@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abyssal-Surge Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <i class="fa-solid fa-circle-nodes logo-icon"></i>
+                <h1>Abyssal-Surge <span class="badge">Studio</span></h1>
+            </div>
+            <nav class="header-nav">
+                <button id="btn-dashboard" class="nav-btn active"><i class="fa-solid fa-chart-line"></i> 대시보드</button>
+                <button id="btn-agents" class="nav-btn"><i class="fa-solid fa-users-gears"></i> 에이전트</button>
+                <button id="btn-simulations" class="nav-btn"><i class="fa-solid fa-play"></i> 시뮬레이션</button>
+                <button id="btn-database" class="nav-btn"><i class="fa-solid fa-database"></i> 로컬 DB</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <!-- Dashboard View -->
+        <section id="view-dashboard" class="view-section active">
+            <div class="grid-container">
+                <div class="card summary-card">
+                    <h3><i class="fa-solid fa-circle-info"></i> 프로젝트 개요</h3>
+                    <p>Abyssal-Surge는 BMAD-GDS 생산 파이프라인을 기반으로 하는 AI 에이전트 협업 게임 스튜디오 시뮬레이터입니다. 8명의 전문 에이전트가 마일스톤과 의사결정 로그를 조정하며 게임을 설계하고 검증합니다.</p>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value" id="stat-agents-count">8</span>
+                            <span class="stat-label">활성 에이전트</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="stat-runs-count">0</span>
+                            <span class="stat-label">시뮬레이션 런</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="stat-logs-count">0</span>
+                            <span class="stat-label">의사결정 로그</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card quick-action-card">
+                    <h3><i class="fa-solid fa-bolt"></i> 빠른 작업</h3>
+                    <div class="action-buttons">
+                        <button id="btn-quick-start" class="btn btn-primary"><i class="fa-solid fa-circle-play"></i> 새 시뮬레이션 시작</button>
+                        <button id="btn-clear-db" class="btn btn-danger"><i class="fa-solid fa-trash-can"></i> 로컬 DB 초기화</button>
+                    </div>
+                </div>
+
+                <div class="card full-width-card">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> 최근 시뮬레이션 기록</h3>
+                    <div class="table-responsive">
+                        <table class="data-table" id="table-recent-runs">
+                            <thead>
+                                <tr>
+                                    <th>Run ID</th>
+                                    <th>시작 시간</th>
+                                    <th>현재 단계</th>
+                                    <th>상태</th>
+                                    <th>작업</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="text-center">기록이 없습니다. 새 시뮬레이션을 시작해보세요.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Agents View -->
+        <section id="view-agents" class="view-section">
+            <h2><i class="fa-solid fa-users-gears"></i> 스튜디오 에이전트 프로필</h2>
+            <p class="section-desc">Abyssal-Surge의 의사결정 파이프라인을 구성하는 8명의 전문 에이전트 목록입니다.</p>
+            <div class="agents-grid" id="agents-container">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- Simulations View -->
+        <section id="view-simulations" class="view-section">
+            <div class="simulation-layout">
+                <div class="sim-control-panel card">
+                    <h3><i class="fa-solid fa-sliders"></i> 시뮬레이션 제어</h3>
+                    <form id="form-new-run">
+                        <div class="form-group">
+                            <label for="input-run-id">Run ID</label>
+                            <input type="text" id="input-run-id" required readonly>
+                            <button type="button" id="btn-regen-id" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrows-rotate"></i> 재생성</button>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-title">프로젝트명 / 주제</label>
+                            <input type="text" id="input-title" placeholder="예: 심해 탐사 RPG 밸런싱 패치" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="select-phase">시작 단계</label>
+                            <select id="select-phase">
+                                <option value="Phase 0">Phase 0: Intake & Constraints</option>
+                                <option value="Phase 1">Phase 1: Production Brief</option>
+                                <option value="Phase 2">Phase 2: Research & Survey</option>
+                                <option value="Phase 3">Phase 3: Monetization & Rules</option>
+                                <option value="Phase 4">Phase 4: Engineering & Risk</option>
+                                <option value="Phase 5">Phase 5: QA & Verdict</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-play"></i> 시뮬레이션 실행</button>
+                    </form>
+                </div>
+
+                <div class="sim-monitor-panel card">
+                    <h3><i class="fa-solid fa-desktop"></i> 실시간 모니터링</h3>
+                    <div class="sim-status-bar">
+                        <span class="status-badge status-idle" id="sim-status-text">대기 중</span>
+                        <span class="sim-current-run-id" id="sim-active-id">-</span>
+                    </div>
+                    <div class="console-output" id="sim-console">
+                        <div class="console-line system">시뮬레이션 준비 완료. 상단의 폼을 작성하고 실행 버튼을 누르세요.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Database View -->
+        <section id="view-database" class="view-section">
+            <h2><i class="fa-solid fa-database"></i> IndexedDB 로컬 데이터베이스 브라우저</h2>
+            <p class="section-desc">브라우저의 IndexedDB에 저장된 데이터를 직접 조회하고 관리할 수 있습니다.</p>
+            
+            <div class="db-tabs">
+                <button class="db-tab-btn active" data-store="runs">Simulation Runs</button>
+                <button class="db-tab-btn" data-store="logs">Decision Logs</button>
+                <button class="db-tab-btn" data-store="agents">Agents Cache</button>
+            </div>
+
+            <div class="card db-content-card">
+                <div class="db-actions">
+                    <button id="btn-refresh-db" class="btn btn-secondary"><i class="fa-solid fa-arrows-rotate"></i> 새로고침</button>
+                    <button id="btn-export-db" class="btn btn-secondary"><i class="fa-solid fa-download"></i> JSON 내보내기</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" id="table-db-data">
+                        <thead>
+                            <!-- Dynamically populated -->
+                        </thead>
+                        <tbody>
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <div class="footer-container">
+            <p>&copy; 2026 Abyssal-Surge. Hosted on GitHub Pages with Local IndexedDB.</p>
+            <p class="footer-links">
+                <a href="https://github.com/jellyggumi/Abyssal-Surge" target="_blank"><i class="fa-brands fa-github"></i> GitHub Repository</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

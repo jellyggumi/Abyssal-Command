@@ -1,0 +1,8 @@
+# Local game-audio credentials (never commit)
+.env.game-audio
+
+# Jeo runtime files
+.jeo/
+
+# OS files
+.DS_Store
