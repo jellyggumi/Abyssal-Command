@@ -231,3 +231,36 @@ button:active:not(:disabled) {
   transform: translateY(0);
 }
 
+
+/* Entity Avatar animations */
+.knight-avatar svg {
+  animation: knight-breath 3s ease-in-out infinite;
+}
+@keyframes knight-breath {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.02); }
+}
+
+.void-avatar svg {
+  animation: void-pulse 4s ease-in-out infinite;
+}
+@keyframes void-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(255,131,111,0.4)); }
+  50% { transform: scale(1.05); filter: drop-shadow(0 0 16px rgba(255,131,111,0.8)); }
+}
+
+.tentacle {
+  transform-origin: 50px 50px;
+  animation: tentacle-writhe 2s ease-in-out infinite alternate;
+}
+@keyframes tentacle-writhe {
+  0% { transform: rotate(-5deg); }
+  100% { transform: rotate(5deg); }
+}
+
+/* High visibility focus overrides */
+button:focus-visible, a:focus-visible {
+  outline: 3px solid var(--focus) !important;
+  outline-offset: 2px !important;
+}
+
