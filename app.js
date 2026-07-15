@@ -56,6 +56,7 @@ const dom = {
   knightAvatar: document.querySelector("#knight-avatar"),
   voidAvatar: document.querySelector("#void-avatar"),
   langToggle: document.querySelector("#lang-toggle"),
+  terminalIllustration: document.querySelector("#terminal-illustration"),
 };
 
 let surface = "lobby";
@@ -393,16 +394,31 @@ function showSurface(next) {
   surface = next;
   for (const [name, screen] of Object.entries(dom.screens)) screen.hidden = name !== next;
   
-  // Audio transitions
+  // Audio transitions & Illustration/Backdrop updates
   if (next === "play") {
     if (sfx.bgm) sfx.bgm.volume = 0.5;
     play("bgm", false); // Loop BGM, don't restart if already playing
     if (sequence === 0) {
       play("narr_intro_" + (encounterIndex + 1));
     }
+    if (dom.terminalIllustration) dom.terminalIllustration.style.display = "none";
+    if (dom.screens.play && dom.screens.play.style) {
+      dom.screens.play.style.backgroundImage = `linear-gradient(rgba(11, 13, 20, 0.85), rgba(11, 13, 20, 0.85)), url('assets/images/stage${encounterIndex + 1}.png')`;
+    }
   } else if (next === "terminal") {
     fadeBgm();
-    if (encounter.outcome === "VICTORY") {
+    if (dom.terminalIllustration) {
+      if (encounter.outcome === "VICTORY" || encounter.outcome === "HOLD") {
+        dom.terminalIllustration.src = "assets/images/victory.png";
+        dom.terminalIllustration.style.display = "inline-block";
+      } else if (encounter.outcome && encounter.outcome.startsWith("DEFEAT")) {
+        dom.terminalIllustration.src = "assets/images/defeat.png";
+        dom.terminalIllustration.style.display = "inline-block";
+      } else {
+        dom.terminalIllustration.style.display = "none";
+      }
+    }
+    if (encounter.outcome === "VICTORY" || encounter.outcome === "HOLD") {
       play("victory");
       play("narr_victory");
     } else if (encounter.outcome && encounter.outcome.startsWith("DEFEAT")) {
@@ -411,6 +427,7 @@ function showSurface(next) {
     }
   } else if (next === "lobby") {
     fadeBgm();
+    if (dom.terminalIllustration) dom.terminalIllustration.style.display = "none";
   }
 
   requestAnimationFrame(() => dom.focus[next]?.focus({ preventScroll: true }));

@@ -22,7 +22,17 @@ const ASSETS = [
   "./assets/audio/narr_intro_4.mp3",
   "./assets/audio/narr_intro_5.mp3",
   "./assets/audio/narr_victory.mp3",
-  "./assets/audio/narr_defeat.mp3"
+  "./assets/audio/narr_defeat.mp3",
+  "./assets/images/lobby.png",
+  "./assets/images/victory.png",
+  "./assets/images/defeat.png",
+  "./assets/images/knight.png",
+  "./assets/images/void_eye.png",
+  "./assets/images/stage1.png",
+  "./assets/images/stage2.png",
+  "./assets/images/stage3.png",
+  "./assets/images/stage4.png",
+  "./assets/images/stage5.png"
 ];
 
 self.addEventListener("install", (event) => {
