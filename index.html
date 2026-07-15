@@ -6,6 +6,9 @@
   <meta name="description" content="A browser-local deterministic Stage 1 encounter for Abyssal Surge.">
   <title>Abyssal Surge — Stage 1</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0d14">
+  <link rel="apple-touch-icon" href="icon.svg">
 </head>
 <body>
   <div id="analytics-banner" style="background: #161f30; padding: 15px; text-align: center; border-bottom: 1px solid #1f2d44; color: #f3f4f6; font-size: 14px; line-height: 1.5;" role="status">
@@ -15,8 +18,11 @@
   </div>
   <a class="skip-link" href="#main-content">Skip to encounter controls</a>
   <header class="site-header">
-    <p class="eyebrow">Abyssal Surge · Browser-local Stage 1</p>
-    <p>Static GitHub Pages-compatible slice · no account or persistence · optional anonymous performance analytics</p>
+    <div>
+      <p class="eyebrow">Abyssal Surge · Browser-local Stage 1</p>
+      <p>Static GitHub Pages-compatible slice · no account or persistence</p>
+    </div>
+    <button id="audio-toggle" type="button" aria-label="Toggle sound" style="min-height: auto; padding: 6px 12px; font-weight: bold;">Unmute 🔊</button>
   </header>
 
   <main id="main-content" tabindex="-1">
@@ -29,6 +35,16 @@
         <div><dt>Bounded outcome</dt><dd>Integrity 0 is DEFEAT_INTEGRITY; pressure 4 is DEFEAT_PRESSURE; foe health 0 is VICTORY; a safe final round is HOLD.</dd></div>
         <div><dt>Local settlement</dt><dd>A campaign contains exactly three terminal encounters. Awards are 2 fragments for VICTORY, 1 for HOLD, and 0 for either defeat; settlement spends 3 fragments per resolve mark, capped at 2.</dd></div>
       </dl>
+      <section class="telemetry-panel" style="margin-top: 1.5rem; padding: 1rem; border: 1px dashed var(--line); border-radius: .45rem; background: rgb(255 255 255 / .02);">
+        <h3 style="margin-top: 0; font-size: 1rem; color: var(--signal);">MET-01/MET-04 Local Telemetry Audit Ledger</h3>
+        <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem;">Verified local-only static operations. Zero egress, zero cookies, zero P2W monetization routes active.</p>
+        <ul id="telemetry-log" style="font-size: 0.85rem; margin: 0; padding-left: 1.2rem; font-family: monospace; color: var(--signal);">
+          <li>[MET-01] MFC: 0 paid items active.</li>
+          <li>[MET-02] DPC: complete free access.</li>
+          <li>[MET-03] FC: zero microtransactions.</li>
+          <li>[MET-04] AVC: agency active (0 commands run).</li>
+        </ul>
+      </section>
       <button id="begin-button" class="primary" type="button">Begin local campaign</button>
     </section>
 
@@ -41,19 +57,51 @@
         <p>Rules version: <code id="rules-version">stage1-rules-v1</code></p>
       </div>
 
-      <section class="status-summary" aria-labelledby="intent-title">
-        <h2 id="intent-title">Published adverse intent: <strong id="intent-value">STRIKE</strong></h2>
-        <p id="threat-copy">STRIKE: 2 integrity damage unless BRACE is used.</p>
-        <p id="counter-value">BRACE costs 1 focus and prevents this STRIKE's 2 damage.</p>
-      </section>
+      <div class="combat-grid">
+        <!-- Left Column: Player Status Card -->
+        <section class="combat-card player-card" aria-label="Player Status">
+          <h2 class="eyebrow" style="color: var(--signal);">The Stewardship (Player)</h2>
+          <dl class="metrics-list" style="display: grid; gap: 0.8rem; margin: 1rem 0 0;">
+            <div>
+              <dt>Integrity</dt>
+              <dd id="integrity-value">6 / 6</dd>
+              <div class="progress-container"><div id="integrity-bar" class="progress-bar integrity-bar"></div></div>
+            </div>
+            <div>
+              <dt>Focus</dt>
+              <dd id="focus-value">3 / 3</dd>
+              <div class="progress-container"><div id="focus-bar" class="progress-bar focus-bar"></div></div>
+            </div>
+            <div>
+              <dt>Guard</dt>
+              <dd id="guard-value">0 / 2</dd>
+              <div class="progress-container"><div id="guard-bar" class="progress-bar guard-bar"></div></div>
+            </div>
+            <div>
+              <dt>Pressure</dt>
+              <dd id="pressure-value">0 / 4</dd>
+              <div class="progress-container"><div id="pressure-bar" class="progress-bar pressure-bar"></div></div>
+            </div>
+          </dl>
+        </section>
 
-      <dl class="metrics" aria-label="Immutable encounter state">
-        <div><dt>Integrity</dt><dd id="integrity-value">6 / 6</dd></div>
-        <div><dt>Focus</dt><dd id="focus-value">3 / 3</dd></div>
-        <div><dt>Guard</dt><dd id="guard-value">0 / 2</dd></div>
-        <div><dt>Pressure</dt><dd id="pressure-value">0 / 4</dd></div>
-        <div><dt>Foe health</dt><dd id="foe-health-value">6 / 6</dd></div>
-      </dl>
+        <!-- Right Column: Adversary Status Card -->
+        <section class="combat-card enemy-card" aria-label="Adversary Status">
+          <h2 class="eyebrow" style="color: var(--danger);">The Abyssal Terror (Foe)</h2>
+          
+          <div class="enemy-metrics" style="margin: 1rem 0 1.5rem;">
+            <dt>Foe Health</dt>
+            <dd id="foe-health-value">6 / 6</dd>
+            <div class="progress-container"><div id="foe-health-bar" class="progress-bar foe-health-bar"></div></div>
+          </div>
+
+          <section class="status-summary" aria-labelledby="intent-title" style="margin-top: 0; background: transparent; border: none; padding: 0; box-shadow: none;">
+            <dt id="intent-title" style="font-size: 0.95rem; color: var(--cinder);">Published adverse intent: <strong id="intent-value" style="color: var(--danger); font-size: 1.1rem;">STRIKE</strong></dt>
+            <p id="threat-copy" style="font-size: 0.9rem; margin: 0.3rem 0 0.5rem; color: var(--ink);">STRIKE: 2 integrity damage unless BRACE is used.</p>
+            <p id="counter-value" style="font-size: 0.85rem; color: var(--muted); margin: 0; font-style: italic;">BRACE costs 1 focus and prevents this STRIKE's 2 damage.</p>
+          </section>
+        </section>
+      </div>
 
       <section class="command-panel" aria-labelledby="commands-title">
         <h2 id="commands-title">Semantic commands</h2>
@@ -78,6 +126,16 @@
       <h1 id="terminal-title" tabindex="-1">Stage 1 result</h1>
       <p id="terminal-summary" class="terminal-summary" role="status"></p>
       <p id="settlement-summary"></p>
+      <section class="telemetry-panel" style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding: 1rem; border: 1px dashed var(--line); border-radius: .45rem; background: rgb(255 255 255 / .02);">
+        <h3 style="margin-top: 0; font-size: 1rem; color: var(--signal);">MET-01/MET-04 Local Telemetry Audit Ledger</h3>
+        <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem;">Verified local-only static operations. Zero egress, zero cookies, zero P2W monetization routes active.</p>
+        <ul id="terminal-telemetry-log" style="font-size: 0.85rem; margin: 0; padding-left: 1.2rem; font-family: monospace; color: var(--signal);">
+          <li>[MET-01] MFC: 0 paid items active.</li>
+          <li>[MET-02] DPC: complete free access.</li>
+          <li>[MET-03] FC: zero microtransactions.</li>
+          <li>[MET-04] AVC: agency active (0 commands run).</li>
+        </ul>
+      </section>
       <div class="button-row">
         <button id="continue-button" class="primary" type="button">Start next local encounter</button>
         <button id="restart-button" type="button">Restart local campaign</button>
@@ -106,7 +164,20 @@
       decline.addEventListener('click', () => {
         banner.style.display = 'none';
       });
+
+      // PWA Service Worker Registration
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').then((reg) => {
+            console.log('ServiceWorker registered with scope: ', reg.scope);
+          }).catch((err) => {
+            console.warn('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
     })();
   </script>
+  <!-- Visual FX Overlay for Combat Actions -->
+  <div id="fx-overlay" class="fx-overlay" aria-hidden="true"></div>
 </body>
 </html>

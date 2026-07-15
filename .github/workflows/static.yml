@@ -52,7 +52,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for file in index.html app.js game-core.js styles.css; do
+          for file in index.html app.js game-core.js styles.css privacy.html; do
             git cat-file -e "${PAGES_REVISION}:${file}"
             test -f "$file"
           done
@@ -67,8 +67,8 @@ jobs:
           set -euo pipefail
           rm -rf "$PAGES_ARTIFACT_DIR"
           mkdir -p "$PAGES_ARTIFACT_DIR"
-          git archive --format=tar "$PAGES_REVISION" -- index.html app.js game-core.js styles.css | tar -x -C "$PAGES_ARTIFACT_DIR"
-          expected=$'app.js\ngame-core.js\nindex.html\nstyles.css'
+          git archive --format=tar "$PAGES_REVISION" -- index.html app.js game-core.js styles.css privacy.html | tar -x -C "$PAGES_ARTIFACT_DIR"
+          expected=$'app.js\ngame-core.js\nindex.html\nprivacy.html\nstyles.css'
           actual="$(find "$PAGES_ARTIFACT_DIR" -type f -print | sed "s#^${PAGES_ARTIFACT_DIR}/##" | sort)"
           test "$actual" = "$expected"
       - name: Setup Pages

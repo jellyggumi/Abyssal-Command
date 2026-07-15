@@ -65,3 +65,169 @@ dd { margin: .16rem 0 0; font-size: 1.08rem; font-weight: 750; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Progress Bar Styling */
+.progress-container {
+  width: 100%;
+  height: 0.4rem;
+  background: rgb(255 255 255 / .05);
+  border-radius: 0.2rem;
+  margin-top: 0.4rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.progress-bar {
+  height: 100%;
+  width: 100%;
+  transition: width 0.3s ease;
+}
+.integrity-bar { background: var(--signal); }
+.focus-bar { background: #00d2ff; }
+.guard-bar { background: var(--cinder); }
+.pressure-bar { background: var(--danger); }
+.foe-health-bar { background: #ff5e97; }
+
+/* Visual FX Overlay */
+.fx-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+
+/* Slash FX */
+.fx-strike {
+  animation: strike-anim 0.4s ease forwards;
+  background: linear-gradient(135deg, transparent 45%, #ffc070 50%, #ffffff 52%, #ff836f 55%, transparent 60%);
+}
+@keyframes strike-anim {
+  0% { opacity: 0; transform: scale(0.9); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+
+/* Shield FX */
+.fx-brace {
+  animation: brace-anim 0.5s ease forwards;
+  box-shadow: inset 0 0 80px rgba(120, 231, 212, 0.6);
+  border: 10px solid var(--signal);
+}
+@keyframes brace-anim {
+  0% { opacity: 0; transform: scale(0.95); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+
+/* Shatter FX */
+.fx-disrupt {
+  animation: disrupt-anim 0.6s ease forwards;
+  background: radial-gradient(circle, rgba(255, 131, 111, 0.4) 0%, transparent 70%);
+  box-shadow: inset 0 0 100px rgba(255, 131, 111, 0.8);
+}
+@keyframes disrupt-anim {
+  0% { opacity: 0; filter: hue-rotate(0deg); }
+  50% { opacity: 1; filter: saturate(2); }
+  100% { opacity: 0; filter: hue-rotate(90deg); }
+}
+
+/* Recover FX */
+.fx-recover {
+  animation: recover-anim 0.5s ease forwards;
+  background: radial-gradient(circle, rgba(0, 210, 255, 0.3) 0%, transparent 60%);
+}
+@keyframes recover-anim {
+  0% { opacity: 0; }
+  40% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Screen Shake */
+.shake {
+  animation: shake-anim 0.3s ease;
+}
+@keyframes shake-anim {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-8px, 5px); }
+  40% { transform: translate(8px, -5px); }
+  60% { transform: translate(-5px, -3px); }
+  80% { transform: translate(5px, 3px); }
+}
+
+/* Typing Animation styling */
+.typing {
+  border-right: 2px solid var(--signal);
+  white-space: pre-wrap;
+  animation: blink 0.75s step-end infinite;
+}
+@keyframes blink {
+  from, to { border-color: transparent }
+  50% { border-color: var(--signal); }
+}
+
+/* Custom Header Audio Button styling */
+#audio-toggle {
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+#audio-toggle.active {
+  border-color: var(--signal);
+  background: #1a2f3f;
+  color: var(--signal);
+}
+
+/* Telemetry Audit Log Styling */
+.telemetry-panel ul {
+  list-style-type: square;
+}
+
+
+/* Combat Grid Layout */
+.combat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+.combat-card {
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / .15);
+}
+@media (max-width: 48rem) {
+  .combat-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Paper/briefing aesthetics for intro lobby screen */
+.intro-panel {
+  border: 2px solid var(--cinder) !important;
+  background: linear-gradient(135deg, #181410 0%, #0d0f17 100%) !important;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Button overrides for more dark fantasy thematic elements */
+button {
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+}
+button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(120, 231, 212, 0.2);
+}
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+

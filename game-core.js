@@ -5,6 +5,8 @@ export const CAMPAIGN_SCHEDULES = Object.freeze([
   Object.freeze(["STRIKE", "STRIKE", "STRIKE"]),
   Object.freeze(["SURGE", "STRIKE", "STRIKE"]),
   Object.freeze(["STRIKE", "SURGE", "STRIKE"]),
+  Object.freeze(["SURGE", "SURGE", "STRIKE"]),
+  Object.freeze(["SURGE", "SURGE", "SURGE"]),
 ]);
 
 const INTENTS = new Set(["STRIKE", "SURGE"]);
@@ -249,8 +251,8 @@ export function awardFor(outcome) {
 }
 
 export function settleCampaign(outcomes) {
-  if (!Array.isArray(outcomes) || outcomes.length !== 3 || !outcomes.every((outcome) => TERMINAL.has(outcome))) {
-    throw new TypeError("Stage 1 settlement requires exactly three terminal encounters.");
+  if (!Array.isArray(outcomes) || outcomes.length !== 5 || !outcomes.every((outcome) => TERMINAL.has(outcome))) {
+    throw new TypeError("Stage 1 settlement requires exactly five terminal encounters.");
   }
   const fragments_earned = outcomes.reduce((total, outcome) => total + awardFor(outcome), 0);
   let fragment_wallet = fragments_earned;
