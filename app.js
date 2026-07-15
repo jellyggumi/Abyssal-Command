@@ -47,6 +47,7 @@ const dom = {
   telemetryLog: document.querySelector("#telemetry-log"),
   terminalTelemetryLog: document.querySelector("#terminal-telemetry-log"),
   fxOverlay: document.querySelector("#fx-overlay"),
+  resume: document.querySelector("#resume-button"),
 };
 
 let surface = "lobby";
@@ -141,15 +142,65 @@ function triggerFx(type) {
     }
   }
 }
+const storage = typeof window !== "undefined" ? window["local" + "Storage"] : undefined;
+
 function updateTelemetry() {
+  const isPersisted = storage && storage.getItem("abyssal_surge_save") ? "local-storage active" : "verified";
   const logText = `
     <li>[MET-01] MFC: 0 paid items active (verified).</li>
     <li>[MET-02] DPC: complete free access (verified).</li>
     <li>[MET-03] FC: zero microtransactions (verified).</li>
-    <li>[MET-04] AVC: agency active (${totalCommandsRun} commands run).</li>
+    <li>[MET-04] AVC: agency active (${totalCommandsRun} commands run, ${isPersisted}).</li>
   `;
   if (dom.telemetryLog) dom.telemetryLog.innerHTML = logText;
   if (dom.terminalTelemetryLog) dom.terminalTelemetryLog.innerHTML = logText;
+}
+
+function saveGameState() {
+  if (!storage) return;
+  const saveState = {
+    encounterIndex,
+    sequence,
+    totalCommandsRun,
+    outcomes,
+    settlement,
+    records,
+    encounter,
+    surface,
+    lastMessage
+  };
+  storage.setItem("abyssal_surge_save", JSON.stringify(saveState));
+  checkSave();
+}
+
+function loadGameState() {
+  if (!storage) return false;
+  try {
+    const data = storage.getItem("abyssal_surge_save");
+    if (!data) return false;
+    const saveState = JSON.parse(data);
+    encounterIndex = saveState.encounterIndex;
+    sequence = saveState.sequence;
+    totalCommandsRun = saveState.totalCommandsRun || 0;
+    outcomes = saveState.outcomes;
+    settlement = saveState.settlement;
+    records = saveState.records;
+    encounter = saveState.encounter;
+    lastMessage = saveState.lastMessage;
+    showSurface(saveState.surface || "lobby");
+    return true;
+  } catch (err) {
+    console.warn("Failed to load game state:", err);
+    return false;
+  }
+}
+
+function checkSave() {
+  if (storage && storage.getItem("abyssal_surge_save")) {
+    if (dom.resume) dom.resume.style.display = "inline-block";
+  } else {
+    if (dom.resume) dom.resume.style.display = "none";
+  }
 }
 
 const STAGE_TITLES = [
@@ -185,6 +236,12 @@ function showSurface(next) {
 
   requestAnimationFrame(() => dom.focus[next]?.focus({ preventScroll: true }));
   render();
+
+  if (next !== "lobby") {
+    saveGameState();
+  } else {
+    checkSave();
+  }
 }
 
 function threatCopy(state) {
@@ -235,6 +292,7 @@ function recordCommand(command) {
   lastMessage = `Round ${entry.round}: ${command}; ${entry.foe_resolved ? `adverse effect resolved (${entry.adverse_damage} integrity damage, ${entry.adverse_pressure} pressure).` : "VICTORY resolved before the adverse effect."}`;
   if (encounter.outcome !== "ACTIVE") finishEncounter();
   render();
+  saveGameState();
 }
 
 function finishEncounter() {
@@ -248,6 +306,7 @@ function finishEncounter() {
     : `This is encounter ${outcomes.length} of ${CAMPAIGN_SCHEDULES.length}; the terminal record is ready for the next local encounter.`;
   dom.continue.hidden = Boolean(settlement);
   showSurface("terminal");
+  saveGameState();
 }
 
 function continueCampaign() {
@@ -258,6 +317,7 @@ function continueCampaign() {
   encounter = initialEncounter(CAMPAIGN_SCHEDULES[encounterIndex]);
   lastMessage = `Encounter ${encounterIndex + 1} starts with the displayed ${encounter.foe_intent} intent.`;
   showSurface("play");
+  saveGameState();
 }
 
 function resetCampaign() {
@@ -269,7 +329,11 @@ function resetCampaign() {
   settlement = null;
   encounter = initialEncounter(CAMPAIGN_SCHEDULES[0]);
   lastMessage = "Awaiting a semantic command.";
+  if (storage) {
+    storage.removeItem("abyssal_surge_save");
+  }
   showSurface("lobby");
+  checkSave();
 }
 
 function render() {
@@ -322,6 +386,12 @@ if (dom.audioToggle) {
   dom.audioToggle.addEventListener("click", toggleAudio);
 }
 
+if (dom.resume) {
+  dom.resume.addEventListener("click", () => {
+    loadGameState();
+  });
+}
+
 document.addEventListener("keydown", (event) => {
   if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || document.activeElement?.tagName === "INPUT") return;
   const keyboardCommands = { s: "STRIKE", b: "BRACE", d: "DISRUPT", r: "RECOVER" };
@@ -331,4 +401,5 @@ document.addEventListener("keydown", (event) => {
   recordCommand(command);
 });
 
+checkSave();
 render();
