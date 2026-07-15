@@ -57,6 +57,8 @@ const dom = {
   voidAvatar: document.querySelector("#void-avatar"),
   langToggle: document.querySelector("#lang-toggle"),
   terminalIllustration: document.querySelector("#terminal-illustration"),
+  foeChargeBar: document.querySelector("#foe-charge-bar"),
+  unitsContainer: document.querySelector("#units-container"),
 };
 
 let surface = "lobby";
@@ -73,6 +75,17 @@ let audioMuted = true;
 let totalCommandsRun = 0;
 let typingInterval = null;
 let fadeInterval = null;
+
+// RTS Engine Variables
+const useRealTime = typeof window !== "undefined" && typeof window.requestAnimationFrame === "function";
+let activeUnits = [];
+let foeCharge = 0;
+let lastTickTime = 0;
+let rAFId = null;
+let nextUnitId = 0;
+let isRecovering = false;
+let recoverTimer = 0;
+let lastSecondSave = 0;
 
 const DICTIONARY = {
   en: {
@@ -310,6 +323,158 @@ function checkSave() {
   }
 }
 
+function rtsLoop(timestamp) {
+  if (surface !== "play" || encounter.outcome !== "ACTIVE") {
+    rAFId = null;
+    return;
+  }
+  
+  if (!lastTickTime) lastTickTime = timestamp;
+  let dt = (timestamp - lastTickTime) / 1000; // in seconds
+  if (dt > 0.1) dt = 0.1; // cap DT to prevent giant jumps when tab loses focus
+  lastTickTime = timestamp;
+
+  // 1. Foe Attack charge progress
+  const foeAttackCooldown = 3.5;
+  foeCharge += dt;
+  if (foeCharge >= foeAttackCooldown) {
+    foeCharge = 0;
+    
+    // Resolve Foe Attack
+    let adverseDamage = 0;
+    let adversePressure = 0;
+    if (encounter.foe_intent === "STRIKE") {
+      adverseDamage = Math.max(0, 2 - encounter.guard);
+      encounter.integrity = Math.max(0, encounter.integrity - adverseDamage);
+      play("strike");
+      triggerFx("STRIKE");
+      if (dom.knightAvatar && dom.knightAvatar.classList) {
+        dom.knightAvatar.classList.add("damage-flash");
+        setTimeout(() => {
+          if (dom.knightAvatar && dom.knightAvatar.classList) {
+            dom.knightAvatar.classList.remove("damage-flash");
+          }
+        }, 400);
+      }
+    } else if (!encounter.surge_countered) {
+      adverseDamage = 4;
+      adversePressure = 2;
+      encounter.integrity = Math.max(0, encounter.integrity - adverseDamage);
+      encounter.pressure = Math.min(4, encounter.pressure + adversePressure);
+      play("disrupt");
+      triggerFx("DISRUPT");
+      if (dom.knightAvatar && dom.knightAvatar.classList) {
+        dom.knightAvatar.classList.add("damage-flash");
+        setTimeout(() => {
+          if (dom.knightAvatar && dom.knightAvatar.classList) {
+            dom.knightAvatar.classList.remove("damage-flash");
+          }
+        }, 400);
+      }
+    }
+    
+    encounter.guard = 0; // reset guard after attack resolves
+    encounter.surge_countered = false;
+    
+    // Check Foe victory/defeat conditions
+    if (encounter.integrity <= 0) {
+      encounter.outcome = "DEFEAT_INTEGRITY";
+      finishEncounter();
+      return;
+    }
+    if (encounter.pressure >= 4) {
+      encounter.outcome = "DEFEAT_PRESSURE";
+      finishEncounter();
+      return;
+    }
+    
+    // Advance Foe round / intent schedule
+    encounter.round = (encounter.round + 1) % encounter.schedule.length;
+    encounter.foe_intent = encounter.schedule[encounter.round];
+  }
+
+  // 2. Player Focus regeneration
+  let regenRate = 0.5; // +0.5 Focus per second normally
+  if (isRecovering) {
+    recoverTimer -= dt;
+    if (recoverTimer <= 0) {
+      isRecovering = false;
+    } else {
+      regenRate = 1.5; // +1.5 Focus per second during recover channel
+    }
+  }
+  encounter.focus = Math.min(encounter.max_focus, encounter.focus + regenRate * dt);
+
+  // 3. Move and Update Deployed Units
+  const nextUnits = [];
+  for (const unit of activeUnits) {
+    unit.x += unit.speed * dt;
+    if (unit.x >= 100) {
+      // Unit reached Foe base! Strike!
+      if (unit.type === "STRIKE") {
+        encounter.foe_health = Math.max(0, encounter.foe_health - 2);
+        play("strike");
+        triggerFx("STRIKE");
+        if (dom.voidAvatar && dom.voidAvatar.classList) {
+          dom.voidAvatar.classList.add("damage-flash");
+          setTimeout(() => {
+            if (dom.voidAvatar && dom.voidAvatar.classList) {
+              dom.voidAvatar.classList.remove("damage-flash");
+            }
+          }, 400);
+        }
+      } else if (unit.type === "BRACE") {
+        encounter.guard = Math.min(2, encounter.guard + 2);
+        play("brace");
+      }
+      
+      // Remove element from DOM
+      if (unit.element && unit.element.parentNode) {
+        unit.element.parentNode.removeChild(unit.element);
+      }
+      
+      if (encounter.foe_health <= 0) {
+        encounter.outcome = "VICTORY";
+        finishEncounter();
+        return;
+      }
+    } else {
+      // Update visual position
+      if (unit.element) {
+        unit.element.style.left = `${unit.x}%`;
+      }
+      nextUnits.push(unit);
+    }
+  }
+  activeUnits = nextUnits;
+
+  // Throttle saveGameState to once per second in real-time loops
+  if (timestamp - lastSecondSave >= 1000) {
+    saveGameState();
+    lastSecondSave = timestamp;
+  }
+
+  render();
+  rAFId = requestAnimationFrame(rtsLoop);
+}
+
+function spawnUnit(type) {
+  if (!dom.unitsContainer) return;
+  const unitId = ++nextUnitId;
+  const element = document.createElement("div");
+  element.className = `spawned-unit ${type === "STRIKE" ? "unit-soldier" : "unit-shield"}`;
+  element.textContent = type === "STRIKE" ? "⚔️" : "🛡️";
+  element.style.left = "0%";
+  dom.unitsContainer.appendChild(element);
+
+  activeUnits.push({
+    id: unitId,
+    type: type,
+    x: 0,
+    speed: 33.3, // takes 3 seconds to cross the screen (100% / 3)
+    element: element
+  });
+}
 const STAGE_TITLES_LOCALIZED = {
   en: [
     "Stage 1: Immediate Pressure",
@@ -468,7 +633,85 @@ function terminalCopy(outcome) {
 }
 
 function recordCommand(command) {
-  if (!COMMANDS.includes(command) || !commandAvailable(command)) return;
+  if (!COMMANDS.includes(command)) return;
+  
+  if (useRealTime) {
+    if (encounter.outcome !== "ACTIVE") return;
+    
+    // Custom RTS logic: check if player has enough Focus
+    if (command === "STRIKE") {
+      if (encounter.focus < 1) {
+        lastMessage = currentLang === "ko" ? "정신력이 부족합니다! (Focus < 1)" : "Insufficient Focus! (Focus < 1)";
+        play("defeat"); // warning buzz
+        render();
+        return;
+      }
+      encounter.focus -= 1;
+      spawnUnit("STRIKE");
+    } else if (command === "BRACE") {
+      if (encounter.focus < 1) {
+        lastMessage = currentLang === "ko" ? "정신력이 부족합니다! (Focus < 1)" : "Insufficient Focus! (Focus < 1)";
+        play("defeat");
+        render();
+        return;
+      }
+      encounter.focus -= 1;
+      spawnUnit("BRACE");
+    } else if (command === "DISRUPT") {
+      if (encounter.focus < 1) {
+        lastMessage = currentLang === "ko" ? "정신력이 부족합니다! (Focus < 1)" : "Insufficient Focus! (Focus < 1)";
+        play("defeat");
+        render();
+        return;
+      }
+      if (encounter.foe_intent !== "SURGE") {
+        lastMessage = currentLang === "ko" ? "적의 SURGE 파동이 켜져있지 않습니다!" : "Enemy is not channeling SURGE!";
+        play("defeat");
+        render();
+        return;
+      }
+      encounter.focus -= 1;
+      encounter.foe_health = Math.max(0, encounter.foe_health - 1);
+      encounter.surge_countered = true;
+      play("disrupt");
+      triggerFx("DISRUPT");
+      if (dom.voidAvatar && dom.voidAvatar.classList) {
+        dom.voidAvatar.classList.add("damage-flash");
+        setTimeout(() => {
+          if (dom.voidAvatar && dom.voidAvatar.classList) {
+            dom.voidAvatar.classList.remove("damage-flash");
+          }
+        }, 400);
+      }
+      if (encounter.foe_health <= 0) {
+        encounter.outcome = "VICTORY";
+        finishEncounter();
+        return;
+      }
+    } else if (command === "RECOVER") {
+      if (encounter.focus >= encounter.max_focus) {
+        lastMessage = currentLang === "ko" ? "정신력이 이미 가득 찼습니다!" : "Focus is already full!";
+        render();
+        return;
+      }
+      isRecovering = true;
+      recoverTimer = 1.0; // 1 second recovery channel
+      play("recover");
+      triggerFx("RECOVER");
+    }
+    
+    totalCommandsRun++;
+    // Log the input with the current elapsed foeCharge/round ticks for deterministic replay!
+    const record = makeCommand(command, encounter.round, ++sequence);
+    records.push(record);
+    lastMessage = currentLang === "ko" ? `${command} 커맨드를 실행했습니다.` : `Executed command: ${command}.`;
+    render();
+    saveGameState();
+    return;
+  }
+  
+  // Turn-based fallback
+  if (!commandAvailable(command)) return;
   totalCommandsRun++;
   
   // Play SFX & Visual FX
@@ -560,6 +803,14 @@ function resetCampaign() {
   settlement = null;
   encounter = initialEncounter(CAMPAIGN_SCHEDULES[0], 0);
   lastMessage = "Awaiting a semantic command.";
+  
+  if (rAFId) {
+    cancelAnimationFrame(rAFId);
+    rAFId = null;
+  }
+  activeUnits = [];
+  if (dom.unitsContainer) dom.unitsContainer.innerHTML = "";
+  
   if (storage) {
     storage.removeItem("abyssal_surge_save");
   }
@@ -603,6 +854,15 @@ function render() {
     }
   }
 
+  // Foe Charge Bar rendering
+  if (dom.foeChargeBar) {
+    if (encounter.outcome === "ACTIVE" && useRealTime) {
+      dom.foeChargeBar.style.width = `${(foeCharge / 3.5) * 100}%`;
+    } else {
+      dom.foeChargeBar.style.width = "0%";
+    }
+  }
+
   dom.trace.replaceChildren(...encounter.trace.map((entry) => {
     const item = document.createElement("li");
     item.textContent = `Round ${entry.round}: ${entry.command}; ${entry.foe_resolved ? `effect ${entry.adverse_damage} integrity / ${entry.adverse_pressure} pressure; ${entry.outcome}.` : "adverse effect skipped; VICTORY."}`;
@@ -611,9 +871,15 @@ function render() {
 
   // Narration with typing animation
   if (surface === "play" && sequence > 0) {
-    typeText(dom.announcement, lastMessage);
+    if (dom.announcement.dataset && dom.announcement.dataset.lastMessage !== lastMessage) {
+      dom.announcement.dataset.lastMessage = lastMessage;
+      typeText(dom.announcement, lastMessage);
+    }
   } else {
     dom.announcement.textContent = lastMessage;
+    if (dom.announcement.dataset) {
+      dom.announcement.dataset.lastMessage = lastMessage;
+    }
   }
 
   // Local telemetry logs ledger updates
