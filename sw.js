@@ -1,8 +1,9 @@
-const CACHE_NAME = "abyssal-surge-static-v4";
+const CACHE_NAME = "abyssal-surge-static-v6";
 const CORE_ASSETS = [
   "./",
   "./index.html",
   "./app.js",
+  "./battle-visualizer.js",
   "./campaign-state.js",
   "./i18n.js",
   "./liquid-ether.js",
@@ -10,7 +11,8 @@ const CORE_ASSETS = [
   "./styles.css",
   "./sw.js",
   "./manifest.json",
-  "./icon.svg"
+  "./icon.svg",
+  "./favicon.ico",
 ];
 
 const OPTIONAL_MEDIA = [
@@ -72,7 +74,7 @@ function isSameOriginGet(request) {
 function isCoreRequest(request) {
   if (!isSameOriginGet(request)) return false;
   const path = new URL(request.url).pathname;
-  return path.endsWith("/") || ["/index.html", "/app.js", "/campaign-state.js", "/i18n.js", "/liquid-ether.js", "/vendor/three.module.min.js", "/styles.css", "/sw.js"].some((suffix) => path.endsWith(suffix));
+  return path.endsWith("/") || ["/index.html", "/app.js", "/battle-visualizer.js", "/campaign-state.js", "/i18n.js", "/liquid-ether.js", "/vendor/three.module.min.js", "/styles.css", "/sw.js"].some((suffix) => path.endsWith(suffix));
 }
 
 self.addEventListener("install", (event) => {

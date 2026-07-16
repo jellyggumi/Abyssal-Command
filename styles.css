@@ -500,3 +500,209 @@ dd { margin: .2rem 0 0; font-size: 1.08rem; font-weight: 800; }
 @media (max-width: 48rem) {
   .feature-preview-grid { grid-template-columns: 1fr; }
 }
+
+/* SPA Sub-Views and 2.5D Battle Styles */
+.sub-view[hidden] {
+  display: none !important;
+}
+
+.center-row {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Boss Spec View Styles */
+.boss-spec-panel {
+  border-color: var(--danger);
+  background: rgba(255, 127, 121, 0.03);
+}
+.boss-spec-content {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+@media (max-width: 48rem) {
+  .boss-spec-content {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+.boss-portrait-large {
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid var(--danger);
+  box-shadow: 0 0 15px rgba(255, 127, 121, 0.4);
+  background: var(--bg);
+}
+.boss-spec-details {
+  flex: 1;
+}
+.spec-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.spec-list div {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.5rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+}
+.spec-list dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.spec-list dd {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--danger);
+}
+
+.player-current-stats {
+  border-top: 1px dashed var(--line);
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+}
+.stats-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+@media (max-width: 30rem) {
+  .stats-list {
+    grid-template-columns: 1fr;
+  }
+}
+.stats-list li {
+  background: rgba(112, 229, 208, 0.04);
+  border: 1px solid rgba(112, 229, 208, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.stats-list span {
+  font-weight: bold;
+  color: var(--aqua);
+}
+
+/* 2.5D Battle Field Styles */
+.battle-field-panel {
+  border-color: var(--aqua);
+  background: rgba(112, 229, 208, 0.02);
+  padding: 1rem;
+}
+.wave-badge {
+  background: var(--danger);
+  color: var(--bg);
+  font-weight: 900;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+.canvas-container-3d {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  background: #060913;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+#battle-canvas-3d {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.combat-overlay-labels {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1rem;
+  pointer-events: none;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+.label-camp-ally {
+  color: var(--aqua);
+  text-shadow: 0 0 5px rgba(112, 229, 208, 0.5);
+}
+.label-camp-boss {
+  color: var(--danger);
+  text-shadow: 0 0 5px rgba(255, 127, 121, 0.5);
+}
+
+/* Cooldown Overlays on Command Buttons */
+.command-grid button {
+  position: relative;
+  overflow: hidden;
+}
+.cooldown-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 11, 21, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  pointer-events: none;
+}
+.cooldown-timer {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--focus);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  letter-spacing: -0.02em;
+}
+
+/* Result View Styles */
+.result-panel {
+  text-align: center;
+  padding: 2rem;
+}
+.result-status-box {
+  margin: 1.5rem 0 2.5rem;
+}
+.result-text {
+  font-size: 3.5rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 25px currentColor;
+}
+.result-text.victory {
+  color: var(--aqua);
+  background: linear-gradient(120deg, var(--ink), var(--aqua), var(--focus));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.result-text.defeat {
+  color: var(--danger);
+  background: linear-gradient(120deg, #ff4c4c, var(--danger), #ff9e9a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.reward-selection-container {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+}

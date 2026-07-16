@@ -170,66 +170,196 @@
           </ol>
         </nav>
 
-        <div id="stage-transition" class="stage-transition" aria-live="polite">
-          <video id="stage-transition-video" muted playsinline preload="metadata" hidden aria-label="Optional stage atmosphere"></video>
-          <div class="stage-transition-copy">
-            <p id="narration-line" class="narration-line" aria-hidden="true"></p>
-            <p id="narration-sr" class="sr-only" role="status"></p>
-            <p id="stage-objective"></p>
-            <button id="toggle-stage-ambience" type="button" aria-pressed="false">Play ambient sound</button>
+        <!-- VIEW 1: SCENARIO VIEW -->
+        <div id="view-scenario" class="sub-view">
+          <div id="stage-transition" class="stage-transition" aria-live="polite">
+            <video id="stage-transition-video" muted playsinline preload="metadata" hidden aria-label="Optional stage atmosphere"></video>
+            <div class="stage-transition-copy">
+              <p id="narration-line" class="narration-line" aria-hidden="true"></p>
+              <p id="narration-sr" class="sr-only" role="status"></p>
+              <p id="stage-objective"></p>
+              <button id="toggle-stage-ambience" type="button" aria-pressed="false">Play ambient sound</button>
+            </div>
+          </div>
+          <div class="button-row center-row">
+            <button id="go-to-boss-spec" class="primary" type="button">보스 정보 확인 (Confront Boss)</button>
           </div>
         </div>
 
-        <section class="panel campaign-status" aria-labelledby="status-heading">
-          <div class="section-heading">
-            <h3 id="status-heading" data-i18n="status.heading">지휘 상태</h3>
-            <output id="campaign-status" class="status-message" aria-live="polite"></output>
-          </div>
-          <div class="status-body">
-            <img id="boss-portrait" class="boss-portrait" src="assets/images/ui/boss-cinder-warden.png" alt="" hidden />
-            <dl class="status-grid">
-              <div><dt data-i18n="status.souls">영혼</dt><dd id="souls-value">0</dd></div>
-              <div><dt data-i18n="status.legion">군단 슬롯</dt><dd id="legion-value">0 / 10</dd></div>
-              <div><dt data-i18n="status.nodes">점거 거점</dt><dd id="nodes-value">0 / 1</dd></div>
-              <div><dt data-i18n="status.integrity">군주 내구도</dt><dd id="integrity-value">10 / 10</dd></div>
-              <div><dt id="boss-label">Boss ward</dt><dd id="boss-value">8 / 8</dd></div>
-            </dl>
-          </div>
-          <ol id="objective-checklist" class="objective-checklist" aria-label="Stage objectives"></ol>
-        </section>
-
-        <section id="command-panel" class="panel command-panel" aria-labelledby="commands-heading">
-          <div class="section-heading">
-            <div>
-              <h3 id="commands-heading" data-i18n="command.heading">의미 기반 명령</h3>
-              <p class="hint" data-i18n="command.hint">버튼을 사용하거나, 다른 컨트롤에 포커스가 없을 때 표시된 키를 누르세요.</p>
+        <!-- VIEW 2: BOSS SPEC VIEW -->
+        <div id="view-boss-spec" class="sub-view" hidden>
+          <section class="panel boss-spec-panel">
+            <div class="section-heading">
+              <h3 class="shiny-text">심연 보스 제원 (Boss Specification)</h3>
             </div>
-          </div>
-          <div class="command-grid">
-            <button id="action-hunt" data-action="hunt" type="button"><img class="action-icon" src="assets/images/ui/action-hunt.png" alt="" /><span class="key">H</span><strong data-i18n="command.hunt.name">사냥</strong><small data-i18n="command.hunt.desc">균열 흔적 두 곳을 탐색</small></button>
-            <button id="action-extract" data-action="extract" type="button"><img class="action-icon" src="assets/images/ui/action-extract.png" alt="" /><span class="key">E</span><strong data-i18n="command.extract.name">추출</strong><small data-i18n="command.extract.desc">그림자 은닉처를 확보</small></button>
-            <button id="action-materialize" data-action="materialize" type="button"><img class="action-icon" src="assets/images/ui/action-materialize.png" alt="" /><span class="key">M</span><strong data-i18n="command.materialize.name">실체화</strong><small data-i18n="command.materialize.desc">그림자 군단을 소환</small></button>
-            <button id="action-capture" data-action="capture" type="button"><img class="action-icon" src="assets/images/ui/action-capture.png" alt="" /><span class="key">C</span><strong data-i18n="command.capture.name">점거</strong><small data-i18n="command.capture.desc">기술 거점을 고정</small></button>
-            <button id="action-possess" data-action="possess" type="button"><img class="action-icon" src="assets/images/ui/action-possess.png" alt="" /><span class="key">P</span><strong data-i18n="command.possess.name">빙의</strong><small data-i18n="command.possess.desc">2단계에서 해금</small></button>
-            <button id="action-domain" data-action="domain" type="button"><img class="action-icon" src="assets/images/ui/action-domain.png" alt="" /><span class="key">D</span><strong data-i18n="command.domain.name">군주의 영역</strong><small data-i18n="command.domain.desc">3단계에서 1회 사용</small></button>
-            <button id="action-assault" data-action="assault" type="button"><img class="action-icon" src="assets/images/ui/action-assault.png" alt="" /><span class="key">A</span><strong data-i18n="command.assault.name">총공격</strong><small data-i18n="command.assault.desc">스테이지 보스를 무너뜨림</small></button>
-          </div>
-        </section>
+            <div class="boss-spec-content">
+              <div class="boss-spec-portrait-container">
+                <img id="boss-portrait-spec" class="boss-portrait-large" src="assets/images/ui/boss-cinder-warden.png" alt="Boss Portrait" />
+              </div>
+              <div class="boss-spec-details">
+                <h4 id="boss-spec-name" class="shiny-text">Cinder Warden</h4>
+                <p id="boss-spec-lore" class="hint">잿빛 다리의 포식자. 침입하는 영혼들의 닻을 끊어 심연의 거름으로 삼는다.</p>
+                <dl class="spec-list">
+                  <div>
+                    <dt>위협 등급</dt>
+                    <dd id="boss-spec-threat">Class A</dd>
+                  </div>
+                  <div>
+                    <dt>보스 체력 (HP)</dt>
+                    <dd id="boss-spec-hp">8 HP</dd>
+                  </div>
+                  <div>
+                    <dt>반격력 (Counterblow)</dt>
+                    <dd id="boss-spec-counter">1</dd>
+                  </div>
+                  <div>
+                    <dt>요구 기술 거점</dt>
+                    <dd id="boss-spec-nodes">1 Node</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+            <div class="player-current-stats">
+              <h4 class="shiny-text">사령관 현재 능력치 (Dusk Warden Stats)</h4>
+              <ul class="stats-list">
+                <li>최대 내구도 (Max Integrity): <span id="stat-max-integrity">10</span></li>
+                <li>쿨타임 감소 (Cooldown Reduction): <span id="stat-cooldown-reduction">0%</span></li>
+                <li>총공격 보너스 피해 (Extra Damage): <span id="stat-extra-damage">+0</span></li>
+                <li>장착된 특수 보상/아이템: <span id="stat-active-items">None</span></li>
+              </ul>
+            </div>
+            <div class="button-row center-row">
+              <button id="go-to-battle" class="primary" type="button">전투 진입 (Start Combat)</button>
+            </div>
+          </section>
+        </div>
 
-        <section id="reward-panel" class="panel reward-panel" aria-labelledby="reward-heading" hidden>
-          <p class="eyebrow" data-i18n="reward.eyebrow">특별 보상</p>
-          <h3 id="reward-heading" tabindex="-1" data-i18n="reward.heading">영구 보너스 하나를 선택하라</h3>
-          <p id="reward-summary" data-i18n="reward.summary">선택하지 않은 보상은 균열 속으로 사라집니다.</p>
-          <div id="reward-options" class="reward-options" role="group" aria-label="Choose one reward"></div>
-        </section>
+        <!-- VIEW 3: BATTLE VIEW -->
+        <div id="view-battle" class="sub-view" hidden>
+          <!-- 2.5D Dungeon Battle Visual Container -->
+          <section id="battle-field" class="panel battle-field-panel">
+            <div class="section-heading">
+              <h3 class="shiny-text">2.5D 심연 전장 (Bird's-Eye View)</h3>
+              <span id="battle-wave-indicator" class="wave-badge">WAVE 1/3</span>
+            </div>
+            <div id="canvas-container-3d" class="canvas-container-3d">
+              <!-- Three.js Canvas -->
+              <canvas id="battle-canvas-3d"></canvas>
+              <div class="combat-overlay-labels">
+                <span class="label-camp-ally">황혼의 진영 (Dusk Camp)</span>
+                <span class="label-camp-boss">보스 진영 (Boss Camp)</span>
+              </div>
+            </div>
+          </section>
 
-        <section id="campaign-complete" class="panel completion-panel" aria-labelledby="completion-heading" hidden>
-          <p class="eyebrow" data-i18n="completion.eyebrow">캠페인 완료</p>
-          <h3 id="completion-heading" tabindex="-1" data-i18n="completion.heading">가라앉은 문이 침묵하다</h3>
-          <img class="completion-emblem" src="assets/images/ui/emblem-gate-sovereign.jpg" alt="Low-poly monument of the defeated Gate Sovereign inside a glowing gate ring" />
-          <p id="completion-summary"></p>
-          <button id="restart-campaign" class="primary" type="button" data-i18n="completion.restartButton">새로운 캠페인 시작</button>
-        </section>
+          <section class="panel campaign-status" aria-labelledby="status-heading">
+            <div class="section-heading">
+              <h3 id="status-heading" data-i18n="status.heading">지휘 상태</h3>
+              <output id="campaign-status" class="status-message" aria-live="polite"></output>
+            </div>
+            <div class="status-body">
+              <img id="boss-portrait" class="boss-portrait" src="assets/images/ui/boss-cinder-warden.png" alt="" hidden />
+              <dl class="status-grid">
+                <div><dt data-i18n="status.souls">영혼</dt><dd id="souls-value">0</dd></div>
+                <div><dt data-i18n="status.legion">군단 슬롯</dt><dd id="legion-value">0 / 10</dd></div>
+                <div><dt data-i18n="status.nodes">점거 거점</dt><dd id="nodes-value">0 / 1</dd></div>
+                <div><dt data-i18n="status.integrity">군주 내구도</dt><dd id="integrity-value">10 / 10</dd></div>
+                <div><dt id="boss-label">Boss ward</dt><dd id="boss-value">8 / 8</dd></div>
+              </dl>
+            </div>
+            <ol id="objective-checklist" class="objective-checklist" aria-label="Stage objectives"></ol>
+          </section>
+
+          <section id="command-panel" class="panel command-panel" aria-labelledby="commands-heading">
+            <div class="section-heading">
+              <div>
+                <h3 id="commands-heading" data-i18n="command.heading">의미 기반 명령</h3>
+                <p class="hint" data-i18n="command.hint">버튼을 사용하거나, 다른 컨트롤에 포커스가 없을 때 표시된 키를 누르세요. 행동 마다 고유 쿨타임이 적용됩니다.</p>
+              </div>
+            </div>
+            <div class="command-grid">
+              <button id="action-hunt" data-action="hunt" type="button">
+                <img class="action-icon" src="assets/images/ui/action-hunt.png" alt="" />
+                <span class="key">H</span>
+                <strong data-i18n="command.hunt.name">사냥</strong>
+                <small data-i18n="command.hunt.desc">균열 흔적 두 곳을 탐색</small>
+                <div class="cooldown-overlay" hidden><span class="cooldown-timer">0.0s</span></div>
+              </button>
+              <button id="action-extract" data-action="extract" type="button">
+                <img class="action-icon" src="assets/images/ui/action-extract.png" alt="" />
+                <span class="key">E</span>
+                <strong data-i18n="command.extract.name">추출</strong>
+                <small data-i18n="command.extract.desc">그림자 은닉처를 확보</small>
+                <div class="cooldown-overlay" hidden><span class="cooldown-timer">0.0s</span></div>
+              </button>
+              <button id="action-materialize" data-action="materialize" type="button">
+                <img class="action-icon" src="assets/images/ui/action-materialize.png" alt="" />
+                <span class="key">M</span>
+                <strong data-i18n="command.materialize.name">실체화</strong>
+                <small data-i18n="command.materialize.desc">그림자 군단을 소환</small>
+                <div class="cooldown-overlay" hidden><span class="cooldown-timer">0.0s</span></div>
+              </button>
+              <button id="action-capture" data-action="capture" type="button">
+                <img class="action-icon" src="assets/images/ui/action-capture.png" alt="" />
+                <span class="key">C</span>
+                <strong data-i18n="command.capture.name">점거</strong>
+                <small data-i18n="command.capture.desc">기술 거점을 고정</small>
+                <div class="cooldown-overlay" hidden><span class="cooldown-timer">0.0s</span></div>
+              </button>
+              <button id="action-possess" data-action="possess" type="button">
+                <img class="action-icon" src="assets/images/ui/action-possess.png" alt="" />
+                <span class="key">P</span>
+                <strong data-i18n="command.possess.name">빙의</strong>
+                <small data-i18n="command.possess.desc">2단계에서 해금</small>
+                <div class="cooldown-overlay" hidden><span class="cooldown-timer">0.0s</span></div>
+              </button>
+              <button id="action-domain" data-action="domain" type="button">
+                <img class="action-icon" src="assets/images/ui/action-domain.png" alt="" />
+                <span class="key">D</span>
+                <strong data-i18n="command.domain.name">군주의 영역</strong>
+                <small data-i18n="command.domain.desc">3단계에서 1회 사용</small>
+                <div class="cooldown-overlay" hidden><span class="cooldown-timer">0.0s</span></div>
+              </button>
+              <button id="action-assault" data-action="assault" type="button">
+                <img class="action-icon" src="assets/images/ui/action-assault.png" alt="" />
+                <span class="key">A</span>
+                <strong data-i18n="command.assault.name">총공격</strong>
+                <small data-i18n="command.assault.desc">스테이지 보스를 무너뜨림</small>
+                <div class="cooldown-overlay" hidden><span class="cooldown-timer">0.0s</span></div>
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <!-- VIEW 4: RESULT VIEW -->
+        <div id="view-result" class="sub-view" hidden>
+          <section class="panel result-panel">
+            <h3 id="result-title" class="shiny-text">전투 결과</h3>
+            <div id="result-status-box" class="result-status-box">
+              <span id="result-text" class="result-text victory">VICTORY</span>
+            </div>
+            
+            <section id="reward-panel" class="reward-selection-container" aria-labelledby="reward-heading">
+              <p class="eyebrow" data-i18n="reward.eyebrow">특별 보상</p>
+              <h3 id="reward-heading" tabindex="-1" data-i18n="reward.heading">영구 보너스 하나를 선택하라</h3>
+              <p id="reward-summary" data-i18n="reward.summary">선택하지 않은 보상은 균열 속으로 사라집니다.</p>
+              <div id="reward-options" class="reward-options" role="group" aria-label="Choose one reward"></div>
+            </section>
+
+            <section id="campaign-complete" class="completion-panel" aria-labelledby="completion-heading" hidden>
+              <p class="eyebrow" data-i18n="completion.eyebrow">캠페인 완료</p>
+              <h3 id="completion-heading" tabindex="-1" data-i18n="completion.heading">가라앉은 문이 침묵하다</h3>
+              <img class="completion-emblem" src="assets/images/ui/emblem-gate-sovereign.jpg" alt="Low-poly monument of the defeated Gate Sovereign inside a glowing gate ring" />
+              <p id="completion-summary"></p>
+              <button id="restart-campaign" class="primary" type="button" data-i18n="completion.restartButton">새로운 캠페인 시작</button>
+            </section>
+            
+            <div class="button-row center-row">
+              <button id="go-to-next-scenario" class="primary font-bold" type="button" hidden>다음 시나리오로 진행 (Next Scenario)</button>
+              <button id="retry-from-result" class="secondary" type="button" hidden>다시 시도 (Retry)</button>
+            </div>
+          </section>
+        </div>
 
         <section class="panel save-panel" aria-labelledby="save-heading">
           <div class="section-heading">

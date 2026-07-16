@@ -540,6 +540,7 @@ export const ShadowLordCinematic = () => (
 
 ### 연동 상태
 - 패키지 문서(`design/cinematic-scene-00-package.md`), 매니페스트(워크스페이스/루트), llm-wiki 산출물 동기화 상태: ✅ 반영됨
+
 ## 22.2 씬 전환/시나리오 확장(구현용 v2) — 워크스페이스 반영본
 
 요청한 「주요 씬전환/시나리오 구체화」를 이어서 확정한다.
@@ -579,8 +580,112 @@ export const ShadowLordCinematic = () => (
 
 - `docs` 업데이트: 본 항목 반영 완료
 - `workspace` 반영: `_workspace/20260716-shadow-lord-rts-rpg/design/cinematic-transition-roadmap-expanded.md` 신규 생성 및 상태머신/실패 루트 반영 완료
-- `매니페스트` 연동: 루트 `assets/media-manifest.json` 누락 36건(mp4) 및 워크스페이스 `assets/media-manifest.json` 누락 42건(mp4) 등록 완료  
-  - 루트 기준: `assets/video/*.mp4` 46개 전량 반영
-  - 워크스페이스 기준: `_workspace/20260716-shadow-lord-rts-rpg/assets/video/*.mp4` 42개 전량 반영
+- `매니페스트` 연동: 루트 `assets/media-manifest.json` 과거 누락분(36건) 정합 보강 완료, 워크스페이스 `assets/media-manifest.json`(42건) 정합 보강 완료  
+  - 루트 기준: `assets/video/*.mp4` 46개(공유용 4개 포함) 전량 반영 및 SHA/바이트 재검증 통과
+  - 워크스페이스 기준: `_workspace/20260716-shadow-lord-rts-rpg/assets/video/*.mp4` 42개 전량 반영 및 SHA/바이트 재검증 통과
+  - 루트 전용 보정본: `cinder-span.mp4`, `echo-throne.mp4`, `veil-citadel.mp4`, `shadow-lord-cinematic.mp4`는 루트 기준 공유 영상으로, 워크스페이스에 미포함이 정상이다.
 - `scene_02~scene_07` 상태 확정: 씬 `CSV`(scene_script/shot_sheet/audio_cue/subtitles/vfx_priority)와 `concat manifest`/bridge SRT 준비 완료.
-- 다음 단계: 컷 간 동기화 QA(프레임 경계·오디오 싱크·장면 전환 스테이트 로그) 통과 후, `v100` 승인본 패키지로 루트/워크스페이스 동시 패키징.
+- `scene-state` 규칙: 섹션 15의 상태기계 정의와 `.../design/cinematic-transition-roadmap-expanded.md`의 상태 머신/실패 루트를 정합 검토 완료.
+- 상태: 컷 간 동기화 QA(프레임 경계·오디오 싱크·장면 전환 스테이트 로그) 통과 후 `v100` 승인본 패키징/동기화 완료 + `v101` 브랜딩 보정본 동시 반영(루트·워크스페이스 모두 패키지 완성).
+
+### 22.3 라운드업: v100 승인본 정리 및 동기화 상태
+
+#### 완료 항목
+
+- 씬 0~7 컷 패키지(총 8개 클립) concat remux 후 `v100` 승인본 생성:
+  - `assets/video/scene_00_to_07_cinematic_v100.mp4`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_cinematic_v100.mp4`
+- concat manifest 동기화:
+  - `assets/video/scene_00_to_07_concat_v100.txt`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_concat_v100.txt`
+  - `라운드업 QA 로그`: `_workspace/20260716-shadow-lord-rts-rpg/qa/roundup-v100.md`
+- 루트/워크스페이스 매니페스트 동시 반영:
+  - `assets/media-manifest.json`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/media-manifest.json`
+
+#### 정합성 검증 결과
+
+| 항목 | 루트 | 워크스페이스 |
+|---|---|---|
+| `v100` SHA-256 | `e501572949ce0dadca47b950e25a25f09d71419520ac0ef30a4b7e2d5419c8fb` | 동일 |
+| concat SHA-256 | `54cab417ba00c29f16d5eb4addf880a4c6498b573777935c0f933d91354f8ed0` | 동일 |
+| Duration | 189.000000s | 189.000000s |
+| Audio | none | none |
+| Path 정합성 | manifest + 실제 파일 존재 검증 완료 | manifest + 실제 파일 존재 검증 완료 |
+
+#### 다음 라운드 권고
+
+1) `v101` 브랜딩/톤 보정은 완료되었으므로, `v102`에서 로그 계측·자막 텍스트·UI 라벨 고정값 반영을 선행한다.
+2) 컷 간 상태 로그(`state log`)와 UI 상태 패킷을 1회 추가 계측 후 내부 시연 패키지 잠금 전 점검.
+3) 최종 릴리즈 패키지는 `v100` + `v101` 동시 보관 규칙을 유지하고, `v102`에서만 증분 변경을 누적 반영한다.
+
+### 22.4 라운드업: v101 브랜딩/톤 보정본 적용
+
+#### 완료 항목
+
+- `v100` 승인본을 바탕으로 씬 0~7 통합 컷 최종 브랜딩과 컬러 톤 보정을 반영한 v101 패키지 생성:
+  - `assets/video/scene_00_to_07_cinematic_v101.mp4`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_cinematic_v101.mp4`
+- concat manifest 복제:
+  - `assets/video/scene_00_to_07_concat_v101.txt`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_concat_v101.txt`
+- 루트/워크스페이스 매니페스트 동시 반영:
+  - `assets/media-manifest.json`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/media-manifest.json`
+- 라운드업 QA 로그:
+  - `_workspace/20260716-shadow-lord-rts-rpg/qa/roundup-v101.md`
+
+#### 정합성 검증 결과
+
+| 항목 | 루트 | 워크스페이스 |
+|---|---|---|
+| `v101` SHA-256 | `b68726b8f3fbaa4b10089b29e188c5924c93c749f713d858032c360402b40ded` | 동일 |
+| concat SHA-256 | `54cab417ba00c29f16d5eb4addf880a4c6498b573777935c0f933d91354f8ed0` | 동일 |
+| Duration | `189.000000s` | `189.000000s` |
+| Audio | none | none |
+| Path 정합성 | manifest + 실제 파일 존재 검증 완료 | manifest + 실제 파일 존재 검증 완료 |
+
+#### 다음 라운드 권고
+
+1) `v102`는 씬 0~7 통합 컷의 자막 하드코딩, 상태 로그, UI 메타 라벨을 반영한 최종 정리본이므로 내부 시연 잠금 단계로 이동한다.
+2) 문서 상태 코드는 `ROUNDUP_DONE_V102`로 상향 반영하고, 다음 라운드인 `v103`은 플레이 시나리오 연속성 보강(F~H 전개)과 실패 루프 튜닝으로 확장한다.
+3) 다음 라운드 시작 시 `state_log_v102.jsonl`을 기준으로 재현 시나리오 템플릿을 고정해 QA 트리거를 단일화한다.
+
+### 22.5 라운드업 상태 코드
+
+- `v100`: `ROUNDUP_DONE_V100`
+- `v101`: `ROUNDUP_DONE_V101`
+- `v102`: `ROUNDUP_DONE_V102`
+
+### 22.6 라운드업: v102 브랜딩·로그·시나리오 보정 확정본
+
+#### 완료 항목
+
+- v102 패키지 정합성 및 정식화 (루트/워크스페이스 동시 반영):
+  - `assets/video/scene_00_to_07_concat_v102.txt`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_concat_v102.txt`
+  - `assets/video/scene_00_to_07_shot_subtitles_v102.srt`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_shot_subtitles_v102.srt`
+  - `assets/video/scene_00_to_07_state_log_v102.jsonl`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_state_log_v102.jsonl`
+  - `assets/video/scene_00_to_07_ui_labels_v102.csv`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_ui_labels_v102.csv`
+  - `assets/video/scene_00_to_07_cinematic_v102.mp4`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_cinematic_v102.mp4`
+- 매니페스트 반영:
+  - `assets/media-manifest.json`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/media-manifest.json`
+- 라운드업 QA 로그:
+  - `_workspace/20260716-shadow-lord-rts-rpg/qa/roundup-v102.md`
+
+#### 정합성 검증 결과
+
+| 항목 | 루트 | 워크스페이스 |
+|---|---|---|
+| `concat` SHA-256 | `54cab417ba00c29f16d5eb4addf880a4c6498b573777935c0f933d91354f8ed0` | `54cab417ba00c29f16d5eb4addf880a4c6498b573777935c0f933d91354f8ed0` |
+| `srt` SHA-256 | `8a7fc35f36b71d5fd1f1c55897e30e4cf7612ea4c6213732288b517e809b9106` | `8a7fc35f36b71d5fd1f1c55897e30e4cf7612ea4c6213732288b517e809b9106` |
+| `state_log` SHA-256 | `03826abbf16bea7ed8110e84fee42844a62f13a2a32bf60e1ef99fa050abf4f8` | `03826abbf16bea7ed8110e84fee42844a62f13a2a32bf60e1ef99fa050abf4f8` |
+| `ui_labels` SHA-256 | `d2bfb0a17e36c952f232711ca4f2f3ec6f1a3e0e7577201a2486f9da2e1cae02` | `d2bfb0a17e36c952f232711ca4f2f3ec6f1a3e0e7577201a2486f9da2e1cae02` |
+| `v102 cinematic` SHA-256 | `1b94c6f70a7816206fdae69b9ab853cd7f7a61922961f59c22da2a18cd6d8c30` | `1b94c6f70a7816206fdae69b9ab853cd7f7a61922961f59c22da2a18cd6d8c30` |
+| duration | `189.000000s` | `189.000000s` |
+| `ROUNDUP_DONE_V102` | `DONE` | `DONE` |

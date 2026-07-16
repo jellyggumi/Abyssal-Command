@@ -18,6 +18,10 @@ export const BALANCE = Object.freeze({
   materializeSummon: 2,                   // shades summoned per materialize
   vanguardLegion: 4,                      // veil-vanguard: shades already raised entering Echo Throne
   anchorRestore: 2,                       // anchor-shard: integrity restored entering Echo Throne
+  hourglassCooldownReduction: 0.2,        // stillwater-hourglass: action cooldown reduction
+  bannerSummonBonus: 1,                   // abyssal-banner: extra shade per materialize
+  bannerInitialAegis: 1,                  // abyssal-banner: protection at stage entry
+  brandAssaultDamage: 1,                  // shadebreaker-brand: unconditional assault damage
   assaultBase: Object.freeze([3, 3, 4]),  // player assault damage per stage
   possessDamage: 1,                       // extra assault damage while a sentinel is possessed
   lensDamage: 1,                          // rift-lens: extra damage on possession strikes
@@ -41,7 +45,9 @@ export const STAGES = Object.freeze([
     bossHealth: 8,
     rewards: Object.freeze([
       Object.freeze({ id: "ember-cohort", name: "Ember Cohort", description: "+12 legion slots for the remaining campaign." }),
-      Object.freeze({ id: "rift-lens", name: "Rift Lens", description: "Possession strikes deal +1 damage from Veil Citadel onward." })
+      Object.freeze({ id: "rift-lens", name: "Rift Lens", description: "Possession strikes deal +1 damage from Veil Citadel onward." }),
+      Object.freeze({ id: "stillwater-hourglass", name: "Stillwater Hourglass", description: "Reduce battle-control cooldowns by 20% for the remaining campaign." }),
+      Object.freeze({ id: "shadebreaker-brand", name: "Shadebreaker Brand", description: "Assaults deal +1 damage for the remaining campaign." })
     ])
   }),
   Object.freeze({
@@ -55,7 +61,8 @@ export const STAGES = Object.freeze([
     bossHealth: 10,
     rewards: Object.freeze([
       Object.freeze({ id: "veil-vanguard", name: "Veil Vanguard", description: "Begin Echo Throne with a four-shade vanguard already raised." }),
-      Object.freeze({ id: "anchor-shard", name: "Anchor Shard", description: "Enter Echo Throne with 2 integrity restored." })
+      Object.freeze({ id: "anchor-shard", name: "Anchor Shard", description: "Enter Echo Throne with 2 integrity restored." }),
+      Object.freeze({ id: "abyssal-banner", name: "Abyssal Banner", description: "Enter the next stage with 1 aegis and materialize 1 additional shade each time." })
     ])
   }),
   Object.freeze({
@@ -88,21 +95,43 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function stageBenefits(rewards) {
+function rewardBenefits(rewards) {
   const ids = new Set(rewards.map((reward) => reward.rewardId));
+  const rewardCount = (rewardId) => rewards.filter((reward) => reward.rewardId === rewardId).length;
   return Object.freeze({
     capacityBonus: ids.has("ember-cohort") ? 12 : 0,
     lensDamage: ids.has("rift-lens") ? BALANCE.lensDamage : 0,
     vanguardLegion: ids.has("veil-vanguard") ? BALANCE.vanguardLegion : 0,
-    anchorRestore: ids.has("anchor-shard") ? BALANCE.anchorRestore : 0
+    anchorRestore: ids.has("anchor-shard") ? BALANCE.anchorRestore : 0,
+    maxIntegrity: BALANCE.maxIntegrity,
+    cooldownReduction: rewardCount("stillwater-hourglass") * BALANCE.hourglassCooldownReduction,
+    extraAssaultDamage: ids.has("shadebreaker-brand") ? BALANCE.brandAssaultDamage : 0,
+    summonBonus: ids.has("abyssal-banner") ? BALANCE.bannerSummonBonus : 0,
+    autoExtract: false,
+    initialAegis: ids.has("abyssal-banner") ? BALANCE.bannerInitialAegis : 0,
+    activeItemNames: rewards.map((reward) => reward.rewardName)
+  });
+}
+
+export function getCampaignBenefits(state) {
+  assertStateShape(state);
+  const benefits = rewardBenefits(state.rewards);
+  return Object.freeze({
+    maxIntegrity: benefits.maxIntegrity,
+    cooldownReduction: clamp(benefits.cooldownReduction, 0, 0.5),
+    extraAssaultDamage: benefits.extraAssaultDamage,
+    summonBonus: benefits.summonBonus,
+    autoExtract: benefits.autoExtract,
+    initialAegis: benefits.initialAegis,
+    activeItemNames: Object.freeze([...benefits.activeItemNames])
   });
 }
 
 function makeStageState(stage, rewards, entryIntegrity) {
-  const benefits = stageBenefits(rewards);
+  const benefits = rewardBenefits(rewards);
   const capacity = clamp(MIN_SLOTS + benefits.capacityBonus, MIN_SLOTS, MAX_SLOTS);
   const legion = stage.number === 3 ? Math.min(benefits.vanguardLegion, capacity) : 0;
-  const integrity = clamp(entryIntegrity, 0, BALANCE.maxIntegrity);
+  const integrity = clamp(entryIntegrity, 0, benefits.maxIntegrity);
   return {
     hunted: 0,
     extracted: false,
@@ -112,7 +141,7 @@ function makeStageState(stage, rewards, entryIntegrity) {
     nodes: 0,
     possessed: false,
     domainUses: 0,
-    aegis: 0,
+    aegis: benefits.initialAegis,
     integrity,
     entryIntegrity: integrity,
     bossHealth: stage.bossHealth
@@ -181,7 +210,7 @@ function counterDamage(stageState, stage) {
 }
 
 function assaultDamage(stageState, stage, benefits) {
-  let damage = BALANCE.assaultBase[stage.number - 1];
+  let damage = BALANCE.assaultBase[stage.number - 1] + benefits.extraAssaultDamage;
   if (stageState.possessed) damage += BALANCE.possessDamage + benefits.lensDamage;
   return damage;
 }
@@ -245,9 +274,17 @@ export function applyAction(state, action) {
 
   const next = transition(state, (draft) => {
     const target = draft.stage;
+    const benefits = rewardBenefits(draft.rewards);
     if (action === "hunt") {
       target.hunted += 1;
-      draft.lastMessage = message;
+      if (target.hunted === 2 && benefits.autoExtract) {
+        target.extracted = true;
+        target.hunted = 0;
+        target.souls += BALANCE.soulsPerExtract;
+        draft.lastMessage = "The second spoor opens into a soul cache before the rift can close.";
+      } else {
+        draft.lastMessage = message;
+      }
     }
     if (action === "extract") {
       target.extracted = true;
@@ -256,7 +293,7 @@ export function applyAction(state, action) {
       draft.lastMessage = "Four volatile shades tear free from the rift.";
     }
     if (action === "materialize") {
-      const summoned = Math.min(BALANCE.materializeSummon, target.capacity - target.legion);
+      const summoned = Math.min(BALANCE.materializeSummon + benefits.summonBonus, target.capacity - target.legion);
       target.souls -= BALANCE.materializeCost;
       target.legion += summoned;
       draft.lastMessage = `${summoned} shadow ${summoned === 1 ? "answers" : "answer"} your call.`;
@@ -271,12 +308,11 @@ export function applyAction(state, action) {
     }
     if (action === "domain") {
       target.domainUses = 1;
-      target.integrity = clamp(target.integrity + BALANCE.domainRestore, 0, BALANCE.maxIntegrity);
-      target.aegis = BALANCE.domainAegis;
+      target.integrity = clamp(target.integrity + BALANCE.domainRestore, 0, benefits.maxIntegrity);
+      target.aegis = Math.max(target.aegis, BALANCE.domainAegis);
       draft.lastMessage = "Lord's Domain unfolds once: the abyss restores 4 integrity, and the next 2 counterblows break against it.";
     }
     if (action === "assault") {
-      const benefits = stageBenefits(draft.rewards);
       const damage = assaultDamage(target, stage, benefits);
       target.bossHealth = Math.max(0, target.bossHealth - damage);
       let counter = 0;
@@ -297,7 +333,6 @@ export function applyAction(state, action) {
       }
     }
   }, { kind: "action", action });
-
   return accepted(next, next.lastMessage, effect);
 }
 
@@ -316,16 +351,38 @@ export function chooseReward(state, rewardId) {
 
       return;
     }
-    const benefits = stageBenefits(draft.rewards);
+    const benefits = rewardBenefits(draft.rewards);
     const nextStage = STAGES[draft.stageIndex + 1];
     const anchorRestore = nextStage.number === 3 ? benefits.anchorRestore : 0;
-    const carried = clamp(draft.stage.integrity + BALANCE.rewardRestore + anchorRestore, 0, BALANCE.maxIntegrity);
+    const carried = clamp(draft.stage.integrity + BALANCE.rewardRestore + anchorRestore, 0, benefits.maxIntegrity);
     draft.stageIndex += 1;
     draft.status = "active";
     draft.stage = makeStageState(nextStage, draft.rewards, carried);
     draft.lastMessage = `${reward.name} carries into ${activeStage(draft).title}.`;
   }, { kind: "reward", rewardId });
   return accepted(next, next.lastMessage, "reward");
+}
+
+export function applyBattleBreach(state) {
+  assertStateShape(state);
+  if (!canAct(state)) return rejected(state, "The breach cannot reach a stage that is not active.");
+
+  const next = transition(state, (draft) => {
+    const target = draft.stage;
+    if (target.aegis > 0) {
+      target.aegis -= 1;
+      draft.lastMessage = "An abyssal breach strikes, but the aegis absorbs it.";
+      return;
+    }
+    target.integrity = Math.max(0, target.integrity - 1);
+    if (target.integrity === 0) {
+      draft.status = "defeat";
+      draft.lastMessage = "The breach shatters the legion's anchor. Regroup and retry this stage.";
+      return;
+    }
+    draft.lastMessage = "An abyssal breach tears 1 integrity.";
+  }, { kind: "battle-breach" });
+  return accepted(next, next.lastMessage, "battle-breach");
 }
 
 export function retryStage(state) {
@@ -394,6 +451,7 @@ export function restoreSaveEnvelope(envelope) {
     else if (event.kind === "action") result = applyAction(state, event.action);
     else if (event.kind === "reward") result = chooseReward(state, event.rewardId);
     else if (event.kind === "retry") result = retryStage(state);
+    else if (event.kind === "battle-breach") result = applyBattleBreach(state);
     else throw new Error("Save trace contains an unsupported event.");
     assert(result.accepted, "Save trace contains an impossible transition.");
     state = result.state;

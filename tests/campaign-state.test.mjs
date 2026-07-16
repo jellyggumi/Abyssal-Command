@@ -6,10 +6,13 @@ import {
   RULES_VERSION,
   SAVE_SCHEMA,
   SAVE_SCHEMA_VERSION,
+  STAGES,
   applyAction,
+  applyBattleBreach,
   chooseReward,
   createCampaign,
   createSaveEnvelope,
+  getCampaignBenefits,
   restoreSaveEnvelope,
   retryStage,
   startCampaign,
@@ -65,6 +68,71 @@ function finishCampaign() {
   state = accept(chooseReward(commands(state, S3_VANGUARD_LENS), "throne-echo"));
   return state;
 }
+
+test("campaign benefits expose selectable reward stats and cap cooldown reduction at 50%", () => {
+  const offeredRewardIds = new Set(STAGES.flatMap((stage) => stage.rewards.map((reward) => reward.id)));
+  assert.equal(offeredRewardIds.has("stillwater-hourglass"), true, "the cooldown item must be selectable from a stage");
+  assert.equal(offeredRewardIds.has("abyssal-banner"), true, "the summon and aegis item must be selectable from a stage");
+
+  const rewardedState = {
+    ...createCampaign(),
+    rewards: [
+      { stageId: "cinder-span", rewardId: "stillwater-hourglass", rewardName: "Stillwater Hourglass" },
+      { stageId: "veil-citadel", rewardId: "abyssal-banner", rewardName: "Abyssal Banner" },
+    ],
+  };
+  const benefits = getCampaignBenefits(rewardedState);
+
+  assert.deepEqual(
+    Object.keys(benefits).sort(),
+    ["activeItemNames", "autoExtract", "cooldownReduction", "extraAssaultDamage", "initialAegis", "maxIntegrity", "summonBonus"],
+  );
+  assert.equal(benefits.maxIntegrity, BALANCE.maxIntegrity);
+  assert.equal(benefits.cooldownReduction, 0.2);
+  assert.equal(benefits.extraAssaultDamage, 0);
+  assert.equal(benefits.summonBonus, 1);
+  assert.equal(benefits.autoExtract, false);
+  assert.equal(benefits.initialAegis, 1);
+  assert.ok(benefits.activeItemNames.includes("Stillwater Hourglass"));
+  assert.ok(benefits.activeItemNames.includes("Abyssal Banner"));
+
+  const cappedBenefits = getCampaignBenefits({
+    ...rewardedState,
+    rewards: Array.from({ length: 3 }, (_, index) => ({
+      stageId: `test-stage-${index}`,
+      rewardId: "stillwater-hourglass",
+      rewardName: "Stillwater Hourglass",
+    })),
+  });
+  assert.equal(cappedBenefits.cooldownReduction, 0.5, "stacked cooldown rewards may never exceed the 50% cap");
+});
+
+test("battle breaches consume aegis, defeat at zero integrity, and replay from saves", () => {
+  let state = accept(chooseReward(commands(start(), S1_OPTIMAL), "rift-lens"));
+  state = accept(chooseReward(commands(state, S2_LENS), "abyssal-banner"));
+  assert.equal(state.status, "active");
+  assert.equal(state.stage.aegis, 1, "Abyssal Banner must carry its starting aegis into the next active stage");
+
+  const integrityBeforeAegis = state.stage.integrity;
+  const absorbed = applyBattleBreach(state);
+  assert.equal(absorbed.accepted, true);
+  assert.equal(absorbed.effect, "battle-breach");
+  state = absorbed.state;
+  assert.equal(state.stage.aegis, 0, "the breach must consume aegis first");
+  assert.equal(state.stage.integrity, integrityBeforeAegis, "an aegis-absorbed breach cannot cost integrity");
+  assert.deepEqual(state.trace.at(-1), { kind: "battle-breach" });
+
+  while (state.status === "active") state = accept(applyBattleBreach(state));
+  assert.equal(state.status, "defeat");
+  assert.equal(state.stage.integrity, 0);
+  assert.deepEqual(state.trace.at(-1), { kind: "battle-breach" });
+  rejectWithoutMutation(state, (current) => applyBattleBreach(current), "defeated campaigns cannot take battle breaches");
+  rejectWithoutMutation(createCampaign(), (current) => applyBattleBreach(current), "briefing campaigns cannot take battle breaches");
+
+  const envelope = createSaveEnvelope(state);
+  assert.ok(envelope.trace.some((event) => event.kind === "battle-breach"), "saves must retain battle breach events");
+  assert.deepEqual(restoreSaveEnvelope(JSON.parse(JSON.stringify(envelope))), state);
+});
 
 test("public campaign API completes the deterministic three-stage Shadow Lord path", () => {
   const completed = finishCampaign();
