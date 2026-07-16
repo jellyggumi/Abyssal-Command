@@ -9,8 +9,8 @@
   "navigationColor": "#0b0d14",
   "backgroundColor": "#0b0d14",
   "startUrl": "/Abyssal-Surge/index.html",
-  "iconUrl": "https://jellyggumi.github.io/Abyssal-Surge/assets/icons/icon-512.png",
-  "maskableIconUrl": "https://jellyggumi.github.io/Abyssal-Surge/assets/icons/icon-512.png",
+  "iconUrl": "https://jellyggumi.github.io/Abyssal-Command/assets/icons/icon-512.png",
+  "maskableIconUrl": "https://jellyggumi.github.io/Abyssal-Command/assets/icons/icon-512.png",
   "appVersion": "0.7.0",
   "appVersionName": "0.7.0",
   "appVersionCode": 7,
@@ -22,5 +22,5 @@
     "alias": "android"
   },
   "fallbackType": "customtabs",
-  "webManifestUrl": "https://jellyggumi.github.io/Abyssal-Surge/manifest.json"
+  "webManifestUrl": "https://jellyggumi.github.io/Abyssal-Command/manifest.json"
 }

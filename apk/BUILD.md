@@ -1,6 +1,6 @@
 # Abyssal Surge — TWA (APK) Build Kit
 
-Packages https://jellyggumi.github.io/Abyssal-Surge/ as a Trusted Web Activity
+Packages https://jellyggumi.github.io/Abyssal-Command/ as a Trusted Web Activity
 Android app. **No APK is built in this repo's environment** — it lacks Android
 tooling (JDK/SDK). This kit makes it a one-command build on any machine with:
 Node.js 18+, JDK 17, and the Android SDK build tools (bubblewrap offers to
@@ -12,13 +12,13 @@ auto-download the JDK and SDK on first run if they are missing).
 npm i -g @bubblewrap/cli
 mkdir abyssal-surge-twa && cd abyssal-surge-twa
 cp /path/to/repo/apk/twa-manifest.json .
-bubblewrap init --manifest https://jellyggumi.github.io/Abyssal-Surge/manifest.json
+bubblewrap init --manifest https://jellyggumi.github.io/Abyssal-Command/manifest.json
 ```
 
 With `twa-manifest.json` copied in first, bubblewrap pre-fills its answers from
 it (packageId `io.github.jellyggumi.abyssalsurge`, name "Abyssal Surge", theme
 `#0b0d14`, start URL `/Abyssal-Surge/index.html`, icon
-`https://jellyggumi.github.io/Abyssal-Surge/assets/icons/icon-512.png`).
+`https://jellyggumi.github.io/Abyssal-Command/assets/icons/icon-512.png`).
 
 ## 2. Generate a signing keystore (first time only)
 
