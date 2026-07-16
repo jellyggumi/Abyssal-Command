@@ -1,14 +1,23 @@
-# 업데이트 노트 (최근 반영)
-
-- 문서 기준 규칙 스냅샷은 `game-core.js`/`app.js`의 현재 스테이지 구조와 일치합니다.
-- 스테이지 5는 `DISRUPT` 누적 비용(1→2→3…)이 적용되며, 정산 규칙은 `VICTORY=2`, `HOLD/DEFEAT=0`입니다.
-- 배포용 산출물은 GitHub Pages Workflow(`static.yml`) 기준으로 정합성 검사 후 `index/app/game-core/styles` 중심으로 게시됩니다.
 # Abyssal Surge
 
 [![Deploy to Pages](https://github.com/jellyggumi/Abyssal-Surge/actions/workflows/static.yml/badge.svg)](https://github.com/jellyggumi/Abyssal-Surge/actions/workflows/static.yml)
 [![GitHub Pages](https://img.shields.io/github/deployments/jellyggumi/Abyssal-Surge/github-pages?label=GitHub%20Pages)](https://jellyggumi.github.io/Abyssal-Surge/)
 ![Top Language](https://img.shields.io/github/languages/top/jellyggumi/Abyssal-Surge)
 ![Repo Size](https://img.shields.io/github/repo-size/jellyggumi/Abyssal-Surge)
+
+## 최근 업데이트 (app.js / game-core.js 반영)
+
+- Stage 5의 `DISRUPT`는 SURGE 회차에서 누적 비용(1→2→3…)으로 계산됩니다. (`game-core.js`)
+- `game-core.js`는 스테이지/스케줄 바인딩 정합성 및 포렌식 계열 상태 위조(`forged state`, `journal`, `replay`) 방어를 강화했습니다.
+- `app.js`는 입력/표시/재개 시나리오에서 허용/거부 상태의 정합적 동기화를 개선해, 거부된 제어가 canonical 상태를 변경하지 않도록 정렬했습니다.
+- 정합 검증:
+  - `node --check app.js`
+  - `node --check game-core.js`
+  - `node --test tests/game-core.test.mjs tests/stage1-vertical-slice.test.mjs tests/playtest-5-stages.test.mjs`
+
+### 배포 산출물 allowlist (static.yml 기준)
+
+- 배포는 다음 파일 전체를 기준으로 생성됩니다: `index.html`, `app.js`, `game-core.js`, `styles.css`, `privacy.html`, `sw.js`, `manifest.json`, `icon.svg`, `assets/`
 
 ---
 
