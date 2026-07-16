@@ -26,6 +26,11 @@ const FALLBACK_KEY = "abyssal-surge-campaign-fallback-v1";
 const MAX_IMPORT_BYTES = 256 * 1024;
 const REWARD_ART_IDS = new Set(["ember-cohort", "rift-lens", "veil-vanguard", "anchor-shard", "throne-echo", "dawnless-crown"]);
 const ACTION_KEYS = Object.freeze({ h: "hunt", e: "extract", m: "materialize", c: "capture", p: "possess", d: "domain", a: "assault" });
+const BATTLE_TARGET_LABELS = Object.freeze({
+  materialize: "소환 관문: 그림자 군단 실체화",
+  capture: "기술 거점: 점거",
+  assault: "보스: 총공격"
+});
 const COOLDOWN_SECONDS = Object.freeze({
   hunt: 4,
   extract: 6,
@@ -36,6 +41,16 @@ const COOLDOWN_SECONDS = Object.freeze({
   assault: 3
 });
 const BATTLE_PREPARATION_MS = 25_000;
+// Simulated-mode breach pacing (reduced-motion / renderer fallback ONLY).
+// In the live sim a breach fires when a hostile VISUALLY reaches the Dusk
+// Portal (BattleVisualizer.onEnemyBreach) - defenders can prevent it.
+// Timers can't be defended against, so the simulated schedule must be
+// forgiving: longer fuse, and only ~half of each wave converts to a breach.
+const BATTLE_BREACH_DELAY_MS = 20_000;
+const SIMULATED_BREACH_RATIO = 0.5;
+// Wave cycle: 3 waves 8s apart, then a lull to hunt/extract/materialize.
+const WAVE_GAP_MS = 9_000;
+const WAVE_LULL_MS = 14_000;
 const BOSS_SPEC = Object.freeze([
   Object.freeze({ threat: "Class A", counter: 1, lore: "The forge bridge's ashbound sentinel breaks intruders against the drowned iron." }),
   Object.freeze({ threat: "Class S", counter: 2, lore: "A tactician of listening stone that turns every uncovered route into a killing field." }),
@@ -52,12 +67,12 @@ const CUE_BY_EFFECT = Object.freeze({
   reward: "assets/audio/reward.mp3"
 });
 const NARRATION = Object.freeze({
-  intro: Object.freeze({ audio: "assets/audio/narr-intro.mp3", line: "심연의 문이 열렸다. 그림자 군주여, 일어나라." }),
+  intro: Object.freeze({ audio: "assets/audio/narr-intro.mp3", line: "심연의 문이 열렸다. 황혼의 감시자여, 군단을 결속하라." }),
   "cinder-span": Object.freeze({ audio: "assets/audio/narr-stage1.mp3", line: "잿빛 교량, 신더 스팬. 재의 메아리를 사냥하고 영혼을 거두어라." }),
   "veil-citadel": Object.freeze({ audio: "assets/audio/narr-stage2.mp3", line: "장막 성채, 베일 시타델. 빙의의 힘이 깨어난다. 두 거점을 동시에 장악하라." }),
   "echo-throne": Object.freeze({ audio: "assets/audio/narr-stage3.mp3", line: "메아리 왕좌. 군주의 영역을 펼쳐 게이트 소버린을 무너뜨려라." }),
   victory: Object.freeze({ audio: "assets/audio/narr-victory.mp3", line: "침묵한 문 앞에서, 그림자 군단이 왕좌에 오른다." }),
-  defeat: Object.freeze({ audio: "assets/audio/narr-defeat.mp3", line: "군단의 닻이 끊어졌다. 다시, 일어나라." })
+  defeat: Object.freeze({ audio: "assets/audio/narr-defeat.mp3", line: "군단의 닻이 끊어졌다. 다시 결속하라." })
 });
 const TYPE_MS_PER_CHAR = 28;
 const BOSS_BY_STAGE = Object.freeze({
@@ -196,6 +211,8 @@ const elements = Object.freeze({
   statActiveItems: document.querySelector("#stat-active-items"),
   waveIndicator: document.querySelector("#battle-wave-indicator"),
   battleCanvas: document.querySelector("#battle-canvas-3d"),
+  battlePointerControls: document.querySelector("#battle-pointer-controls"),
+  battleTargetButtons: [...document.querySelectorAll("[data-battle-target]")],
   battleField: document.querySelector("#battle-field"),
   battleBrief: document.querySelector("#battle-tactical-brief"),
   battleOperation: document.querySelector("#battle-operation"),
@@ -257,6 +274,8 @@ let activeView = "scenario";
 let visualizer = null;
 let waveTimer = 0;
 let wavePreparationTimer = 0;
+const battleBreachTimers = new Set();
+let battleSessionId = 0;
 let cooldownTimer = 0;
 let battleVisualFallback = false;
 let waveIndex = 0;
@@ -358,13 +377,14 @@ function remainingCooldown(action, now = performance.now()) {
 }
 
 function setBattlePressure(phase, label) {
-  elements.waveIndicator.dataset.phase = phase;
-  elements.waveIndicator.textContent = label;
-  elements.battlePressure.textContent = phase === "preparation"
-    ? "Preparation window: issue commands before the first hostile wave enters the lane."
-    : phase === "live"
-      ? "Live-wave pressure: keep the command pad active while hostiles cross the lane."
-      : "Static tactical fallback: rendering is unavailable, but command rules remain active.";
+  const staticFallback = battleVisualFallback;
+  elements.waveIndicator.dataset.phase = staticFallback ? "fallback" : phase;
+  elements.waveIndicator.textContent = staticFallback ? "STATIC TACTICAL BRIEFING · COMMAND SCHEDULE ACTIVE" : label;
+  elements.battlePressure.textContent = staticFallback
+    ? "Static tactical fallback: rendering is unavailable, but command rules remain active."
+    : phase === "preparation"
+      ? "Preparation window: issue commands before the first hostile wave enters the lane."
+      : "Live-wave pressure: keep the command pad active while hostiles cross the lane.";
 }
 
 function renderBattlePresentation(stage) {
@@ -396,8 +416,11 @@ function renderBattlePresentation(stage) {
 }
 
 function stopBattle() {
+  battleSessionId += 1;
   window.clearInterval(waveTimer);
   window.clearTimeout(wavePreparationTimer);
+  for (const timer of battleBreachTimers) window.clearTimeout(timer);
+  battleBreachTimers.clear();
   window.clearInterval(cooldownTimer);
   waveTimer = 0;
   wavePreparationTimer = 0;
@@ -408,48 +431,93 @@ function stopBattle() {
   visualizer = null;
 }
 
-function spawnBattleWave() {
-  if (activeView !== "battle" || !visualizer) return;
+function battleSimulated() {
+  // No live unit sim = breaches can't come from the canvas. Timer schedule
+  // (defense-blind, so deliberately forgiving) covers these two paths.
+  return battleVisualFallback || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function scheduleBattleBreaches(enemyCount, sessionId) {
+  const breaches = Math.ceil(enemyCount * SIMULATED_BREACH_RATIO);
+  for (let enemyIndex = 0; enemyIndex < breaches; enemyIndex += 1) {
+    const timer = window.setTimeout(() => {
+      battleBreachTimers.delete(timer);
+      if (activeView !== "battle" || campaign?.status !== "active" || sessionId !== battleSessionId) return;
+      void handleBattleBreach();
+    }, BATTLE_BREACH_DELAY_MS);
+    battleBreachTimers.add(timer);
+  }
+}
+
+function spawnBattleWave(sessionId = battleSessionId) {
+  if (activeView !== "battle" || campaign?.status !== "active" || sessionId !== battleSessionId) return;
   const stage = currentStage();
   const waveNames = ["SCOUT", "GUARD", "BOSS REINFORCEMENT"];
-  const enemyCounts = [2, 3 + stage.number, 5 + stage.number];
+  // Sized against the defense economy: one hunt->extract->materialize loop
+  // fields ~4 shades (8 swings) per ~11s. Stage 1 cycle = 2+3+4 hostiles
+  // (13 swings incl. 2HP reinforcements) - holdable with sustained play,
+  // lethal if the economy stalls.
+  const enemyCounts = [2, 2 + stage.number, 3 + stage.number];
+  const enemyCount = enemyCounts[waveIndex];
   setBattlePressure("live", `LIVE WAVE · ${waveIndex + 1}/3 · ${waveNames[waveIndex]}`);
-  visualizer.spawnEnemy(enemyCounts[waveIndex]);
+  visualizer?.spawnEnemy(enemyCount);
+  if (battleSimulated()) scheduleBattleBreaches(enemyCount, sessionId);
+  const lastWaveOfCycle = waveIndex === waveNames.length - 1;
   waveIndex = (waveIndex + 1) % waveNames.length;
+  // Cycle rhythm: waves 8s apart, then a lull - the window where the
+  // hunt -> extract -> materialize economy loop actually gets played.
+  if (lastWaveOfCycle) {
+    const lullLabel = window.setTimeout(() => {
+      battleBreachTimers.delete(lullLabel);
+      if (activeView !== "battle" || campaign?.status !== "active" || sessionId !== battleSessionId) return;
+      setBattlePressure("preparation", "LULL · REINFORCE THE PICKET LINE");
+    }, WAVE_GAP_MS);
+    battleBreachTimers.add(lullLabel);
+  }
+  waveTimer = window.setTimeout(() => spawnBattleWave(sessionId), lastWaveOfCycle ? WAVE_LULL_MS : WAVE_GAP_MS);
 }
 
 function startBattle() {
-  if (!campaign || campaign.status !== "active" || visualizer) return;
+  if (!campaign || campaign.status !== "active" || visualizer || cooldownTimer) return;
+  const sessionId = ++battleSessionId;
   waveIndex = 0;
   battleVisualFallback = false;
   let battleVisualizer = null;
   try {
-    const presentation = renderBattlePresentation(currentStage());
-    battleVisualizer = new BattleVisualizer(elements.battleCanvas, presentation);
-    battleVisualizer.onEnemyBreach = () => {
-      if (visualizer === battleVisualizer) void handleBattleBreach();
-    };
+    const stage = currentStage();
+    const presentation = renderBattlePresentation(stage);
+    battleVisualizer = new BattleVisualizer(elements.battleCanvas, presentation, {
+      nodeGoal: stage.nodeGoal,
+      onTacticalLayout: positionBattlePointerControls
+    });
     battleVisualizer.init();
     visualizer = battleVisualizer;
-    setBattlePressure("preparation", "PREPARATION · WAVE 1/3 · SCOUT INBOUND");
-    wavePreparationTimer = window.setTimeout(() => {
-      if (activeView !== "battle" || visualizer !== battleVisualizer || campaign?.status !== "active") return;
-      wavePreparationTimer = 0;
-      spawnBattleWave();
-      waveTimer = window.setInterval(spawnBattleWave, 6000);
-    }, BATTLE_PREPARATION_MS);
+    battleVisualizer.onEnemyBreach = () => {
+      // Live-sim breach: a hostile actually crossed the portal line.
+      if (visualizer !== battleVisualizer || sessionId !== battleSessionId) return;
+      if (activeView !== "battle" || campaign?.status !== "active") return;
+      void handleBattleBreach();
+    };
   } catch {
-    window.clearInterval(waveTimer);
-    window.clearTimeout(wavePreparationTimer);
-    waveTimer = 0;
-    wavePreparationTimer = 0;
     battleVisualizer?.destroy();
     if (visualizer === battleVisualizer) visualizer = null;
     battleVisualFallback = true;
-    setBattlePressure("fallback", "STATIC TACTICAL MAP · COMMAND PAD READY");
+    renderBattlePresentation(currentStage());
   }
-  if (!cooldownTimer) cooldownTimer = window.setInterval(render, 100);
+  setBattlePressure(
+    battleVisualFallback ? "fallback" : "preparation",
+    battleVisualFallback
+      ? "Static tactical fallback: rendering is unavailable, but command rules remain active."
+      : "PREPARATION · WAVE 1/3 · SCOUT INBOUND"
+  );
+  wavePreparationTimer = window.setTimeout(() => {
+    if (activeView !== "battle" || campaign?.status !== "active" || sessionId !== battleSessionId) return;
+    wavePreparationTimer = 0;
+    spawnBattleWave(sessionId);
+  }, BATTLE_PREPARATION_MS);
+  cooldownTimer = window.setInterval(render, 100);
 }
+
 
 function showView(view) {
   if (!elements.views[view] || !campaign) return;
@@ -473,7 +541,12 @@ function renderBossSpec(stage, state, benefits) {
   elements.bossSpecNodes.textContent = `${stage.nodeGoal} Node${stage.nodeGoal === 1 ? "" : "s"}`;
   elements.statMaxIntegrity.textContent = String(benefits.maxIntegrity);
   elements.statCooldownReduction.textContent = `${Math.round(benefits.cooldownReduction * 100)}%`;
-  elements.statExtraDamage.textContent = `+${benefits.extraAssaultDamage}`;
+  const combatModifiers = [
+    benefits.extraAssaultDamage > 0 ? `Assault +${benefits.extraAssaultDamage}` : null,
+    benefits.lensDamage > 0 ? `Possession +${benefits.lensDamage}` : null,
+    benefits.counterReduction > 0 ? `Counter −${benefits.counterReduction}` : null
+  ].filter(Boolean);
+  elements.statExtraDamage.textContent = combatModifiers.join(" · ") || "None";
   elements.statActiveItems.textContent = benefits.activeItemNames.length ? benefits.activeItemNames.join(", ") : "None";
 }
 
@@ -498,6 +571,44 @@ function renderCooldown(button, action, available) {
   const timer = button.querySelector(".cooldown-timer");
   if (overlay) overlay.hidden = !cooling;
   if (timer) timer.textContent = `${(remaining / 1000).toFixed(1)}s`;
+}
+
+function positionBattlePointerControls(anchors) {
+  for (const button of elements.battleTargetButtons) {
+    const target = anchors?.[button.dataset.battleTarget];
+    button.hidden = !target;
+    if (!target) continue;
+    button.style.left = `${target.x}px`;
+    button.style.top = `${target.y}px`;
+  }
+}
+
+function renderBattlePointerControls(available) {
+  const show = activeView === "battle" && !battleVisualFallback && Boolean(visualizer);
+  elements.battlePointerControls.hidden = !show;
+  if (!show) return;
+
+  const anchors = visualizer.getTacticalTargetAnchors?.();
+  positionBattlePointerControls(anchors);
+  for (const button of elements.battleTargetButtons) {
+    const action = button.dataset.battleTarget;
+    const target = anchors?.[action];
+    if (!target) {
+      button.disabled = true;
+      button.setAttribute("aria-disabled", "true");
+      continue;
+    }
+    const remaining = remainingCooldown(action);
+    const cooling = remaining > 0;
+    const ready = available.has(action);
+    renderCooldown(button, action, ready);
+    const status = cooling
+      ? `재사용 대기 ${Math.ceil(remaining / 1000)}초`
+      : ready ? "명령 가능" : "아직 사용할 수 없음";
+    button.dataset.state = cooling ? "cooling" : ready ? "ready" : "locked";
+    button.title = `${BATTLE_TARGET_LABELS[action]} · ${status}`;
+    button.setAttribute("aria-label", `${BATTLE_TARGET_LABELS[action]}: ${status}`);
+  }
 }
 
 function render() {
@@ -529,10 +640,27 @@ function render() {
   renderBossSpec(stage, state, benefits);
   renderResult(isComplete);
 
+  // Mirror engine numbers onto the battle canvas HUD - the battlefield must
+  // be readable without glancing at the side panel.
+  visualizer?.setHud?.({
+    integrity: state.integrity,
+    maxIntegrity: benefits.maxIntegrity,
+    bossHealth: state.bossHealth,
+    bossMax: stage.bossHealth,
+    aegis: state.aegis ?? 0
+  });
+
+  const canRedeploy =
+    campaign.status === "active" &&
+    !!visualizer &&
+    state.legion > 0 &&
+    visualizer.allies.length < state.legion;
   for (const button of elements.commandButtons) {
     const action = button.dataset.action;
-    renderCooldown(button, action, available.has(action));
+    const usable = available.has(action) || (action === "materialize" && canRedeploy);
+    renderCooldown(button, action, usable);
   }
+  renderBattlePointerControls(available);
   for (const [index, button] of elements.stageButtons.entries()) {
     const stageNumber = index + 1;
     const active = stageNumber === stage.number && !isComplete;
@@ -677,7 +805,32 @@ function startActionCooldown(action) {
 }
 
 async function handleAction(action) {
-  if (!campaign || activeView !== "battle" || remainingCooldown(action) > 0 || !getAvailableActions(campaign).includes(action)) return;
+  if (!campaign || activeView !== "battle" || remainingCooldown(action) > 0) return;
+  if (!getAvailableActions(campaign).includes(action)) {
+    // Presentation-only redeploy: the engine refuses materialize at full
+    // legion capacity, but the VISUAL field may have lost its shades to
+    // melee. Reserves stepping back onto the field is pure presentation -
+    // no engine transition, no save event, replay unaffected.
+    if (
+      action === "materialize" &&
+      visualizer &&
+      campaign.status === "active" &&
+      campaign.stage.legion > 0 &&
+      visualizer.allies.length < campaign.stage.legion
+    ) {
+      const benefits = getCampaignBenefits(campaign);
+      const count = Math.min(
+        Math.max(1, 2 + benefits.summonBonus),
+        campaign.stage.legion - visualizer.allies.length
+      );
+      visualizer.triggerMaterialize(count);
+      startActionCooldown(action);
+      flashEffect("materialize");
+      playCue("materialize");
+      render();
+    }
+    return;
+  }
   const result = applyAction(campaign, action);
   campaign = result.state;
   if (!result.accepted) {
@@ -860,7 +1013,7 @@ function playCinematic() {
     elements.cinematicButton.disabled = false;
     elements.cinematicStatus.textContent = "Cinematic unavailable. Text campaign briefing remains complete.";
   };
-  video.src = "assets/video/shadow-lord-cinematic.mp4";
+  video.src = "assets/video/abyssal-surge-cinematic.mp4";
   video.load();
 }
 
@@ -887,6 +1040,7 @@ function wireControls() {
   });
   elements.retryFromResult.addEventListener("click", handleRetry);
   elements.commandButtons.forEach((button) => button.addEventListener("click", () => handleAction(button.dataset.action)));
+  elements.battleTargetButtons.forEach((button) => button.addEventListener("click", () => handleAction(button.dataset.battleTarget)));
   elements.exportSave.addEventListener("click", exportSave);
   elements.importSave.addEventListener("change", () => importSave(elements.importSave.files?.[0]));
   elements.ambience.addEventListener("click", toggleAmbience);
@@ -934,8 +1088,8 @@ function initLiquidEtherBackground() {
 function initReactBitsEffects() {
   // 1. Interactive Particles Background (Fluid Shadow Smoke Particles)
   const canvas = document.querySelector("#particles-canvas");
-  if (canvas) {
-    const ctx = canvas.getContext("2d");
+  const ctx = canvas?.getContext("2d");
+  if (canvas && ctx) {
     let particles = [];
     const maxParticles = 50;
     let mouse = { x: -1000, y: -1000 };
@@ -1078,7 +1232,7 @@ function initReactBitsEffects() {
     });
 
     // 3. Magnetic Buttons Effect
-    const buttons = document.querySelectorAll("button, .file-button");
+    const buttons = document.querySelectorAll("button:not(.battle-pointer-target), .file-button");
     buttons.forEach((btn) => {
       btn.classList.add("magnetic-button");
       window.addEventListener("mousemove", (e) => {

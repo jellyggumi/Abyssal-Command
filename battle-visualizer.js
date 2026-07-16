@@ -11,9 +11,7 @@
 //   top/bottom attenuation and a low-pass on "far" (upper) sources
 // - seeded presentation RNG so a replayed battle shows the same choreography
 //
-// Contract with the deterministic engine is unchanged: the ONLY engine-facing
-// output is onEnemyBreach (recorded as a battle-breach transition by app.js).
-// Everything else here is presentation.
+// This renderer owns no engine-facing transitions; it is presentation only.
 
 import {
   TILE_W, TILE_H, ELEV_H, LAYER,
@@ -29,6 +27,9 @@ const BOSS_TILE = Object.freeze({ x: 14, y: 3.5 });
 const BREACH_X = 1.2;          // enemy reaching this x = breach
 const GOAL_X = 13.8;           // ally reaching this x = strike delivered
 const CLASH_DIST = 0.5;
+const CLASH_TICK_S = 0.55;     // seconds between swings in a sustained engagement
+const PICKET_X = 5.5;          // default ally holding line (in front of the nodes)
+const INTERCEPT_RANGE = 3;     // aggressor radius: defenders chase hostiles this close
 const AI_TICK_MS = 250;        // report: transition priority refresh cadence
 
 const BASE_PALETTE = Object.freeze({
@@ -56,6 +57,10 @@ function paletteFromPresentation(presentation) {
     node: p.ally ?? BASE_PALETTE.node,
     domain: p.domain ?? BASE_PALETTE.domain,
     spark: p.accent ?? BASE_PALETTE.spark,
+    gridLine: p.grid ?? BASE_PALETTE.gridLine,
+    tileTop: p.gridSecondary
+      ? [p.gridSecondary, p.grid ?? p.gridSecondary, p.gridSecondary, p.grid ?? p.gridSecondary]
+      : BASE_PALETTE.tileTop,
     background: p.background ?? BASE_PALETTE.background
   });
 }
@@ -96,7 +101,7 @@ function buildHeightfield(stageNumber) {
 }
 
 export class BattleVisualizer {
-  constructor(canvas, presentation = DEFAULT_BATTLE_PRESENTATION) {
+  constructor(canvas, presentation = DEFAULT_BATTLE_PRESENTATION, options = {}) {
     this.canvas = canvas;
     this.presentation = presentation;
     this.stageNumber = presentation.stageNumber;
@@ -112,13 +117,25 @@ export class BattleVisualizer {
     this.enemies = [];
     this.particles = [];
     this.nodes = [];        // {x, y}
+    this.nodeGoal = Math.max(1, Number.isInteger(options.nodeGoal) ? options.nodeGoal : 1);
+    this.onTacticalLayout = typeof options.onTacticalLayout === "function" ? options.onTacticalLayout : null;
     this.orderFlag = null;  // {x, y, life}
     this.domainLife = 0;
     this.waveCounter = 0;
     this.isAssaulting = false;
     this.assaultTimer = 0;
 
+    // Engine-facing event: fired when a hostile visually crosses the Dusk
+    // Portal line in the LIVE simulation. app.js records it as a
+    // battle-breach transition (save/replay applies the recorded event, so
+    // the deterministic contract is preserved). Under reduced-motion or
+    // renderer fallback there is no live sim — app.js uses timers instead.
     this.onEnemyBreach = null;
+    this.breachFlash = 0;
+
+    // Canvas HUD mirror of engine numbers (app.js pushes via setHud()).
+    this.hud = null;
+
 
     this.height = buildHeightfield(this.stageNumber);
     this.rng = mulberry32(0x5eed + this.stageNumber * 977);
@@ -171,12 +188,18 @@ export class BattleVisualizer {
       if (this.destroyed) return;
       this.computeView();
       this.buildStaticLayer();
+      this.renderStatic();
     };
     window.addEventListener("resize", this.resizeHandler);
 
     this.lastTime = performance.now();
-    this.animate();
+    if (this.reducedMotion) this.render();
+    else this.animate();
     return this;
+  }
+
+  renderStatic() {
+    if (this.reducedMotion && !this.destroyed) this.render();
   }
 
   computeView() {
@@ -204,6 +227,7 @@ export class BattleVisualizer {
     this.view.offsetX = (cssW - worldW * scale) / 2 - minX * scale;
     this.view.offsetY = (cssH - worldH * scale) / 2 - minY * scale;
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.notifyTacticalLayout();
   }
 
   project(fx, fy, fz = 0) {
@@ -219,6 +243,25 @@ export class BattleVisualizer {
     const sy = (canvasY - this.view.offsetY) / this.view.scale;
     // Column-scan picking against the real heightfield (slope-aware).
     return pickTile(sx, sy, (x, y) => this.heightAt(x, y), 4);
+  }
+
+  nodePosition(index) {
+    const spacing = 8 / (this.nodeGoal + 1);
+    return { x: 3.5 + index * spacing, y: GRID_H / 2 - 0.5 };
+  }
+
+  getTacticalTargetAnchors() {
+    const captureIndex = this.nodes.length + 1;
+    const captureNode = captureIndex <= this.nodeGoal ? this.nodePosition(captureIndex) : null;
+    return {
+      materialize: this.project(ALLY_SPAWN.x, ALLY_SPAWN.y, 0),
+      capture: captureNode ? this.project(captureNode.x, captureNode.y, 0) : null,
+      assault: this.project(BOSS_TILE.x, BOSS_TILE.y, 0)
+    };
+  }
+
+  notifyTacticalLayout() {
+    this.onTacticalLayout?.(this.getTacticalTargetAnchors());
   }
 
   // --- static layer (split sorting queue: cached once) -------------------
@@ -348,7 +391,11 @@ export class BattleVisualizer {
     const src = BOSS_ART[this.stageNumber];
     if (!src) return;
     const img = new Image();
-    img.onload = () => { if (!this.destroyed) this.bossImage = img; };
+    img.onload = () => {
+      if (this.destroyed) return;
+      this.bossImage = img;
+      this.renderStatic();
+    };
     img.onerror = () => undefined;
     img.src = src;
   }
@@ -427,12 +474,14 @@ export class BattleVisualizer {
       this.pointerDown = p;
       this.dragRect = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
       this.canvas.setPointerCapture?.(event.pointerId);
+      this.renderStatic();
     };
     const move = (event) => {
       if (!this.pointerDown || !this.dragRect) return;
       const p = canvasPoint(event);
       this.dragRect.x1 = p.x;
       this.dragRect.y1 = p.y;
+      this.renderStatic();
     };
     const up = (event) => {
       if (!this.pointerDown) return;
@@ -459,10 +508,12 @@ export class BattleVisualizer {
       }
       this.pointerDown = null;
       this.dragRect = null;
+      this.renderStatic();
     };
     const cancel = () => {
       this.pointerDown = null;
       this.dragRect = null;
+      this.renderStatic();
     };
     this.canvas.addEventListener("pointerdown", down);
     this.canvas.addEventListener("pointermove", move);
@@ -497,7 +548,7 @@ export class BattleVisualizer {
         x: ALLY_SPAWN.x + this.rng() * 0.6,
         y: ALLY_SPAWN.y + (this.rng() - 0.5) * 2.4,
         speed: 1.4 + this.rng() * 0.5,
-        hp: isPossessed ? 3 : 1,
+        hp: isPossessed ? 4 : 2,
         isPossessed,
         path: null,
         holdUntil: 0,
@@ -507,6 +558,7 @@ export class BattleVisualizer {
       this.burst(unit.x, unit.y, 10, this.palette.ally);
     }
     this.playSpatial(ALLY_SPAWN.x, ALLY_SPAWN.y, { freq: 240, type: "sine", duration: 0.22 });
+    this.renderStatic();
   }
 
   spawnEnemy(count = 3) {
@@ -521,7 +573,6 @@ export class BattleVisualizer {
         speed: archetype === "scout" ? 1.5 + this.rng() * 0.4 : 0.9 + this.rng() * 0.4,
         hp: archetype === "reinforce" ? 2 : 1,
         archetype,
-        // scouts flank along the rim; others go center lane
         laneY: archetype === "scout" ? (this.rng() > 0.5 ? 1.6 : GRID_H - 2.6) : BOSS_TILE.y + (this.rng() - 0.5) * 1.6,
         facing: 4
       };
@@ -529,11 +580,17 @@ export class BattleVisualizer {
       this.burst(unit.x, unit.y, 8, this.palette.enemy);
     }
     this.playSpatial(BOSS_TILE.x, BOSS_TILE.y, { freq: 180, type: "sawtooth", duration: 0.3, gain: 0.8 });
+    this.renderStatic();
   }
 
   triggerHunt() {
     const fx = 3 + this.rng() * 8;
     const fy = 1.5 + this.rng() * 4.5;
+    if (this.reducedMotion) {
+      this.orderFlag = { x: fx, y: fy, life: 1 };
+      this.renderStatic();
+      return;
+    }
     this.burst(fx, fy, 20, this.palette.spark);
     this.playSpatial(fx, fy, { freq: 400, type: "sine", duration: 0.25, gain: 0.7 });
   }
@@ -550,9 +607,15 @@ export class BattleVisualizer {
       this.burst(ally.x, ally.y, 18, this.palette.allyPossessed);
       this.playSpatial(ally.x, ally.y, { freq: 640, type: "sine", duration: 0.3 });
     }
+    this.renderStatic();
   }
 
   triggerExtract() {
+    if (this.reducedMotion) {
+      this.orderFlag = { x: 6, y: 3.5, life: 1 };
+      this.renderStatic();
+      return;
+    }
     for (let i = 0; i < 14; i++) {
       const fx = 4 + this.rng() * 6;
       const fy = 1.5 + this.rng() * 4.5;
@@ -566,20 +629,24 @@ export class BattleVisualizer {
   }
 
   triggerCapture(nodeIndex, maxNodes) {
+    this.nodeGoal = Math.max(1, maxNodes);
     this.nodes = [];
-    const spacing = 8 / (maxNodes + 1);
     for (let i = 1; i <= nodeIndex; i++) {
-      const node = { x: 3.5 + i * spacing, y: GRID_H / 2 - 0.5 };
+      const node = this.nodePosition(i);
       this.nodes.push(node);
       this.burst(node.x, node.y, 14, this.palette.node);
     }
-    this.playSpatial(3.5 + nodeIndex * spacing, GRID_H / 2, { freq: 210, type: "square", duration: 0.35, gain: 0.9 });
+    const capturedNode = this.nodePosition(nodeIndex);
+    this.playSpatial(capturedNode.x, capturedNode.y, { freq: 210, type: "square", duration: 0.35, gain: 0.9 });
+    this.notifyTacticalLayout();
+    this.renderStatic();
   }
 
   triggerDomain() {
     this.domainLife = 4.0;
     this.burst(ALLY_SPAWN.x + 1, ALLY_SPAWN.y, 26, this.palette.domain);
     this.playSpatial(ALLY_SPAWN.x, ALLY_SPAWN.y, { freq: 140, type: "sine", duration: 0.6, gain: 1.1 });
+    this.renderStatic();
   }
 
   triggerAssault() {
@@ -587,6 +654,12 @@ export class BattleVisualizer {
     for (const ally of this.allies) {
       ally.speed = 5.2;
       ally.path = null; // assault overrides move orders
+    }
+    if (this.reducedMotion) {
+      this.orderFlag = { x: BOSS_TILE.x, y: BOSS_TILE.y, life: 1 };
+      this.isAssaulting = false;
+      this.renderStatic();
+      return;
     }
     window.clearTimeout(this.assaultTimer);
     this.assaultTimer = window.setTimeout(() => {
@@ -599,7 +672,7 @@ export class BattleVisualizer {
   }
 
   burst(fx, fy, count, color) {
-    if (this.destroyed) return;
+    if (this.destroyed || this.reducedMotion) return;
     for (let i = 0; i < count; i++) {
       const angle = this.rng() * Math.PI * 2;
       const speed = 0.5 + this.rng() * 1.8;
@@ -613,12 +686,35 @@ export class BattleVisualizer {
     }
   }
 
+  // Engine numbers mirrored onto the canvas (integrity pips, boss bar).
+  // app.js pushes fresh values every render tick; null hides the HUD.
+  setHud(hud) {
+    this.hud = hud;
+    if (this.reducedMotion) this.render();
+  }
+
+  nearestEnemy(unit, range) {
+    let best = null;
+    let bestD = range * range;
+    for (const enemy of this.enemies) {
+      const dx = enemy.x - unit.x;
+      const dy = enemy.y - unit.y;
+      const d = dx * dx + dy * dy;
+      if (d < bestD) { bestD = d; best = enemy; }
+    }
+    return best;
+  }
+
   // --- simulation ---------------------------------------------------------
 
   updateUnits(dt) {
-    // Allies: follow explicit path; otherwise advance on the boss lane.
+    // Allies: explicit move order > intercept nearby hostile > hold picket.
+    // Shades are DEFENDERS by default - they advance to the picket line in
+    // front of the signal nodes and engage what comes, instead of marching
+    // into the portal and despawning. Only an Assault order sends them in.
     for (let i = this.allies.length - 1; i >= 0; i--) {
       const ally = this.allies[i];
+      if ((ally.engagedT ?? 0) > 0) { ally.engagedT -= dt; continue; } // locked in melee
       let target;
       if (ally.path && ally.path.length > 0) {
         target = ally.path[0];
@@ -628,10 +724,19 @@ export class BattleVisualizer {
           ally.path.shift();
           if (ally.path.length === 0) ally.path = null;
         }
-      } else if (!ally.path && performance.now() < ally.holdUntil && !this.isAssaulting) {
-        target = null; // hold position (defender behavior after a move order)
-      } else {
+      } else if (this.isAssaulting) {
         target = { x: GOAL_X, y: ally.y };
+      } else {
+        const prey = this.nearestEnemy(ally, INTERCEPT_RANGE);
+        if (prey) {
+          target = { x: prey.x, y: prey.y };
+        } else if (performance.now() < ally.holdUntil) {
+          target = null; // hold position (defender behavior after a move order)
+        } else if (Math.abs(ally.x - PICKET_X) > 0.25) {
+          target = { x: PICKET_X, y: ally.y };
+        } else {
+          target = null; // standing watch on the picket line
+        }
       }
       if (target) {
         const mag = Math.hypot(target.x - ally.x, target.y - ally.y) || 1;
@@ -644,7 +749,7 @@ export class BattleVisualizer {
         ally.y = Math.max(0.4, Math.min(GRID_H - 0.4, ally.y + v.y * dt));
         ally.facing = directionIndex(v.x, v.y);
       }
-      if (ally.x >= GOAL_X) {
+      if (this.isAssaulting && ally.x >= GOAL_X) {
         this.burst(ally.x, ally.y, 6, this.palette.ally);
         this.allies.splice(i, 1);
         this.selection.delete(ally);
@@ -654,6 +759,8 @@ export class BattleVisualizer {
     // Enemies: scouts flank via laneY then cut in; others straight lane.
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
+      if ((enemy.clashCd ?? 0) > 0) enemy.clashCd -= dt;
+      if ((enemy.engagedT ?? 0) > 0) { enemy.engagedT -= dt; continue; } // locked in melee
       const preferred = { x: -enemy.speed, y: 0 };
       if (enemy.archetype === "scout" && enemy.x > 5) {
         preferred.y = (enemy.laneY - enemy.y) * 1.2;
@@ -668,15 +775,21 @@ export class BattleVisualizer {
         this.burst(enemy.x, enemy.y, 10, this.palette.enemy);
         this.playSpatial(enemy.x, enemy.y, { freq: 110, type: "sawtooth", duration: 0.5, gain: 1.3 });
         this.enemies.splice(i, 1);
-        if (this.onEnemyBreach) this.onEnemyBreach();
+        this.breachFlash = 1;
+        if (typeof this.onEnemyBreach === "function") this.onEnemyBreach();
       }
     }
 
-    // Clash detection (unchanged from the lane model).
+    // Clash: engagement ticks, not per-frame melts. Each unit swings at most
+    // once per CLASH_TICK_S, so a 2HP shade visibly holds the line against
+    // two 1HP scouts instead of evaporating in two frames.
     for (let i = this.allies.length - 1; i >= 0; i--) {
       const ally = this.allies[i];
+      if ((ally.clashCd ?? 0) > 0) ally.clashCd -= dt;
       for (let j = this.enemies.length - 1; j >= 0; j--) {
         const enemy = this.enemies[j];
+        if ((enemy.clashCd ?? 0) > 0) continue;
+        if ((ally.clashCd ?? 0) > 0) break;
         const dx = ally.x - enemy.x;
         const dy = ally.y - enemy.y;
         if (dx * dx + dy * dy < CLASH_DIST * CLASH_DIST) {
@@ -684,6 +797,10 @@ export class BattleVisualizer {
           this.playSpatial(ally.x, ally.y, { freq: 480, type: "triangle", duration: 0.1, gain: 0.5 });
           ally.hp -= 1;
           enemy.hp -= 1;
+          ally.clashCd = CLASH_TICK_S;
+          enemy.clashCd = CLASH_TICK_S;
+          ally.engagedT = CLASH_TICK_S;
+          enemy.engagedT = CLASH_TICK_S;
           if (enemy.hp <= 0) this.enemies.splice(j, 1);
           if (ally.hp <= 0) {
             this.allies.splice(i, 1);
@@ -725,8 +842,10 @@ export class BattleVisualizer {
     const queue = [];
     queue.push({ key: depthKey(ALLY_SPAWN.x, ALLY_SPAWN.y, 0, LAYER.prop), draw: () => this.drawPortal(ALLY_SPAWN.x, ALLY_SPAWN.y, this.palette.ally) });
     queue.push({ key: depthKey(BOSS_TILE.x, BOSS_TILE.y, 0, LAYER.prop), draw: () => this.drawPortal(BOSS_TILE.x, BOSS_TILE.y, this.palette.enemy) });
-    for (const node of this.nodes) {
-      queue.push({ key: depthKey(node.x, node.y, 0, LAYER.prop), draw: () => this.drawNode(node) });
+    for (let index = 1; index <= this.nodeGoal; index++) {
+      const node = this.nodePosition(index);
+      const captured = index <= this.nodes.length;
+      queue.push({ key: depthKey(node.x, node.y, 0, LAYER.prop), draw: () => this.drawNode(node, captured) });
     }
     queue.push({ key: depthKey(BOSS_TILE.x + 0.4, BOSS_TILE.y + 0.4, 0, LAYER.unit), draw: () => this.drawBoss() });
     for (const ally of this.allies) {
@@ -744,6 +863,72 @@ export class BattleVisualizer {
     if (this.domainLife > 0) this.drawDomain();
     if (this.orderFlag) this.drawOrderFlag();
     if (this.dragRect) this.drawDragRect();
+    if (this.hud) this.drawHud();
+    if (this.breachFlash > 0.01) {
+      // Red vignette pulse: a breach must be FELT, not just logged.
+      const ctx2 = this.ctx;
+      const g = ctx2.createRadialGradient(
+        this.view.width / 2, this.view.height / 2, Math.min(this.view.width, this.view.height) * 0.35,
+        this.view.width / 2, this.view.height / 2, Math.max(this.view.width, this.view.height) * 0.72
+      );
+      g.addColorStop(0, "rgba(255, 60, 50, 0)");
+      g.addColorStop(1, `rgba(255, 60, 50, ${0.42 * this.breachFlash})`);
+      ctx2.fillStyle = g;
+      ctx2.fillRect(0, 0, this.view.width, this.view.height);
+    }
+  }
+
+  drawHud() {
+    const ctx = this.ctx;
+    const s = Math.max(0.75, this.view.scale);
+    const pad = 10 * s;
+    ctx.save();
+    ctx.font = `${Math.round(11 * s)}px ui-monospace, monospace`;
+    ctx.textBaseline = "middle";
+
+    // Integrity pips (top-left): filled = remaining, hollow = lost.
+    const max = Math.max(1, this.hud.maxIntegrity ?? 10);
+    const cur = Math.max(0, this.hud.integrity ?? max);
+    const pip = 7 * s;
+    const gap = 4 * s;
+    ctx.fillStyle = this.palette.ally;
+    ctx.globalAlpha = 0.9;
+    ctx.fillText("\u26E8", pad, pad + pip / 2);
+    const pipX0 = pad + 16 * s;
+    for (let i = 0; i < max; i++) {
+      const x = pipX0 + i * (pip + gap);
+      if (i < cur) {
+        ctx.fillStyle = cur <= 3 ? "#ff7f79" : this.palette.ally;
+        ctx.fillRect(x, pad, pip, pip);
+      } else {
+        ctx.strokeStyle = "rgba(255,255,255,0.35)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, pad, pip, pip);
+      }
+    }
+    if ((this.hud.aegis ?? 0) > 0) {
+      ctx.fillStyle = "#ffe18a";
+      ctx.fillText(`AEGIS x${this.hud.aegis}`, pipX0 + max * (pip + gap) + 6 * s, pad + pip / 2);
+    }
+
+    // Boss bar (top-right).
+    if (this.hud.bossMax) {
+      const w = 120 * s;
+      const h = 8 * s;
+      const x = this.view.width - pad - w;
+      const ratio = Math.max(0, Math.min(1, (this.hud.bossHealth ?? 0) / this.hud.bossMax));
+      ctx.globalAlpha = 0.85;
+      ctx.strokeStyle = this.palette.enemy;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, pad, w, h);
+      ctx.fillStyle = this.palette.enemy;
+      ctx.fillRect(x, pad, w * ratio, h);
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.textAlign = "right";
+      ctx.fillText(`BOSS ${this.hud.bossHealth ?? 0}/${this.hud.bossMax}`, x + w, pad + h + 9 * s);
+      ctx.textAlign = "left";
+    }
+    ctx.restore();
   }
 
   drawPortal(fx, fy, color) {
@@ -763,18 +948,21 @@ export class BattleVisualizer {
     ctx.globalAlpha = 1;
   }
 
-  drawNode(node) {
+  drawNode(node, captured) {
     const ctx = this.ctx;
     const base = this.project(node.x, node.y, 0);
     const s = this.view.scale;
     const h = 26 * s;
-    ctx.fillStyle = this.palette.node;
-    ctx.globalAlpha = 0.9;
-    ctx.fillRect(base.x - 4 * s, base.y - h, 8 * s, h);
-    ctx.globalAlpha = 0.35;
+    const color = captured ? this.palette.node : "#71829b";
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.globalAlpha = captured ? 0.9 : 0.46;
+    if (captured) ctx.fillRect(base.x - 4 * s, base.y - h, 8 * s, h);
+    else ctx.strokeRect(base.x - 4 * s, base.y - h, 8 * s, h);
+    ctx.globalAlpha = captured ? 0.35 : 0.15;
     ctx.beginPath();
     ctx.ellipse(base.x, base.y, 16 * s, 8 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
+    captured ? ctx.fill() : ctx.stroke();
     ctx.globalAlpha = 1;
   }
 
@@ -891,20 +1079,27 @@ export class BattleVisualizer {
   // --- loop -----------------------------------------------------------------
 
   animate() {
-    if (this.destroyed) return;
+    if (this.destroyed || this.reducedMotion) return;
     this.animationFrameId = requestAnimationFrame(() => this.animate());
     const now = performance.now();
-    const dt = Math.min((now - this.lastTime) / 1000, 0.1);
+    // Preserve real-time enemy travel through a slow frame without allowing one
+    // large physics step to tunnel through a clash or breach line.
+    const elapsed = Math.min((now - this.lastTime) / 1000, 1);
     this.lastTime = now;
+    const substeps = Math.max(1, Math.ceil(elapsed / 0.05));
+    const dt = elapsed / substeps;
 
-    this.aiAccumulator += dt * 1000;
-    if (this.aiAccumulator >= AI_TICK_MS) {
-      this.aiAccumulator = 0;
-      // AI tick slot (250ms): archetype decisions are cheap and framerate-independent.
+    for (let step = 0; step < substeps; step += 1) {
+      this.aiAccumulator += dt * 1000;
+      if (this.aiAccumulator >= AI_TICK_MS) {
+        this.aiAccumulator = 0;
+        // AI tick slot (250ms): archetype decisions are cheap and framerate-independent.
+      }
+
+      this.updateUnits(dt);
+      this.updateParticles(dt);
+      if (this.breachFlash > 0) this.breachFlash = Math.max(0, this.breachFlash - dt * 1.6);
     }
-
-    this.updateUnits(dt);
-    this.updateParticles(dt);
     this.render();
   }
 
@@ -930,7 +1125,6 @@ export class BattleVisualizer {
     this.spriteCache.clear();
     this.staticLayer = null;
     this.bossImage = null;
-    this.onEnemyBreach = null;
     this.pointerHandlers = null;
     this.resizeHandler = null;
     this.assaultTimer = 0;
