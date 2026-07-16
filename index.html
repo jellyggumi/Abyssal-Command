@@ -140,6 +140,8 @@
         <div id="stage-transition" class="stage-transition" aria-live="polite">
           <video id="stage-transition-video" muted playsinline preload="metadata" hidden aria-label="Optional stage atmosphere"></video>
           <div class="stage-transition-copy">
+            <p id="narration-line" class="narration-line" aria-hidden="true"></p>
+            <p id="narration-sr" class="sr-only" role="status"></p>
             <p id="stage-objective"></p>
             <button id="toggle-stage-ambience" type="button" aria-pressed="false">Play ambient sound</button>
           </div>
@@ -150,13 +152,16 @@
             <h3 id="status-heading">Command status</h3>
             <output id="campaign-status" class="status-message" aria-live="polite"></output>
           </div>
-          <dl class="status-grid">
-            <div><dt>Souls</dt><dd id="souls-value">0</dd></div>
-            <div><dt>Legion slots</dt><dd id="legion-value">0 / 10</dd></div>
-            <div><dt>Nodes held</dt><dd id="nodes-value">0 / 1</dd></div>
-            <div><dt>Lord integrity</dt><dd id="integrity-value">10 / 10</dd></div>
-            <div><dt id="boss-label">Boss ward</dt><dd id="boss-value">8 / 8</dd></div>
-          </dl>
+          <div class="status-body">
+            <img id="boss-portrait" class="boss-portrait" src="assets/images/ui/boss-cinder-warden.png" alt="" hidden />
+            <dl class="status-grid">
+              <div><dt>Souls</dt><dd id="souls-value">0</dd></div>
+              <div><dt>Legion slots</dt><dd id="legion-value">0 / 10</dd></div>
+              <div><dt>Nodes held</dt><dd id="nodes-value">0 / 1</dd></div>
+              <div><dt>Lord integrity</dt><dd id="integrity-value">10 / 10</dd></div>
+              <div><dt id="boss-label">Boss ward</dt><dd id="boss-value">8 / 8</dd></div>
+            </dl>
+          </div>
           <ol id="objective-checklist" class="objective-checklist" aria-label="Stage objectives"></ol>
         </section>
 
@@ -168,13 +173,13 @@
             </div>
           </div>
           <div class="command-grid">
-            <button id="action-hunt" data-action="hunt" type="button"><span class="key">H</span><strong>Hunt</strong><small>Map two rift spoor</small></button>
-            <button id="action-extract" data-action="extract" type="button"><span class="key">E</span><strong>Extract</strong><small>Claim the shade cache</small></button>
-            <button id="action-materialize" data-action="materialize" type="button"><span class="key">M</span><strong>Materialize</strong><small>Raise shadow legion</small></button>
-            <button id="action-capture" data-action="capture" type="button"><span class="key">C</span><strong>Capture</strong><small>Anchor a tech node</small></button>
-            <button id="action-possess" data-action="possess" type="button"><span class="key">P</span><strong>Possess</strong><small>Unlocks in Stage 2</small></button>
-            <button id="action-domain" data-action="domain" type="button"><span class="key">D</span><strong>Lord's Domain</strong><small>One use in Stage 3</small></button>
-            <button id="action-assault" data-action="assault" type="button"><span class="key">A</span><strong>Assault</strong><small>Break the stage boss</small></button>
+            <button id="action-hunt" data-action="hunt" type="button"><img class="action-icon" src="assets/images/ui/action-hunt.png" alt="" /><span class="key">H</span><strong>Hunt</strong><small>Map two rift spoor</small></button>
+            <button id="action-extract" data-action="extract" type="button"><img class="action-icon" src="assets/images/ui/action-extract.png" alt="" /><span class="key">E</span><strong>Extract</strong><small>Claim the shade cache</small></button>
+            <button id="action-materialize" data-action="materialize" type="button"><img class="action-icon" src="assets/images/ui/action-materialize.png" alt="" /><span class="key">M</span><strong>Materialize</strong><small>Raise shadow legion</small></button>
+            <button id="action-capture" data-action="capture" type="button"><img class="action-icon" src="assets/images/ui/action-capture.png" alt="" /><span class="key">C</span><strong>Capture</strong><small>Anchor a tech node</small></button>
+            <button id="action-possess" data-action="possess" type="button"><img class="action-icon" src="assets/images/ui/action-possess.png" alt="" /><span class="key">P</span><strong>Possess</strong><small>Unlocks in Stage 2</small></button>
+            <button id="action-domain" data-action="domain" type="button"><img class="action-icon" src="assets/images/ui/action-domain.png" alt="" /><span class="key">D</span><strong>Lord's Domain</strong><small>One use in Stage 3</small></button>
+            <button id="action-assault" data-action="assault" type="button"><img class="action-icon" src="assets/images/ui/action-assault.png" alt="" /><span class="key">A</span><strong>Assault</strong><small>Break the stage boss</small></button>
           </div>
         </section>
 
@@ -188,6 +193,7 @@
         <section id="campaign-complete" class="panel completion-panel" aria-labelledby="completion-heading" hidden>
           <p class="eyebrow">Campaign complete</p>
           <h3 id="completion-heading" tabindex="-1">The drowned gate is silent</h3>
+          <img class="completion-emblem" src="assets/images/ui/emblem-gate-sovereign.jpg" alt="Low-poly monument of the defeated Gate Sovereign inside a glowing gate ring" />
           <p id="completion-summary"></p>
           <button id="restart-campaign" class="primary" type="button">Begin another campaign</button>
         </section>

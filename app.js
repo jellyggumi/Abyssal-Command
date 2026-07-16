@@ -21,8 +21,28 @@ const FALLBACK_KEY = "abyssal-surge-campaign-fallback-v1";
 const MAX_IMPORT_BYTES = 256 * 1024;
 const ACTION_KEYS = Object.freeze({ h: "hunt", e: "extract", m: "materialize", c: "capture", p: "possess", d: "domain", a: "assault" });
 const CUE_BY_EFFECT = Object.freeze({
+  hunt: "assets/audio/hunt.mp3",
   extract: "assets/audio/extract.mp3",
-  domain: "assets/audio/domain.mp3"
+  materialize: "assets/audio/materialize.mp3",
+  capture: "assets/audio/capture.mp3",
+  possess: "assets/audio/possess.mp3",
+  domain: "assets/audio/domain.mp3",
+  assault: "assets/audio/assault.mp3",
+  reward: "assets/audio/reward.mp3"
+});
+const NARRATION = Object.freeze({
+  intro: Object.freeze({ audio: "assets/audio/narr-intro.mp3", line: "심연의 문이 열렸다. 그림자 군주여, 일어나라." }),
+  "cinder-span": Object.freeze({ audio: "assets/audio/narr-stage1.mp3", line: "잿빛 교량, 신더 스팬. 재의 메아리를 사냥하고 영혼을 거두어라." }),
+  "veil-citadel": Object.freeze({ audio: "assets/audio/narr-stage2.mp3", line: "장막 성채, 베일 시타델. 빙의의 힘이 깨어난다. 두 거점을 동시에 장악하라." }),
+  "echo-throne": Object.freeze({ audio: "assets/audio/narr-stage3.mp3", line: "메아리 왕좌. 군주의 영역을 펼쳐 게이트 소버린을 무너뜨려라." }),
+  victory: Object.freeze({ audio: "assets/audio/narr-victory.mp3", line: "침묵한 문 앞에서, 그림자 군단이 왕좌에 오른다." }),
+  defeat: Object.freeze({ audio: "assets/audio/narr-defeat.mp3", line: "군단의 닻이 끊어졌다. 다시, 일어나라." })
+});
+const TYPE_MS_PER_CHAR = 28;
+const BOSS_BY_STAGE = Object.freeze({
+  "cinder-span": "assets/images/ui/boss-cinder-warden.png",
+  "veil-citadel": "assets/images/ui/boss-veil-tactician.png",
+  "echo-throne": "assets/images/ui/boss-gate-sovereign.png"
 });
 const VIDEO_BY_STAGE = Object.freeze({
   "cinder-span": "assets/video/cinder-span.mp4",
@@ -156,6 +176,8 @@ const elements = Object.freeze({
   cinematic: document.querySelector("#campaign-cinematic"),
   cinematicButton: document.querySelector("#play-cinematic"),
   cinematicStatus: document.querySelector("#cinematic-status"),
+  narrationLine: document.querySelector("#narration-line"),
+  narrationSr: document.querySelector("#narration-sr"),
   commandButtons: [...document.querySelectorAll("[data-action]")],
   stageButtons: [1, 2, 3].map((number) => document.querySelector(`#stage-select-${number}`))
 });
@@ -165,6 +187,10 @@ let storedCampaign = null;
 let storage = new CampaignStorage();
 let cuePlayer = null;
 let ambiencePlayer = null;
+let narrationPlayer = null;
+let typingTimer = 0;
+let narratedStageId = null;
+let narratedOutcome = null;
 
 function currentStage() {
   return STAGES[campaign.stageIndex];
@@ -192,11 +218,16 @@ function renderRewards(stage) {
     button.type = "button";
     button.className = "reward-option";
     button.dataset.rewardId = reward.id;
+    const art = document.createElement("img");
+    art.className = "reward-art";
+    art.alt = "";
+    art.src = `assets/images/ui/reward-${reward.id}.png`;
+    art.addEventListener("error", () => art.remove(), { once: true });
     const name = document.createElement("strong");
     name.textContent = reward.name;
     const description = document.createElement("span");
     description.textContent = reward.description;
-    button.append(name, description);
+    button.append(art, name, description);
     button.addEventListener("click", () => handleReward(reward.id));
     elements.rewardOptions.append(button);
   }
@@ -218,6 +249,18 @@ function renderStageMedia(stage) {
     };
     image.onerror = () => elements.transition.style.removeProperty("background-image");
     image.src = imageSource;
+  }
+
+  const portrait = document.querySelector("#boss-portrait");
+  if (portrait) {
+    const bossArt = BOSS_BY_STAGE[stage.id];
+    if (bossArt) {
+      portrait.src = bossArt;
+      portrait.alt = "";
+      portrait.hidden = false;
+    } else {
+      portrait.hidden = true;
+    }
   }
 
   elements.video.hidden = true;
@@ -280,6 +323,7 @@ function render() {
   renderChecklist();
   if (campaign.status === "reward") renderRewards(stage);
   renderStageMedia(stage);
+  syncNarration();
 }
 
 function revealCampaign() {
@@ -301,6 +345,66 @@ function playCue(effect) {
   cuePlayer.currentTime = 0;
   cuePlayer.src = source;
   cuePlayer.play().catch(() => undefined);
+}
+
+function typeText(target, text) {
+  window.clearInterval(typingTimer);
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    target.textContent = text;
+    target.classList.remove("is-typing");
+    return;
+  }
+  let index = 0;
+  target.textContent = "";
+  target.classList.add("is-typing");
+  typingTimer = window.setInterval(() => {
+    index += 1;
+    target.textContent = text.slice(0, index);
+    if (index >= text.length) {
+      window.clearInterval(typingTimer);
+      target.classList.remove("is-typing");
+    }
+  }, TYPE_MS_PER_CHAR);
+}
+
+function playNarration(key) {
+  const entry = NARRATION[key];
+  if (!entry) return;
+  typeText(elements.narrationLine, entry.line);
+  elements.narrationSr.textContent = entry.line;
+  if (!narrationPlayer) {
+    narrationPlayer = new Audio();
+    narrationPlayer.preload = "none";
+    narrationPlayer.addEventListener("error", () => undefined);
+  }
+  narrationPlayer.pause();
+  narrationPlayer.currentTime = 0;
+  narrationPlayer.src = entry.audio;
+  narrationPlayer.play().catch(() => undefined);
+}
+
+function syncNarration() {
+  if (!campaign) return;
+  const stage = currentStage();
+  if (campaign.status === "campaign-complete") {
+    if (narratedOutcome !== "victory") {
+      narratedOutcome = "victory";
+      playNarration("victory");
+    }
+    return;
+  }
+  if (campaign.status === "defeat") {
+    if (narratedOutcome !== "defeat") {
+      narratedOutcome = "defeat";
+      playNarration("defeat");
+    }
+    return;
+  }
+  narratedOutcome = null;
+  if (narratedStageId !== stage.id) {
+    narratedStageId = stage.id;
+    playNarration(stage.id);
+  }
 }
 
 function flashEffect(effect) {
@@ -362,8 +466,11 @@ async function beginNewCampaign() {
   const result = startCampaign(createCampaign());
   campaign = result.state;
   storedCampaign = null;
+  narratedStageId = STAGES[campaign.stageIndex].id;
+  narratedOutcome = null;
   revealCampaign();
   flashEffect("awaken");
+  playNarration("intro");
   await persistCampaign("New campaign saved");
 }
 
