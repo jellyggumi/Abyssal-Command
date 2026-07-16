@@ -36,6 +36,25 @@ body {
   z-index: -1;
   pointer-events: none;
 }
+.liquid-ether-container {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  touch-action: none;
+  pointer-events: none;
+}
+.liquid-ether-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0.85;
+  mix-blend-mode: screen;
+}
+@media (prefers-reduced-motion: reduce) {
+  .liquid-ether-container { display: none; }
+}
+
 
 .shiny-text {
   background: linear-gradient(

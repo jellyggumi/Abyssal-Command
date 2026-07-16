@@ -216,7 +216,7 @@ async function verifyWorker(page, baseUrl) {
   assert.equal(worker.scope, `${baseUrl}/`, "The service worker must be scoped to this ephemeral loopback origin.");
   assert.equal(worker.scriptUrl, `${baseUrl}/sw.js`, "The active worker must come from the current sw.js source.");
   const campaignCaches = worker.cacheNames.filter((name) => name.startsWith("abyssal-surge-static-"));
-  assert.deepEqual(campaignCaches, ["abyssal-surge-static-v3"], "Only the current static worker cache must be observable after activation.");
+  assert.deepEqual(campaignCaches, ["abyssal-surge-static-v4"], "Only the current static worker cache must be observable after activation.");
 
   return { ...worker, cacheName: campaignCaches[0] };
 }

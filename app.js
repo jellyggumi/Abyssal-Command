@@ -11,6 +11,7 @@ import {
   retryStage,
   startCampaign
 } from "./campaign-state.js";
+import { createLiquidEther } from "./liquid-ether.js";
 
 const BUILD_TAG = "abyssal-surge-static-v1";
 const DB_NAME = "abyssal-surge-campaign";
@@ -617,6 +618,33 @@ function wireControls() {
   });
 }
 
+function initLiquidEtherBackground() {
+  const container = document.querySelector("#liquid-ether-bg");
+  if (!container) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  try {
+    createLiquidEther(container, {
+      colors: ["#6F2969", "#B32B2B", "#395781"],
+      mouseForce: 20,
+      cursorSize: 100,
+      isViscous: false,
+      viscous: 30,
+      iterationsViscous: 32,
+      iterationsPoisson: 32,
+      resolution: 0.5,
+      isBounce: false,
+      autoDemo: true,
+      autoSpeed: 0.5,
+      autoIntensity: 2.2,
+      takeoverDuration: 0.25,
+      autoResumeDelay: 3000,
+      autoRampDuration: 0.6
+    });
+  } catch {
+    // WebGL unavailable or blocked; leave the static CSS gradient background in place.
+  }
+}
+
 function initReactBitsEffects() {
   // 1. Interactive Particles Background (Fluid Shadow Smoke Particles)
   const canvas = document.querySelector("#particles-canvas");
@@ -626,36 +654,6 @@ function initReactBitsEffects() {
     const maxParticles = 50;
     let mouse = { x: -1000, y: -1000 };
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let auroraTime = 0;
-    const auroraBlobs = [
-      { color: "111, 41, 105", baseX: 0.18, baseY: 0.14, freq: 0.55, radius: 0.62 }, // abyssal purple
-      { color: "179, 43, 43", baseX: 0.84, baseY: 0.24, freq: 0.4, radius: 0.55 }, // ember red
-      { color: "57, 87, 129", baseX: 0.5, baseY: 0.88, freq: 0.65, radius: 0.68 } // gate blue
-    ];
-
-    function drawAurora() {
-      auroraTime += reduceMotion ? 0 : 0.0035;
-      const mx = mouse.x === -1000 ? canvas.width / 2 : mouse.x;
-      const my = mouse.y === -1000 ? canvas.height / 2 : mouse.y;
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-      for (const blob of auroraBlobs) {
-        const wobbleX = Math.sin(auroraTime * blob.freq) * 0.07;
-        const wobbleY = Math.cos(auroraTime * blob.freq * 1.3) * 0.07;
-        const pullX = (mx / canvas.width - blob.baseX) * 0.06;
-        const pullY = (my / canvas.height - blob.baseY) * 0.06;
-        const cx = (blob.baseX + wobbleX + pullX) * canvas.width;
-        const cy = (blob.baseY + wobbleY + pullY) * canvas.height;
-        const radius = Math.max(canvas.width, canvas.height) * blob.radius;
-        const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-        gradient.addColorStop(0, `rgba(${blob.color}, 0.24)`);
-        gradient.addColorStop(1, `rgba(${blob.color}, 0)`);
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-      ctx.restore();
-    }
-
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -752,7 +750,6 @@ function initReactBitsEffects() {
 
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawAurora();
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         if (p) {
@@ -766,7 +763,6 @@ function initReactBitsEffects() {
     if (reduceMotion) {
       window.addEventListener("mousemove", () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawAurora();
         for (const p of particles) p.draw();
       });
     }
@@ -840,6 +836,7 @@ async function initialize() {
     setSaveStatus(storage.mode === "indexeddb" ? "No local campaign yet. IndexedDB is ready." : "IndexedDB is unavailable; this session will use the safe local fallback.");
   }
   wireControls();
+  initLiquidEtherBackground();
   initReactBitsEffects();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => undefined);
 }
