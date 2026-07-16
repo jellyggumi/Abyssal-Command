@@ -77,7 +77,8 @@ The campaign state persists reward-driven benefits:
 - Existing capacity, possession damage, starting-vanguard, and entry-integrity rewards remain available.
 
 ### 2.3 Wave Management Rules
-- Enemies spawn from the Dread Portal every 6 seconds in a repeating three-wave cycle: Scout, Guard, and Boss Reinforcement.
+- Each battle begins with a 25-second command-preparation interval before the initial Scout wave spawns. Commands are intended counterplay during this pre-wave window.
+- After preparation, enemies spawn from the Dread Portal every 6 seconds in a repeating three-wave cycle: Scout, Guard, and Boss Reinforcement.
 - Enemy counts scale by stage: 2 scouts, then `3 + stage number` guards, then `5 + stage number` reinforcements.
 - Spawned minions march toward the Ally portal. A breach consumes aegis when available; otherwise it deals 1 integrity damage and can cause defeat.
 - Materialized shades march toward the boss camp, collide with minion waves, and create combat impact VFX.

@@ -2,13 +2,13 @@
 
 **Navigation:** [production contract](../production/production-contract.md) · [retrospective schema](../retrospectives/cycle_retrospective.py) · [task manifest](../production/task-manifest.md)
 
-All rows are deliberately `NOT-RUN` until a dated build/session evidence path is attached. A target is never a measured value. G2/G3/G7 시뮬레이션 수치는 measured-only이며 최종 verdict는 director 결정.
+Gate-level `PASS` requires evidence for every threshold component; a target or documentary plan is never a measured value. Simulator rows label only what `node scripts/run-campaign-balance-sim.mjs` currently measures; a passing sampled sub-check does not promote an incomplete G2.
 
 ## G1
 
 | Threshold | Current measured value | Method | Evidence | Verdict |
 |---|---|---|---|---|
-| 0 un-waived lore violations; 100% trace coverage | not-run | inventory-to-build audit | `design/worldview.md` (plan only) | NOT-RUN |
+| 0 un-waived lore violations; 100% player-visible source traceability | lore-violation count: not-run; trace coverage: **failed** | direct source-to-worldview audit | `app.js` (`BOSS_SPEC` player-visible lore), `campaign-state.js` (`STAGES` objectives/rewards/messages), `design/worldview.md` §§24–32 | **FAIL** — the current source has no `AS-WV-*`/`inventory_id` trace metadata; e.g. `Cinder Warden`, `Veil Tactician`, `Ember Cohort`, and `Abyssal Banner` are player-visible but are not inventory-mapped. The documented Stage 1 boss is `Rift Guardian`, not `Cinder Warden`. A QA violation/waiver audit is also absent, so the zero-violation component remains NOT-RUN. |
 
 ## G6 (Stage 1 operations draft)
 
@@ -16,28 +16,16 @@ All rows are deliberately `NOT-RUN` until a dated build/session evidence path is
 |---|---|---|---|---|
 | telemetry fields implemented; rollback tested; p95 frame ≤16.7 ms; long frames <0.5%; 30-min stable memory; input ≤100 ms | not-run | instrumented browser/mobile session | `ops/telemetry-contract.md`, `engineering/architecture-contract.md` (plans only) | NOT-RUN |
 
-## G2 — 밸런스 v2 재측정
+## G2 — current simulator reconciliation
 
-측정: `node scripts/run-campaign-balance-sim.mjs` (repo root, Node 22) · **2026-07-16T15:22:22Z** · rules `abyssal-surge-rules-v2` · seed 고정(mulberry32) · 승리 정의: 패배 0회 완주(첫 defeat에서 측정 종료). 튜닝 이력은 [balance-sheet 부록](../design/balance-sheet.md).
+**Gate verdict: `NOT-RUN`.** Method: `node scripts/run-campaign-balance-sim.mjs` from the repository root. Evidence: current command stdout produced by `scripts/run-campaign-balance-sim.mjs` against `campaign-state.js` (`abyssal-surge-rules-v2`); no dated build/session ID or retained run artifact is asserted. The command supplies deterministic policy, casual-walker, and selected-combo measurements, not complete G2 coverage.
 
-| Threshold | Current measured value | Method | Evidence | Verdict |
+| Threshold component | Current result | Method | Evidence | Verdict |
 |---|---|---|---|---|
-| casual 승률 45–55% | **51.0%** (n=200, 패배 98회 전부 Echo Throne). v1의 100%에서 노브 8회 반복으로 밴드 중앙 도달 | seeded 랜덤 legal walker 200 시행 | 시뮬레이터 stdout `archetypes.casual`, `design/balance-sheet.md` 반복 로그 | measured — **밴드 내** |
-| 패배 도달 가능 | rusher(최소 materialize, domain 미사용) S3 1번째 assault에서 integrity 0 — 23액션 재현 시퀀스 고정 | 결정론 정책 + 계약 프로브 | stdout `contractProbes.rusherDefeatSequence`, `qa/exploit-register.md#B1` | measured — 충족 (v1 불가능 → v2 도달) |
-| 정보형 플레이 완주 보장 | optimal 100% (25act) · greedy-economy 100% (56act) · comeback 100% (27act) | 결정론 정책 3종 | stdout `archetypes.*` | measured — 충족 |
-| TTK ±15% | 액션 수 proxy: optimal 25act (9/10/6), casual 승리 시 31–71 (평균 50.3). **TTK 목표치는 여전히 미정의 — 밴드 비교 불성립** | 액션 수 = TTK proxy | `qa/playtest-report.md`, `design/balance-sheet.md`(초 단위 target 미정) | measured — 기준선 부재 (판정 불가, director) |
-| 콤보 EV ≤1.3× median | **1.119×** — 4콤보 궤적이 실제로 분화된 상태에서의 비율 (v1은 궤적 동일로 공허 통과) | adaptive optimal 정책 × 4콤보 전수 | stdout `comboEv` (아래 표) | measured — **충족 (비-공허)** |
-
-콤보 궤적 (adaptive optimal, seed 7):
-
-| 콤보 (S1+S2) | 총 액션 | 스테이지별 | integrity 궤적 | EV(승/액션) |
-|---|---:|---|---|---:|
-| ember-cohort + veil-vanguard | 27 | 9/11/7 | 7→5→0 | 0.0370 |
-| ember-cohort + anchor-shard | 31 | 9/11/11 | 7→5→0 | 0.0323 |
-| rift-lens + veil-vanguard | 25 | 9/10/6 | 7→6→2 | 0.0400 |
-| rift-lens + anchor-shard | 29 | 9/10/10 | 7→6→1 | 0.0345 |
-
-4콤보 4개 서로 다른 (총액션, integrity 궤적) — 보상 무효 결함(B2) 해소.
+| Every mechanic and matchup covered | no coverage matrix or matchup dataset emitted | simulator policy/fuzzer inspection | `scripts/run-campaign-balance-sim.mjs` (`ACTIONS`, `measureArchetypes`, `measureCombos`, summary) | **NOT-RUN** — the report gives policies and a fuzzer total, not per-mechanic coverage or matchup win rates. |
+| Matchup win rates 45–55% | casual seeded legal walker: **55.0%** (110/200 wins; 90 defeats, all `echo-throne`) | 200 deterministic seeds (`archetypes.casual`) | current command stdout; `scripts/run-campaign-balance-sim.mjs` `CASUAL_TRIALS = 200` | **measured — in band for this one walker, not a complete matchup result** |
+| TTK within ±15% | optimal action proxy: S1/S2/S3 **9/10/6** actions; derived 30–150 s only under the simulator's unmeasured 5–15 s/action assumption | action-count proxy | current command stdout `g7Proxy`; `scripts/run-campaign-balance-sim.mjs` `SEC_PER_ACTION_MIN/MAX`; `design/balance-sheet.md` §남은 미해결 수치 | **NOT-RUN** — no TTK target/baseline or elapsed-time measurement exists, so ±15% cannot be calculated. |
+| No combo EV >1.3× median | selected 4-combo subset: max/median **1.118571×** | adaptive-optimal run across `ember-cohort`/`rift-lens` × `veil-vanguard`/`anchor-shard` | current command stdout `comboEv`; `scripts/run-campaign-balance-sim.mjs` `measureCombos`; `campaign-state.js` `STAGES` rewards | **NOT-RUN** — the measured subset is below 1.3×, but the runner omits `stillwater-hourglass`, `shadebreaker-brand`, and `abyssal-banner`; all live reward pairs have not been evaluated. |
 
 ## G3 — 아키타입 다양성 재측정
 

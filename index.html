@@ -242,12 +242,33 @@
               <h3 class="shiny-text">2.5D 심연 전장 (Bird's-Eye View)</h3>
               <span id="battle-wave-indicator" class="wave-badge">WAVE 1/3</span>
             </div>
+            <section id="battle-tactical-brief" class="battle-tactical-brief" aria-labelledby="battle-operation">
+              <div class="battle-tactical-copy">
+                <h4 id="battle-operation" class="battle-operation">Operation: Ember Break</h4>
+                <p id="battle-doctrine">Open the forge lane, raise shades, then sever the Warden's hold.</p>
+              </div>
+              <dl class="battle-force-labels">
+                <div><dt>Command</dt><dd id="battle-ally-label">Dusk Legion</dd></div>
+                <div><dt>Hostile</dt><dd id="battle-hostile-label">Ashbound Ward</dd></div>
+              </dl>
+              <p id="battle-pressure" class="battle-pressure" aria-live="polite">Preparation window: issue commands before the first hostile wave enters the lane.</p>
+            </section>
             <div id="canvas-container-3d" class="canvas-container-3d">
-              <!-- Three.js Canvas -->
               <canvas id="battle-canvas-3d"></canvas>
-              <div class="combat-overlay-labels">
-                <span class="label-camp-ally">황혼의 진영 (Dusk Camp)</span>
-                <span class="label-camp-boss">보스 진영 (Boss Camp)</span>
+              <aside id="battle-visual-fallback" class="battle-visual-fallback" aria-labelledby="battle-fallback-title" hidden>
+                <p class="battle-fallback-kicker">Static tactical map</p>
+                <h4 id="battle-fallback-title">Rendering unavailable</h4>
+                <p id="battle-fallback-operation" class="battle-operation">Operation: Ember Break</p>
+                <p id="battle-fallback-doctrine">Open the forge lane, raise shades, then sever the Warden's hold.</p>
+                <dl class="battle-force-labels">
+                  <div><dt>Command</dt><dd id="battle-fallback-ally-label">Dusk Legion</dd></div>
+                  <div><dt>Hostile</dt><dd id="battle-fallback-hostile-label">Ashbound Ward</dd></div>
+                </dl>
+                <p class="battle-fallback-note">The interactive tactical renderer is unavailable. The tactical brief and command pad remain active.</p>
+              </aside>
+              <div class="combat-overlay-labels" aria-hidden="true">
+                <span id="battle-overlay-ally-label" class="label-camp-ally">Dusk Legion</span>
+                <span id="battle-overlay-hostile-label" class="label-camp-boss">Ashbound Ward</span>
               </div>
             </div>
           </section>

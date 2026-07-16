@@ -647,15 +647,17 @@ export const ShadowLordCinematic = () => (
 
 #### 다음 라운드 권고
 
-1) `v102`는 씬 0~7 통합 컷의 자막 하드코딩, 상태 로그, UI 메타 라벨을 반영한 최종 정리본이므로 내부 시연 잠금 단계로 이동한다.
-2) 문서 상태 코드는 `ROUNDUP_DONE_V102`로 상향 반영하고, 다음 라운드인 `v103`은 플레이 시나리오 연속성 보강(F~H 전개)과 실패 루프 튜닝으로 확장한다.
-3) 다음 라운드 시작 시 `state_log_v102.jsonl`을 기준으로 재현 시나리오 템플릿을 고정해 QA 트리거를 단일화한다.
+1) `v103`은 씬 0~7 통합 컷의 실패 루프 튜닝(시나리오 F~H, `S0_DEGRADED/S1_RETRY/S2_FLEEBACK/S3_STAGGER/S5_DESPAIR/FAIL_PIVOT`)까지 반영한 정합본이다.
+2) 문서 상태 코드는 `ROUNDUP_DONE_V103`로 상향 반영되었고, `v104`는 컷별 타이밍·국문/영문 자막 동기화와 UI 패킷 번역 정합화를 완료해 `ROUNDUP_DONE_V104`로 상향 반영한다.
+3) 다음 라운드 시작 시 `state_log_v104.jsonl`의 상태 시간축을 기준으로 시뮬레이터 재생 테스트를 재현한다.
 
 ### 22.5 라운드업 상태 코드
 
 - `v100`: `ROUNDUP_DONE_V100`
 - `v101`: `ROUNDUP_DONE_V101`
 - `v102`: `ROUNDUP_DONE_V102`
+- `v103`: `ROUNDUP_DONE_V103`
+- `v104`: `ROUNDUP_DONE_V104`
 
 ### 22.6 라운드업: v102 브랜딩·로그·시나리오 보정 확정본
 
@@ -689,3 +691,87 @@ export const ShadowLordCinematic = () => (
 | `v102 cinematic` SHA-256 | `1b94c6f70a7816206fdae69b9ab853cd7f7a61922961f59c22da2a18cd6d8c30` | `1b94c6f70a7816206fdae69b9ab853cd7f7a61922961f59c22da2a18cd6d8c30` |
 | duration | `189.000000s` | `189.000000s` |
 | `ROUNDUP_DONE_V102` | `DONE` | `DONE` |
+
+### 22.7 라운드업: v103 실패 루프 튜닝 확정본
+
+#### 완료 항목
+
+- v103 패키지 정합성 및 정식화 (루트/워크스페이스 동시 반영):
+  - `assets/video/scene_00_to_07_concat_v103.txt`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_concat_v103.txt`
+  - `assets/video/scene_00_to_07_shot_subtitles_v103.srt`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_shot_subtitles_v103.srt`
+  - `assets/video/scene_00_to_07_state_log_v103.jsonl`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_state_log_v103.jsonl`
+  - `assets/video/scene_00_to_07_ui_labels_v103.csv`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_ui_labels_v103.csv`
+  - `assets/video/scene_00_to_07_cinematic_v103.mp4`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_cinematic_v103.mp4`
+- 매니페스트 반영:
+  - `assets/media-manifest.json`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/media-manifest.json`
+- 라운드업 QA 로그:
+  - `_workspace/20260716-shadow-lord-rts-rpg/qa/roundup-v103.md`
+
+#### 정합성 검증 결과
+
+| 항목 | 루트 | 워크스페이스 |
+|---|---|---|
+| `concat` SHA-256 | `54cab417ba00c29f16d5eb4addf880a4c6498b573777935c0f933d91354f8ed0` | `54cab417ba00c29f16d5eb4addf880a4c6498b573777935c0f933d91354f8ed0` |
+| `srt` SHA-256 | `24d410cacb03e9389f47de76b65e46bfcb73f0de595cd116f54be37229d696d9` | `24d410cacb03e9389f47de76b65e46bfcb73f0de595cd116f54be37229d696d9` |
+| `state_log` SHA-256 | `a51f4ec805450db0ef183d5bcaee98a2f72f73789dd3f7dbdca9f53a4ecd3a11` | `a51f4ec805450db0ef183d5bcaee98a2f72f73789dd3f7dbdca9f53a4ecd3a11` |
+| `ui_labels` SHA-256 | `44f52f78d0d86ad14a0f4029960d6a93e1a9892931813807627e0ee57f88a0d7` | `44f52f78d0d86ad14a0f4029960d6a93e1a9892931813807627e0ee57f88a0d7` |
+| `v103 cinematic` SHA-256 | `1b94c6f70a7816206fdae69b9ab853cd7f7a61922961f59c22da2a18cd6d8c30` | `1b94c6f70a7816206fdae69b9ab853cd7f7a61922961f59c22da2a18cd6d8c30` |
+| duration | `189.000000s` | `189.000000s` |
+| `audio` | `none` | `none` |
+| `ROUNDUP_DONE_V103` | `DONE` | `DONE` |
+
+#### 다음 라운드 권고
+
+1) `v104`는 컷별 타이밍(`S5_DESPAIR/FAIL_PIVOT`)의 자막-상태 정합도를 정밀 동기화하고, 국문/영문 자막 및 UI 라벨 다국어 패키지까지 확정 반영했다.
+2) 라운드업 QA 증적은 `_workspace/20260716-shadow-lord-rts-rpg/qa/roundup-v104.md`로 기록했다.
+3) 다음 라운드 `v105`에서는 실패 루프 지표(`S2_FLEEBACK`, `S3_STAGGER`, `S5_DESPAIR`)를 플레이데이터 기반으로 캘리브레이션한 뒤 미세 튜닝을 수행한다.
+### 22.8 라운드업: v104 실시간 싱크 정밀 튜닝 완료본
+
+#### 완료 항목
+
+- `v104` 패키지 정합성 및 정식화 (루트/워크스페이스 동시 반영):
+  - `assets/video/scene_00_to_07_concat_v104.txt`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_concat_v104.txt`
+  - `assets/video/scene_00_to_07_shot_subtitles_v104.srt`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_shot_subtitles_v104.srt`
+  - `assets/video/scene_00_to_07_shot_subtitles_v104_en.srt`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_shot_subtitles_v104_en.srt`
+  - `assets/video/scene_00_to_07_state_log_v104.jsonl`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_state_log_v104.jsonl`
+  - `assets/video/scene_00_to_07_ui_labels_v104.csv`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_ui_labels_v104.csv`
+  - `assets/video/scene_00_to_07_ui_labels_v104_en.csv`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_ui_labels_v104_en.csv`
+  - `assets/video/scene_00_to_07_cinematic_v104.mp4`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/video/scene_00_to_07_cinematic_v104.mp4`
+- 매니페스트 반영:
+  - `assets/media-manifest.json`
+  - `_workspace/20260716-shadow-lord-rts-rpg/assets/media-manifest.json`
+- 라운드업 QA 로그:
+  - `_workspace/20260716-shadow-lord-rts-rpg/qa/roundup-v104.md`
+
+#### 정합성 검증 결과
+
+| 항목 | 루트 | 워크스페이스 |
+|---|---|---|
+| `concat` SHA-256 | `54cab417ba00c29f16d5eb4addf880a4c6498b573777935c0f933d91354f8ed0` | `54cab417ba00c29f16d5eb4addf880a4c6498b573777935c0f933d91354f8ed0` |
+| `srt` SHA-256 (`KR`) | `f07662ae1110e8f160a4fc4659300d386a2707304209877baa71d7773f4a7c24` | `f07662ae1110e8f160a4fc4659300d386a2707304209877baa71d7773f4a7c24` |
+| `srt` SHA-256 (`EN`) | `8ce46c0c95844e4ca8f1ad1389e447d7de8dae96579d02550ef24cdf5913bad6` | `8ce46c0c95844e4ca8f1ad1389e447d7de8dae96579d02550ef24cdf5913bad6` |
+| `state_log` SHA-256 | `ad26603c66a7c2be492d057b6aab3172a5329685f8e2baafce577ccabb3412d2` | `ad26603c66a7c2be492d057b6aab3172a5329685f8e2baafce577ccabb3412d2` |
+| `ui_labels` SHA-256 (`KR`) | `a88b2bbaf018232c72fe477fd4797e0d591c3e05acee4bece52fc699cda24bb6` | `a88b2bbaf018232c72fe477fd4797e0d591c3e05acee4bece52fc699cda24bb6` |
+| `ui_labels` SHA-256 (`EN`) | `208b85ed11329f392bc8d3240d3fbbd6a972a1d623fe871d5c527de2ac8d5ff9` | `208b85ed11329f392bc8d3240d3fbbd6a972a1d623fe871d5c527de2ac8d5ff9` |
+| `v104 cinematic` SHA-256 | `1b94c6f70a7816206fdae69b9ab853cd7f7a61922961f59c22da2a18cd6d8c30` | `1b94c6f70a7816206fdae69b9ab853cd7f7a61922961f59c22da2a18cd6d8c30` |
+| `duration` | `189.000000s` | `189.000000s` |
+| `audio` | `none` | `none` |
+| `ROUNDUP_DONE_V104` | `DONE` | `DONE` |
+
+#### 다음 라운드 권고
+
+1) `v105`는 `state_log_v104.jsonl`의 `FAIL_PIVOT` 이후 리턴 구간 수치를 기준으로 실패-회복 연출 임계값을 캘리브레이션한다.
+2) `S2_FLEEBACK`/`S3_STAGGER` 체류시간을 단기 분석해 리스크 구간에서의 역전 타이밍을 재조정한다.

@@ -1,503 +1,942 @@
-import * as THREE from "./vendor/three.module.min.js";
+// 2:1 dimetric (2.5D isometric) battle renderer — Canvas 2D, no WebGL dependency.
+//
+// Implements the 2.5D RTS architecture report:
+// - 2:1 dimetric projection with pixel-snappable tiles (iso-math.js)
+// - per-stage heightfield terrain with slope-aware column-scan picking
+// - painter depth sorting keyed on floor height, split static/dynamic queues
+//   (static terrain pre-sorted once; only units/fx sort per frame)
+// - screen-space drag selection (non-physics Rect.contains filter loop)
+// - A* global pathing + separation steering for local avoidance
+// - virtual audio listener at the screen ground focus with asymmetric
+//   top/bottom attenuation and a low-pass on "far" (upper) sources
+// - seeded presentation RNG so a replayed battle shows the same choreography
+//
+// Contract with the deterministic engine is unchanged: the ONLY engine-facing
+// output is onEnemyBreach (recorded as a battle-breach transition by app.js).
+// Everything else here is presentation.
+
+import {
+  TILE_W, TILE_H, ELEV_H, LAYER,
+  worldToScreen, pickTile, depthKey, findPath, steer,
+  rectContains, directionIndex, mulberry32
+} from "./iso-math.js";
+import { DEFAULT_BATTLE_PRESENTATION } from "./battle-presentation.js";
+
+const GRID_W = 16;
+const GRID_H = 8;
+const ALLY_SPAWN = Object.freeze({ x: 1, y: 3.5 });
+const BOSS_TILE = Object.freeze({ x: 14, y: 3.5 });
+const BREACH_X = 1.2;          // enemy reaching this x = breach
+const GOAL_X = 13.8;           // ally reaching this x = strike delivered
+const CLASH_DIST = 0.5;
+const AI_TICK_MS = 250;        // report: transition priority refresh cadence
+
+const BASE_PALETTE = Object.freeze({
+  ally: "#70e5d0",
+  allyPossessed: "#fff0a4",
+  enemy: "#ff7f79",
+  node: "#70e5d0",
+  domain: "#ab68ff",
+  spark: "#ffb85c",
+  gridLine: "rgba(59, 76, 104, 0.55)",
+  tileTop: ["#141b30", "#182238", "#1d2a42", "#22314d"],   // by elevation
+  tileLeft: "#0c1122",
+  tileRight: "#101731",
+  chasm: "#05070f",
+  background: "#060913"
+});
+
+function paletteFromPresentation(presentation) {
+  const p = presentation?.palette;
+  if (!p) return BASE_PALETTE;
+  return Object.freeze({
+    ...BASE_PALETTE,
+    ally: p.ally ?? BASE_PALETTE.ally,
+    enemy: p.hostile ?? BASE_PALETTE.enemy,
+    node: p.ally ?? BASE_PALETTE.node,
+    domain: p.domain ?? BASE_PALETTE.domain,
+    spark: p.accent ?? BASE_PALETTE.spark,
+    background: p.background ?? BASE_PALETTE.background
+  });
+}
+
+const BOSS_ART = Object.freeze({
+  1: "assets/images/ui/boss-cinder-warden.png",
+  2: "assets/images/ui/boss-veil-tactician.png",
+  3: "assets/images/ui/boss-gate-sovereign.png"
+});
+
+// Per-stage heightfields (16×8, integers; -1 = chasm/unwalkable).
+// Stage 1 Cinder Span: a bridge over the drowned forge — void edges.
+// Stage 2 Veil Citadel: twin raised plateaus (the two signal nodes) + ramps.
+// Stage 3 Echo Throne: stepped ascent toward the throne.
+function buildHeightfield(stageNumber) {
+  const h = [];
+  for (let y = 0; y < GRID_H; y++) {
+    h.push(new Array(GRID_W).fill(0));
+  }
+  if (stageNumber === 1) {
+    for (let x = 0; x < GRID_W; x++) {
+      h[0][x] = -1;
+      h[GRID_H - 1][x] = -1;
+      if (x >= 5 && x <= 10) { h[1][x] = -1; h[GRID_H - 2][x] = -1; } // narrow span
+    }
+  } else if (stageNumber === 2) {
+    for (let y = 2; y <= 5; y++) {
+      for (let x = 5; x <= 6; x++) h[y][x] = 1;
+      for (let x = 9; x <= 10; x++) h[y][x] = 1;
+    }
+  } else {
+    for (let y = 2; y <= 5; y++) {
+      for (let x = 11; x <= 12; x++) h[y][x] = 1;
+      for (let x = 13; x <= 15; x++) h[y][x] = 2;
+    }
+  }
+  return h;
+}
 
 export class BattleVisualizer {
-  constructor(canvas) {
+  constructor(canvas, presentation = DEFAULT_BATTLE_PRESENTATION) {
     this.canvas = canvas;
-    this.scene = null;
-    this.camera = null;
-    this.renderer = null;
+    this.presentation = presentation;
+    this.stageNumber = presentation.stageNumber;
+    this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.palette = paletteFromPresentation(presentation);
+    this.ctx = null;
     this.animationFrameId = null;
+    this.destroyed = false;
+    this.lastTime = 0;
+    this.aiAccumulator = 0;
 
     this.allies = [];
     this.enemies = [];
     this.particles = [];
-    this.nodes = [];
-    this.domainDome = null;
-
-    this.onEnemyBreach = null; // Callback when enemy reaches ally portal
+    this.nodes = [];        // {x, y}
+    this.orderFlag = null;  // {x, y, life}
+    this.domainLife = 0;
+    this.waveCounter = 0;
     this.isAssaulting = false;
-    this.lastTime = 0;
     this.assaultTimer = 0;
-    this.destroyed = false;
-    this.resourceCache = {
-      geometries: new Map(),
-      materials: new Map()
-    };
-    this.allyPortal = null;
-    this.bossPortal = null;
-    this.bossMesh = null;
+
+    this.onEnemyBreach = null;
+
+    this.height = buildHeightfield(this.stageNumber);
+    this.rng = mulberry32(0x5eed + this.stageNumber * 977);
+
+    this.view = { scale: 1, offsetX: 0, offsetY: 0, width: 0, height: 0 };
+    this.staticLayer = null;  // offscreen canvas: terrain + walls, pre-sorted once
+    this.spriteCache = new Map();
+    this.bossImage = null;
+
+    this.selection = new Set();
+    this.dragRect = null;     // {x0,y0,x1,y1} in canvas px
+    this.pointerDown = null;
+    this.pointerHandlers = null;
     this.resizeHandler = null;
+
+    this.audio = null;        // { ctx, master }
   }
 
-  getGeometry(key, create) {
-    let geometry = this.resourceCache.geometries.get(key);
-    if (!geometry) {
-      geometry = create();
-      this.resourceCache.geometries.set(key, geometry);
-    }
-    return geometry;
+  // --- terrain helpers -------------------------------------------------
+
+  heightAt(x, y) {
+    if (x < 0 || y < 0 || x >= GRID_W || y >= GRID_H) return -1;
+    return this.height[y][x];
   }
 
-  getMaterial(key, create) {
-    let material = this.resourceCache.materials.get(key);
-    if (!material) {
-      material = create();
-      this.resourceCache.materials.set(key, material);
-    }
-    return material;
+  walkable(x, y) {
+    return this.heightAt(x, y) >= 0;
   }
 
-  getSparkMaterial(colorHex) {
-    return this.getMaterial(`spark-${colorHex}`, () => new THREE.MeshBasicMaterial({ color: colorHex }));
+  climbOk(x0, y0, x1, y1) {
+    return Math.abs(this.heightAt(x1, y1) - this.heightAt(x0, y0)) <= 1;
   }
 
-  removeMesh(mesh) {
-    mesh?.removeFromParent();
+  elevationAt(fx, fy) {
+    const h = this.heightAt(Math.round(fx), Math.round(fy));
+    return h < 0 ? 0 : h;
   }
 
-  collectResources(object, geometries, materials) {
-    object?.traverse(child => {
-      if (child.geometry) geometries.add(child.geometry);
-      const childMaterials = Array.isArray(child.material) ? child.material : [child.material];
-      childMaterials.forEach(material => {
-        if (material) materials.add(material);
-      });
-    });
-  }
+  // --- lifecycle -------------------------------------------------------
 
   init() {
-    if (this.destroyed || this.scene) return this;
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color("#060913");
+    if (this.destroyed || this.ctx) return this;
+    this.ctx = this.canvas.getContext("2d");
+    this.computeView();
+    this.buildStaticLayer();
+    this.loadBossArt();
+    this.attachPointerHandlers();
 
-    // Bird's-eye view perspective camera (tilted downward)
-    const width = Math.max(this.canvas.clientWidth, 1);
-    const height = Math.max(this.canvas.clientHeight, 1);
-    const aspect = width / height;
-    this.camera = new THREE.PerspectiveCamera(40, aspect, 0.1, 100);
-    this.camera.position.set(0, 8, 12);
-    this.camera.lookAt(0, 0.2, -0.5);
-
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
-    this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    // 2. Setup Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-    this.scene.add(ambientLight);
-
-    const dirLight1 = new THREE.DirectionalLight(0x70e5d0, 0.8);
-    dirLight1.position.set(-5, 8, 2);
-    this.scene.add(dirLight1);
-
-    const dirLight2 = new THREE.DirectionalLight(0xff7f79, 0.6);
-    dirLight2.position.set(5, 8, -2);
-    this.scene.add(dirLight2);
-
-    // 3. Setup Grid Floor representing the dungeon lane
-    const gridHelper = new THREE.GridHelper(24, 24, 0x3b4c68, 0x1b2740);
-    gridHelper.position.y = -0.01;
-    this.scene.add(gridHelper);
-
-    this.resourceCache.geometries.set("floor", gridHelper.geometry);
-    const floorMaterials = Array.isArray(gridHelper.material) ? gridHelper.material : [gridHelper.material];
-    floorMaterials.forEach((material, index) => this.resourceCache.materials.set(`floor-${index}`, material));
-    // Side glowing walls/rails
-    const wallGeo = this.getGeometry("wall", () => new THREE.BoxGeometry(24, 0.1, 0.2));
-    const wallMatAlly = this.getMaterial("wall-ally", () => new THREE.MeshBasicMaterial({ color: 0x70e5d0 }));
-    const wallMatEnemy = this.getMaterial("wall-enemy", () => new THREE.MeshBasicMaterial({ color: 0xff7f79 }));
-
-    const wallLeft = new THREE.Mesh(wallGeo, wallMatAlly);
-    wallLeft.position.set(0, 0.05, 3.5);
-    this.scene.add(wallLeft);
-
-    const wallRight = new THREE.Mesh(wallGeo, wallMatEnemy);
-    wallRight.position.set(0, 0.05, -3.5);
-    this.scene.add(wallRight);
-
-    // 4. Camp Portals
-    // Ally Portal (Torus, left)
-    const allyPortalGeo = this.getGeometry("ally-portal", () => new THREE.TorusGeometry(1.2, 0.15, 8, 24));
-    const allyPortalMat = this.getMaterial("ally-portal", () => new THREE.MeshBasicMaterial({ color: 0x70e5d0, wireframe: true }));
-    this.allyPortal = new THREE.Mesh(allyPortalGeo, allyPortalMat);
-    this.allyPortal.rotation.y = Math.PI / 2;
-    this.allyPortal.position.set(-8, 1, 0);
-    this.scene.add(this.allyPortal);
-
-    // Boss Portal (Cylinder, right)
-    const bossPortalGeo = this.getGeometry("boss-portal", () => new THREE.CylinderGeometry(1.0, 1.4, 2.0, 4, 1, true));
-    const bossPortalMat = this.getMaterial("boss-portal", () => new THREE.MeshBasicMaterial({ color: 0xff7f79, wireframe: true }));
-    this.bossPortal = new THREE.Mesh(bossPortalGeo, bossPortalMat);
-    this.bossPortal.position.set(8, 1, 0);
-    this.scene.add(this.bossPortal);
-
-    // 5. Boss Mesh
-    const bossGeo = this.getGeometry("boss", () => new THREE.ConeGeometry(0.8, 1.6, 4));
-    const bossMat = this.getMaterial("boss", () => new THREE.MeshStandardMaterial({ color: 0xff7f79, roughness: 0.2, metalness: 0.8 }));
-    this.bossMesh = new THREE.Mesh(bossGeo, bossMat);
-    this.bossMesh.position.set(8, 0.8, 0);
-    this.scene.add(this.bossMesh);
-
-    // Handle resizing
     this.resizeHandler = () => {
-      if (this.destroyed || !this.renderer || !this.camera || !this.canvas) return;
-      const width = Math.max(this.canvas.clientWidth, 1);
-      const height = Math.max(this.canvas.clientHeight, 1);
-      this.camera.aspect = width / height;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(width, height);
+      if (this.destroyed) return;
+      this.computeView();
+      this.buildStaticLayer();
     };
     window.addEventListener("resize", this.resizeHandler);
 
-    // Start Rendering Loop
     this.lastTime = performance.now();
     this.animate();
+    return this;
   }
 
-  spawnAlly(count = 2, isPossessed = false) {
-    if (this.destroyed || !this.scene) return;
-    const geo = this.getGeometry("ally", () => new THREE.SphereGeometry(0.25, 8, 8));
-    const materialKey = isPossessed ? "ally-possessed" : "ally";
-    const color = isPossessed ? 0xfff0a4 : 0x70e5d0;
-    const mat = this.getMaterial(materialKey, () => new THREE.MeshStandardMaterial({
-      color,
-      emissive: color,
-      emissiveIntensity: 0.6,
-      roughness: 0.3
-    }));
+  computeView() {
+    const cssW = Math.max(this.canvas.clientWidth, 1);
+    const cssH = Math.max(this.canvas.clientHeight, 1);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.canvas.width = Math.round(cssW * dpr);
+    this.canvas.height = Math.round(cssH * dpr);
+    this.view.width = cssW;
+    this.view.height = cssH;
 
-    for (let i = 0; i < count; i++) {
-      const mesh = new THREE.Mesh(geo, mat);
-      // Spawn slightly offset from ally portal
-      mesh.position.set(
-        -8 + (Math.random() - 0.5) * 0.5,
-        0.25,
-        (Math.random() - 0.5) * 2.0
-      );
+    // Grid bounding box in projection space.
+    const corners = [
+      worldToScreen(0, 0, 0), worldToScreen(GRID_W, 0, 0),
+      worldToScreen(0, GRID_H, 0), worldToScreen(GRID_W, GRID_H, 0)
+    ];
+    const minX = Math.min(...corners.map(c => c.x)) - TILE_W / 2;
+    const maxX = Math.max(...corners.map(c => c.x)) + TILE_W / 2;
+    const minY = Math.min(...corners.map(c => c.y)) - ELEV_H * 3;
+    const maxY = Math.max(...corners.map(c => c.y)) + TILE_H;
+    const worldW = maxX - minX;
+    const worldH = maxY - minY;
+    const scale = Math.min(cssW / worldW, cssH / worldH);
+    this.view.scale = scale;
+    this.view.offsetX = (cssW - worldW * scale) / 2 - minX * scale;
+    this.view.offsetY = (cssH - worldH * scale) / 2 - minY * scale;
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
 
-      this.scene.add(mesh);
-      this.allies.push({
-        mesh,
-        speed: 1.5 + Math.random() * 0.5,
-        hp: isPossessed ? 3 : 1,
-        isPossessed
-      });
+  project(fx, fy, fz = 0) {
+    const s = worldToScreen(fx, fy, fz);
+    return {
+      x: s.x * this.view.scale + this.view.offsetX,
+      y: s.y * this.view.scale + this.view.offsetY
+    };
+  }
 
-      // Spawn summon particles
-      this.createSparks(mesh.position, 10, 0x70e5d0);
+  unprojectToTile(canvasX, canvasY) {
+    const sx = (canvasX - this.view.offsetX) / this.view.scale;
+    const sy = (canvasY - this.view.offsetY) / this.view.scale;
+    // Column-scan picking against the real heightfield (slope-aware).
+    return pickTile(sx, sy, (x, y) => this.heightAt(x, y), 4);
+  }
+
+  // --- static layer (split sorting queue: cached once) -------------------
+
+  buildStaticLayer() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.staticLayer = document.createElement("canvas");
+    this.staticLayer.width = this.canvas.width;
+    this.staticLayer.height = this.canvas.height;
+    const ctx = this.staticLayer.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.fillStyle = this.presentation.palette.background;
+    ctx.fillRect(0, 0, this.view.width, this.view.height);
+
+    // Draw tiles back-to-front (x+y ascending — painter order is inherent).
+    const tiles = [];
+    for (let y = 0; y < GRID_H; y++) {
+      for (let x = 0; x < GRID_W; x++) {
+        tiles.push({ x, y, z: this.height[y][x] });
+      }
     }
+    tiles.sort((a, b) => depthKey(a.x, a.y, Math.max(a.z, 0), LAYER.ground) - depthKey(b.x, b.y, Math.max(b.z, 0), LAYER.ground));
+    for (const t of tiles) this.drawTile(ctx, t.x, t.y, t.z);
+  }
+
+  drawTile(ctx, x, y, z) {
+    const s = this.view.scale;
+    const hw = (TILE_W / 2) * s;
+    const hh = (TILE_H / 2) * s;
+
+    if (z < 0) {
+      // chasm: dark diamond, no walls
+      const c = this.project(x + 0.5, y + 0.5, 0);
+      ctx.fillStyle = this.palette.chasm;
+      ctx.beginPath();
+      ctx.moveTo(c.x, c.y - hh);
+      ctx.lineTo(c.x + hw, c.y);
+      ctx.lineTo(c.x, c.y + hh);
+      ctx.lineTo(c.x - hw, c.y);
+      ctx.closePath();
+      ctx.fill();
+      return;
+    }
+
+    const top = this.project(x + 0.5, y + 0.5, z);
+    // side faces for elevated tiles (drawn first, behind the top)
+    if (z > 0) {
+      const drop = z * ELEV_H * s;
+      ctx.fillStyle = this.palette.tileLeft;
+      ctx.beginPath();
+      ctx.moveTo(top.x - hw, top.y);
+      ctx.lineTo(top.x, top.y + hh);
+      ctx.lineTo(top.x, top.y + hh + drop);
+      ctx.lineTo(top.x - hw, top.y + drop);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = this.palette.tileRight;
+      ctx.beginPath();
+      ctx.moveTo(top.x + hw, top.y);
+      ctx.lineTo(top.x, top.y + hh);
+      ctx.lineTo(top.x, top.y + hh + drop);
+      ctx.lineTo(top.x + hw, top.y + drop);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.fillStyle = this.palette.tileTop[Math.min(z, this.palette.tileTop.length - 1)];
+    ctx.strokeStyle = this.palette.gridLine;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(top.x, top.y - hh);
+    ctx.lineTo(top.x + hw, top.y);
+    ctx.lineTo(top.x, top.y + hh);
+    ctx.lineTo(top.x - hw, top.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // --- sprites (pre-rendered offscreen, per archetype) --------------------
+
+  unitSprite(kind) {
+    let sprite = this.spriteCache.get(kind);
+    if (sprite) return sprite;
+    const size = 48;
+    const c = document.createElement("canvas");
+    c.width = size;
+    c.height = size;
+    const ctx = c.getContext("2d");
+    const color = kind === "possessed" ? this.palette.allyPossessed : kind === "enemy" ? this.palette.enemy : this.palette.ally;
+    // grounding shadow
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.beginPath();
+    ctx.ellipse(size / 2, size * 0.78, size * 0.28, size * 0.12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // body orb with vertical gradient (painterly silhouette)
+    const grad = ctx.createLinearGradient(0, size * 0.15, 0, size * 0.8);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, "#0a0d18");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    if (kind === "enemy") {
+      // enemies: angular silhouette for readability contrast (G4)
+      ctx.moveTo(size / 2, size * 0.12);
+      ctx.lineTo(size * 0.78, size * 0.62);
+      ctx.lineTo(size / 2, size * 0.8);
+      ctx.lineTo(size * 0.22, size * 0.62);
+    } else {
+      ctx.arc(size / 2, size * 0.45, size * 0.28, 0, Math.PI * 2);
+      ctx.moveTo(size / 2 - size * 0.16, size * 0.5);
+      ctx.lineTo(size / 2, size * 0.82);
+      ctx.lineTo(size / 2 + size * 0.16, size * 0.5);
+    }
+    ctx.closePath();
+    ctx.fill();
+    // rim light
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    sprite = c;
+    this.spriteCache.set(kind, sprite);
+    return sprite;
+  }
+
+  loadBossArt() {
+    const src = BOSS_ART[this.stageNumber];
+    if (!src) return;
+    const img = new Image();
+    img.onload = () => { if (!this.destroyed) this.bossImage = img; };
+    img.onerror = () => undefined;
+    img.src = src;
+  }
+
+  // --- audio (virtual listener at screen ground focus) --------------------
+
+  ensureAudio() {
+    if (this.audio || this.destroyed) return this.audio;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      const ctx = new AudioCtx();
+      const master = ctx.createGain();
+      master.gain.value = 0.5;
+      master.connect(ctx.destination);
+      this.audio = { ctx, master };
+    } catch {
+      this.audio = null;
+    }
+    return this.audio;
+  }
+
+  // Report: listener sits at the viewport ground focus, biased slightly
+  // toward the screen top; bottom sources play "closer" (louder), top
+  // sources are softened and low-passed (atmospheric distance).
+  playSpatial(fx, fy, { freq = 320, duration = 0.18, type = "triangle", gain = 1 } = {}) {
+    const audio = this.ensureAudio();
+    if (!audio || audio.ctx.state === "suspended") return;
+    const p = this.project(fx, fy, this.elevationAt(fx, fy));
+    const cx = this.view.width / 2;
+    const focusY = this.view.height * 0.42; // biased above center per the report
+    const pan = Math.max(-1, Math.min(1, (p.x - cx) / (this.view.width / 2)));
+    const vertical = (p.y - focusY) / this.view.height; // <0 above focus, >0 below
+    const proximity = Math.max(0.25, Math.min(1.2, 1 + vertical * 0.9));
+
+    const t = audio.ctx.currentTime;
+    const osc = audio.ctx.createOscillator();
+    osc.type = type;
+    osc.frequency.value = freq;
+    const env = audio.ctx.createGain();
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(0.28 * gain * proximity, t + 0.015);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+    const panner = audio.ctx.createStereoPanner ? audio.ctx.createStereoPanner() : null;
+    let tail = env;
+    if (vertical < -0.05) {
+      // above focus: distant — low-pass filter (psychoacoustic damping)
+      const lp = audio.ctx.createBiquadFilter();
+      lp.type = "lowpass";
+      lp.frequency.value = 900 + 2200 * Math.max(0, 1 + vertical);
+      env.connect(lp);
+      tail = lp;
+    }
+    if (panner) {
+      panner.pan.value = pan;
+      tail.connect(panner);
+      panner.connect(this.audio.master);
+    } else {
+      tail.connect(this.audio.master);
+    }
+    osc.connect(env);
+    osc.start(t);
+    osc.stop(t + duration + 0.02);
+  }
+
+  // --- selection & orders (screen-space filter loop) ----------------------
+
+  attachPointerHandlers() {
+    const canvasPoint = (event) => {
+      const rect = this.canvas.getBoundingClientRect();
+      return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    };
+    const down = (event) => {
+      if (event.button !== 0) return;
+      const p = canvasPoint(event);
+      this.pointerDown = p;
+      this.dragRect = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+      this.canvas.setPointerCapture?.(event.pointerId);
+    };
+    const move = (event) => {
+      if (!this.pointerDown || !this.dragRect) return;
+      const p = canvasPoint(event);
+      this.dragRect.x1 = p.x;
+      this.dragRect.y1 = p.y;
+    };
+    const up = (event) => {
+      if (!this.pointerDown) return;
+      const p = canvasPoint(event);
+      const dx = Math.abs(p.x - this.pointerDown.x);
+      const dy = Math.abs(p.y - this.pointerDown.y);
+      if (dx > 6 || dy > 6) {
+        // Drag select: project each ally to screen, Rect.contains filter.
+        this.selection.clear();
+        for (const ally of this.allies) {
+          const s = this.project(ally.x, ally.y, this.elevationAt(ally.x, ally.y));
+          if (rectContains(this.dragRect, s.x, s.y)) this.selection.add(ally);
+        }
+      } else if (this.selection.size > 0) {
+        // Click with an active selection: move order via slope-aware picking.
+        const tile = this.unprojectToTile(p.x, p.y);
+        if (tile && this.walkable(tile.x, tile.y)) {
+          this.issueMoveOrder(tile);
+          this.orderFlag = { x: tile.x + 0.5, y: tile.y + 0.5, life: 1.2 };
+          this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 520, duration: 0.12, type: "sine", gain: 0.6 });
+        }
+      } else {
+        this.selection.clear();
+      }
+      this.pointerDown = null;
+      this.dragRect = null;
+    };
+    const cancel = () => {
+      this.pointerDown = null;
+      this.dragRect = null;
+    };
+    this.canvas.addEventListener("pointerdown", down);
+    this.canvas.addEventListener("pointermove", move);
+    this.canvas.addEventListener("pointerup", up);
+    this.canvas.addEventListener("pointercancel", cancel);
+    this.pointerHandlers = { down, move, up, cancel };
+  }
+
+  issueMoveOrder(tile) {
+    for (const ally of this.allies) {
+      if (!this.selection.has(ally)) continue;
+      const start = { x: Math.round(ally.x), y: Math.round(ally.y) };
+      const path = findPath(start, { x: tile.x, y: tile.y }, {
+        walkable: (x, y) => this.walkable(x, y),
+        climbOk: (x0, y0, x1, y1) => this.climbOk(x0, y0, x1, y1),
+        width: GRID_W,
+        height: GRID_H
+      });
+      if (path && path.length > 1) {
+        ally.path = path.slice(1).map(node => ({ x: node.x + 0.5 - 0.5, y: node.y + (this.rng() - 0.5) * 0.4 }));
+        ally.holdUntil = performance.now() + 6000; // hold position window after arriving
+      }
+    }
+  }
+
+  // --- public trigger API (unchanged surface) -----------------------------
+
+  spawnAlly(count = 2, isPossessed = false) {
+    if (this.destroyed) return;
+    for (let i = 0; i < count; i++) {
+      const unit = {
+        x: ALLY_SPAWN.x + this.rng() * 0.6,
+        y: ALLY_SPAWN.y + (this.rng() - 0.5) * 2.4,
+        speed: 1.4 + this.rng() * 0.5,
+        hp: isPossessed ? 3 : 1,
+        isPossessed,
+        path: null,
+        holdUntil: 0,
+        facing: 0
+      };
+      this.allies.push(unit);
+      this.burst(unit.x, unit.y, 10, this.palette.ally);
+    }
+    this.playSpatial(ALLY_SPAWN.x, ALLY_SPAWN.y, { freq: 240, type: "sine", duration: 0.22 });
   }
 
   spawnEnemy(count = 3) {
-    if (this.destroyed || !this.scene) return;
-    const geo = this.getGeometry("enemy", () => new THREE.BoxGeometry(0.4, 0.4, 0.4));
-    const mat = this.getMaterial("enemy", () => new THREE.MeshStandardMaterial({
-      color: 0xff7f79,
-      emissive: 0xff7f79,
-      emissiveIntensity: 0.4,
-      roughness: 0.5
-    }));
-
+    if (this.destroyed) return;
+    const archetypes = ["scout", "guard", "reinforce"];
+    const archetype = archetypes[this.waveCounter % archetypes.length];
+    this.waveCounter += 1;
     for (let i = 0; i < count; i++) {
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(
-        8 + (Math.random() - 0.5) * 0.5,
-        0.2,
-        (Math.random() - 0.5) * 2.0
-      );
-
-      this.scene.add(mesh);
-      this.enemies.push({
-        mesh,
-        speed: 1.0 + Math.random() * 0.4,
-        hp: 1
-      });
-
-      this.createSparks(mesh.position, 8, 0xff7f79);
+      const unit = {
+        x: BOSS_TILE.x - 0.5 - this.rng() * 0.5,
+        y: BOSS_TILE.y + (this.rng() - 0.5) * 2.4,
+        speed: archetype === "scout" ? 1.5 + this.rng() * 0.4 : 0.9 + this.rng() * 0.4,
+        hp: archetype === "reinforce" ? 2 : 1,
+        archetype,
+        // scouts flank along the rim; others go center lane
+        laneY: archetype === "scout" ? (this.rng() > 0.5 ? 1.6 : GRID_H - 2.6) : BOSS_TILE.y + (this.rng() - 0.5) * 1.6,
+        facing: 4
+      };
+      this.enemies.push(unit);
+      this.burst(unit.x, unit.y, 8, this.palette.enemy);
     }
+    this.playSpatial(BOSS_TILE.x, BOSS_TILE.y, { freq: 180, type: "sawtooth", duration: 0.3, gain: 0.8 });
   }
 
   triggerHunt() {
-    // Spawn a glowing spoor spawner on the ground
-    const pos = {
-      x: -4 + Math.random() * 8,
-      y: 0.05,
-      z: (Math.random() - 0.5) * 4.0
-    };
-    this.createSparks(pos, 25, 0xffb85c);
+    const fx = 3 + this.rng() * 8;
+    const fy = 1.5 + this.rng() * 4.5;
+    this.burst(fx, fy, 20, this.palette.spark);
+    this.playSpatial(fx, fy, { freq: 400, type: "sine", duration: 0.25, gain: 0.7 });
   }
 
   triggerMaterialize(count = 2) {
     this.spawnAlly(count);
-    this.createSparks({ x: -7.4, y: 0.3, z: 0 }, 18, 0x70e5d0);
   }
+
   triggerPossess() {
-    if (this.destroyed || !this.scene) return;
     const ally = this.allies[0];
     if (ally) {
       ally.isPossessed = true;
       ally.hp = Math.max(ally.hp, 3);
-      ally.mesh.material = this.getMaterial("ally-possessed", () => new THREE.MeshStandardMaterial({
-        color: 0xfff0a4,
-        emissive: 0xfff0a4,
-        emissiveIntensity: 0.6,
-        roughness: 0.3
-      }));
+      this.burst(ally.x, ally.y, 18, this.palette.allyPossessed);
+      this.playSpatial(ally.x, ally.y, { freq: 640, type: "sine", duration: 0.3 });
     }
-    this.createSparks(ally?.mesh.position ?? { x: -6.8, y: 0.3, z: 0 }, 22, 0xfff0a4);
   }
 
   triggerExtract() {
-    if (this.destroyed || !this.scene) return;
-    // Draw actual spark meshes so this effect remains visible while they travel home.
-    for (let i = 0; i < 15; i++) {
-      const startX = -2 + Math.random() * 4;
-      const startZ = (Math.random() - 0.5) * 4.0;
-      this.createSparks({ x: startX, y: 0.2, z: startZ }, 1, 0x70e5d0);
-      const particle = this.particles[this.particles.length - 1];
-      particle.velocity.set(-4.0 - Math.random() * 2.0, 0.2 + Math.random() * 0.5, (Math.random() - 0.5) * 0.5);
-      particle.decay = 1.2;
+    for (let i = 0; i < 14; i++) {
+      const fx = 4 + this.rng() * 6;
+      const fy = 1.5 + this.rng() * 4.5;
+      this.particles.push({
+        x: fx, y: fy, z: 0.2,
+        vx: -3.2 - this.rng() * 1.6, vy: (this.rng() - 0.5) * 0.6, vz: 0.6 + this.rng(),
+        color: this.palette.ally, life: 1.1, decay: 0.9
+      });
     }
+    this.playSpatial(6, 3.5, { freq: 300, type: "sine", duration: 0.3, gain: 0.7 });
   }
 
   triggerCapture(nodeIndex, maxNodes) {
-    if (this.destroyed || !this.scene) return;
-    this.nodes.forEach(node => this.removeMesh(node));
     this.nodes = [];
-
-    // Create glowing technical nodes
-    const spacing = 10 / (maxNodes + 1);
-    const geo = this.getGeometry("node", () => new THREE.CylinderGeometry(0.3, 0.3, 0.8, 6));
-    const mat = this.getMaterial("node", () => new THREE.MeshStandardMaterial({
-      color: 0x70e5d0,
-      emissive: 0x70e5d0,
-      emissiveIntensity: 0.8
-    }));
+    const spacing = 8 / (maxNodes + 1);
     for (let i = 1; i <= nodeIndex; i++) {
-      const x = -5 + i * spacing;
-      const node = new THREE.Mesh(geo, mat);
-      node.position.set(x, 0.4, 0);
-      this.scene.add(node);
+      const node = { x: 3.5 + i * spacing, y: GRID_H / 2 - 0.5 };
       this.nodes.push(node);
-      this.createSparks(node.position, 15, 0x70e5d0);
+      this.burst(node.x, node.y, 14, this.palette.node);
     }
+    this.playSpatial(3.5 + nodeIndex * spacing, GRID_H / 2, { freq: 210, type: "square", duration: 0.35, gain: 0.9 });
   }
 
   triggerDomain() {
-    if (this.destroyed || !this.scene) return;
-    this.removeMesh(this.domainDome);
-    const geo = this.getGeometry("domain", () => new THREE.SphereGeometry(2.5, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2));
-    const mat = this.getMaterial("domain", () => new THREE.MeshBasicMaterial({
-      color: 0xab68ff,
-      transparent: true,
-      opacity: 0.25,
-      wireframe: true
-    }));
-    this.domainDome = new THREE.Mesh(geo, mat);
-    this.domainDome.position.set(-8, 0, 0);
-    this.scene.add(this.domainDome);
-    this.domainDomeLife = 4.0; // 4 seconds duration
+    this.domainLife = 4.0;
+    this.burst(ALLY_SPAWN.x + 1, ALLY_SPAWN.y, 26, this.palette.domain);
+    this.playSpatial(ALLY_SPAWN.x, ALLY_SPAWN.y, { freq: 140, type: "sine", duration: 0.6, gain: 1.1 });
   }
 
   triggerAssault() {
-    if (this.destroyed || !this.scene) return;
     this.isAssaulting = true;
-    // Boost speed of all active allies and make them rush boss
-    this.allies.forEach(a => {
-      a.speed = 6.0;
-    });
-
-    // Boss portal takes massive spark explosion.
+    for (const ally of this.allies) {
+      ally.speed = 5.2;
+      ally.path = null; // assault overrides move orders
+    }
     window.clearTimeout(this.assaultTimer);
     this.assaultTimer = window.setTimeout(() => {
-      if (!this.destroyed) this.createSparks({ x: 8, y: 1.0, z: 0 }, 50, 0xff7f79);
+      if (!this.destroyed) {
+        this.burst(BOSS_TILE.x, BOSS_TILE.y, 40, this.palette.enemy);
+        this.playSpatial(BOSS_TILE.x, BOSS_TILE.y, { freq: 90, type: "sawtooth", duration: 0.5, gain: 1.2 });
+      }
       this.isAssaulting = false;
     }, 1200);
   }
 
-  createSparks(pos, count, colorHex) {
-    if (this.destroyed || !this.scene) return;
-    const geo = this.getGeometry("spark", () => new THREE.SphereGeometry(0.06, 4, 4));
-    const mat = this.getSparkMaterial(colorHex);
-
+  burst(fx, fy, count, color) {
+    if (this.destroyed) return;
     for (let i = 0; i < count; i++) {
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(pos.x, pos.y, pos.z);
-      this.scene.add(mesh);
-
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 0.5 + Math.random() * 2.0;
+      const angle = this.rng() * Math.PI * 2;
+      const speed = 0.5 + this.rng() * 1.8;
       this.particles.push({
-        mesh,
-        velocity: new THREE.Vector3(
-          Math.cos(angle) * speed,
-          0.8 + Math.random() * 2.0,
-          Math.sin(angle) * speed
-        ),
-        color: colorHex,
-        life: 1.0,
-        decay: 1.5 + Math.random() * 1.5
+        x: fx, y: fy, z: 0.15,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        vz: 1.2 + this.rng() * 2,
+        color, life: 1, decay: 1.4 + this.rng() * 1.4
       });
     }
+  }
+
+  // --- simulation ---------------------------------------------------------
+
+  updateUnits(dt) {
+    // Allies: follow explicit path; otherwise advance on the boss lane.
+    for (let i = this.allies.length - 1; i >= 0; i--) {
+      const ally = this.allies[i];
+      let target;
+      if (ally.path && ally.path.length > 0) {
+        target = ally.path[0];
+        const dx = target.x - ally.x;
+        const dy = target.y - ally.y;
+        if (dx * dx + dy * dy < 0.05) {
+          ally.path.shift();
+          if (ally.path.length === 0) ally.path = null;
+        }
+      } else if (!ally.path && performance.now() < ally.holdUntil && !this.isAssaulting) {
+        target = null; // hold position (defender behavior after a move order)
+      } else {
+        target = { x: GOAL_X, y: ally.y };
+      }
+      if (target) {
+        const mag = Math.hypot(target.x - ally.x, target.y - ally.y) || 1;
+        const preferred = {
+          x: ((target.x - ally.x) / mag) * ally.speed,
+          y: ((target.y - ally.y) / mag) * ally.speed
+        };
+        const v = steer(ally, preferred, this.allies);
+        ally.x += v.x * dt;
+        ally.y = Math.max(0.4, Math.min(GRID_H - 0.4, ally.y + v.y * dt));
+        ally.facing = directionIndex(v.x, v.y);
+      }
+      if (ally.x >= GOAL_X) {
+        this.burst(ally.x, ally.y, 6, this.palette.ally);
+        this.allies.splice(i, 1);
+        this.selection.delete(ally);
+      }
+    }
+
+    // Enemies: scouts flank via laneY then cut in; others straight lane.
+    for (let i = this.enemies.length - 1; i >= 0; i--) {
+      const enemy = this.enemies[i];
+      const preferred = { x: -enemy.speed, y: 0 };
+      if (enemy.archetype === "scout" && enemy.x > 5) {
+        preferred.y = (enemy.laneY - enemy.y) * 1.2;
+      } else if (enemy.x <= 5) {
+        preferred.y = (BOSS_TILE.y - enemy.y) * 0.6; // converge on the portal
+      }
+      const v = steer(enemy, preferred, this.enemies);
+      enemy.x += v.x * dt;
+      enemy.y = Math.max(0.4, Math.min(GRID_H - 0.4, enemy.y + v.y * dt));
+      enemy.facing = directionIndex(v.x, v.y);
+      if (enemy.x <= BREACH_X) {
+        this.burst(enemy.x, enemy.y, 10, this.palette.enemy);
+        this.playSpatial(enemy.x, enemy.y, { freq: 110, type: "sawtooth", duration: 0.5, gain: 1.3 });
+        this.enemies.splice(i, 1);
+        if (this.onEnemyBreach) this.onEnemyBreach();
+      }
+    }
+
+    // Clash detection (unchanged from the lane model).
+    for (let i = this.allies.length - 1; i >= 0; i--) {
+      const ally = this.allies[i];
+      for (let j = this.enemies.length - 1; j >= 0; j--) {
+        const enemy = this.enemies[j];
+        const dx = ally.x - enemy.x;
+        const dy = ally.y - enemy.y;
+        if (dx * dx + dy * dy < CLASH_DIST * CLASH_DIST) {
+          this.burst(ally.x, ally.y, 4, this.palette.spark);
+          this.playSpatial(ally.x, ally.y, { freq: 480, type: "triangle", duration: 0.1, gain: 0.5 });
+          ally.hp -= 1;
+          enemy.hp -= 1;
+          if (enemy.hp <= 0) this.enemies.splice(j, 1);
+          if (ally.hp <= 0) {
+            this.allies.splice(i, 1);
+            this.selection.delete(ally);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  updateParticles(dt) {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.life -= dt * p.decay;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.z += p.vz * dt;
+      p.vz -= 6.5 * dt;
+      if (p.z < 0.02) { p.z = 0.02; p.vz = -p.vz * 0.3; }
+      if (p.life <= 0) this.particles.splice(i, 1);
+    }
+    if (this.domainLife > 0) this.domainLife -= dt;
+    if (this.orderFlag) {
+      this.orderFlag.life -= dt;
+      if (this.orderFlag.life <= 0) this.orderFlag = null;
+    }
+  }
+
+  // --- render (dynamic painter queue) --------------------------------------
+
+  render() {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    ctx.clearRect(0, 0, this.view.width, this.view.height);
+    if (this.staticLayer) ctx.drawImage(this.staticLayer, 0, 0, this.view.width, this.view.height);
+
+    // Dynamic painter queue: nodes/portals/boss/units/particles sorted by floor depth.
+    const queue = [];
+    queue.push({ key: depthKey(ALLY_SPAWN.x, ALLY_SPAWN.y, 0, LAYER.prop), draw: () => this.drawPortal(ALLY_SPAWN.x, ALLY_SPAWN.y, this.palette.ally) });
+    queue.push({ key: depthKey(BOSS_TILE.x, BOSS_TILE.y, 0, LAYER.prop), draw: () => this.drawPortal(BOSS_TILE.x, BOSS_TILE.y, this.palette.enemy) });
+    for (const node of this.nodes) {
+      queue.push({ key: depthKey(node.x, node.y, 0, LAYER.prop), draw: () => this.drawNode(node) });
+    }
+    queue.push({ key: depthKey(BOSS_TILE.x + 0.4, BOSS_TILE.y + 0.4, 0, LAYER.unit), draw: () => this.drawBoss() });
+    for (const ally of this.allies) {
+      queue.push({ key: depthKey(ally.x, ally.y, this.elevationAt(ally.x, ally.y), LAYER.unit), draw: () => this.drawUnit(ally, ally.isPossessed ? "possessed" : "ally") });
+    }
+    for (const enemy of this.enemies) {
+      queue.push({ key: depthKey(enemy.x, enemy.y, this.elevationAt(enemy.x, enemy.y), LAYER.unit), draw: () => this.drawUnit(enemy, "enemy") });
+    }
+    for (const p of this.particles) {
+      queue.push({ key: depthKey(p.x, p.y, 0, LAYER.fx), draw: () => this.drawParticle(p) });
+    }
+    queue.sort((a, b) => a.key - b.key);
+    for (const item of queue) item.draw();
+
+    if (this.domainLife > 0) this.drawDomain();
+    if (this.orderFlag) this.drawOrderFlag();
+    if (this.dragRect) this.drawDragRect();
+  }
+
+  drawPortal(fx, fy, color) {
+    const ctx = this.ctx;
+    const p = this.project(fx, fy, 0);
+    const s = this.view.scale;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, TILE_W * 0.55 * s, TILE_H * 0.55 * s, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 0.3;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, TILE_W * 0.38 * s, TILE_H * 0.38 * s, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  drawNode(node) {
+    const ctx = this.ctx;
+    const base = this.project(node.x, node.y, 0);
+    const s = this.view.scale;
+    const h = 26 * s;
+    ctx.fillStyle = this.palette.node;
+    ctx.globalAlpha = 0.9;
+    ctx.fillRect(base.x - 4 * s, base.y - h, 8 * s, h);
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.ellipse(base.x, base.y, 16 * s, 8 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  drawBoss() {
+    const ctx = this.ctx;
+    const p = this.project(BOSS_TILE.x, BOSS_TILE.y, 0);
+    const s = this.view.scale;
+    if (this.bossImage) {
+      const w = 72 * s;
+      const h = w * (this.bossImage.height / this.bossImage.width);
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + 4 * s, 30 * s, 12 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.drawImage(this.bossImage, p.x - w / 2, p.y - h + 6 * s, w, h);
+    } else {
+      ctx.fillStyle = this.palette.enemy;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y - 52 * s);
+      ctx.lineTo(p.x + 20 * s, p.y);
+      ctx.lineTo(p.x - 20 * s, p.y);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  drawUnit(unit, kind) {
+    const ctx = this.ctx;
+    const z = this.elevationAt(unit.x, unit.y);
+    const p = this.project(unit.x, unit.y, z);
+    const s = this.view.scale;
+    const sprite = this.unitSprite(kind);
+    const size = 48 * s * (kind === "enemy" && unit.archetype === "reinforce" ? 1.2 : 1);
+
+    if (this.selection.has(unit)) {
+      ctx.strokeStyle = "#f4f7ff";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + 2 * s, 15 * s, 7.5 * s, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.drawImage(sprite, p.x - size / 2, p.y - size * 0.8, size, size);
+
+    // facing tick (8-direction indicator standing in for directional sheets)
+    const angle = -unit.facing * (Math.PI / 4);
+    ctx.strokeStyle = kind === "enemy" ? this.palette.enemy : this.palette.ally;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y - 14 * s);
+    ctx.lineTo(p.x + Math.cos(angle) * 8 * s, p.y - 14 * s + Math.sin(angle) * 4 * s);
+    ctx.stroke();
+  }
+
+  drawParticle(p) {
+    const ctx = this.ctx;
+    const pos = this.project(p.x, p.y, 0);
+    const s = this.view.scale;
+    ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+    ctx.fillStyle = p.color;
+    ctx.fillRect(pos.x - 2 * s, pos.y - p.z * ELEV_H * s - 2 * s, 4 * s, 4 * s);
+    ctx.globalAlpha = 1;
+  }
+
+  drawDomain() {
+    const ctx = this.ctx;
+    const p = this.project(ALLY_SPAWN.x + 1, ALLY_SPAWN.y, 0);
+    const s = this.view.scale;
+    const r = (this.reducedMotion ? 1.2 : 1.2 + Math.sin(performance.now() / 300) * 0.08) * TILE_W * s;
+    ctx.strokeStyle = this.palette.domain;
+    ctx.globalAlpha = Math.min(0.7, this.domainLife / 2);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, r, r * 0.5, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y - ELEV_H * s, r * 0.8, r * 0.4, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  drawOrderFlag() {
+    const ctx = this.ctx;
+    const p = this.project(this.orderFlag.x, this.orderFlag.y, this.elevationAt(this.orderFlag.x, this.orderFlag.y));
+    const s = this.view.scale;
+    ctx.globalAlpha = Math.min(1, this.orderFlag.life);
+    ctx.strokeStyle = "#f4f7ff";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, 12 * s, 6 * s, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x, p.y - 18 * s);
+    ctx.lineTo(p.x + 10 * s, p.y - 14 * s);
+    ctx.lineTo(p.x, p.y - 10 * s);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  drawDragRect() {
+    const ctx = this.ctx;
+    const r = this.dragRect;
+    ctx.strokeStyle = "rgba(112, 229, 208, 0.9)";
+    ctx.fillStyle = "rgba(112, 229, 208, 0.12)";
+    ctx.lineWidth = 1;
+    const x = Math.min(r.x0, r.x1);
+    const y = Math.min(r.y0, r.y1);
+    const w = Math.abs(r.x1 - r.x0);
+    const h = Math.abs(r.y1 - r.y0);
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeRect(x, y, w, h);
+  }
+
+  // --- loop -----------------------------------------------------------------
+
+  animate() {
+    if (this.destroyed) return;
+    this.animationFrameId = requestAnimationFrame(() => this.animate());
+    const now = performance.now();
+    const dt = Math.min((now - this.lastTime) / 1000, 0.1);
+    this.lastTime = now;
+
+    this.aiAccumulator += dt * 1000;
+    if (this.aiAccumulator >= AI_TICK_MS) {
+      this.aiAccumulator = 0;
+      // AI tick slot (250ms): archetype decisions are cheap and framerate-independent.
+    }
+
+    this.updateUnits(dt);
+    this.updateParticles(dt);
+    this.render();
   }
 
   destroy() {
     if (this.destroyed) return;
     this.destroyed = true;
-
     if (this.resizeHandler) window.removeEventListener("resize", this.resizeHandler);
+    if (this.pointerHandlers) {
+      this.canvas?.removeEventListener("pointerdown", this.pointerHandlers.down);
+      this.canvas?.removeEventListener("pointermove", this.pointerHandlers.move);
+      this.canvas?.removeEventListener("pointerup", this.pointerHandlers.up);
+      this.canvas?.removeEventListener("pointercancel", this.pointerHandlers.cancel);
+    }
     window.clearTimeout(this.assaultTimer);
     if (this.animationFrameId !== null) cancelAnimationFrame(this.animationFrameId);
+    this.audio?.ctx?.close?.().catch?.(() => undefined);
 
-    const geometries = new Set();
-    const materials = new Set();
-    this.collectResources(this.scene, geometries, materials);
-    this.resourceCache.geometries.forEach(geometry => geometries.add(geometry));
-    this.resourceCache.materials.forEach(material => materials.add(material));
-    this.scene?.clear();
-    geometries.forEach(geometry => geometry.dispose?.());
-    materials.forEach(material => material.dispose?.());
-    this.resourceCache.geometries.clear();
-    this.resourceCache.materials.clear();
-
-    this.renderer?.renderLists?.dispose?.();
-    this.renderer?.dispose();
     this.allies = [];
     this.enemies = [];
     this.particles = [];
     this.nodes = [];
-    this.domainDome = null;
-    this.domainDomeLife = 0;
-    this.isAssaulting = false;
-    this.allyPortal = null;
-    this.bossPortal = null;
-    this.bossMesh = null;
+    this.selection.clear();
+    this.spriteCache.clear();
+    this.staticLayer = null;
+    this.bossImage = null;
     this.onEnemyBreach = null;
+    this.pointerHandlers = null;
     this.resizeHandler = null;
     this.assaultTimer = 0;
     this.animationFrameId = null;
-    this.lastTime = 0;
-    this.renderer = null;
-    this.camera = null;
-    this.scene = null;
+    this.audio = null;
+    this.ctx = null;
     this.canvas = null;
-  }
-
-  animate() {
-    if (this.destroyed) return;
-    this.animationFrameId = requestAnimationFrame(() => this.animate());
-
-    const now = performance.now();
-    const dt = (now - this.lastTime) / 1000;
-    this.lastTime = now;
-
-    this.updateSimulation(dt);
-    this.render();
-  }
-
-  updateSimulation(dt) {
-    // 1. Update Domain Dome
-    if (this.domainDome) {
-      this.domainDomeLife -= dt;
-      this.domainDome.rotation.y += dt * 0.5;
-      if (this.domainDomeLife <= 0) {
-        this.scene.remove(this.domainDome);
-        this.domainDome = null;
-      }
-    }
-
-    // 2. Rotate portals
-    if (this.allyPortal) this.allyPortal.rotation.z += dt * 0.8;
-    if (this.bossPortal) this.bossPortal.rotation.y += dt * 0.5;
-
-    // 3. Move Allies (towards right, x increases)
-    for (let i = this.allies.length - 1; i >= 0; i--) {
-      const ally = this.allies[i];
-      ally.mesh.position.x += ally.speed * dt;
-
-      // If reaches boss portal
-      if (ally.mesh.position.x >= 7.8) {
-        this.createSparks(ally.mesh.position, 6, 0x70e5d0);
-        this.scene.remove(ally.mesh);
-        this.allies.splice(i, 1);
-      }
-    }
-
-    // 4. Move Enemies (towards left, x decreases)
-    for (let i = this.enemies.length - 1; i >= 0; i--) {
-      const enemy = this.enemies[i];
-      enemy.mesh.position.x -= enemy.speed * dt;
-
-      // If reaches ally portal
-      if (enemy.mesh.position.x <= -7.8) {
-        this.createSparks(enemy.mesh.position, 8, 0xff7f79);
-        this.scene.remove(enemy.mesh);
-        this.enemies.splice(i, 1);
-
-        // Breach trigger
-        if (this.onEnemyBreach) {
-          this.onEnemyBreach();
-        }
-      }
-    }
-
-    // 5. Check clashing (Ally vs Enemy collision)
-    for (let i = this.allies.length - 1; i >= 0; i--) {
-      const ally = this.allies[i];
-      for (let j = this.enemies.length - 1; j >= 0; j--) {
-        const enemy = this.enemies[j];
-
-        const dist = ally.mesh.position.distanceTo(enemy.mesh.position);
-        if (dist < 0.6) {
-          // Clash impact
-          this.createSparks(ally.mesh.position, 4, 0xffb85c);
-
-          ally.hp -= 1;
-          enemy.hp -= 1;
-
-          if (enemy.hp <= 0) {
-            this.scene.remove(enemy.mesh);
-            this.enemies.splice(j, 1);
-          }
-          if (ally.hp <= 0) {
-            this.scene.remove(ally.mesh);
-            this.allies.splice(i, 1);
-            break; // Ally is dead, stop checking other enemies
-          }
-        }
-      }
-    }
-
-    // 6. Update particles
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i];
-      p.life -= dt * p.decay;
-
-      if (p.mesh) {
-        p.mesh.position.addScaledVector(p.velocity, dt);
-        p.velocity.y -= 9.8 * dt; // gravity
-        if (p.mesh.position.y < 0.05) {
-          p.mesh.position.y = 0.05;
-          p.velocity.y = -p.velocity.y * 0.3; // bounce
-        }
-
-        if (p.life <= 0) {
-          this.scene.remove(p.mesh);
-          this.particles.splice(i, 1);
-        }
-      } else {
-        // Line/copy particles (used for extract)
-        p.position.addScaledVector(p.velocity, dt);
-        if (p.life <= 0) {
-          this.particles.splice(i, 1);
-        }
-      }
-    }
-  }
-
-  render() {
-    if (this.renderer && this.scene && this.camera) {
-      this.renderer.render(this.scene, this.camera);
-    }
   }
 }

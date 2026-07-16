@@ -14,6 +14,7 @@ import {
   startCampaign
 } from "./campaign-state.js";
 import { BattleVisualizer } from "./battle-visualizer.js";
+import { getBattlePresentation } from "./battle-presentation.js";
 import { createLiquidEther } from "./liquid-ether.js";
 
 const BUILD_TAG = "abyssal-surge-static-v1";
@@ -34,6 +35,7 @@ const COOLDOWN_SECONDS = Object.freeze({
   domain: 15,
   assault: 3
 });
+const BATTLE_PREPARATION_MS = 25_000;
 const BOSS_SPEC = Object.freeze([
   Object.freeze({ threat: "Class A", counter: 1, lore: "The forge bridge's ashbound sentinel breaks intruders against the drowned iron." }),
   Object.freeze({ threat: "Class S", counter: 2, lore: "A tactician of listening stone that turns every uncovered route into a killing field." }),
@@ -194,6 +196,20 @@ const elements = Object.freeze({
   statActiveItems: document.querySelector("#stat-active-items"),
   waveIndicator: document.querySelector("#battle-wave-indicator"),
   battleCanvas: document.querySelector("#battle-canvas-3d"),
+  battleField: document.querySelector("#battle-field"),
+  battleBrief: document.querySelector("#battle-tactical-brief"),
+  battleOperation: document.querySelector("#battle-operation"),
+  battleDoctrine: document.querySelector("#battle-doctrine"),
+  battleAllyLabel: document.querySelector("#battle-ally-label"),
+  battleHostileLabel: document.querySelector("#battle-hostile-label"),
+  battlePressure: document.querySelector("#battle-pressure"),
+  battleFallback: document.querySelector("#battle-visual-fallback"),
+  battleFallbackOperation: document.querySelector("#battle-fallback-operation"),
+  battleFallbackDoctrine: document.querySelector("#battle-fallback-doctrine"),
+  battleFallbackAllyLabel: document.querySelector("#battle-fallback-ally-label"),
+  battleFallbackHostileLabel: document.querySelector("#battle-fallback-hostile-label"),
+  battleOverlayAllyLabel: document.querySelector("#battle-overlay-ally-label"),
+  battleOverlayHostileLabel: document.querySelector("#battle-overlay-hostile-label"),
   stageNumber: document.querySelector("#stage-number"),
   stageHeading: document.querySelector("#stage-heading"),
   stageRegion: document.querySelector("#stage-region"),
@@ -240,7 +256,9 @@ let narratedOutcome = null;
 let activeView = "scenario";
 let visualizer = null;
 let waveTimer = 0;
+let wavePreparationTimer = 0;
 let cooldownTimer = 0;
+let battleVisualFallback = false;
 let waveIndex = 0;
 const cooldowns = new Map();
 let pendingNextScenario = false;
@@ -339,11 +357,52 @@ function remainingCooldown(action, now = performance.now()) {
   return Math.max(0, (cooldowns.get(action) ?? 0) - now);
 }
 
+function setBattlePressure(phase, label) {
+  elements.waveIndicator.dataset.phase = phase;
+  elements.waveIndicator.textContent = label;
+  elements.battlePressure.textContent = phase === "preparation"
+    ? "Preparation window: issue commands before the first hostile wave enters the lane."
+    : phase === "live"
+      ? "Live-wave pressure: keep the command pad active while hostiles cross the lane."
+      : "Static tactical fallback: rendering is unavailable, but command rules remain active.";
+}
+
+function renderBattlePresentation(stage) {
+  const presentation = getBattlePresentation(stage.id);
+  if (elements.battleField.dataset.stage !== stage.id) {
+    const { palette } = presentation;
+    elements.battleField.dataset.stage = stage.id;
+    elements.battleField.style.setProperty("--battle-background", palette.background);
+    elements.battleField.style.setProperty("--battle-ally", palette.ally);
+    elements.battleField.style.setProperty("--battle-hostile", palette.hostile);
+    elements.battleField.style.setProperty("--battle-accent", palette.accent);
+    elements.battleOperation.textContent = presentation.operation;
+    elements.battleDoctrine.textContent = presentation.doctrine;
+    elements.battleAllyLabel.textContent = presentation.allyLabel;
+    elements.battleHostileLabel.textContent = presentation.hostileLabel;
+    elements.battleFallbackOperation.textContent = presentation.operation;
+    elements.battleFallbackDoctrine.textContent = presentation.doctrine;
+    elements.battleFallbackAllyLabel.textContent = presentation.allyLabel;
+    elements.battleFallbackHostileLabel.textContent = presentation.hostileLabel;
+    elements.battleOverlayAllyLabel.textContent = presentation.allyLabel;
+    elements.battleOverlayHostileLabel.textContent = presentation.hostileLabel;
+  }
+
+  const showFallback = activeView === "battle" && battleVisualFallback;
+  elements.battleCanvas.hidden = showFallback;
+  elements.battleFallback.hidden = !showFallback;
+  elements.battleBrief.dataset.presentation = stage.id;
+  return presentation;
+}
+
 function stopBattle() {
   window.clearInterval(waveTimer);
+  window.clearTimeout(wavePreparationTimer);
   window.clearInterval(cooldownTimer);
   waveTimer = 0;
+  wavePreparationTimer = 0;
   cooldownTimer = 0;
+  battleVisualFallback = false;
   cooldowns.clear();
   visualizer?.destroy();
   visualizer = null;
@@ -354,7 +413,7 @@ function spawnBattleWave() {
   const stage = currentStage();
   const waveNames = ["SCOUT", "GUARD", "BOSS REINFORCEMENT"];
   const enemyCounts = [2, 3 + stage.number, 5 + stage.number];
-  elements.waveIndicator.textContent = `WAVE ${waveIndex + 1}/3 · ${waveNames[waveIndex]}`;
+  setBattlePressure("live", `LIVE WAVE · ${waveIndex + 1}/3 · ${waveNames[waveIndex]}`);
   visualizer.spawnEnemy(enemyCounts[waveIndex]);
   waveIndex = (waveIndex + 1) % waveNames.length;
 }
@@ -362,19 +421,34 @@ function spawnBattleWave() {
 function startBattle() {
   if (!campaign || campaign.status !== "active" || visualizer) return;
   waveIndex = 0;
-  visualizer = new BattleVisualizer(elements.battleCanvas);
-  visualizer.onEnemyBreach = () => {
-    void handleBattleBreach();
-  };
+  battleVisualFallback = false;
+  let battleVisualizer = null;
   try {
-    visualizer.init();
-    spawnBattleWave();
-    waveTimer = window.setInterval(spawnBattleWave, 6000);
-    cooldownTimer = window.setInterval(render, 100);
+    const presentation = renderBattlePresentation(currentStage());
+    battleVisualizer = new BattleVisualizer(elements.battleCanvas, presentation);
+    battleVisualizer.onEnemyBreach = () => {
+      if (visualizer === battleVisualizer) void handleBattleBreach();
+    };
+    battleVisualizer.init();
+    visualizer = battleVisualizer;
+    setBattlePressure("preparation", "PREPARATION · WAVE 1/3 · SCOUT INBOUND");
+    wavePreparationTimer = window.setTimeout(() => {
+      if (activeView !== "battle" || visualizer !== battleVisualizer || campaign?.status !== "active") return;
+      wavePreparationTimer = 0;
+      spawnBattleWave();
+      waveTimer = window.setInterval(spawnBattleWave, 6000);
+    }, BATTLE_PREPARATION_MS);
   } catch {
-    stopBattle();
-    elements.status.textContent = "Battle visualization is unavailable; command rules remain ready.";
+    window.clearInterval(waveTimer);
+    window.clearTimeout(wavePreparationTimer);
+    waveTimer = 0;
+    wavePreparationTimer = 0;
+    battleVisualizer?.destroy();
+    if (visualizer === battleVisualizer) visualizer = null;
+    battleVisualFallback = true;
+    setBattlePressure("fallback", "STATIC TACTICAL MAP · COMMAND PAD READY");
   }
+  if (!cooldownTimer) cooldownTimer = window.setInterval(render, 100);
 }
 
 function showView(view) {
@@ -433,12 +507,15 @@ function render() {
   const benefits = getCampaignBenefits(campaign);
   const available = new Set(getAvailableActions(campaign));
   const isComplete = campaign.status === "campaign-complete";
+  renderBattlePresentation(stage);
 
   elements.stageNumber.textContent = `Stage ${stage.number} of ${STAGES.length}`;
   elements.stageHeading.textContent = stage.title;
   elements.stageRegion.textContent = stage.region;
   elements.stageObjective.textContent = stage.objective;
-  elements.status.textContent = campaign.lastMessage;
+  elements.status.textContent = battleVisualFallback && activeView === "battle"
+    ? "Battle visualization is unavailable; command rules remain ready."
+    : campaign.lastMessage;
   elements.souls.textContent = String(state.souls);
   elements.legion.textContent = `${state.legion} / ${state.capacity}`;
   elements.nodes.textContent = `${state.nodes} / ${stage.nodeGoal}`;
