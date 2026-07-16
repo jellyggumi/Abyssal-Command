@@ -313,15 +313,34 @@ button:focus-visible, a:focus-visible {
 .spawned-unit {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.6rem;
+  transform: translate(-50%, -50%);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
   pointer-events: none;
-  filter: drop-shadow(0 0 4px rgba(255,255,255,0.4));
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+  animation: walk-wiggle 0.5s infinite alternate ease-in-out;
+  transition: left 0.1s linear;
+}
+@keyframes walk-wiggle {
+  0% { transform: translate(-50%, -55%) rotate(-6deg); }
+  100% { transform: translate(-50%, -45%) rotate(6deg); }
 }
 .unit-soldier {
-  filter: drop-shadow(0 0 6px var(--cinder));
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4), inset 0 0 8px rgba(239, 68, 68, 0.3);
+  filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.6));
 }
 .unit-shield {
-  filter: drop-shadow(0 0 6px var(--signal));
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4), inset 0 0 8px rgba(59, 130, 246, 0.3);
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.6));
 }
 

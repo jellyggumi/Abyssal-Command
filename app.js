@@ -1002,6 +1002,53 @@ function render() {
       dom.voidAvatar.classList.remove("strike-vibe");
     }
   }
+  // Update RTS Monitor Panel
+  const monitorActiveCount = document.querySelector("#monitor-active-count");
+  const monitorListContainer = document.querySelector("#monitor-list-container");
+  const monitorPlaceholder = document.querySelector("#monitor-placeholder");
+
+  if (monitorActiveCount && monitorListContainer) {
+    monitorActiveCount.textContent = activeUnits.length;
+    
+    // Clear old elements
+    const items = [...monitorListContainer.querySelectorAll(".monitor-item")];
+    for (const item of items) {
+      if (item.parentNode) item.parentNode.removeChild(item);
+    }
+    
+    if (activeUnits.length === 0) {
+      if (monitorPlaceholder) monitorPlaceholder.style.display = "block";
+    } else {
+      if (monitorPlaceholder) monitorPlaceholder.style.display = "none";
+      
+      for (const unit of activeUnits) {
+        const item = document.createElement("div");
+        item.className = "monitor-item";
+        item.style.display = "flex";
+        item.style.alignItems = "center";
+        item.style.justifyContent = "space-between";
+        item.style.fontSize = "0.85rem";
+        item.style.padding = "0.3rem 0.6rem";
+        item.style.background = "rgba(255,255,255,0.02)";
+        item.style.border = "1px solid rgba(255,255,255,0.05)";
+        item.style.borderRadius = "0.3rem";
+        
+        const badge = unit.type === "STRIKE" ? "⚔️ [STRIKE Soldier]" : "🛡️ [BRACE Shield]";
+        const badgeColor = unit.type === "STRIKE" ? "color: #ef4444;" : "color: #3b82f6;";
+        const eta = ((100 - unit.x) / unit.speed).toFixed(1);
+        
+        item.innerHTML = `
+          <span style="${badgeColor} font-weight: bold; min-width: 140px;">${badge}</span>
+          <div style="flex: 1; margin: 0 1rem; position: relative; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+            <div style="position: absolute; left: 0; top: 0; bottom: 0; width: ${unit.x}%; background: ${unit.type === "STRIKE" ? "#ef4444" : "#3b82f6"};"></div>
+          </div>
+          <span style="color: var(--muted); min-width: 90px; text-align: right;">Progress: ${unit.x.toFixed(1)}% (ETA: ${eta}s)</span>
+        `;
+        monitorListContainer.appendChild(item);
+      }
+    }
+  }
+
   if (typeof window !== "undefined") {
     window.surface = surface;
     window.encounter = encounter;
