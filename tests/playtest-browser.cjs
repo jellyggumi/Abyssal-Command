@@ -104,7 +104,9 @@ async function run() {
   let disruptCounterVerified = false;
 
   // Helper to play through a stage using active RTS choices
-  async function playStage(stageNum) {
+  async function playStage(stageNum, { strategy = "reactive", deepChecks = true } = {}) {
+    let stageOutcome = null;
+    let stageFoeHealth = null;
     console.log(`\n=== PLAYING STAGE ${stageNum} ===`);
     await page.waitForSelector("#play-screen:not([hidden])", { timeout: 2000 });
 
@@ -119,7 +121,7 @@ async function run() {
       };
     });
     console.log(`[Stage ${stageNum}] Cinematic overlay:`, JSON.stringify(cine));
-    if (stageNum === 1) {
+    if (stageNum === 1 && deepChecks) {
       assert.equal(cine.present, true, "First entry into a new encounter must show the stage cinematic overlay");
       assert.equal(cine.src, `assets/video/stage_intro_${stageNum}.mp4`, "Cinematic must load the per-stage intro video");
     }
@@ -156,7 +158,7 @@ async function run() {
     assert.equal(avatarsLoaded.void, true, "Void avatar image must be loaded successfully");
 
     // DET-RTS: Mouse lane-click spawn assertion (Stage 1 only, once)
-    if (stageNum === 1) {
+    if (stageNum === 1 && deepChecks) {
       console.log("[Stage 1] Testing mouse lane-click STRIKE spawn...");
       const laneClickResult = await page.evaluate(() => {
         const lane = document.querySelector("#rts-units-layer");
@@ -213,7 +215,8 @@ async function run() {
         const foeChargeVal = window.foeCharge;
         const useRealTimeVal = window.useRealTime;
         
-        return { healthVal, focusVal, outcomeVal, intentVal, integrityVal, surgeCounteredVal, rAFIdVal, lastTickTimeVal, foeChargeVal, useRealTimeVal, hostileCount, disruptCount };
+        const roundVal = window.encounter ? window.encounter.round : -1;
+        return { healthVal, focusVal, outcomeVal, intentVal, integrityVal, surgeCounteredVal, rAFIdVal, lastTickTimeVal, foeChargeVal, useRealTimeVal, hostileCount, disruptCount, roundVal };
       });
       
       console.log(`[Stage ${stageNum} Tick] Health: ${status.healthVal}, Focus: ${status.focusVal.toFixed(1)}, Intent: ${status.intentVal}, Countered: ${status.surgeCounteredVal}, rAFId: ${status.rAFIdVal}, lastTick: ${status.lastTickTimeVal?.toFixed(1)}, foeCharge: ${status.foeChargeVal?.toFixed(1)}, realTime: ${status.useRealTimeVal}`);
@@ -228,11 +231,37 @@ async function run() {
       
       if (status.outcomeVal !== "ACTIVE" || status.integrityVal <= 0) {
         console.log(`Stage ${stageNum} finished. Outcome: ${status.outcomeVal}, Foe Health remaining: ${status.healthVal}`);
+        stageOutcome = status.outcomeVal;
+        stageFoeHealth = status.healthVal;
         break;
       }
       
-      // Reactive RTS plays
-      if (status.focusVal >= 1) {
+      // Driver plays
+      if (strategy === "trade" && stageNum === 5) {
+        // DET8-E2E deliberate-trade line: STRIKE -> DISRUPT-on-SURGE -> STRIKE
+        if (status.focusVal >= 2) {
+          if (status.roundVal === 0) {
+            console.log(`[Stage 5/trade] Round 0 STRIKE (accepting the uncovered SURGE trade). Focus: ${status.focusVal.toFixed(1)}`);
+            await page.keyboard.press("s");
+          } else if (status.roundVal === 1 && status.intentVal === "SURGE" && !status.surgeCounteredVal) {
+            console.log(`[Stage 5/trade] Round 1 DISRUPT on SURGE. Focus: ${status.focusVal.toFixed(1)}`);
+            await page.keyboard.press("d");
+          } else if (status.roundVal === 2) {
+            console.log(`[Stage 5/trade] Round 2 finishing STRIKE. Focus: ${status.focusVal.toFixed(1)}`);
+            await page.keyboard.press("s");
+          }
+        }
+        await page.waitForTimeout(400);
+        continue;
+      } else if (strategy === "reactive" && stageNum === 5 && status.roundVal === 2 && status.focusVal >= 1) {
+        // DET8-E2E pinned anti-dominance sequence: DISRUPT, DISRUPT, BRACE.
+        // Round 2 deliberately BRACEs (not STRIKEs): reactive counterplay alone
+        // must end in HOLD with the foe alive at 3 — never a victory.
+        console.log(`[Stage 5/reactive] Round 2 BRACE (pinned D,D,B anti-dominance line). Focus: ${status.focusVal.toFixed(1)}`);
+        await page.keyboard.press("b");
+        await page.waitForTimeout(400);
+        continue;
+      } else if (status.focusVal >= 1) {
         if (status.intentVal === "SURGE") {
           if (!status.surgeCounteredVal) {
             console.log(`[Stage ${stageNum}] Disrupting Foe's SURGE! Focus: ${status.focusVal.toFixed(1)}`);
@@ -272,6 +301,8 @@ async function run() {
     // Transition to terminal screen
     await page.waitForSelector("#terminal-screen:not([hidden])", { timeout: 2000 });
     console.log(`Stage ${stageNum} Terminal screen is visible.`);
+    const commandLog = await page.evaluate(() => window.commandLog || []);
+    console.log(`Stage ${stageNum} command log:`, JSON.stringify(commandLog));
     
     // Save a screenshot for visual evidence at Stage 1 and Stage 5
     if (stageNum === 1 || stageNum === 5) {
@@ -284,23 +315,48 @@ async function run() {
       console.log(`Transitioning to Stage ${stageNum + 1}...`);
       await page.click("#continue-button");
     }
+    return { outcome: stageOutcome, foeHealth: stageFoeHealth, commandLog };
   }
   
-  // Play through all 5 stages
+  // === CAMPAIGN 1 (reactive baseline) — DET8-E2E anti-dominance evidence ===
+  const campaign1 = [];
   for (let i = 1; i <= 5; i++) {
-    await playStage(i);
+    campaign1.push(await playStage(i));
   }
+  for (let i = 0; i < 4; i++) {
+    assert.equal(campaign1[i].outcome, "VICTORY", `Stage ${i + 1} must remain winnable by reactive play`);
+  }
+  assert.equal(campaign1[4].outcome, "HOLD", "ANTI-DOMINANCE: the pinned reactive D,D,B line on Stage 5 must end in HOLD, never VICTORY");
+  assert.equal(campaign1[4].foeHealth, 3, "ANTI-DOMINANCE: reactive counterplay must leave the Stage 5 foe alive at 3 health");
+  assert.deepEqual(campaign1[4].commandLog, ["DISRUPT", "DISRUPT", "BRACE"], "ANTI-DOMINANCE: the accepted Stage 5 command stream must be exactly D,D,B");
 
   // Cycle 006 campaign-level evidence
   assert.equal(sawHostileTelegraph, true, "Hostile void-spawn telegraph must be observed during at least one active charge cycle");
   assert.equal(disruptCounterVerified, true, "At least one DISRUPT counter must dispel the telegraph wave and field an Arcane Disruptor");
   console.log("Cycle 006 evidence: hostile telegraph observed and DISRUPT counter dispel verified.");
   
-  // Verify final campaign settlement details are rendered
-  console.log("\n=== VERIFYING CAMPAIGN SETTLEMENT ===");
+  // Campaign-1 settlement: stages 1-4 VICTORY x2 fragments + Stage 5 HOLD x0 = 8
+  console.log("\n=== VERIFYING CAMPAIGN 1 SETTLEMENT (reactive) ===");
   const settlementText = await page.locator("#settlement-summary").textContent();
   console.log("Settlement Summary:", settlementText);
   assert.ok(settlementText.includes("settled"), "Settlement summary must indicate campaign is settled");
+  assert.ok(settlementText.includes("8 fragments"), `HOLD must award zero: reactive campaign settles at exactly 8 fragments (got "${settlementText}")`);
+
+  // === CAMPAIGN 2 (deliberate trade) — DET8-E2E victory-line evidence ===
+  console.log("\n=== CAMPAIGN 2: DELIBERATE-TRADE STAGE 5 WIN ===");
+  await page.click("#restart-button");
+  await page.waitForSelector("#lobby-screen:not([hidden])", { timeout: 3000 });
+  await page.click("#begin-button");
+  const campaign2 = [];
+  for (let i = 1; i <= 5; i++) {
+    campaign2.push(await playStage(i, { strategy: i === 5 ? "trade" : "reactive", deepChecks: false }));
+  }
+  assert.equal(campaign2[4].outcome, "VICTORY", "TRADE LINE: STRIKE -> DISRUPT-on-SURGE -> STRIKE must win Stage 5 in the live browser");
+  assert.equal(campaign2[4].foeHealth, 0, "TRADE LINE: the Stage 5 foe must reach 0 health");
+  assert.deepEqual(campaign2[4].commandLog, ["STRIKE", "DISRUPT", "STRIKE"], "TRADE LINE: the accepted Stage 5 command stream must be exactly S,D,S");
+  const settlement2 = await page.locator("#settlement-summary").textContent();
+  console.log("Campaign 2 Settlement:", settlement2);
+  assert.ok(settlement2.includes("10 fragments"), `Trade campaign must settle at 10 fragments (got "${settlement2}")`);
 
   // DET7-SW: real service-worker integration check (v3 controls the page, fresh core via network-first)
   console.log("\n=== VERIFYING SERVICE WORKER v3 ===");

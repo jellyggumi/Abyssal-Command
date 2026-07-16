@@ -14,7 +14,7 @@ import {
 
 // DET7: cycle build marker — readable via page eval to verify the v3 service
 // worker serves fresh app.js after a deploy.
-const BUILD_TAG = "c007";
+const BUILD_TAG = "c008";
 if (typeof window !== "undefined") window.BUILD_TAG = BUILD_TAG;
 
 const dom = {
@@ -111,11 +111,14 @@ const FOCUS_EPSILON = 1e-9;
 // DET-STAGE: per-stage real-time presets (presentation-layer only; semantic core untouched).
 // Indexed by encounterIndex, clamped to array bounds.
 const STAGE_RT_PRESETS = [
-  { foeCooldown: 3.5, unitSpeed: 33.3 }, // Stage 1 — baseline, tutorial pacing
-  { foeCooldown: 3.2, unitSpeed: 33.3 }, // Stage 2 — pressure introduction
-  { foeCooldown: 3.0, unitSpeed: 36.0 }, // Stage 3 — mid-campaign tempo rise
-  { foeCooldown: 2.8, unitSpeed: 36.0 }, // Stage 4 — competing-responsibility stress
-  { foeCooldown: 2.5, unitSpeed: 40.0 }, // Stage 5 — accountable-stewardship finale
+  { foeCooldown: 3.5, unitSpeed: 33.3, focusRegen: 0.5 }, // Stage 1 — baseline, tutorial pacing
+  { foeCooldown: 3.2, unitSpeed: 33.3, focusRegen: 0.5 }, // Stage 2 — pressure introduction
+  { foeCooldown: 3.0, unitSpeed: 36.0, focusRegen: 0.5 }, // Stage 3 — mid-campaign tempo rise
+  { foeCooldown: 2.8, unitSpeed: 36.0, focusRegen: 0.5 }, // Stage 4 — competing-responsibility stress
+  // Stage 5 — accountable-stewardship finale. stage1-rules-v2 economy: focus
+  // is a finite budget (no passive regen) so the escalating DISRUPT cost and
+  // the D,D,B anti-dominance line bind in real time exactly as in the reducer.
+  { foeCooldown: 2.5, unitSpeed: 40.0, focusRegen: 0 },
 ];
 
 function stageRtPreset(index = encounterIndex) {
@@ -135,6 +138,9 @@ function resetRealtimeState({ clearUnits = true } = {}) {
     rAFId = null;
   }
   if (clearUnits) {
+    // DET8-DEPTH item 2: a pending Stage 4 sub-wave must not fire into a
+    // cleared lane (stage transition / restart bypasses removeHostileUnits).
+    clearBurstPairTimer();
     activeUnits = [];
     if (dom.unitsContainer) {
       dom.unitsContainer.innerHTML = "";
@@ -696,8 +702,17 @@ function rtsLoop(timestamp) {
   foeCharge += dt;
   if (foeCharge >= foeAttackCooldown) {
     foeCharge = 0;
+
+    // stage1-rules-v2 Stage 5: every round resolves through the reducer at
+    // command time (see recordCommand). The charge wrap is a PURE telegraph
+    // refresh — no damage, no round advance, no state mutation — so the
+    // recorded command stream stays the exact semantic game.
+    if (encounterIndex === 4) {
+      // Telegraph only; frame continues (regen/movement below still run).
+      spawnHostileWave();
+    } else {
     
-    // Resolve Foe Attack
+      // Resolve Foe Attack
     let adverseDamage = 0;
     let adversePressure = 0;
     if (encounter.foe_intent === "STRIKE") {
@@ -752,10 +767,12 @@ function rtsLoop(timestamp) {
     // DET6-FOE (rev): the NEXT charge cycle begins now — telegraph it with a
     // fresh hostile wave. spawnHostileWave clears any edge survivors first.
     spawnHostileWave();
+    }
   }
 
-  // 2. Player Focus regeneration
-  let regenRate = 0.5; // +0.5 Focus per second normally
+  // 2. Player Focus regeneration (per-stage preset; stage 5 has NO passive
+  // regen under stage1-rules-v2 — the RECOVER channel remains the only source)
+  let regenRate = stageRtPreset().focusRegen;
   if (isRecovering) {
     recoverTimer -= dt;
     if (recoverTimer <= 0) {
@@ -770,10 +787,34 @@ function rtsLoop(timestamp) {
   // Friendly units (direction +1) march right and resolve at the foe base;
   // hostile units (direction -1) march left and despawn at the player edge.
   // Hostile arrival is purely visual — no encounter state is touched.
+  // DET8-DEPTH item 1 — Stage 2 "feint": a hostile unit carrying feintAt
+  // freezes once at mid-lane for FEINT_PAUSE_SECONDS, then resumes at a
+  // precomputed faster speed (unit.postFeintSpeed) so total arrival time is
+  // unchanged. Integrated with dt (no per-frame timers); presentation-only.
   const nextUnits = [];
   for (const unit of activeUnits) {
     const direction = unit.direction === -1 ? -1 : 1;
-    unit.x += unit.speed * dt * direction;
+    let moveDt = dt;
+    if (unit.hostile && Number.isFinite(unit.feintAt) && !unit.feintDone) {
+      if (unit.pauseLeft > 0) {
+        // Mid-feint: x stays frozen while the pause timer burns down. Any
+        // leftover dt after the pause ends moves the unit this same frame.
+        unit.pauseLeft -= dt;
+        if (unit.pauseLeft <= 0) {
+          moveDt = -unit.pauseLeft;
+          unit.pauseLeft = 0;
+          unit.feintDone = true;
+          unit.speed = unit.postFeintSpeed;
+        } else {
+          moveDt = 0;
+        }
+      } else if (unit.x <= unit.feintAt) {
+        // Crossing the feint mark this frame: freeze here, start the pause.
+        unit.pauseLeft = FEINT_PAUSE_SECONDS;
+        moveDt = 0;
+      }
+    }
+    unit.x += unit.speed * moveDt * direction;
     if (direction === -1) {
       if (unit.x <= 0) {
         // Hostile reached the player edge: remove the element, drop the unit.
@@ -932,11 +973,51 @@ function spawnUnit(type, { hostile = false, startX = null, speed = null } = {}) 
   });
 }
 
+// DET8-DEPTH item 1 — Stage 2 "feint" tuning. A telegraph unit pauses once at
+// unit.feintAt (random 45-55% of the lane) for FEINT_PAUSE_SECONDS, then
+// resumes at postFeintSpeed so the original arrival time is preserved:
+// remaining distance / (remaining time budget - pause).
+const FEINT_PAUSE_SECONDS = 0.4;
+
+// DET8-DEPTH item 2 — Stage 4 "burst pair": one pending sub-wave timer, armed
+// by spawnHostileWave and cleared by removeHostileUnits (which every wave
+// reset path funnels through) so a stale timer never spawns into a dispelled
+// wave, a finished encounter, or the next stage.
+let burstPairTimer = null;
+function clearBurstPairTimer() {
+  if (burstPairTimer !== null) {
+    clearTimeout(burstPairTimer);
+    burstPairTimer = null;
+  }
+}
+
+// Decorate the most recently spawned hostile with presentation-only fields:
+// an extra lane-offset CSS class and/or the Stage 2 feint schedule. spawnUnit
+// does not return the record, so we reach for the tail of activeUnits.
+function tagLastHostile({ laneClass = null, feint = false, speed = null } = {}) {
+  const unit = activeUnits[activeUnits.length - 1];
+  if (!unit || !unit.hostile) return;
+  if (laneClass && unit.element && unit.element.classList) {
+    unit.element.classList.add(laneClass);
+  }
+  if (feint && Number.isFinite(speed) && speed > 0) {
+    const feintAt = 45 + Math.random() * 10; // pause somewhere in x 45-55%
+    const remainingTime = feintAt / speed; // time budget from feintAt to x=0
+    if (remainingTime > FEINT_PAUSE_SECONDS + 0.1) {
+      unit.feintAt = feintAt;
+      unit.feintDone = false;
+      unit.pauseLeft = 0;
+      unit.postFeintSpeed = feintAt / (remainingTime - FEINT_PAUSE_SECONDS);
+    }
+  }
+}
+
 // DET6-FOE (rev): remove every live hostile from the lane. With { dispel: true }
 // the element plays a brief scale/fade-out (`unit-dispel`, ~300ms, reduced-motion
 // aware via the global media query) before removal; otherwise removal is instant.
 // Purely cosmetic — activeUnits bookkeeping only, no encounter state touched.
 function removeHostileUnits({ dispel = false } = {}) {
+  clearBurstPairTimer();
   const survivors = [];
   for (const unit of activeUnits) {
     if (!unit.hostile) {
@@ -985,9 +1066,38 @@ function spawnHostileWave() {
   removeHostileUnits();
   const preset = stageRtPreset();
   const telegraphSpeed = 100 / preset.foeCooldown;
-  const hostileCount = encounterIndex <= 1 ? 1 : encounterIndex <= 3 ? 2 : 3;
+
+  // DET8-DEPTH item 2 — Stage 4 "burst pair": the 2-unit wave splits into two
+  // sub-waves (0ms / ~450ms) on distinct lane heights so it reads as a
+  // formation. The timer is guarded against surface/encounter/outcome drift
+  // and cleared by every removeHostileUnits path.
+  if (encounterIndex === 3) {
+    spawnUnit("VOIDSPAWN", { hostile: true, startX: 100, speed: telegraphSpeed });
+    tagLastHostile({ laneClass: "unit-lane-high" });
+    burstPairTimer = setTimeout(() => {
+      burstPairTimer = null;
+      if (surface !== "play" || encounterIndex !== 3 || encounter.outcome !== "ACTIVE") return;
+      spawnUnit("VOIDSPAWN", { hostile: true, startX: 100, speed: telegraphSpeed });
+      tagLastHostile({ laneClass: "unit-lane-low" });
+    }, 450);
+    flashLaneSpawn();
+    return;
+  }
+
+  let hostileCount = encounterIndex <= 1 ? 1 : 2;
+  if (encounterIndex >= 4) {
+    // DET8-DEPTH item 3b — Stage 5 telegraph pressure: +1 unit once the boss
+    // is nearly broken (foe_health <= 1). Visual only; capped at 4.
+    hostileCount = 3;
+    if (Number(encounter && encounter.foe_health) <= 1) hostileCount += 1;
+    hostileCount = Math.min(hostileCount, 4);
+  }
   for (let i = 0; i < hostileCount; i += 1) {
     spawnUnit("VOIDSPAWN", { hostile: true, startX: 100 - i * 3, speed: telegraphSpeed });
+    // DET8-DEPTH item 1 — Stage 2 "feint" schedule rides on the unit record.
+    if (encounterIndex === 1) {
+      tagLastHostile({ feint: true, speed: telegraphSpeed });
+    }
   }
   flashLaneSpawn();
 }
@@ -1120,22 +1230,93 @@ function recordCommand(command) {
       render();
     };
 
+    // ── stage1-rules-v2 Stage 5: reducer-routed rounds ──────────────────
+    // Every accepted command IS one full semantic round (player effect +
+    // foe effect + round advance) applied by the frozen core reducer, so
+    // the real-time game and the deterministic contract are one game.
+    // The charge wrap never mutates state here (pure telegraph); HOLD
+    // terminates naturally at round === schedule.length.
+    if (encounterIndex === 4) {
+      const record = makeCommand(command, encounter.round, sequence + 1);
+      const result = reduceEncounter(encounter, record);
+      if (!result.accepted) {
+        reject(result.reason);
+        return;
+      }
+      sequence += 1;
+      records.push(record);
+      totalCommandsRun++;
+      const before = encounter;
+      encounter = result.state;
+
+      // Presentation of the resolved round:
+      play(command.toLowerCase());
+      triggerFx(command);
+      if (command === "STRIKE" || command === "DISRUPT") {
+        spawnUnit(command);
+        if (dom.voidAvatar && dom.voidAvatar.classList) {
+          dom.voidAvatar.classList.add("damage-flash");
+          setTimeout(() => {
+            if (dom.voidAvatar && dom.voidAvatar.classList) {
+              dom.voidAvatar.classList.remove("damage-flash");
+            }
+          }, 400);
+        }
+      } else if (command === "BRACE") {
+        spawnUnit("BRACE");
+      } else if (command === "RECOVER" && dom.knightAvatar && dom.knightAvatar.classList) {
+        dom.knightAvatar.classList.add("recover-pulse");
+        setTimeout(() => {
+          if (dom.knightAvatar && dom.knightAvatar.classList) {
+            dom.knightAvatar.classList.remove("recover-pulse");
+          }
+        }, 800);
+      }
+      if (encounter.integrity < before.integrity && dom.knightAvatar && dom.knightAvatar.classList) {
+        dom.knightAvatar.classList.add("damage-flash");
+        setTimeout(() => {
+          if (dom.knightAvatar && dom.knightAvatar.classList) {
+            dom.knightAvatar.classList.remove("damage-flash");
+          }
+        }, 400);
+      }
+
+      // The old round is resolved: clear its telegraph, then either finish
+      // or telegraph the next round immediately (fresh charge cycle).
+      removeHostileUnits({ dispel: true });
+      if (encounter.outcome !== "ACTIVE") {
+        finishEncounter();
+        return;
+      }
+      foeCharge = 0;
+      spawnHostileWave();
+      lastMessage = commandAcceptanceMessage(command);
+      render();
+      saveGameState();
+      return;
+    }
+
     if (command === "STRIKE") {
-      if (!hasSufficientFocus()) {
+      const cost = commandCost(encounter, "STRIKE");
+      if (!hasSufficientFocus(cost)) {
         reject("FOCUS");
         return;
       }
-      encounter.focus -= 1;
+      encounter.focus -= cost;
       spawnUnit("STRIKE");
     } else if (command === "BRACE") {
-      if (!hasSufficientFocus()) {
+      const cost = commandCost(encounter, "BRACE");
+      if (!hasSufficientFocus(cost)) {
         reject("FOCUS");
         return;
       }
-      encounter.focus -= 1;
+      encounter.focus -= cost;
       spawnUnit("BRACE");
     } else if (command === "DISRUPT") {
-      if (!hasSufficientFocus()) {
+      // stage1-rules-v2: DISRUPT cost escalates with disrupt_uses on Stage 5.
+      // Same commandCost() source as the reducer — no divergent RT economy.
+      const cost = commandCost(encounter, "DISRUPT");
+      if (!hasSufficientFocus(cost)) {
         reject("FOCUS");
         return;
       }
@@ -1143,7 +1324,8 @@ function recordCommand(command) {
         reject("INTENT");
         return;
       }
-      encounter.focus -= 1;
+      encounter.focus -= cost;
+      encounter.disrupt_uses += 1;
       encounter.foe_health = Math.max(0, encounter.foe_health - 1);
       // DET6-FOE (rev): the counter landed (surge_countered false→true) —
       // dispel the live telegraph wave so the response reads on the lane.
@@ -1334,6 +1516,7 @@ function render() {
     window.useRealTime = useRealTime;
     window.isRecovering = isRecovering;
     window.recoverTimer = recoverTimer;
+    window.commandLog = records.map((r) => r.command);
   }
   const titles = STAGE_TITLES_LOCALIZED[currentLang] || STAGE_TITLES_LOCALIZED.en;
   const dict = DICTIONARY[currentLang] || DICTIONARY.en;
@@ -1373,6 +1556,25 @@ function render() {
     } else {
       dom.voidAvatar.classList.remove("surge-alert");
       dom.voidAvatar.classList.remove("strike-vibe");
+    }
+  }
+  // DET8-DEPTH item 3a — Stage 5 boss escalation aura. Driven from render()
+  // (already called every rtsLoop frame and on every state change — no new
+  // polling): tier 1 at foe_health <= 3, tier 2 at <= 1, exclusive tiers.
+  // Cleared on non-play surfaces, other stages, and non-ACTIVE outcomes.
+  if (dom.voidAvatar && dom.voidAvatar.classList) {
+    const bossLow = surface === "play" && encounterIndex === 4 && encounter.outcome === "ACTIVE"
+      ? Number(encounter.foe_health)
+      : NaN;
+    if (bossLow <= 1) {
+      dom.voidAvatar.classList.add("boss-aura-2");
+      dom.voidAvatar.classList.remove("boss-aura-1");
+    } else if (bossLow <= 3) {
+      dom.voidAvatar.classList.add("boss-aura-1");
+      dom.voidAvatar.classList.remove("boss-aura-2");
+    } else {
+      dom.voidAvatar.classList.remove("boss-aura-1");
+      dom.voidAvatar.classList.remove("boss-aura-2");
     }
   }
   // Update RTS Monitor Panel

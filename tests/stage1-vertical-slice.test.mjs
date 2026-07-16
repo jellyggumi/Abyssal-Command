@@ -279,10 +279,11 @@ test("current v1 browser slice keeps semantic local controls, records pointer/ke
     keyboard.restore();
   }
 
+  const { RULES_VERSION: liveRulesVersion } = await import(coreUrl);
   const expectedRecords = [
-    { rules_version: "stage1-rules-v1", command: "STRIKE", tick: 0, sequence: 1 },
-    { rules_version: "stage1-rules-v1", command: "STRIKE", tick: 1, sequence: 2 },
-    { rules_version: "stage1-rules-v1", command: "STRIKE", tick: 2, sequence: 3 },
+    { rules_version: liveRulesVersion, command: "STRIKE", tick: 0, sequence: 1 },
+    { rules_version: liveRulesVersion, command: "STRIKE", tick: 1, sequence: 2 },
+    { rules_version: liveRulesVersion, command: "STRIKE", tick: 2, sequence: 3 },
   ];
   assert.equal(pointer.replayCalls.length, 1, "A terminal result must validate one accumulated local replay.");
   assert.equal(keyboard.replayCalls.length, 1, "Keyboard input must validate one accumulated local replay at terminality.");
@@ -345,4 +346,24 @@ test("Pages publishes the disclosure page with the static runtime closure", () =
   assert.deepEqual([...archiveFiles].sort(), [...archiveClosure].sort(), "The Pages archive must ship the static runtime closure plus the assets tree.");
   assert.deepEqual([...inventorySource].sort(), [...archiveClosure].sort(), "The Pages inventory check must compare against the exact same allowlist.");
   assert.match(workflow, /node --check sw\.js/, "The Pages guard must syntax-check the service worker before shipping it.");
+});
+
+test("stage1-rules-v2 migration guard: v2 is pinned and stale v1 records are rejected", async () => {
+  const core = await import(coreUrl);
+  assert.equal(core.RULES_VERSION, "stage1-rules-v2", "Balance handoff pins the economy to stage1-rules-v2.");
+
+  const encounter = core.initialEncounter(core.CAMPAIGN_SCHEDULES[4], 4);
+  const staleV1Record = Object.freeze({
+    rules_version: "stage1-rules-v1",
+    command: "DISRUPT",
+    tick: 0,
+    sequence: 1,
+  });
+  const result = core.reduceEncounter(encounter, staleV1Record);
+  assert.equal(result.accepted, false, "A stale stage1-rules-v1 record must be rejected, not reinterpreted under the v2 economy.");
+  assert.equal(result.reason, "RULES_VERSION", "Rejection must name the rules-version mismatch.");
+
+  const freshRecord = core.makeCommand("DISRUPT", 0, 1);
+  const ok = core.reduceEncounter(encounter, freshRecord);
+  assert.equal(ok.accepted, true, "The same command under the live rules version must remain accepted.");
 });
