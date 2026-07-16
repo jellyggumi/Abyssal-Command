@@ -383,16 +383,29 @@ async function run() {
   await page.waitForSelector("#play-screen:not([hidden])", { timeout: 3000 });
   const singleApp = await page.evaluate(async () => {
     const before = window.encounter.foe_health;
+    const floatsBefore = window.combatFloatCount || 0;
     window.recordCommand ? window.recordCommand("STRIKE") : document.querySelector('[data-command="STRIKE"]').click();
     const afterCommand = window.encounter.foe_health;
+    // DET9-JUICE: a foe-damage float must appear over the void avatar.
+    await new Promise((r) => setTimeout(r, 120));
+    const damageFloatSeen = !!document.querySelector(".combat-float-damage");
+    const floatsAfter = window.combatFloatCount || 0;
+    // DET9-NUM: after the round (S5 SURGE answered by STRIKE trade), round 1
+    // intent is SURGE — DISRUPT (cost 1) escalates the curve for the badge.
+    document.querySelector('[data-command="DISRUPT"]').click();
+    const disruptBtn = document.querySelector('[data-command="DISRUPT"]');
+    const costBadge = disruptBtn ? (disruptBtn.querySelector(".cost-badge")?.textContent || null) : null;
     // Wait past a full lane traversal (100% / 40%/s = 2.5s) + margin.
     await new Promise((r) => setTimeout(r, 3200));
     const afterTraversal = window.encounter.foe_health;
-    return { before, afterCommand, afterTraversal, outcome: window.encounter.outcome };
+    return { before, afterCommand, afterTraversal, outcome: window.encounter.outcome, damageFloatSeen, floatsDelta: floatsAfter - floatsBefore, costBadge };
   });
   console.log("Single-application probe:", JSON.stringify(singleApp));
   assert.equal(singleApp.before - singleApp.afterCommand, 2, "Reducer must apply the STRIKE effect once at command time");
-  assert.equal(singleApp.afterTraversal, singleApp.afterCommand, "Unit arrival must NOT re-apply the STRIKE effect (foe health unchanged across traversal)");
+  assert.equal(singleApp.afterTraversal, singleApp.afterCommand - 1, "After the follow-up DISRUPT (-1 foe), arrival must NOT re-apply anything further");
+  assert.equal(singleApp.damageFloatSeen, true, "DET9-JUICE: foe damage must render a floating combat number");
+  assert.ok(singleApp.floatsDelta >= 2, `DET9-JUICE: the resolved round must spawn multiple vitals floats (got ${singleApp.floatsDelta})`);
+  assert.equal(singleApp.costBadge, "2⚡", `DET9-NUM: after one DISRUPT the button must surface the escalated cost 2⚡ (got ${singleApp.costBadge})`);
   await page.evaluate(() => localStorage.clear());
 
   // DET7-SW: real service-worker integration check (v3 controls the page, fresh core via network-first)

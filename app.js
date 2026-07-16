@@ -177,6 +177,7 @@ const DICTIONARY = {
     intentTitle: "Current threat:",
     commandsTitle: "Semantic commands",
     commandHelp: "Pointer/touch clicks and keyboard shortcuts record the same versioned command before the deterministic reducer resolves it. Unavailable commands are disabled rather than substituted.",
+    commandHelpStage5: "Stage 5: every accepted command resolves one FULL round \u2014 your effect and the foe's answer land together, and focus does not regenerate.",
     traceTitle: "Resolution trace",
     terminalTitle: "Stage 1 result",
     btnStrike: "Strike",
@@ -229,6 +230,7 @@ const DICTIONARY = {
     intentTitle: "현재 위협:",
     commandsTitle: "커맨드 콘솔",
     commandHelp: "마우스 클릭이나 키보드 단축키(S, B, D, R)를 누르면 결정론적 리듀서가 커맨드 입력을 처리합니다. 사용할 수 없는 커맨드는 비활성화됩니다.",
+    commandHelpStage5: "5\ub2e8\uacc4: \uc2b9\uc778\ub41c \ucee4\ub9e8\ub4dc 1\ud68c\uac00 \ud55c \ub77c\uc6b4\ub4dc \uc804\uccb4\ub97c \uacb0\uc0b0\ud569\ub2c8\ub2e4 \u2014 \ub0b4 \ud6a8\uacfc\uc640 \uc801\uc758 \uc751\uc218\uac00 \ub3d9\uc2dc\uc5d0 \uc801\uc6a9\ub418\uace0, \uc9d1\uc911\uc740 \uc7ac\uc0dd\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.",
     traceTitle: "전투 분석 로그",
     terminalTitle: "전투 결과 기록",
     btnStrike: "공격",
@@ -1172,7 +1174,7 @@ function translateUI() {
   }
 
   el("#commands-title", dict.commandsTitle);
-  el("#command-help", dict.commandHelp);
+  el("#command-help", encounterIndex === 4 ? `${dict.commandHelp} ${dict.commandHelpStage5 || ""}` : dict.commandHelp);
   el("#trace-title", dict.traceTitle);
   el("#terminal-title", dict.terminalTitle);
   el("#continue-button", dict.btnContinue);
@@ -1204,7 +1206,14 @@ function translateUI() {
     if (buttonsMap[cmd]) {
       const key = cmd === "STRIKE" ? "S" : cmd === "BRACE" ? "B" : cmd === "DISRUPT" ? "D" : "R";
       const cleanLabel = buttonsMap[cmd].replace(new RegExp(`\\s*${key}$`), "");
-      button.innerHTML = `${cleanLabel} <kbd>${key}</kbd>`;
+      // DET9-NUM: surface the live command cost when it exceeds the base 1
+      // (stage-5 escalating DISRUPT) so the economy is readable on the button.
+      let costBadge = "";
+      try {
+        const liveCost = commandCost(encounter, cmd);
+        if (liveCost > 1) costBadge = ` <span class="cost-badge">${liveCost}\u26a1</span>`;
+      } catch (err) { /* unknown command labels never break translation */ }
+      button.innerHTML = `${cleanLabel}${costBadge} <kbd>${key}</kbd>`;
     }
   }
 
@@ -1523,6 +1532,48 @@ function resetCampaign() {
 }
 
 
+
+// ── DET9-JUICE: floating combat numbers + screen shake (presentation-only) ──
+// Driven by STATE DIFFS in render(): any foe_health/integrity/pressure/guard/
+// focus delta becomes a float over its owner, no matter which path (reducer,
+// RT wrap, unit arrival) caused it. The quantified economy becomes visible.
+let lastVitals = null;
+let floatsSpawned = 0;
+let shakeTimer = null;
+
+function spawnCombatFloat(anchor, text, kind) {
+  if (!anchor || typeof document === "undefined" || !document.createElement) return;
+  try {
+    const float = document.createElement("span");
+    float.className = `combat-float combat-float-${kind}`;
+    float.textContent = text;
+    if (float.style) float.style.marginLeft = `${Math.round((Math.random() - 0.5) * 36)}px`;
+    if (!anchor.appendChild) return;
+    anchor.appendChild(float);
+    floatsSpawned++;
+    if (typeof window !== "undefined") window.combatFloatCount = floatsSpawned;
+    const cleanup = () => {
+      if (float.parentNode) float.parentNode.removeChild(float);
+    };
+    if (typeof float.addEventListener === "function") float.addEventListener("animationend", cleanup);
+    setTimeout(cleanup, 1400);
+  } catch (err) {
+    /* fake-DOM safety: floats are never load-bearing */
+  }
+}
+
+function triggerScreenShake() {
+  const el = dom.screens && dom.screens.play;
+  if (!el || !el.classList) return;
+  el.classList.remove("screen-shake");
+  void (el.offsetWidth || 0); // restart animation
+  el.classList.add("screen-shake");
+  if (shakeTimer) clearTimeout(shakeTimer);
+  shakeTimer = setTimeout(() => {
+    if (el.classList) el.classList.remove("screen-shake");
+  }, 400);
+}
+
 function render() {
   if (typeof window !== "undefined") {
     window.surface = surface;
@@ -1560,6 +1611,37 @@ function render() {
   if (dom.guardBar) dom.guardBar.style.width = percentage(encounter.guard, maxGuard);
   if (dom.pressureBar) dom.pressureBar.style.width = percentage(encounter.pressure, maxPressure);
   if (dom.foeHealthBar) dom.foeHealthBar.style.width = percentage(encounter.foe_health, maxFoeHealth);
+
+  // DET9-JUICE: diff vitals -> floats. Snapshot key ties floats to one
+  // encounter instance; transitions (continue/restart/resume) just resnapshot.
+  const vitalsKey = `${encounterIndex}|${outcomes.length}`;
+  const vitals = {
+    key: vitalsKey,
+    foe: Number(encounter.foe_health),
+    integrity: Number(encounter.integrity),
+    pressure: Number(encounter.pressure),
+    guard: Number(encounter.guard),
+    focus: Number(encounter.focus),
+  };
+  if (surface === "play" && lastVitals && lastVitals.key === vitalsKey) {
+    const dFoe = vitals.foe - lastVitals.foe;
+    if (dFoe < 0) spawnCombatFloat(dom.voidAvatar, `${dFoe}`, "damage");
+    const dInt = vitals.integrity - lastVitals.integrity;
+    if (dInt < 0) {
+      spawnCombatFloat(dom.knightAvatar, `${dInt}`, "damage");
+      if (dInt <= -2) triggerScreenShake();
+    } else if (dInt > 0) {
+      spawnCombatFloat(dom.knightAvatar, `+${dInt}`, "heal");
+    }
+    const dPressure = vitals.pressure - lastVitals.pressure;
+    if (dPressure > 0) spawnCombatFloat(dom.knightAvatar, `+${dPressure} \u26a0`, "pressure");
+    const dGuard = vitals.guard - lastVitals.guard;
+    if (dGuard > 0) spawnCombatFloat(dom.knightAvatar, `+${dGuard} \u26e8`, "guard");
+    const dFocus = vitals.focus - lastVitals.focus;
+    if (dFocus <= -0.9) spawnCombatFloat(dom.knightAvatar, `${Math.round(dFocus)} \u26a1`, "focus");
+    else if (dFocus >= 0.9) spawnCombatFloat(dom.knightAvatar, `+${Math.round(dFocus)} \u26a1`, "focus");
+  }
+  lastVitals = vitals;
 
   // Update Foe active intent visual alerts
   if (dom.voidAvatar && dom.voidAvatar.classList) {
@@ -1983,7 +2065,13 @@ function commandAvailable(command) {
 
 function terminalCopy(outcome) {
   const label = traceOutcomeText(outcome);
-  const details = outcomeText(outcome);
+  let details = outcomeText(outcome);
+  // World-bible S5 beat: HOLD is survival, not an answer — point at the trade.
+  if (outcome === "HOLD" && encounterIndex === 4) {
+    details = currentLang === "ko"
+      ? "전장은 지켜냈지만 서지의 물음은 답을 얻지 못했다. 보상 0 — 확실함을 내주는 교환만이 승리를 연다"
+      : "the field held, but the Surge's question stands unanswered. Award 0 — only a deliberate trade opens victory";
+  }
   return `${label} — ${details}.`;
 }
 
