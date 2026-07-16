@@ -26,13 +26,17 @@ for (let stage = 0; stage < CAMPAIGN_SCHEDULES.length; stage++) {
   console.log(`Initial State: Integrity=${encounter.integrity}/${encounter.max_integrity}, Focus=${encounter.focus}/${encounter.max_focus}, Foe Health=${encounter.foe_health}/${encounter.max_foe_health}, Foe Intent=${encounter.foe_intent}`);
   
   while (encounter.outcome === "ACTIVE") {
-    // Determine the optimal action (tactical AI)
-    let command = "STRIKE";
-    if (encounter.focus === 0) {
+    // Stage 5 requires a readable risk trade: absorb the first SURGE, counter
+    // the second, then finish before the final STRIKE resolves. Earlier stages
+    // retain the baseline counterplay smoke policy.
+    let command;
+    if (stage === 4) {
+      command = ["STRIKE", "DISRUPT", "STRIKE"][encounter.round];
+    } else if (encounter.focus === 0) {
       command = "RECOVER";
-    } else if (encounter.foe_intent === "SURGE" && encounter.focus >= 1) {
+    } else if (encounter.foe_intent === "SURGE") {
       command = "DISRUPT";
-    } else if (encounter.foe_intent === "STRIKE" && encounter.focus >= 1 && encounter.guard < 2) {
+    } else if (encounter.guard < 2) {
       command = "BRACE";
     } else {
       command = "STRIKE";
@@ -52,6 +56,7 @@ for (let stage = 0; stage < CAMPAIGN_SCHEDULES.length; stage++) {
   
   console.log(`Stage ${stage + 1} finished with outcome: ${encounter.outcome}`);
   assert.ok(["VICTORY", "HOLD"].includes(encounter.outcome), `Encounter must end in VICTORY or HOLD, got ${encounter.outcome}`);
+  if (stage === 4) assert.equal(encounter.outcome, "VICTORY", "Stage 5 needs the deliberate victory line, not a passive HOLD");
   
   outcomes.push(encounter.outcome);
 }

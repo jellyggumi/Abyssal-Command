@@ -3,7 +3,10 @@ import test from "node:test";
 
 import {
   RULES_VERSION,
+  CAMPAIGN_SCHEDULES,
+  awardFor,
   canonicalJson,
+  commandCost,
   initialEncounter,
   makeCommand,
   reduceEncounter,
@@ -28,8 +31,8 @@ const CASES = Object.freeze({
     outcome: "HOLD",
   }),
   HU: Object.freeze({
-    schedule: Object.freeze(["SURGE", "SURGE", "STRIKE"]),
-    plan: Object.freeze(["DISRUPT", "DISRUPT", "BRACE"]),
+    schedule: Object.freeze(["STRIKE", "SURGE", "SURGE"]),
+    plan: Object.freeze(["BRACE", "DISRUPT", "DISRUPT"]),
     outcome: "HOLD",
   }),
   RT: Object.freeze({
@@ -80,9 +83,9 @@ test("P2 CP-SURGE: DISRUPT exactly counters the displayed SURGE", () => {
   assert.equal(result.state.pressure, 1);
   assert.equal(result.state.foe_health, 10);
   assert.deepEqual(result.state.trace.map((event) => [event.command, event.adverse_damage, event.adverse_pressure]), [
-    ["DISRUPT", 0, 0],
-    ["DISRUPT", 0, 0],
     ["BRACE", 0, 0],
+    ["DISRUPT", 0, 0],
+    ["DISRUPT", 0, 0],
   ]);
 });
 
@@ -193,17 +196,17 @@ test("replay leaves input schedule and records immutable", () => {
 });
 
 
-test("P2 corpus campaign replays produce the published fragment totals", () => {
+test("P2 corpus campaign replays preserve victory-only fragment totals", () => {
   const campaigns = [
     ["C00", ["D", "D", "D", "D", "D"], 0],
-    ["C01", ["HS", "D", "D", "D", "D"], 1],
+    ["C01", ["HS", "D", "D", "D", "D"], 0],
     ["C02", ["V", "D", "D", "D", "D"], 2],
-    ["C03", ["V", "HS", "D", "D", "D"], 3],
-    ["C04", ["V", "HU", "D", "D", "D"], 3],
-    ["C05", ["V", "RT", "D", "D", "D"], 3],
+    ["C03", ["V", "HS", "D", "D", "D"], 2],
+    ["C04", ["V", "HU", "D", "D", "D"], 2],
+    ["C05", ["V", "RT", "D", "D", "D"], 2],
     ["C06", ["V", "V", "D", "D", "D"], 4],
-    ["C07", ["V", "V", "HS", "D", "D"], 5],
-    ["C08", ["V", "V", "HS", "HU", "D"], 6],
+    ["C07", ["V", "V", "HS", "D", "D"], 4],
+    ["C08", ["V", "V", "HS", "HU", "D"], 4],
     ["C09", ["V", "V", "V", "V", "V"], 10],
   ];
 
@@ -239,6 +242,51 @@ test("P2 settlement converts at most two three-fragment marks and conserves all 
   assert.equal(settlement.fragments_earned, settlement.fragment_wallet + 3 * settlement.resolve_marks);
 });
 
+test("P2 HOLD settlement is a zero-fragment floor and preserves victory-only rewards", () => {
+  assert.equal(awardFor("HOLD"), 0);
+  assert.deepEqual(settleCampaign(["HOLD", "HOLD", "HOLD", "HOLD", "HOLD"]), {
+    fragments_earned: 0,
+    fragment_wallet: 0,
+    resolve_marks: 0,
+  });
+  assert.equal(awardFor("VICTORY"), 2);
+});
+
+test("P2 Stage 5 makes repeated DISRUPT increasingly expensive and reactive play only holds", () => {
+  const schedule = CAMPAIGN_SCHEDULES[4];
+  const reactive = replayEncounter(schedule, recordsFor(["DISRUPT", "DISRUPT", "BRACE"]));
+
+  assertAccepted(reactive, "the displayed two-button responses remain legal");
+  assert.equal(commandCost(initialEncounter(schedule, 4), "DISRUPT"), 1);
+  const afterFirstDisrupt = reduceEncounter(initialEncounter(schedule, 4), makeCommand("DISRUPT", 0, 1)).state;
+  assert.equal(commandCost(afterFirstDisrupt, "DISRUPT"), 2);
+  assert.equal(reactive.state.outcome, "HOLD");
+  assert.equal(reactive.state.foe_health, 3);
+  assert.equal(reactive.state.focus, 0);
+  assert.equal(awardFor(reactive.state.outcome), 0);
+});
+
+test("P2 Stage 5 exposes both a deliberate victory line and reachable losses", () => {
+  const schedule = CAMPAIGN_SCHEDULES[4];
+  const deliberate = replayEncounter(schedule, recordsFor(["STRIKE", "DISRUPT", "STRIKE"]));
+  const strikeOnly = replayEncounter(schedule, recordsFor(["STRIKE", "STRIKE"]));
+  const braceOnly = replayEncounter(schedule, recordsFor(["BRACE", "BRACE"]));
+
+  assertAccepted(deliberate, "the deliberate trade line is legal");
+  assert.equal(deliberate.state.outcome, "VICTORY");
+  assert.equal(deliberate.state.integrity, 2);
+  assert.equal(deliberate.state.pressure, 2);
+  assert.equal(deliberate.state.foe_health, 0);
+  assert.equal(awardFor(deliberate.state.outcome), 2);
+
+  assertAccepted(strikeOnly, "strike-only commands are legal before defeat");
+  assert.equal(strikeOnly.state.outcome, "DEFEAT_INTEGRITY");
+  assert.equal(strikeOnly.state.round, 2);
+  assertAccepted(braceOnly, "brace-only commands are legal before defeat");
+  assert.equal(braceOnly.state.outcome, "DEFEAT_INTEGRITY");
+  assert.equal(braceOnly.state.round, 2);
+});
+
 
 test("forged prior states reject malformed bounds, schedule/round coherence, intent, and transient values without mutation", () => {
   const cases = [
@@ -259,6 +307,15 @@ test("forged prior states reject malformed bounds, schedule/round coherence, int
         return state;
       },
       reason: "SCHEDULE",
+    },
+    {
+      name: "invalid DISRUPT usage count",
+      forge: () => {
+        const state = initialEncounter(["SURGE"]);
+        state.disrupt_uses = -1;
+        return state;
+      },
+      reason: "DISRUPT_USES",
     },
     {
       name: "active state past its schedule",

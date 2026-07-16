@@ -1,12 +1,12 @@
-export const RULES_VERSION = "stage1-rules-v1";
+export const RULES_VERSION = "stage1-rules-v2";
 export const COMMANDS = Object.freeze(["STRIKE", "BRACE", "DISRUPT", "RECOVER"]);
 export const OUTCOMES = Object.freeze(["ACTIVE", "VICTORY", "HOLD", "DEFEAT_INTEGRITY", "DEFEAT_PRESSURE"]);
 export const CAMPAIGN_SCHEDULES = Object.freeze([
   Object.freeze(["STRIKE", "STRIKE", "STRIKE"]),
   Object.freeze(["SURGE", "STRIKE", "STRIKE"]),
   Object.freeze(["STRIKE", "SURGE", "STRIKE"]),
+  Object.freeze(["STRIKE", "SURGE", "SURGE"]),
   Object.freeze(["SURGE", "SURGE", "STRIKE"]),
-  Object.freeze(["SURGE", "SURGE", "SURGE"]),
 ]);
 
 const INTENTS = new Set(["STRIKE", "SURGE"]);
@@ -67,6 +67,7 @@ function priorStateError(state) {
     [state.foe_health, 0, state.max_foe_health || 6],
   ];
   if (!bounded.every(([value, minimum, maximum]) => Number.isInteger(value) && value >= minimum && value <= maximum)) return "STATE_BOUNDS";
+  if (!Number.isInteger(state.disrupt_uses) || state.disrupt_uses < 0 || state.disrupt_uses > state.schedule.length) return "DISRUPT_USES";
   if (state.surge_countered !== false || state.guard !== 0) return "TRANSIENT_STATE";
   if (!OUTCOMES.includes(state.outcome)) return "OUTCOME";
 
@@ -95,23 +96,36 @@ function commandError(state, record) {
   return null;
 }
 
+function disruptCost(state) {
+  return scheduleIndex(state.schedule) === 4 ? 1 + state.disrupt_uses : 1;
+}
+
+export function commandCost(state, command) {
+  if (!COMMAND_SET.has(command)) throw new TypeError("Unknown command cost.");
+  if (command === "RECOVER") return 0;
+  if (command === "DISRUPT") return disruptCost(state);
+  return 1;
+}
+
 function resolvePlayer(state, command) {
+  const cost = commandCost(state, command);
   if (command === "STRIKE") {
-    if (state.focus < 1) return "FOCUS";
-    state.focus -= 1;
+    if (state.focus < cost) return "FOCUS";
+    state.focus -= cost;
     state.foe_health = Math.max(0, state.foe_health - 2);
     return null;
   }
   if (command === "BRACE") {
-    if (state.focus < 1) return "FOCUS";
-    state.focus -= 1;
+    if (state.focus < cost) return "FOCUS";
+    state.focus -= cost;
     state.guard = Math.min(2, state.guard + 2);
     return null;
   }
   if (command === "DISRUPT") {
-    if (state.focus < 1) return "FOCUS";
+    if (state.focus < cost) return "FOCUS";
     if (state.foe_intent !== "SURGE") return "INTENT";
-    state.focus -= 1;
+    state.focus -= cost;
+    state.disrupt_uses += 1;
     state.foe_health = Math.max(0, state.foe_health - 1);
     state.surge_countered = true;
     return null;
@@ -147,7 +161,7 @@ export function initialEncounter(schedule = CAMPAIGN_SCHEDULES[0], stageIndex = 
     { max_integrity: 6, max_focus: 3, max_foe_health: 8, start_pressure: 0 },
     { max_integrity: 8, max_focus: 4, max_foe_health: 10, start_pressure: 0 },
     { max_integrity: 6, max_focus: 3, max_foe_health: 12, start_pressure: 1 },
-    { max_integrity: 10, max_focus: 5, max_foe_health: 15, start_pressure: 0 },
+    { max_integrity: 6, max_focus: 4, max_foe_health: 5, start_pressure: 0 },
   ];
   const cfg = configs[stageIndex] || configs[0];
 
@@ -166,6 +180,7 @@ export function initialEncounter(schedule = CAMPAIGN_SCHEDULES[0], stageIndex = 
     max_foe_health: cfg.max_foe_health,
     foe_intent: schedule[0],
     surge_countered: false,
+    disrupt_uses: 0,
     outcome: "ACTIVE",
     trace: [],
   };
@@ -283,7 +298,6 @@ export function validateDeterministicReplay(schedule, records) {
 export function awardFor(outcome) {
   if (!TERMINAL.has(outcome)) throw new TypeError("Only a terminal encounter may be settled.");
   if (outcome === "VICTORY") return 2;
-  if (outcome === "HOLD") return 1;
   return 0;
 }
 
