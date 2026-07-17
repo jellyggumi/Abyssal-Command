@@ -1,0 +1,62 @@
+{
+  "schema": "abyssal-surge.reflection-evidence",
+  "schema_version": "1.0",
+  "record_id": "1f62c06e-5b8c-4b15-9f33-53a94801945e",
+  "phase": "release",
+  "source_revision": "62ab111c2ba7caee3834e9657795f99e3a152080",
+  "scope": "Release reflection for the committed Abyssal Surge static client, its Pages artifact, compressed cinematic, and browser-facing campaign controls.",
+  "evidence": [
+    {
+      "evidence_id": "EV-RELEASE-TESTS",
+      "kind": "command",
+      "subject": "Focused state, mirror, narration-atlas, and release-closure regression coverage.",
+      "location": "tests/campaign-state.test.mjs",
+      "observed_at": "2026-07-17T00:09:39Z",
+      "observation": "The selected release tests passed 34 of 34: deterministic campaign progression, mirror validation/fallback, atlas provenance/runtime contracts, Pages closure, reward assets, TWA base URL, and narration synchronization.",
+      "command": "node --test tests/campaign-state.test.mjs tests/campaign-sync.test.mjs tests/narration-atlases.test.mjs tests/release-closure.test.mjs",
+      "exit_code": 0
+    },
+    {
+      "evidence_id": "EV-RELEASE-VIDEO",
+      "kind": "command",
+      "subject": "Shipped opt-in cinematic validates as browser-compatible compressed media.",
+      "location": "assets/video/abyssal-surge-cinematic.mp4",
+      "observed_at": "2026-07-17T00:09:39Z",
+      "observation": "The 2,363,629-byte cinematic is H.264 High/yuv420p at 960x540 and 30 fps, has faststart metadata, and decoded successfully.",
+      "command": "python3 scripts/compress_stage_video.py validate --input assets/video/abyssal-surge-cinematic.mp4",
+      "exit_code": 0
+    },
+    {
+      "evidence_id": "EV-RELEASE-PLAYWRITER",
+      "kind": "browser",
+      "subject": "Running-browser campaign control smoke test on the local release candidate.",
+      "location": "tmp/playwriter-screenshot-1784244037450-r1n7.png",
+      "observed_at": "2026-07-17T00:09:39Z",
+      "observation": "Playwriter snapshots showed the branded Cinder Span view, Korean-to-English language transition, retry persistence status, Boss Specification panel, and successful transition into the Ember Break combat view. Browser logs were empty after each successful interaction.",
+      "command": "Playwriter observe -> language toggle -> retry -> boss specification -> start combat -> observe",
+      "exit_code": 0
+    },
+    {
+      "evidence_id": "EV-RELEASE-ACTION",
+      "kind": "external_reference",
+      "subject": "GitHub Pages workflow built and deployed the committed release artifact.",
+      "location": ".github/workflows/static.yml",
+      "observed_at": "2026-07-17T00:09:39Z",
+      "observation": "GitHub Actions run 29543885796 completed successfully for commit 62ab111 on main after the repository was renamed to jellyggumi/Abyssal-Surge.",
+      "command": null,
+      "exit_code": null,
+      "source_url": "https://github.com/jellyggumi/Abyssal-Surge/actions/runs/29543885796"
+    },
+    {
+      "evidence_id": "EV-RELEASE-PUBLIC",
+      "kind": "external_reference",
+      "subject": "Branded public Pages URL serves the Abyssal Surge campaign document.",
+      "location": "https://jellyggumi.github.io/Abyssal-Surge/",
+      "observed_at": "2026-07-17T00:09:39Z",
+      "observation": "A public HTTP read returned the deployed campaign content, including the offline-ready status, three-stage campaign copy, optional cinematic notice, and local-save text; the previous 404 path was resolved by repository rename.",
+      "command": null,
+      "exit_code": null,
+      "source_url": "https://jellyggumi.github.io/Abyssal-Surge/"
+    }
+  ]
+}
