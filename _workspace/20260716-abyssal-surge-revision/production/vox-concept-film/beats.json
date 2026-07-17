@@ -1,0 +1,200 @@
+{
+  "project": "abyssal-surge-concept-film",
+  "topic": "A 36-second Korean concept film for Abyssal Surge: the Dusk Warden turns a lunar fracture into a deliberate three-stage command campaign.",
+  "language": "ko",
+  "aspect": "16:9",
+  "style": "collage",
+  "provider": "atlas_cloud",
+  "video_model": "google/gemini-omni-flash/image-to-video",
+  "motion_style": "punchy",
+  "constraints": "strict",
+  "theme": "custom_abyssal_editorial_collage",
+  "visual_production_path": "no-Atlas-text-to-image: deterministic local Pillow collage composites from approved GodTiboImagen stage plates",
+  "generation_gate": {
+    "approval_required": true,
+    "atlas_cloud_credential": "not present in the current environment",
+    "vox_pipeline_scripts": "not present in the installed Vox Director skill package",
+    "image_provenance": "Use only approved GodTiboImagen stage-key-art inputs. Do not generate new game image resources with Atlas.",
+    "ownership_and_terms": "must be verified by the named release owner before a billable remote request",
+    "fallback": "Existing locally rendered, text-complete campaign cinematic remains valid if this experiment is not approved.",
+    "human_approval": "approved by project owner on 2026-07-16; selected GTI-derived local collage composites before Atlas image-to-video generation",
+    "visual_production_path": "Create local torn-paper/halftone collage posters from approved GodTiboImagen stage plates, then submit those posters to Atlas image-to-video; do not request Atlas text-to-image posters."
+  },
+  "visual_direction": {
+    "theme": "custom_abyssal_editorial_collage",
+    "source_style": "Original non-pixel painterly dark-fantasy concept art from approved Abyssal Surge stage plates, assembled locally into Vox-style torn-paper editorial collage posters before image-to-video generation.",
+    "palette": "charcoal and wet obsidian ground; abyss teal for allied binding; violet for control and Domain; restrained ember gold and red for hostile pressure.",
+    "image_rule": "No AI-baked text, logos, watermarks, UI, franchise references, anime, chibi, cartoon, retro, or pixel art. Add the Korean captions and end title as deterministic post-production overlays.",
+    "motion_rule": "Flat 2D torn-paper layers with stable painterly source plates, rigid cut-outs, visible parallax, and no perspective warping, morphing, flashing, or tactical-state invention."
+  },
+  "beats": [
+    {
+      "id": 1,
+      "title_cn": "문은 열렸다",
+      "title_en": "",
+      "bg": "charcoal black with a thin lunar-white fracture and abyss teal reflection",
+      "feel": "ominous, ceremonial, inevitable",
+      "narration": "달이 갈라진 밤, 검은 바다 위로 심연의 문이 돌아왔다.",
+      "shots": [
+        {
+          "id": "a",
+          "dur": 3,
+          "title": false,
+          "camera_move": "push_in",
+          "element_motion": "The paper moon crack pulses once, narrow teal residue ripples across the black sea, small paper ash scraps drift inward, and the Warden cloak edge settles; all lettering is absent from the image.",
+          "scene": "A lunar fracture opens over a drowned coastal ward; the Dusk Warden is a small, readable silhouette on wet iron, separated into rigid torn-paper foreground, midground and background layers.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_1a.png"
+        },
+        {
+          "id": "b",
+          "dur": 3,
+          "title": false,
+          "camera_move": "parallax",
+          "element_motion": "Reflection layers slide at different speeds, halftone grain breathes softly, and one paper ward fragment pivots into alignment before settling.",
+          "scene": "A close detail of fractured moonlight reflected in drowned iron with a single teal Echo Deep seam and torn ward-map scraps.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_1b.png"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title_cn": "사냥과 추출",
+      "title_en": "",
+      "bg": "soot charcoal, ember-red pressure, and restrained abyss teal",
+      "feel": "tense, investigative, purposeful",
+      "narration": "신더 스팬이 잠식된다. 재의 메아리를 사냥해, 남은 영혼을 추출하라.",
+      "shots": [
+        {
+          "id": "a",
+          "dur": 3,
+          "title": false,
+          "camera_move": "pan",
+          "element_motion": "A teal spoor line glides toward the pool, ash scraps drift above the bridge, a paper chain swings once, and the soul-pool glow rises and settles without becoming a UI effect.",
+          "scene": "The suspended Cinder Span crosses a drowned forge. Ash spoor leads to one defeated Echo and a clearly separate soul pool; a damaged relay waits beyond.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_2a.png"
+        },
+        {
+          "id": "b",
+          "dur": 3,
+          "title": false,
+          "camera_move": "element",
+          "element_motion": "The pool rises as one rigid paper ribbon, the iron ward ring hinges open, teal fibers pulse once, and the surrounding scraps slide apart and settle.",
+          "scene": "Close cut-in: one black-teal soul pool lifting through an iron ward, with two torn ember scraps framing the process.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_2b.png"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title_cn": "군단을 세워라",
+      "title_en": "",
+      "bg": "wet obsidian with allied abyss teal and a single ember relay",
+      "feel": "controlled escalation, tactical clarity",
+      "narration": "신더 스팬에서 영혼을 군단으로 세워, 단 하나의 노드를 점거하라.",
+      "shots": [
+        {
+          "id": "a",
+          "dur": 3,
+          "title": false,
+          "camera_move": "tilt",
+          "element_motion": "Two rigid shade cut-outs rise in sequence, teal ribbon fragments spiral once around the soul knot, paper rain streaks pass downward, and the forms lock into a line.",
+          "scene": "Two shade forms coalesce from one soul knot beneath the Cinder Span, their silhouettes hard and readable against rain-dark iron.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_3a.png"
+        },
+        {
+          "id": "b",
+          "dur": 3,
+          "title": false,
+          "camera_move": "pull_out",
+          "element_motion": "The teal control ring expands once and settles, the banner straightens, tiny coal scraps scatter away, and the legion layers hold position with subtle depth parallax.",
+          "scene": "A single damaged forge node becomes a controlled teal anchor while the formed legion stands on the bridge; no victory cue and no extra node are shown.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_3b.png"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title_cn": "두 개의 신호",
+      "title_en": "",
+      "bg": "desaturated teal and indigo with exact violet command-thread accents",
+      "feel": "intelligent, strange, precise",
+      "narration": "베일 시타델, 한 신호를 점거해 수호자를 빙의하라. 두 신호면 총공격이다.",
+      "shots": [
+        {
+          "id": "a",
+          "dur": 3,
+          "title": false,
+          "camera_move": "parallax",
+          "element_motion": "The two beacon layers pulse in alternating violet light, citadel paper layers drift in depth, rain strips fall, and small ward geometry slides into a two-point alignment.",
+          "scene": "Veil Citadel moves through rain-dark void between exactly two separate signal beacons. A stone sentinel silhouette remains clearly empty and non-human.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_4a.png"
+        },
+        {
+          "id": "b",
+          "dur": 3,
+          "title": false,
+          "camera_move": "push_in",
+          "element_motion": "The thread draws one clean line into the helm, mask reflections brighten then settle, paper rune fragments orbit once as rigid cut-outs, and the sentinel never changes into a human body.",
+          "scene": "A violet command thread enters the helm of an empty stone sentinel while two distant beacon reflections remain visible in its mask.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_4b.png"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title_cn": "한 번의 영역",
+      "title_en": "",
+      "bg": "royal violet, cold blue, and a thin dawnless-gold threshold",
+      "feel": "brief protection, poised resolve",
+      "narration": "메아리 왕좌에서 군주의 영역은 단 한 번, 진격을 지키는 방패가 된다.",
+      "shots": [
+        {
+          "id": "a",
+          "dur": 3,
+          "title": false,
+          "camera_move": "pan",
+          "element_motion": "The violet paper dome expands to one limited radius, the black-water layers ripple, small gold ward motes travel along the arc, and the dome fades toward a stable edge.",
+          "scene": "The Echo Throne node stands before a gate above the last remembered sea. A thin violet Domain arc covers the legion, visibly finite and temporary.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_5a.png"
+        },
+        {
+          "id": "b",
+          "dur": 3,
+          "title": false,
+          "camera_move": "element",
+          "element_motion": "The seal rotates as a rigid paper disc, violet fragments travel outward then disappear, paper shadow shifts softly, and the distant gate remains closed.",
+          "scene": "Close detail of a crowned seal at the base of a fading violet Domain arc, with the gate still unresolved beyond it.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_5b.png"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title_cn": "심연을 지휘하라",
+      "title_en": "",
+      "bg": "black sea, cold blue, and restrained dawnless gold",
+      "feel": "earned release, quiet authority",
+      "narration": "게이트 소버린에게 총공격하라. 심연은 당신의 명령을 기다린다.",
+      "shots": [
+        {
+          "id": "a",
+          "dur": 3,
+          "title": false,
+          "camera_move": "tilt",
+          "element_motion": "Rigid legion layers advance, the broken gate arch separates into three paper fragments, teal and ember scraps cross once, and the black-water reflection pulls downward to a still end state.",
+          "scene": "A coordinated teal-and-ember strike line advances against the Gate Sovereign's broken arch over black water. The gate breaks but the sea remains restrained; no explosion, logo, or false permanent victory state.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_6a.png"
+        },
+        {
+          "id": "b",
+          "dur": 3,
+          "title": false,
+          "camera_move": "static",
+          "element_motion": "The standard cloth flutters once, the reflection settles, a few torn paper scraps drift out of frame, and all layers hold still for the hard-cut payoff.",
+          "scene": "Quiet return to a black-water shrine: one legion standard reflects in a resealed gate while the Dusk Warden remains a small silhouette. The image contains no readable title; the title is a post-production overlay.",
+          "keyframe_path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_6b.png"
+        }
+      ]
+    }
+  ]
+}

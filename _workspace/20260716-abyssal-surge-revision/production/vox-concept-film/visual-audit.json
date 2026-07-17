@@ -1,0 +1,22 @@
+{
+  "schema": "abyssal-surge.concept-film-visual-audit",
+  "schema_version": "1.0",
+  "reviewer": "ResourceDirection",
+  "verdict": "pass",
+  "scope": "Current stage-six clean-plate posters only.",
+  "posters": [
+    {
+      "path": "keyframes/kf_6a.png",
+      "sha256": "b38329033954c50ed7254e08b7b515508d18850521e1658741833de10c1adbcf"
+    },
+    {
+      "path": "keyframes/kf_6b.png",
+      "sha256": "fbda9a7d12eef78e0f6c93fa84831836837944a13940331b071a90fcf525c513"
+    }
+  ],
+  "findings": [
+    "Neither poster contains readable baked UI or text.",
+    "The Veil Citadel clean-plate substitution has no internal repair, clone, redaction, or patch silhouette.",
+    "Both posters retain coherent painterly torn-paper composition and a readable command/legion subject."
+  ]
+}

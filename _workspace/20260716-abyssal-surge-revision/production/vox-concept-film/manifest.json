@@ -1,0 +1,123 @@
+{
+  "canonical_input": {
+    "path": "_workspace/20260716-abyssal-surge-revision/production/abyssal-surge-concept-video-beats.json",
+    "sha256": "51e1c31dd9adc282f2c7ae7e7cdd7b3e18d132acc04e0d865b41d6406e043d57"
+  },
+  "source_files": [
+    {
+      "path": "assets/images/cinder-span.png",
+      "sha256": "f6355a83db9568f22c0a32e5cf537377813c4e3af4a22bd5c8e9442f70fa9c36"
+    },
+    {
+      "path": "assets/images/echo-throne.png",
+      "sha256": "1707f00db629068286c0edaafef42f19c18dfe9666583692f98ccd0174d1a7ab"
+    },
+    {
+      "path": "assets/images/storyboard/scene_00_opening_gate_v01.jpg",
+      "sha256": "24875b07aea48514d90a650e0ca7dc4c9a49f183c45267339a64106332742bda"
+    },
+    {
+      "path": "assets/images/storyboard/scene_01_soul_pool_v01.jpg",
+      "sha256": "76a6e5ac022847f38c7ddd5ad5c81495e4c5c416032404eaf2faceac21affe08"
+    },
+    {
+      "path": "assets/images/storyboard/scene_03_possession_action_v01.jpg",
+      "sha256": "b9b84a9a503f3771b6290a6f2777ddc70eb55c62a01bb9ad5c881836b7a440e0"
+    },
+    {
+      "path": "assets/images/storyboard/scene_04_domain_shift_v01.jpg",
+      "sha256": "50cef88b96eb1caa9177e78d05f6f799fcd6bd35259e930dabbd543c1e4e938d"
+    },
+    {
+      "path": "assets/images/ui/action-capture.png",
+      "sha256": "bd3679dbc701fb482e45057321bd7c12d856bc11adad1091b64a3f5e2aeed415"
+    },
+    {
+      "path": "assets/images/ui/action-materialize.png",
+      "sha256": "a5b4350f1b78a73fc78f3208d50a73ed0a42d4ecd3ab85d9f941022d99a3ab80"
+    },
+    {
+      "path": "assets/images/veil-citadel.png",
+      "sha256": "98444b35745b5ab8ba40607047299fba87dfad5693a1bfed0c1e1cfbe7fea854"
+    }
+  ],
+  "posters": [
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_1a.png",
+      "sha256": "6c3e871014d2ee28c3deb76132f48834fd17723b3cc2e7704e013f8d0262bc98",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_1b.png",
+      "sha256": "d1067471acf7c54d6e46d702ddd45a162d64c2e9bf4ac890faa253ec63ef9739",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_2a.png",
+      "sha256": "72225518e16566478d0c912c073cafe4b4b8a880d20bf475c7ada5f2007cda3a",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_2b.png",
+      "sha256": "78c39d0dccf8b2d47a454c9cbd4d6835e01a84342a64a1faa199fb8beead9663",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_3a.png",
+      "sha256": "4067be13b2f70849633924336165074e50326bf3d1d3902b395bcbcec7b5be7c",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_3b.png",
+      "sha256": "48ad2265ef63f813639c19170add046f3966433e31ef3ec727c39fda0226fb9a",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_4a.png",
+      "sha256": "dd595d3d30a46f34d793f07d621a80b310796be8af6ae2d0dcddf1d4dd44fd53",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_4b.png",
+      "sha256": "d7d7460c5cce6978178e23dd85f9aafcd01cbcd91ce699a8a65cd7cddf9acf77",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_5a.png",
+      "sha256": "3cf56aa684354c9396fa9e5d6c98a53c477802927079233d0ee7dc996b34a90e",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_5b.png",
+      "sha256": "5e2b31ad6d614310495310cb2740c30fa7550c5c3e00b06f3f082fa6d51f5400",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_6a.png",
+      "sha256": "b38329033954c50ed7254e08b7b515508d18850521e1658741833de10c1adbcf",
+      "width": 960,
+      "height": 540
+    },
+    {
+      "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/keyframes/kf_6b.png",
+      "sha256": "fbda9a7d12eef78e0f6c93fa84831836837944a13940331b071a90fcf525c513",
+      "width": 960,
+      "height": 540
+    }
+  ],
+  "output_beats_json": {
+    "path": "_workspace/20260716-abyssal-surge-revision/production/vox-concept-film/beats.json",
+    "sha256": "f16ef20ebb7715a33972b33ba2a66760b1238598f3fc7ebb6f6fa7afe72b90b3"
+  },
+  "upstream_vox_revision": "0f66dc444fc18ac26f6dddd30ee5505d31b45de6"
+}

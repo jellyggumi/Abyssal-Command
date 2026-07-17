@@ -1,0 +1,47 @@
+{
+  "schema": "abyssal-surge.concept-film-delivery",
+  "schema_version": "1.0",
+  "status": "preproduction_only",
+  "runtime_package_eligible": false,
+  "reason": "Narration/audio provider is unselected and no human or Playwriter approval exists for a voiced cinematic.",
+  "visual": {
+    "baseline": {
+      "path": "abyssal-surge-concept-film-silent.mp4",
+      "sha256": "2b8386574513b58766476f96b3b9bb8d9fa20b945c6c4aeeafc604353e8e3e3a",
+      "bytes": 1775301
+    },
+    "web": {
+      "path": "abyssal-surge-concept-film-silent.web.mp4",
+      "sha256": "b22aa50a438bea6154b1c40455dee31cea81f93189226d20326e186e97148bdd",
+      "bytes": 1679060,
+      "duration_seconds": 36.0,
+      "codec": "h264",
+      "pixel_format": "yuv420p",
+      "width": 960,
+      "height": 540,
+      "fps": 24,
+      "faststart": true,
+      "compression": {
+        "crf": 24,
+        "preset": "slow",
+        "ssim_all": 0.997062,
+        "savings_percent": 5.421108871115377
+      }
+    }
+  },
+  "captions": {
+    "path": "abyssal-surge-concept-film.ko.srt",
+    "sha256": "7ce1e828bdd29ecc71944f1c4017a72d5ad904f8f0fcb9a64946a24f246bf03c",
+    "language": "ko",
+    "blocks": 6,
+    "embedded": false
+  },
+  "audio": {
+    "present": false,
+    "provider": "unselected"
+  },
+  "poster_manifest": {
+    "path": "manifest.json",
+    "sha256": "fd0398052e172548a56d02baf3e9d845c0f22f7fbb1f2ba8ab619feb0317417b"
+  }
+}
