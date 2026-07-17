@@ -1,4 +1,4 @@
-const CACHE_NAME = "abyssal-surge-static-v13";
+const CACHE_NAME = "abyssal-surge-static-v15";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -18,6 +18,23 @@ const CORE_ASSETS = [
   "./icon.svg",
   "./favicon.ico",
 ];
+
+const GLB_BRIDGE_MANIFEST = "./assets/images/battle/glb/manifest.json";
+const GLB_BRIDGE_MANIFEST_PATH = new URL(GLB_BRIDGE_MANIFEST, self.location.href).pathname;
+const GLB_BRIDGE_PATH_PREFIX = new URL("./assets/images/battle/glb/", self.location.href).pathname;
+
+async function cacheGlbBattleBridge(cache) {
+  const response = await fetch(GLB_BRIDGE_MANIFEST, { cache: "no-store" });
+  if (!response.ok) return;
+  await cache.put(GLB_BRIDGE_MANIFEST, response.clone());
+  const manifest = await response.json();
+  const bridgeAssets = Array.isArray(manifest?.records)
+    ? manifest.records
+      .map((record) => record?.output?.path)
+      .filter((path) => typeof path === "string" && path.startsWith("assets/images/battle/glb/"))
+    : [];
+  await Promise.allSettled(bridgeAssets.map((path) => cache.add(`./${path}`)));
+}
 
 const OPTIONAL_MEDIA = [
   "./assets/images/cinder-span.png",
@@ -42,6 +59,8 @@ const OPTIONAL_MEDIA = [
   "./assets/images/ui/reward-throne-echo.png",
   "./assets/images/ui/reward-dawnless-crown.png",
   "./assets/images/ui/boss-cinder-warden.png",
+  "./assets/images/characters/dusk-legion-atlas.png",
+  "./assets/images/ui/concept-tactical-surface.webp",
   "./assets/images/ui/boss-veil-tactician.png",
   "./assets/images/ui/boss-gate-sovereign.png",
   "./assets/images/ui/narration-atlases/boss-cinder-warden-atlas.png",
@@ -84,12 +103,39 @@ function isCoreRequest(request) {
   return path.endsWith("/") || ["/index.html", "/app.js", "/campaign-sync.js", "/battle-visualizer.js", "/battle-presentation.js", "/iso-math.js", "/tilemap-renderer.js", "/campaign-state.js", "/i18n.js", "/liquid-ether.js", "/vendor/three.module.min.js", "/styles.css", "/sw.js"].some((suffix) => path.endsWith(suffix));
 }
 
+function isGlbBridgeRequest(request) {
+  if (!isSameOriginGet(request)) return false;
+  const path = new URL(request.url).pathname;
+  return path === GLB_BRIDGE_MANIFEST_PATH || path.startsWith(GLB_BRIDGE_PATH_PREFIX);
+}
+
+async function networkFirstGlbBridge(request) {
+  try {
+    const response = await fetch(request, { cache: "no-store" });
+    if (!response.ok) {
+      const cached = await caches.match(request);
+      return cached || response;
+    }
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, response.clone());
+    } catch {
+      // A live bridge response remains usable if cache storage is unavailable.
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    return cached || Response.error();
+  }
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(async (cache) => {
         await cache.addAll(CORE_ASSETS);
         await Promise.allSettled(OPTIONAL_MEDIA.map((asset) => cache.add(asset)));
+        await cacheGlbBattleBridge(cache).catch(() => undefined);
       })
       .then(() => self.skipWaiting())
   );
@@ -107,6 +153,11 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (!isSameOriginGet(request)) return;
 
+
+  if (isGlbBridgeRequest(request)) {
+    event.respondWith(networkFirstGlbBridge(request));
+    return;
+  }
   if (isCoreRequest(request)) {
     event.respondWith(
       fetch(request)

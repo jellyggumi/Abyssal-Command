@@ -357,7 +357,23 @@ main {
 .stage-selector button.active { border-color: var(--aqua); color: var(--ink); background: #244158; opacity: 1; }
 .stage-selector button.cleared { border-color: rgb(112 229 208 / 42%); color: var(--aqua); opacity: .85; }
 .stage-selector button.locked { opacity: .38; }
-.stage-transition { display: grid; gap: .5rem; min-height: 4.5rem; margin-bottom: .5rem; overflow: hidden; border: 1px solid rgb(255 184 92 / 32%); border-radius: 1rem; background: linear-gradient(115deg, #26294a, #182237 52%, #4f2c32); }
+.stage-transition {
+  display: grid;
+  gap: .5rem;
+  min-height: 4.5rem;
+  margin-bottom: .5rem;
+  overflow: hidden;
+  border: 1px solid rgb(255 184 92 / 32%);
+  border-radius: 1rem;
+  background: linear-gradient(115deg, #26294a, #182237 52%, #4f2c32);
+  background-position: center, center, center;
+  background-size: cover, cover, cover;
+  animation: tactical-surface-drift 14s ease-in-out infinite alternate;
+}
+@keyframes tactical-surface-drift {
+  from { background-position: center, 47% 53%, center; }
+  to { background-position: center, 53% 47%, center; }
+}
 .narrator-atlas {
   --narrator-atlas-image: none;
   width: min(100%, 16rem);
@@ -411,6 +427,8 @@ dd { margin: .2rem 0 0; font-size: 1.08rem; font-weight: 800; }
 .objective-checklist li::before { position: absolute; left: .65rem; content: "○"; color: var(--muted); }
 .objective-checklist li.complete { color: var(--aqua); }
 .objective-checklist li.complete::before { content: "✓"; color: var(--aqua); font-weight: 900; }
+.objective-checklist li.current { border: 1px solid rgb(255 184 92 / 44%); background: rgb(255 184 92 / 10%); }
+.objective-checklist li.current::before { content: "→"; color: var(--cinder); font-weight: 900; }
 .command-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
 .command-grid button { display: grid; grid-template-columns: auto auto 1fr; align-items: center; column-gap: .4rem; min-height: 3.8rem; text-align: left; padding: .4rem .6rem; }
 .command-grid button strong { align-self: end; }
@@ -809,6 +827,24 @@ dd { margin: .2rem 0 0; font-size: 1.08rem; font-weight: 800; }
   font-weight: 700;
 }
 
+.battle-asset-status {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .025em;
+}
+
+.battle-asset-status[data-state="loaded"] {
+  color: var(--battle-ally);
+}
+
+.battle-asset-status[data-state="partial"],
+.battle-asset-status[data-state="unavailable"] {
+  color: var(--battle-accent);
+}
+
 .battle-mouse-help {
   margin: .55rem 0 0;
   color: var(--muted);
@@ -1182,6 +1218,36 @@ dd { margin: .2rem 0 0; font-size: 1.08rem; font-weight: 800; }
   box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 55%);
 }
 
+/* First-run briefing pauses the opening pressure until the commander commits. */
+.mission-briefing {
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgb(4 6 12 / 86%), rgb(15 22 40 / 74%));
+  backdrop-filter: blur(7px);
+}
+.mission-briefing[hidden] { display: none !important; }
+.mission-briefing-panel {
+  width: min(40rem, 94vw);
+  margin: 0;
+  padding: clamp(1rem, 3vw, 1.55rem);
+  border-color: rgb(255 184 92 / 62%);
+  box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 62%), 0 0 2.5rem rgb(255 184 92 / 14%);
+}
+.mission-briefing-panel h3 { margin-bottom: .3rem; }
+.mission-briefing-stage { margin: 0; color: var(--aqua); font-size: .85rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.mission-briefing-region { margin: .2rem 0 1rem; color: var(--muted); }
+.mission-briefing-facts { display: grid; gap: .45rem; margin: 0 0 1rem; }
+.mission-briefing-facts div { padding: .55rem .65rem; border-left: .22rem solid rgb(112 229 208 / 70%); border-radius: .45rem; background: rgb(255 255 255 / 5%); }
+.mission-briefing-facts dt { margin-bottom: .12rem; color: var(--cinder); }
+.mission-briefing-facts dd { margin: 0; font-size: .9rem; font-weight: 650; }
+.mission-briefing-next { margin: 0 0 1rem; color: var(--focus); font-weight: 750; }
+.mission-briefing-panel .primary { width: 100%; }
+
 /* Desktop-wide: give the field more room */
 @media (min-width: 1100px) {
   .cockpit-main { grid-template-columns: minmax(0, 1fr) 22rem; }
@@ -1209,6 +1275,7 @@ body:has(#campaign-screen:not([hidden])) .site-header .eyebrow { display: none; 
 .cockpit-top h2 { font-size: clamp(1.05rem, 2.2vw, 1.45rem); margin: 0; }
 .cockpit-top .eyebrow { margin-bottom: .1rem; }
 .cockpit-top .muted { display: none; }
+.cockpit-top .commander-identity { display: block; margin: .18rem 0 0; color: var(--aqua); font-size: .72rem; font-weight: 750; letter-spacing: .04em; }
 .cockpit .save-dock { padding: .45rem .8rem; }
 .cockpit .save-dock .hint:last-child { display: none; }
 

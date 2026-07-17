@@ -273,7 +273,7 @@
         "assets/video/scene_01_shot_soul_hunt_v01.mp4",
         "assets/video/scene_01_shot_possession_hint_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 00→01 18-sec transition package.",
+      "derivation": "FFmpeg concat input manifest for scene 00\u219201 18-sec transition package.",
       "sha256": "16d924cc62a953b8632feb7c984dfe07ad66712abd6ded03341517bd12bd5175"
     },
     {
@@ -292,7 +292,7 @@
       "source_assets": [
         "assets/video/scene_00_to_01_concat_input.txt"
       ],
-      "derivation": "18-sec scene 00→01 cinematic sample (scene 00 bridge + scene 01 encounter continuation).",
+      "derivation": "18-sec scene 00\u219201 cinematic sample (scene 00 bridge + scene 01 encounter continuation).",
       "sha256": "6d7a3299abab06388fa22e1d615b279f02adfeab65326d8e4685542d9ad09cfd"
     },
     {
@@ -312,7 +312,7 @@
         "assets/video/scene_00_to_01_opening_encounter_cinematic_v01.mp4",
         "assets/video/scene_00_to_01_shot_subtitles.srt"
       ],
-      "derivation": "18-sec scene 00→01 cinematic sample with hard-sub burn-in.",
+      "derivation": "18-sec scene 00\u219201 cinematic sample with hard-sub burn-in.",
       "sha256": "94db8bc4a491aaaf79cb2681656aaddf47d03eb1ade0d85de40ed00559f9e8d7"
     },
     {
@@ -325,7 +325,7 @@
         "design/assets/cinematic/scene_00_scene_script.csv",
         "design/assets/cinematic/scene_01_scene_script.csv"
       ],
-      "derivation": "Scene 00→01 bridge subtitles for hard-sub workflow.",
+      "derivation": "Scene 00\u219201 bridge subtitles for hard-sub workflow.",
       "sha256": "e89cb0815c357eacaecaa8217971b3b93f0c730284eadf4e8135bc33f3ee982d"
     },
     {
@@ -366,7 +366,7 @@
         "assets/video/scene_01_shot_possession_hint_v01.mp4",
         "assets/video/scene_02_node_contest_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 01→02 transition package.",
+      "derivation": "FFmpeg concat input manifest for scene 01\u219202 transition package.",
       "sha256": "306781110a0502236e4a46c9fb233a9598823e8c7b018843061e0d17687aac41"
     },
     {
@@ -376,7 +376,7 @@
       "generated_by": "subtitle generation utility",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Bridge subtitles for scene 01→02 transition.",
+      "derivation": "Bridge subtitles for scene 01\u219202 transition.",
       "sha256": "28053b0d91ed1633684b48c2d83f130e29a2893daab0f05c36bea65f85c421c7"
     },
     {
@@ -439,7 +439,7 @@
         "assets/video/scene_02_node_contest_v01.mp4",
         "assets/video/scene_03_engagement_bloom_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 02→03 transition package.",
+      "derivation": "FFmpeg concat input manifest for scene 02\u219203 transition package.",
       "sha256": "3e15adbb5ea7a8c9fedce5a20e1d0a3f847d26f669456aa45df8292e4c2e79cf"
     },
     {
@@ -449,7 +449,7 @@
       "generated_by": "subtitle generation utility",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Bridge subtitles for scene 02→03 transition.",
+      "derivation": "Bridge subtitles for scene 02\u219203 transition.",
       "sha256": "b660919803ffdb96f78e6d759adee0235c731d0c850e55d9adf4fe9b7f82e1d6"
     },
     {
@@ -502,7 +502,7 @@
         "assets/video/scene_03_engagement_bloom_v01.mp4",
         "assets/video/scene_04_comeback_shift_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 03→04 transition package.",
+      "derivation": "FFmpeg concat input manifest for scene 03\u219204 transition package.",
       "sha256": "a34e2506bb4f1fae7b2e1a33e7f3892594dd121e2d25746ce3f32a3497db56d0"
     },
     {
@@ -522,7 +522,7 @@
       "generated_by": "subtitle generation utility",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Bridge subtitles for scene 03→04 transition.",
+      "derivation": "Bridge subtitles for scene 03\u219204 transition.",
       "sha256": "477b0178514e17f962b0d1b151e68afdfae5a29fbe724d1d2755fc0764164f28"
     },
     {
@@ -575,7 +575,7 @@
         "assets/video/scene_04_comeback_shift_v01.mp4",
         "assets/video/scene_05_composure_storm_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 04→05 transition package.",
+      "derivation": "FFmpeg concat input manifest for scene 04\u219205 transition package.",
       "sha256": "a0c5c3bcc9af5464c7f0594c8400eedb23d3273eff3de5a58cd3ea1c22884c1d"
     },
     {
@@ -595,7 +595,7 @@
       "generated_by": "subtitle generation utility",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Bridge subtitles for scene 04→05 transition.",
+      "derivation": "Bridge subtitles for scene 04\u219205 transition.",
       "sha256": "7bbaed6ce3f6818b9b9f0c91f0c2c7227c9313277610a0c9b1ac89096d2bd76c"
     },
     {
@@ -648,7 +648,7 @@
         "assets/video/scene_05_composure_storm_v01.mp4",
         "assets/video/scene_06_apex_assault_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 05→06 transition package.",
+      "derivation": "FFmpeg concat input manifest for scene 05\u219206 transition package.",
       "sha256": "4b5cb1142831d8a68c94f2bd88e1f15862713119f1c262e9834946bc1ac39bbc"
     },
     {
@@ -658,7 +658,7 @@
       "generated_by": "subtitle generation utility",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Bridge subtitles for scene 05→06 transition.",
+      "derivation": "Bridge subtitles for scene 05\u219206 transition.",
       "sha256": "69dc60f6c1bb31b21de459d9bd1b120620bd8ec16bc65b95891c064f5bdf058f"
     },
     {
@@ -721,7 +721,7 @@
         "assets/video/scene_06_apex_assault_v01.mp4",
         "assets/video/scene_07_return_persistence_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 06→07 transition package.",
+      "derivation": "FFmpeg concat input manifest for scene 06\u219207 transition package.",
       "sha256": "7627883989c8ef780e7546418de2f3ad2022c520bc5c382d86fdff104858c2df"
     },
     {
@@ -741,7 +741,7 @@
       "generated_by": "subtitle generation utility",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Bridge subtitles for scene 06→07 transition.",
+      "derivation": "Bridge subtitles for scene 06\u219207 transition.",
       "sha256": "8e28ab46fdb062800a629310a6053d7467a97cd8dd83b248f95080d70089c99d"
     },
     {
@@ -800,7 +800,7 @@
         "assets/video/scene_05_to_06_storm_to_apex_v01.mp4",
         "assets/video/scene_06_to_07_return_persistence_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 00→07 approval package.",
+      "derivation": "FFmpeg concat input manifest for scene 00\u219207 approval package.",
       "sha256": "5965521ddd13ca8a8a4b55eba6097cca019a6d464f746f9523c85a23dc4e47e5"
     },
     {
@@ -819,7 +819,7 @@
         "assets/video/scene_05_to_06_storm_to_apex_v01.mp4",
         "assets/video/scene_06_to_07_return_persistence_v01.mp4"
       ],
-      "derivation": "Full scene00→07 cinematic package (v100 approval draft).",
+      "derivation": "Full scene00\u219207 cinematic package (v100 approval draft).",
       "sha256": "e501572949ce0dadca47b950e25a25f09d71419520ac0ef30a4b7e2d5419c8fb"
     },
     {
@@ -838,7 +838,7 @@
         "assets/video/scene_05_to_06_storm_to_apex_v01.mp4",
         "assets/video/scene_06_to_07_return_persistence_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 00→07 polish draft.",
+      "derivation": "FFmpeg concat input manifest for scene 00\u219207 polish draft.",
       "sha256": "5965521ddd13ca8a8a4b55eba6097cca019a6d464f746f9523c85a23dc4e47e5"
     },
     {
@@ -857,7 +857,7 @@
         "assets/video/scene_05_to_06_storm_to_apex_v01.mp4",
         "assets/video/scene_06_to_07_return_persistence_v01.mp4"
       ],
-      "derivation": "Full scene00→07 cinematic package (v101 polish draft).",
+      "derivation": "Full scene00\u219207 cinematic package (v101 polish draft).",
       "sha256": "b68726b8f3fbaa4b10089b29e188c5924c93c749f713d858032c360402b40ded"
     },
     {
@@ -876,7 +876,7 @@
         "assets/video/scene_05_to_06_storm_to_apex_v01.mp4",
         "assets/video/scene_06_to_07_return_persistence_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 00→07 v102 package.",
+      "derivation": "FFmpeg concat input manifest for scene 00\u219207 v102 package.",
       "sha256": "5965521ddd13ca8a8a4b55eba6097cca019a6d464f746f9523c85a23dc4e47e5"
     },
     {
@@ -891,7 +891,7 @@
         "assets/video/scene_00_to_07_ui_labels_v102.csv",
         "assets/video/scene_00_to_07_state_log_v102.jsonl"
       ],
-      "derivation": "Full scene00→07 cinematic package v102 with finalized subtitle burn-in and scene-state HUD labels.",
+      "derivation": "Full scene00\u219207 cinematic package v102 with finalized subtitle burn-in and scene-state HUD labels.",
       "sha256": "1b94c6f70a7816206fdae69b9ab853cd7f7a61922961f59c22da2a18cd6d8c30"
     },
     {
@@ -901,7 +901,7 @@
       "generated_by": "subtitle generation utility (v102 package)",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Shot subtitles for v102 package scene00→07 with narrative and state cue copy.",
+      "derivation": "Shot subtitles for v102 package scene00\u219207 with narrative and state cue copy.",
       "sha256": "bd9c4e83a5220b4dc67003c99b4427093d7a6309cfa6953076fc0109a27ac138"
     },
     {
@@ -988,7 +988,7 @@
       "source_assets": [
         "design/assets/cinematic/scene_00_scene_script.csv"
       ],
-      "derivation": "Scene 01 timeline spec (씬 1 전환/연속 구간 연출 룰).",
+      "derivation": "Scene 01 timeline spec (\uc52c 1 \uc804\ud658/\uc5f0\uc18d \uad6c\uac04 \uc5f0\ucd9c \ub8f0).",
       "sha256": "29fee10ddd1fb19d194a55e5539ac813fde5c8bbb5a1c7a47c9fb8c7957c918a"
     },
     {
@@ -1048,7 +1048,7 @@
       "source_assets": [
         "design/assets/cinematic/scene_01_scene_script.csv"
       ],
-      "derivation": "Scene 2 timeline spec (씬 2 transition and engagement mapping).",
+      "derivation": "Scene 2 timeline spec (\uc52c 2 transition and engagement mapping).",
       "sha256": "db1a7817fb8c8d2b3e11a8a34a4154283fa7c3eb1babc4f75354eb9f4a8d1553"
     },
     {
@@ -1108,7 +1108,7 @@
       "source_assets": [
         "design/assets/cinematic/scene_02_scene_script.csv"
       ],
-      "derivation": "Scene 3 timeline spec (씬 3 transition and engagement mapping).",
+      "derivation": "Scene 3 timeline spec (\uc52c 3 transition and engagement mapping).",
       "sha256": "2e83adf60582ddc79642059ceefece5a5aa774d40f84283e5cc9fd1cc6339f88"
     },
     {
@@ -1168,7 +1168,7 @@
       "source_assets": [
         "design/assets/cinematic/scene_03_scene_script.csv"
       ],
-      "derivation": "Scene 4 timeline spec (씬 4 transition and engagement mapping).",
+      "derivation": "Scene 4 timeline spec (\uc52c 4 transition and engagement mapping).",
       "sha256": "da9ec3271f624909420a304325f56639a4f7fb8b2f39d370211b1997a815b262"
     },
     {
@@ -1228,7 +1228,7 @@
       "source_assets": [
         "design/assets/cinematic/scene_04_scene_script.csv"
       ],
-      "derivation": "Scene 5 timeline spec (씬 5 transition and engagement mapping).",
+      "derivation": "Scene 5 timeline spec (\uc52c 5 transition and engagement mapping).",
       "sha256": "c1847e79ba8dffd75001343eb04d490b97aedf41664386b415d39096a1520a36"
     },
     {
@@ -1288,7 +1288,7 @@
       "source_assets": [
         "design/assets/cinematic/scene_05_scene_script.csv"
       ],
-      "derivation": "Scene 6 timeline spec (씬 6 transition and engagement mapping).",
+      "derivation": "Scene 6 timeline spec (\uc52c 6 transition and engagement mapping).",
       "sha256": "ba6c891a489fe3904622ffa22b233a761f34fb413cc7578b80a63a0f4363cc9b"
     },
     {
@@ -1348,7 +1348,7 @@
       "source_assets": [
         "design/assets/cinematic/scene_06_scene_script.csv"
       ],
-      "derivation": "Scene 7 timeline spec (씬 7 transition and engagement mapping).",
+      "derivation": "Scene 7 timeline spec (\uc52c 7 transition and engagement mapping).",
       "sha256": "3c63112426c77df9620e911cd63311dde8b8d520a312c0c011eaef05affd113b"
     },
     {
@@ -1403,7 +1403,7 @@
         "assets/video/scene_05_to_06_storm_to_apex_v01.mp4",
         "assets/video/scene_06_to_07_return_persistence_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 00→07 v103 package.",
+      "derivation": "FFmpeg concat input manifest for scene 00\u219207 v103 package.",
       "sha256": "5965521ddd13ca8a8a4b55eba6097cca019a6d464f746f9523c85a23dc4e47e5"
     },
     {
@@ -1413,7 +1413,7 @@
       "generated_by": "subtitle generation utility (v103 fail-loop tuning)",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Shot subtitles for v103 package scene00→07 with expanded fail-loop copy.",
+      "derivation": "Shot subtitles for v103 package scene00\u219207 with expanded fail-loop copy.",
       "sha256": "e212624568d193bdd9739686ab744dbcc975b0a504e7037016c4679c936f5743"
     },
     {
@@ -1448,7 +1448,7 @@
         "assets/video/scene_00_to_07_ui_labels_v103.csv",
         "assets/video/scene_00_to_07_state_log_v103.jsonl"
       ],
-      "derivation": "Full scene00→07 cinematic package v103 with fail-loop scenario alignment and state overlay tuning.",
+      "derivation": "Full scene00\u219207 cinematic package v103 with fail-loop scenario alignment and state overlay tuning.",
       "sha256": "1b94c6f70a7816206fdae69b9ab853cd7f7a61922961f59c22da2a18cd6d8c30"
     },
     {
@@ -1467,7 +1467,7 @@
         "assets/video/scene_05_to_06_storm_to_apex_v01.mp4",
         "assets/video/scene_06_to_07_return_persistence_v01.mp4"
       ],
-      "derivation": "FFmpeg concat input manifest for scene 00→07 v104 package.",
+      "derivation": "FFmpeg concat input manifest for scene 00\u219207 v104 package.",
       "sha256": "5965521ddd13ca8a8a4b55eba6097cca019a6d464f746f9523c85a23dc4e47e5"
     },
     {
@@ -1477,7 +1477,7 @@
       "generated_by": "subtitle generation utility (v104 fail-loop precision pass)",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Shot subtitles for v104 package scene00→07 with calibrated S5_DESPAIR/FAIL_PIVOT boundaries.",
+      "derivation": "Shot subtitles for v104 package scene00\u219207 with calibrated S5_DESPAIR/FAIL_PIVOT boundaries.",
       "sha256": "4d0ad115d4d77325a70be32becb386c0a91596702f3008973c9a8727342d5771"
     },
     {
@@ -1489,7 +1489,7 @@
       "source_assets": [
         "assets/video/scene_00_to_07_shot_subtitles_v104.srt"
       ],
-      "derivation": "English localization of v104 scene00→07 shot subtitles.",
+      "derivation": "English localization of v104 scene00\u219207 shot subtitles.",
       "sha256": "87ab7e340713f429b5f8b129c0d034e8a7e85b6063c93973cf94a1f489ccbf87"
     },
     {
@@ -1521,7 +1521,7 @@
       "source_assets": [
         "assets/video/scene_00_to_07_ui_labels_v104.csv"
       ],
-      "derivation": "English UI label package for v104 scene00→07 state packets.",
+      "derivation": "English UI label package for v104 scene00\u219207 state packets.",
       "sha256": "208b85ed11329f392bc8d3240d3fbbd6a972a1d623fe871d5c527de2ac8d5ff9"
     },
     {
@@ -1538,7 +1538,7 @@
         "assets/video/scene_00_to_07_ui_labels_v104_en.csv",
         "assets/video/scene_00_to_07_state_log_v104.jsonl"
       ],
-      "derivation": "Full scene00→07 cinematic package v104 with fail-loop precision pass and bilingual timing package update.",
+      "derivation": "Full scene00\u219207 cinematic package v104 with fail-loop precision pass and bilingual timing package update.",
       "sha256": "1b94c6f70a7816206fdae69b9ab853cd7f7a61922961f59c22da2a18cd6d8c30"
     },
     {
@@ -1608,7 +1608,7 @@
       "generated_by": "ElevenLabs text-to-speech via node tmp/generate-audio.mjs --force --only tts (eleven_multilingual_v2, Daniel)",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Regenerated Abyssal Surge Korean defeat narration through the Daniel ElevenLabs path from canonical source text: \"군단의 닻이 끊어졌다. 다시, 일어나라.\"",
+      "derivation": "Regenerated Abyssal Surge Korean defeat narration through the Daniel ElevenLabs path from canonical source text: \"\uad70\ub2e8\uc758 \ub2fb\uc774 \ub04a\uc5b4\uc84c\ub2e4. \ub2e4\uc2dc, \uc77c\uc5b4\ub098\ub77c.\"",
       "sha256": "8a82223bd74459caa82cd614b9b1578af6531465d1a48f9b523a918cc22c6b69"
     },
     {
@@ -1618,7 +1618,7 @@
       "generated_by": "ElevenLabs text-to-speech via node tmp/generate-audio.mjs --force --only tts (eleven_multilingual_v2, Daniel)",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Regenerated Abyssal Surge Korean intro narration through the Daniel ElevenLabs path from canonical source text: \"심연의 문이 열렸다. 그림자 군주여, 일어나라.\"",
+      "derivation": "Regenerated Abyssal Surge Korean intro narration through the Daniel ElevenLabs path from canonical source text: \"\uc2ec\uc5f0\uc758 \ubb38\uc774 \uc5f4\ub838\ub2e4. \uadf8\ub9bc\uc790 \uad70\uc8fc\uc5ec, \uc77c\uc5b4\ub098\ub77c.\"",
       "sha256": "c611024ec4cc52b3a7d9f2840d1c98df2cb1b5d08d0e13ee9421c6371acc6ba2"
     },
     {
@@ -1628,7 +1628,7 @@
       "generated_by": "ElevenLabs text-to-speech via node tmp/generate-audio.mjs --force --only tts (eleven_multilingual_v2, Daniel)",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Regenerated Abyssal Surge Korean Cinder Span narration through the Daniel ElevenLabs path from canonical source text: \"잿빛 교량, 신더 스팬. 재의 메아리를 사냥하고 영혼을 거두어라.\"",
+      "derivation": "Regenerated Abyssal Surge Korean Cinder Span narration through the Daniel ElevenLabs path from canonical source text: \"\uc7bf\ube5b \uad50\ub7c9, \uc2e0\ub354 \uc2a4\ud32c. \uc7ac\uc758 \uba54\uc544\ub9ac\ub97c \uc0ac\ub0e5\ud558\uace0 \uc601\ud63c\uc744 \uac70\ub450\uc5b4\ub77c.\"",
       "sha256": "0f07af7f0ea69799093fdfc5cd8bc956289d396cc7cb47e8d42a6c9f8609ef06"
     },
     {
@@ -1638,7 +1638,7 @@
       "generated_by": "ElevenLabs text-to-speech via node tmp/generate-audio.mjs --force --only tts (eleven_multilingual_v2, Daniel)",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Regenerated Abyssal Surge Korean Veil Citadel narration through the Daniel ElevenLabs path from canonical source text: \"장막 성채, 베일 시타델. 빙의의 힘이 깨어난다. 두 거점을 동시에 장악하라.\"",
+      "derivation": "Regenerated Abyssal Surge Korean Veil Citadel narration through the Daniel ElevenLabs path from canonical source text: \"\uc7a5\ub9c9 \uc131\ucc44, \ubca0\uc77c \uc2dc\ud0c0\ub378. \ube59\uc758\uc758 \ud798\uc774 \uae68\uc5b4\ub09c\ub2e4. \ub450 \uac70\uc810\uc744 \ub3d9\uc2dc\uc5d0 \uc7a5\uc545\ud558\ub77c.\"",
       "sha256": "025765e41106e050a5591bdfbd24e301a9d883cb0cbbbcc16f0f86af551acbd2"
     },
     {
@@ -1648,7 +1648,7 @@
       "generated_by": "ElevenLabs text-to-speech via node tmp/generate-audio.mjs --force --only tts (eleven_multilingual_v2, Daniel)",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Regenerated Abyssal Surge Korean Echo Throne narration through the Daniel ElevenLabs path from canonical source text: \"메아리 왕좌. 군주의 영역을 펼쳐 게이트 소버린을 무너뜨려라.\"",
+      "derivation": "Regenerated Abyssal Surge Korean Echo Throne narration through the Daniel ElevenLabs path from canonical source text: \"\uba54\uc544\ub9ac \uc655\uc88c. \uad70\uc8fc\uc758 \uc601\uc5ed\uc744 \ud3bc\uccd0 \uac8c\uc774\ud2b8 \uc18c\ubc84\ub9b0\uc744 \ubb34\ub108\ub728\ub824\ub77c.\"",
       "sha256": "83a624d2d13b928dab5d9fe08854e5ff6cfde8f065e096b5cefe450a2f984721"
     },
     {
@@ -1658,7 +1658,7 @@
       "generated_by": "ElevenLabs text-to-speech via node tmp/generate-audio.mjs --force --only tts (eleven_multilingual_v2, Daniel)",
       "source_key_art": [],
       "source_assets": [],
-      "derivation": "Regenerated Abyssal Surge Korean victory narration through the Daniel ElevenLabs path from canonical source text: \"침묵한 문 앞에서, 그림자 군단이 왕좌에 오른다.\"",
+      "derivation": "Regenerated Abyssal Surge Korean victory narration through the Daniel ElevenLabs path from canonical source text: \"\uce68\ubb35\ud55c \ubb38 \uc55e\uc5d0\uc11c, \uadf8\ub9bc\uc790 \uad70\ub2e8\uc774 \uc655\uc88c\uc5d0 \uc624\ub978\ub2e4.\"",
       "sha256": "83d9a32f6eba247f51d630422e9786ead971e02c8c8355fdb4d91cd1e85d10bb"
     },
     {
@@ -1922,6 +1922,588 @@
       "source_assets": [],
       "derivation": "Original project reward image for Veil Vanguard; observed source prompt summary: vanguard elite shades. Postprocessed with sips, background repair, degreening, and Pillow palette compression.",
       "sha256": "709eb02e7d3c3fdb7262d75eeda640cf8f2c19f51b23ab051ff031732d4ba304"
+    },
+    {
+      "filename": "assets/images/characters/dusk-legion-atlas.png",
+      "media_type": "image/png",
+      "bytes": 1251016,
+      "generated_by": "scripts/build_concept_assets.py (no GTI invocation)",
+      "source_key_art": [
+        "assets/images/ui/boss-cinder-warden.png"
+      ],
+      "source_assets": [
+        "assets/images/ui/boss-cinder-warden.png"
+      ],
+      "derivation": "Deterministic 4x4 atlas of sixteen ordered 256px frames at 16 fps from the existing manifest-proven GTI portrait; no new GTI invocation.",
+      "sha256": "97e7b8923d13dbb96c6f00bbafb239274d1d9bf2629a7b8b1336d7f7e00518d4"
+    },
+    {
+      "filename": "assets/images/characters/dusk-legion-source.png",
+      "media_type": "image/png",
+      "bytes": 83600,
+      "generated_by": "scripts/build_concept_assets.py (no GTI invocation)",
+      "source_key_art": [
+        "assets/images/ui/boss-cinder-warden.png"
+      ],
+      "source_assets": [
+        "assets/images/ui/boss-cinder-warden.png"
+      ],
+      "derivation": "Deterministic background removal and framing from an existing manifest-proven GTI portrait; no new GTI invocation.",
+      "sha256": "8df01ba07e3ee23a55d5cee7b93f582b91efc6901d8ed0738866d2955d7e0d13"
+    },
+    {
+      "filename": "assets/images/ui/concept-tactical-surface.webp",
+      "media_type": "image/webp",
+      "bytes": 209042,
+      "generated_by": "scripts/build_concept_assets.py (no GTI invocation)",
+      "source_key_art": [
+        "assets/images/cinder-span.png"
+      ],
+      "source_assets": [
+        "assets/images/cinder-span.png"
+      ],
+      "derivation": "Deterministic translucent tactical UI treatment from existing manifest-proven GTI key art; no new GTI invocation.",
+      "sha256": "dadba5bcb158ae1c10ca0754ae5563689576f5d5f3ddbb3a26c30e219280599c"
+    },
+    {
+      "filename": "assets/images/battle/glb/cinder-span.png",
+      "media_type": "image/png",
+      "bytes": 6042,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/terrain/cinder-span.glb"
+      ],
+      "derivation": "Canvas 2D raster derived by importing assets/models/abyssal-command/terrain/cinder-span.glb with its embedded GLB materials/textures and rendering static terrain at frame 1.",
+      "sha256": "13cc9c4b9c9b4844da6564eebc16285ff745a900cdab78a6528605a984b0c150"
+    },
+    {
+      "filename": "assets/images/battle/glb/cinder-warden__Attack.png",
+      "media_type": "image/png",
+      "bytes": 250832,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/bosses/cinder-warden.glb"
+      ],
+      "derivation": "Canvas 2D Attack atlas derived by importing assets/models/abyssal-command/bosses/cinder-warden.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking cinder-warden-root translation.",
+      "sha256": "f40f6f4f0ec396ce5fee7c062a87eeda4e5e9bac672f933f84b566ae979aa5ab"
+    },
+    {
+      "filename": "assets/images/battle/glb/cinder-warden__Defeat.png",
+      "media_type": "image/png",
+      "bytes": 217160,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/bosses/cinder-warden.glb"
+      ],
+      "derivation": "Canvas 2D Defeat atlas derived by importing assets/models/abyssal-command/bosses/cinder-warden.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking cinder-warden-root translation.",
+      "sha256": "1edc084f8a745cdae204481e66f7a9aa0c25bb0d39e49148e7c108a5beeb755c"
+    },
+    {
+      "filename": "assets/images/battle/glb/cinder-warden__Idle.png",
+      "media_type": "image/png",
+      "bytes": 258150,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/bosses/cinder-warden.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/bosses/cinder-warden.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking cinder-warden-root translation.",
+      "sha256": "f50d1aab8751c0552da37b41004d51a13f5fdbd67067e9e22f323b09a4d7d9c2"
+    },
+    {
+      "filename": "assets/images/battle/glb/command-obelisk__Activate.png",
+      "media_type": "image/png",
+      "bytes": 192759,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/props/command-obelisk.glb"
+      ],
+      "derivation": "Canvas 2D Activate atlas derived by importing assets/models/abyssal-command/props/command-obelisk.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking command-obelisk-root translation.",
+      "sha256": "7c2fdd6328555885777f1d53d07de77ed5cbb4e5f1795a09a69eab2a740b7fee"
+    },
+    {
+      "filename": "assets/images/battle/glb/command-obelisk__Idle.png",
+      "media_type": "image/png",
+      "bytes": 200735,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/props/command-obelisk.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/props/command-obelisk.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking command-obelisk-root translation.",
+      "sha256": "18c7385c5087aff9567461b294c3b3886aa674381c40ab6ac2b640e5c76f957f"
+    },
+    {
+      "filename": "assets/images/battle/glb/echo-throne__Activate.png",
+      "media_type": "image/png",
+      "bytes": 256904,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/props/echo-throne.glb"
+      ],
+      "derivation": "Canvas 2D Activate atlas derived by importing assets/models/abyssal-command/props/echo-throne.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking echo-throne-root translation.",
+      "sha256": "4c58ca85c6c88c9ed18861cdd739c69acc9672717240aef433db0abcfc208932"
+    },
+    {
+      "filename": "assets/images/battle/glb/echo-throne__Idle.png",
+      "media_type": "image/png",
+      "bytes": 263385,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/props/echo-throne.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/props/echo-throne.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking echo-throne-root translation.",
+      "sha256": "4511a53762136849ebee9784f4862e523f50bb6438f8e556e9b74aa92582ad00"
+    },
+    {
+      "filename": "assets/images/battle/glb/echo-throne-steps.png",
+      "media_type": "image/png",
+      "bytes": 8289,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/terrain/echo-throne-steps.glb"
+      ],
+      "derivation": "Canvas 2D raster derived by importing assets/models/abyssal-command/terrain/echo-throne-steps.glb with its embedded GLB materials/textures and rendering static terrain at frame 1.",
+      "sha256": "196d8ce5cbf70fd5407ba524b8ee630de1c1a9871f60c803939514ce757656a0"
+    },
+    {
+      "filename": "assets/images/battle/glb/gate-sovereign__Attack.png",
+      "media_type": "image/png",
+      "bytes": 244754,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/bosses/gate-sovereign.glb"
+      ],
+      "derivation": "Canvas 2D Attack atlas derived by importing assets/models/abyssal-command/bosses/gate-sovereign.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking gate-sovereign-root translation.",
+      "sha256": "7af3f9982a9b27e97d93acdaeeaf2b2bfd8d5b10d764524a76c60a90ad45360d"
+    },
+    {
+      "filename": "assets/images/battle/glb/gate-sovereign__Defeat.png",
+      "media_type": "image/png",
+      "bytes": 225255,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/bosses/gate-sovereign.glb"
+      ],
+      "derivation": "Canvas 2D Defeat atlas derived by importing assets/models/abyssal-command/bosses/gate-sovereign.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking gate-sovereign-root translation.",
+      "sha256": "22723547e841cdcb30af34dfffc0a4d15ec1709ae8a1aaa5459ae5b365c60d73"
+    },
+    {
+      "filename": "assets/images/battle/glb/gate-sovereign__Idle.png",
+      "media_type": "image/png",
+      "bytes": 249643,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/bosses/gate-sovereign.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/bosses/gate-sovereign.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking gate-sovereign-root translation.",
+      "sha256": "36d6ec12ea47b79af11444cf047e063b06ec7399b9a8f7f6c921fde21916728d"
+    },
+    {
+      "filename": "assets/images/battle/glb/guard__Defeat.png",
+      "media_type": "image/png",
+      "bytes": 200119,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/guard.glb"
+      ],
+      "derivation": "Canvas 2D Defeat atlas derived by importing assets/models/abyssal-command/units/guard.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking guard-root translation.",
+      "sha256": "abce104730d5f79c432fcf5de4b9493f2545171ddd816f09c0568daa3cd34046"
+    },
+    {
+      "filename": "assets/images/battle/glb/guard__Idle.png",
+      "media_type": "image/png",
+      "bytes": 223572,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/guard.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/units/guard.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking guard-root translation.",
+      "sha256": "e8d4340ddda0b5cbd53ccc5e64aca450c4b7ce43d87b4a4fb5358031f9d5e959"
+    },
+    {
+      "filename": "assets/images/battle/glb/guard__Move.png",
+      "media_type": "image/png",
+      "bytes": 225661,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/guard.glb"
+      ],
+      "derivation": "Canvas 2D Move atlas derived by importing assets/models/abyssal-command/units/guard.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking guard-root translation.",
+      "sha256": "45025d3b7c267eab7245f3aafbbe57d91efdc783b370078b4dd6d977a58138e0"
+    },
+    {
+      "filename": "assets/images/battle/glb/guard__Special.png",
+      "media_type": "image/png",
+      "bytes": 208200,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/guard.glb"
+      ],
+      "derivation": "Canvas 2D Special atlas derived by importing assets/models/abyssal-command/units/guard.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking guard-root translation.",
+      "sha256": "6a56f477dc4f61e709799709262864027fbb633946a99f99a4d96652af6d0562"
+    },
+    {
+      "filename": "assets/images/battle/glb/guard__Strike.png",
+      "media_type": "image/png",
+      "bytes": 219173,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/guard.glb"
+      ],
+      "derivation": "Canvas 2D Strike atlas derived by importing assets/models/abyssal-command/units/guard.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking guard-root translation.",
+      "sha256": "5d191552d4d34e96e9815f55f6021e1ffffb2aaa918404d1869aa8ef22f77773"
+    },
+    {
+      "filename": "assets/images/battle/glb/possessed__Defeat.png",
+      "media_type": "image/png",
+      "bytes": 209616,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/possessed.glb"
+      ],
+      "derivation": "Canvas 2D Defeat atlas derived by importing assets/models/abyssal-command/units/possessed.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking possessed-root translation.",
+      "sha256": "31ba35ac431ab1ba7c798beaed75964f7a00e40d1fb2b398aeaccb1120a5b725"
+    },
+    {
+      "filename": "assets/images/battle/glb/possessed__Idle.png",
+      "media_type": "image/png",
+      "bytes": 234815,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/possessed.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/units/possessed.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking possessed-root translation.",
+      "sha256": "ff64b639c7e39d959fc54f3f04781c77918913e8a3ca2ac76c8548725d2cd32c"
+    },
+    {
+      "filename": "assets/images/battle/glb/possessed__Move.png",
+      "media_type": "image/png",
+      "bytes": 235582,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/possessed.glb"
+      ],
+      "derivation": "Canvas 2D Move atlas derived by importing assets/models/abyssal-command/units/possessed.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking possessed-root translation.",
+      "sha256": "50482ae94f5b4f37d989a66e4495119292aa16d146f116e3173f9421a041c010"
+    },
+    {
+      "filename": "assets/images/battle/glb/possessed__Special.png",
+      "media_type": "image/png",
+      "bytes": 212423,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/possessed.glb"
+      ],
+      "derivation": "Canvas 2D Special atlas derived by importing assets/models/abyssal-command/units/possessed.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking possessed-root translation.",
+      "sha256": "173b81271e5db593698fc0f4fb6d77278022623a96ea0d7cd869bc7160b14809"
+    },
+    {
+      "filename": "assets/images/battle/glb/possessed__Strike.png",
+      "media_type": "image/png",
+      "bytes": 229423,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/possessed.glb"
+      ],
+      "derivation": "Canvas 2D Strike atlas derived by importing assets/models/abyssal-command/units/possessed.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking possessed-root translation.",
+      "sha256": "fe212eca29a4877e9a015e7fde9a8001216e6d3c4a71dede71de48bff313fdd5"
+    },
+    {
+      "filename": "assets/images/battle/glb/reinforce__Defeat.png",
+      "media_type": "image/png",
+      "bytes": 214826,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/reinforce.glb"
+      ],
+      "derivation": "Canvas 2D Defeat atlas derived by importing assets/models/abyssal-command/units/reinforce.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking reinforce-root translation.",
+      "sha256": "81593268649ac97f5fe49ebc7d66052ce590b03828a042f295f7fea760cee55f"
+    },
+    {
+      "filename": "assets/images/battle/glb/reinforce__Idle.png",
+      "media_type": "image/png",
+      "bytes": 244945,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/reinforce.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/units/reinforce.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking reinforce-root translation.",
+      "sha256": "c46e652fc3ce6227ea16bb404142a072203e1971eb4411bc75e6dc8f914750e4"
+    },
+    {
+      "filename": "assets/images/battle/glb/reinforce__Move.png",
+      "media_type": "image/png",
+      "bytes": 245675,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/reinforce.glb"
+      ],
+      "derivation": "Canvas 2D Move atlas derived by importing assets/models/abyssal-command/units/reinforce.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking reinforce-root translation.",
+      "sha256": "4039d57f90f55f7fd06d78f0905e924ea1a92e651cd05ef6dba6bfb8e5453508"
+    },
+    {
+      "filename": "assets/images/battle/glb/reinforce__Special.png",
+      "media_type": "image/png",
+      "bytes": 226899,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/reinforce.glb"
+      ],
+      "derivation": "Canvas 2D Special atlas derived by importing assets/models/abyssal-command/units/reinforce.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking reinforce-root translation.",
+      "sha256": "a9ab13a43396ecee14308f454bde1e7e1486e7f1f088466946e43c56671233f2"
+    },
+    {
+      "filename": "assets/images/battle/glb/reinforce__Strike.png",
+      "media_type": "image/png",
+      "bytes": 237052,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/reinforce.glb"
+      ],
+      "derivation": "Canvas 2D Strike atlas derived by importing assets/models/abyssal-command/units/reinforce.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking reinforce-root translation.",
+      "sha256": "fc81f4321d0e2b342778f0f408a650a76fd7f641624bbcb1f35b128cf7599006"
+    },
+    {
+      "filename": "assets/images/battle/glb/rift-portal__Activate.png",
+      "media_type": "image/png",
+      "bytes": 252704,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/props/rift-portal.glb"
+      ],
+      "derivation": "Canvas 2D Activate atlas derived by importing assets/models/abyssal-command/props/rift-portal.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking rift-portal-root translation.",
+      "sha256": "0310365100c789569c2c6e8aa23b1a905397fddffc9972ca3ca288266fe4f057"
+    },
+    {
+      "filename": "assets/images/battle/glb/rift-portal__Idle.png",
+      "media_type": "image/png",
+      "bytes": 259777,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/props/rift-portal.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/props/rift-portal.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking rift-portal-root translation.",
+      "sha256": "8a4561107a831ec0d04e45d7182b90bcc6a535c02d9657b29aff80f344caafc2"
+    },
+    {
+      "filename": "assets/images/battle/glb/scout__Defeat.png",
+      "media_type": "image/png",
+      "bytes": 199039,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/scout.glb"
+      ],
+      "derivation": "Canvas 2D Defeat atlas derived by importing assets/models/abyssal-command/units/scout.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking scout-root translation.",
+      "sha256": "a592fd153d5371d13a7ddf0816ba5f2ae23e634de3f8e099906d570a8394308d"
+    },
+    {
+      "filename": "assets/images/battle/glb/scout__Idle.png",
+      "media_type": "image/png",
+      "bytes": 208097,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/scout.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/units/scout.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking scout-root translation.",
+      "sha256": "6bd179c6abdfb3788a16db361c9c548bb35a9d9be03a28f9122033fc1d9cf2b4"
+    },
+    {
+      "filename": "assets/images/battle/glb/scout__Move.png",
+      "media_type": "image/png",
+      "bytes": 209753,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/scout.glb"
+      ],
+      "derivation": "Canvas 2D Move atlas derived by importing assets/models/abyssal-command/units/scout.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking scout-root translation.",
+      "sha256": "95038f6a3c5027adc21e60ade02b8811f69db331fe21c022f0da621ae7c29de2"
+    },
+    {
+      "filename": "assets/images/battle/glb/scout__Special.png",
+      "media_type": "image/png",
+      "bytes": 194742,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/scout.glb"
+      ],
+      "derivation": "Canvas 2D Special atlas derived by importing assets/models/abyssal-command/units/scout.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking scout-root translation.",
+      "sha256": "7870f4bc018162cee0c037ad1716e245d7228d487370904a0edddebd5228fa8e"
+    },
+    {
+      "filename": "assets/images/battle/glb/scout__Strike.png",
+      "media_type": "image/png",
+      "bytes": 202755,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/scout.glb"
+      ],
+      "derivation": "Canvas 2D Strike atlas derived by importing assets/models/abyssal-command/units/scout.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking scout-root translation.",
+      "sha256": "98e8f229d95e027be65f973c1b530ae08d2a4fe0cb62857e01cdc9d96a3fc1b1"
+    },
+    {
+      "filename": "assets/images/battle/glb/shade__Defeat.png",
+      "media_type": "image/png",
+      "bytes": 200153,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/shade.glb"
+      ],
+      "derivation": "Canvas 2D Defeat atlas derived by importing assets/models/abyssal-command/units/shade.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking shade-root translation.",
+      "sha256": "50d793cd9a9900107d0b6e653da977ddafa9d506534a25e2c7cf91dbc5c84e71"
+    },
+    {
+      "filename": "assets/images/battle/glb/shade__Idle.png",
+      "media_type": "image/png",
+      "bytes": 237715,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/shade.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/units/shade.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking shade-root translation.",
+      "sha256": "b3e63a0ba34bc6c50600141787f2cbb4b19fbba2d2ed95769e59c8909ee8876f"
+    },
+    {
+      "filename": "assets/images/battle/glb/shade__Move.png",
+      "media_type": "image/png",
+      "bytes": 238089,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/shade.glb"
+      ],
+      "derivation": "Canvas 2D Move atlas derived by importing assets/models/abyssal-command/units/shade.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking shade-root translation.",
+      "sha256": "23c81c39c224113c36d4bff5e681aae061de1040239508d8f69337e2b7136f1c"
+    },
+    {
+      "filename": "assets/images/battle/glb/shade__Special.png",
+      "media_type": "image/png",
+      "bytes": 212640,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/shade.glb"
+      ],
+      "derivation": "Canvas 2D Special atlas derived by importing assets/models/abyssal-command/units/shade.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking shade-root translation.",
+      "sha256": "ebd0b3519cb78e2e574bd96a32c366ade4ff29a7a17cfc61a5407e773f1e10c7"
+    },
+    {
+      "filename": "assets/images/battle/glb/shade__Strike.png",
+      "media_type": "image/png",
+      "bytes": 230532,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/units/shade.glb"
+      ],
+      "derivation": "Canvas 2D Strike atlas derived by importing assets/models/abyssal-command/units/shade.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking shade-root translation.",
+      "sha256": "03d4c5983f4b22624998a3fc27fe3f90da46dc27020bdcaf7e9ff4149615599e"
+    },
+    {
+      "filename": "assets/images/battle/glb/soul-extractor__Activate.png",
+      "media_type": "image/png",
+      "bytes": 221478,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/props/soul-extractor.glb"
+      ],
+      "derivation": "Canvas 2D Activate atlas derived by importing assets/models/abyssal-command/props/soul-extractor.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking soul-extractor-root translation.",
+      "sha256": "b2c1635ffe1849ea23a8f9ebcd207522bc53e72947284d1d115dbacde1f5bc8c"
+    },
+    {
+      "filename": "assets/images/battle/glb/soul-extractor__Idle.png",
+      "media_type": "image/png",
+      "bytes": 298973,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/props/soul-extractor.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/props/soul-extractor.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking soul-extractor-root translation.",
+      "sha256": "139095f8fd725c9b902423fe5e89788a2b783264f4a403897330a615596a15c2"
+    },
+    {
+      "filename": "assets/images/battle/glb/veil-citadel.png",
+      "media_type": "image/png",
+      "bytes": 6780,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/terrain/veil-citadel.glb"
+      ],
+      "derivation": "Canvas 2D raster derived by importing assets/models/abyssal-command/terrain/veil-citadel.glb with its embedded GLB materials/textures and rendering static terrain at frame 1.",
+      "sha256": "cda7bd7aa6a9a5ddbd1f87dd79aafb5c522303a76ab334f48ec43d5e3070be17"
+    },
+    {
+      "filename": "assets/images/battle/glb/veil-tactician__Attack.png",
+      "media_type": "image/png",
+      "bytes": 237575,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/bosses/veil-tactician.glb"
+      ],
+      "derivation": "Canvas 2D Attack atlas derived by importing assets/models/abyssal-command/bosses/veil-tactician.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking veil-tactician-root translation.",
+      "sha256": "c8c8210485f771f56a03c2e048aa254910e9cc9bd41c26eac055491431983ae7"
+    },
+    {
+      "filename": "assets/images/battle/glb/veil-tactician__Defeat.png",
+      "media_type": "image/png",
+      "bytes": 222898,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/bosses/veil-tactician.glb"
+      ],
+      "derivation": "Canvas 2D Defeat atlas derived by importing assets/models/abyssal-command/bosses/veil-tactician.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking veil-tactician-root translation.",
+      "sha256": "f6918498401fe556fa7ef4cb87907e7cfa80ee606a9430cf424cb6d9f7e7e994"
+    },
+    {
+      "filename": "assets/images/battle/glb/veil-tactician__Idle.png",
+      "media_type": "image/png",
+      "bytes": 245288,
+      "generated_by": "scripts/render-8dir-atlas.py (glb-raster-pack-v1; Blender 5.1.2)",
+      "source_key_art": [],
+      "source_assets": [
+        "assets/models/abyssal-command/bosses/veil-tactician.glb"
+      ],
+      "derivation": "Canvas 2D Idle atlas derived by importing assets/models/abyssal-command/bosses/veil-tactician.glb with its embedded GLB materials/textures; 8 yaw columns \u00d7 4 source frame(s) [1, 10, 20, 30], with camera target tracking veil-tactician-root translation.",
+      "sha256": "af8dc89d7a5d892037e4f5eea8774f1ef48bb7f972620ab5fd012c2b04f9e801"
     }
   ],
   "updated_at": "2026-07-16T23:05:47Z"

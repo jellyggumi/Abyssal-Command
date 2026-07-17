@@ -87,18 +87,41 @@ const UNIT_ATLAS = Object.freeze({
   fps: 16
 });
 
-// Blender-rendered PER-UNIT 8-direction dimetric strips (1024x128, 8 frames,
-// dir0 = facing camera/screen-S, CCW yaw). Distinct silhouettes per archetype
-// keep G4 readability: shade cloak vs scout quadruped vs guard shield vs
-// reinforce spine-back. The conceptual tinted atlas above stays as fallback.
-const UNIT_ATLASES = Object.freeze({
-  ally: "assets/images/battle/shade-atlas.png",
-  possessed: "assets/images/battle/possessed-atlas.png",
-  scout: "assets/images/battle/scout-atlas.png",
-  guard: "assets/images/battle/guard-atlas.png",
-  reinforce: "assets/images/battle/reinforce-atlas.png"
+// Blender output is raster-only at runtime: no GLB parser, WebGL context, or
+// external dependency enters the Canvas renderer. The manifest is the sole
+// contract between the generator and this bridge.
+const GLB_BRIDGE_MANIFEST = "assets/images/battle/glb/manifest.json";
+const BRIDGE_STAGE_TERRAIN = Object.freeze({ 1: "cinder-span", 2: "veil-citadel", 3: "echo-throne-steps" });
+const BRIDGE_STAGE_BOSS = Object.freeze({ 1: "cinder-warden", 2: "veil-tactician", 3: "gate-sovereign" });
+const BRIDGE_ACTION_AUDIO = Object.freeze({
+  hunt: { type: "triangle", source: 320, target: 760, duration: 0.18, gain: 0.48 },
+  extract: { type: "sine", source: 760, target: 260, duration: 0.28, gain: 0.58 },
+  materialize: { type: "sine", source: 150, target: 560, duration: 0.34, gain: 0.72 },
+  capture: { type: "square", source: 240, target: 420, duration: 0.3, gain: 0.5 },
+  possess: { type: "sine", source: 300, target: 880, duration: 0.32, gain: 0.58 },
+  domain: { type: "triangle", source: 110, target: 340, duration: 0.5, gain: 0.72 },
+  assault: { type: "sawtooth", source: 210, target: 84, duration: 0.42, gain: 0.68 },
 });
-const ATLAS_FRAME_PX = 128;
+
+function bridgeKey(assetId, clip) {
+  return `${assetId}::${clip}`;
+}
+
+function isBridgeRecord(record) {
+  return Boolean(
+    record &&
+    typeof record.assetId === "string" &&
+    typeof record.category === "string" &&
+    typeof record.kind === "string" &&
+    typeof record.output?.path === "string" &&
+    record.output.path.startsWith("assets/images/battle/glb/") &&
+    Number.isFinite(record.output.width) &&
+    Number.isFinite(record.output.height) &&
+    record.output.width > 0 &&
+    record.output.height > 0,
+  );
+}
+
 
 
 // Per-stage heightfields (16×8, integers; -1 = chasm/unwalkable).
@@ -177,6 +200,16 @@ export class BattleVisualizer {
     this.occluderTiles = [];
     this.unitAtlases = new Map();
     this.bossImage = null;
+    this.bridge = {
+      state: "pending",
+      records: new Map(),
+      images: new Map(),
+      total: 0,
+      loaded: 0,
+    };
+    this.bridgeGeneration = 0;
+    this.onAssetStatus = typeof options.onAssetStatus === "function" ? options.onAssetStatus : null;
+    this.actionFx = [];
 
     this.selection = new Set();
     this.dragRect = null;     // {x0,y0,x1,y1} in canvas px
@@ -222,7 +255,7 @@ export class BattleVisualizer {
     this.buildStaticLayer();
     this.loadBossArt();
     this.loadUnitAtlas();
-    this.loadUnitStrips();
+    void this.loadBridgeAssets();
     this.attachPointerHandlers();
 
     this.resizeHandler = () => {
@@ -444,6 +477,183 @@ export class BattleVisualizer {
 
   // --- sprites (pre-rendered offscreen, per archetype) --------------------
 
+  isBridgeLoadCurrent(generation) {
+    return !this.destroyed && generation === this.bridgeGeneration;
+  }
+
+  reportAssetStatus(generation = this.bridgeGeneration) {
+    if (!this.isBridgeLoadCurrent(generation)) return;
+    this.onAssetStatus?.({
+      state: this.bridge.state,
+      loaded: this.bridge.loaded,
+      total: this.bridge.total,
+      clips: [...this.bridge.records.values()].filter((record) => record.kind === "actionAtlas").length,
+    });
+  }
+
+  async loadBridgeAssets() {
+    const generation = ++this.bridgeGeneration;
+    this.bridge.state = "loading";
+    this.bridge.records.clear();
+    this.bridge.images.clear();
+    this.bridge.total = 0;
+    this.bridge.loaded = 0;
+    this.reportAssetStatus(generation);
+    try {
+      const response = await fetch(GLB_BRIDGE_MANIFEST, { credentials: "same-origin" });
+      if (!response.ok) throw new Error(`manifest ${response.status}`);
+      const manifest = await response.json();
+      if (!this.isBridgeLoadCurrent(generation)) return;
+      if (
+        manifest?.generationVersion !== "glb-raster-pack-v1" ||
+        !Array.isArray(manifest.records) ||
+        manifest?.atlasLayout?.actionColumns !== 8 ||
+        manifest?.atlasLayout?.actionRows !== 4
+      ) throw new Error("unexpected manifest");
+
+      const records = manifest.records.filter(isBridgeRecord);
+      if (records.length === 0) throw new Error("no bridge records");
+      this.bridge.records = new Map(records.map((record) => [
+        bridgeKey(record.assetId, record.clip ?? "plate"),
+        record,
+      ]));
+      this.bridge.total = records.length;
+      this.reportAssetStatus(generation);
+      await Promise.all(records.map((record) => this.loadBridgeImage(record, generation)));
+      if (!this.isBridgeLoadCurrent(generation)) return;
+      this.bridge.state = this.bridge.loaded === records.length ? "loaded" : this.bridge.loaded ? "partial" : "unavailable";
+    } catch {
+      if (!this.isBridgeLoadCurrent(generation)) return;
+      this.bridge.state = "unavailable";
+    }
+    if (!this.isBridgeLoadCurrent(generation)) return;
+    this.reportAssetStatus(generation);
+    this.render();
+  }
+
+  loadBridgeImage(record, generation) {
+    const path = record.output.path;
+    const url = new URL(path, window.location.href);
+    if (url.origin !== window.location.origin || !url.pathname.includes("/assets/images/battle/glb/")) return Promise.resolve(false);
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => {
+        if (!this.isBridgeLoadCurrent(generation)) {
+          resolve(false);
+          return;
+        }
+        this.bridge.images.set(bridgeKey(record.assetId, record.clip ?? "plate"), image);
+        this.bridge.loaded += 1;
+        this.reportAssetStatus(generation);
+        resolve(true);
+      };
+      image.onerror = () => resolve(false);
+      image.src = url.href;
+    });
+  }
+
+  bridgeAtlas(assetId, clip) {
+    const key = bridgeKey(assetId, clip);
+    const record = this.bridge.records.get(key);
+    const image = this.bridge.images.get(key);
+    return record && image ? { record, image } : null;
+  }
+
+  hasBridgeAtlas(assetId, clip) {
+    return Boolean(this.bridgeAtlas(assetId, clip));
+  }
+
+  drawBridgeAtlas(assetId, clip, facing, p, size) {
+    const atlas = this.bridgeAtlas(assetId, clip);
+    if (!atlas) return false;
+    const { record, image } = atlas;
+    const columns = record.layout?.columns ?? 8;
+    const rows = record.layout?.rows ?? 4;
+    const cellWidth = record.layout?.cellWidth ?? image.naturalWidth / columns;
+    const cellHeight = record.layout?.cellHeight ?? image.naturalHeight / rows;
+    if (!Number.isFinite(cellWidth) || !Number.isFinite(cellHeight) || columns < 1 || rows < 1) return false;
+    const direction = this.atlasFacing(facing) % columns;
+    const phase = this.reducedMotion ? 0 : Math.floor(this.lastTime / 125) % rows;
+    this.ctx.drawImage(
+      image,
+      direction * cellWidth,
+      phase * cellHeight,
+      cellWidth,
+      cellHeight,
+      p.x - size / 2,
+      p.y - size * 0.9,
+      size,
+      size,
+    );
+    return true;
+  }
+
+  bridgeTerrainPlacement() {
+    const atlas = this.bridgeAtlas(BRIDGE_STAGE_TERRAIN[this.stageNumber], "plate");
+    if (!atlas?.image.complete || atlas.image.naturalWidth < 1 || atlas.image.naturalHeight < 1) return null;
+    const corners = [
+      this.project(0, 0, 0),
+      this.project(GRID_W, 0, 0),
+      this.project(GRID_W, GRID_H, 0),
+      this.project(0, GRID_H, 0),
+    ];
+    const left = Math.min(...corners.map((corner) => corner.x));
+    const right = Math.max(...corners.map((corner) => corner.x));
+    const top = Math.min(...corners.map((corner) => corner.y));
+    const bottom = Math.max(...corners.map((corner) => corner.y));
+    const size = Math.max(right - left, bottom - top);
+    if (!Number.isFinite(size) || size <= 0) return null;
+    return { image: atlas.image, corners, left, right, top, bottom, size };
+  }
+
+  drawBridgeTerrain(terrain = this.bridgeTerrainPlacement()) {
+    if (!terrain) return;
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.moveTo(terrain.corners[0].x, terrain.corners[0].y);
+    for (let index = 1; index < terrain.corners.length; index += 1) {
+      this.ctx.lineTo(terrain.corners[index].x, terrain.corners[index].y);
+    }
+    this.ctx.closePath();
+    this.ctx.clip();
+    this.ctx.globalAlpha = 0.32;
+    this.ctx.globalCompositeOperation = "source-over";
+    this.ctx.drawImage(
+      terrain.image,
+      (terrain.left + terrain.right - terrain.size) / 2,
+      (terrain.top + terrain.bottom - terrain.size) / 2,
+      terrain.size,
+      terrain.size,
+    );
+    this.ctx.restore();
+  }
+
+  drawBridgeTerrainTile(tile, terrain) {
+    if (!terrain || tile.z < 0) return;
+    const s = this.view.scale;
+    const hw = (TILE_W / 2) * s;
+    const hh = (TILE_H / 2) * s;
+    const top = this.project(tile.x + 0.5, tile.y + 0.5, tile.z);
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.moveTo(top.x, top.y - hh);
+    this.ctx.lineTo(top.x + hw, top.y);
+    this.ctx.lineTo(top.x, top.y + hh);
+    this.ctx.lineTo(top.x - hw, top.y);
+    this.ctx.closePath();
+    this.ctx.clip();
+    this.ctx.globalAlpha = 0.32;
+    this.ctx.globalCompositeOperation = "source-over";
+    this.ctx.drawImage(
+      terrain.image,
+      (terrain.left + terrain.right - terrain.size) / 2,
+      (terrain.top + terrain.bottom - terrain.size) / 2,
+      terrain.size,
+      terrain.size,
+    );
+    this.ctx.restore();
+  }
+
 
   loadBossArt() {
     const src = BOSS_ART[this.stageNumber];
@@ -487,20 +697,6 @@ export class BattleVisualizer {
     return canvas;
   }
 
-  // Blender per-unit strips load on top: distinct archetype silhouettes
-  // (namespaced "u:" keys so the conceptual kind-keys keep working).
-  loadUnitStrips() {
-    for (const [key, src] of Object.entries(UNIT_ATLASES)) {
-      const img = new Image();
-      img.onload = () => {
-        if (this.destroyed) return;
-        this.unitAtlases.set(`u:${key}`, img);
-        if (this.reducedMotion) this.render();
-      };
-      img.onerror = () => undefined;
-      img.src = src;
-    }
-  }
 
   // World-facing sector (directionIndex: 0 = +x world = screen SE, CCW) ->
   // conceptual atlas facing. The rings differ by a quarter-plus-eighth turn.
@@ -530,7 +726,7 @@ export class BattleVisualizer {
   // Report: listener sits at the viewport ground focus, biased slightly
   // toward the screen top; bottom sources play "closer" (louder), top
   // sources are softened and low-passed (atmospheric distance).
-  playSpatial(fx, fy, { freq = 320, duration = 0.18, type = "triangle", gain = 1 } = {}) {
+  playSpatial(fx, fy, { freq = 320, endFreq = freq, duration = 0.18, delay = 0, type = "triangle", gain = 1 } = {}) {
     const audio = this.ensureAudio();
     if (!audio || audio.ctx.state === "suspended") return;
     const p = this.project(fx, fy, this.elevationAt(fx, fy));
@@ -540,10 +736,11 @@ export class BattleVisualizer {
     const vertical = (p.y - focusY) / this.view.height; // <0 above focus, >0 below
     const proximity = Math.max(0.25, Math.min(1.2, 1 + vertical * 0.9));
 
-    const t = audio.ctx.currentTime;
+    const t = audio.ctx.currentTime + delay;
     const osc = audio.ctx.createOscillator();
     osc.type = type;
-    osc.frequency.value = freq;
+    osc.frequency.setValueAtTime(Math.max(1, freq), t);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFreq), t + duration * 0.78);
     const env = audio.ctx.createGain();
     env.gain.setValueAtTime(0.0001, t);
     env.gain.exponentialRampToValueAtTime(0.28 * gain * proximity, t + 0.015);
@@ -649,6 +846,77 @@ export class BattleVisualizer {
   }
 
   // --- public trigger API (unchanged surface) -----------------------------
+
+  actionPoint(point) {
+    if (point && Number.isFinite(point.x) && Number.isFinite(point.y)) return point;
+    if (point === "ally") return this.allies[0] ?? ALLY_SPAWN;
+    if (point === "boss") return BOSS_TILE;
+    if (point === "extractor") return { x: 6, y: 3.5 };
+    if (point === "node") return this.nodePosition(Math.min(this.nodeGoal, this.nodes.length + 1));
+    return ALLY_SPAWN;
+  }
+
+  setBridgeClip(assetId, clip, duration = 780) {
+    const until = performance.now() + duration;
+    for (const unit of this.allies) {
+      const unitAsset = unit.isPossessed ? "possessed" : "shade";
+      if (unitAsset === assetId) {
+        unit.bridgeClip = clip;
+        unit.bridgeClipUntil = until;
+      }
+    }
+    for (const unit of this.enemies) {
+      if (unit.archetype === assetId) {
+        unit.bridgeClip = clip;
+        unit.bridgeClipUntil = until;
+      }
+    }
+  }
+
+  playActionGesture(action, source, target) {
+    const profile = BRIDGE_ACTION_AUDIO[action];
+    if (!profile) return;
+    this.playSpatial(source.x, source.y, {
+      freq: profile.source,
+      endFreq: profile.target,
+      duration: profile.duration,
+      type: profile.type,
+      gain: profile.gain,
+    });
+    if (source.x !== target.x || source.y !== target.y) {
+      this.playSpatial(target.x, target.y, {
+        freq: Math.max(60, profile.target * 0.72),
+        endFreq: Math.max(60, profile.source * 0.7),
+        duration: profile.duration * 0.7,
+        delay: 0.075,
+        type: profile.type,
+        gain: profile.gain * 0.62,
+      });
+    }
+  }
+
+  triggerAction(semantic) {
+    const action = semantic?.action;
+    if (!action || this.destroyed) return;
+    const source = this.actionPoint(semantic.source);
+    const target = this.actionPoint(semantic.target);
+    const sourceAvailable = this.hasBridgeAtlas(semantic.sourceAsset, semantic.clip);
+    this.playActionGesture(action, source, target);
+    if (sourceAvailable && !this.reducedMotion) {
+      this.actionFx.push({ action, source, target, sourceAsset: semantic.sourceAsset, clip: semantic.clip, life: 0.8, duration: 0.8 });
+    }
+
+    if (action === "hunt") this.triggerHunt();
+    else if (action === "extract") this.triggerExtract();
+    else if (action === "materialize") this.triggerMaterialize(semantic.count);
+    else if (action === "capture") this.triggerCapture(semantic.nodes, semantic.nodeGoal);
+    else if (action === "possess") this.triggerPossess();
+    else if (action === "domain") this.triggerDomain();
+    else if (action === "assault") this.triggerAssault();
+
+    if (sourceAvailable) this.setBridgeClip(semantic.sourceAsset, semantic.clip);
+    this.renderStatic();
+  }
 
   spawnAlly(count = 2, isPossessed = false) {
     if (this.destroyed) return;
@@ -934,6 +1202,10 @@ export class BattleVisualizer {
       if (p.z < 0.02) { p.z = 0.02; p.vz = -p.vz * 0.3; }
       if (p.life <= 0) this.particles.splice(i, 1);
     }
+    for (let i = this.actionFx.length - 1; i >= 0; i--) {
+      this.actionFx[i].life -= dt;
+      if (this.actionFx[i].life <= 0) this.actionFx.splice(i, 1);
+    }
     if (this.domainLife > 0) this.domainLife -= dt;
     if (this.orderFlag) {
       this.orderFlag.life -= dt;
@@ -950,22 +1222,28 @@ export class BattleVisualizer {
     ctx.fillStyle = this.palette.background;
     ctx.fillRect(0, 0, this.view.width, this.view.height);
 
+
     // Chunk Mode owns only opaque, non-occluding floor. The chunk's bounds are
     // culled before its bitmap blit; barriers remain below in the shared queue.
+    const bridgeTerrain = this.bridgeTerrainPlacement();
     if (this.terrainMode === TILEMAP_RENDER_MODE.CHUNK) {
       const viewport = { left: 0, top: 0, right: this.view.width, bottom: this.view.height };
       for (const chunk of visibleIndividualItems([...this.staticChunks.values()], viewport)) {
         ctx.drawImage(chunk.canvas, chunk.bounds.left, chunk.bounds.top, chunk.width, chunk.height);
       }
+      // Source terrain is composited on top of opaque floor but below dynamic
+      // queue items; individual tiles composite it immediately after each tile.
+      this.drawBridgeTerrain(bridgeTerrain);
     }
 
     const terrain = this.terrainMode === TILEMAP_RENDER_MODE.INDIVIDUAL
       ? this.terrainTiles
       : this.occluderTiles;
     const queue = buildIndividualDrawQueue(terrain, this.buildDynamicDrawRecords());
-    for (const item of queue) this.drawQueuedItem(item);
+    for (const item of queue) this.drawQueuedItem(item, bridgeTerrain);
 
     if (this.domainLife > 0) this.drawDomain();
+    for (const effect of this.actionFx) this.drawActionFx(effect);
     if (this.orderFlag) this.drawOrderFlag();
     if (this.dragRect) this.drawDragRect();
     if (this.hud) this.drawHud();
@@ -1035,9 +1313,10 @@ export class BattleVisualizer {
     return records;
   }
 
-  drawQueuedItem(item) {
+  drawQueuedItem(item, bridgeTerrain) {
     if (item.source === "tile") {
       this.drawTile(this.ctx, item.x, item.y, item.z);
+      this.drawBridgeTerrainTile(item, bridgeTerrain);
       return;
     }
     if (item.render === "portal") this.drawPortal(item.x, item.y, item.color);
@@ -1135,27 +1414,75 @@ export class BattleVisualizer {
     ctx.globalAlpha = 1;
   }
 
+  drawActionFx(effect) {
+    const ctx = this.ctx;
+    const source = this.project(effect.source.x, effect.source.y, this.elevationAt(effect.source.x, effect.source.y));
+    const target = this.project(effect.target.x, effect.target.y, this.elevationAt(effect.target.x, effect.target.y));
+    const life = Math.max(0, effect.life / effect.duration);
+    const color = effect.action === "assault" ? this.palette.enemy
+      : effect.action === "domain" ? this.palette.domain
+        : effect.action === "possess" ? this.palette.allyPossessed
+          : this.palette.spark;
+    // The effect is source-backed: its active atlas frame is only enqueued
+    // when the manifest declared and the loader decoded that exact clip.
+    this.drawBridgeAtlas(effect.sourceAsset, effect.clip, 0, source, 52 * this.view.scale);
+    ctx.save();
+    ctx.globalAlpha = life * 0.9;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 2;
+    if (effect.action === "materialize" || effect.action === "domain") {
+      const radius = (1 - life) * 28 * this.view.scale + 10 * this.view.scale;
+      ctx.beginPath();
+      ctx.ellipse(target.x, target.y, radius, radius * 0.46, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (effect.action === "possess") {
+      ctx.beginPath();
+      ctx.arc(target.x, target.y - 15 * this.view.scale, (1 - life) * 16 * this.view.scale + 5, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      ctx.setLineDash(effect.action === "hunt" ? [4, 4] : []);
+      ctx.beginPath();
+      ctx.moveTo(source.x, source.y - 8 * this.view.scale);
+      ctx.lineTo(target.x, target.y - 8 * this.view.scale);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.arc(target.x, target.y - 8 * this.view.scale, 3 + (1 - life) * 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   drawBoss() {
     const ctx = this.ctx;
     const p = this.project(BOSS_TILE.x, BOSS_TILE.y, this.elevationAt(BOSS_TILE.x, BOSS_TILE.y));
     const s = this.view.scale;
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 4 * s, 30 * s, 12 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const bridgeDrawn = this.drawBridgeAtlas(
+      BRIDGE_STAGE_BOSS[this.stageNumber],
+      this.isAssaulting ? "Attack" : "Idle",
+      4,
+      p,
+      82 * s,
+    );
+    if (bridgeDrawn) return;
     if (this.bossImage) {
       const w = 72 * s;
       const h = w * (this.bossImage.height / this.bossImage.width);
-      ctx.fillStyle = "rgba(0,0,0,0.5)";
-      ctx.beginPath();
-      ctx.ellipse(p.x, p.y + 4 * s, 30 * s, 12 * s, 0, 0, Math.PI * 2);
-      ctx.fill();
       ctx.drawImage(this.bossImage, p.x - w / 2, p.y - h + 6 * s, w, h);
-    } else {
-      ctx.fillStyle = this.palette.enemy;
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y - 52 * s);
-      ctx.lineTo(p.x + 20 * s, p.y);
-      ctx.lineTo(p.x - 20 * s, p.y);
-      ctx.closePath();
-      ctx.fill();
+      return;
     }
+    ctx.fillStyle = this.palette.enemy;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y - 52 * s);
+    ctx.lineTo(p.x + 20 * s, p.y);
+    ctx.lineTo(p.x - 20 * s, p.y);
+    ctx.closePath();
+    ctx.fill();
   }
 
   drawUnit(unit, kind) {
@@ -1179,40 +1506,43 @@ export class BattleVisualizer {
     ctx.ellipse(p.x, p.y + 3 * s, size * 0.2, size * 0.09, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 1st choice: Blender per-unit strip (archetype silhouette, 8-dir).
-    const stripKey = kind === "enemy" ? `u:${unit.archetype ?? "guard"}` : kind === "possessed" ? "u:possessed" : "u:ally";
-    const strip = this.unitAtlases.get(stripKey);
-    if (strip) {
-      const frame = this.atlasFacing(unit.facing);
-      ctx.drawImage(strip, frame * ATLAS_FRAME_PX, 0, ATLAS_FRAME_PX, ATLAS_FRAME_PX, p.x - size / 2, p.y - size * 0.86, size, size);
-      return; // directional sheet carries facing - no tick needed
-    }
 
-
-    // Manifest-proven conceptual atlas, pre-tinted by faction on load.
-    const atlas = this.unitAtlases.get(kind);
-    if (atlas) {
-      const phase = this.reducedMotion ? 0 : Math.floor(this.lastTime / (1000 / UNIT_ATLAS.fps)) % 2;
-      const frame = this.atlasFacing(unit.facing) * 2 + phase;
-      const sourceX = UNIT_ATLAS.padding + (frame % 4) * UNIT_ATLAS.stride;
-      const sourceY = UNIT_ATLAS.padding + Math.floor(frame / 4) * UNIT_ATLAS.stride;
-      ctx.drawImage(atlas, sourceX, sourceY, UNIT_ATLAS.framePx, UNIT_ATLAS.framePx, p.x - size / 2, p.y - size * 0.86, size, size);
-    } else {
-      ctx.save();
-      ctx.fillStyle = tint;
-      ctx.globalAlpha = 0.8;
-      ctx.beginPath();
-      if (kind === "enemy") {
-        ctx.moveTo(p.x, p.y - size * 0.68);
-        ctx.lineTo(p.x + size * 0.24, p.y - size * 0.1);
-        ctx.lineTo(p.x, p.y + size * 0.08);
-        ctx.lineTo(p.x - size * 0.24, p.y - size * 0.1);
+    const bridgeAsset = kind === "enemy" ? unit.archetype : kind === "possessed" ? "possessed" : "shade";
+    const clip = unit.bridgeClipUntil > performance.now()
+      ? unit.bridgeClip
+      : unit.engagedT > 0
+        ? "Strike"
+        : (unit.path?.length || (kind !== "enemy" && this.isAssaulting))
+          ? "Move"
+          : "Idle";
+    const bridgeDrawn = this.drawBridgeAtlas(bridgeAsset, clip, unit.facing, p, size);
+    if (!bridgeDrawn) {
+      // Existing conceptual atlas and simple shapes remain the resilient
+      // fallback while a generated image is unavailable or malformed.
+      const atlas = this.unitAtlases.get(kind);
+      if (atlas) {
+        const phase = this.reducedMotion ? 0 : Math.floor(this.lastTime / (1000 / UNIT_ATLAS.fps)) % 2;
+        const frame = this.atlasFacing(unit.facing) * 2 + phase;
+        const sourceX = UNIT_ATLAS.padding + (frame % 4) * UNIT_ATLAS.stride;
+        const sourceY = UNIT_ATLAS.padding + Math.floor(frame / 4) * UNIT_ATLAS.stride;
+        ctx.drawImage(atlas, sourceX, sourceY, UNIT_ATLAS.framePx, UNIT_ATLAS.framePx, p.x - size / 2, p.y - size * 0.86, size, size);
       } else {
-        ctx.arc(p.x, p.y - size * 0.34, size * 0.24, 0, Math.PI * 2);
+        ctx.save();
+        ctx.fillStyle = tint;
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        if (kind === "enemy") {
+          ctx.moveTo(p.x, p.y - size * 0.68);
+          ctx.lineTo(p.x + size * 0.24, p.y - size * 0.1);
+          ctx.lineTo(p.x, p.y + size * 0.08);
+          ctx.lineTo(p.x - size * 0.24, p.y - size * 0.1);
+        } else {
+          ctx.arc(p.x, p.y - size * 0.34, size * 0.24, 0, Math.PI * 2);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
       }
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
     }
 
     const angle = -unit.facing * (Math.PI / 4);
@@ -1316,6 +1646,7 @@ export class BattleVisualizer {
   destroy() {
     if (this.destroyed) return;
     this.destroyed = true;
+    this.bridgeGeneration += 1;
     if (this.resizeHandler) window.removeEventListener("resize", this.resizeHandler);
     if (this.pointerHandlers) {
       this.canvas?.removeEventListener("pointerdown", this.pointerHandlers.down);
@@ -1330,6 +1661,7 @@ export class BattleVisualizer {
     this.allies = [];
     this.enemies = [];
     this.particles = [];
+    this.actionFx = [];
     this.nodes = [];
     this.selection.clear();
     this.unitAtlases.clear();
@@ -1337,6 +1669,8 @@ export class BattleVisualizer {
     this.terrainTiles = [];
     this.occluderTiles = [];
     this.bossImage = null;
+    this.bridge.records.clear();
+    this.bridge.images.clear();
     this.pointerHandlers = null;
     this.resizeHandler = null;
     this.assaultTimer = 0;

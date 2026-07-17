@@ -171,6 +171,7 @@
             <p id="stage-number" class="eyebrow">Stage 1 of 3</p>
             <h2 id="stage-heading" tabindex="-1" class="shiny-text">Cinder Span</h2>
             <p id="stage-region" class="muted"></p>
+            <p id="commander-identity" class="commander-identity" data-i18n="screen.commanderIdentity">황혼의 감시자 · 그림자 군단을 지휘 중</p>
           </div>
           <nav id="stage-selector" class="stage-selector" aria-label="Campaign stage progression">
             <ol>
@@ -184,6 +185,23 @@
             <button id="retry-stage" type="button" aria-label="Retry current stage" data-i18n="screen.retryButton">스테이지 재시도</button>
             <button id="return-to-lobby" type="button" data-i18n="screen.returnButton">사령부로 돌아가기</button>
           </div>
+        </div>
+        <div id="stage-briefing" class="mission-briefing" role="dialog" aria-modal="true" aria-labelledby="briefing-title" hidden>
+          <section class="panel mission-briefing-panel">
+            <p class="eyebrow" data-i18n="briefing.eyebrow">작전 브리핑</p>
+            <h3 id="briefing-title" data-i18n="briefing.title">문이 열린다</h3>
+            <p class="commander-identity" data-i18n="screen.commanderIdentity">황혼의 감시자 · 그림자 군단을 지휘 중</p>
+            <p id="briefing-stage" class="mission-briefing-stage"></p>
+            <p id="briefing-region" class="mission-briefing-region"></p>
+            <dl class="mission-briefing-facts">
+              <div><dt data-i18n="briefing.objectiveLabel">목표</dt><dd id="briefing-objective"></dd></div>
+              <div><dt data-i18n="briefing.operationLabel">작전</dt><dd id="briefing-operation"></dd></div>
+              <div><dt data-i18n="briefing.doctrineLabel">교리</dt><dd id="briefing-doctrine"></dd></div>
+              <div><dt data-i18n="briefing.bossLabel">대상</dt><dd id="briefing-boss"></dd></div>
+            </dl>
+            <p class="mission-briefing-next" data-i18n="briefing.nextOrder">첫 명령: 균열 흔적을 두 번 사냥해 영혼 은닉처를 드러내세요.</p>
+            <button id="start-combat" class="primary" type="button" data-i18n="briefing.startButton">전투 개시</button>
+          </section>
         </div>
 
         <div class="cockpit-main">
@@ -225,6 +243,7 @@
                 <div><dt>Hostile</dt><dd id="battle-hostile-label">Ashbound Ward</dd></div>
               </dl>
               <p id="battle-pressure" class="battle-pressure" aria-live="polite">Preparation window: issue commands before the first hostile wave enters the lane.</p>
+              <p id="battle-asset-status" class="battle-asset-status" aria-live="polite">GLB 전장 자산 대기 중</p>
             </section>
 
             <section class="panel rail-panel campaign-status" aria-labelledby="status-heading">
@@ -343,7 +362,7 @@
           </div>
         </section>
 
-        <section class="panel save-panel save-dock" aria-labelledby="save-heading">
+        <section id="save-dock" class="panel save-panel save-dock" aria-labelledby="save-heading">
           <div class="section-heading">
             <div>
               <h3 id="save-heading" data-i18n="save.heading">로컬 캠페인 저장</h3>
@@ -383,6 +402,7 @@
 
             <div class="button-row center-row">
               <button id="retry-from-result" class="secondary" type="button" hidden>다시 시도 (Retry)</button>
+              <button id="return-to-lobby-from-result" class="secondary" type="button" data-i18n="screen.returnButton">사령부로 돌아가기</button>
             </div>
           </section>
         </div>
