@@ -5,6 +5,7 @@ import vm from "node:vm";
 
 import { RealtimeBattle } from "../battle-realtime-three.js";
 import { GLTFLoader } from "../vendor/loaders/GLTFLoader.js";
+import { ObjectFeedbackLayer } from "../object-feedback-layer.js";
 
 function makeRoot(x = 0, z = 0) {
   return {
@@ -304,7 +305,7 @@ test("RealtimeBattle initialization applies atmospheric rendering and configured
   );
 });
 
-test("RealtimeBattle rejects a deferred backdrop completion after destroy and disposes the late texture", async (t) => {
+test("RealtimeBattle rejects a deferred backdrop completion after destroy with idempotent texture disposal", async (t) => {
   const priorDocument = globalThis.document;
   globalThis.document = { removeEventListener() {} };
   t.after(() => {
@@ -328,7 +329,7 @@ test("RealtimeBattle rejects a deferred backdrop completion after destroy and di
   completeBackgroundLoad();
 
   assert.equal(battle.scene.background, null, "a backdrop completed after destroy must not reattach to the dead scene");
-  assert.equal(texture.disposeCalls, 2, "the deferred completion must dispose its late texture before returning");
+  assert.equal(texture.disposeCalls, 1, "destroy and the deferred completion must dispose the late texture exactly once");
   assert.equal(battle.backgroundResizeCalls, 0, "a rejected late backdrop must not resize a destroyed renderer");
 });
 
@@ -588,7 +589,18 @@ test("RealtimeBattle projects WebGL pointer focus and clears it on cancellation,
       },
       "WebGL focus callbacks must deduplicate stable hover and clear every command/dossier projection when interaction focus exits",
     );
-    assert.deepEqual(requestedActions, ["materialize"], "eligible personal pointerup must dispatch the focused action");
+    assert.deepEqual(
+      requestedActions,
+      [{
+        type: "command-request",
+        action: "materialize",
+        requestId: "renderer-request-1",
+        source: "renderer-pointer",
+        rendererMode: "realtime-3d",
+        occurredAt: 10,
+      }],
+      "eligible personal pointerup must dispatch a normalized renderer command request",
+    );
     assert.equal(
       acceptedAction.at(-1),
       null,
@@ -620,6 +632,11 @@ test("RealtimeBattle previewAction accepts the action-enriched DOM semantic and 
     battle.previewActionSemantic,
     semantic,
     "DOM pointer or keyboard focus must project the exact action-enriched semantic supplied by the app bridge",
+  );
+  assert.deepEqual(
+    Object.keys(battle.previewActionSemantic),
+    Object.keys(semantic),
+    "previewAction must not add undefined command metadata to the caller semantic",
   );
 
   battle.clearActionPreview();
@@ -926,6 +943,56 @@ test("RealtimeBattle clears a wave once every enemy is defeated or breach-retire
     "one live unresolved enemy must block wave completion even when every peer is defeated or breached",
   );
 });
+
+test("RealtimeBattle emits both same-tick enemy breaches before one wave-clear proposal and never repeats them", () => {
+  const events = [];
+  const battle = new RealtimeBattle(
+    null,
+    { stageNumber: 1 },
+    { onEncounterEvent: (event) => events.push(event) },
+  );
+  const encounterState = Object.freeze({ activeWaveId: "scout" });
+  battle.currentWaveId = "scout";
+  battle.encounter = {
+    stageId: "cinder-span",
+    state: encounterState,
+  };
+  battle.particles = { emit() {} };
+  battle.audio = { playTone() {} };
+  battle.play = () => {};
+  battle.shakeCamera = () => {};
+
+  const portal = battle.navigation.gridToWorld(
+    battle.navigation.anchors.portal.x,
+    battle.navigation.anchors.portal.y,
+  );
+  const first = makeUnit({ x: portal.x, z: portal.z });
+  const second = makeUnit({ x: portal.x, z: portal.z });
+  first.id = "enemy-alpha";
+  second.id = "enemy-bravo";
+  first.waypoints = [];
+  second.waypoints = [];
+  battle.enemies = [first, second];
+
+  battle.updateEnemies(0);
+  battle.updateEnemies(0);
+
+  assert.deepEqual(
+    events,
+    [
+      { type: "breach", stageId: "cinder-span", waveId: "scout", enemyId: "enemy-alpha" },
+      { type: "breach", stageId: "cinder-span", waveId: "scout", enemyId: "enemy-bravo" },
+      { type: "wave-cleared", stageId: "cinder-span", waveId: "scout" },
+    ],
+    "each enemy must retain array-order identity, both breach proposals must precede the clear, and the next frame must emit nothing",
+  );
+  assert.deepEqual(
+    encounterState,
+    { activeWaveId: "scout" },
+    "renderer proposals must not mutate the supplied authoritative encounter state",
+  );
+});
+
 
 
 test("RealtimeBattle retires enemy animation mixers when an encounter wave is cleared", () => {
@@ -1547,6 +1614,225 @@ test("RealtimeBattle loads every declared stage resource with or without a canva
   }
 });
 
+test("RealtimeBattle runtime presentation assets load possessed and echo-throne templates once without inflating required accounting", async () => {
+  const statuses = [];
+  const battle = new RealtimeBattle(
+    null,
+    { stageNumber: 3 },
+    { onAssetStatus: (status) => statuses.push(status) },
+  );
+  const requests = [];
+  battle.loadModel = async (resource) => {
+    requests.push(resource);
+    return { scene: {}, animations: [] };
+  };
+
+  const savedProcess = globalThis.process;
+  try {
+    globalThis.process = undefined;
+    await battle.loadStageAssets();
+  } finally {
+    globalThis.process = savedProcess;
+  }
+
+  for (const resource of ["units/possessed.glb", "props/echo-throne.glb"]) {
+    assert.equal(
+      requests.filter((request) => request === resource).length,
+      1,
+      `${resource} must be requested exactly once during template loading`,
+    );
+    assert.equal(battle.templates.has(resource), true, `${resource} must enter the reusable template cache`);
+  }
+  assert.deepEqual(
+    statuses.at(-1),
+    { state: "loaded", loaded: 6, total: 6, clips: 0 },
+    "optional presentation templates must not inflate the six required stage resources",
+  );
+});
+
+test("RealtimeBattle runtime presentation assets render the possessed campaign ally from the possessed template", async () => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const makeTemplate = (name) => {
+    const scene = new THREE.Group();
+    scene.name = name;
+    scene.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial()));
+    return { scene, animations: [] };
+  };
+  const battle = new RealtimeBattle(null, { stageNumber: 3 });
+  battle.scene = new THREE.Scene();
+  battle.contactGeometry = null;
+  battle.contactMaterial = null;
+  battle.templates.set("units/shade.glb", makeTemplate("shade-template"));
+  battle.templates.set("units/possessed.glb", makeTemplate("possessed-template"));
+  battle.resolveSpawn = () => true;
+  battle.play = () => {};
+  battle.applyEncounter = () => {};
+  battle.reconcileDeployments = () => {};
+  battle.updateNodeVisuals = () => {};
+
+  battle.applyCampaignState({ state: { legion: 2, possessed: true } });
+
+  assert.equal(battle.allies.length, 2, "authoritative legion count must still create both allied actors");
+  assert.equal(battle.allies[0].isPossessed, true, "the authoritative possessed identity must remain attached to the first ally");
+  assert.ok(
+    battle.allies[0].root.getObjectByName("possessed-template"),
+    "the possessed ally must visibly clone the possessed GLB rather than the ordinary shade GLB",
+  );
+  assert.ok(
+    battle.allies[1].root.getObjectByName("shade-template"),
+    "unpossessed allies must retain the ordinary shade identity",
+  );
+});
+
+test("RealtimeBattle runtime presentation assets activate one cached echo-throne clone on Domain replay", async () => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const templateScene = new THREE.Group();
+  templateScene.name = "echo-throne-template";
+  templateScene.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial()));
+  const battle = new RealtimeBattle(null, { stageNumber: 3 });
+  battle.scene = new THREE.Scene();
+  battle.contactGeometry = null;
+  battle.contactMaterial = null;
+  battle.templates.set("props/echo-throne.glb", {
+    scene: templateScene,
+    animations: [new THREE.AnimationClip("Activate", 0.5, [])],
+  });
+  battle.emitActionFeedback = () => ({ action: "domain" });
+  const activated = [];
+  const play = battle.play;
+  battle.play = function playObserved(instance, clip, once) {
+    if (instance?.root?.getObjectByName?.("echo-throne-template")) activated.push({ instance, clip, once });
+    return play.call(this, instance, clip, once);
+  };
+  let reloads = 0;
+  battle.loadModel = async () => {
+    reloads += 1;
+    throw new Error("Domain replay must use the cached echo-throne template");
+  };
+  const domain = { action: "domain", source: "commander", target: "commander", actor: "commander", actorClip: "Special" };
+
+  battle.triggerAction(domain);
+  battle.triggerAction(domain);
+
+  const renderedEchoThrones = [];
+  battle.scene.traverse((node) => {
+    if (node.name === "echo-throne-template") renderedEchoThrones.push(node);
+  });
+  assert.equal(renderedEchoThrones.length, 1, "Domain replay must reuse one visible echo-throne clone instead of stacking props");
+  assert.equal(new Set(activated.map(({ instance }) => instance)).size, 1, "both Domain cues must target the same echo-throne instance");
+  assert.deepEqual(
+    activated.map(({ clip, once }) => ({ clip, once })),
+    [{ clip: "Activate", once: true }, { clip: "Activate", once: true }],
+    "each accepted Domain cue must request the authored one-shot Activate clip",
+  );
+  assert.equal(reloads, 0, "Domain replay must never reload an already cached echo-throne GLB");
+});
+
+test("RealtimeBattle runtime presentation assets tolerate optional identity load failure without changing required accounting", async () => {
+  const failedOptional = new Set(["units/possessed.glb", "props/echo-throne.glb"]);
+  const statuses = [];
+  const requests = [];
+  const battle = new RealtimeBattle(
+    null,
+    { stageNumber: 3 },
+    { onAssetStatus: (status) => statuses.push(status) },
+  );
+  battle.loadModel = async (resource) => {
+    requests.push(resource);
+    if (failedOptional.has(resource)) throw new Error(`Unable to load ${resource}`);
+    return { scene: {}, animations: [] };
+  };
+
+  const savedProcess = globalThis.process;
+  try {
+    globalThis.process = undefined;
+    await assert.doesNotReject(
+      battle.loadStageAssets(),
+      "missing possessed and echo-throne presentation models must not prevent renderer startup",
+    );
+  } finally {
+    globalThis.process = savedProcess;
+  }
+
+  assert.deepEqual(
+    [...failedOptional].filter((resource) => requests.includes(resource)).sort(),
+    [...failedOptional].sort(),
+    "startup must attempt each optional identity resource before falling back",
+  );
+  assert.deepEqual(
+    statuses.at(-1),
+    { state: "loaded", loaded: 6, total: 6, clips: 0 },
+    "optional failures must report the required stage-resource accounting accurately",
+  );
+  assert.equal(
+    ["terrain/echo-throne-steps.glb", "units/shade.glb", "units/scout.glb", "units/guard.glb", "units/reinforce.glb", "bosses/gate-sovereign.glb"]
+      .every((resource) => battle.templates.has(resource)),
+    true,
+    "all required stage templates must remain available after optional presentation failures",
+  );
+});
+
+test("RealtimeBattle runtime presentation assets destroy an owned echo-throne clone without double-disposing its shared template", async (t) => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const documentDescriptor = Object.getOwnPropertyDescriptor(globalThis, "document");
+  Object.defineProperty(globalThis, "document", {
+    configurable: true,
+    writable: true,
+    value: { removeEventListener() {} },
+  });
+  t.after(() => {
+    if (documentDescriptor) Object.defineProperty(globalThis, "document", documentDescriptor);
+    else delete globalThis.document;
+  });
+
+  const disposals = { sharedGeometry: 0, sharedMaterial: 0, ownedGeometry: 0, ownedMaterial: 0 };
+  const sharedGeometry = new THREE.BoxGeometry(1, 1, 1);
+  sharedGeometry.dispose = () => { disposals.sharedGeometry += 1; };
+  const sharedMaterial = new THREE.MeshStandardMaterial();
+  sharedMaterial.dispose = () => { disposals.sharedMaterial += 1; };
+  const ownedGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+  ownedGeometry.dispose = () => { disposals.ownedGeometry += 1; };
+  const ownedMaterial = new THREE.MeshStandardMaterial();
+  ownedMaterial.userData.isRuntimeAssetClone = true;
+  ownedMaterial.dispose = () => { disposals.ownedMaterial += 1; };
+  const templateScene = new THREE.Group();
+  templateScene.add(new THREE.Mesh(sharedGeometry, sharedMaterial));
+  templateScene.clone = () => {
+    const clone = new THREE.Group();
+    clone.name = "echo-throne-template";
+    clone.add(new THREE.Mesh(sharedGeometry, sharedMaterial));
+    clone.add(new THREE.Mesh(ownedGeometry, ownedMaterial));
+    return clone;
+  };
+
+  const canvas = { removeEventListener() {} };
+  const battle = new RealtimeBattle(canvas, { stageNumber: 3 });
+  battle.scene = new THREE.Scene();
+  battle.contactGeometry = null;
+  battle.contactMaterial = null;
+  battle.templates.set("props/echo-throne.glb", {
+    scene: templateScene,
+    animations: [new THREE.AnimationClip("Activate", 0.5, [])],
+  });
+  battle.emitActionFeedback = () => ({ action: "domain" });
+  battle.triggerAction({ action: "domain", source: "commander", target: "commander", actor: "commander" });
+
+  assert.ok(
+    battle.scene.getObjectByName("echo-throne-template"),
+    "fixture requires Domain to materialize the runtime-owned echo-throne clone",
+  );
+  assert.deepEqual(disposals, { sharedGeometry: 0, sharedMaterial: 0, ownedGeometry: 0, ownedMaterial: 0 });
+
+  battle.destroy();
+  battle.destroy();
+
+  assert.deepEqual(
+    disposals,
+    { sharedGeometry: 1, sharedMaterial: 1, ownedGeometry: 1, ownedMaterial: 1 },
+    "destroy must release clone-owned resources and each cache-shared template resource exactly once",
+  );
+});
+
 test("ParticleField recycles the fixed-capacity pool instead of growing unbounded", async () => {
   const { ParticleField } = await import("../battle-realtime-three.js");
   const added = [];
@@ -1690,6 +1976,33 @@ test("RealtimeBattle triggers boss defeat feedback exactly once when applyCampai
   assert.deepEqual(defeatCalls, [boss], "a repeated zero-health sync must not re-trigger defeat (defeat() is itself idempotent via unit.defeated)");
 });
 
+test("RealtimeBattle hydrates an initially defeated boss without replaying transition feedback", () => {
+  const battle = new RealtimeBattle(null, { stageNumber: 1, palette: { hostile: "#ff7f79" } });
+  const boss = makeUnit({ x: 3, z: 5 });
+  const particles = [];
+  const tones = [];
+  const animations = [];
+  battle.boss = boss;
+  battle.particles = { emit: (...args) => particles.push(args) };
+  battle.audio = { playTone: (...args) => tones.push(args) };
+  battle.play = (actor, clip, restart) => animations.push({ actor, clip, restart });
+
+  battle.applyCampaignState({ state: { bossHealth: 0, bossMaxHealth: 8 } });
+
+  assert.equal(boss.hp, 0, "the first authoritative snapshot must hydrate the boss's zero health");
+  assert.equal(boss.defeated, true, "an initially zero-health boss must enter the defeated state");
+  assert.deepEqual(
+    animations,
+    [{ actor: boss, clip: "Defeat", restart: true }],
+    "initial defeat hydration must put the boss in its authored Defeat animation",
+  );
+  assert.deepEqual(
+    { particles, tones },
+    { particles: [], tones: [] },
+    "initial defeat hydration must not replay transition-only particles or audio",
+  );
+});
+
 test("RealtimeBattle applyCampaignState does not defeat the boss on a fresh stage entry at full health after a prior defeat", () => {
   const battle = new RealtimeBattle(null, { stageNumber: 1, palette: { hostile: "#ff7f79" } });
   const boss = makeUnit({ x: 3, z: 5 });
@@ -1786,6 +2099,94 @@ test("RealtimeBattle retire() disposes boss-identity-tint material clones withou
 
   battle.retire(boss);
   assert.equal(disposedCount, 1, "retire() must dispose exactly the boss-identity-tint clone, not the template-shared material");
+});
+
+test("RealtimeBattle Stage 4+ identity tint skips shared contact shadows and disposes shared resources only at destroy", async (t) => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const documentDescriptor = Object.getOwnPropertyDescriptor(globalThis, "document");
+  Object.defineProperty(globalThis, "document", {
+    configurable: true,
+    writable: true,
+    value: { removeEventListener() {} },
+  });
+  t.after(() => {
+    if (documentDescriptor) Object.defineProperty(globalThis, "document", documentDescriptor);
+    else delete globalThis.document;
+  });
+
+  const disposals = { contactGeometry: 0, contactMaterial: 0 };
+  const battle = new RealtimeBattle(
+    { removeEventListener() {} },
+    { stageNumber: 4, palette: { hostile: "#ff204e" } },
+  );
+  battle.contactGeometry = new THREE.RingGeometry(0, 0.45, 16);
+  battle.contactGeometry.dispose = () => { disposals.contactGeometry += 1; };
+  battle.contactMaterial = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.5,
+    depthWrite: false,
+  });
+  battle.contactMaterial.dispose = () => { disposals.contactMaterial += 1; };
+
+  const ordinaryMaterial = new THREE.MeshStandardMaterial({ color: 0x224466 });
+  const ordinaryColor = ordinaryMaterial.color.clone();
+  const ordinaryMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), ordinaryMaterial);
+  const contactShadow = new THREE.Mesh(battle.contactGeometry, battle.contactMaterial);
+  const arrayOrdinaryMaterial = new THREE.MeshStandardMaterial({ color: 0x335577 });
+  const arrayMaterials = [battle.contactMaterial, arrayOrdinaryMaterial];
+  const arrayContactMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), arrayMaterials);
+  const arrayContactMaterialsBeforeTint = arrayContactMesh.material;
+  const arrayContactMaterialBeforeTint = arrayContactMesh.material[0];
+  const arrayOrdinaryMaterialBeforeTint = arrayContactMesh.material[1];
+  const bossRoot = new THREE.Group();
+  bossRoot.add(ordinaryMesh, contactShadow);
+  bossRoot.add(arrayContactMesh);
+  const boss = { root: bossRoot, mixer: null };
+
+  battle.applyBossIdentityTint(bossRoot);
+
+  const expectedTint = ordinaryColor.clone().lerp(new THREE.Color("#ff204e"), 0.55);
+  assert.notEqual(ordinaryMesh.material, ordinaryMaterial, "Stage 4+ ordinary boss materials must be cloned for identity tinting");
+  assert.equal(ordinaryMesh.material.userData.isBossIdentityTint, true, "cloned boss material must carry the tint disposal marker");
+  assert.equal(ordinaryMesh.material.color.getHex(), expectedTint.getHex(), "ordinary boss material must receive the hostile identity tint");
+  assert.equal(
+    arrayContactMesh.material,
+    arrayContactMaterialsBeforeTint,
+    "array-valued contact-shadow mesh materials must remain the same array during identity tinting",
+  );
+  assert.equal(
+    arrayContactMesh.material[0],
+    arrayContactMaterialBeforeTint,
+    "array-valued contact-shadow mesh must retain the battle-shared contact material entry",
+  );
+  assert.equal(
+    arrayContactMesh.material[1],
+    arrayOrdinaryMaterialBeforeTint,
+    "array-valued contact-shadow mesh must skip tinting its ordinary material slot",
+  );
+  assert.notEqual(
+    arrayContactMesh.material[0].userData.isBossIdentityTint,
+    true,
+    "shared contact material must never be marked as a boss identity-tint clone",
+  );
+  assert.equal(contactShadow.material, battle.contactMaterial, "contact-shadow material must remain the battle-shared material");
+  assert.equal(contactShadow.geometry, battle.contactGeometry, "contact-shadow geometry must remain the battle-shared geometry");
+
+  battle.retire(boss);
+  assert.deepEqual(
+    disposals,
+    { contactGeometry: 0, contactMaterial: 0 },
+    "retiring a tinted boss must not dispose shared contact-shadow resources",
+  );
+
+  battle.destroy();
+  battle.destroy();
+  assert.deepEqual(
+    disposals,
+    { contactGeometry: 1, contactMaterial: 1 },
+    "destroy must dispose each shared contact-shadow resource exactly once and remain idempotent",
+  );
 });
 
 
@@ -1915,6 +2316,91 @@ test("RealtimeBattle destroy disposes shared WebGL resources once and remains id
   assert.equal(battle.extractorProp, null, "destroy must relinquish the extractor prop reference");
   assert.equal(battle.portalProp, null, "destroy must relinquish the portal prop reference");
   assert.equal(battle.nodeProps, null, "destroy must relinquish the node prop collection");
+});
+
+test("RealtimeBattle campaign and wave entry points remain inert after destroy", (t) => {
+  const documentDescriptor = Object.getOwnPropertyDescriptor(globalThis, "document");
+  Object.defineProperty(globalThis, "document", {
+    configurable: true,
+    writable: true,
+    value: { removeEventListener() {} },
+  });
+  t.after(() => {
+    if (documentDescriptor) Object.defineProperty(globalThis, "document", documentDescriptor);
+    else delete globalThis.document;
+  });
+
+  const battle = new RealtimeBattle({ removeEventListener() {} }, { stageNumber: 1 });
+  battle.destroy();
+
+  const existingEnemy = makeUnit();
+  const calls = {
+    reconcileAllies: 0,
+    applyEncounter: 0,
+    reconcileDeployments: 0,
+    updateNodeVisuals: 0,
+    cloneTemplate: 0,
+  };
+  battle.authoritativeLegion = 7;
+  battle.capturedCount = 2;
+  battle.lastBossHealth = 9;
+  battle.currentWaveId = "retired-wave";
+  battle.enemySerial = 13;
+  battle.enemies = [existingEnemy];
+  battle.reconcileAllies = () => { calls.reconcileAllies += 1; };
+  battle.applyEncounter = () => { calls.applyEncounter += 1; };
+  battle.reconcileDeployments = () => { calls.reconcileDeployments += 1; };
+  battle.updateNodeVisuals = () => { calls.updateNodeVisuals += 1; };
+  battle.cloneTemplate = () => {
+    calls.cloneTemplate += 1;
+    return makeUnit();
+  };
+
+  battle.applyCampaignState({
+    encounter: {
+      stageId: "stage-retired",
+      config: { waves: [{ id: "late-wave", hostiles: 2 }] },
+      state: { activeWaveId: "late-wave" },
+    },
+    state: {
+      legion: 3,
+      bossHealth: 0,
+      bossMaxHealth: 8,
+      deployments: [{ id: "late-tower", kind: "tower" }],
+    },
+  });
+  battle.spawnEncounterWave({ id: "late-wave", hostiles: 2 });
+
+  assert.deepEqual(
+    calls,
+    {
+      reconcileAllies: 0,
+      applyEncounter: 0,
+      reconcileDeployments: 0,
+      updateNodeVisuals: 0,
+      cloneTemplate: 0,
+    },
+    "destroyed campaign and wave entry points must not reconcile state or allocate enemy instances",
+  );
+  assert.deepEqual(
+    {
+      authoritativeLegion: battle.authoritativeLegion,
+      capturedCount: battle.capturedCount,
+      lastBossHealth: battle.lastBossHealth,
+      currentWaveId: battle.currentWaveId,
+      enemySerial: battle.enemySerial,
+      enemies: battle.enemies,
+    },
+    {
+      authoritativeLegion: 7,
+      capturedCount: 2,
+      lastBossHealth: 9,
+      currentWaveId: "retired-wave",
+      enemySerial: 13,
+      enemies: [existingEnemy],
+    },
+    "destroyed entry points must leave previously retired renderer state untouched",
+  );
 });
 
 test("RealtimeBattle shares one contact-shadow material across clones and disposes it only at destroy", async (t) => {
@@ -2684,6 +3170,36 @@ test("RealtimeBattle cloneTemplate applies anisotropic Y compression only to ter
   const expectedPosY = 0.325 * localRoot.scale.x * 0.125;
   assert.ok(Math.abs(localRoot.position.y - expectedPosY) < 1e-5, "position y offset must be scaled correctly on Y axis");
 });
+test("RealtimeBattle cloneTemplate lifts dark terrain materials for readable silhouettes", async () => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const terrainScene = new THREE.Group();
+  const authoredColor = new THREE.Color(0x05080c);
+  const darkMaterial = new THREE.MeshStandardMaterial({
+    color: authoredColor.clone(),
+    metalness: 0.95,
+    roughness: 0.95,
+    emissive: new THREE.Color(0x000000),
+    emissiveIntensity: 0,
+  });
+  terrainScene.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), darkMaterial));
+  battle.templates.set("terrain/test-dark.glb", { scene: terrainScene, animations: [] });
+
+  const instance = battle.cloneTemplate("terrain/test-dark.glb", 1);
+  const normalizedMaterial = instance.root.children[0].children[0].material;
+  const expectedLiftedColor = authoredColor.clone().multiplyScalar(1.35);
+
+  assert.equal(normalizedMaterial.metalness, 0.55, "terrain metalness must be capped to prevent black metallic shading");
+  assert.equal(normalizedMaterial.roughness, 0.72, "terrain roughness must be capped to preserve readable highlights");
+  assert.equal(
+    normalizedMaterial.color.getHex(),
+    expectedLiftedColor.getHex(),
+    "near-black terrain color must receive the authored readability lift",
+  );
+  assert.equal(normalizedMaterial.emissive.getHex(), 0x263454, "dark terrain must receive the slate emissive readability color");
+  assert.equal(normalizedMaterial.emissiveIntensity, 0.26, "dark terrain must receive the slate emissive intensity floor");
+});
+
 
 test("RealtimeBattle cloneTemplate applies emissive readability lift to unit resources", async () => {
   const THREE = await import("../vendor/three.module.min.js");
@@ -2771,4 +3287,528 @@ test("RealtimeBattle cloneTemplate applies emissive readability lift to unit res
   const clonedMatProp = instanceProp.root.children[0].children[0].material;
   assert.equal(clonedMatProp.emissive.getHex(), 0x1a1a1a, "non-unit asset gets the fallback 0x1a1a1a color");
   assert.equal(clonedMatProp.emissiveIntensity, 0.15, "non-unit asset gets the fallback 0.15 intensity");
+});
+
+test("ParticleField direct disposal is idempotent and rejects later emission and updates", async () => {
+  const { ParticleField } = await import("../battle-realtime-three.js");
+  const field = new ParticleField({ add() {} });
+  const releases = { points: 0, geometry: 0, material: 0 };
+  field.points.removeFromParent = () => {
+    releases.points += 1;
+  };
+  field.points.geometry.dispose = () => {
+    releases.geometry += 1;
+  };
+  field.points.material.dispose = () => {
+    releases.material += 1;
+  };
+
+  field.emit(1, 2, 3, "#ffffff", 1);
+  const cursorBeforeDispose = field.cursor;
+  field.dispose();
+  field.dispose();
+
+  assert.deepEqual(
+    releases,
+    { points: 1, geometry: 1, material: 1 },
+    "direct repeated disposal must detach the Points object and release each owned GPU resource exactly once",
+  );
+  assert.equal(field.emit(4, 5, 6, "#ff0000", 2), false, "a disposed field must reject later particle emission");
+  assert.equal(field.update(1 / 60), false, "a disposed field must reject later simulation updates");
+  assert.equal(field.cursor, cursorBeforeDispose, "rejected post-disposal emission must not advance the particle pool");
+});
+
+test("SpatialAudio tracks modern listener transforms and directly disposes its graph once", async (t) => {
+  const windowDescriptor = Object.getOwnPropertyDescriptor(globalThis, "window");
+  const releases = { master: 0, context: 0 };
+
+  class ModernAudioContext {
+    state = "running";
+    destination = {};
+    listener = {
+      positionX: { value: 0 },
+      positionY: { value: 0 },
+      positionZ: { value: 0 },
+      forwardX: { value: 0 },
+      forwardY: { value: 0 },
+      forwardZ: { value: 0 },
+      upX: { value: 0 },
+      upY: { value: 0 },
+      upZ: { value: 0 },
+    };
+
+    createGain() {
+      return {
+        gain: { value: 0 },
+        connect(target) {
+          return target;
+        },
+        disconnect() {
+          releases.master += 1;
+        },
+      };
+    }
+
+    close() {
+      releases.context += 1;
+      this.state = "closed";
+      return Promise.resolve();
+    }
+  }
+
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    writable: true,
+    value: { AudioContext: ModernAudioContext },
+  });
+  t.after(() => {
+    if (windowDescriptor) Object.defineProperty(globalThis, "window", windowDescriptor);
+    else delete globalThis.window;
+  });
+
+  const { SpatialAudio } = await import("../battle-realtime-three.js");
+  const audio = new SpatialAudio();
+  const listener = audio.ctx.listener;
+  audio.updateListener({
+    position: { x: 7, y: 3, z: -5 },
+    getWorldDirection(target) {
+      return target.set(-0.5, 0.25, -0.75);
+    },
+  });
+
+  assert.deepEqual(
+    {
+      position: [listener.positionX.value, listener.positionY.value, listener.positionZ.value],
+      forward: [listener.forwardX.value, listener.forwardY.value, listener.forwardZ.value],
+      up: [listener.upX.value, listener.upY.value, listener.upZ.value],
+    },
+    {
+      position: [7, 3, -5],
+      forward: [-0.5, 0.25, -0.75],
+      up: [0, 1, 0],
+    },
+    "modern AudioParams must follow the camera position, world direction, and Three.js Y-up orientation",
+  );
+
+  audio.dispose();
+  audio.dispose();
+
+  assert.deepEqual(
+    releases,
+    { master: 1, context: 1 },
+    "direct repeated disposal must disconnect the master graph and close its AudioContext exactly once",
+  );
+  assert.equal(audio.master, null, "disposed audio must relinquish its master-node reference");
+  assert.equal(audio.ctx, null, "disposed audio must relinquish its context reference");
+});
+
+test("RealtimeBattle boss phase transitions own their tint and emit one visual/audio cue per new phase", async () => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const battle = new RealtimeBattle(null, {
+    stageNumber: 1,
+    palette: { hostile: "#ff204e" },
+  });
+  const templateMaterial = new THREE.MeshStandardMaterial({
+    color: 0x224466,
+    emissive: 0x000000,
+    emissiveIntensity: 0.1,
+  });
+  const originalTemplateDispose = templateMaterial.dispose.bind(templateMaterial);
+  let templateDisposals = 0;
+  templateMaterial.dispose = () => {
+    templateDisposals += 1;
+    originalTemplateDispose();
+  };
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const mesh = new THREE.Mesh(geometry, templateMaterial);
+  const root = new THREE.Group();
+  root.position.set(3, 0, -2);
+  root.add(mesh);
+  const boss = { id: "warden", root, defeated: false, mixer: null };
+  const particles = [];
+  const tones = [];
+  const animations = [];
+  battle.boss = boss;
+  battle.bossExposed = true;
+  battle.particles = { emit: (...args) => particles.push(args) };
+  battle.audio = { playTone: (...args) => tones.push(args) };
+  battle.play = (actor, clip, restart) => animations.push({ actor, clip, restart });
+
+  battle.applyBossPhaseVisual({
+    phaseIndex: 0,
+    normalizedHealth: 1,
+    phaseCue: { clip: "Special" },
+  });
+  const phaseMaterial = mesh.material;
+  const originalPhaseDispose = phaseMaterial.dispose.bind(phaseMaterial);
+  let phaseDisposals = 0;
+  phaseMaterial.dispose = () => {
+    phaseDisposals += 1;
+    originalPhaseDispose();
+  };
+
+  assert.notEqual(phaseMaterial, templateMaterial, "phase tinting must clone a template-shared boss material");
+  assert.equal(phaseMaterial.userData.isBossPhaseTint, true, "the cloned phase tint must be marked as renderer-owned");
+  assert.deepEqual(
+    { particles, tones, animations },
+    { particles: [], tones: [], animations: [] },
+    "the initial phase establishes a visual baseline without presenting a transition cue",
+  );
+
+  const pressuredPhase = {
+    phaseIndex: 1,
+    normalizedHealth: 0.6,
+    phaseCue: { clip: "Special" },
+  };
+  battle.applyBossPhaseVisual(pressuredPhase);
+  battle.applyBossPhaseVisual(pressuredPhase);
+
+  assert.equal(mesh.material, phaseMaterial, "later phase updates must reuse the renderer-owned tint instead of cloning repeatedly");
+  assert.equal(particles.length, 1, "entering a new phase must emit one visual burst and repeated same-phase state must emit none");
+  assert.equal(tones.length, 1, "entering a new phase must emit one spatial tone and repeated same-phase state must emit none");
+  assert.deepEqual(
+    animations,
+    [{ actor: boss, clip: "Special", restart: true }],
+    "the authored phase animation must restart once on transition and not replay for repeated state",
+  );
+
+  battle.retire(boss);
+  assert.equal(phaseDisposals, 1, "retiring the boss must dispose its renderer-owned phase-tint material");
+  assert.equal(templateDisposals, 0, "retiring the boss must not dispose the template-shared source material");
+  geometry.dispose();
+  originalTemplateDispose();
+});
+
+test("RealtimeBattle boss phase traversal preserves shared contact resources", async () => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const battle = new RealtimeBattle(null, {
+    stageNumber: 1,
+    palette: { hostile: "#ff204e" },
+  });
+  const disposals = { geometry: 0, material: 0 };
+  const contactGeometry = new THREE.RingGeometry(0, 0.45, 16);
+  const contactMaterial = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.5,
+    depthWrite: false,
+  });
+  const originalGeometryDispose = contactGeometry.dispose.bind(contactGeometry);
+  const originalMaterialDispose = contactMaterial.dispose.bind(contactMaterial);
+  contactGeometry.dispose = () => { disposals.geometry += 1; };
+  contactMaterial.dispose = () => { disposals.material += 1; };
+  battle.contactGeometry = contactGeometry;
+  battle.contactMaterial = contactMaterial;
+
+  const contactShadow = new THREE.Mesh(contactGeometry, contactMaterial);
+  const root = new THREE.Group();
+  root.add(contactShadow);
+  const boss = { root, defeated: false, mixer: null };
+  battle.boss = boss;
+
+  battle.applyBossPhaseVisual({
+    phaseIndex: 1,
+    normalizedHealth: 0.5,
+    phaseCue: { clip: "Special" },
+  });
+
+  assert.equal(contactShadow.geometry, contactGeometry, "phase traversal must preserve the battle-shared contact geometry identity");
+  assert.equal(contactShadow.material, contactMaterial, "phase traversal must preserve the battle-shared contact material identity");
+  assert.notEqual(
+    contactMaterial.userData.isBossPhaseTint,
+    true,
+    "the shared contact material must never be marked as a renderer-owned phase clone",
+  );
+
+  battle.retire(boss);
+  assert.deepEqual(
+    disposals,
+    { geometry: 0, material: 0 },
+    "retiring a phase-styled boss must not dispose battle-shared contact resources",
+  );
+
+  originalGeometryDispose();
+  originalMaterialDispose();
+});
+
+test("RealtimeBattle emits one guardian or ranged spawn alert per pattern per wave", () => {
+  const battle = new RealtimeBattle(null, {
+    stageNumber: 1,
+    palette: { hostile: "#ff7f79" },
+  });
+  const particles = [];
+  const tones = [];
+  battle.scene = { add() {} };
+  battle.particles = { emit: (...args) => particles.push(args) };
+  battle.audio = { playTone: (...args) => tones.push(args) };
+  battle.cloneTemplate = () => {
+    const enemy = makeUnit();
+    enemy.root.rotation = {};
+    return enemy;
+  };
+  battle.resolveSpawn = () => true;
+  battle.play = () => {};
+
+  battle.spawnEncounterWave({ id: "shield-line", pattern: "guardian", hostiles: 3, hostileHealth: 4 });
+  battle.spawnEncounterWave({ id: "artillery-line", pattern: "ranged", hostiles: 3, hostileHealth: 2 });
+
+  assert.deepEqual(
+    battle.enemies
+      .filter((enemy) => enemy.lastAlertCue)
+      .map((enemy) => ({ pattern: enemy.patternId, event: enemy.lastAlertCue.event })),
+    [
+      { pattern: "guardian", event: "guardian-shield" },
+      { pattern: "ranged", event: "enemy-ranged-warning" },
+    ],
+    "guardian and ranged patterns must select their distinct spawn-alert contracts once per wave",
+  );
+  assert.equal(particles.length, 2, "six spawned enemies across two homogeneous waves must produce only two alert bursts");
+  assert.equal(tones.length, 2, "six spawned enemies across two homogeneous waves must produce only two alert tones");
+});
+
+test("RealtimeBattle emits summon evolution effects only for an authoritative level transition without mutating frozen state", () => {
+  const battle = new RealtimeBattle(null, {
+    stageNumber: 1,
+    palette: { ally: "#70e5d0" },
+  });
+  const portal = makeRoot(6, -4);
+  const portalProp = {};
+  const particles = [];
+  const tones = [];
+  const animations = [];
+  battle.portal = portal;
+  battle.portalProp = portalProp;
+  battle.particles = { emit: (...args) => particles.push(args) };
+  battle.audio = { playTone: (...args) => tones.push(args) };
+  battle.play = (actor, clip, restart) => animations.push({ actor, clip, restart });
+
+  const campaignAt = (level) => Object.freeze({
+    state: Object.freeze({
+      progression: Object.freeze({
+        summons: Object.freeze({
+          levels: Object.freeze({ shade: level }),
+        }),
+      }),
+    }),
+  });
+  const baseline = campaignAt(1);
+  const evolved = campaignAt(2);
+
+  battle.applyCampaignState({ campaign: baseline });
+  assert.deepEqual(
+    { particles, tones, animations },
+    { particles: [], tones: [], animations: [] },
+    "the initial authoritative summon level is a baseline and must not be presented as an evolution",
+  );
+
+  battle.applyCampaignState({ campaign: evolved });
+  assert.equal(particles.length, 1, "an authoritative summon level increase must emit one evolution particle burst");
+  assert.equal(tones.length, 1, "an authoritative summon level increase must emit one evolution tone");
+  assert.deepEqual(
+    animations,
+    [{ actor: portalProp, clip: "Activate", restart: true }],
+    "an authoritative summon level increase must activate the portal once",
+  );
+
+  battle.applyCampaignState({ campaign: evolved });
+  assert.equal(particles.length, 1, "repeating the same authoritative summon level must not duplicate evolution particles");
+  assert.equal(tones.length, 1, "repeating the same authoritative summon level must not duplicate the evolution tone");
+  assert.equal(animations.length, 1, "repeating the same authoritative summon level must not reactivate the portal");
+  assert.deepEqual(
+    {
+      baseline: baseline.state.progression.summons.levels,
+      evolved: evolved.state.progression.summons.levels,
+    },
+    {
+      baseline: { shade: 1 },
+      evolved: { shade: 2 },
+    },
+    "renderer observation must leave the supplied frozen campaign state unchanged",
+  );
+});
+
+function observeThreeObjectFeedback(t) {
+  const calls = { reconciles: [], speech: [], exchanges: [], renders: [], destroys: 0 };
+  const originals = {
+    reconcile: ObjectFeedbackLayer.prototype.reconcile,
+    emitSpeech: ObjectFeedbackLayer.prototype.emitSpeech,
+    emitExchange: ObjectFeedbackLayer.prototype.emitExchange,
+    render: ObjectFeedbackLayer.prototype.render,
+    destroy: ObjectFeedbackLayer.prototype.destroy,
+  };
+  ObjectFeedbackLayer.prototype.reconcile = function reconcile(objects, options) {
+    calls.reconciles.push({
+      objects: objects.map(({ id, kind, hp, maxHp }) => ({ id, kind, hp, maxHp })),
+      options: { ...options },
+    });
+    return originals.reconcile.call(this, objects, options);
+  };
+  ObjectFeedbackLayer.prototype.emitSpeech = function emitSpeech(objectId, text, options) {
+    calls.speech.push({ objectId, text });
+    return originals.emitSpeech.call(this, objectId, text, options);
+  };
+  ObjectFeedbackLayer.prototype.emitExchange = function emitExchange(sourceId, targetId, value, type, options) {
+    calls.exchanges.push({ sourceId, targetId, value, type });
+    return originals.emitExchange.call(this, sourceId, targetId, value, type, options);
+  };
+  ObjectFeedbackLayer.prototype.render = function render(projector, now) {
+    calls.renders.push({ projector: typeof projector, now });
+  };
+  ObjectFeedbackLayer.prototype.destroy = function destroy() {
+    calls.destroys += 1;
+    return originals.destroy.call(this);
+  };
+  t.after(() => {
+    Object.assign(ObjectFeedbackLayer.prototype, originals);
+  });
+  return calls;
+}
+
+function makeThreeFeedbackCanvas() {
+  const context = { clearRect() {} };
+  return {
+    clientWidth: 320,
+    clientHeight: 180,
+    width: 0,
+    height: 0,
+    getContext: () => context,
+    getBoundingClientRect: () => ({ width: 320, height: 180 }),
+  };
+}
+
+test("RealtimeBattle object feedback mirrors authoritative actors, live deltas, frame projection, and lifecycle", (t) => {
+  const priorWindow = globalThis.window;
+  const priorDocument = globalThis.document;
+  const priorRequestAnimationFrame = globalThis.requestAnimationFrame;
+  const priorCancelAnimationFrame = globalThis.cancelAnimationFrame;
+  globalThis.window = {
+    devicePixelRatio: 1,
+    addEventListener() {},
+    removeEventListener() {},
+  };
+  globalThis.document = {
+    hidden: false,
+    addEventListener() {},
+    removeEventListener() {},
+  };
+  globalThis.requestAnimationFrame = () => 1;
+  globalThis.cancelAnimationFrame = () => {};
+  t.after(() => {
+    if (priorWindow === undefined) delete globalThis.window;
+    else globalThis.window = priorWindow;
+    if (priorDocument === undefined) delete globalThis.document;
+    else globalThis.document = priorDocument;
+    if (priorRequestAnimationFrame === undefined) delete globalThis.requestAnimationFrame;
+    else globalThis.requestAnimationFrame = priorRequestAnimationFrame;
+    if (priorCancelAnimationFrame === undefined) delete globalThis.cancelAnimationFrame;
+    else globalThis.cancelAnimationFrame = priorCancelAnimationFrame;
+  });
+
+  const calls = observeThreeObjectFeedback(t);
+  const canvas = {
+    addEventListener() {},
+    removeEventListener() {},
+    getBoundingClientRect: () => ({ width: 320, height: 180 }),
+  };
+  const battle = new RealtimeBattle(
+    canvas,
+    { stageNumber: 1, palette: { ally: "#70e5d0", hostile: "#ff7f79" } },
+    { feedbackCanvas: makeThreeFeedbackCanvas() },
+  );
+  battle.reconcileAllies = () => {};
+  battle.reconcileEncounterWave = () => {};
+  battle.syncBossExposure = () => {};
+  battle.reconcileDeployments = () => {};
+  battle.updateNodeVisuals = () => {};
+  battle.publishRuntimeState = () => {};
+  battle.applyBossPhaseVisual = () => {};
+  battle.update = () => {};
+  battle.updatePlacementPreview = () => {};
+  battle.updateFocusHighlight = () => {};
+  battle.updateSelectionVisuals = () => {};
+  battle.updateMarqueeVisual = () => {};
+  battle.updateCommanderPathPreview = () => {};
+  battle.renderer = { render() {}, dispose() {} };
+  battle.scene = null;
+  battle.camera = {};
+
+  battle.commander = { ...makeUnit({ hp: 10 }), id: "commander", maxHealth: 10 };
+  const ally = { ...makeUnit({ hp: 2 }), id: "ally-live", maxHealth: 3 };
+  const enemy = { ...makeUnit({ hp: 4 }), id: "enemy-live", maxHealth: 4, breachVisualized: false };
+  battle.allies = [ally];
+  battle.enemies = [enemy];
+  battle.boss = { ...makeUnit({ hp: 12 }), id: "boss", maxHealth: 12 };
+  const deploymentRoot = makeRoot(5, 5);
+  deploymentRoot.children = [];
+  deploymentRoot.traverse = () => {};
+  battle.deploymentsMap.set("tower-live", {
+    id: "tower-live",
+    kind: "tower",
+    gridX: 5,
+    gridY: 5,
+    hp: 4,
+    maxHp: 4,
+    root: deploymentRoot,
+  });
+
+  const campaign = Object.freeze({
+    stageId: "feedback-stage",
+    stage: Object.freeze({
+      legion: 1,
+      nodes: 0,
+      bossHealth: 12,
+      bossMaxHealth: 12,
+      deployments: Object.freeze([
+        Object.freeze({ id: "tower-live", kind: "tower", cell: Object.freeze({ x: 5, y: 5 }), hp: 4, maxHp: 4 }),
+      ]),
+    }),
+  });
+  const campaignBefore = structuredClone(campaign);
+
+  battle.applyCampaignState({ campaign });
+  battle.applyCampaignState({ campaign });
+  battle.currentWaveId = "wave-live";
+  battle.encounter = {
+    stageId: "feedback-stage",
+    state: { activeWaveId: "wave-live" },
+  };
+  battle.pendingEncounterEvent = null;
+  battle.emitEncounterEvent("breach");
+
+  enemy.hp = 2;
+  ally.hp = 3;
+  battle.running = true;
+  battle.lastTime = 1000;
+  battle.frame(1016);
+  battle.destroy();
+  battle.destroy();
+
+  const reconciledIds = calls.reconciles.at(-1)?.objects.map(({ id }) => id).sort() ?? [];
+  const deltaValues = calls.exchanges
+    .map(({ targetId, value, type }) => ({ targetId, value, type }))
+    .sort((left, right) => left.targetId.localeCompare(right.targetId));
+  assert.deepEqual(
+    {
+      reconciledIds,
+      silentReconciles: calls.reconciles.map(({ options }) => options?.silent === true),
+      speech: calls.speech,
+      deltaValues,
+      renders: calls.renders.map(({ projector }) => projector),
+      destroys: calls.destroys,
+      campaign,
+    },
+    {
+      reconciledIds: ["ally-live", "boss", "commander", "enemy-live", "tower-live"],
+      silentReconciles: [true, true],
+      speech: [{ objectId: "commander", text: "Breach detected" }],
+      deltaValues: [
+        { targetId: "ally-live", value: 1, type: "heal" },
+        { targetId: "enemy-live", value: 2, type: "outgoing" },
+      ],
+      renders: ["function"],
+      destroys: 1,
+      campaign: campaignBefore,
+    },
+    "the Three renderer must use one presentation-only feedback layer without replaying identical campaign snapshots",
+  );
 });

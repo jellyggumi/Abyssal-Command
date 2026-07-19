@@ -54,11 +54,6 @@ function createOverlay() {
   overlay.className = "ashen-field-command";
   overlay.setAttribute("data-i18n-aria", "fieldOverlay.aria");
   overlay.innerHTML = `
-    <svg class="ashen-field-command__route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <path class="ashen-field-command__route-path" d="M 17 79 C 31 64, 50 60, 77 35" />
-      <circle class="ashen-field-command__route-marker" cx="17" cy="79" r="1.8" />
-      <path class="ashen-field-command__route-marker" d="M 75 30 L 83 34 L 77 41 Z" />
-    </svg>
     <div class="ashen-field-command__standard">
       <span class="ashen-field-command__eyebrow" data-i18n="fieldOverlay.order"></span>
       <p class="ashen-field-command__objective" data-field-overlay="objective"></p>

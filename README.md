@@ -55,10 +55,19 @@
 
 ### 2026-07-17 검증 증거
 
-- `node --test tests/*.test.mjs`는 136/136 통과했습니다. 임베디드 텍스처 소스 GLB, 액션 클립, stage 4–10 3D/Canvas 자원 대응, core asset의 no-store 캐시, 렌더러 부재 시 명령 피드백, 내레이션 자막 여유 시간, 내레이션 아틀라스·런타임·CSS 계약을 검증합니다.
+- `node --test tests/*.test.mjs`는 136/136 통과했습니다. 임베디드 텍스처 소스 GLB, 액션 클립, stage 4–10 선언 resource rows와 Canvas fallback 대응, core asset의 no-store 캐시, 렌더러 부재 시 명령 피드백, 내레이션 자막 여유 시간, 내레이션 아틀라스·런타임·CSS 계약을 검증합니다.
 - `time node --test tests/playtest-browser-3stage.cjs`는 1/1 통과했습니다(294.2초). 390px 뷰포트의 10개 스테이지 선택기, Stage 1–3 전투·보상·저장 왕복, Stage 4 브리핑 전이를 검증합니다.
 - Playwriter headless 세션으로 `http://127.0.0.1:4173/`을 확인했습니다. 새 캠페인 → Stage 1의 사냥·추출·실체화·점거 → scout/guard/reinforcement 웨이브 → Cinder Warden 처치 → 보상 선택 → Stage 2 브리핑 전이가 정상 동작했습니다. 390px에서는 10개 선택기의 `clientWidth`와 `scrollWidth`가 모두 374px이고 문서 폭은 390px입니다. 렌더 증거는 [Stage 1](_workspace/20260716-shadow-lord-rts-rpg/qa/stage1-narration-playtest-20260717.png)과 [모바일 선택기](_workspace/20260716-shadow-lord-rts-rpg/qa/mobile-stage-selector-playtest-20260717.png)에 보관합니다.
 - 내레이션은 저역 남성 Daniel 보이스, 짧은 실내 폐허 잔향이라는 톤 계약을 유지합니다. 측정 길이와 자막 동기 계산은 [narration scripts](_workspace/20260716-shadow-lord-rts-rpg/design/narration-scripts.md)에 기록합니다.
+
+### 2026-07-19 릴리스 노트 및 검증 증거
+
+- **3D 가독성 패스:** `RealtimeBattle`의 지형 수직 스케일, 어두운 지형 재질 밝기, 유닛 emissive lift, tactical marker, DPR tier를 조정해 실루엣·접촉·전장 대비를 개선했습니다. Stage 4+ identity tint와 shared contact-shadow 수명 규칙도 같은 패스에서 고정했습니다. Stage 4–10 전용 GLB가 추가됐다고 주장하지 않으며, 선언된 stage resource와 Canvas fallback 대응만 검증 범위로 둡니다.
+- **결정론 전투 카탈로그:** `combat-systems.js`의 깊은 불변 `ENEMY_PATTERNS`, `BOSS_PHASES`, `SUMMON_RECIPES`, `COMBAT_ALERT_CUES`가 적 패턴·보스 체력 경계·소환 진화·경보 큐를 같은 입력에 같은 결과로 해석합니다. 호출자 컨텍스트와 안정적인 동률 선택을 보존하고, `campaign-state.js`의 소환 진화·세이브 재생과 연결합니다.
+- **명령 큐/렌더러 요청 계약:** WebGL·Canvas 포인터 콜백은 `{type:'command-request', action, requestId, source:'renderer-pointer', rendererMode, occurredAt}`로 정규화합니다. 앱은 active session과 현재 renderer에서 온 요청만 받아 `campaign-state`에 먼저 예약하고, 큐 헤드를 미리보기만 한 뒤 타이머에서 실행합니다. 실행 결과는 기존 `abyssal:command-resolved` 이벤트로 발행하며 `stopBattle`은 stale 예약 작업을 무효화합니다.
+- `node --test --test-name-pattern='(readability|boss phase|spawn alert|summon evolution|Stage 4\+)' tests/battle-realtime-three.test.mjs`는 6/6 통과했습니다. 지형·유닛 readability lift, Stage 4+ identity tint, 보스 phase cue, spawn alert, summon evolution effect를 확인합니다.
+- `node --test tests/combat-systems.test.mjs tests/campaign-evolution.test.mjs`는 16/16 통과했습니다. 네 전투 카탈로그의 불변성·결정론 resolver와 소환 진화 비용·상한·세이브 재생을 확인합니다.
+- `node --test tests/command-queue-realtime.test.mjs`는 7/7 통과했습니다. 렌더러 요청 정규화, 중복·stale 세션 차단, 큐 헤드 미리보기, 예약 우선 실행, 거부 시 cooldown 보존, `stopBattle` 무효화를 확인합니다.
 
 ## 프로젝트 구조
 

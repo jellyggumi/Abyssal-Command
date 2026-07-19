@@ -128,6 +128,18 @@ PROCEDURAL_CUES: Final[Mapping[str, ProceduralCue]] = {
             "740 Hz confirmation partial, deterministic xorshift noise; MP3 128 kbps."
         ),
     ),
+    "boss-phase-change": ProceduralCue(
+        role="sfx",
+        duration_seconds=0.9,
+        prompt=(
+            "Original Abyssal Surge boss phase change: brittle armor fracture, descending abyssal "
+            "sub impact, one cold teal confirmation partial. No speech, no borrowed melody."
+        ),
+        recipe=(
+            "44.1 kHz mono PCM; 58 Hz descending impact, 310 Hz fracture burst, 1.8 kHz "
+            "confirmation partial, deterministic xorshift grit; MP3 128 kbps."
+        ),
+    ),
     "battle-bgm": ProceduralCue(
         role="music",
         duration_seconds=24.0,
@@ -138,6 +150,42 @@ PROCEDURAL_CUES: Final[Mapping[str, ProceduralCue]] = {
         recipe=(
             "44.1 kHz stereo PCM; phase-aligned 55/82.5/110 Hz drones, alternating 165/220 Hz "
             "stereo overtones and a two-second 52 Hz exponential pulse; edge crossfade; MP3 128 kbps."
+        ),
+    ),
+    "battle-bgm-band-ii": ProceduralCue(
+        role="music",
+        duration_seconds=24.0,
+        prompt=(
+            "Original Abyssal Surge drowned-pressure battle loop for stages 4-6: low drone, "
+            "tidal sub movement, restrained metal pulse, brittle upper partials; instrumental, loopable."
+        ),
+        recipe=(
+            "44.1 kHz stereo PCM; 49/73.5/98 Hz drones, 61 Hz tide pulse, 196/392 Hz "
+            "brittle partials, slow stereo tide motion, edge crossfade; MP3 128 kbps."
+        ),
+    ),
+    "battle-bgm-band-iii": ProceduralCue(
+        role="music",
+        duration_seconds=24.0,
+        prompt=(
+            "Original Abyssal Surge toll-and-fracture battle loop for stages 7-8: wide dark "
+            "space, distant lantern toll, heavy stone resonance; instrumental, loopable."
+        ),
+        recipe=(
+            "44.1 kHz stereo PCM; 46/69/92 Hz drones, 58 Hz impact pulse, 138/276 Hz "
+            "lantern toll partials, slow wide stereo resonance, edge crossfade; MP3 128 kbps."
+        ),
+    ),
+    "battle-bgm-band-iv": ProceduralCue(
+        role="music",
+        duration_seconds=24.0,
+        prompt=(
+            "Original Abyssal Surge rite-and-zenith battle loop for stages 9-10: low ritual "
+            "drone, restrained non-lexical choral texture, three-step threshold figure; instrumental, loopable."
+        ),
+        recipe=(
+            "44.1 kHz stereo PCM; 41/61.5/82 Hz drones, 55 Hz threshold pulse, 164/328 Hz "
+            "bowed-metal fifths, restrained stereo pad, edge crossfade; MP3 128 kbps."
         ),
     ),
 }
@@ -154,6 +202,13 @@ NARRATION_CATALOG: Final[Mapping[str, NarrationPrompt]] = {
     "cinder-span": NarrationPrompt("잿빛 교량, 신더 스팬. 재의 메아리를 사냥하고 영혼을 거두어라."),
     "veil-citadel": NarrationPrompt("장막 성채, 베일 시타델. 빙의의 힘이 깨어난다. 두 거점을 동시에 장악하라."),
     "echo-throne": NarrationPrompt("메아리 왕좌. 군주의 영역을 펼쳐 게이트 소버린을 무너뜨려라."),
+    "sunken-bastion": NarrationPrompt("가라앉은 보루, 선큰 바스티온. 조수의 감시자를 방파제 아래로 가라앉혀라."),
+    "howling-sprawl": NarrationPrompt("울부짖는 폐허, 하울링 스프롤. 무리의 감시자를 빙의해 전령의 목을 조여라."),
+    "glass-necropolis": NarrationPrompt("유리 묘역, 글래스 네크로폴리스. 두 유리 단상을 점거하고 진혼의 합창을 끊어라."),
+    "starless-canal": NarrationPrompt("별 없는 운하, 스타리스 커낼. 군주의 영역을 다시 열어 폭군의 등불을 모두 꺼라."),
+    "shattered-causeway": NarrationPrompt("부서진 둑길, 섀터드 코즈웨이. 다리를 지키는 거상을 육교 아래로 무너뜨려라."),
+    "abyss-chancel": NarrationPrompt("심연 예배당, 어비스 챈슬. 세 의식 단상을 모두 점거하고 봉인 계약을 깨뜨려라."),
+    "gate-zenith": NarrationPrompt("게이트 제니스, 마지막 정점. 모든 가호를 걸고 심연의 섭정을 지워라. 오늘, 문을 닫는다."),
     "victory": NarrationPrompt("침묵한 문 앞에서, 그림자 군단이 왕좌에 오른다."),
     "defeat": NarrationPrompt("군단의 닻이 끊어졌다. 다시, 일어나라."),
 }
@@ -488,6 +543,21 @@ def validate_runtime_output(path: Path, profile: AudioProfile) -> tuple[AudioDet
 
 
 
+def import_provenance(args: argparse.Namespace) -> dict[str, str]:
+    """Capture supplied source provenance without querying or storing credentials."""
+    provenance = {
+        "request_id": required_text(args.request_id, "request_id", 200),
+        "prompt": required_text(args.prompt, "prompt", 8_000),
+        "provider": required_text(args.provider, "provider", 200),
+        "provider_model": required_text(args.provider_model, "provider_model", 200),
+        "source_reference": opaque_source_reference(args.source_reference),
+    }
+    for field in ("provider_model_version", "provider_job_reference", "provider_generated_at", "imported_by"):
+        value = getattr(args, field, None)
+        if value:
+            provenance[field] = required_text(value, field, 500)
+    return provenance
+
 def required_text(value: str | None, field: str, maximum_bytes: int) -> str:
     text = (value or "").strip()
     if not text:
@@ -505,22 +575,6 @@ def opaque_source_reference(value: str | None) -> str:
             "--source-reference must be an opaque non-secret identifier, not a URL, query, or fragment"
         )
     return reference
-
-
-def import_provenance(args: argparse.Namespace) -> dict[str, str]:
-    """Capture supplied source provenance without querying or storing any credential."""
-    provenance = {
-        "request_id": required_text(args.request_id, "request_id", 128),
-        "prompt": required_text(args.prompt, "prompt", 1500),
-        "provider": required_text(args.provider, "provider", 200),
-        "provider_model": required_text(args.provider_model, "provider_model", 200),
-        "source_reference": opaque_source_reference(args.source_reference),
-    }
-    for field in ("provider_model_version", "provider_job_reference", "provider_generated_at", "imported_by"):
-        value = getattr(args, field)
-        if value is not None:
-            provenance[field] = required_text(value, field, 500)
-    return provenance
 
 
 def _edge_envelope(t: float, duration: float, attack: float, release: float) -> float:
@@ -559,23 +613,39 @@ def _procedural_frame(cue_id: str, t: float, duration: float, noise: float) -> t
             + 0.045 * noise * min(1.0, t * 4.0)
         )
         return (value,)
+    if cue_id == "boss-phase-change":
+        envelope = _edge_envelope(t, duration, 0.008, 0.18)
+        impact_t = max(0.0, t - 0.1)
+        impact = math.exp(-10.0 * impact_t) * math.sin(tau * 58.0 * impact_t) if t >= 0.1 else 0.0
+        fracture = math.exp(-7.0 * t) * (0.34 * math.sin(tau * 310.0 * t) + 0.12 * noise)
+        confirmation = math.exp(-8.0 * impact_t) * math.sin(tau * 1800.0 * impact_t) if t >= 0.1 else 0.0
+        return (envelope * (0.52 * impact + 0.25 * fracture + 0.14 * confirmation),)
 
     edge = _edge_envelope(t, duration, 0.18, 0.18)
     pulse_t = t % 2.0
-    pulse = math.exp(-4.8 * pulse_t) * math.sin(tau * 52.0 * pulse_t)
+    if cue_id == "battle-bgm-band-ii":
+        root, fifth, octave, pulse_frequency, upper_left, upper_right = 49.0, 73.5, 98.0, 61.0, 196.0, 392.0
+    elif cue_id == "battle-bgm-band-iii":
+        root, fifth, octave, pulse_frequency, upper_left, upper_right = 46.0, 69.0, 92.0, 58.0, 138.0, 276.0
+    elif cue_id == "battle-bgm-band-iv":
+        root, fifth, octave, pulse_frequency, upper_left, upper_right = 41.0, 61.5, 82.0, 55.0, 164.0, 328.0
+    else:
+        root, fifth, octave, pulse_frequency, upper_left, upper_right = 55.0, 82.5, 110.0, 52.0, 165.0, 220.0
+    pulse = math.exp(-4.8 * pulse_t) * math.sin(tau * pulse_frequency * pulse_t)
     drone = (
-        0.20 * math.sin(tau * 55.0 * t)
-        + 0.13 * math.sin(tau * 82.5 * t)
-        + 0.08 * math.sin(tau * 110.0 * t)
+        0.20 * math.sin(tau * root * t)
+        + 0.13 * math.sin(tau * fifth * t)
+        + 0.08 * math.sin(tau * octave * t)
     )
     slow_motion = 0.72 + 0.28 * math.sin(tau * t / 8.0)
-    left = edge * (slow_motion * drone + 0.22 * pulse + 0.055 * math.sin(tau * 165.0 * t))
+    left = edge * (slow_motion * drone + 0.22 * pulse + 0.055 * math.sin(tau * upper_left * t))
     right = edge * (
-        slow_motion * (0.18 * math.sin(tau * 55.0 * t + 0.22) + 0.14 * math.sin(tau * 82.5 * t))
+        slow_motion * (0.18 * math.sin(tau * root * t + 0.22) + 0.14 * math.sin(tau * fifth * t))
         + 0.22 * pulse
-        + 0.055 * math.sin(tau * 220.0 * t)
+        + 0.055 * math.sin(tau * upper_right * t)
     )
     return (left, right)
+
 
 
 def synthesize_procedural_wav(cue_id: str, destination: Path) -> None:

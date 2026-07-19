@@ -960,6 +960,21 @@ dd { margin: .2rem 0 0; font-size: 1.08rem; font-weight: 800; }
   display: none;
 }
 
+#battle-object-feedback-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  display: block;
+}
+
+#battle-object-feedback-canvas[hidden] {
+  display: none;
+}
+
 .battle-visual-fallback {
   position: absolute;
   inset: 0;

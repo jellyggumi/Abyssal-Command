@@ -31,7 +31,7 @@ jobs:
       PAGES_REVISION: ${{ github.event_name == 'workflow_dispatch' && inputs.rollback_revision || github.sha }}
       PAGES_RUNTIME_PATHS: >-
         index.html app.js battle-field-command-overlay.js battle-visualizer.js battle-realtime-three.js battle-presentation.js iso-math.js tilemap-renderer.js
-        campaign-state.js campaign-sync.js stage-navigation.js tactical-minimap.js i18n.js liquid-ether.js
+        campaign-state.js campaign-sync.js stage-navigation.js tactical-minimap.js i18n.js combat-systems.js liquid-ether.js object-feedback-layer.js
         vendor/three.module.min.js vendor/loaders/GLTFLoader.js vendor/utils/BufferGeometryUtils.js
         styles.css battle-field-command-overlay.css react-game-ui.css privacy.html sw.js manifest.json icon.svg favicon.ico
         profile-store.js react-game-ui.js react-shop.js
@@ -41,7 +41,10 @@ jobs:
         assets/audio/possess.mp3 assets/audio/domain.mp3 assets/audio/assault.mp3 assets/audio/reward.mp3
         assets/audio/ambient.mp3 assets/audio/narr-intro.mp3 assets/audio/narr-stage1.mp3 assets/audio/narr-stage2.mp3
         assets/audio/breach-alert.mp3 assets/audio/wave-spawn.mp3 assets/audio/battle-bgm.mp3
-        assets/audio/narr-stage3.mp3 assets/audio/narr-victory.mp3 assets/audio/narr-defeat.mp3 assets/audio/bgm-theme.mp3
+        assets/audio/battle-bgm-band-ii.mp3 assets/audio/battle-bgm-band-iii.mp3 assets/audio/battle-bgm-band-iv.mp3 assets/audio/boss-phase-change.mp3
+        assets/audio/narr-stage3.mp3 assets/audio/narr-stage4.mp3 assets/audio/narr-stage5.mp3 assets/audio/narr-stage6.mp3
+        assets/audio/narr-stage7.mp3 assets/audio/narr-stage8.mp3 assets/audio/narr-stage9.mp3 assets/audio/narr-stage10.mp3
+        assets/audio/narr-victory.mp3 assets/audio/narr-defeat.mp3 assets/audio/bgm-theme.mp3
         assets/images/cinder-span.png assets/images/veil-citadel.png assets/images/echo-throne.png
         assets/images/sunken-bastion.png assets/images/howling-sprawl.png assets/images/glass-necropolis.png
         assets/images/starless-canal.png assets/images/shattered-causeway.png assets/images/abyss-chancel.png
@@ -72,12 +75,14 @@ jobs:
         assets/models/abyssal-command/units/scout.glb
         assets/models/abyssal-command/units/guard.glb
         assets/models/abyssal-command/units/reinforce.glb
+        assets/models/abyssal-command/units/possessed.glb
         assets/models/abyssal-command/bosses/cinder-warden.glb
         assets/models/abyssal-command/bosses/veil-tactician.glb
         assets/models/abyssal-command/bosses/gate-sovereign.glb
         assets/models/abyssal-command/props/soul-extractor.glb
         assets/models/abyssal-command/props/rift-portal.glb
         assets/models/abyssal-command/props/command-obelisk.glb
+        assets/models/abyssal-command/props/echo-throne.glb
     steps:
       - name: Checkout requested committed revision
         uses: actions/checkout@v4
@@ -103,17 +108,17 @@ jobs:
           set -euo pipefail
           for file in \
             index.html app.js battle-field-command-overlay.js battle-visualizer.js battle-realtime-three.js battle-presentation.js iso-math.js tilemap-renderer.js \
-            campaign-state.js campaign-sync.js stage-navigation.js tactical-minimap.js i18n.js liquid-ether.js \
+            campaign-state.js campaign-sync.js stage-navigation.js tactical-minimap.js i18n.js combat-systems.js liquid-ether.js object-feedback-layer.js \
             vendor/three.module.min.js vendor/loaders/GLTFLoader.js vendor/utils/BufferGeometryUtils.js \
             styles.css battle-field-command-overlay.css react-game-ui.css privacy.html sw.js manifest.json icon.svg favicon.ico \
-            profile-store.js react-game-ui.js react-shop.js \
-            vendor/react.production.min.js vendor/react-dom.production.min.js \
-            assets/icons/icon-192.png assets/icons/icon-512.png \
             assets/audio/hunt.mp3 assets/audio/extract.mp3 assets/audio/materialize.mp3 assets/audio/capture.mp3 \
             assets/audio/possess.mp3 assets/audio/domain.mp3 assets/audio/assault.mp3 assets/audio/reward.mp3 \
             assets/audio/ambient.mp3 assets/audio/narr-intro.mp3 assets/audio/narr-stage1.mp3 assets/audio/narr-stage2.mp3 \
             assets/audio/breach-alert.mp3 assets/audio/wave-spawn.mp3 assets/audio/battle-bgm.mp3 \
-            assets/audio/narr-stage3.mp3 assets/audio/narr-victory.mp3 assets/audio/narr-defeat.mp3 assets/audio/bgm-theme.mp3 \
+            assets/audio/battle-bgm-band-ii.mp3 assets/audio/battle-bgm-band-iii.mp3 assets/audio/battle-bgm-band-iv.mp3 assets/audio/boss-phase-change.mp3 \
+            assets/audio/narr-stage3.mp3 assets/audio/narr-stage4.mp3 assets/audio/narr-stage5.mp3 assets/audio/narr-stage6.mp3 \
+            assets/audio/narr-stage7.mp3 assets/audio/narr-stage8.mp3 assets/audio/narr-stage9.mp3 assets/audio/narr-stage10.mp3 \
+            assets/audio/narr-victory.mp3 assets/audio/narr-defeat.mp3 assets/audio/bgm-theme.mp3 \
             assets/images/cinder-span.png assets/images/veil-citadel.png assets/images/echo-throne.png \
             assets/images/sunken-bastion.png assets/images/howling-sprawl.png assets/images/glass-necropolis.png \
             assets/images/starless-canal.png assets/images/shattered-causeway.png assets/images/abyss-chancel.png \
@@ -142,12 +147,14 @@ jobs:
             assets/models/abyssal-command/terrain/echo-throne-steps.glb \
             assets/models/abyssal-command/units/shade.glb assets/models/abyssal-command/units/scout.glb \
             assets/models/abyssal-command/units/guard.glb assets/models/abyssal-command/units/reinforce.glb \
+            assets/models/abyssal-command/units/possessed.glb \
             assets/models/abyssal-command/bosses/cinder-warden.glb \
             assets/models/abyssal-command/bosses/veil-tactician.glb \
             assets/models/abyssal-command/bosses/gate-sovereign.glb \
             assets/models/abyssal-command/props/soul-extractor.glb \
             assets/models/abyssal-command/props/rift-portal.glb \
-            assets/models/abyssal-command/props/command-obelisk.glb; do
+            assets/models/abyssal-command/props/command-obelisk.glb \
+            assets/models/abyssal-command/props/echo-throne.glb; do
             git cat-file -e "${PAGES_REVISION}:${file}"
             test -f "$file"
           done
@@ -161,7 +168,9 @@ jobs:
           node --check campaign-sync.js
           node --check tactical-minimap.js
           node --check i18n.js
+          node --check combat-systems.js
           node --check liquid-ether.js
+          node --check object-feedback-layer.js
           node --check vendor/three.module.min.js
           node --check sw.js
           node --check vendor/loaders/GLTFLoader.js
@@ -190,7 +199,7 @@ jobs:
           grep -Eq 'from "\./liquid-ether\.js";|import\("\./liquid-ether\.js"\)' app.js
 
           # reject literal edit-tool markers that previously shipped a broken bundle
-          if grep -n "≔" index.html app.js battle-visualizer.js battle-realtime-three.js battle-presentation.js iso-math.js tilemap-renderer.js campaign-state.js campaign-sync.js i18n.js liquid-ether.js vendor/three.module.min.js vendor/loaders/GLTFLoader.js vendor/utils/BufferGeometryUtils.js styles.css privacy.html sw.js manifest.json icon.svg favicon.ico; then
+          if grep -n "≔" index.html app.js battle-visualizer.js battle-realtime-three.js battle-presentation.js iso-math.js tilemap-renderer.js campaign-state.js campaign-sync.js i18n.js liquid-ether.js object-feedback-layer.js vendor/three.module.min.js vendor/loaders/GLTFLoader.js vendor/utils/BufferGeometryUtils.js styles.css privacy.html sw.js manifest.json icon.svg favicon.ico; then
             echo "stray edit markers found in shippable files" >&2
             exit 1
           fi

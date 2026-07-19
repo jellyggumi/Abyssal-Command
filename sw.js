@@ -1,4 +1,4 @@
-const CACHE_NAME = "abyssal-surge-static-v51";
+const CACHE_NAME = "abyssal-surge-static-v53";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -14,6 +14,7 @@ const CORE_ASSETS = [
   "./tilemap-renderer.js",
   "./campaign-state.js",
   "./i18n.js",
+  "./combat-systems.js",
   "./liquid-ether.js",
   "./vendor/three.module.min.js",
   "./vendor/loaders/GLTFLoader.js",
@@ -27,6 +28,7 @@ const CORE_ASSETS = [
   "./react-game-ui.css",
   "./profile-store.js",
   "./react-game-ui.js",
+  "./object-feedback-layer.js",
   "./react-shop.js",
   "./vendor/react.production.min.js",
   "./vendor/react-dom.production.min.js",
@@ -42,12 +44,14 @@ const LAZY_SOURCE_BATTLE_PATHS = Object.freeze([
   "/assets/models/abyssal-command/units/scout.glb",
   "/assets/models/abyssal-command/units/guard.glb",
   "/assets/models/abyssal-command/units/reinforce.glb",
+  "/assets/models/abyssal-command/units/possessed.glb",
   "/assets/models/abyssal-command/bosses/cinder-warden.glb",
   "/assets/models/abyssal-command/bosses/veil-tactician.glb",
   "/assets/models/abyssal-command/bosses/gate-sovereign.glb",
   "/assets/models/abyssal-command/props/soul-extractor.glb",
   "/assets/models/abyssal-command/props/rift-portal.glb",
   "/assets/models/abyssal-command/props/command-obelisk.glb",
+  "/assets/models/abyssal-command/props/echo-throne.glb",
 ]);
 function normalizeGlbBridgeManifestAsset(path) {
   if (typeof path !== "string") return null;
@@ -144,10 +148,21 @@ const OPTIONAL_MEDIA = [
   "./assets/audio/breach-alert.mp3",
   "./assets/audio/wave-spawn.mp3",
   "./assets/audio/battle-bgm.mp3",
+  "./assets/audio/battle-bgm-band-ii.mp3",
+  "./assets/audio/battle-bgm-band-iii.mp3",
+  "./assets/audio/battle-bgm-band-iv.mp3",
+  "./assets/audio/boss-phase-change.mp3",
   "./assets/audio/narr-intro.mp3",
   "./assets/audio/narr-stage1.mp3",
   "./assets/audio/narr-stage2.mp3",
   "./assets/audio/narr-stage3.mp3",
+  "./assets/audio/narr-stage4.mp3",
+  "./assets/audio/narr-stage5.mp3",
+  "./assets/audio/narr-stage6.mp3",
+  "./assets/audio/narr-stage7.mp3",
+  "./assets/audio/narr-stage8.mp3",
+  "./assets/audio/narr-stage9.mp3",
+  "./assets/audio/narr-stage10.mp3",
   "./assets/audio/narr-victory.mp3",
   "./assets/audio/narr-defeat.mp3",
   "./assets/audio/bgm-theme.mp3",
@@ -167,7 +182,7 @@ function isSameOriginGet(request) {
 function isCoreRequest(request) {
   if (!isSameOriginGet(request)) return false;
   const path = new URL(request.url).pathname;
-  return path.endsWith("/") || ["/index.html", "/app.js", "/battle-field-command-overlay.js", "/campaign-sync.js", "/stage-navigation.js", "/tactical-minimap.js", "/battle-visualizer.js", "/battle-realtime-three.js", "/battle-presentation.js", "/iso-math.js", "/tilemap-renderer.js", "/campaign-state.js", "/i18n.js", "/liquid-ether.js", "/vendor/three.module.min.js", "/vendor/loaders/GLTFLoader.js", "/vendor/utils/BufferGeometryUtils.js", "/styles.css", "/battle-field-command-overlay.css", "/sw.js", "/react-game-ui.css", "/profile-store.js", "/react-game-ui.js", "/react-shop.js", "/vendor/react.production.min.js", "/vendor/react-dom.production.min.js"].some((suffix) => path.endsWith(suffix));
+  return path.endsWith("/") || ["/index.html", "/app.js", "/battle-field-command-overlay.js", "/campaign-sync.js", "/stage-navigation.js", "/tactical-minimap.js", "/battle-visualizer.js", "/battle-realtime-three.js", "/battle-presentation.js", "/iso-math.js", "/tilemap-renderer.js", "/campaign-state.js", "/i18n.js", "/combat-systems.js", "/liquid-ether.js", "/vendor/three.module.min.js", "/vendor/loaders/GLTFLoader.js", "/vendor/utils/BufferGeometryUtils.js", "/styles.css", "/battle-field-command-overlay.css", "/sw.js", "/react-game-ui.css", "/profile-store.js", "/react-game-ui.js", "/object-feedback-layer.js", "/react-shop.js", "/vendor/react.production.min.js", "/vendor/react-dom.production.min.js"].some((suffix) => path.endsWith(suffix));
 }
 
 function isGlbBridgeRequest(request) {

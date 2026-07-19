@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { BattleVisualizer } from "../battle-visualizer.js";
+import { ObjectFeedbackLayer } from "../object-feedback-layer.js";
 
 function makeVisualizer(t, {
   reducedMotion = false,
@@ -14,6 +15,8 @@ function makeVisualizer(t, {
   const priorWindow = globalThis.window;
   globalThis.window = {
     matchMedia: () => ({ matches: reducedMotion }),
+    addEventListener() {},
+    removeEventListener() {},
     ...(setTimeout ? { setTimeout } : {}),
     ...(clearTimeout ? { clearTimeout } : {}),
   };
@@ -75,7 +78,7 @@ test("BattleVisualizer fallback canvas prioritizes available semantic targets ov
     canvas,
     options: {
       nodeGoal: 1,
-      onActionRequest: (action) => requestedActions.push(action),
+      onActionRequest: (req) => requestedActions.push(typeof req === "string" ? req : req.action),
       getAvailableActions: () => availableActions,
     },
   });
@@ -140,7 +143,7 @@ test("BattleVisualizer keeps portal pointer focus and activation on the same hig
     options: {
       getAvailableActions: () => availableActions,
       onActionFocus: (action) => focusedActions.push(action),
-      onActionRequest: (action) => requestedActions.push(action),
+      onActionRequest: (req) => requestedActions.push(typeof req === "string" ? req : req.action),
     },
   });
   visualizer.view.scale = 100;
@@ -555,6 +558,259 @@ test("BattleVisualizer reduced-motion feedback keeps one static semantic overlay
   assert.equal(renders, 2, "clearing the static overlay must render the cleared state once");
 });
 
+test("BattleVisualizer mirrors authoritative boss vitality across four-phase thresholds without mutating campaign snapshots", (t) => {
+  const visualizer = makeVisualizer(t, {
+    presentation: { stageNumber: 9 },
+  });
+  const campaign = {
+    stageId: "abyss-chancel",
+    stage: {
+      bossHealth: 22,
+      bossMaxHealth: 22,
+      bossPhaseCount: 4,
+      nodes: 0,
+      deployments: [],
+    },
+  };
+  const stage = {
+    id: "abyss-chancel",
+    bossHealth: 22,
+    bossPhaseCount: 4,
+  };
+  const campaignBefore = structuredClone(campaign);
+  const cases = [
+    { health: 22, phaseIndex: 0 },
+    { health: 16.5, phaseIndex: 1 },
+    { health: 11, phaseIndex: 2 },
+    { health: 5.5, phaseIndex: 3 },
+  ];
+
+  for (const { health, phaseIndex } of cases) {
+    const state = {
+      bossHealth: health,
+      bossMaxHealth: 22,
+      bossPhaseCount: 4,
+      bossExposed: true,
+      nodes: 0,
+      deployments: [],
+    };
+    const stateBefore = structuredClone(state);
+
+    visualizer.applyCampaignState({ campaign, stage, state });
+
+    assert.equal(visualizer.bossHealth, health, `Canvas must mirror authoritative boss HP at ${health}/22`);
+    assert.equal(visualizer.bossMaxHealth, 22, "Canvas must retain the authoritative boss maximum across phase changes");
+    assert.equal(
+      visualizer.bossPhase?.phaseIndex,
+      phaseIndex,
+      `Canvas must enter resolver phase ${phaseIndex} at ${health}/22 health`,
+    );
+    assert.equal(visualizer.bossPhase?.phaseCount, 4, "Canvas must honor the stage's four-phase boss contract");
+    assert.deepEqual(state, stateBefore, "boss presentation sync must not mutate the supplied stage-state snapshot");
+  }
+
+  assert.deepEqual(campaign, campaignBefore, "boss presentation sync must not mutate the supplied campaign");
+});
+
+function makeCanvasBossPresentationHarness(t) {
+  const visualizer = makeVisualizer(t, {
+    presentation: { stageNumber: 9 },
+  });
+  const clips = [];
+  const canvasCalls = [];
+  const spatialCalls = [];
+  const burstCalls = [];
+  visualizer.ctx = {
+    fillStyle: "",
+    strokeStyle: "",
+    globalAlpha: 1,
+    lineWidth: 1,
+    beginPath() { canvasCalls.push(["beginPath"]); },
+    closePath() { canvasCalls.push(["closePath"]); },
+    moveTo(...args) { canvasCalls.push(["moveTo", ...args]); },
+    lineTo(...args) { canvasCalls.push(["lineTo", ...args]); },
+    ellipse(...args) { canvasCalls.push(["ellipse", ...args]); },
+    arc(...args) { canvasCalls.push(["arc", ...args]); },
+    fill() { canvasCalls.push(["fill", this.fillStyle, this.globalAlpha]); },
+    stroke() { canvasCalls.push(["stroke", this.strokeStyle, this.globalAlpha, this.lineWidth]); },
+    fillText(...args) { canvasCalls.push(["fillText", ...args]); },
+    save() { canvasCalls.push(["save"]); },
+    restore() { canvasCalls.push(["restore"]); },
+    setLineDash(...args) { canvasCalls.push(["setLineDash", ...args]); },
+  };
+  visualizer.project = () => ({ x: 100, y: 100 });
+  visualizer.elevationAt = () => 0;
+  visualizer.drawBridgeAtlas = (_asset, clip) => {
+    clips.push(clip);
+    return false;
+  };
+  visualizer.playSpatial = (...args) => spatialCalls.push(args);
+  visualizer.burst = (...args) => burstCalls.push(args);
+
+  const stage = { id: "abyss-chancel", bossHealth: 22, bossPhaseCount: 4 };
+  const campaign = {
+    stageId: "abyss-chancel",
+    stage: {
+      bossHealth: 22,
+      bossMaxHealth: 22,
+      bossPhaseCount: 4,
+      nodes: 0,
+      deployments: [],
+    },
+  };
+  const stateAt = (bossHealth, bossExposed = true) => ({
+    bossHealth,
+    bossMaxHealth: 22,
+    bossPhaseCount: 4,
+    bossExposed,
+    nodes: 0,
+    deployments: [],
+  });
+  const sync = (state) => visualizer.applyCampaignState({ campaign, stage, state });
+  const drawFrame = () => {
+    canvasCalls.length = 0;
+    visualizer.drawBoss();
+    return structuredClone(canvasCalls);
+  };
+  const assault = {
+    action: "assault",
+    source: "ally",
+    target: "boss",
+    actor: "commander",
+    actorClip: "Strike",
+    sourceAsset: "shade",
+    clip: "Strike",
+  };
+
+  return {
+    visualizer,
+    clips,
+    spatialCalls,
+    burstCalls,
+    campaign,
+    stateAt,
+    sync,
+    drawFrame,
+    assault,
+  };
+}
+
+test("BattleVisualizer presents an accepted exposed Assault as boss Attack with an atlas-free cue", (t) => {
+  const {
+    visualizer,
+    clips,
+    campaign,
+    stateAt,
+    sync,
+    drawFrame,
+    assault,
+  } = makeCanvasBossPresentationHarness(t);
+  const campaignBefore = structuredClone(campaign);
+
+  sync(stateAt(22));
+  const liveFallback = drawFrame();
+  const liveClip = clips.at(-1);
+
+  visualizer.bossExposed = false;
+  visualizer.playActionEffect(assault);
+  visualizer.bossExposed = true;
+  const hiddenAssaultFallback = drawFrame();
+  assert.equal(clips.at(-1), liveClip, "an Assault received while the boss is hidden must not change boss playback");
+  assert.deepEqual(hiddenAssaultFallback, liveFallback, "an atlas-free hidden-boss Assault must not change the live fallback frame");
+
+  visualizer.playActionEffect(assault);
+  const attackFallback = drawFrame();
+
+  assert.equal(clips.at(-1), "Attack", "an accepted Assault against a live exposed boss must request its Attack presentation");
+  assert.notDeepEqual(
+    attackFallback,
+    liveFallback,
+    "when the boss atlas is unavailable, accepted Assault must still change the Canvas fallback presentation",
+  );
+  assert.deepEqual(campaign, campaignBefore, "Assault presentation must not mutate the supplied campaign");
+});
+
+test("BattleVisualizer presents authoritative zero boss HP as Defeat and rejects later Attack playback", (t) => {
+  const {
+    visualizer,
+    clips,
+    campaign,
+    stateAt,
+    sync,
+    drawFrame,
+    assault,
+  } = makeCanvasBossPresentationHarness(t);
+  const campaignBefore = structuredClone(campaign);
+  const zeroState = stateAt(0);
+  const zeroStateBefore = structuredClone(zeroState);
+
+  sync(stateAt(22));
+  const liveFallback = drawFrame();
+  visualizer.playActionEffect(assault);
+  sync(zeroState);
+  const defeatFallback = drawFrame();
+
+  assert.equal(clips.at(-1), "Defeat", "authoritative zero boss HP must replace live playback with persistent Defeat");
+  assert.notDeepEqual(
+    defeatFallback,
+    liveFallback,
+    "without an atlas, zero boss HP must remain visibly distinct from the live boss fallback",
+  );
+
+  visualizer.playActionEffect(assault);
+  drawFrame();
+  assert.equal(clips.at(-1), "Defeat", "a later Assault effect must never overwrite an already defeated boss presentation");
+  assert.deepEqual(zeroState, zeroStateBefore, "defeat presentation must not mutate the supplied zero-health snapshot");
+  assert.deepEqual(campaign, campaignBefore, "defeat presentation must not mutate the supplied campaign");
+});
+
+test("BattleVisualizer keeps repeated authoritative zero-health sync presentation-idempotent", (t) => {
+  const {
+    visualizer,
+    clips,
+    spatialCalls,
+    burstCalls,
+    campaign,
+    stateAt,
+    sync,
+    drawFrame,
+  } = makeCanvasBossPresentationHarness(t);
+  const campaignBefore = structuredClone(campaign);
+  const zeroState = stateAt(0);
+  const zeroStateBefore = structuredClone(zeroState);
+
+  sync(stateAt(22));
+  const liveFallback = drawFrame();
+  sync(zeroState);
+  const firstDefeatPhase = visualizer.bossPhase;
+  const defeatFallback = drawFrame();
+  const effectsAfterFirstDefeat = {
+    actionFx: visualizer.actionFx.length,
+    spatial: spatialCalls.length,
+    bursts: burstCalls.length,
+  };
+  assert.equal(clips.at(-1), "Defeat", "the first zero-health sync must establish Defeat before idempotence is evaluated");
+  assert.notDeepEqual(defeatFallback, liveFallback, "the atlas-free Defeat frame must differ from the prior live frame");
+
+  sync(zeroState);
+  const repeatedDefeatFallback = drawFrame();
+
+  assert.strictEqual(visualizer.bossPhase, firstDefeatPhase, "an identical zero-health sync must preserve the resolved phase instead of restarting it");
+  assert.deepEqual(
+    {
+      actionFx: visualizer.actionFx.length,
+      spatial: spatialCalls.length,
+      bursts: burstCalls.length,
+    },
+    effectsAfterFirstDefeat,
+    "an identical zero-health sync must not append or replay defeat feedback",
+  );
+  assert.deepEqual(repeatedDefeatFallback, defeatFallback, "repeated zero-health sync must preserve the same stable Defeat fallback frame");
+  assert.deepEqual(zeroState, zeroStateBefore, "repeated defeat sync must not mutate the supplied zero-health snapshot");
+  assert.deepEqual(campaign, campaignBefore, "repeated defeat sync must not mutate the supplied campaign");
+});
+
+
 function fakeRunningAudioContext() {
   const calls = { resume: 0, oscillators: 0, starts: 0 };
   const context = {
@@ -678,6 +934,69 @@ test("BattleVisualizer maps Stage 1 waves to their authored models and later arc
     "only the three declared Stage 1 waves may select dedicated hostile art; later archetypes must retain the scout fallback",
   );
 });
+
+test("BattleVisualizer emits both same-tick enemy breaches before one wave-clear proposal and never repeats them", (t) => {
+  const events = [];
+  const visualizer = makeVisualizer(t, {
+    options: {
+      onEncounterEvent: (event) => events.push(event),
+    },
+  });
+  const encounterState = Object.freeze({ activeWaveId: "scout" });
+  visualizer.currentWaveId = "scout";
+  visualizer.encounter = {
+    stageId: "cinder-span",
+    state: encounterState,
+  };
+  visualizer.burst = () => {};
+  visualizer.playSpatial = () => {};
+  const portal = visualizer.navigation.anchors.portal;
+  visualizer.enemies = [
+    {
+      id: "enemy-alpha",
+      x: portal.x,
+      y: portal.y,
+      hp: 2,
+      baseSpeed: 2.4,
+      speed: 2.4,
+      path: null,
+      defeated: false,
+      breachVisualized: false,
+      radius: 0.42,
+    },
+    {
+      id: "enemy-bravo",
+      x: portal.x,
+      y: portal.y,
+      hp: 2,
+      baseSpeed: 2.4,
+      speed: 2.4,
+      path: null,
+      defeated: false,
+      breachVisualized: false,
+      radius: 0.42,
+    },
+  ];
+
+  visualizer.updateUnits(0);
+  visualizer.updateUnits(0);
+
+  assert.deepEqual(
+    events,
+    [
+      { type: "breach", stageId: "cinder-span", waveId: "scout", enemyId: "enemy-alpha" },
+      { type: "breach", stageId: "cinder-span", waveId: "scout", enemyId: "enemy-bravo" },
+      { type: "wave-cleared", stageId: "cinder-span", waveId: "scout" },
+    ],
+    "each enemy must retain array-order identity, both breach proposals must precede the clear, and the next frame must emit nothing",
+  );
+  assert.deepEqual(
+    encounterState,
+    { activeWaveId: "scout" },
+    "renderer proposals must not mutate the supplied authoritative encounter state",
+  );
+});
+
 
 function makeCanvasTowerScenario(t, { fortificationLevel = 1, distance = 1 } = {}) {
   const visualizer = makeVisualizer(t, {
@@ -1070,4 +1389,157 @@ test("BattleVisualizer selectAlly publishes only semantic selection changes and 
     "repeated invalid fallback targets must preserve the stable cleared summary",
   );
   assert.equal(summaries.length, 2, "only the fallback selected and cleared semantic states must reach the cockpit");
+});
+
+function observeCanvasObjectFeedback(t) {
+  const calls = { reconciles: [], speech: [], exchanges: [], renders: [], destroys: 0 };
+  const originals = {
+    reconcile: ObjectFeedbackLayer.prototype.reconcile,
+    emitSpeech: ObjectFeedbackLayer.prototype.emitSpeech,
+    emitExchange: ObjectFeedbackLayer.prototype.emitExchange,
+    render: ObjectFeedbackLayer.prototype.render,
+    destroy: ObjectFeedbackLayer.prototype.destroy,
+  };
+  ObjectFeedbackLayer.prototype.reconcile = function reconcile(objects, options) {
+    calls.reconciles.push({
+      objects: objects.map(({ id, kind, hp, maxHp }) => ({ id, kind, hp, maxHp })),
+      options: { ...options },
+    });
+    return originals.reconcile.call(this, objects, options);
+  };
+  ObjectFeedbackLayer.prototype.emitSpeech = function emitSpeech(objectId, text, options) {
+    calls.speech.push({ objectId, text });
+    return originals.emitSpeech.call(this, objectId, text, options);
+  };
+  ObjectFeedbackLayer.prototype.emitExchange = function emitExchange(sourceId, targetId, value, type, options) {
+    calls.exchanges.push({ sourceId, targetId, value, type });
+    return originals.emitExchange.call(this, sourceId, targetId, value, type, options);
+  };
+  ObjectFeedbackLayer.prototype.render = function render(projector, now) {
+    calls.renders.push({ projector: typeof projector, now });
+  };
+  ObjectFeedbackLayer.prototype.destroy = function destroy() {
+    calls.destroys += 1;
+    return originals.destroy.call(this);
+  };
+  t.after(() => {
+    Object.assign(ObjectFeedbackLayer.prototype, originals);
+  });
+  return calls;
+}
+
+function makeSharedFeedbackCanvas() {
+  const context = { clearRect() {} };
+  return {
+    clientWidth: 320,
+    clientHeight: 180,
+    width: 0,
+    height: 0,
+    getContext: () => context,
+    getBoundingClientRect: () => ({ width: 320, height: 180 }),
+  };
+}
+
+test("BattleVisualizer object feedback mirrors authoritative actors, live deltas, frame projection, and lifecycle", (t) => {
+  const calls = observeCanvasObjectFeedback(t);
+  const feedbackCanvas = makeSharedFeedbackCanvas();
+  const visualizer = makeVisualizer(t, { options: { feedbackCanvas } });
+  visualizer.ctx = {
+    clearRect() {},
+    fillRect() {},
+    fillStyle: "",
+  };
+  visualizer.view = { width: 320, height: 180, scale: 1, offsetX: 0, offsetY: 0 };
+  visualizer.bridgeTerrainPlacement = () => null;
+  visualizer.buildDynamicDrawRecords = () => [];
+  visualizer.drawHoverAndPlacementIndicators = () => {};
+  visualizer.reconcileAllies = () => {};
+  visualizer.reconcileEncounterWave = () => {};
+  visualizer.commander = {
+    id: "commander",
+    x: 2,
+    y: 3,
+    hp: 10,
+    maxHealth: 10,
+    defeated: false,
+  };
+  const ally = {
+    id: "ally-live",
+    x: 3,
+    y: 4,
+    hp: 2,
+    maxHealth: 3,
+    defeated: false,
+  };
+  const enemy = {
+    id: "enemy-live",
+    x: 7,
+    y: 4,
+    hp: 4,
+    maxHealth: 4,
+    defeated: false,
+    breachVisualized: false,
+  };
+  visualizer.allies = [ally];
+  visualizer.enemies = [enemy];
+  visualizer.deployments = [{ id: "tower-live", kind: "tower", x: 5, y: 5, hp: 4, maxHp: 4 }];
+
+  const campaign = Object.freeze({
+    stageId: "feedback-stage",
+    stage: Object.freeze({
+      legion: 1,
+      nodes: 0,
+      bossHealth: 12,
+      bossMaxHealth: 12,
+      deployments: Object.freeze([
+        Object.freeze({ id: "tower-live", kind: "tower", cell: Object.freeze({ x: 5, y: 5 }), hp: 4, maxHp: 4 }),
+      ]),
+    }),
+  });
+  const campaignBefore = structuredClone(campaign);
+
+  visualizer.applyCampaignState({ campaign });
+  visualizer.applyCampaignState({ campaign });
+  visualizer.currentWaveId = "wave-live";
+  visualizer.encounter = {
+    stageId: "feedback-stage",
+    state: { activeWaveId: "wave-live" },
+  };
+  visualizer.pendingEncounterEvent = null;
+  visualizer.emitEncounterEvent("breach");
+
+  enemy.hp = 2;
+  ally.hp = 3;
+  visualizer.render();
+  visualizer.destroy();
+  visualizer.destroy();
+
+  const reconciledIds = calls.reconciles.at(-1)?.objects.map(({ id }) => id).sort() ?? [];
+  const deltaValues = calls.exchanges
+    .map(({ targetId, value, type }) => ({ targetId, value, type }))
+    .sort((left, right) => left.targetId.localeCompare(right.targetId));
+  assert.deepEqual(
+    {
+      reconciledIds,
+      silentReconciles: calls.reconciles.map(({ options }) => options?.silent === true),
+      speech: calls.speech,
+      deltaValues,
+      renders: calls.renders.map(({ projector }) => projector),
+      destroys: calls.destroys,
+      campaign,
+    },
+    {
+      reconciledIds: ["ally-live", "boss", "commander", "enemy-live", "tower-live"],
+      silentReconciles: [true, true],
+      speech: [{ objectId: "commander", text: "Breach detected" }],
+      deltaValues: [
+        { targetId: "ally-live", value: 1, type: "heal" },
+        { targetId: "enemy-live", value: 2, type: "outgoing" },
+      ],
+      renders: ["function"],
+      destroys: 1,
+      campaign: campaignBefore,
+    },
+    "the Canvas renderer must use one presentation-only feedback layer without replaying identical campaign snapshots",
+  );
 });

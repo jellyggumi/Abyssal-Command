@@ -23,9 +23,13 @@ import {
   selectTilemapRenderMode, visibleIndividualItems,
 } from "./tilemap-renderer.js";
 import { DEFAULT_BATTLE_PRESENTATION } from "./battle-presentation.js";
+import { ObjectFeedbackLayer } from "./object-feedback-layer.js";
 import {
   createStageNavigation,
 } from "./stage-navigation.js";
+import { resolveEnemyPattern, resolveBossPhase, getCombatAlertCue } from "./combat-systems.js";
+
+let rendererRequestSequence = 0;
 
 // Keyed by navigation.zones[].kind (hazard/current/high-ground/cover/flank/
 // objective/exposed) so the battlefield tint always identifies the actual
@@ -42,6 +46,13 @@ const GIMMICK_STYLES = Object.freeze({
 
 const CLASH_DIST = 0.5;
 const CLASH_TICK_S = 0.55;     // seconds between swings in a sustained engagement
+
+const CIRCLE_PROBES = Object.freeze([
+  Object.freeze([0, 0]),
+  Object.freeze([1, 0]), Object.freeze([-1, 0]), Object.freeze([0, 1]), Object.freeze([0, -1]),
+  Object.freeze([0.707, 0.707]), Object.freeze([0.707, -0.707]),
+  Object.freeze([-0.707, 0.707]), Object.freeze([-0.707, -0.707]),
+]);
 const INTERCEPT_RANGE = 3;     // aggressor radius: defenders chase hostiles this close
 const AI_TICK_MS = 250;        // report: transition priority refresh cadence
 
@@ -148,9 +159,18 @@ function isBridgeRecord(record) {
     record.output.height > 0,
   );
 }
-
-
-
+function inferEnemyPatternKey(wave, index = 0) {
+  const explicit = String(wave?.pattern ?? wave?.enemyPattern ?? "").toLowerCase();
+  if (["rusher", "flanker", "ranged", "guardian"].includes(explicit)) return explicit;
+  const id = String(wave?.id ?? "").toLowerCase();
+  if (id.includes("guard")) return "guardian";
+  if (id.includes("flank") || id.includes("pack") || id.includes("runner")) return "flanker";
+  if (id.includes("ranged") || id.includes("artillery") || id.includes("tide") || id.includes("undertow")) return "ranged";
+  if (id.includes("scout") || id.includes("reinforce") || id.includes("rush")) return "rusher";
+  let hash = Math.max(0, Number(index) || 0);
+  for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return ["rusher", "flanker", "ranged", "guardian"][hash % 4];
+}
 
 export class BattleVisualizer {
   constructor(canvas, presentation = DEFAULT_BATTLE_PRESENTATION, options = {}) {
@@ -189,10 +209,21 @@ export class BattleVisualizer {
     this.encounterSnapshot = null;
     this.currentWaveId = null;
     this.pendingEncounterEvent = null;
+    this.encounterEventKeys = new Set();
     this.bossExposed = false;
     this.runtimeSignature = null;
     this.breachFlash = 0;
     this.hud = null;
+    this.objectFeedback = options.feedbackCanvas
+      ? new ObjectFeedbackLayer(options.feedbackCanvas, { reducedMotion: this.reducedMotion })
+      : null;
+    this.feedbackHpCache = new Map();
+    this.bossHealth = null;
+    this.bossMaxHealth = null;
+    this.bossPhase = null;
+    this.bossClip = "Idle";
+    this.lastBossHealth = null;
+    this.boss = { id: "boss", hp: 0, maxHealth: 0, defeated: false };
 
     this.onTacticalRequest = typeof options.onTacticalRequest === "function" ? options.onTacticalRequest : null;
     this.placementMode = null;
@@ -223,7 +254,8 @@ export class BattleVisualizer {
       hp: 10,
       facing: 0,
       path: null,
-      defeated: false
+      defeated: false,
+      radius: 0.42
     };
     this.nodeGoal = this.navigation.anchors.nodes.length;
     this.rng = mulberry32(0x5eed + this.stageNumber * 977);
@@ -289,7 +321,11 @@ export class BattleVisualizer {
   }
 
   isBarricadeAt(x, y) {
-    return this.deployments.some(d => d.kind === "barricade" && d.x === x && d.y === y);
+    return this.deployments.some(d => {
+      const bx = d.cell ? d.cell.x : d.x;
+      const by = d.cell ? d.cell.y : d.y;
+      return (d.kind === "barricade" || d.type === "barricade") && Math.floor(bx) === x && Math.floor(by) === y;
+    });
   }
 
   // Delegates to the shared authoritative validator (stage-navigation.js) so
@@ -304,59 +340,119 @@ export class BattleVisualizer {
     return this.navigation.climbOk(x0, y0, x1, y1);
   }
 
-  // Barricade-aware BFS pathing. Cannot reuse the frozen navigation.findPath
-  // (stage-navigation.js Object.freezes its return value; reassigning it
-  // throws in strict-mode ESM) so this mirrors its 4-neighborhood BFS while
-  // routing around live barricade deployments via this.walkable.
-  findPath(start, goal) {
-    const width = this.navigation.width;
-    const height = this.navigation.height;
-    const cells = this.navigation.cells;
-    const sx = Math.max(0, Math.min(width - 1, Math.floor(start?.x ?? 0)));
-    const sy = Math.max(0, Math.min(height - 1, Math.floor(start?.y ?? 0)));
-    const gx = Math.max(0, Math.min(width - 1, Math.floor(goal?.x ?? 0)));
-    const gy = Math.max(0, Math.min(height - 1, Math.floor(goal?.y ?? 0)));
-    const startIndex = sy * width + sx;
-    const goalIndex = gy * width + gx;
+  findPath(start, goal, options = {}) {
+    return this.navigation.findPath(start, goal, { barricades: this.deployments, ...options });
+  }
 
-    const permitted = (x, y) => x >= 0 && y >= 0 && x < width && y < height && this.walkable(x, y);
-    if (!permitted(sx, sy) || !permitted(gx, gy)) return null;
+  terrainClear(x, y, radius, previous) {
+    const cellX = Math.floor(x);
+    const cellY = Math.floor(y);
+    if (!this.walkable(cellX, cellY)) return false;
+    if (previous) {
+      const prevX = Math.floor(previous.x);
+      const prevY = Math.floor(previous.y);
+      if (prevX !== cellX || prevY !== cellY) {
+        if (!this.navigation.climbOk(prevX, prevY, cellX, cellY)) return false;
+      }
+    }
+    for (const [offsetX, offsetY] of CIRCLE_PROBES) {
+      const px = x + offsetX * radius;
+      const py = y + offsetY * radius;
+      if (!this.walkable(Math.floor(px), Math.floor(py))) return false;
+    }
+    return true;
+  }
 
-    const parent = new Int16Array(width * height);
-    parent.fill(-1);
-    const queue = new Int16Array(width * height);
-    let read = 0;
-    let write = 0;
-    parent[startIndex] = startIndex;
-    queue[write++] = startIndex;
-    const directions = [[1, 0], [0, -1], [0, 1], [-1, 0]];
+  collidesWithActor(unit, x, y, radius, actor, live) {
+    if (!actor || actor === unit || !live) return false;
+    const dx = x - actor.x;
+    const dy = y - actor.y;
+    const limit = radius + (actor.radius ?? 0.42);
+    return dx * dx + dy * dy < limit * limit;
+  }
 
-    while (read < write) {
-      const current = queue[read++];
-      if (current === goalIndex) break;
-      const x = current % width;
-      const y = Math.floor(current / width);
-      for (const [dx, dy] of directions) {
-        const nx = x + dx;
-        const ny = y + dy;
-        if (!permitted(nx, ny)) continue;
-        const next = ny * width + nx;
-        if (parent[next] !== -1) continue;
-        if (Math.abs(cells[ny][nx] - cells[y][x]) > 1) continue;
-        parent[next] = current;
-        queue[write++] = next;
+  collidesAt(unit, x, y, radius) {
+    // Check barricades
+    for (const dep of this.deployments) {
+      if (dep.kind !== "barricade" && dep.type !== "barricade") continue;
+      const bx = dep.cell ? dep.cell.x + 0.5 : dep.x + 0.5;
+      const by = dep.cell ? dep.cell.y + 0.5 : dep.y + 0.5;
+      const dx = x - bx;
+      const dy = y - by;
+      const limit = radius + 0.45; // barricade radius is 0.45
+      if (dx * dx + dy * dy < limit * limit) return true;
+    }
+
+    // Check allies
+    for (const ally of this.allies) {
+      if (this.collidesWithActor(unit, x, y, radius, ally, this.liveAlly(ally))) return true;
+    }
+
+    // Check commander (if commander is live, not the unit itself, and unit is an enemy)
+    if (this.commander && this.commander !== unit && !this.commander.defeated) {
+      if (this.enemies.includes(unit)) {
+        if (this.collidesWithActor(unit, x, y, radius, this.commander, true)) return true;
       }
     }
 
-    if (parent[goalIndex] === -1) return null;
-    const path = [];
-    for (let current = goalIndex; ; current = parent[current]) {
-      path.push({ x: current % width, y: Math.floor(current / width) });
-      if (current === startIndex) break;
+    // If unit is not an enemy, it also collides with enemies
+    if (!this.enemies.includes(unit)) {
+      for (const enemy of this.enemies) {
+        if (this.collidesWithActor(unit, x, y, radius, enemy, this.liveEnemy(enemy))) return true;
+      }
     }
-    return path.reverse();
+    return false;
   }
 
+  resolveMovement(unit, targetX, targetY) {
+    const radius = unit.radius ?? 0.42;
+    const start = { x: unit.x, y: unit.y };
+    const distance = Math.hypot(targetX - start.x, targetY - start.y);
+    const steps = Math.max(1, Math.ceil(distance / 0.12));
+    let resolved = start;
+    let blocked = false;
+    for (let step = 1; step <= steps; step += 1) {
+      const progress = step / steps;
+      let x = start.x + (targetX - start.x) * progress;
+      let y = start.y + (targetY - start.y) * progress;
+      if (!this.terrainClear(x, y, radius, resolved) || this.collidesAt(unit, x, y, radius)) {
+        const xOnlyClear = this.terrainClear(x, resolved.y, radius, resolved) && !this.collidesAt(unit, x, resolved.y, radius);
+        const yOnlyClear = this.terrainClear(resolved.x, y, radius, resolved) && !this.collidesAt(unit, resolved.x, y, radius);
+        if (xOnlyClear && !yOnlyClear) {
+          y = resolved.y;
+        } else if (yOnlyClear && !xOnlyClear) {
+          x = resolved.x;
+        } else if (xOnlyClear && yOnlyClear) {
+          const distX = Math.hypot(x - targetX, resolved.y - targetY);
+          const distY = Math.hypot(resolved.x - targetX, y - targetY);
+          if (distX < distY) {
+            y = resolved.y;
+          } else {
+            x = resolved.x;
+          }
+        } else {
+          const cellX = Math.floor(resolved.x) + 0.5;
+          const cellY = Math.floor(resolved.y) + 0.5;
+          const nudgeX = resolved.x + Math.sign(cellX - resolved.x) * 0.05;
+          const nudgeY = resolved.y + Math.sign(cellY - resolved.y) * 0.05;
+          const nudgeClear = this.terrainClear(nudgeX, nudgeY, radius, resolved) && !this.collidesAt(unit, nudgeX, nudgeY, radius);
+          if (nudgeClear) {
+            x = nudgeX;
+            y = nudgeY;
+          } else {
+            blocked = true;
+            break;
+          }
+        }
+      }
+      resolved = { x, y };
+    }
+    return {
+      x: resolved.x,
+      y: resolved.y,
+      blocked,
+    };
+  }
   elevationAt(fx, fy) {
     return this.navigation.elevationAt(fx, fy);
   }
@@ -377,16 +473,20 @@ export class BattleVisualizer {
     this.canvas.tabIndex = this.canvas.tabIndex > -1 ? this.canvas.tabIndex : 0;
     this.keydownHandler = (event) => {
       const code = event.code;
-      if (["KeyW", "ArrowUp", "KeyA", "ArrowLeft", "KeyS", "ArrowDown", "KeyD", "ArrowRight"].includes(code)) {
+      if (["KeyW", "ArrowUp", "KeyA", "ArrowLeft", "KeyS", "ArrowDown", "KeyD", "ArrowRight", "ShiftLeft", "ShiftRight"].includes(code)) {
         this.pressed.add(code);
-        event.preventDefault();
+        if (code !== "ShiftLeft" && code !== "ShiftRight") {
+          event.preventDefault();
+        }
       }
     };
     this.keyupHandler = (event) => {
       const code = event.code;
-      if (["KeyW", "ArrowUp", "KeyA", "ArrowLeft", "KeyS", "ArrowDown", "KeyD", "ArrowRight"].includes(code)) {
+      if (["KeyW", "ArrowUp", "KeyA", "ArrowLeft", "KeyS", "ArrowDown", "KeyD", "ArrowRight", "ShiftLeft", "ShiftRight"].includes(code)) {
         this.pressed.delete(code);
-        event.preventDefault();
+        if (code !== "ShiftLeft" && code !== "ShiftRight") {
+          event.preventDefault();
+        }
       }
     };
     this.blurHandler = () => {
@@ -523,7 +623,15 @@ export class BattleVisualizer {
     if (!this.onActionRequest) return false;
     const action = this.tacticalActionAt(canvasPoint);
     if (!action) return false;
-    this.onActionRequest(action);
+    rendererRequestSequence += 1;
+    this.onActionRequest({
+      type: "command-request",
+      action,
+      requestId: `renderer-request-${rendererRequestSequence}`,
+      source: "renderer-pointer",
+      rendererMode: "canvas-2d",
+      occurredAt: Number.isFinite(performance.now()) ? performance.now() : Date.now()
+    });
     return true;
   }
   detectActionAt(canvasPoint) {
@@ -1364,8 +1472,40 @@ export class BattleVisualizer {
 
   previewAction(semantic) {
     if (!semantic) return;
-    this.actionPreview = semantic;
+    if (semantic.commandId === undefined && semantic.phase === undefined) {
+      this.actionPreview = semantic;
+    } else {
+      this.actionPreview = {
+        ...semantic,
+        commandId: semantic.commandId,
+        phase: semantic.phase
+      };
+    }
     this.renderStatic();
+  }
+
+  getCommandReadiness(payload) {
+    if (this.destroyed) return { ready: false, reason: "destroyed" };
+    const action = payload?.action;
+    if (!action) return { ready: false, reason: "invalid-action" };
+    
+    let pointName = "portal";
+    if (action === "hunt" || action === "extract") pointName = "extractor";
+    else if (action === "materialize" || action === "domain") pointName = "portal";
+    else if (action === "capture") pointName = "node";
+    else if (action === "possess") pointName = "ally";
+    else if (action === "assault") pointName = "boss";
+    
+    const targetPt = this.actionPoint(pointName);
+    if (!targetPt) {
+      return { ready: false, reason: "no-target" };
+    }
+    
+    if (!this.navigation || !this.navigation.anchors) {
+      return { ready: false, reason: "path-blocked" };
+    }
+    
+    return { ready: true, reason: "ready" };
   }
 
   clearActionPreview(action) {
@@ -1516,13 +1656,71 @@ export class BattleVisualizer {
         ? state.waves.map((wave) => ({ id: wave?.id, cleared: wave?.cleared === true, breaches: Number(wave?.breaches) || 0 }))
         : [],
     });
-    if (this.encounterSnapshot !== null && this.encounterSnapshot !== snapshot) this.pendingEncounterEvent = null;
+    if (this.encounterSnapshot !== null && this.encounterSnapshot !== snapshot) {
+      this.pendingEncounterEvent = null;
+      this.encounterEventKeys.clear();
+    }
     this.encounterSnapshot = snapshot;
     this.encounter = waves ? { stageId, config, state } : null;
     this.bossExposed = state?.bossExposed === true;
     this.reconcileEncounterWave(activeWaveId);
     this.publishRuntimeState();
     this.renderStatic();
+  }
+
+  syncObjectFeedback() {
+    if (!this.objectFeedback) return;
+    const objects = [];
+    const addActor = (actor, id, kind, maxHp) => {
+      if (!actor) return;
+      objects.push({
+        id,
+        kind,
+        label: actor.label ?? id,
+        hp: Number(actor.hp) || 0,
+        maxHp: Number(actor.maxHealth ?? actor.maxHp ?? maxHp) || maxHp,
+        visible: actor.defeated !== true,
+        selected: this.selection.has(actor),
+      });
+    };
+    addActor(this.commander, this.commander?.id ?? "commander", "commander", 10);
+    for (let index = 0; index < this.allies.length; index += 1) {
+      const ally = this.allies[index];
+      addActor(ally, ally.id ?? `ally-${index}`, ally.isPossessed ? "possessed" : "ally", 3);
+    }
+    for (let index = 0; index < this.enemies.length; index += 1) {
+      const enemy = this.enemies[index];
+      addActor(enemy, enemy.id ?? `enemy-${index}`, "enemy", 3);
+    }
+    addActor(this.boss, "boss", "boss", 1);
+    for (const deployment of this.deployments) {
+      objects.push({
+        id: deployment.id,
+        kind: deployment.kind ?? deployment.type ?? "deployment",
+        label: deployment.label ?? deployment.id,
+        hp: Number(deployment.hp) || 0,
+        maxHp: Number(deployment.maxHp ?? deployment.maxHealth) || 1,
+        visible: deployment.defeated !== true,
+      });
+    }
+    this.objectFeedback.reconcile(objects, { silent: true });
+    this.feedbackHpCache.clear();
+    for (const object of objects) this.feedbackHpCache.set(object.id, object.hp);
+  }
+
+  projectFeedbackObject(object) {
+    if (!object) return null;
+    let actor = null;
+    if (object.id === "commander") actor = this.commander;
+    else if (object.id === "boss") actor = this.boss;
+    else actor = this.allies.find((unit) => unit.id === object.id)
+      ?? this.enemies.find((unit) => unit.id === object.id)
+      ?? this.deployments.find((deployment) => deployment.id === object.id);
+    if (!actor) return null;
+    const x = Number(actor.x ?? actor.cell?.x ?? 0) + (object.id === "boss" ? 0.4 : 0);
+    const y = Number(actor.y ?? actor.cell?.y ?? 0) + (object.id === "boss" ? 0.4 : 0);
+    const point = this.project(x, y, this.elevationAt(x, y));
+    return { x: point.x, y: point.y - 12, depth: y, visible: true };
   }
 
   applyCampaignState({ campaign, stage, encounter, state } = {}) {
@@ -1553,6 +1751,38 @@ export class BattleVisualizer {
     this.campaign = campaign ?? this.campaign;
     const deployments = state?.stage?.deployments ?? campaign?.stage?.deployments ?? state?.deployments ?? [];
     this.reconcileDeployments(deployments);
+    const bossHp = Number(state?.bossHealth ?? campaign?.stage?.bossHealth ?? stage?.bossHealth);
+    const bossMaxHp = Number(
+      state?.bossMaxHealth
+      ?? campaign?.stage?.bossMaxHealth
+      ?? campaign?.stage?.bossHealth
+      ?? stage?.bossHealth
+      ?? this.bossMaxHealth
+      ?? bossHp,
+    );
+    if (Number.isFinite(bossMaxHp) && bossMaxHp > 0) {
+      this.bossMaxHealth = bossMaxHp;
+      this.boss.maxHealth = bossMaxHp;
+    }
+    if (Number.isFinite(bossHp)) {
+      this.bossHealth = bossHp;
+      this.boss.hp = bossHp;
+      if (bossHp <= 0 && !this.boss.defeated) {
+        this.boss.defeated = true;
+        this.bossClip = "Defeat";
+      }
+      this.lastBossHealth = bossHp;
+      try {
+        this.bossPhase = resolveBossPhase({
+          health: bossHp,
+          maxHealth: this.bossMaxHealth,
+          phaseCount: Number(state?.bossPhaseCount ?? stage?.bossPhaseCount ?? 3) || 3,
+        });
+      } catch {
+        this.bossPhase = null;
+      }
+    }
+    this.syncObjectFeedback();
   }
 
   // Idempotent: re-applying an identical deployments list updates matching
@@ -1618,6 +1848,7 @@ export class BattleVisualizer {
         holdUntil: 0,
         isPossessed: false,
         defeated: false,
+        radius: 0.42
       };
       this.allies.push(unit);
       this.burst(unit.x, unit.y, 8, this.palette.ally);
@@ -1666,6 +1897,24 @@ export class BattleVisualizer {
       const spawnX = path.length > 0 ? path[0].x : bossTile.x;
       const spawnY = path.length > 0 ? path[0].y : bossTile.y;
 
+      let pattern;
+      try {
+        pattern = resolveEnemyPattern(
+          inferEnemyPatternKey(wave, index),
+          { ...wave, waveId: wave?.id ?? null, enemyIndex: index, routeIndex },
+        );
+      } catch {
+        pattern = null;
+      }
+      if (!pattern || pattern.accepted === false) {
+        pattern = Object.freeze({
+          accepted: true,
+          patternId: inferEnemyPatternKey(wave, index),
+          movement: "advance",
+          movementDirective: Object.freeze({ mode: "advance", speedMultiplier: 1 }),
+        });
+      }
+
       const unit = {
         id: "enemy-" + (++this.nextUnitId),
         x: spawnX,
@@ -1680,6 +1929,10 @@ export class BattleVisualizer {
         facing: 4,
         defeated: false,
         breachVisualized: false,
+        radius: 0.42,
+        pattern,
+        patternId: pattern.patternId ?? pattern.id ?? wave?.id ?? "rusher",
+        detourPreference: index % 2 === 0 ? 1 : -1,
       };
       this.enemies.push(unit);
       this.burst(unit.x, unit.y, 8, this.palette.enemy);
@@ -1687,18 +1940,33 @@ export class BattleVisualizer {
     this.playSpatial(bossTile.x, bossTile.y, { freq: 180, type: "sawtooth", duration: 0.3, gain: 0.8 });
   }
 
-  emitEncounterEvent(type) {
+  emitEncounterEvent(type, enemy = null) {
     const waveId = this.currentWaveId;
     const stageId = this.encounter?.stageId;
     if (
-      this.pendingEncounterEvent ||
-      (type !== "wave-cleared" && type !== "breach") ||
-      !waveId ||
-      typeof stageId !== "string" ||
-      this.encounter?.state?.activeWaveId !== waveId
+      (type !== "wave-cleared" && type !== "breach")
+      || !waveId
+      || typeof stageId !== "string"
+      || this.encounter?.state?.activeWaveId !== waveId
     ) return;
-    this.pendingEncounterEvent = { type, stageId, waveId };
-    if (this.onEncounterEvent) this.onEncounterEvent(this.pendingEncounterEvent);
+    const eventKey = type === "breach"
+      ? `breach:${enemy?.id ?? "anonymous"}`
+      : "wave-cleared";
+    if (this.encounterEventKeys.has(eventKey)) return;
+    if (type === "wave-cleared" && this.pendingEncounterEvent) return;
+    const event = {
+      type,
+      stageId,
+      waveId,
+      ...(type === "breach" && enemy?.id ? { enemyId: enemy.id } : {}),
+    };
+    this.encounterEventKeys.add(eventKey);
+    if (type === "wave-cleared") this.pendingEncounterEvent = event;
+    if (type === "breach") {
+      const cue = getCombatAlertCue(type);
+      this.objectFeedback?.emitSpeech("commander", cue?.label ?? "Breach detected");
+    }
+    if (this.onEncounterEvent) this.onEncounterEvent(event);
     else if (type === "breach") this.onEnemyBreach?.();
   }
 
@@ -1758,6 +2026,15 @@ export class BattleVisualizer {
       this.actionFx.push(effect);
     }
     if (sourceAvailable) this.setBridgeClip(semantic.sourceAsset, semantic.clip);
+    if (
+      action === "assault"
+      && semantic.target === "boss"
+      && this.bossExposed
+      && !this.boss.defeated
+      && (this.bossHealth === null || this.bossHealth > 0)
+    ) {
+      this.bossClip = "Attack";
+    }
     this.publishRuntimeState();
     this.renderStatic();
     if (this.reducedMotion) this.render();
@@ -1911,8 +2188,27 @@ export class BattleVisualizer {
     return best;
   }
 
+  hasSurge() {
+    return this.pressed.has("ShiftLeft") || this.pressed.has("ShiftRight");
+  }
+
   moveCommander(dt) {
     if (!this.commander || this.commander.defeated) return;
+
+    if (this.commander.path) {
+      const isBlocked = this.commander.path.some(node => this.isBarricadeAt(Math.floor(node.x), Math.floor(node.y)));
+      if (isBlocked) {
+        const start = { x: Math.floor(this.commander.x), y: Math.floor(this.commander.y) };
+        const lastNode = this.commander.path[this.commander.path.length - 1];
+        const goal = { x: Math.floor(lastNode.x), y: Math.floor(lastNode.y) };
+        const newPath = this.findPath(start, goal);
+        if (newPath && newPath.length > 1) {
+          this.commander.path = newPath.slice(1).map(node => ({ x: node.x + 0.5, y: node.y + 0.5 }));
+        } else {
+          this.commander.path = null;
+        }
+      }
+    }
 
     let x = 0;
     let y = 0;
@@ -1928,7 +2224,13 @@ export class BattleVisualizer {
         const dy = nextWaypoint.y - this.commander.y;
         if (Math.hypot(dx, dy) <= 0.08) {
           this.commander.path.shift();
-          if (this.commander.path.length === 0) this.commander.path = null;
+          if (this.commander.path.length === 0) {
+            this.commander.path = null;
+          } else {
+            const next = this.commander.path[0];
+            x = next.x - this.commander.x;
+            y = next.y - this.commander.y;
+          }
         } else {
           x = dx;
           y = dy;
@@ -1938,25 +2240,69 @@ export class BattleVisualizer {
       this.commander.path = null;
     }
 
-    if (x === 0 && y === 0) return;
+    // Set baseSpeed and update commander.speed property
+    const baseSpeed = this.hasSurge() ? 7.2 : 4.1;
+    this.commander.speed = baseSpeed;
 
+    const targetVel = { x: 0, y: 0 };
     const magnitude = Math.hypot(x, y);
-    const mobilityLevel = this.campaign?.progression?.skills?.mobility ?? 1;
-    const mobilityBonus = Math.max(0, mobilityLevel - 1);
-    const gimmick = this.navigation.getGimmickAt(this.commander.x, this.commander.y);
-    const speedMultiplier = (gimmick?.effects?.movementSpeedMultiplier ?? 1) * (1 + mobilityBonus * 0.15);
-    const vx = (x / magnitude) * this.commander.speed * speedMultiplier;
-    const vy = (y / magnitude) * this.commander.speed * speedMultiplier;
+    if (magnitude > 0.0001) {
+      const mobilityLevel = this.campaign?.progression?.skills?.mobility ?? 1;
+      const mobilityBonus = Math.max(0, mobilityLevel - 1);
+      const gimmick = this.navigation.getGimmickAt(this.commander.x, this.commander.y);
+      const speedMultiplier = (gimmick?.effects?.movementSpeedMultiplier ?? 1) * (1 + mobilityBonus * 0.15);
+      const speed = baseSpeed * speedMultiplier;
+      targetVel.x = (x / magnitude) * speed;
+      targetVel.y = (y / magnitude) * speed;
+    }
 
+    if (!this.commanderVelocity) {
+      this.commanderVelocity = { x: 0, y: 0 };
+    }
+
+    const targetSpeed = Math.hypot(targetVel.x, targetVel.y);
+    const currentSpeed = Math.hypot(this.commanderVelocity.x, this.commanderVelocity.y);
+    let rate = 28;
+    if (targetSpeed === 0 || currentSpeed > targetSpeed) {
+      rate = 36;
+    }
+
+    const diffX = targetVel.x - this.commanderVelocity.x;
+    const diffY = targetVel.y - this.commanderVelocity.y;
+    const diffLen = Math.hypot(diffX, diffY);
+    const step = rate * dt;
+
+    if (diffLen <= step) {
+      this.commanderVelocity.x = targetVel.x;
+      this.commanderVelocity.y = targetVel.y;
+    } else {
+      this.commanderVelocity.x += (diffX / diffLen) * step;
+      this.commanderVelocity.y += (diffY / diffLen) * step;
+    }
+
+    const speed = Math.hypot(this.commanderVelocity.x, this.commanderVelocity.y);
+    if (speed < 0.05) {
+      this.commanderVelocity.x = 0;
+      this.commanderVelocity.y = 0;
+      return;
+    }
+
+    const vx = this.commanderVelocity.x;
+    const vy = this.commanderVelocity.y;
     const nextX = this.commander.x + vx * dt;
     const nextY = Math.max(0.4, Math.min(this.navigation.height - 0.4, this.commander.y + vy * dt));
 
-    if (this.walkable(Math.floor(nextX), Math.floor(nextY))) {
-      this.commander.x = nextX;
-      this.commander.y = nextY;
-      this.commanderPosition.x = nextX;
-      this.commanderPosition.y = nextY;
-      this.commander.facing = directionIndex(vx, vy);
+    const resolved = this.resolveMovement(this.commander, nextX, nextY);
+    this.commander.x = resolved.x;
+    this.commander.y = resolved.y;
+    this.commanderPosition.x = resolved.x;
+    this.commanderPosition.y = resolved.y;
+    this.commander.facing = directionIndex(vx, vy);
+
+    if (resolved.blocked) {
+      this.commanderVelocity.x = 0;
+      this.commanderVelocity.y = 0;
+      this.commander.path = null;
     }
   }
 
@@ -1968,6 +2314,33 @@ export class BattleVisualizer {
     this.clearEngagement(unit);
     this.selection.delete(unit);
     this.emitSelectionChange();
+  }
+
+  emitCombatAlert(enemy, event = "enemy-ranged-warning") {
+    let cue = null;
+    try {
+      cue = getCombatAlertCue(event, { enemyId: enemy.id, patternId: enemy.patternId })
+        ?? getCombatAlertCue("start-wave")
+        ?? null;
+    } catch {
+      cue = null;
+    }
+    if (this.destroyed) return;
+    const color = cue?.color ?? cue?.particleColor ?? this.palette.enemy ?? "#ff7f79";
+    const count = Math.max(2, Number(cue?.count ?? cue?.particleCount ?? 8) || 8);
+    this.burst(enemy.x, enemy.y, count, color);
+
+    const frequency = Number(cue?.frequency ?? cue?.freq) || 560;
+    const endFrequency = Number(cue?.endFrequency ?? cue?.endFreq) || Math.max(80, frequency * 0.7);
+    this.playSpatial(enemy.x, enemy.y, {
+      freq: frequency,
+      endFreq: endFrequency,
+      duration: Number(cue?.duration) || 0.18,
+      type: cue?.type ?? "triangle",
+      gain: Number(cue?.gain) || 0.38,
+    });
+    enemy.lastAlertCue = cue;
+    enemy.alertCue = cue;
   }
 
   updateTowers(dt) {
@@ -2115,9 +2488,10 @@ export class BattleVisualizer {
       const nextX = ally.x + velocity.x * dt;
       const nextY = Math.max(0.4, Math.min(this.navigation.height - 0.4, ally.y + velocity.y * dt));
       const blocked = this.clampMovementToContact(ally, nextX, nextY, true);
-      if (!blocked && this.walkable(Math.floor(nextX), Math.floor(nextY))) {
-        ally.x = nextX;
-        ally.y = nextY;
+      if (!blocked) {
+        const resolved = this.resolveMovement(ally, nextX, nextY);
+        ally.x = resolved.x;
+        ally.y = resolved.y;
       }
       ally.facing = directionIndex(velocity.x, velocity.y);
     }
@@ -2126,15 +2500,45 @@ export class BattleVisualizer {
       if (!this.liveEnemy(enemy) || this.engagements.has(enemy)) continue;
       
       const gimmick = this.navigation.getGimmickAt(enemy.x, enemy.y);
-      const speedMult = gimmick?.effects?.movementSpeedMultiplier ?? 1.0;
-      enemy.speed = (enemy.baseSpeed ?? 2.4) * speedMult;
+      const gimmickSpeed = gimmick?.effects?.movementSpeedMultiplier ?? 1.0;
+
+      const pattern = enemy.pattern ?? {};
+      const movement = pattern.movementDirective && typeof pattern.movementDirective === "object"
+        ? pattern.movementDirective
+        : (pattern.movement && typeof pattern.movement === "object" ? pattern.movement : pattern);
+      const patternId = String(pattern.patternId ?? enemy.patternId ?? enemy.archetype ?? "").toLowerCase();
+      const movementKind = String(pattern.movement ?? movement.mode ?? movement.kind ?? movement.type ?? patternId).toLowerCase();
+
+      const isRanged = patternId === "ranged" || movementKind === "ranged" || patternId.includes("ranged");
+      if (isRanged) {
+        enemy.alertTimer = Math.max(0, (enemy.alertTimer ?? (0.35 + (enemy.routeIndex ?? 0) * 0.18)) - dt);
+        enemy.pauseTimer = Math.max(0, (enemy.pauseTimer ?? 0) - dt);
+        if (enemy.pauseTimer > 0) {
+          continue;
+        }
+        if (enemy.alertTimer <= 0) {
+          this.emitCombatAlert(enemy, "enemy-ranged-warning");
+          enemy.alertTimer = Math.max(0.9, Number(movement.pausePeriod ?? movement.alertPeriod) || 1.65);
+          enemy.pauseTimer = Math.max(0.12, Number(movement.pauseDuration) || 0.38);
+          continue;
+        }
+      }
+
+      const configuredSpeed = Number(movement.speedMultiplier ?? movement.speedScale);
+      let patternSpeed = Number.isFinite(configuredSpeed) && configuredSpeed > 0 ? configuredSpeed : 1;
+      if (movementKind === "guardian") {
+        const portalAnchor = this.navigation.anchors.portal;
+        const portalDistance = Math.hypot(enemy.x - portalAnchor.x, enemy.y - portalAnchor.y);
+        patternSpeed *= portalDistance < 4 ? 0.5 : 0.82;
+      }
+      enemy.speed = (enemy.baseSpeed ?? 2.4) * gimmickSpeed * patternSpeed;
 
       if (enemy.path) {
         const isBlocked = enemy.path.some(node => this.isBarricadeAt(Math.floor(node.x), Math.floor(node.y)));
         if (isBlocked) {
           const start = { x: Math.floor(enemy.x), y: Math.floor(enemy.y) };
           const goal = { x: Math.floor(this.navigation.anchors.alliedSpawn.x), y: Math.floor(this.navigation.anchors.alliedSpawn.y) };
-          const newPath = this.findPath(start, goal);
+          const newPath = this.findPath(start, goal, { routeIndex: enemy.routeIndex });
           if (newPath && newPath.length > 1) {
             enemy.path = newPath.slice(1).map(node => ({ x: node.x + 0.5, y: node.y + 0.5 }));
           } else {
@@ -2153,22 +2557,88 @@ export class BattleVisualizer {
           if (enemy.path.length === 0) enemy.path = null;
         }
       } else {
-        target = this.navigation.anchors.alliedSpawn;
+        // Find nearest opponent as target when in combat zone
+        let bestTarget = null;
+        let bestDist = Infinity;
+        const candidates = [];
+        if (this.commander && !this.commander.defeated) {
+          candidates.push(this.commander);
+        }
+        for (const ally of this.allies) {
+          if (this.liveAlly(ally)) {
+            candidates.push(ally);
+          }
+        }
+        for (const cand of candidates) {
+          const dist = Math.hypot(cand.x - enemy.x, cand.y - enemy.y);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestTarget = cand;
+          }
+        }
+        target = bestTarget || this.navigation.anchors.alliedSpawn;
       }
       if (!target) continue;
 
       const magnitude = Math.hypot(target.x - enemy.x, target.y - enemy.y) || 1;
+      let targetDirX = (target.x - enemy.x) / magnitude;
+      let targetDirY = (target.y - enemy.y) / magnitude;
+
+      // Handle preferred distance behavior for ranged/kite or other patterns when in skirmish mode
+      if (!enemy.path) {
+        const dist = Math.hypot(target.x - enemy.x, target.y - enemy.y);
+        const prefDist = Number(movement.preferredDistance) || 0;
+        if (movementKind === "kite") {
+          const retreatDist = Number(movement.retreatDistance) || 3;
+          if (dist < retreatDist) {
+            targetDirX = -targetDirX;
+            targetDirY = -targetDirY;
+          } else if (dist <= prefDist) {
+            targetDirX = 0;
+            targetDirY = 0;
+          }
+        } else if (dist < prefDist) {
+          targetDirX = 0;
+          targetDirY = 0;
+        }
+      }
+
       const velocity = steer(enemy, {
-        x: ((target.x - enemy.x) / magnitude) * enemy.speed,
-        y: ((target.y - enemy.y) / magnitude) * enemy.speed,
+        x: targetDirX * enemy.speed,
+        y: targetDirY * enemy.speed,
       }, this.enemies.filter((candidate) => !candidate.defeated && !candidate.breachVisualized));
 
       const nextX = enemy.x + velocity.x * dt;
       const nextY = Math.max(0.4, Math.min(this.navigation.height - 0.4, enemy.y + velocity.y * dt));
       const blocked = this.clampMovementToContact(enemy, nextX, nextY, false);
-      if (!blocked && this.walkable(Math.floor(nextX), Math.floor(nextY))) {
-        enemy.x = nextX;
-        enemy.y = nextY;
+      if (!blocked) {
+        const resolved = this.resolveMovement(enemy, nextX, nextY);
+        enemy.x = resolved.x;
+        enemy.y = resolved.y;
+        if (resolved.blocked) {
+          const configuredDetour = Number(movement.detourBias ?? movement.detourMultiplier);
+          const detourBias = Number.isFinite(configuredDetour) && configuredDetour !== 0
+            ? configuredDetour
+            : (movementKind === "flanker" || patternId.includes("flank") ? 1.45 : 1);
+          const detourDistance = Math.min(0.24 * Math.abs(detourBias), dt * enemy.speed);
+          const detourSide = Math.sign(enemy.detourPreference || 1) * Math.sign(detourBias || 1);
+          const preferredDetour = this.resolveMovement(
+            enemy,
+            enemy.x - targetDirY * detourSide * detourDistance,
+            enemy.y + targetDirX * detourSide * detourDistance,
+          );
+          enemy.x = preferredDetour.x;
+          enemy.y = preferredDetour.y;
+          if (preferredDetour.blocked) {
+            const fallbackDetour = this.resolveMovement(
+              enemy,
+              enemy.x + targetDirY * detourSide * detourDistance,
+              enemy.y - targetDirX * detourSide * detourDistance,
+            );
+            enemy.x = fallbackDetour.x;
+            enemy.y = fallbackDetour.y;
+          }
+        }
       }
       enemy.facing = directionIndex(velocity.x, velocity.y);
       if (enemy.x <= this.navigation.anchors.portal.x) {
@@ -2177,7 +2647,7 @@ export class BattleVisualizer {
         this.burst(enemy.x, enemy.y, 10, this.palette.enemy);
         this.playSpatial(enemy.x, enemy.y, { freq: 110, type: "sawtooth", duration: 0.5, gain: 1.3 });
         this.breachFlash = 1;
-        this.emitEncounterEvent("breach");
+        this.emitEncounterEvent("breach", enemy);
       }
     }
 
@@ -2265,6 +2735,23 @@ export class BattleVisualizer {
       g.addColorStop(1, `rgba(255, 60, 50, ${0.42 * this.breachFlash})`);
       ctx2.fillStyle = g;
       ctx2.fillRect(0, 0, this.view.width, this.view.height);
+    }
+    if (this.objectFeedback) {
+      const actors = [this.commander, this.boss, ...this.allies, ...this.enemies, ...this.deployments];
+      for (const actor of actors) {
+        if (!actor?.id) continue;
+        const currentHp = Number(actor.hp) || 0;
+        const previousHp = this.feedbackHpCache.get(actor.id);
+        if (previousHp !== undefined && currentHp !== previousHp) {
+          const kind = actor.kind ?? (this.enemies.includes(actor) || actor === this.boss ? "enemy" : "ally");
+          const type = currentHp > previousHp
+            ? "heal"
+            : (kind === "enemy" || kind === "boss" ? "outgoing" : "incoming");
+          this.objectFeedback.emitExchange("commander", actor.id, Math.abs(currentHp - previousHp), type);
+        }
+        this.feedbackHpCache.set(actor.id, currentHp);
+      }
+      this.objectFeedback.render((object) => this.projectFeedbackObject(object));
     }
   }
 
@@ -2558,7 +3045,7 @@ export class BattleVisualizer {
     ctx.fill();
     const bridgeDrawn = this.drawBridgeAtlas(
       BRIDGE_STAGE_BOSS[this.stageNumber],
-      "Idle",
+      this.bossClip,
       4,
       p,
       82 * s,
@@ -2570,11 +3057,13 @@ export class BattleVisualizer {
       ctx.drawImage(this.bossImage, p.x - w / 2, p.y - h + 6 * s, w, h);
       return;
     }
-    ctx.fillStyle = this.palette.enemy;
+    const defeated = this.bossClip === "Defeat";
+    const attacking = this.bossClip === "Attack";
+    ctx.fillStyle = defeated ? "#64748b" : attacking ? "#ffd166" : this.palette.enemy;
     ctx.beginPath();
-    ctx.moveTo(p.x, p.y - 52 * s);
-    ctx.lineTo(p.x + 20 * s, p.y);
-    ctx.lineTo(p.x - 20 * s, p.y);
+    ctx.moveTo(p.x, p.y - (defeated ? 36 : attacking ? 60 : 52) * s);
+    ctx.lineTo(p.x + (defeated ? 26 : attacking ? 24 : 20) * s, p.y);
+    ctx.lineTo(p.x - (defeated ? 26 : attacking ? 24 : 20) * s, p.y);
     ctx.closePath();
     ctx.fill();
   }
@@ -2852,6 +3341,8 @@ export class BattleVisualizer {
   destroy() {
     if (this.destroyed) return;
     this.destroyed = true;
+    this.objectFeedback?.destroy();
+    this.objectFeedback = null;
     this.bridgeGeneration += 1;
     if (this.resizeHandler) window.removeEventListener("resize", this.resizeHandler);
     if (this.pointerHandlers) {

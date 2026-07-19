@@ -8,6 +8,7 @@ import {
   SAVE_SCHEMA,
   SAVE_SCHEMA_VERSION,
   STAGES,
+  SUMMON_RECIPES,
   applyAction,
   applyBattleBreach,
   applyEncounterEvent,
@@ -17,6 +18,7 @@ import {
   executeReservedCommand,
   createCampaign,
   createSaveEnvelope,
+  evolveSummon,
   getCampaignBenefits,
   getCommandCooldown,
   getStageChecklist,
@@ -74,6 +76,13 @@ function rejectWithoutMutation(state, transition, label) {
 
 function start() {
   return accept(startCampaign(createCampaign()), "Campaign should start from briefing");
+}
+
+function gainSummonEssence(state, minimum) {
+  while (state.progression.summons.essence < minimum) {
+    state = commands(state, ["hunt", "hunt", "extract"]);
+  }
+  return state;
 }
 
 // Balance-v5 reference lines preserve legal stage gates while exercising reward effects.
@@ -468,6 +477,27 @@ test("Glass Necropolis alone restores the low no-Lens/no-Brand route to a surviv
   healthy = clearLateStage(healthy);
   assert.equal(healthy.stageId, "glass-necropolis");
   assert.equal(healthy.stage.integrity, 8, "Glass Necropolis must retain integrity earned above its entry floor");
+});
+
+test("Abyss Chancel and Gate Zenith declare four boss phases while earlier stages keep three", () => {
+  const fourPhaseStageIds = new Set(["abyss-chancel", "gate-zenith"]);
+  const stagesById = new Map(STAGES.map((stage) => [stage.id, stage]));
+
+  for (const stage of STAGES.filter(({ id }) => !fourPhaseStageIds.has(id))) {
+    assert.equal(
+      stage.bossPhaseCount ?? 3,
+      3,
+      `${stage.id} must retain the three-phase default`,
+    );
+  }
+
+  for (const stageId of fourPhaseStageIds) {
+    assert.equal(
+      stagesById.get(stageId)?.bossPhaseCount,
+      4,
+      `${stageId} must opt into the four-phase marquee boss contract`,
+    );
+  }
 });
 
 test("stage 4-10 declared encounters expose the boss only after every wave clears", () => {
@@ -989,6 +1019,76 @@ test("cancelling a reservation changes only the authorized queue, message, revis
   assert.equal(JSON.stringify(missing.state), beforeMissingCancellation, "a rejected cancellation cannot drift state");
 });
 
+test("summon recipes charge their bounded positive current-level cost and stop at the declared maximum", () => {
+  for (const recipe of SUMMON_RECIPES) {
+    assert.equal(Number.isSafeInteger(recipe.maxLevel) && recipe.maxLevel > 0, true, `${recipe.id} must declare a bounded positive level cap`);
+    assert.equal(recipe.essenceCosts.length, recipe.maxLevel, `${recipe.id} must price every declared level`);
+    assert.equal(recipe.benefits.length, recipe.maxLevel, `${recipe.id} must publish benefits for every declared level`);
+    assert.equal(
+      recipe.essenceCosts.every((cost) => Number.isSafeInteger(cost) && cost > 0),
+      true,
+      `${recipe.id} must use bounded positive essence costs`,
+    );
+
+    const totalCost = recipe.essenceCosts.reduce((sum, cost) => sum + cost, 0);
+    let state = gainSummonEssence(start(), totalCost);
+
+    for (const [currentLevel, cost] of recipe.essenceCosts.entries()) {
+      const essenceBefore = state.progression.summons.essence;
+      state = accept(evolveSummon(state, recipe.id), `${recipe.id} level ${currentLevel + 1} should be accepted`);
+      assert.equal(state.progression.summons.essence, essenceBefore - cost, `${recipe.id} level ${currentLevel + 1} must charge its current-level cost`);
+      assert.equal(state.progression.summons.levels[recipe.id], currentLevel + 1);
+      assert.ok(state.progression.summons.levels[recipe.id] <= recipe.maxLevel, `${recipe.id} must not evolve beyond its declared maximum`);
+    }
+  }
+});
+
+test("missing, unknown, insufficient, and maximum summon evolutions reject the same state without authority drift", () => {
+  const [maxedRecipe, insufficientRecipe] = SUMMON_RECIPES;
+  const totalCost = maxedRecipe.essenceCosts.reduce((sum, cost) => sum + cost, 0);
+  let state = gainSummonEssence(start(), totalCost);
+  for (let level = 0; level < maxedRecipe.maxLevel; level += 1) {
+    state = accept(evolveSummon(state, maxedRecipe.id));
+  }
+  state = accept(chooseReward(commands(state, S1_OPTIMAL), "ember-cohort"));
+  assert.ok(
+    state.progression.summons.essence < insufficientRecipe.essenceCosts[0],
+    "the public action line must leave less essence than the unstarted recipe requires",
+  );
+
+  for (const { label, recipeId } of [
+    { label: "missing recipe", recipeId: undefined },
+    { label: "unknown recipe", recipeId: "not-a-summon" },
+    { label: "insufficient essence", recipeId: insufficientRecipe.id },
+    { label: "maximum level", recipeId: maxedRecipe.id },
+  ]) {
+    const before = {
+      serialized: JSON.stringify(state),
+      essence: state.progression.summons.essence,
+      levels: JSON.stringify(state.progression.summons.levels),
+      rewards: JSON.stringify(state.rewards),
+      trace: JSON.stringify(state.trace),
+      revision: state.revision,
+    };
+    const result = evolveSummon(state, recipeId);
+
+    assert.equal(result.accepted, false, `${label} must reject`);
+    assert.equal(result.state, state, `${label} must return the supplied authoritative state`);
+    assert.deepEqual(
+      {
+        serialized: JSON.stringify(result.state),
+        essence: result.state.progression.summons.essence,
+        levels: JSON.stringify(result.state.progression.summons.levels),
+        rewards: JSON.stringify(result.state.rewards),
+        trace: JSON.stringify(result.state.trace),
+        revision: result.state.revision,
+      },
+      before,
+      `${label} must not mutate essence, levels, rewards, trace, revision, or any other campaign state`,
+    );
+  }
+});
+
 test("Command level one accepts two reservations and rejects the queue-cap boundary without mutation", () => {
   const initial = start();
   let state = accept(reserveCommand(initial, "hunt", "level-one-first"));
@@ -1145,25 +1245,39 @@ test("caller-supplied deployment IDs are unique across active deployment kinds",
   );
 });
 
-test("reward choice is exclusive and retry resets the stage while retaining earned boons", () => {
-  let state = start();
+test("one offered reward and an accepted summon evolution survive exact save replay and retry", () => {
+  const recipe = SUMMON_RECIPES[0];
+  let state = gainSummonEssence(start(), recipe.essenceCosts[0]);
+  state = accept(evolveSummon(state, recipe.id));
+
   const rewardState = commands(state, S1_OPTIMAL);
-  const beforeInvalidChoice = JSON.stringify(rewardState);
   rejectWithoutMutation(rewardState, (current) => chooseReward(current, "not-an-offer"), "unoffered rewards must reject");
-  assert.equal(JSON.stringify(rewardState), beforeInvalidChoice);
 
   state = accept(chooseReward(rewardState, "ember-cohort"));
-  assert.equal(state.rewards.length, 1);
-  assert.equal(state.rewards[0].rewardId, "ember-cohort");
-  rejectWithoutMutation(state, (current) => chooseReward(current, "rift-lens"), "the other Stage 1 reward cannot also be claimed");
+  assert.deepEqual(state.rewards.map(({ rewardId }) => rewardId), ["ember-cohort"]);
+  assert.equal(state.progression.summons.levels[recipe.id], 1);
 
-  state = command(state, "hunt");
-  const retried = accept(retryStage(state), "an active Stage 2 campaign can retry");
+  for (const alternate of STAGES[0].rewards.filter(({ id }) => id !== "ember-cohort")) {
+    rejectWithoutMutation(
+      state,
+      (current) => chooseReward(current, alternate.id),
+      `${alternate.id} cannot be claimed after the permanent Stage 1 choice`,
+    );
+  }
+
+  const restored = restoreSaveEnvelope(JSON.parse(JSON.stringify(createSaveEnvelope(state))));
+  assert.deepEqual(restored, state, "save replay must restore the exact intermediate reward and summon evolution state");
+
+  const retried = accept(retryStage(command(restored, "hunt")), "an active Stage 2 campaign can retry");
   assert.equal(retried.stageIndex, 1);
   assert.equal(retried.status, "active");
   assert.equal(retried.stage.hunted, 0, "retry must reset current stage progress");
-  assert.equal(retried.stage.capacity, 10, "retry preserves Cohort while capacity remains fixed");
-  assert.deepEqual(retried.rewards.map(({ rewardId }) => rewardId), ["ember-cohort"]);
+  assert.deepEqual(retried.rewards, state.rewards, "retry must retain exactly the one permanently chosen reward");
+  assert.deepEqual(
+    retried.progression.summons,
+    state.progression.summons,
+    "retry must retain the accepted summon level and its remaining essence",
+  );
 
   rejectWithoutMutation(createCampaign(), (current) => retryStage(current), "briefing cannot retry");
   rejectWithoutMutation(rewardState, (current) => retryStage(current), "reward choice cannot retry");

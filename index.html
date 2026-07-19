@@ -12,6 +12,29 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
+    <script>
+      (function() {
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalhost) {
+          const im = document.createElement('script');
+          im.type = 'importmap';
+          im.textContent = JSON.stringify({
+            "imports": {
+              "react": "./react-esm.js",
+              "react-dom": "./react-dom-esm.js",
+              "react/jsx-runtime": "./react-jsx-runtime-esm.js",
+              "agentation": "./node_modules/agentation/dist/index.mjs"
+            }
+          });
+          document.head.appendChild(im);
+
+          const bs = document.createElement('script');
+          bs.type = 'module';
+          bs.src = './agentation-bootstrap.js';
+          document.head.appendChild(bs);
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript><p class="noscript" data-i18n="noscript">Abyssal Command 캠페인을 지휘하려면 JavaScript가 필요합니다.</p></noscript>

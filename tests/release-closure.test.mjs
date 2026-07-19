@@ -13,6 +13,50 @@ const execFileAsync = promisify(execFile);
 
 const SOURCE_ROOT = new URL("../", import.meta.url);
 const CANONICAL_PAGES_BASE = "https://jellyggumi.github.io/Abyssal-Surge";
+const LATE_STAGE_NARRATION = Object.freeze({
+  "sunken-bastion": Object.freeze({
+    lines: Object.freeze(["가라앉은 보루, 선큰 바스티온.", "조수의 감시자를 방파제 아래로 가라앉혀라."]),
+    audio: "assets/audio/narr-stage4.mp3",
+    msPerChar: 45,
+    holdMs: 2000,
+  }),
+  "howling-sprawl": Object.freeze({
+    lines: Object.freeze(["울부짖는 폐허, 하울링 스프롤.", "무리의 감시자를 빙의해 전령의 목을 조여라."]),
+    audio: "assets/audio/narr-stage5.mp3",
+    msPerChar: 45,
+    holdMs: 2000,
+  }),
+  "glass-necropolis": Object.freeze({
+    lines: Object.freeze(["유리 묘역, 글래스 네크로폴리스.", "두 유리 단상을 점거하고 진혼의 합창을 끊어라."]),
+    audio: "assets/audio/narr-stage6.mp3",
+    msPerChar: 45,
+    holdMs: 2000,
+  }),
+  "starless-canal": Object.freeze({
+    lines: Object.freeze(["별 없는 운하, 스타리스 커낼.", "군주의 영역을 다시 열어 폭군의 등불을 모두 꺼라."]),
+    audio: "assets/audio/narr-stage7.mp3",
+    msPerChar: 45,
+    holdMs: 2000,
+  }),
+  "shattered-causeway": Object.freeze({
+    lines: Object.freeze(["부서진 둑길, 섀터드 코즈웨이.", "다리를 지키는 거상을 육교 아래로 무너뜨려라."]),
+    audio: "assets/audio/narr-stage8.mp3",
+    msPerChar: 45,
+    holdMs: 2000,
+  }),
+  "abyss-chancel": Object.freeze({
+    lines: Object.freeze(["심연 예배당, 어비스 챈슬.", "세 의식 단상을 모두 점거하고 봉인 계약을 깨뜨려라."]),
+    audio: "assets/audio/narr-stage9.mp3",
+    msPerChar: 45,
+    holdMs: 2000,
+  }),
+  "gate-zenith": Object.freeze({
+    lines: Object.freeze(["게이트 제니스, 마지막 정점.", "모든 가호를 걸고 심연의 섭정을 지워라.", "오늘, 문을 닫는다."]),
+    audio: "assets/audio/narr-stage10.mp3",
+    msPerChar: 45,
+    holdMs: 2000,
+  }),
+});
 
 async function readProjectFile(path) {
   return readFile(new URL(path, SOURCE_ROOT), "utf8");
@@ -1210,6 +1254,7 @@ test("Pages artifact explicitly allowlists the complete runtime GLB surface", as
     runtimeGlbs.filter((path) => path.includes("/props/")),
     [
       "./assets/models/abyssal-command/props/command-obelisk.glb",
+      "./assets/models/abyssal-command/props/echo-throne.glb",
       "./assets/models/abyssal-command/props/rift-portal.glb",
       "./assets/models/abyssal-command/props/soul-extractor.glb",
     ],
@@ -1500,6 +1545,12 @@ test("runtime narration preserves the locked spoken lines and timing", async () 
       msPerChar: 45,
       holdMs: 2000,
     },
+    ...Object.fromEntries(
+      Object.entries(LATE_STAGE_NARRATION).map(([id, { lines, msPerChar, holdMs }]) => [
+        id,
+        { lines, msPerChar, holdMs },
+      ]),
+    ),
     victory: {
       lines: ["침묵한 문 앞에서,", "그림자 군단이 왕좌에 오른다."],
       msPerChar: 45,
@@ -1518,6 +1569,12 @@ test("runtime narration presentation duration exceeds measured audio duration by
   const narration = runtimeNarrationEntries(app);
   const audioCatalog = runtimeNarrationAudioCatalog(app);
   const audioIds = Object.keys(audioCatalog);
+  const missingLateStageAudio = Object.keys(LATE_STAGE_NARRATION).filter((id) => !audioIds.includes(id));
+  assert.deepEqual(
+    missingLateStageAudio,
+    [],
+    `stage 4-10 narration must expose measured audio entries: ${missingLateStageAudio.join(", ")}`,
+  );
 
   assert.ok(audioIds.length > 0, "app.js must declare at least one NARRATION audio path to measure");
 
@@ -1556,6 +1613,7 @@ test("changed narration stays synchronized across runtime, committed generator, 
       lines: ["심연의 문이 열렸다.", "그림자 군주여, 일어나라."],
       audio: "assets/audio/narr-intro.mp3",
     },
+    ...LATE_STAGE_NARRATION,
     victory: {
       lines: ["침묵한 문 앞에서,", "그림자 군단이 왕좌에 오른다."],
       audio: "assets/audio/narr-victory.mp3",
@@ -1595,6 +1653,7 @@ test("regenerated narration audio matches its manifest identity and locked sourc
     intro: "assets/audio/narr-intro.mp3",
     "cinder-span": "assets/audio/narr-stage1.mp3",
     "veil-citadel": "assets/audio/narr-stage2.mp3",
+    ...Object.fromEntries(Object.entries(LATE_STAGE_NARRATION).map(([id, { audio }]) => [id, audio])),
     "echo-throne": "assets/audio/narr-stage3.mp3",
     victory: "assets/audio/narr-victory.mp3",
     defeat: "assets/audio/narr-defeat.mp3",

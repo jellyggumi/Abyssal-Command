@@ -20,6 +20,10 @@ const VIEWPORTS = Object.freeze([
   Object.freeze({ width: 1024, height: 720, entry: "start" }),
   Object.freeze({ width: 1024, height: 500, entry: "resume" }),
 ]);
+const LANDSCAPE_VIEWPORTS = Object.freeze([
+  Object.freeze({ width: 844, height: 390, entry: "start" }),
+  Object.freeze({ width: 667, height: 375, entry: "resume" }),
+]);
 const EXPECTED_ACTIONS = Object.freeze([
   "hunt",
   "extract",
@@ -270,6 +274,165 @@ function assertLiveLayout(layout, viewport) {
   assert.ok(layout.bodyWidth <= viewport.width, `${context} body must not overflow horizontally; observed ${layout.bodyWidth}px.`);
 }
 
+async function inspectLandscapeLayout(page) {
+  await page.evaluate(() => window.scrollTo(0, 0));
+  return page.evaluate(() => {
+    const required = (selector) => {
+      const element = document.querySelector(selector);
+      if (!(element instanceof HTMLElement)) throw new Error(`Missing rendered surface: ${selector}`);
+      return element;
+    };
+    const rect = (element) => {
+      const bounds = element.getBoundingClientRect();
+      return {
+        left: bounds.left,
+        top: bounds.top,
+        right: bounds.right,
+        bottom: bounds.bottom,
+        width: bounds.width,
+        height: bounds.height,
+      };
+    };
+    const inspect = (element) => {
+      const bounds = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      const computedVisibility = {
+        display: style.display,
+        visibility: style.visibility,
+        opacity: style.opacity,
+        hidden: element.hidden,
+      };
+      return {
+        rect: rect(element),
+        computedVisibility,
+        rendered: bounds.width > 0
+          && bounds.height > 0
+          && computedVisibility.display !== "none"
+          && computedVisibility.visibility !== "hidden"
+          && Number(computedVisibility.opacity) > 0
+          && !computedVisibility.hidden,
+      };
+    };
+    const surfaces = [
+      "#battle-field",
+      "#canvas-container-3d",
+      "#command-panel",
+      "#tactical-skill-controls",
+      ".cockpit-rail",
+      "#battle-minimap",
+      ".rail-boss",
+    ];
+    const commandPanel = required("#command-panel");
+    const commandButtons = [...commandPanel.querySelectorAll("#command-pad button")];
+    const controls = [...commandPanel.querySelectorAll("button, a, input, select, textarea")];
+
+    return {
+      viewport: { width: innerWidth, height: innerHeight },
+      document: {
+        scrollWidth: document.documentElement.scrollWidth,
+        scrollHeight: document.documentElement.scrollHeight,
+        clientWidth: document.documentElement.clientWidth,
+        clientHeight: document.documentElement.clientHeight,
+      },
+      body: {
+        scrollWidth: document.body.scrollWidth,
+        scrollHeight: document.body.scrollHeight,
+        clientWidth: document.body.clientWidth,
+        clientHeight: document.body.clientHeight,
+      },
+      surfaces: Object.fromEntries(surfaces.map((selector) => [selector, {
+        selector,
+        ...inspect(required(selector)),
+      }])),
+      commandButtons: commandButtons.map((button) => ({
+        action: button.dataset.action || "",
+        id: button.id || "",
+        ...inspect(button),
+      })),
+      controls: controls.map((control) => ({
+        id: control.id || "",
+        tagName: control.tagName.toLowerCase(),
+        ...inspect(control),
+      })),
+    };
+  });
+}
+
+function assertLandscapeLayout(layout, viewport) {
+  const context = `${viewport.width}x${viewport.height}`;
+  const tolerance = 0.5;
+  assert.deepEqual(layout.viewport, viewport, `${context} must use the requested browser viewport.`);
+
+  for (const [name, value] of [
+    ["document scrollWidth", layout.document.scrollWidth],
+    ["document scrollHeight", layout.document.scrollHeight],
+    ["document clientWidth", layout.document.clientWidth],
+    ["document clientHeight", layout.document.clientHeight],
+    ["body scrollWidth", layout.body.scrollWidth],
+    ["body scrollHeight", layout.body.scrollHeight],
+    ["body clientWidth", layout.body.clientWidth],
+    ["body clientHeight", layout.body.clientHeight],
+  ]) {
+    const limit = name.endsWith("Width") ? viewport.width : viewport.height;
+    assert.ok(
+      value <= limit + tolerance,
+      `${context} ${name} must stay within the viewport; observed ${value}px against ${limit}px.`,
+    );
+  }
+
+  const assertContained = (surface, name) => {
+    assert.equal(
+      surface.rendered,
+      true,
+      `${context} ${name} must be visibly rendered; observed ${JSON.stringify(surface.computedVisibility)}.`,
+    );
+    assert.ok(
+      surface.rect.width > 0 && surface.rect.height > 0,
+      `${context} ${name} must have nonzero bounds; observed ${JSON.stringify(surface.rect)}.`,
+    );
+    assert.ok(
+      surface.rect.left >= -tolerance
+        && surface.rect.right <= viewport.width + tolerance
+        && surface.rect.top >= -tolerance
+        && surface.rect.bottom <= viewport.height + tolerance,
+      `${context} ${name} must be fully contained in the viewport; observed ${JSON.stringify(surface.rect)}.`,
+    );
+  };
+
+  for (const [selector, surface] of Object.entries(layout.surfaces)) {
+    assertContained(surface, selector);
+  }
+
+  assert.equal(
+    layout.commandButtons.length,
+    EXPECTED_ACTIONS.length,
+    `${context} must render all seven command-pad buttons.`,
+  );
+  assert.deepEqual(
+    layout.commandButtons.map(({ action }) => action),
+    EXPECTED_ACTIONS,
+    `${context} must render the seven command-pad actions in semantic order.`,
+  );
+  for (const command of layout.commandButtons) {
+    assertContained(command, `#command-pad ${command.id || command.action}`);
+  }
+
+  const visibleControls = layout.controls.filter((control) => control.rendered);
+  assert.ok(
+    visibleControls.length > 0,
+    `${context} command panel must expose visible interactive controls.`,
+  );
+  for (const control of visibleControls) {
+    assert.ok(
+      control.rect.left >= -tolerance
+        && control.rect.right <= viewport.width + tolerance
+        && control.rect.top >= -tolerance
+        && control.rect.bottom <= viewport.height + tolerance,
+      `${context} visible command-panel control ${control.id || control.tagName} must stay within the viewport; observed ${JSON.stringify(control.rect)}.`,
+    );
+  }
+}
+
 async function assertSaveControlsAndExport(page, viewport) {
   const exportButton = page.locator("#export-save");
   const importLabel = page.locator('label[for="import-save"]');
@@ -370,6 +533,26 @@ async function runViewport(browser, baseUrl, viewport, envelope) {
   }
 }
 
+async function runLandscapeViewport(browser, baseUrl, viewport, envelope) {
+  const context = await browser.newContext({
+    acceptDownloads: true,
+    viewport: { width: viewport.width, height: viewport.height },
+  });
+  try {
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: "domcontentloaded" });
+    await waitForCampaignBoot(page);
+    if (viewport.entry === "start") await startCampaign(page);
+    else await resumeCampaign(page, envelope);
+
+    const layout = await inspectLandscapeLayout(page);
+    assertLandscapeLayout(layout, { width: viewport.width, height: viewport.height });
+    return layout;
+  } finally {
+    await context.close();
+  }
+}
+
 async function run() {
   let browser;
   let server;
@@ -380,10 +563,16 @@ async function run() {
 
     const started = await runViewport(browser, hosting.baseUrl, VIEWPORTS[0]);
     const resumed = await runViewport(browser, hosting.baseUrl, VIEWPORTS[1], started.exportedEnvelope);
+    const landscapeStarted = await runLandscapeViewport(browser, hosting.baseUrl, LANDSCAPE_VIEWPORTS[0]);
+    const landscapeResumed = await runLandscapeViewport(browser, hosting.baseUrl, LANDSCAPE_VIEWPORTS[1], started.exportedEnvelope);
+    const landscapeDimensions = [landscapeStarted, landscapeResumed].map((layout) => (
+      `${layout.viewport.width}x${layout.viewport.height}:field=${layout.surfaces["#battle-field"].rect.width.toFixed(2)}x${layout.surfaces["#battle-field"].rect.height.toFixed(2)}`
+    )).join(" ");
     const dimensions = [started, resumed].map(({ layout }) => (
       `${layout.viewport.width}x${layout.viewport.height}:canvas=${layout.canvas.rect.width.toFixed(2)}x${layout.canvas.rect.height.toFixed(2)}`
     )).join(" ");
     console.log(`BATTLE_HUD_RESPONSIVE_BROWSER_PASS ${dimensions} commands=7 export=2 import-resume=1 overflowX=0`);
+    console.log(`BATTLE_HUD_RESPONSIVE_BROWSER_LANDSCAPE_PASS ${landscapeDimensions} commands=7 overflowX=0`);
   } finally {
     if (browser) await browser.close();
     if (server) await closeServer(server);

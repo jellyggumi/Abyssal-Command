@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { receiptCopy, selectCurrentCommand, textOf } from "../battle-field-command-overlay.js";
@@ -444,6 +445,50 @@ function assertLocalizedOverlayChrome(overlay, copy) {
 function localizedReceiptPrefix(i18n, locale) {
   return i18n.translations[locale]["fieldOverlay.relayPrefix"];
 }
+
+test("overlay presentation omits proxy routes and decorative frames while retaining activation affordances", async () => {
+  const [moduleSource, stylesheet] = await Promise.all([
+    readFile(new URL("../battle-field-command-overlay.js", import.meta.url), "utf8"),
+    readFile(new URL("../battle-field-command-overlay.css", import.meta.url), "utf8"),
+  ]);
+  const markup = moduleSource.match(/overlay\.innerHTML = `([\s\S]*?)`;/)?.[1] ?? "";
+
+  assert.doesNotMatch(
+    markup,
+    /<(?:svg|path|circle)\b|ashen-field-command__route(?:-path|-marker)?\b/,
+    "the overlay markup must not restore the obsolete SVG proxy route, path, or markers",
+  );
+  assert.doesNotMatch(
+    stylesheet,
+    /\.ashen-field-command__route(?:-path|-marker)?\b|stroke-dasharray\s*:/,
+    "the overlay stylesheet must not restore route selectors or dashed-route styling",
+  );
+  assert.doesNotMatch(
+    stylesheet,
+    /\.ashen-field-command::before\b|\.ashen-field-command\[data-spatial-focused\]\b/,
+    "the overlay stylesheet must not restore decorative outer or spatial frame styling",
+  );
+  assert.match(
+    markup,
+    /<button class="ashen-field-command__activate" type="button">/,
+    "the route removal must retain a semantic command activation button",
+  );
+  assert.match(
+    stylesheet,
+    /#battle-field \.ashen-field-command__activate\s*\{[^}]*pointer-events:\s*auto\s*;/s,
+    "the activation button must remain actionable inside the pointer-transparent overlay",
+  );
+  assert.match(
+    stylesheet,
+    /#battle-field \.ashen-field-command__activate:focus-visible\s*\{[^}]*outline\s*:/s,
+    "keyboard focus must retain a visible activation affordance",
+  );
+  assert.match(
+    stylesheet,
+    /#battle-field \.ashen-field-command__activate\[data-focused="true"\]\s*\{[^}]*box-shadow\s*:/s,
+    "matching spatial focus must retain an active activation affordance",
+  );
+});
 
 test("selectCurrentCommand resolves marked and enabled commands in priority order", () => {
   const enabled = command();

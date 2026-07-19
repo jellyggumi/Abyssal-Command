@@ -66,6 +66,22 @@ async function ffprobe(relativePath) {
   ]);
   return JSON.parse(stdout);
 }
+async function assertAudibleMp3(relativePath, label = relativePath) {
+  const { stderr } = await execFileAsync("ffmpeg", [
+    "-hide_banner",
+    "-nostats",
+    "-i",
+    projectPath(relativePath),
+    "-af",
+    "volumedetect",
+    "-f",
+    "null",
+    "-",
+  ]);
+  const meanVolume = /mean_volume:\s*(?<value>[-+0-9.]+|[-+]?(?:inf|infinity))\s+dB/iu.exec(stderr);
+  assert.ok(meanVolume, `${label} must expose a decoded mean volume`);
+  assert.ok(Number.isFinite(Number(meanVolume.groups.value)), `${label} must contain a non-silent decoded signal`);
+}
 
 function videoAndAudioStreams(probe, label) {
   const video = probe.streams.find(({ codec_type: type }) => type === "video");
@@ -117,13 +133,13 @@ async function walkRelativeFiles(root) {
   return output.sort();
 }
 
-test("shared media inventory closes all 188 records against exact file bytes and SHA-256", async () => {
+test("shared media inventory closes all 199 records against exact file bytes and SHA-256", async () => {
   const manifest = await readJson(MEDIA_MANIFEST_PATH);
   assert.equal(manifest.schema_version, 2, "the shared media inventory must use schema v2");
-  assert.equal(manifest.assets.length, 188, "the release inventory must retain all 188 supplied media records");
+  assert.equal(manifest.assets.length, 199, "the release inventory must retain the 188 baseline records plus seven stage narrations, one authored boss-phase combat cue, and three stage-band music records");
 
   const filenames = manifest.assets.map(({ filename }) => filename);
-  assert.equal(new Set(filenames).size, 188, "each supplied media file must have exactly one inventory record");
+  assert.equal(new Set(filenames).size, manifest.assets.length, "each supplied media file must have exactly one inventory record");
 
   for (const record of manifest.assets) {
     assert.match(record.sha256, /^[0-9a-f]{64}$/u, `${record.filename} must declare a SHA-256 digest`);
@@ -211,7 +227,7 @@ test("model v2 and the 45-record raster bridge form a hash-closed 15-asset runti
       actionAtlases += 1;
       assert.deepEqual(
         [record.output.width, record.output.height, record.layout.columns, record.layout.rows, record.layout.cellWidth, record.layout.cellHeight],
-        [1024, 512, 8, 4, 128, 128],
+        [2048, 1024, 8, 4, 256, 256],
         `${record.output.path} must retain its 8-direction 4-frame atlas geometry`,
       );
       assert.deepEqual(record.frameSamples, [1, 10, 20, 30], `${record.output.path} must retain its source frame samples`);
@@ -224,7 +240,7 @@ test("model v2 and the 45-record raster bridge form a hash-closed 15-asset runti
       assert.equal(record.kind, "terrainPlate");
       assert.deepEqual(
         [record.output.width, record.output.height, record.layout.columns, record.layout.rows],
-        [128, 128, 1, 1],
+        [256, 256, 1, 1],
         `${record.output.path} must retain its single terrain plate`,
       );
     }
@@ -235,25 +251,41 @@ test("model v2 and the 45-record raster bridge form a hash-closed 15-asset runti
   assert.equal(terrainPlates, 3);
 });
 
-test("procedural encounter cues and battle music retain valid MP3 delivery and provenance", async () => {
+test("procedural encounter cues, canonical combat cues, and battle music retain valid MP3 delivery and provenance", async () => {
   const manifest = await readJson(MEDIA_MANIFEST_PATH);
   const records = new Map(manifest.assets.map((record) => [record.filename, record]));
   const contracts = [
     { filename: "assets/audio/breach-alert.mp3", cueId: "breach-alert", role: "sfx", channels: 1, durationMs: 2429 },
     { filename: "assets/audio/wave-spawn.mp3", cueId: "wave-spawn", role: "sfx", channels: 1, durationMs: 1541 },
     { filename: "assets/audio/battle-bgm.mp3", cueId: "battle-bgm", role: "music", channels: 2, durationMs: 24033 },
+    { filename: "assets/audio/boss-phase-change.mp3", cueId: "boss-phase-change", role: "sfx", channels: 1 },
+    { filename: "assets/audio/battle-bgm-band-ii.mp3", cueId: "battle-bgm-band-ii", role: "music", channels: 2 },
+    { filename: "assets/audio/battle-bgm-band-iii.mp3", cueId: "battle-bgm-band-iii", role: "music", channels: 2 },
+    { filename: "assets/audio/battle-bgm-band-iv.mp3", cueId: "battle-bgm-band-iv", role: "music", channels: 2 },
   ];
 
   for (const expected of contracts) {
     const record = records.get(expected.filename);
     assert.ok(record, `${expected.filename} must remain in the shared inventory`);
+    assert.equal(record.media_type, "audio/mpeg", `${expected.filename} must be declared as MPEG audio`);
     assert.equal(record.generated_by, `Local deterministic procedural synthesis via scripts/generate_game_audio.py (cue_id=${expected.cueId})`);
     assert.equal(record.role, expected.role);
     assert.equal(record.sample_rate_hz, 44100);
     assert.equal(record.bitrate_kbps, 128);
     assert.equal(record.channels, expected.channels);
-    assert.equal(record.duration_ms, expected.durationMs);
+    assert.ok(Number.isInteger(record.duration_ms) && record.duration_ms > 0, `${expected.filename} must declare a positive integer duration`);
+    if (expected.durationMs !== undefined) {
+      assert.equal(record.duration_ms, expected.durationMs);
+    } else {
+      const minimumDurationMs = expected.role === "music" ? 10_000 : 500;
+      const maximumDurationMs = expected.role === "music" ? 60_000 : 3_000;
+      assert.ok(
+        record.duration_ms >= minimumDurationMs && record.duration_ms <= maximumDurationMs,
+        `${expected.filename} must retain its ${expected.role} duration contract`,
+      );
+    }
     assert.match(record.derivation, /Procedure:/u, `${expected.filename} must retain its reproducible synthesis procedure`);
+    await assertFileIdentity(expected.filename, record);
 
     const probe = await ffprobe(expected.filename);
     const stream = probe.streams.find(({ codec_type: type }) => type === "audio");
@@ -261,8 +293,13 @@ test("procedural encounter cues and battle music retain valid MP3 delivery and p
     assert.equal(stream.codec_name, "mp3");
     assert.equal(Number(stream.sample_rate), 44100);
     assert.equal(stream.channels, expected.channels);
-    assert.ok(Math.abs(Number(probe.format.duration) * 1000 - expected.durationMs) <= 2, `${expected.filename} duration must match its role contract`);
+    assert.ok(Number(probe.format.duration) > 0, `${expected.filename} must retain a positive decoded duration`);
+    assert.ok(
+      Math.abs(Number(probe.format.duration) * 1000 - record.duration_ms) <= 2,
+      `${expected.filename} duration must match its manifest record`,
+    );
     assert.equal(Number(stream.bit_rate), 128000, `${expected.filename} must remain a 128 kbps encoded stream`);
+    await assertAudibleMp3(expected.filename);
   }
 });
 

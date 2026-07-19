@@ -172,7 +172,7 @@ function cellCoordinate(value, limit) {
   return Math.max(0, Math.min(limit - 1, Math.floor(Number(value) || 0)));
 }
 
-function findPath(cells, start, goal, allowedKeys = null) {
+function findPath(cells, start, goal, allowedKeys = null, barricades = null) {
   const width = STAGE_GRID_WIDTH;
   const height = STAGE_GRID_HEIGHT;
   const sx = cellCoordinate(start?.x, width);
@@ -187,8 +187,18 @@ function findPath(cells, start, goal, allowedKeys = null) {
   let read = 0;
   let write = 0;
 
+  const isBarricaded = (x, y) => {
+    if (!barricades) return false;
+    return barricades.some((d) => {
+      const bx = d.cell ? d.cell.x : d.x;
+      const by = d.cell ? d.cell.y : d.y;
+      return (d.kind === "barricade" || d.type === "barricade") && Math.floor(bx) === x && Math.floor(by) === y;
+    });
+  };
+
   const permitted = (x, y) => {
     if (x < 0 || y < 0 || x >= width || y >= height || cells[y][x] < 0) return false;
+    if (isBarricaded(x, y)) return false;
     return !allowedKeys || allowedKeys.has(y * width + x) || x <= 5 || x >= 19;
   };
   if (!permitted(sx, sy) || !permitted(gx, gy)) return null;
@@ -512,7 +522,8 @@ export function createStageNavigation(stageNumber) {
     worldToGrid,
     findPath: (start, goal, options = {}) => {
       const routeIndex = Number.isInteger(options.routeIndex) ? options.routeIndex : null;
-      return findPath(cells, start, goal, routeIndex === null ? null : routeKeySets[routeIndex] ?? null);
+      const barricades = options.barricades || null;
+      return findPath(cells, start, goal, routeIndex === null ? null : routeKeySets[routeIndex] ?? null, barricades);
     },
     routePath: (routeIndex, reverse = false) => {
       const route = routes[routeIndex];

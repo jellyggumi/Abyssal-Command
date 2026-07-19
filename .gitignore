@@ -4,6 +4,10 @@
 # Jeo runtime files
 .jeo/
 
+# OMC (oh-my-claudecode) orchestration state — session/local artifacts, not
+# project source.
+.omc/
+
 # OS files
 .DS_Store
 # Node dependencies (promo-video render tool)

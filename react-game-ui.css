@@ -2619,3 +2619,1396 @@ textarea:focus-visible {
     gap: 0.18rem !important;
   }
 }
+/* Duplicate HUD mirror: .ashen-field-command (battle-field-command-overlay.js)
+   already renders the interactive objective/hostile/relay/ward surface across
+   every viewport. This React-only mirror duplicated the same objective,
+   resource, and selection text in the same screen corners, causing visible
+   notification overlap on wide desktop viewports. Kept in the DOM (tests
+   assert its ids/data-battle-screen targets) but never painted. */
+.battle-screen-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: none;
+  pointer-events: none;
+  color: #f1f4fb;
+  font-family: var(--font-serif);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.85);
+}
+
+.battle-screen-ui__selection,
+.battle-screen-ui__resources,
+.battle-screen-ui__mission {
+  position: absolute;
+  border: 1px solid rgb(121 187 217 / 0.48);
+  background: linear-gradient(135deg, rgb(7 12 25 / 0.94), rgb(12 24 40 / 0.82));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.04), 0 10px 22px rgb(0 0 0 / 0.26);
+  backdrop-filter: blur(8px);
+}
+
+.battle-screen-ui__selection {
+  left: 0.65rem;
+  bottom: 0.65rem;
+  display: grid;
+  grid-template-columns: 2.7rem minmax(0, 1fr);
+  gap: 0.55rem;
+  width: min(19rem, calc(100% - 1.3rem));
+  padding: 0.55rem;
+  border-radius: 3px;
+}
+
+.battle-screen-ui__selection-image {
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 1px solid rgb(121 187 217 / 0.6);
+  object-fit: cover;
+  background: #101b2b;
+}
+
+.battle-screen-ui__selection-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.battle-screen-ui__eyebrow {
+  color: #8fb5c9;
+  font: 600 0.58rem/1.1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.battle-screen-ui__selection-name,
+.battle-screen-ui__mission strong {
+  overflow: hidden;
+  color: #f4f7fb;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-screen-ui__selection-role,
+.battle-screen-ui__mission small {
+  overflow: hidden;
+  color: #afbdc8;
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-screen-ui__selection-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.6rem;
+  color: #afbdc8;
+  font: 0.58rem/1.2 var(--font-mono);
+}
+
+.battle-screen-ui__selection-stats b {
+  color: #e8f4ff;
+  font-weight: 700;
+}
+
+.battle-screen-ui__selection-status {
+  min-height: 0.75rem;
+  color: #81d4ef;
+  font-size: 0.58rem;
+}
+
+.battle-screen-ui__resources {
+  top: 0.65rem;
+  right: 0.65rem;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(3.4rem, 1fr));
+  gap: 0.35rem;
+  width: min(27rem, calc(100% - 1.3rem));
+  margin: 0;
+  padding: 0.45rem;
+  border-radius: 3px;
+}
+
+.battle-screen-ui__resources > div {
+  min-width: 0;
+  display: grid;
+  gap: 0.08rem;
+}
+
+.battle-screen-ui__resources dt {
+  overflow: hidden;
+  color: #8fb5c9;
+  font: 600 0.52rem/1.1 var(--font-mono);
+  letter-spacing: 0.05em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.battle-screen-ui__resources dd {
+  margin: 0;
+  color: #f5f7ff;
+  font: 700 0.72rem/1.1 var(--font-mono);
+  white-space: nowrap;
+}
+
+.battle-screen-ui__mission {
+  top: 0.65rem;
+  left: 0.65rem;
+  display: grid;
+  gap: 0.12rem;
+  width: min(15rem, calc(100% - 29rem));
+  padding: 0.5rem 0.6rem;
+  border-left: 2px solid #81d4ef;
+  border-radius: 0 3px 3px 0;
+}
+
+.battle-screen-ui__mission strong {
+  white-space: normal;
+}
+
+.battle-screen-ui__mission small {
+  white-space: normal;
+}
+
+.battle-screen-ui__wave {
+  justify-self: start;
+  margin-top: 0.12rem;
+  padding: 0.12rem 0.3rem;
+  border: 1px solid rgb(219 156 87 / 0.45);
+  color: #e1b37b;
+  font: 600 0.56rem/1.1 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 760px) {
+  .battle-screen-ui__resources {
+    top: 0.5rem;
+    right: 0.5rem;
+    grid-template-columns: repeat(3, minmax(3.6rem, 1fr));
+    width: min(15rem, calc(100% - 1rem));
+  }
+
+  .battle-screen-ui__mission {
+    top: 0.5rem;
+    left: 0.5rem;
+    width: min(12rem, calc(100% - 16rem));
+  }
+
+  .battle-screen-ui__selection {
+    left: 0.5rem;
+    bottom: 0.5rem;
+    width: min(17rem, calc(100% - 1rem));
+  }
+}
+
+@media (max-width: 460px) {
+  .battle-screen-ui__resources {
+    grid-template-columns: repeat(2, minmax(3.6rem, 1fr));
+    width: 9rem;
+  }
+
+  .battle-screen-ui__mission {
+    width: calc(100% - 10rem);
+  }
+
+  .battle-screen-ui__selection-role,
+  .battle-screen-ui__selection-status {
+    display: none;
+  }
+}
+@media (max-width: 420px) {
+  /* The shared accessibility floor must win over the desktop command-dock rhythm. */
+  .field-command-dock .command-grid button {
+    min-height: 44px !important;
+  }
+}
+@media (max-width: 420px) {
+  /* Keep locator/focus scrolling below the sticky site header on compact screens. */
+  #command-panel.field-command-dock {
+    scroll-margin-top: 16rem !important;
+  }
+}
+@media (min-width: 900px) and (min-height: 761px) {
+  /* Let the desktop command dock own its intrinsic content instead of clipping
+     skill, deployment, and reservation controls inside a short grid row. */
+  #campaign-screen {
+    overflow: visible auto !important;
+  }
+
+  .cockpit-main {
+    grid-template-rows: 18rem max-content !important;
+    min-height: max-content !important;
+    overflow: visible !important;
+  }
+
+  .cockpit-main .battle-field-panel {
+    height: 18rem !important;
+    min-height: 18rem !important;
+  }
+
+  #command-panel.field-command-dock {
+    align-self: start !important;
+    height: max-content !important;
+    min-height: max-content !important;
+  }
+}
+@media (max-width: 460px) {
+  /* The shared readability floor is intentionally reduced only inside this
+     220px-high field HUD so mission, resources, and selection never stack on
+     top of one another. */
+  .battle-screen-ui,
+  .battle-screen-ui__mission,
+  .battle-screen-ui__selection,
+  .battle-screen-ui__resources {
+    font-size: 0.58rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .battle-screen-ui__selection {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 0.35rem;
+    padding: 0.3rem;
+  }
+
+  .battle-screen-ui__selection-image {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .battle-screen-ui__eyebrow,
+  .battle-screen-ui__selection-name,
+  .battle-screen-ui__selection-role,
+  .battle-screen-ui__selection-stats,
+  .battle-screen-ui__selection-stats span,
+  .battle-screen-ui__selection-stats b,
+  .battle-screen-ui__mission strong,
+  .battle-screen-ui__mission small,
+  .battle-screen-ui__wave,
+  .battle-screen-ui__resources dt,
+  .battle-screen-ui__resources dd {
+    line-height: 1.1 !important;
+  }
+
+  .battle-screen-ui__eyebrow,
+  .battle-screen-ui__selection-stats,
+  .battle-screen-ui__selection-stats span,
+  .battle-screen-ui__selection-stats b,
+  .battle-screen-ui__resources dt {
+    font-size: 0.5rem !important;
+  }
+
+  .battle-screen-ui__selection-name {
+    font-size: 0.68rem !important;
+  }
+
+  .battle-screen-ui__selection-stats {
+    flex-wrap: nowrap;
+    gap: 0.18rem;
+  }
+
+  .battle-screen-ui__mission strong {
+    font-size: 0.68rem !important;
+  }
+
+  .battle-screen-ui__mission small {
+    font-size: 0.5rem !important;
+  }
+
+  .battle-screen-ui__wave {
+    font-size: 0.5rem !important;
+  }
+
+  .battle-screen-ui__resources dd {
+    font-size: 0.64rem !important;
+  }
+}
+.battle-screen-ui__feedback {
+  overflow: hidden;
+  color: #81d4ef;
+  font-size: 0.58rem;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 460px) {
+  .battle-screen-ui__feedback {
+    font-size: 0.5rem !important;
+    line-height: 1.1 !important;
+  }
+}
+
+/* Campaign-owned frontline telemetry. These fields extend the existing mission
+   plate instead of creating a second proxy overlay over the battlefield. */
+.battle-screen-ui__frontline {
+  display: grid;
+  gap: 0.12rem;
+  margin: 0.18rem 0 0;
+}
+
+.battle-screen-ui__frontline > div {
+  display: grid;
+  grid-template-columns: 4.4rem minmax(0, 1fr);
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.battle-screen-ui__frontline dt,
+.battle-screen-ui__frontline dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font: 0.54rem/1.15 var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-screen-ui__frontline dt {
+  color: #8fb5c9;
+}
+
+.battle-screen-ui__frontline dd {
+  color: #e5edf5;
+}
+
+.battle-screen-ui__frontline dd[data-state="live"],
+.battle-screen-ui__frontline dd[data-state="engaged"],
+.battle-screen-ui__frontline dd[data-state="active"] {
+  color: #81d4ef;
+}
+
+.battle-screen-ui__frontline dd[data-state="boss"],
+.battle-screen-ui__frontline dd[data-state="stopped"] {
+  color: #e1b37b;
+}
+
+/* Summon evolution consumes reducer-owned essence and levels. */
+.summon-evolutions {
+  grid-column: 1 / -1;
+}
+
+.summon-evolution-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.summon-essence {
+  color: var(--muted);
+  font: 0.75rem/1.2 var(--font-mono);
+}
+
+.summon-essence strong {
+  color: var(--aqua);
+}
+
+.summon-evolution-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.summon-evolution-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.2rem;
+  min-height: 4.5rem;
+  padding: 0.45rem;
+  text-align: left;
+}
+
+.summon-evolution-card strong,
+.summon-evolution-card small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summon-evolution-card small {
+  color: var(--muted);
+}
+
+.summon-evolution-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.2rem 0.5rem;
+  color: var(--aqua);
+  font: 0.6875rem/1.2 var(--font-mono);
+}
+
+.summon-evolution-card[data-evolution-state="ready"] {
+  border-color: var(--aqua) !important;
+  box-shadow: inset 0 0 8px rgb(66 181 173 / 35%) !important;
+}
+
+.summon-evolution-card[data-evolution-state="max"] {
+  border-color: var(--cinder) !important;
+}
+
+@media (min-width: 900px) and (max-height: 760px) {
+  /* Preserve the 1024×720 and 1024×500 battle rows: evolution remains in the
+     DOM and reducer flow, but does not expand the compact command dock. */
+  #command-panel.field-command-dock .summon-evolutions {
+    display: none !important;
+  }
+
+  .battle-screen-ui__frontline {
+    gap: 0.06rem;
+  }
+
+  .battle-screen-ui__frontline > div {
+    grid-template-columns: 3.8rem minmax(0, 1fr);
+    gap: 0.2rem;
+  }
+
+  .battle-screen-ui__frontline dt,
+  .battle-screen-ui__frontline dd {
+    font-size: 0.48rem;
+  }
+}
+
+@media (max-width: 620px) {
+  .summon-evolution-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 460px) {
+  /* Preserve the existing non-overlapping 220px mobile field plate. The live
+     resource, pressure, and wave mirrors remain visible at this width. */
+  .battle-screen-ui__frontline {
+    display: none;
+  }
+}
+
+
+@media (max-width: 899px) and (max-height: 600px) and (orientation: landscape) {
+  /* 1. Page / Viewport Container Constraint: Lock to viewport height and disable scroll */
+  html, body {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+  #react-game-root {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+  main#game-root {
+    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  #campaign-screen.cockpit {
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    padding: 0.25rem !important;
+    gap: 0.25rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 2. Compact Site Header */
+  .site-header.medieval-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.2rem 0.5rem !important;
+    min-height: 2.2rem !important;
+    margin: 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+  }
+  .site-header.medieval-header h1 {
+    font-size: 1.1rem !important;
+    margin: 0 !important;
+  }
+  .site-header.medieval-header .subtitle,
+  .site-header.medieval-header .eyebrow,
+  .site-header.medieval-header .build-label {
+    display: none !important;
+  }
+  .site-header.medieval-header .header-controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+  }
+  .site-header.medieval-header .ghost-toggle {
+    min-height: 2.75rem !important;
+    padding: 0.1rem 0.4rem !important;
+    font-size: 0.7rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* 3. Compact Cockpit Top */
+  .cockpit-top {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.15rem 0.35rem !important;
+    gap: 0.35rem !important;
+    background: var(--panel) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 4px !important;
+    min-height: 0 !important;
+  }
+  .cockpit-top .cockpit-stage-id {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+  }
+  .cockpit-top #stage-number {
+    font-size: 0.7rem !important;
+    margin: 0 !important;
+  }
+  .cockpit-top #stage-heading {
+    font-size: 0.85rem !important;
+    margin: 0 !important;
+  }
+  .cockpit-top .commander-identity,
+  .cockpit-top .stage-selector {
+    display: none !important;
+  }
+  .cockpit-top .wave-badge {
+    font-size: 0.7rem !important;
+    padding: 0.1rem 0.35rem !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+  .cockpit-top .campaign-heading-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0.2rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .cockpit-top .campaign-heading-actions button {
+    min-height: 2.75rem !important;
+    padding: 0.15rem 0.4rem !important;
+    font-size: 0.7rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* 4. Inline Resource Bar */
+  .cockpit-top .battle-resource-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 0.15rem !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .cockpit-top .battle-resource-bar > div {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.15rem !important;
+    padding: 0.1rem 0.25rem !important;
+    min-height: 0 !important;
+    background: var(--raised) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 2px !important;
+  }
+  .cockpit-top .battle-resource-bar dt {
+    font-size: 0.65rem !important;
+    margin: 0 !important;
+  }
+  .cockpit-top .battle-resource-bar dd {
+    font-size: 0.75rem !important;
+    margin: 0 !important;
+  }
+  .resource-boss-portrait {
+    display: none !important;
+  }
+
+  /* 5. Two-Column Cockpit Main Grid */
+  .cockpit-main {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 23rem !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "battle rail"
+      "commands commands" !important;
+    gap: 0.25rem !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: hidden !important;
+    align-items: stretch !important;
+  }
+  .cockpit-details {
+    display: none !important;
+  }
+
+  /* 6. Flexible Battlefield */
+  .cockpit-main .battle-field-panel {
+    grid-area: battle !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 1px solid var(--line) !important;
+  }
+  .cockpit-main .canvas-container-3d {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    aspect-ratio: auto !important;
+  }
+  .cockpit-main .canvas-container-3d canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+  }
+  .battle-mission-guide {
+    padding: 0.2rem 0.4rem !important;
+    font-size: 0.7rem !important;
+    background: rgba(9, 10, 13, 0.85) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 4px !important;
+    margin: 0.15rem !important;
+  }
+  .battle-mission-guide strong {
+    font-size: 0.7rem !important;
+  }
+  .battle-mission-guide p {
+    font-size: 0.65rem !important;
+    margin: 0 !important;
+  }
+  .battle-mission-guide .mission-loop-wrapper,
+  .battle-mission-guide .mission-badges {
+    display: none !important;
+  }
+
+  /* 7. Nested Grid right rail */
+  .cockpit-rail.battle-hud-rail {
+    grid-area: rail !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.2rem !important;
+    padding: 0.2rem !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 0 !important;
+    background: var(--panel) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 4px !important;
+  }
+  .cockpit-rail .rail-panel {
+    margin: 0 !important;
+    padding: 0.25rem !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    background: var(--raised) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 4px !important;
+  }
+  .cockpit-rail .rail-boss,
+  .cockpit-rail .rail-panel,
+  .cockpit-rail .battle-force-labels,
+  .cockpit-rail .objective-checklist {
+    display: block !important;
+  }
+
+  /* Minimap Panel */
+  .cockpit-rail .battle-minimap-panel {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .cockpit-rail #battle-minimap {
+    width: auto !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  /* Tactical Brief Panel */
+  .cockpit-rail .battle-tactical-brief {
+    font-size: 0.65rem !important;
+  }
+  .cockpit-rail .battle-tactical-brief h4 {
+    font-size: 0.75rem !important;
+    margin: 0 0 0.15rem 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .cockpit-rail .battle-tactical-brief p {
+    font-size: 0.65rem !important;
+    margin: 0 !important;
+  }
+  .cockpit-rail .battle-tactical-brief .battle-force-labels {
+    display: none !important;
+  }
+
+  /* Boss Panel */
+  .cockpit-rail .rail-boss {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0.2rem !important;
+  }
+  .cockpit-rail .rail-boss .rail-boss-head {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+  }
+  .cockpit-rail .rail-boss .boss-portrait-rail {
+    width: 2.2rem !important;
+    height: 2.2rem !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 2px !important;
+  }
+  .cockpit-rail .rail-boss h4 {
+    font-size: 0.75rem !important;
+    margin: 0 0 0.1rem 0 !important;
+  }
+  .cockpit-rail .rail-boss .spec-list.spec-list-compact {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.15rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .cockpit-rail .rail-boss .spec-list.spec-list-compact div {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .cockpit-rail .rail-boss .spec-list.spec-list-compact dt {
+    font-size: 0.6rem !important;
+    color: var(--muted) !important;
+  }
+  .cockpit-rail .rail-boss .spec-list.spec-list-compact dd {
+    font-size: 0.65rem !important;
+    font-weight: bold !important;
+    margin: 0 !important;
+  }
+  .cockpit-rail .rail-boss .rail-lore,
+  .cockpit-rail .rail-boss .stats-list {
+    display: none !important;
+  }
+
+  /* Campaign Status / Objective Panel */
+  .cockpit-rail .campaign-status {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0.2rem !important;
+  }
+  .cockpit-rail .campaign-status .section-heading {
+    display: none !important;
+  }
+  .cockpit-rail .campaign-status .field-current-objective {
+    font-size: 0.65rem !important;
+    margin: 0 0 0.15rem 0 !important;
+    line-height: 1.2 !important;
+  }
+  .cockpit-rail .campaign-status .field-current-objective span {
+    font-weight: bold !important;
+  }
+  .cockpit-rail .campaign-status .objective-checklist {
+    display: block !important;
+    margin: 0 !important;
+    padding-left: 0.75rem !important;
+    font-size: 0.65rem !important;
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+  .cockpit-rail .campaign-status .objective-checklist li {
+    margin-bottom: 0.1rem !important;
+  }
+
+  /* 8. Command Dock Grid */
+  #command-panel.field-command-dock {
+    grid-area: commands !important;
+    display: grid !important;
+    grid-template-areas: none !important;
+    grid-template-rows: 1fr !important;
+    grid-template-columns: 9rem minmax(0, 2fr) minmax(0, 1.5fr) !important;
+    gap: 0.25rem !important;
+    padding: 0.25rem !important;
+    min-height: 0 !important;
+    height: auto !important;
+    align-items: stretch !important;
+    background: linear-gradient(180deg, var(--raised) 0%, var(--panel) 100%) !important;
+    border: 2px solid var(--line) !important;
+    border-radius: 4px !important;
+  }
+  .field-command-dock #summon-evolution-controls,
+  .field-command-dock #tactical-deployment-controls,
+  .field-command-dock .tactical-reservations,
+  .field-command-dock .section-heading,
+  .field-command-dock .command-hint {
+    display: none !important;
+  }
+
+  /* Dossier */
+  .field-command-dock .selection-dossier {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 0.15rem !important;
+    min-height: 0 !important;
+    border: 1px solid var(--line) !important;
+    background: var(--raised) !important;
+    box-sizing: border-box !important;
+  }
+  .field-command-dock .selection-dossier img,
+  .field-command-dock .selection-dossier #dossier-label,
+  .field-command-dock .selection-dossier #dossier-role,
+  .field-command-dock .selection-dossier #dossier-selection-hint,
+  .field-command-dock .selection-dossier #dossier-status {
+    display: none !important;
+  }
+  .field-command-dock .selection-dossier #dossier-name {
+    font-size: 0.7rem !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-bottom: 0.15rem !important;
+  }
+  .field-command-dock .dossier-stats {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.1rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .field-command-dock .dossier-stats > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    background: var(--panel) !important;
+    padding: 0.1rem !important;
+    border: 1px solid var(--line) !important;
+  }
+  .field-command-dock .dossier-stats dt {
+    font-size: 0.55rem !important;
+    color: var(--muted) !important;
+  }
+  .field-command-dock .dossier-stats dd {
+    font-size: 0.65rem !important;
+    font-weight: bold !important;
+    margin: 0 !important;
+  }
+
+  /* Command Pad (7 Buttons) */
+  .field-command-dock .command-grid {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 0.2rem !important;
+  }
+  .field-command-dock .command-grid button,
+  .field-command-dock .command-grid button:last-child {
+    grid-column: auto !important;
+    min-height: 44px !important;
+    padding: 0.15rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    min-width: 0 !important;
+  }
+  .field-command-dock .command-grid button img.action-icon {
+    display: block !important;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    margin-bottom: 0.05rem !important;
+  }
+  .field-command-dock .command-grid button strong {
+    font-size: 0.65rem !important;
+    line-height: 1 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  .field-command-dock .command-grid button small {
+    display: none !important;
+  }
+  .field-command-dock .command-grid button .key {
+    font-size: 0.55rem !important;
+    padding: 0 0.1rem !important;
+    top: 0.05rem !important;
+    right: 0.05rem !important;
+  }
+
+  /* Tactical Skills */
+  .field-command-dock #tactical-skill-controls {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 0.15rem !important;
+    border: 1px solid var(--line) !important;
+    background: var(--raised) !important;
+    box-sizing: border-box !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+  }
+  .field-command-dock #tactical-skill-controls .section-heading {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin-bottom: 0.15rem !important;
+  }
+  .field-command-dock #tactical-skill-controls .section-heading h4 {
+    display: none !important;
+  }
+  .field-command-dock #tactical-skill-controls .marks-counter {
+    font-size: 0.65rem !important;
+    margin: 0 !important;
+    padding: 0.05rem 0.2rem !important;
+  }
+  .field-command-dock #tactical-skill-controls .skills-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.15rem !important;
+  }
+  .field-command-dock .skill-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 0.15rem !important;
+    min-height: 0 !important;
+    background: var(--panel) !important;
+    border: 1px solid var(--line) !important;
+  }
+  .field-command-dock .skill-info {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    margin-bottom: 0.15rem !important;
+    width: 100% !important;
+  }
+  .field-command-dock .skill-info strong {
+    font-size: 0.65rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    width: 100% !important;
+  }
+  .field-command-dock .skill-info .skill-desc {
+    display: none !important;
+  }
+  .field-command-dock .skill-info .skill-level-text {
+    font-size: 0.55rem !important;
+  }
+  .field-command-dock .skill-upgrade-btn {
+    min-height: 44px !important;
+    width: 100% !important;
+    padding: 0.1rem 0.2rem !important;
+    font-size: 0.6rem !important;
+    line-height: 1.1 !important;
+    white-space: normal !important;
+  }
+
+  /* 9. Save Dock - Flex sibling below cockpit-main */
+  .cockpit #save-dock.save-dock {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0.15rem !important;
+    margin: 0 !important;
+    border: 1px solid var(--line) !important;
+    background: var(--panel) !important;
+    min-height: 0 !important;
+  }
+  .cockpit #save-dock.save-dock .section-heading {
+    display: flex !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    justify-content: center !important;
+  }
+  .cockpit #save-dock.save-dock .section-heading > div:first-child {
+    display: none !important;
+  }
+  .cockpit #save-dock.save-dock .button-row {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+    width: auto !important;
+    margin: 0 !important;
+    justify-content: center !important;
+  }
+  .cockpit #save-dock.save-dock button,
+  .cockpit #save-dock.save-dock .file-button {
+    min-width: 120px !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.7rem !important;
+    padding: 0 0.5rem !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* Narrow follow-up media-query override for compact landscape viewports */
+@media (max-width: 899px) and (max-height: 600px) and (orientation: landscape) {
+  /* Hide save-dock in this mode */
+  .cockpit #save-dock.save-dock {
+    display: none !important;
+  }
+
+  /* Set cockpit-main rows to minmax(120px, 1fr) 6.5rem */
+  .cockpit-main {
+    grid-template-rows: minmax(120px, 1fr) 6.5rem !important;
+  }
+
+  /* Force command-panel height/min-height/max-height to 6.5rem with overflow hidden */
+  #command-panel.field-command-dock {
+    height: 6.5rem !important;
+    min-height: 6.5rem !important;
+    max-height: 6.5rem !important;
+    overflow: hidden !important;
+  }
+
+  /* Ensure command pad and skills share that row without expanding it; keep command/skill buttons >=44px */
+  .field-command-dock .selection-dossier,
+  .field-command-dock .command-grid,
+  .field-command-dock #tactical-skill-controls {
+    height: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .field-command-dock .command-grid {
+    align-items: center !important;
+  }
+
+  .field-command-dock .command-grid button {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 0.05rem !important;
+  }
+
+  .field-command-dock .skill-card {
+    padding: 0.1rem !important;
+    justify-content: space-between !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .field-command-dock .skill-info {
+    margin-bottom: 0.05rem !important;
+  }
+
+  .field-command-dock .skill-info strong {
+    font-size: 0.6rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .field-command-dock .skill-info .skill-level-text {
+    font-size: 0.5rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .field-command-dock .skill-upgrade-btn {
+    min-height: 44px !important;
+    height: 44px !important;
+    font-size: 0.55rem !important;
+    padding: 0.05rem 0.1rem !important;
+  }
+
+  /* Set rail grid columns two, rows repeat(3, minmax(0, 1fr)) */
+  .cockpit-rail.battle-hud-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  /* Assign minimap grid-column 1/-1 row1 */
+  .cockpit-rail .battle-minimap-panel {
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+  }
+
+  /* Set minimap width:100%; height:100%; aspect-ratio:auto */
+  .cockpit-rail #battle-minimap {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+  }
+
+  /* Tactical brief row2 col1 */
+  .cockpit-rail .battle-tactical-brief {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
+
+  /* Rail-boss row2 col2 */
+  .cockpit-rail .rail-boss {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+  }
+
+  /* Campaign-status row3 1/-1 */
+  .cockpit-rail .campaign-status {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    padding: 0.15rem !important;
+    font-size: 0.65rem !important;
+    line-height: 1.1 !important;
+    overflow: hidden !important;
+  }
+
+  /* Compact campaign-status text/checklist without overflow outside rail */
+  .cockpit-rail .campaign-status .field-current-objective {
+    font-size: 0.62rem !important;
+    margin-bottom: 0.1rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .cockpit-rail .campaign-status .objective-checklist {
+    font-size: 0.62rem !important;
+    padding-left: 0.5rem !important;
+    overflow-y: auto !important;
+    max-height: 100% !important;
+  }
+
+  .cockpit-rail .campaign-status .objective-checklist li {
+    margin-bottom: 0.05rem !important;
+    line-height: 1.1 !important;
+  }
+}
+
+@media (max-width: 720px) and (max-height: 600px) and (orientation: landscape) {
+  /* 1. Viewport Container Constraint: Lock to viewport height and disable scroll */
+  html, body {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+  #react-game-root,
+  main#game-root,
+  #campaign-screen,
+  #campaign-screen.cockpit,
+  .cockpit {
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* 2. Compact Cockpit Top (<=90px) with 2-row grid: stage actions / resources resources */
+  .cockpit-top {
+    display: grid !important;
+    grid-template-areas:
+      "stage actions"
+      "resources resources" !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    gap: 0.2rem 0.35rem !important;
+    padding: 0.2rem 0.35rem !important;
+    max-height: 90px !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    background: var(--panel) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 4px !important;
+  }
+
+  /* Retain stage number but hide verbose stage heading / commander identity / wave badge / stage selector */
+  .cockpit-top .cockpit-stage-id {
+    grid-area: stage !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    min-width: 0 !important;
+  }
+  .cockpit-top #stage-number {
+    font-size: 0.7rem !important;
+    margin: 0 !important;
+  }
+  .cockpit-top #stage-heading,
+  .cockpit-top #stage-region,
+  .cockpit-top .commander-identity,
+  .cockpit-top .wave-badge,
+  .cockpit-top .stage-selector {
+    display: none !important;
+  }
+
+  /* Actions: three equal flexible buttons >=44px with no wrap */
+  .cockpit-top .campaign-heading-actions {
+    grid-area: actions !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 0.2rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-width: 0 !important;
+  }
+  .cockpit-top .campaign-heading-actions button {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    font-size: 0.56rem !important;
+    letter-spacing: -0.03em !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+    padding: 0.1rem 0.25rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* Resource strip: full width, compact, horizontally scrollable and clipped */
+  .cockpit-top .battle-resource-bar {
+    grid-area: resources !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    gap: 0.15rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .cockpit-top .battle-resource-bar::-webkit-scrollbar {
+    display: none !important;
+  }
+  .cockpit-top .battle-resource-bar > div {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex: 0 0 auto !important;
+    gap: 0.15rem !important;
+    padding: 0.1rem 0.25rem !important;
+    min-height: 0 !important;
+    height: auto !important;
+    background: var(--raised) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 2px !important;
+  }
+  .cockpit-top .battle-resource-bar dt {
+    font-size: 0.65rem !important;
+    margin: 0 !important;
+  }
+  .cockpit-top .battle-resource-bar dd {
+    font-size: 0.75rem !important;
+    margin: 0 !important;
+  }
+  .resource-boss-portrait {
+    display: none !important;
+  }
+
+  /* Explicitly override ID selectors with height 100% / min-height 0 / flex-shrink 1 */
+  #battle-field,
+  .battle-hud-panel,
+  .canvas-container-3d {
+    height: 100% !important;
+    min-height: 0 !important;
+    flex-shrink: 1 !important;
+  }
+  .canvas-container-3d canvas {
+    height: 100% !important;
+  }
+
+  /* Ensure cockpit-main remains a bounded two-row grid with no page scroll */
+  .cockpit-main {
+    display: grid !important;
+    grid-template-rows: minmax(120px, 1fr) 6.25rem !important;
+    overflow: hidden !important;
+  }
+
+  /* Hide save-dock in this mode */
+  .cockpit #save-dock.save-dock {
+    display: none !important;
+  }
+
+  #command-panel.field-command-dock {
+    height: 6.25rem !important;
+    min-height: 6.25rem !important;
+    max-height: 6.25rem !important;
+  }
+
+  .field-command-dock .skill-upgrade-btn {
+    min-height: 44px !important;
+    height: 44px !important;
+    font-size: 0 !important;
+    line-height: 1 !important;
+    letter-spacing: -0.04em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+  }
+
+  .field-command-dock .skill-upgrade-btn span[id^="skill-cost-"] {
+    display: none !important;
+  }
+
+  .field-command-dock .skill-upgrade-btn > span[data-i18n="tactical.upgrade"] {
+    display: inline !important;
+    font-size: 0.55rem !important;
+    line-height: 1 !important;
+  }
+
+  .cockpit-rail .battle-tactical-brief {
+    display: none !important;
+  }
+
+  .cockpit-rail {
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .cockpit-rail.battle-hud-rail {
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .cockpit-rail .battle-minimap-panel {
+    grid-row: 1 !important;
+    grid-column: 1 / -1 !important;
+  }
+
+  .cockpit-rail .rail-boss {
+    grid-row: 2 !important;
+    grid-column: 1 !important;
+  }
+
+  .cockpit-rail .campaign-status {
+    grid-row: 2 !important;
+    grid-column: 2 !important;
+  }
+}
+

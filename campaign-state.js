@@ -21,6 +21,62 @@ const STANDARD_PROGRESSION = Object.freeze({
   materializeCost: 2,
   materializeSummon: 2
 });
+const SUMMON_ESSENCE_PER_EXTRACT = 2;
+const freezeRecipe = (recipe) => Object.freeze({
+  ...recipe,
+  maxLevel: recipe.essenceCosts.length,
+  essenceCosts: Object.freeze([...recipe.essenceCosts]),
+  benefits: Object.freeze(recipe.benefits.map((benefit) => Object.freeze({ ...benefit })))
+});
+
+// Summon recipes are campaign-wide and intentionally independent from stages.
+// Each level consumes the corresponding essenceCosts entry and unlocks the
+// matching benefits entry. The catalog is data-only so it can be replayed
+// without browser or renderer dependencies.
+export const SUMMON_RECIPES = Object.freeze([
+  freezeRecipe({
+    id: "ember-scion",
+    name: "Ember Scion",
+    description: "Harden a shade into a furnace-born vanguard.",
+    essenceCosts: [4, 8, 12],
+    benefits: [
+      { materializeBonus: 1 },
+      { materializeBonus: 2 },
+      { materializeBonus: 3 }
+    ]
+  }),
+  freezeRecipe({
+    id: "rift-hound",
+    name: "Rift Hound",
+    description: "Teach a shade to follow a breach back to its source.",
+    essenceCosts: [4, 8, 12],
+    benefits: [
+      { assaultDamageBonus: 1 },
+      { assaultDamageBonus: 2 },
+      { assaultDamageBonus: 3 }
+    ]
+  }),
+  freezeRecipe({
+    id: "ward-wisp",
+    name: "Ward Wisp",
+    description: "Bind a shade to blunt the next counterblow.",
+    essenceCosts: [4, 8, 12],
+    benefits: [
+      { counterReduction: 1 },
+      { counterReduction: 2 },
+      { counterReduction: 3 }
+    ]
+  })
+]);
+
+export const SUMMON_RECIPES_BY_ID = Object.freeze(
+  Object.fromEntries(SUMMON_RECIPES.map((recipe) => [recipe.id, recipe]))
+);
+
+const DEFAULT_SUMMON_PROGRESSION = Object.freeze({
+  essence: 0,
+  levels: Object.freeze({})
+});
 
 const STANDARD_COMMAND_COOLDOWNS = Object.freeze({
   hunt: 4,
@@ -422,6 +478,7 @@ export const STAGES = Object.freeze([
     nodeGoal: 3,
     bossName: "Veiled Concordat",
     bossHealth: 22,
+    bossPhaseCount: 4,
     rewardIntegrityRestore: 3,
     progression: STANDARD_PROGRESSION,
     commands: Object.freeze({
@@ -473,6 +530,7 @@ export const STAGES = Object.freeze([
     nodeGoal: 3,
     bossName: "Abyss Regent",
     bossHealth: 26,
+    bossPhaseCount: 4,
     rewardIntegrityRestore: 1,
     progression: STANDARD_PROGRESSION,
     commands: Object.freeze({
@@ -642,6 +700,56 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+export function getSummonRecipe(recipeId) {
+  return SUMMON_RECIPES_BY_ID[recipeId] ?? null;
+}
+
+export function getSummonRecipeBenefits(recipeId, level) {
+  const recipe = getSummonRecipe(recipeId);
+  if (!recipe || !Number.isInteger(level) || level < 1 || level > recipe.maxLevel) return null;
+  return recipe.benefits[level - 1];
+}
+
+function summonEvolutionBenefits(summons = DEFAULT_SUMMON_PROGRESSION) {
+  const totals = {
+    materializeBonus: 0,
+    assaultDamageBonus: 0,
+    counterReduction: 0
+  };
+  const levels = summons?.levels ?? {};
+  for (const recipe of SUMMON_RECIPES) {
+    const level = levels[recipe.id] ?? 0;
+    for (let index = 0; index < level; index += 1) {
+      const benefit = recipe.benefits[index];
+      totals.materializeBonus += benefit.materializeBonus ?? 0;
+      totals.assaultDamageBonus += benefit.assaultDamageBonus ?? 0;
+      totals.counterReduction += benefit.counterReduction ?? 0;
+    }
+  }
+  return totals;
+}
+
+export function getSummonEvolutionBenefits(state) {
+  assertStateShape(state);
+  const summons = state.progression.summons ?? DEFAULT_SUMMON_PROGRESSION;
+  const totals = summonEvolutionBenefits(summons);
+  return Object.freeze({
+    essence: summons.essence ?? 0,
+    levels: Object.freeze({ ...(summons.levels ?? {}) }),
+    materializeBonus: totals.materializeBonus,
+    assaultDamageBonus: totals.assaultDamageBonus,
+    counterReduction: totals.counterReduction
+  });
+}
+function sanitizeSummonProgression(progression) {
+  if (!progression.summons) {
+    progression.summons = { essence: DEFAULT_SUMMON_PROGRESSION.essence, levels: {} };
+    return progression.summons;
+  }
+  if (!progression.summons.levels) progression.summons.levels = {};
+  return progression.summons;
+}
+
 function rewardDefinition(reward) {
   const stage = STAGES_BY_ID[reward.stageId];
   return stage?.rewards.find((item) => item.id === reward.rewardId) ?? null;
@@ -791,6 +899,10 @@ function makeCampaign() {
         command: 1,
         fortification: 1,
         mobility: 1
+      },
+      summons: {
+        essence: DEFAULT_SUMMON_PROGRESSION.essence,
+        levels: {}
       }
     },
     commandQueue: []
@@ -804,6 +916,7 @@ function stateStageId(state) {
 function transition(state, mutate, event) {
   const next = clone(state);
   next.stageId = stateStageId(next);
+  sanitizeSummonProgression(next.progression);
   if (next.stage && activeStage(next).encounter && !next.stage.encounter) next.stage.encounter = makeEncounterState(activeStage(next));
   mutate(next);
   if (event) next.trace.push(event);
@@ -841,6 +954,17 @@ function assertStateShape(state) {
   assert(Number.isInteger(state.progression.skills.command) && state.progression.skills.command >= 1 && state.progression.skills.command <= 5, "Command skill level is invalid.");
   assert(Number.isInteger(state.progression.skills.fortification) && state.progression.skills.fortification >= 1 && state.progression.skills.fortification <= 5, "Fortification skill level is invalid.");
   assert(Number.isInteger(state.progression.skills.mobility) && state.progression.skills.mobility >= 1 && state.progression.skills.mobility <= 5, "Mobility skill level is invalid.");
+  if (state.progression.summons !== undefined) {
+    const summons = state.progression.summons;
+    assert(summons && typeof summons === "object", "Summon progression is invalid.");
+    assert(Number.isInteger(summons.essence) && summons.essence >= 0, "Summon essence is invalid.");
+    assert(summons.levels && typeof summons.levels === "object" && !Array.isArray(summons.levels), "Summon levels are invalid.");
+    for (const [recipeId, level] of Object.entries(summons.levels)) {
+      const recipe = getSummonRecipe(recipeId);
+      assert(recipe, "Summon recipe level references an unknown recipe.");
+      assert(Number.isInteger(level) && level >= 0 && level <= recipe.maxLevel, "Summon recipe level is invalid.");
+    }
+  }
 
   assert(Array.isArray(state.commandQueue), "Command queue must be an array.");
   for (const item of state.commandQueue) {
@@ -870,23 +994,26 @@ function stageComplete(next, stage) {
   next.lastMessage = `${stage.bossName} dissolves into ash. Choose one lasting boon.`;
 }
 
-function counterDamage(stageState, stage, benefits) {
+function counterDamage(stageState, stage, benefits, progression) {
   const counter = stage.commands.assault.counter;
+  const summonBenefits = summonEvolutionBenefits(progression?.summons);
   if (counter.mode === "threshold") {
     const base = stageState.legion >= counter.minimumLegion ? counter.readyDamage : counter.belowDamage;
-    return Math.max(1, base - benefits.counterReduction);
+    return Math.max(1, base - benefits.counterReduction - summonBenefits.counterReduction);
   }
   const shield = Math.floor(stageState.legion / counter.shieldDivisor);
   const thin = stageState.legion < counter.thinLegion ? counter.thinPenalty : 0;
-  return Math.max(1, Math.max(1, counter.baseDamage - shield) + thin - benefits.counterReduction);
+  return Math.max(1, Math.max(1, counter.baseDamage - shield) + thin - benefits.counterReduction - summonBenefits.counterReduction);
 }
 
-function assaultDamage(stageState, stage, benefits) {
+function assaultDamage(stageState, stage, benefits, progression) {
   const assault = stage.commands.assault;
-  let damage = assault.damage;
+  const summonBenefits = summonEvolutionBenefits(progression?.summons);
+  let damage = assault.damage + summonBenefits.assaultDamageBonus;
   if (stageState.possessed) damage += (assault.possessedDamage ?? 0) + benefits.possessedAssaultBonus;
   return damage;
 }
+
 
 function guardAction(state, action) {
   assertStateShape(state);
@@ -924,13 +1051,13 @@ function guardAssault(state, stage, current) {
 function applyAssault(draft, stage) {
   const target = draft.stage;
   const benefits = rewardBenefits(draft.rewards);
-  const damage = assaultDamage(target, stage, benefits);
+  const damage = assaultDamage(target, stage, benefits, draft.progression);
   target.bossHealth = Math.max(0, target.bossHealth - damage);
   let counter = 0;
   if (target.aegis > 0) {
     target.aegis -= 1;
   } else {
-    counter = counterDamage(target, stage, benefits);
+    counter = counterDamage(target, stage, benefits, draft.progression);
     target.integrity = Math.max(0, target.integrity - counter);
   }
   if (target.bossHealth === 0) {
@@ -960,6 +1087,27 @@ function applyBreach(draft, damage) {
   draft.lastMessage = `An abyssal breach tears ${damage} integrity.`;
 }
 
+function normalizeRecipeId(value) {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object" && typeof value.recipeId === "string") return value.recipeId;
+  return null;
+}
+
+function applySummonEvolution(draft, recipeId) {
+  const recipe = getSummonRecipe(recipeId);
+  if (!recipe) return "That summon recipe does not exist.";
+  const summons = sanitizeSummonProgression(draft.progression);
+  const currentLevel = summons.levels[recipe.id] ?? 0;
+  if (currentLevel >= recipe.maxLevel) return `${recipe.name} is already at maximum evolution.`;
+  const essenceCost = recipe.essenceCosts[currentLevel];
+  if (summons.essence < essenceCost) {
+    return `Not enough summon essence. Need ${essenceCost} but have ${summons.essence}.`;
+  }
+  summons.essence -= essenceCost;
+  summons.levels[recipe.id] = currentLevel + 1;
+  draft.lastMessage = `${recipe.name} evolved to level ${currentLevel + 1}.`;
+  return null;
+}
 function checkAndApplyActionMutations(draft, action) {
   const state = draft;
   const blocked = guardAction(state, action);
@@ -969,6 +1117,7 @@ function checkAndApplyActionMutations(draft, action) {
   const current = state.stage;
   const progression = stage.progression;
   const benefits = rewardBenefits(state.rewards);
+  const summonProgression = sanitizeSummonProgression(state.progression);
 
   if (action === "hunt") {
     if (current.hunted >= progression.huntGoal) return "The spoor is fully mapped. Extract the gathered shade.";
@@ -978,7 +1127,8 @@ function checkAndApplyActionMutations(draft, action) {
       current.extracted = true;
       current.hunted = 0;
       current.souls += progression.soulsPerExtract;
-      draft.lastMessage = "The second spoor opens into a soul cache before the rift can close.";
+      summonProgression.essence += SUMMON_ESSENCE_PER_EXTRACT;
+      draft.lastMessage = `The second spoor opens into a soul cache before the rift can close (+${SUMMON_ESSENCE_PER_EXTRACT} summon essence).`;
     } else {
       draft.lastMessage = message;
     }
@@ -987,12 +1137,17 @@ function checkAndApplyActionMutations(draft, action) {
     current.extracted = true;
     current.hunted = 0;
     current.souls += progression.soulsPerExtract;
-    draft.lastMessage = "Four volatile shades tear free from the rift.";
+    summonProgression.essence += SUMMON_ESSENCE_PER_EXTRACT;
+    draft.lastMessage = `Four volatile shades tear free from the rift (+${SUMMON_ESSENCE_PER_EXTRACT} summon essence).`;
   } else if (action === "materialize") {
     if (current.souls < progression.materializeCost || current.legion >= current.capacity) {
       return current.souls < progression.materializeCost ? "Extract enough shade before materializing a legion." : "Your legion slots are full.";
     }
-    const summoned = Math.min(progression.materializeSummon + benefits.materializeBonus, current.capacity - current.legion);
+    const summonBenefits = summonEvolutionBenefits(state.progression.summons);
+    const summoned = Math.min(
+      progression.materializeSummon + benefits.materializeBonus + summonBenefits.materializeBonus,
+      current.capacity - current.legion
+    );
     current.souls -= progression.materializeCost;
     current.legion += summoned;
     draft.lastMessage = `${summoned} shadow ${summoned === 1 ? "answers" : "answer"} your call.`;
@@ -1028,7 +1183,30 @@ function checkAndApplyActionMutations(draft, action) {
   return null;
 }
 
-export function applyAction(state, action) {
+export function evolveSummon(state, recipeId) {
+  assertStateShape(state);
+  if (!canAct(state)) return rejected(state, "This stage is not active.");
+  const normalizedRecipeId = normalizeRecipeId(recipeId);
+  if (!normalizedRecipeId) return rejected(state, "A summon recipe is required.");
+
+  const testDraft = clone(state);
+  sanitizeSummonProgression(testDraft.progression);
+  const err = applySummonEvolution(testDraft, normalizedRecipeId);
+  if (err) return rejected(state, err);
+  const essenceBefore = state.progression.summons?.essence ?? 0;
+  const next = transition(state, (draft) => {
+    applySummonEvolution(draft, normalizedRecipeId);
+  }, {
+    kind: "action",
+    action: "evolve-summon",
+    recipeId: normalizedRecipeId,
+    essenceBefore
+  });
+  return accepted(next, next.lastMessage, "evolve-summon");
+}
+
+export function applyAction(state, action, recipeId) {
+  if (action === "evolve-summon") return evolveSummon(state, recipeId);
   const testDraft = clone(state);
   if (testDraft.stage && activeStage(testDraft).encounter && !testDraft.stage.encounter) {
     testDraft.stage.encounter = makeEncounterState(activeStage(testDraft));
@@ -1038,9 +1216,13 @@ export function applyAction(state, action) {
     return rejected(state, err);
   }
 
+  const event = { kind: "action", action };
+  const essenceBefore = state.progression.summons?.essence ?? 0;
+  const essenceGained = testDraft.progression.summons.essence - essenceBefore;
+  if (essenceGained > 0) event.essenceGained = essenceGained;
   const next = transition(state, (draft) => {
     checkAndApplyActionMutations(draft, action);
-  }, { kind: "action", action });
+  }, event);
   return accepted(next, next.lastMessage, action);
 }
 
@@ -1166,7 +1348,14 @@ function applyTraceEvent(state, event) {
   if (event.kind === "start") {
     result = startCampaign(state);
   } else if (event.kind === "action") {
-    result = applyAction(state, event.action);
+    if (event.action === "evolve-summon" && Number.isInteger(event.essenceBefore)) {
+      const seeded = clone(state);
+      sanitizeSummonProgression(seeded.progression);
+      seeded.progression.summons.essence = event.essenceBefore;
+      result = evolveSummon(seeded, event.recipeId);
+    } else {
+      result = applyAction(state, event.action, event.recipeId);
+    }
   } else if (event.kind === "reward") {
     result = chooseReward(state, event.rewardId);
   } else if (event.kind === "retry") {
@@ -1286,7 +1475,11 @@ export function restoreSaveEnvelope(envelope) {
   assert(Array.isArray(envelope.trace), "Save trace is missing.");
   assert(envelope.trace.length <= MAX_TRACE_EVENTS, `Save trace exceeds ${MAX_TRACE_EVENTS} events.`);
 
-  return rebuildStateFromTrace(envelope.trace);
+  const restored = rebuildStateFromTrace(envelope.trace);
+  // Old traces predate summon progression; normalize the missing branch while
+  // preserving every replayed stage, reward, and action result.
+  sanitizeSummonProgression(restored.progression);
+  return restored;
 }
 
 export const TACTICAL_METADATA = Object.freeze({
@@ -1388,6 +1581,26 @@ export function cancelReservedCommand(state, id) {
   }, { kind: "cancel-reserved-command", id });
 
   return accepted(next, next.lastMessage, "cancel");
+}
+
+export function checkReservedCommandExecution(state, id) {
+  if (!canAct(state)) return { ready: false, message: "This stage is not active." };
+  const index = state.commandQueue.findIndex((item) => item.id === id);
+  if (index === -1) {
+    return { ready: false, message: "Command not found in queue." };
+  }
+  const action = state.commandQueue[index].action;
+
+  const testDraft = clone(state);
+  if (testDraft.stage && activeStage(testDraft).encounter && !testDraft.stage.encounter) {
+    testDraft.stage.encounter = makeEncounterState(activeStage(testDraft));
+  }
+  const err = checkAndApplyActionMutations(testDraft, action);
+
+  if (err) {
+    return { ready: false, action, message: `Execution failed: ${err}` };
+  }
+  return { ready: true, action, message: "" };
 }
 
 export function executeReservedCommand(state, id) {

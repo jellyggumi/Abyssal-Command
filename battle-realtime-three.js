@@ -4,6 +4,12 @@ import {
   createStageNavigation,
   TACTICAL_GIMMICKS,
 } from "./stage-navigation.js";
+import {
+  resolveEnemyPattern,
+  resolveBossPhase,
+  getCombatAlertCue,
+} from "./combat-systems.js";
+import { ObjectFeedbackLayer } from "./object-feedback-layer.js";
 
 // Stages 4-10 reuse the three shipped GLB terrain/boss sets (resource-budget
 // compromise; dedicated models are a future upgrade). To keep each boss
@@ -39,6 +45,8 @@ const ENEMY_ADVANCE_SPEED = 2.4;
 const ATTACK_RANGE = 1.9;
 const SHADE_INTERCEPT_RADIUS = 5;
 const EPSILON = 0.0001;
+let rendererRequestSequence = 0;
+
 
 // Presentation / Graphics Pass Configuration
 const SHADOW_MAP_SIZE = 1024;
@@ -65,6 +73,19 @@ function clipFor(clips, name) {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function inferEnemyPatternKey(wave, index = 0) {
+  const explicit = String(wave?.pattern ?? wave?.enemyPattern ?? "").toLowerCase();
+  if (["rusher", "flanker", "ranged", "guardian"].includes(explicit)) return explicit;
+  const id = String(wave?.id ?? "").toLowerCase();
+  if (id.includes("guard")) return "guardian";
+  if (id.includes("flank") || id.includes("pack") || id.includes("runner")) return "flanker";
+  if (id.includes("ranged") || id.includes("artillery") || id.includes("tide") || id.includes("undertow")) return "ranged";
+  if (id.includes("scout") || id.includes("reinforce") || id.includes("rush")) return "rusher";
+  let hash = Math.max(0, Number(index) || 0);
+  for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return ["rusher", "flanker", "ranged", "guardian"][hash % 4];
 }
 
 function cappedPixelRatio(width, devicePixelRatio) {
@@ -120,6 +141,7 @@ export class ParticleField {
     this.velocity = new Float32Array(this.capacity * 3);
     this.gravity = new Float32Array(this.capacity);
     this.baseColor = new Float32Array(this.capacity * 3);
+    this.disposed = false;
 
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(this.capacity * 3), 3));
@@ -142,6 +164,7 @@ export class ParticleField {
   // down by `gravity` (world units/s^2; 0 = no fall, for rising wisps use a
   // negative value).
   emit(x, y, z, color, count, { speedMin = 0.8, speedMax = 2.4, life = 0.6, gravity = 2.2, upBias = 0.6 } = {}) {
+    if (this.disposed) return false;
     const c = color instanceof THREE.Color ? color : new THREE.Color(color);
     const position = this.points.geometry.attributes.position;
     const colors = this.points.geometry.attributes.color;
@@ -170,6 +193,7 @@ export class ParticleField {
   }
 
   update(dt) {
+    if (this.disposed) return false;
     const position = this.points.geometry.attributes.position;
     const color = this.points.geometry.attributes.color;
     let anyAlive = false;
@@ -196,9 +220,12 @@ export class ParticleField {
   }
 
   dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
     this.points.removeFromParent();
     this.points.geometry.dispose();
     this.points.material.dispose();
+    this.points = null;
   }
 }
 
@@ -215,6 +242,7 @@ export class SpatialAudio {
     this.buffers = new Map();
     this.master = null;
     this.listenerForward = new THREE.Vector3();
+    this.disposed = false;
     if (this.ctx) {
       this.master = this.ctx.createGain();
       this.master.gain.value = 0.85;
@@ -223,6 +251,7 @@ export class SpatialAudio {
   }
 
   async loadSample(name) {
+    if (this.disposed) return null;
     const context = this.ctx;
     if (!context) return null;
     if (this.buffers.has(name)) return this.buffers.get(name);
@@ -235,7 +264,7 @@ export class SpatialAudio {
   }
 
   updateListener(camera) {
-    if (!this.ctx) return;
+    if (this.disposed || !this.ctx || !camera?.position) return;
     const listener = this.ctx.listener;
     const p = camera.position;
     if (listener.positionX) {
@@ -245,6 +274,7 @@ export class SpatialAudio {
     } else if (listener.setPosition) {
       listener.setPosition(p.x, p.y, p.z);
     }
+    if (typeof camera.getWorldDirection !== "function") return;
     const forward = this.listenerForward;
     camera.getWorldDirection(forward);
     if (listener.forwardX) {
@@ -322,6 +352,8 @@ export class SpatialAudio {
   }
 
   dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
     this.buffers.clear();
     this.master?.disconnect();
     this.master = null;
@@ -369,9 +401,20 @@ export class RealtimeBattle {
     this.encounterSnapshot = null;
     this.currentWaveId = null;
     this.pendingEncounterEvent = null;
+    this.encounterEventKeys = new Set();
     this.bossExposed = false;
+    this.feedbackCanvas = options.feedbackCanvas ?? null;
+    this.objectFeedback = this.feedbackCanvas
+      ? new ObjectFeedbackLayer(this.feedbackCanvas, { reducedMotion: this.presentation?.reducedMotion ?? false })
+      : null;
+    this.feedbackCache = new Map();
+    this.authoritativePossessed = false;
+    this.echoThroneProp = null;
     this.rafCallback = null;
     this.lastBossHealth = null;
+    this.bossMaxHealth = null;
+    this.bossPhase = null;
+    this.summonLevels = null;
     this.runtimeSignature = null;
     this.allies = [];
     this.allyPickRoots = [];
@@ -500,7 +543,12 @@ export class RealtimeBattle {
       const bgUrl = `./assets/images/${stageId}.png`;
       this.backgroundTexture = loader.load(bgUrl, (texture) => {
         if (this.destroyed || this.backgroundTexture !== texture) {
-          texture.dispose();
+          if (texture && typeof texture.dispose === "function") {
+            if (!this.disposedResources.has(texture)) {
+              this.disposedResources.add(texture);
+              texture.dispose();
+            }
+          }
           return;
         }
         texture.colorSpace = THREE.SRGBColorSpace;
@@ -672,7 +720,7 @@ export class RealtimeBattle {
     // Load the prop models in the background (awaited so they are available in createBattleObjects)
     const isTest = typeof process !== "undefined";
     if (!isTest) {
-      const props = ["props/soul-extractor.glb", "props/rift-portal.glb", "props/command-obelisk.glb"];
+      const props = ["props/soul-extractor.glb", "props/rift-portal.glb", "props/command-obelisk.glb", "props/echo-throne.glb", "units/possessed.glb"];
       for (const prop of props) {
         try {
           const gltf = await this.loadModel(prop);
@@ -941,6 +989,8 @@ export class RealtimeBattle {
     this.scene.add(boss.root);
     this.boss = boss;
     boss.id = "boss";
+    boss.maxHealth = this.bossMaxHealth ?? this.lastBossHealth ?? null;
+    if (this.bossPhase) this.applyBossPhaseVisual(this.bossPhase);
     this.registerStaticBlocker(boss.root, 1.18, true, () => boss.root.visible);
     this.interactives.push(boss.root);
     this.syncBossExposure();
@@ -967,6 +1017,8 @@ export class RealtimeBattle {
     const tint = new THREE.Color(hex);
     root.traverse((node) => {
       if (!node.isMesh) return;
+      if (this.contactGeometry && node.geometry === this.contactGeometry) return;
+      if (this.contactMaterial && (node.material === this.contactMaterial || (Array.isArray(node.material) && node.material.includes(this.contactMaterial)))) return;
       const materials = Array.isArray(node.material) ? node.material : [node.material];
       const tinted = materials.map((material) => {
         if (!material) return material;
@@ -1159,17 +1211,25 @@ export class RealtimeBattle {
           const materials = Array.isArray(node.material) ? node.material : [node.material];
           for (const mat of materials) {
             if (mat.isMeshStandardMaterial) {
-              if (mat.metalness > 0.7) mat.metalness = 0.7; // Tame excessive metallic blackness
-              if (mat.roughness > 0.8) mat.roughness = 0.8;
-              // Very subtle emissive color to prevent complete shadow blackness
+              const metalnessCap = isTerrain ? 0.55 : 0.7;
+              const roughnessCap = isTerrain ? 0.72 : 0.8;
+              if (mat.metalness > metalnessCap) mat.metalness = metalnessCap; // Tame excessive metallic blackness
+              if (mat.roughness > roughnessCap) mat.roughness = roughnessCap;
+              // Lift authored near-black terrain just enough for silhouette and relief readability.
+              if (isTerrain && mat.color && (mat.color.r + mat.color.g + mat.color.b) < 0.48) {
+                mat.color.multiplyScalar(1.35);
+              }
+              // Very subtle emissive color to prevent complete shadow blackness.
               const originallyZero = !mat.emissive || (mat.emissive.r === 0 && mat.emissive.g === 0 && mat.emissive.b === 0);
               if (originallyZero) {
                 if (THREE.Color) {
-                  mat.emissive = new THREE.Color(0x1a1a1a);
+                  mat.emissive = new THREE.Color(isTerrain ? 0x263454 : 0x1a1a1a);
                 } else {
-                  mat.emissive = 0x1a1a1a;
+                  mat.emissive = isTerrain ? 0x263454 : 0x1a1a1a;
                 }
-                mat.emissiveIntensity = 0.15;
+                mat.emissiveIntensity = isTerrain ? 0.26 : 0.15;
+              } else if (isTerrain) {
+                mat.emissiveIntensity = Math.max(mat.emissiveIntensity ?? 0, 0.2);
               }
               // Restrained unit emissive lift for silhouette readability against the dark concept backdrop.
               if (resource.startsWith("units/")) {
@@ -1274,6 +1334,8 @@ export class RealtimeBattle {
     this.updateMarqueeVisual?.();
     this.updateCommanderPathPreview?.();
 
+    this.updateObjectFeedbackDeltas();
+    this.renderObjectFeedback();
     this.renderer.render(this.scene, this.camera);
     this.raf = requestAnimationFrame(this.rafCallback);
   }
@@ -1806,12 +1868,70 @@ export class RealtimeBattle {
     }
   }
 
+  emitCombatAlert(enemy, event = "enemy-ranged-warning") {
+    if (!enemy?.root) return;
+    let cue = null;
+    try {
+      cue = getCombatAlertCue(event, { enemyId: enemy.id, patternId: enemy.patternId })
+        ?? getCombatAlertCue("start-wave")
+        ?? null;
+    } catch {
+      cue = null;
+    }
+    const position = enemy.root.position;
+    if (this.destroyed) return;
+    const color = cue?.color ?? cue?.particleColor ?? this.presentation?.palette?.hostile ?? "#ff7f79";
+    const count = Math.max(2, Number(cue?.count ?? cue?.particleCount ?? 8) || 8);
+    const particleOptions = {
+      speedMin: Number(cue?.speedMin) || 0.6,
+      speedMax: Number(cue?.speedMax) || 1.8,
+      life: Number(cue?.life) || 0.45,
+      gravity: Number.isFinite(Number(cue?.gravity)) ? Number(cue.gravity) : 1.4,
+      upBias: Number(cue?.upBias) || 0.5,
+    };
+    this.particles?.emit(position.x, position.y + 0.8, position.z, color, count, particleOptions);
+    const frequency = Number(cue?.frequency ?? cue?.freq) || 560;
+    const endFrequency = Number(cue?.endFrequency ?? cue?.endFreq) || Math.max(80, frequency * 0.7);
+    this.audio.playTone(position.x, position.y + 0.8, position.z, {
+      freq: frequency,
+      endFreq: endFrequency,
+      duration: Number(cue?.duration) || 0.18,
+      type: cue?.type ?? "triangle",
+      gain: Number(cue?.gain) || 0.38,
+    });
+    enemy.lastAlertCue = cue;
+    enemy.alertCue = cue;
+  }
+
   updateEnemies(dt) {
     const portalAnchor = this.navigation.anchors.portal;
     const portalWorld = this.navigation.gridToWorld(portalAnchor.x, portalAnchor.y);
     
     for (const enemy of this.enemies) {
       if (!this.liveEnemy(enemy) || this.engagements.has(enemy)) continue;
+
+      const pattern = enemy.pattern ?? {};
+      const movement = pattern.movementDirective && typeof pattern.movementDirective === "object"
+        ? pattern.movementDirective
+        : (pattern.movement && typeof pattern.movement === "object" ? pattern.movement : pattern);
+      const patternId = String(pattern.patternId ?? enemy.patternId ?? enemy.archetype ?? "").toLowerCase();
+      const movementKind = String(pattern.movement ?? movement.mode ?? movement.kind ?? movement.type ?? patternId).toLowerCase();
+      const isRanged = patternId === "ranged" || movementKind === "ranged" || patternId.includes("ranged");
+      if (isRanged) {
+        enemy.alertTimer = Math.max(0, (enemy.alertTimer ?? (0.35 + (enemy.routeIndex ?? 0) * 0.18)) - dt);
+        enemy.pauseTimer = Math.max(0, (enemy.pauseTimer ?? 0) - dt);
+        if (enemy.pauseTimer > 0) {
+          this.play(enemy, "Idle");
+          continue;
+        }
+        if (enemy.alertTimer <= 0) {
+          this.emitCombatAlert(enemy, "enemy-ranged-warning");
+          enemy.alertTimer = Math.max(0.9, Number(movement.pausePeriod ?? movement.alertPeriod) || 1.65);
+          enemy.pauseTimer = Math.max(0.12, Number(movement.pauseDuration) || 0.38);
+          this.play(enemy, "Special", true);
+          continue;
+        }
+      }
       
       if (!enemy.waypoints) {
         const routeIndex = enemy.routeIndex ?? 0;
@@ -1849,8 +1969,14 @@ export class RealtimeBattle {
         this.direction.multiplyScalar(1 / distance);
         const grid = this.navigation.worldToGrid(enemy.root.position.x, enemy.root.position.z);
         const gimmick = this.getGimmickAt(grid.x, grid.y);
-        const speedMult = gimmick?.effects?.movementSpeedMultiplier ?? 1.0;
-        const enemySpeed = ENEMY_ADVANCE_SPEED * speedMult;
+        const gimmickSpeed = gimmick?.effects?.movementSpeedMultiplier ?? 1.0;
+        const configuredSpeed = Number(movement.speedMultiplier ?? movement.speedScale);
+        let patternSpeed = Number.isFinite(configuredSpeed) && configuredSpeed > 0 ? configuredSpeed : 1;
+        if (movementKind === "guardian") {
+          const portalDistance = Math.hypot(enemy.root.position.x - portalWorld.x, enemy.root.position.z - portalWorld.z);
+          patternSpeed *= portalDistance < 4 ? 0.5 : 0.82;
+        }
+        const enemySpeed = ENEMY_ADVANCE_SPEED * gimmickSpeed * patternSpeed;
         
         const resolved = this.applyResolvedMovement(
           enemy,
@@ -1858,17 +1984,22 @@ export class RealtimeBattle {
           enemy.root.position.z + this.direction.z * dt * enemySpeed,
         );
         if (resolved.blocked) {
-          const detourDistance = Math.min(0.24, dt * enemySpeed);
+          const configuredDetour = Number(movement.detourBias ?? movement.detourMultiplier);
+          const detourBias = Number.isFinite(configuredDetour) && configuredDetour !== 0
+            ? configuredDetour
+            : (movementKind === "flanker" || patternId.includes("flank") ? 1.45 : 1);
+          const detourDistance = Math.min(0.24 * Math.abs(detourBias), dt * enemySpeed);
+          const detourSide = Math.sign(enemy.detourPreference || 1) * Math.sign(detourBias || 1);
           const preferredDetour = this.applyResolvedMovement(
             enemy,
-            enemy.root.position.x - this.direction.z * enemy.detourPreference * detourDistance,
-            enemy.root.position.z + this.direction.x * enemy.detourPreference * detourDistance,
+            enemy.root.position.x - this.direction.z * detourSide * detourDistance,
+            enemy.root.position.z + this.direction.x * detourSide * detourDistance,
           );
           if (preferredDetour.blocked) {
             this.applyResolvedMovement(
               enemy,
-              enemy.root.position.x + this.direction.z * enemy.detourPreference * detourDistance,
-              enemy.root.position.z - this.direction.x * enemy.detourPreference * detourDistance,
+              enemy.root.position.x + this.direction.z * detourSide * detourDistance,
+              enemy.root.position.z - this.direction.x * detourSide * detourDistance,
             );
           }
         }
@@ -1885,7 +2016,7 @@ export class RealtimeBattle {
           freq: 140, endFreq: 60, duration: 0.35, type: "square", gain: 0.75,
         });
         this.shakeCamera(0.14, 0.22);
-        this.emitEncounterEvent("breach");
+        this.emitEncounterEvent("breach", enemy);
       }
     }
 
@@ -2181,7 +2312,7 @@ export class RealtimeBattle {
         if (upTime - pointer.downTime <= 500) {
           const action = this.resolvePointerAction(event);
           if (action) {
-            this.requestAction?.(action);
+            this.dispatchActionRequest(action, event);
           } else {
             const ally = this.resolvePointerAlly(event);
             if (ally) {
@@ -2203,7 +2334,7 @@ export class RealtimeBattle {
         if (upTime - pointer.downTime <= 500) {
           const action = this.resolvePointerAction(event);
           if (action) {
-            this.requestAction?.(action);
+            this.dispatchActionRequest(action, event);
           } else {
             const ally = this.resolvePointerAlly(event);
             if (ally) {
@@ -2255,7 +2386,7 @@ export class RealtimeBattle {
     if (rallyKind === "personal") {
       const action = this.resolvePointerAction(event);
       if (action) {
-        this.requestAction?.(action);
+        this.dispatchActionRequest(action, event);
         return;
       }
     } else if (!this.setPointerRay(event)) {
@@ -2393,36 +2524,196 @@ export class RealtimeBattle {
     this.publishRuntimeState();
   }
 
+  applyBossPhaseVisual(phase) {
+    if (this.destroyed) return;
+    if (!phase) return;
+    const phaseIndex = Math.max(0, Number(phase.phaseIndex) || 0);
+    const normalizedHealth = clamp(Number(phase.normalizedHealth) || 0, 0, 1);
+    const previousPhase = this.bossPhase?.phaseIndex;
+    this.bossPhase = phase;
+    if (!this.boss?.root) return;
+    const root = this.boss.root;
+    root.userData = root.userData || {};
+    this.boss.phase = phase;
+    this.boss.phaseIndex = phaseIndex;
+    this.boss.phaseCue = phase.phaseCue ?? null;
+    root.userData.bossPhase = phase;
+    const baseScale = Number(root.userData.bossPhaseBaseScale) || root.scale?.x || 1;
+    root.userData.bossPhaseBaseScale = baseScale;
+    const phaseScale = 1 + Math.min(0.12, phaseIndex * 0.035);
+    root.scale?.setScalar?.(baseScale * phaseScale);
+
+    const hostileColor = new THREE.Color(this.presentation?.palette?.hostile ?? "#ff7f79");
+    const tintAmount = Math.min(0.24, phaseIndex * 0.07 + (1 - normalizedHealth) * 0.1);
+    root.traverse?.((node) => {
+      if (!node.isMesh) return;
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      if (node.geometry === this.contactGeometry || materials.includes(this.contactMaterial)) return;
+      const ownedMaterials = materials.map((material) => {
+        if (!material) return material;
+        let owned = material;
+        if (!material.userData?.isBossIdentityTint && !material.userData?.isBossPhaseTint) {
+          owned = material.clone();
+          owned.userData.isBossPhaseTint = true;
+        }
+        if (!owned.userData) owned.userData = {};
+        if (!owned.userData.bossPhaseBaseColor && owned.color?.clone) owned.userData.bossPhaseBaseColor = owned.color.clone();
+        if (!owned.userData.bossPhaseBaseEmissive && owned.emissive?.clone) owned.userData.bossPhaseBaseEmissive = owned.emissive.clone();
+        if (!Object.prototype.hasOwnProperty.call(owned.userData, "bossPhaseBaseEmissiveIntensity")) {
+          owned.userData.bossPhaseBaseEmissiveIntensity = Number(owned.emissiveIntensity) || 0;
+        }
+        if (owned.color?.copy && owned.userData.bossPhaseBaseColor) {
+          owned.color.copy(owned.userData.bossPhaseBaseColor).lerp(hostileColor, tintAmount);
+        }
+        if (owned.emissive?.copy && owned.userData.bossPhaseBaseEmissive) {
+          owned.emissive.copy(owned.userData.bossPhaseBaseEmissive).lerp(hostileColor, Math.min(0.45, tintAmount * 1.8));
+        }
+        if ("emissiveIntensity" in owned) {
+          owned.emissiveIntensity = owned.userData.bossPhaseBaseEmissiveIntensity + phaseIndex * 0.08 + (1 - normalizedHealth) * 0.12;
+        }
+        return owned;
+      });
+      node.material = ownedMaterials.length === 1 ? ownedMaterials[0] : ownedMaterials;
+    });
+
+    const cue = String(phase.phaseCue?.clip ?? phase.phaseCue ?? "").toLowerCase();
+    if (previousPhase !== undefined && previousPhase !== phaseIndex && this.bossExposed && !this.boss.defeated) {
+      if (cue === "special") this.play(this.boss, "Special", true);
+      else if (cue === "attack") this.play(this.boss, "Attack", true);
+      let alertCue = null;
+      try {
+        alertCue = getCombatAlertCue("boss-phase-shift", { phaseIndex, bossId: this.boss.id })
+          ?? getCombatAlertCue("phase-change")
+          ?? null;
+      } catch {
+        alertCue = null;
+      }
+      const position = root.position;
+      const alertColor = alertCue?.color ?? alertCue?.particleColor ?? this.presentation?.palette?.hostile ?? "#ff7f79";
+      this.particles?.emit(position.x, position.y + 1, position.z, alertColor, Math.max(4, Number(alertCue?.count ?? alertCue?.particleCount) || 12), {
+        speedMin: Number(alertCue?.speedMin) || 1,
+        speedMax: Number(alertCue?.speedMax) || 2.5,
+        life: Number(alertCue?.life) || 0.65,
+        gravity: Number.isFinite(Number(alertCue?.gravity)) ? Number(alertCue.gravity) : 1.2,
+        upBias: Number(alertCue?.upBias) || 0.8,
+      });
+      this.audio.playTone(position.x, position.y + 1, position.z, {
+        freq: Number(alertCue?.frequency ?? alertCue?.freq) || 240,
+        endFreq: Number(alertCue?.endFrequency ?? alertCue?.endFreq) || 620,
+        duration: Number(alertCue?.duration) || 0.28,
+        type: alertCue?.type ?? "sawtooth",
+        gain: Number(alertCue?.gain) || 0.5,
+      });
+    }
+  }
+  applySummonEvolutionVisuals(summons) {
+    const levels = summons?.levels;
+    if (!levels || typeof levels !== "object") return;
+    const nextLevels = new Map(
+      Object.entries(levels).map(([recipeId, level]) => [recipeId, Math.max(0, Number(level) || 0)]),
+    );
+    const previousLevels = this.summonLevels;
+    this.summonLevels = nextLevels;
+    if (!previousLevels || this.destroyed) return;
+
+    const position = this.portal?.position ?? this.commander?.root?.position ?? this.commanderPosition;
+    for (const [recipeId, level] of nextLevels) {
+      if (level <= (previousLevels.get(recipeId) ?? 0)) continue;
+      let cue = null;
+      try {
+        cue = getCombatAlertCue("summon-evolution") ?? getCombatAlertCue("summon-evolved") ?? null;
+      } catch {
+        cue = null;
+      }
+      const color = cue?.color ?? cue?.particleColor ?? this.presentation?.palette?.ally ?? "#70e5d0";
+      this.particles?.emit(position.x, position.y + 0.8, position.z, color, Math.min(24, 12 + level * 4), {
+        speedMin: Number(cue?.speedMin) || 0.9,
+        speedMax: Number(cue?.speedMax) || 2.8,
+        life: Number(cue?.life) || 0.8,
+        gravity: Number.isFinite(Number(cue?.gravity)) ? Number(cue.gravity) : -0.25,
+        upBias: Number(cue?.upBias) || 0.9,
+      });
+      this.audio.playTone(position.x, position.y + 0.8, position.z, {
+        freq: Number(cue?.frequency ?? cue?.freq) || 420,
+        endFreq: Number(cue?.endFrequency ?? cue?.endFreq) || 760,
+        duration: Number(cue?.duration) || 0.32,
+        type: cue?.type ?? "triangle",
+        gain: Number(cue?.gain) || 0.48,
+      });
+      if (this.portalProp) this.play(this.portalProp, "Activate", true);
+      this.lastSummonEvolution = { recipeId, level, cue };
+    }
+  }
+
   applyCampaignState({ campaign, stage, encounter, state } = {}) {
+    if (this.destroyed) return;
     const config = encounter?.config ?? stage?.encounter ?? null;
     const encounterState = encounter?.state ?? state?.encounter ?? state ?? campaign?.stage?.encounter ?? encounter ?? null;
     const stageId = encounter?.stageId ?? stage?.id ?? campaign?.stageId ?? null;
     this.capturedCount = Number(state?.stage?.nodes ?? state?.nodes ?? campaign?.stage?.nodes ?? this.capturedCount ?? 0);
+    const isPossessed = state?.possessed === true || campaign?.stage?.possessed === true;
+    this.authoritativePossessed = isPossessed;
     const legion = Number(state?.legion ?? campaign?.stage?.legion);
     if (Number.isInteger(legion) && legion >= 0) {
       this.authoritativeLegion = legion;
       this.reconcileAllies(legion);
-      const isPossessed = state?.possessed === true || campaign?.stage?.possessed === true;
       for (let index = 0; index < this.allies.length; index += 1) {
         this.allies[index].isPossessed = isPossessed && index === 0;
       }
       this.emitSelectionChange();
     }
     const bossHealth = Number(state?.bossHealth ?? campaign?.stage?.bossHealth);
+    const bossMaxHealth = Number(
+      state?.bossMaxHealth
+      ?? campaign?.stage?.bossMaxHealth
+      ?? campaign?.stage?.bossHealth
+      ?? stage?.bossHealth
+      ?? this.bossMaxHealth
+      ?? bossHealth,
+    );
+    if (Number.isFinite(bossMaxHealth) && bossMaxHealth > 0) this.bossMaxHealth = bossMaxHealth;
     if (Number.isFinite(bossHealth)) {
-      if (bossHealth === 0 && this.lastBossHealth > 0) this.defeat(this.boss);
+      if (this.boss) {
+        this.boss.hp = bossHealth;
+        this.boss.maxHealth = this.bossMaxHealth;
+      }
+      if (bossHealth <= 0 && this.boss && !this.boss.defeated) {
+        if (this.lastBossHealth > 0) {
+          this.defeat(this.boss);
+        } else {
+          this.boss.defeated = true;
+          this.clearEngagement(this.boss);
+          this.play(this.boss, "Defeat", true);
+        }
+      }
       this.lastBossHealth = bossHealth;
     }
     this.applyEncounter({ stageId, config, state: encounterState });
+    if (Number.isFinite(bossHealth) && this.bossMaxHealth > 0) {
+      let phase;
+      try {
+        phase = resolveBossPhase({
+          health: bossHealth,
+          maxHealth: this.bossMaxHealth,
+          phaseCount: Number(state?.bossPhaseCount ?? stage?.bossPhaseCount ?? 3) || 3,
+        });
+      } catch {
+        phase = null;
+      }
+      if (phase) this.applyBossPhaseVisual(phase);
+    }
     const skills = state?.progression?.skills ?? campaign?.state?.progression?.skills ?? campaign?.progression?.skills;
     if (skills) {
       this.fortificationLevel = Number(skills.fortification) || 0;
       this.mobilityLevel = Number(skills.mobility) || 0;
       this.commandLevel = Number(skills.command) || 0;
     }
+    const summons = state?.progression?.summons ?? campaign?.state?.progression?.summons ?? campaign?.progression?.summons;
+    if (summons) this.applySummonEvolutionVisuals(summons);
     const deployments = state?.stage?.deployments ?? campaign?.stage?.deployments ?? state?.deployments ?? [];
     this.reconcileDeployments(deployments);
     this.updateNodeVisuals();
+    this.syncObjectFeedback({ silent: true });
   }
 
   reconcileEncounterWave(activeWaveId = this.encounter?.state?.activeWaveId ?? null) {
@@ -2441,7 +2732,12 @@ export class RealtimeBattle {
       if (!node.isMesh) return;
       const materials = Array.isArray(node.material) ? node.material : [node.material];
       for (const material of materials) {
-        if (material?.userData?.isBossIdentityTint) disposeUnique(material, disposed);
+        if (material?.userData?.isRuntimeAssetClone) {
+          disposeUnique(node.geometry, disposed);
+          disposeMaterialResources(material, disposed);
+        } else if (material?.userData?.isBossIdentityTint || material?.userData?.isBossPhaseTint) {
+          disposeUnique(material, disposed);
+        }
       }
     });
     if (!instance?.mixer) return;
@@ -2481,13 +2777,25 @@ export class RealtimeBattle {
     this.enemies.length = 0;
     this.currentWaveId = null;
   }
-
+  createEchoThrone() {
+    if (this.echoThroneProp || !this.scene || !this.templates.has("props/echo-throne.glb")) return this.echoThroneProp;
+    const prop = this.cloneTemplate("props/echo-throne.glb", 2.2);
+    const anchor = this.navigation.anchors.boss;
+    const position = this.gridToWorld(anchor.x, anchor.y);
+    this.setGroundedPosition(prop, position.x, position.z);
+    this.scene.add(prop.root);
+    this.echoThroneProp = prop;
+    return prop;
+  }
   createAlly() {
-    const ally = this.cloneTemplate("units/shade.glb", 1.15);
+    const identityResource = this.authoritativePossessed && this.allies.length === 0 && this.templates.has("units/possessed.glb")
+      ? "units/possessed.glb"
+      : "units/shade.glb";
+    const ally = this.cloneTemplate(identityResource, 1.15);
     ally.radius = 0.4;
     ally.hp = 3;
     ally.maxHealth = 3;
-    ally.isPossessed = false;
+    ally.isPossessed = identityResource === "units/possessed.glb";
     ally.defeated = false;
     ally.id = `ally-${this.nextActorId++}`;
     ally.root.userData.ally = ally;
@@ -2535,7 +2843,9 @@ export class RealtimeBattle {
   }
 
   spawnEncounterWave(wave) {
+    if (this.destroyed) return;
     const count = Math.max(0, Number(wave?.hostiles) || 0);
+    const alertedPatterns = new Set();
     let model = "units/scout.glb";
     if (wave?.id === "guard") model = "units/guard.glb";
     else if (wave?.id === "reinforcement" || wave?.id === "reinforce") model = "units/reinforce.glb";
@@ -2549,6 +2859,25 @@ export class RealtimeBattle {
       const routeIndex = index % 3;
       const routeCells = this.navigation.routePath(routeIndex, true);
       const spawnWorld = this.navigation.gridToWorld(routeCells[0].x + 0.5, routeCells[0].y + 0.5);
+      let pattern;
+      try {
+        pattern = resolveEnemyPattern(
+          inferEnemyPatternKey(wave, index),
+          { ...wave, waveId: wave?.id ?? null, enemyIndex: index, routeIndex },
+        );
+      } catch {
+        pattern = null;
+      }
+      if (!pattern || pattern.accepted === false) {
+        pattern = Object.freeze({
+          accepted: true,
+          patternId: inferEnemyPatternKey(wave, index),
+          movement: "advance",
+          movementDirective: Object.freeze({ mode: "advance", speedMultiplier: 1 }),
+        });
+      }
+      enemy.pattern = pattern;
+      enemy.patternId = pattern.patternId ?? pattern.id ?? wave?.id ?? "rusher";
       
       enemy.detourPreference = this.enemySerial % 2 === 0 ? 1 : -1;
       
@@ -2579,27 +2908,45 @@ export class RealtimeBattle {
       
       enemy.hp = Math.max(1, Number(wave.hostileHealth) || 2);
       enemy.archetype = wave.id;
+      enemy.alertTimer = Number(pattern?.movement?.alertOffset) || (0.35 + routeIndex * 0.18);
+      enemy.pauseTimer = 0;
       
       enemy.defeated = false;
       enemy.breachVisualized = false;
       this.scene.add(enemy.root);
       this.enemies.push(enemy);
       this.play(enemy, "Move");
+      const alertEvent = enemy.patternId === "guardian"
+        ? "guardian-shield"
+        : (enemy.patternId === "ranged" ? "enemy-ranged-warning" : "start-wave");
+      if (!alertedPatterns.has(enemy.patternId)) {
+        alertedPatterns.add(enemy.patternId);
+        this.emitCombatAlert(enemy, alertEvent);
+      }
     }
   }
 
-  emitEncounterEvent(type) {
+  emitEncounterEvent(type, enemy = null) {
     const waveId = this.currentWaveId;
     const stageId = this.encounter?.stageId;
     if (
-      this.pendingEncounterEvent ||
-      (type !== "wave-cleared" && type !== "breach") ||
-      !waveId ||
-      typeof stageId !== "string" ||
-      this.encounter?.state?.activeWaveId !== waveId
+      (type !== "wave-cleared" && type !== "breach")
+      || !waveId
+      || typeof stageId !== "string"
+      || this.encounter?.state?.activeWaveId !== waveId
     ) return;
-    this.pendingEncounterEvent = { type, stageId, waveId };
-    if (this.onEncounterEvent) this.onEncounterEvent(this.pendingEncounterEvent);
+    const eventKey = type === "breach"
+      ? `breach:${enemy?.id ?? "anonymous"}`
+      : `wave-cleared:${waveId}`;
+    if (this.encounterEventKeys.has(eventKey)) return;
+    this.encounterEventKeys.add(eventKey);
+    const event = { type, stageId, waveId, ...(type === "breach" && enemy?.id ? { enemyId: enemy.id } : {}) };
+    if (type === "wave-cleared") this.pendingEncounterEvent = event;
+    if (type === "breach") {
+      const cue = getCombatAlertCue(type);
+      this.objectFeedback?.emitSpeech("commander", cue?.label ?? "Breach detected");
+    }
+    if (this.onEncounterEvent) this.onEncounterEvent(event);
     else if (type === "breach") this.onEnemyBreach?.();
   }
 
@@ -2648,6 +2995,83 @@ export class RealtimeBattle {
     };
   }
 
+  feedbackObjects() {
+    const objects = [];
+    const add = (actor, kind, label, priority = 0) => {
+      if (!actor?.id) return;
+      objects.push({
+        id: actor.id,
+        kind,
+        label,
+        hp: Number(actor.hp ?? 0),
+        maxHp: Number(actor.maxHealth ?? actor.maxHp ?? 1),
+        selected: this.selection?.has(actor) ?? false,
+        visible: actor.defeated !== true,
+        priority,
+      });
+    };
+    add(this.commander, "commander", "Commander", 5);
+    add(this.boss, "boss", "Boss", 4);
+    for (const ally of this.allies) add(ally, "ally", "Ally", 3);
+    for (const enemy of this.enemies) add(enemy, "enemy", "Enemy", 2);
+    for (const deployment of this.deploymentsMap.values()) add(deployment, deployment.kind ?? "deployment", deployment.kind ?? "Deployment", 1);
+    return objects;
+  }
+
+  syncObjectFeedback({ silent = true } = {}) {
+    console.error("SYNC CALLED", !!this.objectFeedback);
+    if (!this.objectFeedback) return;
+    const objects = this.feedbackObjects();
+    this.objectFeedback.reconcile(objects, { silent });
+    for (const object of objects) {
+      if (!this.feedbackCache.has(object.id)) this.feedbackCache.set(object.id, { hp: object.hp, maxHp: object.maxHp });
+    }
+  }
+
+  updateObjectFeedbackDeltas() {
+    if (!this.objectFeedback) return;
+    for (const object of this.feedbackObjects()) {
+      const previous = this.feedbackCache.get(object.id);
+      if (!previous) {
+        this.feedbackCache.set(object.id, { hp: object.hp, maxHp: object.maxHp });
+        continue;
+      }
+      const delta = object.hp - previous.hp;
+      if (delta !== 0) {
+        this.objectFeedback.emitExchange(
+          object.id,
+          object.id,
+          Math.abs(delta),
+          delta > 0 ? "heal" : "outgoing",
+        );
+        previous.hp = object.hp;
+      }
+      previous.maxHp = object.maxHp;
+    }
+  }
+
+  renderObjectFeedback() {
+    if (!this.objectFeedback) return;
+    this.objectFeedback.render((object) => {
+      const actor = object.id === "commander"
+        ? this.commander
+        : object.id === "boss"
+          ? this.boss
+          : [...this.allies, ...this.enemies].find((candidate) => candidate?.id === object.id)
+            ?? this.deploymentsMap.get(object.id);
+      const position = actor?.root?.position;
+      if (!position || !this.camera?.project) return { x: 0, y: 0, depth: 0, visible: true };
+      const projected = position.clone ? position.clone() : new THREE.Vector3(position.x, position.y, position.z);
+      projected.project(this.camera);
+      return {
+        x: (projected.x * 0.5 + 0.5) * this.feedbackCanvas.width,
+        y: (-projected.y * 0.5 + 0.5) * this.feedbackCanvas.height,
+        depth: projected.z,
+        visible: projected.z >= -1 && projected.z <= 1,
+      };
+    });
+  }
+
   publishRuntimeState() {
     const enemiesActive = this.enemies.length;
     const alliesVisible = this.visibleAllyCount();
@@ -2690,6 +3114,30 @@ export class RealtimeBattle {
     if (point === "ally") return this.allies.find((candidate) => this.liveAlly(candidate))?.root?.position ?? this.commanderPosition;
     if (point === "boss") return this.boss?.root?.position ?? this.commanderPosition;
     return this.commander?.root?.position ?? this.commanderPosition;
+  }
+
+  getCommandReadiness(payload) {
+    if (this.destroyed) return { ready: false, reason: "destroyed" };
+    const action = payload?.action;
+    if (!action) return { ready: false, reason: "invalid-action" };
+
+    let pointName = "portal";
+    if (action === "hunt" || action === "extract") pointName = "extractor";
+    else if (action === "materialize" || action === "domain") pointName = "portal";
+    else if (action === "capture") pointName = "node";
+    else if (action === "possess") pointName = "ally";
+    else if (action === "assault") pointName = "boss";
+
+    const targetPt = this.actionFeedbackPoint(pointName);
+    if (!targetPt) {
+      return { ready: false, reason: "no-target" };
+    }
+
+    if (!this.navigation || !this.navigation.anchors) {
+      return { ready: false, reason: "path-blocked" };
+    }
+
+    return { ready: true, reason: "ready" };
   }
   actionFeedbackActor(actor) {
     if (actor === "ally") return this.allies.find((candidate) => this.liveAlly(candidate)) ?? this.commander;
@@ -2763,6 +3211,10 @@ export class RealtimeBattle {
     if (actor) this.play(actor, semantic.actorClip ?? semantic.clip ?? "Special", true);
     if (action === "assault" && this.bossExposed && this.boss && !this.boss.defeated) this.play(this.boss, "Attack", true);
     if (action === "possess" || action === "domain") this.rally.copy(this.commanderPosition);
+    if (action === "domain") {
+      const echoThrone = this.createEchoThrone();
+      if (echoThrone) this.play(echoThrone, "Activate", true);
+    }
     if (action === "materialize" && this.portalProp) {
       this.play(this.portalProp, "Activate", true);
     }
@@ -2810,13 +3262,41 @@ export class RealtimeBattle {
     });
   }
 
+  dispatchActionRequest(action, event) {
+    if (!this.requestAction) return;
+    rendererRequestSequence += 1;
+    this.requestAction({
+      type: "command-request",
+      action,
+      requestId: `renderer-request-${rendererRequestSequence}`,
+      source: "renderer-pointer",
+      rendererMode: "realtime-3d",
+      occurredAt: Number.isFinite(event?.timeStamp) ? event.timeStamp : Date.now()
+    });
+  }
+
   previewAction(semantic) {
     if (!semantic?.action) {
       this.clearActionPreview();
       return;
     }
     if (this.previewActionSemantic?.action !== semantic.action) this.resetPreviewEmphasis();
-    this.previewActionSemantic = semantic;
+    if (semantic.commandId === undefined && semantic.phase === undefined) {
+      this.previewActionSemantic = semantic;
+    } else {
+      const copy = { ...semantic };
+      if (semantic.commandId !== undefined) {
+        copy.commandId = semantic.commandId;
+      } else {
+        delete copy.commandId;
+      }
+      if (semantic.phase !== undefined) {
+        copy.phase = semantic.phase;
+      } else {
+        delete copy.phase;
+      }
+      this.previewActionSemantic = copy;
+    }
   }
 
   clearActionPreview(action = null) {
@@ -3626,7 +4106,7 @@ export class RealtimeBattle {
       this.deckMesh = null;
     }
     if (this.backgroundTexture) {
-      this.backgroundTexture.dispose();
+      disposeUnique(this.backgroundTexture, this.disposedResources);
       this.backgroundTexture = null;
     }
     if (this.scene) {
@@ -3650,6 +4130,10 @@ export class RealtimeBattle {
       this.retire(this.portalProp);
       this.portalProp = null;
     }
+    if (this.echoThroneProp) {
+      this.retire(this.echoThroneProp);
+      this.echoThroneProp = null;
+    }
     if (this.nodeProps) {
       for (const obelisk of this.nodeProps) {
         this.retire(obelisk);
@@ -3669,6 +4153,9 @@ export class RealtimeBattle {
       roots.push(this.node);
     }
     for (const root of roots) disposeObjectResources(root, this.disposedResources);
+    this.objectFeedback?.destroy();
+    this.objectFeedback = null;
+    this.feedbackCache?.clear?.();
     this.renderer?.dispose();
     this.audio?.dispose();
     this.templates.clear();

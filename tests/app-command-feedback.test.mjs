@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import vm from "node:vm";
-import { STAGES, createCampaign, reserveCommand, startCampaign } from "../campaign-state.js";
+import { STAGES, SUMMON_RECIPES, createCampaign, reserveCommand, startCampaign } from "../campaign-state.js";
+import { resolveBossPhase } from "../combat-systems.js";
 import { translate, translations } from "../i18n.js";
 
 async function loadBattleVisualTrigger({ hasRenderer = false } = {}) {
@@ -101,6 +102,21 @@ async function loadReleaseLocalization(locale) {
     importSave: { value: "" },
     waveIndicator: { dataset: {}, textContent: "" },
     battlePressure: { textContent: "" },
+    stageObjective: { textContent: "Capture the Cinder Span node" },
+    souls: { textContent: "4 / 8" },
+    legion: { textContent: "2 / 6" },
+    nodes: { textContent: "1 / 1" },
+    integrity: { textContent: "8 / 10" },
+    bossLabel: { textContent: "Warden" },
+    boss: { textContent: "6 / 8" },
+    battleScreenObjective: { textContent: "" },
+    battleScreenPressure: { textContent: "" },
+    battleScreenWave: { textContent: "" },
+    battleScreenSouls: { textContent: "" },
+    battleScreenLegion: { textContent: "" },
+    battleScreenNodes: { textContent: "" },
+    battleScreenIntegrity: { textContent: "" },
+    battleScreenBoss: { textContent: "" },
   };
   const confirmations = [];
   const context = vm.createContext({
@@ -140,6 +156,7 @@ async function loadReleaseLocalization(locale) {
     },
   });
   const definitions = [
+    appFunction(source, "syncBattleScreenHud", "focusPendingCommand"),
     appFunction(source, "setSaveStatus", "translatedResumeText"),
     appFunction(source, "setBattlePressure", "renderBattleAssetStatus"),
     appFunction(source, "persistCampaign", "applyMirroredCampaign"),
@@ -1674,6 +1691,22 @@ test("new campaign, save transfer, and briefing status copy follows the active K
 
     api.setBattlePressure("briefing", "unlocalized fallback");
     assert.equal(elements.waveIndicator.textContent, contracts[locale].briefing, `${locale} briefing must publish its exact localized wave badge`);
+    for (const [mirror, source] of [
+      ["battleScreenObjective", "stageObjective"],
+      ["battleScreenPressure", "battlePressure"],
+      ["battleScreenWave", "waveIndicator"],
+      ["battleScreenSouls", "souls"],
+      ["battleScreenLegion", "legion"],
+      ["battleScreenNodes", "nodes"],
+      ["battleScreenIntegrity", "integrity"],
+    ]) {
+      assert.equal(
+        elements[mirror].textContent,
+        elements[source].textContent,
+        `${locale} battle-screen ${mirror} must mirror the ${source} source text`,
+      );
+    }
+    assert.equal(elements.battleScreenBoss.textContent, "Warden 6 / 8", `${locale} battle-screen boss must mirror label and health`);
   }
 });
 
@@ -2223,6 +2256,66 @@ test("battle cockpit renders stable selection HUD IDs beside the tactical canvas
   assert.ok(findReactElement(root, "battle-canvas-fallback"), "the selection HUD contract must coexist with the fallback canvas");
 });
 
+function findReactElementsByProp(root, prop, value, matches = []) {
+  if (!root || typeof root !== "object") return matches;
+  if (root.props?.[prop] === value) matches.push(root);
+  for (const child of root.children ?? []) findReactElementsByProp(child, prop, value, matches);
+  return matches;
+}
+
+test("battlefield HUD exposes stable objective, resource, and selection mirror targets", async () => {
+  const root = await renderReactGameUiContract();
+  assert.ok(findReactElement(root, "battle-screen-ui"), "the battlefield HUD mirror must have a stable root");
+
+  const requiredTargets = [
+    "objective",
+    "pressure",
+    "wave",
+    "souls",
+    "legion",
+    "nodes",
+    "integrity",
+    "boss",
+    "forecast",
+    "advance",
+    "boss-phase",
+    "enemy-growth",
+    "selection-image",
+    "selection-label",
+    "selection-name",
+    "selection-role",
+    "selection-count",
+    "selection-health",
+    "selection-order",
+    "selection-status",
+  ];
+  for (const target of requiredTargets) {
+    assert.equal(
+      findReactElementsByProp(root, "data-battle-screen", target).length,
+      1,
+      `the battlefield HUD must expose exactly one data-battle-screen="${target}" target`,
+    );
+  }
+});
+
+test("summon evolution controls cover every exported recipe exactly once", async () => {
+  const root = await renderReactGameUiContract();
+  const expectedRecipeIds = ["ember-scion", "rift-hound", "ward-wisp"];
+  assert.deepEqual(
+    SUMMON_RECIPES.map((recipe) => recipe.id),
+    expectedRecipeIds,
+    "the exported summon recipe contract must retain the three player-facing evolution paths",
+  );
+  for (const recipeId of expectedRecipeIds) {
+    assert.equal(
+      findReactElementsByProp(root, "data-summon-recipe", recipeId).length,
+      1,
+      `the rendered controls must expose exactly one evolution action for ${recipeId}`,
+    );
+  }
+});
+
+
 test("selection HUD copy is complete and language-specific in Korean and English", () => {
   const keys = [
     "command.selectionCount",
@@ -2238,6 +2331,22 @@ test("selection HUD copy is complete and language-specific in Korean and English
     "command.selection.order.moving",
     "command.selection.order.engaged",
     "command.selection.order.mixed",
+    "battle.live.forecastLabel",
+    "battle.live.advanceLabel",
+    "battle.live.bossPhaseLabel",
+    "battle.live.enemyGrowthLabel",
+    "battle.live.forecast.none",
+    "battle.live.forecast.wave",
+    "battle.live.forecast.boss",
+    "battle.live.advance.waiting",
+    "battle.live.advance.stopped",
+    "battle.live.advance.dispatched",
+    "battle.live.advance.spawned",
+    "battle.live.advance.engaged",
+    "battle.live.bossPhase.locked",
+    "battle.live.bossPhase.active",
+    "battle.live.enemyGrowth.none",
+    "battle.live.enemyGrowth.active",
   ];
 
   for (const key of keys) {
@@ -2245,6 +2354,301 @@ test("selection HUD copy is complete and language-specific in Korean and English
     assert.match(translations.en[key] ?? "", /[A-Za-z]/, `${key} must have English HUD copy`);
     assert.notEqual(translations.ko[key], translations.en[key], `${key} must not reuse one locale's string for both languages`);
   }
+});
+
+async function loadLiveFrontlineProjection(locale = "en") {
+  const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
+  const node = () => ({ textContent: "", dataset: {} });
+  const fields = {
+    forecast: node(),
+    advance: node(),
+    bossPhase: node(),
+    enemyGrowth: node(),
+  };
+  const elements = {
+    battleScreenForecast: fields.forecast,
+    battleScreenAdvance: fields.advance,
+    battleScreenBossPhase: fields.bossPhase,
+    battleScreenEnemyGrowth: fields.enemyGrowth,
+  };
+  const context = vm.createContext({
+    elements,
+    resolveBossPhase,
+    translations,
+  });
+  const definitions = [
+    appFunction(source, "formatLiveBattleHud", "deriveLiveBattleHud"),
+    appFunction(source, "deriveLiveBattleHud", "renderLiveBattleHud"),
+    appFunction(source, "renderLiveBattleHud", "projectBattleRuntime"),
+  ];
+  vm.runInContext(
+    `${definitions.join("\n\n")}
+    globalThis.liveFrontlineApi = {
+      derive: deriveLiveBattleHud,
+      render: renderLiveBattleHud
+    };`,
+    context,
+    { filename: "app.js" },
+  );
+  return {
+    derive: (stage, state, runtime) => context.liveFrontlineApi.derive(stage, state, runtime, locale),
+    project(stage, state, runtime) {
+      context.liveFrontlineApi.render(stage, state, runtime, locale);
+      return Object.fromEntries(
+        Object.entries(fields).map(([name, field]) => [
+          name,
+          { text: field.textContent, state: field.dataset.state },
+        ]),
+      );
+    },
+  };
+}
+function frontlineStageStates() {
+  const started = startCampaign(createCampaign());
+  if (!started.accepted) throw new Error(`Unable to start frontline HUD fixture: ${started.message}`);
+  const pending = structuredClone(started.state.stage);
+  const live = structuredClone(pending);
+  live.encounter.activeWaveId = STAGES[0].encounter.waves[0].id;
+  const boss = structuredClone(pending);
+  for (const wave of boss.encounter.waves) wave.cleared = true;
+  boss.encounter.activeWaveId = null;
+  boss.encounter.bossExposed = true;
+  boss.encounter.spawningStopped = true;
+  boss.bossHealth = 4;
+  return { pending, live, boss };
+}
+test("live frontline HUD projects Korean and English pending, live, and boss states", async (t) => {
+  const contracts = {
+    en: {
+      pending: {
+        forecast: { text: "Forecast: 1/3 scout · 2 hostiles · 8s", state: "pending" },
+        advance: { text: "Spawn pending · awaiting the next approach", state: "waiting" },
+        bossPhase: { text: "Boss phase locked · clear the waves first", state: "locked" },
+        enemyGrowth: { text: "Enemy growth 1/3 · 0 active", state: "pending" },
+      },
+      live: {
+        forecast: { text: "Forecast: 1/3 scout · 2 hostiles · 8s", state: "live" },
+        advance: { text: "2 enemies advancing · 1 engagements", state: "engaged" },
+        bossPhase: { text: "Boss phase locked · clear the waves first", state: "locked" },
+        enemyGrowth: { text: "Enemy growth 1/3 · 2 active", state: "live" },
+      },
+      boss: {
+        forecast: { text: "Forecast: all waves cleared · boss engagement", state: "boss" },
+        advance: { text: "Spawning stopped · boss lane open", state: "stopped" },
+        bossPhase: { text: "Boss phase 2/3 · 4/8 HP", state: "active" },
+        enemyGrowth: { text: "Enemy growth 3/3 · 0 active", state: "boss" },
+      },
+    },
+    ko: {
+      pending: {
+        forecast: { text: "예측: 1/3 정찰 · 적 2명 · 8초", state: "pending" },
+        advance: { text: "생성 대기 · 다음 웨이브 접근 전", state: "waiting" },
+        bossPhase: { text: "보스 단계 잠김 · 웨이브를 먼저 돌파", state: "locked" },
+        enemyGrowth: { text: "적 성장 1/3 · 활성 0명", state: "pending" },
+      },
+      live: {
+        forecast: { text: "예측: 1/3 정찰 · 적 2명 · 8초", state: "live" },
+        advance: { text: "적 2명 진입 · 1곳 교전", state: "engaged" },
+        bossPhase: { text: "보스 단계 잠김 · 웨이브를 먼저 돌파", state: "locked" },
+        enemyGrowth: { text: "적 성장 1/3 · 활성 2명", state: "live" },
+      },
+      boss: {
+        forecast: { text: "예측: 모든 웨이브 돌파 · 보스전", state: "boss" },
+        advance: { text: "생성 중단 · 보스 진입로 개방", state: "stopped" },
+        bossPhase: { text: "보스 단계 2/3 · 체력 4/8", state: "active" },
+        enemyGrowth: { text: "적 성장 3/3 · 활성 0명", state: "boss" },
+      },
+    },
+  };
+  for (const locale of ["ko", "en"]) {
+    const fixture = await loadLiveFrontlineProjection(locale);
+    for (const stateName of ["pending", "live", "boss"]) {
+      await t.test(`${locale} ${stateName}`, () => {
+        const states = frontlineStageStates();
+        const runtime = stateName === "live"
+          ? { enemiesActive: 2, engagements: 1 }
+          : { enemiesActive: 0, engagements: 0 };
+        assert.deepEqual(
+          fixture.project(STAGES[0], states[stateName], runtime),
+          contracts[locale][stateName],
+          `${locale} ${stateName} must expose exact frontline copy and semantic data-state values`,
+        );
+      });
+    }
+  }
+});
+test("renderer telemetry moves a live wave from dispatch through spawn to engagement", async (t) => {
+  const fixture = await loadLiveFrontlineProjection("en");
+  const cases = [
+    {
+      name: "dispatched",
+      runtime: {},
+      advance: { text: "Wave dispatched · renderer synchronizing", state: "dispatched" },
+      growth: "Enemy growth 1/3 · 0 active",
+    },
+    {
+      name: "spawned",
+      runtime: { enemiesActive: 2, engagements: 0 },
+      advance: { text: "2 enemies spawned · advancing", state: "spawned" },
+      growth: "Enemy growth 1/3 · 2 active",
+    },
+    {
+      name: "engaged",
+      runtime: { enemiesActive: 2, engagements: 1 },
+      advance: { text: "2 enemies advancing · 1 engagements", state: "engaged" },
+      growth: "Enemy growth 1/3 · 2 active",
+    },
+  ];
+  for (const contract of cases) {
+    await t.test(contract.name, () => {
+      const { live } = frontlineStageStates();
+      const projected = fixture.project(STAGES[0], live, contract.runtime);
+      assert.deepEqual(projected.advance, contract.advance);
+      assert.equal(projected.enemyGrowth.text, contract.growth);
+      assert.equal(projected.forecast.state, "live", "renderer counts must not override the campaign encounter's active-wave identity");
+    });
+  }
+});
+test("live frontline projection leaves stage, encounter, and renderer telemetry inputs unchanged", async () => {
+  const fixture = await loadLiveFrontlineProjection("en");
+  const stage = structuredClone(STAGES[0]);
+  const { live: state } = frontlineStageStates();
+  const runtime = {
+    mode: "realtime",
+    enemiesActive: 2,
+    engagements: 1,
+    nestedTelemetry: { exchanges: [1, 2] },
+  };
+  const before = {
+    stage: structuredClone(stage),
+    state: structuredClone(state),
+    runtime: structuredClone(runtime),
+  };
+  fixture.derive(stage, state, runtime);
+  assert.deepEqual(stage, before.stage, "projection must not mutate stage configuration");
+  assert.deepEqual(state, before.state, "projection must not mutate authoritative campaign encounter state");
+  assert.deepEqual(runtime, before.runtime, "projection must not normalize renderer telemetry in place");
+});
+function freezeSummonFixture(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) freezeSummonFixture(child);
+  return Object.freeze(value);
+}
+async function loadSummonEvolutionWiring(recipeId = "ember-scion") {
+  const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
+  const delegatedClickWiring = source.match(
+    /document\.addEventListener\("click", \(event\) => \{[\s\S]*?\n  \}\);(?=\n\n  elements\.exportSave)/,
+  );
+  assert.ok(delegatedClickWiring, "app runtime must expose delegated tactical command wiring");
+  const initialCampaign = freezeSummonFixture({
+    status: "active",
+    progression: {
+      summons: {
+        essence: 9,
+        levels: {},
+      },
+    },
+  });
+  const evolvedCampaign = freezeSummonFixture({
+    status: "active",
+    progression: {
+      summons: {
+        essence: 5,
+        levels: { [recipeId]: 1 },
+      },
+    },
+    domainResult: "evolveSummon",
+  });
+  const events = [];
+  let clickListener = null;
+  let resolvePersistence;
+  const persisted = new Promise((resolve) => {
+    resolvePersistence = resolve;
+  });
+  let context;
+  context = vm.createContext({
+    campaign: initialCampaign,
+    SUMMON_RECIPES,
+    evolveSummon: (state, selectedRecipeId) => {
+      events.push({ type: "evolve", state, recipeId: selectedRecipeId });
+      return { accepted: true, state: evolvedCampaign };
+    },
+    synchronizeBattleRenderer: () => {
+      events.push({ type: "sync", state: context.campaign });
+    },
+    translate: (key) => translations.en[key] ?? "",
+    translateRejectionReason: (message) => message,
+    showTacticalFeedback: (message) => {
+      events.push({ type: "feedback", message });
+      context.render();
+    },
+    render: () => {
+      events.push({ type: "render", state: context.campaign });
+    },
+    getCombatAlertCue: (semantic) => `cue:${semantic}`,
+    playCombatAlertCue: (cue) => {
+      events.push({ type: "cue", cue });
+    },
+    persistCampaign: async (key) => {
+      const receipt = { type: "persist", key, state: context.campaign };
+      events.push(receipt);
+      resolvePersistence(receipt);
+    },
+    document: {
+      addEventListener(type, listener) {
+        if (type === "click") clickListener = listener;
+      },
+    },
+  });
+  const handler = appFunction(source, "handleSummonEvolution", "cancelPlacementMode");
+  vm.runInContext(
+    `"use strict";
+    ${handler}
+    ${delegatedClickWiring[0]}
+    globalThis.summonEvolutionApi = {
+      getCampaign: () => campaign
+    };`,
+    context,
+    { filename: "app.js" },
+  );
+  assert.equal(typeof clickListener, "function", "the delegated command listener must be installed");
+  return {
+    click() {
+      const button = {
+        dataset: { summonRecipe: recipeId },
+        closest(selector) {
+          return selector === "#summon-evolution-controls button[data-summon-recipe]" ? this : null;
+        },
+      };
+      clickListener({ target: button });
+      return persisted;
+    },
+    events,
+    evolvedCampaign,
+    getCampaign: () => context.summonEvolutionApi.getCampaign(),
+    initialCampaign,
+  };
+}
+test("summon control delegates evolution and projects the returned campaign through render and persistence", async () => {
+  const fixture = await loadSummonEvolutionWiring();
+  const initialSnapshot = structuredClone(fixture.initialCampaign);
+  const persistence = await fixture.click();
+  const evolution = fixture.events.find((event) => event.type === "evolve");
+  assert.ok(evolution, "the summon control must delegate progression to evolveSummon");
+  assert.strictEqual(evolution.state, fixture.initialCampaign, "evolveSummon must receive the authoritative campaign state");
+  assert.equal(evolution.recipeId, "ember-scion", "the clicked recipe must select the matching domain evolution");
+  assert.deepEqual(fixture.initialCampaign, initialSnapshot, "the command handler must not mutate progression directly");
+  assert.strictEqual(fixture.getCampaign(), fixture.evolvedCampaign, "the reducer result must become the authoritative campaign");
+  const synchronization = fixture.events.find((event) => event.type === "sync");
+  const render = fixture.events.find((event) => event.type === "render");
+  const feedback = fixture.events.find((event) => event.type === "feedback");
+  const cue = fixture.events.find((event) => event.type === "cue");
+  assert.strictEqual(synchronization?.state, fixture.evolvedCampaign, "the renderer must synchronize the evolved campaign");
+  assert.strictEqual(render?.state, fixture.evolvedCampaign, "visible feedback must render from the evolved campaign");
+  assert.equal(feedback?.message, "Ember Scion evolved to level 1.", "the control must announce the accepted evolution");
+  assert.equal(cue?.cue, "cue:summon-evolved", "accepted evolution must emit its authored combat cue");
+  assert.equal(persistence.key, "persist.campaignSaved", "accepted evolution must use campaign persistence");
+  assert.strictEqual(persistence.state, fixture.evolvedCampaign, "persistence must store the reducer-returned campaign");
 });
 
 async function loadSelectionDossierRuntime(locale = "en") {
@@ -2269,7 +2673,25 @@ async function loadSelectionDossierRuntime(locale = "en") {
     "dossier-health",
     "dossier-order",
     "dossier-status",
+    "battle-selection-image",
+    "battle-selection-label",
+    "battle-selection-name",
+    "battle-selection-role",
+    "battle-selection-count",
+    "battle-selection-health",
+    "battle-selection-order",
+    "battle-selection-status",
   ].map((id) => [id, element()]));
+  const elements = {
+    battleScreenSelectionImage: ids["battle-selection-image"],
+    battleScreenSelectionLabel: ids["battle-selection-label"],
+    battleScreenSelectionName: ids["battle-selection-name"],
+    battleScreenSelectionRole: ids["battle-selection-role"],
+    battleScreenSelectionCount: ids["battle-selection-count"],
+    battleScreenSelectionHealth: ids["battle-selection-health"],
+    battleScreenSelectionOrder: ids["battle-selection-order"],
+    battleScreenSelectionStatus: ids["battle-selection-status"],
+  };
   const dossier = element();
   const context = vm.createContext({
     BATTLE_ACTION_SEMANTICS: Object.freeze({
@@ -2277,6 +2699,7 @@ async function loadSelectionDossierRuntime(locale = "en") {
     }),
     campaign: Object.freeze({ status: "active" }),
     currentLang: () => locale,
+    elements,
     document: {
       getElementById: (id) => ids[id] ?? null,
       querySelector: (selector) => (selector === ".selection-dossier" ? dossier : null),
@@ -2357,6 +2780,43 @@ test("renderer selection survives temporary action-focus dossier previews", asyn
     ids["dossier-order"].textContent,
     translations.en["command.selection.order.mixed"],
     "clearing the preview must restore the renderer's current order",
+  );
+});
+
+test("renderer selection mirrors order and status into the battlefield HUD", async () => {
+  const { api, ids } = await loadSelectionDossierRuntime("en");
+  api.select({
+    count: 2,
+    total: 3,
+    health: 4,
+    maxHealth: 6,
+    possessed: 0,
+    engaged: 0,
+    moving: 2,
+    order: "moving",
+  }, 3);
+
+  assert.equal(
+    ids["battle-selection-order"].textContent,
+    translations.en["command.selection.order.moving"],
+    "the battlefield HUD must mirror the renderer's current selection order",
+  );
+  assert.equal(
+    ids["battle-selection-status"].textContent,
+    `2 ${translations.en["command.selectionStatus.selected"]} · ${translations.en["command.selection.order.moving"]}`,
+    "the battlefield HUD must mirror selected count and order in its live status",
+  );
+
+  api.select(null, 3);
+  assert.equal(
+    ids["battle-selection-order"].textContent,
+    translations.en["command.selection.order.none"],
+    "clearing the active renderer selection must reset the battlefield order mirror",
+  );
+  assert.equal(
+    ids["battle-selection-status"].textContent,
+    translations.en["command.selectionStatus.none"],
+    "clearing the active renderer selection must reset the battlefield status mirror",
   );
 });
 

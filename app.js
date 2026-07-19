@@ -18,8 +18,11 @@ import {
   reorderReservedCommand,
   cancelReservedCommand,
   executeReservedCommand,
+  checkReservedCommandExecution,
   upgradeSkill,
   deployTacticalObject,
+  evolveSummon,
+  SUMMON_RECIPES,
   TACTICAL_METADATA
 } from "./campaign-state.js";
 import { BattleVisualizer } from "./battle-visualizer.js";
@@ -28,6 +31,7 @@ import { getBattlePresentation } from "./battle-presentation.js";
 import { CampaignMirror } from "./campaign-sync.js";
 import { TacticalMinimap } from "./tactical-minimap.js";
 import { currentLang, translate, translations } from "./i18n.js";
+import { getCombatAlertCue, resolveBossPhase } from "./combat-systems.js";
 
 const BUILD_TAG = "abyssal-surge-static-v51";
 const DB_NAME = "abyssal-surge-campaign";
@@ -80,15 +84,43 @@ const CUE_BY_EFFECT = Object.freeze({
   assault: "assets/audio/assault.mp3",
   reward: "assets/audio/reward.mp3",
   "breach-alert": "assets/audio/breach-alert.mp3",
-  "wave-spawn": "assets/audio/wave-spawn.mp3"
+  "wave-spawn": "assets/audio/wave-spawn.mp3",
+  "boss-phase-change": "assets/audio/boss-phase-change.mp3"
 });
 const ENCOUNTER_CUE_BY_EVENT = Object.freeze({
   breach: "breach-alert",
-  "start-wave": "wave-spawn"
+  "start-wave": "wave-spawn",
+  "enemy-ranged-warning": "enemy-ranged-warning",
+  "boss-phase-shift": "boss-phase-change",
+  "summon-evolved": "summon-evolved",
+  "summon-evolution": "summon-evolved",
+  "boss-phase": "boss-phase-change",
+  "phase-change": "boss-phase-change",
+  "boss-low-health": "boss-low-health",
+  "guardian-shield": "guardian-shield",
+  "low-health": "boss-low-health",
+  "guardian-guard": "guardian-shield"
+});
+const COMBAT_ALERT_FEEDBACK_KEYS = Object.freeze({
+  "enemy-ranged-warning": "combat.alert.enemy-ranged-warning",
+  "boss-phase-change": "combat.alert.boss-phase-change",
+  "summon-evolved": "combat.alert.summon-evolved",
+  "boss-low-health": "combat.alert.boss-low-health",
+  "guardian-shield": "combat.alert.guardian-shield",
+  "wave-spawn": "combat.alert.wave-spawn"
 });
 const MUSIC_BY_SCENE = Object.freeze({
   lobby: "assets/audio/bgm-theme.mp3",
   battle: "assets/audio/battle-bgm.mp3"
+});
+const MUSIC_BY_STAGE = Object.freeze({
+  "sunken-bastion": "assets/audio/battle-bgm-band-ii.mp3",
+  "howling-sprawl": "assets/audio/battle-bgm-band-ii.mp3",
+  "glass-necropolis": "assets/audio/battle-bgm-band-ii.mp3",
+  "starless-canal": "assets/audio/battle-bgm-band-iii.mp3",
+  "shattered-causeway": "assets/audio/battle-bgm-band-iii.mp3",
+  "abyss-chancel": "assets/audio/battle-bgm-band-iv.mp3",
+  "gate-zenith": "assets/audio/battle-bgm-band-iv.mp3"
 });
 const NARRATION = Object.freeze({
   intro: Object.freeze({
@@ -115,40 +147,45 @@ const NARRATION = Object.freeze({
     msPerChar: 45,
     holdMs: 2000
   }),
-  // Stages 4-10: text narration ships now; audio lines land with the next
-  // recording batch (playNarration skips audio when the field is absent).
   "sunken-bastion": Object.freeze({
-    lines: Object.freeze(["가라앉은 보루, 선큰 바스티온.", "방파제 위에서 조수의 감시자를 수장시켜라."]),
+    audio: "assets/audio/narr-stage4.mp3",
+    lines: Object.freeze(["가라앉은 보루, 선큰 바스티온.", "조수의 감시자를 방파제 아래로 가라앉혀라."]),
     msPerChar: 45,
     holdMs: 2000
   }),
   "howling-sprawl": Object.freeze({
-    lines: Object.freeze(["울부짖는 폐허, 하울링 스프롤.", "무리의 파수꾼을 빙의해 전령의 목을 조여라."]),
+    audio: "assets/audio/narr-stage5.mp3",
+    lines: Object.freeze(["울부짖는 폐허, 하울링 스프롤.", "무리의 감시자를 빙의해 전령의 목을 조여라."]),
     msPerChar: 45,
     holdMs: 2000
   }),
   "glass-necropolis": Object.freeze({
-    lines: Object.freeze(["유리 묘역, 글래스 네크로폴리스.", "두 유리 단상을 장악하고 진혼곡을 침묵시켜라."]),
+    audio: "assets/audio/narr-stage6.mp3",
+    lines: Object.freeze(["유리 묘역, 글래스 네크로폴리스.", "두 유리 단상을 점거하고 진혼의 합창을 끊어라."]),
     msPerChar: 45,
     holdMs: 2000
   }),
   "starless-canal": Object.freeze({
-    lines: Object.freeze(["별 없는 운하, 스타리스 커낼.", "군주의 영역이 돌아온다. 폭군의 등불을 모두 꺼라."]),
+    audio: "assets/audio/narr-stage7.mp3",
+    lines: Object.freeze(["별 없는 운하, 스타리스 커낼.", "군주의 영역을 다시 열어 폭군의 등불을 모두 꺼라."]),
     msPerChar: 45,
     holdMs: 2000
   }),
   "shattered-causeway": Object.freeze({
-    lines: Object.freeze(["부서진 둑길, 섀터드 코즈웨이.", "다리를 지키는 거상을 그 다리 아래로 무너뜨려라."]),
+    audio: "assets/audio/narr-stage8.mp3",
+    lines: Object.freeze(["부서진 둑길, 섀터드 코즈웨이.", "다리를 지키는 거상을 육교 아래로 무너뜨려라."]),
     msPerChar: 45,
     holdMs: 2000
   }),
   "abyss-chancel": Object.freeze({
-    lines: Object.freeze(["심연 예배당, 어비스 챈슬.", "세 의식 단상을 모두 점거하고 계약을 파기하라."]),
+    audio: "assets/audio/narr-stage9.mp3",
+    lines: Object.freeze(["심연 예배당, 어비스 챈슬.", "세 의식 단상을 모두 점거하고 봉인 계약을 깨뜨려라."]),
     msPerChar: 45,
     holdMs: 2000
   }),
   "gate-zenith": Object.freeze({
-    lines: Object.freeze(["게이트 제니스, 마지막 정점.", "모든 은총을 걸고 심연의 섭정을 unmake하라.", "문은 오늘 닫힌다."]),
+    audio: "assets/audio/narr-stage10.mp3",
+    lines: Object.freeze(["게이트 제니스, 마지막 정점.", "모든 가호를 걸고 심연의 섭정을 지워라.", "오늘, 문을 닫는다."]),
     msPerChar: 45,
     holdMs: 2000
   }),
@@ -171,13 +208,13 @@ const NARRATION_EN = Object.freeze({
   "cinder-span": Object.freeze(["The Ashen Bridge, Cinder Span.", "Hunt Ashen Echoes and harvest their souls."]),
   "veil-citadel": Object.freeze(["The Shrouded Fortress, Veil Citadel.", "The power of possession awakens.", "Seize both nodes simultaneously."]),
   "echo-throne": Object.freeze(["The Echo Throne.", "Channel the Lord's Domain and bring down the Gate Sovereign."]),
-  "sunken-bastion": Object.freeze(["The Drowned Bulwark, Sunken Bastion.", "Drown the Tidal Warden upon the breakwater."]),
-  "howling-sprawl": Object.freeze(["The Howling Sprawl.", "Possess the Flock Watcher to choke off the Herald."]),
-  "glass-necropolis": Object.freeze(["The Glass Necropolis.", "Seize both glass platforms and silence the Requiem."]),
-  "starless-canal": Object.freeze(["The Starless Canal.", "The Lord's Domain returns. Extinguish all the Tyrant's lanterns."]),
-  "shattered-causeway": Object.freeze(["The Shattered Causeway.", "Bring down the colossus guarding the bridge beneath it."]),
-  "abyss-chancel": Object.freeze(["The Abyss Chancel.", "Seize all three ritual platforms and break the contract."]),
-  "gate-zenith": Object.freeze(["Gate Zenith, the final peak.", "Stake all grace to unmake the Abyssal Regent.", "The gate closes today."]),
+  "sunken-bastion": Object.freeze(["The Drowned Bulwark, Sunken Bastion.", "Sink the Tidal Warden beneath the breakwater."]),
+  "howling-sprawl": Object.freeze(["The Howling Sprawl.", "Possess the Flock Watcher and choke the Herald's advance."]),
+  "glass-necropolis": Object.freeze(["The Glass Necropolis.", "Seize both glass platforms and silence the Requiem Choir."]),
+  "starless-canal": Object.freeze(["The Starless Canal.", "Reopen the Lord's Domain and extinguish every tyrant lantern."]),
+  "shattered-causeway": Object.freeze(["The Shattered Causeway.", "Collapse the colossus beneath the bridge it guards."]),
+  "abyss-chancel": Object.freeze(["The Abyss Chancel.", "Seize all three ritual platforms and break the binding contract."]),
+  "gate-zenith": Object.freeze(["Gate Zenith, the final ascent.", "Stake every grace to unmake the Abyssal Regent.", "Close the gate today."]),
   victory: Object.freeze(["Before the silenced gate,", "the Shadow Legion ascends the throne."]),
   defeat: Object.freeze(["The legion's anchor has shattered.", "Rise, once more."])
 });
@@ -400,6 +437,27 @@ const elements = Object.freeze({
   battleAllyLabel: document.querySelector("#battle-ally-label"),
   battleHostileLabel: document.querySelector("#battle-hostile-label"),
   battlePressure: document.querySelector("#battle-pressure"),
+  battleScreenObjective: document.querySelector('[data-battle-screen="objective"]'),
+  battleScreenPressure: document.querySelector('[data-battle-screen="pressure"]'),
+  battleScreenFeedback: document.querySelector('[data-battle-screen="feedback"]'),
+  battleScreenWave: document.querySelector('[data-battle-screen="wave"]'),
+  battleScreenSouls: document.querySelector('[data-battle-screen="souls"]'),
+  battleScreenLegion: document.querySelector('[data-battle-screen="legion"]'),
+  battleScreenNodes: document.querySelector('[data-battle-screen="nodes"]'),
+  battleScreenIntegrity: document.querySelector('[data-battle-screen="integrity"]'),
+  battleScreenBoss: document.querySelector('[data-battle-screen="boss"]'),
+  battleScreenForecast: document.querySelector('[data-battle-screen="forecast"]'),
+  battleScreenAdvance: document.querySelector('[data-battle-screen="advance"]'),
+  battleScreenBossPhase: document.querySelector('[data-battle-screen="boss-phase"]'),
+  battleScreenEnemyGrowth: document.querySelector('[data-battle-screen="enemy-growth"]'),
+  battleScreenSelectionImage: document.querySelector('[data-battle-screen="selection-image"]'),
+  battleScreenSelectionLabel: document.querySelector('[data-battle-screen="selection-label"]'),
+  battleScreenSelectionName: document.querySelector('[data-battle-screen="selection-name"]'),
+  battleScreenSelectionRole: document.querySelector('[data-battle-screen="selection-role"]'),
+  battleScreenSelectionCount: document.querySelector('[data-battle-screen="selection-count"]'),
+  battleScreenSelectionHealth: document.querySelector('[data-battle-screen="selection-health"]'),
+  battleScreenSelectionOrder: document.querySelector('[data-battle-screen="selection-order"]'),
+  battleScreenSelectionStatus: document.querySelector('[data-battle-screen="selection-status"]'),
   battleAssetStatus: document.querySelector("#battle-asset-status"),
   battleFallback: document.querySelector("#battle-visual-fallback"),
   battleFallbackOperation: document.querySelector("#battle-fallback-operation"),
@@ -417,6 +475,8 @@ const elements = Object.freeze({
   integrity: document.querySelector("#integrity-value"),
   bossLabel: document.querySelector("#boss-label"),
   boss: document.querySelector("#boss-value"),
+  summonEssence: document.querySelector("#summon-essence-value"),
+  summonEvolutionButtons: [...document.querySelectorAll("[data-summon-recipe]")],
   checklist: document.querySelector("#objective-checklist"),
   rewardPanel: document.querySelector("#reward-panel"),
   rewardOptions: document.querySelector("#reward-options"),
@@ -472,6 +532,7 @@ let activeNarrationKey = null;
 let stageBriefingOpen = false;
 let entryGuidanceStageId = null;
 let pendingCommandFocus = false;
+let commandRequestSequence = 0;
 // Single-screen cockpit: the battlefield, intel rail, and command pad are
 // always visible while a campaign runs. `battleUiActive()` (a live battle
 // session exists) replaces the old activeView === "battle" checks; the
@@ -643,6 +704,22 @@ function translateRejectionReason(msg, lang) {
     return t("tactical.rejection.extractRequiresSpoor");
   }
 
+  if (msg === "A summon recipe is required." || msg === "That summon recipe does not exist.") {
+    return t("summon.rejection.invalidRecipe");
+  }
+
+  const evolutionMaxMatch = msg.match(/^(.+) is already at maximum evolution\.$/);
+  if (evolutionMaxMatch) {
+    return t("summon.rejection.maxLevel").replace("{name}", evolutionMaxMatch[1]);
+  }
+
+  const evolutionEssenceMatch = msg.match(/^Not enough summon essence\. Need (\d+) but have (\d+)\.$/);
+  if (evolutionEssenceMatch) {
+    return t("summon.rejection.essence")
+      .replace("{cost}", evolutionEssenceMatch[1])
+      .replace("{essence}", evolutionEssenceMatch[2]);
+  }
+
   const execMatch = msg.match(/^Execution failed:\s*(.+)$/);
   if (execMatch) {
     const innerReason = translateRejectionReason(execMatch[1], lang);
@@ -699,26 +776,35 @@ async function handleDeployRequest(kind, cell) {
 
 async function handleExecuteReserved(id) {
   if (!campaign || campaign.status !== "active") return;
-  const result = executeReservedCommand(campaign, id);
-  campaign = result.state;
-  render();
-  if (!result.accepted) {
-    showTacticalFeedback(translateRejectionReason(result.message));
-    return;
+  if (typeof armQueuedCommand === "function") {
+    armQueuedCommand(id, { source: "queue-exec-button", forceCheck: true });
+  } else {
+    const result = executeReservedCommand(campaign, id);
+    campaign = result.state;
+    render();
+    if (!result.accepted) {
+      showTacticalFeedback(translateRejectionReason(result.message));
+      return;
+    }
+    startActionCooldown(result.action);
+    render();
+    await persistCampaign("persist.campaignSaved");
   }
-
-  synchronizeBattleRenderer();
-  const action = result.effect;
-  startActionCooldown(action);
-  triggerBattleVisual(action);
-  await persistCampaign("persist.campaignSaved");
 }
 
 async function handleCancelReserved(id) {
   if (!campaign || campaign.status !== "active") return;
+  const queue = campaign.commandQueue || campaign.progression?.commandQueue || [];
+  const isHead = queue.length > 0 && queue[0].id === id;
   const result = cancelReservedCommand(campaign, id);
   if (result.accepted) {
     campaign = result.state;
+    if (typeof dropQueuedCommandRuntime === "function") {
+      dropQueuedCommandRuntime(id, "cancelled");
+    }
+    if (isHead && visualizer && typeof visualizer.clearActionPreview === "function") {
+      visualizer.clearActionPreview();
+    }
     render();
     await persistCampaign("persist.campaignSaved");
   }
@@ -729,12 +815,18 @@ async function handleReorderReserved(fromIndex, toIndex) {
   const result = reorderReservedCommand(campaign, fromIndex, toIndex);
   if (result.accepted) {
     campaign = result.state;
+    if (typeof syncQueuedCommandPreview === "function") {
+      syncQueuedCommandPreview();
+    }
     render();
     await persistCampaign("persist.campaignSaved");
   }
 }
 
 async function handleReserveAction(action) {
+  if (typeof enqueueCommandRequest === "function") {
+    return enqueueCommandRequest(action, { source: "reserve-ui" });
+  }
   if (!campaign || campaign.status !== "active") return;
   const result = reserveCommand(campaign, action);
   if (result.accepted) {
@@ -770,6 +862,27 @@ async function handleSkillUpgrade(skill) {
     showTacticalFeedback(translateRejectionReason(result.message));
   }
 }
+async function handleSummonEvolution(recipeId) {
+  if (!campaign || campaign.status !== "active") return;
+  const result = evolveSummon(campaign, recipeId);
+  if (!result.accepted) {
+    showTacticalFeedback(translateRejectionReason(result.message));
+    return;
+  }
+
+  campaign = result.state;
+  synchronizeBattleRenderer();
+  const recipe = SUMMON_RECIPES.find((candidate) => candidate.id === recipeId);
+  const level = campaign.progression.summons?.levels?.[recipeId] ?? 0;
+  const recipeName = translate(`summon.recipe.${recipeId}.name`) || recipe?.name || recipeId;
+  const feedback = translate("summon.evolution.accepted")
+    .replace("{name}", recipeName)
+    .replace("{level}", String(level));
+  showTacticalFeedback(feedback);
+  playCombatAlertCue(getCombatAlertCue("summon-evolved"));
+  await persistCampaign("persist.campaignSaved");
+}
+
 
 function cancelPlacementMode() {
   activePlacementMode = null;
@@ -952,34 +1065,54 @@ function renderSelectionDossier() {
   const statusEl = document.getElementById("dossier-status");
   const healthValue = Number.isInteger(summary.health) ? summary.health : summary.health.toFixed(1);
   const maxHealthValue = Number.isInteger(summary.maxHealth) ? summary.maxHealth : summary.maxHealth.toFixed(1);
+  const nameKey = summary.count > 0 ? "command.selectionName" : "command.selectionNone";
+  const roleKey = summary.possessed > 0 ? "command.selectionPossessedRole" : "command.selectionRole";
 
   if (labelEl) {
     labelEl.setAttribute("data-i18n", "command.selectionLabel");
     labelEl.textContent = translate("command.selectionLabel");
   }
   if (nameEl) {
-    const nameKey = summary.count > 0 ? "command.selectionName" : "command.selectionNone";
     nameEl.setAttribute("data-i18n", nameKey);
     nameEl.textContent = translate(nameKey);
   }
   if (roleEl) {
-    const roleKey = summary.possessed > 0 ? "command.selectionPossessedRole" : "command.selectionRole";
     roleEl.setAttribute("data-i18n", roleKey);
     roleEl.textContent = translate(roleKey);
   }
+  const orderKey = `command.selection.order.${summary.order}`;
+  const statusText = summary.count > 0
+    ? `${summary.count} ${translate("command.selectionStatus.selected")} · ${translate(orderKey)}`
+    : translate("command.selectionStatus.none");
   if (imgEl) imgEl.src = "assets/images/ui/action-possess.png";
   if (countEl) countEl.textContent = `${summary.count} / ${summary.total}`;
   if (healthEl) healthEl.textContent = `${healthValue} / ${maxHealthValue}`;
   if (orderEl) {
-    const orderKey = `command.selection.order.${summary.order}`;
     orderEl.setAttribute("data-i18n", orderKey);
     orderEl.textContent = translate(orderKey);
   }
-  if (statusEl) {
-    statusEl.textContent = summary.count > 0
-      ? `${summary.count} ${translate("command.selectionStatus.selected")} · ${translate(`command.selection.order.${summary.order}`)}`
-      : translate("command.selectionStatus.none");
+  if (statusEl) statusEl.textContent = statusText;
+
+  if (elements.battleScreenSelectionImage) elements.battleScreenSelectionImage.src = "assets/images/ui/action-possess.png";
+  if (elements.battleScreenSelectionLabel) {
+    elements.battleScreenSelectionLabel.setAttribute("data-i18n", "command.selectionLabel");
+    elements.battleScreenSelectionLabel.textContent = translate("command.selectionLabel");
   }
+  if (elements.battleScreenSelectionName) {
+    elements.battleScreenSelectionName.setAttribute("data-i18n", nameKey);
+    elements.battleScreenSelectionName.textContent = translate(nameKey);
+  }
+  if (elements.battleScreenSelectionRole) {
+    elements.battleScreenSelectionRole.setAttribute("data-i18n", roleKey);
+    elements.battleScreenSelectionRole.textContent = translate(roleKey);
+  }
+  if (elements.battleScreenSelectionCount) elements.battleScreenSelectionCount.textContent = `${summary.count} / ${summary.total}`;
+  if (elements.battleScreenSelectionHealth) elements.battleScreenSelectionHealth.textContent = `${healthValue} / ${maxHealthValue}`;
+  if (elements.battleScreenSelectionOrder) {
+    elements.battleScreenSelectionOrder.setAttribute("data-i18n", orderKey);
+    elements.battleScreenSelectionOrder.textContent = translate(orderKey);
+  }
+  if (elements.battleScreenSelectionStatus) elements.battleScreenSelectionStatus.textContent = statusText;
 }
 
 function currentActionFocus() {
@@ -1062,8 +1195,436 @@ let battleStarting = false;
 let pendingBattleRenderer = null;
 let lastScrolledStageId = null;
 const cooldowns = new Map();
+
+const COMMAND_QUEUE_TICK_MS = 100;
+const COMMAND_ACK_MIN_MS = 250;
+const COMMAND_RENDERER_ACK_TIMEOUT_MS = 750;
+const COMMAND_DUPLICATE_WINDOW_MS = 250;
+const queuedCommandRuntime = new Map();
+const seenCommandRequests = new Map();
+let commandExecutionTimer = 0;
+let lastCheckedSignature = "";
 let resultOverlayOpen = false;
 let campaignMirror = null;
+
+function evaluateQueuedCommandReadiness(head, runtime) {
+  const now = performance.now();
+  const elapsed = now - runtime.queuedAt;
+  
+  const reducerCheck = checkReservedCommandExecution(campaign, head.id);
+  if (!reducerCheck.ready) {
+    return { ready: false, phase: "blocked", reason: reducerCheck.message };
+  }
+  
+  if (remainingCooldown(head.action) > 0) {
+    return { ready: false, phase: "waiting-scene", reason: "cooldown" };
+  }
+  
+  if (elapsed < COMMAND_ACK_MIN_MS) {
+    return { ready: false, phase: "acknowledging", reason: "acknowledging" };
+  }
+  
+  let rendererReady = true;
+  let rendererReason = "";
+  
+  const rendererReadyResult = (visualizer && typeof visualizer.getCommandReadiness === "function")
+    ? visualizer.getCommandReadiness({ commandId: head.id, action: head.action, target: runtime.target })
+    : null;
+  
+  if (rendererReadyResult) {
+    rendererReady = rendererReadyResult.ready;
+    rendererReason = rendererReadyResult.reason || "";
+  }
+  
+  const stage = currentStage();
+  const state = campaign.stage;
+  const encounter = currentEncounter(stage, state);
+  if (head.action === "assault" && encounter) {
+    const bossExposedApp = encounter.bossExposed === true;
+    let bossExposedRenderer = true;
+    let enemiesActiveRenderer = 0;
+    if (rendererRuntime) {
+      bossExposedRenderer = rendererRuntime.bossExposed === true;
+      enemiesActiveRenderer = rendererRuntime.enemiesActive || 0;
+    }
+    if (!bossExposedApp || !bossExposedRenderer || enemiesActiveRenderer > 0) {
+      rendererReady = false;
+      rendererReason = "boss-not-exposed";
+    }
+  }
+  
+  if (!rendererReady) {
+    if (elapsed >= COMMAND_RENDERER_ACK_TIMEOUT_MS) {
+      rendererReady = true;
+      rendererReason = "timeout-fallback";
+    } else {
+      return { ready: false, phase: "waiting-scene", reason: rendererReason || "waiting-renderer" };
+    }
+  }
+  
+  return { ready: true, phase: "ready", reason: "" };
+}
+
+function setQueuedCommandPhase(id, phase, reason = "") {
+  const runtime = queuedCommandRuntime.get(id);
+  const item = campaign?.commandQueue?.find(q => q.id === id);
+  const action = item ? item.action : "";
+  
+  if (runtime) {
+    if (runtime.phase === phase && runtime.reason === reason) return;
+    runtime.phase = phase;
+    runtime.reason = reason;
+  }
+  
+  if (typeof window.CustomEvent === "function") {
+    const queueIndex = campaign?.commandQueue ? campaign.commandQueue.findIndex(q => q.id === id) : -1;
+    let remainingMs = 0;
+    if (action) {
+      remainingMs = Math.max(0, remainingCooldown(action));
+    }
+    const event = new window.CustomEvent("abyssal:command-phase", {
+      detail: {
+        id,
+        action,
+        phase,
+        reason: reason || undefined,
+        remainingMs: remainingMs || undefined,
+        queueIndex: queueIndex !== -1 ? queueIndex : undefined
+      }
+    });
+    window.dispatchEvent(event);
+  }
+}
+
+function dropQueuedCommandRuntime(id, finalPhase) {
+  if (finalPhase) {
+    setQueuedCommandPhase(id, finalPhase);
+  }
+  queuedCommandRuntime.delete(id);
+}
+
+function armQueuedCommand(id, options) {
+  const opts = options || {};
+  const runtime = queuedCommandRuntime.get(id);
+  if (runtime) {
+    if (opts.source) {
+      runtime.source = opts.source;
+    }
+    if (opts.forceCheck) {
+      runtime.forceCheck = true;
+      runtime.lastCheckedRevision = -1;
+      runtime.lastCheckedSignature = "";
+    }
+    if (runtime.phase === "blocked") {
+      setQueuedCommandPhase(id, "queued");
+    }
+  } else {
+    const queuedItem = campaign.commandQueue.find(item => item.id === id);
+    if (queuedItem) {
+      queuedCommandRuntime.set(id, {
+        phase: "queued",
+        queuedAt: performance.now(),
+        source: opts.source || "queue-exec-button",
+        forceCheck: true,
+        lastCheckedRevision: -1,
+        lastCheckedSignature: ""
+      });
+      setQueuedCommandPhase(id, "queued");
+    }
+  }
+  scheduleQueueCheck();
+  render();
+}
+
+async function enqueueCommandRequest(action, options) {
+  const opts = options || {};
+  if (!campaign || campaign.status !== "active" || resultOverlayOpen) return;
+  
+  const nextId = opts.requestId || `cmd-${campaign.revision}-${campaign.commandQueue.length}`;
+  const result = reserveCommand(campaign, action, nextId);
+  if (!result.accepted) {
+    showTacticalFeedback(translateRejectionReason(result.message));
+    return;
+  }
+  campaign = result.state;
+  
+  const now = performance.now();
+  queuedCommandRuntime.set(nextId, {
+    phase: "queued",
+    queuedAt: now,
+    source: opts.source || "primary-control",
+    target: opts.target,
+    lastCheckedRevision: -1,
+    lastCheckedSignature: ""
+  });
+  
+  if (typeof window.CustomEvent === "function") {
+    const queueIndex = campaign.commandQueue.findIndex(item => item.id === nextId);
+    const event = new window.CustomEvent("abyssal:command-queued", {
+      detail: { id: nextId, action, queueIndex, source: opts.source || "primary-control" }
+    });
+    window.dispatchEvent(event);
+  }
+  
+  setQueuedCommandPhase(nextId, "queued");
+  
+  showTacticalFeedback(translateStatusMessage(campaign.lastMessage, currentLang()));
+  scheduleQueueCheck();
+  render();
+  await persistCampaign("persist.campaignSaved");
+}
+
+function handleRendererCommandRequest(request, sessionId, renderer) {
+  if (!campaign || campaign.status !== "active") return;
+  if (sessionId !== battleSessionId) return;
+  if (renderer !== visualizer && renderer !== pendingBattleRenderer) return;
+
+  const payload = normalizeCommandRequest(request);
+  if (!payload.action || payload.type !== "command-request") return;
+
+  const reqId = payload.requestId;
+  if (seenCommandRequests.has(reqId)) return;
+  seenCommandRequests.set(reqId, performance.now());
+
+  void enqueueCommandRequest(payload.action, {
+    source: payload.source,
+    requestId: reqId,
+    target: payload.target
+  });
+}
+
+function syncCommandRuntimeFromCampaign() {
+  if (!campaign) {
+    queuedCommandRuntime.clear();
+    return;
+  }
+  
+  const idsInQueue = new Set(campaign.commandQueue.map(item => item.id));
+  for (const id of queuedCommandRuntime.keys()) {
+    if (!idsInQueue.has(id)) {
+      queuedCommandRuntime.delete(id);
+    }
+  }
+  
+  campaign.commandQueue.forEach((item) => {
+    if (!queuedCommandRuntime.has(item.id)) {
+      queuedCommandRuntime.set(item.id, {
+        phase: "queued",
+        queuedAt: performance.now(),
+        source: "restored",
+        lastCheckedRevision: -1,
+        lastCheckedSignature: ""
+      });
+      setQueuedCommandPhase(item.id, "queued");
+    }
+  });
+  
+  syncQueuedCommandPreview();
+}
+
+function syncQueuedCommandPreview(renderer = visualizer) {
+  if (!renderer) return;
+  if (!campaign || campaign.commandQueue.length === 0) {
+    if (typeof renderer.clearActionPreview === "function") {
+      renderer.clearActionPreview();
+    }
+    return;
+  }
+  const head = campaign.commandQueue[0];
+  const semantics = BATTLE_ACTION_SEMANTICS[head.action];
+  if (!semantics) return;
+  let runtime = queuedCommandRuntime.get(head.id);
+  if (!runtime) {
+    runtime = {
+      phase: "queued",
+      queuedAt: performance.now(),
+      source: semantics.source || "restored",
+      target: semantics.target,
+      lastCheckedRevision: -1,
+      lastCheckedSignature: ""
+    };
+    queuedCommandRuntime.set(head.id, runtime);
+  }
+  const queueIndex = campaign.commandQueue.findIndex((item) => item.id === head.id);
+  if (typeof renderer.previewAction === "function") {
+    renderer.previewAction({
+      ...semantics,
+      action: head.action,
+      commandId: head.id,
+      phase: runtime.phase || "queued",
+      queueIndex,
+      source: semantics.source ?? runtime.source,
+      target: semantics.target ?? runtime.target,
+      queuedAt: runtime.queuedAt
+    });
+  }
+}
+
+async function executeQueuedCommandIfReady(id) {
+  if (!campaign || campaign.status !== "active") return;
+  const head = campaign.commandQueue[0];
+  if (!head || head.id !== id) return;
+  
+  const runtime = queuedCommandRuntime.get(id);
+  if (!runtime || runtime.phase === "executing") return;
+  
+  setQueuedCommandPhase(id, "executing");
+  
+  const action = head.action;
+  const stage = currentStage();
+  const priorCampaign = campaign;
+  
+  const reducerCheck = checkReservedCommandExecution(campaign, id);
+  if (!reducerCheck.ready) {
+    setQueuedCommandPhase(id, "blocked", reducerCheck.message);
+    showTacticalFeedback(translateRejectionReason(reducerCheck.message));
+    render();
+    return;
+  }
+  
+  let accepted = false;
+  let result;
+  try {
+    result = executeReservedCommand(campaign, id);
+    campaign = result.state;
+    
+    if (!result.accepted) {
+      setQueuedCommandPhase(id, "blocked", result.message);
+      showTacticalFeedback(translateRejectionReason(result.message));
+      render();
+      return;
+    }
+    
+    accepted = true;
+    startActionCooldown(action);
+    dropQueuedCommandRuntime(id, "executed");
+    
+    synchronizeBattleRenderer();
+    armEncounterWhenPrepared();
+    
+    const materializeCount = action === "materialize"
+      ? campaign.stage.legion - priorCampaign.stage.legion
+      : 0;
+    const triggerVisual = triggerBattleVisual;
+    triggerVisual(action, action === "materialize" ? { count: materializeCount } : {});
+    
+    render();
+    await persistCampaign("persist.campaignSaved");
+    
+  } finally {
+    if (typeof window.CustomEvent === "function") {
+      window.setTimeout(() => {
+        const event = new window.CustomEvent("abyssal:command-resolved", {
+          detail: {
+            id,
+            action,
+            accepted,
+            phase: accepted ? "executed" : "rejected",
+            message: result?.message || "",
+            queueIndexBefore: 0,
+            revision: campaign.revision
+          }
+        });
+        window.dispatchEvent(event);
+      }, 0);
+    }
+  }
+}
+
+function normalizeCommandRequest(request) {
+  const raw = typeof request === "string" ? { action: request } : (request || {});
+  const occurredAt = Number.isFinite(raw.occurredAt)
+    ? raw.occurredAt
+    : performance.now();
+  const requestId = raw.requestId || `cmd-req-${++commandRequestSequence}`;
+  return {
+    type: "command-request",
+    action: raw.action,
+    requestId,
+    source: raw.source || (typeof request === "string" ? "app-ui" : "renderer-pointer"),
+    rendererMode: raw.rendererMode || "none",
+    occurredAt
+  };
+}
+
+function scheduleCommandQueueDrain() {
+  scheduleQueueCheck();
+}
+
+function clearCommandQueueRuntime() {
+  seenCommandRequests.clear();
+  queuedCommandRuntime.clear();
+}
+
+async function drainCommandQueue() {
+  if (!campaign || campaign.status !== "active") return;
+  if (campaign.commandQueue.length === 0) {
+    syncQueuedCommandPreview();
+    return;
+  }
+  
+  const head = campaign.commandQueue[0];
+  let runtime = queuedCommandRuntime.get(head.id);
+  if (!runtime) {
+    runtime = {
+      phase: "queued",
+      queuedAt: performance.now(),
+      source: "scheduler",
+      lastCheckedRevision: -1,
+      lastCheckedSignature: ""
+    };
+    queuedCommandRuntime.set(head.id, runtime);
+  }
+  
+  const rendererRuntimeSignature = rendererRuntime ? JSON.stringify({
+    bossExposed: rendererRuntime.bossExposed,
+    enemiesActive: rendererRuntime.enemiesActive
+  }) : "";
+  const cooldownDeadline = cooldowns.get(head.action) || 0;
+  const currentSignature = `${campaign.revision}:${rendererRuntimeSignature}:${cooldownDeadline}:${runtime.forceCheck ? "force" : ""}`;
+  
+  
+  const check = evaluateQueuedCommandReadiness(head, runtime);
+  runtime.lastCheckedSignature = currentSignature;
+  delete runtime.forceCheck;
+  
+  setQueuedCommandPhase(head.id, check.phase, check.reason);
+  
+  if (check.phase === "blocked") {
+    showTacticalFeedback(translateRejectionReason(check.reason));
+    render();
+  } else if (check.ready) {
+    await executeQueuedCommandIfReady(head.id);
+  } else {
+    syncQueuedCommandPreview();
+    render();
+  }
+}
+
+function scheduleQueueCheck() {
+  if (!campaign || campaign.status !== "active" || campaign.commandQueue.length === 0) {
+    if (commandExecutionTimer) {
+      window.clearTimeout(commandExecutionTimer);
+      commandExecutionTimer = 0;
+    }
+    return;
+  }
+  if (commandExecutionTimer) return;
+  commandExecutionTimer = window.setTimeout(async () => {
+    commandExecutionTimer = 0;
+    await drainCommandQueue();
+    scheduleQueueCheck();
+  }, COMMAND_QUEUE_TICK_MS);
+}
+
+function stopCommandQueueTimer() {
+  if (commandExecutionTimer) {
+    window.clearTimeout(commandExecutionTimer);
+    commandExecutionTimer = 0;
+  }
+  queuedCommandRuntime.clear();
+  seenCommandRequests.clear();
+}
 
 function currentStage() {
   return STAGES[campaign.stageIndex];
@@ -1686,9 +2247,15 @@ function setBattlePressure(phase, label) {
           ? "Preparation window: issue commands before the first hostile wave enters the lane."
           : "Live-wave pressure: keep the command pad active while hostiles cross the lane.";
   }
+  syncBattleScreenHud();
 }
 
-function renderBattleAssetStatus({ state, loaded = 0, total = 0, clips = 0 } = {}) {
+function renderBattleAssetStatus(options) {
+  const opts = options || {};
+  const state = opts.state;
+  const loaded = opts.loaded || 0;
+  const total = opts.total || 0;
+  const clips = opts.clips || 0;
   if (!elements.battleAssetStatus) return;
   const korean = currentLang() !== "en";
   const count = total ? `${loaded}/${total}` : "";
@@ -1822,6 +2389,121 @@ function currentEncounterWave(stage = currentStage(), encounter = currentEncount
   return stage.encounter.waves.find((wave) => wave.id === encounter.activeWaveId) ?? null;
 }
 
+function formatLiveBattleHud(key, values, lang) {
+  let text = translations[lang]?.[key] ?? key;
+  for (const [name, value] of Object.entries(values)) {
+    text = text.replaceAll(`{${name}}`, String(value));
+  }
+  return text;
+}
+
+function deriveLiveBattleHud(stage, state, runtime, lang) {
+  const encounter = stage?.encounter && state?.encounter ? state.encounter : null;
+  const waves = stage?.encounter?.waves ?? [];
+  const progress = encounter?.waves ?? [];
+  const total = waves.length;
+  const activeIndex = encounter?.activeWaveId
+    ? waves.findIndex((wave) => wave.id === encounter.activeWaveId)
+    : -1;
+  const nextIndex = progress.findIndex((wave) => wave?.cleared !== true);
+  const threatIndex = activeIndex >= 0 ? activeIndex : nextIndex;
+  const threat = threatIndex >= 0 ? waves[threatIndex] : null;
+  const enemiesActive = Number.isFinite(runtime?.enemiesActive)
+    ? Math.max(0, Math.trunc(runtime.enemiesActive))
+    : 0;
+  const engagements = Number.isFinite(runtime?.engagements)
+    ? Math.max(0, Math.trunc(runtime.engagements))
+    : 0;
+
+  let forecastKey = "battle.live.forecast.none";
+  let forecastState = "none";
+  if (encounter?.bossExposed) {
+    forecastKey = "battle.live.forecast.boss";
+    forecastState = "boss";
+  } else if (threat) {
+    forecastKey = "battle.live.forecast.wave";
+    forecastState = activeIndex >= 0 ? "live" : "pending";
+  }
+  const waveName = threat
+    ? (lang === "ko" ? translations.ko[`wave.${threat.id}`] || threat.id : threat.id)
+    : "";
+  const forecast = formatLiveBattleHud(forecastKey, {
+    current: threatIndex + 1,
+    total,
+    name: waveName,
+    hostiles: threat?.hostiles ?? 0,
+    seconds: threat?.spawnAtSeconds ?? 0,
+  }, lang);
+
+  let advanceKey = "battle.live.advance.waiting";
+  let advanceState = "waiting";
+  if (encounter?.spawningStopped || encounter?.bossExposed) {
+    advanceKey = "battle.live.advance.stopped";
+    advanceState = "stopped";
+  } else if (activeIndex >= 0 && engagements > 0) {
+    advanceKey = "battle.live.advance.engaged";
+    advanceState = "engaged";
+  } else if (activeIndex >= 0 && enemiesActive > 0) {
+    advanceKey = "battle.live.advance.spawned";
+    advanceState = "spawned";
+  } else if (activeIndex >= 0) {
+    advanceKey = "battle.live.advance.dispatched";
+    advanceState = "dispatched";
+  }
+  const advance = formatLiveBattleHud(advanceKey, {
+    active: enemiesActive,
+    engagements,
+  }, lang);
+
+  const phaseCount = stage?.bossPhaseCount === 4 ? 4 : 3;
+  const phase = resolveBossPhase({
+    health: state?.bossHealth,
+    maxHealth: stage?.bossHealth,
+    phaseCount,
+  });
+  const bossPhaseState = encounter?.bossExposed ? "active" : "locked";
+  const bossPhase = formatLiveBattleHud(
+    encounter?.bossExposed ? "battle.live.bossPhase.active" : "battle.live.bossPhase.locked",
+    {
+      current: phase.accepted ? phase.phaseIndex + 1 : "—",
+      total: phase.accepted ? phase.phaseCount : "—",
+      health: state?.bossHealth ?? "—",
+      maximum: stage?.bossHealth ?? "—",
+    },
+    lang,
+  );
+
+  const growthStage = total > 0
+    ? Math.min(total, Math.max(1, threatIndex >= 0 ? threatIndex + 1 : total))
+    : 0;
+  const enemyGrowth = formatLiveBattleHud(
+    total > 0 ? "battle.live.enemyGrowth.active" : "battle.live.enemyGrowth.none",
+    { current: growthStage, total, active: enemiesActive },
+    lang,
+  );
+
+  return {
+    forecast: { text: forecast, state: forecastState },
+    advance: { text: advance, state: advanceState },
+    bossPhase: { text: bossPhase, state: bossPhaseState },
+    enemyGrowth: { text: enemyGrowth, state: encounter?.bossExposed ? "boss" : (activeIndex >= 0 ? "live" : "pending") },
+  };
+}
+
+function renderLiveBattleHud(stage, state, runtime, lang) {
+  const projection = deriveLiveBattleHud(stage, state, runtime, lang);
+  for (const [element, field] of [
+    [elements.battleScreenForecast, projection.forecast],
+    [elements.battleScreenAdvance, projection.advance],
+    [elements.battleScreenBossPhase, projection.bossPhase],
+    [elements.battleScreenEnemyGrowth, projection.enemyGrowth],
+  ]) {
+    if (!element) continue;
+    element.textContent = field.text;
+    element.dataset.state = field.state;
+  }
+}
+
 function projectBattleRuntime() {
   if (!campaign) return;
   const stage = currentStage();
@@ -1837,6 +2519,7 @@ function projectBattleRuntime() {
   const presentation = getBattlePresentation(stage.id);
   const allyName = resolvePresentationCopy(null, presentation.allyLabel, stage.id, "allyLabel");
   const bossName = lang === "ko" ? translate(`stage.${stage.id}.bossName`) || stage.bossName : stage.bossName;
+  renderLiveBattleHud(stage, state, rendererRuntime, lang);
 
   elements.battleAllyLabel.textContent = lang === "ko"
     ? `${allyName} · ${state.legion}/${state.capacity} 실체화됨`
@@ -1943,7 +2626,9 @@ function synchronizeBattleRenderer(renderer = visualizer) {
     config: stage.encounter ?? null,
     state: encounter ?? { waves: [], activeWaveId: null, bossExposed: true, spawningStopped: true }
   });
+  syncQueuedCommandPreview(renderer);
   syncMinimap();
+  scheduleQueueCheck();
 }
 
 function handleRendererRuntime(runtime, sessionId, source) {
@@ -1990,7 +2675,29 @@ function handleEncounterEvent(event, sessionId = battleSessionId, source = null)
     campaign = result.state;
     render();
     const encounterCue = ENCOUNTER_CUE_BY_EVENT[event.type];
-    if (encounterCue) playCue(encounterCue);
+    const hasAuthoredCue = encounterCue && (
+      encounterCue === "breach-alert" ||
+      encounterCue === "wave-spawn" ||
+      (typeof CUE_BY_EFFECT !== "undefined" && CUE_BY_EFFECT[encounterCue])
+    );
+    if (hasAuthoredCue) {
+      playCue(encounterCue);
+    } else {
+      const combatAlertCue = typeof getCombatAlertCue === "function"
+        ? (getCombatAlertCue(event) || (encounterCue ? getCombatAlertCue(encounterCue) : null))
+        : null;
+      if (combatAlertCue) {
+        const feedback = typeof getCombatAlertFeedback === "function"
+          ? getCombatAlertFeedback(combatAlertCue)
+          : (combatAlertCue.text || combatAlertCue.message || "");
+        if (feedback && typeof showTacticalFeedback === "function") {
+          showTacticalFeedback(feedback);
+        }
+        if (typeof playCombatAlertCue === "function") {
+          playCombatAlertCue(combatAlertCue);
+        }
+      }
+    }
     const encounter = currentEncounter();
     if (campaign.status !== "active" || encounter?.bossExposed || encounter?.spawningStopped) {
       clearEncounterStartTimer();
@@ -2015,6 +2722,9 @@ function stopBattle() {
   battleSessionId += 1;
   clearEncounterStartTimer();
   stopBattleAudio();
+  if (typeof stopCommandQueueTimer === "function") {
+    stopCommandQueueTimer();
+  }
   syncBgmScene("lobby");
   window.clearInterval(cooldownTimer);
   battleStartedAt = 0;
@@ -2054,13 +2764,13 @@ function stopBattle() {
 function activateBattleFallback(stage, sessionId) {
   battleVisualFallback = true;
   renderBattleAssetStatus({ state: "unavailable" });
-  renderBattlePresentation(stage);
+  const presentation = renderBattlePresentation(stage);
   let fallback = null;
-  fallback = new BattleVisualizer(elements.battleFallbackCanvas, getBattlePresentation(stage.id), {
+  fallback = new BattleVisualizer(elements.battleFallbackCanvas, presentation, {
     nodeGoal: stage.nodeGoal,
     getAvailableActions: getInteractiveBattleActions,
     onAssetStatus: renderBattleAssetStatus,
-    onActionRequest: (action) => void handleAction(action),
+    onActionRequest: (request) => void handleRendererCommandRequest(request, sessionId, fallback),
     onEncounterEvent: (event) => void handleEncounterEvent(event, sessionId, fallback),
     onRuntimeState: (runtime) => handleRendererRuntime(runtime, sessionId, fallback),
     onActionFocus: (action) => handleActionFocus(action),
@@ -2111,12 +2821,11 @@ async function startBattle() {
         nodeGoal: stage.nodeGoal,
         getAvailableActions: getInteractiveBattleActions,
         onAssetStatus: renderBattleAssetStatus,
-        onActionRequest: (action) => void handleAction(action),
+        onActionRequest: (request) => void handleRendererCommandRequest(request, sessionId, battleRenderer),
         onEncounterEvent: (event) => void handleEncounterEvent(event, sessionId, battleRenderer),
         onRuntimeState: (runtime) => handleRendererRuntime(runtime, sessionId, battleRenderer),
         onActionFocus: (action) => handleActionFocus(action),
         onSelectionChange: (summary) => handleRendererSelection(summary, sessionId),
-        onTacticalRequest: (request) => handleTacticalRequest(request),
         onRendererFailure: () => {
           if (visualizer !== battleRenderer || sessionId !== battleSessionId || campaign?.status !== "active") return;
           visualizer = activateBattleFallback(currentStage(), sessionId);
@@ -2125,6 +2834,8 @@ async function startBattle() {
           }
           synchronizeBattleRenderer();
           projectBattleRuntime();
+          syncQueuedCommandPreview();
+          void drainCommandQueue();
         },
       });
       pendingBattleRenderer = battleRenderer;
@@ -2287,6 +2998,22 @@ function setResourceMeter(element, value, maximum) {
   const progress = Math.max(0, Math.min(1, (Number(value) || 0) / max));
   meter.style.setProperty("--resource-progress", `${Math.round(progress * 100)}%`);
 }
+function syncBattleScreenHud() {
+  const mirrors = [
+    [elements.battleScreenObjective, elements.stageObjective?.textContent],
+    [elements.battleScreenPressure, elements.battlePressure?.textContent],
+    [elements.battleScreenFeedback, elements.status?.textContent],
+    [elements.battleScreenWave, elements.waveIndicator?.textContent],
+    [elements.battleScreenSouls, elements.souls?.textContent],
+    [elements.battleScreenLegion, elements.legion?.textContent],
+    [elements.battleScreenNodes, elements.nodes?.textContent],
+    [elements.battleScreenIntegrity, elements.integrity?.textContent],
+    [elements.battleScreenBoss, `${elements.bossLabel?.textContent ?? ""} ${elements.boss?.textContent ?? ""}`.trim()],
+  ];
+  for (const [target, value] of mirrors) {
+    if (target && value) target.textContent = value;
+  }
+}
 
 
 
@@ -2370,6 +3097,8 @@ function render() {
     
   elements.boss.textContent = `${state.bossHealth} / ${stage.bossHealth}`;
   setResourceMeter(elements.boss, state.bossHealth, stage.bossHealth);
+  renderSelectionDossier();
+  syncBattleScreenHud();
   elements.retry.disabled = campaign.status === "reward" || isComplete;
   elements.complete.hidden = !isComplete;
   
@@ -2768,6 +3497,49 @@ function render() {
     });
   }
 
+  // 6. Render campaign-owned summon evolution controls.
+  const summons = campaign.progression?.summons ?? { essence: 0, levels: {} };
+  if (elements.summonEssence) elements.summonEssence.textContent = String(summons.essence);
+  for (const button of elements.summonEvolutionButtons ?? []) {
+    const recipeId = button.dataset.summonRecipe;
+    const recipe = SUMMON_RECIPES.find((candidate) => candidate.id === recipeId);
+    if (!recipe) {
+      button.disabled = true;
+      continue;
+    }
+    const level = summons.levels?.[recipeId] ?? 0;
+    const maxed = level >= recipe.maxLevel;
+    const cost = maxed ? null : recipe.essenceCosts[level];
+    const affordable = cost !== null && summons.essence >= cost;
+    button.disabled = campaign.status !== "active" || maxed || !affordable;
+    button.dataset.evolutionState = maxed ? "max" : affordable ? "ready" : "essence";
+
+    const levelElement = button.querySelector("[data-summon-level]");
+    if (levelElement) {
+      levelElement.textContent = formatLiveBattleHud(
+        maxed ? "summon.level.max" : "summon.level.current",
+        { level, maximum: recipe.maxLevel },
+        lang,
+      );
+    }
+    const costElement = button.querySelector("[data-summon-cost]");
+    if (costElement) {
+      costElement.textContent = maxed
+        ? translate("summon.cost.max")
+        : formatLiveBattleHud("summon.cost.next", { cost }, lang);
+    }
+    const name = translate(`summon.recipe.${recipeId}.name`) || recipe.name;
+    button.setAttribute("aria-label", formatLiveBattleHud(
+      maxed
+        ? "summon.control.max"
+        : affordable
+          ? "summon.control.ready"
+          : "summon.control.essence",
+      { name, level, maximum: recipe.maxLevel, cost, essence: summons.essence },
+      lang,
+    ));
+  }
+
   // 6. Update Minimap Snapshot
   syncMinimap();
 
@@ -2826,6 +3598,81 @@ function playCue(effect) {
   cuePlayer.play().catch(() => undefined);
 }
 
+function getCombatAlertFeedback(cue) {
+  if (!cue) return "";
+  const cueId = typeof cue.id === "string" ? cue.id : "";
+  const key = COMBAT_ALERT_FEEDBACK_KEYS[cueId] || (cueId ? `combat.alert.${cueId}` : "");
+  const lang = typeof currentLang === "function" ? currentLang() : "en";
+  if (key && typeof translate === "function") {
+    const localized = translate(key, lang);
+    if (localized && localized !== key) return localized;
+  }
+  const text = typeof cue.text === "string"
+    ? cue.text
+    : (typeof cue.message === "string" ? cue.message : cue.label);
+  return typeof text === "string" && text.trim()
+    ? text.trim()
+    : (cueId ? `Combat alert: ${cueId}` : "Combat alert");
+}
+
+function playProceduralCombatAlert(cue) {
+  if (!cue || typeof window === "undefined") return;
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+  let context;
+  try {
+    context = new AudioCtx();
+    if (!context || !context.createOscillator || !context.createGain) return;
+    if (context.state === "suspended") context.resume().catch(() => undefined);
+    if (context.state === "closed") return;
+    const critical = cue.severity === "critical";
+    const positive = cue.severity === "positive";
+    const startFrequency = critical ? 660 : positive ? 520 : 420;
+    const endFrequency = critical ? 300 : positive ? 780 : 220;
+    const duration = Math.max(0.12, Math.min(0.8, Number(cue.durationMs) / 1000 || 0.24));
+    const now = context.currentTime;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = critical ? "square" : positive ? "sine" : "triangle";
+    oscillator.frequency.setValueAtTime(startFrequency, now);
+    oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, endFrequency), now + duration);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.16, now + Math.min(0.04, duration / 4));
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + duration);
+    oscillator.addEventListener?.("ended", () => context.close?.(), { once: true });
+  } catch {
+    context?.close?.();
+  }
+}
+
+function playCombatAlertCue(cue) {
+  if (!cue) return;
+  const candidateCue = ENCOUNTER_CUE_BY_EVENT[cue.event] || ENCOUNTER_CUE_BY_EVENT[cue.id];
+  const authoredCue = candidateCue && (
+    candidateCue === "breach-alert" ||
+    candidateCue === "wave-spawn" ||
+    (typeof CUE_BY_EFFECT !== "undefined" && CUE_BY_EFFECT[candidateCue])
+  );
+  if (authoredCue) {
+    playCue(authoredCue);
+    return;
+  }
+  const effect = typeof cue.id === "string" ? cue.id : "";
+  if (effect && CUE_BY_EFFECT[effect]) {
+    playCue(effect);
+    return;
+  }
+  const now = performance.now();
+  if (effect && effect === lastCueEffect && now - lastCueStartedAt < 150) return;
+  lastCueEffect = effect;
+  lastCueStartedAt = now;
+  playProceduralCombatAlert(cue);
+}
+
 function setBgmTogglePlaying(playing) {
   elements.bgmToggle?.classList.toggle("is-playing", playing);
   elements.bgmToggle?.setAttribute("aria-pressed", String(playing));
@@ -2844,9 +3691,17 @@ function playSelectedBgm(run) {
   });
 }
 
+function musicSourceForScene(scene) {
+  if (scene === "battle") {
+    const stageId = typeof campaign !== "undefined" && campaign ? currentStage()?.id : "";
+    return MUSIC_BY_STAGE[stageId] || MUSIC_BY_SCENE.battle;
+  }
+  return MUSIC_BY_SCENE[scene];
+}
+
 function syncBgmScene(scene) {
   const player = elements.bgmPlayer;
-  const source = MUSIC_BY_SCENE[scene];
+  const source = musicSourceForScene(scene);
   if (!player || !source) return;
   if (player.getAttribute("src") === source) {
     player.dataset.audioScene = scene;
@@ -3023,7 +3878,7 @@ async function applyMirroredCampaign(envelope, metadata) {
     const mirroredCampaign = restoreSaveEnvelope(envelope);
     const activeCampaign = campaign;
     await storage.save(envelope);
-    const isStale = campaign !== activeCampaign || !campaignMirror?.authorize(metadata);
+    const isStale = campaign !== activeCampaign || (campaignMirror && !campaignMirror?.authorize(metadata));
     if (isStale) {
       const restoreCampaign = campaign || storedCampaign;
       if (restoreCampaign) {
@@ -3036,6 +3891,9 @@ async function applyMirroredCampaign(envelope, metadata) {
     if (campaign) {
       stopBattle();
       campaign = mirroredCampaign;
+      if (typeof syncCommandRuntimeFromCampaign === "function") {
+        syncCommandRuntimeFromCampaign();
+      }
       narratedStageId = null;
       narratedOutcome = null;
       render();
@@ -3047,11 +3905,12 @@ async function applyMirroredCampaign(envelope, metadata) {
 }
 
 function triggerBattleVisual(action, details = {}) {
+  const opts = details || {};
   if (!campaign) return;
   const semantic = BATTLE_ACTION_SEMANTICS[action];
   if (!semantic) return;
   if (visualizer) {
-    visualizer.playActionEffect({ ...semantic, action, ...details });
+    visualizer.playActionEffect({ ...semantic, action, ...opts });
     return;
   }
   flashEffect(action);
@@ -3064,47 +3923,8 @@ function startActionCooldown(action) {
 }
 
 async function handleAction(action) {
-  let accepted = false;
-  try {
-    if (!campaign || !battleUiActive() || resultOverlayOpen || remainingCooldown(action) > 0) return;
-    if (!getAvailableActions(campaign).includes(action)) return;
-
-    const stage = currentStage();
-    const priorCampaign = campaign;
-    const result = action === "assault" && stage.encounter
-      ? applyEncounterEvent(campaign, { type: "boss-assault", stageId: stage.id })
-      : applyAction(campaign, action);
-    const materializeCount = action === "materialize" && result.accepted
-      ? result.state.stage.legion - priorCampaign.stage.legion
-      : 0;
-    campaign = result.state;
-    if (campaign.status !== "active" || currentEncounter()?.bossExposed || currentEncounter()?.spawningStopped) {
-      clearEncounterStartTimer();
-    }
-    if (!result.accepted) {
-      render();
-      return;
-    }
-
-    accepted = true;
-    startActionCooldown(action);
-    synchronizeBattleRenderer();
-    armEncounterWhenPrepared();
-    triggerBattleVisual(action, action === "materialize" ? { count: materializeCount } : {});
-    render();
-    await persistCampaign("persist.campaignSaved");
-  } finally {
-    if (typeof window.CustomEvent === "function") {
-      window.setTimeout(() => {
-        const event = new window.CustomEvent("abyssal:command-resolved", {
-          detail: { action, accepted }
-        });
-        window.dispatchEvent(event);
-      }, 0);
-    }
-  }
+  return enqueueCommandRequest(action, { source: "primary-control" });
 }
-
 async function handleReward(rewardId) {
   if (!campaign || !resultOverlayOpen) return;
   const result = chooseReward(campaign, rewardId);
@@ -3177,6 +3997,7 @@ async function handleRetry() {
     render();
     return;
   }
+  syncCommandRuntimeFromCampaign();
   flashEffect("retry");
   entryGuidanceStageId = null;
   await persistCampaign("persist.stageRetrySaved");
@@ -3514,6 +4335,13 @@ function wireControls() {
       void handleSkillUpgrade(skill);
       return;
     }
+    // 4. Summon evolution buttons
+    const summonButton = target.closest("#summon-evolution-controls button[data-summon-recipe]");
+    if (summonButton) {
+      void handleSummonEvolution(summonButton.dataset.summonRecipe);
+      return;
+    }
+
   });
 
   elements.exportSave.addEventListener("click", exportSave);

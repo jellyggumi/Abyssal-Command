@@ -2,6 +2,9 @@
   const React = window.React;
   const ReactDOM = window.ReactDOM;
   const e = React.createElement;
+  if (typeof window !== "undefined" && !window.location) {
+    window.location = { hostname: "" };
+  }
 
   function BackgroundLayer() {
     return e('div', { className: 'medieval-bg-layer' },
@@ -437,6 +440,11 @@
               'data-i18n-aria': 'battle.fallbackCanvasAria',
               hidden: true
             }),
+            e('canvas', {
+              id: 'battle-object-feedback-canvas',
+              'aria-hidden': 'true',
+              style: { pointerEvents: 'none' }
+            }),
             e('aside', {
               id: 'battle-visual-fallback',
               className: 'battle-visual-fallback',
@@ -458,6 +466,86 @@
                 )
               ),
               e('p', { className: 'battle-fallback-note', 'data-i18n': 'battle.fallback.note' }, '직접 렌더러를 사용할 수 없습니다. 전술 브리핑과 명령 패널은 활성 상태로 유지됩니다.')
+            )
+          ),
+          e('div', {
+            id: 'battle-screen-ui',
+            className: 'battle-screen-ui',
+            'aria-label': '전장 화면 UI',
+            'data-i18n-aria': 'fieldOverlay.aria'
+          },
+            e('section', {
+              className: 'battle-screen-ui__selection',
+              'aria-label': '현재 선택된 지휘 부대',
+              'data-i18n-aria': 'command.selectionAria'
+            },
+              e('img', {
+                className: 'battle-screen-ui__selection-image',
+                'data-battle-screen': 'selection-image',
+                src: 'assets/images/ui/action-possess.png',
+                alt: ''
+              }),
+              e('div', { className: 'battle-screen-ui__selection-copy' },
+                e('span', { className: 'battle-screen-ui__eyebrow', 'data-battle-screen': 'selection-label', 'data-i18n': 'command.selectionLabel' }, '선택 부대'),
+                e('strong', { className: 'battle-screen-ui__selection-name', 'data-battle-screen': 'selection-name', 'data-i18n': 'command.selectionNone' }, '선택 없음'),
+                e('small', { className: 'battle-screen-ui__selection-role', 'data-battle-screen': 'selection-role', 'data-i18n': 'command.selectionRole' }, '황혼의 감시자 · 전선 지휘관'),
+                e('div', { className: 'battle-screen-ui__selection-stats' },
+                  e('span', null,
+                    e('span', { 'data-i18n': 'command.selectionCount' }, '선택 수'),
+                    ' ',
+                    e('b', { 'data-battle-screen': 'selection-count' }, '0 / 0')
+                  ),
+                  e('span', null,
+                    e('span', { 'data-i18n': 'command.selectionHealth' }, '통합 체력'),
+                    ' ',
+                    e('b', { 'data-battle-screen': 'selection-health' }, '0 / 0')
+                  ),
+                  e('span', null,
+                    e('span', { 'data-i18n': 'command.selectionOrder' }, '현재 명령'),
+                    ' ',
+                    e('b', { 'data-battle-screen': 'selection-order', 'data-i18n': 'command.selection.order.none' }, '대기')
+                  )
+                ),
+                e('output', {
+                  className: 'battle-screen-ui__selection-status',
+                  'data-battle-screen': 'selection-status',
+                  'aria-live': 'polite'
+                })
+              )
+            ),
+            e('dl', {
+              className: 'battle-screen-ui__resources',
+              'aria-label': '전투 자원',
+              'data-i18n-aria': 'status.resourceAria'
+            },
+              [
+                ['souls', 'status.souls', '영혼'],
+                ['legion', 'status.legion', '군단 슬롯'],
+                ['nodes', 'status.nodes', '점거 거점'],
+                ['integrity', 'status.integrity', '군주 내구도'],
+                ['boss', 'boss.hp', '보스 보호막']
+              ].map(([id, labelKey, label]) => e('div', { key: id, 'data-battle-screen-resource': id },
+                e('dt', { 'data-i18n': labelKey }, label),
+                e('dd', { 'data-battle-screen': id }, '—')
+              ))
+            ),
+            e('div', { className: 'battle-screen-ui__mission', role: 'status', 'aria-live': 'polite' },
+              e('span', { className: 'battle-screen-ui__eyebrow', 'data-i18n': 'fieldOverlay.order' }, '현재 명령'),
+              e('strong', { 'data-battle-screen': 'objective' }, '현재 목표를 불러오는 중…'),
+              e('small', { 'data-battle-screen': 'pressure' }, '전장 상태를 불러오는 중…'),
+              e('output', { className: 'battle-screen-ui__feedback', 'data-battle-screen': 'feedback', 'aria-live': 'polite' }),
+              e('span', { className: 'battle-screen-ui__wave', 'data-battle-screen': 'wave' }, '웨이브 대기'),
+              e('dl', { className: 'battle-screen-ui__frontline' },
+                [
+                  ['forecast', 'battle.live.forecastLabel', '다음 웨이브', '웨이브 예측 대기'],
+                  ['advance', 'battle.live.advanceLabel', '진입 상태', '적 진입 대기'],
+                  ['boss-phase', 'battle.live.bossPhaseLabel', '보스 단계', '보스 잠김'],
+                  ['enemy-growth', 'battle.live.enemyGrowthLabel', '적 성장', '성장 단계 대기']
+                ].map(([id, labelKey, label, value]) => e('div', { key: id },
+                  e('dt', { 'data-i18n': labelKey }, label),
+                  e('dd', { 'data-battle-screen': id }, value)
+                ))
+              )
             )
           ),
           e('p', { id: 'battle-direct-help', className: 'battle-mouse-help', 'data-i18n': 'battle.directHelp' }, '전장을 선택한 후, WASD나 방향키를 길게 눌러 사령관을 이동하고 Shift를 눌러 돌진하십시오. 드래그하여 회전하고 휠로 확대/축소할 수 있으며, 지면을 클릭해 사령관을 소집하고 우클릭으로 그림자를 집결시키며 표시된 대상을 클릭해 명령을 발동하십시오.')
@@ -568,6 +656,42 @@
                     ' (',
                     e('span', { id: 'skill-cost-' + skill.id }, '4'),
                     ' M)'
+                  )
+                );
+              })
+            )
+          ),
+          e('div', {
+            id: 'summon-evolution-controls',
+            className: 'tactical-hud-section summon-evolutions',
+            'aria-labelledby': 'summon-evolution-heading'
+          },
+            e('div', { className: 'summon-evolution-heading' },
+              e('h4', { id: 'summon-evolution-heading', 'data-i18n': 'summon.heading' }, '소환수 진화'),
+              e('span', { className: 'summon-essence' },
+                e('span', { 'data-i18n': 'summon.essence' }, '정수'),
+                ' ',
+                e('strong', { id: 'summon-essence-value' }, '0')
+              )
+            ),
+            e('div', { className: 'summon-evolution-grid' },
+              [
+                { id: 'ember-scion', name: '잿불 후예', description: '실체화 소환 수 강화' },
+                { id: 'rift-hound', name: '균열 사냥개', description: '총공격 피해 강화' },
+                { id: 'ward-wisp', name: '수호 도깨비불', description: '반격 피해 감소' }
+              ].map(function (recipe) {
+                return e('button', {
+                  key: recipe.id,
+                  type: 'button',
+                  className: 'summon-evolution-card battle-pointer-target',
+                  'data-summon-recipe': recipe.id,
+                  'aria-label': recipe.name + ' 진화'
+                },
+                  e('strong', { 'data-i18n': 'summon.recipe.' + recipe.id + '.name' }, recipe.name),
+                  e('small', { 'data-i18n': 'summon.recipe.' + recipe.id + '.description' }, recipe.description),
+                  e('span', { className: 'summon-evolution-meta' },
+                    e('span', { 'data-summon-level': '' }, '레벨 0 / 3'),
+                    e('span', { 'data-summon-cost': '' }, '다음 비용 4')
                   )
                 );
               })
@@ -886,6 +1010,18 @@
   }
 
   function App() {
+    const useState = React.useState || ((initial) => [initial, () => {}]);
+    const useEffect = React.useEffect || (() => {});
+
+    const [agentationLoaded, setAgentationLoaded] = useState(!!window.Agentation);
+
+    useEffect(() => {
+      if (window.Agentation) return;
+      const handleLoaded = () => setAgentationLoaded(true);
+      window.addEventListener('agentation:loaded', handleLoaded);
+      return () => window.removeEventListener('agentation:loaded', handleLoaded);
+    }, []);
+
     const containerRef = function (node) {
       if (node) {
         document.getElementById('react-game-root').setAttribute('data-mounted', 'true');
@@ -893,6 +1029,8 @@
         window.dispatchEvent(new CustomEvent('abyssal:react-ready'));
       }
     };
+
+    const isLocalhost = window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
     return e('div', {
       ref: containerRef,
@@ -912,7 +1050,8 @@
         e(CampaignLobby),
         e(CampaignCockpit)
       ),
-      e('div', { id: 'visual-effect', className: 'visual-effect', 'aria-hidden': 'true' })
+      e('div', { id: 'visual-effect', className: 'visual-effect', 'aria-hidden': 'true' }),
+      isLocalhost && agentationLoaded && window.Agentation ? e(window.Agentation, { endpoint: 'http://localhost:4747' }) : null
     );
   }
 
