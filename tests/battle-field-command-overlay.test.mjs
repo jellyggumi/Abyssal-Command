@@ -934,3 +934,46 @@ test("mounted overlay copies the selected native command and delegates activatio
     assert.equal(earlierCommand.clickCount, 0, "activation must not invoke an earlier non-current command");
   });
 });
+
+test("spatial focus highlights the proxy activation only for its active native command", { concurrency: false }, async () => {
+  const materialize = staticCommand({
+    action: "materialize",
+    name: "Materialize",
+    detail: "Call a shade through the portal.",
+    current: true,
+  });
+  const domain = staticCommand({
+    action: "domain",
+    name: "Domain",
+    detail: "Open the full abyssal domain.",
+  });
+  const fixture = createStaticOverlayFixture({ commands: [materialize, domain] });
+
+  await withMountedOverlay(fixture, async (overlay) => {
+    const activation = overlay.querySelector("button");
+
+    fixture.dispatch("abyssal:spatial-focus", { detail: { action: "domain" } });
+    assert.equal(
+      overlay.getAttribute("data-spatial-focused"),
+      "domain",
+      "the overlay must retain the spatial action projected from the battlefield even when it is not the proxy command",
+    );
+    assert.equal(
+      activation.getAttribute("data-focused"),
+      null,
+      "a different spatial action must not visually claim that the proxy activation will issue it",
+    );
+
+    fixture.dispatch("abyssal:spatial-focus", { detail: { action: "materialize" } });
+    assert.equal(
+      overlay.getAttribute("data-spatial-focused"),
+      "materialize",
+      "the overlay must update its spatial action when focus moves to the active proxy command",
+    );
+    assert.equal(
+      activation.getAttribute("data-focused"),
+      "true",
+      "the proxy activation may highlight only when spatial focus matches its active native command",
+    );
+  });
+});

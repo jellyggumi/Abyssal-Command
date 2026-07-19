@@ -31,7 +31,13 @@ function makeVisualizer(t, {
 
 function makePointerCanvas() {
   const listeners = new Map();
+  const focusCalls = [];
   return {
+    style: {},
+    focusCalls,
+    focus(options) {
+      focusCalls.push(options);
+    },
     addEventListener(type, listener) {
       listeners.set(type, listener);
     },
@@ -42,8 +48,15 @@ function makePointerCanvas() {
       return { left: 0, top: 0, width: 1600, height: 900 };
     },
     setPointerCapture() {},
-    dispatch(type, { x, y }) {
-      listeners.get(type)?.({ button: 0, pointerId: 1, clientX: x, clientY: y });
+    dispatch(type, { x = 0, y = 0, ...event } = {}) {
+      listeners.get(type)?.({
+        button: 0,
+        pointerId: 1,
+        pointerType: "mouse",
+        clientX: x,
+        clientY: y,
+        ...event,
+      });
     },
   };
 }
@@ -114,6 +127,158 @@ test("BattleVisualizer fallback canvas prioritizes available semantic targets ov
     ["materialize", "capture", "assault"],
     "an exposed boss must dispatch Assault only after the supplied available-action contract admits it",
   );
+});
+
+test("BattleVisualizer keeps portal pointer focus and activation on the same highest-priority available action", (t) => {
+  const canvas = makePointerCanvas();
+  const focusedActions = [];
+  const requestedActions = [];
+  let availableActions = ["materialize", "domain"];
+  const visualizer = makeVisualizer(t, {
+    canvas,
+    options: {
+      getAvailableActions: () => availableActions,
+      onActionFocus: (action) => focusedActions.push(action),
+      onActionRequest: (action) => requestedActions.push(action),
+    },
+  });
+  visualizer.view.scale = 100;
+  visualizer.project = (x, y) => ({ x: x * 100, y: y * 100 });
+  visualizer.elevationAt = () => 0;
+  visualizer.attachPointerHandlers();
+  const portal = visualizer.actionPoint("portal");
+  const target = visualizer.project(portal.x, portal.y);
+
+  canvas.dispatch("pointermove", target);
+  clickCanvasTarget(canvas, target);
+
+  availableActions = ["domain"];
+  canvas.dispatch("pointermove", target);
+  clickCanvasTarget(canvas, target);
+
+  assert.deepEqual(
+    focusedActions,
+    ["materialize", "domain"],
+    "portal focus must prefer Materialize while both commands are available and expose Domain only after Materialize is unavailable",
+  );
+  assert.deepEqual(
+    requestedActions,
+    ["materialize", "domain"],
+    "pointerup activation must resolve the same portal action previously projected through pointer focus",
+  );
+});
+
+test("BattleVisualizer focuses the fallback canvas before reporting pointerdown spatial focus", (t) => {
+  const canvas = makePointerCanvas();
+  const reportedFocus = [];
+  const visualizer = makeVisualizer(t, {
+    canvas,
+    options: {
+      getAvailableActions: () => ["materialize"],
+      onActionFocus: (action) => {
+        reportedFocus.push({ action, focusCallCount: canvas.focusCalls.length });
+      },
+    },
+  });
+  visualizer.view.scale = 100;
+  visualizer.project = (x, y) => ({ x: x * 100, y: y * 100 });
+  visualizer.elevationAt = () => 0;
+  visualizer.attachPointerHandlers();
+  const portal = visualizer.actionPoint("portal");
+
+  canvas.dispatch("pointerdown", {
+    ...visualizer.project(portal.x, portal.y),
+    pointerType: "touch",
+  });
+
+  assert.deepEqual(
+    canvas.focusCalls,
+    [{ preventScroll: true }],
+    "pointerdown must move keyboard ownership to the fallback canvas without scrolling the command UI",
+  );
+  assert.deepEqual(
+    reportedFocus,
+    [{ action: "materialize", focusCallCount: 1 }],
+    "the canvas must already be focused before pointer/touch spatial focus is projected to the DOM",
+  );
+});
+
+test("BattleVisualizer projects pointer focus and clears it on hover exit, cancellation, and canvas blur", (t) => {
+  const runFocusSequence = (exit) => {
+    const canvas = makePointerCanvas();
+    const focusedActions = [];
+    const visualizer = makeVisualizer(t, {
+      canvas,
+      options: {
+        getAvailableActions: () => ["materialize"],
+        onActionFocus: (action) => focusedActions.push(action),
+      },
+    });
+    visualizer.view.scale = 100;
+    visualizer.project = (x, y) => ({ x: x * 100, y: y * 100 });
+    visualizer.elevationAt = () => 0;
+    visualizer.attachPointerHandlers();
+    const portal = visualizer.actionPoint("portal");
+    const target = visualizer.project(portal.x, portal.y);
+
+    if (exit === "pointercancel") {
+      canvas.dispatch("pointerdown", target);
+    } else {
+      canvas.dispatch("pointermove", target);
+    }
+    canvas.dispatch(exit, exit === "pointercancel" ? { pointerId: 1 } : {});
+    return focusedActions;
+  };
+
+  const canvas = makePointerCanvas();
+  const passiveFocus = [];
+  const visualizer = makeVisualizer(t, {
+    canvas,
+    options: {
+      getAvailableActions: () => ["materialize"],
+      onActionFocus: (action) => passiveFocus.push(action),
+    },
+  });
+  visualizer.view.scale = 100;
+  visualizer.project = (x, y) => ({ x: x * 100, y: y * 100 });
+  visualizer.elevationAt = () => 0;
+  visualizer.attachPointerHandlers();
+  const portal = visualizer.actionPoint("portal");
+  canvas.dispatch("pointermove", visualizer.project(portal.x, portal.y));
+  canvas.dispatch("pointermove", { x: 1500, y: 850 });
+
+  assert.deepEqual(
+    {
+      passiveHover: passiveFocus,
+      pointerleave: runFocusSequence("pointerleave"),
+      pointercancel: runFocusSequence("pointercancel"),
+      blur: runFocusSequence("blur"),
+    },
+    {
+      passiveHover: ["materialize", null],
+      pointerleave: ["materialize", null],
+      pointercancel: ["materialize", null],
+      blur: ["materialize", null],
+    },
+    "every canvas focus exit must clear the command/dossier projection after exposing the matching available action",
+  );
+});
+
+test("BattleVisualizer previewAction and clearActionPreview expose a controlled DOM preview seam", (t) => {
+  const visualizer = makeVisualizer(t);
+  const semantic = Object.freeze({ action: "hunt", source: "portal", target: "extractor", actor: "commander", clip: "Special" });
+  let renders = 0;
+  visualizer.renderStatic = () => {
+    renders += 1;
+  };
+
+  visualizer.previewAction(semantic);
+  assert.strictEqual(visualizer.actionPreview, semantic, "DOM hover or keyboard focus must project the exact action-enriched semantic supplied by the app bridge");
+  assert.equal(renders, 1, "starting a DOM preview must redraw the fallback battlefield");
+
+  visualizer.clearActionPreview();
+  assert.equal(visualizer.actionPreview, null, "DOM pointerout or blur must clear the projected renderer preview");
+  assert.equal(renders, 2, "clearing a DOM preview must redraw the fallback battlefield");
 });
 
 test("BattleVisualizer action feedback remains presentation-only while preserving semantic source-to-target gestures", (t) => {
@@ -368,4 +533,30 @@ test("BattleVisualizer spawns hostile waves from the 24×12 route frontage witho
       `route ${routeIndex + 1} must terminate at the portal frontage`,
     );
   });
+});
+
+test("BattleVisualizer maps Stage 1 waves to their authored models and later archetypes to the scout fallback", (t) => {
+  const visualizer = makeVisualizer(t, {
+    presentation: { stageNumber: 1 },
+  });
+  visualizer.burst = () => {};
+  visualizer.playSpatial = () => {};
+  const archetypeByWave = {};
+
+  for (const waveId of ["scout", "guard", "reinforcement", "depthguard"]) {
+    visualizer.enemies = [];
+    visualizer.spawnEncounterWave({ id: waveId, hostiles: 1, hostileHealth: 2 });
+    archetypeByWave[waveId] = visualizer.enemies[0]?.archetype;
+  }
+
+  assert.deepEqual(
+    archetypeByWave,
+    {
+      scout: "scout",
+      guard: "guard",
+      reinforcement: "reinforce",
+      depthguard: "scout",
+    },
+    "only the three declared Stage 1 waves may select dedicated hostile art; later archetypes must retain the scout fallback",
+  );
 });

@@ -296,6 +296,16 @@
   }
 }
 
+#battle-field .ashen-field-command__activate[data-focused="true"] {
+  border-color: #fff0b4;
+  background: linear-gradient(145deg, #6b4825, #25180f 68%);
+  box-shadow: 0 0 0 .125rem rgb(255 240 180 / 40%), 0 0 .75rem rgb(255 240 180 / 45%);
+}
+
+#battle-field .ashen-field-command[data-spatial-focused] {
+  border-color: #70e5d0;
+  box-shadow: 0 0 .95rem rgb(112 229 208 / 35%);
+}
 @media (prefers-reduced-motion: reduce) {
   #battle-field .ashen-field-command *,
   #battle-field .ashen-field-command::before {

@@ -1,4 +1,4 @@
-const CACHE_NAME = "abyssal-surge-static-v48";
+const CACHE_NAME = "abyssal-surge-static-v49";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -39,6 +39,8 @@ const LAZY_SOURCE_BATTLE_PATHS = Object.freeze([
   "/assets/models/abyssal-command/terrain/echo-throne-steps.glb",
   "/assets/models/abyssal-command/units/shade.glb",
   "/assets/models/abyssal-command/units/scout.glb",
+  "/assets/models/abyssal-command/units/guard.glb",
+  "/assets/models/abyssal-command/units/reinforce.glb",
   "/assets/models/abyssal-command/bosses/cinder-warden.glb",
   "/assets/models/abyssal-command/bosses/veil-tactician.glb",
   "/assets/models/abyssal-command/bosses/gate-sovereign.glb",

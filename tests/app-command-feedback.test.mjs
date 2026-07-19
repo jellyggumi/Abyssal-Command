@@ -284,8 +284,14 @@ async function loadCommandFocusHotkey() {
     toggleFullscreen: null,
   };
   const actions = [];
+  const previewActions = [];
+  const projectedActions = [];
   const context = vm.createContext({
     ACTION_KEYS: Object.freeze({ a: "assault" }),
+    BATTLE_ACTION_SEMANTICS: Object.freeze({
+      hunt: Object.freeze({ source: "portal", target: "extractor" }),
+      assault: Object.freeze({ source: "ally", target: "boss" }),
+    }),
     DIGIT_ACTION_KEYS: Object.freeze({ "1": "hunt", digit1: "hunt" }),
     battleUiActive: () => true,
     beginNewCampaign: () => {},
@@ -301,6 +307,7 @@ async function loadCommandFocusHotkey() {
     handleFullscreenError: () => {},
     importSave: () => {},
     pendingCommandFocus: false,
+    projectActionFocus: (action) => projectedActions.push(action),
     playCinematic: () => {},
     refreshNarrationLanguage: () => {},
     refreshSaveStatus: () => {},
@@ -316,18 +323,25 @@ async function loadCommandFocusHotkey() {
     toggleCinematicTranscript: () => {},
     toggleFullscreen: () => Promise.resolve(),
     updateResumeAffordance: () => {},
+    visualizer: {
+      previewAction: (semantic) => previewActions.push(semantic.action),
+      clearActionPreview: () => previewActions.push(null),
+    },
     window: {
       addEventListener: (type, listener) => listeners.set(type, listener),
     },
   });
   context.render = () => context.focusPendingCommand();
   const definitions = [
+    appFunction(source, "currentActionFocus", "updateActionFocus"),
+    appFunction(source, "updateActionFocus", "handleActionFocus"),
+    appFunction(source, "handleActionFocus", "projectActionFocus"),
     appFunction(source, "focusPendingCommand", "render"),
     appFunction(source, "beginStageCombat", "exportSave"),
     appFunction(source, "wireControls", "startLiquidEtherBackground"),
   ];
   vm.runInContext(
-    `${definitions.join("\n\n")}\nglobalThis.focusPendingCommand = focusPendingCommand; wireControls();`,
+    `let activeFieldFocusedAction = null;\nlet activeCommandHoverAction = null;\nlet activeCommandFocusAction = null;\n${definitions.join("\n\n")}\nglobalThis.focusPendingCommand = focusPendingCommand; globalThis.handleActionFocus = handleActionFocus; wireControls();`,
     context,
     { filename: "app.js" },
   );
@@ -355,8 +369,11 @@ async function loadCommandFocusHotkey() {
     body,
     editable,
     hunt,
+    previewActions,
+    projectedActions,
     activeElement: () => document.activeElement,
     acknowledgeBriefing: () => elements.startCombat.dispatch("click"),
+    focusFieldAction: (action) => context.handleActionFocus(action),
     pressAssault: () => pressKey("a", "KeyA"),
     pressDigitOne: () => pressKey("1", "Digit1"),
   };
@@ -672,6 +689,31 @@ test("briefing acknowledgement focuses Hunt and Digit1 dispatches only from comm
   assert.deepEqual(fixture.actions, ["hunt"], "editable focus must block numeric campaign command dispatch");
 });
 
+test("spatial field hover overrides and then restores a keyboard-focused command preview", async () => {
+  const fixture = await loadCommandFocusHotkey();
+
+  fixture.hunt.focus();
+  fixture.hunt.dispatch("focus");
+  fixture.focusFieldAction("assault");
+  assert.equal(
+    fixture.activeElement(),
+    fixture.hunt,
+    "spatial pointer hover must not steal keyboard focus from the command button",
+  );
+  fixture.focusFieldAction(null);
+
+  assert.deepEqual(
+    fixture.previewActions,
+    ["hunt", "assault", "hunt"],
+    "field hover must override the lingering keyboard preview, and clearing the field hover must restore that focused command",
+  );
+  assert.deepEqual(
+    fixture.projectedActions,
+    ["hunt", "assault", "hunt"],
+    "command and dossier projection must follow the same field-over-keyboard precedence as the renderer preview",
+  );
+});
+
 test("Assault remains a command outside the tactical canvas and movement owns A on either canvas", async () => {
   const fixture = await loadCommandFocusHotkey();
 
@@ -969,6 +1011,7 @@ async function loadAudioSceneLifecycle() {
     lastCueStartedAt: 100,
     pendingBattleRenderer: { destroy() {} },
     pendingCommandFocus: true,
+    projectActionFocus: () => {},
     rendererRuntime: {},
     translate: () => "Play ambience",
     visualizer: { destroy() {} },

@@ -22,6 +22,15 @@ const STAGE_ASSETS = Object.freeze({
   10: Object.freeze({ terrain: "terrain/echo-throne-steps.glb", boss: "bosses/gate-sovereign.glb" }),
 });
 const MODEL_ROOT = "./assets/models/abyssal-command/";
+const BATTLE_ACTION_SEMANTICS = Object.freeze({
+  hunt: Object.freeze({ source: "portal", target: "extractor", actor: "commander", actorClip: "Special", sourceAsset: "shade", clip: "Special" }),
+  extract: Object.freeze({ source: "extractor", target: "portal", actor: "commander", actorClip: "Special", sourceAsset: "soul-extractor", clip: "Activate" }),
+  materialize: Object.freeze({ source: "portal", target: "portal", actor: "commander", actorClip: "Special", sourceAsset: "rift-portal", clip: "Activate" }),
+  capture: Object.freeze({ source: "commander", target: "node", actor: "commander", actorClip: "Special", sourceAsset: "commander", clip: "Special" }),
+  possess: Object.freeze({ source: "commander", target: "commander", actor: "commander", actorClip: "Special", sourceAsset: "commander", clip: "Special" }),
+  domain: Object.freeze({ source: "commander", target: "commander", actor: "commander", actorClip: "Special", sourceAsset: "commander", clip: "Special" }),
+  assault: Object.freeze({ source: "commander", target: "boss", actor: "commander", actorClip: "Special", sourceAsset: "commander", clip: "Special" }),
+});
 const MOVE_CODES = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"]);
 const SURGE_CODES = new Set(["ShiftLeft", "ShiftRight"]);
 const TERRAIN_ELEVATION_SCALE = 0.42;
@@ -328,10 +337,14 @@ export class RealtimeBattle {
     this.stageNumber = Math.max(1, Math.min(10, Number(presentation?.stageNumber) || 1));
     this.nodeGoal = Math.max(1, Number(options.nodeGoal) || 1);
     this.requestAction = typeof options.onActionRequest === "function" ? options.onActionRequest : null;
+    this.getAvailableActions = typeof options.getAvailableActions === "function" ? options.getAvailableActions : null;
     this.onAssetStatus = typeof options.onAssetStatus === "function" ? options.onAssetStatus : null;
     this.onRendererFailure = typeof options.onRendererFailure === "function" ? options.onRendererFailure : null;
     this.onEncounterEvent = typeof options.onEncounterEvent === "function" ? options.onEncounterEvent : null;
     this.onRuntimeState = typeof options.onRuntimeState === "function" ? options.onRuntimeState : null;
+    this.onActionFocus = typeof options.onActionFocus === "function" ? options.onActionFocus : null;
+    this.lastHoveredAction = null;
+    this.previewActionSemantic = null;
     this.onEnemyBreach = null; // Legacy callback; encounter events take precedence.
     this.encounter = null;
     this.encounterSnapshot = null;
@@ -403,6 +416,10 @@ export class RealtimeBattle {
       frame: (time) => this.frame(time),
       visibility: () => this.onVisibility(),
       clearPressedInput: () => this.clearPressedInput(),
+      blur: () => {
+        this.clearPressedInput();
+        this.clearHover();
+      },
       contextLost: (event) => this.onContextLost(event),
       keydown: (event) => this.onKey(event, true),
       keyup: (event) => this.onKey(event, false),
@@ -413,6 +430,7 @@ export class RealtimeBattle {
       pointercancel: (event) => this.onPointerCancel(event),
       wheel: (event) => this.onWheel(event),
       lostpointercapture: (event) => this.onLostPointerCapture(event),
+      pointerleave: (event) => this.onPointerLeave(event),
     };
   }
 
@@ -517,7 +535,7 @@ export class RealtimeBattle {
     this.canvas.addEventListener("webglcontextlost", this.bound.contextLost, false);
     this.canvas.addEventListener("keydown", this.bound.keydown);
     this.canvas.addEventListener("keyup", this.bound.keyup);
-    this.canvas.addEventListener("blur", this.bound.clearPressedInput);
+    this.canvas.addEventListener("blur", this.bound.blur);
     this.canvas.addEventListener("pointerdown", this.bound.pointerdown);
     this.canvas.addEventListener("pointermove", this.bound.pointermove);
     this.canvas.addEventListener("pointerup", this.bound.pointerup);
@@ -525,7 +543,8 @@ export class RealtimeBattle {
     this.canvas.addEventListener("lostpointercapture", this.bound.lostpointercapture);
     this.canvas.addEventListener("contextmenu", this.bound.contextmenu);
     this.canvas.addEventListener("wheel", this.bound.wheel, { passive: false });
-    globalThis.window?.addEventListener("blur", this.bound.clearPressedInput);
+    this.canvas.addEventListener("pointerleave", this.bound.pointerleave);
+    globalThis.window?.addEventListener("blur", this.bound.blur);
     document.addEventListener("visibilitychange", this.bound.visibility);
     this.resizeObserver = new ResizeObserver(this.bound.resize);
     this.resizeObserver.observe(this.canvas);
@@ -533,7 +552,7 @@ export class RealtimeBattle {
 
   async loadStageAssets() {
     const stage = STAGE_ASSETS[this.stageNumber];
-    const resources = [stage.terrain, "units/shade.glb", "units/scout.glb", stage.boss];
+    const resources = [stage.terrain, "units/shade.glb", "units/scout.glb", "units/guard.glb", "units/reinforce.glb", stage.boss];
     let loaded = 0;
     this.onAssetStatus?.({ state: "loading", loaded, total: resources.length, clips: 0 });
     for (const resource of resources) {
@@ -1023,6 +1042,7 @@ export class RealtimeBattle {
     }
     this.updateMarkerPulses(dt);
     this.updateAmbience(dt);
+    this.updatePreviewEmphasis(dt);
     this.particles?.update(dt);
     this.updateCamera(dt);
     this.audio.updateListener(this.camera);
@@ -1509,7 +1529,20 @@ export class RealtimeBattle {
   updateCamera(dt = 0) {
     const alpha = Math.min(1, Math.max(0, 1 - Math.exp(-dt / 0.1304)));
     this.lookTarget.copy(this.commanderPosition);
-    if (this.boss?.root?.position) this.lookTarget.lerp(this.boss.root.position, 0.22);
+    if (this.previewActionSemantic) {
+      const sourcePoint = this.actionFeedbackPoint(this.previewActionSemantic.source);
+      const targetPoint = this.actionFeedbackPoint(this.previewActionSemantic.target);
+      let biasTarget = targetPoint;
+      if (this.previewActionSemantic.target === "commander" && this.previewActionSemantic.source !== "commander") {
+        biasTarget = sourcePoint;
+      }
+      if (biasTarget) {
+        const biasVec = new THREE.Vector3(biasTarget.x, biasTarget.y, biasTarget.z);
+        this.lookTarget.lerp(biasVec, 0.35);
+      }
+    } else {
+      if (this.boss?.root?.position) this.lookTarget.lerp(this.boss.root.position, 0.22);
+    }
     this.cameraTarget.lerp(this.lookTarget, alpha);
     const bounds = this.navigation.bounds;
     this.cameraTarget.x = clamp(this.cameraTarget.x, bounds.left, bounds.right);
@@ -1562,6 +1595,39 @@ export class RealtimeBattle {
     return this.pressed.has("ShiftLeft") || this.pressed.has("ShiftRight");
   }
 
+  setPointerRay(event) {
+    const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return false;
+    this.pointerNdc.set(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    this.raycaster.setFromCamera(this.pointerNdc, this.camera);
+    return true;
+  }
+
+  resolvePointerAction(event) {
+    if (!this.setPointerRay(event)) return null;
+    const hit = this.raycaster.intersectObjects(this.interactives, true)[0];
+    let object = hit?.object ?? null;
+    while (object && !object.userData.semantic) object = object.parent;
+    const action = object?.userData.semantic || null;
+    if (!action || !this.getAvailableActions) return action;
+    const available = this.getAvailableActions();
+    const allowed = typeof available?.has === "function"
+      ? available.has(action)
+      : available?.includes?.(action);
+    return allowed === false ? null : action;
+  }
+
+  setHoveredAction(action) {
+    const nextAction = action || null;
+    this.canvas.style.cursor = nextAction ? "pointer" : "";
+    if (nextAction === this.lastHoveredAction) return;
+    this.lastHoveredAction = nextAction;
+    this.onActionFocus?.(nextAction);
+  }
+
   onPointerDown(event) {
     this.canvas.focus({ preventScroll: true });
     if (this.pointer) return;
@@ -1577,10 +1643,17 @@ export class RealtimeBattle {
       button: event.button
     };
     this.canvas.setPointerCapture(event.pointerId);
+
+    // Touch down reports only actions that the authoritative campaign currently permits.
+    this.setHoveredAction(this.resolvePointerAction(event));
   }
 
   onPointerMove(event) {
-    if (!this.pointer || this.pointer.id !== event.pointerId) return;
+    if (!this.pointer || this.pointer.id !== event.pointerId) {
+      this.setHoveredAction(this.resolvePointerAction(event));
+      return;
+    }
+
     if (!this.pointer.moved) {
       const dxStart = event.clientX - this.pointer.startX;
       const dyStart = event.clientY - this.pointer.startY;
@@ -1588,6 +1661,8 @@ export class RealtimeBattle {
       const threshold = this.pointer.type === "touch" ? 12 : 6;
       if (distance > threshold) {
         this.pointer.moved = true;
+        // Drag just became active, clear hover
+        this.clearHover();
       }
     }
     if (!this.pointer.moved) return;
@@ -1604,10 +1679,14 @@ export class RealtimeBattle {
     const pointer = this.pointer;
     this.pointer = null;
     if (this.canvas.hasPointerCapture(event.pointerId)) this.canvas.releasePointerCapture(event.pointerId);
+
+    this.setHoveredAction(this.resolvePointerAction(event));
+
     if (pointer.moved) return;
     const upTime = event.timeStamp || Date.now();
     if (upTime - pointer.downTime <= 500) {
       this.pick(event, pointer.button === 2 ? "allies" : "personal");
+      this.setHoveredAction(pointer.type === "touch" ? null : this.resolvePointerAction(event));
     }
   }
 
@@ -1615,12 +1694,18 @@ export class RealtimeBattle {
     if (!this.pointer || this.pointer.id !== event.pointerId) return;
     if (this.canvas.hasPointerCapture(event.pointerId)) this.canvas.releasePointerCapture(event.pointerId);
     this.pointer = null;
+    this.clearHover();
   }
 
   onLostPointerCapture(event) {
     if (!this.pointer || this.pointer.id !== event.pointerId) return;
     if (this.canvas.hasPointerCapture(event.pointerId)) this.canvas.releasePointerCapture(event.pointerId);
     this.pointer = null;
+    this.clearHover();
+  }
+
+  onPointerLeave(event) {
+    this.clearHover();
   }
 
   onWheel(event) {
@@ -1630,20 +1715,14 @@ export class RealtimeBattle {
   }
 
   pick(event, rallyKind) {
-    const rect = this.canvas.getBoundingClientRect();
-    this.pointerNdc.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
-    this.raycaster.setFromCamera(this.pointerNdc, this.camera);
     if (rallyKind === "personal") {
-      const hits = this.raycaster.intersectObjects(this.interactives, true);
-      if (hits.length) {
-        let object = hits[0].object;
-        while (object && !object.userData.semantic) object = object.parent;
-        const semantic = object?.userData.semantic;
-        if (semantic) {
-          this.requestAction?.(semantic);
-          return;
-        }
+      const action = this.resolvePointerAction(event);
+      if (action) {
+        this.requestAction?.(action);
+        return;
       }
+    } else if (!this.setPointerRay(event)) {
+      return;
     }
     const ground = this.raycaster.intersectObject(this.ground, false)[0];
     if (!ground || !this.commander) return;
@@ -1832,8 +1911,14 @@ export class RealtimeBattle {
 
   spawnEncounterWave(wave) {
     const count = Math.max(0, Number(wave?.hostiles) || 0);
+    let model = "units/scout.glb";
+    if (wave?.id === "guard") model = "units/guard.glb";
+    else if (wave?.id === "reinforcement" || wave?.id === "reinforce") model = "units/reinforce.glb";
+    if (!this.templates.has(model)) {
+      model = "units/scout.glb";
+    }
     for (let index = 0; index < count; index += 1) {
-      const enemy = this.cloneTemplate("units/scout.glb", 1.2);
+      const enemy = this.cloneTemplate(model, 1.2);
       enemy.radius = 0.42;
       
       const routeIndex = index % 3;
@@ -2059,6 +2144,86 @@ export class RealtimeBattle {
     this.playActionEffect(semantic);
   }
 
+  clearHover() {
+    if (this.canvas && this.canvas.style) {
+      this.canvas.style.cursor = "";
+    }
+    if (this.lastHoveredAction !== null) {
+      this.lastHoveredAction = null;
+      this.onActionFocus?.(null);
+    }
+  }
+
+  resetPreviewEmphasis() {
+    const root = this.boss?.root;
+    if (!root?.userData || !Object.prototype.hasOwnProperty.call(root.userData, "originalScaleScalar")) return;
+    root.scale.setScalar(root.userData.originalScaleScalar);
+    delete root.userData.originalScaleScalar;
+    root.traverse((node) => {
+      if (!node.isMesh) return;
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      for (const material of materials) {
+        if (!Object.prototype.hasOwnProperty.call(material?.userData ?? {}, "previewOriginalEmissiveIntensity")) continue;
+        material.emissiveIntensity = material.userData.previewOriginalEmissiveIntensity;
+        delete material.userData.previewOriginalEmissiveIntensity;
+      }
+    });
+  }
+
+  previewAction(semantic) {
+    if (!semantic?.action) {
+      this.clearActionPreview();
+      return;
+    }
+    if (this.previewActionSemantic?.action !== semantic.action) this.resetPreviewEmphasis();
+    this.previewActionSemantic = semantic;
+  }
+
+  clearActionPreview(action = null) {
+    if (action && this.previewActionSemantic?.action !== action) return;
+    this.previewActionSemantic = null;
+    this.resetPreviewEmphasis();
+  }
+
+  updatePreviewEmphasis() {
+    const semantic = this.previewActionSemantic;
+    if (!semantic) {
+      this.resetPreviewEmphasis();
+      return;
+    }
+
+    const targets = [semantic.source, semantic.target];
+    if (!targets.includes("boss")) this.resetPreviewEmphasis();
+    const time = performance.now() * 0.005;
+    const pulseFactor = 1.0 + Math.sin(time * 12.0) * 0.12;
+
+    if (targets.includes("portal") && this.portal) {
+      this.portalPulse = Math.max(this.portalPulse, 2.5 + Math.sin(time * 12.0) * 0.5);
+    }
+    if (targets.includes("node") && this.node) {
+      this.nodePulse = Math.max(this.nodePulse, 2.5 + Math.sin(time * 12.0) * 0.5);
+    }
+    if (targets.includes("boss") && this.boss && this.boss.root) {
+      if (!this.boss.root.userData.originalScaleScalar) {
+        this.boss.root.userData.originalScaleScalar = this.boss.root.scale.x;
+      }
+      this.boss.root.scale.setScalar(this.boss.root.userData.originalScaleScalar * pulseFactor);
+      
+      this.boss.root.traverse((node) => {
+        if (node.isMesh) {
+          const materials = Array.isArray(node.material) ? node.material : [node.material];
+          for (const material of materials) {
+            if (!material?.userData?.isBossIdentityTint) continue;
+            if (!Object.prototype.hasOwnProperty.call(material.userData, "previewOriginalEmissiveIntensity")) {
+              material.userData.previewOriginalEmissiveIntensity = material.emissiveIntensity;
+            }
+            material.emissiveIntensity = 1.2 + Math.sin(time * 12.0) * 0.4;
+          }
+        }
+      });
+    }
+  }
+
   setHud(hud) {
     this.hud = hud;
   }
@@ -2066,6 +2231,7 @@ export class RealtimeBattle {
   onVisibility() {
     if (document.hidden) {
       this.clearPressedInput();
+      this.clearHover();
       if (this.raf) cancelAnimationFrame(this.raf);
       this.raf = 0;
       return;
@@ -2085,22 +2251,25 @@ export class RealtimeBattle {
 
   destroy() {
     if (this.destroyed) return;
+    this.clearHover();
+    this.clearActionPreview();
     this.destroyed = true;
     this.running = false;
     if (this.raf) cancelAnimationFrame(this.raf);
     this.raf = 0;
     this.resizeObserver?.disconnect();
     document.removeEventListener("visibilitychange", this.bound.visibility);
-    globalThis.window?.removeEventListener("blur", this.bound.clearPressedInput);
+    globalThis.window?.removeEventListener("blur", this.bound.blur);
     this.canvas.removeEventListener("webglcontextlost", this.bound.contextLost);
     this.canvas.removeEventListener("keydown", this.bound.keydown);
     this.canvas.removeEventListener("keyup", this.bound.keyup);
-    this.canvas.removeEventListener("blur", this.bound.clearPressedInput);
+    this.canvas.removeEventListener("blur", this.bound.blur);
     this.canvas.removeEventListener("pointerdown", this.bound.pointerdown);
     this.canvas.removeEventListener("pointermove", this.bound.pointermove);
     this.canvas.removeEventListener("pointerup", this.bound.pointerup);
     this.canvas.removeEventListener("pointercancel", this.bound.pointercancel);
     this.canvas.removeEventListener("lostpointercapture", this.bound.lostpointercapture);
+    this.canvas.removeEventListener("pointerleave", this.bound.pointerleave);
     this.canvas.removeEventListener("contextmenu", this.bound.contextmenu);
     this.canvas.removeEventListener("wheel", this.bound.wheel);
     this.clearEncounterWave();

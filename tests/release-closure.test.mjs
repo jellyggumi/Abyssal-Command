@@ -1575,6 +1575,7 @@ test("English narration covers every campaign state and language refresh updates
     syncAmbienceButtonText() {},
     syncCinematicCopy() {},
     updateResumeAffordance() {},
+    updateActionFocus() {},
     syncFullscreenControl() {},
   });
   vm.runInContext(`

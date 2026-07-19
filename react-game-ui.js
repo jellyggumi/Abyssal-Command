@@ -468,13 +468,14 @@
           'aria-labelledby': 'commands-heading'
         },
           e('div', { className: 'selection-dossier', 'aria-label': '선택 부대', 'data-i18n-aria': 'command.selectionAria' },
-            e('img', { src: 'assets/images/ui/action-possess.png', alt: '' }),
+            e('img', { id: 'dossier-image', src: 'assets/images/ui/action-possess.png', alt: '' }),
             e('div', null,
-              e('span', { 'data-i18n': 'command.selectionLabel' }, '선택 부대'),
+              e('span', { id: 'dossier-label', 'data-i18n': 'command.selectionLabel' }, '선택 부대'),
               ' ',
-              e('strong', { 'data-i18n': 'command.selectionName' }, '그림자 군단'),
+              e('strong', { id: 'dossier-name', 'data-i18n': 'command.selectionName' }, '그림자 군단'),
               ' ',
-              e('small', { 'data-i18n': 'command.selectionRole' }, '황혼의 감시자 · 전선 지휘관')
+              e('small', { id: 'dossier-role', 'data-i18n': 'command.selectionRole' }, '황혼의 감시자 · 전선 지휘관'),
+              e('span', { id: 'dossier-status', className: 'dossier-status', 'aria-live': 'polite' })
             )
           ),
           e('div', { className: 'section-heading' },

@@ -19,7 +19,7 @@ import { getBattlePresentation } from "./battle-presentation.js";
 import { CampaignMirror } from "./campaign-sync.js";
 import { currentLang, translate, translations } from "./i18n.js";
 
-const BUILD_TAG = "abyssal-surge-static-v48";
+const BUILD_TAG = "abyssal-surge-static-v49";
 const DB_NAME = "abyssal-surge-campaign";
 const DB_VERSION = 1;
 const STORE_NAME = "campaigns";
@@ -476,6 +476,91 @@ let pendingCommandFocus = false;
 // session exists) replaces the old activeView === "battle" checks; the
 // result overlay is derived from campaign.status in render().
 let visualizer = null;
+let activeFieldFocusedAction = null;
+let activeCommandHoverAction = null;
+let activeCommandFocusAction = null;
+
+function currentActionFocus() {
+  return activeCommandHoverAction || activeFieldFocusedAction || activeCommandFocusAction;
+}
+
+function updateActionFocus() {
+  const action = currentActionFocus();
+  projectActionFocus(action);
+  if (!visualizer) return;
+  const semantic = action ? BATTLE_ACTION_SEMANTICS[action] : null;
+  if (semantic && typeof visualizer.previewAction === "function") {
+    visualizer.previewAction({ ...semantic, action });
+  } else if (typeof visualizer.clearActionPreview === "function") {
+    visualizer.clearActionPreview();
+  }
+}
+
+function handleActionFocus(action) {
+  activeFieldFocusedAction = action;
+  updateActionFocus();
+}
+
+function projectActionFocus(action) {
+  const buttons = document.querySelectorAll(".command-grid button[data-action]");
+  buttons.forEach((btn) => {
+    const actId = btn.getAttribute("data-action");
+    if (actId === action) btn.setAttribute("data-focused", "true");
+    else btn.removeAttribute("data-focused");
+  });
+
+  const dossier = document.querySelector(".selection-dossier");
+  const labelEl = document.getElementById("dossier-label");
+  const nameEl = document.getElementById("dossier-name");
+  const roleEl = document.getElementById("dossier-role");
+  const imgEl = document.getElementById("dossier-image");
+  const statusEl = document.getElementById("dossier-status");
+
+  if (action) {
+    dossier?.setAttribute("data-focused", "true");
+    const lang = currentLang();
+    const isKo = lang === "ko";
+    const semantic = BATTLE_ACTION_SEMANTICS[action];
+    const pointLabels = isKo
+      ? { portal: "차원문", extractor: "추출기", commander: "사령관", node: "거점", ally: "군단", boss: "보스" }
+      : { portal: "Portal", extractor: "Extractor", commander: "Commander", node: "Node", ally: "Legion", boss: "Boss" };
+    labelEl?.removeAttribute("data-i18n");
+    nameEl?.removeAttribute("data-i18n");
+    roleEl?.removeAttribute("data-i18n");
+    if (labelEl) labelEl.textContent = isKo ? "명령 대상" : "Command Target";
+    if (nameEl) nameEl.textContent = translate(`command.${action}.name`);
+    if (roleEl) roleEl.textContent = translate(`command.${action}.desc`);
+    if (imgEl) imgEl.src = `assets/images/ui/action-${action}.png`;
+    if (statusEl && semantic) {
+      const source = pointLabels[semantic.source] ?? semantic.source;
+      const target = pointLabels[semantic.target] ?? semantic.target;
+      statusEl.textContent = isKo ? `경로: ${source} → ${target}` : `Route: ${source} → ${target}`;
+    }
+  } else {
+    dossier?.removeAttribute("data-focused");
+    if (labelEl) {
+      labelEl.setAttribute("data-i18n", "command.selectionLabel");
+      labelEl.textContent = translate("command.selectionLabel");
+    }
+    if (nameEl) {
+      nameEl.setAttribute("data-i18n", "command.selectionName");
+      nameEl.textContent = translate("command.selectionName");
+    }
+    if (roleEl) {
+      roleEl.setAttribute("data-i18n", "command.selectionRole");
+      roleEl.textContent = translate("command.selectionRole");
+    }
+    if (imgEl) imgEl.src = "assets/images/ui/action-possess.png";
+    if (statusEl) statusEl.textContent = "";
+  }
+
+  if (typeof window.CustomEvent === "function") {
+    const event = new window.CustomEvent("abyssal:spatial-focus", {
+      detail: { action }
+    });
+    window.dispatchEvent(event);
+  }
+}
 let battleSessionId = 0;
 let encounterStartTimer = 0;
 let battleStartedAt = 0;
@@ -1443,6 +1528,10 @@ function stopBattle() {
   battleStarting = false;
   visualizer?.destroy();
   visualizer = null;
+  activeFieldFocusedAction = null;
+  activeCommandHoverAction = null;
+  activeCommandFocusAction = null;
+  projectActionFocus(null);
 }
 
 function activateBattleFallback(stage, sessionId) {
@@ -1456,7 +1545,8 @@ function activateBattleFallback(stage, sessionId) {
     onAssetStatus: renderBattleAssetStatus,
     onActionRequest: (action) => void handleAction(action),
     onEncounterEvent: (event) => void handleEncounterEvent(event, sessionId, fallback),
-    onRuntimeState: (runtime) => handleRendererRuntime(runtime, sessionId, fallback)
+    onRuntimeState: (runtime) => handleRendererRuntime(runtime, sessionId, fallback),
+    onActionFocus: (action) => handleActionFocus(action)
   });
   try {
     fallback.init();
@@ -1485,10 +1575,12 @@ async function startBattle() {
       const presentation = renderBattlePresentation(stage);
       battleRenderer = new RealtimeBattle(elements.battleCanvas3d, presentation, {
         nodeGoal: stage.nodeGoal,
+        getAvailableActions: () => campaign ? getAvailableActions(campaign) : [],
         onAssetStatus: renderBattleAssetStatus,
         onActionRequest: (action) => void handleAction(action),
         onEncounterEvent: (event) => void handleEncounterEvent(event, sessionId, battleRenderer),
         onRuntimeState: (runtime) => handleRendererRuntime(runtime, sessionId, battleRenderer),
+        onActionFocus: (action) => handleActionFocus(action),
         onRendererFailure: () => {
           if (visualizer !== battleRenderer || sessionId !== battleSessionId || campaign?.status !== "active") return;
           visualizer = activateBattleFallback(currentStage(), sessionId);
@@ -2517,7 +2609,32 @@ function wireControls() {
       first.focus();
     }
   });
-  elements.commandButtons.forEach((button) => button.addEventListener("click", () => handleAction(button.dataset.action)));
+  elements.commandButtons.forEach((button) => {
+    const action = button.dataset.action;
+    button.addEventListener("click", () => handleAction(action));
+    
+    button.addEventListener("pointerenter", () => {
+      activeCommandHoverAction = action;
+      updateActionFocus();
+    });
+
+    button.addEventListener("pointerleave", () => {
+      if (activeCommandHoverAction !== action) return;
+      activeCommandHoverAction = null;
+      updateActionFocus();
+    });
+
+    button.addEventListener("focus", () => {
+      activeCommandFocusAction = action;
+      updateActionFocus();
+    });
+
+    button.addEventListener("blur", () => {
+      if (activeCommandFocusAction !== action) return;
+      activeCommandFocusAction = null;
+      updateActionFocus();
+    });
+  });
   elements.exportSave.addEventListener("click", exportSave);
   elements.importSave.addEventListener("change", () => importSave(elements.importSave.files?.[0]));
   elements.ambience.addEventListener("click", toggleAmbience);
@@ -2533,6 +2650,7 @@ function wireControls() {
     syncAmbienceButtonText();
     refreshSaveStatus();
     if (campaign) render();
+    updateActionFocus();
     refreshNarrationLanguage();
     syncFullscreenControl();
   });

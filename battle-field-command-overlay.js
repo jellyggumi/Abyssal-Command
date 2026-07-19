@@ -181,9 +181,18 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
     }
   }
 
+  function handleSpatialFocus(event) {
+    if (!event || !event.detail) return;
+    const { action } = event.detail;
+    if (action) overlay.setAttribute("data-spatial-focused", action);
+    else overlay.removeAttribute("data-spatial-focused");
+    if (action && action === activeCommand?.dataset?.action) activation.setAttribute("data-focused", "true");
+    else activation.removeAttribute("data-focused");
+  }
   view?.addEventListener?.("abyssal:language-changed", handleLanguageChange);
   view?.addEventListener?.("abyssal:campaign-rendered", handleLanguageChange);
   view?.addEventListener?.("abyssal:command-resolved", handleCommandResolved);
+  view?.addEventListener?.("abyssal:spatial-focus", handleSpatialFocus);
   view?.addEventListener?.("click", handleViewClick);
 
   const Observer = view?.MutationObserver ?? globalThis.MutationObserver;
@@ -224,6 +233,7 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
       view?.removeEventListener?.("abyssal:language-changed", handleLanguageChange);
       view?.removeEventListener?.("abyssal:campaign-rendered", handleLanguageChange);
       view?.removeEventListener?.("abyssal:command-resolved", handleCommandResolved);
+      view?.removeEventListener?.("abyssal:spatial-focus", handleSpatialFocus);
       view?.removeEventListener?.("click", handleViewClick);
       observer?.disconnect();
       overlay.remove();

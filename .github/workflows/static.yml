@@ -70,6 +70,8 @@ jobs:
         assets/models/abyssal-command/terrain/echo-throne-steps.glb
         assets/models/abyssal-command/units/shade.glb
         assets/models/abyssal-command/units/scout.glb
+        assets/models/abyssal-command/units/guard.glb
+        assets/models/abyssal-command/units/reinforce.glb
         assets/models/abyssal-command/bosses/cinder-warden.glb
         assets/models/abyssal-command/bosses/veil-tactician.glb
         assets/models/abyssal-command/bosses/gate-sovereign.glb
@@ -136,6 +138,7 @@ jobs:
             assets/models/abyssal-command/terrain/veil-citadel.glb \
             assets/models/abyssal-command/terrain/echo-throne-steps.glb \
             assets/models/abyssal-command/units/shade.glb assets/models/abyssal-command/units/scout.glb \
+            assets/models/abyssal-command/units/guard.glb assets/models/abyssal-command/units/reinforce.glb \
             assets/models/abyssal-command/bosses/cinder-warden.glb \
             assets/models/abyssal-command/bosses/veil-tactician.glb \
             assets/models/abyssal-command/bosses/gate-sovereign.glb; do

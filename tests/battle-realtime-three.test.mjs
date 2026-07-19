@@ -369,6 +369,148 @@ test("RealtimeBattle clears held keyboard movement on canvas, window, and hidden
   }
 });
 
+test("RealtimeBattle projects WebGL pointer focus and clears it on cancellation, pointer exit, and canvas blur", () => {
+  const canvasListeners = new Map();
+  const documentListeners = new Map();
+  const windowListeners = new Map();
+  const listeners = (target) => ({
+    addEventListener(type, handler) {
+      target.set(type, handler);
+    },
+    removeEventListener(type, handler) {
+      if (target.get(type) === handler) target.delete(type);
+    },
+  });
+  const canvas = {
+    ...listeners(canvasListeners),
+    style: {},
+    focus() {},
+    setPointerCapture() {},
+    hasPointerCapture: () => true,
+    releasePointerCapture() {},
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }),
+  };
+  const document = { ...listeners(documentListeners), activeElement: canvas, hidden: false };
+  const window = listeners(windowListeners);
+  const descriptors = new Map(
+    ["document", "window", "ResizeObserver"].map((name) => [name, Object.getOwnPropertyDescriptor(globalThis, name)]),
+  );
+  Object.assign(globalThis, {
+    document,
+    window,
+    ResizeObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+  });
+
+  let availableActions = ["materialize"];
+  const requestedActions = [];
+  const focusedActions = [];
+  const battle = new RealtimeBattle(
+    canvas,
+    { stageNumber: 1 },
+    {
+      getAvailableActions: () => availableActions,
+      onActionRequest: (action) => {
+        requestedActions.push(action);
+        availableActions = [];
+      },
+      onActionFocus: (action) => focusedActions.push(action),
+    },
+  );
+  const semanticRoot = { userData: { semantic: "materialize" }, parent: null };
+  const semanticChild = { userData: {}, parent: semanticRoot };
+  let hit = true;
+  battle.camera = {};
+  battle.raycaster = {
+    setFromCamera() {},
+    intersectObjects: () => (hit ? [{ object: semanticChild }] : []),
+  };
+  battle.interactives = [semanticRoot];
+
+  try {
+    battle.attachEvents();
+    const pointer = {
+      button: 0,
+      clientX: 50,
+      clientY: 50,
+      pointerId: 1,
+      pointerType: "mouse",
+      timeStamp: 10,
+    };
+
+    canvasListeners.get("pointermove")(pointer);
+    canvasListeners.get("pointermove")(pointer);
+    hit = false;
+    canvasListeners.get("pointermove")(pointer);
+    const passiveHover = focusedActions.splice(0);
+
+    hit = true;
+    canvasListeners.get("pointerdown")(pointer);
+    canvasListeners.get("pointercancel")(pointer);
+    const pointercancel = focusedActions.splice(0);
+
+    canvasListeners.get("pointermove")(pointer);
+    canvasListeners.get("pointerleave")(pointer);
+    const pointerleave = focusedActions.splice(0);
+
+    canvasListeners.get("pointermove")(pointer);
+    canvasListeners.get("blur")();
+    const blur = focusedActions.splice(0);
+
+    canvasListeners.get("pointerdown")(pointer);
+    canvasListeners.get("pointerup")(pointer);
+    const acceptedAction = focusedActions.splice(0);
+
+    assert.deepEqual(
+      { passiveHover, pointercancel, pointerleave, blur },
+      {
+        passiveHover: ["materialize", null],
+        pointercancel: ["materialize", null],
+        pointerleave: ["materialize", null],
+        blur: ["materialize", null],
+      },
+      "WebGL focus callbacks must deduplicate stable hover and clear every command/dossier projection when interaction focus exits",
+    );
+    assert.deepEqual(requestedActions, ["materialize"], "eligible personal pointerup must dispatch the focused action");
+    assert.equal(
+      acceptedAction.at(-1),
+      null,
+      "accepted pointer action must refresh availability and clear stale WebGL focus after synchronous dispatch",
+    );
+  } finally {
+    battle.destroy();
+    for (const [name, descriptor] of descriptors) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else delete globalThis[name];
+    }
+  }
+});
+
+test("RealtimeBattle previewAction accepts the action-enriched DOM semantic and clears it through the renderer seam", () => {
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const semantic = Object.freeze({
+    action: "hunt",
+    source: "portal",
+    target: "extractor",
+    actor: "commander",
+    actorClip: "Special",
+    sourceAsset: "shade",
+    clip: "Special",
+  });
+
+  battle.previewAction(semantic);
+  assert.strictEqual(
+    battle.previewActionSemantic,
+    semantic,
+    "DOM pointer or keyboard focus must project the exact action-enriched semantic supplied by the app bridge",
+  );
+
+  battle.clearActionPreview();
+  assert.equal(battle.previewActionSemantic, null, "DOM pointerout or blur must clear the renderer preview");
+});
+
 
 
 
@@ -693,6 +835,39 @@ test("RealtimeBattle spawns hostile waves from the 24×12 route frontage without
     const finalGrid = battle.navigation.worldToGrid(enemy.waypoints.at(-1).x, enemy.waypoints.at(-1).z);
     assert.deepEqual(finalGrid, { x: 1.5, y: 5.5 }, `route ${routeIndex + 1} must terminate at the portal frontage`);
   });
+});
+
+test("RealtimeBattle maps Stage 1 waves to authored GLBs and later archetypes to the scout fallback", () => {
+  const modelByWave = {};
+
+  for (const waveId of ["scout", "guard", "reinforcement", "depthguard"]) {
+    const battle = new RealtimeBattle(null, { stageNumber: 1 });
+    for (const model of ["units/scout.glb", "units/guard.glb", "units/reinforce.glb"]) {
+      battle.templates.set(model, {});
+    }
+    battle.scene = { add() {} };
+    battle.resolveSpawn = () => true;
+    battle.play = () => {};
+    battle.cloneTemplate = (model) => {
+      modelByWave[waveId] = model;
+      const enemy = makeUnit();
+      enemy.root.rotation = {};
+      return enemy;
+    };
+
+    battle.spawnEncounterWave({ id: waveId, hostiles: 1, hostileHealth: 2 });
+  }
+
+  assert.deepEqual(
+    modelByWave,
+    {
+      scout: "units/scout.glb",
+      guard: "units/guard.glb",
+      reinforcement: "units/reinforce.glb",
+      depthguard: "units/scout.glb",
+    },
+    "only the declared Stage 1 waves may select dedicated GLBs; later archetypes must retain the scout fallback",
+  );
 });
 
 test("RealtimeBattle ignores rally clicks that land on the shared Stage 1 chasm", () => {
@@ -1046,7 +1221,7 @@ test("RealtimeBattle makes a melee exchange legible through midpoint and target-
   assert.deepEqual(battle.enemies, [enemy], "combat feedback must not create or remove enemy units");
 });
 
-test("RealtimeBattle preserves stages 4–10 and loads each stage's declared terrain and boss resources", async () => {
+test("RealtimeBattle loads every declared stage resource with or without a canvas test double", async () => {
   const expectedStageResources = new Map([
     [4, ["terrain/veil-citadel.glb", "bosses/cinder-warden.glb"]],
     [5, ["terrain/cinder-span.glb", "bosses/veil-tactician.glb"]],
@@ -1057,27 +1232,29 @@ test("RealtimeBattle preserves stages 4–10 and loads each stage's declared ter
     [10, ["terrain/echo-throne-steps.glb", "bosses/gate-sovereign.glb"]],
   ]);
 
-  for (const [stageNumber, [terrain, boss]] of expectedStageResources) {
-    const battle = new RealtimeBattle(null, { stageNumber });
-    const loaded = [];
-    battle.loadModel = async (resource) => {
-      loaded.push(resource);
-      return { animations: [] };
-    };
+  for (const canvas of [null, {}]) {
+    for (const [stageNumber, [terrain, boss]] of expectedStageResources) {
+      const battle = new RealtimeBattle(canvas, { stageNumber });
+      const loaded = [];
+      battle.loadModel = async (resource) => {
+        loaded.push(resource);
+        return { animations: [] };
+      };
 
-    await battle.loadStageAssets();
+      await battle.loadStageAssets();
 
-    assert.equal(battle.stageNumber, stageNumber, `Stage ${stageNumber} must not be clamped to Stage 3.`);
-    assert.deepEqual(
-      { width: battle.navigation.width, height: battle.navigation.height },
-      { width: 24, height: 12 },
-      `Stage ${stageNumber} must initialize the expanded tactical navigation grid.`,
-    );
-    assert.deepEqual(
-      loaded,
-      [terrain, "units/shade.glb", "units/scout.glb", boss],
-      `Stage ${stageNumber} must request its declared terrain and boss resources.`,
-    );
+      assert.equal(battle.stageNumber, stageNumber, `Stage ${stageNumber} must not be clamped to Stage 3.`);
+      assert.deepEqual(
+        { width: battle.navigation.width, height: battle.navigation.height },
+        { width: 24, height: 12 },
+        `Stage ${stageNumber} must initialize the expanded tactical navigation grid.`,
+      );
+      assert.deepEqual(
+        loaded,
+        [terrain, "units/shade.glb", "units/scout.glb", "units/guard.glb", "units/reinforce.glb", boss],
+        `Stage ${stageNumber} must request every declared resource ${canvas ? "with" : "without"} a canvas test double.`,
+      );
+    }
   }
 });
 

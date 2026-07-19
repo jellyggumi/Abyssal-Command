@@ -2289,3 +2289,35 @@ body:has(#campaign-screen:not([hidden])) main { overflow: hidden; }
   }
   .cockpit-details { display: none; }
 }
+/* Cross-link the active DOM command with its spatial battlefield target. */
+.field-command-dock .command-grid button[data-focused="true"] {
+  border-color: #70e5d0;
+  background: rgb(112 229 208 / 10%);
+  box-shadow: 0 0 .75rem rgb(112 229 208 / 40%);
+}
+
+.selection-dossier[data-focused="true"] {
+  border-color: #70e5d0;
+  background: rgb(112 229 208 / 5%);
+  box-shadow: 0 0 .625rem rgb(112 229 208 / 25%);
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .selection-dossier[data-focused="true"] {
+    transition: none;
+  }
+}
+
+#dossier-status {
+  display: block;
+  margin-top: .15rem;
+  color: #70e5d0;
+  font-size: .58rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+#battle-canvas-fallback {
+  cursor: default;
+}

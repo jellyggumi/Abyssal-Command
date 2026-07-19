@@ -173,6 +173,8 @@ export class BattleVisualizer {
     this.waveCounter = 0;
     this.onEncounterEvent = typeof options.onEncounterEvent === "function" ? options.onEncounterEvent : null;
     this.onRuntimeState = typeof options.onRuntimeState === "function" ? options.onRuntimeState : null;
+    this.onActionFocus = typeof options.onActionFocus === "function" ? options.onActionFocus : null;
+    this.actionPreview = null;
     this.onEnemyBreach = null; // Legacy callback; encounter events take precedence.
     this.encounter = null;
     this.encounterSnapshot = null;
@@ -228,6 +230,7 @@ export class BattleVisualizer {
     this.pointerDown = null;
     this.activePointerId = null;
     this.activePointerType = null;
+    this.focusedAction = null;
     this.pointerDownTime = 0;
     this.waveClearedProposed = false;
     this.pointerHandlers = null;
@@ -347,24 +350,29 @@ export class BattleVisualizer {
   }
 
   tacticalActionAt(canvasPoint) {
-    if (!this.onActionRequest || !this.getAvailableActions) return null;
+    if (!this.getAvailableActions) return null;
     const available = new Set(this.getAvailableActions());
     const candidates = [
       { action: "materialize", point: this.actionPoint("portal") },
+      { action: "domain", point: this.actionPoint("portal") },
       ...(this.nodes.length < this.nodeGoal ? [{ action: "capture", point: this.actionPoint("node") }] : []),
+      { action: "possess", point: this.actionPoint("ally") },
+      { action: "extract", point: this.actionPoint("extractor") },
+      { action: "hunt", point: this.actionPoint("extractor") },
       ...(this.bossExposed ? [{ action: "assault", point: this.actionPoint("boss") }] : []),
     ];
-    const radius = Math.max(16, this.view.scale * 0.6);
+    const radius = Math.max(24, this.view.scale * 0.9);
     let hit = null;
     let distance = radius * radius;
     for (const candidate of candidates) {
       if (!available.has(candidate.action)) continue;
       const point = candidate.point;
+      if (!point) continue;
       const screen = this.project(point.x, point.y, this.elevationAt(point.x, point.y));
       const dx = canvasPoint.x - screen.x;
       const dy = canvasPoint.y - screen.y;
       const squared = dx * dx + dy * dy;
-      if (squared <= distance) {
+      if (squared < distance) {
         hit = candidate.action;
         distance = squared;
       }
@@ -373,10 +381,22 @@ export class BattleVisualizer {
   }
 
   requestTacticalActionAt(canvasPoint) {
+    if (!this.onActionRequest) return false;
     const action = this.tacticalActionAt(canvasPoint);
     if (!action) return false;
     this.onActionRequest(action);
     return true;
+  }
+  detectActionAt(canvasPoint) {
+    return this.tacticalActionAt(canvasPoint);
+  }
+
+  setActionFocus(action) {
+    const nextAction = action || null;
+    if (nextAction === this.focusedAction) return;
+    this.focusedAction = nextAction;
+    this.canvas.style.cursor = nextAction ? "pointer" : "default";
+    this.onActionFocus?.(nextAction);
   }
 
   notifyTacticalLayout() {
@@ -837,6 +857,7 @@ export class BattleVisualizer {
     const down = (event) => {
       if (this.activePointerId !== null) return;
       if (event.button !== 0) return;
+      this.canvas.focus?.({ preventScroll: true });
 
       const p = canvasPoint(event);
       this.activePointerId = event.pointerId;
@@ -845,21 +866,27 @@ export class BattleVisualizer {
       this.pointerDownTime = performance.now();
       this.dragRect = null;
 
+      this.setActionFocus(this.detectActionAt(p));
+
       this.canvas.setPointerCapture?.(event.pointerId);
       this.renderStatic();
     };
 
     const move = (event) => {
-      if (this.activePointerId === null || event.pointerId !== this.activePointerId) return;
+      const p = canvasPoint(event);
+      if (this.activePointerId === null || event.pointerId !== this.activePointerId) {
+        if (event.pointerType !== "touch") this.setActionFocus(this.detectActionAt(p));
+        return;
+      }
       if (!this.pointerDown) return;
 
-      const p = canvasPoint(event);
       const dx = p.x - this.pointerDown.x;
       const dy = p.y - this.pointerDown.y;
       const dist = Math.hypot(dx, dy);
       const threshold = this.activePointerType === "touch" ? 12 : 6;
 
       if (dist > threshold) {
+        this.setActionFocus(null);
         this.dragRect = {
           x0: this.pointerDown.x,
           y0: this.pointerDown.y,
@@ -884,7 +911,6 @@ export class BattleVisualizer {
       const isTapEligible = duration <= 500;
 
       if (dist > threshold) {
-        // Drag select: project each ally to screen, Rect.contains filter.
         this.selection.clear();
         const dragBox = {
           x0: this.pointerDown.x,
@@ -898,7 +924,6 @@ export class BattleVisualizer {
         }
       } else if (isTapEligible) {
         if (!this.requestTacticalActionAt(p) && this.selection.size > 0) {
-          // A target command takes priority over selected-unit move orders.
           const tile = this.unprojectToTile(p.x, p.y);
           if (tile && this.walkable(tile.x, tile.y)) {
             this.issueMoveOrder(tile);
@@ -908,6 +933,7 @@ export class BattleVisualizer {
         }
       }
 
+      this.setActionFocus(this.activePointerType === "touch" ? null : this.detectActionAt(p));
       this.activePointerId = null;
       this.activePointerType = null;
       this.pointerDown = null;
@@ -922,6 +948,7 @@ export class BattleVisualizer {
       this.activePointerType = null;
       this.pointerDown = null;
       this.dragRect = null;
+      this.setActionFocus(null);
       this.renderStatic();
     };
 
@@ -931,12 +958,22 @@ export class BattleVisualizer {
       }
     };
 
+    const leave = () => {
+      this.setActionFocus(null);
+    };
+
+    const blur = () => {
+      this.setActionFocus(null);
+    };
+
     this.canvas.addEventListener("pointerdown", down);
     this.canvas.addEventListener("pointermove", move);
     this.canvas.addEventListener("pointerup", up);
     this.canvas.addEventListener("pointercancel", cancel);
     this.canvas.addEventListener("lostpointercapture", lostCapture);
-    this.pointerHandlers = { down, move, up, cancel, lostCapture };
+    this.canvas.addEventListener("pointerleave", leave);
+    this.canvas.addEventListener("blur", blur);
+    this.pointerHandlers = { down, move, up, cancel, lostCapture, leave, blur };
   }
 
   issueMoveOrder(tile) {
@@ -966,6 +1003,16 @@ export class BattleVisualizer {
     return this.navigation.anchors.alliedSpawn;
   }
 
+  previewAction(semantic) {
+    if (!semantic) return;
+    this.actionPreview = semantic;
+    this.renderStatic();
+  }
+
+  clearActionPreview(action) {
+    this.actionPreview = null;
+    this.renderStatic();
+  }
   setBridgeClip(assetId, clip, duration = 780) {
     const until = performance.now() + duration;
     for (const unit of this.allies) {
@@ -1105,7 +1152,16 @@ export class BattleVisualizer {
 
   spawnEncounterWave(wave) {
     const count = Math.max(0, Number(wave?.hostiles) || 0);
-    const archetype = wave.id === "reinforcement" ? "reinforce" : wave.id;
+    let archetype = "scout";
+    if (wave?.id === "scout") {
+      archetype = "scout";
+    } else if (wave?.id === "guard") {
+      archetype = "guard";
+    } else if (wave?.id === "reinforcement" || wave?.id === "reinforce") {
+      archetype = "reinforce";
+    } else {
+      archetype = "scout";
+    }
     const bossTile = this.navigation.anchors.boss;
     for (let index = 0; index < count; index += 1) {
       const routeIndex = index % this.navigation.routes.length;
@@ -1524,6 +1580,7 @@ export class BattleVisualizer {
     for (const item of queue) this.drawQueuedItem(item, bridgeTerrain);
 
     for (const effect of this.actionFx) this.drawActionFx(effect);
+    if (this.actionPreview) this.drawActionPreview();
     if (this.orderFlag) this.drawOrderFlag();
     if (this.dragRect) this.drawDragRect();
     if (this.hud) this.drawHud();
@@ -1938,6 +1995,47 @@ export class BattleVisualizer {
     this.publishRuntimeState();
     this.render();
   }
+  drawActionPreview() {
+    const ctx = this.ctx;
+    if (!ctx || !this.actionPreview) return;
+    const srcPoint = this.actionPoint(this.actionPreview.source);
+    const tgtPoint = this.actionPoint(this.actionPreview.target);
+    if (!srcPoint || !tgtPoint) return;
+
+    const srcScreen = this.project(srcPoint.x, srcPoint.y, this.elevationAt(srcPoint.x, srcPoint.y));
+    const tgtScreen = this.project(tgtPoint.x, tgtPoint.y, this.elevationAt(tgtPoint.x, tgtPoint.y));
+    
+    ctx.save();
+    const s = this.view.scale;
+    
+    ctx.strokeStyle = "rgba(112, 229, 208, 0.6)";
+    ctx.lineWidth = 2 * s;
+    ctx.setLineDash([4 * s, 4 * s]);
+    if (!this.reducedMotion) {
+      ctx.lineDashOffset = -Math.floor(performance.now() / 30) % 8;
+    }
+    ctx.beginPath();
+    ctx.moveTo(srcScreen.x, srcScreen.y);
+    ctx.lineTo(tgtScreen.x, tgtScreen.y);
+    ctx.stroke();
+    
+    const radius = 24 * s;
+    ctx.strokeStyle = "#70e5d0";
+    ctx.lineWidth = 2 * s;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    const pulse = this.reducedMotion ? 0.0 : Math.sin(performance.now() * 0.005) * 4 * s;
+    ctx.arc(tgtScreen.x, tgtScreen.y, radius + pulse, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    ctx.strokeStyle = "rgba(112, 229, 208, 0.3)";
+    ctx.lineWidth = 1 * s;
+    ctx.beginPath();
+    ctx.arc(tgtScreen.x, tgtScreen.y, radius + 8 * s + pulse * 1.5, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    ctx.restore();
+  }
 
   destroy() {
     if (this.destroyed) return;
@@ -1950,6 +2048,8 @@ export class BattleVisualizer {
       this.canvas?.removeEventListener("pointerup", this.pointerHandlers.up);
       this.canvas?.removeEventListener("pointercancel", this.pointerHandlers.cancel);
       this.canvas?.removeEventListener("lostpointercapture", this.pointerHandlers.lostCapture);
+      this.canvas?.removeEventListener("pointerleave", this.pointerHandlers.leave);
+      this.canvas?.removeEventListener("blur", this.pointerHandlers.blur);
     }
     if (this.handleVisibilityChange) {
       globalThis.document?.removeEventListener?.("visibilitychange", this.handleVisibilityChange);
