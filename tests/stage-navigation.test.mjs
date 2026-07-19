@@ -200,6 +200,33 @@ test("portal-to-boss paths remain walkable, orthogonal, and elevation-legal on e
   }
 });
 
+test("deployment validation treats towers as occupying terrain and barricades as route blockers", () => {
+  const navigation = createStageNavigation(1);
+  const partialSeal = [
+    { id: "wall-1", kind: "barricade", cell: { x: 5, y: 4 } },
+    { id: "wall-2", kind: "barricade", cell: { x: 5, y: 5 } },
+    { id: "wall-3", kind: "barricade", cell: { x: 5, y: 6 } },
+  ];
+
+  const tower = navigation.validateDeployment(5, 7, partialSeal, "tower");
+  const barricade = navigation.validateDeployment(5, 7, partialSeal, "barricade");
+
+  assert.deepEqual(
+    { valid: tower.valid, status: tower.status },
+    { valid: true, status: "valid" },
+    "a tower on the last open frontage cell must occupy that cell without closing the portal-to-boss route",
+  );
+  assert.deepEqual(
+    { valid: barricade.valid, status: barricade.status, reason: barricade.reason },
+    {
+      valid: false,
+      status: "protected",
+      reason: "Deployment would completely block all paths from portal to boss.",
+    },
+    "a barricade on the same cell must reject when it would seal the last portal-to-boss route",
+  );
+});
+
 test("all ten stages retain distinct tactical layouts", () => {
   const signatures = [];
   for (let stageNumber = 1; stageNumber <= 10; stageNumber += 1) {

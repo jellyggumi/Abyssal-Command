@@ -485,7 +485,7 @@
             ),
             e('p', { className: 'hint command-hint', 'data-i18n': 'command.hint' }, '버튼을 사용하거나, 다른 컨트롤에 포커스가 없을 때 표시된 키를 누르세요. 행동 마다 고유 쿨타임이 적용됩니다.')
           ),
-          e('div', { className: 'command-grid' },
+          e('div', { id: 'command-pad', className: 'command-grid' },
             [
               { id: 'hunt', key: '1', name: 'command.hunt.name', label: '사냥', desc: 'command.hunt.desc', text: '균열 흔적 두 곳을 탐색' },
               { id: 'extract', key: '2', name: 'command.extract.name', label: '추출', desc: 'command.extract.desc', text: '그림자 은닉처를 확보' },
@@ -513,12 +513,138 @@
               );
             })
           )
+          ,
+          // 1. Tactical Marks Display and Skill Controls
+          e('div', { id: 'tactical-skill-controls', className: 'tactical-hud-section tactical-skills' },
+            e('div', { className: 'section-heading' },
+              e('h4', { 'data-i18n': 'tactical.skillsHeading' }, '전술 등급 및 업그레이드'),
+              e('div', { className: 'marks-counter' },
+                e('span', { 'data-i18n': 'tactical.marksLabel' }, '전술 휘장:'),
+                ' ',
+                e('strong', { id: 'tactical-marks-value' }, '8')
+              )
+            ),
+            e('div', { className: 'skills-grid' },
+              [
+                { id: 'command', label: '지휘력', name: 'tactical.skill.command', desc: 'tactical.skill.commandDesc', descText: '대기열 크기 증가' },
+                { id: 'fortification', label: '요새화', name: 'tactical.skill.fortification', desc: 'tactical.skill.fortificationDesc', descText: '구조물 성능 강화' },
+                { id: 'mobility', label: '기동력', name: 'tactical.skill.mobility', desc: 'tactical.skill.mobilityDesc', descText: '사령관 이동 속도 향상' }
+              ].map(function (skill) {
+                return e('div', {
+                  key: skill.id,
+                  className: 'skill-card',
+                  'data-skill': skill.id
+                },
+                  e('div', { className: 'skill-info' },
+                    e('strong', { 'data-i18n': skill.name }, skill.label),
+                    e('small', { className: 'skill-desc', 'data-i18n': skill.desc }, skill.descText),
+                    e('span', { className: 'skill-level-text' },
+                      e('span', { 'data-i18n': 'tactical.levelLabel' }, '레벨'),
+                      ': ',
+                      e('span', { id: 'skill-level-' + skill.id }, '1')
+                    )
+                  ),
+                  e('button', {
+                    className: 'skill-upgrade-btn battle-pointer-target',
+                    type: 'button',
+                    'data-skill': skill.id,
+                    'data-i18n-aria': 'tactical.skill.' + skill.id + '.aria',
+                    'aria-label': skill.label + ' 업그레이드'
+                  },
+                    e('span', { 'data-i18n': 'tactical.upgrade' }, '업그레이드'),
+                    ' (',
+                    e('span', { id: 'skill-cost-' + skill.id }, '4'),
+                    ' M)'
+                  )
+                );
+              })
+            )
+          ),
+          // 2. Tower/Barricade Placement Palette
+          e('div', { id: 'tactical-deployment-controls', className: 'tactical-hud-section tactical-deployments' },
+            e('h4', { 'data-i18n': 'placement.heading' }, '방어 시설 배치'),
+            e('div', { className: 'deployment-grid' },
+              [
+                { id: 'tower', label: '방어 타워', name: 'placement.tower', desc: 'placement.towerDesc', descText: '자동 사격 타워 건설 (비용: 4 휘장)', cost: 4 },
+                { id: 'barricade', label: '바리케이드', name: 'placement.barricade', desc: 'placement.barricadeDesc', descText: '이동 경로를 차단하는 장애물 (비용: 2 휘장)', cost: 2 }
+              ].map(function (dep) {
+                return e('button', {
+                  key: dep.id,
+                  id: 'deploy-' + dep.id,
+                  className: 'deployment-btn battle-pointer-target',
+                  type: 'button',
+                  'data-kind': dep.id,
+                  'data-i18n-aria': 'placement.' + dep.id + '.aria',
+                  'aria-label': dep.label + ' 배치'
+                },
+                  e('strong', { 'data-i18n': dep.name }, dep.label),
+                  e('span', { className: 'count-badge' }, '[0/0]'),
+                  e('small', { 'data-i18n': dep.desc }, dep.descText),
+                  e('span', { className: 'cost-badge' }, dep.cost + ' M')
+                );
+              })
+            )
+          ),
+          // 3. Command Reservation Controls and Queue
+          e('div', { className: 'tactical-hud-section tactical-reservations' },
+            e('div', { id: 'reserve-command', className: 'reserve-command-panel' },
+              e('h4', { 'data-i18n': 'queue.reserveTitle' }, '사전 명령 예약'),
+              e('div', { className: 'reserve-buttons-row' },
+                [
+                  { id: 'hunt', key: '1', label: '사냥' },
+                  { id: 'extract', key: '2', label: '추출' },
+                  { id: 'materialize', key: '3', label: '실체화' },
+                  { id: 'capture', key: '4', label: '점거' },
+                  { id: 'possess', key: '5', label: '빙의' },
+                  { id: 'domain', key: '6', label: '군주의 영역' },
+                  { id: 'assault', key: '7', label: '총공격' }
+                ].map(function (act) {
+                  return e('button', {
+                    key: act.id,
+                    className: 'reserve-btn battle-pointer-target',
+                    type: 'button',
+                    'data-reserve-action': act.id,
+                    'data-i18n-aria': 'queue.reserve.' + act.id + '.aria',
+                    'aria-label': act.label + ' 예약'
+                  }, act.key);
+                })
+              )
+            ),
+            e('div', { className: 'queue-panel' },
+              e('h4', { 'data-i18n': 'queue.heading' }, '예약 대기열'),
+              e('ol', {
+                id: 'command-reservation-queue',
+                className: 'queue-list',
+                'aria-live': 'polite',
+                'aria-atomic': 'false',
+                'aria-relevant': 'additions removals text'
+              })
+            )
+          )
         ),
         e('aside', {
           className: 'cockpit-rail field-edge-hud battle-hud-rail',
           'aria-label': '전술 전장 상태',
           'data-i18n-aria': 'battle.statusAria'
         },
+          // Minimap Canvas at top of rail
+          e('section', {
+            className: 'panel rail-panel battle-minimap-panel',
+            'aria-labelledby': 'minimap-heading'
+          },
+            e('h4', { id: 'minimap-heading', className: 'sr-only', 'data-i18n': 'battle.minimapHeading' }, '전술 미니맵'),
+            e('canvas', {
+              id: 'battle-minimap',
+              tabIndex: 0,
+              role: 'application',
+              'aria-label': '실시간 미니맵',
+              'data-i18n-aria': 'battle.minimapAria',
+              'aria-describedby': 'battle-minimap-hint'
+            },
+              e('span', { 'data-i18n': 'battle.minimapFallback' }, '실시간 미니맵을 표시할 수 없습니다.')
+            ),
+            e('p', { id: 'battle-minimap-hint', className: 'sr-only', 'data-i18n': 'battle.minimapHint' }, '방향키로 초점 칸을 이동하고 Enter나 Space로 전술 카메라를 이동하십시오.')
+          ),
           e('section', {
             id: 'battle-tactical-brief',
             className: 'panel rail-panel battle-tactical-brief',

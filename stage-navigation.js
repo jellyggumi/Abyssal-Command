@@ -223,9 +223,152 @@ function findPath(cells, start, goal, allowedKeys = null) {
   return path.reverse();
 }
 
+export const TACTICAL_GIMMICKS = Object.freeze({
+  hazard: Object.freeze({
+    id: "hazard",
+    kind: "hazard",
+    labelEn: "Hazard Zone",
+    labelKo: "위험 지역",
+    effects: Object.freeze({
+      movementSpeedMultiplier: 0.7,
+      combatDamageReceivedMultiplier: 1.25,
+      towerRangeMultiplier: 0.8,
+      descriptionEn: "Volatile terrain slows movement and increases damage taken. Tower effectiveness is reduced.",
+      descriptionKo: "휘발성 지형으로 인해 이동 속도가 저하되고 받는 피해가 증가합니다. 타워 효율이 감소합니다."
+    })
+  }),
+  current: Object.freeze({
+    id: "current",
+    kind: "current",
+    labelEn: "Strong Current",
+    labelKo: "강한 해류",
+    effects: Object.freeze({
+      movementSpeedMultiplier: 0.6,
+      combatDamageReceivedMultiplier: 1.0,
+      towerRangeMultiplier: 1.0,
+      descriptionEn: "Strong underwater flows hinder navigation, reducing speed.",
+      descriptionKo: "강한 수중 흐름으로 인해 항해가 방해받아 속도가 감소합니다."
+    })
+  }),
+  "high-ground": Object.freeze({
+    id: "high-ground",
+    kind: "high-ground",
+    labelEn: "High Ground",
+    labelKo: "고지대",
+    effects: Object.freeze({
+      movementSpeedMultiplier: 1.0,
+      combatDamageDealtMultiplier: 1.15,
+      combatDamageReceivedMultiplier: 0.85,
+      towerRangeMultiplier: 1.2,
+      descriptionEn: "Elevated terrain grants combat bonuses and extends tower ranges.",
+      descriptionKo: "상승된 지형은 전투 보너스를 부여하고 타워 사거리를 연장합니다."
+    })
+  }),
+  cover: Object.freeze({
+    id: "cover",
+    kind: "cover",
+    labelEn: "Tactical Cover",
+    labelKo: "전술적 엄폐",
+    effects: Object.freeze({
+      movementSpeedMultiplier: 0.9,
+      combatDamageReceivedMultiplier: 0.75,
+      towerRangeMultiplier: 1.0,
+      descriptionEn: "Natural shielding reduces incoming combat damage.",
+      descriptionKo: "천연 차폐물로 인해 들어오는 전투 피해가 감소합니다."
+    })
+  }),
+  flank: Object.freeze({
+    id: "flank",
+    kind: "flank",
+    labelEn: "Flanking Route",
+    labelKo: "우회로",
+    effects: Object.freeze({
+      movementSpeedMultiplier: 1.2,
+      combatDamageDealtMultiplier: 1.1,
+      combatDamageReceivedMultiplier: 1.1,
+      towerRangeMultiplier: 1.0,
+      descriptionEn: "Clear pathway allowing fast movement and aggressive flanking maneuvers.",
+      descriptionKo: "빠른 이동과 공격적인 측면 기동을 허용하는 투명한 경로입니다."
+    })
+  }),
+  objective: Object.freeze({
+    id: "objective",
+    kind: "objective",
+    labelEn: "Tactical Objective",
+    labelKo: "전술적 목표",
+    effects: Object.freeze({
+      movementSpeedMultiplier: 1.0,
+      combatDamageDealtMultiplier: 1.0,
+      combatDamageReceivedMultiplier: 1.0,
+      towerRangeMultiplier: 1.1,
+      descriptionEn: "Key location of interest. Fortifications here are slightly enhanced.",
+      descriptionKo: "주요 관심 위치입니다. 이곳의 요새가 약간 강화됩니다."
+    })
+  }),
+  exposed: Object.freeze({
+    id: "exposed",
+    kind: "exposed",
+    labelEn: "Exposed Field",
+    labelKo: "노출된 평야",
+    effects: Object.freeze({
+      movementSpeedMultiplier: 1.1,
+      combatDamageReceivedMultiplier: 1.2,
+      towerRangeMultiplier: 0.9,
+      descriptionEn: "Wide open space. Units move slightly faster but receive more damage.",
+      descriptionKo: "넓고 열린 공간입니다. 유닛이 약간 더 빨리 이동하지만 더 많은 피해를 받습니다."
+    })
+  })
+});
+
+function pathExists(cells, start, goal, blockedCells) {
+  const width = STAGE_GRID_WIDTH;
+  const height = STAGE_GRID_HEIGHT;
+  const sx = Math.max(0, Math.min(width - 1, Math.floor(start.x)));
+  const sy = Math.max(0, Math.min(height - 1, Math.floor(start.y)));
+  const gx = Math.max(0, Math.min(width - 1, Math.floor(goal.x)));
+  const gy = Math.max(0, Math.min(height - 1, Math.floor(goal.y)));
+
+  const startIndex = sy * width + sx;
+  const goalIndex = gy * width + gx;
+
+  if (blockedCells.has(startIndex) || blockedCells.has(goalIndex)) return false;
+
+  const visited = new Set([startIndex]);
+  const queue = [startIndex];
+  let head = 0;
+
+  const directions = [[1, 0], [0, -1], [0, 1], [-1, 0]];
+
+  while (head < queue.length) {
+    const current = queue[head++];
+    if (current === goalIndex) return true;
+
+    const cx = current % width;
+    const cy = Math.floor(current / width);
+
+    for (const [dx, dy] of directions) {
+      const nx = cx + dx;
+      const ny = cy + dy;
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+      if (cells[ny][nx] < 0) continue;
+
+      const nextIndex = ny * width + nx;
+      if (visited.has(nextIndex) || blockedCells.has(nextIndex)) continue;
+
+      if (Math.abs(cells[ny][nx] - cells[cy][cx]) > 1) continue;
+
+      visited.add(nextIndex);
+      queue.push(nextIndex);
+    }
+  }
+  return false;
+}
+
+
 export function buildStageHeightfield(stageNumber) {
   return createStageNavigation(stageNumber).cells;
 }
+
 
 export function createStageNavigation(stageNumber) {
   const { meta, cells, routes, anchors, zones } = compile(stageNumber);
@@ -243,6 +386,112 @@ export function createStageNavigation(stageNumber) {
   };
   const gridToWorld = (x, y) => Object.freeze({ x: x - STAGE_GRID_WIDTH / 2, z: y - STAGE_GRID_HEIGHT / 2 });
   const worldToGrid = (x, z) => Object.freeze({ x: x + STAGE_GRID_WIDTH / 2, y: z + STAGE_GRID_HEIGHT / 2 });
+
+  const anchorCells = new Set();
+  const addAnchor = (coord) => {
+    if (coord && typeof coord.x === "number" && typeof coord.y === "number") {
+      anchorCells.add(Math.floor(coord.y) * STAGE_GRID_WIDTH + Math.floor(coord.x));
+    }
+  };
+  addAnchor(anchors.portal);
+  addAnchor(anchors.boss);
+  addAnchor(anchors.extractor);
+  addAnchor(anchors.rally);
+  addAnchor(anchors.alliedSpawn);
+  if (anchors.nodes) anchors.nodes.forEach(addAnchor);
+  if (anchors.hostileSpawns) anchors.hostileSpawns.forEach(addAnchor);
+
+  const getGimmickAt = (x, y) => {
+    const cellX = Math.floor(x);
+    const cellY = Math.floor(y);
+    if (cellX < 0 || cellX >= STAGE_GRID_WIDTH || cellY < 0 || cellY >= STAGE_GRID_HEIGHT) {
+      return null;
+    }
+    const zone = zones.find((z) => z.cells.some((c) => c.x === cellX && c.y === cellY));
+    if (!zone) return null;
+    return TACTICAL_GIMMICKS[zone.kind] ?? null;
+  };
+
+  const validateDeployment = (x, y, deployments = [], kind) => {
+    const cellX = Math.floor(x);
+    const cellY = Math.floor(y);
+
+    // 1. Walkability check
+    if (cellX < 0 || cellX >= STAGE_GRID_WIDTH || cellY < 0 || cellY >= STAGE_GRID_HEIGHT || cells[cellY][cellX] < 0) {
+      return Object.freeze({
+        status: "unwalkable",
+        valid: false,
+        walkable: false,
+        protected: false,
+        occupied: false,
+        reason: "Cell is not walkable or out of bounds."
+      });
+    }
+
+    // 2. Occupied check
+    const isOccupied = deployments.some((d) => {
+      const dx = d.cell ? d.cell.x : d.x;
+      const dy = d.cell ? d.cell.y : d.y;
+      return Math.floor(dx) === cellX && Math.floor(dy) === cellY;
+    });
+    if (isOccupied) {
+      return Object.freeze({
+        status: "occupied",
+        valid: false,
+        walkable: true,
+        protected: false,
+        occupied: true,
+        reason: "Cell is occupied by an existing deployment."
+      });
+    }
+
+    // 3. Protected check
+    const isAnchor = anchorCells.has(cellY * STAGE_GRID_WIDTH + cellX);
+    const isBaseArea = cellX <= 2 || cellX >= 21;
+
+    const activeKind = kind || "barricade";
+
+    // Check path block
+    const blockedCells = new Set();
+    for (const d of deployments) {
+      if (d.kind === "barricade") {
+        const dx = d.cell ? d.cell.x : d.x;
+        const dy = d.cell ? d.cell.y : d.y;
+        blockedCells.add(Math.floor(dy) * STAGE_GRID_WIDTH + Math.floor(dx));
+      }
+    }
+    if (activeKind === "barricade") {
+      blockedCells.add(cellY * STAGE_GRID_WIDTH + cellX);
+    }
+
+    const isPathBlocked = activeKind === "barricade" && !pathExists(cells, anchors.portal, anchors.boss, blockedCells);
+
+    if (isAnchor || isBaseArea || isPathBlocked) {
+      let reason = "Cell is in a protected area.";
+      if (isAnchor) reason = "Cell contains a critical game anchor.";
+      else if (isBaseArea) reason = "Cell is in a protected base or spawn area.";
+      else if (isPathBlocked) reason = "Deployment would completely block all paths from portal to boss.";
+
+      return Object.freeze({
+        status: "protected",
+        valid: false,
+        walkable: true,
+        protected: true,
+        occupied: false,
+        reason
+      });
+    }
+
+    // 4. Valid check
+    return Object.freeze({
+      status: "valid",
+      valid: true,
+      walkable: true,
+      protected: false,
+      occupied: false,
+      reason: "Cell is valid for deployment."
+    });
+  };
 
   return Object.freeze({
     stageNumber: meta.number,
@@ -277,7 +526,11 @@ export function createStageNavigation(stageNumber) {
       return [...anchors.hostileSpawns, ...anchors.nodes].find((anchor) => anchor.id === id) ?? null;
     },
     getNodeByIndex: (index) => anchors.nodes[index] ?? null,
+    gimmicks: TACTICAL_GIMMICKS,
+    getGimmickAt,
+    validateDeployment,
   });
+
 }
 
 export function validateStageNavigation(stageNumber) {

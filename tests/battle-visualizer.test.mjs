@@ -35,6 +35,7 @@ function makePointerCanvas() {
   return {
     style: {},
     focusCalls,
+    listeners,
     focus(options) {
       focusCalls.push(options);
     },
@@ -262,6 +263,123 @@ test("BattleVisualizer projects pointer focus and clears it on hover exit, cance
     },
     "every canvas focus exit must clear the command/dossier projection after exposing the matching available action",
   );
+});
+
+test("BattleVisualizer placement validation preserves the active deployment kind", (t) => {
+  const visualizer = makeVisualizer(t);
+  const receivedKinds = [];
+  visualizer.navigation = {
+    validateDeployment(_x, _y, _deployments, kind) {
+      receivedKinds.push(kind);
+      return { valid: kind === "tower" };
+    },
+  };
+
+  visualizer.placementMode = "tower";
+  assert.equal(visualizer.isPlacementLegal({ x: 8, y: 2 }), true, "tower preview must use tower route-blocking semantics");
+  visualizer.placementMode = "barricade";
+  assert.equal(visualizer.isPlacementLegal({ x: 8, y: 2 }), false, "barricade preview must use barricade route-blocking semantics");
+  assert.deepEqual(receivedKinds, ["tower", "barricade"], "each preview must pass its current kind to the shared validator");
+});
+
+test("BattleVisualizer touch orders follow the shared Stage 1 route around void", (t) => {
+  const canvas = makePointerCanvas();
+  const tacticalRequests = [];
+  const visualizer = makeVisualizer(t, {
+    canvas,
+    options: { onTacticalRequest: (request) => tacticalRequests.push(request) },
+  });
+  const startCell = {
+    x: Math.floor(visualizer.navigation.anchors.alliedSpawn.x),
+    y: Math.floor(visualizer.navigation.anchors.alliedSpawn.y),
+  };
+  const targetCell = { x: 12, y: 2 };
+  const authoredPath = visualizer.findPath(startCell, targetCell);
+  const directCrossesVoid = Array.from({ length: 101 }, (_, step) => {
+    const progress = step / 100;
+    const x = startCell.x + 0.5 + (targetCell.x - startCell.x) * progress;
+    const y = startCell.y + 0.5 + (targetCell.y - startCell.y) * progress;
+    return !visualizer.navigation.walkable(x, y);
+  }).some(Boolean);
+  assert.ok(authoredPath && authoredPath.length > 2, "the Stage 1 fixture must expose a nontrivial shared route");
+  assert.equal(directCrossesVoid, true, "the Stage 1 fixture's direct start-to-target segment must cross void");
+
+  const ally = {
+    x: visualizer.navigation.anchors.alliedSpawn.x,
+    y: visualizer.navigation.anchors.alliedSpawn.y,
+    defeated: false,
+  };
+  visualizer.allies = [ally];
+  visualizer.selection.add(ally);
+  visualizer.detectActionAt = () => null;
+  visualizer.requestTacticalActionAt = () => false;
+  visualizer.unprojectToTile = () => targetCell;
+  visualizer.playSpatial = () => {};
+  visualizer.attachPointerHandlers();
+
+  canvas.dispatch("pointerdown", { pointerType: "touch" });
+  canvas.dispatch("pointerup", { pointerType: "touch" });
+
+  assert.deepEqual(tacticalRequests, [], "selected-unit movement must remain renderer-local");
+
+  const visitedCells = new Set();
+  let reachedTarget = false;
+  for (let step = 0; step < 1200; step += 1) {
+    visualizer.updateUnits(1 / 30);
+    visitedCells.add(`${Math.floor(ally.x)},${Math.floor(ally.y)}`);
+    if (Math.hypot(ally.x - (targetCell.x + 0.5), ally.y - (targetCell.y + 0.5)) <= Math.sqrt(0.05)) {
+      reachedTarget = true;
+      break;
+    }
+  }
+
+  assert.equal(reachedTarget, true, "the selected ally must reach the authored target instead of stopping at the void");
+  assert.ok(visitedCells.size > 2, "the accepted order must traverse a nontrivial multi-cell route");
+});
+
+test("BattleVisualizer focus projection updates its minimap snapshot without callback recursion", (t) => {
+  const tacticalRequests = [];
+  const visualizer = makeVisualizer(t, {
+    options: { onTacticalRequest: (request) => tacticalRequests.push(request) },
+  });
+  visualizer.computeView = () => {};
+  visualizer.buildStaticLayer = () => {};
+  visualizer.unprojectToTile = () => ({ x: 12, y: 5 });
+
+  visualizer.focusTacticalCell({ x: 8, y: 5 });
+
+  assert.deepEqual(visualizer.getTacticalSnapshot().focus, { x: 8, y: 5 }, "external minimap focus must be visible in the next renderer snapshot");
+  assert.deepEqual(tacticalRequests, [], "applying external focus must not re-enter the tactical request callback");
+});
+
+test("BattleVisualizer destroy removes every pointer and visibility listener it registered", (t) => {
+  const canvas = makePointerCanvas();
+  const documentListeners = new Map();
+  const priorDocument = Object.getOwnPropertyDescriptor(globalThis, "document");
+  Object.defineProperty(globalThis, "document", {
+    configurable: true,
+    value: {
+      addEventListener(type, listener) {
+        documentListeners.set(type, listener);
+      },
+      removeEventListener(type, listener) {
+        if (documentListeners.get(type) === listener) documentListeners.delete(type);
+      },
+    },
+  });
+  t.after(() => {
+    if (priorDocument) Object.defineProperty(globalThis, "document", priorDocument);
+    else delete globalThis.document;
+  });
+  const visualizer = makeVisualizer(t, { canvas });
+  visualizer.attachPointerHandlers();
+  assert.equal(canvas.listeners.size, 8, "the pointer seam must register its complete interaction listener set");
+  assert.equal(documentListeners.has("visibilitychange"), true, "the renderer must observe document visibility while alive");
+
+  visualizer.destroy();
+
+  assert.equal(canvas.listeners.size, 0, "destroy must remove every canvas listener registered by the pointer seam");
+  assert.equal(documentListeners.size, 0, "destroy must remove its document visibility listener");
 });
 
 test("BattleVisualizer previewAction and clearActionPreview expose a controlled DOM preview seam", (t) => {
@@ -559,4 +677,178 @@ test("BattleVisualizer maps Stage 1 waves to their authored models and later arc
     },
     "only the three declared Stage 1 waves may select dedicated hostile art; later archetypes must retain the scout fallback",
   );
+});
+
+function makeCanvasTowerScenario(t, { fortificationLevel = 1, distance = 1 } = {}) {
+  const visualizer = makeVisualizer(t, {
+    presentation: { stageNumber: 1 },
+  });
+  const enemy = {
+    id: "enemy-1",
+    x: -0.5 + distance,
+    y: -0.5,
+    hp: 10,
+    defeated: false,
+    breachVisualized: false,
+  };
+
+  visualizer.campaign = {
+    progression: {
+      skills: { fortification: fortificationLevel },
+    },
+  };
+  visualizer.burst = () => {};
+  visualizer.playSpatial = () => {};
+  visualizer.enemies = [enemy];
+  visualizer.deployments = [{
+    id: "tower-1",
+    kind: "tower",
+    x: -1,
+    y: -1,
+    cooldown: 0,
+  }];
+
+  return {
+    visualizer,
+    enemy,
+    shotCount: () => visualizer.getTacticalSnapshot().towerShots.length,
+  };
+}
+
+test("BattleVisualizer tower auto-fire applies fortification bonuses above the level-1 baseline", async (t) => {
+  const cases = [
+    { name: "level 1 deals baseline damage", fortificationLevel: 1, expectedDamage: 1 },
+    { name: "level 2 adds twenty percent damage", fortificationLevel: 2, expectedDamage: 1.2 },
+  ];
+
+  for (const { name, fortificationLevel, expectedDamage } of cases) {
+    await t.test(name, () => {
+      const { visualizer, enemy, shotCount } = makeCanvasTowerScenario(t, { fortificationLevel });
+
+      visualizer.updateTowers(0);
+
+      assert.deepEqual(
+        {
+          damage: Number((10 - enemy.hp).toFixed(6)),
+          shots: shotCount(),
+        },
+        { damage: expectedDamage, shots: 1 },
+        "one live enemy inside tower range must take the level-scaled damage from exactly one emitted shot",
+      );
+    });
+  }
+});
+
+test("BattleVisualizer tower auto-fire includes the shared base-range boundary and excludes enemies beyond it", async (t) => {
+  const cases = [
+    { name: "enemy exactly four units away is in range", distance: 4, expectedShots: 1 },
+    { name: "enemy just beyond four units is out of range", distance: 4.001, expectedShots: 0 },
+  ];
+
+  for (const { name, distance, expectedShots } of cases) {
+    await t.test(name, () => {
+      const { visualizer, shotCount } = makeCanvasTowerScenario(t, { distance });
+
+      visualizer.updateTowers(0);
+
+      assert.equal(
+        shotCount(),
+        expectedShots,
+        "the Canvas tower must use the same inclusive four-unit base range as the WebGL tower",
+      );
+    });
+  }
+});
+
+test("BattleVisualizer tower auto-fire emits only one shot during the shared one-second cooldown", (t) => {
+  const { visualizer, shotCount } = makeCanvasTowerScenario(t);
+  const shotsByElapsedTime = [];
+
+  for (const elapsed of [0, 0.8, 0.2]) {
+    visualizer.updateTowers(elapsed);
+    shotsByElapsedTime.push(shotCount());
+  }
+
+  assert.deepEqual(
+    shotsByElapsedTime,
+    [1, 1, 2],
+    "the tower must fire immediately, remain blocked at 0.8 seconds, and fire again after one full second",
+  );
+});
+
+function measureCanvasMobilityTick(t, { mobilityLevel, terrainMultiplier = 1 }) {
+  const visualizer = makeVisualizer(t, {
+    presentation: { stageNumber: 1 },
+  });
+  const start = { x: 5, y: 5 };
+  const ally = {
+    x: start.x,
+    y: start.y + 1,
+    baseSpeed: 1.2,
+    speed: 1.2,
+    hp: 3,
+    defeated: false,
+    path: [{ x: start.x + 2, y: start.y + 1 }],
+  };
+
+  visualizer.campaign = {
+    progression: {
+      skills: { mobility: mobilityLevel },
+    },
+  };
+  visualizer.commander.x = start.x;
+  visualizer.commander.y = start.y;
+  visualizer.commanderPosition = { ...start };
+  visualizer.allies = [ally];
+  visualizer.pressed.add("KeyD");
+  const navigation = Object.create(visualizer.navigation);
+  Object.defineProperty(navigation, "getGimmickAt", {
+    value: () => ({
+      effects: { movementSpeedMultiplier: terrainMultiplier },
+    }),
+  });
+  visualizer.navigation = navigation;
+  visualizer.walkable = () => true;
+  visualizer.clampMovementToContact = () => false;
+
+  visualizer.updateUnits(0.25);
+
+  return {
+    commander: Math.hypot(
+      visualizer.commander.x - start.x,
+      visualizer.commander.y - start.y,
+    ),
+    ally: Math.hypot(ally.x - start.x, ally.y - (start.y + 1)),
+  };
+}
+
+test("BattleVisualizer Mobility accelerates only the commander and composes with terrain movement", async (t) => {
+  const baseline = measureCanvasMobilityTick(t, { mobilityLevel: 1 });
+  const upgraded = measureCanvasMobilityTick(t, { mobilityLevel: 2 });
+  const terrainMultiplier = 0.5;
+  const terrainAffected = measureCanvasMobilityTick(t, { mobilityLevel: 2, terrainMultiplier });
+
+  await t.test("level 2 moves the commander exactly fifteen percent farther than level 1", () => {
+    assert.equal(
+      Number((upgraded.commander / baseline.commander).toFixed(12)),
+      1.15,
+      "Mobility level 1 must be the commander baseline and level 2 must add exactly fifteen percent",
+    );
+  });
+
+  await t.test("level 2 leaves allied-unit movement at the level-1 distance", () => {
+    assert.equal(
+      Number((upgraded.ally / baseline.ally).toFixed(12)),
+      1,
+      "Mobility must not change allied-unit speed",
+    );
+  });
+
+  await t.test("terrain movement effects multiply the upgraded commander distance", () => {
+    assert.equal(
+      Number((terrainAffected.commander / upgraded.commander).toFixed(12)),
+      terrainMultiplier,
+      "terrain movement effects must remain multiplicative with commander Mobility",
+    );
+  });
 });

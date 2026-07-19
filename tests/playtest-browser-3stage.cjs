@@ -64,6 +64,8 @@ const STAGE_ONE_SOURCE_GLB_RESPONSES = Object.freeze([
   Object.freeze({ path: "/assets/models/abyssal-command/terrain/cinder-span.glb", status: 200, contentType: "model/gltf-binary", fromServiceWorker: true }),
   Object.freeze({ path: "/assets/models/abyssal-command/units/shade.glb", status: 200, contentType: "model/gltf-binary", fromServiceWorker: true }),
   Object.freeze({ path: "/assets/models/abyssal-command/units/scout.glb", status: 200, contentType: "model/gltf-binary", fromServiceWorker: true }),
+  Object.freeze({ path: "/assets/models/abyssal-command/units/guard.glb", status: 200, contentType: "model/gltf-binary", fromServiceWorker: true }),
+  Object.freeze({ path: "/assets/models/abyssal-command/units/reinforce.glb", status: 200, contentType: "model/gltf-binary", fromServiceWorker: true }),
   Object.freeze({ path: "/assets/models/abyssal-command/bosses/cinder-warden.glb", status: 200, contentType: "model/gltf-binary", fromServiceWorker: true }),
 ]);
 
@@ -75,6 +77,8 @@ const ALL_SOURCE_GLB_PATHS = new Set([
   "/assets/models/abyssal-command/terrain/echo-throne-steps.glb",
   "/assets/models/abyssal-command/units/shade.glb",
   "/assets/models/abyssal-command/units/scout.glb",
+  "/assets/models/abyssal-command/units/guard.glb",
+  "/assets/models/abyssal-command/units/reinforce.glb",
   "/assets/models/abyssal-command/bosses/cinder-warden.glb",
   "/assets/models/abyssal-command/bosses/veil-tactician.glb",
   "/assets/models/abyssal-command/bosses/gate-sovereign.glb",
@@ -860,8 +864,8 @@ async function assertDirectSourceGlbReadiness(page) {
   const status = await text(page.locator("#battle-asset-status"));
   assert.match(
     status,
-    /^(?:Source GLB atlases 4\/4 · \d+ action clips active|GLB 소스 아틀라스 4\/4 · 동작 클립 \d+개 활성)$/,
-    "The tactical brief must visibly report that all four direct-renderer source GLBs and their action clips are ready."
+    /^(?:Source GLB atlases 6\/6 · \d+ action clips active|GLB 소스 아틀라스 6\/6 · 동작 클립 \d+개 활성)$/,
+    "The tactical brief must visibly report that all six direct-renderer source GLBs and their action clips are ready."
   );
   assert.doesNotMatch(
     status,
@@ -1830,8 +1834,8 @@ async function verifyRealtimeThreeBattleOnly(browser, baseUrl) {
     const assetStatus = await text(page.locator("#battle-asset-status"));
     assert.match(
       assetStatus,
-      /^(?:Source GLB atlases 4\/4 · \d+ action clips active|GLB 소스 아틀라스 4\/4 · 동작 클립 \d+개 활성)$/,
-      "The direct renderer must publicly report successful readiness for all four Stage 1 source GLBs."
+      /^(?:Source GLB atlases 6\/6 · \d+ action clips active|GLB 소스 아틀라스 6\/6 · 동작 클립 \d+개 활성)$/,
+      "The direct renderer must publicly report successful readiness for all six Stage 1 source GLBs."
     );
     assert.equal(await page.locator("#battle-asset-status").getAttribute("data-state"), "loaded", "The direct renderer must expose its loaded readiness state.");
     assert.deepEqual(
@@ -3676,7 +3680,7 @@ async function verifyStageThreeChecklist(browser, baseUrl) {
 function cleanupError(label, error) {
   return `${label}: ${error instanceof Error ? error.message : String(error)}`;
 }
-const CURRENT_STATIC_CACHE = "abyssal-surge-static-v48";
+const CURRENT_STATIC_CACHE = "abyssal-surge-static-v50";
 
 function currentWorkerCacheName() {
   let serviceWorkerSource;

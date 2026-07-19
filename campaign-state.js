@@ -1,3 +1,5 @@
+import { createStageNavigation } from "./stage-navigation.js";
+
 export const RULES_VERSION = "abyssal-surge-rules-v7";
 export const SAVE_SCHEMA = "abyssal-surge-campaign";
 export const SAVE_SCHEMA_VERSION = 5;
@@ -765,7 +767,8 @@ function makeStageState(stage, rewards, entryIntegrity) {
     aegis: benefits.entryAegis,
     integrity,
     entryIntegrity: integrity,
-    bossHealth: stage.bossHealth
+    bossHealth: stage.bossHealth,
+    deployments: []
   };
   if (stage.encounter) state.encounter = makeEncounterState(stage);
   return state;
@@ -781,7 +784,16 @@ function makeCampaign() {
     stage: makeStageState(STAGES[0], [], BALANCE.maxIntegrity),
     trace: [],
     revision: 0,
-    lastMessage: "The abyss answers when you are ready."
+    lastMessage: "The abyss answers when you are ready.",
+    progression: {
+      marks: 8,
+      skills: {
+        command: 1,
+        fortification: 1,
+        mobility: 1
+      }
+    },
+    commandQueue: []
   };
 }
 
@@ -822,6 +834,31 @@ function assertStateShape(state) {
   assert(Array.isArray(state.rewards) && Array.isArray(state.trace), "Campaign history is invalid.");
   assert(state.stage && typeof state.stage === "object", "Campaign stage state is invalid.");
   validateEncounterState(state.stage.encounter, activeStage(state));
+
+  assert(state.progression && typeof state.progression === "object", "Campaign progression is invalid.");
+  assert(Number.isInteger(state.progression.marks) && state.progression.marks >= 0, "Campaign progression marks is invalid.");
+  assert(state.progression.skills && typeof state.progression.skills === "object", "Campaign progression skills is invalid.");
+  assert(Number.isInteger(state.progression.skills.command) && state.progression.skills.command >= 1 && state.progression.skills.command <= 5, "Command skill level is invalid.");
+  assert(Number.isInteger(state.progression.skills.fortification) && state.progression.skills.fortification >= 1 && state.progression.skills.fortification <= 5, "Fortification skill level is invalid.");
+  assert(Number.isInteger(state.progression.skills.mobility) && state.progression.skills.mobility >= 1 && state.progression.skills.mobility <= 5, "Mobility skill level is invalid.");
+
+  assert(Array.isArray(state.commandQueue), "Command queue must be an array.");
+  for (const item of state.commandQueue) {
+    assert(item && typeof item === "object", "Command queue item must be an object.");
+    assert(typeof item.id === "string", "Command queue item id must be a string.");
+    assert(typeof item.action === "string", "Command queue item action must be a string.");
+    assert(!item.reason || typeof item.reason === "string", "Command queue item reason must be a string.");
+  }
+
+  assert(Array.isArray(state.stage.deployments), "Stage deployments must be an array.");
+  for (const dep of state.stage.deployments) {
+    assert(dep && typeof dep === "object", "Deployment must be an object.");
+    assert(typeof dep.id === "string", "Deployment id must be a string.");
+    assert(dep.kind === "tower" || dep.kind === "barricade", "Deployment kind is invalid.");
+    assert(dep.cell && typeof dep.cell === "object", "Deployment cell must be an object.");
+    assert(Number.isInteger(dep.cell.x) && dep.cell.x >= 0 && dep.cell.x < 24, "Deployment cell x is out of grid.");
+    assert(Number.isInteger(dep.cell.y) && dep.cell.y >= 0 && dep.cell.y < 12, "Deployment cell y is out of grid.");
+  }
 }
 
 function canAct(state) {
@@ -923,85 +960,86 @@ function applyBreach(draft, damage) {
   draft.lastMessage = `An abyssal breach tears ${damage} integrity.`;
 }
 
-export function applyAction(state, action) {
+function checkAndApplyActionMutations(draft, action) {
+  const state = draft;
   const blocked = guardAction(state, action);
-  if (blocked) return blocked;
+  if (blocked) return blocked.message;
 
   const stage = activeStage(state);
   const current = state.stage;
   const progression = stage.progression;
-  let message = "";
+  const benefits = rewardBenefits(state.rewards);
 
   if (action === "hunt") {
-    if (current.hunted >= progression.huntGoal) return rejected(state, "The spoor is fully mapped. Extract the gathered shade.");
-    message = current.hunted === 0 ? "You find a heatless footprint in the cinders." : "The second trace exposes the rift's pulse.";
-  }
-  if (action === "extract" && current.hunted < progression.huntGoal) return rejected(state, "Two spoor marks are required before extraction.");
-  if (action === "materialize" && (current.souls < progression.materializeCost || current.legion >= current.capacity)) {
-    return rejected(state, current.souls < progression.materializeCost ? "Extract enough shade before materializing a legion." : "Your legion slots are full.");
-  }
-  if (action === "capture" && (current.legion < 2 || current.nodes >= stage.nodeGoal)) {
-    return rejected(state, current.legion < 2 ? "A legion of at least two shades must anchor the node." : "Every required node is already held.");
-  }
-  if (action === "possess") {
+    if (current.hunted >= progression.huntGoal) return "The spoor is fully mapped. Extract the gathered shade.";
+    const message = current.hunted === 0 ? "You find a heatless footprint in the cinders." : "The second trace exposes the rift's pulse.";
+    current.hunted += 1;
+    if (current.hunted === progression.huntGoal && benefits.autoExtract) {
+      current.extracted = true;
+      current.hunted = 0;
+      current.souls += progression.soulsPerExtract;
+      draft.lastMessage = "The second spoor opens into a soul cache before the rift can close.";
+    } else {
+      draft.lastMessage = message;
+    }
+  } else if (action === "extract") {
+    if (current.hunted < progression.huntGoal) return "Two spoor marks are required before extraction.";
+    current.extracted = true;
+    current.hunted = 0;
+    current.souls += progression.soulsPerExtract;
+    draft.lastMessage = "Four volatile shades tear free from the rift.";
+  } else if (action === "materialize") {
+    if (current.souls < progression.materializeCost || current.legion >= current.capacity) {
+      return current.souls < progression.materializeCost ? "Extract enough shade before materializing a legion." : "Your legion slots are full.";
+    }
+    const summoned = Math.min(progression.materializeSummon + benefits.materializeBonus, current.capacity - current.legion);
+    current.souls -= progression.materializeCost;
+    current.legion += summoned;
+    draft.lastMessage = `${summoned} shadow ${summoned === 1 ? "answers" : "answer"} your call.`;
+  } else if (action === "capture") {
+    if (current.legion < 2 || current.nodes >= stage.nodeGoal) {
+      return current.legion < 2 ? "A legion of at least two shades must anchor the node." : "Every required node is already held.";
+    }
+    current.nodes += 1;
+    draft.lastMessage = `The node bends beneath the legion's banner (${current.nodes}/${stage.nodeGoal}).`;
+  } else if (action === "possess") {
     const command = stage.commands.possess;
     if (current.nodes < command.requiresNodes || current.possessed) {
-      return rejected(state, current.possessed ? "A sentinel is already possessed." : "Hold a signal node before taking a sentinel.");
+      return current.possessed ? "A sentinel is already possessed." : "Hold a signal node before taking a sentinel.";
     }
-  }
-  if (action === "domain") {
+    current.possessed = true;
+    draft.lastMessage = "A sentinel's will is folded into your command; its fury rides your assaults.";
+  } else if (action === "domain") {
     const command = stage.commands.domain;
     if (current.nodes < command.requiresNodes || current.domainUses >= command.limit) {
-      return rejected(state, current.domainUses >= command.limit ? "Lord's Domain may answer only once." : "Secure the throne node before opening the Domain.");
+      return current.domainUses >= command.limit ? "Lord's Domain may answer only once." : "Secure the throne node before opening the Domain.";
     }
-  }
-  if (action === "assault") {
+    current.domainUses = 1;
+    current.integrity = clamp(current.integrity + command.integrityRestore, 0, benefits.maxIntegrity);
+    current.aegis += command.aegis;
+    draft.lastMessage = `Lord's Domain unfolds once: the abyss restores ${command.integrityRestore} integrity, and the next ${command.aegis} counterblows break against it.`;
+  } else if (action === "assault") {
     const assaultBlocked = guardAssault(state, stage, current);
-    if (assaultBlocked) return assaultBlocked;
+    if (assaultBlocked) return assaultBlocked.message;
+    applyAssault(draft, stage);
+  } else {
+    return "Unsupported command.";
+  }
+  return null;
+}
+
+export function applyAction(state, action) {
+  const testDraft = clone(state);
+  if (testDraft.stage && activeStage(testDraft).encounter && !testDraft.stage.encounter) {
+    testDraft.stage.encounter = makeEncounterState(activeStage(testDraft));
+  }
+  const err = checkAndApplyActionMutations(testDraft, action);
+  if (err) {
+    return rejected(state, err);
   }
 
   const next = transition(state, (draft) => {
-    const target = draft.stage;
-    const benefits = rewardBenefits(draft.rewards);
-    if (action === "hunt") {
-      target.hunted += 1;
-      if (target.hunted === progression.huntGoal && benefits.autoExtract) {
-        target.extracted = true;
-        target.hunted = 0;
-        target.souls += progression.soulsPerExtract;
-        draft.lastMessage = "The second spoor opens into a soul cache before the rift can close.";
-      } else {
-        draft.lastMessage = message;
-      }
-    }
-    if (action === "extract") {
-      target.extracted = true;
-      target.hunted = 0;
-      target.souls += progression.soulsPerExtract;
-      draft.lastMessage = "Four volatile shades tear free from the rift.";
-    }
-    if (action === "materialize") {
-      const summoned = Math.min(progression.materializeSummon + benefits.materializeBonus, target.capacity - target.legion);
-      target.souls -= progression.materializeCost;
-      target.legion += summoned;
-      draft.lastMessage = `${summoned} shadow ${summoned === 1 ? "answers" : "answer"} your call.`;
-    }
-    if (action === "capture") {
-      target.nodes += 1;
-      draft.lastMessage = `The node bends beneath the legion's banner (${target.nodes}/${stage.nodeGoal}).`;
-    }
-    if (action === "possess") {
-      target.possessed = true;
-      draft.lastMessage = "A sentinel's will is folded into your command; its fury rides your assaults.";
-    }
-    if (action === "domain") {
-      const command = stage.commands.domain;
-      target.domainUses = 1;
-      target.integrity = clamp(target.integrity + command.integrityRestore, 0, benefits.maxIntegrity);
-      target.aegis += command.aegis;
-      draft.lastMessage = `Lord's Domain unfolds once: the abyss restores ${command.integrityRestore} integrity, and the next ${command.aegis} counterblows break against it.`;
-    }
-    if (action === "assault") applyAssault(draft, stage);
+    checkAndApplyActionMutations(draft, action);
   }, { kind: "action", action });
   return accepted(next, next.lastMessage, action);
 }
@@ -1060,6 +1098,7 @@ export function applyEncounterEvent(state, event) {
       return;
     }
     targetWave.cleared = true;
+    draft.progression.marks += 2;
     targetEncounter.activeWaveId = null;
     const allCleared = targetEncounter.waves.every((wave) => wave.cleared);
     targetEncounter.bossExposed = allCleared;
@@ -1080,6 +1119,7 @@ export function chooseReward(state, rewardId) {
 
   const next = transition(state, (draft) => {
     draft.rewards.push({ stageId: stage.id, rewardId: reward.id, rewardName: reward.name });
+    draft.progression.marks += 4;
     const nextStage = stage.nextStageId ? STAGES_BY_ID[stage.nextStageId] : null;
     if (!nextStage) {
       draft.status = "campaign-complete";
@@ -1121,6 +1161,47 @@ export function applyBattleBreach(state) {
   return accepted(next, next.lastMessage, "battle-breach");
 }
 
+function applyTraceEvent(state, event) {
+  let result;
+  if (event.kind === "start") {
+    result = startCampaign(state);
+  } else if (event.kind === "action") {
+    result = applyAction(state, event.action);
+  } else if (event.kind === "reward") {
+    result = chooseReward(state, event.rewardId);
+  } else if (event.kind === "retry") {
+    result = retryStage(state);
+  } else if (event.kind === "battle-breach") {
+    result = applyBattleBreach(state);
+  } else if (event.kind === "encounter") {
+    result = applyEncounterEvent(state, event.event);
+  } else if (event.kind === "reserve-command") {
+    result = reserveCommand(state, event.action, event.id);
+  } else if (event.kind === "reorder-reserved-command") {
+    result = reorderReservedCommand(state, event.fromIndex, event.toIndex);
+  } else if (event.kind === "cancel-reserved-command") {
+    result = cancelReservedCommand(state, event.id);
+  } else if (event.kind === "execute-reserved-command") {
+    result = executeReservedCommand(state, event.id);
+  } else if (event.kind === "upgrade-skill") {
+    result = upgradeSkill(state, event.skill);
+  } else if (event.kind === "deploy-tactical-object") {
+    result = deployTacticalObject(state, event.deployKind, event.cell, event.id);
+  } else {
+    throw new Error("Save trace contains an unsupported event.");
+  }
+  assert(result.accepted, "Save trace contains an impossible transition.");
+  return result.state;
+}
+
+function rebuildStateFromTrace(trace) {
+  let state = createCampaign();
+  for (const event of trace) {
+    state = applyTraceEvent(state, event);
+  }
+  return state;
+}
+
 export function retryStage(state) {
   assertStateShape(state);
   if (state.status === "briefing" || state.status === "campaign-complete" || state.status === "reward") {
@@ -1134,10 +1215,16 @@ export function retryStage(state) {
     if (event.kind === "start" || event.kind === "reward") checkpoint = index;
   }
   next.trace.splice(checkpoint + 1);
+
+  const replayed = rebuildStateFromTrace(next.trace);
+
+  next.progression = replayed.progression;
+  next.commandQueue = replayed.commandQueue;
   next.stage = makeStageState(activeStage(next), next.rewards, next.stage.entryIntegrity);
   next.status = "active";
   next.lastMessage = `${activeStage(next).title} reforms. Your earned boons remain.`;
   next.revision += 1;
+
   return accepted(next, next.lastMessage, "retry");
 }
 
@@ -1199,19 +1286,211 @@ export function restoreSaveEnvelope(envelope) {
   assert(Array.isArray(envelope.trace), "Save trace is missing.");
   assert(envelope.trace.length <= MAX_TRACE_EVENTS, `Save trace exceeds ${MAX_TRACE_EVENTS} events.`);
 
-  let state = createCampaign();
-  for (const event of envelope.trace) {
-    assert(event && typeof event === "object" && typeof event.kind === "string", "Save trace contains an invalid event.");
-    let result;
-    if (event.kind === "start") result = startCampaign(state);
-    else if (event.kind === "action") result = applyAction(state, event.action);
-    else if (event.kind === "reward") result = chooseReward(state, event.rewardId);
-    else if (event.kind === "retry") result = retryStage(state);
-    else if (event.kind === "battle-breach") result = applyBattleBreach(state);
-    else if (event.kind === "encounter") result = applyEncounterEvent(state, event.event);
-    else throw new Error("Save trace contains an unsupported event.");
-    assert(result.accepted, "Save trace contains an impossible transition.");
-    state = result.state;
+  return rebuildStateFromTrace(envelope.trace);
+}
+
+export const TACTICAL_METADATA = Object.freeze({
+  initialMarks: 8,
+  towerCost: 4,
+  barricadeCost: 2
+});
+
+export function getCommandCooldown(state, command) {
+  assertStateShape(state);
+  const stage = activeStage(state);
+  const commandDef = stage.commands[command];
+  if (!commandDef) return 0;
+  let baseCooldown = commandDef.cooldown;
+  if (baseCooldown === undefined) {
+    const defaults = {
+      hunt: 4,
+      extract: 5,
+      materialize: 5,
+      capture: 6,
+      possess: 10,
+      domain: 15,
+      assault: 3
+    };
+    baseCooldown = defaults[command] ?? 0;
   }
-  return state;
+  const benefits = getCampaignBenefits(state);
+  return baseCooldown * (1 - benefits.cooldownReduction);
+}
+
+export function getTacticalProgression(state) {
+  assertStateShape(state);
+  return {
+    marks: state.progression.marks,
+    skills: {
+      command: state.progression.skills.command,
+      fortification: state.progression.skills.fortification,
+      mobility: state.progression.skills.mobility
+    },
+    commandQueue: clone(state.commandQueue),
+    deployments: state.stage ? clone(state.stage.deployments) : []
+  };
+}
+
+export function reserveCommand(state, action, id) {
+  if (!canAct(state)) return rejected(state, "This stage is not active.");
+  const stage = activeStage(state);
+  if (!stage.commands[action]) return rejected(state, "That command has no place in this stage.");
+
+  const commandLevel = state.progression.skills.command;
+  const queueLimit = Math.min(5, commandLevel + 1);
+  if (state.commandQueue.length >= queueLimit) {
+    return rejected(state, "Command reservation queue is full.");
+  }
+
+  const eventId = id || `res-${state.revision}-${state.commandQueue.length}`;
+  if (state.commandQueue.some((item) => item.id === eventId)) {
+    return rejected(state, "Command reservation ID is already in use.");
+  }
+  const next = transition(state, (draft) => {
+    draft.commandQueue.push({ id: eventId, action });
+    draft.lastMessage = `Reserved command: ${action}.`;
+  }, { kind: "reserve-command", action, id: eventId });
+
+  return accepted(next, next.lastMessage, "reserve");
+}
+
+export function reorderReservedCommand(state, fromIndex, toIndex) {
+  if (!canAct(state)) return rejected(state, "This stage is not active.");
+  if (!Number.isInteger(fromIndex) || fromIndex < 0 || fromIndex >= state.commandQueue.length) {
+    return rejected(state, "Invalid fromIndex.");
+  }
+  if (!Number.isInteger(toIndex) || toIndex < 0 || toIndex >= state.commandQueue.length) {
+    return rejected(state, "Invalid toIndex.");
+  }
+
+  const next = transition(state, (draft) => {
+    const [item] = draft.commandQueue.splice(fromIndex, 1);
+    draft.commandQueue.splice(toIndex, 0, item);
+    draft.lastMessage = "Reordered command queue.";
+  }, { kind: "reorder-reserved-command", fromIndex, toIndex });
+
+  return accepted(next, next.lastMessage, "reorder");
+}
+
+export function cancelReservedCommand(state, id) {
+  if (!canAct(state)) return rejected(state, "This stage is not active.");
+  const index = state.commandQueue.findIndex((item) => item.id === id);
+  if (index === -1) {
+    return rejected(state, "Command not found in queue.");
+  }
+
+  const next = transition(state, (draft) => {
+    const qIndex = draft.commandQueue.findIndex((item) => item.id === id);
+    if (qIndex !== -1) {
+      draft.commandQueue.splice(qIndex, 1);
+    }
+    draft.lastMessage = "Cancelled reserved command.";
+  }, { kind: "cancel-reserved-command", id });
+
+  return accepted(next, next.lastMessage, "cancel");
+}
+
+export function executeReservedCommand(state, id) {
+  if (!canAct(state)) return rejected(state, "This stage is not active.");
+  const index = state.commandQueue.findIndex((item) => item.id === id);
+  if (index === -1) {
+    return rejected(state, "Command not found in queue.");
+  }
+  const action = state.commandQueue[index].action;
+
+  const testDraft = clone(state);
+  if (testDraft.stage && activeStage(testDraft).encounter && !testDraft.stage.encounter) {
+    testDraft.stage.encounter = makeEncounterState(activeStage(testDraft));
+  }
+  const err = checkAndApplyActionMutations(testDraft, action);
+
+  if (err) {
+    return rejected(state, `Execution failed: ${err}`);
+  }
+
+  const next = transition(state, (draft) => {
+    checkAndApplyActionMutations(draft, action);
+    const qIndex = draft.commandQueue.findIndex((q) => q.id === id);
+    if (qIndex !== -1) {
+      draft.commandQueue.splice(qIndex, 1);
+    }
+    draft.lastMessage = `Executed reserved command: ${action}. ` + draft.lastMessage;
+  }, { kind: "execute-reserved-command", id, success: true });
+
+  return accepted(next, next.lastMessage, action);
+}
+
+export function upgradeSkill(state, skill) {
+  if (!canAct(state)) return rejected(state, "This stage is not active.");
+  if (skill !== "command" && skill !== "fortification" && skill !== "mobility") {
+    return rejected(state, "Invalid skill type.");
+  }
+  const currentLevel = state.progression.skills[skill];
+  if (currentLevel >= 5) {
+    return rejected(state, `Skill ${skill} is already at maximum level.`);
+  }
+  const cost = currentLevel * 4;
+  if (state.progression.marks < cost) {
+    return rejected(state, `Not enough marks. Need ${cost} but have ${state.progression.marks}.`);
+  }
+
+  const next = transition(state, (draft) => {
+    const currentLvl = draft.progression.skills[skill];
+    const skillCost = currentLvl * 4;
+    draft.progression.marks -= skillCost;
+    draft.progression.skills[skill] += 1;
+    draft.lastMessage = `Upgraded ${skill} skill to level ${currentLvl + 1}.`;
+  }, { kind: "upgrade-skill", skill });
+
+  return accepted(next, next.lastMessage, "upgrade-skill");
+}
+
+export function deployTacticalObject(state, kind, cell, id) {
+  if (!canAct(state)) return rejected(state, "This stage is not active.");
+  if (kind !== "tower" && kind !== "barricade") {
+    return rejected(state, "Invalid deployment kind.");
+  }
+  if (!cell || typeof cell !== "object" || !Number.isInteger(cell.x) || !Number.isInteger(cell.y)) {
+    return rejected(state, "Invalid cell coordinates.");
+  }
+  const { x, y } = cell;
+  if (x < 0 || x >= 24 || y < 0 || y >= 12) {
+    return rejected(state, "Placement is out of grid boundaries.");
+  }
+
+  const currentDeployments = state.stage.deployments || [];
+  const depId = id || `dep-${state.revision}-${currentDeployments.length}`;
+  if (currentDeployments.some((deployment) => deployment.id === depId)) {
+    return rejected(state, "Deployment ID is already in use.");
+  }
+  const stageNumber = state.stageIndex + 1;
+  const navigation = createStageNavigation(stageNumber);
+  const validation = navigation.validateDeployment(cell.x, cell.y, state.stage.deployments, kind);
+  if (!validation.valid) {
+    return rejected(state, validation.reason);
+  }
+
+  const fortificationLevel = state.progression.skills.fortification;
+  const currentCount = currentDeployments.filter((d) => d.kind === kind).length;
+  const cap = kind === "tower" ? fortificationLevel : (fortificationLevel + 1);
+  if (currentCount >= cap) {
+    return rejected(state, `Cannot deploy more than ${cap} ${kind}s at fortification level ${fortificationLevel}.`);
+  }
+
+  const cost = kind === "tower" ? 4 : 2;
+  if (state.progression.marks < cost) {
+    return rejected(state, `Not enough marks. Need ${cost} but have ${state.progression.marks}.`);
+  }
+
+  const next = transition(state, (draft) => {
+    draft.progression.marks -= cost;
+    draft.stage.deployments.push({
+      id: depId,
+      kind,
+      cell: { x, y }
+    });
+    draft.lastMessage = `Deployed ${kind} at (${x}, ${y}).`;
+  }, { kind: "deploy-tactical-object", deployKind: kind, cell, id: depId });
+
+  return accepted(next, next.lastMessage, `deploy-${kind}`);
 }

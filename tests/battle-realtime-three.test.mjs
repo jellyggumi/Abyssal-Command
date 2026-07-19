@@ -511,6 +511,162 @@ test("RealtimeBattle previewAction accepts the action-enriched DOM semantic and 
   assert.equal(battle.previewActionSemantic, null, "DOM pointerout or blur must clear the renderer preview");
 });
 
+test("RealtimeBattle placement validation preserves the active deployment kind", () => {
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const receivedKinds = [];
+  battle.navigation = {
+    width: 24,
+    height: 12,
+    validateDeployment(_x, _y, _deployments, kind) {
+      receivedKinds.push(kind);
+      return { valid: kind === "tower" };
+    },
+  };
+
+  battle.placementMode = "tower";
+  assert.equal(battle.isPlacementLegal(8, 2), true, "tower preview must use tower route-blocking semantics");
+  battle.placementMode = "barricade";
+  assert.equal(battle.isPlacementLegal(8, 2), false, "barricade preview must use barricade route-blocking semantics");
+  assert.deepEqual(receivedKinds, ["tower", "barricade"], "each WebGL preview must pass its current kind to the shared validator");
+});
+
+test("RealtimeBattle external focus is callback-pure and publishes minimap-compatible tactical state", () => {
+  const tacticalRequests = [];
+  const battle = new RealtimeBattle(
+    null,
+    { stageNumber: 1 },
+    { onTacticalRequest: (request) => tacticalRequests.push(request) },
+  );
+  battle.updateFocusHighlight = () => {};
+  const navigation = battle.navigation;
+  battle.cachedNavigationSnapshot = {
+    width: navigation.width,
+    height: navigation.height,
+    cells: navigation.cells,
+    routes: navigation.routes.map(({ id, lane, cells }) => ({ id, lane, cells })),
+    zones: navigation.zones.map(({ kind, cells }) => ({ kind, cells })),
+    anchors: {
+      portal: navigation.anchors.portal,
+      boss: navigation.anchors.boss,
+      extractor: navigation.anchors.extractor,
+      rally: navigation.anchors.rally,
+      alliedSpawn: navigation.anchors.alliedSpawn,
+      nodes: navigation.anchors.nodes,
+      hostileSpawns: navigation.anchors.hostileSpawns,
+    },
+  };
+  battle.commander = { ...makeUnit({ x: -4, z: 0, hp: 3 }), id: "commander" };
+  battle.allies = [{ ...makeUnit({ x: -2, z: 1, hp: 2 }), id: "ally-1" }];
+  battle.enemies = [{ ...makeUnit({ x: 4, z: -1, hp: 2 }), id: "enemy-1" }];
+  battle.deploymentsMap.set("tower-1", { id: "tower-1", kind: "tower", gridX: 8, gridY: 5 });
+
+  battle.focusTacticalCell({ x: 8, y: 5 });
+  const snapshot = battle.getTacticalSnapshot();
+
+  assert.deepEqual(tacticalRequests, [], "applying minimap focus must not re-enter the tactical request callback");
+  assert.deepEqual(
+    {
+      stageNumber: snapshot.stageNumber,
+      navigationSize: [snapshot.navigation.width, snapshot.navigation.height],
+      focus: snapshot.focus,
+      units: snapshot.units,
+      deployments: snapshot.deployments,
+    },
+    {
+      stageNumber: 1,
+      navigationSize: [24, 12],
+      focus: { x: 8, y: 5 },
+      units: [
+        { id: "commander", team: 1, x: -4, z: 0, hp: 3 },
+        { id: "ally-1", team: 1, x: -2, z: 1, hp: 2 },
+        { id: "enemy-1", team: 2, x: 4, z: -1, hp: 2 },
+      ],
+      deployments: [{ id: "tower-1", kind: "tower", x: 8, y: 5 }],
+    },
+    "the WebGL snapshot must retain the navigation, world-unit, deployment, and focus fields consumed by the minimap",
+  );
+});
+
+test("RealtimeBattle selected-unit orders follow the shared Stage 1 route around void", () => {
+  const tacticalRequests = [];
+  const canvas = {
+    style: {},
+    focus() {},
+    setPointerCapture() {},
+    hasPointerCapture: () => true,
+    releasePointerCapture() {},
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }),
+  };
+  const battle = new RealtimeBattle(
+    canvas,
+    { stageNumber: 1 },
+    { onTacticalRequest: (request) => tacticalRequests.push(request) },
+  );
+  const startCell = {
+    x: Math.floor(battle.navigation.anchors.alliedSpawn.x),
+    y: Math.floor(battle.navigation.anchors.alliedSpawn.y),
+  };
+  const targetCell = { x: 12, y: 2 };
+  const authoredPath = battle.navigation.findPath(startCell, targetCell);
+  const directCrossesVoid = Array.from({ length: 101 }, (_, step) => {
+    const progress = step / 100;
+    const x = startCell.x + 0.5 + (targetCell.x - startCell.x) * progress;
+    const y = startCell.y + 0.5 + (targetCell.y - startCell.y) * progress;
+    return !battle.navigation.walkable(x, y);
+  }).some(Boolean);
+  assert.ok(authoredPath && authoredPath.length > 2, "the Stage 1 fixture must expose a nontrivial shared route");
+  assert.equal(directCrossesVoid, true, "the Stage 1 fixture's direct start-to-target segment must cross void");
+
+  const startWorld = battle.navigation.gridToWorld(
+    battle.navigation.anchors.alliedSpawn.x,
+    battle.navigation.anchors.alliedSpawn.y,
+  );
+  const commanderWorld = battle.navigation.gridToWorld(3.5, 5.5);
+  const targetWorld = battle.navigation.gridToWorld(targetCell.x + 0.5, targetCell.y + 0.5);
+  battle.camera = {};
+  battle.ground = {};
+  battle.commander = makeUnit({ x: commanderWorld.x, z: commanderWorld.z });
+  const ally = makeUnit({ x: startWorld.x, z: startWorld.z });
+  battle.allies = [ally];
+  battle.selection.add(ally);
+  battle.raycaster = {
+    setFromCamera() {},
+    intersectObjects: () => [],
+    intersectObject: () => [{ point: { x: targetWorld.x, y: 0, z: targetWorld.z } }],
+  };
+  battle.particles = { emit() {} };
+  battle.audio = { playTone() {} };
+  battle.play = () => {};
+  const pointer = {
+    button: 2,
+    clientX: 50,
+    clientY: 50,
+    pointerId: 1,
+    pointerType: "mouse",
+    timeStamp: 10,
+  };
+
+  battle.onPointerDown(pointer);
+  battle.onPointerUp(pointer);
+
+  assert.deepEqual(tacticalRequests, [], "selected-unit movement must remain renderer-local");
+
+  const visitedCells = new Set();
+  let reachedTarget = false;
+  for (let step = 0; step < 1200; step += 1) {
+    battle.updateAllies(1 / 30);
+    const cell = battle.navigation.worldToGrid(ally.root.position.x, ally.root.position.z);
+    visitedCells.add(`${Math.floor(cell.x)},${Math.floor(cell.y)}`);
+    if (Math.hypot(ally.root.position.x - targetWorld.x, ally.root.position.z - targetWorld.z) <= 0.16) {
+      reachedTarget = true;
+      break;
+    }
+  }
+
+  assert.equal(reachedTarget, true, "the selected ally must reach the authored target instead of stopping at the void");
+  assert.ok(visitedCells.size > 2, "the accepted order must traverse a nontrivial multi-cell route");
+});
+
 
 
 
@@ -870,12 +1026,26 @@ test("RealtimeBattle maps Stage 1 waves to authored GLBs and later archetypes to
   );
 });
 
-test("RealtimeBattle ignores rally clicks that land on the shared Stage 1 chasm", () => {
+test("RealtimeBattle rejects selected-unit orders that target the shared Stage 1 chasm", () => {
+  const tacticalRequests = [];
+  const failureParticles = [];
+  const failureTones = [];
   const canvas = {
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }),
   };
-  const battle = new RealtimeBattle(canvas, { stageNumber: 1 });
-  battle.commander = makeUnit({ x: -4, z: -3 });
+  const battle = new RealtimeBattle(
+    canvas,
+    { stageNumber: 1 },
+    { onTacticalRequest: (request) => tacticalRequests.push(request) },
+  );
+  const start = battle.navigation.gridToWorld(
+    battle.navigation.anchors.alliedSpawn.x,
+    battle.navigation.anchors.alliedSpawn.y,
+  );
+  const ally = makeUnit({ x: start.x, z: start.z });
+  battle.commander = makeUnit({ x: start.x, z: start.z });
+  battle.allies = [ally];
+  battle.selection.add(ally);
   battle.camera = {};
   battle.ground = {};
   battle.raycaster = {
@@ -883,24 +1053,28 @@ test("RealtimeBattle ignores rally clicks that land on the shared Stage 1 chasm"
     intersectObjects: () => [],
     intersectObject: () => [{ point: { x: -3, y: 0, z: -3 } }],
   };
+  battle.particles = { emit: (...args) => failureParticles.push(args) };
+  battle.audio = { playTone: (...args) => failureTones.push(args) };
+  battle.rally.set(start.x - 1.25, 0, start.z);
+  battle.play = () => {};
   const priorRally = battle.rally.clone();
-  const resolveMovement = battle.resolveMovement.bind(battle);
-  const resolutionCalls = [];
-  battle.resolveMovement = (...args) => {
-    resolutionCalls.push(args);
-    return resolveMovement(...args);
-  };
 
   battle.pick({ clientX: 50, clientY: 50 }, "allies");
-  assert.equal(resolutionCalls.length, 1, "rally click must validate its target through movement resolution");
-  assert.equal(resolutionCalls[0][0], battle.commander, "rally resolution must start from the commander position");
-  assert.deepEqual(resolutionCalls[0].slice(1), [-3, -3], "rally resolution must receive the clicked chasm coordinates");
 
+  battle.updateAllies(1 / 30);
+  assert.deepEqual(
+    { x: ally.root.position.x, y: ally.root.position.y, z: ally.root.position.z },
+    { x: start.x, y: 0, z: start.z },
+    "an unreachable void target must leave the selected ally at its legal formation position",
+  );
   assert.deepEqual(
     battle.rally.toArray(),
     priorRally.toArray(),
-    "rally input on the Stage 1 void must preserve the last legal rally point instead of ordering allies into the chasm",
+    "rally input on the Stage 1 void must preserve the last legal rally point",
   );
+  assert.equal(failureParticles.length, 1, "a rejected chasm order must emit one visible failure cue");
+  assert.equal(failureTones.length, 1, "a rejected chasm order must emit one audible failure cue");
+  assert.deepEqual(tacticalRequests, [], "a rejected selected-unit order must remain renderer-local");
 });
 
 test("RealtimeBattle movement resolution stops before static and live colliders", () => {
@@ -1542,4 +1716,157 @@ test("RealtimeBattle destroy disposes shared WebGL resources once and remains id
     { geometry: 1, material: 1, texture: 1, ring: 1, shadow: 1, renderer: 1, particles: 1, audio: 1 },
     "destroy must release each shared GPU resource once even when the scene exposes it through multiple meshes and destroy is repeated",
   );
+});
+
+function makeRealtimeTowerScenario({ fortificationLevel = 1, distance = 1 } = {}) {
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const enemy = { ...makeUnit({ x: distance, z: 0, hp: 10 }), id: "enemy-1" };
+  const towerRoot = makeRoot();
+  towerRoot.position.distanceTo = (target) => Math.hypot(
+    towerRoot.position.x - target.x,
+    towerRoot.position.z - target.z,
+  );
+
+  battle.fortificationLevel = fortificationLevel;
+  battle.enemies = [enemy];
+  battle.getGimmickAt = () => null;
+  battle.drawTracer = () => {};
+  battle.particles = { emit() {} };
+  battle.audio = { playTone() {} };
+  battle.deploymentsMap.set("tower-1", {
+    id: "tower-1",
+    kind: "tower",
+    root: towerRoot,
+    gridX: 0,
+    gridY: 0,
+    cooldown: 0,
+  });
+
+  return {
+    battle,
+    enemy,
+    shotCount: () => battle.getTacticalSnapshot().towerShots.length,
+  };
+}
+
+test("RealtimeBattle tower auto-fire applies fortification bonuses above the level-1 baseline", async (t) => {
+  const cases = [
+    { name: "level 1 deals baseline damage", fortificationLevel: 1, expectedDamage: 1 },
+    { name: "level 2 adds twenty percent damage", fortificationLevel: 2, expectedDamage: 1.2 },
+  ];
+
+  for (const { name, fortificationLevel, expectedDamage } of cases) {
+    await t.test(name, () => {
+      const { battle, enemy, shotCount } = makeRealtimeTowerScenario({ fortificationLevel });
+
+      battle.updateTowers(0);
+
+      assert.deepEqual(
+        {
+          damage: Number((10 - enemy.hp).toFixed(6)),
+          shots: shotCount(),
+        },
+        { damage: expectedDamage, shots: 1 },
+        "one live enemy inside tower range must take the level-scaled damage from exactly one emitted shot",
+      );
+    });
+  }
+});
+
+test("RealtimeBattle tower auto-fire includes the shared base-range boundary and excludes enemies beyond it", async (t) => {
+  const cases = [
+    { name: "enemy exactly four units away is in range", distance: 4, expectedShots: 1 },
+    { name: "enemy just beyond four units is out of range", distance: 4.001, expectedShots: 0 },
+  ];
+
+  for (const { name, distance, expectedShots } of cases) {
+    await t.test(name, () => {
+      const { battle, shotCount } = makeRealtimeTowerScenario({ distance });
+
+      battle.updateTowers(0);
+
+      assert.equal(
+        shotCount(),
+        expectedShots,
+        "the WebGL tower must use the same inclusive four-unit base range as the Canvas tower",
+      );
+    });
+  }
+});
+
+test("RealtimeBattle tower auto-fire emits only one shot during the shared one-second cooldown", () => {
+  const { battle, shotCount } = makeRealtimeTowerScenario();
+  const shotsByElapsedTime = [];
+
+  for (const elapsed of [0, 0.8, 0.2]) {
+    battle.updateTowers(elapsed);
+    shotsByElapsedTime.push(shotCount());
+  }
+
+  assert.deepEqual(
+    shotsByElapsedTime,
+    [1, 1, 2],
+    "the tower must fire immediately, remain blocked at 0.8 seconds, and fire again after one full second",
+  );
+});
+
+function measureRealtimeMobilityTick({ mobilityLevel, terrainMultiplier = 1 }) {
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const commander = makeUnit();
+  const ally = makeUnit({ z: 1 });
+  commander.root.rotation = { y: 0 };
+  ally.customOrder = { x: 1, z: 1 };
+  ally.customOrderReached = false;
+
+  battle.mobilityLevel = mobilityLevel;
+  battle.commander = commander;
+  battle.allies = [ally];
+  battle.pressed.add("KeyD");
+  battle.getGimmickAt = () => ({
+    effects: { movementSpeedMultiplier: terrainMultiplier },
+  });
+  battle.applyResolvedMovement = (unit, targetX, targetZ) => {
+    unit.root.position.set(targetX, 0, targetZ);
+    return { x: targetX, y: 0, z: targetZ, blocked: false };
+  };
+  battle.play = () => {};
+
+  battle.moveCommander(0.25);
+  battle.updateAllies(0.25);
+
+  return {
+    commander: Math.hypot(commander.root.position.x, commander.root.position.z),
+    ally: Math.hypot(ally.root.position.x, ally.root.position.z - 1),
+  };
+}
+
+test("RealtimeBattle Mobility accelerates only the commander and composes with terrain movement", async (t) => {
+  const baseline = measureRealtimeMobilityTick({ mobilityLevel: 1 });
+  const upgraded = measureRealtimeMobilityTick({ mobilityLevel: 2 });
+  const terrainMultiplier = 0.5;
+  const terrainAffected = measureRealtimeMobilityTick({ mobilityLevel: 2, terrainMultiplier });
+
+  await t.test("level 2 moves the commander exactly fifteen percent farther than level 1", () => {
+    assert.equal(
+      Number((upgraded.commander / baseline.commander).toFixed(12)),
+      1.15,
+      "Mobility level 1 must be the commander baseline and level 2 must add exactly fifteen percent",
+    );
+  });
+
+  await t.test("level 2 leaves allied-unit movement at the level-1 distance", () => {
+    assert.equal(
+      Number((upgraded.ally / baseline.ally).toFixed(12)),
+      1,
+      "Mobility must not change allied-unit speed",
+    );
+  });
+
+  await t.test("terrain movement effects multiply the upgraded commander distance", () => {
+    assert.equal(
+      Number((terrainAffected.commander / upgraded.commander).toFixed(12)),
+      terrainMultiplier,
+      "terrain movement effects must remain multiplicative with commander Mobility",
+    );
+  });
 });

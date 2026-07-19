@@ -27,11 +27,18 @@ import {
   createStageNavigation,
 } from "./stage-navigation.js";
 
-const ZONE_STYLES = Object.freeze([
-  Object.freeze({ fill: "rgba(255, 184, 92, 0.15)", stroke: "#ffb85c" }),  // spark/orange
-  Object.freeze({ fill: "rgba(171, 104, 255, 0.15)", stroke: "#ab68ff" }), // domain/purple
-  Object.freeze({ fill: "rgba(112, 229, 208, 0.15)", stroke: "#70e5d0" })  // ally/cyan
-]);
+// Keyed by navigation.zones[].kind (hazard/current/high-ground/cover/flank/
+// objective/exposed) so the battlefield tint always identifies the actual
+// gimmick, matching the hues tactical-minimap.js uses for the same kinds.
+const GIMMICK_STYLES = Object.freeze({
+  hazard: Object.freeze({ fill: "rgba(239, 68, 68, 0.16)", stroke: "#ef4444" }),
+  current: Object.freeze({ fill: "rgba(6, 182, 212, 0.16)", stroke: "#06b6d4" }),
+  "high-ground": Object.freeze({ fill: "rgba(234, 179, 8, 0.16)", stroke: "#eab308" }),
+  cover: Object.freeze({ fill: "rgba(34, 197, 94, 0.16)", stroke: "#22c55e" }),
+  flank: Object.freeze({ fill: "rgba(168, 85, 247, 0.16)", stroke: "#a855f7" }),
+  objective: Object.freeze({ fill: "rgba(59, 130, 246, 0.16)", stroke: "#3b82f6" }),
+  exposed: Object.freeze({ fill: "rgba(249, 115, 22, 0.16)", stroke: "#f97316" })
+});
 
 const CLASH_DIST = 0.5;
 const CLASH_TICK_S = 0.55;     // seconds between swings in a sustained engagement
@@ -185,15 +192,44 @@ export class BattleVisualizer {
     this.breachFlash = 0;
     this.hud = null;
 
+    this.onTacticalRequest = typeof options.onTacticalRequest === "function" ? options.onTacticalRequest : null;
+    this.placementMode = null;
+    this.focusCell = null;
+    this.deployments = [];
+    this.activeTowerShots = [];
+    this.hoverTile = null;
+    this.placementError = null;
+    this.campaign = null;
+    this.navigationSnapshot = null;
+    this.nextUnitId = 0;
+    this.isPanning = false;
+    this.panStartX = 0;
+    this.panStartY = 0;
+    this.pressed = new Set();
+    this.keydownHandler = null;
+    this.keyupHandler = null;
+    this.blurHandler = null;
 
     this.navigation = createStageNavigation(this.stageNumber);
+    const portalAnchor = this.navigation.anchors.portal;
+    this.commanderPosition = { x: portalAnchor.x, y: portalAnchor.y };
+    this.commander = {
+      id: "commander",
+      x: portalAnchor.x,
+      y: portalAnchor.y,
+      speed: 1.5,
+      hp: 10,
+      facing: 0,
+      path: null,
+      defeated: false
+    };
     this.nodeGoal = this.navigation.anchors.nodes.length;
     this.rng = mulberry32(0x5eed + this.stageNumber * 977);
 
-    this.tileZoneIndex = new Map();
-    this.navigation.zones.forEach((zone, zoneIdx) => {
+    this.tileGimmickKind = new Map();
+    this.navigation.zones.forEach((zone) => {
       for (const cell of zone.cells) {
-        this.tileZoneIndex.set(`${cell.x},${cell.y}`, zoneIdx);
+        this.tileGimmickKind.set(`${cell.x},${cell.y}`, zone.kind);
       }
     });
 
@@ -246,11 +282,77 @@ export class BattleVisualizer {
   }
 
   walkable(x, y) {
+    if (this.isBarricadeAt(x, y)) return false;
     return this.navigation.walkable(x, y);
+  }
+
+  isBarricadeAt(x, y) {
+    return this.deployments.some(d => d.kind === "barricade" && d.x === x && d.y === y);
+  }
+
+  // Delegates to the shared authoritative validator (stage-navigation.js) so
+  // Canvas placement previews reject the same anchors/base-area/path-sealing
+  // cases the campaign-state transition itself enforces server-side.
+  isPlacementLegal(tile) {
+    if (!tile) return false;
+    return this.navigation.validateDeployment(tile.x, tile.y, this.deployments, this.placementMode).valid;
   }
 
   climbOk(x0, y0, x1, y1) {
     return this.navigation.climbOk(x0, y0, x1, y1);
+  }
+
+  // Barricade-aware BFS pathing. Cannot reuse the frozen navigation.findPath
+  // (stage-navigation.js Object.freezes its return value; reassigning it
+  // throws in strict-mode ESM) so this mirrors its 4-neighborhood BFS while
+  // routing around live barricade deployments via this.walkable.
+  findPath(start, goal) {
+    const width = this.navigation.width;
+    const height = this.navigation.height;
+    const cells = this.navigation.cells;
+    const sx = Math.max(0, Math.min(width - 1, Math.floor(start?.x ?? 0)));
+    const sy = Math.max(0, Math.min(height - 1, Math.floor(start?.y ?? 0)));
+    const gx = Math.max(0, Math.min(width - 1, Math.floor(goal?.x ?? 0)));
+    const gy = Math.max(0, Math.min(height - 1, Math.floor(goal?.y ?? 0)));
+    const startIndex = sy * width + sx;
+    const goalIndex = gy * width + gx;
+
+    const permitted = (x, y) => x >= 0 && y >= 0 && x < width && y < height && this.walkable(x, y);
+    if (!permitted(sx, sy) || !permitted(gx, gy)) return null;
+
+    const parent = new Int16Array(width * height);
+    parent.fill(-1);
+    const queue = new Int16Array(width * height);
+    let read = 0;
+    let write = 0;
+    parent[startIndex] = startIndex;
+    queue[write++] = startIndex;
+    const directions = [[1, 0], [0, -1], [0, 1], [-1, 0]];
+
+    while (read < write) {
+      const current = queue[read++];
+      if (current === goalIndex) break;
+      const x = current % width;
+      const y = Math.floor(current / width);
+      for (const [dx, dy] of directions) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (!permitted(nx, ny)) continue;
+        const next = ny * width + nx;
+        if (parent[next] !== -1) continue;
+        if (Math.abs(cells[ny][nx] - cells[y][x]) > 1) continue;
+        parent[next] = current;
+        queue[write++] = next;
+      }
+    }
+
+    if (parent[goalIndex] === -1) return null;
+    const path = [];
+    for (let current = goalIndex; ; current = parent[current]) {
+      path.push({ x: current % width, y: Math.floor(current / width) });
+      if (current === startIndex) break;
+    }
+    return path.reverse();
   }
 
   elevationAt(fx, fy) {
@@ -268,6 +370,30 @@ export class BattleVisualizer {
   init() {
     if (this.destroyed || this.ctx) return this;
     this.ctx = this.canvas.getContext("2d");
+
+    // Attach key listeners on canvas
+    this.canvas.tabIndex = this.canvas.tabIndex > -1 ? this.canvas.tabIndex : 0;
+    this.keydownHandler = (event) => {
+      const code = event.code;
+      if (["KeyW", "ArrowUp", "KeyA", "ArrowLeft", "KeyS", "ArrowDown", "KeyD", "ArrowRight"].includes(code)) {
+        this.pressed.add(code);
+        event.preventDefault();
+      }
+    };
+    this.keyupHandler = (event) => {
+      const code = event.code;
+      if (["KeyW", "ArrowUp", "KeyA", "ArrowLeft", "KeyS", "ArrowDown", "KeyD", "ArrowRight"].includes(code)) {
+        this.pressed.delete(code);
+        event.preventDefault();
+      }
+    };
+    this.blurHandler = () => {
+      this.pressed.clear();
+    };
+    this.canvas.addEventListener("keydown", this.keydownHandler);
+    this.canvas.addEventListener("keyup", this.keyupHandler);
+    this.canvas.addEventListener("blur", this.blurHandler);
+
     if (Number.isInteger(this.authoritativeLegion)) this.reconcileAllies(this.authoritativeLegion);
     this.computeView();
     this.buildStaticLayer();
@@ -316,10 +442,20 @@ export class BattleVisualizer {
     const maxY = Math.max(...corners.map(c => c.y)) + TILE_H;
     const worldW = maxX - minX;
     const worldH = maxY - minY;
-    const scale = Math.min(cssW / worldW, cssH / worldH);
-    this.view.scale = scale;
-    this.view.offsetX = (cssW - worldW * scale) / 2 - minX * scale;
-    this.view.offsetY = (cssH - worldH * scale) / 2 - minY * scale;
+
+    const defaultScale = Math.min(cssW / worldW, cssH / worldH);
+    if (this.focusCell) {
+      const zoomScale = defaultScale * 2.0;
+      this.view.scale = zoomScale;
+      const cellCenter = worldToScreen(this.focusCell.x + 0.5, this.focusCell.y + 0.5, this.elevationAt(this.focusCell.x + 0.5, this.focusCell.y + 0.5));
+      this.view.offsetX = cssW / 2 - cellCenter.x * zoomScale;
+      this.view.offsetY = cssH / 2 - cellCenter.y * zoomScale;
+    } else {
+      this.view.scale = defaultScale;
+      this.view.offsetX = (cssW - worldW * defaultScale) / 2 - minX * defaultScale;
+      this.view.offsetY = (cssH - worldH * defaultScale) / 2 - minY * defaultScale;
+    }
+
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.notifyTacticalLayout();
   }
@@ -527,8 +663,8 @@ export class BattleVisualizer {
       ctx.fill();
     }
 
-    const zoneIdx = this.tileZoneIndex?.get(`${x},${y}`);
-    const zoneStyle = zoneIdx !== undefined ? ZONE_STYLES[zoneIdx] : null;
+    const gimmickKind = this.tileGimmickKind.get(`${x},${y}`);
+    const zoneStyle = gimmickKind ? GIMMICK_STYLES[gimmickKind] : null;
 
     ctx.fillStyle = this.palette.tileTop[Math.min(z, this.palette.tileTop.length - 1)];
     ctx.strokeStyle = zoneStyle ? zoneStyle.stroke : this.palette.gridLine;
@@ -855,8 +991,19 @@ export class BattleVisualizer {
     };
 
     const down = (event) => {
+      if (event.button === 2) {
+        event.preventDefault();
+        const p = canvasPoint(event);
+        const tile = this.unprojectToTile(p.x, p.y);
+        if (tile && this.walkable(tile.x, tile.y) && this.selection.size > 0) {
+          this.issueFormationMove(tile);
+          this.orderFlag = { x: tile.x + 0.5, y: tile.y + 0.5, life: 1.2 };
+          this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 650, duration: 0.15, type: "sine", gain: 0.5 });
+        }
+        return;
+      }
       if (this.activePointerId !== null) return;
-      if (event.button !== 0) return;
+      if (event.button !== 0 && event.button !== 1) return;
       this.canvas.focus?.({ preventScroll: true });
 
       const p = canvasPoint(event);
@@ -866,7 +1013,14 @@ export class BattleVisualizer {
       this.pointerDownTime = performance.now();
       this.dragRect = null;
 
-      this.setActionFocus(this.detectActionAt(p));
+      this.isPanning = false;
+      this.panStartX = this.view.offsetX;
+      this.panStartY = this.view.offsetY;
+      if (event.button === 1 || event.altKey) {
+        this.isPanning = true;
+      } else {
+        this.setActionFocus(this.detectActionAt(p));
+      }
 
       this.canvas.setPointerCapture?.(event.pointerId);
       this.renderStatic();
@@ -874,6 +1028,8 @@ export class BattleVisualizer {
 
     const move = (event) => {
       const p = canvasPoint(event);
+      this.hoverTile = this.unprojectToTile(p.x, p.y);
+
       if (this.activePointerId === null || event.pointerId !== this.activePointerId) {
         if (event.pointerType !== "touch") this.setActionFocus(this.detectActionAt(p));
         return;
@@ -882,19 +1038,33 @@ export class BattleVisualizer {
 
       const dx = p.x - this.pointerDown.x;
       const dy = p.y - this.pointerDown.y;
-      const dist = Math.hypot(dx, dy);
-      const threshold = this.activePointerType === "touch" ? 12 : 6;
 
-      if (dist > threshold) {
-        this.setActionFocus(null);
-        this.dragRect = {
-          x0: this.pointerDown.x,
-          y0: this.pointerDown.y,
-          x1: p.x,
-          y1: p.y
-        };
+      if (this.isPanning) {
+        this.view.offsetX = this.panStartX + dx;
+        this.view.offsetY = this.panStartY + dy;
       } else {
-        this.dragRect = null;
+        const dist = Math.hypot(dx, dy);
+        const threshold = this.activePointerType === "touch" ? 12 : 6;
+
+        if (dist > threshold) {
+          if (this.activePointerType === "touch") {
+            this.isPanning = true;
+            this.setActionFocus(null);
+            this.dragRect = null;
+            this.view.offsetX = this.panStartX + dx;
+            this.view.offsetY = this.panStartY + dy;
+          } else {
+            this.setActionFocus(null);
+            this.dragRect = {
+              x0: this.pointerDown.x,
+              y0: this.pointerDown.y,
+              x1: p.x,
+              y1: p.y
+            };
+          }
+        } else {
+          this.dragRect = null;
+        }
       }
       this.renderStatic();
     };
@@ -910,25 +1080,70 @@ export class BattleVisualizer {
       const duration = performance.now() - this.pointerDownTime;
       const isTapEligible = duration <= 500;
 
-      if (dist > threshold) {
-        this.selection.clear();
-        const dragBox = {
-          x0: this.pointerDown.x,
-          y0: this.pointerDown.y,
-          x1: p.x,
-          y1: p.y
-        };
-        for (const ally of this.allies) {
-          const s = this.project(ally.x, ally.y, this.elevationAt(ally.x, ally.y));
-          if (rectContains(dragBox, s.x, s.y)) this.selection.add(ally);
-        }
-      } else if (isTapEligible) {
-        if (!this.requestTacticalActionAt(p) && this.selection.size > 0) {
-          const tile = this.unprojectToTile(p.x, p.y);
-          if (tile && this.walkable(tile.x, tile.y)) {
-            this.issueMoveOrder(tile);
-            this.orderFlag = { x: tile.x + 0.5, y: tile.y + 0.5, life: 1.2 };
-            this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 520, duration: 0.12, type: "sine", gain: 0.6 });
+      if (this.isPanning) {
+        this.isPanning = false;
+      } else {
+        if (dist > threshold) {
+          this.selection.clear();
+          const dragBox = {
+            x0: this.pointerDown.x,
+            y0: this.pointerDown.y,
+            x1: p.x,
+            y1: p.y
+          };
+          for (const ally of this.allies) {
+            const s = this.project(ally.x, ally.y, this.elevationAt(ally.x, ally.y));
+            if (rectContains(dragBox, s.x, s.y)) this.selection.add(ally);
+          }
+        } else if (isTapEligible) {
+          if (this.placementMode) {
+            const tile = this.unprojectToTile(p.x, p.y);
+            if (this.isPlacementLegal(tile)) {
+              this.onTacticalRequest?.({
+                type: "deploy",
+                kind: this.placementMode,
+                cell: { x: tile.x, y: tile.y }
+              });
+              this.placementMode = null;
+            } else if (tile) {
+              this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 120, type: "sawtooth", duration: 0.25, gain: 0.7 });
+              this.placementError = { x: tile.x, y: tile.y, life: 0.5 };
+              if (this.reducedMotion) {
+                const clear = window.clearTimeout ?? globalThis.clearTimeout;
+                const set = window.setTimeout ?? globalThis.setTimeout;
+                if (this.placementErrorTimer) clear(this.placementErrorTimer);
+                this.placementErrorTimer = set(() => {
+                  this.placementError = null;
+                  this.placementErrorTimer = null;
+                  this.renderStatic();
+                }, 500);
+              }
+            }
+          } else if (!this.requestTacticalActionAt(p)) {
+            // Only reached when no spatial action (materialize/capture/possess/
+            // extract/hunt/assault) sat under the tap; touch keeps its
+            // pre-contract semantic (move the current selection), while
+            // mouse/pen primary taps drive the commander per the input
+            // contract (secondary click still owns selected-ally rally).
+            const tile = this.unprojectToTile(p.x, p.y);
+            if (tile && this.activePointerType === "touch" && this.selection.size > 0) {
+              if (this.walkable(tile.x, tile.y)) {
+                this.issueFormationMove(tile);
+                this.orderFlag = { x: tile.x + 0.5, y: tile.y + 0.5, life: 1.2 };
+                this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 520, duration: 0.12, type: "sine", gain: 0.6 });
+              }
+            } else if (tile) {
+              this.onTacticalRequest?.({ type: "focus", cell: { x: tile.x, y: tile.y } });
+              if (this.walkable(tile.x, tile.y)) {
+                const start = { x: Math.floor(this.commander.x), y: Math.floor(this.commander.y) };
+                const path = this.findPath(start, tile);
+                if (path && path.length > 1) {
+                  this.commander.path = path.slice(1).map(node => ({ x: node.x + 0.5, y: node.y + 0.5 }));
+                  this.orderFlag = { x: tile.x + 0.5, y: tile.y + 0.5, life: 1.2 };
+                  this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 600, duration: 0.1, type: "sine", gain: 0.3 });
+                }
+              }
+            }
           }
         }
       }
@@ -949,6 +1164,7 @@ export class BattleVisualizer {
       this.pointerDown = null;
       this.dragRect = null;
       this.setActionFocus(null);
+      this.isPanning = false;
       this.renderStatic();
     };
 
@@ -960,10 +1176,16 @@ export class BattleVisualizer {
 
     const leave = () => {
       this.setActionFocus(null);
+      this.hoverTile = null;
     };
 
     const blur = () => {
       this.setActionFocus(null);
+      this.hoverTile = null;
+    };
+
+    const contextmenu = (event) => {
+      event.preventDefault();
     };
 
     this.canvas.addEventListener("pointerdown", down);
@@ -973,19 +1195,63 @@ export class BattleVisualizer {
     this.canvas.addEventListener("lostpointercapture", lostCapture);
     this.canvas.addEventListener("pointerleave", leave);
     this.canvas.addEventListener("blur", blur);
-    this.pointerHandlers = { down, move, up, cancel, lostCapture, leave, blur };
+    this.canvas.addEventListener("contextmenu", contextmenu);
+    this.pointerHandlers = { down, move, up, cancel, lostCapture, leave, blur, contextmenu };
   }
+  // Spreads selected allies across a small BFS-discovered footprint around
+  // the target tile (superseding the old single-point issueMoveOrder) so a
+  // multi-unit rally does not stack everyone on one cell.
+  issueFormationMove(tile) {
+    const selectedAllies = this.allies.filter(ally => this.selection.has(ally));
+    if (selectedAllies.length === 0) return;
 
-  issueMoveOrder(tile) {
-    for (const ally of this.allies) {
-      if (!this.selection.has(ally)) continue;
-      const start = { x: Math.floor(ally.x), y: Math.floor(ally.y) };
-      const path = this.navigation.findPath(start, { x: tile.x, y: tile.y });
-      if (path && path.length > 1) {
-        ally.path = path.slice(1).map(node => ({ x: node.x + 0.5, y: node.y + 0.5 }));
-        ally.holdUntil = performance.now() + 6000; // hold position window after arriving
+    const gridW = this.navigation.width || 24;
+    const gridH = this.navigation.height || 12;
+    const targets = [];
+    const queue = [{ x: tile.x, y: tile.y }];
+    const visited = new Set([`${tile.x},${tile.y}`]);
+    let head = 0;
+
+    const dirs = [
+      [1, 0], [0, -1], [0, 1], [-1, 0],
+      [1, 1], [-1, 1], [1, -1], [-1, -1]
+    ];
+
+    while (head < queue.length && targets.length < selectedAllies.length) {
+      const curr = queue[head++];
+      if (this.walkable(curr.x, curr.y)) {
+        targets.push(curr);
+      }
+      for (let i = 0; i < dirs.length; i++) {
+        const d = dirs[i];
+        const nx = curr.x + d[0];
+        const ny = curr.y + d[1];
+        if (nx >= 0 && nx < gridW && ny >= 0 && ny < gridH) {
+          const key = `${nx},${ny}`;
+          if (!visited.has(key)) {
+            visited.add(key);
+            queue.push({ x: nx, y: ny });
+          }
+        }
       }
     }
+
+    while (targets.length < selectedAllies.length) {
+      targets.push({ x: tile.x, y: tile.y });
+    }
+
+    selectedAllies.forEach((ally, i) => {
+      const targetTile = targets[i] || tile;
+      const start = { x: Math.floor(ally.x), y: Math.floor(ally.y) };
+      const path = this.findPath(start, targetTile);
+      if (path && path.length > 1) {
+        ally.path = path.slice(1).map(node => ({ x: node.x + 0.5, y: node.y + 0.5 }));
+        ally.holdUntil = performance.now() + 6000;
+      } else {
+        ally.path = [{ x: targetTile.x + 0.5, y: targetTile.y + 0.5 }];
+        ally.holdUntil = performance.now() + 6000;
+      }
+    });
   }
 
   // --- public trigger API (unchanged surface) -----------------------------
@@ -1012,6 +1278,100 @@ export class BattleVisualizer {
   clearActionPreview(action) {
     this.actionPreview = null;
     this.renderStatic();
+  }
+  setPlacementMode(kind) {
+    this.placementMode = kind;
+    this.renderStatic();
+  }
+
+  focusTacticalCell(cell) {
+    if (cell && Number.isInteger(cell.x) && Number.isInteger(cell.y)) {
+      this.focusCell = { x: cell.x, y: cell.y };
+    } else {
+      this.focusCell = null;
+    }
+    this.computeView();
+    this.buildStaticLayer();
+    this.renderStatic();
+  }
+
+  // Computed once and cached: this.navigation is immutable for the
+  // renderer's lifetime, so there is no reason to rebuild the routes/zones/
+  // anchors arrays on every snapshot pull (syncMinimap can call this often).
+  buildNavigationSnapshot() {
+    const nav = this.navigation;
+    return {
+      width: nav.width,
+      height: nav.height,
+      cells: nav.cells,
+      routes: nav.routes.map((route) => ({
+        id: route.id,
+        lane: route.lane,
+        cells: route.cells.map((c) => ({ x: c.x, y: c.y }))
+      })),
+      zones: nav.zones.map((zone) => ({
+        kind: zone.kind,
+        cells: zone.cells.map((c) => ({ x: c.x, y: c.y }))
+      })),
+      anchors: {
+        portal: { x: nav.anchors.portal.x, y: nav.anchors.portal.y },
+        boss: { x: nav.anchors.boss.x, y: nav.anchors.boss.y },
+        extractor: { x: nav.anchors.extractor.x, y: nav.anchors.extractor.y },
+        rally: { x: nav.anchors.rally.x, y: nav.anchors.rally.y },
+        alliedSpawn: { x: nav.anchors.alliedSpawn.x, y: nav.anchors.alliedSpawn.y },
+        nodes: nav.anchors.nodes.map((n) => ({ id: n.id, x: n.x, y: n.y })),
+        hostileSpawns: nav.anchors.hostileSpawns.map((s) => ({ id: s.id, x: s.x, y: s.y, routeIndex: s.routeIndex }))
+      }
+    };
+  }
+
+  getTacticalSnapshot() {
+    if (!this.navigationSnapshot) this.navigationSnapshot = this.buildNavigationSnapshot();
+    const centerTile = this.unprojectToTile(this.view.width / 2, this.view.height / 2);
+    const centerWorld = this.navigation.gridToWorld(
+      centerTile ? centerTile.x + 0.5 : this.navigation.width / 2,
+      centerTile ? centerTile.y + 0.5 : this.navigation.height / 2
+    );
+    return {
+      stageNumber: this.stageNumber,
+      navigation: this.navigationSnapshot,
+      units: [
+        ...(this.commander && !this.commander.defeated ? [{
+          id: this.commander.id,
+          team: 1,
+          ...this.navigation.gridToWorld(this.commander.x, this.commander.y),
+          hp: this.commander.hp
+        }] : []),
+        ...this.allies.filter((a) => this.liveAlly(a)).map((a) => ({
+          id: a.id,
+          team: 1,
+          ...this.navigation.gridToWorld(a.x, a.y),
+          hp: a.hp
+        })),
+        ...this.enemies.filter((e) => this.liveEnemy(e)).map((e) => ({
+          id: e.id,
+          team: 2,
+          ...this.navigation.gridToWorld(e.x, e.y),
+          hp: e.hp
+        }))
+      ],
+      deployments: this.deployments.map((d) => ({
+        id: d.id,
+        kind: d.kind,
+        x: d.x,
+        y: d.y
+      })),
+      focus: this.focusCell ? { x: this.focusCell.x, y: this.focusCell.y } : null,
+      selectionCount: this.selection.size,
+      placementMode: this.placementMode,
+      towerShots: this.activeTowerShots.map((s) => ({
+        towerId: s.towerId,
+        targetId: s.targetId,
+        x: s.x,
+        y: s.y
+      })),
+      viewport: { x: centerWorld.x, z: centerWorld.z, zoom: this.view.scale }
+    };
   }
   setBridgeClip(assetId, clip, duration = 780) {
     const until = performance.now() + duration;
@@ -1089,6 +1449,39 @@ export class BattleVisualizer {
     const nodeCount = Number(state?.nodes ?? campaign?.stage?.nodes ?? 0);
     this.nodes = this.navigation.anchors.nodes.slice(0, nodeCount);
     this.applyEncounter({ stageId, config, state: encounterState });
+
+    // Tower/barricade reconciliation is authoritative-only: this renderer
+    // never mutates campaign.stage.deployments, only mirrors it.
+    this.campaign = campaign ?? this.campaign;
+    const deployments = state?.stage?.deployments ?? campaign?.stage?.deployments ?? state?.deployments ?? [];
+    this.reconcileDeployments(deployments);
+  }
+
+  // Idempotent: re-applying an identical deployments list updates matching
+  // ids in place and adds/removes nothing, so no duplicate deployments are
+  // ever created by a repeated/duplicate campaign-state push.
+  reconcileDeployments(list) {
+    if (!Array.isArray(list)) return;
+    const keep = new Set();
+    for (const entry of list) {
+      if (!entry || typeof entry.id !== "string") continue;
+      if (entry.kind !== "tower" && entry.kind !== "barricade") continue;
+      const cellX = Number.isInteger(entry.cell?.x) ? entry.cell.x : Math.trunc(entry.x);
+      const cellY = Number.isInteger(entry.cell?.y) ? entry.cell.y : Math.trunc(entry.y);
+      if (!Number.isInteger(cellX) || !Number.isInteger(cellY)) continue;
+      keep.add(entry.id);
+      const existing = this.deployments.find((d) => d.id === entry.id);
+      if (existing) {
+        existing.kind = entry.kind;
+        existing.x = cellX;
+        existing.y = cellY;
+      } else {
+        this.deployments.push({ id: entry.id, kind: entry.kind, x: cellX, y: cellY, cooldown: 0 });
+      }
+    }
+    if (this.deployments.length !== keep.size || this.deployments.some((d) => !keep.has(d.id))) {
+      this.deployments = this.deployments.filter((d) => keep.has(d.id));
+    }
   }
 
   reconcileEncounterWave(activeWaveId = this.encounter?.state?.activeWaveId ?? null) {
@@ -1113,10 +1506,13 @@ export class BattleVisualizer {
     const additions = Math.max(0, Number(count) || 0);
     const alliedSpawn = this.navigation.anchors.alliedSpawn;
     for (let index = 0; index < additions; index += 1) {
+      const baseSpeed = 1.2 + this.rng() * 0.25;
       const unit = {
+        id: "ally-" + (++this.nextUnitId),
         x: alliedSpawn.x + (this.allies.length % 3) * 0.34,
         y: alliedSpawn.y + ((this.allies.length % 3) - 1) * 0.45,
-        speed: 1.2 + this.rng() * 0.25,
+        baseSpeed: baseSpeed,
+        speed: baseSpeed,
         hp: 3,
         facing: 0,
         path: null,
@@ -1171,8 +1567,10 @@ export class BattleVisualizer {
       const spawnY = path.length > 0 ? path[0].y : bossTile.y;
 
       const unit = {
+        id: "enemy-" + (++this.nextUnitId),
         x: spawnX,
         y: spawnY,
+        baseSpeed: 2.4,
         speed: 2.4, // Keep 2.4 hostile speed
         hp: Math.max(1, Number(wave.hostileHealth) || 2),
         archetype,
@@ -1413,6 +1811,119 @@ export class BattleVisualizer {
     return best;
   }
 
+  moveCommander(dt) {
+    if (!this.commander || this.commander.defeated) return;
+
+    let x = 0;
+    let y = 0;
+    if (this.pressed.has("KeyW") || this.pressed.has("ArrowUp")) y -= 1;
+    if (this.pressed.has("KeyS") || this.pressed.has("ArrowDown")) y += 1;
+    if (this.pressed.has("KeyA") || this.pressed.has("ArrowLeft")) x -= 1;
+    if (this.pressed.has("KeyD") || this.pressed.has("ArrowRight")) x += 1;
+
+    if (x === 0 && y === 0) {
+      if (this.commander.path?.length > 0) {
+        const nextWaypoint = this.commander.path[0];
+        const dx = nextWaypoint.x - this.commander.x;
+        const dy = nextWaypoint.y - this.commander.y;
+        if (Math.hypot(dx, dy) <= 0.08) {
+          this.commander.path.shift();
+          if (this.commander.path.length === 0) this.commander.path = null;
+        } else {
+          x = dx;
+          y = dy;
+        }
+      }
+    } else {
+      this.commander.path = null;
+    }
+
+    if (x === 0 && y === 0) return;
+
+    const magnitude = Math.hypot(x, y);
+    const mobilityLevel = this.campaign?.progression?.skills?.mobility ?? 1;
+    const mobilityBonus = Math.max(0, mobilityLevel - 1);
+    const gimmick = this.navigation.getGimmickAt(this.commander.x, this.commander.y);
+    const speedMultiplier = (gimmick?.effects?.movementSpeedMultiplier ?? 1) * (1 + mobilityBonus * 0.15);
+    const vx = (x / magnitude) * this.commander.speed * speedMultiplier;
+    const vy = (y / magnitude) * this.commander.speed * speedMultiplier;
+
+    const nextX = this.commander.x + vx * dt;
+    const nextY = Math.max(0.4, Math.min(this.navigation.height - 0.4, this.commander.y + vy * dt));
+
+    if (this.walkable(Math.floor(nextX), Math.floor(nextY))) {
+      this.commander.x = nextX;
+      this.commander.y = nextY;
+      this.commanderPosition.x = nextX;
+      this.commanderPosition.y = nextY;
+      this.commander.facing = directionIndex(vx, vy);
+    }
+  }
+
+  defeatUnit(unit) {
+    if (!unit) return;
+    unit.defeated = true;
+    unit.bridgeClip = "Defeat";
+    unit.bridgeClipUntil = Number.POSITIVE_INFINITY;
+    this.clearEngagement(unit);
+    this.selection.delete(unit);
+  }
+
+  updateTowers(dt) {
+    const fortLevel = this.campaign?.progression?.skills?.fortification ?? 1;
+    const rangeMult = 1.0 + (fortLevel - 1) * 0.1;
+    const dmgMult = 1.0 + (fortLevel - 1) * 0.2;
+
+    for (const dep of this.deployments) {
+      if (dep.kind !== "tower") continue;
+      dep.cooldown = Math.max(0, (dep.cooldown ?? 0) - dt);
+      if (dep.cooldown > 0) continue;
+
+      const gimmick = this.navigation.getGimmickAt(dep.x, dep.y);
+      const gimRangeMult = gimmick?.effects?.towerRangeMultiplier ?? 1.0;
+      const range = 4.0 * rangeMult * gimRangeMult;
+
+      // Find nearest enemy in range
+      let target = null;
+      let bestD = range * range;
+      for (const enemy of this.enemies) {
+        if (!this.liveEnemy(enemy)) continue;
+        const dx = enemy.x - (dep.x + 0.5);
+        const dy = enemy.y - (dep.y + 0.5);
+        const d = dx * dx + dy * dy;
+        if (d <= bestD) {
+          bestD = d;
+          target = enemy;
+        }
+      }
+
+      if (target) {
+        dep.cooldown = 1.0;
+        this.activeTowerShots.push({
+          towerId: dep.id,
+          targetId: target.id,
+          sourceX: dep.x + 0.5,
+          sourceY: dep.y + 0.5,
+          x: target.x,
+          y: target.y,
+          life: 0.15
+        });
+
+        const targetGimmick = this.navigation.getGimmickAt(target.x, target.y);
+        const targetDmgMult = targetGimmick?.effects?.combatDamageReceivedMultiplier ?? 1.0;
+        const damage = 1.0 * dmgMult * targetDmgMult;
+
+        target.hp -= damage;
+        this.playSpatial(dep.x + 0.5, dep.y + 0.5, { freq: 880, endFreq: 440, type: "sine", duration: 0.1, gain: 0.3 });
+        this.burst(target.x, target.y, 4, this.palette.spark);
+
+        if (target.hp <= 0) {
+          this.defeatUnit(target);
+        }
+      }
+    }
+  }
+
   updateEngagements(dt) {
     for (const ally of this.allies) {
       const enemy = this.engagements.get(ally);
@@ -1422,23 +1933,27 @@ export class BattleVisualizer {
       if (ally.clashCd !== 0 || enemy.clashCd !== 0) continue;
       this.burst(ally.x, ally.y, 4, this.palette.spark);
       this.playSpatial(ally.x, ally.y, { freq: 480, type: "triangle", duration: 0.1, gain: 0.5 });
-      ally.hp -= 1;
-      enemy.hp -= 1;
+      
+      const allyGimmick = this.navigation.getGimmickAt(ally.x, ally.y);
+      const enemyGimmick = this.navigation.getGimmickAt(enemy.x, enemy.y);
+      const allyDamageDealtMult = allyGimmick?.effects?.combatDamageDealtMultiplier ?? 1.0;
+      const enemyDamageReceivedMult = enemyGimmick?.effects?.combatDamageReceivedMultiplier ?? 1.0;
+      const allyDamageToEnemy = 1.0 * allyDamageDealtMult * enemyDamageReceivedMult;
+      
+      const enemyDamageDealtMult = enemyGimmick?.effects?.combatDamageDealtMultiplier ?? 1.0;
+      const allyDamageReceivedMult = allyGimmick?.effects?.combatDamageReceivedMultiplier ?? 1.0;
+      const enemyDamageToAlly = 1.0 * enemyDamageDealtMult * allyDamageReceivedMult;
+
+      ally.hp -= enemyDamageToAlly;
+      enemy.hp -= allyDamageToEnemy;
       ally.clashCd = CLASH_TICK_S;
       enemy.clashCd = CLASH_TICK_S;
       this.exchanges += 1;
       if (enemy.hp <= 0) {
-        enemy.defeated = true;
-        enemy.bridgeClip = "Defeat";
-        enemy.bridgeClipUntil = Number.POSITIVE_INFINITY;
-        this.clearEngagement(enemy);
+        this.defeatUnit(enemy);
       }
       if (ally.hp <= 0) {
-        ally.defeated = true;
-        ally.bridgeClip = "Defeat";
-        ally.bridgeClipUntil = Number.POSITIVE_INFINITY;
-        this.selection.delete(ally);
-        this.clearEngagement(ally);
+        this.defeatUnit(ally);
       }
     }
   }
@@ -1450,9 +1965,32 @@ export class BattleVisualizer {
     this.selectEngagements();
     this.updateEngagements(dt);
     this.reconcileEngagements();
+    this.moveCommander(dt);
+    this.updateTowers(dt);
+
 
     for (const ally of this.allies) {
       if (!this.liveAlly(ally) || this.engagements.has(ally)) continue;
+      
+      const gimmick = this.navigation.getGimmickAt(ally.x, ally.y);
+      const speedMult = gimmick?.effects?.movementSpeedMultiplier ?? 1.0;
+      ally.speed = (ally.baseSpeed ?? 1.2) * speedMult;
+
+      if (ally.path) {
+        const isBlocked = ally.path.some(node => this.isBarricadeAt(Math.floor(node.x), Math.floor(node.y)));
+        if (isBlocked) {
+          const start = { x: Math.floor(ally.x), y: Math.floor(ally.y) };
+          const lastNode = ally.path[ally.path.length - 1];
+          const goal = { x: Math.floor(lastNode.x), y: Math.floor(lastNode.y) };
+          const newPath = this.findPath(start, goal);
+          if (newPath && newPath.length > 1) {
+            ally.path = newPath.slice(1).map(node => ({ x: node.x + 0.5, y: node.y + 0.5 }));
+          } else {
+            ally.path = null;
+          }
+        }
+      }
+
       let target = null;
       if (ally.path?.length) {
         target = ally.path[0];
@@ -1476,7 +2014,7 @@ export class BattleVisualizer {
       const nextX = ally.x + velocity.x * dt;
       const nextY = Math.max(0.4, Math.min(this.navigation.height - 0.4, ally.y + velocity.y * dt));
       const blocked = this.clampMovementToContact(ally, nextX, nextY, true);
-      if (!blocked) {
+      if (!blocked && this.walkable(Math.floor(nextX), Math.floor(nextY))) {
         ally.x = nextX;
         ally.y = nextY;
       }
@@ -1485,6 +2023,25 @@ export class BattleVisualizer {
 
     for (const enemy of this.enemies) {
       if (!this.liveEnemy(enemy) || this.engagements.has(enemy)) continue;
+      
+      const gimmick = this.navigation.getGimmickAt(enemy.x, enemy.y);
+      const speedMult = gimmick?.effects?.movementSpeedMultiplier ?? 1.0;
+      enemy.speed = (enemy.baseSpeed ?? 2.4) * speedMult;
+
+      if (enemy.path) {
+        const isBlocked = enemy.path.some(node => this.isBarricadeAt(Math.floor(node.x), Math.floor(node.y)));
+        if (isBlocked) {
+          const start = { x: Math.floor(enemy.x), y: Math.floor(enemy.y) };
+          const goal = { x: Math.floor(this.navigation.anchors.alliedSpawn.x), y: Math.floor(this.navigation.anchors.alliedSpawn.y) };
+          const newPath = this.findPath(start, goal);
+          if (newPath && newPath.length > 1) {
+            enemy.path = newPath.slice(1).map(node => ({ x: node.x + 0.5, y: node.y + 0.5 }));
+          } else {
+            enemy.path = null;
+          }
+        }
+      }
+
       let target = null;
       if (enemy.path?.length) {
         target = enemy.path[0];
@@ -1508,7 +2065,7 @@ export class BattleVisualizer {
       const nextX = enemy.x + velocity.x * dt;
       const nextY = Math.max(0.4, Math.min(this.navigation.height - 0.4, enemy.y + velocity.y * dt));
       const blocked = this.clampMovementToContact(enemy, nextX, nextY, false);
-      if (!blocked) {
+      if (!blocked && this.walkable(Math.floor(nextX), Math.floor(nextY))) {
         enemy.x = nextX;
         enemy.y = nextY;
       }
@@ -1540,6 +2097,16 @@ export class BattleVisualizer {
       if (p.z < 0.02) { p.z = 0.02; p.vz = -p.vz * 0.3; }
       if (p.life <= 0) this.particles.splice(i, 1);
     }
+    for (let i = this.activeTowerShots.length - 1; i >= 0; i--) {
+      this.activeTowerShots[i].life -= dt;
+      if (this.activeTowerShots[i].life <= 0) this.activeTowerShots.splice(i, 1);
+    }
+
+    if (this.placementError) {
+      this.placementError.life -= dt;
+      if (this.placementError.life <= 0) this.placementError = null;
+    }
+
     for (let i = this.actionFx.length - 1; i >= 0; i--) {
       this.actionFx[i].life -= dt;
       if (this.actionFx[i].life <= 0) this.actionFx.splice(i, 1);
@@ -1582,6 +2149,7 @@ export class BattleVisualizer {
     for (const effect of this.actionFx) this.drawActionFx(effect);
     if (this.actionPreview) this.drawActionPreview();
     if (this.orderFlag) this.drawOrderFlag();
+    this.drawHoverAndPlacementIndicators();
     if (this.dragRect) this.drawDragRect();
     if (this.hud) this.drawHud();
     if (this.breachFlash > 0.01) {
@@ -1618,6 +2186,34 @@ export class BattleVisualizer {
         layer: "actor", render: "boss",
       },
     ];
+
+    if (this.commander && !this.commander.defeated) {
+      records.push({
+        id: "commander",
+        x: this.commander.x,
+        y: this.commander.y,
+        z: this.elevationAt(this.commander.x, this.commander.y),
+        sortRoot: this.sortRootAt(this.commander.x, this.commander.y),
+        layer: "actor",
+        render: "unit",
+        unit: this.commander,
+        kind: "commander"
+      });
+    }
+
+    for (const dep of this.deployments) {
+      records.push({
+        id: dep.id,
+        x: dep.x + 0.5,
+        y: dep.y + 0.5,
+        z: this.elevationAt(dep.x + 0.5, dep.y + 0.5),
+        sortRoot: this.sortRootAt(dep.x + 0.5, dep.y + 0.5),
+        layer: "prop",
+        render: "deployment",
+        deployment: dep
+      });
+    }
+
     this.navigation.anchors.nodes.forEach((node, index) => {
       records.push({
         id: node.id, x: node.x, y: node.y, z: 0,
@@ -1662,6 +2258,63 @@ export class BattleVisualizer {
     else if (item.render === "boss") this.drawBoss();
     else if (item.render === "unit") this.drawUnit(item.unit, item.kind);
     else if (item.render === "particle") this.drawParticle(item.particle, item.blend);
+    else if (item.render === "deployment") this.drawDeployment(item.deployment);
+  }
+
+  drawDeployment(dep) {
+    const ctx = this.ctx;
+    const s = this.view.scale;
+    const z = this.elevationAt(dep.x + 0.5, dep.y + 0.5);
+    const p = this.project(dep.x + 0.5, dep.y + 0.5, z);
+
+    ctx.save();
+    if (dep.kind === "tower") {
+      ctx.fillStyle = "#4b5563";
+      ctx.strokeStyle = "#fbbf24";
+      ctx.lineWidth = 2 * s;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, 16 * s, 8 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#6b7280";
+      ctx.beginPath();
+      ctx.moveTo(p.x - 12 * s, p.y);
+      ctx.lineTo(p.x - 8 * s, p.y - 28 * s);
+      ctx.lineTo(p.x + 8 * s, p.y - 28 * s);
+      ctx.lineTo(p.x + 12 * s, p.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#fbbf24";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y - 28 * s, 10 * s, 5 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#f59e0b";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y - 34 * s, 4 * s, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (dep.kind === "barricade") {
+      ctx.fillStyle = "#78350f";
+      ctx.strokeStyle = "#d97706";
+      ctx.lineWidth = 1.5 * s;
+
+      ctx.fillRect(p.x - 14 * s, p.y - 12 * s, 4 * s, 12 * s);
+      ctx.strokeRect(p.x - 14 * s, p.y - 12 * s, 4 * s, 12 * s);
+
+      ctx.fillRect(p.x + 10 * s, p.y - 12 * s, 4 * s, 12 * s);
+      ctx.strokeRect(p.x + 10 * s, p.y - 12 * s, 4 * s, 12 * s);
+
+      ctx.fillStyle = "#b45309";
+      ctx.fillRect(p.x - 12 * s, p.y - 10 * s, 24 * s, 3 * s);
+      ctx.strokeRect(p.x - 12 * s, p.y - 10 * s, 24 * s, 3 * s);
+      ctx.fillRect(p.x - 12 * s, p.y - 5 * s, 24 * s, 3 * s);
+      ctx.strokeRect(p.x - 12 * s, p.y - 5 * s, 24 * s, 3 * s);
+    }
+    ctx.restore();
   }
 
   drawHud() {
@@ -1939,6 +2592,63 @@ export class BattleVisualizer {
     ctx.strokeRect(x, y, w, h);
   }
 
+  drawTileDiamond(ctx, x, y, strokeColor, fillColor, lineWidth = 2) {
+    const z = this.elevationAt(x + 0.5, y + 0.5);
+    const top = this.project(x + 0.5, y + 0.5, z);
+    const s = this.view.scale;
+    const hw = (TILE_W / 2) * s;
+    const hh = (TILE_H / 2) * s;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(top.x, top.y - hh);
+    ctx.lineTo(top.x + hw, top.y);
+    ctx.lineTo(top.x, top.y + hh);
+    ctx.lineTo(top.x - hw, top.y);
+    ctx.closePath();
+
+    if (fillColor) {
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+    }
+    if (strokeColor) {
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = lineWidth * s;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  drawHoverAndPlacementIndicators() {
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    if (this.placementError) {
+      const alpha = this.reducedMotion ? 0.8 : Math.max(0, this.placementError.life / 0.5);
+      if (alpha > 0) {
+        this.drawTileDiamond(
+          ctx,
+          this.placementError.x,
+          this.placementError.y,
+          `rgba(255, 68, 68, ${alpha})`,
+          `rgba(255, 68, 68, ${alpha * 0.4})`,
+          3
+        );
+      }
+    }
+
+    if (this.hoverTile) {
+      if (this.placementMode) {
+        const legal = this.isPlacementLegal(this.hoverTile);
+        const strokeColor = legal ? "rgba(112, 229, 208, 0.9)" : "rgba(255, 68, 68, 0.9)";
+        const fillColor = legal ? "rgba(112, 229, 208, 0.4)" : "rgba(255, 68, 68, 0.4)";
+        this.drawTileDiamond(ctx, this.hoverTile.x, this.hoverTile.y, strokeColor, fillColor, 2);
+      } else {
+        this.drawTileDiamond(ctx, this.hoverTile.x, this.hoverTile.y, "rgba(244, 247, 255, 0.6)", "rgba(244, 247, 255, 0.25)", 1.5);
+      }
+    }
+  }
+
   // --- loop -----------------------------------------------------------------
 
   animate() {
@@ -2050,6 +2760,24 @@ export class BattleVisualizer {
       this.canvas?.removeEventListener("lostpointercapture", this.pointerHandlers.lostCapture);
       this.canvas?.removeEventListener("pointerleave", this.pointerHandlers.leave);
       this.canvas?.removeEventListener("blur", this.pointerHandlers.blur);
+      this.canvas?.removeEventListener("contextmenu", this.pointerHandlers.contextmenu);
+    }
+    if (this.keydownHandler) {
+      this.canvas?.removeEventListener("keydown", this.keydownHandler);
+      this.keydownHandler = null;
+    }
+    if (this.keyupHandler) {
+      this.canvas?.removeEventListener("keyup", this.keyupHandler);
+      this.keyupHandler = null;
+    }
+    if (this.blurHandler) {
+      this.canvas?.removeEventListener("blur", this.blurHandler);
+      this.blurHandler = null;
+    }
+    this.pressed.clear();
+    if (this.placementErrorTimer) {
+      (window.clearTimeout ?? globalThis.clearTimeout)(this.placementErrorTimer);
+      this.placementErrorTimer = null;
     }
     if (this.handleVisibilityChange) {
       globalThis.document?.removeEventListener?.("visibilitychange", this.handleVisibilityChange);

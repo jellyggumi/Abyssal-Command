@@ -2,6 +2,7 @@ import * as THREE from "./vendor/three.module.min.js";
 import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
 import {
   createStageNavigation,
+  TACTICAL_GIMMICKS,
 } from "./stage-navigation.js";
 
 // Stages 4-10 reuse the three shipped GLB terrain/boss sets (resource-budget
@@ -343,6 +344,22 @@ export class RealtimeBattle {
     this.onEncounterEvent = typeof options.onEncounterEvent === "function" ? options.onEncounterEvent : null;
     this.onRuntimeState = typeof options.onRuntimeState === "function" ? options.onRuntimeState : null;
     this.onActionFocus = typeof options.onActionFocus === "function" ? options.onActionFocus : null;
+    this.onTacticalRequest = typeof options.onTacticalRequest === "function" ? options.onTacticalRequest : null;
+    this.placementMode = null;
+    this.deploymentsMap = new Map();
+    this.selection = new Set();
+    this.isMarqueeSelecting = false;
+    this.marqueeRect = null;
+    this.marqueeDiv = null;
+    this.focusedCell = null;
+    this.focusHighlightMesh = null;
+    this.commanderPathLine = null;
+    this.tracers = [];
+    this.frameShots = [];
+    this.cachedNavigationSnapshot = null;
+    this.fortificationLevel = 0;
+    this.mobilityLevel = 0;
+    this.commandLevel = 0;
     this.lastHoveredAction = null;
     this.previewActionSemantic = null;
     this.onEnemyBreach = null; // Legacy callback; encounter events take precedence.
@@ -355,6 +372,7 @@ export class RealtimeBattle {
     this.lastBossHealth = null;
     this.runtimeSignature = null;
     this.allies = [];
+    this.nextActorId = 1;
     this.enemies = [];
     this.engagements = new Map();
     this.exchanges = 0;
@@ -523,6 +541,34 @@ export class RealtimeBattle {
     if (Number.isInteger(this.authoritativeLegion)) this.reconcileAllies(this.authoritativeLegion);
     this.reconcileEncounterWave();
     this.syncBossExposure();
+    if (this.navigation && this.navigation.routes && this.navigation.zones && this.navigation.cells) {
+      const navigationRoutes = Array.isArray(this.navigation.routes) ? this.navigation.routes.map((route) => ({
+        id: route.id,
+        lane: route.lane,
+        cells: Array.isArray(route.cells) ? route.cells.map((c) => ({ x: c.x, y: c.y })) : []
+      })) : [];
+      const navigationZones = Array.isArray(this.navigation.zones) ? this.navigation.zones.map((zone) => ({
+        kind: zone.kind,
+        cells: Array.isArray(zone.cells) ? zone.cells.map((c) => ({ x: c.x, y: c.y })) : []
+      })) : [];
+      const navigationAnchors = {
+        portal: this.navigation.anchors?.portal ? { x: this.navigation.anchors.portal.x, y: this.navigation.anchors.portal.y } : null,
+        boss: this.navigation.anchors?.boss ? { x: this.navigation.anchors.boss.x, y: this.navigation.anchors.boss.y } : null,
+        extractor: this.navigation.anchors?.extractor ? { x: this.navigation.anchors.extractor.x, y: this.navigation.anchors.extractor.y } : null,
+        rally: this.navigation.anchors?.rally ? { x: this.navigation.anchors.rally.x, y: this.navigation.anchors.rally.y } : null,
+        alliedSpawn: this.navigation.anchors?.alliedSpawn ? { x: this.navigation.anchors.alliedSpawn.x, y: this.navigation.anchors.alliedSpawn.y } : null,
+        nodes: Array.isArray(this.navigation.anchors?.nodes) ? this.navigation.anchors.nodes.map((n) => ({ id: n.id, x: n.x, y: n.y })) : [],
+        hostileSpawns: Array.isArray(this.navigation.anchors?.hostileSpawns) ? this.navigation.anchors.hostileSpawns.map((s) => ({ id: s.id, x: s.x, y: s.y, routeIndex: s.routeIndex })) : []
+      };
+      this.cachedNavigationSnapshot = {
+        width: this.navigation.width,
+        height: this.navigation.height,
+        cells: this.navigation.cells,
+        routes: navigationRoutes,
+        zones: navigationZones,
+        anchors: navigationAnchors
+      };
+    }
     this.publishRuntimeState();
     this.rafCallback = this.bound?.frame ?? ((time) => this.frame(time));
     this.running = true;
@@ -680,6 +726,22 @@ export class RealtimeBattle {
           // Junction of multiple routes
           tileColor = colorJunction.clone();
         }
+        const gimmick = this.getGimmickAt(c, r);
+        if (gimmick) {
+          const gimmickColors = {
+            hazard: new THREE.Color(0xef4444),
+            current: new THREE.Color(0x3b82f6),
+            "high-ground": new THREE.Color(0xf59e0b),
+            cover: new THREE.Color(0x10b981),
+            flank: new THREE.Color(0x8b5cf6),
+            objective: new THREE.Color(0x06b6d4),
+            exposed: new THREE.Color(0xec4899)
+          };
+          const gColor = gimmickColors[gimmick.kind];
+          if (gColor) {
+            tileColor.lerp(gColor, 0.45);
+          }
+        }
         deckMesh.setColorAt(i, tileColor);
       }
 
@@ -746,6 +808,7 @@ export class RealtimeBattle {
     this.applyBossIdentityTint(boss.root);
     this.scene.add(boss.root);
     this.boss = boss;
+    boss.id = "boss";
     this.registerStaticBlocker(boss.root, 1.18, true, () => boss.root.visible);
     this.interactives.push(boss.root);
     this.syncBossExposure();
@@ -757,6 +820,7 @@ export class RealtimeBattle {
     this.commanderPosition.copy(commander.root.position);
     this.scene.add(commander.root);
     this.commander = commander;
+    commander.id = "commander";
     this.play(commander, "Idle");
   }
 
@@ -981,6 +1045,7 @@ export class RealtimeBattle {
       this.raf = 0;
       return;
     }
+    this.frameShots = [];
     const rawDelta = (time - this.lastTime) / 1000;
     if (rawDelta > 0.10) {
       this.droppedTime += (rawDelta - 0.10);
@@ -1007,6 +1072,11 @@ export class RealtimeBattle {
       this.update(SIM_TICK);
       this.accumulator -= SIM_TICK;
     }
+    this.updatePlacementPreview?.();
+    this.updateFocusHighlight?.();
+    this.updateSelectionVisuals?.();
+    this.updateMarqueeVisual?.();
+    this.updateCommanderPathPreview?.();
 
     this.renderer.render(this.scene, this.camera);
     this.raf = requestAnimationFrame(this.rafCallback);
@@ -1032,6 +1102,9 @@ export class RealtimeBattle {
     this.moveCommander(dt);
     this.updateAllies(dt);
     this.updateEnemies(dt);
+    this.updateTracers?.(dt);
+    this.updateTowers?.(dt);
+    this.updateZoneAmbience?.(dt);
     for (const mixer of this.mixers) mixer.update(dt);
     this.portal.rotation.y += dt * 0.8;
     for (const node of this.nodes) {
@@ -1241,7 +1314,16 @@ export class RealtimeBattle {
       this.play(ally, "Strike");
       if (ally.cooldown !== 0) continue;
       ally.cooldown = 0.55;
-      enemy.hp -= 1;
+      const allyGrid = this.navigation.worldToGrid(ally.root.position.x, ally.root.position.z);
+      const allyGimmick = this.getGimmickAt(allyGrid.x, allyGrid.y);
+      const allyDamageDealtMult = allyGimmick?.effects?.combatDamageDealtMultiplier ?? 1.0;
+      
+      const enemyGrid = this.navigation.worldToGrid(enemy.root.position.x, enemy.root.position.z);
+      const enemyGimmick = this.getGimmickAt(enemyGrid.x, enemyGrid.y);
+      const enemyDamageReceivedMult = enemyGimmick?.effects?.combatDamageReceivedMultiplier ?? 1.0;
+      
+      const damage = 1 * allyDamageDealtMult * enemyDamageReceivedMult;
+      enemy.hp -= damage;
       this.clashEffect(ally.root.position, enemy.root.position);
       this.enemyStrike(enemy, ally);
       this.exchanges += 1;
@@ -1264,8 +1346,19 @@ export class RealtimeBattle {
 
   enemyStrike(enemy, target, damage = 1) {
     if (!enemy || !target || target.defeated) return;
+    
+    const enemyGrid = this.navigation.worldToGrid(enemy.root.position.x, enemy.root.position.z);
+    const enemyGimmick = this.getGimmickAt(enemyGrid.x, enemyGrid.y);
+    const enemyDamageDealtMult = enemyGimmick?.effects?.combatDamageDealtMultiplier ?? 1.0;
+    
+    const targetGrid = this.navigation.worldToGrid(target.root.position.x, target.root.position.z);
+    const targetGimmick = this.getGimmickAt(targetGrid.x, targetGrid.y);
+    const targetDamageReceivedMult = targetGimmick?.effects?.combatDamageReceivedMultiplier ?? 1.0;
+    
+    const finalDamage = damage * enemyDamageDealtMult * targetDamageReceivedMult;
+    
     this.play(enemy, "Strike");
-    target.hp -= damage;
+    target.hp -= finalDamage;
     target.hit = (target.hit ?? 0) + 1;
     const hostile = this.presentation?.palette?.hostile ?? "#ff7f79";
     this.particles?.emit(target.root.position.x, target.root.position.y + 0.8, target.root.position.z, hostile, 8, {
@@ -1327,7 +1420,12 @@ export class RealtimeBattle {
     const targetVel = new THREE.Vector2(0, 0);
     const length = Math.hypot(x, z);
     if (length > EPSILON) {
-      const speed = this.hasSurge() ? 7.2 : 4.1;
+      const baseSpeed = this.hasSurge() ? 7.2 : 4.1;
+      const grid = this.navigation.worldToGrid(root.position.x, root.position.z);
+      const gimmick = this.getGimmickAt(grid.x, grid.y);
+      const speedMult = gimmick?.effects?.movementSpeedMultiplier ?? 1.0;
+      const mobilityBonus = Math.max(0, (this.mobilityLevel || 1) - 1);
+      const speed = baseSpeed * speedMult * (1.0 + 0.15 * mobilityBonus);
       targetVel.set((x / length) * speed, (z / length) * speed);
     }
     
@@ -1402,14 +1500,44 @@ export class RealtimeBattle {
       const ally = this.allies[index];
       if (!this.liveAlly(ally) || this.engagements.has(ally)) continue;
       const intercept = this.nearestUnengagedEnemy(ally);
-      const angle = index * 2.4;
-      const desiredX = intercept?.root.position.x ?? this.rally.x + Math.cos(angle) * 1.25;
-      const desiredZ = intercept?.root.position.z ?? this.rally.z + Math.sin(angle) * 1.25;
+      
+      let desiredX, desiredZ;
+      if (intercept) {
+        desiredX = intercept.root.position.x;
+        desiredZ = intercept.root.position.z;
+      } else if (ally.customPath?.length > 0 && !ally.customOrderReached) {
+        let waypoint = ally.customPath[0];
+        if (Math.hypot(waypoint.x - ally.root.position.x, waypoint.z - ally.root.position.z) <= 0.08) {
+          ally.customPath.shift();
+          waypoint = ally.customPath[0] ?? ally.customOrder;
+          if (ally.customPath.length === 0 && Math.hypot(waypoint.x - ally.root.position.x, waypoint.z - ally.root.position.z) <= 0.08) {
+            ally.customOrderReached = true;
+          }
+        }
+        desiredX = waypoint.x;
+        desiredZ = waypoint.z;
+      } else if (ally.customOrder && !ally.customOrderReached) {
+        desiredX = ally.customOrder.x;
+        desiredZ = ally.customOrder.z;
+        if (Math.hypot(desiredX - ally.root.position.x, desiredZ - ally.root.position.z) <= 0.08) {
+          ally.customOrderReached = true;
+        }
+      } else {
+        const angle = index * 2.4;
+        desiredX = this.rally.x + Math.cos(angle) * 1.25;
+        desiredZ = this.rally.z + Math.sin(angle) * 1.25;
+      }
+      
       const root = ally.root;
+      const grid = this.navigation.worldToGrid(root.position.x, root.position.z);
+      const gimmick = this.getGimmickAt(grid.x, grid.y);
+      const speedMult = gimmick?.effects?.movementSpeedMultiplier ?? 1.0;
+      const lerpFactor = Math.min(1, dt * 3 * speedMult);
+      
       this.applyResolvedMovement(
         ally,
-        root.position.x + (desiredX - root.position.x) * Math.min(1, dt * 3),
-        root.position.z + (desiredZ - root.position.z) * Math.min(1, dt * 3),
+        root.position.x + (desiredX - root.position.x) * lerpFactor,
+        root.position.z + (desiredZ - root.position.z) * lerpFactor,
       );
       this.play(ally, "Move");
     }
@@ -1456,13 +1584,18 @@ export class RealtimeBattle {
       const distance = this.direction.length();
       if (distance > EPSILON) {
         this.direction.multiplyScalar(1 / distance);
+        const grid = this.navigation.worldToGrid(enemy.root.position.x, enemy.root.position.z);
+        const gimmick = this.getGimmickAt(grid.x, grid.y);
+        const speedMult = gimmick?.effects?.movementSpeedMultiplier ?? 1.0;
+        const enemySpeed = ENEMY_ADVANCE_SPEED * speedMult;
+        
         const resolved = this.applyResolvedMovement(
           enemy,
-          enemy.root.position.x + this.direction.x * dt * 2.4,
-          enemy.root.position.z + this.direction.z * dt * 2.4,
+          enemy.root.position.x + this.direction.x * dt * enemySpeed,
+          enemy.root.position.z + this.direction.z * dt * enemySpeed,
         );
         if (resolved.blocked) {
-          const detourDistance = Math.min(0.24, dt * 2.4);
+          const detourDistance = Math.min(0.24, dt * enemySpeed);
           const preferredDetour = this.applyResolvedMovement(
             enemy,
             enemy.root.position.x - this.direction.z * enemy.detourPreference * detourDistance,
@@ -1527,9 +1660,15 @@ export class RealtimeBattle {
   }
 
   updateCamera(dt = 0) {
-    const alpha = Math.min(1, Math.max(0, 1 - Math.exp(-dt / 0.1304)));
+    const reducedMotion = globalThis.window?.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+    const alpha = reducedMotion ? 1.0 : Math.min(1, Math.max(0, 1 - Math.exp(-dt / 0.1304)));
     this.lookTarget.copy(this.commanderPosition);
-    if (this.previewActionSemantic) {
+    
+    if (this.focusedCell) {
+      const world = this.navigation.gridToWorld(this.focusedCell.x + 0.5, this.focusedCell.y + 0.5);
+      const elevation = this.navigation.elevationAt(this.focusedCell.x + 0.5, this.focusedCell.y + 0.5);
+      this.lookTarget.set(world.x, elevation * TERRAIN_ELEVATION_SCALE, world.z);
+    } else if (this.previewActionSemantic) {
       const sourcePoint = this.actionFeedbackPoint(this.previewActionSemantic.source);
       const targetPoint = this.actionFeedbackPoint(this.previewActionSemantic.target);
       let biasTarget = targetPoint;
@@ -1543,7 +1682,13 @@ export class RealtimeBattle {
     } else {
       if (this.boss?.root?.position) this.lookTarget.lerp(this.boss.root.position, 0.22);
     }
-    this.cameraTarget.lerp(this.lookTarget, alpha);
+    
+    if (reducedMotion) {
+      this.cameraTarget.copy(this.lookTarget);
+    } else {
+      this.cameraTarget.lerp(this.lookTarget, alpha);
+    }
+    
     const bounds = this.navigation.bounds;
     this.cameraTarget.x = clamp(this.cameraTarget.x, bounds.left, bounds.right);
     this.cameraTarget.z = clamp(this.cameraTarget.z, bounds.near, bounds.far);
@@ -1554,7 +1699,8 @@ export class RealtimeBattle {
       Math.sin(this.orbitAzimuth) * horizontal,
     );
     this.camera.position.copy(this.cameraTarget).add(this.cameraOffset);
-    if (this.shakeTime > 0) {
+    
+    if (this.shakeTime > 0 && !reducedMotion) {
       this.shakeTime = Math.max(0, this.shakeTime - dt);
       const strength = this.shakeMagnitude * (this.shakeDuration > 0 ? this.shakeTime / this.shakeDuration : 0);
       const t = performance.now() * 0.001;
@@ -1631,6 +1777,16 @@ export class RealtimeBattle {
   onPointerDown(event) {
     this.canvas.focus({ preventScroll: true });
     if (this.pointer) return;
+    
+    let mode = "select";
+    if (this.placementMode) {
+      mode = "placement";
+    } else if (event.pointerType === "touch" || event.button === 1 || (event.button === 0 && event.altKey)) {
+      mode = "orbit";
+    } else if (event.button === 2) {
+      mode = "right-click";
+    }
+    
     this.pointer = {
       id: event.pointerId,
       type: event.pointerType,
@@ -1639,12 +1795,25 @@ export class RealtimeBattle {
       startY: event.clientY,
       x: event.clientX,
       y: event.clientY,
+      lastX: event.clientX,
+      lastY: event.clientY,
       moved: false,
-      button: event.button
+      button: event.button,
+      mode: mode
     };
     this.canvas.setPointerCapture(event.pointerId);
-
-    // Touch down reports only actions that the authoritative campaign currently permits.
+    
+    if (mode === "select" && !this.placementMode) {
+      this.isMarqueeSelecting = true;
+      this.marqueeRect = {
+        x0: event.clientX,
+        y0: event.clientY,
+        x1: event.clientX,
+        y1: event.clientY
+      };
+      this.updateMarqueeSelection();
+    }
+    
     this.setHoveredAction(this.resolvePointerAction(event));
   }
 
@@ -1661,49 +1830,127 @@ export class RealtimeBattle {
       const threshold = this.pointer.type === "touch" ? 12 : 6;
       if (distance > threshold) {
         this.pointer.moved = true;
-        // Drag just became active, clear hover
         this.clearHover();
       }
     }
-    if (!this.pointer.moved) return;
-    const dx = event.clientX - this.pointer.x;
-    const dy = event.clientY - this.pointer.y;
-    this.orbitAzimuth -= dx * 0.008;
-    this.orbitElevation = clamp(this.orbitElevation - dy * 0.006, 0.2, 1.25);
+    
     this.pointer.x = event.clientX;
     this.pointer.y = event.clientY;
+    
+    if (this.pointer.moved) {
+      if (this.pointer.mode === "orbit") {
+        const dx = event.clientX - this.pointer.lastX;
+        const dy = event.clientY - this.pointer.lastY;
+        this.orbitAzimuth -= dx * 0.008;
+        this.orbitElevation = clamp(this.orbitElevation - dy * 0.006, 0.2, 1.25);
+      } else if (this.pointer.mode === "select" && !this.placementMode) {
+        this.isMarqueeSelecting = true;
+        this.marqueeRect.x1 = event.clientX;
+        this.marqueeRect.y1 = event.clientY;
+        this.updateMarqueeSelection();
+      }
+    }
+    
+    this.pointer.lastX = event.clientX;
+    this.pointer.lastY = event.clientY;
   }
 
   onPointerUp(event) {
     if (!this.pointer || this.pointer.id !== event.pointerId) return;
     const pointer = this.pointer;
     this.pointer = null;
-    if (this.canvas.hasPointerCapture(event.pointerId)) this.canvas.releasePointerCapture(event.pointerId);
-
+    if (this.canvas.hasPointerCapture(event.pointerId)) {
+      this.canvas.releasePointerCapture(event.pointerId);
+    }
+    
     this.setHoveredAction(this.resolvePointerAction(event));
-
-    if (pointer.moved) return;
-    const upTime = event.timeStamp || Date.now();
-    if (upTime - pointer.downTime <= 500) {
-      this.pick(event, pointer.button === 2 ? "allies" : "personal");
-      this.setHoveredAction(pointer.type === "touch" ? null : this.resolvePointerAction(event));
+    
+    if (this.placementMode) {
+      if (!pointer.moved) {
+        if (this.setPointerRay(event)) {
+          const groundHit = this.raycaster.intersectObject(this.ground, false)[0];
+          if (groundHit) {
+            const grid = this.navigation.worldToGrid(groundHit.point.x, groundHit.point.z);
+            const x = Math.floor(grid.x);
+            const y = Math.floor(grid.y);
+            const legal = this.isPlacementLegal(x, y);
+            if (legal) {
+              this.onTacticalRequest?.({ type: 'deploy', kind: this.placementMode, cell: { x, y } });
+              this.setPlacementMode(null);
+            } else {
+              const hostile = this.presentation?.palette?.hostile ?? "#ff7f79";
+              this.particles?.emit(groundHit.point.x, groundHit.point.y + 0.1, groundHit.point.z, hostile, 8, {
+                speedMin: 0.5, speedMax: 1.5, life: 0.4, gravity: 3, upBias: 0.2
+              });
+              this.audio.playTone(groundHit.point.x, groundHit.point.y + 0.1, groundHit.point.z, {
+                freq: 150, endFreq: 100, duration: 0.2, type: "sawtooth", gain: 0.4
+              });
+            }
+          }
+        }
+      }
+      return;
+    }
+    
+    if (pointer.mode === "select") {
+      this.isMarqueeSelecting = false;
+      this.updateMarqueeVisual();
+      
+      if (!pointer.moved) {
+        const upTime = event.timeStamp || Date.now();
+        if (upTime - pointer.downTime <= 500) {
+          const action = this.resolvePointerAction(event);
+          if (action) {
+            this.requestAction?.(action);
+          } else {
+            this.pick(event, "personal");
+          }
+          this.setHoveredAction(pointer.type === "touch" ? null : this.resolvePointerAction(event));
+        }
+      }
+    } else if (pointer.mode === "right-click") {
+      if (!pointer.moved) {
+        this.pick(event, "allies");
+      }
+    } else if (pointer.mode === "orbit") {
+      if (pointer.type === "touch" && !pointer.moved) {
+        const upTime = event.timeStamp || Date.now();
+        if (upTime - pointer.downTime <= 500) {
+          const action = this.resolvePointerAction(event);
+          if (action) {
+            this.requestAction?.(action);
+          } else if (this.selection && this.selection.size > 0) {
+            this.pick(event, "allies");
+          } else {
+            this.pick(event, "personal");
+          }
+          this.setHoveredAction(null);
+        }
+      }
     }
   }
 
   onPointerCancel(event) {
     if (!this.pointer || this.pointer.id !== event.pointerId) return;
-    if (this.canvas.hasPointerCapture(event.pointerId)) this.canvas.releasePointerCapture(event.pointerId);
+    if (this.canvas.hasPointerCapture(event.pointerId)) {
+      this.canvas.releasePointerCapture(event.pointerId);
+    }
     this.pointer = null;
+    this.isMarqueeSelecting = false;
+    this.updateMarqueeVisual();
     this.clearHover();
   }
 
   onLostPointerCapture(event) {
     if (!this.pointer || this.pointer.id !== event.pointerId) return;
-    if (this.canvas.hasPointerCapture(event.pointerId)) this.canvas.releasePointerCapture(event.pointerId);
+    if (this.canvas.hasPointerCapture(event.pointerId)) {
+      this.canvas.releasePointerCapture(event.pointerId);
+    }
     this.pointer = null;
+    this.isMarqueeSelecting = false;
+    this.updateMarqueeVisual();
     this.clearHover();
   }
-
   onPointerLeave(event) {
     this.clearHover();
   }
@@ -1728,22 +1975,85 @@ export class RealtimeBattle {
     if (!ground || !this.commander) return;
     
     if (rallyKind === "allies") {
-      const resolved = this.resolveMovement(this.commander, ground.point.x, ground.point.z);
-      if (resolved.blocked) {
+      const P = ground.point;
+      const goalGrid = this.navigation.worldToGrid(P.x, P.z);
+      const selectedArray = this.selection?.size > 0 ? [...this.selection] : [];
+      const plannedOrders = [];
+
+      if (selectedArray.length > 0) {
+        for (let i = 0; i < selectedArray.length; i += 1) {
+          const ally = selectedArray[i];
+          const angle = i * (Math.PI * 2 / Math.max(1, selectedArray.length));
+          const dist = selectedArray.length > 1 ? 0.8 : 0;
+          const targetX = P.x + Math.cos(angle) * dist;
+          const targetZ = P.z + Math.sin(angle) * dist;
+          const targetGrid = this.navigation.worldToGrid(targetX, targetZ);
+          const startGrid = this.navigation.worldToGrid(ally.root.position.x, ally.root.position.z);
+          let path = this.findTacticalPath(startGrid, targetGrid);
+          if (!path) path = this.findTacticalPath(startGrid, goalGrid);
+          if (path?.length) plannedOrders.push({ ally, path });
+        }
+      } else {
+        const startGrid = this.navigation.worldToGrid(this.commander.root.position.x, this.commander.root.position.z);
+        if (!this.findTacticalPath(startGrid, goalGrid)) {
+          plannedOrders.length = 0;
+        } else {
+          plannedOrders.push({ ally: null, path: null });
+        }
+      }
+
+      if (plannedOrders.length === 0) {
         const hostile = this.presentation?.palette?.hostile ?? "#ff7f79";
-        this.particles?.emit(ground.point.x, ground.point.y + 0.1, ground.point.z, hostile, 8, {
+        this.particles?.emit(P.x, P.y + 0.1, P.z, hostile, 8, {
           speedMin: 0.5, speedMax: 1.5, life: 0.4, gravity: 3, upBias: 0.2
         });
-        this.audio.playTone(ground.point.x, ground.point.y + 0.1, ground.point.z, {
+        this.audio.playTone(P.x, P.y + 0.1, P.z, {
           freq: 150, endFreq: 100, duration: 0.2, type: "sawtooth", gain: 0.4
         });
         return;
       }
-      this.rally.set(resolved.x, resolved.y, resolved.z);
+
+      const accent = this.presentation?.palette?.accent ?? "#ffb85c";
+      this.particles?.emit(P.x, P.y + 0.1, P.z, accent, 5, {
+        speedMin: 0.5, speedMax: 1.5, life: 0.3, gravity: 2, upBias: 0.5
+      });
+      this.audio.playTone(P.x, P.y + 0.1, P.z, {
+        freq: 500, endFreq: 700, duration: 0.12, type: "sine", gain: 0.3
+      });
+
+      if (selectedArray.length > 0) {
+        for (const { ally, path } of plannedOrders) {
+          const worldPath = path.map((cell) => {
+            const world = this.navigation.gridToWorld(cell.x + 0.5, cell.y + 0.5);
+            return new THREE.Vector3(
+              world.x,
+              this.navigation.elevationAt(cell.x + 0.5, cell.y + 0.5) * TERRAIN_ELEVATION_SCALE,
+              world.z
+            );
+          });
+          ally.customPath = worldPath.slice(1);
+          ally.customOrder = worldPath[worldPath.length - 1];
+          ally.customOrderReached = ally.customPath.length === 0;
+        }
+        this.rally.copy(P);
+      } else {
+        this.rally.set(P.x, P.y, P.z);
+        for (const ally of this.allies) {
+          ally.customPath = [];
+          ally.customOrder = null;
+        }
+      }
     } else {
       const startGrid = this.navigation.worldToGrid(this.commander.root.position.x, this.commander.root.position.z);
       const goalGrid = this.navigation.worldToGrid(ground.point.x, ground.point.z);
-      const path = this.navigation.findPath(startGrid, goalGrid);
+      
+      // Request focus
+      const cellX = Math.floor(goalGrid.x);
+      const cellY = Math.floor(goalGrid.y);
+      this.focusTacticalCell({ x: cellX, y: cellY });
+      this.onTacticalRequest?.({ type: 'focus', cell: { x: cellX, y: cellY } });
+      
+      const path = this.findTacticalPath(startGrid, goalGrid);
       if (!path || path.length === 0) {
         const hostile = this.presentation?.palette?.hostile ?? "#ff7f79";
         this.particles?.emit(ground.point.x, ground.point.y + 0.1, ground.point.z, hostile, 8, {
@@ -1756,7 +2066,6 @@ export class RealtimeBattle {
       }
       
       this.commanderPath = path;
-      
       const finalCell = path[path.length - 1];
       const finalWorld = this.navigation.gridToWorld(finalCell.x + 0.5, finalCell.y + 0.5);
       const elevation = this.navigation.elevationAt(finalCell.x + 0.5, finalCell.y + 0.5);
@@ -1809,6 +2118,14 @@ export class RealtimeBattle {
       this.lastBossHealth = bossHealth;
     }
     this.applyEncounter({ stageId, config, state: encounterState });
+    const skills = state?.progression?.skills ?? campaign?.state?.progression?.skills ?? campaign?.progression?.skills;
+    if (skills) {
+      this.fortificationLevel = Number(skills.fortification) || 0;
+      this.mobilityLevel = Number(skills.mobility) || 0;
+      this.commandLevel = Number(skills.command) || 0;
+    }
+    const deployments = state?.stage?.deployments ?? campaign?.stage?.deployments ?? state?.deployments ?? [];
+    this.reconcileDeployments(deployments);
     this.updateNodeVisuals();
   }
 
@@ -1874,6 +2191,7 @@ export class RealtimeBattle {
     ally.radius = 0.4;
     ally.hp = 3;
     ally.defeated = false;
+    ally.id = `ally-${this.nextActorId++}`;
     const formation = this.allies.length % 3 - 1;
     if (!this.resolveSpawn(ally, this.commanderPosition.x - 0.3, this.commanderPosition.z + formation * 1.1)) {
       this.retire(ally);
@@ -1920,7 +2238,7 @@ export class RealtimeBattle {
     for (let index = 0; index < count; index += 1) {
       const enemy = this.cloneTemplate(model, 1.2);
       enemy.radius = 0.42;
-      
+      enemy.id = `enemy-${wave.id || "wave"}-${this.enemySerial}`;
       const routeIndex = index % 3;
       const routeCells = this.navigation.routePath(routeIndex, true);
       const spawnWorld = this.navigation.gridToWorld(routeCells[0].x + 0.5, routeCells[0].y + 0.5);
@@ -2248,6 +2566,628 @@ export class RealtimeBattle {
     this.onAssetStatus?.({ state: "unavailable" });
     this.onRendererFailure?.();
   }
+  setPlacementMode(kind) {
+    this.placementMode = kind || null;
+    if (!this.placementMode) {
+      if (this.placementPreview) {
+        this.scene.remove(this.placementPreview);
+        this.placementPreview.traverse((node) => {
+          if (node.isMesh) {
+            node.geometry?.dispose();
+            node.material?.dispose();
+          }
+        });
+        this.placementPreview = null;
+      }
+    } else {
+      if (!this.placementPreview) {
+        const geom = new THREE.BoxGeometry(0.92, 0.15, 0.92);
+        const mat = new THREE.MeshBasicMaterial({
+          color: 0x70e5d0,
+          transparent: true,
+          opacity: 0.5
+        });
+        this.placementPreview = new THREE.Mesh(geom, mat);
+        this.scene.add(this.placementPreview);
+      }
+      this.placementPreview.visible = false;
+    }
+  }
+
+  isPlacementLegal(gridX, gridY) {
+    const x = Math.floor(gridX);
+    const y = Math.floor(gridY);
+    const w = this.navigation?.width ?? 24;
+    const h = this.navigation?.height ?? 12;
+    if (x < 0 || x >= w || y < 0 || y >= h) return false;
+    
+    const deployments = [];
+    for (const dep of this.deploymentsMap.values()) {
+      deployments.push({
+        id: dep.id,
+        kind: dep.kind,
+        x: dep.gridX,
+        y: dep.gridY
+      });
+    }
+    
+    return !!this.navigation?.validateDeployment?.(x, y, deployments, this.placementMode)?.valid;
+  }
+
+  updatePlacementPreview() {
+    if (!this.placementMode || !this.placementPreview) return;
+    if (this.pointer) {
+      if (this.setPointerRay({ clientX: this.pointer.x, clientY: this.pointer.y })) {
+        const groundHit = this.raycaster.intersectObject(this.ground, false)[0];
+        if (groundHit) {
+          const grid = this.navigation.worldToGrid(groundHit.point.x, groundHit.point.z);
+          const x = Math.floor(grid.x);
+          const y = Math.floor(grid.y);
+          if (x >= 0 && x < 24 && y >= 0 && y < 12) {
+            const world = this.navigation.gridToWorld(x + 0.5, y + 0.5);
+            const elevation = this.navigation.elevationAt(x + 0.5, y + 0.5);
+            const yPos = elevation * TERRAIN_ELEVATION_SCALE;
+            this.placementPreview.position.set(world.x, yPos + 0.1, world.z);
+            this.placementPreview.visible = true;
+            const legal = this.isPlacementLegal(x, y);
+            const color = legal
+              ? (this.presentation?.palette?.ally ?? "#70e5d0")
+              : (this.presentation?.palette?.hostile ?? "#ff7f79");
+            this.placementPreview.material.color.set(color);
+            return;
+          }
+        }
+      }
+    }
+    this.placementPreview.visible = false;
+  }
+
+  focusTacticalCell(cell) {
+    this.focusedCell = cell || null;
+    this.updateFocusHighlight();
+  }
+
+  getTacticalSnapshot() {
+    const units = [];
+    if (this.commander && !this.commander.defeated) {
+      units.push({
+        id: this.commander.id || "commander",
+        team: 1,
+        x: this.commander.root.position.x,
+        z: this.commander.root.position.z,
+        hp: 3
+      });
+    }
+    for (let i = 0; i < this.allies.length; i++) {
+      const ally = this.allies[i];
+      if (this.liveAlly(ally)) {
+        units.push({
+          id: ally.id || `ally-${i}`,
+          team: 1,
+          x: ally.root.position.x,
+          z: ally.root.position.z,
+          hp: ally.hp
+        });
+      }
+    }
+    for (let i = 0; i < this.enemies.length; i++) {
+      const enemy = this.enemies[i];
+      if (this.liveEnemy(enemy)) {
+        units.push({
+          id: enemy.id || `enemy-${i}`,
+          team: 2,
+          x: enemy.root.position.x,
+          z: enemy.root.position.z,
+          hp: enemy.hp
+        });
+      }
+    }
+    if (this.bossExposed && this.boss && !this.boss.defeated) {
+      units.push({
+        id: this.boss.id || "boss",
+        team: 2,
+        x: this.boss.root.position.x,
+        z: this.boss.root.position.z,
+        hp: this.boss.hp !== undefined ? this.boss.hp : (this.lastBossHealth !== null ? this.lastBossHealth : 20)
+      });
+    }
+    const deployments = [];
+    for (const [id, dep] of this.deploymentsMap.entries()) {
+      deployments.push({
+        id: dep.id,
+        kind: dep.kind,
+        x: dep.gridX,
+        y: dep.gridY
+      });
+    }
+    const focus = this.focusedCell ? { x: this.focusedCell.x, y: this.focusedCell.y } : null;
+    return {
+      stageNumber: this.stageNumber,
+      navigation: this.cachedNavigationSnapshot || {},
+      units,
+      deployments,
+      focus,
+      selectionCount: this.selection ? this.selection.size : 0,
+      placementMode: this.placementMode,
+      towerShots: this.frameShots || [],
+      viewport: this.camera ? { x: this.camera.position.x, z: this.camera.position.z, zoom: this.zoom } : null
+    };
+  }
+
+  updateTracers(dt) {
+    if (!this.tracers) return;
+    for (let i = this.tracers.length - 1; i >= 0; i--) {
+      const tracer = this.tracers[i];
+      tracer.age += dt;
+      if (tracer.age >= tracer.maxAge) {
+        this.scene.remove(tracer.line);
+        tracer.line.geometry?.dispose();
+        tracer.material?.dispose();
+        this.tracers.splice(i, 1);
+      } else {
+        tracer.material.opacity = 1.0 - (tracer.age / tracer.maxAge);
+      }
+    }
+  }
+
+  updateFocusHighlight() {
+    if (this.focusedCell) {
+      if (!this.focusHighlightMesh) {
+        const geom = new THREE.RingGeometry(0.5, 0.6, 16);
+        const mat = new THREE.MeshBasicMaterial({
+          color: this.presentation?.palette?.accent ?? 0xffb85c,
+          transparent: true,
+          opacity: 0.8,
+          side: THREE.DoubleSide
+        });
+        this.focusHighlightMesh = new THREE.Mesh(geom, mat);
+        this.focusHighlightMesh.rotation.x = -Math.PI / 2;
+        this.scene.add(this.focusHighlightMesh);
+      }
+      const world = this.navigation.gridToWorld(this.focusedCell.x + 0.5, this.focusedCell.y + 0.5);
+      const elevation = this.navigation.elevationAt(this.focusedCell.x + 0.5, this.focusedCell.y + 0.5);
+      this.focusHighlightMesh.position.set(world.x, elevation * TERRAIN_ELEVATION_SCALE + 0.05, world.z);
+      this.focusHighlightMesh.visible = true;
+    } else {
+      if (this.focusHighlightMesh) {
+        this.focusHighlightMesh.visible = false;
+      }
+    }
+  }
+
+  updateSelectionVisuals() {
+    if (!this.ringGeometry) return;
+    for (const ally of this.allies) {
+      if (!this.liveAlly(ally)) continue;
+      const isSelected = this.selection.has(ally);
+      if (isSelected) {
+        if (!ally.selectionRing) {
+          const ringMat = new THREE.MeshBasicMaterial({
+            color: this.presentation?.palette?.ally ?? 0x70e5d0,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide
+          });
+          const ring = new THREE.Mesh(this.ringGeometry, ringMat);
+          ring.rotation.x = -Math.PI / 2;
+          ring.position.y = 0.05;
+          ring.scale.setScalar(0.5);
+          ally.root.add(ring);
+          ally.selectionRing = ring;
+        }
+        ally.selectionRing.visible = true;
+      } else {
+        if (ally.selectionRing) {
+          ally.selectionRing.visible = false;
+        }
+      }
+    }
+  }
+
+  updateMarqueeVisual() {
+    if (this.isMarqueeSelecting && this.marqueeRect && this.canvas.parentElement) {
+      if (!this.marqueeDiv) {
+        this.marqueeDiv = document.createElement("div");
+        this.marqueeDiv.style.position = "absolute";
+        this.marqueeDiv.style.border = "1.5px dashed #70e5d0";
+        this.marqueeDiv.style.backgroundColor = "rgba(112, 229, 208, 0.15)";
+        this.marqueeDiv.style.pointerEvents = "none";
+        this.marqueeDiv.style.zIndex = "999";
+        this.canvas.parentElement.appendChild(this.marqueeDiv);
+      }
+      const x0 = Math.min(this.marqueeRect.x0, this.marqueeRect.x1);
+      const x1 = Math.max(this.marqueeRect.x0, this.marqueeRect.x1);
+      const y0 = Math.min(this.marqueeRect.y0, this.marqueeRect.y1);
+      const y1 = Math.max(this.marqueeRect.y0, this.marqueeRect.y1);
+      const parentRect = this.canvas.parentElement.getBoundingClientRect();
+      this.marqueeDiv.style.left = `${x0 - parentRect.left}px`;
+      this.marqueeDiv.style.top = `${y0 - parentRect.top}px`;
+      this.marqueeDiv.style.width = `${x1 - x0}px`;
+      this.marqueeDiv.style.height = `${y1 - y0}px`;
+      this.marqueeDiv.style.display = "block";
+    } else {
+      if (this.marqueeDiv) {
+        this.marqueeDiv.style.display = "none";
+      }
+    }
+  }
+
+  updateMarqueeSelection() {
+    if (!this.isMarqueeSelecting || !this.marqueeRect) return;
+    const x0 = Math.min(this.marqueeRect.x0, this.marqueeRect.x1);
+    const x1 = Math.max(this.marqueeRect.x0, this.marqueeRect.x1);
+    const y0 = Math.min(this.marqueeRect.y0, this.marqueeRect.y1);
+    const y1 = Math.max(this.marqueeRect.y0, this.marqueeRect.y1);
+    this.selection.clear();
+    for (const ally of this.allies) {
+      if (!this.liveAlly(ally)) continue;
+      const screenPos = this.projectToScreen(ally.root.position);
+      if (screenPos.x >= x0 && screenPos.x <= x1 && screenPos.y >= y0 && screenPos.y <= y1) {
+        this.selection.add(ally);
+      }
+    }
+  }
+
+  projectToScreen(position) {
+    const tempV = position.clone();
+    tempV.project(this.camera);
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: (tempV.x * 0.5 + 0.5) * rect.width + rect.left,
+      y: (-tempV.y * 0.5 + 0.5) * rect.height + rect.top
+    };
+  }
+
+  getGimmickAt(gridX, gridY) {
+    const x = Math.floor(gridX);
+    const y = Math.floor(gridY);
+    if (!this.navigation?.zones) return null;
+    const zone = this.navigation.zones.find((z) =>
+      z.cells.some((c) => c.x === x && c.y === y)
+    );
+    if (!zone) return null;
+    return TACTICAL_GIMMICKS[zone.kind] || null;
+  }
+
+  updateCommanderPathPreview() {
+    if (this.commanderPath && this.commanderPath.length > 0) {
+      const points = [];
+      points.push(this.commander.root.position.clone());
+      for (const cell of this.commanderPath) {
+        const world = this.navigation.gridToWorld(cell.x + 0.5, cell.y + 0.5);
+        const nav = this.navigationAt(world.x, world.z);
+        points.push(new THREE.Vector3(world.x, nav.elevation * TERRAIN_ELEVATION_SCALE + 0.08, world.z));
+      }
+      if (!this.commanderPathLine) {
+        const geom = new THREE.BufferGeometry().setFromPoints(points);
+        const mat = new THREE.LineDashedMaterial({
+          color: this.presentation?.palette?.accent ?? 0xffb85c,
+          dashSize: 0.2,
+          gapSize: 0.1,
+          transparent: true,
+          opacity: 0.8
+        });
+        this.commanderPathLine = new THREE.Line(geom, mat);
+        this.scene.add(this.commanderPathLine);
+      } else {
+        this.commanderPathLine.geometry.dispose();
+        this.commanderPathLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+      }
+      this.commanderPathLine.computeLineDistances();
+      this.commanderPathLine.visible = true;
+    } else {
+      if (this.commanderPathLine) {
+        this.commanderPathLine.visible = false;
+      }
+    }
+  }
+
+  updateZoneAmbience(dt) {
+    if (!this.navigation?.zones || !this.particles) return;
+    this.zoneAmbienceTimer = (this.zoneAmbienceTimer || 0) - dt;
+    if (this.zoneAmbienceTimer > 0) return;
+    this.zoneAmbienceTimer = 0.15;
+    for (const zone of this.navigation.zones) {
+      if (!zone.cells || zone.cells.length === 0) continue;
+      const cell = zone.cells[Math.floor(Math.random() * zone.cells.length)];
+      const world = this.navigation.gridToWorld(cell.x + 0.5, cell.y + 0.5);
+      const elevation = this.navigation.elevationAt(cell.x + 0.5, cell.y + 0.5);
+      const y = elevation * TERRAIN_ELEVATION_SCALE + 0.05;
+      let color;
+      let count = 1;
+      let grav = -0.1;
+      let life = 1.2;
+      switch (zone.kind) {
+        case "hazard":
+          color = "#ef4444";
+          grav = 0.5;
+          break;
+        case "current":
+          color = "#3b82f6";
+          grav = -0.4;
+          break;
+        case "high-ground":
+          color = "#f59e0b";
+          break;
+        case "cover":
+          color = "#10b981";
+          break;
+        case "flank":
+          color = "#8b5cf6";
+          break;
+        case "objective":
+          color = "#06b6d4";
+          break;
+        case "exposed":
+          color = "#ec4899";
+          break;
+        default:
+          continue;
+      }
+      this.particles.emit(
+        world.x + (Math.random() - 0.5) * 0.6,
+        y + Math.random() * 0.2,
+        world.z + (Math.random() - 0.5) * 0.6,
+        color,
+        count,
+        { speedMin: 0.1, speedMax: 0.3, life, gravity: grav, upBias: 0.3 }
+      );
+    }
+  }
+
+  findTacticalPath(start, goal) {
+    const cells = this.navigation.cells.map(row => [...row]);
+    const width = this.navigation?.width ?? 24;
+    const height = this.navigation?.height ?? 12;
+    for (const dep of this.deploymentsMap.values()) {
+      if (dep.kind !== "barricade") continue;
+      const x = dep.gridX;
+      const y = dep.gridY;
+      if (x >= 0 && x < width && y >= 0 && y < height) {
+        cells[y][x] = -1;
+      }
+    }
+    const sx = Math.max(0, Math.min(width - 1, Math.floor(start.x)));
+    const sy = Math.max(0, Math.min(height - 1, Math.floor(start.y)));
+    const gx = Math.max(0, Math.min(width - 1, Math.floor(goal.x)));
+    const gy = Math.max(0, Math.min(height - 1, Math.floor(goal.y)));
+    const startIndex = sy * width + sx;
+    const goalIndex = gy * width + gx;
+    const permitted = (x, y) => {
+      if (x < 0 || y < 0 || x >= width || y >= height || cells[y][x] < 0) return false;
+      return true;
+    };
+    if (!permitted(sx, sy) || !permitted(gx, gy)) return null;
+    const parent = new Int16Array(width * height);
+    parent.fill(-1);
+    const queue = new Int16Array(width * height);
+    let read = 0;
+    let write = 0;
+    parent[startIndex] = startIndex;
+    queue[write++] = startIndex;
+    const directions = [[1, 0], [0, -1], [0, 1], [-1, 0]];
+    while (read < write) {
+      const current = queue[read++];
+      if (current === goalIndex) break;
+      const x = current % width;
+      const y = Math.floor(current / width);
+      for (const [dx, dy] of directions) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (!permitted(nx, ny)) continue;
+        const next = ny * width + nx;
+        if (parent[next] !== -1) continue;
+        if (Math.abs(cells[ny][nx] - cells[y][x]) > 1) continue;
+        parent[next] = current;
+        queue[write++] = next;
+      }
+    }
+    if (parent[goalIndex] === -1) return null;
+    const path = [];
+    for (let current = goalIndex; ; current = parent[current]) {
+      path.push({ x: current % width, y: Math.floor(current / width) });
+      if (current === startIndex) break;
+    }
+    return path.reverse();
+  }
+
+  drawTracer(from, to) {
+    const points = [
+      from.clone().add(new THREE.Vector3(0, 1.2, 0)),
+      to.clone().add(new THREE.Vector3(0, 0.5, 0))
+    ];
+    const geom = new THREE.BufferGeometry().setFromPoints(points);
+    const allyColor = this.presentation?.palette?.ally ?? "#70e5d0";
+    const mat = new THREE.LineBasicMaterial({
+      color: new THREE.Color(allyColor),
+      transparent: true,
+      opacity: 1.0,
+      linewidth: 2
+    });
+    const line = new THREE.Line(geom, mat);
+    this.scene.add(line);
+    this.tracers.push({
+      line,
+      material: mat,
+      age: 0,
+      maxAge: 0.15
+    });
+  }
+
+  reconcileDeployments(deploymentsList) {
+    const currentIds = new Set();
+    for (const dep of deploymentsList) {
+      const id = dep.id;
+      if (!id) continue;
+      currentIds.add(id);
+      const kind = dep.kind;
+      const gridX = dep.cell ? dep.cell.x : (dep.x !== undefined ? dep.x : 0);
+      const gridY = dep.cell ? dep.cell.y : (dep.y !== undefined ? dep.y : 0);
+      if (!this.deploymentsMap.has(id)) {
+        const world = this.navigation.gridToWorld(gridX + 0.5, gridY + 0.5);
+        const elevation = this.navigation.elevationAt(gridX + 0.5, gridY + 0.5);
+        const y = elevation * TERRAIN_ELEVATION_SCALE;
+        const group = new THREE.Group();
+        group.position.set(world.x, y, world.z);
+        let radius = 0.4;
+        if (kind === "tower") {
+          const baseGeom = new THREE.CylinderGeometry(0.35, 0.35, 1.2, 8);
+          const capGeom = new THREE.ConeGeometry(0.3, 0.4, 8);
+          capGeom.translate(0, 0.8, 0);
+          const allyColor = this.presentation?.palette?.ally ?? "#70e5d0";
+          const material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(allyColor),
+            roughness: 0.6,
+            metalness: 0.2
+          });
+          const baseMesh = new THREE.Mesh(baseGeom, material);
+          baseMesh.position.y = 0.6;
+          baseMesh.castShadow = true;
+          baseMesh.receiveShadow = true;
+          const capMesh = new THREE.Mesh(capGeom, material);
+          capMesh.castShadow = true;
+          capMesh.receiveShadow = true;
+          group.add(baseMesh);
+          group.add(capMesh);
+          radius = 0.45;
+        } else {
+          const geom = new THREE.BoxGeometry(0.8, 0.6, 0.8);
+          const accentColor = this.presentation?.palette?.accent ?? "#ffb85c";
+          const material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(accentColor),
+            roughness: 0.8,
+            metalness: 0.4
+          });
+          const visualMesh = new THREE.Mesh(geom, material);
+          visualMesh.position.y = 0.3;
+          visualMesh.castShadow = true;
+          visualMesh.receiveShadow = true;
+          group.add(visualMesh);
+          const health = dep.hp !== undefined ? dep.hp : 5;
+          const maxHp = dep.maxHp !== undefined ? dep.maxHp : 5;
+          const healthRatio = maxHp > 0 ? health / maxHp : 1.0;
+          visualMesh.scale.y = 0.2 + 0.8 * healthRatio;
+          radius = 0.45;
+        }
+        this.scene.add(group);
+        const deploymentObj = {
+          id,
+          kind,
+          gridX,
+          gridY,
+          root: group,
+          radius,
+          hp: kind === "barricade" ? 5 : 0,
+          maxHp: kind === "barricade" ? 5 : 0,
+          cooldown: 0,
+          target: null,
+          shots: []
+        };
+        this.deploymentsMap.set(id, deploymentObj);
+        if (kind === "barricade") {
+          this.registerStaticBlocker(group, radius, true, () => {
+            return !deploymentObj.defeated;
+          });
+        }
+      } else {
+        const depObj = this.deploymentsMap.get(id);
+        const world = this.navigation.gridToWorld(gridX + 0.5, gridY + 0.5);
+        const elevation = this.navigation.elevationAt(gridX + 0.5, gridY + 0.5);
+        const y = elevation * TERRAIN_ELEVATION_SCALE;
+        depObj.root.position.set(world.x, y, world.z);
+        depObj.gridX = gridX;
+        depObj.gridY = gridY;
+        if (kind !== "tower" && depObj.root.children[0]) {
+          const visualMesh = depObj.root.children[0];
+          const health = dep.hp !== undefined ? dep.hp : 5;
+          const maxHp = dep.maxHp !== undefined ? dep.maxHp : 5;
+          const healthRatio = maxHp > 0 ? health / maxHp : 1.0;
+          visualMesh.scale.y = 0.2 + 0.8 * healthRatio;
+        }
+      }
+    }
+    for (const [id, depObj] of this.deploymentsMap.entries()) {
+      if (!currentIds.has(id)) {
+        depObj.root.removeFromParent();
+        depObj.root.traverse((node) => {
+          if (node.isMesh) {
+            node.geometry?.dispose();
+            if (Array.isArray(node.material)) {
+              node.material.forEach((mat) => mat.dispose());
+            } else {
+              node.material?.dispose();
+            }
+          }
+        });
+        this.staticBlockers = this.staticBlockers.filter(
+          (blocker) => blocker.root !== depObj.root
+        );
+        this.deploymentsMap.delete(id);
+      }
+    }
+  }
+
+  updateTowers(dt) {
+    const targets = [];
+    for (const enemy of this.enemies) {
+      if (this.liveEnemy(enemy)) {
+        targets.push(enemy);
+      }
+    }
+    if (this.bossExposed && this.boss && !this.boss.defeated) {
+      targets.push(this.boss);
+    }
+    for (const dep of this.deploymentsMap.values()) {
+      if (dep.kind !== "tower") continue;
+      dep.cooldown = Math.max(0, dep.cooldown - dt);
+      const gridX = Math.floor(dep.gridX);
+      const gridY = Math.floor(dep.gridY);
+      const gimmick = this.getGimmickAt(gridX, gridY);
+      const rangeMult = gimmick?.effects?.towerRangeMultiplier ?? 1.0;
+      const fortificationBonus = Math.max(0, (this.fortificationLevel || 1) - 1);
+      const fortMultRange = 1.0 + 0.1 * fortificationBonus;
+      const range = 4.0 * rangeMult * fortMultRange;
+      let bestTarget = null;
+      let closestDist = range;
+      const towerPos = dep.root.position;
+      for (const target of targets) {
+        const dist = towerPos.distanceTo(target.root.position);
+        if (dist <= closestDist) {
+          closestDist = dist;
+          bestTarget = target;
+        }
+      }
+      if (bestTarget && dep.cooldown <= 0) {
+        dep.cooldown = 1.0;
+        const targetGrid = this.navigation.worldToGrid(bestTarget.root.position.x, bestTarget.root.position.z);
+        const targetGimmick = this.getGimmickAt(targetGrid.x, targetGrid.y);
+        const targetDamageReceivedMult = targetGimmick?.effects?.combatDamageReceivedMultiplier ?? 1.0;
+        const fortMultDamage = 1.0 + 0.2 * fortificationBonus;
+        const finalDamage = 1 * targetDamageReceivedMult * fortMultDamage;
+        bestTarget.hp -= finalDamage;
+        bestTarget.hit = (bestTarget.hit ?? 0) + 1;
+        this.drawTracer(towerPos, bestTarget.root.position);
+        const targetPos = bestTarget.root.position;
+        const color = this.presentation?.palette?.ally ?? "#70e5d0";
+        this.particles?.emit(targetPos.x, targetPos.y + 0.5, targetPos.z, color, 6, {
+          speedMin: 0.8, speedMax: 2.0, life: 0.35, gravity: 1.5, upBias: 0.3
+        });
+        this.audio.playTone(targetPos.x, targetPos.y + 0.5, targetPos.z, {
+          freq: 700, endFreq: 400, duration: 0.15, type: "sine", gain: 0.3
+        });
+        const targetId = bestTarget === this.boss ? "boss" : bestTarget.id;
+        this.frameShots.push({
+          towerId: dep.id,
+          targetId: targetId,
+          x: targetPos.x,
+          y: targetPos.z
+        });
+        if (bestTarget.hp <= 0 || (bestTarget !== this.boss && bestTarget.hit >= 3)) {
+          this.defeat(bestTarget);
+        }
+      }
+    }
+  }
 
   destroy() {
     if (this.destroyed) return;
@@ -2272,6 +3212,56 @@ export class RealtimeBattle {
     this.canvas.removeEventListener("pointerleave", this.bound.pointerleave);
     this.canvas.removeEventListener("contextmenu", this.bound.contextmenu);
     this.canvas.removeEventListener("wheel", this.bound.wheel);
+    if (this.marqueeDiv) {
+      this.marqueeDiv.remove();
+      this.marqueeDiv = null;
+    }
+    if (this.placementPreview) {
+      this.scene.remove(this.placementPreview);
+      this.placementPreview.traverse((node) => {
+        if (node.isMesh) {
+          node.geometry?.dispose();
+          node.material?.dispose();
+        }
+      });
+      this.placementPreview = null;
+    }
+    if (this.focusHighlightMesh) {
+      this.scene.remove(this.focusHighlightMesh);
+      this.focusHighlightMesh.geometry?.dispose();
+      this.focusHighlightMesh.material?.dispose();
+      this.focusHighlightMesh = null;
+    }
+    if (this.commanderPathLine) {
+      this.scene.remove(this.commanderPathLine);
+      this.commanderPathLine.geometry?.dispose();
+      this.commanderPathLine.material?.dispose();
+      this.commanderPathLine = null;
+    }
+    if (this.tracers) {
+      for (const tracer of this.tracers) {
+        this.scene.remove(tracer.line);
+        tracer.line.geometry?.dispose();
+        tracer.material?.dispose();
+      }
+      this.tracers = [];
+    }
+    if (this.deploymentsMap) {
+      for (const dep of this.deploymentsMap.values()) {
+        dep.root.removeFromParent();
+        dep.root.traverse((node) => {
+          if (node.isMesh) {
+            node.geometry?.dispose();
+            if (Array.isArray(node.material)) {
+              node.material.forEach((mat) => mat.dispose());
+            } else {
+              node.material?.dispose();
+            }
+          }
+        });
+      }
+      this.deploymentsMap.clear();
+    }
     this.clearEncounterWave();
     for (const ally of this.allies) this.retire(ally);
     this.allies.length = 0;

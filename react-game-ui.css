@@ -1371,6 +1371,311 @@ button.primary:hover:not(:disabled), .relic-shop-btn-equip:hover:not(:disabled) 
 }
 
 /* ============================================================
+   Tactical HUD Styling (RTS Extensions)
+   ============================================================ */
+
+/* 1. Minimap Panel */
+.battle-minimap-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  padding: 0.5rem !important;
+  box-sizing: border-box !important;
+  min-height: 96px !important;
+}
+
+#battle-minimap {
+  width: 100% !important;
+  aspect-ratio: 24 / 12 !important; /* Matches 24x12 navigation grid */
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  display: block !important;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8) !important;
+}
+
+#battle-minimap:focus-visible {
+  outline: 2px solid var(--focus) !important;
+  outline-offset: 2px !important;
+}
+
+/* 2. Tactical Section Layout */
+.tactical-hud-section {
+  margin-top: 0.75rem !important;
+  padding-top: 0.75rem !important;
+  border-top: 1px dashed var(--line) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+}
+
+.tactical-hud-section h4 {
+  font-family: var(--font-serif) !important;
+  color: var(--muted) !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  margin: 0 !important;
+}
+
+/* 3. Skill Upgrade Controls */
+.tactical-skills .section-heading {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+}
+
+.marks-counter {
+  font-size: 0.85rem !important;
+  color: var(--ink) !important;
+  background: var(--raised) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 3px !important;
+  padding: 0.2rem 0.5rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+}
+
+#tactical-marks-value {
+  color: var(--focus) !important;
+  font-family: monospace !important;
+  font-weight: bold !important;
+}
+
+.skills-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 0.4rem !important;
+}
+
+.skill-card {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  padding: 0.4rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 0.3rem !important;
+  min-height: 80px !important;
+}
+
+.skill-info {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.15rem !important;
+  min-width: 0 !important;
+}
+
+.skill-info strong {
+  font-size: 0.75rem !important;
+  color: var(--ink) !important;
+  text-transform: uppercase !important;
+}
+
+.skill-desc {
+  font-size: 0.65rem !important;
+  color: var(--muted) !important;
+  line-height: 1.25 !important;
+}
+
+.skill-level-text {
+  font-size: 0.65rem !important;
+  color: var(--muted) !important;
+}
+
+.skill-upgrade-btn {
+  width: 100% !important;
+  min-height: 44px !important; /* Accessibility >= 44px */
+  padding: 0.25rem !important;
+  font-size: 0.7rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+}
+
+/* 4. Placement Palette */
+.deployment-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 0.5rem !important;
+}
+
+.deployment-btn {
+  min-height: 44px !important; /* Accessibility >= 44px */
+  padding: 0.4rem 0.6rem !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+  grid-template-areas: "name count badge" "desc desc desc" !important;
+  align-items: center !important;
+  column-gap: 0.5rem !important;
+  row-gap: 0.15rem !important;
+  text-align: left !important;
+}
+
+.deployment-btn strong {
+  grid-area: name !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  min-width: 0 !important;
+}
+
+.count-badge {
+  grid-area: count !important;
+  font-family: monospace !important;
+  font-size: 0.7rem !important;
+  color: var(--ink) !important;
+  opacity: 0.8 !important;
+  white-space: nowrap !important;
+}
+
+.deployment-btn small {
+  grid-area: desc !important;
+  display: block !important;
+  font-size: 0.65rem !important;
+  color: var(--muted) !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+}
+
+.cost-badge {
+  grid-area: badge !important;
+  font-family: monospace !important;
+  font-size: 0.7rem !important;
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 3px !important;
+  padding: 0.1rem 0.3rem !important;
+  color: var(--focus) !important;
+  white-space: nowrap !important;
+}
+
+/* 5. Command Reservation Queue */
+.tactical-reservations {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  grid-column: 1 / -1 !important;
+  gap: 0.75rem !important;
+}
+
+.reserve-buttons-row {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(44px, 1fr)) !important;
+  gap: 0.2rem !important;
+  margin-top: 0.25rem !important;
+}
+
+.reserve-btn {
+  min-height: 44px !important; /* Accessibility >= 44px */
+  min-width: 44px !important;
+  padding: 0 !important;
+  font-size: 0.75rem !important;
+  font-weight: bold !important;
+  font-family: monospace !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.queue-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+  min-width: 0 !important;
+}
+
+.queue-list {
+  list-style: decimal inside !important;
+  margin: 0 !important;
+  padding: 0.25rem !important;
+  border: 1px solid var(--line) !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-radius: 4px !important;
+  min-height: 60px !important;
+  max-height: 150px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+}
+
+/* Queue List Items. Structure supports both a documented sibling-error
+   pattern (.queue-item-error / .queue-item-controls) and the nested-reason
+   pattern the current app.js render() emits (.queue-item-reason inside
+   .queue-item-name, .queue-item-actions wrapping the action buttons). */
+.queue-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  background: var(--raised) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 3px !important;
+  padding: 0.25rem 0.4rem !important;
+  gap: 0.25rem 0.4rem !important;
+  font-size: 0.7rem !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.queue-item-name {
+  font-weight: bold !important;
+  color: var(--ink) !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.queue-item-controls,
+.queue-item-actions {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 0.15rem !important;
+  flex: 0 0 auto !important;
+}
+
+.queue-item-controls button,
+.queue-item-actions button {
+  min-height: 44px !important; /* Accessibility >= 44px */
+  min-width: 44px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.7rem !important;
+}
+
+/* Sibling error line (documented contract shape) */
+.queue-item-error {
+  display: block !important;
+  flex-basis: 100% !important;
+  font-size: 0.65rem !important;
+  color: var(--danger) !important;
+  margin-top: 0.1rem !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Nested reason run inside .queue-item-name (current app.js shape) */
+.queue-item-reason {
+  display: inline !important;
+  font-weight: normal !important;
+  font-size: 0.65rem !important;
+  color: var(--danger) !important;
+}
+
+/* ============================================================
    8. MOBILE RESPONSIVE OVERRIDES (SCREENS <= 720px)
    ============================================================ */
 
@@ -1721,6 +2026,39 @@ button.primary:hover:not(:disabled), .relic-shop-btn-equip:hover:not(:disabled) 
     position: relative !important;
     bottom: auto !important;
   }
+
+  /* Tactical HUD stacking: skills, deployments, reservation queue */
+  .skills-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.4rem !important;
+  }
+
+  .skill-card {
+    min-height: auto !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .skill-upgrade-btn {
+    width: auto !important;
+    padding: 0.4rem 0.8rem !important;
+  }
+
+  .deployment-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.4rem !important;
+  }
+
+  .tactical-reservations {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .battle-minimap-panel {
+    min-height: 120px !important;
+  }
 }
 
 /* ============================================================
@@ -1894,6 +2232,19 @@ textarea:focus-visible {
     display: none !important;
   }
 
+  .deployment-btn small {
+    display: none !important;
+  }
+
+  .deployment-btn {
+    grid-template-columns: minmax(0, 1fr) auto auto !important;
+    grid-template-areas: "name count badge" !important;
+  }
+
+  .skill-desc {
+    display: none !important;
+  }
+
   .field-command-dock .command-grid button strong {
     font-size: 0.75rem !important;
   }
@@ -2041,4 +2392,12 @@ textarea:focus-visible {
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
   }
+
+  /* Ultra-compact fullscreen landscape: seven-command deck takes priority,
+     tactical HUD extensions (skills/deployment/reservation) collapse out of
+     view but remain in the DOM for state/tests. */
+  .field-command-dock .tactical-hud-section {
+    display: none !important;
+  }
 }
+

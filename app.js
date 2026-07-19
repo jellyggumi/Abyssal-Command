@@ -11,12 +11,22 @@ import {
   getStageChecklist,
   restoreSaveEnvelope,
   retryStage,
-  startCampaign
+  startCampaign,
+  getCommandCooldown,
+  getTacticalProgression,
+  reserveCommand,
+  reorderReservedCommand,
+  cancelReservedCommand,
+  executeReservedCommand,
+  upgradeSkill,
+  deployTacticalObject,
+  TACTICAL_METADATA
 } from "./campaign-state.js";
 import { BattleVisualizer } from "./battle-visualizer.js";
 import { RealtimeBattle } from "./battle-realtime-three.js";
 import { getBattlePresentation } from "./battle-presentation.js";
 import { CampaignMirror } from "./campaign-sync.js";
+import { TacticalMinimap } from "./tactical-minimap.js";
 import { currentLang, translate, translations } from "./i18n.js";
 
 const BUILD_TAG = "abyssal-surge-static-v50";
@@ -40,15 +50,6 @@ const BATTLE_ACTION_SEMANTICS = Object.freeze({
   possess: Object.freeze({ source: "portal", target: "ally", actor: "commander", actorClip: "Special", sourceAsset: "possessed", clip: "Special" }),
   domain: Object.freeze({ source: "portal", target: "portal", actor: "commander", actorClip: "Special", sourceAsset: "echo-throne", clip: "Activate" }),
   assault: Object.freeze({ source: "ally", target: "boss", actor: "commander", actorClip: "Strike", sourceAsset: "shade", clip: "Strike" }),
-});
-const COOLDOWN_SECONDS = Object.freeze({
-  hunt: 4,
-  extract: 6,
-  materialize: 5,
-  capture: 8,
-  possess: 10,
-  domain: 15,
-  assault: 3
 });
 const RESUME_STATUS_KEYS = Object.freeze({
   briefing: "lobby.resumeStatus.briefing",
@@ -441,7 +442,7 @@ const elements = Object.freeze({
   cinematicStatus: document.querySelector("#cinematic-status"),
   narrationLine: document.querySelector("#narration-line"),
   narrationSr: document.querySelector("#narration-sr"),
-  commandButtons: [...document.querySelectorAll("button[data-action]")],
+  commandButtons: [...document.querySelectorAll("button[data-action]")].filter((btn) => typeof btn.closest !== "function" || btn.closest("#command-pad") !== null),
   stageButtons: [...document.querySelectorAll("#stage-selector [data-stage-number]")],
   bgmToggle: document.querySelector("#bgm-toggle"),
   bgmPlayer: document.querySelector("#bgm-player"),
@@ -479,6 +480,435 @@ let visualizer = null;
 let activeFieldFocusedAction = null;
 let activeCommandHoverAction = null;
 let activeCommandFocusAction = null;
+let minimapInstance = null;
+let minimapFailed = false;
+let activePlacementMode = null;
+let tacticalFeedbackMessage = "";
+let tacticalFeedbackTimer = 0;
+
+function translateRejectionReason(msg, lang) {
+  if (lang === undefined) lang = currentLang();
+  if (!msg) return "";
+
+  const fallbackTranslations = {
+    ko: {
+      "tactical.rejection.inactiveStage": "현재 스테이지에서는 이 전술 행동을 사용할 수 없습니다.",
+      "tactical.rejection.invalidCommand": "이 스테이지에서 사용할 수 없는 명령입니다.",
+      "tactical.rejection.invalidCoordinates": "배치 좌표가 올바르지 않습니다.",
+      "tactical.rejection.invalidSkill": "올바르지 않은 전술 스킬입니다.",
+      "tactical.rejection.commandMissing": "대기열에서 명령을 찾을 수 없습니다.",
+      "tactical.rejection.maxSkill": "스킬이 이미 최대 레벨입니다.",
+      "tactical.rejection.queueFull": "예약 대기열이 가득 찼습니다.",
+      "tactical.rejection.insufficientMarks": "전술 휘장이 부족합니다.",
+      "tactical.rejection.deploymentCap": "배치 한도에 도달했습니다.",
+      "tactical.rejection.occupied": "해당 칸에는 이미 배치물이 있습니다.",
+      "tactical.rejection.outOfBounds": "배치 가능한 범위를 벗어났습니다.",
+      "tactical.rejection.extractRequiresSpoor": "추출하려면 포자 흔적 2개가 필요합니다.",
+      "tactical.rejection.protectedArea": "보호 구역에는 배치할 수 없습니다.",
+      "tactical.rejection.protectedAnchor": "핵심 전장 지점에는 배치할 수 없습니다.",
+      "tactical.rejection.protectedBase": "보호된 기지 또는 생성 구역에는 배치할 수 없습니다.",
+      "tactical.rejection.routeBlocked": "배치하면 차원문에서 보스까지의 모든 경로가 막힙니다.",
+      "tactical.rejection.duplicateReservation": "이미 대기열에 예약된 명령 ID입니다.",
+      "tactical.rejection.duplicateDeployment": "이미 배치에 사용된 ID입니다.",
+      "tactical.rejection.duplicateId": "이미 사용 중인 ID입니다.",
+      "tactical.rejection.executionFailed": "명령 예약 실행에 실패했습니다: {error}"
+    },
+    en: {
+      "tactical.rejection.inactiveStage": "This tactical action is unavailable outside an active stage.",
+      "tactical.rejection.invalidCommand": "That command is unavailable in this stage.",
+      "tactical.rejection.invalidCoordinates": "The deployment coordinates are invalid.",
+      "tactical.rejection.invalidSkill": "The tactical skill is invalid.",
+      "tactical.rejection.commandMissing": "The command is no longer in the queue.",
+      "tactical.rejection.maxSkill": "That skill is already at maximum level.",
+      "tactical.rejection.queueFull": "The command reservation queue is full.",
+      "tactical.rejection.insufficientMarks": "Not enough Tactical Marks.",
+      "tactical.rejection.deploymentCap": "Deployment cap reached.",
+      "tactical.rejection.occupied": "That cell is already occupied.",
+      "tactical.rejection.outOfBounds": "That cell is outside the deployment area.",
+      "tactical.rejection.extractRequiresSpoor": "Two spoor marks are required before extraction.",
+      "tactical.rejection.protectedArea": "That cell is in a protected area.",
+      "tactical.rejection.protectedAnchor": "Critical battlefield anchors cannot receive deployments.",
+      "tactical.rejection.protectedBase": "Protected base and spawn areas cannot receive deployments.",
+      "tactical.rejection.routeBlocked": "That deployment would block every route from the portal to the boss.",
+      "tactical.rejection.duplicateReservation": "Command reservation ID is already in use.",
+      "tactical.rejection.duplicateDeployment": "Deployment ID is already in use.",
+      "tactical.rejection.duplicateId": "ID is already in use.",
+      "tactical.rejection.executionFailed": "Execution failed: {error}"
+    }
+  };
+
+  const t = (key) => {
+    if (typeof translations !== "undefined" && translations && translations[lang]) {
+      return translations[lang][key] || key;
+    }
+    if (fallbackTranslations[lang] && fallbackTranslations[lang][key]) {
+      return fallbackTranslations[lang][key];
+    }
+    return translate(key, lang) || key;
+  };
+
+  if (
+    msg === "This stage is not active." ||
+    msg === "This stage is not accepting commands right now." ||
+    msg === "The breach cannot reach a stage that is not active." ||
+    msg === "This stage is not accepting encounter events right now."
+  ) {
+    return t("tactical.rejection.inactiveStage");
+  }
+
+  if (msg === "That command has no place in this stage.") {
+    return t("tactical.rejection.invalidCommand");
+  }
+
+  if (msg === "Invalid cell coordinates.") {
+    return t("tactical.rejection.invalidCoordinates");
+  }
+
+  if (msg === "Invalid skill type." || msg === "Invalid deployment kind.") {
+    return t("tactical.rejection.invalidSkill");
+  }
+
+  if (msg === "Command not found in queue.") {
+    return t("tactical.rejection.commandMissing");
+  }
+
+  const maxSkillMatch = msg.match(/^Skill\s+(.+)\s+is already at maximum level\.$/);
+  if (maxSkillMatch) {
+    return t("tactical.rejection.maxSkill").replace("{skill}", maxSkillMatch[1]);
+  }
+
+  if (msg === "Command reservation queue is full.") {
+    return t("tactical.rejection.queueFull");
+  }
+
+  const marksMatch = msg.match(/^Not enough marks\.\s*Need\s+(\d+)\s+but have\s+(\d+)\.$/);
+  if (marksMatch) {
+    return t("tactical.rejection.insufficientMarks")
+      .replace("{need}", marksMatch[1])
+      .replace("{have}", marksMatch[2]);
+  }
+
+  const capMatch = msg.match(/^Cannot deploy more than\s+(\d+)\s+(.+?)s at fortification level\s+(\d+)\.$/);
+  if (capMatch) {
+    return t("tactical.rejection.deploymentCap")
+      .replace("{cap}", capMatch[1])
+      .replace("{kind}", capMatch[2])
+      .replace("{level}", capMatch[3]);
+  }
+
+  if (msg === "Cell is occupied by an existing deployment." || msg.includes("already occupied")) {
+    return t("tactical.rejection.occupied");
+  }
+
+  if (msg === "Cell is not walkable or out of bounds." || msg === "Placement is out of grid boundaries.") {
+    return t("tactical.rejection.outOfBounds");
+  }
+
+  if (msg === "Cell is in a protected area.") {
+    return t("tactical.rejection.protectedArea");
+  }
+
+  if (msg === "Cell contains a critical game anchor.") {
+    return t("tactical.rejection.protectedAnchor");
+  }
+
+  if (msg === "Cell is in a protected base or spawn area.") {
+    return t("tactical.rejection.protectedBase");
+  }
+
+  if (msg === "Deployment would completely block all paths from portal to boss.") {
+    return t("tactical.rejection.routeBlocked");
+  }
+
+  if (msg === "Command reservation ID is already in use.") {
+    return t("tactical.rejection.duplicateReservation");
+  }
+
+  if (msg === "Deployment ID is already in use.") {
+    return t("tactical.rejection.duplicateDeployment");
+  }
+
+  if (msg === "Two spoor marks are required before extraction.") {
+    return t("tactical.rejection.extractRequiresSpoor");
+  }
+
+  const execMatch = msg.match(/^Execution failed:\s*(.+)$/);
+  if (execMatch) {
+    const innerReason = translateRejectionReason(execMatch[1], lang);
+    return t("tactical.rejection.executionFailed").replace("{error}", innerReason);
+  }
+
+  return msg;
+}
+
+function showTacticalFeedback(msg) {
+  tacticalFeedbackMessage = msg;
+  if (tacticalFeedbackTimer) {
+    window.clearTimeout(tacticalFeedbackTimer);
+  }
+  render();
+  tacticalFeedbackTimer = window.setTimeout(() => {
+    tacticalFeedbackMessage = "";
+    tacticalFeedbackTimer = 0;
+    render();
+  }, 3000);
+}
+
+function handleTacticalRequest(request) {
+  if (!campaign || campaign.status !== "active") return;
+  if (request.type === "deploy") {
+    void handleDeployRequest(request.kind, request.cell);
+  } else if (request.type === "focus") {
+    if (visualizer && typeof visualizer.focusTacticalCell === "function") {
+      visualizer.focusTacticalCell(request.cell);
+    }
+  }
+}
+
+async function handleDeployRequest(kind, cell) {
+  const result = deployTacticalObject(campaign, kind, cell);
+  if (result.accepted) {
+    campaign = result.state;
+    activePlacementMode = null;
+    if (visualizer && typeof visualizer.setPlacementMode === "function") {
+      visualizer.setPlacementMode(null);
+    }
+    synchronizeBattleRenderer();
+    render();
+    await persistCampaign("persist.campaignSaved");
+  } else {
+    activePlacementMode = null;
+    if (visualizer && typeof visualizer.setPlacementMode === "function") {
+      visualizer.setPlacementMode(null);
+    }
+    render();
+    showTacticalFeedback(translateRejectionReason(result.message));
+  }
+}
+
+async function handleExecuteReserved(id) {
+  if (!campaign || campaign.status !== "active") return;
+  const result = executeReservedCommand(campaign, id);
+  campaign = result.state;
+  render();
+  if (!result.accepted) {
+    showTacticalFeedback(translateRejectionReason(result.message));
+    return;
+  }
+
+  synchronizeBattleRenderer();
+  const action = result.effect;
+  startActionCooldown(action);
+  triggerBattleVisual(action);
+  await persistCampaign("persist.campaignSaved");
+}
+
+async function handleCancelReserved(id) {
+  if (!campaign || campaign.status !== "active") return;
+  const result = cancelReservedCommand(campaign, id);
+  if (result.accepted) {
+    campaign = result.state;
+    render();
+    await persistCampaign("persist.campaignSaved");
+  }
+}
+
+async function handleReorderReserved(fromIndex, toIndex) {
+  if (!campaign || campaign.status !== "active") return;
+  const result = reorderReservedCommand(campaign, fromIndex, toIndex);
+  if (result.accepted) {
+    campaign = result.state;
+    render();
+    await persistCampaign("persist.campaignSaved");
+  }
+}
+
+async function handleReserveAction(action) {
+  if (!campaign || campaign.status !== "active") return;
+  const result = reserveCommand(campaign, action);
+  if (result.accepted) {
+    campaign = result.state;
+    render();
+    await persistCampaign("persist.campaignSaved");
+  } else {
+    showTacticalFeedback(translateRejectionReason(result.message));
+  }
+}
+
+function handleDeploymentSelect(kind) {
+  if (!campaign || campaign.status !== "active") return;
+  if (activePlacementMode === kind) {
+    activePlacementMode = null;
+  } else {
+    activePlacementMode = kind;
+  }
+  if (visualizer && typeof visualizer.setPlacementMode === "function") {
+    visualizer.setPlacementMode(activePlacementMode);
+  }
+  render();
+}
+
+async function handleSkillUpgrade(skill) {
+  if (!campaign || campaign.status !== "active") return;
+  const result = upgradeSkill(campaign, skill);
+  if (result.accepted) {
+    campaign = result.state;
+    render();
+    await persistCampaign("persist.campaignSaved");
+  } else {
+    showTacticalFeedback(translateRejectionReason(result.message));
+  }
+}
+
+function cancelPlacementMode() {
+  activePlacementMode = null;
+  if (visualizer && typeof visualizer.setPlacementMode === "function") {
+    visualizer.setPlacementMode(null);
+  }
+  render();
+}
+
+function normalizeMinimapSnapshot(snapshot) {
+  if (!snapshot || !snapshot.navigation) return snapshot;
+  const nav = snapshot.navigation;
+  
+  let normalizedRoutes = [];
+  if (Array.isArray(nav.routes)) {
+    normalizedRoutes = nav.routes.map((route, idx) => {
+      if (Array.isArray(route)) {
+        return { cells: route, lane: idx };
+      }
+      if (route && Array.isArray(route.cells)) {
+        return {
+          cells: route.cells,
+          lane: typeof route.lane === 'number' ? route.lane : idx
+        };
+      }
+      return { cells: [], lane: idx };
+    });
+  }
+
+  let normalizedZones = [];
+  if (Array.isArray(nav.zones)) {
+    normalizedZones = nav.zones.map((zone, idx) => {
+      if (zone && Array.isArray(zone.cells)) {
+        return {
+          kind: zone.kind || "cover",
+          cells: zone.cells
+        };
+      }
+      return { kind: "cover", cells: [] };
+    });
+  }
+
+  let normalizedAnchors = {
+    portal: null,
+    boss: null,
+    extractor: null,
+    nodes: [],
+    hostileSpawns: []
+  };
+  if (nav.anchors) {
+    if (Array.isArray(nav.anchors)) {
+      nav.anchors.forEach(anchor => {
+        if (!anchor) return;
+        if (anchor.id === "portal") {
+          normalizedAnchors.portal = { x: anchor.x, y: anchor.y };
+        } else if (anchor.id === "boss") {
+          normalizedAnchors.boss = { x: anchor.x, y: anchor.y };
+        } else if (anchor.id === "extractor") {
+          normalizedAnchors.extractor = { x: anchor.x, y: anchor.y };
+        } else if (anchor.id === "node" || anchor.id?.startsWith("node")) {
+          normalizedAnchors.nodes.push({ x: anchor.x, y: anchor.y, id: anchor.id });
+        } else if (anchor.id === "hostile-spawn" || anchor.id?.startsWith("hostile-spawn")) {
+          normalizedAnchors.hostileSpawns.push({ x: anchor.x, y: anchor.y, id: anchor.id, routeIndex: anchor.routeIndex });
+        }
+      });
+    } else if (typeof nav.anchors === "object") {
+      normalizedAnchors.portal = nav.anchors.portal ? { x: nav.anchors.portal.x, y: nav.anchors.portal.y } : null;
+      normalizedAnchors.boss = nav.anchors.boss ? { x: nav.anchors.boss.x, y: nav.anchors.boss.y } : null;
+      normalizedAnchors.extractor = nav.anchors.extractor ? { x: nav.anchors.extractor.x, y: nav.anchors.extractor.y } : null;
+      normalizedAnchors.nodes = Array.isArray(nav.anchors.nodes) ? nav.anchors.nodes.map(n => ({ x: n.x, y: n.y, id: n.id })) : [];
+      normalizedAnchors.hostileSpawns = Array.isArray(nav.anchors.hostileSpawns) ? nav.anchors.hostileSpawns.map(s => ({ x: s.x, y: s.y, id: s.id, routeIndex: s.routeIndex })) : [];
+    }
+  }
+
+  return {
+    ...snapshot,
+    navigation: {
+      ...nav,
+      cells: Array.isArray(nav.cells) ? nav.cells : [],
+      routes: normalizedRoutes,
+      zones: normalizedZones,
+      anchors: normalizedAnchors
+    }
+  };
+}
+
+function syncMinimap() {
+  const canvas = document.querySelector("#battle-minimap");
+  if (!battleUiActive() || !canvas) {
+    if (minimapInstance) {
+      try {
+        minimapInstance.destroy();
+      } catch (err) {
+        console.error("Failed to destroy minimap:", err);
+      }
+      minimapInstance = null;
+    }
+    return;
+  }
+  if (minimapFailed) return;
+  if (minimapInstance && minimapInstance.canvas !== canvas) {
+    try {
+      minimapInstance.destroy();
+    } catch (err) {
+      console.error("Failed to destroy minimap on canvas change:", err);
+    }
+    minimapInstance = null;
+  }
+  if (!minimapInstance) {
+    try {
+      const reducedMotion = typeof window !== 'undefined' && window.matchMedia
+        ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        : false;
+      minimapInstance = new TacticalMinimap(canvas, {
+        reducedMotion,
+        onFocusRequest: (cell) => {
+          if (visualizer && typeof visualizer.focusTacticalCell === "function") {
+            visualizer.focusTacticalCell(cell);
+          }
+        }
+      });
+    } catch (err) {
+      console.error("Failed to initialize TacticalMinimap:", err);
+      minimapInstance = null;
+      minimapFailed = true;
+      return;
+    }
+  }
+  if (minimapInstance && visualizer && typeof visualizer.getTacticalSnapshot === "function") {
+    try {
+      const snapshot = visualizer.getTacticalSnapshot();
+      if (snapshot) {
+        const normalized = normalizeMinimapSnapshot(snapshot);
+        minimapInstance.update(normalized);
+      }
+    } catch (err) {
+      console.error("Failed to update minimap snapshot:", err);
+      minimapFailed = true;
+      if (minimapInstance) {
+        try {
+          minimapInstance.destroy();
+        } catch (e) {
+          console.warn("Failed to destroy minimapInstance on snapshot update failure:", e);
+        }
+        minimapInstance = null;
+      }
+    }
+  }
+}
+
 
 function currentActionFocus() {
   return activeCommandHoverAction || activeFieldFocusedAction || activeCommandFocusAction;
@@ -881,9 +1311,14 @@ function getChecklistLabel(item, lang) {
 }
 
 function translateStatusMessage(msg, lang) {
-  if (lang !== "ko") return msg;
   if (!msg) return "";
-  
+  const reservedMatch = msg.match(/^Reserved command:\s*(.+)\.$/);
+  if (reservedMatch) {
+    const commandName = translate(`command.${reservedMatch[1]}.name`, lang) || reservedMatch[1];
+    return translate("queue.reservedReceipt", lang).replace("{command}", commandName);
+  }
+  if (lang !== "ko") return msg;
+
   if (msg.includes("The abyss answers when you are ready.")) {
     return "준비가 되면 심연이 답할 것입니다.";
   }
@@ -1448,6 +1883,7 @@ function synchronizeBattleRenderer(renderer = visualizer) {
     config: stage.encounter ?? null,
     state: encounter ?? { waves: [], activeWaveId: null, bossExposed: true, spawningStopped: true }
   });
+  syncMinimap();
 }
 
 function handleRendererRuntime(runtime, sessionId, source) {
@@ -1531,12 +1967,27 @@ function stopBattle() {
   pendingBattleRenderer?.destroy();
   pendingBattleRenderer = null;
   battleStarting = false;
+  if (visualizer && typeof visualizer.setPlacementMode === "function") {
+    try {
+      visualizer.setPlacementMode(null);
+    } catch (err) {
+      console.error("Failed to clear placement mode on visualizer destroy:", err);
+    }
+  }
   visualizer?.destroy();
   visualizer = null;
+  activePlacementMode = null;
+  if (tacticalFeedbackTimer) {
+    window.clearTimeout(tacticalFeedbackTimer);
+    tacticalFeedbackTimer = 0;
+  }
+  tacticalFeedbackMessage = "";
+  minimapFailed = false;
   activeFieldFocusedAction = null;
   activeCommandHoverAction = null;
   activeCommandFocusAction = null;
   projectActionFocus(null);
+  if (typeof syncMinimap === "function") syncMinimap();
 }
 
 function activateBattleFallback(stage, sessionId) {
@@ -1551,13 +2002,24 @@ function activateBattleFallback(stage, sessionId) {
     onActionRequest: (action) => void handleAction(action),
     onEncounterEvent: (event) => void handleEncounterEvent(event, sessionId, fallback),
     onRuntimeState: (runtime) => handleRendererRuntime(runtime, sessionId, fallback),
-    onActionFocus: (action) => handleActionFocus(action)
+    onActionFocus: (action) => handleActionFocus(action),
+    onTacticalRequest: (request) => handleTacticalRequest(request)
   });
   try {
     fallback.init();
+    if (fallback && typeof fallback.setPlacementMode === "function") {
+      fallback.setPlacementMode(activePlacementMode);
+    }
     return fallback;
-  } catch {
-    fallback.destroy();
+  } catch (err) {
+    console.error("Failed to initialize battle fallback visualizer:", err);
+    if (fallback) {
+      try {
+        fallback.destroy();
+      } catch (destroyErr) {
+        console.warn("Failed to destroy fallback visualizer after initialization failure:", destroyErr);
+      }
+    }
     return null;
   }
 }
@@ -1574,6 +2036,9 @@ async function startBattle() {
   const stage = currentStage();
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     visualizer = activateBattleFallback(stage, sessionId);
+    if (visualizer && typeof visualizer.setPlacementMode === "function") {
+      visualizer.setPlacementMode(activePlacementMode);
+    }
     battleStarting = false;
   } else {
     try {
@@ -1586,9 +2051,13 @@ async function startBattle() {
         onEncounterEvent: (event) => void handleEncounterEvent(event, sessionId, battleRenderer),
         onRuntimeState: (runtime) => handleRendererRuntime(runtime, sessionId, battleRenderer),
         onActionFocus: (action) => handleActionFocus(action),
+        onTacticalRequest: (request) => handleTacticalRequest(request),
         onRendererFailure: () => {
           if (visualizer !== battleRenderer || sessionId !== battleSessionId || campaign?.status !== "active") return;
           visualizer = activateBattleFallback(currentStage(), sessionId);
+          if (visualizer && typeof visualizer.setPlacementMode === "function") {
+            visualizer.setPlacementMode(activePlacementMode);
+          }
           synchronizeBattleRenderer();
           projectBattleRuntime();
         },
@@ -1605,6 +2074,9 @@ async function startBattle() {
       battleRenderer?.destroy();
       if (sessionId !== battleSessionId || campaign?.status !== "active") return;
       visualizer = activateBattleFallback(currentStage(), sessionId);
+      if (visualizer && typeof visualizer.setPlacementMode === "function") {
+        visualizer.setPlacementMode(activePlacementMode);
+      }
     } finally {
       if (pendingBattleRenderer === battleRenderer) pendingBattleRenderer = null;
       if (!pendingBattleRenderer) battleStarting = false;
@@ -1813,6 +2285,9 @@ function render() {
   } else {
     statusText = translatedLastMessage;
   }
+  if (tacticalFeedbackMessage) {
+    statusText = tacticalFeedbackMessage;
+  }
   elements.status.textContent = statusText;
 
   elements.souls.textContent = String(state.souls);
@@ -1927,6 +2402,311 @@ function render() {
     }
   }
 
+  // 1. Render Marks Value
+  const marksEl = document.querySelector("#tactical-marks-value");
+  if (marksEl) {
+    const progression = getTacticalProgression(campaign);
+    marksEl.textContent = String(progression.marks);
+  }
+
+  // 2. Render Command Queue Buttons (Availability / Fullness)
+  const reserveContainer = document.querySelector("#reserve-command");
+  if (reserveContainer) {
+    const progression = getTacticalProgression(campaign);
+    const queue = progression.commandQueue || [];
+    const queueLimit = Math.min(5, progression.skills.command + 1);
+    const queueFull = queue.length >= queueLimit;
+    
+    const buttons = reserveContainer.querySelectorAll("button[data-reserve-action]");
+    buttons.forEach((button) => {
+      const action = button.dataset.reserveAction;
+      const stage = currentStage();
+      const hasAction = stage.commands[action] !== undefined;
+      button.disabled = !hasAction || queueFull;
+      
+      const nameText = translate(`command.${action}.name`) || action;
+      let labelText = lang === "ko" ? `${nameText} 예약` : `Reserve ${nameText}`;
+      let titleText = labelText;
+      
+      if (!hasAction) {
+        const reason = translate("queue.disabled.locked");
+        labelText = `${nameText} (${reason})`;
+        titleText = labelText;
+      } else if (queueFull) {
+        const reason = translate("queue.disabled.limit");
+        labelText = `${nameText} (${reason})`;
+        titleText = labelText;
+      }
+      
+      button.textContent = lang === "ko" ? `${nameText} 예약` : `Reserve ${nameText}`;
+      button.setAttribute("aria-label", labelText);
+      button.setAttribute("title", titleText);
+    });
+  }
+
+  // 3. Render Command Reservation Queue List
+  const queueContainer = document.querySelector("#command-reservation-queue");
+  if (queueContainer) {
+    const activeEl = document.activeElement;
+    let savedFocus = null;
+    if (activeEl && queueContainer.contains(activeEl)) {
+      const queueItem = activeEl.closest(".queue-item");
+      if (queueItem) {
+        savedFocus = {
+          id: queueItem.dataset.id,
+          index: parseInt(queueItem.dataset.index, 10),
+          className: activeEl.className
+        };
+      }
+    }
+    queueContainer.innerHTML = "";
+    const progression = getTacticalProgression(campaign);
+    const queue = progression.commandQueue || [];
+    
+    if (queue.length === 0) {
+      const li = document.createElement("li");
+      li.className = "queue-empty";
+      li.textContent = translate("queue.empty");
+      queueContainer.appendChild(li);
+    } else {
+      queue.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.className = "queue-item";
+        li.dataset.index = index;
+        li.dataset.id = item.id;
+        
+        const name = document.createElement("span");
+        name.className = "queue-item-name";
+        const commandName = translate(`command.${item.action}.name`) || item.action;
+        name.textContent = commandName;
+        
+        if (item.reason) {
+          const reasonSpan = document.createElement("span");
+          reasonSpan.className = "queue-item-reason";
+          reasonSpan.textContent = ` (${translateRejectionReason(item.reason, lang)})`;
+          name.appendChild(reasonSpan);
+        }
+        
+        li.appendChild(name);
+        
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "queue-item-actions";
+        
+        const position = index + 1;
+        let execLabel, upLabel, downLabel, cancelLabel;
+        if (lang === "ko") {
+          execLabel = `예약된 ${commandName} ${translate("queue.execute")} (위치 ${position})`;
+          upLabel = `예약된 ${commandName} ${translate("queue.moveUp")}로 이동 (위치 ${position})`;
+          downLabel = `예약된 ${commandName} ${translate("queue.moveDown")}로 이동 (위치 ${position})`;
+          cancelLabel = `예약된 ${commandName} ${translate("queue.cancel")} (위치 ${position})`;
+        } else {
+          execLabel = `${translate("queue.execute")} reserved ${commandName} (position ${position})`;
+          upLabel = `Move reserved ${commandName} ${translate("queue.moveUp").toLowerCase()} (position ${position})`;
+          downLabel = `Move reserved ${commandName} ${translate("queue.moveDown").toLowerCase()} (position ${position})`;
+          cancelLabel = `${translate("queue.cancel")} reserved ${commandName} (position ${position})`;
+        }
+
+        const execBtn = document.createElement("button");
+        execBtn.type = "button";
+        execBtn.className = "execute-reserved-btn";
+        execBtn.textContent = lang === "ko" ? "실행" : "Exec";
+        execBtn.dataset.id = item.id;
+        execBtn.dataset.index = index;
+        execBtn.setAttribute("aria-label", execLabel);
+        execBtn.setAttribute("title", execLabel);
+        execBtn.addEventListener("click", () => void handleExecuteReserved(item.id));
+        actionsDiv.appendChild(execBtn);
+        
+        const upBtn = document.createElement("button");
+        upBtn.type = "button";
+        upBtn.className = "reorder-up-btn";
+        upBtn.textContent = "▲";
+        upBtn.dataset.id = item.id;
+        upBtn.dataset.index = index;
+        upBtn.disabled = index === 0;
+        upBtn.setAttribute("aria-label", upLabel);
+        upBtn.setAttribute("title", upLabel);
+        upBtn.addEventListener("click", () => void handleReorderReserved(index, index - 1));
+        actionsDiv.appendChild(upBtn);
+        
+        const downBtn = document.createElement("button");
+        downBtn.type = "button";
+        downBtn.className = "reorder-down-btn";
+        downBtn.textContent = "▼";
+        downBtn.dataset.id = item.id;
+        downBtn.dataset.index = index;
+        downBtn.disabled = index === queue.length - 1;
+        downBtn.setAttribute("aria-label", downLabel);
+        downBtn.setAttribute("title", downLabel);
+        downBtn.addEventListener("click", () => void handleReorderReserved(index, index + 1));
+        actionsDiv.appendChild(downBtn);
+        
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "cancel-reserved-btn";
+        cancelBtn.textContent = lang === "ko" ? "취소" : "Cancel";
+        cancelBtn.dataset.id = item.id;
+        cancelBtn.dataset.index = index;
+        cancelBtn.setAttribute("aria-label", cancelLabel);
+        cancelBtn.setAttribute("title", cancelLabel);
+        cancelBtn.addEventListener("click", () => void handleCancelReserved(item.id));
+        actionsDiv.appendChild(cancelBtn);
+        
+        li.appendChild(actionsDiv);
+        queueContainer.appendChild(li);
+      });
+    }
+
+    if (savedFocus) {
+      const newItems = Array.from(queueContainer.querySelectorAll(".queue-item"));
+      if (newItems.length > 0) {
+        let targetItem = newItems.find(item => item.dataset.id === savedFocus.id);
+        if (!targetItem) {
+          const targetIndex = Math.max(0, Math.min(savedFocus.index, newItems.length - 1));
+          targetItem = newItems[targetIndex];
+        }
+        if (targetItem) {
+          const selector = savedFocus.className.split(" ").map(c => `.${c}`).join("");
+          const targetBtn = targetItem.querySelector(selector) || targetItem.querySelector("button");
+          if (targetBtn) {
+            targetBtn.focus();
+          }
+        }
+      } else {
+        const fallback = document.querySelector("#tactical-deployment-controls button:not([disabled])") ||
+                         document.querySelector("#tactical-skill-controls button:not([disabled])") ||
+                         document.querySelector(".command-btn:not([disabled])") ||
+                         document.querySelector("button:not([disabled])");
+        if (fallback) {
+          fallback.focus();
+        }
+      }
+    }
+  }
+
+  // 4. Render Deployment Controls
+  const deploymentContainer = document.querySelector("#tactical-deployment-controls");
+  if (deploymentContainer) {
+    const progression = getTacticalProgression(campaign);
+    const fortificationLevel = progression.skills.fortification;
+    const currentDeployments = progression.deployments || [];
+    
+    const buttons = deploymentContainer.querySelectorAll("button[data-kind]");
+    buttons.forEach((button) => {
+      const kind = button.dataset.kind;
+      const cost = kind === "tower" ? 4 : 2;
+      
+      const currentCount = currentDeployments.filter((d) => d.kind === kind).length;
+      const cap = kind === "tower" ? fortificationLevel : (fortificationLevel + 1);
+      
+      const hasMarks = progression.marks >= cost;
+      const limitReached = currentCount >= cap;
+      
+      button.disabled = !hasMarks || limitReached;
+      button.classList.toggle("active", activePlacementMode === kind);
+      button.setAttribute("aria-pressed", activePlacementMode === kind ? "true" : "false");
+
+      let labelText = "";
+      const actionName = translate(`placement.${kind}`) || kind;
+      if (lang === "ko") {
+        const statusText = activePlacementMode === kind 
+          ? "배치 모드 활성화됨" 
+          : button.disabled 
+            ? (limitReached ? "배치 불가 (배치 한도에 도달했습니다.)" : "배치 불가 (전술 휘장이 부족합니다.)")
+            : "배치 가능";
+        labelText = `${actionName} (비용: ${cost} 휘장, ${currentCount}/${cap}대 배치됨) - ${statusText}`;
+      } else {
+        const statusText = activePlacementMode === kind 
+          ? "active placement mode" 
+          : button.disabled 
+            ? (limitReached ? "unavailable (Deployment cap reached.)" : "unavailable (Not enough Tactical Marks.)")
+            : "available to deploy";
+        labelText = `${actionName} (Cost: ${cost} Marks, ${currentCount}/${cap} deployed) - ${statusText}`;
+      }
+      button.setAttribute("aria-label", labelText);
+      button.setAttribute("title", labelText);
+      
+      const strongEl = button.querySelector("strong");
+      if (strongEl) {
+        strongEl.textContent = translate(`placement.${kind}`) || kind;
+      }
+      const smallEl = button.querySelector("small");
+      if (smallEl) {
+        smallEl.textContent = translate(`placement.${kind}Desc`) || "";
+      }
+      const costBadgeEl = button.querySelector(".cost-badge");
+      if (costBadgeEl) {
+        costBadgeEl.textContent = lang === "ko" ? `${cost}점` : `${cost} M`;
+      }
+      let countEl = button.querySelector(".count-badge");
+      if (!countEl) {
+        countEl = document.createElement("span");
+        countEl.className = "count-badge";
+        const smallElRef = button.querySelector("small");
+        if (smallElRef) {
+          button.insertBefore(countEl, smallElRef);
+        } else {
+          button.appendChild(countEl);
+        }
+      }
+      countEl.textContent = `[${currentCount}/${cap}]`;
+    });
+  }
+
+  // 5. Render Skill Upgrades
+  const skillContainer = document.querySelector("#tactical-skill-controls");
+  if (skillContainer) {
+    const progression = getTacticalProgression(campaign);
+    const marks = progression.marks;
+    
+    const buttons = skillContainer.querySelectorAll("button[data-skill]");
+    buttons.forEach((button) => {
+      const skill = button.dataset.skill;
+      const currentLevel = progression.skills[skill] ?? 1;
+      const cost = currentLevel * 4;
+      const maxed = currentLevel >= 5;
+      
+      button.disabled = maxed || marks < cost;
+      
+      const levelEl = document.getElementById("skill-level-" + skill);
+      if (levelEl) {
+        levelEl.textContent = maxed
+          ? `${currentLevel} (${translate("tactical.max")})`
+          : currentLevel;
+      }
+      
+      const costEl = document.getElementById("skill-cost-" + skill);
+      if (costEl) {
+        costEl.textContent = maxed ? "-" : cost;
+      }
+
+      const skillLabel = translate(`tactical.skill.${skill}`) || skill;
+      
+      let labelText = "";
+      if (lang === "ko") {
+        const levelText = `레벨: ${currentLevel}/5`;
+        const costText = maxed ? "" : ` (비용: ${cost} 휘장)`;
+        const statusText = maxed 
+          ? `잠김 (${translate("tactical.maxLevel")})` 
+          : (marks < cost ? "업그레이드 불가 (전술 휘장이 부족합니다.)" : "업그레이드 가능");
+        labelText = `${skillLabel} (${levelText}${costText}) - ${statusText}`;
+      } else {
+        const levelText = `Level: ${currentLevel}/5`;
+        const costText = maxed ? "" : ` (Cost: ${cost} Marks)`;
+        const statusText = maxed 
+          ? `locked (${translate("tactical.maxLevel")})` 
+          : (marks < cost ? "unavailable (Not enough Tactical Marks.)" : "available to upgrade");
+        labelText = `${skillLabel} (${levelText}${costText}) - ${statusText}`;
+      }
+      button.setAttribute("aria-label", labelText);
+      button.setAttribute("title", labelText);
+    });
+  }
+
+  // 6. Update Minimap Snapshot
+  syncMinimap();
+
+
   renderChecklist(checklist);
   if (campaign.status === "reward") renderRewards(stage);
   renderStageMedia(stage);
@@ -2012,8 +2792,10 @@ function syncBgmScene(scene) {
   player.pause();
   player.src = source;
   player.dataset.audioScene = scene;
-  player.load();
-  if (bgmEnabled) playSelectedBgm(run);
+  if (bgmEnabled) {
+    player.load();
+    playSelectedBgm(run);
+  }
 }
 
 function stopBattleAudio() {
@@ -2212,8 +2994,7 @@ function triggerBattleVisual(action, details = {}) {
 }
 
 function startActionCooldown(action) {
-  const benefits = getCampaignBenefits(campaign);
-  const duration = COOLDOWN_SECONDS[action] * (1 - benefits.cooldownReduction);
+  const duration = getCommandCooldown(campaign, action);
   cooldowns.set(action, performance.now() + duration * 1000);
 }
 
@@ -2640,6 +3421,36 @@ function wireControls() {
       updateActionFocus();
     });
   });
+  // Delegated UI listeners for tactical command controls
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!target || typeof target.closest !== "function") return;
+
+    // 1. Reserve action buttons
+    const reserveButton = target.closest("#reserve-command button[data-reserve-action]");
+    if (reserveButton) {
+      const action = reserveButton.dataset.reserveAction;
+      void handleReserveAction(action);
+      return;
+    }
+
+    // 2. Deployment buttons
+    const deployButton = target.closest("#tactical-deployment-controls button[data-kind]");
+    if (deployButton) {
+      const kind = deployButton.dataset.kind;
+      void handleDeploymentSelect(kind);
+      return;
+    }
+
+    // 3. Skill upgrade buttons
+    const skillButton = target.closest("#tactical-skill-controls button[data-skill]");
+    if (skillButton) {
+      const skill = skillButton.dataset.skill;
+      void handleSkillUpgrade(skill);
+      return;
+    }
+  });
+
   elements.exportSave.addEventListener("click", exportSave);
   elements.importSave.addEventListener("change", () => importSave(elements.importSave.files?.[0]));
   elements.ambience.addEventListener("click", toggleAmbience);
@@ -2678,6 +3489,14 @@ function wireControls() {
         return;
       }
     }
+    if (event.key === "Escape" && typeof activePlacementMode !== "undefined" && activePlacementMode) {
+      event.preventDefault();
+      if (typeof cancelPlacementMode === "function") {
+        cancelPlacementMode();
+      }
+      return;
+    }
+
 
     if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
     

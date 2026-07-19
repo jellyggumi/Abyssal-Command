@@ -87,6 +87,39 @@ function archivePaths(workflow) {
   return new Set(declaration.groups.paths.trim().split(/\s+/).map((path) => `./${path}`));
 }
 
+function workflowGuardScript(workflow) {
+  const declaration = workflow.match(
+    /^ {6}- name: Guard committed static import closure\n(?<step>[\s\S]*?)(?=^ {6}- name: |(?![\s\S]))/m,
+  );
+  assert.ok(declaration, "static Pages workflow must retain the committed static import closure guard");
+
+  const run = declaration.groups.step.match(/^ {8}run: \|\n(?<script>[\s\S]*)/m);
+  assert.ok(run, "committed static import closure guard must define a shell script");
+  return run.groups.script.replace(/^ {10}/gm, "");
+}
+
+function committedGuardPaths(workflow) {
+  const declaration = workflowGuardScript(workflow).match(
+    /for file in \\\n(?<paths>[\s\S]*?); do/,
+  );
+  assert.ok(declaration, "committed static import closure guard must enumerate its guarded paths");
+
+  return new Set(
+    declaration.groups.paths
+      .replace(/\\\n/g, " ")
+      .trim()
+      .split(/\s+/)
+      .map((path) => `./${path}`),
+  );
+}
+
+function syntaxCheckedPaths(workflow) {
+  return new Set(
+    [...workflowGuardScript(workflow).matchAll(/^\s*node --check (?<path>\S+)\s*$/gm)]
+      .map((match) => `./${match.groups.path}`),
+  );
+}
+
 function indexLocalRuntimeEntrypoints(index) {
   const paths = [];
 
@@ -307,6 +340,18 @@ function coreAssetPaths(serviceWorker) {
   return new Set([...declaration.groups.assets.matchAll(/["'](?<path>\.[^"']+)["']/g)].map((match) => match.groups.path));
 }
 
+function coreRequestPaths(serviceWorker) {
+  const declaration = serviceWorker.match(
+    /function isCoreRequest\([^)]*\)\s*\{[\s\S]*?return[\s\S]*?\[(?<assets>[\s\S]*?)\]\.some\(/,
+  );
+  assert.ok(declaration, "service worker must classify its core request paths in isCoreRequest()");
+
+  return new Set(
+    [...declaration.groups.assets.matchAll(/["'](?<path>\/[^"']+)["']/g)]
+      .map((match) => `.${match.groups.path}`),
+  );
+}
+
 function runtimeAssetPath(path) {
   const declaration = path.match(/^(?:\.\/)?(?<asset>assets\/(?<subpath>[^?#]+))$/);
   assert.ok(declaration, `runtime media URL must be a literal relative assets path: ${path}`);
@@ -417,7 +462,7 @@ function lockedNarrationText(catalog, id) {
 }
 
 
-test("every static local app module is shipped in the Pages artifact and precached offline", async () => {
+test("every static local app module is shipped, guarded, syntax checked when required, and available offline", async () => {
   const [workflow, serviceWorker, dependencies] = await Promise.all([
     readProjectFile(".github/workflows/static.yml"),
     readProjectFile("sw.js"),
@@ -427,19 +472,42 @@ test("every static local app module is shipped in the Pages artifact and precach
   assert.ok(dependencies.length > 0, "app.js must retain at least one static local ESM import");
 
   const pagesArtifact = archivePaths(workflow);
+  const committedGuard = committedGuardPaths(workflow);
+  const syntaxChecks = syntaxCheckedPaths(workflow);
   const serviceWorkerCore = coreAssetPaths(serviceWorker);
-  const missingFromArtifact = dependencies.filter((dependency) => !pagesArtifact.has(dependency));
-  const missingFromServiceWorker = dependencies.filter((dependency) => !serviceWorkerCore.has(dependency));
+  const serviceWorkerClassifier = coreRequestPaths(serviceWorker);
+  const tacticalMinimapDependencies = dependencies.filter(
+    (dependency) => dependency === "./tactical-minimap.js",
+  );
+  const gaps = {
+    pagesRuntimePaths: dependencies.filter((dependency) => !pagesArtifact.has(dependency)),
+    committedFileGuard: dependencies.filter((dependency) => !committedGuard.has(dependency)),
+    tacticalMinimapSyntaxCheck: tacticalMinimapDependencies.filter(
+      (dependency) => !syntaxChecks.has(dependency),
+    ),
+    serviceWorkerCore: dependencies.filter((dependency) => !serviceWorkerCore.has(dependency)),
+    serviceWorkerClassifier: dependencies.filter(
+      (dependency) => !serviceWorkerClassifier.has(dependency),
+    ),
+  };
 
   assert.deepEqual(
-    missingFromArtifact,
-    [],
-    `Static local app module closure missing from Pages git archive: ${missingFromArtifact.join(", ")}`,
-  );
-  assert.deepEqual(
-    missingFromServiceWorker,
-    [],
-    `Static local app module closure missing from service-worker CORE_ASSETS: ${missingFromServiceWorker.join(", ")}`,
+    gaps,
+    {
+      pagesRuntimePaths: [],
+      committedFileGuard: [],
+      tacticalMinimapSyntaxCheck: [],
+      serviceWorkerCore: [],
+      serviceWorkerClassifier: [],
+    },
+    [
+      "Static local app module release closure is incomplete:",
+      `PAGES_RUNTIME_PATHS: ${gaps.pagesRuntimePaths.join(", ")}`,
+      `committed file guard: ${gaps.committedFileGuard.join(", ")}`,
+      `tactical minimap syntax check: ${gaps.tacticalMinimapSyntaxCheck.join(", ")}`,
+      `service-worker CORE_ASSETS: ${gaps.serviceWorkerCore.join(", ")}`,
+      `service-worker core classifier: ${gaps.serviceWorkerClassifier.join(", ")}`,
+    ].join("\n"),
   );
 });
 

@@ -405,6 +405,810 @@ async function loadInteractiveBattleActions() {
   };
 }
 
+
+async function loadReactReserveButtonContract() {
+  const source = await readFile(new URL("../react-game-ui.js", import.meta.url), "utf8");
+  let renderedTree = null;
+  const root = { style: {} };
+  const React = {
+    createElement(type, props, ...children) {
+      return {
+        type,
+        props: {
+          ...(props || {}),
+          children: children.length <= 1 ? children[0] : children,
+        },
+        children,
+      };
+    },
+  };
+  const context = vm.createContext({
+    CustomEvent: class CustomEvent {},
+    document: {
+      documentElement: { dataset: {} },
+      getElementById: (id) => id === "react-game-root" ? root : null,
+    },
+    window: {
+      React,
+      ReactDOM: {
+        render(tree) {
+          renderedTree = tree;
+        },
+      },
+      dispatchEvent: () => {},
+    },
+  });
+  vm.runInContext(source, context, { filename: "react-game-ui.js" });
+  assert.ok(renderedTree, "React shell must mount its actual element tree");
+
+  const elements = [];
+  const visit = (node) => {
+    if (Array.isArray(node)) {
+      node.forEach(visit);
+      return;
+    }
+    if (!node || typeof node !== "object") return;
+    if (typeof node.type === "function") {
+      visit(node.type(node.props || {}));
+      return;
+    }
+    elements.push(node);
+    visit(node.children);
+  };
+  visit(renderedTree);
+
+  const container = elements.find((element) => element.props?.id === "reserve-command");
+  const buttons = elements.filter((element) => (
+    element.type === "button" &&
+    typeof element.props?.["data-reserve-action"] === "string"
+  ));
+  assert.ok(container, "React shell must instantiate the reserve-command container");
+  assert.equal(buttons.length, 7, "React shell must instantiate all seven reserve actions");
+  return { container, buttons };
+}
+
+async function loadTacticalHudProjection({
+  locale = "en",
+  progression = {
+    marks: 8,
+    skills: { command: 1, fortification: 1, mobility: 1 },
+    commandQueue: [
+      { id: "reserved-hunt", action: "hunt" },
+      { id: "reserved-extract", action: "extract" },
+    ],
+    deployments: [],
+  },
+  activePlacementMode = null,
+  includeReserveControls = false,
+  executeReserved = null,
+} = {}) {
+  const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
+  const reserveContract = includeReserveControls
+    ? await loadReactReserveButtonContract()
+    : null;
+  const delegatedClickWiring = includeReserveControls
+    ? source.match(
+      /document\.addEventListener\("click", \(event\) => \{[\s\S]*?\n  \}\);(?=\n\n  elements\.exportSave)/,
+    )
+    : [""];
+  if (includeReserveControls) {
+    assert.ok(delegatedClickWiring, "app runtime must expose delegated tactical command wiring");
+  }
+  const documentListeners = new Map();
+  const tacticalProjection = source.match(
+    /\/\/ 1\. Render Marks Value[\s\S]*?(?=\n  \/\/ 6\. Update Minimap Snapshot)/,
+  );
+  assert.ok(tacticalProjection, "app runtime must expose the tactical HUD projection");
+
+  let document;
+  const selectorAttribute = /\[([^\]=]+)(?:="([^"]*)")?\]/g;
+  const attributeValue = (node, name) => {
+    if (name.startsWith("data-")) {
+      const key = name.slice(5).replace(/-([a-z])/g, (_, character) => character.toUpperCase());
+      return node.dataset[key];
+    }
+    return node.getAttribute(name);
+  };
+  const matchesSimpleSelector = (node, selector) => {
+    const attributes = [...selector.matchAll(selectorAttribute)];
+    let remainder = selector.replace(selectorAttribute, "");
+    for (const [, name, value] of attributes) {
+      const actual = attributeValue(node, name);
+      if (actual === undefined || actual === null || (value !== undefined && String(actual) !== value)) return false;
+    }
+    const id = remainder.match(/#([\w-]+)/)?.[1];
+    if (id && node.id !== id) return false;
+    remainder = remainder.replace(/#[\w-]+/, "");
+    const classes = [...remainder.matchAll(/\.([\w-]+)/g)].map((match) => match[1]);
+    const nodeClasses = new Set(String(node.className || "").split(/\s+/).filter(Boolean));
+    if (classes.some((className) => !nodeClasses.has(className))) return false;
+    const tagName = remainder.replace(/\.[\w-]+/g, "").trim();
+    return !tagName || node.tagName === tagName.toUpperCase();
+  };
+  const descendants = (root) => root.children.flatMap((child) => [child, ...descendants(child)]);
+  const matchesSelector = (node, selector, root) => {
+    const parts = selector.trim().split(/\s+/);
+    if (!matchesSimpleSelector(node, parts.at(-1))) return false;
+    let ancestor = node.parentNode;
+    for (let index = parts.length - 2; index >= 0; index -= 1) {
+      while (ancestor && ancestor !== root.parentNode && !matchesSimpleSelector(ancestor, parts[index])) {
+        ancestor = ancestor.parentNode;
+      }
+      if (!ancestor || ancestor === root.parentNode) return false;
+      ancestor = ancestor.parentNode;
+    }
+    return true;
+  };
+  const createNode = (tagName = "div") => {
+    const attributes = new Map();
+    const listeners = new Map();
+    let innerHtml = "";
+    const node = {
+      tagName: tagName.toUpperCase(),
+      id: "",
+      className: "",
+      dataset: {},
+      disabled: false,
+      children: [],
+      parentNode: null,
+      textContent: "",
+      appendChild(child) {
+        child.parentNode = this;
+        this.children.push(child);
+        return child;
+      },
+      insertBefore(child, reference) {
+        child.parentNode = this;
+        const index = this.children.indexOf(reference);
+        if (index === -1) this.children.push(child);
+        else this.children.splice(index, 0, child);
+        return child;
+      },
+      addEventListener(type, listener) {
+        listeners.set(type, listener);
+      },
+      dispatch(type, event = {}) {
+        return listeners.get(type)?.(event);
+      },
+      setAttribute(name, value) {
+        attributes.set(name, String(value));
+        if (name.startsWith("data-")) {
+          const key = name.slice(5).replace(/-([a-z])/g, (_, character) => character.toUpperCase());
+          this.dataset[key] = String(value);
+        }
+      },
+      getAttribute(name) {
+        return attributes.get(name) ?? null;
+      },
+      removeAttribute(name) {
+        attributes.delete(name);
+      },
+      querySelectorAll(selector) {
+        return descendants(this).filter((candidate) => matchesSelector(candidate, selector, this));
+      },
+      querySelector(selector) {
+        return this.querySelectorAll(selector)[0] ?? null;
+      },
+      contains(candidate) {
+        return candidate === this || descendants(this).includes(candidate);
+      },
+      closest(selector) {
+        let candidate = this;
+        while (candidate) {
+          if (matchesSelector(candidate, selector, body)) return candidate;
+          candidate = candidate.parentNode;
+        }
+        return null;
+      },
+      focus() {
+        document.activeElement = this;
+      },
+    };
+    node.classList = {
+      toggle(className, force) {
+        const classes = new Set(String(node.className || "").split(/\s+/).filter(Boolean));
+        const enabled = force === undefined ? !classes.has(className) : Boolean(force);
+        if (enabled) classes.add(className);
+        else classes.delete(className);
+        node.className = [...classes].join(" ");
+        return enabled;
+      },
+      contains(className) {
+        return String(node.className || "").split(/\s+/).includes(className);
+      },
+    };
+    Object.defineProperty(node, "innerHTML", {
+      get: () => innerHtml,
+      set(value) {
+        innerHtml = String(value);
+        if (value === "") {
+          if (node.children.some((child) => child.contains(document.activeElement))) {
+            document.activeElement = document.body;
+          }
+          node.children.forEach((child) => {
+            child.parentNode = null;
+          });
+          node.children = [];
+        }
+      },
+    });
+    return node;
+  };
+
+  const body = createNode("body");
+  document = {
+    body,
+    activeElement: body,
+    createElement: createNode,
+    querySelector: (selector) => selector === "body" ? body : body.querySelector(selector),
+    querySelectorAll: (selector) => body.querySelectorAll(selector),
+    getElementById: (id) => body.querySelector(`#${id}`),
+    addEventListener(type, listener) {
+      const listeners = documentListeners.get(type) ?? [];
+      listeners.push(listener);
+      documentListeners.set(type, listeners);
+    },
+    dispatchEvent(event) {
+      for (const listener of documentListeners.get(event.type) ?? []) listener(event);
+    },
+  };
+  const append = (parent, tagName, properties = {}) => {
+    const node = createNode(tagName);
+    Object.assign(node, properties);
+    parent.appendChild(node);
+    return node;
+  };
+
+  const instantiateReactElement = (parent, element) => {
+    const node = append(parent, element.type);
+    for (const [name, value] of Object.entries(element.props || {})) {
+      if (value === undefined || value === null || name === "children" || name === "key") continue;
+      if (name === "className") node.className = String(value);
+      else if (name === "type") node.type = String(value);
+      else if (name === "id") node.id = String(value);
+      else if (name.startsWith("data-") || name.startsWith("aria-")) node.setAttribute(name, value);
+    }
+    node.textContent = element.children
+      .flat(Infinity)
+      .filter((child) => typeof child === "string" || typeof child === "number")
+      .join("");
+    return node;
+  };
+
+  const reserveButtons = {};
+  if (reserveContract) {
+    const reserveContainer = instantiateReactElement(body, reserveContract.container);
+    for (const buttonContract of reserveContract.buttons) {
+      const button = instantiateReactElement(reserveContainer, buttonContract);
+      reserveButtons[button.dataset.reserveAction] = button;
+    }
+  }
+  append(body, "strong", { id: "tactical-marks-value" });
+  const queueContainer = append(body, "ol", { id: "command-reservation-queue" });
+  const deploymentContainer = append(body, "div", { id: "tactical-deployment-controls" });
+  const deploymentButtons = {};
+  for (const kind of ["tower", "barricade"]) {
+    const button = append(deploymentContainer, "button", { id: `deploy-${kind}`, className: "deployment-btn" });
+    button.dataset.kind = kind;
+    append(button, "strong");
+    append(button, "span", { className: "count-badge" });
+    append(button, "small");
+    append(button, "span", { className: "cost-badge" });
+    deploymentButtons[kind] = button;
+  }
+  const skillContainer = append(body, "div", { id: "tactical-skill-controls" });
+  const skillButtons = {};
+  for (const skill of ["command", "fortification", "mobility"]) {
+    append(skillContainer, "span", { id: `skill-level-${skill}` });
+    append(skillContainer, "span", { id: `skill-cost-${skill}` });
+    const button = append(skillContainer, "button", { className: "skill-upgrade-btn" });
+    button.dataset.skill = skill;
+    skillButtons[skill] = button;
+  }
+
+  let campaign = {
+    status: "active",
+    progression: {
+      marks: progression.marks,
+      skills: { ...progression.skills },
+      commandQueue: progression.commandQueue.map((item) => ({ ...item })),
+      deployments: progression.deployments.map((item) => ({ ...item })),
+    },
+  };
+  const stateWithQueue = (commandQueue) => ({
+    ...campaign,
+    progression: {
+      ...campaign.progression,
+      commandQueue,
+    },
+  });
+  const reserveCalls = [];
+  const executeCalls = [];
+  const feedbackMessages = [];
+  const context = vm.createContext({
+    activePlacementMode,
+    campaign,
+    currentLang: () => locale,
+    currentStage: () => ({ commands: { hunt: {}, extract: {} } }),
+    document,
+    getTacticalProgression: (state) => state.progression,
+    persistCampaign: async () => {},
+    showTacticalFeedback: (message) => feedbackMessages.push(message),
+    startActionCooldown: () => {},
+    synchronizeBattleRenderer: () => {},
+    translate: (key) => translations[locale][key] ?? "",
+    translations,
+    triggerBattleVisual: () => {},
+    reserveCommand: (state, action) => {
+      reserveCalls.push(action);
+      return {
+        accepted: true,
+        state: {
+          ...state,
+          progression: {
+            ...state.progression,
+            commandQueue: [
+              ...state.progression.commandQueue,
+              { id: `reserved-${action}`, action },
+            ],
+          },
+        },
+      };
+    },
+    executeReservedCommand: (state, id) => {
+      executeCalls.push(id);
+      if (executeReserved) return executeReserved(state, id);
+      return { accepted: false, state, message: "Command not found in queue." };
+    },
+    cancelReservedCommand: (state, id) => {
+      const commandQueue = state.progression.commandQueue.filter((item) => item.id !== id);
+      return { accepted: commandQueue.length !== state.progression.commandQueue.length, state: stateWithQueue(commandQueue) };
+    },
+    reorderReservedCommand: (state, fromIndex, toIndex) => {
+      const commandQueue = state.progression.commandQueue.map((item) => ({ ...item }));
+      const [item] = commandQueue.splice(fromIndex, 1);
+      commandQueue.splice(toIndex, 0, item);
+      return { accepted: true, state: stateWithQueue(commandQueue) };
+    },
+  });
+  const definitions = [
+    appFunction(source, "translateRejectionReason", "showTacticalFeedback"),
+    appFunction(source, "handleExecuteReserved", "handleCancelReserved"),
+    appFunction(source, "handleCancelReserved", "handleReorderReserved"),
+    appFunction(source, "handleReorderReserved", "handleReserveAction"),
+    appFunction(source, "handleReserveAction", "handleDeploymentSelect"),
+  ];
+  vm.runInContext(
+    `${definitions.join("\n\n")}\n${delegatedClickWiring[0]}\nfunction projectTacticalHud() {\n  const lang = currentLang();\n  ${tacticalProjection[0]}\n}\nglobalThis.render = projectTacticalHud; globalThis.tacticalHud = { cancel: handleCancelReserved, execute: handleExecuteReserved, reorder: handleReorderReserved, translateReason: translateRejectionReason };`,
+    context,
+    { filename: "app.js" },
+  );
+  context.render();
+
+  return {
+    body,
+    deploymentButtons,
+    document,
+    queueContainer,
+    reserveButtons,
+    reserveCalls,
+    executeCalls,
+    feedbackMessages,
+    skillButtons,
+    cancel: (id) => context.tacticalHud.cancel(id),
+    click: (button) => document.dispatchEvent({ type: "click", target: button }),
+    execute: (id) => context.tacticalHud.execute(id),
+    reorder: (fromIndex, toIndex) => context.tacticalHud.reorder(fromIndex, toIndex),
+    render: () => context.render(),
+    setProgression(next) {
+      campaign.progression = {
+        ...campaign.progression,
+        ...next,
+        skills: { ...campaign.progression.skills, ...next.skills },
+        commandQueue: (next.commandQueue ?? campaign.progression.commandQueue).map((item) => ({ ...item })),
+        deployments: (next.deployments ?? campaign.progression.deployments).map((item) => ({ ...item })),
+      };
+      context.campaign = campaign;
+    },
+    translateReason: (message, lang = locale) => context.tacticalHud.translateReason(message, lang),
+  };
+}
+
+test("queue operations keep focus on the surviving operation or nearest surviving row", async (t) => {
+  const focusedQueueControl = (fixture) => {
+    const focused = fixture.document.activeElement;
+    if (focused === fixture.body) return "body";
+    return `${focused.closest(".queue-item")?.dataset.id ?? "no-row"}:${focused.className}`;
+  };
+
+  await t.test("reorder", async () => {
+    const fixture = await loadTacticalHudProjection();
+    fixture.queueContainer.querySelector(
+      '.queue-item[data-id="reserved-hunt"] .cancel-reserved-btn',
+    ).focus();
+    await fixture.reorder(0, 1);
+    assert.equal(
+      focusedQueueControl(fixture),
+      "reserved-hunt:cancel-reserved-btn",
+      "reordering must restore focus to the same operation on the moved reservation",
+    );
+  });
+
+  await t.test("cancel", async () => {
+    const fixture = await loadTacticalHudProjection();
+    fixture.queueContainer.querySelector(
+      '.queue-item[data-id="reserved-extract"] .cancel-reserved-btn',
+    ).focus();
+    await fixture.cancel("reserved-extract");
+    assert.equal(
+      focusedQueueControl(fixture),
+      "reserved-hunt:cancel-reserved-btn",
+      "removing the focused reservation must focus the equivalent operation on the nearest surviving row",
+    );
+  });
+});
+
+test("React reserve controls share one render and delegated-click attribute contract", async () => {
+  const fixture = await loadTacticalHudProjection({
+    locale: "en",
+    includeReserveControls: true,
+    progression: {
+      marks: 8,
+      skills: { command: 1, fortification: 1, mobility: 1 },
+      commandQueue: [],
+      deployments: [],
+    },
+  });
+  const hunt = fixture.reserveButtons.hunt;
+  const materialize = fixture.reserveButtons.materialize;
+  fixture.click(hunt);
+
+  assert.deepEqual(
+    {
+      hunt: {
+        disabled: hunt.disabled,
+        text: hunt.textContent,
+        ariaLabel: hunt.getAttribute("aria-label"),
+        title: hunt.getAttribute("title"),
+      },
+      materialize: {
+        disabled: materialize.disabled,
+        text: materialize.textContent,
+        ariaLabel: materialize.getAttribute("aria-label"),
+        title: materialize.getAttribute("title"),
+      },
+      reservedActions: [...fixture.reserveCalls],
+    },
+    {
+      hunt: {
+        disabled: false,
+        text: "Reserve Hunt",
+        ariaLabel: "Reserve Hunt",
+        title: "Reserve Hunt",
+      },
+      materialize: {
+        disabled: true,
+        text: "Reserve Materialize",
+        ariaLabel: "Materialize (Locked)",
+        title: "Materialize (Locked)",
+      },
+      reservedActions: ["hunt"],
+    },
+    "the React reserve attribute must be the one app render and delegated wiring consume",
+  );
+});
+
+test("reserved execution rejection displays the returned message instead of stale campaign feedback", async () => {
+  const fixture = await loadTacticalHudProjection({
+    executeReserved: (state) => ({
+      accepted: false,
+      state: {
+        ...state,
+        lastMessage: "Stale campaign feedback.",
+      },
+      message: "Returned reservation rejection.",
+    }),
+  });
+
+  await fixture.execute("reserved-hunt");
+  assert.deepEqual(
+    {
+      executedIds: [...fixture.executeCalls],
+      feedback: [...fixture.feedbackMessages],
+    },
+    {
+      executedIds: ["reserved-hunt"],
+      feedback: ["Returned reservation rejection."],
+    },
+    "a rejected reserved execution must surface its own result message",
+  );
+});
+
+test("deployment controls expose pressed state and localized insufficient-Marks or cap reasons", async (t) => {
+  const copy = {
+    ko: {
+      insufficient: "전술 휘장이 부족합니다.",
+      cap: "배치 한도에 도달했습니다.",
+    },
+    en: {
+      insufficient: "Not enough Tactical Marks.",
+      cap: "Deployment cap reached.",
+    },
+  };
+  for (const locale of ["ko", "en"]) {
+    await t.test(`${locale} selected state`, async () => {
+      const fixture = await loadTacticalHudProjection({ locale, activePlacementMode: "tower" });
+      assert.deepEqual(
+        {
+          disabled: fixture.deploymentButtons.tower.disabled,
+          pressed: fixture.deploymentButtons.tower.getAttribute("aria-pressed"),
+        },
+        { disabled: false, pressed: "true" },
+        `${locale} selected deployment must expose its active toggle state`,
+      );
+    });
+
+    await t.test(`${locale} insufficient Marks`, async () => {
+      const fixture = await loadTacticalHudProjection({
+        locale,
+        progression: {
+          marks: 3,
+          skills: { command: 1, fortification: 1, mobility: 1 },
+          commandQueue: [],
+          deployments: [],
+        },
+      });
+      const accessibleCopy = [
+        fixture.deploymentButtons.tower.getAttribute("aria-label"),
+        fixture.deploymentButtons.tower.getAttribute("title"),
+      ].join(" ");
+      assert.deepEqual(
+        {
+          disabled: fixture.deploymentButtons.tower.disabled,
+          pressed: fixture.deploymentButtons.tower.getAttribute("aria-pressed"),
+          exposesReason: accessibleCopy.includes(copy[locale].insufficient),
+        },
+        { disabled: true, pressed: "false", exposesReason: true },
+        `${locale} unaffordable deployment must expose its localized disabled reason`,
+      );
+    });
+
+    await t.test(`${locale} deployment cap`, async () => {
+      const fixture = await loadTacticalHudProjection({
+        locale,
+        progression: {
+          marks: 8,
+          skills: { command: 1, fortification: 1, mobility: 1 },
+          commandQueue: [],
+          deployments: [{ id: "tower-1", kind: "tower", cell: { x: 8, y: 5 } }],
+        },
+      });
+      const accessibleCopy = [
+        fixture.deploymentButtons.tower.getAttribute("aria-label"),
+        fixture.deploymentButtons.tower.getAttribute("title"),
+      ].join(" ");
+      assert.deepEqual(
+        {
+          disabled: fixture.deploymentButtons.tower.disabled,
+          pressed: fixture.deploymentButtons.tower.getAttribute("aria-pressed"),
+          exposesReason: accessibleCopy.includes(copy[locale].cap),
+        },
+        { disabled: true, pressed: "false", exposesReason: true },
+        `${locale} capped deployment must expose its localized disabled reason`,
+      );
+    });
+  }
+});
+
+test("skill controls expose localized insufficient-Marks and maximum-level reasons", async (t) => {
+  const insufficientCopy = {
+    ko: "전술 휘장이 부족합니다.",
+    en: "Not enough Tactical Marks.",
+  };
+  for (const locale of ["ko", "en"]) {
+    await t.test(`${locale} insufficient Marks`, async () => {
+      const fixture = await loadTacticalHudProjection({
+        locale,
+        progression: {
+          marks: 3,
+          skills: { command: 1, fortification: 1, mobility: 1 },
+          commandQueue: [],
+          deployments: [],
+        },
+      });
+      const accessibleCopy = [
+        fixture.skillButtons.command.getAttribute("aria-label"),
+        fixture.skillButtons.command.getAttribute("title"),
+      ].join(" ");
+      assert.deepEqual(
+        {
+          disabled: fixture.skillButtons.command.disabled,
+          exposesReason: accessibleCopy.includes(insufficientCopy[locale]),
+        },
+        { disabled: true, exposesReason: true },
+        `${locale} unaffordable skill upgrade must expose its localized disabled reason`,
+      );
+    });
+
+    await t.test(`${locale} maximum level`, async () => {
+      const fixture = await loadTacticalHudProjection({
+        locale,
+        progression: {
+          marks: 20,
+          skills: { command: 5, fortification: 1, mobility: 1 },
+          commandQueue: [],
+          deployments: [],
+        },
+      });
+      const accessibleCopy = [
+        fixture.skillButtons.command.getAttribute("aria-label"),
+        fixture.skillButtons.command.getAttribute("title"),
+      ].join(" ");
+      assert.deepEqual(
+        {
+          disabled: fixture.skillButtons.command.disabled,
+          exposesReason: accessibleCopy.includes(translations[locale]["tactical.maxLevel"]),
+        },
+        { disabled: true, exposesReason: true },
+        `${locale} maximum skill must expose its localized disabled reason`,
+      );
+    });
+  }
+});
+
+test("every tactical rejection family resolves through Korean and English i18n copy", async (t) => {
+  const cases = [
+    {
+      name: "inactive stage",
+      message: "This stage is not active.",
+      key: "tactical.rejection.inactiveStage",
+      ko: "현재 스테이지에서는 이 전술 행동을 사용할 수 없습니다.",
+      en: "This tactical action is unavailable outside an active stage.",
+    },
+    {
+      name: "invalid command",
+      message: "That command has no place in this stage.",
+      key: "tactical.rejection.invalidCommand",
+      ko: "이 스테이지에서 사용할 수 없는 명령입니다.",
+      en: "That command is unavailable in this stage.",
+    },
+    {
+      name: "invalid coordinates",
+      message: "Invalid cell coordinates.",
+      key: "tactical.rejection.invalidCoordinates",
+      ko: "배치 좌표가 올바르지 않습니다.",
+      en: "The deployment coordinates are invalid.",
+    },
+    {
+      name: "invalid skill",
+      message: "Invalid skill type.",
+      key: "tactical.rejection.invalidSkill",
+      ko: "올바르지 않은 전술 스킬입니다.",
+      en: "The tactical skill is invalid.",
+    },
+    {
+      name: "command missing",
+      message: "Command not found in queue.",
+      key: "tactical.rejection.commandMissing",
+      ko: "대기열에서 명령을 찾을 수 없습니다.",
+      en: "The command is no longer in the queue.",
+    },
+    {
+      name: "maximum skill",
+      message: "Skill command is already at maximum level.",
+      key: "tactical.rejection.maxSkill",
+      ko: "스킬이 이미 최대 레벨입니다.",
+      en: "That skill is already at maximum level.",
+    },
+    {
+      name: "queue full",
+      message: "Command reservation queue is full.",
+      key: "tactical.rejection.queueFull",
+      ko: "예약 대기열이 가득 찼습니다.",
+      en: "The command reservation queue is full.",
+    },
+    {
+      name: "insufficient marks",
+      message: "Not enough marks. Need 4 but have 3.",
+      key: "tactical.rejection.insufficientMarks",
+      ko: "전술 휘장이 부족합니다.",
+      en: "Not enough Tactical Marks.",
+    },
+    {
+      name: "deployment cap",
+      message: "Cannot deploy more than 1 towers at fortification level 1.",
+      key: "tactical.rejection.deploymentCap",
+      ko: "배치 한도에 도달했습니다.",
+      en: "Deployment cap reached.",
+    },
+    {
+      name: "occupied cell",
+      message: "Cell is occupied by an existing deployment.",
+      key: "tactical.rejection.occupied",
+      ko: "해당 칸에는 이미 배치물이 있습니다.",
+      en: "That cell is already occupied.",
+    },
+    {
+      name: "out of bounds",
+      message: "Cell is not walkable or out of bounds.",
+      key: "tactical.rejection.outOfBounds",
+      ko: "배치 가능한 범위를 벗어났습니다.",
+      en: "That cell is outside the deployment area.",
+    },
+    {
+      name: "route blocked",
+      message: "Deployment would completely block all paths from portal to boss.",
+      key: "tactical.rejection.routeBlocked",
+      ko: "배치하면 차원문에서 보스까지의 모든 경로가 막힙니다.",
+      en: "That deployment would block every route from the portal to the boss.",
+    },
+  ];
+  const fixture = await loadTacticalHudProjection();
+  for (const contract of cases) {
+    await t.test(contract.name, () => {
+      const actual = {};
+      const expected = {};
+      for (const locale of ["ko", "en"]) {
+        const rendered = fixture.translateReason(contract.message, locale);
+        actual[locale] = {
+          catalog: translations[locale][contract.key],
+          rendered,
+          leaksRawEnglish: locale === "ko" && rendered.includes(contract.message),
+        };
+        expected[locale] = {
+          catalog: contract[locale],
+          rendered: contract[locale],
+          leaksRawEnglish: false,
+        };
+      }
+      assert.deepEqual(
+        actual,
+        expected,
+        `${contract.name} rejection must use localized Korean and English tactical copy`,
+      );
+    });
+  }
+});
+test("protected navigation cells use catalog-backed Korean and English rejection copy", async (t) => {
+  const fixture = await loadTacticalHudProjection();
+  const variants = [
+    "Cell contains a critical game anchor.",
+    "Cell is in a protected base or spawn area.",
+  ];
+
+  for (const message of variants) {
+    await t.test(message, () => {
+      const actual = {};
+      for (const locale of ["ko", "en"]) {
+        const rendered = fixture.translateReason(message, locale);
+        const catalogCopy = new Set(
+          Object.values(translations[locale]).filter((copy) => typeof copy === "string" && copy.trim().length > 0),
+        );
+        actual[locale] = {
+          nonempty: typeof rendered === "string" && rendered.trim().length > 0,
+          catalogBacked: catalogCopy.has(rendered),
+          ...(locale === "ko" ? { leaksRawEnglish: rendered.includes(message) } : {}),
+        };
+      }
+      assert.deepEqual(
+        actual,
+        {
+          ko: {
+            nonempty: true,
+            catalogBacked: true,
+            leaksRawEnglish: false,
+          },
+          en: {
+            nonempty: true,
+            catalogBacked: true,
+          },
+        },
+        "each protected-cell validator rejection must resolve to public locale catalog copy",
+      );
+    });
+  }
+});
+
 async function loadFullscreenRuntime({ locale = "en", fullscreenEnabled = true } = {}) {
   const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
   const documentListeners = new Map();
@@ -913,6 +1717,43 @@ test("accepted first and second Hunt results are fully localized in Korean mode"
   }
 });
 
+test("reserved command receipts use locale catalog command names without raw engine copy", async () => {
+  const translateStatus = await loadStatusTranslator();
+  const raw = "Reserved command: extract.";
+
+  for (const locale of ["ko", "en"]) {
+    const expected = translations[locale]["queue.reservedReceipt"].replace(
+      "{command}",
+      translations[locale]["command.extract.name"],
+    );
+    const rendered = translateStatus(raw, locale);
+    assert.equal(rendered, expected, `${locale} reservation feedback must compose its command name and receipt from the locale catalog`);
+    if (locale === "ko") {
+      assert.equal(rendered.includes(raw), false, "Korean reservation feedback must not leak the raw English engine receipt");
+      assert.equal(rendered.includes("extract"), false, "Korean reservation feedback must not leak the raw English command identifier");
+    }
+  }
+});
+
+test("reserved execution prerequisite feedback localizes its wrapper and actionable inner reason", async () => {
+  const fixture = await loadTacticalHudProjection();
+  const rawInnerReason = "Two spoor marks are required before extraction.";
+  const raw = `Execution failed: ${rawInnerReason}`;
+
+  for (const locale of ["ko", "en"]) {
+    const expected = translations[locale]["tactical.rejection.executionFailed"].replace(
+      "{error}",
+      translations[locale]["tactical.rejection.extractRequiresSpoor"],
+    );
+    const rendered = fixture.translateReason(raw, locale);
+    assert.equal(rendered, expected, `${locale} execution rejection must compose its wrapper and prerequisite from the locale catalog`);
+    if (locale === "ko") {
+      assert.equal(rendered.includes(rawInnerReason), false, "Korean execution rejection must not leak the raw English prerequisite");
+      assert.equal(rendered.includes("Execution failed"), false, "Korean execution rejection must not leak the raw English wrapper");
+    }
+  }
+});
+
 
 test("accepted commands retain a local feedback cue when battle rendering is unavailable", async () => {
   const fallback = await loadBattleVisualTrigger();
@@ -1043,6 +1884,8 @@ async function loadAudioSceneLifecycle() {
     clearEncounterStartTimer: () => {},
     cooldownTimer: 99,
     cooldowns: new Map([["hunt", 1]]),
+    tacticalFeedbackMessage: "Barricade route is sealed.",
+    tacticalFeedbackTimer: 77,
     cuePlayer,
     elements: {
       ambience: {
@@ -1068,6 +1911,7 @@ async function loadAudioSceneLifecycle() {
     visualizer: { destroy() {} },
     window: {
       clearInterval: (id) => playerCalls.push(`clearInterval:${id}`),
+      clearTimeout: (id) => playerCalls.push(`clearTimeout:${id}`),
     },
   });
   const definitions = [
@@ -1178,6 +2022,11 @@ test("stopping battle clears one-shot audio and stale BGM completions before ret
     fixture.playerCalls.includes("clearInterval:99"),
     true,
     "battle teardown must clear its active render interval",
+  );
+  assert.equal(
+    fixture.playerCalls.includes("clearTimeout:77"),
+    true,
+    "battle teardown must cancel its pending tactical feedback reset before leaving the battle",
   );
   assert.deepEqual(fixture.cueCalls, ["pause", "remove:src", "load"], "the active one-shot cue must be paused, unloaded, and reset");
   assert.deepEqual(

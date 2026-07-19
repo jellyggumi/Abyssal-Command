@@ -12,13 +12,20 @@ import {
   applyBattleBreach,
   applyEncounterEvent,
   chooseReward,
+  cancelReservedCommand,
+  deployTacticalObject,
+  executeReservedCommand,
   createCampaign,
   createSaveEnvelope,
   getCampaignBenefits,
+  getCommandCooldown,
   getStageChecklist,
   restoreSaveEnvelope,
+  reorderReservedCommand,
+  reserveCommand,
   retryStage,
   startCampaign,
+  upgradeSkill,
 } from "../campaign-state.js";
 
 const COMMANDS = Object.freeze([
@@ -792,6 +799,352 @@ test("premature public commands reject without mutating campaign state", () => {
   rejectWithoutMutation(state, (current) => applyAction(current, "domain"), "Stage 3 domain must be one-use");
 });
 
+test("failed reserved command execution stays immutable beyond the save trace limit", () => {
+  const reservationId = "stage-1-invalid-extract";
+  const rejectionReason = "Two spoor marks are required before extraction.";
+  const reserved = accept(
+    reserveCommand(start(), "extract", reservationId),
+    "Stage 1 extract should be reservable before its execution prerequisites are met",
+  );
+  const baselineSerialization = JSON.stringify(reserved);
+  const baselineTrace = JSON.stringify(reserved.trace);
+  const baselineRevision = reserved.revision;
+  const observations = [];
+  let state = reserved;
+
+  for (let attempt = 1; attempt <= 401; attempt += 1) {
+    const supplied = state;
+    const suppliedSerialization = JSON.stringify(supplied);
+    const suppliedTrace = JSON.stringify(supplied.trace);
+    const suppliedRevision = supplied.revision;
+    const result = executeReservedCommand(supplied, reservationId);
+    observations.push({
+      rejected: result.accepted === false,
+      sameState: result.state === supplied,
+      sameSerialization: JSON.stringify(result.state) === suppliedSerialization,
+      sameRevision: result.state.revision === suppliedRevision,
+      sameTrace: JSON.stringify(result.state.trace) === suppliedTrace,
+      reasonVisible: result.message.includes(rejectionReason),
+    });
+    state = result.state;
+  }
+
+  const envelope = createSaveEnvelope(state);
+  let restored;
+  let restoreError;
+  try {
+    restored = restoreSaveEnvelope(JSON.parse(JSON.stringify(envelope)));
+  } catch (error) {
+    restoreError = error;
+  }
+
+  assert.deepEqual(
+    {
+      everyAttemptRejected: observations.every((item) => item.rejected),
+      everyAttemptReturnedTheSuppliedState: observations.every((item) => item.sameState),
+      everyAttemptPreservedSerialization: observations.every((item) => item.sameSerialization),
+      everyAttemptPreservedRevision: observations.every((item) => item.sameRevision),
+      everyAttemptPreservedTrace: observations.every((item) => item.sameTrace),
+      everyAttemptExposedTheReason: observations.every((item) => item.reasonVisible),
+      finalStateIsReservedState: state === reserved,
+      finalSerializationIsUnchanged: JSON.stringify(state) === baselineSerialization,
+      finalRevisionIsUnchanged: state.revision === baselineRevision,
+      finalTraceIsUnchanged: JSON.stringify(state.trace) === baselineTrace,
+      saveEnvelopeIsRestorable:
+        restoreError === undefined && JSON.stringify(restored) === baselineSerialization,
+    },
+    {
+      everyAttemptRejected: true,
+      everyAttemptReturnedTheSuppliedState: true,
+      everyAttemptPreservedSerialization: true,
+      everyAttemptPreservedRevision: true,
+      everyAttemptPreservedTrace: true,
+      everyAttemptExposedTheReason: true,
+      finalStateIsReservedState: true,
+      finalSerializationIsUnchanged: true,
+      finalRevisionIsUnchanged: true,
+      finalTraceIsUnchanged: true,
+      saveEnvelopeIsRestorable: true,
+    },
+  );
+});
+
+test("caller-supplied reservation IDs are unique across the active command queue", () => {
+  const reservationId = "caller-reservation";
+  const state = accept(reserveCommand(start(), "hunt", reservationId));
+  const beforeSerialization = JSON.stringify(state);
+  const beforeQueue = JSON.stringify(state.commandQueue);
+  const beforeTrace = JSON.stringify(state.trace);
+  const beforeRevision = state.revision;
+
+  const duplicate = reserveCommand(state, "extract", reservationId);
+
+  assert.deepEqual(
+    {
+      rejected: duplicate.accepted === false,
+      sameState: duplicate.state === state,
+      sameSerialization: JSON.stringify(duplicate.state) === beforeSerialization,
+      queueUnchanged: JSON.stringify(duplicate.state.commandQueue) === beforeQueue,
+      traceUnchanged: JSON.stringify(duplicate.state.trace) === beforeTrace,
+      revisionUnchanged: duplicate.state.revision === beforeRevision,
+    },
+    {
+      rejected: true,
+      sameState: true,
+      sameSerialization: true,
+      queueUnchanged: true,
+      traceUnchanged: true,
+      revisionUnchanged: true,
+    },
+  );
+});
+
+test("reserved command order and execution replay byte-for-byte from the public save envelope", () => {
+  let state = start();
+  const initialMarks = state.progression.marks;
+  const initialRevision = state.revision;
+  const initialTraceLength = state.trace.length;
+
+  const huntReservation = reserveCommand(state, "hunt");
+  assert.equal(huntReservation.accepted, true, huntReservation.message);
+  assert.equal(huntReservation.effect, "reserve");
+  assert.equal(huntReservation.message, "Reserved command: hunt.");
+  state = huntReservation.state;
+  const huntId = `res-${initialRevision}-0`;
+  assert.deepEqual(state.commandQueue, [{ id: huntId, action: "hunt" }]);
+
+  const extractReservation = reserveCommand(state, "extract");
+  assert.equal(extractReservation.accepted, true, extractReservation.message);
+  assert.equal(extractReservation.effect, "reserve");
+  assert.equal(extractReservation.message, "Reserved command: extract.");
+  state = extractReservation.state;
+  const extractId = `res-${initialRevision + 1}-1`;
+  assert.deepEqual(state.commandQueue, [
+    { id: huntId, action: "hunt" },
+    { id: extractId, action: "extract" },
+  ]);
+
+  const reordered = reorderReservedCommand(state, 1, 0);
+  assert.equal(reordered.accepted, true, reordered.message);
+  assert.equal(reordered.effect, "reorder");
+  assert.equal(reordered.message, "Reordered command queue.");
+  state = reordered.state;
+  assert.deepEqual(state.commandQueue, [
+    { id: extractId, action: "extract" },
+    { id: huntId, action: "hunt" },
+  ]);
+
+  const executed = executeReservedCommand(state, huntId);
+  assert.equal(executed.accepted, true, executed.message);
+  assert.equal(executed.effect, "hunt");
+  assert.match(executed.message, /^Executed reserved command: hunt\./);
+  state = executed.state;
+
+  assert.deepEqual(state.commandQueue, [{ id: extractId, action: "extract" }], "execution removes only the selected reservation");
+  assert.equal(state.stage.hunted, 1, "the selected Hunt executes through the same public action contract");
+  assert.equal(state.progression.marks, initialMarks, "queue operations and Hunt do not spend tactical Marks");
+  assert.equal(state.revision, initialRevision + 4, "each accepted queue transition advances revision exactly once");
+  assert.equal(state.trace.length, initialTraceLength + 4, "each accepted queue transition appends exactly one replay event");
+  assert.deepEqual(state.trace.slice(initialTraceLength), [
+    { kind: "reserve-command", action: "hunt", id: huntId },
+    { kind: "reserve-command", action: "extract", id: extractId },
+    { kind: "reorder-reserved-command", fromIndex: 1, toIndex: 0 },
+    { kind: "execute-reserved-command", id: huntId, success: true },
+  ]);
+
+  const envelope = createSaveEnvelope(state);
+  const restored = restoreSaveEnvelope(JSON.parse(JSON.stringify(envelope)));
+  assert.equal(
+    JSON.stringify(restored),
+    JSON.stringify(state),
+    "the public save envelope must replay IDs, order, Marks, revision, trace, and command effects byte-for-byte",
+  );
+});
+
+test("cancelling a reservation changes only the authorized queue, message, revision, and trace", () => {
+  const queued = accept(reserveCommand(start(), "hunt", "cancel-me"));
+  const stageBefore = JSON.stringify(queued.stage);
+  const progressionBefore = JSON.stringify(queued.progression);
+  const rewardsBefore = JSON.stringify(queued.rewards);
+  const revisionBefore = queued.revision;
+  const traceBefore = queued.trace;
+
+  const cancelled = cancelReservedCommand(queued, "cancel-me");
+  assert.equal(cancelled.accepted, true, cancelled.message);
+  assert.equal(cancelled.effect, "cancel");
+  assert.equal(cancelled.message, "Cancelled reserved command.");
+  assert.deepEqual(cancelled.state.commandQueue, []);
+  assert.equal(JSON.stringify(cancelled.state.stage), stageBefore);
+  assert.equal(JSON.stringify(cancelled.state.progression), progressionBefore, "cancellation must not spend Marks or alter skills");
+  assert.equal(JSON.stringify(cancelled.state.rewards), rewardsBefore);
+  assert.equal(cancelled.state.revision, revisionBefore + 1);
+  assert.deepEqual(cancelled.state.trace, [...traceBefore, { kind: "cancel-reserved-command", id: "cancel-me" }]);
+
+  const beforeMissingCancellation = JSON.stringify(cancelled.state);
+  const missing = cancelReservedCommand(cancelled.state, "cancel-me");
+  assert.equal(missing.accepted, false);
+  assert.equal(missing.effect, "none");
+  assert.equal(missing.message, "Command not found in queue.");
+  assert.equal(missing.state, cancelled.state, "a rejected cancellation returns the supplied state");
+  assert.equal(JSON.stringify(missing.state), beforeMissingCancellation, "a rejected cancellation cannot drift state");
+});
+
+test("Command level one accepts two reservations and rejects the queue-cap boundary without mutation", () => {
+  const initial = start();
+  let state = accept(reserveCommand(initial, "hunt", "level-one-first"));
+  state = accept(reserveCommand(state, "extract", "level-one-second"));
+  const beforeOverflow = JSON.stringify(state);
+  const revisionBeforeOverflow = state.revision;
+  const traceBeforeOverflow = JSON.stringify(state.trace);
+
+  const overflow = reserveCommand(state, "materialize", "level-one-overflow");
+
+  assert.equal(state.progression.skills.command, 1);
+  assert.deepEqual(state.commandQueue, [
+    { id: "level-one-first", action: "hunt" },
+    { id: "level-one-second", action: "extract" },
+  ]);
+  assert.equal(state.progression.marks, initial.progression.marks);
+  assert.equal(state.revision, initial.revision + 2);
+  assert.equal(overflow.accepted, false);
+  assert.equal(overflow.effect, "none");
+  assert.equal(overflow.message, "Command reservation queue is full.");
+  assert.equal(overflow.state, state);
+  assert.equal(JSON.stringify(overflow.state), beforeOverflow);
+  assert.equal(overflow.state.revision, revisionBeforeOverflow);
+  assert.equal(JSON.stringify(overflow.state.trace), traceBeforeOverflow);
+});
+
+test("Command upgrades charge each level, reject insufficient Marks and level six, and cap level five at five reservations", () => {
+  let state = start();
+
+  function upgradeCommand(expectedCost, expectedLevel) {
+    const supplied = state;
+    const marksBefore = supplied.progression.marks;
+    const revisionBefore = supplied.revision;
+    const traceBefore = supplied.trace;
+    const result = upgradeSkill(supplied, "command");
+    assert.equal(result.accepted, true, result.message);
+    assert.equal(result.effect, "upgrade-skill");
+    assert.equal(result.message, `Upgraded command skill to level ${expectedLevel}.`);
+    state = result.state;
+    assert.equal(state.progression.skills.command, expectedLevel);
+    assert.equal(state.progression.marks, marksBefore - expectedCost);
+    assert.equal(state.revision, revisionBefore + 1);
+    assert.deepEqual(state.trace, [...traceBefore, { kind: "upgrade-skill", skill: "command" }]);
+  }
+
+  upgradeCommand(4, 2);
+  const beforeInsufficient = JSON.stringify(state);
+  const insufficient = upgradeSkill(state, "command");
+  assert.equal(insufficient.accepted, false);
+  assert.equal(insufficient.effect, "none");
+  assert.equal(insufficient.message, "Not enough marks. Need 8 but have 4.");
+  assert.equal(insufficient.state, state);
+  assert.equal(JSON.stringify(insufficient.state), beforeInsufficient);
+
+  state = accept(chooseReward(commands(state, S1_OPTIMAL), "rift-lens"));
+  assert.equal(state.progression.marks, 14, "Stage 1 waves and reward restore the public Marks needed for level three");
+  upgradeCommand(8, 3);
+
+  state = accept(chooseReward(commands(state, S2_LENS), "veil-vanguard"));
+  state = accept(chooseReward(commands(state, S3_VANGUARD_LENS), "throne-echo"));
+  assert.equal(state.progression.marks, 14, "Stage 2 and Stage 3 rewards fund the next declared upgrade");
+  upgradeCommand(12, 4);
+
+  state = clearLateStage(state);
+  state = clearLateStage(state);
+  assert.ok(state.progression.marks >= 16, "declared encounter and reward Marks must fund the final upgrade");
+  upgradeCommand(16, 5);
+
+  const beforeMaximum = JSON.stringify(state);
+  const maximum = upgradeSkill(state, "command");
+  assert.equal(maximum.accepted, false);
+  assert.equal(maximum.effect, "none");
+  assert.equal(maximum.message, "Skill command is already at maximum level.");
+  assert.equal(maximum.state, state);
+  assert.equal(JSON.stringify(maximum.state), beforeMaximum);
+
+  const reservationIds = [];
+  for (let index = 0; index < 5; index += 1) {
+    const revisionBefore = state.revision;
+    const reservation = reserveCommand(state, "hunt");
+    assert.equal(reservation.accepted, true, reservation.message);
+    const expectedId = `res-${revisionBefore}-${index}`;
+    reservationIds.push(expectedId);
+    state = reservation.state;
+    assert.equal(state.commandQueue[index].id, expectedId);
+  }
+  assert.deepEqual(
+    state.commandQueue,
+    reservationIds.map((id) => ({ id, action: "hunt" })),
+    "level five preserves deterministic reservation order through its full five-slot capacity",
+  );
+
+  const beforeOverflow = JSON.stringify(state);
+  const marksBeforeOverflow = state.progression.marks;
+  const revisionBeforeOverflow = state.revision;
+  const traceBeforeOverflow = JSON.stringify(state.trace);
+  const overflow = reserveCommand(state, "hunt");
+  assert.equal(overflow.accepted, false);
+  assert.equal(overflow.effect, "none");
+  assert.equal(overflow.message, "Command reservation queue is full.");
+  assert.equal(overflow.state, state);
+  assert.equal(JSON.stringify(overflow.state), beforeOverflow);
+  assert.equal(overflow.state.progression.marks, marksBeforeOverflow);
+  assert.equal(overflow.state.revision, revisionBeforeOverflow);
+  assert.equal(JSON.stringify(overflow.state.trace), traceBeforeOverflow);
+});
+
+test("Stillwater Hourglass reduces every declared command cooldown by its public 20% without state drift", () => {
+  const state = accept(chooseReward(commands(start(), S1_OPTIMAL), "stillwater-hourglass"));
+  const stage = STAGES[state.stageIndex];
+  const before = JSON.stringify(state);
+
+  for (const action of ["hunt", "extract", "materialize", "capture", "assault"]) {
+    assert.equal(
+      getCommandCooldown(state, action),
+      stage.commands[action].cooldown * 0.8,
+      `${action} cooldown must apply the Hourglass multiplier`,
+    );
+  }
+
+  assert.equal(JSON.stringify(state), before, "cooldown reads must not mutate campaign state, revision, or trace");
+});
+
+test("caller-supplied deployment IDs are unique across active deployment kinds", () => {
+  const deploymentId = "caller-deployment";
+  const state = accept(deployTacticalObject(start(), "tower", { x: 6, y: 2 }, deploymentId));
+  const beforeSerialization = JSON.stringify(state);
+  const beforeDeployments = JSON.stringify(state.stage.deployments);
+  const beforeMarks = state.progression.marks;
+  const beforeTrace = JSON.stringify(state.trace);
+  const beforeRevision = state.revision;
+
+  const duplicate = deployTacticalObject(state, "barricade", { x: 6, y: 3 }, deploymentId);
+
+  assert.deepEqual(
+    {
+      rejected: duplicate.accepted === false,
+      sameState: duplicate.state === state,
+      sameSerialization: JSON.stringify(duplicate.state) === beforeSerialization,
+      deploymentsUnchanged: JSON.stringify(duplicate.state.stage.deployments) === beforeDeployments,
+      marksUnchanged: duplicate.state.progression.marks === beforeMarks,
+      traceUnchanged: JSON.stringify(duplicate.state.trace) === beforeTrace,
+      revisionUnchanged: duplicate.state.revision === beforeRevision,
+    },
+    {
+      rejected: true,
+      sameState: true,
+      sameSerialization: true,
+      deploymentsUnchanged: true,
+      marksUnchanged: true,
+      traceUnchanged: true,
+      revisionUnchanged: true,
+    },
+  );
+});
+
 test("reward choice is exclusive and retry resets the stage while retaining earned boons", () => {
   let state = start();
   const rewardState = commands(state, S1_OPTIMAL);
@@ -814,6 +1167,72 @@ test("reward choice is exclusive and retry resets the stage while retaining earn
 
   rejectWithoutMutation(createCampaign(), (current) => retryStage(current), "briefing cannot retry");
   rejectWithoutMutation(rewardState, (current) => retryStage(current), "reward choice cannot retry");
+});
+
+test("tactical deployments spend their kind cost, enforce per-kind caps, and replay from saves", () => {
+  let towerState = start();
+  const towerMarks = towerState.progression.marks;
+  towerState = accept(
+    deployTacticalObject(towerState, "tower", { x: 6, y: 2 }, "tower-1"),
+    "the first tower should fit the Stage 1 fortification cap",
+  );
+  assert.equal(towerMarks - towerState.progression.marks, 4, "a tower deployment must spend four earned marks");
+  rejectWithoutMutation(
+    towerState,
+    (current) => deployTacticalObject(current, "tower", { x: 6, y: 3 }, "tower-2"),
+    "fortification level one must cap towers at one",
+  );
+
+  let barricadeState = start();
+  const barricadeMarks = barricadeState.progression.marks;
+  barricadeState = accept(deployTacticalObject(barricadeState, "barricade", { x: 6, y: 2 }, "barricade-1"));
+  barricadeState = accept(deployTacticalObject(barricadeState, "barricade", { x: 6, y: 3 }, "barricade-2"));
+  assert.equal(barricadeMarks - barricadeState.progression.marks, 4, "two barricades must spend two marks apiece");
+  rejectWithoutMutation(
+    barricadeState,
+    (current) => deployTacticalObject(current, "barricade", { x: 6, y: 4 }, "barricade-3"),
+    "fortification level one must cap barricades at two",
+  );
+
+  const envelope = createSaveEnvelope(barricadeState);
+  assert.deepEqual(
+    restoreSaveEnvelope(JSON.parse(JSON.stringify(envelope))),
+    barricadeState,
+    "save replay must reproduce deployment IDs, cells, spent marks, and trace revision exactly",
+  );
+});
+
+test("invalid tactical cells and occupied cells reject without spending marks", () => {
+  const state = start();
+  for (const [label, cell] of [
+    ["out-of-bounds", { x: 24, y: 0 }],
+    ["authored void", { x: 0, y: 0 }],
+    ["protected rally anchor", { x: 3, y: 5 }],
+  ]) {
+    rejectWithoutMutation(
+      state,
+      (current) => deployTacticalObject(current, "barricade", cell, `invalid-${label}`),
+      `${label} placement must reject`,
+    );
+  }
+
+  const occupied = accept(deployTacticalObject(state, "tower", { x: 6, y: 2 }, "occupant"));
+  rejectWithoutMutation(
+    occupied,
+    (current) => deployTacticalObject(current, "barricade", { x: 6, y: 2 }, "overlap"),
+    "a second deployment cannot spend marks on an occupied cell",
+  );
+});
+
+test("campaign deployment rejects a barricade that would seal the portal-to-boss route without spending marks", () => {
+  let state = accept(chooseReward(commands(start(), S1_OPTIMAL), "rift-lens"));
+  state = accept(chooseReward(commands(state, S2_LENS), "veil-vanguard"));
+
+  rejectWithoutMutation(
+    state,
+    (current) => deployTacticalObject(current, "barricade", { x: 6, y: 5 }, "stage-3-seal"),
+    "the Stage 3 approach barricade must reject before it closes the last route",
+  );
 });
 
 test("public retries keep a started stage save compact and playable", () => {
