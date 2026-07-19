@@ -379,6 +379,32 @@ async function loadCommandFocusHotkey() {
   };
 }
 
+async function loadInteractiveBattleActions() {
+  const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
+  const cooldowns = new Map();
+  const context = vm.createContext({
+    battleUiActive: () => true,
+    campaign: Object.freeze({ status: "active" }),
+    getAvailableActions: () => ["hunt"],
+    remainingCooldown: (action) => cooldowns.get(action) ?? 0,
+    resultOverlayOpen: false,
+  });
+  const definition = appFunction(source, "getInteractiveBattleActions", "setBattlePressure");
+  vm.runInContext(
+    `${definition}\nglobalThis.getInteractiveBattleActions = getInteractiveBattleActions;`,
+    context,
+    { filename: "app.js" },
+  );
+
+  return {
+    getActions: () => Array.from(context.getInteractiveBattleActions()),
+    setCooldown: (action, remaining) => cooldowns.set(action, remaining),
+    setResultOverlayOpen: (open) => {
+      context.resultOverlayOpen = open;
+    },
+  };
+}
+
 async function loadFullscreenRuntime({ locale = "en", fullscreenEnabled = true } = {}) {
   const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
   const documentListeners = new Map();
@@ -674,6 +700,31 @@ test("Shift+F toggles only outside editable controls while Escape remains browse
   escape.body.focus();
   assert.equal(escape.pressKey("Escape"), false, "Escape on the campaign surface must remain native fullscreen behavior");
   assert.equal(escape.requestRuns.length, 0, "Escape must not invoke the custom fullscreen toggle");
+});
+
+test("spatial actions exclude cooling commands and all result-overlay input", async () => {
+  const fixture = await loadInteractiveBattleActions();
+
+  assert.deepEqual(
+    fixture.getActions(),
+    ["hunt"],
+    "an engine-available action with no remaining cooldown must be interactive",
+  );
+
+  fixture.setCooldown("hunt", 1);
+  assert.deepEqual(
+    fixture.getActions(),
+    [],
+    "an engine-available action must not remain interactive while its cooldown is active",
+  );
+
+  fixture.setCooldown("hunt", 0);
+  fixture.setResultOverlayOpen(true);
+  assert.deepEqual(
+    fixture.getActions(),
+    [],
+    "the result overlay must suppress spatial actions even after their cooldown expires",
+  );
 });
 
 test("briefing acknowledgement focuses Hunt and Digit1 dispatches only from command focus", async () => {

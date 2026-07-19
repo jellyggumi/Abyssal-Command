@@ -19,7 +19,7 @@ import { getBattlePresentation } from "./battle-presentation.js";
 import { CampaignMirror } from "./campaign-sync.js";
 import { currentLang, translate, translations } from "./i18n.js";
 
-const BUILD_TAG = "abyssal-surge-static-v49";
+const BUILD_TAG = "abyssal-surge-static-v50";
 const DB_NAME = "abyssal-surge-campaign";
 const DB_VERSION = 1;
 const STORE_NAME = "campaigns";
@@ -1157,6 +1157,11 @@ function remainingCooldown(action, now = performance.now()) {
   return Math.max(0, (cooldowns.get(action) ?? 0) - now);
 }
 
+function getInteractiveBattleActions() {
+  if (!campaign || !battleUiActive() || resultOverlayOpen) return [];
+  return getAvailableActions(campaign).filter((action) => remainingCooldown(action) <= 0);
+}
+
 function setBattlePressure(phase, label) {
   const staticFallback = battleVisualFallback;
   const lang = currentLang();
@@ -1541,7 +1546,7 @@ function activateBattleFallback(stage, sessionId) {
   let fallback = null;
   fallback = new BattleVisualizer(elements.battleFallbackCanvas, getBattlePresentation(stage.id), {
     nodeGoal: stage.nodeGoal,
-    getAvailableActions: () => campaign ? getAvailableActions(campaign) : [],
+    getAvailableActions: getInteractiveBattleActions,
     onAssetStatus: renderBattleAssetStatus,
     onActionRequest: (action) => void handleAction(action),
     onEncounterEvent: (event) => void handleEncounterEvent(event, sessionId, fallback),
@@ -1575,7 +1580,7 @@ async function startBattle() {
       const presentation = renderBattlePresentation(stage);
       battleRenderer = new RealtimeBattle(elements.battleCanvas3d, presentation, {
         nodeGoal: stage.nodeGoal,
-        getAvailableActions: () => campaign ? getAvailableActions(campaign) : [],
+        getAvailableActions: getInteractiveBattleActions,
         onAssetStatus: renderBattleAssetStatus,
         onActionRequest: (action) => void handleAction(action),
         onEncounterEvent: (event) => void handleEncounterEvent(event, sessionId, battleRenderer),
