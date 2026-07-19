@@ -3,7 +3,14 @@ import test from "node:test";
 
 import { BattleVisualizer } from "../battle-visualizer.js";
 
-function makeVisualizer(t, { reducedMotion = false, setTimeout, clearTimeout, canvas = {}, options = {} } = {}) {
+function makeVisualizer(t, {
+  reducedMotion = false,
+  setTimeout,
+  clearTimeout,
+  canvas = {},
+  options = {},
+  presentation,
+} = {}) {
   const priorWindow = globalThis.window;
   globalThis.window = {
     matchMedia: () => ({ matches: reducedMotion }),
@@ -15,7 +22,7 @@ function makeVisualizer(t, { reducedMotion = false, setTimeout, clearTimeout, ca
     else globalThis.window = priorWindow;
   });
 
-  const visualizer = new BattleVisualizer(canvas, undefined, options);
+  const visualizer = new BattleVisualizer(canvas, presentation, options);
   visualizer.renderStatic = () => {};
   visualizer.publishRuntimeState = () => {};
   visualizer.hasBridgeAtlas = () => false;
@@ -334,4 +341,31 @@ test("BattleVisualizer ignores rejected suspended-audio resumes without allocati
   assert.equal(calls.resume, 1, "a rejected resume must still be attempted exactly once");
   assert.equal(calls.oscillators, 0, "a rejected resume must not allocate an oscillator");
   assert.equal(calls.starts, 0, "a rejected resume must not start an oscillator");
+});
+
+test("BattleVisualizer spawns hostile waves from the 24×12 route frontage without legacy 16×8 coordinates", (t) => {
+  const visualizer = makeVisualizer(t, {
+    presentation: { stageNumber: 10 },
+  });
+  visualizer.burst = () => {};
+  visualizer.playSpatial = () => {};
+
+  visualizer.spawnEncounterWave({ id: "zenith-wave", hostiles: 3, hostileHealth: 4 });
+
+  assert.equal(visualizer.enemies.length, 3, "the fallback renderer must materialize every hostile in the supplied wave");
+  visualizer.enemies.forEach((enemy, routeIndex) => {
+    assert.equal(enemy.routeIndex, routeIndex, `hostile ${routeIndex + 1} must use its authored route`);
+    assert.equal(enemy.x, 22.5, `route ${routeIndex + 1} must spawn beyond the legacy 16-column boundary`);
+    assert.equal(enemy.y, 5.5, `route ${routeIndex + 1} must spawn on the far-side deployment frontage`);
+    assert.equal(
+      enemy.path.length,
+      visualizer.navigation.routes[routeIndex].cells.length - 1,
+      `route ${routeIndex + 1} must retain every waypoint after its spawn cell`,
+    );
+    assert.deepEqual(
+      enemy.path.at(-1),
+      { x: 1.5, y: 5.5 },
+      `route ${routeIndex + 1} must terminate at the portal frontage`,
+    );
+  });
 });

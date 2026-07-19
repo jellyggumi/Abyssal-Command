@@ -247,6 +247,13 @@
       hidden: true,
       'aria-labelledby': 'stage-heading'
     },
+      e('p', {
+        id: 'fullscreen-status',
+        className: 'sr-only',
+        role: 'status',
+        'aria-live': 'polite',
+        'aria-atomic': 'true'
+      }),
       e('div', { className: 'cockpit-top' },
         e('div', { className: 'cockpit-stage-id' },
           e('p', { id: 'stage-number', className: 'eyebrow' }, '3단계 중 1단계'),
@@ -329,12 +336,15 @@
             className: 'fullscreen-toggle',
             type: 'button',
             'aria-pressed': 'false',
+            'aria-keyshortcuts': 'Shift+F',
+            title: '전체 화면 시작 (Shift+F)',
             'data-i18n': 'screen.fullscreenEnter'
           }, '전체 화면'),
           e('button', {
             id: 'retry-stage',
             type: 'button',
             'aria-label': '현재 스테이지 재시도',
+            'data-i18n-aria': 'screen.retryButton',
             'data-i18n': 'screen.retryButton'
           }, '스테이지 재시도'),
           e('button', {
@@ -415,12 +425,15 @@
               id: 'battle-canvas-3d',
               tabIndex: 0,
               'aria-label': '실시간 전술 전장',
+              'aria-keyshortcuts': '1 2 3 4 5 6 7',
               'data-i18n-aria': 'battle.canvasAria',
               'aria-describedby': 'battle-direct-help'
             }),
             e('canvas', {
               id: 'battle-canvas-fallback',
+              tabIndex: 0,
               'aria-label': '전술 전장 대체 화면',
+              'aria-keyshortcuts': '1 2 3 4 5 6 7',
               'data-i18n-aria': 'battle.fallbackCanvasAria',
               hidden: true
             }),
@@ -473,13 +486,13 @@
           ),
           e('div', { className: 'command-grid' },
             [
-              { id: 'hunt', key: 'H', name: 'command.hunt.name', label: '사냥', desc: 'command.hunt.desc', text: '균열 흔적 두 곳을 탐색' },
-              { id: 'extract', key: 'E', name: 'command.extract.name', label: '추출', desc: 'command.extract.desc', text: '그림자 은닉처를 확보' },
-              { id: 'materialize', key: 'M', name: 'command.materialize.name', label: '실체화', desc: 'command.materialize.desc', text: '그림자 군단을 소환' },
-              { id: 'capture', key: 'C', name: 'command.capture.name', label: '점거', desc: 'command.capture.desc', text: '기술 거점을 고정' },
-              { id: 'possess', key: 'P', name: 'command.possess.name', label: '빙의', desc: 'command.possess.desc', text: '2단계에서 해금' },
-              { id: 'domain', key: 'D', name: 'command.domain.name', label: '군주의 영역', desc: 'command.domain.desc', text: '3단계에서 1회 사용' },
-              { id: 'assault', key: 'A', name: 'command.assault.name', label: '총공격', desc: 'command.assault.desc', text: '스테이지 보스를 무너뜨림' }
+              { id: 'hunt', key: '1', name: 'command.hunt.name', label: '사냥', desc: 'command.hunt.desc', text: '균열 흔적 두 곳을 탐색' },
+              { id: 'extract', key: '2', name: 'command.extract.name', label: '추출', desc: 'command.extract.desc', text: '그림자 은닉처를 확보' },
+              { id: 'materialize', key: '3', name: 'command.materialize.name', label: '실체화', desc: 'command.materialize.desc', text: '그림자 군단을 소환' },
+              { id: 'capture', key: '4', name: 'command.capture.name', label: '점거', desc: 'command.capture.desc', text: '기술 거점을 고정' },
+              { id: 'possess', key: '5', name: 'command.possess.name', label: '빙의', desc: 'command.possess.desc', text: '2단계에서 해금' },
+              { id: 'domain', key: '6', name: 'command.domain.name', label: '군주의 영역', desc: 'command.domain.desc', text: '3단계에서 1회 사용' },
+              { id: 'assault', key: '7', name: 'command.assault.name', label: '총공격', desc: 'command.assault.desc', text: '스테이지 보스를 무너뜨림' }
             ].map(function (act) {
               return e('button', {
                 key: act.id,

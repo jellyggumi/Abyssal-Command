@@ -20,6 +20,8 @@ const COMPACT_FIELD_OVERLAY_MODE = process.argv.includes("--compact-field-overla
 const STAGE_THREE_CHECKLIST_MODE = process.argv.includes("--stage-three-checklist");
 const MOBILE_SAVE_CONTROLS_MODE = process.argv.includes("--mobile-save-controls");
 const MEDIA_ERROR_CLASSIFICATION_MODE = process.argv.includes("--media-error-classification");
+const DESKTOP_READABILITY_MODE = process.argv.includes("--desktop-readability");
+const RESUME_RENDERING_MODE = process.argv.includes("--resume-rendering");
 let playwright;
 if (!BRIDGE_CACHE_BOUNDARY_MODE && !SOURCE_CACHE_ADMISSION_MODE && !MEDIA_ERROR_CLASSIFICATION_MODE) {
   try {
@@ -431,13 +433,13 @@ function isTeardownAbortedBridgeAsset(url, errorText) {
     return false;
   }
 }
-function collectClientErrors(page) {
+function collectClientErrors(page, { echoConsole = true } = {}) {
   const unexpectedErrors = [];
   const optionalMediaErrors = [];
   const expectedBgmAborts = [];
   page.on("pageerror", (error) => unexpectedErrors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => {
-    console.log(`PAGE LOG [${message.type()}]:`, message.text());
+    if (echoConsole) console.log(`PAGE LOG [${message.type()}]:`, message.text());
     if (message.type() !== "error") return;
     const sourceUrl = message.location().url || "";
     if (isOptionalMediaUrl(sourceUrl)) {
@@ -688,12 +690,19 @@ function assertObservedSourceGlbPaths(sourceGlbTrace, expectedPaths, scenario) {
 }
 
 
-function collectStrictClientErrors(page) {
-  const errors = collectClientErrors(page);
+function collectStrictClientErrors(page, {
+  allowExpectedBgmAborts = false,
+  echoConsole = true,
+} = {}) {
+  const errors = collectClientErrors(page, { echoConsole });
   let teardownStarted = false;
   page.on("requestfailed", (request) => {
     const errorText = request.failure()?.errorText || "failed";
     if (teardownStarted && isTeardownAbortedRealtimeAsset(request.url(), errorText)) return;
+    if (allowExpectedBgmAborts && isExpectedBgmSceneHandoffAbort(request.url(), errorText)) {
+      errors.expectedBgmAborts.push(`request (${requestOrigin(request)}): ${request.url()} (${errorText})`);
+      return;
+    }
     errors.unexpectedErrors.push(`request (${requestOrigin(request)}): ${request.url()} (${errorText})`);
   });
   page.on("response", (response) => {
@@ -1528,7 +1537,7 @@ const STAGE_ONE_BRIEFING_LOCALES = Object.freeze({
     role: "역할 · 황혼의 감시자로서 그림자 군단을 지휘하십시오.",
     playerJob: "그림자 군단을 지휘해 현재 목표를 완수하고, 관문 수호 내구도가 0에 이르지 않게 하며, 보스 신더 워든을 처치하십시오.",
     objective: "스테이지 1 목표 · 사냥 → 추출 → 실체화 → 점거로 제련소 거점을 장악하십시오.",
-    nextOrder: "지금 H 또는 사냥을 눌러 첫 번째 균열 흔적을 찾으십시오.",
+    nextOrder: "지금 1 또는 사냥을 눌러 첫 번째 균열 흔적을 찾으십시오.",
     operation: "작전: 잿불 돌파",
     doctrine: "제련소 길을 열고 그림자를 일으켜 워든의 지배를 끊으십시오.",
     boss: "신더 워든",
@@ -1544,7 +1553,7 @@ const STAGE_ONE_BRIEFING_LOCALES = Object.freeze({
     role: "Role · Command the Dusk Legion as the Twilight Watcher.",
     playerJob: "Command the Dusk Legion, complete the current objective, keep Gate ward integrity above zero, and defeat Cinder Warden.",
     objective: "Stage 1 objective · Hunt → Extract → Materialize → Capture the forge node.",
-    nextOrder: "Now press H or Hunt to find the first rift spoor.",
+    nextOrder: "Now press 1 or Hunt to find the first rift spoor.",
     operation: "Operation: Ember Break",
     doctrine: "Open the forge lane, raise shades, then sever the Warden's hold.",
     boss: "Cinder Warden",
@@ -1838,7 +1847,7 @@ async function verifyRealtimeThreeBattleOnly(browser, baseUrl) {
       true,
       "The tactical canvas must receive focus before direct keyboard control.",
     );
-    await page.keyboard.press("KeyH");
+    await page.keyboard.press("Digit1");
     await page.waitForFunction(
       () => document.querySelector("#action-hunt") instanceof HTMLButtonElement
         && document.querySelector("#action-hunt").disabled,
@@ -1885,6 +1894,89 @@ async function verifyRealtimeThreeBattleOnly(browser, baseUrl) {
     console.log(`PLAYTEST_BROWSER_REALTIME_GLB_RESPONSES ${JSON.stringify(sourceGlbTrace.records)}`);
     assertObservedSourceGlbPaths(sourceGlbTrace, STAGE_ONE_SOURCE_GLB_PATHS, "Focused real-time Three Stage 1 battle");
     assertNoStrictClientErrors(strictErrors, "Focused real-time Three Stage 1 battle");
+  } finally {
+    strictErrors?.beginTeardown();
+    await context.close();
+  }
+}
+
+async function verifyResumeRendering(browser, baseUrl) {
+  const context = await browser.newContext({
+    acceptDownloads: true,
+    viewport: { width: 390, height: 844 },
+  });
+  let strictErrors;
+  try {
+    await context.addInitScript(() => {
+      window.__battleWebglDrawCalls = 0;
+      for (const contextName of ["WebGLRenderingContext", "WebGL2RenderingContext"]) {
+        const Context = window[contextName];
+        if (!Context) continue;
+        for (const methodName of ["drawArrays", "drawElements"]) {
+          const nativeDraw = Context.prototype[methodName];
+          if (typeof nativeDraw !== "function") continue;
+          Context.prototype[methodName] = function auditedDraw(...args) {
+            if (this.canvas?.id === "battle-canvas-3d") {
+              window.__battleWebglDrawCalls += 1;
+            }
+            return nativeDraw.apply(this, args);
+          };
+        }
+      }
+    });
+
+    const page = await context.newPage();
+    strictErrors = collectStrictClientErrors(page, {
+      allowExpectedBgmAborts: true,
+      echoConsole: false,
+    });
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: "domcontentloaded" });
+    await waitForCampaignBoot(page);
+    await startStageOneCampaign(page);
+    await enterBattle(page, 1, "Cinder Span");
+    await assertDirectSourceGlbReadiness(page);
+    await page.waitForFunction(() => window.__battleWebglDrawCalls > 0, undefined, { timeout: 30_000 });
+    const preReloadDraws = await page.evaluate(() => window.__battleWebglDrawCalls);
+    assert.ok(preReloadDraws > 0, `The initial Stage 1 WebGL renderer must submit draw calls; observed ${preReloadDraws}.`);
+
+    await page.locator("#action-hunt").scrollIntoViewIfNeeded();
+    await clickEnabledAction(page, "#action-hunt");
+    const beforeReloadTrace = await campaignTrace(page);
+    assert.equal(
+      beforeReloadTrace.filter((event) => event?.kind === "action" && event.action === "hunt").length,
+      1,
+      "The pre-reload campaign must persist exactly one accepted Hunt action.",
+    );
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await waitForCampaignBoot(page);
+    await page.locator("#resume-campaign").waitFor({ state: "visible" });
+    await page.locator("#resume-campaign").click();
+    await page.locator("#campaign-screen").waitFor({ state: "visible" });
+    await page.locator("#battle-field").waitFor({ state: "visible" });
+    await page.locator("#battle-canvas-3d").waitFor({ state: "visible" });
+    await assertDirectSourceGlbReadiness(page);
+    await page.waitForFunction(() => window.__battleWebglDrawCalls > 0, undefined, { timeout: 30_000 });
+
+    const postResumeDraws = await page.evaluate(() => window.__battleWebglDrawCalls);
+    assert.ok(postResumeDraws > 0, `The resumed Stage 1 WebGL renderer must submit draw calls; observed ${postResumeDraws}.`);
+    assert.equal(
+      await page.locator("#battle-visual-fallback").isHidden(),
+      true,
+      "A successfully resumed direct renderer must keep the Canvas fallback hidden.",
+    );
+    assert.equal(
+      await page.locator("#battle-asset-status").getAttribute("data-state"),
+      "loaded",
+      "A successfully resumed direct renderer must retain loaded asset status.",
+    );
+    const resumedTrace = await campaignTrace(page);
+    assert.equal(
+      resumedTrace.filter((event) => event?.kind === "action" && event.action === "hunt").length,
+      1,
+      "Reload and Resume must restore the persisted Hunt transition exactly once.",
+    );
+    assertNoStrictClientErrors(strictErrors, "390×844 reload and Resume rendering");
   } finally {
     strictErrors?.beginTeardown();
     await context.close();
@@ -2275,40 +2367,41 @@ async function verifyCompactControlJourney(browser, baseUrl) {
     const traceBeforeButtonHotkey = await campaignTrace(page);
     const surfaceBeforeButtonHotkey = await campaignSurface(page);
     const huntEnabledBeforeButtonHotkey = await page.locator("#action-hunt").isEnabled();
-    await page.keyboard.press("KeyH");
+    await page.keyboard.press("Digit1");
     await page.waitForTimeout(150);
-    assert.deepEqual(await campaignTrace(page), traceBeforeButtonHotkey, "Focused Return to Lobby must block H from dispatching a campaign action.");
+    assert.deepEqual(await campaignTrace(page), traceBeforeButtonHotkey, "Focused Return to Lobby must block 1 from dispatching a campaign action.");
     assert.deepEqual(await campaignSurface(page), surfaceBeforeButtonHotkey, "Focused Return to Lobby must preserve public campaign status.");
     assert.equal(await page.locator("#action-hunt").isEnabled(), huntEnabledBeforeButtonHotkey, "Focused Return to Lobby must preserve command availability.");
-    const campaignSummary = page.locator("#campaign-screen summary").first();
-    await campaignSummary.focus();
+    const languageToggle = page.locator("#lang-toggle");
+    await languageToggle.waitFor({ state: "visible" });
+    await languageToggle.focus();
     assert.equal(
-      await campaignSummary.evaluate((summary) => document.activeElement === summary),
+      await languageToggle.evaluate((button) => document.activeElement === button),
       true,
-      "A focusable campaign summary must receive focus before its single-key guard is exercised.",
+      "The visible compact language toggle must receive focus before its single-key guard is exercised.",
     );
-    const traceBeforeSummaryHotkey = await campaignTrace(page);
-    const surfaceBeforeSummaryHotkey = await campaignSurface(page);
-    const huntEnabledBeforeSummaryHotkey = await page.locator("#action-hunt").isEnabled();
-    await page.keyboard.press("KeyH");
+    const traceBeforeLanguageHotkey = await campaignTrace(page);
+    const surfaceBeforeLanguageHotkey = await campaignSurface(page);
+    const huntEnabledBeforeLanguageHotkey = await page.locator("#action-hunt").isEnabled();
+    await page.keyboard.press("Digit1");
     await page.waitForTimeout(150);
-    assert.deepEqual(await campaignTrace(page), traceBeforeSummaryHotkey, "Focused campaign summary must block H from dispatching a campaign action.");
-    assert.deepEqual(await campaignSurface(page), surfaceBeforeSummaryHotkey, "Focused campaign summary must preserve public campaign status.");
-    assert.equal(await page.locator("#action-hunt").isEnabled(), huntEnabledBeforeSummaryHotkey, "Focused campaign summary must preserve command availability.");
+    assert.deepEqual(await campaignTrace(page), traceBeforeLanguageHotkey, "Focused compact language toggle must block 1 from dispatching a campaign action.");
+    assert.deepEqual(await campaignSurface(page), surfaceBeforeLanguageHotkey, "Focused compact language toggle must preserve public campaign status.");
+    assert.equal(await page.locator("#action-hunt").isEnabled(), huntEnabledBeforeLanguageHotkey, "Focused compact language toggle must preserve command availability.");
 
     const traceStart = (await campaignTrace(page)).length;
     await canvas.focus();
     assert.equal(
       await canvas.evaluate((element) => document.activeElement === element),
       true,
-      "The direct battlefield must receive focus before its H action-hotkey is exercised.",
+      "The direct battlefield must receive focus before its 1 action-hotkey is exercised.",
     );
-    await page.keyboard.press("KeyH");
+    await page.keyboard.press("Digit1");
     await page.waitForFunction(() => document.querySelector("#action-hunt") instanceof HTMLButtonElement && document.querySelector("#action-hunt").disabled);
     assert.deepEqual(
       (await campaignTrace(page)).slice(traceStart),
       [{ kind: "action", action: "hunt" }],
-      "Focused direct canvas must retain H campaign-action dispatch at 320×568.",
+      "Focused direct canvas must retain 1 campaign-action dispatch at 320×568.",
     );
     assertNoStrictClientErrors(strictErrors, "Compact control journey");
   } finally {
@@ -2585,6 +2678,112 @@ async function verifyMobileSaveControls(browser, baseUrl) {
     assertNoStrictClientErrors(strictErrors, "Focused 360px active-play save controls");
   } finally {
     strictErrors?.beginTeardown();
+    await context.close();
+  }
+}
+
+async function verifyDesktopReadability(browser, baseUrl) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  try {
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: "domcontentloaded" });
+    await waitForCampaignBoot(page);
+    if (await page.locator("html").getAttribute("lang") !== "en") {
+      await page.locator("#lang-toggle").click();
+      await page.waitForFunction(() => document.documentElement.lang === "en");
+    }
+    await startStageOneCampaign(page);
+    await enterBattle(page, 1, "Cinder Span");
+    await page.evaluate(async () => {
+      await document.fonts?.ready;
+      await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+    });
+
+    const skipLink = page.locator(".skip-link");
+    await skipLink.focus();
+    const surface = await page.evaluate(() => {
+      const describeText = (element) => ({
+        text: element?.textContent?.trim() ?? "",
+        rendered: Boolean(element && element.getClientRects().length > 0),
+        clientWidth: element?.clientWidth ?? 0,
+        clientHeight: element?.clientHeight ?? 0,
+        scrollWidth: element?.scrollWidth ?? 0,
+        scrollHeight: element?.scrollHeight ?? 0,
+      });
+      const panel = document.querySelector("#command-panel");
+      const panelRect = panel?.getBoundingClientRect();
+      const commands = [...(panel?.querySelectorAll("button[data-action]") ?? [])].map((button) => {
+        const rect = button.getBoundingClientRect();
+        const centerTarget = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        return {
+          id: button.id,
+          insidePanel: Boolean(
+            panelRect
+            && rect.left >= panelRect.left - 0.5
+            && rect.top >= panelRect.top - 0.5
+            && rect.right <= panelRect.right + 0.5
+            && rect.bottom <= panelRect.bottom + 0.5
+          ),
+          ownsCenter: Boolean(centerTarget && button.contains(centerTarget)),
+        };
+      });
+      const skip = document.querySelector(".skip-link");
+      const skipRect = skip?.getBoundingClientRect();
+      return {
+        objective: describeText(document.querySelector(".ashen-field-command__objective")),
+        resources: [...document.querySelectorAll(".battle-resource-bar dt")].map(describeText),
+        panel: {
+          rendered: Boolean(panel && panel.getClientRects().length > 0),
+          clientWidth: panel?.clientWidth ?? 0,
+          clientHeight: panel?.clientHeight ?? 0,
+          scrollWidth: panel?.scrollWidth ?? 0,
+          scrollHeight: panel?.scrollHeight ?? 0,
+          commands,
+        },
+        skipLink: {
+          focused: document.activeElement === skip,
+          width: skipRect?.width ?? 0,
+          height: skipRect?.height ?? 0,
+        },
+      };
+    });
+
+    assert.notEqual(surface.objective.text, "", "At 1440×900, the current field objective must expose readable text.");
+    assert.equal(surface.objective.rendered, true, "At 1440×900, the current field objective must remain rendered.");
+    assert.ok(
+      surface.objective.scrollWidth <= surface.objective.clientWidth
+        && surface.objective.scrollHeight <= surface.objective.clientHeight,
+      `At 1440×900, the current field objective must fit without clipping; observed ${JSON.stringify(surface.objective)}.`,
+    );
+
+    assert.equal(surface.resources.length, 5, "The desktop battle HUD must retain all five resource labels.");
+    for (const resource of surface.resources) {
+      assert.notEqual(resource.text, "", "Each desktop battle resource must retain a visible label.");
+      assert.equal(resource.rendered, true, `The ${resource.text} resource label must remain rendered at 1440×900.`);
+      assert.ok(
+        resource.scrollWidth <= resource.clientWidth && resource.scrollHeight <= resource.clientHeight,
+        `The ${resource.text} resource label must fit or wrap without clipping at 1440×900; observed ${JSON.stringify(resource)}.`,
+      );
+    }
+
+    assert.equal(surface.panel.rendered, true, "At 1440×900, the command panel must remain rendered.");
+    assert.equal(surface.panel.commands.length, 7, "The desktop command panel must retain all seven campaign actions.");
+    assert.ok(
+      surface.panel.scrollWidth <= surface.panel.clientWidth
+        && surface.panel.scrollHeight <= surface.panel.clientHeight,
+      `At 1440×900, the command panel must expose its full content without an internal clipped overflow; observed ${JSON.stringify(surface.panel)}.`,
+    );
+    for (const command of surface.panel.commands) {
+      assert.equal(command.insidePanel, true, `${command.id} must remain inside the visible 1440×900 command panel.`);
+      assert.equal(command.ownsCenter, true, `${command.id} must retain a reachable center hit target at 1440×900.`);
+    }
+
+    assert.equal(surface.skipLink.focused, true, "The skip link must become the active keyboard target when focused.");
+    assert.ok(
+      surface.skipLink.width >= 44 && surface.skipLink.height >= 44,
+      `The focused skip link must provide at least a 44×44px target; observed ${surface.skipLink.width}×${surface.skipLink.height}.`,
+    );
+  } finally {
     await context.close();
   }
 }
@@ -3477,7 +3676,7 @@ async function verifyStageThreeChecklist(browser, baseUrl) {
 function cleanupError(label, error) {
   return `${label}: ${error instanceof Error ? error.message : String(error)}`;
 }
-const CURRENT_STATIC_CACHE = "abyssal-surge-static-v46";
+const CURRENT_STATIC_CACHE = "abyssal-surge-static-v48";
 
 function currentWorkerCacheName() {
   let serviceWorkerSource;
@@ -3498,7 +3697,7 @@ function currentWorkerCacheName() {
   assert.equal(
     cacheName,
     CURRENT_STATIC_CACHE,
-    "sw.js must retain the v46 static cache revision required by the browser cache assertion.",
+    "sw.js must retain the current static cache revision required by the browser cache assertion.",
   );
   return cacheName;
 }
@@ -3885,6 +4084,16 @@ async function run() {
     if (STAGE_THREE_CHECKLIST_MODE) {
       await verifyStageThreeChecklist(browser, hosting.baseUrl);
       console.log("PLAYTEST_BROWSER_STAGE_THREE_CHECKLIST_PASS locales=ko,en optional=possess,domain current=assault");
+      return;
+    }
+    if (DESKTOP_READABILITY_MODE) {
+      await verifyDesktopReadability(browser, hosting.baseUrl);
+      console.log("PLAYTEST_BROWSER_DESKTOP_READABILITY_PASS viewport=1440x900 objective=readable resources=5 commands=7 skip-link=44x44");
+      return;
+    }
+    if (RESUME_RENDERING_MODE) {
+      await verifyResumeRendering(browser, hosting.baseUrl);
+      console.log("PLAYTEST_BROWSER_RESUME_RENDERING_PASS viewport=390x844 pre-reload-draws=positive post-resume-draws=positive fallback=hidden asset-status=loaded errors=0");
       return;
     }
     if (REALTIME_ONLY_MODE) {

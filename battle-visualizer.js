@@ -15,7 +15,7 @@
 
 import {
   TILE_W, TILE_H, ELEV_H, LAYER,
-  worldToScreen, pickTile, depthKey, findPath, steer,
+  worldToScreen, pickTile, depthKey, steer,
   rectContains, directionIndex, mulberry32
 } from "./iso-math.js";
 import {
@@ -24,17 +24,17 @@ import {
 } from "./tilemap-renderer.js";
 import { DEFAULT_BATTLE_PRESENTATION } from "./battle-presentation.js";
 import {
-  STAGE_GRID_WIDTH as GRID_W,
-  STAGE_GRID_HEIGHT as GRID_H,
   createStageNavigation,
 } from "./stage-navigation.js";
-const ALLY_SPAWN = Object.freeze({ x: 1, y: 3.5 });
-const BOSS_TILE = Object.freeze({ x: 14, y: 3.5 });
-const BREACH_X = 1.2;          // enemy reaching this x = breach
-const GOAL_X = 13.8;           // ally reaching this x = strike delivered
+
+const ZONE_STYLES = Object.freeze([
+  Object.freeze({ fill: "rgba(255, 184, 92, 0.15)", stroke: "#ffb85c" }),  // spark/orange
+  Object.freeze({ fill: "rgba(171, 104, 255, 0.15)", stroke: "#ab68ff" }), // domain/purple
+  Object.freeze({ fill: "rgba(112, 229, 208, 0.15)", stroke: "#70e5d0" })  // ally/cyan
+]);
+
 const CLASH_DIST = 0.5;
 const CLASH_TICK_S = 0.55;     // seconds between swings in a sustained engagement
-const PICKET_X = 5.5;          // default ally holding line (in front of the nodes)
 const INTERCEPT_RANGE = 3;     // aggressor radius: defenders chase hostiles this close
 const AI_TICK_MS = 250;        // report: transition priority refresh cadence
 
@@ -185,8 +185,25 @@ export class BattleVisualizer {
 
 
     this.navigation = createStageNavigation(this.stageNumber);
+    this.nodeGoal = this.navigation.anchors.nodes.length;
     this.rng = mulberry32(0x5eed + this.stageNumber * 977);
 
+    this.tileZoneIndex = new Map();
+    this.navigation.zones.forEach((zone, zoneIdx) => {
+      for (const cell of zone.cells) {
+        this.tileZoneIndex.set(`${cell.x},${cell.y}`, zoneIdx);
+      }
+    });
+
+    this.timeAccumulator = 0;
+    this.droppedTime = 0;
+    this.wasHidden = false;
+    this.handleVisibilityChange = () => {
+      if (globalThis.document?.hidden) {
+        this.wasHidden = true;
+      }
+    };
+    globalThis.document?.addEventListener?.("visibilitychange", this.handleVisibilityChange);
     this.view = { scale: 1, offsetX: 0, offsetY: 0, width: 0, height: 0 };
     this.terrainMode = TILEMAP_RENDER_MODE.CHUNK;
     this.staticChunks = new Map();
@@ -209,6 +226,10 @@ export class BattleVisualizer {
     this.selection = new Set();
     this.dragRect = null;     // {x0,y0,x1,y1} in canvas px
     this.pointerDown = null;
+    this.activePointerId = null;
+    this.activePointerType = null;
+    this.pointerDownTime = 0;
+    this.waveClearedProposed = false;
     this.pointerHandlers = null;
     this.resizeHandler = null;
 
@@ -283,8 +304,8 @@ export class BattleVisualizer {
 
     // Grid bounding box in projection space.
     const corners = [
-      worldToScreen(0, 0, 0), worldToScreen(GRID_W, 0, 0),
-      worldToScreen(0, GRID_H, 0), worldToScreen(GRID_W, GRID_H, 0)
+      worldToScreen(0, 0, 0), worldToScreen(this.navigation.width, 0, 0),
+      worldToScreen(0, this.navigation.height, 0), worldToScreen(this.navigation.width, this.navigation.height, 0)
     ];
     const minX = Math.min(...corners.map(c => c.x)) - TILE_W / 2;
     const maxX = Math.max(...corners.map(c => c.x)) + TILE_W / 2;
@@ -315,18 +336,13 @@ export class BattleVisualizer {
     return pickTile(sx, sy, (x, y) => this.heightAt(x, y), 4);
   }
 
-  nodePosition(index) {
-    const spacing = 8 / (this.nodeGoal + 1);
-    return { x: 3.5 + index * spacing, y: GRID_H / 2 - 0.5 };
-  }
 
   getTacticalTargetAnchors() {
-    const captureIndex = this.nodes.length + 1;
-    const captureNode = captureIndex <= this.nodeGoal ? this.nodePosition(captureIndex) : null;
+    const captureNode = this.navigation.anchors.nodes[this.nodes.length] ?? null;
     return {
-      materialize: this.project(ALLY_SPAWN.x, ALLY_SPAWN.y, 0),
+      materialize: this.project(this.navigation.anchors.alliedSpawn.x, this.navigation.anchors.alliedSpawn.y, 0),
       capture: captureNode ? this.project(captureNode.x, captureNode.y, 0) : null,
-      assault: this.project(BOSS_TILE.x, BOSS_TILE.y, 0)
+      assault: this.project(this.navigation.anchors.boss.x, this.navigation.anchors.boss.y, 0)
     };
   }
 
@@ -372,8 +388,8 @@ export class BattleVisualizer {
   buildStaticLayer() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.terrainMode = selectTilemapRenderMode({
-      width: GRID_W,
-      height: GRID_H,
+      width: this.navigation.width,
+      height: this.navigation.height,
       backingPixels: this.canvas.width * this.canvas.height,
     });
     this.staticChunks.clear();
@@ -381,8 +397,8 @@ export class BattleVisualizer {
     this.occluderTiles = [];
 
     const floorChunks = new Map();
-    for (let y = 0; y < GRID_H; y++) {
-      for (let x = 0; x < GRID_W; x++) {
+    for (let y = 0; y < this.navigation.height; y++) {
+      for (let x = 0; x < this.navigation.width; x++) {
         const z = this.heightAt(x, y);
         const tile = {
           id: `terrain-${x}-${y}`,
@@ -491,9 +507,12 @@ export class BattleVisualizer {
       ctx.fill();
     }
 
+    const zoneIdx = this.tileZoneIndex?.get(`${x},${y}`);
+    const zoneStyle = zoneIdx !== undefined ? ZONE_STYLES[zoneIdx] : null;
+
     ctx.fillStyle = this.palette.tileTop[Math.min(z, this.palette.tileTop.length - 1)];
-    ctx.strokeStyle = this.palette.gridLine;
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = zoneStyle ? zoneStyle.stroke : this.palette.gridLine;
+    ctx.lineWidth = zoneStyle ? 1.5 : 1;
     ctx.beginPath();
     ctx.moveTo(top.x, top.y - hh);
     ctx.lineTo(top.x + hw, top.y);
@@ -501,6 +520,10 @@ export class BattleVisualizer {
     ctx.lineTo(top.x - hw, top.y);
     ctx.closePath();
     ctx.fill();
+    if (zoneStyle) {
+      ctx.fillStyle = zoneStyle.fill;
+      ctx.fill();
+    }
     ctx.stroke();
   }
 
@@ -622,9 +645,9 @@ export class BattleVisualizer {
     if (!atlas?.image.complete || atlas.image.naturalWidth < 1 || atlas.image.naturalHeight < 1) return null;
     const corners = [
       this.project(0, 0, 0),
-      this.project(GRID_W, 0, 0),
-      this.project(GRID_W, GRID_H, 0),
-      this.project(0, GRID_H, 0),
+      this.project(this.navigation.width, 0, 0),
+      this.project(this.navigation.width, this.navigation.height, 0),
+      this.project(0, this.navigation.height, 0),
     ];
     const left = Math.min(...corners.map((corner) => corner.x));
     const right = Math.max(...corners.map((corner) => corner.x));
@@ -810,72 +833,119 @@ export class BattleVisualizer {
       const rect = this.canvas.getBoundingClientRect();
       return { x: event.clientX - rect.left, y: event.clientY - rect.top };
     };
+
     const down = (event) => {
+      if (this.activePointerId !== null) return;
       if (event.button !== 0) return;
+
       const p = canvasPoint(event);
+      this.activePointerId = event.pointerId;
+      this.activePointerType = event.pointerType;
       this.pointerDown = p;
-      this.dragRect = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+      this.pointerDownTime = performance.now();
+      this.dragRect = null;
+
       this.canvas.setPointerCapture?.(event.pointerId);
       this.renderStatic();
     };
+
     const move = (event) => {
-      if (!this.pointerDown || !this.dragRect) return;
+      if (this.activePointerId === null || event.pointerId !== this.activePointerId) return;
+      if (!this.pointerDown) return;
+
       const p = canvasPoint(event);
-      this.dragRect.x1 = p.x;
-      this.dragRect.y1 = p.y;
+      const dx = p.x - this.pointerDown.x;
+      const dy = p.y - this.pointerDown.y;
+      const dist = Math.hypot(dx, dy);
+      const threshold = this.activePointerType === "touch" ? 12 : 6;
+
+      if (dist > threshold) {
+        this.dragRect = {
+          x0: this.pointerDown.x,
+          y0: this.pointerDown.y,
+          x1: p.x,
+          y1: p.y
+        };
+      } else {
+        this.dragRect = null;
+      }
       this.renderStatic();
     };
+
     const up = (event) => {
-      if (!this.pointerDown) return;
+      if (this.activePointerId === null || event.pointerId !== this.activePointerId) return;
+
       const p = canvasPoint(event);
-      const dx = Math.abs(p.x - this.pointerDown.x);
-      const dy = Math.abs(p.y - this.pointerDown.y);
-      if (dx > 6 || dy > 6) {
+      const dx = p.x - this.pointerDown.x;
+      const dy = p.y - this.pointerDown.y;
+      const dist = Math.hypot(dx, dy);
+      const threshold = this.activePointerType === "touch" ? 12 : 6;
+      const duration = performance.now() - this.pointerDownTime;
+      const isTapEligible = duration <= 500;
+
+      if (dist > threshold) {
         // Drag select: project each ally to screen, Rect.contains filter.
         this.selection.clear();
+        const dragBox = {
+          x0: this.pointerDown.x,
+          y0: this.pointerDown.y,
+          x1: p.x,
+          y1: p.y
+        };
         for (const ally of this.allies) {
           const s = this.project(ally.x, ally.y, this.elevationAt(ally.x, ally.y));
-          if (rectContains(this.dragRect, s.x, s.y)) this.selection.add(ally);
+          if (rectContains(dragBox, s.x, s.y)) this.selection.add(ally);
         }
-      } else if (!this.requestTacticalActionAt(p) && this.selection.size > 0) {
-        // A target command takes priority over selected-unit move orders.
-        const tile = this.unprojectToTile(p.x, p.y);
-        if (tile && this.walkable(tile.x, tile.y)) {
-          this.issueMoveOrder(tile);
-          this.orderFlag = { x: tile.x + 0.5, y: tile.y + 0.5, life: 1.2 };
-          this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 520, duration: 0.12, type: "sine", gain: 0.6 });
+      } else if (isTapEligible) {
+        if (!this.requestTacticalActionAt(p) && this.selection.size > 0) {
+          // A target command takes priority over selected-unit move orders.
+          const tile = this.unprojectToTile(p.x, p.y);
+          if (tile && this.walkable(tile.x, tile.y)) {
+            this.issueMoveOrder(tile);
+            this.orderFlag = { x: tile.x + 0.5, y: tile.y + 0.5, life: 1.2 };
+            this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 520, duration: 0.12, type: "sine", gain: 0.6 });
+          }
         }
-      } else if (this.selection.size === 0) {
-        this.selection.clear();
       }
+
+      this.activePointerId = null;
+      this.activePointerType = null;
       this.pointerDown = null;
       this.dragRect = null;
       this.renderStatic();
     };
-    const cancel = () => {
+
+    const cancel = (event) => {
+      if (this.activePointerId === null || (event && event.pointerId !== this.activePointerId)) return;
+
+      this.activePointerId = null;
+      this.activePointerType = null;
       this.pointerDown = null;
       this.dragRect = null;
       this.renderStatic();
     };
+
+    const lostCapture = (event) => {
+      if (this.activePointerId !== null && event.pointerId === this.activePointerId) {
+        cancel(event);
+      }
+    };
+
     this.canvas.addEventListener("pointerdown", down);
     this.canvas.addEventListener("pointermove", move);
     this.canvas.addEventListener("pointerup", up);
     this.canvas.addEventListener("pointercancel", cancel);
-    this.pointerHandlers = { down, move, up, cancel };
+    this.canvas.addEventListener("lostpointercapture", lostCapture);
+    this.pointerHandlers = { down, move, up, cancel, lostCapture };
   }
 
   issueMoveOrder(tile) {
     for (const ally of this.allies) {
       if (!this.selection.has(ally)) continue;
-      const start = { x: Math.round(ally.x), y: Math.round(ally.y) };
-      const path = findPath(start, { x: tile.x, y: tile.y }, {
-        walkable: (x, y) => this.walkable(x, y),
-        climbOk: (x0, y0, x1, y1) => this.climbOk(x0, y0, x1, y1),
-        width: GRID_W,
-        height: GRID_H
-      });
+      const start = { x: Math.floor(ally.x), y: Math.floor(ally.y) };
+      const path = this.navigation.findPath(start, { x: tile.x, y: tile.y });
       if (path && path.length > 1) {
-        ally.path = path.slice(1).map(node => ({ x: node.x + 0.5 - 0.5, y: node.y + (this.rng() - 0.5) * 0.4 }));
+        ally.path = path.slice(1).map(node => ({ x: node.x + 0.5, y: node.y + 0.5 }));
         ally.holdUntil = performance.now() + 6000; // hold position window after arriving
       }
     }
@@ -885,12 +955,15 @@ export class BattleVisualizer {
 
   actionPoint(point) {
     if (point && Number.isFinite(point.x) && Number.isFinite(point.y)) return point;
-    if (point === "portal") return ALLY_SPAWN;
-    if (point === "ally") return this.allies[0] ?? ALLY_SPAWN;
-    if (point === "boss") return BOSS_TILE;
-    if (point === "extractor") return { x: 6, y: 3.5 };
-    if (point === "node") return this.nodePosition(Math.min(this.nodeGoal, this.nodes.length + 1));
-    return ALLY_SPAWN;
+    if (point === "portal") return this.navigation.anchors.portal;
+    if (point === "ally") return this.allies[0] ?? this.navigation.anchors.alliedSpawn;
+    if (point === "boss") return this.navigation.anchors.boss;
+    if (point === "extractor") return this.navigation.anchors.extractor;
+    if (point === "node") {
+      const nextNode = this.navigation.anchors.nodes[this.nodes.length];
+      return nextNode ?? this.navigation.anchors.boss;
+    }
+    return this.navigation.anchors.alliedSpawn;
   }
 
   setBridgeClip(assetId, clip, duration = 780) {
@@ -961,6 +1034,13 @@ export class BattleVisualizer {
       this.authoritativeLegion = legion;
       this.reconcileAllies(legion);
     }
+    if (stage && Number.isInteger(stage.nodeGoal)) {
+      this.nodeGoal = stage.nodeGoal;
+    } else {
+      this.nodeGoal = this.navigation.anchors.nodes.length;
+    }
+    const nodeCount = Number(state?.nodes ?? campaign?.stage?.nodes ?? 0);
+    this.nodes = this.navigation.anchors.nodes.slice(0, nodeCount);
     this.applyEncounter({ stageId, config, state: encounterState });
   }
 
@@ -970,6 +1050,7 @@ export class BattleVisualizer {
       this.clearEncounterWave();
       if (!wave || !this.ctx) return;
       this.currentWaveId = wave.id;
+      this.waveClearedProposed = false;
       this.spawnEncounterWave(wave);
     }
   }
@@ -978,14 +1059,16 @@ export class BattleVisualizer {
     for (const enemy of this.enemies) this.clearEngagement(enemy);
     this.enemies = [];
     this.currentWaveId = null;
+    this.waveClearedProposed = false;
   }
 
   spawnAlly(count = 1) {
     const additions = Math.max(0, Number(count) || 0);
+    const alliedSpawn = this.navigation.anchors.alliedSpawn;
     for (let index = 0; index < additions; index += 1) {
       const unit = {
-        x: ALLY_SPAWN.x + (this.allies.length % 3) * 0.34,
-        y: ALLY_SPAWN.y + ((this.allies.length % 3) - 1) * 0.45,
+        x: alliedSpawn.x + (this.allies.length % 3) * 0.34,
+        y: alliedSpawn.y + ((this.allies.length % 3) - 1) * 0.45,
         speed: 1.2 + this.rng() * 0.25,
         hp: 3,
         facing: 0,
@@ -1023,15 +1106,23 @@ export class BattleVisualizer {
   spawnEncounterWave(wave) {
     const count = Math.max(0, Number(wave?.hostiles) || 0);
     const archetype = wave.id === "reinforcement" ? "reinforce" : wave.id;
+    const bossTile = this.navigation.anchors.boss;
     for (let index = 0; index < count; index += 1) {
+      const routeIndex = index % this.navigation.routes.length;
+      const pathCells = this.navigation.routePath(routeIndex, true);
+      const path = pathCells ? pathCells.map(cell => ({ x: cell.x + 0.5, y: cell.y + 0.5 })) : [];
+      const spawnX = path.length > 0 ? path[0].x : bossTile.x;
+      const spawnY = path.length > 0 ? path[0].y : bossTile.y;
+
       const unit = {
-        x: BOSS_TILE.x - 0.5 - this.rng() * 0.5,
-        y: BOSS_TILE.y + (this.rng() - 0.5) * 2.4,
-        speed: archetype === "scout" ? 1.5 + this.rng() * 0.4 : 0.9 + this.rng() * 0.4,
+        x: spawnX,
+        y: spawnY,
+        speed: 2.4, // Keep 2.4 hostile speed
         hp: Math.max(1, Number(wave.hostileHealth) || 2),
         archetype,
         waveId: wave.id,
-        laneY: archetype === "scout" ? (this.rng() > 0.5 ? 1.6 : GRID_H - 2.6) : BOSS_TILE.y + (this.rng() - 0.5) * 1.6,
+        routeIndex,
+        path: path.length > 1 ? path.slice(1) : null,
         facing: 4,
         defeated: false,
         breachVisualized: false,
@@ -1039,7 +1130,7 @@ export class BattleVisualizer {
       this.enemies.push(unit);
       this.burst(unit.x, unit.y, 8, this.palette.enemy);
     }
-    this.playSpatial(BOSS_TILE.x, BOSS_TILE.y, { freq: 180, type: "sawtooth", duration: 0.3, gain: 0.8 });
+    this.playSpatial(bossTile.x, bossTile.y, { freq: 180, type: "sawtooth", duration: 0.3, gain: 0.8 });
   }
 
   emitEncounterEvent(type) {
@@ -1133,6 +1224,9 @@ export class BattleVisualizer {
     for (let i = 0; i < count; i++) {
       const angle = this.rng() * Math.PI * 2;
       const speed = 0.5 + this.rng() * 1.8;
+      if (this.particles.length >= 360) {
+        this.particles.shift();
+      }
       this.particles.push({
         x: fx, y: fy, z: 0.15,
         sortRoot: { x: fx, y: fy, z: 0 },
@@ -1315,7 +1409,7 @@ export class BattleVisualizer {
       } else {
         const prey = this.nearestEnemy(ally, INTERCEPT_RANGE);
         if (prey) target = { x: prey.x, y: prey.y };
-        else if (performance.now() >= ally.holdUntil && Math.abs(ally.x - PICKET_X) > 0.25) target = { x: PICKET_X, y: ally.y };
+        else if (performance.now() >= ally.holdUntil && Math.abs(ally.x - this.navigation.anchors.rally.x) > 0.25) target = { x: this.navigation.anchors.rally.x, y: ally.y };
       }
       if (!target) continue;
       const magnitude = Math.hypot(target.x - ally.x, target.y - ally.y) || 1;
@@ -1324,7 +1418,7 @@ export class BattleVisualizer {
         y: ((target.y - ally.y) / magnitude) * ally.speed,
       }, this.allies.filter((candidate) => !candidate.defeated));
       const nextX = ally.x + velocity.x * dt;
-      const nextY = Math.max(0.4, Math.min(GRID_H - 0.4, ally.y + velocity.y * dt));
+      const nextY = Math.max(0.4, Math.min(this.navigation.height - 0.4, ally.y + velocity.y * dt));
       const blocked = this.clampMovementToContact(ally, nextX, nextY, true);
       if (!blocked) {
         ally.x = nextX;
@@ -1335,19 +1429,35 @@ export class BattleVisualizer {
 
     for (const enemy of this.enemies) {
       if (!this.liveEnemy(enemy) || this.engagements.has(enemy)) continue;
-      const preferred = { x: -enemy.speed, y: 0 };
-      if (enemy.archetype === "scout" && enemy.x > 5) preferred.y = (enemy.laneY - enemy.y) * 1.2;
-      else if (enemy.x <= 5) preferred.y = (BOSS_TILE.y - enemy.y) * 0.6;
-      const velocity = steer(enemy, preferred, this.enemies.filter((candidate) => !candidate.defeated && !candidate.breachVisualized));
+      let target = null;
+      if (enemy.path?.length) {
+        target = enemy.path[0];
+        const dx = target.x - enemy.x;
+        const dy = target.y - enemy.y;
+        if (dx * dx + dy * dy < 0.05) {
+          enemy.path.shift();
+          if (enemy.path.length === 0) enemy.path = null;
+        }
+      } else {
+        target = this.navigation.anchors.alliedSpawn;
+      }
+      if (!target) continue;
+
+      const magnitude = Math.hypot(target.x - enemy.x, target.y - enemy.y) || 1;
+      const velocity = steer(enemy, {
+        x: ((target.x - enemy.x) / magnitude) * enemy.speed,
+        y: ((target.y - enemy.y) / magnitude) * enemy.speed,
+      }, this.enemies.filter((candidate) => !candidate.defeated && !candidate.breachVisualized));
+
       const nextX = enemy.x + velocity.x * dt;
-      const nextY = Math.max(0.4, Math.min(GRID_H - 0.4, enemy.y + velocity.y * dt));
+      const nextY = Math.max(0.4, Math.min(this.navigation.height - 0.4, enemy.y + velocity.y * dt));
       const blocked = this.clampMovementToContact(enemy, nextX, nextY, false);
       if (!blocked) {
         enemy.x = nextX;
         enemy.y = nextY;
       }
       enemy.facing = directionIndex(velocity.x, velocity.y);
-      if (enemy.x <= BREACH_X) {
+      if (enemy.x <= this.navigation.anchors.portal.x) {
         enemy.breachVisualized = true;
         this.clearEngagement(enemy);
         this.burst(enemy.x, enemy.y, 10, this.palette.enemy);
@@ -1357,7 +1467,8 @@ export class BattleVisualizer {
       }
     }
 
-    if (this.currentWaveId && this.enemies.length > 0 && this.enemies.every((enemy) => enemy.defeated)) {
+    if (this.currentWaveId && this.enemies.length > 0 && !this.waveClearedProposed && this.enemies.every((enemy) => enemy.defeated || enemy.breachVisualized)) {
+      this.waveClearedProposed = true;
       this.emitEncounterEvent("wave-cleared");
     }
   }
@@ -1431,31 +1542,32 @@ export class BattleVisualizer {
   }
 
   buildDynamicDrawRecords() {
+    const alliedSpawn = this.navigation.anchors.alliedSpawn;
+    const bossTile = this.navigation.anchors.boss;
     const records = [
       {
-        id: "ally-portal", x: ALLY_SPAWN.x, y: ALLY_SPAWN.y, z: 0,
-        sortRoot: this.sortRootAt(ALLY_SPAWN.x, ALLY_SPAWN.y),
+        id: "ally-portal", x: alliedSpawn.x, y: alliedSpawn.y, z: 0,
+        sortRoot: this.sortRootAt(alliedSpawn.x, alliedSpawn.y),
         layer: "prop", render: "portal", color: this.palette.ally,
       },
       {
-        id: "boss-portal", x: BOSS_TILE.x, y: BOSS_TILE.y, z: 0,
-        sortRoot: this.sortRootAt(BOSS_TILE.x, BOSS_TILE.y),
+        id: "boss-portal", x: bossTile.x, y: bossTile.y, z: 0,
+        sortRoot: this.sortRootAt(bossTile.x, bossTile.y),
         layer: "prop", render: "portal", color: this.palette.enemy,
       },
       {
-        id: "boss", x: BOSS_TILE.x + 0.4, y: BOSS_TILE.y + 0.4, z: 0,
-        sortRoot: this.sortRootAt(BOSS_TILE.x + 0.4, BOSS_TILE.y + 0.4),
+        id: "boss", x: bossTile.x + 0.4, y: bossTile.y + 0.4, z: 0,
+        sortRoot: this.sortRootAt(bossTile.x + 0.4, bossTile.y + 0.4),
         layer: "actor", render: "boss",
       },
     ];
-    for (let index = 1; index <= this.nodeGoal; index++) {
-      const node = this.nodePosition(index);
+    this.navigation.anchors.nodes.forEach((node, index) => {
       records.push({
-        id: `node-${index}`, x: node.x, y: node.y, z: 0,
+        id: node.id, x: node.x, y: node.y, z: 0,
         sortRoot: this.sortRootAt(node.x, node.y), layer: "prop",
-        render: "node", node, captured: index <= this.nodes.length,
+        render: "node", node, captured: index < this.nodes.length,
       });
-    }
+    });
     for (let index = 0; index < this.allies.length; index++) {
       const unit = this.allies[index];
       records.push({
@@ -1626,7 +1738,7 @@ export class BattleVisualizer {
   drawBoss() {
     if (!this.bossExposed) return;
     const ctx = this.ctx;
-    const p = this.project(BOSS_TILE.x, BOSS_TILE.y, this.elevationAt(BOSS_TILE.x, BOSS_TILE.y));
+    const p = this.project(this.navigation.anchors.boss.x, this.navigation.anchors.boss.y, this.elevationAt(this.navigation.anchors.boss.x, this.navigation.anchors.boss.y));
     const s = this.view.scale;
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.beginPath();
@@ -1776,23 +1888,52 @@ export class BattleVisualizer {
     if (this.destroyed || this.reducedMotion) return;
     this.animationFrameId = requestAnimationFrame(() => this.animate());
     const now = performance.now();
-    // Preserve real-time enemy travel through a slow frame without allowing one
-    // large physics step to tunnel through a clash or breach line.
-    const elapsed = Math.min((now - this.lastTime) / 1000, 1);
-    this.lastTime = now;
-    const substeps = Math.max(1, Math.ceil(elapsed / 0.05));
-    const dt = elapsed / substeps;
 
-    for (let step = 0; step < substeps; step += 1) {
-      this.aiAccumulator += dt * 1000;
+    if (document.hidden) {
+      this.lastTime = now;
+      this.timeAccumulator = 0;
+      return;
+    }
+    if (this.wasHidden) {
+      this.lastTime = now;
+      this.timeAccumulator = 0;
+      this.wasHidden = false;
+    }
+
+    let elapsed = (now - this.lastTime) / 1000;
+    this.lastTime = now;
+
+    if (elapsed < 0) elapsed = 0;
+
+    // frame delta clamp .10s
+    if (elapsed > 0.10) {
+      this.droppedTime += (elapsed - 0.10);
+      elapsed = 0.10;
+    }
+
+    this.timeAccumulator += elapsed;
+
+    const FIXED_DT = 1 / 60;
+    // max 6 catch-up steps
+    let steps = Math.floor(this.timeAccumulator / FIXED_DT);
+    if (steps > 6) {
+      const droppedSteps = steps - 6;
+      this.droppedTime += droppedSteps * FIXED_DT;
+      this.timeAccumulator -= droppedSteps * FIXED_DT;
+      steps = 6;
+    }
+
+    for (let step = 0; step < steps; step += 1) {
+      this.aiAccumulator += FIXED_DT * 1000;
       if (this.aiAccumulator >= AI_TICK_MS) {
         this.aiAccumulator = 0;
         // AI tick slot (250ms): archetype decisions are cheap and framerate-independent.
       }
 
-      this.updateUnits(dt);
-      this.updateParticles(dt);
-      if (this.breachFlash > 0) this.breachFlash = Math.max(0, this.breachFlash - dt * 1.6);
+      this.updateUnits(FIXED_DT);
+      this.updateParticles(FIXED_DT);
+      if (this.breachFlash > 0) this.breachFlash = Math.max(0, this.breachFlash - FIXED_DT * 1.6);
+      this.timeAccumulator -= FIXED_DT;
     }
     this.publishRuntimeState();
     this.render();
@@ -1808,6 +1949,10 @@ export class BattleVisualizer {
       this.canvas?.removeEventListener("pointermove", this.pointerHandlers.move);
       this.canvas?.removeEventListener("pointerup", this.pointerHandlers.up);
       this.canvas?.removeEventListener("pointercancel", this.pointerHandlers.cancel);
+      this.canvas?.removeEventListener("lostpointercapture", this.pointerHandlers.lostCapture);
+    }
+    if (this.handleVisibilityChange) {
+      globalThis.document?.removeEventListener?.("visibilitychange", this.handleVisibilityChange);
     }
     if (this.actionFeedbackTimer !== null) (window.clearTimeout ?? globalThis.clearTimeout)(this.actionFeedbackTimer);
     if (this.animationFrameId !== null) cancelAnimationFrame(this.animationFrameId);

@@ -1,4 +1,4 @@
-export const RULES_VERSION = "abyssal-surge-rules-v6";
+export const RULES_VERSION = "abyssal-surge-rules-v7";
 export const SAVE_SCHEMA = "abyssal-surge-campaign";
 export const SAVE_SCHEMA_VERSION = 5;
 
@@ -143,7 +143,7 @@ export const STAGES = Object.freeze([
         cooldown: STANDARD_COMMAND_COOLDOWNS.assault,
         damage: 4,
         possessedDamage: 1,
-        counter: Object.freeze({ mode: "shielded", baseDamage: 8, shieldDivisor: 4, thinLegion: 5, thinPenalty: 1 })
+        counter: Object.freeze({ mode: "shielded", baseDamage: 6, shieldDivisor: 4, thinLegion: 5, thinPenalty: 1 })
       })
     }),
     rewards: Object.freeze([
@@ -676,6 +676,11 @@ function rewardBenefits(rewards) {
       benefits.stageEntries[stageId] = target;
     }
   }
+  benefits.cooldownMultiplier = Math.max(0.60, benefits.cooldownMultiplier);
+  benefits.possessedAssaultBonus = Math.min(4, benefits.possessedAssaultBonus);
+  benefits.counterReduction = Math.min(3, benefits.counterReduction);
+  benefits.materializeBonus = Math.min(4, benefits.materializeBonus);
+  benefits.entryAegis = Math.min(2, benefits.entryAegis);
   return Object.freeze(benefits);
 }
 
@@ -689,7 +694,7 @@ export function getCampaignBenefits(state) {
   const echoThroneEntry = entryBenefits(benefits, STAGES_BY_ID["echo-throne"]);
   return Object.freeze({
     maxIntegrity: benefits.maxIntegrity,
-    cooldownReduction: Number(clamp(1 - benefits.cooldownMultiplier, 0, 0.5).toFixed(12)),
+    cooldownReduction: Number(clamp(1 - benefits.cooldownMultiplier, 0, 0.40).toFixed(12)),
     lensDamage: benefits.possessedAssaultBonus,
     vanguardLegion: echoThroneEntry.legion,
     anchorRestore: echoThroneEntry.integrity,

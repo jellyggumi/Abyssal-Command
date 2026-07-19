@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Campaign balance simulator + exploit fuzzer for Abyssal Surge rules v5.
+// Campaign balance simulator + exploit fuzzer for Abyssal Surge rules.
 // Node 22, zero dependencies. It derives arithmetic from the public stage
 // definitions and reward-benefit API, then exercises legal campaign transitions.
 // Usage: node scripts/run-campaign-balance-sim.mjs   (prints one JSON summary)

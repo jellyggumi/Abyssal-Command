@@ -214,6 +214,486 @@ async function loadStartupStatus(locale, {
   return elements.saveStatus.textContent;
 }
 
+async function loadCommandFocusHotkey() {
+  const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
+  const commandButtonsDefinition = source.match(
+    /commandButtons:\s*(?<expression>\[\.\.\.document\.querySelectorAll\([^)\n]+\)\])/,
+  );
+  assert.ok(commandButtonsDefinition, "app runtime must collect its command controls");
+
+  const listeners = new Map();
+  const createControl = (dataset = {}) => {
+    const controlListeners = new Map();
+    const control = {
+      dataset,
+      disabled: false,
+      addEventListener: (type, listener) => controlListeners.set(type, listener),
+      dispatch: (type, event = {}) => controlListeners.get(type)?.(event),
+      focus: () => {
+        document.activeElement = control;
+      },
+    };
+    return control;
+  };
+  const hunt = createControl({ action: "hunt" });
+  const assault = createControl({ action: "assault" });
+  const fieldFeedback = { dataset: { action: "hunt" } };
+  const editable = createControl();
+  const body = createControl();
+  const documentElement = createControl();
+  const document = {
+    activeElement: null,
+    body,
+    documentElement,
+    addEventListener: () => {},
+    querySelectorAll: (selector) => (
+      selector === "button[data-action]" ? [hunt, assault] : [fieldFeedback, hunt, assault]
+    ),
+  };
+  const collectionContext = vm.createContext({ document });
+  vm.runInContext(
+    `globalThis.commandButtons = ${commandButtonsDefinition.groups.expression};`,
+    collectionContext,
+    { filename: "app.js" },
+  );
+
+  const inertControl = () => createControl();
+  const battleCanvas3d = createControl();
+  const battleFallbackCanvas = createControl();
+  const elements = {
+    ambience: inertControl(),
+    battleCanvas3d,
+    battleFallbackCanvas,
+    bgmToggle: null,
+    briefing: inertControl(),
+    cinematicButton: inertControl(),
+    cinematicTranscript: inertControl(),
+    cinematicTranscriptToggle: inertControl(),
+    commandButtons: collectionContext.commandButtons,
+    exportSave: inertControl(),
+    importSave: editable,
+    restart: inertControl(),
+    resultOverlay: { ...inertControl(), querySelectorAll: () => [] },
+    resume: inertControl(),
+    retry: inertControl(),
+    retryFromResult: inertControl(),
+    returnToLobby: inertControl(),
+    returnToLobbyFromResult: inertControl(),
+    start: inertControl(),
+    startCombat: inertControl(),
+    toggleFullscreen: null,
+  };
+  const actions = [];
+  const context = vm.createContext({
+    ACTION_KEYS: Object.freeze({ a: "assault" }),
+    DIGIT_ACTION_KEYS: Object.freeze({ "1": "hunt", digit1: "hunt" }),
+    battleUiActive: () => true,
+    beginNewCampaign: () => {},
+    campaign: { status: "active" },
+    currentStage: () => ({ id: "cinder-span" }),
+    document,
+    elements,
+    entryGuidanceStageId: null,
+    exportSave: () => {},
+    getAvailableActions: () => ["hunt", "assault"],
+    handleAction: (action) => actions.push(action),
+    handleRetry: () => {},
+    handleFullscreenError: () => {},
+    importSave: () => {},
+    pendingCommandFocus: false,
+    playCinematic: () => {},
+    refreshNarrationLanguage: () => {},
+    refreshSaveStatus: () => {},
+    resultOverlayOpen: false,
+    resumeCampaign: () => Promise.resolve(),
+    returnToLobby: () => Promise.resolve(),
+    stageBriefingOpen: true,
+    syncAmbienceButtonText: () => {},
+    syncCinematicCopy: () => {},
+    syncFullscreenControl: () => {},
+    toggleAmbience: () => {},
+    toggleBgm: () => {},
+    toggleCinematicTranscript: () => {},
+    toggleFullscreen: () => Promise.resolve(),
+    updateResumeAffordance: () => {},
+    window: {
+      addEventListener: (type, listener) => listeners.set(type, listener),
+    },
+  });
+  context.render = () => context.focusPendingCommand();
+  const definitions = [
+    appFunction(source, "focusPendingCommand", "render"),
+    appFunction(source, "beginStageCombat", "exportSave"),
+    appFunction(source, "wireControls", "startLiquidEtherBackground"),
+  ];
+  vm.runInContext(
+    `${definitions.join("\n\n")}\nglobalThis.focusPendingCommand = focusPendingCommand; wireControls();`,
+    context,
+    { filename: "app.js" },
+  );
+
+  const pressKey = (key, code) => {
+    let prevented = false;
+    listeners.get("keydown")({
+      altKey: false,
+      code,
+      ctrlKey: false,
+      key,
+      metaKey: false,
+      preventDefault: () => {
+        prevented = true;
+      },
+      repeat: false,
+    });
+    return prevented;
+  };
+  return {
+    actions,
+    assault,
+    battleCanvas3d,
+    battleFallbackCanvas,
+    body,
+    editable,
+    hunt,
+    activeElement: () => document.activeElement,
+    acknowledgeBriefing: () => elements.startCombat.dispatch("click"),
+    pressAssault: () => pressKey("a", "KeyA"),
+    pressDigitOne: () => pressKey("1", "Digit1"),
+  };
+}
+
+async function loadFullscreenRuntime({ locale = "en", fullscreenEnabled = true } = {}) {
+  const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
+  const documentListeners = new Map();
+  const windowListeners = new Map();
+  const requestRuns = [];
+  const exitRuns = [];
+  const statusWrites = [];
+  let statusText = "";
+
+  const createDeferredOperation = () => {
+    let resolve;
+    let reject;
+    const promise = new Promise((settle, fail) => {
+      resolve = settle;
+      reject = fail;
+    });
+    return { promise, reject, resolve };
+  };
+  const createControl = ({ tagName = "BUTTON", isContentEditable = false } = {}) => {
+    const attributes = new Map();
+    const listeners = new Map();
+    return {
+      attributes,
+      dataset: {},
+      disabled: false,
+      hidden: false,
+      isContentEditable,
+      tagName,
+      addEventListener: (type, listener) => listeners.set(type, listener),
+      dispatch: (type, event = {}) => listeners.get(type)?.(event),
+      focus() {
+        document.activeElement = this;
+      },
+      getAttribute: (name) => attributes.get(name) ?? null,
+      getClientRects: () => [{}],
+      querySelectorAll: () => [],
+      setAttribute: (name, value) => attributes.set(name, String(value)),
+    };
+  };
+
+  const body = createControl({ tagName: "BODY" });
+  const documentElement = createControl({ tagName: "HTML" });
+  const input = createControl({ tagName: "INPUT" });
+  const contentEditable = createControl({ tagName: "DIV", isContentEditable: true });
+  const screen = createControl({ tagName: "SECTION" });
+  const toggle = createControl();
+  const fullscreenStatus = {
+    get textContent() {
+      return statusText;
+    },
+    set textContent(value) {
+      statusText = value;
+      statusWrites.push(value);
+    },
+  };
+  const document = {
+    activeElement: body,
+    body,
+    documentElement,
+    fullscreenElement: null,
+    fullscreenEnabled,
+    addEventListener: (type, listener) => documentListeners.set(type, listener),
+    exitFullscreen() {
+      const run = createDeferredOperation();
+      exitRuns.push(run);
+      return run.promise;
+    },
+    querySelector: (selector) => selector === "#fullscreen-status" ? fullscreenStatus : null,
+  };
+  screen.requestFullscreen = (options) => {
+    const run = createDeferredOperation();
+    run.options = options;
+    requestRuns.push(run);
+    return run.promise;
+  };
+
+  const inertControl = () => createControl();
+  const elements = {
+    ambience: inertControl(),
+    battleCanvas3d: inertControl(),
+    battleFallbackCanvas: inertControl(),
+    bgmToggle: null,
+    briefing: inertControl(),
+    cinematicButton: inertControl(),
+    cinematicTranscript: inertControl(),
+    cinematicTranscriptToggle: inertControl(),
+    commandButtons: [],
+    exportSave: inertControl(),
+    importSave: inertControl(),
+    restart: inertControl(),
+    resultOverlay: inertControl(),
+    resume: inertControl(),
+    retry: inertControl(),
+    retryFromResult: inertControl(),
+    returnToLobby: inertControl(),
+    returnToLobbyFromResult: inertControl(),
+    screen,
+    start: inertControl(),
+    startCombat: inertControl(),
+    toggleFullscreen: toggle,
+  };
+  const context = vm.createContext({
+    ACTION_KEYS: Object.freeze({}),
+    DIGIT_ACTION_KEYS: Object.freeze({}),
+    battleUiActive: () => false,
+    beginNewCampaign: () => {},
+    beginStageCombat: () => {},
+    campaign: { status: "active" },
+    document,
+    elements,
+    exportSave: () => {},
+    fullscreenPending: false,
+    getAvailableActions: () => [],
+    handleAction: () => {},
+    handleRetry: () => {},
+    importSave: () => {},
+    playCinematic: () => {},
+    refreshNarrationLanguage: () => {},
+    refreshSaveStatus: () => {},
+    render: () => {},
+    resultOverlayOpen: false,
+    resumeCampaign: () => Promise.resolve(),
+    returnToLobby: () => Promise.resolve(),
+    syncAmbienceButtonText: () => {},
+    syncCinematicCopy: () => {},
+    toggleAmbience: () => {},
+    toggleBgm: () => {},
+    toggleCinematicTranscript: () => {},
+    translate: (key) => translations[locale][key] ?? key,
+    updateResumeAffordance: () => {},
+    window: {
+      addEventListener: (type, listener) => windowListeners.set(type, listener),
+    },
+  });
+  const definitions = [
+    appFunction(source, "syncFullscreenControl", "announceFullscreen"),
+    appFunction(source, "announceFullscreen", "handleFullscreenError"),
+    appFunction(source, "handleFullscreenError", "toggleFullscreen"),
+    appFunction(source, "toggleFullscreen", "playCinematic"),
+    appFunction(source, "wireControls", "startLiquidEtherBackground"),
+  ];
+  vm.runInContext(
+    `${definitions.join("\n\n")}\nglobalThis.fullscreenApi = { sync: syncFullscreenControl, toggle: toggleFullscreen }; wireControls();`,
+    context,
+    { filename: "app.js" },
+  );
+
+  const pressKey = (key, { shiftKey = false } = {}) => {
+    let prevented = false;
+    windowListeners.get("keydown")({
+      altKey: false,
+      code: key === "F" || key === "f" ? "KeyF" : key,
+      ctrlKey: false,
+      key,
+      metaKey: false,
+      preventDefault: () => {
+        prevented = true;
+      },
+      repeat: false,
+      shiftKey,
+    });
+    return prevented;
+  };
+  return {
+    body,
+    contentEditable,
+    document,
+    exitRuns,
+    fullscreenStatus,
+    input,
+    requestRuns,
+    screen,
+    statusWrites,
+    toggle,
+    dispatchDocument: (type) => documentListeners.get(type)?.(),
+    pressKey,
+    sync: () => context.fullscreenApi.sync(),
+    toggleFullscreen: () => context.fullscreenApi.toggle(),
+  };
+}
+
+test("fullscreen support honors fullscreenEnabled and publishes the operable control state", async () => {
+  const supported = await loadFullscreenRuntime();
+  assert.equal(supported.toggle.hidden, false, "an enabled Fullscreen API must expose the campaign control");
+  assert.equal(supported.toggle.disabled, false, "an idle Fullscreen API control must remain operable");
+  assert.equal(supported.toggle.getAttribute("aria-pressed"), "false", "the control must report that the campaign screen is not fullscreen");
+  assert.equal(supported.toggle.getAttribute("aria-keyshortcuts"), "Shift+F", "the control must expose its keyboard shortcut");
+  assert.equal(supported.toggle.textContent, translations.en["screen.fullscreenEnter"], "the idle control must use the active locale's enter action");
+  assert.equal(supported.toggle.getAttribute("title"), translations.en["screen.fullscreenEnterTitle"], "the idle control title must describe the localized shortcut");
+
+  const policyBlocked = await loadFullscreenRuntime({ fullscreenEnabled: false });
+  assert.equal(policyBlocked.toggle.hidden, true, "a browser policy that disables fullscreen must hide the unusable control even when methods exist");
+});
+
+test("fullscreen requests hide browser navigation and suppress overlapping transitions", async () => {
+  const fixture = await loadFullscreenRuntime();
+
+  fixture.toggle.dispatch("click");
+  fixture.toggle.dispatch("click");
+  assert.equal(fixture.requestRuns.length, 1, "a pending fullscreen request must suppress a second button transition");
+  assert.deepEqual(
+    { ...fixture.requestRuns[0].options },
+    { navigationUI: "hide" },
+    "campaign fullscreen must request the distraction-free navigation UI mode",
+  );
+  assert.equal(fixture.toggle.disabled, true, "the fullscreen control must be disabled while the native transition is pending");
+
+  fixture.requestRuns[0].resolve();
+  await Promise.resolve();
+  assert.equal(fixture.toggle.disabled, true, "resolving requestFullscreen before fullscreenchange must not reopen the overlap window");
+
+  fixture.document.fullscreenElement = fixture.screen;
+  fixture.dispatchDocument("fullscreenchange");
+  assert.equal(fixture.toggle.disabled, false, "the native fullscreenchange event must release the transition guard");
+
+  fixture.toggle.dispatch("click");
+  fixture.toggle.dispatch("click");
+  assert.equal(fixture.exitRuns.length, 1, "a pending native exit must suppress a second exit request");
+  fixture.exitRuns[0].resolve();
+  await Promise.resolve();
+});
+
+test("fullscreenchange synchronizes the control and announces localized entry and exit", async () => {
+  for (const locale of ["ko", "en"]) {
+    const fixture = await loadFullscreenRuntime({ locale });
+
+    fixture.document.fullscreenElement = fixture.screen;
+    fixture.dispatchDocument("fullscreenchange");
+    assert.equal(fixture.toggle.getAttribute("aria-pressed"), "true", `${locale} entry must expose the active pressed state`);
+    assert.equal(fixture.toggle.textContent, translations[locale]["screen.fullscreenExit"], `${locale} entry must swap the control to the exit action`);
+    assert.equal(fixture.toggle.getAttribute("title"), translations[locale]["screen.fullscreenExitTitle"], `${locale} entry must localize the shortcut title`);
+    assert.equal(fixture.fullscreenStatus.textContent, translations[locale]["screen.fullscreenEntered"], `${locale} entry must announce the completed transition`);
+
+    fixture.document.fullscreenElement = null;
+    fixture.dispatchDocument("fullscreenchange");
+    assert.equal(fixture.toggle.getAttribute("aria-pressed"), "false", `${locale} exit must clear the pressed state`);
+    assert.equal(fixture.toggle.textContent, translations[locale]["screen.fullscreenEnter"], `${locale} exit must restore the enter action`);
+    assert.equal(fixture.fullscreenStatus.textContent, translations[locale]["screen.fullscreenExited"], `${locale} exit must announce the completed transition`);
+
+    const externalOwner = await loadFullscreenRuntime({ locale });
+    externalOwner.document.fullscreenElement = {};
+    externalOwner.dispatchDocument("fullscreenchange");
+    assert.deepEqual(
+      externalOwner.statusWrites,
+      [],
+      `${locale} fullscreenchange for a different document element must not announce that the campaign exited`,
+    );
+  }
+});
+
+test("fullscreen rejection and fullscreenerror restore the control with one localized error announcement", async () => {
+  for (const failure of ["rejection", "fullscreenerror"]) {
+    const fixture = await loadFullscreenRuntime({ locale: "ko" });
+    const transition = fixture.toggleFullscreen();
+    assert.equal(fixture.toggle.disabled, true, `${failure} setup must begin with a guarded transition`);
+
+    if (failure === "rejection") {
+      fixture.requestRuns[0].reject(new Error("fullscreen denied"));
+      await transition;
+    } else {
+      fixture.dispatchDocument("fullscreenerror");
+      fixture.requestRuns[0].resolve();
+      await transition;
+    }
+
+    assert.equal(fixture.toggle.disabled, false, `${failure} must restore the fullscreen control`);
+    assert.equal(fixture.toggle.getAttribute("aria-pressed"), "false", `${failure} must retain the actual inactive state`);
+    assert.equal(fixture.fullscreenStatus.textContent, translations.ko["screen.fullscreenError"], `${failure} must publish the localized failure`);
+    assert.deepEqual(fixture.statusWrites, [translations.ko["screen.fullscreenError"]], `${failure} must announce the failure exactly once`);
+  }
+});
+
+test("Shift+F toggles only outside editable controls while Escape remains browser-owned", async () => {
+  const active = await loadFullscreenRuntime();
+  active.body.focus();
+  assert.equal(active.pressKey("F", { shiftKey: true }), true, "Shift+F on the active campaign surface must be consumed");
+  assert.equal(active.requestRuns.length, 1, "Shift+F must dispatch exactly one fullscreen request");
+  active.requestRuns[0].resolve();
+  await Promise.resolve();
+
+  for (const [owner, property] of [
+    ["input", "input"],
+    ["contenteditable region", "contentEditable"],
+  ]) {
+    const fixture = await loadFullscreenRuntime();
+    const editable = fixture[property];
+    editable.focus();
+    assert.equal(fixture.pressKey("F", { shiftKey: true }), false, `Shift+F in an ${owner} must remain available to editing`);
+    assert.equal(fixture.requestRuns.length, 0, `an ${owner} must not dispatch fullscreen`);
+  }
+
+  const escape = await loadFullscreenRuntime();
+  escape.body.focus();
+  assert.equal(escape.pressKey("Escape"), false, "Escape on the campaign surface must remain native fullscreen behavior");
+  assert.equal(escape.requestRuns.length, 0, "Escape must not invoke the custom fullscreen toggle");
+});
+
+test("briefing acknowledgement focuses Hunt and Digit1 dispatches only from command focus", async () => {
+  const fixture = await loadCommandFocusHotkey();
+
+  fixture.acknowledgeBriefing();
+  assert.equal(fixture.activeElement(), fixture.hunt, "acknowledging the briefing must focus the Hunt command button, not a non-focusable field-feedback surface");
+  assert.equal(fixture.pressDigitOne(), true, "Digit1 from the post-briefing Hunt focus must be consumed as a campaign command");
+  assert.deepEqual(fixture.actions, ["hunt"], "Digit1 from the focused Hunt command must dispatch exactly one Hunt");
+
+  fixture.editable.focus();
+  assert.equal(fixture.pressDigitOne(), false, "Digit1 from an editable control must remain available to the control");
+  assert.deepEqual(fixture.actions, ["hunt"], "editable focus must block numeric campaign command dispatch");
+});
+
+test("Assault remains a command outside the tactical canvas and movement owns A on either canvas", async () => {
+  const fixture = await loadCommandFocusHotkey();
+
+  for (const [owner, control] of [
+    ["document body", fixture.body],
+    ["command button", fixture.hunt],
+  ]) {
+    control.focus();
+    assert.equal(fixture.pressAssault(), true, `${owner} focus must consume A as the available Assault command`);
+  }
+  assert.deepEqual(fixture.actions, ["assault", "assault"], "body and command focus must each dispatch exactly one Assault");
+
+  for (const [owner, canvas] of [
+    ["direct renderer", fixture.battleCanvas3d],
+    ["fallback renderer", fixture.battleFallbackCanvas],
+  ]) {
+    canvas.focus();
+    assert.equal(fixture.pressAssault(), false, `${owner} focus must leave A available for tactical movement`);
+  }
+  assert.deepEqual(fixture.actions, ["assault", "assault"], "focused tactical canvases must not dispatch Assault from movement input");
+});
+
 test("new campaign, save transfer, and briefing status copy follows the active Korean or English locale", async () => {
   const contracts = {
     ko: {

@@ -416,7 +416,7 @@ test("Glass Necropolis alone restores the low no-Lens/no-Brand route to a surviv
   state = accept(chooseReward(state, "throne-echo"));
 
   state = clearLateWithoutReward(state);
-  assert.equal(state.stage.integrity, 0, "the low Stage 4 winner must carry the route's actual surviving integrity");
+  assert.equal(state.stage.integrity, 1, "the low Stage 4 winner must carry the route's actual surviving integrity");
   state = accept(chooseReward(state, "tidebreaker-sigil"));
   assert.equal(state.stageId, "howling-sprawl");
   assert.equal(state.stage.integrity, 4, "the global floor remains unchanged before Glass Necropolis");
@@ -663,16 +663,16 @@ test("thin legions take the reckless-assault penalty", () => {
   let state = accept(chooseReward(commands(start(), S1_OPTIMAL), "rift-lens"));
   state = accept(chooseReward(commands(state, S2_LENS), "veil-vanguard"));
   state = commands(state, ["capture", "assault"]);
-  // counter at L4: max(1, 8 - 1) + 1 thin = 8.
-  assert.equal(state.stage.integrity, 0, "counter 8 must exhaust the carried integrity of 7");
-  assert.equal(state.status, "defeat", "an undefended thin assault into the Gate Sovereign is lethal");
+  // v7 counter at L4: max(1, 6 - 1) + 1 thin = 6.
+  assert.equal(state.stage.integrity, 1, "counter 6 must leave one integrity from the carried total of 7");
+  assert.equal(state.status, "active", "the approved Echo counter retune must keep this thin assault survivable");
 
-  // Same position with a fatter legion (L8): counter max(1, 8-2) = 6, no thin penalty.
+  // Same position with a fatter legion (L8): counter max(1, 6-2) = 4, no thin penalty.
   let fat = accept(chooseReward(commands(start(), S1_OPTIMAL), "rift-lens"));
   fat = accept(chooseReward(commands(fat, S2_LENS), "veil-vanguard"));
   fat = commands(fat, ["hunt", "hunt", "extract", "materialize", "materialize", "capture", "assault"]);
   assert.equal(fat.stage.legion, 8);
-  assert.equal(fat.stage.integrity, 1, "an 8-shade legion softens the same counterblow to 6");
+  assert.equal(fat.stage.integrity, 3, "an 8-shade legion softens the same counterblow to 4");
   assert.equal(fat.status, "active");
 });
 
@@ -991,7 +991,7 @@ test("content trace inventory covers every stage, boss, and offered reward", () 
   );
 });
 
-test("v5 publishes only campaign limits globally and keeps combat and rewards with their stages", () => {
+test("v7 publishes only campaign limits globally and keeps combat and rewards with their stages", () => {
   assert.deepEqual(BALANCE, { maxIntegrity: 10 });
 
   const [cinderSpan, veilCitadel, echoThrone] = STAGES;
@@ -1012,7 +1012,7 @@ test("v5 publishes only campaign limits globally and keeps combat and rewards wi
     cooldown: 3,
     damage: 4,
     possessedDamage: 1,
-    counter: { mode: "shielded", baseDamage: 8, shieldDivisor: 4, thinLegion: 5, thinPenalty: 1 },
+    counter: { mode: "shielded", baseDamage: 6, shieldDivisor: 4, thinLegion: 5, thinPenalty: 1 },
   });
 
   assert.deepEqual(

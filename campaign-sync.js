@@ -222,19 +222,22 @@ export class CampaignMirror {
       });
       return;
     }
+    const stampOrder = this.latestStamp ? compareStamps(message.stamp, this.latestStamp) : 1;
     if (
       (message.targetId && message.targetId !== this.originId) ||
-      (this.latestStamp && compareStamps(message.stamp, this.latestStamp) <= 0)
+      stampOrder < 0 ||
+      (stampOrder === 0 && this.latestEnvelope)
     ) {
       return;
     }
     this.revision = Math.max(this.revision, message.stamp.revision);
     this.latestEnvelope = message.envelope;
-    this.latestStamp = createStamp(message.stamp.revision, message.stamp.originId);
+    const acceptedStamp = createStamp(message.stamp.revision, message.stamp.originId);
+    this.latestStamp = acceptedStamp;
     writeValue(this.storage, REVISION_KEY, String(this.revision));
-    writeStamp(this.storage, this.latestStamp);
+    writeStamp(this.storage, acceptedStamp);
     Promise.resolve()
-      .then(() => this.onState(message.envelope, Object.freeze({ originId: message.originId, revision: message.stamp.revision })))
+      .then(() => this.onState(message.envelope, acceptedStamp))
       .catch(() => undefined);
   }
 }

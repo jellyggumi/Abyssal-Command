@@ -167,7 +167,22 @@ h1 { margin-bottom: 0; font-size: clamp(1.55rem, 6vw, 2.65rem); line-height: 1; 
 h2 { margin-bottom: .65rem; font-size: clamp(1.7rem, 7vw, 3.25rem); line-height: 1.05; }
 h3 { margin-bottom: .35rem; font-size: 1.12rem; }
 
-.skip-link { position: fixed; z-index: 10; left: 1rem; top: .75rem; transform: translateY(-180%); padding: .65rem .9rem; border-radius: .5rem; color: #111; background: var(--focus); }
+.skip-link {
+  position: fixed;
+  z-index: 10;
+  top: .75rem;
+  left: 1rem;
+  display: inline-flex;
+  align-items: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: .65rem .9rem;
+  transform: translateY(-180%);
+  border-radius: .5rem;
+  box-sizing: border-box;
+  color: #111;
+  background: var(--focus);
+}
 .skip-link:focus { transform: translateY(0); }
 .site-header, main { width: min(72rem, calc(100% - 1.5rem)); margin-inline: auto; }
 main {
@@ -1714,6 +1729,46 @@ dd { margin: .2rem 0 0; font-size: 1.08rem; font-weight: 800; }
     clip: rect(0 0 0 0);
     white-space: nowrap;
   }
+  #campaign-screen .battle-resource-bar {
+    grid-template-columns: repeat(5, minmax(clamp(7.5rem, 10vw, 9rem), 1fr)) !important;
+  }
+  #campaign-screen .battle-resource-bar > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #campaign-screen .battle-resource-bar dt {
+    overflow: visible;
+    line-height: 1.2;
+    overflow-wrap: normal;
+    text-overflow: clip;
+    white-space: normal;
+  }
+  #campaign-screen .battle-resource-bar [data-resource="boss"] {
+    grid-template-columns: 1.55rem minmax(0, 1fr) auto;
+  }
+  #campaign-screen .battle-resource-bar [data-resource="boss"] dt {
+    grid-row: 1;
+    grid-column: 1 / -1;
+  }
+  #campaign-screen .battle-resource-bar [data-resource="boss"] dd {
+    grid-row: 2;
+    grid-column: 2 / -1;
+  }
+  #command-panel.field-command-dock {
+    height: auto !important;
+    min-height: clamp(10rem, 22dvh, 12rem) !important;
+    max-height: min(18rem, 34dvh);
+    overflow: visible;
+  }
+  #command-panel .command-grid {
+    align-self: stretch;
+    grid-auto-rows: minmax(clamp(3.5rem, 8dvh, 4.5rem), auto);
+  }
+  #command-panel .command-grid button,
+  #command-panel .command-grid button:last-child {
+    width: 100%;
+    max-width: none !important;
+    min-height: clamp(3.5rem, 8dvh, 4.5rem) !important;
+  }
 }
 
 body:has(#campaign-screen:not([hidden])) .site-header { padding: .25rem 0 .18rem; }
@@ -1769,7 +1824,11 @@ body:has(#campaign-screen:not([hidden])) main { overflow: hidden; }
 #campaign-screen:fullscreen {
   width: 100vw;
   height: 100dvh;
-  padding: .45rem;
+  padding:
+    max(.45rem, env(safe-area-inset-top, 0px))
+    max(.45rem, env(safe-area-inset-right, 0px))
+    max(.45rem, env(safe-area-inset-bottom, 0px))
+    max(.45rem, env(safe-area-inset-left, 0px));
   background:
     radial-gradient(circle at 50% -20%, rgb(48 79 96 / 34%), transparent 44rem),
     #05070b;
@@ -1823,7 +1882,6 @@ body:has(#campaign-screen:not([hidden])) main { overflow: hidden; }
       "wave wave";
     gap: .22rem .35rem;
   }
-  .cockpit-top .cockpit-stage-id .eyebrow,
   .cockpit-top .commander-identity,
   .cockpit-top .stage-selector { display: none !important; }
   .cockpit-top .campaign-heading-actions { gap: .2rem; }

@@ -503,14 +503,15 @@ test("React shell exposes the authoritative ten-stage campaign and seven command
     .map((match) => ({ number: Number(match.groups.number), id: match.groups.id }));
   const selectorStages = [...reactUi.matchAll(/\{ num: (?<number>\d+), title: ['"]map\.node\d+Title['"], text: ['"][^'"]+['"] \}/g)]
     .map((match) => Number(match.groups.number));
-  const actions = [...reactUi.matchAll(/\{ id: ['"](?<id>[\w-]+)['"], key: ['"][A-Z]['"], name: ['"]command\.[\w-]+\.name['"]/g)]
-    .map((match) => match.groups.id);
+  const actionKeys = [...reactUi.matchAll(/\{ id: ['"](?<id>[\w-]+)['"], key: ['"](?<key>[1-7])['"], name: ['"]command\.[\w-]+\.name['"]/g)]
+    .map((match) => ({ id: match.groups.id, key: match.groups.key }));
   const expectedActions = ["hunt", "extract", "materialize", "capture", "possess", "domain", "assault"];
+  const expectedActionKeys = expectedActions.map((id, index) => ({ id, key: String(index + 1) }));
 
   assert.equal(STAGES.length, 10, "the deterministic campaign must retain ten stages");
   assert.deepEqual(mapStages, STAGES.map(({ number, id }) => ({ number, id })), "the React campaign map must mirror all engine stages in order");
   assert.deepEqual(selectorStages, STAGES.map(({ number }) => number), "the cockpit selector must expose all ten engine stages");
-  assert.deepEqual(actions, expectedActions, "the React command deck must expose the complete seven-action vocabulary");
+  assert.deepEqual(actionKeys, expectedActionKeys, "the React command deck must map keys 1–7 to the complete ordered seven-action vocabulary");
   assert.match(reactUi, /id:\s*['"]action-['"]\s*\+\s*act\.id[\s\S]*?['"]data-action['"]:\s*act\.id/, "every command record must render a stable action ID and data-action hook");
   for (const stage of STAGES) {
     for (const key of [`map.stage${stage.number}Badge`, `map.node${stage.number}Title`, `map.node${stage.number}Desc`]) {
@@ -565,13 +566,29 @@ test("localized fullscreen control requests, exits, and synchronizes fullscreen 
     readProjectFile("app.js"),
   ]);
   const control = reactUi.match(/e\(['"]button['"],\s*\{\s*id:\s*['"]toggle-fullscreen['"],(?<props>[\s\S]*?)\n\s*\},/);
+  const retryControl = reactUi.match(/e\(['"]button['"],\s*\{\s*id:\s*['"]retry-stage['"],(?<props>[\s\S]*?)\n\s*\},/);
 
   assert.ok(control, "react-game-ui.js must expose #toggle-fullscreen as a button");
   assert.match(control.groups.props, /['"]data-i18n['"]:\s*['"]screen\.fullscreenEnter['"]/, "the fullscreen button must start with localized enter copy");
   assert.match(control.groups.props, /['"]aria-pressed['"]:\s*['"]false['"]/, "the fullscreen button must expose its initial inactive state");
+  assert.ok(retryControl, "react-game-ui.js must expose #retry-stage as a button");
+  assert.match(
+    retryControl.groups.props,
+    /['"]data-i18n-aria['"]:\s*['"]screen\.retryButton['"]/,
+    "the retry control aria-label must follow the active locale instead of retaining its Korean shell copy",
+  );
   for (const locale of ["ko", "en"]) {
-    assert.ok(translations[locale]["screen.fullscreenEnter"], `${locale} must localize entering fullscreen`);
-    assert.ok(translations[locale]["screen.fullscreenExit"], `${locale} must localize exiting fullscreen`);
+    for (const key of [
+      "screen.fullscreenEnter",
+      "screen.fullscreenExit",
+      "screen.fullscreenEnterTitle",
+      "screen.fullscreenExitTitle",
+      "screen.fullscreenEntered",
+      "screen.fullscreenExited",
+      "screen.fullscreenError",
+    ]) {
+      assert.ok(translations[locale][key], `${locale} must own localized fullscreen copy for ${key}`);
+    }
   }
 
   const toggleBody = sourceFunctionBody(app, "toggleFullscreen");
@@ -582,8 +599,13 @@ test("localized fullscreen control requests, exits, and synchronizes fullscreen 
   );
   assert.match(
     toggleBody,
-    /elements\.screen\.requestFullscreen\s*\(\s*\)/,
-    "toggleFullscreen() must request fullscreen on the campaign screen",
+    /elements\.screen\.requestFullscreen\s*\(\s*\{\s*navigationUI:\s*["']hide["']\s*\}\s*\)/,
+    "toggleFullscreen() must request campaign fullscreen with hidden browser navigation",
+  );
+  assert.match(
+    toggleBody,
+    /fullscreenPending\)\s*return[\s\S]*fullscreenPending\s*=\s*true[\s\S]*syncFullscreenControl\s*\(\s*\)/,
+    "toggleFullscreen() must reject overlapping transitions and disable the control before invoking the native API",
   );
 
   const syncBody = sourceFunctionBody(app, "syncFullscreenControl");
@@ -591,9 +613,25 @@ test("localized fullscreen control requests, exits, and synchronizes fullscreen 
   assert.match(syncBody, /setAttribute\s*\(\s*["']aria-pressed["']\s*,\s*String\(active\)\s*\)/, "fullscreen sync must publish the pressed state");
   assert.match(syncBody, /screen\.fullscreenExit[\s\S]*?screen\.fullscreenEnter/, "fullscreen sync must swap localized enter and exit copy");
 
+  const errorBody = sourceFunctionBody(app, "handleFullscreenError");
+  assert.match(
+    errorBody,
+    /fullscreenPending\s*=\s*false[\s\S]*syncFullscreenControl\s*\(\s*\)[\s\S]*screen\.fullscreenError/,
+    "fullscreen failures must release the pending guard, restore the control, and announce the localized error",
+  );
+
   const wireBody = sourceFunctionBody(app, "wireControls");
   assert.match(wireBody, /elements\.toggleFullscreen\?\.addEventListener\s*\(\s*["']click["'][\s\S]*?toggleFullscreen\s*\(\s*\)/, "fullscreen button clicks must invoke toggleFullscreen()");
-  assert.match(wireBody, /document\.addEventListener\s*\(\s*["']fullscreenchange["']\s*,\s*syncFullscreenControl\s*\)/, "native fullscreen changes must resynchronize the control");
+  assert.match(
+    wireBody,
+    /document\.addEventListener\s*\(\s*["']fullscreenchange["']\s*,\s*\(\)\s*=>\s*\{[\s\S]*?fullscreenPending\s*=\s*false[\s\S]*?syncFullscreenControl\s*\(\s*\)[\s\S]*?screen\.fullscreenEntered[\s\S]*?screen\.fullscreenExited/,
+    "native fullscreen changes must release pending state, synchronize the control, and announce localized entry or exit",
+  );
+  assert.match(
+    wireBody,
+    /document\.addEventListener\s*\(\s*["']fullscreenerror["']\s*,\s*handleFullscreenError\s*\)/,
+    "native fullscreen errors must use the shared recovery path",
+  );
   assert.match(wireBody, /syncFullscreenControl\s*\(\s*\)/, "control wiring must synchronize fullscreen support and initial state");
 });
 
@@ -1537,6 +1575,7 @@ test("English narration covers every campaign state and language refresh updates
     syncAmbienceButtonText() {},
     syncCinematicCopy() {},
     updateResumeAffordance() {},
+    syncFullscreenControl() {},
   });
   vm.runInContext(`
     ${narrationDeclarations}

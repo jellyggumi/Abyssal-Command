@@ -19,7 +19,7 @@ import { getBattlePresentation } from "./battle-presentation.js";
 import { CampaignMirror } from "./campaign-sync.js";
 import { currentLang, translate, translations } from "./i18n.js";
 
-const BUILD_TAG = "abyssal-surge-static-v46";
+const BUILD_TAG = "abyssal-surge-static-v48";
 const DB_NAME = "abyssal-surge-campaign";
 const DB_VERSION = 1;
 const STORE_NAME = "campaigns";
@@ -28,6 +28,10 @@ const FALLBACK_KEY = "abyssal-surge-campaign-fallback-v1";
 const MAX_IMPORT_BYTES = 256 * 1024;
 const REWARD_ART_IDS = new Set(["ember-cohort", "rift-lens", "veil-vanguard", "anchor-shard", "throne-echo", "dawnless-crown"]);
 const ACTION_KEYS = Object.freeze({ h: "hunt", e: "extract", m: "materialize", c: "capture", p: "possess", d: "domain", a: "assault" });
+const DIGIT_ACTION_KEYS = Object.freeze({
+  "1": "hunt", "2": "extract", "3": "materialize", "4": "capture", "5": "possess", "6": "domain", "7": "assault",
+  "digit1": "hunt", "digit2": "extract", "digit3": "materialize", "digit4": "capture", "digit5": "possess", "digit6": "domain", "digit7": "assault"
+});
 const BATTLE_ACTION_SEMANTICS = Object.freeze({
   hunt: Object.freeze({ source: "portal", target: "extractor", actor: "commander", actorClip: "Special", sourceAsset: "shade", clip: "Special" }),
   extract: Object.freeze({ source: "extractor", target: "portal", actor: "commander", actorClip: "Special", sourceAsset: "soul-extractor", clip: "Activate" }),
@@ -437,7 +441,7 @@ const elements = Object.freeze({
   cinematicStatus: document.querySelector("#cinematic-status"),
   narrationLine: document.querySelector("#narration-line"),
   narrationSr: document.querySelector("#narration-sr"),
-  commandButtons: [...document.querySelectorAll("[data-action]")],
+  commandButtons: [...document.querySelectorAll("button[data-action]")],
   stageButtons: [...document.querySelectorAll("#stage-selector [data-stage-number]")],
   bgmToggle: document.querySelector("#bgm-toggle"),
   bgmPlayer: document.querySelector("#bgm-player"),
@@ -491,6 +495,7 @@ function currentStage() {
 }
 
 let mirrorActive = false;
+let fullscreenPending = false;
 let lastSaveStatusType = "";
 let lastSaveStatusKey = "";
 let lastSaveStatusExtra = "";
@@ -2195,9 +2200,12 @@ async function beginNewCampaign() {
 async function returnToLobby() {
   if (!campaign) return;
   if (document.fullscreenElement === elements.screen && typeof document.exitFullscreen === "function") {
+    fullscreenPending = true;
+    syncFullscreenControl();
     try {
       await document.exitFullscreen();
     } catch {
+      fullscreenPending = false;
       syncFullscreenControl();
       return;
     }
@@ -2356,24 +2364,58 @@ function toggleCinematicTranscript() {
 function syncFullscreenControl() {
   if (!elements.toggleFullscreen) return;
   const supported = typeof elements.screen?.requestFullscreen === "function"
-    && typeof document.exitFullscreen === "function";
+    && typeof document.exitFullscreen === "function"
+    && document.fullscreenEnabled !== false;
   elements.toggleFullscreen.hidden = !supported;
+  if (!supported) return;
+
   const active = document.fullscreenElement === elements.screen;
   elements.toggleFullscreen.setAttribute("aria-pressed", String(active));
+  elements.toggleFullscreen.disabled = fullscreenPending;
+  elements.toggleFullscreen.setAttribute("aria-keyshortcuts", "Shift+F");
+
   const key = active ? "screen.fullscreenExit" : "screen.fullscreenEnter";
   elements.toggleFullscreen.dataset.i18n = key;
   elements.toggleFullscreen.textContent = translate(key);
+
+  const titleKey = active ? "screen.fullscreenExitTitle" : "screen.fullscreenEnterTitle";
+  elements.toggleFullscreen.setAttribute("title", translate(titleKey));
+}
+
+function announceFullscreen(statusKey) {
+  const statusEl = document.querySelector("#fullscreen-status");
+  if (statusEl) {
+    statusEl.textContent = translate(statusKey);
+  }
+}
+
+function handleFullscreenError() {
+  const wasPending = fullscreenPending;
+  fullscreenPending = false;
+  syncFullscreenControl();
+  if (wasPending) {
+    announceFullscreen("screen.fullscreenError");
+  }
 }
 
 async function toggleFullscreen() {
-  if (!elements.toggleFullscreen || elements.toggleFullscreen.hidden) return;
+  if (!elements.toggleFullscreen || elements.toggleFullscreen.hidden || fullscreenPending) return;
+  const supported = typeof elements.screen?.requestFullscreen === "function"
+    && typeof document.exitFullscreen === "function"
+    && document.fullscreenEnabled !== false;
+  if (!supported) return;
+
+  fullscreenPending = true;
+  syncFullscreenControl();
+
   try {
-    if (document.fullscreenElement) await document.exitFullscreen();
-    else await elements.screen.requestFullscreen();
-  } catch {
-    // Browsers may reject fullscreen when the gesture or embed policy disallows it.
-  } finally {
-    syncFullscreenControl();
+    if (document.fullscreenElement === elements.screen) {
+      await document.exitFullscreen();
+    } else {
+      await elements.screen.requestFullscreen({ navigationUI: "hide" });
+    }
+  } catch (err) {
+    handleFullscreenError();
   }
 }
 
@@ -2435,7 +2477,15 @@ function wireControls() {
   elements.returnToLobbyFromResult.addEventListener("click", () => void returnToLobby());
   elements.retry.addEventListener("click", handleRetry);
   elements.toggleFullscreen?.addEventListener("click", () => void toggleFullscreen());
-  document.addEventListener("fullscreenchange", syncFullscreenControl);
+  document.addEventListener("fullscreenchange", () => {
+    const wasActive = elements.toggleFullscreen?.getAttribute("aria-pressed") === "true";
+    const active = document.fullscreenElement === elements.screen;
+    fullscreenPending = false;
+    syncFullscreenControl();
+    if (active) announceFullscreen("screen.fullscreenEntered");
+    else if (wasActive) announceFullscreen("screen.fullscreenExited");
+  });
+  document.addEventListener("fullscreenerror", handleFullscreenError);
   elements.retryFromResult.addEventListener("click", handleRetry);
   elements.startCombat.addEventListener("click", beginStageCombat);
   elements.briefing.addEventListener("keydown", (event) => {
@@ -2484,16 +2534,50 @@ function wireControls() {
     refreshSaveStatus();
     if (campaign) render();
     refreshNarrationLanguage();
+    syncFullscreenControl();
   });
   window.addEventListener("keydown", (event) => {
-    if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
-    const action = ACTION_KEYS[event.key.toLowerCase()];
-    const focusOwner = document.activeElement;
-    if (focusOwner === elements.battleCanvas3d) {
-      if (action === "domain") return;
-    } else if (focusOwner !== document.body && focusOwner !== document.documentElement) {
-      return;
+    if ((event.key === "F" || event.key === "f") && event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && !event.repeat) {
+      const focusOwner = document.activeElement;
+      const isEditable = focusOwner && (
+        focusOwner.tagName === "INPUT" ||
+        focusOwner.tagName === "TEXTAREA" ||
+        focusOwner.tagName === "SELECT" ||
+        focusOwner.isContentEditable
+      );
+      const supported = typeof elements.screen?.requestFullscreen === "function"
+        && typeof document.exitFullscreen === "function"
+        && document.fullscreenEnabled !== false;
+
+      if (!isEditable && elements.screen && !elements.screen.hidden && supported && campaign) {
+        event.preventDefault();
+        void toggleFullscreen();
+        return;
+      }
     }
+
+    if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+    
+    const focusOwner = document.activeElement;
+    const isCanvasFocused = focusOwner === elements.battleCanvas3d || focusOwner === elements.battleFallbackCanvas;
+    const isBodyFocused = focusOwner === document.body || focusOwner === document.documentElement;
+    const isCommandFocused = elements.commandButtons.includes(focusOwner);
+
+    if (!isCanvasFocused && !isBodyFocused && !isCommandFocused) return;
+
+    let action = null;
+    const keyLower = event.key.toLowerCase();
+    const codeLower = event.code ? event.code.toLowerCase() : "";
+
+    if (DIGIT_ACTION_KEYS[keyLower]) {
+      action = DIGIT_ACTION_KEYS[keyLower];
+    } else if (DIGIT_ACTION_KEYS[codeLower]) {
+      action = DIGIT_ACTION_KEYS[codeLower];
+    } else if (ACTION_KEYS[keyLower]) {
+      action = ACTION_KEYS[keyLower];
+      if (isCanvasFocused && (action === "domain" || action === "assault")) action = null;
+    }
+
     if (action && battleUiActive() && !resultOverlayOpen && campaign && getAvailableActions(campaign).includes(action)) {
       event.preventDefault();
       void handleAction(action);

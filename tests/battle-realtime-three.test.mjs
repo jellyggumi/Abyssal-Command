@@ -157,7 +157,10 @@ async function initializeRendererPresentation() {
     },
     destroyed: false,
     authoritativeLegion: null,
+    navigation: { bounds: { left: -12, right: 12, near: -6, far: 6 } },
+    raycaster: {},
     attachEvents() {},
+    updateCamera() {},
     resize() {},
     async loadStageAssets() {},
     createBattleObjects() {},
@@ -544,27 +547,27 @@ test("RealtimeBattle retires removed ally animation mixers during authoritative 
   assert.deepEqual(battle.mixers, [], "removed ally mixer must not remain in the per-frame update list");
 });
 
-test("RealtimeBattle exposes the shared 16×8 terrain walkability and elevation for 3D navigation", () => {
+test("RealtimeBattle exposes the shared 24×12 terrain walkability and elevation for 3D navigation", () => {
   const cinderSpan = new RealtimeBattle(null, { stageNumber: 1 });
   const veilCitadel = new RealtimeBattle(null, { stageNumber: 2 });
   const echoThrone = new RealtimeBattle(null, { stageNumber: 3 });
 
   const bridgeVoid = cinderSpan.navigationAt(-3, -3);
-  assert.equal(bridgeVoid.x, 5, "Stage 1 navigation must map the bridge void to the shared grid column");
-  assert.equal(bridgeVoid.y, 1, "Stage 1 navigation must map the bridge void to the shared grid row");
+  assert.equal(bridgeVoid.x, 9, "Stage 1 navigation must map world space across all 24 grid columns");
+  assert.equal(bridgeVoid.y, 3, "Stage 1 navigation must map world space across all 12 grid rows");
   assert.equal(
     bridgeVoid.walkable,
     false,
     "the Stage 1 bridge void must be unwalkable to 3D navigation just as it is on the 2D heightfield",
   );
   assert.deepEqual(
-    veilCitadel.navigationAt(-3, -2),
-    { x: 5, y: 2, elevation: 1, walkable: true },
+    veilCitadel.navigationAt(-3, -3.5),
+    { x: 9, y: 2.5, elevation: 1, walkable: true },
     "the Stage 2 raised citadel must report the shared heightfield elevation",
   );
   assert.deepEqual(
-    echoThrone.navigationAt(5, -2),
-    { x: 13, y: 2, elevation: 2, walkable: true },
+    echoThrone.navigationAt(5, -0.5),
+    { x: 17, y: 5.5, elevation: 2, walkable: true },
     "the Stage 3 throne ascent must report the shared two-level elevation",
   );
 });
@@ -572,19 +575,124 @@ test("RealtimeBattle exposes the shared 16×8 terrain walkability and elevation 
 test("RealtimeBattle movement resolution rejects shared chasms and adopts shared terrain elevation", () => {
   const cinderSpan = new RealtimeBattle(null, { stageNumber: 1 });
   const veilCitadel = new RealtimeBattle(null, { stageNumber: 2 });
-  const bridgeUnit = makeUnit({ x: -4, z: -3 });
-  const citadelUnit = makeUnit({ x: -4, z: -2 });
+  const directions = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+  let chasmTransition = null;
+  for (const cell of cinderSpan.navigation.routes[0].cells) {
+    const voidOffset = directions.find(([dx, dy]) => !cinderSpan.navigation.walkable(cell.x + dx, cell.y + dy));
+    if (voidOffset) {
+      chasmTransition = {
+        from: cell,
+        to: { x: cell.x + voidOffset[0], y: cell.y + voidOffset[1] },
+      };
+      break;
+    }
+  }
+  assert.ok(chasmTransition, "Stage 1 must expose a legal route cell adjacent to a chasm");
+  const bridgeStart = cinderSpan.navigation.gridToWorld(chasmTransition.from.x + 0.5, chasmTransition.from.y + 0.5);
+  const bridgeTarget = cinderSpan.navigation.gridToWorld(chasmTransition.to.x + 0.5, chasmTransition.to.y + 0.5);
+  const bridgeUnit = makeUnit({ x: bridgeStart.x, z: bridgeStart.z });
+  bridgeUnit.radius = 0;
 
-  assert.deepEqual(
-    cinderSpan.resolveMovement(bridgeUnit, -3, -3),
-    { x: -4, y: 0, z: -3, blocked: true },
-    "a 3D unit must stop at its prior legal position rather than enter the Stage 1 bridge void",
+  const elevatedRoute = veilCitadel.navigation.routes[0].cells;
+  const elevatedIndex = elevatedRoute.findIndex(
+    (cell, index) => index > 0 && veilCitadel.navigation.heightAt(cell.x, cell.y) === 1,
+  );
+  assert.ok(elevatedIndex > 0, "Stage 2 must expose a reachable raised route cell");
+  const plateauStart = veilCitadel.navigation.gridToWorld(
+    elevatedRoute[elevatedIndex - 1].x + 0.5,
+    elevatedRoute[elevatedIndex - 1].y + 0.5,
+  );
+  const plateauTarget = veilCitadel.navigation.gridToWorld(
+    elevatedRoute[elevatedIndex].x + 0.5,
+    elevatedRoute[elevatedIndex].y + 0.5,
+  );
+  const citadelUnit = makeUnit({ x: plateauStart.x, z: plateauStart.z });
+  citadelUnit.radius = 0;
+
+  const blockedAtChasm = cinderSpan.resolveMovement(bridgeUnit, bridgeTarget.x, bridgeTarget.z);
+  assert.equal(blockedAtChasm.blocked, true, "a 3D unit must not enter the Stage 1 chasm");
+  assert.equal(
+    cinderSpan.navigationAt(blockedAtChasm.x, blockedAtChasm.z).walkable,
+    true,
+    "a blocked 3D move must finish on legal terrain",
+  );
+  assert.notDeepEqual(
+    { x: blockedAtChasm.x, z: blockedAtChasm.z },
+    bridgeTarget,
+    "a blocked 3D move must not resolve onto its void target",
   );
   assert.deepEqual(
-    veilCitadel.resolveMovement(citadelUnit, -3, -2),
-    { x: -3, y: 0.42, z: -2, blocked: false },
-    "a legal 3D move onto the Stage 2 plateau must take the same elevation as the 2D heightfield",
+    veilCitadel.resolveMovement(citadelUnit, plateauTarget.x, plateauTarget.z),
+    { x: plateauTarget.x, y: 0.42, z: plateauTarget.z, blocked: false },
+    "a legal 3D move onto the Stage 2 plateau must take the same elevation as the shared heightfield",
   );
+});
+
+test("RealtimeBattle caps a stalled frame at six deterministic simulation steps", (t) => {
+  const priorDocument = globalThis.document;
+  const priorRequestAnimationFrame = globalThis.requestAnimationFrame;
+  globalThis.document = { hidden: false };
+  const scheduled = [];
+  globalThis.requestAnimationFrame = (callback) => {
+    scheduled.push(callback);
+    return 91;
+  };
+  t.after(() => {
+    if (priorDocument === undefined) delete globalThis.document;
+    else globalThis.document = priorDocument;
+    if (priorRequestAnimationFrame === undefined) delete globalThis.requestAnimationFrame;
+    else globalThis.requestAnimationFrame = priorRequestAnimationFrame;
+  });
+
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const updates = [];
+  let renders = 0;
+  battle.running = true;
+  battle.renderer = { render: () => { renders += 1; } };
+  battle.scene = {};
+  battle.camera = {};
+  battle.update = (dt) => updates.push(dt);
+
+  battle.frame(1000);
+
+  assert.equal(updates.length, 6, "a one-second stall must not trigger more than six catch-up simulation steps");
+  assert.ok(updates.every((dt) => dt === 1 / 60), "every catch-up step must use the fixed 60 Hz timestep");
+  assert.equal(renders, 1, "the capped catch-up frame must still render exactly once");
+  assert.deepEqual(scheduled, [battle.rafCallback], "the frame loop must schedule exactly one successor");
+  assert.ok(battle.accumulator >= 0 && battle.accumulator < 1 / 60, "the capped frame must leave less than one simulation step queued");
+});
+
+test("RealtimeBattle spawns hostile waves from the 24×12 route frontage without legacy 16×8 coordinates", () => {
+  const battle = new RealtimeBattle(null, { stageNumber: 10 });
+  const spawnCalls = [];
+  battle.scene = { add() {} };
+  battle.cloneTemplate = () => {
+    const enemy = makeUnit();
+    enemy.root.rotation = {};
+    return enemy;
+  };
+  battle.resolveSpawn = (enemy, x, z) => {
+    enemy.root.position.set(x, 0, z);
+    spawnCalls.push({ x, z });
+    return true;
+  };
+  battle.play = () => {};
+
+  battle.spawnEncounterWave({ id: "zenith-wave", hostiles: 3, hostileHealth: 4 });
+
+  const expectedSpawns = battle.navigation.routes.map((_, routeIndex) => {
+    const spawnCell = battle.navigation.routePath(routeIndex, true)[0];
+    return battle.navigation.gridToWorld(spawnCell.x + 0.5, spawnCell.y + 0.5);
+  }).map(({ x, z }) => ({ x, z }));
+  assert.deepEqual(spawnCalls, expectedSpawns, "each hostile route must spawn from its authored far-side endpoint");
+  assert.equal(battle.enemies.length, 3, "the renderer must materialize every hostile in the supplied wave");
+  battle.enemies.forEach((enemy, routeIndex) => {
+    const spawnGrid = battle.navigation.worldToGrid(spawnCalls[routeIndex].x, spawnCalls[routeIndex].z);
+    assert.equal(spawnGrid.x, 22.5, `route ${routeIndex + 1} must spawn beyond the legacy 16-column boundary`);
+    assert.equal(enemy.waypoints.length, battle.navigation.routes[routeIndex].cells.length, `route ${routeIndex + 1} must retain its full authored path`);
+    const finalGrid = battle.navigation.worldToGrid(enemy.waypoints.at(-1).x, enemy.waypoints.at(-1).z);
+    assert.deepEqual(finalGrid, { x: 1.5, y: 5.5 }, `route ${routeIndex + 1} must terminate at the portal frontage`);
+  });
 });
 
 test("RealtimeBattle ignores rally clicks that land on the shared Stage 1 chasm", () => {
@@ -659,6 +767,40 @@ test("RealtimeBattle movement resolution stops before static and live colliders"
   assert.equal(liveResult.z, -0.5, "live collision resolution must not introduce lateral drift");
 });
 
+test("RealtimeBattle resolves extractor feedback through the injected shared navigation anchor", () => {
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const defaultPoint = battle.actionFeedbackPoint("extractor");
+  const baseNavigation = battle.navigation;
+  const injectedAnchor = Object.freeze({ id: "extractor", x: 16.5, y: 5.5 });
+  const gridToWorldCalls = [];
+  battle.navigation = {
+    ...baseNavigation,
+    anchors: { ...baseNavigation.anchors, extractor: injectedAnchor },
+    gridToWorld: (x, y) => {
+      gridToWorldCalls.push({ x, y });
+      return baseNavigation.gridToWorld(x, y);
+    },
+  };
+
+  const injectedPoint = battle.actionFeedbackPoint("extractor");
+  const injectedWorld = baseNavigation.gridToWorld(injectedAnchor.x, injectedAnchor.y);
+  assert.deepEqual(
+    gridToWorldCalls,
+    [{ x: injectedAnchor.x, y: injectedAnchor.y }],
+    "extractor feedback must resolve the current shared stage anchor through navigation.gridToWorld",
+  );
+  assert.deepEqual(
+    injectedPoint,
+    {
+      x: injectedWorld.x,
+      y: battle.navigationAt(injectedWorld.x, injectedWorld.z).elevation * 0.42,
+      z: injectedWorld.z,
+    },
+    "extractor feedback must land on the injected shared navigation anchor",
+  );
+  assert.notDeepEqual(injectedPoint, defaultPoint, "changing the shared extractor anchor must move renderer feedback instead of retaining a legacy literal");
+});
+
 test("RealtimeBattle emits bounded directional feedback for every supported action without mutating authoritative combat state", () => {
   const battle = new RealtimeBattle(null, {
     stageNumber: 1,
@@ -698,7 +840,13 @@ test("RealtimeBattle emits bounded directional feedback for every supported acti
   battle.triggerHitStop = (duration) => hitStopCalls.push(duration);
 
 
-  const extractor = { x: -2, y: 0, z: -0.5 };
+  const extractorAnchor = battle.navigation.anchors.extractor;
+  const extractorWorld = battle.navigation.gridToWorld(extractorAnchor.x, extractorAnchor.y);
+  const extractor = {
+    x: extractorWorld.x,
+    y: battle.navigationAt(extractorWorld.x, extractorWorld.z).elevation * 0.42,
+    z: extractorWorld.z,
+  };
   const semantics = [
     { action: "hunt", source: "portal", target: "extractor" },
     { action: "extract", source: "extractor", target: "portal" },
@@ -713,7 +861,7 @@ test("RealtimeBattle emits bounded directional feedback for every supported acti
   assert.deepEqual(
     battle.actionFeedbackPoint("extractor"),
     extractor,
-    "extract feedback must use the 2D-parity extractor grid coordinate rather than the portal",
+    "extract feedback must use its authored coordinate on the expanded 24×12 tactical grid",
   );
   assert.deepEqual(
     feedback,
@@ -731,8 +879,8 @@ test("RealtimeBattle emits bounded directional feedback for every supported acti
   assert.deepEqual(
     particleCalls.map(([x, y, z, color, count]) => [x, Number(y.toFixed(2)), z, color, count]),
     [
-      [8, 1.32, -2, "#accent", 5], [-2, 0.72, -0.5, "#accent", 12],
-      [-2, 0.72, -0.5, "#ally", 5], [8, 1.32, -2, "#ally", 14],
+      [8, 1.32, -2, "#accent", 5], [extractor.x, Number((extractor.y + 0.72).toFixed(2)), extractor.z, "#accent", 12],
+      [extractor.x, Number((extractor.y + 0.72).toFixed(2)), extractor.z, "#ally", 5], [8, 1.32, -2, "#ally", 14],
       [8, 1.32, -2, "#ally", 8], [8, 1.32, -2, "#ally", 12],
       [8, 1.32, -2, "#accent", 7], [-5, 1.52, 4, "#accent", 18],
       [8, 1.32, -2, "#accent", 6], [4, 0.92, -1, "#accent", 16],
@@ -745,7 +893,7 @@ test("RealtimeBattle emits bounded directional feedback for every supported acti
     sampleCalls.map(([action, x, y, z, gain]) => [action, x, Number(y.toFixed(2)), z, gain]),
     [
       ["hunt", 8, 1.32, -2, 0.52],
-      ["extract", -2, 0.72, -0.5, 0.58],
+      ["extract", extractor.x, Number((extractor.y + 0.72).toFixed(2)), extractor.z, 0.58],
       ["materialize", 8, 1.32, -2, 0.7],
       ["capture", 8, 1.32, -2, 0.66],
       ["possess", 8, 1.32, -2, 0.62],
@@ -757,7 +905,7 @@ test("RealtimeBattle emits bounded directional feedback for every supported acti
   assert.deepEqual(
     toneCalls.map(([x, y, z, options]) => [x, Number(y.toFixed(2)), z, Number(options.gain.toFixed(3))]),
     [
-      [-2, 0.72, -0.5, 0.208],
+      [extractor.x, Number((extractor.y + 0.72).toFixed(2)), extractor.z, 0.208],
       [8, 1.32, -2, 0.232],
       [-5, 1.52, 4, 0.264],
       [4, 0.92, -1, 0.248],
@@ -908,15 +1056,6 @@ test("RealtimeBattle preserves stages 4–10 and loads each stage's declared ter
     [9, ["terrain/veil-citadel.glb", "bosses/gate-sovereign.glb"]],
     [10, ["terrain/echo-throne-steps.glb", "bosses/gate-sovereign.glb"]],
   ]);
-  const stageNavigationMarkers = new Map([
-    [4, { x: 0, y: 0, elevation: -1 }],
-    [5, { x: 4, y: 2, elevation: -1 }],
-    [6, { x: 5, y: 1, elevation: 1 }],
-    [7, { x: 3, y: 3, elevation: -1 }],
-    [8, { x: 5, y: 2, elevation: -1 }],
-    [9, { x: 4, y: 1, elevation: 1 }],
-    [10, { x: 8, y: 2, elevation: 1 }],
-  ]);
 
   for (const [stageNumber, [terrain, boss]] of expectedStageResources) {
     const battle = new RealtimeBattle(null, { stageNumber });
@@ -929,10 +1068,10 @@ test("RealtimeBattle preserves stages 4–10 and loads each stage's declared ter
     await battle.loadStageAssets();
 
     assert.equal(battle.stageNumber, stageNumber, `Stage ${stageNumber} must not be clamped to Stage 3.`);
-    assert.equal(
-      battle.navigation.cells[stageNavigationMarkers.get(stageNumber).y][stageNavigationMarkers.get(stageNumber).x],
-      stageNavigationMarkers.get(stageNumber).elevation,
-      `Stage ${stageNumber} must retain its own tactical navigation rather than using Stage 3's terrain.`,
+    assert.deepEqual(
+      { width: battle.navigation.width, height: battle.navigation.height },
+      { width: 24, height: 12 },
+      `Stage ${stageNumber} must initialize the expanded tactical navigation grid.`,
     );
     assert.deepEqual(
       loaded,

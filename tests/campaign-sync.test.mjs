@@ -220,6 +220,126 @@ test("campaign mirrors converge on the lexicographically greatest stamp at an eq
   }], "a lower origin ID at the same revision must not replace the greater stamp");
 });
 
+test("synchronously accepted states retain the stamp paired with each callback envelope", async () => {
+  const harness = createChannelHarness();
+  const received = [];
+  const firstOrigin = "tab-batched-state-first";
+  const secondOrigin = "tab-batched-state-second";
+  const firstEnvelope = envelope();
+  const secondEnvelope = createSaveEnvelope(startCampaign(createCampaign()).state);
+  const mirror = new CampaignMirror({
+    BroadcastChannel: harness.BroadcastChannel,
+    onState: (campaign, metadata) => received.push({ campaign, metadata }),
+    storage: createMemoryStorage(),
+  });
+  const injector = new harness.BroadcastChannel(CHANNEL_NAME);
+
+  try {
+    mirror.start();
+    harness.clearPending();
+    injector.postMessage(stateMessage({
+      originId: firstOrigin,
+      revision: 1,
+      campaign: firstEnvelope,
+    }));
+    harness.deliverNext();
+    injector.postMessage(stateMessage({
+      originId: secondOrigin,
+      revision: 2,
+      campaign: secondEnvelope,
+    }));
+    harness.deliverNext();
+
+    await Promise.resolve();
+
+    assert.deepEqual(received, [
+      {
+        campaign: firstEnvelope,
+        metadata: { originId: firstOrigin, revision: 1 },
+      },
+      {
+        campaign: secondEnvelope,
+        metadata: { originId: secondOrigin, revision: 2 },
+      },
+    ], "each accepted envelope must reach its callback with the stamp accepted for that same frame");
+    assert.equal(mirror.authorize(received[0].metadata), false, "the first callback stamp must be identifiable as superseded");
+    assert.equal(mirror.authorize(received[1].metadata), true, "only the latest accepted callback stamp may remain authorized");
+  } finally {
+    injector.close();
+    mirror.close();
+  }
+});
+
+test("a same-tab reload accepts its persisted equal-stamp state exactly once", async () => {
+  const harness = createChannelHarness();
+  const sharedStorage = createMemoryStorage();
+  const receivedByReloadedContext = [];
+  const savedCampaign = createSaveEnvelope(startCampaign(createCampaign()).state);
+  const rejectedCampaign = envelope();
+  const oldContext = new CampaignMirror({
+    BroadcastChannel: harness.BroadcastChannel,
+    storage: sharedStorage,
+  });
+
+  let reloadedContext;
+  let injector;
+  try {
+    oldContext.start(savedCampaign);
+    harness.clearPending();
+    assert.equal(oldContext.publish(savedCampaign), true);
+    harness.clearPending();
+
+    reloadedContext = new CampaignMirror({
+      BroadcastChannel: harness.BroadcastChannel,
+      onState: (campaign, metadata) => receivedByReloadedContext.push({ campaign, metadata }),
+      storage: sharedStorage,
+    });
+    reloadedContext.start();
+    assert.equal(reloadedContext.latestEnvelope, null, "the reloaded context inherits only the persisted stamp");
+
+    harness.deliverNext((message) => message.kind === "request" && message.originId === reloadedContext.originId);
+    const equalStampState = harness.deliverNext((message) =>
+      message.kind === "state" &&
+      message.originId === oldContext.originId &&
+      message.targetId === reloadedContext.originId
+    );
+    await Promise.resolve();
+
+    assert.deepEqual(receivedByReloadedContext, [{
+      campaign: savedCampaign,
+      metadata: equalStampState.stamp,
+    }], "an equal stamp may hydrate a reloaded context only while its envelope is absent");
+    assert.deepEqual(reloadedContext.latestEnvelope, savedCampaign);
+    assert.equal(reloadedContext.authorize(receivedByReloadedContext[0].metadata), true);
+
+    injector = new harness.BroadcastChannel(CHANNEL_NAME);
+    injector.postMessage(stateMessage({
+      originId: "tab-equal-frame-relay",
+      revision: equalStampState.stamp.revision,
+      stamp: equalStampState.stamp,
+      targetId: reloadedContext.originId,
+      campaign: rejectedCampaign,
+    }));
+    harness.deliverNext((message) => message.originId === "tab-equal-frame-relay");
+    injector.postMessage(stateMessage({
+      originId: "tab-stale-frame-relay",
+      revision: equalStampState.stamp.revision - 1,
+      stamp: { revision: equalStampState.stamp.revision - 1, originId: "tab-stale-state-author" },
+      targetId: reloadedContext.originId,
+      campaign: rejectedCampaign,
+    }));
+    harness.deliverNext((message) => message.originId === "tab-stale-frame-relay");
+    await Promise.resolve();
+
+    assert.equal(receivedByReloadedContext.length, 1, "duplicate equal and stale states must not trigger another acceptance");
+    assert.deepEqual(reloadedContext.latestEnvelope, savedCampaign, "rejected frames must not supersede the hydrated saved state");
+  } finally {
+    injector?.close();
+    reloadedContext?.close();
+    oldContext.close();
+  }
+});
+
 test("a late joiner accepts a reloaded relay's state carrying the original author's stamp", async () => {
   const harness = createChannelHarness();
   const authorStorage = createMemoryStorage();
@@ -268,8 +388,9 @@ test("a late joiner accepts a reloaded relay's state carrying the original autho
     assert.notEqual(relayedState.originId, relayedState.stamp.originId);
     assert.deepEqual(receivedByLateJoiner, [{
       campaign: savedCampaign,
-      metadata: { originId: reloadedRelay.originId, revision: 1 },
+      metadata: { originId: author.originId, revision: 1 },
     }]);
+    assert.equal(lateJoiner.authorize(receivedByLateJoiner[0].metadata), true);
   } finally {
     lateJoiner?.close();
     reloadedRelay?.close();
