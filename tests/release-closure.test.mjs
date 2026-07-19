@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import vm from "node:vm";
 import { STAGES } from "../campaign-state.js";
 import { translations } from "../i18n.js";
 
@@ -93,72 +94,47 @@ function indexLocalRuntimeEntrypoints(index) {
     const attributes = tag.groups.attributes;
     const localPath = attributes.match(/\b(?:href|src)=["'](?<path>[^"']+)["']/i)?.groups?.path;
     const isStylesheet = tag[1].toLowerCase() === "link" && /\brel=["']stylesheet["']/i.test(attributes);
-    const isModule = tag[1].toLowerCase() === "script" && /\btype=["']module["']/i.test(attributes);
+    const isScript = tag[1].toLowerCase() === "script";
 
-    if (!localPath || (!isStylesheet && !isModule) || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(localPath)) continue;
+    if (!localPath || (!isStylesheet && !isScript) || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(localPath)) continue;
     paths.push(projectRelativePath(new URL(localPath, SOURCE_ROOT)));
   }
 
   return [...new Set(paths)].sort();
 }
-const VOID_HTML_TAGS = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"]);
 
-function htmlElementTree(source) {
-  const root = { children: [], parent: null };
-  const stack = [root];
-  const token = /<!--[\s\S]*?-->|<![^>]*>|<\/(?<closing>[a-z][\w-]*)\s*>|<(?<opening>[a-z][\w-]*)\b(?<attributes>[^>]*)>/gi;
-
-  for (const match of source.matchAll(token)) {
-    if (match.groups?.closing) {
-      const closingTag = match.groups.closing.toLowerCase();
-      while (stack.length > 1 && stack.at(-1).tagName !== closingTag) stack.pop();
-      if (stack.length > 1) stack.pop();
-      continue;
-    }
-    if (!match.groups?.opening) continue;
-
-    const tagName = match.groups.opening.toLowerCase();
-    const attributes = new Map(
-      [...match.groups.attributes.matchAll(/(?<name>[\w:-]+)(?:\s*=\s*["'](?<value>[^"']*)["'])?/g)]
-        .map((attribute) => [attribute.groups.name, attribute.groups.value ?? ""]),
-    );
-    const node = {
-      tagName,
-      id: attributes.get("id") ?? null,
-      classes: new Set((attributes.get("class") ?? "").split(/\s+/).filter(Boolean)),
-      attributes,
-      i18nKey: attributes.get("data-i18n") ?? null,
-      i18nAriaKey: attributes.get("data-i18n-aria") ?? null,
-      i18nAltKey: attributes.get("data-i18n-alt") ?? null,
-      children: [],
-      parent: stack.at(-1),
-    };
-    stack.at(-1).children.push(node);
-    if (!VOID_HTML_TAGS.has(tagName) && !match[0].endsWith("/>")) stack.push(node);
-  }
-  return root;
+function indexScripts(index) {
+  return [...index.matchAll(/<script\b(?<attributes>[^>]*)>/gi)]
+    .map((tag) => {
+      const source = tag.groups.attributes.match(/\bsrc=["'](?<path>[^"']+)["']/i)?.groups?.path;
+      return source ? { source, attributes: tag.groups.attributes } : null;
+    })
+    .filter(Boolean);
 }
 
-function findHtmlElement(root, predicate) {
-  if (predicate(root)) return root;
-  for (const child of root.children ?? []) {
-    const match = findHtmlElement(child, predicate);
-    if (match) return match;
-  }
-  return null;
-}
-function findAllHtmlElements(root, predicate, matches = []) {
-  if (predicate(root)) matches.push(root);
-  for (const child of root.children ?? []) findAllHtmlElements(child, predicate, matches);
-  return matches;
+function reactLiteralIds(source) {
+  return new Set(
+    [...source.matchAll(/\bid:\s*["'](?<id>[A-Za-z][\w-]*)["']/g)]
+      .map((match) => match.groups.id),
+  );
 }
 
-
-function isHtmlDescendant(node, ancestor) {
-  for (let current = node?.parent; current; current = current.parent) {
-    if (current === ancestor) return true;
+function appQueriedIds(source) {
+  const ids = new Set(
+    [...source.matchAll(/document\.querySelector(?:All)?\(\s*["']#(?<id>[A-Za-z][\w-]*)[^"']*["']\s*\)/g)]
+      .map((match) => match.groups.id),
+  );
+  for (const match of source.matchAll(/document\.getElementById\(\s*["'](?<id>[A-Za-z][\w-]*)["']\s*\)/g)) {
+    ids.add(match.groups.id);
   }
-  return false;
+  return [...ids].sort();
+}
+
+function reactLiteralI18nKeys(source) {
+  return new Set(
+    [...source.matchAll(/["']data-i18n(?:-aria|-alt)?["']:\s*["'](?<key>[^"']+)["']\s*(?=[,}])/g)]
+      .map((match) => match.groups.key),
+  );
 }
 
 function cssBlock(source, header) {
@@ -223,7 +199,7 @@ function sourceFunctionBody(source, name) {
 }
 
 function absoluteCssPixels(value) {
-  const length = /^(?<amount>\d*\.?\d+)(?<unit>px|rem)$/.exec(value ?? "");
+  const length = /^(?<amount>\d*\.?\d+)(?<unit>px|rem)(?:\s*!important)?$/.exec(value ?? "");
   assert.ok(length, `expected an absolute px/rem CSS length, received ${value}`);
   return Number(length.groups.amount) * (length.groups.unit === "rem" ? 16 : 1);
 }
@@ -467,45 +443,91 @@ test("every static local app module is shipped in the Pages artifact and precach
   );
 });
 
-test("local index stylesheet and module entry points are shipped in the Pages artifact and precached offline", async () => {
-  const [workflow, index, serviceWorker] = await Promise.all([
+test("index loads the complete React shell synchronously before the legacy app module", async () => {
+  const [workflow, index, serviceWorker, reactUi, app] = await Promise.all([
     readProjectFile(".github/workflows/static.yml"),
     readProjectFile("index.html"),
     readProjectFile("sw.js"),
+    readProjectFile("react-game-ui.js"),
+    readProjectFile("app.js"),
   ]);
+  const scripts = indexScripts(index);
+  const scriptOrder = scripts.map(({ source }) => source);
   const entrypoints = indexLocalRuntimeEntrypoints(index);
   const pagesArtifact = archivePaths(workflow);
   const serviceWorkerCore = coreAssetPaths(serviceWorker);
+  const synchronousReactShell = [
+    "vendor/react.production.min.js",
+    "vendor/react-dom.production.min.js",
+    "profile-store.js",
+    "react-game-ui.js",
+    "react-shop.js",
+  ];
+
+  assert.deepEqual(
+    scriptOrder.slice(0, synchronousReactShell.length),
+    synchronousReactShell,
+    "React, the profile store, game shell, and cosmetic shop must execute synchronously in dependency order",
+  );
+  for (const source of synchronousReactShell) {
+    const script = scripts.find((candidate) => candidate.source === source);
+    assert.ok(script, `index.html must load ${source}`);
+    assert.doesNotMatch(script.attributes, /\b(?:async|defer)\b|\btype=["']module["']/, `${source} must be a synchronous classic script`);
+  }
+  assert.ok(
+    scriptOrder.indexOf("react-game-ui.js") < scriptOrder.indexOf("app.js"),
+    "the React shell must mount every legacy DOM surface before app.js queries it",
+  );
+  assert.match(index, /<div\s+id=["']react-game-root["']><\/div>/, "index.html must expose the React mount root");
+  assert.match(reactUi, /ReactDOM\.render\s*\(\s*e\(App\)\s*,\s*container\s*\)/, "react-game-ui.js must render the application shell");
+
+  const queriedIds = appQueriedIds(app);
+  const declaredIds = reactLiteralIds(reactUi);
+  const missingIds = queriedIds.filter((id) => !declaredIds.has(id));
+  assert.ok(queriedIds.length > 0, "app.js must retain DOM query contracts");
+  assert.deepEqual(
+    missingIds,
+    [],
+    `react-game-ui.js must declare every literal DOM ID queried by app.js: ${missingIds.join(", ")}`,
+  );
+
   const missingFromArtifact = entrypoints.filter((entrypoint) => !pagesArtifact.has(entrypoint));
   const missingFromServiceWorker = entrypoints.filter((entrypoint) => !serviceWorkerCore.has(entrypoint));
-
-  assert.deepEqual(
-    entrypoints.filter((entrypoint) => entrypoint.startsWith("./battle-field-command-overlay")),
-    ["./battle-field-command-overlay.css", "./battle-field-command-overlay.js"],
-    "index.html must keep both field-command overlay runtime entry points.",
-  );
-  assert.deepEqual(
-    missingFromArtifact,
-    [],
-    `Index runtime entry points missing from Pages git archive: ${missingFromArtifact.join(", ")}`,
-  );
-  assert.deepEqual(
-    missingFromServiceWorker,
-    [],
-    `Index runtime entry points missing from service-worker CORE_ASSETS: ${missingFromServiceWorker.join(", ")}`,
-  );
+  assert.deepEqual(missingFromArtifact, [], `Index runtime entry points missing from Pages git archive: ${missingFromArtifact.join(", ")}`);
+  assert.deepEqual(missingFromServiceWorker, [], `Index runtime entry points missing from service-worker CORE_ASSETS: ${missingFromServiceWorker.join(", ")}`);
 });
 
-test("every static index localization hook is owned by both language dictionaries", async () => {
-  const tree = htmlElementTree(await readProjectFile("index.html"));
-  const keys = new Set(
-    findAllHtmlElements(
-      tree,
-      (element) => Boolean(element.i18nKey || element.i18nAriaKey || element.i18nAltKey),
-    ).flatMap((element) => [element.i18nKey, element.i18nAriaKey, element.i18nAltKey].filter(Boolean)),
-  );
+test("React shell exposes the authoritative ten-stage campaign and seven command actions", async () => {
+  const reactUi = await readProjectFile("react-game-ui.js");
+  const mapStages = [...reactUi.matchAll(/\{ id: (?<number>\d+), name: ['"](?<id>[\w-]+)['"], file: ['"][^'"]+['"], alt: ['"][^'"]+['"] \}/g)]
+    .map((match) => ({ number: Number(match.groups.number), id: match.groups.id }));
+  const selectorStages = [...reactUi.matchAll(/\{ num: (?<number>\d+), title: ['"]map\.node\d+Title['"], text: ['"][^'"]+['"] \}/g)]
+    .map((match) => Number(match.groups.number));
+  const actions = [...reactUi.matchAll(/\{ id: ['"](?<id>[\w-]+)['"], key: ['"][A-Z]['"], name: ['"]command\.[\w-]+\.name['"]/g)]
+    .map((match) => match.groups.id);
+  const expectedActions = ["hunt", "extract", "materialize", "capture", "possess", "domain", "assault"];
 
-  assert.ok(keys.size > 0, "index.html must retain static localization hooks");
+  assert.equal(STAGES.length, 10, "the deterministic campaign must retain ten stages");
+  assert.deepEqual(mapStages, STAGES.map(({ number, id }) => ({ number, id })), "the React campaign map must mirror all engine stages in order");
+  assert.deepEqual(selectorStages, STAGES.map(({ number }) => number), "the cockpit selector must expose all ten engine stages");
+  assert.deepEqual(actions, expectedActions, "the React command deck must expose the complete seven-action vocabulary");
+  assert.match(reactUi, /id:\s*['"]action-['"]\s*\+\s*act\.id[\s\S]*?['"]data-action['"]:\s*act\.id/, "every command record must render a stable action ID and data-action hook");
+  for (const stage of STAGES) {
+    for (const key of [`map.stage${stage.number}Badge`, `map.node${stage.number}Title`, `map.node${stage.number}Desc`]) {
+      assert.ok(translations.ko[key] && translations.en[key], `both locales must own ${key}`);
+    }
+  }
+  for (const action of expectedActions) {
+    for (const key of [`command.${action}.name`, `command.${action}.desc`]) {
+      assert.ok(translations.ko[key] && translations.en[key], `both locales must own ${key}`);
+    }
+  }
+});
+
+test("every literal React shell localization hook is owned by both language dictionaries", async () => {
+  const keys = reactLiteralI18nKeys(await readProjectFile("react-game-ui.js"));
+
+  assert.ok(keys.size > 0, "react-game-ui.js must retain localized shell copy");
   for (const locale of ["ko", "en"]) {
     const missing = [...keys]
       .filter((key) => !Object.prototype.hasOwnProperty.call(translations[locale], key))
@@ -513,71 +535,40 @@ test("every static index localization hook is owned by both language dictionarie
     assert.deepEqual(
       missing,
       [],
-      `${locale} must own every index.html data-i18n, data-i18n-aria, and data-i18n-alt key: ${missing.join(", ")}`,
+      `${locale} must own every literal React data-i18n, data-i18n-aria, and data-i18n-alt key: ${missing.join(", ")}`,
     );
   }
 });
 
-test("cinematic fallback localizes fragments without replacing anchor-owning parents", async () => {
-  const tree = htmlElementTree(await readProjectFile("index.html"));
-  const video = findHtmlElement(tree, (element) => element.id === "campaign-cinematic");
-  const fallback = findHtmlElement(tree, (element) => element.id === "cinematic-fallback");
-  const expectedFragments = new Map([
-    [video, [
-      ["span", "lobby.cinematicUnavailable"],
-      ["a", "lobby.cinematicOpenMp4"],
-    ]],
-    [fallback, [
-      ["span", "lobby.cinematicPlaybackUnavailable"],
-      ["a", "lobby.cinematicOpenRepresentativeMp4"],
-      ["span", "lobby.cinematicTranscriptAlternative"],
-    ]],
-  ]);
+test("React cinematic fallback localizes fragments without replacing anchor-owning parents", async () => {
+  const lobby = sourceFunctionBody(await readProjectFile("react-game-ui.js"), "CampaignLobby");
+  const expectedKeys = [
+    "lobby.cinematicUnavailable",
+    "lobby.cinematicOpenMp4",
+    "lobby.cinematicPlaybackUnavailable",
+    "lobby.cinematicOpenRepresentativeMp4",
+    "lobby.cinematicTranscriptAlternative",
+  ];
 
-  for (const [owner, expected] of expectedFragments) {
-    assert.ok(owner, "index.html must retain both cinematic fallback surfaces");
-    assert.ok(
-      owner.children.some((element) => element.tagName === "a"),
-      `#${owner.id} must retain its direct fallback anchor`,
-    );
-    assert.equal(
-      owner.i18nKey,
-      null,
-      `#${owner.id} must not own data-i18n because replacing its textContent would destroy its anchor`,
-    );
-
-    const keyedFragments = owner.children
-      .filter((element) => element.i18nKey)
-      .map((element) => [element.tagName, element.i18nKey]);
-    assert.deepEqual(
-      keyedFragments,
-      expected,
-      `#${owner.id} must localize each fallback text and link as an independent fragment`,
-    );
-
-    for (const [, key] of expected) {
-      for (const locale of ["ko", "en"]) {
-        assert.equal(
-          Object.prototype.hasOwnProperty.call(translations[locale], key),
-          true,
-          `${locale} must own cinematic fallback fragment ${key}`,
-        );
-      }
+  assert.match(lobby, /id:\s*['"]campaign-cinematic['"][\s\S]*?e\(['"]span['"],\s*\{\s*['"]data-i18n['"]:\s*['"]lobby\.cinematicUnavailable['"][\s\S]*?e\(['"]a['"],\s*\{[^}]*['"]data-i18n['"]:\s*['"]lobby\.cinematicOpenMp4['"]/, "the React video fallback must retain independently localized text and anchor children");
+  assert.match(lobby, /id:\s*['"]cinematic-fallback['"][\s\S]*?lobby\.cinematicPlaybackUnavailable[\s\S]*?lobby\.cinematicOpenRepresentativeMp4[\s\S]*?lobby\.cinematicTranscriptAlternative/, "the playback fallback must retain independently localized text and anchor children");
+  for (const key of expectedKeys) {
+    for (const locale of ["ko", "en"]) {
+      assert.equal(Object.prototype.hasOwnProperty.call(translations[locale], key), true, `${locale} must own cinematic fallback fragment ${key}`);
     }
   }
 });
 
 test("localized fullscreen control requests, exits, and synchronizes fullscreen state", async () => {
-  const [index, app] = await Promise.all([
-    readProjectFile("index.html"),
+  const [reactUi, app] = await Promise.all([
+    readProjectFile("react-game-ui.js"),
     readProjectFile("app.js"),
   ]);
-  const tree = htmlElementTree(index);
-  const control = findHtmlElement(tree, (element) => element.id === "toggle-fullscreen");
+  const control = reactUi.match(/e\(['"]button['"],\s*\{\s*id:\s*['"]toggle-fullscreen['"],(?<props>[\s\S]*?)\n\s*\},/);
 
-  assert.equal(control?.tagName, "button", "index.html must expose #toggle-fullscreen as a button");
-  assert.equal(control?.i18nKey, "screen.fullscreenEnter", "the fullscreen button must start with localized enter copy");
-  assert.equal(control?.attributes.get("aria-pressed"), "false", "the fullscreen button must expose its initial inactive state");
+  assert.ok(control, "react-game-ui.js must expose #toggle-fullscreen as a button");
+  assert.match(control.groups.props, /['"]data-i18n['"]:\s*['"]screen\.fullscreenEnter['"]/, "the fullscreen button must start with localized enter copy");
+  assert.match(control.groups.props, /['"]aria-pressed['"]:\s*['"]false['"]/, "the fullscreen button must expose its initial inactive state");
   for (const locale of ["ko", "en"]) {
     assert.ok(translations[locale]["screen.fullscreenEnter"], `${locale} must localize entering fullscreen`);
     assert.ok(translations[locale]["screen.fullscreenExit"], `${locale} must localize exiting fullscreen`);
@@ -698,24 +689,19 @@ test("returning to the lobby finishes campaign fullscreen exit before hiding the
 });
 
 
-test("desktop cockpit keeps battlefield, status rail, and command deck as direct layout surfaces", async () => {
-  const [index, styles] = await Promise.all([
-    readProjectFile("index.html"),
+test("desktop cockpit keeps battlefield, status rail, and command deck as stable React layout surfaces", async () => {
+  const [reactUi, styles] = await Promise.all([
+    readProjectFile("react-game-ui.js"),
     readProjectFile("styles.css"),
   ]);
-  const tree = htmlElementTree(index);
-  const byId = (id) => findHtmlElement(tree, (element) => element.id === id);
-  const cockpit = findHtmlElement(tree, (element) => element.classes?.has("cockpit-main"));
-  const battlefield = byId("battle-field");
-  const commands = byId("command-panel");
-  const fieldHud = findHtmlElement(tree, (element) => element.classes?.has("field-edge-hud"));
-  const missionGuide = byId("battle-mission-guide");
+  const declaredIds = reactLiteralIds(reactUi);
 
-  assert.ok(cockpit, "index.html must expose the cockpit-main layout owner");
-  assert.strictEqual(battlefield?.parent, cockpit, "#battle-field must be a direct cockpit-main child");
-  assert.strictEqual(commands?.parent, cockpit, "#command-panel must be a direct cockpit-main child");
-  assert.strictEqual(fieldHud?.parent, cockpit, ".field-edge-hud must be a direct cockpit-main child");
-  assert.strictEqual(missionGuide?.parent, battlefield, "#battle-mission-guide must belong to the tactical battlefield");
+  for (const id of ["battle-field", "command-panel", "battle-mission-guide", "battle-mission-current", "battle-mission-why"]) {
+    assert.equal(declaredIds.has(id), true, `the React cockpit must expose #${id}`);
+  }
+  for (const className of ["cockpit-main", "field-edge-hud"]) {
+    assert.match(reactUi, new RegExp(`className:\\s*['"][^'"]*\\b${className}\\b`), `the React cockpit must expose .${className}`);
+  }
 
   const desktopRules = cssRules(styles.replace(/\/\*[\s\S]*?\*\//g, ""));
   const cockpitRule = desktopRules.find(({ selector }) => selector === ".cockpit-main");
@@ -723,35 +709,25 @@ test("desktop cockpit keeps battlefield, status rail, and command deck as direct
   const statusRailRule = desktopRules.find(({ selector }) => selector === ".cockpit-rail");
   const commandDeckRule = desktopRules.find(({ selector }) => selector === ".field-command-dock");
   assert.equal(cssDeclaration(cockpitRule, "display"), "grid", "desktop cockpit-main must own the layout grid");
-  assert.match(cssDeclaration(cockpitRule, "grid-template-areas") ?? "", /"battle hud"[\s\S]*"commands commands"/, "desktop grid must reserve direct battlefield, HUD, and command-deck surfaces");
+  assert.match(cssDeclaration(cockpitRule, "grid-template-areas") ?? "", /"battle hud"[\s\S]*"commands commands"/, "desktop grid must reserve battlefield, HUD, and command-deck surfaces");
   assert.equal(cssDeclaration(battlefieldRule, "grid-area"), "battle", "battlefield must own the desktop battle area");
   assert.equal(cssDeclaration(statusRailRule, "grid-area"), "hud", "status rail must own the desktop HUD area");
   assert.equal(cssDeclaration(commandDeckRule, "grid-area"), "commands", "command deck must own the desktop commands area");
 
-  for (const id of ["battle-mission-current", "battle-mission-why"]) {
-    const element = byId(id);
-    assert.ok(element, `mission guide must expose #${id} for runtime guidance`);
-    assert.equal(isHtmlDescendant(element, missionGuide), true, `#${id} must remain inside the mission guide`);
-  }
-
   for (const key of ["mission.kicker", "mission.loop", "mission.win", "mission.lose"]) {
-    const keyedElement = findHtmlElement(tree, (element) => element.i18nKey === key);
-    assert.ok(keyedElement, `mission guide must expose the static ${key} localization hook`);
-    assert.equal(isHtmlDescendant(keyedElement, missionGuide), true, `${key} must remain inside the mission guide`);
+    assert.match(reactUi, new RegExp(`['"]data-i18n['"]:\\s*['"]${key.replace(".", "\\.")}['"]`), `mission guide must expose ${key}`);
     assert.match(translations.ko[key], /\p{Script=Hangul}/u, `${key} must provide Korean mission guidance`);
     assert.match(translations.en[key], /[A-Za-z]/, `${key} must remain available after the English toggle`);
   }
 });
 
 
-test("battle resource rows own their semantic meter updates and progress fills", async () => {
-  const [index, app, styles] = await Promise.all([
-    readProjectFile("index.html"),
+test("React battle resource rows own their semantic meter updates and progress fills", async () => {
+  const [reactUi, app, styles] = await Promise.all([
+    readProjectFile("react-game-ui.js"),
     readProjectFile("app.js"),
     readProjectFile("styles.css"),
   ]);
-  const tree = htmlElementTree(index);
-  const resourceBar = findHtmlElement(tree, (element) => element.classes?.has("battle-resource-bar"));
   const expectedMeters = [
     ["souls", "souls-value"],
     ["legion", "legion-value"],
@@ -759,17 +735,13 @@ test("battle resource rows own their semantic meter updates and progress fills",
     ["integrity", "integrity-value"],
     ["boss", "boss-value"],
   ];
-  const resourceRows = resourceBar?.children.filter((element) => element.attributes?.has("data-resource")) ?? [];
 
-  assert.deepEqual(
-    resourceRows.map((row) => row.attributes.get("data-resource")),
-    expectedMeters.map(([resource]) => resource),
-    "battle resource rows must expose stable data-resource meter owners",
-  );
   for (const [resource, valueId] of expectedMeters) {
-    const row = resourceRows.find((element) => element.attributes.get("data-resource") === resource);
-    assert.ok(row, `${resource} must retain a dedicated resource row`);
-    assert.ok(findHtmlElement(row, (element) => element.id === valueId), `${resource} row must own #${valueId}`);
+    assert.match(
+      reactUi,
+      new RegExp(`['"]data-resource['"]:\\s*['"]${resource}['"][\\s\\S]{0,320}?id:\\s*['"]${valueId}['"]`),
+      `${resource} must retain a dedicated React resource row owning #${valueId}`,
+    );
   }
 
   const meterBody = sourceFunctionBody(app, "setResourceMeter");
@@ -822,11 +794,28 @@ test("the 360px lobby uses a shrinkable column and bounds its cinematic surface"
   );
 });
 test("mobile active play keeps command targets touch-safe and hides secondary cockpit details", async () => {
-  const mobileRules = cssRules(cssBlock(await readProjectFile("styles.css"), "@media (max-width: 899px)"));
+  const [styles, reactStyles] = await Promise.all([
+    readProjectFile("styles.css"),
+    readProjectFile("react-game-ui.css"),
+  ]);
+  const mobileRules = cssRules(cssBlock(styles, "@media (max-width: 899px)"));
+  const reactMobileRules = cssRules(cssBlock(reactStyles, "@media (max-width: 899px)"));
   const commandTargetRule = mobileRules.find(({ selector }) => selector.includes(".field-command-dock .command-grid button"));
   const activePlayRules = mobileRules.filter(({ selector }) => selector.includes("#stage-briefing[hidden]"));
   const cockpitDetailsRule = activePlayRules.find(({ selector }) => selector.includes(".cockpit-details"));
+  const cockpitMainRule = reactMobileRules.find(({ selector }) => selector === ".cockpit-main");
 
+  assert.ok(cockpitMainRule, "the <=899px cockpit must retain an explicit main-layout rule");
+  assert.equal(
+    cssDeclaration(cockpitMainRule, "flex")?.replace(/\s*!important$/, ""),
+    "0 0 auto",
+    "the mobile cockpit must keep its intrinsic height instead of shrinking commands beneath the save dock",
+  );
+  assert.equal(
+    cssDeclaration(cockpitMainRule, "overflow")?.replace(/\s*!important$/, ""),
+    "visible",
+    "the intrinsic mobile cockpit flow must expose commands before the following save dock",
+  );
   assert.ok(commandTargetRule, "the <=899px cockpit must retain a command-button target rule");
   assert.ok(
     absoluteCssPixels(cssDeclaration(commandTargetRule, "min-height")) >= 44,
@@ -845,9 +834,13 @@ test("mobile active play keeps command targets touch-safe and hides secondary co
   );
 });
 
-test("360px essential HUD copy stays readable and utility and save targets stay 44px tall", async () => {
-  const styles = await readProjectFile("styles.css");
+test("360px essential HUD copy stays at least 12.5px and utility and save targets stay 44px tall", async () => {
+  const [styles, reactStyles] = await Promise.all([
+    readProjectFile("styles.css"),
+    readProjectFile("react-game-ui.css"),
+  ]);
   const mobileRules = cssRules(cssBlock(styles, "@media (max-width: 899px)"));
+  const readableRules = cssRules(cssBlock(reactStyles, "@media (max-width: 899px)"));
   const narrowRules = cssRules(cssBlock(styles, "@media (max-width: 640px)"));
   const ruleFor = (rules, expectedSelector) => rules.find(({ selector }) => (
     selector.split(",").map((entry) => entry.trim()).includes(expectedSelector)
@@ -864,14 +857,14 @@ test("360px essential HUD copy stays readable and utility and save targets stay 
     ".field-current-objective",
     ".field-edge-hud .battle-pressure",
   ];
-  const readableMinimum = absoluteCssPixels(".68rem");
+  const readableMinimum = 12.5;
 
   for (const selector of essentialLabels) {
-    const rule = ruleFor(mobileRules, selector);
+    const rule = ruleFor(readableRules, selector);
     assert.ok(rule, `the mobile HUD must retain an explicit essential-label rule for ${selector}`);
     assert.ok(
       absoluteCssPixels(cssDeclaration(rule, "font-size")) >= readableMinimum,
-      `${selector} must remain at least .68rem on a 360px viewport`,
+      `${selector} must remain at least 12.5px on a 360px viewport`,
     );
   }
 
@@ -890,6 +883,55 @@ test("360px essential HUD copy stays readable and utility and save targets stay 
       `${selector} must remain at least 44px tall on a 360px viewport`,
     );
   }
+});
+
+test("premium React CSS preserves themes, responsive bounds, touch targets, dialogs, and reduced motion", async () => {
+  const styles = await readProjectFile("react-game-ui.css");
+  const allRules = cssRules(styles.replace(/\/\*[\s\S]*?\*\//g, ""));
+  const baseControls = allRules.find(({ selector }) => selector.split(",").map((part) => part.trim()).includes("button"));
+
+  for (const theme of ["iron", "cinder", "veil", "sovereign"]) {
+    const themeRule = allRules.find(({ selector }) => selector === `html[data-ui-theme="${theme}"]`);
+    assert.ok(themeRule, `premium CSS must define the ${theme} profile theme`);
+    for (const token of ["--bg", "--panel", "--ink", "--cinder", "--focus"]) {
+      assert.ok(cssDeclaration(themeRule, token), `${theme} must provide ${token}`);
+    }
+  }
+  assert.ok(absoluteCssPixels(cssDeclaration(baseControls, "min-height")) >= 44, "default controls must remain at least 44px tall");
+  const headerControls = allRules.find(({ selector }) => selector === ".site-header.medieval-header .ghost-toggle");
+  const shopControls = allRules.find(({ selector }) => selector === ".relic-shop-btn");
+  assert.ok(absoluteCssPixels(cssDeclaration(headerControls, "min-height")) >= 44, "desktop header controls must not override the 44px target minimum");
+  assert.ok(absoluteCssPixels(cssDeclaration(shopControls, "min-height")) >= 44, "desktop shop controls must not override the 44px target minimum");
+
+  const desktopRules = cssRules(cssBlock(styles, "@media (min-width: 1400px)"));
+  const desktopViewport = desktopRules.find(({ selector }) => selector === "html, body");
+  const desktopRoot = desktopRules.find(({ selector }) => selector === "main#game-root");
+  assert.equal(cssDeclaration(desktopViewport, "overflow"), "hidden", "1440px desktop must stay inside the viewport");
+  assert.equal(cssDeclaration(desktopRoot, "max-width"), "1440px", "desktop game content must remain bounded");
+  assert.equal(cssDeclaration(desktopRoot, "min-height"), "0", "desktop flex content must be allowed to shrink without overflow");
+
+  const mobileRules = cssRules(cssBlock(styles, "@media (max-width: 720px)"));
+  const mobileViewport = mobileRules.find(({ selector }) => selector === "html, body");
+  const mobileRoot = mobileRules.find(({ selector }) => selector === "main#game-root");
+  const dialogs = mobileRules.find(({ selector }) => selector === ".mission-briefing, .result-overlay");
+  const dialogPanels = mobileRules.find(({ selector }) => selector === ".mission-briefing-panel, .result-panel");
+  const mobileControls = mobileRules.find(({ selector }) => selector.includes(".relic-shop-btn") && selector.includes(".result-panel button"));
+  assert.equal(cssDeclaration(mobileViewport, "overflow-x"), "hidden !important", "360px layout must prevent document overflow");
+  assert.equal(cssDeclaration(mobileViewport, "max-width"), "100vw !important", "360px document must stay viewport-bounded");
+  assert.equal(cssDeclaration(mobileRoot, "overflow-x"), "hidden !important", "the mobile game root must prevent horizontal overflow");
+  assert.equal(cssDeclaration(dialogs, "position"), "fixed !important", "mobile briefing and result dialogs must remain viewport-fixed");
+  assert.equal(cssDeclaration(dialogs, "inset"), "0 !important", "mobile dialogs must fill the viewport");
+  assert.equal(cssDeclaration(dialogPanels, "overflow-y"), "auto !important", "mobile dialog content must scroll internally");
+  assert.ok(absoluteCssPixels(cssDeclaration(mobileControls, "min-height")) >= 44, "mobile controls must remain at least 44px tall");
+
+  const reducedRules = cssRules(cssBlock(styles, "@media (prefers-reduced-motion: reduce)"));
+  const reducedAll = reducedRules.find(({ selector }) => selector === "*, ::before, ::after");
+  const liquidEther = reducedRules.find(({ selector }) => selector === ".liquid-ether-container");
+  const particles = reducedRules.find(({ selector }) => selector === "#particles-canvas");
+  assert.equal(cssDeclaration(reducedAll, "transition-duration"), "0s !important", "reduced motion must disable transitions");
+  assert.equal(cssDeclaration(reducedAll, "animation-iteration-count"), "1 !important", "reduced motion must stop looping animations");
+  assert.equal(cssDeclaration(liquidEther, "display"), "none !important", "reduced motion must disable the liquid background");
+  assert.equal(cssDeclaration(particles, "display"), "none !important", "reduced motion must disable background particles");
 });
 
 test("campaign rendering supplies the engine stage checklist to the checklist view", async () => {
@@ -1011,67 +1053,38 @@ test("Pages artifact ships all optional media without publishing inventory or un
     "Pages artifact must allowlist exactly the supported runtime videos",
   );
 });
-test("cinematic captions and transcript release surfaces are explicitly published", async () => {
-  const [workflow, index] = await Promise.all([
+test("React cinematic captions and transcript release surfaces are explicitly published", async () => {
+  const [workflow, reactUi] = await Promise.all([
     readProjectFile(".github/workflows/static.yml"),
-    readProjectFile("index.html"),
+    readProjectFile("react-game-ui.js"),
   ]);
   const pagesArtifact = archivePaths(workflow);
-  const cinematic = index.match(/<video id="campaign-cinematic"(?<attributes>[^>]*)>(?<content>[\s\S]*?)<\/video>/);
-  assert.ok(cinematic, "index.html must declare the campaign cinematic video element");
+  const lobby = sourceFunctionBody(reactUi, "CampaignLobby");
+  const captions = lobby.match(
+    /e\(['"]track['"],\s*\{(?<props>[\s\S]*?)\}\)/,
+  );
+  assert.ok(captions, "the React campaign cinematic must declare a captions track");
+  assert.match(captions.groups.props, /\bkind:\s*['"]captions['"]/, "the cinematic track must be captions");
+  assert.match(captions.groups.props, /\bsrcLang:\s*['"]ko['"]/, "the cinematic track must identify Korean captions");
+  assert.match(captions.groups.props, /\blabel:\s*['"]한국어 자막['"]/, "the cinematic track must expose its Korean label");
+  assert.match(captions.groups.props, /\bdefault:\s*true/, "Korean captions must be the default track");
+  const captionsPath = captions.groups.props.match(/\bsrc:\s*['"](?<source>assets\/video\/[^'"]+\.vtt)['"]/)?.groups?.source;
+  assert.equal(captionsPath, "assets/video/abyssal-surge-cinematic.ko.vtt", "the cinematic must reference its committed Korean captions");
 
-  const captions = cinematic.groups.content.match(
-    /<track\b(?=[^>]*\bkind="captions")(?=[^>]*\bsrclang="ko")(?=[^>]*\blabel="한국어 자막")(?=[^>]*\bsrc="(?<source>assets\/video\/[^"]+\.vtt)")(?=[^>]*\bdefault\b)[^>]*>/,
-  );
-  assert.ok(captions, "campaign cinematic must declare default Korean captions");
-  assert.equal(
-    captions.groups.source,
-    "assets/video/abyssal-surge-cinematic.ko.vtt",
-    "campaign cinematic must declare its committed Korean captions asset",
-  );
+  const transcriptToggle = lobby.match(/e\(['"]button['"],\s*\{\s*id:\s*['"]toggle-cinematic-transcript['"],(?<props>[\s\S]*?)\n\s*\},/);
+  assert.ok(transcriptToggle, "the React lobby must provide a cinematic transcript toggle");
+  assert.match(transcriptToggle.groups.props, /['"]aria-controls['"]:\s*['"]cinematic-transcript['"]/, "the transcript toggle must control the transcript");
+  assert.match(transcriptToggle.groups.props, /['"]aria-expanded['"]:\s*['"]false['"]/, "the transcript toggle must begin collapsed");
 
-  const transcriptToggle = index.match(/<button id="toggle-cinematic-transcript"(?<attributes>[^>]*)>/);
-  assert.ok(transcriptToggle, "index.html must provide a cinematic transcript toggle");
-  assert.match(
-    transcriptToggle.groups.attributes,
-    /\baria-controls="cinematic-transcript"/,
-    "cinematic transcript toggle must control the transcript surface",
-  );
-  assert.match(
-    transcriptToggle.groups.attributes,
-    /\baria-expanded="false"/,
-    "cinematic transcript toggle must expose its initial collapsed state",
-  );
+  const transcript = lobby.match(/e\(['"]section['"],\s*\{\s*id:\s*['"]cinematic-transcript['"],(?<props>[\s\S]*?)\n\s*\},/);
+  assert.ok(transcript, "the React lobby must include an accessible cinematic transcript");
+  assert.match(transcript.groups.props, /\bhidden:\s*true/, "the transcript must begin hidden");
+  assert.match(transcript.groups.props, /['"]aria-labelledby['"]:\s*['"]cinematic-transcript-heading['"]/, "the transcript must reference its heading");
+  assert.match(lobby, /e\(['"]h3['"],\s*\{\s*id:\s*['"]cinematic-transcript-heading['"]/, "the transcript must render its referenced heading");
 
-  const transcript = index.match(
-    /<section id="cinematic-transcript"(?<attributes>[^>]*)>(?<content>[\s\S]*?)<\/section>/,
-  );
-  assert.ok(transcript, "index.html must include an accessible cinematic transcript surface");
-  assert.match(
-    transcript.groups.attributes,
-    /\bhidden\b/,
-    "cinematic transcript must begin hidden until the toggle requests it",
-  );
-  const transcriptLabel = transcript.groups.attributes.match(/\baria-labelledby="(?<id>[^"]+)"/);
-  assert.ok(transcriptLabel, "cinematic transcript must have an accessible label");
-  assert.match(
-    transcript.groups.content,
-    new RegExp(`<h[1-6]\\s+id="${transcriptLabel.groups.id}"`),
-    "cinematic transcript must include its referenced heading",
-  );
-
-  const captionsPath = `./${captions.groups.source}`;
-  await readProjectFile(captions.groups.source);
-  assert.equal(
-    pagesArtifact.has(captionsPath),
-    true,
-    `Cinematic captions must be individually allowlisted by Pages: ${captionsPath}`,
-  );
-  assert.equal(
-    pagesArtifact.has("./index.html"),
-    true,
-    "Pages artifact must include the cinematic transcript document",
-  );
+  await readProjectFile(captionsPath);
+  assert.equal(pagesArtifact.has(`./${captionsPath}`), true, `Cinematic captions must be individually allowlisted by Pages: ${captionsPath}`);
+  assert.equal(pagesArtifact.has("./react-game-ui.js"), true, "Pages artifact must include the React transcript document owner");
 });
 test("Pages artifact explicitly allowlists the complete runtime GLB surface", async () => {
   const [workflow, battleRuntime] = await Promise.all([
@@ -1479,4 +1492,224 @@ test("regenerated narration audio matches its manifest identity and locked sourc
       `Narration derivation must retain its locked source sentence: ${id}`,
     );
   }));
+});
+
+test("English narration covers every campaign state and language refresh updates visible and SR copy without replaying audio", async () => {
+  const app = await readProjectFile("app.js");
+  const narrationStart = app.indexOf("const NARRATION =");
+  const stageArtStart = app.indexOf("// Stage art:", narrationStart);
+  assert.ok(narrationStart >= 0 && stageArtStart > narrationStart, "app.js must expose the complete narration catalogs");
+  const narrationDeclarations = app.slice(narrationStart, stageArtStart);
+  const languageHandler = app.match(
+    /window\.addEventListener\("abyssal:language-changed", \(\) => \{(?<body>[\s\S]*?)\n  \}\);/,
+  );
+  assert.ok(languageHandler, "the app must subscribe its narration refresh to the public language-change event");
+
+  const elements = {
+    narrationLine: {
+      textContent: "이전 줄",
+      classList: { remove() {} },
+    },
+    briefingNarration: { textContent: "이전 브리핑" },
+    narrationSr: { textContent: "이전 스크린 리더 줄" },
+  };
+  const language = { value: "ko" };
+  const audio = {
+    currentTime: 17,
+    src: "assets/audio/narr-stage1.mp3",
+    playCalls: 0,
+    pauseCalls: 0,
+    play() {
+      this.playCalls += 1;
+      return Promise.resolve();
+    },
+    pause() {
+      this.pauseCalls += 1;
+    },
+  };
+  const context = vm.createContext({
+    audio,
+    campaign: null,
+    currentLang: () => language.value,
+    elements,
+    refreshSaveStatus() {},
+    render() {},
+    syncAmbienceButtonText() {},
+    syncCinematicCopy() {},
+    updateResumeAffordance() {},
+  });
+  vm.runInContext(`
+    ${narrationDeclarations}
+    let activeNarrationKey = "intro";
+    let narrationRun = 4;
+    let narrationPlayer = audio;
+    function getNarrationLines(key) {${sourceFunctionBody(app, "getNarrationLines")}}
+    function setTypedNarrationLine(line) {${sourceFunctionBody(app, "setTypedNarrationLine")}}
+    function refreshNarrationLanguage() {${sourceFunctionBody(app, "refreshNarrationLanguage")}}
+    function handleLanguageChange() {${languageHandler.groups.body}}
+    globalThis.narrationContract = {
+      korean: NARRATION,
+      english: NARRATION_EN,
+      refresh(key) {
+        activeNarrationKey = key;
+        handleLanguageChange();
+        return { run: narrationRun };
+      }
+    };
+  `, context, { filename: "app.js" });
+
+  const requiredKeys = ["intro", ...STAGES.map((stage) => stage.id), "victory", "defeat"];
+  assert.deepEqual(
+    Object.keys(context.narrationContract.english).sort(),
+    [...requiredKeys].sort(),
+    "English narration must cover intro, all ten campaign stages, victory, and defeat",
+  );
+  for (const key of requiredKeys) {
+    const koreanLines = Array.from(context.narrationContract.korean[key]?.lines ?? []);
+    const englishLines = Array.from(context.narrationContract.english[key] ?? []);
+    assert.ok(koreanLines.length > 0, `${key} must retain source narration`);
+    assert.ok(englishLines.length > 0, `${key} must provide English narration`);
+    assert.ok(englishLines.every((line) => /[A-Za-z]/.test(line)), `${key} English narration must contain readable spoken copy`);
+  }
+
+  language.value = "en";
+  const activeKey = STAGES.at(-1).id;
+  const expectedLines = Array.from(context.narrationContract.english[activeKey]);
+  const audioBefore = {
+    currentTime: audio.currentTime,
+    src: audio.src,
+    playCalls: audio.playCalls,
+    pauseCalls: audio.pauseCalls,
+  };
+  const refreshed = context.narrationContract.refresh(activeKey);
+
+  assert.equal(elements.narrationLine.textContent, expectedLines.at(-1), "language change must refresh displayed narration immediately");
+  assert.equal(elements.briefingNarration.textContent, expectedLines.at(-1), "language change must refresh briefing narration immediately");
+  assert.equal(elements.narrationSr.textContent, expectedLines.join(" "), "language change must refresh the complete screen-reader narration");
+  assert.equal(refreshed.run, 5, "language refresh must cancel the superseded typing run");
+  assert.deepEqual(
+    {
+      currentTime: audio.currentTime,
+      src: audio.src,
+      playCalls: audio.playCalls,
+      pauseCalls: audio.pauseCalls,
+    },
+    audioBefore,
+    "language refresh must not restart, seek, pause, or replace narration audio",
+  );
+});
+
+test("a stale mirrored save cannot overwrite newer campaign state and rechecks mirror stamp currentness", async () => {
+  const app = await readProjectFile("app.js");
+  const declaration = /async function applyMirroredCampaign\s*\((?<parameters>[^)]*)\)/.exec(app);
+  assert.ok(declaration, "app.js must declare applyMirroredCampaign()");
+
+  const incomingStamp = Object.freeze({ originId: "tab-remote-aaaaaaaa", revision: 7 });
+  const newerStamp = Object.freeze({ originId: "tab-local-bbbbbbbbb", revision: 8 });
+  const staleCampaign = Object.freeze({ id: "stale-mirror" });
+  const newerEnvelope = Object.freeze({ tag: "newer-local" });
+  const newerCampaign = Object.freeze({ id: "newer-local", envelope: newerEnvelope });
+  const staleEnvelope = Object.freeze({ tag: "stale-mirror", campaign: staleCampaign });
+  const persistence = {
+    current: Object.freeze({ tag: "initial-local" }),
+    saves: [],
+    stampChecks: 0,
+    stopCalls: 0,
+    renderCalls: 0,
+    mirroredStatuses: 0,
+  };
+  let releaseStaleSave;
+  let markStaleSaveStarted;
+  const staleSaveGate = new Promise((resolve) => {
+    releaseStaleSave = resolve;
+  });
+  const staleSaveStarted = new Promise((resolve) => {
+    markStaleSaveStarted = resolve;
+  });
+  const storage = {
+    async save(envelope) {
+      persistence.saves.push(envelope.tag);
+      if (envelope === staleEnvelope) {
+        markStaleSaveStarted();
+        await staleSaveGate;
+      }
+      persistence.current = envelope;
+      return "IndexedDB";
+    },
+  };
+  const context = vm.createContext({
+    createSaveEnvelope: (campaign) => campaign.envelope,
+    isCurrentMirrorStamp(left, right) {
+      persistence.stampChecks += 1;
+      return left?.originId === right?.originId && left?.revision === right?.revision;
+    },
+    persistence,
+    restoreSaveEnvelope: (envelope) => envelope.campaign,
+    setSaveStatus() {
+      persistence.mirroredStatuses += 1;
+    },
+    stopBattle() {
+      persistence.stopCalls += 1;
+    },
+    storage,
+    translate: (key) => key,
+    updateResumeAffordance() {},
+    render() {
+      persistence.renderCalls += 1;
+    },
+  });
+  vm.runInContext(`
+    let campaign = { id: "initial-local", envelope: persistence.current };
+    let storedCampaign = campaign;
+    let narratedStageId = "initial-stage";
+    let narratedOutcome = "initial-outcome";
+    let currentMirrorStamp = ${JSON.stringify(incomingStamp)};
+    const campaignMirror = {
+      get latestStamp() {
+        persistence.stampChecks += 1;
+        return currentMirrorStamp;
+      },
+      authorize(stamp) {
+        persistence.stampChecks += 1;
+        return stamp?.originId === currentMirrorStamp.originId && stamp?.revision === currentMirrorStamp.revision;
+      }
+    };
+    async function applyMirroredCampaign(${declaration.groups.parameters}) {
+      ${sourceFunctionBody(app, "applyMirroredCampaign")}
+    }
+    globalThis.mirrorContract = {
+      apply: (envelope, stamp) => applyMirroredCampaign(envelope, stamp),
+      installNewer(campaignValue, envelope, stamp) {
+        campaign = campaignValue;
+        storedCampaign = campaignValue;
+        campaign.envelope = envelope;
+        currentMirrorStamp = stamp;
+        persistence.current = envelope;
+      },
+      snapshot() {
+        return { campaignId: campaign.id, storedCampaignId: storedCampaign.id };
+      }
+    };
+  `, context, { filename: "app.js" });
+
+  const applyingStaleMirror = context.mirrorContract.apply(staleEnvelope, incomingStamp);
+  await staleSaveStarted;
+  context.mirrorContract.installNewer({ ...newerCampaign }, newerEnvelope, newerStamp);
+  releaseStaleSave();
+  await applyingStaleMirror;
+
+  assert.deepEqual(
+    { ...context.mirrorContract.snapshot() },
+    { campaignId: "newer-local", storedCampaignId: "newer-local" },
+    "a mirror apply that becomes stale while saving must not replace newer live or resumable state",
+  );
+  assert.equal(persistence.current, newerEnvelope, "stale mirrored persistence must restore or preserve the newer local envelope");
+  assert.match(
+    sourceFunctionBody(app, "applyMirroredCampaign"),
+    /await\s+storage\.save\(envelope\)[\s\S]*campaignMirror\?\.authorize\(metadata\)/,
+    "the async mirror apply must reauthorize the incoming stamp after persistence yields",
+  );
+  assert.equal(persistence.stopCalls, 0, "a stale mirror must not stop the newer active battle");
+  assert.equal(persistence.renderCalls, 0, "a stale mirror must not rerender over the newer campaign");
+  assert.equal(persistence.mirroredStatuses, 0, "a stale mirror must not announce that it was applied");
 });

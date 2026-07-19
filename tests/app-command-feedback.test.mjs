@@ -112,7 +112,7 @@ async function loadReleaseLocalization(locale) {
     MAX_IMPORT_BYTES: 256 * 1024,
     battleVisualFallback: false,
     campaign: { status: "active", trace: [{ kind: "start" }] },
-    campaignMirror: { publish: () => {} },
+    campaignMirror: { authorize: () => true, publish: () => {} },
     createCampaign: () => ({ status: "briefing", trace: [] }),
     createSaveEnvelope: () => ({ schema: "test-save" }),
     currentLang: () => locale,
@@ -253,7 +253,10 @@ test("new campaign, save transfer, and briefing status copy follows the active K
     await api.importSave({ size: 2, text: async () => "{}" });
     assert.equal(elements.saveStatus.textContent, contracts[locale].imported, `${locale} successful import must publish its exact localized saved status`);
 
-    await api.applyMirroredCampaign({ schema: "test-save" });
+    await api.applyMirroredCampaign(
+      { schema: "test-save" },
+      { originId: "tab-remote-localization", revision: 1 },
+    );
     assert.equal(elements.saveStatus.textContent, contracts[locale].mirrored, `${locale} cross-tab application must publish its exact localized visible status`);
 
     api.setBattlePressure("briefing", "unlocalized fallback");

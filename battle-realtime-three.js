@@ -416,10 +416,11 @@ export class RealtimeBattle {
 
   async init() {
     if (this.destroyed) throw new Error("Realtime battle was destroyed before initialization");
-    if (!this.canvas.getContext("webgl2")) {
+    const gl = this.canvas.getContext("webgl2", { antialias: true, alpha: false });
+    if (!gl) {
       throw new Error("WebGL 2 is unavailable");
     }
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false });
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, context: gl, antialias: true, alpha: false });
     const viewportWidth = Number(window.innerWidth) || 1440;
     this.renderer.setPixelRatio(cappedPixelRatio(viewportWidth, window.devicePixelRatio));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;

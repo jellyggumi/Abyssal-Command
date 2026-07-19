@@ -100,7 +100,7 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
   const receiptCommand = overlay.querySelector('[data-field-overlay="relay-command"]');
   let activeCommand = null;
   let relayedCommand = null;
-  let frame = 0;
+  let pendingCommand = null;
 
   function projectNativeText(line, output, value) {
     line.hidden = !value;
@@ -108,7 +108,12 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
   }
 
   function projectRelayedCommand() {
-    if (!relayedCommand || !receipt || !receiptCommand) return;
+    if (!receipt || !receiptCommand) return;
+    if (!relayedCommand) {
+      receipt.hidden = true;
+      receiptCommand.textContent = "";
+      return;
+    }
 
     const copy = commandCopy(relayedCommand);
     receiptCommand.textContent = copy.name;
@@ -116,7 +121,6 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
   }
 
   function render() {
-    frame = 0;
     activeCommand = selectCurrentCommand(commands.querySelectorAll("[data-action]"));
     const copy = commandCopy(activeCommand);
     const objectiveText = currentRenderedObjective();
@@ -135,32 +139,52 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
     projectRelayedCommand();
   }
 
-  function prefersReducedMotion() {
-    return view?.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-  }
-
   function requestRender() {
-    if (prefersReducedMotion()) {
-      render();
-      return;
-    }
-    if (frame) return;
-    const requestFrame = view?.requestAnimationFrame ?? globalThis.requestAnimationFrame;
-    if (!requestFrame) {
-      render();
-      return;
-    }
-    frame = requestFrame.call(view ?? globalThis, render);
+    render();
   }
 
   activation.addEventListener("click", () => {
     if (!activeCommand || activeCommand.disabled) return;
 
     const issuedCommand = activeCommand;
+    pendingCommand = issuedCommand;
     issuedCommand.click();
-    relayedCommand = issuedCommand;
-    projectRelayedCommand();
   });
+
+  function handleLanguageChange() {
+    const queue = view?.queueMicrotask ?? globalThis.queueMicrotask;
+    if (queue) {
+      queue.call(view ?? globalThis, render);
+      return;
+    }
+    Promise.resolve().then(render);
+  }
+
+  function handleCommandResolved(event) {
+    if (!event || !event.detail) return;
+    const { action, accepted } = event.detail;
+    if (pendingCommand && pendingCommand.dataset && pendingCommand.dataset.action === action) {
+      if (accepted) {
+        relayedCommand = pendingCommand;
+      } else {
+        relayedCommand = null;
+      }
+      projectRelayedCommand();
+      pendingCommand = null;
+    }
+  }
+
+  function handleViewClick(event) {
+    const button = event?.target?.closest?.("button[data-action]");
+    if (button) {
+      pendingCommand = button;
+    }
+  }
+
+  view?.addEventListener?.("abyssal:language-changed", handleLanguageChange);
+  view?.addEventListener?.("abyssal:campaign-rendered", handleLanguageChange);
+  view?.addEventListener?.("abyssal:command-resolved", handleCommandResolved);
+  view?.addEventListener?.("click", handleViewClick);
 
   const Observer = view?.MutationObserver ?? globalThis.MutationObserver;
   const observer = Observer ? new Observer(requestRender) : null;
@@ -197,11 +221,11 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
   return {
     overlay,
     destroy() {
+      view?.removeEventListener?.("abyssal:language-changed", handleLanguageChange);
+      view?.removeEventListener?.("abyssal:campaign-rendered", handleLanguageChange);
+      view?.removeEventListener?.("abyssal:command-resolved", handleCommandResolved);
+      view?.removeEventListener?.("click", handleViewClick);
       observer?.disconnect();
-      if (frame) {
-        const cancelFrame = view?.cancelAnimationFrame ?? globalThis.cancelAnimationFrame;
-        cancelFrame?.call(view ?? globalThis, frame);
-      }
       overlay.remove();
     },
   };

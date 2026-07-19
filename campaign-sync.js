@@ -188,6 +188,15 @@ export class CampaignMirror {
     this.channel = null;
   }
 
+  authorize(metadata) {
+    return !!(
+      metadata &&
+      this.latestStamp &&
+      this.latestStamp.revision === metadata.revision &&
+      this.latestStamp.originId === metadata.originId
+    );
+  }
+
   #post(message) {
     try {
       this.channel.postMessage(message);

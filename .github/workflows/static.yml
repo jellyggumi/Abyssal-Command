@@ -33,7 +33,9 @@ jobs:
         index.html app.js battle-field-command-overlay.js battle-visualizer.js battle-realtime-three.js battle-presentation.js iso-math.js tilemap-renderer.js
         campaign-state.js campaign-sync.js stage-navigation.js i18n.js liquid-ether.js
         vendor/three.module.min.js vendor/loaders/GLTFLoader.js vendor/utils/BufferGeometryUtils.js
-        styles.css battle-field-command-overlay.css privacy.html sw.js manifest.json icon.svg favicon.ico
+        styles.css battle-field-command-overlay.css react-game-ui.css privacy.html sw.js manifest.json icon.svg favicon.ico
+        profile-store.js react-game-ui.js react-shop.js
+        vendor/react.production.min.js vendor/react-dom.production.min.js
         assets/icons/icon-192.png assets/icons/icon-512.png
         assets/audio/hunt.mp3 assets/audio/extract.mp3 assets/audio/materialize.mp3 assets/audio/capture.mp3
         assets/audio/possess.mp3 assets/audio/domain.mp3 assets/audio/assault.mp3 assets/audio/reward.mp3
@@ -98,7 +100,9 @@ jobs:
             index.html app.js battle-field-command-overlay.js battle-visualizer.js battle-realtime-three.js battle-presentation.js iso-math.js tilemap-renderer.js \
             campaign-state.js campaign-sync.js stage-navigation.js i18n.js liquid-ether.js \
             vendor/three.module.min.js vendor/loaders/GLTFLoader.js vendor/utils/BufferGeometryUtils.js \
-            styles.css battle-field-command-overlay.css privacy.html sw.js manifest.json icon.svg favicon.ico \
+            styles.css battle-field-command-overlay.css react-game-ui.css privacy.html sw.js manifest.json icon.svg favicon.ico \
+            profile-store.js react-game-ui.js react-shop.js \
+            vendor/react.production.min.js vendor/react-dom.production.min.js \
             assets/icons/icon-192.png assets/icons/icon-512.png \
             assets/audio/hunt.mp3 assets/audio/extract.mp3 assets/audio/materialize.mp3 assets/audio/capture.mp3 \
             assets/audio/possess.mp3 assets/audio/domain.mp3 assets/audio/assault.mp3 assets/audio/reward.mp3 \
@@ -152,9 +156,21 @@ jobs:
           node --check sw.js
           node --check vendor/loaders/GLTFLoader.js
           node --check vendor/utils/BufferGeometryUtils.js
+          node --check profile-store.js
+          node --check react-game-ui.js
+          node --check react-shop.js
           grep -Fq 'href="styles.css"' index.html
           grep -Fq '<script type="module" src="app.js"></script>' index.html
           grep -Fq '<script type="module" src="i18n.js"></script>' index.html
+          node -e '
+            const html = require("fs").readFileSync("index.html", "utf8");
+            const order = ["react.production", "react-dom", "profile-store", "react-game-ui", "react-shop", "app.js"];
+            const pattern = order.map(s => `<script[^>]+src="[^"]*${s}[^"]*"`).join(".*");
+            if (!new RegExp(pattern, "s").test(html)) {
+              console.error("Invalid script loading order in index.html");
+              process.exit(1);
+            }
+          '
           grep -Fq 'from "./campaign-state.js";' app.js
           grep -Fq 'from "./battle-visualizer.js";' app.js
           grep -Fq 'from "./battle-presentation.js";' app.js

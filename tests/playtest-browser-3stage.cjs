@@ -19,8 +19,9 @@ const COMPACT_CONTROL_JOURNEY_MODE = process.argv.includes("--compact-control-jo
 const COMPACT_FIELD_OVERLAY_MODE = process.argv.includes("--compact-field-overlay");
 const STAGE_THREE_CHECKLIST_MODE = process.argv.includes("--stage-three-checklist");
 const MOBILE_SAVE_CONTROLS_MODE = process.argv.includes("--mobile-save-controls");
+const MEDIA_ERROR_CLASSIFICATION_MODE = process.argv.includes("--media-error-classification");
 let playwright;
-if (!BRIDGE_CACHE_BOUNDARY_MODE && !SOURCE_CACHE_ADMISSION_MODE) {
+if (!BRIDGE_CACHE_BOUNDARY_MODE && !SOURCE_CACHE_ADMISSION_MODE && !MEDIA_ERROR_CLASSIFICATION_MODE) {
   try {
     playwright = require("playwright");
   } catch (error) {
@@ -413,6 +414,16 @@ function isOptionalMediaUrl(url) {
   }
 }
 
+function isExpectedBgmSceneHandoffAbort(url, errorText) {
+  if (errorText !== "net::ERR_ABORTED") return false;
+  try {
+    const pathname = new URL(url).pathname;
+    return pathname === "/assets/audio/battle-bgm.mp3" || pathname === "/assets/audio/bgm-theme.mp3";
+  } catch {
+    return false;
+  }
+}
+
 function isTeardownAbortedBridgeAsset(url, errorText) {
   try {
     return new URL(url).pathname.startsWith("/assets/images/battle/glb/") && errorText === "net::ERR_ABORTED";
@@ -423,6 +434,7 @@ function isTeardownAbortedBridgeAsset(url, errorText) {
 function collectClientErrors(page) {
   const unexpectedErrors = [];
   const optionalMediaErrors = [];
+  const expectedBgmAborts = [];
   page.on("pageerror", (error) => unexpectedErrors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => {
     console.log(`PAGE LOG [${message.type()}]:`, message.text());
@@ -434,11 +446,49 @@ function collectClientErrors(page) {
       unexpectedErrors.push(`console: ${message.text()}${sourceUrl ? ` (${sourceUrl})` : ""}`);
     }
   });
-  return { unexpectedErrors, optionalMediaErrors };
+  return { unexpectedErrors, optionalMediaErrors, expectedBgmAborts };
 }
 
 function assertNoClientErrors(errors, scenario) {
-  assert.deepEqual(errors.unexpectedErrors, [], `${scenario} emitted unexpected client errors:\n${errors.unexpectedErrors.join("\n")}`);
+  const failures = [...errors.unexpectedErrors, ...errors.optionalMediaErrors];
+  assert.deepEqual(failures, [], `${scenario} emitted client or network errors:\n${failures.join("\n")}`);
+}
+
+function verifyMediaErrorClassification() {
+  const origin = "http://127.0.0.1:4173";
+  for (const url of [
+    `${origin}/assets/audio/battle-bgm.mp3`,
+    `${origin}/assets/audio/bgm-theme.mp3?scene=briefing`,
+  ]) {
+    assert.equal(
+      isExpectedBgmSceneHandoffAbort(url, "net::ERR_ABORTED"),
+      true,
+      `${url} must be recognized as an intentional BGM scene-handoff abort.`
+    );
+  }
+
+  for (const { url, errorText } of [
+    { url: `${origin}/assets/audio/battle-bgm.mp3`, errorText: "net::ERR_FAILED" },
+    { url: `${origin}/assets/audio/bgm-theme.mp3`, errorText: "net::ERR_BLOCKED_BY_CLIENT" },
+    { url: `${origin}/assets/audio/voiceover.mp3`, errorText: "net::ERR_ABORTED" },
+    { url: `${origin}/assets/video/stage-intro.mp4`, errorText: "net::ERR_ABORTED" },
+    { url: `${origin}/assets/audio/battle-bgm.mp3.backup`, errorText: "net::ERR_ABORTED" },
+  ]) {
+    assert.equal(
+      isExpectedBgmSceneHandoffAbort(url, errorText),
+      false,
+      `${url} (${errorText}) must remain a client-error failure.`
+    );
+  }
+
+  assert.throws(
+    () => assertNoClientErrors(
+      { unexpectedErrors: [], optionalMediaErrors: ["response 404: optional audio"], expectedBgmAborts: [] },
+      "Media classification fixture"
+    ),
+    /response 404: optional audio/,
+    "optional-media errors must fail the same client-error gate."
+  );
 }
 
 function sourceModelGlbPath(url) {
@@ -3427,7 +3477,7 @@ async function verifyStageThreeChecklist(browser, baseUrl) {
 function cleanupError(label, error) {
   return `${label}: ${error instanceof Error ? error.message : String(error)}`;
 }
-const CURRENT_STATIC_CACHE = "abyssal-surge-static-v38";
+const CURRENT_STATIC_CACHE = "abyssal-surge-static-v46";
 
 function currentWorkerCacheName() {
   let serviceWorkerSource;
@@ -3448,7 +3498,7 @@ function currentWorkerCacheName() {
   assert.equal(
     cacheName,
     CURRENT_STATIC_CACHE,
-    "sw.js must retain the v38 static cache revision required by the browser cache assertion.",
+    "sw.js must retain the v46 static cache revision required by the browser cache assertion.",
   );
   return cacheName;
 }
@@ -3896,11 +3946,14 @@ async function run() {
     const moduleResponses = collectCampaignModuleResponses(page, hosting.baseUrl);
     page.on("requestfailed", (request) => {
       const errorText = request.failure()?.errorText || "failed";
-      if (isTeardownAbortedBridgeAsset(request.url(), errorText)) return;
-      if (isOptionalMediaUrl(request.url())) {
-        clientErrors.optionalMediaErrors.push(`request (${requestOrigin(request)}): ${request.url()}`);
+      const requestUrl = request.url();
+      if (isTeardownAbortedBridgeAsset(requestUrl, errorText)) return;
+      if (isExpectedBgmSceneHandoffAbort(requestUrl, errorText)) {
+        clientErrors.expectedBgmAborts.push(`request (${requestOrigin(request)}): ${requestUrl} (${errorText})`);
+      } else if (isOptionalMediaUrl(requestUrl)) {
+        clientErrors.optionalMediaErrors.push(`request (${requestOrigin(request)}): ${requestUrl} (${errorText})`);
       } else {
-        clientErrors.unexpectedErrors.push(`request (${requestOrigin(request)}): ${request.url()} (${errorText})`);
+        clientErrors.unexpectedErrors.push(`request (${requestOrigin(request)}): ${requestUrl} (${errorText})`);
       }
     });
     page.on("response", (response) => {
@@ -3926,7 +3979,7 @@ async function run() {
 
     assertObservedSourceGlbPaths(sourceGlbTrace, ALL_SOURCE_GLB_PATHS, "Full campaign path");
     assertNoClientErrors(clientErrors, "Full campaign path");
-    console.log(`PLAYTEST_BROWSER_PASS stages=Cinder Span,Veil Citadel,Echo Throne legion=0/10,4/10,8/10 worker=${new URL(worker.scriptUrl).pathname} cache=${worker.cacheName} optional-media-errors=${clientErrors.optionalMediaErrors.length}`);
+    console.log(`PLAYTEST_BROWSER_PASS stages=Cinder Span,Veil Citadel,Echo Throne legion=0/10,4/10,8/10 worker=${new URL(worker.scriptUrl).pathname} cache=${worker.cacheName} expected-bgm-aborts=${clientErrors.expectedBgmAborts.length} optional-media-errors=${clientErrors.optionalMediaErrors.length}`);
   } catch (error) {
     let screenshotPath = "";
     if (page) {
@@ -3995,6 +4048,14 @@ if (BRIDGE_CACHE_BOUNDARY_MODE) {
       console.error(`PLAYTEST_SOURCE_CACHE_ADMISSION_FAIL: ${error instanceof Error ? error.stack || error.message : String(error)}`);
       process.exitCode = 1;
     });
+} else if (MEDIA_ERROR_CLASSIFICATION_MODE) {
+  try {
+    verifyMediaErrorClassification();
+    console.log("PLAYTEST_MEDIA_ERROR_CLASSIFICATION_PASS expected=bgm-scene-handoff-aborts rejected=wrong-error,other-audio,video,lookalike optional-media-gate=strict");
+  } catch (error) {
+    console.error(`PLAYTEST_MEDIA_ERROR_CLASSIFICATION_FAIL: ${error instanceof Error ? error.stack || error.message : String(error)}`);
+    process.exitCode = 1;
+  }
 } else if (playwright) {
   run();
 }

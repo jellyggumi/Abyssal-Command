@@ -19,7 +19,7 @@ import { getBattlePresentation } from "./battle-presentation.js";
 import { CampaignMirror } from "./campaign-sync.js";
 import { currentLang, translate, translations } from "./i18n.js";
 
-const BUILD_TAG = "abyssal-surge-static-v37";
+const BUILD_TAG = "abyssal-surge-static-v46";
 const DB_NAME = "abyssal-surge-campaign";
 const DB_VERSION = 1;
 const STORE_NAME = "campaigns";
@@ -159,6 +159,22 @@ const NARRATION = Object.freeze({
     msPerChar: 45,
     holdMs: 1473
   })
+});
+
+const NARRATION_EN = Object.freeze({
+  intro: Object.freeze(["The abyssal gate has opened.", "Arise, Shadow Lord."]),
+  "cinder-span": Object.freeze(["The Ashen Bridge, Cinder Span.", "Hunt Ashen Echoes and harvest their souls."]),
+  "veil-citadel": Object.freeze(["The Shrouded Fortress, Veil Citadel.", "The power of possession awakens.", "Seize both nodes simultaneously."]),
+  "echo-throne": Object.freeze(["The Echo Throne.", "Channel the Lord's Domain and bring down the Gate Sovereign."]),
+  "sunken-bastion": Object.freeze(["The Drowned Bulwark, Sunken Bastion.", "Drown the Tidal Warden upon the breakwater."]),
+  "howling-sprawl": Object.freeze(["The Howling Sprawl.", "Possess the Flock Watcher to choke off the Herald."]),
+  "glass-necropolis": Object.freeze(["The Glass Necropolis.", "Seize both glass platforms and silence the Requiem."]),
+  "starless-canal": Object.freeze(["The Starless Canal.", "The Lord's Domain returns. Extinguish all the Tyrant's lanterns."]),
+  "shattered-causeway": Object.freeze(["The Shattered Causeway.", "Bring down the colossus guarding the bridge beneath it."]),
+  "abyss-chancel": Object.freeze(["The Abyss Chancel.", "Seize all three ritual platforms and break the contract."]),
+  "gate-zenith": Object.freeze(["Gate Zenith, the final peak.", "Stake all grace to unmake the Abyssal Regent.", "The gate closes today."]),
+  victory: Object.freeze(["Before the silenced gate,", "the Shadow Legion ascends the throne."]),
+  defeat: Object.freeze(["The legion's anchor has shattered.", "Rise, once more."])
 });
 // Stage art: stages 4-10 portraits/backdrops are generated in this release;
 // resolveStageArt falls back to the flagship trio until a file exists.
@@ -447,6 +463,7 @@ let liquidEtherLoad = null;
 let particleBackground = null;
 let narratedStageId = null;
 let narratedOutcome = null;
+let activeNarrationKey = null;
 let stageBriefingOpen = false;
 let entryGuidanceStageId = null;
 let pendingCommandFocus = false;
@@ -473,8 +490,52 @@ function currentStage() {
   return STAGES[campaign.stageIndex];
 }
 
-function setSaveStatus(message) {
+let mirrorActive = false;
+let lastSaveStatusType = "";
+let lastSaveStatusKey = "";
+let lastSaveStatusExtra = "";
+
+function setSaveStatus(message, type = "plain", key = "", extra = "") {
   elements.saveStatus.textContent = message;
+  if (key) {
+    lastSaveStatusType = type;
+    lastSaveStatusKey = key;
+    lastSaveStatusExtra = extra;
+  }
+}
+
+function refreshSaveStatus() {
+  if (!lastSaveStatusKey) return;
+  const lang = currentLang();
+  let msg = translate(lastSaveStatusKey) || lastSaveStatusKey;
+  if (lastSaveStatusType === "compatible") {
+    msg = msg.replace("{source}", lastSaveStatusExtra);
+  } else if (lastSaveStatusType === "rejected") {
+    msg = msg.replace("{error}", lastSaveStatusExtra);
+  } else if (lastSaveStatusType === "savedTo") {
+    msg = lang === "ko"
+      ? `${msg} (${lastSaveStatusExtra}에 저장됨)`
+      : `${msg} in ${lastSaveStatusExtra}.`;
+  }
+  elements.saveStatus.textContent = msg;
+}
+
+function getNarrationLines(key) {
+  const lang = currentLang();
+  if (lang === "en" && NARRATION_EN[key]) {
+    return NARRATION_EN[key];
+  }
+  return NARRATION[key]?.lines || [];
+}
+
+function syncAmbienceButtonText() {
+  if (!elements.ambience) return;
+  const lang = currentLang();
+  if (!ambiencePlayer || ambiencePlayer.paused) {
+    elements.ambience.textContent = lang === "ko" ? "환경음 재생" : "Play ambient sound";
+  } else {
+    elements.ambience.textContent = lang === "ko" ? "환경음 끄기" : "Pause ambient sound";
+  }
 }
 
 function translatedResumeText(key, fallback) {
@@ -1336,6 +1397,7 @@ function handleEncounterEvent(event, sessionId = battleSessionId, source = null)
     }
 
     campaign = result.state;
+    render();
     const encounterCue = ENCOUNTER_CUE_BY_EVENT[event.type];
     if (encounterCue) playCue(encounterCue);
     const encounter = currentEncounter();
@@ -1343,7 +1405,6 @@ function handleEncounterEvent(event, sessionId = battleSessionId, source = null)
       clearEncounterStartTimer();
     }
     await persistCampaign(`persist.encounter.${event.type}`);
-    render();
     synchronizeBattleRenderer();
 
     if (
@@ -1605,6 +1666,11 @@ function render() {
   const benefits = getCampaignBenefits(campaign);
   const available = new Set(getAvailableActions(campaign));
   const isComplete = campaign.status === "campaign-complete";
+  try {
+    window.AbyssalProfile?.syncCampaign(campaign);
+  } catch (e) {
+    console.error("Profile sync failed:", e);
+  }
   renderBattlePresentation(stage);
   renderMissionBriefing(stage);
 
@@ -1764,6 +1830,9 @@ function render() {
   renderStageMedia(stage);
   syncNarration();
   focusPendingCommand();
+  if (typeof window.CustomEvent === "function") {
+    window.dispatchEvent(new window.CustomEvent("abyssal:campaign-rendered"));
+  }
 }
 
 async function resumeCampaign() {
@@ -1874,9 +1943,12 @@ function setTypedNarrationLine(line) {
   elements.briefingNarration.textContent = line;
 }
 
-async function typeNarration(entry, run) {
+async function typeNarration(key, run) {
+  const entry = NARRATION[key];
+  if (!entry) return;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  for (const line of entry.lines) {
+  const lines = getNarrationLines(key);
+  for (const line of lines) {
     if (run !== narrationRun) return;
     setTypedNarrationLine("");
     elements.narrationLine.classList.toggle("is-typing", !reduceMotion);
@@ -1897,9 +1969,11 @@ async function typeNarration(entry, run) {
 function playNarration(key) {
   const entry = NARRATION[key];
   if (!entry) return false;
+  activeNarrationKey = key;
   const run = ++narrationRun;
-  elements.narrationSr.textContent = entry.lines.join(" ");
-  void typeNarration(entry, run);
+  const lines = getNarrationLines(key);
+  elements.narrationSr.textContent = lines.join(" ");
+  void typeNarration(key, run);
   if (!narrationPlayer) {
     narrationPlayer = new Audio();
     narrationPlayer.preload = "none";
@@ -1914,6 +1988,16 @@ function playNarration(key) {
     narrationPlayer.removeAttribute("src");
   }
   return true;
+}
+
+function refreshNarrationLanguage() {
+  if (!activeNarrationKey) return;
+  const lines = getNarrationLines(activeNarrationKey);
+  if (!lines.length) return;
+  narrationRun += 1;
+  elements.narrationLine.classList.remove("is-typing");
+  elements.narrationSr.textContent = lines.join(" ");
+  setTypedNarrationLine(lines[lines.length - 1]);
 }
 
 function openCurrentStageBriefing(narrationKey = currentStage().id) {
@@ -1969,25 +2053,37 @@ function flashEffect(effect) {
 
 async function persistCampaign(contextKey = "persist.campaignSaved") {
   if (!campaign) return;
+  const activeCampaign = campaign;
   const envelope = createSaveEnvelope(campaign);
   storedCampaign = campaign;
   updateResumeAffordance();
   const savedTo = await storage.save(envelope);
-  campaignMirror?.publish(envelope);
+  if (campaign === activeCampaign) {
+    campaignMirror?.publish(envelope);
+  }
   const lang = currentLang();
   const localizedContext = translate(contextKey) || contextKey;
   const statusMsg = lang === "ko"
     ? `${localizedContext} (${savedTo}에 저장됨)`
     : `${localizedContext} in ${savedTo}.`;
-  setSaveStatus(statusMsg);
+  setSaveStatus(statusMsg, "savedTo", contextKey, savedTo);
 }
 
-async function applyMirroredCampaign(envelope) {
+async function applyMirroredCampaign(envelope, metadata) {
   try {
     const mirroredCampaign = restoreSaveEnvelope(envelope);
+    const activeCampaign = campaign;
+    await storage.save(envelope);
+    const isStale = campaign !== activeCampaign || !campaignMirror?.authorize(metadata);
+    if (isStale) {
+      const restoreCampaign = campaign || storedCampaign;
+      if (restoreCampaign) {
+        await storage.save(createSaveEnvelope(restoreCampaign));
+      }
+      return;
+    }
     storedCampaign = mirroredCampaign;
     updateResumeAffordance();
-    await storage.save(envelope);
     if (campaign) {
       stopBattle();
       campaign = mirroredCampaign;
@@ -1995,7 +2091,7 @@ async function applyMirroredCampaign(envelope) {
       narratedOutcome = null;
       render();
     }
-    setSaveStatus(translate("saveStatus.mirroredApplied"));
+    setSaveStatus(translate("saveStatus.mirroredApplied"), "plain", "saveStatus.mirroredApplied");
   } catch {
     // The mirror validates structure; replay validation keeps incompatible saves local.
   }
@@ -2020,32 +2116,45 @@ function startActionCooldown(action) {
 }
 
 async function handleAction(action) {
-  if (!campaign || !battleUiActive() || resultOverlayOpen || remainingCooldown(action) > 0) return;
-  if (!getAvailableActions(campaign).includes(action)) return;
+  let accepted = false;
+  try {
+    if (!campaign || !battleUiActive() || resultOverlayOpen || remainingCooldown(action) > 0) return;
+    if (!getAvailableActions(campaign).includes(action)) return;
 
-  const stage = currentStage();
-  const priorCampaign = campaign;
-  const result = action === "assault" && stage.encounter
-    ? applyEncounterEvent(campaign, { type: "boss-assault", stageId: stage.id })
-    : applyAction(campaign, action);
-  const materializeCount = action === "materialize" && result.accepted
-    ? result.state.stage.legion - priorCampaign.stage.legion
-    : 0;
-  campaign = result.state;
-  if (campaign.status !== "active" || currentEncounter()?.bossExposed || currentEncounter()?.spawningStopped) {
-    clearEncounterStartTimer();
-  }
-  if (!result.accepted) {
+    const stage = currentStage();
+    const priorCampaign = campaign;
+    const result = action === "assault" && stage.encounter
+      ? applyEncounterEvent(campaign, { type: "boss-assault", stageId: stage.id })
+      : applyAction(campaign, action);
+    const materializeCount = action === "materialize" && result.accepted
+      ? result.state.stage.legion - priorCampaign.stage.legion
+      : 0;
+    campaign = result.state;
+    if (campaign.status !== "active" || currentEncounter()?.bossExposed || currentEncounter()?.spawningStopped) {
+      clearEncounterStartTimer();
+    }
+    if (!result.accepted) {
+      render();
+      return;
+    }
+
+    accepted = true;
+    startActionCooldown(action);
+    synchronizeBattleRenderer();
+    armEncounterWhenPrepared();
+    triggerBattleVisual(action, action === "materialize" ? { count: materializeCount } : {});
     render();
-    return;
+    await persistCampaign("persist.campaignSaved");
+  } finally {
+    if (typeof window.CustomEvent === "function") {
+      window.setTimeout(() => {
+        const event = new window.CustomEvent("abyssal:command-resolved", {
+          detail: { action, accepted }
+        });
+        window.dispatchEvent(event);
+      }, 0);
+    }
   }
-
-  startActionCooldown(action);
-  synchronizeBattleRenderer();
-  armEncounterWhenPrepared();
-  triggerBattleVisual(action, action === "materialize" ? { count: materializeCount } : {});
-  render();
-  await persistCampaign("persist.campaignSaved");
 }
 
 async function handleReward(rewardId) {
@@ -2143,13 +2252,13 @@ function exportSave() {
   anchor.download = "abyssal-surge-campaign-save.json";
   anchor.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  setSaveStatus(translate("saveStatus.exported"));
+  setSaveStatus(translate("saveStatus.exported"), "plain", "saveStatus.exported");
 }
 
 async function importSave(file) {
   if (!file) return;
   if (file.size > MAX_IMPORT_BYTES) {
-    setSaveStatus(translate("importTooLarge"));
+    setSaveStatus(translate("importTooLarge"), "plain", "importTooLarge");
     elements.importSave.value = "";
     return;
   }
@@ -2169,7 +2278,7 @@ async function importSave(file) {
     flashEffect("reward");
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "invalid save file";
-    setSaveStatus(translate("importRejected").replace("{error}", errorMsg));
+    setSaveStatus(translate("importRejected").replace("{error}", errorMsg), "rejected", "importRejected", errorMsg);
   } finally {
     elements.importSave.value = "";
   }
@@ -2182,20 +2291,22 @@ function toggleAmbience() {
     ambiencePlayer.preload = "none";
     ambiencePlayer.addEventListener("error", () => {
       ambiencePlayer.pause();
-      elements.ambience.textContent = "Ambient sound unavailable";
+      const lang = currentLang();
+      elements.ambience.textContent = lang === "ko" ? "환경음을 사용할 수 없음" : "Ambient sound unavailable";
       elements.ambience.setAttribute("aria-pressed", "false");
     });
   }
+  const lang = currentLang();
   if (ambiencePlayer.paused) {
     ambiencePlayer.play().then(() => {
-      elements.ambience.textContent = "Pause ambient sound";
+      elements.ambience.textContent = lang === "ko" ? "환경음 끄기" : "Pause ambient sound";
       elements.ambience.setAttribute("aria-pressed", "true");
     }).catch(() => {
-      elements.ambience.textContent = "Ambient sound unavailable";
+      elements.ambience.textContent = lang === "ko" ? "환경음을 사용할 수 없음" : "Ambient sound unavailable";
     });
   } else {
     ambiencePlayer.pause();
-    elements.ambience.textContent = "Play ambient sound";
+    elements.ambience.textContent = lang === "ko" ? "환경음 재생" : "Play ambient sound";
     elements.ambience.setAttribute("aria-pressed", "false");
   }
 }
@@ -2366,11 +2477,14 @@ function wireControls() {
   elements.cinematicTranscript.addEventListener("keydown", (event) => {
     if (event.key === "Escape") toggleCinematicTranscript();
   });
-  elements.languageToggle?.addEventListener("click", () => window.requestAnimationFrame(() => {
+  window.addEventListener("abyssal:language-changed", () => {
     updateResumeAffordance();
     syncCinematicCopy();
+    syncAmbienceButtonText();
+    refreshSaveStatus();
     if (campaign) render();
-  }));
+    refreshNarrationLanguage();
+  });
   window.addEventListener("keydown", (event) => {
     if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
     const action = ACTION_KEYS[event.key.toLowerCase()];
@@ -2590,61 +2704,22 @@ function initReactBitsEffects() {
     }
   }
 
-  // 2. Spotlight & Tilt Effects (only on devices with hover capability)
-  if (window.matchMedia("(hover: hover)").matches) {
-    const panels = document.querySelectorAll(".panel, .map-node, .storyboard-card");
-    panels.forEach((panel) => {
-      panel.addEventListener("mousemove", (e) => {
-        const rect = panel.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        panel.style.setProperty("--mouse-x", `${x}px`);
-        panel.style.setProperty("--mouse-y", `${y}px`);
-
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        const rotateX = ((y - centerY) / centerY) * -6; // max 6 degrees tilt
-        const rotateY = ((x - centerX) / centerX) * 6;
-        panel.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-      });
-
-      panel.addEventListener("mouseleave", () => {
-        panel.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg)";
-      });
-    });
-
-    // 3. Magnetic Buttons Effect
-    const buttons = document.querySelectorAll("button:not(.battle-pointer-target), .file-button");
-    buttons.forEach((btn) => {
-      btn.classList.add("magnetic-button");
-      window.addEventListener("mousemove", (e) => {
-        const rect = btn.getBoundingClientRect();
-        const btnX = rect.left + rect.width / 2;
-        const btnY = rect.top + rect.height / 2;
-        const dx = e.clientX - btnX;
-        const dy = e.clientY - btnY;
-        const dist = Math.hypot(dx, dy);
-
-        if (dist < 70) {
-          // Pull button towards cursor
-          const pullX = dx * 0.25;
-          const pullY = dy * 0.25;
-          btn.style.transform = `translate(${pullX}px, ${pullY}px)`;
-        } else {
-          btn.style.transform = "";
-        }
-      });
-      btn.addEventListener("mouseleave", () => {
-        btn.style.transform = "";
-      });
-    });
-  }
   return particleLoop;
 }
 
 async function initialize() {
   document.documentElement.dataset.rulesVersion = RULES_VERSION;
   document.documentElement.dataset.buildTag = BUILD_TAG;
+  if (window.AbyssalProfile) {
+    try {
+      const snapshot = window.AbyssalProfile.getSnapshot();
+      if (snapshot?.equippedTheme) {
+        document.documentElement.dataset.uiTheme = snapshot.equippedTheme;
+      }
+    } catch (e) {
+      console.error("AbyssalProfile initialization failed:", e);
+    }
+  }
   syncCinematicCopy();
   await storage.open();
   const loaded = await storage.load();
@@ -2652,18 +2727,20 @@ async function initialize() {
     try {
       storedCampaign = restoreSaveEnvelope(loaded.envelope);
       updateResumeAffordance();
-      setSaveStatus(translate("saveStatus.compatibleCampaign").replace("{source}", loaded.source));
+      setSaveStatus(translate("saveStatus.compatibleCampaign").replace("{source}", loaded.source), "compatible", "saveStatus.compatibleCampaign", loaded.source);
     } catch {
-      setSaveStatus(translate("saveStatus.incompatibleCampaign"));
+      setSaveStatus(translate("saveStatus.incompatibleCampaign"), "plain", "saveStatus.incompatibleCampaign");
     }
   } else {
-    setSaveStatus(storage.mode === "indexeddb" ? translate("saveStatus.noCampaignIndexedDb") : translate("saveStatus.indexedDbUnavailable"));
+    const key = storage.mode === "indexeddb" ? "saveStatus.noCampaignIndexedDb" : "saveStatus.indexedDbUnavailable";
+    setSaveStatus(translate(key), "plain", key);
   }
-  campaignMirror = new CampaignMirror({ onState: applyMirroredCampaign });
+  campaignMirror = new CampaignMirror({ onState: (envelope, metadata) => applyMirroredCampaign(envelope, metadata) });
   const mirrorAvailability = campaignMirror.start(storedCampaign ? createSaveEnvelope(storedCampaign) : null);
-  elements.mirrorStatus.textContent = mirrorAvailability.available
-    ? "다른 탭과 이 브라우저에서만 로컬 동기화 중입니다. 인터넷 멀티플레이는 아닙니다."
-    : "탭 간 로컬 동기화를 사용할 수 없습니다. 이 기기 저장은 계속됩니다.";
+  mirrorActive = mirrorAvailability.available;
+  elements.mirrorStatus.textContent = mirrorActive
+    ? translate("save.mirrorActive")
+    : translate("save.mirrorInactive");
   window.addEventListener("pagehide", () => campaignMirror?.close(), { once: true });
   wireControls();
   particleBackground = initReactBitsEffects();

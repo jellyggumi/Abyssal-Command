@@ -1,0 +1,2044 @@
+/* react-game-ui.css - Premium Medieval UI Theme Extensions & Overrides */
+
+/* ============================================================
+   1. CSS VARIABLES & THEMES
+   ============================================================ */
+
+/* Default Medieval Theme: Near-black stone/iron foundation, desaturated parchment text, gold focus */
+:root {
+  --bg: #090a0d !important;
+  --panel: #11100e !important;
+  --raised: #1c1815 !important;
+  --line: #3d3126 !important;
+  --ink: #dfd7bd !important;
+  --muted: #8a8370 !important;
+  --aqua: #42b5ad !important; /* Subtle teal abyss magic */
+  --cinder: #e5c158 !important; /* Aged gold */
+  --danger: #b33e2b !important; /* Ember/cinder danger */
+  --focus: #e5c158 !important;
+
+  --font-serif: Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --transition-heavy: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --bevel-light: inset 0 0 0 1px #524233, inset 0 0 10px rgba(0, 0, 0, 0.85);
+  --bevel-heavy: inset 0 0 0 2px #3d3126, inset 0 0 0 3px #524233, inset 0 0 20px rgba(0, 0, 0, 0.95);
+  --shadow-medieval: 0 4px 10px rgba(0, 0, 0, 0.65), 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark !important;
+}
+
+/* Iron Theme: Near-black cold stone/iron foundation, grey-blue lines, parchment text */
+html[data-ui-theme="iron"] {
+  --bg: #090a0d !important;
+  --panel: #11100e !important;
+  --raised: #1c1815 !important;
+  --line: #3d3126 !important;
+  --ink: #dfd7bd !important;
+  --muted: #8a8370 !important;
+  --aqua: #42b5ad !important;
+  --cinder: #e5c158 !important;
+  --danger: #b33e2b !important;
+  --focus: #e5c158 !important;
+
+  --bevel-light: inset 0 0 0 1px #524233, inset 0 0 10px rgba(0, 0, 0, 0.85) !important;
+  --bevel-heavy: inset 0 0 0 2px #3d3126, inset 0 0 0 3px #524233, inset 0 0 20px rgba(0, 0, 0, 0.95) !important;
+  --shadow-medieval: 0 4px 10px rgba(0, 0, 0, 0.65), 0 12px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Cinder Theme: Smoldering red highlights, warm charcoal/stone backdrop, ember accents */
+html[data-ui-theme="cinder"] {
+  --bg: #0b0908 !important;
+  --panel: #140f0d !important;
+  --raised: #211814 !important;
+  --line: #422d25 !important;
+  --ink: #dfd2bd !important;
+  --muted: #8f7970 !important;
+  --aqua: #ff6a3d !important;
+  --cinder: #ff983d !important;
+  --danger: #d43b25 !important;
+  --focus: #ff983d !important;
+
+  --bevel-light: inset 0 0 0 1px #6b473a, inset 0 0 10px rgba(0, 0, 0, 0.85) !important;
+  --bevel-heavy: inset 0 0 0 2px #422d25, inset 0 0 0 3px #6b473a, inset 0 0 20px rgba(0, 0, 0, 0.95) !important;
+  --shadow-medieval: 0 4px 10px rgba(0, 0, 0, 0.7), 0 12px 32px rgba(255, 106, 61, 0.15) !important;
+}
+
+/* Veil Theme: Deep indigo, purple shadows, restrained teal/cyan magic */
+html[data-ui-theme="veil"] {
+  --bg: #06050b !important;
+  --panel: #0d0a17 !important;
+  --raised: #161129 !important;
+  --line: #302652 !important;
+  --ink: #cbd2df !important;
+  --muted: #72798f !important;
+  --aqua: #42aab5 !important;
+  --cinder: #836be5 !important;
+  --danger: #ac3b9d !important;
+  --focus: #42aab5 !important;
+
+  --bevel-light: inset 0 0 0 1px #4e3e82, inset 0 0 10px rgba(0, 0, 0, 0.85) !important;
+  --bevel-heavy: inset 0 0 0 2px #302652, inset 0 0 0 3px #4e3e82, inset 0 0 20px rgba(0, 0, 0, 0.95) !important;
+  --shadow-medieval: 0 4px 10px rgba(0, 0, 0, 0.75), 0 12px 32px rgba(131, 107, 229, 0.15) !important;
+}
+
+/* Sovereign Theme: Ornate gold/brass and royal crimson highlights */
+html[data-ui-theme="sovereign"] {
+  --bg: #0b0907 !important;
+  --panel: #1a140f !important;
+  --raised: #281e14 !important;
+  --line: #523e26 !important;
+  --ink: #f2e3c9 !important;
+  --muted: #a69176 !important;
+  --aqua: #e0ac43 !important;
+  --cinder: #ffd558 !important;
+  --danger: #b32b2b !important;
+  --focus: #ffd558 !important;
+
+  --bevel-light: inset 0 0 0 1px #785a36, inset 0 0 10px rgba(0, 0, 0, 0.85) !important;
+  --bevel-heavy: inset 0 0 0 2px #523e26, inset 0 0 0 3px #785a36, inset 0 0 20px rgba(0, 0, 0, 0.95) !important;
+  --shadow-medieval: 0 4px 10px rgba(0, 0, 0, 0.7), 0 12px 32px rgba(255, 213, 88, 0.25) !important;
+}
+
+/* ============================================================
+   2. GLOBAL RESET & TYPOGRAPHY
+   ============================================================ */
+
+html, body {
+  background: var(--bg) !important;
+  color: var(--ink) !important;
+  font-family: var(--font-sans) !important;
+  transition: background-color 0.4s ease;
+}
+
+/* Enforce 44px min block size for controls */
+.site-header button,
+.ghost-toggle,
+.campaign-heading-actions button,
+.magnetic-button,
+.relic-shop-btn,
+.file-button,
+#export-save,
+label[for="import-save"],
+.stage-selector button {
+  min-height: 44px !important;
+  box-sizing: border-box !important;
+}
+
+/* Persistent HUD labels & values >=12.5px */
+.battle-resource-bar dt,
+.battle-force-labels dt,
+.spec-list dt,
+.spec-list-compact dt,
+.stats-list span,
+.stats-list-compact li span,
+.selection-dossier span,
+.selection-dossier small,
+.wave-badge,
+.field-command-dock .key,
+.field-current-objective,
+.objective-checklist li,
+#stage-number,
+.cockpit-top .eyebrow {
+  font-size: 12.5px !important;
+}
+
+.battle-resource-bar dd,
+.battle-force-labels dd,
+.spec-list dd,
+.spec-list-compact dd,
+.selection-dossier strong,
+.cooldown-timer {
+  font-size: 13.5px !important;
+}
+
+/* Compact numbered / scrollable treatment for stage selector tabs */
+.stage-selector {
+  overflow-x: auto !important;
+  scrollbar-width: thin !important;
+  max-width: 100% !important;
+}
+.stage-selector ol {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  gap: 0.35rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  list-style: none !important;
+  min-width: max-content !important;
+}
+.stage-selector li {
+  flex: 0 0 auto !important;
+}
+.stage-selector button {
+  min-height: 44px !important;
+  min-width: 44px !important;
+  width: auto !important;
+  padding: 0.3rem 0.5rem !important;
+}
+
+h1, h2, h3, h4, h5, h6,
+.shiny-text,
+.relic-shop-title,
+.campaign-resume-summary-heading,
+.cockpit-top h2,
+.mission-briefing-panel h3,
+.result-panel h3,
+.ashen-field-command__activate-name {
+  font-family: var(--font-serif) !important;
+  font-weight: bold !important;
+  letter-spacing: 0.02em !important;
+}
+
+body, p, li, dt, dd, td, th, input, textarea, select,
+.lede, .hint, .ashen-field-command__objective, .ashen-field-command__activate-note {
+  font-family: var(--font-sans) !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--panel) !important;
+  border-left: 1px solid var(--line);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line) !important;
+  border: 1px solid var(--panel);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cinder) !important;
+}
+
+/* ============================================================
+   3. SHARP MEDIEVAL WIDGETS & BUTTONS (NO GLASSY SAAS)
+   ============================================================ */
+
+/* Panel Overrides */
+.panel {
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.008), rgba(255, 255, 255, 0.008) 1px, transparent 1px, transparent 4px),
+              linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%) !important;
+  border: 2px solid var(--line) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--bevel-heavy), var(--shadow-medieval) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: var(--transition-heavy) !important;
+}
+
+.panel:hover {
+  border-color: var(--cinder) !important;
+  box-shadow: var(--bevel-heavy), 0 0 15px rgba(229, 193, 88, 0.15), var(--shadow-medieval) !important;
+}
+
+/* Button & Controls */
+button, .file-button, .relic-shop-btn {
+  min-height: 2.8rem;
+  border: 2px solid var(--line) !important;
+  border-radius: 4px !important;
+  padding: 0.6rem 1.2rem !important;
+  color: var(--ink) !important;
+  background: linear-gradient(180deg, var(--raised) 0%, var(--panel) 100%) !important;
+  font-family: var(--font-serif) !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  cursor: pointer;
+  box-shadow: var(--bevel-light), 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  transition: var(--transition-heavy) !important;
+}
+
+button:hover:not(:disabled), .file-button:hover, .relic-shop-btn:hover:not(:disabled) {
+  border-color: var(--cinder) !important;
+  background: linear-gradient(180deg, var(--panel) 0%, var(--raised) 100%) !important;
+  box-shadow: inset 0 0 0 1px var(--cinder), 0 0 12px rgba(229, 193, 88, 0.25) !important;
+  color: var(--ink) !important;
+  transform: translateY(-1px) !important;
+}
+
+button:active:not(:disabled), .file-button:active, .relic-shop-btn:active:not(:disabled) {
+  transform: translateY(1px) !important;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8) !important;
+}
+
+button:disabled, .relic-shop-btn:disabled {
+  opacity: 0.35 !important;
+  border-color: #24201c !important;
+  background: #0f0d0b !important;
+  color: #5c554a !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Primary buttons (Gold Banner style) */
+button.primary, .relic-shop-btn-equip {
+  border-color: var(--cinder) !important;
+  background: linear-gradient(180deg, #3a2e1d 0%, #1c150c 100%) !important;
+  color: var(--cinder) !important;
+  box-shadow: inset 0 0 0 1px var(--cinder), inset 0 0 10px rgba(184, 144, 60, 0.3), 0 4px 10px rgba(0,0,0,0.4) !important;
+}
+
+button.primary:hover:not(:disabled), .relic-shop-btn-equip:hover:not(:disabled) {
+  background: linear-gradient(180deg, #4d3e2a 0%, #291f13 100%) !important;
+  border-color: var(--cinder) !important;
+  box-shadow: inset 0 0 0 1px #fff, inset 0 0 12px rgba(229, 193, 88, 0.5), 0 4px 12px rgba(229, 193, 88, 0.25) !important;
+  color: #fff !important;
+}
+
+/* Active buttons (Teal Magic style) */
+.relic-shop-btn-active {
+  border-color: var(--aqua) !important;
+  background: linear-gradient(180deg, #0e2a27 0%, #051211 100%) !important;
+  color: var(--aqua) !important;
+  box-shadow: inset 0 0 0 1px var(--aqua), inset 0 0 10px rgba(66, 181, 173, 0.3), 0 4px 10px rgba(0,0,0,0.4) !important;
+}
+
+.relic-shop-btn-active:hover:not(:disabled) {
+  background: linear-gradient(180deg, #18423e 0%, #0b211f 100%) !important;
+  border-color: var(--aqua) !important;
+  box-shadow: inset 0 0 0 1px #fff, inset 0 0 12px rgba(66, 181, 173, 0.5) !important;
+  color: #a4eae5 !important;
+}
+
+/* ============================================================
+   4. SITE HEADER (MEDIEVAL OVERLAY)
+   ============================================================ */
+
+.site-header.medieval-header {
+  border-bottom: 2px solid var(--line) !important;
+  background: #090a0d !important;
+  padding: 0.75rem 1.5rem !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.site-header.medieval-header h1 {
+  color: var(--ink) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9) !important;
+  font-size: 2rem !important;
+}
+
+.site-header.medieval-header .subtitle {
+  color: var(--muted) !important;
+  font-family: var(--font-serif) !important;
+  font-style: italic;
+}
+
+.site-header.medieval-header .build-label {
+  color: var(--muted) !important;
+  opacity: 0.7;
+}
+
+.site-header.medieval-header .ghost-toggle {
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  background: var(--panel) !important;
+  color: var(--muted) !important;
+  font-family: var(--font-serif) !important;
+  min-height: 2.8rem;
+}
+
+.site-header.medieval-header .ghost-toggle:hover {
+  border-color: var(--cinder) !important;
+  color: var(--ink) !important;
+}
+
+.site-header.medieval-header .ghost-toggle.is-playing {
+  color: var(--aqua) !important;
+  border-color: var(--aqua) !important;
+  box-shadow: 0 0 10px rgba(66, 181, 173, 0.25) !important;
+}
+
+/* ============================================================
+   5. DESKTOP 1440x900 LAYOUT & LOBBY SYSTEM
+   ============================================================ */
+
+@media (min-width: 1400px) {
+  html, body {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  #react-game-root {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  main#game-root {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: calc(100vh - 4.5rem);
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+  }
+
+  /* Lobby Layout */
+  .lobby-panel.medieval-lobby {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    grid-template-areas:
+      "eyebrow cinematic"
+      "title cinematic"
+      "resume cinematic"
+      "lede cinematic"
+      "actions cinematic"
+      "description cinematic"
+      "map features";
+    grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr);
+    gap: 0.5rem 1.5rem;
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 1.5rem !important;
+    background-image: linear-gradient(180deg, rgba(8, 11, 15, 0.85) 0%, rgba(6, 7, 10, 0.98) 100%), url('assets/images/cinder-span.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    border: 2px solid var(--line) !important;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.95), var(--shadow-medieval) !important;
+    border-radius: 4px !important;
+  }
+
+  /* Side-by-side positioning of Chronicle and Shop */
+  .campaign-map-section.war-table-container {
+    grid-area: map;
+  }
+  .storyboard-section {
+    grid-area: storyboard;
+    align-self: start !important;
+  }
+  .feature-preview-section {
+    grid-area: features;
+  }
+
+  /* Re-arrange lobby for chronicle & shop side-by-side */
+  .lobby-panel.medieval-lobby {
+    grid-template-areas:
+      "eyebrow cinematic"
+      "title cinematic"
+      "resume cinematic"
+      "lede cinematic"
+      "actions cinematic"
+      "description cinematic"
+      "map map"
+      "storyboard features" !important;
+    grid-template-rows: auto auto auto auto auto auto auto auto !important;
+  }
+
+  .feature-preview-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important; /* Stack previews vertically */
+    gap: 0.75rem !important;
+  }
+
+  .feature-card-shop {
+    order: -1 !important; /* Shop goes first */
+  }
+}
+
+/* Lobby Content Styling */
+.medieval-lobby .eyebrow {
+  color: var(--cinder) !important;
+  font-family: var(--font-serif) !important;
+  font-weight: bold !important;
+  letter-spacing: 0.15em !important;
+  margin-bottom: 0.1rem !important;
+}
+
+.medieval-lobby h2 {
+  color: #fff !important;
+  font-size: 2.2rem !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9) !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.medieval-lobby .lede {
+  color: var(--ink) !important;
+  font-size: 1rem !important;
+  line-height: 1.6 !important;
+  max-width: 60ch !important;
+  opacity: 0.9;
+}
+
+/* Resume Box */
+.lobby-hero-resume {
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  border-radius: 4px !important;
+  padding: 0.75rem 1rem !important;
+  box-shadow: var(--bevel-light) !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.lobby-hero-resume .campaign-resume-summary-heading {
+  color: var(--cinder) !important;
+  font-family: var(--font-serif) !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.lobby-hero-resume dt {
+  color: var(--muted) !important;
+}
+
+.lobby-hero-resume dd {
+  color: var(--ink) !important;
+  font-weight: bold !important;
+}
+
+/* Lobby Controls */
+.lobby-hero-controls button.primary {
+  font-size: 1.05rem !important;
+  padding: 0.75rem 1.75rem !important;
+}
+
+/* Cinematic Theater */
+.cinematic-theater-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+}
+
+.cinematic-theater-video {
+  border: 2px solid var(--line) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--bevel-heavy), 0 4px 12px rgba(0,0,0,0.7) !important;
+  background: #000 !important;
+  width: 100% !important;
+  max-height: 14rem !important;
+  aspect-ratio: 16 / 9;
+}
+
+.cinematic-theater-transcript {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--bevel-light) !important;
+  padding: 1rem !important;
+  color: var(--ink) !important;
+  font-family: var(--font-serif) !important;
+  max-height: 12rem !important;
+  overflow-y: auto !important;
+}
+
+.cinematic-theater-transcript h3 {
+  color: var(--cinder) !important;
+  font-size: 1.1rem !important;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.25rem;
+}
+
+.cinematic-theater-transcript li {
+  line-height: 1.5 !important;
+  color: var(--ink) !important;
+  opacity: 0.95;
+  margin-bottom: 0.5rem;
+}
+
+.cinematic-theater-transcript strong {
+  color: var(--cinder) !important;
+}
+
+/* 10-stage War Table */
+.war-table-container {
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.005), rgba(255, 255, 255, 0.005) 1px, transparent 1px, transparent 3px),
+              var(--panel) !important;
+  border: 2px solid var(--line) !important;
+  border-radius: 4px !important;
+  padding: 1.25rem !important;
+  box-shadow: var(--bevel-heavy) !important;
+}
+
+.war-table-container h3 {
+  font-family: var(--font-serif) !important;
+  color: var(--cinder) !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.war-table-grid {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  gap: 1rem !important;
+  overflow-x: auto !important;
+  padding: 1rem 0 !important;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cinder) var(--raised);
+}
+
+.war-table-node {
+  flex: 0 0 14rem !important;
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  padding: 0.75rem !important;
+  box-shadow: var(--bevel-light) !important;
+  transition: var(--transition-heavy) !important;
+}
+
+.war-table-node:hover {
+  transform: translateY(-4px) !important;
+  border-color: var(--cinder) !important;
+  box-shadow: var(--bevel-light), 0 0 15px var(--cinder) !important;
+}
+
+.war-table-node.active-stage {
+  border-color: var(--cinder) !important;
+  box-shadow: inset 0 0 0 1px var(--cinder), 0 0 15px var(--cinder) !important;
+}
+
+.war-table-node.locked-stage {
+  opacity: 0.5;
+  filter: grayscale(1) brightness(0.6);
+  cursor: not-allowed;
+}
+
+.war-table-node .map-node-image-wrapper {
+  border: 1px solid var(--line) !important;
+  border-radius: 2px !important;
+  overflow: hidden !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.war-table-node h4 {
+  font-family: var(--font-serif) !important;
+  font-size: 1.1rem !important;
+  color: var(--ink) !important;
+  margin: 0.25rem 0 !important;
+}
+
+.war-table-node p {
+  font-size: 0.8rem !important;
+  color: var(--muted) !important;
+  line-height: 1.4 !important;
+}
+
+.war-table-node .map-node-badge {
+  font-family: var(--font-serif) !important;
+  background: var(--raised) !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
+  font-size: 0.65rem !important;
+  border-radius: 2px !important;
+}
+
+.map-connector {
+  display: flex !important;
+  align-items: center !important;
+  color: var(--line) !important;
+  font-size: 1.5rem !important;
+}
+
+/* Chronicle (storyboard) */
+.storyboard-section {
+  background: var(--panel) !important;
+  border: 2px solid var(--line) !important;
+  border-radius: 4px !important;
+  padding: 1.25rem !important;
+  box-shadow: var(--bevel-heavy) !important;
+}
+
+.storyboard-section h3 {
+  font-family: var(--font-serif) !important;
+  color: var(--cinder) !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.storyboard-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)) !important;
+  gap: 0.75rem !important;
+  margin-top: 0.75rem !important;
+}
+
+.storyboard-card {
+  background: var(--raised) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  box-shadow: var(--bevel-light) !important;
+  transition: var(--transition-heavy) !important;
+}
+
+.storyboard-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: var(--cinder) !important;
+}
+
+.storyboard-card img {
+  border-bottom: 1px solid var(--line) !important;
+  object-fit: cover !important;
+  width: 100% !important;
+  aspect-ratio: 16 / 9 !important;
+}
+
+.storyboard-card .card-content {
+  padding: 0.5rem !important;
+}
+
+.storyboard-card h5 {
+  font-family: var(--font-serif) !important;
+  color: var(--ink) !important;
+  margin: 0 0 0.25rem 0 !important;
+  font-size: 0.85rem !important;
+}
+
+.storyboard-card p {
+  font-size: 0.72rem !important;
+  color: var(--muted) !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+}
+
+/* Relic Shop */
+.relic-shop-container {
+  background: var(--panel) !important;
+  border: 2px solid var(--line) !important;
+  border-radius: 4px !important;
+  padding: 1.25rem !important;
+  box-shadow: var(--bevel-heavy) !important;
+}
+
+.relic-shop-header {
+  border-bottom: 1px solid var(--line) !important;
+  padding-bottom: 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.relic-shop-title {
+  font-family: var(--font-serif) !important;
+  color: var(--cinder) !important;
+  font-size: 1.3rem !important;
+  margin: 0 !important;
+}
+
+.relic-shop-subtitle {
+  font-size: 0.8rem !important;
+  color: var(--muted) !important;
+  margin: 0.2rem 0 0.5rem 0 !important;
+}
+
+.relic-shop-balance-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.relic-shop-balance {
+  background: var(--raised) !important;
+  border: 1px solid var(--cinder) !important;
+  border-radius: 2px !important;
+  padding: 0.35rem 0.6rem !important;
+  color: var(--cinder) !important;
+  font-family: var(--font-serif) !important;
+  font-weight: bold !important;
+  font-size: 0.85rem !important;
+}
+
+.relic-shop-stipend-label {
+  font-size: 0.7rem !important;
+  color: var(--aqua) !important;
+  font-style: italic !important;
+}
+
+.relic-shop-catalog {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)) !important;
+  gap: 0.75rem !important;
+}
+
+.relic-shop-item {
+  background: var(--raised) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-shadow: var(--bevel-light) !important;
+}
+
+.relic-shop-item-art {
+  width: 100% !important;
+  aspect-ratio: 16 / 10 !important;
+  object-fit: cover !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+
+.relic-shop-item-name {
+  font-family: var(--font-serif) !important;
+  color: var(--ink) !important;
+  font-size: 0.95rem !important;
+  font-weight: bold !important;
+  margin: 0.5rem 0.5rem 0.25rem 0.5rem !important;
+}
+
+.relic-shop-item-desc {
+  font-size: 0.75rem !important;
+  color: var(--muted) !important;
+  line-height: 1.3 !important;
+  margin: 0 0.5rem 0.5rem 0.5rem !important;
+  flex-grow: 1 !important;
+}
+
+.relic-shop-item-footer {
+  padding: 0.5rem !important;
+  border-top: 1px solid var(--line) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.25rem !important;
+}
+
+.relic-shop-item-price {
+  font-family: var(--font-serif) !important;
+  color: var(--cinder) !important;
+  font-weight: bold !important;
+  font-size: 0.85rem !important;
+}
+
+.relic-shop-btn {
+  min-height: 2.8rem !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  border-radius: 2px !important;
+}
+
+.relic-shop-status {
+  margin-top: 0.75rem !important;
+  padding: 0.4rem 0.6rem !important;
+  border-radius: 2px !important;
+  font-size: 0.75rem !important;
+  font-family: var(--font-serif) !important;
+  text-align: center !important;
+}
+
+.relic-shop-status.success,
+.relic-shop-status-success {
+  background: rgba(66, 181, 173, 0.1) !important;
+  border: 1px solid var(--aqua) !important;
+  color: var(--aqua) !important;
+}
+
+.relic-shop-status.error,
+.relic-shop-status-error {
+  background: rgba(179, 62, 43, 0.1) !important;
+  border: 1px solid var(--danger) !important;
+  color: var(--danger) !important;
+}
+
+/* ============================================================
+   6. BATTLE COCKPIT (PC RTS FIELD-DOMINANT LAYOUT)
+   ============================================================ */
+
+@media (min-width: 900px) {
+  /* Enforce battlefield 16:9 dominance */
+  .battle-hud-cockpit {
+    background: var(--bg) !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    padding: 0.5rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    overflow: hidden !important;
+  }
+
+  .cockpit-main {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 20rem !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "battle hud"
+      "commands hud" !important;
+    gap: 0.5rem !important;
+    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    align-items: stretch !important;
+  }
+
+  .battle-hud-panel {
+    grid-area: battle;
+    border: 2px solid var(--line) !important;
+    background: #000 !important;
+    box-shadow: inset 0 0 25px rgba(0,0,0,0.95), var(--shadow-medieval) !important;
+    border-radius: 4px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .canvas-container-3d {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    max-height: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Compact Top Resource Strip */
+  .battle-resource-bar {
+    background: var(--panel) !important;
+    border: 1px solid var(--line) !important;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8) !important;
+    border-radius: 4px !important;
+    padding: 0.25rem 0.5rem !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(6rem, 1fr)) !important;
+    gap: 0.25rem !important;
+  }
+
+  .battle-resource-bar > div {
+    border: 1px solid var(--line) !important;
+    background: var(--raised) !important;
+    border-radius: 2px !important;
+    padding: 0.18rem 0.4rem !important;
+    min-height: auto !important;
+  }
+
+  .battle-resource-bar dt {
+    font-family: var(--font-serif) !important;
+    color: var(--muted) !important;
+    font-size: 0.65rem !important;
+    text-transform: uppercase !important;
+  }
+
+  .battle-resource-bar dd {
+    font-family: monospace !important;
+    color: var(--ink) !important;
+    font-weight: bold !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Progress bars inside resources */
+  .battle-resource-bar > div::after {
+    background: var(--aqua) !important;
+    box-shadow: 0 0 5px rgba(66, 181, 173, 0.5) !important;
+  }
+  .battle-resource-bar [data-resource="souls"]::after,
+  .battle-resource-bar [data-resource="nodes"]::after {
+    background: var(--cinder) !important;
+    box-shadow: 0 0 5px rgba(229, 193, 88, 0.5) !important;
+  }
+  .battle-resource-bar [data-resource="integrity"]::after,
+  .battle-resource-bar [data-resource="boss"]::after {
+    background: var(--danger) !important;
+    box-shadow: 0 0 5px rgba(179, 62, 43, 0.5) !important;
+  }
+
+  /* Right Tactical Rail */
+  .battle-hud-rail {
+    grid-area: hud;
+    background: var(--panel) !important;
+    border: 2px solid var(--line) !important;
+    border-radius: 4px !important;
+    box-shadow: var(--bevel-heavy) !important;
+    padding: 0.5rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  .battle-hud-rail .rail-panel {
+    background: var(--raised) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 4px !important;
+    box-shadow: var(--bevel-light) !important;
+    padding: 0.5rem !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Bottom Seven-Command Deck */
+  .battle-hud-dock {
+    grid-area: commands !important;
+    background: linear-gradient(180deg, var(--raised) 0%, var(--panel) 100%) !important;
+    border: 2px solid var(--line) !important;
+    box-shadow: var(--bevel-heavy), var(--shadow-medieval) !important;
+    border-radius: 4px !important;
+    padding: 0.6rem !important;
+    height: auto !important;
+    min-height: 160px !important;
+  }
+
+  .field-command-dock .command-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 0.3rem !important;
+  }
+
+  .field-command-dock .command-grid button {
+    min-height: 3.2rem !important;
+    padding: 0.3rem 0.45rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.7rem !important;
+  }
+  #command-panel {
+    min-height: 160px !important;
+    height: auto !important;
+  }
+
+  .field-command-dock .command-grid button {
+    max-width: 100px !important;
+  }
+
+  /* Desktop stage selector overrides to ensure flex layout */
+  .stage-selector ol {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    grid-template-columns: none !important;
+  }
+  .stage-selector button {
+    min-height: 44px !important;
+  }
+
+  /* Desktop lobby map/shop sizing & vertical scroll overrides */
+  .campaign-map-section.war-table-container {
+    min-height: 220px !important;
+  }
+  .feature-preview-section {
+    min-height: 320px !important;
+  }
+  .feature-preview-section,
+  .feature-preview-grid,
+  #shop-root,
+  .relic-shop-container {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex: none !important;
+  }
+  #shop-root.relic-shop-host {
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+  .storyboard-grid {
+    align-items: start !important;
+  }
+  .storyboard-card {
+    height: auto !important;
+  }
+  .cinematic-theater-container {
+    align-self: start !important;
+  }
+  .cinematic-theater-container:has(#cinematic-transcript:not([hidden])) {
+    align-self: stretch !important;
+    min-height: auto !important;
+    min-block-size: auto !important;
+  }
+  .lobby-panel.medieval-lobby:has(#cinematic-transcript:not([hidden])) {
+    grid-template-areas:
+      "eyebrow title"
+      "resume lede"
+      "actions description"
+      "cinematic cinematic"
+      "map map"
+      "storyboard features" !important;
+    grid-template-rows: auto auto auto auto auto auto !important;
+  }
+  .cinematic-theater-transcript,
+  #cinematic-transcript {
+    max-height: 28rem !important;
+  }
+}
+
+/* Command States */
+.command-grid button[data-command-state="ready"] {
+  border-color: var(--aqua) !important;
+  box-shadow: inset 0 0 8px var(--aqua) !important;
+}
+.command-grid button[data-command-state="ready"]:hover {
+  border-color: var(--aqua) !important;
+  box-shadow: inset 0 0 12px var(--aqua), inset 0 0 0 1px var(--aqua) !important;
+}
+.command-grid button[data-command-state="objective"] {
+  border-color: var(--cinder) !important;
+  box-shadow: inset 0 0 8px var(--cinder) !important;
+}
+.command-grid button[data-command-state="objective"]:hover {
+  border-color: var(--cinder) !important;
+  box-shadow: inset 0 0 12px var(--cinder), inset 0 0 0 1px var(--cinder) !important;
+}
+.command-grid button[data-command-state="cooling"] {
+  border-color: var(--danger) !important;
+  box-shadow: inset 0 0 8px var(--danger) !important;
+}
+.command-grid button[data-command-state="locked"] {
+  opacity: 0.5 !important;
+  filter: grayscale(0.8) brightness(0.5) !important;
+}
+
+/* Cooldown overlay */
+.cooldown-overlay {
+  background: rgba(9, 10, 13, 0.85) !important;
+}
+.cooldown-timer {
+  color: var(--danger) !important;
+  font-family: monospace !important;
+  font-weight: bold !important;
+}
+
+/* ============================================================
+   7. BRIEFING & RESULTS CINEMATIC OVERLAYS
+   ============================================================ */
+
+/* Briefing overlay */
+.mission-briefing {
+  background: var(--bg) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+}
+
+.mission-briefing-panel {
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.008), rgba(255, 255, 255, 0.008) 1px, transparent 1px, transparent 3px),
+              linear-gradient(180deg, var(--raised) 0%, var(--panel) 100%) !important;
+  border: 3px double var(--cinder) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--bevel-heavy), var(--shadow-medieval) !important;
+  padding: 2rem !important;
+  max-width: 44rem !important;
+  width: 90% !important;
+  color: var(--ink) !important;
+}
+
+.mission-briefing-panel h3 {
+  color: var(--cinder) !important;
+  font-size: 2rem !important;
+  text-align: center !important;
+  margin-bottom: 0.5rem !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9) !important;
+}
+
+.mission-briefing-stage {
+  color: var(--aqua) !important;
+  font-family: var(--font-serif) !important;
+  font-weight: bold !important;
+  font-size: 1rem !important;
+  text-align: center !important;
+  display: block !important;
+  letter-spacing: 0.1em !important;
+}
+
+.mission-briefing-region {
+  color: var(--muted) !important;
+  text-align: center !important;
+  margin-top: 0.2rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.mission-briefing-facts {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 0.75rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.mission-briefing-facts div {
+  background: var(--panel) !important;
+  border-left: 3px solid var(--cinder) !important;
+  border-radius: 2px !important;
+  padding: 0.6rem 0.8rem !important;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.5) !important;
+}
+
+.mission-briefing-facts dt {
+  color: var(--muted) !important;
+  font-size: 0.75rem !important;
+  font-family: var(--font-serif) !important;
+}
+
+.mission-briefing-facts dd {
+  color: var(--ink) !important;
+  font-size: 0.95rem !important;
+  font-weight: bold !important;
+}
+
+.mission-briefing-narration {
+  font-size: 1.05rem !important;
+  line-height: 1.6 !important;
+  color: var(--ink) !important;
+  opacity: 0.9;
+  background: var(--bg) !important;
+  border: 1px solid var(--line) !important;
+  padding: 1rem !important;
+  border-radius: 4px !important;
+  margin-bottom: 1.5rem !important;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8) !important;
+}
+
+.mission-briefing-next {
+  color: var(--cinder) !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Results overlay */
+.result-overlay {
+  background: var(--bg) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+}
+
+.result-panel {
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.008), rgba(255, 255, 255, 0.008) 1px, transparent 1px, transparent 3px),
+              linear-gradient(180deg, var(--raised) 0%, var(--panel) 100%) !important;
+  border: 3px double var(--cinder) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--bevel-heavy), var(--shadow-medieval) !important;
+  padding: 2rem !important;
+  max-width: 44rem !important;
+  width: 90% !important;
+  color: var(--ink) !important;
+}
+
+.result-panel h3 {
+  color: var(--cinder) !important;
+  font-size: 2.2rem !important;
+  text-align: center !important;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.8) !important;
+}
+
+.result-status-box {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  padding: 1rem !important;
+  margin-bottom: 1.5rem !important;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8) !important;
+}
+
+.result-text {
+  font-family: var(--font-serif) !important;
+  font-weight: bold !important;
+  font-size: 2rem !important;
+  text-align: center !important;
+  letter-spacing: 0.05em !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.result-text.victory {
+  color: var(--aqua) !important;
+  text-shadow: 0 0 15px var(--aqua) !important;
+}
+
+.result-text.defeat {
+  color: var(--danger) !important;
+  text-shadow: 0 0 15px var(--danger) !important;
+}
+
+/* Large Art Cards for Rewards */
+.reward-selection-container {
+  border-top: 1px solid var(--line) !important;
+  margin-top: 1.5rem !important;
+  padding-top: 1.5rem !important;
+}
+
+.reward-selection-container h3 {
+  font-size: 1.25rem !important;
+  color: var(--ink) !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.reward-options {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 1.5rem !important;
+  margin-top: 1rem !important;
+}
+
+.reward-option {
+  display: flex !important;
+  flex-direction: column !important;
+  background: linear-gradient(180deg, var(--raised) 0%, var(--panel) 100%) !important;
+  border: 2px solid var(--cinder) !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  box-shadow: var(--bevel-light), 0 4px 10px rgba(0,0,0,0.5) !important;
+  transition: var(--transition-heavy) !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  min-height: auto !important;
+}
+
+.reward-option:hover {
+  transform: translateY(-6px) !important;
+  border-color: var(--cinder) !important;
+  box-shadow: var(--bevel-light), 0 0 15px var(--cinder) !important;
+}
+
+.reward-art {
+  width: 100% !important;
+  height: 10rem !important;
+  max-height: 10rem !important;
+  object-fit: cover !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+
+.reward-option strong {
+  font-family: var(--font-serif) !important;
+  font-size: 1.1rem !important;
+  color: var(--ink) !important;
+  display: block;
+  padding: 0.75rem 0.75rem 0.25rem !important;
+}
+
+.reward-option span {
+  font-size: 0.8rem !important;
+  color: var(--muted) !important;
+  line-height: 1.4 !important;
+  display: block;
+  padding: 0 0.75rem 0.75rem !important;
+}
+
+/* Completion Panel */
+.completion-panel {
+  border-top: 1px solid var(--line) !important;
+  margin-top: 1.5rem !important;
+  padding-top: 1.5rem !important;
+  text-align: center !important;
+}
+
+.completion-emblem {
+  display: block !important;
+  width: min(12rem, 55%) !important;
+  margin: 1rem auto !important;
+  border-radius: 4px !important;
+  border: 2px solid var(--cinder) !important;
+  box-shadow: 0 0 25px var(--cinder) !important;
+}
+
+/* ============================================================
+   7b. COMPACT RESPONSIVE OVERRIDES (SCREENS <= 899px)
+   ============================================================ */
+@media (max-width: 899px) {
+  .cockpit-main {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: min-content !important;
+    overflow: visible !important;
+  }
+
+  /* Make all core labels fully readable — no ellipsis or truncation */
+  #stage-heading,
+  .cockpit-top h2,
+  .battle-resource-bar dt,
+  #boss-label,
+  .field-command-dock .command-grid strong,
+  .field-command-dock .command-grid button strong,
+  .field-command-dock .status-message,
+  .field-command-dock .key,
+  .field-current-objective,
+  .field-edge-hud .battle-pressure,
+  .battle-mission-guide strong,
+  .selection-dossier span,
+  .selection-dossier small,
+  .cockpit-top .wave-badge,
+  .cockpit .wave-badge {
+    text-overflow: clip !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    font-size: 12.5px !important;
+  }
+}
+
+/* ============================================================
+   8. MOBILE RESPONSIVE OVERRIDES (SCREENS <= 720px)
+   ============================================================ */
+
+@media (max-width: 720px) {
+  /* Prevent horizontal overflow & allow document-level scroll on lobby */
+  html, body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
+  html:has(#campaign-lobby:not([hidden])),
+  body:has(#campaign-lobby:not([hidden])) {
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+
+  #react-game-root:has(#campaign-lobby:not([hidden])),
+  #react-game-root:has(#campaign-lobby:not([hidden])) > div {
+    height: auto !important;
+    min-height: 100% !important;
+  }
+
+  main#game-root {
+    width: 100% !important;
+    padding: 0.5rem !important;
+    overflow-x: hidden !important;
+  }
+
+  main#game-root:has(#campaign-lobby:not([hidden])) {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-y: visible !important;
+  }
+
+
+  .storyboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .feature-preview-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Shop Cards Swipe/Stack (Flex scroll snap) */
+  .relic-shop-catalog {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    gap: 0.75rem !important;
+    padding: 0.5rem 0 !important;
+    -webkit-overflow-scrolling: touch;
+    width: 100% !important;
+  }
+
+  .relic-shop-item {
+    flex: 0 0 85% !important;
+    scroll-snap-align: center !important;
+    margin: 0 !important;
+  }
+
+  /* Battle Cockpit Mobile Adjustments */
+  #campaign-screen,
+  .cockpit {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+  }
+
+  .cockpit-top {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto auto !important;
+    grid-template-areas:
+      "stage wave"
+      "actions actions"
+      "resources resources" !important;
+    gap: 0.4rem 0.5rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .cockpit-top .stage-selector {
+    display: none !important;
+  }
+
+  .cockpit-top .cockpit-stage-id {
+    grid-area: stage !important;
+    min-width: 0 !important;
+    align-self: center !important;
+  }
+
+  .cockpit-top .wave-badge {
+    grid-area: wave !important;
+    justify-self: end !important;
+    align-self: center !important;
+    min-width: 0 !important;
+  }
+
+  .cockpit-top .campaign-heading-actions {
+    grid-area: actions !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    justify-content: space-between !important;
+  }
+
+  .cockpit-top .campaign-heading-actions button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    flex: 1 1 auto !important;
+    min-width: 80px !important;
+    max-width: 100% !important;
+    min-height: 44px !important;
+    padding: 0.25rem 0.35rem !important;
+    font-size: 0.72rem !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+    word-break: keep-all !important;
+    overflow-wrap: anywhere !important;
+  }
+
+
+  /* Battlefield first */
+  .battle-field-panel {
+    order: -2 !important;
+    width: 100% !important;
+    padding: 0.25rem !important;
+  }
+
+  #battle-field,
+  .battle-hud-panel,
+  .canvas-container-3d {
+    min-height: clamp(220px, 32dvh, 300px) !important;
+    height: clamp(220px, 32dvh, 300px) !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Resources horizontally scrollable */
+  .battle-resource-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    white-space: nowrap !important;
+    padding: 0.4rem !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .battle-resource-bar > div {
+    flex: 0 0 6.5rem !important;
+    scroll-snap-align: start !important;
+    padding: 0.35rem 0.5rem !important;
+  }
+
+  /* Command Deck 2-column or horizontally scrollable with 52px+ controls */
+  .field-command-dock {
+    order: 0 !important;
+    width: 100% !important;
+    padding: 0.5rem !important;
+  }
+
+  .field-command-dock .command-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.4rem !important;
+  }
+
+  .field-command-dock .command-grid button {
+    min-height: 4rem !important;
+    padding: 0.4rem 0.5rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+  }
+
+  .field-command-dock .command-grid button small {
+    display: block !important;
+  }
+
+  .field-command-dock .command-grid button:last-child {
+    grid-column: span 2 !important;
+  }
+
+  /* Secondary Intel Collapsible/Stacked */
+  .field-edge-hud {
+    order: 1 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.4rem !important;
+  }
+
+  /* Pure CSS Collapsible accordion for mobile edge HUD panels */
+  .field-edge-hud .rail-panel {
+    border: 1px solid var(--line) !important;
+    background: var(--raised) !important;
+    overflow: visible !important;
+    max-height: none !important;
+    position: relative !important;
+  }
+
+  .field-edge-hud .rail-boss {
+    display: block !important;
+  }
+
+  /* Dialogs fit 360x800, body text >= 14px, controls >= 44px, scroll internally */
+  .mission-briefing, .result-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    padding: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(5, 7, 10, 0.98) !important;
+    overflow: hidden !important;
+  }
+
+  .mission-briefing-panel, .result-panel {
+    width: 100% !important;
+    height: auto !important;
+    max-height: calc(100vh - 1rem) !important;
+    max-height: calc(100dvh - 1rem) !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    padding: 0.6rem 0.8rem !important;
+    box-shadow: var(--bevel-heavy) !important;
+    box-sizing: border-box !important;
+  }
+
+  .mission-briefing-panel h3 {
+    font-size: 1.25rem !important;
+    margin: 0 0 0.15rem 0 !important;
+  }
+
+  .mission-briefing-stage {
+    font-size: 0.8rem !important;
+  }
+
+  .mission-briefing-region {
+    margin: 0.1rem 0 0.4rem 0 !important;
+    font-size: 0.75rem !important;
+  }
+
+  .mission-briefing-player-job {
+    font-size: 0.85rem !important;
+    margin: 0 0 0.35rem 0 !important;
+    line-height: 1.3 !important;
+  }
+
+  .mission-briefing-facts {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.35rem !important;
+    margin: 0 0 0.4rem 0 !important;
+  }
+
+  .mission-briefing-facts div {
+    padding: 0.25rem 0.4rem !important;
+    border-left-width: 2px !important;
+  }
+
+  .mission-briefing-facts dt {
+    font-size: 0.65rem !important;
+  }
+
+  .mission-briefing-facts dd {
+    font-size: 0.8rem !important;
+  }
+
+  .mission-briefing-narration {
+    padding: 0.4rem 0.6rem !important;
+    font-size: 0.8rem !important;
+    line-height: 1.4 !important;
+    margin: 0 0 0.4rem 0 !important;
+    min-height: auto !important;
+    max-height: 5.5rem !important;
+    overflow-y: auto !important;
+  }
+
+  .mission-briefing-next {
+    font-size: 0.75rem !important;
+    margin: 0 0 0.4rem 0 !important;
+  }
+
+  .mission-briefing-panel button.primary {
+    min-height: 44px !important;
+    padding: 0.4rem !important;
+    font-size: 0.85rem !important;
+    margin: 0 !important;
+  }
+
+  /* Large art cards stacked on mobile */
+  .reward-options {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .reward-art {
+    height: 7.5rem !important;
+  }
+
+  /* Dialog fonts & controls size rules */
+  body, p, li, dd, dt, span, div, button, td, th {
+    font-size: 14px !important; /* Body text >= 14px */
+  }
+
+  button, .file-button, .relic-shop-btn,
+  .mission-briefing-panel button, .result-panel button {
+    min-height: 44px !important; /* Controls >= 44px */
+    padding-top: 0.4rem !important;
+    padding-bottom: 0.4rem !important;
+  }
+  /* Mobile transcript expansion */
+  .cinematic-theater-transcript,
+  .cinematic-transcript {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Keep command panel in normal flow below */
+  #command-panel,
+  .battle-hud-dock {
+    height: auto !important;
+    min-height: auto !important;
+    position: relative !important;
+    bottom: auto !important;
+  }
+}
+
+/* ============================================================
+   9. INTERACTION HIGHLIGHTS, THEME & SYSTEM INSETS
+   ============================================================ */
+
+/* High Contrast & Focus Visible styling */
+@media (forced-colors: active) {
+  button, .file-button, .panel {
+    border: 2px solid ButtonBorder !important;
+  }
+}
+
+/* Safe Area Insets Support */
+@supports (padding: env(safe-area-inset-top)) {
+  .site-header.medieval-header {
+    padding-top: calc(0.75rem + env(safe-area-inset-top, 0px)) !important;
+    padding-left: calc(1.5rem + env(safe-area-inset-left, 0px)) !important;
+    padding-right: calc(1.5rem + env(safe-area-inset-right, 0px)) !important;
+  }
+
+  .battle-hud-cockpit {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: calc(0.5rem + env(safe-area-inset-left, 0px)) !important;
+    padding-right: calc(0.5rem + env(safe-area-inset-right, 0px)) !important;
+  }
+
+  .mission-briefing-panel, .result-panel {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* ============================================================
+   10. PREFERS REDUCED MOTION (NO DECORATIVE ANIMATION)
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+
+  /* Disable text shine animation */
+  .shiny-text {
+    background: none !important;
+    -webkit-text-fill-color: initial !important;
+    color: var(--ink) !important;
+  }
+
+  /* Disable glitch effects */
+  .glitch-text::before, .glitch-text::after {
+    display: none !important;
+  }
+
+  /* Keep basic visibility but disable transit animations */
+  .liquid-ether-container {
+    display: none !important;
+  }
+
+  #particles-canvas {
+    display: none !important;
+  }
+
+  .panel, button, .file-button, .reward-option, .war-table-node {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .panel:hover, button:hover, .file-button:hover, .reward-option:hover, .war-table-node:hover {
+    transform: none !important;
+  }
+}
+
+/* ============================================================
+   11. SYSTEM ADAPTATION, ULTRA-MOBILE, TOUCH & ACCESSIBILITY
+   ============================================================ */
+
+/* General feature card medieval panels styling */
+#campaign-lobby .feature-card {
+  background: var(--panel) !important;
+  border: 2px solid var(--line) !important;
+  border-radius: 4px !important;
+  box-shadow: var(--bevel-light) !important;
+}
+
+/* Ensure battlefield panel has medieval stone theme across both desktop and mobile */
+.battle-field-panel {
+  background: #000 !important;
+  border: 2px solid var(--line) !important;
+  box-shadow: inset 0 0 25px rgba(0,0,0,0.95), var(--shadow-medieval) !important;
+}
+
+/* Cinematic vignette shadow on body */
+body {
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.95) !important;
+}
+
+/* Focus Visible upgrades */
+button:focus-visible,
+.file-button:focus-within,
+.skip-link:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--focus) !important;
+  outline-offset: 2px !important;
+}
+
+/* Media query for ultra-mobile / very small screens (<= 420px) */
+@media (max-width: 420px) {
+  main#game-root {
+    padding: 0.25rem !important;
+  }
+
+  .site-header.medieval-header {
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  .site-header.medieval-header h1 {
+    font-size: 1.35rem !important;
+  }
+
+  .site-header.medieval-header .subtitle {
+    font-size: 0.75rem !important;
+  }
+
+  .medieval-lobby h2 {
+    font-size: 1.45rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .medieval-lobby .lede {
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .lobby-hero-resume {
+    padding: 0.5rem !important;
+  }
+
+  .lobby-hero-resume dt, .lobby-hero-resume dd {
+    font-size: 0.75rem !important;
+  }
+
+  /* Compact resources scroll view */
+  .battle-resource-bar > div {
+    flex: 0 0 5.25rem !important;
+    padding: 0.2rem 0.3rem !important;
+  }
+
+  .battle-resource-bar dt {
+    font-size: 0.55rem !important;
+  }
+
+  .battle-resource-bar dd {
+    font-size: 0.75rem !important;
+  }
+
+  /* Compact 2-column commands without description text to fit 44px height */
+  .field-command-dock .command-grid button {
+    min-height: 44px !important;
+    padding: 0.25rem 0.35rem !important;
+  }
+
+  .field-command-dock .command-grid button small {
+    display: none !important;
+  }
+
+  .field-command-dock .command-grid button strong {
+    font-size: 0.75rem !important;
+  }
+
+  .field-command-dock .command-grid button img.action-icon {
+    width: 16px !important;
+    height: 16px !important;
+    margin-right: 0.2rem !important;
+  }
+
+  .field-command-dock .command-grid button .key {
+    font-size: 0.55rem !important;
+    padding: 1px 3px !important;
+  }
+
+  /* Compact dialog overlays */
+  .mission-briefing-panel, .result-panel {
+    padding: 0.5rem 0.6rem !important;
+    border-width: 2px !important;
+  }
+
+  .mission-briefing-facts {
+    gap: 0.25rem !important;
+  }
+
+  .mission-briefing-facts div {
+    padding: 0.2rem 0.3rem !important;
+  }
+
+  .mission-briefing-facts dt {
+    font-size: 0.6rem !important;
+  }
+
+  .mission-briefing-facts dd {
+    font-size: 0.75rem !important;
+  }
+
+  .reward-options {
+    gap: 0.5rem !important;
+  }
+
+  .reward-art {
+    height: 5.5rem !important;
+  }
+}
+
+/* Touchscreens hover reset safeguards */
+@media (hover: none) {
+  button:hover, .file-button:hover, .relic-shop-btn:hover, .storyboard-card:hover, .war-table-node:hover, .reward-option:hover {
+    transform: none !important;
+    background: linear-gradient(180deg, var(--raised) 0%, var(--panel) 100%) !important;
+    box-shadow: var(--bevel-light) !important;
+    border-color: var(--line) !important;
+    color: var(--ink) !important;
+  }
+  button.primary:hover {
+    background: linear-gradient(180deg, #3a2e1d 0%, #1c150c 100%) !important;
+    border-color: var(--cinder) !important;
+    box-shadow: inset 0 0 0 1px var(--cinder), inset 0 0 10px rgba(184, 144, 60, 0.3) !important;
+    color: var(--cinder) !important;
+  }
+  .relic-shop-btn-active:hover {
+    background: linear-gradient(180deg, #0e2a27 0%, #051211 100%) !important;
+    border-color: var(--aqua) !important;
+    box-shadow: inset 0 0 0 1px var(--aqua), inset 0 0 10px rgba(66, 181, 173, 0.3) !important;
+    color: var(--aqua) !important;
+  }
+}
+
+/* ============================================================
+   12. COMMERCIAL READABILITY FLOOR
+   Dense command information remains readable at the supported
+   desktop and mobile viewports instead of shrinking below 12.5px.
+   ============================================================ */
+.cockpit-stage-id,
+.cockpit .wave-badge,
+.battle-resource-bar dt,
+.battle-resource-bar dd,
+.battle-status,
+.battle-pressure,
+.rail-lore,
+.battle-mission-current,
+.battle-mission-why,
+#battle-mission-current,
+#battle-mission-why,
+#commands-heading,
+#campaign-status,
+.command-hint,
+.field-command-dock .command-grid button strong,
+.field-command-dock .command-grid button small,
+.field-command-dock .command-grid button .key,
+.battle-checklist,
+.battle-operation,
+.field-current-objective > span,
+.ashen-field-command__ward > span,
+.ashen-field-command__ward > strong,
+.ashen-field-command__eyebrow,
+.ashen-field-command__label,
+.ashen-field-command__hostile,
+.ashen-field-command__pressure,
+.ashen-field-command__activate-note,
+.ashen-field-command__result-copy,
+.ashen-field-command__route-status,
+.ashen-field-command__unit-status,
+.ashen-field-command__unit-status span,
+.ashen-field-command__unit-status strong {
+  font-size: 0.78125rem !important;
+  line-height: 1.3 !important;
+}
+
+.field-command-dock .command-grid button {
+  min-height: 5.25rem !important;
+}
+
+
+@media (min-width: 900px) and (max-height: 760px) {
+  .field-command-dock .command-grid button {
+    min-height: 3.2rem !important;
+  }
+}
+
+@media (min-width: 900px) and (max-height: 400px) {
+  #command-panel.field-command-dock {
+    min-height: 0 !important;
+    height: 6rem !important;
+    padding: 0.3rem !important;
+  }
+
+  .field-command-dock .section-heading {
+    min-height: 0 !important;
+    margin: 0 !important;
+  }
+
+  .field-command-dock .selection-dossier,
+  .field-command-dock .section-heading h3,
+  .field-command-dock .command-hint,
+  .field-command-dock .command-grid button small,
+  .field-command-dock .command-grid button img.action-icon {
+    display: none !important;
+  }
+
+  .field-command-dock #campaign-status {
+    display: block !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}

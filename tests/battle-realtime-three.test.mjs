@@ -142,8 +142,16 @@ async function initializeRendererPresentation() {
   const executable = definition[0].replace(/^  async init\(\)/, "async function init()");
   vm.runInContext(`${executable}\nglobalThis.initialize = init;`, context, { filename: "battle-realtime-three.js" });
 
+  const webgl2Context = {};
+  const contextRequests = [];
+  const canvas = {
+    getContext(...args) {
+      contextRequests.push(args);
+      return args[0] === "webgl2" ? webgl2Context : null;
+    },
+  };
   const battle = {
-    canvas: { getContext: (kind) => (kind === "webgl2" ? {} : null) },
+    canvas,
     presentation: {
       palette: { accent: "#f0a040", ally: "#70e5d0", background: "#101827" },
     },
@@ -159,11 +167,25 @@ async function initializeRendererPresentation() {
     frame() {},
   };
   await context.initialize.call(battle);
-  return { battle, THREE, types: { FogExp2, RingGeometry } };
+  return { battle, THREE, types: { FogExp2, RingGeometry }, canvas, contextRequests, webgl2Context };
 }
 
 test("RealtimeBattle initialization applies atmospheric rendering and configured tactical markers", async () => {
-  const { battle, THREE, types } = await initializeRendererPresentation();
+  const { battle, THREE, types, canvas, contextRequests, webgl2Context } = await initializeRendererPresentation();
+  assert.equal(contextRequests.length, 1, "realtime initialization must make exactly one context request");
+  const [contextType, contextAttributes] = contextRequests[0];
+  assert.equal(contextType, "webgl2", "realtime initialization must require WebGL2");
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(contextAttributes)),
+    { antialias: true, alpha: false },
+    "realtime initialization must request the hardened opaque antialiased context",
+  );
+  assert.equal(battle.renderer.options.canvas, canvas, "WebGLRenderer must receive the battle canvas");
+  assert.equal(
+    battle.renderer.options.context,
+    webgl2Context,
+    "WebGLRenderer must receive the exact context returned by the battle canvas",
+  );
 
   assert.equal(battle.renderer.toneMapping, THREE.ACESFilmicToneMapping, "realtime rendering must use ACES filmic tone mapping");
   assert.deepEqual(

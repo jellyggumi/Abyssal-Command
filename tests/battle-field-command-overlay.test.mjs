@@ -267,6 +267,7 @@ function createStaticOverlayFixture({
   ]);
   const observers = [];
   const observations = [];
+  const eventListeners = new Map();
   const documentElement = new StaticElement("html");
   const storage = new Map(locale ? [["abyssal-command-lang", locale]] : []);
   const matchingElements = (selector) => {
@@ -306,6 +307,22 @@ function createStaticOverlayFixture({
         getItem: (key) => storage.get(key) ?? null,
         setItem: (key, value) => storage.set(key, String(value)),
       },
+      addEventListener(type, listener) {
+        const listeners = eventListeners.get(type) ?? [];
+        listeners.push(listener);
+        eventListeners.set(type, listeners);
+      },
+      removeEventListener(type, listener) {
+        const listeners = eventListeners.get(type) ?? [];
+        eventListeners.set(type, listeners.filter((candidate) => candidate !== listener));
+      },
+      dispatchEvent(event) {
+        for (const listener of [...(eventListeners.get(event.type) ?? [])]) listener(event);
+        return true;
+      },
+      queueMicrotask(callback) {
+        callback();
+      },
     },
     MutationObserver: class {
       constructor(callback) {
@@ -326,12 +343,19 @@ function createStaticOverlayFixture({
         this.targets = [];
       }
     },
+    field,
     container,
     commandPanel,
     checklist,
     checklistItems,
     status,
     observations,
+    listenerCount(type) {
+      return eventListeners.get(type)?.length ?? 0;
+    },
+    dispatch(type, detail = {}) {
+      this.window.dispatchEvent({ type, ...detail });
+    },
     notify(target) {
       for (const observer of observers) {
         if (observer.targets.includes(target)) observer.callback([], observer);
@@ -343,7 +367,7 @@ function createStaticOverlayFixture({
 let fixtureImportNumber = 0;
 
 async function withMountedOverlay(fixture, verify) {
-  const globals = ["document", "window", "MutationObserver", "requestAnimationFrame", "cancelAnimationFrame"];
+  const globals = ["document", "window", "MutationObserver", "requestAnimationFrame", "cancelAnimationFrame", "CustomEvent"];
   const prior = new Map(globals.map((name) => [name, {
     exists: Object.prototype.hasOwnProperty.call(globalThis, name),
     value: globalThis[name],
@@ -358,18 +382,26 @@ async function withMountedOverlay(fixture, verify) {
       return 1;
     },
     cancelAnimationFrame: () => {},
+    CustomEvent: class {
+      constructor(type, init = {}) {
+        this.type = type;
+        this.detail = init.detail;
+      }
+    },
   });
 
   try {
     const i18nUrl = new URL("../i18n.js", import.meta.url);
     i18nUrl.searchParams.set("static-fixture", String(++fixtureImportNumber));
     const i18n = await import(i18nUrl.href);
+    const overlayI18n = await import(new URL("../i18n.js", import.meta.url).href);
+    overlayI18n.applyLanguage(i18n.currentLang());
     const moduleUrl = new URL("../battle-field-command-overlay.js", import.meta.url);
     moduleUrl.searchParams.set("static-fixture", String(++fixtureImportNumber));
-    await import(moduleUrl.href);
+    const overlayModule = await import(moduleUrl.href);
     const overlay = fixture.container.children[0];
     assert.ok(overlay, "the module must mount the field overlay into the existing battlefield container");
-    return await verify(overlay, i18n);
+    return await verify(overlay, i18n, overlayModule);
   } finally {
     for (const [name, { exists, value }] of prior) {
       if (exists) globalThis[name] = value;
@@ -493,6 +525,36 @@ test("receiptCopy reports only the command the field proxy relayed", async () =>
   );
 });
 
+test("locale APIs and cross-tab storage events keep memory, document, storage, and observers consistent", { concurrency: false }, async () => {
+  const fixture = createStaticOverlayFixture({ locale: "ko" });
+
+  await withMountedOverlay(fixture, async (_overlay, i18n) => {
+    const languageChanges = [];
+    fixture.window.addEventListener("abyssal:language-changed", (event) => languageChanges.push(event.detail.lang));
+
+    assert.equal(i18n.currentLang(), "ko", "the in-memory locale must initialize from persisted storage");
+    assert.equal(fixture.document.documentElement.lang, "ko", "initial application must synchronize the document locale");
+
+    i18n.applyLanguage("en");
+    assert.equal(i18n.currentLang(), "en", "applyLanguage must update the locale read by currentLang");
+    assert.equal(fixture.document.documentElement.lang, "en", "applyLanguage must update the document locale");
+    assert.equal(fixture.window.localStorage.getItem("abyssal-command-lang"), "ko", "applyLanguage alone must not overwrite the saved preference");
+    assert.deepEqual(languageChanges, [], "applyLanguage alone must not announce a user preference change");
+
+    i18n.setLanguage("ko");
+    assert.equal(i18n.currentLang(), "ko", "setLanguage must update the in-memory locale");
+    assert.equal(fixture.document.documentElement.lang, "ko", "setLanguage must apply the same locale to the document");
+    assert.equal(fixture.window.localStorage.getItem("abyssal-command-lang"), "ko", "setLanguage must persist the selected locale");
+    assert.deepEqual(languageChanges, ["ko"], "setLanguage must dispatch one language-change contract event");
+
+    fixture.window.localStorage.setItem("abyssal-command-lang", "en");
+    fixture.dispatch("storage", { key: "abyssal-command-lang", newValue: "en" });
+    assert.equal(i18n.currentLang(), "en", "a cross-tab storage change must update currentLang");
+    assert.equal(fixture.document.documentElement.lang, "en", "a cross-tab storage change must apply to the document");
+    assert.deepEqual(languageChanges, ["ko", "en"], "a cross-tab storage change must dispatch the same public language-change event");
+  });
+});
+
 test("mounted overlay localizes Korean chrome and preserves the relayed native command", { concurrency: false }, async () => {
   const nativeCommand = staticCommand({
     action: "hunt",
@@ -511,6 +573,7 @@ test("mounted overlay localizes Korean chrome and preserves the relayed native c
     assert.equal(fixture.document.documentElement.lang, "ko", "Korean must be the default document locale");
     assertLocalizedOverlayChrome(overlay, KOREAN_OVERLAY_COPY);
     activation.click();
+    fixture.dispatch("abyssal:command-resolved", { detail: { action: "hunt", accepted: true } });
     assert.equal(prefix.textContent, localizedReceiptPrefix(i18n, "ko"), "the receipt prefix must default to Korean");
     assert.equal(relayedCommand.textContent, nativeCommand.querySelector("strong").textContent, "the receipt must copy the native command name");
     assert.equal(receipt.hidden, false, "the localized receipt must appear after native delegation");
@@ -534,6 +597,7 @@ test("mounted overlay applies a persisted English locale on first mount", { conc
     assert.equal(fixture.document.documentElement.lang, "en", "a persisted English preference must apply before the overlay is mounted");
     assertLocalizedOverlayChrome(overlay, ENGLISH_OVERLAY_COPY);
     activation.click();
+    fixture.dispatch("abyssal:command-resolved", { detail: { action: "extract", accepted: true } });
     assert.equal(prefix.textContent, localizedReceiptPrefix(i18n, "en"), "the persisted locale must select the English receipt prefix");
     assert.equal(relayedCommand.textContent, nativeCommand.querySelector("strong").textContent, "localization must not replace the native command name");
   });
@@ -557,6 +621,7 @@ test("mounted overlay updates static chrome and a visible receipt through the pu
     const statusCopy = overlay.querySelector(".ashen-field-command__result-copy");
 
     activation.click();
+    fixture.dispatch("abyssal:command-resolved", { detail: { action: "hunt", accepted: true } });
     i18n.setLanguage("en");
 
     assert.equal(fixture.document.documentElement.lang, "en", "the public language switch must update the document locale");
@@ -591,6 +656,7 @@ test("mounted overlay reprojects the relayed native command after campaign progr
     const relayedCommand = overlay.querySelector('[data-field-overlay="relay-command"]');
 
     activation.click();
+    fixture.dispatch("abyssal:command-resolved", { detail: { action: "hunt", accepted: true } });
     assert.equal(huntCommand.clickCount, 1, "the Korean Hunt order must delegate to its native command before campaign progression");
     assert.equal(
       receipt.textContent,
@@ -600,21 +666,30 @@ test("mounted overlay reprojects the relayed native command after campaign progr
 
     huntCommand.removeAttribute("aria-current");
     extractCommand.setAttribute("aria-current", "step");
-    fixture.notify(fixture.commandPanel);
+    fixture.dispatch("abyssal:campaign-rendered");
 
     assert.equal(
       relayedCommand.textContent,
       i18n.translations.ko["command.hunt.name"],
       "campaign progression must retain the original native command source rather than follow Extract",
     );
+    assert.equal(
+      activation.textContent,
+      `${i18n.translations.ko["command.extract.name"]}Secure the exposed reserve.`,
+      "campaign-rendered must reproject the newly selected native command copy",
+    );
 
     i18n.setLanguage("en");
-    fixture.notify(fixture.commandPanel);
 
     assert.equal(fixture.document.documentElement.lang, "en", "the public language switch must update the document locale");
     assertLocalizedOverlayChrome(overlay, ENGLISH_OVERLAY_COPY);
     assert.equal(prefix.textContent, localizedReceiptPrefix(i18n, "en"), "the visible receipt prefix must update to English");
     assert.equal(relayedCommand.textContent, i18n.translations.en["command.hunt.name"], "the receipt must reproject the original Hunt source label in English");
+    assert.equal(
+      activation.textContent,
+      `${i18n.translations.en["command.extract.name"]}Secure the exposed reserve.`,
+      "language change must reproject localized copy from the currently selected native command",
+    );
     assert.equal(
       receipt.textContent,
       `${localizedReceiptPrefix(i18n, "en")} ${i18n.translations.en["command.hunt.name"]}`,
@@ -622,6 +697,50 @@ test("mounted overlay reprojects the relayed native command after campaign progr
     );
   });
 });
+test("destroy removes overlay event subscriptions and stops subsequent projections", { concurrency: false }, async () => {
+  const nativeCommand = staticCommand({
+    action: "hunt",
+    name: "Hunt",
+    detail: "Trace the existing breach.",
+    current: true,
+  });
+  const fixture = createStaticOverlayFixture({ commands: [nativeCommand] });
+
+  await withMountedOverlay(fixture, async (_autoOverlay, _i18n, overlayModule) => {
+    const baselineLanguageListeners = fixture.listenerCount("abyssal:language-changed");
+    const baselineCampaignListeners = fixture.listenerCount("abyssal:campaign-rendered");
+    const baselineCommandListeners = fixture.listenerCount("abyssal:command-resolved");
+    const baselineClickListeners = fixture.listenerCount("click");
+    const secondaryContainer = new StaticElement("div");
+    const mounted = overlayModule.mountFieldCommandOverlay({
+      root: fixture.field,
+      container: secondaryContainer,
+      commands: fixture.commandPanel,
+    });
+    assert.ok(mounted, "an explicit overlay mount must return its lifecycle handle");
+    assert.equal(fixture.listenerCount("abyssal:language-changed"), baselineLanguageListeners + 1);
+    assert.equal(fixture.listenerCount("abyssal:campaign-rendered"), baselineCampaignListeners + 1);
+    assert.equal(fixture.listenerCount("abyssal:command-resolved"), baselineCommandListeners + 1);
+    assert.equal(fixture.listenerCount("click"), baselineClickListeners + 1);
+
+    nativeCommand.querySelector("strong").textContent = "Hunt the changed spoor";
+    fixture.dispatch("abyssal:campaign-rendered");
+    const activation = mounted.overlay.querySelector("button");
+    assert.match(activation.textContent, /Hunt the changed spoor/, "campaign-rendered must refresh projected source copy");
+
+    mounted.destroy();
+    assert.equal(secondaryContainer.children.length, 0, "destroy must remove the mounted overlay");
+    assert.equal(fixture.listenerCount("abyssal:language-changed"), baselineLanguageListeners, "destroy must remove its language listener");
+    assert.equal(fixture.listenerCount("abyssal:campaign-rendered"), baselineCampaignListeners, "destroy must remove its campaign listener");
+    assert.equal(fixture.listenerCount("abyssal:command-resolved"), baselineCommandListeners, "destroy must remove its command-resolution listener");
+    assert.equal(fixture.listenerCount("click"), baselineClickListeners, "destroy must remove its native-command listener");
+
+    nativeCommand.querySelector("strong").textContent = "Must not reproject";
+    fixture.dispatch("abyssal:campaign-rendered");
+    assert.doesNotMatch(activation.textContent, /Must not reproject/, "a destroyed overlay must ignore later campaign renders");
+  });
+});
+
 
 
 
@@ -743,6 +862,40 @@ test("mounted overlay does not invent a confirmed result when campaign status is
   });
 });
 
+test("relay receipt waits for an accepted command resolution and rejection clears the pending command", { concurrency: false }, async () => {
+  const nativeCommand = staticCommand({
+    action: "extract",
+    name: "Extract the cache",
+    detail: "Secure the exposed reserve.",
+    current: true,
+  });
+  const fixture = createStaticOverlayFixture({ commands: [nativeCommand] });
+
+  await withMountedOverlay(fixture, async (overlay, i18n) => {
+    const activation = overlay.querySelector("button");
+    const receipt = overlay.querySelector('[data-field-overlay="relay-receipt"]');
+    const relayedCommand = overlay.querySelector('[data-field-overlay="relay-command"]');
+
+    activation.click();
+    assert.equal(nativeCommand.clickCount, 1, "the overlay must still delegate the selected native command");
+    assert.equal(receipt.hidden, true, "delegation alone must not claim that the command was accepted");
+    assert.equal(relayedCommand.textContent, "", "a pending command must not leak into the announced receipt");
+
+    fixture.dispatch("abyssal:command-resolved", { detail: { action: "extract", accepted: false } });
+    assert.equal(receipt.hidden, true, "a rejected command must leave the relay receipt hidden");
+    assert.equal(relayedCommand.textContent, "", "rejection must clear the pending relay copy");
+
+    activation.click();
+    fixture.dispatch("abyssal:command-resolved", { detail: { action: "extract", accepted: true } });
+    assert.equal(receipt.hidden, false, "only an explicit accepted resolution may reveal the relay receipt");
+    assert.equal(
+      receipt.textContent,
+      `${localizedReceiptPrefix(i18n, "ko")} Extract the cache`,
+      "the accepted receipt must announce the command that actually resolved",
+    );
+  });
+});
+
 test("mounted overlay copies the selected native command and delegates activation back to it", { concurrency: false }, async () => {
   const markedCommand = staticCommand({
     action: "extract",
@@ -769,6 +922,7 @@ test("mounted overlay copies the selected native command and delegates activatio
     );
 
     activation.click();
+    fixture.dispatch("abyssal:command-resolved", { detail: { action: "extract", accepted: true } });
     assert.equal(
       receipt.textContent,
       `${localizedReceiptPrefix(i18n, "ko")} Extract the cache`,

@@ -710,8 +710,8 @@ class AutoDriver {
 export function createLiquidEther(container, options = {}) {
   if (!container || typeof window === "undefined") return null;
 
-  const probe = document.createElement("canvas");
-  const gl = probe.getContext("webgl2") || probe.getContext("webgl") || probe.getContext("experimental-webgl");
+  const canvas = document.createElement("canvas");
+  const gl = canvas.getContext("webgl2", { antialias: true, alpha: true });
   if (!gl) return null;
 
   const config = { ...DEFAULT_OPTIONS, ...options };
@@ -723,7 +723,7 @@ export function createLiquidEther(container, options = {}) {
   if (containerStyle.overflow === "visible") container.style.overflow = "hidden";
 
   const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, context: gl, antialias: true, alpha: true });
   renderer.autoClear = false;
   renderer.setClearColor(new THREE.Color(0x000000), 0);
   renderer.setPixelRatio(pixelRatio);
