@@ -1927,47 +1927,51 @@ function getCommandLockReason(action, lang) {
 function getChecklistLabel(item, lang) {
   if (lang !== "ko") return item.label;
   const stage = currentStage();
+  // Every non-wave item maps to exactly one of the seven command buttons;
+  // naming that command explicitly closes the "what do I click for this"
+  // gap between the objective checklist and the command deck -- previously
+  // this returned a bare goal noun phrase with no link to the mechanism.
   if (item.id === "hunt") {
     const match = item.label.match(/(\d+)\/(\d+)/);
     if (match) {
       const [_, current, total] = match;
-      return `균열 흔적 ${current}/${total} 사냥`;
+      return `[사냥] 균열 흔적 ${current}/${total} 처치`;
     }
-    return "균열 흔적 사냥";
+    return "[사냥] 균열 흔적 처치";
   }
   if (item.id === "extract") {
-    return "그림자 은닉처 추출";
+    return "[추출] 그림자 은닉처 확보";
   }
   if (item.id === "materialize") {
     const match = item.label.match(/(\d+)\/(\d+)/);
     if (match) {
       const [_, current, total] = match;
-      return `그림자 군단 ${current}/${total} 실체화`;
+      return `[실체화] 그림자 군단 ${current}/${total}`;
     }
-    return "그림자 군단 실체화";
+    return "[실체화] 그림자 군단 소환";
   }
   if (item.id === "capture") {
     const match = item.label.match(/Hold (\d+)/);
     if (match) {
       const [_, total] = match;
-      return `기술 거점 ${total}곳 점거`;
+      return `[점거] 기술 거점 ${total}곳 확보`;
     }
-    return "기술 거점 점거";
+    return "[점거] 기술 거점 확보";
   }
   if (item.id === "possess") {
-    return "센티널 빙의";
+    return "[빙의] 센티널에 빙의";
   }
   if (item.id === "domain") {
-    return "군주의 영역 1회 발동";
+    return "[군주의 영역] 1회 발동";
   }
   if (item.id.startsWith("wave-")) {
     const waveId = item.id.substring(5);
     const waveNameKo = translate(`wave.${waveId}`) || waveId;
-    return `${waveNameKo} 웨이브 처치`;
+    return `방어: ${waveNameKo} 웨이브 격퇴`;
   }
   if (item.id === "assault") {
     const bossNameKo = translate(`stage.${stage.id}.bossName`) || stage.bossName;
-    return `${bossNameKo} 처치`;
+    return `[돌격] ${bossNameKo} 처치`;
   }
   return item.label;
 }
@@ -4297,7 +4301,12 @@ function wireControls() {
   elements.retryFromResult.addEventListener("click", handleRetry);
   elements.startCombat.addEventListener("click", beginStageCombat);
   elements.briefing.addEventListener("keydown", (event) => {
-    if (event.key !== "Tab") return;
+    // Forward Tab jumps straight to the primary CTA (Start Combat) as a
+    // shortcut. This must never trap Shift+Tab -- a player backing out of
+    // the briefing toward earlier UI (language toggle, lobby controls) needs
+    // native backward focus order, or focus gets stuck here with no way to
+    // navigate "up" via keyboard.
+    if (event.key !== "Tab" || event.shiftKey) return;
     event.preventDefault();
     elements.startCombat.focus();
   });

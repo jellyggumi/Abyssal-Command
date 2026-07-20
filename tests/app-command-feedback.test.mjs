@@ -1657,6 +1657,40 @@ test("focusPendingCommand still focuses the first command when nothing has claim
   );
 });
 
+async function loadBriefingTabHandler() {
+  const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
+  const definition = source.match(
+    /elements\.briefing\.addEventListener\("keydown", \(event\) => \{[\s\S]*?\n {2}\}\);/,
+  );
+  assert.ok(definition, "app runtime must wire a keydown listener onto the briefing panel");
+
+  let listener = null;
+  const startCombat = { focused: false, focus: () => { startCombat.focused = true; } };
+  const briefing = { addEventListener: (type, fn) => { if (type === "keydown") listener = fn; } };
+  const context = vm.createContext({ elements: { briefing, startCombat } });
+  vm.runInContext(definition[0], context, { filename: "app.js" });
+
+  return {
+    dispatch: (event) => listener(event),
+  };
+}
+
+test("the briefing panel's Tab shortcut never traps Shift+Tab, only forward Tab", async () => {
+  const fixture = await loadBriefingTabHandler();
+
+  let prevented = false;
+  fixture.dispatch({ key: "Tab", shiftKey: false, preventDefault: () => { prevented = true; } });
+  assert.equal(prevented, true, "forward Tab must jump to the Start Combat CTA");
+
+  let shiftTabPrevented = false;
+  fixture.dispatch({ key: "Tab", shiftKey: true, preventDefault: () => { shiftTabPrevented = true; } });
+  assert.equal(
+    shiftTabPrevented,
+    false,
+    "Shift+Tab must never be trapped, or a player backing out of the briefing toward earlier UI gets stuck with no way to navigate backward",
+  );
+});
+
 test("spatial field hover overrides and then restores a keyboard-focused command preview", async () => {
   const fixture = await loadCommandFocusHotkey();
 
