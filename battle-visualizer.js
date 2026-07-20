@@ -2854,6 +2854,7 @@ export class BattleVisualizer {
     const queue = buildIndividualDrawQueue(terrain, this.buildDynamicDrawRecords());
     for (const item of queue) this.drawQueuedItem(item, bridgeTerrain);
 
+    this.drawActionRangeRing();
     for (const effect of this.actionFx) this.drawActionFx(effect);
     if (this.actionPreview) this.drawActionPreview();
     if (this.routePreviewActive) this.drawRoutePreview();
@@ -3325,6 +3326,46 @@ export class BattleVisualizer {
     ctx.restore();
   }
 
+
+  // Action-interaction-range ring: a thin isometric-projected circle at the
+  // commander's feet sized to ACTION_INTERACTION_RADIUS, the WebGL renderer's
+  // exact counterpart (see updateActionRangeRing in battle-realtime-three.js)
+  // so "how close do I need to walk to act on something" reads the same way
+  // regardless of which renderer is active. Brightens when a currently
+  // available action's world anchor sits inside the ring right now.
+  drawActionRangeRing() {
+    if (!this.commanderPosition) return;
+    const ctx = this.ctx;
+    if (!ctx || typeof ctx.save !== "function" || typeof ctx.beginPath !== "function") return;
+    const cx = this.commanderPosition.x;
+    const cy = this.commanderPosition.y;
+
+    let anchorInRange = false;
+    if (this.getCommandReadiness && this.getAvailableActions) {
+      for (const action of this.getAvailableActions()) {
+        if (this.getCommandReadiness({ action }).ready) {
+          anchorInRange = true;
+          break;
+        }
+      }
+    }
+
+    const steps = 32;
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i += 1) {
+      const angle = (i / steps) * Math.PI * 2;
+      const gx = cx + Math.cos(angle) * ACTION_INTERACTION_RADIUS;
+      const gy = cy + Math.sin(angle) * ACTION_INTERACTION_RADIUS;
+      const p = this.project(gx, gy, this.elevationAt(cx, cy));
+      if (i === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = anchorInRange ? "rgba(113, 216, 198, 0.75)" : "rgba(143, 163, 176, 0.35)";
+    ctx.lineWidth = 1.25;
+    ctx.stroke();
+    ctx.restore();
+  }
 
   drawOrderFlag() {
     const ctx = this.ctx;

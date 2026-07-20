@@ -472,6 +472,10 @@ export class RealtimeBattle {
     // Same idea as commanderDestinationMarker, for a rallied ally group's
     // shared destination (this.rally). Built lazily in updateRallyMarker().
     this.allyRallyMarker = null;
+    // Constant "how close do I need to be" affordance ring at the
+    // commander's feet, sized to ACTION_INTERACTION_RADIUS. Built lazily in
+    // updateActionRangeRing().
+    this.actionRangeRing = null;
     const bounds = this.navigation.bounds;
     this.boundsCenter = new THREE.Vector3((bounds.left + bounds.right) * 0.5, 0, (bounds.near + bounds.far) * 0.5);
     this.cameraTarget = this.boundsCenter.clone();
@@ -1479,6 +1483,7 @@ export class RealtimeBattle {
     this.updateMarqueeVisual?.();
     this.updateCommanderPathPreview?.();
     this.updateRallyMarker?.();
+    this.updateActionRangeRing?.();
 
     this.updateObjectFeedbackDeltas();
     this.renderObjectFeedback();
@@ -4458,6 +4463,56 @@ export class RealtimeBattle {
     this.allyRallyMarker.scale.setScalar(pulse);
   }
 
+  // Action-interaction-range ring: a thin circle at the commander's feet
+  // sized to ACTION_INTERACTION_RADIUS, so "how close do I need to walk to
+  // act on something" is a visible, constant affordance instead of only
+  // discoverable by trial and error via getCommandReadiness()'s out-of-range
+  // rejection. Brightens when a currently-available action's world anchor
+  // sits inside the ring right now (i.e. the commander could act immediately).
+  updateActionRangeRing() {
+    if (!this.commanderPosition) return;
+    if (!this.scene || typeof this.scene.add !== "function") return;
+    if (!this.actionRangeRing) {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(ACTION_INTERACTION_RADIUS - 0.05, ACTION_INTERACTION_RADIUS, 48),
+        new THREE.MeshBasicMaterial({
+          color: 0x8fa3b0,
+          transparent: true,
+          opacity: 0.35,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          depthTest: true
+        })
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.raycast = () => {};
+      this.scene.add(ring);
+      this.actionRangeRing = ring;
+    }
+
+    const elevation = this.navigationAt?.(this.commanderPosition.x, this.commanderPosition.z)?.elevation ?? 0;
+    this.actionRangeRing.position.set(
+      this.commanderPosition.x,
+      elevation * TERRAIN_ELEVATION_SCALE + 0.05,
+      this.commanderPosition.z
+    );
+
+    let anchorInRange = false;
+    if (this.getAvailableActions) {
+      const available = this.getAvailableActions();
+      const actions = typeof available?.values === "function" ? [...available.values()] : available ?? [];
+      for (const action of actions) {
+        const readiness = this.getCommandReadiness({ action });
+        if (readiness.ready) {
+          anchorInRange = true;
+          break;
+        }
+      }
+    }
+    this.actionRangeRing.material.color.set(anchorInRange ? 0x71d8c6 : 0x8fa3b0);
+    this.actionRangeRing.material.opacity = anchorInRange ? 0.65 : 0.32;
+  }
+
   updateZoneAmbience(dt) {
     if (!this.navigation?.zones || !this.particles) return;
     this.zoneAmbienceTimer = (this.zoneAmbienceTimer || 0) - dt;
@@ -4825,6 +4880,12 @@ export class RealtimeBattle {
       this.allyRallyMarker.geometry?.dispose();
       this.allyRallyMarker.material?.dispose();
       this.allyRallyMarker = null;
+    }
+    if (this.actionRangeRing) {
+      this.scene.remove(this.actionRangeRing);
+      this.actionRangeRing.geometry?.dispose();
+      this.actionRangeRing.material?.dispose();
+      this.actionRangeRing = null;
     }
     if (this.tracers) {
       for (const tracer of this.tracers) {

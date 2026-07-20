@@ -1791,3 +1791,40 @@ test("BattleVisualizer getCommandReadiness gates each action on the commander's 
   const huntAtExtractor = visualizer.getCommandReadiness({ action: "hunt" });
   assert.equal(huntAtExtractor.ready, true, "walking the commander to the extractor must bring Hunt into range");
 });
+
+test("BattleVisualizer drawActionRangeRing projects the same ACTION_INTERACTION_RADIUS as getCommandReadiness and brightens only when an action is actually in range", (t) => {
+  const visualizer = makeVisualizer(t, { presentation: { stageNumber: 1 } });
+  const strokeStyles = [];
+  visualizer.ctx = {
+    save() {},
+    restore() {},
+    beginPath() {},
+    moveTo() {},
+    lineTo() {},
+    stroke() {
+      strokeStyles.push(this.strokeStyle);
+    },
+    set strokeStyle(value) {
+      this._strokeStyle = value;
+    },
+    get strokeStyle() {
+      return this._strokeStyle;
+    },
+  };
+  visualizer.getAvailableActions = () => ["hunt"];
+
+  visualizer.drawActionRangeRing();
+  assert.equal(strokeStyles.length, 1, "the ring must be drawn once per call");
+  const [dimStroke] = strokeStyles;
+
+  const extractorAnchor = visualizer.navigation.anchors.extractor;
+  visualizer.commanderPosition.x = extractorAnchor.x;
+  visualizer.commanderPosition.y = extractorAnchor.y;
+  visualizer.drawActionRangeRing();
+
+  assert.notEqual(
+    strokeStyles[1],
+    dimStroke,
+    "walking Hunt's anchor into range must change the ring's stroke from its dim out-of-range reading",
+  );
+});

@@ -3812,6 +3812,36 @@ test("RealtimeBattle marquee publishes its selected actor set once", () => {
   );
 });
 
+test("RealtimeBattle marquee and single-click selection can only ever contain movable allies, never fixed deployments (towers/barricades)", () => {
+  const battle = new RealtimeBattle(null, { stageNumber: 1 }, {});
+  const ally = makeUnit({ hp: 4 });
+  battle.allies = [ally];
+  battle.deploymentsMap.set("tower-1", { id: "tower-1", kind: "tower", root: { position: { x: 0, y: 0, z: 0 } } });
+  battle.deploymentsMap.set("wall-1", { id: "wall-1", kind: "barricade", root: { position: { x: 1, y: 0, z: 1 } } });
+
+  // A marquee rectangle wide enough to screen-cover every fixture position.
+  battle.isMarqueeSelecting = true;
+  battle.marqueeRect = { x0: 0, y0: 0, x1: 200, y1: 200 };
+  battle.projectToScreen = () => ({ x: 50, y: 50 });
+  battle.updateMarqueeSelection();
+
+  assert.deepEqual(
+    [...battle.selection],
+    [ally],
+    "marquee selection must only ever admit live allies, never tower/barricade deployments sharing the same screen space",
+  );
+
+  // selectAlly is the single-click entry point; feeding it a deployment must
+  // not seat it, since deployments are structurally absent from this.allies.
+  const towerLikeObject = battle.deploymentsMap.get("tower-1");
+  battle.selectAlly(towerLikeObject);
+  assert.equal(
+    battle.selection.has(towerLikeObject),
+    false,
+    "selectAlly must never seat an object that is not a live member of this.allies",
+  );
+});
+
 test("RealtimeBattle selectAlly publishes only semantic selection changes and clears invalid targets", () => {
   const summaries = [];
   const battle = new RealtimeBattle(
@@ -4824,4 +4854,45 @@ test("RealtimeBattle getCommandReadiness gates each action on the commander's di
   battle.commanderPosition.set(extractorWorld.x, 0, extractorWorld.z);
   const huntAtExtractor = battle.getCommandReadiness({ action: "hunt" });
   assert.equal(huntAtExtractor.ready, true, "walking the commander to the extractor must bring Hunt into range");
+});
+
+test("RealtimeBattle updateActionRangeRing draws a constant range affordance at ACTION_INTERACTION_RADIUS and brightens only when an available action's anchor is inside it", async () => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  battle.scene = new THREE.Scene();
+  battle.getAvailableActions = () => ["hunt"];
+
+  battle.updateActionRangeRing();
+
+  assert.ok(battle.actionRangeRing, "a range ring must be created");
+  assert.equal(
+    battle.scene.children.includes(battle.actionRangeRing),
+    true,
+    "the ring must be added to the scene exactly once",
+  );
+  assert.equal(
+    battle.actionRangeRing.position.x,
+    battle.commanderPosition.x,
+    "the ring must track the commander's world position",
+  );
+  const { required: actionInteractionRadius } = battle.getCommandReadiness({ action: "hunt" });
+  assert.equal(
+    battle.actionRangeRing.geometry.parameters.outerRadius,
+    actionInteractionRadius,
+    "the ring radius must match the actual interaction-range gate, not an arbitrary constant",
+  );
+  // Hunt's anchor (the extractor) is far from the portal spawn: nothing is
+  // reachable yet, so the ring must read as dim/neutral.
+  const dimOpacity = battle.actionRangeRing.material.opacity;
+  assert.ok(dimOpacity < 0.5, "the ring must read as dim when no available action's anchor is within range");
+
+  const extractorAnchor = battle.navigation.anchors.extractor;
+  const extractorWorld = battle.navigation.gridToWorld(extractorAnchor.x, extractorAnchor.y);
+  battle.commanderPosition.set(extractorWorld.x, 0, extractorWorld.z);
+  battle.updateActionRangeRing();
+
+  assert.ok(
+    battle.actionRangeRing.material.opacity > dimOpacity,
+    "walking into Hunt's actual range must brighten the ring instead of leaving it at the dim/out-of-range reading",
+  );
 });
