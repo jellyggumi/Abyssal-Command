@@ -333,6 +333,28 @@ function measureArchetypes() {
     if (r.defeatedAt) defeatStages[r.defeatedAt] = (defeatStages[r.defeatedAt] ?? 0) + 1;
   }
   const uniqueSeqs = new Set(casualRuns.map((r) => r.sequenceSignature));
+  // Per-stage action counts for stages the casual walker actually completed
+  // (only counted from wins, so every stage 0..9 is a completed-stage sample).
+  // This is the same shape the retired 3-stage TTK band was fit from
+  // ("인간 페이스 5-15s/act × 라이브 실측 act/스테이지"); derivedPacingSeconds* is
+  // that formula applied to the current 10-stage measured action counts, NOT
+  // a measured wall-clock playtest -- it is a candidate band pending a live-
+  // timed pass, not a validated one.
+  const perStagePacing = STAGES.map((stage, i) => {
+    const values = wins.map((r) => r.perStage[i]?.actions).filter((v) => typeof v === "number" && v > 0);
+    if (!values.length) return { stage: stage.id, sampled: 0 };
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    return {
+      stage: stage.id,
+      sampled: values.length,
+      actionsMin: Math.min(...values),
+      actionsMax: Math.max(...values),
+      actionsMean: Math.round(mean * 100) / 100,
+      derivedPacingSecondsLow: Math.round(mean * 5 * 10) / 10,
+      derivedPacingSecondsPoint: Math.round(mean * 10 * 10) / 10,
+      derivedPacingSecondsHigh: Math.round(mean * 15 * 10) / 10
+    };
+  });
   out.casual = {
     trials: CASUAL_TRIALS,
     deterministic: false,
@@ -342,7 +364,8 @@ function measureArchetypes() {
     totalActionsOnWins: totals.length
       ? { min: Math.min(...totals), max: Math.max(...totals), mean: totals.reduce((a, b) => a + b, 0) / totals.length }
       : null,
-    uniqueSequences: uniqueSeqs.size
+    uniqueSequences: uniqueSeqs.size,
+    perStagePacing
   };
   return out;
 }

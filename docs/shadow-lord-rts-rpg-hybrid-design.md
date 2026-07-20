@@ -11,29 +11,51 @@
 ## 1) 프로덕션 경계 (확정 계약)
 
 - **릴리스 경계**: GitHub Pages 정적·오프라인·싱글플레이어. 브라우저 로컬 versioned save(IndexedDB+export/import)가 유일한 영속성. 계정/클라우드/멀티/결제/서버안티치트는 미래 게이트.
-- **캠페인 모델**: 결정론 3-스테이지 캠페인 + save/replay 계약이 기준선. 서버 추상화나 미검증 풀-RTS로 대체하지 않는다.
+- **캠페인 모델**: 결정론 **10-스테이지** 캠페인 + save/replay 계약이 기준선 (v1 비전 당시엔 3-스테이지였으나 커밋 `065c69e`/`38c5392` 등으로 10-스테이지까지 확장·라이브 검증됨). 서버 추상화나 미검증 풀-RTS로 대체하지 않는다.
 - **권리**: 《나 혼자만 레벨업》은 *영감 레퍼런스*로만. 라이선스 증빙 없는 캐릭터명/유사 자산 생성·마케팅 금지. 신규 미디어 배치마다 자산별 출처·모델·프롬프트·SHA-256 기록.
 - **검증 명령 계약**: `node --test tests/*.test.mjs`, `node scripts/run-campaign-balance-sim.mjs`, `node --check` 개별 명령이 증거 단위. npm 스크립트는 존재하지 않으므로 인용 금지 (package.json 없음 — tools/promo-video만 예외).
 - **멀티플레이 마이그레이션 사다리**: P0 IndexedDB SaveEnvelope(현재) → Z1 save-envelope ghost-share 코드 공유(zero-backend, 측정: 287자/0.35ms) → 수요 검증 후 Supabase(RLS 필수) → 경쟁전은 서버 권위 런타임. 클라이언트 체크섬은 위조 방지가 아니라 손상 감지다.
 
 ## 2) 캠페인 구조 (확정, 라이브 검증)
 
-| Stage | 무대 | 신규 전술 | 보스(HP) | 계승 |
-|---|---|---|---|---|
-| 1 | Cinder Span 잿빛 교량 | 사냥→추출→실체화→점령 기본 루프 | Cinder Warden (8) | 보상 1택 |
-| 2 | Veil Citadel 장막 성채 | 빙의 해금, 거점 2 동시 유지 | Veil Tactician (10) | 보상 1택 |
-| 3 | Echo Throne 메아리 왕좌 | 군주의 영역(일발역전, 1회) | Gate Sovereign (17) | 기록 보상 |
+| Stage | 무대 | 보스(HP) | 노드 목표 |
+|---|---|---|---:|
+| 1 | Cinder Span | Cinder Warden (8) | 1 |
+| 2 | Veil Citadel | Veil Tactician (10) | 2 |
+| 3 | Echo Throne | Gate Sovereign (17) | 1 |
+| 4 | Sunken Bastion | Tide Warden (12) | 1 |
+| 5 | Howling Sprawl | Pack Herald (14) | 1 |
+| 6 | Glass Necropolis | Requiem Choir (16) | 2 |
+| 7 | Starless Canal | Lantern Tyrant (18) | 2 |
+| 8 | Shattered Causeway | Bridge Colossus (20) | 2 |
+| 9 | Abyss Chancel | Veiled Concordat (22) | 3 |
+| 10 | Gate Zenith | Abyss Regent (26) | 3 |
 
-*수치 소스: `campaign-state.js` STAGES — `bossHealth` 8/10/17, `nodeGoal` 1/2/1.*
+*수치 소스: `campaign-state.js` STAGES (전 10항목 확인, 2026-07-20). 코어 루프(사냥→추출→실체화→점령)와 스테이지2의 빙의·거점 2 동시 유지, 스테이지3의 군주의 영역(일발역전) 도입은 v1 비전 그대로 유지된다; 스테이지 4–10은 동일 루프 위에 보스 체력·노드 목표만 점증한다.*
 
 ### 밸런스 v2 확정 수치 (시뮬레이터 + 라이브 실측)
 
 - 보스 반격 기본 [1, 2, 8] − ⌊legion/4⌋ (하한 1) + 얇은군단(+1, legion < 2+stage). *(`campaign-state.js` counterBase/shieldDivisor/thinMargin/thinPenalty)*
 - 플레이어 총공격 기본 [3, 3, 4] + 빙의 시 +1, Rift Lens 보유 빙의 시 추가 +4. *(`campaign-state.js` assaultBase/possessDamage/lensDamage)*
 - integrity 스테이지 지속, 보상 선택 시 +1 (클램프 10). domain: +4 회복 + aegis 2회. *(`campaign-state.js` rewardRestore/maxIntegrity/domainRestore/domainAegis)*
-- 아키타입 승률 (n=200): casual **51.0%** (밴드 45–55%), optimal 100%/25act, greedy 100%/56act, comeback 100% (domain 없으면 같은 라인이 패배), rusher **0%** (의도된 교훈).
+- 아키타입 승률 (rules v7, 10-스테이지, n=200): casual **51.0%** (밴드 45–55%), optimal 100%/102act, greedy-economy 100%/116act, comeback은 domain 미사용 시 패배·사용 시 생존(도메인 전환 재현 확인, `domainConvertsDefeatToWin: true`), rusher **0%**(echo-throne에서 패배, 의도된 교훈). *(3-스테이지 시절 수치였던 "optimal 100%/25act, greedy 100%/56act, comeback 100%"는 폐기 — 10-스테이지 재실측치로 교체, 2026-07-20)*
 - 콤보 EV 1.119× ≤ 1.3 — 4콤보 4결과 분화.
-- **TTK 밴드 (확정)**: 스테이지 클리어 시간 목표 S1 **75s ±15%**, S2 **100s ±15%**, S3 **120s ±15%** (인간 페이스 5–15s/act × 라이브 실측 9–17act/스테이지에서 유도. 봇 실측: 7.1/8.8/9.3s @0.5s/act).
+- **TTK 밴드 (10-스테이지 재도출, candidate — 라이브 타이밍 검증 대기)**: 3-스테이지 시절 확정치(S1 75s/S2 100s/S3 120s ±15%)는 폐기한다. `scripts/run-campaign-balance-sim.mjs`의 `casual.perStagePacing`(2026-07-20 확장, n=102 승리 표본/스테이지)로 동일 공식(인간 페이스 5–15s/act, 중앙값 10s/act)을 10-스테이지에 재적용한 값:
+
+  | Stage | 평균 act | 목표(점) | 밴드(±15%) |
+  |---|---:|---:|---:|
+  | 1 Cinder Span | 16.5 | 165s | 140–190s |
+  | 2 Veil Citadel | 17.7 | 177s | 151–204s |
+  | 3 Echo Throne | 17.3 | 173s | 147–199s |
+  | 4 Sunken Bastion | 16.8 | 168s | 143–193s |
+  | 5 Howling Sprawl | 17.1 | 171s | 145–197s |
+  | 6 Glass Necropolis | 18.6 | 186s | 158–214s |
+  | 7 Starless Canal | 19.0 | 190s | 161–218s |
+  | 8 Shattered Causeway | 19.7 | 197s | 167–226s |
+  | 9 Abyss Chancel | 19.7 | 197s | 168–227s |
+  | 10 Gate Zenith | 21.1 | 211s | 179–242s |
+
+  이 표는 시뮬레이션된 액션 수에 공식을 적용한 **후보값**이다. 원본 3-스테이지 밴드는 시뮬레이터 수치 위에 라이브/봇 실측(7.1/8.8/9.3s @0.5s/act)까지 교차 검증한 뒤 "확정"으로 승격했다 — 10-스테이지판도 동일한 라이브 타이밍 실측 없이는 "확정"으로 표기하지 않는다. *(다음 사이클: 실제 세션 타이밍 계측 후 확정 전환)*
 - 라이브 검증: 배포 사이트에서 47액션 풀캠페인 완주, S3를 integrity 0 직전 클리어. assault-우선 무모봇은 S2 사망(패배 도달 실증).
 
 ## 3) 전투화면 (현행 — 단일 화면 RTS 콕핏)
@@ -273,3 +295,9 @@ Stage 1의 현행 선언은 준비 8초/legion 4/node 1, `scout` 8초·2기 → 
 - 리포지토리 문서: `docs/screen-layout-planning.md`, `docs/stat-item-schema.md`, `docs/shadow-lord-rts-rpg-hybrid-design.md` (이 문서의 리포 미러, frontmatter 없음)
 - 게이트 원장: `_workspace/20260716-shadow-lord-rts-rpg/qa/gate-measurements.md`
 - 회고 시스템: `_workspace/20260716-shadow-lord-rts-rpg/retrospectives/` (Pydantic 검증, carry-forward 큐)
+
+## Continuation update — 2026-07-20
+
+- **10-스테이지 확장 반영**: 2장 캠페인 표·아키타입 승률·TTK 밴드를 3-스테이지 v1 수치에서 실제 10-스테이지(`campaign-state.js` STAGES, cinder-span→gate-zenith) 재실측치로 교체했다. 회고 §8 항목 2("TTK band-overrides 동기화 필요")를 이걸로 종료 처리한다 — 단, 새 밴드는 시뮬레이션 액션수 기반 candidate이며 3-스테이지판처럼 라이브/봇 타이밍 실측까지 거치기 전엔 "확정" 승격 보류.
+- **밸런스 시뮬레이터 확장**: `scripts/run-campaign-balance-sim.mjs`의 casual 아키타입 측정에 `perStagePacing`(스테이지별 승리 표본 action min/max/mean + 5–15s/act 공식 적용 목표 초)을 추가했다. 기존 `totalActionsOnWins` 집계는 그대로 유지, 신규 필드는 순수 추가라 하위 호환.
+- 재실행 검증: `node scripts/run-campaign-balance-sim.mjs`(rules v7) — casual 51.0%(n=200, 10스테이지 모두 통과 승리 표본 102개), 결정론 재현(`determinismDoubleRunIdentical: true`), 퍼저 15만 회 0건, 콤보 12/12 전승. `node --test tests/*.test.mjs` 480/480 회귀 없음(시뮬레이터 스크립트는 별도 진입점이라 이 스위트에 포함되지 않음, 기존 관례와 동일).
