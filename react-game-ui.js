@@ -903,32 +903,40 @@
               )
             )
           )
-        )
-      ),
-      e('section', {
-        id: 'save-dock',
-        className: 'panel save-panel save-dock',
-        'aria-labelledby': 'save-heading'
-      },
-        e('div', { className: 'section-heading' },
-          e('div', null,
-            e('h3', { id: 'save-heading', 'data-i18n': 'save.heading' }, '로컬 캠페인 저장'),
-            e('p', { id: 'save-status', className: 'hint', role: 'status', 'data-i18n': 'save.statusText' }, '로컬 저장 데이터 준비 중…'),
-            e('p', { id: 'campaign-mirror-status', className: 'mirror-status', role: 'status', 'data-i18n': 'save.mirrorStatusText' }, '탭 간 로컬 동기화를 확인하는 중입니다.')
-          ),
-          e('div', { className: 'button-row' },
-            e('button', { id: 'export-save', type: 'button', 'data-i18n': 'save.exportButton' }, '저장 내보내기'),
-            e('label', { className: 'file-button', htmlFor: 'import-save' },
-              e('span', { 'data-i18n': 'save.importButton' }, '저장 불러오기'),
-              e('input', {
-                id: 'import-save',
-                type: 'file',
-                accept: 'application/json,.json'
-              })
-            )
-          )
         ),
-        e('p', { className: 'hint', 'data-i18n': 'save.hint' }, '캠페인 상태는 버전이 관리되는 IndexedDB 봉투에 로컬로 저장됩니다. 브라우저 데이터를 지우기 전에 파일로 내보내세요.')
+        e('details', { className: 'save-dock-menu' },
+          e('summary', {
+            className: 'save-dock-trigger',
+            'aria-label': '저장',
+            'data-i18n-aria': 'save.menuAria',
+            title: '저장'
+          }, '💾'),
+          e('section', {
+            id: 'save-dock',
+            className: 'panel save-panel save-dock',
+            'aria-labelledby': 'save-heading'
+          },
+            e('div', { className: 'section-heading' },
+              e('div', null,
+                e('h3', { id: 'save-heading', 'data-i18n': 'save.heading' }, '로컬 캠페인 저장'),
+                e('p', { id: 'save-status', className: 'hint', role: 'status', 'data-i18n': 'save.statusText' }, '로컬 저장 데이터 준비 중…'),
+                e('p', { id: 'campaign-mirror-status', className: 'mirror-status', role: 'status', 'data-i18n': 'save.mirrorStatusText' }, '탭 간 로컬 동기화를 확인하는 중입니다.')
+              ),
+              e('div', { className: 'button-row' },
+                e('button', { id: 'export-save', type: 'button', 'data-i18n': 'save.exportButton' }, '저장 내보내기'),
+                e('label', { className: 'file-button', htmlFor: 'import-save' },
+                  e('span', { 'data-i18n': 'save.importButton' }, '저장 불러오기'),
+                  e('input', {
+                    id: 'import-save',
+                    type: 'file',
+                    accept: 'application/json,.json'
+                  })
+                )
+              )
+            ),
+            e('p', { className: 'hint', 'data-i18n': 'save.hint' }, '캠페인 상태는 버전이 관리되는 IndexedDB 봉투에 로컬로 저장됩니다. 브라우저 데이터를 지우기 전에 파일로 내보내세요.')
+          )
+        )
       ),
       e('div', {
         id: 'view-result',

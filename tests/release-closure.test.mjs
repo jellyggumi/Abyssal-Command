@@ -849,9 +849,9 @@ test("returning to the lobby finishes campaign fullscreen exit before hiding the
 
 
 test("desktop cockpit keeps battlefield, status rail, and command deck as stable React layout surfaces", async () => {
-  const [reactUi, styles] = await Promise.all([
+  const [reactUi, reactStyles] = await Promise.all([
     readProjectFile("react-game-ui.js"),
-    readProjectFile("styles.css"),
+    readProjectFile("react-game-ui.css"),
   ]);
   const declaredIds = reactLiteralIds(reactUi);
 
@@ -865,16 +865,26 @@ test("desktop cockpit keeps battlefield, status rail, and command deck as stable
     assert.match(reactUi, new RegExp(`className:\\s*['"][^'"]*\\b${className}\\b`), `the React cockpit must expose .${className}`);
   }
 
-  const desktopRules = cssRules(styles.replace(/\/\*[\s\S]*?\*\//g, ""));
-  const cockpitRule = desktopRules.find(({ selector }) => selector === ".cockpit-main");
-  const battlefieldRule = desktopRules.find(({ selector }) => selector === ".cockpit-main .battle-field-panel");
-  const statusRailRule = desktopRules.find(({ selector }) => selector === ".cockpit-rail");
-  const commandDeckRule = desktopRules.find(({ selector }) => selector === ".field-command-dock");
-  assert.equal(cssDeclaration(cockpitRule, "display"), "grid", "desktop cockpit-main must own the layout grid");
-  assert.match(cssDeclaration(cockpitRule, "grid-template-areas") ?? "", /"battle hud"[\s\S]*"commands commands"/, "desktop grid must reserve battlefield, HUD, and command-deck surfaces");
-  assert.equal(cssDeclaration(battlefieldRule, "grid-area"), "battle", "battlefield must own the desktop battle area");
-  assert.equal(cssDeclaration(statusRailRule, "grid-area"), "hud", "status rail must own the desktop HUD area");
-  assert.equal(cssDeclaration(commandDeckRule, "grid-area"), "commands", "command deck must own the desktop commands area");
+  // Overlay HUD: react-game-ui.css's final, deliberately-last-in-cascade
+  // desktop block is the sole source of truth for grid-area/position now
+  // (styles.css's base .cockpit-main/.field-command-dock/.cockpit-rail
+  // rules stay untouched so mobile/tablet keep their own unrelated layout).
+  const overlayBlock = cssBlock(reactStyles, "@media (min-width: 900px) and (min-height: 0px)");
+  const overlayRules = cssRules(overlayBlock);
+  const cockpitRule = overlayRules.find(({ selector }) => selector === ".cockpit-main");
+  const statusRailRule = overlayRules.find(({ selector }) => selector === ".battle-hud-rail");
+  const commandDeckRule = overlayRules.find(({ selector }) => selector === ".battle-hud-dock");
+  assert.equal(cssDeclaration(cockpitRule, "position"), "relative !important", "cockpit-main must be the containing block for its docked overlay panels");
+  assert.match(
+    cssDeclaration(cockpitRule, "grid-template-areas") ?? "",
+    /"battle"/,
+    "the battlefield, status rail, and command deck are docked overlay panels stacked on one shared grid area, not three separate grid slots",
+  );
+  assert.equal(cssDeclaration(statusRailRule, "grid-area"), "battle !important", "the status rail overlays the battlefield instead of owning a separate HUD column");
+  assert.equal(cssDeclaration(statusRailRule, "position"), "absolute !important", "the status rail must dock as an overlay panel");
+  assert.equal(cssDeclaration(commandDeckRule, "grid-area"), "battle !important", "the command deck overlays the battlefield instead of owning a separate row");
+  assert.equal(cssDeclaration(commandDeckRule, "position"), "absolute !important", "the command deck must dock as an overlay panel");
+
 
 });
 
