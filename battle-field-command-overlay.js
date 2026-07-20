@@ -161,17 +161,26 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
 
     const selectionName = queryText("#dossier-name") || queryText('[data-battle-screen="selection-name"]');
     const selectionCount = queryText("#dossier-count") || queryText('[data-battle-screen="selection-count"]');
+    const selectionHealth = queryText("#dossier-health") || queryText('[data-battle-screen="selection-health"]');
     const selectionOrder = queryText("#dossier-order") || queryText('[data-battle-screen="selection-order"]');
 
     const waveText = queryText("#battle-wave-indicator") || queryText('[data-battle-screen="wave"]');
     const hostileText = queryText("#battle-hostile-label") || queryText('[data-battle-screen="enemy-growth"]');
     const bossPhaseText = queryText('[data-battle-screen="boss-phase"]');
 
+    // The full selection dossier (portrait, HP bar, order) lives in the side
+    // rail outside the canvas viewport; this on-canvas readout is the only
+    // "current state" signal a player sees without looking away from the
+    // map, so it must carry HP -- not just name/order -- or the map itself
+    // never actually answers "what's happening with my selection right now".
     let selectionStr = "";
     if (selectionName) {
       selectionStr += selectionName;
       if (selectionCount && selectionCount !== "—") {
         selectionStr += ` (${selectionCount})`;
+      }
+      if (selectionHealth && selectionHealth !== "0 / 0" && selectionHealth !== "—") {
+        selectionStr += ` · HP ${selectionHealth}`;
       }
       if (selectionOrder && selectionOrder !== "—") {
         selectionStr += ` — ${selectionOrder}`;
@@ -276,6 +285,7 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
     "#battle-wave-indicator",
     ".selection-dossier",
     "#dossier-count",
+    "#dossier-health",
     "#dossier-order",
     "#dossier-name",
     "[data-battle-screen='wave']",
@@ -283,6 +293,7 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
     "[data-battle-screen='enemy-growth']",
     "[data-battle-screen='selection-name']",
     "[data-battle-screen='selection-count']",
+    "[data-battle-screen='selection-health']",
     "[data-battle-screen='selection-order']"
   ].forEach((selector) => {
     const target = dom.querySelector(selector);

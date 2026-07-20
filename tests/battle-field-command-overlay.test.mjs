@@ -236,6 +236,7 @@ function createStaticOverlayFixture({
   campaignStatus = "Accepted outcome",
   selectionName = "Abyssal vanguard",
   selectionCount = "2 selected",
+  selectionHealth = "0 / 0",
   selectionOrder = "Advancing",
   waveStatus = "Wave 3",
   commands = [
@@ -262,6 +263,7 @@ function createStaticOverlayFixture({
   const status = campaignStatus === null ? null : new StaticElement("output", campaignStatus);
   const dossierName = new StaticElement("span", selectionName);
   const dossierCount = new StaticElement("span", selectionCount);
+  const dossierHealth = new StaticElement("span", selectionHealth);
   const dossierOrder = new StaticElement("span", selectionOrder);
   const battleWave = new StaticElement("span", waveStatus);
   const hostileLabel = new StaticElement("span", "Hostile fixture");
@@ -278,6 +280,7 @@ function createStaticOverlayFixture({
     ["#battle-wave-indicator", battleWave],
     ["#dossier-name", dossierName],
     ["#dossier-count", dossierCount],
+    ["#dossier-health", dossierHealth],
     ["#dossier-order", dossierOrder],
   ]);
   const observers = [];
@@ -366,6 +369,7 @@ function createStaticOverlayFixture({
     status,
     dossierName,
     dossierCount,
+    dossierHealth,
     dossierOrder,
     battleWave,
     observations,
@@ -1016,6 +1020,42 @@ test("exported mount mirrors tactical battle state, refreshes observed selection
       "Rift guard (3 selected) — Holding breach",
       "destroy must disconnect the tactical readout from subsequent observed mutations",
     );
+  });
+});
+
+test("the on-canvas tactical readout carries selection HP, since it's the only current-state signal a player sees without looking away from the map", { concurrency: false }, async () => {
+  const fixture = createStaticOverlayFixture({
+    selectionName: "Rift guard",
+    selectionCount: "2 selected",
+    selectionHealth: "9 / 15",
+    selectionOrder: "Holding breach",
+    waveStatus: "Wave 4",
+  });
+
+  await withMountedOverlay(fixture, async (_autoOverlay, _i18n, overlayModule) => {
+    const container = new StaticElement("div");
+    const mounted = overlayModule.mountFieldCommandOverlay({
+      root: fixture.field,
+      container,
+      commands: fixture.commandPanel,
+    });
+    const tacticalSelection = mounted.overlay.querySelector('[data-field-overlay="tactical-selection"]');
+
+    assert.equal(
+      tacticalSelection.textContent,
+      "Rift guard (2 selected) · HP 9 / 15 — Holding breach",
+      "the on-canvas readout must carry HP between count and order, not just name/order",
+    );
+
+    fixture.dossierHealth.textContent = "3 / 15";
+    fixture.notify(fixture.dossierHealth);
+    assert.equal(
+      tacticalSelection.textContent,
+      "Rift guard (2 selected) · HP 3 / 15 — Holding breach",
+      "an observed HP mutation must refresh the on-canvas readout live",
+    );
+
+    mounted.destroy();
   });
 });
 
