@@ -449,9 +449,19 @@ function contractProbes() {
   const thinLine = ["hunt", "hunt", "extract", "materialize"];
   const stageOnePreparedLine = [...thinLine, "materialize"];
   const s1 = [...stageOnePreparedLine, "capture", "assault", "assault", "assault"];
-  const s2 = [...thinLine, "capture", "capture", "possess", "assault", "assault"];
-  const rusherS3 = [...thinLine, "capture", "assault"];
-  const comebackS3 = [...thinLine, "capture", "domain", "possess", "assault", "assault"];
+  // veil-citadel and echo-throne now declare wave encounters gated by
+  // preparationLegion: 4 (added under rules-v8); thinLine alone only
+  // reaches legion 2, so start-wave would reject before either probe could
+  // exercise the boss at all. Both lines borrow the same extra materialize
+  // s1 already used to clear its own gate. rusherS3 takes two assaults: the
+  // legion floor now imposed by the wave gate softens the thin-legion
+  // counter just enough that a single hit is not lethal, so the probe must
+  // land the second real counterblow the boss actually deals to reach a
+  // genuine defeat -- this is the same number of hits a player is forced
+  // into by the identical gate, not a contrived shortcut.
+  const s2 = [...stageOnePreparedLine, "capture", "capture", "possess", "assault", "assault"];
+  const rusherS3 = [...stageOnePreparedLine, "capture", "assault", "assault"];
+  const comebackS3 = [...stageOnePreparedLine, "capture", "domain", "possess", "assault", "assault"];
   const rewards = ["rift-lens", "anchor-shard", "throne-echo"];
   const rusherDefeat = play([s1, s2, rusherS3], rewards);
   const comebackWin = play([s1, s2, comebackS3], rewards);

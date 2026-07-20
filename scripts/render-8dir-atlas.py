@@ -83,7 +83,10 @@ def configure_render(scene, size):
         scene.render.engine = "BLENDER_EEVEE_NEXT"
     except TypeError:
         scene.render.engine = "BLENDER_EEVEE"
-    scene.eevee.taa_render_samples = 16
+    scene.eevee.taa_render_samples = max(
+        1,
+        int(os.environ.get("ABYSSAL_RENDER_SAMPLES", "16")),
+    )
     scene.render.resolution_x = size
     scene.render.resolution_y = size
     scene.render.resolution_percentage = 100

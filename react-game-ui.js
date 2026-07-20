@@ -740,7 +740,17 @@
               )
             ),
             e('div', { className: 'queue-panel' },
-              e('h4', { 'data-i18n': 'queue.heading' }, '예약 대기열'),
+              e('div', { className: 'queue-panel-heading' },
+                e('h4', { 'data-i18n': 'queue.heading' }, '예약 대기열'),
+                e('button', {
+                  id: 'clear-reservation-queue',
+                  type: 'button',
+                  className: 'queue-clear-button',
+                  'data-i18n': 'queue.clearButton',
+                  'data-i18n-aria': 'queue.clearButtonAria',
+                  'aria-label': '예약 대기열 비우기'
+                }, '전체 취소')
+              ),
               e('ol', {
                 id: 'command-reservation-queue',
                 className: 'queue-list',

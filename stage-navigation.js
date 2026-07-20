@@ -16,25 +16,148 @@ const EXPECTED_NODE_COUNTS = Object.freeze([1, 2, 1, 1, 1, 2, 2, 2, 3, 3]);
 
 const STAGES = Object.freeze([
   stage(1, "Cinder Span", 6, 18, [30, 28, 32], [[12, 5.5]],
-    ["Ash Shelf", "Forge Bridge", "Smelter Catwalk"], ["exposed", "objective", "cover"]),
+    ["Scout Valley Trail", "Reconnaissance Basin", "Vanguard Lookout"], ["flank", "exposed", "cover"]),
   stage(2, "Veil Citadel", 6, 18, [30, 32, 34], [[9, 2.5], [9, 8.5]],
-    ["Signal Terrace", "Veil Gate", "Relay Ramp"], ["high-ground", "exposed", "objective"]),
+    ["Branching Terraces", "Command Gate", "Decentralized Ramp"], ["objective", "flank", "high-ground"]),
   stage(3, "Echo Throne", 7, 17, [36, 32, 34], [[14, 5.5]],
-    ["Whisper Stair", "Grand Ascent", "Servitor Ramp"], ["cover", "objective", "flank"]),
+    ["Crossroads Defense", "Phalanx Grand Ascent", "Spear Phalanx Route"], ["objective", "cover", "exposed"]),
   stage(4, "Sunken Bastion", 6, 18, [32, 34, 36], [[12, 5.5]],
-    ["Breakwater", "Flood Causeway", "Sea Wall"], ["exposed", "hazard", "cover"]),
+    ["Fog Tower Stairs", "Vertical Staircase", "Ranged Lookout Steps"], ["high-ground", "exposed", "hazard"]),
   stage(5, "Howling Sprawl", 7, 17, [36, 34, 38], [[13, 5.5]],
-    ["Ruin Arcade", "Howling Plaza", "Collapsed Alleys"], ["cover", "objective", "flank"]),
+    ["Cave Mouth Entrance", "Chokepoint Defense", "Narrow Cave Passage"], ["cover", "hazard", "flank"]),
   stage(6, "Glass Necropolis", 7, 18, [34, 36, 38], [[10, 2.5], [10, 8.5]],
-    ["Grave Terrace", "Crystal Nave", "Crypt Walk"], ["high-ground", "exposed", "objective"]),
+    ["Swamp Cavalry Path", "Lowland Nave", "Flanking Swamp Walk"], ["current", "flank", "high-ground"]),
   stage(7, "Starless Canal", 6, 18, [36, 38, 40], [[9, 2.5], [9, 8.5]],
-    ["Moonless Quay", "Twin Bridge Chain", "Barge Deck"], ["cover", "exposed", "current"]),
+    ["Keep Siege Quay", "Canal Wall Breach", "Castle Gate Assault"], ["objective", "current", "exposed"]),
   stage(8, "Shattered Causeway", 7, 17, [36, 38, 40], [[10, 2.5], [10, 8.5]],
-    ["Upper Span", "Shard Steps", "Underbridge"], ["high-ground", "hazard", "cover"]),
+    ["Terraced Upper Span", "Cathedral Relic Steps", "Terraced Underbridge"], ["high-ground", "objective", "cover"]),
   stage(9, "Abyss Chancel", 6, 18, [38, 40, 42], [[8, 2.5], [12, 5.5], [8, 8.5]],
-    ["Cantor Chain", "Rite Bridge", "Choir Walk"], ["high-ground", "current", "cover"]),
+    ["Altar Steps Ascent", "Soul Ritual Bridge", "High Altar Walk"], ["hazard", "objective", "high-ground"]),
   stage(10, "Gate Zenith", 7, 17, [44, 40, 42], [[9, 2.5], [12, 5.5], [9, 8.5]],
-    ["Crown Spiral", "Grand Stair", "Pilgrim Stair"], ["flank", "objective", "cover"]),
+    ["Commander Frontline", "Allied Duel Stair", "Boss Finale Throne"], ["objective", "flank", "exposed"]),
+]);
+
+const STAGE_PROFILES = Object.freeze([
+  Object.freeze({
+    role: "reconnaissance",
+    unitFocus: Object.freeze(["scout", "flanker"]),
+    formation: "skirmish",
+    mechanic: "scout-movement",
+    camera: Object.freeze({
+      azimuth: 2.2,
+      elevation: 0.85,
+      zoom: 16.5,
+      fogDensity: 0.008,
+    }),
+  }),
+  Object.freeze({
+    role: "command",
+    unitFocus: Object.freeze(["tactician", "guardian"]),
+    formation: "split-column",
+    mechanic: "branching-paths",
+    camera: Object.freeze({
+      azimuth: 2.3,
+      elevation: 0.88,
+      zoom: 17.0,
+      fogDensity: 0.007,
+    }),
+  }),
+  Object.freeze({
+    role: "infantry",
+    unitFocus: Object.freeze(["guardian", "rusher"]),
+    formation: "phalanx",
+    mechanic: "crossroads-defense",
+    camera: Object.freeze({
+      azimuth: 2.4,
+      elevation: 0.90,
+      zoom: 18.0,
+      fogDensity: 0.009,
+    }),
+  }),
+  Object.freeze({
+    role: "ranged",
+    unitFocus: Object.freeze(["ranged", "guardian"]),
+    formation: "vertical-stair",
+    mechanic: "vertical-combat",
+    camera: Object.freeze({
+      azimuth: 2.1,
+      elevation: 0.75,
+      zoom: 19.5,
+      fogDensity: 0.013,
+    }),
+  }),
+  Object.freeze({
+    role: "guardian",
+    unitFocus: Object.freeze(["guardian", "rusher"]),
+    formation: "wedge",
+    mechanic: "chokepoint-hold",
+    camera: Object.freeze({
+      azimuth: 2.45,
+      elevation: 0.95,
+      zoom: 15.5,
+      fogDensity: 0.011,
+    }),
+  }),
+  Object.freeze({
+    role: "cavalry",
+    unitFocus: Object.freeze(["flanker", "rusher"]),
+    formation: "cavalry-flank",
+    mechanic: "swamp-traversal",
+    camera: Object.freeze({
+      azimuth: 2.15,
+      elevation: 0.78,
+      zoom: 16.0,
+      fogDensity: 0.012,
+    }),
+  }),
+  Object.freeze({
+    role: "siege",
+    unitFocus: Object.freeze(["rusher", "ranged"]),
+    formation: "siege-line",
+    mechanic: "castle-breach",
+    camera: Object.freeze({
+      azimuth: 2.25,
+      elevation: 0.82,
+      zoom: 17.5,
+      fogDensity: 0.006,
+    }),
+  }),
+  Object.freeze({
+    role: "relic-recovery",
+    unitFocus: Object.freeze(["guardian", "ranged"]),
+    formation: "line-defensive",
+    mechanic: "relic-retrieval",
+    camera: Object.freeze({
+      azimuth: 2.35,
+      elevation: 0.80,
+      zoom: 18.5,
+      fogDensity: 0.010,
+    }),
+  }),
+  Object.freeze({
+    role: "ritualist",
+    unitFocus: Object.freeze(["ranged", "flanker"]),
+    formation: "circle-ritual",
+    mechanic: "altar-ritual",
+    camera: Object.freeze({
+      azimuth: 2.4,
+      elevation: 0.92,
+      zoom: 19.0,
+      fogDensity: 0.008,
+    }),
+  }),
+  Object.freeze({
+    role: "commander-in-chief",
+    unitFocus: Object.freeze(["guardian", "flanker", "ranged", "rusher"]),
+    formation: "frontline-clash",
+    mechanic: "commander-duel",
+    camera: Object.freeze({
+      azimuth: 2.5,
+      elevation: 0.98,
+      zoom: 20.0,
+      fogDensity: 0.014,
+    }),
+  }),
 ]);
 
 function stage(number, name, junctionA, junctionB, lengths, nodes, routeNames, affordances) {
@@ -98,9 +221,91 @@ function authoredRoute(meta, laneIndex) {
 }
 
 function elevationFor(stageNumber, laneIndex, x) {
-  if (stageNumber === 3) return Math.min(2, Math.floor(x / 8));
-  if (stageNumber === 10) return Math.min(3, Math.floor(x / 6));
-  if ([2, 6, 9].includes(stageNumber) && laneIndex === 0) return 1;
+  if (stageNumber === 1) {
+    if (x <= 5 || x >= 17) return 1;
+    return 0;
+  }
+  if (stageNumber === 2) {
+    if (laneIndex === 0) {
+      if (x <= 5 || x >= 18) return 0;
+      if (x === 6 || x === 17) return 1;
+      return 2;
+    }
+    if (laneIndex === 2) {
+      if (x >= 8 && x <= 15) return 1;
+      return 0;
+    }
+    return 0;
+  }
+  if (stageNumber === 3) {
+    if (x <= 7) return 0;
+    if (x === 8 || x === 9) return 1;
+    if (x >= 10 && x <= 14) return 2;
+    if (x === 15 || x === 16) return 1;
+    return 0;
+  }
+  if (stageNumber === 4) {
+    if (x <= 4) return 0;
+    if (x >= 5 && x <= 8) return 1;
+    if (x >= 9 && x <= 13) return 2;
+    return 3;
+  }
+  if (stageNumber === 5) {
+    if (x <= 8) return 0;
+    if (x === 9 || x === 10) return 1;
+    if (x >= 11 && x <= 13) return 2;
+    if (x === 14 || x === 15) return 1;
+    return 0;
+  }
+  if (stageNumber === 6) {
+    if (laneIndex === 0) {
+      if (x <= 6 || x >= 19) return 0;
+      if (x === 7 || x === 18) return 1;
+      if (x === 8 || x === 17) return 2;
+      return 3;
+    }
+    return 0;
+  }
+  if (stageNumber === 7) {
+    if (x <= 7) return 0;
+    if (x === 8 || x === 9) return 1;
+    if (x === 10 || x === 11) return 0;
+    if (x === 12) return 1;
+    if (x >= 13 && x <= 15) return 2;
+    if (x === 16 || x === 17) return 1;
+    return 0;
+  }
+  if (stageNumber === 8) {
+    if (x <= 4) return 0;
+    if (x >= 5 && x <= 8) return 1;
+    if (x >= 9 && x <= 13) return 2;
+    if (x >= 14 && x <= 17) return 3;
+    if (x >= 18 && x <= 19) return 2;
+    if (x >= 20 && x <= 21) return 1;
+    return 0;
+  }
+  if (stageNumber === 9) {
+    if (x <= 5) return 0;
+    if (x === 6) return 1;
+    if (x === 7 || x === 8) return 2;
+    if (x >= 9 && x <= 14) return 3;
+    if (x === 15 || x === 16) return 2;
+    if (x === 17) return 1;
+    return 0;
+  }
+  if (stageNumber === 10) {
+    if (x <= 4) return 0;
+    if (x === 5) return 1;
+    if (x >= 6 && x <= 8) return 2;
+    if (x === 9 || x === 10) return 1;
+    if (x === 11 || x === 12) return 0;
+    if (x === 13) return 1;
+    if (x === 14) return 2;
+    if (x >= 15 && x <= 18) return 3;
+    if (x === 19) return 2;
+    if (x === 20) return 1;
+    return 0;
+  }
   return 0;
 }
 
@@ -513,6 +718,7 @@ export function createStageNavigation(stageNumber) {
   };
 
   return Object.freeze({
+    profile: STAGE_PROFILES[meta.number - 1],
     stageNumber: meta.number,
     name: meta.name,
     width: STAGE_GRID_WIDTH,

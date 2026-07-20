@@ -2,7 +2,17 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import vm from "node:vm";
-import { STAGES, SUMMON_RECIPES, createCampaign, getStageChecklist, reserveCommand, startCampaign } from "../campaign-state.js";
+import {
+  FIELD_ITEM_CATALOG,
+  STAGES,
+  SUMMON_RECIPES,
+  applyAction,
+  applyEncounterEvent,
+  createCampaign,
+  getStageChecklist,
+  reserveCommand,
+  startCampaign,
+} from "../campaign-state.js";
 import { resolveBossPhase } from "../combat-systems.js";
 import { translate, translations } from "../i18n.js";
 
@@ -2072,24 +2082,30 @@ test("healthy battle rendering owns command feedback without duplicate local cue
   assert.deepEqual(rendered.cueCalls, [], "renderer-backed feedback must not duplicate the local audio acknowledgement");
 });
 
-async function loadEncounterCueDispatcher() {
+async function loadEncounterCueDispatcher({ campaignState = null } = {}) {
   const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
   const cueMap = source.match(/const ENCOUNTER_CUE_BY_EVENT = Object\.freeze\(\{[\s\S]*?\}\);/);
   assert.ok(cueMap, "app runtime must expose its encounter-event cue map");
   const cueCalls = [];
+  const feedbackCalls = [];
   const context = vm.createContext({
     battleSessionId: 7,
-    campaign: { status: "active" },
+    campaign: campaignState ?? { status: "active" },
     clearEncounterStartTimer: () => {},
-    currentEncounter: () => ({ bossExposed: true, spawningStopped: false }),
+    currentEncounter: () => context.campaign.stage?.encounter ?? { bossExposed: true, spawningStopped: false },
+    currentLang: () => "en",
     encounterEventQueue: Promise.resolve(),
+    FIELD_ITEM_CATALOG,
     persistCampaign: async () => {},
     playCue: (cue) => cueCalls.push(cue),
     render: () => {},
     scheduleEncounterWaveStart: () => {},
+    showTacticalFeedback: (message) => feedbackCalls.push(message),
     synchronizeBattleRenderer: () => {},
+    translate: (key) => translations.en[key] ?? key,
     visualizer: {},
     applyEncounterEvent(state, event) {
+      if (campaignState) return applyEncounterEvent(state, event);
       return event.accepted === false
         ? { accepted: false, state }
         : { accepted: true, state: { status: "active" } };
@@ -2103,7 +2119,9 @@ async function loadEncounterCueDispatcher() {
   );
   return {
     cueCalls,
+    feedbackCalls,
     dispatch: (event) => context.dispatchEncounter(event, 7, null),
+    getCampaign: () => context.campaign,
   };
 }
 
@@ -2307,6 +2325,41 @@ test("accepted encounter wave and breach transitions emit their authored cues wh
     "only reducer-accepted encounter transitions may emit the wave and breach audio contracts",
   );
 });
+test("only the boss-exposing final wave announces the automatic field event selected by the reducer", async () => {
+  let prepared = startCampaign(createCampaign());
+  assert.equal(prepared.accepted, true, "the public campaign fixture must start");
+  let state = prepared.state;
+  for (const action of ["hunt", "hunt", "extract", "materialize", "materialize", "capture"]) {
+    const result = applyAction(state, action);
+    assert.equal(result.accepted, true, `Stage 1 preparation must legally accept ${action}: ${result.message}`);
+    state = result.state;
+  }
+
+  const fixture = await loadEncounterCueDispatcher({ campaignState: state });
+  const waves = STAGES[0].encounter.waves;
+  for (const [waveIndex, wave] of waves.entries()) {
+    await fixture.dispatch({ type: "start-wave", stageId: STAGES[0].id, waveId: wave.id });
+    await fixture.dispatch({ type: "wave-cleared", stageId: STAGES[0].id, waveId: wave.id });
+
+    const fieldFeedback = fixture.feedbackCalls.filter((message) => message.startsWith("Field Event:"));
+    if (waveIndex < waves.length - 1) {
+      assert.deepEqual(
+        fieldFeedback,
+        [],
+        `clearing non-final wave ${wave.id} must not announce an automatic field event`,
+      );
+    }
+  }
+
+  const [effect] = fixture.getCampaign().stage.activeEffects;
+  assert.ok(effect, "the final wave must leave the reducer-selected automatic field effect active");
+  assert.deepEqual(
+    fixture.feedbackCalls.filter((message) => message.startsWith("Field Event:")),
+    [`Field Event: ${translations.en[`effect.${effect.type}`]} (${effect.charges} charges)`],
+    "the app must announce exactly the effect and charge count produced by the boss-exposing final clear",
+  );
+});
+
 
 test("stopping battle clears one-shot audio and stale BGM completions before returning enabled music to the lobby", async () => {
   const fixture = await loadAudioSceneLifecycle();
@@ -2609,13 +2662,13 @@ test("live frontline HUD projects Korean and English pending, live, and boss sta
   const contracts = {
     en: {
       pending: {
-        forecast: { text: "Forecast: 1/3 scout · 2 hostiles · 12s", state: "pending" },
+        forecast: { text: "Forecast: 1/3 scout · 2 hostiles · 15s", state: "pending" },
         advance: { text: "Spawn pending · awaiting the next approach", state: "waiting" },
         bossPhase: { text: "Boss phase locked · clear the waves first", state: "locked" },
         enemyGrowth: { text: "Enemy growth 1/3 · 0 active", state: "pending" },
       },
       live: {
-        forecast: { text: "Forecast: 1/3 scout · 2 hostiles · 12s", state: "live" },
+        forecast: { text: "Forecast: 1/3 scout · 2 hostiles · 15s", state: "live" },
         advance: { text: "2 enemies advancing · 1 engagements", state: "engaged" },
         bossPhase: { text: "Boss phase locked · clear the waves first", state: "locked" },
         enemyGrowth: { text: "Enemy growth 1/3 · 2 active", state: "live" },
@@ -2629,13 +2682,13 @@ test("live frontline HUD projects Korean and English pending, live, and boss sta
     },
     ko: {
       pending: {
-        forecast: { text: "예측: 1/3 정찰 · 적 2명 · 12초", state: "pending" },
+        forecast: { text: "예측: 1/3 정찰 · 적 2명 · 15초", state: "pending" },
         advance: { text: "생성 대기 · 다음 웨이브 접근 전", state: "waiting" },
         bossPhase: { text: "보스 단계 잠김 · 웨이브를 먼저 돌파", state: "locked" },
         enemyGrowth: { text: "적 성장 1/3 · 활성 0명", state: "pending" },
       },
       live: {
-        forecast: { text: "예측: 1/3 정찰 · 적 2명 · 12초", state: "live" },
+        forecast: { text: "예측: 1/3 정찰 · 적 2명 · 15초", state: "live" },
         advance: { text: "적 2명 진입 · 1곳 교전", state: "engaged" },
         bossPhase: { text: "보스 단계 잠김 · 웨이브를 먼저 돌파", state: "locked" },
         enemyGrowth: { text: "적 성장 1/3 · 활성 2명", state: "live" },

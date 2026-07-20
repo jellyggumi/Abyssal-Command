@@ -15,7 +15,14 @@
       "outputResolution": [
         1024,
         1024
-      ]
+      ],
+      "generatedSource": "source/prop-rift-glyph.png",
+      "generatedBy": "functions.generate_image (openai-codex)",
+      "referenceInputs": [
+        "assets/images/ui/concept-tactical-surface.png",
+        "assets/images/battle/glb/rift-portal__Idle.png"
+      ],
+      "derivation": "Concept-aligned interactive-prop obsidian with violet rift glyph channels generated as a seamless tileable albedo replacement."
     },
     {
       "id": "cold-steel",
@@ -47,7 +54,14 @@
       "outputResolution": [
         1024,
         1024
-      ]
+      ],
+      "generatedBy": "functions.generate_image (openai-codex)",
+      "generatedSource": "source/player-void-weave.png",
+      "referenceInputs": [
+        "assets/images/battle/glb/shade__Idle.png",
+        "assets/images/ui/concept-tactical-surface.png"
+      ],
+      "derivation": "Concept-aligned player shade cloth/obsidian weave generated as a seamless tileable albedo replacement."
     },
     {
       "id": "violet-rift",

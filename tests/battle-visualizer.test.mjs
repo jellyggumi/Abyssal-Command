@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { BattleVisualizer } from "../battle-visualizer.js";
 import { ObjectFeedbackLayer } from "../object-feedback-layer.js";
+import { screenToWorldFlat } from "../iso-math.js";
 
 function makeVisualizer(t, {
   reducedMotion = false,
@@ -573,6 +574,85 @@ test("BattleVisualizer focus projection updates its minimap snapshot without cal
 
   assert.deepEqual(visualizer.getTacticalSnapshot().focus, { x: 8, y: 5 }, "external minimap focus must be visible in the next renderer snapshot");
   assert.deepEqual(tacticalRequests, [], "applying external focus must not re-enter the tactical request callback");
+});
+
+test("BattleVisualizer tactical snapshot bounds all four inverse-projected canvas corners through pan, zoom, and resize", (t) => {
+  const canvas = makePointerCanvas();
+  canvas.clientWidth = 640;
+  canvas.clientHeight = 360;
+  const visualizer = makeVisualizer(t, { canvas });
+  visualizer.ctx = { setTransform() {} };
+
+  const expectedViewport = () => {
+    const corners = [
+      [0, 0],
+      [visualizer.view.width, 0],
+      [0, visualizer.view.height],
+      [visualizer.view.width, visualizer.view.height],
+    ].map(([canvasX, canvasY]) => {
+      const flat = screenToWorldFlat(
+        (canvasX - visualizer.view.offsetX) / visualizer.view.scale,
+        (canvasY - visualizer.view.offsetY) / visualizer.view.scale,
+      );
+      return visualizer.navigation.gridToWorld(flat.x, flat.y);
+    });
+    const minX = Math.min(...corners.map(({ x }) => x));
+    const maxX = Math.max(...corners.map(({ x }) => x));
+    const minZ = Math.min(...corners.map(({ z }) => z));
+    const maxZ = Math.max(...corners.map(({ z }) => z));
+    return {
+      x: (minX + maxX) / 2,
+      z: (minZ + maxZ) / 2,
+      width: maxX - minX,
+      depth: maxZ - minZ,
+    };
+  };
+  const assertViewport = (actual, expected, context) => {
+    assert.ok(actual, `${context} must publish a viewport`);
+    for (const field of ["x", "z", "width", "depth"]) {
+      assert.ok(Number.isFinite(actual[field]), `${context} ${field} must be finite`);
+      assert.ok(
+        Math.abs(actual[field] - expected[field]) <= Math.max(1, Math.abs(expected[field])) * 1e-12,
+        `${context} ${field}: expected ${expected[field]}, received ${actual[field]}`,
+      );
+    }
+    assert.equal(actual.zoom, visualizer.view.scale, `${context} must preserve the existing minimap zoom field`);
+    assert.ok(actual.width > 0 && actual.depth > 0, `${context} dimensions must remain positive`);
+  };
+
+  visualizer.computeView();
+  const fitted = visualizer.getTacticalSnapshot().viewport;
+  assertViewport(fitted, expectedViewport(), "the fitted canvas footprint");
+
+  visualizer.attachPointerHandlers();
+  canvas.dispatch("pointerdown", { button: 1, x: 100, y: 100, pointerId: 7 });
+  canvas.dispatch("pointermove", { button: 1, x: 180, y: 140, pointerId: 7 });
+  const panned = visualizer.getTacticalSnapshot().viewport;
+  assertViewport(panned, expectedViewport(), "the middle-dragged canvas footprint");
+  assert.notDeepEqual(
+    { x: panned.x, z: panned.z },
+    { x: fitted.x, z: fitted.z },
+    "panning must move the minimap viewport center",
+  );
+  assert.ok(Math.abs(panned.width - fitted.width) < 1e-12, "panning must preserve viewport width");
+  assert.ok(Math.abs(panned.depth - fitted.depth) < 1e-12, "panning must preserve viewport depth");
+  canvas.dispatch("pointerup", { button: 1, x: 180, y: 140, pointerId: 7 });
+
+  visualizer.manualZoom = 2;
+  visualizer.computeView();
+  const zoomed = visualizer.getTacticalSnapshot().viewport;
+  assertViewport(zoomed, expectedViewport(), "the zoomed canvas footprint");
+  assert.ok(zoomed.width < fitted.width && zoomed.depth < fitted.depth, "zooming in must shrink both visible world-space dimensions");
+
+  canvas.clientWidth = 800;
+  canvas.clientHeight = 500;
+  visualizer.computeView();
+  const resized = visualizer.getTacticalSnapshot().viewport;
+  assertViewport(resized, expectedViewport(), "the resized canvas footprint");
+  assert.ok(
+    resized.width !== zoomed.width || resized.depth !== zoomed.depth,
+    "resizing the canvas must update at least one visible world-space dimension",
+  );
 });
 
 test("BattleVisualizer destroy removes every pointer and visibility listener it registered", (t) => {
@@ -1363,7 +1443,7 @@ test("BattleVisualizer tower auto-fire emits only one shot during the shared one
   );
 });
 
-function measureCanvasMobilityTick(t, { mobilityLevel, terrainMultiplier = 1 }) {
+function measureCanvasMobilityTick(t, { mobilityLevel, terrainMultiplier = 1, movementMultiplier = 1 }) {
   const visualizer = makeVisualizer(t, {
     presentation: { stageNumber: 1 },
   });
@@ -1383,6 +1463,7 @@ function measureCanvasMobilityTick(t, { mobilityLevel, terrainMultiplier = 1 }) 
       skills: { mobility: mobilityLevel },
     },
   };
+  visualizer.movementMultiplier = movementMultiplier;
   visualizer.commander.x = start.x;
   visualizer.commander.y = start.y;
   visualizer.commanderPosition = { ...start };
@@ -1414,6 +1495,7 @@ test("BattleVisualizer Mobility accelerates only the commander and composes with
   const upgraded = measureCanvasMobilityTick(t, { mobilityLevel: 2 });
   const terrainMultiplier = 0.5;
   const terrainAffected = measureCanvasMobilityTick(t, { mobilityLevel: 2, terrainMultiplier });
+  const haste = measureCanvasMobilityTick(t, { mobilityLevel: 1, movementMultiplier: 1.25 });
 
   await t.test("level 2 moves the commander exactly fifteen percent farther than level 1", () => {
     assert.equal(
@@ -1438,6 +1520,15 @@ test("BattleVisualizer Mobility accelerates only the commander and composes with
       "terrain movement effects must remain multiplicative with commander Mobility",
     );
   });
+
+  await t.test("a 25% HASTE multiplier accelerates commander movement exactly once", () => {
+    assert.equal(
+      Number((haste.commander / baseline.commander).toFixed(12)),
+      1.25,
+      "the Canvas movement path must apply HASTE once rather than ignore or square the campaign multiplier",
+    );
+  });
+
 });
 
 test("BattleVisualizer publishes stable aggregate selection summaries and selected defeat", (t) => {
@@ -1819,7 +1910,7 @@ test("BattleVisualizer object feedback mirrors authoritative actors, live deltas
   );
 });
 
-test("BattleVisualizer getCommandReadiness gates each action on the commander's distance to its world gimmick anchor", (t) => {
+test("[PS-001] Mouse movement and proximity gate world actions until the commander reaches their anchor", (t) => {
   const visualizer = makeVisualizer(t, { presentation: { stageNumber: 1 } });
 
   const materializeAtSpawn = visualizer.getCommandReadiness({ action: "materialize" });
@@ -1876,4 +1967,65 @@ test("BattleVisualizer drawActionRangeRing projects the same ACTION_INTERACTION_
     dimStroke,
     "walking Hunt's anchor into range must change the ring's stroke from its dim out-of-range reading",
   );
+});
+
+test("BattleVisualizer emits exact chest events for mouse and touch and clears field presentation state on reconciliation and destroy", (t) => {
+  const canvas = makePointerCanvas();
+  const encounterEvents = [];
+  const visualizer = makeVisualizer(t, {
+    canvas,
+    presentation: { stageNumber: 1 },
+    options: {
+      onEncounterEvent(event) {
+        encounterEvents.push(event);
+      },
+    },
+  });
+  visualizer.elevationAt = () => 0;
+  visualizer.attachPointerHandlers();
+
+  const applyChest = (id, itemId, activeEffects) => {
+    visualizer.applyCampaignState({
+      campaign: {
+        stageId: "cinder-span",
+        stage: {
+          pendingChest: { id, itemId },
+          activeEffects,
+        },
+      },
+      stage: { id: "cinder-span" },
+    });
+    return visualizer.project(visualizer.chestTile.x + 0.5, visualizer.chestTile.y + 0.5, 0);
+  };
+
+  const mouseTarget = applyChest("chest-scout", "void-blade", [{ type: "ATTACK", value: 2, charges: 2 }]);
+  clickCanvasTarget(canvas, mouseTarget);
+  clickCanvasTarget(canvas, mouseTarget);
+  assert.deepEqual(encounterEvents, [{
+    type: "open-chest",
+    stageId: "cinder-span",
+    chestId: "chest-scout",
+  }], "a held campaign chest must emit once even if the mouse clicks it twice before state reconciliation");
+
+  visualizer.applyCampaignState({
+    campaign: { stageId: "cinder-span", stage: { pendingChest: null, activeEffects: [] } },
+    stage: { id: "cinder-span" },
+  });
+  assert.equal(visualizer.pendingChest, null);
+  assert.equal(visualizer.chestTile, null);
+  assert.deepEqual(visualizer.activeEffects, []);
+
+  const touchTarget = applyChest("chest-guard", "iron-resolve", [{ type: "DEFENSE", value: 1, charges: 3 }]);
+  canvas.dispatch("pointerdown", { ...touchTarget, pointerId: 2, pointerType: "touch" });
+  canvas.dispatch("pointerup", { ...touchTarget, pointerId: 2, pointerType: "touch" });
+  assert.deepEqual(encounterEvents.at(-1), {
+    type: "open-chest",
+    stageId: "cinder-span",
+    chestId: "chest-guard",
+  });
+
+  visualizer.destroy();
+  assert.equal(canvas.listeners.size, 0, "destroy must detach every Canvas field interaction listener");
+  assert.equal(visualizer.pendingChest, null);
+  assert.deepEqual(visualizer.activeEffects, []);
 });

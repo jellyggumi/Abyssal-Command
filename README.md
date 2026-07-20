@@ -7,6 +7,12 @@
 
 **▶ 플레이:** https://jellyggumi.github.io/Abyssal-Command/ (모바일·데스크톱, PWA 오프라인 지원)
 
+## 플레이 영상
+
+[약 68초 게임플레이 영상 보기](docs/media/abyssal-surge-play.mp4)
+
+영상은 10단계 캠페인의 브리핑, 실시간 전장, 명령 피드백, 상자 보상, 스킬 이펙트 흐름을 960×540·24fps H.264로 편집한 저장소 내 미디어입니다.
+
 ## 게임 시스템
 
 1. **무자원 전투 루프**
@@ -18,6 +24,8 @@
 3. **결정론적 위험·보상**
    - 보스 반격, integrity, 군단 방패, 얇은 군단 페널티, Lord's Domain의 단일 사용 제한은 `campaign-state.js`의 고정 규칙입니다.
    - 스테이지를 완료하면 그 스테이지에서 제시된 보상 중 하나를 선택합니다. 선택 효과는 현재 캠페인에만 적용됩니다.
+   - 각 웨이브는 결정론적 랜덤 상자 하나를 생성합니다. 다음 웨이브 전에 상자를 열어 공격·방어·가속·무적·회피·약화 아이템을 확보할 수 있습니다.
+   - 스테이지의 마지막 웨이브를 돌파하면 보스전에 적용되는 필드 이벤트 효과가 한 번 발생합니다. 같은 세이브·행동 기록은 같은 상자와 이벤트를 재현합니다.
 4. **로컬 세이브**
    - 같은 액션 시퀀스는 같은 결과를 냅니다. 저장 봉투는 이벤트 트레이스를 재생해 검증합니다.
    - IndexedDB를 우선 사용하며 localStorage 폴백과 JSON 내보내기/가져오기를 제공합니다.
@@ -83,7 +91,6 @@
 - **행동 커맨드 근접 게이팅:** `getCommandReadiness()`가 실제 커맨더-앵커 거리를 측정하도록 WebGL·Canvas 렌더러 양쪽에 구현했습니다(`ACTION_INTERACTION_RADIUS = 3.0`, 포탈/추출기/거점/보스와 동일 좌표계 사용). 범위를 벗어나면 `reason: "out-of-range"`를 반환하고, `app.js`의 `evaluateQueuedCommandReadiness`는 이 사유만 750ms 타임아웃 우회 대상에서 제외해 실제로 근접해야만 실행되도록 했습니다. 첫 진입 시 1회 `tactical.rejection.outOfRange` 안내(한/영 `i18n.js` 추가)를 띄우고, 재진입 시 반복하지 않습니다.
 - **캔버스 직접 조작(기믹 클릭) 버그 수정:** WebGL 렌더러에서 커맨드 노드 마커의 `userData.semantic`이 `null`로 남아있어 클릭해도 Capture가 발동하지 않던 문제를 고쳤습니다(`"capture"`로 고정). 포탈·추출기 마커는 `userData.semanticGroup`(`["materialize","domain"]`, `["hunt","extract"]`)을 추가로 얻어, `resolvePointerAction`이 현재 `getAvailableActions()`에서 허용된 후보로 동적 해석합니다 — 이전엔 추출기 클릭이 항상 Extract로만 고정되어 Hunt를 캔버스에서 직접 발동할 방법이 없었습니다. 호버 하이라이트(`updateMarkerPulses`)도 동일한 동적 해석을 사용합니다. Canvas 폴백 렌더러는 이미 `tacticalActionAt()`에서 동일 동작을 구현하고 있어 변경하지 않았습니다.
 - `node --test tests/battle-realtime-three.test.mjs tests/battle-visualizer.test.mjs tests/command-queue-realtime.test.mjs`는 신규 5건(마커 시맨틱 태깅, `resolvePointerAction` 그룹 해석, WebGL/Canvas `getCommandReadiness` 거리 게이팅, out-of-range 대기열 타임아웃 면제)을 포함해 전부 통과했습니다. `node --test tests/*.test.mjs` 전체 스위트는 457/457 통과했습니다.
-- `node --test tests/battle-realtime-three.test.mjs tests/battle-visualizer.test.mjs tests/command-queue-realtime.test.mjs`는 신규 5건(마커 시맨틱 태깅, `resolvePointerAction` 그룹 해석, WebGL/Canvas `getCommandReadiness` 거리 게이팅, out-of-range 대기열 타임아웃 면제)을 포함해 전부 통과했습니다. `node --test tests/*.test.mjs` 전체 스위트는 457/457 통과했습니다.
 
 ### 2026-07-20 보스 위협 자동공격 및 지상 텍스처 완성
 
@@ -99,6 +106,14 @@
 - **탈취·처치·지형변화가 채집 소스입니다.** `capture` 성공 시 사이클 1회 환급("영토 산출"), 웨이브 처치(`wave-cleared`) 시 1회 환급("처치 드랍"), 보스가 처음 노출되는 순간(`bossExposed` 전이) 추가로 1회 더 환급("지형변화 광맥")됩니다 — 무제한 반복 클릭이 아니라 실제 전투/점령 참여가 사냥 여지를 되돌려줍니다.
 - 상한 도달 시 거부 메시지는 한/영 완전 로컬라이즈됩니다(`tactical.rejection.extractionsExhausted`, `i18n.js` + `app.js` 폴백 카탈로그 양쪽).
 - `node --test tests/farming-cap.test.mjs`는 신규 4건(상한 도달 후 무변이 거부, capture 환급, wave-clear·boss-exposed 이중 환급, 스테이지별 리셋)을 포함해 전부 통과했습니다. `node --test tests/*.test.mjs` 전체 스위트는 467/467 통과했습니다.
+
+### 2026-07-20 5분 스테이지·상자·스킬 밸런스
+
+- **5분 전투 호흡:** 10개 스테이지의 최종 웨이브를 235–250초에 배치해 준비·웨이브·보스 결전을 약 5분 구간으로 묶었습니다. 자동 시뮬레이터의 관측 모델은 실제 벽시계 플레이타임을 대신하지 않으므로, 최종 웨이브 스케줄과 행동량을 별도 수치로 기록합니다.
+- **상자와 이벤트:** 전체 39개 웨이브가 상자를 하나씩 생성하고, 보스가 노출되는 최종 웨이브에서만 스테이지당 필드 이벤트가 한 번 발생합니다. `ATTACK`, `DEFENSE`, `HASTE`, `INVINCIBLE`, `EVASION`, `DEBUFF` 여섯 효과는 10단계 경로에서 모두 도달 가능하며 저장·재생 시 결정론적으로 복원됩니다.
+- **전략 압력:** Stage 1·2의 자동 내구도 회복을 제거하고 Echo Throne의 얇은 군단 반격을 강화했습니다. Lord's Domain과 상자 방어 효과를 계획적으로 사용해야 생존하며, 보상과 HASTE를 합친 명령 쿨다운 감소는 40%를 넘지 않습니다.
+- **밸런스 결과:** `node scripts/run-campaign-balance-sim.mjs`에서 casual 200회 승률 50%, rusher 0%, optimal·greedy-economy 100%, comeback 기준 경로 0%를 기록했습니다. 12개 초기 보상 조합은 모두 완주했고 최고 효율/중앙 효율 비는 1.183×, 150,000회 퍼즈 연산은 발견 0건, 이중 실행은 동일했습니다.
+- **10개 QA 시나리오:** `PS-001`–`PS-010`이 마우스/명령 근접성, 39개 상자와 10개 이벤트, 여섯 효과의 소비·우선순위, 중복 상자 차단, 저장 재생, 재시도 초기화를 검증합니다.
 
 ## 프로젝트 구조
 
@@ -132,6 +147,6 @@ python3 -m http.server 8000
 
 ## 검증 상태와 패키징 범위
 
-**v0.3.1 릴리스:** RealtimeBattle WebGL/GLB 경로가 기본이며 Canvas는 대체 경로입니다. 규칙 엔진과 유닛 커버리지는 10개 스테이지에 걸치며, 10개 스테이지 전부가 보스 위협 자동공격 패턴, 지상 PBR 텍스처, 그리고 탈취·처치·지형변화로 환급되는 유한 Hunt/Extract 상한(스테이지당 최대 14사이클, 실측 기반)을 갖습니다. 브라우저 검증은 Stage 1–3 전투·보상·저장 왕복과 Stage 4 브리핑 전이까지 실제로 실행했으며, 10개 스테이지 전체를 브라우저에서 완료했다고 주장하지 않습니다. 스테이지당 목표 플레이 볼륨(~5분) 확장과 전용 스킬 시스템은 다음 밸런스 사이클로 이월된 상태입니다.
+**v0.4.0 릴리스 후보:** RealtimeBattle WebGL/GLB 경로가 기본이며 Canvas는 대체 경로입니다. 규칙 엔진과 유닛 커버리지는 10개 스테이지에 걸치며, 전 스테이지가 약 5분 전투 스케줄, 웨이브 상자, 보스 노출 필드 이벤트, 여섯 전술 효과, 보스 위협 자동공격, 지상 PBR 텍스처, 유한 Hunt/Extract 상한을 공유합니다. 브라우저 검증은 캠페인 시작·브리핑·전투 진입, 1280×720 리소스 로드와 오버플로 없음까지 실행했습니다. 10개 스테이지 전체의 실제 사람 완주 시간과 게임 하네스의 몰입도·30분 soak 게이트는 아직 측정하지 않았으므로 통과로 주장하지 않습니다.
 
 APK는 향후 선택 가능한 패키징 경로이며, 이 저장소는 APK 산출물이나 설치 가능한 Android 빌드를 제공한다고 주장하지 않습니다.

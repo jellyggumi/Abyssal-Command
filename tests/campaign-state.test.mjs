@@ -7,6 +7,7 @@ import {
   RULES_VERSION,
   SAVE_SCHEMA,
   SAVE_SCHEMA_VERSION,
+  FIELD_ITEM_CATALOG,
   STAGES,
   SUMMON_RECIPES,
   applyAction,
@@ -49,11 +50,20 @@ function command(state, action) {
   return accept(applyAction(state, action), `Expected ${action} to be accepted: ${state.lastMessage}`);
 }
 
-function encounter(state, type, waveId) {
+function campaignEvent(state, event) {
   return accept(
-    applyEncounterEvent(state, { type, stageId: state.stageId, waveId }),
-    `Expected ${type} for ${waveId} to be accepted: ${state.lastMessage}`,
+    applyEncounterEvent(state, { ...event, stageId: state.stageId }),
+    `Expected ${event.type}${event.waveId ? ` for ${event.waveId}` : ""} to be accepted: ${state.lastMessage}`,
   );
+}
+
+function encounter(state, type, waveId) {
+  return campaignEvent(state, { type, waveId });
+}
+
+function openPendingChest(state) {
+  assert.ok(state.stage.pendingChest, `${state.stageId} must have a pending chest to collect`);
+  return campaignEvent(state, { type: "open-chest", chestId: state.stage.pendingChest.id });
 }
 
 function commands(state, actions) {
@@ -61,7 +71,7 @@ function commands(state, actions) {
   for (const action of actions) {
     next = typeof action === "string"
       ? command(next, action)
-      : encounter(next, action.type, action.waveId);
+      : campaignEvent(next, action);
   }
   return next;
 }
@@ -91,14 +101,21 @@ const S1_PREPARATION = Object.freeze([...ECONOMY_L4, "capture"]);
 const S1_ENCOUNTER = Object.freeze([
   { type: "start-wave", waveId: "scout" },
   { type: "wave-cleared", waveId: "scout" },
+  { type: "open-chest", chestId: "chest-scout" },
   { type: "start-wave", waveId: "guard" },
   { type: "wave-cleared", waveId: "guard" },
   { type: "start-wave", waveId: "reinforcement" },
   { type: "wave-cleared", waveId: "reinforcement" },
 ]);
-const S1_OPTIMAL = [...S1_PREPARATION, ...S1_ENCOUNTER, "assault", "assault", "assault"];
-const S2_LENS = [...ECONOMY_L4, "capture", "capture", "possess", "assault", "assault"];
-const S3_VANGUARD_LENS = ["capture", "domain", "possess", "assault", "assault"];
+const encounterLine = (stageIndex) => STAGES[stageIndex].encounter.waves.flatMap(({ id }) => [
+  { type: "start-wave", waveId: id },
+  { type: "wave-cleared", waveId: id },
+]);
+const S2_ENCOUNTER = Object.freeze(encounterLine(1));
+const S3_ENCOUNTER = Object.freeze(encounterLine(2));
+const S1_OPTIMAL = [...S1_PREPARATION, ...S1_ENCOUNTER, "assault", "assault"];
+const S2_LENS = [...ECONOMY_L4, "capture", "capture", "possess", ...S2_ENCOUNTER, "assault", "assault"];
+const S3_VANGUARD_LENS = ["capture", ...S3_ENCOUNTER, "domain", "possess", "assault", "assault"];
 
 // Deterministic late-campaign reward line: one legal pick per stage 4-10.
 const LATE_REWARDS = Object.freeze({
@@ -139,9 +156,11 @@ function prepareDeclaredEncounter(state) {
   return state;
 }
 
+const COMBAT_FIELD_EFFECT_TYPES = Object.freeze(FIELD_ITEM_CATALOG.map(({ effect }) => effect.type));
+
 // Clears every declared wave in schedule order after proving the schedule is
 // enforced: the second declared wave must reject while the first is uncleared.
-function clearDeclaredWaves(state) {
+function clearDeclaredWaves(state, collectedEffectTypes = []) {
   const stage = STAGES[state.stageIndex];
   state = prepareDeclaredEncounter(state);
   const waves = stage.encounter.waves;
@@ -153,6 +172,10 @@ function clearDeclaredWaves(state) {
   for (const wave of waves) {
     state = encounter(state, "start-wave", wave.id);
     state = encounter(state, "wave-cleared", wave.id);
+    const pendingItem = FIELD_ITEM_CATALOG.find(({ id }) => id === state.stage.pendingChest?.itemId);
+    if (pendingItem && collectedEffectTypes.includes(pendingItem.effect.type)) {
+      state = openPendingChest(state);
+    }
   }
   return state;
 }
@@ -163,7 +186,7 @@ function clearDeclaredWaves(state) {
 function clearLateStage(state) {
   const stage = STAGES[state.stageIndex];
   assert.equal(state.stage.bossHealth, stage.bossHealth, `${stage.id} must open at its declared ${stage.bossHealth} boss health`);
-  state = clearDeclaredWaves(state);
+  state = clearDeclaredWaves(state, COMBAT_FIELD_EFFECT_TYPES);
   state = buildLegion(state, legionTarget(stage));
   while (state.stage.nodes < stage.nodeGoal) state = command(state, "capture");
   if (stage.commands.possess) state = command(state, "possess");
@@ -198,7 +221,7 @@ test("campaign benefits expose selectable reward stats", () => {
 
   assert.deepEqual(
     Object.keys(benefits).sort(),
-    ["activeItemNames", "anchorRestore", "autoExtract", "cooldownReduction", "counterReduction", "extraAssaultDamage", "initialAegis", "lensDamage", "maxIntegrity", "summonBonus", "vanguardLegion"],
+    ["activeItemNames", "anchorRestore", "autoExtract", "cooldownReduction", "counterReduction", "extraAssaultDamage", "initialAegis", "lensDamage", "maxIntegrity", "movementMultiplier", "summonBonus", "vanguardLegion"],
   );
   assert.equal(benefits.maxIntegrity, BALANCE.maxIntegrity);
   assert.equal(benefits.cooldownReduction, 0.2);
@@ -276,7 +299,7 @@ test("stage checklist keeps preparation ahead of waves and marks only truly opti
     "the first declared wave becomes current only after the complete preparation gate",
   );
 
-  const stageTwo = accept(chooseReward(commands(stageOne, S1_ENCOUNTER.concat("assault", "assault", "assault")), "rift-lens"));
+  const stageTwo = accept(chooseReward(commands(stageOne, S1_ENCOUNTER.concat("assault", "assault")), "rift-lens"));
   const stageTwoPossess = getStageChecklist(stageTwo).find(({ id }) => id === "possess");
   assert.deepEqual(
     stageTwoPossess,
@@ -317,25 +340,36 @@ test("battle breaches consume aegis, defeat at zero integrity, and replay from s
   state = accept(chooseReward(commands(state, S2_LENS), "abyssal-banner"));
   assert.equal(state.status, "active");
   assert.equal(state.stage.aegis, 1, "Abyssal Banner must carry its starting aegis into the next active stage");
+  state = commands(state, [...ECONOMY_L4, "capture"]);
+  state = encounter(state, "start-wave", STAGES[2].encounter.waves[0].id);
 
   const integrityBeforeAegis = state.stage.integrity;
   const absorbed = applyBattleBreach(state);
   assert.equal(absorbed.accepted, true);
-  assert.equal(absorbed.effect, "battle-breach");
+  assert.equal(absorbed.effect, "breach");
   state = absorbed.state;
   assert.equal(state.stage.aegis, 0, "the breach must consume aegis first");
   assert.equal(state.stage.integrity, integrityBeforeAegis, "an aegis-absorbed breach cannot cost integrity");
-  assert.deepEqual(state.trace.at(-1), { kind: "battle-breach" });
+  assert.deepEqual(state.trace.at(-1), {
+    kind: "encounter",
+    event: { type: "breach", stageId: "echo-throne", waveId: "advance" },
+  });
 
   while (state.status === "active") state = accept(applyBattleBreach(state));
   assert.equal(state.status, "defeat");
   assert.equal(state.stage.integrity, 0);
-  assert.deepEqual(state.trace.at(-1), { kind: "battle-breach" });
+  assert.deepEqual(state.trace.at(-1), {
+    kind: "encounter",
+    event: { type: "breach", stageId: "echo-throne", waveId: "advance" },
+  });
   rejectWithoutMutation(state, (current) => applyBattleBreach(current), "defeated campaigns cannot take battle breaches");
   rejectWithoutMutation(createCampaign(), (current) => applyBattleBreach(current), "briefing campaigns cannot take battle breaches");
 
   const envelope = createSaveEnvelope(state);
-  assert.ok(envelope.trace.some((event) => event.kind === "battle-breach"), "saves must retain battle breach events");
+  assert.ok(
+    envelope.trace.some((event) => event.kind === "encounter" && event.event?.type === "breach"),
+    "saves must retain battle breach events",
+  );
   assert.deepEqual(restoreSaveEnvelope(JSON.parse(JSON.stringify(envelope))), state);
 });
 
@@ -381,17 +415,21 @@ test("public campaign API completes the deterministic ten-stage Abyssal Command 
   ], "the campaign must earn exactly one reward per stage, in declared chain order");
 
   const kinds = state.trace.map(({ kind }) => kind);
-  assert.deepEqual(kinds.slice(0, 34), [
+  assert.deepEqual(kinds.slice(0, 48), [
     "start",
     ...Array(6).fill("action"),
+    ...Array(7).fill("encounter"),
+    ...Array(2).fill("action"),
+    "reward",
+    ...Array(8).fill("action"),
     ...Array(6).fill("encounter"),
-    ...Array(3).fill("action"),
+    ...Array(2).fill("action"),
     "reward",
-    ...Array(10).fill("action"),
+    "action",
+    ...Array(8).fill("encounter"),
+    ...Array(4).fill("action"),
     "reward",
-    ...Array(5).fill("action"),
-    "reward",
-  ], "the preserved stage 1-3 line must replay with its established event shape");
+  ], "the stage 1-3 line must replay every declared wave, explicit chest collection, and deterministic field-effect action");
   assert.equal(kinds.filter((kind) => kind === "reward").length, 10, "the trace must record exactly one reward event per stage");
   assert.equal(kinds.at(-1), "reward", "the campaign must end on the final reward choice");
 
@@ -404,7 +442,12 @@ test("public campaign API completes the deterministic ten-stage Abyssal Command 
 test("Glass Necropolis alone restores the low no-Lens/no-Brand route to a survivable entry", () => {
   const clearLateWithoutReward = (current) => {
     const stage = STAGES[current.stageIndex];
-    current = clearDeclaredWaves(current);
+    current = clearDeclaredWaves(
+      current,
+      stage.id === "sunken-bastion"
+        ? COMBAT_FIELD_EFFECT_TYPES
+        : ["DEFENSE", "INVINCIBLE", "EVASION", "DEBUFF"],
+    );
     current = buildLegion(current, current.stage.capacity);
     while (current.stage.nodes < stage.nodeGoal) current = command(current, "capture");
     if (stage.commands.possess) current = command(current, "possess");
@@ -421,6 +464,7 @@ test("Glass Necropolis alone restores the low no-Lens/no-Brand route to a surviv
   state = buildLegion(state, 4);
   while (state.stage.nodes < STAGES[state.stageIndex].nodeGoal) state = command(state, "capture");
   state = command(state, "possess");
+  state = clearDeclaredWaves(state);
   while (state.status === "active") state = command(state, "assault");
   state = accept(chooseReward(state, "veil-vanguard"));
 
@@ -428,17 +472,18 @@ test("Glass Necropolis alone restores the low no-Lens/no-Brand route to a surviv
   state = command(state, "capture");
   state = command(state, "domain");
   state = command(state, "possess");
+  state = clearDeclaredWaves(state, COMBAT_FIELD_EFFECT_TYPES);
   while (state.status === "active") state = command(state, "assault");
   state = accept(chooseReward(state, "throne-echo"));
 
   state = clearLateWithoutReward(state);
-  assert.equal(state.stage.integrity, 1, "the low Stage 4 winner must carry the route's actual surviving integrity");
+  assert.equal(state.stage.integrity, 5, "deterministic field defenses must preserve five integrity through the low Stage 4 route");
   state = accept(chooseReward(state, "tidebreaker-sigil"));
   assert.equal(state.stageId, "howling-sprawl");
-  assert.equal(state.stage.integrity, 4, "the global floor remains unchanged before Glass Necropolis");
+  assert.equal(state.stage.integrity, 8, "Stage 4's five surviving integrity plus its three-point reward restore must carry into Stage 5");
 
   state = clearLateWithoutReward(state);
-  assert.equal(state.stage.integrity, 0, "the fully prepared low Stage 5 winner must still be recoverable");
+  assert.equal(state.stage.integrity, 4, "the fully prepared Stage 5 route must carry its four surviving integrity into the recovery reward");
   state = accept(chooseReward(state, "sprawl-hourglass"));
   assert.equal(state.stageId, "glass-necropolis");
   assert.deepEqual(
@@ -449,17 +494,17 @@ test("Glass Necropolis alone restores the low no-Lens/no-Brand route to a surviv
   assert.equal(state.stage.integrity, 7, "Glass Necropolis must raise this low winner to its seven-integrity entry floor");
 
   const stage = STAGES[state.stageIndex];
-  state = clearDeclaredWaves(state);
+  state = clearDeclaredWaves(state, ["DEFENSE"]);
   state = buildLegion(state, state.stage.capacity);
   while (state.stage.nodes < stage.nodeGoal) state = command(state, "capture");
   state = command(state, "possess");
   assert.equal(state.stage.legion, state.stage.capacity, "the route must retain all available Stage 6 preparation");
 
   for (const [assault, expected] of [
-    { integrity: 5, bossHealth: 11, status: "active" },
-    { integrity: 3, bossHealth: 6, status: "active" },
-    { integrity: 1, bossHealth: 1, status: "active" },
-    { integrity: 0, bossHealth: 0, status: "reward" },
+    { integrity: 6, bossHealth: 11, status: "active" },
+    { integrity: 5, bossHealth: 6, status: "active" },
+    { integrity: 4, bossHealth: 1, status: "active" },
+    { integrity: 2, bossHealth: 0, status: "reward" },
   ].entries()) {
     state = command(state, "assault");
     assert.equal(state.stage.integrity, expected.integrity, `Stage 6 assault ${assault + 1} must apply its legal counterblow`);
@@ -476,7 +521,7 @@ test("Glass Necropolis alone restores the low no-Lens/no-Brand route to a surviv
   healthy = clearLateStage(healthy);
   healthy = clearLateStage(healthy);
   assert.equal(healthy.stageId, "glass-necropolis");
-  assert.equal(healthy.stage.integrity, 8, "Glass Necropolis must retain integrity earned above its entry floor");
+  assert.equal(healthy.stage.integrity, 10, "Glass Necropolis must retain the route's earned capped integrity above its entry floor");
 });
 
 test("Abyss Chancel and Gate Zenith declare four boss phases while earlier stages keep three", () => {
@@ -542,8 +587,13 @@ test("stage 4-10 declared encounters expose the boss only after every wave clear
   assert.equal(state.stage.encounter.bossExposed, true, "clearing the final declared wave exposes the boss");
   assert.equal(state.stage.encounter.spawningStopped, true, "clearing the final declared wave stops spawning");
 
+  const attackBoost = state.stage.activeEffects.find(({ type }) => type === "ATTACK")?.value ?? 0;
   const struck = accept(applyAction(state, "assault"), "the exposed Stage 4 boss must accept the assault");
-  assert.equal(struck.stage.bossHealth, stage.bossHealth - stage.commands.assault.damage, "the first legal assault must land its declared damage");
+  assert.equal(
+    struck.stage.bossHealth,
+    stage.bossHealth - stage.commands.assault.damage - attackBoost,
+    "the first legal assault must compose its declared damage with the active deterministic ATTACK event",
+  );
 });
 
 test("Stage 1 encounter accepts only the active declared wave and exposes the boss after the third clear", () => {
@@ -555,12 +605,12 @@ test("Stage 1 encounter accepts only the active declared wave and exposes the bo
       preparationLegion: 4,
       preparationNodes: 1,
       waves: [
-        { id: "scout", spawnAtSeconds: 12, hostiles: 2, hostileHealth: 2, breachDamage: 1 },
-        { id: "guard", spawnAtSeconds: 33, hostiles: 3, hostileHealth: 2, breachDamage: 1 },
-        { id: "reinforcement", spawnAtSeconds: 54, hostiles: 3, hostileHealth: 2, breachDamage: 1 },
+        { id: "scout", spawnAtSeconds: 15, hostiles: 2, hostileHealth: 2, breachDamage: 1, pattern: "rusher" },
+        { id: "guard", spawnAtSeconds: 130, hostiles: 3, hostileHealth: 2, breachDamage: 1, pattern: "guardian" },
+        { id: "reinforcement", spawnAtSeconds: 245, hostiles: 3, hostileHealth: 2, breachDamage: 1, pattern: "flanker" },
       ],
     },
-    "Stage 1 must publish the declared 12/33/54 second 2/3/3 hostile encounter schedule.",
+    "Stage 1 must publish the implemented 15/130/245 second 2/3/3 hostile encounter schedule.",
   );
 
   let state = commands(start(), S1_PREPARATION);
@@ -607,27 +657,29 @@ test("Stage 1 encounter accepts only the active declared wave and exposes the bo
 });
 
 test("boss counterblows scale by stage and are softened by the legion shield", () => {
-  // Stage 1 prepared legion (L4, floor(4/4)=1 shield): counter = 1.
+  // Stage 1's prepared legion softens both counterblows to one. Collecting
+  // Void Blade explicitly makes both assaults deal five after the final
+  // once-per-stage ATTACK event merges into its charges.
   let prepared = commands(start(), [...S1_PREPARATION, ...S1_ENCOUNTER]);
   prepared = command(prepared, "assault");
-  assert.equal(prepared.stage.bossHealth, 5, "Stage 1 assault must deal 3 damage");
-  assert.equal(prepared.stage.integrity, 9, "the required four-shade legion must soften the first Stage 1 counterblow to 1");
+  assert.equal(prepared.stage.bossHealth, 3, "the first Stage 1 assault must apply the collected Void Blade's +2 damage");
+  assert.equal(prepared.stage.integrity, 9, "the prepared legion must soften the first counterblow to one");
 
-  // The preparation contract leaves no thin Stage 1 route; its shield applies
-  // consistently until the third assault ends the stage.
   const shielded = command(prepared, "assault");
-  assert.equal(shielded.stage.integrity, 8, "the prepared Stage 1 legion must soften the second counterblow to 1");
+  assert.equal(shielded.stage.bossHealth, 0, "the second Void-Blade assault must finish the remaining three health");
+  assert.equal(shielded.stage.integrity, 8, "the prepared legion must soften the winning counterblow to one");
 });
 
 test("integrity persists across stages instead of resetting to 10", () => {
-  // Prepared Stage 1: three shielded counterblows of 1 leave integrity 7.
-  let state = commands(start(), [...S1_PREPARATION, ...S1_ENCOUNTER, "assault", "assault", "assault"]);
+  // Two explicit Void-Blade assaults finish Stage 1 while the prepared
+  // legion reduces each counterblow to one.
+  let state = commands(start(), [...S1_PREPARATION, ...S1_ENCOUNTER, "assault", "assault"]);
   assert.equal(state.status, "reward");
-  assert.equal(state.stage.integrity, 7);
+  assert.equal(state.stage.integrity, 8);
 
   state = accept(chooseReward(state, "rift-lens"));
   assert.equal(state.stageIndex, 1);
-  assert.equal(state.stage.integrity, 8, "Stage 2 must open with carried integrity 7 + reward restore 1, not 10");
+  assert.equal(state.stage.integrity, 8, "Stage 2 must carry the surviving eight integrity with no free reward recovery");
   assert.equal(state.stage.entryIntegrity, 8, "the stage entry snapshot must record the carried value");
 });
 
@@ -635,6 +687,7 @@ test("Rift Lens adds four damage to possessed Stage 3 assaults", () => {
   let state = accept(chooseReward(commands(start(), S1_OPTIMAL), "rift-lens"));
   state = accept(chooseReward(commands(state, S2_LENS), "anchor-shard"));
   state = commands(state, [...ECONOMY_L4, "capture"]);
+  state = clearDeclaredWaves(state);
 
   const unpossessed = command(state, "assault");
   assert.equal(unpossessed.stage.bossHealth, 13, "unpossessed Stage 3 assault deals base 4");
@@ -654,6 +707,7 @@ test("Stage 3 keeps Possess optional after capture while Rift Lens resolves the 
     "Stage 3 Possess must remain unavailable before the throne node is captured",
   );
   state = command(state, "capture");
+  state = clearDeclaredWaves(state);
 
   const unpossessed = command(state, "assault");
   assert.equal(unpossessed.stage.bossHealth, 13, "Stage 3 must allow the unpossessed four-damage assault after capture");
@@ -677,9 +731,10 @@ test("Lord's Domain restores 4 integrity and its aegis negates the next two coun
   let state = accept(chooseReward(commands(start(), S1_OPTIMAL), "rift-lens"));
   state = accept(chooseReward(commands(state, S2_LENS), "veil-vanguard"));
   assert.equal(state.stage.legion, 4, "Veil Vanguard must open Echo Throne with four shades");
-  assert.equal(state.stage.integrity, 7);
+  assert.equal(state.stage.integrity, 6, "Stage 2 carries six integrity into Echo Throne because its reward grants no free recovery");
 
   state = command(state, "capture");
+  state = clearDeclaredWaves(state);
   state = command(state, "domain");
   assert.equal(state.stage.integrity, 10, "Domain must restore 4 integrity (clamped)");
   assert.equal(state.stage.aegis, 2);
@@ -699,38 +754,55 @@ test("thin legions take the reckless-assault penalty", () => {
   // Stage 3 thin threshold is legion < 5: a 4-shade vanguard is still thin.
   let state = accept(chooseReward(commands(start(), S1_OPTIMAL), "rift-lens"));
   state = accept(chooseReward(commands(state, S2_LENS), "veil-vanguard"));
-  state = commands(state, ["capture", "assault"]);
-  // v7 counter at L4: max(1, 6 - 1) + 1 thin = 6.
-  assert.equal(state.stage.integrity, 1, "counter 6 must leave one integrity from the carried total of 7");
-  assert.equal(state.status, "active", "the approved Echo counter retune must keep this thin assault survivable");
+  state = command(state, "capture");
+  state = clearDeclaredWaves(state);
+  state = command(state, "domain");
+  state = campaignEvent(state, { type: "boss-strike" });
+  state = campaignEvent(state, { type: "boss-strike" });
+  const thinIntegrityBefore = state.stage.integrity;
+  state = command(state, "assault");
+  const thinCounterDamage = thinIntegrityBefore - state.stage.integrity;
+  assert.equal(state.status, "active", "Domain restoration must leave the thin Stage 3 assault survivable after clearing both aegis charges");
 
-  // Same position with a fatter legion (L8): counter max(1, 6-2) = 4, no thin penalty.
+  // The same Domain-restored position with a fatter legion (L8) isolates
+  // the shield and thin-threshold difference after both aegis charges clear.
   let fat = accept(chooseReward(commands(start(), S1_OPTIMAL), "rift-lens"));
   fat = accept(chooseReward(commands(fat, S2_LENS), "veil-vanguard"));
-  fat = commands(fat, ["hunt", "hunt", "extract", "materialize", "materialize", "capture", "assault"]);
+  fat = commands(fat, ["hunt", "hunt", "extract", "materialize", "materialize", "capture"]);
+  fat = clearDeclaredWaves(fat);
+  fat = command(fat, "domain");
+  fat = campaignEvent(fat, { type: "boss-strike" });
+  fat = campaignEvent(fat, { type: "boss-strike" });
+  const fatIntegrityBefore = fat.stage.integrity;
+  fat = command(fat, "assault");
   assert.equal(fat.stage.legion, 8);
-  assert.equal(fat.stage.integrity, 3, "an 8-shade legion softens the same counterblow to 4");
+  const fatCounterDamage = fatIntegrityBefore - fat.stage.integrity;
+  assert.deepEqual(
+    { thinCounterDamage, fatCounterDamage },
+    { thinCounterDamage: 8, fatCounterDamage: 6 },
+    "with baseDamage 8, the thin-legion penalty must add two real integrity damage after both paths clear the same aegis and DEBUFF effects",
+  );
   assert.equal(fat.status, "active");
 });
 
 test("defeat is reachable: the thin rush dies on Echo Throne and retry restores the stage entry", () => {
-  const thinLine = ["hunt", "hunt", "extract", "materialize"];
-  let state = commands(start(), [...S1_PREPARATION, ...S1_ENCOUNTER, "assault", "assault", "assault"]);
+  const thinLine = [...ECONOMY_L4];
+  let state = commands(start(), [...S1_PREPARATION, ...S1_ENCOUNTER, "assault", "assault"]);
   state = accept(chooseReward(state, "rift-lens"));
-  state = commands(state, [...thinLine, "capture", "capture", "possess", "assault", "assault"]);
+  state = commands(state, [...thinLine, "capture", "capture", "possess", ...S2_ENCOUNTER, "assault", "assault"]);
   assert.equal(state.status, "reward", "the thin Stage 2 line survives on the killing blow");
-  assert.equal(state.stage.integrity, 2);
+  assert.equal(state.stage.integrity, 6, "the thin Stage 2 line wins with six integrity and no free reward recovery");
   state = accept(chooseReward(state, "anchor-shard"));
-  assert.equal(state.stage.integrity, 5, "Echo Throne entry = max(2 + restore 1 + Anchor Shard 2, entry floor 4)");
+  assert.equal(state.stage.integrity, 8, "Echo Throne entry adds only Anchor Shard's two integrity to the carried six");
 
-  state = commands(state, [...thinLine, "capture", "assault"]);
-  assert.equal(state.status, "defeat", "the first undefended Echo Throne assault must be lethal");
+  state = commands(state, [...thinLine, "capture", ...S3_ENCOUNTER, "assault", "assault"]);
+  assert.equal(state.status, "defeat", "two thin Echo Throne counterblows must exhaust integrity after both DEBUFF charges");
   assert.equal(state.stage.integrity, 0);
   rejectWithoutMutation(state, (current) => applyAction(current, "assault"), "a defeated stage accepts no commands");
 
   const retried = accept(retryStage(state), "defeat must allow a retry");
   assert.equal(retried.status, "active");
-  assert.equal(retried.stage.integrity, 5, "retry must restore the recorded stage-entry integrity");
+  assert.equal(retried.stage.integrity, 8, "retry must restore the recorded stage-entry integrity");
   assert.equal(retried.stage.nodes, 0, "retry must reset stage progress");
   assert.deepEqual(retried.rewards.map(({ rewardId }) => rewardId), ["rift-lens", "anchor-shard"]);
 });
@@ -759,7 +831,7 @@ test("Ember Cohort makes the first legal Stage 2 materialize raise four shades w
 
 test("Ember Cohort and Abyssal Banner make the first legal Stage 3 materialize raise five shades", () => {
   let state = accept(chooseReward(commands(start(), S1_OPTIMAL), "ember-cohort"));
-  state = commands(state, [...ECONOMY_L4, "capture", "capture", "possess", "assault", "assault", "assault"]);
+  state = commands(state, [...ECONOMY_L4, "capture", "capture", "possess", ...S2_ENCOUNTER, "assault", "assault", "assault"]);
   state = accept(chooseReward(state, "abyssal-banner"));
   state = commands(state, ["hunt", "hunt", "extract", "materialize"]);
 
@@ -780,7 +852,8 @@ test("Stillwater Hourglass publicly grants 20% cooldown reduction and extracts o
 
 test("Bulwark Brand reduces a thin Stage 2 counterblow by two but never below one integrity", () => {
   let state = accept(chooseReward(commands(start(), S1_OPTIMAL), "shadebreaker-brand"));
-  state = commands(state, ["hunt", "hunt", "extract", "materialize", "capture", "capture", "possess"]);
+  state = commands(state, [...ECONOMY_L4, "capture", "capture", "possess"]);
+  state = commands(state, S2_ENCOUNTER);
   const integrityBeforeAssault = state.stage.integrity;
   state = command(state, "assault");
 
@@ -790,7 +863,8 @@ test("Bulwark Brand reduces a thin Stage 2 counterblow by two but never below on
 test("Abyssal Banner plus Lord's Domain gives three aegis and Rift Lens ends Stage 3 in two possessed strikes", () => {
   let state = accept(chooseReward(commands(start(), S1_OPTIMAL), "rift-lens"));
   state = accept(chooseReward(commands(state, S2_LENS), "abyssal-banner"));
-  state = commands(state, ["hunt", "hunt", "extract", "materialize", "capture", "domain", "possess"]);
+  state = commands(state, [...ECONOMY_L4, "capture", "domain", "possess"]);
+  state = commands(state, S3_ENCOUNTER);
 
   assert.equal(state.stage.aegis, 3, "Banner entry aegis and Domain's two aegis stack to three");
   state = commands(state, ["assault", "assault"]);
@@ -817,6 +891,7 @@ test("premature public commands reject without mutating campaign state", () => {
   state = commands(state, [...ECONOMY_L4, "capture", "capture"]);
   rejectWithoutMutation(state, (current) => applyAction(current, "assault"), "Stage 2 must require possession before assault");
   state = command(state, "possess");
+  state = commands(state, S2_ENCOUNTER);
   for (let strike = 0; strike < 3; strike += 1) state = command(state, "assault");
   state = accept(chooseReward(state, "anchor-shard"));
   assert.equal(state.stageIndex, 2);
@@ -824,6 +899,7 @@ test("premature public commands reject without mutating campaign state", () => {
 
   rejectWithoutMutation(state, (current) => applyAction(current, "domain"), "Stage 3 domain must require the throne node");
   state = commands(state, [...ECONOMY_L4, "capture"]);
+  state = commands(state, S3_ENCOUNTER);
   accept(applyAction(state, "assault"), "Stage 3 assault must remain available once its node gate is met");
   state = command(state, "domain");
   rejectWithoutMutation(state, (current) => applyAction(current, "domain"), "Stage 3 domain must be one-use");
@@ -1149,7 +1225,7 @@ test("Command upgrades charge each level, reject insufficient Marks and level si
 
   state = accept(chooseReward(commands(state, S2_LENS), "veil-vanguard"));
   state = accept(chooseReward(commands(state, S3_VANGUARD_LENS), "throne-echo"));
-  assert.equal(state.progression.marks, 14, "Stage 2 and Stage 3 rewards fund the next declared upgrade");
+  assert.equal(state.progression.marks, 28, "Stage 2 and Stage 3 waves fund the next declared upgrade");
   upgradeCommand(12, 4);
 
   state = clearLateStage(state);
@@ -1545,7 +1621,7 @@ test("v7 publishes only campaign limits globally and keeps combat and rewards wi
     cooldown: 4,
     damage: 4,
     possessedDamage: 1,
-    counter: { mode: "shielded", baseDamage: 6, shieldDivisor: 4, thinLegion: 5, thinPenalty: 1 },
+    counter: { mode: "shielded", baseDamage: 8, shieldDivisor: 4, thinLegion: 5, thinPenalty: 1 },
   });
 
   assert.deepEqual(
@@ -1571,5 +1647,342 @@ test("v7 publishes only campaign limits globally and keeps combat and rewards wi
       "throne-echo": {},
       "dawnless-crown": {},
     },
+  );
+});
+
+test("all ten encounter schedules are strictly monotonic and finish inside the 235-250 second five-minute wave band", () => {
+  const expectedSchedules = [
+    [15, 130, 245],
+    [15, 130, 245],
+    [15, 90, 165, 240],
+    [15, 90, 165, 240],
+    [15, 90, 165, 240],
+    [15, 90, 165, 240],
+    [15, 90, 165, 240],
+    [15, 90, 165, 240],
+    [15, 90, 165, 240],
+    [15, 70, 125, 180, 240],
+  ];
+
+  assert.deepEqual(
+    STAGES.map((stage) => stage.encounter.waves.map(({ spawnAtSeconds }) => spawnAtSeconds)),
+    expectedSchedules,
+    "every stage must retain its authored wave cadence, including Stage 1's implemented 15/130/245 cutover",
+  );
+  for (const stage of STAGES) {
+    const times = stage.encounter.waves.map(({ spawnAtSeconds }) => spawnAtSeconds);
+    assert.ok(
+      times.every((time, index) => index === 0 || time > times[index - 1]),
+      `${stage.id} wave times must increase strictly`,
+    );
+    assert.ok(
+      times.at(-1) >= 235 && times.at(-1) <= 250,
+      `${stage.id} final wave must land in the 235-250 second band`,
+    );
+  }
+});
+
+function clearFieldWave(state, waveIndex) {
+  const stage = STAGES[state.stageIndex];
+  const wave = stage.encounter.waves[waveIndex];
+  state = encounter(state, "start-wave", wave.id);
+  return encounter(state, "wave-cleared", wave.id);
+}
+
+function enterPreparedStageTwo() {
+  const state = accept(chooseReward(commands(start(), S1_OPTIMAL), "rift-lens"));
+  return commands(state, [...ECONOMY_L4, "capture", "capture", "possess"]);
+}
+
+function enterPreparedStageThree() {
+  let state = accept(chooseReward(commands(start(), S1_OPTIMAL), "rift-lens"));
+  state = accept(chooseReward(commands(state, S2_LENS), "veil-vanguard"));
+  return command(state, "capture");
+}
+
+test("[PS-001] Every wave emits its deterministic chest while only the boss-exposing clear emits one automatic event", () => {
+  assert.deepEqual(
+    FIELD_ITEM_CATALOG.map(({ id, effect: { type } }) => ({ id, type })),
+    [
+      { id: "void-blade", type: "ATTACK" },
+      { id: "iron-resolve", type: "DEFENSE" },
+      { id: "tempest-boots", type: "HASTE" },
+      { id: "aegis-shield", type: "INVINCIBLE" },
+      { id: "shadow-cloak", type: "EVASION" },
+      { id: "crippling-curse", type: "DEBUFF" },
+    ],
+    "the exported catalog must retain one deterministic item for every field mechanic",
+  );
+
+  const expectedAutomaticEvents = [
+    { type: "ATTACK", value: 1, charges: 1 },
+    { type: "DEFENSE", value: 1, charges: 1 },
+    { type: "DEBUFF", value: 1, charges: 1 },
+    { type: "ATTACK", value: 1, charges: 1 },
+    { type: "DEFENSE", value: 1, charges: 1 },
+    { type: "HASTE", value: 0.15, charges: 2 },
+    { type: "INVINCIBLE", value: 1, charges: 1 },
+    { type: "EVASION", value: 1, charges: 1 },
+    { type: "DEBUFF", value: 1, charges: 1 },
+    { type: "INVINCIBLE", value: 1, charges: 1 },
+  ];
+  const rewardByStage = {
+    "cinder-span": "rift-lens",
+    "veil-citadel": "veil-vanguard",
+    "echo-throne": "throne-echo",
+    ...LATE_REWARDS,
+  };
+  const observedAutomaticEvents = [];
+  let chestCount = 0;
+  let state = start();
+
+  for (const [stageIndex, stage] of STAGES.entries()) {
+    assert.equal(state.stageId, stage.id);
+    state = prepareDeclaredEncounter(state);
+    for (const [waveIndex, wave] of stage.encounter.waves.entries()) {
+      state = clearFieldWave(state, waveIndex);
+      chestCount += 1;
+      assert.deepEqual(
+        state.stage.pendingChest,
+        {
+          id: `chest-${wave.id}`,
+          itemId: FIELD_ITEM_CATALOG[(stageIndex + waveIndex) % FIELD_ITEM_CATALOG.length].id,
+        },
+        `${stage.id}/${wave.id} must leave exactly its deterministic chest pending`,
+      );
+      if (waveIndex < stage.encounter.waves.length - 1) {
+        assert.deepEqual(
+          state.stage.activeEffects,
+          [],
+          `${stage.id}/${wave.id} must not emit an automatic field event before boss exposure`,
+        );
+      }
+    }
+
+    assert.deepEqual(
+      state.stage.activeEffects,
+      [expectedAutomaticEvents[stageIndex]],
+      `${stage.id} must emit exactly one deterministic automatic event on its final clear`,
+    );
+    observedAutomaticEvents.push(state.stage.activeEffects[0].type);
+
+    state = buildLegion(state, legionTarget(stage));
+    while (state.stage.nodes < stage.nodeGoal) state = command(state, "capture");
+    if (stage.commands.domain) state = command(state, "domain");
+    if (stage.commands.possess) state = command(state, "possess");
+    while (state.status === "active") state = command(state, "assault");
+    state = accept(chooseReward(state, rewardByStage[stage.id]));
+  }
+
+  assert.equal(chestCount, 39, "all 39 declared waves across the ten stages must produce a chest");
+  assert.equal(state.status, "campaign-complete");
+  assert.deepEqual(
+    new Set(observedAutomaticEvents),
+    new Set(["ATTACK", "DEFENSE", "HASTE", "INVINCIBLE", "EVASION", "DEBUFF"]),
+    "the once-per-stage deterministic sequence must keep all six field-event mechanics reachable",
+  );
+});
+
+test("[PS-002] Mouse chest click accepts only the deterministic exact chest ID and rejects duplicate collection", () => {
+  const prepared = commands(start(), S1_PREPARATION);
+  const firstRun = clearFieldWave(prepared, 0);
+  const replayedRun = clearFieldWave(prepared, 0);
+
+  assert.deepEqual(
+    {
+      pendingChest: firstRun.stage.pendingChest,
+      activeEffects: firstRun.stage.activeEffects,
+    },
+    {
+      pendingChest: replayedRun.stage.pendingChest,
+      activeEffects: replayedRun.stage.activeEffects,
+    },
+    "the same stage and wave index must choose the same chest item and field event",
+  );
+  assert.deepEqual(firstRun.stage.pendingChest, {
+    id: "chest-scout",
+    itemId: FIELD_ITEM_CATALOG[0].id,
+  });
+  assert.deepEqual(firstRun.stage.activeEffects, [], "a non-final clear must not inject the chest's ATTACK effect automatically");
+
+  rejectWithoutMutation(
+    firstRun,
+    (state) => applyEncounterEvent(state, { type: "open-chest", stageId: state.stageId, chestId: "chest-guard" }),
+    "a mouse event for another chest ID must not collect the pending chest",
+  );
+  const collected = accept(applyEncounterEvent(firstRun, {
+    type: "open-chest",
+    stageId: firstRun.stageId,
+    chestId: "chest-scout",
+  }));
+  assert.equal(collected.stage.pendingChest, null);
+  assert.deepEqual(collected.stage.activeEffects, [{ type: "ATTACK", value: 2, charges: 2 }]);
+  rejectWithoutMutation(
+    collected,
+    (state) => applyEncounterEvent(state, { type: "open-chest", stageId: state.stageId, chestId: "chest-scout" }),
+    "a second click on an already collected chest must reject without granting charges",
+  );
+});
+
+test("[PS-003] Attack field buff increases the next mouse-issued assault and consumes exactly one charge", () => {
+  let state = commands(start(), S1_PREPARATION);
+  state = clearFieldWave(state, 0);
+  state = accept(applyEncounterEvent(state, {
+    type: "open-chest",
+    stageId: state.stageId,
+    chestId: state.stage.pendingChest.id,
+  }));
+  state = clearFieldWave(state, 1);
+  state = clearFieldWave(state, 2);
+
+  const attackBefore = state.stage.activeEffects.find(({ type }) => type === "ATTACK");
+  const bossHealthBefore = state.stage.bossHealth;
+  state = command(state, "assault");
+  const attackAfter = state.stage.activeEffects.find(({ type }) => type === "ATTACK");
+
+  assert.equal(bossHealthBefore - state.stage.bossHealth, 5, "Void Blade must add two damage to Stage 1's three-damage assault");
+  assert.equal(attackAfter.charges, attackBefore.charges - 1, "one accepted assault must consume one ATTACK charge");
+});
+
+test("[PS-004] Defense field buff nullifies a one-damage wave breach and consumes its charge", () => {
+  let state = enterPreparedStageTwo();
+  state = clearFieldWave(state, 0);
+  state = openPendingChest(state);
+  assert.deepEqual(state.stage.activeEffects, [{ type: "DEFENSE", value: 1, charges: 3 }]);
+
+  state = encounter(state, "start-wave", STAGES[1].encounter.waves[1].id);
+  const integrityBefore = state.stage.integrity;
+  state = encounter(state, "breach", STAGES[1].encounter.waves[1].id);
+
+  assert.equal(state.stage.integrity, integrityBefore, "DEFENSE must reduce a one-damage breach to zero");
+  assert.deepEqual(
+    state.stage.activeEffects.find(({ type }) => type === "DEFENSE"),
+    { type: "DEFENSE", value: 1, charges: 2 },
+    "the blocked breach must consume exactly one of the chest-injected DEFENSE charges",
+  );
+});
+
+test("[PS-005] Reward and HASTE cooldown reductions cap at 40% without consuming the field effect on reads", () => {
+  let state = accept(chooseReward(commands(start(), S1_OPTIMAL), "stillwater-hourglass"));
+  state = command(prepareDeclaredEncounter(state), "possess");
+  state = clearFieldWave(state, 0);
+  state = clearFieldWave(state, 1);
+  state = openPendingChest(state);
+
+  const before = JSON.stringify(state.stage.activeEffects);
+  const baseCooldown = STAGES[state.stageIndex].commands.assault.cooldown;
+  assert.equal(getCampaignBenefits(state).movementMultiplier, 1.25, "Tempest Boots must expose a 25% movement multiplier");
+  assert.equal(getCommandCooldown(state, "assault"), baseCooldown * 0.6, "Hourglass plus HASTE must stop at the shared 40% reduction cap");
+  assert.ok(getCommandCooldown(state, "assault") >= baseCooldown * 0.6, "combined reward and HASTE reductions must retain at least 60% of base cooldown");
+  assert.equal(JSON.stringify(state.stage.activeEffects), before, "querying movement and cooldown benefits must not consume HASTE charges");
+});
+
+test("[PS-006] Invulnerability blocks the next boss strike before defense or integrity can change", () => {
+  let state = enterPreparedStageTwo();
+  state = clearFieldWave(state, 0);
+  state = clearFieldWave(state, 1);
+  state = clearFieldWave(state, 2);
+  state = openPendingChest(state);
+  const integrityBefore = state.stage.integrity;
+  const defenseBefore = structuredClone(state.stage.activeEffects.find(({ type }) => type === "DEFENSE"));
+
+  state = campaignEvent(state, { type: "boss-strike" });
+
+  assert.equal(state.stage.integrity, integrityBefore);
+  assert.equal(state.stage.activeEffects.some(({ type }) => type === "INVINCIBLE"), false, "the boss strike must consume chest-injected INVINCIBLE");
+  assert.deepEqual(
+    state.stage.activeEffects.find(({ type }) => type === "DEFENSE"),
+    defenseBefore,
+    "INVINCIBLE must short-circuit before the final-clear DEFENSE charge is consumed",
+  );
+});
+
+test("[PS-007] Evasion rejects one proximity-triggered boss strike without consuming other defenses", () => {
+  let state = enterPreparedStageThree();
+  state = clearFieldWave(state, 0);
+  state = clearFieldWave(state, 1);
+  state = openPendingChest(state);
+  state = clearFieldWave(state, 2);
+  state = openPendingChest(state);
+  const integrityBefore = state.stage.integrity;
+  const invincibilityBefore = structuredClone(state.stage.activeEffects.find(({ type }) => type === "INVINCIBLE"));
+
+  state = campaignEvent(state, { type: "boss-strike" });
+
+  assert.equal(state.stage.integrity, integrityBefore, "EVASION must prevent the complete boss-strike damage event");
+  assert.equal(state.stage.activeEffects.some(({ type }) => type === "EVASION"), true, "one of the chest-injected EVASION charges must remain after the evaded strike");
+  assert.equal(state.stage.activeEffects.find(({ type }) => type === "EVASION").charges, 1);
+  assert.deepEqual(
+    state.stage.activeEffects.find(({ type }) => type === "INVINCIBLE"),
+    invincibilityBefore,
+    "an evaded strike must not spend the queued INVINCIBLE defense",
+  );
+});
+
+test("[PS-008] Debuff reduces the next boss strike by one and is removed at zero charges", () => {
+  let state = enterPreparedStageThree();
+  for (let waveIndex = 0; waveIndex < STAGES[2].encounter.waves.length; waveIndex += 1) {
+    state = clearFieldWave(state, waveIndex);
+  }
+  assert.deepEqual(
+    state.stage.activeEffects.find(({ type }) => type === "DEBUFF"),
+    { type: "DEBUFF", value: 1, charges: 1 },
+  );
+
+  const integrityBefore = state.stage.integrity;
+  state = accept(applyEncounterEvent(state, { type: "boss-strike", stageId: state.stageId }));
+
+  assert.equal(integrityBefore - state.stage.integrity, 1, "DEBUFF must reduce Echo Throne's two-damage boss strike to one");
+  assert.equal(state.stage.activeEffects.some(({ type }) => type === "DEBUFF"), false);
+});
+
+test("[PS-009] Consecutive wave clears keep exactly one pending chest and retire the stale mouse target", () => {
+  let state = commands(start(), S1_PREPARATION);
+  state = clearFieldWave(state, 0);
+  assert.deepEqual(state.stage.pendingChest, { id: "chest-scout", itemId: "void-blade" });
+  state = clearFieldWave(state, 1);
+  assert.deepEqual(state.stage.pendingChest, { id: "chest-guard", itemId: "iron-resolve" });
+
+  rejectWithoutMutation(
+    state,
+    (current) => applyEncounterEvent(current, { type: "open-chest", stageId: current.stageId, chestId: "chest-scout" }),
+    "the overwritten chest ID must no longer be collectable",
+  );
+  const collected = accept(applyEncounterEvent(state, {
+    type: "open-chest",
+    stageId: state.stageId,
+    chestId: "chest-guard",
+  }));
+  assert.equal(collected.stage.pendingChest, null, "collecting the sole pending chest must leave no second hidden chest");
+});
+
+test("[PS-010] Save replay and retry preserve deterministic field history while resetting transient chest and effects", () => {
+  let state = commands(start(), S1_PREPARATION);
+  state = clearFieldWave(state, 0);
+  state = accept(applyEncounterEvent(state, {
+    type: "open-chest",
+    stageId: state.stageId,
+    chestId: state.stage.pendingChest.id,
+  }));
+  state = clearFieldWave(state, 1);
+
+  const restored = restoreSaveEnvelope(createSaveEnvelope(state));
+  assert.deepEqual(restored, state, "save replay must reconstruct the same chosen chests, event effects, charges, and pending chest");
+
+  const retried = accept(retryStage(restored));
+  assert.equal(retried.stage.pendingChest, null);
+  assert.deepEqual(retried.stage.activeEffects, []);
+  assert.ok(retried.stage.encounter.waves.every(({ cleared }) => !cleared), "retry must reset every wave while retaining earned campaign history");
+  const compactRestored = restoreSaveEnvelope(createSaveEnvelope(retried));
+  assert.deepEqual(compactRestored.stage, retried.stage, "the compact retry save must restore identical playable stage state");
+  assert.deepEqual(compactRestored.progression, retried.progression);
+  assert.deepEqual(compactRestored.rewards, retried.rewards);
+  const continuedRetry = applyAction(retried, "hunt");
+  const continuedRestore = applyAction(compactRestored, "hunt");
+  assert.equal(continuedRestore.accepted, continuedRetry.accepted);
+  assert.deepEqual(
+    continuedRestore.state.stage,
+    continuedRetry.state.stage,
+    "retry and its compact save replay must produce the same next gameplay transition despite non-gameplay revision/message compaction",
   );
 });

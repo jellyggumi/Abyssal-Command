@@ -1633,6 +1633,39 @@ button.primary:hover:not(:disabled), .relic-shop-btn-equip:hover:not(:disabled) 
   min-width: 0 !important;
 }
 
+.queue-panel-heading {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.4rem !important;
+}
+
+.queue-panel-heading h4 {
+  margin: 0 !important;
+}
+
+.queue-clear-button {
+  flex-shrink: 0 !important;
+  min-height: 28px !important;
+  padding: 0.15rem 0.5rem !important;
+  font-size: 0.7rem !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  background: var(--raised) !important;
+  color: var(--ink) !important;
+  cursor: pointer !important;
+}
+
+.queue-clear-button:hover:not(:disabled) {
+  border-color: var(--danger, #e06156) !important;
+  color: var(--danger, #e06156) !important;
+}
+
+.queue-clear-button:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
 .queue-list {
   list-style: decimal inside !important;
   margin: 0 !important;
@@ -4325,5 +4358,16 @@ textarea:focus-visible {
   }
 
   .cockpit-details { display: none !important; }
+
+  /* The mission/objective overlay (.ashen-field-command) used to span the
+     whole #battle-field width at inset:0 -- correct when nothing else
+     overlaid the canvas, but the rail/command-deck docking above now sits
+     on top of it (higher z-index) and hid its left/right text panels
+     ("현재 목표" objective, hostile-watch) completely behind them. Inset it
+     to the open center strip between the two docks instead of covering it. */
+  #battle-field .ashen-field-command {
+    left: calc(min(16rem, 26%) + 1.1rem) !important;
+    right: calc(min(22rem, 34%) + 1.1rem) !important;
+  }
 }
 

@@ -1009,6 +1009,58 @@ test("RealtimeBattle external focus is callback-pure and publishes minimap-compa
   );
 });
 
+test("RealtimeBattle tactical snapshot reports the look target and perspective ground footprint", () => {
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  battle.camera = {
+    aspect: 16 / 9,
+    fov: 48,
+    position: { x: 99, z: 88 },
+  };
+  battle.lookTarget.set(7, 2, -3);
+  battle.zoom = 20;
+  battle.orbitElevation = 0.9;
+
+  const snapshotAt = ({ zoom = battle.zoom, aspect = battle.camera.aspect, elevation = battle.orbitElevation } = {}) => {
+    battle.zoom = zoom;
+    battle.camera.aspect = aspect;
+    battle.orbitElevation = elevation;
+    return battle.getTacticalSnapshot().viewport;
+  };
+  const assertFiniteFootprint = (viewport, context) => {
+    assert.ok(viewport, `${context} must publish a viewport`);
+    assert.ok(Number.isFinite(viewport.width) && viewport.width > 0, `${context} width must be finite and positive`);
+    assert.ok(Number.isFinite(viewport.depth) && viewport.depth > 0, `${context} depth must be finite and positive`);
+  };
+  const closeTo = (actual, expected, context) => {
+    assert.ok(Math.abs(actual - expected) <= Math.max(1, Math.abs(expected)) * 1e-12, `${context}: expected ${expected}, received ${actual}`);
+  };
+
+  const base = snapshotAt();
+  const verticalSpan = 2 * Math.tan((48 * Math.PI / 180) / 2) * 20;
+  assert.deepEqual(
+    { x: base.x, z: base.z },
+    { x: 7, z: -3 },
+    "the minimap viewport center must follow lookTarget rather than the offset camera position",
+  );
+  assertFiniteFootprint(base, "the base perspective footprint");
+  closeTo(base.width, verticalSpan * (16 / 9), "the viewport width must use the 48-degree vertical FOV and camera aspect");
+  closeTo(base.depth, verticalSpan / Math.sin(0.9), "the viewport depth must project the vertical span through orbit elevation");
+
+  const farther = snapshotAt({ zoom: 30, aspect: 16 / 9, elevation: 0.9 });
+  assert.ok(farther.width > base.width && farther.depth > base.depth, "increasing camera distance must enlarge both world-space viewport dimensions");
+
+  const narrow = snapshotAt({ zoom: 20, aspect: 3 / 4, elevation: 0.9 });
+  assert.ok(narrow.width < base.width, "a narrower camera aspect must reduce world-space viewport width");
+  closeTo(narrow.depth, base.depth, "camera aspect must not distort world-space viewport depth");
+
+  const steeper = snapshotAt({ zoom: 20, aspect: 16 / 9, elevation: 1.15 });
+  closeTo(steeper.width, base.width, "orbit elevation must not distort world-space viewport width");
+  assert.ok(steeper.depth < base.depth, "a steeper orbit must reduce the ground-projected viewport depth");
+
+  const guarded = snapshotAt({ zoom: Number.NaN, aspect: 0, elevation: Number.NaN });
+  assertFiniteFootprint(guarded, "the guarded perspective footprint");
+});
+
 test("RealtimeBattle selected-unit orders follow the shared Stage 1 route around void", () => {
   const tacticalRequests = [];
   const canvas = {
@@ -1332,13 +1384,13 @@ test("RealtimeBattle exposes the shared 24×12 terrain walkability and elevation
   );
   assert.deepEqual(
     veilCitadel.navigationAt(-3, -3.5),
-    { x: 9, y: 2.5, elevation: 1, walkable: true },
+    { x: 9, y: 2.5, elevation: 2, walkable: true },
     "the Stage 2 raised citadel must report the shared heightfield elevation",
   );
   assert.deepEqual(
     echoThrone.navigationAt(5, -0.5),
-    { x: 17, y: 5.5, elevation: 2, walkable: true },
-    "the Stage 3 throne ascent must report the shared two-level elevation",
+    { x: 17, y: 5.5, elevation: 0, walkable: true },
+    "the Stage 3 throne approach must report the shared heightfield elevation",
   );
 });
 
@@ -1535,9 +1587,9 @@ test("RealtimeBattle rejects selected-unit orders that target the shared Stage 1
 
   battle.updateAllies(1 / 30);
   assert.deepEqual(
-    { x: ally.root.position.x, y: ally.root.position.y, z: ally.root.position.z },
-    { x: start.x, y: 0, z: start.z },
-    "an unreachable void target must leave the selected ally at its legal formation position",
+    { x: ally.root.position.x, z: ally.root.position.z },
+    { x: start.x, z: start.z },
+    "an unreachable void target must not displace the selected ally horizontally from its legal formation position",
   );
   assert.deepEqual(
     battle.rally.toArray(),
@@ -2594,7 +2646,7 @@ test("RealtimeBattle Stage 4+ identity tint skips shared contact shadows and dis
 
   battle.applyBossIdentityTint(bossRoot);
 
-  const expectedTint = ordinaryColor.clone().lerp(new THREE.Color("#ff204e"), 0.55);
+  const expectedTint = ordinaryColor.clone().lerp(new THREE.Color("#ff204e"), 0.22);
   assert.notEqual(ordinaryMesh.material, ordinaryMaterial, "Stage 4+ ordinary boss materials must be cloned for identity tinting");
   assert.equal(ordinaryMesh.material.userData.isBossIdentityTint, true, "cloned boss material must carry the tint disposal marker");
   assert.equal(ordinaryMesh.material.color.getHex(), expectedTint.getHex(), "ordinary boss material must receive the hostile identity tint");
@@ -3201,7 +3253,7 @@ test("RealtimeBattle tower auto-fire emits only one shot during the shared one-s
   );
 });
 
-function measureRealtimeMobilityTick({ mobilityLevel, terrainMultiplier = 1 }) {
+function measureRealtimeMobilityTick({ mobilityLevel, terrainMultiplier = 1, movementMultiplier = 1 }) {
   const battle = new RealtimeBattle(null, { stageNumber: 1 });
   const commander = makeUnit();
   const ally = makeUnit({ z: 1 });
@@ -3210,6 +3262,7 @@ function measureRealtimeMobilityTick({ mobilityLevel, terrainMultiplier = 1 }) {
   ally.customOrderReached = false;
 
   battle.mobilityLevel = mobilityLevel;
+  battle.movementMultiplier = movementMultiplier;
   battle.commander = commander;
   battle.allies = [ally];
   battle.pressed.add("KeyD");
@@ -3236,6 +3289,7 @@ test("RealtimeBattle Mobility accelerates only the commander and composes with t
   const upgraded = measureRealtimeMobilityTick({ mobilityLevel: 2 });
   const terrainMultiplier = 0.5;
   const terrainAffected = measureRealtimeMobilityTick({ mobilityLevel: 2, terrainMultiplier });
+  const haste = measureRealtimeMobilityTick({ mobilityLevel: 1, movementMultiplier: 1.25 });
 
   await t.test("level 2 moves the commander exactly fifteen percent farther than level 1", () => {
     assert.equal(
@@ -3260,6 +3314,14 @@ test("RealtimeBattle Mobility accelerates only the commander and composes with t
       "terrain movement effects must remain multiplicative with commander Mobility",
     );
   });
+  await t.test("a 25% HASTE multiplier accelerates commander movement exactly once", () => {
+    assert.equal(
+      Number((haste.commander / baseline.commander).toFixed(12)),
+      1.25,
+      "the WebGL movement path must apply HASTE once rather than ignore or square the campaign multiplier",
+    );
+  });
+
 });
 
 test("RealtimeBattle selected allies use the stage ally palette and a motion-safe persistent WebGL indicator", async (t) => {
@@ -4013,6 +4075,32 @@ test("RealtimeBattle cloneTemplate wraps GLTF content in a wrapper root to prese
   assert.ok(localRoot.position.x !== 0 || localRoot.position.y !== 0 || localRoot.position.z !== 0, "localRoot offset must be preserved");
 });
 
+test("RealtimeBattle cloneTemplate preserves the authored ground-center pivot for asymmetric unit geometry", async () => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const templateScene = new THREE.Group();
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshStandardMaterial(),
+  );
+  mesh.position.set(3, 0, -2);
+  templateScene.add(mesh);
+
+  battle.templates.set("units/shade.glb", {
+    scene: templateScene,
+    animations: [],
+  });
+
+  const instance = battle.cloneTemplate("units/shade.glb", 2);
+  const localRoot = instance.root.children[0];
+  const normalizedBounds = new THREE.Box3().setFromObject(localRoot);
+
+  assert.equal(localRoot.position.x, 0, "asymmetric unit geometry must keep the local X origin");
+  assert.equal(localRoot.position.z, 0, "asymmetric unit geometry must keep the local Z origin");
+  assert.ok(localRoot.scale.x > 1, "unit geometry must retain its normalization scale");
+  assert.ok(Math.abs(normalizedBounds.min.y) < 1e-6, "normalized unit geometry must remain grounded at Y=0");
+});
+
 test("RealtimeBattle cloneTemplate applies anisotropic Y compression only to terrain resources", async () => {
   const THREE = await import("../vendor/three.module.min.js");
   const battle = new RealtimeBattle(null, { stageNumber: 1 });
@@ -4061,7 +4149,7 @@ test("RealtimeBattle cloneTemplate lifts dark terrain materials for readable sil
   const normalizedMaterial = instance.root.children[0].children[0].material;
   const expectedLiftedColor = authoredColor.clone().multiplyScalar(1.35);
 
-  assert.equal(normalizedMaterial.metalness, 0.55, "terrain metalness must be capped to prevent black metallic shading");
+  assert.equal(normalizedMaterial.metalness, 0.4, "terrain metalness must be capped to prevent black metallic shading");
   assert.equal(normalizedMaterial.roughness, 0.72, "terrain roughness must be capped to preserve readable highlights");
   assert.equal(
     normalizedMaterial.color.getHex(),
@@ -4101,7 +4189,7 @@ test("RealtimeBattle cloneTemplate applies emissive readability lift to unit res
   const instanceZero = battle.cloneTemplate("units/test-zero.glb", 1);
   const clonedMatZero = instanceZero.root.children[0].children[0].material;
   assert.equal(clonedMatZero.emissive.getHex(), 0x00ffff, "zero emissive unit uses the presentation ally color");
-  assert.equal(clonedMatZero.emissiveIntensity, 0.45, "zero emissive unit raises intensity to 0.45");
+  assert.equal(clonedMatZero.emissiveIntensity, 0.1, "zero emissive unit raises intensity to 0.1");
 
   // Case 2: Unit with nonzero emissive and default fallback palette (no presentation)
   const battleDefault = new RealtimeBattle(null, { stageNumber: 1 });
@@ -4121,7 +4209,7 @@ test("RealtimeBattle cloneTemplate applies emissive readability lift to unit res
   const instanceNonzero = battleDefault.cloneTemplate("units/test-nonzero.glb", 1);
   const clonedMatNonzero = instanceNonzero.root.children[0].children[0].material;
   assert.equal(clonedMatNonzero.emissive.getHex(), 0xff0000, "nonzero emissive color is preserved");
-  assert.equal(clonedMatNonzero.emissiveIntensity, 0.45, "nonzero emissive intensity floor is raised to 0.45");
+  assert.equal(clonedMatNonzero.emissiveIntensity, 0.1, "nonzero emissive intensity floor is raised to 0.1");
 
   // Case 3: Unit with high nonzero emissive intensity (e.g. 0.8)
   const unitScene3 = new THREE.Group();
@@ -5100,4 +5188,199 @@ test("RealtimeBattle tints the commander with a distinct identity color so it ne
     0xffffff,
     "tinting the commander must never mutate the shared shade.glb template material",
   );
+});
+
+test("RealtimeBattle deduplicates repeated mouse and touch chest activations until synchronized chest ID changes", () => {
+  for (const [pointerType, pointerIdBase] of [["mouse", 10], ["touch", 20]]) {
+    const capturedPointers = new Set();
+    const canvas = {
+      style: {},
+      focus() {},
+      setPointerCapture(id) {
+        capturedPointers.add(id);
+      },
+      hasPointerCapture(id) {
+        return capturedPointers.has(id);
+      },
+      releasePointerCapture(id) {
+        capturedPointers.delete(id);
+      },
+    };
+    const encounterEvents = [];
+    const tones = [];
+    const battle = new RealtimeBattle(canvas, { stageNumber: 1 }, {
+      onEncounterEvent(event) {
+        encounterEvents.push(event);
+      },
+    });
+    battle.stageId = "cinder-span";
+    battle.resolvePointerAction = () => "open-chest";
+    battle.setHoveredAction = () => {};
+    battle.audio = {
+      playTone(...args) {
+        tones.push(args);
+      },
+      dispose() {},
+    };
+    battle.commanderPosition = { x: 0, y: 0, z: 0 };
+    battle.createChestVisuals = (chest) => {
+      battle.renderedChest = chest;
+      battle.chestGroup = { position: { x: 1, y: 0, z: 2 } };
+    };
+    battle.removeChestVisuals = () => {
+      battle.renderedChest = null;
+      battle.chestGroup = null;
+    };
+    battle.applyEncounter = () => {};
+    battle.reconcileDeployments = () => {};
+    battle.updateNodeVisuals = () => {};
+    battle.syncObjectFeedback = () => {};
+    const synchronizeChest = (pendingChest) => {
+      battle.applyCampaignState({ state: { stage: { pendingChest } } });
+    };
+
+
+    const activate = (pointerId) => {
+      const event = {
+        button: 0,
+        clientX: 40,
+        clientY: 50,
+        pointerId,
+        pointerType,
+        timeStamp: 100,
+      };
+      battle.onPointerDown(event);
+      battle.onPointerUp({ ...event, timeStamp: 150 });
+    };
+
+    synchronizeChest({ id: `${pointerType}-chest-a`, itemId: "void-blade" });
+    activate(pointerIdBase);
+    activate(pointerIdBase + 1);
+
+    assert.deepEqual(
+      encounterEvents,
+      [{ type: "open-chest", stageId: "cinder-span", chestId: `${pointerType}-chest-a` }],
+      `${pointerType} must emit one reducer request while the same chest is pending reconciliation`,
+    );
+    assert.equal(tones.length, 1, `${pointerType} must play the chest activation tone only once before reconciliation`);
+
+    synchronizeChest({ id: `${pointerType}-chest-b`, itemId: "iron-resolve" });
+    activate(pointerIdBase + 2);
+    activate(pointerIdBase + 3);
+
+    assert.deepEqual(
+      encounterEvents,
+      [
+        { type: "open-chest", stageId: "cinder-span", chestId: `${pointerType}-chest-a` },
+        { type: "open-chest", stageId: "cinder-span", chestId: `${pointerType}-chest-b` },
+      ],
+      `${pointerType} must allow exactly one new reducer request after synchronized chest ID changes`,
+    );
+    assert.equal(tones.length, 2, `${pointerType} must play one activation tone per synchronized chest ID`);
+  }
+});
+
+test("RealtimeBattle emits exact chest events for mouse and touch and reconciles one disposable field visual", (t) => {
+  const priorDocument = globalThis.document;
+  const priorWindow = globalThis.window;
+  globalThis.document = { removeEventListener() {} };
+  globalThis.window = { removeEventListener() {} };
+  t.after(() => {
+    if (priorDocument === undefined) delete globalThis.document;
+    else globalThis.document = priorDocument;
+    if (priorWindow === undefined) delete globalThis.window;
+    else globalThis.window = priorWindow;
+  });
+
+  const capturedPointers = new Set();
+  const canvas = {
+    style: {},
+    focus() {},
+    setPointerCapture(id) {
+      capturedPointers.add(id);
+    },
+    hasPointerCapture(id) {
+      return capturedPointers.has(id);
+    },
+    releasePointerCapture(id) {
+      capturedPointers.delete(id);
+    },
+    removeEventListener() {},
+  };
+  const encounterEvents = [];
+  const battle = new RealtimeBattle(canvas, { stageNumber: 1 }, {
+    onEncounterEvent(event) {
+      encounterEvents.push(event);
+    },
+  });
+  battle.stageId = "cinder-span";
+  battle.resolvePointerAction = () => "open-chest";
+  battle.setHoveredAction = () => {};
+  battle.audio = { playTone() {}, dispose() {} };
+  battle.commanderPosition = { x: 0, y: 0, z: 0 };
+  battle.createChestVisuals = (chest) => {
+    battle.renderedChest = chest;
+    battle.chestGroup = { position: { x: 1, y: 0, z: 2 } };
+  };
+  battle.removeChestVisuals = () => {
+    battle.renderedChest = null;
+    battle.chestGroup = null;
+  };
+  battle.applyEncounter = () => {};
+  battle.reconcileDeployments = () => {};
+  battle.updateNodeVisuals = () => {};
+  battle.syncObjectFeedback = () => {};
+
+
+  const click = (pointerType, pointerId, chestId) => {
+    battle.applyCampaignState({ state: { stage: { pendingChest: { id: chestId } } } });
+    const event = {
+      button: 0,
+      clientX: 40,
+      clientY: 50,
+      pointerId,
+      pointerType,
+      timeStamp: 100,
+    };
+    battle.onPointerDown(event);
+    battle.onPointerUp({ ...event, timeStamp: 150 });
+  };
+
+  click("mouse", 1, "chest-scout");
+  click("touch", 2, "chest-guard");
+  assert.deepEqual(encounterEvents, [
+    { type: "open-chest", stageId: "cinder-span", chestId: "chest-scout" },
+    { type: "open-chest", stageId: "cinder-span", chestId: "chest-guard" },
+  ], "WebGL mouse and touch taps must publish the same reducer-ready event shape");
+
+  const lifecycle = [];
+  battle.renderedChest = null;
+  battle.chestGroup = null;
+  battle.createChestVisuals = (chest) => {
+    lifecycle.push(["create", chest.id]);
+    battle.renderedChest = chest;
+    battle.chestGroup = { position: { x: 0, y: 0, z: 0 } };
+  };
+  battle.removeChestVisuals = () => {
+    lifecycle.push(["remove", battle.renderedChest?.id ?? null]);
+    battle.renderedChest = null;
+    battle.chestGroup = null;
+  };
+
+  battle.reconcileChest({ id: "chest-a", itemId: "void-blade" });
+  battle.reconcileChest({ id: "chest-a", itemId: "void-blade" });
+  battle.reconcileChest({ id: "chest-b", itemId: "iron-resolve" });
+  battle.reconcileChest(null);
+  assert.deepEqual(lifecycle, [
+    ["create", "chest-a"],
+    ["remove", "chest-a"],
+    ["create", "chest-b"],
+    ["remove", "chest-b"],
+  ], "reconciliation must keep one chest visual, avoid rebuilding the same ID, and remove stale IDs");
+
+  battle.renderedChest = { id: "chest-destroy" };
+  battle.activeEffects = [{ type: "ATTACK", value: 2, charges: 1 }];
+  battle.destroy();
+  assert.deepEqual(lifecycle.at(-1), ["remove", "chest-destroy"], "destroy must remove the final chest visual");
+  assert.deepEqual(battle.activeEffects, [], "destroy must clear field-effect presentation state");
 });

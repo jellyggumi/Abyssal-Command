@@ -2,7 +2,7 @@
   "version": 2,
   "pack": "abyssal-command-low-poly",
   "source": "abyssal-command-resource-pack.blend",
-  "sourceSha256": "337ac7c00ab5c1596edcef7cce922c3e1647d1ec15ec85df377dbe92080e78e2",
+  "sourceSha256": "a06a3f6063f98bcfd8ceca368ab7d2fbe0b59ff568cdf9c11c51778d80c14112",
   "coordinateSystem": "Blender Z-up; ground-center pivots; authored forward is -Y",
   "rendering": "Flat-shaded PBR GLB resources with embedded albedo and tangent-space normal textures; no external texture URLs",
   "build": {
@@ -20,9 +20,9 @@
       {
         "family": "ash-cloth",
         "albedo": "textures/ash-cloth-albedo.png",
-        "albedoSha256": "2db52cd0d02c335b8aae79b98974239814957d85d071e3220513d4273642e22a",
+        "albedoSha256": "adb011b6e2203c058381c5c7ca7e1370f2b502615a53e88c11390e1e2aa58652",
         "normal": "textures/ash-cloth-normal.png",
-        "normalSha256": "5c2bbf6a764dad159c186798fd31dde6e68d082e9253c7172ec533233301abe7"
+        "normalSha256": "92c30a458ad0b081fa477003f53d2d6e58098bbffc7152de29fa23d4bb58ef42"
       },
       {
         "family": "cinder-ember",
@@ -62,9 +62,9 @@
       {
         "family": "void-obsidian",
         "albedo": "textures/void-obsidian-albedo.png",
-        "albedoSha256": "fbef6b9630452d624f3d31e6c2d92493f85bf6d68ed39a850e3341ef59eea71b",
+        "albedoSha256": "dccb271a8d30fbe1841dd3fb9a17cad36771c4b8f59c9e6d58a22e5ffabb5bd7",
         "normal": "textures/void-obsidian-normal.png",
-        "normalSha256": "dbdce512fadc532a17e78eb8debb1c4f908122977e6695a5adbb959291f20edb"
+        "normalSha256": "6325628f9d509ee9d5a34ce8728c4e401f479ff753df90c0f011332b60756e0d"
       }
     ]
   },
@@ -73,7 +73,7 @@
       "id": "shade",
       "category": "unit",
       "path": "units/shade.glb",
-      "sha256": "cfbe699332bbe7c0183d6302724caaf7b88d19a73fe587fd0e606e9d41566fc1",
+      "sha256": "ee81f9bf924ba69d0d562323de1262a34beeb21689c6c4ea991406fc2670995f",
       "pivot": "ground-center",
       "groundOffsetApplied": -0.037459,
       "measurements": {
@@ -148,7 +148,7 @@
       "id": "possessed",
       "category": "unit",
       "path": "units/possessed.glb",
-      "sha256": "34a18cf75268932115e279f3290c0ab8cfb9fcb0aa2e3aeba52bb347d8fef6b4",
+      "sha256": "4f0bd134f2efb2e5f529aec1c19d67677e830db2e82376edb284d84eaadd27ab",
       "pivot": "ground-center",
       "groundOffsetApplied": -0.0,
       "measurements": {
@@ -224,7 +224,7 @@
       "id": "scout",
       "category": "unit",
       "path": "units/scout.glb",
-      "sha256": "36941045d74475eecd851d1c0bf9bf10790d78379c2594043518a376c741b4ed",
+      "sha256": "e309dc46ba657ccba167ac6cb5a3fde6d1ba96fc79e4e574a84e83dc1e5553b5",
       "pivot": "ground-center",
       "groundOffsetApplied": 0.002202,
       "measurements": {
@@ -300,7 +300,7 @@
       "id": "guard",
       "category": "unit",
       "path": "units/guard.glb",
-      "sha256": "06053d594227473f8e31cf5d72a8cde0dc28d68f14c042fe46e069a1357ddbfa",
+      "sha256": "77d4ea3ccd9f5b2d4b9c6e0dfc52a06af8b84ca87f42b4e89ef25aa7c973d6e6",
       "pivot": "ground-center",
       "groundOffsetApplied": -0.0,
       "measurements": {
@@ -377,7 +377,7 @@
       "id": "reinforce",
       "category": "unit",
       "path": "units/reinforce.glb",
-      "sha256": "082e6ec9b5410f1c37fe3ac58755c682b0b895340419f36fac54935dde72de79",
+      "sha256": "dd3d6cc139c932a302f4693dc39f5c2b434781dea8795481d1b920d7206be358",
       "pivot": "ground-center",
       "groundOffsetApplied": -0.0,
       "measurements": {
@@ -455,7 +455,7 @@
       "id": "cinder-warden",
       "category": "boss",
       "path": "bosses/cinder-warden.glb",
-      "sha256": "ac36b930a345c138cc4edf2c5098f4efeb496307c49084ec31a277cda85caf32",
+      "sha256": "c10a67170b2cb504b2ae6f3cefd015ed390a7b55a76eb0ea3c6cb42c88f42f52",
       "pivot": "ground-center",
       "groundOffsetApplied": -0.075,
       "measurements": {
@@ -524,7 +524,7 @@
       "id": "veil-tactician",
       "category": "boss",
       "path": "bosses/veil-tactician.glb",
-      "sha256": "ad4b5d32f01eb06e21795730397e4ba146554d3c04906b4b711272f7e74538ec",
+      "sha256": "92e0e6ac8c7dad6637f5dc5f4c33fb8c8d619ed9622e74fec3b5a0e4e445cee3",
       "pivot": "ground-center",
       "groundOffsetApplied": -0.05,
       "measurements": {
@@ -593,7 +593,7 @@
       "id": "gate-sovereign",
       "category": "boss",
       "path": "bosses/gate-sovereign.glb",
-      "sha256": "252c8899afabde5e2d86c6dd8b6ce0bfd320ff3dc211580d00bb3293531ca9bb",
+      "sha256": "c3368d0221f7e1c0b8e95b6c43d1f80ac80a111e7ef244bb1c74aa00684ecec7",
       "pivot": "ground-center",
       "groundOffsetApplied": 0.02811,
       "measurements": {
@@ -663,7 +663,7 @@
       "id": "rift-portal",
       "category": "prop",
       "path": "props/rift-portal.glb",
-      "sha256": "2ea9876c99286b93bf9d524fbea6784f46adab332ffb0f02b89e6fbf1ffc8435",
+      "sha256": "24fb0e2ce9c6d2c770f6ca3b996a64a62cec98991a27bb0180a8675bceb62cda",
       "pivot": "ground-center",
       "groundOffsetApplied": -0.01,
       "measurements": {
@@ -711,7 +711,7 @@
       "id": "command-obelisk",
       "category": "prop",
       "path": "props/command-obelisk.glb",
-      "sha256": "0a36f93649cdfe52a16bcc1bdee25701d9efc4d2d50de0f93871b1bacee6f440",
+      "sha256": "9a74786217ca50a7464c83cb9f7bd9e5d892168741e77bbf32e134d440458b1b",
       "pivot": "ground-center",
       "groundOffsetApplied": -0.0,
       "measurements": {
@@ -807,7 +807,7 @@
       "id": "echo-throne",
       "category": "prop",
       "path": "props/echo-throne.glb",
-      "sha256": "e5c3bb65750eda0eeb65608c51db2ebe8b79820f6acd74a07516519259d02f8e",
+      "sha256": "02061b7c25010b16028f271e06532e1ff2b199cd14e8aeb3dbfc34d99ac0042a",
       "pivot": "ground-center",
       "groundOffsetApplied": -0.44,
       "measurements": {
@@ -855,7 +855,7 @@
       "id": "cinder-span",
       "category": "terrain",
       "path": "terrain/cinder-span.glb",
-      "sha256": "6042c43c24b3fe76dca0129b0a2e0850c10982a1c469cfd0b7f7d9d0a723a147",
+      "sha256": "4d89bd39db0882d6a4700a739af6d6a9e759fac6a8c447f13b8ecd6b7b11dfbd",
       "pivot": "ground-center",
       "groundOffsetApplied": 0.39,
       "measurements": {
@@ -897,7 +897,7 @@
       "id": "veil-citadel",
       "category": "terrain",
       "path": "terrain/veil-citadel.glb",
-      "sha256": "2b06c27ecaaefda646ca59fb62746a14229387bb41d1f01e7ab92fcb06613bbb",
+      "sha256": "bdc67ce7fd9920fe195eec6bf3085e3515ae10c601e6bcef3f91191e404d7f95",
       "pivot": "ground-center",
       "groundOffsetApplied": 0.26,
       "measurements": {
@@ -940,7 +940,7 @@
       "id": "echo-throne-steps",
       "category": "terrain",
       "path": "terrain/echo-throne-steps.glb",
-      "sha256": "3e05f59b8055442f8244d4a471cdf00c48cb243868d03bfd48cf247fc9009b88",
+      "sha256": "238e3245e8a3d867c090aa216907405f538459601f80d3cf80f16e6847e68e90",
       "pivot": "ground-center",
       "groundOffsetApplied": -0.0,
       "measurements": {

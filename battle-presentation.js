@@ -106,7 +106,7 @@ export const BATTLE_PRESENTATIONS = Object.freeze({
   "veil-citadel": Object.freeze({
     operation: "Operation: Veil Breach",
     stageNumber: 2,
-    doctrine: "Hold both signal nodes before the Tactician closes the listening routes.",
+    doctrine: "Hold both signal nodes and clear three signal waves before the Tactician closes the listening routes.",
     allyLabel: "Veil Vanguard",
     hostileLabel: "Citadel Screen",
     palette: PALETTE.veil
@@ -114,7 +114,7 @@ export const BATTLE_PRESENTATIONS = Object.freeze({
   "echo-throne": Object.freeze({
     operation: "Operation: Thronefall",
     stageNumber: 3,
-    doctrine: "Secure the throne node, invoke the Domain, and break the Sovereign's gate.",
+    doctrine: "Secure the throne node, invoke the Domain, and survive four throne waves to break the Sovereign's gate.",
     allyLabel: "Thronebound Legion",
     hostileLabel: "Sovereign Guard",
     palette: PALETTE.throne
@@ -122,7 +122,7 @@ export const BATTLE_PRESENTATIONS = Object.freeze({
   "sunken-bastion": Object.freeze({
     stageNumber: 4,
     operation: "Operation: Breakwater",
-    doctrine: "Hold the causeway above the flood; drown nothing you cannot recall.",
+    doctrine: "Hold the tower steps against ranged fire; ascend only with the legion's shield.",
     allyLabel: "Tidebound Legion",
     hostileLabel: "Flood Ward",
     palette: PALETTE.tide
@@ -130,7 +130,7 @@ export const BATTLE_PRESENTATIONS = Object.freeze({
   "howling-sprawl": Object.freeze({
     stageNumber: 5,
     operation: "Operation: Muzzle",
-    doctrine: "Take the howl node and turn the pack's own sentinel against the Herald.",
+    doctrine: "Defend the cave choke node and turn the pack's own sentinel against the Herald.",
     allyLabel: "Duskfang Legion",
     hostileLabel: "Pack Vanguard",
     palette: PALETTE.howl
@@ -138,7 +138,7 @@ export const BATTLE_PRESENTATIONS = Object.freeze({
   "glass-necropolis": Object.freeze({
     stageNumber: 6,
     operation: "Operation: Silence",
-    doctrine: "Hold both glass terraces; let the choir sing to empty graves.",
+    doctrine: "Hold both swamp crossings against cavalry; guard the flanks from being overrun.",
     allyLabel: "Requiem Legion",
     hostileLabel: "Grave Chorus",
     palette: PALETTE.glass
@@ -146,7 +146,7 @@ export const BATTLE_PRESENTATIONS = Object.freeze({
   "starless-canal": Object.freeze({
     stageNumber: 7,
     operation: "Operation: Blackwater",
-    doctrine: "Seize both toll bridges and douse every lantern the Tyrant hangs.",
+    doctrine: "Siege the canal keep bridges and breach the castle gates to douse the Tyrant.",
     allyLabel: "Starless Legion",
     hostileLabel: "Lantern Toll",
     palette: PALETTE.canal
@@ -154,7 +154,7 @@ export const BATTLE_PRESENTATIONS = Object.freeze({
   "shattered-causeway": Object.freeze({
     stageNumber: 8,
     operation: "Operation: Keystone",
-    doctrine: "Anchor the broken span; the Colossus falls where the bridge already fell.",
+    doctrine: "Secure the bridge-cathedral crossings to recover the relic before the Colossus defends it.",
     allyLabel: "Spanbound Legion",
     hostileLabel: "Causeway Watch",
     palette: PALETTE.causeway
@@ -162,7 +162,7 @@ export const BATTLE_PRESENTATIONS = Object.freeze({
   "abyss-chancel": Object.freeze({
     stageNumber: 9,
     operation: "Operation: Countersign",
-    doctrine: "Claim all three rite platforms and unbind the Concordat's signatures.",
+    doctrine: "Claim all three altar platforms and disrupt the ritual to unbind the Concordat.",
     allyLabel: "Oathbreaker Legion",
     hostileLabel: "Concordat Guard",
     palette: PALETTE.chancel
@@ -170,7 +170,7 @@ export const BATTLE_PRESENTATIONS = Object.freeze({
   "gate-zenith": Object.freeze({
     stageNumber: 10,
     operation: "Operation: Crownfall",
-    doctrine: "Spend every boon earned below; the Regent answers only to the whole legion.",
+    doctrine: "Deploy your commanders to clash with the Regent's elite; the final battle requires the whole legion.",
     allyLabel: "Zenith Legion",
     hostileLabel: "Regent's Own",
     palette: PALETTE.zenith

@@ -17,13 +17,15 @@ import {
   reserveCommand,
   reorderReservedCommand,
   cancelReservedCommand,
+  clearCommandQueue,
   executeReservedCommand,
   checkReservedCommandExecution,
   upgradeSkill,
   deployTacticalObject,
   evolveSummon,
   SUMMON_RECIPES,
-  TACTICAL_METADATA
+  TACTICAL_METADATA,
+  FIELD_ITEM_CATALOG
 } from "./campaign-state.js";
 import { BattleVisualizer } from "./battle-visualizer.js";
 import { RealtimeBattle } from "./battle-realtime-three.js";
@@ -489,6 +491,7 @@ const elements = Object.freeze({
   saveStatus: document.querySelector("#save-status"),
   mirrorStatus: document.querySelector("#campaign-mirror-status"),
   exportSave: document.querySelector("#export-save"),
+  clearQueue: document.querySelector("#clear-reservation-queue"),
   importSave: document.querySelector("#import-save"),
   effect: document.querySelector("#visual-effect"),
   ambience: document.querySelector("#toggle-stage-ambience"),
@@ -811,6 +814,25 @@ async function handleCancelReserved(id) {
       dropQueuedCommandRuntime(id, "cancelled");
     }
     if (isHead && visualizer && typeof visualizer.clearActionPreview === "function") {
+      visualizer.clearActionPreview();
+    }
+    render();
+    await persistCampaign("persist.campaignSaved");
+  }
+}
+
+async function handleClearReservedQueue() {
+  if (!campaign || campaign.status !== "active") return;
+  const queue = campaign.commandQueue || campaign.progression?.commandQueue || [];
+  if (queue.length === 0) return;
+  const clearedIds = queue.map((item) => item.id);
+  const result = clearCommandQueue(campaign);
+  if (result.accepted) {
+    campaign = result.state;
+    if (typeof dropQueuedCommandRuntime === "function") {
+      for (const id of clearedIds) dropQueuedCommandRuntime(id, "cancelled");
+    }
+    if (visualizer && typeof visualizer.clearActionPreview === "function") {
       visualizer.clearActionPreview();
     }
     render();
@@ -2750,6 +2772,27 @@ function handleEncounterEvent(event, sessionId = battleSessionId, source = null)
       (source !== null && source !== visualizer)
     ) return;
 
+    const previousActiveEffects = event.type === "wave-cleared"
+      ? (campaign.stage?.activeEffects ?? [])
+      : null;
+
+    let itemAcquiredFeedback = "";
+    if (event.type === "open-chest") {
+      const pendingChest = campaign.stage?.pendingChest;
+      if (pendingChest && pendingChest.id === event.chestId) {
+        const itemId = pendingChest.itemId;
+        const itemDef = FIELD_ITEM_CATALOG.find(i => i.id === itemId);
+        if (itemDef) {
+          const lang = currentLang();
+          const name = translate(`item.${itemId}.name`) || itemDef.name;
+          const desc = translate(`item.${itemId}.description`) || itemDef.description;
+          itemAcquiredFeedback = lang === "ko"
+            ? `${name} 획득! (${desc})`
+            : `Acquired: ${name} (${desc})`;
+        }
+      }
+    }
+
     const result = applyEncounterEvent(campaign, event);
     if (!result.accepted) {
       synchronizeBattleRenderer();
@@ -2757,7 +2800,31 @@ function handleEncounterEvent(event, sessionId = battleSessionId, source = null)
     }
 
     campaign = result.state;
+    let waveClearedFeedback = "";
+    if (previousActiveEffects) {
+      const pickedEvent = campaign.stage?.activeEffects?.find((effect) => {
+        const previous = previousActiveEffects.find((candidate) => candidate.type === effect.type);
+        return effect.charges > (previous?.charges ?? 0);
+      });
+      if (pickedEvent) {
+        const lang = currentLang();
+        const effName = translate(`effect.${pickedEvent.type}`);
+        const chargesStr = lang === "ko" ? `${pickedEvent.charges}회` : `${pickedEvent.charges} charges`;
+        waveClearedFeedback = lang === "ko"
+          ? `필드 이벤트 발동: ${effName} (${chargesStr})`
+          : `Field Event: ${effName} (${chargesStr})`;
+      }
+    }
     render();
+
+    if (waveClearedFeedback) {
+      showTacticalFeedback(waveClearedFeedback);
+    }
+    if (itemAcquiredFeedback) {
+      showTacticalFeedback(itemAcquiredFeedback);
+      playCombatAlertCue({ id: "open-chest", event: "open-chest", severity: "positive", durationMs: 300 });
+    }
+
     const encounterCue = ENCOUNTER_CUE_BY_EVENT[event.type];
     const hasAuthoredCue = encounterCue && (
       encounterCue === "breach-alert" ||
@@ -2766,7 +2833,7 @@ function handleEncounterEvent(event, sessionId = battleSessionId, source = null)
     );
     if (hasAuthoredCue) {
       playCue(encounterCue);
-    } else {
+    } else if (event.type !== "open-chest") {
       const combatAlertCue = typeof getCombatAlertCue === "function"
         ? (getCombatAlertCue(event) || (encounterCue ? getCombatAlertCue(encounterCue) : null))
         : null;
@@ -3043,7 +3110,17 @@ function renderBossSpec(stage, state, benefits) {
     if (benefits.lensDamage > 0) combatModifiers.push(`Possession +${benefits.lensDamage}`);
     if (benefits.counterReduction > 0) combatModifiers.push(`Counter −${benefits.counterReduction}`);
   }
-  elements.statExtraDamage.textContent = combatModifiers.join(" · ") || (lang === "ko" ? "없음" : "None");
+
+  const activeEffects = (state && Array.isArray(state.activeEffects)) ? state.activeEffects : [];
+  for (const eff of activeEffects) {
+    const effName = lang === "ko" ? translate(`effect.${eff.type}`) : eff.type;
+    const valueStr = eff.value ? ` +${eff.value}` : "";
+    const chargesStr = lang === "ko" ? `${eff.charges}회` : `${eff.charges} chg`;
+    combatModifiers.push(`${effName}${valueStr} (${chargesStr})`);
+  }
+  if (elements.statExtraDamage) {
+    elements.statExtraDamage.textContent = combatModifiers.join(" · ") || (lang === "ko" ? "없음" : "None");
+  }
   
   const activeItemNames = benefits.activeItemNames.map(name => {
     let rewardId = "";
@@ -3053,7 +3130,16 @@ function renderBossSpec(stage, state, benefits) {
     }
     return (lang === "ko" && rewardId) ? translate(`reward.${rewardId}.name`) : name;
   });
-  elements.statActiveItems.textContent = activeItemNames.length ? activeItemNames.join(", ") : (lang === "ko" ? "없음" : "None");
+
+  const effectItems = activeEffects.map(eff => {
+    const effName = translate(`effect.${eff.type}`);
+    const chargesStr = lang === "ko" ? `${eff.charges}회` : `${eff.charges} chg`;
+    return `${effName} (${chargesStr})`;
+  });
+  const allActive = [...activeItemNames, ...effectItems];
+  if (elements.statActiveItems) {
+    elements.statActiveItems.textContent = allActive.length ? allActive.join(", ") : (lang === "ko" ? "없음" : "None");
+  }
 }
 
 function renderResult(isComplete) {
@@ -3337,6 +3423,7 @@ function render() {
     queueContainer.innerHTML = "";
     const progression = getTacticalProgression(campaign);
     const queue = progression.commandQueue || [];
+    if (elements.clearQueue) elements.clearQueue.disabled = queue.length === 0;
     
     if (queue.length === 0) {
       const li = document.createElement("li");
@@ -4431,6 +4518,7 @@ function wireControls() {
   });
 
   elements.exportSave.addEventListener("click", exportSave);
+  elements.clearQueue?.addEventListener("click", () => void handleClearReservedQueue());
   elements.importSave.addEventListener("change", () => importSave(elements.importSave.files?.[0]));
   elements.ambience.addEventListener("click", toggleAmbience);
   elements.bgmToggle?.addEventListener("click", toggleBgm);

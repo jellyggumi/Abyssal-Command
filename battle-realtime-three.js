@@ -10,12 +10,12 @@ import {
   getCombatAlertCue,
 } from "./combat-systems.js";
 import { ObjectFeedbackLayer } from "./object-feedback-layer.js";
+import { getStageMotif } from "./battle-stage-identity.js";
+import { getCampaignBenefits } from "./campaign-state.js";
 
-// Stages 4-10 reuse the three shipped GLB terrain/boss sets (resource-budget
-// compromise; dedicated models are a future upgrade). To keep each boss
-// visually distinct despite the shared mesh, createBattleObjects() applies a
-// per-stage emissive/base-color tint from presentation.palette.hostile on
-// top of the reused materials. Terrain reuse carries no identity claim.
+// Stages 4-10 reuse the three shipped GLB terrain/boss sets, but are visually
+// differentiated using a stage-specific identity kit (low-poly landmark and boss
+// adornments, combined with per-stage tints/palettes).
 const STAGE_ASSETS = Object.freeze({
   1: Object.freeze({ terrain: "terrain/cinder-span.glb", boss: "bosses/cinder-warden.glb" }),
   2: Object.freeze({ terrain: "terrain/veil-citadel.glb", boss: "bosses/veil-tactician.glb" }),
@@ -85,6 +85,10 @@ const CIRCLE_PROBES = Object.freeze([
 function clipFor(clips, name) {
   const needle = name.toLowerCase();
   return clips.find((clip) => clip.name.toLowerCase() === needle || clip.name.toLowerCase().endsWith(`__${needle}`)) ?? null;
+}
+
+function getFinite(val, fallback) {
+  return (typeof val === "number" && Number.isFinite(val)) ? val : fallback;
 }
 
 function clamp(value, min, max) {
@@ -383,7 +387,13 @@ export class RealtimeBattle {
   constructor(canvas, presentation, options = {}) {
     this.canvas = canvas;
     this.presentation = presentation;
-    this.stageNumber = Math.max(1, Math.min(10, Number(presentation?.stageNumber) || 1));
+    let stageNum = Number(presentation?.stageNumber);
+    if (!Number.isFinite(stageNum)) {
+      stageNum = 1;
+    } else {
+      stageNum = Math.floor(stageNum);
+    }
+    this.stageNumber = Math.max(1, Math.min(10, stageNum));
     this.nodeGoal = Math.max(1, Number(options.nodeGoal) || 1);
     this.requestAction = typeof options.onActionRequest === "function" ? options.onActionRequest : null;
     this.getAvailableActions = typeof options.getAvailableActions === "function" ? options.getAvailableActions : null;
@@ -423,6 +433,18 @@ export class RealtimeBattle {
     this.currentWaveId = null;
     this.pendingEncounterEvent = null;
     this.encounterEventKeys = new Set();
+    this.renderedChest = null;
+    this.chestGroup = null;
+    this.chestAura = null;
+    this.chestParticleTimer = 0;
+    this.pendingChestId = null;
+    this.chestOpenedRequested = false;
+    this.stageId = null;
+    this.activeEffects = [];
+    this.latestCampaignState = null;
+    this.movementMultiplier = 1;
+    this.lastEffectsSet = new Set();
+    this.effectsTimer = 0;
     this.bossExposed = false;
     // Boss auto-attack ("boss-strike"): declarative per-stage pattern data
     // (see campaign-state.js STAGES[*].bossPattern), a countdown owned by
@@ -435,7 +457,7 @@ export class RealtimeBattle {
     this.bossThreatRing = null;
     this.feedbackCanvas = options.feedbackCanvas ?? null;
     this.objectFeedback = this.feedbackCanvas
-      ? new ObjectFeedbackLayer(this.feedbackCanvas, { reducedMotion: this.presentation?.reducedMotion ?? false })
+      ? new ObjectFeedbackLayer(this.feedbackCanvas, { reducedMotion: this.isReducedMotion })
       : null;
     this.feedbackCache = new Map();
     this.authoritativePossessed = false;
@@ -503,12 +525,17 @@ export class RealtimeBattle {
     this.raycaster.far = 80;
     this.pointerNdc = new THREE.Vector2();
     this.pointer = null;
-    this.orbitAzimuth = 2.3;
-    this.orbitElevation = 0.9;
-    this.zoom = 16;
+    const cameraProfile = this.navigation.profile?.camera;
+
+    const hasProfile = !!(cameraProfile && typeof cameraProfile.zoom === "number" && Number.isFinite(cameraProfile.zoom));
+
+    this.orbitAzimuth = clamp(getFinite(cameraProfile?.azimuth, 2.3), -Math.PI * 2, Math.PI * 2);
+    this.orbitElevation = clamp(getFinite(cameraProfile?.elevation, 0.9), 0.2, 1.25);
+    this.zoom = hasProfile ? clamp(cameraProfile.zoom, 1.0, 100.0) : 16;
     this.safeNdcLimit = 0.84;
-    this.minFitZoom = 16;
+    this.minFitZoom = hasProfile ? clamp(cameraProfile.zoom, 1.0, 100.0) : 16;
     this.hasManualZoomed = false;
+    this.hasProfileCamera = hasProfile;
     this._fitSamplePoints = null;
     this._fitCamera = null;
     this._fitProjectionScratch = null;
@@ -549,10 +576,22 @@ export class RealtimeBattle {
       pointerleave: (event) => this.onPointerLeave(event),
     };
   }
+  get isReducedMotion() {
+    if (this.presentation?.reducedMotion) return true;
+    if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+      const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+      return media ? media.matches : false;
+    }
+    return false;
+  }
+
 
   async init() {
-    if (this.destroyed) throw new Error("Realtime battle was destroyed before initialization");
+    const getFinite = (val, fallback) => (typeof val === "number" && Number.isFinite(val)) ? val : fallback;
+    const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
     this.navigation ??= createStageNavigation(this.stageNumber ?? 1);
+    const cameraProfile = this.navigation?.profile?.camera;
+    if (this.destroyed) throw new Error("Realtime battle was destroyed before initialization");
     const gl = this.canvas.getContext("webgl2", { antialias: true, alpha: false });
     if (!gl) {
       throw new Error("WebGL 2 is unavailable");
@@ -572,9 +611,50 @@ export class RealtimeBattle {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.scene = new THREE.Scene();
+    const isTest = typeof process !== "undefined";
+    this.environmentMap = null;
+    if (!isTest && THREE.PMREMGenerator) {
+      // Root-cause fix for "metallic materials render as a flat dark blob":
+      // MeshStandardMaterial's metal reflection term needs *something* to
+      // reflect (image-based lighting). Without scene.environment every
+      // metallic surface has nothing to sample, however good its albedo/
+      // normal maps are. This is a small, cheap procedural "room" run
+      // through PMREMGenerator once at startup -- not a real HDRI, just
+      // enough directional variation (a bright ceiling, dim walls, one
+      // accent-colored panel) for metal reflections to read as lit instead
+      // of black. The generator and throwaway room scene are disposed
+      // immediately after baking; only the resulting cube texture is kept.
+      const pmrem = new THREE.PMREMGenerator(this.renderer);
+      pmrem.compileEquirectangularShader();
+      const room = new THREE.Scene();
+      const roomGeometry = new THREE.BoxGeometry(24, 24, 24);
+      const roomMaterial = new THREE.MeshBasicMaterial({ color: 0x11151d, side: THREE.BackSide });
+      room.add(new THREE.Mesh(roomGeometry, roomMaterial));
+      const ceilingLight = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 10),
+        new THREE.MeshBasicMaterial({ color: 0xaab6c8 }),
+      );
+      ceilingLight.position.set(0, 11.9, 0);
+      ceilingLight.rotation.x = Math.PI / 2;
+      room.add(ceilingLight);
+      const accentPanel = new THREE.Mesh(
+        new THREE.PlaneGeometry(8, 8),
+        new THREE.MeshBasicMaterial({ color: 0x4a6a86 }),
+      );
+      accentPanel.position.set(0, 0, -11.9);
+      room.add(accentPanel);
+      this.environmentMap = pmrem.fromScene(room, 0.04).texture;
+      this.scene.environment = this.environmentMap;
+      roomGeometry.dispose();
+      roomMaterial.dispose();
+      ceilingLight.geometry.dispose();
+      ceilingLight.material.dispose();
+      accentPanel.geometry.dispose();
+      accentPanel.material.dispose();
+      pmrem.dispose();
+    }
 
     // Stage-aware concept-art backdrop
-    const isTest = typeof process !== "undefined";
     if (!isTest && THREE.TextureLoader) {
       const loader = (this.textureLoader ??= new THREE.TextureLoader());
       const stageIdMap = {
@@ -629,16 +709,18 @@ export class RealtimeBattle {
 
     // Stage-palette fog/atmospheric depth
     const fogColor = this.presentation?.palette?.background ?? "#060913";
-    this.scene.fog = new THREE.FogExp2(fogColor, FOG_DENSITY);
+    const profileFogDensity = getFinite(cameraProfile?.fogDensity, FOG_DENSITY);
+    this.scene.fog = new THREE.FogExp2(fogColor, clamp(profileFogDensity, 0.0001, 0.5));
 
     const bounds = this.navigation.bounds;
     const mapWidth = bounds.right - bounds.left;
     const mapHeight = bounds.far - bounds.near;
     const maxDim = Math.max(mapWidth, mapHeight);
-    this.zoom = 16 * Math.max(1, maxDim / 24);
+    if (!this.hasProfileCamera) {
+      this.zoom = 16 * Math.max(1, maxDim / 24);
+    }
     this.camera = new THREE.PerspectiveCamera(48, 1, 0.1, Math.max(120, this.zoom * 4));
     this.raycaster.far = Math.max(100, this.zoom * 3);
-
     // Hemisphere light with slightly lifted stage-colored ground to prevent crushed shadows
     const groundColor = (THREE.Color && this.presentation?.palette?.background)
       ? new THREE.Color(this.presentation.palette.background).lerp(new THREE.Color(0x3a4868), 0.35)
@@ -1075,6 +1157,105 @@ export class RealtimeBattle {
     this.applyBossIdentityTint(boss.root);
     this.scene.add(boss.root);
     this.boss = boss;
+
+    // Stage-specific boss motif adornment (Stages 4-10)
+    const motif = getStageMotif(this.stageNumber);
+    if (motif && boss.root) {
+      const bossAdornmentGroup = new THREE.Group();
+      bossAdornmentGroup.name = "bossAdornmentGroup";
+      
+      const primaryColor = new THREE.Color(motif.primary);
+      const secondaryColor = new THREE.Color(motif.secondary);
+      
+      if (motif.bossMotif === "breakwater") {
+        const ringGeom = new THREE.TorusGeometry(0.55, 0.08, 8, 24);
+        const ringMat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.1, transparent: true, opacity: 0.7 });
+        ringMat.userData.isRuntimeAssetClone = true;
+        const ring = new THREE.Mesh(ringGeom, ringMat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = 2.2;
+        bossAdornmentGroup.add(ring);
+      } else if (motif.bossMotif === "rib-sprawl") {
+        const ribGeom = new THREE.BoxGeometry(0.06, 0.9, 0.06);
+        const ribMat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.9 });
+        ribMat.userData.isRuntimeAssetClone = true;
+        
+        const ribLeft = new THREE.Mesh(ribGeom, ribMat);
+        ribLeft.position.set(-0.5, 1.8, 0);
+        ribLeft.rotation.z = -0.5;
+        bossAdornmentGroup.add(ribLeft);
+        
+        const ribRight = new THREE.Mesh(ribGeom, ribMat);
+        ribRight.position.set(0.5, 1.8, 0);
+        ribRight.rotation.z = 0.5;
+        bossAdornmentGroup.add(ribRight);
+      } else if (motif.bossMotif === "crystal") {
+        const crystalGeom = new THREE.OctahedronGeometry(0.28, 0);
+        const crystalMat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.1, metalness: 0.8 });
+        crystalMat.userData.isRuntimeAssetClone = true;
+        const crystal = new THREE.Mesh(crystalGeom, crystalMat);
+        crystal.scale.set(1, 1.8, 1);
+        crystal.position.y = 2.4;
+        bossAdornmentGroup.add(crystal);
+      } else if (motif.bossMotif === "lantern") {
+        const sphereGeom = new THREE.SphereGeometry(0.08, 8, 8);
+        const sphereMat = new THREE.MeshStandardMaterial({ 
+          color: primaryColor, 
+          emissive: primaryColor, 
+          emissiveIntensity: 0.8,
+          roughness: 0.2 
+        });
+        sphereMat.userData.isRuntimeAssetClone = true;
+        
+        const orb1 = new THREE.Mesh(sphereGeom, sphereMat);
+        orb1.position.set(-0.4, 2.2, 0.3);
+        bossAdornmentGroup.add(orb1);
+        
+        const orb2 = new THREE.Mesh(sphereGeom, sphereMat);
+        orb2.position.set(0.4, 2.2, 0.3);
+        bossAdornmentGroup.add(orb2);
+        
+        const orb3 = new THREE.Mesh(sphereGeom, sphereMat);
+        orb3.position.set(0, 2.3, -0.4);
+        bossAdornmentGroup.add(orb3);
+      } else if (motif.bossMotif === "keystone") {
+        const wedgeGeom = new THREE.BoxGeometry(0.45, 0.15, 0.45);
+        const wedgeMat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.5 });
+        wedgeMat.userData.isRuntimeAssetClone = true;
+        const wedge = new THREE.Mesh(wedgeGeom, wedgeMat);
+        wedge.position.y = 2.3;
+        bossAdornmentGroup.add(wedge);
+      } else if (motif.bossMotif === "rite") {
+        const ringGeom = new THREE.TorusGeometry(0.8, 0.04, 8, 32);
+        const ringMat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.4 });
+        ringMat.userData.isRuntimeAssetClone = true;
+        const ring = new THREE.Mesh(ringGeom, ringMat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = 0.02;
+        bossAdornmentGroup.add(ring);
+      } else if (motif.bossMotif === "crown") {
+        const ringGeom = new THREE.CylinderGeometry(0.35, 0.35, 0.07, 12, 1, true);
+        const ringMat = new THREE.MeshStandardMaterial({ color: secondaryColor, roughness: 0.3, metalness: 0.7, side: THREE.DoubleSide });
+        ringMat.userData.isRuntimeAssetClone = true;
+        const ring = new THREE.Mesh(ringGeom, ringMat);
+        ring.position.y = 2.2;
+        bossAdornmentGroup.add(ring);
+        
+        const spikeGeom = new THREE.ConeGeometry(0.04, 0.15, 4);
+        const spikeMat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.3, metalness: 0.8 });
+        spikeMat.userData.isRuntimeAssetClone = true;
+        
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2;
+          const spike = new THREE.Mesh(spikeGeom, spikeMat);
+          spike.position.set(Math.cos(angle) * 0.35, 2.3, Math.sin(angle) * 0.35);
+          spike.rotation.y = angle;
+          bossAdornmentGroup.add(spike);
+        }
+      }
+      boss.root.add(bossAdornmentGroup);
+    }
+
     boss.id = "boss";
     boss.maxHealth = this.bossMaxHealth ?? this.lastBossHealth ?? null;
     if (this.bossPhase) this.applyBossPhaseVisual(this.bossPhase);
@@ -1115,6 +1296,261 @@ export class RealtimeBattle {
     this.commander = commander;
     commander.id = "commander";
     this.play(commander, "Idle");
+
+    // Stage 4-10 low-poly landmarks
+    if (motif) {
+      this.stageIdentityGroup = new THREE.Group();
+      this.stageIdentityGroup.name = "stageIdentityGroup";
+      
+      const primaryColor = new THREE.Color(motif.primary);
+      const secondaryColor = new THREE.Color(motif.secondary);
+      
+      for (const lm of motif.landmarks) {
+        const world = this.gridToWorld(lm.x + 0.5, lm.y + 0.5);
+        const elevation = this.navigation.elevationAt(lm.x + 0.5, lm.y + 0.5);
+        const yPos = elevation * TERRAIN_ELEVATION_SCALE + 0.05;
+        
+        const lmGroup = new THREE.Group();
+        lmGroup.position.set(world.x, yPos, world.z);
+        
+        const env = motif.environment || motif.id;
+        
+        if (env === "fog-tower" || env === "tide") {
+          const boxMatPrimary = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.5 });
+          boxMatPrimary.userData.isRuntimeAssetClone = true;
+          const boxMatSecondary = new THREE.MeshStandardMaterial({ color: secondaryColor, roughness: 0.7 });
+          boxMatSecondary.userData.isRuntimeAssetClone = true;
+          const boxGeom = new THREE.BoxGeometry(1, 1, 1);
+
+          const baseMesh = new THREE.Mesh(boxGeom, boxMatSecondary);
+          baseMesh.scale.set(0.26, 0.12, 0.26);
+          baseMesh.position.y = 0.06;
+          lmGroup.add(baseMesh);
+
+          const midMesh = new THREE.Mesh(boxGeom, boxMatPrimary);
+          midMesh.scale.set(0.18, 0.12, 0.18);
+          midMesh.position.y = 0.18;
+          lmGroup.add(midMesh);
+
+          const topMesh = new THREE.Mesh(boxGeom, boxMatSecondary);
+          topMesh.scale.set(0.10, 0.12, 0.10);
+          topMesh.position.y = 0.30;
+          lmGroup.add(topMesh);
+
+          const step1 = new THREE.Mesh(boxGeom, boxMatPrimary);
+          step1.scale.set(0.08, 0.04, 0.08);
+          step1.position.set(0.16, 0.02, 0);
+          lmGroup.add(step1);
+
+          const step2 = new THREE.Mesh(boxGeom, boxMatSecondary);
+          step2.scale.set(0.08, 0.08, 0.08);
+          step2.position.set(0.12, 0.04, 0);
+          lmGroup.add(step2);
+
+        } else if (env === "cave-defense" || env === "howl") {
+          const ribMat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.9 });
+          ribMat.userData.isRuntimeAssetClone = true;
+          const barMat = new THREE.MeshStandardMaterial({ color: secondaryColor, roughness: 0.8 });
+          barMat.userData.isRuntimeAssetClone = true;
+
+          const ribGeom = new THREE.BoxGeometry(0.03, 0.45, 0.03);
+          const postGeom = new THREE.BoxGeometry(0.04, 0.22, 0.04);
+          const barGeom = new THREE.BoxGeometry(0.3, 0.04, 0.04);
+
+          const rib1 = new THREE.Mesh(ribGeom, ribMat);
+          rib1.position.set(-0.12, 0.2, 0);
+          rib1.rotation.z = 0.5;
+          lmGroup.add(rib1);
+          
+          const rib2 = new THREE.Mesh(ribGeom, ribMat);
+          rib2.position.set(0.12, 0.2, 0);
+          rib2.rotation.z = -0.5;
+          lmGroup.add(rib2);
+
+          const post1 = new THREE.Mesh(postGeom, barMat);
+          post1.position.set(-0.1, 0.11, 0.08);
+          lmGroup.add(post1);
+
+          const post2 = new THREE.Mesh(postGeom, barMat);
+          post2.position.set(0.1, 0.11, 0.08);
+          lmGroup.add(post2);
+
+          const bar = new THREE.Mesh(barGeom, barMat);
+          bar.position.set(0, 0.15, 0.08);
+          lmGroup.add(bar);
+
+        } else if (env === "black-swamp" || env === "glass") {
+          const poolMat = new THREE.MeshStandardMaterial({ color: secondaryColor, roughness: 0.1, metalness: 0.9 });
+          poolMat.userData.isRuntimeAssetClone = true;
+          const poleMat = new THREE.MeshStandardMaterial({ color: secondaryColor, roughness: 0.6 });
+          poleMat.userData.isRuntimeAssetClone = true;
+          const flagMat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.7 });
+          flagMat.userData.isRuntimeAssetClone = true;
+
+          const poolGeom = new THREE.CylinderGeometry(0.24, 0.24, 0.02, 12);
+          const poleGeom = new THREE.CylinderGeometry(0.015, 0.015, 0.5, 8);
+          const flagGeom = new THREE.BoxGeometry(0.18, 0.08, 0.02);
+
+          const pool = new THREE.Mesh(poolGeom, poolMat);
+          pool.position.y = 0.01;
+          lmGroup.add(pool);
+
+          const pole = new THREE.Mesh(poleGeom, poleMat);
+          pole.position.set(0, 0.25, 0);
+          lmGroup.add(pole);
+
+          const flag = new THREE.Mesh(flagGeom, flagMat);
+          flag.position.set(0.09, 0.44, 0);
+          lmGroup.add(flag);
+
+        } else if (env === "castle-siege" || env === "canal") {
+          const wallMat = new THREE.MeshStandardMaterial({ color: secondaryColor, roughness: 0.9 });
+          wallMat.userData.isRuntimeAssetClone = true;
+          const trimMat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.8 });
+          trimMat.userData.isRuntimeAssetClone = true;
+
+          const wallGeom = new THREE.BoxGeometry(0.32, 0.2, 0.14);
+          const crenellGeom = new THREE.BoxGeometry(0.08, 0.06, 0.14);
+          const debrisGeom = new THREE.BoxGeometry(0.1, 0.06, 0.1);
+
+          const wall = new THREE.Mesh(wallGeom, wallMat);
+          wall.position.y = 0.1;
+          lmGroup.add(wall);
+
+          const cren1 = new THREE.Mesh(crenellGeom, trimMat);
+          cren1.position.set(-0.12, 0.23, 0);
+          lmGroup.add(cren1);
+
+          const cren2 = new THREE.Mesh(crenellGeom, trimMat);
+          cren2.position.set(0.12, 0.23, 0);
+          lmGroup.add(cren2);
+
+          const debris = new THREE.Mesh(debrisGeom, wallMat);
+          debris.position.set(0.18, 0.03, 0.1);
+          debris.rotation.set(0.4, 0.2, 0.5);
+          lmGroup.add(debris);
+
+        } else if (env === "cathedral-relic" || env === "causeway") {
+          const stoneMat = new THREE.MeshStandardMaterial({ color: secondaryColor, roughness: 0.7 });
+          stoneMat.userData.isRuntimeAssetClone = true;
+          const relicMat = new THREE.MeshStandardMaterial({
+            color: primaryColor,
+            emissive: primaryColor,
+            emissiveIntensity: 1.5,
+            roughness: 0.2
+          });
+          relicMat.userData.isRuntimeAssetClone = true;
+
+          const pillarGeom = new THREE.CylinderGeometry(0.025, 0.025, 0.35, 8);
+          const archGeom = new THREE.BoxGeometry(0.025, 0.18, 0.025);
+          const relicGeom = new THREE.OctahedronGeometry(0.06, 0);
+
+          const pillar1 = new THREE.Mesh(pillarGeom, stoneMat);
+          pillar1.position.set(-0.12, 0.175, 0);
+          lmGroup.add(pillar1);
+
+          const pillar2 = new THREE.Mesh(pillarGeom, stoneMat);
+          pillar2.position.set(0.12, 0.175, 0);
+          lmGroup.add(pillar2);
+
+          const archL = new THREE.Mesh(archGeom, stoneMat);
+          archL.position.set(-0.07, 0.38, 0);
+          archL.rotation.z = -0.6;
+          lmGroup.add(archL);
+
+          const archR = new THREE.Mesh(archGeom, stoneMat);
+          archR.position.set(0.07, 0.38, 0);
+          archR.rotation.z = 0.6;
+          lmGroup.add(archR);
+
+          const relic = new THREE.Mesh(relicGeom, relicMat);
+          relic.position.set(0, 0.2, 0);
+          lmGroup.add(relic);
+
+        } else if (env === "soul-altar" || env === "chancel") {
+          const altarMat = new THREE.MeshStandardMaterial({ color: secondaryColor, roughness: 0.8 });
+          altarMat.userData.isRuntimeAssetClone = true;
+          const soulMat = new THREE.MeshStandardMaterial({
+            color: primaryColor,
+            emissive: primaryColor,
+            emissiveIntensity: 1.2,
+            roughness: 0.2
+          });
+          soulMat.userData.isRuntimeAssetClone = true;
+
+          const bottomGeom = new THREE.CylinderGeometry(0.26, 0.28, 0.06, 12);
+          const midGeom = new THREE.CylinderGeometry(0.18, 0.20, 0.06, 12);
+          const soulGeom = new THREE.OctahedronGeometry(0.08, 0);
+          const pillarGeom = new THREE.BoxGeometry(0.04, 0.12, 0.04);
+
+          const bottom = new THREE.Mesh(bottomGeom, altarMat);
+          bottom.position.y = 0.03;
+          lmGroup.add(bottom);
+
+          const mid = new THREE.Mesh(midGeom, altarMat);
+          mid.position.y = 0.09;
+          lmGroup.add(mid);
+
+          const pil1 = new THREE.Mesh(pillarGeom, altarMat);
+          pil1.position.set(-0.2, 0.06, 0);
+          lmGroup.add(pil1);
+
+          const pil2 = new THREE.Mesh(pillarGeom, altarMat);
+          pil2.position.set(0.2, 0.06, 0);
+          lmGroup.add(pil2);
+
+          const soul = new THREE.Mesh(soulGeom, soulMat);
+          soul.position.set(0, 0.22, 0);
+          lmGroup.add(soul);
+
+        } else if (env === "final-battle" || env === "zenith") {
+          const goldMat = new THREE.MeshStandardMaterial({ color: "#ffd700", roughness: 0.1, metalness: 0.9 });
+          goldMat.userData.isRuntimeAssetClone = true;
+          const primaryBannerMat = new THREE.MeshStandardMaterial({ color: primaryColor, roughness: 0.7 });
+          primaryBannerMat.userData.isRuntimeAssetClone = true;
+          const secondaryBannerMat = new THREE.MeshStandardMaterial({ color: secondaryColor, roughness: 0.7 });
+          secondaryBannerMat.userData.isRuntimeAssetClone = true;
+          const poleMat = new THREE.MeshStandardMaterial({ color: "#666666", roughness: 0.5 });
+          poleMat.userData.isRuntimeAssetClone = true;
+
+          const crownRingGeom = new THREE.TorusGeometry(0.1, 0.025, 8, 16);
+          const crownProngGeom = new THREE.ConeGeometry(0.02, 0.08, 4);
+          const poleGeom = new THREE.CylinderGeometry(0.015, 0.015, 0.4, 8);
+          const bannerGeom = new THREE.BoxGeometry(0.12, 0.06, 0.02);
+
+          const crownRing = new THREE.Mesh(crownRingGeom, goldMat);
+          crownRing.position.y = 0.03;
+          crownRing.rotation.x = -Math.PI / 2;
+          lmGroup.add(crownRing);
+
+          for (let i = 0; i < 4; i++) {
+            const angle = (i / 4) * Math.PI * 2;
+            const prong = new THREE.Mesh(crownProngGeom, goldMat);
+            prong.position.set(Math.cos(angle) * 0.1, 0.07, Math.sin(angle) * 0.1);
+            prong.rotation.set(Math.sin(angle) * 0.2, angle, -Math.cos(angle) * 0.2);
+            lmGroup.add(prong);
+          }
+
+          const poleL = new THREE.Mesh(poleGeom, poleMat);
+          poleL.position.set(-0.18, 0.2, 0);
+          lmGroup.add(poleL);
+
+          const bannerL = new THREE.Mesh(bannerGeom, secondaryBannerMat);
+          bannerL.position.set(-0.13, 0.34, 0);
+          lmGroup.add(bannerL);
+
+          const poleR = new THREE.Mesh(poleGeom, poleMat);
+          poleR.position.set(0.18, 0.2, 0);
+          lmGroup.add(poleR);
+
+          const bannerR = new THREE.Mesh(bannerGeom, primaryBannerMat);
+          bannerR.position.set(0.13, 0.34, 0);
+          lmGroup.add(bannerR);
+        }
+        this.stageIdentityGroup.add(lmGroup);
+      }
+      this.scene.add(this.stageIdentityGroup);
+    }
   }
 
   // The commander clones the shared units/shade.glb -- the same resource
@@ -1137,12 +1573,18 @@ export class RealtimeBattle {
         if (!material || material === this.contactMaterial) return material;
         material.userData = material.userData || {};
         material.userData.isCommanderIdentityTint = true;
-        if (material.color) material.color.lerp(tint, 0.5);
+        // Identity tint is a silhouette-readability accent, not a repaint:
+        // a full-saturation emissive at high intensity self-illuminates and
+        // washes out the model's actual albedo texture and normal-mapped
+        // shading entirely, making it look like a flat, untextured colored
+        // blob regardless of lighting or normal maps -- exactly the "only
+        // shows as purple" symptom this used to cause for every commander.
+        if (material.color) material.color.lerp(tint, 0.22);
         if ("emissive" in material) {
           if (material.emissive?.copy) material.emissive.copy(tint);
           else material.emissive = tint.clone();
-          material.emissiveIntensity = 0.5;
-          material.userData.runtimeEmissiveIntensityBase = 0.5;
+          material.emissiveIntensity = 0.12;
+          material.userData.runtimeEmissiveIntensityBase = 0.12;
         }
         return material;
       });
@@ -1170,12 +1612,12 @@ export class RealtimeBattle {
         if (!material || material === this.contactMaterial) return material;
         material.userData = material.userData || {};
         material.userData.isBossIdentityTint = true;
-        if (material.color) material.color.lerp(tint, 0.55);
+        if (material.color) material.color.lerp(tint, 0.22);
         if ("emissive" in material) {
           if (material.emissive?.copy) material.emissive.copy(tint);
           else material.emissive = tint.clone();
-          material.emissiveIntensity = 0.55;
-          material.userData.runtimeEmissiveIntensityBase = 0.55;
+          material.emissiveIntensity = 0.12;
+          material.userData.runtimeEmissiveIntensityBase = 0.12;
         }
         return material;
       });
@@ -1364,7 +1806,15 @@ export class RealtimeBattle {
           const materials = Array.isArray(node.material) ? node.material : [node.material];
           for (const mat of materials) {
             if (mat.isMeshStandardMaterial) {
-              const metalnessCap = isTerrain ? 0.55 : 0.7;
+              // The scene has no environment map (no IBL), so a
+              // MeshStandardMaterial's metal reflection term has nothing to
+              // reflect: at high metalness it renders as a near-black
+              // silhouette regardless of the albedo/normal texture, which is
+              // exactly the "only shows as a flat dark color" symptom this
+              // caps against. 0.7 was still high enough to trigger it for
+              // unit/prop/boss materials; terrain's 0.55 cap does not fully
+              // fix it either, so both are lowered together.
+              const metalnessCap = isTerrain ? 0.4 : 0.45;
               const roughnessCap = isTerrain ? 0.72 : 0.8;
               if (mat.metalness > metalnessCap) mat.metalness = metalnessCap; // Tame excessive metallic blackness
               if (mat.roughness > roughnessCap) mat.roughness = roughnessCap;
@@ -1384,7 +1834,14 @@ export class RealtimeBattle {
               } else if (isTerrain) {
                 mat.emissiveIntensity = Math.max(mat.emissiveIntensity ?? 0, 0.2);
               }
-              // Restrained unit emissive lift for silhouette readability against the dark concept backdrop.
+              // Restrained unit emissive lift for silhouette readability against the
+              // dark concept backdrop. Kept deliberately low: a full-saturation
+              // faction color self-illuminating at high intensity overwhelms the
+              // model's actual albedo/normal-mapped shading and reads as a flat
+              // solid-color blob (this is what previously made every ally unit
+              // look flat teal-green and every hostile look flat red, regardless
+              // of texture or lighting) -- this should only lift shadow-black
+              // areas enough to keep ally/hostile silhouettes legible in the dark.
               if (resource.startsWith("units/")) {
                 const isEnemy = resource.includes("scout") || resource.includes("guard") || resource.includes("reinforce");
                 const unitColor = isEnemy
@@ -1396,9 +1853,9 @@ export class RealtimeBattle {
                   } else {
                     mat.emissive = THREE.Color ? new THREE.Color(unitColor) : unitColor;
                   }
-                  mat.emissiveIntensity = 0.45;
+                  mat.emissiveIntensity = 0.1;
                 } else {
-                  mat.emissiveIntensity = Math.max(mat.emissiveIntensity ?? 0, 0.45);
+                  mat.emissiveIntensity = Math.max(mat.emissiveIntensity ?? 0, 0.1);
                 }
               } else if (!isTerrain) {
                 // Non-terrain props / boss emissive lift
@@ -1470,7 +1927,10 @@ export class RealtimeBattle {
     const span = Math.max(this.size.x, this.size.z, EPSILON);
     const scale = targetSize / span;
     root.scale.setScalar(scale);
-    root.position.set(-this.center.x * scale, -this.box.min.y * scale, -this.center.z * scale);
+    // GLB roots are authored ground-center pivots. Normalize vertical contact
+    // without recentering the full AABB, which would shift asymmetric weapons
+    // and cloaks away from their navigation anchors.
+    root.position.set(0, -this.box.min.y * scale, 0)
     root.updateMatrixWorld(true);
   }
 
@@ -1573,6 +2033,8 @@ export class RealtimeBattle {
     this.updateMarkerPulses(dt);
     this.updateAmbience(dt);
     this.updatePreviewEmphasis(dt);
+    this.updateChest(dt);
+    this.updateActiveEffects(dt);
     this.particles?.update(dt);
     this.updateCamera(dt);
     this.audio.updateListener(this.camera);
@@ -2092,7 +2554,8 @@ export class RealtimeBattle {
       const gimmick = this.getGimmickAt(grid.x, grid.y);
       const speedMult = gimmick?.effects?.movementSpeedMultiplier ?? 1.0;
       const mobilityBonus = Math.max(0, (this.mobilityLevel || 1) - 1);
-      const speed = baseSpeed * speedMult * (1.0 + 0.15 * mobilityBonus);
+      const benefitsMult = this.movementMultiplier;
+      const speed = baseSpeed * speedMult * (1.0 + 0.15 * mobilityBonus) * benefitsMult;
       targetVel.set((x / length) * speed, (z / length) * speed);
     }
     
@@ -2412,7 +2875,7 @@ export class RealtimeBattle {
   }
 
   updateCamera(dt = 0) {
-    const reducedMotion = globalThis.window?.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+    const reducedMotion = this.isReducedMotion;
     const alpha = reducedMotion ? 1.0 : Math.min(1, Math.max(0, 1 - Math.exp(-dt / 0.1304)));
     this.lookTarget.copy(this.commanderPosition);
     
@@ -2650,7 +3113,7 @@ export class RealtimeBattle {
   applyInteractiveHighlight(root, semantic, isHovered, isActionable, baseIntensity, dt) {
     if (!root) return;
 
-    const reducedMotion = this.presentation?.reducedMotion ?? false;
+    const reducedMotion = this.isReducedMotion;
     const time = performance.now() * 0.001;
 
     let emissiveIntensityMul = 1.0;
@@ -2746,6 +3209,7 @@ export class RealtimeBattle {
     if (!object) return null;
 
     const allows = (candidate) => {
+      if (candidate === "open-chest") return true;
       if (!this.getAvailableActions) return true;
       const available = this.getAvailableActions();
       return typeof available?.has === "function"
@@ -2875,7 +3339,7 @@ export class RealtimeBattle {
     const last = points[points.length - 1];
     preview.endpoint.position.copy(last);
 
-    const reducedMotion = this.presentation?.reducedMotion ?? false;
+    const reducedMotion = this.isReducedMotion;
     const time = performance.now() * 0.001;
     const endpointPulse = reducedMotion ? 1.0 : 1.0 + Math.sin(time * 12.0) * 0.15;
     preview.endpoint.scale.setScalar(endpointPulse);
@@ -2977,6 +3441,33 @@ export class RealtimeBattle {
     this.pointer.lastY = event.clientY;
   }
 
+  requestChestOpen() {
+    const chestId = this.renderedChest?.id ?? null;
+    if (
+      !this.onEncounterEvent
+      || chestId === null
+      || chestId !== this.pendingChestId
+      || this.chestOpenedRequested
+    ) {
+      return;
+    }
+
+    this.chestOpenedRequested = true;
+    const pos = this.chestGroup?.position ?? this.commanderPosition;
+    this.audio?.playTone?.(pos.x, pos.y + 0.4, pos.z, {
+      freq: 600,
+      endFreq: 1200,
+      duration: 0.4,
+      type: "sine",
+      gain: 0.6
+    });
+    this.onEncounterEvent({
+      type: "open-chest",
+      stageId: this.stageId,
+      chestId
+    });
+  }
+
   onPointerUp(event) {
     if (!this.pointer || this.pointer.id !== event.pointerId) return;
     const pointer = this.pointer;
@@ -3022,7 +3513,9 @@ export class RealtimeBattle {
         const upTime = event.timeStamp || Date.now();
         if (upTime - pointer.downTime <= 500) {
           const action = this.resolvePointerAction(event);
-          if (action) {
+          if (action === "open-chest") {
+            this.requestChestOpen();
+          } else if (action) {
             this.dispatchActionRequest(action, event);
           } else {
             const ally = this.resolvePointerAlly(event);
@@ -3054,7 +3547,9 @@ export class RealtimeBattle {
         const upTime = event.timeStamp || Date.now();
         if (upTime - pointer.downTime <= 500) {
           const action = this.resolvePointerAction(event);
-          if (action) {
+          if (action === "open-chest") {
+            this.requestChestOpen();
+          } else if (action) {
             this.dispatchActionRequest(action, event);
           } else {
             const ally = this.resolvePointerAlly(event);
@@ -3381,6 +3876,20 @@ export class RealtimeBattle {
 
   applyCampaignState({ campaign, stage, encounter, state } = {}) {
     if (this.destroyed) return;
+    this.latestCampaignState = state ?? campaign ?? null;
+    this.activeEffects = state?.stage?.activeEffects ?? campaign?.stage?.activeEffects ?? [];
+    try {
+      this.movementMultiplier = getCampaignBenefits(this.latestCampaignState).movementMultiplier;
+    } catch {
+      this.movementMultiplier = 1;
+    }
+    const pendingChest = state?.stage?.pendingChest ?? campaign?.stage?.pendingChest ?? null;
+    const pendingChestId = pendingChest?.id ?? null;
+    if (pendingChestId !== this.pendingChestId) {
+      this.pendingChestId = pendingChestId;
+      this.chestOpenedRequested = false;
+    }
+    this.reconcileChest(pendingChest);
     // bossPattern is stage config (campaign-state.js), not runtime state, so
     // it only needs to be re-latched when a stage changes, not every frame.
     this.bossPattern = stage?.bossPattern ?? null;
@@ -3452,6 +3961,279 @@ export class RealtimeBattle {
     this.reconcileDeployments(deployments);
     this.updateNodeVisuals();
     this.syncObjectFeedback({ silent: true });
+  }
+
+  reconcileChest(pendingChest) {
+    if (this.destroyed) return;
+    const currentId = this.renderedChest?.id ?? null;
+    const nextId = pendingChest?.id ?? null;
+
+    if (currentId === nextId) {
+      return;
+    }
+
+    if (this.renderedChest) {
+      this.removeChestVisuals();
+    }
+
+    if (pendingChest) {
+      this.createChestVisuals(pendingChest);
+    }
+  }
+
+  createChestVisuals(chest) {
+    if (!this.navigation || !this.navigation.cells || !this.scene) return;
+    const height = this.navigation.height || 12;
+    const width = this.navigation.width || 24;
+    const walkable = [];
+    for (let r = 0; r < height; r++) {
+      for (let c = 0; c < width; c++) {
+        if (this.navigation.cells[r] && this.navigation.cells[r][c] >= 0) {
+          walkable.push({ x: c, y: r, elevation: this.navigation.cells[r][c] });
+        }
+      }
+    }
+
+    if (walkable.length === 0) return;
+
+    const anchors = this.navigation.anchors;
+    const isAnchor = (x, y) => {
+      if (anchors.portal && Math.floor(anchors.portal.x) === x && Math.floor(anchors.portal.y) === y) return true;
+      if (anchors.boss && Math.floor(anchors.boss.x) === x && Math.floor(anchors.boss.y) === y) return true;
+      if (anchors.alliedSpawn && Math.floor(anchors.alliedSpawn.x) === x && Math.floor(anchors.alliedSpawn.y) === y) return true;
+      if (anchors.nodes && anchors.nodes.some(n => Math.floor(n.x) === x && Math.floor(n.y) === y)) return true;
+      return false;
+    };
+    const filtered = walkable.filter(cell => !isAnchor(cell.x, cell.y));
+    const cellsToUse = filtered.length > 0 ? filtered : walkable;
+
+    const chestId = chest.id || "chest-default";
+    let hash = 0;
+    for (let i = 0; i < chestId.length; i++) {
+      hash = (hash << 5) - hash + chestId.charCodeAt(i);
+      hash |= 0;
+    }
+    const index = Math.abs(hash) % cellsToUse.length;
+    const cell = cellsToUse[index];
+
+    const world = this.navigation.gridToWorld(cell.x + 0.5, cell.y + 0.5);
+    const elevation = cell.elevation;
+    const yPos = elevation * TERRAIN_ELEVATION_SCALE;
+    const chestPosition = new THREE.Vector3(world.x, yPos, world.z);
+
+    const chestGroup = new THREE.Group();
+    chestGroup.name = "chestGroup";
+    chestGroup.position.copy(chestPosition);
+
+    const baseGeom = new THREE.BoxGeometry(0.6, 0.3, 0.45);
+    const baseMat = new THREE.MeshStandardMaterial({
+      color: 0x8b5a2b,
+      roughness: 0.8,
+      metalness: 0.1
+    });
+    baseMat.userData.isRuntimeAssetClone = true;
+    const baseMesh = new THREE.Mesh(baseGeom, baseMat);
+    baseMesh.position.y = 0.15;
+    baseMesh.castShadow = true;
+    baseMesh.receiveShadow = true;
+    baseMesh.userData = { semantic: "open-chest" };
+    chestGroup.add(baseMesh);
+
+    const lidGeom = new THREE.BoxGeometry(0.62, 0.15, 0.47);
+    const lidMat = new THREE.MeshStandardMaterial({
+      color: 0xd4af37,
+      roughness: 0.4,
+      metalness: 0.8
+    });
+    lidMat.userData.isRuntimeAssetClone = true;
+    const lidMesh = new THREE.Mesh(lidGeom, lidMat);
+    lidMesh.position.y = 0.355;
+    lidMesh.castShadow = true;
+    lidMesh.receiveShadow = true;
+    lidMesh.userData = { semantic: "open-chest" };
+    chestGroup.add(lidMesh);
+
+    let auraMesh = null;
+    if (this.ringGeometry) {
+      const auraMat = new THREE.MeshBasicMaterial({
+        color: 0xffb85c,
+        transparent: true,
+        opacity: 0.5,
+        depthWrite: false
+      });
+      auraMat.userData.isRuntimeAssetClone = true;
+      auraMesh = new THREE.Mesh(this.ringGeometry, auraMat);
+      auraMesh.rotation.x = -Math.PI / 2;
+      auraMesh.position.y = 0.02;
+      auraMesh.scale.setScalar(0.7);
+      chestGroup.add(auraMesh);
+    }
+
+    chestGroup.userData = {
+      semantic: "open-chest",
+      chestId: chest.id
+    };
+
+    this.scene.add(chestGroup);
+    this.chestGroup = chestGroup;
+    this.renderedChest = chest;
+    this.chestAura = auraMesh;
+
+    this.interactives.push(baseMesh);
+    this.interactives.push(lidMesh);
+
+    this.audio?.playTone?.(chestPosition.x, chestPosition.y + 0.4, chestPosition.z, {
+      freq: 440,
+      endFreq: 880,
+      duration: 0.3,
+      type: "sine",
+      gain: 0.5
+    });
+  }
+
+  removeChestVisuals() {
+    if (this.chestGroup) {
+      if (this.scene) this.scene.remove(this.chestGroup);
+
+      this.chestGroup.traverse((node) => {
+        if (node.isMesh) {
+          const index = this.interactives.indexOf(node);
+          if (index !== -1) {
+            this.interactives.splice(index, 1);
+          }
+        }
+      });
+
+      disposeObjectResources(this.chestGroup, this.disposedResources);
+      this.chestGroup = null;
+      this.chestAura = null;
+    }
+    this.renderedChest = null;
+  }
+
+  updateChest(dt) {
+    if (this.chestGroup && this.chestAura) {
+      const elapsed = performance.now() * 0.005;
+      const pulse = (Math.sin(elapsed) + 1.0) * 0.5;
+      this.chestAura.scale.setScalar(0.6 + pulse * 0.3);
+      if (this.chestAura.material) {
+        this.chestAura.material.opacity = 0.2 + (1.0 - pulse) * 0.6;
+      }
+
+      this.chestParticleTimer = (this.chestParticleTimer || 0) - dt;
+      if (this.chestParticleTimer <= 0) {
+        this.chestParticleTimer = 0.4;
+        const pos = this.chestGroup.position;
+        const t = performance.now() * 0.001;
+        const offsetX = Math.sin(t * 10) * 0.2;
+        const offsetZ = Math.cos(t * 17) * 0.2;
+        this.particles?.emit(pos.x + offsetX, pos.y + 0.1, pos.z + offsetZ, "#ffb85c", 1, {
+          speedMin: 0.1, speedMax: 0.3, life: 0.6, gravity: -0.5, upBias: 0.4
+        });
+      }
+    }
+  }
+
+  mapEffectType(type) {
+    const t = String(type || "").toUpperCase();
+    if (t === "HASTE_SPEED" || t === "HASTE") return "HASTE";
+    if (t === "DEFENSE_SHIELDED" || t === "SHIELDED" || t === "DEFENSE") return "DEFENSE";
+    if (t === "EVASION") return "EVASION";
+    return t;
+  }
+
+  updateActiveEffects(dt) {
+    if (this.destroyed) return;
+
+    this.lastEffectsSet = this.lastEffectsSet || new Set();
+    const currentTypes = new Set((this.activeEffects || []).map(e => this.mapEffectType(e.type)));
+    for (const type of currentTypes) {
+      if (!this.lastEffectsSet.has(type)) {
+        let speech = "";
+        let target = "commander";
+        if (type === "ATTACK") speech = "Attacks empowered!";
+        else if (type === "DEFENSE") speech = "Aegis online.";
+        else if (type === "HASTE") speech = "Haste activated!";
+        else if (type === "INVINCIBLE") speech = "Invulnerable!";
+        else if (type === "EVASION") speech = "Evasion active.";
+        else if (type === "DEBUFF") {
+          speech = "Power fading...";
+          target = "boss";
+        }
+        if (speech && this.objectFeedback) {
+          if (target === "commander" && this.commander) {
+            this.objectFeedback.emitSpeech("commander", speech);
+          } else if (target === "boss" && this.boss && !this.boss.defeated) {
+            this.objectFeedback.emitSpeech("boss", speech);
+          }
+        }
+      }
+    }
+    this.lastEffectsSet = currentTypes;
+
+    if (this.commander && this.commander.root && this.ringGeometry) {
+      const hasShield = this.activeEffects?.some(e => {
+        const m = this.mapEffectType(e.type);
+        return m === "DEFENSE";
+      });
+      const hasInvincible = this.activeEffects?.some(e => {
+        const m = this.mapEffectType(e.type);
+        return m === "INVINCIBLE";
+      });
+      if (hasShield || hasInvincible) {
+        if (!this.commanderShieldRing) {
+          const ringColor = hasInvincible ? "#ffffff" : "#3377ff";
+          const ringMat = new THREE.MeshBasicMaterial({
+            color: ringColor,
+            transparent: true,
+            opacity: 0.75,
+            depthWrite: false
+          });
+          ringMat.userData.isRuntimeAssetClone = true;
+          const ring = new THREE.Mesh(this.ringGeometry, ringMat);
+          ring.rotation.x = -Math.PI / 2;
+          ring.position.y = 0.05;
+          ring.renderOrder = 13;
+          this.commander.root.add(ring);
+          this.commanderShieldRing = ring;
+        } else {
+          this.commanderShieldRing.material.color.set(hasInvincible ? "#ffffff" : "#3377ff");
+          this.commanderShieldRing.visible = true;
+        }
+      } else if (this.commanderShieldRing) {
+        this.commanderShieldRing.visible = false;
+      }
+    }
+
+    this.effectsTimer = (this.effectsTimer || 0) - dt;
+    if (this.effectsTimer <= 0) {
+      this.effectsTimer = 0.15;
+
+      for (const effect of (this.activeEffects || [])) {
+        const mapped = this.mapEffectType(effect.type);
+        if (mapped !== "DEBUFF" && this.commanderPosition && this.commander && !this.commander.defeated) {
+          const color = mapped === "ATTACK" ? "#ff3333"
+                      : mapped === "DEFENSE" ? "#3377ff"
+                      : mapped === "HASTE" ? "#ffcc00"
+                      : mapped === "INVINCIBLE" ? "#ffffff"
+                      : mapped === "EVASION" ? "#33ffaa" : "#888888";
+          const t = performance.now() * 0.002;
+          const offsetX = Math.sin(t * 7) * 0.25;
+          const offsetZ = Math.cos(t * 7) * 0.25;
+          this.particles?.emit(this.commanderPosition.x + offsetX, this.commanderPosition.y + 0.2, this.commanderPosition.z + offsetZ, color, 1, {
+            speedMin: 0.1, speedMax: 0.3, life: 0.4, gravity: -0.2, upBias: 0.2
+          });
+        } else if (mapped === "DEBUFF" && this.boss && !this.boss.defeated && this.boss.root) {
+          const pos = this.boss.root.position;
+          const t = performance.now() * 0.002;
+          const offsetX = Math.sin(t * 9) * 0.3;
+          const offsetZ = Math.cos(t * 9) * 0.3;
+          this.particles?.emit(pos.x + offsetX, pos.y + 0.5, pos.z + offsetZ, "#cc33ff", 1, {
+            speedMin: 0.1, speedMax: 0.3, life: 0.5, gravity: 0.5, upBias: 0.1
+          });
+        }
+      }
+    }
   }
 
   reconcileEncounterWave(activeWaveId = this.encounter?.state?.activeWaveId ?? null) {
@@ -3595,9 +4377,29 @@ export class RealtimeBattle {
       model = "units/scout.glb";
     }
     for (let index = 0; index < count; index += 1) {
-      const enemy = this.cloneTemplate(model, 1.2);
-      enemy.radius = 0.42;
+      const isEliteCommander = wave.commander === true && index === 0;
+      const enemy = this.cloneTemplate(model, isEliteCommander ? 1.8 : 1.2);
+      enemy.radius = isEliteCommander ? 0.63 : 0.42;
       enemy.id = `enemy-${wave.id || "wave"}-${this.enemySerial}`;
+      if (isEliteCommander) {
+        this.ownRuntimeMaterials(enemy.root);
+        const accentColor = new THREE.Color("#ff4400");
+        enemy.root.traverse((node) => {
+          if (node.isMesh && node.material) {
+            const materials = Array.isArray(node.material) ? node.material : [node.material];
+            for (const mat of materials) {
+              if (mat && mat.userData?.isRuntimeOwnedMaterial) {
+                if (mat.emissive && typeof mat.emissive.set === "function") {
+                  mat.emissive.set(accentColor);
+                } else {
+                  mat.emissive = accentColor;
+                }
+                mat.emissiveIntensity = 0.22;
+              }
+            }
+          }
+        });
+      }
       const routeIndex = index % 3;
       const routeCells = this.navigation.routePath(routeIndex, true);
       const spawnWorld = this.navigation.gridToWorld(routeCells[0].x + 0.5, routeCells[0].y + 0.5);
@@ -3648,7 +4450,9 @@ export class RealtimeBattle {
       }
       enemy.waypointIndex = 0;
       
-      enemy.hp = Math.max(1, Number(wave.hostileHealth) || 2);
+      const baseHp = Math.max(1, Number(wave.hostileHealth) || 2);
+      enemy.hp = isEliteCommander ? baseHp * 1.5 : baseHp;
+      enemy.maxHealth = enemy.hp;
       enemy.archetype = wave.id;
       enemy.alertTimer = Number(pattern?.movement?.alertOffset) || (0.35 + routeIndex * 0.18);
       enemy.pauseTimer = 0;
@@ -4266,6 +5070,33 @@ export class RealtimeBattle {
       });
     }
     const focus = this.focusedCell ? { x: this.focusedCell.x, y: this.focusedCell.y } : null;
+    const rendererCanvas = this.renderer?.domElement || this.canvas;
+    const canvasRect = typeof rendererCanvas?.getBoundingClientRect === "function"
+      ? rendererCanvas.getBoundingClientRect()
+      : null;
+    const canvasWidth = Number(canvasRect?.width)
+      || Number(rendererCanvas?.clientWidth)
+      || Number(rendererCanvas?.width);
+    const canvasHeight = Number(canvasRect?.height)
+      || Number(rendererCanvas?.clientHeight)
+      || Number(rendererCanvas?.height);
+    const measuredAspect = canvasWidth > 0 && canvasHeight > 0 ? canvasWidth / canvasHeight : NaN;
+    const aspect = Number.isFinite(measuredAspect) && measuredAspect > 0
+      ? measuredAspect
+      : (Number.isFinite(this.camera?.aspect) && this.camera.aspect > 0 ? this.camera.aspect : 1);
+    const zoom = Number.isFinite(this.zoom) && this.zoom > 0 ? this.zoom : 1;
+    const elevation = Number.isFinite(this.orbitElevation) ? this.orbitElevation : Math.PI / 2;
+    const halfViewHeight = Math.tan(24 * Math.PI / 180) * zoom;
+    const groundDepthScale = Math.max(Math.abs(Math.sin(elevation)), 0.001);
+    const computedWidth = halfViewHeight * 2 * aspect;
+    const computedDepth = halfViewHeight * 2 / groundDepthScale;
+    const viewport = {
+      x: Number.isFinite(this.lookTarget?.x) ? this.lookTarget.x : 0,
+      z: Number.isFinite(this.lookTarget?.z) ? this.lookTarget.z : 0,
+      zoom,
+      width: Number.isFinite(computedWidth) && computedWidth > 0 ? Math.max(0.001, computedWidth) : 0.001,
+      depth: Number.isFinite(computedDepth) && computedDepth > 0 ? Math.max(0.001, computedDepth) : 0.001,
+    };
     return {
       stageNumber: this.stageNumber,
       navigation: this.cachedNavigationSnapshot || {},
@@ -4275,7 +5106,7 @@ export class RealtimeBattle {
       selectionCount: this.selection ? this.selection.size : 0,
       placementMode: this.placementMode,
       towerShots: this.frameShots || [],
-      viewport: this.camera ? { x: this.camera.position.x, z: this.camera.position.z, zoom: this.zoom } : null
+      viewport,
     };
   }
 
@@ -4341,7 +5172,7 @@ export class RealtimeBattle {
           ally.root.add(ring);
           ally.selectionRing = ring;
         }
-        const reducedMotion = this.presentation?.reducedMotion ?? false;
+        const reducedMotion = this.isReducedMotion;
         const pulse = reducedMotion ? 0 : (Math.sin(performance.now() * 0.008) + 1) * 0.5;
         ally.selectionRing.scale.setScalar(0.78 + pulse * 0.12);
         ally.selectionRing.material.opacity = 0.76 + pulse * 0.2;
@@ -4355,7 +5186,7 @@ export class RealtimeBattle {
 
     // Update active route preview endpoint pulse continuously
     if (this.routePreviewActive && this.routePreview?.endpoint) {
-      const reducedMotion = this.presentation?.reducedMotion ?? false;
+      const reducedMotion = this.isReducedMotion;
       const time = performance.now() * 0.001;
       const endpointPulse = reducedMotion ? 1.0 : 1.0 + Math.sin(time * 12.0) * 0.15;
       this.routePreview.endpoint.scale.setScalar(endpointPulse);
@@ -4489,7 +5320,7 @@ export class RealtimeBattle {
       }
       this.commanderDestinationMarker.position.copy(destination);
       this.commanderDestinationMarker.visible = true;
-      const reducedMotion = this.presentation?.reducedMotion ?? false;
+      const reducedMotion = this.isReducedMotion;
       const pulse = reducedMotion ? 1.0 : 1.0 + Math.sin(performance.now() * 0.001 * 10.0) * 0.18;
       this.commanderDestinationMarker.scale.setScalar(pulse);
     } else {
@@ -4536,7 +5367,7 @@ export class RealtimeBattle {
     const elevation = this.navigationAt(this.rally.x, this.rally.z)?.elevation ?? 0;
     this.allyRallyMarker.position.set(this.rally.x, elevation * TERRAIN_ELEVATION_SCALE + 0.09, this.rally.z);
     this.allyRallyMarker.visible = true;
-    const reducedMotion = this.presentation?.reducedMotion ?? false;
+    const reducedMotion = this.isReducedMotion;
     const pulse = reducedMotion ? 1.0 : 1.0 + Math.sin(performance.now() * 0.001 * 10.0) * 0.18;
     this.allyRallyMarker.scale.setScalar(pulse);
   }
@@ -4908,12 +5739,31 @@ export class RealtimeBattle {
 
   destroy() {
     if (this.destroyed) return;
+    this.removeChestVisuals?.();
+    this.pendingChestId = null;
+    this.chestOpenedRequested = false;
+    if (this.commanderShieldRing) {
+      if (this.commander && this.commander.root) {
+        this.commander.root.remove(this.commanderShieldRing);
+      }
+      this.commanderShieldRing.geometry?.dispose();
+      this.commanderShieldRing.material?.dispose();
+      this.commanderShieldRing = null;
+    }
+    this.activeEffects = [];
+    this.latestCampaignState = null;
+    this.movementMultiplier = 1;
     this.clearHover();
     this.clearActionPreview();
     this.destroyed = true;
     this.running = false;
     if (this.raf) cancelAnimationFrame(this.raf);
     this.raf = 0;
+    if (this.stageIdentityGroup) {
+      this.scene.remove(this.stageIdentityGroup);
+      disposeObjectResources(this.stageIdentityGroup, this.disposedResources);
+      this.stageIdentityGroup = null;
+    }
     this.resizeObserver?.disconnect();
     document.removeEventListener("visibilitychange", this.bound.visibility);
     globalThis.window?.removeEventListener("blur", this.bound.blur);
@@ -5013,6 +5863,8 @@ export class RealtimeBattle {
       this.keyLight.shadow?.dispose?.();
       this.keyLight = null;
     }
+    this.bossThreatRing = null;
+    this.stageId = null;
     this.fillLight = null;
     this.rimLight = null;
     if (this.ringGeometry) {
@@ -5053,8 +5905,13 @@ export class RealtimeBattle {
       disposeUnique(this.backgroundTexture, this.disposedResources);
       this.backgroundTexture = null;
     }
+    if (this.environmentMap) {
+      disposeUnique(this.environmentMap, this.disposedResources);
+      this.environmentMap = null;
+    }
     if (this.scene) {
       this.scene.background = null;
+      this.scene.environment = null;
     }
     this.ambientLight = null;
     if (this.contactGeometry) {

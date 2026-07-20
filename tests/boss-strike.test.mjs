@@ -46,14 +46,17 @@ test("boss-strike deals its declared pattern damage and is independent of exposu
   assert.equal(result.effect, "boss-strike");
 });
 
-test("boss-strike works on stages with no declared wave encounter (e.g. veil-citadel)", () => {
-  let state = start();
-  // Skip straight to veil-citadel by walking the reward flow deterministically
-  // is unnecessary here: boss-strike only needs an active stage, so validate
-  // directly against every stage id, including the two without `encounter`.
-  for (const stageId of ["veil-citadel", "echo-throne"]) {
-    const stage = STAGES_BY_ID[stageId];
-    assert.equal(stage.encounter, undefined, `${stageId} is expected to have no wave encounter for this assertion`);
+test("all ten stages declare wave encounters alongside valid boss-strike patterns", () => {
+  assert.equal(STAGES.length, 10, "the complete campaign must retain all ten declared stages");
+  for (const stage of STAGES) {
+    assert.ok(
+      Array.isArray(stage.encounter?.waves) && stage.encounter.waves.length > 0,
+      `${stage.id} must declare at least one encounter wave`,
+    );
+    assert.ok(
+      stage.bossPattern && ["melee", "ranged", "aoe"].includes(stage.bossPattern.type),
+      `${stage.id} must retain a valid boss-strike pattern alongside its wave encounter`,
+    );
   }
 });
 

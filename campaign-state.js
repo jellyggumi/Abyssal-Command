@@ -1,8 +1,65 @@
 import { createStageNavigation } from "./stage-navigation.js";
 
-export const RULES_VERSION = "abyssal-surge-rules-v7";
+export const RULES_VERSION = "abyssal-surge-rules-v8";
 export const SAVE_SCHEMA = "abyssal-surge-campaign";
 export const SAVE_SCHEMA_VERSION = 5;
+
+export const FIELD_ITEM_CATALOG = Object.freeze([
+  Object.freeze({ id: "void-blade", name: "Void Blade", description: "Attack boost", effect: Object.freeze({ type: "ATTACK", value: 2, charges: 2 }) }),
+  Object.freeze({ id: "iron-resolve", name: "Iron Resolve", description: "Defense boost", effect: Object.freeze({ type: "DEFENSE", value: 1, charges: 3 }) }),
+  Object.freeze({ id: "tempest-boots", name: "Tempest Boots", description: "Haste/speed boost", effect: Object.freeze({ type: "HASTE", value: 0.25, charges: 3 }) }),
+  Object.freeze({ id: "aegis-shield", name: "Aegis Shield", description: "Blocks next damage", effect: Object.freeze({ type: "INVINCIBLE", value: 1, charges: 1 }) }),
+  Object.freeze({ id: "shadow-cloak", name: "Shadow Cloak", description: "Evade next boss strike", effect: Object.freeze({ type: "EVASION", value: 1, charges: 2 }) }),
+  Object.freeze({ id: "crippling-curse", name: "Crippling Curse", description: "Enemy debuff", effect: Object.freeze({ type: "DEBUFF", value: 1, charges: 2 }) })
+]);
+
+const FIELD_EVENT_CATALOG = Object.freeze([
+  Object.freeze({ type: "ATTACK", value: 1, charges: 1 }),
+  Object.freeze({ type: "DEFENSE", value: 1, charges: 1 }),
+  Object.freeze({ type: "HASTE", value: 0.15, charges: 2 }),
+  Object.freeze({ type: "INVINCIBLE", value: 1, charges: 1 }),
+  Object.freeze({ type: "EVASION", value: 1, charges: 1 }),
+  Object.freeze({ type: "DEBUFF", value: 1, charges: 1 })
+]);
+
+function consumeEffect(effects, type) {
+  if (!effects) return { active: false, value: 0 };
+  const index = effects.findIndex(eff => {
+    if (type === "DEFENSE") {
+      return (eff.type === "DEFENSE" || eff.type === "SHIELDED") && eff.charges > 0;
+    }
+    return eff.type === type && eff.charges > 0;
+  });
+  if (index !== -1) {
+    const eff = effects[index];
+    eff.charges -= 1;
+    const value = eff.value;
+    if (eff.charges <= 0) {
+      effects.splice(index, 1);
+    }
+    return { active: true, value };
+  }
+  return { active: false, value: 0 };
+}
+
+function addEffect(effects, incoming) {
+  const maxCharges = 5;
+  const typeKey = incoming.type === "SHIELDED" ? "DEFENSE" : incoming.type;
+  const existing = effects.find(eff => {
+    const effType = eff.type === "SHIELDED" ? "DEFENSE" : eff.type;
+    return effType === typeKey;
+  });
+  if (existing) {
+    existing.charges = Math.min(maxCharges, existing.charges + incoming.charges);
+    existing.value = Math.max(existing.value, incoming.value);
+  } else {
+    effects.push({
+      type: typeKey,
+      value: incoming.value,
+      charges: Math.min(maxCharges, incoming.charges)
+    });
+  }
+}
 
 // Campaign-wide limits only. Encounter, command, boss, and reward rules live
 // with the stage that owns them.
@@ -112,7 +169,7 @@ export const STAGES = Object.freeze([
     // anyone who lingers inside triggerRange on its own cooldown, regardless
     // of exposure/possession — see applyEncounterEvent's "boss-strike" branch.
     bossPattern: Object.freeze({ type: "melee", triggerRange: 4.5, cooldownSeconds: 5, damage: 1 }),
-    rewardIntegrityRestore: 1,
+    rewardIntegrityRestore: 0,
     progression: STANDARD_PROGRESSION,
     commands: Object.freeze({
       hunt: Object.freeze({ cooldown: STANDARD_COMMAND_COOLDOWNS.hunt }),
@@ -130,9 +187,9 @@ export const STAGES = Object.freeze([
       preparationLegion: 4,
       preparationNodes: 1,
       waves: Object.freeze([
-        Object.freeze({ id: "scout", spawnAtSeconds: 12, hostiles: 2, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "guard", spawnAtSeconds: 33, hostiles: 3, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "reinforcement", spawnAtSeconds: 54, hostiles: 3, hostileHealth: 2, breachDamage: 1 })
+        Object.freeze({ id: "scout", spawnAtSeconds: 15, hostiles: 2, hostileHealth: 2, breachDamage: 1, pattern: "rusher" }),
+        Object.freeze({ id: "guard", spawnAtSeconds: 130, hostiles: 3, hostileHealth: 2, breachDamage: 1, pattern: "guardian" }),
+        Object.freeze({ id: "reinforcement", spawnAtSeconds: 245, hostiles: 3, hostileHealth: 2, breachDamage: 1, pattern: "flanker" })
       ])
     }),
     rewards: Object.freeze([
@@ -158,12 +215,12 @@ export const STAGES = Object.freeze([
     nextStageId: "echo-throne",
     title: "Veil Citadel",
     region: "A fortress of listening stone",
-    objective: "Carry your first boon, hold both signal nodes, possess a sentinel, and defeat the tactician who commands the veil.",
+    objective: "Carry your first boon, hold both signal nodes, possess a sentinel, clear three signal waves, and defeat the tactician who commands the veil.",
     nodeGoal: 2,
     bossName: "Veil Tactician",
     bossHealth: 10,
     bossPattern: Object.freeze({ type: "ranged", triggerRange: 6, cooldownSeconds: 6, damage: 1 }),
-    rewardIntegrityRestore: 1,
+    rewardIntegrityRestore: 0,
     progression: STANDARD_PROGRESSION,
     commands: Object.freeze({
       hunt: Object.freeze({ cooldown: STANDARD_COMMAND_COOLDOWNS.hunt }),
@@ -178,6 +235,16 @@ export const STAGES = Object.freeze([
         requiresPossessed: true,
         counter: Object.freeze({ mode: "shielded", baseDamage: 2, shieldDivisor: 4, thinLegion: 4, thinPenalty: 1 })
       })
+    }),
+    encounter: Object.freeze({
+      preparationSeconds: 12,
+      preparationLegion: 4,
+      preparationNodes: 2,
+      waves: Object.freeze([
+        Object.freeze({ id: "probing", spawnAtSeconds: 15, hostiles: 3, hostileHealth: 2, breachDamage: 1, pattern: "flanker" }),
+        Object.freeze({ id: "pressure", spawnAtSeconds: 130, hostiles: 3, hostileHealth: 2, breachDamage: 1, pattern: "ranged" }),
+        Object.freeze({ id: "screen", spawnAtSeconds: 245, hostiles: 4, hostileHealth: 2, breachDamage: 1, pattern: "guardian" })
+      ])
     }),
     rewards: Object.freeze([
       Object.freeze({ id: "veil-vanguard", name: "Veil Vanguard", description: "Start Echo Throne with four shades already raised; this skips setup but remains a thin legion.", effects: Object.freeze({ stageEntry: Object.freeze({ "echo-throne": Object.freeze({ legion: 4 }) }) }) }),
@@ -200,7 +267,7 @@ export const STAGES = Object.freeze([
     nextStageId: "sunken-bastion",
     title: "Echo Throne",
     region: "The gate above the last remembered sea",
-    objective: "Carry both boons, secure the throne node, invoke the one-use Lord's Domain comeback, and unmake the Gate Sovereign.",
+    objective: "Carry both boons, secure the throne node, invoke the one-use Lord's Domain comeback, survive four throne waves, and unmake the Gate Sovereign.",
     nodeGoal: 1,
     bossName: "Gate Sovereign",
     bossHealth: 17,
@@ -218,8 +285,19 @@ export const STAGES = Object.freeze([
         cooldown: STANDARD_COMMAND_COOLDOWNS.assault,
         damage: 4,
         possessedDamage: 1,
-        counter: Object.freeze({ mode: "shielded", baseDamage: 6, shieldDivisor: 4, thinLegion: 5, thinPenalty: 1 })
+        counter: Object.freeze({ mode: "shielded", baseDamage: 8, shieldDivisor: 4, thinLegion: 5, thinPenalty: 1 })
       })
+    }),
+    encounter: Object.freeze({
+      preparationSeconds: 12,
+      preparationLegion: 4,
+      preparationNodes: 1,
+      waves: Object.freeze([
+        Object.freeze({ id: "advance", spawnAtSeconds: 15, hostiles: 4, hostileHealth: 2, breachDamage: 1, pattern: "rusher" }),
+        Object.freeze({ id: "phalanx", spawnAtSeconds: 90, hostiles: 5, hostileHealth: 2, breachDamage: 1, pattern: "guardian" }),
+        Object.freeze({ id: "crossing", spawnAtSeconds: 165, hostiles: 5, hostileHealth: 2, breachDamage: 1, pattern: "flanker" }),
+        Object.freeze({ id: "onslaught", spawnAtSeconds: 240, hostiles: 6, hostileHealth: 3, breachDamage: 1, pattern: "ranged" })
+      ])
     }),
     rewards: Object.freeze([
       Object.freeze({ id: "throne-echo", name: "Throne Echo", description: "Records the legion's final oath in the campaign archive.", effects: Object.freeze({}) }),
@@ -240,7 +318,7 @@ export const STAGES = Object.freeze([
     nextStageId: "howling-sprawl",
     title: "Sunken Bastion",
     region: "A drowned breakwater fortress reclaimed by the tide",
-    objective: "Raise the legion above the waterline, hold the flood node, weather four tide waves, and drown the Tide Warden's claim.",
+    objective: "Scale the fog tower stairs, hold the vertical platform, weather four vertical waves, and drown the Tide Warden's claim.",
     nodeGoal: 1,
     bossName: "Tide Warden",
     bossHealth: 12,
@@ -262,10 +340,10 @@ export const STAGES = Object.freeze([
       preparationSeconds: 12,
       preparationLegion: 2,
       waves: Object.freeze([
-        Object.freeze({ id: "tide", spawnAtSeconds: 15, hostiles: 3, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "undertow", spawnAtSeconds: 36, hostiles: 3, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "riptide", spawnAtSeconds: 57, hostiles: 4, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "depthguard", spawnAtSeconds: 78, hostiles: 4, hostileHealth: 3, breachDamage: 1 })
+        Object.freeze({ id: "tide", spawnAtSeconds: 15, hostiles: 3, hostileHealth: 2, breachDamage: 1, pattern: "rusher" }),
+        Object.freeze({ id: "undertow", spawnAtSeconds: 90, hostiles: 3, hostileHealth: 2, breachDamage: 1, pattern: "ranged" }),
+        Object.freeze({ id: "riptide", spawnAtSeconds: 165, hostiles: 4, hostileHealth: 2, breachDamage: 1, pattern: "ranged" }),
+        Object.freeze({ id: "depthguard", spawnAtSeconds: 240, hostiles: 4, hostileHealth: 3, breachDamage: 1, pattern: "guardian" })
       ])
     }),
     rewards: Object.freeze([
@@ -289,7 +367,7 @@ export const STAGES = Object.freeze([
     nextStageId: "glass-necropolis",
     title: "Howling Sprawl",
     region: "A moonlit ruin district ruled by the pack",
-    objective: "Take the howl node, possess a pack sentinel, survive four hunting waves, and silence the Pack Herald.",
+    objective: "Hold the cave choke node, possess a pack sentinel, survive four hunting waves, and silence the Pack Herald.",
     nodeGoal: 1,
     bossName: "Pack Herald",
     bossHealth: 14,
@@ -313,10 +391,10 @@ export const STAGES = Object.freeze([
       preparationSeconds: 12,
       preparationLegion: 2,
       waves: Object.freeze([
-        Object.freeze({ id: "howler", spawnAtSeconds: 15, hostiles: 3, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "packrunner", spawnAtSeconds: 36, hostiles: 4, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "alphaguard", spawnAtSeconds: 57, hostiles: 4, hostileHealth: 3, breachDamage: 1 }),
-        Object.freeze({ id: "direpack", spawnAtSeconds: 78, hostiles: 5, hostileHealth: 3, breachDamage: 1 })
+        Object.freeze({ id: "howler", spawnAtSeconds: 15, hostiles: 3, hostileHealth: 2, breachDamage: 1, pattern: "rusher" }),
+        Object.freeze({ id: "packrunner", spawnAtSeconds: 90, hostiles: 4, hostileHealth: 2, breachDamage: 1, pattern: "flanker" }),
+        Object.freeze({ id: "alphaguard", spawnAtSeconds: 165, hostiles: 4, hostileHealth: 3, breachDamage: 1, pattern: "guardian" }),
+        Object.freeze({ id: "direpack", spawnAtSeconds: 240, hostiles: 5, hostileHealth: 3, breachDamage: 1, pattern: "guardian" })
       ])
     }),
     rewards: Object.freeze([
@@ -340,7 +418,7 @@ export const STAGES = Object.freeze([
     nextStageId: "starless-canal",
     title: "Glass Necropolis",
     region: "A cathedral of grave-glass that sings back every march",
-    objective: "Hold both glass nodes, possess a chorister sentinel, endure four requiem waves, and shatter the Requiem Choir.",
+    objective: "Hold both swamp nodes, possess a chorister sentinel, endure four cavalry flank waves, and shatter the Requiem Choir.",
     nodeGoal: 2,
     bossName: "Requiem Choir",
     bossHealth: 16,
@@ -365,10 +443,10 @@ export const STAGES = Object.freeze([
       preparationSeconds: 12,
       preparationLegion: 2,
       waves: Object.freeze([
-        Object.freeze({ id: "requiem", spawnAtSeconds: 15, hostiles: 4, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "dirge", spawnAtSeconds: 39, hostiles: 4, hostileHealth: 3, breachDamage: 1 }),
-        Object.freeze({ id: "lament", spawnAtSeconds: 63, hostiles: 5, hostileHealth: 3, breachDamage: 1 }),
-        Object.freeze({ id: "threnody", spawnAtSeconds: 87, hostiles: 5, hostileHealth: 3, breachDamage: 1 })
+        Object.freeze({ id: "requiem", spawnAtSeconds: 15, hostiles: 4, hostileHealth: 2, breachDamage: 1, pattern: "flanker" }),
+        Object.freeze({ id: "dirge", spawnAtSeconds: 90, hostiles: 4, hostileHealth: 3, breachDamage: 1, pattern: "flanker" }),
+        Object.freeze({ id: "lament", spawnAtSeconds: 165, hostiles: 5, hostileHealth: 3, breachDamage: 1, pattern: "rusher" }),
+        Object.freeze({ id: "threnody", spawnAtSeconds: 240, hostiles: 5, hostileHealth: 3, breachDamage: 1, pattern: "guardian" })
       ])
     }),
     rewards: Object.freeze([
@@ -392,7 +470,7 @@ export const STAGES = Object.freeze([
     nextStageId: "shattered-causeway",
     title: "Starless Canal",
     region: "A lightless waterway strung with tyrant lanterns",
-    objective: "Seize both toll nodes, reopen Lord's Domain, outlast four lantern waves, and douse the Lantern Tyrant.",
+    objective: "Seize both canal keep nodes, reopen Lord's Domain, outlast four castle siege waves, and douse the Lantern Tyrant.",
     nodeGoal: 2,
     bossName: "Lantern Tyrant",
     bossHealth: 18,
@@ -417,10 +495,10 @@ export const STAGES = Object.freeze([
       preparationSeconds: 12,
       preparationLegion: 3,
       waves: Object.freeze([
-        Object.freeze({ id: "lantern", spawnAtSeconds: 15, hostiles: 4, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "bargeguard", spawnAtSeconds: 39, hostiles: 5, hostileHealth: 3, breachDamage: 1 }),
-        Object.freeze({ id: "tollkeeper", spawnAtSeconds: 63, hostiles: 5, hostileHealth: 3, breachDamage: 1 }),
-        Object.freeze({ id: "tyrantwake", spawnAtSeconds: 87, hostiles: 6, hostileHealth: 3, breachDamage: 1 })
+        Object.freeze({ id: "lantern", spawnAtSeconds: 15, hostiles: 4, hostileHealth: 2, breachDamage: 1, pattern: "rusher" }),
+        Object.freeze({ id: "bargeguard", spawnAtSeconds: 90, hostiles: 5, hostileHealth: 3, breachDamage: 1, pattern: "guardian" }),
+        Object.freeze({ id: "tollkeeper", spawnAtSeconds: 165, hostiles: 5, hostileHealth: 3, breachDamage: 1, pattern: "ranged" }),
+        Object.freeze({ id: "tyrantwake", spawnAtSeconds: 240, hostiles: 6, hostileHealth: 3, breachDamage: 1, pattern: "rusher" })
       ])
     }),
     rewards: Object.freeze([
@@ -444,7 +522,7 @@ export const STAGES = Object.freeze([
     nextStageId: "abyss-chancel",
     title: "Shattered Causeway",
     region: "The broken land-bridge where a colossus still stands watch",
-    objective: "Anchor both span nodes, invoke the Domain, break five siege waves, and topple the Bridge Colossus.",
+    objective: "Anchor both bridge-cathedral nodes to recover the relic, invoke the Domain, break four siege waves, and topple the Bridge Colossus.",
     nodeGoal: 2,
     bossName: "Bridge Colossus",
     bossHealth: 20,
@@ -469,10 +547,10 @@ export const STAGES = Object.freeze([
       preparationSeconds: 12,
       preparationLegion: 3,
       waves: Object.freeze([
-        Object.freeze({ id: "rubble", spawnAtSeconds: 15, hostiles: 4, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "spanwarden", spawnAtSeconds: 39, hostiles: 5, hostileHealth: 3, breachDamage: 1 }),
-        Object.freeze({ id: "keystone", spawnAtSeconds: 63, hostiles: 5, hostileHealth: 3, breachDamage: 1 }),
-        Object.freeze({ id: "colossusguard", spawnAtSeconds: 87, hostiles: 6, hostileHealth: 4, breachDamage: 1 })
+        Object.freeze({ id: "rubble", spawnAtSeconds: 15, hostiles: 4, hostileHealth: 2, breachDamage: 1, pattern: "rusher" }),
+        Object.freeze({ id: "spanwarden", spawnAtSeconds: 90, hostiles: 5, hostileHealth: 3, breachDamage: 1, pattern: "guardian" }),
+        Object.freeze({ id: "keystone", spawnAtSeconds: 165, hostiles: 5, hostileHealth: 3, breachDamage: 1, pattern: "flanker" }),
+        Object.freeze({ id: "colossusguard", spawnAtSeconds: 240, hostiles: 6, hostileHealth: 4, breachDamage: 1, pattern: "guardian" })
       ])
     }),
     rewards: Object.freeze([
@@ -496,7 +574,7 @@ export const STAGES = Object.freeze([
     nextStageId: "gate-zenith",
     title: "Abyss Chancel",
     region: "A floating chancel where the Concordat signs the abyss away",
-    objective: "Claim all three rite nodes, possess a signatory, open the Domain, survive four oath waves, and unbind the Veiled Concordat.",
+    objective: "Claim all three soul altar nodes, possess a signatory, open the Domain, survive four ritual waves, and unbind the Veiled Concordat.",
     nodeGoal: 3,
     bossName: "Veiled Concordat",
     bossHealth: 22,
@@ -522,10 +600,10 @@ export const STAGES = Object.freeze([
       preparationSeconds: 12,
       preparationLegion: 3,
       waves: Object.freeze([
-        Object.freeze({ id: "acolyte", spawnAtSeconds: 15, hostiles: 4, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "votary", spawnAtSeconds: 39, hostiles: 5, hostileHealth: 3, breachDamage: 1 }),
-        Object.freeze({ id: "oathbound", spawnAtSeconds: 63, hostiles: 6, hostileHealth: 3, breachDamage: 1 }),
-        Object.freeze({ id: "concord", spawnAtSeconds: 87, hostiles: 6, hostileHealth: 4, breachDamage: 1 })
+        Object.freeze({ id: "acolyte", spawnAtSeconds: 15, hostiles: 4, hostileHealth: 2, breachDamage: 1, pattern: "ranged" }),
+        Object.freeze({ id: "votary", spawnAtSeconds: 90, hostiles: 5, hostileHealth: 3, breachDamage: 1, pattern: "rusher" }),
+        Object.freeze({ id: "oathbound", spawnAtSeconds: 165, hostiles: 6, hostileHealth: 3, breachDamage: 1, pattern: "guardian" }),
+        Object.freeze({ id: "concord", spawnAtSeconds: 240, hostiles: 6, hostileHealth: 4, breachDamage: 1, pattern: "ranged" })
       ])
     }),
     rewards: Object.freeze([
@@ -549,7 +627,7 @@ export const STAGES = Object.freeze([
     nextStageId: null,
     title: "Gate Zenith",
     region: "The stormcrowned summit above every drowned gate",
-    objective: "Carry every boon, hold all three crown nodes, spend the Domain, outlast five zenith waves, and unmake the Abyss Regent.",
+    objective: "Carry every boon, hold all three crown nodes, spend the Domain, outlast five commander waves, and unmake the Abyss Regent.",
     nodeGoal: 3,
     bossName: "Abyss Regent",
     bossHealth: 26,
@@ -575,11 +653,11 @@ export const STAGES = Object.freeze([
       preparationSeconds: 12,
       preparationLegion: 3,
       waves: Object.freeze([
-        Object.freeze({ id: "zenithguard", spawnAtSeconds: 15, hostiles: 5, hostileHealth: 2, breachDamage: 1 }),
-        Object.freeze({ id: "stormherald", spawnAtSeconds: 39, hostiles: 5, hostileHealth: 3, breachDamage: 1 }),
-        Object.freeze({ id: "gatewrath", spawnAtSeconds: 63, hostiles: 6, hostileHealth: 3, breachDamage: 1 }),
-        Object.freeze({ id: "regentsown", spawnAtSeconds: 87, hostiles: 6, hostileHealth: 4, breachDamage: 1 }),
-        Object.freeze({ id: "lasttide", spawnAtSeconds: 111, hostiles: 7, hostileHealth: 4, breachDamage: 1 })
+        Object.freeze({ id: "zenithguard", spawnAtSeconds: 15, hostiles: 5, hostileHealth: 2, breachDamage: 1, pattern: "guardian" }),
+        Object.freeze({ id: "stormherald", spawnAtSeconds: 70, hostiles: 5, hostileHealth: 3, breachDamage: 1, pattern: "ranged" }),
+        Object.freeze({ id: "gatewrath", spawnAtSeconds: 125, hostiles: 6, hostileHealth: 3, breachDamage: 1, pattern: "rusher" }),
+        Object.freeze({ id: "regentsown", spawnAtSeconds: 180, hostiles: 6, hostileHealth: 4, breachDamage: 1, pattern: "guardian" }),
+        Object.freeze({ id: "lasttide", spawnAtSeconds: 240, hostiles: 7, hostileHealth: 4, breachDamage: 1, pattern: "flanker", commander: true })
       ])
     }),
     rewards: Object.freeze([
@@ -615,7 +693,7 @@ export const CONTENT_TRACE = Object.freeze({
   "AS-WV-023": Object.freeze({ stageId: "cinder-span", entity: "reward", rewardId: "shadebreaker-brand", field: "description", value: "Bulwark doctrine: reduce every boss counterblow by 2 (never below 1)." }),
   "AS-WV-024": Object.freeze({ stageId: "veil-citadel", entity: "stage", field: "name", value: "Veil Citadel" }),
   "AS-WV-025": Object.freeze({ stageId: "veil-citadel", entity: "stage", field: "region", value: "A fortress of listening stone" }),
-  "AS-WV-026": Object.freeze({ stageId: "veil-citadel", entity: "stage", field: "description", value: "Carry your first boon, hold both signal nodes, possess a sentinel, and defeat the tactician who commands the veil." }),
+  "AS-WV-026": Object.freeze({ stageId: "veil-citadel", entity: "stage", field: "description", value: "Carry your first boon, hold both signal nodes, possess a sentinel, clear three signal waves, and defeat the tactician who commands the veil." }),
   "AS-WV-027": Object.freeze({ stageId: "veil-citadel", entity: "boss", field: "name", value: "Veil Tactician" }),
   "AS-WV-028": Object.freeze({ stageId: "veil-citadel", entity: "boss", field: "description", value: "A tactician of listening stone that turns every uncovered route into a killing field." }),
   "AS-WV-029": Object.freeze({ stageId: "veil-citadel", entity: "reward", rewardId: "veil-vanguard", field: "name", value: "Veil Vanguard" }),
@@ -626,7 +704,7 @@ export const CONTENT_TRACE = Object.freeze({
   "AS-WV-034": Object.freeze({ stageId: "veil-citadel", entity: "reward", rewardId: "abyssal-banner", field: "description", value: "Legion doctrine: enter with 1 aegis; every Materialize raises 1 additional shade; Lord's Domain adds its 2 aegis." }),
   "AS-WV-035": Object.freeze({ stageId: "echo-throne", entity: "stage", field: "name", value: "Echo Throne" }),
   "AS-WV-036": Object.freeze({ stageId: "echo-throne", entity: "stage", field: "region", value: "The gate above the last remembered sea" }),
-  "AS-WV-037": Object.freeze({ stageId: "echo-throne", entity: "stage", field: "description", value: "Carry both boons, secure the throne node, invoke the one-use Lord's Domain comeback, and unmake the Gate Sovereign." }),
+  "AS-WV-037": Object.freeze({ stageId: "echo-throne", entity: "stage", field: "description", value: "Carry both boons, secure the throne node, invoke the one-use Lord's Domain comeback, survive four throne waves, and unmake the Gate Sovereign." }),
   "AS-WV-038": Object.freeze({ stageId: "echo-throne", entity: "boss", field: "name", value: "Gate Sovereign" }),
   "AS-WV-039": Object.freeze({ stageId: "echo-throne", entity: "boss", field: "description", value: "The final gate's remembered ruler, holding back the last abyssal tide." }),
   "AS-WV-040": Object.freeze({ stageId: "echo-throne", entity: "reward", rewardId: "throne-echo", field: "name", value: "Throne Echo" }),
@@ -635,7 +713,7 @@ export const CONTENT_TRACE = Object.freeze({
   "AS-WV-043": Object.freeze({ stageId: "echo-throne", entity: "reward", rewardId: "dawnless-crown", field: "description", value: "Records a crown forged from the closed gate." }),
   "AS-WV-044": Object.freeze({ stageId: "sunken-bastion", entity: "stage", field: "name", value: "Sunken Bastion" }),
   "AS-WV-045": Object.freeze({ stageId: "sunken-bastion", entity: "stage", field: "region", value: "A drowned breakwater fortress reclaimed by the tide" }),
-  "AS-WV-046": Object.freeze({ stageId: "sunken-bastion", entity: "stage", field: "description", value: "Raise the legion above the waterline, hold the flood node, weather four tide waves, and drown the Tide Warden's claim." }),
+  "AS-WV-046": Object.freeze({ stageId: "sunken-bastion", entity: "stage", field: "description", value: "Scale the fog tower stairs, hold the vertical platform, weather four vertical waves, and drown the Tide Warden's claim." }),
   "AS-WV-047": Object.freeze({ stageId: "sunken-bastion", entity: "boss", field: "name", value: "Tide Warden" }),
   "AS-WV-048": Object.freeze({ stageId: "sunken-bastion", entity: "boss", field: "description", value: "A drowned warden whose coral-fused armor drags whole companies beneath the breakwater." }),
   "AS-WV-049": Object.freeze({ stageId: "sunken-bastion", entity: "reward", rewardId: "tidebreaker-sigil", field: "name", value: "Tidebreaker Sigil" }),
@@ -646,7 +724,7 @@ export const CONTENT_TRACE = Object.freeze({
   "AS-WV-054": Object.freeze({ stageId: "sunken-bastion", entity: "reward", rewardId: "depth-cohort", field: "description", value: "Legion doctrine: Materialize raises 1 additional shade." }),
   "AS-WV-055": Object.freeze({ stageId: "howling-sprawl", entity: "stage", field: "name", value: "Howling Sprawl" }),
   "AS-WV-056": Object.freeze({ stageId: "howling-sprawl", entity: "stage", field: "region", value: "A moonlit ruin district ruled by the pack" }),
-  "AS-WV-057": Object.freeze({ stageId: "howling-sprawl", entity: "stage", field: "description", value: "Take the howl node, possess a pack sentinel, survive four hunting waves, and silence the Pack Herald." }),
+  "AS-WV-057": Object.freeze({ stageId: "howling-sprawl", entity: "stage", field: "description", value: "Hold the cave choke node, possess a pack sentinel, survive four hunting waves, and silence the Pack Herald." }),
   "AS-WV-058": Object.freeze({ stageId: "howling-sprawl", entity: "boss", field: "name", value: "Pack Herald" }),
   "AS-WV-059": Object.freeze({ stageId: "howling-sprawl", entity: "boss", field: "description", value: "The pack's crowned herald; every howl is a marching order for the ruin district." }),
   "AS-WV-060": Object.freeze({ stageId: "howling-sprawl", entity: "reward", rewardId: "pack-banner", field: "name", value: "Pack Banner" }),
@@ -657,7 +735,7 @@ export const CONTENT_TRACE = Object.freeze({
   "AS-WV-065": Object.freeze({ stageId: "howling-sprawl", entity: "reward", rewardId: "sprawl-hourglass", field: "description", value: "Tempo doctrine: reduce command cooldowns by a further 15%." }),
   "AS-WV-066": Object.freeze({ stageId: "glass-necropolis", entity: "stage", field: "name", value: "Glass Necropolis" }),
   "AS-WV-067": Object.freeze({ stageId: "glass-necropolis", entity: "stage", field: "region", value: "A cathedral of grave-glass that sings back every march" }),
-  "AS-WV-068": Object.freeze({ stageId: "glass-necropolis", entity: "stage", field: "description", value: "Hold both glass nodes, possess a chorister sentinel, endure four requiem waves, and shatter the Requiem Choir." }),
+  "AS-WV-068": Object.freeze({ stageId: "glass-necropolis", entity: "stage", field: "description", value: "Hold both swamp nodes, possess a chorister sentinel, endure four cavalry flank waves, and shatter the Requiem Choir." }),
   "AS-WV-069": Object.freeze({ stageId: "glass-necropolis", entity: "boss", field: "name", value: "Requiem Choir" }),
   "AS-WV-070": Object.freeze({ stageId: "glass-necropolis", entity: "boss", field: "description", value: "Three grave-choristers fused into one requiem that sings marching legions apart." }),
   "AS-WV-071": Object.freeze({ stageId: "glass-necropolis", entity: "reward", rewardId: "glass-chorus", field: "name", value: "Glass Chorus" }),
@@ -668,7 +746,7 @@ export const CONTENT_TRACE = Object.freeze({
   "AS-WV-076": Object.freeze({ stageId: "glass-necropolis", entity: "reward", rewardId: "choir-shard", field: "description", value: "Recovery doctrine: restore 2 additional integrity when entering Starless Canal." }),
   "AS-WV-077": Object.freeze({ stageId: "starless-canal", entity: "stage", field: "name", value: "Starless Canal" }),
   "AS-WV-078": Object.freeze({ stageId: "starless-canal", entity: "stage", field: "region", value: "A lightless waterway strung with tyrant lanterns" }),
-  "AS-WV-079": Object.freeze({ stageId: "starless-canal", entity: "stage", field: "description", value: "Seize both toll nodes, reopen Lord's Domain, outlast four lantern waves, and douse the Lantern Tyrant." }),
+  "AS-WV-079": Object.freeze({ stageId: "starless-canal", entity: "stage", field: "description", value: "Seize both canal keep nodes, reopen Lord's Domain, outlast four castle siege waves, and douse the Lantern Tyrant." }),
   "AS-WV-080": Object.freeze({ stageId: "starless-canal", entity: "boss", field: "name", value: "Lantern Tyrant" }),
   "AS-WV-081": Object.freeze({ stageId: "starless-canal", entity: "boss", field: "description", value: "A canal tyrant strung with tribute lanterns, each one a soul still paying the toll." }),
   "AS-WV-082": Object.freeze({ stageId: "starless-canal", entity: "reward", rewardId: "canal-lantern", field: "name", value: "Canal Lantern" }),
@@ -679,7 +757,7 @@ export const CONTENT_TRACE = Object.freeze({
   "AS-WV-087": Object.freeze({ stageId: "starless-canal", entity: "reward", rewardId: "starless-cohort", field: "description", value: "Legion doctrine: Materialize raises 1 additional shade." }),
   "AS-WV-088": Object.freeze({ stageId: "shattered-causeway", entity: "stage", field: "name", value: "Shattered Causeway" }),
   "AS-WV-089": Object.freeze({ stageId: "shattered-causeway", entity: "stage", field: "region", value: "The broken land-bridge where a colossus still stands watch" }),
-  "AS-WV-090": Object.freeze({ stageId: "shattered-causeway", entity: "stage", field: "description", value: "Anchor both span nodes, invoke the Domain, break five siege waves, and topple the Bridge Colossus." }),
+  "AS-WV-090": Object.freeze({ stageId: "shattered-causeway", entity: "stage", field: "description", value: "Anchor both bridge-cathedral nodes to recover the relic, invoke the Domain, break four siege waves, and topple the Bridge Colossus." }),
   "AS-WV-091": Object.freeze({ stageId: "shattered-causeway", entity: "boss", field: "name", value: "Bridge Colossus" }),
   "AS-WV-092": Object.freeze({ stageId: "shattered-causeway", entity: "boss", field: "description", value: "The last watch-colossus of the broken span, still holding a bridge that no longer exists." }),
   "AS-WV-093": Object.freeze({ stageId: "shattered-causeway", entity: "reward", rewardId: "causeway-core", field: "name", value: "Causeway Core" }),
@@ -690,7 +768,7 @@ export const CONTENT_TRACE = Object.freeze({
   "AS-WV-098": Object.freeze({ stageId: "shattered-causeway", entity: "reward", rewardId: "span-sigil", field: "description", value: "Vanguard doctrine: start Abyss Chancel with four shades already raised." }),
   "AS-WV-099": Object.freeze({ stageId: "abyss-chancel", entity: "stage", field: "name", value: "Abyss Chancel" }),
   "AS-WV-100": Object.freeze({ stageId: "abyss-chancel", entity: "stage", field: "region", value: "A floating chancel where the Concordat signs the abyss away" }),
-  "AS-WV-101": Object.freeze({ stageId: "abyss-chancel", entity: "stage", field: "description", value: "Claim all three rite nodes, possess a signatory, open the Domain, survive four oath waves, and unbind the Veiled Concordat." }),
+  "AS-WV-101": Object.freeze({ stageId: "abyss-chancel", entity: "stage", field: "description", value: "Claim all three soul altar nodes, possess a signatory, open the Domain, survive four ritual waves, and unbind the Veiled Concordat." }),
   "AS-WV-102": Object.freeze({ stageId: "abyss-chancel", entity: "boss", field: "name", value: "Veiled Concordat" }),
   "AS-WV-103": Object.freeze({ stageId: "abyss-chancel", entity: "boss", field: "description", value: "Three veiled signatories who countersign the abyss itself against every intruder." }),
   "AS-WV-104": Object.freeze({ stageId: "abyss-chancel", entity: "reward", rewardId: "chancel-veil", field: "name", value: "Chancel Veil" }),
@@ -701,7 +779,7 @@ export const CONTENT_TRACE = Object.freeze({
   "AS-WV-109": Object.freeze({ stageId: "abyss-chancel", entity: "reward", rewardId: "rite-hourglass", field: "description", value: "Tempo doctrine: reduce command cooldowns by a further 15%." }),
   "AS-WV-110": Object.freeze({ stageId: "gate-zenith", entity: "stage", field: "name", value: "Gate Zenith" }),
   "AS-WV-111": Object.freeze({ stageId: "gate-zenith", entity: "stage", field: "region", value: "The stormcrowned summit above every drowned gate" }),
-  "AS-WV-112": Object.freeze({ stageId: "gate-zenith", entity: "stage", field: "description", value: "Carry every boon, hold all three crown nodes, spend the Domain, outlast five zenith waves, and unmake the Abyss Regent." }),
+  "AS-WV-112": Object.freeze({ stageId: "gate-zenith", entity: "stage", field: "description", value: "Carry every boon, hold all three crown nodes, spend the Domain, outlast five commander waves, and unmake the Abyss Regent." }),
   "AS-WV-113": Object.freeze({ stageId: "gate-zenith", entity: "boss", field: "name", value: "Abyss Regent" }),
   "AS-WV-114": Object.freeze({ stageId: "gate-zenith", entity: "boss", field: "description", value: "The regent above every drowned gate, wearing the storm as a crown and the tide as a writ." }),
   "AS-WV-115": Object.freeze({ stageId: "gate-zenith", entity: "reward", rewardId: "zenith-crown", field: "name", value: "Zenith Crown" }),
@@ -826,6 +904,13 @@ export function getCampaignBenefits(state) {
   assertStateShape(state);
   const benefits = rewardBenefits(state.rewards);
   const echoThroneEntry = entryBenefits(benefits, STAGES_BY_ID["echo-throne"]);
+  let movementMultiplier = 1.0;
+  if (state.stage && Array.isArray(state.stage.activeEffects)) {
+    const hasteEffect = state.stage.activeEffects.find(eff => eff.type === "HASTE");
+    if (hasteEffect) {
+      movementMultiplier += hasteEffect.value;
+    }
+  }
   return Object.freeze({
     maxIntegrity: benefits.maxIntegrity,
     cooldownReduction: Number(clamp(1 - benefits.cooldownMultiplier, 0, 0.40).toFixed(12)),
@@ -837,8 +922,10 @@ export function getCampaignBenefits(state) {
     summonBonus: benefits.materializeBonus,
     autoExtract: benefits.autoExtract,
     initialAegis: benefits.entryAegis,
-    activeItemNames: Object.freeze([...benefits.activeItemNames])
+    activeItemNames: Object.freeze([...benefits.activeItemNames]),
+    movementMultiplier
   });
+
 }
 
 function makeEncounterState(stage) {
@@ -905,7 +992,9 @@ function makeStageState(stage, rewards, entryIntegrity) {
     integrity,
     entryIntegrity: integrity,
     bossHealth: stage.bossHealth,
-    deployments: []
+    deployments: [],
+    pendingChest: null,
+    activeEffects: []
   };
   if (stage.encounter) state.encounter = makeEncounterState(stage);
   return state;
@@ -976,6 +1065,14 @@ function assertStateShape(state) {
   assert(Array.isArray(state.rewards) && Array.isArray(state.trace), "Campaign history is invalid.");
   assert(state.stage && typeof state.stage === "object", "Campaign stage state is invalid.");
   validateEncounterState(state.stage.encounter, activeStage(state));
+  assert(state.stage.pendingChest === null || (typeof state.stage.pendingChest === "object" && typeof state.stage.pendingChest.id === "string" && typeof state.stage.pendingChest.itemId === "string"), "Stage pendingChest is invalid.");
+  assert(Array.isArray(state.stage.activeEffects), "Stage activeEffects must be an array.");
+  for (const eff of state.stage.activeEffects) {
+    assert(eff && typeof eff === "object", "Stage activeEffect must be an object.");
+    assert(typeof eff.type === "string", "Stage activeEffect type must be a string.");
+    assert(typeof eff.value === "number", "Stage activeEffect value must be a number.");
+    assert(Number.isInteger(eff.charges) && eff.charges >= 0, "Stage activeEffect charges must be a non-negative integer.");
+  }
 
   assert(state.progression && typeof state.progression === "object", "Campaign progression is invalid.");
   assert(Number.isInteger(state.progression.marks) && state.progression.marks >= 0, "Campaign progression marks is invalid.");
@@ -1096,40 +1193,92 @@ function guardAssault(state, stage, current) {
 function applyAssault(draft, stage) {
   const target = draft.stage;
   const benefits = rewardBenefits(draft.rewards);
-  const damage = assaultDamage(target, stage, benefits, draft.progression);
-  target.bossHealth = Math.max(0, target.bossHealth - damage);
-  let counter = 0;
-  if (target.aegis > 0) {
-    target.aegis -= 1;
-  } else {
-    counter = counterDamage(target, stage, benefits, draft.progression);
-    target.integrity = Math.max(0, target.integrity - counter);
+  const baseDamage = assaultDamage(target, stage, benefits, draft.progression);
+  
+  let damage = baseDamage;
+  const attRes = consumeEffect(target.activeEffects, "ATTACK");
+  if (attRes.active) {
+    damage += attRes.value;
   }
+  
+  target.bossHealth = Math.max(0, target.bossHealth - damage);
+  
+  let counter = 0;
+  const invRes = consumeEffect(target.activeEffects, "INVINCIBLE");
+  if (invRes.active) {
+    counter = 0;
+  } else {
+    if (target.aegis > 0) {
+      target.aegis -= 1;
+      counter = 0;
+    } else {
+      const rawCounter = counterDamage(target, stage, benefits, draft.progression);
+      let finalCounter = rawCounter;
+      const defRes = consumeEffect(target.activeEffects, "DEFENSE");
+      if (defRes.active) {
+        finalCounter -= defRes.value;
+      }
+      const debRes = consumeEffect(target.activeEffects, "DEBUFF");
+      if (debRes.active) {
+        finalCounter -= debRes.value;
+      }
+      counter = Math.max(1, finalCounter);
+      target.integrity = Math.max(0, target.integrity - counter);
+    }
+  }
+  
   if (target.bossHealth === 0) {
     stageComplete(draft, stage);
   } else if (target.integrity === 0) {
     draft.status = "defeat";
     draft.lastMessage = "The legion loses its anchor. Regroup and retry this stage.";
   } else {
-    const aftermath = counter === 0 ? "The Domain turns the counterblow aside." : `The counterblow tears ${counter} integrity.`;
+    const aftermath = counter === 0 ? "The counterblow was turned aside." : `The counterblow tears ${counter} integrity.`;
     draft.lastMessage = `${stage.bossName} recoils; ${target.bossHealth} ward strength remains. ${aftermath}`;
   }
 }
 
-function applyBreach(draft, damage) {
+function applyBreach(draft, damage, source = "breach") {
   const target = draft.stage;
-  if (target.aegis > 0) {
-    target.aegis -= 1;
-    draft.lastMessage = "An abyssal breach strikes, but the aegis absorbs it.";
+  
+  if (source === "boss-strike") {
+    const evaRes = consumeEffect(target.activeEffects, "EVASION");
+    if (evaRes.active) {
+      draft.lastMessage = "The boss strike is evaded!";
+      return;
+    }
+  }
+  
+  const invRes = consumeEffect(target.activeEffects, "INVINCIBLE");
+  if (invRes.active) {
+    draft.lastMessage = "Invulnerability blocks the damage source!";
     return;
   }
-  target.integrity = Math.max(0, target.integrity - damage);
+  
+  let finalDamage = damage;
+  const defRes = consumeEffect(target.activeEffects, "DEFENSE");
+  if (defRes.active) {
+    finalDamage -= defRes.value;
+  }
+  const debRes = consumeEffect(target.activeEffects, "DEBUFF");
+  if (debRes.active) {
+    finalDamage -= debRes.value;
+  }
+  const minDmg = (source === "breach") ? 0 : 1;
+  finalDamage = Math.max(minDmg, finalDamage);
+  
+  if (target.aegis > 0 && finalDamage > 0) {
+    target.aegis -= 1;
+    draft.lastMessage = `${source === "boss-strike" ? "A boss strike" : "An abyssal breach"} strikes, but the aegis absorbs it.`;
+    return;
+  }
+  target.integrity = Math.max(0, target.integrity - finalDamage);
   if (target.integrity === 0) {
     draft.status = "defeat";
-    draft.lastMessage = "The breach shatters the legion's anchor. Regroup and retry this stage.";
+    draft.lastMessage = `The ${source === "boss-strike" ? "boss strike" : "breach"} shatters the legion's anchor. Regroup and retry this stage.`;
     return;
   }
-  draft.lastMessage = `An abyssal breach tears ${damage} integrity.`;
+  draft.lastMessage = `${source === "boss-strike" ? "A boss strike" : "An abyssal breach"} tears ${finalDamage} integrity.`;
 }
 
 function normalizeRecipeId(value) {
@@ -1287,6 +1436,22 @@ export function applyEncounterEvent(state, event) {
   const stage = activeStage(state);
   if (event.stageId !== stage.id) return rejected(state, "Encounter event belongs to a different stage.");
 
+  if (event.type === "open-chest") {
+    if (!state.stage.pendingChest || state.stage.pendingChest.id !== event.chestId) {
+      return rejected(state, "No such pending chest is available.");
+    }
+    const next = transition(state, (draft) => {
+      const pending = draft.stage.pendingChest;
+      const itemDef = FIELD_ITEM_CATALOG.find(item => item.id === pending.itemId);
+      if (itemDef) {
+        addEffect(draft.stage.activeEffects, itemDef.effect);
+      }
+      draft.stage.pendingChest = null;
+      draft.lastMessage = `Collected ${pending.itemId} from chest ${pending.id}.`;
+    }, { kind: "encounter", event: clone(event) });
+    return accepted(next, next.lastMessage, "open-chest");
+  }
+
   // Boss auto-attack: the boss threatens anyone inside its declared strike
   // range on its own initiative — independent of wave-clear, possession, or
   // exposure state, and valid even on stages with no wave encounter at all
@@ -1297,7 +1462,7 @@ export function applyEncounterEvent(state, event) {
     const pattern = stage.bossPattern;
     if (!pattern) return rejected(state, "This boss has no declared attack pattern.");
     if (state.stage.bossHealth <= 0) return rejected(state, "The boss is already broken.");
-    const next = transition(state, (draft) => applyBreach(draft, pattern.damage), { kind: "encounter", event: clone(event) });
+    const next = transition(state, (draft) => applyBreach(draft, pattern.damage, "boss-strike"), { kind: "encounter", event: clone(event) });
     return accepted(next, next.lastMessage, "boss-strike");
   }
 
@@ -1344,23 +1509,40 @@ export function applyEncounterEvent(state, event) {
     const targetWave = targetEncounter.waves[activeIndex];
     if (event.type === "breach") {
       targetWave.breaches += 1;
-      applyBreach(draft, configuredWave.breachDamage);
+      applyBreach(draft, configuredWave.breachDamage, "breach");
       return;
     }
     targetWave.cleared = true;
     draft.progression.marks += 2;
     targetEncounter.activeWaveId = null;
-    // Kill-drop: clearing a wave's hostiles reopens one hunting cycle, same
-    // as capturing ground — the field itself is the resource, not a menu.
     draft.stage.extractions = Math.max(0, (draft.stage.extractions ?? 0) - 1);
     const allCleared = targetEncounter.waves.every((wave) => wave.cleared);
     targetEncounter.bossExposed = allCleared;
     targetEncounter.spawningStopped = allCleared;
     if (allCleared) {
-      // Terrain-change mineral: the field visibly changes once the boss is
-      // exposed (spawning stops, the ground shifts) — a one-time larger vein.
       draft.stage.extractions = Math.max(0, (draft.stage.extractions ?? 0) - 1);
     }
+    
+    const chestId = `chest-${configuredWave.id}`;
+    const itemIndex = (draft.stageIndex + activeIndex) % FIELD_ITEM_CATALOG.length;
+    const pickedItem = FIELD_ITEM_CATALOG[itemIndex];
+    draft.stage.pendingChest = {
+      id: chestId,
+      itemId: pickedItem.id
+    };
+    
+    // Automatic field-event buff fires once per stage, on the wave that
+    // exposes the boss -- not on every wave clear -- so it augments the
+    // upcoming assault without compounding across the stage's full wave
+    // count. The index math is unchanged, so every stage still rolls
+    // exactly one event and all six catalog types remain reachable across
+    // the ten-stage campaign.
+    if (allCleared) {
+      const eventIndex = (draft.stageIndex * 7 + activeIndex * 3) % FIELD_EVENT_CATALOG.length;
+      const pickedEvent = FIELD_EVENT_CATALOG[eventIndex];
+      addEffect(draft.stage.activeEffects, pickedEvent);
+    }
+    
     draft.lastMessage = allCleared
       ? `${stage.bossName} is exposed. Spawning has stopped.`
       : `${configuredWave.id} wave cleared. The next wave remains on approach.`;
@@ -1415,7 +1597,7 @@ export function applyBattleBreach(state) {
     if (!wave) return rejected(state, "The encounter is complete; no wave can breach.");
     return applyEncounterEvent(state, { type: "breach", stageId: stage.id, waveId: wave.id });
   }
-  const next = transition(state, (draft) => applyBreach(draft, 1), { kind: "battle-breach" });
+  const next = transition(state, (draft) => applyBreach(draft, 1, "breach"), { kind: "battle-breach" });
   return accepted(next, next.lastMessage, "battle-breach");
 }
 
@@ -1583,7 +1765,18 @@ export function getCommandCooldown(state, command) {
     baseCooldown = defaults[command] ?? 0;
   }
   const benefits = getCampaignBenefits(state);
-  return baseCooldown * (1 - benefits.cooldownReduction);
+  let hasteReduction = 0;
+  if (state.stage && Array.isArray(state.stage.activeEffects)) {
+    const hasteEffect = state.stage.activeEffects.find(eff => eff.type === "HASTE");
+    if (hasteEffect) {
+      hasteReduction = hasteEffect.value;
+    }
+  }
+  // Total command cooldown reduction is capped at 40% across BOTH sources
+  // combined (reward cooldownMultiplier and field HASTE) -- HASTE must not
+  // stack past the same ceiling rewards alone are held to.
+  const totalReduction = clamp(benefits.cooldownReduction + hasteReduction, 0, 0.40);
+  return baseCooldown * (1 - totalReduction);
 }
 
 export function getTacticalProgression(state) {
@@ -1657,6 +1850,28 @@ export function cancelReservedCommand(state, id) {
   }, { kind: "cancel-reserved-command", id });
 
   return accepted(next, next.lastMessage, "cancel");
+}
+
+/**
+ * Cancels every currently reserved command in one deterministic transition,
+ * instead of requiring the player to cancel each queued entry one at a
+ * time. A no-op (still accepted) on an already-empty queue, matching
+ * cancelReservedCommand's tolerant style rather than rejecting a harmless
+ * "nothing to clear" request.
+ */
+export function clearCommandQueue(state) {
+  if (!canAct(state)) return rejected(state, "This stage is not active.");
+  if (state.commandQueue.length === 0) {
+    return accepted(state, "The reservation queue is already empty.", "clear-queue");
+  }
+
+  const clearedCount = state.commandQueue.length;
+  const next = transition(state, (draft) => {
+    draft.commandQueue = [];
+    draft.lastMessage = `Cleared ${clearedCount} reserved command${clearedCount === 1 ? "" : "s"}.`;
+  }, { kind: "clear-command-queue", clearedCount });
+
+  return accepted(next, next.lastMessage, "clear-queue");
 }
 
 export function checkReservedCommandExecution(state, id) {

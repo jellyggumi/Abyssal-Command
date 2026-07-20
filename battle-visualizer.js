@@ -15,7 +15,7 @@
 
 import {
   TILE_W, TILE_H, ELEV_H, LAYER,
-  worldToScreen, pickTile, depthKey, steer,
+  worldToScreen, screenToWorldFlat, pickTile, depthKey, steer,
   rectContains, directionIndex, mulberry32
 } from "./iso-math.js";
 import {
@@ -28,7 +28,8 @@ import {
   createStageNavigation,
 } from "./stage-navigation.js";
 import { resolveEnemyPattern, resolveBossPhase, getCombatAlertCue } from "./combat-systems.js";
-
+import { getStageMotif } from "./battle-stage-identity.js";
+import { getCampaignBenefits } from "./campaign-state.js";
 let rendererRequestSequence = 0;
 
 // Backing-store resolution cap for the Canvas2D tilemap. Raised from the
@@ -132,16 +133,18 @@ const UNIT_ATLAS = Object.freeze({
 // external dependency enters the Canvas renderer. The manifest is the sole
 // contract between the generator and this bridge.
 const GLB_BRIDGE_MANIFEST = "assets/images/battle/glb/manifest.json";
-// Stages 4-10 reuse a Stage 1-3 terrain plate (matches STAGE_ASSETS terrain
-// reuse in battle-realtime-three.js so both renderers agree on ground art;
-// terrain reuse carries no boss-identity claim). See BOSS_ART above for the
-// per-stage boss art that keeps identity distinct.
+// Stages 4-10 reuse a Stage 1-3 terrain plate, but are augmented with stage-specific
+// 2D landmark shapes and colors (matching WebGL motifs) for visual identity.
 const BRIDGE_STAGE_TERRAIN = Object.freeze({
   1: "cinder-span", 2: "veil-citadel", 3: "echo-throne-steps",
   4: "veil-citadel", 5: "cinder-span", 6: "veil-citadel",
   7: "cinder-span", 8: "echo-throne-steps", 9: "veil-citadel", 10: "echo-throne-steps"
 });
-const BRIDGE_STAGE_BOSS = Object.freeze({ 1: "cinder-warden", 2: "veil-tactician", 3: "gate-sovereign" });
+const BRIDGE_STAGE_BOSS = Object.freeze({
+  1: "cinder-warden", 2: "veil-tactician", 3: "gate-sovereign",
+  4: "cinder-warden", 5: "veil-tactician", 6: "veil-tactician",
+  7: "gate-sovereign", 8: "cinder-warden", 9: "gate-sovereign", 10: "gate-sovereign"
+});
 const BRIDGE_ACTION_AUDIO = Object.freeze({
   hunt: { type: "triangle", source: 320, target: 760, duration: 0.18, gain: 0.48 },
   extract: { type: "sine", source: 760, target: 260, duration: 0.28, gain: 0.58 },
@@ -187,7 +190,13 @@ export class BattleVisualizer {
   constructor(canvas, presentation = DEFAULT_BATTLE_PRESENTATION, options = {}) {
     this.canvas = canvas;
     this.presentation = presentation;
-    this.stageNumber = presentation.stageNumber;
+    let stageNum = Number(presentation?.stageNumber);
+    if (!Number.isFinite(stageNum)) {
+      stageNum = 1;
+    } else {
+      stageNum = Math.floor(stageNum);
+    }
+    this.stageNumber = Math.max(1, Math.min(10, stageNum));
     this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     this.palette = paletteFromPresentation(presentation);
     this.ctx = null;
@@ -247,6 +256,14 @@ export class BattleVisualizer {
     this.hoverTile = null;
     this.placementError = null;
     this.campaign = null;
+    this.pendingChest = null;
+    this.chestTile = null;
+    this.chestId = null;
+    this.chestOpenedRequested = false;
+    this.activeEffects = [];
+    this.movementMultiplier = 1;
+    this.previouslyActiveEffects = new Set();
+    this.effectParticleTimer = 0;
     this.navigationSnapshot = null;
     this.nextUnitId = 0;
     this.isPanning = false;
@@ -537,8 +554,13 @@ export class BattleVisualizer {
     this.reconcileEncounterWave();
     this.publishRuntimeState();
     this.emitSelectionChange();
-    if (this.reducedMotion) this.render();
-    else this.animate();
+    // animate() now runs unconditionally (see its own comment) -- it is the
+    // only path that keeps unit positions, screenX/screenY nameplate
+    // anchors, and the painted scene in sync with the deterministic
+    // campaign as it changes. A single this.render() here used to be the
+    // entire reduced-motion experience: one frame, then nothing ever
+    // repainted again.
+    this.animate();
     return this;
   }
 
@@ -662,6 +684,20 @@ export class BattleVisualizer {
     return true;
   }
   detectActionAt(canvasPoint) {
+    if (this.pendingChest && this.chestTile && !this.chestOpenedRequested) {
+      const chestScreen = this.project(
+        this.chestTile.x + 0.5,
+        this.chestTile.y + 0.5,
+        this.elevationAt(this.chestTile.x + 0.5, this.chestTile.y + 0.5)
+      );
+      const dx = canvasPoint.x - chestScreen.x;
+      const dy = canvasPoint.y - chestScreen.y;
+      const distSq = dx * dx + dy * dy;
+      const hitRadius = Math.max(24, this.view.scale * 0.9);
+      if (distSq < hitRadius * hitRadius) {
+        return "open-chest";
+      }
+    }
     return this.tacticalActionAt(canvasPoint);
   }
 
@@ -1422,29 +1458,59 @@ export class BattleVisualizer {
                 }, 500);
               }
             }
-          } else if (!this.requestTacticalActionAt(p)) {
-            const ally = this.resolvePointerAlly(p);
-            if (ally) {
-              this.selectAlly(ally);
-            } else {
-              // Touch preserves its existing selected-formation move contract;
-              // mouse/pen primary ground taps continue to drive the commander.
-              const tile = this.unprojectToTile(p.x, p.y);
-              if (tile && this.activePointerType === "touch" && this.selection.size > 0) {
-                if (this.walkable(tile.x, tile.y)) {
-                  this.issueFormationMove(tile);
-                  this.orderFlag = { x: tile.x + 0.5, y: tile.y + 0.5, life: 1.2, forCommander: false };
-                  this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 520, duration: 0.12, type: "sine", gain: 0.6 });
+          } else {
+            if (this.pendingChest && this.chestTile && !this.chestOpenedRequested) {
+              const chestScreen = this.project(
+                this.chestTile.x + 0.5,
+                this.chestTile.y + 0.5,
+                this.elevationAt(this.chestTile.x + 0.5, this.chestTile.y + 0.5)
+              );
+              const dx = p.x - chestScreen.x;
+              const dy = p.y - chestScreen.y;
+              const distSq = dx * dx + dy * dy;
+              const hitRadius = Math.max(24, this.view.scale * 0.9);
+              if (distSq < hitRadius * hitRadius) {
+                this.chestOpenedRequested = true;
+                if (this.onEncounterEvent) {
+                  this.onEncounterEvent({
+                    type: "open-chest",
+                    stageId: this.stageId,
+                    chestId: this.pendingChest.id
+                  });
                 }
-              } else if (tile) {
-                this.onTacticalRequest?.({ type: "focus", cell: { x: tile.x, y: tile.y } });
-                if (this.walkable(tile.x, tile.y)) {
-                  const start = { x: Math.floor(this.commander.x), y: Math.floor(this.commander.y) };
-                  const path = this.findPath(start, tile);
-                  if (path && path.length > 1) {
-                    this.commander.path = path.slice(1).map(node => ({ x: node.x + 0.5, y: node.y + 0.5 }));
-                    this.orderFlag = { x: tile.x + 0.5, y: tile.y + 0.5, life: 1.2, forCommander: true };
-                    this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 600, duration: 0.1, type: "sine", gain: 0.3 });
+                this.activePointerId = null;
+                this.activePointerType = null;
+                this.activePointerButton = null;
+                this.pointerDown = null;
+                this.dragRect = null;
+                this.renderStatic();
+                return;
+              }
+            }
+            if (!this.requestTacticalActionAt(p)) {
+              const ally = this.resolvePointerAlly(p);
+              if (ally) {
+                this.selectAlly(ally);
+              } else {
+                // Touch preserves its existing selected-formation move contract;
+                // mouse/pen primary ground taps continue to drive the commander.
+                const tile = this.unprojectToTile(p.x, p.y);
+                if (tile && this.activePointerType === "touch" && this.selection.size > 0) {
+                  if (this.walkable(tile.x, tile.y)) {
+                    this.issueFormationMove(tile);
+                    this.orderFlag = { x: tile.x + 0.5, y: tile.y + 0.5, life: 1.2, forCommander: false };
+                    this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 520, duration: 0.12, type: "sine", gain: 0.6 });
+                  }
+                } else if (tile) {
+                  this.onTacticalRequest?.({ type: "focus", cell: { x: tile.x, y: tile.y } });
+                  if (this.walkable(tile.x, tile.y)) {
+                    const start = { x: Math.floor(this.commander.x), y: Math.floor(this.commander.y) };
+                    const path = this.findPath(start, tile);
+                    if (path && path.length > 1) {
+                      this.commander.path = path.slice(1).map(node => ({ x: node.x + 0.5, y: node.y + 0.5 }));
+                      this.orderFlag = { x: tile.x + 0.5, y: tile.y + 0.5, life: 1.2, forCommander: true };
+                      this.playSpatial(tile.x + 0.5, tile.y + 0.5, { freq: 600, duration: 0.1, type: "sine", gain: 0.3 });
+                    }
                   }
                 }
               }
@@ -1697,11 +1763,49 @@ export class BattleVisualizer {
 
   getTacticalSnapshot() {
     if (!this.navigationSnapshot) this.navigationSnapshot = this.buildNavigationSnapshot();
-    const centerTile = this.unprojectToTile(this.view.width / 2, this.view.height / 2);
-    const centerWorld = this.navigation.gridToWorld(
-      centerTile ? centerTile.x + 0.5 : this.navigation.width / 2,
-      centerTile ? centerTile.y + 0.5 : this.navigation.height / 2
-    );
+    const rawViewWidth = Number(this.view.width)
+      || Number(this.canvas?.clientWidth)
+      || Number(this.canvas?.width);
+    const rawViewHeight = Number(this.view.height)
+      || Number(this.canvas?.clientHeight)
+      || Number(this.canvas?.height);
+    const viewWidth = Number.isFinite(rawViewWidth) && rawViewWidth > 0 ? rawViewWidth : 1;
+    const viewHeight = Number.isFinite(rawViewHeight) && rawViewHeight > 0 ? rawViewHeight : 1;
+    const scale = Number.isFinite(this.view.scale) && this.view.scale > 0 ? this.view.scale : 1;
+    const offsetX = Number.isFinite(this.view.offsetX) ? this.view.offsetX : 0;
+    const offsetY = Number.isFinite(this.view.offsetY) ? this.view.offsetY : 0;
+    const screenCorners = [
+      [0, 0],
+      [viewWidth, 0],
+      [viewWidth, viewHeight],
+      [0, viewHeight],
+    ];
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+    for (const [canvasX, canvasY] of screenCorners) {
+      const flat = screenToWorldFlat(
+        (canvasX - offsetX) / scale,
+        (canvasY - offsetY) / scale,
+      );
+      const world = this.navigation.gridToWorld(flat.x, flat.y);
+      if (!Number.isFinite(world?.x) || !Number.isFinite(world?.z)) continue;
+      minX = Math.min(minX, world.x);
+      maxX = Math.max(maxX, world.x);
+      minZ = Math.min(minZ, world.z);
+      maxZ = Math.max(maxZ, world.z);
+    }
+    if (![minX, maxX, minZ, maxZ].every(Number.isFinite)) {
+      const fallbackCenter = this.navigation.gridToWorld(
+        this.navigation.width / 2,
+        this.navigation.height / 2,
+      );
+      minX = maxX = Number.isFinite(fallbackCenter?.x) ? fallbackCenter.x : 0;
+      minZ = maxZ = Number.isFinite(fallbackCenter?.z) ? fallbackCenter.z : 0;
+    }
+    const viewportWidth = maxX - minX;
+    const viewportDepth = maxZ - minZ;
     return {
       stageNumber: this.stageNumber,
       navigation: this.navigationSnapshot,
@@ -1740,7 +1844,13 @@ export class BattleVisualizer {
         x: s.x,
         y: s.y
       })),
-      viewport: { x: centerWorld.x, z: centerWorld.z, zoom: this.view.scale }
+      viewport: {
+        x: (minX + maxX) / 2,
+        z: (minZ + maxZ) / 2,
+        zoom: scale,
+        width: Number.isFinite(viewportWidth) && viewportWidth > 0 ? Math.max(0.001, viewportWidth) : 0.001,
+        depth: Number.isFinite(viewportDepth) && viewportDepth > 0 ? Math.max(0.001, viewportDepth) : 0.001,
+      }
     };
   }
   setBridgeClip(assetId, clip, duration = 780) {
@@ -1810,6 +1920,26 @@ export class BattleVisualizer {
     const objects = [];
     const addActor = (actor, id, kind, maxHp) => {
       if (!actor) return;
+      const actorStatuses = [];
+      if (id === "commander") {
+        if (this.activeEffects) {
+          for (const effect of this.activeEffects) {
+            const type = effect.type;
+            if (type === "ATTACK") actorStatuses.push("ATTACK");
+            else if (type === "DEFENSE" || type === "SHIELDED" || type === "DEFENSE_SHIELDED") actorStatuses.push("SHIELDED");
+            else if (type === "HASTE" || type === "HASTE_SPEED") actorStatuses.push("HASTE");
+            else if (type === "INVINCIBLE") actorStatuses.push("INVINCIBLE");
+            else if (type === "EVASION") actorStatuses.push("EVASION");
+          }
+        }
+      } else if (id === "boss") {
+        if (this.activeEffects) {
+          for (const effect of this.activeEffects) {
+            const type = effect.type;
+            if (type === "DEBUFF") actorStatuses.push("DEBUFF");
+          }
+        }
+      }
       objects.push({
         id,
         kind,
@@ -1818,6 +1948,7 @@ export class BattleVisualizer {
         maxHp: Number(actor.maxHealth ?? actor.maxHp ?? maxHp) || maxHp,
         visible: actor.defeated !== true,
         selected: this.selection.has(actor),
+        statuses: actorStatuses,
       });
     };
     addActor(this.commander, this.commander?.id ?? "commander", "commander", 10);
@@ -1864,6 +1995,111 @@ export class BattleVisualizer {
     const config = encounter?.config ?? stage?.encounter ?? null;
     const encounterState = encounter?.state ?? state?.encounter ?? state ?? campaign?.stage?.encounter ?? encounter ?? null;
     const stageId = encounter?.stageId ?? stage?.id ?? campaign?.stageId ?? null;
+    if (this.stageId !== stageId) {
+      this.stageId = stageId;
+      this.previouslyActiveEffects = new Set();
+      this.activeEffects = [];
+      this.pendingChest = null;
+      this.chestTile = null;
+      this.chestId = null;
+    }
+
+    const pendingChest = stage?.pendingChest ?? campaign?.stage?.pendingChest ?? state?.stage?.pendingChest ?? state?.pendingChest ?? null;
+    const nextEffects = stage?.activeEffects ?? campaign?.stage?.activeEffects ?? state?.stage?.activeEffects ?? state?.activeEffects ?? [];
+
+    this.activeEffects = nextEffects;
+    const campaignState = state?.stage ? state : (campaign ?? this.campaign);
+    this.campaign = campaignState;
+    try {
+      this.movementMultiplier = getCampaignBenefits(campaignState).movementMultiplier;
+    } catch {
+      const hasteEffect = nextEffects.find((effect) => effect.type === "HASTE");
+      this.movementMultiplier = 1 + (hasteEffect?.value ?? 0);
+    }
+
+    // Check for newly active effects and emit speech bubbles
+    const nextEffectTypes = new Set(nextEffects.map(e => e.type));
+    for (const type of nextEffectTypes) {
+      if (!this.previouslyActiveEffects.has(type)) {
+        let speechText = "";
+        let targetId = "commander";
+        if (type === "ATTACK") {
+          speechText = "Assault powered!";
+        } else if (type === "DEFENSE" || type === "SHIELDED" || type === "DEFENSE_SHIELDED") {
+          speechText = "Shields online!";
+        } else if (type === "HASTE" || type === "HASTE_SPEED") {
+          speechText = "Speed boosted!";
+        } else if (type === "INVINCIBLE") {
+          speechText = "Invincible!";
+        } else if (type === "EVASION") {
+          speechText = "Evasion prepped!";
+        } else if (type === "DEBUFF") {
+          speechText = "Enemy debuffed!";
+          targetId = "boss";
+        }
+
+        if (speechText) {
+          this.objectFeedback?.emitSpeech(targetId, speechText);
+
+          // Add visual action FX gesture
+          const targetUnit = targetId === "commander" ? this.commander : this.boss;
+          if (targetUnit && !targetUnit.defeated) {
+            const tx = targetId === "commander" ? this.commander.x : this.navigation.anchors.boss.x + 0.4;
+            const ty = targetId === "commander" ? this.commander.y : this.navigation.anchors.boss.y + 0.4;
+            
+            let actionType = "materialize";
+            if (type === "EVASION" || type === "HASTE" || type === "HASTE_SPEED") {
+              actionType = "possess";
+            } else if (type === "DEFENSE" || type === "SHIELDED" || type === "DEFENSE_SHIELDED" || type === "INVINCIBLE") {
+              actionType = "domain";
+            }
+            
+            this.actionFx.push({
+              action: actionType,
+              source: { x: tx, y: ty },
+              target: { x: tx, y: ty },
+              life: 0.8,
+              duration: 0.8
+            });
+          }
+        }
+      }
+    }
+    this.previouslyActiveEffects = nextEffectTypes;
+
+    // Handle chest placement
+    if (pendingChest) {
+      if (!this.chestTile || this.chestId !== pendingChest.id) {
+        this.chestId = pendingChest.id;
+        this.pendingChest = pendingChest;
+        this.chestOpenedRequested = false;
+
+        const walkableCells = [];
+        for (let y = 0; y < this.navigation.height; y++) {
+          for (let x = 0; x < this.navigation.width; x++) {
+            if (this.navigation.walkable(x, y)) {
+              walkableCells.push({ x, y });
+            }
+          }
+        }
+        if (walkableCells.length > 0) {
+          let h = 0;
+          const idStr = pendingChest.id;
+          for (let i = 0; i < idStr.length; i++) {
+            h = (h << 5) - h + idStr.charCodeAt(i);
+          }
+          h = h | 0;
+          const index = Math.abs(h) % walkableCells.length;
+          this.chestTile = walkableCells[index];
+        } else {
+          this.chestTile = { x: 0, y: 0 };
+        }
+      }
+    } else {
+      this.pendingChest = null;
+      this.chestTile = null;
+      this.chestId = null;
+    }
     const legion = Number(state?.legion ?? campaign?.stage?.legion);
     if (Number.isInteger(legion) && legion >= 0) {
       this.authoritativeLegion = legion;
@@ -1885,7 +2121,6 @@ export class BattleVisualizer {
 
     // Tower/barricade reconciliation is authoritative-only: this renderer
     // never mutates campaign.stage.deployments, only mirrors it.
-    this.campaign = campaign ?? this.campaign;
     const deployments = state?.stage?.deployments ?? campaign?.stage?.deployments ?? state?.deployments ?? [];
     this.reconcileDeployments(deployments);
     const bossHp = Number(state?.bossHealth ?? campaign?.stage?.bossHealth ?? stage?.bossHealth);
@@ -2379,7 +2614,9 @@ export class BattleVisualizer {
 
     // Set baseSpeed and update commander.speed property
     const baseSpeed = this.hasSurge() ? 7.2 : 4.1;
-    this.commander.speed = baseSpeed;
+    const benefitsMult = this.movementMultiplier;
+    const finalBaseSpeed = baseSpeed * benefitsMult;
+    this.commander.speed = finalBaseSpeed;
 
     const targetVel = { x: 0, y: 0 };
     const magnitude = Math.hypot(x, y);
@@ -2388,7 +2625,7 @@ export class BattleVisualizer {
       const mobilityBonus = Math.max(0, mobilityLevel - 1);
       const gimmick = this.navigation.getGimmickAt(this.commander.x, this.commander.y);
       const speedMultiplier = (gimmick?.effects?.movementSpeedMultiplier ?? 1) * (1 + mobilityBonus * 0.15);
-      const speed = baseSpeed * speedMultiplier;
+      const speed = finalBaseSpeed * speedMultiplier;
       targetVel.x = (x / magnitude) * speed;
       targetVel.y = (y / magnitude) * speed;
     }
@@ -2835,6 +3072,64 @@ export class BattleVisualizer {
         if (this.orderFlag.life <= 0) this.orderFlag = null;
       }
     }
+    // Update active effects particles
+    if (this.activeEffects && this.activeEffects.length > 0 && !this.reducedMotion && !this.destroyed) {
+      if (this.effectParticleTimer === undefined || this.effectParticleTimer === null) this.effectParticleTimer = 0;
+      this.effectParticleTimer += dt;
+      if (this.effectParticleTimer >= 0.15) {
+        this.effectParticleTimer = 0;
+        for (const effect of this.activeEffects) {
+          const type = effect.type;
+          let color = "#ffffff";
+          let unit = this.commander;
+          if (type === "ATTACK") color = "#ff3333";
+          else if (type === "DEFENSE" || type === "SHIELDED" || type === "DEFENSE_SHIELDED") color = "#3377ff";
+          else if (type === "HASTE" || type === "HASTE_SPEED") color = "#ffcc00";
+          else if (type === "INVINCIBLE") color = "#ffffff";
+          else if (type === "EVASION") color = "#33ffaa";
+          else if (type === "DEBUFF") {
+            color = "#cc33ff";
+            unit = this.boss;
+          } else {
+            continue;
+          }
+
+          let unitX = 0, unitY = 0;
+          let canSpawn = false;
+          if (unit === this.commander && this.commander && !this.commander.defeated) {
+            unitX = this.commander.x;
+            unitY = this.commander.y;
+            canSpawn = true;
+          } else if (unit === this.boss && this.boss && !this.boss.defeated && this.bossExposed) {
+            unitX = this.navigation.anchors.boss.x + 0.4;
+            unitY = this.navigation.anchors.boss.y + 0.4;
+            canSpawn = true;
+          }
+
+          if (canSpawn) {
+            const angle = this.rng() * Math.PI * 2;
+            const dist = this.rng() * 0.3;
+            const px = unitX + Math.cos(angle) * dist;
+            const py = unitY + Math.sin(angle) * dist;
+            if (this.particles.length >= 360) {
+              this.particles.shift();
+            }
+            this.particles.push({
+              x: px,
+              y: py,
+              z: 0.1 + this.rng() * 0.4,
+              vx: (this.rng() - 0.5) * 0.6,
+              vy: (this.rng() - 0.5) * 0.6,
+              vz: 1.0 + this.rng() * 1.5,
+              life: 0.8,
+              decay: 1.0 + this.rng() * 0.8,
+              color,
+              sortRoot: this.sortRootAt(px, py)
+            });
+          }
+        }
+      }
+    }
   }
 
   // --- render (dynamic painter queue) --------------------------------------
@@ -2933,6 +3228,22 @@ export class BattleVisualizer {
       },
     ];
 
+    const motif = getStageMotif(this.stageNumber);
+    if (motif) {
+      motif.landmarks.forEach((lm, index) => {
+        records.push({
+          id: `landmark-${index}`,
+          x: lm.x + 0.5,
+          y: lm.y + 0.5,
+          z: this.elevationAt(lm.x + 0.5, lm.y + 0.5),
+          sortRoot: this.sortRootAt(lm.x + 0.5, lm.y + 0.5),
+          layer: "prop",
+          render: "landmark",
+          landmarkIndex: index
+        });
+      });
+    }
+
     if (this.commander && !this.commander.defeated) {
       records.push({
         id: "commander",
@@ -2990,6 +3301,18 @@ export class BattleVisualizer {
         render: "particle", particle,
       });
     }
+    if (this.pendingChest && this.chestTile) {
+      records.push({
+        id: this.pendingChest.id,
+        x: this.chestTile.x + 0.5,
+        y: this.chestTile.y + 0.5,
+        z: this.elevationAt(this.chestTile.x + 0.5, this.chestTile.y + 0.5),
+        sortRoot: this.sortRootAt(this.chestTile.x + 0.5, this.chestTile.y + 0.5),
+        layer: "prop",
+        render: "chest",
+        chest: this.pendingChest
+      });
+    }
     return records;
   }
 
@@ -3005,6 +3328,58 @@ export class BattleVisualizer {
     else if (item.render === "unit") this.drawUnit(item.unit, item.kind);
     else if (item.render === "particle") this.drawParticle(item.particle, item.blend);
     else if (item.render === "deployment") this.drawDeployment(item.deployment);
+    else if (item.render === "landmark") this.drawLandmark(item.x, item.y, item.z, item.landmarkIndex);
+    else if (item.render === "chest") this.drawChest(item.chest, item.x, item.y, item.z);
+  }
+
+  drawChest(chest, fx, fy, fz) {
+    const ctx = this.ctx;
+    const s = this.view.scale;
+    const p = this.project(fx, fy, fz);
+
+    ctx.save();
+    // Glow/Pulse indicator underneath chest
+    const pulse = this.reducedMotion ? 0.0 : Math.sin(performance.now() * 0.004) * 2 * s;
+    ctx.shadowBlur = 12 * s + pulse;
+    ctx.shadowColor = "#f59e0b"; // gold glow
+
+    // Draw bottom base/shadow elliptical ring
+    ctx.strokeStyle = "rgba(245, 158, 11, 0.8)";
+    ctx.lineWidth = 1.5 * s;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 2 * s, 18 * s + pulse, 9 * s + pulse * 0.5, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Reset shadow for actual solid chest parts to avoid performance hits
+    ctx.shadowBlur = 0;
+
+    // Draw main box of the chest (wooden brown base)
+    ctx.fillStyle = "#78350f"; // wooden brown
+    ctx.strokeStyle = "#fbbf24"; // golden trims
+    ctx.lineWidth = 2 * s;
+    ctx.beginPath();
+    ctx.moveTo(p.x - 12 * s, p.y + 4 * s);
+    ctx.lineTo(p.x - 12 * s, p.y - 8 * s);
+    ctx.lineTo(p.x + 12 * s, p.y - 8 * s);
+    ctx.lineTo(p.x + 12 * s, p.y + 4 * s);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw chest lid (golden/bronze top curved shape)
+    ctx.fillStyle = "#d97706";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y - 8 * s, 12 * s, Math.PI, 0, false);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Golden lock details
+    ctx.fillStyle = "#fbbf24";
+    ctx.fillRect(p.x - 2 * s, p.y - 8 * s, 4 * s, 6 * s);
+    ctx.strokeRect(p.x - 2 * s, p.y - 8 * s, 4 * s, 6 * s);
+
+    ctx.restore();
   }
 
   drawDeployment(dep) {
@@ -3133,6 +3508,129 @@ export class BattleVisualizer {
     ctx.globalAlpha = 1;
   }
 
+  drawLandmark(fx, fy, fz, index) {
+    const motif = getStageMotif(this.stageNumber);
+    if (!motif) return;
+    const ctx = this.ctx;
+    const s = this.view.scale;
+    const p = this.project(fx, fy, fz);
+    
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    
+    if (motif.id === "tide") {
+      ctx.strokeStyle = motif.primary;
+      ctx.lineWidth = 3 * s;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, 16 * s, 8 * s, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      ctx.fillStyle = motif.secondary;
+      ctx.beginPath();
+      ctx.rect(p.x - 3 * s, p.y - 12 * s, 6 * s, 12 * s);
+      ctx.fill();
+    } else if (motif.id === "howl") {
+      ctx.fillStyle = motif.secondary;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, 10 * s, 5 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.strokeStyle = motif.primary;
+      ctx.lineWidth = 2.5 * s;
+      ctx.beginPath();
+      ctx.moveTo(p.x - 8 * s, p.y);
+      ctx.lineTo(p.x + 4 * s, p.y - 16 * s);
+      ctx.moveTo(p.x + 8 * s, p.y);
+      ctx.lineTo(p.x - 4 * s, p.y - 16 * s);
+      ctx.stroke();
+    } else if (motif.id === "glass") {
+      ctx.fillStyle = motif.primary;
+      ctx.strokeStyle = motif.secondary;
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y - 20 * s);
+      ctx.lineTo(p.x + 8 * s, p.y - 10 * s);
+      ctx.lineTo(p.x, p.y);
+      ctx.lineTo(p.x - 8 * s, p.y - 10 * s);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      
+      ctx.fillStyle = motif.secondary;
+      ctx.beginPath();
+      ctx.moveTo(p.x + 8 * s, p.y - 12 * s);
+      ctx.lineTo(p.x + 13 * s, p.y - 6 * s);
+      ctx.lineTo(p.x + 8 * s, p.y);
+      ctx.lineTo(p.x + 3 * s, p.y - 6 * s);
+      ctx.closePath();
+      ctx.fill();
+    } else if (motif.id === "canal") {
+      ctx.strokeStyle = motif.secondary;
+      ctx.lineWidth = 2 * s;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x, p.y - 18 * s);
+      ctx.stroke();
+      
+      ctx.fillStyle = motif.primary;
+      ctx.shadowColor = motif.primary;
+      ctx.shadowBlur = 10 * s;
+      ctx.fillRect(p.x - 4 * s, p.y - 24 * s, 8 * s, 8 * s);
+    } else if (motif.id === "causeway") {
+      ctx.fillStyle = motif.secondary;
+      ctx.beginPath();
+      ctx.moveTo(p.x - 8 * s, p.y);
+      ctx.lineTo(p.x - 8 * s, p.y - 14 * s);
+      ctx.lineTo(p.x + 8 * s, p.y - 14 * s);
+      ctx.lineTo(p.x + 8 * s, p.y);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.fillStyle = motif.primary;
+      ctx.beginPath();
+      ctx.moveTo(p.x - 10 * s, p.y - 14 * s);
+      ctx.lineTo(p.x, p.y - 20 * s);
+      ctx.lineTo(p.x + 10 * s, p.y - 14 * s);
+      ctx.lineTo(p.x, p.y - 11 * s);
+      ctx.closePath();
+      ctx.fill();
+    } else if (motif.id === "chancel") {
+      ctx.fillStyle = motif.secondary;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, 14 * s, 7 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = motif.primary;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y - 24 * s);
+      ctx.lineTo(p.x + 6 * s, p.y - 2 * s);
+      ctx.lineTo(p.x - 6 * s, p.y - 2 * s);
+      ctx.closePath();
+      ctx.fill();
+    } else if (motif.id === "zenith") {
+      ctx.fillStyle = motif.secondary;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, 12 * s, 6 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      const cy = p.y - 6 * s;
+      ctx.fillStyle = motif.primary;
+      ctx.beginPath();
+      ctx.moveTo(p.x - 5 * s, cy + 2 * s);
+      ctx.lineTo(p.x - 5 * s, cy - 3 * s);
+      ctx.lineTo(p.x - 2 * s, cy);
+      ctx.lineTo(p.x, cy - 5 * s);
+      ctx.lineTo(p.x + 2 * s, cy);
+      ctx.lineTo(p.x + 5 * s, cy - 3 * s);
+      ctx.lineTo(p.x + 5 * s, cy + 2 * s);
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    ctx.restore();
+  }
+
+
   drawNode(node, captured) {
     const ctx = this.ctx;
     const base = this.project(node.x, node.y, this.elevationAt(node.x, node.y));
@@ -3169,13 +3667,14 @@ export class BattleVisualizer {
     ctx.fillStyle = color;
     ctx.lineWidth = 2;
     if (effect.action === "materialize" || effect.action === "domain") {
-      const radius = (1 - life) * 28 * this.view.scale + 10 * this.view.scale;
+      const radius = (this.reducedMotion ? 0.5 : (1 - life)) * 28 * this.view.scale + 10 * this.view.scale;
       ctx.beginPath();
       ctx.ellipse(target.x, target.y, radius, radius * 0.46, 0, 0, Math.PI * 2);
       ctx.stroke();
     } else if (effect.action === "possess") {
       ctx.beginPath();
-      ctx.arc(target.x, target.y - 15 * this.view.scale, (1 - life) * 16 * this.view.scale + 5, 0, Math.PI * 2);
+      const radius = (this.reducedMotion ? 0.5 : (1 - life)) * 16 * this.view.scale + 5;
+      ctx.arc(target.x, target.y - 15 * this.view.scale, radius, 0, Math.PI * 2);
       ctx.stroke();
     } else {
       ctx.setLineDash(effect.action === "hunt" ? [4, 4] : []);
@@ -3185,7 +3684,8 @@ export class BattleVisualizer {
       ctx.stroke();
       ctx.setLineDash([]);
       ctx.beginPath();
-      ctx.arc(target.x, target.y - 8 * this.view.scale, 3 + (1 - life) * 8, 0, Math.PI * 2);
+      const radius = 3 + (this.reducedMotion ? 0.5 : (1 - life)) * 8;
+      ctx.arc(target.x, target.y - 8 * this.view.scale, radius, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
@@ -3207,6 +3707,84 @@ export class BattleVisualizer {
       p,
       82 * s,
     );
+
+    const motif = getStageMotif(this.stageNumber);
+    if (motif) {
+      ctx.save();
+      let cy;
+      if (bridgeDrawn) {
+        cy = p.y - 82 * s * 0.9;
+      } else if (this.bossImage) {
+        const w = 72 * s;
+        const h = w * (this.bossImage.height / this.bossImage.width);
+        cy = p.y - h + 6 * s;
+      } else {
+        const defeated = this.bossClip === "Defeat";
+        const attacking = this.bossClip === "Attack";
+        cy = p.y - (defeated ? 36 : attacking ? 60 : 52) * s;
+      }
+      ctx.fillStyle = motif.primary;
+      ctx.strokeStyle = motif.secondary;
+      ctx.lineWidth = 1.5 * s;
+      
+      if (motif.bossMotif === "breakwater") {
+        ctx.beginPath();
+        ctx.arc(p.x, cy, 5 * s, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (motif.bossMotif === "rib-sprawl") {
+        ctx.beginPath();
+        ctx.moveTo(p.x - 4 * s, cy - 4 * s);
+        ctx.lineTo(p.x + 4 * s, cy + 4 * s);
+        ctx.moveTo(p.x + 4 * s, cy - 4 * s);
+        ctx.lineTo(p.x - 4 * s, cy + 4 * s);
+        ctx.stroke();
+      } else if (motif.bossMotif === "crystal") {
+        ctx.beginPath();
+        ctx.moveTo(p.x, cy - 6 * s);
+        ctx.lineTo(p.x + 4 * s, cy);
+        ctx.lineTo(p.x, cy + 6 * s);
+        ctx.lineTo(p.x - 4 * s, cy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (motif.bossMotif === "lantern") {
+        ctx.shadowColor = motif.primary;
+        ctx.shadowBlur = 6 * s;
+        ctx.beginPath();
+        ctx.arc(p.x, cy, 4 * s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      } else if (motif.bossMotif === "keystone") {
+        ctx.beginPath();
+        ctx.moveTo(p.x - 5 * s, cy - 4 * s);
+        ctx.lineTo(p.x + 5 * s, cy - 4 * s);
+        ctx.lineTo(p.x, cy + 5 * s);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (motif.bossMotif === "rite") {
+        ctx.beginPath();
+        ctx.arc(p.x, cy, 5 * s, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(p.x, cy, 2.5 * s, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (motif.bossMotif === "crown") {
+        ctx.beginPath();
+        ctx.moveTo(p.x - 5 * s, cy + 2 * s);
+        ctx.lineTo(p.x - 5 * s, cy - 3 * s);
+        ctx.lineTo(p.x - 2 * s, cy);
+        ctx.lineTo(p.x, cy - 5 * s);
+        ctx.lineTo(p.x + 2 * s, cy);
+        ctx.lineTo(p.x + 5 * s, cy - 3 * s);
+        ctx.lineTo(p.x + 5 * s, cy + 2 * s);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     if (bridgeDrawn) return;
     if (this.bossImage) {
       const w = 72 * s;
@@ -3271,6 +3849,19 @@ export class BattleVisualizer {
       ctx.restore();
     }
 
+    const hasInvincible = this.activeEffects?.some(e => e.type === "INVINCIBLE");
+    if (kind === "commander" && hasInvincible) {
+      const pulse = this.reducedMotion ? 0 : (Math.sin(this.lastTime * 0.012) + 1) * 0.5;
+      ctx.save();
+      ctx.strokeStyle = "#ffffff";
+      ctx.shadowBlur = 10 * s + pulse * 4 * s;
+      ctx.shadowColor = "#ffffff";
+      ctx.lineWidth = 2.5 * s;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + 2 * s, (18 + pulse * 2.5) * s, (9 + pulse * 1.25) * s, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
     const tint = kind === "possessed"
       ? this.palette.allyPossessed
       : kind === "enemy"
@@ -3478,7 +4069,16 @@ export class BattleVisualizer {
   // --- loop -----------------------------------------------------------------
 
   animate() {
-    if (this.destroyed || this.reducedMotion) return;
+    // reducedMotion must NOT stop this loop: it is the master clock for
+    // simulation (updateUnits/updateParticles) and the only place render()
+    // is called. Individual cosmetic effects (particle bursts, HP-bar pulse,
+    // the action-range-ring pulse, etc.) already self-gate on
+    // this.reducedMotion correctly at their own call sites -- gating here
+    // too used to freeze the entire scene for reduced-motion users: nothing
+    // ever rendered, unit positions never updated, and the object-feedback
+    // layer's screenX/screenY (the boss/commander nameplates) never
+    // refreshed past their first frame.
+    if (this.destroyed) return;
     this.animationFrameId = requestAnimationFrame(() => this.animate());
     const now = performance.now();
 
@@ -3636,6 +4236,17 @@ export class BattleVisualizer {
     this.actionFeedbackTimer = null;
     this.animationFrameId = null;
     this.audio = null;
+    this.pendingChest = null;
+    this.chestTile = null;
+    this.chestId = null;
+    this.chestOpenedRequested = false;
+    this.activeEffects = [];
+    this.movementMultiplier = 1;
+    if (this.previouslyActiveEffects) {
+      this.previouslyActiveEffects.clear();
+      this.previouslyActiveEffects = null;
+    }
+    this.effectParticleTimer = null;
     this.ctx = null;
     this.canvas = null;
   }
