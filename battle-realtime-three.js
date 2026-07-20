@@ -1726,6 +1726,17 @@ export class RealtimeBattle {
       else order = "holding";
     }
 
+    // Selection "kind" — same-type selections resolve to that type's own
+    // identity (used to project the correct portrait); a selection spanning
+    // both a possessed ally and ordinary shade allies resolves to "mixed" so
+    // the UI does not falsely claim a single uniform type.
+    let kind = "none";
+    if (count > 0) {
+      if (possessed === count) kind = "possessed";
+      else if (possessed === 0) kind = "shade";
+      else kind = "mixed";
+    }
+
     const cached = this.cachedSelectionSummary;
     if (
       cached &&
@@ -1748,6 +1759,7 @@ export class RealtimeBattle {
       engaged,
       moving,
       order,
+      kind,
     };
     this.cachedSelectionSummary = summary;
     this.onSelectionChange?.(summary);

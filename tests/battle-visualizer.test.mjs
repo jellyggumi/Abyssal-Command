@@ -1421,6 +1421,7 @@ test("BattleVisualizer publishes stable aggregate selection summaries and select
       engaged: 0,
       moving: 0,
       order: "none",
+      kind: "none",
     },
     "the initial fallback summary must be serializable plain data",
   );
@@ -1452,6 +1453,7 @@ test("BattleVisualizer publishes stable aggregate selection summaries and select
       engaged: 1,
       moving: 1,
       order: "mixed",
+      kind: "mixed",
     },
     "fallback selection data must use the same health and order semantics as WebGL",
   );
@@ -1470,6 +1472,7 @@ test("BattleVisualizer publishes stable aggregate selection summaries and select
       engaged: 0,
       moving: 1,
       order: "moving",
+      kind: "possessed",
     },
     "fallback defeat must immediately remove and republish a selected actor",
   );
@@ -1488,6 +1491,7 @@ test("BattleVisualizer publishes stable aggregate selection summaries and select
       engaged: 0,
       moving: 0,
       order: "none",
+      kind: "none",
     },
     "fallback authoritative removal must clear and republish the selected set",
   );
@@ -1553,6 +1557,7 @@ test("BattleVisualizer marquee emits one summary for the resulting actor set", (
       engaged: 0,
       moving: 0,
       order: "holding",
+      kind: "shade",
     }],
     "the completed marquee must publish one holding summary for its selected set",
   );
@@ -1582,6 +1587,7 @@ test("BattleVisualizer selectAlly publishes only semantic selection changes and 
       engaged: 0,
       moving: 0,
       order: "holding",
+      kind: "shade",
     },
     "direct fallback selection must publish current and maximum health without counting defeated allies",
   );
@@ -1606,6 +1612,7 @@ test("BattleVisualizer selectAlly publishes only semantic selection changes and 
       engaged: 0,
       moving: 0,
       order: "none",
+      kind: "none",
     },
     "rejecting an invalid fallback target must publish the cleared selection while preserving the live-force total",
   );

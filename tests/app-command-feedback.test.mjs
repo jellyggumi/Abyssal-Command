@@ -2800,6 +2800,7 @@ async function loadSelectionDossierRuntime(locale = "en") {
     },
   });
   const definitions = [
+    appFunction(source, "selectionPortraitFor", "renderSelectionDossier"),
     appFunction(source, "handleRendererSelection", "renderSelectionDossier"),
     appFunction(source, "renderSelectionDossier", "currentActionFocus"),
     appFunction(source, "currentActionFocus", "updateActionFocus"),
@@ -2810,7 +2811,7 @@ async function loadSelectionDossierRuntime(locale = "en") {
   vm.runInContext(
     `const EMPTY_RENDERER_SELECTION = Object.freeze({
       count: 0, total: 0, health: 0, maxHealth: 0,
-      possessed: 0, engaged: 0, moving: 0, order: "none"
+      possessed: 0, engaged: 0, moving: 0, order: "none", kind: "none"
     });
     let rendererSelectionSummary = EMPTY_RENDERER_SELECTION;
     let activeFieldFocusedAction = null;

@@ -1157,6 +1157,15 @@ export class BattleVisualizer {
       else order = "holding";
     }
 
+    // Selection "kind" -- WebGL renderer's exact counterpart (see
+    // emitSelectionChange in battle-realtime-three.js).
+    let kind = "none";
+    if (count > 0) {
+      if (possessed === count) kind = "possessed";
+      else if (possessed === 0) kind = "shade";
+      else kind = "mixed";
+    }
+
     const cached = this.cachedSelectionSummary;
     if (
       cached &&
@@ -1179,6 +1188,7 @@ export class BattleVisualizer {
       engaged,
       moving,
       order,
+      kind,
     };
     this.cachedSelectionSummary = summary;
     this.onSelectionChange?.(summary);

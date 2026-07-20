@@ -3466,6 +3466,7 @@ test("RealtimeBattle publishes stable selection summaries and removes a defeated
       engaged: 0,
       moving: 0,
       order: "none",
+      kind: "none",
     },
     "the first publication must describe an empty battlefield selection with plain scalar data",
   );
@@ -3496,6 +3497,7 @@ test("RealtimeBattle publishes stable selection summaries and removes a defeated
       engaged: 1,
       moving: 1,
       order: "mixed",
+      kind: "mixed",
     },
     "the dossier summary must aggregate the actual selected actors rather than campaign legion totals",
   );
@@ -3516,6 +3518,7 @@ test("RealtimeBattle publishes stable selection summaries and removes a defeated
       engaged: 0,
       moving: 1,
       order: "moving",
+      kind: "possessed",
     },
     "defeat must remove a selected actor and immediately republish the surviving selection",
   );
@@ -3536,6 +3539,7 @@ test("RealtimeBattle publishes stable selection summaries and removes a defeated
       engaged: 0,
       moving: 0,
       order: "none",
+      kind: "none",
     },
     "authoritative ally removal must clear and republish the selected set",
   );
@@ -3807,6 +3811,7 @@ test("RealtimeBattle marquee publishes its selected actor set once", () => {
       engaged: 0,
       moving: 0,
       order: "holding",
+      kind: "shade",
     }],
     "an unchanged marquee must emit one aggregate holding summary",
   );
@@ -3842,6 +3847,37 @@ test("RealtimeBattle marquee and single-click selection can only ever contain mo
   );
 });
 
+test("RealtimeBattle selection 'kind' resolves to the selected type's own identity, or 'mixed' only when a possessed ally and a shade ally are selected together", () => {
+  const battle = new RealtimeBattle(null, { stageNumber: 1 }, {});
+  const shadeA = makeUnit({ hp: 3 });
+  const shadeB = makeUnit({ hp: 2 });
+  const possessed = { ...makeUnit({ hp: 3 }), isPossessed: true };
+  battle.allies = [shadeA, shadeB, possessed];
+
+  assert.equal(battle.emitSelectionChange().kind, "none", "an empty selection must resolve to kind 'none'");
+
+  battle.selection.add(shadeA);
+  assert.equal(battle.emitSelectionChange().kind, "shade", "a single ordinary ally must resolve to kind 'shade'");
+
+  battle.selection.add(shadeB);
+  assert.equal(
+    battle.emitSelectionChange().kind,
+    "shade",
+    "multiple ordinary allies selected together are a uniform type and must still resolve to kind 'shade'",
+  );
+
+  battle.selection.clear();
+  battle.selection.add(possessed);
+  assert.equal(battle.emitSelectionChange().kind, "possessed", "the possessed ally alone must resolve to kind 'possessed'");
+
+  battle.selection.add(shadeA);
+  assert.equal(
+    battle.emitSelectionChange().kind,
+    "mixed",
+    "a possessed ally selected together with an ordinary ally must resolve to kind 'mixed', not silently claim either uniform type",
+  );
+});
+
 test("RealtimeBattle selectAlly publishes only semantic selection changes and clears invalid targets", () => {
   const summaries = [];
   const battle = new RealtimeBattle(
@@ -3868,6 +3904,7 @@ test("RealtimeBattle selectAlly publishes only semantic selection changes and cl
       engaged: 0,
       moving: 0,
       order: "holding",
+      kind: "shade",
     },
     "direct selection must publish the selected ally's current and maximum health without counting defeated allies",
   );
@@ -3892,6 +3929,7 @@ test("RealtimeBattle selectAlly publishes only semantic selection changes and cl
       engaged: 0,
       moving: 0,
       order: "none",
+      kind: "none",
     },
     "rejecting an invalid direct target must publish the cleared selection while preserving the live-force total",
   );

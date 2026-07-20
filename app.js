@@ -551,6 +551,7 @@ const EMPTY_RENDERER_SELECTION = Object.freeze({
   engaged: 0,
   moving: 0,
   order: "none",
+  kind: "none",
 });
 let rendererSelectionSummary = EMPTY_RENDERER_SELECTION;
 let minimapInstance = null;
@@ -1059,6 +1060,20 @@ function handleRendererSelection(summary, sessionId = battleSessionId) {
   projectActionFocus(currentActionFocus());
 }
 
+// The repo has no dedicated per-unit portrait art (only action icons and
+// boss/reward images), so the selection portrait reuses the two action
+// icons that best match what is actually selected: the possess icon for a
+// possessed ally (a literal match) and the materialize icon for ordinary
+// shade allies / no selection / a mixed possessed+shade group (materialize
+// is the command that raises the shade legion, so it reads as "your ally
+// legion" generically). Previously this was hardcoded to the possess icon
+// regardless of what -- if anything -- was selected.
+function selectionPortraitFor(kind) {
+  return kind === "possessed"
+    ? "assets/images/ui/action-possess.png"
+    : "assets/images/ui/action-materialize.png";
+}
+
 function renderSelectionDossier() {
   const summary = rendererSelectionSummary ?? EMPTY_RENDERER_SELECTION;
   const labelEl = document.getElementById("dossier-label");
@@ -1090,7 +1105,8 @@ function renderSelectionDossier() {
   const statusText = summary.count > 0
     ? `${summary.count} ${translate("command.selectionStatus.selected")} · ${translate(orderKey)}`
     : translate("command.selectionStatus.none");
-  if (imgEl) imgEl.src = "assets/images/ui/action-possess.png";
+  const portraitSrc = selectionPortraitFor(summary.kind);
+  if (imgEl) imgEl.src = portraitSrc;
   if (countEl) countEl.textContent = `${summary.count} / ${summary.total}`;
   if (healthEl) healthEl.textContent = `${healthValue} / ${maxHealthValue}`;
   if (orderEl) {
@@ -1099,7 +1115,7 @@ function renderSelectionDossier() {
   }
   if (statusEl) statusEl.textContent = statusText;
 
-  if (elements.battleScreenSelectionImage) elements.battleScreenSelectionImage.src = "assets/images/ui/action-possess.png";
+  if (elements.battleScreenSelectionImage) elements.battleScreenSelectionImage.src = portraitSrc;
   if (elements.battleScreenSelectionLabel) {
     elements.battleScreenSelectionLabel.setAttribute("data-i18n", "command.selectionLabel");
     elements.battleScreenSelectionLabel.textContent = translate("command.selectionLabel");
