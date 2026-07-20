@@ -2895,7 +2895,11 @@ export class RealtimeBattle {
     let mode = "select";
     if (this.placementMode) {
       mode = "placement";
-    } else if (event.pointerType === "touch" || event.button === 1 || (event.button === 0 && event.altKey)) {
+    } else if (event.pointerType === "touch") {
+      // Mouse never orbits the camera: the view angle stays fixed for every
+      // mouse click/drag (left-drag = marquee select, as documented in
+      // battle.directHelp). Only touch drag still orbits, per the mobile
+      // "터치 드래그 회전" control already published in the UI help copy.
       mode = "orbit";
     } else if (event.button === 2) {
       mode = "right-click";
