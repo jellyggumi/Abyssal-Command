@@ -1853,11 +1853,35 @@ button.primary:hover:not(:disabled), .relic-shop-btn-equip:hover:not(:disabled) 
   }
 
 
-  /* Battlefield first */
-  .battle-field-panel {
+  /* Battlefield first — full-bleed to the true screen edges. main#game-root
+     and #campaign-screen both carry horizontal padding (needed everywhere
+     else, e.g. the resource bar and command dock), so cancel it here with
+     the standard 100vw/negative-centering full-bleed trick instead of
+     hardcoding a padding sum that would silently drift out of sync with
+     those ancestors' own values. The #battle-field ID is added to each
+     selector purely to out-specificity the later, non-media-scoped
+     ".battle-field-panel { border: 2px !important }" / ".battle-hud-panel"
+     "medieval stone theme" rule (source order alone would lose to it, since
+     that rule sits after this block in the file and matches at every width).
+   */
+  .battle-field-panel,
+  #battle-field.battle-field-panel {
     order: -2 !important;
-    width: 100% !important;
-    padding: 0.25rem !important;
+    width: 100vw !important;
+    margin-left: calc(50% - 50vw) !important;
+    margin-right: calc(50% - 50vw) !important;
+    padding: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .battle-hud-panel,
+  #battle-field.battle-hud-panel {
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
   }
 
   #battle-field,
