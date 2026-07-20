@@ -12,7 +12,7 @@ import { translations } from "../i18n.js";
 const execFileAsync = promisify(execFile);
 
 const SOURCE_ROOT = new URL("../", import.meta.url);
-const CANONICAL_PAGES_BASE = "https://jellyggumi.github.io/Abyssal-Surge";
+const CANONICAL_PAGES_BASE = "https://jellyggumi.github.io/Abyssal-Command";
 const LATE_STAGE_NARRATION = Object.freeze({
   "sunken-bastion": Object.freeze({
     lines: Object.freeze(["가라앉은 보루, 선큰 바스티온.", "조수의 감시자를 방파제 아래로 가라앉혀라."]),
@@ -1478,7 +1478,7 @@ test("public launch documentation uses the canonical Pages application base", as
   );
 
   for (const [path, source] of documents) {
-    assert.doesNotMatch(source, /Abyssal-Command/, `${path} must not reference the former public app URL`);
+    assert.doesNotMatch(source, /Abyssal-Surge/, `${path} must not reference the former public app URL`);
     assert.ok(source.includes(CANONICAL_PAGES_BASE), `${path} must link to the canonical Pages application`);
   }
   const buildGuide = documents.find(([path]) => path === "apk/BUILD.md")?.[1];

@@ -1,11 +1,11 @@
 # Abyssal Command
 
-[![Deploy to Pages](https://github.com/jellyggumi/Abyssal-Surge/actions/workflows/static.yml/badge.svg)](https://github.com/jellyggumi/Abyssal-Surge/actions/workflows/static.yml)
-[![GitHub Pages](https://img.shields.io/github/deployments/jellyggumi/Abyssal-Surge/github-pages?label=GitHub%20Pages)](https://jellyggumi.github.io/Abyssal-Surge/)
+[![Deploy to Pages](https://github.com/jellyggumi/Abyssal-Command/actions/workflows/static.yml/badge.svg)](https://github.com/jellyggumi/Abyssal-Command/actions/workflows/static.yml)
+[![GitHub Pages](https://img.shields.io/github/deployments/jellyggumi/Abyssal-Command/github-pages?label=GitHub%20Pages)](https://jellyggumi.github.io/Abyssal-Command/)
 
 **Abyssal Command**는 오리지널 세계관의 전투 중심 무자원 RTS-RPG 하이브리드 웹 캠페인입니다. 모든 진행은 브라우저 로컬에서 결정론적으로 계산되며, 온라인 서비스·멀티플레이·클라우드 동기화를 사용하지 않습니다.
 
-**▶ 플레이:** https://jellyggumi.github.io/Abyssal-Surge/ (모바일·데스크톱, PWA 오프라인 지원)
+**▶ 플레이:** https://jellyggumi.github.io/Abyssal-Command/ (모바일·데스크톱, PWA 오프라인 지원)
 
 ## 게임 시스템
 
@@ -103,7 +103,7 @@
 ## 프로젝트 구조
 
 ```text
-Abyssal-Surge/
+Abyssal-Command/
 ├── index.html            # 캠페인 UI와 공개 메타데이터
 ├── styles.css            # 프레젠테이션과 reduced-motion 규칙
 ├── app.js                # 입력, HUD, 내레이션, 로컬 저장
@@ -126,7 +126,7 @@ python3 -m http.server 8000
 
 ## GitHub Pages 배포
 
-`main`에 푸시하면 [Deploy static content to Pages](.github/workflows/static.yml) 워크플로가 실행됩니다. 워크플로가 성공적으로 완료되면 https://jellyggumi.github.io/Abyssal-Surge/ 가 갱신됩니다.
+`main`에 푸시하면 [Deploy static content to Pages](.github/workflows/static.yml) 워크플로가 실행됩니다. 워크플로가 성공적으로 완료되면 https://jellyggumi.github.io/Abyssal-Command/ 가 갱신됩니다.
 
 배포 아티팩트는 커밋된 런타임 파일 allowlist에서만 생성됩니다. 로컬 작업 트리의 미추적 파일이나 allowlist 밖 파일은 GitHub Pages에 포함되지 않습니다. 배포 상태는 상단 배지 또는 `gh run list --workflow static.yml --limit 1`로 확인합니다.
 
