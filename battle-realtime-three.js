@@ -3521,6 +3521,13 @@ export class RealtimeBattle {
             const ally = this.resolvePointerAlly(event);
             if (ally) {
               this.selectAlly(ally);
+            } else if (this.selection && this.selection.size > 0) {
+              // A prior marquee drag (or single click) already selected one
+              // or more allies: an empty-ground click must rally them, not
+              // silently ignore the selection and move the commander
+              // instead. This mirrors the touch/orbit branch below, which
+              // already had this check -- mouse's "select" mode never did.
+              this.pick(event, "allies");
             } else {
               this.pick(event, "personal");
             }
@@ -5163,6 +5170,12 @@ export class RealtimeBattle {
             transparent: true,
             opacity: 0.92,
             depthWrite: false,
+            // The ring sits flat on the ground at a selected ally's feet;
+            // without disabling depth-testing too, any nearby higher-
+            // elevation terrain cell clips it from view (the same class of
+            // bug fixed earlier for the action-range ring, the commander's
+            // destination marker, and the ally rally marker).
+            depthTest: false,
             side: THREE.DoubleSide
           });
           const ring = new THREE.Mesh(this.ringGeometry, ringMat);

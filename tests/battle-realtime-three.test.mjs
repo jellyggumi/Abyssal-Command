@@ -3660,7 +3660,58 @@ test("RealtimeBattle direct ally click replaces selection without issuing a grou
   assert.equal(summaries.at(-1).health, 2, "direct selection must publish the selected ally's health");
 });
 
-test("RealtimeBattle primary empty-ground click preserves ally selection while focusing and moving the commander", () => {
+test("RealtimeBattle primary empty-ground click rallies a selected ally instead of silently moving the commander (regression: previously ignored the selection)", () => {
+  const canvas = {
+    style: {},
+    focus() {},
+    setPointerCapture() {},
+    hasPointerCapture: () => true,
+    releasePointerCapture() {},
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }),
+  };
+  const battle = new RealtimeBattle(canvas, { stageNumber: 1 }, {});
+  const commanderCell = { x: 3, y: 5 };
+  const targetCell = { x: 12, y: 2 };
+  const commanderWorld = battle.navigation.gridToWorld(commanderCell.x + 0.5, commanderCell.y + 0.5);
+  const targetWorld = battle.navigation.gridToWorld(targetCell.x + 0.5, targetCell.y + 0.5);
+
+  const ally = makeUnit({ x: commanderWorld.x + 1, z: commanderWorld.z });
+  battle.commander = makeUnit({ x: commanderWorld.x, z: commanderWorld.z });
+  battle.allies = [ally];
+  battle.selection.add(ally);
+  battle.camera = {};
+  battle.ground = {};
+  battle.scene = { add() {} };
+  battle.resolvePointerAction = () => null;
+  battle.resolvePointerAlly = () => null;
+  battle.updateFocusHighlight = () => {};
+  battle.raycaster = {
+    setFromCamera() {},
+    intersectObject: () => [{ point: { x: targetWorld.x, y: 0, z: targetWorld.z } }],
+  };
+  battle.particles = { emit() {} };
+  battle.audio = { playTone() {} };
+  const pointer = {
+    button: 0,
+    clientX: 50,
+    clientY: 50,
+    pointerId: 8,
+    pointerType: "mouse",
+    timeStamp: 100,
+  };
+
+  battle.onPointerDown(pointer);
+  battle.onPointerUp({ ...pointer, timeStamp: 150 });
+
+  assert.deepEqual([...battle.selection], [ally], "the primary-button ground click must preserve the selected ally");
+  assert.equal(battle.commanderOrder, null, "an empty-ground click with a selected ally must not also move the commander");
+  assert.ok(
+    ally.customOrder || ally.customPath?.length,
+    "the selected ally must receive a rally order, mirroring the right-click path -- previously the commander moved and the ally just sat there",
+  );
+});
+
+test("RealtimeBattle primary empty-ground click moves the commander when nothing is selected", () => {
   const tacticalRequests = [];
   const canvas = {
     style: {},
@@ -3684,10 +3735,8 @@ test("RealtimeBattle primary empty-ground click preserves ally selection while f
     "the fixture must provide a legal commander route",
   );
 
-  const ally = makeUnit({ x: commanderWorld.x + 1, z: commanderWorld.z });
   battle.commander = makeUnit({ x: commanderWorld.x, z: commanderWorld.z });
-  battle.allies = [ally];
-  battle.selection.add(ally);
+  battle.allies = [];
   battle.camera = {};
   battle.ground = {};
   battle.scene = { add() {} };
@@ -3711,7 +3760,6 @@ test("RealtimeBattle primary empty-ground click preserves ally selection while f
   battle.onPointerDown(pointer);
   battle.onPointerUp({ ...pointer, timeStamp: 150 });
 
-  assert.deepEqual([...battle.selection], [ally], "primary mouse ground movement must preserve the selected ally");
   assert.deepEqual(
     battle.focusedCell,
     targetCell,
@@ -3725,7 +3773,7 @@ test("RealtimeBattle primary empty-ground click preserves ally selection while f
   assert.deepEqual(
     { x: battle.commanderOrder.x, z: battle.commanderOrder.z },
     { x: targetWorld.x, z: targetWorld.z },
-    "the same ground click must queue commander movement to the focused cell",
+    "with nothing selected, the same ground click must queue commander movement to the focused cell",
   );
 });
 
