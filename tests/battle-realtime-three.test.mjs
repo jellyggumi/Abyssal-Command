@@ -4565,3 +4565,44 @@ test("RealtimeBattle object feedback mirrors authoritative actors, live deltas, 
     "the Three renderer must use one presentation-only feedback layer without replaying identical campaign snapshots",
   );
 });
+
+test("RealtimeBattle feedbackObjects surfaces ally and tower action-readiness as a stamina-style bar while omitting it for commander, boss, and non-tower deployments", () => {
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+
+  battle.commander = { ...makeUnit({ hp: 10 }), id: "commander" };
+  battle.boss = { ...makeUnit({ hp: 12 }), id: "boss" };
+  battle.allies = [{ ...makeUnit({ hp: 3 }), id: "ally-1", cooldown: 0.275 }];
+  battle.enemies = [{ ...makeUnit({ hp: 4 }), id: "enemy-1" }];
+  battle.deploymentsMap.set("tower-1", {
+    id: "tower-1",
+    kind: "tower",
+    hp: 4,
+    maxHp: 4,
+    cooldown: 0.25,
+  });
+  battle.deploymentsMap.set("wall-1", {
+    id: "wall-1",
+    kind: "barricade",
+    hp: 5,
+    maxHp: 5,
+    cooldown: 0,
+  });
+
+  const byId = Object.fromEntries(battle.feedbackObjects().map((object) => [object.id, object]));
+
+  assert.equal(byId["ally-1"].maxEnergy, 0.55, "an ally's readiness bar must span its full strike cooldown");
+  assert.ok(
+    Math.abs(byId["ally-1"].energy - 0.275) < 1e-9,
+    "an ally halfway through its cooldown must report half-filled readiness",
+  );
+  assert.equal(byId["tower-1"].maxEnergy, 1, "a tower's readiness bar must span its full fire cooldown");
+  assert.ok(
+    Math.abs(byId["tower-1"].energy - 0.75) < 1e-9,
+    "a tower three-quarters recovered must report three-quarters-filled readiness",
+  );
+  assert.deepEqual(
+    [byId.commander.maxEnergy, byId.boss.maxEnergy, byId["wall-1"].maxEnergy],
+    [undefined, undefined, undefined],
+    "units without a cooldown-gated action must not draw a stamina bar",
+  );
+});

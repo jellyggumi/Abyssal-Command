@@ -43,6 +43,8 @@ const SURGE_CODES = new Set(["ShiftLeft", "ShiftRight"]);
 const TERRAIN_ELEVATION_SCALE = 0.42;
 const ENEMY_ADVANCE_SPEED = 2.4;
 const ATTACK_RANGE = 1.9;
+const ALLY_STRIKE_COOLDOWN = 0.55;
+const TOWER_FIRE_COOLDOWN = 1.0;
 const SHADE_INTERCEPT_RADIUS = 5;
 const EPSILON = 0.0001;
 let rendererRequestSequence = 0;
@@ -1766,7 +1768,7 @@ export class RealtimeBattle {
       ally.cooldown = Math.max(0, ally.cooldown - dt);
       this.play(ally, "Strike");
       if (ally.cooldown !== 0) continue;
-      ally.cooldown = 0.55;
+      ally.cooldown = ALLY_STRIKE_COOLDOWN;
       const allyGrid = this.navigation.worldToGrid(ally.root.position.x, ally.root.position.z);
       const allyGimmick = this.getGimmickAt(allyGrid.x, allyGrid.y);
       const allyDamageDealtMult = allyGimmick?.effects?.combatDamageDealtMultiplier ?? 1.0;
@@ -3475,7 +3477,7 @@ export class RealtimeBattle {
     const objects = [];
     const add = (actor, kind, label, priority = 0) => {
       if (!actor?.id) return;
-      objects.push({
+      const record = {
         id: actor.id,
         kind,
         label,
@@ -3484,7 +3486,17 @@ export class RealtimeBattle {
         selected: this.selection?.has(actor) ?? false,
         visible: actor.defeated !== true,
         priority,
-      });
+      };
+      // Surface attack-readiness as a secondary "stamina" bar for units whose
+      // next action is gated by a cooldown timer (allies and towers only).
+      if (kind === "ally" && typeof actor.cooldown === "number") {
+        record.maxEnergy = ALLY_STRIKE_COOLDOWN;
+        record.energy = Math.max(0, ALLY_STRIKE_COOLDOWN - actor.cooldown);
+      } else if (kind === "tower" && typeof actor.cooldown === "number") {
+        record.maxEnergy = TOWER_FIRE_COOLDOWN;
+        record.energy = Math.max(0, TOWER_FIRE_COOLDOWN - actor.cooldown);
+      }
+      objects.push(record);
     };
     add(this.commander, "commander", "Commander", 5);
     add(this.boss, "boss", "Boss", 4);
@@ -4071,6 +4083,12 @@ export class RealtimeBattle {
       const time = performance.now() * 0.001;
       const endpointPulse = reducedMotion ? 1.0 : 1.0 + Math.sin(time * 12.0) * 0.15;
       this.routePreview.endpoint.scale.setScalar(endpointPulse);
+
+      // Flow the dashed route line toward the destination so the travel
+      // direction reads at a glance; static under reduced motion.
+      if (this.routePreview.line?.material) {
+        this.routePreview.line.material.dashOffset = reducedMotion ? 0 : -((time * 0.6) % 0.34);
+      }
     }
   }
 
@@ -4451,7 +4469,7 @@ export class RealtimeBattle {
         }
       }
       if (bestTarget && dep.cooldown <= 0) {
-        dep.cooldown = 1.0;
+        dep.cooldown = TOWER_FIRE_COOLDOWN;
         const targetGrid = this.navigation.worldToGrid(bestTarget.root.position.x, bestTarget.root.position.z);
         const targetGimmick = this.getGimmickAt(targetGrid.x, targetGrid.y);
         const targetDamageReceivedMult = targetGimmick?.effects?.combatDamageReceivedMultiplier ?? 1.0;

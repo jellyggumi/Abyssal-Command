@@ -101,6 +101,8 @@ export class ObjectFeedbackLayer {
           label: src.label || "",
           hp: src.hp !== undefined ? src.hp : 100,
           maxHp: src.maxHp !== undefined ? src.maxHp : 100,
+          energy: src.energy !== undefined ? src.energy : null,
+          maxEnergy: src.maxEnergy !== undefined ? src.maxEnergy : null,
           statuses: Array.isArray(src.statuses) ? [...src.statuses] : [],
           selected: !!src.selected,
           priority: src.priority || 0,
@@ -119,6 +121,8 @@ export class ObjectFeedbackLayer {
         obj.kind = src.kind || obj.kind;
         obj.label = src.label !== undefined ? src.label : obj.label;
         obj.hp = src.hp !== undefined ? src.hp : obj.hp;
+        obj.energy = src.energy !== undefined ? src.energy : obj.energy;
+        obj.maxEnergy = src.maxEnergy !== undefined ? src.maxEnergy : obj.maxEnergy;
         obj.maxHp = src.maxHp !== undefined ? src.maxHp : obj.maxHp;
         
         if (Array.isArray(src.statuses)) {
@@ -477,6 +481,8 @@ export class ObjectFeedbackLayer {
         label: obj.label,
         hp: obj.hp,
         maxHp: obj.maxHp,
+        energy: obj.energy,
+        maxEnergy: obj.maxEnergy,
         statuses: [...obj.statuses],
         selected: obj.selected,
         priority: obj.priority,
@@ -516,6 +522,8 @@ export class ObjectFeedbackLayer {
     const hpRatio = obj.maxHp > 0 ? Math.max(0, Math.min(1, obj.hp / obj.maxHp)) : 0;
     const isAlly = obj.kind === "ally" || obj.kind === "hero" || obj.kind === "player" || obj.kind === "commander";
     const baseColor = isAlly ? "#71d8c6" : "#e06156"; // aqua vs danger
+    const hasEnergy = this._hasEnergy(obj);
+    const energyRatio = hasEnergy ? Math.max(0, Math.min(1, (obj.energy || 0) / obj.maxEnergy)) : 0;
 
     ctx.save();
 
@@ -525,6 +533,7 @@ export class ObjectFeedbackLayer {
 
     const badgeW = 60;
     const badgeH = 18;
+    const energyExtra = hasEnergy ? 6 : 0;
     const halfW = badgeW / 2;
 
     ctx.strokeStyle = obj.selected ? "#f2d38b" : `${baseColor}66`;
@@ -532,7 +541,7 @@ export class ObjectFeedbackLayer {
     ctx.fillStyle = "rgba(6, 9, 19, 0.75)";
 
     // Main background card
-    this._drawRoundedRect(ctx, x - halfW, y - badgeH / 2, badgeW, badgeH, 4);
+    this._drawRoundedRect(ctx, x - halfW, y - badgeH / 2, badgeW, badgeH + energyExtra, 4);
     ctx.fill();
     ctx.stroke();
 
@@ -557,6 +566,16 @@ export class ObjectFeedbackLayer {
     }
     ctx.fillStyle = fillStyle;
     ctx.fillRect(barX, barY, barW * hpRatio, barH);
+
+    // Readiness/stamina bar: fills as the unit's next-action cooldown recovers
+    if (hasEnergy) {
+      const energyY = barY + barH + 3;
+      const energyH = 3;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+      ctx.fillRect(barX, energyY, barW, energyH);
+      ctx.fillStyle = energyRatio >= 1 ? "#8fd8ff" : "#4d84b0";
+      ctx.fillRect(barX, energyY, barW * energyRatio, energyH);
+    }
 
     // Compact title text
     ctx.font = "8px " + this.options.fontFamily;
@@ -626,7 +645,7 @@ export class ObjectFeedbackLayer {
     const boxH = 14 + padY * 2;
 
     const x = obj.screenX;
-    const badgeHeightOffset = (obj.statuses && obj.statuses.length > 0) ? 44 : 36;
+    const badgeHeightOffset = ((obj.statuses && obj.statuses.length > 0) ? 44 : 36) + (this._hasEnergy(obj) ? 6 : 0);
     const y = obj.screenY - badgeHeightOffset + floatOffset;
 
     const boxX = x - boxW / 2;
@@ -697,6 +716,8 @@ export class ObjectFeedbackLayer {
 
     let color = "#ffffff";
     let text = "";
+    const magnitude = Math.abs(Number(exchange.value) || 0);
+    const isCrit = magnitude >= (this.options.critThreshold ?? 20) && exchange.type !== "heal";
 
     // Differentiate types and signs
     if (exchange.type === "outgoing") {
@@ -711,20 +732,25 @@ export class ObjectFeedbackLayer {
     } else {
       text = String(exchange.value);
     }
+    if (isCrit) text += "!";
 
-    ctx.font = "bold 12px " + this.options.fontFamily;
+    ctx.font = (isCrit ? "bold 16px " : "bold 12px ") + this.options.fontFamily;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    // Legibility shadow outline
+    // Legibility shadow outline (thicker for a heavier hit)
     ctx.strokeStyle = "rgba(6, 9, 19, 0.9)";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = isCrit ? 4 : 3;
     ctx.strokeText(text, x, y);
 
     ctx.fillStyle = color;
     ctx.fillText(text, x, y);
 
     ctx.restore();
+  }
+
+  _hasEnergy(obj) {
+    return typeof obj.maxEnergy === "number" && obj.maxEnergy > 0;
   }
 
   _abbreviateStatus(status) {

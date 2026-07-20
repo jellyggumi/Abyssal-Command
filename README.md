@@ -71,6 +71,13 @@
 - `node --test tests/combat-systems.test.mjs tests/campaign-evolution.test.mjs`는 16/16 통과했습니다. 네 전투 카탈로그의 불변성·결정론 resolver와 소환 진화 비용·상한·세이브 재생을 확인합니다.
 - `node --test tests/command-queue-realtime.test.mjs`는 7/7 통과했습니다. 렌더러 요청 정규화, 중복·stale 세션 차단, 큐 헤드 미리보기, 예약 우선 실행, 거부 시 cooldown 보존, `stopBattle` 무효화를 확인합니다.
 
+### 2026-07-20 플레이어 중심 UI/UX 강화
+
+- **행동 준비도(스태미나) 게이지:** 아군·타워의 공격 쿨다운을 `ObjectFeedbackLayer` HP 바로 아래 3px 보조 게이지로 노출합니다(`energy`/`maxEnergy`, 값 미제공 시 그리지 않음). 커맨더·보스·바리케이드처럼 쿨다운이 없는 오브젝트는 표시하지 않습니다. `battle-realtime-three.js`는 `ALLY_STRIKE_COOLDOWN`(0.55초), `TOWER_FIRE_COOLDOWN`(1.0초) 상수로 기존 매직 넘버를 대체하고 두 값을 `feedbackObjects()`에서 계산해 전달합니다.
+- **데미지 팝업 크리티컬 등급:** `critThreshold`(기본 20) 이상인 비힐 교환은 `bold 16px`·굵은 외곽선·`!` 접미사로 강조하고, 일반 타격은 기존 `bold 12px` 그대로 유지합니다. 힐 수치는 크기 상승 없이 항상 안정적으로 표시됩니다.
+- **이동 경로 흐름 애니메이션:** 아군 우클릭 이동 미리보기의 점선(`LineDashedMaterial`)에 `dashOffset`을 매 프레임 갱신해 목적지 방향으로 흐르는 인상을 주고, `reduced-motion`에서는 정지 상태를 유지합니다. 도착 지점 링 마커와 WebGL 선택 링은 기존 구현을 그대로 사용합니다(변경 없음, 이미 구현되어 있었음을 확인).
+- `node --test tests/object-feedback-layer.test.mjs tests/battle-realtime-three.test.mjs`는 105/105 통과했습니다(신규 3건: 준비도 게이지 렌더링, 크리티컬 등급 폰트 분기, `feedbackObjects()`의 아군/타워 준비도 계산과 커맨더/보스/바리케이드 제외). `node --test tests/*.test.mjs` 전체 스위트는 452/452 통과했습니다.
+
 ## 프로젝트 구조
 
 ```text

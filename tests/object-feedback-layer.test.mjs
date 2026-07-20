@@ -219,6 +219,30 @@ test("ObjectFeedbackLayer draws a compact HP ratio and exact status abbreviation
   );
 });
 
+test("ObjectFeedbackLayer draws a secondary readiness/stamina bar only for objects that declare one", (t) => {
+  const { layer, context } = makeLayer(t);
+  layer.reconcile([
+    { id: "ready-ally", kind: "ally", label: "Ally", hp: 90, maxHp: 100, energy: 0.4, maxEnergy: 0.55 },
+    { id: "no-stamina", kind: "enemy", label: "Foe", hp: 90, maxHp: 100 },
+  ], { silent: true });
+
+  layer.render((object) => ({
+    x: object.id === "ready-ally" ? 100 : 200,
+    y: 100,
+    depth: 0,
+    visible: true,
+  }), 1000);
+
+  const staminaFillWidths = context.calls
+    .filter((call) => call.op === "fillRect" && call.height === 3)
+    .map(({ width }) => width);
+  assert.deepEqual(
+    staminaFillWidths,
+    [50, 50 * (0.4 / 0.55)],
+    "only the object declaring maxEnergy draws a readiness track and fill, sized to its energy ratio",
+  );
+});
+
 test("ObjectFeedbackLayer deduplicates repeated utterances and enforces per-object cooldowns from time zero", (t) => {
   const { layer } = makeLayer(t, {
     dedupeWindow: 1000,
@@ -262,6 +286,29 @@ test("ObjectFeedbackLayer distinguishes simultaneous outgoing, incoming, and hea
     values.map(({ y }) => y),
     [90, 76, 62],
     "simultaneous values on one anchor must remain individually legible",
+  );
+});
+
+test("ObjectFeedbackLayer gives heavy hits a bolder crit tier while leaving healing numbers unmarked", (t) => {
+  const { layer, context } = makeLayer(t);
+  layer.reconcile([
+    { id: "unit", kind: "ally", label: "Unit", hp: 40, maxHp: 100 },
+  ], { silent: true });
+  layer.emitExchange("commander", "unit", 12, "outgoing", { now: 1000 });
+  layer.emitExchange("enemy", "unit", 25, "incoming", { now: 1000 });
+  layer.emitExchange("unit", "unit", 30, "heal", { now: 1000 });
+
+  layer.render(projectAt(), 1000);
+  const values = context.calls.filter((call) => call.op === "fillText" && /^[+-]/.test(call.text));
+
+  assert.deepEqual(
+    values.map(({ text, font }) => ({ text, font })),
+    [
+      { text: "-12", font: "bold 12px monospace, sans-serif" },
+      { text: "-25!", font: "bold 16px monospace, sans-serif" },
+      { text: "+30", font: "bold 12px monospace, sans-serif" },
+    ],
+    "only non-heal hits at or above the crit threshold gain the bolder tier and exclamation mark",
   );
 });
 
