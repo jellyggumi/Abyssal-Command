@@ -396,6 +396,9 @@ async function loadCommandFocusHotkey() {
     activeElement: () => document.activeElement,
     acknowledgeBriefing: () => elements.startCombat.dispatch("click"),
     focusFieldAction: (action) => context.handleActionFocus(action),
+    focusPendingCommand: () => context.focusPendingCommand(),
+    setPendingCommandFocus: (value) => { context.pendingCommandFocus = value; },
+    setStageBriefingOpen: (value) => { context.stageBriefingOpen = value; },
     pressAssault: () => pressKey("a", "KeyA"),
     pressDigitOne: () => pressKey("1", "Digit1"),
   };
@@ -1600,6 +1603,58 @@ test("briefing acknowledgement focuses Hunt and Digit1 dispatches only from comm
   fixture.editable.focus();
   assert.equal(fixture.pressDigitOne(), false, "Digit1 from an editable control must remain available to the control");
   assert.deepEqual(fixture.actions, ["hunt"], "editable focus must block numeric campaign command dispatch");
+});
+
+test("focusPendingCommand does not steal focus from an already-engaged battle canvas", async () => {
+  const fixture = await loadCommandFocusHotkey();
+
+  // Mirrors the real timing bug: beginStageCombat() sets the pending flag
+  // and clears stageBriefingOpen well before the async battle scene finishes
+  // loading; a player can click into the canvas during that window, and the
+  // eventual render() -> focusPendingCommand() call must not yank focus back
+  // to a command button once it belatedly runs.
+  fixture.setStageBriefingOpen(false);
+  fixture.setPendingCommandFocus(true);
+  fixture.battleCanvas3d.focus();
+  assert.equal(fixture.activeElement(), fixture.battleCanvas3d, "the canvas must already be focused before the pending check runs");
+
+  fixture.focusPendingCommand();
+
+  assert.equal(
+    fixture.activeElement(),
+    fixture.battleCanvas3d,
+    "focusPendingCommand must not steal focus from an already-engaged canvas",
+  );
+});
+
+test("focusPendingCommand does not steal focus from an already-engaged Canvas2D fallback either", async () => {
+  const fixture = await loadCommandFocusHotkey();
+
+  fixture.setStageBriefingOpen(false);
+  fixture.setPendingCommandFocus(true);
+  fixture.battleFallbackCanvas.focus();
+
+  fixture.focusPendingCommand();
+
+  assert.equal(
+    fixture.activeElement(),
+    fixture.battleFallbackCanvas,
+    "focusPendingCommand must not steal focus from the Canvas2D fallback either",
+  );
+});
+
+test("focusPendingCommand still focuses the first command when nothing has claimed focus yet", async () => {
+  const fixture = await loadCommandFocusHotkey();
+
+  fixture.setStageBriefingOpen(false);
+  fixture.setPendingCommandFocus(true);
+  fixture.focusPendingCommand();
+
+  assert.equal(
+    fixture.activeElement(),
+    fixture.hunt,
+    "with no prior canvas engagement, the pending focus must still land on the first command (the original accessibility affordance)",
+  );
 });
 
 test("spatial field hover overrides and then restores a keyboard-focused command preview", async () => {

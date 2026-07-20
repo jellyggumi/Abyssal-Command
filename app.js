@@ -3067,6 +3067,17 @@ function syncBattleScreenHud() {
 
 function focusPendingCommand() {
   if (!pendingCommandFocus || stageBriefingOpen || !battleUiActive()) return;
+  // The battle scene finishes loading asynchronously, so this can fire well
+  // after beginStageCombat() set the flag -- late enough that a player who
+  // already clicked into the canvas to start moving would otherwise have
+  // focus yanked back to a command button the instant loading completes.
+  // Respect an already-engaged canvas instead of stealing focus from it.
+  const focusOwner = document.activeElement;
+  const isCanvasFocused = focusOwner === elements.battleCanvas3d || focusOwner === elements.battleFallbackCanvas;
+  if (isCanvasFocused) {
+    pendingCommandFocus = false;
+    return;
+  }
   const command = elements.commandButtons[0];
   if (!command || command.disabled) return;
   pendingCommandFocus = false;
