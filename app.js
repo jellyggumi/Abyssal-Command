@@ -135,7 +135,7 @@ const NARRATION = Object.freeze({
     audio: "assets/audio/narr-stage1.mp3",
     lines: Object.freeze(["잿빛 교량, 신더 스팬.", "재의 메아리를 사냥하고 영혼을 거두어라."]),
     msPerChar: 45,
-    holdMs: 2085
+    holdMs: 2285
   }),
   "veil-citadel": Object.freeze({
     audio: "assets/audio/narr-stage2.mp3",
@@ -147,43 +147,43 @@ const NARRATION = Object.freeze({
     audio: "assets/audio/narr-stage3.mp3",
     lines: Object.freeze(["메아리 왕좌.", "군주의 영역을 펼쳐 게이트 소버린을 무너뜨려라."]),
     msPerChar: 45,
-    holdMs: 2000
+    holdMs: 2100
   }),
   "sunken-bastion": Object.freeze({
     audio: "assets/audio/narr-stage4.mp3",
     lines: Object.freeze(["가라앉은 보루, 선큰 바스티온.", "조수의 감시자를 방파제 아래로 가라앉혀라."]),
     msPerChar: 45,
-    holdMs: 2000
+    holdMs: 2570
   }),
   "howling-sprawl": Object.freeze({
     audio: "assets/audio/narr-stage5.mp3",
     lines: Object.freeze(["울부짖는 폐허, 하울링 스프롤.", "무리의 감시자를 빙의해 전령의 목을 조여라."]),
     msPerChar: 45,
-    holdMs: 2000
+    holdMs: 2410
   }),
   "glass-necropolis": Object.freeze({
     audio: "assets/audio/narr-stage6.mp3",
     lines: Object.freeze(["유리 묘역, 글래스 네크로폴리스.", "두 유리 단상을 점거하고 진혼의 합창을 끊어라."]),
     msPerChar: 45,
-    holdMs: 2000
+    holdMs: 2960
   }),
   "starless-canal": Object.freeze({
     audio: "assets/audio/narr-stage7.mp3",
     lines: Object.freeze(["별 없는 운하, 스타리스 커낼.", "군주의 영역을 다시 열어 폭군의 등불을 모두 꺼라."]),
     msPerChar: 45,
-    holdMs: 2000
+    holdMs: 3000
   }),
   "shattered-causeway": Object.freeze({
     audio: "assets/audio/narr-stage8.mp3",
     lines: Object.freeze(["부서진 둑길, 섀터드 코즈웨이.", "다리를 지키는 거상을 육교 아래로 무너뜨려라."]),
     msPerChar: 45,
-    holdMs: 2000
+    holdMs: 2460
   }),
   "abyss-chancel": Object.freeze({
     audio: "assets/audio/narr-stage9.mp3",
     lines: Object.freeze(["심연 예배당, 어비스 챈슬.", "세 의식 단상을 모두 점거하고 봉인 계약을 깨뜨려라."]),
     msPerChar: 45,
-    holdMs: 2000
+    holdMs: 3230
   }),
   "gate-zenith": Object.freeze({
     audio: "assets/audio/narr-stage10.mp3",

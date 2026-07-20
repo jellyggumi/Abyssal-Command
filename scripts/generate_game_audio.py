@@ -91,6 +91,33 @@ SFX_PROMPTS = {
         "metallic shimmer suggesting a dimensional gate. Ominous, epic, mysterious, "
         "cinematic dark fantasy tone. No lyrics, no spoken words, seamless loop-friendly."
     ),
+    "battle-bgm": (
+        "Original Abyssal Surge battle theme: grand dark epic orchestral battle underscore, "
+        "thunderous war drums, soaring desperate strings, distant wordless choir rising into "
+        "brass fanfare, relentless militant rhythm section. Cinematic, powerful, heroic-yet-"
+        "ominous dark fantasy battle music. No lyrics, no spoken words, seamless loop-friendly."
+    ),
+    "battle-bgm-band-ii": (
+        "Original Abyssal Surge battle theme for the drowned depths, stages four to six: grand "
+        "dark orchestral underscore with tidal sub-bass swells, deep taiko-like war drums, "
+        "mournful cello and viola ostinato, distant submerged choir, brass stabs cutting through "
+        "crushing pressure. Epic, oppressive, cinematic dark fantasy. No lyrics, no spoken "
+        "words, seamless loop-friendly."
+    ),
+    "battle-bgm-band-iii": (
+        "Original Abyssal Surge battle theme for the shattered causeways, stages seven and "
+        "eight: grand dark orchestral underscore, tolling cathedral bells, cracking stone "
+        "percussion, rising string tremolo, heroic brass motif fighting through despair, "
+        "thunderous low drums. Epic, tragic, cinematic dark fantasy battle music. No lyrics, "
+        "no spoken words, seamless loop-friendly."
+    ),
+    "battle-bgm-band-iv": (
+        "Original Abyssal Surge final battle theme for the abyssal zenith, stages nine and ten: "
+        "grand dark epic orchestral finale, full wordless choir chanting a ritual chorus, "
+        "thunderous war drums and taiko, soaring desperate strings and horns building to a "
+        "climactic brass fanfare, relentless triumphant yet doomed rhythm. Cinematic, "
+        "monumental, dark fantasy climax. No lyrics, no spoken words, seamless loop-friendly."
+    ),
 }
 
 @dataclass(frozen=True)
@@ -138,54 +165,6 @@ PROCEDURAL_CUES: Final[Mapping[str, ProceduralCue]] = {
         recipe=(
             "44.1 kHz mono PCM; 58 Hz descending impact, 310 Hz fracture burst, 1.8 kHz "
             "confirmation partial, deterministic xorshift grit; MP3 128 kbps."
-        ),
-    ),
-    "battle-bgm": ProceduralCue(
-        role="music",
-        duration_seconds=24.0,
-        prompt=(
-            "Original Abyssal Surge battle underscore: tense low drones, restrained two-second "
-            "war pulse, cold stereo overtones; loopable, no speech, no borrowed melody."
-        ),
-        recipe=(
-            "44.1 kHz stereo PCM; phase-aligned 55/82.5/110 Hz drones, alternating 165/220 Hz "
-            "stereo overtones and a two-second 52 Hz exponential pulse; edge crossfade; MP3 128 kbps."
-        ),
-    ),
-    "battle-bgm-band-ii": ProceduralCue(
-        role="music",
-        duration_seconds=24.0,
-        prompt=(
-            "Original Abyssal Surge drowned-pressure battle loop for stages 4-6: low drone, "
-            "tidal sub movement, restrained metal pulse, brittle upper partials; instrumental, loopable."
-        ),
-        recipe=(
-            "44.1 kHz stereo PCM; 49/73.5/98 Hz drones, 61 Hz tide pulse, 196/392 Hz "
-            "brittle partials, slow stereo tide motion, edge crossfade; MP3 128 kbps."
-        ),
-    ),
-    "battle-bgm-band-iii": ProceduralCue(
-        role="music",
-        duration_seconds=24.0,
-        prompt=(
-            "Original Abyssal Surge toll-and-fracture battle loop for stages 7-8: wide dark "
-            "space, distant lantern toll, heavy stone resonance; instrumental, loopable."
-        ),
-        recipe=(
-            "44.1 kHz stereo PCM; 46/69/92 Hz drones, 58 Hz impact pulse, 138/276 Hz "
-            "lantern toll partials, slow wide stereo resonance, edge crossfade; MP3 128 kbps."
-        ),
-    ),
-    "battle-bgm-band-iv": ProceduralCue(
-        role="music",
-        duration_seconds=24.0,
-        prompt=(
-            "Original Abyssal Surge rite-and-zenith battle loop for stages 9-10: low ritual "
-            "drone, restrained non-lexical choral texture, three-step threshold figure; instrumental, loopable."
-        ),
-        recipe=(
-            "44.1 kHz stereo PCM; 41/61.5/82 Hz drones, 55 Hz threshold pulse, 164/328 Hz "
-            "bowed-metal fifths, restrained stereo pad, edge crossfade; MP3 128 kbps."
         ),
     ),
 }

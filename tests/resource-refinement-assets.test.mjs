@@ -251,17 +251,13 @@ test("model v2 and the 45-record raster bridge form a hash-closed 15-asset runti
   assert.equal(terrainPlates, 3);
 });
 
-test("procedural encounter cues, canonical combat cues, and battle music retain valid MP3 delivery and provenance", async () => {
+test("procedural encounter cues and canonical combat cues retain valid MP3 delivery and provenance", async () => {
   const manifest = await readJson(MEDIA_MANIFEST_PATH);
   const records = new Map(manifest.assets.map((record) => [record.filename, record]));
   const contracts = [
     { filename: "assets/audio/breach-alert.mp3", cueId: "breach-alert", role: "sfx", channels: 1, durationMs: 2429 },
     { filename: "assets/audio/wave-spawn.mp3", cueId: "wave-spawn", role: "sfx", channels: 1, durationMs: 1541 },
-    { filename: "assets/audio/battle-bgm.mp3", cueId: "battle-bgm", role: "music", channels: 2, durationMs: 24033 },
     { filename: "assets/audio/boss-phase-change.mp3", cueId: "boss-phase-change", role: "sfx", channels: 1 },
-    { filename: "assets/audio/battle-bgm-band-ii.mp3", cueId: "battle-bgm-band-ii", role: "music", channels: 2 },
-    { filename: "assets/audio/battle-bgm-band-iii.mp3", cueId: "battle-bgm-band-iii", role: "music", channels: 2 },
-    { filename: "assets/audio/battle-bgm-band-iv.mp3", cueId: "battle-bgm-band-iv", role: "music", channels: 2 },
   ];
 
   for (const expected of contracts) {
