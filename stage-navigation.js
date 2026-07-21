@@ -3,14 +3,6 @@
 export const STAGE_GRID_WIDTH = 24;
 export const STAGE_GRID_HEIGHT = 12;
 
-// Legacy defaults retained for callers that have not yet moved to the per-stage
-// navigation object. New code must use navigation.anchors.
-export const STAGE_TACTICAL_ANCHORS = Object.freeze({
-  portal: Object.freeze({ x: 1, y: 5.5 }),
-  boss: Object.freeze({ x: 22, y: 5.5 }),
-  node: Object.freeze({ x: 12, y: 5.5 }),
-});
-
 const LANES = Object.freeze([2, 5, 8]);
 const EXPECTED_NODE_COUNTS = Object.freeze([1, 2, 1, 1, 1, 2, 2, 2, 3, 3]);
 

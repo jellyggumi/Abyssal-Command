@@ -6,8 +6,6 @@ export const TILEMAP_RENDER_MODE = Object.freeze({
 });
 
 export const TILE_CHUNK_SIZE = 16;
-export const INDIVIDUAL_TILE_LIMIT = 256;
-export const STATIC_BACKING_PIXEL_LIMIT = 2_097_152;
 
 function isFiniteNonNegativeInteger(value, name) {
   if (!Number.isInteger(value) || value < 0) {

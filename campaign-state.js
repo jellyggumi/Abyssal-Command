@@ -833,12 +833,6 @@ export function getSummonRecipe(recipeId) {
   return SUMMON_RECIPES_BY_ID[recipeId] ?? null;
 }
 
-export function getSummonRecipeBenefits(recipeId, level) {
-  const recipe = getSummonRecipe(recipeId);
-  if (!recipe || !Number.isInteger(level) || level < 1 || level > recipe.maxLevel) return null;
-  return recipe.benefits[level - 1];
-}
-
 function summonEvolutionBenefits(summons = DEFAULT_SUMMON_PROGRESSION) {
   const totals = {
     materializeBonus: 0,
