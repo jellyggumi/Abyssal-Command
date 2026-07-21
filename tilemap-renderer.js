@@ -137,6 +137,45 @@ function normalizeDrawRecord(record, source, layer) {
   };
 }
 
+function drawQueueComparator(a, b) {
+  return (
+    (a.blend === "additive") - (b.blend === "additive") ||
+    a.sortKey - b.sortKey ||
+    a.orderInLayer - b.orderInLayer ||
+    a.id.localeCompare(b.id)
+  );
+}
+
+/**
+ * Normalizes and validates a batch of raw terrain tiles into draw records
+ * once, ahead of time. buildStaticLayer() calls this after tiles are built
+ * so the per-frame render() path can reuse the cached, already-validated
+ * records for the every-frame merge instead of re-normalizing and
+ * re-validating up to hundreds of unchanged tiles on every single frame.
+ */
+export function normalizeStaticDrawRecords(tiles = []) {
+  if (!Array.isArray(tiles)) throw new TypeError("tiles must be an array");
+  return tiles.map((tile) => normalizeDrawRecord(tile, "tile", resolveTileLayer(tile)));
+}
+
+/**
+ * Merges pre-normalized static records (see normalizeStaticDrawRecords)
+ * with freshly-normalized dynamic records and returns one sorted painter
+ * queue -- the same shape and ordering buildIndividualDrawQueue produces,
+ * without re-normalizing the static half every call.
+ */
+export function mergeDrawQueue(normalizedStatic, dynamics = []) {
+  if (!Array.isArray(normalizedStatic) || !Array.isArray(dynamics)) {
+    throw new TypeError("normalizedStatic and dynamics must be arrays");
+  }
+  const queue = [
+    ...normalizedStatic,
+    ...dynamics.map((dynamic) => normalizeDrawRecord(dynamic, "dynamic", resolveDynamicLayer(dynamic))),
+  ];
+  queue.sort(drawQueueComparator);
+  return queue;
+}
+
 /**
  * Builds the shared painter queue for per-tile occluders and dynamic objects.
  * Chunked floors are intentionally absent: they draw below this queue. A wall
@@ -144,21 +183,8 @@ function normalizeDrawRecord(record, source, layer) {
  * front of it at their real world coordinates.
  */
 export function buildIndividualDrawQueue(tiles = [], dynamics = []) {
-  if (!Array.isArray(tiles) || !Array.isArray(dynamics)) {
-    throw new TypeError("tiles and dynamics must be arrays");
-  }
-  const queue = [
-    ...tiles.map((tile) => normalizeDrawRecord(tile, "tile", resolveTileLayer(tile))),
-    ...dynamics.map((dynamic) => normalizeDrawRecord(dynamic, "dynamic", resolveDynamicLayer(dynamic))),
-  ];
-  queue.sort(
-    (a, b) =>
-      (a.blend === "additive") - (b.blend === "additive") ||
-      a.sortKey - b.sortKey ||
-      a.orderInLayer - b.orderInLayer ||
-      a.id.localeCompare(b.id),
-  );
-  return queue;
+  if (!Array.isArray(tiles)) throw new TypeError("tiles and dynamics must be arrays");
+  return mergeDrawQueue(normalizeStaticDrawRecords(tiles), dynamics);
 }
 
 /**

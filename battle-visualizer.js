@@ -19,8 +19,8 @@ import {
   rectContains, directionIndex, mulberry32
 } from "./iso-math.js";
 import {
-  TILEMAP_RENDER_MODE, buildIndividualDrawQueue, chunkForTile,
-  selectTilemapRenderMode, visibleIndividualItems,
+  TILEMAP_RENDER_MODE, chunkForTile, mergeDrawQueue,
+  normalizeStaticDrawRecords, selectTilemapRenderMode, visibleIndividualItems,
 } from "./tilemap-renderer.js";
 import { DEFAULT_BATTLE_PRESENTATION } from "./battle-presentation.js";
 import { ObjectFeedbackLayer } from "./object-feedback-layer.js";
@@ -331,6 +331,10 @@ export class BattleVisualizer {
     this.staticChunksList = [];
     this.terrainTiles = [];
     this.occluderTiles = [];
+    // ponytail: pre-normalized this.terrainTiles/this.occluderTiles (see
+    // buildStaticLayer) so render()'s per-frame merge skips re-validating
+    // and re-allocating unchanged terrain records every frame.
+    this.staticDrawQueue = [];
     this.unitAtlases = new Map();
     this.bossImage = null;
     this.bridge = {
@@ -764,6 +768,12 @@ export class BattleVisualizer {
         floorChunks.set(chunk.id, tiles);
       }
     }
+
+    // Pre-normalize/validate the terrain half of the painter queue once per
+    // stage load or resize instead of on every render() frame -- terrain
+    // never changes mid-stage (see render()'s mergeDrawQueue call).
+    const staticTerrain = this.terrainMode === TILEMAP_RENDER_MODE.INDIVIDUAL ? this.terrainTiles : this.occluderTiles;
+    this.staticDrawQueue = normalizeStaticDrawRecords(staticTerrain);
 
     if (this.terrainMode === TILEMAP_RENDER_MODE.INDIVIDUAL) return;
     for (const [id, tiles] of floorChunks) {
@@ -3320,10 +3330,7 @@ export class BattleVisualizer {
       this.drawBridgeTerrain(bridgeTerrain);
     }
 
-    const terrain = this.terrainMode === TILEMAP_RENDER_MODE.INDIVIDUAL
-      ? this.terrainTiles
-      : this.occluderTiles;
-    const queue = buildIndividualDrawQueue(terrain, this.buildDynamicDrawRecords());
+    const queue = mergeDrawQueue(this.staticDrawQueue, this.buildDynamicDrawRecords());
     for (const item of queue) this.drawQueuedItem(item, bridgeTerrain);
 
     this.drawActionRangeRing();
@@ -4438,6 +4445,7 @@ export class BattleVisualizer {
     this.staticChunksList = [];
     this.terrainTiles = [];
     this.occluderTiles = [];
+    this.staticDrawQueue = [];
     this.bossImage = null;
     this.bridge.records.clear();
     this.bridge.images.clear();
