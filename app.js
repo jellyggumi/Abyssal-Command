@@ -582,7 +582,7 @@ let minimapFailed = false;
 let activePlacementMode = null;
 let tacticalFeedbackMessage = "";
 let tacticalFeedbackTimer = 0;
-let portraitPauseQuery = null;
+let battleLandscapeRequested = false;
 
 function translateRejectionReason(msg, lang) {
   if (lang === undefined) lang = currentLang();
@@ -3114,6 +3114,7 @@ function stopBattle() {
     // No-op: unlock is a courtesy so the lobby is not stuck landscape-locked
     // on browsers that granted the lock; nothing to recover if it throws.
   }
+  battleLandscapeRequested = false;
   clearEncounterStartTimer();
   stopBattleAudio();
   if (typeof stopCommandQueueTimer === "function") {
@@ -3193,58 +3194,30 @@ function activateBattleFallback(stage, sessionId) {
   }
 }
 
-// .rotate-device-prompt covers #canvas-container-3d/#battle-canvas-fallback
-// with an opaque overlay via CSS while a mobile viewport is portrait, but a
-// WebGL canvas left running behind it keeps drawing frames nobody can see --
-// wasted GPU/battery at best, and, confirmed live, an actively-rendering
-// canvas can end up compositing above a same-stacking-context sibling
-// regardless of z-index in some environments, which the CSS overlay alone
-// cannot out-stack. Pausing the real renderer's own rAF loop here removes
-// that contention outright instead of trying to win it, and resumes the
-// instant the device (or the emulator) reports landscape again.
-function wirePortraitPauseListener() {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
-  const query = window.matchMedia("(max-width: 899px) and (orientation: portrait)");
-  const apply = (matches) => {
-    if (visualizer && typeof visualizer.setRenderingPaused === "function") {
-      visualizer.setRenderingPaused(matches);
-    }
-  };
-  const handler = (event) => apply(event.matches);
-  if (typeof query.addEventListener === "function") {
-    query.addEventListener("change", handler);
-  } else if (typeof query.addListener === "function") {
-    query.addListener(handler); // Safari < 14 fallback
-  }
-  portraitPauseQuery = query;
-}
 
 async function maybeLockLandscapeForBattle() {
-  // Best-effort convenience for the "please rotate" prompt (see
-  // .rotate-device-prompt in react-game-ui.css): where the Orientation Lock
-  // API is actually supported (Android Chrome/Firefox/Samsung Internet, and
-  // only while fullscreen), this proactively rotates the rendering surface
-  // for the player instead of making them find and use the device's manual
-  // rotation. iOS Safari implements neither API at all, so this silently
-  // no-ops there and the player rotates by hand -- the CSS prompt covers
-  // that gap either way, so every failure here is intentionally swallowed
-  // rather than surfaced as an error.
+  // Attempts to move the battle scene to landscape as soon as the player
+  // starts combat. On platforms that support fullscreen + Orientation Lock,
+  // this gives the mobile scene the wide layout immediately and keeps users
+  // out of the portrait warning flow.
   try {
     if (!elements.screen || typeof window.matchMedia !== "function") return;
-    const isNarrow = window.matchMedia("(max-width: 899px)").matches;
-    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-    if (!isNarrow || !isPortrait) return;
+    if (!window.matchMedia("(max-width: 899px)").matches || battleLandscapeRequested) return;
+    battleLandscapeRequested = true;
+
     if (!document.fullscreenElement && typeof elements.screen.requestFullscreen === "function") {
       await elements.screen.requestFullscreen({ navigationUI: "hide" });
     }
+
     if (typeof screen?.orientation?.lock === "function") {
-      await screen.orientation.lock("landscape");
+      await screen.orientation.lock("landscape-primary");
     }
   } catch {
-    // Unsupported, denied, or not currently fullscreen-eligible: expected
-    // and harmless on iOS Safari and any browser that rejects the request.
+    // Orientation lock is best effort; gameplay should continue in current
+    // orientation when locking is unavailable or denied.
   }
 }
+
 
 async function startBattle() {
   if (!campaign || campaign.status !== "active" || visualizer || cooldownTimer || battleStarting) return;
@@ -3309,9 +3282,9 @@ async function startBattle() {
         return;
       }
       visualizer = battleRenderer;
-      if (portraitPauseQuery?.matches && typeof visualizer.setRenderingPaused === "function") {
-        visualizer.setRenderingPaused(true);
-      }
+      // Keep the renderer live while the browser completes (or rejects) the
+      // best-effort landscape request; portrait no longer blocks the battle
+      // behind a manual-rotation overlay.
       if (pendingBattleRenderer === battleRenderer) pendingBattleRenderer = null;
     } catch {
       battleRenderer?.destroy();
@@ -4520,6 +4493,11 @@ async function handleRetry() {
 
 function beginStageCombat() {
   if (!campaign || campaign.status !== "active" || !stageBriefingOpen) return;
+  // Run this directly from the Start Combat click so fullscreen/orientation
+  // requests still have the browser's user-activation grant.
+  if (typeof maybeLockLandscapeForBattle === "function") {
+    void maybeLockLandscapeForBattle();
+  }
   stageBriefingOpen = false;
   entryGuidanceStageId = currentStage().id;
   pendingCommandFocus = true;
@@ -5189,7 +5167,6 @@ async function initialize() {
     : translate("save.mirrorInactive");
   window.addEventListener("pagehide", () => campaignMirror?.close(), { once: true });
   wireControls();
-  wirePortraitPauseListener();
   particleBackground = initReactBitsEffects();
   syncBackgroundEffects();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => undefined);

@@ -6328,10 +6328,9 @@ test("RealtimeBattle stays paused through a hidden/visible visibility round-trip
   battle.raf = 501;
 
   battle.setRenderingPaused(true);
-  assert.equal(battle.raf, 0, "the mobile rotate-device overlay path must have stopped the loop before the tab visibility cycle begins");
-
-  // The overlay stays up (still externally paused) while the player switches
-  // tabs and comes back -- this is the exact regression the fix targets.
+  assert.equal(battle.raf, 0, "an external pause must stop the loop before the tab visibility cycle begins");
+  // The external pause stays active while the player switches tabs and comes
+  // back -- this is the exact regression the fix targets.
   globalThis.document.hidden = true;
   battle.onVisibility();
   assert.equal(battle.raf, 0, "going hidden while externally paused must leave the already-stopped loop alone");

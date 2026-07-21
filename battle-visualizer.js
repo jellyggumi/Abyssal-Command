@@ -2594,12 +2594,9 @@ export class BattleVisualizer {
     if (this.reducedMotion) this.render();
   }
 
-  // Mirrors RealtimeBattle.setRenderingPaused: app.js calls this while the
-  // mobile "please rotate your device" prompt covers the canvas so this
-  // loop -- the reduced-motion master clock, see the note atop animate() --
-  // actually stops instead of paying for update/render work nobody sees
-  // behind the opaque .rotate-device-prompt overlay (react-game-ui.css hides
-  // .cockpit-main under the same media query).
+  // External lifecycle hook shared with the WebGL renderer. Pausing cancels
+  // the reduced-motion master clock so callers can suspend rendering without
+  // losing the renderer's state or scheduling duplicate frames.
   setRenderingPaused(paused) {
     this.externallyPaused = paused;
     if (paused) {

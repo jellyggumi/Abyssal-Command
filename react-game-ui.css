@@ -3552,72 +3552,8 @@ textarea:focus-visible {
    already-tested "compact landscape" rule blocks below resolves correctly
    with zero CSS changes. iOS Safari does not implement the Orientation
    Lock API at all, so for it (and for any lock attempt that is rejected)
-   this prompt asks the player to rotate their phone by hand instead of
-   silently leaving them on the scrolling portrait layout. */
-.rotate-device-prompt {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  display: none;
-  place-items: center;
-  padding: 1.5rem;
-  background: #05070b;
-  color: #f0ead6;
-  text-align: center;
-}
-
-.rotate-device-prompt[hidden] {
-  display: none;
-}
-
-@media (max-width: 899px) and (orientation: portrait) {
-  body:has(#campaign-screen:not([hidden])) .rotate-device-prompt {
-    display: grid;
-  }
-
-  /* Hide the gameplay HUD behind the prompt: harmless now that the prompt
-     itself renders correctly (see the DOM-placement note on
-     #rotate-device-prompt in react-game-ui.js -- moving it to be
-     #campaign-screen's own last child, sharing its position:fixed stacking
-     context, is what actually fixed the paint order here), but still
-     worthwhile so nothing behind an opaque full-screen message stays
-     interactive or keeps rendering. */
-  body:has(#campaign-screen:not([hidden])) .cockpit-main {
-    display: none !important;
-  }
-}
-
-.rotate-device-prompt__icon {
-  margin: 0 auto .9rem;
-  font-size: 2.6rem;
-  animation: rotate-device-prompt-spin 1.8s ease-in-out infinite;
-}
-
-@keyframes rotate-device-prompt-spin {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(90deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rotate-device-prompt__icon {
-    animation: none;
-  }
-}
-
-.rotate-device-prompt__title {
-  margin: 0 0 .4rem;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.1rem;
-  font-weight: 800;
-}
-
-.rotate-device-prompt__hint {
-  margin: 0;
-  max-width: 24rem;
-  color: #aeb7bd;
-  font-size: .85rem;
-  line-height: 1.4;
-}
+   the battle scene continues with its responsive fallback instead of asking
+   the player to rotate manually. */
 
 @media (max-width: 899px) and (max-height: 600px) and (orientation: landscape) {
   /* 1. Page / Viewport Container Constraint: Lock to viewport height and disable scroll */

@@ -2230,10 +2230,10 @@ test("BattleVisualizer stays paused through a hidden/visible visibility round-tr
   visualizer.animationFrameId = 501;
 
   visualizer.setRenderingPaused(true);
-  assert.equal(visualizer.animationFrameId, null, "the mobile rotate-device overlay path must have stopped the loop before the tab visibility cycle begins");
+  assert.equal(visualizer.animationFrameId, null, "an external pause must stop the loop before the tab visibility cycle begins");
 
-  // The overlay stays up (still externally paused) while the player switches
-  // tabs and comes back -- this is the exact regression the fix targets.
+  // The external pause stays active while the player switches tabs and comes
+  // back -- this is the exact regression the fix targets.
   globalThis.document.hidden = true;
   documentListeners.get("visibilitychange")();
   assert.equal(visualizer.animationFrameId, null, "going hidden while externally paused must leave the already-stopped loop alone");
@@ -2326,8 +2326,8 @@ test("BattleVisualizer setRenderingPaused(true) then setRenderingPaused(false) r
   visualizer.setRenderingPaused(true);
   assert.equal(visualizer.animationFrameId, null, "rendering must actually be paused (raf cancelled) before the resume gap is simulated");
 
-  // Simulate the portrait "rotate your device" overlay staying up for five
-  // real seconds while the render loop is fully stopped.
+  // Simulate an external five-second pause while the render loop is fully
+  // stopped.
   nowValue += 5000;
 
   visualizer.setRenderingPaused(false);

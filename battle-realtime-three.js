@@ -5602,14 +5602,9 @@ export class RealtimeBattle {
   }
 
   // Explicit external pause/resume, independent of tab visibility (see
-  // onVisibility for that case): app.js calls this while the mobile
-  // "please rotate your device" prompt covers the canvas (portrait, narrow
-  // viewport) so the WebGL context stops rendering entirely instead of
-  // continuing to draw frames nobody can see behind an opaque overlay.
-  // Also sidesteps a live-observed issue where an actively-rendering WebGL
-  // canvas can end up compositing above same-stacking-context DOM siblings
-  // regardless of z-index in some environments -- stopping the render loop
-  // removes that contention outright rather than trying to out-stack it.
+  // onVisibility for that case). This hook lets the application suspend the
+  // WebGL render loop during a lifecycle transition without changing the
+  // renderer's state or allowing duplicate animation frames.
   setRenderingPaused(paused) {
     this.externallyPaused = paused;
     if (paused) {

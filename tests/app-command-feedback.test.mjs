@@ -289,7 +289,6 @@ async function loadStartupStatus(locale, {
     updateResumeAffordance: () => {},
     window: { addEventListener: () => {} },
     wireControls: () => {},
-    wirePortraitPauseListener: () => {},
   });
   const definitions = [
     appFunction(appSource, "setSaveStatus", "translatedResumeText"),
@@ -3349,7 +3348,6 @@ test("app passes session-scoped selection callbacks to both battle renderers", a
     handleTacticalRequest() {},
     lastScrolledStageId: "old-stage",
     pendingBattleRenderer: null,
-    portraitPauseQuery: null,
     projectActionFocus() {},
     projectBattleRuntime() {},
     render() {},
@@ -3448,7 +3446,6 @@ test("startBattle falls back to the Canvas2D renderer instead of leaving every c
     handleTacticalRequest() {},
     lastScrolledStageId: "old-stage",
     pendingBattleRenderer: null,
-    portraitPauseQuery: null,
     projectActionFocus() {},
     projectBattleRuntime() {},
     render() {},
