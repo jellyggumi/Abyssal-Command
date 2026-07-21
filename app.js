@@ -404,6 +404,9 @@ const elements = Object.freeze({
   resumeBossPortrait: document.querySelector("#campaign-resume-boss-portrait"),
   resumeBossName: document.querySelector("#campaign-resume-boss-name"),
   restart: document.querySelector("#restart-campaign"),
+  confirmDialog: document.querySelector("#confirm-dialog"),
+  confirmDialogConfirm: document.querySelector("#confirm-dialog-confirm"),
+  confirmDialogCancel: document.querySelector("#confirm-dialog-cancel"),
   retry: document.querySelector("#retry-stage"),
   returnToLobby: document.querySelector("#return-to-lobby"),
   resultOverlay: document.querySelector("#view-result"),
@@ -4412,8 +4415,50 @@ async function handleReward(rewardId) {
   window.requestAnimationFrame(() => elements.startCombat.focus());
 }
 
+// Themed replacement for window.confirm on the lobby's most destructive action
+// (starting a new campaign wipes the resumable local run). The native dialog
+// broke theme consistency, sat awkwardly on mobile, and needed special-casing
+// in automated QA; this custom modal reuses the existing result-overlay theme
+// and resolves a Promise so beginNewCampaign can still `await` a yes/no.
+let confirmDialogResolver = null;
+
+function handleConfirmDialogKeydown(event) {
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeConfirmDialog(false);
+  }
+}
+
+function closeConfirmDialog(result) {
+  if (!confirmDialogResolver) return;
+  const resolve = confirmDialogResolver;
+  confirmDialogResolver = null;
+  if (elements.confirmDialog) elements.confirmDialog.hidden = true;
+  document.removeEventListener("keydown", handleConfirmDialogKeydown, true);
+  const gameRoot = document.querySelector("#game-root");
+  if (gameRoot) gameRoot.inert = false;
+  resolve(result);
+}
+
+function showConfirmDialog() {
+  // No themed element present (e.g. a stripped test DOM) -> fall back to the
+  // native prompt so the destructive-action guard is never silently skipped.
+  if (!elements.confirmDialog || !elements.confirmDialogConfirm) {
+    return Promise.resolve(window.confirm(translate("confirm.newCampaign")));
+  }
+  if (confirmDialogResolver) closeConfirmDialog(false);
+  return new Promise((resolve) => {
+    confirmDialogResolver = resolve;
+    elements.confirmDialog.hidden = false;
+    const gameRoot = document.querySelector("#game-root");
+    if (gameRoot) gameRoot.inert = true;
+    document.addEventListener("keydown", handleConfirmDialogKeydown, true);
+    window.requestAnimationFrame(() => elements.confirmDialogConfirm.focus());
+  });
+}
+
 async function beginNewCampaign() {
-  if (campaign && campaign.trace.length > 0 && !window.confirm(translate("confirm.newCampaign"))) return;
+  if (campaign && campaign.trace.length > 0 && !(await showConfirmDialog())) return;
   stopBattle();
   entryGuidanceStageId = null;
   const result = startCampaign(createCampaign());
@@ -4702,6 +4747,13 @@ function playCinematic() {
 function wireControls() {
   elements.start.addEventListener("click", beginNewCampaign);
   elements.restart.addEventListener("click", beginNewCampaign);
+  elements.confirmDialogConfirm?.addEventListener("click", () => closeConfirmDialog(true));
+  elements.confirmDialogCancel?.addEventListener("click", () => closeConfirmDialog(false));
+  elements.confirmDialog?.addEventListener("click", (event) => {
+    // Backdrop click (the overlay itself, not the panel) cancels, matching the
+    // native dialog's dismiss-on-outside-tap behaviour.
+    if (event.target === elements.confirmDialog) closeConfirmDialog(false);
+  });
   elements.resume.addEventListener("click", () => void resumeCampaign().catch(() => undefined));
   elements.returnToLobby.addEventListener("click", () => void returnToLobby());
   elements.returnToLobbyFromResult.addEventListener("click", () => void returnToLobby());

@@ -232,6 +232,7 @@ async function loadReleaseLocalization(locale) {
     appFunction(source, "setBattlePressure", "renderBattleAssetStatus"),
     appFunction(source, "persistCampaign", "applyMirroredCampaign"),
     appFunction(source, "applyMirroredCampaign", "triggerBattleVisual"),
+    appFunction(source, "showConfirmDialog", "beginNewCampaign"),
     appFunction(source, "beginNewCampaign", "returnToLobby"),
     appFunction(source, "exportSave", "importSave"),
     appFunction(source, "importSave", "toggleAmbience"),

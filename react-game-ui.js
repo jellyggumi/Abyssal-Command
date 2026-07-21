@@ -1193,6 +1193,24 @@
         e(CampaignCockpit)
       ),
       e('div', { id: 'visual-effect', className: 'visual-effect', 'aria-hidden': 'true' }),
+      e('div', {
+        id: 'confirm-dialog',
+        className: 'result-overlay confirm-dialog',
+        role: 'dialog',
+        'aria-modal': 'true',
+        'aria-labelledby': 'confirm-dialog-title',
+        'aria-describedby': 'confirm-dialog-message',
+        hidden: true
+      },
+        e('section', { className: 'panel result-panel confirm-dialog-panel' },
+          e('h3', { id: 'confirm-dialog-title', className: 'shiny-text', 'data-i18n': 'confirm.newCampaignTitle' }, '새 캠페인 시작'),
+          e('p', { id: 'confirm-dialog-message', className: 'confirm-dialog-message', 'data-i18n': 'confirm.newCampaign' }, '새로운 캠페인을 시작하시겠습니까? 현재 진행 중인 로컬 세이브가 대체됩니다.'),
+          e('div', { className: 'button-row center-row' },
+            e('button', { id: 'confirm-dialog-cancel', className: 'secondary', type: 'button', 'data-i18n': 'confirm.cancel' }, '취소'),
+            e('button', { id: 'confirm-dialog-confirm', className: 'primary', type: 'button', 'data-i18n': 'confirm.confirm' }, '시작하기')
+          )
+        )
+      ),
       isLocalhost && agentationLoaded && window.Agentation ? e(window.Agentation, { endpoint: 'http://localhost:4747' }) : null
     );
   }

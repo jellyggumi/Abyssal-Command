@@ -1426,6 +1426,18 @@ button.primary:hover:not(:disabled), .relic-shop-btn-equip:hover:not(:disabled) 
   color: var(--ink) !important;
 }
 
+.confirm-dialog-panel {
+  max-width: 32rem !important;
+  text-align: center !important;
+}
+
+.confirm-dialog-message {
+  color: var(--ink) !important;
+  font-size: 1.05rem !important;
+  line-height: 1.5 !important;
+  margin: 0 0 1.5rem !important;
+}
+
 .result-panel h3 {
   color: var(--cinder) !important;
   font-size: 2.2rem !important;
@@ -4723,6 +4735,19 @@ textarea:focus-visible {
    an equal-or-broader media condition is what reliably wins here. */
 @media (min-width: 900px) and (min-height: 0px) {
   body:has(#campaign-screen:not([hidden])) {
+    overflow: hidden !important;
+  }
+
+  /* `.site-header, main { width: min(72rem, calc(100% - 1.5rem)); margin-inline:
+     auto; }` (styles.css) centers a max-1152px reading column -- correct for
+     the lobby's prose-like layout, but it left ~48px side gutters and a
+     bottom padding strip around the battlefield even after the two bars
+     above stopped reserving vertical space. Full-bleed it during battle. */
+  body:has(#campaign-screen:not([hidden])) main#game-root {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: hidden !important;
   }
 
