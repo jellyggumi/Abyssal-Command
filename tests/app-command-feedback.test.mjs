@@ -105,6 +105,62 @@ async function loadStatusTranslator() {
   return (message, lang = "ko") => context.translateStatus(message, lang);
 }
 
+function createResumeMapNode(stageNumber) {
+  const statusPill = { textContent: "" };
+  const attributes = new Map();
+  return {
+    dataset: { stageNumber: String(stageNumber) },
+    setAttribute: (name, value) => attributes.set(name, value),
+    removeAttribute: (name) => attributes.delete(name),
+    getAttribute: (name) => (attributes.has(name) ? attributes.get(name) : null),
+    querySelector: (selector) => (selector === ".map-node-status" ? statusPill : null),
+  };
+}
+
+
+
+async function loadResumeAffordanceRuntime(locale = "en") {
+  const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
+  const bossByStage = source.match(/const BOSS_BY_STAGE = Object\.freeze\(\{[\s\S]*?\}\);/);
+  assert.ok(bossByStage, "app runtime must expose its per-stage boss portrait map");
+  const resumeStatusKeys = source.match(/const RESUME_STATUS_KEYS = Object\.freeze\(\{[\s\S]*?\}\);/);
+  assert.ok(resumeStatusKeys, "app runtime must expose its resume-status i18n key map");
+  const mapNodes = STAGES.map((stage) => createResumeMapNode(stage.number));
+  const elements = {
+    resume: { hidden: false, classList: { toggle: () => {} } },
+    start: { classList: { toggle: () => {} } },
+    resumeSummary: { hidden: false },
+    resumeStage: { textContent: "" },
+    resumeStatus: { textContent: "" },
+    resumeBossRow: { hidden: false },
+    resumeBossName: { textContent: "" },
+    resumeBossPortrait: { src: "", hidden: false },
+  };
+  const context = vm.createContext({
+    STAGES,
+    currentLang: () => locale,
+    document: { querySelectorAll: (selector) => (selector === ".map-node[data-node-status]" ? mapNodes : []) },
+    elements,
+    storedCampaign: null,
+    translate: (key) => translations[locale]?.[key] ?? key,
+    translatedResumeText: (key, fallback) => translations[locale]?.[key] ?? fallback,
+  });
+  const definition = appFunction(source, "updateResumeAffordance", "renderChecklist");
+  vm.runInContext(
+    `${bossByStage[0]}\n${resumeStatusKeys[0]}\n${definition}\nglobalThis.syncResumeAffordance = updateResumeAffordance;`,
+    context,
+    { filename: "app.js" },
+  );
+  return {
+    elements,
+    mapNodes,
+    sync: (resumableCampaign) => {
+      context.storedCampaign = resumableCampaign;
+      context.syncResumeAffordance();
+    },
+  };
+}
+
 async function loadReleaseLocalization(locale) {
   const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
   const elements = {
@@ -1874,6 +1930,92 @@ test("startup save discovery reports exact localized compatibility and storage a
       `${locale} startup must report the safe fallback when IndexedDB is unavailable`,
     );
   }
+});
+
+test("with no resumable campaign, the campaign map marks stage 1 current and every other stage locked", async () => {
+  const { mapNodes, sync } = await loadResumeAffordanceRuntime();
+  sync(null);
+  assert.equal(mapNodes[0].dataset.nodeStatus, "current", "stage 1 must be the current step with no saved campaign");
+  assert.equal(mapNodes[0].getAttribute("aria-current"), "step", "stage 1 must carry aria-current=step");
+  for (let i = 1; i < mapNodes.length; i += 1) {
+    assert.equal(mapNodes[i].dataset.nodeStatus, "locked", `stage ${i + 1} must be locked with no saved campaign`);
+    assert.equal(mapNodes[i].getAttribute("aria-current"), null, `stage ${i + 1} must not carry aria-current`);
+  }
+});
+
+test("an active campaign at stageIndex 0 shows the same map shape as no resumable campaign", async () => {
+  const { mapNodes, sync } = await loadResumeAffordanceRuntime();
+  sync({ status: "active", stageIndex: 0 });
+  assert.equal(mapNodes[0].dataset.nodeStatus, "current", "stage 1 must be current while it is the active stage");
+  assert.equal(mapNodes[0].getAttribute("aria-current"), "step");
+  for (let i = 1; i < mapNodes.length; i += 1) {
+    assert.equal(mapNodes[i].dataset.nodeStatus, "locked", `stage ${i + 1} must remain locked`);
+    assert.equal(mapNodes[i].getAttribute("aria-current"), null);
+  }
+});
+
+test("a reward status at stageIndex 0 marks the defeated stage cleared and advances the next stage to current", async () => {
+  const { mapNodes, sync } = await loadResumeAffordanceRuntime();
+  sync({ status: "reward", stageIndex: 0 });
+  assert.equal(mapNodes[0].dataset.nodeStatus, "cleared", "stage 1's boss is already down during its reward screen");
+  assert.equal(mapNodes[0].getAttribute("aria-current"), null, "a cleared stage must not carry aria-current");
+  assert.equal(mapNodes[1].dataset.nodeStatus, "current", "stage 2 becomes the current step during stage 1's reward screen");
+  assert.equal(mapNodes[1].getAttribute("aria-current"), "step");
+  for (let i = 2; i < mapNodes.length; i += 1) {
+    assert.equal(mapNodes[i].dataset.nodeStatus, "locked", `stage ${i + 1} must still be locked`);
+  }
+});
+
+test("a defeat status keeps the retried stage current instead of marking it cleared", async () => {
+  const { mapNodes, sync } = await loadResumeAffordanceRuntime();
+  sync({ status: "defeat", stageIndex: 2 });
+  assert.equal(mapNodes[0].dataset.nodeStatus, "cleared", "stage 1 remains cleared");
+  assert.equal(mapNodes[1].dataset.nodeStatus, "cleared", "stage 2 remains cleared");
+  assert.equal(mapNodes[2].dataset.nodeStatus, "current", "stage 3 stays current on defeat since the player retries it, not skips it");
+  assert.equal(mapNodes[2].getAttribute("aria-current"), "step");
+  for (let i = 3; i < mapNodes.length; i += 1) {
+    assert.equal(mapNodes[i].dataset.nodeStatus, "locked", `stage ${i + 1} must remain locked`);
+  }
+});
+
+test("a campaign-complete status marks every map stage cleared regardless of stageIndex", async () => {
+  const { mapNodes, sync } = await loadResumeAffordanceRuntime();
+  sync({ status: "campaign-complete", stageIndex: 0 });
+  for (const node of mapNodes) {
+    assert.equal(node.dataset.nodeStatus, "cleared", `${node.dataset.stageNumber} must be cleared once the campaign is complete`);
+    assert.equal(node.getAttribute("aria-current"), null, "a completed campaign has no current step");
+  }
+});
+
+test("the resume boss row previews the current stage's boss while a stage is in progress", async () => {
+  const { elements, sync } = await loadResumeAffordanceRuntime("en");
+  sync({ status: "active", stageIndex: 0 });
+  assert.equal(elements.resumeBossRow.hidden, false, "the boss row must be visible while a stage is in progress");
+  assert.equal(elements.resumeBossName.textContent, "Cinder Warden", "an in-progress stage must preview its own boss, not the next one");
+  assert.equal(elements.resumeBossPortrait.src, "assets/images/ui/boss-cinder-warden.png");
+  assert.equal(elements.resumeBossPortrait.hidden, false);
+
+  const ko = await loadResumeAffordanceRuntime("ko");
+  ko.sync({ status: "briefing", stageIndex: 0 });
+  assert.equal(ko.elements.resumeBossName.textContent, "신더 워든", "Korean mode must render the localized boss name");
+});
+
+test("the resume boss row previews the next stage's boss during the reward screen, not the just-defeated one", async () => {
+  const { elements, sync } = await loadResumeAffordanceRuntime("en");
+  sync({ status: "reward", stageIndex: 0 });
+  assert.equal(elements.resumeBossRow.hidden, false);
+  assert.equal(elements.resumeBossName.textContent, "Veil Tactician", "the reward screen must preview the upcoming boss, not Cinder Warden again");
+  assert.equal(elements.resumeBossPortrait.src, "assets/images/ui/boss-veil-tactician.png");
+
+  const ko = await loadResumeAffordanceRuntime("ko");
+  ko.sync({ status: "reward", stageIndex: 0 });
+  assert.equal(ko.elements.resumeBossName.textContent, "베일 전술가", "Korean mode must render the localized next-stage boss name");
+});
+
+test("the resume boss row hides entirely once the campaign is complete", async () => {
+  const { elements, sync } = await loadResumeAffordanceRuntime("en");
+  sync({ status: "campaign-complete", stageIndex: 9 });
+  assert.equal(elements.resumeBossRow.hidden, true, "a completed campaign has no next threat to preview");
 });
 
 test("Korean command guidance states each action's concrete progress, economy, prerequisite, and combat result", async () => {

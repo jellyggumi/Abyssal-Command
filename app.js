@@ -2316,8 +2316,14 @@ function updateResumeAffordance() {
 function syncCampaignMapStatus(resumableCampaign) {
   const nodes = document.querySelectorAll(".map-node[data-node-status]");
   if (!nodes.length) return;
+  // "reward" means the active stage's boss is already down and the player
+  // is choosing a boon before advancing -- treat it as cleared so this
+  // agrees with the boss-row preview below, which already looks one stage
+  // ahead for the same status.
   const clearedThrough = resumableCampaign
-    ? (resumableCampaign.status === "campaign-complete" ? STAGES.length : resumableCampaign.stageIndex)
+    ? (resumableCampaign.status === "campaign-complete"
+      ? STAGES.length
+      : resumableCampaign.stageIndex + (resumableCampaign.status === "reward" ? 1 : 0))
     : 0;
   const campaignComplete = resumableCampaign?.status === "campaign-complete";
   nodes.forEach((node) => {
