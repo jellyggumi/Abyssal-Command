@@ -96,6 +96,22 @@ function createOverlay() {
   tactical.append(selectionSpan, separatorSpan, statusSpan);
   overlay.append(tactical);
 
+  // A disclosure deliberately guides the next canvas click instead of
+  // synthesizing a parallel movement request. The renderer stays the only
+  // owner of selected-unit and commander movement.
+  const rallyMenu = dom.createElement("details");
+  rallyMenu.className = "ashen-field-command__rally-menu";
+  rallyMenu.setAttribute("data-field-overlay", "rally-menu");
+
+  const rallySummary = dom.createElement("summary");
+  rallySummary.setAttribute("data-i18n", "fieldOverlay.rallySummary");
+  const rallyTitle = dom.createElement("strong");
+  rallyTitle.setAttribute("data-field-overlay", "rally-title");
+  const rallyDetail = dom.createElement("span");
+  rallyDetail.setAttribute("data-field-overlay", "rally-detail");
+  rallyMenu.append(rallySummary, rallyTitle, rallyDetail);
+  overlay.append(rallyMenu);
+
   return overlay;
 }
 
@@ -115,6 +131,9 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
   const result = overlay.querySelector(".ashen-field-command__result-copy");
   const receipt = overlay.querySelector('[data-field-overlay="relay-receipt"]');
   const receiptCommand = overlay.querySelector('[data-field-overlay="relay-command"]');
+  const rallyMenu = overlay.querySelector('[data-field-overlay="rally-menu"]');
+  const rallyTitle = overlay.querySelector('[data-field-overlay="rally-title"]');
+  const rallyDetail = overlay.querySelector('[data-field-overlay="rally-detail"]');
   let activeCommand = null;
   let relayedCommand = null;
   let pendingCommand = null;
@@ -135,6 +154,11 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
     const copy = commandCopy(relayedCommand);
     receiptCommand.textContent = copy.name;
     receipt.hidden = !receiptCopy(copy);
+  }
+
+  function hasSelectedForce(selectionCount) {
+    const match = String(selectionCount ?? "").match(/\d+/);
+    return Boolean(match && Number(match[0]) > 0);
   }
 
   function render() {
@@ -163,6 +187,12 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
     const selectionCount = queryText("#dossier-count") || queryText('[data-battle-screen="selection-count"]');
     const selectionHealth = queryText("#dossier-health") || queryText('[data-battle-screen="selection-health"]');
     const selectionOrder = queryText("#dossier-order") || queryText('[data-battle-screen="selection-order"]');
+
+    if (rallyTitle && rallyDetail) {
+      const hasSelection = hasSelectedForce(selectionCount);
+      rallyTitle.textContent = translate(hasSelection ? "fieldOverlay.rallyGroup" : "fieldOverlay.rallyCommander");
+      rallyDetail.textContent = translate(hasSelection ? "fieldOverlay.rallyGroupDetail" : "fieldOverlay.rallyCommanderDetail");
+    }
 
     const waveText = queryText("#battle-wave-indicator") || queryText('[data-battle-screen="wave"]');
     const hostileText = queryText("#battle-hostile-label") || queryText('[data-battle-screen="enemy-growth"]');
@@ -252,6 +282,11 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
     }
   }
 
+  function closeRallyMenuAfterMapTarget(event) {
+    if (!rallyMenu?.open || !event?.target?.closest?.("canvas")) return;
+    rallyMenu.open = false;
+  }
+
   function handleSpatialFocus(event) {
     if (!event || !event.detail) return;
     const { action } = event.detail;
@@ -265,6 +300,7 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
   view?.addEventListener?.("abyssal:command-resolved", handleCommandResolved);
   view?.addEventListener?.("abyssal:spatial-focus", handleSpatialFocus);
   view?.addEventListener?.("click", handleViewClick);
+  container.addEventListener?.("pointerup", closeRallyMenuAfterMapTarget);
 
   const Observer = view?.MutationObserver ?? globalThis.MutationObserver;
   const observer = Observer ? new Observer(requestRender) : null;
@@ -319,6 +355,7 @@ export function mountFieldCommandOverlay({ root = field, container = canvasConta
       view?.removeEventListener?.("abyssal:command-resolved", handleCommandResolved);
       view?.removeEventListener?.("abyssal:spatial-focus", handleSpatialFocus);
       view?.removeEventListener?.("click", handleViewClick);
+      container.removeEventListener?.("pointerup", closeRallyMenuAfterMapTarget);
       observer?.disconnect();
       overlay.remove();
     },

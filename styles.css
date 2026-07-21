@@ -1995,7 +1995,7 @@ body:has(#campaign-screen:not([hidden])) main { overflow: hidden; }
    ============================================================ */
 @media (max-width: 899px) {
   #battle-field .ashen-field-command { display: block !important; }
-  #battle-field .ashen-field-command > *:not(.ashen-field-command__tactical) { display: none !important; }
+  #battle-field .ashen-field-command > *:not(.ashen-field-command__tactical):not(.ashen-field-command__rally-menu) { display: none !important; }
   body:has(#campaign-screen:not([hidden])) main {
     overflow: hidden auto;
     padding-bottom: 0;

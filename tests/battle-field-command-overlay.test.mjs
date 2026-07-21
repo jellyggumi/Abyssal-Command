@@ -201,6 +201,11 @@ class StaticElement {
     listeners.push(listener);
     this._listeners.set(name, listeners);
   }
+  dispatchEvent(event) {
+    for (const listener of this._listeners.get(event.type) ?? []) listener(event);
+    return true;
+  }
+
 
   click() {
     this.clickCount += 1;
@@ -565,9 +570,10 @@ test("overlay presentation omits proxy routes and decorative frames while retain
 });
 
 test("the field overlay exclusively paints objective, threat, and result inside responsive battlefield bounds", async () => {
-  const [moduleSource, stylesheet] = await Promise.all([
+  const [moduleSource, stylesheet, globalStyles] = await Promise.all([
     readFile(new URL("../battle-field-command-overlay.js", import.meta.url), "utf8"),
     readFile(new URL("../battle-field-command-overlay.css", import.meta.url), "utf8"),
+    readFile(new URL("../styles.css", import.meta.url), "utf8"),
   ]);
   const markup = moduleSource.match(/overlay\.innerHTML = `([\s\S]*?)`;/)?.[1] ?? "";
   const hooks = [...markup.matchAll(/data-field-overlay="([^"]+)"/g)].map((match) => match[1]);
@@ -634,6 +640,29 @@ test("the field overlay exclusively paints objective, threat, and result inside 
   assert.equal(cssDeclaration(tacticalRule, "transform"), "translateX(-50%)", "desktop tactical centering must account for its own width");
 
   const mobileRules = cssRules(cssBlock(stylesheet, "@media (max-width: 899px)"));
+  const globalMobileRules = cssRules(cssBlock(globalStyles, "@media (max-width: 899px)"));
+  const mobileCompactionRule = globalMobileRules.find(({ selector }) => (
+    selector.includes("#battle-field .ashen-field-command > *")
+  ));
+  assert.ok(mobileCompactionRule, "the global mobile compaction rule must retain the field overlay child selector");
+  assert.match(
+    mobileCompactionRule.selector,
+    /:not\(\.ashen-field-command__rally-menu\)/,
+    "global mobile compaction must preserve the rally disclosure",
+  );
+  assert.equal(
+    cssDeclaration(mobileCompactionRule, "display"),
+    "none !important",
+    "global mobile compaction must only hide non-tactical, non-rally field surfaces",
+  );
+
+  const mobileRallyRule = cssRuleFor(mobileRules, "#battle-field .ashen-field-command__rally-menu");
+  assert.equal(
+    cssDeclaration(mobileRallyRule, "top"),
+    ".5rem",
+    "the compact rally disclosure must reserve the battlefield's top edge",
+  );
+
   const mobileOverlayRule = cssRuleFor(mobileRules, "#battle-field .ashen-field-command");
   assert.equal(
     (cssDeclaration(mobileOverlayRule, "grid-template-columns")?.match(/minmax\(0,\s*1fr\)/g) ?? []).length,
@@ -641,6 +670,11 @@ test("the field overlay exclusively paints objective, threat, and result inside 
     "both compact field columns must share available width without forcing overflow",
   );
   const mobileTacticalRule = cssRuleFor(mobileRules, "#battle-field .ashen-field-command__tactical");
+  assert.equal(
+    cssDeclaration(mobileTacticalRule, "bottom"),
+    ".5rem",
+    "the compact tactical readout must remain anchored to the separate bottom edge",
+  );
   for (const edge of ["right", "bottom", "left"]) {
     assert.notEqual(
       cssDeclaration(mobileTacticalRule, edge),
@@ -1300,5 +1334,72 @@ test("spatial focus decorates only the active proxy without retargeting field ac
     fixture.dispatch("abyssal:spatial-focus", { detail: {} });
     assert.equal(overlay.getAttribute("data-spatial-focused"), null, "leaving spatial focus must clear the overlay focus owner");
     assert.equal(activation.getAttribute("data-focused"), null, "leaving spatial focus must clear the activation highlight");
+  });
+});
+
+test("tactical rally disclosure only guides the established canvas target route", { concurrency: false }, async () => {
+  const activeCommand = staticCommand({
+    action: "hunt",
+    name: "Hunt",
+    detail: "Trace the breach.",
+    current: true,
+  });
+  const unrelatedCommand = staticCommand({
+    action: "extract",
+    name: "Extract",
+    detail: "Secure the reserve.",
+  });
+  const fixture = createStaticOverlayFixture({
+    locale: "en",
+    selectionCount: "2 selected",
+    commands: [activeCommand, unrelatedCommand],
+  });
+
+  await withMountedOverlay(fixture, async (overlay) => {
+    const rallyMenu = overlay.querySelector('[data-field-overlay="rally-menu"]');
+    const [summary, title, detail] = rallyMenu.children;
+    const nodes = [];
+    const collect = (node) => {
+      nodes.push(node);
+      node.children.forEach(collect);
+    };
+    collect(overlay);
+
+    assert.equal(
+      nodes.filter((node) => node.tagName === "BUTTON").length,
+      1,
+      "the disclosure must not create a second command button",
+    );
+    assert.equal(
+      nodes.filter((node) => node.getAttribute("role") === "button").length,
+      0,
+      "the disclosure must not simulate a command button through ARIA",
+    );
+    assert.equal(summary.tagName, "SUMMARY", "the guidance must remain a native disclosure");
+    assert.equal(title.textContent, "Rally selected force", "a positive selection count must describe the selected-force rally");
+    assert.equal(
+      detail.textContent,
+      "Click empty ground to move the selected force along a safe route.",
+      "selected-force guidance must describe the existing canvas target interaction",
+    );
+
+    fixture.dossierCount.textContent = "0 selected";
+    fixture.notify(fixture.dossierCount);
+    assert.equal(title.textContent, "Move commander", "an empty selection must switch the disclosure to commander movement");
+    assert.equal(
+      detail.textContent,
+      "No force is selected. Click empty ground to move the commander.",
+      "commander guidance must describe the same canvas target interaction",
+    );
+
+    rallyMenu.open = true;
+    const canvas = new StaticElement("canvas");
+    fixture.container.dispatchEvent({
+      type: "pointerup",
+      target: { closest: (selector) => (selector === "canvas" ? canvas : null) },
+    });
+    assert.equal(rallyMenu.open, false, "only the established canvas pointer target must close the guidance disclosure");
+    assert.equal(activeCommand.clickCount, 0, "closing guidance must not synthesize the active command");
+    assert.equal(unrelatedCommand.clickCount, 0, "closing guidance must not click an unrelated native command");
   });
 });

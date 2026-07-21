@@ -11,7 +11,7 @@ import {
 } from "./combat-systems.js";
 import { ObjectFeedbackLayer } from "./object-feedback-layer.js";
 import { getStageMotif } from "./battle-stage-identity.js";
-import { getCampaignBenefits } from "./campaign-state.js";
+import { BALANCE, getCampaignBenefits } from "./campaign-state.js";
 
 // Stages 4-10 reuse the three shipped GLB terrain/boss sets, but are visually
 // differentiated using a stage-specific identity kit (low-poly landmark and boss
@@ -548,11 +548,20 @@ export class RealtimeBattle {
       ? new ObjectFeedbackLayer(this.feedbackCanvas, { reducedMotion: this.isReducedMotion })
       : null;
     this.feedbackCache = new Map();
+    this.feedbackRecords = new Map();
+    this.feedbackActors = new Map();
+    this.feedbackObjectList = [];
+    this.feedbackActiveIds = new Set();
+    this.feedbackProjection = new THREE.Vector3();
+    this.feedbackProjectionState = { x: 0, y: 0, depth: 0, visible: false };
+    this.feedbackProjector = this.projectObjectFeedback.bind(this);
     this.authoritativePossessed = false;
     this.echoThroneProp = null;
     this.rafCallback = null;
     this.lastBossHealth = null;
     this.bossMaxHealth = null;
+    this.commanderIntegrity = null;
+    this.commanderMaxIntegrity = BALANCE.maxIntegrity;
     this.bossPhase = null;
     this.summonLevels = null;
     this.runtimeSignature = null;
@@ -613,6 +622,7 @@ export class RealtimeBattle {
     this.lookTarget = new THREE.Vector3();
     this.direction = new THREE.Vector3();
     this.box = new THREE.Box3();
+    this.staticBoundsScratch = new THREE.Box3();
     this.size = new THREE.Vector3();
     this.center = new THREE.Vector3();
     this.raycaster = new THREE.Raycaster();
@@ -1407,6 +1417,7 @@ export class RealtimeBattle {
     boss.id = "boss";
     boss.maxHealth = this.bossMaxHealth ?? this.lastBossHealth ?? null;
     if (this.bossPhase) this.applyBossPhaseVisual(this.bossPhase);
+    this.refreshFeedbackAnchor(boss, 1.8);
     this.registerStaticBlocker(boss.root, 1.18, true, () => boss.root.visible);
     this.interactives.push(boss.root);
     this.syncBossExposure();
@@ -1468,6 +1479,9 @@ export class RealtimeBattle {
     this.scene.add(commander.root);
     this.commander = commander;
     commander.id = "commander";
+    commander.maxHealth = this.commanderMaxIntegrity;
+    commander.hp = this.commanderIntegrity ?? this.commanderMaxIntegrity;
+    this.refreshFeedbackAnchor(commander, 1.15);
     this.play(commander, "Idle");
 
     // Stage 4-10 low-poly landmarks
@@ -1938,7 +1952,100 @@ export class RealtimeBattle {
   registerStaticBlocker(root, radius, blocksMovement, active = () => true) {
     const collider = Object.freeze({ type: "circle", radius, blocksMovement });
     root.userData.collider = collider;
-    this.staticBlockers.push({ root, radius, blocksMovement, active });
+    const blocker = {
+      root,
+      radius,
+      blocksMovement,
+      active,
+      bounds: {
+        hasMesh: false,
+        minX: 0,
+        maxX: 0,
+        minZ: 0,
+        maxZ: 0,
+        centerX: 0,
+        centerZ: 0,
+        broadRadius: radius,
+      },
+    };
+    this.staticBlockers.push(blocker);
+    this.refreshStaticBlocker(blocker);
+    return blocker;
+  }
+
+  refreshStaticBlocker(blockerOrRoot) {
+    const blocker = blockerOrRoot?.root
+      ? blockerOrRoot
+      : this.staticBlockers.find((candidate) => candidate.root === blockerOrRoot);
+    if (!blocker?.root) return null;
+
+    const root = blocker.root;
+    const bounds = blocker.bounds;
+    const rootPosition = root.position;
+    root.updateWorldMatrix?.(true, true);
+    let hasMesh = false;
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+    root.traverse?.((node) => {
+      if (
+        !node.isMesh
+        || node.userData?.isRendererContactShadow
+        || node.geometry === this.contactGeometry
+      ) return;
+      const geometry = node.geometry;
+      if (!geometry?.boundingBox) geometry?.computeBoundingBox?.();
+      if (!geometry?.boundingBox) return;
+      this.staticBoundsScratch.copy(geometry.boundingBox).applyMatrix4(node.matrixWorld);
+      minX = Math.min(minX, this.staticBoundsScratch.min.x);
+      maxX = Math.max(maxX, this.staticBoundsScratch.max.x);
+      minZ = Math.min(minZ, this.staticBoundsScratch.min.z);
+      maxZ = Math.max(maxZ, this.staticBoundsScratch.max.z);
+      hasMesh = true;
+    });
+
+    if (!hasMesh) {
+      bounds.hasMesh = false;
+      bounds.centerX = rootPosition?.x ?? 0;
+      bounds.centerZ = rootPosition?.z ?? 0;
+      bounds.broadRadius = blocker.radius;
+      return blocker;
+    }
+
+    bounds.hasMesh = true;
+    bounds.minX = minX;
+    bounds.maxX = maxX;
+    bounds.minZ = minZ;
+    bounds.maxZ = maxZ;
+    bounds.centerX = (minX + maxX) * 0.5;
+    bounds.centerZ = (minZ + maxZ) * 0.5;
+    bounds.broadRadius = Math.hypot((maxX - minX) * 0.5, (maxZ - minZ) * 0.5);
+    return blocker;
+  }
+
+  refreshFeedbackAnchor(instance, fallbackHeight = 1) {
+    const root = instance?.root ?? instance;
+    if (!root) return fallbackHeight;
+    root.updateWorldMatrix?.(true, true);
+    let top = -Infinity;
+    root.traverse?.((node) => {
+      if (
+        !node.isMesh
+        || node.userData?.isRendererContactShadow
+        || node.geometry === this.contactGeometry
+      ) return;
+      const geometry = node.geometry;
+      if (!geometry?.boundingBox) geometry?.computeBoundingBox?.();
+      if (!geometry?.boundingBox) return;
+      this.staticBoundsScratch.copy(geometry.boundingBox).applyMatrix4(node.matrixWorld);
+      top = Math.max(top, this.staticBoundsScratch.max.y);
+    });
+    const rootY = root.matrixWorld?.elements?.[13] ?? root.position?.y ?? 0;
+    const height = Number.isFinite(top) ? Math.max(fallbackHeight, top - rootY + 0.18) : fallbackHeight;
+    if (instance && instance !== root) instance.feedbackAnchorHeight = height;
+    else root.userData.feedbackAnchorHeight = height;
+    return height;
   }
 
   cloneTemplate(resource, targetSize) {
@@ -2069,10 +2176,12 @@ export class RealtimeBattle {
       contactShadow.rotation.x = -Math.PI / 2;
       contactShadow.position.y = 0.015; // Slightly elevated to prevent z-fighting
       contactShadow.raycast = () => {}; // Completely disable raycasting on the shadow mesh
+      contactShadow.userData.isRendererContactShadow = true;
       root.add(contactShadow);
     }
 
     const instance = { root, mixer: new THREE.AnimationMixer(root), clips: template.animations, actions: new Map(), active: null, cooldown: 0 };
+    this.refreshFeedbackAnchor(instance, Math.max(0.8, targetSize * 0.65));
     this.mixers.push(instance.mixer);
     return instance;
   }
@@ -2597,6 +2706,19 @@ export class RealtimeBattle {
   collidesAt(unit, x, z, radius) {
     for (const blocker of this.staticBlockers) {
       if (blocker.blocksMovement === false || blocker.active?.() === false) continue;
+      const bounds = blocker.bounds;
+      if (bounds?.hasMesh) {
+        const broadDx = x - bounds.centerX;
+        const broadDz = z - bounds.centerZ;
+        const broadLimit = radius + bounds.broadRadius;
+        if (broadDx * broadDx + broadDz * broadDz > broadLimit * broadLimit) continue;
+        const closestX = clamp(x, bounds.minX, bounds.maxX);
+        const closestZ = clamp(z, bounds.minZ, bounds.maxZ);
+        const dx = x - closestX;
+        const dz = z - closestZ;
+        if (dx * dx + dz * dz < radius * radius) return true;
+        continue;
+      }
       const position = blocker.root?.position ?? blocker;
       const dx = x - position.x;
       const dz = z - position.z;
@@ -4195,6 +4317,28 @@ export class RealtimeBattle {
     this.capturedCount = Number(state?.stage?.nodes ?? state?.nodes ?? campaign?.stage?.nodes ?? this.capturedCount ?? 0);
     const isPossessed = state?.possessed === true || campaign?.stage?.possessed === true;
     this.authoritativePossessed = isPossessed;
+    const integrity = Number(state?.stage?.integrity ?? state?.integrity ?? campaign?.stage?.integrity);
+    let commanderMaxIntegrity = Number(
+      state?.stage?.maxIntegrity
+      ?? state?.maxIntegrity
+      ?? campaign?.stage?.maxIntegrity
+      ?? campaign?.maxIntegrity,
+    );
+    if (!(commanderMaxIntegrity > 0)) {
+      try {
+        commanderMaxIntegrity = Number(getCampaignBenefits(campaign ?? state).maxIntegrity);
+      } catch {
+        commanderMaxIntegrity = BALANCE.maxIntegrity;
+      }
+    }
+    this.commanderMaxIntegrity = commanderMaxIntegrity > 0 ? commanderMaxIntegrity : BALANCE.maxIntegrity;
+    if (Number.isFinite(integrity)) {
+      this.commanderIntegrity = clamp(integrity, 0, this.commanderMaxIntegrity);
+      if (this.commander) {
+        this.commander.maxHealth = this.commanderMaxIntegrity;
+        this.commander.hp = this.commanderIntegrity;
+      }
+    }
     const legion = Number(state?.legion ?? campaign?.stage?.legion);
     if (Number.isInteger(legion) && legion >= 0) {
       this.authoritativeLegion = legion;
@@ -4840,37 +4984,69 @@ export class RealtimeBattle {
     };
   }
 
-  feedbackObjects() {
-    const objects = [];
-    const add = (actor, kind, label, priority = 0) => {
-      if (!actor?.id) return;
-      const record = {
+  updateFeedbackRecord(record, actor, kind, label, priority) {
+    record.kind = kind;
+    record.label = label;
+    record.hp = Number(actor.hp ?? 0);
+    record.maxHp = Number(actor.maxHealth ?? actor.maxHp ?? 1);
+    record.selected = this.selection?.has(actor) ?? false;
+    record.visible = actor.defeated !== true;
+    record.priority = priority;
+    record.energy = undefined;
+    record.maxEnergy = undefined;
+    if (kind === "ally" && typeof actor.cooldown === "number") {
+      record.maxEnergy = ALLY_STRIKE_COOLDOWN;
+      record.energy = Math.max(0, ALLY_STRIKE_COOLDOWN - actor.cooldown);
+    } else if (kind === "tower" && typeof actor.cooldown === "number") {
+      record.maxEnergy = TOWER_FIRE_COOLDOWN;
+      record.energy = Math.max(0, TOWER_FIRE_COOLDOWN - actor.cooldown);
+    }
+  }
+
+  addFeedbackActor(actor, kind, label, priority) {
+    if (!actor?.id) return;
+    let record = this.feedbackRecords.get(actor.id);
+    if (!record) {
+      record = {
         id: actor.id,
         kind,
         label,
-        hp: Number(actor.hp ?? 0),
-        maxHp: Number(actor.maxHealth ?? actor.maxHp ?? 1),
-        selected: this.selection?.has(actor) ?? false,
-        visible: actor.defeated !== true,
+        hp: 0,
+        maxHp: 1,
+        selected: false,
+        visible: true,
         priority,
       };
-      // Surface attack-readiness as a secondary "stamina" bar for units whose
-      // next action is gated by a cooldown timer (allies and towers only).
-      if (kind === "ally" && typeof actor.cooldown === "number") {
-        record.maxEnergy = ALLY_STRIKE_COOLDOWN;
-        record.energy = Math.max(0, ALLY_STRIKE_COOLDOWN - actor.cooldown);
-      } else if (kind === "tower" && typeof actor.cooldown === "number") {
-        record.maxEnergy = TOWER_FIRE_COOLDOWN;
-        record.energy = Math.max(0, TOWER_FIRE_COOLDOWN - actor.cooldown);
-      }
-      objects.push(record);
-    };
-    add(this.commander, "commander", "Commander", 5);
-    add(this.boss, "boss", "Boss", 4);
-    for (const ally of this.allies) add(ally, "ally", "Ally", 3);
-    for (const enemy of this.enemies) add(enemy, "enemy", "Enemy", 2);
-    for (const deployment of this.deploymentsMap.values()) add(deployment, deployment.kind ?? "deployment", deployment.kind ?? "Deployment", 1);
-    return objects;
+      this.feedbackRecords.set(actor.id, record);
+    }
+    this.updateFeedbackRecord(record, actor, kind, label, priority);
+    this.feedbackActors.set(actor.id, actor);
+    this.feedbackActiveIds.add(actor.id);
+    this.feedbackObjectList.push(record);
+  }
+
+  feedbackObjects() {
+    this.feedbackObjectList.length = 0;
+    this.feedbackActiveIds.clear();
+    this.addFeedbackActor(this.commander, "commander", "Commander", 5);
+    this.addFeedbackActor(this.boss, "boss", "Boss", 4);
+    for (const ally of this.allies) this.addFeedbackActor(ally, "ally", "Ally", 3);
+    for (const enemy of this.enemies) this.addFeedbackActor(enemy, "enemy", "Enemy", 2);
+    for (const deployment of this.deploymentsMap.values()) {
+      this.addFeedbackActor(
+        deployment,
+        deployment.kind ?? "deployment",
+        deployment.kind ?? "Deployment",
+        1,
+      );
+    }
+    for (const [id] of this.feedbackRecords) {
+      if (this.feedbackActiveIds.has(id)) continue;
+      this.feedbackRecords.delete(id);
+      this.feedbackActors.delete(id);
+      this.feedbackCache.delete(id);
+    }
+    return this.feedbackObjectList;
   }
 
   syncObjectFeedback({ silent = true } = {}) {
@@ -4878,52 +5054,104 @@ export class RealtimeBattle {
     const objects = this.feedbackObjects();
     this.objectFeedback.reconcile(objects, { silent });
     for (const object of objects) {
-      if (!this.feedbackCache.has(object.id)) this.feedbackCache.set(object.id, { hp: object.hp, maxHp: object.maxHp });
+      if (!this.feedbackCache.has(object.id)) {
+        this.feedbackCache.set(object.id, { hp: object.hp, maxHp: object.maxHp });
+      }
     }
   }
 
   updateObjectFeedbackDeltas() {
     if (!this.objectFeedback) return;
-    for (const object of this.feedbackObjects()) {
-      const previous = this.feedbackCache.get(object.id);
+    for (let index = 0; index < this.feedbackObjectList.length; index += 1) {
+      const record = this.feedbackObjectList[index];
+      const actor = this.feedbackActors.get(record.id);
+      if (!actor) continue;
+      this.updateFeedbackRecord(record, actor, record.kind, record.label, record.priority);
+      const object = this.objectFeedback.objects.get(record.id);
+      if (object) {
+        object.hp = record.hp;
+        object.maxHp = record.maxHp;
+        object.energy = record.energy;
+        object.maxEnergy = record.maxEnergy;
+        object.selected = record.selected;
+        object.visible = record.visible;
+      }
+      const previous = this.feedbackCache.get(record.id);
       if (!previous) {
-        this.feedbackCache.set(object.id, { hp: object.hp, maxHp: object.maxHp });
+        this.feedbackCache.set(record.id, { hp: record.hp, maxHp: record.maxHp });
         continue;
       }
-      const delta = object.hp - previous.hp;
+      const delta = record.hp - previous.hp;
       if (delta !== 0) {
         this.objectFeedback.emitExchange(
-          object.id,
-          object.id,
+          record.id,
+          record.id,
           Math.abs(delta),
           delta > 0 ? "heal" : "outgoing",
         );
-        previous.hp = object.hp;
+        previous.hp = record.hp;
       }
-      previous.maxHp = object.maxHp;
+      previous.maxHp = record.maxHp;
     }
+  }
+
+  projectObjectFeedback(object) {
+    const result = this.feedbackProjectionState;
+    const actor = this.feedbackActors.get(object.id);
+    const position = actor?.root?.position;
+    if (!position || !this.camera?.project) {
+      result.x = 0;
+      result.y = 0;
+      result.depth = 0;
+      result.visible = false;
+      return result;
+    }
+    this.feedbackProjection.copy(position);
+    this.feedbackProjection.y += Number(actor.feedbackAnchorHeight ?? actor.root.userData?.feedbackAnchorHeight) || 1;
+    this.feedbackProjection.project(this.camera);
+    result.x = (this.feedbackProjection.x * 0.5 + 0.5) * this.feedbackCanvas.width;
+    result.y = (-this.feedbackProjection.y * 0.5 + 0.5) * this.feedbackCanvas.height;
+    result.depth = this.feedbackProjection.z;
+    result.visible = this.feedbackProjection.z >= -1 && this.feedbackProjection.z <= 1;
+    return result;
   }
 
   renderObjectFeedback() {
     if (!this.objectFeedback) return;
-    this.objectFeedback.render((object) => {
-      const actor = object.id === "commander"
-        ? this.commander
-        : object.id === "boss"
-          ? this.boss
-          : [...this.allies, ...this.enemies].find((candidate) => candidate?.id === object.id)
-            ?? this.deploymentsMap.get(object.id);
-      const position = actor?.root?.position;
-      if (!position || !this.camera?.project) return { x: 0, y: 0, depth: 0, visible: true };
-      const projected = position.clone ? position.clone() : new THREE.Vector3(position.x, position.y, position.z);
-      projected.project(this.camera);
-      return {
-        x: (projected.x * 0.5 + 0.5) * this.feedbackCanvas.width,
-        y: (-projected.y * 0.5 + 0.5) * this.feedbackCanvas.height,
-        depth: projected.z,
-        visible: projected.z >= -1 && projected.z <= 1,
-      };
+    this.objectFeedback.render(this.feedbackProjector);
+  }
+
+  getMaterialBindingEvidence() {
+    if (!this.scene?.traverse) return [];
+    const bindings = [];
+    this.scene.traverse((node) => {
+      if (
+        !node.isMesh
+        || node.userData?.isRendererContactShadow
+        || node.geometry === this.contactGeometry
+      ) return;
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      for (let index = 0; index < materials.length; index += 1) {
+        const material = materials[index];
+        if (!material?.map && !material?.normalMap) continue;
+        const map = material.map;
+        const normalMap = material.normalMap;
+        bindings.push({
+          mesh: node.name || node.uuid,
+          material: material.name || material.uuid,
+          materialIndex: index,
+          map: map ? {
+            uuid: map.uuid,
+            source: map.source?.data?.currentSrc ?? map.source?.data?.src ?? map.name ?? null,
+          } : null,
+          normalMap: normalMap ? {
+            uuid: normalMap.uuid,
+            source: normalMap.source?.data?.currentSrc ?? normalMap.source?.data?.src ?? normalMap.name ?? null,
+          } : null,
+        });
+      }
     });
+    return bindings;
   }
 
   publishRuntimeState() {
@@ -5937,6 +6165,7 @@ export class RealtimeBattle {
           shots: []
         };
         this.deploymentsMap.set(id, deploymentObj);
+        this.refreshFeedbackAnchor(deploymentObj, kind === "tower" ? 1.4 : 0.9);
         if (kind === "barricade") {
           this.registerStaticBlocker(group, radius, true, () => {
             return !deploymentObj.defeated;
@@ -5947,6 +6176,12 @@ export class RealtimeBattle {
         const world = this.navigation.gridToWorld(gridX + 0.5, gridY + 0.5);
         const elevation = this.navigation.elevationAt(gridX + 0.5, gridY + 0.5);
         const y = elevation * TERRAIN_ELEVATION_SCALE;
+        const barricadeMoved = kind === "barricade"
+          && (
+            depObj.root.position.x !== world.x
+            || depObj.root.position.y !== y
+            || depObj.root.position.z !== world.z
+          );
         depObj.root.position.set(world.x, y, world.z);
         depObj.gridX = gridX;
         depObj.gridY = gridY;
@@ -5957,6 +6192,8 @@ export class RealtimeBattle {
           const healthRatio = maxHp > 0 ? health / maxHp : 1.0;
           visualMesh.scale.y = 0.2 + 0.8 * healthRatio;
         }
+        this.refreshFeedbackAnchor(depObj, kind === "tower" ? 1.4 : 0.9);
+        if (barricadeMoved) this.refreshStaticBlocker(depObj.root);
       }
     }
     for (const [id, depObj] of this.deploymentsMap.entries()) {

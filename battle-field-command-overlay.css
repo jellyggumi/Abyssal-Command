@@ -225,6 +225,62 @@
   white-space: nowrap;
 }
 
+/* This is a real disclosure, not a second movement implementation. Its
+   instruction leads into the canvas' established pointer route, so selection,
+   destination picking, path preview, collision, and fallback semantics have
+   one authority. */
+#battle-field .ashen-field-command__rally-menu {
+  position: absolute;
+  top: clamp(4.8rem, 11vh, 7.2rem);
+  left: 50%;
+  z-index: 6;
+  box-sizing: border-box;
+  width: min(20rem, calc(100% - 2rem));
+  transform: translateX(-50%);
+  border: 1px solid rgb(126 224 174 / 76%);
+  border-radius: .4rem;
+  background: linear-gradient(145deg, rgb(13 35 27 / 95%), rgb(10 15 15 / 92%));
+  box-shadow: 0 .4rem 1rem rgb(0 0 0 / 50%), inset 0 0 0 1px rgb(169 255 205 / 10%);
+  color: #e7ffef;
+  font-size: .68rem;
+  line-height: 1.35;
+  pointer-events: auto;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 85%);
+}
+
+#battle-field .ashen-field-command__rally-menu summary {
+  cursor: pointer;
+  padding: .38rem .55rem;
+  color: #b9f7ce;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .62rem;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+#battle-field .ashen-field-command__rally-menu strong,
+#battle-field .ashen-field-command__rally-menu span {
+  display: block;
+  padding: 0 .55rem;
+}
+
+#battle-field .ashen-field-command__rally-menu strong {
+  margin-top: .1rem;
+  color: #fff0cd;
+  font-size: .78rem;
+}
+
+#battle-field .ashen-field-command__rally-menu span {
+  padding-bottom: .5rem;
+  color: #c9ddce;
+}
+
+#battle-field .ashen-field-command__rally-menu:focus-within {
+  outline: 3px solid rgb(185 247 206 / 85%);
+  outline-offset: 3px;
+}
+
 #battle-field .ashen-field-command__tactical {
   position: absolute;
   /* Was bottom:1rem, landing in the exact same band as .ashen-field-command__ward
@@ -312,6 +368,10 @@
   #battle-field .ashen-field-command__ward {
     padding: .28rem .35rem;
     font-size: .61rem;
+  }
+
+  #battle-field .ashen-field-command__rally-menu {
+    top: .5rem;
   }
 
   #battle-field .ashen-field-command__tactical {

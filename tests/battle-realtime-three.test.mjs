@@ -5821,3 +5821,137 @@ test("RealtimeBattle updateBossStrike ramps the AoE attack-target indicator to i
     `an AoE boss's indicator must ramp toward the wider 0.32 splash-footprint peak, not the narrower point-reticle peak (got ${battle.bossTargetMarker.material.opacity})`,
   );
 });
+
+test("RealtimeBattle uses cached mesh XZ bounds for static blockers while retaining live actor-circle contacts", async () => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const blockerRoot = new THREE.Group();
+  blockerRoot.add(new THREE.Mesh(new THREE.BoxGeometry(4, 1, 4), new THREE.MeshBasicMaterial()));
+  battle.registerStaticBlocker(blockerRoot, 0.75, true);
+
+  const mover = makeUnit();
+  assert.equal(
+    battle.collidesAt(mover, 1.45, 1.45, 0.2),
+    true,
+    "the mesh's corner must block even though it lies outside the legacy circular blocker radius",
+  );
+
+  blockerRoot.position.x = 5;
+  assert.equal(
+    battle.collidesAt(mover, 1.45, 1.45, 0.2),
+    true,
+    "moving a mesh alone must not recompute its cached blocker bounds",
+  );
+  battle.refreshStaticBlocker(blockerRoot);
+  assert.equal(battle.collidesAt(mover, 1.45, 1.45, 0.2), false, "an explicit refresh must retire the old cached bounds");
+  assert.equal(battle.collidesAt(mover, 6.45, 1.45, 0.2), true, "an explicit refresh must adopt the moved mesh bounds");
+
+  battle.staticBlockers.length = 0;
+  battle.allies = [{ ...makeUnit({ x: 1 }), radius: 0.42 }];
+  assert.equal(
+    battle.collidesAt(mover, 1.7, 0, 0.42),
+    true,
+    "dynamic actors must continue using their circular contact radius when static meshes use AABBs",
+  );
+});
+
+test("RealtimeBattle feeds commander feedback from authoritative stage integrity", () => {
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  battle.commander = { ...makeUnit({ hp: 99 }), id: "commander", maxHealth: 99 };
+  battle.reconcileChest = () => {};
+  battle.reconcileAllies = () => {};
+  battle.emitSelectionChange = () => {};
+  battle.applyEncounter = () => {};
+  battle.reconcileDeployments = () => {};
+  battle.updateNodeVisuals = () => {};
+
+  battle.applyCampaignState({ state: { stage: { integrity: 7, maxIntegrity: 13 } } });
+  const commanderFeedback = battle.feedbackObjects().find(({ id }) => id === "commander");
+
+  assert.deepEqual(
+    { hp: commanderFeedback.hp, maxHp: commanderFeedback.maxHp },
+    { hp: 7, maxHp: 13 },
+    "commander feedback must mirror stage integrity rather than a stale actor-health value",
+  );
+});
+
+test("RealtimeBattle updates feedback readiness between structural reconciliations", () => {
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const ally = { ...makeUnit({ hp: 3 }), id: "ally-readiness", cooldown: 0.55 };
+  let reconciles = 0;
+  battle.allies = [ally];
+  battle.objectFeedback = {
+    objects: new Map(),
+    reconcile(objects) {
+      reconciles += 1;
+      this.objects = new Map(objects.map((object) => [object.id, { ...object }]));
+    },
+    emitExchange() {},
+  };
+
+  battle.syncObjectFeedback();
+  ally.cooldown = 0;
+  battle.updateObjectFeedbackDeltas();
+
+  assert.equal(reconciles, 1, "readiness must not wait for another structural reconcile");
+  assert.equal(
+    battle.objectFeedback.objects.get("ally-readiness").energy,
+    0.55,
+    "the existing feedback object must show its live cooldown recovery",
+  );
+});
+
+test("RealtimeBattle projects feedback above the refreshed mesh head anchor", async () => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const root = new THREE.Group();
+  root.add(new THREE.Mesh(new THREE.BoxGeometry(1, 4, 1), new THREE.MeshBasicMaterial()));
+  const actor = { id: "anchored-ally", root, feedbackAnchorHeight: 1 };
+  battle.camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+  battle.camera.position.set(0, 0, 10);
+  battle.camera.lookAt(0, 0, 0);
+  battle.camera.updateProjectionMatrix();
+  battle.camera.updateMatrixWorld();
+  battle.camera.project = () => {};
+  battle.feedbackCanvas = { width: 100, height: 100 };
+  battle.feedbackActors.set(actor.id, actor);
+
+  const baselineY = battle.projectObjectFeedback({ id: actor.id }).y;
+  const anchorHeight = battle.refreshFeedbackAnchor(actor, 1);
+  const anchoredY = battle.projectObjectFeedback({ id: actor.id }).y;
+
+  assert.ok(anchorHeight > 1, "a tall mesh must establish an anchor above the fallback height");
+  assert.ok(anchoredY < baselineY, "the refreshed head anchor must lift feedback projection above the actor origin");
+});
+
+test("RealtimeBattle reports bound material maps without mutating runtime materials", async () => {
+  const THREE = await import("../vendor/three.module.min.js");
+  const battle = new RealtimeBattle(null, { stageNumber: 1 });
+  const map = new THREE.Texture();
+  const normalMap = new THREE.Texture();
+  map.name = "deck-albedo";
+  normalMap.name = "deck-normal";
+  const material = new THREE.MeshStandardMaterial({ map, normalMap });
+  material.name = "deck-material";
+  Object.freeze(material);
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material);
+  mesh.name = "deck-mesh";
+  battle.scene = new THREE.Scene();
+  battle.scene.add(mesh);
+
+  const evidence = battle.getMaterialBindingEvidence();
+
+  assert.deepEqual(
+    evidence.map(({ mesh: meshName, material: materialName, map: albedo, normalMap: normals }) => ({
+      mesh: meshName,
+      material: materialName,
+      map: albedo?.source,
+      normalMap: normals?.source,
+    })),
+    [{ mesh: "deck-mesh", material: "deck-material", map: "deck-albedo", normalMap: "deck-normal" }],
+    "material evidence must expose each mesh's bound albedo and normal maps",
+  );
+  assert.equal(mesh.material, material, "evidence collection must not replace runtime materials");
+  assert.equal(material.map, map, "evidence collection must not rewrite bound albedo maps");
+  assert.equal(material.normalMap, normalMap, "evidence collection must not rewrite bound normal maps");
+});
