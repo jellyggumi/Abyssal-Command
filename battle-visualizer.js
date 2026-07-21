@@ -2992,6 +2992,10 @@ export class BattleVisualizer {
     this.updateTowers(dt);
 
 
+    // ponytail: computed once per tick instead of once per unit inside the
+    // loop below (was this.allies.filter(...) called fresh for every ally's
+    // steer() call -- O(n^2) array allocations per tick at n units).
+    const steerableAllies = this.allies.filter((candidate) => !candidate.defeated);
     for (const ally of this.allies) {
       if (!this.liveAlly(ally) || this.engagements.has(ally)) continue;
       
@@ -3033,7 +3037,7 @@ export class BattleVisualizer {
       const velocity = steer(ally, {
         x: ((target.x - ally.x) / magnitude) * ally.speed,
         y: ((target.y - ally.y) / magnitude) * ally.speed,
-      }, this.allies.filter((candidate) => !candidate.defeated));
+      }, steerableAllies);
       const nextX = ally.x + velocity.x * dt;
       const nextY = Math.max(0.4, Math.min(this.navigation.height - 0.4, ally.y + velocity.y * dt));
       const blocked = this.clampMovementToContact(ally, nextX, nextY, true);
@@ -3045,6 +3049,9 @@ export class BattleVisualizer {
       ally.facing = directionIndex(velocity.x, velocity.y);
     }
 
+    // ponytail: same fix as steerableAllies above -- computed once per tick
+    // instead of once per enemy inside the loop.
+    const steerableEnemies = this.enemies.filter((candidate) => !candidate.defeated && !candidate.breachVisualized);
     for (const enemy of this.enemies) {
       if (!this.liveEnemy(enemy) || this.engagements.has(enemy)) continue;
       
@@ -3155,7 +3162,7 @@ export class BattleVisualizer {
       const velocity = steer(enemy, {
         x: targetDirX * enemy.speed,
         y: targetDirY * enemy.speed,
-      }, this.enemies.filter((candidate) => !candidate.defeated && !candidate.breachVisualized));
+      }, steerableEnemies);
 
       const nextX = enemy.x + velocity.x * dt;
       const nextY = Math.max(0.4, Math.min(this.navigation.height - 0.4, enemy.y + velocity.y * dt));
