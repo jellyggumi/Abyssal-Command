@@ -3645,7 +3645,7 @@ textarea:focus-visible {
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
-    padding: 0.25rem !important;
+    padding: 0 !important;
     gap: 0.25rem !important;
     box-sizing: border-box !important;
   }
@@ -3790,20 +3790,22 @@ textarea:focus-visible {
     display: none !important;
   }
 
-  /* 5. Two-Column Cockpit Main Grid */
+  /* 5. Single-Column Cockpit Main Grid */
   .cockpit-main {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) 23rem !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: minmax(0, 1fr) auto !important;
     grid-template-areas:
-      "battle rail"
-      "commands commands" !important;
+      "battle"
+      "commands" !important;
     gap: 0.25rem !important;
     flex: 1 1 auto !important;
     min-height: 0 !important;
     height: auto !important;
     overflow: hidden !important;
     align-items: stretch !important;
+    position: relative !important;
+    --battle-hud-command-row-height: 0rem !important;
   }
   .cockpit-details {
     display: none !important;
@@ -3836,18 +3838,28 @@ textarea:focus-visible {
 
   /* 7. Nested Grid right rail */
   .cockpit-rail.battle-hud-rail {
-    grid-area: rail !important;
+    grid-area: battle !important;
     display: grid !important;
+    position: absolute !important;
+    top: 0 !important;
+    right: 0.25rem !important;
+    left: auto !important;
+    bottom: var(--battle-hud-command-row-height, 0rem) !important;
+    width: min(23rem, 34vw) !important;
+    height: auto !important;
+    max-height: none !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
     gap: 0.2rem !important;
     padding: 0.2rem !important;
-    height: 100% !important;
     box-sizing: border-box !important;
     min-height: 0 !important;
     background: var(--panel) !important;
     border: 1px solid var(--line) !important;
     border-radius: 4px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    z-index: 11 !important;
   }
   .cockpit-rail .rail-panel {
     margin: 0 !important;
@@ -4223,7 +4235,12 @@ textarea:focus-visible {
 
   /* Set cockpit-main rows to minmax(120px, 1fr) 6.5rem */
   .cockpit-main {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas:
+      "battle"
+      "commands" !important;
     grid-template-rows: minmax(120px, 1fr) 6.5rem !important;
+    --battle-hud-command-row-height: 6.5rem !important;
   }
 
   /* Force command-panel height/min-height/max-height to 6.5rem with overflow hidden */
@@ -4506,8 +4523,13 @@ textarea:focus-visible {
   /* Ensure cockpit-main remains a bounded two-row grid with no page scroll */
   .cockpit-main {
     display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: minmax(120px, 1fr) 6.25rem !important;
+    grid-template-areas:
+      "battle"
+      "commands" !important;
     overflow: hidden !important;
+    --battle-hud-command-row-height: 6.25rem !important;
   }
 
   /* Hide save-dock in this mode */
