@@ -2,6 +2,21 @@
  * ObjectFeedbackLayer - Presentation-only overlay layer for combat object feedback.
  * Renders HP bars, status badges, speech bubbles, and floating damage/heal exchanges.
  */
+// Hoisted out of _abbreviateStatus(): that method is called once per status
+// chip per rendered badge (up to ~48x/frame at maxVisible=16), and was
+// allocating this object literal fresh every call.
+const STATUS_ABBREVIATIONS = Object.freeze({
+  BURNING: "BRN",
+  FROZEN: "FRZ",
+  STUNNED: "STN",
+  POISONED: "PSN",
+  SHIELDED: "SHD",
+  HASTE: "HST",
+  SLOW: "SLW",
+  WEAK: "WEK",
+  BLEED: "BLD"
+});
+
 export class ObjectFeedbackLayer {
   constructor(canvas, options = {}) {
     if (!canvas) {
@@ -761,18 +776,7 @@ export class ObjectFeedbackLayer {
   _abbreviateStatus(status) {
     if (!status) return "";
     const clean = status.trim().toUpperCase();
-    const map = {
-      BURNING: "BRN",
-      FROZEN: "FRZ",
-      STUNNED: "STN",
-      POISONED: "PSN",
-      SHIELDED: "SHD",
-      HASTE: "HST",
-      SLOW: "SLW",
-      WEAK: "WEK",
-      BLEED: "BLD"
-    };
-    return map[clean] || (clean.length > 3 ? clean.substring(0, 3) : clean);
+    return STATUS_ABBREVIATIONS[clean] || (clean.length > 3 ? clean.substring(0, 3) : clean);
   }
 
   _drawRoundedRect(ctx, x, y, w, h, r) {
