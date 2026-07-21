@@ -3630,6 +3630,7 @@ textarea:focus-visible {
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
+    position: relative !important;
   }
   main#game-root {
     flex: 1 1 auto !important;
@@ -3639,7 +3640,7 @@ textarea:focus-visible {
     display: flex !important;
     flex-direction: column !important;
   }
-  #campaign-screen.cockpit {
+  #campaign-screen.cockpit:not([hidden]) {
     height: 100% !important;
     max-height: 100% !important;
     display: flex !important;
@@ -3648,10 +3649,16 @@ textarea:focus-visible {
     padding: 0 !important;
     gap: 0.25rem !important;
     box-sizing: border-box !important;
+    position: relative !important;
   }
 
   /* 2. Compact Site Header */
   .site-header.medieval-header {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 16 !important;
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -3660,6 +3667,11 @@ textarea:focus-visible {
     min-height: 2.2rem !important;
     margin: 0 !important;
     border-bottom: 1px solid var(--line) !important;
+    background: linear-gradient(180deg, rgb(5 7 11 / 92%), rgb(5 7 11 / 55%)) !important;
+    pointer-events: none !important;
+  }
+  .site-header.medieval-header > * {
+    pointer-events: auto !important;
   }
   .site-header.medieval-header h1 {
     font-size: 1.1rem !important;
@@ -3686,6 +3698,11 @@ textarea:focus-visible {
 
   /* 3. Compact Cockpit Top */
   .cockpit-top {
+    position: absolute !important;
+    top: 2.9rem !important;
+    left: 0.35rem !important;
+    right: 0.35rem !important;
+    z-index: 15 !important;
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -3693,10 +3710,14 @@ textarea:focus-visible {
     justify-content: space-between !important;
     padding: 0.15rem 0.35rem !important;
     gap: 0.35rem !important;
-    background: var(--panel) !important;
+    background: rgb(12 18 24 / 88%) !important;
     border: 1px solid var(--line) !important;
     border-radius: 4px !important;
     min-height: 0 !important;
+    pointer-events: none !important;
+  }
+  .cockpit-top > * {
+    pointer-events: auto !important;
   }
   .cockpit-top .cockpit-stage-id {
     display: flex !important;
@@ -3841,10 +3862,10 @@ textarea:focus-visible {
     grid-area: battle !important;
     display: grid !important;
     position: absolute !important;
-    top: 0 !important;
+    top: 6.2rem !important;
     right: 0.25rem !important;
     left: auto !important;
-    bottom: var(--battle-hud-command-row-height, 0rem) !important;
+    bottom: 0.25rem !important;
     width: min(23rem, 34vw) !important;
     height: auto !important;
     max-height: none !important;
@@ -3860,6 +3881,12 @@ textarea:focus-visible {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     z-index: 11 !important;
+  }
+  /* Push the mission/objective overlay below the floating header + resource
+     bar (both position:absolute now, see sections 2 and 3 above) so its
+     top-left/top-right panels don't render underneath them. */
+  #battle-field .ashen-field-command {
+    top: 6.3rem !important;
   }
   .cockpit-rail .rail-panel {
     margin: 0 !important;
@@ -4360,6 +4387,17 @@ textarea:focus-visible {
     margin-bottom: 0.05rem !important;
     line-height: 1.1 !important;
   }
+
+  /* Mission briefing/result dialogs must fit the short landscape viewport
+     and stay reachable: without a bound they overflow past 100dvh with
+     overflow-y:visible (the desktop default), pushing #start-combat off
+     screen with no way to scroll to it. */
+  .mission-briefing-panel,
+  .result-panel {
+    max-height: calc(100dvh - 1rem) !important;
+    overflow-y: auto !important;
+    padding: 0.6rem 0.9rem !important;
+  }
 }
 
 @media (max-width: 720px) and (max-height: 600px) and (orientation: landscape) {
@@ -4376,10 +4414,16 @@ textarea:focus-visible {
     height: 100% !important;
     max-height: 100% !important;
     overflow: hidden !important;
+    position: relative !important;
   }
 
   /* 2. Compact Cockpit Top (<=90px) with 2-row grid: stage actions / resources resources */
   .cockpit-top {
+    position: absolute !important;
+    top: 2.9rem !important;
+    left: 0.35rem !important;
+    right: 0.35rem !important;
+    z-index: 15 !important;
     display: grid !important;
     grid-template-areas:
       "stage actions"
@@ -4392,9 +4436,13 @@ textarea:focus-visible {
     height: auto !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
-    background: var(--panel) !important;
+    background: rgb(12 18 24 / 88%) !important;
     border: 1px solid var(--line) !important;
     border-radius: 4px !important;
+    pointer-events: none !important;
+  }
+  .cockpit-top > * {
+    pointer-events: auto !important;
   }
 
   /* Retain stage number but hide verbose stage heading / commander identity / wave badge / stage selector */
@@ -4589,6 +4637,16 @@ textarea:focus-visible {
   .cockpit-rail .campaign-status {
     grid-row: 2 !important;
     grid-column: 2 !important;
+  }
+  /* Narrower phones stack .cockpit-top into a taller 2-row grid (up to
+     90px) above -- push the rail and mission overlay further down than
+     the wider landscape block does so they clear it instead of hiding
+     underneath. */
+  .cockpit-rail.battle-hud-rail {
+    top: 8.8rem !important;
+  }
+  #battle-field .ashen-field-command {
+    top: 9.1rem !important;
   }
 }
 
