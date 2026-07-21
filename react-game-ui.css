@@ -578,7 +578,7 @@ button.primary:hover:not(:disabled), .relic-shop-btn-equip:hover:not(:disabled) 
   scrollbar-color: var(--cinder) var(--raised);
 }
 .war-table-grid:focus-visible {
-  outline: 2px solid var(--ember, var(--cinder)) !important;
+  outline: 2px solid var(--focus) !important;
   outline-offset: 3px !important;
 }
 
@@ -4701,6 +4701,108 @@ textarea:focus-visible {
      right under #battle-field's own top edge, directly behind the strip. */
   #battle-field .ashen-field-command {
     top: 4.6rem !important;
+  }
+}
+
+/* ============================================================
+   Full-bleed desktop battlefield: the 3D canvas previously only
+   filled #battle-field's own grid cell, itself shrunk by the
+   site-header (~3.7rem) and .cockpit-top (~3.2rem) rows sitting
+   above .cockpit-main in normal document flow -- roughly 15% of a
+   900px-tall viewport spent on chrome instead of the battlefield.
+   Both become absolutely-positioned overlay bars here (the same
+   "battle" grid-area trick already used for the rail/dock/save-menu/
+   resource-bar above), removing them from flex flow so
+   main#game-root/.cockpit-main naturally expand to the full
+   viewport via their existing flex:1 rules. Every control they hold
+   (BGM/language toggle, stage title, 10-stage selector, wave badge,
+   settings menu) stays exactly as reachable/keyboard-focusable as
+   before -- only its position changes from "pushes the canvas down"
+   to "floats on top of it". Deliberately last in the cascade for the
+   same reason as the block above: a later !important declaration at
+   an equal-or-broader media condition is what reliably wins here. */
+@media (min-width: 900px) and (min-height: 0px) {
+  body:has(#campaign-screen:not([hidden])) {
+    overflow: hidden !important;
+  }
+
+  body:has(#campaign-screen:not([hidden])) .site-header.medieval-header {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 16 !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.4rem 0.75rem !important;
+    background: linear-gradient(180deg, rgb(5 7 11 / 92%), rgb(5 7 11 / 0%)) !important;
+    pointer-events: none !important;
+  }
+
+  body:has(#campaign-screen:not([hidden])) .site-header.medieval-header > * {
+    pointer-events: auto !important;
+  }
+
+  body:has(#campaign-screen:not([hidden])) .site-header.medieval-header .eyebrow,
+  body:has(#campaign-screen:not([hidden])) .site-header.medieval-header .subtitle {
+    display: none !important;
+  }
+
+  body:has(#campaign-screen:not([hidden])) .site-header.medieval-header h1 {
+    margin: 0 !important;
+    font-size: 1.1rem !important;
+  }
+
+  body:has(#campaign-screen:not([hidden])) .site-header.medieval-header .header-controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+  }
+
+  body:has(#campaign-screen:not([hidden])) .cockpit-top {
+    position: absolute !important;
+    top: 2.6rem !important;
+    left: 0.6rem !important;
+    right: 0.6rem !important;
+    z-index: 15 !important;
+    grid-template-columns: minmax(9rem, 12rem) minmax(14rem, 1fr) auto auto !important;
+    grid-template-areas: "stage selector wave actions" !important;
+    padding: 0.4rem 0.6rem !important;
+    background: rgb(12 18 24 / 88%) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 4px !important;
+    pointer-events: none !important;
+  }
+
+  body:has(#campaign-screen:not([hidden])) .cockpit-top > * {
+    pointer-events: auto !important;
+  }
+
+  /* .cockpit-main no longer loses ~6.9rem to the two bars above it in
+     normal flow -- it (and #battle-field's canvas inside it) now
+     stretches to the full viewport height via the existing
+     `.cockpit-main { flex: 1 1 auto; }` base rule. */
+  body:has(#campaign-screen:not([hidden])) .cockpit-main {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+
+  /* Push every existing #battle-field overlay down to clear the two
+     new bars (site-header ~2.6rem + cockpit-top ~3.4rem including its
+     own docked resource-bar underneath it) instead of starting at the
+     canvas's now-true top edge and landing behind them. */
+  body:has(#campaign-screen:not([hidden])) .battle-hud-rail,
+  body:has(#campaign-screen:not([hidden])) .battle-hud-dock {
+    top: 6.6rem !important;
+  }
+
+  body:has(#campaign-screen:not([hidden])) #battle-field .ashen-field-command {
+    top: 10.6rem !important;
+  }
+
+  body:has(#campaign-screen:not([hidden])) .battle-resource-bar {
+    top: calc(100% + 0.5rem) !important;
   }
 }
 

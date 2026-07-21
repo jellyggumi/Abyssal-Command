@@ -251,6 +251,15 @@ export class BattleVisualizer {
     this.bossClip = "Idle";
     this.lastBossHealth = null;
     this.boss = { id: "boss", hp: 0, maxHealth: 0, defeated: false };
+    // Boss auto-attack ("boss-strike"): declarative per-stage pattern data
+    // (see campaign-state.js STAGES[*].bossPattern), a countdown owned by
+    // this renderer (mirrors battle-realtime-three.js's WebGL twin so both
+    // renderers give reduced-motion/low-spec players the same core loop),
+    // and whether the commander is currently standing inside triggerRange —
+    // the last flag drives the danger-ring HUD read in updateBossStrike().
+    this.bossPattern = null;
+    this.bossStrikeCooldownRemaining = 0;
+    this.bossStrikeArmed = false;
 
     this.onTacticalRequest = typeof options.onTacticalRequest === "function" ? options.onTacticalRequest : null;
     this.placementMode = null;
@@ -2058,6 +2067,10 @@ export class BattleVisualizer {
       this.chestTile = null;
       this.chestId = null;
     }
+    // bossPattern is stage config (campaign-state.js), not runtime state, so
+    // it only needs to be re-latched when a stage changes, not every frame —
+    // mirrors battle-realtime-three.js's applyCampaignState twin.
+    this.bossPattern = stage?.bossPattern ?? campaign?.stage?.bossPattern ?? state?.bossPattern ?? null;
 
     const pendingChest = stage?.pendingChest ?? campaign?.stage?.pendingChest ?? state?.stage?.pendingChest ?? state?.pendingChest ?? null;
     const nextEffects = stage?.activeEffects ?? campaign?.stage?.activeEffects ?? state?.stage?.activeEffects ?? state?.activeEffects ?? [];
@@ -2408,6 +2421,57 @@ export class BattleVisualizer {
     }
     if (this.onEncounterEvent) this.onEncounterEvent(event);
     else if (type === "breach") this.onEnemyBreach?.();
+  }
+  // Boss auto-attack: fires independently of any player command whenever the
+  // commander has been standing inside bossPattern.triggerRange for a full
+  // cooldown window. campaign-state.js's applyEncounterEvent "boss-strike"
+  // branch is the authoritative damage application (and is NOT gated on
+  // exposure — see drawBossThreatRing for the one place exposure *does*
+  // matter here); this method only decides *when* to ask for it and how the
+  // wind-up reads on screen. Mirrors battle-realtime-three.js's twin so the
+  // Canvas fallback gives the same core loop as WebGL.
+  updateBossStrike(dt) {
+    const pattern = this.bossPattern;
+    const boss = this.boss;
+    const bossTile = this.navigation?.anchors?.boss;
+    if (!pattern || !boss || boss.defeated || !(boss.hp > 0) || !this.commanderPosition || !bossTile) {
+      this.bossStrikeArmed = false;
+      return;
+    }
+    const dx = this.commanderPosition.x - bossTile.x;
+    const dy = this.commanderPosition.y - bossTile.y;
+    const distance = Math.hypot(dx, dy);
+    const triggerRange = Number(pattern.triggerRange) || 4.5;
+    const cooldownSeconds = Math.max(0.5, Number(pattern.cooldownSeconds) || 5);
+    const inThreatRange = distance <= triggerRange;
+    this.bossStrikeArmed = inThreatRange;
+
+    if (!inThreatRange) {
+      // Stepping out lets the wind-up relax instead of firing the instant
+      // the player steps back in, rewarding a deliberate approach.
+      this.bossStrikeCooldownRemaining = Math.max(this.bossStrikeCooldownRemaining, cooldownSeconds * 0.5);
+      return;
+    }
+    this.bossStrikeCooldownRemaining -= dt;
+    if (this.bossStrikeCooldownRemaining > 0) return;
+
+    this.bossStrikeCooldownRemaining = cooldownSeconds;
+    this.playBossStrikeEffect(pattern);
+    this.onEncounterEvent?.({ type: "boss-strike", stageId: this.stageId });
+  }
+
+  playBossStrikeEffect(pattern) {
+    const bossTile = this.navigation?.anchors?.boss;
+    if (!bossTile) return;
+    this.burst(bossTile.x + 0.4, bossTile.y + 0.4, pattern.type === "aoe" ? 14 : 8, this.palette.enemy);
+    this.playSpatial(bossTile.x + 0.4, bossTile.y + 0.4, {
+      freq: pattern.type === "aoe" ? 120 : 260,
+      endFreq: pattern.type === "aoe" ? 60 : 130,
+      duration: 0.22,
+      type: "sawtooth",
+      gain: 0.5
+    });
+    this.objectFeedback?.emitSpeech("boss", "Strike!");
   }
 
   activeEngagements() {
@@ -2901,6 +2965,7 @@ export class BattleVisualizer {
     this.updateEngagements(dt);
     this.reconcileEngagements();
     this.moveCommander(dt);
+    this.updateBossStrike(dt);
     this.updateTowers(dt);
 
 
@@ -3249,6 +3314,7 @@ export class BattleVisualizer {
     for (const item of queue) this.drawQueuedItem(item, bridgeTerrain);
 
     this.drawActionRangeRing();
+    this.drawBossThreatRing();
     for (const effect of this.actionFx) this.drawActionFx(effect);
     if (this.actionPreview) this.drawActionPreview();
     if (this.routePreviewActive) this.drawRoutePreview();
@@ -4059,6 +4125,49 @@ export class BattleVisualizer {
       else ctx.lineTo(p.x, p.y);
     }
     ctx.strokeStyle = anchorInRange ? "rgba(113, 216, 198, 0.75)" : "rgba(143, 163, 176, 0.35)";
+    ctx.lineWidth = 1.25;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Boss threat-radius telegraph: mirrors drawActionRangeRing's isometric
+  // circle-drawing pattern above, but centered on the boss anchor with
+  // radius == bossPattern.triggerRange, so a Canvas-fallback player gets the
+  // same "how close is dangerous" read the WebGL renderer's bossThreatRing
+  // gives. updateBossStrike() itself is NOT exposure-gated (standing in
+  // range still gets you hit even while the boss mesh is hidden — matches
+  // campaign-state.js's exposure-independent boss-strike), but telegraphing
+  // a threat ring for a boss the player can't currently see would be a
+  // confusing HUD read, so the ring *drawing* (not the mechanic) stays
+  // gated on bossExposed. Opacity brightens as cooldown empties; no pulse or
+  // flicker, so the read stays static/legible under reduced motion too.
+  drawBossThreatRing() {
+    if (!this.bossExposed || !this.bossPattern) return;
+    const bossTile = this.navigation?.anchors?.boss;
+    if (!bossTile) return;
+    const ctx = this.ctx;
+    if (!ctx || typeof ctx.save !== "function" || typeof ctx.beginPath !== "function") return;
+    const cx = bossTile.x;
+    const cy = bossTile.y;
+    const triggerRange = Number(this.bossPattern.triggerRange) || 4.5;
+    const cooldownSeconds = Math.max(0.5, Number(this.bossPattern.cooldownSeconds) || 5);
+    const readiness = this.bossStrikeArmed
+      ? 1 - Math.min(1, Math.max(0, this.bossStrikeCooldownRemaining / cooldownSeconds))
+      : 0;
+
+    const steps = 32;
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i += 1) {
+      const angle = (i / steps) * Math.PI * 2;
+      const gx = cx + Math.cos(angle) * triggerRange;
+      const gy = cy + Math.sin(angle) * triggerRange;
+      const p = this.project(gx, gy, this.elevationAt(cx, cy));
+      if (i === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = this.palette.enemy;
+    ctx.globalAlpha = 0.14 + readiness * 0.5;
     ctx.lineWidth = 1.25;
     ctx.stroke();
     ctx.restore();
