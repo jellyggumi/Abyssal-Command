@@ -122,40 +122,40 @@
       "testDisposition": "delete"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/battle/dusk-warden-frame-00.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/battle/dusk-warden-frame-00.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/battle/dusk-warden-frame-01.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/battle/dusk-warden-frame-01.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/battle/dusk-warden-frame-02.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/battle/dusk-warden-frame-02.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/battle/dusk-warden-frame-03.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/battle/dusk-warden-frame-03.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
       "disposition": "delete",
@@ -194,40 +194,40 @@
       "testDisposition": "delete"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/battle/echo-rusher-frame-00.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/battle/echo-rusher-frame-00.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/battle/echo-rusher-frame-01.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/battle/echo-rusher-frame-01.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/battle/echo-rusher-frame-02.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/battle/echo-rusher-frame-02.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
+      "disposition": "retain",
       "currentPath": "assets/images/battle/echo-rusher-frame-03.png",
-      "replacementPath": null,
+      "replacementPath": "assets/images/battle/echo-rusher-frame-03.png",
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
+      "runtimeReference": true,
+      "testDisposition": "retain"
     },
     {
       "disposition": "delete",

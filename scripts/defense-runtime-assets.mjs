@@ -1,0 +1,13 @@
+export const RETAINED_ASSET_PATHS = Object.freeze([
+  'assets/defense-asset-manifest.json',
+  'assets/icons/icon-192.png',
+  'assets/icons/icon-512.png',
+  'assets/images/battle/dusk-warden-frame-00.png',
+  'assets/images/battle/dusk-warden-frame-01.png',
+  'assets/images/battle/dusk-warden-frame-02.png',
+  'assets/images/battle/dusk-warden-frame-03.png',
+  'assets/images/battle/echo-rusher-frame-00.png',
+  'assets/images/battle/echo-rusher-frame-01.png',
+  'assets/images/battle/echo-rusher-frame-02.png',
+  'assets/images/battle/echo-rusher-frame-03.png',
+]);

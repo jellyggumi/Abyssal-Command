@@ -2,16 +2,13 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { dirname, extname, resolve } from 'node:path';
-import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import test from 'node:test';
+import { RETAINED_ASSET_PATHS } from '../scripts/defense-runtime-assets.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = resolve(root, 'assets/defense-asset-manifest.json');
-const retainedPaths = new Set([
-  'assets/defense-asset-manifest.json',
-  'assets/icons/icon-192.png',
-  'assets/icons/icon-512.png',
-]);
+const retainedPaths = new Set(RETAINED_ASSET_PATHS);
 
 function trackedAssetPaths() {
   const result = spawnSync('git', ['ls-files', '-z', 'assets'], {
