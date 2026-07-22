@@ -64,6 +64,8 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assert.match(job(workflow, "deployed_smoke"), /npm ci/);
   assert.match(job(workflow, "deployed_smoke"), /playwright install --with-deps chromium/);
   assert.match(job(workflow, "deployed_smoke"), /--rules-version "\$RULES_VERSION"/);
+  assert.match(job(workflow, "package_pages"), /include-hidden-files: true/);
+  assert.match(job(workflow, "package_pages"), /name: pages-bundle[\s\S]*?if-no-files-found: error/);
   assert.match(job(workflow, "release_receipt"), /"all_gate_pass":%s/);
   assert.match(job(workflow, "release_receipt"), /test "\$all_gate_pass" = true/);
   assert.doesNotMatch(workflow.match(/PAGES_RUNTIME_PATHS: >-[\s\S]*?\n\n/)?.[0] ?? "", /react-game-ui\.js|react-shop|vendor\/react|tactical|minimap|battle-field|campaign-sync|assets\/(?:models|video)/i);

@@ -180,13 +180,14 @@ jobs:
           printf '{"candidate_sha":"%s","rules_version":"%s"}\n' "$RESOLVED_SHA" "$RULES_VERSION" > "$PAGES_ARTIFACT_DIR/version.json"
           node scripts/validate-pages-version.mjs --file "$PAGES_ARTIFACT_DIR/version.json" --sha "$RESOLVED_SHA"
           printf '{"gate":"package_pages","sha":"%s","status":"passed"}\n' "$RESOLVED_SHA" > results/package_pages.json
-      - if: always()
+      - if: success()
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
           name: pages-bundle
           path: .pages-artifact
-          if-no-files-found: warn
-      - if: always()
+          if-no-files-found: error
+          include-hidden-files: true
+      - if: success()
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
         with:
           path: .pages-artifact
