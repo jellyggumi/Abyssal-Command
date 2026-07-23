@@ -212,8 +212,19 @@ async function makeCryptographicTestAdmission(registerRoot, admissionNonce, term
   manifest.manifest_id = "test-only-ed25519-admission";
   manifest.admission_nonce = admissionNonce;
   if (terminalTickCeiling) {
-    for (const tuple of Object.values(JSON.parse(await readFile(join(registerRoot, CANONICAL_PATHS.expectedTuples), "utf8")).expected_tuples).flat()) {
-      manifest.terminal_tick_ceilings[tuple.assessment_condition_id ?? tuple.matrix_id] = terminalTickCeiling;
+    const expectedTuples = JSON.parse(await readFile(join(registerRoot, CANONICAL_PATHS.expectedTuples), "utf8"));
+    const assessmentUnitBindings = expectedTuples.source_contract_bindings?.assessment_unit_bindings ?? [];
+    const terminalCeilingKeys = new Set();
+    for (const tuple of Object.values(expectedTuples.expected_tuples).flat()) {
+      terminalCeilingKeys.add(tuple.assessment_condition_id ?? tuple.matrix_id);
+      for (const binding of assessmentUnitBindings) {
+        if (binding.assessment_unit_id === tuple.assessment_unit_id) {
+          terminalCeilingKeys.add(binding.assessment_condition_id);
+        }
+      }
+    }
+    for (const key of terminalCeilingKeys) {
+      manifest.terminal_tick_ceilings[key] = terminalTickCeiling;
     }
   }
   manifest.expires_at = "2100-01-01T00:00:00.000Z";
@@ -793,10 +804,16 @@ test("isolated Ed25519 admission fixture exercises the reduced G2 runtime collec
     assert.ok(inputDispositions.length > 0);
     assert.ok(inputDispositions.every(({ public_input_type: type, accepted }) => typeof type === "string" && typeof accepted === "boolean"),
       "input dispositions must record actual public input outcomes");
-    assert.deepEqual(m4Queue.map(({ tape_sim_tick: tick, normalized_input: input }) => ({ tick, input })), [
-      { tick: 0, input: { decision: "DECLINE", cardId: m4Queue[0].normalized_input.cardId } },
-      { tick: 1, input: { decision: "SELECT", cardId: m4Queue[1].normalized_input.cardId } },
+    assert.equal(m4Queue.length, 2, "M4_DECLINE_THEN_SELECT must queue exactly two declared inputs");
+    assert.deepEqual(m4Queue.map(({ tape_sim_tick: tick, normalized_input: input }) => ({
+      tick,
+      decision: input?.decision,
+    })), [
+      { tick: 0, decision: "DECLINE" },
+      { tick: 1, decision: "SELECT" },
     ]);
+    assert.ok(m4Queue.every(({ normalized_input: input }) => typeof input?.cardId === "string" && input.cardId.length > 0),
+      "M4 queued inputs must retain nonempty normalized card IDs");
     assert.deepEqual([...new Set(observerConfigurations.map(canonicalStringify))].sort(),
       [...new Set(expectedObserverConfigurations.map(canonicalStringify))].sort(),
       "every declared M2/M3/M4 observer and cadence must emit checkpoints");

@@ -26,6 +26,98 @@ function mockCanvas() {
   };
   return { width: 640, height: 360, calls, getContext: () => context };
 }
+function cameraCanvas() {
+  const calls = [];
+  const gradient = { addColorStop(...args) { calls.push(["stop", ...args]); } };
+  const context = new Proxy({
+    clearRect(...args) { calls.push(["clear", ...args]); },
+    fillRect(...args) { calls.push(["rect", ...args]); },
+    save() { calls.push(["save"]); },
+    restore() { calls.push(["restore"]); },
+    translate(...args) { calls.push(["translate", ...args]); },
+    createLinearGradient() { return gradient; },
+    createRadialGradient() { return gradient; },
+  }, {
+    get(target, name) {
+      if (name in target) return target[name];
+      return (...args) => calls.push([String(name), ...args]);
+    },
+    set(_target, name, value) {
+      calls.push([String(name), value]);
+      return true;
+    },
+  });
+  return { width: 640, height: 360, calls, getContext: () => context };
+}
+
+const CINDER_SPAN_WORLD_ASSETS = [
+  "./assets/images/battle/world/cinder-span-topdown-plate.webp",
+  "./assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
+];
+
+let rendererImportNonce = 0;
+
+function cinderSpanSnapshot() {
+  return {
+    tick: 5,
+    presentation: {
+      stageId: "cinder-span",
+      stagePresentation: {
+        palette: { contour: "contour", hazard: "hazard", objective: "objective", surface: "surface" },
+        terrain: { patternId: "cinder-span" },
+      },
+      terrain: { tactics: {} },
+    },
+  };
+}
+
+function unavailableImage() {
+  return class UnavailableImage {
+    set src(_value) {
+      throw new Error("image unavailable");
+    }
+  };
+}
+
+function loadedImage() {
+  return class LoadedImage {
+    constructor() {
+      this.complete = false;
+      this.naturalHeight = 0;
+      this.naturalWidth = 0;
+    }
+
+    set src(value) {
+      this._src = value;
+      this.complete = true;
+      this.naturalHeight = 1;
+      this.naturalWidth = 1;
+    }
+
+    get src() {
+      return this._src;
+    }
+  };
+}
+
+function replaceImage(t, Image) {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "Image");
+  Object.defineProperty(globalThis, "Image", { configurable: true, value: Image });
+  t.after(() => {
+    if (original) Object.defineProperty(globalThis, "Image", original);
+    else delete globalThis.Image;
+  });
+}
+
+async function freshAdapters() {
+  const query = `?renderer-contract=${rendererImportNonce += 1}`;
+  const [{ RealtimeBattle: Primary }, { BattleVisualizer: Fallback }] = await Promise.all([
+    import(`../battle-realtime-three.js${query}`),
+    import(`../battle-visualizer.js${query}`),
+  ]);
+  return [Primary, Fallback];
+}
+
 
 const snapshot = {
   gate: { x: 320, y: 300, radius: 32 },
@@ -62,6 +154,84 @@ test("defense renderer adapters project a supplied snapshot to a mocked Canvas2D
     assert.doesNotThrow(() => adapter.renderSnapshot(snapshot));
   }
 });
+test("defense renderer adapters apply the identical bounded camera transform only after clearing the canvas", () => {
+  const frame = Object.freeze({
+    camera: Object.freeze({ x: 9000, y: -9000 }),
+    viewport: { height: 360, width: 640 },
+  });
+  const transforms = [];
+
+  for (const Adapter of ADAPTERS) {
+    const canvas = cameraCanvas();
+    const adapter = new Adapter().mount({ canvas, viewport: { height: canvas.height, width: canvas.width } });
+    adapter.renderSnapshot(snapshot, frame);
+
+    const cameraTransform = canvas.calls.find(([name]) => name === "translate");
+    const clearIndex = canvas.calls.findIndex(([name]) => name === "clear");
+    const backgroundIndex = canvas.calls.findIndex(([name]) => name === "rect");
+    const transformIndex = canvas.calls.indexOf(cameraTransform);
+    assert.deepEqual(
+      cameraTransform,
+      ["translate", canvas.width, -canvas.height],
+      `${Adapter.name} bounds the shared presentation camera to the visible canvas`,
+    );
+    assert.ok(clearIndex < transformIndex, `${Adapter.name} clears in screen space before the world camera`);
+    assert.ok(backgroundIndex < transformIndex, `${Adapter.name} paints the screen-space background before the world camera`);
+    transforms.push(cameraTransform);
+    adapter.dispose();
+  }
+
+  assert.deepEqual(transforms[0], transforms[1], "primary and fallback adapters accept the same bounded camera frame");
+});
+
+test("both adapters select the approved Cinder Span artwork only in the camera-transformed world layer", async (t) => {
+  replaceImage(t, loadedImage());
+  const camera = { x: 24, y: -18 };
+
+  for (const Adapter of await freshAdapters()) {
+    const canvas = cameraCanvas();
+    const adapter = new Adapter().mount({ canvas, viewport: canvas });
+    adapter.renderSnapshot(cinderSpanSnapshot(), { camera, viewport: canvas });
+
+    const imageCalls = canvas.calls.filter(([name]) => name === "drawImage");
+    assert.deepEqual(
+      imageCalls.map(([, image]) => image.src),
+      CINDER_SPAN_WORLD_ASSETS,
+      `${Adapter.name} selects both approved Cinder Span images`,
+    );
+    const cameraIndex = canvas.calls.findIndex(
+      ([name, x, y]) => name === "translate" && x === camera.x && y === camera.y,
+    );
+    const firstImageIndex = canvas.calls.indexOf(imageCalls[0]);
+    assert.ok(cameraIndex >= 0 && cameraIndex < firstImageIndex, `${Adapter.name} applies images inside the transient camera world layer`);
+
+    const beforeOtherStage = canvas.calls.length;
+    adapter.renderSnapshot(
+      { ...cinderSpanSnapshot(), presentation: { ...cinderSpanSnapshot().presentation, stageId: "gate-zenith" } },
+      { camera, viewport: canvas },
+    );
+    assert.equal(
+      canvas.calls.slice(beforeOtherStage).some(([name]) => name === "drawImage"),
+      false,
+      `${Adapter.name} does not select Cinder Span artwork for another stage`,
+    );
+    adapter.dispose();
+  }
+});
+
+test("both adapters retain procedural Cinder Span terrain when world artwork is unavailable", async (t) => {
+  replaceImage(t, unavailableImage());
+
+  for (const Adapter of await freshAdapters()) {
+    const canvas = cameraCanvas();
+    const adapter = new Adapter().mount({ canvas, viewport: canvas });
+    assert.doesNotThrow(() => adapter.renderSnapshot(cinderSpanSnapshot(), { camera: { x: 16, y: -12 }, viewport: canvas }));
+    assert.equal(canvas.calls.some(([name]) => name === "drawImage"), false, `${Adapter.name} does not paint an unavailable image`);
+    assert.ok(canvas.calls.some(([name]) => name === "rect"), `${Adapter.name} keeps its procedural terrain visible`);
+    adapter.dispose();
+  }
+});
+
 
 
 

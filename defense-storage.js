@@ -5,6 +5,29 @@ const DATABASE_NAME = "abyssal-command-defense";
 const STORE_NAME = "campaign";
 const RECORD_KEY = "active";
 
+const idleSettlementQueues = new Map();
+
+function queueIdleSettlement(lockName, operation) {
+  const previous = idleSettlementQueues.get(lockName) ?? Promise.resolve();
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  idleSettlementQueues.set(lockName, gate);
+  return previous.then(operation, operation).finally(() => {
+    release();
+    if (idleSettlementQueues.get(lockName) === gate) idleSettlementQueues.delete(lockName);
+  });
+}
+
+function serializeIdleSettlement(lockName, operation) {
+  const locks = globalThis.navigator?.locks;
+  if (typeof locks?.request === "function") {
+    return locks.request(lockName, { mode: "exclusive" }, operation);
+  }
+  return queueIdleSettlement(lockName, operation);
+}
+
 function fallbackHash(text) {
   let hash = 0x811c9dc5;
   for (let index = 0; index < text.length; index += 1) {
@@ -166,12 +189,55 @@ export class DefenseStorage {
     return true;
   }
 
+  async #settleIndexedDbIdleReturn(now) {
+    while (true) {
+      let text;
+      let campaign;
+      try {
+        text = await this.#readText();
+        campaign = await this.#decode(text);
+      } catch {
+        return { campaign: null, receipt: noCampaignIdleReceipt(now) };
+      }
+      if (!campaign) return { campaign: null, receipt: noCampaignIdleReceipt(now) };
+
+      const settlement = settleCampaignIdleReturn(campaign, { now });
+      if (settlement.receipt.settledAt === null) return settlement;
+      const nextText = await this.#encode(settlement.campaign);
+      const transaction = this.database.transaction(STORE_NAME, "readwrite");
+      const store = transaction.objectStore(STORE_NAME);
+      const committed = await new Promise((resolve, reject) => {
+        let wroteSettlement = false;
+        transaction.oncomplete = () => resolve(wroteSettlement);
+        transaction.onerror = () => reject(transaction.error ?? new Error("IndexedDB transaction failed."));
+        transaction.onabort = () => reject(transaction.error ?? new Error("IndexedDB transaction aborted."));
+
+        const request = store.get(RECORD_KEY);
+        request.onsuccess = () => {
+          if (request.result !== text) return;
+          try {
+            store.put(nextText, RECORD_KEY);
+            wroteSettlement = true;
+          } catch (error) {
+            reject(error);
+          }
+        };
+        request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed."));
+      });
+      if (committed) return settlement;
+    }
+  }
+
   async settleIdleReturn({ now } = {}) {
-    const campaign = await this.load();
-    if (!campaign) return { campaign: null, receipt: noCampaignIdleReceipt(now) };
-    const settlement = settleCampaignIdleReturn(campaign, { now });
-    if (settlement.receipt.settledAt !== null) await this.save(settlement.campaign);
-    return settlement;
+    await this.open();
+    return serializeIdleSettlement(`abyssal-command-defense:idle:${this.backend}:${this.key}`, async () => {
+      if (this.backend === "indexeddb") return this.#settleIndexedDbIdleReturn(now);
+      const campaign = await this.load();
+      if (!campaign) return { campaign: null, receipt: noCampaignIdleReceipt(now) };
+      const settlement = settleCampaignIdleReturn(campaign, { now });
+      if (settlement.receipt.settledAt !== null) await this.save(settlement.campaign);
+      return settlement;
+    });
   }
 
   async clear() {

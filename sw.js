@@ -10,6 +10,7 @@ const CORE_ASSETS = [
   "./defense-run-simulation.js",
   "./campaign-state.js",
   "./defense-storage.js",
+  "./battle-canvas-text.js",
   "./battle-realtime-three.js",
   "./battle-visualizer.js",
   "./defense-audio.js",
@@ -23,6 +24,8 @@ const CORE_ASSETS = [
   "./assets/images/battle/echo-rusher-frame-01.png",
   "./assets/images/battle/echo-rusher-frame-02.png",
   "./assets/images/battle/echo-rusher-frame-03.png",
+  "./assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
+  "./assets/images/battle/world/cinder-span-topdown-plate.webp",
   "./styles.css",
   "./react-game-ui.css",
   "./manifest.json",
@@ -30,6 +33,16 @@ const CORE_ASSETS = [
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",
 ];
+
+const APP_SHELL_PATHS = new Set(
+  CORE_ASSETS
+    .filter((asset) => asset === "./index.html" || asset === "./manifest.json" || /\.(?:js|css)$/.test(asset))
+    .map((asset) => new URL(asset, self.registration.scope).pathname),
+);
+
+function isAppShellRequest(request, url) {
+  return request.mode === "navigate" || APP_SHELL_PATHS.has(url.pathname);
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).then(() => self.skipWaiting()));
@@ -62,7 +75,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(fetch(event.request, { cache: "no-store" }));
     return;
   }
-  if (event.request.mode === "navigate") {
+  if (isAppShellRequest(event.request, url)) {
     event.respondWith(networkFirst(event.request));
     return;
   }

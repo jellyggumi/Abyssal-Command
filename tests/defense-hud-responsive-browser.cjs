@@ -141,9 +141,9 @@ async function verifyPortraitViewportContract(browser, hosting) {
         cardTop: Number.parseFloat(getComputedStyle(document.querySelector(".edge-card") ?? document.querySelector(".defense-top")).top),
       };
     });
-    assert.deepEqual({ top: safeInsets.top.top, right: safeInsets.top.right, left: safeInsets.top.left }, { top: 17, right: 23, left: 11 }, "portrait top HUD must map physical safe areas to logical edges");
-    assert.deepEqual({ bottom: safeInsets.bottom.bottom, right: safeInsets.bottom.right, left: safeInsets.bottom.left }, { bottom: 29, right: 23, left: 11 }, "portrait bottom HUD must map physical safe areas to logical edges");
-    assert.equal(safeInsets.cardTop, 17, "portrait cards must avoid the physical right cutout");
+    assert.deepEqual({ top: safeInsets.top.top, right: safeInsets.top.right, left: safeInsets.top.left }, { top: 11, right: 17, left: 29 }, "portrait top HUD must stay on physical safe edges, not rotated logical mappings");
+    assert.deepEqual({ bottom: safeInsets.bottom.bottom, right: safeInsets.bottom.right, left: safeInsets.bottom.left }, { bottom: 23, right: 17, left: 29 }, "portrait bottom HUD must stay on physical safe edges, not rotated logical mappings");
+    assert.equal(safeInsets.cardTop, 11, "portrait cards must avoid the physical top cutout, not the former rotated right edge");
 
     await page.evaluate(() => {
       const viewport = window.__defenseFakeViewport;
