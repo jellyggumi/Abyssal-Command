@@ -34,7 +34,8 @@ const validLoadout = (loadout) => [...new Set((Array.isArray(loadout) ? loadout 
 const nextId = (run, prefix) => `${prefix}-${++run.nextId}`;
 const actor = (id, kind, x, y, hp, maxHp, extra = {}) => ({ id, kind, x, y, hp, maxHp, ...extra });
 const sortedActors = (entries) => [...entries].sort((left, right) => left.id.localeCompare(right.id));
-const stageCutscene = (stage) => CUTSCENES[stage.id] || CUTSCENES.default;
+const LEGACY_CUTSCENE_STAGE_IDS = new Set(["cinder-span", "veil-citadel", "echo-throne"]);
+const stageCutscene = (stage) => LEGACY_CUTSCENE_STAGE_IDS.has(stage.id) ? (CUTSCENES[stage.id] || CUTSCENES.default) : CUTSCENES.default;
 const eventCue = (name) => AUDIO_CUES[name]?.id || null;
 const SNAPSHOT_VERSION = 6;
 const EVENT_VERSION = 3;
@@ -533,11 +534,7 @@ function fire(run, source, target, damage, owner, ttl = 5, combat = null) {
   projectile.causalRootId = firedEvent.eventId;
   if (hit.critical) emit(run, "CRITICAL_HIT", {
     entityId: source.id,
-    sourceSpawnEventId: source.spawnEventId || null,
     targetId: target.id,
-    targetSpawnEventId: target.spawnEventId || null,
-    projectileId: projectile.id,
-    causalRootId: projectile.causalRootId,
     source: hit.source,
     baseDamage: hit.baseDamage,
     damage: hit.damage,
@@ -1729,7 +1726,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     itemIds: [],
     rewardIds: [],
     rewardOffer: null,
-    loreSurprise: null,
+    loreSurprise,
     m4: {
       planId: stagePlan.m4Plan.id,
       inventory: stagePlan.m4Plan.cards.map((card) => card.id),
@@ -1857,7 +1854,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     cutscene: stageCutscene(stage).intro,
     cue: eventCue("stageStart"),
   });
-  if (loreSurprise) state.loreSurprise = emit(state, "LORE_SURPRISE_RESOLVED", loreSurprise);
+  if (loreSurprise) emit(state, "LORE_SURPRISE_RESOLVED", loreSurprise);
   emit(state, "M4_CARD_AVAILABLE", {
     cardId: state.m4.inventory[0],
     m4PlanId: stagePlan.m4Plan.id,
