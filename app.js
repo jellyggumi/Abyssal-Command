@@ -1,11 +1,27 @@
 import {
   STAGES,
+  allocateWardenStatPoint,
   applyCampaignRunResult,
+  boundFragmentEarned,
+  boundFragmentSpent,
   captureElite,
   createCampaign,
+  echoCoreEarned,
+  echoCoreSpent,
+  equipmentTierIndexFor,
+  purchaseEquipmentTier,
+  selectWardenTrait,
+  setCompanionFormationSlot,
   setCompanionLoadout,
   startRun,
+  unlockWardenSkillNode,
+  wardLevel,
 } from "./campaign-state.js";
+import {
+  EQUIPMENT_SLOTS, EQUIPMENT_TIERS, MAX_FRONT_SLOTS, WARDEN_SKILL_TREE,
+  WARDEN_STATS, WARDEN_TRAITS, WARDEN_TRAIT_UNLOCK_SEQUENCES, equipmentTierUpgradeCost, wardenStatPointCost,
+  wardenTraitOffersForSequence,
+} from "./rpg-catalog.js";
 import { DefenseStorage } from "./defense-storage.js";
 import {
   advanceDefenseRun,
