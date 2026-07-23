@@ -24,12 +24,13 @@ env:
   PAGES_ARTIFACT_DIR: .pages-artifact
   PAGES_RUNTIME_PATHS: >-
     index.html app.js defense-viewport.js defense-catalog.js defense-run-simulation.js campaign-state.js defense-storage.js defense-audio.js
-    battle-realtime-three.js battle-visualizer.js styles.css react-game-ui.css sw.js manifest.json icon.svg privacy.html
+    defense-cutscene.js defense-telemetry.js battle-realtime-three.js battle-visualizer.js styles.css react-game-ui.css sw.js manifest.json icon.svg privacy.html
     assets/icons/icon-192.png assets/icons/icon-512.png
     assets/images/battle/dusk-warden-frame-00.png assets/images/battle/dusk-warden-frame-01.png
     assets/images/battle/dusk-warden-frame-02.png assets/images/battle/dusk-warden-frame-03.png
     assets/images/battle/echo-rusher-frame-00.png assets/images/battle/echo-rusher-frame-01.png
     assets/images/battle/echo-rusher-frame-02.png assets/images/battle/echo-rusher-frame-03.png
+    assets/video/abyssal-surge-defense-survivor-smoke.mp4
 
 jobs:
   resolve_revision:
@@ -176,6 +177,10 @@ jobs:
           read -r -a paths <<< "$PAGES_RUNTIME_PATHS"
           for path in "${paths[@]}"; do test -f "$path"; done
           git archive --format=tar "$RESOLVED_SHA" -- "${paths[@]}" | tar -x -C "$PAGES_ARTIFACT_DIR"
+          test "$(grep -o '__CANDIDATE_SHA__' "$PAGES_ARTIFACT_DIR/sw.js" | wc -l)" -eq 1
+          sed -i "s/__CANDIDATE_SHA__/$RESOLVED_SHA/" "$PAGES_ARTIFACT_DIR/sw.js"
+          ! grep -q '__CANDIDATE_SHA__' "$PAGES_ARTIFACT_DIR/sw.js"
+          grep -Fq "abyssal-command-defense-survivor-$RESOLVED_SHA" "$PAGES_ARTIFACT_DIR/sw.js"
           actual="$(find "$PAGES_ARTIFACT_DIR" -type f -print | sed "s#^$PAGES_ARTIFACT_DIR/##" | sort)"
           expected="$(printf '%s\n' "${paths[@]}" | sort)"
           test "$actual" = "$expected"

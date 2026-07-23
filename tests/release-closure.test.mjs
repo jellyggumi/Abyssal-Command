@@ -5,15 +5,18 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
+import { runInNewContext } from "node:vm";
 
 const execFileAsync = promisify(execFile);
 const ROOT = new URL("../", import.meta.url);
 const RULES_VERSION = "defense-survivor-v1";
+const GAMEPLAY_VIDEO = "assets/video/abyssal-surge-defense-survivor-smoke.mp4";
 const RUNTIME_PATHS = new Set([
   "index.html", "app.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
-  "campaign-state.js", "defense-storage.js", "defense-audio.js", "battle-realtime-three.js", "battle-visualizer.js", "styles.css",
-  "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
+  "campaign-state.js", "defense-storage.js", "defense-cutscene.js", "defense-telemetry.js", "defense-audio.js",
+  "battle-realtime-three.js", "battle-visualizer.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png",
+  GAMEPLAY_VIDEO,
   "assets/images/battle/dusk-warden-frame-00.png", "assets/images/battle/dusk-warden-frame-01.png",
   "assets/images/battle/dusk-warden-frame-02.png", "assets/images/battle/dusk-warden-frame-03.png",
   "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
@@ -38,7 +41,10 @@ function runtimePaths(workflow) {
 }
 
 test("Pages workflow preserves the defense-survivor release DAG and closure", async () => {
-  const workflow = await project(".github/workflows/static.yml");
+  const [workflow, readme] = await Promise.all([
+    project(".github/workflows/static.yml"),
+    project("README.md"),
+  ]);
   const order = [
     "resolve_revision", "engine_contract", "release_closure", "browser_contract", "package_pages",
     "artifact_smoke", "deploy_pages", "deployed_smoke", "release_receipt",
@@ -57,6 +63,7 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assert.match(job(workflow, "release_receipt"), /needs: \[resolve_revision, engine_contract, release_closure, browser_contract, package_pages, artifact_smoke, deploy_pages, deployed_smoke\]/);
 
   assert.deepEqual(runtimePaths(workflow), RUNTIME_PATHS);
+  assert.match(readme, new RegExp(`\\]\\(${GAMEPLAY_VIDEO.replaceAll(".", "\\.")}\\)`), `README must link ${GAMEPLAY_VIDEO}`);
   assert.match(workflow, /"rules_version":"%s"/);
   assert.match(workflow, /node scripts\/validate-pages-version\.mjs --file "\$PAGES_ARTIFACT_DIR\/version\.json" --sha "\$RESOLVED_SHA"/);
   assert.match(workflow, /status=unsupported-no-deployed-defense-smoke/);
@@ -72,7 +79,7 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assert.match(job(workflow, "package_pages"), /name: pages-bundle[\s\S]*?if-no-files-found: error/);
   assert.match(job(workflow, "release_receipt"), /"all_gate_pass":%s/);
   assert.match(job(workflow, "release_receipt"), /test "\$all_gate_pass" = true/);
-  assert.doesNotMatch(workflow.match(/PAGES_RUNTIME_PATHS: >-[\s\S]*?\n\n/)?.[0] ?? "", /react-game-ui\.js|react-shop|vendor\/react|tactical|minimap|battle-field|campaign-sync|assets\/(?:models|video)/i);
+  assert.doesNotMatch(workflow.match(/PAGES_RUNTIME_PATHS: >-[\s\S]*?\n\n/)?.[0] ?? "", /react-game-ui\.js|react-shop|vendor\/react|tactical|minimap|battle-field|campaign-sync|assets\/models/i);
 
   for (const use of workflow.matchAll(/^\s+uses: [^\n]+$/gm)) {
     assert.match(use[0], /@[0-9a-f]{40}$/, `action must be SHA-pinned: ${use[0]}`);
@@ -95,9 +102,9 @@ test("version scripts enforce the exact defense rules version", async () => {
   await writeFile(versionFile, JSON.stringify({ candidate_sha: sha, rules_version: "wrong" }));
   const required = [
     "index.html", "version.json", "app.js", "defense-viewport.js", "defense-catalog.js",
-    "defense-run-simulation.js", "campaign-state.js", "defense-storage.js", "defense-audio.js",
-    "battle-realtime-three.js", "battle-visualizer.js", "styles.css", "react-game-ui.css",
-    "sw.js", "manifest.json",
+    "defense-run-simulation.js", "campaign-state.js", "defense-storage.js", "defense-cutscene.js",
+    "defense-telemetry.js", "defense-audio.js", "battle-realtime-three.js", "battle-visualizer.js",
+    "styles.css", "react-game-ui.css", "sw.js", "manifest.json",
     "assets/images/battle/dusk-warden-frame-00.png", "assets/images/battle/dusk-warden-frame-01.png",
     "assets/images/battle/dusk-warden-frame-02.png", "assets/images/battle/dusk-warden-frame-03.png",
     "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
@@ -113,4 +120,57 @@ test("version scripts enforce the exact defense rules version", async () => {
   await assert.rejects(execFileAsync(process.execPath, [command, "--dir", directory]));
   await writeFile(join(directory, "bootstrap.js"), "export const boot = true;\n");
   await execFileAsync(process.execPath, [command, "--dir", directory]);
+});
+
+test("the candidate-stamped service worker precaches every runtime observer and preserves unrelated caches", async () => {
+  const candidateSha = "b".repeat(40);
+  const listeners = new Map();
+  const opened = [];
+  const deleted = [];
+  let precached = [];
+  let installPromise;
+  let activatePromise;
+  const currentCache = `abyssal-command-defense-survivor-${candidateSha}`;
+  const staleCache = `abyssal-command-defense-survivor-${"a".repeat(40)}`;
+  const unrelatedCache = "another-application-cache";
+  const caches = {
+    open: async (name) => {
+      opened.push(name);
+      return {
+        addAll: async (assets) => { precached = [...assets]; },
+        put: async () => {},
+      };
+    },
+    keys: async () => [currentCache, staleCache, unrelatedCache],
+    delete: async (name) => { deleted.push(name); return true; },
+    match: async () => null,
+  };
+  const self = {
+    location: { origin: "https://example.test" },
+    clients: { claim: async () => {} },
+    skipWaiting: async () => {},
+    addEventListener: (type, listener) => listeners.set(type, listener),
+  };
+  const artifactSource = (await project("sw.js")).replaceAll("__CANDIDATE_SHA__", candidateSha);
+  runInNewContext(artifactSource, {
+    URL,
+    Promise,
+    caches,
+    fetch: async () => ({ ok: false }),
+    self,
+  });
+
+  listeners.get("install")({
+    waitUntil(promise) { installPromise = promise; },
+  });
+  await installPromise;
+  assert.deepEqual(opened, [currentCache]);
+  assert.ok(precached.includes("./defense-cutscene.js"));
+  assert.ok(precached.includes("./defense-telemetry.js"));
+
+  listeners.get("activate")({
+    waitUntil(promise) { activatePromise = promise; },
+  });
+  await activatePromise;
+  assert.deepEqual(deleted, [staleCache]);
 });

@@ -1,6 +1,9 @@
 import { COMPANIONS, REWARDS, STAGE_REWARD_IDS } from "./defense-catalog.js";
 
 export const RULES_VERSION = "defense-survivor-v1";
+export const IDLE_RETURN_VERSION = 1;
+export const IDLE_RETURN_INTERVAL_MS = 60_000;
+export const IDLE_RETURN_MAX_ELAPSED_MS = 8 * 60 * 60 * 1000;
 export const STAGES = Object.freeze([
   Object.freeze({ id: "cinder-span", name: "Cinder Span", bossName: "Cinder Warden", sequence: 1 }),
   Object.freeze({ id: "veil-citadel", name: "Veil Citadel", bossName: "Veil Tactician", sequence: 2 }),
@@ -22,6 +25,13 @@ const isPlainObject = (value) => value !== null && typeof value === "object" && 
 const hasOnlyKeys = (value, keys) => Object.keys(value).length === keys.length && Object.keys(value).every((key) => keys.includes(key));
 const validIds = (ids) => Array.isArray(ids) && ids.every(isNonEmptyString) && new Set(ids).size === ids.length;
 const canonicalPrototype = (prototype) => isNonEmptyString(prototype) && Object.hasOwn(COMPANIONS, prototype);
+const isTimestamp = (value) => Number.isSafeInteger(value) && value >= 0;
+function copyIdleReturn(idleReturn) {
+  return { version: idleReturn.version, lastSettledAt: idleReturn.lastSettledAt, totalProgress: idleReturn.totalProgress };
+}
+function idleReceipt(outcome, { requestedAt = null, elapsedMs = 0, settledElapsedMs = 0, completedStages = 0, awardedProgress = 0, settledAt = null } = {}) {
+  return Object.freeze({ outcome, requestedAt, elapsedMs, settledElapsedMs, completedStages, awardedProgress, settledAt });
+}
 function copyCampaign(campaign) {
   return {
     campaignId: campaign.campaignId, resetEpoch: campaign.resetEpoch, unlockedStageIndex: campaign.unlockedStageIndex,
@@ -29,14 +39,20 @@ function copyCampaign(campaign) {
     companionLoadout: { prototypeIds: [...campaign.companionLoadout.prototypeIds] },
     resolvedIds: [...campaign.resolvedIds], attemptsByStage: { ...campaign.attemptsByStage },
     rewardIds: [...(campaign.rewardIds ?? [])], achievementIds: [...(campaign.achievementIds ?? [])],
+    idleReturn: copyIdleReturn(campaign.idleReturn ?? initialIdleReturn()),
     lastResolution: campaign.lastResolution ? { ...campaign.lastResolution } : null,
   };
 }
 const LEGACY_KEYS = ["campaignId", "resetEpoch", "unlockedStageIndex", "companionCollection", "companionLoadout", "resolvedIds", "attemptsByStage", "lastResolution"];
-const CURRENT_KEYS = [...LEGACY_KEYS, "rewardIds", "achievementIds"];
+const REWARD_KEYS = [...LEGACY_KEYS, "rewardIds", "achievementIds"];
+const CURRENT_KEYS = [...REWARD_KEYS, "idleReturn"];
+const initialIdleReturn = () => ({ version: IDLE_RETURN_VERSION, lastSettledAt: null, totalProgress: 0 });
 function migrateCampaign(value) {
-  if (!isPlainObject(value) || !hasOnlyKeys(value, LEGACY_KEYS)) return value;
-  return { ...value, rewardIds: [], achievementIds: [] };
+  if (!isPlainObject(value)) return value;
+  if (hasOnlyKeys(value, LEGACY_KEYS)) return { ...value, rewardIds: [], achievementIds: [], idleReturn: initialIdleReturn() };
+  if (hasOnlyKeys(value, [...LEGACY_KEYS, "idleReturn"])) return { ...value, rewardIds: [], achievementIds: [] };
+  if (hasOnlyKeys(value, REWARD_KEYS)) return { ...value, idleReturn: initialIdleReturn() };
+  return value;
 }
 function validCampaign(value) {
   const candidate = migrateCampaign(value);
@@ -47,6 +63,7 @@ function validCampaign(value) {
   if (new Set(prototypes).size !== prototypes.length || !isPlainObject(candidate.companionLoadout) || !hasOnlyKeys(candidate.companionLoadout, ["prototypeIds"]) || !validIds(candidate.companionLoadout.prototypeIds) || candidate.companionLoadout.prototypeIds.length > MAX_LOADOUT_SIZE || !candidate.companionLoadout.prototypeIds.every((prototype) => prototypes.includes(prototype))) return false;
   if (!validIds(candidate.resolvedIds) || !candidate.resolvedIds.every((id) => STAGE_INDEX.has(id)) || !isPlainObject(candidate.attemptsByStage) || !Object.entries(candidate.attemptsByStage).every(([id, attempts]) => STAGE_INDEX.has(id) && Number.isInteger(attempts) && attempts >= 0)) return false;
   if (!validIds(candidate.rewardIds) || !candidate.rewardIds.every((id) => Object.hasOwn(REWARDS, id)) || !validIds(candidate.achievementIds)) return false;
+  if (!isPlainObject(candidate.idleReturn) || !hasOnlyKeys(candidate.idleReturn, ["version", "lastSettledAt", "totalProgress"]) || candidate.idleReturn.version !== IDLE_RETURN_VERSION || (candidate.idleReturn.lastSettledAt !== null && !isTimestamp(candidate.idleReturn.lastSettledAt)) || !isTimestamp(candidate.idleReturn.totalProgress)) return false;
   return candidate.lastResolution === null || (isPlainObject(candidate.lastResolution) && hasOnlyKeys(candidate.lastResolution, ["stageId", "outcome", "campaignComplete"]) && STAGE_INDEX.has(candidate.lastResolution.stageId) && ["victory", "defeat", "FINAL_COMPLETION"].includes(candidate.lastResolution.outcome) && typeof candidate.lastResolution.campaignComplete === "boolean");
 }
 function requireCampaign(campaign) { if (!validCampaign(campaign)) fail("Invalid defense campaign."); }
@@ -55,7 +72,7 @@ export function createCampaign({ campaignId, resetEpoch = 0 } = {}) {
   if (!Number.isInteger(resetEpoch) || resetEpoch < 0) fail("resetEpoch must be a non-negative integer.");
   const id = campaignId ?? `defense-${resetEpoch}-${++campaignSequence}`;
   if (!isNonEmptyString(id)) fail("campaignId must be a non-empty string.");
-  return { campaignId: id, resetEpoch, unlockedStageIndex: 0, companionCollection: [], companionLoadout: { prototypeIds: [] }, resolvedIds: [], attemptsByStage: {}, rewardIds: [], achievementIds: [], lastResolution: null };
+  return { campaignId: id, resetEpoch, unlockedStageIndex: 0, companionCollection: [], companionLoadout: { prototypeIds: [] }, resolvedIds: [], attemptsByStage: {}, rewardIds: [], achievementIds: [], idleReturn: initialIdleReturn(), lastResolution: null };
 }
 export function startRun(campaign, stageId = STAGES[campaign?.unlockedStageIndex]?.id) {
   requireCampaign(campaign);
@@ -86,6 +103,32 @@ export function applyCampaignRunResult(campaign, { stageId, outcome, rewardId = 
   next.rewardIds.sort();
   next.lastResolution = { stageId, outcome, campaignComplete: victory && stageIndex === STAGES.length - 1 && next.resolvedIds.includes(stageId) };
   return next;
+}
+
+export function settleIdleReturn(campaign, { now } = {}) {
+  requireCampaign(campaign);
+  const next = copyCampaign(campaign);
+  if (!isTimestamp(now)) return { campaign: next, receipt: idleReceipt("INVALID_TIME") };
+  const lastSettledAt = next.idleReturn.lastSettledAt;
+  if (lastSettledAt === null) {
+    next.idleReturn.lastSettledAt = now;
+    return { campaign: next, receipt: idleReceipt("INITIALIZED", { requestedAt: now, settledAt: now }) };
+  }
+  if (now < lastSettledAt) return { campaign: next, receipt: idleReceipt("INVALID_TIME", { requestedAt: now }) };
+  const elapsedMs = now - lastSettledAt;
+  if (elapsedMs < IDLE_RETURN_INTERVAL_MS) return { campaign: next, receipt: idleReceipt("EARLY", { requestedAt: now, elapsedMs }) };
+  const settledElapsedMs = Math.min(elapsedMs, IDLE_RETURN_MAX_ELAPSED_MS);
+  const completedStages = next.resolvedIds.length;
+  next.idleReturn.lastSettledAt = now;
+  if (completedStages === 0) {
+    return { campaign: next, receipt: idleReceipt("NO_COMPLETED_STAGES", { requestedAt: now, elapsedMs, settledElapsedMs, settledAt: now }) };
+  }
+  const awardedProgress = completedStages * Math.floor(settledElapsedMs / IDLE_RETURN_INTERVAL_MS);
+  if (!Number.isSafeInteger(next.idleReturn.totalProgress + awardedProgress)) {
+    return { campaign: copyCampaign(campaign), receipt: idleReceipt("CAPACITY_REACHED", { requestedAt: now, elapsedMs, settledElapsedMs, completedStages }) };
+  }
+  next.idleReturn.totalProgress += awardedProgress;
+  return { campaign: next, receipt: idleReceipt("SETTLED", { requestedAt: now, elapsedMs, settledElapsedMs, completedStages, awardedProgress, settledAt: now }) };
 }
 export function captureElite(campaign, eliteId, prototype) {
   requireCampaign(campaign);

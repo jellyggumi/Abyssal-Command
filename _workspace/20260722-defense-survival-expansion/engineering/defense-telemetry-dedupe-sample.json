@@ -1,0 +1,115 @@
+{
+  "format": "abyssal-defense-telemetry",
+  "schemaVersion": 1,
+  "generatedAtMs": 5005,
+  "scope": "offline-local-debug",
+  "privacy": {
+    "playerIdentifiers": false,
+    "networkTransport": false,
+    "persistentStorage": false
+  },
+  "bounds": {
+    "maxRecords": 16,
+    "retainedRecords": 5,
+    "droppedRecords": 0
+  },
+  "records": [
+    {
+      "schemaVersion": 1,
+      "sequence": 1,
+      "runId": "run-1",
+      "type": "RUN_STARTED",
+      "atMs": 5000,
+      "payload": {
+        "stageId": "cinder-span",
+        "seed": 42,
+        "rulesVersion": "defense-survivor-v1",
+        "tickRate": 60,
+        "reducedMotion": false
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 2,
+      "runId": "run-1",
+      "type": "PROJECTILE_IMPACT",
+      "atMs": 5001,
+      "payload": {
+        "tick": 90,
+        "projectileId": "p-1",
+        "sourceId": "commander",
+        "targetId": "enemy-1",
+        "from": {
+          "x": 10,
+          "y": 20
+        },
+        "to": {
+          "x": 30,
+          "y": 40
+        },
+        "hit": true
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 3,
+      "runId": "run-1",
+      "type": "PROJECTILE_IMPACT",
+      "atMs": 5002,
+      "payload": {
+        "tick": 90,
+        "projectileId": "p-2",
+        "sourceId": "companion-1",
+        "targetId": "enemy-2",
+        "from": {
+          "x": 11,
+          "y": 21
+        },
+        "to": {
+          "x": 31,
+          "y": 41
+        },
+        "hit": false,
+        "guardedBy": "ward"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 4,
+      "runId": "run-1",
+      "type": "MOVE",
+      "atMs": 5003,
+      "payload": {
+        "tick": 90,
+        "sourceId": "enemy-1",
+        "from": {
+          "x": 30,
+          "y": 40
+        },
+        "to": {
+          "x": 32,
+          "y": 40
+        }
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 5,
+      "runId": "run-1",
+      "type": "MOVE",
+      "atMs": 5004,
+      "payload": {
+        "tick": 90,
+        "sourceId": "enemy-2",
+        "from": {
+          "x": 31,
+          "y": 41
+        },
+        "to": {
+          "x": 29,
+          "y": 43
+        }
+      }
+    }
+  ]
+}

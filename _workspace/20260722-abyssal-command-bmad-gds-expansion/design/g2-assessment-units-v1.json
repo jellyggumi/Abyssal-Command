@@ -1,0 +1,239 @@
+{
+  "schema_version": "g2-assessment-units-v1",
+  "register_version": "1.1.0-runtime-backed",
+  "register_id": "g2-assessment-units-v1",
+  "status": "BOUND_MEASUREMENT_DEFINITION_ONLY",
+  "gate_status": "G2 NOT MEASURED / NOT PASSED",
+  "stage_status": "Stage 2 REDO",
+  "source_facts": [
+    {
+      "fact_id": "catalog-stage-plans",
+      "citation": "defense-catalog.js:481-527",
+      "fact": "STAGE_PLAN_DESCRIPTORS derives map-plan:<stage>:v1, wave-plan:<stage>:v1, and m4-plan:<stage>:v1 for every catalog stage."
+    },
+    {
+      "fact_id": "catalog-stage-roster",
+      "citation": "defense-catalog.js:443-454",
+      "fact": "The current catalog stage IDs are cinder-span through gate-zenith, with gate-zenith carrying boss s10-abyss-regent."
+    },
+    {
+      "fact_id": "runtime-plan-identity",
+      "citation": "defense-run-simulation.js:1432-1497,1667-1706",
+      "fact": "createDefenseRun commits plan identity, mapPlanId, wavePlanId, m4PlanId, and waveVariantId into its snapshot."
+    },
+    {
+      "fact_id": "runtime-terminal-outcomes",
+      "citation": "defense-run-simulation.js:1391-1419",
+      "fact": "The runtime emits TERMINAL DEFEAT on gate/commander/extraction failure; boss defeat emits VICTORY except gate-zenith, which emits FINAL_COMPLETION."
+    },
+    {
+      "fact_id": "runtime-m4",
+      "citation": "defense-catalog.js:504-522; defense-run-simulation.js:599-665",
+      "fact": "Every catalog M4 plan has hold-line and recover-echo cards, occupation recovery, and an M4_CARD_INVENTORY_EXHAUSTED fallback; runtime accepts M4_CARD_DECISION SELECT or DECLINE."
+    }
+  ],
+  "non_authorizations": [
+    "no evidence collection authorization",
+    "no runtime or catalog change",
+    "no tuning authorization",
+    "no reward, idle-return, monetization, provider, or network change",
+    "no G8 or human-playtest evidence",
+    "no gate or release disposition"
+  ],
+  "role_records": {
+    "record_id": "g2-runtime-register-role-record-v1",
+    "record_status": "SIGNED_PROPOSED_DESIGN_INPUT_ONLY",
+    "meaning": "This is the signed requirement record for a future harness manifest, not a collection authorization or a claim that measurements exist.",
+    "signatures": [
+      {
+        "role": "game-designer",
+        "signature_scope": "finite condition bindings, pressure labels, and M5 cohort mapping",
+        "signature_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+        "collection_authorization": "NOT_GRANTED"
+      },
+      {
+        "role": "game-qa",
+        "signature_scope": "expected-tuple closure and retained first-failure rows",
+        "signature_status": "COUNTERSIGNATURE_REQUIRED_BEFORE_COLLECTION",
+        "collection_authorization": "NOT_GRANTED"
+      },
+      {
+        "role": "game-programmer",
+        "signature_scope": "runner export of committed plan identity and terminal/event fields",
+        "signature_status": "RUNNER_ATTESTATION_REQUIRED_BEFORE_COLLECTION",
+        "collection_authorization": "NOT_GRANTED"
+      },
+      {
+        "role": "game-production-director",
+        "signature_scope": "later post-review disposition only",
+        "signature_status": "DIRECTOR_DECISION_REQUIRED_AFTER_R1_R2",
+        "collection_authorization": "NOT_GRANTED"
+      }
+    ]
+  },
+  "immutable_runtime_identity": {
+    "required_snapshot_fields": [
+      "plan.identity",
+      "plan.mapPlanId",
+      "plan.wavePlanId",
+      "plan.m4PlanId",
+      "plan.waveVariantId",
+      "measurementProfileId",
+      "seed"
+    ],
+    "runtime_fact_citation": "defense-run-simulation.js:1438-1497,1667-1706",
+    "runner_blocker": "The future runner must serialize these values and their catalog digest in each retained row; this register does not generate a digest."
+  },
+  "profiles": [
+    { "profile_id": "bulwark", "source": "defense-catalog.js:52-67" },
+    { "profile_id": "striker", "source": "defense-catalog.js:68-82" },
+    { "profile_id": "gambit", "source": "defense-catalog.js:83-97" },
+    { "profile_id": "conductor", "source": "defense-catalog.js:98-112" },
+    { "profile_id": "rift", "source": "defense-catalog.js:113-127" }
+  ],
+  "assessment_conditions": [
+    {
+      "assessment_condition_id": "g2-condition-ordinary-low-v1",
+      "target_cohort_id": "ordinary",
+      "pressure_band_id": "low",
+      "pressure_binding_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+      "stage_id": "cinder-span",
+      "map_plan_id": "map-plan:cinder-span:v1",
+      "wave_plan_id": "wave-plan:cinder-span:v1",
+      "m4_plan_id": "m4-plan:cinder-span:v1",
+      "target_binding": { "runtime_selector": "non-boss enemy emitted from committed wave schedule", "source": "defense-catalog.js:443-444; defense-run-simulation.js:1289-1291" },
+      "terminal_binding": "VICTORY",
+      "terminal_source": "defense-run-simulation.js:1400-1419"
+    },
+    {
+      "assessment_condition_id": "g2-condition-ordinary-median-v1",
+      "target_cohort_id": "ordinary",
+      "pressure_band_id": "median",
+      "pressure_binding_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+      "stage_id": "howling-sprawl",
+      "map_plan_id": "map-plan:howling-sprawl:v1",
+      "wave_plan_id": "wave-plan:howling-sprawl:v1",
+      "m4_plan_id": "m4-plan:howling-sprawl:v1",
+      "target_binding": { "runtime_selector": "non-boss enemy emitted from committed wave schedule", "source": "defense-catalog.js:448; defense-run-simulation.js:1289-1291" },
+      "terminal_binding": "VICTORY",
+      "terminal_source": "defense-run-simulation.js:1400-1419"
+    },
+    {
+      "assessment_condition_id": "g2-condition-ordinary-high-v1",
+      "target_cohort_id": "ordinary",
+      "pressure_band_id": "high",
+      "pressure_binding_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+      "stage_id": "gate-zenith",
+      "map_plan_id": "map-plan:gate-zenith:v1",
+      "wave_plan_id": "wave-plan:gate-zenith:v1",
+      "m4_plan_id": "m4-plan:gate-zenith:v1",
+      "target_binding": { "runtime_selector": "non-boss enemy emitted from committed wave schedule", "source": "defense-catalog.js:453; defense-run-simulation.js:1289-1291" },
+      "terminal_binding": "FINAL_COMPLETION",
+      "terminal_source": "defense-run-simulation.js:1400-1419"
+    },
+    {
+      "assessment_condition_id": "g2-condition-elite-low-v1",
+      "target_cohort_id": "elite",
+      "pressure_band_id": "low",
+      "pressure_binding_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+      "stage_id": "veil-citadel",
+      "map_plan_id": "map-plan:veil-citadel:v1",
+      "wave_plan_id": "wave-plan:veil-citadel:v1",
+      "m4_plan_id": "m4-plan:veil-citadel:v1",
+      "target_binding": { "elite_id": "s2-veil-sentinel", "source": "defense-catalog.js:445" },
+      "terminal_binding": "VICTORY",
+      "terminal_source": "defense-run-simulation.js:1400-1419"
+    },
+    {
+      "assessment_condition_id": "g2-condition-elite-median-v1",
+      "target_cohort_id": "elite",
+      "pressure_band_id": "median",
+      "pressure_binding_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+      "stage_id": "sunken-bastion",
+      "map_plan_id": "map-plan:sunken-bastion:v1",
+      "wave_plan_id": "wave-plan:sunken-bastion:v1",
+      "m4_plan_id": "m4-plan:sunken-bastion:v1",
+      "target_binding": { "elite_id": "s4-anchor-diver", "source": "defense-catalog.js:447" },
+      "terminal_binding": "VICTORY",
+      "terminal_source": "defense-run-simulation.js:1400-1419"
+    },
+    {
+      "assessment_condition_id": "g2-condition-elite-high-v1",
+      "target_cohort_id": "elite",
+      "pressure_band_id": "high",
+      "pressure_binding_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+      "stage_id": "starless-canal",
+      "map_plan_id": "map-plan:starless-canal:v1",
+      "wave_plan_id": "wave-plan:starless-canal:v1",
+      "m4_plan_id": "m4-plan:starless-canal:v1",
+      "target_binding": { "elite_id": "s7-toll-keeper", "source": "defense-catalog.js:450" },
+      "terminal_binding": "VICTORY",
+      "terminal_source": "defense-run-simulation.js:1400-1419"
+    },
+    {
+      "assessment_condition_id": "g2-condition-stage-10-boss-low-v1",
+      "target_cohort_id": "stage_10_boss",
+      "pressure_band_id": "low",
+      "pressure_binding_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+      "stage_id": "gate-zenith",
+      "map_plan_id": "map-plan:gate-zenith:v1",
+      "wave_plan_id": "wave-plan:gate-zenith:v1",
+      "m4_plan_id": "m4-plan:gate-zenith:v1",
+      "target_binding": { "boss_id": "s10-abyss-regent", "source": "defense-catalog.js:453" },
+      "terminal_binding": "FINAL_COMPLETION",
+      "terminal_source": "defense-run-simulation.js:1400-1419"
+    },
+    {
+      "assessment_condition_id": "g2-condition-stage-10-boss-median-v1",
+      "target_cohort_id": "stage_10_boss",
+      "pressure_band_id": "median",
+      "pressure_binding_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+      "stage_id": "gate-zenith",
+      "map_plan_id": "map-plan:gate-zenith:v1",
+      "wave_plan_id": "wave-plan:gate-zenith:v1",
+      "m4_plan_id": "m4-plan:gate-zenith:v1",
+      "target_binding": { "boss_id": "s10-abyss-regent", "source": "defense-catalog.js:453" },
+      "terminal_binding": "FINAL_COMPLETION",
+      "terminal_source": "defense-run-simulation.js:1400-1419"
+    },
+    {
+      "assessment_condition_id": "g2-condition-stage-10-boss-high-v1",
+      "target_cohort_id": "stage_10_boss",
+      "pressure_band_id": "high",
+      "pressure_binding_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+      "stage_id": "gate-zenith",
+      "map_plan_id": "map-plan:gate-zenith:v1",
+      "wave_plan_id": "wave-plan:gate-zenith:v1",
+      "m4_plan_id": "m4-plan:gate-zenith:v1",
+      "target_binding": { "boss_id": "s10-abyss-regent", "source": "defense-catalog.js:453" },
+      "terminal_binding": "FINAL_COMPLETION",
+      "terminal_source": "defense-run-simulation.js:1400-1419"
+    }
+  ],
+  "m4_applicability": {
+    "binding_type": "catalog_fact",
+    "source": "defense-catalog.js:504-522; defense-run-simulation.js:599-665",
+    "applies_to_every_assessment_condition": true,
+    "cards": [
+      { "id_template": "<stage_id>-hold-line", "checkpoint_objective_id": "gate-defense" },
+      { "id_template": "<stage_id>-recover-echo", "checkpoint_objective_id": "echo-recovery" }
+    ],
+    "recovery": { "checkpoint_objective_id": "occupation", "id_template": "<stage_id>-safe-lane" },
+    "fallback": { "id_template": "<stage_id>-fallback", "reason": "M4_CARD_INVENTORY_EXHAUSTED", "objective_id": "occupation" },
+    "accepted_input": { "type": "M4_CARD_DECISION", "payload": { "cardId": "exact catalog card ID", "decision": ["SELECT", "DECLINE"] } },
+    "required_retained_events": ["M4_CARD_SELECTED", "M4_CARD_DECLINED", "M4_CARD_REJECTED", "M4_FALLBACK", "M4_RECOVERY_CHECKPOINT"]
+  },
+  "terminal_outcome_mapping": [
+    { "terminal_event": "TERMINAL outcome DEFEAT", "mapped_outcome": "DEFEAT", "eligible_for_win_rate_denominator": true, "source": "defense-run-simulation.js:1391-1399" },
+    { "terminal_event": "TERMINAL outcome VICTORY", "mapped_outcome": "VICTORY", "eligible_for_win_rate_denominator": true, "source": "defense-run-simulation.js:1400-1419" },
+    { "terminal_event": "TERMINAL outcome FINAL_COMPLETION", "mapped_outcome": "FINAL_COMPLETION", "eligible_for_win_rate_denominator": true, "source": "defense-run-simulation.js:1400-1419" },
+    { "terminal_event": "missing or unrecognized terminal event", "mapped_outcome": "NOT_OBSERVED", "eligible_for_win_rate_denominator": false, "status": "SIGNED_PROPOSED_DESIGN_INPUT" }
+  ],
+  "register_digest": "MUST_REGENERATE_FROM_THIS_COMPLETE_DOCUMENT_BEFORE_COLLECTION",
+  "expected_tuples_regeneration": {
+    "owner": "separate runner/register executor",
+    "required_input_fields": ["assessment_condition_id", "profile_id", "seed_id", "input_policy_id", "stage_id", "map_plan_id", "wave_plan_id", "m4_plan_id", "pressure_band_id", "target_cohort_id", "terminal_binding", "measurementProfileId"],
+    "required_runtime_digests": ["rules_catalog_digest", "plan.identity", "waveVariantId", "input_tape_digest", "observer_implementation_digest", "local_export_checksum"],
+    "prohibition": "Do not infer a tuple from an unregistered condition, a different plan ID, or an absent digest."
+  }
+}

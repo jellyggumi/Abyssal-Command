@@ -1,0 +1,10 @@
+Command: node scripts/run-g2-archetype-sweep.mjs --output /Users/jangyoung/orca/Abyssal-Surge/_workspace/20260722-abyssal-command-bmad-gds-expansion/qa/evidence/gates/G2-archetype-and-combat-sweep.json
+Timestamp: 2026-07-22T16:00:00.000Z
+Exit Code: 0
+Total Runs: 15
+Completed Runs: 15
+Digest Mismatches: 0
+Replay Equality: 15/15 PASS
+Measurement Status: INCOMPLETE
+Gate Verdict: NOT_PASSED
+Note: Raw deterministic G2 measurement runner export. Single-slice 360-tick window; does not satisfy full G2 gate thresholds or claim a gate pass.

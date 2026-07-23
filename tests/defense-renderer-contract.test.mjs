@@ -63,6 +63,9 @@ test("defense renderer adapters project a supplied snapshot to a mocked Canvas2D
   }
 });
 
+
+
+
 test("defense renderer modules contain no loop, input, campaign, or outcome ownership", async () => {
   for (const source of SOURCES) {
     const code = await readFile(new URL(`../${source}`, import.meta.url), "utf8");

@@ -1,4 +1,4 @@
-import { RULES_VERSION, restoreCampaign, serializeCampaign } from "./campaign-state.js";
+import { RULES_VERSION, restoreCampaign, serializeCampaign, settleIdleReturn as settleCampaignIdleReturn } from "./campaign-state.js";
 
 const DEFAULT_KEY = "abyssal-command-defense";
 const DATABASE_NAME = "abyssal-command-defense";
@@ -32,6 +32,18 @@ function requestResult(request) {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed."));
+  });
+}
+
+function noCampaignIdleReceipt(now) {
+  return Object.freeze({
+    outcome: "NO_CAMPAIGN",
+    requestedAt: Number.isSafeInteger(now) && now >= 0 ? now : null,
+    elapsedMs: 0,
+    settledElapsedMs: 0,
+    completedStages: 0,
+    awardedProgress: 0,
+    settledAt: null,
   });
 }
 
@@ -152,6 +164,14 @@ export class DefenseStorage {
     const text = await this.#encode(campaign);
     await this.#writeText(text);
     return true;
+  }
+
+  async settleIdleReturn({ now } = {}) {
+    const campaign = await this.load();
+    if (!campaign) return { campaign: null, receipt: noCampaignIdleReceipt(now) };
+    const settlement = settleCampaignIdleReturn(campaign, { now });
+    if (settlement.receipt.settledAt !== null) await this.save(settlement.campaign);
+    return settlement;
   }
 
   async clear() {

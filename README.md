@@ -35,23 +35,23 @@ python3 -m http.server 4173
 ## 검증
 
 ```bash
-node --test tests/defense-run-simulation.test.mjs tests/defense-campaign-adapter.test.mjs tests/defense-renderer-contract.test.mjs
-node --test tests/defense-asset-manifest.test.mjs tests/no-rts-closure.test.mjs tests/release-closure.test.mjs
+node --test tests/defense-run-simulation.test.mjs tests/defense-campaign-adapter.test.mjs tests/defense-renderer-contract.test.mjs tests/defense-asset-manifest.test.mjs tests/no-rts-closure.test.mjs tests/defense-cutscene.test.mjs tests/defense-expansion-contract.test.mjs tests/defense-observers-contract.test.mjs tests/defense-stat-delta-browser.test.mjs tests/release-closure.test.mjs
 node tests/defense-survivor-browser.cjs
 node tests/defense-hud-responsive-browser.cjs
+node tests/defense-performance-browser.cjs
 ```
 
-브라우저 계약은 로비 → Cinder Span 전투 → 키보드/터치 이동 → 성장 선택을 확인합니다. Pages 아티팩트는 `.github/workflows/static.yml`의 런타임 allowlist와 `tests/pages-artifact-smoke.cjs`로 별도 폐쇄 검증합니다.
+브라우저 계약은 로비 → Cinder Span 전투 → 키보드/터치 이동 → 성장 수치 비교와 선택을 확인합니다. 성능 프로브는 모바일/데스크톱 뷰포트의 DOM 수, 프레임 간격, 입력 피드백을 검사합니다. Pages 아티팩트는 `.github/workflows/static.yml`의 candidate-SHA 런타임 allowlist와 `tests/pages-artifact-smoke.cjs`로 별도 폐쇄 검증합니다.
 
 ## 플레이 영상
 
-실제 브라우저에서 새 저장소로 시작해 Cinder Span 전투와 성장 선택을 캡처한 영상은 [`assets/video/abyssal-surge-defense-survivor-smoke.mp4`](assets/video/abyssal-surge-defense-survivor-smoke.mp4)입니다. H.264, 1280×720, 22.88초입니다.
+실제 브라우저에서 새 저장소로 시작해 Cinder Span의 컷신, 전투, Gate/Echo 이후 성장 수치 비교와 선택까지 캡처한 영상은 [`assets/video/abyssal-surge-defense-survivor-smoke.mp4`](assets/video/abyssal-surge-defense-survivor-smoke.mp4)입니다. H.264 1280×720 25fps 영상과 AAC-LC 48kHz 스테레오 사운드트랙을 담은 32.20초 MP4입니다.
 
 ## GitHub Pages 배포
 
 `main`에 푸시하면 [Deploy static content to Pages](.github/workflows/static.yml) 워크플로가 실행되도록 구성되어 있습니다. 현재 저장소의 Pages URL은 https://jellyggumi.github.io/Abyssal-Command/ 입니다. 저장소가 `Abyssal-Surge`로 실제 rename된 뒤에는 이 링크와 배지를 함께 갱신해야 합니다.
 
-배포 아티팩트는 커밋된 런타임 파일 allowlist에서만 생성됩니다. `defense-audio.js`와 2.5D 전투 스프라이트 프레임은 allowlist와 service-worker 캐시에 포함되며, 로컬 작업 트리의 미추적 파일이나 allowlist 밖 파일은 Pages에 포함되지 않습니다. 상단 배지와 GitHub Actions 실행 기록은 실제 배포 상태를 확인하는 근거입니다.
+배포 아티팩트는 커밋된 런타임 파일 allowlist에서만 생성됩니다. `defense-audio.js`, 2.5D 전투 스프라이트 프레임, 위 플레이 영상은 allowlist에 포함되며, 런타임 코드와 전투 프레임은 service-worker 캐시에도 포함됩니다. 로컬 작업 트리의 미추적 파일이나 allowlist 밖 파일은 Pages에 포함되지 않습니다. 상단 배지와 GitHub Actions 실행 기록은 실제 배포 상태를 확인하는 근거입니다.
 
 ## 저장소 구조
 
@@ -62,6 +62,8 @@ Abyssal-Command/
 ├── defense-run-simulation.js  # 결정론적 60 Hz 전투 규칙
 ├── defense-catalog.js         # 스테이지·정예·스킬·아이템·보상 authored 데이터
 ├── defense-audio.js           # 오프라인 절차적 BGM/효과음 큐
+├── defense-telemetry.js       # 용량 제한된 오프라인 런 이벤트 관측·내보내기
+├── defense-cutscene.js        # authored 스테이지 컷신 이벤트 정규화
 ├── campaign-state.js          # 영구 캠페인·동료 진행 상태
 ├── battle-realtime-three.js   # 기본 Canvas 스냅샷 전장 투영과 텍스처 프레임
 ├── battle-visualizer.js       # 대체 Canvas 스냅샷 전장 투영

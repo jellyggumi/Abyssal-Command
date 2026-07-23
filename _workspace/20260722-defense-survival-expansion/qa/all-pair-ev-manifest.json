@@ -1,0 +1,2256 @@
+{
+  "schema": "abyssal-all-pair-ev-manifest-v1",
+  "generatedAt": "2026-07-22T13:01:23.071Z",
+  "exactCommand": "node _workspace/20260722-defense-survival-expansion/qa/run-all-pair-ev.mjs manifest /Users/jangyoung/orca/Abyssal-Surge/_workspace/20260722-defense-survival-expansion/qa/all-pair-ev-manifest.json",
+  "evidenceBoundary": "Only exported createDefenseRun/getRunSnapshot/queueInput/advanceDefenseRun/isTerminalRun/getRunDigest APIs and public catalog constants are used.",
+  "inputs": {
+    "seedScan": [
+      1,
+      10000
+    ],
+    "maxTicks": 18000,
+    "stages": [
+      "cinder-span",
+      "veil-citadel",
+      "echo-throne",
+      "sunken-bastion",
+      "howling-sprawl",
+      "glass-necropolis",
+      "starless-canal",
+      "shattered-causeway",
+      "abyss-chancel",
+      "gate-zenith"
+    ],
+    "controllers": [
+      "Hunter65",
+      "Generalist"
+    ],
+    "activeSkills": [
+      "grave-pulse",
+      "rift-bolt",
+      "shadow-step",
+      "soul-lance",
+      "void-aegis"
+    ],
+    "companionLoadout": [
+      "ember-cohort",
+      "rift-lens",
+      "veil-vanguard"
+    ],
+    "rewardIds": [
+      "abyssal-banner",
+      "bulwark-brand",
+      "stillwater-hourglass"
+    ],
+    "simulationSha256": "7b6f0c3bd1410c2055a98225179b7448acf7efd7aaa1b228bd17234ebde90c0c",
+    "catalogSha256": "42612a374b0edba60fae89c5bf6a2924f0c36bf824de6f4b92125f65b8b27749",
+    "runnerSha256": "266b908349f9998932d715fb2d5737e88a85006a124af85fac5b2a2c36d19e0b"
+  },
+  "requiredEntries": 200,
+  "acceptedEntries": 200,
+  "blockers": [],
+  "status": "READY",
+  "entries": [
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 873,
+      "acquisitionActionDigest": "d754b2dc29ebe5abf0ab963b318307f001e39f9b2e052613212529d70f3538a0"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1137,
+      "acquisitionActionDigest": "1821c8bbf7ac4d623bfe13ab5b515e200abbb929517c15baef0a384111f7762c"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 993,
+      "acquisitionActionDigest": "a03d283c1366ab8686e4aab961e950c8d083c1a443e04ed2c9c5136e060ea2ac"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1305,
+      "acquisitionActionDigest": "904e5f0c8f140192e2e4d216965e992f09163a4c68a543b354e9721099e32721"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1281,
+      "acquisitionActionDigest": "01aa07fecc854914d5fb2441e01e9e301aa5c4f2216b99d4f988a72ca33a6ad6"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1425,
+      "acquisitionActionDigest": "f3c0f12cd0112e30c820af088bafeac5a53cea5fc7eb642eb4a69ea3ec2c3b41"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2073,
+      "acquisitionActionDigest": "2b34233a14beb91f0b3da308d8d98973c93da894f96454d6b0ec848b2676de3e"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1953,
+      "acquisitionActionDigest": "8c881f6825ea9666ee32b3089aa1df87455b6bf44510d7dda13da0bd8c412ff3"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2457,
+      "acquisitionActionDigest": "bbf06e3a7ff6a14a72c5de42d31842a273150552029e6aaaaade725752c27eb9"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 2049,
+      "acquisitionActionDigest": "90cd3e0fbf9ca0814ec127e75185ee2718fb63ed4d094d788941e8b13c1960b6"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1557,
+      "acquisitionActionDigest": "b5e84ae02536006f5f43fc89012d1fa6923d1d2b150efb416c1e5e562740674c"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1549,
+      "acquisitionActionDigest": "c7817824f36547083dcd949f4cf0e1f96ce47609e6772c273160395ecb17ce03"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1629,
+      "acquisitionActionDigest": "e4f085f1ea04695dd3c2f8cb9a61f93724ede46c9e087348e1eb1f512588fce0"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1629,
+      "acquisitionActionDigest": "97ac2810543673f6fcc469ce09511d8c51bb36d24585db81563057ba9d450719"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2409,
+      "acquisitionActionDigest": "80d57e1b0004b9d246db48cedfde44e252b576c405e6ef73271b6084e863d70b"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 2473,
+      "acquisitionActionDigest": "7de68daededf76b61c4784f787d11815fefb26edf0780a7f3700227648cc1fa5"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2529,
+      "acquisitionActionDigest": "2e6f47090c767c41e0b894b364a80f9a1fa089ac1c22d0bce9cb5f42cdeed9ed"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 2557,
+      "acquisitionActionDigest": "ae87d3522a346801a1d018dc869475368a7f9e2e80c6bc9313206aebd5c54dc9"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1857,
+      "acquisitionActionDigest": "e0f6236caaa7abf04ed7d1659f9014f683e2f13514ef5c53c21a8c09c1b92f4c"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1857,
+      "acquisitionActionDigest": "d226c2c0b56b0aa0b05e125744491db57092e7ecca5c239a4a6ec672f787faf1"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 873,
+      "acquisitionActionDigest": "819730134a2aae2918f96ffeb3f52a3996647a59e8ba09568bde978920c0832f"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1137,
+      "acquisitionActionDigest": "aab4e71e0a3cbecce6a056c466f070ba14ccdd12da635ed79b2ba52562674600"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 993,
+      "acquisitionActionDigest": "274cbc4cbba541e6b23a4ca372e8f05dde0347d2826cda9f95f61b2abbcd55c4"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1305,
+      "acquisitionActionDigest": "132f05d8c5135260735e0fbf25ae2ce912698a1a0ecbab516d644d499e9ecb02"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1281,
+      "acquisitionActionDigest": "f3ebd3765f5128f1b9e59b6b99052baca25345642d838025594bd88a86d5693e"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1425,
+      "acquisitionActionDigest": "da6827846c7ef2993bb3fea22aa9ecaca0c1ffd1fb428f9ed328f491c45c6c52"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2073,
+      "acquisitionActionDigest": "51162ec69277ead313b643458a7f4f9410131f57a5a2dae2715adea78fd315cc"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1953,
+      "acquisitionActionDigest": "a84d1b1c64c679ec4153dac2ade1335c239a2ea5a433104a9961da6b893ba269"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2457,
+      "acquisitionActionDigest": "362b4c3c3643361bec4052a7c2b2ae59708d4b4ade7b14f494a47056def9499f"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 2049,
+      "acquisitionActionDigest": "db19ec614c36c2522623aa50b828f585bd2e765449a6f099dc33a871ff8e71c1"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1557,
+      "acquisitionActionDigest": "c9483abbd8a311bd513e1c9a7d023e8ebe342cbb8db83257565ec8f2c91a0631"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1549,
+      "acquisitionActionDigest": "0de68e93843bc4b56501e99aa94ed8cae8a48f2042c46424c3b1fb90519de45a"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1629,
+      "acquisitionActionDigest": "7c2119fda21db7b7f7907fa64f5d0ca20f893b6bff1ef6de255ef91a7c9b0856"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1629,
+      "acquisitionActionDigest": "6acf636d0f1d49cd896a309136079c87d75ce7896c8136256b3c07cd8ef87429"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2409,
+      "acquisitionActionDigest": "56b2a43c2e1df056e223f2038236bb702060e69f2e9a5cc1e7784f6feabfea1c"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 2473,
+      "acquisitionActionDigest": "3d01f0d0743050fdd0f8c951b0455bc651d773d365c2023da835ff0a40c93934"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2529,
+      "acquisitionActionDigest": "d89b0025c54709793a7311cf279ef104506c78da2f610d445581b117e2d5f784"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 2557,
+      "acquisitionActionDigest": "44a74dcffa05cf12c03fea3cc6df04124a9b01a2795dffa3f317c591ffcf5849"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1857,
+      "acquisitionActionDigest": "d7cc02e58208dc82c4a6a10a0aa21d26aa535260df8ec2cf647e2ef1deedbacc"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1857,
+      "acquisitionActionDigest": "36ccaa75e47a542f1e9b3d64076cd1fae3632ae7c815d56b509dbccffb59698b"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Hunter65",
+      "seed": 6,
+      "acquiredTick": 873,
+      "acquisitionActionDigest": "6bafd8bd13fd6a98e18ac520df8ae9330661cdbed3f41a03eb824423f8584a6a"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Generalist",
+      "seed": 6,
+      "acquiredTick": 1137,
+      "acquisitionActionDigest": "0368dc20a74c24f754ae8ccadc8ea74735cb5669e35ccdbbf79701e1e8d10ec0"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Hunter65",
+      "seed": 3,
+      "acquiredTick": 1102,
+      "acquisitionActionDigest": "6bbe0a788416a6ff9b4df056a0e6f61fc7d53dac2751f8c04436fdd482261bae"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1615,
+      "acquisitionActionDigest": "b4bf909796dc8db0aefcbda011457691e854afaa1375f3cc796358b6dadf265a"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1282,
+      "acquisitionActionDigest": "c1b0fd0671cfad43742e339917ebb9a0cb884cd9432afaf977dd78b869444aaf"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Generalist",
+      "seed": 6,
+      "acquiredTick": 1449,
+      "acquisitionActionDigest": "d8b930671630dcc9a55084d1f55a4002ee83439c1e6369b4ca1b0eb5c2f35fb2"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2074,
+      "acquisitionActionDigest": "f53b1754b81e3928a0b15fb35c6b5d2e0392f1a5c281a8714be2b59435c8ef39"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2002,
+      "acquisitionActionDigest": "89e7645168ac42755543d133ce4c24889b4d0c35ccbd6a74409b18c03a025600"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2458,
+      "acquisitionActionDigest": "b7c442790087c64ceb17c945b8528da1660b20acb9bcbaeda9938a7a2f66e3fc"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2146,
+      "acquisitionActionDigest": "78d5aea5ead2c9dbf5e71ada3aaf8e7cbf25f6c0afc5b88e749aeed32d05b6f5"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Hunter65",
+      "seed": 3,
+      "acquiredTick": 1990,
+      "acquisitionActionDigest": "ce5a2af37e0eb9c69282f042f00c0d21b82a4eb5bd3f1afa8b5c3f369a58c38c"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1915,
+      "acquisitionActionDigest": "d5313b74eb07048297e4cdefffdc3015d8adc96715a42e2eebb3f3dec04b8b4b"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1975,
+      "acquisitionActionDigest": "882fa8ceeb43efdfd26a698b9919cc91d66f32efbbfaa951da24e7f6b0347fef"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2119,
+      "acquisitionActionDigest": "fc046fe25de2f93b609107b8304a5a1bc74827c27e10a0140bf3ee70e9a5833f"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2410,
+      "acquisitionActionDigest": "0018390ba786fb475e2cbbf26f6e907acd79b53f509ca4490bd5476446a03073"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Generalist",
+      "seed": 6,
+      "acquiredTick": 2389,
+      "acquisitionActionDigest": "a104e1dd59cd31263a22de0e7c98c24cac8e7842583fb8a9ca19c01bf6709a0a"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2530,
+      "acquisitionActionDigest": "ffb574f2b9a426c152c2b367efa7f448c0f4aae4de30b355417ddd54fe7cc928"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Generalist",
+      "seed": 10,
+      "acquiredTick": 2889,
+      "acquisitionActionDigest": "74852a5174f0356e34e5bb7215fc56d6c5869405002a6ae54d53a688cf985732"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Hunter65",
+      "seed": 3,
+      "acquiredTick": 2626,
+      "acquisitionActionDigest": "f9c5082dc59414f7f3e4b20fec3db6dbb505ea84f114cadb3bedd03adb3ec4e6"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2194,
+      "acquisitionActionDigest": "f6c22108be4a621e80c9276fef1f91903883b764c11629d23befe7173885426d"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Hunter65",
+      "seed": 3,
+      "acquiredTick": 897,
+      "acquisitionActionDigest": "1a43b0a96932fb802f5d2e81c689c3019275646a9484904e3ccca84ea4db9805"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Generalist",
+      "seed": 3,
+      "acquiredTick": 1137,
+      "acquisitionActionDigest": "1e319315d6fdba26f50cee33716cd5d9e1183d69aeb8de3bf5986405e0f4356f"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Hunter65",
+      "seed": 3,
+      "acquiredTick": 1101,
+      "acquisitionActionDigest": "1ba489969223a292da8c29342165b79ee848b004d0e843833027719d4a0050e3"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1615,
+      "acquisitionActionDigest": "cc246c350d34cff841bb8eeb1f92b2b4300b05f208021266a31597cbf35731d9"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1282,
+      "acquisitionActionDigest": "e3555785ac2fe87b4028f55509833a3685dece4a1e920d96055875ab4ee946c2"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Generalist",
+      "seed": 3,
+      "acquiredTick": 1437,
+      "acquisitionActionDigest": "2c296d14750796a4e30fb5d0ce8fc544bcf0d07e8fd84a16c3669f5fc82b64a0"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2074,
+      "acquisitionActionDigest": "660eb442b842421d46946a583bba7134e1653fe91f5bd29a9f2213555cfc5520"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2002,
+      "acquisitionActionDigest": "51463b2f16d7d146d53bd7f5b08317237de2194774eb3d3b125ff4709cb81885"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2458,
+      "acquisitionActionDigest": "ec8c978b04845564aa668c3bab422610de71741606092478732a1adabd73f366"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2146,
+      "acquisitionActionDigest": "5f8b1698148340d74d189ffdb0a81c8d4aeb8647102139f6687ba0d5c9b73258"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Hunter65",
+      "seed": 3,
+      "acquiredTick": 1989,
+      "acquisitionActionDigest": "c4ba6de979c673f45ff292201259ab76dc07099e6e8d9a37e7676de2a75ca499"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1915,
+      "acquisitionActionDigest": "5fb2ea95ab747803bf346bf7a74745f31cf7137c79461631248dda0dc6a3997c"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1975,
+      "acquisitionActionDigest": "552315555efe7eae983bbc9a7877e13835fc4c0249339b6ff6ff1fffe1594316"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2119,
+      "acquisitionActionDigest": "0be377ce72a84590670618ebdc747ba50016915b5813087b0f4fce280d116e90"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2410,
+      "acquisitionActionDigest": "c2d9acf2d8d8395d6c32d940405b14235527780a4460ec35090215bac5cf434f"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Generalist",
+      "seed": 6,
+      "acquiredTick": 2389,
+      "acquisitionActionDigest": "61f61086081875d0c0dffa8f374bab0ab8ebd3956e41edb695275753537eb56c"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2530,
+      "acquisitionActionDigest": "17328157fe3f853ef5281592a3ca0dbacc327609741a4f6b204c5acf608b78cf"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Generalist",
+      "seed": 3,
+      "acquiredTick": 2529,
+      "acquisitionActionDigest": "3a25609a416614d3f1145674b040dccb3c8dad17a34f759de1c04d76623d07b3"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Hunter65",
+      "seed": 3,
+      "acquiredTick": 2625,
+      "acquisitionActionDigest": "49c1ece3188905a1780f8b77c478b551955b6af727b409f46ada6266df66671e"
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2194,
+      "acquisitionActionDigest": "fb87875c47c68ce32755e0694bf54ca22053e5b81344ff0e0829c40bb7de2c34"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Hunter65",
+      "seed": 4,
+      "acquiredTick": 873,
+      "acquisitionActionDigest": "cc484eac6c33a7ebd498ae35d8717bdbfdd11cc6d14180bce464e6ed9ccc29ef"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 1137,
+      "acquisitionActionDigest": "cc9c05b055ee2b96601ccde5f8a0e47d7be40f0ce129da07ed345d175e8f507a"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1183,
+      "acquisitionActionDigest": "4a103a9c6f124f43fc0a9f7c9a521d57580e31b2a1530fe3e5847ba86fa634ee"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 1281,
+      "acquisitionActionDigest": "7e7f88bcd00dbd2311183586805fd39533a42280180bbce73096751bdb325def"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1258,
+      "acquisitionActionDigest": "e22087f34810c19e0388c49740deae71793b65ba901945faa1fc3d05b5112b39"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 1437,
+      "acquisitionActionDigest": "0a0a098583d1b840d64e96654e5381025626bebfd46f9c40c2c81afa7df866af"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2002,
+      "acquisitionActionDigest": "bf52ba010069b1fd59c4c614dc1966e69e2f9f5c9cb4a1d8185190af05511df5"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 2001,
+      "acquisitionActionDigest": "10999fae433da2f713d3057bed8cdbea5426dfb50f4372e7559210268f2d4851"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2386,
+      "acquisitionActionDigest": "d232e3c9cb94e559a7a5eae9659f2885f6e804f1f6bdcc64b5d6b87c837b45b7"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 2145,
+      "acquisitionActionDigest": "90b7413ab07c969d18c37bd1fdefd9ea5b52173505e706a950b6cfd8be110cdf"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1858,
+      "acquisitionActionDigest": "c7d691e7ec4c03220871dbd3a56853a6875aa894f5893d01fc9816264831982b"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 1593,
+      "acquisitionActionDigest": "1e7397eeee5e16302a3a40b9be425510377eff3971fb204c5a593f48727c6a91"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2026,
+      "acquisitionActionDigest": "fdeb00193d47c38b6a7f5b873299d38ec1646cb984c07e05b3c01594baf51a7b"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 1761,
+      "acquisitionActionDigest": "533d078d7b179b22c6fa81571e4f81b40b7decf74df4760c0e7d1b42ac44b168"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2950,
+      "acquisitionActionDigest": "6f93501a9cc49ac2800d4c02670a98e0cc12f229a1e473f226b287c70aa6291f"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Generalist",
+      "seed": 11,
+      "acquiredTick": 2893,
+      "acquisitionActionDigest": "dcd91bb769ab3aba7ff1254b377467e04212f2239dac3ae011ebe20557a847e1"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Hunter65",
+      "seed": 4,
+      "acquiredTick": 3105,
+      "acquisitionActionDigest": "e69b57b678daa9e79e8c319d4d7152e38f0fe357b424803a02371a8a08b6d67e"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Generalist",
+      "seed": 10,
+      "acquiredTick": 2890,
+      "acquisitionActionDigest": "2e33dc2dc683cf1bc0d01d28589b96d1f1aa4dab117820ec21ca917d011c881f"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2386,
+      "acquisitionActionDigest": "cc77d08df2651136531ef76fd7d18d5c45cfb8af1ab31d4c228ce2a1cb32fd18"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 2337,
+      "acquisitionActionDigest": "6325b757aa9e6d11974f725c054c818416a10bc2a5bf5c962cc535c2ee87e574"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 873,
+      "acquisitionActionDigest": "2455a639ca3b9d1bf8b0210121809451da6b41580332c13ba40d9ca63623d2de"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1137,
+      "acquisitionActionDigest": "9f030fac86b39c2f9f3ed7a6df5d3f6cd318ad38fe42d8f0d05ae84fd5988c13"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1017,
+      "acquisitionActionDigest": "dde1ce5897c0ce713cf5b46fada281644ba52278447d34d67c8699496e6e0712"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1591,
+      "acquisitionActionDigest": "8a6f481d8c8260925c8a4b9bfba6b00eee82b352f12b742d565bfeadbd4fb3cd"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1282,
+      "acquisitionActionDigest": "779fed7e3d43b486b48d3d145b98f6a96eb52e75a384a26c8b6b8394b4b32e4d"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1425,
+      "acquisitionActionDigest": "44f30e869875d5cd8df9aa9550e45468984169e6c59f60433559e87b372973a9"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2074,
+      "acquisitionActionDigest": "839252246d7867c08cdfa704ab5a92ea27761c7a1f25c1751245dafad751eb33"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2001,
+      "acquisitionActionDigest": "e76a9f80e8a013e8a016b2a308bad89f5625fc0ee195dbc91c0763004b67c34d"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2458,
+      "acquisitionActionDigest": "94fc04eb515bb9a3d326a42ba273779647f446768b9b44edfa11e644c1561373"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2145,
+      "acquisitionActionDigest": "b0639df303146b252773b89d608684418a0b1eb76dfae49b569580c74bfcfd5a"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1857,
+      "acquisitionActionDigest": "650a205cacd94b3b6c8e5c50d185118893a636ee33d32d29a1ab1108063a0a87"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1593,
+      "acquisitionActionDigest": "8bfa4c51f14fa9efbe096f4890723ae695e4f1ba504b6de0190ce427fa8fdd5b"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1967,
+      "acquisitionActionDigest": "1d1adab43b27808a9fc95caa0db15414518e73c74f1e49772eed18157dc419ae"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1761,
+      "acquisitionActionDigest": "024e3cc31982b2982539f8cbf6e30d5ef15569d8e1dac63fa456c2ce81485780"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2410,
+      "acquisitionActionDigest": "66a524e124c98f4413a7c846cfe96c209421341417eabe22c19fad1db9da8dae"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Generalist",
+      "seed": 6,
+      "acquiredTick": 2389,
+      "acquisitionActionDigest": "912093785c417777535330e0efdb19c70de3caa69bbb6357557a9bdce0588d84"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2530,
+      "acquisitionActionDigest": "549b9c9a9388a22c9d77d322c2cbb45249feaa77be582257ea8f4300d0746e67"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Generalist",
+      "seed": 15,
+      "acquiredTick": 2601,
+      "acquisitionActionDigest": "c788dbfd2ef764419d4e20d38654c8993453fe37981803ca44e31e2f8b19f3b8"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2385,
+      "acquisitionActionDigest": "e1c4ec62d1e7e00626e5f402b12b24391cfd7c16b8305b421d7e7708f3c0fd65"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2193,
+      "acquisitionActionDigest": "50d68cf2a9fefa5337db331b6709ba9725d3e33ba4dfa3b483b277969998962a"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Hunter65",
+      "seed": 4,
+      "acquiredTick": 873,
+      "acquisitionActionDigest": "22ad84ea84d6593a796487103c817dbe3723d2d7d44e1740f52be28e0bb96218"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 1137,
+      "acquisitionActionDigest": "e0e5de0b02d0dd19a5920df71fcbb1b41fa7a967793f96a8e56660a1285f26ad"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Hunter65",
+      "seed": 4,
+      "acquiredTick": 1017,
+      "acquisitionActionDigest": "5fa471b4d5c074fd17d114e4ad1458ca380bdcd253d4cc643494ff7932ac193c"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1591,
+      "acquisitionActionDigest": "9d57d98c3778e04c3c7d9a47be64bd37e3e82eb39cac7fe2c5221e0fcf2db555"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1282,
+      "acquisitionActionDigest": "4aaec9e32eaba6b12ca9b895780ec63ef4eaf1b9d55be4d353a4fc2badf3a6ed"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 1437,
+      "acquisitionActionDigest": "f31397e56eec2c94b8e897534bd9f96a537be72fa7e94ac86fcc62d8b6bf1520"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2074,
+      "acquisitionActionDigest": "6b30dedbb098716aef4ebde57311ce121ce3e1ce0571c7c5c209f526fb8cd315"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 2001,
+      "acquisitionActionDigest": "ef24e14404ba2f88d5412b3ca6afd10e7a084a2eaeea2b55135c00fbc3f57f6b"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2458,
+      "acquisitionActionDigest": "e50c45d3220dd4b95c1745258302429d7cd85170419b3d05843e30bd0abb992c"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 2145,
+      "acquisitionActionDigest": "c9799a8a5c5c95ae93f56348b43755a323a20c75ab3eaa5a83611286816e702d"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Hunter65",
+      "seed": 4,
+      "acquiredTick": 1857,
+      "acquisitionActionDigest": "598fa35723eab96492fc22cb5517fec970c7e5ebde9f98c517c2345921b43dce"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 1593,
+      "acquisitionActionDigest": "087aa85d2d6978376dd4837b7c22bd689b32a1c472f59fe200aa97afaacd3d43"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1967,
+      "acquisitionActionDigest": "e566f0b9fa12bf5eb670e2c0645993af0d919f4b143bdb37ff9e03da104ef091"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 1761,
+      "acquisitionActionDigest": "b9722b11dd29a8ed3a4af8f4e96b24befc62ebf106d85af5b3acfca8bb4da589"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2410,
+      "acquisitionActionDigest": "b4010d9523377b43a4a22d86318733d6e791cacc7a6af9741a591016531759fa"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Generalist",
+      "seed": 7,
+      "acquiredTick": 2809,
+      "acquisitionActionDigest": "2ab46e0e5c1642dfd6763673b6cf984cf3caa72953af0e300294253b846dcba4"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2530,
+      "acquisitionActionDigest": "0e91e9e5dae5a54bb526f205db695d8b3aebef11f3827a75723d17c4b1ce6345"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Generalist",
+      "seed": 7,
+      "acquiredTick": 2601,
+      "acquisitionActionDigest": "0b4b27d85459d02aacbe26d6018d4263104e2ef5dfd9fb271b54b919b5d47785"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Hunter65",
+      "seed": 4,
+      "acquiredTick": 2385,
+      "acquisitionActionDigest": "4d010b109dce9869706a3c403beae65be61942686050f7655ea040237af5cb21"
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 2337,
+      "acquisitionActionDigest": "8ffc5cddf37a40cc9e2b294647ccc9fa43099764e79e2b9dc8dca3322bd81397"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Hunter65",
+      "seed": 5,
+      "acquiredTick": 873,
+      "acquisitionActionDigest": "14605d8b3e43d3dc206a398be52d240a516b8dbc29c08188ec60ea344be15b99"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Generalist",
+      "seed": 5,
+      "acquiredTick": 1041,
+      "acquisitionActionDigest": "c37eaacfeaa6bbdaba882bbbe894ff197d17c7c852648487fea9fe9cbb505600"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1183,
+      "acquisitionActionDigest": "4a103a9c6f124f43fc0a9f7c9a521d57580e31b2a1530fe3e5847ba86fa634ee"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1591,
+      "acquisitionActionDigest": "f2b7daf947917ad16c04c1c15ea78f79afdd575b87df472e608877d0e9d14534"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1282,
+      "acquisitionActionDigest": "114e37d2b30c79b983be7d11b779f2fae588b178aefbac43b07e50748d66e225"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Generalist",
+      "seed": 4,
+      "acquiredTick": 1783,
+      "acquisitionActionDigest": "7fcc6965482803b04f3d5411d33dee26cea61f03bdd07e36d91ad3bea2905aa9"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2074,
+      "acquisitionActionDigest": "5c515f7a3537a888f34817694351c09e1cc13fd33d47520f4326ac134c4728a9"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2002,
+      "acquisitionActionDigest": "0ca411b7b6f1869a829981236c6bf26d3f524bc7d42fc86425506174fd60db03"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2458,
+      "acquisitionActionDigest": "4f35673332959122355793c86ff172b22f869a413572e21ea9c76d049480e19e"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2146,
+      "acquisitionActionDigest": "053c0815211e8a47b274529cdbccd580eae68289174996b32784924841e34f57"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1858,
+      "acquisitionActionDigest": "c7d691e7ec4c03220871dbd3a56853a6875aa894f5893d01fc9816264831982b"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1903,
+      "acquisitionActionDigest": "8b7406886c62385cd7ff4f77bc3e8de335da27cf2462aae8db18bbd1c692102f"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1975,
+      "acquisitionActionDigest": "1a74b2dd0dcedc98b3dc09448a9716aa5d5d2efa8c1fa2dbf7d9ddc02925e721"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2095,
+      "acquisitionActionDigest": "76e7a01ded0ab0cfbabc0c443eca75198a62affb1c3ac164e49fae7eb7adafb3"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2410,
+      "acquisitionActionDigest": "4516914a99ef04774bb38b137f4b4f0afcf5ef5f5b27e5c6516fb69a4d9ad593"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Generalist",
+      "seed": 6,
+      "acquiredTick": 2389,
+      "acquisitionActionDigest": "3e1b3cf9fed4d49c004f64a493255ca73b32deb77ec374d470bebe0b64aec86c"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2530,
+      "acquisitionActionDigest": "db5f7c9e0936d4e7ac9d136dc2f6a1a815fa851a17010d9236b012fe05e7e1cb"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Generalist",
+      "seed": 11,
+      "acquiredTick": 2625,
+      "acquisitionActionDigest": "3712bf6d2df3f0cbdab0c633b7112f0544ef85db552049377665065bf70a645f"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2386,
+      "acquisitionActionDigest": "cc77d08df2651136531ef76fd7d18d5c45cfb8af1ab31d4c228ce2a1cb32fd18"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2194,
+      "acquisitionActionDigest": "afa5774c16d6456e094d174eeba5d1e567add80cfb039e470cf0cde8accdbb6f"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 873,
+      "acquisitionActionDigest": "37031e1bcd067febf43b9166fda1887078ebefefaac22fbbcb7aee4b03a60c62"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1137,
+      "acquisitionActionDigest": "1a76e94703a760d8b15c35145651bf4223b219b66ef3b09700b5a2899c184852"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1017,
+      "acquisitionActionDigest": "11957c7c782cf97e2b34c515c23ca09712f689d9d14c8dc4ec72ff6047b71e92"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Generalist",
+      "seed": 1,
+      "acquiredTick": 1591,
+      "acquisitionActionDigest": "f692ef3606b87c24896c2f137c01bbdf4e4b42d8e472f6871eac7e2e9b6a23d9"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1282,
+      "acquisitionActionDigest": "b2655061b07bd73ef31e51271f4abc8879cd7c77ae169fcc7e51b25ec228539a"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1425,
+      "acquisitionActionDigest": "459857c9feb4fae2559c890138b3c45edb399c30dd0fe6bb8d7319587e4ffcd3"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2074,
+      "acquisitionActionDigest": "663145b4227329f579e21fe514079feeb66a26a77256980823b33bde9c21dc4a"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2001,
+      "acquisitionActionDigest": "02e60db272443f484c8fa7461d16252d13e7400eacd2420b2186c8f19896380a"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2458,
+      "acquisitionActionDigest": "2d5659ade918493f3083e19b22405a24d819f7aeb323c658839b37e2a9d0aeb7"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2145,
+      "acquisitionActionDigest": "f4687202ecf1751cb88b1f373ee814d5819426a200239b8e73d3d0d0d240f6ec"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1857,
+      "acquisitionActionDigest": "94f8a3593baeb083e891cfe76a4d7d225fb5daf8613461b4daac658a25446ba9"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1593,
+      "acquisitionActionDigest": "8088261ad3bd099a6c57e85c02f8b39784c05d54234fa3dcbd53aae04fe164b2"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 1975,
+      "acquisitionActionDigest": "30efd199cd8b8713e9ee48bdda35ce82b2a92e632f38696d7eb33c28ad6b5df5"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1761,
+      "acquisitionActionDigest": "b7b1cfbc4e6ae46203e28ab971f4424ca787b1027fa60c66da1c22bf1640aa10"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2410,
+      "acquisitionActionDigest": "47b0caf2db063339ff32a0bc4bdd9df110b3190435dd1953df46d35c043383e7"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Generalist",
+      "seed": 6,
+      "acquiredTick": 2389,
+      "acquisitionActionDigest": "410f664eee27c7a477bef2272b01df45388f537b7fd92b33c855362e3f0c3809"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Hunter65",
+      "seed": 1,
+      "acquiredTick": 2530,
+      "acquisitionActionDigest": "14f54ec08dc6bdd6ce5d1538abf47f9a8927e3a4f2f8f78328d9eb163e832be0"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Generalist",
+      "seed": 10,
+      "acquiredTick": 2889,
+      "acquisitionActionDigest": "215514ca7a21f14f3c00d71fd3304765d5428bd87b439d5df4a5fff9bae3b0f0"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2385,
+      "acquisitionActionDigest": "3f511e4d282d9b8d412a1a31f16e4cbde5151c6ddd78e149fabe07c042cb3f65"
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2193,
+      "acquisitionActionDigest": "38ceee484c5f88c4b185b3aca199090623117bafeff68cbd2a2cf0c9c4c825af"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 873,
+      "acquisitionActionDigest": "e256330bae838bc3b9e736a1e7af243f1bb5ea5477ffae96d338009328aba0d5"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "cinder-span",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1137,
+      "acquisitionActionDigest": "1110e3b661ec73f49f66f7cc1ee9f6430d8ee60e12d9465c8512f92b07a97db4"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1017,
+      "acquisitionActionDigest": "881c7c3bbe236a22bad1dc3286328ba61c203613dda8abcff04715f621393df2"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "veil-citadel",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1305,
+      "acquisitionActionDigest": "4d55f6b6b28943a6046ac44d575f71421d27ab1cfbd268de45b9b9da8a0839a3"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1257,
+      "acquisitionActionDigest": "195cbe683a6c5e00b268fd7c515af8652e6aa2bb13afff829ef0179a9d329e6e"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "echo-throne",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1425,
+      "acquisitionActionDigest": "b9614b56e82b56d8333a4d3f9c9141a7067158eb26c0f070b2076894abbcb3e4"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2001,
+      "acquisitionActionDigest": "7875835c79740f4b17e3bb2a9b0678acc907b69955b7d875032f965fb9f57e53"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "sunken-bastion",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2001,
+      "acquisitionActionDigest": "20099f639de7d893d0c0b5d9b7502c73d18d570bb304ddcb644aa33a314a1127"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2385,
+      "acquisitionActionDigest": "99f4c01ab2a946cda31ed099b90b5b79a055686c51e683996a604bc7d3a06d35"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "howling-sprawl",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2145,
+      "acquisitionActionDigest": "4f0d8c097c009730d6ab45e97c30d8f81abcfae6bf321d5bf1854ad792b77994"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 1857,
+      "acquisitionActionDigest": "d9fbad83b461b58b64bf95929b428eb70827d594eec93df3a193755ac4e1aa57"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "glass-necropolis",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1593,
+      "acquisitionActionDigest": "2871bd35ce1a3f7ce8dc80c883f8f2433d5a3287ebd6fe55a74a778ffd0e4113"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2025,
+      "acquisitionActionDigest": "935ffed2ec3f61aa24a23c11027a95fb20ff4a438433a31589dcd7b8b23e7285"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "starless-canal",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 1761,
+      "acquisitionActionDigest": "755a448ef2be36c0133c5a93acbe48a9feae28c21848f645ae910c1819c932a8"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2949,
+      "acquisitionActionDigest": "74a4b63d3a659611fab1192eaf5b47225533822f9a5ccc1ac23a2249179caa4b"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "shattered-causeway",
+      "controller": "Generalist",
+      "seed": 7,
+      "acquiredTick": 2809,
+      "acquisitionActionDigest": "e0277b6ca8fc5fc2334f3dea1a4aee4ff39f8877a48713e3aee41d5436dc0332"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Hunter65",
+      "seed": 3,
+      "acquiredTick": 2698,
+      "acquisitionActionDigest": "d4b145d835e0ffa86e12f3da2a7bb1d9e6c95e5205af95575b4d385a59148faf"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "abyss-chancel",
+      "controller": "Generalist",
+      "seed": 7,
+      "acquiredTick": 2601,
+      "acquisitionActionDigest": "1de78667387b24f488744ea3b81048c46fba5e724248b3f6e22c687c42c7c342"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Hunter65",
+      "seed": 2,
+      "acquiredTick": 2385,
+      "acquisitionActionDigest": "e02f4ff55c6ddd9e151fbd0cb8992789aa6486e8ccb52688a3ed29ef1eb4c11e"
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "stageId": "gate-zenith",
+      "controller": "Generalist",
+      "seed": 2,
+      "acquiredTick": 2193,
+      "acquisitionActionDigest": "2e1aa0fa4111f34f04c7124132aa6edb501d85e3842d91222b8bb9787b83c6cd"
+    }
+  ],
+  "acceptedSeedManifestSha256": "153a02264604df97d059669ad0125b29bee305471e51cb608f9773f9edd46427"
+}

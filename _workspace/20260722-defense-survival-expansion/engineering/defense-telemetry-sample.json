@@ -1,0 +1,254 @@
+{
+  "format": "abyssal-defense-telemetry",
+  "schemaVersion": 1,
+  "generatedAtMs": 2017,
+  "scope": "offline-local-debug",
+  "privacy": {
+    "playerIdentifiers": false,
+    "networkTransport": false,
+    "persistentStorage": false
+  },
+  "bounds": {
+    "maxRecords": 64,
+    "retainedRecords": 18,
+    "droppedRecords": 0
+  },
+  "records": [
+    {
+      "schemaVersion": 1,
+      "sequence": 1,
+      "runId": "run-1",
+      "type": "RUN_STARTED",
+      "atMs": 2000,
+      "payload": {
+        "stageId": "cinder-span",
+        "seed": 17,
+        "rulesVersion": "defense-survivor-v1",
+        "tickRate": 60,
+        "reducedMotion": false
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 2,
+      "runId": "run-1",
+      "type": "RUN_SNAPSHOT",
+      "atMs": 2001,
+      "payload": {
+        "tick": 0,
+        "defeatedCount": 0,
+        "gateIntegrity": 1000,
+        "gateMaxIntegrity": 1000,
+        "activeEnemies": 0,
+        "terminal": null
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 3,
+      "runId": "run-1",
+      "type": "ENEMY_DEFEATED",
+      "atMs": 2002,
+      "payload": {
+        "tick": 30,
+        "enemyId": "enemy-1"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 4,
+      "runId": "run-1",
+      "type": "GATE_BREACHED",
+      "atMs": 2003,
+      "payload": {
+        "tick": 31,
+        "enemyId": "enemy-2",
+        "damage": 12
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 5,
+      "runId": "run-1",
+      "type": "GROWTH_OFFER",
+      "atMs": 2004,
+      "payload": {
+        "tick": 60,
+        "choices": [
+          "rift-bolt",
+          "soul-lance",
+          "eclipse-edge"
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 6,
+      "runId": "run-1",
+      "type": "SKILL_SELECTED",
+      "atMs": 2005,
+      "payload": {
+        "tick": 61,
+        "skillId": "rift-bolt",
+        "currentValue": 0,
+        "upgradedValue": 1
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 7,
+      "runId": "run-1",
+      "type": "SKILL_CAST",
+      "atMs": 2006,
+      "payload": {
+        "tick": 62,
+        "skillId": "rift-bolt"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 8,
+      "runId": "run-1",
+      "type": "ITEM_COLLECTED",
+      "atMs": 2007,
+      "payload": {
+        "tick": 90,
+        "itemId": "ashen-sigil"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 9,
+      "runId": "run-1",
+      "type": "ELITE_CANDIDATE_AVAILABLE",
+      "atMs": 2008,
+      "payload": {
+        "tick": 100,
+        "enemyId": "elite-1",
+        "eliteId": "W-01",
+        "prototype": "ember-cohort",
+        "expiresAt": 700
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 10,
+      "runId": "run-1",
+      "type": "INPUT_VISIBLE",
+      "atMs": 2112.5,
+      "payload": {
+        "inputSeq": 7,
+        "inputType": "EXTRACT_ELITE",
+        "inputAtMs": 2100,
+        "visibleAtMs": 2112.5,
+        "latencyMs": 12.5,
+        "tick": 101
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 11,
+      "runId": "run-1",
+      "type": "ELITE_EXTRACTED",
+      "atMs": 2010,
+      "payload": {
+        "tick": 101,
+        "eliteId": "W-01",
+        "entityId": "elite-1",
+        "prototype": "ember-cohort"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 12,
+      "runId": "run-1",
+      "type": "BOSS_SPAWNED",
+      "atMs": 2011,
+      "payload": {
+        "tick": 300,
+        "enemyId": "boss-1"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 13,
+      "runId": "run-1",
+      "type": "TERMINAL",
+      "atMs": 2012,
+      "payload": {
+        "tick": 450,
+        "outcome": "VICTORY",
+        "rewardChoices": [
+          "ember-cohort-legacy"
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 14,
+      "runId": "run-1",
+      "type": "REWARD_SELECTED",
+      "atMs": 2013,
+      "payload": {
+        "tick": 450,
+        "rewardId": "ember-cohort-legacy",
+        "alreadyOwned": false
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 15,
+      "runId": "run-1",
+      "type": "RUN_SNAPSHOT",
+      "atMs": 2014,
+      "payload": {
+        "tick": 450,
+        "defeatedCount": 12,
+        "gateIntegrity": 734,
+        "gateMaxIntegrity": 1000,
+        "activeEnemies": 0,
+        "terminal": "VICTORY"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 16,
+      "runId": "run-1",
+      "type": "FRAME_PROBE",
+      "atMs": 2222,
+      "payload": {
+        "sampleCount": 2,
+        "meanFrameMs": 19.2,
+        "p95FrameMs": 22,
+        "maxFrameMs": 22,
+        "longFrameCount": 1,
+        "heapUsedBytes": 34567890
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 17,
+      "runId": "run-1",
+      "type": "REDUCED_MOTION_CHANGED",
+      "atMs": 2015,
+      "payload": {
+        "enabled": true,
+        "source": "media-query"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "sequence": 18,
+      "runId": "run-1",
+      "type": "RUN_RESULT",
+      "atMs": 2016,
+      "payload": {
+        "outcome": "victory",
+        "rewardId": "ember-cohort-legacy",
+        "campaignComplete": false,
+        "stageId": "cinder-span",
+        "tick": 450
+      }
+    }
+  ]
+}

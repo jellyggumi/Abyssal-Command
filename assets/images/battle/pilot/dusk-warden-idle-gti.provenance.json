@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/dusk-warden-idle-gti.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-22",
+  "generator": {
+    "tool": "god-tibo-imagen",
+    "provider": "private-codex",
+    "model": "gpt-5.4",
+    "responseId": "resp_079851467cc87389016a60822eb3808191a64e916adf194674",
+    "sessionId": "4c2263a3-b31e-4362-b94a-1719710bcae3",
+    "backendStability": "unsupported-private-backend"
+  },
+  "prompt": "Original Abyssal Surge Dusk Warden character, full-body idle pose for a 2.5D dark-fantasy defense RPG, three-quarter isometric camera, single character only. Obsidian and aged brass armor with teal Echo-command lines, clear readable silhouette, grounded boots and centered pivot. Painterly game production art with crisp readable edges. No text, no logos. No magenta, pink, or purple on the character. Isolated on a perfectly uniform solid #FF00FF background. No shadow outside the feet.",
+  "output": {
+    "format": "png",
+    "width": 1536,
+    "height": 1024,
+    "bytes": 1955612,
+    "sha256": "4973ac1058c81375f477b80232eaa8de304c5236b0c1ebd1002dcc6edb93d291"
+  },
+  "worldviewTrace": ["W-01", "W-02", "W-03"],
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false,
+  "perfectPixelStatus": "blocked: installed ppgen rejects god-tibo-imagen and exposes no extractMethod=none/no-pixel-conversion path"
+}

@@ -1,4 +1,5 @@
-const CACHE_NAME = "abyssal-command-defense-survivor-v2";
+const CACHE_PREFIX = "abyssal-command-defense-survivor-";
+const CACHE_NAME = "abyssal-command-defense-survivor-__CANDIDATE_SHA__";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -11,6 +12,8 @@ const CORE_ASSETS = [
   "./battle-realtime-three.js",
   "./battle-visualizer.js",
   "./defense-audio.js",
+  "./defense-cutscene.js",
+  "./defense-telemetry.js",
   "./assets/images/battle/dusk-warden-frame-00.png",
   "./assets/images/battle/dusk-warden-frame-01.png",
   "./assets/images/battle/dusk-warden-frame-02.png",
@@ -33,7 +36,7 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(caches.keys().then((names) => Promise.all(
-    names.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name)),
+    names.filter((name) => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME).map((name) => caches.delete(name)),
   )).then(() => self.clients.claim()));
 });
 

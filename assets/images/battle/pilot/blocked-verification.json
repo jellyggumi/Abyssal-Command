@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "status": "blocked",
+  "verifiedAt": "2026-07-22T08:38:46Z",
+  "subject": "Dusk Warden",
+  "scope": {
+    "states": [
+      "idle"
+    ],
+    "fullStateGenerationAttempted": false,
+    "reason": "The required one-state pilot must validate before any full-state generation."
+  },
+  "pipeline": {
+    "generator": "PerfectPixel ppgen",
+    "provider": "god-tibo-imagen",
+    "model": "gpt-5.4",
+    "extractMethod": "none",
+    "pixelArtConversion": false,
+    "matte": "#FF00FF",
+    "requestedDimensions": {
+      "width": 1024,
+      "height": 1024,
+      "unit": "px"
+    }
+  },
+  "prompt": "Dusk Warden, an original dark-fantasy 2.5D defense RPG guardian in blackened steel and ash-gray layered cloth, moonless silver edge accents, readable three-quarter isometric silhouette, braced idle combat stance, grounded proportions, no text, no logos, no copyrighted character likeness, no magenta pink or purple on the character. Render on a perfectly flat solid #FF00FF magenta matte with no shadows gradients texture glow or spill. Preserve smooth painterly 2.5D art; do not convert to pixel art, do not quantize, and do not remove the matte. One idle state pilot only.",
+  "attempt": {
+    "command": "/Users/jangyoung/.claude/skills/perfectpixel/bin/ppgen -provider god-tibo-imagen -model gpt-5.4 -key [REDACTED_DUMMY] -desc [PROMPT_ABOVE] -style cartoon -states idle -attempts 1 -out /Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/dusk-warden-idle -json",
+    "exitCode": 1,
+    "stderr": "ppgen 실패: 지원하지 않는 프로바이더입니다: god-tibo-imagen",
+    "outputCreated": false
+  },
+  "providerDryRun": {
+    "tool": "god-tibo-imagen gti",
+    "mode": "dry-run",
+    "provider": "private-codex",
+    "model": "gpt-5.4",
+    "requestUrl": "https://chatgpt.com/backend-api/codex/responses",
+    "requestShapeValidated": true,
+    "generationSubmitted": false,
+    "note": "The provider request shape validates independently, but direct generation was not submitted because that would bypass the required PerfectPixel workflow."
+  },
+  "provenance": {
+    "requestOrJobReference": null,
+    "outputSha256": null,
+    "outputLicense": null,
+    "outputDimensions": null,
+    "generatorSoftwareLicense": "MIT",
+    "nullReason": "PerfectPixel rejected the required provider before request submission, so no provider job, generated output, asset license, digest, or output dimensions exist."
+  },
+  "blockers": [
+    {
+      "code": "PPGEN_PROVIDER_UNSUPPORTED",
+      "detail": "The installed ppgen provider registry does not include god-tibo-imagen and rejects it during provider resolution."
+    },
+    {
+      "code": "PPGEN_EXTRACT_NONE_UNAVAILABLE",
+      "detail": "The installed ppgen CLI exposes no extract-method flag, always removes the background, and always invokes frame pixel post-processing; it cannot satisfy extractMethod=none with no pixel-art conversion."
+    }
+  ],
+  "preservation": {
+    "existingResourcesModified": false,
+    "runtimeIngestionApproved": false,
+    "pilotValidated": false
+  }
+}

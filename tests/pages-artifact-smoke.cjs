@@ -12,6 +12,8 @@ const REQUIRED_FILES = [
   "defense-run-simulation.js",
   "campaign-state.js",
   "defense-storage.js",
+  "defense-cutscene.js",
+  "defense-telemetry.js",
   "defense-audio.js",
   "battle-realtime-three.js",
   "battle-visualizer.js",

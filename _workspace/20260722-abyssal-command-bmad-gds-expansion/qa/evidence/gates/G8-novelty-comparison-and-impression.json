@@ -1,0 +1,306 @@
+{
+  "_artifact": {
+    "id": "G8-novelty-comparison-and-impression",
+    "gate": "G8",
+    "produced_by": "Stage2NoveltyQA",
+    "authored_date": "2026-07-22",
+    "gate_status": "NOT MEASURED",
+    "gate_verdict": "NOT PASSED",
+    "status_rationale": "No human impression measurement session has been conducted. Fixture determinism is verified; comparator context is research-derived, not play-session derived. G8 requires QA impression ≥4/5 against a five-title panel — that evidence does not exist."
+  },
+
+  "gate_definition": {
+    "gate": "G8",
+    "label": "novelty / striking element",
+    "threshold": "≥1 element absent in ≤2 of ≥5 comparables AND QA impression ≥4/5",
+    "method": "Audit the bounded seed-plan plus caption-first world handoff novelty claim against a five-title comparison ledger; run fixed-seed impression task after implementation without claiming external feature equivalence.",
+    "evidence_path_declared": "qa/evidence/gates/G8-novelty-comparison-and-impression.json",
+    "source": "qa/gate-measurements.md § G8"
+  },
+
+  "provenance_contract": {
+    "comparator_titles": {
+      "provenance_type": "RESEARCH_DERIVED",
+      "evidence_sources": [
+        {
+          "id": "E2",
+          "title": "Deep Rock Galactic: Survivor",
+          "source_file": "research/stage-world-procedural.md",
+          "source_url": "https://store.steampowered.com/app/2321470/Deep_Rock_Galactic_Survivor/",
+          "retrieval_method": "direct page retrieval — official publisher/developer product page",
+          "caveat": "Storefront description only. No implementation access, no play session claimed. Supports publicly stated product structure only."
+        },
+        {
+          "id": "E3",
+          "title": "Deep Rock Galactic",
+          "source_file": "research/stage-world-procedural.md",
+          "source_url": "https://store.steampowered.com/app/548430/Deep_Rock_Galactic/",
+          "retrieval_method": "direct page retrieval — official publisher/developer product page",
+          "caveat": "Storefront description only. Co-op, destructibility, mining fiction are out of scope for Abyssal."
+        },
+        {
+          "id": "E4",
+          "title": "Hades",
+          "source_file": "research/stage-world-procedural.md",
+          "source_url": "https://store.steampowered.com/app/1145360/Hades/",
+          "retrieval_method": "direct page retrieval — official developer product page",
+          "caveat": "Storefront description only. Characters, dialogue, mythology, and progression economy are out of scope."
+        },
+        {
+          "id": "E5",
+          "title": "Vampire Survivors",
+          "source_file": "research/stage-world-procedural.md",
+          "source_url": "https://store.steampowered.com/app/1794680/Vampire_Survivors/",
+          "retrieval_method": "direct page retrieval — official developer product page",
+          "caveat": "Storefront description only. Setting, economy, and exact progression are not input to Abyssal design."
+        },
+        {
+          "id": "S1",
+          "title": "Left 4 Dead (AI Director / pacing reference)",
+          "source_file": "research/wave-encounter-composition.md",
+          "source_url": "https://steamcdn-a.akamaihd.net/apps/valve/2009/ai_systems_of_l4d_mike_booth.pdf",
+          "retrieval_method": "primary developer technical presentation — AIIDE 2009 official Valve CDN PDF",
+          "caveat": "Co-op first-person shooter. Numbers are evidence of one shipped implementation, not portable thresholds. Architectural patterns only (Director, pacing state machine, boss/normal separation) are bounded-transferable."
+        }
+      ],
+      "caveat_global": "All five titles are comparator context, not feature specifications. No content, art, code, economy, narrative, or named characters are transferable. Comparison describes publicly stated product-level patterns only."
+    },
+    "local_fixture_observations": {
+      "provenance_type": "DIRECT_LOCAL_DETERMINISTIC",
+      "source_file": "tests/cinder-span-vertical-slice.test.mjs",
+      "rules_authority": "defense-catalog.js",
+      "catalog_version": "defense-survivor-v1",
+      "tick_rate_hz": 60,
+      "fixture_command": "node --test tests/cinder-span-vertical-slice.test.mjs",
+      "fixture_run_date": "2026-07-22",
+      "test_outcome": "pass 3/3",
+      "node_version": "system node (arm64 darwin)"
+    }
+  },
+
+  "local_fixture_observations": {
+    "_note": "All values below are directly observed from running the pinned test suite. No values are inferred or estimated.",
+
+    "build_identifier": {
+      "catalog_version": "defense-survivor-v1",
+      "stage_id": "cinder-span",
+      "stage_name": "Cinder Span",
+      "boss_id": "s1-cinder-warden",
+      "boss_name": "Cinder Warden",
+      "arena_width": 24000,
+      "arena_height": 12000,
+      "tick_rate_hz": 60
+    },
+
+    "wave_plan_authored_slots": [
+      {
+        "slot": 0,
+        "tick": 0,
+        "authored_alternatives": [
+          { "id": "opening-rusher-pure",    "composition": [{ "enemy": "rusher",  "count": 4 }] },
+          { "id": "opening-rusher-flanker", "composition": [{ "enemy": "rusher",  "count": 2 }, { "enemy": "flanker", "count": 2 }] }
+        ]
+      },
+      {
+        "slot": 1,
+        "tick": 180,
+        "authored_alternatives": [
+          { "id": "pressure-flanker-pure",   "composition": [{ "enemy": "flanker", "count": 3 }] },
+          { "id": "pressure-flanker-rusher", "composition": [{ "enemy": "flanker", "count": 2 }, { "enemy": "rusher",  "count": 1 }] }
+        ]
+      },
+      {
+        "slot": 2,
+        "tick": 390,
+        "authored_alternatives": [
+          { "id": "denial-ranged-pure",    "composition": [{ "enemy": "ranged", "count": 2 }] },
+          { "id": "denial-ranged-flanker", "composition": [{ "enemy": "ranged", "count": 1 }, { "enemy": "flanker", "count": 1 }] }
+        ]
+      }
+    ],
+
+    "seed_variation_observations": {
+      "seed_17_wave_selections": [
+        { "slot": 0, "alternativeId": "opening-rusher-pure" },
+        { "slot": 1, "alternativeId": "pressure-flanker-pure" },
+        { "slot": 2, "alternativeId": "denial-ranged-pure" }
+      ],
+      "seed_18_wave_selections": [
+        { "slot": 0, "alternativeId": "opening-rusher-pure" },
+        { "slot": 1, "alternativeId": "pressure-flanker-rusher" },
+        { "slot": 2, "alternativeId": "denial-ranged-flanker" }
+      ],
+      "seed_17_replay_identity_confirmed": true,
+      "seed_17_vs_seed_18_differ": true,
+      "observation_note": "Seed 17 selects all-pure alternatives across 3 slots. Seed 18 selects mixed alternatives for slots 1 and 2. Both replays are byte-identical on re-run. Both satisfy all authored slot and composition constraints per test assertion."
+    },
+
+    "critical_hit_observation": {
+      "critical_seed": 1,
+      "critical_tick": 337,
+      "event_type": "CRITICAL_HIT",
+      "entity_id": "commander",
+      "target_id": "enemy-4",
+      "source": "basic",
+      "base_damage": 900,
+      "final_damage": 1800,
+      "chance_bp": 1500,
+      "multiplier_bp": 20000,
+      "replay_identity_confirmed": true,
+      "observation_note": "Seed 1 produces a CRITICAL_HIT at tick 337. baseDamage=900, multiplierBp=20000 → trunc(900×2.0)=1800. Replay from same seed produces identical event. chanceBp=1500 (15%) matches COMMANDER.critProfile.chanceBp."
+    },
+
+    "lore_surprise_observation": {
+      "lore_seed": 23,
+      "table_id": "cinder-span-surprise",
+      "table_chance_bp": 2500,
+      "table_outcome_count": 2,
+      "seed_23_roll_bp": 137,
+      "seed_23_outcome_id": "forge-ember-flicker",
+      "seed_23_text": "잠긴 용광로 잔해에서 작은 불씨 하나가 튀어오른다.",
+      "replay_identity_confirmed": true,
+      "non_combat_confirmed": "no enemies, no projectiles, no damage to commander or gate, no reward offer created",
+      "observation_note": "rollBp=137 < chanceBp=2500, so outcome is selected. Replay from seed 23 produces identical event. Lore resolution does not alter the seeded wave schedule per test assertion."
+    },
+
+    "stage_tactics_observed": {
+      "chokepath": { "id": "cinder-center", "x": 18000, "halfWidth": 2200 },
+      "flank_entry": { "id": "cinder-south", "entryX": 12000, "entryY": 9800 },
+      "elevation": { "id": "cinder-overlook", "x": 16600, "y": 2600, "rangeMultiplier": 1.08 },
+      "hazard": { "id": "ash-surge", "x": 14800, "y": 6000, "radius": 1100, "damagePerSecond": 8 },
+      "occupation": { "id": "cinder-seal", "x": 17600, "y": 6000, "radius": 900, "holdTicks": 180,
+        "effects": { "moveMultiplier": 1.05, "rangeMultiplier": 1.08, "recoveryPerSecond": 4 } },
+      "extraction": { "id": "cinder-bind", "x": 15400, "y": 6000, "radius": 1000, "windowTicks": 600 },
+      "spawn_directions": ["W", "SW"],
+      "seeded_variation": { "timingJitterTicks": 12, "densityDelta": 1, "laneJitter": 300 },
+      "map_variant": {
+        "version": "v1",
+        "modules": ["ember-relay-spire", "drowned-forge-arch"],
+        "protectedCorridor": { "declared": true, "preservesObjectives": true, "preservesRoutes": true }
+      }
+    },
+
+    "commander_profile_observed": {
+      "maxIntegrity": 1000,
+      "speed": 4100,
+      "basicDamage": 900,
+      "basicRange": 6000,
+      "basicCooldown": 24,
+      "critProfile": { "sources": ["basic", "skill"], "chanceBp": 1500, "multiplierBp": 20000 }
+    }
+  },
+
+  "comparator_analysis": {
+    "_provenance": "RESEARCH_DERIVED — source-file citations only; no direct play sessions",
+    "_caveat": "This section maps source-stated patterns to candidate Abyssal features. It is not a feature-equivalence claim. All comparisons are bounded by the cited source text.",
+
+    "comparator_feature_map": [
+      {
+        "feature_candidate": "Bounded authored-alternative wave selection via integer seed",
+        "abyssal_mechanism": "CINDER_SPAN_WAVE_PLAN: 3 slots × 2 authored alternatives each; seed-derived selection with timingJitterTicks=12",
+        "comparators_with_analog": ["E2 Deep Rock Galactic: Survivor (procedural enemy waves per mission)", "S1 Left 4 Dead (authored candidate items selected by Director)"],
+        "comparators_without_direct_analog": ["E4 Hades (narrative run variety, not wave-slot authored grammar)", "E5 Vampire Survivors (time-survival with roguelite upgrades — no authored per-slot grammar stated)", "E3 Deep Rock Galactic (procedural cave gen + alien hordes — no per-slot authored alternative grammar stated)"],
+        "absent_in_le2_of_5_comparators": true,
+        "hypothesis": "[FALSIFIABLE] The specific combination of: (a) pre-authored named alternatives per wave slot, (b) seed-derived deterministic selection, (c) replay-identity constraint, and (d) non-combat lore event in the same authored grammar — is not publicly stated as a combined mechanism in ≤2 of these 5 comparator titles. This is a structural hypothesis, not a play-experience claim.",
+        "falsification_condition": "If a comparator's public documentation or postmortem reveals a per-slot authored-alternative grammar with integer-seed replay parity, the absent-in-≤2 count must be revised."
+      },
+      {
+        "feature_candidate": "Caption-first W-01…W-05 world handoff derived only from deterministic stage outcome",
+        "abyssal_mechanism": "Cutscene strings keyed to stageId; handoff template accepts only allowlisted outcome payload; no run-only skills forwarded",
+        "comparators_with_analog": ["E4 Hades (run-to-run story/upgrade continuity; bosses remember player)", "E2 Deep Rock Galactic: Survivor (objective/extraction loop connects to progression)"],
+        "comparators_without_direct_analog": ["E3 Deep Rock Galactic (storefront does not describe a between-run caption grammar)", "E5 Vampire Survivors (gold for upgrades — cross-run continuity, but no handoff caption grammar stated)", "S1 Left 4 Dead (no cross-run world handoff — campaign progression only)"],
+        "absent_in_le2_of_5_comparators": true,
+        "hypothesis": "[FALSIFIABLE] A caption-first world-consequence handoff constrained exclusively to deterministic authoritative outcome payload (no renderer/audio authority, no run-skill persistence) is not publicly stated as a mechanism in ≤2 of the 5 comparators.",
+        "falsification_condition": "If a comparator's postmortem documents an observer-only caption grammar with a strict no-run-state-persistence rule equivalent to P0, the hypothesis must be revised."
+      },
+      {
+        "feature_candidate": "Seed-deterministic lore surprise as non-combat authored table event",
+        "abyssal_mechanism": "CINDER_SPAN_SURPRISE_TABLE: chanceBp=2500, 2 named text outcomes; resolved at tick 0; cannot damage, spawn enemies, or create rewards",
+        "comparators_with_analog": ["S1 Left 4 Dead (authored event sequences with boss/normal separation — distinct from lore)"],
+        "comparators_without_direct_analog": ["E2 Deep Rock Galactic: Survivor (no non-combat authored lore table mechanism stated in storefront)", "E3 Deep Rock Galactic (exploration/survival focus — no authored surprise table stated)", "E4 Hades (narrative via dialogue system, not a tabular seed-resolved lore event)", "E5 Vampire Survivors (minimalistic — no authored lore surprise table stated)"],
+        "absent_in_le2_of_5_comparators": true,
+        "hypothesis": "[FALSIFIABLE] A seed-deterministic authored-outcome lore table that fires at tick 0 and is strictly non-combat (no damage, no spawn, no reward) is absent from publicly stated mechanisms in ≥3 of 5 comparators.",
+        "falsification_condition": "If a comparator's postmortem or documentation describes a seed-keyed non-combat authored text-outcome table, the count must be revised."
+      }
+    ]
+  },
+
+  "novelty_hypothesis": {
+    "statement": "[FALSIFIABLE] At least one of the three candidate features above (bounded per-slot authored-alternative grammar, caption-first deterministic-outcome world handoff, or seed-resolved non-combat lore table) satisfies the condition: absent in ≤2 of the 5 cited comparator titles as measured by their public product descriptions and developer presentations.",
+    "current_status": "STRUCTURAL — based on research-derived source text only. Not yet validated by a QA impression session.",
+    "falsification_conditions": [
+      "A cited comparator's documentation reveals the same mechanism combination, reducing absent-in-≤2 count below 1.",
+      "A QA impression session scores the implemented feature below 4/5.",
+      "The local fixture is found to be incomplete (e.g., the wave-plan grammar covers only 1 slot, or the seed-variation observable is removed in a catalog revision)."
+    ]
+  },
+
+  "gate_measurement_status": {
+    "gate": "G8",
+    "status": "NOT MEASURED",
+    "verdict": "NOT PASSED",
+    "comparator_context_complete": true,
+    "local_fixture_determinism_verified": true,
+    "local_fixture_variation_confirmed": true,
+    "human_impression_session_conducted": false,
+    "impression_score": null,
+    "impression_threshold": "≥4/5",
+    "blocking_evidence": [
+      "No QA impression session has been conducted against the Cinder Span fixed-seed slice.",
+      "No moderated first-exposure study for objective-direction readability exists.",
+      "Wave-plan grammar is 3 slots with 2 alternatives each — not yet a 100-key corpus per the G8-adjacent scorecard targets.",
+      "design/novelty-scorecard.md Stage 1 decision gates all remain UNPASSED."
+    ],
+    "what_is_verified": [
+      "Fixed-seed determinism: seeds 17 and 18 produce distinct authored-alternative selections; seed 17 replays identically.",
+      "Critical hit: seed 1 produces CRITICAL_HIT at tick 337 with correct multiplier semantics; replay identical.",
+      "Lore surprise: seed 23 produces LORE_SURPRISE_RESOLVED at tick 0 with rollBp=137 < chanceBp=2500; replay identical; non-combat invariants hold.",
+      "All 3 authored test assertions in cinder-span-vertical-slice.test.mjs pass (3/3)."
+    ]
+  },
+
+  "evidence_ledger": [
+    {
+      "id": "L1",
+      "type": "LOCAL_FIXTURE",
+      "path": "tests/cinder-span-vertical-slice.test.mjs",
+      "description": "Authored deterministic test for Cinder Span wave-slot selection, critical hit semantics, and lore surprise."
+    },
+    {
+      "id": "L2",
+      "type": "LOCAL_SOURCE",
+      "path": "defense-catalog.js",
+      "description": "Immutable authored rules authority; RULES_VERSION=defense-survivor-v1; contains CINDER_SPAN_WAVE_PLAN, CINDER_SPAN_SURPRISE_TABLE, STAGE_TACTICS['cinder-span'], COMMANDER."
+    },
+    {
+      "id": "L3",
+      "type": "LOCAL_RESEARCH",
+      "path": "research/stage-world-procedural.md",
+      "description": "Stage/world procedural research containing E2–E5 comparator storefront evidence."
+    },
+    {
+      "id": "L4",
+      "type": "LOCAL_RESEARCH",
+      "path": "research/wave-encounter-composition.md",
+      "description": "Wave encounter composition research containing S1 (L4D AI Systems) evidence."
+    },
+    {
+      "id": "L5",
+      "type": "LOCAL_RESEARCH",
+      "path": "research/pcg-map-grammar.md",
+      "description": "PCG map grammar research containing E1–E6 evidence for determinism and variation contracts."
+    },
+    {
+      "id": "L6",
+      "type": "LOCAL_DESIGN",
+      "path": "design/novelty-scorecard.md",
+      "description": "Novelty scorecard with unverified targets and UNPASSED gate decisions."
+    },
+    {
+      "id": "L7",
+      "type": "LOCAL_QA",
+      "path": "qa/gate-measurements.md",
+      "description": "Gate measurements ledger; G8 declared NOT MEASURED / NOT PASSED."
+    }
+  ]
+}

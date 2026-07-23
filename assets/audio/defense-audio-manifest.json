@@ -1,16 +1,265 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "runtime": "defense-audio.js",
   "mode": "offline-procedural",
+  "dependencies": {
+    "network": false,
+    "mediaDecode": false,
+    "externalAssets": [],
+    "api": "Web Audio oscillator and gain nodes only"
+  },
+  "mix": {
+    "masterGain": 0.055,
+    "sfxBusGain": 1,
+    "ambienceBusGain": 0.32,
+    "musicBusGain": 0.26,
+    "silenceFloor": 0.0001
+  },
+  "refractorySeconds": {
+    "movement-step": 0.07,
+    "weapon-fire": 0.025,
+    "impact-hit": 0.025,
+    "extraction-ready": 0.12,
+    "occupation-captured": 0.12
+  },
+  "nodeBudget": {
+    "maximumTotalNodes": 64,
+    "maximumTransientNodes": 48,
+    "normalPersistentNodes": 14,
+    "reducedMotionPersistentNodes": 4,
+    "overflowPolicy": "Drop the new optional cue before allocating any node."
+  },
   "cues": [
-    { "id": "stage-start", "event": "STAGE_STARTED", "waveform": "sine", "frequency": 220, "duration": 0.18 },
-    { "id": "enemy-defeated", "event": "ENEMY_DEFEATED", "waveform": "triangle", "frequency": 160, "duration": 0.08 },
-    { "id": "elite-extracted", "event": "ELITE_EXTRACTED", "waveform": "sine", "frequency": 420, "duration": 0.32 },
-    { "id": "item-collected", "event": "ITEM_COLLECTED", "waveform": "sine", "frequency": 560, "duration": 0.2 },
-    { "id": "growth-offer", "event": "GROWTH_OFFER/SKILL_SELECTED", "waveform": "triangle", "frequency": 320, "duration": 0.24 },
-    { "id": "skill-cast", "event": "SKILL_CAST", "waveform": "sawtooth", "frequency": 260, "duration": 0.14 },
-    { "id": "boss-spawned", "event": "BOSS_SPAWNED", "waveform": "sawtooth", "frequency": 90, "duration": 0.5 },
-    { "id": "terminal", "event": "TERMINAL/REWARD_SELECTED", "waveform": "sine", "frequency": 120, "duration": 0.5 }
+    {
+      "id": "stage-start",
+      "catalogStatus": "existing",
+      "events": ["STAGE_STARTED"],
+      "worldviewTraceIds": ["W-03"],
+      "layers": [
+        { "waveform": "sine", "frequency": 220, "endFrequency": 330, "duration": 0.18, "gain": 0.16, "delay": 0, "attack": 0.008 },
+        { "waveform": "triangle", "frequency": 330, "endFrequency": 440, "duration": 0.22, "gain": 0.08, "delay": 0.045, "attack": 0.008 }
+      ]
+    },
+    {
+      "id": "movement-step",
+      "catalogStatus": "existing",
+      "events": ["MOVE"],
+      "worldviewTraceIds": ["W-03"],
+      "layers": [
+        { "waveform": "triangle", "frequency": 92, "endFrequency": 72, "duration": 0.045, "gain": 0.035, "delay": 0, "attack": 0.004 }
+      ]
+    },
+    {
+      "id": "weapon-fire",
+      "catalogStatus": "existing",
+      "events": ["WEAPON_FIRED", "ENEMY_ATTACK"],
+      "worldviewTraceIds": ["W-04"],
+      "layers": [
+        { "waveform": "square", "frequency": 310, "endFrequency": 155, "duration": 0.055, "gain": 0.045, "delay": 0, "attack": 0.004 },
+        { "waveform": "triangle", "frequency": 465, "endFrequency": 232.5, "duration": 0.04, "gain": 0.025, "delay": 0.008, "attack": 0.003 }
+      ]
+    },
+    {
+      "id": "impact-hit",
+      "catalogStatus": "existing",
+      "events": ["PROJECTILE_IMPACT", "GATE_BREACHED", "HAZARD_DAMAGE", "COMMANDER_DAMAGED", "PICKUP_DENIED", "ECHO_DENIED", "OBJECTIVE_FAILED", "EXTRACTION_REJECTED", "EXTRACTION_INTERRUPTED", "OCCUPATION_INTERRUPTED"],
+      "worldviewTraceIds": ["W-01", "W-03", "W-04"],
+      "layers": [
+        { "waveform": "sawtooth", "frequency": 118, "endFrequency": 52, "duration": 0.07, "gain": 0.075, "delay": 0, "attack": 0.004 },
+        { "waveform": "square", "frequency": 59, "endFrequency": 42, "duration": 0.045, "gain": 0.035, "delay": 0, "attack": 0.008 }
+      ],
+      "variants": {
+        "PICKUP_DENIED": [
+          { "waveform": "square", "frequency": 76, "endFrequency": 42, "duration": 0.08, "gain": 0.045, "delay": 0, "attack": 0.008 }
+        ]
+      }
+    },
+    {
+      "id": "enemy-defeated",
+      "catalogStatus": "existing",
+      "events": ["ENEMY_DEFEATED"],
+      "worldviewTraceIds": ["W-01"],
+      "layers": [
+        { "waveform": "triangle", "frequency": 160, "endFrequency": 72, "duration": 0.08, "gain": 0.13, "delay": 0, "attack": 0.008 },
+        { "waveform": "square", "frequency": 82, "endFrequency": 48, "duration": 0.055, "gain": 0.04, "delay": 0, "attack": 0.008 }
+      ]
+    },
+    {
+      "id": "item-collected",
+      "catalogStatus": "existing",
+      "events": ["ITEM_COLLECTED", "TERRAIN_RECOVERY"],
+      "worldviewTraceIds": ["W-01"],
+      "layers": [
+        { "waveform": "sine", "frequency": 560, "endFrequency": 780, "duration": 0.2, "gain": 0.11, "delay": 0, "attack": 0.008 },
+        { "waveform": "triangle", "frequency": 840, "endFrequency": 1120, "duration": 0.14, "gain": 0.055, "delay": 0.04, "attack": 0.008 }
+      ]
+    },
+    {
+      "id": "growth-offer",
+      "catalogStatus": "existing",
+      "events": ["GROWTH_OFFER", "SKILL_SELECTED"],
+      "worldviewTraceIds": ["W-01", "W-04"],
+      "layers": [
+        { "waveform": "triangle", "frequency": 320, "endFrequency": 400, "duration": 0.24, "gain": 0.1, "delay": 0, "attack": 0.008 },
+        { "waveform": "sine", "frequency": 480, "endFrequency": 640, "duration": 0.2, "gain": 0.055, "delay": 0.055, "attack": 0.008 }
+      ],
+      "variants": {
+        "SKILL_SELECTED": [
+          { "waveform": "triangle", "frequency": 400, "endFrequency": 600, "duration": 0.18, "gain": 0.1, "delay": 0, "attack": 0.008 },
+          { "waveform": "sine", "frequency": 600, "endFrequency": 800, "duration": 0.16, "gain": 0.05, "delay": 0.035, "attack": 0.008 }
+        ]
+      }
+    },
+    {
+      "id": "skill-cast",
+      "catalogStatus": "existing",
+      "events": ["SKILL_CAST"],
+      "worldviewTraceIds": ["W-04"],
+      "layers": [
+        { "waveform": "sawtooth", "frequency": 260, "endFrequency": 92, "duration": 0.14, "gain": 0.085, "delay": 0, "attack": 0.008 },
+        { "waveform": "square", "frequency": 520, "endFrequency": 260, "duration": 0.075, "gain": 0.035, "delay": 0.012, "attack": 0.008 }
+      ]
+    },
+    {
+      "id": "extraction-ready",
+      "catalogStatus": "existing",
+      "events": ["ELITE_CANDIDATE_AVAILABLE", "EXTRACTION_PROGRESS"],
+      "worldviewTraceIds": ["W-02"],
+      "layers": [
+        { "waveform": "sine", "frequency": 360, "endFrequency": 540, "duration": 0.22, "gain": 0.08, "delay": 0, "attack": 0.008 },
+        { "waveform": "triangle", "frequency": 180, "endFrequency": 270, "duration": 0.18, "gain": 0.04, "delay": 0.04, "attack": 0.008 }
+      ],
+      "variants": {
+        "EXTRACTION_PROGRESS": [
+          { "waveform": "sine", "frequency": 280, "endFrequency": 320, "duration": 0.09, "gain": 0.04, "delay": 0, "attack": 0.008 }
+        ]
+      }
+    },
+    {
+      "id": "elite-extracted",
+      "catalogStatus": "existing",
+      "events": ["ELITE_EXTRACTED", "EXTRACTION_COMPLETED"],
+      "worldviewTraceIds": ["W-02"],
+      "layers": [
+        { "waveform": "sine", "frequency": 420, "endFrequency": 840, "duration": 0.32, "gain": 0.12, "delay": 0, "attack": 0.008 },
+        { "waveform": "triangle", "frequency": 210, "endFrequency": 420, "duration": 0.28, "gain": 0.07, "delay": 0.035, "attack": 0.008 },
+        { "waveform": "sine", "frequency": 630, "endFrequency": 945, "duration": 0.22, "gain": 0.045, "delay": 0.11, "attack": 0.008 }
+      ]
+    },
+    {
+      "id": "occupation-captured",
+      "catalogStatus": "existing",
+      "events": ["OCCUPATION_PROGRESS", "OCCUPATION_CAPTURED"],
+      "worldviewTraceIds": ["W-02", "W-03", "W-04"],
+      "layers": [
+        { "waveform": "triangle", "frequency": 240, "endFrequency": 360, "duration": 0.18, "gain": 0.075, "delay": 0, "attack": 0.008 },
+        { "waveform": "sine", "frequency": 120, "endFrequency": 240, "duration": 0.2, "gain": 0.04, "delay": 0.035, "attack": 0.008 }
+      ],
+      "variants": {
+        "OCCUPATION_PROGRESS": [
+          { "waveform": "triangle", "frequency": 180, "endFrequency": 210, "duration": 0.09, "gain": 0.035, "delay": 0, "attack": 0.008 }
+        ]
+      }
+    },
+    {
+      "id": "boss-spawned",
+      "catalogStatus": "existing",
+      "events": ["BOSS_SPAWNED"],
+      "worldviewTraceIds": ["W-03", "W-04"],
+      "layers": [
+        { "waveform": "sawtooth", "frequency": 90, "endFrequency": 45, "duration": 0.5, "gain": 0.085, "delay": 0, "attack": 0.025 },
+        { "waveform": "triangle", "frequency": 135, "endFrequency": 67.5, "duration": 0.56, "gain": 0.065, "delay": 0.035, "attack": 0.025 },
+        { "waveform": "sine", "frequency": 45, "endFrequency": 36, "duration": 0.62, "gain": 0.07, "delay": 0.08, "attack": 0.03 }
+      ]
+    },
+    {
+      "id": "terminal",
+      "catalogStatus": "existing",
+      "events": ["TERMINAL", "REWARD_SELECTED"],
+      "worldviewTraceIds": ["W-03", "W-05"],
+      "layers": [
+        { "waveform": "sine", "frequency": 120, "endFrequency": 60, "duration": 0.5, "gain": 0.1, "delay": 0, "attack": 0.02 },
+        { "waveform": "triangle", "frequency": 180, "endFrequency": 90, "duration": 0.42, "gain": 0.055, "delay": 0.05, "attack": 0.02 }
+      ],
+      "variants": {
+        "DEFEAT": [
+          { "waveform": "sawtooth", "frequency": 110, "endFrequency": 41, "duration": 0.55, "gain": 0.08, "delay": 0, "attack": 0.025 },
+          { "waveform": "sine", "frequency": 55, "endFrequency": 34, "duration": 0.62, "gain": 0.065, "delay": 0.04, "attack": 0.025 }
+        ],
+        "VICTORY": [
+          { "waveform": "sine", "frequency": 120, "endFrequency": 240, "duration": 0.46, "gain": 0.1, "delay": 0, "attack": 0.008 },
+          { "waveform": "triangle", "frequency": 180, "endFrequency": 360, "duration": 0.4, "gain": 0.055, "delay": 0.055, "attack": 0.008 }
+        ],
+        "FINAL_COMPLETION": [
+          { "waveform": "sine", "frequency": 120, "endFrequency": 480, "duration": 0.58, "gain": 0.1, "delay": 0, "attack": 0.008 },
+          { "waveform": "triangle", "frequency": 180, "endFrequency": 720, "duration": 0.52, "gain": 0.055, "delay": 0.055, "attack": 0.008 },
+          { "waveform": "sine", "frequency": 240, "endFrequency": 960, "duration": 0.46, "gain": 0.035, "delay": 0.11, "attack": 0.008 }
+        ],
+        "REWARD_SELECTED": [
+          { "waveform": "sine", "frequency": 240, "endFrequency": 480, "duration": 0.2, "gain": 0.095, "delay": 0, "attack": 0.008 },
+          { "waveform": "triangle", "frequency": 360, "endFrequency": 720, "duration": 0.16, "gain": 0.045, "delay": 0.035, "attack": 0.008 }
+        ]
+      }
+    }
   ],
-  "reducedMotion": "Text and status events remain; decorative oscillators may be skipped."
+  "ambience": {
+    "id": "echo-deep-gate-bed",
+    "lifecycle": "DefenseAudio.startAmbience() after user-gesture start; DefenseAudio.stopAmbience()/stop() on teardown.",
+    "worldviewTraceIds": ["W-01", "W-03"],
+    "layers": [
+      { "waveform": "sine", "frequency": 29, "gain": 0.055 },
+      { "waveform": "triangle", "frequency": 43.5, "gain": 0.018 }
+    ]
+  },
+  "music": {
+    "id": "dusk-warden-battle-bed",
+    "lifecycle": "DefenseAudio.startBattleMusic() after user-gesture start; DefenseAudio.stopBattleMusic()/stop() on teardown.",
+    "worldviewTraceIds": ["W-03", "W-04"],
+    "layers": [
+      { "waveform": "sine", "frequency": 55, "gain": 0.045 },
+      { "waveform": "triangle", "frequency": 82.41, "gain": 0.022 },
+      { "waveform": "sine", "frequency": 123.47, "gain": 0.012 }
+    ]
+  },
+  "runtimeEvents": [
+    { "type": "STAGE_STARTED", "cueId": "stage-start", "status": "bound" },
+    { "type": "MOVE", "cueId": "movement-step", "status": "bound" },
+    { "type": "WEAPON_FIRED", "cueId": "weapon-fire", "status": "bound" },
+    { "type": "ENEMY_ATTACK", "cueId": "weapon-fire", "status": "audio-mapped" },
+    { "type": "PROJECTILE_IMPACT", "cueId": "impact-hit", "status": "bound" },
+    { "type": "ENEMY_SPAWNED", "cueId": null, "status": "semantic-only; no micro-cue by design" },
+    { "type": "ENEMY_POLICY_SELECTED", "cueId": null, "status": "semantic-only; no micro-cue by design" },
+    { "type": "WAVE_VARIANT_STARTED", "cueId": null, "status": "semantic-only; wave identity remains visual/telemetry" },
+    { "type": "OBJECTIVE_COMPLETED", "cueId": null, "status": "semantic-only; objective-specific events own their cues" },
+    { "type": "OBJECTIVE_PHASE_CHANGED", "cueId": null, "status": "semantic-only; phase-specific events own their cues" },
+    { "type": "OBJECTIVE_FAILED", "cueId": "impact-hit", "status": "audio-mapped" },
+    { "type": "COMMANDER_DAMAGED", "cueId": "impact-hit", "status": "audio-mapped" },
+    { "type": "GATE_BREACHED", "cueId": "impact-hit", "status": "audio-mapped" },
+    { "type": "HAZARD_DAMAGE", "cueId": "impact-hit", "status": "audio-mapped" },
+    { "type": "PICKUP_DENIED", "cueId": "impact-hit", "status": "audio-mapped-with-variant" },
+    { "type": "ECHO_DENIED", "cueId": "impact-hit", "status": "audio-mapped" },
+    { "type": "ENEMY_DEFEATED", "cueId": "enemy-defeated", "status": "bound" },
+    { "type": "ELITE_CANDIDATE_AVAILABLE", "cueId": "extraction-ready", "status": "audio-mapped" },
+    { "type": "ELITE_EXTRACTED", "cueId": "elite-extracted", "status": "bound" },
+    { "type": "EXTRACTION_PROGRESS", "cueId": "extraction-ready", "status": "audio-mapped-with-variant" },
+    { "type": "EXTRACTION_COMPLETED", "cueId": "elite-extracted", "status": "bound" },
+    { "type": "EXTRACTION_REJECTED", "cueId": "impact-hit", "status": "audio-mapped" },
+    { "type": "EXTRACTION_INTERRUPTED", "cueId": "impact-hit", "status": "audio-mapped" },
+    { "type": "OCCUPATION_PROGRESS", "cueId": "occupation-captured", "status": "audio-mapped-with-variant" },
+    { "type": "OCCUPATION_CAPTURED", "cueId": "occupation-captured", "status": "bound" },
+    { "type": "OCCUPATION_INTERRUPTED", "cueId": "impact-hit", "status": "audio-mapped" },
+    { "type": "ITEM_COLLECTED", "cueId": "item-collected", "status": "bound" },
+    { "type": "TERRAIN_RECOVERY", "cueId": "item-collected", "status": "audio-mapped" },
+    { "type": "GROWTH_OFFER", "cueId": "growth-offer", "status": "bound" },
+    { "type": "SKILL_SELECTED", "cueId": "growth-offer", "status": "bound-with-variant" },
+    { "type": "SKILL_CAST", "cueId": "skill-cast", "status": "bound" },
+    { "type": "BOSS_SPAWNED", "cueId": "boss-spawned", "status": "bound" },
+    { "type": "TERMINAL", "cueId": "terminal", "status": "bound-with-outcome-variant" },
+    { "type": "REWARD_SELECTED", "cueId": "terminal", "status": "bound-with-variant" }
+  ],
+  "accessibility": {
+    "userGestureStartup": true,
+    "reducedMotion": "Micro-cues remain available; decorative ambience and battle music are not allocated.",
+    "semanticFallback": "All audio is optional presentation. Text, status, reward, extraction, and terminal semantics remain authoritative when Web Audio is absent or fails."
+  }
 }

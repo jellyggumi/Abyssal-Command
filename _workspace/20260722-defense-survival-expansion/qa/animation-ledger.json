@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-07-22",
+  "stage": "Stage 1 FIX",
+  "lane": "animation-rig",
+  "status": "blocked",
+  "gateClaim": "none",
+  "source": {
+    "path": "assets/models/abyssal-command/abyssal-command-resource-pack.blend1",
+    "protectedBackup": true,
+    "sizeBytes": 197491,
+    "modifiedLocal": "2026-07-18 01:11:28",
+    "sha256AfterAttempt": "5ea58be5dcfee1e2c89fc41102f53f5fad61d1da4a58ad28dbb6b2690ab091c4",
+    "fileIdentification": "Zstandard compressed data (v0.8+), Dictionary ID: None",
+    "writeTargeted": false,
+    "untouchedEvidence": [
+      "The attempted Blender payload opened the backup as input and named a distinct Save As output.",
+      "The backup retained its 2026-07-18 modification time after the 2026-07-22 attempt.",
+      "No rename, deletion, in-place conversion, or replacement command targeted the backup."
+    ]
+  },
+  "blender": {
+    "version": null,
+    "versionStatus": "unavailable because all Blender inspection paths timed out",
+    "interactiveAttemptsReportedByParent": 2,
+    "localBinaryReportedByParent": "absent",
+    "cliSummaryAttempt": {
+      "input": "assets/models/abyssal-command/abyssal-command-resource-pack.blend1",
+      "status": "timeout",
+      "exactError": "MCP error: Request timeout after 30000ms"
+    },
+    "backgroundAttempt": {
+      "input": "assets/models/abyssal-command/abyssal-command-resource-pack.blend1",
+      "attemptCount": 1,
+      "status": "timeout",
+      "exactError": "MCP error: Request timeout after 30000ms",
+      "retried": false
+    }
+  },
+  "inspection": {
+    "scenes": null,
+    "objects": null,
+    "actions": null,
+    "images": null,
+    "linkedLibraries": null,
+    "missingFiles": null,
+    "status": "no Blender datablock result returned"
+  },
+  "intendedProduction": {
+    "committed": false,
+    "blendPath": "assets/models/abyssal-command/production-rig/dusk-warden-production-rig.blend",
+    "glbPath": "assets/models/abyssal-command/production-rig/dusk-warden-production-rig.glb",
+    "character": "Dusk Warden",
+    "canon": [
+      "Moonless Court",
+      "Echo Deep"
+    ],
+    "objects": [
+      {
+        "name": "DuskWarden_Rig",
+        "type": "ARMATURE",
+        "pivot": [0.0, 0.0, 0.0],
+        "created": false
+      },
+      {
+        "name": "DuskWarden_Mesh",
+        "type": "MESH",
+        "pivot": [0.0, 0.0, 0.0],
+        "created": false
+      },
+      {
+        "name": "VFX_CommandPulse_LowCost",
+        "type": "MESH",
+        "vertexCount": 24,
+        "quadCount": 12,
+        "materialCount": 1,
+        "textureCount": 0,
+        "created": false
+      }
+    ],
+    "fps": 60,
+    "clips": [
+      {
+        "name": "DuskWarden_Idle",
+        "frameStart": 1,
+        "frameEnd": 60,
+        "created": false
+      },
+      {
+        "name": "DuskWarden_Walk",
+        "frameStart": 1,
+        "frameEnd": 32,
+        "created": false
+      },
+      {
+        "name": "DuskWarden_Strike",
+        "frameStart": 1,
+        "frameEnd": 24,
+        "created": false
+      },
+      {
+        "name": "DuskWarden_Cast",
+        "frameStart": 1,
+        "frameEnd": 48,
+        "created": false
+      }
+    ],
+    "exportSettings": {
+      "format": "GLB",
+      "selectionOnly": true,
+      "animations": true,
+      "animationMode": "ACTIONS when supported by installed operator schema",
+      "nlaStrips": true,
+      "materials": "EXPORT",
+      "yUp": true,
+      "applyTransforms": false,
+      "deformationBones": true,
+      "forceSampling": true,
+      "executed": false
+    }
+  },
+  "validation": {
+    "productionDirectoryExists": false,
+    "blendExists": false,
+    "glbExists": false,
+    "embeddedResources": "not testable",
+    "glbMagic": "not testable",
+    "glbVersion": "not testable",
+    "glbDeclaredLengthMatches": "not testable",
+    "namedClips": "not testable",
+    "externalBufferUris": "not testable",
+    "result": "fail_absent"
+  },
+  "authoritativeLoopDependencies": {
+    "loop": [
+      "Gate defense",
+      "Echo recovery",
+      "growth",
+      "occupation/extraction",
+      "boss kill"
+    ],
+    "animationCoverageStatus": "unverified and incomplete because no rig or clips were generated",
+    "minimumFutureCoverage": [
+      "locomotion over chokepaths, flanks, and elevation",
+      "strike and cast response readable within 100ms",
+      "occupation and extraction interaction",
+      "damage, low-HP, defeat, and boss-kill reactions",
+      "resource recovery and reward acknowledgement"
+    ],
+    "plannedCatalogClipIdsReportedBySystems": [
+      "occupation",
+      "extractionReady",
+      "damage",
+      "lowHp",
+      "bossDefeat",
+      "echoRecovery"
+    ],
+    "ownershipDependency": "Simulation event contracts and runtime animation-state wiring are outside this lane and must remain deterministic 60 Hz simulation-owned with presentation observing only."
+  },
+  "blockers": [
+    "Interactive Blender MCP timed out twice in the parent lane.",
+    "A local blender executable was reported absent by the parent lane.",
+    "The Blender CLI summary request timed out after 30000ms.",
+    "The single permitted background Blender MCP execution timed out after 30000ms.",
+    "No production output path appeared, so Blender version, datablocks, pivots, clips, resources, and GLB structure remain unverifiable."
+  ],
+  "report": "_workspace/20260722-defense-survival-expansion/engineering/animation-rig-report.md",
+  "runtimeFilesChanged": false,
+  "imageAudioAssetsChanged": false,
+  "testsChanged": false
+}

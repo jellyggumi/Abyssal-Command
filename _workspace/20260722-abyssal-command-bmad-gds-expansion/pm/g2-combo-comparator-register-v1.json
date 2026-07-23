@@ -1,0 +1,162 @@
+{
+  "schema_version": "g2-combo-comparator-register/2",
+  "register_id": "g2-combo-comparator-register-v1",
+  "register_version": "2.0.0-runtime-backed",
+  "status": "BOUND_MEASUREMENT_DEFINITION_ONLY",
+  "gate_status": "G2 NOT MEASURED / NOT PASSED",
+  "stage_status": "Stage 2 REDO",
+  "source_facts": [
+    {
+      "citation": "defense-catalog.js:33-50",
+      "fact": "QA_MULTI_SKILL_MEASUREMENT_FIXTURE has ID qa-multi-skill-measurement-v1, qaOnly true, budget g2-measurement-fixture-budget-v1, and ordered activeSkillIds [soul-lance, grave-pulse]."
+    },
+    {
+      "citation": "defense-run-simulation.js:1433-1468",
+      "fact": "createDefenseRun admits this fixture by measurementProfileId and initializes every activeSkillIds member as a ranked skill with zero cooldown."
+    },
+    {
+      "citation": "defense-run-simulation.js:486-488,720-731",
+      "fact": "Cast and damage-linking runtime fields include castInstanceId, causalRootId, enemy spawnEventId, and killEventId."
+    },
+    {
+      "citation": "defense-run-simulation.js:1438-1497,1667-1706",
+      "fact": "Runtime snapshots commit plan identity and plan IDs including waveVariantId."
+    }
+  ],
+  "non_authorizations": [
+    "no corpus collection authorization",
+    "no gameplay or catalog change",
+    "no reward, idle-return, monetization, provider, account, or network change",
+    "no G8 evidence",
+    "no G2 pass or release decision"
+  ],
+  "m6_signed_role_record": {
+    "record_id": "g2-m6-role-record-v1",
+    "record_status": "SIGNED_PROPOSED_DESIGN_INPUT_ONLY",
+    "harness_boundary": "This signed requirement record assigns ownership for the QA-only fixture and comparator definition. It does not attest a run, authorize collection, or claim a measured result.",
+    "signatures": [
+      {
+        "role": "game-designer",
+        "authority": "signs the finite QA-only fixture signature, ability order, target-condition applicability, and pressure labels",
+        "signature_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+        "collection_authorization": "NOT_GRANTED"
+      },
+      {
+        "role": "game-pm",
+        "authority": "signs the offense-attribution and excluded commercial/reward/idle boundary",
+        "signature_status": "ATTESTED_MEASUREMENT_ONLY",
+        "source": "pm/negotiation-record.md PMD-06",
+        "collection_authorization": "NOT_GRANTED"
+      },
+      {
+        "role": "game-qa",
+        "authority": "countersigns finite comparator tuples, raw-event validation, and first-failure retention",
+        "signature_status": "COUNTERSIGNATURE_REQUIRED_BEFORE_COLLECTION",
+        "collection_authorization": "NOT_GRANTED"
+      },
+      {
+        "role": "game-programmer",
+        "authority": "attests runner export of immutable plan identity, event links, and digests without authoritative writes",
+        "signature_status": "RUNNER_ATTESTATION_REQUIRED_BEFORE_COLLECTION",
+        "collection_authorization": "NOT_GRANTED"
+      },
+      {
+        "role": "game-production-director",
+        "authority": "makes a later disposition after independent review only",
+        "signature_status": "DIRECTOR_DECISION_REQUIRED_AFTER_R1_R2",
+        "collection_authorization": "NOT_GRANTED"
+      }
+    ]
+  },
+  "fixture": {
+    "fixture_id": "qa-multi-skill-measurement-v1",
+    "qa_only": true,
+    "fixture_budget_id": "g2-measurement-fixture-budget-v1",
+    "ordered_active_skill_ids": ["soul-lance", "grave-pulse"],
+    "active_skill_id_count": 2,
+    "source": "defense-catalog.js:33-50; defense-run-simulation.js:1456-1468",
+    "admission_note": "This is the catalog-defined multi-skill fixture. It replaces the prior incorrect claim that the fixture population necessarily has one active skill."
+  },
+  "signature_definition": {
+    "definition_version": "g2-multiskill-combo-signature-v2",
+    "required_distinct_active_skill_ability_id_minimum": 2,
+    "ordered_ability_ids": ["soul-lance", "grave-pulse"],
+    "linked_event_interval_max_simulation_ticks": 120,
+    "event_source_kind": "active_skill",
+    "excluded_sequences": ["basic_fire_only", "one_active_skill_only", "unlinked_resolved_damage", "linked_events_outside_120_simulation_ticks"],
+    "required_linked_event_fields": ["event_id", "tick", "source_actor_id", "castInstanceId", "causalRootId", "active_skill_id", "target_instance_id", "target_spawn_event_id", "final_damage", "resolution_state", "plan.identity", "rules_catalog_digest", "assessment_condition_id"],
+    "required_linked_event_fields_status": "SIGNED_PROPOSED_DESIGN_INPUT_EXCEPT_castInstanceId_causalRootId_spawnEventId_killEventId_RUNTIME_FACTS",
+    "runtime_field_citation": "defense-run-simulation.js:486-488,720-731; additional runner field names are required harness outputs, not asserted current event-shape facts."
+  },
+  "signature_registry": {
+    "declared_signature_count": 1,
+    "entries": [
+      {
+        "signature_id": "g2-m6-qa-soul-lance-grave-pulse-v1",
+        "fixture_id": "qa-multi-skill-measurement-v1",
+        "ordered_ability_ids": ["soul-lance", "grave-pulse"],
+        "target_cohort_id": "stage_10_boss",
+        "assessment_condition_id": "g2-condition-stage-10-boss-median-v1",
+        "stage_id": "gate-zenith",
+        "map_plan_id": "map-plan:gate-zenith:v1",
+        "wave_plan_id": "wave-plan:gate-zenith:v1",
+        "m4_plan_id": "m4-plan:gate-zenith:v1",
+        "pressure_band_id": "median",
+        "input_policy_id": "declared-movement",
+        "starting_state_band_id": "qa-multiskill-initial-skills-ready-v1",
+        "applicability_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+        "source_backing": ["defense-catalog.js:33-50", "defense-catalog.js:453", "defense-catalog.js:481-527", "defense-run-simulation.js:1456-1468"],
+        "measurement_state": "NOT_MEASURED"
+      }
+    ]
+  },
+  "finite_comparator_population": {
+    "population_id": "g2-m6-qa-soul-lance-grave-pulse-v1",
+    "fixture_id": "qa-multi-skill-measurement-v1",
+    "signature_id": "g2-m6-qa-soul-lance-grave-pulse-v1",
+    "map_and_condition_binding": "g2-condition-stage-10-boss-median-v1",
+    "seed_ids": [17, 18, 19],
+    "seed_ids_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+    "crit_or_deck_position_ids": ["combat-rng-initial", "combat-rng-plus-1"],
+    "crit_or_deck_position_ids_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+    "input_policy_id": "declared-movement",
+    "input_policy_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+    "expected_complete_instance_count": 6,
+    "expected_complete_instance_count_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+    "population_axes": ["seed_id", "crit_or_deck_position_id"],
+    "no_runtime_derivation": true,
+    "measurement_state": "NOT_MEASURED",
+    "note": "The two proposed position labels are harness register values; current runtime exposes combatRng but no deck-position register. The runner must emit the exact declared position value and digest before this population is collectable."
+  },
+  "comparator_contract": {
+    "comparator_key_fields": ["fixture_id", "signature_id", "assessment_condition_id", "ordered_ability_ids", "target_cohort_id", "pressure_band_id", "input_policy_id", "starting_state_band_id", "observer_equivalent_canonical_digest"],
+    "candidate_identity_fields": ["assessment_condition_id", "target_instance_id", "ordered_ability_ids", "first_resolved_event_id", "last_resolved_event_id"],
+    "median_policy": {
+      "candidate_excluded": true,
+      "minimum_complete_instances_before_candidate_exclusion": 2,
+      "minimum_comparator_instances_after_candidate_exclusion": 1,
+      "even_count": "arithmetic mean of two middle ascending final_damage integers",
+      "zero_or_absent_median": "NOT_OBSERVED"
+    },
+    "ratio_policy": {
+      "formula": "combo_final_damage / comparator_median_final_damage",
+      "maximum_inclusive_ratio": 1.3,
+      "over_cap_status": "MEASURED_FAIL_AFTER_INDEPENDENT_REVIEW",
+      "collection_state": "NOT_MEASURED"
+    }
+  },
+  "excluded_fixture_state": {
+    "companion_loadout": [],
+    "reward_ids": [],
+    "commercial_reward_idle_provider_network_fields_must_be_absent_or_unchanged": ["ads", "purchases", "paid_power", "premium_currency", "subscription", "account", "offer", "reward_ledger", "idle_clock", "permit", "receipt", "settlement", "remote_url", "credential", "telemetry_upload", "cloud_sync"],
+    "source_boundary": "defense-run-simulation.js:171-182,396-460,589-595,1433-1468",
+    "invalid_delta_disposition": "INVALID_MISSING_EVIDENCE"
+  },
+  "register_digest": "MUST_REGENERATE_FROM_THIS_COMPLETE_DOCUMENT_BEFORE_COLLECTION",
+  "expected_tuples_regeneration": {
+    "owner": "separate runner/register executor",
+    "exact_required_fields": ["signature_id", "fixture_id", "ordered_ability_ids", "assessment_condition_id", "stage_id", "mapPlanId", "wavePlanId", "m4PlanId", "seed_id", "crit_or_deck_position_id", "input_policy_id", "starting_state_band_id", "castInstanceId", "causalRootId", "first_resolved_event_id", "last_resolved_event_id", "target_instance_id", "observer_equivalent_canonical_digest", "rules_catalog_digest", "local_export_checksum"],
+    "required_digests": ["comparator_register_digest", "assessment_units_register_digest", "rules_catalog_digest", "plan.identity", "input_tape_digest", "observer_implementation_digest", "expected_tuple_manifest_digest"],
+    "blocker": "The expected-tuples generator and runner are out of scope. It must emit exactly six finite M6 candidate tuples and retain any missing/extra tuple as the first failure."
+  }
+}

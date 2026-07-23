@@ -1,0 +1,556 @@
+{
+  "attestations": {
+    "non_signature_notice": "This accountability record does not fabricate a human signature. It binds no corpus collection or gate outcome.",
+    "role_attestations": [
+      {
+        "accountability": "The bound g2-assessment-units-v1 register freezes finite profile/cohort/pressure and map/wave mappings that these tapes address.",
+        "collection_authorization": "NOT_GRANTED",
+        "role": "game-designer",
+        "status": "ATTESTED_MEASUREMENT_ONLY"
+      },
+      {
+        "accountability": "Binds the two finite normalized tape IDs and all profile-specific cooldown/target probes; rejects missing, extra, or substituted tape rows.",
+        "collection_authorization": "NOT_GRANTED",
+        "role": "game-qa",
+        "status": "ATTESTED_MEASUREMENT_ONLY"
+      },
+      {
+        "accountability": "Separately attests runner admission and records runtime-generated immutable build/source hashes without allowing input or observers to write canonical state.",
+        "collection_authorization": "NOT_GRANTED",
+        "role": "game-programmer",
+        "status": "RUNNER_ATTESTATION_REQUIRED_BEFORE_COLLECTION"
+      },
+      {
+        "accountability": "Makes a later independent-review gate disposition only.",
+        "collection_authorization": "NOT_GRANTED",
+        "role": "game-production-director",
+        "status": "DIRECTOR_DECISION_REQUIRED_AFTER_R1_R2"
+      }
+    ]
+  },
+  "canonical_payload_sha256": "sha256:480b3b359ed92fbf28ace6f8807128d65b1c4f301c435117ba58bdd985ca2fe0",
+  "canonical_serialization": {
+    "checksum_scope": "all top-level fields except canonical_payload_sha256",
+    "encoding": "UTF-8",
+    "object_key_order": "lexicographic",
+    "separators": [
+      ",",
+      ":"
+    ]
+  },
+  "cooldown_probe_cardinality": 30,
+  "cooldown_target_probe_population": [
+    {
+      "configured_cooldown_ticks": 300,
+      "cooldown_case": "C-1",
+      "expected_action_disposition": "REJECT_NOT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-bulwark-cminus1-stable-target-v1",
+      "probe_tick": 359,
+      "profile_id": "Bulwark",
+      "ready_tick": 360,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 300,
+      "cooldown_case": "C-1",
+      "expected_action_disposition": "REJECT_NOT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-bulwark-cminus1-target-loss-reacquire-v1",
+      "probe_tick": 359,
+      "profile_id": "Bulwark",
+      "ready_tick": 360,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 357,
+      "target_reacquire_tick": 361
+    },
+    {
+      "configured_cooldown_ticks": 300,
+      "cooldown_case": "C",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-bulwark-c-stable-target-v1",
+      "probe_tick": 360,
+      "profile_id": "Bulwark",
+      "ready_tick": 360,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 300,
+      "cooldown_case": "C",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-bulwark-c-target-loss-reacquire-v1",
+      "probe_tick": 360,
+      "profile_id": "Bulwark",
+      "ready_tick": 360,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 358,
+      "target_reacquire_tick": 362
+    },
+    {
+      "configured_cooldown_ticks": 300,
+      "cooldown_case": "C+1",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-bulwark-cplus1-stable-target-v1",
+      "probe_tick": 361,
+      "profile_id": "Bulwark",
+      "ready_tick": 360,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 300,
+      "cooldown_case": "C+1",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-bulwark-cplus1-target-loss-reacquire-v1",
+      "probe_tick": 361,
+      "profile_id": "Bulwark",
+      "ready_tick": 360,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 359,
+      "target_reacquire_tick": 363
+    },
+    {
+      "configured_cooldown_ticks": 270,
+      "cooldown_case": "C-1",
+      "expected_action_disposition": "REJECT_NOT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-striker-cminus1-stable-target-v1",
+      "probe_tick": 329,
+      "profile_id": "Striker",
+      "ready_tick": 330,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 270,
+      "cooldown_case": "C-1",
+      "expected_action_disposition": "REJECT_NOT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-striker-cminus1-target-loss-reacquire-v1",
+      "probe_tick": 329,
+      "profile_id": "Striker",
+      "ready_tick": 330,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 327,
+      "target_reacquire_tick": 331
+    },
+    {
+      "configured_cooldown_ticks": 270,
+      "cooldown_case": "C",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-striker-c-stable-target-v1",
+      "probe_tick": 330,
+      "profile_id": "Striker",
+      "ready_tick": 330,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 270,
+      "cooldown_case": "C",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-striker-c-target-loss-reacquire-v1",
+      "probe_tick": 330,
+      "profile_id": "Striker",
+      "ready_tick": 330,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 328,
+      "target_reacquire_tick": 332
+    },
+    {
+      "configured_cooldown_ticks": 270,
+      "cooldown_case": "C+1",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-striker-cplus1-stable-target-v1",
+      "probe_tick": 331,
+      "profile_id": "Striker",
+      "ready_tick": 330,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 270,
+      "cooldown_case": "C+1",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-striker-cplus1-target-loss-reacquire-v1",
+      "probe_tick": 331,
+      "profile_id": "Striker",
+      "ready_tick": 330,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 329,
+      "target_reacquire_tick": 333
+    },
+    {
+      "configured_cooldown_ticks": 240,
+      "cooldown_case": "C-1",
+      "expected_action_disposition": "REJECT_NOT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-gambit-cminus1-stable-target-v1",
+      "probe_tick": 299,
+      "profile_id": "Gambit",
+      "ready_tick": 300,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 240,
+      "cooldown_case": "C-1",
+      "expected_action_disposition": "REJECT_NOT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-gambit-cminus1-target-loss-reacquire-v1",
+      "probe_tick": 299,
+      "profile_id": "Gambit",
+      "ready_tick": 300,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 297,
+      "target_reacquire_tick": 301
+    },
+    {
+      "configured_cooldown_ticks": 240,
+      "cooldown_case": "C",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-gambit-c-stable-target-v1",
+      "probe_tick": 300,
+      "profile_id": "Gambit",
+      "ready_tick": 300,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 240,
+      "cooldown_case": "C",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-gambit-c-target-loss-reacquire-v1",
+      "probe_tick": 300,
+      "profile_id": "Gambit",
+      "ready_tick": 300,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 298,
+      "target_reacquire_tick": 302
+    },
+    {
+      "configured_cooldown_ticks": 240,
+      "cooldown_case": "C+1",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-gambit-cplus1-stable-target-v1",
+      "probe_tick": 301,
+      "profile_id": "Gambit",
+      "ready_tick": 300,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 240,
+      "cooldown_case": "C+1",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-gambit-cplus1-target-loss-reacquire-v1",
+      "probe_tick": 301,
+      "profile_id": "Gambit",
+      "ready_tick": 300,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 299,
+      "target_reacquire_tick": 303
+    },
+    {
+      "configured_cooldown_ticks": 120,
+      "cooldown_case": "C-1",
+      "expected_action_disposition": "REJECT_NOT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-conductor-cminus1-stable-target-v1",
+      "probe_tick": 179,
+      "profile_id": "Conductor",
+      "ready_tick": 180,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 120,
+      "cooldown_case": "C-1",
+      "expected_action_disposition": "REJECT_NOT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-conductor-cminus1-target-loss-reacquire-v1",
+      "probe_tick": 179,
+      "profile_id": "Conductor",
+      "ready_tick": 180,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 177,
+      "target_reacquire_tick": 181
+    },
+    {
+      "configured_cooldown_ticks": 120,
+      "cooldown_case": "C",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-conductor-c-stable-target-v1",
+      "probe_tick": 180,
+      "profile_id": "Conductor",
+      "ready_tick": 180,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 120,
+      "cooldown_case": "C",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-conductor-c-target-loss-reacquire-v1",
+      "probe_tick": 180,
+      "profile_id": "Conductor",
+      "ready_tick": 180,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 178,
+      "target_reacquire_tick": 182
+    },
+    {
+      "configured_cooldown_ticks": 120,
+      "cooldown_case": "C+1",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-conductor-cplus1-stable-target-v1",
+      "probe_tick": 181,
+      "profile_id": "Conductor",
+      "ready_tick": 180,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 120,
+      "cooldown_case": "C+1",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-conductor-cplus1-target-loss-reacquire-v1",
+      "probe_tick": 181,
+      "profile_id": "Conductor",
+      "ready_tick": 180,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 179,
+      "target_reacquire_tick": 183
+    },
+    {
+      "configured_cooldown_ticks": 210,
+      "cooldown_case": "C-1",
+      "expected_action_disposition": "REJECT_NOT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-rift-cminus1-stable-target-v1",
+      "probe_tick": 269,
+      "profile_id": "Rift",
+      "ready_tick": 270,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 210,
+      "cooldown_case": "C-1",
+      "expected_action_disposition": "REJECT_NOT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-rift-cminus1-target-loss-reacquire-v1",
+      "probe_tick": 269,
+      "profile_id": "Rift",
+      "ready_tick": 270,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 267,
+      "target_reacquire_tick": 271
+    },
+    {
+      "configured_cooldown_ticks": 210,
+      "cooldown_case": "C",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-rift-c-stable-target-v1",
+      "probe_tick": 270,
+      "profile_id": "Rift",
+      "ready_tick": 270,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 210,
+      "cooldown_case": "C",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-rift-c-target-loss-reacquire-v1",
+      "probe_tick": 270,
+      "profile_id": "Rift",
+      "ready_tick": 270,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 268,
+      "target_reacquire_tick": 272
+    },
+    {
+      "configured_cooldown_ticks": 210,
+      "cooldown_case": "C+1",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-rift-cplus1-stable-target-v1",
+      "probe_tick": 271,
+      "profile_id": "Rift",
+      "ready_tick": 270,
+      "target_case": "stable-target"
+    },
+    {
+      "configured_cooldown_ticks": 210,
+      "cooldown_case": "C+1",
+      "expected_action_disposition": "ACCEPT_READY",
+      "initial_cast_tick": 60,
+      "probe_id": "g2-cooldown-rift-cplus1-target-loss-reacquire-v1",
+      "probe_tick": 271,
+      "profile_id": "Rift",
+      "ready_tick": 270,
+      "target_case": "target-loss-reacquire",
+      "target_loss_tick": 269,
+      "target_reacquire_tick": 273
+    }
+  ],
+  "cross_register_references": {
+    "assessment_units": "design/g2-assessment-units-v1.json",
+    "combo_comparator": "pm/g2-combo-comparator-register-v1.json",
+    "seed_register": "qa/g2-full-route-seed-register-v1.json",
+    "ttk_cohorts": "design/g2-ttk-cohort-register-v1.json"
+  },
+  "gate_state": {
+    "gate": "G2",
+    "measurement_status": "NOT MEASURED",
+    "stage_2_disposition": "REDO",
+    "verdict": "NOT PASSED"
+  },
+  "input_policy_cardinality": 2,
+  "input_tapes": [
+    {
+      "events": [
+        {
+          "action": "move",
+          "ordinal": 0,
+          "sim_tick": 0,
+          "x_q15": 32767,
+          "y_q15": 0
+        },
+        {
+          "action": "move",
+          "ordinal": 1,
+          "sim_tick": 120,
+          "x_q15": 23170,
+          "y_q15": 23170
+        },
+        {
+          "action": "ability",
+          "ordinal": 2,
+          "sim_tick": 240,
+          "slot": 1
+        },
+        {
+          "action": "move",
+          "ordinal": 3,
+          "sim_tick": 360,
+          "x_q15": 0,
+          "y_q15": 32767
+        },
+        {
+          "action": "move",
+          "ordinal": 4,
+          "sim_tick": 480,
+          "x_q15": -23170,
+          "y_q15": 23170
+        },
+        {
+          "action": "ability",
+          "ordinal": 5,
+          "sim_tick": 600,
+          "slot": 1
+        },
+        {
+          "action": "move",
+          "ordinal": 6,
+          "sim_tick": 720,
+          "x_q15": 0,
+          "y_q15": 0
+        }
+      ],
+      "input_policy_id": "declared-movement",
+      "input_tape_id": "g2-input-declared-route-v1",
+      "purpose": "Declared movement answer; automatic targeting only; no target ID, aim angle, raw coordinate, wall-clock, or observer-derived input."
+    },
+    {
+      "events": [
+        {
+          "action": "move",
+          "ordinal": 0,
+          "phase": "hold-position",
+          "sim_tick": 0,
+          "x_q15": 0,
+          "y_q15": 0
+        },
+        {
+          "action": "ability",
+          "ordinal": 1,
+          "phase": "hold-position",
+          "sim_tick": 180,
+          "slot": 1
+        },
+        {
+          "action": "move",
+          "ordinal": 2,
+          "phase": "path-edge",
+          "sim_tick": 300,
+          "x_q15": 32767,
+          "y_q15": -32768
+        },
+        {
+          "action": "ability",
+          "ordinal": 3,
+          "phase": "path-edge",
+          "sim_tick": 420,
+          "slot": 1
+        },
+        {
+          "action": "move",
+          "ordinal": 4,
+          "phase": "path-edge",
+          "sim_tick": 540,
+          "x_q15": -32768,
+          "y_q15": 32767
+        },
+        {
+          "action": "move",
+          "ordinal": 5,
+          "phase": "hold-position",
+          "sim_tick": 660,
+          "x_q15": 0,
+          "y_q15": 0
+        }
+      ],
+      "input_policy_id": "adversarial-movement",
+      "input_tape_id": "g2-input-adversarial-hold-path-edge-v1",
+      "purpose": "One deterministic adversarial policy containing both required hold-position and path-edge phases; automatic targeting only."
+    }
+  ],
+  "m3_execution_rule": "Each M3 row uses exactly one of the finite profile/cooldown/target probes above as a deterministic overlay on exactly one bound input tape. The overlay is part of the expected tuple ID and is never silently merged, rerolled, or substituted.",
+  "normalization_contract": {
+    "allowed_actions": [
+      "move",
+      "ability"
+    ],
+    "cancellation_rule": "A release or cancel normalizes to move(0,0) on the next simulation tick; this register contains no device-specific raw event.",
+    "forbidden_fields": [
+      "target_id",
+      "aim_angle",
+      "raw_device_coordinate",
+      "wall_clock",
+      "observer_state",
+      "render_time"
+    ],
+    "ordering": "ascending sim_tick then ordinal"
+  },
+  "purpose": "Binds two normalized deterministic input policies and finite cooldown/target probes. It authorizes neither manual aim nor any runtime, catalog, reward, idle, monetization, provider, network, release, G8, or human-playtest change.",
+  "register_id": "g2-input-tape-register-v1",
+  "register_state": "FINITE_DECISION_REGISTER__COLLECTION_BLOCKED",
+  "schema_version": "g2-input-tape-register-v1",
+  "source_refs": [
+    "qa/g2-canonical-preregistration.md#L20-L39",
+    "qa/g2-coverage-matrix.md#L22-L89",
+    "design/g2-assessment-contract.md#L124-L175",
+    "pm/g2-offense-attribution-contract.md#L14-L25",
+    "engineering/g2-full-route-runner-contract.md#L20-L90",
+    "design/balance-sheet.md#L144-L192",
+    "pm/negotiation-record.md#L104-L142"
+  ]
+}

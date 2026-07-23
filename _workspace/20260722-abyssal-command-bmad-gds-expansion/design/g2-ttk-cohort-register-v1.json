@@ -1,0 +1,68 @@
+{
+  "schema_version": "g2-ttk-cohort-register-v1",
+  "register_version": "1.1.0-runtime-backed",
+  "register_id": "g2-ttk-cohort-register-v1",
+  "status": "BOUND_MEASUREMENT_DEFINITION_ONLY",
+  "gate_status": "G2 NOT MEASURED / NOT PASSED",
+  "stage_status": "Stage 2 REDO",
+  "source_contract": {
+    "assessment_conditions": "design/g2-assessment-units-v1.json",
+    "runtime_plan_identity": "defense-run-simulation.js:1432-1497,1667-1706",
+    "enemy_death_linkage": "defense-run-simulation.js:720-731",
+    "terminal_outcomes": "defense-run-simulation.js:1391-1419"
+  },
+  "non_authorizations": [
+    "no measured TTK result",
+    "no tuning authorization",
+    "no runtime or catalog change",
+    "no reward, idle-return, monetization, provider, or network change",
+    "no human-playtest or G8 evidence",
+    "no gate or release disposition"
+  ],
+  "measurement_definition": {
+    "simulation_hz": 60,
+    "ttk_ticks": "matched_kill_tick - matched_spawn_tick",
+    "ttk_seconds": "ttk_ticks / 60",
+    "eligible_record_requires": ["assessment_condition_id", "target_instance_id", "target_cohort_id", "matched_spawn_event_id", "matched_kill_event_id", "matched_spawn_tick", "matched_kill_tick", "plan.identity", "plan.waveVariantId"],
+    "missing_or_unlinked_disposition": "NOT_OBSERVED",
+    "source_fact": "ENEMY_DEFEATED emits enemyId, spawnEventId, castInstanceId, and causalRootId; its eventId is also recorded as killEventId (defense-run-simulation.js:720-731)."
+  },
+  "percentile_rule": {
+    "method": "nearest-rank on ascending complete matched records",
+    "rank_formula": "ceil(q * n)",
+    "quantiles": [0.05, 0.5, 0.95],
+    "no_pooling_across": ["profile_id", "assessment_condition_id", "target_cohort_id", "pressure_band_id", "input_policy_id", "plan.identity", "plan.waveVariantId"]
+  },
+  "target_bands": [
+    { "target_cohort_id": "ordinary", "inclusive_seconds": [0.35, 1.25], "status": "SIGNED_PROPOSED_DESIGN_INPUT", "source": "design/balance-sheet.md:68-76" },
+    { "target_cohort_id": "elite", "inclusive_seconds": [6, 14], "status": "SIGNED_PROPOSED_DESIGN_INPUT", "source": "design/balance-sheet.md:68-76" },
+    { "target_cohort_id": "stage_10_boss", "inclusive_seconds": [35, 90], "p50_global_target_seconds": [51, 69], "status": "SIGNED_PROPOSED_DESIGN_INPUT", "source": "design/balance-sheet.md:68-76; qa/gate-measurements.md:34-45" }
+  ],
+  "cohort_mappings": [
+    { "cohort_mapping_id": "g2-ttk-ordinary-low-v1", "assessment_condition_id": "g2-condition-ordinary-low-v1", "target_cohort_id": "ordinary", "pressure_band_id": "low", "stage_id": "cinder-span", "map_plan_id": "map-plan:cinder-span:v1", "wave_plan_id": "wave-plan:cinder-span:v1", "target_selector": "non-boss enemy from committed wave schedule", "binding_source": "design/g2-assessment-units-v1.json; defense-catalog.js:443-444" },
+    { "cohort_mapping_id": "g2-ttk-ordinary-median-v1", "assessment_condition_id": "g2-condition-ordinary-median-v1", "target_cohort_id": "ordinary", "pressure_band_id": "median", "stage_id": "howling-sprawl", "map_plan_id": "map-plan:howling-sprawl:v1", "wave_plan_id": "wave-plan:howling-sprawl:v1", "target_selector": "non-boss enemy from committed wave schedule", "binding_source": "design/g2-assessment-units-v1.json; defense-catalog.js:448" },
+    { "cohort_mapping_id": "g2-ttk-ordinary-high-v1", "assessment_condition_id": "g2-condition-ordinary-high-v1", "target_cohort_id": "ordinary", "pressure_band_id": "high", "stage_id": "gate-zenith", "map_plan_id": "map-plan:gate-zenith:v1", "wave_plan_id": "wave-plan:gate-zenith:v1", "target_selector": "non-boss enemy from committed wave schedule", "binding_source": "design/g2-assessment-units-v1.json; defense-catalog.js:453" },
+    { "cohort_mapping_id": "g2-ttk-elite-low-v1", "assessment_condition_id": "g2-condition-elite-low-v1", "target_cohort_id": "elite", "pressure_band_id": "low", "stage_id": "veil-citadel", "map_plan_id": "map-plan:veil-citadel:v1", "wave_plan_id": "wave-plan:veil-citadel:v1", "target_selector": "elite_id=s2-veil-sentinel", "binding_source": "design/g2-assessment-units-v1.json; defense-catalog.js:445" },
+    { "cohort_mapping_id": "g2-ttk-elite-median-v1", "assessment_condition_id": "g2-condition-elite-median-v1", "target_cohort_id": "elite", "pressure_band_id": "median", "stage_id": "sunken-bastion", "map_plan_id": "map-plan:sunken-bastion:v1", "wave_plan_id": "wave-plan:sunken-bastion:v1", "target_selector": "elite_id=s4-anchor-diver", "binding_source": "design/g2-assessment-units-v1.json; defense-catalog.js:447" },
+    { "cohort_mapping_id": "g2-ttk-elite-high-v1", "assessment_condition_id": "g2-condition-elite-high-v1", "target_cohort_id": "elite", "pressure_band_id": "high", "stage_id": "starless-canal", "map_plan_id": "map-plan:starless-canal:v1", "wave_plan_id": "wave-plan:starless-canal:v1", "target_selector": "elite_id=s7-toll-keeper", "binding_source": "design/g2-assessment-units-v1.json; defense-catalog.js:450" },
+    { "cohort_mapping_id": "g2-ttk-stage-10-boss-low-v1", "assessment_condition_id": "g2-condition-stage-10-boss-low-v1", "target_cohort_id": "stage_10_boss", "pressure_band_id": "low", "stage_id": "gate-zenith", "map_plan_id": "map-plan:gate-zenith:v1", "wave_plan_id": "wave-plan:gate-zenith:v1", "target_selector": "boss_id=s10-abyss-regent", "binding_source": "design/g2-assessment-units-v1.json; defense-catalog.js:453" },
+    { "cohort_mapping_id": "g2-ttk-stage-10-boss-median-v1", "assessment_condition_id": "g2-condition-stage-10-boss-median-v1", "target_cohort_id": "stage_10_boss", "pressure_band_id": "median", "stage_id": "gate-zenith", "map_plan_id": "map-plan:gate-zenith:v1", "wave_plan_id": "wave-plan:gate-zenith:v1", "target_selector": "boss_id=s10-abyss-regent", "binding_source": "design/g2-assessment-units-v1.json; defense-catalog.js:453" },
+    { "cohort_mapping_id": "g2-ttk-stage-10-boss-high-v1", "assessment_condition_id": "g2-condition-stage-10-boss-high-v1", "target_cohort_id": "stage_10_boss", "pressure_band_id": "high", "stage_id": "gate-zenith", "map_plan_id": "map-plan:gate-zenith:v1", "wave_plan_id": "wave-plan:gate-zenith:v1", "target_selector": "boss_id=s10-abyss-regent", "binding_source": "design/g2-assessment-units-v1.json; defense-catalog.js:453" }
+  ],
+  "m5_population": {
+    "population_id": "g2-m5-runtime-plan-cohorts-v1",
+    "cohort_mapping_count": 9,
+    "profiles": ["bulwark", "striker", "gambit", "conductor", "rift"],
+    "input_policy_ids": ["declared-movement", "adversarial-movement"],
+    "input_policy_status": "SIGNED_PROPOSED_DESIGN_INPUT",
+    "collection_state": "NOT_MEASURED",
+    "required_linkage": ["assessment_condition_id", "profile_id", "seed_id", "input_policy_id", "target_instance_id", "spawn_event_id", "kill_event_id", "plan.identity", "mapPlanId", "wavePlanId", "m4PlanId", "waveVariantId", "rules_catalog_digest"]
+  },
+  "register_digest": "MUST_REGENERATE_FROM_THIS_COMPLETE_DOCUMENT_BEFORE_COLLECTION",
+  "expected_tuples_regeneration": {
+    "owner": "separate runner/register executor",
+    "exact_required_fields": ["cohort_mapping_id", "assessment_condition_id", "profile_id", "seed_id", "input_policy_id", "target_cohort_id", "target_instance_id", "plan.identity", "mapPlanId", "wavePlanId", "m4PlanId", "waveVariantId", "rules_catalog_digest", "input_tape_digest", "observer_equivalent_canonical_digest"],
+    "required_output_digests": ["expected_tuple_manifest_digest", "register_digest", "rules_catalog_digest", "local_export_checksum"],
+    "blocker": "No expected-tuples generator was changed in this work; do not infer M5 rows or a complete denominator."
+  }
+}

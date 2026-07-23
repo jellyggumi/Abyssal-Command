@@ -1,0 +1,554 @@
+{
+  "schema": "abyssal-all-pair-ev-v1",
+  "generatedAt": "2026-07-22T11:51:52.804Z",
+  "exactCommands": [
+    "node _workspace/20260722-defense-survival-expansion/qa/run-all-pair-ev.mjs manifest /Users/jangyoung/orca/Abyssal-Surge/_workspace/20260722-defense-survival-expansion/qa/all-pair-ev-manifest.json",
+    "node _workspace/20260722-defense-survival-expansion/qa/run-all-pair-ev.mjs measure /Users/jangyoung/orca/Abyssal-Surge/_workspace/20260722-defense-survival-expansion/qa/all-pair-ev-manifest.json /Users/jangyoung/orca/Abyssal-Surge/_workspace/20260722-defense-survival-expansion/qa/all-pair-ev-result.json"
+  ],
+  "formula": "For each active pair over the identical ten-stage, Hunter65+Generalist, full-loadout/full-reward public-API distribution: equal-weight arithmetic mean of eight axes normalized to the across-pair median: total observed/potential damage per tick; casts per 1000 ticks; targets per cast; integrity plus terrain recovery per 1000 ticks; item/companion count plus companion impact contribution per run; occupation visits/captures plus recovery per run; inverse median winning boss TTK; completion plus completed-objective action score. Raw proxy is sum(damage/cooldownTicks), with void-aegis damage=0 and no area inflation.",
+  "inputs": {
+    "seedScan": [
+      1,
+      10000
+    ],
+    "maxTicks": 18000,
+    "stages": [
+      "cinder-span",
+      "veil-citadel",
+      "echo-throne",
+      "sunken-bastion",
+      "howling-sprawl",
+      "glass-necropolis",
+      "starless-canal",
+      "shattered-causeway",
+      "abyss-chancel",
+      "gate-zenith"
+    ],
+    "controllers": [
+      "Hunter65",
+      "Generalist"
+    ],
+    "activeSkills": [
+      "grave-pulse",
+      "rift-bolt",
+      "shadow-step",
+      "soul-lance",
+      "void-aegis"
+    ],
+    "companionLoadout": [
+      "ember-cohort",
+      "rift-lens",
+      "veil-vanguard"
+    ],
+    "rewardIds": [
+      "abyssal-banner",
+      "bulwark-brand",
+      "stillwater-hourglass"
+    ],
+    "simulationSha256": "4d2c484388d35f5fdd70d31fd2b13bfc4dc94395c63be468c21e9a59f452c37a",
+    "catalogSha256": "e6479cffdca3f7982552083dea2334f2f2622cc37aa0d6ad19df8dfe75fba5cf",
+    "acceptedSeedManifestPath": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260722-defense-survival-expansion/qa/all-pair-ev-manifest.json",
+    "acceptedSeedManifestSha256": "153a02264604df97d059669ad0125b29bee305471e51cb608f9773f9edd46427",
+    "samplesPerPair": 20
+  },
+  "acquisition": {
+    "requiredPairs": 10,
+    "measuredPairs": 10,
+    "requiredSamplesPerPair": 20,
+    "allPairsAcquired": true
+  },
+  "replay": {
+    "samples": 200,
+    "matches": 200,
+    "pass": true
+  },
+  "raw": {
+    "median": 7.073412698412699,
+    "maximum": 9.05982905982906,
+    "maxToMedianRatio": 1.2808285683460998,
+    "cap": 1.3,
+    "pass": true
+  },
+  "normalized": {
+    "axisMedians": {
+      "damagePerTick": 66.90173697852293,
+      "castsPer1000Ticks": 4.235271004810123,
+      "targetsPerCast": 0.6225062771056836,
+      "integrityPer1000Ticks": 25.873298989122503,
+      "itemCompanionPerRun": 12.098075,
+      "occupationPerRun": 2.806,
+      "bossEfficiency": 1.0845999743554453,
+      "completionAction": 2
+    },
+    "encounterMedian": 1.0204372960558623,
+    "encounterMaximum": 1.4368797005138938,
+    "maxToMedianRatio": 1.4081019050044932,
+    "cap": 1.3,
+    "status": "MEASURED",
+    "pass": false
+  },
+  "pairs": [
+    {
+      "pair": [
+        "grave-pulse",
+        "rift-bolt"
+      ],
+      "encounterSamples": 20,
+      "terminalSamples": 20,
+      "pairAcquiredSamples": 20,
+      "rawProxy": 7.323717948717949,
+      "observed": {
+        "totalTicks": 62790,
+        "castCount": 260,
+        "targets": 164,
+        "skillDamagePotential": 189400,
+        "commanderProjectileDamage": 1874535,
+        "companionProjectileDamage": 1953730,
+        "integrityAndRecovery": 1627,
+        "itemsCompanions": 227.37300000000002,
+        "occupation": 56.27000000000001,
+        "bossTtkSamples": 20,
+        "medianBossTtkTicks": 949.5,
+        "completions": 20,
+        "actionObjectives": 120
+      },
+      "axes": {
+        "damagePerTick": 63.98574613792005,
+        "castsPer1000Ticks": 4.140786749482402,
+        "targetsPerCast": 0.6307692307692307,
+        "integrityPer1000Ticks": 25.91176939003026,
+        "itemCompanionPerRun": 11.36865,
+        "occupationPerRun": 2.8135000000000003,
+        "bossEfficiency": 1.05318588730911,
+        "completionAction": 2
+      },
+      "normalizedAxes": {
+        "damagePerTick": 0.9564138246285148,
+        "castsPer1000Ticks": 0.9776910957479669,
+        "targetsPerCast": 1.013273687298328,
+        "integrityPer1000Ticks": 1.0014868765256386,
+        "itemCompanionPerRun": 0.939707350136282,
+        "occupationPerRun": 1.002672843905916,
+        "bossEfficiency": 0.9710362458149567,
+        "completionAction": 1
+      },
+      "encounterEv": 0.9827852405072004
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "shadow-step"
+      ],
+      "encounterSamples": 20,
+      "terminalSamples": 20,
+      "pairAcquiredSamples": 20,
+      "rawProxy": 6.994047619047619,
+      "observed": {
+        "totalTicks": 62977,
+        "castCount": 337,
+        "targets": 207,
+        "skillDamagePotential": 163300,
+        "commanderProjectileDamage": 1884855,
+        "companionProjectileDamage": 1969030,
+        "integrityAndRecovery": 1627,
+        "itemsCompanions": 228.90300000000005,
+        "occupation": 56.27000000000001,
+        "bossTtkSamples": 20,
+        "medianBossTtkTicks": 949.5,
+        "completions": 20,
+        "actionObjectives": 120
+      },
+      "axes": {
+        "damagePerTick": 63.788128999476,
+        "castsPer1000Ticks": 5.3511599472823415,
+        "targetsPerCast": 0.6142433234421365,
+        "integrityPer1000Ticks": 25.834828588214744,
+        "itemCompanionPerRun": 11.445150000000002,
+        "occupationPerRun": 2.8135000000000003,
+        "bossEfficiency": 1.05318588730911,
+        "completionAction": 2
+      },
+      "normalizedAxes": {
+        "damagePerTick": 0.9534599829590901,
+        "castsPer1000Ticks": 1.2634752159200369,
+        "targetsPerCast": 0.9867263127016721,
+        "integrityPer1000Ticks": 0.9985131234743613,
+        "itemCompanionPerRun": 0.9460306701686013,
+        "occupationPerRun": 1.002672843905916,
+        "bossEfficiency": 0.9710362458149567,
+        "completionAction": 1
+      },
+      "encounterEv": 1.0152392993680792
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "soul-lance"
+      ],
+      "encounterSamples": 20,
+      "terminalSamples": 20,
+      "pairAcquiredSamples": 20,
+      "rawProxy": 7.152777777777779,
+      "observed": {
+        "totalTicks": 64817,
+        "castCount": 289,
+        "targets": 183,
+        "skillDamagePotential": 170650,
+        "commanderProjectileDamage": 2074860,
+        "companionProjectileDamage": 2093315,
+        "integrityAndRecovery": 1617,
+        "itemsCompanions": 241.3315,
+        "occupation": 56.17,
+        "bossTtkSamples": 20,
+        "medianBossTtkTicks": 905.5,
+        "completions": 20,
+        "actionObjectives": 120
+      },
+      "axes": {
+        "damagePerTick": 66.93961460727895,
+        "castsPer1000Ticks": 4.458706820741472,
+        "targetsPerCast": 0.6332179930795848,
+        "integrityPer1000Ticks": 24.947158924356266,
+        "itemCompanionPerRun": 12.066575,
+        "occupationPerRun": 2.8085,
+        "bossEfficiency": 1.1043622308117063,
+        "completionAction": 2
+      },
+      "normalizedAxes": {
+        "damagePerTick": 1.0005661680916922,
+        "castsPer1000Ticks": 1.0527559666613038,
+        "targetsPerCast": 1.0172074023473383,
+        "integrityPer1000Ticks": 0.9642047940946533,
+        "itemCompanionPerRun": 0.9973962799866921,
+        "occupationPerRun": 1.0008909479686385,
+        "bossEfficiency": 1.018220779018555,
+        "completionAction": 1
+      },
+      "encounterEv": 1.006405292271109
+    },
+    {
+      "pair": [
+        "grave-pulse",
+        "void-aegis"
+      ],
+      "encounterSamples": 20,
+      "terminalSamples": 20,
+      "pairAcquiredSamples": 20,
+      "rawProxy": 2.7083333333333335,
+      "observed": {
+        "totalTicks": 65522,
+        "castCount": 283,
+        "targets": 91,
+        "skillDamagePotential": 59150,
+        "commanderProjectileDamage": 2065965,
+        "companionProjectileDamage": 2116480,
+        "integrityAndRecovery": 8002,
+        "itemsCompanions": 243.64800000000002,
+        "occupation": 56.230000000000004,
+        "bossTtkSamples": 20,
+        "medianBossTtkTicks": 947.5,
+        "completions": 20,
+        "actionObjectives": 120
+      },
+      "axes": {
+        "damagePerTick": 64.73543237385917,
+        "castsPer1000Ticks": 4.319159976801685,
+        "targetsPerCast": 0.3215547703180212,
+        "integrityPer1000Ticks": 122.12691920271054,
+        "itemCompanionPerRun": 12.182400000000001,
+        "occupationPerRun": 2.8115,
+        "bossEfficiency": 1.0554089709762533,
+        "completionAction": 2
+      },
+      "normalizedAxes": {
+        "damagePerTick": 0.9676196059698838,
+        "castsPer1000Ticks": 1.0198072264788456,
+        "targetsPerCast": 0.5165486391769034,
+        "integrityPer1000Ticks": 4.720191238622273,
+        "itemCompanionPerRun": 1.0069701171467362,
+        "occupationPerRun": 1.001960085531005,
+        "bossEfficiency": 0.9730859265449092,
+        "completionAction": 1
+      },
+      "encounterEv": 1.4007728549338194
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "shadow-step"
+      ],
+      "encounterSamples": 20,
+      "terminalSamples": 20,
+      "pairAcquiredSamples": 20,
+      "rawProxy": 8.901098901098901,
+      "observed": {
+        "totalTicks": 66243,
+        "castCount": 275,
+        "targets": 187,
+        "skillDamagePotential": 234900,
+        "commanderProjectileDamage": 2094195,
+        "companionProjectileDamage": 2188630,
+        "integrityAndRecovery": 1577,
+        "itemsCompanions": 250.863,
+        "occupation": 55.77,
+        "bossTtkSamples": 20,
+        "medianBossTtkTicks": 897,
+        "completions": 20,
+        "actionObjectives": 120
+      },
+      "axes": {
+        "damagePerTick": 68.19928143350995,
+        "castsPer1000Ticks": 4.151382032818562,
+        "targetsPerCast": 0.68,
+        "integrityPer1000Ticks": 23.806288966381352,
+        "itemCompanionPerRun": 12.54315,
+        "occupationPerRun": 2.7885,
+        "bossEfficiency": 1.1148272017837235,
+        "completionAction": 2
+      },
+      "normalizedAxes": {
+        "damagePerTick": 1.0193947797708685,
+        "castsPer1000Ticks": 0.9801927735211546,
+        "targetsPerCast": 1.092358462892344,
+        "integrityPer1000Ticks": 0.920110302763859,
+        "itemCompanionPerRun": 1.0367889106324768,
+        "occupationPerRun": 0.9937633642195296,
+        "bossEfficiency": 1.027869470904461,
+        "completionAction": 1
+      },
+      "encounterEv": 1.0088097580880866
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "soul-lance"
+      ],
+      "encounterSamples": 20,
+      "terminalSamples": 20,
+      "pairAcquiredSamples": 20,
+      "rawProxy": 9.05982905982906,
+      "observed": {
+        "totalTicks": 63255,
+        "castCount": 233,
+        "targets": 162,
+        "skillDamagePotential": 235800,
+        "commanderProjectileDamage": 2040900,
+        "companionProjectileDamage": 2013315,
+        "integrityAndRecovery": 1601,
+        "itemsCompanions": 233.3315,
+        "occupation": 56.01,
+        "bossTtkSamples": 20,
+        "medianBossTtkTicks": 859.5,
+        "completions": 20,
+        "actionObjectives": 120
+      },
+      "axes": {
+        "damagePerTick": 67.82096276974153,
+        "castsPer1000Ticks": 3.683503280373093,
+        "targetsPerCast": 0.6952789699570815,
+        "integrityPer1000Ticks": 25.310252153979924,
+        "itemCompanionPerRun": 11.666575,
+        "occupationPerRun": 2.8005,
+        "bossEfficiency": 1.1634671320535195,
+        "completionAction": 2
+      },
+      "normalizedAxes": {
+        "damagePerTick": 1.0137399390917712,
+        "castsPer1000Ticks": 0.8697207985485768,
+        "targetsPerCast": 1.1169027454466025,
+        "integrityPer1000Ticks": 0.9782383052358614,
+        "itemCompanionPerRun": 0.9643331687065918,
+        "occupationPerRun": 0.998039914468995,
+        "bossEfficiency": 1.0727154338584077,
+        "completionAction": 1
+      },
+      "encounterEv": 1.0017112881696009
+    },
+    {
+      "pair": [
+        "rift-bolt",
+        "void-aegis"
+      ],
+      "encounterSamples": 20,
+      "terminalSamples": 20,
+      "pairAcquiredSamples": 20,
+      "rawProxy": 4.615384615384615,
+      "observed": {
+        "totalTicks": 65120,
+        "castCount": 224,
+        "targets": 75,
+        "skillDamagePotential": 135000,
+        "commanderProjectileDamage": 2102250,
+        "companionProjectileDamage": 2141190,
+        "integrityAndRecovery": 7994,
+        "itemsCompanions": 246.11900000000006,
+        "occupation": 56.18,
+        "bossTtkSamples": 20,
+        "medianBossTtkTicks": 964.5,
+        "completions": 20,
+        "actionObjectives": 120
+      },
+      "axes": {
+        "damagePerTick": 67.23648648648648,
+        "castsPer1000Ticks": 3.43980343980344,
+        "targetsPerCast": 0.33482142857142855,
+        "integrityPer1000Ticks": 122.75798525798525,
+        "itemCompanionPerRun": 12.305950000000003,
+        "occupationPerRun": 2.809,
+        "bossEfficiency": 1.0368066355624677,
+        "completionAction": 2
+      },
+      "normalizedAxes": {
+        "damagePerTick": 1.005003599653489,
+        "castsPer1000Ticks": 0.8121802444039007,
+        "targetsPerCast": 0.5378603250848594,
+        "integrityPer1000Ticks": 4.744581868342125,
+        "itemCompanionPerRun": 1.0171824856433773,
+        "occupationPerRun": 1.0010691375623664,
+        "bossEfficiency": 0.9559345934694676,
+        "completionAction": 1
+      },
+      "encounterEv": 1.3842265317699483
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "soul-lance"
+      ],
+      "encounterSamples": 20,
+      "terminalSamples": 20,
+      "pairAcquiredSamples": 20,
+      "rawProxy": 8.730158730158731,
+      "observed": {
+        "totalTicks": 63288,
+        "castCount": 301,
+        "targets": 201,
+        "skillDamagePotential": 208800,
+        "commanderProjectileDamage": 2036100,
+        "companionProjectileDamage": 2035830,
+        "integrityAndRecovery": 1595,
+        "itemsCompanions": 235.583,
+        "occupation": 55.95,
+        "bossTtkSamples": 20,
+        "medianBossTtkTicks": 875,
+        "completions": 20,
+        "actionObjectives": 120
+      },
+      "axes": {
+        "damagePerTick": 67.63888888888889,
+        "castsPer1000Ticks": 4.756035899380609,
+        "targetsPerCast": 0.6677740863787376,
+        "integrityPer1000Ticks": 25.20225003160157,
+        "itemCompanionPerRun": 11.77915,
+        "occupationPerRun": 2.7975000000000003,
+        "bossEfficiency": 1.1428571428571428,
+        "completionAction": 2
+      },
+      "normalizedAxes": {
+        "damagePerTick": 1.0110184270791445,
+        "castsPer1000Ticks": 1.1229590488965258,
+        "targetsPerCast": 1.0727186390529662,
+        "integrityPer1000Ticks": 0.9740640357534981,
+        "itemCompanionPerRun": 0.9736383680874849,
+        "occupationPerRun": 0.9969707769066287,
+        "bossEfficiency": 1.053713046172916,
+        "completionAction": 1
+      },
+      "encounterEv": 1.0256352927436456
+    },
+    {
+      "pair": [
+        "shadow-step",
+        "void-aegis"
+      ],
+      "encounterSamples": 20,
+      "terminalSamples": 20,
+      "pairAcquiredSamples": 20,
+      "rawProxy": 4.285714285714286,
+      "observed": {
+        "totalTicks": 64732,
+        "castCount": 303,
+        "targets": 114,
+        "skillDamagePotential": 102600,
+        "commanderProjectileDamage": 2119440,
+        "companionProjectileDamage": 2105915,
+        "integrityAndRecovery": 7251,
+        "itemsCompanions": 242.5915,
+        "occupation": 56.06999999999999,
+        "bossTtkSamples": 20,
+        "medianBossTtkTicks": 923,
+        "completions": 20,
+        "actionObjectives": 120
+      },
+      "axes": {
+        "damagePerTick": 66.85959031082,
+        "castsPer1000Ticks": 4.680837916331953,
+        "targetsPerCast": 0.37623762376237624,
+        "integrityPer1000Ticks": 112.01569548291417,
+        "itemCompanionPerRun": 12.129574999999999,
+        "occupationPerRun": 2.8034999999999997,
+        "bossEfficiency": 1.0834236186348862,
+        "completionAction": 2
+      },
+      "normalizedAxes": {
+        "damagePerTick": 0.9993700213237144,
+        "castsPer1000Ticks": 1.1052038726720879,
+        "targetsPerCast": 0.6043916946696136,
+        "integrityPer1000Ticks": 4.329393616562276,
+        "itemCompanionPerRun": 1.0026037200133078,
+        "occupationPerRun": 0.9991090520313612,
+        "bossEfficiency": 0.9989154013015185,
+        "completionAction": 1
+      },
+      "encounterEv": 1.379873422321735
+    },
+    {
+      "pair": [
+        "soul-lance",
+        "void-aegis"
+      ],
+      "encounterSamples": 20,
+      "terminalSamples": 20,
+      "pairAcquiredSamples": 20,
+      "rawProxy": 4.444444444444445,
+      "observed": {
+        "totalTicks": 65638,
+        "castCount": 267,
+        "targets": 104,
+        "skillDamagePotential": 124800,
+        "commanderProjectileDamage": 2118330,
+        "companionProjectileDamage": 2145680,
+        "integrityAndRecovery": 8317,
+        "itemsCompanions": 246.56799999999998,
+        "occupation": 55.67,
+        "bossTtkSamples": 20,
+        "medianBossTtkTicks": 921,
+        "completions": 20,
+        "actionObjectives": 120
+      },
+      "axes": {
+        "damagePerTick": 66.8638593497669,
+        "castsPer1000Ticks": 4.067765623571711,
+        "targetsPerCast": 0.3895131086142322,
+        "integrityPer1000Ticks": 126.71013742039672,
+        "itemCompanionPerRun": 12.328399999999998,
+        "occupationPerRun": 2.7835,
+        "bossEfficiency": 1.0857763300760044,
+        "completionAction": 2
+      },
+      "normalizedAxes": {
+        "damagePerTick": 0.9994338319083076,
+        "castsPer1000Ticks": 0.9604499024860107,
+        "targetsPerCast": 0.6257175597092077,
+        "integrityPer1000Ticks": 4.897332090262917,
+        "itemCompanionPerRun": 1.0190381527639727,
+        "occupationPerRun": 0.9919814682822523,
+        "bossEfficiency": 1.0010845986984815,
+        "completionAction": 1
+      },
+      "encounterEv": 1.4368797005138938
+    }
+  ],
+  "grade": "FIX",
+  "limitation": "Deterministic automation, not human feedback. Potential skill damage/targets are observed from public snapshots at cast time, matching the frozen eight-axis formula; no hidden actor injection or post-result weighting is used."
+}
