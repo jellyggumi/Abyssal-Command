@@ -11,16 +11,21 @@ const execFileAsync = promisify(execFile);
 const ROOT = new URL("../", import.meta.url);
 const RULES_VERSION = "defense-survivor-v1";
 const GAMEPLAY_VIDEO = "assets/video/abyssal-surge-defense-survivor-smoke.mp4";
+const CINDER_SPAN_WORLD_ASSETS = [
+  "assets/images/battle/world/cinder-span-topdown-plate.webp",
+  "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
+];
 const RUNTIME_PATHS = new Set([
   "index.html", "app.js", "rpg-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
   "campaign-state.js", "defense-storage.js", "defense-cutscene.js", "defense-telemetry.js", "defense-audio.js",
-  "battle-realtime-three.js", "battle-visualizer.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
+  "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png",
   GAMEPLAY_VIDEO,
   "assets/images/battle/dusk-warden-frame-00.png", "assets/images/battle/dusk-warden-frame-01.png",
   "assets/images/battle/dusk-warden-frame-02.png", "assets/images/battle/dusk-warden-frame-03.png",
   "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
   "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
+  ...CINDER_SPAN_WORLD_ASSETS,
 ]);
 
 async function project(path) {
@@ -63,6 +68,8 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assert.match(job(workflow, "release_receipt"), /needs: \[resolve_revision, engine_contract, release_closure, browser_contract, package_pages, artifact_smoke, deploy_pages, deployed_smoke\]/);
 
   assert.deepEqual(runtimePaths(workflow), RUNTIME_PATHS);
+  assert.match(job(workflow, "package_pages"), /read -r -a paths <<< "\$PAGES_RUNTIME_PATHS"/);
+  assert.match(job(workflow, "package_pages"), /git archive --format=tar "\$RESOLVED_SHA" -- "\$\{paths\[@\]\}"/);
   assert.match(readme, new RegExp(`\\]\\(${GAMEPLAY_VIDEO.replaceAll(".", "\\.")}\\)`), `README must link ${GAMEPLAY_VIDEO}`);
   assert.match(workflow, /"rules_version":"%s"/);
   assert.match(workflow, /node scripts\/validate-pages-version\.mjs --file "\$PAGES_ARTIFACT_DIR\/version\.json" --sha "\$RESOLVED_SHA"/);
@@ -79,7 +86,7 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assert.match(job(workflow, "package_pages"), /name: pages-bundle[\s\S]*?if-no-files-found: error/);
   assert.match(job(workflow, "release_receipt"), /"all_gate_pass":%s/);
   assert.match(job(workflow, "release_receipt"), /test "\$all_gate_pass" = true/);
-  assert.doesNotMatch(workflow.match(/PAGES_RUNTIME_PATHS: >-[\s\S]*?\n\n/)?.[0] ?? "", /react-game-ui\.js|react-shop|vendor\/react|tactical|minimap|battle-field|campaign-sync|assets\/models/i);
+  assert.doesNotMatch(workflow.match(/PAGES_RUNTIME_PATHS: >-[\s\S]*?\n\n/)?.[0] ?? "", /react-game-ui\.js|react-shop|vendor\/react|minimap|battle-field|campaign-sync|assets\/models/i);
 
   for (const use of workflow.matchAll(/^\s+uses: [^\n]+$/gm)) {
     assert.match(use[0], /@[0-9a-f]{40}$/, `action must be SHA-pinned: ${use[0]}`);
@@ -103,12 +110,13 @@ test("version scripts enforce the exact defense rules version", async () => {
   const required = [
     "index.html", "version.json", "app.js", "defense-viewport.js", "defense-catalog.js",
     "defense-run-simulation.js", "campaign-state.js", "defense-storage.js", "defense-cutscene.js",
-    "defense-telemetry.js", "defense-audio.js", "battle-realtime-three.js", "battle-visualizer.js",
+    "defense-telemetry.js", "defense-audio.js", "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js",
     "styles.css", "react-game-ui.css", "sw.js", "manifest.json",
     "assets/images/battle/dusk-warden-frame-00.png", "assets/images/battle/dusk-warden-frame-01.png",
     "assets/images/battle/dusk-warden-frame-02.png", "assets/images/battle/dusk-warden-frame-03.png",
     "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
     "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
+    ...CINDER_SPAN_WORLD_ASSETS,
   ];
   for (const file of required) {
     const target = join(directory, file);
@@ -122,31 +130,41 @@ test("version scripts enforce the exact defense rules version", async () => {
   await execFileAsync(process.execPath, [command, "--dir", directory]);
 });
 
-test("the candidate-stamped service worker precaches every runtime observer and preserves unrelated caches", async () => {
+test("the candidate-stamped service worker precaches every runtime observer, refreshes the app shell, and preserves binary cache-first behavior", async () => {
   const candidateSha = "b".repeat(40);
   const listeners = new Map();
   const opened = [];
   const deleted = [];
+  const cached = new Map();
   let precached = [];
   let installPromise;
   let activatePromise;
+  let fetchHandler = async () => { throw new Error("unexpected network request"); };
   const currentCache = `abyssal-command-defense-survivor-${candidateSha}`;
   const staleCache = `abyssal-command-defense-survivor-${"a".repeat(40)}`;
   const unrelatedCache = "another-application-cache";
+  const requestKey = (request) => typeof request === "string"
+    ? new URL(request, self.location.href).href
+    : request.url;
+  const cache = {
+    addAll: async (assets) => { precached = [...assets]; },
+    put: async (request, response) => { cached.set(requestKey(request), response); },
+  };
   const caches = {
     open: async (name) => {
       opened.push(name);
-      return {
-        addAll: async (assets) => { precached = [...assets]; },
-        put: async () => {},
-      };
+      return cache;
     },
     keys: async () => [currentCache, staleCache, unrelatedCache],
     delete: async (name) => { deleted.push(name); return true; },
-    match: async () => null,
+    match: async (request) => cached.get(requestKey(request)) ?? null,
   };
   const self = {
-    location: { origin: "https://example.test" },
+    location: {
+      origin: "https://example.test",
+      href: "https://example.test/Abyssal-Surge/sw.js",
+    },
+    registration: { scope: "https://example.test/Abyssal-Surge/" },
     clients: { claim: async () => {} },
     skipWaiting: async () => {},
     addEventListener: (type, listener) => listeners.set(type, listener),
@@ -155,8 +173,10 @@ test("the candidate-stamped service worker precaches every runtime observer and 
   runInNewContext(artifactSource, {
     URL,
     Promise,
+    Request,
+    Response,
     caches,
-    fetch: async () => ({ ok: false }),
+    fetch: (...args) => fetchHandler(...args),
     self,
   });
 
@@ -165,6 +185,15 @@ test("the candidate-stamped service worker precaches every runtime observer and 
   });
   await installPromise;
   assert.deepEqual(opened, [currentCache]);
+  assert.ok(precached.includes("./battle-canvas-text.js"), "the renderer text helper must be candidate-stamped with the app shell");
+  for (const path of CINDER_SPAN_WORLD_ASSETS) {
+    assert.ok(precached.includes(`./${path}`), `${path} must be precached for offline Cinder Span presentation`);
+  }
+  assert.equal(
+    precached.some((path) => /assets\/images\/battle\/world\/cinder-span-(?:topdown|tactical-paper)-plate\.png$/.test(path)),
+    false,
+    "the service worker must not precache duplicate Cinder Span PNG plates",
+  );
   assert.ok(precached.includes("./defense-cutscene.js"));
   assert.ok(precached.includes("./defense-telemetry.js"));
 
@@ -173,4 +202,60 @@ test("the candidate-stamped service worker precaches every runtime observer and 
   });
   await activatePromise;
   assert.deepEqual(deleted, [staleCache]);
+
+  const dispatchFetch = async (request) => {
+    let responsePromise;
+    listeners.get("fetch")({
+      request,
+      respondWith(promise) { responsePromise = Promise.resolve(promise); },
+    });
+    assert.ok(responsePromise, `service worker must respond to ${request.url}`);
+    return responsePromise;
+  };
+  const stylesheetRequest = new Request("https://example.test/Abyssal-Surge/styles.css");
+  cached.set(requestKey(stylesheetRequest), new Response("/* stale stylesheet */", { status: 200 }));
+  const fetchCalls = [];
+  fetchHandler = async (request, init) => {
+    fetchCalls.push({ request, init });
+    return new Response("/* deployed stylesheet */", { status: 200 });
+  };
+
+  const onlineStylesheet = await dispatchFetch(stylesheetRequest);
+  assert.equal(await onlineStylesheet.text(), "/* deployed stylesheet */");
+  assert.equal(fetchCalls.length, 1, "a cached stylesheet must still check the network");
+  assert.equal(fetchCalls[0].request.url, stylesheetRequest.url);
+  assert.equal(fetchCalls[0].init.cache, "no-store");
+  assert.equal(await cached.get(requestKey(stylesheetRequest)).text(), "/* deployed stylesheet */");
+
+  cached.set(requestKey(stylesheetRequest), new Response("/* offline cached stylesheet */", { status: 200 }));
+  fetchHandler = async () => { throw new Error("offline"); };
+  const offlineStylesheet = await dispatchFetch(stylesheetRequest);
+  assert.equal(await offlineStylesheet.text(), "/* offline cached stylesheet */");
+
+  const canvasTextRequest = new Request("https://example.test/Abyssal-Surge/battle-canvas-text.js");
+  cached.set(requestKey(canvasTextRequest), new Response("/* stale text helper */", { status: 200 }));
+  fetchHandler = async (request, init) => {
+    fetchCalls.push({ request, init });
+    return new Response("export const drawCanvasText = () => {};", { status: 200 });
+  };
+  const onlineCanvasText = await dispatchFetch(canvasTextRequest);
+  assert.equal(await onlineCanvasText.text(), "export const drawCanvasText = () => {};");
+  assert.equal(fetchCalls.length, 2, "a cached shell helper must still check the network");
+  assert.equal(fetchCalls.at(-1).request.url, canvasTextRequest.url);
+  assert.equal(fetchCalls.at(-1).init.cache, "no-store");
+  assert.equal(await cached.get(requestKey(canvasTextRequest)).text(), "export const drawCanvasText = () => {};");
+
+  cached.set(requestKey(canvasTextRequest), new Response("/* offline text helper */", { status: 200 }));
+  fetchHandler = async () => { throw new Error("offline"); };
+  const offlineCanvasText = await dispatchFetch(canvasTextRequest);
+  assert.equal(await offlineCanvasText.text(), "/* offline text helper */");
+
+  const spriteRequest = new Request(
+    "https://example.test/Abyssal-Surge/assets/images/battle/dusk-warden-frame-00.png",
+  );
+  cached.set(requestKey(spriteRequest), new Response(new Uint8Array([1, 2, 3]), { status: 200 }));
+  const fetchesBeforeSprite = fetchCalls.length;
+  const sprite = await dispatchFetch(spriteRequest);
+  assert.deepEqual([...new Uint8Array(await sprite.arrayBuffer())], [1, 2, 3]);
+  assert.equal(fetchCalls.length, fetchesBeforeSprite, "cached sprites must not require the network");
 });

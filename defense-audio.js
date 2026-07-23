@@ -167,20 +167,23 @@ const prefersReducedMotion = () => {
 
 const safePromise = (value) => value?.catch?.(() => undefined);
 
-const FEEDBACK_EVENT_TYPES = new Set(["CRITICAL_HIT", "LORE_SURPRISE_RESOLVED"]);
+const FEEDBACK_EVENT_TYPES = new Set(["LORE_SURPRISE_RESOLVED", ...Object.keys(EVENT_CUE_IDS)]);
 
 const feedbackEventKey = (event) => {
-  if (!FEEDBACK_EVENT_TYPES.has(event?.type)) return null;
+  if (!FEEDBACK_EVENT_TYPES.has(event?.type) && !byId[event?.cue]) return null;
+  if (event?.eventId) return `event:${event.eventId}`;
   return [
-    event.type,
-    event.tick ?? 0,
-    event.entityId ?? "",
-    event.targetId ?? "",
-    event.tableId ?? "",
-    event.outcomeId ?? "",
-    event.source ?? "",
-    event.damage ?? "",
-    event.text ?? "",
+    event?.version ?? "",
+    event?.tick ?? 0,
+    event?.eventSequence ?? "",
+    event?.type ?? "",
+    event?.entityId ?? "",
+    event?.targetId ?? "",
+    event?.tableId ?? "",
+    event?.outcomeId ?? "",
+    event?.source ?? "",
+    event?.damage ?? "",
+    event?.text ?? "",
   ].join(":");
 };
 
@@ -452,9 +455,10 @@ export class DefenseAudio {
         this.narrate(event);
         return;
       }
+      const catalogCue = typeof event?.cue === "string" && byId[event.cue] ? event.cue : null;
       const cueId = event?.type === "CRITICAL_HIT"
         ? AUDIO_CUES.criticalHit.id
-        : EVENT_CUE_IDS[event?.type] || event?.cue;
+        : EVENT_CUE_IDS[event?.type] || catalogCue;
       if (cueId) this.play(cueId, event);
     });
   }

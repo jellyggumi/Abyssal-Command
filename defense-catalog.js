@@ -452,6 +452,91 @@ export const STAGES = freeze([
   stage("abyss-chancel", "Abyss Chancel", "Veiled Concordat", 220, "s9-oathbound-signatory", "guardian", "dawnless-crown", "s9-veiled-concordat", 1200, [[0, "flanker", 8], [300, "ranged", 6], [660, "guardian", 5]]),
   stage("gate-zenith", "Gate Zenith", "Abyss Regent", 240, "s10-regent-herald", "flanker", "dawnless-crown", "s10-abyss-regent", 1260, [[0, "rusher", 9], [300, "ranged", 7], [690, "guardian", 5]]),
 ]);
+
+/**
+ * Immutable display vocabulary for the Seal Atlas and passive terrain overlays.
+ * These IDs and labels never participate in stage resolution or simulation.
+ */
+export const STAGE_PRESENTATION_BY_ID = freeze({
+  "cinder-span": {
+    palette: { surface: "surface-cinder-ash", contour: "contour-ember", landmark: "landmark-forge", hazard: "hazard-ash", objective: "objective-seal" },
+    terrain: { patternId: "terrain.cinder-span.ash-bands", label: "재의 띠" },
+    landmarks: [{ id: "landmark.ember-relay-spire", label: "불씨 중계탑" }, { id: "landmark.drowned-forge-arch", label: "잠긴 용광로 아치" }],
+    atmosphere: { descriptor: "잿빛 바람이 교량의 봉쇄선을 훑는다.", motif: "불씨와 재의 흐름" },
+    mapLabels: { title: "잿빛 교량", domain: "재의 봉쇄선", chokepath: "중앙 재길", flank: "남쪽 측면", elevation: "잿빛 감시대", hazard: "재 폭풍", occupation: "재의 봉인", extraction: "결속 지점", objective: "재의 봉인을 지켜 결속하라." },
+  },
+  "veil-citadel": {
+    palette: { surface: "surface-veil-stone", contour: "contour-veil", landmark: "landmark-rampart", hazard: "hazard-static", objective: "objective-signal" },
+    terrain: { patternId: "terrain.veil-citadel.veiled-lines", label: "장막의 선" },
+    landmarks: [{ id: "landmark.veil-rampart", label: "장막 성벽" }, { id: "landmark.veil-twins", label: "쌍둥이 장막" }],
+    atmosphere: { descriptor: "성채의 장막이 신호와 시야를 삼킨다.", motif: "거울빛 장막과 정전" },
+    mapLabels: { title: "장막 성채", domain: "장막의 봉쇄선", chokepath: "쌍둥이 장막길", flank: "북쪽 측면", elevation: "장막 성벽", hazard: "거울 정전", occupation: "장막 신호", extraction: "결속 지점", objective: "장막 신호를 붙들고 결속하라." },
+  },
+  "echo-throne": {
+    palette: { surface: "surface-throne-stone", contour: "contour-echo", landmark: "landmark-dais", hazard: "hazard-rift", objective: "objective-domain" },
+    terrain: { patternId: "terrain.echo-throne.court-steps", label: "왕좌의 계단" },
+    landmarks: [{ id: "landmark.throne-dais", label: "왕좌 단상" }, { id: "landmark.throne-aisle", label: "왕좌 회랑" }],
+    atmosphere: { descriptor: "달 없는 궁정의 메아리가 왕좌 회랑을 울린다.", motif: "메아리와 단상의 균열" },
+    mapLabels: { title: "메아리 왕좌", domain: "달 없는 궁정", chokepath: "왕좌 회랑", flank: "남쪽 측면", elevation: "왕좌 단상", hazard: "메아리 균열", occupation: "왕좌 영역", extraction: "결속 지점", objective: "왕좌 영역을 지켜 결속하라." },
+  },
+  "sunken-bastion": {
+    palette: { surface: "surface-bastion-flood", contour: "contour-tide", landmark: "landmark-anchor", hazard: "hazard-flood", objective: "objective-pump" },
+    terrain: { patternId: "terrain.sunken-bastion.flood-arcs", label: "침수 호" },
+    landmarks: [{ id: "landmark.bastion-anchor", label: "보루 닻" }, { id: "landmark.bastion-floodgate", label: "침수 수문" }],
+    atmosphere: { descriptor: "가라앉은 보루의 수문에서 조류가 밀려든다.", motif: "침수선과 닻의 잔향" },
+    mapLabels: { title: "가라앉은 보루", domain: "조류의 봉쇄선", chokepath: "침수 수문", flank: "수로 측면", elevation: "보루 닻", hazard: "침수 파동", occupation: "보루 펌프", extraction: "결속 지점", objective: "보루 펌프를 점유하고 결속하라." },
+  },
+  "howling-sprawl": {
+    palette: { surface: "surface-sprawl-dust", contour: "contour-wind", landmark: "landmark-ridge", hazard: "hazard-gust", objective: "objective-beacon" },
+    terrain: { patternId: "terrain.howling-sprawl.wind-hatch", label: "바람 해칭" },
+    landmarks: [{ id: "landmark.sprawl-ridge", label: "황야 능선" }, { id: "landmark.sprawl-funnel", label: "바람깔때기" }],
+    atmosphere: { descriptor: "울부짖는 바람이 황야의 측면을 열어젖힌다.", motif: "교차풍과 능선의 골" },
+    mapLabels: { title: "울부짖는 황야", domain: "바람길 봉쇄선", chokepath: "바람깔때기", flank: "교차풍 측면", elevation: "황야 능선", hazard: "울부짖는 돌풍", occupation: "황야 봉화", extraction: "결속 지점", objective: "황야 봉화를 지켜 결속하라." },
+  },
+  "glass-necropolis": {
+    palette: { surface: "surface-glass-crypt", contour: "contour-glass", landmark: "landmark-spire", hazard: "hazard-shard", objective: "objective-choir" },
+    terrain: { patternId: "terrain.glass-necropolis.fractures", label: "유리 균열" },
+    landmarks: [{ id: "landmark.glass-spire", label: "유리 첨탑" }, { id: "landmark.glass-crypt", label: "유리 납골당" }],
+    atmosphere: { descriptor: "유리 묘역의 반사면이 고지와 사선을 가른다.", motif: "파편빛과 합창의 잔향" },
+    mapLabels: { title: "유리 묘역", domain: "유리 고지 봉쇄선", chokepath: "유리 납골당", flank: "반사 측면", elevation: "유리 첨탑", hazard: "유리 파편비", occupation: "유리 합창", extraction: "결속 지점", objective: "유리 합창을 점유하고 결속하라." },
+  },
+  "starless-canal": {
+    palette: { surface: "surface-canal-ink", contour: "contour-lock", landmark: "landmark-towpath", hazard: "hazard-undertow", objective: "objective-toll" },
+    terrain: { patternId: "terrain.starless-canal.lock-stripes", label: "수문 줄무늬" },
+    landmarks: [{ id: "landmark.canal-towpath", label: "운하 견인로" }, { id: "landmark.canal-lock", label: "잠긴 수문" }],
+    atmosphere: { descriptor: "별 없는 수로의 저류가 통행길을 끌어당긴다.", motif: "수문과 어두운 물결" },
+    mapLabels: { title: "별 없는 운하", domain: "위험 수로 봉쇄선", chokepath: "잠긴 수문", flank: "수문 측면", elevation: "운하 견인로", hazard: "수로 저류", occupation: "운하 통행점", extraction: "결속 지점", objective: "운하 통행점을 점유하고 결속하라." },
+  },
+  "shattered-causeway": {
+    palette: { surface: "surface-causeway-rubble", contour: "contour-fracture", landmark: "landmark-keystone", hazard: "hazard-collapse", objective: "objective-brace" },
+    terrain: { patternId: "terrain.shattered-causeway.rubble", label: "파편 더미" },
+    landmarks: [{ id: "landmark.causeway-keystone", label: "둑길 쐐기돌" }, { id: "landmark.causeway-gap", label: "끊긴 둑길" }],
+    atmosphere: { descriptor: "부서진 둑길의 틈이 관문 앞에서 흔들린다.", motif: "붕괴선과 쐐기돌" },
+    mapLabels: { title: "부서진 둑길", domain: "교량 봉쇄선", chokepath: "끊긴 둑길", flank: "파편 측면", elevation: "둑길 쐐기돌", hazard: "둑길 붕괴", occupation: "둑길 버팀점", extraction: "결속 지점", objective: "둑길 버팀점을 지켜 결속하라." },
+  },
+  "abyss-chancel": {
+    palette: { surface: "surface-chancel-abyss", contour: "contour-oath", landmark: "landmark-apse", hazard: "hazard-oath", objective: "objective-oath" },
+    terrain: { patternId: "terrain.abyss-chancel.oath-rings", label: "서약 고리" },
+    landmarks: [{ id: "landmark.chancel-apse", label: "예배소 후진" }, { id: "landmark.chancel-nave", label: "예배소 본당" }],
+    atmosphere: { descriptor: "심연 예배소의 서약이 관문 위로 압력을 드리운다.", motif: "서약 고리와 가려진 서명" },
+    mapLabels: { title: "심연 예배소", domain: "서약의 봉쇄선", chokepath: "예배소 본당", flank: "교차 회랑 측면", elevation: "예배소 후진", hazard: "서약의 압력", occupation: "예배소 서약", extraction: "결속 지점", objective: "예배소 서약을 역전해 결속하라." },
+  },
+  "gate-zenith": {
+    palette: { surface: "surface-zenith-void", contour: "contour-threshold", landmark: "landmark-crown", hazard: "hazard-command", objective: "objective-last-seal" },
+    terrain: { patternId: "terrain.gate-zenith.threshold-rays", label: "문턱 광선" },
+    landmarks: [{ id: "landmark.zenith-crown", label: "정점의 왕관" }, { id: "landmark.zenith-threshold", label: "관문의 문턱" }],
+    atmosphere: { descriptor: "관문 정점에서 명령망이 심연과 맞닿는다.", motif: "문턱 광선과 마지막 봉인" },
+    mapLabels: { title: "관문 정점", domain: "마지막 봉쇄선", chokepath: "관문의 문턱", flank: "그림자 측면", elevation: "정점의 왕관", hazard: "심연의 명령", occupation: "마지막 봉인", extraction: "마지막 결속 지점", objective: "마지막 봉인을 지키고 관문을 방어하라." },
+  },
+});
+
+const stagePresentationIds = Object.keys(STAGE_PRESENTATION_BY_ID);
+if (
+  stagePresentationIds.length !== STAGES.length
+  || STAGES.some(({ id }) => !Object.prototype.hasOwnProperty.call(STAGE_PRESENTATION_BY_ID, id))
+) {
+  throw new Error("STAGE_PRESENTATION_BY_ID must cover every authored stage.");
+}
 export const STAGE_ITEM_IDS = freeze({
   "cinder-span": "ashen-sigil",
   "veil-citadel": "ward-splinter",

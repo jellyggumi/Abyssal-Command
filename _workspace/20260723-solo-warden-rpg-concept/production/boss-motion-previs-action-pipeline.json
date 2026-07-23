@@ -1,0 +1,470 @@
+{
+  "schemaVersion": "motion-previs-pipeline-1.0",
+  "pipeline": "motion-previs-v2",
+  "owner": "motion-previs-style-implementation",
+  "sourceImage": "assets/images/battle/pilot/concept-*-boss.png",
+  "artDirection": {
+    "universe": "anime-anisotropic 2.5D",
+    "styleAdaption": "cel-shaded, painterly shadows, sharp edge contrast, particle accents",
+    "copyrightSafety": {
+      "allowedFromReference": "camera framing, anatomy density, energy palette logic, timing rhythm",
+      "forbidden": [
+        "copy exact silhouettes",
+        "copy trademarked costume emblems",
+        "copy logos/glyphs/watermarks",
+        "copy one-to-one pose chain from a referenced work"
+      ],
+      "derivationRule": "same energy archetype only; no direct shape copying"
+    }
+  },
+  "deliverables": [
+    "per-action JSON timing sheets",
+    "Blender NLA clips + proxy-safe markers",
+    "god-tibo prompt batches",
+    "motion transition matrix",
+    "retarget compatibility table"
+  ],
+  "namingConvention": {
+    "clipId": "{bossId}::{action}::{variant}::{runId}",
+    "actionIdPattern": "idle|move|run|hit|bighit|attack|critical|avoid|defence|die|show",
+    "variantPattern": "v01|v02|v03|v04",
+    "frameIds": "0-based integer at 60fps output; runtime ingest converts to 30fps",
+    "filePaths": {
+      "previsBlender": "_workspace/20260723-solo-warden-rpg-concept/production/{bossId}/{action}/{variant}/previs.blend",
+      "previsTimeline": "_workspace/20260723-solo-warden-rpg-concept/production/{bossId}/{action}/{variant}/timing.json",
+      "retargetMap": "_workspace/20260723-solo-warden-rpg-concept/production/{bossId}/{action}/{variant}/retarget.json"
+    }
+  },
+  "bossAliases": {
+    "pipelineBossIds": ["sung-hum", "human-command", "shadow-commander", "broken-court-monarch"],
+    "conceptPromptArchetypes": {
+      "sung-hum": "sung-hum",
+      "human-command": "player-core",
+      "shadow-commander": "shadow-soldier",
+      "broken-court-monarch": "broken-court-monarch"
+    },
+    "outputImageByBoss": {
+      "sung-hum": "concept-sung-hum-boss.png",
+      "human-command": "concept-human-command-boss.png",
+      "shadow-commander": "concept-shadow-commander-boss.png",
+      "broken-court-monarch": "concept-broken-court-monarch-boss.png"
+    }
+  },
+  "promptSchema": {
+    "requiredFields": [
+      "promptId",
+      "version",
+      "boss",
+      "action",
+      "variant",
+      "camera",
+      "framing",
+      "motionIntent",
+      "keyPoses",
+      "constraints",
+      "qualityTags"
+    ],
+    "fieldTypes": {
+      "promptId": "string",
+      "version": "semver",
+      "boss": "enum(sung-hum|human-command|shadow-commander|broken-court-monarch)",
+      "action": "enum(idle,move,run,hit,bighit,attack,critical,avoid,defence,die,show)",
+      "variant": "enum(v01,v02,v03,v04)",
+      "camera": {
+        "angleDeg": "number",
+        "pitchDeg": "number",
+        "distance": "number",
+        "fov": "number"
+      },
+      "framing": "string",
+      "motionIntent": "string",
+      "keyPoses": "array<{timePct,poseLabel,speedHint}>"
+    },
+    "outputFormat": "one JSON record per variant per action"
+  },
+  "keyframeBudgets": {
+    "idle": { "min": 72, "target": 120, "max": 180, "keyPoses": { "min": 3, "max": 5 } },
+    "move": { "min": 48, "target": 72, "max": 108, "keyPoses": { "min": 4, "max": 7 } },
+    "run": { "min": 48, "target": 84, "max": 120, "keyPoses": { "min": 5, "max": 9 } },
+    "hit": { "min": 36, "target": 54, "max": 84, "keyPoses": { "min": 5, "max": 8 } },
+    "bighit": { "min": 54, "target": 84, "max": 132, "keyPoses": { "min": 6, "max": 10 }, "notes": "impact peak window mandatory" },
+    "attack": { "min": 54, "target": 90, "max": 132, "keyPoses": { "min": 6, "max": 10 } },
+    "critical": { "min": 42, "target": 72, "max": 96, "keyPoses": { "min": 5, "max": 8 } },
+    "avoid": { "min": 24, "target": 42, "max": 72, "keyPoses": { "min": 4, "max": 7 } },
+    "defence": { "min": 48, "target": 78, "max": 114, "keyPoses": { "min": 4, "max": 7 } },
+    "die": { "min": 45, "target": 72, "max": 96, "keyPoses": { "min": 4, "max": 6 } },
+    "show": { "min": 48, "target": 96, "max": 180, "keyPoses": { "min": 5, "max": 8 } }
+  },
+  "actionDefinitions": [
+    {
+      "action": "idle",
+      "intent": "stabilize silhouette + threat posture",
+      "signaturePoses": ["weight settle", "micro-balance", "shoulder settle", "pre-load gaze"],
+      "loop": true,
+      "entryWindowFrames": 6,
+      "exitWindowFrames": 6
+    },
+    {
+      "action": "move",
+      "intent": "directional reposition at combat tempo",
+      "signaturePoses": ["torso lean", "foot contact", "weapon counterbalance", "weight reset"],
+      "loop": true,
+      "entryWindowFrames": 6,
+      "exitWindowFrames": 8
+    },
+    {
+      "action": "run",
+      "intent": "urgent displacement with sustained foot rhythm",
+      "signaturePoses": ["stride phase A", "stride phase B", "torso drive", "landing settle"],
+      "loop": true,
+      "entryWindowFrames": 6,
+      "exitWindowFrames": 8
+    },
+    {
+      "action": "hit",
+      "intent": "single moderate hit reaction to external source",
+      "signaturePoses": ["anticipation", "contact", "micro recoil", "arm reset"],
+      "loop": false,
+      "entryWindowFrames": 4,
+      "exitWindowFrames": 10
+    },
+    {
+      "action": "bighit",
+      "intent": "high-impact strike with force transfer",
+      "signaturePoses": ["telegraph", "gather force", "impact", "displacement", "settle"],
+      "loop": false,
+      "entryWindowFrames": 4,
+      "exitWindowFrames": 12,
+      "holdAtImpactFrames": 4
+    },
+    {
+      "action": "attack",
+      "intent": "offensive option with recover",
+      "signaturePoses": ["bait", "swing", "strike arc", "recover", "threat reset"],
+      "loop": false,
+      "entryWindowFrames": 5,
+      "exitWindowFrames": 8
+    },
+    {
+      "action": "critical",
+      "intent": "burst damage moment + dramatic pause",
+      "signaturePoses": ["danger read", "wind-up", "impact", "short hang", "landing"],
+      "loop": false,
+      "entryWindowFrames": 8,
+      "exitWindowFrames": 14
+    },
+    {
+      "action": "avoid",
+      "intent": "evasive impulse; preserve silhouette clarity",
+      "signaturePoses": ["read", "sidestep", "counter lean", "stabilize"],
+      "loop": false,
+      "entryWindowFrames": 4,
+      "exitWindowFrames": 6,
+      "interruptable": true
+    },
+    {
+      "action": "defence",
+      "intent": "guard reaction with guard release",
+      "signaturePoses": ["guard lift", "absorbed hit", "ground push", "guard reset"],
+      "loop": false,
+      "entryWindowFrames": 5,
+      "exitWindowFrames": 9
+    },
+    {
+      "action": "die",
+      "intent": "terminal collapse and settle",
+      "signaturePoses": ["collapse cue", "impact sink", "recoil", "final pose"],
+      "loop": false,
+      "entryWindowFrames": 8,
+      "exitWindowFrames": 0,
+      "holdEndHoldFrames": 24
+    },
+    {
+      "action": "show",
+      "intent": "intro / taunt / boss reveal",
+      "signaturePoses": ["stance prep", "symbolic emphasis", "command beat", "dominant hold"],
+      "loop": false,
+      "entryWindowFrames": 8,
+      "exitWindowFrames": 10
+    }
+  ],
+  "characterPromptProfiles": {
+    "sung-hum": {
+      "motionTone": "disciplined-hunter",
+      "variants": {
+        "v01": "quiet readiness + quick-strike composure; clean geometry, minimal cape chaos",
+        "v02": "measured dominance + controlled aura lock",
+        "v03": "threaten-first with extended pre-impact pause",
+        "v04": "shorter, sharper cut, duelist cadence"
+      }
+    },
+    "human-command": {
+      "motionTone": "command-heavy caster-commander",
+      "variants": {
+        "v01": "sigil-led anticipation and shoulder-forward cast",
+        "v02": "tactical sidestep + staff line sweep",
+        "v03": "ritualistic heavy prep before contact",
+        "v04": "rapid micro-burst to prevent target stutter"
+      }
+    },
+    "shadow-commander": {
+      "motionTone": "mass-shadow fluid fighter",
+      "variants": {
+        "v01": "soft cloak drift with delayed hand strike",
+        "v02": "compact coil burst + abrupt exit",
+        "v03": "mirrored duplicate bait + commit",
+        "v04": "long arcs, broad shadow tails"
+      }
+    },
+    "broken-court-monarch": {
+      "motionTone": "ceremonial authority with impact authority",
+      "variants": {
+        "v01": "slow ceremonial cue before burst",
+        "v02": "staff-spike + radial push",
+        "v03": "dominance lock-down stance shifts",
+        "v04": "high-radius sweep with sustained after-image"
+      }
+    }
+  },
+  "transitionMatrix": {
+    "strategy": "state-safe, deterministic, retarget-agnostic",
+    "sourceFps": 60,
+    "runtimeFps": 30,
+    "defaultCrossFade": 6,
+    "minCrossFade": 3,
+    "maxCrossFade": 12,
+    "transitionWindowFrames": {
+      "entry": 12,
+      "interrupt": 8,
+      "exit": 12
+    },
+    "interruptRules": {
+      "idle": ["move", "run", "attack", "bighit", "critical", "avoid", "defence", "hit", "show", "die"],
+      "move": ["run", "attack", "bighit", "critical", "avoid", "defence", "hit", "show", "idle", "die"],
+      "run": ["attack", "hit", "bighit", "critical", "avoid", "defence", "move", "idle", "show", "die"],
+      "hit": ["avoid", "defence", "attack", "run", "move", "critical", "idle", "die"],
+      "bighit": ["avoid", "defence", "attack", "move", "run", "critical", "idle", "die"],
+      "attack": ["avoid", "defence", "hit", "critical", "move", "run", "idle", "die"],
+      "critical": ["avoid", "defence", "die", "attack", "run", "move", "idle", "show"],
+      "avoid": ["run", "move", "attack", "defence", "hit", "critical", "idle", "die"],
+      "defence": ["critical", "die", "bighit", "attack", "run", "move", "avoid", "idle", "show"],
+      "die": [],
+      "show": ["attack", "run", "move", "avoid", "defence", "critical", "hit", "idle", "die"]
+    },
+    "special": {
+      "show_to_action": { "crossFade": 12, "rule": "use delayed blend, keep intro silhouette first 24f" },
+      "critical_to_defence_or_avoid": { "crossFade": 4, "rule": "hard stop only if speed < 0.35" },
+      "run_to_avoid": { "crossFade": 3, "rule": "no pose discontinuity in feet" },
+      "show_exit_buffer": { "crossFade": 12, "postHold": 24, "rule": "hold show-intro identity frame for first 24f before interrupt"},
+      "die": { "crossFade": 0, "rule": "immediate cut to final hold loop" }
+    },
+    "loopContinuity": {
+      "idle": "first and last pose mirror by position and facing",
+      "move": "foot contact phase must align",
+      "run": "root phase lock at step boundary",
+      "attack": "recover pose must equal move-ready pose when looped as fallback",
+      "show": "intro silhouette must remain readable across exit"
+    },
+    "stateMap": {
+      "idle": ["loop"],
+      "move": ["loop"],
+      "run": ["loop"],
+      "hit": ["single"],
+      "bighit": ["single"],
+      "attack": ["single"],
+      "critical": ["single"],
+      "avoid": ["single"],
+      "defence": ["single"],
+      "die": ["terminal"],
+      "show": ["single"]
+    }
+  },
+  "frameBudgetSync": {
+    "frameToRuntimeRatio": 2,
+    "seamAllowanceFrames": {
+      "loop": 2,
+      "crossfade": 2,
+      "interrupt": 3
+    }
+  },
+  "retargetCompatibility": {
+    "acceptedRig": {
+      "human": {
+        "requiredBones": [
+          "root",
+          "hips",
+          "spine",
+          "chest",
+          "neck",
+          "head",
+          "upperarm_l",
+          "lowerarm_l",
+          "hand_l",
+          "upperarm_r",
+          "lowerarm_r",
+          "hand_r",
+          "thigh_l",
+          "shin_l",
+          "foot_l",
+          "thigh_r",
+          "shin_r",
+          "foot_r"
+        ],
+        "optionalBones": ["clavicle_l", "clavicle_r", "shoulder_tweak", "cape_root", "cape_tip_l", "cape_tip_r"],
+        "restPoseRequirement": "A-pose with neutral shoulders and feet downward",
+        "unitScale": "metric meters"
+      },
+      "shadow": {
+        "requiredBones": [
+          "root",
+          "hips",
+          "spine",
+          "chest",
+          "neck",
+          "head",
+          "upperarm_l",
+          "lowerarm_l",
+          "hand_l",
+          "upperarm_r",
+          "lowerarm_r",
+          "hand_r",
+          "cloak_root",
+          "thigh_l",
+          "shin_l",
+          "foot_l",
+          "thigh_r",
+          "shin_r",
+          "foot_r"
+        ],
+        "optionalBones": ["cloak_front", "cloak_tail", "tail_root", "jaw"],
+        "restPoseRequirement": "A-pose with cloak weight neutral",
+        "unitScale": "metric meters"
+      }
+    },
+    "bossRigMap": {
+      "sung-hum": "human",
+      "human-command": "human",
+      "shadow-commander": "shadow",
+      "broken-court-monarch": "human"
+    },
+    "jointAlias": {
+      "human": {
+        "hips": "pelvis",
+        "upperarm_l": "upperarm.L",
+        "lowerarm_l": "lowerarm.L",
+        "hand_l": "hand.L",
+        "upperarm_r": "upperarm.R",
+        "lowerarm_r": "lowerarm.R",
+        "hand_r": "hand.R",
+        "shin_l": "shin.L",
+        "shin_r": "shin.R"
+      },
+      "shadow": {
+        "hips": "pelvis",
+        "upperarm_l": "upper_arm.L",
+        "lowerarm_l": "forearm.L",
+        "hand_l": "hand.L",
+        "upperarm_r": "upper_arm.R",
+        "lowerarm_r": "forearm.R",
+        "hand_r": "hand.R",
+        "shin_l": "shin.L",
+        "shin_r": "shin.R",
+        "cloak_root": "cloak_root",
+        "cape_root": "cape_root"
+      }
+    },
+    "exportSettings": {
+      "actionRange": "use strict start/end markers and preserve bone rest",
+      "armature": "single armature object per boss clip",
+      "constraints": "all constraints must be applied or baked before export",
+      "poseModeForBake": "sample all bone channels at source FPS",
+      "nlaPolicy": "one strip per action variant with clear prefix action::{action}::{variant}"
+    },
+    "motionCurveConstraints": {
+      "rootDiscontinuityTolM": 0.03,
+      "boneRotationTolDeg": 22,
+      "velocityTolMps": 8.0,
+      "ikToFkFallbackRequired": ["hips", "spine", "chest", "hand_l", "hand_r"]
+    },
+    "automatedRetargetChecks": [
+      "all required bones present",
+      "bone transforms finite at every frame",
+      "root displacement continuity below 0.03m between transition boundaries",
+      "hand bone count equal across source/target rig",
+      "no IK-only channels when FK fallback profile requested",
+      "joint alias map resolves all required channels",
+      "clip marker names match `action::{action}::{variant}`"
+    ]
+  },
+  "qaGates": {
+    "stage0": {
+      "name": "format alignment",
+      "criteria": [
+        "timing JSON contains all 11 action IDs for every boss",
+        "every action has exactly 4 variants",
+        "frame budgets within min/target/max bounds"
+      ]
+    },
+    "stage1": {
+      "name": "blocking pass",
+      "criteria": [
+        "each action has clear anticipation + impact + settle pose",
+        "no blocked silhouette overlap in intro/peak poses",
+        "camera stays in 2.5D isometric envelope"
+      ]
+    },
+    "stage2": {
+      "name": "timing collision and readability",
+      "criteria": [
+        "pose change density >= 1 major change per 24 frames",
+        "idle/move/run keep balance center within ±0.12m",
+        "attack tree has explicit recovery frame"
+      ]
+    },
+    "stage3": {
+      "name": "blender prep",
+      "criteria": [
+        "boss origin at z=0",
+        "unit scale consistent",
+        "proxy fallback used only when source rig missing"
+      ]
+    },
+    "stage4": {
+      "name": "animation bake + review",
+      "criteria": [
+        "NLA strips contiguous and labelled",
+        "cross-fade markers exported",
+        "frame drift <= 1px over 240px reference"
+      ]
+    },
+    "stage5": {
+      "name": "fx sync and loop polish",
+      "criteria": [
+        "impact peak frames have FX trigger markers",
+        "die final hold passes 2 loops without pop",
+        "show action exposes boss identity at least once in first 50 frames"
+      ]
+    },
+    "stage6": {
+      "name": "integration and release",
+      "criteria": [
+        "clips accepted by blend/import pipeline schema check",
+        "retarget map present per clip",
+        "runtimeEligible flag documented false until runtime mapping complete"
+      ]
+    }
+  },
+  "executionSequencing": {
+    "mode": "sequential",
+    "stages": [
+      "Stage0 schema lock",
+      "Stage1 blocking and pose blocking for all actions",
+      "Stage2 timing and transition proofread",
+      "Stage3 Blender scene and rig validation",
+      "Stage4 clip bake + NLA",
+      "Stage5 FX, transition, loop and show-stop polish",
+      "Stage6 QA and gate approval"
+    ],
+    "handoffCriteria": "next stage opens only after gate artifacts recorded as json in production/qa-gate-log.json"
+  }
+}

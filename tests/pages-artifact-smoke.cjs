@@ -29,6 +29,8 @@ const REQUIRED_FILES = [
   "assets/images/battle/echo-rusher-frame-01.png",
   "assets/images/battle/echo-rusher-frame-02.png",
   "assets/images/battle/echo-rusher-frame-03.png",
+  "assets/images/battle/world/cinder-span-topdown-plate.webp",
+  "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
 ];
 
 function argument(name) {

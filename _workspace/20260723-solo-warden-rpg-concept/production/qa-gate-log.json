@@ -1,0 +1,195 @@
+{
+  "pipelineId": "motion-previs-v2",
+  "runId": "run-0001",
+  "createdAtUtc": "2026-07-23T00:00:00Z",
+  "status": "pending",
+  "bosses": [
+    "sung-hum",
+    "human-command",
+    "shadow-commander",
+    "broken-court-monarch"
+  ],
+  "actions": [
+    "idle",
+    "move",
+    "run",
+    "hit",
+    "bighit",
+    "attack",
+    "critical",
+    "avoid",
+    "defence",
+    "die",
+    "show"
+  ],
+  "stageGates": [
+    {
+      "stage": "stage0",
+      "name": "format alignment",
+      "status": "pending",
+      "gatedAt": null,
+      "passCount": 0,
+      "failCount": 0,
+      "dependsOn": null,
+      "requiredArtifacts": [
+        "_workspace/20260723-solo-warden-rpg-concept/production/boss-motion-previs-action-pipeline.json",
+        "_workspace/20260723-solo-warden-rpg-concept/design/boss-concept-prompt-pack.json"
+      ],
+      "criteria": [
+        "timing JSON contains all 11 action IDs for every boss",
+        "every action has exactly 4 variants",
+        "frame budgets within min/target/max bounds"
+      ],
+      "automatedChecks": [
+        "schemaVersion must be set and parseable",
+        "action set size == 11 and each action has variantCount == 4"
+      ],
+      "notes": []
+    },
+    {
+      "stage": "stage1",
+      "name": "blocking pass",
+      "status": "pending",
+      "gatedAt": null,
+      "passCount": 0,
+      "failCount": 0,
+      "dependsOn": "stage0",
+      "requiredArtifacts": [
+        "per-boss blocking pose notes for all 11 actions",
+        "_workspace/20260723-solo-warden-rpg-concept/production/boss-motion-previs-action-pipeline.json",
+        "_workspace/20260723-solo-warden-rpg-concept/production/boss-motion-previs-timing.json"
+      ],
+      "criteria": [
+        "each action has clear anticipation + impact + settle pose",
+        "no blocked silhouette overlap in intro/peak poses",
+        "camera stays in 2.5D isometric envelope"
+      ],
+      "automatedChecks": [
+        "pose tags {anticipation,impact,settle} exist for each action",
+        "camera envelope pitch within -40..-75 and isometric yaw"
+      ],
+      "notes": []
+    },
+    {
+      "stage": "stage2",
+      "name": "timing collision and readability",
+      "status": "pending",
+      "gatedAt": null,
+      "passCount": 0,
+      "failCount": 0,
+      "dependsOn": "stage1",
+      "requiredArtifacts": [
+        "_workspace/20260723-solo-warden-rpg-concept/production/boss-motion-previs-timing.json",
+        "_workspace/20260723-solo-warden-rpg-concept/production/boss_previs_timings.json"
+      ],
+      "criteria": [
+        "pose change density >= 1 major change per 24 frames",
+        "idle/move/run keep balance center within ±0.12m",
+        "attack tree has explicit recovery frame"
+      ],
+      "automatedChecks": [
+        "major pose delta frequency >= 1/24f",
+        "center drift metrics logged per loop action",
+        "attack/critical variants include recover marker"
+      ],
+      "notes": []
+    },
+    {
+      "stage": "stage3",
+      "name": "blender prep",
+      "status": "pending",
+      "gatedAt": null,
+      "passCount": 0,
+      "failCount": 0,
+      "dependsOn": "stage2",
+      "requiredArtifacts": [
+        "_workspace/20260723-solo-warden-rpg-concept/production/boss_previs_workfile.blend",
+        "Blender armature collection + per-boss scene hierarchy"
+      ],
+      "criteria": [
+        "boss origin at z=0",
+        "unit scale consistent",
+        "proxy fallback used only when source rig missing"
+      ],
+      "automatedChecks": [
+        "origin object world.z == 0.0 for all bosses",
+        "armature scale matches metric meters",
+        "missing-source-rig decision logged before proxy activation"
+      ],
+      "notes": []
+    },
+    {
+      "stage": "stage4",
+      "name": "animation bake + review",
+      "status": "pending",
+      "gatedAt": null,
+      "passCount": 0,
+      "failCount": 0,
+      "dependsOn": "stage3",
+      "requiredArtifacts": [
+        "_workspace/20260723-solo-warden-rpg-concept/production/boss_previs_timings.json",
+        "NLA strips per boss/action/variant generated in scene"
+      ],
+      "criteria": [
+        "NLA strips contiguous and labelled",
+        "cross-fade markers exported",
+        "frame drift <= 1px over 240px reference"
+      ],
+      "automatedChecks": [
+        "NLA order and frame continuity check",
+        "cross-fade marker naming `trans::<from>::<to>::<frame>`",
+        "pose drift metric <= 1px/240px"
+      ],
+      "notes": []
+    },
+    {
+      "stage": "stage5",
+      "name": "fx sync and loop polish",
+      "status": "pending",
+      "gatedAt": null,
+      "passCount": 0,
+      "failCount": 0,
+      "dependsOn": "stage4",
+      "requiredArtifacts": [
+        "showcase playblast per boss/action/variant",
+        "FX trigger pass with impact frame map"
+      ],
+      "criteria": [
+        "impact peak frames have FX trigger markers",
+        "die final hold passes 2 loops without pop",
+        "show action exposes boss identity at least once in first 50 frames"
+      ],
+      "automatedChecks": [
+        "impact markers map to FX timeline channels",
+        "die hold continuity check for two-loop playback",
+        "identity-readability heuristic on first 50 frames of show"
+      ],
+      "notes": []
+    },
+    {
+      "stage": "stage6",
+      "name": "integration and release",
+      "status": "pending",
+      "gatedAt": null,
+      "passCount": 0,
+      "failCount": 0,
+      "dependsOn": "stage5",
+      "requiredArtifacts": [
+        "_workspace/20260723-solo-warden-rpg-concept/production/qa-gate-log.json",
+        "blend/import pipeline manifest",
+        "runtime-ready retarget map per clip"
+      ],
+      "criteria": [
+        "clips accepted by blend/import pipeline schema check",
+        "retarget map present per clip",
+        "runtimeEligible flag documented false until runtime mapping complete"
+      ],
+      "automatedChecks": [
+        "schema validator pass for every clip package",
+        "retarget map references bossRigMap and jointAlias",
+        "runtimeEligible field exists and is false/explicit"
+      ],
+      "notes": []
+    }
+  ]
+}

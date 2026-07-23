@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
@@ -84,4 +84,46 @@ test('defense asset manifest has literal, complete dispositions when generated',
     assert.equal(row.generator, 'scripts/build-defense-asset-manifest.mjs');
     assert.equal(currentPaths.includes(row.currentPath), false);
   }
+});
+
+test('approved Cinder Span world images remain retained runtime assets', () => {
+  const approvedPaths = [
+    'assets/images/battle/world/cinder-span-topdown-plate.webp',
+    'assets/images/battle/world/cinder-span-tactical-paper-plate.webp',
+  ];
+  const replacedPngPaths = approvedPaths.map((path) => path.replace(/\.webp$/, '.png'));
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+
+  for (const path of approvedPaths) {
+    assert.ok(retainedPaths.has(path), `${path} must be retained for the runtime`);
+  }
+  for (const path of replacedPngPaths) {
+    assert.equal(retainedPaths.has(path), false, `${path} must not re-enter the runtime asset closure`);
+  }
+
+  if (manifest.pendingGeneration) return;
+
+  for (const path of approvedPaths) {
+    assert.deepEqual(
+      manifest.rows.find((row) => row.currentPath === path),
+      {
+        currentPath: path,
+        disposition: 'retain',
+        extension: '.webp',
+        generator: 'scripts/build-defense-asset-manifest.mjs',
+        replacementPath: path,
+        runtimeReference: true,
+        testDisposition: 'retain',
+      },
+      `${path} must have an exact retained manifest disposition`,
+    );
+  }
+
+  for (const path of replacedPngPaths) {
+    const row = manifest.rows.find((entry) => entry.currentPath === path);
+    assert.ok(!row || row.runtimeReference === false, `${path} must not be retained as a duplicate runtime image`);
+  }
+
+  const totalBytes = approvedPaths.reduce((sum, path) => sum + statSync(resolve(root, path)).size, 0);
+  assert.ok(totalBytes <= 2 * 1024 * 1024, `Cinder Span runtime WebP plates must stay within the 2 MiB release budget (observed ${totalBytes} bytes)`);
 });

@@ -32,7 +32,7 @@ import {
 } from "./defense-run-simulation.js";
 import { RealtimeBattle } from "./battle-realtime-three.js";
 import { BattleVisualizer } from "./battle-visualizer.js";
-import { ARENA, COMPANIONS, REWARDS, RULES_VERSION, SKILLS, STAGE_BY_ID, STAGE_REWARD_IDS, TICK_RATE } from "./defense-catalog.js";
+import { ARENA, COMPANIONS, CUTSCENES, REWARDS, RULES_VERSION, SKILLS, STAGE_PRESENTATION_BY_ID, STAGE_REWARD_IDS, STAGE_TACTICS, TICK_RATE } from "./defense-catalog.js";
 import { cutsceneEventKey, cutsceneFromEvent } from "./defense-cutscene.js";
 import { DefenseAudio } from "./defense-audio.js";
 import { DefenseViewport } from "./defense-viewport.js";
@@ -54,12 +54,17 @@ const KEY_DIRECTIONS = Object.freeze({
   s: "S", arrowdown: "S", a: "W", arrowleft: "W",
 });
 const SNAPSHOT_FEEDBACK_TYPES = new Set(["CRITICAL_HIT", "LORE_SURPRISE_RESOLVED"]);
+const VISUAL_ACTOR_SCALE = 2.5;
+const CAMERA_FOLLOW_X_LIMIT = 0.18;
+const CAMERA_FOLLOW_Y_LIMIT = 0.14;
+const CAMERA_FOLLOW_EASING = 0.18;
 
 let campaign = null;
 let selectedStageId = STAGES[0].id;
 let statusText = "기록을 불러오는 중입니다.";
 let campaignWrite = Promise.resolve();
 let session = null;
+let idleReturnReceipt = null;
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -77,12 +82,62 @@ function stageFor(stageId) {
   return STAGES.find((stage) => stage.id === stageId) ?? STAGES[0];
 }
 
-function stageLabel(stage) {
-  return `${stage.sequence}. ${stage.name} · ${stage.bossName}`;
+
+
+function stagePresentationFor(stageId) {
+  return STAGE_PRESENTATION_BY_ID[stageId] ?? STAGE_PRESENTATION_BY_ID[STAGES[0].id];
 }
 
-function stageSpecFor(stageId) {
-  return STAGE_BY_ID[stageId] ?? STAGE_BY_ID[STAGES[0].id];
+function normalizedPosition(x, y) {
+  return Object.freeze({
+    x: x / ARENA.width * 2 - 1,
+    y: y / ARENA.height * 2 - 1,
+  });
+}
+
+function stageTerrainProjection(stageId) {
+  const tactics = STAGE_TACTICS[stageId] ?? STAGE_TACTICS[STAGES[0].id];
+  const presentation = stagePresentationFor(stageId);
+  return Object.freeze({
+    patternId: presentation.terrain.patternId,
+    label: presentation.terrain.label,
+    palette: presentation.palette,
+    chokepath: Object.freeze({
+      id: tactics.chokepath.id,
+      ...normalizedPosition(tactics.chokepath.x, ARENA.height / 2),
+      halfWidth: tactics.chokepath.halfWidth / ARENA.width * 2,
+      label: presentation.mapLabels.chokepath,
+    }),
+    flank: Object.freeze({
+      id: tactics.flank.id,
+      ...normalizedPosition(tactics.flank.entryX, tactics.flank.entryY),
+      label: presentation.mapLabels.flank,
+    }),
+    elevation: Object.freeze({
+      id: tactics.elevation.id,
+      ...normalizedPosition(tactics.elevation.x, tactics.elevation.y),
+      label: presentation.mapLabels.elevation,
+    }),
+    hazard: Object.freeze({
+      id: tactics.hazard.id,
+      ...normalizedPosition(tactics.hazard.x, tactics.hazard.y),
+      radius: tactics.hazard.radius / ARENA.width * 2,
+      label: presentation.mapLabels.hazard,
+    }),
+    occupation: Object.freeze({
+      id: tactics.occupation.id,
+      ...normalizedPosition(tactics.occupation.x, tactics.occupation.y),
+      radius: tactics.occupation.radius / ARENA.width * 2,
+      label: presentation.mapLabels.occupation,
+    }),
+    extraction: Object.freeze({
+      id: tactics.extraction.id,
+      ...normalizedPosition(tactics.extraction.x, tactics.extraction.y),
+      radius: tactics.extraction.radius / ARENA.width * 2,
+      label: presentation.mapLabels.extraction,
+    }),
+    spawnDirections: tactics.spawnDirections,
+  });
 }
 
 function companionGlyph(prototype) {
@@ -96,13 +151,40 @@ function companionGlyph(prototype) {
   }[prototype] ?? "·";
 }
 
+function stageNarrativeFor(stageId) {
+  return CUTSCENES[stageId] ?? CUTSCENES.default;
+}
+
 function stageObjective(stageId) {
-  const objectives = {
-    "cinder-span": "잿빛 교량의 봉쇄점을 지키고 첫 잔향을 회수",
-    "veil-citadel": "장막 신호를 점유해 관문 압력을 낮춤",
-    "echo-throne": "왕좌의 메아리를 끊고 중앙 전선을 유지",
-  };
-  return objectives[stageId] ?? "추출점을 점유하고 보스의 명령망을 봉쇄";
+  const intro = stageNarrativeFor(stageId).intro;
+  const lines = Array.isArray(intro) ? intro.filter((line) => typeof line === "string") : [];
+  return lines.join(" ") || "관문을 지키고 메아리를 추출하라.";
+}
+
+function idleReturnSummary() {
+  const total = campaign?.idleReturn?.totalProgress ?? 0;
+  const receipt = idleReturnReceipt;
+  if (receipt?.outcome === "SETTLED") {
+    return { outcome: receipt.outcome, total, text: `오프라인 귀환 정산 완료 · +${receipt.awardedProgress} 기록 · 누적 ${total}` };
+  }
+  if (receipt?.outcome === "NO_COMPLETED_STAGES") {
+    return { outcome: receipt.outcome, total, text: `오프라인 귀환을 확인했습니다 · 완료 전선 없음 · 누적 ${total}` };
+  }
+  if (receipt?.outcome === "ENCROACHED") {
+    return { outcome: receipt.outcome, total, text: `저지선 압력 초과 · 이번 구간 정산 몰수(동료/장비/영구성장 손실 없음) · 저지 레벨 ${campaign ? wardLevel(campaign) : 0} · 누적 ${total}` };
+  }
+  if (receipt?.outcome === "INITIALIZED") {
+    return { outcome: receipt.outcome, total, text: `오프라인 귀환 기록 시작 · 누적 ${total}` };
+  }
+  return { outcome: receipt?.outcome ?? "UNAVAILABLE", total, text: `오프라인 귀환 기록 · 누적 ${total}` };
+}
+
+function integrityProjection(actor) {
+  const maxIntegrity = Math.max(1, Number.isFinite(actor?.maxIntegrity) ? actor.maxIntegrity : 1);
+  const integrity = Math.max(0, Math.min(maxIntegrity, Number.isFinite(actor?.integrity) ? actor.integrity : 0));
+  const ratio = integrity / maxIntegrity;
+  const state = ratio <= 0.15 ? "critical" : ratio <= 0.35 ? "pressured" : "stable";
+  return { integrity, maxIntegrity, ratio, state };
 }
 
 function nextRewardName(stageId) {
@@ -244,7 +326,9 @@ function renderGrowthPanel() {
 function renderLobby() {
   if (!campaign) return;
   const selected = stageFor(selectedStageId);
-  const selectedSpec = stageSpecFor(selected.id);
+  const idleSummary = idleReturnSummary();
+  const selectedPresentation = stagePresentationFor(selected.id);
+  const selectedTerrain = stageTerrainProjection(selected.id);
   const loadout = selectedLoadout();
   const collection = campaign.companionCollection;
   const completed = campaign.resolvedIds?.length ?? 0;
@@ -266,11 +350,18 @@ function renderLobby() {
         <div class="hero-facts"><span><small>현재 목표</small><b>관문 방어</b></span><span><small>다음 위협</small><b>${escapeHtml(selected.bossName)}</b></span><span><small>출전 편성</small><b>${loadout.length}/3 슬롯</b></span></div>
         <button id="start-defense" class="primary-action hero-cta"><span>작전 개시</span><small>${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)} 전선으로</small><b aria-hidden="true">↗</b></button>
       </div>
-      <div class="tactical-map" aria-label="선택한 전선의 전술 지도">
-        <div class="map-grid" aria-hidden="true"></div><div class="map-route route-a" aria-hidden="true"></div><div class="map-route route-b" aria-hidden="true"></div>
-        <div class="map-node node-gate"><span>GATE</span><b>관문</b></div><div class="map-node node-seal"><span>SEAL</span><b>점유점</b></div><div class="map-node node-threat"><span>THREAT</span><b>보스</b></div>
-        <div class="map-readout"><span>작전 구역</span><strong>${escapeHtml(selected.name)}</strong><small>방어선 ${selected.sequence} · 위험도 ${Math.min(99, Math.round(selectedSpec.scale / 2.4))}%</small></div>
-      </div>
+      <section class="tactical-map stage-atlas" data-stage-atlas="selected" data-stage-id="${escapeHtml(selected.id)}" data-terrain-pattern="${escapeHtml(selectedPresentation.terrain.patternId)}" aria-labelledby="atlas-title" aria-describedby="atlas-context">
+        <div class="map-grid atlas-contours" aria-hidden="true"></div>
+        <div class="map-route route-a" aria-hidden="true"></div><div class="map-route route-b" aria-hidden="true"></div>
+        <div class="map-node node-gate" aria-hidden="true"><span>GATE</span><b>관문</b></div><div class="map-node node-seal" aria-hidden="true"><span>BIND</span><b>점유점</b></div><div class="map-node node-threat" aria-hidden="true"><span>THREAT</span><b>위협</b></div>
+        <div class="map-readout"><span>SEAL ATLAS · ${escapeHtml(selectedPresentation.terrain.label)}</span><strong id="atlas-title">${escapeHtml(selectedPresentation.mapLabels.title)}</strong><small>${escapeHtml(selectedPresentation.mapLabels.domain)} · ${escapeHtml(selectedPresentation.atmosphere.motif)}</small></div>
+        <dl id="atlas-context" class="atlas-context" data-stage-map-context="terrain">
+          <div><dt>지형</dt><dd>${escapeHtml(selectedPresentation.terrain.label)} · ${escapeHtml(selectedPresentation.mapLabels.chokepath)}</dd></div>
+          <div><dt>랜드마크</dt><dd>${escapeHtml(selectedPresentation.landmarks.map(({ label }) => label).join(" · "))}</dd></div>
+          <div><dt>위협</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)} (${escapeHtml(selectedTerrain.spawnDirections.join(", "))})</dd></div>
+          <div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div>
+        </dl>
+      </section>
     </section>
     <div class="ops-grid">
       <section class="mission-panel" aria-labelledby="stage-title">
@@ -284,10 +375,10 @@ function renderLobby() {
         </div>
       </section>
       <aside class="briefing-panel" aria-labelledby="briefing-title">
-        <div class="panel-heading"><div><p class="eyebrow">TACTICAL BRIEFING</p><h2 id="briefing-title">작전 브리핑</h2></div><span class="briefing-code">AC-${String(selected.sequence).padStart(2, "0")}</span></div>
-        <div class="briefing-target"><span class="target-sigil" aria-hidden="true">◉</span><div><small>최우선 위협</small><strong>${escapeHtml(selected.bossName)}</strong><span>${escapeHtml(selectedObjective)}</span></div></div>
-        <dl class="briefing-stats"><div><dt>전선 난이도</dt><dd><span class="difficulty-bars" aria-label="난이도 ${Math.min(5, Math.ceil(selected.sequence / 2))}/5">${"▮".repeat(Math.min(5, Math.ceil(selected.sequence / 2)))}${"▯".repeat(5 - Math.min(5, Math.ceil(selected.sequence / 2)))}</span></dd></div><div><dt>다음 보상</dt><dd>${escapeHtml(nextRewardName(selected.id))}</dd></div><div><dt>작전 방식</dt><dd>이동 + 자동 사격</dd></div></dl>
-        <p class="briefing-tip"><strong>군주여, 일어나라!</strong> 중앙 전장에서 손가락을 끌어 이동하세요. 적을 처치하고 <b>추출(Extract)</b>하여 그림자 군단으로 복속시킬 수 있습니다.</p>
+        <div class="panel-heading"><div><p class="eyebrow">TACTICAL BRIEFING · ${escapeHtml(selectedPresentation.mapLabels.domain)}</p><h2 id="briefing-title">작전 브리핑</h2></div><span class="briefing-code">AC-${String(selected.sequence).padStart(2, "0")}</span></div>
+        <div class="briefing-target" data-stage-briefing="selected" data-stage-id="${escapeHtml(selected.id)}"><span class="target-sigil" aria-hidden="true">◉</span><div><small>${escapeHtml(selectedPresentation.mapLabels.title)} · ${escapeHtml(selectedPresentation.atmosphere.descriptor)}</small><strong>${escapeHtml(selected.bossName)}</strong><span id="briefing-stage-narrative" data-stage-id="${escapeHtml(selected.id)}">${escapeHtml(selectedObjective)}</span></div></div>
+        <dl class="briefing-stats"><div><dt>지형 / 고지</dt><dd>${escapeHtml(selectedPresentation.mapLabels.chokepath)} · ${escapeHtml(selectedPresentation.mapLabels.elevation)}</dd></div><div><dt>위협 / 측면</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)}</dd></div><div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div><div><dt>다음 보상</dt><dd>${escapeHtml(nextRewardName(selected.id))}</dd></div></dl>
+        <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 중앙 전장에서 손가락을 끌어 이동하세요. 적을 처치하고 <b>추출(Extract)</b>하여 그림자 군단으로 복속시킬 수 있습니다.</p>
       </aside>
       <section class="loadout-panel" aria-labelledby="companion-title">
         <div class="panel-heading"><div><p class="eyebrow">COMMAND BOND</p><h2 id="companion-title">동료 편성</h2></div><span class="panel-count">${loadout.length}/3 ACTIVE</span></div>
@@ -297,8 +388,7 @@ function renderLobby() {
       </section>
       ${renderGrowthPanel()}
       <section class="archive-panel" aria-labelledby="reward-title">
-        <div class="panel-heading"><div><p class="eyebrow">ARCHIVE</p><h2 id="reward-title">기록실</h2></div><span class="panel-count">${campaign.rewardIds?.length ?? 0} RELICS</span></div>
-        <div class="archive-summary"><span class="archive-ring"><b>${completed}</b><small>전선<br />완료</small></span><div><strong>영구 진행</strong><p>보스 보상과 동료 결속은 기록실에 남아 다음 런에도 이어집니다.</p></div></div>
+        <div class="archive-summary"><span class="archive-ring"><b>${completed}</b><small>전선<br />완료</small></span><div><strong>영구 진행</strong><p>보스 보상과 동료 결속은 기록실에 남아 다음 런에도 이어집니다.</p><p id="idle-return-summary" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p></div></div>
         <div class="reward-grid">${(campaign.rewardIds?.length ?? 0) ? campaign.rewardIds.map((id) => `<article class="reward-card"><span class="reward-mark">✦</span><strong>${escapeHtml(REWARDS[id]?.name ?? id)}</strong><span>${escapeHtml(REWARDS[id]?.description ?? "기록된 보상")}</span></article>`).join("") : `<p class="empty-archive">첫 보스를 봉쇄하면 영구 보상을 선택할 수 있습니다.</p>`}</div>
       </section>
     </div>
@@ -442,13 +532,13 @@ function beginSession(stageId) {
       <canvas id="defense-canvas" aria-label="방어 전장"></canvas>
       <div id="defense-edge-hud">
         <div class="defense-edge defense-top">
-          <div class="hud-panel hud-mission"><span class="hud-eyebrow">ABYSSAL COMMAND</span><strong id="battle-stage"></strong><span id="battle-status" aria-live="polite"></span></div>
-          <div class="top-right-hud"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong>관문을 지켜라</strong></span></div><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div></div>
+          <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">ABYSSAL COMMAND · SEAL ATLAS</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span></div>
+          <div class="top-right-hud"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div></div>
         </div>
         <output id="battle-event-feedback" class="battle-event-feedback" role="status" aria-live="polite" aria-atomic="true"></output>
         <div class="arena-callout" aria-hidden="true"><span>GATE CORE</span><i></i><span>전선을 유지하세요</span></div>
         <div class="defense-edge defense-bottom">
-          <div class="hud-panel gate-panel"><div class="gate-panel-copy"><span class="hud-eyebrow">GATE INTEGRITY</span><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div></div>
+          <div class="hud-panel gate-panel"><div class="gate-panel-copy"><span class="hud-eyebrow">COMMANDER / GATE INTEGRITY</span><strong id="battle-commander-integrity"></strong><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div></div>
           <div class="one-thumb-controls" id="movement-actions" role="group" aria-label="한 손 이동 조작">
             <button type="button" data-move="N" aria-label="위로 이동">↑</button>
             <button type="button" data-move="W" aria-label="왼쪽으로 이동">←</button>
@@ -459,7 +549,6 @@ function beginSession(stageId) {
           <div class="hud-actions" id="battle-actions" aria-label="전투 행동"></div>
         </div>
       </div>
-    </section>
     </section>`;
   session = new BattleSession(stageId);
   session.start();
@@ -507,6 +596,7 @@ export class BattleSession {
     this.cutsceneEventKeys = new Set();
     this.cutsceneTimer = null;
     this.stopped = false;
+    this.camera = { x: 0, y: 0 };
     this.focusBeforeGrowth = null;
     this.onResize = this.resize.bind(this);
     this.onPointerDown = this.onPointerDown.bind(this);
@@ -518,7 +608,10 @@ export class BattleSession {
     this.onMoveControlEnd = this.onMoveControlEnd.bind(this);
     this.onMoveControlClick = this.onMoveControlClick.bind(this);
     this.onVisibility = this.onVisibility.bind(this);
-    this.onReducedMotion = (event) => telemetry.recordReducedMotion(event.matches);
+    this.onReducedMotion = (event) => {
+      telemetry.recordReducedMotion(event.matches);
+      if (event.matches) this.camera = { x: 0, y: 0 };
+    };
     this.loop = this.loop.bind(this);
   }
 
@@ -573,6 +666,31 @@ export class BattleSession {
     const ratio = Math.min(globalThis.devicePixelRatio || 1, 2);
     this.canvas.width = Math.max(1, Math.round(width * ratio));
     this.canvas.height = Math.max(1, Math.round(height * ratio));
+    this.resetCamera();
+  }
+
+  resetCamera() {
+    this.camera = { x: 0, y: 0 };
+  }
+
+  updateCamera(commander) {
+    const width = Math.max(1, this.canvas?.width ?? 1);
+    const height = Math.max(1, this.canvas?.height ?? 1);
+    const x = Number.isFinite(commander?.x) ? commander.x : 0;
+    const y = Number.isFinite(commander?.y) ? commander.y : 0;
+    const target = {
+      x: Math.max(-width * CAMERA_FOLLOW_X_LIMIT, Math.min(width * CAMERA_FOLLOW_X_LIMIT, -x * width / 2)),
+      y: Math.max(-height * CAMERA_FOLLOW_Y_LIMIT, Math.min(height * CAMERA_FOLLOW_Y_LIMIT, -y * height / 2)),
+    };
+    if (this.motionQuery?.matches) {
+      this.camera = target;
+      return target;
+    }
+    this.camera = {
+      x: this.camera.x + (target.x - this.camera.x) * CAMERA_FOLLOW_EASING,
+      y: this.camera.y + (target.y - this.camera.y) * CAMERA_FOLLOW_EASING,
+    };
+    return this.camera;
   }
 
   logicalPoint(event) {
@@ -718,13 +836,13 @@ export class BattleSession {
     const pixelRatio = Math.min(globalThis.devicePixelRatio || 1, 2);
     const presentationRadius = (actor) => {
       if (actor.id === "gate") return 30;
-      if (actor.id === "commander") return 11;
-      if (actor.class === "boss") return 25;
-      if (actor.elite) return 14;
+      if (actor.id === "commander") return 11 * VISUAL_ACTOR_SCALE;
+      if (actor.class === "boss") return 25 * VISUAL_ACTOR_SCALE;
+      if (actor.elite) return 14 * VISUAL_ACTOR_SCALE;
       if (actor.kind === "companion") return 9;
       if (actor.kind === "projectile") return 3;
       if (actor.kind === "pickup") return 5;
-      return 8;
+      return 8 * VISUAL_ACTOR_SCALE;
     };
     const project = (actor) => ({
       ...actor,
@@ -733,8 +851,15 @@ export class BattleSession {
       radius: presentationRadius(actor) * pixelRatio,
       normalized: true,
     });
+    const presentation = Object.freeze({
+      stageId: this.stageId,
+      visualScale: VISUAL_ACTOR_SCALE,
+      stagePresentation: stagePresentationFor(this.stageId),
+      terrain: stageTerrainProjection(this.stageId),
+    });
     return {
       ...snapshot,
+      presentation,
       gate: project(snapshot.gate),
       commander: project(snapshot.commander),
       enemies: snapshot.enemies.map(project),
@@ -840,15 +965,29 @@ export class BattleSession {
     this.recordExtraction(snapshot);
     this.consumeCutscenes(snapshot.events);
     const projection = this.projected(snapshot);
+    const camera = this.updateCamera(projection.commander);
+    const frame = {
+      viewport: this.canvas,
+      portrait: document.documentElement.dataset.defensePortrait === "true",
+      camera: Object.freeze({ x: camera.x, y: camera.y }),
+    };
     try {
-      this.renderer?.renderSnapshot(projection, { viewport: this.canvas });
+      this.renderer?.renderSnapshot(projection, frame);
     } catch {
       this.renderer?.dispose?.();
       this.renderer = new BattleVisualizer().mount({ canvas: this.canvas, viewport: this.canvas });
-      this.renderer.renderSnapshot(projection, { viewport: this.canvas });
+      this.renderer.renderSnapshot(projection, frame);
     }
     const stage = stageFor(this.stageId);
+    const gateIntegrity = integrityProjection(snapshot.gate);
+    const commanderIntegrity = integrityProjection(snapshot.commander);
+    const presentation = stagePresentationFor(this.stageId);
     root.querySelector("#battle-stage").textContent = `${stage.sequence}. ${stage.name}`;
+    root.querySelector("#battle-domain").textContent = `${presentation.mapLabels.title} · ${presentation.mapLabels.domain}`;
+    root.querySelector("#battle-terrain-context").textContent = `${presentation.terrain.label} · ${presentation.mapLabels.hazard} · ${presentation.mapLabels.occupation} → ${presentation.mapLabels.extraction}`;
+    this.surface.dataset.stageId = this.stageId;
+    this.surface.dataset.terrainPattern = presentation.terrain.patternId;
+    this.surface.dataset.visualScale = String(VISUAL_ACTOR_SCALE);
     this.statusNode.textContent = this.userPaused
       ? "사용자 일시 정지"
       : snapshot.growthOffer
@@ -858,8 +997,20 @@ export class BattleSession {
           : snapshot.terminal
             ? "전투 종료"
             : `시간 ${Math.floor(snapshot.tick / TICK_RATE)}초 · Lv.${snapshot.commander.level}`;
-    root.querySelector("#battle-integrity").textContent = `관문 내구 ${snapshot.gate.integrity}/${snapshot.gate.maxIntegrity}`;
-    root.querySelector("#battle-integrity-fill").style.width = `${Math.max(0, Math.min(100, snapshot.gate.integrity / snapshot.gate.maxIntegrity * 100))}%`;
+    root.querySelector("#battle-objective").textContent = presentation.mapLabels.objective;
+    const commanderNode = root.querySelector("#battle-commander-integrity");
+    commanderNode.textContent = `지휘관 내구 ${commanderIntegrity.integrity}/${commanderIntegrity.maxIntegrity} · ${commanderIntegrity.state}`;
+    commanderNode.dataset.integrityState = commanderIntegrity.state;
+    commanderNode.dataset.integrityCurrent = String(commanderIntegrity.integrity);
+    commanderNode.dataset.integrityMax = String(commanderIntegrity.maxIntegrity);
+    const gateNode = root.querySelector("#battle-integrity");
+    gateNode.textContent = `관문 내구 ${gateIntegrity.integrity}/${gateIntegrity.maxIntegrity} · ${gateIntegrity.state}`;
+    gateNode.dataset.integrityState = gateIntegrity.state;
+    gateNode.dataset.integrityCurrent = String(gateIntegrity.integrity);
+    gateNode.dataset.integrityMax = String(gateIntegrity.maxIntegrity);
+    this.surface.dataset.commanderIntegrity = commanderIntegrity.state;
+    this.surface.dataset.gateIntegrity = gateIntegrity.state;
+    root.querySelector("#battle-integrity-fill").style.width = `${gateIntegrity.ratio * 100}%`;
     root.querySelector("#battle-enemies").textContent = `적 ${snapshot.enemies.length} · 처치 ${snapshot.progress.defeated} · 아이템 ${snapshot.progress.itemsCollected}`;
     this.renderControls(snapshot);
     if (snapshot.terminal && !this.terminalHandled) void this.resolveTerminal(snapshot);
@@ -1021,6 +1172,7 @@ export class BattleSession {
     this.unlisten(window, "abyssal:defense-viewportchange", this.onResize);
     if (this.motionQuery) this.unlisten(this.motionQuery, "change", this.onReducedMotion);
     this.renderer?.dispose?.();
+    this.resetCamera();
     this.audio.stop();
     this.dismissCutscene();
     globalThis.screen?.orientation?.unlock?.();
@@ -1032,9 +1184,11 @@ export class BattleSession {
 async function initialize() {
   try {
     await storage.open();
+    const settlement = await storage.settleIdleReturn({ now: Date.now() });
+    campaign = settlement.campaign ?? createCampaign();
+    idleReturnReceipt = settlement.receipt;
+  } catch {
     campaign = (await storage.load()) ?? createCampaign();
-  } catch (err) {
-    campaign = createCampaign();
   }
   selectedStageId = STAGES[campaign.unlockedStageIndex]?.id ?? STAGES[0].id;
   statusText = `저장소 ${storage.backend ?? "메모리"} 준비됨`;

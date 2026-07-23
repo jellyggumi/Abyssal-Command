@@ -626,6 +626,24 @@
       "testDisposition": "delete"
     },
     {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
+      "replacementPath": "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
+      "extension": ".webp",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/world/cinder-span-topdown-plate.webp",
+      "replacementPath": "assets/images/battle/world/cinder-span-topdown-plate.webp",
+      "extension": ".webp",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
       "disposition": "delete",
       "currentPath": "assets/models/abyssal-command/abyssal-command-resource-pack.blend",
       "replacementPath": null,
@@ -1766,42 +1784,6 @@
       "currentPath": "assets/images/battle/sovereign-atlas.png",
       "replacementPath": null,
       "extension": ".png",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
-    },
-    {
-      "disposition": "delete",
-      "currentPath": "assets/images/battle/world/cinder-span-tactical-paper-plate.png",
-      "replacementPath": null,
-      "extension": ".png",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
-    },
-    {
-      "disposition": "delete",
-      "currentPath": "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
-      "replacementPath": null,
-      "extension": ".webp",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
-    },
-    {
-      "disposition": "delete",
-      "currentPath": "assets/images/battle/world/cinder-span-topdown-plate.png",
-      "replacementPath": null,
-      "extension": ".png",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
-    },
-    {
-      "disposition": "delete",
-      "currentPath": "assets/images/battle/world/cinder-span-topdown-plate.webp",
-      "replacementPath": null,
-      "extension": ".webp",
       "generator": "scripts/build-defense-asset-manifest.mjs",
       "runtimeReference": false,
       "testDisposition": "delete"

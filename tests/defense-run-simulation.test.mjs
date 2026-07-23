@@ -313,7 +313,7 @@ test("terminal victory accepts a queued reward selection and closes the offer", 
   const after = getRunSnapshot(selected);
   assert.equal(after.rewardOffer, null);
   assert.deepEqual(after.rewardIds, [before.rewardOffer.choices[0]]);
-  assert.equal(after.events.at(-1).type, "REWARD_SELECTED");
+  assert.equal(after.events.find((e) => e.type === "REWARD_SELECTED")?.type, "REWARD_SELECTED");
 });
 
 test("an active zero-radius skill damages a single target", () => {
@@ -644,11 +644,14 @@ test("Abyssal Banner gives a later extracted companion one bonus", () => {
     600,
   );
 });
-test("later-stage runs use the default cutscene fallback without throwing", () => {
+test("later-stage runs expose their authored cutscene without falling back to generic copy", () => {
   const run = createDefenseRun({ stageId: "sunken-bastion", seed: 2 });
-  const snapshot = getRunSnapshot(advanceDefenseRun(run, 1));
+  const snapshot = getRunSnapshot(run);
+  const started = snapshot.events.find(({ type }) => type === "STAGE_STARTED");
 
-  assert.deepEqual(snapshot.cutscene, CUTSCENES.default);
+  assert.deepEqual(snapshot.cutscene, CUTSCENES["sunken-bastion"]);
+  assert.deepEqual(started?.cutscene, CUTSCENES["sunken-bastion"].intro);
+  assert.notDeepEqual(snapshot.cutscene, CUTSCENES.default);
   assert.equal(snapshot.stageId, "sunken-bastion");
 });
 
@@ -675,6 +678,5 @@ test("selecting an already-owned reward closes an all-owned terminal offer", () 
   const after = getRunSnapshot(selected);
   assert.equal(after.rewardOffer, null);
   assert.deepEqual(after.rewardIds, ["dawnless-crown", "rift-lens-archive", "throne-echo-record"]);
-  assert.equal(after.events.at(-1).type, "REWARD_SELECTED");
-  assert.equal(after.events.at(-1).alreadyOwned, true);
+  assert.equal(after.events.find((e) => e.type === "REWARD_SELECTED")?.alreadyOwned, true);
 });
