@@ -4,6 +4,7 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./app.js",
+  "./rpg-catalog.js",
   "./defense-viewport.js",
   "./defense-catalog.js",
   "./defense-run-simulation.js",
