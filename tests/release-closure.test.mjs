@@ -12,7 +12,7 @@ const ROOT = new URL("../", import.meta.url);
 const RULES_VERSION = "defense-survivor-v1";
 const GAMEPLAY_VIDEO = "assets/video/abyssal-surge-defense-survivor-smoke.mp4";
 const RUNTIME_PATHS = new Set([
-  "index.html", "app.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
+  "index.html", "app.js", "rpg-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
   "campaign-state.js", "defense-storage.js", "defense-cutscene.js", "defense-telemetry.js", "defense-audio.js",
   "battle-realtime-three.js", "battle-visualizer.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png",

@@ -9,7 +9,9 @@ import {
   serializeCampaign,
   settleIdleReturn,
   startRun,
+  wardLevel,
 } from "../campaign-state.js";
+import { STAGES } from "../defense-catalog.js";
 import { DefenseStorage } from "../defense-storage.js";
 import { createDefenseRun, getRunSnapshot } from "../defense-run-simulation.js";
 
@@ -22,17 +24,28 @@ function memoryStorage(initialValues = []) {
   };
 }
 
+/**
+ * `count` completed stages, drawn from the real 10-stage `STAGES` order (not a fixed
+ * 2-stage list) so tests can reach a `wardLevel` above the 8h-idle wardline-pressure cap
+ * (`campaign-state.js`'s `wardlinePressure`, saturates at 8) when they need the SETTLED
+ * path rather than ENCROACHED — see `campaign-state-rpg.test.mjs`'s dedicated ENCROACHED
+ * coverage for that gate's own tests.
+ */
 function campaignWithCompletedStages(count = 1) {
   let campaign = createCampaign({ campaignId: `idle-${count}` });
-  for (const stageId of ["cinder-span", "veil-citadel"].slice(0, count)) {
-    campaign = startRun(campaign, stageId);
-    campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
+  for (const stage of STAGES.slice(0, count)) {
+    campaign = startRun(campaign, stage.id);
+    campaign = applyCampaignRunResult(campaign, { stageId: stage.id, outcome: "victory" });
   }
   return campaign;
 }
 
 test("idle settlement caps elapsed time, awards only completed-stage progress, and leaves an active run unchanged", () => {
-  const campaign = campaignWithCompletedStages(2);
+  // 9 completed stages -> wardLevel 9 (no companions captured on a plain "victory" outcome),
+  // comfortably above the wardline-pressure cap of 8 so this exercises the SETTLED path this
+  // test has always covered, not the newer ENCROACHED gate (233a9d0) which has its own tests.
+  const campaign = campaignWithCompletedStages(9);
+  assert.equal(wardLevel(campaign), 9);
   const activeRun = createDefenseRun({ stageId: "cinder-span", seed: 41 });
   const activeRunSnapshot = getRunSnapshot(activeRun);
   const campaignBeforeSettlement = serializeCampaign(campaign);
@@ -46,8 +59,8 @@ test("idle settlement caps elapsed time, awards only completed-stage progress, a
     requestedAt: 10_000 + IDLE_RETURN_MAX_ELAPSED_MS + (3 * IDLE_RETURN_INTERVAL_MS),
     elapsedMs: IDLE_RETURN_MAX_ELAPSED_MS + (3 * IDLE_RETURN_INTERVAL_MS),
     settledElapsedMs: IDLE_RETURN_MAX_ELAPSED_MS,
-    completedStages: 2,
-    awardedProgress: 2 * (IDLE_RETURN_MAX_ELAPSED_MS / IDLE_RETURN_INTERVAL_MS),
+    completedStages: 9,
+    awardedProgress: 9 * (IDLE_RETURN_MAX_ELAPSED_MS / IDLE_RETURN_INTERVAL_MS),
     settledAt: 10_000 + IDLE_RETURN_MAX_ELAPSED_MS + (3 * IDLE_RETURN_INTERVAL_MS),
   });
   assert.deepEqual(serializeCampaign(campaign), campaignBeforeSettlement, "settlement must not mutate its campaign input");
