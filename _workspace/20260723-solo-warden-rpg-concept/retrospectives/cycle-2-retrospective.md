@@ -15,7 +15,7 @@ run-id: `20260723-solo-warden-rpg-concept` · director: game-production-director
 | R3 (supplementary) | 2 | PASS | PASS (re-confirmed) | 1.166×-1.326×, within 1.3× cap |
 | R5 (supplementary) | 2 | unreachable-by-construction | unchanged | NG+ scope still undecided |
 | G4 | 3 | PARTIAL | PARTIAL (accessibility scope widened) | 0/108 undersized elements across 5 real milestones |
-| G6 | 3 | PARTIAL | PARTIAL (perf scope widened) | 427 DOM nodes, 8.332ms rAF, +2.36% heap growth at true endpoint |
+| G6 | 3 | PARTIAL | mostly closed (ops-docs via concurrent push + a new hazard finding) | 427 DOM nodes, 8.332ms rAF, +2.36% heap growth at true endpoint; rollback save-loss hazard now documented |
 | G1 final | 3 | PASS | PASS (unchanged) | zero new narrative content this cycle |
 
 ## What this cycle actually closed
@@ -31,12 +31,15 @@ R1's full-protocol measurement (the other major PENDING item) is now a precise, 
 3. **G8 novelty scoring** — untouched for 2 cycles; designer-owned, blocked on nothing technical, just not yet scheduled.
 4. **NG+ scope decision** (`UNIFIED-GDD.md` §12 item 6) — now blocks 2 independent things (R5's session-15 ceiling, PM's completionist-collector session band). Worth prioritizing next cycle since it's unblocking two open items at once, not one.
 5. **Stage 6 Undertow-stable badge** — a genuine, newly-discovered content/presentation gap (design doc describes it, no UI implements it). Small, bounded, not urgent.
+6. **Rollback save-schema hazard** (surfaced by the concurrent workstream covered below, cross-referenced in `production/gate-reviews/stage3-review-cycle2.md`) — rolling back across this cycle's `233a9d0` boundary silently discards a player's save on their first post-rollback action. Mitigation path documented (`ops/rollback-runbook.md`); not yet live-tested, correctly deferred as a human-authorization decision given the now-known risk.
 
-## Process note: the collision-avoidance strategy was tested for real, not just planned
+## Process note: two collisions this cycle, one contained by design, one exposing a real gap
 
-Cycle 1's retrospective (implicit in this cycle's `decision-log.md#D15`/`D16` references to it) identified shared-working-tree contamination as the root cause of 2 production-breaking pushes. This cycle opened by setting up an isolated git worktree specifically because of that lesson — and then a substantial concurrent push actually landed on `main` mid-cycle, hitting 2 of the exact files this cycle also modified. This was the real test of whether the isolation strategy actually works, not just a precaution taken and never exercised.
+Cycle 1's retrospective identified shared-working-tree contamination as the root cause of 2 production-breaking pushes. This cycle opened by setting up an isolated git worktree specifically because of that lesson.
 
-It held. The worktree didn't prevent the collision (concurrent work on `main` will always be possible) but it made the collision *visible and inspectable* rather than silently overwritten — the merge required reading actual conflict content, and in both overlapping cases the concurrent branch's independent fix was verified (not assumed) to be a strict superset of this cycle's own fix before taking it wholesale. Zero regressions crossed the merge boundary; the full suite went from this cycle's clean 148/4 baseline to a merged 164/0 with the concurrent branch's own commit incidentally closing 4 additional pre-existing failures neither branch was individually scoped to fix.
+**Collision 1 (worktree-level, contained)**: a substantial concurrent push landed on `main` mid-cycle (`e7d5e8d`, world-art feature branch), hitting 2 of the exact files this cycle also modified. The worktree strategy worked exactly as designed — it made the collision *visible and inspectable* rather than silently overwritten. The merge required reading actual conflict content, and in both overlapping cases the concurrent branch's independent fix was verified (not assumed) to be a strict superset of this cycle's own fix before taking it wholesale. Zero regressions crossed the merge boundary; the full suite went from this cycle's clean 148/4 baseline to a merged 164/0.
+
+**Collision 2 (branch-level, a real gap)**: immediately after that first merge and push, a *second* independent workstream's already-CI-verified commits (`b1be9d5`, `1030019` — the same work that produced `ops/rollback-runbook.md` and its hazard finding) briefly became unreachable when this cycle's push landed first in a race with no PR/branch-protection gate between the two. No data was actually lost — the other workstream recovered correctly by cherry-picking onto the new tip and logging it as `conflicts.md` C2 — but this is the honest finding: **an isolated worktree solves shared-working-tree contamination; it does nothing for a shared-branch push race.** Two independent agents pushing to the same unprotected `main` can still strand each other's history, and this cycle's own push was the one that (unintentionally) did the stranding this time. Worth carrying into whatever governs multi-workstream `main` access next: either a serialization discipline (fetch-immediately-before-push, applied to `main` pushes the same way this cycle applied it to the worktree merge) or actual branch protection requiring PRs when multiple workstreams share a run-id.
 
 ## Next-cycle entry decision
 
