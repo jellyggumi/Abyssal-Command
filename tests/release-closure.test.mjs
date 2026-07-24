@@ -26,6 +26,20 @@ const RUNTIME_PATHS = new Set([
   "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
   "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
   ...CINDER_SPAN_WORLD_ASSETS,
+  "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
+  "assets/models/battle/terrain/cinder-span.glb", "assets/models/battle/terrain/veil-citadel.glb", "assets/models/battle/terrain/echo-throne-steps.glb", "assets/models/battle/terrain/echo-throne.glb",
+  "assets/models/battle/terrain/sunken-bastion.glb", "assets/models/battle/terrain/howling-sprawl.glb", "assets/models/battle/terrain/glass-necropolis.glb", "assets/models/battle/terrain/starless-canal.glb",
+  "assets/models/battle/terrain/shattered-causeway.glb", "assets/models/battle/terrain/abyss-chancel.glb", "assets/models/battle/terrain/gate-zenith.glb",
+  "assets/models/battle/bosses/cinder-warden.glb", "assets/models/battle/bosses/veil-tactician.glb", "assets/models/battle/bosses/gate-sovereign.glb", "assets/models/battle/bosses/tide-warden.glb",
+  "assets/models/battle/bosses/pack-herald.glb", "assets/models/battle/bosses/requiem-choir.glb", "assets/models/battle/bosses/lantern-tyrant.glb", "assets/models/battle/bosses/bridge-colossus.glb",
+  "assets/models/battle/bosses/veiled-concordat.glb", "assets/models/battle/bosses/abyss-regent.glb",
+  "assets/models/battle/enemies/scout.glb", "assets/models/battle/enemies/shade.glb", "assets/models/battle/enemies/guard.glb", "assets/models/battle/enemies/possessed.glb",
+  "assets/models/battle/companions/ember-cohort.glb", "assets/models/battle/companions/rift-lens.glb", "assets/models/battle/companions/veil-vanguard.glb",
+  "assets/models/battle/companions/anchor-shard.glb", "assets/models/battle/companions/throne-echo.glb", "assets/models/battle/companions/dawnless-crown.glb",
+  "assets/models/battle/commander/dusk-warden.glb",
+  "assets/models/battle/vfx/critical-hit-burst.glb", "assets/models/battle/vfx/boss-rally-aura.glb", "assets/models/battle/vfx/gate-breach-shockwave.glb",
+  "assets/models/battle/vfx/wardens-ward-shield.glb", "assets/models/battle/vfx/echo-warden-awakening.glb", "assets/models/battle/vfx/companion-downed-fade.glb",
+  "assets/models/battle/items/abyssal-banner.glb", "assets/models/battle/items/bulwark-brand.glb", "assets/models/battle/items/equipment-tier-gems.glb", "assets/models/battle/items/stillwater-hourglass.glb",
 ]);
 
 async function project(path) {
@@ -86,7 +100,7 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assert.match(job(workflow, "package_pages"), /name: pages-bundle[\s\S]*?if-no-files-found: error/);
   assert.match(job(workflow, "release_receipt"), /"all_gate_pass":%s/);
   assert.match(job(workflow, "release_receipt"), /test "\$all_gate_pass" = true/);
-  assert.doesNotMatch(workflow.match(/PAGES_RUNTIME_PATHS: >-[\s\S]*?\n\n/)?.[0] ?? "", /react-game-ui\.js|react-shop|vendor\/react|minimap|battle-field|campaign-sync|assets\/models/i);
+  assert.doesNotMatch(workflow.match(/PAGES_RUNTIME_PATHS: >-[\s\S]*?\n\n/)?.[0] ?? "", /react-game-ui\.js|react-shop|vendor\/react|minimap|battle-field|campaign-sync/i);
 
   for (const use of workflow.matchAll(/^\s+uses: [^\n]+$/gm)) {
     assert.match(use[0], /@[0-9a-f]{40}$/, `action must be SHA-pinned: ${use[0]}`);
@@ -117,6 +131,20 @@ test("version scripts enforce the exact defense rules version", async () => {
     "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
     "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
     ...CINDER_SPAN_WORLD_ASSETS,
+    "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
+    "assets/models/battle/terrain/cinder-span.glb", "assets/models/battle/terrain/veil-citadel.glb", "assets/models/battle/terrain/echo-throne-steps.glb", "assets/models/battle/terrain/echo-throne.glb",
+    "assets/models/battle/terrain/sunken-bastion.glb", "assets/models/battle/terrain/howling-sprawl.glb", "assets/models/battle/terrain/glass-necropolis.glb", "assets/models/battle/terrain/starless-canal.glb",
+    "assets/models/battle/terrain/shattered-causeway.glb", "assets/models/battle/terrain/abyss-chancel.glb", "assets/models/battle/terrain/gate-zenith.glb",
+    "assets/models/battle/bosses/cinder-warden.glb", "assets/models/battle/bosses/veil-tactician.glb", "assets/models/battle/bosses/gate-sovereign.glb", "assets/models/battle/bosses/tide-warden.glb",
+    "assets/models/battle/bosses/pack-herald.glb", "assets/models/battle/bosses/requiem-choir.glb", "assets/models/battle/bosses/lantern-tyrant.glb", "assets/models/battle/bosses/bridge-colossus.glb",
+    "assets/models/battle/bosses/veiled-concordat.glb", "assets/models/battle/bosses/abyss-regent.glb",
+    "assets/models/battle/enemies/scout.glb", "assets/models/battle/enemies/shade.glb", "assets/models/battle/enemies/guard.glb", "assets/models/battle/enemies/possessed.glb",
+    "assets/models/battle/companions/ember-cohort.glb", "assets/models/battle/companions/rift-lens.glb", "assets/models/battle/companions/veil-vanguard.glb",
+    "assets/models/battle/companions/anchor-shard.glb", "assets/models/battle/companions/throne-echo.glb", "assets/models/battle/companions/dawnless-crown.glb",
+    "assets/models/battle/commander/dusk-warden.glb",
+    "assets/models/battle/vfx/critical-hit-burst.glb", "assets/models/battle/vfx/boss-rally-aura.glb", "assets/models/battle/vfx/gate-breach-shockwave.glb",
+    "assets/models/battle/vfx/wardens-ward-shield.glb", "assets/models/battle/vfx/echo-warden-awakening.glb", "assets/models/battle/vfx/companion-downed-fade.glb",
+    "assets/models/battle/items/abyssal-banner.glb", "assets/models/battle/items/bulwark-brand.glb", "assets/models/battle/items/equipment-tier-gems.glb", "assets/models/battle/items/stillwater-hourglass.glb",
   ];
   for (const file of required) {
     const target = join(directory, file);

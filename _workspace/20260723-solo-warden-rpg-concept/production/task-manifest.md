@@ -66,3 +66,28 @@ another concurrent workstream — relaxes the assertion to
 `events.find(e => e.type === "REWARD_SELECTED")`). Deploy (`package_pages`
 onward) stays gated until that lands; `browser_contract` and
 `release_closure` are green as of 687cf87.
+
+## World-content-pack Blender 자산 생성 (this session)
+
+사용자 요청으로 Stage 4-10 지형/보스/동료/아이템/VFX 3D 자산을 캐논 `abyssal-command-resource-pack.blend` 기반 파라메트릭 빌더로 생성. 세부 결함 발견·수정 경위는 `decision-log.md` D15 참조.
+
+| task | artifact | status | note |
+|---|---|---|---|
+| 파라메트릭 빌더 작성 | `scripts/build-world-content-pack.py` | done | 지형 7 + 보스 7 + 동료 6 + 아이템 8 + VFX 6 = 30 컬렉션/209 오브젝트, 캐논 팩 읽기 전용 사용 |
+| 캐논 리소스 팩 텍스처 결함 발견·완화 | `scripts/build-world-content-pack.py`(`ensure_materials`) | done | 9개 재사용 머티리얼의 링크된 텍스처 파일이 저장소에 부재(마젠타 렌더 유발) — 캐논 파일은 미변경, 빌더가 깨진 링크를 재빌드마다 결정론적으로 언링크 |
+| 지오메트리 인접성 QA + 수정 | `scripts/check-asset-adjacency.py`, `scripts/build-world-content-pack.py` | done | 30개 컬렉션 전수 바운딩박스 인접성 검사, 9개 컬렉션 실제 결함 수정(목/팔 연결 누락, 소품 부유), 3개는 의도적 디자인으로 확인(무수정) |
+| Cycles 결정론적 리뷰 렌더 검증 | `scripts/render-review-thumbnails.py` | done | 전체 30 컬렉션 재빌드 후 재검증 — pairwise gap 전수 0.0000, 육안 렌더 확인 |
+
+## WebGL RealtimeBattle migration + Pages deploy wiring (this session)
+
+`battle-realtime-three.js`가 Canvas2D 위에 3D처럼 보이도록 그리던 이전 구현이었음을 발견 — 사용자 요청("battle-realtime-three.js가 진짜로 three.js/WebGL을 쓰는지 검증하고, 아니면 실제로 만들어라")에 따라 전면 재작성. 상세 결정 경위는 `decision-log.md` D16 참조.
+
+| task | artifact | status | note |
+|---|---|---|---|
+| RealtimeBattle 전면 재작성 (실제 WebGL) | `battle-realtime-three.js` | done | THREE.WebGLRenderer/Scene/PerspectiveCamera 기반 재작성, mount/renderSnapshot/dispose/onVisualFeedback/debugMetrics 계약 유지(app.js의 RealtimeBattle→BattleVisualizer 폴백 패턴 무변경). GLTF 로딩(캐싱+공유), dual-mode 좌표 해석(정규화 `[-1,1]` vs raw arena 0-24000, 구 렌더러 계약과 동일 휴리스틱), 카메라 이징+reduced-motion 스냅, VFX 5종 스폰 전량 브라우저 실측(터레인/보스/동료/적/커맨더/게이트/VFX 렌더 확인, 스크린샷 증거) |
+| GLB 룩업 테이블 완전성 검증 | `battle-realtime-three.js` | done | 42개 GLB 실측 대조 — 지형10+보스10+적4+동료6+커맨더1+VFX6=37개 결선, items/*.glb 4개+echo-throne.glb(장식용, echo-throne-steps.glb로 대체)는 렌더러 미참조 확인(보상은 DOM 텍스트 카드로 렌더, 3D 모델 아님) |
+| vendor 파일 bare specifier 버그 발견·수정 | `vendor/loaders/GLTFLoader.js`, `vendor/utils/{BufferGeometryUtils,SkeletonUtils}.js` | done | CDN에서 그대로 복사된 3개 파일이 `from 'three'`(npm 패키지 bare specifier) 사용 — 브라우저는 `index.html`의 importmap으로 해석했지만 순수 Node(`node --test`)는 해석 불가, CI 전체 블로킹 버그. 상대경로(`from '../three.module.js'`)로 수정, importmap을 사장(死藏) 코드로 판단해 `index.html`에서 제거 |
+| 렌더러 계약 테스트 전면 재작성 | `tests/defense-renderer-contract.test.mjs`, `tests/world-presentation-contract.test.mjs` | done | 구 테스트가 RealtimeBattle/BattleVisualizer를 동일 Canvas2D 어댑터로 가정(둘 다 mock canvas의 `arc`/`fillText` 등 호출을 assert) — RealtimeBattle은 이제 진짜 WebGL이라 이 가정이 깨짐. WebGL 컨텍스트 생성 실패 시 mount()가 throw하는 계약(app.js 폴백의 전제) 테스트 추가, RealtimeBattle 전용 테스트는 실제 THREE.Scene/Camera/Group을 직접 구성해 WebGLRenderer만 우회(mock 없이 진짜 reconcileActors/updateCamera/ensureStageTerrain 로직 실행). Canvas2D 전용 계약(포틀레이트 라벨 counter-rotation 등, 3D에는 대응 없음 — 해당 정보는 DOM/CSS atlas 패널로 이전됨)은 BattleVisualizer 전용으로 재scope |
+| 배포 파이프라인 5개소 배선 | `.github/workflows/static.yml`, `scripts/defense-runtime-assets.mjs`, `sw.js`, `tests/release-closure.test.mjs`, `tests/pages-artifact-smoke.cjs`, `assets/defense-asset-manifest.json` | done | vendor 5개+GLB 42개(sw.js는 미참조 5개 제외한 37개만 precache)를 Pages 배포 allowlist·서비스워커 precache·자산 매니페스트·릴리즈 클로저 테스트에 전량 등록. 두 테스트 파일(`defense-asset-manifest.test.mjs`, `release-closure.test.mjs`)에 남아있던 "assets/models는 영구 금지"라는 구 RTS 시대(커밋 `141b8f7`) 불변식을 발견·완화(당시엔 다른 GLB 경로 체계였고, 이번 재도입은 프로덕션 문서(`motion-previs-and-blender-execution-plan.md`)가 명시한 의도된 산출물) |
+| 전체 스위트 회귀 검증 | `node --test` 출력 | done | 169개 중 157 pass — 실패 12개 전량 이 세션과 무관한 기존 dirty-tree 원인 2가지로 추적: (1) `_workspace/20260722-abyssal-command-bmad-gds-expansion/` 전체가 git 인덱스엔 있으나 워킹트리에서 미스테이지 삭제됨(10개 테스트), (2) `assets/images/battle/world/cinder-span-topdown-plate.webp`가 별도 워크스트림에 의해 `pilot/`로 미스테이지 이동됨(2개 테스트) — 둘 다 이 세션이 건드리지 않은 경로, `git show HEAD:`로 원본 확인 |
+| 브라우저 실 WebGL 스모크 테스트 | 스크린샷 증거 | done | 로컬 정적 서버로 실제 `index.html` 서빙 → 로비→전투 시작→실제 GLB 42개 중 다수 네트워크 요청 확인(vendor 5개+터레인/커맨더/적3종/VFX2종)→WebGL 컨텍스트 존재 확인→3D 커맨더 모델(왕관 스파이크 형상)·게이트 토러스·터레인 평면이 성장선택 HUD와 함께 렌더되는 스크린샷 확보, 콘솔 에러 0건 |

@@ -1,10 +1,36 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import * as THREE from "../vendor/three.module.js";
 import { BattleVisualizer } from "../battle-visualizer.js";
 import { RealtimeBattle } from "../battle-realtime-three.js";
 import { ARENA, STAGES, STAGE_PRESENTATION_BY_ID } from "../defense-catalog.js";
 import { advanceDefenseRun, createDefenseRun, getRunDigest, getRunSnapshot } from "../defense-run-simulation.js";
+
+// RealtimeBattle (primary, real WebGL/Three.js) can't mount against the
+// Canvas2D-shaped mocks below -- THREE.WebGLRenderer requires a real
+// GL-capable canvas, unavailable under plain `node --test` (see
+// defense-renderer-contract.test.mjs for that specific contract). Where a
+// test needs RealtimeBattle's actual reconciliation behavior, this harness
+// wires it directly to real THREE.Scene/Camera/Group instances -- the same
+// objects mount() itself creates -- bypassing only WebGLRenderer.
+function realtimeBattleHarness() {
+  const adapter = new RealtimeBattle();
+  adapter.disposed = false;
+  adapter.scene = new THREE.Scene();
+  adapter.camera = new THREE.PerspectiveCamera(42, 640 / 360, 0.1, 200);
+  adapter.terrainGroup = new THREE.Group();
+  adapter.actorGroup = new THREE.Group();
+  adapter.vfxGroup = new THREE.Group();
+  adapter.scene.add(adapter.terrainGroup, adapter.actorGroup, adapter.vfxGroup);
+  adapter.gateMesh = new THREE.Mesh(
+    new THREE.TorusGeometry(1, 0.08, 12, 32),
+    new THREE.MeshStandardMaterial(),
+  );
+  adapter.gateMesh.visible = false;
+  adapter.scene.add(adapter.gateMesh);
+  return adapter;
+}
 
 function noop() {}
 
@@ -73,9 +99,6 @@ function mockCanvas() {
   });
   return { calls, getContext: () => context, height: 360, width: 640 };
 }
-
-let artworkImportNonce = 0;
-
 function artworkImage(available) {
   return class ArtworkImage {
     constructor() {
@@ -96,14 +119,6 @@ function artworkImage(available) {
   };
 }
 
-async function freshWorldAdapters() {
-  const query = `?world-presentation=${artworkImportNonce += 1}`;
-  const [{ RealtimeBattle: Primary }, { BattleVisualizer: Fallback }] = await Promise.all([
-    import(`../battle-realtime-three.js${query}`),
-    import(`../battle-visualizer.js${query}`),
-  ]);
-  return [Primary, Fallback];
-}
 function worldTextCanvas() {
   const calls = [];
   let matrix = [1, 0, 0, 1, 0, 0];
@@ -278,20 +293,41 @@ test("primary and fallback adapters observe the same presentation projection wit
     "different authored stages must resolve distinct renderer presentation profiles",
   );
 
-  for (const Adapter of [RealtimeBattle, BattleVisualizer]) {
+  {
     const canvas = mockCanvas();
     const alternateCanvas = mockCanvas();
-    const adapter = new Adapter();
-    const alternateAdapter = new Adapter();
+    const adapter = new BattleVisualizer();
+    const alternateAdapter = new BattleVisualizer();
     adapter.mount({ canvas, viewport: { width: canvas.width, height: canvas.height } });
     alternateAdapter.mount({ canvas: alternateCanvas, viewport: { width: alternateCanvas.width, height: alternateCanvas.height } });
     assert.doesNotThrow(() => adapter.renderSnapshot(projection, { viewport: canvas }));
     assert.doesNotThrow(() => alternateAdapter.renderSnapshot(alternateProjection, { viewport: alternateCanvas }));
-    assert.ok(canvas.calls.length > 0, `${Adapter.name} must render the supplied presentation projection`);
+    assert.ok(canvas.calls.length > 0, "BattleVisualizer must render the supplied presentation projection");
     assert.notDeepEqual(
       alternateCanvas.calls,
       canvas.calls,
-      `${Adapter.name} must render distinct data-driven terrain/objective overlays for distinct stage projections`,
+      "BattleVisualizer must render distinct data-driven terrain/objective overlays for distinct stage projections",
+    );
+    adapter.dispose();
+    alternateAdapter.dispose();
+  }
+
+  {
+    // RealtimeBattle's equivalent of "distinct data-driven terrain per
+    // stage projection" is resolving a distinct terrain GLB per stageId
+    // (cinder-span vs gate-zenith), and reconciling the projected actors
+    // into its real scene graph without throwing or mutating input.
+    const adapter = realtimeBattleHarness();
+    const alternateAdapter = realtimeBattleHarness();
+    assert.doesNotThrow(() => adapter.reconcileActors(projection));
+    assert.doesNotThrow(() => adapter.ensureStageTerrain(projection.presentation.stageId));
+    assert.doesNotThrow(() => alternateAdapter.reconcileActors(alternateProjection));
+    assert.doesNotThrow(() => alternateAdapter.ensureStageTerrain(alternateProjection.presentation.stageId));
+    assert.ok(adapter.actors.size > 0, "RealtimeBattle must reconcile the supplied presentation projection into tracked actors");
+    assert.notEqual(
+      adapter.loadingStageId,
+      alternateAdapter.loadingStageId,
+      "RealtimeBattle must resolve distinct terrain models for distinct stage projections",
     );
     adapter.dispose();
     alternateAdapter.dispose();
@@ -322,15 +358,25 @@ test("Cinder Span artwork availability remains passive to canonical simulation s
 
   for (const available of [false, true]) {
     Object.defineProperty(globalThis, "Image", { configurable: true, value: artworkImage(available) });
-    for (const Adapter of await freshWorldAdapters()) {
-      const canvas = mockCanvas();
-      const adapter = new Adapter().mount({ canvas, viewport: canvas });
-      assert.doesNotThrow(
-        () => adapter.renderSnapshot(projection, { camera: { x: 24, y: -18 }, viewport: canvas }),
-        `${Adapter.name} accepts ${available ? "available" : "unavailable"} passive artwork`,
-      );
-      adapter.dispose();
-    }
+    const canvas = mockCanvas();
+    const adapter = new BattleVisualizer().mount({ canvas, viewport: canvas });
+    assert.doesNotThrow(
+      () => adapter.renderSnapshot(projection, { camera: { x: 24, y: -18 }, viewport: canvas }),
+      `BattleVisualizer accepts ${available ? "available" : "unavailable"} passive artwork`,
+    );
+    adapter.dispose();
+
+    // RealtimeBattle doesn't use the Image global at all (terrain loads
+    // through GLTFLoader/fetch); its passivity contract is that stage
+    // terrain resolution never mutates the projection or canonical
+    // snapshot it was derived from, regardless of artwork availability.
+    const realtimeAdapter = realtimeBattleHarness();
+    assert.doesNotThrow(
+      () => realtimeAdapter.ensureStageTerrain(projection.presentation.stageId),
+      `RealtimeBattle accepts stage terrain resolution regardless of artwork availability=${available}`,
+    );
+    realtimeAdapter.dispose();
+
     assert.deepEqual(projection, projectionBeforeRender, `artwork availability=${available} does not mutate projection data`);
     assert.deepEqual(snapshot, canonical, `artwork availability=${available} does not mutate the canonical snapshot`);
     assert.equal(getRunDigest(run), digest, `artwork availability=${available} does not alter the deterministic run digest`);
@@ -368,88 +414,90 @@ test("commander-follow camera is bounded transient frame state and snaps or rese
 });
 
 
-test("both world adapters retain label anchors while counter-rotating every canvas glyph only in portrait", () => {
+// RealtimeBattle's battle canvas never draws map-label text -- that
+// context (atmosphere/landmarks/mapLabels) lives in the DOM/CSS atlas
+// panel in the live app (app.js's "stage-atlas" section), verified by
+// world-presentation-browser.cjs's real-browser atlasSnapshot() checks.
+// The canvas-glyph portrait counter-rotation contract below is specific
+// to BattleVisualizer's Canvas2D text rendering.
+test("BattleVisualizer retains label anchors while counter-rotating every canvas glyph only in portrait", () => {
   const expectedLabels = ["ATMOSPHERE", "CHOKE", "ELEVATION", "EXTRACTION", "FLANK", "HAZARD", "LANDMARK", "OCCUPATION"].sort();
 
-  for (const Adapter of [RealtimeBattle, BattleVisualizer]) {
-    const landscapeCanvas = worldTextCanvas();
-    const portraitCanvas = worldTextCanvas();
-    const landscapeAdapter = new Adapter().mount({ canvas: landscapeCanvas, viewport: landscapeCanvas });
-    const portraitAdapter = new Adapter().mount({ canvas: portraitCanvas, viewport: portraitCanvas });
+  const landscapeCanvas = worldTextCanvas();
+  const portraitCanvas = worldTextCanvas();
+  const landscapeAdapter = new BattleVisualizer().mount({ canvas: landscapeCanvas, viewport: landscapeCanvas });
+  const portraitAdapter = new BattleVisualizer().mount({ canvas: portraitCanvas, viewport: portraitCanvas });
 
-    landscapeAdapter.renderSnapshot(worldPresentationSnapshot(), { portrait: false, viewport: landscapeCanvas });
-    portraitAdapter.renderSnapshot(worldPresentationSnapshot(), { portrait: true, viewport: portraitCanvas });
+  landscapeAdapter.renderSnapshot(worldPresentationSnapshot(), { portrait: false, viewport: landscapeCanvas });
+  portraitAdapter.renderSnapshot(worldPresentationSnapshot(), { portrait: true, viewport: portraitCanvas });
 
-    const landscapeText = renderedWorldText(landscapeCanvas);
-    const portraitText = renderedWorldText(portraitCanvas);
-    assert.deepEqual(landscapeText.map(({ label }) => label).sort(), expectedLabels, `${Adapter.name} renders every world label and caption in landscape`);
-    assert.deepEqual(portraitText.map(({ label }) => label).sort(), expectedLabels, `${Adapter.name} renders every world label and caption in portrait`);
+  const landscapeText = renderedWorldText(landscapeCanvas);
+  const portraitText = renderedWorldText(portraitCanvas);
+  assert.deepEqual(landscapeText.map(({ label }) => label).sort(), expectedLabels, "renders every world label and caption in landscape");
+  assert.deepEqual(portraitText.map(({ label }) => label).sort(), expectedLabels, "renders every world label and caption in portrait");
 
-    const landscapeByLabel = new Map(landscapeText.map((entry) => [entry.label, entry]));
-    const portraitByLabel = new Map(portraitText.map((entry) => [entry.label, entry]));
-    for (const label of expectedLabels) {
-      const landscape = landscapeByLabel.get(label);
-      const portrait = portraitByLabel.get(label);
-      assert.deepEqual(
-        landscape.matrix.map((value) => Math.round(value * 1e12) / 1e12),
-        [1, 0, 0, 1, 0, 0],
-        `${Adapter.name} leaves ${label} as a direct, unrotated landscape fillText`,
-      );
-      assert.notDeepEqual([landscape.x, landscape.y], [0, 0], `${Adapter.name} retains ${label}'s direct landscape anchor`);
-      assert.deepEqual(
-        [portrait.x, portrait.y],
-        [0, 0],
-        `${Adapter.name} renders ${label} at the local portrait glyph origin`,
-      );
-      assert.deepEqual(
-        portrait.matrix.map((value) => Math.round(value * 1e12) / 1e12),
-        [0, -1, 1, 0, landscape.x, landscape.y],
-        `${Adapter.name} applies the local -π/2 glyph transform at ${label}'s unchanged anchor`,
-      );
-    }
-
-    landscapeAdapter.dispose();
-    portraitAdapter.dispose();
+  const landscapeByLabel = new Map(landscapeText.map((entry) => [entry.label, entry]));
+  const portraitByLabel = new Map(portraitText.map((entry) => [entry.label, entry]));
+  for (const label of expectedLabels) {
+    const landscape = landscapeByLabel.get(label);
+    const portrait = portraitByLabel.get(label);
+    assert.deepEqual(
+      landscape.matrix.map((value) => Math.round(value * 1e12) / 1e12),
+      [1, 0, 0, 1, 0, 0],
+      `leaves ${label} as a direct, unrotated landscape fillText`,
+    );
+    assert.notDeepEqual([landscape.x, landscape.y], [0, 0], `retains ${label}'s direct landscape anchor`);
+    assert.deepEqual(
+      [portrait.x, portrait.y],
+      [0, 0],
+      `renders ${label} at the local portrait glyph origin`,
+    );
+    assert.deepEqual(
+      portrait.matrix.map((value) => Math.round(value * 1e12) / 1e12),
+      [0, -1, 1, 0, landscape.x, landscape.y],
+      `applies the local -π/2 glyph transform at ${label}'s unchanged anchor`,
+    );
   }
+
+  landscapeAdapter.dispose();
+  portraitAdapter.dispose();
 });
-test("both world adapters keep portrait label counterrotation on the logical plane under the shared camera frame", () => {
+test("BattleVisualizer keeps portrait label counterrotation on the logical plane under the shared camera frame", () => {
   const expectedLabels = ["ATMOSPHERE", "CHOKE", "ELEVATION", "EXTRACTION", "FLANK", "HAZARD", "LANDMARK", "OCCUPATION"].sort();
   const camera = { x: 24, y: -18 };
 
-  for (const Adapter of [RealtimeBattle, BattleVisualizer]) {
-    const landscapeCanvas = worldTextCanvas();
-    const portraitCanvas = worldTextCanvas();
-    const landscapeAdapter = new Adapter().mount({ canvas: landscapeCanvas, viewport: landscapeCanvas });
-    const portraitAdapter = new Adapter().mount({ canvas: portraitCanvas, viewport: portraitCanvas });
+  const landscapeCanvas = worldTextCanvas();
+  const portraitCanvas = worldTextCanvas();
+  const landscapeAdapter = new BattleVisualizer().mount({ canvas: landscapeCanvas, viewport: landscapeCanvas });
+  const portraitAdapter = new BattleVisualizer().mount({ canvas: portraitCanvas, viewport: portraitCanvas });
 
-    landscapeAdapter.renderSnapshot(worldPresentationSnapshot(), { portrait: false, viewport: landscapeCanvas });
-    portraitAdapter.renderSnapshot(worldPresentationSnapshot(), { camera, portrait: true, viewport: portraitCanvas });
+  landscapeAdapter.renderSnapshot(worldPresentationSnapshot(), { portrait: false, viewport: landscapeCanvas });
+  portraitAdapter.renderSnapshot(worldPresentationSnapshot(), { camera, portrait: true, viewport: portraitCanvas });
 
-    const landscapeByLabel = new Map(renderedWorldText(landscapeCanvas).map((entry) => [entry.label, entry]));
-    const portraitByLabel = new Map(renderedWorldText(portraitCanvas).map((entry) => [entry.label, entry]));
+  const landscapeByLabel = new Map(renderedWorldText(landscapeCanvas).map((entry) => [entry.label, entry]));
+  const portraitByLabel = new Map(renderedWorldText(portraitCanvas).map((entry) => [entry.label, entry]));
+  assert.deepEqual(
+    [...portraitByLabel.keys()].sort(),
+    expectedLabels,
+    "retains every portrait world label under the camera frame",
+  );
+  assert.deepEqual(
+    portraitCanvas.calls.find(([name]) => name === "translate"),
+    ["translate", camera.x, camera.y],
+    "applies the shared camera in the world plane before portrait labels",
+  );
+  for (const label of expectedLabels) {
+    const landscape = landscapeByLabel.get(label);
+    const portrait = portraitByLabel.get(label);
+    assert.deepEqual([portrait.x, portrait.y], [0, 0], `retains ${label}'s local portrait glyph origin`);
     assert.deepEqual(
-      [...portraitByLabel.keys()].sort(),
-      expectedLabels,
-      `${Adapter.name} retains every portrait world label under the camera frame`,
+      portrait.matrix.map((value) => Math.round(value * 1e12) / 1e12),
+      [0, -1, 1, 0, landscape.x + camera.x, landscape.y + camera.y],
+      `counter-rotates ${label} at its camera-shifted logical anchor`,
     );
-    assert.deepEqual(
-      portraitCanvas.calls.find(([name]) => name === "translate"),
-      ["translate", camera.x, camera.y],
-      `${Adapter.name} applies the shared camera in the world plane before portrait labels`,
-    );
-    for (const label of expectedLabels) {
-      const landscape = landscapeByLabel.get(label);
-      const portrait = portraitByLabel.get(label);
-      assert.deepEqual([portrait.x, portrait.y], [0, 0], `${Adapter.name} retains ${label}'s local portrait glyph origin`);
-      assert.deepEqual(
-        portrait.matrix.map((value) => Math.round(value * 1e12) / 1e12),
-        [0, -1, 1, 0, landscape.x + camera.x, landscape.y + camera.y],
-        `${Adapter.name} counter-rotates ${label} at its camera-shifted logical anchor`,
-      );
-    }
-
-    landscapeAdapter.dispose();
-    portraitAdapter.dispose();
   }
+
+  landscapeAdapter.dispose();
+  portraitAdapter.dispose();
 });
 
