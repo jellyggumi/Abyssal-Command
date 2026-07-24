@@ -378,7 +378,24 @@ export class RealtimeBattle {
     const target = new THREE.Vector3(commanderPoint.x, 0.9, commanderPoint.z);
     if (reducedMotion) this.cameraTarget.copy(target);
     else this.cameraTarget.lerp(target, CAMERA_FOLLOW_EASING);
-    const distance = this.camera.zoomFactor * Math.max(this.stageWorld.halfX, this.stageWorld.halfZ, 0.5);
+    // Camera framing distance must scale with the terrain's own measured visual
+    // footprint (footprintRadii, populated at load time — see loadModel()), NOT
+    // stageWorld.halfX/halfZ. Those half-extents are a SEPARATE, narrower concept:
+    // the walkable/entity-confinement bounds (e.g. cinder-span's bridge deck is
+    // 0.85/0.47, but its full terrain mesh — cliffs, span, decorative geometry —
+    // measures 2.6/1.35). Framing the camera off the narrow walkable bounds while
+    // character rigs are authored at their own ~2-unit scale put the camera INSIDE
+    // character geometry at every zoom level (verified: at zoomFactor 1.4-5, only
+    // texture close-up was visible, commander/enemies never legible) — the walkable
+    // half-extent has no necessary relationship to how big the terrain or its
+    // occupants actually render. veil-citadel/echo-throne happened to define
+    // halfX/halfZ equal to their own footprint (no visible bug there); cinder-span
+    // did not, exposing the conflation. footprintRadii is already the correct
+    // "how large does this GLB root actually render" measurement (same one used
+    // for boss melee-reach telegraphs), so reuse it here instead of introducing a
+    // second visual-scale concept.
+    const terrainFootprint = this.footprintRadii.get(this.stageWorld.terrain) ?? Math.max(this.stageWorld.halfX, this.stageWorld.halfZ, 0.5);
+    const distance = this.camera.zoomFactor * terrainFootprint;
     const cosP = Math.cos(this.camera.pitch);
     this.perspectiveCamera.position.set(
       this.cameraTarget.x + distance * cosP * Math.sin(this.camera.yaw),
