@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-s5-pack-herald.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": {
+    "tool": "god-tibo-imagen",
+    "provider": "codex-cli",
+    "model": "gpt-5.4",
+    "sessionId": "019f92e9-2030-7a72-a65b-84646d2e024f"
+  },
+  "prompt": "A feral herald clad in bone-and-hide armor, wearing a howling wolf-skull helm, wielding dual hooked claws, wind-torn fur cloak billowing behind, full-body three-quarter hero framing, aggressive crouched stance, harsh dusty amber wasteland lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": {
+    "format": "png",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 2259135,
+    "sha256": "16cc7a894e6499a1fb1ffac8f40428de0cd9b43dbbdea73ca8c45760dfed7ade"
+  },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

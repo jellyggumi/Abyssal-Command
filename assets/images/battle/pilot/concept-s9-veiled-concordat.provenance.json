@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-s9-veiled-concordat.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": {
+    "tool": "god-tibo-imagen",
+    "provider": "codex-cli",
+    "model": "gpt-5.4",
+    "sessionId": "019f92f2-d124-74d2-be35-4a06e603abbe"
+  },
+  "prompt": "A diplomat-like figure in ceremonial abyss-blue robes, multiple floating vote-seal insignias orbiting around them, wielding twin ceremonial blades, calm but ominous posture, full-body three-quarter hero framing, composed still stance, deep abyssal-blue ceremonial lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": {
+    "format": "png",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 2113837,
+    "sha256": "2f72f286f7eceda95fc5bd60ce9a22664d3a93cd267d71eec4b2019ab9efc9df"
+  },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

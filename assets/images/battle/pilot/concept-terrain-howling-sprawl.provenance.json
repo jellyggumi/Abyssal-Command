@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-terrain-howling-sprawl.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92e6-899e-7f82-b7f1-734b056ff626" },
+  "prompt": "Isometric game-terrain diorama concept art, dark-fantasy environment: a wide wind-torn wasteland with jagged broken rock formations jutting from cracked earth, howling dust trails whipping across the ground, dusk-orange sky bleeding into deep shadow, painterly game production art, moody atmospheric lighting, desolate open terrain, no characters, no UI, no text, no logos, no watermark, original design only.",
+  "output": { "format": "png", "width": 1536, "height": 1024, "bytes": 2475366, "sha256": "a41d861d3795d3b20a4c973d32dec357c3ee4c71ced12317a29574473e867470" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

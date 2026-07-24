@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-s10-abyss-regent.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": {
+    "tool": "god-tibo-imagen",
+    "provider": "codex-cli",
+    "model": "gpt-5.4",
+    "sessionId": "019f92f5-1f75-7a11-99b2-c2cbc92f633b"
+  },
+  "prompt": "The final regent, the most ornate and imposing design of all bosses, fused armor-and-throne-fragment aesthetic, wielding twin void-glaives, wearing a crown of shattered gate-seals, elaborate layered silhouette, full-body three-quarter hero framing, towering commanding stance, intense radiant void-and-gold zenith lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": {
+    "format": "png",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 2508257,
+    "sha256": "9a358d2f2cbb04483866cd8b65d8e53158cf322a619559c196b2c65bbf0a159e"
+  },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

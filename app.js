@@ -208,6 +208,9 @@ function companionGlyph(prototype) {
     "anchor-shard": "⬡",
     "throne-echo": "◌",
     "dawnless-crown": "♜",
+    "pack-warden": "◊",
+    "lantern-reaver": "☖",
+    "requiem-warden": "○",
   }[prototype] ?? "·";
 }
 
@@ -643,7 +646,7 @@ function renderLobby() {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   });
-  root.querySelector("#export-telemetry").addEventListener("click", () => {
+  root.querySelector("#export-telemetry")?.addEventListener("click", () => {
     const url = URL.createObjectURL(new Blob([telemetry.exportJson()], { type: "application/json" }));
     const link = document.createElement("a");
     link.href = url;
@@ -651,7 +654,7 @@ function renderLobby() {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   });
-  root.querySelector("#import-defense").addEventListener("change", async (event) => {
+  root.querySelector("#import-defense")?.addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     const text = file ? await file.text() : "";
     if (!text || !(await storage.importText(text))) {
@@ -664,7 +667,7 @@ function renderLobby() {
     statusText = "기록을 가져왔습니다.";
     renderLobby();
   });
-  root.querySelector("#reset-defense").addEventListener("click", async () => {
+  root.querySelector("#reset-defense")?.addEventListener("click", async () => {
     await storage.clear();
     campaign = createCampaign({ resetEpoch: campaign.resetEpoch + 1 });
     selectedStageId = STAGES[0].id;
@@ -1494,9 +1497,11 @@ export class BattleSession {
         card.innerHTML = `<h2>성장 선택 · 전투 일시 정지</h2><div class="choices">${previews.map(({ skillId, label }) => `<button data-pick="${skillId}"><strong>${escapeHtml(SKILLS[skillId]?.name ?? skillId)}</strong><span>${escapeHtml(label)}</span></button>`).join("")}</div>`;
         card.querySelectorAll("[data-pick]").forEach((button) => {
           button.addEventListener("click", () => {
+            const picked = previews.find((preview) => preview.skillId === button.dataset.pick);
             this.send("SKILL_SELECTED", { skillId: button.dataset.pick });
             card.remove();
             this.focusBeforeGrowth?.focus?.();
+            if (picked) this.showToast(`<h2>LV UP · 스킬 습득</h2><p>${escapeHtml(SKILLS[picked.skillId]?.name ?? picked.skillId)} · ${escapeHtml(picked.label)}</p>`, { className: "defense-toast-levelup" });
           });
         });
         card.querySelector("button")?.focus();

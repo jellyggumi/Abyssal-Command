@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/dusk-warden-idle-gti-refstyle.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": {
+    "tool": "god-tibo-imagen",
+    "provider": "codex-cli",
+    "model": "gpt-5.4",
+    "sessionId": "019f92b1-ef4b-71c2-abff-5f04efc04fad"
+  },
+  "prompt": "Original Abyssal Surge Dusk Warden commander, alternate full-body concept exploring a spiked-halo crown motif and long dual-tipped teal-glowing spear (instead of lantern-and-scythe), dark obsidian-and-brass segmented plate armor, tattered layered cape, teal Echo-command energy lines running through chest and pauldron gems, three-quarter standing hero pose, weight balanced, painterly cel-shaded game production art, crisp readable silhouette. Isolated on a perfectly uniform solid #FF00FF background, no shadow outside the feet, no text, no logos, no copyrighted character likeness.",
+  "output": {
+    "format": "png",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 2072297,
+    "sha256": "bac818323fb95c46bfe88b969ec33b6dcbd011e86fcdb846f6c0fc92b2f4f989"
+  },
+  "supersedes": {
+    "reason": "Original file at this path had no recoverable provenance (never committed to git, no sidecar found anywhere in repo history). Original bytes preserved out-of-tree at generation time, sha256 4a1d... (not retained in repo) -- not restorable if needed, this is a fresh generation matching the same creative brief (alternate spiked-halo/spear exploration of the dusk-warden-idle-gti.png commander design) rather than a byte-identical recovery.",
+    "unreferencedByRuntime": true
+  },
+  "worldviewTrace": ["W-01", "W-02", "W-03"],
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false,
+  "perfectPixelStatus": "blocked: installed ppgen rejects god-tibo-imagen and exposes no extractMethod=none/no-pixel-conversion path"
+}

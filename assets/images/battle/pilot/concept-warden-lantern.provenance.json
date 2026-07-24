@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-warden-lantern.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92e4-9735-7080-b942-78f5dc852278" },
+  "prompt": "An ornate brass lantern with detailed scrollwork, a warm golden-white flame burning inside its glass chamber, a soft wide glow-radius aura visibly emanating outward from the flame to show an extended pickup range, isometric-friendly 3/4 angle, centered composition, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, dramatic rim light on the brass and glass edges to show polished metal and glass material, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1254, "height": 1254, "bytes": 2115997, "sha256": "867011a686d32ba23a31f8a4260b62227cd86b13cb9a582bdaf8a5090c8ea227" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

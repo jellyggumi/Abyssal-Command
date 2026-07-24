@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-s4-tide-warden.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": {
+    "tool": "god-tibo-imagen",
+    "provider": "codex-cli",
+    "model": "gpt-5.4",
+    "sessionId": "019f92e7-26d0-7f20-9f60-d1cb4d75ea1e"
+  },
+  "prompt": "A barnacle-armored warden wielding a trident-halberd, dripping wet cloak, teal bioluminescent markings glowing across the armor, coral-like shoulder growths, full-body three-quarter hero framing, grounded stance, cold teal bioluminescent underwater lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": {
+    "format": "png",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 2265649,
+    "sha256": "803e9410ec25e1b2005a5ce05ebe7a21cddce01d8fc3c890ea18b156cbaa3a67"
+  },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

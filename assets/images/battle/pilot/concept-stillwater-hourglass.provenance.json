@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-stillwater-hourglass.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92dc-f39d-7bb0-9fb7-8c8bf2201002" },
+  "prompt": "An ornate hourglass with softly glowing cyan sand that appears to slow mid-fall inside frost-touched glass bulbs, aged brass fittings and filigree at the caps, wisps of cold mist curling near the base, isometric-friendly 3/4 angle, centered composition, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, dramatic rim light on the glass and brass edges to show glass and metal material, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1254, "height": 1254, "bytes": 1924863, "sha256": "4550d6d444c85300b485f0a036081990c19c17702f5df891900dd68fd5f5f433" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

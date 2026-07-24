@@ -1,0 +1,667 @@
+{
+  "schemaVersion": "elevenlabs-sound-resource-manifest-1.0",
+  "runId": "20260723-solo-warden-rpg-concept",
+  "generatedAt": "2026-07-23T17:30:28.847548Z",
+  "artifactRoot": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs",
+  "scope": "stage 1-10 cinematic/interactive sound package",
+  "requiredCount": 106,
+  "readyCount": 106,
+  "missingCount": 0,
+  "missing": [],
+  "aliasPolicy": {
+    "npcHaram_lobby_opening": "npcRael_stage9_choice",
+    "npcMeri_lobby_timing": "npcRael_stage9_choice",
+    "bgm_prologue_low": "bgm_stage01_entry",
+    "bgm_lobby_day": "bgm_stage01_entry",
+    "bgm_ending_common": "bgm_stage10_final",
+    "bgm_ending_a": "bgm_stage10_final",
+    "bgm_ending_b": "bgm_stage06_peak",
+    "sfx_gate_rip_01": "sfx_vow_break",
+    "sfx_ambient_forge": "sfx_echo_drone",
+    "sfx_resonance_bloom": "sfx_vow_break",
+    "sfx_forge_soft": "sfx_bridge_break",
+    "sfx_pursuit_wind": "sfx_colossus_step",
+    "sfx_player_idle_loop": "sfx_player_move_loop",
+    "sfx_player_die": "sfx_player_hit",
+    "sfx_boss_human_critical": "sfx_boss_human_attack",
+    "sfx_boss_shadow_avoid": "sfx_boss_shadow_attack"
+  },
+  "resources": [
+    {
+      "category": "narration",
+      "id": "narr_intro_01",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_intro_01.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_lobby_intro",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_lobby_intro.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_stage01_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage01_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_boss01_show",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss01_show.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_stage02_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage02_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_boss02_show",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss02_show.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_stage03_04_bridge",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage03_04_bridge.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_boss03_show",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss03_show.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_stage05",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage05.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_stage06",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage06.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_stage07_08",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage07_08.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_boss08_show",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss08_show.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_stage09",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage09.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_boss10_show",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss10_show.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_ending_common",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_ending_common.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_ending_a",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_ending_a.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "narration",
+      "id": "narr_ending_b",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_ending_b.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "state",
+      "id": "state.player.safe",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.safe.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "state",
+      "id": "state.player.critical",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.critical.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "state",
+      "id": "state.player.lowhp",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.lowhp.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "state",
+      "id": "state.player.defence_ready",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.defence_ready.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "state",
+      "id": "state.player.skill_cd",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.skill_cd.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "state",
+      "id": "state.player.die",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.die.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "state",
+      "id": "state.player.move",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.move.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "skill",
+      "id": "skill.player.attack",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/skill/skill.player.attack.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "skill",
+      "id": "skill.player.bighit",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/skill/skill.player.bighit.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "skill",
+      "id": "skill.player.critical",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/skill/skill.player.critical.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "skill",
+      "id": "skill.player.avoid",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/skill/skill.player.avoid.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "skill",
+      "id": "skill.player.defence",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/skill/skill.player.defence.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "skill",
+      "id": "skill.player.move",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/skill/skill.player.move.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "skill",
+      "id": "skill.player.run",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/skill/skill.player.run.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_prologue_low",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_prologue_low.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_lobby_day",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_lobby_day.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_stage01_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage01_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_stage01_boss",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage01_boss.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_stage02_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage02_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_stage02_boss",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage02_boss.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_mid_gate_drive",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_mid_gate_drive.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_stage03_boss",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage03_boss.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_stage05",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage05.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_stage06_peak",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage06_peak.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_bridge_cascade",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_bridge_cascade.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_stage08_colossus",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage08_colossus.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_stage09_dissonant",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage09_dissonant.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_stage10_final",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage10_final.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_ending_common",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_ending_common.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_ending_a",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_ending_a.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "bgm",
+      "id": "bgm_ending_b",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_ending_b.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_gate_rip_01",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_gate_rip_01.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_ambient_forge",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_ambient_forge.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_ward_level_warning",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_ward_level_warning.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_enter_chime",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_enter_chime.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_bridge_grind",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_bridge_grind.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_tactical_ping",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_tactical_ping.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_echo_drone",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_echo_drone.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_staff_windup",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_staff_windup.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_howl_loop",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_howl_loop.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_ward_lock",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_ward_lock.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_bridge_break",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_bridge_break.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_colossus_step",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_colossus_step.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_vow_break",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_vow_break.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_final_gate_shatter",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_final_gate_shatter.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_resonance_bloom",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_resonance_bloom.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_forge_soft",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_forge_soft.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_pursuit_wind",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_pursuit_wind.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_player_idle_loop",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_idle_loop.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_player_move_loop",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_move_loop.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_player_run_loop",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_run_loop.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_player_hit",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_hit.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_player_bighit",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_bighit.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_player_attack",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_attack.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_player_critical",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_critical.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_player_avoid",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_avoid.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_player_block",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_block.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_player_die",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_die.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_player_show",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_show.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_human_enter",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_human_enter.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_human_attack",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_human_attack.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_human_critical",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_human_critical.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_generic_hit",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_generic_hit.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_shadow_enter",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_shadow_enter.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_shadow_attack",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_shadow_attack.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_shadow_critical",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_shadow_critical.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_shadow_avoid",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_shadow_avoid.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_broken_court_monarch_enter",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_enter.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_broken_court_monarch_attack",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_attack.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_broken_court_monarch_critical",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_critical.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "sfx",
+      "id": "sfx_boss_broken_court_monarch_bighit",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_bighit.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "combat",
+      "id": "sfx_player_hit",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_player_hit.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "combat",
+      "id": "sfx_boss_impact_burst",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "combat",
+      "id": "sfx_defence_break",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_defence_break.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "combat",
+      "id": "sfx_stage_clear_short",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_stage_clear_short.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "combat",
+      "id": "sfx_elite_fail_warning",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_elite_fail_warning.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "combat",
+      "id": "sfx_ward_rise",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_ward_rise.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "ambience",
+      "id": "bg_stage01_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage01_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "ambience",
+      "id": "bg_stage02_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage02_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "ambience",
+      "id": "bg_stage03_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage03_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "ambience",
+      "id": "bg_stage04_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage04_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "ambience",
+      "id": "bg_stage05_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage05_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "ambience",
+      "id": "bg_stage06_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage06_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "ambience",
+      "id": "bg_stage07_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage07_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "ambience",
+      "id": "bg_stage08_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage08_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "ambience",
+      "id": "bg_stage09_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage09_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "ambience",
+      "id": "bg_stage10_entry",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage10_entry.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "npc",
+      "id": "npcHaram_lobby_opening",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/npc/npcHaram_lobby_opening.mp3",
+      "status": "ready"
+    },
+    {
+      "category": "npc",
+      "id": "npcMeri_lobby_timing",
+      "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/npc/npcMeri_lobby_timing.mp3",
+      "status": "ready"
+    }
+  ]
+}

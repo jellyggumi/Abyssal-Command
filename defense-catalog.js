@@ -146,6 +146,11 @@ export const REWARDS = freeze({
   "abyssal-banner": { id: "abyssal-banner", name: "Abyssal Banner", description: "런 시작 및 이후 추출 동료 공격력 +60", kind: "modifier", damageBonus: 60 },
   "throne-echo-record": { id: "throne-echo-record", name: "Moonless Court Echo Record", description: "Moonless Court 왕좌에서 회수한 잔향을 기록실에 보존", kind: "archive" },
   "dawnless-crown": { id: "dawnless-crown", name: "Moonless Command Archive", description: "Moonless Court의 최종 명령 잔향을 기록실에 보존", kind: "archive" },
+  "warden-lantern": { id: "warden-lantern", name: "Warden's Lantern", description: "런 시작 시 Commander 획득반경 +400", kind: "modifier", pickupRange: 400 },
+  "choir-ward-crystal": { id: "choir-ward-crystal", name: "Choir Ward Crystal", description: "런 시작 시 Commander 치명타 확률 +3%p", kind: "modifier", critChanceBonusBp: 300 },
+  "pack-warden-legacy": { id: "pack-warden-legacy", name: "Pack Warden Legacy", description: "다음 런의 동료 슬롯에 Pack Warden 기록", kind: "companion", companionId: "pack-warden" },
+  "lantern-reaver-legacy": { id: "lantern-reaver-legacy", name: "Lantern Reaver Legacy", description: "다음 런의 동료 슬롯에 Lantern Reaver 기록", kind: "companion", companionId: "lantern-reaver" },
+  "requiem-warden-legacy": { id: "requiem-warden-legacy", name: "Requiem Warden Legacy", description: "다음 런의 동료 슬롯에 Requiem Warden 기록", kind: "companion", companionId: "requiem-warden" },
 });
 export const AUDIO_CUES = freeze({
   stageStart: { id: "stage-start", waveform: "sine", frequency: 220, duration: 0.18 },
@@ -268,6 +273,9 @@ export const COMPANIONS = freeze({
   "anchor-shard": { id: "anchor-shard", name: "Anchor Shard", damage: 720, fireTicks: 70, range: 5600 },
   "throne-echo": { id: "throne-echo", name: "Throne Echo", damage: 480, fireTicks: 38, range: 4800 },
   "dawnless-crown": { id: "dawnless-crown", name: "Moonless Command", damage: 600, fireTicks: 52, range: 6000 },
+  "pack-warden": { id: "pack-warden", name: "Pack Warden", damage: 400, fireTicks: 30, range: 4200 },
+  "lantern-reaver": { id: "lantern-reaver", name: "Lantern Reaver", damage: 480, fireTicks: 40, range: 4400 },
+  "requiem-warden": { id: "requiem-warden", name: "Requiem Warden", damage: 440, fireTicks: 38, range: 4600 },
 });
 export const SKILLS = freeze({
   "rift-bolt": { id: "rift-bolt", name: "Echo Bolt", role: "active", kind: "active", damage: 1800, cooldown: 390, radius: 0 },
@@ -554,9 +562,9 @@ export const STAGE_REWARD_IDS = freeze({
   "veil-citadel": Object.freeze(["rift-lens-archive", "anchor-shard-archive", "abyssal-banner"]),
   "echo-throne": Object.freeze(["throne-echo-record", "veil-vanguard-legacy", "stillwater-hourglass"]),
   "sunken-bastion": Object.freeze(["anchor-shard-archive", "bulwark-brand", "abyssal-banner"]),
-  "howling-sprawl": Object.freeze(["veil-vanguard-legacy", "ember-cohort-legacy", "rift-lens-archive"]),
-  "glass-necropolis": Object.freeze(["rift-lens-archive", "stillwater-hourglass", "anchor-shard-archive"]),
-  "starless-canal": Object.freeze(["abyssal-banner", "bulwark-brand", "throne-echo-record"]),
+  "howling-sprawl": Object.freeze(["veil-vanguard-legacy", "ember-cohort-legacy", "rift-lens-archive", "pack-warden-legacy"]),
+  "glass-necropolis": Object.freeze(["rift-lens-archive", "stillwater-hourglass", "anchor-shard-archive", "requiem-warden-legacy", "choir-ward-crystal"]),
+  "starless-canal": Object.freeze(["abyssal-banner", "bulwark-brand", "throne-echo-record", "lantern-reaver-legacy", "warden-lantern"]),
   "shattered-causeway": Object.freeze(["ember-cohort-legacy", "veil-vanguard-legacy", "abyssal-banner"]),
   "abyss-chancel": Object.freeze(["dawnless-crown", "throne-echo-record", "bulwark-brand"]),
   "gate-zenith": Object.freeze(["dawnless-crown", "throne-echo-record", "rift-lens-archive"]),

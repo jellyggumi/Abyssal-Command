@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-terrain-sunken-bastion.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92e4-953f-71d1-b8e9-d1eceaaa74e9" },
+  "prompt": "Isometric game-terrain diorama concept art, dark-fantasy environment: a partially submerged stone bastion, shallow water pooling across the floor reflecting teal bioluminescent glow, barnacle-crusted stonework and dripping moss, painterly game production art, moody atmospheric lighting with cool teal-green ambiance, no characters, no UI, no text, no logos, no watermark, original design only.",
+  "output": { "format": "png", "width": 1536, "height": 1024, "bytes": 2368993, "sha256": "19e37b0789b7a1a2723dd5ebca5091b6381034bf32775c818f77ed4a6fd6183a" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

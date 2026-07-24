@@ -1,0 +1,490 @@
+{
+  "schemaVersion": 2,
+  "pipeline": "motion-previs-v2",
+  "bosses": [
+    {
+      "id": "warden-lantern",
+      "name": "warden-lantern",
+      "source": "assets/images/battle/pilot/concept-warden-lantern.png",
+      "sourceImages": [
+        "assets/images/battle/pilot/concept-warden-lantern.png"
+      ],
+      "durationFrames": 864,
+      "actions": [
+        {
+          "action": "show",
+          "variant": "v01",
+          "startFrame": 1,
+          "endFrame": 96,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-warden-lantern.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "idle",
+          "variant": "v01",
+          "startFrame": 97,
+          "endFrame": 216,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-warden-lantern.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "move",
+          "variant": "v01",
+          "startFrame": 217,
+          "endFrame": 288,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-warden-lantern.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "run",
+          "variant": "v01",
+          "startFrame": 289,
+          "endFrame": 372,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-warden-lantern.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "hit",
+          "variant": "v01",
+          "startFrame": 373,
+          "endFrame": 426,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-warden-lantern.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "bighit",
+          "variant": "v01",
+          "startFrame": 427,
+          "endFrame": 510,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-warden-lantern.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "attack",
+          "variant": "v01",
+          "startFrame": 511,
+          "endFrame": 600,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-warden-lantern.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "critical",
+          "variant": "v01",
+          "startFrame": 601,
+          "endFrame": 672,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-warden-lantern.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "avoid",
+          "variant": "v01",
+          "startFrame": 673,
+          "endFrame": 714,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-warden-lantern.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "defence",
+          "variant": "v01",
+          "startFrame": 715,
+          "endFrame": 792,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-warden-lantern.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "die",
+          "variant": "v01",
+          "startFrame": 793,
+          "endFrame": 864,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-warden-lantern.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        }
+      ]
+    },
+    {
+      "id": "abyssal-banner",
+      "name": "abyssal-banner",
+      "source": "assets/images/battle/pilot/concept-abyssal-banner.png",
+      "sourceImages": [
+        "assets/images/battle/pilot/concept-abyssal-banner.png"
+      ],
+      "durationFrames": 864,
+      "actions": [
+        {
+          "action": "show",
+          "variant": "v01",
+          "startFrame": 1,
+          "endFrame": 96,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-abyssal-banner.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "idle",
+          "variant": "v01",
+          "startFrame": 97,
+          "endFrame": 216,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-abyssal-banner.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "move",
+          "variant": "v01",
+          "startFrame": 217,
+          "endFrame": 288,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-abyssal-banner.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "run",
+          "variant": "v01",
+          "startFrame": 289,
+          "endFrame": 372,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-abyssal-banner.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "hit",
+          "variant": "v01",
+          "startFrame": 373,
+          "endFrame": 426,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-abyssal-banner.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "bighit",
+          "variant": "v01",
+          "startFrame": 427,
+          "endFrame": 510,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-abyssal-banner.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "attack",
+          "variant": "v01",
+          "startFrame": 511,
+          "endFrame": 600,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-abyssal-banner.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "critical",
+          "variant": "v01",
+          "startFrame": 601,
+          "endFrame": 672,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-abyssal-banner.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "avoid",
+          "variant": "v01",
+          "startFrame": 673,
+          "endFrame": 714,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-abyssal-banner.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "defence",
+          "variant": "v01",
+          "startFrame": 715,
+          "endFrame": 792,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-abyssal-banner.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "die",
+          "variant": "v01",
+          "startFrame": 793,
+          "endFrame": 864,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-abyssal-banner.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        }
+      ]
+    },
+    {
+      "id": "anchor-shard",
+      "name": "anchor-shard",
+      "source": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "sourceImages": [
+        "assets/images/battle/pilot/concept-anchor-shard.png"
+      ],
+      "durationFrames": 864,
+      "actions": [
+        {
+          "action": "show",
+          "variant": "v01",
+          "startFrame": 1,
+          "endFrame": 96,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "idle",
+          "variant": "v01",
+          "startFrame": 97,
+          "endFrame": 216,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "move",
+          "variant": "v01",
+          "startFrame": 217,
+          "endFrame": 288,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "run",
+          "variant": "v01",
+          "startFrame": 289,
+          "endFrame": 372,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "hit",
+          "variant": "v01",
+          "startFrame": 373,
+          "endFrame": 426,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "bighit",
+          "variant": "v01",
+          "startFrame": 427,
+          "endFrame": 510,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "attack",
+          "variant": "v01",
+          "startFrame": 511,
+          "endFrame": 600,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "critical",
+          "variant": "v01",
+          "startFrame": 601,
+          "endFrame": 672,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "avoid",
+          "variant": "v01",
+          "startFrame": 673,
+          "endFrame": 714,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "defence",
+          "variant": "v01",
+          "startFrame": 715,
+          "endFrame": 792,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "die",
+          "variant": "v01",
+          "startFrame": 793,
+          "endFrame": 864,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        }
+      ]
+    },
+    {
+      "id": "broken-court-monarch-boss",
+      "name": "broken-court-monarch-boss",
+      "source": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+      "sourceImages": [
+        "assets/images/battle/pilot/concept-broken-court-monarch-boss.png"
+      ],
+      "durationFrames": 864,
+      "actions": [
+        {
+          "action": "show",
+          "variant": "v01",
+          "startFrame": 1,
+          "endFrame": 96,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "idle",
+          "variant": "v01",
+          "startFrame": 97,
+          "endFrame": 216,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "move",
+          "variant": "v01",
+          "startFrame": 217,
+          "endFrame": 288,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "run",
+          "variant": "v01",
+          "startFrame": 289,
+          "endFrame": 372,
+          "loop": true,
+          "sourceImage": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "hit",
+          "variant": "v01",
+          "startFrame": 373,
+          "endFrame": 426,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "bighit",
+          "variant": "v01",
+          "startFrame": 427,
+          "endFrame": 510,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "attack",
+          "variant": "v01",
+          "startFrame": 511,
+          "endFrame": 600,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "critical",
+          "variant": "v01",
+          "startFrame": 601,
+          "endFrame": 672,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "avoid",
+          "variant": "v01",
+          "startFrame": 673,
+          "endFrame": 714,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "defence",
+          "variant": "v01",
+          "startFrame": 715,
+          "endFrame": 792,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        },
+        {
+          "action": "die",
+          "variant": "v01",
+          "startFrame": 793,
+          "endFrame": 864,
+          "loop": false,
+          "sourceImage": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+          "sourceImageIndex": 0,
+          "signaturePoses": []
+        }
+      ]
+    }
+  ]
+}

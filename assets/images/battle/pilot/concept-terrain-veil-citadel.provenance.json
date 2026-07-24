@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-terrain-veil-citadel.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92df-4d08-7de0-a1b2-7ac96ce3a3bf" },
+  "prompt": "Isometric game-terrain diorama concept art, dark-fantasy environment: a shrouded fortress plaza with tall fog-veiled stone towers rising into the mist, a central plateau with faint rolling mist across cracked flagstones, cool blue-grey palette, painterly game production art, moody atmospheric lighting with soft diffused light through fog, no characters, no UI, no text, no logos, no watermark, original design only.",
+  "output": { "format": "png", "width": 1536, "height": 1024, "bytes": 2393929, "sha256": "2a9262f1e0e4c3621d2ec102b812270d7b693d0af247ecbbbe7f96c3905322fb" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

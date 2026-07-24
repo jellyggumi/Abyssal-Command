@@ -73,7 +73,7 @@ onward) stays gated until that lands; `browser_contract` and
 
 | task | artifact | status | note |
 |---|---|---|---|
-| 파라메트릭 빌더 작성 | `scripts/build-world-content-pack.py` | done | 지형 7 + 보스 7 + 동료 6 + 아이템 8 + VFX 6 = 30 컬렉션/209 오브젝트, 캐논 팩 읽기 전용 사용 |
+| 파라메트릭 빌더 작성 | `scripts/build-world-content-pack.py` | done | 지형 7 + 보스 7 + 동료 6 + 아이템 8 + VFX 6 = 30 컬렉션/209 오브젝트, 캐논 팩 읽기 전용 사용. **[2026-07-25 추가 확인]** 당시 산출물 `world-content-pack.blend`을 2026-07-25 세션에서 헤드리스 재확인한 결과 52개 컬렉션 전부 0 오브젝트(빈 껍데기)였음 — 원인은 캐논 입력 `abyssal-command-resource-pack.blend` 자체가 이후 어느 시점(디스크 압박 정리로 추정, 확정 아님[INFERENCE])에 유실된 것. 형제 워크트리에서 캐논 팩 복사 후 빌더 재실행으로 260 오브젝트/36 컬렉션 재생성, export까지 완료(아래 섹션) |
 | 캐논 리소스 팩 텍스처 결함 발견·완화 | `scripts/build-world-content-pack.py`(`ensure_materials`) | done | 9개 재사용 머티리얼의 링크된 텍스처 파일이 저장소에 부재(마젠타 렌더 유발) — 캐논 파일은 미변경, 빌더가 깨진 링크를 재빌드마다 결정론적으로 언링크 |
 | 지오메트리 인접성 QA + 수정 | `scripts/check-asset-adjacency.py`, `scripts/build-world-content-pack.py` | done | 30개 컬렉션 전수 바운딩박스 인접성 검사, 9개 컬렉션 실제 결함 수정(목/팔 연결 누락, 소품 부유), 3개는 의도적 디자인으로 확인(무수정) |
 | Cycles 결정론적 리뷰 렌더 검증 | `scripts/render-review-thumbnails.py` | done | 전체 30 컬렉션 재빌드 후 재검증 — pairwise gap 전수 0.0000, 육안 렌더 확인 |
@@ -85,9 +85,39 @@ onward) stays gated until that lands; `browser_contract` and
 | task | artifact | status | note |
 |---|---|---|---|
 | RealtimeBattle 전면 재작성 (실제 WebGL) | `battle-realtime-three.js` | done | THREE.WebGLRenderer/Scene/PerspectiveCamera 기반 재작성, mount/renderSnapshot/dispose/onVisualFeedback/debugMetrics 계약 유지(app.js의 RealtimeBattle→BattleVisualizer 폴백 패턴 무변경). GLTF 로딩(캐싱+공유), dual-mode 좌표 해석(정규화 `[-1,1]` vs raw arena 0-24000, 구 렌더러 계약과 동일 휴리스틱), 카메라 이징+reduced-motion 스냅, VFX 5종 스폰 전량 브라우저 실측(터레인/보스/동료/적/커맨더/게이트/VFX 렌더 확인, 스크린샷 증거) |
-| GLB 룩업 테이블 완전성 검증 | `battle-realtime-three.js` | done | 42개 GLB 실측 대조 — 지형10+보스10+적4+동료6+커맨더1+VFX6=37개 결선, items/*.glb 4개+echo-throne.glb(장식용, echo-throne-steps.glb로 대체)는 렌더러 미참조 확인(보상은 DOM 텍스트 카드로 렌더, 3D 모델 아님) |
+| GLB 룩업 테이블 완전성 검증 | `battle-realtime-three.js` | done | ~~42개 GLB 실측 대조 — 지형10+보스10+적4+동료6+커맨더1+VFX6=37개 결선~~ **[2026-07-25 정정]** 이 "37개 결선" 주장은 룩업 테이블 코드상의 키 매핑 완전성만 확인한 것으로, 실제 파일 존재/네트워크 로드는 검증하지 않았음. 2026-07-25 세션에서 실측 재검증 결과 당시 디스크엔 `anchor-shard.glb` 1개만 실재(나머지는 `loadGltf()`의 `.catch()`가 조용히 삼켜 렌더 무발동). 근본원인·해결은 아래 "3D 자산 결선 실체 확인" 섹션 참조. items/*.glb 4개+echo-throne.glb가 렌더러 미참조라는 부분(보상은 DOM 카드로 렌더)은 검증 재확인됨, 정정 대상 아님 |
 | vendor 파일 bare specifier 버그 발견·수정 | `vendor/loaders/GLTFLoader.js`, `vendor/utils/{BufferGeometryUtils,SkeletonUtils}.js` | done | CDN에서 그대로 복사된 3개 파일이 `from 'three'`(npm 패키지 bare specifier) 사용 — 브라우저는 `index.html`의 importmap으로 해석했지만 순수 Node(`node --test`)는 해석 불가, CI 전체 블로킹 버그. 상대경로(`from '../three.module.js'`)로 수정, importmap을 사장(死藏) 코드로 판단해 `index.html`에서 제거 |
 | 렌더러 계약 테스트 전면 재작성 | `tests/defense-renderer-contract.test.mjs`, `tests/world-presentation-contract.test.mjs` | done | 구 테스트가 RealtimeBattle/BattleVisualizer를 동일 Canvas2D 어댑터로 가정(둘 다 mock canvas의 `arc`/`fillText` 등 호출을 assert) — RealtimeBattle은 이제 진짜 WebGL이라 이 가정이 깨짐. WebGL 컨텍스트 생성 실패 시 mount()가 throw하는 계약(app.js 폴백의 전제) 테스트 추가, RealtimeBattle 전용 테스트는 실제 THREE.Scene/Camera/Group을 직접 구성해 WebGLRenderer만 우회(mock 없이 진짜 reconcileActors/updateCamera/ensureStageTerrain 로직 실행). Canvas2D 전용 계약(포틀레이트 라벨 counter-rotation 등, 3D에는 대응 없음 — 해당 정보는 DOM/CSS atlas 패널로 이전됨)은 BattleVisualizer 전용으로 재scope |
 | 배포 파이프라인 5개소 배선 | `.github/workflows/static.yml`, `scripts/defense-runtime-assets.mjs`, `sw.js`, `tests/release-closure.test.mjs`, `tests/pages-artifact-smoke.cjs`, `assets/defense-asset-manifest.json` | done | vendor 5개+GLB 42개(sw.js는 미참조 5개 제외한 37개만 precache)를 Pages 배포 allowlist·서비스워커 precache·자산 매니페스트·릴리즈 클로저 테스트에 전량 등록. 두 테스트 파일(`defense-asset-manifest.test.mjs`, `release-closure.test.mjs`)에 남아있던 "assets/models는 영구 금지"라는 구 RTS 시대(커밋 `141b8f7`) 불변식을 발견·완화(당시엔 다른 GLB 경로 체계였고, 이번 재도입은 프로덕션 문서(`motion-previs-and-blender-execution-plan.md`)가 명시한 의도된 산출물) |
 | 전체 스위트 회귀 검증 | `node --test` 출력 | done | 169개 중 157 pass — 실패 12개 전량 이 세션과 무관한 기존 dirty-tree 원인 2가지로 추적: (1) `_workspace/20260722-abyssal-command-bmad-gds-expansion/` 전체가 git 인덱스엔 있으나 워킹트리에서 미스테이지 삭제됨(10개 테스트), (2) `assets/images/battle/world/cinder-span-topdown-plate.webp`가 별도 워크스트림에 의해 `pilot/`로 미스테이지 이동됨(2개 테스트) — 둘 다 이 세션이 건드리지 않은 경로, `git show HEAD:`로 원본 확인 |
 | 브라우저 실 WebGL 스모크 테스트 | 스크린샷 증거 | done | 로컬 정적 서버로 실제 `index.html` 서빙 → 로비→전투 시작→실제 GLB 42개 중 다수 네트워크 요청 확인(vendor 5개+터레인/커맨더/적3종/VFX2종)→WebGL 컨텍스트 존재 확인→3D 커맨더 모델(왕관 스파이크 형상)·게이트 토러스·터레인 평면이 성장선택 HUD와 함께 렌더되는 스크린샷 확보, 콘솔 에러 0건 |
+
+## 동료 3종 + 아이템 2종 확장 (this session)
+
+사용자 요청으로 6개 동료(스테이지 1-3 계보)에 3종 추가(9종, 스테이지 4-10 계보) + REWARDS 신규 2종. 상세 결정 경위는 `decision-log.md` D18 참조.
+
+| task | artifact | status | note |
+|---|---|---|---|
+| 신규 동료 3종 데이터+역할 배선 | `defense-catalog.js`, `rpg-catalog.js` | done | `pack-warden`(vanguard)·`lantern-reaver`(striker)·`requiem-warden`(support), COMPANION_ROLES 3역할×2명 하드코딩 없음 확인 후 동적 배선만으로 완료 |
+| 신규 REWARDS 2종 | `defense-catalog.js`(REWARDS, STAGE_REWARD_IDS), `defense-run-simulation.js` | done | `warden-lantern`(pickupRange 버프)·`choir-ward-crystal`(critChanceBonusBp 버프), 기존 `applyOwnedRewards` 필드에 직접 후킹(신규 시뮬레이션 코드 불필요) |
+| 3D 에셋 빌드 확장 | `scripts/build-world-content-pack.py` | done | 기존 6동료 빌드 패턴 답습, 신규 5컬렉션(동료3+아이템2) 인접성 QA 첫 시도 클린 통과(0 결함) |
+| 전체 38컬렉션 재검증 | `scripts/check-asset-adjacency.py` | done | 회귀 없음, 기존 2개 flagged(D15 의도된 예외)만 유지 |
+| GLB export + 배포 배선 | `scripts/export-battle-glb.py`, `.github/workflows/static.yml`, `sw.js`, `scripts/defense-runtime-assets.mjs`, `tests/release-closure.test.mjs`, `tests/pages-artifact-smoke.cjs`, `assets/defense-asset-manifest.json` | done | 신규 GLB 5종을 6개소 전량 등록(D16 교훈 재적용); release-closure 파일 내 리스트 2곳 중복 존재를 최초 누락했다가 advisory로 즉시 보정 |
+| 런타임 배선 | `battle-realtime-three.js`(COMPANION_MODELS), `app.js`(companionGlyph) | done | 3종 GLB 경로 + 3종 UI glyph 추가 |
+| 회귀 테스트 (3개 서브에이전트 병렬) | `tests/rpg-catalog.test.mjs`, `tests/defense-run-simulation-rpg.test.mjs`, `tests/defense-run-simulation.test.mjs` | done | 각자 IRC로 파일 소유권 조율(충돌 없음), teeth-test로 assertion 실효성 자체 증명 |
+
+## 3D 자산 결선 실체 확인 + T-pose 캐릭터 배치 + 리깅 도구 결정 (this session)
+
+사용자 요청("나머지 이미지 매쉬도 T-Pose로 생성후, 리깅해야해... 실제 리소스가 반영되어 구성 동작하도록해야해")에 따라 진행. 상세 경위는 `decision-log.md` D19 참조.
+
+| task | artifact | status | note |
+|---|---|---|---|
+| Rodin Confirm 버튼 좌표 버그 발견·해결 | (프로세스 지식, 코드 아님) | done | 이전 세션 내내 다운로드가 실패한 근본 원인 — DOM에 동일 텍스트("Confirm") 요소가 5개 존재, 잘못된 좌표를 클릭해 잠긴 Pack 섹션을 계속 누르고 있었음. `document.elementFromPoint()`로 실제 렌더 위치 역산 후 해결. `saveAs()`/`download.path()`가 sandboxed fs 제약으로 타임아웃되는 것도 발견 — 다운로드 이벤트에서 서명 URL(`file.hyper3d.com/.../base.glb?X-Tos-...`)만 추출해 `curl` 직접 다운로드로 우회 |
+| 보스 T-pose GLB 5종 확보 (s1-s5) | `pipeline/bosses/raw/{s1-cinder-warden,s2-veil-tactician,s3-gate-sovereign,s4-tide-warden,s5-pack-herald}.raw.glb` | done | 전량 glTF magic 검증 + SHA-256 상호 고유성 확인(5개 전부 다른 해시). s4는 T-pose 적용 전 Geometry가 이미 confirm된 상태였음이 밝혀져 `.NOTPOSE.` 파일명 마커로 표시(31.5MB, quad 리토폴로지 미적용 원본 밀도) — 재생성하지 않고 보존, Blender 리포즈 필요 사항으로 명시 |
+| **3D 런타임 자산 결선 갭 발견·해결** | `assets/images/battle/glb/*.glb`(40개), `assets/models/abyssal-command/abyssal-command-resource-pack.blend`, `_workspace/.../world-content-pack.blend` | done | 직전 커밋(`0b50089`)이 스스로 문서화한 기지 갭 재확인: `battle-realtime-three.js`의 40개 매핑 중 `anchor-shard.glb` 1개만 실재, 나머지 39개는 `loadGltf()`의 `.catch()`가 조용히 삼켜 무발동 상태. 캐논 리소스팩(`abyssal-command-resource-pack.blend`)이 디스크 압박 정리로 유실된 것이 근본원인 — 형제 워크트리(`Abyssal-Surge-3d-overhaul`, `Abyssal-Surge-cycle2`, 동일 origin) 대조로 확인 후 복사, `build-world-content-pack.py`+`export-battle-glb.py` 재실행으로 40/40 GLB 신규 export(260 오브젝트, 36 컬렉션). 전량 glTF magic 검증 통과, 헤드리스 서버+브라우저 실측(WebGL 컨텍스트 확인, 네트워크에서 4종 GLB 200 확인 — dusk-warden/cinder-span/scout/shade, 스크린샷으로 보스+터레인+VFX 실제 렌더 확인) |
+| 삭제된 workspace 5개 안전성 재검증·복구 | `_workspace/20260716-*`(2개, 복구 불필요 확인), `_workspace/20260722-*`(3개, 복구 완료), `assets/images/battle/{dusk-warden,echo-rusher}-*`(20개), `assets/images/battle/pilot/concept-{shadow-commander,sung-hum}-boss.*`(4개), `assets/models/abyssal-command/abyssal-command-resource-pack.glb`, `assets/video/abyssal-surge-defense-survivor-smoke.mp4`, `assets/images/battle/animation-manifest.json` | done | 최초 판단("커밋 메시지가 ship이니 안전")이 틀렸음을 테스트 실패로 발견 — `git ls-files`가 tracked로 보고하는 모든 경로를 디스크 존재 여부로 전수 재검증, 형제 워크트리에서 HEAD와 diff 0 확인 후 복구(git 조작 아님, 순수 파일 복사 — 형제가 동일 origin의 다른 체크아웃이므로 버전 어긋남 없음 확인). 코드/테스트가 참조하지 않는 나머지 3개(20260716- 2종 + 미참조분)는 정리 유지 |
+| G2 fixture 1건 진짜 유실 확인·문서화 | `tests/g2-prepared-prerequisite-bindings.test.mjs` | done | `g2-prepared-prerequisite-bindings-v1.json` — git 히스토리에도 형제 워크트리 2곳에도 존재하지 않음, 진짜 복구 불가로 결론. 위조 대신 `existsSync` 가드 + 사유 명시된 `test(..., { skip: "..." })`로 처리(영구 red 스위트 방지) |
+| 전체 스위트 회귀 검증 | `node --test` 출력 | done | 174개 중 173 pass, 1 skip(위 fixture, 사유 명시), 0 fail. `tmp/marker-test.mjs`(손상된 유니코드 삽입된 디버그 스크래치 파일)도 발견·제거 |
+| 리깅 도구 조사 + ADR | `.claude/skills/game-studio-harness/references/quality-gates.md`("Character asset pipeline standard" 섹션) | done | AccuRig/Mixamo/Tripo AI/Mesh2Motion 4종 라이선스+자동화+포맷 비교(서브에이전트 위임 리서치). 결론: Tripo AI(REST API+SDK, 휴머노이드+크리처 겸용, 네이티브 GLB, CC BY 4.0 무료 티어)가 배치 자동화 유일 옵션 — AccuRig/Mesh2Motion은 라이선스는 깨끗하나 GUI 전용(배치 불가), Mixamo는 2026년 인증/업로드 불안정성 다수 보고로 비권장 |
+| ~~**BLOCKER 1: 크레딧 부족**~~ | Rodin 계정 잔액 27.5 | **[2026-07-25 정정, 즉시 반증]** 이 판단은 틀렸음 — s6 신규 생성(비-redo, concept 이미지→T-pose)을 실측한 결과 실제 소모는 캐릭터당 0.5크레딧(27.5→27.0)뿐이었다. 17개 전량 신규 생성에 필요한 예산은 ~8.5크레딧으로 27.5 잔액 내에서 충분(19 여유). "캐릭터당 수 크레딧"이라는 최초 추정은 실측 없이 UI의 다른 숫자(Confirm 버튼의 "0.5 Credits" 표시를 다른 항목으로 오인)에서 잘못 도출됨. BLOCKER 아님 — 취소선 처리, 17개 생성 계속 진행 |
+| **BLOCKER: 리깅 API 키 부재** | `TRIPO_API_KEY` 미설정 | open | Tripo AI가 유일한 배치 자동화 경로이나 API 키 없음. AccuRig/Mesh2Motion은 22개 캐릭터를 GUI로 수동 리깅해야 해 이번 세션 내 완료 불가. 사용자 결정 필요: (a) Tripo API 키 제공, (b) 수동 리깅 워크플로우로 전환, (c) T-pose GLB 확보(크레딧 충분, 진행 중)만 이번 사이클 완료하고 리깅은 다음 사이클로 이월 |

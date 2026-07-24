@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-lantern-reaver.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92ed-ba72-7ad1-b4fe-838eb88c0b44" },
+  "prompt": "An original dark-fantasy striker unit called Lantern Reaver: an agile dual-blade wielder in a sleek low-profile leather-and-metal outfit, twin curved blades drawn and crossed, a small glowing soul-lantern hanging from their belt, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear dual-blade silhouette, swift crouched low-profile stance, dynamic warm amber lantern-glow rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1024, "height": 1536, "bytes": 2195312, "sha256": "e4a2da7f5c3e662f73ab4ce1ab15f97225458f7cf36811d0ea3d0185c6717d2b" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

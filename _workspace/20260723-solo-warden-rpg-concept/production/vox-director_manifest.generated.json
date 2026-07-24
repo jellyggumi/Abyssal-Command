@@ -1,0 +1,871 @@
+{
+  "schemaVersion": "vox-director-manifest-1.1",
+  "runId": "20260723-solo-warden-rpg-concept",
+  "artifactRoot": "_workspace/20260723-solo-warden-rpg-concept",
+  "source": {
+    "design": "design/defense-rpg-cinematic-arc.md",
+    "audioManifest": "production/audio-cut-stage-manifest.json",
+    "motionMatrix": "production/storyboard-motion-sound-matrix.json",
+    "soundPlan": "production/elevenlabs_sound_plan.json"
+  },
+  "outputPreset": {
+    "videoPartsRoot": "assets/video",
+    "audioRoot": "assets/audio/elevenlabs",
+    "renderPartNames": [
+      "part_intro.mp4",
+      "part_lobby.mp4",
+      "part_stage01.mp4",
+      "part_stage02.mp4",
+      "part_stage03.mp4",
+      "part_stage04.mp4",
+      "part_stage05.mp4",
+      "part_stage06.mp4",
+      "part_stage07.mp4",
+      "part_stage08.mp4",
+      "part_stage09.mp4",
+      "part_stage10.mp4",
+      "part_ending_common.mp4",
+      "part_ending_branch_a.mp4",
+      "part_ending_branch_b.mp4"
+    ],
+    "defaultAspect": "1024x576",
+    "defaultFps": 30,
+    "targetFrameRate": 30
+  },
+  "parts": [
+    {
+      "partId": "part_intro",
+      "cutIds": [
+        "C01"
+      ],
+      "durationSec": 8,
+      "scenePrompts": [
+        "Ember-ruined gate district, fractured ether gate collapsing in the haze, lone dusk-warden protagonist silhouette emerging from smoke, distant command lines flickering, cinematic 1024x576, 3.5D anime concept frame, warm-automata ember-noir palette, high silhouette clarity."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C01",
+          "durationSec": 8,
+          "scenePrompt": "Ember-ruined gate district, fractured ether gate collapsing in the haze, lone dusk-warden protagonist silhouette emerging from smoke, distant command lines flickering, cinematic 1024x576, 3.5D anime concept frame, warm-automata ember-noir palette, high silhouette clarity.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_intro_01.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_prologue_low.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_gate_rip_01.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        }
+      ]
+    },
+    {
+      "partId": "part_lobby",
+      "cutIds": [
+        "C02"
+      ],
+      "durationSec": 10,
+      "scenePrompts": [
+        "War-hold lobby command room, dusk practical lighting, strategic table with ten red pin marks on map, tense-but-calmed soldiers preparing, 1024x576, 3.5D cutscene style, warm-automata, readable UI-absent staging for storyboard."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C02",
+          "durationSec": 10,
+          "scenePrompt": "War-hold lobby command room, dusk practical lighting, strategic table with ten red pin marks on map, tense-but-calmed soldiers preparing, 1024x576, 3.5D cutscene style, warm-automata, readable UI-absent staging for storyboard.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_lobby_intro.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_lobby_day.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_ambient_forge.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [],
+          "npcVoice": [
+            "assets/audio/elevenlabs/npc/npcHaram_lobby_opening.mp3",
+            "assets/audio/elevenlabs/npc/npcMeri_lobby_timing.mp3"
+          ],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        }
+      ]
+    },
+    {
+      "partId": "part_stage01",
+      "cutIds": [
+        "C03",
+        "C04"
+      ],
+      "durationSec": 21,
+      "scenePrompts": [
+        "Narrow ember canyon bridge approach, unstable ward line markers blinking red, smoke rolling low, protagonist enters through heat haze, 1024x576, 3.5D anime cinematic, ember particles and broken stone textures.",
+        "Human-vanguard commander appears first time, tactical mask and ember crown, dramatic sidelight on angular armor and cloak, 1024x576, 3.5D cel-shaded, strong silhouette and readable hands."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C03",
+          "durationSec": 9,
+          "scenePrompt": "Narrow ember canyon bridge approach, unstable ward line markers blinking red, smoke rolling low, protagonist enters through heat haze, 1024x576, 3.5D anime cinematic, ember particles and broken stone textures.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_stage01_entry.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_stage01_entry.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_ward_level_warning.mp3"
+          ],
+          "ambience": [
+            "assets/audio/elevenlabs/ambience/bg_stage01_entry.mp3"
+          ],
+          "combatSfx": [],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [
+            {
+              "id": "state.player.safe",
+              "audio": "assets/audio/elevenlabs/state/state.player.safe.mp3"
+            },
+            {
+              "id": "state.player.skill_cd",
+              "audio": "assets/audio/elevenlabs/state/state.player.skill_cd.mp3"
+            }
+          ],
+          "skill": [
+            {
+              "id": "skill.player.attack",
+              "audio": "assets/audio/elevenlabs/skill/skill.player.attack.mp3"
+            }
+          ],
+          "rawTriggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.skill_cd"
+            ],
+            "skillNarration": [
+              "skill.player.attack"
+            ]
+          }
+        },
+        {
+          "cutId": "C04",
+          "durationSec": 12,
+          "scenePrompt": "Human-vanguard commander appears first time, tactical mask and ember crown, dramatic sidelight on angular armor and cloak, 1024x576, 3.5D cel-shaded, strong silhouette and readable hands.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_boss01_show.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_stage01_boss.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_boss_enter_chime.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_boss_human_attack.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_player_block.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [
+            "assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3",
+            "assets/audio/elevenlabs/combat/sfx_player_hit.mp3"
+          ],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [
+            {
+              "id": "state.player.defence_ready",
+              "audio": "assets/audio/elevenlabs/state/state.player.defence_ready.mp3"
+            }
+          ],
+          "skill": [
+            {
+              "id": "skill.player.defence",
+              "audio": "assets/audio/elevenlabs/skill/skill.player.defence.mp3"
+            }
+          ],
+          "rawTriggers": {
+            "stateNarration": [
+              "state.player.defence_ready"
+            ],
+            "skillNarration": [
+              "skill.player.defence"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "partId": "part_stage02",
+      "cutIds": [
+        "C05",
+        "C06"
+      ],
+      "durationSec": 20,
+      "scenePrompts": [
+        "Fortress bridge under storm, shadow flares in two-way columns, fog and red signal rods flicker through the rain, 1024x576, 3.5D isometric transition frame, ember-noir palette.",
+        "Control-break tactician commander reveal, dual-spear shadow soldier style armor, cracked visor and layered plates, cinematic slow side reveal, 1024x576, 3.5D anime storyboard frame."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C05",
+          "durationSec": 9,
+          "scenePrompt": "Fortress bridge under storm, shadow flares in two-way columns, fog and red signal rods flicker through the rain, 1024x576, 3.5D isometric transition frame, ember-noir palette.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_stage02_entry.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_stage02_entry.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_bridge_grind.mp3"
+          ],
+          "ambience": [
+            "assets/audio/elevenlabs/ambience/bg_stage02_entry.mp3"
+          ],
+          "combatSfx": [],
+          "npcVoice": [],
+          "battleTriggerAudio": [
+            {
+              "id": "sfx_ward_rise",
+              "audio": "sfx_ward_rise"
+            }
+          ],
+          "state": [
+            {
+              "id": "state.player.move",
+              "audio": "assets/audio/elevenlabs/state/state.player.move.mp3"
+            }
+          ],
+          "skill": [],
+          "rawTriggers": {
+            "battleSfx": [
+              "sfx_ward_rise"
+            ],
+            "stateNarration": [
+              "state.player.move"
+            ]
+          }
+        },
+        {
+          "cutId": "C06",
+          "durationSec": 11,
+          "scenePrompt": "Control-break tactician commander reveal, dual-spear shadow soldier style armor, cracked visor and layered plates, cinematic slow side reveal, 1024x576, 3.5D anime storyboard frame.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_boss02_show.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_stage02_boss.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_tactical_ping.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_boss_human_attack.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_player_avoid.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [
+            "assets/audio/elevenlabs/combat/sfx_ward_rise.mp3"
+          ],
+          "npcVoice": [],
+          "battleTriggerAudio": [
+            {
+              "id": "onDefenceBreak",
+              "audio": "onDefenceBreak"
+            }
+          ],
+          "state": [
+            {
+              "id": "state.player.critical",
+              "audio": "assets/audio/elevenlabs/state/state.player.critical.mp3"
+            },
+            {
+              "id": "state.player.lowhp",
+              "audio": "assets/audio/elevenlabs/state/state.player.lowhp.mp3"
+            }
+          ],
+          "skill": [],
+          "rawTriggers": {
+            "stateNarration": [
+              "state.player.critical",
+              "state.player.lowhp"
+            ],
+            "battleSfx": [
+              "onDefenceBreak"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "partId": "part_stage03",
+      "cutIds": [
+        "C07",
+        "C08"
+      ],
+      "durationSec": 22,
+      "scenePrompts": [
+        "Gate throne and sunken bastion merged into one corridor montage: alternating palette shifts, low-angle wide shot, alternating crimson and indigo shadows, 1024x576, dramatic 2.5D anime cut, stage3-4 continuity.",
+        "Void knight of abyssal gate, cloak-like shadow fragments around body, crimson-thorn staff, anti-noise motion blur hint, high-contrast 3.5D anime frame, 1024x576."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C07",
+          "durationSec": 12,
+          "scenePrompt": "Gate throne and sunken bastion merged into one corridor montage: alternating palette shifts, low-angle wide shot, alternating crimson and indigo shadows, 1024x576, dramatic 2.5D anime cut, stage3-4 continuity.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_stage03_04_bridge.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_mid_gate_drive.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_echo_drone.mp3"
+          ],
+          "ambience": [
+            "assets/audio/elevenlabs/ambience/bg_stage03_entry.mp3"
+          ],
+          "combatSfx": [],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        },
+        {
+          "cutId": "C08",
+          "durationSec": 10,
+          "scenePrompt": "Void knight of abyssal gate, cloak-like shadow fragments around body, crimson-thorn staff, anti-noise motion blur hint, high-contrast 3.5D anime frame, 1024x576.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_boss03_show.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_stage03_boss.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_staff_windup.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_boss_shadow_critical.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_player_attack.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [
+            "assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3"
+          ],
+          "npcVoice": [],
+          "battleTriggerAudio": [
+            {
+              "id": "sfx_player_hit",
+              "audio": "sfx_player_hit"
+            },
+            {
+              "id": "sfx_boss_shadow_attack",
+              "audio": "sfx_boss_shadow_attack"
+            }
+          ],
+          "state": [
+            {
+              "id": "state.player.die",
+              "audio": "assets/audio/elevenlabs/state/state.player.die.mp3"
+            }
+          ],
+          "skill": [],
+          "rawTriggers": {
+            "stateNarration": [
+              "state.player.die"
+            ],
+            "battleSfx": [
+              "sfx_player_hit",
+              "sfx_boss_shadow_attack"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "partId": "part_stage04",
+      "cutIds": [
+        "C07",
+        "C08"
+      ],
+      "durationSec": 22,
+      "scenePrompts": [
+        "Gate throne and sunken bastion merged into one corridor montage: alternating palette shifts, low-angle wide shot, alternating crimson and indigo shadows, 1024x576, dramatic 2.5D anime cut, stage3-4 continuity.",
+        "Void knight of abyssal gate, cloak-like shadow fragments around body, crimson-thorn staff, anti-noise motion blur hint, high-contrast 3.5D anime frame, 1024x576."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C07",
+          "durationSec": 12,
+          "scenePrompt": "Gate throne and sunken bastion merged into one corridor montage: alternating palette shifts, low-angle wide shot, alternating crimson and indigo shadows, 1024x576, dramatic 2.5D anime cut, stage3-4 continuity.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_stage03_04_bridge.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_mid_gate_drive.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_echo_drone.mp3"
+          ],
+          "ambience": [
+            "assets/audio/elevenlabs/ambience/bg_stage03_entry.mp3"
+          ],
+          "combatSfx": [],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        },
+        {
+          "cutId": "C08",
+          "durationSec": 10,
+          "scenePrompt": "Void knight of abyssal gate, cloak-like shadow fragments around body, crimson-thorn staff, anti-noise motion blur hint, high-contrast 3.5D anime frame, 1024x576.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_boss03_show.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_stage03_boss.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_staff_windup.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_boss_shadow_critical.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_player_attack.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [
+            "assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3"
+          ],
+          "npcVoice": [],
+          "battleTriggerAudio": [
+            {
+              "id": "sfx_player_hit",
+              "audio": "sfx_player_hit"
+            },
+            {
+              "id": "sfx_boss_shadow_attack",
+              "audio": "sfx_boss_shadow_attack"
+            }
+          ],
+          "state": [
+            {
+              "id": "state.player.die",
+              "audio": "assets/audio/elevenlabs/state/state.player.die.mp3"
+            }
+          ],
+          "skill": [],
+          "rawTriggers": {
+            "stateNarration": [
+              "state.player.die"
+            ],
+            "battleSfx": [
+              "sfx_player_hit",
+              "sfx_boss_shadow_attack"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "partId": "part_stage05",
+      "cutIds": [
+        "C09"
+      ],
+      "durationSec": 10,
+      "scenePrompts": [
+        "Howling enemy pack before torn signal tower, wind circles and circling pressure build, tactical formation compression, 1024x576, 3.5D comic-motion frame."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C09",
+          "durationSec": 10,
+          "scenePrompt": "Howling enemy pack before torn signal tower, wind circles and circling pressure build, tactical formation compression, 1024x576, 3.5D comic-motion frame.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_stage05.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_stage05.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_howl_loop.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_boss_generic_hit.mp3"
+          ],
+          "ambience": [
+            "assets/audio/elevenlabs/ambience/bg_stage05_entry.mp3"
+          ],
+          "combatSfx": [],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        }
+      ]
+    },
+    {
+      "partId": "part_stage06",
+      "cutIds": [
+        "C10"
+      ],
+      "durationSec": 11,
+      "scenePrompts": [
+        "Glass cathedral ruin with rising ward sigils, emperor-like commander silhouette at center, wardLevel symbols pulsing outward, 1024x576, high-tension 3.5D anime composition."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C10",
+          "durationSec": 11,
+          "scenePrompt": "Glass cathedral ruin with rising ward sigils, emperor-like commander silhouette at center, wardLevel symbols pulsing outward, 1024x576, high-tension 3.5D anime composition.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_stage06.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_stage06_peak.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_ward_lock.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_bighit.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_player_block.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [
+            "assets/audio/elevenlabs/combat/sfx_ward_rise.mp3"
+          ],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        }
+      ]
+    },
+    {
+      "partId": "part_stage07",
+      "cutIds": [
+        "C11"
+      ],
+      "durationSec": 12,
+      "scenePrompts": [
+        "Dark canal and broken bridge, mirrored water shadows and two-lane pursuit path, compressed stage7-8 transition, 1024x576, 3.5D anime with spatial cue overlays."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C11",
+          "durationSec": 12,
+          "scenePrompt": "Dark canal and broken bridge, mirrored water shadows and two-lane pursuit path, compressed stage7-8 transition, 1024x576, 3.5D anime with spatial cue overlays.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_stage07_08.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_bridge_cascade.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_bridge_break.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_boss_shadow_attack.mp3"
+          ],
+          "ambience": [
+            "assets/audio/elevenlabs/ambience/bg_stage07_entry.mp3"
+          ],
+          "combatSfx": [],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        }
+      ]
+    },
+    {
+      "partId": "part_stage08",
+      "cutIds": [
+        "C11",
+        "C12"
+      ],
+      "durationSec": 24,
+      "scenePrompts": [
+        "Dark canal and broken bridge, mirrored water shadows and two-lane pursuit path, compressed stage7-8 transition, 1024x576, 3.5D anime with spatial cue overlays.",
+        "Colossus frame from gate ruins, colossal shadow banners whipping ash-storms, gigantic silhouette preparing strike, 1024x576, 3.5D isometric hero framing."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C11",
+          "durationSec": 12,
+          "scenePrompt": "Dark canal and broken bridge, mirrored water shadows and two-lane pursuit path, compressed stage7-8 transition, 1024x576, 3.5D anime with spatial cue overlays.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_stage07_08.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_bridge_cascade.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_bridge_break.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_boss_shadow_attack.mp3"
+          ],
+          "ambience": [
+            "assets/audio/elevenlabs/ambience/bg_stage07_entry.mp3"
+          ],
+          "combatSfx": [],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        },
+        {
+          "cutId": "C12",
+          "durationSec": 12,
+          "scenePrompt": "Colossus frame from gate ruins, colossal shadow banners whipping ash-storms, gigantic silhouette preparing strike, 1024x576, 3.5D isometric hero framing.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_boss08_show.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_stage08_colossus.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_colossus_step.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_critical.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_player_critical.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [
+            "assets/audio/elevenlabs/combat/sfx_defence_break.mp3",
+            "assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3"
+          ],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        }
+      ]
+    },
+    {
+      "partId": "part_stage09",
+      "cutIds": [
+        "C13"
+      ],
+      "durationSec": 11,
+      "scenePrompts": [
+        "Veiled court in abyssal courtroom, diplomatic duel with split lighting and uneasy alliance optics, 1024x576, 2.5D anime noir courtroom tension frame."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C13",
+          "durationSec": 11,
+          "scenePrompt": "Veiled court in abyssal courtroom, diplomatic duel with split lighting and uneasy alliance optics, 1024x576, 2.5D anime noir courtroom tension frame.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_stage09.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_stage09_dissonant.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_vow_break.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_player_block.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_player_hit.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [
+            "assets/audio/elevenlabs/combat/sfx_player_hit.mp3",
+            "assets/audio/elevenlabs/combat/sfx_stage_clear_short.mp3"
+          ],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [
+            {
+              "id": "state.player.safe",
+              "audio": "assets/audio/elevenlabs/state/state.player.safe.mp3"
+            },
+            {
+              "id": "state.player.critical",
+              "audio": "assets/audio/elevenlabs/state/state.player.critical.mp3"
+            }
+          ],
+          "skill": [
+            {
+              "id": "skill.player.avoid",
+              "audio": "assets/audio/elevenlabs/skill/skill.player.avoid.mp3"
+            },
+            {
+              "id": "skill.player.attack",
+              "audio": "assets/audio/elevenlabs/skill/skill.player.attack.mp3"
+            }
+          ],
+          "rawTriggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.critical"
+            ],
+            "skillNarration": [
+              "skill.player.avoid",
+              "skill.player.attack"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "partId": "part_stage10",
+      "cutIds": [
+        "C14"
+      ],
+      "durationSec": 13,
+      "scenePrompts": [
+        "Abyss Zenith battlefield, cracked moonless throne sigils and fractured command dais, crimson storm above, 1024x576, 3.5D cinematic showdown frame."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C14",
+          "durationSec": 13,
+          "scenePrompt": "Abyss Zenith battlefield, cracked moonless throne sigils and fractured command dais, crimson storm above, 1024x576, 3.5D cinematic showdown frame.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_boss10_show.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_stage10_final.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_final_gate_shatter.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_critical.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_player_bighit.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [
+            "assets/audio/elevenlabs/combat/sfx_elite_fail_warning.mp3",
+            "assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3"
+          ],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        }
+      ]
+    },
+    {
+      "partId": "part_ending_common",
+      "cutIds": [
+        "C15"
+      ],
+      "durationSec": 9,
+      "scenePrompts": [
+        "Dawn breaks over abyssal wall, deepmark rune glowing in hero chest, companions waiting in calm distance, 1024x576, 3.5D emotional resolution frame."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C15",
+          "durationSec": 9,
+          "scenePrompt": "Dawn breaks over abyssal wall, deepmark rune glowing in hero chest, companions waiting in calm distance, 1024x576, 3.5D emotional resolution frame.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_ending_common.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_ending_common.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_resonance_bloom.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [
+            "assets/audio/elevenlabs/combat/sfx_stage_clear_short.mp3"
+          ],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [
+            {
+              "id": "state.player.safe",
+              "audio": "assets/audio/elevenlabs/state/state.player.safe.mp3"
+            },
+            {
+              "id": "state.player.defence_ready",
+              "audio": "assets/audio/elevenlabs/state/state.player.defence_ready.mp3"
+            }
+          ],
+          "skill": [],
+          "rawTriggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.defence_ready"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "partId": "part_ending_branch_a",
+      "cutIds": [
+        "C16"
+      ],
+      "durationSec": 10,
+      "scenePrompts": [
+        "Peaceful hold rebuilding after gate-order sever, warm campfire and repaired banners, civilian crews returning to work, 1024x576, soft reconstruction style still in ember-noir world."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C16",
+          "durationSec": 10,
+          "scenePrompt": "Peaceful hold rebuilding after gate-order sever, warm campfire and repaired banners, civilian crews returning to work, 1024x576, soft reconstruction style still in ember-noir world.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_ending_a.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_ending_a.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_forge_soft.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        }
+      ]
+    },
+    {
+      "partId": "part_ending_branch_b",
+      "cutIds": [
+        "C17"
+      ],
+      "durationSec": 11,
+      "scenePrompts": [
+        "Storm-charged horizon, vow-marked pursuit map projected in air, lone silhouette chasing remaining commandline residue, 1024x576, high-contrast pursuit frame."
+      ],
+      "cutAudio": [
+        {
+          "cutId": "C17",
+          "durationSec": 11,
+          "scenePrompt": "Storm-charged horizon, vow-marked pursuit map projected in air, lone silhouette chasing remaining commandline residue, 1024x576, high-contrast pursuit frame.",
+          "narration": [
+            "assets/audio/elevenlabs/narration/narr_ending_b.mp3"
+          ],
+          "bgm": [
+            "assets/audio/elevenlabs/bgm/bgm_ending_b.mp3"
+          ],
+          "sfx": [
+            "assets/audio/elevenlabs/sfx/sfx_pursuit_wind.mp3",
+            "assets/audio/elevenlabs/sfx/sfx_player_attack.mp3"
+          ],
+          "ambience": [],
+          "combatSfx": [
+            "assets/audio/elevenlabs/combat/sfx_elite_fail_warning.mp3"
+          ],
+          "npcVoice": [],
+          "battleTriggerAudio": [],
+          "state": [],
+          "skill": [],
+          "rawTriggers": {}
+        }
+      ]
+    }
+  ]
+}

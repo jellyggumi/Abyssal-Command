@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-veil-vanguard.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92e1-9a10-7cd1-b2d3-3b6e6973d2f5" },
+  "prompt": "An original dark-fantasy vanguard unit called Veil Vanguard: a heavily armored shield-bearer in thick plated armor, wrapped in a tattering translucent veil-cloak that trails behind them, bracing a large teal energy shield forward, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear weapon/shield silhouette, braced grounded defensive stance, solid cold teal rim lighting emphasizing bulk and armor plating, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1024, "height": 1536, "bytes": 2483907, "sha256": "0cdbef5587d0f34783766b20ea467ff1d95d62e3211235b008a4f8f60030c54c" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

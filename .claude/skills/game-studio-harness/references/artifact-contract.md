@@ -18,6 +18,12 @@ _workspace/{run-id}/
 │   ├── novelty-scorecard.md         # G8; vs survey frequency
 │   ├── presentation-spec.md         # immersion intent per scene/effect
 │   └── trend-survey/                # skill://survey artifacts (.survey mirror)
+├── ui/                              # ui-senior-developer
+│   ├── information-architecture.md  # panel/screen map traced to design systems
+│   ├── component-contracts.md       # props/state/events; read-only sim binding
+│   ├── hud-layout-spec.md           # screen-space vs world-space, edge-HUD compliance
+│   ├── accessibility-audit.md       # touch target, contrast, reduced-motion (G4 input)
+│   └── perf-notes.md                # DOM count, UI input latency ≤100ms (G6 input)
 ├── pm/                              # game-pm
 │   ├── revenue-map.md               # revenue points + touched balance numbers
 │   ├── reward-bands.md              # comeback/steady/fairness numbers (G5)

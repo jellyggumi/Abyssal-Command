@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-terrain-cinder-span.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92dd-1480-7743-922f-ebf90c99f6b1" },
+  "prompt": "Isometric game-terrain diorama concept art, dark-fantasy environment: an ash-covered ruined stone bridge spanning a deep chasm, glowing ember cracks splitting the ground and bridge stones, drifting ash particles suspended in the air, warm orange-red ambient glow from below the chasm, painterly game production art, moody atmospheric lighting, dramatic warm haze on the horizon, no characters, no UI, no text, no logos, no watermark, original design only.",
+  "output": { "format": "png", "width": 1536, "height": 1024, "bytes": 2646987, "sha256": "8430b1494e8dabac3c913d25ab0093de0c4d50d08f7f7e8db49b12dcfe2160ac" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

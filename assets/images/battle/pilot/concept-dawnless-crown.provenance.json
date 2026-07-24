@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-dawnless-crown.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92e8-5dcf-74d1-a148-b1fc49fd876c" },
+  "prompt": "An original dark-fantasy support commanding officer called Moonless Command: an authoritative figure wearing dark navy and silver military-regal armor, a broken crown motif set into their helm, holding a tall banner-staff with a tattered dark banner, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear banner-staff silhouette, authoritative commanding stance, soft protective cool silver-blue rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1024, "height": 1536, "bytes": 2140196, "sha256": "c66ae5823dc95664b8bb73a509a5b6c7678869a6b377ee920a240533e0f865fd" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

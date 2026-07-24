@@ -1,0 +1,782 @@
+{
+  "schemaVersion": "stage-cut-sound-manifest-v1",
+  "runId": "20260723-solo-warden-rpg-concept",
+  "scope": "storyboard cuts including intro,lobby,stages 1-10, ending branches",
+  "cuts": [
+    {
+      "cutId": "C01",
+      "stage": "intro",
+      "label": "프롤로그 - 재난의 전조",
+      "durationSec": 8,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_intro_01",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_intro_01.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_prologue_low",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_prologue_low.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_gate_rip_01",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_gate_rip_01.mp3"
+          }
+        ]
+      }
+    },
+    {
+      "cutId": "C02",
+      "stage": "lobby",
+      "label": "로비 오프닝",
+      "durationSec": 10,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_lobby_intro",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_lobby_intro.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_lobby_day",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_lobby_day.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_ambient_forge",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_ambient_forge.mp3"
+          }
+        ],
+        "npcVoiceSamples": [
+          {
+            "id": "npcHaram_lobby_opening",
+            "category": "npc",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/npc/npcHaram_lobby_opening.mp3"
+          },
+          {
+            "id": "npcMeri_lobby_timing",
+            "category": "npc",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/npc/npcMeri_lobby_timing.mp3"
+          }
+        ]
+      }
+    },
+    {
+      "cutId": "C03",
+      "stage": 1,
+      "label": "스테이지1 진입",
+      "durationSec": 9,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_stage01_entry",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage01_entry.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_stage01_entry",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage01_entry.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_ward_level_warning",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_ward_level_warning.mp3"
+          }
+        ],
+        "ambience": [
+          {
+            "id": "bg_stage01_entry",
+            "category": "ambience",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage01_entry.mp3"
+          }
+        ]
+      },
+      "triggers": {
+        "stateNarration": [
+          "state.player.safe",
+          "state.player.skill_cd"
+        ],
+        "skillNarration": [
+          "skill.player.attack"
+        ]
+      }
+    },
+    {
+      "cutId": "C04",
+      "stage": 1,
+      "label": "스테이지1 보스 쇼케이스",
+      "durationSec": 12,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_boss01_show",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss01_show.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_stage01_boss",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage01_boss.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_boss_enter_chime",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_enter_chime.mp3"
+          },
+          {
+            "id": "sfx_boss_human_attack",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_human_attack.mp3"
+          },
+          {
+            "id": "sfx_player_block",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_block.mp3"
+          }
+        ],
+        "combatSfx": [
+          {
+            "id": "sfx_boss_impact_burst",
+            "category": "combatSfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3"
+          },
+          {
+            "id": "sfx_player_hit",
+            "category": "combatSfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_player_hit.mp3"
+          }
+        ]
+      },
+      "triggers": {
+        "stateNarration": [
+          "state.player.defence_ready"
+        ],
+        "skillNarration": [
+          "skill.player.defence"
+        ]
+      }
+    },
+    {
+      "cutId": "C05",
+      "stage": 2,
+      "label": "스테이지2 전환",
+      "durationSec": 9,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_stage02_entry",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage02_entry.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_stage02_entry",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage02_entry.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_bridge_grind",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_bridge_grind.mp3"
+          }
+        ],
+        "ambience": [
+          {
+            "id": "bg_stage02_entry",
+            "category": "ambience",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage02_entry.mp3"
+          }
+        ]
+      },
+      "triggers": {
+        "battleSfx": [
+          "sfx_ward_rise"
+        ],
+        "stateNarration": [
+          "state.player.move"
+        ]
+      }
+    },
+    {
+      "cutId": "C06",
+      "stage": 2,
+      "label": "스테이지2 보스 쇼케이스",
+      "durationSec": 11,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_boss02_show",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss02_show.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_stage02_boss",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage02_boss.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_tactical_ping",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_tactical_ping.mp3"
+          },
+          {
+            "id": "sfx_boss_human_attack",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_human_attack.mp3"
+          },
+          {
+            "id": "sfx_player_avoid",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_avoid.mp3"
+          }
+        ],
+        "combatSfx": [
+          {
+            "id": "sfx_ward_rise",
+            "category": "combatSfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_ward_rise.mp3"
+          }
+        ]
+      },
+      "triggers": {
+        "stateNarration": [
+          "state.player.critical",
+          "state.player.lowhp"
+        ],
+        "battleSfx": [
+          "onDefenceBreak"
+        ]
+      }
+    },
+    {
+      "cutId": "C07",
+      "stage": 3,
+      "label": "스테이지3-4 연결",
+      "durationSec": 12,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_stage03_04_bridge",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage03_04_bridge.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_mid_gate_drive",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_mid_gate_drive.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_echo_drone",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_echo_drone.mp3"
+          }
+        ],
+        "ambience": [
+          {
+            "id": "bg_stage03_entry",
+            "category": "ambience",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage03_entry.mp3"
+          }
+        ]
+      }
+    },
+    {
+      "cutId": "C08",
+      "stage": 3,
+      "label": "스테이지3 보스 쇼케이스",
+      "durationSec": 10,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_boss03_show",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss03_show.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_stage03_boss",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage03_boss.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_staff_windup",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_staff_windup.mp3"
+          },
+          {
+            "id": "sfx_boss_shadow_critical",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_shadow_critical.mp3"
+          },
+          {
+            "id": "sfx_player_attack",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_attack.mp3"
+          }
+        ],
+        "combatSfx": [
+          {
+            "id": "sfx_boss_impact_burst",
+            "category": "combatSfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3"
+          }
+        ]
+      },
+      "triggers": {
+        "stateNarration": [
+          "state.player.die"
+        ],
+        "battleSfx": [
+          "sfx_player_hit",
+          "sfx_boss_shadow_attack"
+        ]
+      }
+    },
+    {
+      "cutId": "C09",
+      "stage": 5,
+      "label": "스테이지5 압박 구간",
+      "durationSec": 10,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_stage05",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage05.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_stage05",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage05.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_howl_loop",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_howl_loop.mp3"
+          },
+          {
+            "id": "sfx_boss_generic_hit",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_generic_hit.mp3"
+          }
+        ],
+        "ambience": [
+          {
+            "id": "bg_stage05_entry",
+            "category": "ambience",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage05_entry.mp3"
+          }
+        ]
+      }
+    },
+    {
+      "cutId": "C10",
+      "stage": 6,
+      "label": "스테이지6 문턱",
+      "durationSec": 11,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_stage06",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage06.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_stage06_peak",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage06_peak.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_ward_lock",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_ward_lock.mp3"
+          },
+          {
+            "id": "sfx_boss_broken_court_monarch_bighit",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_bighit.mp3"
+          },
+          {
+            "id": "sfx_player_block",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_block.mp3"
+          }
+        ],
+        "combatSfx": [
+          {
+            "id": "sfx_ward_rise",
+            "category": "combatSfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_ward_rise.mp3"
+          }
+        ]
+      }
+    },
+    {
+      "cutId": "C11",
+      "stage": 7,
+      "label": "스테이지7-8 전개",
+      "durationSec": 12,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_stage07_08",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage07_08.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_bridge_cascade",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_bridge_cascade.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_bridge_break",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_bridge_break.mp3"
+          },
+          {
+            "id": "sfx_boss_shadow_attack",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_shadow_attack.mp3"
+          }
+        ],
+        "ambience": [
+          {
+            "id": "bg_stage07_entry",
+            "category": "ambience",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage07_entry.mp3"
+          }
+        ]
+      }
+    },
+    {
+      "cutId": "C12",
+      "stage": 8,
+      "label": "스테이지8 보스 쇼케이스",
+      "durationSec": 12,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_boss08_show",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss08_show.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_stage08_colossus",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage08_colossus.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_colossus_step",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_colossus_step.mp3"
+          },
+          {
+            "id": "sfx_boss_broken_court_monarch_critical",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_critical.mp3"
+          },
+          {
+            "id": "sfx_player_critical",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_critical.mp3"
+          }
+        ],
+        "combatSfx": [
+          {
+            "id": "sfx_defence_break",
+            "category": "combatSfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_defence_break.mp3"
+          },
+          {
+            "id": "sfx_boss_impact_burst",
+            "category": "combatSfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3"
+          }
+        ]
+      }
+    },
+    {
+      "cutId": "C13",
+      "stage": 9,
+      "label": "스테이지9 갈림입구",
+      "durationSec": 11,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_stage09",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage09.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_stage09_dissonant",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage09_dissonant.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_vow_break",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_vow_break.mp3"
+          },
+          {
+            "id": "sfx_player_block",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_block.mp3"
+          },
+          {
+            "id": "sfx_player_hit",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_hit.mp3"
+          }
+        ],
+        "combatSfx": [
+          {
+            "id": "sfx_player_hit",
+            "category": "combat",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_player_hit.mp3"
+          },
+          {
+            "id": "sfx_stage_clear_short",
+            "category": "combat",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_stage_clear_short.mp3"
+          }
+        ],
+        "npc": [
+          {
+            "id": "npcRael_stage9_choice",
+            "category": "npc",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/npc/npcRael_stage9_choice.mp3"
+          }
+        ]
+      },
+      "triggers": {
+        "stateNarration": [
+          "state.player.safe",
+          "state.player.critical"
+        ],
+        "skillNarration": [
+          "skill.player.avoid",
+          "skill.player.attack"
+        ]
+      }
+    },
+    {
+      "cutId": "C14",
+      "stage": 10,
+      "label": "스테이지10 최종 쇼케이스",
+      "durationSec": 13,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_boss10_show",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss10_show.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_stage10_final",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage10_final.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_final_gate_shatter",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_final_gate_shatter.mp3"
+          },
+          {
+            "id": "sfx_boss_broken_court_monarch_critical",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_critical.mp3"
+          },
+          {
+            "id": "sfx_player_bighit",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_bighit.mp3"
+          }
+        ],
+        "combatSfx": [
+          {
+            "id": "sfx_elite_fail_warning",
+            "category": "combatSfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_elite_fail_warning.mp3"
+          },
+          {
+            "id": "sfx_boss_impact_burst",
+            "category": "combatSfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3"
+          }
+        ]
+      }
+    },
+    {
+      "cutId": "C15",
+      "stage": "ending-common",
+      "label": "엔딩 공통",
+      "durationSec": 9,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_ending_common",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_ending_common.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_ending_common",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_ending_common.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_resonance_bloom",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_resonance_bloom.mp3"
+          }
+        ],
+        "combatSfx": [
+          {
+            "id": "sfx_stage_clear_short",
+            "category": "combatSfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_stage_clear_short.mp3"
+          }
+        ]
+      },
+      "triggers": {
+        "stateNarration": [
+          "state.player.safe",
+          "state.player.defence_ready"
+        ]
+      }
+    },
+    {
+      "cutId": "C16",
+      "stage": "ending-a",
+      "label": "엔딩 브랜치 A: 재건 루트",
+      "durationSec": 10,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_ending_a",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_ending_a.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_ending_a",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_ending_a.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_forge_soft",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_forge_soft.mp3"
+          }
+        ],
+        "combatSfx": []
+      }
+    },
+    {
+      "cutId": "C17",
+      "stage": "ending-b",
+      "label": "엔딩 브랜치 B: 재침투 루트",
+      "durationSec": 11,
+      "audio": {
+        "narration": [
+          {
+            "id": "narr_ending_b",
+            "category": "narration",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_ending_b.mp3"
+          }
+        ],
+        "bgm": [
+          {
+            "id": "bgm_ending_b",
+            "category": "bgm",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_ending_b.mp3"
+          }
+        ],
+        "sfx": [
+          {
+            "id": "sfx_pursuit_wind",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_pursuit_wind.mp3"
+          },
+          {
+            "id": "sfx_player_attack",
+            "category": "sfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_attack.mp3"
+          }
+        ],
+        "combatSfx": [
+          {
+            "id": "sfx_elite_fail_warning",
+            "category": "combatSfx",
+            "path": "_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_elite_fail_warning.mp3"
+          }
+        ]
+      }
+    }
+  ]
+}

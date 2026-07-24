@@ -1,0 +1,970 @@
+{
+  "runId": "20260723-solo-warden-rpg-concept",
+  "requestedStyles": [
+    "base",
+    "anime-soft",
+    "noir-cut",
+    "webtoon-static"
+  ],
+  "parts": [
+    {
+      "partId": "part_intro",
+      "durationSec": 8,
+      "cutIds": [
+        "C01"
+      ],
+      "audioMix": "part_intro_muxed.wav",
+      "output": "assets/video/part_intro.mp4",
+      "cutTrackCount": 1,
+      "render_base": {
+        "partId": "part_intro",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_intro.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_intro",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_intro.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_intro",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_intro.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_intro",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_intro.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_lobby",
+      "durationSec": 10,
+      "cutIds": [
+        "C02"
+      ],
+      "audioMix": "part_lobby_muxed.wav",
+      "output": "assets/video/part_lobby.mp4",
+      "cutTrackCount": 1,
+      "render_base": {
+        "partId": "part_lobby",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_lobby.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_lobby",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_lobby.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_lobby",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_lobby.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_lobby",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_lobby.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_stage01",
+      "durationSec": 21,
+      "cutIds": [
+        "C03",
+        "C04"
+      ],
+      "audioMix": "part_stage01_muxed.wav",
+      "output": "assets/video/part_stage01.mp4",
+      "cutTrackCount": 2,
+      "render_base": {
+        "partId": "part_stage01",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_stage01.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_stage01",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_stage01.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_stage01",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_stage01.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_stage01",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_stage01.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_stage02",
+      "durationSec": 20,
+      "cutIds": [
+        "C05",
+        "C06"
+      ],
+      "audioMix": "part_stage02_muxed.wav",
+      "output": "assets/video/part_stage02.mp4",
+      "cutTrackCount": 2,
+      "render_base": {
+        "partId": "part_stage02",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_stage02.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_stage02",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_stage02.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_stage02",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_stage02.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_stage02",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_stage02.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_stage03",
+      "durationSec": 22,
+      "cutIds": [
+        "C07",
+        "C08"
+      ],
+      "audioMix": "part_stage03_muxed.wav",
+      "output": "assets/video/part_stage03.mp4",
+      "cutTrackCount": 2,
+      "render_base": {
+        "partId": "part_stage03",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_stage03.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_stage03",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_stage03.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_stage03",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_stage03.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_stage03",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_stage03.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_stage04",
+      "durationSec": 22,
+      "cutIds": [
+        "C07",
+        "C08"
+      ],
+      "audioMix": "part_stage04_muxed.wav",
+      "output": "assets/video/part_stage04.mp4",
+      "cutTrackCount": 2,
+      "render_base": {
+        "partId": "part_stage04",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_stage04.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_stage04",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_stage04.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_stage04",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_stage04.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_stage04",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_stage04.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_stage05",
+      "durationSec": 10,
+      "cutIds": [
+        "C09"
+      ],
+      "audioMix": "part_stage05_muxed.wav",
+      "output": "assets/video/part_stage05.mp4",
+      "cutTrackCount": 1,
+      "render_base": {
+        "partId": "part_stage05",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_stage05.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_stage05",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_stage05.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_stage05",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_stage05.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_stage05",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_stage05.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_stage06",
+      "durationSec": 11,
+      "cutIds": [
+        "C10"
+      ],
+      "audioMix": "part_stage06_muxed.wav",
+      "output": "assets/video/part_stage06.mp4",
+      "cutTrackCount": 1,
+      "render_base": {
+        "partId": "part_stage06",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_stage06.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_stage06",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_stage06.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_stage06",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_stage06.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_stage06",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_stage06.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_stage07",
+      "durationSec": 12,
+      "cutIds": [
+        "C11"
+      ],
+      "audioMix": "part_stage07_muxed.wav",
+      "output": "assets/video/part_stage07.mp4",
+      "cutTrackCount": 1,
+      "render_base": {
+        "partId": "part_stage07",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_stage07.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_stage07",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_stage07.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_stage07",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_stage07.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_stage07",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_stage07.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_stage08",
+      "durationSec": 24,
+      "cutIds": [
+        "C11",
+        "C12"
+      ],
+      "audioMix": "part_stage08_muxed.wav",
+      "output": "assets/video/part_stage08.mp4",
+      "cutTrackCount": 2,
+      "render_base": {
+        "partId": "part_stage08",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_stage08.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_stage08",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_stage08.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_stage08",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_stage08.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_stage08",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_stage08.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_stage09",
+      "durationSec": 11,
+      "cutIds": [
+        "C13"
+      ],
+      "audioMix": "part_stage09_muxed.wav",
+      "output": "assets/video/part_stage09.mp4",
+      "cutTrackCount": 1,
+      "render_base": {
+        "partId": "part_stage09",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_stage09.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_stage09",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_stage09.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_stage09",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_stage09.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_stage09",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_stage09.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_stage10",
+      "durationSec": 13,
+      "cutIds": [
+        "C14"
+      ],
+      "audioMix": "part_stage10_muxed.wav",
+      "output": "assets/video/part_stage10.mp4",
+      "cutTrackCount": 1,
+      "render_base": {
+        "partId": "part_stage10",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_stage10.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_stage10",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_stage10.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_stage10",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_stage10.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_stage10",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_stage10.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_ending_common",
+      "durationSec": 9,
+      "cutIds": [
+        "C15"
+      ],
+      "audioMix": "part_ending_common_muxed.wav",
+      "output": "assets/video/part_ending_common.mp4",
+      "cutTrackCount": 1,
+      "render_base": {
+        "partId": "part_ending_common",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_ending_common.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_ending_common",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_ending_common.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_ending_common",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_ending_common.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_ending_common",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_ending_common.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_ending_branch_a",
+      "durationSec": 10,
+      "cutIds": [
+        "C16"
+      ],
+      "audioMix": "part_ending_branch_a_muxed.wav",
+      "output": "assets/video/part_ending_branch_a.mp4",
+      "cutTrackCount": 1,
+      "render_base": {
+        "partId": "part_ending_branch_a",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_ending_branch_a.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_ending_branch_a",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_ending_branch_a.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_ending_branch_a",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_ending_branch_a.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_ending_branch_a",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_ending_branch_a.mp4",
+        "skipped": false
+      }
+    },
+    {
+      "partId": "part_ending_branch_b",
+      "durationSec": 11,
+      "cutIds": [
+        "C17"
+      ],
+      "audioMix": "part_ending_branch_b_muxed.wav",
+      "output": "assets/video/part_ending_branch_b.mp4",
+      "cutTrackCount": 1,
+      "render_base": {
+        "partId": "part_ending_branch_b",
+        "style": "base",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/part_ending_branch_b.mp4",
+        "skipped": false
+      },
+      "render_anime-soft": {
+        "partId": "part_ending_branch_b",
+        "style": "anime-soft",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/part_ending_branch_b.mp4",
+        "skipped": false
+      },
+      "render_noir-cut": {
+        "partId": "part_ending_branch_b",
+        "style": "noir-cut",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/part_ending_branch_b.mp4",
+        "skipped": false
+      },
+      "render_webtoon-static": {
+        "partId": "part_ending_branch_b",
+        "style": "webtoon-static",
+        "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/part_ending_branch_b.mp4",
+        "skipped": false
+      }
+    }
+  ],
+  "audio": {
+    "generated": {
+      "part_intro": {
+        "out": "part_intro_muxed.wav",
+        "trackCount": 3,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_intro_01.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_prologue_low.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_gate_rip_01.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9
+        ]
+      },
+      "part_lobby": {
+        "out": "part_lobby_muxed.wav",
+        "trackCount": 5,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_lobby_intro.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_lobby_day.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_ambient_forge.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/npc/npcHaram_lobby_opening.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/npc/npcMeri_lobby_timing.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.95,
+          0.95
+        ]
+      },
+      "part_stage01": {
+        "out": "part_stage01_muxed.wav",
+        "trackCount": 16,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage01_entry.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage01_entry.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_ward_level_warning.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage01_entry.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.safe.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.skill_cd.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/skill/skill.player.attack.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss01_show.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage01_boss.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_enter_chime.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_human_attack.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_block.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_player_hit.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.defence_ready.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/skill/skill.player.defence.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.56,
+          0.9,
+          0.9,
+          0.95,
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.9,
+          0.92,
+          0.92,
+          0.9,
+          0.95
+        ]
+      },
+      "part_stage02": {
+        "out": "part_stage02_muxed.wav",
+        "trackCount": 13,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage02_entry.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage02_entry.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_bridge_grind.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage02_entry.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.move.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss02_show.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage02_boss.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_tactical_ping.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_human_attack.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_avoid.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_ward_rise.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.critical.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.lowhp.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.56,
+          0.9,
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.9,
+          0.92,
+          0.9,
+          0.9
+        ]
+      },
+      "part_stage03": {
+        "out": "part_stage03_muxed.wav",
+        "trackCount": 11,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage03_04_bridge.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_mid_gate_drive.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_echo_drone.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage03_entry.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss03_show.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage03_boss.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_staff_windup.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_shadow_critical.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_attack.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.die.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.56,
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.9,
+          0.92,
+          0.9
+        ]
+      },
+      "part_stage04": {
+        "out": "part_stage04_muxed.wav",
+        "trackCount": 11,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage03_04_bridge.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_mid_gate_drive.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_echo_drone.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage03_entry.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss03_show.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage03_boss.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_staff_windup.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_shadow_critical.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_attack.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.die.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.56,
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.9,
+          0.92,
+          0.9
+        ]
+      },
+      "part_stage05": {
+        "out": "part_stage05_muxed.wav",
+        "trackCount": 5,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage05.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage05.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_howl_loop.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_generic_hit.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage05_entry.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.56
+        ]
+      },
+      "part_stage06": {
+        "out": "part_stage06_muxed.wav",
+        "trackCount": 6,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage06.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage06_peak.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_ward_lock.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_bighit.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_block.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_ward_rise.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.9,
+          0.92
+        ]
+      },
+      "part_stage07": {
+        "out": "part_stage07_muxed.wav",
+        "trackCount": 5,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage07_08.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_bridge_cascade.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_bridge_break.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_shadow_attack.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage07_entry.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.56
+        ]
+      },
+      "part_stage08": {
+        "out": "part_stage08_muxed.wav",
+        "trackCount": 12,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage07_08.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_bridge_cascade.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_bridge_break.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_shadow_attack.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/ambience/bg_stage07_entry.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss08_show.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage08_colossus.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_colossus_step.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_critical.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_critical.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_defence_break.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.56,
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.9,
+          0.92,
+          0.92
+        ]
+      },
+      "part_stage09": {
+        "out": "part_stage09_muxed.wav",
+        "trackCount": 11,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_stage09.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage09_dissonant.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_vow_break.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_block.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_hit.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_player_hit.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_stage_clear_short.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.safe.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.critical.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/skill/skill.player.avoid.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/skill/skill.player.attack.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.9,
+          0.92,
+          0.92,
+          0.9,
+          0.9,
+          0.95,
+          0.95
+        ]
+      },
+      "part_stage10": {
+        "out": "part_stage10_muxed.wav",
+        "trackCount": 7,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_boss10_show.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_stage10_final.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_final_gate_shatter.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_boss_broken_court_monarch_critical.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_bighit.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_elite_fail_warning.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_boss_impact_burst.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.9,
+          0.92,
+          0.92
+        ]
+      },
+      "part_ending_common": {
+        "out": "part_ending_common_muxed.wav",
+        "trackCount": 6,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_ending_common.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_ending_common.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_resonance_bloom.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_stage_clear_short.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.safe.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/state/state.player.defence_ready.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.92,
+          0.9,
+          0.9
+        ]
+      },
+      "part_ending_branch_a": {
+        "out": "part_ending_branch_a_muxed.wav",
+        "trackCount": 3,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_ending_a.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_ending_a.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_forge_soft.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9
+        ]
+      },
+      "part_ending_branch_b": {
+        "out": "part_ending_branch_b_muxed.wav",
+        "trackCount": 5,
+        "tracksUsed": [
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/narration/narr_ending_b.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/bgm/bgm_ending_b.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_pursuit_wind.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/sfx/sfx_player_attack.mp3",
+          "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/audio/elevenlabs/combat/sfx_elite_fail_warning.mp3"
+        ],
+        "gains": [
+          1,
+          0.56,
+          0.9,
+          0.9,
+          0.92
+        ]
+      }
+    },
+    "skipped": {},
+    "missingTracks": {}
+  },
+  "concat_base": {
+    "mainline": {
+      "seq": "mainline",
+      "style": "base",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/defense_stage1to10_story_01.mp4",
+      "skipped": false
+    },
+    "ending_branch_b": {
+      "seq": "ending_branch_b",
+      "style": "base",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/defense_stage1to10_story_endingB.mp4",
+      "skipped": false
+    },
+    "cut_only": {
+      "seq": "cut_only",
+      "style": "base",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/defense_stage1to10_story_cutonly.mp4",
+      "skipped": false
+    }
+  },
+  "concat_anime-soft": {
+    "mainline": {
+      "seq": "mainline",
+      "style": "anime-soft",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/defense_stage1to10_story_01_anime_soft.mp4",
+      "skipped": false
+    },
+    "ending_branch_b": {
+      "seq": "ending_branch_b",
+      "style": "anime-soft",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/defense_stage1to10_story_endingB_anime_soft.mp4",
+      "skipped": false
+    },
+    "cut_only": {
+      "seq": "cut_only",
+      "style": "anime-soft",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/anime-soft/defense_stage1to10_story_cutonly_anime_soft.mp4",
+      "skipped": false
+    }
+  },
+  "concat_noir-cut": {
+    "mainline": {
+      "seq": "mainline",
+      "style": "noir-cut",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/defense_stage1to10_story_01_noir_cut.mp4",
+      "skipped": false
+    },
+    "ending_branch_b": {
+      "seq": "ending_branch_b",
+      "style": "noir-cut",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/defense_stage1to10_story_endingB_noir_cut.mp4",
+      "skipped": false
+    },
+    "cut_only": {
+      "seq": "cut_only",
+      "style": "noir-cut",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/noir-cut/defense_stage1to10_story_cutonly_noir_cut.mp4",
+      "skipped": false
+    }
+  },
+  "concat_webtoon-static": {
+    "mainline": {
+      "seq": "mainline",
+      "style": "webtoon-static",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/defense_stage1to10_story_01_webtoon_static.mp4",
+      "skipped": false
+    },
+    "ending_branch_b": {
+      "seq": "ending_branch_b",
+      "style": "webtoon-static",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/defense_stage1to10_story_endingB_webtoon_static.mp4",
+      "skipped": false
+    },
+    "cut_only": {
+      "seq": "cut_only",
+      "style": "webtoon-static",
+      "out": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260723-solo-warden-rpg-concept/assets/video/styles/webtoon-static/defense_stage1to10_story_cutonly_webtoon_static.mp4",
+      "skipped": false
+    }
+  }
+}

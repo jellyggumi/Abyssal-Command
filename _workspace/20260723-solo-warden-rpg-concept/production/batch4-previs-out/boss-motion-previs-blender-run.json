@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "blend_out": "_workspace/20260723-solo-warden-rpg-concept/production/batch4-previs-out/boss_previs_workfile.blend",
+  "timing_out": "_workspace/20260723-solo-warden-rpg-concept/production/batch4-previs-out/boss_previs_timings.json",
+  "timeline": "_workspace/20260723-solo-warden-rpg-concept/production/batch4-motion-previs-timeline.json",
+  "fps": 60,
+  "bosses": [
+    "warden-lantern",
+    "abyssal-banner",
+    "anchor-shard",
+    "broken-court-monarch-boss"
+  ],
+  "bossCount": 4
+}

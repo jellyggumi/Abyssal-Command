@@ -255,6 +255,8 @@ function applyOwnedRewards(run, rewardIds) {
       run.gate.maxIntegrity += reward.integrity;
       run.gate.integrity += reward.integrity;
     }
+    if (reward.pickupRange) run.commander.pickupRange += reward.pickupRange;
+    if (reward.critChanceBonusBp) run.commander.critProfile.chanceBp = clamp(run.commander.critProfile.chanceBp + reward.critChanceBonusBp, 0, 10000);
   });
   run.rewardIds = owned;
   if (owned.includes("abyssal-banner")) run.companions.forEach((companion) => { companion.damage += REWARDS["abyssal-banner"].damageBonus; });

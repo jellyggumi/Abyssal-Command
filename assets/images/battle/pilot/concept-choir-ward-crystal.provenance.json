@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-choir-ward-crystal.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92e6-f2b2-71a2-a51c-54dad505a722" },
+  "prompt": "A faceted crystal shard standing upright, resonating with faint musical light-ripples radiating outward from its core, a pale silver-blue glow pulsing through the crystal, thin crystalline resonance lines etched across its facets, isometric-friendly 3/4 angle, centered composition, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, dramatic rim light on the crystal edges to show translucent gem material, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1254, "height": 1254, "bytes": 1520516, "sha256": "c306e4ca9503b4ea2750ca2b49ca8eab32bda2b1e16e1673d86d3d0fdb42eacb" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-pack-warden.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92eb-13c6-76d1-aca8-b848f485e3c0" },
+  "prompt": "An original dark-fantasy vanguard unit called Pack Warden: a rugged wolf-pack handler wearing beast-hide armor and fur trim, gripping a heavy handler's weapon, a bonded wolf-companion silhouette standing at their side, wilderness-worn gear, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear weapon and wolf-companion silhouette, wide grounded stance, solid earthy amber-brown rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1536, "height": 1024, "bytes": 2238454, "sha256": "eb4e7beea5018de4dc1aa18f9156ed5afcafe90dee041ecc567119f04182064e" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

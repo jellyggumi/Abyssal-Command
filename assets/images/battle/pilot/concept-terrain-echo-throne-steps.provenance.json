@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-terrain-echo-throne-steps.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92f4-4272-78a1-ac05-ef701656af8e" },
+  "prompt": "Isometric game-terrain diorama concept art, dark-fantasy environment: a grand descending staircase within a ruined regal hall, framed as a vertical passage of wide stone steps flanked by cracked columns, faint echo-distortion visual ripples shimmering in the air like heat-haze, dim golden torchlight flickering along the stairwell walls, painterly game production art, moody atmospheric lighting, no characters, no UI, no text, no logos, no watermark, original design only.",
+  "output": { "format": "png", "width": 1024, "height": 1536, "bytes": 2809472, "sha256": "2dad142ff0b0e3c1f0305e2937f465b8d42edb14d99f232b2d02e1fbdbb721b4" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

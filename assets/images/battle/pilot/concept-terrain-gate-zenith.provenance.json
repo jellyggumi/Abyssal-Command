@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-terrain-gate-zenith.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92f2-14e0-71d2-97aa-b4c2f41203ff" },
+  "prompt": "Isometric game-terrain diorama concept art, dark-fantasy environment: the most imposing and elaborate environment in the set — a massive ornate gate structure at the peak of a fortress, colossal carved stone pillars and towering gate doors, dramatic stormy sky with lightning breaking through heavy clouds, epic climactic scale framing, painterly game production art, richly detailed atmospheric lighting, no characters, no UI, no text, no logos, no watermark, original design only.",
+  "output": { "format": "png", "width": 1536, "height": 1024, "bytes": 2909753, "sha256": "14975f9aa4d9ee5eeb449232bb98ef73b7bfde227876e77e6dad2cca994f4635" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

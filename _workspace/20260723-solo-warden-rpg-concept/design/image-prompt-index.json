@@ -1,0 +1,2168 @@
+{
+  "schemaVersion": "image-prompt-index-v1.3",
+  "generatedAt": "2026-07-24",
+  "purpose": "Consolidated cross-reference of every image asset under assets/images/ to its generation prompt (or documented reason it has none). Built by reading boss-concept-prompt-pack.json + all *.provenance.json sidecars + git history for non-AI renders; not hand-authored.",
+  "totalImages": 85,
+  "summary": {
+    "archetype-variant": 16,
+    "boss-final": 4,
+    "pilot-reference": 4,
+    "world-texture": 1,
+    "blender-8dir-sprite-render": 20,
+    "prop-item-concept": 6,
+    "unit-archetype-concept": 9,
+    "mob-concept": 4,
+    "stage-boss-concept": 10,
+    "terrain": 11
+  },
+  "knownIssues": [
+    "assets/images/battle/pilot/concept-broken-court-monarch-v02.png and assets/images/battle/pilot/concept-sung-hum-v01.png: the exact text sent to the generator has a documented divergence from the pack (see each entry's provenanceNote). Treat 'sentToGenerator' as ground truth for any regeneration, not 'packEnglish'.",
+    "assets/images/battle/pilot/concept-sung-hum-boss.png's provenance sidecar sits at assets/images/battle/world/concept-sung-hum-boss.provenance.json (wrong directory, content verified via sha256 match) -- left in place, belongs to a separate uncommitted workstream's file move; do not relocate without checking that workstream first.",
+    "RESOLVED 2026-07-24: assets/images/battle/world/cinder-span-topdown-plate.webp was found genuinely MISSING from its referenced path (git-deleted, only an untracked copy existed at pilot/) -- restored byte-exact from git HEAD (sha256 38ed32b7... verified). assets/images/battle/world/cinder-span-tactical-paper-plate.webp was confirmed present and unchanged from HEAD the whole time. Neither was regenerated (approved deployed art, user chose to keep as-is).",
+    "RESOLVED 2026-07-24: assets/images/battle/pilot/dusk-warden-idle-gti-refstyle.png had no recoverable provenance and was unreferenced by any runtime code -- regenerated via god-tibo-imagen (gti, codex-cli provider) with a new tracked prompt exploring the same commander design's spiked-halo/spear variant. Original (unprovenanced) bytes backed up out-of-tree, not restorable in-repo. New file has a full provenance.json sidecar.",
+    "RESOLVED 2026-07-24: 40 concept images under assets/images/battle/pilot/ (stage-boss concepts s1-s10, terrain plates, mob concepts, prop-item concepts, unit-archetype concepts) existed on disk with valid *.provenance.json sidecars but were never consolidated into this index. All 40 sha256 hashes verified against sidecar output.sha256 (zero mismatches). Added with a new 'runtimeStatus' field (status/purpose/runtimeEligible/license, sourced verbatim from each sidecar) since all 40 carry runtimeEligible=false / license=pending-runtime-rights-review -- this was previously untracked context. New categories introduced: stage-boss-concept (10), terrain (11), mob-concept (4), prop-item-concept (6), unit-archetype-concept (9)."
+  ],
+  "images": [
+    {
+      "path": "assets/images/battle/pilot/concept-broken-court-monarch-v01.png",
+      "sha256": "e0e98b5ebacdc8c6f56e144e496c6834953b02b88ada89f39e521bd2a3ee9272",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Regent-grade broken-court ruler archetype, tall armored figure with fractured crown array, heavy draped mantle in dark emerald and rust, one hand lifted in command with runic whip, the other holding void-flare glaive, grand but controlled scale, 1024x576 2.5D anime RPG concept with dramatic magenta cutoff background. Negative constraints: no direct visual of canonical Monarch, no source crown geometry, no copied robe seam pattern.",
+        "packEnglish": "Regent-grade broken-court ruler archetype, tall armored figure with fractured crown array, heavy draped mantle in dark emerald and rust, one hand lifted in command with runic whip, the other holding void-flare glaive, grand but controlled scale, 1024x576 2.5D anime RPG concept with dramatic magenta cutoff background.",
+        "packKorean": "붕괴된 통치자 형식의 군주형, 높고 각진 왕관 열결 구조, 다크 에메랄드와 녹슨 망토, 한손의 통치 지시 제스처와 한손의 공허 채찍 창, 장엄한 실루엣, 1024x576 2.5D 애니 콘셉트, #FF00FF 컷아웃.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "군주형",
+            "권위",
+            "파괴 미학",
+            "셀콘셉트"
+          ],
+          "en": [
+            "regent",
+            "authority",
+            "ruin aesthetic",
+            "cel concept"
+          ]
+        },
+        "lighting": {
+          "key": "royal cyan under-glow",
+          "fill": "burnt gold side fill",
+          "rim": "lavender edge",
+          "mood": "inevitable"
+        },
+        "composition": {
+          "cameraAngle": "low three-quarter with slight top tilt",
+          "shotSize": "full body + dramatic headroom",
+          "poseReadability": "crown and gauntlet never merged",
+          "environmentHint": "abstract throne fragments behind"
+        },
+        "negative": [
+          "no direct visual of canonical Monarch",
+          "no source crown geometry",
+          "no copied robe seam pattern"
+        ],
+        "motionAffinity": [
+          "show",
+          "idle",
+          "defence",
+          "critical"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-broken-court-monarch-v01.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fed-1ddb-70b2-8d74-eb7e3a854050"
+      },
+      "promptId": "aw-mo-v01",
+      "archetype": "broken-court-monarch",
+      "archetypeDisplayName": "Crown of the Broken Court",
+      "variant": "v01"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-broken-court-monarch-v02.png",
+      "sha256": "b4a5faad15ee2c1f71be6ad5500ca966bdf6818d82f0f04fca6322e147b4657d",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "High monarch sentinel with obsidian ceremonial gauntlets, curved spine-plate ridge, long ceremonial gloves, two-sword silhouette crossing above shoulder, controlled breathing motion, particles forming broken mandala around feet, clean single-character full-body illustration, 2.5D anime cel-shaded style. Negative constraints: no recognizable crown silhouette from source monarch, no duplicated robe proportions, no face-identifying marks from external IP, absolutely no text, no titles, no captions, no labels, no typography, no infographic layout, no character-sheet callout boxes, no watermark, single unified image only, isolated on flat magenta #FF00FF background.",
+        "packEnglish": "Towering broken-court sentinel figure in obsidian ceremonial gauntlets, curved spine-plate ridge, long ceremonial gloves, two-sword silhouette crossing above shoulder, controlled breathing motion, particles forming broken mandala around feet, clean single-character full-body illustration, 2.5D anime cel-shaded style, no text, no captions, no labels, no typography, no infographic layout.",
+        "packKorean": "고위 군주형 감시자, 흑요석 의식 장갑과 등뼈형 판지, 긴 장식 장갑, 어깨 위에서 교차하는 이중 검선, 안정 호흡의 정적 포즈, 발치 파편 문양 입자, 분명한 2.5D 가독성.",
+        "sentStartsWithPackText": false,
+        "styleTags": {
+          "ko": [
+            "의식 감시자",
+            "교차 무기",
+            "규율",
+            "2.5D 카드"
+          ],
+          "en": [
+            "ceremonial sentinel",
+            "crossed blades",
+            "disciplined",
+            "2.5D card"
+          ]
+        },
+        "lighting": {
+          "key": "cold white front",
+          "fill": "amber haze",
+          "rim": "royal purple",
+          "mood": "cold dignity"
+        },
+        "composition": {
+          "cameraAngle": "verticalized three-quarter",
+          "shotSize": "full body, symmetrical balance",
+          "poseReadability": "crossed blades clearly readable",
+          "environmentHint": "broken palace floor geometry"
+        },
+        "negative": [
+          "no recognizable crown silhouette from source monarch",
+          "no duplicated robe proportions",
+          "no face-identifying marks from external IP"
+        ],
+        "motionAffinity": [
+          "move",
+          "run",
+          "attack",
+          "show"
+        ]
+      },
+      "issues": [
+        "provenance-note: see provenanceNote for a documented divergence between the pack text and what was actually sent"
+      ],
+      "sidecarPath": "assets/images/battle/pilot/concept-broken-court-monarch-v02.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8ff5-69fa-7871-918b-5002d9dae939"
+      },
+      "promptId": "aw-mo-v02",
+      "archetype": "broken-court-monarch",
+      "archetypeDisplayName": "Crown of the Broken Court",
+      "variant": "v02",
+      "provenanceNote": "The 'prompt' field above is the exact text sent to the generator (ad-hoc no-text negatives appended at generation time, per decision-log.md D14). design/boss-concept-prompt-pack.json's aw-mo-v02.promptEnglish was edited AFTER this generation to prevent regression on any future regen and no longer matches this field verbatim — that pack edit was not used for this specific image."
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-broken-court-monarch-v03.png",
+      "sha256": "5a25589af858ec1e5e5ae3e63f787825cd6727df8e123f1074b95dcf2b9f2a18",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Regal warlord in layered dark armor and fractured sigil cape, right hand casting void-thorn spike, left hand braced with hexed buckler, broad stance and head tilt, 2.5D anime style with painterly ink outlines and strong directional shadow. Negative constraints: no exact iconic cape proportions, no copied throne-room motifs, no extra text or watermark.",
+        "packEnglish": "Regal warlord in layered dark armor and fractured sigil cape, right hand casting void-thorn spike, left hand braced with hexed buckler, broad stance and head tilt, 2.5D anime style with painterly ink outlines and strong directional shadow.",
+        "packKorean": "왕권형 전쟁 주재자, 다층 흑요석 갑주와 파편 문양 망토, 오른손에서 침투 가시 광선, 왼손에 방어석이 얇게 부딪히는 모양의 버클러, 넓은 자세와 고개 기울기, 잉크형 선명 외곽선의 2.5D 애니스타일.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "전쟁 군주",
+            "방어-공격 혼합",
+            "강한 그림자",
+            "인디펜트"
+          ],
+          "en": [
+            "warlord",
+            "defence-offense blend",
+            "strong shadow",
+            "ink outline"
+          ]
+        },
+        "lighting": {
+          "key": "top-right amber",
+          "fill": "dark violet pool",
+          "rim": "icy white",
+          "mood": "threatening calm"
+        },
+        "composition": {
+          "cameraAngle": "three-quarter slightly from left",
+          "shotSize": "full body centered",
+          "poseReadability": "hands and buckler readable despite cape",
+          "environmentHint": "noisy particle spikes from ground edges"
+        },
+        "negative": [
+          "no exact iconic cape proportions",
+          "no copied throne-room motifs",
+          "no extra text or watermark"
+        ],
+        "motionAffinity": [
+          "bighit",
+          "critical",
+          "hit",
+          "defence"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-broken-court-monarch-v03.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8ff1-4f53-7830-ae9f-e39d5e989c3d"
+      },
+      "promptId": "aw-mo-v03",
+      "archetype": "broken-court-monarch",
+      "archetypeDisplayName": "Crown of the Broken Court",
+      "variant": "v03"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-broken-court-monarch-v04.png",
+      "sha256": "96e7a2eab07db9dd9ba791425c420aa68c39ef21c1b43f920fd812d222fb3f9c",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Broken-court monarch in ceremonial plate robes, long triangular pauldrons, split halo behind the head, fist-first impact pose with suspended impact dust, cinematic particle spikes and clean visual language for retargeting tests, isolated on pure #FF00FF. Negative constraints: no source monarch face reproduction, no copied halo geometry, no readable writing on garments.",
+        "packEnglish": "Broken-court monarch in ceremonial plate robes, long triangular pauldrons, split halo behind the head, fist-first impact pose with suspended impact dust, cinematic particle spikes and clean visual language for retargeting tests, isolated on pure #FF00FF.",
+        "packKorean": "파괴된 왕궁군주 콘셉트, 의례갑주 로브와 삼각 견갑, 머리 뒤 분열된 헤일로, 주먹 선행 충돌 포즈와 충격 먼지, 프레임 리타깃 테스트용 깔끔한 시각 언어, #FF00FF 단색.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "왕좌 붕괴",
+            "충격 포즈",
+            "리타깃용",
+            "고대 비늘"
+          ],
+          "en": [
+            "throne broken",
+            "impact pose",
+            "retargeting ready",
+            "ornamental armor"
+          ]
+        },
+        "lighting": {
+          "key": "hard cross key",
+          "fill": "soft shadow-green",
+          "rim": "crimson flare",
+          "mood": "ceremonial wrath"
+        },
+        "composition": {
+          "cameraAngle": "medium high three-quarter",
+          "shotSize": "full body with halo clearance",
+          "poseReadability": "shoulders and forearms kept separated",
+          "environmentHint": "abstract royal fracture motifs"
+        },
+        "negative": [
+          "no source monarch face reproduction",
+          "no copied halo geometry",
+          "no readable writing on garments"
+        ],
+        "motionAffinity": [
+          "attack",
+          "critical",
+          "avoid",
+          "show"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-broken-court-monarch-v04.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8ff2-9bc4-74f2-af37-d961b5c445ee"
+      },
+      "promptId": "aw-mo-v04",
+      "archetype": "broken-court-monarch",
+      "archetypeDisplayName": "Crown of the Broken Court",
+      "variant": "v04"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-player-core-v01.png",
+      "sha256": "3b8a37d8e45eb1e864e166e50b39031e663becbd841845137186c7a0f3dab01f",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Player avatar as original 2.5D RPG lead, compact reinforced coat with utility harness, broad shoulder guards, short curved sword and compact shield, focused gaze and relaxed weight in attack-ready idle, readable front-to-rear silhouette, cinematic warm-cool particle mix, flat magenta background. Negative constraints: no direct likeness to any established game hero, no modern UI frames, no copied Dreadlord-type silhouette.",
+        "packEnglish": "Player avatar as original 2.5D RPG lead, compact reinforced coat with utility harness, broad shoulder guards, short curved sword and compact shield, focused gaze and relaxed weight in attack-ready idle, readable front-to-rear silhouette, cinematic warm-cool particle mix, flat magenta background.",
+        "packKorean": "플레이어 아바타 형상, 전술 하네스가 결합된 단단한 코트, 넓은 어깨 보호대, 짧은 곡검과 소형 방패, 전투 준비 대기자세, 앞뒤 실루엣이 분명함, 따뜻함-차가움 입자 혼합, #FF00FF 배경.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "플레이어 자아",
+            "유저 지향",
+            "읽기 쉬운"
+          ],
+          "en": [
+            "player avatar",
+            "user-identifiable",
+            "readable"
+          ]
+        },
+        "lighting": {
+          "key": "neutral noon key with amber cast",
+          "fill": "pale cyan side fill",
+          "rim": "thin white edge",
+          "mood": "confident"
+        },
+        "composition": {
+          "cameraAngle": "stable three-quarter portrait",
+          "shotSize": "full body",
+          "poseReadability": "weapon + shield contrast",
+          "environmentHint": "empty gate-mark arc"
+        },
+        "negative": [
+          "no direct likeness to any established game hero",
+          "no modern UI frames",
+          "no copied Dreadlord-type silhouette"
+        ],
+        "motionAffinity": [
+          "idle",
+          "move",
+          "run",
+          "show"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-player-core-v01.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fe7-ed65-7ec1-986f-7a7913010eee"
+      },
+      "promptId": "aw-pl-v01",
+      "archetype": "player-core",
+      "archetypeDisplayName": "Abyss Courier Player",
+      "variant": "v01"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-player-core-v02.png",
+      "sha256": "cc894265ad1a7c6f50c9493fcd02a9a2b6ef5f92e18bd368ed6ece81b4784b39",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Player core form in ceremonial yet practical attire, layered scarf and shoulder plate set, medium halberd in hand, defensive posture with knee flexion and forward guard, bright particle sparks at blade tip, cel-shaded textures and 2.5D anime composition, zero text. Negative constraints: no IP title/marks, no exact player colorways from existing references, no overexposed face.",
+        "packEnglish": "Player core form in ceremonial yet practical attire, layered scarf and shoulder plate set, medium halberd in hand, defensive posture with knee flexion and forward guard, bright particle sparks at blade tip, cel-shaded textures and 2.5D anime composition, zero text.",
+        "packKorean": "의식 요소가 가벼운 실용형 전투복, 장식 망토와 어깨 판금, 중형 장창을 들고 무릎을 굽혀 방어, 검 끝 번개 입자, 셀셰이딩 질감 2.5D, 문구 없음.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "의식-실용",
+            "균형 포즈",
+            "방어성",
+            "게임 콘셉트"
+          ],
+          "en": [
+            "ceremonial utility",
+            "balanced stance",
+            "defensive",
+            "game concept"
+          ]
+        },
+        "lighting": {
+          "key": "soft golden top",
+          "fill": "deep violet low",
+          "rim": "electric cyan",
+          "mood": "resolute"
+        },
+        "composition": {
+          "cameraAngle": "isometric-friendly three-quarter",
+          "shotSize": "waist-to-crown centered",
+          "poseReadability": "scarf planes visible from multiple axes",
+          "environmentHint": "subtle broken gate particles around feet"
+        },
+        "negative": [
+          "no IP title/marks",
+          "no exact player colorways from existing references",
+          "no overexposed face"
+        ],
+        "motionAffinity": [
+          "attack",
+          "hit",
+          "defence",
+          "avoid"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-player-core-v02.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fe9-3b3e-77b2-ad89-066fbe9e4486"
+      },
+      "promptId": "aw-pl-v02",
+      "archetype": "player-core",
+      "archetypeDisplayName": "Abyss Courier Player",
+      "variant": "v02"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-player-core-v03.png",
+      "sha256": "e1801eca9bde478dc8682163751cb08a9e01635c80715de80f9f2afd44678d54",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Mobile brawler style player archetype with cross-body chain relic, compact gauntlet rifle integrated in right arm silhouette, broad chest strap, half-smirk expression, stepping diagonal into frame, 2.5D anime with painterly brush strokes and particle burst trails. Negative constraints: no exact match to known player icon, no duplicated weapon set from prior variant, no background UI.",
+        "packEnglish": "Mobile brawler style player archetype with cross-body chain relic, compact gauntlet rifle integrated in right arm silhouette, broad chest strap, half-smirk expression, stepping diagonal into frame, 2.5D anime with painterly brush strokes and particle burst trails.",
+        "packKorean": "기동형 플레이어 아바타, 대각선으로 들어가는 무빙 스텝, 크로스바디 사슬 유물, 우측 팔 건틀렛 라인, 도드라진 가슴 스트랩, 절반 미소, 셀셰이딩 브러시 드로잉과 파티클 궤적.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "기동형",
+            "근거리",
+            "입자궤적",
+            "2.5D 애니"
+          ],
+          "en": [
+            "mobile",
+            "close-range",
+            "particle trails",
+            "2.5D anime"
+          ]
+        },
+        "lighting": {
+          "key": "warm right-side",
+          "fill": "cool green bounce",
+          "rim": "saturated cyan",
+          "mood": "active"
+        },
+        "composition": {
+          "cameraAngle": "dynamic three-quarter",
+          "shotSize": "full body in motion arc",
+          "poseReadability": "leg-step leads silhouette transition",
+          "environmentHint": "speed lines and small floating dust"
+        },
+        "negative": [
+          "no exact match to known player icon",
+          "no duplicated weapon set from prior variant",
+          "no background UI"
+        ],
+        "motionAffinity": [
+          "run",
+          "move",
+          "attack",
+          "critical"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-player-core-v03.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fea-b261-7f62-8f09-1a14818809ef"
+      },
+      "promptId": "aw-pl-v03",
+      "archetype": "player-core",
+      "archetypeDisplayName": "Abyss Courier Player",
+      "variant": "v03"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-player-core-v04.png",
+      "sha256": "b310c162a24c112f1182a42ae9b7585ff9897f6638fb4791b5b6a62ea2c90623",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Quietly powerful player figure, reinforced gauntlet gloves and matte bronze chest core, one hand extended with command sigil, other holding a rune axe at rest, calm ready stance, cel-shaded 2.5D with controlled dramatic composition, warm crimson highlights and clean matte magenta isolation. Negative constraints: no modern player mascot likeness, no duplicate emblem from any IP, no extra text.",
+        "packEnglish": "Quietly powerful player figure, reinforced gauntlet gloves and matte bronze chest core, one hand extended with command sigil, other holding a rune axe at rest, calm ready stance, cel-shaded 2.5D with controlled dramatic composition, warm crimson highlights and clean matte magenta isolation.",
+        "packKorean": "은은히 강한 플레이어형, 강화 건틀렛과 무광 청동 흉심, 한 손은 명령 인장, 한 손은 휴식 자세의 룬 도끼, 차분한 준비자세, 셀셰이딩 2.5D, 선명한 진홍 하이라이트와 #FF00FF 분리.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "차분한 강함",
+            "지휘 제스처",
+            "브라이트 콘트라스트",
+            "원형 유연"
+          ],
+          "en": [
+            "quiet power",
+            "command gesture",
+            "high contrast",
+            "composite-ready"
+          ]
+        },
+        "lighting": {
+          "key": "warm backlight",
+          "fill": "muted umber",
+          "rim": "thin magenta",
+          "mood": "poised"
+        },
+        "composition": {
+          "cameraAngle": "static 3/4 centered",
+          "shotSize": "full body, no clutter",
+          "poseReadability": "gesture and weapon separated from torso",
+          "environmentHint": "minimal runic dust at heel point"
+        },
+        "negative": [
+          "no modern player mascot likeness",
+          "no duplicate emblem from any IP",
+          "no extra text"
+        ],
+        "motionAffinity": [
+          "defence",
+          "show",
+          "hit",
+          "avoid"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-player-core-v04.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8feb-e728-70e2-b24e-d5f5f8f3e30f"
+      },
+      "promptId": "aw-pl-v04",
+      "archetype": "player-core",
+      "archetypeDisplayName": "Abyss Courier Player",
+      "variant": "v04"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-shadow-soldier-v01.png",
+      "sha256": "b245ad3cb4f141a6ff199149025248d07084a43cb12351179e511048fe37a652",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Single shadow infantry archetype, hollowed armor plates fused from obsidian and bone fragments, elongated gloves with talon knuckles, shoulder lantern sigils glowing cyan, low crouch charge pose on one leg, controlled void fog emanating from feet, clean readable silhouette, anime-like 2.5D cel-shaded monster-hunter aesthetic, isolated magenta matte. Negative constraints: no direct silhouette copy of any known shadow clone trope, no human-identical face and outfit from source, no extra duplicated clones in frame.",
+        "packEnglish": "Single shadow infantry archetype, hollowed armor plates fused from obsidian and bone fragments, elongated gloves with talon knuckles, shoulder lantern sigils glowing cyan, low crouch charge pose on one leg, controlled void fog emanating from feet, clean readable silhouette, anime-like 2.5D cel-shaded monster-hunter aesthetic, isolated magenta matte.",
+        "packKorean": "하나의 그림자 보병형, 흑요석과 뼈 조각 혼합 갑주, 길어진 망치형 장갑, 어깨 신호등이 청색 발광, 발밑으로 그림자 안개가 번짐, 단일 실루엣이 분명한 전력 자세, 2.5D 셀셰이딩 미지근한 전투 아트, #FF00FF 바탕.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "그림자 병종",
+            "기계-유기",
+            "애니메이션형",
+            "원본 파생"
+          ],
+          "en": [
+            "shadow infantry",
+            "biomechanical",
+            "anime-style",
+            "original derivative"
+          ]
+        },
+        "lighting": {
+          "key": "cold blue sidelight",
+          "fill": "violet floor glow",
+          "rim": "faint white edge",
+          "mood": "menacing"
+        },
+        "composition": {
+          "cameraAngle": "three-quarter isometric feel",
+          "shotSize": "full body, ground contacts visible",
+          "poseReadability": "clear leg and foot position",
+          "environmentHint": "one broken gate arch as abstract backdrop"
+        },
+        "negative": [
+          "no direct silhouette copy of any known shadow clone trope",
+          "no human-identical face and outfit from source",
+          "no extra duplicated clones in frame"
+        ],
+        "motionAffinity": [
+          "idle",
+          "move",
+          "run",
+          "show"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-shadow-soldier-v01.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fe1-8d29-7b41-bf7f-a08a5d624795"
+      },
+      "promptId": "aw-ss-v01",
+      "archetype": "shadow-soldier",
+      "archetypeDisplayName": "Graveshadow Battalion Unit",
+      "variant": "v01"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-shadow-soldier-v02.png",
+      "sha256": "c345de19052f2d267bfc57d49c36ec75e09e8c19dedcb2ff9bdd5a04ef0a443c",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Dark unit commander form with segmented carapace and crescent blade, torso twisted, one hand drawing dark energy lines, another throwing up blocking ward, stylized hard shadow gradients, strict high readability, 1024x576 card concept, 2.5D painterly cel-shade with particle cracks. Negative constraints: no cloned source character faces, no duplicated bone-white mask style, no legible text.",
+        "packEnglish": "Dark unit commander form with segmented carapace and crescent blade, torso twisted, one hand drawing dark energy lines, another throwing up blocking ward, stylized hard shadow gradients, strict high readability, 1024x576 card concept, 2.5D painterly cel-shade with particle cracks.",
+        "packKorean": "검은 갑주 지휘형, 가시형 흉갑과 초승달 검, 몸통이 비틀린 경직 포즈, 손에서 암영선이 발산, 반대손은 방어권 부여, 높은 가독성, 1024x576 카드형 콘셉트, 파티클 파열이 있는 셀셰이드.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "유닛-지휘",
+            "강한 가시",
+            "정지 포즈",
+            "픽셀프리"
+          ],
+          "en": [
+            "unit commander",
+            "spike-carapace",
+            "command pose",
+            "pixel-free"
+          ]
+        },
+        "lighting": {
+          "key": "hard low key with cyan highlights",
+          "fill": "dim amber rim",
+          "rim": "white fracture lines",
+          "mood": "defensive aggression"
+        },
+        "composition": {
+          "cameraAngle": "slight overhead hero frame",
+          "shotSize": "full body, shoulders near edges",
+          "poseReadability": "arms fully visible in silhouette contrast",
+          "environmentHint": "abstract wall of floating obsidian shards"
+        },
+        "negative": [
+          "no cloned source character faces",
+          "no duplicated bone-white mask style",
+          "no legible text"
+        ],
+        "motionAffinity": [
+          "attack",
+          "hit",
+          "defence",
+          "avoid"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-shadow-soldier-v02.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fe2-a1a9-7f82-a08e-8f77187154e2"
+      },
+      "promptId": "aw-ss-v02",
+      "archetype": "shadow-soldier",
+      "archetypeDisplayName": "Graveshadow Battalion Unit",
+      "variant": "v02"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-shadow-soldier-v03.png",
+      "sha256": "e04daa5756a3ecfb09247463344a14336ef1f41bbf27a749fd6ac83409894fb6",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Mass-produced shadow knight silhouette transformed into unique hero unit: black cloth wraps, segmented knee guards, blade-throne crest, shoulder-mounted rune fan, crouch-to-leap attack prelude, clean volumetric edges, dynamic particle smoke, anime style, no realism. Negative constraints: no faceless-source shadow soldier, no mirrored copy of prior variants, no clutter around hands.",
+        "packEnglish": "Mass-produced shadow knight silhouette transformed into unique hero unit: black cloth wraps, segmented knee guards, blade-throne crest, shoulder-mounted rune fan, crouch-to-leap attack prelude, clean volumetric edges, dynamic particle smoke, anime style, no realism.",
+        "packKorean": "대량 복제 병종을 개인화한 독립 병사, 검은 천 조각과 무릎 가드, 검은 왕좌 문양 날개, 어깨 룬 부채를 펼친 예비 돌진 포즈, 깨끗한 입체 경계와 파티클 스모그, 애니 스타일.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "병사 개성화",
+            "돌진 준비",
+            "스모그",
+            "2.5D"
+          ],
+          "en": [
+            "unit personalization",
+            "leap readied",
+            "smoke",
+            "2.5D"
+          ]
+        },
+        "lighting": {
+          "key": "single magenta-laced blue front",
+          "fill": "subtle gray wash",
+          "rim": "cyan fringe",
+          "mood": "savage momentum"
+        },
+        "composition": {
+          "cameraAngle": "low-profile side-three-quarter",
+          "shotSize": "full body + prep arc",
+          "poseReadability": "knee bend and spine curve visible",
+          "environmentHint": "broken platform geometry without text"
+        },
+        "negative": [
+          "no faceless-source shadow soldier",
+          "no mirrored copy of prior variants",
+          "no clutter around hands"
+        ],
+        "motionAffinity": [
+          "run",
+          "hit",
+          "avoid",
+          "bighit"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-shadow-soldier-v03.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fe5-44be-72a2-aa4a-451a71a93f50"
+      },
+      "promptId": "aw-ss-v03",
+      "archetype": "shadow-soldier",
+      "archetypeDisplayName": "Graveshadow Battalion Unit",
+      "variant": "v03"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-shadow-soldier-v04.png",
+      "sha256": "c3f37a2fed04f7d3650ba8f01aa71333111cfc9e456bd8fcd5129dafc38bd678",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Elite shadow infantry captain with bone-white shoulder mask, long hook-chain pike, heavy footfall, stern jawline, high-contrast armor planes, cinematic downward tilt, magenta isolation, painterly ink and particle impact strokes for 2.5D anime composition. Negative constraints: no source-copyright symbols, no duplicate mask motifs, no close-up face reference.",
+        "packEnglish": "Elite shadow infantry captain with bone-white shoulder mask, long hook-chain pike, heavy footfall, stern jawline, high-contrast armor planes, cinematic downward tilt, magenta isolation, painterly ink and particle impact strokes for 2.5D anime composition.",
+        "packKorean": "정예 그림자 보병 대장, 뼈빛 어깨 마스크와 긴 갈고리 창, 무거운 보행, 굵은 턱선, 고대비 장갑면, 하향 투시 구도, #FF00FF 격리, 잉크+파티클 타격 흔적.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "정예 병종",
+            "후퇴 제어",
+            "강한 경량",
+            "액션 콘셉트"
+          ],
+          "en": [
+            "elite captain",
+            "controlled stride",
+            "hard-shape",
+            "action concept"
+          ]
+        },
+        "lighting": {
+          "key": "rim-heavy top light",
+          "fill": "deep purple ambient",
+          "rim": "cold teal",
+          "mood": "commanding"
+        },
+        "composition": {
+          "cameraAngle": "vertical slight high angle",
+          "shotSize": "full body with headroom",
+          "poseReadability": "mask and spear axis separated",
+          "environmentHint": "hollowed hall with geometric shadows"
+        },
+        "negative": [
+          "no source-copyright symbols",
+          "no duplicate mask motifs",
+          "no close-up face reference"
+        ],
+        "motionAffinity": [
+          "defence",
+          "critical",
+          "hit",
+          "show"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-shadow-soldier-v04.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fe6-a178-7ab0-a6c4-f900628b7b37"
+      },
+      "promptId": "aw-ss-v04",
+      "archetype": "shadow-soldier",
+      "archetypeDisplayName": "Graveshadow Battalion Unit",
+      "variant": "v04"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-sung-hum-v01.png",
+      "sha256": "2091b9223628223c95b67476ccc5894e9d5566f1c87f72ac679c609253767aa3",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Original dark-fantasy huntress/warrior in battle-ready human form, narrow-shouldered but strong, layered plate-and-cloth armor, matte iron bracers, narrow steel rapier in one hand and void-thread tether in other, scarred face under a split-bone hood, grounded 3/4 combat stance, isolated on uniform #FF00FF matte, warm-dusk particle sparks around weapon edges, cel-shaded 2.5D anime production art, full-body concept for boss character. No text or logos, no copyrighted character likeness, no exact replica of any known character face or pose.",
+        "packEnglish": "Original dark-fantasy huntress/warrior in battle-ready human form, narrow-shouldered but strong, layered plate-and-cloth armor, matte iron bracers, narrow steel rapier in one hand and void-thread tether in other, scarred face under a split-bone hood, grounded 3/4 combat stance, isolated on uniform #FF00FF matte, warm-dusk particle sparks around weapon edges, cel-shaded 2.5D anime production art, full-body concept for boss character.",
+        "packKorean": "오리지널 다크 판타지 인간 전사, 날렵하지만 단단한 체격의 상의·하의 분절형 갑주, 무광속성 철 제지, 오른손은 짧은 철퇴, 왼손은 그림자 실, 반가림 고깔모자 아래 상처 흔적, 3/4 전투 스탠스 풀바디, #FF00FF 단색 바탕, 늦은 석양의 입자 효과, 셀 셰이딩 2.5D 애니메이션 콘셉트 아트.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "오리지널화",
+            "셀셰이딩",
+            "2.5D",
+            "어둠판타지",
+            "솔로레벨링-영감"
+          ],
+          "en": [
+            "originalized",
+            "cel-shaded",
+            "2.5D",
+            "dark-fantasy",
+            "anime-like"
+          ]
+        },
+        "lighting": {
+          "key": "warm 6200K top-left",
+          "fill": "soft amber bounce",
+          "rim": "deep violet edge",
+          "mood": "tense and controlled"
+        },
+        "composition": {
+          "cameraAngle": "high three-quarter hero, isometric-friendly",
+          "shotSize": "full body, knee-to-head centered",
+          "poseReadability": "clear weapon silhouette on torso and hands, no overlap",
+          "environmentHint": "sparse autumn foliage shapes and drifting leaves as depth cues only"
+        },
+        "negative": [
+          "no copyrighted character likeness",
+          "no Korean text/logo",
+          "no exact replica of source protagonist face/pose",
+          "no multiple faces of same model in one frame"
+        ],
+        "motionAffinity": [
+          "idle",
+          "move",
+          "run",
+          "attack",
+          "show"
+        ]
+      },
+      "issues": [
+        "provenance-note: see provenanceNote for a documented divergence between the pack text and what was actually sent"
+      ],
+      "sidecarPath": "assets/images/battle/pilot/concept-sung-hum-v01.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fd9-7b7d-7a22-b6ae-5653ca51fc0f"
+      },
+      "promptId": "aw-sjh-v01",
+      "archetype": "sung-hum",
+      "archetypeDisplayName": "Nightward Human Vanguard",
+      "variant": "v01",
+      "provenanceNote": "The 'prompt' field above is the exact text sent to the generator via a manual first-test CLI call (hand-typed negative summary, not design/boss-concept-prompt-pack.json's aw-sjh-v01.negative array). This intentionally avoided that array's literal 'Jin-Woo' text (see decision-log.md D14 addendum) even though it was written before that leak was noticed and fixed."
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-sung-hum-v02.png",
+      "sha256": "5103d5f0424f92ed2b5af509c5db5f2754d9ddf1f067fef59a23e9fbd0add44e",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Full-body concept of a scar-scarred hunter tactician in layered black-green battle robes and brass neck ring, asymmetrical shoulder guard, twin hooked blades folded across the back, restrained posture with one knee slightly bent as if about to lunge, cinematic particle haze, matte magenta isolation, stylized 2.5D anime with painterly textures and rigid shape blocks. Negative constraints: no exact costume from source, no webtoon-provided hairstyle, no duplicated character in mirror.",
+        "packEnglish": "Full-body concept of a scar-scarred hunter tactician in layered black-green battle robes and brass neck ring, asymmetrical shoulder guard, twin hooked blades folded across the back, restrained posture with one knee slightly bent as if about to lunge, cinematic particle haze, matte magenta isolation, stylized 2.5D anime with painterly textures and rigid shape blocks.",
+        "packKorean": "강인한 흉터의 사냥꾼 전술가, 검은 녹색 제복과 황동 목가드, 비대칭 어깨 보호구, 등 위로 접혀 있는 이중 갈고리 칼, 즉시 돌진을 알리는 무릎 꺾임 포즈, 파티클 안개, 단색 #FF00FF 컷아웃, 셀셔이딩 2.5D 게임 콘셉트 아트.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "원형탈피",
+            "하이턴션",
+            "동적",
+            "펜타곤 실루엣 분리"
+          ],
+          "en": [
+            "original silhouette",
+            "high tension",
+            "dynamic",
+            "action silhouette priority"
+          ]
+        },
+        "lighting": {
+          "key": "cool 5200K side key",
+          "fill": "deep teal ambient",
+          "rim": "silver edge on shoulder plates",
+          "mood": "watchful"
+        },
+        "composition": {
+          "cameraAngle": "slightly top-down hero frame",
+          "shotSize": "full body + blade sweep clear area",
+          "poseReadability": "contrasting edge around folded blade and left arm",
+          "environmentHint": "distant ring of ghost-vine motifs, no hard scenery objects"
+        },
+        "negative": [
+          "no exact costume from source",
+          "no webtoon-provided hairstyle",
+          "no duplicated character in mirror"
+        ],
+        "motionAffinity": [
+          "run",
+          "avoid",
+          "attack",
+          "defence"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-sung-hum-v02.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fdc-c9b9-7783-ba4c-40a8e41fcf20"
+      },
+      "promptId": "aw-sjh-v02",
+      "archetype": "sung-hum",
+      "archetypeDisplayName": "Nightward Human Vanguard",
+      "variant": "v02"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-sung-hum-v03.png",
+      "sha256": "d91260f426027a761a854a925aa8cb8f2217a3b04263109eeaa514188aec18f6",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Human elite hunter with compact layered plate, blood-red undershirt, weathered gauntlets, one hand forming a short shadow knot, the other pointing forward, dramatic frontal three-quarter pivot, expressive cape geometry, cinematic 1024x576 manga-anime concept, high contrast highlights on armor seams, grounded boots and stable center of gravity. Negative constraints: no copied face design, no exact cape and sword ratio from source, no branded swords.",
+        "packEnglish": "Human elite hunter with compact layered plate, blood-red undershirt, weathered gauntlets, one hand forming a short shadow knot, the other pointing forward, dramatic frontal three-quarter pivot, expressive cape geometry, cinematic 1024x576 manga-anime concept, high contrast highlights on armor seams, grounded boots and stable center of gravity.",
+        "packKorean": "무거운 갑옷의 정예 사냥꾼, 붉은 내피와 풍화된 건틀렛, 한 손은 짧은 그림자 결속제스처, 다른 손은 전진 제스처, 극적인 3/4 회전, 케이프 형태를 과장, 카니발식 장면성, 1024x576 애니메이션 콘셉트, 갑주 이음매 강조.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "전략가",
+            "전투준비",
+            "애니 콘셉트",
+            "픽셀리스"
+          ],
+          "en": [
+            "combat-ready",
+            "pivot",
+            "character-sheet style",
+            "non-pixellated"
+          ]
+        },
+        "lighting": {
+          "key": "split light, hard front",
+          "fill": "dark smoke ambient",
+          "rim": "red-gold edge",
+          "mood": "threat calm"
+        },
+        "composition": {
+          "cameraAngle": "oblique three-quarter",
+          "shotSize": "full body, slight upward tilt",
+          "poseReadability": "cape and forearm axis separate clearly",
+          "environmentHint": "floating ember particles around floor contact points"
+        },
+        "negative": [
+          "no copied face design",
+          "no exact cape and sword ratio from source",
+          "no branded swords"
+        ],
+        "motionAffinity": [
+          "hit",
+          "critical",
+          "defence",
+          "show"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-sung-hum-v03.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fde-cfd3-7143-8bdb-46bafeec5014"
+      },
+      "promptId": "aw-sjh-v03",
+      "archetype": "sung-hum",
+      "archetypeDisplayName": "Nightward Human Vanguard",
+      "variant": "v03"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-sung-hum-v04.png",
+      "sha256": "b3427620441aa1df032ebb02e61b73c3ca103c2b5b9395d9928b1c109d11b8a5",
+      "category": "archetype-variant",
+      "prompt": {
+        "sentToGenerator": "Battle veteran in torn ceremonial black-white vestments fused with scavenged tech bracers, eyes lit by low amber gauge-light, dual hooks clipped on waist, weight-shifted guard pose, painterly ink outlines, magenta matte isolation, cinematic hero card framing, 2.5D anime RPG asset style. Negative constraints: no source-accurate battle scars, no copied eye glow signature, no logo patches.",
+        "packEnglish": "Battle veteran in torn ceremonial black-white vestments fused with scavenged tech bracers, eyes lit by low amber gauge-light, dual hooks clipped on waist, weight-shifted guard pose, painterly ink outlines, magenta matte isolation, cinematic hero card framing, 2.5D anime RPG asset style.",
+        "packKorean": "전투 베테랑, 찢긴 제의복과 장비 부품이 결합된 흉갑, 허리의 이중 갈고리 장치, 하체 하중 이동 가드 포즈, 잉크 라인 계열의 부드러운 붓결, #FF00FF 분리 바탕, 2.5D RPG 히어로 카드 구도.",
+        "sentStartsWithPackText": true,
+        "styleTags": {
+          "ko": [
+            "고전-현대 혼합",
+            "원본성 유지",
+            "장비 고도화",
+            "강한 실루엣"
+          ],
+          "en": [
+            "hybrid-tech",
+            "originalized",
+            "upgraded kit",
+            "strong silhouette"
+          ]
+        },
+        "lighting": {
+          "key": "low amber underlight",
+          "fill": "muted umber midtones",
+          "rim": "cobalt cool edge",
+          "mood": "vigilant"
+        },
+        "composition": {
+          "cameraAngle": "slight low-angle three-quarter",
+          "shotSize": "full body with room for shoulder extension",
+          "poseReadability": "hips and shoulders not masked by cloth",
+          "environmentHint": "minimal broken-tree bokeh"
+        },
+        "negative": [
+          "no source-accurate battle scars",
+          "no copied eye glow signature",
+          "no logo patches"
+        ],
+        "motionAffinity": [
+          "move",
+          "run",
+          "bighit",
+          "critical"
+        ]
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-sung-hum-v04.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8fe0-0490-7832-a3f3-244eda18f3ae"
+      },
+      "promptId": "aw-sjh-v04",
+      "archetype": "sung-hum",
+      "archetypeDisplayName": "Nightward Human Vanguard",
+      "variant": "v04"
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-broken-court-monarch-boss.png",
+      "sha256": "fc22ab3bf1decad4f3c1d1f0b1469302a74c4ff3758b54758c2bd00d2f0f9c60",
+      "category": "boss-final",
+      "prompt": {
+        "sentToGenerator": "Original dark-fantasy hunter-commander boss concept (concept-broken-court-monarch-boss), cinematic full-body concept art, three-quarter hero framing, #FF00FF matte, high readability, no text or logos, and no copyrighted character likeness.",
+        "note": "Generic boss-label template, not from the per-archetype pack (bossId substituted into a shared skeleton prompt)."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-broken-court-monarch-boss.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8f6a-bfab-79f0-a8a2-cbe78b811a56"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-human-command-boss.png",
+      "sha256": "5c4c186f1fc4d3be33270776cc339ccc061d03a11168aa26bfda07be2463f4c8",
+      "category": "boss-final",
+      "prompt": {
+        "sentToGenerator": "Original dark-fantasy hunter-commander boss concept (concept-human-command-boss), cinematic full-body concept art, three-quarter hero framing, #FF00FF matte, high readability, no text or logos, and no copyrighted character likeness.",
+        "note": "Generic boss-label template, not from the per-archetype pack (bossId substituted into a shared skeleton prompt)."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-human-command-boss.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8f67-deb4-7e43-a9d8-ac8c997224c4"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-shadow-commander-boss.png",
+      "sha256": "841a4d20445346c37f4bb763af217b4b53cb90e1ba4e54e2bf02b3039fa8d795",
+      "category": "boss-final",
+      "prompt": {
+        "sentToGenerator": "Original dark-fantasy hunter-commander boss concept (concept-shadow-commander-boss), cinematic full-body concept art, three-quarter hero framing, #FF00FF matte, high readability, no text or logos, and no copyrighted character likeness.",
+        "note": "Generic boss-label template, not from the per-archetype pack (bossId substituted into a shared skeleton prompt)."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-shadow-commander-boss.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8f66-1cda-7153-8ab0-73f1081813d1"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-sung-hum-boss.png",
+      "sha256": "64c1fadab0ba0bffa24a9bb537a3afec1aa34e828dae5152b5f382a089847ffc",
+      "category": "boss-final",
+      "prompt": {
+        "sentToGenerator": "Original dark-fantasy hunter-commander boss concept (concept-sung-hum-boss), cinematic full-body concept art, three-quarter hero framing, #FF00FF matte, high readability, no text or logos, and no copyrighted character likeness.",
+        "note": "Generic boss-label template, not from the per-archetype pack (bossId substituted into a shared skeleton prompt)."
+      },
+      "issues": [
+        "sidecar-in-wrong-directory (lives at assets/images/battle/world/concept-sung-hum-boss.provenance.json, should sit beside the image)"
+      ],
+      "sidecarPath": "assets/images/battle/world/concept-sung-hum-boss.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f8f69-5cf2-7101-98fd-66bb13a3086d"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/cinder-span-topdown-plate.webp",
+      "sha256": "38ed32b73e79ed44743604d25ce46017ee2722a9632c75f4c2cabcf8f6f8468f",
+      "category": "pilot-reference",
+      "prompt": null,
+      "issues": [
+        "no-provenance-sidecar-found"
+      ]
+    },
+    {
+      "path": "assets/images/battle/pilot/dusk-warden-idle-gti-refstyle.png",
+      "sha256": "bac818323fb95c46bfe88b969ec33b6dcbd011e86fcdb846f6c0fc92b2f4f989",
+      "category": "pilot-reference",
+      "prompt": {
+        "sentToGenerator": "Original Abyssal Surge Dusk Warden commander, alternate full-body concept exploring a spiked-halo crown motif and long dual-tipped teal-glowing spear (instead of lantern-and-scythe), dark obsidian-and-brass segmented plate armor, tattered layered cape, teal Echo-command energy lines running through chest and pauldron gems, three-quarter standing hero pose, weight balanced, painterly cel-shaded game production art, crisp readable silhouette. Isolated on a perfectly uniform solid #FF00FF background, no shadow outside the feet, no text, no logos, no copyrighted character likeness."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/dusk-warden-idle-gti-refstyle.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92b1-ef4b-71c2-abff-5f04efc04fad"
+      },
+      "provenanceNote": "Original file at this path had no recoverable provenance (never committed to git, no sidecar found anywhere in repo history). Original bytes preserved out-of-tree at generation time, sha256 4a1d... (not retained in repo) -- not restorable if needed, this is a fresh generation matching the same creative brief (alternate spiked-halo/spear exploration of the dusk-warden-idle-gti.png commander design) rather than a byte-identical recovery."
+    },
+    {
+      "path": "assets/images/battle/pilot/dusk-warden-idle-gti.png",
+      "sha256": "4973ac1058c81375f477b80232eaa8de304c5236b0c1ebd1002dcc6edb93d291",
+      "category": "pilot-reference",
+      "prompt": {
+        "sentToGenerator": "Original Abyssal Surge Dusk Warden character, full-body idle pose for a 2.5D dark-fantasy defense RPG, three-quarter isometric camera, single character only. Obsidian and aged brass armor with teal Echo-command lines, clear readable silhouette, grounded boots and centered pivot. Painterly game production art with crisp readable edges. No text, no logos. No magenta, pink, or purple on the character. Isolated on a perfectly uniform solid #FF00FF background. No shadow outside the feet."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/dusk-warden-idle-gti.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "private-codex",
+        "model": "gpt-5.4",
+        "responseId": "resp_079851467cc87389016a60822eb3808191a64e916adf194674",
+        "sessionId": "4c2263a3-b31e-4362-b94a-1719710bcae3",
+        "backendStability": "unsupported-private-backend"
+      }
+    },
+    {
+      "path": "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
+      "sha256": "4829621a3bd94e1edbba88482bd4b0ad772620d4f52b6244119c487c2575e572",
+      "category": "world-texture",
+      "prompt": null,
+      "issues": [
+        "no-provenance-sidecar-found"
+      ]
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-atlas-rgba-tight.png",
+      "sha256": "ae048f0af4b7601a015a66b1e88041f96c770064928e970af848b67311461eeb",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-atlas-rgba.png",
+      "sha256": "5449976ef2e3bd9fc7a6f45d94d9a6b2cd2d792b988fc01038a0e360349986a5",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-atlas-white.png",
+      "sha256": "c1c885164835c1acf7c1073159d1fb9d3fc24fef6e652b4c078c409d34b03ceb",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-atlas.png",
+      "sha256": "d39b3240abf0b1c902900f636587250d3e328a9ae530eb5d586c58b021f8d071",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-clean-00.png",
+      "sha256": "9469979a664858756af1b8e4c58d70b16cf13111d5b4e2e6d6ba08c0927cbe3d",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-clean-01.png",
+      "sha256": "95a2869787eba0534d15fa3a7649edbb4a1ddace6ca2eff14c7d478a097c4376",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-clean-02.png",
+      "sha256": "98cc85a64249d72d325eea3bc938aca8823c56d572b59d044511f66f354e29ac",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-clean-03.png",
+      "sha256": "2bb31e63c508333594be1acc851bb9b39c1effcf8ad3ec4b303d7461dda6833d",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-frame-00.png",
+      "sha256": "e74d79bfffab9e68d0204fb7b65b8631144bf850290064d324b7af7bc8112820",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-frame-01.png",
+      "sha256": "038331d6f1ac55f1d0bbc10d01b27cb2da6bda51b55c4ac83bc702c9e7858414",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-frame-02.png",
+      "sha256": "31fd4c1ebfeb4a52ebc22d61b19cafec50e99d1c0d67f540dfa741a488093ac5",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/dusk-warden-frame-03.png",
+      "sha256": "cd9aa6f77714d390d349e1b529eec21575377759d28d775fff6a36dc3e7826b2",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/echo-rusher-atlas-rgba-tight.png",
+      "sha256": "bd8ef8a63445a4cb5c3e47dfde846f27b4c3eb6d7faa52cfe45972b34157a9e9",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/echo-rusher-atlas-rgba.png",
+      "sha256": "50586e6adb97cfe668fa69cb7dc7be821a3e028a175d44e588d9bc894b0587f7",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/echo-rusher-atlas-white.png",
+      "sha256": "5ff452daddb66275cf880c88e46949619ded34e8d862fd9a64d26915e97905c7",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/echo-rusher-atlas.png",
+      "sha256": "99c39dfcd636566f634621486d5b2dad45460bd448f444a701406ba1a13574fe",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/echo-rusher-frame-00.png",
+      "sha256": "3270a02f33a6b5bcd21bc082e8355da0f747ef878f29ccca80283604f5a74f31",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/echo-rusher-frame-01.png",
+      "sha256": "bbd9572948fed1a664d49ee2797d8e37f1b1a8648029c270367cb0ebc54c1eb8",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/echo-rusher-frame-02.png",
+      "sha256": "ea560e89f4103fdd2eff275634d6f6d525117ce39e13a7ee95a270598452a20d",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/echo-rusher-frame-03.png",
+      "sha256": "87c35f8e3f783681049de14f6abe69452b0e05a90cb5ce0747141e59123389a9",
+      "category": "blender-8dir-sprite-render",
+      "prompt": null,
+      "issues": [],
+      "note": "Orthographic 8-direction camera render of a GLB model via scripts/render-8dir-atlas.py (git history: added 2de4710, removed 141b8f7 when the old RTS asset path was retired -- script no longer in working tree). Not AI image generation; no prompt applies."
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-abyssal-banner.png",
+      "sha256": "1f1421c81387245d5f1376d2eb1ed700c2317dd770b1a54d49652d72f5b052fb",
+      "category": "prop-item-concept",
+      "prompt": {
+        "sentToGenerator": "A small tattered war-banner mounted on a short wooden pole, dark purple cloth torn at the edges bearing a faintly glowing sigil, thin ember-like particles rising off the fabric into the air, isometric-friendly 3/4 angle, centered composition, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, dramatic rim light on the cloth and pole edges to show worn fabric and wood material, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-abyssal-banner.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e2-2810-7d01-acd0-8cf4383377ef"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "sha256": "e2e0d93cf2ba51e255c7a1217d54046c8f2d69fbbcbb8c9abc2f835873d4b557",
+      "category": "unit-archetype-concept",
+      "prompt": {
+        "sentToGenerator": "An original dark-fantasy vanguard unit called Anchor Shard: a massive brawler wielding a huge anchor-chain weapon, iron-and-rust armor plating, thick chain wrapped tightly around both forearms and knuckles, heavy hulking build, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear weapon silhouette, wide grounded heavy stance, solid cold steel-grey rim lighting with rust-orange accent highlights, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-anchor-shard.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e4-4e00-7401-bb91-f922b994f37f"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-bulwark-brand.png",
+      "sha256": "ccc9734efe426fc8edecae3329efb3d81640a53b09cb906082cee89853d65d6d",
+      "category": "prop-item-concept",
+      "prompt": {
+        "sentToGenerator": "A heavy iron branding-seal stamp shaped like a defensive sigil, a glowing protective rune etched deep into its flat striking face, a thick chain wrapped tightly around its stone-and-iron handle, isometric-friendly 3/4 angle, centered composition, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, dramatic rim light on the iron and chain edges to show weathered metal material, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-bulwark-brand.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92df-a4c4-7c23-9eec-99cdfb659f41"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-choir-ward-crystal.png",
+      "sha256": "c306e4ca9503b4ea2750ca2b49ca8eab32bda2b1e16e1673d86d3d0fdb42eacb",
+      "category": "prop-item-concept",
+      "prompt": {
+        "sentToGenerator": "A faceted crystal shard standing upright, resonating with faint musical light-ripples radiating outward from its core, a pale silver-blue glow pulsing through the crystal, thin crystalline resonance lines etched across its facets, isometric-friendly 3/4 angle, centered composition, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, dramatic rim light on the crystal edges to show translucent gem material, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-choir-ward-crystal.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e6-f2b2-71a2-a51c-54dad505a722"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-dawnless-crown.png",
+      "sha256": "c66ae5823dc95664b8bb73a509a5b6c7678869a6b377ee920a240533e0f865fd",
+      "category": "unit-archetype-concept",
+      "prompt": {
+        "sentToGenerator": "An original dark-fantasy support commanding officer called Moonless Command: an authoritative figure wearing dark navy and silver military-regal armor, a broken crown motif set into their helm, holding a tall banner-staff with a tattered dark banner, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear banner-staff silhouette, authoritative commanding stance, soft protective cool silver-blue rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-dawnless-crown.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e8-5dcf-74d1-a148-b1fc49fd876c"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-ember-cohort.png",
+      "sha256": "3838cba657744cfddd6e2afb31074129b356497e50737b53062b2c015ecf87d0",
+      "category": "unit-archetype-concept",
+      "prompt": {
+        "sentToGenerator": "An original dark-fantasy striker soldier called Ember Cohort: an agile ember-wreathed spear-wielding fighter, lean armored build with glowing warm orange-red fire cracks running along the spear shaft and armor seams, cinder embers drifting off the weapon, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear weapon silhouette, agile forward-leaning grounded stance, dynamic warm ember-glow rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-ember-cohort.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92dd-0970-71e2-accd-3c4d719763a5"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-equipment-tier-gems.png",
+      "sha256": "7b658d9483552cc52be2a4c6626818bbcac784e5fcac052923977578baecb76d",
+      "category": "prop-item-concept",
+      "prompt": {
+        "sentToGenerator": "A matched set of five gemstones arranged in a small ascending arc, from a small dull rough-cut stone on the left to a large radiant multi-faceted gem on the right, each stone progressively larger, clearer, and more brilliant, representing five equipment power tiers, isometric-friendly 3/4 angle, centered composition, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, dramatic rim light on the gem edges to show faceted crystal material, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-equipment-tier-gems.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92d9-fe2e-70a1-8f00-47b0963dc840"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-guard.png",
+      "sha256": "0dc1b1848fe5886d5e9cefe8104da8a5894a0553931b9b7b66331b98c1d24468",
+      "category": "mob-concept",
+      "prompt": {
+        "sentToGenerator": "A bulky armored guardian construct mob enemy for a dark-fantasy defense RPG, tanky elite-escort role, heavy stone-and-metal plating, wide defensive stance with a raised shield-like forearm, thick blocky proportions, escorting protective posture, simple menacing-but-generic low-tier mob design with minimal ornamentation and a readable blocky silhouette, cel-shaded 2.5D anime/game production art, painterly textures, high readability, dull iron-grey menace lighting with faint warm rune glow, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-guard.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92df-a52a-7b32-9c6c-2d4cf6e576b2"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-lantern-reaver.png",
+      "sha256": "e4a2da7f5c3e662f73ab4ce1ab15f97225458f7cf36811d0ea3d0185c6717d2b",
+      "category": "unit-archetype-concept",
+      "prompt": {
+        "sentToGenerator": "An original dark-fantasy striker unit called Lantern Reaver: an agile dual-blade wielder in a sleek low-profile leather-and-metal outfit, twin curved blades drawn and crossed, a small glowing soul-lantern hanging from their belt, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear dual-blade silhouette, swift crouched low-profile stance, dynamic warm amber lantern-glow rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-lantern-reaver.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92ed-ba72-7ad1-b4fe-838eb88c0b44"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-pack-warden.png",
+      "sha256": "eb4e7beea5018de4dc1aa18f9156ed5afcafe90dee041ecc567119f04182064e",
+      "category": "unit-archetype-concept",
+      "prompt": {
+        "sentToGenerator": "An original dark-fantasy vanguard unit called Pack Warden: a rugged wolf-pack handler wearing beast-hide armor and fur trim, gripping a heavy handler's weapon, a bonded wolf-companion silhouette standing at their side, wilderness-worn gear, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear weapon and wolf-companion silhouette, wide grounded stance, solid earthy amber-brown rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-pack-warden.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92eb-13c6-76d1-aca8-b848f485e3c0"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-possessed.png",
+      "sha256": "fafaa16ac0f8867f88fbbbc482e5c3465c70f39ccdf1c6281c9fe12f30ebd96a",
+      "category": "mob-concept",
+      "prompt": {
+        "sentToGenerator": "A possessed marionette-like ranged caster mob enemy for a dark-fantasy defense RPG, jerky unnatural limb angles bent at wrong joints, thin puppet-like frame with loose dangling string-like tethers, glowing projectile orbs orbiting its outstretched hands, tilted head suggesting broken puppet control, simple menacing-but-generic low-tier mob design with minimal ornamentation and a small readable silhouette, cel-shaded 2.5D anime/game production art, painterly textures, high readability, sickly green-violet menace lighting from the orbiting orbs, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-possessed.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e1-e3c1-7100-ac11-91175eaaf6d4"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-requiem-warden.png",
+      "sha256": "f8ab22c6c08bb5cedda07b3d88e76f174f6c52800af08c9f6ec028e84ae0d9c8",
+      "category": "unit-archetype-concept",
+      "prompt": {
+        "sentToGenerator": "An original dark-fantasy support unit called Requiem Warden: a mournful warden wrapped in a faded funeral-shroud cloak, holding a tall requiem-horn staff carved with mourning sigils, gentle protective bearing, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear staff silhouette, gentle protective stance, soft protective muted violet-grey rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-requiem-warden.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92ef-b38e-77a2-b4bb-1db9d6af363b"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-rift-lens.png",
+      "sha256": "a3d76ad1e342876a469027eb787db9de390e9287c01753aa8e3b955a20ec12da",
+      "category": "unit-archetype-concept",
+      "prompt": {
+        "sentToGenerator": "An original dark-fantasy striker unit called Rift Lens: an arcane scholar-archer wearing layered violet robes and light arcane armor plating, a floating rift-lens focus orb hovering beside their shoulder, drawing a bow made of crackling purple/violet arcane energy, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear weapon/prop silhouette, agile poised archer stance, dynamic cold violet energy rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-rift-lens.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92df-1db3-7c52-bfbe-fe3466e3a975"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-s1-cinder-warden.png",
+      "sha256": "473e15e96b9f4692ded900def31594d1dd77bd1f09649cdc1d527829e1b1020d",
+      "category": "stage-boss-concept",
+      "prompt": {
+        "sentToGenerator": "An armored warden wreathed in embers and ash, cracked obsidian plate armor, glowing cinder cracks running across the armor plates, wielding a warped greatsword trailing ash particles, full-body three-quarter hero framing, grounded battle-ready stance, warm ember-orange glow lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-s1-cinder-warden.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92da-bda2-7532-b334-9ddbfce0374d"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-s10-abyss-regent.png",
+      "sha256": "9a358d2f2cbb04483866cd8b65d8e53158cf322a619559c196b2c65bbf0a159e",
+      "category": "stage-boss-concept",
+      "prompt": {
+        "sentToGenerator": "The final regent, the most ornate and imposing design of all bosses, fused armor-and-throne-fragment aesthetic, wielding twin void-glaives, wearing a crown of shattered gate-seals, elaborate layered silhouette, full-body three-quarter hero framing, towering commanding stance, intense radiant void-and-gold zenith lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-s10-abyss-regent.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92f5-1f75-7a11-99b2-c2cbc92f633b"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-s2-veil-tactician.png",
+      "sha256": "b5dae636e292ac8299a4d3f3ba7d6398e711723e472656dfa9fda0873241d067",
+      "category": "stage-boss-concept",
+      "prompt": {
+        "sentToGenerator": "A robed tactician-general wearing a translucent veil-cloak, a tactical rune-map floating beside them, wielding twin curved daggers, cold analytical posture, full-body three-quarter hero framing, poised calculating stance, cold pale-blue analytical lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-s2-veil-tactician.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92df-7aa9-7512-9b7f-618502700faa"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-s3-gate-sovereign.png",
+      "sha256": "db8882cef616ec4d17de76c377b7da9fecd4ea0948cad55017abd23e9b616ecc",
+      "category": "stage-boss-concept",
+      "prompt": {
+        "sentToGenerator": "A regal sovereign wielding a massive gate-key-shaped scepter, echo-distortion visual trails rippling around the silhouette, wearing an ornate but cracked crown, full-body three-quarter hero framing, commanding regal stance, deep royal-violet echoing lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-s3-gate-sovereign.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e1-ad6c-76e2-afe0-46579af6603a"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-s4-tide-warden.png",
+      "sha256": "803e9410ec25e1b2005a5ce05ebe7a21cddce01d8fc3c890ea18b156cbaa3a67",
+      "category": "stage-boss-concept",
+      "prompt": {
+        "sentToGenerator": "A barnacle-armored warden wielding a trident-halberd, dripping wet cloak, teal bioluminescent markings glowing across the armor, coral-like shoulder growths, full-body three-quarter hero framing, grounded stance, cold teal bioluminescent underwater lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-s4-tide-warden.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e7-26d0-7f20-9f60-d1cb4d75ea1e"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-s5-pack-herald.png",
+      "sha256": "16cc7a894e6499a1fb1ffac8f40428de0cd9b43dbbdea73ca8c45760dfed7ade",
+      "category": "stage-boss-concept",
+      "prompt": {
+        "sentToGenerator": "A feral herald clad in bone-and-hide armor, wearing a howling wolf-skull helm, wielding dual hooked claws, wind-torn fur cloak billowing behind, full-body three-quarter hero framing, aggressive crouched stance, harsh dusty amber wasteland lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-s5-pack-herald.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e9-2030-7a72-a65b-84646d2e024f"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-s6-requiem-choir.png",
+      "sha256": "2a8fc06730bd98e4eb04f4b64f3f36aa36be1ed40af962faa24377d060ebdbd5",
+      "category": "stage-boss-concept",
+      "prompt": {
+        "sentToGenerator": "A ghostly choir-conductor figure made of fused glass shards, holding a conductor's baton trailing musical light-notes, wearing a mournful faceless mask, full-body three-quarter hero framing, still elegant stance, pale mournful violet-white crystalline lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-s6-requiem-choir.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92eb-6394-76d1-aac8-265ca4ea62cd"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-s7-lantern-tyrant.png",
+      "sha256": "7915647a5c6f7ce6eefd7928bdae3c47c9bf71aa99b11068e612fc76f9b7fc1e",
+      "category": "stage-boss-concept",
+      "prompt": {
+        "sentToGenerator": "A tyrant carrying a massive lantern staff with trapped soul-light glowing inside it, chain-wrapped armor, void-black cloak that seems to absorb light, full-body three-quarter hero framing, imposing towering stance, stark contrast lantern-glow-against-void lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-s7-lantern-tyrant.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92ed-74c7-79b0-a3c6-aaa5338535f8"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-s8-bridge-colossus.png",
+      "sha256": "88b06785e401bddcef1601b781d24a6e94b8d54a2c4356fc8463e6c1a1dde4de",
+      "category": "stage-boss-concept",
+      "prompt": {
+        "sentToGenerator": "A hulking stone-and-iron colossus fused with bridge rubble, massive fists shaped like collapsed archways, deep cracks running across its body glowing with structural energy, full-body three-quarter hero framing, wide braced stance, molten structural-energy orange-red glow lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-s8-bridge-colossus.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92ef-a6c9-7773-98f5-a066b4ca14a4"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-s9-veiled-concordat.png",
+      "sha256": "2f72f286f7eceda95fc5bd60ce9a22664d3a93cd267d71eec4b2019ab9efc9df",
+      "category": "stage-boss-concept",
+      "prompt": {
+        "sentToGenerator": "A diplomat-like figure in ceremonial abyss-blue robes, multiple floating vote-seal insignias orbiting around them, wielding twin ceremonial blades, calm but ominous posture, full-body three-quarter hero framing, composed still stance, deep abyssal-blue ceremonial lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-s9-veiled-concordat.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92f2-d124-74d2-be35-4a06e603abbe"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-scout.png",
+      "sha256": "68400899e22765b3f9506dd8fb6458be5446a6a5af115cd0e9bd4fa82a0ed28b",
+      "category": "mob-concept",
+      "prompt": {
+        "sentToGenerator": "A lean scout-wraith mob enemy for a dark-fantasy defense RPG, low-HP fast-moving silhouette, gaunt hunched frame, tattered dark cloak streaking behind it as if mid-sprint, forward-leaning aggressive sprint pose, clawed reaching hands, simple menacing-but-generic low-tier mob design with minimal ornamentation and a small readable silhouette, cel-shaded 2.5D anime/game production art, painterly textures, high readability, cold blue menace lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-scout.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92dc-345b-7412-a19a-54e4c41abda0"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-shade.png",
+      "sha256": "805bc4906005de955dca50eea928916f80cbc7362c031db6e05c3973ec25d695",
+      "category": "mob-concept",
+      "prompt": {
+        "sentToGenerator": "A shadowy flanking shade creature mob enemy for a dark-fantasy defense RPG, semi-transparent smoky wisping limbs, low crouched sideways stance suggesting a flanking maneuver, narrow featureless dark head, wispy trailing form fading at the edges, simple menacing-but-generic low-tier mob design with minimal ornamentation and a small readable silhouette, cel-shaded 2.5D anime/game production art, painterly textures, high readability, deep violet-grey menace lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-shade.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92de-3c72-7873-aa80-c29cbb0cd847"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-stillwater-hourglass.png",
+      "sha256": "4550d6d444c85300b485f0a036081990c19c17702f5df891900dd68fd5f5f433",
+      "category": "prop-item-concept",
+      "prompt": {
+        "sentToGenerator": "An ornate hourglass with softly glowing cyan sand that appears to slow mid-fall inside frost-touched glass bulbs, aged brass fittings and filigree at the caps, wisps of cold mist curling near the base, isometric-friendly 3/4 angle, centered composition, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, dramatic rim light on the glass and brass edges to show glass and metal material, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-stillwater-hourglass.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92dc-f39d-7bb0-9fb7-8c8bf2201002"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-terrain-abyss-chancel.png",
+      "sha256": "af4949635f80e7c4ed5b80e5ff3f9c849b162dbc95bfcacddb06569efbd8a6e0",
+      "category": "terrain",
+      "prompt": {
+        "sentToGenerator": "Isometric game-terrain diorama concept art, dark-fantasy environment: a chapel-like ceremonial chamber lined with rows of dead unlit votive candles, abyss-blue ambient light seeping through the space, ornate ceremonial architecture with carved stone altars, painterly game production art, moody atmospheric lighting, solemn sacred ruin, no characters, no UI, no text, no logos, no watermark, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-terrain-abyss-chancel.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92ef-f022-7e73-bcbc-f22b2a51e438"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-terrain-cinder-span.png",
+      "sha256": "8430b1494e8dabac3c913d25ab0093de0c4d50d08f7f7e8db49b12dcfe2160ac",
+      "category": "terrain",
+      "prompt": {
+        "sentToGenerator": "Isometric game-terrain diorama concept art, dark-fantasy environment: an ash-covered ruined stone bridge spanning a deep chasm, glowing ember cracks splitting the ground and bridge stones, drifting ash particles suspended in the air, warm orange-red ambient glow from below the chasm, painterly game production art, moody atmospheric lighting, dramatic warm haze on the horizon, no characters, no UI, no text, no logos, no watermark, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-terrain-cinder-span.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92dd-1480-7743-922f-ebf90c99f6b1"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-terrain-echo-throne-steps.png",
+      "sha256": "2dad142ff0b0e3c1f0305e2937f465b8d42edb14d99f232b2d02e1fbdbb721b4",
+      "category": "terrain",
+      "prompt": {
+        "sentToGenerator": "Isometric game-terrain diorama concept art, dark-fantasy environment: a grand descending staircase within a ruined regal hall, framed as a vertical passage of wide stone steps flanked by cracked columns, faint echo-distortion visual ripples shimmering in the air like heat-haze, dim golden torchlight flickering along the stairwell walls, painterly game production art, moody atmospheric lighting, no characters, no UI, no text, no logos, no watermark, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-terrain-echo-throne-steps.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92f4-4272-78a1-ac05-ef701656af8e"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-terrain-echo-throne.png",
+      "sha256": "841ca777da56074789ed654d95d4056ed65b3b5facacc607b018a8f840aff577",
+      "category": "terrain",
+      "prompt": {
+        "sentToGenerator": "Isometric game-terrain diorama concept art, dark-fantasy environment: a grand ruined regal throne hall with cracked marble floors and toppled columns, faint echo-distortion visual ripples shimmering in the air like heat-haze, dim golden torchlight flickering along the walls, painterly game production art, moody atmospheric lighting, ornate ruined architecture, no characters, no UI, no text, no logos, no watermark, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-terrain-echo-throne.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e1-d561-77f1-875a-3360cee61299"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-terrain-gate-zenith.png",
+      "sha256": "14975f9aa4d9ee5eeb449232bb98ef73b7bfde227876e77e6dad2cca994f4635",
+      "category": "terrain",
+      "prompt": {
+        "sentToGenerator": "Isometric game-terrain diorama concept art, dark-fantasy environment: the most imposing and elaborate environment in the set — a massive ornate gate structure at the peak of a fortress, colossal carved stone pillars and towering gate doors, dramatic stormy sky with lightning breaking through heavy clouds, epic climactic scale framing, painterly game production art, richly detailed atmospheric lighting, no characters, no UI, no text, no logos, no watermark, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-terrain-gate-zenith.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92f2-14e0-71d2-97aa-b4c2f41203ff"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-terrain-glass-necropolis.png",
+      "sha256": "bac017ba2809e2d96d37000fc5df971e38f83b5fa080cb97c46e84dd9f9c6c77",
+      "category": "terrain",
+      "prompt": {
+        "sentToGenerator": "Isometric game-terrain diorama concept art, dark-fantasy environment: rows of glass and crystal tombstone-like structures catching pale refracted light, fractured crystalline ground with sharp shard formations, cold silver-white atmosphere, painterly game production art, moody atmospheric lighting with icy highlights, no characters, no UI, no text, no logos, no watermark, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-terrain-glass-necropolis.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e8-9090-7281-8b92-703c37502bd3"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-terrain-howling-sprawl.png",
+      "sha256": "a41d861d3795d3b20a4c973d32dec357c3ee4c71ced12317a29574473e867470",
+      "category": "terrain",
+      "prompt": {
+        "sentToGenerator": "Isometric game-terrain diorama concept art, dark-fantasy environment: a wide wind-torn wasteland with jagged broken rock formations jutting from cracked earth, howling dust trails whipping across the ground, dusk-orange sky bleeding into deep shadow, painterly game production art, moody atmospheric lighting, desolate open terrain, no characters, no UI, no text, no logos, no watermark, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-terrain-howling-sprawl.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e6-899e-7f82-b7f1-734b056ff626"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-terrain-shattered-causeway.png",
+      "sha256": "ab62019649e731dc073fc031c6c09d88197b3bade2f1e4e1e0ecf8ca3067391b",
+      "category": "terrain",
+      "prompt": {
+        "sentToGenerator": "Isometric game-terrain diorama concept art, dark-fantasy environment: a long stone causeway with collapsed and missing sections revealing a dark void gap below, structural rubble and broken support pillars scattered across the path, tense grey-amber lighting, painterly game production art, moody atmospheric lighting, precarious broken crossing, no characters, no UI, no text, no logos, no watermark, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-terrain-shattered-causeway.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92ed-da71-7663-8cb2-47c434133a76"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-terrain-starless-canal.png",
+      "sha256": "54579def8b9796e019b676f590ec078150ef20141cc2217f1e7100290211a1b4",
+      "category": "terrain",
+      "prompt": {
+        "sentToGenerator": "Isometric game-terrain diorama concept art, dark-fantasy environment: a narrow dark canal running between tall looming dark structures, void-black sky overhead with no visible stars, faint warm lantern-light reflections rippling on the black water surface, painterly game production art, moody atmospheric lighting, claustrophobic vertical framing, no characters, no UI, no text, no logos, no watermark, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-terrain-starless-canal.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92eb-4a7e-75d3-9b55-273b2a6158fc"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-terrain-sunken-bastion.png",
+      "sha256": "19e37b0789b7a1a2723dd5ebca5091b6381034bf32775c818f77ed4a6fd6183a",
+      "category": "terrain",
+      "prompt": {
+        "sentToGenerator": "Isometric game-terrain diorama concept art, dark-fantasy environment: a partially submerged stone bastion, shallow water pooling across the floor reflecting teal bioluminescent glow, barnacle-crusted stonework and dripping moss, painterly game production art, moody atmospheric lighting with cool teal-green ambiance, no characters, no UI, no text, no logos, no watermark, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-terrain-sunken-bastion.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e4-953f-71d1-b8e9-d1eceaaa74e9"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-terrain-veil-citadel.png",
+      "sha256": "2a9262f1e0e4c3621d2ec102b812270d7b693d0af247ecbbbe7f96c3905322fb",
+      "category": "terrain",
+      "prompt": {
+        "sentToGenerator": "Isometric game-terrain diorama concept art, dark-fantasy environment: a shrouded fortress plaza with tall fog-veiled stone towers rising into the mist, a central plateau with faint rolling mist across cracked flagstones, cool blue-grey palette, painterly game production art, moody atmospheric lighting with soft diffused light through fog, no characters, no UI, no text, no logos, no watermark, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-terrain-veil-citadel.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92df-4d08-7de0-a1b2-7ac96ce3a3bf"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-throne-echo.png",
+      "sha256": "058d088866be8e5bb6ef45a74649c0cb76c8166a6ccad1f417da3ff06c2fa1f7",
+      "category": "unit-archetype-concept",
+      "prompt": {
+        "sentToGenerator": "An original dark-fantasy support unit called Throne Echo: a ghostly translucent echo-priest figure wearing faded regal remnants of tattered royal cloth, wielding a tall staff topped with a small floating fragment of a broken throne, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear staff/prop silhouette, calm supportive floating pose, soft protective pale-gold and faint spectral-white rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-throne-echo.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e6-5d4e-7af2-9806-0c12989fecc7"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-veil-vanguard.png",
+      "sha256": "0cdbef5587d0f34783766b20ea467ff1d95d62e3211235b008a4f8f60030c54c",
+      "category": "unit-archetype-concept",
+      "prompt": {
+        "sentToGenerator": "An original dark-fantasy vanguard unit called Veil Vanguard: a heavily armored shield-bearer in thick plated armor, wrapped in a tattering translucent veil-cloak that trails behind them, bracing a large teal energy shield forward, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear weapon/shield silhouette, braced grounded defensive stance, solid cold teal rim lighting emphasizing bulk and armor plating, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-veil-vanguard.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e1-9a10-7cd1-b2d3-3b6e6973d2f5"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/pilot/concept-warden-lantern.png",
+      "sha256": "867011a686d32ba23a31f8a4260b62227cd86b13cb9a582bdaf8a5090c8ea227",
+      "category": "prop-item-concept",
+      "prompt": {
+        "sentToGenerator": "An ornate brass lantern with detailed scrollwork, a warm golden-white flame burning inside its glass chamber, a soft wide glow-radius aura visibly emanating outward from the flame to show an extended pickup range, isometric-friendly 3/4 angle, centered composition, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, dramatic rim light on the brass and glass edges to show polished metal and glass material, no text, no logos, no watermark, no copyrighted character likeness, original design only."
+      },
+      "issues": [],
+      "sidecarPath": "assets/images/battle/pilot/concept-warden-lantern.provenance.json",
+      "generator": {
+        "tool": "god-tibo-imagen",
+        "provider": "codex-cli",
+        "model": "gpt-5.4",
+        "sessionId": "019f92e4-9735-7080-b942-78f5dc852278"
+      },
+      "runtimeStatus": {
+        "status": "concept-pilot-not-runtime",
+        "purpose": "rodin-image-to-3d-source",
+        "runtimeEligible": false,
+        "license": "pending-runtime-rights-review"
+      }
+    },
+    {
+      "path": "assets/images/battle/world/cinder-span-topdown-plate.webp",
+      "sha256": "38ed32b73e79ed44743604d25ce46017ee2722a9632c75f4c2cabcf8f6f8468f",
+      "category": "pilot-reference",
+      "prompt": null,
+      "issues": [
+        "no-provenance-sidecar-found"
+      ],
+      "note": "Byte-identical duplicate of assets/images/battle/pilot/cinder-span-topdown-plate.webp (same sha256); see knownIssues for restoration history."
+    }
+  ]
+}

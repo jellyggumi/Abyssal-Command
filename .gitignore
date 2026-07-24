@@ -32,3 +32,19 @@ assets/images/battle/glb/.staging/
 # Blender autosave backups (the .blend source itself IS tracked - the asset
 # pack test asserts manifest.source exists in the pack)
 *.blend1
+
+# Character asset pipeline intermediates (Rodin raw output, retopo working
+# copies) -- regeneratable from Rodin API + Blender scripts; only the final
+# composed GLBs under assets/images/battle/glb/ ship. Also exceeds GitHub's
+# 100MB single-file limit in places.
+_workspace/*/pipeline/
+_workspace/*/models-out/
+
+# Motion-previs working files (multi-hundred-MB Blender scenes) and their
+# exported previs-only GLBs -- previs output is superseded by the final
+# rigged/retopo'd asset; the workfile is a local scratch scene, not a
+# tracked source (unlike world-content-pack.blend, which the resource-pack
+# build script and its test treat as a real tracked source).
+_workspace/*/production/batch4-source-scene.blend
+_workspace/*/production/batch4-previs-out/*.blend
+assets/images/battle/glb/previs/

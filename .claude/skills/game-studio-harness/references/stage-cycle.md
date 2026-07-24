@@ -25,6 +25,7 @@ Phase 1c (negotiation round 1):
 
 Phase 1d (build):
 - game-programmer → core loop implementation + presentation/animation first pass per `design/presentation-spec.md` + resource manifest (`engineering/resource-manifest.md`) + `engineering/architecture-contract.md` + `ops/telemetry-contract.md` draft
+- ui-senior-developer → `ui/information-architecture.md` (every panel from `design/core-loop.md`/`design/balance-sheet.md`) + `ui/hud-layout-spec.md` (screen-space vs world-space for the camera-follow view, edge-HUD compliance) draft, from `design/presentation-spec.md`
 - game-qa (shadow) → smoke tests on each build drop; early defects filed
 
 Gate review (director): G7 draft, G1 draft, G6-ops draft → PASS moves to
@@ -45,6 +46,7 @@ Phase 2c (negotiation round 2):
 
 Phase 2d:
 - game-programmer → apply data-driven changes (no code edits for numbers), implement novelty element, respond to every defect (`fixed`/`deferred`+reason)
+- ui-senior-developer → `ui/component-contracts.md` revised from QA confusion/choice-overload findings; density retune with before/after note
 - game-qa → re-verification sims: bands, comeback conversion, paid/free delta, loop repeat-rate
 
 Gate review: G2, G3, G5, G7 final, G8 → PASS moves to Stage 3; REDO returns
@@ -57,6 +59,7 @@ harvested.
 Phase 3a (parallel):
 - game-programmer → perf optimization to budget (p95 frame, memory soak, input latency), movement-path optimization (`engineering/movement-optimization.md`), ops hardening (`ops/rollback-runbook.md` tested, `ops/release-readiness.md`)
 - game-designer + game-programmer → impact pass: scenario beats, effect timing, hit feedback, transitions per presentation-spec; before/after evidence per improvement
+- ui-senior-developer → `ui/accessibility-audit.md` (touch target, contrast, reduced-motion parity) + `ui/perf-notes.md` (DOM count, UI input latency ≤100ms) final
 - game-pm → `pm/revenue-forecast.md` final: revenue rhythm across planned concept rotations, predictability windows + confirming telemetry fields
 
 Phase 3b:

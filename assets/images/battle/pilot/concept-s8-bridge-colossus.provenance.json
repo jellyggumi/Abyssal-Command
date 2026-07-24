@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-s8-bridge-colossus.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": {
+    "tool": "god-tibo-imagen",
+    "provider": "codex-cli",
+    "model": "gpt-5.4",
+    "sessionId": "019f92ef-a6c9-7773-98f5-a066b4ca14a4"
+  },
+  "prompt": "A hulking stone-and-iron colossus fused with bridge rubble, massive fists shaped like collapsed archways, deep cracks running across its body glowing with structural energy, full-body three-quarter hero framing, wide braced stance, molten structural-energy orange-red glow lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": {
+    "format": "png",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 2410452,
+    "sha256": "88b06785e401bddcef1601b781d24a6e94b8d54a2c4356fc8463e6c1a1dde4de"
+  },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

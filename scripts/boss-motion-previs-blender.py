@@ -277,6 +277,11 @@ def run_in_blender(blend_path, timeline_path, outdir, fps, make_proxies=True):
         if rig is None:
             raise RuntimeError(f"Rig not found and proxies disabled: {boss_id}")
 
+        # Imported (esp. glTF/Rodin) objects commonly default to QUATERNION rotation
+        # mode; rotation_euler keyframes silently no-op unless mode is an Euler order.
+        if rig.rotation_mode == "QUATERNION" or rig.rotation_mode.startswith("AXIS"):
+            rig.rotation_mode = "XYZ"
+
         action_obj = bpy.data.actions.get(f"{boss_id}_previs")
         if action_obj is None:
             action_obj = bpy.data.actions.new(name=f"{boss_id}_previs")
@@ -284,30 +289,34 @@ def run_in_blender(blend_path, timeline_path, outdir, fps, make_proxies=True):
         rig.animation_data_create()
         rig.animation_data.action = action_obj
 
-        # Keep simple deterministic keyframing from legacy stage blocks for quick visibility.
-        for i, stage in enumerate(boss.get("stages", []), start=1):
-            s = _clamp_int(stage.get("startFrame", 1), 1)
-            e = _clamp_int(stage.get("endFrame", 1), max(1, s))
+        # Keyframe from the unified action list (v2 "actions" or legacy "stages",
+        # both normalized by _flatten_actions_from_boss). Deterministic pose drift
+        # keeps the preview readable on rigless/unrigged Rodin output.
+        for i, action in enumerate(_flatten_actions_from_boss(boss), start=1):
+            s = _clamp_int(action.get("startFrame", 1), 1)
+            e = _clamp_int(action.get("endFrame", 1), max(1, s))
+            drift_x, drift_y = _derive_runtime_action_pose_data(action)
             loc_x = float(i) * 0.35
             rot_y = radians((i - 1) * 4)
             rig.location = (loc_x, 0.0, 0.0)
             rig.rotation_euler[1] = rot_y
             rig.keyframe_insert(data_path="location", frame=s)
             rig.keyframe_insert(data_path="rotation_euler", frame=s)
-            rig.location = (loc_x + 0.05, 0.0, 0.0)
-            rig.rotation_euler[1] = rot_y + radians(1.8)
+            rig.location = (loc_x + 0.05 + drift_x, 0.0, 0.0)
+            rig.rotation_euler[1] = rot_y + radians(1.8) + drift_y
             rig.keyframe_insert(data_path="location", frame=e)
             rig.keyframe_insert(data_path="rotation_euler", frame=e)
 
-            # add one action-like marker per legacy block and keep in sidecar
-            
         scene.frame_start = 1
         scene.frame_end = max(1, duration)
 
-        for marker_def in _build_markers(boss)[0]:
+        legacy_markers, clip_markers = _build_markers(boss)
+        for marker_def in legacy_markers:
             label = marker_def["label"]
             scene.timeline_markers.new(f"{boss_id}:{label}", frame=marker_def["startFrame"])
             scene.timeline_markers.new(f"{boss_id}:{label}-end", frame=marker_def["endFrame"])
+        for clip_marker_def in clip_markers:
+            scene.timeline_markers.new(f"{boss_id}:{clip_marker_def['marker']}", frame=clip_marker_def["frame"])
 
         sidecar = _build_sidecar_for_boss(
             boss,
