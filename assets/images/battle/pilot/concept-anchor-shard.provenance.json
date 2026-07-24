@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-anchor-shard.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92e4-4e00-7401-bb91-f922b994f37f" },
+  "prompt": "An original dark-fantasy vanguard unit called Anchor Shard: a massive brawler wielding a huge anchor-chain weapon, iron-and-rust armor plating, thick chain wrapped tightly around both forearms and knuckles, heavy hulking build, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear weapon silhouette, wide grounded heavy stance, solid cold steel-grey rim lighting with rust-orange accent highlights, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1024, "height": 1536, "bytes": 2388037, "sha256": "e2e0d93cf2ba51e255c7a1217d54046c8f2d69fbbcbb8c9abc2f835873d4b557" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

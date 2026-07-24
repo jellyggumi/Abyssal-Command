@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-terrain-glass-necropolis.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92e8-9090-7281-8b92-703c37502bd3" },
+  "prompt": "Isometric game-terrain diorama concept art, dark-fantasy environment: rows of glass and crystal tombstone-like structures catching pale refracted light, fractured crystalline ground with sharp shard formations, cold silver-white atmosphere, painterly game production art, moody atmospheric lighting with icy highlights, no characters, no UI, no text, no logos, no watermark, original design only.",
+  "output": { "format": "png", "width": 1536, "height": 1024, "bytes": 2887922, "sha256": "bac017ba2809e2d96d37000fc5df971e38f83b5fa080cb97c46e84dd9f9c6c77" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

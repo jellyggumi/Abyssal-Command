@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-throne-echo.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92e6-5d4e-7af2-9806-0c12989fecc7" },
+  "prompt": "An original dark-fantasy support unit called Throne Echo: a ghostly translucent echo-priest figure wearing faded regal remnants of tattered royal cloth, wielding a tall staff topped with a small floating fragment of a broken throne, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear staff/prop silhouette, calm supportive floating pose, soft protective pale-gold and faint spectral-white rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1024, "height": 1536, "bytes": 2267225, "sha256": "058d088866be8e5bb6ef45a74649c0cb76c8166a6ccad1f417da3ff06c2fa1f7" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

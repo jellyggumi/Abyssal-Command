@@ -162,8 +162,6 @@ html[data-defense-portrait="true"] #defense-canvas {
 /* Warden growth panel — UNIFIED-GDD.md §6.3: 3 new dense screens (inventory/skill-tree/formation)
    get a 48dp touch-target floor (stricter than the base 44px) + minimum interactive-element gap. */
 .growth-panel { grid-column: 1 / -1; padding: 1rem; border: 1px solid #293f5d; border-radius: .85rem; background: linear-gradient(145deg, rgb(16 30 48 / .95), rgb(8 17 31 / .95)); }
-.growth-panel details { margin-top: .75rem; }
-.growth-panel summary { cursor: pointer; min-height: 48px; display: flex; align-items: center; padding: .4rem 0; font-weight: 700; }
 .growth-stat-grid, .growth-skill-grid, .growth-equip-grid { display: grid; gap: .6rem; margin-top: .5rem; }
 .growth-stat-row, .growth-skill-node { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .5rem; border: 1px solid #2b4767; border-radius: .6rem; background: rgb(8 20 34 / .7); }
 .growth-skill-node.is-unlocked { border-color: #71cfb0; background: rgb(113 207 176 / .1); }
@@ -185,6 +183,36 @@ html[data-defense-portrait="true"] #defense-canvas {
 .tier-icon[data-tier-vertices="4"] { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
 .tier-icon[data-tier-vertices="5"] { clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); }
 .tier-icon[data-tier-vertices="6"] { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); }
+
+/* Command-deck tab shell (5 tabs: 출정/성장/동료/인벤토리/요새) — new screens use the 48dp density floor. */
+.command-tabbar { display: flex; gap: .4rem; overflow-x: auto; padding: .7rem 0 0; }
+.command-tab { min-width: auto; min-height: 48px; padding: .5rem 1rem; border-radius: 999px; white-space: nowrap; }
+.command-tab.is-active, .command-tab[aria-selected="true"] { border-color: #80d8ff; background: linear-gradient(90deg, #163b5d, #102940); }
+.command-tabpanel { display: grid; gap: 1rem; margin-top: 1rem; }
+.command-segments { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .3rem; }
+.segment-tab { min-height: 48px; padding: .45rem .9rem; font-size: .82rem; }
+.segment-tab.is-active, .segment-tab[aria-selected="true"] { border-color: #71cfb0; background: rgb(113 207 176 / .12); }
+.command-segment-panel { margin-top: .75rem; }
+
+/* Pause-menu overlay (D5, decision-log.md — Option A: large overlay allowed only while userPaused===true). */
+#defense-pause-overlay { position: absolute; inset: 0; z-index: 5; overflow: auto; padding: max(1rem, var(--defense-safe-top)) max(1rem, var(--defense-safe-right)) max(1rem, var(--defense-safe-bottom)) max(1rem, var(--defense-safe-left)); background: rgb(3 8 17 / .92); pointer-events: auto; }
+.pause-overlay-panel { width: min(100%, 780px); margin: 0 auto; padding: 1.1rem; border: 1px solid #4a3f8a; border-radius: 1rem; background: linear-gradient(145deg, rgb(20 18 40 / .97), rgb(10 9 24 / .97)); }
+.pause-overlay-panel .panel-heading { align-items: flex-start; }
+.pause-overlay-panel #pause-resume { min-height: 48px; }
+.pause-overlay-grid { display: grid; gap: .85rem; margin-top: .5rem; }
+.pause-overlay-grid h3 { margin: 0 0 .4rem; font-size: .85rem; color: #b6c8df; }
+.pause-overlay-hint { margin-top: .9rem; font-size: .78rem; }
+.pause-overlay-actions { display: flex; justify-content: flex-end; margin-top: .6rem; }
+.pause-overlay-actions button { min-height: 48px; }
+
+/* In-battle edge-card micro-panel toasts: level-up / rally / reward-tier — non-blocking, reuse .edge-card visual language. */
+.edge-toast { position: absolute; top: calc(max(.5rem, var(--defense-safe-top)) + 4.4rem); left: 50%; transform: translateX(-50%); z-index: 4; display: flex; align-items: center; gap: .5rem; width: max-content; max-width: min(84vw, 480px); padding: .5rem .65rem; border: 1px solid #8d6cd6; border-radius: 10px; background: rgb(12 11 30 / .94); pointer-events: auto; font-size: .8rem; opacity: 1; transition: opacity 400ms ease; }
+.edge-toast[data-dismissing="true"] { opacity: 0; }
+.edge-toast button { min-width: 32px; min-height: 32px; padding: 0; font-size: 1rem; line-height: 1; }
+.edge-toast-levelup { border-color: #71cfb0; }
+.edge-toast-rally { border-color: #e9c46a; top: auto; bottom: calc(max(.5rem, var(--defense-safe-bottom)) + 5.6rem); }
+.edge-toast-reward { border-color: #80d8ff; }
+.edge-toast .tier-icon { width: 12px; height: 12px; }
 
 @media (max-width: 720px) {
   .defense-lobby { padding-inline: .75rem; }

@@ -106,7 +106,7 @@
 - `human-command` 보스: `boss:human-command:{action}`
 - `shadow-commander` 보스: `boss:shadow-commander:{action}`
 - `broken-court-monarch` 보스: `boss:broken-court-monarch:{action}`
-- `player`(성진우): `player:{action}`
+- `player`(Dusk Warden): `player:{action}`
 
 권장 우선순위:
 1. `show`로 식별성 확보

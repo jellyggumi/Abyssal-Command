@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-terrain-echo-throne.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92e1-d561-77f1-875a-3360cee61299" },
+  "prompt": "Isometric game-terrain diorama concept art, dark-fantasy environment: a grand ruined regal throne hall with cracked marble floors and toppled columns, faint echo-distortion visual ripples shimmering in the air like heat-haze, dim golden torchlight flickering along the walls, painterly game production art, moody atmospheric lighting, ornate ruined architecture, no characters, no UI, no text, no logos, no watermark, original design only.",
+  "output": { "format": "png", "width": 1536, "height": 1024, "bytes": 2896351, "sha256": "841ca777da56074789ed654d95d4056ed65b3b5facacc607b018a8f840aff577" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

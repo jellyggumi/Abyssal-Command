@@ -93,18 +93,22 @@ test("wardenTraitOffersForSequence returns a deterministic 3-of-8 offer at each 
   assert.deepEqual(wardenTraitOffersForSequence(11), []);
 });
 
-test("companion roles cover the 6 canonical companions two-per-role, and roleForCompanion resolves both directions", () => {
+test("companion roles cover the 9 canonical companions three-per-role, and roleForCompanion resolves both directions", () => {
   assert.deepEqual(Object.keys(COMPANION_ROLES).sort(), ["striker", "support", "vanguard"]);
   const allMembers = Object.values(COMPANION_ROLES).flatMap((role) => role.members);
   assert.deepEqual([...allMembers].sort(), Object.keys(COMPANIONS).sort());
   assert.equal(new Set(allMembers).size, allMembers.length, "no companion may belong to two roles");
+  assert.equal(allMembers.length, Object.keys(COMPANIONS).length);
 
   assert.equal(roleForCompanion("ember-cohort"), "striker");
   assert.equal(roleForCompanion("rift-lens"), "striker");
+  assert.equal(roleForCompanion("lantern-reaver"), "striker");
   assert.equal(roleForCompanion("anchor-shard"), "vanguard");
   assert.equal(roleForCompanion("veil-vanguard"), "vanguard");
+  assert.equal(roleForCompanion("pack-warden"), "vanguard");
   assert.equal(roleForCompanion("throne-echo"), "support");
   assert.equal(roleForCompanion("dawnless-crown"), "support");
+  assert.equal(roleForCompanion("requiem-warden"), "support");
   assert.equal(roleForCompanion("not-a-companion"), null);
 });
 

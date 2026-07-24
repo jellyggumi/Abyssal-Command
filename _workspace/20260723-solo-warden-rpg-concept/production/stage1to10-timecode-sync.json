@@ -1,0 +1,3954 @@
+{
+  "schemaVersion": "na-honjam-stage1to10-timecode-sync-1.0",
+  "runId": "20260723-solo-warden-rpg-concept",
+  "generatedAt": "2026-07-24T00:00:00Z",
+  "artifactRoot": "_workspace/20260723-solo-warden-rpg-concept",
+  "source": {
+    "voxPartPlaylist": "assets/video/vox-part-playlist.json",
+    "storyboardMatrix": "production/storyboard-motion-sound-matrix.json",
+    "audioManifest": "production/audio-cut-stage-manifest.json",
+    "videoRunReport": "production/vox-director_video_run_report.json"
+  },
+  "note": "2026-07-24 audio-truncation/overlap fix (see vox-director_video_pipeline.md#버그수정-이력) applied before this map was generated; all part/concat durations verified against ffprobe.",
+  "frameRateRuntime": 30,
+  "partDurations": [
+    {
+      "partId": "part_intro",
+      "durationSec": 8,
+      "durationActualSec": 8.0,
+      "cutIds": [
+        "C01"
+      ],
+      "audioMix": "part_intro_muxed.wav",
+      "output": "assets/video/part_intro.mp4"
+    },
+    {
+      "partId": "part_lobby",
+      "durationSec": 10,
+      "durationActualSec": 10.0,
+      "cutIds": [
+        "C02"
+      ],
+      "audioMix": "part_lobby_muxed.wav",
+      "output": "assets/video/part_lobby.mp4"
+    },
+    {
+      "partId": "part_stage01",
+      "durationSec": 21,
+      "durationActualSec": 21.0,
+      "cutIds": [
+        "C03",
+        "C04"
+      ],
+      "audioMix": "part_stage01_muxed.wav",
+      "output": "assets/video/part_stage01.mp4"
+    },
+    {
+      "partId": "part_stage02",
+      "durationSec": 20,
+      "durationActualSec": 20.0,
+      "cutIds": [
+        "C05",
+        "C06"
+      ],
+      "audioMix": "part_stage02_muxed.wav",
+      "output": "assets/video/part_stage02.mp4"
+    },
+    {
+      "partId": "part_stage03",
+      "durationSec": 22,
+      "durationActualSec": 22.0,
+      "cutIds": [
+        "C07",
+        "C08"
+      ],
+      "audioMix": "part_stage03_muxed.wav",
+      "output": "assets/video/part_stage03.mp4"
+    },
+    {
+      "partId": "part_stage04",
+      "durationSec": 22,
+      "durationActualSec": 22.0,
+      "cutIds": [
+        "C07",
+        "C08"
+      ],
+      "audioMix": "part_stage04_muxed.wav",
+      "output": "assets/video/part_stage04.mp4"
+    },
+    {
+      "partId": "part_stage05",
+      "durationSec": 10,
+      "durationActualSec": 10.0,
+      "cutIds": [
+        "C09"
+      ],
+      "audioMix": "part_stage05_muxed.wav",
+      "output": "assets/video/part_stage05.mp4"
+    },
+    {
+      "partId": "part_stage06",
+      "durationSec": 11,
+      "durationActualSec": 11.0,
+      "cutIds": [
+        "C10"
+      ],
+      "audioMix": "part_stage06_muxed.wav",
+      "output": "assets/video/part_stage06.mp4"
+    },
+    {
+      "partId": "part_stage07",
+      "durationSec": 12,
+      "durationActualSec": 12.0,
+      "cutIds": [
+        "C11"
+      ],
+      "audioMix": "part_stage07_muxed.wav",
+      "output": "assets/video/part_stage07.mp4"
+    },
+    {
+      "partId": "part_stage08",
+      "durationSec": 24,
+      "durationActualSec": 24.0,
+      "cutIds": [
+        "C11",
+        "C12"
+      ],
+      "audioMix": "part_stage08_muxed.wav",
+      "output": "assets/video/part_stage08.mp4"
+    },
+    {
+      "partId": "part_stage09",
+      "durationSec": 11,
+      "durationActualSec": 11.0,
+      "cutIds": [
+        "C13"
+      ],
+      "audioMix": "part_stage09_muxed.wav",
+      "output": "assets/video/part_stage09.mp4"
+    },
+    {
+      "partId": "part_stage10",
+      "durationSec": 13,
+      "durationActualSec": 13.0,
+      "cutIds": [
+        "C14"
+      ],
+      "audioMix": "part_stage10_muxed.wav",
+      "output": "assets/video/part_stage10.mp4"
+    },
+    {
+      "partId": "part_ending_common",
+      "durationSec": 9,
+      "durationActualSec": 9.0,
+      "cutIds": [
+        "C15"
+      ],
+      "audioMix": "part_ending_common_muxed.wav",
+      "output": "assets/video/part_ending_common.mp4"
+    },
+    {
+      "partId": "part_ending_branch_a",
+      "durationSec": 10,
+      "durationActualSec": 10.0,
+      "cutIds": [
+        "C16"
+      ],
+      "audioMix": "part_ending_branch_a_muxed.wav",
+      "output": "assets/video/part_ending_branch_a.mp4"
+    },
+    {
+      "partId": "part_ending_branch_b",
+      "durationSec": 11,
+      "durationActualSec": 11.0,
+      "cutIds": [
+        "C17"
+      ],
+      "audioMix": "part_ending_branch_b_muxed.wav",
+      "output": "assets/video/part_ending_branch_b.mp4"
+    }
+  ],
+  "sequences": {
+    "mainline": {
+      "partIds": [
+        "part_intro",
+        "part_lobby",
+        "part_stage01",
+        "part_stage02",
+        "part_stage03",
+        "part_stage04",
+        "part_stage05",
+        "part_stage06",
+        "part_stage07",
+        "part_stage08",
+        "part_stage09",
+        "part_stage10",
+        "part_ending_common",
+        "part_ending_branch_a"
+      ],
+      "partCount": 14,
+      "totalDurationSec": 203.0,
+      "outputs": {
+        "base": "assets/video/defense_stage1to10_story_01.mp4",
+        "anime-soft": "assets/video/styles/anime-soft/defense_stage1to10_story_01_anime_soft.mp4",
+        "noir-cut": "assets/video/styles/noir-cut/defense_stage1to10_story_01_noir_cut.mp4",
+        "webtoon-static": "assets/video/styles/webtoon-static/defense_stage1to10_story_01_webtoon_static.mp4"
+      },
+      "concatListFile": "assets/video/concat_parts.txt",
+      "occurrenceCount": 19,
+      "occurrences": [
+        {
+          "occurrenceId": "mainline#01_C01",
+          "partOrder": 1,
+          "partId": "part_intro",
+          "cutId": "C01",
+          "cutOrderInPart": 1,
+          "cutLabel": "프롤로그 - 재난의 전조",
+          "cutStage": "intro",
+          "durationSec": 8.0,
+          "startSec": 0.0,
+          "endSec": 8.0,
+          "startFrame30": 0,
+          "endFrame30": 240,
+          "narrationTarget": "C01",
+          "interactive": {
+            "type": "choice-latch",
+            "options": [
+              "호흡 모드",
+              "엄호 모드"
+            ],
+            "effect": "호흡/엄호 선택은 intro-only 텍스트 브랜치와 HUD 첫 안내색만 변경. 컷 전환은 동일"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 8
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_intro_01"
+            ],
+            "bgm": [
+              "bgm_prologue_low"
+            ],
+            "sfx": [
+              "sfx_gate_rip_01"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#02_C02",
+          "partOrder": 2,
+          "partId": "part_lobby",
+          "cutId": "C02",
+          "cutOrderInPart": 1,
+          "cutLabel": "로비 오프닝",
+          "cutStage": "lobby",
+          "durationSec": 10.0,
+          "startSec": 8.0,
+          "endSec": 18.0,
+          "startFrame30": 240,
+          "endFrame30": 540,
+          "narrationTarget": "C02",
+          "interactive": {
+            "type": "dialogue-branch",
+            "npc": "하람/메리",
+            "prompt": "브리핑 문구 변경 옵션 두 가지 열림",
+            "effect": "보스 출현 컷(C03/C04) 텍스트 레이어 언어톤을 전환"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "idle",
+              "previsTag": "player:idle",
+              "durationFrames": 300,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 6
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_lobby_intro"
+            ],
+            "bgm": [
+              "bgm_lobby_day"
+            ],
+            "sfx": [
+              "sfx_ambient_forge"
+            ],
+            "npcVoiceSamples": [
+              "npcHaram_lobby_opening",
+              "npcMeri_lobby_timing"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#03_C03",
+          "partOrder": 3,
+          "partId": "part_stage01",
+          "cutId": "C03",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지1 진입",
+          "cutStage": 1,
+          "durationSec": 9.0,
+          "startSec": 18.0,
+          "endSec": 27.0,
+          "startFrame30": 540,
+          "endFrame30": 810,
+          "narrationTarget": "C03",
+          "interactive": {
+            "type": "branch-weight",
+            "choices": [
+              "안정 수색",
+              "선제 공격"
+            ],
+            "state": "runMode"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.skill_cd"
+            ],
+            "skillNarration": [
+              "skill.player.attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 6,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "attack",
+              "previsTag": "player:attack",
+              "durationFrames": 144,
+              "offsetFrames": 120
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage01_entry"
+            ],
+            "bgm": [
+              "bgm_stage01_entry"
+            ],
+            "sfx": [
+              "sfx_ward_level_warning"
+            ],
+            "ambience": [
+              "bg_stage01_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#03_C04",
+          "partOrder": 3,
+          "partId": "part_stage01",
+          "cutId": "C04",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지1 보스 쇼케이스",
+          "cutStage": 1,
+          "durationSec": 12.0,
+          "startSec": 27.0,
+          "endSec": 39.0,
+          "startFrame30": 810,
+          "endFrame30": 1170,
+          "narrationTarget": "C04",
+          "interactive": {
+            "type": "combat-preference",
+            "options": [
+              "공격 우세",
+              "회피 우선"
+            ],
+            "state": "첫 보정 슬롯 토큰 갱신"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.defence_ready"
+            ],
+            "skillNarration": [
+              "skill.player.defence"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 270,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 6
+            },
+            {
+              "actor": "boss",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 132,
+              "offsetFrames": 90
+            },
+            {
+              "actor": "player",
+              "action": "defence",
+              "previsTag": "player:defence",
+              "durationFrames": 84,
+              "offsetFrames": 150
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss01_show"
+            ],
+            "bgm": [
+              "bgm_stage01_boss"
+            ],
+            "sfx": [
+              "sfx_boss_enter_chime",
+              "sfx_boss_human_attack",
+              "sfx_player_block"
+            ],
+            "combatSfx": [
+              "sfx_boss_impact_burst",
+              "sfx_player_hit"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#04_C05",
+          "partOrder": 4,
+          "partId": "part_stage02",
+          "cutId": "C05",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지2 전환",
+          "cutStage": 2,
+          "durationSec": 9.0,
+          "startSec": 39.0,
+          "endSec": 48.0,
+          "startFrame30": 1170,
+          "endFrame30": 1440,
+          "narrationTarget": "C05",
+          "interactive": {
+            "type": "branch",
+            "options": [
+              "정예 우선 정리",
+              "안전 경로 우선"
+            ],
+            "effect": "정예 우선 정리 실패 시 경고 텍스트 레이어가 1.6초 단축"
+          },
+          "triggers": {
+            "battleSfx": [
+              "sfx_ward_rise"
+            ],
+            "stateNarration": [
+              "state.player.move"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "player",
+              "action": "run",
+              "previsTag": "player:run",
+              "durationFrames": 180,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "human-command",
+              "action": "move",
+              "previsTag": "boss:human-command:move",
+              "durationFrames": 200,
+              "offsetFrames": 20
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage02_entry"
+            ],
+            "bgm": [
+              "bgm_stage02_entry"
+            ],
+            "sfx": [
+              "sfx_bridge_grind"
+            ],
+            "ambience": [
+              "bg_stage02_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#04_C06",
+          "partOrder": 4,
+          "partId": "part_stage02",
+          "cutId": "C06",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지2 보스 쇼케이스",
+          "cutStage": 2,
+          "durationSec": 11.0,
+          "startSec": 48.0,
+          "endSec": 59.0,
+          "startFrame30": 1440,
+          "endFrame30": 1770,
+          "narrationTarget": "C06",
+          "interactive": {
+            "type": "timing-pressure",
+            "effect": "보스 show 뒤 0.8초 안에 회피 입력 실패 시 상태 경고를 강화"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.critical",
+              "state.player.lowhp"
+            ],
+            "battleSfx": [
+              "onDefenceBreak"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "human-command",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 144,
+              "offsetFrames": 70
+            },
+            {
+              "actor": "player",
+              "action": "avoid",
+              "previsTag": "player:avoid",
+              "durationFrames": 60,
+              "offsetFrames": 120
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss02_show"
+            ],
+            "bgm": [
+              "bgm_stage02_boss"
+            ],
+            "sfx": [
+              "sfx_tactical_ping",
+              "sfx_boss_human_attack",
+              "sfx_player_avoid"
+            ],
+            "combatSfx": [
+              "sfx_ward_rise"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#05_C07",
+          "partOrder": 5,
+          "partId": "part_stage03",
+          "cutId": "C07",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지3-4 연결",
+          "cutStage": 3,
+          "durationSec": 12.0,
+          "startSec": 59.0,
+          "endSec": 71.0,
+          "startFrame30": 1770,
+          "endFrame30": 2130,
+          "narrationTarget": "C07",
+          "interactive": {
+            "type": "npc-line",
+            "npc": "하람",
+            "text": "저지선 임계값이 다음 두 스테이지에 걸쳐 유지된다.",
+            "effect": "판독형 분기 없이 다음 컷으로 고정"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 260,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 180,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "run",
+              "previsTag": "player:run",
+              "durationFrames": 180,
+              "offsetFrames": 60
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage03_04_bridge"
+            ],
+            "bgm": [
+              "bgm_mid_gate_drive"
+            ],
+            "sfx": [
+              "sfx_echo_drone"
+            ],
+            "ambience": [
+              "bg_stage03_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#05_C08",
+          "partOrder": 5,
+          "partId": "part_stage03",
+          "cutId": "C08",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지3 보스 쇼케이스",
+          "cutStage": 3,
+          "durationSec": 10.0,
+          "startSec": 71.0,
+          "endSec": 81.0,
+          "startFrame30": 2130,
+          "endFrame30": 2430,
+          "narrationTarget": "C08",
+          "interactive": {
+            "type": "defence-popup",
+            "effect": "boss critical 경보 즉시 defence 팝업 표시"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.die"
+            ],
+            "battleSfx": [
+              "sfx_player_hit",
+              "sfx_boss_shadow_attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "attack",
+              "previsTag": "player:attack",
+              "durationFrames": 132,
+              "offsetFrames": 80
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "critical",
+              "previsTag": "boss:shadow-commander:critical",
+              "durationFrames": 96,
+              "offsetFrames": 140
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss03_show"
+            ],
+            "bgm": [
+              "bgm_stage03_boss"
+            ],
+            "sfx": [
+              "sfx_staff_windup",
+              "sfx_boss_shadow_critical",
+              "sfx_player_attack"
+            ],
+            "combatSfx": [
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#06_C07",
+          "partOrder": 6,
+          "partId": "part_stage04",
+          "cutId": "C07",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지3-4 연결",
+          "cutStage": 3,
+          "durationSec": 12.0,
+          "startSec": 81.0,
+          "endSec": 93.0,
+          "startFrame30": 2430,
+          "endFrame30": 2790,
+          "narrationTarget": "C07",
+          "interactive": {
+            "type": "npc-line",
+            "npc": "하람",
+            "text": "저지선 임계값이 다음 두 스테이지에 걸쳐 유지된다.",
+            "effect": "판독형 분기 없이 다음 컷으로 고정"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 260,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 180,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "run",
+              "previsTag": "player:run",
+              "durationFrames": 180,
+              "offsetFrames": 60
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage03_04_bridge"
+            ],
+            "bgm": [
+              "bgm_mid_gate_drive"
+            ],
+            "sfx": [
+              "sfx_echo_drone"
+            ],
+            "ambience": [
+              "bg_stage03_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#06_C08",
+          "partOrder": 6,
+          "partId": "part_stage04",
+          "cutId": "C08",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지3 보스 쇼케이스",
+          "cutStage": 3,
+          "durationSec": 10.0,
+          "startSec": 93.0,
+          "endSec": 103.0,
+          "startFrame30": 2790,
+          "endFrame30": 3090,
+          "narrationTarget": "C08",
+          "interactive": {
+            "type": "defence-popup",
+            "effect": "boss critical 경보 즉시 defence 팝업 표시"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.die"
+            ],
+            "battleSfx": [
+              "sfx_player_hit",
+              "sfx_boss_shadow_attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "attack",
+              "previsTag": "player:attack",
+              "durationFrames": 132,
+              "offsetFrames": 80
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "critical",
+              "previsTag": "boss:shadow-commander:critical",
+              "durationFrames": 96,
+              "offsetFrames": 140
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss03_show"
+            ],
+            "bgm": [
+              "bgm_stage03_boss"
+            ],
+            "sfx": [
+              "sfx_staff_windup",
+              "sfx_boss_shadow_critical",
+              "sfx_player_attack"
+            ],
+            "combatSfx": [
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#07_C09",
+          "partOrder": 7,
+          "partId": "part_stage05",
+          "cutId": "C09",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지5 압박 구간",
+          "cutStage": 5,
+          "durationSec": 10.0,
+          "startSec": 103.0,
+          "endSec": 113.0,
+          "startFrame30": 3090,
+          "endFrame30": 3390,
+          "narrationTarget": "C09",
+          "interactive": {
+            "type": "split-command",
+            "effect": "우측 경로 비우기 분산 모드로 이동"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 6
+            },
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 240,
+              "offsetFrames": 20
+            },
+            {
+              "actor": "human-command",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 132,
+              "offsetFrames": 90
+            },
+            {
+              "actor": "human-command",
+              "action": "bighit",
+              "previsTag": "boss:human-command:bighit",
+              "durationFrames": 132,
+              "offsetFrames": 150
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage05"
+            ],
+            "bgm": [
+              "bgm_stage05"
+            ],
+            "sfx": [
+              "sfx_howl_loop",
+              "sfx_boss_generic_hit"
+            ],
+            "ambience": [
+              "bg_stage05_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#08_C10",
+          "partOrder": 8,
+          "partId": "part_stage06",
+          "cutId": "C10",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지6 문턱",
+          "cutStage": 6,
+          "durationSec": 11.0,
+          "startSec": 113.0,
+          "endSec": 124.0,
+          "startFrame30": 3390,
+          "endFrame30": 3720,
+          "narrationTarget": "C10",
+          "interactive": {
+            "type": "branch",
+            "options": [
+              "방어 강화",
+              "공격 템포 유지"
+            ]
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "broken-court-monarch",
+              "action": "show",
+              "previsTag": "boss:broken-court-monarch:show",
+              "durationFrames": 300,
+              "transitionInFrames": 14,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "defence",
+              "previsTag": "player:defence",
+              "durationFrames": 120,
+              "offsetFrames": 60
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "attack",
+              "previsTag": "boss:broken-court-monarch:attack",
+              "durationFrames": 132,
+              "offsetFrames": 120
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "bighit",
+              "previsTag": "boss:broken-court-monarch:bighit",
+              "durationFrames": 132,
+              "offsetFrames": 180
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage06"
+            ],
+            "bgm": [
+              "bgm_stage06_peak"
+            ],
+            "sfx": [
+              "sfx_ward_lock",
+              "sfx_boss_broken_court_monarch_bighit",
+              "sfx_player_block"
+            ],
+            "combatSfx": [
+              "sfx_ward_rise"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#09_C11",
+          "partOrder": 9,
+          "partId": "part_stage07",
+          "cutId": "C11",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지7-8 전개",
+          "cutStage": 7,
+          "durationSec": 12.0,
+          "startSec": 124.0,
+          "endSec": 136.0,
+          "startFrame30": 3720,
+          "endFrame30": 4080,
+          "narrationTarget": "C11",
+          "interactive": {
+            "type": "hud-visual",
+            "effect": "포메이션 변경 시 체력바 분할 애니메이션 형태 전환"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "move",
+              "previsTag": "boss:shadow-commander:move",
+              "durationFrames": 240,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 120,
+              "offsetFrames": 140
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "attack",
+              "previsTag": "boss:shadow-commander:attack",
+              "durationFrames": 132,
+              "offsetFrames": 160
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage07_08"
+            ],
+            "bgm": [
+              "bgm_bridge_cascade"
+            ],
+            "sfx": [
+              "sfx_bridge_break",
+              "sfx_boss_shadow_attack"
+            ],
+            "ambience": [
+              "bg_stage07_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#10_C11",
+          "partOrder": 10,
+          "partId": "part_stage08",
+          "cutId": "C11",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지7-8 전개",
+          "cutStage": 7,
+          "durationSec": 12.0,
+          "startSec": 136.0,
+          "endSec": 148.0,
+          "startFrame30": 4080,
+          "endFrame30": 4440,
+          "narrationTarget": "C11",
+          "interactive": {
+            "type": "hud-visual",
+            "effect": "포메이션 변경 시 체력바 분할 애니메이션 형태 전환"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "move",
+              "previsTag": "boss:shadow-commander:move",
+              "durationFrames": 240,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 120,
+              "offsetFrames": 140
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "attack",
+              "previsTag": "boss:shadow-commander:attack",
+              "durationFrames": 132,
+              "offsetFrames": 160
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage07_08"
+            ],
+            "bgm": [
+              "bgm_bridge_cascade"
+            ],
+            "sfx": [
+              "sfx_bridge_break",
+              "sfx_boss_shadow_attack"
+            ],
+            "ambience": [
+              "bg_stage07_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#10_C12",
+          "partOrder": 10,
+          "partId": "part_stage08",
+          "cutId": "C12",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지8 보스 쇼케이스",
+          "cutStage": 8,
+          "durationSec": 12.0,
+          "startSec": 148.0,
+          "endSec": 160.0,
+          "startFrame30": 4440,
+          "endFrame30": 4800,
+          "narrationTarget": "C12",
+          "interactive": {
+            "type": "timing-window",
+            "options": [
+              "Avoid성공시 3초 무피격 버프 적용"
+            ],
+            "effect": "성공 시 player:avoid 액션을 강제 전이 가능"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "broken-court-monarch",
+              "action": "show",
+              "previsTag": "boss:broken-court-monarch:show",
+              "durationFrames": 300,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "critical",
+              "previsTag": "boss:broken-court-monarch:critical",
+              "durationFrames": 120,
+              "offsetFrames": 120
+            },
+            {
+              "actor": "player",
+              "action": "critical",
+              "previsTag": "player:critical",
+              "durationFrames": 90,
+              "offsetFrames": 130
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss08_show"
+            ],
+            "bgm": [
+              "bgm_stage08_colossus"
+            ],
+            "sfx": [
+              "sfx_colossus_step",
+              "sfx_boss_broken_court_monarch_critical",
+              "sfx_player_critical"
+            ],
+            "combatSfx": [
+              "sfx_defence_break",
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#11_C13",
+          "partOrder": 11,
+          "partId": "part_stage09",
+          "cutId": "C13",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지9 갈림입구",
+          "cutStage": 9,
+          "durationSec": 11.0,
+          "startSec": 160.0,
+          "endSec": 171.0,
+          "startFrame30": 4800,
+          "endFrame30": 5130,
+          "narrationTarget": "C13",
+          "interactive": {
+            "type": "branch",
+            "options": [
+              "추적을 멈춘다",
+              "계속 추적한다"
+            ],
+            "effect": "엔딩 분기 전투톤 토글"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.critical"
+            ],
+            "skillNarration": [
+              "skill.player.avoid",
+              "skill.player.attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 240,
+              "transitionInFrames": 10,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "human-command",
+              "action": "hit",
+              "previsTag": "boss:human-command:hit",
+              "durationFrames": 84,
+              "offsetFrames": 90
+            },
+            {
+              "actor": "player",
+              "action": "defence",
+              "previsTag": "player:defence",
+              "durationFrames": 120,
+              "offsetFrames": 100
+            },
+            {
+              "actor": "human-command",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 132,
+              "offsetFrames": 140
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage09"
+            ],
+            "bgm": [
+              "bgm_stage09_dissonant"
+            ],
+            "sfx": [
+              "sfx_vow_break",
+              "sfx_player_block",
+              "sfx_player_hit"
+            ],
+            "combatSfx": [
+              "sfx_player_hit",
+              "sfx_stage_clear_short"
+            ],
+            "npc": [
+              "npcRael_stage9_choice"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#12_C14",
+          "partOrder": 12,
+          "partId": "part_stage10",
+          "cutId": "C14",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지10 최종 쇼케이스",
+          "cutStage": 10,
+          "durationSec": 13.0,
+          "startSec": 171.0,
+          "endSec": 184.0,
+          "startFrame30": 5130,
+          "endFrame30": 5520,
+          "narrationTarget": "C14",
+          "interactive": {
+            "type": "critical-branch",
+            "options": [
+              "공격형 연쇄",
+              "방어형 생존"
+            ],
+            "effect": "엔딩 A/B 진입 사전 상태 결정"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "broken-court-monarch",
+              "action": "show",
+              "previsTag": "boss:broken-court-monarch:show",
+              "durationFrames": 360,
+              "transitionInFrames": 16,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "attack",
+              "previsTag": "boss:broken-court-monarch:attack",
+              "durationFrames": 132,
+              "offsetFrames": 120
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "critical",
+              "previsTag": "boss:broken-court-monarch:critical",
+              "durationFrames": 120,
+              "offsetFrames": 150
+            },
+            {
+              "actor": "player",
+              "action": "bighit",
+              "previsTag": "player:bighit",
+              "durationFrames": 120,
+              "offsetFrames": 200
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss10_show"
+            ],
+            "bgm": [
+              "bgm_stage10_final"
+            ],
+            "sfx": [
+              "sfx_final_gate_shatter",
+              "sfx_boss_broken_court_monarch_critical",
+              "sfx_player_bighit"
+            ],
+            "combatSfx": [
+              "sfx_elite_fail_warning",
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#13_C15",
+          "partOrder": 13,
+          "partId": "part_ending_common",
+          "cutId": "C15",
+          "cutOrderInPart": 1,
+          "cutLabel": "엔딩 공통",
+          "cutStage": "ending-common",
+          "durationSec": 9.0,
+          "startSec": 184.0,
+          "endSec": 193.0,
+          "startFrame30": 5520,
+          "endFrame30": 5790,
+          "narrationTarget": "C15",
+          "interactive": {
+            "type": "chapter-close",
+            "effect": "다음 챕터 조건 텍스트(회복/재침투 티저)",
+            "nextChapterHint": {
+              "nextChapterUnlocked": true,
+              "branchHint": "ending-a 또는 ending_b"
+            }
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.defence_ready"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 180,
+              "transitionInFrames": 10,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "player",
+              "action": "idle",
+              "previsTag": "player:idle",
+              "durationFrames": 120,
+              "offsetFrames": 60
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_ending_common"
+            ],
+            "bgm": [
+              "bgm_ending_common"
+            ],
+            "sfx": [
+              "sfx_resonance_bloom"
+            ],
+            "combatSfx": [
+              "sfx_stage_clear_short"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "mainline#14_C16",
+          "partOrder": 14,
+          "partId": "part_ending_branch_a",
+          "cutId": "C16",
+          "cutOrderInPart": 1,
+          "cutLabel": "엔딩 브랜치 A: 재건 루트",
+          "cutStage": "ending-a",
+          "durationSec": 10.0,
+          "startSec": 193.0,
+          "endSec": 203.0,
+          "startFrame30": 5790,
+          "endFrame30": 6090,
+          "narrationTarget": "C16",
+          "interactive": {
+            "type": "teaser",
+            "effect": "회복 루트 안내 및 사이드퀘스트 티저 표시"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 180,
+              "transitionInFrames": 10,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "player",
+              "action": "idle",
+              "previsTag": "player:idle",
+              "durationFrames": 120,
+              "offsetFrames": 120
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_ending_a"
+            ],
+            "bgm": [
+              "bgm_ending_a"
+            ],
+            "sfx": [
+              "sfx_forge_soft"
+            ],
+            "combatSfx": []
+          }
+        }
+      ]
+    },
+    "ending_branch_b": {
+      "partIds": [
+        "part_intro",
+        "part_lobby",
+        "part_stage01",
+        "part_stage02",
+        "part_stage03",
+        "part_stage04",
+        "part_stage05",
+        "part_stage06",
+        "part_stage07",
+        "part_stage08",
+        "part_stage09",
+        "part_stage10",
+        "part_ending_common",
+        "part_ending_branch_b"
+      ],
+      "partCount": 14,
+      "totalDurationSec": 204.0,
+      "outputs": {
+        "base": "assets/video/defense_stage1to10_story_endingB.mp4",
+        "anime-soft": "assets/video/styles/anime-soft/defense_stage1to10_story_endingB_anime_soft.mp4",
+        "noir-cut": "assets/video/styles/noir-cut/defense_stage1to10_story_endingB_noir_cut.mp4",
+        "webtoon-static": "assets/video/styles/webtoon-static/defense_stage1to10_story_endingB_webtoon_static.mp4"
+      },
+      "concatListFile": "assets/video/concat_parts_branchB.txt",
+      "occurrenceCount": 19,
+      "occurrences": [
+        {
+          "occurrenceId": "ending_branch_b#01_C01",
+          "partOrder": 1,
+          "partId": "part_intro",
+          "cutId": "C01",
+          "cutOrderInPart": 1,
+          "cutLabel": "프롤로그 - 재난의 전조",
+          "cutStage": "intro",
+          "durationSec": 8.0,
+          "startSec": 0.0,
+          "endSec": 8.0,
+          "startFrame30": 0,
+          "endFrame30": 240,
+          "narrationTarget": "C01",
+          "interactive": {
+            "type": "choice-latch",
+            "options": [
+              "호흡 모드",
+              "엄호 모드"
+            ],
+            "effect": "호흡/엄호 선택은 intro-only 텍스트 브랜치와 HUD 첫 안내색만 변경. 컷 전환은 동일"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 8
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_intro_01"
+            ],
+            "bgm": [
+              "bgm_prologue_low"
+            ],
+            "sfx": [
+              "sfx_gate_rip_01"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#02_C02",
+          "partOrder": 2,
+          "partId": "part_lobby",
+          "cutId": "C02",
+          "cutOrderInPart": 1,
+          "cutLabel": "로비 오프닝",
+          "cutStage": "lobby",
+          "durationSec": 10.0,
+          "startSec": 8.0,
+          "endSec": 18.0,
+          "startFrame30": 240,
+          "endFrame30": 540,
+          "narrationTarget": "C02",
+          "interactive": {
+            "type": "dialogue-branch",
+            "npc": "하람/메리",
+            "prompt": "브리핑 문구 변경 옵션 두 가지 열림",
+            "effect": "보스 출현 컷(C03/C04) 텍스트 레이어 언어톤을 전환"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "idle",
+              "previsTag": "player:idle",
+              "durationFrames": 300,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 6
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_lobby_intro"
+            ],
+            "bgm": [
+              "bgm_lobby_day"
+            ],
+            "sfx": [
+              "sfx_ambient_forge"
+            ],
+            "npcVoiceSamples": [
+              "npcHaram_lobby_opening",
+              "npcMeri_lobby_timing"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#03_C03",
+          "partOrder": 3,
+          "partId": "part_stage01",
+          "cutId": "C03",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지1 진입",
+          "cutStage": 1,
+          "durationSec": 9.0,
+          "startSec": 18.0,
+          "endSec": 27.0,
+          "startFrame30": 540,
+          "endFrame30": 810,
+          "narrationTarget": "C03",
+          "interactive": {
+            "type": "branch-weight",
+            "choices": [
+              "안정 수색",
+              "선제 공격"
+            ],
+            "state": "runMode"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.skill_cd"
+            ],
+            "skillNarration": [
+              "skill.player.attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 6,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "attack",
+              "previsTag": "player:attack",
+              "durationFrames": 144,
+              "offsetFrames": 120
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage01_entry"
+            ],
+            "bgm": [
+              "bgm_stage01_entry"
+            ],
+            "sfx": [
+              "sfx_ward_level_warning"
+            ],
+            "ambience": [
+              "bg_stage01_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#03_C04",
+          "partOrder": 3,
+          "partId": "part_stage01",
+          "cutId": "C04",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지1 보스 쇼케이스",
+          "cutStage": 1,
+          "durationSec": 12.0,
+          "startSec": 27.0,
+          "endSec": 39.0,
+          "startFrame30": 810,
+          "endFrame30": 1170,
+          "narrationTarget": "C04",
+          "interactive": {
+            "type": "combat-preference",
+            "options": [
+              "공격 우세",
+              "회피 우선"
+            ],
+            "state": "첫 보정 슬롯 토큰 갱신"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.defence_ready"
+            ],
+            "skillNarration": [
+              "skill.player.defence"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 270,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 6
+            },
+            {
+              "actor": "boss",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 132,
+              "offsetFrames": 90
+            },
+            {
+              "actor": "player",
+              "action": "defence",
+              "previsTag": "player:defence",
+              "durationFrames": 84,
+              "offsetFrames": 150
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss01_show"
+            ],
+            "bgm": [
+              "bgm_stage01_boss"
+            ],
+            "sfx": [
+              "sfx_boss_enter_chime",
+              "sfx_boss_human_attack",
+              "sfx_player_block"
+            ],
+            "combatSfx": [
+              "sfx_boss_impact_burst",
+              "sfx_player_hit"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#04_C05",
+          "partOrder": 4,
+          "partId": "part_stage02",
+          "cutId": "C05",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지2 전환",
+          "cutStage": 2,
+          "durationSec": 9.0,
+          "startSec": 39.0,
+          "endSec": 48.0,
+          "startFrame30": 1170,
+          "endFrame30": 1440,
+          "narrationTarget": "C05",
+          "interactive": {
+            "type": "branch",
+            "options": [
+              "정예 우선 정리",
+              "안전 경로 우선"
+            ],
+            "effect": "정예 우선 정리 실패 시 경고 텍스트 레이어가 1.6초 단축"
+          },
+          "triggers": {
+            "battleSfx": [
+              "sfx_ward_rise"
+            ],
+            "stateNarration": [
+              "state.player.move"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "player",
+              "action": "run",
+              "previsTag": "player:run",
+              "durationFrames": 180,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "human-command",
+              "action": "move",
+              "previsTag": "boss:human-command:move",
+              "durationFrames": 200,
+              "offsetFrames": 20
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage02_entry"
+            ],
+            "bgm": [
+              "bgm_stage02_entry"
+            ],
+            "sfx": [
+              "sfx_bridge_grind"
+            ],
+            "ambience": [
+              "bg_stage02_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#04_C06",
+          "partOrder": 4,
+          "partId": "part_stage02",
+          "cutId": "C06",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지2 보스 쇼케이스",
+          "cutStage": 2,
+          "durationSec": 11.0,
+          "startSec": 48.0,
+          "endSec": 59.0,
+          "startFrame30": 1440,
+          "endFrame30": 1770,
+          "narrationTarget": "C06",
+          "interactive": {
+            "type": "timing-pressure",
+            "effect": "보스 show 뒤 0.8초 안에 회피 입력 실패 시 상태 경고를 강화"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.critical",
+              "state.player.lowhp"
+            ],
+            "battleSfx": [
+              "onDefenceBreak"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "human-command",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 144,
+              "offsetFrames": 70
+            },
+            {
+              "actor": "player",
+              "action": "avoid",
+              "previsTag": "player:avoid",
+              "durationFrames": 60,
+              "offsetFrames": 120
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss02_show"
+            ],
+            "bgm": [
+              "bgm_stage02_boss"
+            ],
+            "sfx": [
+              "sfx_tactical_ping",
+              "sfx_boss_human_attack",
+              "sfx_player_avoid"
+            ],
+            "combatSfx": [
+              "sfx_ward_rise"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#05_C07",
+          "partOrder": 5,
+          "partId": "part_stage03",
+          "cutId": "C07",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지3-4 연결",
+          "cutStage": 3,
+          "durationSec": 12.0,
+          "startSec": 59.0,
+          "endSec": 71.0,
+          "startFrame30": 1770,
+          "endFrame30": 2130,
+          "narrationTarget": "C07",
+          "interactive": {
+            "type": "npc-line",
+            "npc": "하람",
+            "text": "저지선 임계값이 다음 두 스테이지에 걸쳐 유지된다.",
+            "effect": "판독형 분기 없이 다음 컷으로 고정"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 260,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 180,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "run",
+              "previsTag": "player:run",
+              "durationFrames": 180,
+              "offsetFrames": 60
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage03_04_bridge"
+            ],
+            "bgm": [
+              "bgm_mid_gate_drive"
+            ],
+            "sfx": [
+              "sfx_echo_drone"
+            ],
+            "ambience": [
+              "bg_stage03_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#05_C08",
+          "partOrder": 5,
+          "partId": "part_stage03",
+          "cutId": "C08",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지3 보스 쇼케이스",
+          "cutStage": 3,
+          "durationSec": 10.0,
+          "startSec": 71.0,
+          "endSec": 81.0,
+          "startFrame30": 2130,
+          "endFrame30": 2430,
+          "narrationTarget": "C08",
+          "interactive": {
+            "type": "defence-popup",
+            "effect": "boss critical 경보 즉시 defence 팝업 표시"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.die"
+            ],
+            "battleSfx": [
+              "sfx_player_hit",
+              "sfx_boss_shadow_attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "attack",
+              "previsTag": "player:attack",
+              "durationFrames": 132,
+              "offsetFrames": 80
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "critical",
+              "previsTag": "boss:shadow-commander:critical",
+              "durationFrames": 96,
+              "offsetFrames": 140
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss03_show"
+            ],
+            "bgm": [
+              "bgm_stage03_boss"
+            ],
+            "sfx": [
+              "sfx_staff_windup",
+              "sfx_boss_shadow_critical",
+              "sfx_player_attack"
+            ],
+            "combatSfx": [
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#06_C07",
+          "partOrder": 6,
+          "partId": "part_stage04",
+          "cutId": "C07",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지3-4 연결",
+          "cutStage": 3,
+          "durationSec": 12.0,
+          "startSec": 81.0,
+          "endSec": 93.0,
+          "startFrame30": 2430,
+          "endFrame30": 2790,
+          "narrationTarget": "C07",
+          "interactive": {
+            "type": "npc-line",
+            "npc": "하람",
+            "text": "저지선 임계값이 다음 두 스테이지에 걸쳐 유지된다.",
+            "effect": "판독형 분기 없이 다음 컷으로 고정"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 260,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 180,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "run",
+              "previsTag": "player:run",
+              "durationFrames": 180,
+              "offsetFrames": 60
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage03_04_bridge"
+            ],
+            "bgm": [
+              "bgm_mid_gate_drive"
+            ],
+            "sfx": [
+              "sfx_echo_drone"
+            ],
+            "ambience": [
+              "bg_stage03_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#06_C08",
+          "partOrder": 6,
+          "partId": "part_stage04",
+          "cutId": "C08",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지3 보스 쇼케이스",
+          "cutStage": 3,
+          "durationSec": 10.0,
+          "startSec": 93.0,
+          "endSec": 103.0,
+          "startFrame30": 2790,
+          "endFrame30": 3090,
+          "narrationTarget": "C08",
+          "interactive": {
+            "type": "defence-popup",
+            "effect": "boss critical 경보 즉시 defence 팝업 표시"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.die"
+            ],
+            "battleSfx": [
+              "sfx_player_hit",
+              "sfx_boss_shadow_attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "attack",
+              "previsTag": "player:attack",
+              "durationFrames": 132,
+              "offsetFrames": 80
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "critical",
+              "previsTag": "boss:shadow-commander:critical",
+              "durationFrames": 96,
+              "offsetFrames": 140
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss03_show"
+            ],
+            "bgm": [
+              "bgm_stage03_boss"
+            ],
+            "sfx": [
+              "sfx_staff_windup",
+              "sfx_boss_shadow_critical",
+              "sfx_player_attack"
+            ],
+            "combatSfx": [
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#07_C09",
+          "partOrder": 7,
+          "partId": "part_stage05",
+          "cutId": "C09",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지5 압박 구간",
+          "cutStage": 5,
+          "durationSec": 10.0,
+          "startSec": 103.0,
+          "endSec": 113.0,
+          "startFrame30": 3090,
+          "endFrame30": 3390,
+          "narrationTarget": "C09",
+          "interactive": {
+            "type": "split-command",
+            "effect": "우측 경로 비우기 분산 모드로 이동"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 6
+            },
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 240,
+              "offsetFrames": 20
+            },
+            {
+              "actor": "human-command",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 132,
+              "offsetFrames": 90
+            },
+            {
+              "actor": "human-command",
+              "action": "bighit",
+              "previsTag": "boss:human-command:bighit",
+              "durationFrames": 132,
+              "offsetFrames": 150
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage05"
+            ],
+            "bgm": [
+              "bgm_stage05"
+            ],
+            "sfx": [
+              "sfx_howl_loop",
+              "sfx_boss_generic_hit"
+            ],
+            "ambience": [
+              "bg_stage05_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#08_C10",
+          "partOrder": 8,
+          "partId": "part_stage06",
+          "cutId": "C10",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지6 문턱",
+          "cutStage": 6,
+          "durationSec": 11.0,
+          "startSec": 113.0,
+          "endSec": 124.0,
+          "startFrame30": 3390,
+          "endFrame30": 3720,
+          "narrationTarget": "C10",
+          "interactive": {
+            "type": "branch",
+            "options": [
+              "방어 강화",
+              "공격 템포 유지"
+            ]
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "broken-court-monarch",
+              "action": "show",
+              "previsTag": "boss:broken-court-monarch:show",
+              "durationFrames": 300,
+              "transitionInFrames": 14,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "defence",
+              "previsTag": "player:defence",
+              "durationFrames": 120,
+              "offsetFrames": 60
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "attack",
+              "previsTag": "boss:broken-court-monarch:attack",
+              "durationFrames": 132,
+              "offsetFrames": 120
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "bighit",
+              "previsTag": "boss:broken-court-monarch:bighit",
+              "durationFrames": 132,
+              "offsetFrames": 180
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage06"
+            ],
+            "bgm": [
+              "bgm_stage06_peak"
+            ],
+            "sfx": [
+              "sfx_ward_lock",
+              "sfx_boss_broken_court_monarch_bighit",
+              "sfx_player_block"
+            ],
+            "combatSfx": [
+              "sfx_ward_rise"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#09_C11",
+          "partOrder": 9,
+          "partId": "part_stage07",
+          "cutId": "C11",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지7-8 전개",
+          "cutStage": 7,
+          "durationSec": 12.0,
+          "startSec": 124.0,
+          "endSec": 136.0,
+          "startFrame30": 3720,
+          "endFrame30": 4080,
+          "narrationTarget": "C11",
+          "interactive": {
+            "type": "hud-visual",
+            "effect": "포메이션 변경 시 체력바 분할 애니메이션 형태 전환"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "move",
+              "previsTag": "boss:shadow-commander:move",
+              "durationFrames": 240,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 120,
+              "offsetFrames": 140
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "attack",
+              "previsTag": "boss:shadow-commander:attack",
+              "durationFrames": 132,
+              "offsetFrames": 160
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage07_08"
+            ],
+            "bgm": [
+              "bgm_bridge_cascade"
+            ],
+            "sfx": [
+              "sfx_bridge_break",
+              "sfx_boss_shadow_attack"
+            ],
+            "ambience": [
+              "bg_stage07_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#10_C11",
+          "partOrder": 10,
+          "partId": "part_stage08",
+          "cutId": "C11",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지7-8 전개",
+          "cutStage": 7,
+          "durationSec": 12.0,
+          "startSec": 136.0,
+          "endSec": 148.0,
+          "startFrame30": 4080,
+          "endFrame30": 4440,
+          "narrationTarget": "C11",
+          "interactive": {
+            "type": "hud-visual",
+            "effect": "포메이션 변경 시 체력바 분할 애니메이션 형태 전환"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "move",
+              "previsTag": "boss:shadow-commander:move",
+              "durationFrames": 240,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 120,
+              "offsetFrames": 140
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "attack",
+              "previsTag": "boss:shadow-commander:attack",
+              "durationFrames": 132,
+              "offsetFrames": 160
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage07_08"
+            ],
+            "bgm": [
+              "bgm_bridge_cascade"
+            ],
+            "sfx": [
+              "sfx_bridge_break",
+              "sfx_boss_shadow_attack"
+            ],
+            "ambience": [
+              "bg_stage07_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#10_C12",
+          "partOrder": 10,
+          "partId": "part_stage08",
+          "cutId": "C12",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지8 보스 쇼케이스",
+          "cutStage": 8,
+          "durationSec": 12.0,
+          "startSec": 148.0,
+          "endSec": 160.0,
+          "startFrame30": 4440,
+          "endFrame30": 4800,
+          "narrationTarget": "C12",
+          "interactive": {
+            "type": "timing-window",
+            "options": [
+              "Avoid성공시 3초 무피격 버프 적용"
+            ],
+            "effect": "성공 시 player:avoid 액션을 강제 전이 가능"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "broken-court-monarch",
+              "action": "show",
+              "previsTag": "boss:broken-court-monarch:show",
+              "durationFrames": 300,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "critical",
+              "previsTag": "boss:broken-court-monarch:critical",
+              "durationFrames": 120,
+              "offsetFrames": 120
+            },
+            {
+              "actor": "player",
+              "action": "critical",
+              "previsTag": "player:critical",
+              "durationFrames": 90,
+              "offsetFrames": 130
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss08_show"
+            ],
+            "bgm": [
+              "bgm_stage08_colossus"
+            ],
+            "sfx": [
+              "sfx_colossus_step",
+              "sfx_boss_broken_court_monarch_critical",
+              "sfx_player_critical"
+            ],
+            "combatSfx": [
+              "sfx_defence_break",
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#11_C13",
+          "partOrder": 11,
+          "partId": "part_stage09",
+          "cutId": "C13",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지9 갈림입구",
+          "cutStage": 9,
+          "durationSec": 11.0,
+          "startSec": 160.0,
+          "endSec": 171.0,
+          "startFrame30": 4800,
+          "endFrame30": 5130,
+          "narrationTarget": "C13",
+          "interactive": {
+            "type": "branch",
+            "options": [
+              "추적을 멈춘다",
+              "계속 추적한다"
+            ],
+            "effect": "엔딩 분기 전투톤 토글"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.critical"
+            ],
+            "skillNarration": [
+              "skill.player.avoid",
+              "skill.player.attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 240,
+              "transitionInFrames": 10,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "human-command",
+              "action": "hit",
+              "previsTag": "boss:human-command:hit",
+              "durationFrames": 84,
+              "offsetFrames": 90
+            },
+            {
+              "actor": "player",
+              "action": "defence",
+              "previsTag": "player:defence",
+              "durationFrames": 120,
+              "offsetFrames": 100
+            },
+            {
+              "actor": "human-command",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 132,
+              "offsetFrames": 140
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage09"
+            ],
+            "bgm": [
+              "bgm_stage09_dissonant"
+            ],
+            "sfx": [
+              "sfx_vow_break",
+              "sfx_player_block",
+              "sfx_player_hit"
+            ],
+            "combatSfx": [
+              "sfx_player_hit",
+              "sfx_stage_clear_short"
+            ],
+            "npc": [
+              "npcRael_stage9_choice"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#12_C14",
+          "partOrder": 12,
+          "partId": "part_stage10",
+          "cutId": "C14",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지10 최종 쇼케이스",
+          "cutStage": 10,
+          "durationSec": 13.0,
+          "startSec": 171.0,
+          "endSec": 184.0,
+          "startFrame30": 5130,
+          "endFrame30": 5520,
+          "narrationTarget": "C14",
+          "interactive": {
+            "type": "critical-branch",
+            "options": [
+              "공격형 연쇄",
+              "방어형 생존"
+            ],
+            "effect": "엔딩 A/B 진입 사전 상태 결정"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "broken-court-monarch",
+              "action": "show",
+              "previsTag": "boss:broken-court-monarch:show",
+              "durationFrames": 360,
+              "transitionInFrames": 16,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "attack",
+              "previsTag": "boss:broken-court-monarch:attack",
+              "durationFrames": 132,
+              "offsetFrames": 120
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "critical",
+              "previsTag": "boss:broken-court-monarch:critical",
+              "durationFrames": 120,
+              "offsetFrames": 150
+            },
+            {
+              "actor": "player",
+              "action": "bighit",
+              "previsTag": "player:bighit",
+              "durationFrames": 120,
+              "offsetFrames": 200
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss10_show"
+            ],
+            "bgm": [
+              "bgm_stage10_final"
+            ],
+            "sfx": [
+              "sfx_final_gate_shatter",
+              "sfx_boss_broken_court_monarch_critical",
+              "sfx_player_bighit"
+            ],
+            "combatSfx": [
+              "sfx_elite_fail_warning",
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#13_C15",
+          "partOrder": 13,
+          "partId": "part_ending_common",
+          "cutId": "C15",
+          "cutOrderInPart": 1,
+          "cutLabel": "엔딩 공통",
+          "cutStage": "ending-common",
+          "durationSec": 9.0,
+          "startSec": 184.0,
+          "endSec": 193.0,
+          "startFrame30": 5520,
+          "endFrame30": 5790,
+          "narrationTarget": "C15",
+          "interactive": {
+            "type": "chapter-close",
+            "effect": "다음 챕터 조건 텍스트(회복/재침투 티저)",
+            "nextChapterHint": {
+              "nextChapterUnlocked": true,
+              "branchHint": "ending-a 또는 ending_b"
+            }
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.defence_ready"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 180,
+              "transitionInFrames": 10,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "player",
+              "action": "idle",
+              "previsTag": "player:idle",
+              "durationFrames": 120,
+              "offsetFrames": 60
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_ending_common"
+            ],
+            "bgm": [
+              "bgm_ending_common"
+            ],
+            "sfx": [
+              "sfx_resonance_bloom"
+            ],
+            "combatSfx": [
+              "sfx_stage_clear_short"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "ending_branch_b#14_C17",
+          "partOrder": 14,
+          "partId": "part_ending_branch_b",
+          "cutId": "C17",
+          "cutOrderInPart": 1,
+          "cutLabel": "엔딩 브랜치 B: 재침투 루트",
+          "cutStage": "ending-b",
+          "durationSec": 11.0,
+          "startSec": 193.0,
+          "endSec": 204.0,
+          "startFrame30": 5790,
+          "endFrame30": 6120,
+          "narrationTarget": "C17",
+          "interactive": {
+            "type": "teaser",
+            "effect": "다음 시즌 재침투 루트(추적형 성장) 진입 안내"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "run",
+              "previsTag": "player:run",
+              "durationFrames": 220,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "player",
+              "action": "attack",
+              "previsTag": "player:attack",
+              "durationFrames": 132,
+              "offsetFrames": 100
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_ending_b"
+            ],
+            "bgm": [
+              "bgm_ending_b"
+            ],
+            "sfx": [
+              "sfx_pursuit_wind",
+              "sfx_player_attack"
+            ],
+            "combatSfx": [
+              "sfx_elite_fail_warning"
+            ]
+          }
+        }
+      ]
+    },
+    "cut_only": {
+      "partIds": [
+        "part_intro",
+        "part_lobby",
+        "part_stage01",
+        "part_stage02",
+        "part_stage03",
+        "part_stage04",
+        "part_stage05",
+        "part_stage06",
+        "part_stage07",
+        "part_stage08",
+        "part_stage09",
+        "part_stage10",
+        "part_ending_common",
+        "part_ending_branch_a",
+        "part_ending_branch_b"
+      ],
+      "partCount": 15,
+      "totalDurationSec": 214.0,
+      "outputs": {
+        "base": "assets/video/defense_stage1to10_story_cutonly.mp4",
+        "anime-soft": "assets/video/styles/anime-soft/defense_stage1to10_story_cutonly_anime_soft.mp4",
+        "noir-cut": "assets/video/styles/noir-cut/defense_stage1to10_story_cutonly_noir_cut.mp4",
+        "webtoon-static": "assets/video/styles/webtoon-static/defense_stage1to10_story_cutonly_webtoon_static.mp4"
+      },
+      "concatListFile": "assets/video/concat_parts_cutonly.txt",
+      "occurrenceCount": 20,
+      "occurrences": [
+        {
+          "occurrenceId": "cut_only#01_C01",
+          "partOrder": 1,
+          "partId": "part_intro",
+          "cutId": "C01",
+          "cutOrderInPart": 1,
+          "cutLabel": "프롤로그 - 재난의 전조",
+          "cutStage": "intro",
+          "durationSec": 8.0,
+          "startSec": 0.0,
+          "endSec": 8.0,
+          "startFrame30": 0,
+          "endFrame30": 240,
+          "narrationTarget": "C01",
+          "interactive": {
+            "type": "choice-latch",
+            "options": [
+              "호흡 모드",
+              "엄호 모드"
+            ],
+            "effect": "호흡/엄호 선택은 intro-only 텍스트 브랜치와 HUD 첫 안내색만 변경. 컷 전환은 동일"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 8
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_intro_01"
+            ],
+            "bgm": [
+              "bgm_prologue_low"
+            ],
+            "sfx": [
+              "sfx_gate_rip_01"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#02_C02",
+          "partOrder": 2,
+          "partId": "part_lobby",
+          "cutId": "C02",
+          "cutOrderInPart": 1,
+          "cutLabel": "로비 오프닝",
+          "cutStage": "lobby",
+          "durationSec": 10.0,
+          "startSec": 8.0,
+          "endSec": 18.0,
+          "startFrame30": 240,
+          "endFrame30": 540,
+          "narrationTarget": "C02",
+          "interactive": {
+            "type": "dialogue-branch",
+            "npc": "하람/메리",
+            "prompt": "브리핑 문구 변경 옵션 두 가지 열림",
+            "effect": "보스 출현 컷(C03/C04) 텍스트 레이어 언어톤을 전환"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "idle",
+              "previsTag": "player:idle",
+              "durationFrames": 300,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 6
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_lobby_intro"
+            ],
+            "bgm": [
+              "bgm_lobby_day"
+            ],
+            "sfx": [
+              "sfx_ambient_forge"
+            ],
+            "npcVoiceSamples": [
+              "npcHaram_lobby_opening",
+              "npcMeri_lobby_timing"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#03_C03",
+          "partOrder": 3,
+          "partId": "part_stage01",
+          "cutId": "C03",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지1 진입",
+          "cutStage": 1,
+          "durationSec": 9.0,
+          "startSec": 18.0,
+          "endSec": 27.0,
+          "startFrame30": 540,
+          "endFrame30": 810,
+          "narrationTarget": "C03",
+          "interactive": {
+            "type": "branch-weight",
+            "choices": [
+              "안정 수색",
+              "선제 공격"
+            ],
+            "state": "runMode"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.skill_cd"
+            ],
+            "skillNarration": [
+              "skill.player.attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 6,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "attack",
+              "previsTag": "player:attack",
+              "durationFrames": 144,
+              "offsetFrames": 120
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage01_entry"
+            ],
+            "bgm": [
+              "bgm_stage01_entry"
+            ],
+            "sfx": [
+              "sfx_ward_level_warning"
+            ],
+            "ambience": [
+              "bg_stage01_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#03_C04",
+          "partOrder": 3,
+          "partId": "part_stage01",
+          "cutId": "C04",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지1 보스 쇼케이스",
+          "cutStage": 1,
+          "durationSec": 12.0,
+          "startSec": 27.0,
+          "endSec": 39.0,
+          "startFrame30": 810,
+          "endFrame30": 1170,
+          "narrationTarget": "C04",
+          "interactive": {
+            "type": "combat-preference",
+            "options": [
+              "공격 우세",
+              "회피 우선"
+            ],
+            "state": "첫 보정 슬롯 토큰 갱신"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.defence_ready"
+            ],
+            "skillNarration": [
+              "skill.player.defence"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 270,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 6
+            },
+            {
+              "actor": "boss",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 132,
+              "offsetFrames": 90
+            },
+            {
+              "actor": "player",
+              "action": "defence",
+              "previsTag": "player:defence",
+              "durationFrames": 84,
+              "offsetFrames": 150
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss01_show"
+            ],
+            "bgm": [
+              "bgm_stage01_boss"
+            ],
+            "sfx": [
+              "sfx_boss_enter_chime",
+              "sfx_boss_human_attack",
+              "sfx_player_block"
+            ],
+            "combatSfx": [
+              "sfx_boss_impact_burst",
+              "sfx_player_hit"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#04_C05",
+          "partOrder": 4,
+          "partId": "part_stage02",
+          "cutId": "C05",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지2 전환",
+          "cutStage": 2,
+          "durationSec": 9.0,
+          "startSec": 39.0,
+          "endSec": 48.0,
+          "startFrame30": 1170,
+          "endFrame30": 1440,
+          "narrationTarget": "C05",
+          "interactive": {
+            "type": "branch",
+            "options": [
+              "정예 우선 정리",
+              "안전 경로 우선"
+            ],
+            "effect": "정예 우선 정리 실패 시 경고 텍스트 레이어가 1.6초 단축"
+          },
+          "triggers": {
+            "battleSfx": [
+              "sfx_ward_rise"
+            ],
+            "stateNarration": [
+              "state.player.move"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "player",
+              "action": "run",
+              "previsTag": "player:run",
+              "durationFrames": 180,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "human-command",
+              "action": "move",
+              "previsTag": "boss:human-command:move",
+              "durationFrames": 200,
+              "offsetFrames": 20
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage02_entry"
+            ],
+            "bgm": [
+              "bgm_stage02_entry"
+            ],
+            "sfx": [
+              "sfx_bridge_grind"
+            ],
+            "ambience": [
+              "bg_stage02_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#04_C06",
+          "partOrder": 4,
+          "partId": "part_stage02",
+          "cutId": "C06",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지2 보스 쇼케이스",
+          "cutStage": 2,
+          "durationSec": 11.0,
+          "startSec": 48.0,
+          "endSec": 59.0,
+          "startFrame30": 1440,
+          "endFrame30": 1770,
+          "narrationTarget": "C06",
+          "interactive": {
+            "type": "timing-pressure",
+            "effect": "보스 show 뒤 0.8초 안에 회피 입력 실패 시 상태 경고를 강화"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.critical",
+              "state.player.lowhp"
+            ],
+            "battleSfx": [
+              "onDefenceBreak"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "human-command",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 144,
+              "offsetFrames": 70
+            },
+            {
+              "actor": "player",
+              "action": "avoid",
+              "previsTag": "player:avoid",
+              "durationFrames": 60,
+              "offsetFrames": 120
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss02_show"
+            ],
+            "bgm": [
+              "bgm_stage02_boss"
+            ],
+            "sfx": [
+              "sfx_tactical_ping",
+              "sfx_boss_human_attack",
+              "sfx_player_avoid"
+            ],
+            "combatSfx": [
+              "sfx_ward_rise"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#05_C07",
+          "partOrder": 5,
+          "partId": "part_stage03",
+          "cutId": "C07",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지3-4 연결",
+          "cutStage": 3,
+          "durationSec": 12.0,
+          "startSec": 59.0,
+          "endSec": 71.0,
+          "startFrame30": 1770,
+          "endFrame30": 2130,
+          "narrationTarget": "C07",
+          "interactive": {
+            "type": "npc-line",
+            "npc": "하람",
+            "text": "저지선 임계값이 다음 두 스테이지에 걸쳐 유지된다.",
+            "effect": "판독형 분기 없이 다음 컷으로 고정"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 260,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 180,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "run",
+              "previsTag": "player:run",
+              "durationFrames": 180,
+              "offsetFrames": 60
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage03_04_bridge"
+            ],
+            "bgm": [
+              "bgm_mid_gate_drive"
+            ],
+            "sfx": [
+              "sfx_echo_drone"
+            ],
+            "ambience": [
+              "bg_stage03_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#05_C08",
+          "partOrder": 5,
+          "partId": "part_stage03",
+          "cutId": "C08",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지3 보스 쇼케이스",
+          "cutStage": 3,
+          "durationSec": 10.0,
+          "startSec": 71.0,
+          "endSec": 81.0,
+          "startFrame30": 2130,
+          "endFrame30": 2430,
+          "narrationTarget": "C08",
+          "interactive": {
+            "type": "defence-popup",
+            "effect": "boss critical 경보 즉시 defence 팝업 표시"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.die"
+            ],
+            "battleSfx": [
+              "sfx_player_hit",
+              "sfx_boss_shadow_attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "attack",
+              "previsTag": "player:attack",
+              "durationFrames": 132,
+              "offsetFrames": 80
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "critical",
+              "previsTag": "boss:shadow-commander:critical",
+              "durationFrames": 96,
+              "offsetFrames": 140
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss03_show"
+            ],
+            "bgm": [
+              "bgm_stage03_boss"
+            ],
+            "sfx": [
+              "sfx_staff_windup",
+              "sfx_boss_shadow_critical",
+              "sfx_player_attack"
+            ],
+            "combatSfx": [
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#06_C07",
+          "partOrder": 6,
+          "partId": "part_stage04",
+          "cutId": "C07",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지3-4 연결",
+          "cutStage": 3,
+          "durationSec": 12.0,
+          "startSec": 81.0,
+          "endSec": 93.0,
+          "startFrame30": 2430,
+          "endFrame30": 2790,
+          "narrationTarget": "C07",
+          "interactive": {
+            "type": "npc-line",
+            "npc": "하람",
+            "text": "저지선 임계값이 다음 두 스테이지에 걸쳐 유지된다.",
+            "effect": "판독형 분기 없이 다음 컷으로 고정"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 260,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 180,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "run",
+              "previsTag": "player:run",
+              "durationFrames": 180,
+              "offsetFrames": 60
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage03_04_bridge"
+            ],
+            "bgm": [
+              "bgm_mid_gate_drive"
+            ],
+            "sfx": [
+              "sfx_echo_drone"
+            ],
+            "ambience": [
+              "bg_stage03_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#06_C08",
+          "partOrder": 6,
+          "partId": "part_stage04",
+          "cutId": "C08",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지3 보스 쇼케이스",
+          "cutStage": 3,
+          "durationSec": 10.0,
+          "startSec": 93.0,
+          "endSec": 103.0,
+          "startFrame30": 2790,
+          "endFrame30": 3090,
+          "narrationTarget": "C08",
+          "interactive": {
+            "type": "defence-popup",
+            "effect": "boss critical 경보 즉시 defence 팝업 표시"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.die"
+            ],
+            "battleSfx": [
+              "sfx_player_hit",
+              "sfx_boss_shadow_attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "shadow-commander",
+              "action": "show",
+              "previsTag": "boss:shadow-commander:show",
+              "durationFrames": 240,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "attack",
+              "previsTag": "player:attack",
+              "durationFrames": 132,
+              "offsetFrames": 80
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "critical",
+              "previsTag": "boss:shadow-commander:critical",
+              "durationFrames": 96,
+              "offsetFrames": 140
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss03_show"
+            ],
+            "bgm": [
+              "bgm_stage03_boss"
+            ],
+            "sfx": [
+              "sfx_staff_windup",
+              "sfx_boss_shadow_critical",
+              "sfx_player_attack"
+            ],
+            "combatSfx": [
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#07_C09",
+          "partOrder": 7,
+          "partId": "part_stage05",
+          "cutId": "C09",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지5 압박 구간",
+          "cutStage": 5,
+          "durationSec": 10.0,
+          "startSec": 103.0,
+          "endSec": 113.0,
+          "startFrame30": 3090,
+          "endFrame30": 3390,
+          "narrationTarget": "C09",
+          "interactive": {
+            "type": "split-command",
+            "effect": "우측 경로 비우기 분산 모드로 이동"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 6
+            },
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 240,
+              "offsetFrames": 20
+            },
+            {
+              "actor": "human-command",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 132,
+              "offsetFrames": 90
+            },
+            {
+              "actor": "human-command",
+              "action": "bighit",
+              "previsTag": "boss:human-command:bighit",
+              "durationFrames": 132,
+              "offsetFrames": 150
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage05"
+            ],
+            "bgm": [
+              "bgm_stage05"
+            ],
+            "sfx": [
+              "sfx_howl_loop",
+              "sfx_boss_generic_hit"
+            ],
+            "ambience": [
+              "bg_stage05_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#08_C10",
+          "partOrder": 8,
+          "partId": "part_stage06",
+          "cutId": "C10",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지6 문턱",
+          "cutStage": 6,
+          "durationSec": 11.0,
+          "startSec": 113.0,
+          "endSec": 124.0,
+          "startFrame30": 3390,
+          "endFrame30": 3720,
+          "narrationTarget": "C10",
+          "interactive": {
+            "type": "branch",
+            "options": [
+              "방어 강화",
+              "공격 템포 유지"
+            ]
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "broken-court-monarch",
+              "action": "show",
+              "previsTag": "boss:broken-court-monarch:show",
+              "durationFrames": 300,
+              "transitionInFrames": 14,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "player",
+              "action": "defence",
+              "previsTag": "player:defence",
+              "durationFrames": 120,
+              "offsetFrames": 60
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "attack",
+              "previsTag": "boss:broken-court-monarch:attack",
+              "durationFrames": 132,
+              "offsetFrames": 120
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "bighit",
+              "previsTag": "boss:broken-court-monarch:bighit",
+              "durationFrames": 132,
+              "offsetFrames": 180
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage06"
+            ],
+            "bgm": [
+              "bgm_stage06_peak"
+            ],
+            "sfx": [
+              "sfx_ward_lock",
+              "sfx_boss_broken_court_monarch_bighit",
+              "sfx_player_block"
+            ],
+            "combatSfx": [
+              "sfx_ward_rise"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#09_C11",
+          "partOrder": 9,
+          "partId": "part_stage07",
+          "cutId": "C11",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지7-8 전개",
+          "cutStage": 7,
+          "durationSec": 12.0,
+          "startSec": 124.0,
+          "endSec": 136.0,
+          "startFrame30": 3720,
+          "endFrame30": 4080,
+          "narrationTarget": "C11",
+          "interactive": {
+            "type": "hud-visual",
+            "effect": "포메이션 변경 시 체력바 분할 애니메이션 형태 전환"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "move",
+              "previsTag": "boss:shadow-commander:move",
+              "durationFrames": 240,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 120,
+              "offsetFrames": 140
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "attack",
+              "previsTag": "boss:shadow-commander:attack",
+              "durationFrames": 132,
+              "offsetFrames": 160
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage07_08"
+            ],
+            "bgm": [
+              "bgm_bridge_cascade"
+            ],
+            "sfx": [
+              "sfx_bridge_break",
+              "sfx_boss_shadow_attack"
+            ],
+            "ambience": [
+              "bg_stage07_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#10_C11",
+          "partOrder": 10,
+          "partId": "part_stage08",
+          "cutId": "C11",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지7-8 전개",
+          "cutStage": 7,
+          "durationSec": 12.0,
+          "startSec": 136.0,
+          "endSec": 148.0,
+          "startFrame30": 4080,
+          "endFrame30": 4440,
+          "narrationTarget": "C11",
+          "interactive": {
+            "type": "hud-visual",
+            "effect": "포메이션 변경 시 체력바 분할 애니메이션 형태 전환"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 240,
+              "transitionInFrames": 8,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "move",
+              "previsTag": "boss:shadow-commander:move",
+              "durationFrames": 240,
+              "offsetFrames": 40
+            },
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 120,
+              "offsetFrames": 140
+            },
+            {
+              "actor": "shadow-commander",
+              "action": "attack",
+              "previsTag": "boss:shadow-commander:attack",
+              "durationFrames": 132,
+              "offsetFrames": 160
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage07_08"
+            ],
+            "bgm": [
+              "bgm_bridge_cascade"
+            ],
+            "sfx": [
+              "sfx_bridge_break",
+              "sfx_boss_shadow_attack"
+            ],
+            "ambience": [
+              "bg_stage07_entry"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#10_C12",
+          "partOrder": 10,
+          "partId": "part_stage08",
+          "cutId": "C12",
+          "cutOrderInPart": 2,
+          "cutLabel": "스테이지8 보스 쇼케이스",
+          "cutStage": 8,
+          "durationSec": 12.0,
+          "startSec": 148.0,
+          "endSec": 160.0,
+          "startFrame30": 4440,
+          "endFrame30": 4800,
+          "narrationTarget": "C12",
+          "interactive": {
+            "type": "timing-window",
+            "options": [
+              "Avoid성공시 3초 무피격 버프 적용"
+            ],
+            "effect": "성공 시 player:avoid 액션을 강제 전이 가능"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "broken-court-monarch",
+              "action": "show",
+              "previsTag": "boss:broken-court-monarch:show",
+              "durationFrames": 300,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "critical",
+              "previsTag": "boss:broken-court-monarch:critical",
+              "durationFrames": 120,
+              "offsetFrames": 120
+            },
+            {
+              "actor": "player",
+              "action": "critical",
+              "previsTag": "player:critical",
+              "durationFrames": 90,
+              "offsetFrames": 130
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss08_show"
+            ],
+            "bgm": [
+              "bgm_stage08_colossus"
+            ],
+            "sfx": [
+              "sfx_colossus_step",
+              "sfx_boss_broken_court_monarch_critical",
+              "sfx_player_critical"
+            ],
+            "combatSfx": [
+              "sfx_defence_break",
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#11_C13",
+          "partOrder": 11,
+          "partId": "part_stage09",
+          "cutId": "C13",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지9 갈림입구",
+          "cutStage": 9,
+          "durationSec": 11.0,
+          "startSec": 160.0,
+          "endSec": 171.0,
+          "startFrame30": 4800,
+          "endFrame30": 5130,
+          "narrationTarget": "C13",
+          "interactive": {
+            "type": "branch",
+            "options": [
+              "추적을 멈춘다",
+              "계속 추적한다"
+            ],
+            "effect": "엔딩 분기 전투톤 토글"
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.critical"
+            ],
+            "skillNarration": [
+              "skill.player.avoid",
+              "skill.player.attack"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "human-command",
+              "action": "show",
+              "previsTag": "boss:human-command:show",
+              "durationFrames": 240,
+              "transitionInFrames": 10,
+              "transitionOutFrames": 10
+            },
+            {
+              "actor": "human-command",
+              "action": "hit",
+              "previsTag": "boss:human-command:hit",
+              "durationFrames": 84,
+              "offsetFrames": 90
+            },
+            {
+              "actor": "player",
+              "action": "defence",
+              "previsTag": "player:defence",
+              "durationFrames": 120,
+              "offsetFrames": 100
+            },
+            {
+              "actor": "human-command",
+              "action": "attack",
+              "previsTag": "boss:human-command:attack",
+              "durationFrames": 132,
+              "offsetFrames": 140
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_stage09"
+            ],
+            "bgm": [
+              "bgm_stage09_dissonant"
+            ],
+            "sfx": [
+              "sfx_vow_break",
+              "sfx_player_block",
+              "sfx_player_hit"
+            ],
+            "combatSfx": [
+              "sfx_player_hit",
+              "sfx_stage_clear_short"
+            ],
+            "npc": [
+              "npcRael_stage9_choice"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#12_C14",
+          "partOrder": 12,
+          "partId": "part_stage10",
+          "cutId": "C14",
+          "cutOrderInPart": 1,
+          "cutLabel": "스테이지10 최종 쇼케이스",
+          "cutStage": 10,
+          "durationSec": 13.0,
+          "startSec": 171.0,
+          "endSec": 184.0,
+          "startFrame30": 5130,
+          "endFrame30": 5520,
+          "narrationTarget": "C14",
+          "interactive": {
+            "type": "critical-branch",
+            "options": [
+              "공격형 연쇄",
+              "방어형 생존"
+            ],
+            "effect": "엔딩 A/B 진입 사전 상태 결정"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "broken-court-monarch",
+              "action": "show",
+              "previsTag": "boss:broken-court-monarch:show",
+              "durationFrames": 360,
+              "transitionInFrames": 16,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "attack",
+              "previsTag": "boss:broken-court-monarch:attack",
+              "durationFrames": 132,
+              "offsetFrames": 120
+            },
+            {
+              "actor": "broken-court-monarch",
+              "action": "critical",
+              "previsTag": "boss:broken-court-monarch:critical",
+              "durationFrames": 120,
+              "offsetFrames": 150
+            },
+            {
+              "actor": "player",
+              "action": "bighit",
+              "previsTag": "player:bighit",
+              "durationFrames": 120,
+              "offsetFrames": 200
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_boss10_show"
+            ],
+            "bgm": [
+              "bgm_stage10_final"
+            ],
+            "sfx": [
+              "sfx_final_gate_shatter",
+              "sfx_boss_broken_court_monarch_critical",
+              "sfx_player_bighit"
+            ],
+            "combatSfx": [
+              "sfx_elite_fail_warning",
+              "sfx_boss_impact_burst"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#13_C15",
+          "partOrder": 13,
+          "partId": "part_ending_common",
+          "cutId": "C15",
+          "cutOrderInPart": 1,
+          "cutLabel": "엔딩 공통",
+          "cutStage": "ending-common",
+          "durationSec": 9.0,
+          "startSec": 184.0,
+          "endSec": 193.0,
+          "startFrame30": 5520,
+          "endFrame30": 5790,
+          "narrationTarget": "C15",
+          "interactive": {
+            "type": "chapter-close",
+            "effect": "다음 챕터 조건 텍스트(회복/재침투 티저)",
+            "nextChapterHint": {
+              "nextChapterUnlocked": true,
+              "branchHint": "ending-a 또는 ending_b"
+            }
+          },
+          "triggers": {
+            "stateNarration": [
+              "state.player.safe",
+              "state.player.defence_ready"
+            ]
+          },
+          "motion": [
+            {
+              "actor": "player",
+              "action": "show",
+              "previsTag": "player:show",
+              "durationFrames": 180,
+              "transitionInFrames": 10,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "player",
+              "action": "idle",
+              "previsTag": "player:idle",
+              "durationFrames": 120,
+              "offsetFrames": 60
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_ending_common"
+            ],
+            "bgm": [
+              "bgm_ending_common"
+            ],
+            "sfx": [
+              "sfx_resonance_bloom"
+            ],
+            "combatSfx": [
+              "sfx_stage_clear_short"
+            ]
+          }
+        },
+        {
+          "occurrenceId": "cut_only#14_C16",
+          "partOrder": 14,
+          "partId": "part_ending_branch_a",
+          "cutId": "C16",
+          "cutOrderInPart": 1,
+          "cutLabel": "엔딩 브랜치 A: 재건 루트",
+          "cutStage": "ending-a",
+          "durationSec": 10.0,
+          "startSec": 193.0,
+          "endSec": 203.0,
+          "startFrame30": 5790,
+          "endFrame30": 6090,
+          "narrationTarget": "C16",
+          "interactive": {
+            "type": "teaser",
+            "effect": "회복 루트 안내 및 사이드퀘스트 티저 표시"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "move",
+              "previsTag": "player:move",
+              "durationFrames": 180,
+              "transitionInFrames": 10,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "player",
+              "action": "idle",
+              "previsTag": "player:idle",
+              "durationFrames": 120,
+              "offsetFrames": 120
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_ending_a"
+            ],
+            "bgm": [
+              "bgm_ending_a"
+            ],
+            "sfx": [
+              "sfx_forge_soft"
+            ],
+            "combatSfx": []
+          }
+        },
+        {
+          "occurrenceId": "cut_only#15_C17",
+          "partOrder": 15,
+          "partId": "part_ending_branch_b",
+          "cutId": "C17",
+          "cutOrderInPart": 1,
+          "cutLabel": "엔딩 브랜치 B: 재침투 루트",
+          "cutStage": "ending-b",
+          "durationSec": 11.0,
+          "startSec": 203.0,
+          "endSec": 214.0,
+          "startFrame30": 6090,
+          "endFrame30": 6420,
+          "narrationTarget": "C17",
+          "interactive": {
+            "type": "teaser",
+            "effect": "다음 시즌 재침투 루트(추적형 성장) 진입 안내"
+          },
+          "triggers": null,
+          "motion": [
+            {
+              "actor": "player",
+              "action": "run",
+              "previsTag": "player:run",
+              "durationFrames": 220,
+              "transitionInFrames": 12,
+              "transitionOutFrames": 8
+            },
+            {
+              "actor": "player",
+              "action": "attack",
+              "previsTag": "player:attack",
+              "durationFrames": 132,
+              "offsetFrames": 100
+            }
+          ],
+          "audioRefs": {
+            "narration": [
+              "narr_ending_b"
+            ],
+            "bgm": [
+              "bgm_ending_b"
+            ],
+            "sfx": [
+              "sfx_pursuit_wind",
+              "sfx_player_attack"
+            ],
+            "combatSfx": [
+              "sfx_elite_fail_warning"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "usage": {
+    "blender": "Import as VSE timeline markers: one marker per occurrence at startFrame30 (30fps timeline), labeled cutId + cutLabel. Use sequences.<name>.occurrences[].startFrame30/endFrame30.",
+    "unity": "Import as Timeline markers or a signal-emitter track: one marker per occurrence at startSec, firing audioRefs/triggers for HUD/narration sync.",
+    "generic": "sequences.<name>.occurrences is a flat, time-ordered list per sequence variant (mainline/ending_branch_b/cut_only); each entry carries its own cut metadata, so no cross-reference into storyboard-motion-sound-matrix.json is required for playback sync."
+  }
+}

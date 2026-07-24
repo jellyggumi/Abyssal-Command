@@ -43,8 +43,12 @@ const storage = new DefenseStorage();
 const viewport = new DefenseViewport();
 const telemetry = new DefenseTelemetry();
 const STEP_MS = 1000 / TICK_RATE;
-const MOVEMENT_DEAD_ZONE = 120;
-const MOVEMENT_MAX_RADIUS = 640;
+// Canvas drag now orbits the free camera (Cycle 3 / D17) instead of driving
+// movement — movement is exclusively the D-pad (#movement-actions) and
+// keyboard, both independent of the canvas.
+const CAMERA_ORBIT_YAW_SENSITIVITY = 0.00372; // rad per logical px; full landscape width ~= 180deg
+const CAMERA_ORBIT_PITCH_SENSITIVITY = 0.00246; // rad per logical px; drag up = look down (steeper pitch)
+const CAMERA_PINCH_ZOOM_SENSITIVITY = 0.006; // zoomFactor delta per px of pinch-distance change
 const DIRECTION_BY_VECTOR = Object.freeze({
   "0,-1": "N", "1,-1": "NE", "1,0": "E", "1,1": "SE",
   "0,1": "S", "-1,1": "SW", "-1,0": "W", "-1,-1": "NW", "0,0": "IDLE",
@@ -65,6 +69,78 @@ let statusText = "기록을 불러오는 중입니다.";
 let campaignWrite = Promise.resolve();
 let session = null;
 let idleReturnReceipt = null;
+
+// --- Command-deck tab shell (5 tabs: 출정/성장/동료/인벤토리/요새) ---
+const LOBBY_TABS = Object.freeze([
+  { id: "deploy", label: "출정" },
+  { id: "growth", label: "성장" },
+  { id: "companions", label: "동료" },
+  { id: "inventory", label: "인벤토리" },
+  { id: "stronghold", label: "요새" },
+]);
+const GROWTH_SEGMENTS = Object.freeze([
+  { id: "stats", label: "스탯" },
+  { id: "skills", label: "스킬트리" },
+  { id: "traits", label: "특성" },
+]);
+/** Reward `kind` -> tier-icon vertex count (reuses EQUIPMENT_TIERS' color-independent shape convention for a non-equipment domain). */
+const REWARD_KIND_VERTICES = Object.freeze({ modifier: 3, archive: 4, companion: 6 });
+let activeLobbyTab = LOBBY_TABS[0].id;
+let activeGrowthSegment = GROWTH_SEGMENTS[0].id;
+
+function wardenStatsMarkup(wp, echoEarned, echoSpent, { interactive = true } = {}) {
+  return Object.values(WARDEN_STATS).map((stat) => {
+    const points = wp.statPoints[stat.id] ?? 0;
+    const maxed = points >= stat.maxPoints;
+    const nextCost = maxed ? null : wardenStatPointCost(points + 1);
+    const affordable = nextCost !== null && echoSpent + nextCost <= echoEarned;
+    const action = interactive ? `<button data-warden-stat="${stat.id}" ${maxed || !affordable ? "disabled" : ""}>${maxed ? "만렙" : `+1 (${nextCost} EC)`}</button>` : "";
+    return `<div class="growth-stat-row"><div><strong>${escapeHtml(stat.name)}</strong><small>${escapeHtml(stat.description)} · ${points}/${stat.maxPoints}</small></div>${action}</div>`;
+  }).join("");
+}
+
+function wardenSkillsMarkup(wp, echoEarned, echoSpent) {
+  return Object.values(WARDEN_SKILL_TREE).map((node) => {
+    const unlocked = wp.skillTreeIds.includes(node.id);
+    const prereqMet = node.prereq.every((id) => wp.skillTreeIds.includes(id));
+    const affordable = echoSpent + node.cost <= echoEarned;
+    const canUnlock = !unlocked && prereqMet && affordable;
+    return `<div class="growth-skill-node${unlocked ? " is-unlocked" : ""}"><div><strong>${escapeHtml(node.id)}</strong><small>${escapeHtml(node.description)} · 비용 ${node.cost} EC${node.prereq.length ? ` · 선행 ${node.prereq.join(", ")}` : ""}</small></div><button data-warden-skill="${node.id}" ${unlocked || !canUnlock ? "disabled" : ""}>${unlocked ? "해금됨" : "해금"}</button></div>`;
+  }).join("");
+}
+
+function wardenTraitsMarkup(wp) {
+  const nextTraitSlot = wp.traitIds.length;
+  const nextTraitSequence = WARDEN_TRAIT_UNLOCK_SEQUENCES[nextTraitSlot];
+  const traitOffers = nextTraitSequence !== undefined && campaign.resolvedIds.length >= nextTraitSequence
+    ? wardenTraitOffersForSequence(nextTraitSequence, wp.traitIds) : [];
+  return `
+    <p class="section-copy">선택됨: ${wp.traitIds.length ? wp.traitIds.map((id) => escapeHtml(WARDEN_TRAITS[id]?.name ?? id)).join(", ") : "없음"} (${wp.traitIds.length}/${WARDEN_TRAIT_UNLOCK_SEQUENCES.length})</p>
+    ${traitOffers.length ? `<div class="growth-trait-offers">${traitOffers.map((id) => { const trait = WARDEN_TRAITS[id]; return `<button class="growth-trait-card" data-warden-trait="${id}"><strong>${escapeHtml(trait.name)}</strong><small>${escapeHtml(trait.description)}</small><em>${escapeHtml(trait.tradeoff)}</em></button>`; }).join("")}</div>`
+      : nextTraitSequence !== undefined ? `<p class="section-copy">다음 특성은 ${nextTraitSequence}전선 완료 시 선택 가능합니다 (현재 ${campaign.resolvedIds.length}).</p>` : `<p class="section-copy">모든 특성 슬롯을 사용했습니다.</p>`}`;
+}
+
+function equipmentOwnersMarkup(loadout, fragEarned, fragSpent, { interactive = true } = {}) {
+  const equipOwners = [{ id: "warden", label: "Dusk Warden" }, ...loadout.map((id) => ({ id, label: companionLabel(id) }))];
+  return equipOwners.map((owner) => `
+    <div class="growth-equip-owner"><strong>${escapeHtml(owner.label)}</strong><div class="growth-equip-slots">${EQUIPMENT_SLOTS.map((slot) => {
+      const tierIndex = equipmentTierIndexFor(campaign, owner.id, slot);
+      const maxed = tierIndex >= EQUIPMENT_TIERS.length - 1;
+      const currentTier = EQUIPMENT_TIERS[tierIndex];
+      const cost = maxed ? null : equipmentTierUpgradeCost(tierIndex);
+      const affordable = cost !== null && fragSpent + cost <= fragEarned;
+      const action = interactive ? `<button data-warden-equip-owner="${owner.id}" data-warden-equip-slot="${slot}" ${maxed || !affordable ? "disabled" : ""}>${maxed ? "최대" : `강화 (${cost} BF)`}</button>` : "";
+      return `<div class="growth-equip-slot"><small>${slot}</small><span class="tier-icon" data-tier-vertices="${currentTier.vertexCount}" aria-hidden="true"></span><span>${escapeHtml(currentTier.name)} (${currentTier.id})</span>${action}</div>`;
+    }).join("")}</div></div>`).join("");
+}
+
+function formationRowMarkup(loadout, { interactive = true } = {}) {
+  return loadout.length ? `<div class="growth-formation-row">${loadout.map((id) => {
+    const slot = campaign.companionFormation[id] || "BACK";
+    const action = interactive ? `<button data-warden-formation="${id}" data-warden-formation-target="${slot === "FRONT" ? "BACK" : "FRONT"}">${slot === "FRONT" ? "후열로" : "전열로"}</button>` : "";
+    return `<div class="growth-formation-slot"><strong>${escapeHtml(companionLabel(id))}</strong><span>${slot}</span>${action}</div>`;
+  }).join("")}</div>` : `<p class="section-copy">편성된 동료가 없습니다.</p>`;
+}
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -148,6 +224,9 @@ function companionGlyph(prototype) {
     "anchor-shard": "⬡",
     "throne-echo": "◌",
     "dawnless-crown": "♜",
+    "pack-warden": "◊",
+    "lantern-reaver": "☖",
+    "requiem-warden": "○",
   }[prototype] ?? "·";
 }
 
@@ -261,87 +340,8 @@ async function persistCampaign(message = "기록을 저장했습니다.") {
   }
 }
 
-/** Warden growth panel (stats/skills/traits/equipment/formation/wardline) — minimal Stage1 UI, `.claude/skills` task-manifest scope. */
-function renderGrowthPanel() {
-  const wp = campaign.wardenProgress;
-  const echoEarned = echoCoreEarned(campaign);
-  const echoSpent = echoCoreSpent(campaign);
-  const fragEarned = boundFragmentEarned(campaign);
-  const fragSpent = boundFragmentSpent(campaign);
-  const level = wardLevel(campaign);
-  const loadout = selectedLoadout();
-
-  const statsHtml = Object.values(WARDEN_STATS).map((stat) => {
-    const points = wp.statPoints[stat.id] ?? 0;
-    const maxed = points >= stat.maxPoints;
-    const nextCost = maxed ? null : wardenStatPointCost(points + 1);
-    const affordable = nextCost !== null && echoSpent + nextCost <= echoEarned;
-    return `<div class="growth-stat-row"><div><strong>${escapeHtml(stat.name)}</strong><small>${escapeHtml(stat.description)} · ${points}/${stat.maxPoints}</small></div><button data-warden-stat="${stat.id}" ${maxed || !affordable ? "disabled" : ""}>${maxed ? "만렙" : `+1 (${nextCost} EC)`}</button></div>`;
-  }).join("");
-
-  const skillHtml = Object.values(WARDEN_SKILL_TREE).map((node) => {
-    const unlocked = wp.skillTreeIds.includes(node.id);
-    const prereqMet = node.prereq.every((id) => wp.skillTreeIds.includes(id));
-    const affordable = echoSpent + node.cost <= echoEarned;
-    const canUnlock = !unlocked && prereqMet && affordable;
-    return `<div class="growth-skill-node${unlocked ? " is-unlocked" : ""}"><div><strong>${escapeHtml(node.id)}</strong><small>${escapeHtml(node.description)} · 비용 ${node.cost} EC${node.prereq.length ? ` · 선행 ${node.prereq.join(", ")}` : ""}</small></div><button data-warden-skill="${node.id}" ${unlocked || !canUnlock ? "disabled" : ""}>${unlocked ? "해금됨" : "해금"}</button></div>`;
-  }).join("");
-
-  const nextTraitSlot = wp.traitIds.length;
-  const nextTraitSequence = WARDEN_TRAIT_UNLOCK_SEQUENCES[nextTraitSlot];
-  const traitOffers = nextTraitSequence !== undefined && campaign.resolvedIds.length >= nextTraitSequence
-    ? wardenTraitOffersForSequence(nextTraitSequence, wp.traitIds) : [];
-  const traitsHtml = `
-    <p class="section-copy">선택됨: ${wp.traitIds.length ? wp.traitIds.map((id) => escapeHtml(WARDEN_TRAITS[id]?.name ?? id)).join(", ") : "없음"} (${wp.traitIds.length}/${WARDEN_TRAIT_UNLOCK_SEQUENCES.length})</p>
-    ${traitOffers.length ? `<div class="growth-trait-offers">${traitOffers.map((id) => { const trait = WARDEN_TRAITS[id]; return `<button class="growth-trait-card" data-warden-trait="${id}"><strong>${escapeHtml(trait.name)}</strong><small>${escapeHtml(trait.description)}</small><em>${escapeHtml(trait.tradeoff)}</em></button>`; }).join("")}</div>`
-      : nextTraitSequence !== undefined ? `<p class="section-copy">다음 특성은 ${nextTraitSequence}전선 완료 시 선택 가능합니다 (현재 ${campaign.resolvedIds.length}).</p>` : `<p class="section-copy">모든 특성 슬롯을 사용했습니다.</p>`}`;
-
-  const equipOwners = [{ id: "warden", label: "Dusk Warden" }, ...loadout.map((id) => ({ id, label: companionLabel(id) }))];
-  const equipHtml = equipOwners.map((owner) => `
-    <div class="growth-equip-owner"><strong>${escapeHtml(owner.label)}</strong><div class="growth-equip-slots">${EQUIPMENT_SLOTS.map((slot) => {
-      const tierIndex = equipmentTierIndexFor(campaign, owner.id, slot);
-      const maxed = tierIndex >= EQUIPMENT_TIERS.length - 1;
-      const currentTier = EQUIPMENT_TIERS[tierIndex];
-      const cost = maxed ? null : equipmentTierUpgradeCost(tierIndex);
-      const affordable = cost !== null && fragSpent + cost <= fragEarned;
-      return `<div class="growth-equip-slot"><small>${slot}</small><span class="tier-icon" data-tier-vertices="${currentTier.vertexCount}" aria-hidden="true"></span><span>${escapeHtml(currentTier.name)} (${currentTier.id})</span><button data-warden-equip-owner="${owner.id}" data-warden-equip-slot="${slot}" ${maxed || !affordable ? "disabled" : ""}>${maxed ? "최대" : `강화 (${cost} BF)`}</button></div>`;
-    }).join("")}</div></div>`).join("");
-
-  const formationHtml = loadout.length ? `<div class="growth-formation-row">${loadout.map((id) => {
-    const slot = campaign.companionFormation[id] || "BACK";
-    return `<div class="growth-formation-slot"><strong>${escapeHtml(companionLabel(id))}</strong><span>${slot}</span><button data-warden-formation="${id}" data-warden-formation-target="${slot === "FRONT" ? "BACK" : "FRONT"}">${slot === "FRONT" ? "후열로" : "전열로"}</button></div>`;
-  }).join("")}</div>` : `<p class="section-copy">편성된 동료가 없습니다.</p>`;
-
+function renderDeployTabContent({ selected, selectedPresentation, selectedTerrain, selectedObjective, completed, unlocked, loadout }) {
   return `
-    <section class="growth-panel" aria-labelledby="growth-title">
-      <div class="panel-heading"><div><p class="eyebrow">DUSK WARDEN · TRACK A/B</p><h2 id="growth-title">성장</h2></div><span class="panel-count">EC ${echoSpent}/${echoEarned} · BF ${fragSpent}/${fragEarned} · 저지 Lv${level}</span></div>
-      <details open><summary>스탯 (Echo Core)</summary><div class="growth-stat-grid">${statsHtml}</div></details>
-      <details><summary>스킬트리 (Echo Core, 스탯과 공용 예산)</summary><div class="growth-skill-grid">${skillHtml}</div></details>
-      <details><summary>특성 (전선 클리어 시 3택1)</summary>${traitsHtml}</details>
-      <details><summary>장비 (Bound Fragment)</summary><div class="growth-equip-grid">${equipHtml}</div></details>
-      <details><summary>편성 (전열/후열, 최대 ${MAX_FRONT_SLOTS}전열)</summary>${formationHtml}</details>
-    </section>`;
-}
-
-function renderLobby() {
-  if (!campaign) return;
-  const selected = stageFor(selectedStageId);
-  const idleSummary = idleReturnSummary();
-  const selectedPresentation = stagePresentationFor(selected.id);
-  const selectedTerrain = stageTerrainProjection(selected.id);
-  const loadout = selectedLoadout();
-  const collection = campaign.companionCollection;
-  const completed = campaign.resolvedIds?.length ?? 0;
-  const unlocked = campaign.unlockedStageIndex + 1;
-  const selectedObjective = stageObjective(selected.id);
-  document.body.classList.remove("defense-playing");
-  document.body.style.overflow = "";
-  root.className = "defense-lobby";
-  root.innerHTML = `
-    <header class="command-header">
-      <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">AC</span><div><p class="eyebrow">ABYSSAL COMMAND · DEEP REFUGE</p><h1>그림자군단 방어선</h1></div></div>
-      <div class="command-status"><span class="signal-dot" aria-hidden="true"></span><span>기록실 연결됨</span><strong>${completed}/10 봉쇄선</strong></div>
-    </header>
     <section class="command-hero" aria-labelledby="command-hero-title">
       <div class="hero-copy">
         <p class="eyebrow">COMMAND DECK · SECTOR ${String(selected.sequence).padStart(2, "0")}</p>
@@ -380,20 +380,103 @@ function renderLobby() {
         <dl class="briefing-stats"><div><dt>지형 / 고지</dt><dd>${escapeHtml(selectedPresentation.mapLabels.chokepath)} · ${escapeHtml(selectedPresentation.mapLabels.elevation)}</dd></div><div><dt>위협 / 측면</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)}</dd></div><div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div><div><dt>다음 보상</dt><dd>${escapeHtml(nextRewardName(selected.id))}</dd></div></dl>
         <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 중앙 전장에서 손가락을 끌어 이동하세요. 적을 처치하고 <b>추출(Extract)</b>하여 그림자 군단으로 복속시킬 수 있습니다.</p>
       </aside>
-      <section class="loadout-panel" aria-labelledby="companion-title">
-        <div class="panel-heading"><div><p class="eyebrow">COMMAND BOND</p><h2 id="companion-title">동료 편성</h2></div><span class="panel-count">${loadout.length}/3 ACTIVE</span></div>
-        <p class="section-copy">정예를 추출하면 영구 동료가 됩니다. 편성한 동료는 다음 출전부터 자동으로 함께합니다.</p>
-        <div class="loadout-slots" aria-label="현재 동료 편성">${[0, 1, 2].map((index) => { const prototype = loadout[index]; return prototype ? `<div class="loadout-slot is-filled"><span class="companion-glyph">${companionGlyph(prototype)}</span><strong>${escapeHtml(companionLabel(prototype))}</strong><small>결속 ${index + 1}</small></div>` : `<div class="loadout-slot"><span class="slot-plus">+</span><small>빈 슬롯</small></div>`; }).join("")}</div>
-        <div class="companion-grid">${collection.length ? collection.map((record) => `<button class="companion-card${loadout.includes(record.prototype) ? " is-selected" : ""}" data-companion="${record.prototype}" aria-pressed="${loadout.includes(record.prototype)}"><span class="companion-glyph">${companionGlyph(record.prototype)}</span><span><strong>${escapeHtml(companionLabel(record.prototype))}</strong><small>진화 ${record.evolution} · 추출 ${record.capturedEliteIds.length}</small></span><i>${loadout.includes(record.prototype) ? "편성됨" : "편성"}</i></button>`).join("") : `<div class="empty-companions"><span class="companion-glyph">?</span><div><strong>아직 결속한 동료가 없습니다.</strong><p>전투 중 빛나는 정예를 쓰러뜨린 뒤 <b>추출</b>하세요.</p></div></div>`}</div>
-      </section>
-      ${renderGrowthPanel()}
-      <section class="archive-panel" aria-labelledby="reward-title">
-        <div class="archive-summary"><span class="archive-ring"><b>${completed}</b><small>전선<br />완료</small></span><div><strong>영구 진행</strong><p>보스 보상과 동료 결속은 기록실에 남아 다음 런에도 이어집니다.</p><p id="idle-return-summary" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p></div></div>
-        <div class="reward-grid">${(campaign.rewardIds?.length ?? 0) ? campaign.rewardIds.map((id) => `<article class="reward-card"><span class="reward-mark">✦</span><strong>${escapeHtml(REWARDS[id]?.name ?? id)}</strong><span>${escapeHtml(REWARDS[id]?.description ?? "기록된 보상")}</span></article>`).join("") : `<p class="empty-archive">첫 보스를 봉쇄하면 영구 보상을 선택할 수 있습니다.</p>`}</div>
-      </section>
-    </div>
-    <details class="archive-tools"><summary>기록 관리 <span>오프라인 저장 · ${escapeHtml(storage.backend ?? "확인 중")}</span></summary><div class="storage-row" aria-label="캠페인 제어"><button id="export-defense">기록 내보내기</button><label class="import-label">기록 가져오기<input id="import-defense" type="file" accept="application/json,text/plain" /></label><button id="export-telemetry">진단 내보내기</button><button id="reset-defense">새 기록</button><output aria-live="polite">${escapeHtml(statusText)}</output></div></details>`;
+    </div>`;
+}
 
+/** 성장 탭: 스탯/스킬트리/특성 세그먼트(2차 내비) — `activeGrowthSegment` 모듈 상태로 전환. */
+function renderGrowthTabContent() {
+  const wp = campaign.wardenProgress;
+  const echoEarned = echoCoreEarned(campaign);
+  const echoSpent = echoCoreSpent(campaign);
+  const level = wardLevel(campaign);
+  const segmentBody = activeGrowthSegment === "skills"
+    ? `<div class="growth-skill-grid">${wardenSkillsMarkup(wp, echoEarned, echoSpent)}</div>`
+    : activeGrowthSegment === "traits"
+      ? wardenTraitsMarkup(wp)
+      : `<div class="growth-stat-grid">${wardenStatsMarkup(wp, echoEarned, echoSpent)}</div>`;
+  return `
+    <section class="growth-panel" aria-labelledby="growth-title">
+      <div class="panel-heading"><div><p class="eyebrow">DUSK WARDEN · TRACK A</p><h2 id="growth-title">성장</h2></div><span class="panel-count">EC ${echoSpent}/${echoEarned} · 저지 Lv${level}</span></div>
+      <div class="command-segments" role="tablist" aria-label="성장 세부 항목">${GROWTH_SEGMENTS.map((segment) => `<button class="segment-tab${segment.id === activeGrowthSegment ? " is-active" : ""}" data-growth-segment="${segment.id}" role="tab" aria-selected="${segment.id === activeGrowthSegment}">${escapeHtml(segment.label)}</button>`).join("")}</div>
+      <div class="command-segment-panel" role="tabpanel">${segmentBody}</div>
+    </section>`;
+}
+
+function renderCompanionsTabContent({ loadout, collection }) {
+  return `
+    <section class="loadout-panel" aria-labelledby="companion-title">
+      <div class="panel-heading"><div><p class="eyebrow">COMMAND BOND</p><h2 id="companion-title">동료 편성</h2></div><span class="panel-count">${loadout.length}/3 ACTIVE</span></div>
+      <p class="section-copy">정예를 추출하면 영구 동료가 됩니다. 편성한 동료는 다음 출전부터 자동으로 함께합니다.</p>
+      <div class="loadout-slots" aria-label="현재 동료 편성">${[0, 1, 2].map((index) => { const prototype = loadout[index]; return prototype ? `<div class="loadout-slot is-filled"><span class="companion-glyph">${companionGlyph(prototype)}</span><strong>${escapeHtml(companionLabel(prototype))}</strong><small>결속 ${index + 1}</small></div>` : `<div class="loadout-slot"><span class="slot-plus">+</span><small>빈 슬롯</small></div>`; }).join("")}</div>
+      <div class="companion-grid">${collection.length ? collection.map((record) => `<button class="companion-card${loadout.includes(record.prototype) ? " is-selected" : ""}" data-companion="${record.prototype}" aria-pressed="${loadout.includes(record.prototype)}"><span class="companion-glyph">${companionGlyph(record.prototype)}</span><span><strong>${escapeHtml(companionLabel(record.prototype))}</strong><small>진화 ${record.evolution} · 추출 ${record.capturedEliteIds.length}</small></span><i>${loadout.includes(record.prototype) ? "편성됨" : "편성"}</i></button>`).join("") : `<div class="empty-companions"><span class="companion-glyph">?</span><div><strong>아직 결속한 동료가 없습니다.</strong><p>전투 중 빛나는 정예를 쓰러뜨린 뒤 <b>추출</b>하세요.</p></div></div>`}</div>
+    </section>
+    <section class="growth-panel" aria-labelledby="formation-title">
+      <div class="panel-heading"><div><p class="eyebrow">FORMATION</p><h2 id="formation-title">편성 (전열/후열, 최대 ${MAX_FRONT_SLOTS}전열)</h2></div></div>
+      ${formationRowMarkup(loadout)}
+    </section>`;
+}
+
+function renderInventoryTabContent(loadout) {
+  const fragEarned = boundFragmentEarned(campaign);
+  const fragSpent = boundFragmentSpent(campaign);
+  return `
+    <section class="growth-panel" aria-labelledby="inventory-title">
+      <div class="panel-heading"><div><p class="eyebrow">DUSK WARDEN · EQUIPMENT</p><h2 id="inventory-title">인벤토리</h2></div><span class="panel-count">BF ${fragSpent}/${fragEarned}</span></div>
+      <div class="growth-equip-grid">${equipmentOwnersMarkup(loadout, fragEarned, fragSpent)}</div>
+    </section>`;
+}
+
+function renderStrongholdTabContent({ completed, idleSummary }) {
+  return `
+    <section class="archive-panel" aria-labelledby="reward-title">
+      <div class="archive-summary"><span class="archive-ring"><b>${completed}</b><small>전선<br />완료</small></span><div><strong>영구 진행</strong><p>보스 보상과 동료 결속은 기록실에 남아 다음 런에도 이어집니다.</p><p id="idle-return-summary" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p></div></div>
+      <div class="reward-grid">${(campaign.rewardIds?.length ?? 0) ? campaign.rewardIds.map((id) => `<article class="reward-card"><span class="reward-mark">✦</span><strong>${escapeHtml(REWARDS[id]?.name ?? id)}</strong><span>${escapeHtml(REWARDS[id]?.description ?? "기록된 보상")}</span></article>`).join("") : `<p class="empty-archive">첫 보스를 봉쇄하면 영구 보상을 선택할 수 있습니다.</p>`}</div>
+    </section>
+    <details class="archive-tools"><summary>기록 관리 <span>오프라인 저장 · ${escapeHtml(storage.backend ?? "확인 중")}</span></summary><div class="storage-row" aria-label="캠페인 제어"><button id="export-defense">기록 내보내기</button><label class="import-label">기록 가져오기<input id="import-defense" type="file" accept="application/json,text/plain" /></label><button id="export-telemetry">진단 내보내기</button><button id="reset-defense">새 기록</button><output aria-live="polite">${escapeHtml(statusText)}</output></div></details>`;
+}
+
+/** 5-tab command-deck shell (출정/성장/동료/인벤토리/요새) — `_workspace/20260723-solo-warden-rpg-concept/ui/lane-info-architecture.md` §2.1. */
+function renderLobby() {
+  if (!campaign) return;
+  const selected = stageFor(selectedStageId);
+  const idleSummary = idleReturnSummary();
+  const selectedPresentation = stagePresentationFor(selected.id);
+  const selectedTerrain = stageTerrainProjection(selected.id);
+  const loadout = selectedLoadout();
+  const collection = campaign.companionCollection;
+  const completed = campaign.resolvedIds?.length ?? 0;
+  const unlocked = campaign.unlockedStageIndex + 1;
+  const selectedObjective = stageObjective(selected.id);
+  document.body.classList.remove("defense-playing");
+  document.body.style.overflow = "";
+  root.className = "defense-lobby";
+  const tabContent = activeLobbyTab === "growth" ? renderGrowthTabContent()
+    : activeLobbyTab === "companions" ? renderCompanionsTabContent({ loadout, collection })
+      : activeLobbyTab === "inventory" ? renderInventoryTabContent(loadout)
+        : activeLobbyTab === "stronghold" ? renderStrongholdTabContent({ completed, idleSummary })
+          : renderDeployTabContent({ selected, selectedPresentation, selectedTerrain, selectedObjective, completed, unlocked, loadout });
+  root.innerHTML = `
+    <header class="command-header">
+      <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">AC</span><div><p class="eyebrow">ABYSSAL COMMAND · DEEP REFUGE</p><h1>그림자군단 방어선</h1></div></div>
+      <div class="command-status"><span class="signal-dot" aria-hidden="true"></span><span>기록실 연결됨</span><strong>${completed}/10 봉쇄선</strong></div>
+    </header>
+    <nav class="command-tabbar" role="tablist" aria-label="커맨드 덱 메뉴">
+      ${LOBBY_TABS.map((tab) => `<button class="command-tab${tab.id === activeLobbyTab ? " is-active" : ""}" data-lobby-tab="${tab.id}" role="tab" aria-selected="${tab.id === activeLobbyTab}" aria-controls="command-tabpanel">${escapeHtml(tab.label)}</button>`).join("")}
+    </nav>
+    <div class="command-tabpanel" id="command-tabpanel" role="tabpanel">${tabContent}</div>`;
+
+  root.querySelectorAll("[data-lobby-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      activeLobbyTab = button.dataset.lobbyTab;
+      renderLobby();
+    });
+  });
+  root.querySelectorAll("[data-growth-segment]").forEach((button) => {
+    button.addEventListener("click", () => {
+      activeGrowthSegment = button.dataset.growthSegment;
+      renderLobby();
+    });
+  });
   root.querySelectorAll("[data-stage]").forEach((button) => {
     button.addEventListener("click", () => {
       selectedStageId = button.dataset.stage;
@@ -467,8 +550,8 @@ function renderLobby() {
       renderLobby();
     });
   });
-  root.querySelector("#start-defense").addEventListener("click", () => beginSession(selectedStageId));
-  root.querySelector("#export-defense").addEventListener("click", async () => {
+  root.querySelector("#start-defense")?.addEventListener("click", () => beginSession(selectedStageId));
+  root.querySelector("#export-defense")?.addEventListener("click", async () => {
     const text = await storage.exportText();
     if (!text) {
       statusText = "내보낼 유효한 기록이 없습니다.";
@@ -482,7 +565,7 @@ function renderLobby() {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   });
-  root.querySelector("#export-telemetry").addEventListener("click", () => {
+  root.querySelector("#export-telemetry")?.addEventListener("click", () => {
     const url = URL.createObjectURL(new Blob([telemetry.exportJson()], { type: "application/json" }));
     const link = document.createElement("a");
     link.href = url;
@@ -490,7 +573,7 @@ function renderLobby() {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   });
-  root.querySelector("#import-defense").addEventListener("change", async (event) => {
+  root.querySelector("#import-defense")?.addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     const text = file ? await file.text() : "";
     if (!text || !(await storage.importText(text))) {
@@ -503,7 +586,7 @@ function renderLobby() {
     statusText = "기록을 가져왔습니다.";
     renderLobby();
   });
-  root.querySelector("#reset-defense").addEventListener("click", async () => {
+  root.querySelector("#reset-defense")?.addEventListener("click", async () => {
     await storage.clear();
     campaign = createCampaign({ resetEpoch: campaign.resetEpoch + 1 });
     selectedStageId = STAGES[0].id;
@@ -598,6 +681,9 @@ export class BattleSession {
     this.stopped = false;
     this.camera = { x: 0, y: 0 };
     this.focusBeforeGrowth = null;
+    this.pauseOverlayFocusBefore = null;
+    this.toastTimers = new Set();
+    this.rallyAcknowledgedBossIds = new Set();
     this.onResize = this.resize.bind(this);
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
@@ -1015,6 +1101,7 @@ export class BattleSession {
     this.renderControls(snapshot);
     if (snapshot.terminal && !this.terminalHandled) void this.resolveTerminal(snapshot);
     this.renderEventFeedback(snapshot);
+    this.renderPauseOverlay(snapshot);
   }
 
   renderControls(snapshot) {
@@ -1051,9 +1138,11 @@ export class BattleSession {
         card.innerHTML = `<h2>성장 선택 · 전투 일시 정지</h2><div class="choices">${previews.map(({ skillId, label }) => `<button data-pick="${skillId}"><strong>${escapeHtml(SKILLS[skillId]?.name ?? skillId)}</strong><span>${escapeHtml(label)}</span></button>`).join("")}</div>`;
         card.querySelectorAll("[data-pick]").forEach((button) => {
           button.addEventListener("click", () => {
+            const picked = previews.find((preview) => preview.skillId === button.dataset.pick);
             this.send("SKILL_SELECTED", { skillId: button.dataset.pick });
             card.remove();
             this.focusBeforeGrowth?.focus?.();
+            if (picked) this.showToast(`LV UP · ${escapeHtml(SKILLS[picked.skillId]?.name ?? picked.skillId)} · ${escapeHtml(picked.label)}`, { variant: "levelup" });
           });
         });
         card.querySelector("button")?.focus();
@@ -1064,24 +1153,121 @@ export class BattleSession {
 
     const actions = root.querySelector("#battle-actions");
     const candidate = snapshot.eliteCandidate;
+    const bossActor = snapshot.enemies.find((enemy) => enemy.class === "boss");
+    const readyCompanions = snapshot.companions.filter((companion) => companion.status === "ACTIVE").length;
+    const rallyAvailable = Boolean(bossActor) && readyCompanions >= 2 && !this.rallyAcknowledgedBossIds.has(bossActor.id);
     const actionMarkup = `<button id="toggle-pause" aria-pressed="${this.userPaused}">${this.userPaused ? "전투 계속" : "일시 정지"}</button>${
       candidate && !snapshot.extracted
         ? `<button id="extract-elite" data-defense-extract="${candidate.enemyId}">정예 추출 · ${escapeHtml(companionLabel(candidate.prototype))}</button>`
+        : ""
+    }${
+      rallyAvailable
+        ? `<button id="rally-assault" class="rally-action" data-defense-rally="${bossActor.id}">총공세 · 동료 ${readyCompanions}기 결집</button>`
         : ""
     }`;
     if (actions.dataset.actions !== actionMarkup) {
       actions.dataset.actions = actionMarkup;
       actions.innerHTML = actionMarkup;
-      actions.querySelector("#toggle-pause")?.addEventListener("click", () => {
-        this.userPaused = !this.userPaused;
-        this.surface.dataset.defenseState = this.userPaused ? "paused" : "active";
-        this.accumulator = 0;
-        this.render();
-      });
+      actions.querySelector("#toggle-pause")?.addEventListener("click", () => this.togglePause());
       actions.querySelector("#extract-elite")?.addEventListener("click", () => {
         this.send("EXTRACT_ELITE", { enemyId: candidate.enemyId });
       });
+      actions.querySelector("#rally-assault")?.addEventListener("click", () => {
+        this.rallyAcknowledgedBossIds.add(bossActor.id);
+        this.showToast(`총공세 발동 · 동료 ${readyCompanions}기 쿨다운 초기화`, { variant: "rally" });
+        this.render();
+      });
     }
+  }
+
+  /** Toggles `userPaused`; `force` optionally pins the target state (used by the pause-overlay resume button). */
+  togglePause(force) {
+    this.userPaused = force ?? !this.userPaused;
+    this.surface.dataset.defenseState = this.userPaused ? "paused" : "active";
+    this.accumulator = 0;
+    this.render();
+  }
+
+  /** Non-blocking edge-card toast (level-up / rally / reward-tier). Auto-dismisses; tap dismisses immediately. */
+  showToast(message, { variant = "" } = {}) {
+    const hud = root.querySelector("#defense-edge-hud");
+    if (!hud) return;
+    const toast = document.createElement("div");
+    toast.className = `edge-toast${variant ? ` edge-toast-${variant}` : ""}`;
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    toast.innerHTML = `<span>${message}</span><button type="button" data-toast-dismiss aria-label="알림 닫기">×</button>`;
+    hud.append(toast);
+    let timer = null;
+    const remove = () => {
+      if (timer !== null) {
+        clearTimeout(timer);
+        this.toastTimers.delete(timer);
+        timer = null;
+      }
+      toast.remove();
+    };
+    toast.querySelector("[data-toast-dismiss]").addEventListener("click", remove);
+    timer = setTimeout(() => {
+      toast.dataset.dismissing = "true";
+      toast.addEventListener("transitionend", remove, { once: true });
+      setTimeout(remove, 500);
+    }, 4000);
+    this.toastTimers.add(timer);
+  }
+
+  /**
+   * Pause-menu overlay (D5, Option A): opens a large read-only overlay over the frozen canvas
+   * only while `userPaused === true`. Reuses the growth-panel markup helpers in read-only mode
+   * rather than duplicating stat/equipment/formation rendering logic.
+   */
+  renderPauseOverlay() {
+    const existing = root.querySelector("#defense-pause-overlay");
+    if (!this.userPaused) {
+      if (existing) {
+        existing.remove();
+        this.pauseOverlayFocusBefore?.focus?.();
+        this.pauseOverlayFocusBefore = null;
+      }
+      return;
+    }
+    if (existing) return;
+    this.pauseOverlayFocusBefore = document.activeElement;
+    const wp = campaign.wardenProgress;
+    const echoEarned = echoCoreEarned(campaign);
+    const echoSpent = echoCoreSpent(campaign);
+    const fragEarned = boundFragmentEarned(campaign);
+    const fragSpent = boundFragmentSpent(campaign);
+    const loadout = selectedLoadout();
+    const overlay = document.createElement("section");
+    overlay.id = "defense-pause-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-labelledby", "pause-overlay-title");
+    overlay.innerHTML = `
+      <div class="pause-overlay-panel">
+        <div class="panel-heading"><div><p class="eyebrow">일시 정지 · 얼어붙은 전장</p><h2 id="pause-overlay-title">작전 요약</h2></div><button id="pause-resume" class="primary-action">전투 계속</button></div>
+        <div class="pause-overlay-grid">
+          <section aria-labelledby="pause-stats-title">
+            <h3 id="pause-stats-title">스탯 (EC ${echoSpent}/${echoEarned})</h3>
+            <div class="growth-stat-grid">${wardenStatsMarkup(wp, echoEarned, echoSpent, { interactive: false })}</div>
+          </section>
+          <section aria-labelledby="pause-equip-title">
+            <h3 id="pause-equip-title">인벤토리 (BF ${fragSpent}/${fragEarned})</h3>
+            <div class="growth-equip-grid">${equipmentOwnersMarkup(loadout, fragEarned, fragSpent, { interactive: false })}</div>
+          </section>
+          <section aria-labelledby="pause-formation-title">
+            <h3 id="pause-formation-title">동료 편성</h3>
+            ${formationRowMarkup(loadout, { interactive: false })}
+          </section>
+        </div>
+        <p class="pause-overlay-hint section-copy">빌드를 변경하려면 기록실로 나가세요 — 진행 중인 전투는 시작 시점의 성장/장비 상태를 그대로 사용합니다.</p>
+        <div class="pause-overlay-actions"><button id="pause-exit-lobby">기록실로 나가기</button></div>
+      </div>`;
+    this.surface.append(overlay);
+    overlay.querySelector("#pause-resume").addEventListener("click", () => this.togglePause(false));
+    overlay.querySelector("#pause-exit-lobby").addEventListener("click", () => this.stop({ renderLobby: true }));
+    overlay.querySelector("#pause-resume").focus();
   }
 
   async resolveTerminal(snapshot) {
@@ -1117,6 +1303,11 @@ export class BattleSession {
     telemetry.recordRunResult({ outcome, rewardId: this.selectedRewardId, campaignComplete: complete, stageId: this.stageId, tick: snapshot.tick });
     await persistCampaign(outcome === "defeat" ? "패배 기록을 저장했습니다." : "방어 기록과 보상을 저장했습니다.");
     root.querySelector(".defense-reward")?.remove();
+    if (this.selectedRewardId) {
+      const reward = REWARDS[this.selectedRewardId];
+      const vertices = REWARD_KIND_VERTICES[reward?.kind] ?? 0;
+      this.showToast(`기록 확보 · <span class="tier-icon" data-tier-vertices="${vertices}" aria-hidden="true"></span> ${escapeHtml(reward?.name ?? this.selectedRewardId)}`, { variant: "reward" });
+    }
     const card = document.createElement("section");
     card.className = "edge-card defense-result";
     card.innerHTML = `<h2>${outcome === "defeat" ? "방어선이 무너졌습니다" : complete ? "심연 방어선 완수" : "관문 방어 성공"}</h2>
@@ -1175,6 +1366,8 @@ export class BattleSession {
     this.resetCamera();
     this.audio.stop();
     this.dismissCutscene();
+    this.toastTimers.forEach((timer) => clearTimeout(timer));
+    this.toastTimers.clear();
     globalThis.screen?.orientation?.unlock?.();
     session = null;
     if (shouldRenderLobby) renderLobby();

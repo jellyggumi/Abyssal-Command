@@ -84,9 +84,9 @@ export function wardenTraitOffersForSequence(sequenceNumber, excludeIds = []) {
 
 /** Track B: companion role passives (no stat allocation — fixed role + equipment + traits only, per director decision UNIFIED-GDD.md §3.3). */
 export const COMPANION_ROLES = freeze({
-  vanguard: { id: "vanguard", name: "수호", members: freeze(["anchor-shard", "veil-vanguard"]), description: "자체 내구+30%, 배치 중 Commander 피격-5%", selfIntegrityMultiplier: 1.30, commanderIncomingDamageMultiplier: 0.95 },
-  striker: { id: "striker", name: "타격", members: freeze(["ember-cohort", "rift-lens"]), description: "피해+20%, 보스/정예 대상 추가+10%", damageBonus: 0.20, eliteDamageBonus: 0.30 },
-  support: { id: "support", name: "지원", members: freeze(["throne-echo", "dawnless-crown"]), description: "Commander 획득반경+10%, 스킬쿨다운-5%", commanderPickupRangeMultiplier: 1.10, commanderCooldownReduction: 0.05 },
+  vanguard: { id: "vanguard", name: "수호", members: freeze(["anchor-shard", "veil-vanguard", "pack-warden"]), description: "자체 내구+30%, 배치 중 Commander 피격-5%", selfIntegrityMultiplier: 1.30, commanderIncomingDamageMultiplier: 0.95 },
+  striker: { id: "striker", name: "타격", members: freeze(["ember-cohort", "rift-lens", "lantern-reaver"]), description: "피해+20%, 보스/정예 대상 추가+10%", damageBonus: 0.20, eliteDamageBonus: 0.30 },
+  support: { id: "support", name: "지원", members: freeze(["throne-echo", "dawnless-crown", "requiem-warden"]), description: "Commander 획득반경+10%, 스킬쿨다운-5%", commanderPickupRangeMultiplier: 1.10, commanderCooldownReduction: 0.05 },
 });
 const COMPANION_ROLE_BY_MEMBER = freeze(Object.fromEntries(
   Object.values(COMPANION_ROLES).flatMap((role) => role.members.map((companionId) => [companionId, role.id])),

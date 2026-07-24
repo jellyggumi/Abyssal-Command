@@ -1,0 +1,338 @@
+{
+  "bossId": "anchor-shard",
+  "bossName": "anchor-shard",
+  "source": "assets/images/battle/pilot/concept-anchor-shard.png",
+  "sourceImages": [
+    "assets/images/battle/pilot/concept-anchor-shard.png"
+  ],
+  "durationFrames": 864,
+  "fps": 60,
+  "schemaVersion": 2,
+  "pipeline": "motion-previs-v2",
+  "markers": [],
+  "actions": [
+    {
+      "action": "show",
+      "variant": "v01",
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "startFrame": 1,
+      "endFrame": 96,
+      "loop": false,
+      "durationFrames": 96,
+      "keyPoses": [],
+      "sourceImageIndex": 0,
+      "signaturePoses": [],
+      "transition": {},
+      "sourceFrameRate": 60,
+      "runtimeFps": 30
+    },
+    {
+      "action": "idle",
+      "variant": "v01",
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "startFrame": 97,
+      "endFrame": 216,
+      "loop": true,
+      "durationFrames": 120,
+      "keyPoses": [],
+      "sourceImageIndex": 0,
+      "signaturePoses": [],
+      "transition": {},
+      "sourceFrameRate": 60,
+      "runtimeFps": 30
+    },
+    {
+      "action": "move",
+      "variant": "v01",
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "startFrame": 217,
+      "endFrame": 288,
+      "loop": true,
+      "durationFrames": 72,
+      "keyPoses": [],
+      "sourceImageIndex": 0,
+      "signaturePoses": [],
+      "transition": {},
+      "sourceFrameRate": 60,
+      "runtimeFps": 30
+    },
+    {
+      "action": "run",
+      "variant": "v01",
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "startFrame": 289,
+      "endFrame": 372,
+      "loop": true,
+      "durationFrames": 84,
+      "keyPoses": [],
+      "sourceImageIndex": 0,
+      "signaturePoses": [],
+      "transition": {},
+      "sourceFrameRate": 60,
+      "runtimeFps": 30
+    },
+    {
+      "action": "hit",
+      "variant": "v01",
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "startFrame": 373,
+      "endFrame": 426,
+      "loop": false,
+      "durationFrames": 54,
+      "keyPoses": [],
+      "sourceImageIndex": 0,
+      "signaturePoses": [],
+      "transition": {},
+      "sourceFrameRate": 60,
+      "runtimeFps": 30
+    },
+    {
+      "action": "bighit",
+      "variant": "v01",
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "startFrame": 427,
+      "endFrame": 510,
+      "loop": false,
+      "durationFrames": 84,
+      "keyPoses": [],
+      "sourceImageIndex": 0,
+      "signaturePoses": [],
+      "transition": {},
+      "sourceFrameRate": 60,
+      "runtimeFps": 30
+    },
+    {
+      "action": "attack",
+      "variant": "v01",
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "startFrame": 511,
+      "endFrame": 600,
+      "loop": false,
+      "durationFrames": 90,
+      "keyPoses": [],
+      "sourceImageIndex": 0,
+      "signaturePoses": [],
+      "transition": {},
+      "sourceFrameRate": 60,
+      "runtimeFps": 30
+    },
+    {
+      "action": "critical",
+      "variant": "v01",
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "startFrame": 601,
+      "endFrame": 672,
+      "loop": false,
+      "durationFrames": 72,
+      "keyPoses": [],
+      "sourceImageIndex": 0,
+      "signaturePoses": [],
+      "transition": {},
+      "sourceFrameRate": 60,
+      "runtimeFps": 30
+    },
+    {
+      "action": "avoid",
+      "variant": "v01",
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "startFrame": 673,
+      "endFrame": 714,
+      "loop": false,
+      "durationFrames": 42,
+      "keyPoses": [],
+      "sourceImageIndex": 0,
+      "signaturePoses": [],
+      "transition": {},
+      "sourceFrameRate": 60,
+      "runtimeFps": 30
+    },
+    {
+      "action": "defence",
+      "variant": "v01",
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "startFrame": 715,
+      "endFrame": 792,
+      "loop": false,
+      "durationFrames": 78,
+      "keyPoses": [],
+      "sourceImageIndex": 0,
+      "signaturePoses": [],
+      "transition": {},
+      "sourceFrameRate": 60,
+      "runtimeFps": 30
+    },
+    {
+      "action": "die",
+      "variant": "v01",
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "startFrame": 793,
+      "endFrame": 864,
+      "loop": false,
+      "durationFrames": 72,
+      "keyPoses": [],
+      "sourceImageIndex": 0,
+      "signaturePoses": [],
+      "transition": {},
+      "sourceFrameRate": 60,
+      "runtimeFps": 30
+    }
+  ],
+  "clipMarkers": [
+    {
+      "marker": "action::show::v01::start",
+      "frame": 1,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "show",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::show::v01::end",
+      "frame": 96,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "show",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::idle::v01::start",
+      "frame": 97,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "idle",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::idle::v01::end",
+      "frame": 216,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "idle",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::move::v01::start",
+      "frame": 217,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "move",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::move::v01::end",
+      "frame": 288,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "move",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::run::v01::start",
+      "frame": 289,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "run",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::run::v01::end",
+      "frame": 372,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "run",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::hit::v01::start",
+      "frame": 373,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "hit",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::hit::v01::end",
+      "frame": 426,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "hit",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::bighit::v01::start",
+      "frame": 427,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "bighit",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::bighit::v01::end",
+      "frame": 510,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "bighit",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::attack::v01::start",
+      "frame": 511,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "attack",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::attack::v01::end",
+      "frame": 600,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "attack",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::critical::v01::start",
+      "frame": 601,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "critical",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::critical::v01::end",
+      "frame": 672,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "critical",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::avoid::v01::start",
+      "frame": 673,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "avoid",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::avoid::v01::end",
+      "frame": 714,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "avoid",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::defence::v01::start",
+      "frame": 715,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "defence",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::defence::v01::end",
+      "frame": 792,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "defence",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::die::v01::start",
+      "frame": 793,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "die",
+      "variant": "v01"
+    },
+    {
+      "marker": "action::die::v01::end",
+      "frame": 864,
+      "sourceImage": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "action": "die",
+      "variant": "v01"
+    }
+  ],
+  "sourceTimeline": "_workspace/20260723-solo-warden-rpg-concept/production/batch4-motion-previs-timeline.json",
+  "proxyCreated": false
+}

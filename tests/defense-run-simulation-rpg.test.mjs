@@ -135,6 +135,34 @@ test("rpgActive gating: the vanguard role's selfIntegrityMultiplier (+30% maxHp)
   assert.equal(getRunSnapshot(active).companions[0].maxHp, Math.round(2880 * 1.30));
 });
 
+test("the 3 new companions (pack-warden, lantern-reaver, requiem-warden) exist in COMPANIONS with the authored stats", () => {
+  assert.deepEqual(
+    { id: COMPANIONS["pack-warden"].id, damage: COMPANIONS["pack-warden"].damage, fireTicks: COMPANIONS["pack-warden"].fireTicks, range: COMPANIONS["pack-warden"].range },
+    { id: "pack-warden", damage: 400, fireTicks: 30, range: 4200 },
+  );
+  assert.deepEqual(
+    { id: COMPANIONS["lantern-reaver"].id, damage: COMPANIONS["lantern-reaver"].damage, fireTicks: COMPANIONS["lantern-reaver"].fireTicks, range: COMPANIONS["lantern-reaver"].range },
+    { id: "lantern-reaver", damage: 480, fireTicks: 40, range: 4400 },
+  );
+  assert.deepEqual(
+    { id: COMPANIONS["requiem-warden"].id, damage: COMPANIONS["requiem-warden"].damage, fireTicks: COMPANIONS["requiem-warden"].fireTicks, range: COMPANIONS["requiem-warden"].range },
+    { id: "requiem-warden", damage: 440, fireTicks: 38, range: 4600 },
+  );
+});
+
+test("rpgActive gating: pack-warden (the new 3rd vanguard member) gets the same vanguard selfIntegrityMultiplier (+30% maxHp) as the original vanguard companions, only once rpgActive is true", () => {
+  const inert = createDefenseRun({ stageId: "cinder-span", seed: 5, companionLoadout: ["pack-warden"] });
+  const active = createDefenseRun({
+    stageId: "cinder-span", seed: 5, companionLoadout: ["pack-warden"],
+    wardenProgress: { statPoints: { "binding-might": 1 }, skillTreeIds: [], traitIds: [] },
+  });
+  assert.equal(inert.rpgActive, false);
+  assert.equal(active.rpgActive, true);
+  // companionFormationIntegrity: pack-warden T1 uninvested = 400*8*1.00 = 3200
+  assert.equal(getRunSnapshot(inert).companions[0].maxHp, 3200);
+  assert.equal(getRunSnapshot(active).companions[0].maxHp, Math.round(3200 * 1.30));
+});
+
 test("critical mechanic: a FRONT companion takes contact/ranged damage from a driven run while a BACK companion in the same run never does", () => {
   let run = createDefenseRun({
     stageId: "gate-zenith", seed: 3,

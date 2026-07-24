@@ -1,10 +1,12 @@
 ---
 name: game-studio-harness
 description: >
-  Run the 5-agent game production studio: director, designer (numeric
+  Run the 6-agent game production studio: director, designer (numeric
   balance + combos + core loop), PM (revenue points + reward bands +
   forecast), programmer (extensible/stable implementation + perf +
-  movement-path optimization), QA (archetype-rotation balance breaking +
+  movement-path optimization), UI senior developer (information
+  architecture + component contracts + HUD screen/world-space layout +
+  accessibility/perf), QA (archetype-rotation balance breaking +
   benchmark surveys + gate measurement). Executes the 3-stage operating
   cycle — Stage 1 concept/presentation/animation/resources/core build,
   Stage 2 balance/core-loop stability/novelty development, Stage 3 ops
@@ -14,8 +16,8 @@ description: >
   stage gate, balance cycle, 게임 개발 사이클, run the studio, next cycle.
 allowed-tools: Bash Read Write Edit Glob Grep TaskCreate TaskUpdate SendMessage
 metadata:
-  tags: game-production, orchestration, balance, monetization, qa, bmad-gds
-  version: "1.0"
+  tags: game-production, orchestration, balance, monetization, qa, bmad-gds, ui
+  version: "1.1"
 ---
 
 # Game Studio Harness
@@ -45,6 +47,7 @@ artifact → specialist routing → milestone thread) with numeric quality gates
 | game-pm | `.claude/agents/game-pm.md` | Revenue map, reward bands (comeback ≤30%, free/paid parity 10–20 sessions, win-rate delta ≤5%p), negotiation record, revenue forecast |
 | game-programmer | `.claude/agents/game-programmer.md` | Architecture contract, perf budget (p95 ≤16.7ms, input ≤100ms), movement-path optimization, tech verification, telemetry, defect responses |
 | game-qa | `.claude/agents/game-qa.md` | Archetype rotation (≥5 types), exploit register, benchmark survey, gate measurements, defect/regression registers |
+| ui-senior-developer | `.claude/agents/ui-senior-developer.md` | Information architecture, component contracts, HUD screen/world-space layout, accessibility audit, UI perf/input-latency notes |
 
 Communication topology: director assigns and gates; QA broadcasts every
 exploit/discovery to ALL agents with a feedback request; designer↔PM
@@ -55,7 +58,7 @@ every defect within the cycle (`fixed` or `deferred` + reasoning).
 
 ### Step 0: Preparation
 Why: every artifact must be traceable per run.
-1. Derive `run-id` = `{YYYYMMDD}-{cycle-label}` and create `_workspace/{run-id}/{intake,design,pm,engineering,qa,ops,production,messages,retrospectives}/`.
+1. Derive `run-id` = `{YYYYMMDD}-{cycle-label}` and create `_workspace/{run-id}/{intake,design,pm,engineering,ui,qa,ops,production,messages,retrospectives}/`.
 2. If resuming, read the newest existing `_workspace/*/production/task-manifest.md` and the last retrospective; enter at the recorded stage instead of Stage 1.
 
 ### Step 1: Intake (director)
@@ -64,7 +67,6 @@ game_type, team_shape, engine, current_stage, next_public_beat,
 source_packet, main_constraint, main_question). Choose ONE operating mode
 for the cycle and state the next public beat explicitly.
 
-### Step 2: Team assembly
 ```
 TeamCreate:
   members:
@@ -72,6 +74,7 @@ TeamCreate:
     - name: game-pm              definition: .claude/agents/game-pm.md
     - name: game-programmer      definition: .claude/agents/game-programmer.md
     - name: game-qa              definition: .claude/agents/game-qa.md
+    - name: ui-senior-developer  definition: .claude/agents/ui-senior-developer.md
 ```
 Director creates tasks per stage (see `references/stage-cycle.md`) with
 owner, artifact path, and gate linkage. All paths absolute, anchored at
@@ -85,14 +88,18 @@ Follow `references/stage-cycle.md` exactly. Summary:
   candidate + presentation spec) ∥ PM (revenue-point draft) ∥ QA (benchmark
   survey + test plan + archetype set). Then designer↔PM negotiation round 1,
   then programmer builds core loop + presentation/animation + resource
-  manifest + telemetry draft. Gate: G7 draft, G1 draft, G6-ops draft.
+  manifest + telemetry draft ∥ UI senior developer drafts information
+  architecture + HUD layout spec from the presentation spec. Gate: G7 draft,
+  G1 draft, G6-ops draft.
 - **Stage 2 — Balance, core-loop stability, novelty development**:
   QA exploit hunt across archetypes → designer retune → PM reward-band
   adjustment → negotiation round 2 → programmer applies data changes →
-  QA re-verification. Gate: G2, G3, G5, G7 final, G8.
+  UI senior developer revises component contracts from QA confusion
+  findings → QA re-verification. Gate: G2, G3, G5, G7 final, G8.
 - **Stage 3 — Ops stability and play impact (연출/시나리오/이펙트)**:
   programmer perf+memory+movement optimization and ops hardening ∥
-  designer+programmer presentation/scenario/effect impact pass ∥ QA full
+  designer+programmer presentation/scenario/effect impact pass ∥ UI senior
+  developer accessibility audit + UI perf/input-latency pass ∥ QA full
   regression + immersion scoring ∥ PM revenue-consistency forecast.
   Gate: G4, G6, G1 final.
 

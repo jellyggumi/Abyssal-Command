@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-terrain-starless-canal.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92eb-4a7e-75d3-9b55-273b2a6158fc" },
+  "prompt": "Isometric game-terrain diorama concept art, dark-fantasy environment: a narrow dark canal running between tall looming dark structures, void-black sky overhead with no visible stars, faint warm lantern-light reflections rippling on the black water surface, painterly game production art, moody atmospheric lighting, claustrophobic vertical framing, no characters, no UI, no text, no logos, no watermark, original design only.",
+  "output": { "format": "png", "width": 1024, "height": 1536, "bytes": 2241331, "sha256": "54579def8b9796e019b676f590ec078150ef20141cc2217f1e7100290211a1b4" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

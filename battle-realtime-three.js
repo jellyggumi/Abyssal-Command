@@ -7,6 +7,7 @@
 // ownership" check.
 import * as THREE from "./vendor/three.module.js";
 import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
+import { STAGES } from "./defense-catalog.js";
 
 const MAX_VISUAL_EFFECTS = 24;
 const MAX_VISUAL_EVENT_KEYS = 128;
@@ -103,6 +104,25 @@ const COMPANION_MODELS = Object.freeze({
 });
 
 const COMMANDER_MODEL = "dusk-warden.glb";
+
+// Public companion/boss/commander model-path lookups, for UI code (app.js
+// portrait cards) that has a prototype/stage id but no live simulation
+// "entity" object. Reuses the SAME maps the battle renderer itself
+// consumes, so results are always consistent with what would actually be
+// drawn in battle for that id.
+export function meshRootForCompanion(companionId) {
+  return COMPANION_MODELS[companionId] ?? null;
+}
+
+// Looks up the stage's authored boss id (defense-catalog.js STAGES) and
+// resolves it through BOSS_MODELS -- returns null if the stage or its boss
+// model isn't found, so callers fall back to a glyph/text portrait.
+export function meshRootForStageBoss(stageId) {
+  const bossId = STAGES.find((entry) => entry.id === stageId)?.boss;
+  return bossId ? (BOSS_MODELS[bossId] ?? null) : null;
+}
+
+export const COMMANDER_MESH_ROOT = COMMANDER_MODEL;
 
 // Event type -> one-shot VFX GLB + lifetime (ticks @ 60Hz). These 5 RPG-
 // layer telemetry events (defense-run-simulation.js) had zero visual
@@ -299,6 +319,116 @@ function disposeObject3D(root) {
       material.dispose();
     }
   });
+}
+
+/**
+ * Standalone offscreen WebGL renderer that turns a single per-object GLB
+ * (companion/boss/commander -- resolved via meshRootForCompanion() /
+ * meshRootForStageBoss() / COMMANDER_MESH_ROOT above) into a cached 2D
+ * portrait (PNG data URL) for UI cards. Reuses the SAME shared
+ * loadGltf()/gltfCache RealtimeBattle draws from (no duplicate fetch of a
+ * file already in flight or cached) but owns its own renderer/scene/camera,
+ * independent of any battle session's lifecycle: lobby screens need
+ * portraits before any RealtimeBattle instance exists, and portraits must
+ * survive battle start/stop/dispose. Degrades to null (caller falls back to
+ * text/glyph, same posture as the rest of this adapter's "never throw
+ * mid-render" contract) on WebGL2 unavailability or a model-load failure.
+ */
+export class MeshThumbnailService {
+  constructor() {
+    this.cache = new Map(); // relPath -> data URL, or null if permanently unavailable
+    this.pending = new Map(); // relPath -> in-flight render Promise (de-dupes concurrent card renders)
+    this.renderer = null;
+    this.scene = null;
+    this.camera = null;
+    this.unavailable = false;
+  }
+
+  ensureReady() {
+    if (this.unavailable) return false;
+    if (this.renderer) return true;
+    const canvas = typeof OffscreenCanvas === "function" ? new OffscreenCanvas(1, 1) : (typeof document !== "undefined" ? document.createElement("canvas") : null);
+    const gl = canvas?.getContext?.("webgl2", { alpha: true, antialias: true, failIfMajorPerformanceCaveat: false });
+    if (!(typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext)) {
+      this.unavailable = true;
+      return false;
+    }
+    this.renderer = new THREE.WebGLRenderer({ canvas, context: gl, antialias: true, alpha: true });
+    this.renderer.setClearColor(0x000000, 0);
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(35, 1, 0.05, 50);
+    this.scene.add(new THREE.HemisphereLight(0xfff2d6, 0x140a06, 1.1));
+    const sun = new THREE.DirectionalLight(0xffd9a8, 1.6);
+    sun.position.set(2, 4, 3);
+    this.scene.add(sun);
+    return true;
+  }
+
+  /** Render relPath (a MODEL_ROOT-relative GLB path, e.g. from meshRootForCompanion())
+   * to a cached square PNG data URL, or null if unavailable/unknown. Concurrent calls
+   * for the same path share one render. */
+  async render(relPath, size = 256) {
+    if (this.cache.has(relPath)) return this.cache.get(relPath);
+    if (this.pending.has(relPath)) return this.pending.get(relPath);
+    const job = this.renderNow(relPath, size).finally(() => this.pending.delete(relPath));
+    this.pending.set(relPath, job);
+    return job;
+  }
+
+  async renderNow(relPath, size) {
+    if (!this.ensureReady()) {
+      this.cache.set(relPath, null);
+      return null;
+    }
+    let gltf;
+    try {
+      gltf = await loadGltf(relPath);
+    } catch {
+      this.cache.set(relPath, null);
+      return null;
+    }
+    const object = gltf.scene.clone(true);
+    this.scene.add(object);
+    const box = new THREE.Box3().setFromObject(object);
+    const center = box.getCenter(new THREE.Vector3());
+    const dims = box.getSize(new THREE.Vector3());
+    const radius = Math.max(dims.x, dims.y, dims.z) / 2 || 1;
+    // 3/4 portrait angle (not top-down): distance derived from the camera's own
+    // FOV so the full bounding sphere fits with a small margin, at ANY GLB scale.
+    const distance = (radius / Math.sin((this.camera.fov / 2) * (Math.PI / 180))) * 1.35;
+    this.camera.position.set(center.x + distance * 0.55, center.y + dims.y * 0.12, center.z + distance * 0.83);
+    this.camera.lookAt(center.x, center.y + dims.y * 0.05, center.z);
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(size, size, false);
+    this.renderer.clear();
+    this.renderer.render(this.scene, this.camera);
+    let dataUrl = null;
+    try {
+      const canvasEl = this.renderer.domElement;
+      dataUrl = canvasEl.convertToBlob
+        ? await canvasEl.convertToBlob({ type: "image/png" }).then((blob) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          }))
+        : canvasEl.toDataURL("image/png");
+    } catch {
+      dataUrl = null;
+    }
+    this.scene.remove(object);
+    disposeObject3D(object);
+    this.cache.set(relPath, dataUrl);
+    return dataUrl;
+  }
+
+  dispose() {
+    this.cache.clear();
+    this.pending.clear();
+    if (this.scene) this.scene.clear();
+    this.renderer?.dispose();
+    this.renderer = null;
+  }
 }
 
 /**

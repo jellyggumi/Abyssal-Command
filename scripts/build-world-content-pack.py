@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 Builds the Solo Warden RPG cycle's world-content pack: terrain (stages 4-10),
-characters (7 bosses + 6 companions), items (3 reward props + 5 equipment-tier
-gems), and VFX (6 effects tied to shipped telemetry events).
+characters (7 bosses + 9 companions), items (5 reward props + 5 equipment-tier
+gems), VFX (6 effects tied to shipped telemetry events), and ambient
+decoration props for all 10 stage terrains.
 
 Run headless against the canonical resource pack, writes a NEW file
 (does not mutate the shared canonical pack other workstreams reference):
@@ -464,6 +465,32 @@ def build_companions(mats):
     make_cone("dawnless-crown-spike-1", coll, (0.08, 0, 1.195), rot=(0, D(10), 0), radius1=0.03, radius2=0.0, depth=0.16, material=mats["Moonless Silver"])
     make_icosphere("dawnless-orb-prop", coll, (0.1215, 0, 0.85), radius=0.045, material=mats["Violet Ether"])
 
+    # pack-warden -- vanguard, howling-sprawl lineage (wind-worn tank)
+    coll = make_collection("pack-warden")
+    make_root("pack-warden-root", coll)
+    make_cube("packwarden-body", coll, (0, 0, 0.6), scale=(0.19, 0.15, 0.5), material=mats["Dust Tan"])
+    make_icosphere("packwarden-head", coll, (0, 0, 0.96), radius=0.155, material=mats["Windworn Bone"])
+    make_cone("packwarden-shoulder-0", coll, (-0.22, 0, 0.86), rot=(0, D(-28), D(12)), radius1=0.08, radius2=0.02, depth=0.2, material=mats["Dust Tan"])
+    make_cone("packwarden-shoulder-1", coll, (0.22, 0, 0.86), rot=(0, D(28), D(-12)), radius1=0.08, radius2=0.02, depth=0.2, material=mats["Dust Tan"])
+    make_cone("packwarden-howl-horn", coll, (0.28, 0, 0.55), rot=(0, D(75), 0), radius1=0.05, radius2=0.005, depth=0.26, material=mats["Windworn Bone"])
+
+    # lantern-reaver -- striker, starless-canal lineage (amber-lit blade)
+    coll = make_collection("lantern-reaver")
+    make_root("lantern-reaver-root", coll)
+    make_cone("reaver-body", coll, (0, 0, 0.6), radius1=0.17, radius2=0.1, depth=0.55, material=mats["Starless Indigo"])
+    make_icosphere("reaver-head", coll, (0, 0, 1.11), radius=0.145, material=mats["Lantern Amber"])
+    make_cylinder("reaver-blade", coll, (0.24, 0, 0.68), rot=(0, D(-22), 0), radius=0.02, depth=0.62, material=mats["Cold Steel"])
+    make_icosphere("reaver-lantern-glow", coll, (-0.26, 0, 0.62), radius=0.055, material=mats["Lantern Amber"])
+    make_cylinder("reaver-lantern-post", coll, (-0.26, 0, 0.44), radius=0.012, depth=0.16, material=mats["Cold Steel"])
+
+    # requiem-warden -- support, glass-necropolis lineage (fragile-glass halo)
+    coll = make_collection("requiem-warden")
+    make_root("requiem-warden-root", coll)
+    make_cone("requiemwarden-body", coll, (0, 0, 0.6), radius1=0.16, radius2=0.09, depth=0.55, material=mats["Choir Silver"])
+    make_icosphere("requiemwarden-head", coll, (0, 0, 1.1), radius=0.14, material=mats["Glass Shard"])
+    make_torus("requiemwarden-halo-ring", coll, (0, 0, 1.32), rot=(D(90), 0, 0), major_radius=0.18, minor_radius=0.018, material=mats["Choir Silver"])
+    make_cylinder("requiemwarden-staff", coll, (0.2, 0, 0.68), rot=(0, D(-16), 0), radius=0.015, depth=0.6, material=mats["Old Bone"])
+
 
 # ===========================================================================
 # ITEMS: 3 reward props + 5 equipment-tier gems
@@ -497,6 +524,21 @@ def build_items(mats):
     make_icosphere("banner-finial", coll, (0, 0, 0.93), radius=0.05, material=mats["Gate Gold"])
     make_cone("banner-tassel-0", coll, (0.12, 0, 0.52), radius1=0.015, radius2=0.0, depth=0.1, material=mats["Violet Ether"])
     make_cone("banner-tassel-1", coll, (0.05, 0, 0.53), radius1=0.012, radius2=0.0, depth=0.08, material=mats["Violet Ether"])
+
+    # warden-lantern -- reward prop, "commander pickup range bonus"
+    coll = make_collection("warden-lantern")
+    make_root("warden-lantern-root", coll)
+    make_cylinder("wardenlantern-body", coll, (0, 0, 0.28), radius=0.11, depth=0.32, vertices=8, material=mats["Cold Steel"])
+    make_icosphere("wardenlantern-flame", coll, (0, 0, 0.28), radius=0.07, material=mats["Lantern Amber"])
+    make_cylinder("wardenlantern-handle", coll, (0, 0, 0.5), radius=0.012, depth=0.16, material=mats["Old Bone"])
+    make_torus("wardenlantern-cage-ring", coll, (0, 0, 0.28), rot=(D(90), 0, 0), major_radius=0.12, minor_radius=0.01, material=mats["Starless Indigo"])
+
+    # choir-ward-crystal -- reward prop, "critical chance bonus"
+    coll = make_collection("choir-ward-crystal")
+    make_root("choir-ward-crystal-root", coll)
+    make_cone("wardcrystal-facet-top", coll, (0, 0, 0.24), radius1=0.14, radius2=0.0, depth=0.24, vertices=6, material=mats["Glass Shard"])
+    make_cone("wardcrystal-facet-bottom", coll, (0, 0, 0.08), rot=(D(180), 0, 0), radius1=0.14, radius2=0.0, depth=0.16, vertices=6, material=mats["Glass Shard"])
+    make_cylinder("wardcrystal-base", coll, (0, 0, 0.02), radius=0.1, depth=0.04, vertices=8, material=mats["Choir Silver"])
 
     # Equipment-tier gems -- vertex counts match styles.css exactly.
     coll = make_collection("equipment-tier-gems")
@@ -592,6 +634,64 @@ def build_commander(mats):
 
 
 # ===========================================================================
+# DECORATIONS: small ambient props added to all 10 stage terrains (1-2 each).
+# Stages 1-3 (cinder-span/veil-citadel/echo-throne-steps) live in the
+# canonical abyssal-command-resource-pack.blend -- collections are read from
+# there via make_collection() (which returns the EXISTING collection instead
+# of creating a new one) and only new prop objects are appended in-memory;
+# the canonical file itself is never re-saved (main() always writes to
+# --out, a separate path -- verified this session). Stages 4-10 already
+# belong to this pack's own collections. Every prop sits on/inside its
+# stage's existing floor plane (within adjacency tolerance) and reuses only
+# materials already present in that stage, so no new palette entries or
+# floating-island risk.
+# ===========================================================================
+def build_decorations(mats):
+    # --- Stage 1: Cinder Span -- small ember-warmed rubble on each cliff top ---
+    coll = make_collection("cinder-span")
+    make_icosphere("cinder-cliff-ember-0", coll, (-1.9, 0.7, 0.08), radius=0.06, material=mats["Cinder Ember"])
+    make_cube("cinder-cliff-rubble-0", coll, (1.85, -0.6, 0.06), rot=(0, 0, D(20)), scale=(0.1, 0.08, 0.05), material=mats["Obsidian"])
+
+    # --- Stage 2: Veil Citadel -- corner totems flanking the plateaus ---
+    coll = make_collection("veil-citadel")
+    make_cylinder("citadel-corner-totem-0", coll, (-1.9, 1.4, 0.12), radius=0.05, depth=0.3, vertices=6, material=mats["Cold Steel"])
+    make_cylinder("citadel-corner-totem-1", coll, (1.9, -1.4, 0.12), radius=0.05, depth=0.3, vertices=6, material=mats["Cold Steel"])
+
+    # --- Stage 3: Echo Throne (steps) -- banner post beside the low floor ---
+    coll = make_collection("echo-throne-steps")
+    make_cylinder("throne-steps-banner-pole", coll, (-8.5, 2.8, 0.4), radius=0.06, depth=0.8, material=mats["Old Bone"])
+    make_cube("throne-steps-banner-cloth", coll, (-8.5, 2.8, 0.7), scale=(0.5, 0.02, 0.4), material=mats["Violet Ether"])
+
+    # --- Stage 4: Sunken Bastion -- driftwood crate on the flooded floor ---
+    coll = make_collection("sunken-bastion")
+    make_cube("bastion-driftwood-crate", coll, (0.5, 0.5, -0.1), rot=(0, 0, D(15)), scale=(0.16, 0.14, 0.1), material=mats["Barnacle Grey"])
+
+    # --- Stage 5: Howling Sprawl -- sun-bleached bone marker ---
+    coll = make_collection("howling-sprawl")
+    make_cone("sprawl-bone-marker", coll, (0.8, -0.3, -0.1), radius1=0.04, radius2=0.01, depth=0.28, material=mats["Windworn Bone"])
+
+    # --- Stage 6: Glass Necropolis -- grave marker slabs on the plateau ---
+    coll = make_collection("glass-necropolis")
+    make_cube("necropolis-grave-marker-0", coll, (0.4, -0.65, 0.36), rot=(D(4), 0, 0), scale=(0.1, 0.02, 0.16), material=mats["Old Bone"])
+
+    # --- Stage 7: Starless Canal -- mooring post near the channel ---
+    coll = make_collection("starless-canal")
+    make_cylinder("canal-mooring-post", coll, (0.5, 0.3, 0.0), radius=0.03, depth=0.4, material=mats["Cold Steel"])
+
+    # --- Stage 8: Shattered Causeway -- loose chain link on the support pillar ---
+    coll = make_collection("shattered-causeway")
+    make_torus("causeway-chain-link", coll, (0.2, 0.1, -0.3), rot=(D(90), D(20), 0), major_radius=0.06, minor_radius=0.012, material=mats["Causeway Rust"])
+
+    # --- Stage 9: Abyss Chancel -- votive candle between the front pillars ---
+    coll = make_collection("abyss-chancel")
+    make_cylinder("chancel-votive-candle", coll, (0, 0.75, 0.0), radius=0.03, depth=0.14, material=mats["Concordat Gold"])
+
+    # --- Stage 10: Gate Zenith -- fallen sigil shard beside the dais ---
+    coll = make_collection("gate-zenith")
+    make_cube("zenith-fallen-sigil-shard", coll, (0.5, 0.85, -0.06), rot=(D(10), D(15), D(30)), scale=(0.14, 0.02, 0.1), material=mats["Regent Crimson"])
+
+
+# ===========================================================================
 # Main
 # ===========================================================================
 def main():
@@ -604,6 +704,7 @@ def main():
     build_commander(mats)
     build_items(mats)
     build_vfx(mats)
+    build_decorations(mats)
 
     bpy.ops.wm.save_as_mainfile(filepath=args.out)
 
@@ -614,12 +715,21 @@ def main():
         "bridge-colossus", "veiled-concordat", "abyss-regent",
         "ember-cohort", "rift-lens", "veil-vanguard", "anchor-shard",
         "throne-echo", "dawnless-crown", "dusk-warden",
+        "pack-warden", "lantern-reaver", "requiem-warden",
         "stillwater-hourglass", "bulwark-brand", "abyssal-banner", "equipment-tier-gems",
+        "warden-lantern", "choir-ward-crystal",
         "vfx-critical-hit-burst", "vfx-boss-rally-aura", "vfx-gate-breach-shockwave",
         "vfx-wardens-ward-shield", "vfx-echo-warden-awakening", "vfx-companion-downed-fade",
     ]
+    # Decorated canonical-pack collections (read from the base file, extended
+    # in-memory, saved only to --out) get their own tally -- they are NOT
+    # part of this pack's "new collections" (they pre-exist in canon), but
+    # their prop-object counts are worth reporting for this build's QA.
+    decorated_canonical = ["cinder-span", "veil-citadel", "echo-throne-steps"]
     total_objects = sum(len(bpy.data.collections[c].objects) for c in new_collections)
-    print(f"BUILD_SUMMARY collections={len(new_collections)} objects={total_objects} out={args.out}")
+    decorated_objects = sum(len(bpy.data.collections[c].objects) for c in decorated_canonical)
+    print(f"BUILD_SUMMARY collections={len(new_collections)} objects={total_objects} "
+          f"decorated_canonical_collections={len(decorated_canonical)} decorated_canonical_objects={decorated_objects} out={args.out}")
 
 
 if __name__ == "__main__":

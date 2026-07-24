@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-s3-gate-sovereign.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": {
+    "tool": "god-tibo-imagen",
+    "provider": "codex-cli",
+    "model": "gpt-5.4",
+    "sessionId": "019f92e1-ad6c-76e2-afe0-46579af6603a"
+  },
+  "prompt": "A regal sovereign wielding a massive gate-key-shaped scepter, echo-distortion visual trails rippling around the silhouette, wearing an ornate but cracked crown, full-body three-quarter hero framing, commanding regal stance, deep royal-violet echoing lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": {
+    "format": "png",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 2527482,
+    "sha256": "db8882cef616ec4d17de76c377b7da9fecd4ea0948cad55017abd23e9b616ecc"
+  },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-scout.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92dc-345b-7412-a19a-54e4c41abda0" },
+  "prompt": "A lean scout-wraith mob enemy for a dark-fantasy defense RPG, low-HP fast-moving silhouette, gaunt hunched frame, tattered dark cloak streaking behind it as if mid-sprint, forward-leaning aggressive sprint pose, clawed reaching hands, simple menacing-but-generic low-tier mob design with minimal ornamentation and a small readable silhouette, cel-shaded 2.5D anime/game production art, painterly textures, high readability, cold blue menace lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1254, "height": 1254, "bytes": 1384905, "sha256": "68400899e22765b3f9506dd8fb6458be5446a6a5af115cd0e9bd4fa82a0ed28b" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

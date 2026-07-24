@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-ember-cohort.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92dd-0970-71e2-accd-3c4d719763a5" },
+  "prompt": "An original dark-fantasy striker soldier called Ember Cohort: an agile ember-wreathed spear-wielding fighter, lean armored build with glowing warm orange-red fire cracks running along the spear shaft and armor seams, cinder embers drifting off the weapon, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear weapon silhouette, agile forward-leaning grounded stance, dynamic warm ember-glow rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1024, "height": 1536, "bytes": 2050405, "sha256": "3838cba657744cfddd6e2afb31074129b356497e50737b53062b2c015ecf87d0" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

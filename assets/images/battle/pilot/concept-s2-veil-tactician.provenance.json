@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-s2-veil-tactician.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": {
+    "tool": "god-tibo-imagen",
+    "provider": "codex-cli",
+    "model": "gpt-5.4",
+    "sessionId": "019f92df-7aa9-7512-9b7f-618502700faa"
+  },
+  "prompt": "A robed tactician-general wearing a translucent veil-cloak, a tactical rune-map floating beside them, wielding twin curved daggers, cold analytical posture, full-body three-quarter hero framing, poised calculating stance, cold pale-blue analytical lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": {
+    "format": "png",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 2316518,
+    "sha256": "b5dae636e292ac8299a4d3f3ba7d6398e711723e472656dfa9fda0873241d067"
+  },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

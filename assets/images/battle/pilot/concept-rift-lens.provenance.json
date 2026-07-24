@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-rift-lens.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92df-1db3-7c52-bfbe-fe3466e3a975" },
+  "prompt": "An original dark-fantasy striker unit called Rift Lens: an arcane scholar-archer wearing layered violet robes and light arcane armor plating, a floating rift-lens focus orb hovering beside their shoulder, drawing a bow made of crackling purple/violet arcane energy, cel-shaded 2.5D anime/game production art, painterly textures, high readability, full-body, three-quarter hero framing, clear weapon/prop silhouette, agile poised archer stance, dynamic cold violet energy rim lighting, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": { "format": "png", "width": 1024, "height": 1536, "bytes": 2227437, "sha256": "a3d76ad1e342876a469027eb787db9de390e9287c01753aa8e3b955a20ec12da" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

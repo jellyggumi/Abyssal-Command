@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-s6-requiem-choir.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": {
+    "tool": "god-tibo-imagen",
+    "provider": "codex-cli",
+    "model": "gpt-5.4",
+    "sessionId": "019f92eb-6394-76d1-aac8-265ca4ea62cd"
+  },
+  "prompt": "A ghostly choir-conductor figure made of fused glass shards, holding a conductor's baton trailing musical light-notes, wearing a mournful faceless mask, full-body three-quarter hero framing, still elegant stance, pale mournful violet-white crystalline lighting mood, cel-shaded 2.5D anime/game production art, painterly textures, high readability, isolated on a perfectly uniform solid #FF00FF magenta background, no shadow outside the base, no text, no logos, no watermark, no copyrighted character likeness, original design only.",
+  "output": {
+    "format": "png",
+    "width": 1024,
+    "height": 1536,
+    "bytes": 2360576,
+    "sha256": "2a8fc06730bd98e4eb04f4b64f3f36aa36be1ed40af962faa24377d060ebdbd5"
+  },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

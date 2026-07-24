@@ -1,0 +1,377 @@
+{
+  "schemaVersion": "abyssal-surge-asset-manifest-3.0-canonical",
+  "generatedAt": "2026-07-24",
+  "sourceOfTruth": "defense-catalog.js (BOSSES, COMPANIONS, ENEMIES enemy-skin ids, plus existing assets/models/battle/{items,terrain} dirs)",
+  "note": "v3 supersedes v2. v2 incorrectly included 4 non-canon boss concepts (broken-court-monarch-boss et al, flagged in conflicts.md as unauthorized third-party output) and 16 motion-reference-only v01-v04 PNGs as independent generation targets. Corrected to the 40 entities actually referenced by defense-catalog.js. commander/dusk-warden.glb is EXCLUDED from this pipeline -- it has its own separate toon-shader sprite-atlas bake pipeline documented in design/UNIFIED-GDD.md, not the Rodin 3D generation + armature rig pipeline.",
+  "nonCanonExcluded": [
+    "concept-broken-court-monarch-boss.png (GENERATED, WASTED - not in defense-catalog.js BOSSES)",
+    "concept-sung-hum-boss.png",
+    "concept-human-command-boss.png",
+    "concept-shadow-commander-boss.png",
+    "16x concept-{broken-court-monarch,player-core,shadow-soldier,sung-hum}-v0{1-4}.png (motion-ref only, never independent gen targets)"
+  ],
+  "existingPlaceholdersAreLowPoly": "All current assets/models/battle/*/*.glb are 3-90KB procedural placeholders, to be replaced in-place by same-name high-fidelity Rodin output.",
+  "totalTargets": 40,
+  "targets": [
+    {
+      "category": "bosses",
+      "catalogId": "s1-cinder-warden",
+      "outputGlbName": "cinder-warden.glb",
+      "existingPlaceholderPath": "assets/models/battle/bosses/cinder-warden.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-s1-cinder-warden.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "bosses",
+      "catalogId": "s2-veil-tactician",
+      "outputGlbName": "veil-tactician.glb",
+      "existingPlaceholderPath": "assets/models/battle/bosses/veil-tactician.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-s2-veil-tactician.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "bosses",
+      "catalogId": "s3-gate-sovereign",
+      "outputGlbName": "gate-sovereign.glb",
+      "existingPlaceholderPath": "assets/models/battle/bosses/gate-sovereign.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-s3-gate-sovereign.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "bosses",
+      "catalogId": "s4-tide-warden",
+      "outputGlbName": "tide-warden.glb",
+      "existingPlaceholderPath": "assets/models/battle/bosses/tide-warden.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-s4-tide-warden.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "bosses",
+      "catalogId": "s5-pack-herald",
+      "outputGlbName": "pack-herald.glb",
+      "existingPlaceholderPath": "assets/models/battle/bosses/pack-herald.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-s5-pack-herald.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "bosses",
+      "catalogId": "s6-requiem-choir",
+      "outputGlbName": "requiem-choir.glb",
+      "existingPlaceholderPath": "assets/models/battle/bosses/requiem-choir.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-s6-requiem-choir.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "bosses",
+      "catalogId": "s7-lantern-tyrant",
+      "outputGlbName": "lantern-tyrant.glb",
+      "existingPlaceholderPath": "assets/models/battle/bosses/lantern-tyrant.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-s7-lantern-tyrant.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "bosses",
+      "catalogId": "s8-bridge-colossus",
+      "outputGlbName": "bridge-colossus.glb",
+      "existingPlaceholderPath": "assets/models/battle/bosses/bridge-colossus.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-s8-bridge-colossus.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "bosses",
+      "catalogId": "s9-veiled-concordat",
+      "outputGlbName": "veiled-concordat.glb",
+      "existingPlaceholderPath": "assets/models/battle/bosses/veiled-concordat.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-s9-veiled-concordat.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "bosses",
+      "catalogId": "s10-abyss-regent",
+      "outputGlbName": "abyss-regent.glb",
+      "existingPlaceholderPath": "assets/models/battle/bosses/abyss-regent.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-s10-abyss-regent.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "companions",
+      "catalogId": "ember-cohort",
+      "outputGlbName": "ember-cohort.glb",
+      "existingPlaceholderPath": "assets/models/battle/companions/ember-cohort.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-ember-cohort.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "companions",
+      "catalogId": "rift-lens",
+      "outputGlbName": "rift-lens.glb",
+      "existingPlaceholderPath": "assets/models/battle/companions/rift-lens.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-rift-lens.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "companions",
+      "catalogId": "veil-vanguard",
+      "outputGlbName": "veil-vanguard.glb",
+      "existingPlaceholderPath": "assets/models/battle/companions/veil-vanguard.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-veil-vanguard.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "companions",
+      "catalogId": "anchor-shard",
+      "outputGlbName": "anchor-shard.glb",
+      "existingPlaceholderPath": "assets/models/battle/companions/anchor-shard.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-anchor-shard.png",
+      "needsArmatureRig": true,
+      "status": "done"
+    },
+    {
+      "category": "companions",
+      "catalogId": "throne-echo",
+      "outputGlbName": "throne-echo.glb",
+      "existingPlaceholderPath": "assets/models/battle/companions/throne-echo.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-throne-echo.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "companions",
+      "catalogId": "dawnless-crown",
+      "outputGlbName": "dawnless-crown.glb",
+      "existingPlaceholderPath": "assets/models/battle/companions/dawnless-crown.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-dawnless-crown.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "companions",
+      "catalogId": "pack-warden",
+      "outputGlbName": "pack-warden.glb",
+      "existingPlaceholderPath": "assets/models/battle/companions/pack-warden.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-pack-warden.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "companions",
+      "catalogId": "lantern-reaver",
+      "outputGlbName": "lantern-reaver.glb",
+      "existingPlaceholderPath": "assets/models/battle/companions/lantern-reaver.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-lantern-reaver.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "companions",
+      "catalogId": "requiem-warden",
+      "outputGlbName": "requiem-warden.glb",
+      "existingPlaceholderPath": "assets/models/battle/companions/requiem-warden.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-requiem-warden.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "enemies",
+      "catalogId": "guard",
+      "outputGlbName": "guard.glb",
+      "existingPlaceholderPath": "assets/models/battle/enemies/guard.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-guard.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "enemies",
+      "catalogId": "possessed",
+      "outputGlbName": "possessed.glb",
+      "existingPlaceholderPath": "assets/models/battle/enemies/possessed.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-possessed.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "enemies",
+      "catalogId": "scout",
+      "outputGlbName": "scout.glb",
+      "existingPlaceholderPath": "assets/models/battle/enemies/scout.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-scout.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "enemies",
+      "catalogId": "shade",
+      "outputGlbName": "shade.glb",
+      "existingPlaceholderPath": "assets/models/battle/enemies/shade.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-shade.png",
+      "needsArmatureRig": true,
+      "status": "pending"
+    },
+    {
+      "category": "items",
+      "catalogId": "abyssal-banner",
+      "outputGlbName": "abyssal-banner.glb",
+      "existingPlaceholderPath": "assets/models/battle/items/abyssal-banner.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-abyssal-banner.png",
+      "needsArmatureRig": false,
+      "status": "done"
+    },
+    {
+      "category": "items",
+      "catalogId": "bulwark-brand",
+      "outputGlbName": "bulwark-brand.glb",
+      "existingPlaceholderPath": "assets/models/battle/items/bulwark-brand.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-bulwark-brand.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "items",
+      "catalogId": "choir-ward-crystal",
+      "outputGlbName": "choir-ward-crystal.glb",
+      "existingPlaceholderPath": "assets/models/battle/items/choir-ward-crystal.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-choir-ward-crystal.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "items",
+      "catalogId": "equipment-tier-gems",
+      "outputGlbName": "equipment-tier-gems.glb",
+      "existingPlaceholderPath": "assets/models/battle/items/equipment-tier-gems.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-equipment-tier-gems.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "items",
+      "catalogId": "stillwater-hourglass",
+      "outputGlbName": "stillwater-hourglass.glb",
+      "existingPlaceholderPath": "assets/models/battle/items/stillwater-hourglass.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-stillwater-hourglass.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "items",
+      "catalogId": "warden-lantern",
+      "outputGlbName": "warden-lantern.glb",
+      "existingPlaceholderPath": "assets/models/battle/items/warden-lantern.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-warden-lantern.png",
+      "needsArmatureRig": false,
+      "status": "done"
+    },
+    {
+      "category": "terrain",
+      "catalogId": "abyss-chancel",
+      "outputGlbName": "abyss-chancel.glb",
+      "existingPlaceholderPath": "assets/models/battle/terrain/abyss-chancel.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-terrain-abyss-chancel.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "terrain",
+      "catalogId": "cinder-span",
+      "outputGlbName": "cinder-span.glb",
+      "existingPlaceholderPath": "assets/models/battle/terrain/cinder-span.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-terrain-cinder-span.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "terrain",
+      "catalogId": "echo-throne",
+      "outputGlbName": "echo-throne.glb",
+      "existingPlaceholderPath": "assets/models/battle/terrain/echo-throne.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-terrain-echo-throne.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "terrain",
+      "catalogId": "echo-throne-steps",
+      "outputGlbName": "echo-throne-steps.glb",
+      "existingPlaceholderPath": "assets/models/battle/terrain/echo-throne-steps.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-terrain-echo-throne-steps.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "terrain",
+      "catalogId": "gate-zenith",
+      "outputGlbName": "gate-zenith.glb",
+      "existingPlaceholderPath": "assets/models/battle/terrain/gate-zenith.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-terrain-gate-zenith.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "terrain",
+      "catalogId": "glass-necropolis",
+      "outputGlbName": "glass-necropolis.glb",
+      "existingPlaceholderPath": "assets/models/battle/terrain/glass-necropolis.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-terrain-glass-necropolis.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "terrain",
+      "catalogId": "howling-sprawl",
+      "outputGlbName": "howling-sprawl.glb",
+      "existingPlaceholderPath": "assets/models/battle/terrain/howling-sprawl.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-terrain-howling-sprawl.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "terrain",
+      "catalogId": "shattered-causeway",
+      "outputGlbName": "shattered-causeway.glb",
+      "existingPlaceholderPath": "assets/models/battle/terrain/shattered-causeway.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-terrain-shattered-causeway.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "terrain",
+      "catalogId": "starless-canal",
+      "outputGlbName": "starless-canal.glb",
+      "existingPlaceholderPath": "assets/models/battle/terrain/starless-canal.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-terrain-starless-canal.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "terrain",
+      "catalogId": "sunken-bastion",
+      "outputGlbName": "sunken-bastion.glb",
+      "existingPlaceholderPath": "assets/models/battle/terrain/sunken-bastion.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-terrain-sunken-bastion.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    },
+    {
+      "category": "terrain",
+      "catalogId": "veil-citadel",
+      "outputGlbName": "veil-citadel.glb",
+      "existingPlaceholderPath": "assets/models/battle/terrain/veil-citadel.glb",
+      "conceptPng": "assets/images/battle/pilot/concept-terrain-veil-citadel.png",
+      "needsArmatureRig": false,
+      "status": "pending"
+    }
+  ]
+}

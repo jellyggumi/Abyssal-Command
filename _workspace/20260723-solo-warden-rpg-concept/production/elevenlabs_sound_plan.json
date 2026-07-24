@@ -15,14 +15,14 @@
   },
   "voiceProfiles": {
     "narrator": {
-      "voiceId": "V1_NARRATOR_MAIN",
+      "voiceId": "onwK4e9ZLuTAKqWW03F9",
       "label": "Na-Honjam_MainNarrator",
-      "usage": "모든 컷 내레이션 / NPC 브리핑 / 엔딩 카피",
+      "usage": "모든 컷 내레이션 / NPC 브리핑 / 엔딩 카피 — 다크판타지 시네마틱 트레일러 톤",
       "settings": {
-        "stability": 0.27,
-        "similarityBoost": 0.76,
-        "style": 0.64,
-        "speed": 0.96
+        "stability": 0.4,
+        "similarityBoost": 0.78,
+        "style": 0.52,
+        "speed": 0.94
       }
     },
     "npcHaram": {
@@ -58,15 +58,26 @@
         "speed": 0.97
       }
     },
+    "playerCombat": {
+      "voiceId": "TxGEqnHWrfWFTfGW9XjX",
+      "label": "DuskWarden_CombatResolve",
+      "usage": "스킬 발동 대사 — 플레이어 1인칭 전투 함성. 단호함과 결연함이 핵심 감정. speed를 주 강도 레버로 사용(안정성 우선).",
+      "settings": {
+        "stability": 0.42,
+        "similarityBoost": 0.75,
+        "style": 0.48,
+        "speed": 1.06
+      }
+    },
     "playerStatus": {
-      "voiceId": "V1_PLAYER_STATUS",
+      "voiceId": "21m00Tcm4TlvDq8ikWAM",
       "label": "Status_Glyph",
       "usage": "상태 경고, 버프/디버프 알림",
       "settings": {
-        "stability": 0.33,
+        "stability": 0.4,
         "similarityBoost": 0.72,
-        "style": 0.55,
-        "speed": 1.03
+        "style": 0.42,
+        "speed": 1.02
       }
     }
   },
@@ -83,7 +94,7 @@
       "label": "C01 프롤로그 서두",
       "category": "narration",
       "voice": "narrator",
-      "text": "게이트가 반복해서 열리는 밤, 성진우는 마지막으로 남은 인간의 전선에서 발을 뗐다. 그러나 이 밤, 그림자 너머에서 부르고 있는 호출은 평생의 전장을 열었다.",
+      "text": "게이트가 열리는 밤, Dusk Warden에게 그림자의 호출이 닿았다.",
       "targetCut": "C01"
     },
     {
@@ -91,7 +102,7 @@
       "label": "로비 시작 브리핑",
       "category": "narration",
       "voice": "narrator",
-      "text": "입구 브리핑입니다. 오늘은 1번 봉쇄선에서 시작하지만, 각 스테이지가 적의 명령망을 노출할수록 도달 가능한 성장은 배가됩니다.",
+      "text": "입구 브리핑입니다. 1번 봉쇄선에서 시작하지만, 명령망을 노출할수록 성장은 배가됩니다.",
       "targetCut": "C02"
     },
     {
@@ -255,38 +266,38 @@
   "skillTriggerNarrations": {
     "player.attack": {
       "id": "skill.player.attack",
-      "voice": "narrator",
-      "text": "성진우의 첫 일격. 가벼운 궤적이 아닌, 심장을 찌르는 타이밍이다."
+      "voice": "playerCombat",
+      "text": "물러서지 않는다."
     },
     "player.bighit": {
       "id": "skill.player.bighit",
-      "voice": "narrator",
-      "text": "대형 폭력. 짧은 침묵 이후, 전방 위력을 강제 발산한다."
+      "voice": "playerCombat",
+      "text": "전부 건다. 지금, 여기서 끝낸다."
     },
     "player.critical": {
       "id": "skill.player.critical",
-      "voice": "narrator",
-      "text": "치명연타 판정. 피해량 증폭이 발동됩니다."
+      "voice": "playerCombat",
+      "text": "빈틈을 봤다. 놓치지 않는다."
     },
     "player.avoid": {
       "id": "skill.player.avoid",
-      "voice": "playerStatus",
-      "text": "회피 판정 성공. 보스 연계 타임윈도우가 1초 줄어듭니다."
+      "voice": "playerCombat",
+      "text": "아직, 쓰러지지 않았다."
     },
     "player.defence": {
       "id": "skill.player.defence",
-      "voice": "playerStatus",
-      "text": "가드 강화 모드 전환. 입력 지연은 용인되지 않습니다."
+      "voice": "playerCombat",
+      "text": "여기는 내가 막는다."
     },
     "player.move": {
       "id": "skill.player.move",
-      "voice": "playerStatus",
-      "text": "재정비 이동. 보이지 않는 채찍선은 계속 상승합니다."
+      "voice": "playerCombat",
+      "text": "다시 선다. 끝날 때까지 끝난 게 아니다."
     },
     "player.run": {
       "id": "skill.player.run",
-      "voice": "playerStatus",
-      "text": "추진 모드. 고속 이동과 함께 경보를 유도할 수 있습니다."
+      "voice": "playerCombat",
+      "text": "멈추지 않는다. 뚫고 나간다."
     }
   },
   "animationSfxMap": {

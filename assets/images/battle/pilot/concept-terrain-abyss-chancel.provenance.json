@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/images/battle/pilot/concept-terrain-abyss-chancel.png",
+  "status": "concept-pilot-not-runtime",
+  "generatedAt": "2026-07-24",
+  "generator": { "tool": "god-tibo-imagen", "provider": "codex-cli", "model": "gpt-5.4", "sessionId": "019f92ef-f022-7e73-bcbc-f22b2a51e438" },
+  "prompt": "Isometric game-terrain diorama concept art, dark-fantasy environment: a chapel-like ceremonial chamber lined with rows of dead unlit votive candles, abyss-blue ambient light seeping through the space, ornate ceremonial architecture with carved stone altars, painterly game production art, moody atmospheric lighting, solemn sacred ruin, no characters, no UI, no text, no logos, no watermark, original design only.",
+  "output": { "format": "png", "width": 1536, "height": 1024, "bytes": 2412992, "sha256": "af4949635f80e7c4ed5b80e5ff3f9c849b162dbc95bfcacddb06569efbd8a6e0" },
+  "purpose": "rodin-image-to-3d-source",
+  "license": "pending-runtime-rights-review",
+  "runtimeEligible": false
+}

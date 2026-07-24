@@ -1,0 +1,197 @@
+{
+  "schemaVersion": "vox-part-playlist-1.0",
+  "runId": "20260723-solo-warden-rpg-concept",
+  "parts": [
+    {
+      "partId": "part_intro",
+      "audioMix": "part_intro_muxed.wav",
+      "output": "assets/video/part_intro.mp4",
+      "durationSec": 8,
+      "cutIds": [
+        "C01"
+      ]
+    },
+    {
+      "partId": "part_lobby",
+      "audioMix": "part_lobby_muxed.wav",
+      "output": "assets/video/part_lobby.mp4",
+      "durationSec": 10,
+      "cutIds": [
+        "C02"
+      ]
+    },
+    {
+      "partId": "part_stage01",
+      "audioMix": "part_stage01_muxed.wav",
+      "output": "assets/video/part_stage01.mp4",
+      "durationSec": 21,
+      "cutIds": [
+        "C03",
+        "C04"
+      ]
+    },
+    {
+      "partId": "part_stage02",
+      "audioMix": "part_stage02_muxed.wav",
+      "output": "assets/video/part_stage02.mp4",
+      "durationSec": 20,
+      "cutIds": [
+        "C05",
+        "C06"
+      ]
+    },
+    {
+      "partId": "part_stage03",
+      "audioMix": "part_stage03_muxed.wav",
+      "output": "assets/video/part_stage03.mp4",
+      "durationSec": 22,
+      "cutIds": [
+        "C07",
+        "C08"
+      ]
+    },
+    {
+      "partId": "part_stage04",
+      "audioMix": "part_stage04_muxed.wav",
+      "output": "assets/video/part_stage04.mp4",
+      "durationSec": 22,
+      "cutIds": [
+        "C07",
+        "C08"
+      ]
+    },
+    {
+      "partId": "part_stage05",
+      "audioMix": "part_stage05_muxed.wav",
+      "output": "assets/video/part_stage05.mp4",
+      "durationSec": 10,
+      "cutIds": [
+        "C09"
+      ]
+    },
+    {
+      "partId": "part_stage06",
+      "audioMix": "part_stage06_muxed.wav",
+      "output": "assets/video/part_stage06.mp4",
+      "durationSec": 11,
+      "cutIds": [
+        "C10"
+      ]
+    },
+    {
+      "partId": "part_stage07",
+      "audioMix": "part_stage07_muxed.wav",
+      "output": "assets/video/part_stage07.mp4",
+      "durationSec": 12,
+      "cutIds": [
+        "C11"
+      ]
+    },
+    {
+      "partId": "part_stage08",
+      "audioMix": "part_stage08_muxed.wav",
+      "output": "assets/video/part_stage08.mp4",
+      "durationSec": 24,
+      "cutIds": [
+        "C11",
+        "C12"
+      ]
+    },
+    {
+      "partId": "part_stage09",
+      "audioMix": "part_stage09_muxed.wav",
+      "output": "assets/video/part_stage09.mp4",
+      "durationSec": 11,
+      "cutIds": [
+        "C13"
+      ]
+    },
+    {
+      "partId": "part_stage10",
+      "audioMix": "part_stage10_muxed.wav",
+      "output": "assets/video/part_stage10.mp4",
+      "durationSec": 13,
+      "cutIds": [
+        "C14"
+      ]
+    },
+    {
+      "partId": "part_ending_common",
+      "audioMix": "part_ending_common_muxed.wav",
+      "output": "assets/video/part_ending_common.mp4",
+      "durationSec": 9,
+      "cutIds": [
+        "C15"
+      ]
+    },
+    {
+      "partId": "part_ending_branch_a",
+      "audioMix": "part_ending_branch_a_muxed.wav",
+      "output": "assets/video/part_ending_branch_a.mp4",
+      "durationSec": 10,
+      "cutIds": [
+        "C16"
+      ]
+    },
+    {
+      "partId": "part_ending_branch_b",
+      "audioMix": "part_ending_branch_b_muxed.wav",
+      "output": "assets/video/part_ending_branch_b.mp4",
+      "durationSec": 11,
+      "cutIds": [
+        "C17"
+      ]
+    }
+  ],
+  "sequences": {
+    "mainline": [
+      "part_intro.mp4",
+      "part_lobby.mp4",
+      "part_stage01.mp4",
+      "part_stage02.mp4",
+      "part_stage03.mp4",
+      "part_stage04.mp4",
+      "part_stage05.mp4",
+      "part_stage06.mp4",
+      "part_stage07.mp4",
+      "part_stage08.mp4",
+      "part_stage09.mp4",
+      "part_stage10.mp4",
+      "part_ending_common.mp4",
+      "part_ending_branch_a.mp4"
+    ],
+    "ending_branch_b": [
+      "part_intro.mp4",
+      "part_lobby.mp4",
+      "part_stage01.mp4",
+      "part_stage02.mp4",
+      "part_stage03.mp4",
+      "part_stage04.mp4",
+      "part_stage05.mp4",
+      "part_stage06.mp4",
+      "part_stage07.mp4",
+      "part_stage08.mp4",
+      "part_stage09.mp4",
+      "part_stage10.mp4",
+      "part_ending_common.mp4",
+      "part_ending_branch_b.mp4"
+    ],
+    "cut_only": [
+      "part_intro.mp4",
+      "part_lobby.mp4",
+      "part_stage01.mp4",
+      "part_stage02.mp4",
+      "part_stage03.mp4",
+      "part_stage04.mp4",
+      "part_stage05.mp4",
+      "part_stage06.mp4",
+      "part_stage07.mp4",
+      "part_stage08.mp4",
+      "part_stage09.mp4",
+      "part_stage10.mp4",
+      "part_ending_common.mp4",
+      "part_ending_branch_a.mp4",
+      "part_ending_branch_b.mp4"
+    ]
+  }
+}

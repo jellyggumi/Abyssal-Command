@@ -571,6 +571,57 @@ test("owned Bulwark Brand reduces gate breach damage", () => {
   assert.equal(branded.gateDamageReduction, 2);
 });
 
+test("owned Warden's Lantern increases commander pickupRange by exactly 400 over baseline", () => {
+  const baseline = getRunSnapshot(createDefenseRun({ stageId: "cinder-span", seed: 1, companionLoadout: ["ember-cohort"] }));
+  const lantern = getRunSnapshot(createDefenseRun({
+    stageId: "cinder-span", seed: 1, companionLoadout: ["ember-cohort"], rewardIds: ["warden-lantern"],
+  }));
+
+  assert.equal(baseline.commander.pickupRange, 12000);
+  assert.equal(lantern.commander.pickupRange, 12400);
+  assert.equal(lantern.commander.pickupRange - baseline.commander.pickupRange, 400);
+});
+
+test("owned Choir Ward Crystal increases commander crit chance by exactly 300bp over baseline", () => {
+  const baseline = getRunSnapshot(createDefenseRun({ stageId: "cinder-span", seed: 1, companionLoadout: ["ember-cohort"] }));
+  const crystal = getRunSnapshot(createDefenseRun({
+    stageId: "cinder-span", seed: 1, companionLoadout: ["ember-cohort"], rewardIds: ["choir-ward-crystal"],
+  }));
+
+  assert.equal(baseline.commander.critProfile.chanceBp, 1500);
+  assert.equal(crystal.commander.critProfile.chanceBp, 1800);
+  assert.equal(crystal.commander.critProfile.chanceBp - baseline.commander.critProfile.chanceBp, 300);
+
+  // Composes additively with a Warden stat crit investment and stays clamped within [0, 10000]:
+  // base 1500 + maxed fracture-precision (10 * 100 = 1000) applied first by wardenProgress, then
+  // + the 300bp reward on top -- the same clamp() call path that guards the ceiling for any stack.
+  const stacked = getRunSnapshot(createDefenseRun({
+    stageId: "cinder-span", seed: 1, companionLoadout: ["ember-cohort"],
+    rewardIds: ["choir-ward-crystal"],
+    wardenProgress: { statPoints: { "fracture-precision": 10 }, skillTreeIds: [], traitIds: [] },
+  }));
+  assert.equal(stacked.commander.critProfile.chanceBp, 2800);
+  assert.ok(stacked.commander.critProfile.chanceBp <= 10000, "chanceBp must never exceed the 10000bp clamp ceiling");
+});
+
+test("Warden's Lantern and Choir Ward Crystal are applied once at run creation and never compound across ticks with no pickups", () => {
+  let run = createDefenseRun({
+    stageId: "cinder-span", seed: 1, companionLoadout: ["ember-cohort"],
+    rewardIds: ["warden-lantern", "choir-ward-crystal"],
+  });
+  const initial = getRunSnapshot(run);
+  assert.equal(initial.commander.pickupRange, 12400);
+  assert.equal(initial.commander.critProfile.chanceBp, 1800);
+
+  for (let step = 0; step < 200; step += 1) run = advanceDefenseRun(run, 1);
+  const after = getRunSnapshot(run);
+
+  assert.deepEqual(after.itemIds, [], "the fixture window must not have collected an item that could re-trigger pickupRange logic");
+  assert.equal(after.growthOffer, null, "the fixture window must not have offered growth that could re-trigger pickupRange logic");
+  assert.equal(after.commander.pickupRange, 12400, "pickupRange must not compound or drift across ticks");
+  assert.equal(after.commander.critProfile.chanceBp, 1800, "chanceBp must not compound or drift across ticks");
+});
+
 test("an item pickup applies both gate maximum and current integrity", () => {
   const { previous, snapshot } = advanceUntilWithPrevious(
     createDefenseRun({
