@@ -602,6 +602,13 @@ export class RealtimeBattle {
       this.renderer.setSize(bufferWidth, bufferHeight, false);
       this.perspectiveCamera.aspect = width / height;
       this.perspectiveCamera.updateProjectionMatrix();
+      // Expose the applied backbuffer scale (=== 1 on a real GPU; < 1 when the
+      // SOFTWARE_MAX_BACKBUFFER_PX clamp is active) so tests/tooling can observe the
+      // software-path dynamic-resolution downscale — canvas.width alone can't
+      // distinguish "native" from "clamped". Written only in this guard, i.e. on the
+      // full-res -> clamped transition, so it records the real scale rather than the
+      // post-clamp steady-state (where width is already clamped and bufferScale -> 1).
+      if (this.canvas.dataset) this.canvas.dataset.renderScale = String(bufferScale);
     }
     const now = typeof performance !== "undefined" ? performance.now() : Date.now();
     const deltaSeconds = this.lastFrameAt ? Math.min(MAX_FRAME_DELTA_SECONDS, Math.max(0, (now - this.lastFrameAt) / 1000)) : 0;

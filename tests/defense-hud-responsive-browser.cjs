@@ -145,6 +145,10 @@ async function verifyPortraitViewportContract(browser, hosting) {
     assert.deepEqual({ bottom: safeInsets.bottom.bottom, right: safeInsets.bottom.right, left: safeInsets.bottom.left }, { bottom: 23, right: 17, left: 29 }, "portrait bottom HUD must stay on physical safe edges, not rotated logical mappings");
     assert.equal(safeInsets.cardTop, 11, "portrait cards must avoid the physical top cutout, not the former rotated right edge");
 
+    const preResize = await page.evaluate(() => {
+      const canvas = document.querySelector("#defense-canvas");
+      return { canvasWidth: canvas.width, canvasHeight: canvas.height };
+    });
     await page.evaluate(() => {
       const viewport = window.__defenseFakeViewport;
       viewport.offsetLeft = 13;
@@ -165,6 +169,7 @@ async function verifyPortraitViewportContract(browser, hosting) {
         height: Math.round(bounds.height),
         canvasWidth: canvas.width,
         canvasHeight: canvas.height,
+        renderScale: Number.parseFloat(canvas.dataset.renderScale ?? "1"),
         ratio: Math.min(window.devicePixelRatio || 1, 2),
       };
     });
@@ -173,8 +178,23 @@ async function verifyPortraitViewportContract(browser, hosting) {
       { left: 13, top: 17, width: 360, height: 800 },
       "the shifted visual viewport must define the full-bleed physical battle rectangle",
     );
-    assert.equal(shifted.canvasWidth, Math.round(800 * shifted.ratio), "visual viewport resize must update logical canvas width");
-    assert.equal(shifted.canvasHeight, Math.round(360 * shifted.ratio), "visual viewport resize must update logical canvas height");
+    const renderScale = shifted.renderScale;
+    const nativeWidth = Math.round(800 * shifted.ratio);
+    const nativeHeight = Math.round(360 * shifted.ratio);
+    // (1) software dynamic-resolution exposes a scale in (0,1]; a real GPU reports exactly 1.
+    assert.ok(Number.isFinite(renderScale) && renderScale > 0 && renderScale <= 1, `canvas renderScale must be a finite number in (0,1], got ${renderScale}`);
+    // (2) original intent preserved: a visual-viewport resize must propagate to the canvas backing store.
+    assert.ok(shifted.canvasWidth !== preResize.canvasWidth || shifted.canvasHeight !== preResize.canvasHeight, `visual viewport resize must change the canvas backing store from ${preResize.canvasWidth}x${preResize.canvasHeight}`);
+    // (3) uniform scaling preserves the post-resize logical portrait aspect (800/360), catching aspect distortion.
+    assert.ok(Math.abs(shifted.canvasWidth / shifted.canvasHeight - 800 / 360) < 0.02, `canvas backing store must preserve the 800/360 aspect, got ${shifted.canvasWidth}x${shifted.canvasHeight}`);
+    // (4) never upscales past native, and software clamps the backbuffer to the 180000px cap.
+    assert.ok(shifted.canvasWidth <= nativeWidth && shifted.canvasHeight <= nativeHeight, `canvas backing store must not exceed native ${nativeWidth}x${nativeHeight}, got ${shifted.canvasWidth}x${shifted.canvasHeight}`);
+    if (renderScale < 1) assert.ok(shifted.canvasWidth * shifted.canvasHeight <= 181000, `software-clamped canvas must respect the 180000px backbuffer cap, got ${shifted.canvasWidth * shifted.canvasHeight}px`);
+    // (5) on GPU / no clamp, keep the original exact native-resolution check at full strength.
+    if (renderScale === 1) {
+      assert.equal(shifted.canvasWidth, nativeWidth, "visual viewport resize must update logical canvas width");
+      assert.equal(shifted.canvasHeight, nativeHeight, "visual viewport resize must update logical canvas height");
+    }
 
     // Cycle 3 / D17: canvas drag now orbits the free camera, never movement
     // (movement is exclusively #movement-actions/keyboard, independent of the
