@@ -50,11 +50,45 @@ button:disabled { opacity: .42; cursor: not-allowed; }
 .defense-reward { max-height: min(38vh, 360px); }
 .defense-reward .choices button { display: grid; gap: .2rem; min-width: 11rem; text-align: left; }
 .defense-reward .choices span { color: #b9c2d6; font-size: .72rem; }
-html[data-defense-portrait="true"] #defense-canvas {
+html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="true"] #world-hud-overlay {
   width: var(--defense-logical-width);
   height: var(--defense-logical-height);
   transform: rotate(90deg) translateY(-100%);
   transform-origin: top left;
+}
+/*
+ * World-space HUD overlay (Cycle 3 Track 3, Option B DOM-overlay pattern —
+ * ui/lane-hud-layout.md section 4 "재검토 시 적용" scope, now the actually
+ * adopted rendering path per D17): shares the canvas's exact box + portrait
+ * rotation transform above, so child elements positioned via RealtimeBattle's
+ * worldToNDC() projection land in the same coordinate space as the 3D scene
+ * without needing separate portrait-rotation math. The overlay itself never
+ * intercepts pointer events (camera orbit/pinch on the canvas underneath
+ * must keep working); only specific interactive children opt back in.
+ */
+#world-hud-overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.world-nameplate { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); display: grid; gap: .1rem; padding: .15rem .4rem; border-radius: .4rem; background: rgb(5 12 25 / .72); font-size: .62rem; white-space: nowrap; text-align: center; pointer-events: none; }
+.world-nameplate strong { display: block; color: #dff3ff; font-size: .64rem; }
+.world-nameplate-bar { width: 3.2rem; height: .22rem; overflow: hidden; border-radius: 999px; background: #27384f; }
+.world-nameplate-bar i { display: block; height: 100%; background: linear-gradient(90deg, #e26b72, #e9c46a, #70d3ae); }
+.world-nameplate.is-downed { opacity: .55; }
+.world-capture-prompt { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); padding: .3rem .55rem; border: 1px solid #b992ff; border-radius: .5rem; background: rgb(12 11 30 / .85); color: #e7d9ff; font-size: .68rem; font-weight: 700; white-space: nowrap; animation: world-capture-pulse 1.6s ease-in-out infinite; }
+/* Row 17: offscreen objective waypoint arrow, screen-edge-clamped. rotate() applied inline per-frame (see app.js renderWorldHud). */
+.world-waypoint-arrow { position: absolute; left: 0; top: 0; transform-origin: center; font-size: 1.1rem; line-height: 1; color: #dfae51; text-shadow: 0 0 6px rgb(223 174 81 / .65), 0 1px 2px rgb(0 0 0 / .6); pointer-events: none; }
+/* Outer element carries ONLY the JS-computed screen position (set once,
+   never animated) — a CSS animation replaces the whole computed transform
+   value for an animated property, so co-animating position with the inner
+   rise/fade would discard the position. The inner span carries the
+   animation, positioned relative to the outer via its own centering
+   translate. */
+.world-damage-number { position: absolute; left: 0; top: 0; pointer-events: none; }
+.world-damage-number-rise { display: block; transform: translate(-50%, -50%); color: #fff3a1; font-size: .78rem; font-weight: 800; text-shadow: 0 1px 2px rgb(0 0 0 / .6); animation: world-damage-rise 900ms ease-out forwards; }
+.world-damage-number-rise.is-crit { color: #ff9a7a; font-size: .92rem; }
+@keyframes world-capture-pulse { 0%, 100% { opacity: .78; } 50% { opacity: 1; } }
+@keyframes world-damage-rise { from { opacity: 1; transform: translate(-50%, -50%); } to { opacity: 0; transform: translate(-50%, calc(-50% - 1.4rem)); } }
+@media (prefers-reduced-motion: reduce) {
+  .world-capture-prompt { animation: none; }
+  .world-damage-number-rise { animation: none; opacity: 0; transition: opacity 250ms linear 550ms; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 

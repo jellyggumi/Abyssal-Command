@@ -154,7 +154,24 @@ test("defense renderer adapters project a supplied snapshot to a mocked Canvas2D
     assert.doesNotThrow(() => adapter.renderSnapshot(snapshot));
   }
 });
-test("defense renderer adapters apply the identical bounded camera transform only after clearing the canvas", () => {
+// D17 (production/decision-log.md, Cycle 3 concept lock): RealtimeBattle now
+// renders via real WebGL2 + a free-orbit 3D camera when available, which is
+// NOT expected to produce byte-identical output to BattleVisualizer's fixed
+// Canvas2D camera — that assumption was explicitly retired this cycle. What
+// remains TRUE and load-bearing (asserted below): Node has no global
+// WebGL2RenderingContext at all, so hasRealWebGL2()'s `typeof
+// WebGL2RenderingContext !== "undefined"` check is unconditionally false in
+// every Node test regardless of what the mock canvas provides — RealtimeBattle
+// therefore ALWAYS composes and delegates to its own internal BattleVisualizer
+// fallback here (usingFallback===true), for every adapter in this test. This
+// test is really "RealtimeBattle's Canvas2D fallback path stays wired
+// identically to standalone BattleVisualizer" — an important regression guard
+// (a change to the fallback delegation could silently diverge the two), but it
+// says NOTHING about real-WebGL output, which can only be exercised in a real
+// browser (see tests/defense-survivor-browser.cjs's renderer-mode assertions,
+// and tests/defense-hud-responsive-browser.cjs/defense-performance-browser.cjs
+// for the actual WebGL2 rendering path this suite cannot reach).
+test("RealtimeBattle's Canvas2D fallback (always active in Node, which has no WebGL2RenderingContext) stays bounded-camera-identical to standalone BattleVisualizer", () => {
   const frame = Object.freeze({
     camera: Object.freeze({ x: 9000, y: -9000 }),
     viewport: { height: 360, width: 640 },
@@ -164,6 +181,7 @@ test("defense renderer adapters apply the identical bounded camera transform onl
   for (const Adapter of ADAPTERS) {
     const canvas = cameraCanvas();
     const adapter = new Adapter().mount({ canvas, viewport: { height: canvas.height, width: canvas.width } });
+    if (Adapter === RealtimeBattle) assert.equal(adapter.usingFallback, true, "Node has no WebGL2RenderingContext global -> RealtimeBattle must be in its Canvas2D fallback for this assertion to be meaningful");
     adapter.renderSnapshot(snapshot, frame);
 
     const cameraTransform = canvas.calls.find(([name]) => name === "translate");
@@ -181,7 +199,7 @@ test("defense renderer adapters apply the identical bounded camera transform onl
     adapter.dispose();
   }
 
-  assert.deepEqual(transforms[0], transforms[1], "primary and fallback adapters accept the same bounded camera frame");
+  assert.deepEqual(transforms[0], transforms[1], "RealtimeBattle's fallback and standalone BattleVisualizer accept the same bounded camera frame (Canvas2D-fallback-only guarantee, not a real-WebGL claim)");
 });
 
 test("both adapters select the approved Cinder Span artwork only in the camera-transformed world layer", async (t) => {

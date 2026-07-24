@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { createHash } = require("node:crypto");
 const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
@@ -9,6 +10,7 @@ try { playwright = require("playwright"); } catch {
   console.log("DEFENSE_SURVIVOR_BROWSER_SKIPPED missing Playwright");
 }
 const ROOT = path.resolve(__dirname, "..");
+const STORAGE_KEY = "abyssal-command-defense";
 
 function startServer() {
   const host = http.createServer((req, res) => {
@@ -17,7 +19,7 @@ function startServer() {
     if (!file.startsWith(ROOT + path.sep)) return res.writeHead(403).end();
     fs.stat(file, (error, stat) => {
       if (error || !stat.isFile()) return res.writeHead(404).end();
-      const mimeTypes = { ".js": "text/javascript", ".css": "text/css", ".html": "text/html", ".json": "application/json", ".png": "image/png", ".mp4": "video/mp4" };
+      const mimeTypes = { ".js": "text/javascript", ".css": "text/css", ".html": "text/html", ".json": "application/json", ".png": "image/png", ".mp4": "video/mp4", ".glb": "model/gltf-binary" };
       res.writeHead(200, { "Cache-Control": "no-store", "Content-Type": mimeTypes[path.extname(file)] || "application/octet-stream" });
       fs.createReadStream(file).pipe(res);
     });
@@ -25,16 +27,70 @@ function startServer() {
   return new Promise((resolve, reject) => host.listen(0, "127.0.0.1", () => resolve({ host, url: `http://127.0.0.1:${host.address().port}` })).on("error", reject));
 }
 
-async function run() {
-  const hosting = await startServer();
-  let browser;
+/**
+ * Cycle 3 Track 3 World HUD regression fixtures (see repo handoff notes for the
+ * three real bugs found + fixed during manual verification):
+ *
+ * Bug #1: projectEntityToScreen()/projectStaticPoint() used to accept a
+ *   world-unit heightOffset that got added before projecting to NDC. This
+ *   scene's world-space half-extent can be under 1 unit (STAGE_WORLD
+ *   "cinder-span" halfX=0.85/halfZ=0.47), so a meter-scale-guessed offset like
+ *   2.3 was ~2.5x the entire scene height, pushing NDC y outside [-1,1] and
+ *   making `visible` false for genuinely on-screen entities -- nameplates and
+ *   damage numbers silently never rendered. Fixed: projection now always uses
+ *   the entity's raw ground anchor; callers apply a fixed SCREEN-SPACE PIXEL
+ *   offset after projecting (WORLD_NAMEPLATE_LIFT_PX etc. in app.js).
+ *
+ * Bug #2: the original single .world-damage-number element carried BOTH an
+ *   inline JS-computed position transform AND a CSS keyframe animation that
+ *   also set `transform`. A CSS animation replaces the entire computed value
+ *   for an animated property -- it does not compose with an inline value --
+ *   so every damage number's rendered (computed) transform was pinned to the
+ *   overlay's top-left corner regardless of the real hit location. Fixed: an
+ *   outer .world-damage-number holds ONLY the static inline position
+ *   transform; a nested .world-damage-number-rise span carries the
+ *   rise+fade keyframe animation.
+ *
+ * Bug #3 (more severe, pre-existing before this session): getRunSnapshot()
+ *   has no top-level `boss` field -- the boss only ever appears as an entry
+ *   in snapshot.enemies with class==="boss". The renderer's old code checked
+ *   `if (snapshot.boss ...)` (permanently unreachable dead code) and
+ *   separately meshNameFor() deliberately returns null for class==="boss"
+ *   entities, expecting a caller to substitute the stage's boss GLB mesh
+ *   root name -- no caller ever did. Net effect: the boss rendered with ZERO
+ *   mesh in real WebGL for the entire life of this renderer. Fixed: the
+ *   enemies loop now resolves `world.boss` (STAGE_WORLD[stageId].boss) as
+ *   the mesh root name whenever enemy.class === "boss".
+ *
+ * Seeds a real companion loadout via campaign-state.js + defense-storage.js's
+ * own localStorage envelope format (indexedDB disabled so the app's real
+ * boot sequence falls back to localStorage), then drives a real battle
+ * against real WebGL in a fresh browser context.
+ */
+async function seededWorldHudCampaign() {
+  const campaignState = await import("../campaign-state.js");
+  let campaign = campaignState.createCampaign({ campaignId: "world-hud-regression", resetEpoch: 1 });
+  campaign = campaignState.startRun(campaign, "cinder-span");
+  campaign = campaignState.captureElite(campaign, "s1-ember-hunter", "ember-cohort");
+  campaign = campaignState.setCompanionLoadout(campaign, ["ember-cohort"]);
+  const payload = campaignState.serializeCampaign(campaign);
+  const text = JSON.stringify(payload);
+  return {
+    encoded: JSON.stringify({
+      version: campaignState.RULES_VERSION,
+      hash: `sha256-${createHash("sha256").update(text).digest("hex")}`,
+      payload,
+    }),
+  };
+}
+
+async function verifyPlaythroughJourney(browser, hosting) {
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page = await context.newPage();
   const report = { events: [], errors: [] };
+  page.on("pageerror", (error) => report.errors.push({ kind: "page", message: error.message }));
+  page.on("console", (message) => { if (message.type() === "error") report.errors.push({ kind: "console", message: message.text() }); });
   try {
-    browser = await playwright.chromium.launch({ headless: true });
-    const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 390, height: 844 }, hasTouch: true });
-    const page = await context.newPage();
-    page.on("pageerror", (error) => report.errors.push({ kind: "page", message: error.message }));
-    page.on("console", (message) => { if (message.type() === "error") report.errors.push({ kind: "console", message: message.text() }); });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
     await page.locator("#defense-app.defense-lobby").waitFor();
     assert.equal(await page.locator("#start-defense").isVisible(), true, "lobby must expose a live departure action");
@@ -173,8 +229,253 @@ async function run() {
     assert.equal(await surface.getAttribute("data-defense-renderer"), "webgl", "the real WebGL renderer must survive a full playthrough without silently failing over to the Canvas2D fallback");
     report.events.push("webgl-renderer-confirmed-active");
     assert.deepEqual(report.errors, [], "visible journey emitted unexpected page or console errors");
-    console.log(JSON.stringify({ pass: true, ...report }, null, 2));
+    return report;
+  } finally {
     await context.close();
+  }
+}
+
+/**
+ * World HUD overlay regression coverage (Bug #1, #2, #4). Seeds a real
+ * companion loadout, starts a real battle, and drives the live simulation
+ * loop entirely from inside the page (clicking through growth offers and
+ * dismissing the stage-entry cutscene as they appear — both otherwise pause
+ * tick advancement, see defense-run-simulation.js's advanceDefenseRun()
+ * growthOffer early-break) until either: (a) a companion nameplate has
+ * rendered with a real on-screen transform and at least two floating damage
+ * numbers with distinct computed positions have been observed (proving Bug
+ * #1 and Bug #2 stay fixed), and (b) the elite capture prompt has appeared
+ * once an elite candidate + this stage's fixed extraction zone exist
+ * (Bug #4 / "reasonably scoped" acceptance item).
+ */
+async function verifyWorldHudOverlay(browser, hosting, campaign) {
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+  try {
+    await page.addInitScript(({ encoded, key }) => {
+      Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
+      localStorage.setItem(key, encoded);
+    }, { encoded: campaign.encoded, key: STORAGE_KEY });
+    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").click();
+    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+
+    // Drive the live loop entirely inside the page: repeatedly dismiss the
+    // stage-entry cutscene and click through growth offers (both otherwise
+    // block real-time tick advancement — see advanceDefenseRun()'s
+    // `if (next.growthOffer) { ...; break; }`) while a MutationObserver
+    // records every .world-damage-number's real rendered (computed, not
+    // inline) transform + its .world-damage-number-rise text at the moment
+    // each is inserted — reading computed style is what actually would have
+    // caught Bug #2 (a co-animated transform silently replaces the whole
+    // computed value; the inline style string alone would look correct even
+    // under the bug).
+    const drive = await page.evaluate(async () => {
+      const overlay = document.querySelector("#world-hud-overlay");
+      const damageSamples = [];
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (!(node instanceof HTMLElement) || !node.classList.contains("world-damage-number")) continue;
+            const rise = node.querySelector(".world-damage-number-rise");
+            damageSamples.push({
+              computedTransform: getComputedStyle(node).transform,
+              inlineTransform: node.style.transform,
+              riseText: rise?.textContent ?? null,
+            });
+          }
+        }
+      });
+      observer.observe(overlay, { childList: true });
+
+      const deadlineAt = Date.now() + 32000;
+      let nameplateTransform = null;
+      let capturePromptText = null;
+      const clickedOfferKeys = new Set();
+      while (Date.now() < deadlineAt) {
+        const cutsceneDismiss = document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]");
+        if (cutsceneDismiss) cutsceneDismiss.click();
+        const growthOffer = document.querySelector("#defense-growth-offer");
+        if (growthOffer) {
+          const offerKey = growthOffer.dataset.offer ?? "";
+          const button = growthOffer.querySelector("button[data-pick]");
+          if (button && !clickedOfferKeys.has(offerKey)) {
+            clickedOfferKeys.add(offerKey);
+            button.click();
+          }
+        }
+        if (nameplateTransform === null) {
+          const nameplate = overlay.querySelector("[data-world-nameplate]");
+          if (nameplate && nameplate.style.transform) nameplateTransform = nameplate.style.transform;
+        }
+        if (capturePromptText === null) {
+          const prompt = overlay.querySelector(".world-capture-prompt");
+          if (prompt) capturePromptText = prompt.textContent;
+        }
+        if (nameplateTransform !== null && damageSamples.length >= 4 && capturePromptText !== null) break;
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      }
+      observer.disconnect();
+      return { nameplateTransform, damageSamples, capturePromptText, elapsedMs: 32000 - Math.max(0, deadlineAt - Date.now()) };
+    });
+
+    // Bug #1 guard: the companion nameplate must have appeared with a real
+    // on-screen pixel transform (never absent/never-appears, which is what
+    // the world-unit heightOffset regression produced — visible stayed false
+    // forever for an on-screen entity).
+    assert.ok(drive.nameplateTransform, "a seeded companion's world-nameplate must render with a real transform during a live playthrough (Bug #1 guard)");
+    assert.match(drive.nameplateTransform, /translate\(-?\d+(?:\.\d+)?px,\s*-?\d+(?:\.\d+)?px\)/, "the nameplate transform must be a real pixel translate, not a stale/empty value");
+
+    // Bug #2 guard: at least two distinct floating damage numbers must have
+    // rendered at genuinely different COMPUTED screen positions. Under the
+    // bug, the outer element's computed transform was always pinned to the
+    // overlay's origin regardless of hit location (the co-animated CSS
+    // transform replaced the whole computed value), so every sample would
+    // collapse to the same computed transform string.
+    assert.ok(drive.damageSamples.length >= 2, `expected at least 2 floating damage numbers during a live playthrough, saw ${drive.damageSamples.length}`);
+    for (const sample of drive.damageSamples) {
+      assert.notEqual(sample.computedTransform, "none", "a rendered damage number must carry a real computed transform, not the CSS initial value");
+      assert.match(sample.riseText ?? "", /^-\d+$/, "the inner .world-damage-number-rise span must carry the '-<damage>' text");
+    }
+    const distinctComputedTransforms = new Set(drive.damageSamples.map((sample) => sample.computedTransform));
+    assert.ok(
+      distinctComputedTransforms.size >= 2,
+      `damage numbers must render at distinct computed screen positions across different hits, saw only ${distinctComputedTransforms.size} distinct computed transform(s) across ${drive.damageSamples.length} samples: ${JSON.stringify([...distinctComputedTransforms])}`,
+    );
+
+    // Bug #4 (elite capture prompt, "if reasonably scoped"): once an elite
+    // candidate exists and this stage's extraction zone is projectable, the
+    // capture prompt must show the companion's real display name, not a raw
+    // prototype id or empty text.
+    assert.ok(drive.capturePromptText, "the elite capture prompt must appear once an elite candidate + extraction zone exist (Bug #4 guard)");
+    assert.match(drive.capturePromptText, /추출 가능/, "the capture prompt must carry the expected Korean call-to-action copy");
+    assert.match(drive.capturePromptText, /Ember Cohort/, "the capture prompt must name the real seeded elite companion prototype, not a placeholder");
+
+    assert.deepEqual(errors, [], "world HUD overlay journey emitted unexpected page or console errors");
+    return {
+      nameplateTransform: drive.nameplateTransform,
+      damageSampleCount: drive.damageSamples.length,
+      distinctDamagePositions: distinctComputedTransforms.size,
+      capturePromptText: drive.capturePromptText,
+      elapsedMs: drive.elapsedMs,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+/**
+ * Bug #3 guard (boss mesh resolution): direct scene-graph inspection, not a
+ * weaker DOM/event proxy. app.js exposes no debug hook for its live
+ * BattleSession/RealtimeBattle instance, so this constructs an independent
+ * RealtimeBattle against a fresh off-DOM canvas inside the SAME page/origin
+ * (so the "three" import-map specifier and the real GLB asset resolve
+ * correctly), drives the real defense-run-simulation.js state machine
+ * headlessly (pure computation, no wall-clock wait) until a live boss
+ * enemy exists, feeds that real simulation-produced snapshot through the
+ * exact renderSnapshot()/updateEntity()/instanceFor() code path the bug
+ * lived in, and inspects renderer.instances directly for a populated boss
+ * entry with real cloned mesh geometry underneath it — the precise
+ * regression (meshNameFor() returning null for class==="boss" with no
+ * caller substituting the stage boss root) would leave that Map entry
+ * entirely absent. This is strictly stronger evidence than any DOM/event
+ * signal could give, and was chosen over driving a full live UI playthrough
+ * to the boss (which requires completing a two-phase occupation+extraction
+ * hold sequence, adding tens of seconds of real wall-clock wait for no
+ * additional coverage of the actual bug).
+ */
+async function verifyBossMeshRegression(browser, hosting) {
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+  try {
+    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    const result = await page.evaluate(async () => {
+      const sim = await import("/defense-run-simulation.js");
+      const { ARENA } = await import("/defense-catalog.js");
+      const { RealtimeBattle } = await import("/battle-realtime-three.js");
+      const { createDefenseRun, advanceDefenseRun, getRunSnapshot, isTerminalRun, queueInput } = sim;
+
+      function step(run) {
+        const offer = getRunSnapshot(run).growthOffer;
+        let next = offer ? queueInput(run, "SKILL_SELECTED", { skillId: offer.choices[0] }) : run;
+        const snapshot = getRunSnapshot(next);
+        next = queueInput(next, "MOVE", { octant: "IDLE" });
+        if (snapshot.eliteCandidate && !snapshot.extracted) next = queueInput(next, "EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
+        return advanceDefenseRun(next, 1);
+      }
+
+      let run = createDefenseRun({ stageId: "cinder-span", seed: 2962819252, companionLoadout: ["ember-cohort"] });
+      let snapshot = getRunSnapshot(run);
+      let boss = null;
+      for (let i = 0; i < 3000 && !isTerminalRun(run); i += 1) {
+        run = step(run);
+        snapshot = getRunSnapshot(run);
+        boss = snapshot.enemies.find((enemy) => enemy.class === "boss");
+        if (boss) break;
+      }
+      if (!boss) return { error: `no live boss appeared within the simulated tick budget (final tick ${snapshot.tick}, terminal=${String(isTerminalRun(run))})` };
+
+      const project = (entity) => ({ ...entity, x: (entity.x / ARENA.width) * 2 - 1, y: (entity.y / ARENA.height) * 2 - 1 });
+      const projected = {
+        ...snapshot,
+        presentation: { stageId: "cinder-span" },
+        commander: project(snapshot.commander),
+        enemies: snapshot.enemies.map(project),
+        companions: snapshot.companions.map(project),
+      };
+
+      const canvas = document.createElement("canvas");
+      canvas.width = 320;
+      canvas.height = 180;
+      document.body.appendChild(canvas);
+      const renderer = new RealtimeBattle().mount({ canvas, viewport: canvas });
+      if (renderer.usingFallback) return { error: "RealtimeBattle fell back to Canvas2D (no real WebGL2 in this context) -- cannot exercise the WebGL mesh-resolution code path" };
+      await renderer.modelPromise;
+      if (!renderer.modelReady) return { error: "the abyssal-command-resource-pack.glb model failed to load -- cannot verify mesh resolution" };
+
+      renderer.renderSnapshot(projected, {});
+
+      const entry = renderer.instances.get(boss.id);
+      if (!entry) return { error: `renderer.instances has no entry for live boss id ${boss.id} -- Bug #3 has regressed (meshNameFor()/world.boss substitution broken)`, bossId: boss.id, bossHp: boss.hp, bossTick: snapshot.tick };
+      let meshDescendantCount = 0;
+      entry.object.traverse((node) => { if (node.isMesh || node.isSkinnedMesh) meshDescendantCount += 1; });
+      return {
+        bossId: boss.id,
+        bossHp: boss.hp,
+        bossTick: snapshot.tick,
+        meshRootName: entry.meshRootName,
+        meshDescendantCount,
+        expectedMeshRootName: "cinder-warden-root",
+      };
+    });
+
+    assert.equal(result.error, undefined, `boss mesh regression check failed: ${result.error}`);
+    assert.equal(result.meshRootName, result.expectedMeshRootName, "the boss must resolve its mesh root from STAGE_WORLD, not the always-null meshNameFor() result");
+    assert.ok(result.meshDescendantCount > 0, `the boss's cloned scene-graph object must contain real mesh geometry, found ${result.meshDescendantCount} mesh descendants`);
+    assert.deepEqual(errors, [], "boss mesh regression check emitted unexpected page or console errors");
+    return result;
+  } finally {
+    await context.close();
+  }
+}
+
+async function run() {
+  const hosting = await startServer();
+  let browser;
+  try {
+    browser = await playwright.chromium.launch({ headless: true });
+    const campaign = await seededWorldHudCampaign();
+    const journey = await verifyPlaythroughJourney(browser, hosting);
+    const worldHud = await verifyWorldHudOverlay(browser, hosting, campaign);
+    const bossMesh = await verifyBossMeshRegression(browser, hosting);
+    console.log(JSON.stringify({ pass: true, journey, worldHud, bossMesh }, null, 2));
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => hosting.host.close(resolve));

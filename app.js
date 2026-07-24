@@ -62,6 +62,13 @@ const VISUAL_ACTOR_SCALE = 2.5;
 const CAMERA_FOLLOW_X_LIMIT = 0.18;
 const CAMERA_FOLLOW_Y_LIMIT = 0.14;
 const CAMERA_FOLLOW_EASING = 0.18;
+// World-HUD (Track 3) screen-space "float above ground anchor" offsets, in
+// CSS pixels — NOT world units. See projectEntityToScreen()/projectStaticPoint()
+// docs in battle-realtime-three.js for why a world-unit offset is unsafe here.
+const WORLD_NAMEPLATE_LIFT_PX = 34;
+const WORLD_DAMAGE_NUMBER_LIFT_PX = 18;
+const WORLD_CAPTURE_PROMPT_LIFT_PX = 12;
+const WORLD_WAYPOINT_EDGE_MARGIN_PX = 28; // clamped inset from the viewport edge, row 17's screen-clamp margin
 
 let campaign = null;
 let selectedStageId = STAGES[0].id;
@@ -647,6 +654,7 @@ function beginSession(stageId) {
   root.innerHTML = `
     <section id="defense-battle-surface" data-defense-ready="true" data-defense-input-seq="0" data-defense-skill="" data-defense-move="IDLE" data-defense-state="active" aria-label="심연 방어 전장">
       <canvas id="defense-canvas" aria-label="방어 전장"></canvas>
+      <div id="world-hud-overlay" aria-hidden="true"></div>
       <div id="defense-edge-hud">
         <div class="defense-edge defense-top">
           <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">ABYSSAL COMMAND · SEAL ATLAS</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span></div>
@@ -730,6 +738,16 @@ export class BattleSession {
     // pattern, auto-dismiss, never pause the sim themselves.
     this.toastTimer = null;
     this.rallyAcknowledgedBossIds = new Set();
+    // World-space HUD (Track 3, DOM-overlay pattern — ui/lane-hud-layout.md
+    // section 4, Option B): companion nameplates/health bars, elite capture
+    // prompt, floating damage numbers, all positioned via
+    // RealtimeBattle.projectEntityToScreen()/projectStaticPoint(). No-ops
+    // when the Canvas2D fallback is active (worldToNDC returns null there);
+    // the pure-shape anchors (self-marker, health rings) stay Canvas2D-only
+    // per the existing battle-visualizer.js/battle-realtime-three.js
+    // Canvas2D drawing code, unaffected by this DOM layer.
+    this.worldHudDamageEventKeys = new Set();
+    this.worldHudDamageTick = null;
     this.onResize = this.resize.bind(this);
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
@@ -1183,8 +1201,191 @@ export class BattleSession {
     root.querySelector("#battle-enemies").textContent = `적 ${snapshot.enemies.length} · 처치 ${snapshot.progress.defeated} · 아이템 ${snapshot.progress.itemsCollected}`;
     this.renderControls(snapshot);
     this.renderPauseOverlay();
+    this.renderWorldHud(snapshot);
     if (snapshot.terminal && !this.terminalHandled) void this.resolveTerminal(snapshot);
     this.renderEventFeedback(snapshot);
+  }
+
+  /**
+   * World-space HUD text/interactive anchors (companion nameplates+health
+   * bars, elite capture prompt, floating damage numbers) — DOM overlay,
+   * updated every frame via RealtimeBattle's NDC projection. A no-op when
+   * the Canvas2D fallback is active (projection methods return null there),
+   * which is correct: those pure Canvas2D adapters have no 3D camera to
+   * project through, and this DOM layer is additive presentation only.
+   */
+  renderWorldHud(snapshot) {
+    const overlay = root.querySelector("#world-hud-overlay");
+    if (!overlay) return;
+    const width = Math.max(1, this.canvas?.clientWidth ?? 1);
+    const height = Math.max(1, this.canvas?.clientHeight ?? 1);
+    const toScreen = (ndc) => ({ x: (ndc.x + 1) / 2 * width, y: (1 - ndc.y) / 2 * height });
+
+    // Offscreen objective waypoint arrow (screen #17, hybrid world->screen
+    // clamp) — the camera-follow view frequently has the gate (this stage's
+    // sole "next objective" beacon, per the gate marker's world-space ring)
+    // outside the viewport; a fixed camera-relative arrow is standard topdown-
+    // ARPG practice for keeping an always-relevant objective locatable. Ground
+    // point normalized the same way updateExtractionRing's world-space twin
+    // does (this field isn't in app.js's own projected() normalization pass).
+    let waypointArrow = overlay.querySelector(".world-waypoint-arrow");
+    const gate = snapshot.gate;
+    if (gate && this.renderer?.projectStaticPoint) {
+      const normalizedX = gate.x / ARENA.width * 2 - 1;
+      const normalizedY = gate.y / ARENA.height * 2 - 1;
+      const ndc = this.renderer.projectStaticPoint(normalizedX, normalizedY);
+      if (ndc && !ndc.visible) {
+        // Behind-camera points have no meaningful screen direction (worldToNDC
+        // intentionally returns null there, see its docstring) - only an
+        // in-front-but-outside-frustum point can be clamped to an edge arrow.
+        const raw = toScreen(ndc);
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const dx = raw.x - centerX;
+        const dy = raw.y - centerY;
+        const halfW = width / 2 - WORLD_WAYPOINT_EDGE_MARGIN_PX;
+        const halfH = height / 2 - WORLD_WAYPOINT_EDGE_MARGIN_PX;
+        const scale = Math.min(halfW / Math.max(Math.abs(dx), 1e-6), halfH / Math.max(Math.abs(dy), 1e-6));
+        const clampedX = centerX + dx * Math.min(1, scale);
+        const clampedY = centerY + dy * Math.min(1, scale);
+        const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI) + 90; // +90: glyph points "up" at angle 0
+        if (!waypointArrow) {
+          waypointArrow = document.createElement("div");
+          waypointArrow.className = "world-waypoint-arrow";
+          waypointArrow.textContent = "▲";
+          waypointArrow.setAttribute("aria-hidden", "true");
+          overlay.append(waypointArrow);
+        }
+        waypointArrow.style.transform = "translate(" + clampedX + "px, " + clampedY + "px) translate(-50%, -50%) rotate(" + angleDeg + "deg)";
+      } else {
+        waypointArrow?.remove();
+      }
+    } else {
+      waypointArrow?.remove();
+    }
+
+
+    // Companion nameplates + health bars (screen #11) — capped at the
+    // existing MAX_LOADOUT_SIZE=3 loadout precedent, so no separate cap is
+    // needed (there are never more than 3 companions to plate). Projects
+    // the companion's GROUND anchor (see projectEntityToScreen() doc) and
+    // floats the plate above it with a fixed screen-space pixel offset
+    // (WORLD_NAMEPLATE_LIFT_PX) — zoom-varying by design, but never
+    // decides visibility, unlike a world-unit height offset would.
+    const nameplateAnchors = new Map();
+    for (const companion of snapshot.companions ?? []) {
+      const ndc = this.renderer?.projectEntityToScreen?.(companion.id);
+      if (!ndc?.visible) continue;
+      const point = toScreen(ndc);
+      const ratio = Math.max(0, Math.min(1, (companion.hp ?? 0) / Math.max(1, companion.maxHp ?? 1)));
+      let node = overlay.querySelector('[data-world-nameplate="' + companion.id + '"]');
+      if (!node) {
+        node = document.createElement("div");
+        node.className = "world-nameplate";
+        node.dataset.worldNameplate = companion.id;
+        node.innerHTML = "<strong></strong><span class=\"world-nameplate-bar\"><i></i></span>";
+        overlay.append(node);
+      }
+      node.classList.toggle("is-downed", companion.status === "DOWNED");
+      node.querySelector("strong").textContent = companionLabel(companion.companionId);
+      node.querySelector("i").style.width = (ratio * 100) + "%";
+      node.style.transform = "translate(" + point.x + "px, " + (point.y - WORLD_NAMEPLATE_LIFT_PX) + "px) translate(-50%, -100%)";
+      nameplateAnchors.set(companion.id, node);
+    }
+    overlay.querySelectorAll("[data-world-nameplate]").forEach((node) => {
+      if (!nameplateAnchors.has(node.dataset.worldNameplate)) node.remove();
+    });
+
+    // Elite capture prompt (screen #15) — anchored at the stage's fixed
+    // extraction zone (STAGE_TACTICS[stageId].extraction), not the
+    // defeated-elite corpse: defense-run-simulation.js removes dead enemies
+    // from run.enemies immediately, so eliteCandidate carries no live
+    // position — the actual mechanic is "carry the echo to the extraction
+    // zone", which is what this prompt correctly reflects. Same ground-anchor
+    // + screen-space-lift pattern as the nameplate above.
+    let capturePrompt = overlay.querySelector(".world-capture-prompt");
+    const extraction = snapshot.tactics?.extraction;
+    if (snapshot.eliteCandidate && !snapshot.extracted && extraction) {
+      const normalizedX = extraction.x / ARENA.width * 2 - 1;
+      const normalizedY = extraction.y / ARENA.height * 2 - 1;
+      const ndc = this.renderer?.projectStaticPoint?.(normalizedX, normalizedY);
+      if (ndc?.visible) {
+        const point = toScreen(ndc);
+        if (!capturePrompt) {
+          capturePrompt = document.createElement("div");
+          capturePrompt.className = "world-capture-prompt";
+          overlay.append(capturePrompt);
+        }
+        capturePrompt.textContent = "추출 가능 · " + companionLabel(snapshot.eliteCandidate.prototype);
+        capturePrompt.style.transform = "translate(" + point.x + "px, " + (point.y - WORLD_CAPTURE_PROMPT_LIFT_PX) + "px) translate(-50%, -100%)";
+      } else {
+        capturePrompt?.remove();
+      }
+    } else {
+      capturePrompt?.remove();
+    }
+
+    // Floating damage numbers (screen #16) — event-driven, pooled at
+    // MAX_VISUAL_EFFECTS=24 (battle-visualizer.js precedent). Two
+    // non-overlapping event sources (verified against
+    // defense-run-simulation.js emit() call sites): PROJECTILE_IMPACT for
+    // ranged hits on enemies/commander (excludes gate by design — it has a
+    // persistent HUD bar already; excludes companion ids because a
+    // companion ranged hit ALSO emits COMPANION_DAMAGED for the same hit,
+    // which would double-count), and COMMANDER_DAMAGED/COMPANION_DAMAGED
+    // unconditionally for melee contact damage (which never emits
+    // PROJECTILE_IMPACT). Enemy-takes-melee-contact-damage has no event at
+    // all in this codebase (enemies only take damage via projectiles), so
+    // that path needs no separate handling.
+    //
+    // Structure: an outer .world-damage-number holds the JS-computed screen
+    // position (set once via inline transform, never animated — a CSS
+    // animation replaces the ENTIRE computed transform value for an
+    // animated property, so co-animating position and rise/fade on the same
+    // element would silently discard the position, pinning every number to
+    // the overlay's top-left corner). An inner span carries the rise+fade
+    // keyframe animation relative to that fixed position.
+    if (this.worldHudDamageTick !== snapshot.tick) {
+      this.worldHudDamageTick = snapshot.tick;
+      this.worldHudDamageEventKeys.clear();
+    }
+    const companionIds = new Set((snapshot.companions ?? []).map((companion) => companion.id));
+    for (const event of snapshot.events ?? []) {
+      let targetId = null;
+      let damage = null;
+      if (event.type === "PROJECTILE_IMPACT" && event.hit && event.targetId !== "gate" && !companionIds.has(event.targetId)) {
+        targetId = event.targetId;
+        damage = event.damage;
+      } else if (event.type === "COMMANDER_DAMAGED") {
+        targetId = "commander";
+        damage = event.damage;
+      } else if (event.type === "COMPANION_DAMAGED") {
+        targetId = event.entityId;
+        damage = event.damage;
+      } else {
+        continue;
+      }
+      if (targetId === null || !damage) continue;
+      const key = event.type + ":" + targetId + ":" + snapshot.tick;
+      if (this.worldHudDamageEventKeys.has(key)) continue;
+      this.worldHudDamageEventKeys.add(key);
+      const ndc = this.renderer?.projectEntityToScreen?.(targetId);
+      if (!ndc?.visible) continue;
+      const point = toScreen(ndc);
+      const isCriticalTick = (snapshot.events ?? []).some((candidate) => candidate.type === "CRITICAL_HIT" && (candidate.targetId === targetId || candidate.entityId === targetId));
+      const pooled = overlay.querySelectorAll(".world-damage-number");
+      if (pooled.length >= 24) pooled[0].remove();
+      const number = document.createElement("div");
+      number.className = "world-damage-number";
+      number.style.transform = "translate(" + point.x + "px, " + (point.y - WORLD_DAMAGE_NUMBER_LIFT_PX) + "px)";
+      const rise = document.createElement("span");
+      rise.className = "world-damage-number-rise" + (isCriticalTick ? " is-crit" : "");
+      rise.textContent = "-" + damage;
+      number.append(rise);
+      overlay.append(number);
+      rise.addEventListener("animationend", () => number.remove());
+      setTimeout(() => number.remove(), 1200); // fallback if reduced-motion suppresses the animationend event
+    }
   }
 
   renderControls(snapshot) {
