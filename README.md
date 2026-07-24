@@ -3,21 +3,22 @@
 [![Deploy to Pages](https://github.com/jellyggumi/Abyssal-Command/actions/workflows/static.yml/badge.svg)](https://github.com/jellyggumi/Abyssal-Command/actions/workflows/static.yml)
 [![GitHub Pages](https://img.shields.io/github/deployments/jellyggumi/Abyssal-Command/github-pages?label=GitHub%20Pages)](https://jellyggumi.github.io/Abyssal-Command/)
 
-**Abyssal Surge**는 기존 심연 세계관을 유지한 모바일 우선 싱글플레이 디펜스 서바이버 캠페인입니다. 플레이어는 Dusk Warden을 이동시키고 자동 공격으로 지속되는 적군을 막으며, 런마다 스킬을 선택하고 정예를 추출해 영구 동료로 성장시킵니다. 10개 스테이지를 통과하면 Gate Zenith에서 캠페인이 종료됩니다. 전투 화면은 2.5D 아이소메트릭 스프라이트, 절차적 효과음/BGM, 스테이지 컷신 이벤트를 사용합니다.
+**Abyssal Surge**는 기존 심연 세계관을 유지한 모바일 우선 싱글플레이 디펜스 서바이버 캠페인입니다. 플레이어는 Dusk Warden을 이동시키고 자동 공격으로 지속되는 적군을 막으며, 런마다 스킬을 선택하고 정예를 추출해 영구 동료로 성장시킵니다. 전장은 실시간 3D(Three.js/WebGL) 씬으로 렌더링되며, 카메라는 커맨더를 따라가는 고정 앵글 버드아이 시점을 유지합니다. WebGL을 사용할 수 없는 환경에서는 동일한 스냅샷 계약을 공유하는 Canvas 2D 대체 어댑터가 표시를 이어갑니다. 10개 스테이지를 통과하면 Gate Zenith에서 캠페인이 종료됩니다.
 
 ## 플레이 계약
 
 - 전장은 모바일 화면을 가득 쓰는 full-bleed Canvas입니다. HUD는 화면 가장자리에 배치하여 전장과 적의 위험 신호를 가리지 않습니다.
 - 브라우저가 허용하는 범위에서 fullscreen과 landscape lock을 자동 요청합니다. 잠금할 수 없는 세로 화면에서는 회전 안내를 띄우지 않고, 시계 방향 논리 가로 화면을 세로 뷰포트에 표시합니다.
 - 이동 입력 외에 기본 공격은 자동입니다. XP를 얻을 때마다 현재 런에만 적용되는 스킬 제안 중 하나를 선택합니다.
-- 정예 적은 처치 뒤 추출할 수 있으며, 추출한 동료는 이후 캠페인에도 남는 영구 진행입니다.
+- 캠페인 진행은 워든 스탯 포인트, 5노드 스킬 트리, 5단계 장비 티어(무기/방어구/장신구), 스테이지 클리어 시퀀스로 해금되는 특성(trait)으로 영구 성장합니다. 스탯 포인트와 스킬 트리는 같은 Echo Core 예산을 공유합니다.
+- 정예 적은 처치 뒤 추출할 수 있으며, 추출한 동료는 영구 캠페인 진행으로 남습니다. 동료는 전열(FRONT, 최대 2)/후열(BACK) 포메이션에 배치되어 역할(선봉/타격대/지원)별 패시브를 받습니다.
 - 보스를 쓰러뜨리면 다음 스테이지로 진행합니다. Stage 10 보스 승리는 캠페인을 마칩니다.
 
 ## 기술 계약
 
 - 전투 규칙은 결정론적 60 Hz 시뮬레이션으로 진행합니다. 같은 저장 상태와 입력 순서는 같은 결과를 재현해야 합니다.
 - 진행 데이터는 기기 로컬에 오프라인으로 저장하며, JSON 내보내기/가져오기로 백업과 이동을 지원합니다. 클라우드 동기화나 온라인 멀티플레이는 이 계약에 포함되지 않습니다.
-- 전장 투영은 Canvas 2D 스냅샷 어댑터로 게임 규칙과 분리됩니다. 렌더러 오류가 발생하면 같은 스냅샷 계약의 대체 어댑터가 표시를 이어갑니다.
+- 전장 투영은 스냅샷 어댑터로 게임 규칙과 분리됩니다. 기본 어댑터(`battle-realtime-three.js`)는 GLB 모델을 로드하는 실제 Three.js 씬 그래프이며, 렌더러 오류나 WebGL 컨텍스트 생성 실패 시 같은 스냅샷 계약의 Canvas 2D 대체 어댑터(`battle-visualizer.js`)가 표시를 이어갑니다.
 - reduced motion을 존중하고, 움직임·번쩍임을 줄인 읽기 쉬운 표현을 제공합니다.
 
 상세한 규칙과 범위는 [디펜스 서바이버 설계 문서](docs/abyssal-command-defense-survivor-design.md), 제작 범위와 운영 원칙은 [production cycle](docs/abyssal-surge-production-cycle.md)을 따릅니다.

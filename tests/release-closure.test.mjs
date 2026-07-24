@@ -20,14 +20,14 @@ const RUNTIME_PATHS = new Set([
   "campaign-state.js", "defense-storage.js", "defense-cutscene.js", "defense-telemetry.js", "defense-audio.js",
   "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png",
-  "vendor/three.module.min.js", "vendor/three.core.min.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/SkeletonUtils.js", "vendor/utils/BufferGeometryUtils.js",
-  "assets/models/abyssal-command/abyssal-command-resource-pack.glb",
   GAMEPLAY_VIDEO,
   "assets/images/battle/dusk-warden-frame-00.png", "assets/images/battle/dusk-warden-frame-01.png",
   "assets/images/battle/dusk-warden-frame-02.png", "assets/images/battle/dusk-warden-frame-03.png",
   "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
   "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
   ...CINDER_SPAN_WORLD_ASSETS,
+  "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
+  "assets/images/battle/glb/anchor-shard.glb",
 ]);
 
 async function project(path) {
@@ -119,6 +119,8 @@ test("version scripts enforce the exact defense rules version", async () => {
     "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
     "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
     ...CINDER_SPAN_WORLD_ASSETS,
+    "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
+    "assets/images/battle/glb/anchor-shard.glb",
   ];
   for (const file of required) {
     const target = join(directory, file);

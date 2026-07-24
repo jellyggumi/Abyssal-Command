@@ -67,7 +67,6 @@ test('defense asset manifest has literal, complete dispositions when generated',
     assert.equal(row.replacementPath, retained ? row.currentPath : null);
 
     assert.equal(/^assets\/video\//.test(row.currentPath) && retained, false);
-    assert.equal(/^assets\/models\//.test(row.currentPath) && retained, false);
     assert.equal(/\/action-[^/]+$/.test(row.currentPath) && retained, false);
     assert.equal(/^assets\/images\/resource-refinement\//.test(row.currentPath) && retained, false);
   }

@@ -12,12 +12,6 @@ const CORE_ASSETS = [
   "./defense-storage.js",
   "./battle-canvas-text.js",
   "./battle-realtime-three.js",
-  "./vendor/three.module.min.js",
-  "./vendor/three.core.min.js",
-  "./vendor/loaders/GLTFLoader.js",
-  "./vendor/utils/SkeletonUtils.js",
-  "./vendor/utils/BufferGeometryUtils.js",
-  "./assets/models/abyssal-command/abyssal-command-resource-pack.glb",
   "./battle-visualizer.js",
   "./defense-audio.js",
   "./defense-cutscene.js",
@@ -32,6 +26,19 @@ const CORE_ASSETS = [
   "./assets/images/battle/echo-rusher-frame-03.png",
   "./assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
   "./assets/images/battle/world/cinder-span-topdown-plate.webp",
+  "./vendor/three.module.js",
+  "./vendor/three.core.js",
+  "./vendor/loaders/GLTFLoader.js",
+  "./vendor/utils/BufferGeometryUtils.js",
+  "./vendor/utils/SkeletonUtils.js",
+  // anchor-shard.glb (companion model, assets/images/battle/glb/) is deliberately
+  // NOT precached here: it is an unoptimized ~31MB pilot export (vs. the prior
+  // properly-baked companion GLBs at a few KB each). Precaching would force every
+  // visitor to download 31MB before install completes. networkFirst() below still
+  // caches it into CACHE_NAME on first real fetch (battle start), so offline replay
+  // works normally after one online session -- this only defers the cost off the
+  // install-blocking critical path. Re-add once the asset pipeline ships an
+  // optimized/compressed version.
   "./styles.css",
   "./react-game-ui.css",
   "./manifest.json",

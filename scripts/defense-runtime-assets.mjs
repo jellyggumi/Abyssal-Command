@@ -12,4 +12,5 @@ export const RETAINED_ASSET_PATHS = Object.freeze([
   'assets/images/battle/echo-rusher-frame-03.png',
   'assets/images/battle/world/cinder-span-tactical-paper-plate.webp',
   'assets/images/battle/world/cinder-span-topdown-plate.webp',
+  'assets/images/battle/glb/anchor-shard.glb',
 ]);

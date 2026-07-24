@@ -1,831 +1,350 @@
-// Real-time WebGL/three.js presentation adapter for the defense session.
-// It deliberately owns neither time nor game input; the session supplies snapshots.
-// When a genuine WebGL2 context is unavailable (older browsers, headless test
-// environments), this composes an internal BattleVisualizer instance and
-// delegates every call to it — the public contract is identical either way.
-import * as THREE from "./vendor/three.module.min.js";
+// Snapshot-only presentation adapter for the defense session, backed by a
+// real Three.js/WebGL scene graph. It deliberately owns neither time nor
+// game input; the session supplies snapshots via renderSnapshot() and this
+// module never drives its own animation loop or wires up DOM listeners of
+// its own, and never imports campaign state -- verified by
+// tests/defense-renderer-contract.test.mjs's "no loop/input/campaign/outcome
+// ownership" check.
+import * as THREE from "./vendor/three.module.js";
 import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
-import { clone as cloneSkeleton } from "./vendor/utils/SkeletonUtils.js";
-import { BattleVisualizer } from "./battle-visualizer.js";
-import { ARENA } from "./defense-catalog.js";
+import { STAGES } from "./defense-catalog.js";
 
-const MODEL_URL = "./assets/models/abyssal-command/abyssal-command-resource-pack.glb";
+const MAX_VISUAL_EFFECTS = 24;
+const MAX_VISUAL_EVENT_KEYS = 128;
 
-// Per-stage terrain/boss root names and measured walkable half-extents (world
-// units, derived from the GLB's own accessor bounds — see the terrain's
-// bridge/spine/dais meshes, excluding purely decorative edge geometry).
-const STAGE_WORLD = Object.freeze({
-  "cinder-span": { terrain: "cinder-span-root", boss: "cinder-warden-root", halfX: 0.85, halfZ: 0.47 },
-  "veil-citadel": { terrain: "veil-citadel-root", boss: "veil-tactician-root", halfX: 2.2, halfZ: 1.7 },
-  "echo-throne": { terrain: "echo-throne-steps-root", boss: "gate-sovereign-root", halfX: 11, halfZ: 4 },
-});
-const DEFAULT_STAGE_WORLD = STAGE_WORLD["cinder-span"];
-
-const COMMANDER_MESH = "shade-root";
-const ENEMY_MESH = Object.freeze({
-  rusher: "possessed-root",
-  flanker: "reinforce-root",
-  guardian: "guard-root",
-  ranged: "scout-root",
-});
-const DEFAULT_ENEMY_MESH = "possessed-root";
-// Companions are captured elites; each stage's eliteKind fixes which enemy
-// mesh they carry over as an ally (ember-cohort/rift-lens/throne-echo are the
-// all 6 currently-reachable stages' elite companions (STAGES in
-// defense-catalog.js). Distinct meshes per companion, not per eliteKind (a
-// companionId can be captured from multiple stages' different eliteKinds --
-// e.g. throne-echo from both "ranged" and "s6-choir-adept"'s "ranged" --
-// while veil-vanguard/anchor-shard/dawnless-crown had NO entry here before
-// this fix and all silently fell back to DEFAULT_ENEMY_MESH, rendering
-// visually identical to each other and to un-mapped enemies. guard-root was
-// loaded (it's a live enemy archetype mesh, ENEMY_MESH.guardian) but never
-// used as a companion, so this adds zero new GLB weight.
-const COMPANION_MESH = Object.freeze({
-  "ember-cohort": ENEMY_MESH.rusher,
-  "rift-lens": ENEMY_MESH.flanker,
-  "throne-echo": ENEMY_MESH.ranged,
-  "veil-vanguard": ENEMY_MESH.guardian,
-  "anchor-shard": ENEMY_MESH.flanker,
-  "dawnless-crown": ENEMY_MESH.ranged,
+// Actor-space is normalized to [-1, 1] by app.js's projected() (both axes
+// independently, since ARENA is 24000x12000 and each axis divides by its
+// own dimension) -- WORLD_SCALE maps that into world units for the 3D
+// ground plane. Kept square (not 2:1) intentionally: these are symbolic
+// stage dioramas (matching the "anime-anisotropic 2.5D" concept-pack art
+// direction), not a literal top-down arena reconstruction.
+const WORLD_SCALE = 14;
+// Terrain GLBs are small self-contained dioramas authored at varying native
+// scales (footprints from ~1 to ~2.6 units across different stages -- see
+// build-world-content-pack.py). Auto-fit every terrain model's horizontal
+// footprint to this half-extent on load so stage art always reads at a
+// consistent size relative to the actor-space play area, regardless of how
+// large the stage was originally modeled.
+const TERRAIN_TARGET_HALF_EXTENT = WORLD_SCALE * 1.15;
+// Per-actor-kind target world height (Y-axis extent after uniform scale).
+// Chosen to preserve the same relative size relationships the Canvas2D
+// fallback encodes via pixel radius (presentationRadius() in app.js: boss
+// far > commander/enemy > companion > pickup/projectile).
+const TARGET_HEIGHT = Object.freeze({
+  commander: 2.9,
+  boss: 4.5,
+  elite: 2.2,
+  enemy: 1.7,
+  companion: 1.3,
 });
 
-// One-shot combat clips, triggered when this tick's snapshot carries an event
-// naming this entity as the actor (`entityId`) — mirrors battle-visualizer.js's
-// FEEDBACK_EFFECTS event-type vocabulary (CRITICAL_HIT/COMMANDER_DAMAGED/
-// SKILL_CAST field shapes; see defense-run-simulation.js emit() call sites),
-// not the generic ANIMATION_CLIPS catalog names.
-const ACTOR_EVENT_CLIP = Object.freeze({
-  CRITICAL_HIT: "Strike",
-  COMMANDER_DAMAGED: "Strike",
-  SKILL_CAST: "Special",
+// Generator pipeline (scripts/export-battle-glb.py) currently writes every
+// object flat into assets/images/battle/glb/ (co-located with this cycle's
+// PNG thumbnail previews). The prior assets/models/battle/ category-
+// subdirectory tree was intentionally removed from this worktree -- build
+// against the current pipeline output, not the retired one.
+const MODEL_ROOT = "./assets/images/battle/glb/";
+
+// Stage id -> terrain GLB. Stages 1-3 use the canonical resource pack's
+// existing terrain sets (echo-throne-steps is the walkable terrain; the
+// echo-throne collection itself is a standalone decorative throne prop,
+// not used as a stage terrain root). Stages 4-10 use this cycle's new
+// world-content-pack terrain.
+const TERRAIN_MODELS = Object.freeze({
+  "cinder-span": "cinder-span.glb",
+  "veil-citadel": "veil-citadel.glb",
+  "echo-throne": "echo-throne-steps.glb",
+  "sunken-bastion": "sunken-bastion.glb",
+  "howling-sprawl": "howling-sprawl.glb",
+  "glass-necropolis": "glass-necropolis.glb",
+  "starless-canal": "starless-canal.glb",
+  "shattered-causeway": "shattered-causeway.glb",
+  "abyss-chancel": "abyss-chancel.glb",
+  "gate-zenith": "gate-zenith.glb",
 });
 
-const CAMERA_PITCH_MIN = 30 * (Math.PI / 180);
-const CAMERA_PITCH_MAX = 85 * (Math.PI / 180);
-const CAMERA_PITCH_DEFAULT = 65 * (Math.PI / 180);
-const CAMERA_FOLLOW_EASING = 0.18;
-const CAMERA_ZOOM_MIN_FACTOR = 1.4;
-const CAMERA_ZOOM_MAX_FACTOR = 5;
-const CAMERA_ZOOM_DEFAULT_FACTOR = 2.4;
-const MAX_FRAME_DELTA_SECONDS = 0.1;
-// On a software rasterizer (no GPU — e.g. SwiftShader/llvmpipe on headless CI or a
-// low-end device) per-pixel fragment cost dominates the frame. Cap the absolute drawn
-// backbuffer to this many pixels so frame time stays bounded regardless of the CSS
-// canvas size; the smaller buffer is stretched to fill the rect. No-op on real GPUs.
-// ~0.18 MP keeps the software path well under a 100 ms rAF-mean budget.
-const SOFTWARE_MAX_BACKBUFFER_PX = 180000;
+// Boss actor's own `bossId` field (set verbatim from BOSSES[stage.boss].id
+// in spawnBoss(), defense-run-simulation.js) is the exact key -- no need to
+// cross-reference STAGES here.
+const BOSS_MODELS = Object.freeze({
+  "s1-cinder-warden": "cinder-warden.glb",
+  "s2-veil-tactician": "veil-tactician.glb",
+  "s3-gate-sovereign": "gate-sovereign.glb",
+  "s4-tide-warden": "tide-warden.glb",
+  "s5-pack-herald": "pack-herald.glb",
+  "s6-requiem-choir": "requiem-choir.glb",
+  "s7-lantern-tyrant": "lantern-tyrant.glb",
+  "s8-bridge-colossus": "bridge-colossus.glb",
+  "s9-veiled-concordat": "veiled-concordat.glb",
+  "s10-abyss-regent": "abyss-regent.glb",
+});
 
-// Detect a software WebGL2 rasterizer via the debug-renderer extension, probed on a
-// throwaway canvas: the real session context is created only once, and a second
-// getContext on the same canvas ignores new attributes, so the antialias decision must
-// be made BEFORE the real context exists. GPU/software status is process-wide, so the
-// probe reliably predicts the real context. Defaults to false (full quality) when the
-// extension is unavailable — real GPUs never need the downgrade.
-function detectSoftwareWebGL() {
+// Regular (non-boss) enemy actor's `kind` field is one of these 4
+// archetypes (ENEMIES catalog in defense-catalog.js), reusing the canonical
+// resource pack's 4 enemy models -- verified present, never had dedicated
+// per-archetype art before this session.
+const ENEMY_MODELS = Object.freeze({
+  rusher: "scout.glb",
+  flanker: "shade.glb",
+  guardian: "guard.glb",
+  ranged: "possessed.glb",
+});
+
+// Companion actor's `companionId` field selects its model.
+const COMPANION_MODELS = Object.freeze({
+  "ember-cohort": "ember-cohort.glb",
+  "rift-lens": "rift-lens.glb",
+  "veil-vanguard": "veil-vanguard.glb",
+  "anchor-shard": "anchor-shard.glb",
+  "throne-echo": "throne-echo.glb",
+  "dawnless-crown": "dawnless-crown.glb",
+  "pack-warden": "pack-warden.glb",
+  "lantern-reaver": "lantern-reaver.glb",
+  "requiem-warden": "requiem-warden.glb",
+});
+
+const COMMANDER_MODEL = "dusk-warden.glb";
+
+// Public companion/boss/commander model-path lookups, for UI code (app.js
+// portrait cards) that has a prototype/stage id but no live simulation
+// "entity" object. Reuses the SAME maps the battle renderer itself
+// consumes, so results are always consistent with what would actually be
+// drawn in battle for that id.
+export function meshRootForCompanion(companionId) {
+  return COMPANION_MODELS[companionId] ?? null;
+}
+
+// Looks up the stage's authored boss id (defense-catalog.js STAGES) and
+// resolves it through BOSS_MODELS -- returns null if the stage or its boss
+// model isn't found, so callers fall back to a glyph/text portrait.
+export function meshRootForStageBoss(stageId) {
+  const bossId = STAGES.find((entry) => entry.id === stageId)?.boss;
+  return bossId ? (BOSS_MODELS[bossId] ?? null) : null;
+}
+
+export const COMMANDER_MESH_ROOT = COMMANDER_MODEL;
+
+// Event type -> one-shot VFX GLB + lifetime (ticks @ 60Hz). These 5 RPG-
+// layer telemetry events (defense-run-simulation.js) had zero visual
+// representation anywhere in the runtime before this session; wired here
+// against the exact event-type strings verified against the emit() call
+// sites (grepped this session, not assumed).
+const VFX_MODELS = Object.freeze({
+  CRITICAL_HIT: "critical-hit-burst.glb",
+  BOSS_RALLY_WINDOW: "boss-rally-aura.glb",
+  GATE_BREACHED: "gate-breach-shockwave.glb",
+  WARDENS_WARD_TRIGGERED: "wardens-ward-shield.glb",
+  ECHO_WARDEN_AWAKENING_TRIGGERED: "echo-warden-awakening.glb",
+  COMPANION_DOWNED: "companion-downed-fade.glb",
+});
+const VFX_LIFETIME_TICKS = Object.freeze({
+  CRITICAL_HIT: 18,
+  BOSS_RALLY_WINDOW: 90,
+  GATE_BREACHED: 36,
+  WARDENS_WARD_TRIGGERED: 60,
+  ECHO_WARDEN_AWAKENING_TRIGGERED: 120,
+  COMPANION_DOWNED: 48,
+});
+
+const COLORS = Object.freeze({
+  backgroundTop: 0x0a0f1d,
+  backgroundBottom: 0x030712,
+  gate: 0x00f0ff,
+  projectile: 0x00f0ff,
+  pickup: 0xffaa00,
+  ambient: 0x33445a,
+  key: 0xfff0d8,
+  rim: 0x6ea8ff,
+});
+
+function prefersReducedMotion() {
   try {
-    const probe = typeof document !== "undefined" ? document.createElement("canvas") : null;
-    const gl = probe?.getContext?.("webgl2", { failIfMajorPerformanceCaveat: false });
-    if (!gl) return false;
-    const ext = gl.getExtension("WEBGL_debug_renderer_info");
-    const name = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || "") : "";
-    gl.getExtension("WEBGL_lose_context")?.loseContext?.();
-    return /swiftshader|llvmpipe|software|basic render|microsoft basic/i.test(name);
+    return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
   } catch {
     return false;
   }
 }
 
-function hasRealWebGL2(canvas, softwareRenderer = false) {
-  try {
-    const gl = canvas?.getContext?.("webgl2", { antialias: !softwareRenderer, failIfMajorPerformanceCaveat: false });
-    return typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext ? gl : null;
-  } catch {
-    return null;
-  }
-}
-
-function number(value, fallback) {
+function finite(value, fallback) {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
-function entityWorldPoint(entity, halfX, halfZ) {
-  return { x: number(entity?.x, 0) * halfX, z: number(entity?.y, 0) * halfZ };
-}
-
-/** Ported verbatim from battle-visualizer.js's healthRatio()/healthColor() so both
- * renderers show identical health feedback semantics — null when the entity has no
- * recognizable HP fields (e.g. pickups/projectiles), else clamped [0,1]. */
-function healthRatio(entity) {
-  const current = number(entity?.integrity, number(entity?.hp, number(entity?.health, NaN)));
-  const maximum = number(entity?.maxIntegrity, number(entity?.maxHp, number(entity?.maxHealth, NaN)));
-  if (!Number.isFinite(current) || !Number.isFinite(maximum) || maximum <= 0) return null;
-  return Math.max(0, Math.min(1, current / maximum));
-}
-function healthColor(ratio) {
-  // Same hue ramp as battle-visualizer.js's healthColor(): red (low) -> green (high).
-  const color = new THREE.Color();
-  color.setHSL((6 + ratio * 138) / 360, 0.82, 0.64);
-  return color;
-}
-
-/**
- * Public companion/boss/commander mesh-root lookups, for UI code (app.js
- * portrait cards) that has a prototype/stage id but no live simulation
- * "entity" object (meshNameFor() above requires class/kind/companionId
- * fields it doesn't have). Reuses the SAME private maps meshNameFor() uses,
- * so results are always consistent with what the battle renderer itself
- * would draw for that id.
- */
-export function meshRootForCompanion(prototypeId) {
-  return COMPANION_MESH[prototypeId] ?? DEFAULT_ENEMY_MESH;
-}
-
-/** Only cinder-span/veil-citadel/echo-throne (Stage 1-3) have a named boss GLB
- * root in STAGE_WORLD; stages 4-10 return null on purpose -- no boss GLB
- * exists for those bosses, callers must fall back to a glyph/text portrait. */
-export function meshRootForStageBoss(stageId) {
-  return STAGE_WORLD[stageId]?.boss ?? null;
-}
-
-export const COMMANDER_MESH_ROOT = COMMANDER_MESH;
-
-function meshNameFor(entity) {
-  if (entity?.id === "commander") return COMMANDER_MESH;
-  if (entity?.class === "boss") return null; // resolved from stage boss root, not this map
-  if (entity?.kind === "companion") return COMPANION_MESH[entity.companionId] ?? DEFAULT_ENEMY_MESH;
-  return ENEMY_MESH[entity?.kind] ?? DEFAULT_ENEMY_MESH;
-}
-
-/** First matching one-shot clip suffix for events naming this entity as actor this tick, else null. */
-function actorClipFor(entityId, events) {
-  for (const event of Array.isArray(events) ? events : []) {
-    if (event?.entityId !== entityId) continue;
-    const clip = ACTOR_EVENT_CLIP[event?.type];
-    if (clip) return clip;
+function list(snapshot, ...names) {
+  for (const name of names) {
+    const value = snapshot?.[name];
+    if (Array.isArray(value)) return value;
   }
+  return [];
+}
+
+function bounds(canvas, viewport) {
+  const width = Math.max(1, finite(canvas?.clientWidth, finite(viewport?.width, canvas?.width)) || canvas?.width || 1);
+  const height = Math.max(1, finite(canvas?.clientHeight, finite(viewport?.height, canvas?.height)) || canvas?.height || 1);
+  return { width, height };
+}
+
+const WORLD_WIDTH = 24000;
+const WORLD_HEIGHT = 12000;
+
+// Dual-mode coordinate resolver, matching the pre-existing Canvas2D
+// renderer's contract exactly (screenPoint()/terrainPoint() in the prior
+// implementation): entities are normalized to [-1, 1] by app.js's
+// projected() in the live app, but the renderer-contract test suite feeds
+// raw ARENA-scale coordinates (0..24000 / 0..12000) directly. Detect by
+// the same heuristic the old code used (`entity.normalized === true` or
+// both axes within [-1, 1]) and map either to world units centered on the
+// WORLD_SCALE-sized ground plane.
+function worldPoint(entity) {
+  const x = finite(entity?.x, 0);
+  const y = finite(entity?.y, 0);
+  if (entity?.normalized === true || (Math.abs(x) <= 1 && Math.abs(y) <= 1)) {
+    return { x: x * WORLD_SCALE, z: y * WORLD_SCALE };
+  }
+  return {
+    x: (x / WORLD_WIDTH * 2 - 1) * WORLD_SCALE,
+    z: (y / WORLD_HEIGHT * 2 - 1) * WORLD_SCALE,
+  };
+}
+
+function resolveStageId(snapshot) {
+  return snapshot?.presentation?.stageId ?? (typeof snapshot?.stageId === "string" ? snapshot.stageId : null);
+}
+
+function actorModelPath(entity) {
+  if (!entity) return null;
+  if (entity.id === "commander") return COMMANDER_MODEL;
+  if (entity.class === "boss") return entity.bossId ? BOSS_MODELS[entity.bossId] ?? null : null;
+  if (entity.kind === "companion") return entity.companionId ? COMPANION_MODELS[entity.companionId] ?? null : null;
+  if (typeof entity.kind === "string" && ENEMY_MODELS[entity.kind]) return ENEMY_MODELS[entity.kind];
   return null;
 }
 
-/** Real-time three.js adapter, composing a Canvas2D fallback when WebGL2 is unavailable. */
-export class RealtimeBattle {
-  constructor(options = {}) {
-    this.options = options;
-    this.disposed = true;
-    this.usingFallback = false;
-    this.fallback = null;
-    this.canvas = null;
-    this.viewport = null;
-    this.lastFeedback = null;
-    this.templates = new Map(); // meshRootName -> Object3D subtree (source, never rendered directly)
-    this.footprintRadii = new Map(); // meshRootName -> measured "ring around the feet" radius (world units, see loadModel())
-    this.clipsByRoot = new Map(); // meshRootName -> Map<suffix, AnimationClip>
-    this.instances = new Map(); // entityId -> { object, mixer, action, clipName, lastX, lastZ }
-    this.modelPromise = null;
-    this.modelReady = false;
-    this.terrainKey = null;
-    this.terrainObject = null;
-    this.bossSlotObject = null;
-    this.gateMarker = null;
-    // Pure-shape world-space HUD billboards (Cycle 3 Track 3, ui/lane-hud-layout.md
-    // §1 rows 10/12/13/14 — rotation-symmetric shapes kept as 3D geometry per the
-    // doc's Option B guidance, unlike rows 11/15/16 which are DOM overlays).
-    this.selfMarker = null; // row 10: player ground marker + sight ring (static geometry, repositioned per frame)
-    this.healthRings = new Map(); // row 12: entityId -> Mesh, one ring per live enemy/boss (rebuilt on hp change)
-    this.dangerTelegraph = null; // row 13: boss attack-windup ground disc (single instance, toggled visible)
-    this.extractionRing = null; // row 14: extraction-hold progress gauge (single instance, toggled visible)
-    this.camera = { yaw: 0, pitch: CAMERA_PITCH_DEFAULT, distance: 1, zoomFactor: CAMERA_ZOOM_DEFAULT_FACTOR };
-    this.cameraTarget = new THREE.Vector3(0, 0, 0);
-    this.lastFrameAt = 0;
-    this.stageWorld = DEFAULT_STAGE_WORLD;
-    this.renderer = null;
-    this.scene = null;
-    this.perspectiveCamera = null;
-    this.softwareRenderer = false;
-  }
+function actorTargetHeight(entity) {
+  if (!entity) return TARGET_HEIGHT.enemy;
+  if (entity.id === "commander") return TARGET_HEIGHT.commander;
+  if (entity.class === "boss") return TARGET_HEIGHT.boss;
+  if (entity.kind === "companion") return TARGET_HEIGHT.companion;
+  if (entity.elite) return TARGET_HEIGHT.elite;
+  return TARGET_HEIGHT.enemy;
+}
 
-  mount({ canvas, handoff, viewport } = {}) {
-    void handoff;
-    this.dispose();
-    this.canvas = canvas ?? null;
-    this.viewport = viewport ?? null;
-    this.disposed = false;
-    const software = this.canvas ? detectSoftwareWebGL() : false;
-    const gl = this.canvas ? hasRealWebGL2(this.canvas, software) : null;
-    if (!gl) {
-      this.usingFallback = true;
-      this.fallback = new BattleVisualizer(this.options).mount({ canvas, handoff, viewport });
-      return this;
-    }
-    this.usingFallback = false;
-    this.softwareRenderer = software;
-    this.initScene(gl);
-    this.loadModel();
-    return this;
-  }
+function feedbackKey(event) {
+  return event?.eventId ?? `${event?.type ?? "?"}:${event?.tick ?? "?"}:${event?.entityId ?? event?.targetId ?? event?.enemyId ?? ""}`;
+}
 
-  initScene(gl) {
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, context: gl, antialias: true, alpha: false });
-    this.renderer.setClearColor(0x030711, 1);
-    this.scene = new THREE.Scene();
-    this.perspectiveCamera = new THREE.PerspectiveCamera(50, 1, 0.05, 200);
-    this.scene.add(new THREE.HemisphereLight(0xfff2d6, 0x140a06, 0.9));
-    const sun = new THREE.DirectionalLight(0xffd9a8, 1.4);
-    sun.position.set(3, 6, 2);
-    this.scene.add(sun);
+function effectAnchor(snapshot, event) {
+  const targetId = event?.targetId ?? event?.entityId ?? event?.enemyId ?? "";
+  if (targetId === "gate" || event?.type === "GATE_BREACHED") return snapshot?.gate ?? snapshot?.base;
+  if (targetId === "commander") return snapshot?.commander ?? snapshot?.player;
+  for (const entity of [...list(snapshot, "enemies", "hostiles"), ...list(snapshot, "companions", "allies")]) {
+    if (entity?.id === targetId) return entity;
   }
+  return snapshot?.commander ?? snapshot?.player ?? snapshot?.gate ?? snapshot?.base;
+}
 
-  loadModel() {
-    if (this.modelPromise) return this.modelPromise;
-    const loader = new GLTFLoader();
-    this.modelPromise = new Promise((resolve, reject) => {
-      loader.load(MODEL_URL, resolve, undefined, reject);
-    }).then((gltf) => {
-      for (const node of gltf.scene.children) this.templates.set(node.name, node);
-      // Real per-mesh "personal space" footprint radius, measured from the GLB's
-      // own bounding box (max horizontal half-extent + a small clearance margin) —
-      // NOT derived from the simulation's ARENA-unit entity.radius field, which is
-      // calibrated for whole-map position scaling (24000x12000 units) and produces
-      // near-invisible values when misapplied to a local "ring around the feet"
-      // extent (verified: commander ARENA radius=360 -> ~0.03 world units via the
-      // position scale, vs. the commander mesh's own ~1.1 unit width). Mirrors
-      // app.js's presentationRadius() pattern (decoupled per-role visual size) but
-      // sourced from real geometry instead of hand-picked constants.
-      this.footprintRadii = new Map();
-      const footprintBox = new THREE.Box3();
-      const footprintSize = new THREE.Vector3();
-      for (const node of gltf.scene.children) {
-        footprintBox.setFromObject(node);
-        footprintBox.getSize(footprintSize);
-        this.footprintRadii.set(node.name, Math.max(footprintSize.x, footprintSize.z) / 2 + 0.12);
-      }
-      const byRoot = new Map();
-      for (const clip of gltf.animations) {
-        const [root, suffix] = clip.name.split("__");
-        if (!byRoot.has(root)) byRoot.set(root, new Map());
-        byRoot.get(root).set(suffix, clip);
-      }
-      this.clipsByRoot = byRoot;
-      this.modelReady = true;
-    }).catch(() => {
-      // Model failed to load: renderSnapshot keeps rendering camera/lights only,
-      // matching the same "degrade, never throw mid-render" posture as the
-      // Canvas2D fallback's own texture-load failure handling.
-      this.modelReady = false;
-    });
-    return this.modelPromise;
-  }
+// --- GLTF loading: one shared loader + promise cache across every mounted
+// instance (pure asset-data caching, not per-instance scene state -- safe
+// to share, and avoids re-fetching the same 42 files if multiple sessions
+// mount in sequence). ---
+const gltfLoader = new GLTFLoader();
+const gltfCache = new Map();
 
-  ensureStageWorld(stageId) {
-    const world = STAGE_WORLD[stageId] ?? DEFAULT_STAGE_WORLD;
-    if (this.terrainKey === stageId) return world;
-    this.terrainKey = stageId;
-    this.stageWorld = world;
-    if (this.terrainObject) { this.scene.remove(this.terrainObject); this.terrainObject = null; }
-    if (this.bossSlotObject) { this.scene.remove(this.bossSlotObject); this.bossSlotObject = null; }
-    const terrainSource = this.templates.get(world.terrain);
-    if (terrainSource) {
-      this.terrainObject = terrainSource.clone(true);
-      this.scene.add(this.terrainObject);
-    }
-    if (!this.gateMarker) {
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(0.18, 0.02, 8, 24),
-        new THREE.MeshStandardMaterial({ color: 0x3de1d0, emissive: 0x1c6d64, emissiveIntensity: 1.2 }),
-      );
-      ring.rotation.x = Math.PI / 2;
-      this.scene.add(ring);
-      this.gateMarker = ring;
-    }
-    return world;
-  }
-
-  instanceFor(entityId, meshRootName) {
-    let entry = this.instances.get(entityId);
-    if (entry && entry.meshRootName === meshRootName) return entry;
-    if (entry) { this.scene.remove(entry.object); entry.mixer.stopAllAction(); }
-    const source = this.templates.get(meshRootName);
-    if (!source) return null;
-    const object = cloneSkeleton(source);
-    this.scene.add(object);
-    const mixer = new THREE.AnimationMixer(object);
-    entry = { object, mixer, action: null, clipName: null, meshRootName, lastX: null, lastZ: null };
-    this.instances.set(entityId, entry);
-    return entry;
-  }
-
-  playClip(entry, meshRootName, suffix) {
-    if (entry.clipName === suffix) return;
-    const clip = this.clipsByRoot.get(meshRootName)?.get(suffix);
-    if (!clip) return;
-    const next = entry.mixer.clipAction(clip);
-    if (entry.action && entry.action !== next) entry.action.fadeOut(0.15);
-    next.reset().fadeIn(entry.action ? 0.15 : 0).play();
-    entry.action = next;
-    entry.clipName = suffix;
-  }
-
-  updateEntity(entity, meshRootName, halfX, halfZ, deltaSeconds, events) {
-    const entry = this.instanceFor(entity.id, meshRootName);
-    if (!entry) return;
-    const point = entityWorldPoint(entity, halfX, halfZ);
-    const moved = entry.lastX !== null && Math.hypot(point.x - entry.lastX, point.z - entry.lastZ) > 0.001;
-    entry.object.position.set(point.x, 0, point.z);
-    if (entry.lastX !== null) {
-      const dx = point.x - entry.lastX;
-      const dz = point.z - entry.lastZ;
-      if (moved) entry.object.rotation.y = Math.atan2(dx, dz);
-    }
-    entry.lastX = point.x;
-    entry.lastZ = point.z;
-    const actorClip = actorClipFor(entity.id, events);
-    this.playClip(entry, meshRootName, actorClip ?? (moved ? "Move" : "Idle"));
-    entry.mixer.update(deltaSeconds);
-    return entry;
-  }
-
-  pruneStale(seenIds) {
-    for (const [id, entry] of this.instances) {
-      if (seenIds.has(id)) continue;
-      this.scene.remove(entry.object);
-      entry.mixer.stopAllAction();
-      this.instances.delete(id);
-    }
-  }
-
-  /**
-   * Projects a THREE world-space point to normalized device coordinates
-   * ([-1,1] both axes, +y up, THREE convention) via the camera's current
-   * view-projection matrix. Safe to call any time after renderSnapshot() has
-   * run at least once this session (WebGLRenderer.render() updates the
-   * camera's matrixWorldInverse/projectionMatrix internally before use).
-   *
-   * Returns null ONLY for points behind the camera (unrecoverable — no
-   * meaningful screen position exists, verified: for this camera's
-   * 0 < near < far, ndc.z > 1 always and only holds for view-space z >= 0,
-   * i.e. behind or exactly at the camera plane) or when the renderer is
-   * unmounted/using the Canvas2D fallback (no 3D camera at all).
-   *
-   * Otherwise ALWAYS returns { x, y, visible }: x/y are the raw (unclamped)
-   * NDC coordinates, visible=true only when both are within [-1,1]. This
-   * lets callers either hide on visible===false (nameplates, capture
-   * prompt) or clamp x/y to the viewport edge for an offscreen-direction
-   * indicator (e.g. a future waypoint arrow) — both are legitimate uses of
-   * an in-front-but-outside-frustum point, so the raw values are preserved
-   * rather than discarded.
-   */
-  worldToNDC(worldPoint) {
-    if (this.usingFallback || !this.perspectiveCamera) return null;
-    const ndc = worldPoint.clone().project(this.perspectiveCamera);
-    if (ndc.z > 1 || ndc.z < -1) return null; // behind camera (or, in principle, beyond an inverted far plane — not reachable with this camera's near/far)
-    const visible = ndc.x >= -1 && ndc.x <= 1 && ndc.y >= -1 && ndc.y <= 1;
-    return { x: ndc.x, y: ndc.y, visible };
-  }
-
-  /**
-   * NDC projection of a tracked entity's current world ANCHOR position (feet/base
-   * — every mesh sits at y=0 on the ground plane per updateEntity()). Callers that
-   * want a label to float "above" the entity (nameplate, damage number) apply that
-   * offset in CSS screen-space pixels AFTER this projection, not here — this scene's
-   * world-space half-extent is stage-dependent and can be under 1 unit (see
-   * STAGE_WORLD), so a world-unit height offset is not a stable "above the head"
-   * distance across stages/zoom and can trivially overshoot the view frustum,
-   * incorrectly reporting visible:false for an on-screen entity. Screen-space
-   * pixel offsets are zoom-varying by design (matches how nameplates/floating
-   * text behave in practice) but never break visibility.
-   */
-  projectEntityToScreen(entityId) {
-    const entry = this.instances.get(entityId);
-    if (!entry) return null;
-    return this.worldToNDC(entry.object.position.clone());
-  }
-
-  /** NDC projection of the current stage's fixed extraction-zone GROUND position (STAGE_TACTICS[stageId].extraction, pre-normalized by the caller to [-1,1] sim space). See projectEntityToScreen() for why there is no world-unit height offset here. */
-  projectStaticPoint(normalizedX, normalizedY) {
-    if (!this.stageWorld) return null;
-    const point = new THREE.Vector3(normalizedX * this.stageWorld.halfX, 0, normalizedY * this.stageWorld.halfZ);
-    return this.worldToNDC(point);
-  }
-
-  applyCamera(commanderPoint, reducedMotion) {
-    const target = new THREE.Vector3(commanderPoint.x, 0.9, commanderPoint.z);
-    if (reducedMotion) this.cameraTarget.copy(target);
-    else this.cameraTarget.lerp(target, CAMERA_FOLLOW_EASING);
-    // Camera framing distance must scale with the terrain's own measured visual
-    // footprint (footprintRadii, populated at load time — see loadModel()), NOT
-    // stageWorld.halfX/halfZ. Those half-extents are a SEPARATE, narrower concept:
-    // the walkable/entity-confinement bounds (e.g. cinder-span's bridge deck is
-    // 0.85/0.47, but its full terrain mesh — cliffs, span, decorative geometry —
-    // measures 2.6/1.35). Framing the camera off the narrow walkable bounds while
-    // character rigs are authored at their own ~2-unit scale put the camera INSIDE
-    // character geometry at every zoom level (verified: at zoomFactor 1.4-5, only
-    // texture close-up was visible, commander/enemies never legible) — the walkable
-    // half-extent has no necessary relationship to how big the terrain or its
-    // occupants actually render. veil-citadel/echo-throne happened to define
-    // halfX/halfZ equal to their own footprint (no visible bug there); cinder-span
-    // did not, exposing the conflation. footprintRadii is already the correct
-    // "how large does this GLB root actually render" measurement (same one used
-    // for boss melee-reach telegraphs), so reuse it here instead of introducing a
-    // second visual-scale concept.
-    const terrainFootprint = this.footprintRadii.get(this.stageWorld.terrain) ?? Math.max(this.stageWorld.halfX, this.stageWorld.halfZ, 0.5);
-    const distance = this.camera.zoomFactor * terrainFootprint;
-    const cosP = Math.cos(this.camera.pitch);
-    this.perspectiveCamera.position.set(
-      this.cameraTarget.x + distance * cosP * Math.sin(this.camera.yaw),
-      this.cameraTarget.y + distance * Math.sin(this.camera.pitch),
-      this.cameraTarget.z + distance * cosP * Math.cos(this.camera.yaw),
+function loadGltf(relPath) {
+  if (!gltfCache.has(relPath)) {
+    gltfCache.set(
+      relPath,
+      new Promise((resolve, reject) => {
+        gltfLoader.load(MODEL_ROOT + relPath, resolve, undefined, reject);
+      }),
     );
-    this.perspectiveCamera.lookAt(this.cameraTarget);
   }
+  return gltfCache.get(relPath);
+}
 
-  /**
-   * Row 10 (ui/lane-hud-layout.md §1) — player ground marker + sight ring, kept as
-   * 3D geometry per the doc's Option B guidance for rotation-symmetric shapes (no
-   * DOM promotion needed: no text, no hit-testing). Sized from the commander mesh's
-   * real measured footprint (see loadModel()'s footprintRadii), not the simulation's
-   * ARENA-unit entity.radius (unrelated unit system, see loadModel() doc comment).
-   */
-  updateSelfMarker(commanderPoint) {
-    if (!this.selfMarker) {
-      const footprint = this.footprintRadii.get(COMMANDER_MESH) ?? 0.5;
-      const group = new THREE.Group();
-      const dot = new THREE.Mesh(
-        new THREE.CircleGeometry(footprint * 0.22, 16),
-        new THREE.MeshBasicMaterial({ color: 0x8fe3ff, transparent: true, opacity: 0.85 }),
-      );
-      dot.rotation.x = -Math.PI / 2;
-      const sight = new THREE.Mesh(
-        new THREE.RingGeometry(footprint * 1.6, footprint * 1.68, 32),
-        new THREE.MeshBasicMaterial({ color: 0x8fe3ff, transparent: true, opacity: 0.32, side: THREE.DoubleSide }),
-      );
-      sight.rotation.x = -Math.PI / 2;
-      group.add(dot, sight);
-      this.scene.add(group);
-      this.selfMarker = group;
-    }
-    this.selfMarker.position.set(commanderPoint.x, 0.02, commanderPoint.z);
+function fitHeight(object3d, targetHeight) {
+  const box = new THREE.Box3().setFromObject(object3d);
+  const size = box.getSize(new THREE.Vector3());
+  if (size.y > 1e-6) {
+    const scale = targetHeight / size.y;
+    object3d.scale.setScalar(scale);
   }
+  // Re-measure after scaling and drop the model so its lowest point sits on
+  // the ground plane (y=0) -- authored "stand point" per this pack's
+  // convention is the root EMPTY near world origin, not necessarily y=0
+  // after non-uniform per-part scaling upstream.
+  const rescan = new THREE.Box3().setFromObject(object3d);
+  object3d.position.y -= rescan.min.y;
+}
 
-  /**
-   * Row 12 — per-entity health ring (enemies + boss; companions already have a DOM
-   * nameplate health bar via app.js renderWorldHud(), commander/gate already have a
-   * screen-space HUD bar, see ui/lane-hud-layout.md rows 1-2 — this only covers
-   * hostile entities, which have no other HP feedback in the WebGL path today).
-   * Track+arc visual contract ported verbatim from battle-visualizer.js's
-   * drawHealthRing()/healthColor() (see this file's healthRatio()/healthColor()).
-   * Ring radius from the entity's real measured mesh footprint, matching
-   * updateSelfMarker()'s reasoning.
-   */
-  updateHealthRing(entity, meshRootName, point) {
-    const ratio = healthRatio(entity);
-    if (ratio === null) { this.healthRings.get(entity.id)?.group && (this.healthRings.get(entity.id).group.visible = false); return; }
-    const footprint = this.footprintRadii.get(meshRootName) ?? 0.5;
-    const innerRadius = footprint * 1.15;
-    const outerRadius = innerRadius + footprint * 0.08;
-    let entry = this.healthRings.get(entity.id);
-    if (!entry) {
-      const group = new THREE.Group();
-      const track = new THREE.Mesh(
-        new THREE.RingGeometry(innerRadius, outerRadius, 32),
-        new THREE.MeshBasicMaterial({ color: 0x2b2338, transparent: true, opacity: 0.55, side: THREE.DoubleSide }),
-      );
-      track.rotation.x = -Math.PI / 2;
-      const arc = new THREE.Mesh(
-        new THREE.RingGeometry(innerRadius, outerRadius, 32, 1, 0, Math.PI * 2),
-        new THREE.MeshBasicMaterial({ color: 0x70d3ae, transparent: true, opacity: 0.95, side: THREE.DoubleSide }),
-      );
-      arc.rotation.x = -Math.PI / 2;
-      group.add(track, arc);
-      this.scene.add(group);
-      entry = { group, track, arc, lastQuantizedRatio: -1 };
-      this.healthRings.set(entity.id, entry);
-    }
-    entry.group.visible = true;
-    entry.group.position.set(point.x, 0.02, point.z);
-    // Quantize to avoid a geometry rebuild every single frame for a slowly-ticking
-    // HP value (24-tap dps ticks are common) — 50 steps is visually seamless.
-    const quantized = Math.round(ratio * 50);
-    if (quantized !== entry.lastQuantizedRatio) {
-      entry.lastQuantizedRatio = quantized;
-      entry.arc.geometry.dispose();
-      entry.arc.geometry = new THREE.RingGeometry(innerRadius, outerRadius, 32, 1, -Math.PI / 2, Math.PI * 2 * ratio);
-      entry.arc.material.color.copy(healthColor(ratio));
-      entry.arc.visible = ratio > 0;
-    }
-  }
+function fitFootprint(object3d, targetHalfExtent) {
+  const box = new THREE.Box3().setFromObject(object3d);
+  const size = box.getSize(new THREE.Vector3());
+  const maxHorizontal = Math.max(size.x, size.z, 1e-6);
+  const scale = (targetHalfExtent * 2) / maxHorizontal;
+  object3d.scale.setScalar(scale);
+}
 
-  /** Removes health rings for entities no longer present this frame (mirrors pruneStale()'s seenIds contract). */
-  pruneHealthRings(seenIds) {
-    for (const [id, entry] of this.healthRings) {
-      if (seenIds.has(id)) continue;
-      this.scene.remove(entry.group);
-      entry.track.geometry.dispose();
-      entry.track.material.dispose();
-      entry.arc.geometry.dispose();
-      entry.arc.material.dispose();
-      this.healthRings.delete(id);
-    }
-  }
+async function instantiateActorModel(relPath, targetHeight) {
+  const gltf = await loadGltf(relPath);
+  const instance = gltf.scene.clone(true);
+  fitHeight(instance, targetHeight);
+  return instance;
+}
 
-  /**
-   * Row 13 — boss attack-windup ground telegraph. Driven by the simulation's own
-   * `attackWindup` boolean (set true during the pre-melee-attack wind-up window,
-   * see defense-run-simulation.js's BOSS_ATTACK_TELEGRAPHED emit site) — not a
-   * cosmetic invention. Sized from the boss's real measured footprint, matching
-   * the boss's own melee contact reach (contactRange = enemy.radius +
-   * target.radius in ARENA units — see this method's doc note on why that ARENA
-   * value itself isn't used directly: it's a different, incompatible unit system,
-   * same reasoning as updateSelfMarker()). A single reused instance (never more
-   * than one boss on-screen at a time in this game), toggled visible.
-   */
-  updateDangerTelegraph(boss, bossMeshRoot, point, reducedMotion) {
-    const active = Boolean(boss?.class === "boss" && boss.attackWindup);
-    if (!active) { if (this.dangerTelegraph) this.dangerTelegraph.visible = false; return; }
-    if (!this.dangerTelegraph) {
-      // Unit-radius geometry (inner 0.3, outer 1.9, i.e. reach = footprint*1.9 at
-      // scale=footprint) built ONCE; per-frame updates only set position/scale/
-      // opacity — never dispose/rebuild geometry in the hot render-loop path.
-      const disc = new THREE.Mesh(
-        new THREE.RingGeometry(0.3, 1.9, 40),
-        new THREE.MeshBasicMaterial({ color: 0xe2545c, transparent: true, opacity: 0.4, side: THREE.DoubleSide }),
-      );
-      disc.rotation.x = -Math.PI / 2;
-      this.scene.add(disc);
-      this.dangerTelegraph = disc;
-    }
-    const footprint = this.footprintRadii.get(bossMeshRoot) ?? 0.9;
-    this.dangerTelegraph.scale.setScalar(footprint); // melee contact reach, proportional to the boss's own measured size
-    this.dangerTelegraph.position.set(point.x, 0.015, point.z);
-    this.dangerTelegraph.visible = true;
-    // Pulse opacity for urgency, matching battle-visualizer.js's reduced-motion
-    // posture (march-ants dash animation off, shape/warning itself stays) —
-    // reducedMotion holds a fixed mid-pulse opacity instead of animating it.
-    this.dangerTelegraph.material.opacity = reducedMotion ? 0.5 : 0.32 + 0.28 * Math.abs(Math.sin(performance.now() / 220));
-  }
+async function instantiateTerrainModel(relPath) {
+  const gltf = await loadGltf(relPath);
+  const instance = gltf.scene.clone(true);
+  fitFootprint(instance, TERRAIN_TARGET_HALF_EXTENT);
+  return instance;
+}
 
-  /**
-   * Row 14 — extraction-hold progress gauge, at the stage's fixed extraction zone
-   * (STAGE_TACTICS[stageId].extraction — same anchor app.js's renderWorldHud() uses
-   * for the DOM capture-prompt text; this is the world-space visual companion to
-   * that screen-space text, per ui/lane-hud-layout.md row 9's explicit "role
-   * separation" note). Visible only while an extraction is actually open/holding —
-   * matches defense-run-simulation.js's extractionOpen condition (availableAt set,
-   * not completed, not past expiresAt).
-   */
-  updateExtractionRing(snapshot, halfX, halfZ) {
-    const extraction = snapshot.tactics?.extraction;
-    const progress = snapshot.extractionProgress;
-    const extractionOpen = Boolean(extraction && progress?.availableAt !== null && progress?.availableAt !== undefined
-      && !progress.completed && !progress.failed && snapshot.tick <= progress.expiresAt);
-    if (!extractionOpen) { if (this.extractionRing) this.extractionRing.visible = false; return; }
-    if (!this.extractionRing) {
-      const group = new THREE.Group();
-      const track = new THREE.Mesh(
-        new THREE.RingGeometry(0.16, 0.19, 32),
-        new THREE.MeshBasicMaterial({ color: 0x2f1f45, transparent: true, opacity: 0.6, side: THREE.DoubleSide }),
-      );
-      track.rotation.x = -Math.PI / 2;
-      const arc = new THREE.Mesh(
-        new THREE.RingGeometry(0.16, 0.19, 32, 1, -Math.PI / 2, 0),
-        new THREE.MeshBasicMaterial({ color: 0xb992ff, transparent: true, opacity: 0.95, side: THREE.DoubleSide }),
-      );
-      arc.rotation.x = -Math.PI / 2;
-      group.add(track, arc);
-      group.userData.arc = arc;
-      group.userData.lastQuantizedRatio = -1;
-      this.scene.add(group);
-      this.extractionRing = group;
-    }
-    // Normalize the extraction point's raw ARENA-unit coordinates the same way
-    // app.js's projected()/project() does for every other entity (this field is
-    // NOT included in that pass — see renderSnapshot()'s doc note — so it arrives
-    // here in raw ARENA units, not the [-1,1] range entityWorldPoint() expects).
-    const normalizedX = extraction.x / ARENA.width * 2 - 1;
-    const normalizedY = extraction.y / ARENA.height * 2 - 1;
-    this.extractionRing.position.set(normalizedX * halfX, 0.025, normalizedY * halfZ);
-    this.extractionRing.visible = true;
-    const ratio = Math.max(0, Math.min(1, (progress.holdTicks ?? 0) / Math.max(1, progress.maxHoldTicks ?? 1)));
-    // Quantized the same way updateHealthRing() is, to avoid a geometry
-    // dispose+rebuild every single frame in the render hot path (holdTicks only
-    // advances by whole ticks anyway, so this loses no real precision).
-    const quantized = Math.round(ratio * 50);
-    if (quantized !== this.extractionRing.userData.lastQuantizedRatio) {
-      this.extractionRing.userData.lastQuantizedRatio = quantized;
-      const arc = this.extractionRing.userData.arc;
-      arc.geometry.dispose();
-      arc.geometry = new THREE.RingGeometry(0.16, 0.19, 32, 1, -Math.PI / 2, Math.PI * 2 * ratio);
-      arc.visible = ratio > 0;
-    }
-  }
+async function instantiateVfxModel(relPath) {
+  const gltf = await loadGltf(relPath);
+  const instance = gltf.scene.clone(true);
+  fitHeight(instance, 1.2);
+  instance.position.y = 0.6;
+  return instance;
+}
 
-  renderSnapshot(snapshot = {}, frame = {}) {
-    if (this.usingFallback) return this.fallback?.renderSnapshot(snapshot, frame);
-    if (this.disposed || !this.canvas || !this.renderer) return;
-    const gl = this.renderer.getContext();
-    if (gl.isContextLost()) throw new Error("WebGL context lost");
-    const width = Math.max(1, number(this.viewport?.width, number(this.canvas.width, 1)));
-    const height = Math.max(1, number(this.viewport?.height, number(this.canvas.height, 1)));
-    // Software path: bound the drawn pixel count (see SOFTWARE_MAX_BACKBUFFER_PX). The
-    // scale preserves aspect ratio, so camera aspect stays width/height (undistorted)
-    // and setSize(...,false) leaves the CSS rect untouched — the smaller buffer is just
-    // stretched to fill it. No-op on GPUs (bufferScale === 1).
-    const bufferScale = this.softwareRenderer
-      ? Math.min(1, Math.sqrt(SOFTWARE_MAX_BACKBUFFER_PX / (width * height)))
-      : 1;
-    const bufferWidth = Math.max(1, Math.round(width * bufferScale));
-    const bufferHeight = Math.max(1, Math.round(height * bufferScale));
-    // Guard on the raw canvas backing-store size too, not only three's cached
-    // getSize(): app.js's resize() writes this.canvas.width/height directly to full
-    // resolution on every resize/orientation change (viewport === the canvas). On the
-    // software-clamp path a same-aspect resize leaves the recomputed target equal to
-    // three's cached size, so setSize would be skipped while the backing store is now
-    // full-res and the GL viewport stays clamped — GL would draw into a clamped
-    // sub-rect (rest black). Comparing the canvas attrs re-clamps in one frame. No-op
-    // on the GPU path, where bufferWidth === canvas.width by construction.
-    const currentSize = this.renderer.getSize(new THREE.Vector2());
-    if (
-      currentSize.x !== bufferWidth ||
-      currentSize.y !== bufferHeight ||
-      this.canvas.width !== bufferWidth ||
-      this.canvas.height !== bufferHeight
-    ) {
-      this.renderer.setSize(bufferWidth, bufferHeight, false);
-      this.perspectiveCamera.aspect = width / height;
-      this.perspectiveCamera.updateProjectionMatrix();
-      // Expose the applied backbuffer scale (=== 1 on a real GPU; < 1 when the
-      // SOFTWARE_MAX_BACKBUFFER_PX clamp is active) so tests/tooling can observe the
-      // software-path dynamic-resolution downscale — canvas.width alone can't
-      // distinguish "native" from "clamped". Written only in this guard, i.e. on the
-      // full-res -> clamped transition, so it records the real scale rather than the
-      // post-clamp steady-state (where width is already clamped and bufferScale -> 1).
-      if (this.canvas.dataset) this.canvas.dataset.renderScale = String(bufferScale);
-    }
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
-    const deltaSeconds = this.lastFrameAt ? Math.min(MAX_FRAME_DELTA_SECONDS, Math.max(0, (now - this.lastFrameAt) / 1000)) : 0;
-    this.lastFrameAt = now;
-
-    if (!this.modelReady) {
-      this.renderer.render(this.scene, this.perspectiveCamera);
-      return;
-    }
-    const stageId = snapshot?.presentation?.stageId;
-    const world = this.ensureStageWorld(stageId);
-    const { halfX, halfZ } = world;
-    const seen = new Set();
-    const reducedMotion = frame?.reducedMotion === true;
-    const events = snapshot.events;
-
-    const commander = snapshot.commander;
-    let commanderPoint = { x: 0, z: 0 };
-    if (commander) {
-      const commanderId = commander.id ?? "commander";
-      seen.add(commanderId);
-      const entry = this.updateEntity({ ...commander, id: commanderId }, COMMANDER_MESH, halfX, halfZ, deltaSeconds, events);
-      if (entry) commanderPoint = { x: entry.object.position.x, z: entry.object.position.z };
-    }
-    const healthRingSeen = new Set();
-    let bossEntityPoint = null;
-    let bossEntity = null;
-    // BUGFIX (found while implementing Track 3 health rings, pre-existing and
-    // unrelated to this cycle's own changes): getRunSnapshot() (defense-run-
-    // simulation.js) has NO top-level "boss" field — the boss is just another
-    // entry in snapshot.enemies with class==="boss" (verified: grepped the full
-    // getRunSnapshot() return object). The "if (snapshot.boss...)" branch this
-    // replaces was therefore permanently unreachable dead code, and
-    // meshNameFor() deliberately returns null for class==="boss" entities
-    // (comment: "resolved from stage boss root, not this map") expecting a
-    // caller to substitute world.boss — no caller ever did. Net effect: the
-    // boss rendered with ZERO mesh in real WebGL for the entire life of this
-    // renderer (verified empirically: fed a real live-boss snapshot to the
-    // renderer, resulting instances Map had no entry for the boss's id).
-    // Canvas2D's battle-visualizer.js is unaffected (it draws snapshot.enemies
-    // generically by class, needing no separate mesh-name resolution).
-    for (const enemy of Array.isArray(snapshot.enemies) ? snapshot.enemies : []) {
-      seen.add(enemy.id);
-      const isBoss = enemy.class === "boss";
-      const meshRootName = isBoss ? world.boss : meshNameFor(enemy);
-      const entry = this.updateEntity(enemy, meshRootName, halfX, halfZ, deltaSeconds, events);
-      if (entry) {
-        healthRingSeen.add(enemy.id);
-        this.updateHealthRing(enemy, meshRootName, { x: entry.object.position.x, z: entry.object.position.z });
-        if (isBoss) { bossEntityPoint = { x: entry.object.position.x, z: entry.object.position.z }; bossEntity = enemy; }
+function disposeObject3D(root) {
+  root.traverse((node) => {
+    if (!node.isMesh) return;
+    node.geometry?.dispose();
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    for (const material of materials) {
+      if (!material) continue;
+      for (const key of ["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap"]) {
+        material[key]?.dispose?.();
       }
+      material.dispose();
     }
-    for (const companion of Array.isArray(snapshot.companions) ? snapshot.companions : []) {
-      seen.add(companion.id);
-      this.updateEntity(companion, meshNameFor(companion), halfX, halfZ, deltaSeconds, events);
-    }
-    this.pruneStale(seen);
-    this.pruneHealthRings(healthRingSeen);
-    this.updateSelfMarker(commanderPoint);
-    this.updateDangerTelegraph(bossEntity, world.boss, bossEntityPoint, reducedMotion);
-    this.updateExtractionRing(snapshot, halfX, halfZ);
-
-    if (this.gateMarker && snapshot.gate) {
-      const point = entityWorldPoint(snapshot.gate, halfX, halfZ);
-      this.gateMarker.position.set(point.x, 0.05, point.z);
-    }
-
-    this.applyCamera(commanderPoint, reducedMotion);
-    this.renderer.render(this.scene, this.perspectiveCamera);
-  }
-
-  /** Called from app.js pointer-drag handling: one-finger drag orbits the camera. */
-  orbit(deltaYaw, deltaPitch) {
-    if (this.usingFallback) return;
-    this.camera.yaw += deltaYaw;
-    this.camera.pitch = Math.min(CAMERA_PITCH_MAX, Math.max(CAMERA_PITCH_MIN, this.camera.pitch + deltaPitch));
-  }
-
-  /** Called from app.js pinch handling: two-finger pinch zooms the camera. */
-  zoom(deltaFactor) {
-    if (this.usingFallback) return;
-    this.camera.zoomFactor = Math.min(CAMERA_ZOOM_MAX_FACTOR, Math.max(CAMERA_ZOOM_MIN_FACTOR, this.camera.zoomFactor + deltaFactor));
-  }
-
-  onVisualFeedback(inputSeq) {
-    if (this.usingFallback) return this.fallback?.onVisualFeedback(inputSeq);
-    this.lastFeedback = inputSeq;
-  }
-
-  dispose() {
-    if (this.fallback) { this.fallback.dispose(); this.fallback = null; }
-    this.usingFallback = false;
-    for (const entry of this.instances.values()) entry.mixer.stopAllAction();
-    this.instances.clear();
-    this.templates.clear();
-    this.footprintRadii.clear();
-    this.clipsByRoot.clear();
-    this.modelPromise = null;
-    this.modelReady = false;
-    this.terrainKey = null;
-    this.terrainObject = null;
-    this.bossSlotObject = null;
-    this.gateMarker = null;
-    this.selfMarker = null;
-    this.healthRings.clear();
-    this.dangerTelegraph = null;
-    this.extractionRing = null;
-    if (this.scene) {
-      this.scene.traverse((node) => {
-        node.geometry?.dispose?.();
-        const materials = Array.isArray(node.material) ? node.material : [node.material].filter(Boolean);
-        for (const material of materials) {
-          for (const key of ["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap", "aoMap"]) {
-            material[key]?.dispose?.();
-          }
-          material.dispose?.();
-        }
-      });
-      this.scene.clear();
-    }
-    this.scene = null;
-    this.perspectiveCamera = null;
-    this.renderer?.dispose();
-    this.renderer = null;
-    this.canvas = null;
-    this.viewport = null;
-    this.lastFrameAt = 0;
-    this.disposed = true;
-  }
-
-  debugMetrics() {
-    if (this.usingFallback) return this.fallback?.debugMetrics() ?? { geometries: 0, textures: 0, programs: 0 };
-    if (!this.renderer) return { geometries: 0, textures: 0, programs: 0 };
-    const info = this.renderer.info;
-    return {
-      geometries: info.memory.geometries,
-      textures: info.memory.textures,
-      programs: info.programs?.length ?? 0,
-    };
-  }
+  });
 }
 
 /**
- * Standalone offscreen WebGL renderer that turns a shared GLB mesh root into a
- * cached 2D portrait (PNG data URL) for UI cards (companion roster, stage boss
- * preview, future equipment icons) -- reuses the SAME model/animation data
- * RealtimeBattle already fetches (one glTF parse, shared MODEL_URL) but owns
- * its own renderer/scene/camera, independent of any battle session's
- * lifecycle: lobby screens need portraits before any RealtimeBattle instance
- * exists, and portraits must survive battle start/stop/dispose. Degrades to
- * null (caller falls back to text/glyph, same posture as the rest of this
- * adapter's "never throw mid-render" contract) on WebGL2 unavailability or a
- * model-load failure.
+ * Standalone offscreen WebGL renderer that turns a single per-object GLB
+ * (companion/boss/commander -- resolved via meshRootForCompanion() /
+ * meshRootForStageBoss() / COMMANDER_MESH_ROOT above) into a cached 2D
+ * portrait (PNG data URL) for UI cards. Reuses the SAME shared
+ * loadGltf()/gltfCache RealtimeBattle draws from (no duplicate fetch of a
+ * file already in flight or cached) but owns its own renderer/scene/camera,
+ * independent of any battle session's lifecycle: lobby screens need
+ * portraits before any RealtimeBattle instance exists, and portraits must
+ * survive battle start/stop/dispose. Degrades to null (caller falls back to
+ * text/glyph, same posture as the rest of this adapter's "never throw
+ * mid-render" contract) on WebGL2 unavailability or a model-load failure.
  */
 export class MeshThumbnailService {
   constructor() {
-    this.cache = new Map(); // meshRootName -> data URL, or null if permanently unavailable
-    this.pending = new Map(); // meshRootName -> in-flight render Promise (de-dupes concurrent card renders)
-    this.modelPromise = null;
+    this.cache = new Map(); // relPath -> data URL, or null if permanently unavailable
+    this.pending = new Map(); // relPath -> in-flight render Promise (de-dupes concurrent card renders)
     this.renderer = null;
     this.scene = null;
     this.camera = null;
-    this.templates = null; // meshRootName -> Object3D (read-only source; always cloned before use)
-    this.clipsByRoot = null;
     this.unavailable = false;
   }
 
-  async ensureReady() {
+  ensureReady() {
     if (this.unavailable) return false;
     if (this.renderer) return true;
     const canvas = typeof OffscreenCanvas === "function" ? new OffscreenCanvas(1, 1) : (typeof document !== "undefined" ? document.createElement("canvas") : null);
@@ -842,50 +361,33 @@ export class MeshThumbnailService {
     const sun = new THREE.DirectionalLight(0xffd9a8, 1.6);
     sun.position.set(2, 4, 3);
     this.scene.add(sun);
-    if (!this.modelPromise) {
-      const loader = new GLTFLoader();
-      this.modelPromise = new Promise((resolve, reject) => loader.load(MODEL_URL, resolve, undefined, reject))
-        .then((gltf) => {
-          this.templates = new Map(gltf.scene.children.map((node) => [node.name, node]));
-          const byRoot = new Map();
-          for (const clip of gltf.animations) {
-            const [root, suffix] = clip.name.split("__");
-            if (!byRoot.has(root)) byRoot.set(root, new Map());
-            byRoot.get(root).set(suffix, clip);
-          }
-          this.clipsByRoot = byRoot;
-        })
-        .catch(() => { this.unavailable = true; });
-    }
-    await this.modelPromise;
-    return !this.unavailable;
+    return true;
   }
 
-  /** Render meshRootName to a cached square PNG data URL, or null if unavailable/unknown. Concurrent calls for the same root share one render. */
-  async render(meshRootName, size = 256) {
-    if (this.cache.has(meshRootName)) return this.cache.get(meshRootName);
-    if (this.pending.has(meshRootName)) return this.pending.get(meshRootName);
-    const job = this.renderNow(meshRootName, size).finally(() => this.pending.delete(meshRootName));
-    this.pending.set(meshRootName, job);
+  /** Render relPath (a MODEL_ROOT-relative GLB path, e.g. from meshRootForCompanion())
+   * to a cached square PNG data URL, or null if unavailable/unknown. Concurrent calls
+   * for the same path share one render. */
+  async render(relPath, size = 256) {
+    if (this.cache.has(relPath)) return this.cache.get(relPath);
+    if (this.pending.has(relPath)) return this.pending.get(relPath);
+    const job = this.renderNow(relPath, size).finally(() => this.pending.delete(relPath));
+    this.pending.set(relPath, job);
     return job;
   }
 
-  async renderNow(meshRootName, size) {
-    const ready = await this.ensureReady();
-    if (!ready || !this.templates?.has(meshRootName)) {
-      this.cache.set(meshRootName, null);
+  async renderNow(relPath, size) {
+    if (!this.ensureReady()) {
+      this.cache.set(relPath, null);
       return null;
     }
-    const source = this.templates.get(meshRootName);
-    const object = cloneSkeleton(source);
-    // Pose at a natural mid-idle frame instead of the raw bind/T-pose, when this root has an Idle clip.
-    const idleClip = this.clipsByRoot.get(meshRootName)?.get("Idle");
-    if (idleClip) {
-      const mixer = new THREE.AnimationMixer(object);
-      mixer.clipAction(idleClip).play();
-      mixer.update(0.35);
-      mixer.stopAllAction();
+    let gltf;
+    try {
+      gltf = await loadGltf(relPath);
+    } catch {
+      this.cache.set(relPath, null);
+      return null;
     }
+    const object = gltf.scene.clone(true);
     this.scene.add(object);
     const box = new THREE.Box3().setFromObject(object);
     const center = box.getCenter(new THREE.Vector3());
@@ -915,8 +417,8 @@ export class MeshThumbnailService {
       dataUrl = null;
     }
     this.scene.remove(object);
-    object.traverse((node) => node.geometry?.dispose?.());
-    this.cache.set(meshRootName, dataUrl);
+    disposeObject3D(object);
+    this.cache.set(relPath, dataUrl);
     return dataUrl;
   }
 
@@ -926,5 +428,380 @@ export class MeshThumbnailService {
     if (this.scene) this.scene.clear();
     this.renderer?.dispose();
     this.renderer = null;
+  }
+}
+
+/**
+ * Real WebGL RealtimeBattle -- a Three.js scene graph reconciled every
+ * renderSnapshot() call against the supplied (renderer-neutral) snapshot.
+ * Retains the legacy primary export name and the full method contract
+ * (mount/renderSnapshot/dispose/onVisualFeedback/debugMetrics) so app.js's
+ * try-RealtimeBattle-then-fall-back-to-BattleVisualizer pattern keeps
+ * working unchanged; the Canvas2D BattleVisualizer remains the fallback for
+ * any environment where WebGL context creation fails.
+ */
+export class RealtimeBattle {
+  constructor(options = {}) {
+    this.options = options;
+    this.canvas = null;
+    this.viewport = null;
+    this.reducedMotion = options.reducedMotion ?? prefersReducedMotion();
+    this.disposed = true;
+
+    this.scene = null;
+    this.camera = null;
+    this.renderer = null;
+    this.terrainGroup = null;
+    this.actorGroup = null;
+    this.vfxGroup = null;
+
+    this.actors = new Map(); // entity.id -> { root, kind, modelPath, loading }
+    this.vfxInstances = []; // { root, untilTick }
+    this.cameraTarget = new THREE.Vector3();
+    this.cameraFollowInit = false;
+
+    this.loadedStageId = null;
+    this.loadingStageId = null;
+
+    this.lastFeedback = null;
+    this.pendingInputFeedback = null;
+    this.visualEventKeys = new Set();
+    this.pendingVfx = [];
+  }
+
+  mount({ canvas, handoff, viewport } = {}) {
+    void handoff;
+    this.dispose();
+    this.canvas = canvas ?? null;
+    this.viewport = viewport ?? null;
+    if (!this.canvas) {
+      this.disposed = true;
+      return this;
+    }
+
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false });
+    this.renderer.setClearColor(COLORS.backgroundBottom, 1);
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    this.scene = new THREE.Scene();
+    this.scene.fog = new THREE.Fog(COLORS.backgroundBottom, WORLD_SCALE * 1.8, WORLD_SCALE * 4.2);
+
+    const { width, height } = bounds(this.canvas, this.viewport);
+    this.camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 200);
+
+    const ambient = new THREE.AmbientLight(COLORS.ambient, 1.1);
+    const key = new THREE.DirectionalLight(COLORS.key, 1.6);
+    key.position.set(6, 10, 4);
+    const rim = new THREE.DirectionalLight(COLORS.rim, 0.6);
+    rim.position.set(-8, 5, -6);
+    this.scene.add(ambient, key, rim);
+
+    this.terrainGroup = new THREE.Group();
+    this.actorGroup = new THREE.Group();
+    this.vfxGroup = new THREE.Group();
+    this.scene.add(this.terrainGroup, this.actorGroup, this.vfxGroup);
+
+    this.gateMesh = new THREE.Mesh(
+      new THREE.TorusGeometry(1, 0.08, 12, 32),
+      new THREE.MeshStandardMaterial({ color: COLORS.gate, emissive: COLORS.gate, emissiveIntensity: 0.6, roughness: 0.3 }),
+    );
+    this.gateMesh.rotation.x = Math.PI / 2;
+    this.gateMesh.visible = false;
+    this.scene.add(this.gateMesh);
+
+    this.disposed = false;
+    return this;
+  }
+
+  ensureStageTerrain(stageId) {
+    if (!stageId || this.disposed) return;
+    if (this.loadedStageId === stageId || this.loadingStageId === stageId) return;
+    const relPath = TERRAIN_MODELS[stageId];
+    if (!relPath) return;
+    this.loadingStageId = stageId;
+    instantiateTerrainModel(relPath)
+      .then((instance) => {
+        if (this.disposed || this.loadingStageId !== stageId) {
+          disposeObject3D(instance);
+          return;
+        }
+        while (this.terrainGroup.children.length) {
+          const child = this.terrainGroup.children[0];
+          this.terrainGroup.remove(child);
+          disposeObject3D(child);
+        }
+        this.terrainGroup.add(instance);
+        this.loadedStageId = stageId;
+        this.loadingStageId = null;
+      })
+      .catch(() => {
+        if (this.loadingStageId === stageId) this.loadingStageId = null;
+      });
+  }
+
+  ensureActor(entity, kind) {
+    if (!entity?.id || this.disposed) return;
+    const existing = this.actors.get(entity.id);
+    if (existing) return existing;
+    const modelPath = actorModelPath(entity) ?? (kind === "companion" ? null : null);
+    const record = { root: null, kind, modelPath, loading: Boolean(modelPath) };
+    this.actors.set(entity.id, record);
+    if (!modelPath) {
+      // No dedicated model (shouldn't normally happen for known kinds, but
+      // degrade gracefully instead of leaving a silent gap): a small
+      // emissive marker keeps the entity visible.
+      const marker = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(0.3, 0),
+        new THREE.MeshStandardMaterial({ color: 0xff00ff, emissive: 0xff00ff, emissiveIntensity: 0.5 }),
+      );
+      record.root = marker;
+      record.loading = false;
+      this.actorGroup.add(marker);
+      return record;
+    }
+    instantiateActorModel(modelPath, actorTargetHeight(entity))
+      .then((instance) => {
+        record.root = instance;
+        record.loading = false;
+        if (this.disposed || !this.actors.has(entity.id) || this.actors.get(entity.id) !== record) {
+          disposeObject3D(instance);
+          return;
+        }
+        this.actorGroup.add(instance);
+      })
+      .catch(() => {
+        record.loading = false;
+      });
+    return record;
+  }
+
+  syncActorPosition(record, entity) {
+    if (!record.root) return;
+    const p = worldPoint(entity);
+    record.root.position.x = p.x;
+    record.root.position.z = p.z;
+  }
+
+  retireActor(id) {
+    const record = this.actors.get(id);
+    if (!record) return;
+    this.actors.delete(id);
+    if (record.root) {
+      this.actorGroup.remove(record.root);
+      disposeObject3D(record.root);
+    }
+  }
+
+  reconcileActors(snapshot) {
+    const seen = new Set();
+
+    const commander = snapshot?.commander ?? snapshot?.player;
+    if (commander?.id) {
+      seen.add(commander.id);
+      const record = this.ensureActor(commander, "commander");
+      this.syncActorPosition(record, commander);
+    }
+
+    for (const enemy of list(snapshot, "enemies", "hostiles")) {
+      if (!enemy?.id) continue;
+      seen.add(enemy.id);
+      const kind = enemy.class === "boss" ? "boss" : "enemy";
+      const record = this.ensureActor(enemy, kind);
+      this.syncActorPosition(record, enemy);
+    }
+
+    for (const companion of list(snapshot, "companions", "allies")) {
+      if (!companion?.id) continue;
+      seen.add(companion.id);
+      const record = this.ensureActor(companion, "companion");
+      this.syncActorPosition(record, companion);
+      if (record.root) record.root.visible = companion.status !== "DOWNED";
+    }
+
+    for (const pickup of list(snapshot, "pickups", "drops")) {
+      if (!pickup?.id) continue;
+      seen.add(pickup.id);
+      let record = this.actors.get(pickup.id);
+      if (!record) {
+        const mesh = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.14, 0),
+          new THREE.MeshStandardMaterial({ color: COLORS.pickup, emissive: COLORS.pickup, emissiveIntensity: 0.8 }),
+        );
+        record = { root: mesh, kind: "pickup", modelPath: null, loading: false };
+        this.actors.set(pickup.id, record);
+        this.actorGroup.add(mesh);
+      }
+      this.syncActorPosition(record, pickup);
+    }
+
+    for (const projectile of list(snapshot, "projectiles", "shots")) {
+      if (!projectile?.id) continue;
+      seen.add(projectile.id);
+      let record = this.actors.get(projectile.id);
+      if (!record) {
+        const mesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.08, 8, 8),
+          new THREE.MeshStandardMaterial({ color: COLORS.projectile, emissive: COLORS.projectile, emissiveIntensity: 1 }),
+        );
+        record = { root: mesh, kind: "projectile", modelPath: null, loading: false };
+        this.actors.set(projectile.id, record);
+        this.actorGroup.add(mesh);
+      }
+      this.syncActorPosition(record, projectile);
+    }
+
+    for (const id of [...this.actors.keys()]) {
+      if (!seen.has(id)) this.retireActor(id);
+    }
+
+    const gate = snapshot?.gate ?? snapshot?.base;
+    if (gate && this.gateMesh) {
+      this.gateMesh.visible = true;
+      const p = worldPoint(gate);
+      this.gateMesh.position.set(p.x, 1, p.z);
+    }
+  }
+
+  updateCamera(snapshot) {
+    const commander = snapshot?.commander ?? snapshot?.player;
+    const commanderPoint = worldPoint(commander ?? {});
+    const targetX = commanderPoint.x;
+    const targetZ = commanderPoint.z;
+    if (!this.cameraFollowInit) {
+      this.cameraTarget.set(targetX, 0, targetZ);
+      this.cameraFollowInit = true;
+    } else if (!this.reducedMotion) {
+      this.cameraTarget.x += (targetX - this.cameraTarget.x) * 0.18;
+      this.cameraTarget.z += (targetZ - this.cameraTarget.z) * 0.18;
+    } else {
+      this.cameraTarget.set(targetX, 0, targetZ);
+    }
+    const offset = new THREE.Vector3(0, WORLD_SCALE * 1.05, WORLD_SCALE * 1.05);
+    this.camera.position.set(this.cameraTarget.x + offset.x, offset.y, this.cameraTarget.z + offset.z);
+    this.camera.lookAt(this.cameraTarget.x, 0.6, this.cameraTarget.z);
+  }
+
+  rememberVisualEvent(key) {
+    if (this.visualEventKeys.has(key)) return false;
+    this.visualEventKeys.add(key);
+    if (this.visualEventKeys.size > MAX_VISUAL_EVENT_KEYS) {
+      this.visualEventKeys.delete(this.visualEventKeys.values().next().value);
+    }
+    return true;
+  }
+
+  spawnVfx(snapshot, event, tick) {
+    const relPath = VFX_MODELS[event?.type];
+    if (!relPath) return;
+    const anchor = effectAnchor(snapshot, event);
+    if (!anchor) return;
+    const lifetime = VFX_LIFETIME_TICKS[event.type] ?? 30;
+    const untilTick = tick + lifetime;
+    const placeholder = new THREE.Group();
+    const p = worldPoint(anchor);
+    placeholder.position.set(p.x, 0.6, p.z);
+    this.vfxGroup.add(placeholder);
+    const record = { root: placeholder, untilTick, loaded: false };
+    this.vfxInstances.push(record);
+    if (this.vfxInstances.length > MAX_VISUAL_EFFECTS) {
+      const stale = this.vfxInstances.shift();
+      this.vfxGroup.remove(stale.root);
+      disposeObject3D(stale.root);
+    }
+    instantiateVfxModel(relPath).then((instance) => {
+      if (!this.vfxInstances.includes(record)) {
+        disposeObject3D(instance);
+        return;
+      }
+      placeholder.add(instance);
+      record.loaded = true;
+    });
+  }
+
+  collectFeedback(snapshot) {
+    const tick = finite(snapshot?.tick, 0);
+    for (const record of this.vfxInstances) {
+      if (record.untilTick <= tick) {
+        this.vfxGroup.remove(record.root);
+        disposeObject3D(record.root);
+      }
+    }
+    this.vfxInstances = this.vfxInstances.filter((record) => record.untilTick > tick);
+
+    for (const event of Array.isArray(snapshot?.events) ? snapshot.events : []) {
+      if (!VFX_MODELS[event?.type]) continue;
+      const key = feedbackKey(event);
+      if (this.rememberVisualEvent(key)) this.spawnVfx(snapshot, event, tick);
+    }
+    this.pendingInputFeedback = null;
+  }
+
+  renderSnapshot(snapshot = {}, frame = {}) {
+    if (this.disposed || !this.renderer || !this.camera || !this.scene) return;
+    const { width, height } = bounds(this.canvas, this.viewport ?? frame?.viewport);
+    if (this.canvas.width !== Math.round(width) || this.canvas.height !== Math.round(height)) {
+      this.renderer.setSize(width, height, false);
+    }
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+
+    this.ensureStageTerrain(resolveStageId(snapshot));
+    this.reconcileActors(snapshot);
+    this.updateCamera(snapshot);
+    this.collectFeedback(snapshot);
+
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  onVisualFeedback(inputSeq) {
+    this.lastFeedback = inputSeq;
+    this.pendingInputFeedback = inputSeq;
+  }
+
+  dispose() {
+    if (this.terrainGroup) {
+      while (this.terrainGroup.children.length) {
+        const child = this.terrainGroup.children[0];
+        this.terrainGroup.remove(child);
+        disposeObject3D(child);
+      }
+    }
+    for (const record of this.actors.values()) {
+      if (record.root) disposeObject3D(record.root);
+    }
+    this.actors.clear();
+    for (const record of this.vfxInstances) {
+      disposeObject3D(record.root);
+    }
+    this.vfxInstances = [];
+    if (this.gateMesh) disposeObject3D(this.gateMesh);
+    this.gateMesh = null;
+
+    this.scene = null;
+    this.camera = null;
+    this.terrainGroup = null;
+    this.actorGroup = null;
+    this.vfxGroup = null;
+    this.cameraFollowInit = false;
+
+    this.renderer?.dispose();
+    this.renderer = null;
+    this.canvas = null;
+    this.viewport = null;
+    this.pendingInputFeedback = null;
+    this.visualEventKeys.clear();
+    this.loadedStageId = null;
+    this.loadingStageId = null;
+    this.disposed = true;
+  }
+
+  debugMetrics() {
+    if (!this.renderer) return { geometries: 0, textures: 0, programs: 0 };
+    const info = this.renderer.info;
+    return {
+      geometries: info.memory.geometries,
+      textures: info.memory.textures,
+      programs: info.programs?.length ?? 0,
+    };
   }
 }

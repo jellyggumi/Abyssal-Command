@@ -31,6 +31,12 @@ const REQUIRED_FILES = [
   "assets/images/battle/echo-rusher-frame-03.png",
   "assets/images/battle/world/cinder-span-topdown-plate.webp",
   "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
+  "vendor/three.module.js",
+  "vendor/three.core.js",
+  "vendor/loaders/GLTFLoader.js",
+  "vendor/utils/BufferGeometryUtils.js",
+  "vendor/utils/SkeletonUtils.js",
+  "assets/images/battle/glb/anchor-shard.glb",
 ];
 
 function argument(name) {
