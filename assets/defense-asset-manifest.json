@@ -239,6 +239,15 @@
       "testDisposition": "retain"
     },
     {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/glb/anchor-shard.glb",
+      "replacementPath": "assets/images/battle/glb/anchor-shard.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
       "disposition": "delete",
       "currentPath": "assets/images/battle/pilot/blocked-verification.json",
       "replacementPath": null,
@@ -662,384 +671,6 @@
       "testDisposition": "delete"
     },
     {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/bosses/abyss-regent.glb",
-      "replacementPath": "assets/models/battle/bosses/abyss-regent.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/bosses/bridge-colossus.glb",
-      "replacementPath": "assets/models/battle/bosses/bridge-colossus.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/bosses/cinder-warden.glb",
-      "replacementPath": "assets/models/battle/bosses/cinder-warden.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/bosses/gate-sovereign.glb",
-      "replacementPath": "assets/models/battle/bosses/gate-sovereign.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/bosses/lantern-tyrant.glb",
-      "replacementPath": "assets/models/battle/bosses/lantern-tyrant.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/bosses/pack-herald.glb",
-      "replacementPath": "assets/models/battle/bosses/pack-herald.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/bosses/requiem-choir.glb",
-      "replacementPath": "assets/models/battle/bosses/requiem-choir.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/bosses/tide-warden.glb",
-      "replacementPath": "assets/models/battle/bosses/tide-warden.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/bosses/veil-tactician.glb",
-      "replacementPath": "assets/models/battle/bosses/veil-tactician.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/bosses/veiled-concordat.glb",
-      "replacementPath": "assets/models/battle/bosses/veiled-concordat.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/commander/dusk-warden.glb",
-      "replacementPath": "assets/models/battle/commander/dusk-warden.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/companions/anchor-shard.glb",
-      "replacementPath": "assets/models/battle/companions/anchor-shard.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/companions/dawnless-crown.glb",
-      "replacementPath": "assets/models/battle/companions/dawnless-crown.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/companions/ember-cohort.glb",
-      "replacementPath": "assets/models/battle/companions/ember-cohort.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/companions/rift-lens.glb",
-      "replacementPath": "assets/models/battle/companions/rift-lens.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/companions/throne-echo.glb",
-      "replacementPath": "assets/models/battle/companions/throne-echo.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/companions/veil-vanguard.glb",
-      "replacementPath": "assets/models/battle/companions/veil-vanguard.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/enemies/guard.glb",
-      "replacementPath": "assets/models/battle/enemies/guard.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/enemies/possessed.glb",
-      "replacementPath": "assets/models/battle/enemies/possessed.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/enemies/scout.glb",
-      "replacementPath": "assets/models/battle/enemies/scout.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/enemies/shade.glb",
-      "replacementPath": "assets/models/battle/enemies/shade.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/items/abyssal-banner.glb",
-      "replacementPath": "assets/models/battle/items/abyssal-banner.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/items/bulwark-brand.glb",
-      "replacementPath": "assets/models/battle/items/bulwark-brand.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/items/equipment-tier-gems.glb",
-      "replacementPath": "assets/models/battle/items/equipment-tier-gems.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/items/stillwater-hourglass.glb",
-      "replacementPath": "assets/models/battle/items/stillwater-hourglass.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/terrain/abyss-chancel.glb",
-      "replacementPath": "assets/models/battle/terrain/abyss-chancel.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/terrain/cinder-span.glb",
-      "replacementPath": "assets/models/battle/terrain/cinder-span.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/terrain/echo-throne-steps.glb",
-      "replacementPath": "assets/models/battle/terrain/echo-throne-steps.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/terrain/echo-throne.glb",
-      "replacementPath": "assets/models/battle/terrain/echo-throne.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/terrain/gate-zenith.glb",
-      "replacementPath": "assets/models/battle/terrain/gate-zenith.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/terrain/glass-necropolis.glb",
-      "replacementPath": "assets/models/battle/terrain/glass-necropolis.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/terrain/howling-sprawl.glb",
-      "replacementPath": "assets/models/battle/terrain/howling-sprawl.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/terrain/shattered-causeway.glb",
-      "replacementPath": "assets/models/battle/terrain/shattered-causeway.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/terrain/starless-canal.glb",
-      "replacementPath": "assets/models/battle/terrain/starless-canal.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/terrain/sunken-bastion.glb",
-      "replacementPath": "assets/models/battle/terrain/sunken-bastion.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/terrain/veil-citadel.glb",
-      "replacementPath": "assets/models/battle/terrain/veil-citadel.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/vfx/boss-rally-aura.glb",
-      "replacementPath": "assets/models/battle/vfx/boss-rally-aura.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/vfx/companion-downed-fade.glb",
-      "replacementPath": "assets/models/battle/vfx/companion-downed-fade.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/vfx/critical-hit-burst.glb",
-      "replacementPath": "assets/models/battle/vfx/critical-hit-burst.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/vfx/echo-warden-awakening.glb",
-      "replacementPath": "assets/models/battle/vfx/echo-warden-awakening.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/vfx/gate-breach-shockwave.glb",
-      "replacementPath": "assets/models/battle/vfx/gate-breach-shockwave.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
-      "disposition": "retain",
-      "currentPath": "assets/models/battle/vfx/wardens-ward-shield.glb",
-      "replacementPath": "assets/models/battle/vfx/wardens-ward-shield.glb",
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
-    },
-    {
       "disposition": "delete",
       "currentPath": "assets/video/abyssal-surge-defense-survivor-smoke.mp4",
       "replacementPath": null,
@@ -1334,6 +965,24 @@
       "currentPath": "assets/images/abyss-chancel.png",
       "replacementPath": null,
       "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/battle/glb/abyssal-banner.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/battle/glb/broken-court-monarch-boss.glb",
+      "replacementPath": null,
+      "extension": ".glb",
       "generator": "scripts/build-defense-asset-manifest.mjs",
       "runtimeReference": false,
       "testDisposition": "delete"
@@ -1727,6 +1376,42 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/images/battle/glb/previs/abyssal-banner.previs.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/battle/glb/previs/anchor-shard.previs.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/battle/glb/previs/broken-court-monarch-boss.previs.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/battle/glb/previs/warden-lantern.previs.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/images/battle/glb/reinforce__Cast.png",
       "replacementPath": null,
       "extension": ".png",
@@ -2108,6 +1793,15 @@
       "currentPath": "assets/images/battle/glb/veil-tactician__Special.png",
       "replacementPath": null,
       "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/battle/glb/warden-lantern.glb",
+      "replacementPath": null,
+      "extension": ".glb",
       "generator": "scripts/build-defense-asset-manifest.mjs",
       "runtimeReference": false,
       "testDisposition": "delete"
@@ -3096,6 +2790,429 @@
     {
       "disposition": "delete",
       "currentPath": "assets/models/abyssal-command/units/shade.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/bosses/abyss-regent.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/bosses/bridge-colossus.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/bosses/cinder-warden.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/bosses/gate-sovereign.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/bosses/lantern-tyrant.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/bosses/pack-herald.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/bosses/requiem-choir.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/bosses/tide-warden.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/bosses/veil-tactician.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/bosses/veiled-concordat.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/commander/dusk-warden.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/companions/anchor-shard.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/companions/dawnless-crown.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/companions/ember-cohort.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/companions/lantern-reaver.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/companions/pack-warden.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/companions/requiem-warden.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/companions/rift-lens.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/companions/throne-echo.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/companions/veil-vanguard.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/enemies/guard.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/enemies/possessed.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/enemies/scout.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/enemies/shade.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/items/abyssal-banner.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/items/bulwark-brand.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/items/choir-ward-crystal.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/items/equipment-tier-gems.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/items/stillwater-hourglass.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/items/warden-lantern.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/terrain/abyss-chancel.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/terrain/cinder-span.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/terrain/echo-throne-steps.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/terrain/echo-throne.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/terrain/gate-zenith.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/terrain/glass-necropolis.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/terrain/howling-sprawl.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/terrain/shattered-causeway.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/terrain/starless-canal.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/terrain/sunken-bastion.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/terrain/veil-citadel.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/vfx/boss-rally-aura.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/vfx/companion-downed-fade.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/vfx/critical-hit-burst.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/vfx/echo-warden-awakening.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/vfx/gate-breach-shockwave.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/models/battle/vfx/wardens-ward-shield.glb",
       "replacementPath": null,
       "extension": ".glb",
       "generator": "scripts/build-defense-asset-manifest.mjs",

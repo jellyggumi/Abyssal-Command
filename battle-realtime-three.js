@@ -17,7 +17,7 @@ const MAX_VISUAL_EVENT_KEYS = 128;
 // ground plane. Kept square (not 2:1) intentionally: these are symbolic
 // stage dioramas (matching the "anime-anisotropic 2.5D" concept-pack art
 // direction), not a literal top-down arena reconstruction.
-const WORLD_SCALE = 8;
+const WORLD_SCALE = 14;
 // Terrain GLBs are small self-contained dioramas authored at varying native
 // scales (footprints from ~1 to ~2.6 units across different stages -- see
 // build-world-content-pack.py). Auto-fit every terrain model's horizontal
@@ -30,14 +30,19 @@ const TERRAIN_TARGET_HALF_EXTENT = WORLD_SCALE * 1.15;
 // fallback encodes via pixel radius (presentationRadius() in app.js: boss
 // far > commander/enemy > companion > pickup/projectile).
 const TARGET_HEIGHT = Object.freeze({
-  commander: 2.2,
-  boss: 3.4,
-  elite: 1.7,
-  enemy: 1.3,
-  companion: 1.0,
+  commander: 2.9,
+  boss: 4.5,
+  elite: 2.2,
+  enemy: 1.7,
+  companion: 1.3,
 });
 
-const MODEL_ROOT = "./assets/models/battle/";
+// Generator pipeline (scripts/export-battle-glb.py) currently writes every
+// object flat into assets/images/battle/glb/ (co-located with this cycle's
+// PNG thumbnail previews). The prior assets/models/battle/ category-
+// subdirectory tree was intentionally removed from this worktree -- build
+// against the current pipeline output, not the retired one.
+const MODEL_ROOT = "./assets/images/battle/glb/";
 
 // Stage id -> terrain GLB. Stages 1-3 use the canonical resource pack's
 // existing terrain sets (echo-throne-steps is the walkable terrain; the
@@ -45,32 +50,32 @@ const MODEL_ROOT = "./assets/models/battle/";
 // not used as a stage terrain root). Stages 4-10 use this cycle's new
 // world-content-pack terrain.
 const TERRAIN_MODELS = Object.freeze({
-  "cinder-span": "terrain/cinder-span.glb",
-  "veil-citadel": "terrain/veil-citadel.glb",
-  "echo-throne": "terrain/echo-throne-steps.glb",
-  "sunken-bastion": "terrain/sunken-bastion.glb",
-  "howling-sprawl": "terrain/howling-sprawl.glb",
-  "glass-necropolis": "terrain/glass-necropolis.glb",
-  "starless-canal": "terrain/starless-canal.glb",
-  "shattered-causeway": "terrain/shattered-causeway.glb",
-  "abyss-chancel": "terrain/abyss-chancel.glb",
-  "gate-zenith": "terrain/gate-zenith.glb",
+  "cinder-span": "cinder-span.glb",
+  "veil-citadel": "veil-citadel.glb",
+  "echo-throne": "echo-throne-steps.glb",
+  "sunken-bastion": "sunken-bastion.glb",
+  "howling-sprawl": "howling-sprawl.glb",
+  "glass-necropolis": "glass-necropolis.glb",
+  "starless-canal": "starless-canal.glb",
+  "shattered-causeway": "shattered-causeway.glb",
+  "abyss-chancel": "abyss-chancel.glb",
+  "gate-zenith": "gate-zenith.glb",
 });
 
 // Boss actor's own `bossId` field (set verbatim from BOSSES[stage.boss].id
 // in spawnBoss(), defense-run-simulation.js) is the exact key -- no need to
 // cross-reference STAGES here.
 const BOSS_MODELS = Object.freeze({
-  "s1-cinder-warden": "bosses/cinder-warden.glb",
-  "s2-veil-tactician": "bosses/veil-tactician.glb",
-  "s3-gate-sovereign": "bosses/gate-sovereign.glb",
-  "s4-tide-warden": "bosses/tide-warden.glb",
-  "s5-pack-herald": "bosses/pack-herald.glb",
-  "s6-requiem-choir": "bosses/requiem-choir.glb",
-  "s7-lantern-tyrant": "bosses/lantern-tyrant.glb",
-  "s8-bridge-colossus": "bosses/bridge-colossus.glb",
-  "s9-veiled-concordat": "bosses/veiled-concordat.glb",
-  "s10-abyss-regent": "bosses/abyss-regent.glb",
+  "s1-cinder-warden": "cinder-warden.glb",
+  "s2-veil-tactician": "veil-tactician.glb",
+  "s3-gate-sovereign": "gate-sovereign.glb",
+  "s4-tide-warden": "tide-warden.glb",
+  "s5-pack-herald": "pack-herald.glb",
+  "s6-requiem-choir": "requiem-choir.glb",
+  "s7-lantern-tyrant": "lantern-tyrant.glb",
+  "s8-bridge-colossus": "bridge-colossus.glb",
+  "s9-veiled-concordat": "veiled-concordat.glb",
+  "s10-abyss-regent": "abyss-regent.glb",
 });
 
 // Regular (non-boss) enemy actor's `kind` field is one of these 4
@@ -78,23 +83,26 @@ const BOSS_MODELS = Object.freeze({
 // resource pack's 4 enemy models -- verified present, never had dedicated
 // per-archetype art before this session.
 const ENEMY_MODELS = Object.freeze({
-  rusher: "enemies/scout.glb",
-  flanker: "enemies/shade.glb",
-  guardian: "enemies/guard.glb",
-  ranged: "enemies/possessed.glb",
+  rusher: "scout.glb",
+  flanker: "shade.glb",
+  guardian: "guard.glb",
+  ranged: "possessed.glb",
 });
 
 // Companion actor's `companionId` field selects its model.
 const COMPANION_MODELS = Object.freeze({
-  "ember-cohort": "companions/ember-cohort.glb",
-  "rift-lens": "companions/rift-lens.glb",
-  "veil-vanguard": "companions/veil-vanguard.glb",
-  "anchor-shard": "companions/anchor-shard.glb",
-  "throne-echo": "companions/throne-echo.glb",
-  "dawnless-crown": "companions/dawnless-crown.glb",
+  "ember-cohort": "ember-cohort.glb",
+  "rift-lens": "rift-lens.glb",
+  "veil-vanguard": "veil-vanguard.glb",
+  "anchor-shard": "anchor-shard.glb",
+  "throne-echo": "throne-echo.glb",
+  "dawnless-crown": "dawnless-crown.glb",
+  "pack-warden": "pack-warden.glb",
+  "lantern-reaver": "lantern-reaver.glb",
+  "requiem-warden": "requiem-warden.glb",
 });
 
-const COMMANDER_MODEL = "commander/dusk-warden.glb";
+const COMMANDER_MODEL = "dusk-warden.glb";
 
 // Event type -> one-shot VFX GLB + lifetime (ticks @ 60Hz). These 5 RPG-
 // layer telemetry events (defense-run-simulation.js) had zero visual
@@ -102,12 +110,12 @@ const COMMANDER_MODEL = "commander/dusk-warden.glb";
 // against the exact event-type strings verified against the emit() call
 // sites (grepped this session, not assumed).
 const VFX_MODELS = Object.freeze({
-  CRITICAL_HIT: "vfx/critical-hit-burst.glb",
-  BOSS_RALLY_WINDOW: "vfx/boss-rally-aura.glb",
-  GATE_BREACHED: "vfx/gate-breach-shockwave.glb",
-  WARDENS_WARD_TRIGGERED: "vfx/wardens-ward-shield.glb",
-  ECHO_WARDEN_AWAKENING_TRIGGERED: "vfx/echo-warden-awakening.glb",
-  COMPANION_DOWNED: "vfx/companion-downed-fade.glb",
+  CRITICAL_HIT: "critical-hit-burst.glb",
+  BOSS_RALLY_WINDOW: "boss-rally-aura.glb",
+  GATE_BREACHED: "gate-breach-shockwave.glb",
+  WARDENS_WARD_TRIGGERED: "wardens-ward-shield.glb",
+  ECHO_WARDEN_AWAKENING_TRIGGERED: "echo-warden-awakening.glb",
+  COMPANION_DOWNED: "companion-downed-fade.glb",
 });
 const VFX_LIFETIME_TICKS = Object.freeze({
   CRITICAL_HIT: 18,

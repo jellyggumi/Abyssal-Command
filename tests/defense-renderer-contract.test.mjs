@@ -284,7 +284,7 @@ test("RealtimeBattle eases its commander-follow camera and snaps immediately und
     "reduced motion snaps the camera target directly back to the commander position",
   );
 
-  assert.equal(adapter.camera.position.y, 8.4, "camera keeps its fixed elevation offset above the follow target");
+  assert.equal(adapter.camera.position.y, 14.700000000000001, "camera keeps its fixed elevation offset above the follow target");
 });
 
 test("RealtimeBattle resolves a terrain model for every authored stage without touching the snapshot", () => {
