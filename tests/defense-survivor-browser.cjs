@@ -259,6 +259,39 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
       localStorage.setItem(key, encoded);
     }, { encoded: campaign.encoded, key: STORAGE_KEY });
+    // Install a controllable requestAnimationFrame BEFORE the app boots so the
+    // battle loop's game-time is driven by explicit frame pumps, not the CI
+    // runner's real frame rate. BattleSession.loop (app.js) is the ONLY rAF
+    // consumer in the app (DefenseViewport is purely event-driven; RealtimeBattle
+    // is rendered synchronously from inside loop(), never self-scheduled), and it
+    // derives simulation game-time solely from the rAF-supplied timestamp,
+    // clamped to elapsed = min(100, frameDuration) ms per frame. By QUEUEING rAF
+    // callbacks and firing them from __pumpFrame() against a synthetic clock that
+    // advances a fixed 100 ms per pump, every pump advances EXACTLY 100 ms of
+    // game-time no matter how long the frame really takes to render — see the
+    // drive loop below for why the old fixed 32 s wall-clock budget was
+    // unreachable on a slow software-WebGL CI runner.
+    await page.addInitScript(() => {
+      const queue = new Map();
+      let nextId = 1;
+      let syntheticNow = 0;
+      window.requestAnimationFrame = (callback) => {
+        const id = nextId++;
+        queue.set(id, callback);
+        return id;
+      };
+      window.cancelAnimationFrame = (id) => { queue.delete(id); };
+      // Snapshot + clear BEFORE invoking so a callback re-registering itself
+      // (loop() does `this.frame = requestAnimationFrame(this.loop)`) lands in
+      // the NEXT pump, guaranteeing exactly one loop() call per pump.
+      window.__pumpFrame = (deltaMs) => {
+        syntheticNow += deltaMs;
+        const pending = [...queue.values()];
+        queue.clear();
+        for (const callback of pending) callback(syntheticNow);
+        return syntheticNow;
+      };
+    });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
     await page.locator("#defense-app.defense-lobby").waitFor();
     await page.locator("#start-defense").click();
@@ -292,11 +325,34 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       });
       observer.observe(overlay, { childList: true });
 
-      const deadlineAt = Date.now() + 32000;
+      // Deterministic frame-pump drive (see the controllable rAF init script
+      // above). Each __pumpFrame(100) advances EXACTLY 100 ms of GAME-time
+      // (elapsed = min(100, frameDuration), frameDuration pinned to 100), so the
+      // elite-candidate state — reached only after the gate-defense ->
+      // echo-recovery objective chain defeats the stage-1 elite, ~17-18 s of
+      // game-time — is a pure function of pump COUNT, never of the CI runner's
+      // real frame rate. The old fixed 32 s WALL-CLOCK budget failed in CI
+      // precisely because loop() clamps game-time to min(100, frameDuration) per
+      // frame: on a slow software-WebGL runner a frame takes far longer than
+      // 100 ms, so 32 s of wall-clock yielded well under 18 s of game-time and
+      // the capture prompt never appeared. Pumping decouples the two entirely.
+      // Pumping ~6 sim ticks/frame (100 ms / STEP_MS, STEP_MS = 1000/60) also
+      // deliberately drives loop()'s multi-tick catch-up + frameEvents path —
+      // the exact slow-frame path CI hits — so this is MORE faithful to the CI
+      // scenario, not less.
+      const FRAME_MS = 100;
+      // Elite candidate needs ~17-18 s game-time (~1062 ticks) => ~180 pumps at
+      // 100 ms each. This cap is 200 s of GAME-time (>10x margin) — a game-time
+      // bound, not a wall-clock bound, so no runner slowness can defeat it:
+      // 2000 pumps is always exactly 200 s of game-time. It only trips if the
+      // capture prompt genuinely never renders (a real Bug #4 regression),
+      // which is exactly what the assertion below is here to catch.
+      const MAX_PUMPS = 2000;
       let nameplateTransform = null;
       let capturePromptText = null;
       const clickedOfferKeys = new Set();
-      while (Date.now() < deadlineAt) {
+      let pumps = 0;
+      while (pumps < MAX_PUMPS) {
         const cutsceneDismiss = document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]");
         if (cutsceneDismiss) cutsceneDismiss.click();
         const growthOffer = document.querySelector("#defense-growth-offer");
@@ -317,10 +373,15 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
           if (prompt) capturePromptText = prompt.textContent;
         }
         if (nameplateTransform !== null && damageSamples.length >= 4 && capturePromptText !== null) break;
-        await new Promise((resolve) => setTimeout(resolve, 150));
+        window.__pumpFrame(FRAME_MS);
+        pumps += 1;
+        // Yield a macrotask so the childList MutationObserver microtask (which
+        // records each damage number's COMPUTED transform at insertion) and any
+        // pending style/layout work settle before the next iteration reads DOM.
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
       observer.disconnect();
-      return { nameplateTransform, damageSamples, capturePromptText, elapsedMs: 32000 - Math.max(0, deadlineAt - Date.now()) };
+      return { nameplateTransform, damageSamples, capturePromptText, pumps, gameTimeMs: pumps * FRAME_MS };
     });
 
     // Bug #1 guard: the companion nameplate must have appeared with a real
@@ -361,7 +422,8 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       damageSampleCount: drive.damageSamples.length,
       distinctDamagePositions: distinctComputedTransforms.size,
       capturePromptText: drive.capturePromptText,
-      elapsedMs: drive.elapsedMs,
+      pumps: drive.pumps,
+      gameTimeMs: drive.gameTimeMs,
     };
   } finally {
     await context.close();
