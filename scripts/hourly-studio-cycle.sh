@@ -83,11 +83,31 @@ trap cleanup EXIT INT TERM
 cd "$REPO" || { log "FATAL: repo missing"; exit 1; }
 
 # --- precondition: clean tree ------------------------------------------------
-# A dirty tree means a human is mid-edit, or a prior pass died leaving debris.
-# Either way an autonomous pass must not commit on top of it.
+# A dirty tree means a human is mid-edit, another agent session is working this
+# repo, or a prior pass died leaving debris. An autonomous pass must not commit
+# on top of any of those.
+#
+# Skips are RECORDED, not just logged: if the tree stays dirty for days the
+# loop would otherwise starve in total silence -- indistinguishable from
+# running fine -- which is the same class of invisible failure as a scheduler
+# that exits 127 every tick. `consecutiveSkips` makes starvation checkable
+# with a single `cat .studio-loop/state.json`.
 if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
   log "SKIP: working tree dirty -- refusing to run an autonomous pass over human/partial work"
   git status --short | head -20 | tee -a "$LOG"
+  node -e "
+const fs = require('fs');
+const p = '$STATE';
+let s = {};
+try { s = JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) {}
+s.consecutiveSkips = (s.consecutiveSkips || 0) + 1;
+s.lastSkip = { at: new Date().toISOString(), reason: 'dirty-tree', log: '$LOG' };
+fs.mkdirSync(require('path').dirname(p), { recursive: true });
+fs.writeFileSync(p, JSON.stringify(s, null, 2) + '\n');
+if (s.consecutiveSkips >= 3) {
+  console.error('[studio-loop] WARNING: ' + s.consecutiveSkips + ' consecutive dirty-tree skips -- the loop is doing NO work. Commit or stash the working tree.');
+}
+" 2>&1 | tee -a "$LOG"
   exit 0
 fi
 
@@ -162,26 +182,29 @@ set -e
 HEAD_AFTER="$(git rev-parse HEAD)"
 DIRTY="$(git status --porcelain --untracked-files=no)"
 
+# Neither branch below ever `git add -A` or `git checkout -- .` blindly. The
+# tree is only known-clean at pass START: another agent session (or the user)
+# can write files while a pass runs, and this driver has no way to tell that
+# work apart from the pass's own. Sweeping it into an auto-commit, or
+# reverting it wholesale, would destroy or misattribute someone else's edits.
+# The pass agent is instructed to commit its own work; anything left over is
+# reported for a human instead of guessed at.
 if [[ $TEST_RC -ne 0 ]]; then
   log "TESTS FAILED (rc=$TEST_RC)"
   if [[ -n "$DIRTY" ]]; then
-    log "reverting uncommitted changes from failed pass"
-    git checkout -- . 2>&1 | tee -a "$LOG"
-    git clean -fd -- '*.tmp' 2>&1 | tee -a "$LOG" || true
+    log "WARN: red suite AND uncommitted changes -- NOT auto-reverting (cannot prove they are all this pass's)."
+    log "      Inspect and revert by hand if they are loop debris:"
+    git status --short | head -20 | tee -a "$LOG"
   fi
   if [[ "$HEAD_AFTER" != "$HEAD_BEFORE" ]]; then
-    log "WARN: pass committed ${HEAD_AFTER:0:8} but suite is red -- left in place for human review, NOT auto-reverted"
+    log "WARN: pass committed ${HEAD_AFTER:0:8} but suite is red -- left in place for human review"
   fi
 else
   log "tests PASS"
   if [[ -n "$DIRTY" ]]; then
-    log "WARN: pass left uncommitted changes with a green suite -- committing as a checkpoint"
-    git add -A
-    git commit -q -m "chore(studio-loop): pass #$PASS_N uncommitted remainder
-
-Auto-committed by scripts/hourly-studio-cycle.sh because the pass ended
-with a green test suite but left changes unstaged. Review before push."
-    HEAD_AFTER="$(git rev-parse HEAD)"
+    log "WARN: green suite but uncommitted changes remain -- left for a human, NOT auto-committed."
+    log "      Either the pass failed to commit its own work, or a concurrent session is editing:"
+    git status --short | head -20 | tee -a "$LOG"
   fi
 fi
 
@@ -199,6 +222,7 @@ s.lastRc = $RC;
 s.lastTestRc = $TEST_RC;
 s.lastCommits = $COMMITS;
 s.lastHead = '$HEAD_AFTER';
+s.consecutiveSkips = 0; // a pass actually ran; starvation streak (if any) is over
 s.history = (s.history || []).slice(-49);
 s.history.push({ pass: $PASS_N, at: new Date().toISOString(), rc: $RC, testRc: $TEST_RC, commits: $COMMITS, log: '$LOG' });
 fs.writeFileSync(p, JSON.stringify(s, null, 2) + '\n');
