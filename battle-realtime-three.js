@@ -341,6 +341,54 @@ const STAGE_PALETTE_TINTS = Object.freeze({
   "gate-zenith": 0xddc869, // canon-zenith-gold -- threshold-rays open-vista motif
 });
 
+// Per-stage fog DEPTH (near/far as WORLD_SCALE multiples). applyStagePalette()
+// already retints fog COLOR per stage, but near/far distance stayed a single
+// global constant (mount(): WORLD_SCALE*1.8 / *4.2), so every stage read at the
+// same atmospheric depth regardless of its authored motif -- the exact
+// "스테이지마다 시각적 차별점이 있는가" gap this axis targets. This table gives
+// each stage its own openness, grounded in stage-composition-20260725.md §3:
+//   - heavy/close fog for void & night motifs so low silhouettes stay veiled:
+//     Echo Throne (§3.3 "가장 짙게 ... 저해상도 지오메트리 은폐"), Starless
+//     Canal (§3.7 "안개색을 가장 어둡게"), Abyss Chancel (§3.9 "안개를 무겁게"),
+//     Veil Citadel (§3.2 "장막이 신호와 시야를 삼킨다").
+//   - open/far fog for the two vista stages whose identity IS a readable long
+//     silhouette: Howling Sprawl (§3.5 "안개를 가장 옅게 ... 능선의 실루엣이
+//     원거리에서도 읽혀야"), Gate Zenith (§3.10 "안개를 가장 옅게 ... 가장 멀리,
+//     가장 넓게 본다").
+//   - tight fog for the bridge stage so its ends "fade into fog" instead of
+//     snapping off a card-flat bbox: Cinder Span (§3.1 "다리 양 끝단이 항상
+//     안개에 잠기도록 ... 안개 속으로 사라진다").
+// Unlisted stages fall back to STAGE_FOG_BASE (the mount() baseline). Pure
+// render values -- fog never feeds the snapshot or getRunDigest, so the
+// renderer-one-way / determinism contracts are untouched. Every listed near <
+// its far, and every near stays within ~±0.5 of the shipped 1.8 baseline so
+// the near-plane never crosses the character/gate the player is tracking
+// (§1.4's "안개 근거리가 지형 가장자리를 가리도록" concern only bounds how FAR
+// near may drift outward, which the two vista stages do intentionally so their
+// terrain silhouette reads -- exactly what §3.5/§3.10 ask for).
+const STAGE_FOG_BASE = Object.freeze({ near: 1.8, far: 4.2 });
+const STAGE_FOG_MULTIPLIERS = Object.freeze({
+  "cinder-span": { near: 1.6, far: 3.6 },
+  "veil-citadel": { near: 1.5, far: 3.4 },
+  "echo-throne": { near: 1.4, far: 3.0 },
+  "sunken-bastion": { near: 1.8, far: 4.0 },
+  "howling-sprawl": { near: 2.2, far: 5.4 },
+  "glass-necropolis": { near: 1.9, far: 4.4 },
+  "starless-canal": { near: 1.4, far: 3.1 },
+  "shattered-causeway": { near: 1.7, far: 3.9 },
+  "abyss-chancel": { near: 1.5, far: 3.3 },
+  "gate-zenith": { near: 2.3, far: 5.6 },
+});
+
+// Resolves a stage id to concrete world-unit fog near/far. Exported as the
+// single source of truth so world-presentation-contract.test.mjs can assert
+// applyStagePalette() actually wrote these values (not a render-layer
+// fabrication), the same oracle pattern the HUD tests use.
+export function stageFogRange(stageId) {
+  const m = STAGE_FOG_MULTIPLIERS[stageId] ?? STAGE_FOG_BASE;
+  return { near: WORLD_SCALE * m.near, far: WORLD_SCALE * m.far };
+}
+
 function prefersReducedMotion() {
   try {
     return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
@@ -923,7 +971,15 @@ export class RealtimeBattle {
     // each independently so this method degrades gracefully instead of
     // throwing, same defensive pattern as the this.renderer guard below
     // and debugMetrics()'s this.renderer check.
-    if (this.scene.fog) this.scene.fog.color.copy(backgroundTint);
+    if (this.scene.fog) {
+      this.scene.fog.color.copy(backgroundTint);
+      // Per-stage atmospheric depth (see STAGE_FOG_MULTIPLIERS). Overrides the
+      // single global near/far mount() set so each stage's openness matches its
+      // authored motif; pure render state, no snapshot/digest coupling.
+      const fogRange = stageFogRange(stageId);
+      this.scene.fog.near = fogRange.near;
+      this.scene.fog.far = fogRange.far;
+    }
     if (this.keyLight) this.keyLight.color.copy(new THREE.Color(COLORS.key).lerp(new THREE.Color(tint), 0.18));
     if (this.ambientLight) this.ambientLight.color.copy(new THREE.Color(COLORS.ambient).lerp(new THREE.Color(tint), 0.3));
 
