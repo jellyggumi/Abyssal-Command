@@ -273,10 +273,10 @@ const MOVE_EPSILON = 0.01;
 // from 4 cardinal angles under even 4-way lighting puts the face, chest
 // armour and forward-held weapon at Blender -Y, which the glTF importer's
 // Y-up conversion maps to +Z in three.js space -- so yaw 0 already aims the
-// model along +Z and no correction is needed. All 43 characters come from
-// one rig-and-animate batch (scripts/rig-and-animate-asset-blender.py), so
-// this is a library-wide constant rather than a per-asset table; a future
-// batch authored to a different axis is corrected here alone.
+// model along +Z and no correction is needed. Every character comes from one
+// rig batch (scripts/rig-character-asset-blender.py), so this is a
+// library-wide constant rather than a per-asset table; a future batch authored
+// to a different axis is corrected here alone.
 const MODEL_FORWARD_YAW_OFFSET = 0;
 // Radians per second. Fast enough that a full reversal completes in ~0.26s
 // (visible as a turn, not a slide), slow enough that the turn reads as
@@ -1300,6 +1300,90 @@ export class RealtimeBattle {
     this.rimLightTarget.position.copy(this.cameraTarget);
   }
 
+  /**
+   * Projects a world point to normalized device coordinates for the DOM
+   * world-space HUD overlay (app.js renderWorldHud()).
+   *
+   * RESTORED (D26). This existed in the Cycle 3 renderer (9a60a49) and was
+   * lost wholesale by merge 5a5f63a, which adopted the incoming
+   * recovery/g2-stage2-binding renderer as canonical -- that side had never
+   * carried these methods, so a `theirs` resolution silently dropped them
+   * while app.js kept calling them behind `?.`, leaving every world-space
+   * HUD element (companion nameplates, floating damage numbers, objective
+   * waypoint arrow, extraction capture prompt) rendering nothing.
+   *
+   * Returns null ONLY when there is no usable 3D camera (unmounted or
+   * disposed) or for points behind the camera, where no meaningful screen
+   * position exists: for this camera's 0 < near < far, |ndc.z| > 1 holds
+   * exactly for view-space z >= 0.
+   *
+   * Otherwise ALWAYS returns { x, y, visible } with RAW (unclamped) NDC.
+   * `visible` is true only when both axes fall inside [-1,1]. Callers need
+   * both behaviours and the distinction is load-bearing: nameplates and the
+   * capture prompt hide on visible===false, while the waypoint arrow
+   * deliberately consumes the out-of-range values to clamp an offscreen
+   * direction indicator to the viewport edge (app.js:1376 branches on
+   * `!ndc.visible`). Discarding the raw values would silently disable that
+   * arrow.
+   */
+  worldToNDC(worldVec) {
+    if (this.disposed || !this.camera) return null;
+    // Vector3.project() reads camera.matrixWorldInverse, which three.js only
+    // refreshes inside renderer.render(). Today app.js happens to call the
+    // world-HUD pass after renderSnapshot(), so that ordering holds -- but
+    // it is invisible coupling that would silently return stale (or, on a
+    // never-rendered camera, identity-matrix) projections the moment a
+    // caller runs this first. Refreshing here costs one matrix compose and
+    // makes the method correct independent of call order.
+    this.camera.updateMatrixWorld();
+    const ndc = worldVec.clone().project(this.camera);
+    if (ndc.z > 1 || ndc.z < -1) return null; // behind the camera
+    return { x: ndc.x, y: ndc.y, visible: ndc.x >= -1 && ndc.x <= 1 && ndc.y >= -1 && ndc.y <= 1 };
+  }
+
+  /**
+   * NDC projection of a tracked actor's GROUND anchor -- every actor mesh
+   * sits at y=0 (syncActorPosition only ever writes x/z), so this is the
+   * feet position, not the head.
+   *
+   * Callers that want a label to float above the actor apply that lift in
+   * CSS screen-space pixels AFTER projecting (app.js's
+   * WORLD_NAMEPLATE_LIFT_PX / WORLD_DAMAGE_NUMBER_LIFT_PX), never as a
+   * world-unit y offset here. That is deliberate: this scene's world extent
+   * is a fixed WORLD_SCALE diorama that a zoomed-in orbit camera can fill
+   * entirely, so a world-unit height offset is not a stable "above the
+   * head" distance and can push an on-screen actor's anchor outside the
+   * frustum, reporting visible:false for something the player can see. A
+   * screen-space pixel lift is zoom-varying by design but never breaks
+   * visibility.
+   *
+   * Reads the RENDERED position, so a companion mid-follow-trail
+   * (updateActorFollow) gets a nameplate on the body the player sees rather
+   * than on the simulation position it is still easing toward.
+   */
+  projectEntityToScreen(entityId) {
+    const record = this.actors.get(entityId);
+    if (!record?.root) return null;
+    return this.worldToNDC(record.root.position);
+  }
+
+  /**
+   * NDC projection of a fixed ground point given in the simulation's
+   * normalized [-1,1] space (callers divide an ARENA coordinate by
+   * ARENA.width/height and rescale -- see app.js:1373 and :1448).
+   *
+   * Uses the same normalized->world mapping worldPoint() applies to
+   * entities, so a static marker and an actor standing on it project to the
+   * same pixel. See projectEntityToScreen() for why there is no world-unit
+   * height offset.
+   */
+  projectStaticPoint(normalizedX, normalizedY) {
+    if (this.disposed || !this.camera) return null;
+    return this.worldToNDC(
+      new THREE.Vector3(finite(normalizedX, 0) * WORLD_SCALE, 0, finite(normalizedY, 0) * WORLD_SCALE),
+    );
+  }
+
   rememberVisualEvent(key) {
     if (this.visualEventKeys.has(key)) return false;
     this.visualEventKeys.add(key);
@@ -1370,7 +1454,7 @@ export class RealtimeBattle {
         instance.position.set(echo.x, 0, echo.z);
         this.vfxGroup.add(instance);
         const action = actions.die;
-        let untilTick = tick + 72; // DEFAULT_ACTION_BUDGETS.die.targetFrames @ 60fps, scripts/rig-and-animate-asset-blender.py
+        let untilTick = tick + 72; // DEFAULT_BUDGETS.die.targetFrames @ 60fps, scripts/rig-character-asset-blender.py
         if (action) {
           action.reset().play();
           const clip = action.getClip();

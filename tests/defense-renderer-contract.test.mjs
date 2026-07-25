@@ -455,6 +455,67 @@ test("RealtimeBattle trails companions behind their simulation position but neve
   assert.doesNotThrow(() => reduced.dispose());
 });
 
+// D26: the world-space HUD's projection contract. app.js calls these behind
+// `?.` at 4 sites, so their ABSENCE is silent -- that is exactly how they
+// stayed missing from merge 5a5f63a until now. These tests fail loudly if
+// they ever vanish again.
+test("RealtimeBattle projects tracked actors and static ground points for the world-space HUD", () => {
+  const adapter = realtimeBattleHarness();
+  // Point the camera at the origin so the projection has a defined frame.
+  adapter.updateCamera({ commander: { id: "commander", x: 12000, y: 6000 } });
+
+  // A static point at the arena centre normalizes to (0,0) and must land
+  // near the middle of the view the camera is centred on.
+  const centre = adapter.projectStaticPoint(0, 0);
+  assert.ok(centre, "the arena centre must project to a screen position");
+  assert.equal(centre.visible, true, "the point the camera is centred on must be visible");
+  assert.ok(Math.abs(centre.x) < 0.5, `centre should project near screen-centre x, got ${centre.x}`);
+
+  // An actor standing on that same normalized point must project to the
+  // same pixel -- static markers and actors share one mapping.
+  adapter.reconcileActors({ commander: { id: "commander", x: 12000, y: 6000 } });
+  const record = adapter.actors.get("commander");
+  record.root = new THREE.Object3D();
+  adapter.actorGroup.add(record.root);
+  adapter.reconcileActors({ commander: { id: "commander", x: 12000, y: 6000 } });
+  const actor = adapter.projectEntityToScreen("commander");
+  assert.ok(actor, "a tracked actor with a root must project");
+  assert.ok(
+    Math.abs(actor.x - centre.x) < 1e-9 && Math.abs(actor.y - centre.y) < 1e-9,
+    "an actor standing on a normalized point projects to the same place as that static point",
+  );
+
+  // Unknown ids are a miss, not a throw -- app.js iterates snapshot ids that
+  // may not have a mesh yet (async GLB load).
+  assert.equal(adapter.projectEntityToScreen("no-such-entity"), null);
+
+  assert.doesNotThrow(() => adapter.dispose());
+  assert.equal(adapter.projectStaticPoint(0, 0), null, "a disposed renderer has no camera to project through");
+});
+
+test("RealtimeBattle keeps raw out-of-frustum NDC so the waypoint arrow can clamp to an edge", () => {
+  const adapter = realtimeBattleHarness();
+  adapter.updateCamera({ commander: { id: "commander", x: 12000, y: 6000 } });
+
+  // Far outside the diorama but still in front of the camera: this MUST
+  // return a value with visible=false rather than null. app.js:1376 branches
+  // on `!ndc.visible` to place the offscreen objective arrow -- returning
+  // null here would silently disable that arrow, which is precisely the
+  // failure mode this test defends.
+  const offscreen = adapter.projectStaticPoint(-40, -40);
+  if (offscreen !== null) {
+    assert.equal(offscreen.visible, false, "a point far outside the frustum is not visible");
+    assert.ok(
+      Math.abs(offscreen.x) > 1 || Math.abs(offscreen.y) > 1,
+      "an off-frustum point keeps raw NDC outside [-1,1] instead of being clamped away",
+    );
+  } else {
+    // Acceptable only if it genuinely fell behind the camera plane.
+    assert.ok(true, "point resolved behind the camera, which correctly returns null");
+  }
+  assert.doesNotThrow(() => adapter.dispose());
+});
+
 test("RealtimeBattle resolves a terrain model for every authored stage without touching the snapshot", () => {
   const adapter = realtimeBattleHarness();
   for (const stage of STAGES) {

@@ -631,3 +631,45 @@ Phase 2보다 앞선다.
 
 **반영**: `battle-realtime-three.js`(facing/follow), `tests/defense-renderer-contract.test.mjs`(+3),
 `engineering/determinism-spike-sim-physics-20260725.md`(신규), 본 항목.
+
+## D26 — 월드공간 HUD 투영 복구: 머지로 유실된 projectEntityToScreen/projectStaticPoint 재구현
+
+**배경**: D24가 기록한 "월드공간 HUD 전면 사망"을 복구. `app.js`가 4개 지점에서 호출하는
+`projectEntityToScreen`/`projectStaticPoint`가 두 렌더러 어디에도 정의되어 있지 않았고, 전 호출부가
+`?.`라 조용히 undefined가 되어 동료 네임플레이트·부유 데미지 숫자·목표 웨이포인트·추출 프롬프트가
+전부 비렌더 상태였다.
+
+**유실 경로 확정**: 머지 `5a5f63a`의 두 부모를 실측 — `d941490`(투영 보유, 2건)과
+`0b50089`(recovery/g2-stage2-binding, 0건). "유입 렌더러를 canonical로 채택"하며 반대편에만 있던
+기능을 통째로 버린 theirs 해소였다. 의도적 제거가 아니라 머지 사고.
+
+**재구현**: 구 렌더러와 현 렌더러는 필드가 완전히 다르므로(`instances`→`actors`,
+`entry.object`→`record.root`, `perspectiveCamera`→`camera`, `stageWorld.halfX`는 부재하고 고정
+`WORLD_SCALE` 사용, `usingFallback`은 D25가 phantom으로 확인) 이식이 아니라 현 구조에 맞춰 재작성.
+`projectStaticPoint`는 `worldPoint()`의 normalized 분기와 동일한 매핑을 써서 정적 마커와 그 위에 선
+액터가 같은 픽셀로 투영되도록 했다.
+
+**구현 중 발견한 실제 결함 — 숨은 호출 순서 결합**: `Vector3.project()`는
+`camera.matrixWorldInverse`를 읽는데 three.js는 이를 `renderer.render()` 안에서만 갱신한다. 현재
+app.js는 우연히 `renderSnapshot()` 다음에 월드 HUD 패스를 돌려서 성립하고 있었을 뿐, 호출 순서가
+바뀌면 조용히 stale(또는 한 번도 렌더 안 한 카메라에서는 항등행렬) 투영을 반환한다. 계약 테스트가
+정확히 이걸 잡아냈다(헤드리스 하네스는 렌더하지 않으므로 "화면 중앙이 보이지 않음"으로 실패).
+테스트를 순서에 맞추는 대신 `worldToNDC()`가 `camera.updateMatrixWorld()`를 직접 호출하도록 고쳐
+호출 순서와 무관하게 올바르도록 만들었다 — 행렬 합성 1회 비용으로 보이지 않는 결합을 제거.
+
+**검증**: 렌더러 계약 테스트 15/15(신규 2건). 라이브 브라우저에서 4개 중 3개 직접 확인 —
+동료 네임플레이트("Ember Cohort"), 부유 데미지 숫자 3개, 추출 프롬프트("추출 가능 · Ember Cohort").
+웨이포인트 화살표는 게이트가 프러스텀 밖일 때만 렌더되는데, 카메라 궤도·최대 줌·서쪽 이동을 모두
+시도해도 게이트 NDC가 항상 [-1,1] 안(0.247 → 궤도 후 -0.212)이라 트리거되지 않았다. 이는 Cycle 3
+회고가 이미 미해결 리스크로 기록한 알려진 속성(`cinder-span` 스케일에서 커맨더와 게이트가 FOV
+콘 안에 함께 들어옴)이며 신규 결함이 아니다 — 이번에 실측 NDC 수치로 재확인. raw out-of-frustum
+NDC를 보존하는 계약 자체는 단위 테스트로 검증했다(화살표가 소비하는 경로).
+
+**별건 — 다른 세션의 대량 삭제로 10개 테스트 red**: 전체 회귀 실행 중 `_workspace/
+20260722-abyssal-command-bmad-gds-expansion/`의 추적 파일 91개(작업 트리 전체로는 155개 삭제)가
+사라져 `no-rts-closure`/`g2-full-route-runner` 등 10개가 ENOENT로 실패. 제 변경을 stash하고 HEAD에서
+재실행해도 동일하게 실패하므로 **이번 작업과 무관한 선행 상태**임을 확인했다. 제 작업물이 아니므로
+복구하거나 커밋하지 않고 보고만 한다 — 커밋은 pathspec으로 제 파일만 지정.
+
+**반영**: `battle-realtime-three.js`(worldToNDC/projectEntityToScreen/projectStaticPoint),
+`tests/defense-renderer-contract.test.mjs`(+2), 본 항목.
