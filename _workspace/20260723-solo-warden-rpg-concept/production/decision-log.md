@@ -801,3 +801,65 @@ UI 축에서 인런 XP 진행 바를 붙여 "다음 레벨업까지의 진행"�
 **반영**: `app.js`(#passive-badges 마크업 + hud-right-stack 래핑 + render 로직),
 `styles.css`(.hud-right-stack/.hud-passives/.passive-badge + 좁은화면 규칙),
 `tests/defense-survivor-browser.cjs`(+verifyPassiveBadges), 본 항목. 커밋 `9e44245`.
+
+## D30 — 스테이지 구성/분위기 패스 #9(%5=4): 스테이지별 안개 심도(near/far) 배선
+
+> **번호 근거**: append-only 규약. 쓰기 직전 `grep -oE '^## D[0-9]+'`로 최대 번호 확인 → D29.
+> 그다음 번호 **D30**을 취한다. 커밋 직전 `git log -1`로 내 해시(`31e506d`) 확인.
+
+**축**: 스테이지 구성/분위기(%5=4). 순환 기본값 그대로 — 더 시급한 축 없음. 직전 축-4 패스
+(D22가 `applyStagePalette` 배선)가 스테이지별 안개/조명 **색**을 배선했으나, 안개 **심도**
+(near/far)는 여전히 `mount()`의 전역 상수 하나(`WORLD_SCALE*1.8 / *4.2`)로 고정돼 있었다.
+
+**발견 (실측)**: `applyStagePalette`는 `this.scene.fog.color.copy(backgroundTint)`만 하고
+near/far는 손대지 않았다(`battle-realtime-three.js:926`, 편집 전). 즉 10개 스테이지 전부
+동일한 대기 심도로 읽혀 — "스테이지마다 시각적 차별점이 있는가"(축-4 핵심 질문)에서 안개라는
+가장 강한 분위기 레버가 균일했다. `stage-composition-20260725.md §3`은 스테이지마다 서로 다른
+안개 밀도를 명시적으로 요구했으나(§3.3 Echo Throne "가장 짙게", §3.5 Howling Sprawl "가장
+옅게 ... 능선 실루엣이 원거리에서도 읽혀야", §3.10 Gate Zenith "가장 멀리, 가장 넓게",
+§3.1 Cinder Span "다리 양 끝단이 항상 안개에 잠기도록") 렌더러가 소비하지 않았다.
+
+**판정 — 채택**. `STAGE_FOG_MULTIPLIERS` 테이블 + `stageFogRange(stageId)` 순수 헬퍼(export)
+추가, `applyStagePalette`에서 색 설정 직후 near/far 적용. 값은 전부 `WORLD_SCALE` 배수
+(매직넘버 0, 미등록 스테이지는 base 1.8/4.2 폴백). 실측 결과:
+
+| 스테이지 | far | 모티프 근거(§3) |
+|---|---:|---|
+| echo-throne | 42.0 | 최저(가장 짙음), 공허/저해상 은폐 §3.3 |
+| starless-canal | 43.4 | 별 없는 밤 §3.7 |
+| abyss-chancel | 46.2 | 서약/압력 무거움 §3.9 |
+| veil-citadel | 47.6 | 장막이 시야를 삼킴 §3.2 |
+| cinder-span | 50.4 | 다리 끝이 안개로 소실 §3.1 |
+| shattered-causeway | 54.6 | 잔해 먼지 중간 §3.8 |
+| sunken-bastion | 56.0 | 침수 중간 §3.4 |
+| glass-necropolis | 61.6 | 파편 반사 중간 §3.6 |
+| howling-sprawl | 75.6 | 개방 황야(가장 옅음) §3.5 |
+| gate-zenith | 78.4 | 정점 조망(가장 옅음) §3.10 |
+
+far 스프레드 **1.87×**(42.0 .. 78.4). near는 두 조망 스테이지를 제외하고 전부 1.8 기준
+±0.5 내 유지 — §1.4의 "안개 근거리가 지형 가장자리를 가리도록" 우려는 near가 바깥으로 얼마나
+드리프트하는지만 제한하는데, 조망 두 스테이지는 그 지형 실루엣을 **의도적으로 노출**한다
+(§3.5/§3.10이 정확히 요구).
+
+- **결정론/무과금/오프라인 격리**: 안개는 순수 씬 렌더 상태 — 스냅샷/`getRunDigest` 미접촉,
+  `applyStagePalette`는 `stageId`만 읽는다(렌더러 단방향 계약 유지). 신규 에셋/네트워크 0.
+  PMREM/림 라이트(렌더러 게이트 부분)는 미변경.
+- **검증(자기보고 아님)**: node --test **190 tests / 189 pass / 0 fail / 1 skip**(회귀 0,
+  결정론/디지털 테스트 포함 전부 통과). 신규 `world-presentation-contract` 테스트가 실제
+  `applyStagePalette`를 실제 `THREE.Fog`에 10스테이지 전부 구동, (a) 각 near/far가
+  `stageFogRange` 오라클과 정확 일치(렌더러가 테이블을 소비함을 증명, 날조 아님), (b) near<far,
+  (c) 로스터 far 스프레드 ≥1.5×, (d) 조망 2종(howling/gate) > 폐쇄 2종(echo/starless)을 실증.
+  안개 near/far는 순수 THREE 상태라 브라우저가 이 주장에 추가 증거를 주지 않음(GPU 게이트
+  아님) — 대신 `world-presentation-browser.cjs` green으로 렌더 회귀 0 확인(exit 0).
+
+**미해결(다음 축-4 패스 입력)**: (1) **조명(key/rim) 심도·각도는 여전히 스테이지 무관** —
+`applyStagePalette`가 key/ambient 색만 틴트, §3.9 "제단 조명처럼 낮은 각도"·§3.10 "문턱
+광선" 같은 스테이지별 조명 방향/강도 연출은 미배선. (2) §3.6 Glass Necropolis **환경맵 서사
+정합 결함**(전역 6색 큐브가 스테이지 지오메트리 미반사)은 D22에서 deferred, 여전히 미해결 —
+동적 스테이지별 큐브맵은 코드 아키텍처 변경(스파이크 선행). (3) terrain 10종 GLB **임의각
+감사**(백페이스컬링/UV/실루엣)는 §2.2 감사 스코프 미포함 상태 그대로 — 안개 심도가 저각에서
+수면 절단/편평 bbox를 얼마간 완화하나 근본 확인은 감사 확대 필요.
+
+**반영**: `battle-realtime-three.js`(STAGE_FOG_MULTIPLIERS + stageFogRange export +
+applyStagePalette near/far 적용), `tests/world-presentation-contract.test.mjs`(신규 안개 심도
+테스트 + import), 본 항목. 커밋 `31e506d`.

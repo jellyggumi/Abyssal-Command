@@ -315,3 +315,49 @@ transition 제거. 순수 클라 렌더(snapshot.commander) → getRunDigest 무
   루프(성장 오퍼에서 원하는 종류 우선 클릭, `clickedOfferKeys`로 중복 방지) 패턴 재사용.
 - `verifyBossMeshRegression`는 여전히 사전존재 실패(`.glb` D26 제거, 타 세션 소관). 신규
   브라우저 테스트는 그 앞에 배치해 격리된 양성 증거를 확보할 것.
+
+---
+
+## 패스 #9 — 2026-07-26 07:00 KST · 축 4(스테이지 구성/분위기) · 커밋 `31e506d`
+
+**초점 선택**: 패스 #9 → %5=4 → 스테이지 구성/분위기. 순환 기본값 그대로. 직전 축-4 작업
+(D22 `applyStagePalette` 배선)이 스테이지별 안개/조명 **색**은 붙였으나 안개 **심도**(near/far)는
+전역 상수 하나로 고정 — 스테이지 차별화의 가장 강한 대기 레버가 균일했다.
+
+### 무엇을 바꿨는가 (측정값 포함)
+- **발견(실측)**: `applyStagePalette`는 `fog.color`만 스테이지별로 바꾸고 near/far는 `mount()`
+  전역 상수(`WORLD_SCALE*1.8/*4.2`) 그대로 → 10스테이지 동일 대기 심도. `stage-composition
+  -20260725.md §3`은 스테이지마다 다른 안개 밀도를 명시 요구했으나 렌더러 미소비.
+- **구현**: `STAGE_FOG_MULTIPLIERS` 데이터 테이블 + `stageFogRange(stageId)` 순수 export 헬퍼
+  추가, `applyStagePalette`에서 색 직후 near/far 적용. 매직넘버 0(전부 `WORLD_SCALE` 배수).
+- **측정**: far 스프레드 **1.87×** — Echo Throne 42.0(가장 폐쇄, §3.3 공허 은폐) → Gate
+  Zenith 78.4(가장 개방, §3.10 정점 조망). Howling Sprawl 75.6(§3.5 능선 실루엣), Cinder
+  Span 50.4(§3.1 다리 끝 소실), Starless Canal 43.4·Abyss Chancel 46.2·Veil Citadel 47.6
+  (밤/서약/장막 폐쇄 모티프).
+- **격리**: 안개는 순수 씬 렌더 상태 — 스냅샷/`getRunDigest` 미접촉, `applyStagePalette`는
+  `stageId`만 읽음(렌더러 단방향 유지). 신규 에셋·네트워크 0. PMREM/림(렌더러 게이트) 미변경.
+- **검증**: node --test **190/189/0/1**(회귀 0, 결정론 테스트 전부 통과). 신규
+  `world-presentation-contract` 테스트: 실제 `applyStagePalette`를 실제 `THREE.Fog`에 10스테이지
+  구동 → (a) near/far가 `stageFogRange` 오라클과 정확 일치(테이블 소비 증명), (b) near<far,
+  (c) far 스프레드 ≥1.5×, (d) 조망 2종>폐쇄 2종 실증. `world-presentation-browser.cjs` green
+  (exit 0, 렌더 회귀 0).
+
+### 무엇이 여전히 미해결인가 (은폐 없음)
+1. **조명(key/rim) 심도·각도는 여전히 스테이지 무관** — 색만 틴트, §3.9 "제단 조명처럼 낮은
+   각도"·§3.10 "문턱 광선" 같은 방향/강도 연출 미배선. 다음 축-4 패스 1순위 후보.
+2. **§3.6 Glass Necropolis 환경맵 서사 결함** — 전역 6색 큐브가 스테이지 지오메트리 미반사.
+   D22 deferred 그대로. 동적 스테이지별 큐브맵은 코드 아키텍처 변경(스파이크 선행, 범위 밖).
+3. **terrain 10종 GLB 임의각 감사 미수행** — §2.2 감사 스코프에 terrain 미포함 상태 그대로.
+   안개 심도가 저각 수면절단/편평 bbox를 얼마간 완화하나 근본 확인은 감사 확대 필요.
+4. **정성 검증(사람)**: 자동 테스트가 near/far 값·오라클 일치·스프레드까지 실증. "실제 브라우저
+   에서 스테이지 전환 시 개방감 대비가 체감되는가"는 사람이 봐야 하는 정성 항목(Cycle1부터 표준 결핍).
+
+### 다음 패스가 이 축을 다시 잡을 때 알아야 할 것
+- 스테이지별 대기 배선은 이제 `applyStagePalette` 한 곳에 집약: 색 3종(fog/key/ambient) +
+  심도(fog near/far) + PMREM 틴트. 조명 방향/강도를 스테이지별로 주려면 같은 메서드에
+  `STAGE_LIGHT_*` 테이블을 추가하고 keyLight/rimLight의 position·intensity를 틴트와 동일 패턴으로.
+- `stageFogRange`는 export된 순수 함수 — 새 대기 파라미터도 동일하게 순수 export + 오라클
+  테스트 패턴(`world-presentation-contract`의 `realtimeBattleHarness()`가 renderer 없이 실제
+  씬에 메서드 구동)으로 검증 가능. GPU 게이트 아닌 씬 상태는 브라우저 불필요.
+- §1.4 제약: 안개 near를 바깥으로 크게 드리프트시키면 저각/줌인에서 지형 가장자리가 노출된다 —
+  조망 스테이지는 이게 의도(실루엣 노출)지만, 폐쇄 스테이지 near는 1.8 기준 근처 유지할 것.
