@@ -264,3 +264,95 @@ DOWNED가 런스코프 한정(영구손실 없음)이라는 §4.4 설계 자체�
 **교훈(종합)**: 이번 세션 전체가 "이전 세션의 성공 주장을 실측 없이 믿지 말라"는 단일 패턴의 반복이었다 — Confirm 버튼 클릭이 "작동하는 것처럼 보였지만" 잘못된 요소를 클릭하고 있었고, GLB 룩업 테이블이 "완전해 보였지만" 39개가 404였고, workspace 삭제가 "안전해 보였지만" 11개 테스트를 깨뜨리고 있었다. 매번 해소 방법은 동일했다 — UI 텍스트나 커밋 메시지가 아니라 실제 DOM 좌표, 실제 네트워크 응답, 실제 테스트 실행 결과로 재확인.
 
 **반영**: `assets/images/battle/glb/*.glb`(40개 신규 export), `assets/models/abyssal-command/abyssal-command-resource-pack.blend`(형제 워크트리에서 복구), `_workspace/20260723-solo-warden-rpg-concept/production/world-content-pack.blend`(재빌드), `_workspace/20260723-solo-warden-rpg-concept/pipeline/bosses/raw/s{1-5}-*.raw.glb`(신규), `_workspace/20260722-{abyssal-command-bmad-gds-expansion,abyssal-command-vertical-slice-implementation,defense-survival-expansion}/`(복구), `assets/images/battle/{dusk-warden,echo-rusher}-*.png`(20개 복구), `assets/images/battle/pilot/concept-{shadow-commander,sung-hum}-boss.*`(복구), `assets/images/battle/animation-manifest.json`(복구), `tests/g2-prepared-prerequisite-bindings.test.mjs`(skip 가드 추가), `.claude/skills/game-studio-harness/references/quality-gates.md`(Character asset pipeline standard 섹션 신규), `production/task-manifest.md`(정정 주석 3건 + 신규 섹션).
+
+## D20 — 사용자 요청 "추가된 리소스로 게임리소스 업데이트... 각 리소스와 게임 UI 대대적으로 개편" 중 발견: D19가 "완료"로 표시한 파이프라인의 3개 독립 결함
+
+**배경**: 사용자가 "추가된 리소스로 게임리소스 업데이트할꺼야. 콘셉이미지기반으로 만들었으니까 알맞게
+적용해야하고 각 리소스와 게임 UI 대대적으로 개편"을 요청(원문 오탈자 포함). D19가 직전 커밋(`d8e9d9f`)에서
+"T-pose 캐릭터 파이프라인 완료"로 표시했으나, 실제 라이브 브라우저 렌더 실측 결과 캐릭터가 여전히 정지된
+T-pose로 표시되는 것을 발견 — D19의 "완료" 판정을 재검증한 결과 3개의 독립적 결함이 드러남.
+
+**발견 1 — 배포 allowlist 4개소가 40개 GLB 중 1개(`anchor-shard.glb`)만 등록하고 있었음**: `battle-realtime-three.js`의
+모델 룩업 테이블은 40개 GLB를 전부 참조하지만, 실제 배포 경로(`scripts/defense-runtime-assets.mjs`의
+`RETAINED_ASSET_PATHS`, `.github/workflows/static.yml`의 `PAGES_RUNTIME_PATHS`, `tests/release-closure.test.mjs`의
+`RUNTIME_PATHS`, `sw.js`의 `CORE_ASSETS`)는 전부 독립적으로 하드코딩된 목록이며 `anchor-shard.glb` 하나만
+등록돼 있었다. 로컬 `python3 -m http.server`는 저장소 전체를 그대로 서빙하므로 이 갭이 로컬 개발/테스트
+환경에서는 절대 드러나지 않는다 — Pages 배포만이 `git archive`로 allowlist에 명시된 파일만 포장하므로,
+실제 라이브 사이트는 나머지 39개 GLB에 대해 전량 404를 반환했을 것(확인은 로컬 환경 한계상 불가, 코드
+경로 분석으로 결론).
+**판정**: 4개소 전부에 40개 GLB 경로 동기화, `defense-asset-manifest.json` 재생성, `node --test`로
+매니페스트/release-closure 테스트 그린 확인. D19가 "배포 파이프라인 5개소 배선"(task-manifest.md 91행)으로
+완료 표시한 항목이 실제로는 워크플로 하드코딩 리스트 자체를 갱신하지 않은 채 GLB 파일만 디스크에 존재하는
+상태로 남아있었던 것으로 확인 — "파일이 저장소에 존재한다"와 "파일이 배포된다"는 별개의 사실이며, 이번
+세션 전까지 후자가 검증된 적이 없었다.
+
+**발견 2 — `AnimationMixer`가 렌더러 어디에도 없었음(가장 심각한 결함)**: 리깅 파이프라인
+(`scripts/rig-and-animate-asset-blender.py`)이 11개 액션 클립(idle/move/run/hit/bighit/attack/critical/
+avoid/defence/die/show)을 GLB의 `animations` 배열에 정확히 굽고 있음을 확인했으나, `battle-realtime-three.js`의
+`instantiateActorModel()`은 `gltf.scene.clone(true)`만 호출하고 `gltf.animations`를 한 번도 참조하지 않았다 —
+즉 리깅된 GLB를 로드해도 애니메이션을 재생할 메커니즘 자체가 렌더러에 없었다. 실 브라우저 스크린샷으로
+커맨더가 완전히 정지된 별모양 실루엣으로 렌더링되는 것을 확인해 실증(전투가 진행되며 게이트/커맨더 내구가
+실제로 변화하는데도 시각적으로는 고정 포즈).
+**판정**: `SkeletonUtils.clone()`(three.js 애드온, 이미 `vendor/utils/SkeletonUtils.js`에 벤더링돼 있었으나
+미사용 상태였음 — plain `Object3D#clone()`은 SkinnedMesh를 원본과 공유 스켈레톤에 바인딩한 채로 복제해
+동일 GLB의 다중 인스턴스가 서로의 포즈를 오염시키는 문제가 있어 필수)로 액터 인스턴스화를 교체,
+`THREE.AnimationMixer`+11-액션 크로스페이드 상태머신을 신규 구현. 이동 상태는 프레임간 위치델타로 idle/move
+추론(시뮬레이션에 명시적 "moving" 플래그가 없음, `syncActorPosition()`의 기존 위치 동기화 로직에 자연스럽게
+결합). 전투 액션(attack/hit/die)은 실제 코드에서 확인된 이벤트 필드 형태만 사용(`WEAPON_FIRED.entityId`,
+`ENEMY_ATTACK.entityId`/`.targetId`, `COMPANION_DOWNED`, `ENEMY_DEFEATED.enemyId`) — 존재 확인 안 된
+"COMMANDER_ATTACK" 류 이벤트를 추측으로 만들어내지 않음. 적 처치는 시뮬레이션 계약상 같은 틱에 액터가
+즉시 제거되므로(`resolveDeaths()`), 죽는 순간의 시각 피드백을 위해 death-echo라는 별도의 단명 액터를
+`captureDeathEchoes()`(reconcileActors 이전 실행, 제거 전 위치/모델 캡처)+`spawnDeathEcho()`(die 클립 재생 후
+자동 정리)로 구현 — 기존 `vfxInstances` 풀 패턴 재사용, 시뮬레이션 소유권 경계 위반 없음.
+
+**발견 3 — 커맨더(Dusk Warden) 자신이 22개 배치 리깅 대상에서 누락돼 있었음**: D19의 "나머지 T-pose
+생성+리깅" 범위는 보스 10+동료 9+적 4=23종(이미 리깅된 anchor-shard 포함하면 22개 신규)이었으나, 이
+목록에 커맨더가 포함돼 있지 않았다 — "나머지"라는 표현이 이전 사이클에서 커맨더는 이미 처리됐다고
+암묵적으로 가정했으나, 실제로는 `dusk-warden.glb`가 애초에 프로시저럴 리소스팩(`Void Obsidian`/`Cold Steel`/
+`Cyan Rift`/`Zenith Void Gold` 4개 캐논 머티리얼, 16개 별도 메시 파츠 — 팔/다리 없이 로브+블레이드+랜턴
+구성)의 구 버전 산출물이었고 스켈레톤도 애니메이션도 전혀 없는 상태로 방치돼 있었다. 매 전투마다 항상
+화면에 보이는 유일한 캐릭터가 유일하게 미처리 상태였다는 역설.
+**판정**: 리깅 스크립트는 단일 임포트 메시를 전제(`imported[0]`)하므로 16-파트 구조에 그대로 적용 불가 —
+Blender `bpy.ops.object.join()`으로 16개 파츠를 머티리얼 슬롯 4개를 보존한 채 단일 메시로 병합(시각적
+외형 무변경, 오브젝트 카운트만 축소) 후 표준 파이프라인 그대로 통과. 첫 시도에 성공(36 joints, 11 clips,
+bone-heat weighting 결함 없음) — 이 캐릭터의 지오메트리가 다른 로브형 보스들과 달리 pedestal-cut
+휴리스틱에 적합한 명확한 허리 실루엣을 가지고 있었던 것으로 추정.
+
+**부수 발견 — 배치 리깅 22종 중 4종(gate-sovereign/tide-warden/lantern-tyrant/veiled-concordat)이
+결정론적으로 실패**: bone-heat weighting이 매 시도(각 5회) 100% 실패, 스켈레톤은 생성되나 스킨 바인딩이
+0 vertex weight로 귀결. 원인 분석: 이 4개 보스는 모두 화려하게 부풀려진 로브/케이프 실루엣을 가지고 있어,
+radius-minima 기반 pedestal-cut 휴리스틱(허리 = 반경이 국소 최솟값인 지점)이 로브의 주름/단 구조를 다중
+허위 "허리" 후보로 오인 — 성공한 다른 6개 보스(cinder-warden/veil-tactician/pack-herald/requiem-choir/
+bridge-colossus/abyss-regent)는 상대적으로 명확한 실루엣을 가짐. 손 계산으로 cut fraction 클램프 범위를
+좁혀보는 실험(0.08-0.22)도 4개 전부에서 동일하게 실패해 단순 파라미터 튜닝으로는 해소 불가 확인.
+**판정**: 무리한 반복 재시도 대신 결함을 있는 그대로 문서화하고 다음 사이클로 이월(`task-manifest.md`
+Deferred 섹션) — 이 4개는 정적 메시로 폴백 렌더링되며(형태/색상은 정상, T-pose 애니메이션만 없음) 게임플레이
+자체를 막지 않는다. 근본 해결은 pedestal-cut 휴리스틱의 볼록껍질 기반 재설계 또는 수동 리토폴로지가 필요.
+
+**부수 발견 — 배치 리깅 도중 13개 런타임 GLB가 원인 불명으로 애니메이션 없는 상태로 오염됨**: staging
+격리 경로(`/tmp/rig-batch-staging`)만 사용하도록 설계된 배치 스크립트 실행 중, `git status`로 13개 런타임
+GLB(`assets/images/battle/glb/*.glb`)가 예기치 않게 애니메이션 0개 상태로 덮어써진 것을 발견 — 동일
+코드 경로를 격리 환경에서 재실행했을 때는 재현되지 않았고, 세션 시작부터 실행 중이던 별도 Blender GUI
+프로세스(BlenderMCP addon 등록 상태)가 원인일 가능성이 있으나 직접적 인과 확증은 못함. **미확정 원인을
+방치하지 않고**: `git checkout`으로 13개 파일 즉시 원복(hash 대조로 원본과 완전 일치 확인), staging
+디렉터리의 19개 원본 결과물을 재검증(skin+11-clips 재확인) 후 안전하게 재배포. 이후 재발 없음(전체 세션
+동안 이 1회만 관측).
+**교훈**: "안전한 staging 경로만 사용했다"는 설계 의도가 실제로 안전을 보장하지 않을 수 있다 —
+대량 GPU/CPU 작업(Blender 배치)을 실행하기 전과 직후 반드시 `git status`로 의도치 않은 워킹트리 변경을
+확인할 것. 이번 사고가 verification 없이 넘어갔다면 커밋 시점에 13개 캐릭터의 애니메이션이 조용히 사라진
+채로 배포됐을 것.
+
+**검증 범위**: `node --test 'tests/**/*.test.mjs'` 174개 중 173 pass/1 skip(기존 사유 있는 스킵)/0 fail.
+실 브라우저(headless Chromium)로 로비→전투 진입→커맨더/적 4종(scout/shade) 애니메이션 실제 렌더 확인 —
+idle 상태에서 뼈대(`DEF-spine`) quaternion을 800ms 간격 3회 샘플링해 실제로 변화함을 직접 증명(breathing
+loop), 이동 커맨드 입력 후 walk 전환, 전투 진행 중 적 attack 포즈(팔다리 확장) 전환을 스크린샷으로 확인.
+서비스워커가 리깅 이전 캐시된 GLB를 계속 서빙하는 함정도 발견 — `navigator.serviceWorker.getRegistrations()`
+unregister + `caches.delete()` 없이는 코드 변경이 반영되지 않음(이번 세션의 첫 애니메이션 검증 시도가
+정확히 이 함정에 걸려 "여전히 0 애니메이션"으로 오판할 뻔함, 재확인 후 정정).
+
+**반영**: `scripts/defense-runtime-assets.mjs`+`.github/workflows/static.yml`+`tests/release-closure.test.mjs`+
+`sw.js`+`assets/defense-asset-manifest.json`(배포 allowlist 4개소 동기화), `battle-realtime-three.js`(AnimationMixer
+통합, PMREM 환경광, RIG_ACTION_KEYS 개명), `assets/images/battle/glb/*.glb`(20개 리깅+애니메이션 신규 배포,
+3개 미참조 파일+previs 형제 3개 삭제), `styles.css`(canon 팔레트 토큰 8종 신규+4개 고노출 표면 재도색),
+`_workspace/20260723-solo-warden-rpg-concept/ui/lane-hud-layout.md`(stale Option A/B 서술 정정),
+`production/task-manifest.md`(D19 TRIPO_API_KEY 블로커 해소 표시+reinforce 오류 정정+신규 섹션).

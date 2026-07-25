@@ -7,6 +7,7 @@
 // ownership" check.
 import * as THREE from "./vendor/three.module.js";
 import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "./vendor/utils/SkeletonUtils.js";
 import { STAGES } from "./defense-catalog.js";
 
 const MAX_VISUAL_EFFECTS = 24;
@@ -146,6 +147,37 @@ const VFX_LIFETIME_TICKS = Object.freeze({
   COMPANION_DOWNED: 48,
 });
 
+// Rigged character GLBs (scripts/rig-and-animate-asset-blender.py) embed an
+// 11-clip action library per asset, named "<assetId>::<action>::v01" in the
+// glTF `animations` array -- idle/move/run/hit/bighit/attack/critical/
+// avoid/defence/die/show (design/previs-rigging-guide.md). Not every GLB in
+// MODEL_ROOT is rigged (VFX/terrain models, and a handful of boss meshes
+// whose non-humanoid silhouette defeated the automatic-weight pedestal-cut
+// heuristic, ship as static meshes) -- RIG_ACTION_KEYS lets loadActions()
+// detect which clips (if any) a given loaded model actually has, so
+// unrigged models simply skip animation without special-casing.
+const RIG_ACTION_KEYS = Object.freeze([
+  "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "die", "show",
+]);
+// Movement in this simulation is continuous position sync (app.js's
+// projected() feeds ARENA-scale x/y every tick), not a discrete "moving"
+// flag -- MOVE_EPSILON is the per-frame world-unit position delta above
+// which an actor is considered to be walking rather than idle. Tuned well
+// below the commander's per-tick displacement at the slowest authored
+// movement speed (defense-run-simulation.js COMMANDER.speed), scaled into
+// WORLD_SCALE world units, so idle jitter from camera-relative rounding
+// never falsely reads as "move".
+const MOVE_EPSILON = 0.01;
+// Verified event field shapes (defense-run-simulation.js emit() call
+// sites), not inferred: WEAPON_FIRED.entityId is the shooter (commander or
+// companion) on every ranged auto-attack; ENEMY_ATTACK.entityId is the
+// attacking enemy/boss and .targetId is whoever it hit (commander id,
+// companion entity id, or "gate" -- gate has no actor mesh so a lookup miss
+// is a silent no-op, not a bug). One shared rule set drives both sides of
+// every attack without special-casing attacker kind.
+const ATTACKER_EVENT_ACTION = Object.freeze({ WEAPON_FIRED: "entityId", ENEMY_ATTACK: "entityId" });
+const TARGET_HIT_EVENT = "ENEMY_ATTACK";
+
 const COLORS = Object.freeze({
   backgroundTop: 0x0a0f1d,
   backgroundBottom: 0x030712,
@@ -284,11 +316,61 @@ function fitFootprint(object3d, targetHalfExtent) {
   object3d.scale.setScalar(scale);
 }
 
+// Extracts "<action>" from a clip named "<assetId>::<action>::v01" (the rig
+// pipeline's naming convention) -- tolerant of a bare/unnamespaced clip name
+// too so a non-pipeline-authored GLB with a plain "idle"/"attack" clip still
+// works.
+function actionKeyFromClipName(name) {
+  const parts = typeof name === "string" ? name.split("::") : [];
+  const candidate = parts.length >= 2 ? parts[1] : parts[0];
+  return RIG_ACTION_KEYS.includes(candidate) ? candidate : null;
+}
+
+// Builds an { actionKey -> AnimationAction } map for every rig-pipeline clip
+// present on this GLB's animations array (RIG_ACTION_KEYS doc comment above
+// explains why not every model has any). idle/move/run loop; every other
+// action is a one-shot combat beat that holds its last pose instead of
+// snapping back to frame 0.
+function buildActions(mixer, clips) {
+  const actions = {};
+  for (const clip of clips) {
+    const key = actionKeyFromClipName(clip.name);
+    if (!key || actions[key]) continue;
+    const action = mixer.clipAction(clip);
+    if (key === "idle" || key === "move" || key === "run") {
+      action.setLoop(THREE.LoopRepeat, Infinity);
+    } else {
+      action.setLoop(THREE.LoopOnce, 1);
+      action.clampWhenFinished = true;
+    }
+    actions[key] = action;
+  }
+  return actions;
+}
+
 async function instantiateActorModel(relPath, targetHeight) {
   const gltf = await loadGltf(relPath);
-  const instance = gltf.scene.clone(true);
+  // SkeletonUtils.clone() (not gltf.scene.clone()) so a SkinnedMesh instance
+  // gets bound to ITS OWN cloned skeleton -- plain Object3D#clone() copies
+  // the mesh but leaves every clone bound to the ORIGINAL shared skeleton,
+  // so multiple live instances of the same rigged GLB (e.g. two "scout"
+  // enemies on screen at once) would corrupt each other's pose every frame.
+  // No-op for non-skinned nodes (terrain/VFX never hit this path), so this
+  // is safe for every actor kind uniformly.
+  const instance = SkeletonUtils.clone(gltf.scene);
   fitHeight(instance, targetHeight);
-  return instance;
+  let mixer = null;
+  let actions = {};
+  if (Array.isArray(gltf.animations) && gltf.animations.length) {
+    // AnimationClip keyframe tracks address bones/nodes by NAME, not object
+    // reference, and SkeletonUtils.clone() preserves every name -- binding
+    // the mixer to `instance` (the clone) makes clipAction() resolve tracks
+    // against the clone's own bones, standard three.js multi-instance
+    // pattern, one mixer per instance sharing the same immutable clip data.
+    mixer = new THREE.AnimationMixer(instance);
+    actions = buildActions(mixer, gltf.animations);
+  }
+  return { instance, mixer, actions };
 }
 
 async function instantiateTerrainModel(relPath) {
@@ -431,6 +513,40 @@ export class MeshThumbnailService {
   }
 }
 
+// Bakes a small procedural "room" into a PMREM environment map so PBR
+// materials (metallic/roughness authored by build-world-content-pack.py --
+// see decision-log.md D15/D19 canon material table) actually show directional
+// specular reflections instead of reading flat/grey under ambient+directional
+// lights alone (three.js's PBR BSDF needs an environment for its specular IBL
+// term; without one, metallic surfaces have nothing to reflect and read as
+// dull diffuse regardless of authored roughness/metalness). Self-lit
+// MeshBasicMaterial box faces (no separate lights needed in this bake scene)
+// tinted from the SAME COLORS palette the live scene's directional lights
+// already use, so the reflected environment reads as an extension of the
+// existing lighting direction/color rather than an unrelated HDRI.
+function buildEnvironmentMap(renderer) {
+  const bakeScene = new THREE.Scene();
+  const faceColors = [
+    COLORS.rim, COLORS.rim, // +X / -X: cool rim tone on the sides
+    COLORS.key, COLORS.backgroundBottom, // +Y / -Y: warm key overhead, dark underfoot
+    COLORS.ambient, COLORS.ambient, // +Z / -Z: neutral ambient tone front/back
+  ];
+  const faceIntensity = [1.4, 1.4, 2.6, 0.3, 0.9, 0.9];
+  const materials = faceColors.map((color, i) => {
+    const c = new THREE.Color(color).multiplyScalar(faceIntensity[i]);
+    return new THREE.MeshBasicMaterial({ color: c, side: THREE.BackSide });
+  });
+  const box = new THREE.Mesh(new THREE.BoxGeometry(50, 50, 50), materials);
+  bakeScene.add(box);
+
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const renderTarget = pmrem.fromScene(bakeScene, 0.04);
+  pmrem.dispose();
+  box.geometry.dispose();
+  for (const m of materials) m.dispose();
+  return renderTarget.texture;
+}
+
 /**
  * Real WebGL RealtimeBattle -- a Three.js scene graph reconciled every
  * renderSnapshot() call against the supplied (renderer-neutral) snapshot.
@@ -454,9 +570,10 @@ export class RealtimeBattle {
     this.terrainGroup = null;
     this.actorGroup = null;
     this.vfxGroup = null;
+    this.environmentTexture = null;
 
     this.actors = new Map(); // entity.id -> { root, kind, modelPath, loading }
-    this.vfxInstances = []; // { root, untilTick }
+    this.vfxInstances = []; // { root, untilTick } -- also holds death echoes: { root, untilTick, mixer }
     this.cameraTarget = new THREE.Vector3();
     this.cameraFollowInit = false;
 
@@ -467,6 +584,12 @@ export class RealtimeBattle {
     this.pendingInputFeedback = null;
     this.visualEventKeys = new Set();
     this.pendingVfx = [];
+    this.pendingDeathEchoes = []; // captureDeathEchoes()-collected { modelPath, x, z }, drained by collectFeedback()
+    // Wall-clock delta for AnimationMixer stepping, derived from the same
+    // performance.now() timestamp updateAnimations() already receives for
+    // one-shot expiry -- deliberately NOT tied to snapshot.tick (60Hz sim
+    // ticks can batch/skip on a slow frame or a paused/backgrounded tab).
+    this.lastAnimMs = null;
   }
 
   mount({ canvas, handoff, viewport } = {}) {
@@ -484,6 +607,13 @@ export class RealtimeBattle {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.scene = new THREE.Scene();
+    // envMap (not envMapIntensity=0 default): every actor/terrain/gate
+    // MeshStandardMaterial in this scene picks this up automatically via
+    // scene.environment (three.js's implicit-IBL-source behavior) -- no
+    // per-material wiring needed. Owns its own render-target texture,
+    // disposed alongside the rest of this session's GPU resources.
+    this.environmentTexture = buildEnvironmentMap(this.renderer);
+    this.scene.environment = this.environmentTexture;
     this.scene.fog = new THREE.Fog(COLORS.backgroundBottom, WORLD_SCALE * 1.8, WORLD_SCALE * 4.2);
 
     const { width, height } = bounds(this.canvas, this.viewport);
@@ -544,7 +674,11 @@ export class RealtimeBattle {
     const existing = this.actors.get(entity.id);
     if (existing) return existing;
     const modelPath = actorModelPath(entity) ?? (kind === "companion" ? null : null);
-    const record = { root: null, kind, modelPath, loading: Boolean(modelPath) };
+    const record = {
+      root: null, kind, modelPath, loading: Boolean(modelPath),
+      mixer: null, actions: {}, activeActionKey: null, targetHeight: actorTargetHeight(entity),
+      oneShotUntilMs: 0, moving: false, lastX: null, lastZ: null,
+    };
     this.actors.set(entity.id, record);
     if (!modelPath) {
       // No dedicated model (shouldn't normally happen for known kinds, but
@@ -560,14 +694,23 @@ export class RealtimeBattle {
       return record;
     }
     instantiateActorModel(modelPath, actorTargetHeight(entity))
-      .then((instance) => {
+      .then(({ instance, mixer, actions }) => {
         record.root = instance;
+        record.mixer = mixer;
+        record.actions = actions;
         record.loading = false;
         if (this.disposed || !this.actors.has(entity.id) || this.actors.get(entity.id) !== record) {
           disposeObject3D(instance);
           return;
         }
         this.actorGroup.add(instance);
+        // Start in idle immediately (no fade-in needed for a freshly
+        // mounted actor -- there is no prior pose to blend from).
+        const idle = actions.idle;
+        if (idle) {
+          idle.reset().play();
+          record.activeActionKey = "idle";
+        }
       })
       .catch(() => {
         record.loading = false;
@@ -575,9 +718,46 @@ export class RealtimeBattle {
     return record;
   }
 
+  // Crossfades record's currently-playing action to `key` over `fadeSeconds`.
+  // No-op if the actor has no clip for `key` (some models are unrigged, see
+  // RIG_ACTION_KEYS doc comment) or is already playing it.
+  crossfadeToAction(record, key, fadeSeconds = 0.2) {
+    const next = record.actions?.[key];
+    if (!next || record.activeActionKey === key) return false;
+    const previous = record.activeActionKey ? record.actions[record.activeActionKey] : null;
+    next.enabled = true;
+    next.setEffectiveWeight(1);
+    next.reset().fadeIn(fadeSeconds).play();
+    if (previous && previous !== next) previous.fadeOut(fadeSeconds);
+    record.activeActionKey = key;
+    return true;
+  }
+
+  // Plays a one-shot combat beat (attack/hit/bighit/critical/die/...) on top
+  // of locomotion, holding it for its authored clip duration before
+  // updateAnimations() lets locomotion resume. Silently ignored for actors
+  // without that clip or without a mixer (unrigged models) -- combat still
+  // functions identically, just without the visual flourish.
+  triggerAction(record, key, nowMs) {
+    if (!record?.mixer) return;
+    const action = record.actions?.[key];
+    if (!action) return;
+    const played = this.crossfadeToAction(record, key, 0.08);
+    if (!played) return;
+    const clip = action.getClip();
+    record.oneShotUntilMs = nowMs + (Number.isFinite(clip?.duration) ? clip.duration * 1000 : 600);
+  }
+
   syncActorPosition(record, entity) {
     if (!record.root) return;
     const p = worldPoint(entity);
+    if (record.lastX !== null) {
+      const dx = p.x - record.lastX;
+      const dz = p.z - record.lastZ;
+      record.moving = Math.hypot(dx, dz) > MOVE_EPSILON;
+    }
+    record.lastX = p.x;
+    record.lastZ = p.z;
     record.root.position.x = p.x;
     record.root.position.z = p.z;
   }
@@ -586,6 +766,7 @@ export class RealtimeBattle {
     const record = this.actors.get(id);
     if (!record) return;
     this.actors.delete(id);
+    if (record.mixer) record.mixer.stopAllAction();
     if (record.root) {
       this.actorGroup.remove(record.root);
       disposeObject3D(record.root);
@@ -615,7 +796,31 @@ export class RealtimeBattle {
       seen.add(companion.id);
       const record = this.ensureActor(companion, "companion");
       this.syncActorPosition(record, companion);
-      if (record.root) record.root.visible = companion.status !== "DOWNED";
+      const isDowned = companion.status === "DOWNED";
+      if (record.root) {
+        if (isDowned && record.prevStatus !== "DOWNED") {
+          // Just went down this frame: play the die clip once before
+          // hiding, instead of vanishing instantly -- triggerAction() is a
+          // no-op if this actor has no "die" clip, so unrigged companions
+          // fall through to the immediate-hide branch below exactly as
+          // before this session's change.
+          const hasDie = Boolean(record.actions?.die);
+          if (hasDie) {
+            this.triggerAction(record, "die", performance.now());
+            record.root.visible = true;
+            record.dieHideAtMs = record.oneShotUntilMs;
+          } else {
+            record.root.visible = false;
+          }
+        } else if (isDowned) {
+          // Already down (not this frame): stay in whatever the die-timer
+          // decided -- updateAnimations() flips visible=false once the die
+          // clip's duration elapses, never re-shown while still DOWNED.
+        } else {
+          record.root.visible = true;
+        }
+      }
+      record.prevStatus = companion.status;
     }
 
     for (const pickup of list(snapshot, "pickups", "drops")) {
@@ -718,6 +923,99 @@ export class RealtimeBattle {
     });
   }
 
+  // Runs BEFORE reconcileActors() retires this tick's dead enemies, so their
+  // actor record (model path + last synced position) is still readable.
+  // Captures just enough to spawn a standalone death-echo actor afterward
+  // (collectFeedback, which runs after retirement) -- the echo is NOT the
+  // same actor continuing to exist, it's a short-lived visual-only replay of
+  // the die clip at the enemy's last position, same lifecycle pattern as
+  // spawnVfx()'s vfxInstances pool.
+  captureDeathEchoes(snapshot) {
+    for (const event of Array.isArray(snapshot?.events) ? snapshot.events : []) {
+      if (event?.type !== "ENEMY_DEFEATED") continue;
+      const key = feedbackKey(event);
+      if (!this.rememberVisualEvent(key)) continue;
+      const record = this.actors.get(event.enemyId);
+      if (!record?.root || !record.modelPath || !record.actions?.die) continue;
+      this.pendingDeathEchoes.push({
+        modelPath: record.modelPath,
+        x: record.root.position.x,
+        z: record.root.position.z,
+        targetHeight: record.targetHeight ?? TARGET_HEIGHT.enemy,
+      });
+    }
+  }
+
+  spawnDeathEcho(echo, tick) {
+    instantiateActorModel(echo.modelPath, echo.targetHeight)
+      .then(({ instance, mixer, actions }) => {
+        if (this.disposed) {
+          disposeObject3D(instance);
+          return;
+        }
+        instance.position.set(echo.x, 0, echo.z);
+        this.vfxGroup.add(instance);
+        const action = actions.die;
+        let untilTick = tick + 72; // DEFAULT_ACTION_BUDGETS.die.targetFrames @ 60fps, scripts/rig-and-animate-asset-blender.py
+        if (action) {
+          action.reset().play();
+          const clip = action.getClip();
+          if (Number.isFinite(clip?.duration)) untilTick = tick + Math.ceil(clip.duration * 60);
+        }
+        this.vfxInstances.push({ root: instance, untilTick, mixer, loaded: true });
+      })
+      .catch(() => {});
+  }
+
+  // Steps every live actor's AnimationMixer by real elapsed time and returns
+  // one-shot combat beats (attack/hit/die/...) to locomotion (idle/move)
+  // once their clip finishes -- called once per renderSnapshot() after
+  // positions/state are reconciled for this frame, deliberately NOT tied to
+  // the 60Hz sim tick (see lastAnimMs field comment).
+  updateAnimations(nowMs) {
+    const delta = Math.min((nowMs - (this.lastAnimMs ?? nowMs)) / 1000, 0.1);
+    this.lastAnimMs = nowMs;
+    for (const record of this.actors.values()) {
+      if (record.mixer) record.mixer.update(delta);
+      if (record.oneShotUntilMs && nowMs >= record.oneShotUntilMs) {
+        record.oneShotUntilMs = 0;
+        this.crossfadeToAction(record, record.moving ? "move" : "idle", 0.15);
+      } else if (!record.oneShotUntilMs && record.mixer) {
+        // No one-shot in flight: keep locomotion honest every frame (a
+        // companion/enemy that starts moving mid-idle, or stops mid-walk,
+        // switches immediately rather than waiting for the next combat
+        // beat to resync it).
+        this.crossfadeToAction(record, record.moving ? "move" : "idle", 0.15);
+      }
+      if (record.dieHideAtMs && nowMs >= record.dieHideAtMs) {
+        record.dieHideAtMs = 0;
+        if (record.root) record.root.visible = false;
+      }
+    }
+    for (const echo of this.vfxInstances) {
+      if (echo.mixer) echo.mixer.update(delta);
+    }
+  }
+
+
+  // Consumes WEAPON_FIRED (commander/companion ranged auto-attack) and
+  // ENEMY_ATTACK (enemy/boss attacking commander, a companion, or "gate")
+  // events to trigger the attack/hit clips on whichever live actors they
+  // name -- verified event field shapes, see ATTACKER_EVENT_ACTION/
+  // TARGET_HIT_EVENT doc comment above. A miss (id not in this.actors, e.g.
+  // "gate" which has no actor mesh) is a silent no-op by design.
+  triggerCombatActions(event, nowMs) {
+    const attackerId = ATTACKER_EVENT_ACTION[event?.type];
+    if (attackerId) {
+      const attacker = this.actors.get(event[attackerId]);
+      if (attacker) this.triggerAction(attacker, "attack", nowMs);
+    }
+    if (event?.type === TARGET_HIT_EVENT) {
+      const target = this.actors.get(event.targetId);
+      if (target) this.triggerAction(target, "hit", nowMs);
+    }
+  }
+
   collectFeedback(snapshot) {
     const tick = finite(snapshot?.tick, 0);
     for (const record of this.vfxInstances) {
@@ -728,10 +1026,16 @@ export class RealtimeBattle {
     }
     this.vfxInstances = this.vfxInstances.filter((record) => record.untilTick > tick);
 
+    const nowMs = performance.now();
     for (const event of Array.isArray(snapshot?.events) ? snapshot.events : []) {
-      if (!VFX_MODELS[event?.type]) continue;
-      const key = feedbackKey(event);
-      if (this.rememberVisualEvent(key)) this.spawnVfx(snapshot, event, tick);
+      if (VFX_MODELS[event?.type]) {
+        const key = feedbackKey(event);
+        if (this.rememberVisualEvent(key)) this.spawnVfx(snapshot, event, tick);
+      }
+      this.triggerCombatActions(event, nowMs);
+    }
+    for (const echo of this.pendingDeathEchoes.splice(0)) {
+      this.spawnDeathEcho(echo, tick);
     }
     this.pendingInputFeedback = null;
   }
@@ -746,8 +1050,10 @@ export class RealtimeBattle {
     this.camera.updateProjectionMatrix();
 
     this.ensureStageTerrain(resolveStageId(snapshot));
+    this.captureDeathEchoes(snapshot);
     this.reconcileActors(snapshot);
     this.updateCamera(snapshot);
+    this.updateAnimations(performance.now());
     this.collectFeedback(snapshot);
 
     this.renderer.render(this.scene, this.camera);
@@ -767,15 +1073,20 @@ export class RealtimeBattle {
       }
     }
     for (const record of this.actors.values()) {
+      record.mixer?.stopAllAction();
       if (record.root) disposeObject3D(record.root);
     }
     this.actors.clear();
     for (const record of this.vfxInstances) {
+      record.mixer?.stopAllAction();
       disposeObject3D(record.root);
     }
     this.vfxInstances = [];
+    this.pendingDeathEchoes = [];
     if (this.gateMesh) disposeObject3D(this.gateMesh);
     this.gateMesh = null;
+    this.environmentTexture?.dispose();
+    this.environmentTexture = null;
 
     this.scene = null;
     this.camera = null;
@@ -792,6 +1103,7 @@ export class RealtimeBattle {
     this.visualEventKeys.clear();
     this.loadedStageId = null;
     this.loadingStageId = null;
+    this.lastAnimMs = null;
     this.disposed = true;
   }
 

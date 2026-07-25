@@ -153,6 +153,17 @@ camera.position = followTarget + (reducedMotion ? 0 : shakeOffset)
 
 ## 4. 렌더링 경로별 앵커링 전략 — Option A 채택 확정, Option B 문서화된 대안
 
+**[2026-07-25 정정 — Cycle 3 D17로 대체됨]** 아래 §4 본문 전체("Option A 채택 확정")는 이 문서 작성 시점(Cycle 1)의
+판정이며, `production/decision-log.md` D17("Cycle 3: Option A→B 렌더링 경로 번복")에서 **사용자가 자유 카메라 WebGL
+재개를 명시적으로 요청**해 뒤집혔다 — §0의 재검토 조건("Stage 2 이후 자유 회전 카메라나 동적 조명이 명시적으로
+요구되면 재검토")이 문자 그대로 발동됨. 실제 출하된 `battle-realtime-three.js`는 진짜 `THREE.WebGLRenderer`이며
+(D17 이후 세션에서 Canvas2D로 위장하고 있던 이전 구현 자체를 재작성 확인, 커밋 `0e6389e`/`161a2ab`+), 아래 §4의
+"Option A 채택/Option B 미적용" 프레이밍은 **더 이상 사실이 아니다**. 카메라는 여전히 D17이 확정한 대로
+고정 상방·무회전이므로(자유 회전 카메라가 아니라 자유 위치 이동 카메라), §2/§3의 portrait 회전 보정 로직과
+§0의 "카메라 회전 없음" 전제는 그대로 유효 — 뒤집힌 것은 렌더링 백엔드(Canvas2D→WebGL)이지 카메라 회전
+자유도가 아니다. 아래 원문은 Cycle 1 당시 판정 기록으로 보존하며(아티팩트 계약), 현재 상태는 이 정정 노트를
+따른다.
+
 `ProgRenderArch`의 `engineering/lane-render-arch.md`가 **Option A(Blender-베이크 셀셰이드 스프라이트,
 기존 Canvas2D 스냅샷 계약 유지)를 이번 사이클 채택안으로 확정**했다(§6, "단일 추천: 옵션 A") — WebGL은
 검토·문서화되었으나 **이번 사이클에는 적용하지 않는다**(고정 북향 카메라가 자유 회전을 요구하지 않는 한
@@ -244,6 +255,14 @@ hud_layout_targets:
 ---
 
 ## director handoff note
+
+**[2026-07-25 정정]** 위 노트의 "렌더링 경로 분기가 해소되었다" 판정은 Cycle 1 시점 사실이며, D17에서
+Option B(실제 WebGL)로 번복됐다 — §4 정정 노트 참조. §1-3의 신규 HUD 요소(동료 네임플레이트/체력바,
+포획 프롬프트, 부유 대미지 숫자 등)는 실제로는 `battle-realtime-three.js`의 world-space HUD 오버레이로
+구현됐다(Cycle 3 Track 3, `#world-hud-overlay` DOM 오버레이 — 이 문서 §4의 Option B 절이 "재검토 시 적용"
+으로 미리 명세해 둔 DOM 앵커 패턴을 그대로 사용, `styles.css` 주석 "Cycle 3 Track 3, Option B DOM-overlay
+pattern... now the actually adopted rendering path per D17" 참조) — "DOM 노드 증가 없음"이라는 이 노트의
+결론은 뒤집혔다. 카메라 고정-상방·무회전 전제는 그대로 유효(위 §4 정정 노트 참조).
 
 가장 중요한 새 사실은 **렌더링 경로 분기가 해소되었다**는 것이다 — `ProgRenderArch`가
 `engineering/lane-render-arch.md`에서 Option A(Blender-베이크 셀셰이드 스프라이트, 기존 Canvas2D 계약
