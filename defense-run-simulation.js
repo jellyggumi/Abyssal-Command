@@ -281,6 +281,12 @@ function applyOwnedRewards(run, rewardIds) {
 function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
   const data = ENEMIES[type] || ENEMIES.rusher;
   const hp = scaled(data.hp, run.stage.scale);
+  // XP reward tracks enemy toughness: late stages scale enemy HP (line above) by
+  // run.stage.scale, so a flat XP grant would stretch the in-run level-up cadence
+  // the further a player progresses (2.4x the HP for the same XP at gate-zenith).
+  // Scaling XP by the same stage factor keeps the level-up rhythm constant across
+  // stages. scale 100 (cinder-span) is an identity, so Stage 1 digests are unchanged.
+  const xpReward = scaled(data.xp, run.stage.scale);
   const fallbackPolicy = elite ? "low-hp-focus" : (
     type === "flanker" ? "flank" :
     type === "guardian" ? "elite-escort" :
@@ -295,7 +301,7 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     class: elite ? "elite" : type,
     speed: elite ? Math.trunc(data.speed * 0.8) : data.speed,
     damage: data.damage,
-    xp: elite ? data.xp * 4 : data.xp,
+    xp: elite ? xpReward * 4 : xpReward,
     elite,
     radius: data.radius,
     stageEliteId: elite ? run.stage.eliteId : null,

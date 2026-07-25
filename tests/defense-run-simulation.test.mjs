@@ -12,9 +12,11 @@ import {
 import {
   COMMANDER,
   CUTSCENES,
+  ENEMIES,
   MEASUREMENT_FIXTURE_BUDGET_ID,
   MEASUREMENT_PROFILES,
   SKILLS,
+  STAGES,
   XP_GROWTH,
 } from "../defense-catalog.js";
 
@@ -129,6 +131,32 @@ function castMeasurementSkillAgainstTarget(profileId, seed = 17) {
 
   assert.fail("the fixed measurement fixture must encounter a target within its active-skill range");
 }
+
+test("enemy XP reward scales with stage difficulty so late-stage level-up cadence tracks scaled enemy HP", () => {
+  const scaled = (value, stageScale) => Math.trunc((value * stageScale) / 100);
+  const firstRusherXp = (stageId) => {
+    const spawned = getRunSnapshot(advanceDefenseRun(createDefenseRun({ stageId, seed: 5 }), 1));
+    const rusher = spawned.enemies.find((enemy) => enemy.class === "rusher");
+    assert.ok(rusher, `${stageId} opening wave must spawn a rusher`);
+    return rusher.xp;
+  };
+
+  const cinderStage = STAGES.find((stage) => stage.id === "cinder-span");
+  const zenithStage = STAGES.find((stage) => stage.id === "gate-zenith");
+  assert.equal(cinderStage.scale, 100, "cinder-span must remain the scale-100 baseline stage");
+
+  // Stage 1 (scale 100) is an exact identity: scaled(xp, 100) === xp. This guards the
+  // determinism baseline — every cinder-span digest fixture must stay byte-identical.
+  assert.equal(firstRusherXp("cinder-span"), ENEMIES.rusher.xp);
+
+  // A late stage scales enemy HP by run.stage.scale; XP now tracks the same factor so
+  // the in-run reward rhythm no longer stalls as the campaign gets harder.
+  assert.equal(firstRusherXp("gate-zenith"), scaled(ENEMIES.rusher.xp, zenithStage.scale));
+  assert.ok(
+    firstRusherXp("gate-zenith") > firstRusherXp("cinder-span"),
+    "a rusher must be worth more XP at gate-zenith than at cinder-span",
+  );
+});
 
 test("equal seeds and identical inputs produce identical deterministic digests", () => {
   let left = createDefenseRun({ stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] });
