@@ -17,6 +17,7 @@ import {
   MEASUREMENT_PROFILES,
   SKILLS,
   STAGES,
+  STAGE_WAVE_VARIANTS,
   XP_GROWTH,
 } from "../defense-catalog.js";
 
@@ -156,6 +157,53 @@ test("enemy XP reward scales with stage difficulty so late-stage level-up cadenc
     firstRusherXp("gate-zenith") > firstRusherXp("cinder-span"),
     "a rusher must be worth more XP at gate-zenith than at cinder-span",
   );
+});
+
+test("early stages replay with seeded enemy-composition variety while preserving the spawn budget", () => {
+  // Data contract: every authored variant remixes the SAME total count using only enemy classes
+  // that already appear in that stage's own wave list — replays change the mix, not the budget.
+  for (const [stageId, slots] of Object.entries(STAGE_WAVE_VARIANTS)) {
+    const stage = STAGES.find((entry) => entry.id === stageId);
+    assert.ok(stage, `${stageId} in STAGE_WAVE_VARIANTS must be a real stage`);
+    const stageEnemyClasses = new Set(stage.waves.map(([, enemy]) => enemy));
+    for (const [slot, alternatives] of Object.entries(slots)) {
+      const [, primaryEnemy, primaryCount] = stage.waves[Number(slot)];
+      assert.deepEqual(
+        alternatives[0].composition.map(({ enemy, count }) => ({ enemy, count })),
+        [{ enemy: primaryEnemy, count: primaryCount }],
+        `${stageId} slot ${slot}: alternatives[0] must be the authored primary composition`,
+      );
+      for (const alternative of alternatives) {
+        const total = alternative.composition.reduce((sum, { count }) => sum + count, 0);
+        assert.equal(total, primaryCount, `${stageId} slot ${slot} (${alternative.id}): total count must equal the authored primary`);
+        for (const { enemy } of alternative.composition) {
+          assert.ok(stageEnemyClasses.has(enemy), `${stageId} slot ${slot} (${alternative.id}): "${enemy}" must already appear in this stage`);
+        }
+      }
+    }
+  }
+
+  // Runtime contract: the seed actually selects among variants for a variant stage, and an
+  // un-varied stage stays on a single composition. selectionId reflects the picked alternative
+  // independent of the ±1 density jitter, so it is the clean variety signal.
+  const openingSelectionId = (stageId, seed) => {
+    let run = createDefenseRun({ stageId, seed });
+    for (let tick = 0; tick < 240 && !isTerminalRun(run); tick += 1) {
+      run = advanceDefenseRun(run, 1);
+      const started = getRunSnapshot(run).events.find(
+        (event) => event.type === "WAVE_VARIANT_STARTED" && event.slot === 0,
+      );
+      if (started) return started.selectionId;
+    }
+    return null;
+  };
+  const seeds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+  const veilSelections = new Set(seeds.map((seed) => openingSelectionId("veil-citadel", seed)));
+  veilSelections.delete(null);
+  assert.ok(veilSelections.size >= 2, `veil-citadel opening wave must vary its composition across seeds (saw ${veilSelections.size})`);
+  const zenithSelections = new Set(seeds.map((seed) => openingSelectionId("gate-zenith", seed)));
+  zenithSelections.delete(null);
+  assert.equal(zenithSelections.size, 1, "gate-zenith has no authored variants, so its opening wave keeps one composition");
 });
 
 test("equal seeds and identical inputs produce identical deterministic digests", () => {
