@@ -1642,7 +1642,14 @@ export class BattleSession {
    * or crashed immediately and ran entirely on the Canvas2D fallback.
    */
   updateRendererModeAttribute() {
-    this.surface.dataset.defenseRenderer = this.renderer?.usingFallback === false ? "webgl" : "canvas2d";
+    // Identity check, NOT a renderer-reported flag: neither RealtimeBattle nor
+    // BattleVisualizer defines `usingFallback` (an earlier revision read that
+    // field, which was always undefined, so this attribute reported "canvas2d"
+    // 100% of the time and the browser test above it could never actually
+    // observe a live WebGL playthrough). Both mount() methods return `this`,
+    // and every assignment site here constructs one of exactly these two
+    // classes, so the constructor is the ground truth for which path is live.
+    this.surface.dataset.defenseRenderer = this.renderer instanceof RealtimeBattle ? "webgl" : "canvas2d";
   }
 
   /**
