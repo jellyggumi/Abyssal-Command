@@ -205,6 +205,14 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .objective-chip small { color: #9cb8ce; }
 .objective-chip strong { display: block; margin-top: .08rem; line-height: 1.28; }
 .objective-pulse { width: .6rem; height: .6rem; border: 2px solid #87d9bc; border-radius: 50%; }
+/* Right-edge stack: active-skill cooldown buttons over the read-only passive-build chips. */
+.hud-right-stack { display: flex; flex-direction: column; gap: .3rem; align-items: flex-end; min-width: 0; }
+.hud-passives { display: flex; gap: .3rem; flex-wrap: wrap; justify-content: flex-end; pointer-events: none; }
+.passive-badge { display: flex; align-items: center; gap: .3rem; padding: .28rem .42rem; border: 1px solid #6a4fa0; border-radius: .55rem; background: rgb(18 12 32 / .82); }
+.passive-glyph { color: #b79be6; font-size: .82rem; line-height: 1; }
+.passive-copy { display: flex; flex-direction: column; line-height: 1.15; }
+.passive-copy strong { font-size: .62rem; font-weight: 700; letter-spacing: .01em; color: #e8ddff; white-space: nowrap; }
+.passive-copy small { font-size: .58rem; color: #a98fd6; white-space: nowrap; }
 .one-thumb-controls { display: grid; grid-template-columns: repeat(5, minmax(44px, 1fr)); gap: .3rem; max-width: min(45vw, 320px); }
 .one-thumb-controls button { min-width: 44px; min-height: 44px; padding: .35rem; }
 .gate-panel { max-width: min(43vw, 360px); }
@@ -274,6 +282,8 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
   .top-right-hud { max-width: 49vw; }
   .objective-chip { max-width: 11rem; }
   .objective-chip strong { max-height: 2.6em; overflow: hidden; }
+  /* Narrow screens: passive chips keep the glyph + boon, drop the name (still in title/aria). */
+  .passive-copy strong { display: none; }
   .gate-panel { max-width: 42vw; }
   .one-thumb-controls { grid-template-columns: repeat(3, 44px); max-width: 8.8rem; }
   .defense-bottom { gap: .3rem; }

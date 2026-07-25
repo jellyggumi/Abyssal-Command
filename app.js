@@ -762,7 +762,7 @@ function beginSession(stageId) {
       <div id="defense-edge-hud">
         <div class="defense-edge defense-top">
           <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">ABYSSAL COMMAND · SEAL ATLAS</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span><div class="hud-xp" aria-hidden="true"><b id="battle-xp-label"></b><span class="hud-xp-track"><i id="battle-xp-fill"></i></span></div></div>
-          <div class="top-right-hud"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div></div>
+          <div class="top-right-hud"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div><div class="hud-right-stack"><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
         </div>
         <output id="battle-event-feedback" class="battle-event-feedback" role="status" aria-live="polite" aria-atomic="true"></output>
         <div class="arena-callout" aria-hidden="true"><span>GATE CORE</span><i></i><span>전선을 유지하세요</span></div>
@@ -1599,6 +1599,33 @@ export class BattleSession {
       skills.querySelectorAll("[data-cast]").forEach((button) => {
         button.addEventListener("click", () => this.send("SKILL_CAST", { skillId: button.dataset.cast }));
       });
+    }
+
+    // Persistent read-only badges for acquired PASSIVE skills. #skill-actions
+    // above filters kind==="active", so before this the 3 passive picks
+    // (Dusk Edge/Echo Magnet/Gate Binder) vanished into stats after the level-up
+    // toast -- half the growth pool left zero on-screen trace of the character's
+    // building kit. These non-interactive chips keep that accrued power visible
+    // for the whole run (survivor/ARPG "growth is felt" legibility), each chip
+    // labelled with exactly the per-skill boon the growth preview promised.
+    const passives = root.querySelector("#passive-badges");
+    if (passives) {
+      const passiveGlyphs = { "eclipse-edge": "†", "soul-magnet": "◎", "ward-binder": "❖" };
+      const passiveMarkup = snapshot.commander.skills
+        .filter((id) => SKILLS[id]?.kind === "passive")
+        .map((id) => {
+          const skill = SKILLS[id] ?? {};
+          const glyph = passiveGlyphs[id] ?? "◆";
+          const boon = skill.basicDamage ? `+${skill.basicDamage} 공격`
+            : skill.pickupRange ? `+${skill.pickupRange} 회수`
+            : skill.maxIntegrity ? `+${skill.maxIntegrity} 내구` : "지속";
+          const name = escapeHtml(skill.name ?? id);
+          return `<span class="passive-badge" data-passive="${id}" title="${name} · ${escapeHtml(boon)}"><span class="passive-glyph" aria-hidden="true">${glyph}</span><span class="passive-copy"><strong>${name}</strong><small>${escapeHtml(boon)}</small></span></span>`;
+        }).join("");
+      if (passives.dataset.passives !== passiveMarkup) {
+        passives.dataset.passives = passiveMarkup;
+        passives.innerHTML = passiveMarkup;
+      }
     }
 
     // Scoped to the growth-offer card's own id (not the broader .edge-card

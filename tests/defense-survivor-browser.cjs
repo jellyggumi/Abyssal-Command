@@ -746,6 +746,105 @@ async function verifyXpProgressBar(browser, hosting, campaign) {
   }
 }
 
+/**
+ * Passive-build legibility (RPG growth axis). #skill-actions renders only
+ * kind==="active" skills, so before this pass the 3 passive picks left no
+ * on-screen trace after the level-up toast. This drives real growth offers,
+ * prefers a passive choice, and proves each acquired passive renders a
+ * persistent read-only badge inside the edge HUD with exactly the catalog boon.
+ */
+async function verifyPassiveBadges(browser, hosting, campaign) {
+  // Independent oracle: the public SKILLS passive boons (defense-catalog.js).
+  // The rendered badge text MUST equal one of these, proving the value is wired
+  // from the catalog and not fabricated in the render layer.
+  const PASSIVE_BOONS = { "eclipse-edge": "+180 공격", "soul-magnet": "+1500 회수", "ward-binder": "+120 내구" };
+  const ACTIVE_IDS = ["rift-bolt", "soul-lance", "grave-pulse", "void-aegis", "shadow-step"];
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+  try {
+    await page.addInitScript(({ encoded, key }) => {
+      Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
+      localStorage.setItem(key, encoded);
+    }, { encoded: campaign.encoded, key: STORAGE_KEY });
+    await page.addInitScript(() => {
+      const queue = new Map();
+      let nextId = 1;
+      let syntheticNow = 0;
+      window.requestAnimationFrame = (callback) => { const id = nextId++; queue.set(id, callback); return id; };
+      window.cancelAnimationFrame = (id) => { queue.delete(id); };
+      window.__pumpFrame = (deltaMs) => {
+        syntheticNow += deltaMs;
+        const pending = [...queue.values()];
+        queue.clear();
+        for (const callback of pending) callback(syntheticNow);
+        return syntheticNow;
+      };
+    });
+    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").click();
+    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+
+    // Deterministic in-page pump drive (same controllable-rAF pattern as the
+    // world-HUD test): each __pumpFrame(100) advances EXACTLY 100 ms of
+    // game-time, so reaching a level-up is a pure function of pump COUNT, never
+    // of the CI runner's frame rate. On each growth offer prefer a passive pick
+    // (falling back to the first choice) so the passive-badge strip is exercised;
+    // break as soon as a badge renders. 1200 pumps = 120 s of game-time, ample
+    // margin over the first level-up (XP_GROWTH[0]=30 fires within a few seconds).
+    const passiveIds = Object.keys(PASSIVE_BOONS);
+    const state = await page.evaluate(async (passiveIds) => {
+      const FRAME_MS = 100;
+      const MAX_PUMPS = 1200;
+      const clickedOfferKeys = new Set();
+      const readBadges = () => [...(document.querySelectorAll("#passive-badges .passive-badge"))]
+        .map((b) => ({ id: b.dataset.passive ?? "", boon: b.querySelector("small")?.textContent ?? "" }));
+      let pumps = 0;
+      while (pumps < MAX_PUMPS) {
+        document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]")?.click();
+        const offer = document.querySelector("#defense-growth-offer");
+        if (offer) {
+          const key = offer.dataset.offer ?? "";
+          if (!clickedOfferKeys.has(key)) {
+            clickedOfferKeys.add(key);
+            const picks = [...offer.querySelectorAll("button[data-pick]")];
+            const passive = picks.find((b) => passiveIds.includes(b.dataset.pick));
+            (passive ?? picks[0])?.click();
+          }
+        }
+        if (readBadges().length > 0) break;
+        window.__pumpFrame(FRAME_MS);
+        pumps += 1;
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+      const badges = readBadges();
+      return {
+        badges,
+        pumps,
+        insideEdgeHud: Boolean(document.querySelector("#defense-edge-hud #passive-badges")),
+        activeInPassiveStrip: badges.map((b) => b.id),
+      };
+    }, passiveIds);
+    assert.ok(state.badges.length > 0, `a passive skill must be acquirable and render at least one #passive-badges chip within the drive budget (pumped ${state.pumps})`);
+    assert.ok(state.insideEdgeHud, "the passive-badge strip must live inside #defense-edge-hud (edge-HUD constraint, no center panel)");
+    for (const { id, boon } of state.badges) {
+      assert.ok(PASSIVE_BOONS[id], `badge ${JSON.stringify(id)} must be a real passive skill from the catalog`);
+      assert.equal(boon, PASSIVE_BOONS[id], `passive ${id} badge must show its catalog boon ${PASSIVE_BOONS[id]}; saw ${JSON.stringify(boon)}`);
+    }
+    for (const id of state.activeInPassiveStrip) {
+      assert.equal(ACTIVE_IDS.includes(id), false, `the passive strip must never render an active skill; saw ${id}`);
+    }
+    await page.screenshot({ path: "/tmp/passive-badges.png" });
+    assert.deepEqual(errors, [], "passive-badge journey emitted unexpected page or console errors");
+    return { badges: state.badges, insideEdgeHud: state.insideEdgeHud };
+  } finally {
+    await context.close();
+  }
+}
+
 async function run() {
   const hosting = await startServer();
   let browser;
@@ -756,8 +855,9 @@ async function run() {
     const worldHud = await verifyWorldHudOverlay(browser, hosting, campaign);
     const stanceFeedback = await verifyStanceSwitchFeedback(browser, hosting, campaign);
     const xpProgress = await verifyXpProgressBar(browser, hosting, campaign);
+    const passiveBadges = await verifyPassiveBadges(browser, hosting, campaign);
     const bossMesh = await verifyBossMeshRegression(browser, hosting);
-    console.log(JSON.stringify({ pass: true, journey, worldHud, bossMesh, stanceFeedback, xpProgress }, null, 2));
+    console.log(JSON.stringify({ pass: true, journey, worldHud, bossMesh, stanceFeedback, xpProgress, passiveBadges }, null, 2));
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => hosting.host.close(resolve));
