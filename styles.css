@@ -191,6 +191,14 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .hud-mission { max-width: min(46vw, 380px); }
 .hud-mission #battle-domain { color: #a7d9ee; font-weight: 700; }
 .hud-mission #battle-terrain-context { color: #bed0de; font-size: .72rem; line-height: 1.32; }
+/* In-run XP-to-next-level bar (top mission panel). Arcane violet->gold "echo"
+   hue keeps it distinct from the integrity (red/gold/green) and gate (blue/cyan)
+   bars; gold end signals imminent level-up. Thin-bar geometry reuses the
+   .integrity-meter / .gate-panel-bar-track pattern. */
+.hud-xp { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .4rem; margin-top: .32rem; }
+.hud-xp #battle-xp-label { font-size: .66rem; font-weight: 700; letter-spacing: .02em; color: var(--canon-zenith-gold); white-space: nowrap; }
+.hud-xp-track { height: .32rem; overflow: hidden; border-radius: 999px; background: #27384f; }
+.hud-xp-track i { display: block; height: 100%; background: linear-gradient(90deg, #7c5cc4, var(--canon-zenith-gold)); transition: width 120ms linear; }
 [data-stage-hud-context][data-terrain-pattern] { border-color: #5b85a5; }
 .top-right-hud { display: flex; gap: .45rem; align-items: flex-start; justify-content: flex-end; max-width: 53vw; pointer-events: auto; }
 .objective-chip { display: flex; align-items: center; gap: .4rem; max-width: 15rem; padding: .42rem .55rem; border: 1px solid #4a7a93; border-radius: .65rem; background: rgb(5 12 25 / .85); font-size: .76rem; }
@@ -274,6 +282,7 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 @media (prefers-reduced-motion: reduce) {
   .tactical-map::after { opacity: .72; }
   .integrity-meter i { transition: none; }
+  .hud-xp-track i { transition: none; }
 }
 
 /* Command deck tab shell (Cycle 3 UI overhaul, ui/lane-info-architecture.md

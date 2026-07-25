@@ -32,7 +32,7 @@ import {
 } from "./defense-run-simulation.js";
 import { RealtimeBattle, MeshThumbnailService, meshRootForCompanion, meshRootForStageBoss, COMMANDER_MESH_ROOT } from "./battle-realtime-three.js";
 import { BattleVisualizer } from "./battle-visualizer.js";
-import { ARENA, COMPANIONS, CUTSCENES, REWARDS, RULES_VERSION, SKILLS, STAGE_PRESENTATION_BY_ID, STAGE_REWARD_IDS, STAGE_TACTICS, TICK_RATE } from "./defense-catalog.js";
+import { ARENA, COMPANIONS, CUTSCENES, REWARDS, RULES_VERSION, SKILLS, STAGE_PRESENTATION_BY_ID, STAGE_REWARD_IDS, STAGE_TACTICS, TICK_RATE, XP_GROWTH } from "./defense-catalog.js";
 import { cutsceneEventKey, cutsceneFromEvent } from "./defense-cutscene.js";
 import { DefenseAudio } from "./defense-audio.js";
 import { DefenseViewport } from "./defense-viewport.js";
@@ -761,7 +761,7 @@ function beginSession(stageId) {
       <div id="world-hud-overlay" aria-hidden="true"></div>
       <div id="defense-edge-hud">
         <div class="defense-edge defense-top">
-          <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">ABYSSAL COMMAND · SEAL ATLAS</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span></div>
+          <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">ABYSSAL COMMAND · SEAL ATLAS</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span><div class="hud-xp" aria-hidden="true"><b id="battle-xp-label"></b><span class="hud-xp-track"><i id="battle-xp-fill"></i></span></div></div>
           <div class="top-right-hud"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div></div>
         </div>
         <output id="battle-event-feedback" class="battle-event-feedback" role="status" aria-live="polite" aria-atomic="true"></output>
@@ -1363,6 +1363,16 @@ export class BattleSession {
             ? "전투 종료"
             : `시간 ${Math.floor(snapshot.tick / TICK_RATE)}초 · Lv.${snapshot.commander.level}`;
     root.querySelector("#battle-objective").textContent = presentation.mapLabels.objective;
+    // In-run XP-to-next-level progress (IA: the core RPG growth decision was
+    // previously invisible mid-combat — only "Lv.N" text, no progress toward
+    // the next skill/growth offer). Cost mirrors the simulation's own level-up
+    // threshold exactly (defense-run-simulation.js:641/1689) so the bar fills
+    // precisely to the moment the growth offer fires. Pure client render off
+    // snapshot.commander — no simulation state touched, getRunDigest unaffected.
+    const xpCost = XP_GROWTH[snapshot.commander.level - 1] || XP_GROWTH.at(-1);
+    const xpRatio = xpCost > 0 ? Math.max(0, Math.min(1, snapshot.commander.xp / xpCost)) : 0;
+    root.querySelector("#battle-xp-fill").style.width = `${xpRatio * 100}%`;
+    root.querySelector("#battle-xp-label").textContent = `Lv.${snapshot.commander.level} · ${snapshot.commander.xp}/${xpCost}`;
     const commanderNode = root.querySelector("#battle-commander-integrity");
     commanderNode.textContent = `지휘관 내구 ${commanderIntegrity.integrity}/${commanderIntegrity.maxIntegrity} · ${commanderIntegrity.state}`;
     commanderNode.dataset.integrityState = commanderIntegrity.state;

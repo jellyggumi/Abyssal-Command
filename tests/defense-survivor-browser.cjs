@@ -647,6 +647,105 @@ async function verifyStanceSwitchFeedback(browser, hosting, campaign) {
   }
 }
 
+/**
+ * Pass #7 (UI/IA axis): the in-run XP-to-next-level bar (#battle-xp-fill +
+ * #battle-xp-label in the top mission panel). Before this the mid-combat HUD
+ * exposed only "Lv.N" text — the player had zero visibility into progress
+ * toward the next growth/skill choice, the core RPG decision. Proven live via
+ * the same deterministic frame-pump harness: the bar must render inside the
+ * edge HUD, its cost must come from the public XP_GROWTH contract, and its
+ * fill width must equal the label's xp/cost ratio (i.e. it reflects real
+ * snapshot.commander data, not a static element).
+ */
+async function verifyXpProgressBar(browser, hosting, campaign) {
+  // The public XP-growth contract (defense-catalog.js XP_GROWTH). Duplicated
+  // here as an independent oracle: the label's per-level cost MUST be one of
+  // these, which proves the cost is wired from the catalog and not fabricated.
+  const XP_GROWTH = [30, 55, 85, 120, 160, 205, 255, 310];
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+  try {
+    await page.addInitScript(({ encoded, key }) => {
+      Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
+      localStorage.setItem(key, encoded);
+    }, { encoded: campaign.encoded, key: STORAGE_KEY });
+    await page.addInitScript(() => {
+      const queue = new Map();
+      let nextId = 1;
+      let syntheticNow = 0;
+      window.requestAnimationFrame = (callback) => { const id = nextId++; queue.set(id, callback); return id; };
+      window.cancelAnimationFrame = (id) => { queue.delete(id); };
+      window.__pumpFrame = (deltaMs) => {
+        syntheticNow += deltaMs;
+        const pending = [...queue.values()];
+        queue.clear();
+        for (const callback of pending) callback(syntheticNow);
+        return syntheticNow;
+      };
+    });
+    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").click();
+    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+
+    const pumpQuiet = async () => {
+      await page.evaluate(() => {
+        document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]")?.click();
+        const offer = document.querySelector("#defense-growth-offer");
+        offer?.querySelector("button[data-pick]")?.click();
+        window.__pumpFrame(100);
+      });
+      await page.waitForTimeout(0);
+    };
+    const xpState = () => page.evaluate(() => {
+      const fill = document.querySelector("#battle-xp-fill");
+      const label = document.querySelector("#battle-xp-label");
+      return {
+        exists: Boolean(fill) && Boolean(label),
+        insideEdgeHud: Boolean(document.querySelector("#defense-edge-hud #battle-xp-fill")),
+        widthPct: fill ? parseFloat(fill.style.width) : NaN,
+        label: label?.textContent ?? "",
+        clean: !document.querySelector("#defense-growth-offer") && !document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]"),
+      };
+    });
+
+    // Reach a clean, actionable battle frame where the XP bar has been rendered.
+    let state = null;
+    for (let i = 0; i < 60; i += 1) {
+      await pumpQuiet();
+      const s = await xpState();
+      if (s.exists && s.clean && /^Lv\.\d+ · \d+\/\d+$/.test(s.label)) { state = s; break; }
+    }
+    assert.ok(state, "the live battle must render the #battle-xp progress bar with a Lv.N · xp/cost label");
+    assert.ok(state.insideEdgeHud, "the XP bar must live inside #defense-edge-hud (edge-HUD constraint, no center panel)");
+
+    const match = state.label.match(/^Lv\.(\d+) · (\d+)\/(\d+)$/);
+    assert.ok(match, `XP label must read "Lv.N · xp/cost"; saw ${JSON.stringify(state.label)}`);
+    const level = Number(match[1]);
+    const xp = Number(match[2]);
+    const cost = Number(match[3]);
+    assert.ok(level >= 1, `commander level must be >= 1; saw ${level}`);
+    assert.ok(XP_GROWTH.includes(cost), `level cost ${cost} must come from the XP_GROWTH contract ${JSON.stringify(XP_GROWTH)}`);
+    assert.ok(xp >= 0, `xp must be non-negative; saw ${xp}`);
+
+    // The rendered fill width must equal the clamped xp/cost ratio — proving the
+    // bar reflects live snapshot data, not a placeholder.
+    const expectedWidth = Math.max(0, Math.min(1, xp / cost)) * 100;
+    assert.ok(Number.isFinite(state.widthPct), `fill width must be a numeric percent; saw ${state.widthPct}`);
+    assert.ok(state.widthPct >= 0 && state.widthPct <= 100, `fill width must be within [0,100]; saw ${state.widthPct}`);
+    assert.ok(Math.abs(state.widthPct - expectedWidth) < 0.5, `fill width ${state.widthPct}% must match xp/cost ratio ${expectedWidth}% from label ${JSON.stringify(state.label)}`);
+
+    await page.screenshot({ path: "/tmp/xp-progress-bar.png" });
+    assert.deepEqual(errors, [], "XP progress-bar journey emitted unexpected page or console errors");
+    return { level, xp, cost, widthPct: state.widthPct, label: state.label, insideEdgeHud: state.insideEdgeHud };
+  } finally {
+    await context.close();
+  }
+}
+
 async function run() {
   const hosting = await startServer();
   let browser;
@@ -656,8 +755,9 @@ async function run() {
     const journey = await verifyPlaythroughJourney(browser, hosting);
     const worldHud = await verifyWorldHudOverlay(browser, hosting, campaign);
     const stanceFeedback = await verifyStanceSwitchFeedback(browser, hosting, campaign);
+    const xpProgress = await verifyXpProgressBar(browser, hosting, campaign);
     const bossMesh = await verifyBossMeshRegression(browser, hosting);
-    console.log(JSON.stringify({ pass: true, journey, worldHud, bossMesh, stanceFeedback }, null, 2));
+    console.log(JSON.stringify({ pass: true, journey, worldHud, bossMesh, stanceFeedback, xpProgress }, null, 2));
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => hosting.host.close(resolve));
