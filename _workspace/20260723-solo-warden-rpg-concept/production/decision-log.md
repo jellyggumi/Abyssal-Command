@@ -356,3 +356,125 @@ unregister + `caches.delete()` 없이는 코드 변경이 반영되지 않음(�
 3개 미참조 파일+previs 형제 3개 삭제), `styles.css`(canon 팔레트 토큰 8종 신규+4개 고노출 표면 재도색),
 `_workspace/20260723-solo-warden-rpg-concept/ui/lane-hud-layout.md`(stale Option A/B 서술 정정),
 `production/task-manifest.md`(D19 TRIPO_API_KEY 블로커 해소 표시+reinforce 오류 정정+신규 섹션).
+
+## D21 — Stage 1 재진입(핵심루프/UI 재설계) 착수 결정: 자유궤도 카메라 완성 확정 + 오토팔로우 정책 + D20 정정 노트 재정정 필요 발견
+
+**배경**: 사용자가 "레퍼런스 게임 리서치 기반 코어루프+UI 재설계, 기존 리소스 활용"을 요청. 8게임 심층
+리서치(`design/trend-survey/defense-offense-rpg-hybrid-deep-research-20260725.md`) 완료 후 실제 코드
+상태를 대조하며 두 개의 구체적 갭 발견.
+
+**발견 1 — D17이 확정한 자유궤도 카메라 스펙이 미구현**: `presentation-spec.md:18-25`(yaw 무제한, pitch
+[30°,85°] 클램프, 핀치줌)이 D17에서 명시적으로 확정됐고 `app.js`의 입력 레이어(`CAMERA_ORBIT_YAW_SENSITIVITY`
+등, `onPointerMove`의 `renderer?.orbit?.()`/`renderer?.zoom?.()` 호출)는 이미 구현돼 있으나,
+`battle-realtime-three.js`에는 `orbit()`/`zoom()` 메서드 자체가 존재하지 않아 입력이 조용히 no-op됨
+(optional chaining). `updateCamera()`는 여전히 매 프레임 고정 등각 오프셋을 강제 재계산.
+
+**판정 1**: 신규 리서치가 "장르 표준은 고정 카메라"(Diablo Immortal/Torchlight Infinite 둘 다 애셋이
+단일 시점 전제로 제작돼 회전 시 렌더링되지 않은 영역 노출 위험)라는 상반된 근거를 제시했음을 사용자에게
+명시적으로 알린 뒤, 사용자가 **D17 스펙대로 완전한 자유 궤도 카메라 구축을 재확인**(고정 카메라로의
+롤백 아님). 전제조건으로 51개 라이브 GLB 중 우선순위 23개(보스10+동료9+적4)를 8방위×2고도(30°/85°)로
+헤드리스 Blender 렌더링해 실루엣 커버리지 감사(`scripts/audit-glb-angle-readiness.py`, 신규) 실행 —
+전량 통과(최저 min/front 커버리지 비율 0.267/0.359, 각도별 급격한 커버리지 붕괴 없음, 육안 샘플 확인
+결과 pack-herald의 무기-손 미융합은 각도 무관 기존 결함으로 별도 이슈, 카메라 작업 블로커 아님).
+
+**발견 2 — 오토팔로우 재개 시 궤도 각도 유지 여부가 스펙에 미기재**: `presentation-spec.md:21`은
+"auto-follow lag 0.18, reduced-motion hard-cut"만 명시하고 드래그 종료 후 오토팔로우 재개가 사용자가
+설정한 `orbitYaw`/`orbitPitch`/`zoomFactor`까지 기본값으로 리셋하는지 침묵.
+
+**판정 2**: **각도는 유지, 팬 타겟(카메라가 추적하는 지점)만 커맨더로 재추종한다.** 근거: (1) 요구사항
+4의 "커맨더 추적 로직은 유지하되 타겟 지점만 궤도 중심으로 사용한다"는 문구에서 논리적으로 도출 —
+`ControlFeelDesign` 레인이 독립적으로 동일 결론에 도달. (2) 자유 궤도 카메라의 UX 원칙상 플레이어가
+고른 시야각을 매번 리셋하면 자유 궤도를 제공하는 목적 자체가 무력화됨. (3) 8게임 리서치에는 참고할
+자유궤도 선례가 없음(Diablo Immortal/Torchlight Infinite 전부 고정 카메라) — 순수 UX 설계 판단.
+
+**발견 3 — D20의 "stale Option A/B 서술 정정" 자체가 신규 오류를 도입**: `ui/lane-hud-layout.md` §4의
+"[2026-07-25 정정]" 노트(D20이 반영한 것)가 "카메라는 여전히 고정 상방·무회전(자유 회전 카메라가 아니라
+자유 위치 이동 카메라)"이라고 서술 — 이는 `presentation-spec.md`의 명시적 "yaw unrestricted, pitch
+clamped" 스펙 및 위 판정 1과 정면 모순된다. D20 세션이 렌더링 백엔드 번복(Canvas2D→WebGL)만 반영하고
+카메라 회전 자유도 자체는 D17이 이미 확정했다는 사실을 놓친 것으로 추정. **후속 조치**: `UILayoutRedesign`
+레인 산출물 병합 시 이 노트를 재정정 — 병합 전까지 `stage1-reentry-synthesis-20260725.md`가 정확한
+근거 소스로 우선한다.
+
+**반영**: `design/stage1-reentry-synthesis-20260725.md`(신규, §1 확인됨/§2 구현갭/§3 백로그 종합),
+`scripts/audit-glb-angle-readiness.py`(신규, 각도 감사 도구), 본 항목. `ui/lane-hud-layout.md` §4 재정정은
+후속 병합 커밋에서 반영 예정.
+
+## D22 — 5개 병렬 설계 레인 병합 결정: 3-스탠스/UI 백로그/스테이지 임의각/카메라 세부사항 확정
+
+**배경**: `stage1-reentry-synthesis-20260725.md`를 기준으로 5개 병렬 설계 레인(코어루프/UI/스테이지구성/
+조작감/카메라구현계획)을 실행, 전량 완료. 병합 시 승인이 필요하다고 각 레인이 명시적으로 플래그한
+항목을 정리하고 디렉터 판정을 기록한다.
+
+**판정 1 — 포대(Turret) 스탠스와 Boss Rally Window 구조적 상호배제**: `core-loop-redesign-20260725.md` §3.4가
+발견 — 포대는 파생 FRONT수 0이라 Boss Rally Window(FRONT≥1 요구)를 영구히 발동 못 시킴, 그러나 포대의
+설계 의도가 정확히 보스전 지속딜링이라 자신이 가장 필요한 시나리오에서 랠리 보너스를 못 받는 모순.
+**채택: 옵션 (c) 의도된 트레이드오프로 유지** — 신규 시스템 도입 없이 기존 §7.2 서술("포대 = 지속딜,
+대신 랠리 버스트는 포기")과 상충하지 않으므로 최소 변경. 밸런스 시트 시뮬레이션 이후 재검토 가능.
+
+**판정 2 — R2 검증 매트릭스 확장**: `core-loop-redesign-20260725.md` §3.4 — 3-스탠스는 R2의 "공간적
+다양성" 요구를 초과 충족하지만 "역할 다양성 붕괴" 우려는 미해결. **채택: `qa/lane-risk-register.md`의
+검증 매트릭스를 3(스탠스)×N(역할비율)로 확장 — Stage 2 `design/balance-sheet.md` 소관으로 이월.**
+
+**판정 3 — 항목 E 아이콘 형태 변경 승인**: `ui-redesign-delta-20260725.md` §E — synthesis §3 원문의
+"육각형" 제안이 `EQUIPMENT_TIERS` T5(`rpg-catalog.js:107-115` `vertexCount:6`)와 형태 충돌. **채택:
+영구(Track A/B) = 축정렬 정사각형(`border-radius:3px`), 런스코프 = 원형(`.tier-icon[data-tier-vertices="0"]`와
+별개 클래스로 안전 재사용)** — UI 레인의 MODIFY 제안 그대로 승인.
+
+**판정 4 — 동료 로스터 트레이 + 버프/디버프 트레이 통합**: `ui-redesign-delta-20260725.md` §3 밀도 경고 —
+미구현 신규 요소 2개(`lane-hud-layout.md` 행6/행7)가 그대로 합류하면 인-배틀 상시 정보 요소가
+7→9개로 늘어 Torchlight Infinite의 "지저분하다" 비판 밀도(12개) 방향으로 이동. **채택: 별개 2개 트레이
+대신 단일 통합 "상태 트레이"로 병합** — 요소 수 증가 없이 동료 상태+버프 정보를 한 컴포넌트에 표시.
+정확한 레이아웃은 UI 레인 후속 구현 소관.
+
+**판정 5 — 오토팔로우 재개 정책(재확인)**: D21에서 이미 확정("각도 유지, 팬 타겟만 재추종") —
+`CameraImplPlan`이 §4.2 구현계획에 구조적으로 반영 완료(Section 1/Section 2가 서로 다른 필드만 쓰도록
+분리) 확인. 추가 판정 불필요, 구현 검증만 남음.
+
+**판정 6 — 궤도 거리 clamp 산출 방식**: `camera-orbit-implementation-plan-20260725.md` §3.3 — 런타임 GLB
+바운딩박스 실측(B안, 비동기 타이밍 문제) 대신 기존 결정론적 상수(`TERRAIN_TARGET_HALF_EXTENT`,
+`TARGET_HEIGHT.boss`) 기반 분석적 유도(A안) 채택 제안. **승인.** margin 계수(1.1/1.2)는 이번 세션
+GLB 감사(아래 판정 7)로 검증됨 — 조정 불필요.
+
+**판정 7 — GLB 임의각 감사 범위 확대(터레인 10종)**: `stage-composition-20260725.md` 디렉터 노트가
+synthesis §2.2의 감사 범위(캐릭터 24종만)에 터레인 10종이 빠져있음을 지적. **채택: 즉시 확대 실행** —
+`scripts/audit-glb-angle-readiness.py`를 터레인 10종에 재실행(8방위×2고도, 256px, 알파-커버리지
+휴리스틱). 결과: 6/10 플래그(cinder-span/echo-throne-steps/shattered-causeway/starless-canal/
+sunken-bastion/veil-citadel) — **전량 육안 확인 결과 실제 지오메트리 결손(구멍/미완성 후면) 없음**,
+플래그는 전부 의도된 형태(다리형 편평 bbox, shattered-causeway의 "끊긴" 의도적 갭, 저폴리 슬랩)의
+정상적 반영. **결론: 10개 터레인 전량 임의각 뷰잉에 구조적 결손 없음 확인 — synthesis §2.2 GLB
+안전성 전제 조건이 캐릭터 23종+터레인 10종 총 33종 전량에 대해 충족됨.**
+
+**판정 8 — Glass Necropolis 환경맵 결함**: `stage-composition-20260725.md` §3.6 — `buildEnvironmentMap()`이
+전역 6색 큐브 1개를 전 스테이지 공유(`battle-realtime-three.js:582-603,671`), Glass Necropolis의
+"반사" 정체성과 서사적으로 불일치(GLB 형상과 무관한 확정 코드 결함). **채택: 이번 사이클 구현 대상에
+포함** — 최소 완화책(스테이지별 환경맵 틴트, `applyStagePalette` 확장)을 Implementation 단계에서 적용.
+근본 해결(스테이지 지오메트리를 실제로 반사하는 dynamic cubemap)은 스코프 초과로 다음 사이클 이월.
+
+**판정 9 — 림 라이트 카메라 상대화**: `stage-composition-20260725.md` §1.2 — 림 라이트가 씬 좌표
+고정(`battle-realtime-three.js:680-681`)이라 자유 궤도 도입 시 각도에 따라 역광 소실/과다 발생.
+**채택: 카메라 구현 작업에 포함** — `orbit()`/`updateCamera()` 갱신 시 림 라이트 위치를 카메라 상대
+좌표(궤도 반대편 방향)로 매 프레임 재계산.
+
+**판정 10 — `applyStagePalette(stageId)` 배선**: `stage-composition-20260725.md` §1.1 — `STAGE_PRESENTATION_BY_ID`가
+10개 스테이지 전부의 팔레트/분위기 데이터를 이미 보유하나 3D 렌더러가 전혀 읽지 않음. **채택: 이번
+사이클 구현 대상에 포함** — `mount()`/`ensureStageTerrain()`이 stageId 기준으로 안개색/조명색/환경맵
+틴트를 `STAGE_PRESENTATION_BY_ID[stageId].palette`에서 매핑하는 신규 함수 추가.
+
+**판정 11 — `lane-hud-layout.md` §4 정정 노트 재정정**: D21 발견 3(카메라 회전 자유도 관련 stale
+서술)을 여기서 실행 확정 — Implementation 단계 착수 시 `ui/lane-hud-layout.md` §4를
+`stage1-reentry-synthesis-20260725.md`/`presentation-spec.md:18-25` 기준으로 재정정.
+
+**Implementation 착수 인터페이스 확정** (코드 감사로 확인, 5개 레인 산출물 종합):
+- 신규 입력 타입 `STANCE_CYCLE` — `queueInput()`(`defense-run-simulation.js:1872-1873`) 화이트리스트에
+  추가, `processInput()`(`:828-903`)에 신규 분기: 4초 쿨다운(`run.stanceCooldownUntilTick`) 확인 후
+  `run.formationStance`를 `VANGUARD→TURRET→SPLIT→VANGUARD` 순환.
+- `FORMATION_SLOTS`(`rpg-catalog.js:98`)를 2값에서 3스탠스 표현으로 확장 — 정확한 스키마(스탠스별
+  오프셋 벡터 테이블, 파생 FRONT수 함수)는 `UNIFIED-GDD.md:81-83` 표 그대로 이식.
+- 컴패니언 포지션 동기화(`defense-run-simulation.js:1581-1583`, 현재 전원 커맨더 좌표 스냅)를
+  스탠스별 오프셋 적용 버전으로 교체 — `OCTANT_VECTORS`(`defense-catalog.js:13-16`) 패턴 재사용.
+- `RealtimeBattle`에 `orbit()`/`zoom()` 메서드 신설(`camera-orbit-implementation-plan-20260725.md` §3
+  의사코드 그대로), `updateCamera()` 재작성(§4.2), `tests/defense-renderer-contract.test.mjs:287`의
+  `camera.position.y===14.7` 하드코드 assertion 갱신 필수.
+
+**반영**: 본 항목. Implementation 단계 착수 준비 완료 — 5개 설계 델타 문서 전부 승인, 병합 판정 11건
+확정.
