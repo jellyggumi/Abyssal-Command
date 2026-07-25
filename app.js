@@ -988,7 +988,7 @@ export class BattleSession {
       const deltaDistance = distance - this.pinch.distance;
       this.pinch.distance = distance;
       this.dismissCameraHint();
-      this.renderer?.zoom?.(-deltaDistance * CAMERA_PINCH_ZOOM_SENSITIVITY);
+      if (this.renderer?.zoom?.(-deltaDistance * CAMERA_PINCH_ZOOM_SENSITIVITY)) this.signalCameraClamp();
       return;
     }
     if (this.pointer?.id !== event.pointerId) return;
@@ -997,7 +997,20 @@ export class BattleSession {
     this.pointer.x = point.x;
     this.pointer.y = point.y;
     this.dismissCameraHint();
-    this.renderer?.orbit?.(dx * CAMERA_ORBIT_YAW_SENSITIVITY, -dy * CAMERA_ORBIT_PITCH_SENSITIVITY);
+    if (this.renderer?.orbit?.(dx * CAMERA_ORBIT_YAW_SENSITIVITY, -dy * CAMERA_ORBIT_PITCH_SENSITIVITY)) this.signalCameraClamp();
+  }
+
+  // Plays the short low-volume boundary tick when a drag/pinch pushes
+  // against an already-saturated pitch/zoom clamp (control-feel-
+  // 20260725.md §3.3/§3.5). Pure renderer-side side channel: the
+  // simulation never sees this, so getRunDigest determinism is untouched.
+  // The cue's own 0.15s refractory (defense-audio.js) stops a continuous
+  // push into the wall from buzzing -- no app-side throttle needed. Audio
+  // is orthogonal to prefers-reduced-motion, so no motion-query branch:
+  // the tick is intentionally the one boundary signal that survives
+  // reduced-motion (§3.3 chose audio-only precisely for that reason).
+  signalCameraClamp() {
+    this.audio?.play?.("camera-clamp");
   }
 
   onPointerEnd(event) {

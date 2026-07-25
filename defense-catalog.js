@@ -167,6 +167,13 @@ export const AUDIO_CUES = freeze({
   extractionReady: { id: "extraction-ready", waveform: "sine", frequency: 360, duration: 0.22 },
   occupationCaptured: { id: "occupation-captured", waveform: "triangle", frequency: 240, duration: 0.18 },
   terminal: { id: "terminal", waveform: "sine", frequency: 120, duration: 0.5 },
+  // Free-orbit camera pitch/zoom boundary tick (control-feel-20260725.md
+  // §3.3/§3.5): a dedicated cue id — NOT a reuse of impact-hit — so its
+  // own refractory bucket and lastCueAt are independent of the constant
+  // combat impact-hit stream, which would otherwise both drown it out and
+  // buzz it. Played renderer-side from app.js's pointer handlers, never
+  // emitted as a simulation event (so it stays out of getRunDigest).
+  cameraClamp: { id: "camera-clamp", waveform: "sawtooth", frequency: 90, duration: 0.035 },
 });
 export const ARCHIVE_RETURN = freeze({
   ruleVersion: RULES_VERSION,

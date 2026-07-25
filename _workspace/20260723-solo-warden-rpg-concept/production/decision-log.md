@@ -631,3 +631,28 @@ Phase 2보다 앞선다.
 
 **반영**: `battle-realtime-three.js`(facing/follow), `tests/defense-renderer-contract.test.mjs`(+3),
 `engineering/determinism-spike-sim-physics-20260725.md`(신규), 본 항목.
+
+## Note (hourly pass #1, 2026-07-25) — browser 스위트 RED: D25가 근본 원인 규명 완료
+
+이번 조작감 패스(camera-clamp 경계 tick 구현) 검증 중 발견. **아키텍처 결정 아님 — 플래그.**
+
+`node tests/defense-survivor-browser.cjs --allow-missing-browser`가 커밋 `33b160a`(이 패스
+시작 HEAD)에서 이미 실패한다: `verifyWorldHudOverlay`의 "Bug #1 guard" —
+`drive.nameplateTransform`가 falsy(동료 world-nameplate가 라이브 플레이스루에서 실제 픽셀
+transform으로 렌더되지 않음). **내 변경과 무관함을 실증**: camera-clamp diff 6파일을 stash한
+clean HEAD에서 동일 지점·동일 메시지로 재현.
+
+**원인 확정 (병합 시 추가)**: 이 노트는 원래 "world-unit heightOffset 회귀로 추정"이라고
+추측했으나, 같은 시간대 다른 세션이 §D25에서 실제 원인을 규명했다 — `app.js`가 호출하는
+`projectEntityToScreen`/`projectStaticPoint`가 **두 렌더러 어디에도 정의되어 있지 않다**.
+Cycle 3 커밋 `9a60a49`에는 존재했으나 렌더러를 통째로 교체한 머지 `5a5f63a`에서 유실됐고,
+전 호출부가 `?.`라 조용히 undefined가 됐다. 추측을 확정 원인으로 대체한다.
+
+두 조사가 **독립적으로 같은 지점에 도달**한 것이 교차 검증이다: 이 패스는 브라우저 테스트
+실패로, D25는 물리 통합 리스크 조사 중 코드 추적으로. 영향 범위는 네임플레이트 하나가 아니라
+월드공간 HUD 전량(동료 네임플레이트 `app.js:1416`, 부유 데미지 숫자 `:1517`, 목표 웨이포인트
+`:1375`, 추출 링 `:1450`).
+
+이 실패는 축2(UI/월드공간 HUD) 소관이라 조작감 패스(축1)에서 고치지 않았다(하네스 원칙:
+한 패스 = 한 축). 다음 UI 패스의 최우선 입력으로 `retrospectives/hourly-passes.md` Pass #1에
+이월 기록. D25도 "다음 사이클 최우선 후보, 물리 Phase 2보다 앞선다"로 동일 판정.

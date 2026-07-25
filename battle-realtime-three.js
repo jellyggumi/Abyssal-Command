@@ -57,14 +57,20 @@ const TERRAIN_CORNER_RADIUS = TERRAIN_TARGET_HALF_EXTENT * Math.SQRT2;
 // Largest actor silhouette (boss) that must never clip the near plane at
 // the steepest (most oblique) permitted pitch.
 const BOSS_RADIUS = TARGET_HEIGHT.boss / 2;
-let MIN_ORBIT_DISTANCE = null;
-let MAX_ORBIT_DISTANCE = null;
 // zoomFactor default: matches the legacy fixed offset's camera-to-target
 // Euclidean distance (hypot(WORLD_SCALE*1.05, WORLD_SCALE*1.05)) so the
 // first rendered frame starts at the same "how far away" feel as the
 // pre-orbit camera -- only the viewing ANGLE changes to the new
 // presentation-spec default (65° pitch vs the legacy 45° isometric).
 const ORBIT_ZOOM_DEFAULT = Math.hypot(WORLD_SCALE * 1.05, WORLD_SCALE * 1.05);
+// Pre-mount fallback bounds bracketing ORBIT_ZOOM_DEFAULT so zoom() has a
+// valid clamp range before mount() computes the precise fov/GLB-derived
+// values below. mount() always overwrites both before the first real
+// zoom() call, so this changes no production behavior -- it only keeps a
+// pre-mount zoom() (constructed-but-not-mounted, e.g. under test) from
+// clamping against null (which coerces to 0 and corrupts zoomFactor).
+let MIN_ORBIT_DISTANCE = ORBIT_ZOOM_DEFAULT * 0.5;
+let MAX_ORBIT_DISTANCE = ORBIT_ZOOM_DEFAULT * 2;
 // Camera-relative rim light (stage-composition-20260725.md §1.2, D22
 // 판정 9): a DirectionalLight's illumination is direction-only (distance
 // doesn't affect its intensity), so a fixed distance/pitch -- independent
@@ -1226,21 +1232,31 @@ export class RealtimeBattle {
   // sensitivity-scaled radians (app.js:940) -- this method does no further
   // scaling or sign flips, just accumulate + clamp
   // (camera-orbit-implementation-plan-20260725.md §3.1).
+  // Returns true when this call's pitch input was cut by the clamp -- i.e.
+  // the player kept dragging into an already-saturated [30°,85°] boundary.
+  // app.js uses that to fire the camera-clamp boundary tick (control-feel-
+  // 20260725.md §3.3). Yaw is unrestricted so it never contributes.
   orbit(dYaw, dPitch) {
-    if (this.disposed) return;
+    if (this.disposed) return false;
     // yaw: unrestricted, wrapped only for float hygiene over a long
     // session -- never clamped (presentation-spec.md:18-25 "yaw
     // unrestricted").
     this.orbitYaw = wrapAngle(this.orbitYaw + dYaw);
-    this.orbitPitch = THREE.MathUtils.clamp(this.orbitPitch + dPitch, MIN_ORBIT_PITCH, MAX_ORBIT_PITCH);
+    const desiredPitch = this.orbitPitch + dPitch;
+    this.orbitPitch = THREE.MathUtils.clamp(desiredPitch, MIN_ORBIT_PITCH, MAX_ORBIT_PITCH);
+    return Math.abs(desiredPitch - this.orbitPitch) > 1e-9;
   }
 
   // Called by app.js's pinch handler with an already-sign-adjusted delta
   // (app.js:928-933) -- accumulate + clamp only, no scaling
-  // (camera-orbit-implementation-plan-20260725.md §3.2).
+  // (camera-orbit-implementation-plan-20260725.md §3.2). Returns true when
+  // the pinch pushed against a saturated distance boundary (symmetric with
+  // orbit() above -- drives the same boundary tick).
   zoom(delta) {
-    if (this.disposed) return;
-    this.zoomFactor = THREE.MathUtils.clamp(this.zoomFactor + delta, MIN_ORBIT_DISTANCE, MAX_ORBIT_DISTANCE);
+    if (this.disposed) return false;
+    const desired = this.zoomFactor + delta;
+    this.zoomFactor = THREE.MathUtils.clamp(desired, MIN_ORBIT_DISTANCE, MAX_ORBIT_DISTANCE);
+    return Math.abs(desired - this.zoomFactor) > 1e-9;
   }
 
   updateCamera(snapshot) {
