@@ -403,6 +403,58 @@ test("RealtimeBattle holds an idle actor's facing steady and snaps it under redu
   assert.doesNotThrow(() => reduced.dispose());
 });
 
+test("RealtimeBattle trails companions behind their simulation position but never the commander", () => {
+  const adapter = realtimeBattleHarness();
+  // The simulation hard-snaps companions to commander+offset every tick;
+  // the renderer softens that. The commander itself must stay exact --
+  // smoothing direct player input would read as input lag.
+  const snapshot = (cx, cy, kx, ky) => ({
+    commander: { id: "commander", x: cx, y: cy },
+    companions: [{ id: "ally-1", x: kx, y: ky, status: "ACTIVE" }],
+  });
+
+  adapter.reconcileActors(snapshot(12000, 6000, 12000, 6000));
+  const cmd = facingActor(adapter, "commander");
+  const ally = facingActor(adapter, "ally-1");
+  // Second pass seeds both records' rendered position at the start point.
+  adapter.reconcileActors(snapshot(12000, 6000, 12000, 6000));
+  const allyStartX = ally.root.position.x;
+
+  // Both jump the same distance in one tick.
+  adapter.reconcileActors(snapshot(18000, 6000, 18000, 6000));
+
+  assert.ok(
+    Math.abs(cmd.root.position.x - cmd.goalX) < 1e-9,
+    "the commander renders exactly on its simulation position, never trailed",
+  );
+  assert.equal(
+    ally.root.position.x, allyStartX,
+    "a companion's rendered position does not teleport with the simulation on the same frame",
+  );
+  assert.ok(ally.goalX > allyStartX, "the companion's goal position did advance");
+
+  // The trail converges: enough elapsed time must close the gap.
+  adapter.updateActorFollow(ally, 1.0);
+  assert.ok(
+    Math.abs(ally.root.position.x - ally.goalX) < 1e-3,
+    `the companion catches up to its simulation position, got ${ally.root.position.x} vs goal ${ally.goalX}`,
+  );
+
+  // Reduced motion removes the trail entirely.
+  const reduced = realtimeBattleHarness();
+  reduced.reducedMotion = true;
+  reduced.reconcileActors(snapshot(12000, 6000, 12000, 6000));
+  const rAlly = facingActor(reduced, "ally-1");
+  reduced.reconcileActors(snapshot(12000, 6000, 12000, 6000));
+  reduced.reconcileActors(snapshot(18000, 6000, 18000, 6000));
+  assert.ok(
+    Math.abs(rAlly.root.position.x - rAlly.goalX) < 1e-9,
+    "reduced motion renders companions exactly on the simulation position",
+  );
+  assert.doesNotThrow(() => adapter.dispose());
+  assert.doesNotThrow(() => reduced.dispose());
+});
+
 test("RealtimeBattle resolves a terrain model for every authored stage without touching the snapshot", () => {
   const adapter = realtimeBattleHarness();
   for (const stage of STAGES) {

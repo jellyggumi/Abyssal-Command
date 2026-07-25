@@ -241,15 +241,14 @@ const VFX_LIFETIME_TICKS = Object.freeze({
   COMPANION_DOWNED: 48,
 });
 
-// Rigged character GLBs (scripts/rig-and-animate-asset-blender.py) embed an
+// Rigged character GLBs (scripts/rig-character-asset-blender.py) embed an
 // 11-clip action library per asset, named "<assetId>::<action>::v01" in the
 // glTF `animations` array -- idle/move/run/hit/bighit/attack/critical/
-// avoid/defence/die/show (design/previs-rigging-guide.md). Not every GLB in
-// MODEL_ROOT is rigged (VFX/terrain models, and a handful of boss meshes
-// whose non-humanoid silhouette defeated the automatic-weight pedestal-cut
-// heuristic, ship as static meshes) -- RIG_ACTION_KEYS lets loadActions()
-// detect which clips (if any) a given loaded model actually has, so
-// unrigged models simply skip animation without special-casing.
+// avoid/defence/die/show (design/previs-rigging-guide.md). Every character
+// model in BOSS_MODELS / ENEMY_MODELS / COMPANION_MODELS / COMMANDER_MODEL
+// carries the full set; VFX and terrain GLBs carry none. RIG_ACTION_KEYS lets
+// loadActions() detect which clips (if any) a given loaded model actually has,
+// so unrigged models simply skip animation without special-casing.
 const RIG_ACTION_KEYS = Object.freeze([
   "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "die", "show",
 ]);
@@ -283,6 +282,11 @@ const MODEL_FORWARD_YAW_OFFSET = 0;
 // (visible as a turn, not a slide), slow enough that the turn reads as
 // motion at all -- an instant snap loses the cue entirely.
 const FACING_TURN_RATE = 12;
+// Per-second catch-up rate for the companion follow trail (see
+// updateActorFollow()). At 30/s the render position closes ~93% of its gap
+// in 90ms: enough softness to read as "following", short enough that a
+// companion never appears to be somewhere it is not.
+const FOLLOW_CATCHUP_RATE = 30;
 // Verified event field shapes (defense-run-simulation.js emit() call
 // sites), not inferred: WEAPON_FIRED.entityId is the shooter (commander or
 // companion) on every ranged auto-attack; ENEMY_ATTACK.entityId is the
@@ -962,6 +966,10 @@ export class RealtimeBattle {
       // actor's first real movement, so a freshly spawned actor keeps its
       // authored orientation instead of snapping to an arbitrary default.
       yaw: null, targetYaw: null,
+      // Simulation-exact position, kept alongside the rendered one so a
+      // companion's render trail (updateActorFollow) always has an
+      // authoritative target to converge on.
+      goalX: null, goalZ: null,
     };
     this.actors.set(entity.id, record);
     if (!modelPath) {
@@ -1032,12 +1040,29 @@ export class RealtimeBattle {
     record.oneShotUntilMs = nowMs + (Number.isFinite(clip?.duration) ? clip.duration * 1000 : 600);
   }
 
+  // Writes the actor's rendered position and derives its heading. `record`
+  // keeps two positions: the simulation's exact one (goalX/goalZ) and the
+  // rendered one (root.position), which for companions trails slightly --
+  // see updateActorFollow(). Facing is derived from the RENDERED delta so a
+  // trailing companion faces where it is visibly going, not where the
+  // simulation already teleported it.
   syncActorPosition(record, entity) {
     if (!record.root) return;
     const p = worldPoint(entity);
+    record.goalX = p.x;
+    record.goalZ = p.z;
+    // Commander and everything that is not a companion render exactly on
+    // the simulation position. The commander especially: it answers direct
+    // player input, and smoothing it would read as input lag.
+    if (record.kind !== "companion" || this.reducedMotion || record.lastX === null) {
+      record.root.position.x = p.x;
+      record.root.position.z = p.z;
+    }
+    const rx = record.root.position.x;
+    const rz = record.root.position.z;
     if (record.lastX !== null) {
-      const dx = p.x - record.lastX;
-      const dz = p.z - record.lastZ;
+      const dx = rx - record.lastX;
+      const dz = rz - record.lastZ;
       record.moving = Math.hypot(dx, dz) > MOVE_EPSILON;
       // Re-aim only while actually travelling (D23 Phase 1). Below
       // MOVE_EPSILON the delta is rounding noise with no meaningful
@@ -1058,10 +1083,38 @@ export class RealtimeBattle {
         }
       }
     }
-    record.lastX = p.x;
-    record.lastZ = p.z;
-    record.root.position.x = p.x;
-    record.root.position.z = p.z;
+    record.lastX = rx;
+    record.lastZ = rz;
+  }
+
+  // Eases a companion's RENDERED position toward the simulation position
+  // (D23 Phase 1). The simulation hard-snaps every companion to
+  // `commander + stanceOffset` each tick (defense-run-simulation.js), which
+  // renders as the whole squad teleporting in lockstep with the player.
+  // Trailing them slightly reads as a squad following rather than a rigid
+  // formation glued to the commander.
+  //
+  // Presentation-only, and safe against this cycle's stance system: FRONT/
+  // BACK is derived from loadout index (stanceSlotForIndex: `index <
+  // derivedFrontCount`), never from live position, and all range/targeting
+  // math runs on the simulation position -- so a trailing render position
+  // cannot change or misreport any gameplay state.
+  //
+  // Same 1 - e^(-rate*dt) form as updateActorFacing(), so the catch-up takes
+  // constant wall-clock time regardless of frame rate. FOLLOW_CATCHUP_RATE
+  // is high enough that the trail settles in ~90ms -- visible as softness,
+  // never as a companion lagging somewhere it isn't.
+  updateActorFollow(record, deltaSeconds) {
+    if (!record.root || record.kind !== "companion") return;
+    if (record.goalX === null || record.goalX === undefined) return;
+    if (this.reducedMotion) {
+      record.root.position.x = record.goalX;
+      record.root.position.z = record.goalZ;
+      return;
+    }
+    const t = 1 - Math.exp(-FOLLOW_CATCHUP_RATE * deltaSeconds);
+    record.root.position.x += (record.goalX - record.root.position.x) * t;
+    record.root.position.z += (record.goalZ - record.root.position.z) * t;
   }
 
   retireActor(id) {
@@ -1368,6 +1421,7 @@ export class RealtimeBattle {
     this.lastAnimMs = nowMs;
     for (const record of this.actors.values()) {
       if (record.mixer) record.mixer.update(delta);
+      this.updateActorFollow(record, delta);
       this.updateActorFacing(record, delta);
       if (record.oneShotUntilMs && nowMs >= record.oneShotUntilMs) {
         record.oneShotUntilMs = 0;
