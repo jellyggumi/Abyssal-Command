@@ -141,3 +141,68 @@ HP 7,200인데 XP 8, 같은 레벨업에 2.4배 노동. 인런 성장 아크가 
 - 위 미해결 #3(스테이지 2~10 wave variation 부재)이 다음 밸런스/반복성 후보 1순위.
 - 이 변경의 디자이너 재확인 결과를 D27에 회신할 것 — 승인되면 label을 CONFIRMED로,
   기각되면 revert + 사유 기록.
+
+---
+
+## Pass #6 — 2026-07-26 04:00 KST · 축: 코어루프/조작감 (%5 = 1)
+
+**HEAD at start**: `0ee59af`
+
+### 고른 초점
+축 순환 기본값(%5=1 → 조작감) 채택. 더 시급한 다른 축 없음. Pass #1(같은 축)이 자유궤도
+카메라 클램프 tick(§3.3/§3.5)만 구현했고, control-feel §2(3-스탠스 전환 피드백)의 **성공
+확인 피드백**이 미구현으로 남아 있었다.
+
+### 리서치 재사용 (재조사 안 함 — 규칙 준수)
+기존 `design/control-feel-20260725.md` §2.2/§2.3가 이 각도를 이미 커버. 신규 survey 미실시.
+
+### 무엇을 바꿨는가 (측정값 포함)
+**발견 (실측)**: 3-스탠스 셀렉터는 이 게임의 defense↔offense 전환 그 자체이자 플레이어의
+유일한 상시 실시간 전략 결정(Brotato 모델: 이동=포지셔닝, 발사=자동, 스탠스=전략층)이다.
+그런데 **거부(쿨다운) 탭은 `.is-blocked` shake로 시각 피드백**을 받는 반면(D22 구현),
+**성공 전환은 STANCE_SWITCHED 오디오 큐 + 무음 글리프 교체**뿐이었다. 좋은 게임 필은 성공에
+실패 이상의 피드백을 준다 — control-feel §2.2가 성공 확인을 명세했으나 §2.3(거부)만 출하됨.
+
+**구현**: STANCE_SWITCHED 이벤트에 반응해 app.js render()가 `#stance-cycle`에 `.is-switched`
+클래스를 STANCE_SWITCH_CONFIRM_MS(520ms) 동안 유지 — 기존 block-shake와 **동일한 패시브
+이벤트 스캔/eventId 디듀프/wall-clock 데드라인 패턴** 미러링. CSS는 정적 유지 글로우(cyan
+테두리 + box-shadow 헤일로 + cyan 글리프, 쿨다운 링과 같은 `--canon-cyan-rift` = "확정 진입" 색).
+
+**정적(키프레임 아님)인 이유 — 실측 근거**: `#battle-actions`는 쿨다운 링 전진을 위해
+버튼 서브트리를 innerHTML로 **~40ms마다 재생성**한다(diff-guard가 `--rc-cooldown-pct`
+변화로 트립). @keyframes였다면 재생성마다 애니메이션이 리셋돼 stutter. 정적 상태는 재생성
+시에도 동일 재적용 → 윈도우 동안 안정, 클래스 드롭 시 소멸. 비-모션이라 reduced-motion에서
+**의도적으로 억제 안 함**(shake와 달리) — shake가 될 수 없는 접근성 있는 "전환 확정" 신호.
+
+**결정론/무과금/오프라인**: 순수 클라 렌더, 시뮬 미접촉 → `getRunDigest` 무영향. 신규 에셋/
+네트워크 0.
+
+### 측정/검증 (자기보고 아님)
+- **신규 브라우저 테스트** `verifyStanceSwitchFeedback`(`tests/defense-survivor-browser.cjs`):
+  결정론적 frame-pump 하네스로 실제 app 렌더 경로를 end-to-end 구동 — 클릭 → 글리프 ▲→●
+  (전환 처리됨) AND `.is-switched` 존재; 쿨다운 중 2차 탭 → `.is-blocked` 존재+글리프 고정
+  (**이전까지 미테스트였던 block shake의 첫 커버리지 추가**); 520ms 후 → `.is-switched` 소멸.
+  실측 결과: `{initialGlyph:"▲", switchedGlyph:"●", sawSwitched:true, sawBlocked:true,
+  clearedAfterWindow:true}`. 실행 명령: `node tests/defense-survivor-browser.cjs`.
+- **스크린샷**: `/tmp/stance-switched-glow.png` — 글로우가 실제 렌더됨 확인(box-shadow 미클립,
+  버튼 ● cyan 발광, 옆 "일시 정지" 버튼은 무발광).
+- **전체 node --test**: 189 tests / 188 pass / 0 fail / 1 skip(사전존재 g2 fixture) — 회귀 0.
+
+### 무엇이 여전히 미해결인가 (은폐 없음)
+1. **`.cjs` 스위트 전체는 여전히 exit 1** — 원인은 **사전 존재하는 노후 테스트
+   `verifyBossMeshRegression`** 하나뿐. `abyssal-command-resource-pack.glb`를 로드하려 하나
+   이 파일은 리소스팩이 per-character GLB로 분할되며 제거됐고(코드 어디서도 미참조, grep 실측)
+   D26이 이미 "노후 테스트"로 플래그함. **다른 세션 소관 — 미수정**(규칙: 남의 소관 미접촉).
+   내 테스트는 이 앞에 배치해 도달 가능하게 유지. 이 stale 테스트 정리가 다음 QA 패스 후보.
+2. **실제 청감/체감은 사람 검증 필요** — 자동 테스트는 DOM 클래스+글리프+윈도우 클리어까지
+   실증. "글로우가 만족스러운가"는 사람이 브라우저에서 눌러봐야 하는 정성 항목(Cycle1부터의
+   표준 결핍과 동종). 로직 경로는 전부 닫힘.
+
+### 다음 패스가 이 축(조작감)을 다시 잡을 때 알아야 할 것
+- 성공/거부 스탠스 피드백이 이제 대칭(성공=held glow, 거부=shake). 유사 "성공 확인 없는 성공
+  액션"이 또 있으면(예: 스킬 캐스트 성공 순간의 버튼 피드백?) 같은 정적-held-class 패턴 재사용.
+- `#battle-actions`의 innerHTML 재생성(~40ms/회, 쿨다운 중)은 **키프레임 애니메이션을 못 쓰게
+  하는 구조적 제약**임을 실측 확인. 이 버튼군에 @keyframes 피드백을 붙이려면 먼저 diff-render를
+  리팩터(볼라타일 쿨다운 스타일을 innerHTML 밖으로)해야 한다 — 이번엔 정적 글로우로 우회, 리팩터는
+  범위 밖으로 유지.
+- Pass #1의 미해결(4초 스탠스 쿨다운 "체감 지루함")은 여전히 밸런스 축(%5=5) 소관.
