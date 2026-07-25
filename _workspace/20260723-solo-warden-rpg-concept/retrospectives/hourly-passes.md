@@ -273,3 +273,45 @@ transition 제거. 순수 클라 렌더(snapshot.commander) → getRunDigest 무
 - `#battle-xp-fill`은 인라인 `style.width` %로 갱신 — 다른 라이브 지표 추가 시 동일 방식.
 - 미해결 #2(XP aria 접근성)는 접근성 전용 패스가 잡을 것. 매 프레임 갱신 요소의 aria 정책
   (저빈도 요약 announce)은 이 게임 전반의 미해결 주제.
+
+---
+
+## 패스 #8 — 2026-07-26 06:00 KST · 축 3(RPG 성장/캐릭터) · 커밋 `9e44245`
+
+**초점 선택**: 패스 #8 → %5=3 → RPG 성장/캐릭터. 순환 기본값 그대로. 직전 #7(D28)이 UI 축에서
+"다음 레벨업까지 진행"을 XP 바로 가시화했는데, 정작 레벨업으로 **얻는 성장(스킬)** 절반이 화면에서
+사라지는 자매 문제가 남아 있었다 — 이번 패스의 자연스러운 후속.
+
+### 무엇을 바꿨는가 (측정값 포함)
+- **발견(실측)**: `#skill-actions`가 `kind==="active"`만 렌더(`app.js:1589`) → 지속(passive)
+  스킬 3종(Dusk Edge/Echo Magnet/Gate Binder)은 습득 후 2초 토스트가 끝나면 전투 화면에서
+  완전히 소멸. 런-스코프 성장 풀의 절반이 "성장 체감"에서 탈락.
+- **구현**: 엣지 HUD 우상단에 컬럼 스택(`.hud-right-stack`)을 두고 액티브 버튼 아래에 읽기전용
+  `#passive-badges` 스트립 추가. 배지 = 글리프 + 스킬명 + per-skill boon(성장 프리뷰와 동일
+  문구, `+180 공격`/`+1500 회수`/`+120 내구`). 값은 전부 `SKILLS` 카탈로그 파생(매직넘버 0).
+- **격리**: 순수 클라 렌더(`snapshot.commander.skills` 읽기만), 시뮬/`getRunDigest`/카탈로그
+  미접촉. 신규 에셋·네트워크 0. reduced-motion 자동 안전(애니메이션 없음).
+- **측정**: node --test **189 tests / 188 pass / 0 fail / 1 skip**(회귀 0). 브라우저 테스트
+  `verifyPassiveBadges`: 결정론 frame-pump로 실제 성장 오퍼 구동 → 지속 스킬 우선 픽 →
+  (a) `#defense-edge-hud` 내부 렌더, (b) boon이 독립 오라클 `PASSIVE_BOONS`와 정확 일치,
+  (c) 스트립에 액티브 id 부재를 실증. 스크린샷 `/tmp/passive-badges.png`에 "◎ Echo Magnet
+  +1500 회수" 칩 확인 — 레벨업 토스트 회수반경 12000→13500과 일치(카탈로그 배선 증명, 자기보고 아님).
+
+### 무엇이 여전히 미해결인가 (은폐 없음)
+1. **성장 오퍼 카드에 현재 보유 빌드 미표시** — 1/3 선택 시 시너지 판단이 블라인드. Vampire
+   Survivors식 레벨업 화면(보유 무기/패시브 노출) 대비 갭. 이번 배지가 상시 노출을 해결했으니
+   다음 RPG 패스는 오퍼 카드 내 보유-빌드 요약이 1순위 후보.
+2. **`skillRanks[id]`가 `applySkill`에서 항상 1로 하드코딩**(`defense-run-simulation.js:644`) —
+   8스킬 1회성 습득, 랭크업 없음 → "빌드에 더 투자" 결정의 깊이 부재. 랭크업 도입은 시뮬/결정론
+   변경이라 스파이크 선행 필수(범위 밖, D23 물리 스파이크 규약과 동일 성격).
+3. **액티브 vs 지속 빌드-정체성 대비 약함** — 액티브는 쿨다운 버튼, 지속은 새 배지로 분리됐으나
+   통합 "빌드 요약" 관점은 아직 없음.
+
+### 다음 패스가 이 축을 다시 잡을 때 알아야 할 것
+- 지속 배지 렌더는 `renderControls` 내 `#skill-actions` 블록 직후. `snapshot.commander.skills`를
+  `kind==="passive"`로 필터해 `#passive-badges`에 dataset-diff로 갱신. 같은 패턴으로 액티브
+  빌드 요약/보유-빌드 카드 컨텍스트 확장 가능.
+- 브라우저 테스트에서 특정 스킬 종류를 확정 습득시키려면 `verifyPassiveBadges`의 in-page 펌프
+  루프(성장 오퍼에서 원하는 종류 우선 클릭, `clickedOfferKeys`로 중복 방지) 패턴 재사용.
+- `verifyBossMeshRegression`는 여전히 사전존재 실패(`.glb` D26 제거, 타 세션 소관). 신규
+  브라우저 테스트는 그 앞에 배치해 격리된 양성 증거를 확보할 것.

@@ -748,3 +748,56 @@ Pass #5(D27)가 후반 스테이지 XP를 난이도에 비례 스케일하면서
 **반영**: `app.js`(XP_GROWTH import + hud-xp 마크업 + render 로직), `styles.css`(.hud-xp
 스타일 + reduced-motion), `tests/defense-survivor-browser.cjs`(+verifyXpProgressBar), 본 항목.
 커밋 `e56c897`.
+
+## D29 — RPG 성장 패스 #8(%5=3): 인런 지속(passive) 스킬 빌드 배지 상시 노출
+
+> **번호 근거**: append-only 규약. 쓰기 직전 `awk`로 파일 끝 마지막 헤더 확인 → D28.
+> 그다음 번호 **D29**를 취한다. 커밋 직전 `git log -1`로 내 해시(`9e44245`) 확인.
+
+**축**: RPG 성장/캐릭터(%5=3). 순환 기본값 그대로 — 더 시급한 축 없음. 직전 패스 #7(D28)이
+UI 축에서 인런 XP 진행 바를 붙여 "다음 레벨업까지의 진행"을 가시화했는데, 정작 **레벨업으로
+얻은 성장 자체**(스킬)가 절반은 화면에서 사라지는 문제가 남아 있었다.
+
+**발견 (실측)**: `renderControls`의 `#skill-actions`는 `SKILLS[id]?.kind === "active"`로
+필터(`app.js:1589`)한다. 즉 **지속(passive) 스킬 3종**(Dusk Edge +기본공격, Echo Magnet
++회수반경, Gate Binder +최대내구)은 습득 후 2초짜리 레벨업 토스트가 사라지면 **전투 화면
+어디에도 흔적이 남지 않는다**. 런-스코프 성장 풀의 절반이 "성장이 체감되는가"에서 탈락 —
+플레이어는 자기 Dusk Warden이 어떤 지속 특성을 쌓았는지 런 내내 볼 수단이 없었다. `grep`으로
+전투 HUD·CSS 어디에도 지속-스킬 표시가 없음을 실측 확인.
+
+**판정 — 채택**. 엣지 HUD 우상단, 액티브 스킬 버튼 아래에 컬럼 스택(`.hud-right-stack`)을
+두고 새 읽기전용 배지 스트립 `#passive-badges`를 추가. 각 배지는 글리프 + 스킬명 + **성장
+프리뷰가 약속한 그 per-skill boon 그대로**(`+180 공격` / `+1500 회수` / `+120 내구`). 매직넘버 0
+(값은 전부 `SKILLS` 카탈로그에서 파생). 비상호작용(`pointer-events: none`).
+
+- **결정론/무과금/오프라인 격리**: 순수 클라 렌더(`snapshot.commander.skills` 읽기만) →
+  시뮬·`getRunDigest`·카탈로그 미접촉. 신규 에셋/네트워크 0. 색은 아케인 바이올렛 "에코" 계열
+  (`#6a4fa0`/`#b79be6`)로 액티브 스킬(청록)·목표 칩과 시각 구별. 애니메이션 없음(reduced-motion
+  자동 안전). 좁은 화면(≤ 기존 브레이크포인트)에선 배지 이름 숨기고 글리프+boon만(이름은
+  title/aria 유지).
+- **엣지 HUD 제약(D5) 준수**: 스트립은 `#defense-edge-hud` 우상단 스택 안 — 중앙 전장 미가림.
+  브라우저 테스트가 `#defense-edge-hud #passive-badges` 존재로 실증.
+- **검증(자기보고 아님)**: node --test 189/188/0/1(회귀 0). 신규 브라우저 테스트
+  `verifyPassiveBadges`가 결정론 frame-pump로 실제 성장 오퍼를 구동, 지속 스킬을 우선 픽한 뒤
+  (a) 엣지 HUD 내 렌더, (b) 배지 boon이 독립 오라클 `PASSIVE_BOONS` 값과 정확히 일치(렌더
+  레이어 날조 아님을 증명), (c) 스트립에 액티브 스킬 id 부재를 실증. 스크린샷
+  `/tmp/passive-badges.png`: "◎ Echo Magnet +1500 회수" 칩이 레벨업 토스트의 회수반경
+  12000→13500과 일치. 사전존재 노후 테스트 `verifyBossMeshRegression`(`.glb` D26에서 제거,
+  타 세션 소관)보다 앞에 배치해 내 증거가 먼저 나오게 함 — 실측으로 `.glb` 부재·내 diff 무관 확인.
+
+- **레퍼런스 근거**: `design/trend-survey/defense-offense-rpg-hybrid-deep-research-20260725.md:114/246`
+  (Brotato 순수 수평 해금의 상시 가시 빌드, Archero 런-스코프 아이콘 상시 노출; 6/8 게임이
+  런-스코프 빌드 가시화를 저비용 패턴으로 채택). 신규 survey 미실시 — 기존 RPG 딥리서치가
+  이 각도를 커버, 규칙("이미 조사한 축 재조사 금지") 준수.
+
+**미해결(다음 RPG 패스 입력)**: (1) **액티브 스킬은 이미 쿨다운 버튼으로 보이지만 지속과의
+빌드 정체성 대비가 약함** — 액티브/지속 통합 "빌드 요약" 관점 고려 여지. (2) `skillRanks[id]`는
+`applySkill`에서 항상 `1`로 하드코딩(랭크업 없음, `defense-run-simulation.js:644`) — 8스킬
+1회성 습득이라 "빌드에 더 투자" 결정의 깊이가 없음. 랭크업 도입은 시뮬/결정론 변경이라 스파이크
+선행 필요(범위 밖). (3) 성장 오퍼 카드에 **현재 보유 빌드 컨텍스트 미표시** — 시너지 판단이
+블라인드(Vampire Survivors식 레벨업 화면 대비 갭). 이번 배지가 상시 노출을 해결했으므로 다음
+패스에서 오퍼 카드 내 보유-빌드 요약으로 확장 후보.
+
+**반영**: `app.js`(#passive-badges 마크업 + hud-right-stack 래핑 + render 로직),
+`styles.css`(.hud-right-stack/.hud-passives/.passive-badge + 좁은화면 규칙),
+`tests/defense-survivor-browser.cjs`(+verifyPassiveBadges), 본 항목. 커밋 `9e44245`.
