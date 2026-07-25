@@ -20,6 +20,18 @@ tmp/
 
 # Local generation diagnostics and Python bytecode
 .debug-codex-imagegen/
+
+# Codex imagegen occasionally drops its output PNG at repo root (CWD) instead
+# of .debug-codex-imagegen/ -- stray debug artifact, not a tracked asset.
+generated-*.png
+
+# Session tooling scratch output (graphify indexing cache, ad-hoc deep-research
+# reports) -- generated at repo root by tools invoked during a session, not
+# project source or game resources. graphify output belongs under the
+# separate llm-wiki vault, not this repo.
+graphify-out/
+ai-narration-tools/
+ai-rigging-tools/
 scripts/__pycache__/
 
 # Derived binary collage posters for Abyssal Surge concept film

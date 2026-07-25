@@ -8,7 +8,7 @@
 import * as THREE from "./vendor/three.module.js";
 import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "./vendor/utils/SkeletonUtils.js";
-import { STAGES } from "./defense-catalog.js";
+import { REWARDS, STAGES } from "./defense-catalog.js";
 
 const MAX_VISUAL_EFFECTS = 24;
 const MAX_VISUAL_EVENT_KEYS = 128;
@@ -52,32 +52,32 @@ const MODEL_ROOT = "./assets/images/battle/glb/";
 // not used as a stage terrain root). Stages 4-10 use this cycle's new
 // world-content-pack terrain.
 const TERRAIN_MODELS = Object.freeze({
-  "cinder-span": "cinder-span.glb",
-  "veil-citadel": "veil-citadel.glb",
-  "echo-throne": "echo-throne-steps.glb",
-  "sunken-bastion": "sunken-bastion.glb",
-  "howling-sprawl": "howling-sprawl.glb",
-  "glass-necropolis": "glass-necropolis.glb",
-  "starless-canal": "starless-canal.glb",
-  "shattered-causeway": "shattered-causeway.glb",
-  "abyss-chancel": "abyss-chancel.glb",
-  "gate-zenith": "gate-zenith.glb",
+  "cinder-span": "terrain/cinder-span.glb",
+  "veil-citadel": "terrain/veil-citadel.glb",
+  "echo-throne": "terrain/echo-throne-steps.glb",
+  "sunken-bastion": "terrain/sunken-bastion.glb",
+  "howling-sprawl": "terrain/howling-sprawl.glb",
+  "glass-necropolis": "terrain/glass-necropolis.glb",
+  "starless-canal": "terrain/starless-canal.glb",
+  "shattered-causeway": "terrain/shattered-causeway.glb",
+  "abyss-chancel": "terrain/abyss-chancel.glb",
+  "gate-zenith": "terrain/gate-zenith.glb",
 });
 
 // Boss actor's own `bossId` field (set verbatim from BOSSES[stage.boss].id
 // in spawnBoss(), defense-run-simulation.js) is the exact key -- no need to
 // cross-reference STAGES here.
 const BOSS_MODELS = Object.freeze({
-  "s1-cinder-warden": "cinder-warden.glb",
-  "s2-veil-tactician": "veil-tactician.glb",
-  "s3-gate-sovereign": "gate-sovereign.glb",
-  "s4-tide-warden": "tide-warden.glb",
-  "s5-pack-herald": "pack-herald.glb",
-  "s6-requiem-choir": "requiem-choir.glb",
-  "s7-lantern-tyrant": "lantern-tyrant.glb",
-  "s8-bridge-colossus": "bridge-colossus.glb",
-  "s9-veiled-concordat": "veiled-concordat.glb",
-  "s10-abyss-regent": "abyss-regent.glb",
+  "s1-cinder-warden": "bosses/cinder-warden.glb",
+  "s2-veil-tactician": "bosses/veil-tactician.glb",
+  "s3-gate-sovereign": "bosses/gate-sovereign.glb",
+  "s4-tide-warden": "bosses/tide-warden.glb",
+  "s5-pack-herald": "bosses/pack-herald.glb",
+  "s6-requiem-choir": "bosses/requiem-choir.glb",
+  "s7-lantern-tyrant": "bosses/lantern-tyrant.glb",
+  "s8-bridge-colossus": "bosses/bridge-colossus.glb",
+  "s9-veiled-concordat": "bosses/veiled-concordat.glb",
+  "s10-abyss-regent": "bosses/abyss-regent.glb",
 });
 
 // Regular (non-boss) enemy actor's `kind` field is one of these 4
@@ -85,26 +85,26 @@ const BOSS_MODELS = Object.freeze({
 // resource pack's 4 enemy models -- verified present, never had dedicated
 // per-archetype art before this session.
 const ENEMY_MODELS = Object.freeze({
-  rusher: "scout.glb",
-  flanker: "shade.glb",
-  guardian: "guard.glb",
-  ranged: "possessed.glb",
+  rusher: "enemies/scout.glb",
+  flanker: "enemies/shade.glb",
+  guardian: "enemies/guard.glb",
+  ranged: "enemies/possessed.glb",
 });
 
 // Companion actor's `companionId` field selects its model.
 const COMPANION_MODELS = Object.freeze({
-  "ember-cohort": "ember-cohort.glb",
-  "rift-lens": "rift-lens.glb",
-  "veil-vanguard": "veil-vanguard.glb",
-  "anchor-shard": "anchor-shard.glb",
-  "throne-echo": "throne-echo.glb",
-  "dawnless-crown": "dawnless-crown.glb",
-  "pack-warden": "pack-warden.glb",
-  "lantern-reaver": "lantern-reaver.glb",
-  "requiem-warden": "requiem-warden.glb",
+  "ember-cohort": "companions/ember-cohort.glb",
+  "rift-lens": "companions/rift-lens.glb",
+  "veil-vanguard": "companions/veil-vanguard.glb",
+  "anchor-shard": "companions/anchor-shard.glb",
+  "throne-echo": "companions/throne-echo.glb",
+  "dawnless-crown": "companions/dawnless-crown.glb",
+  "pack-warden": "companions/pack-warden.glb",
+  "lantern-reaver": "companions/lantern-reaver.glb",
+  "requiem-warden": "companions/requiem-warden.glb",
 });
 
-const COMMANDER_MODEL = "dusk-warden.glb";
+const COMMANDER_MODEL = "commander/dusk-warden.glb";
 
 // Public companion/boss/commander model-path lookups, for UI code (app.js
 // portrait cards) that has a prototype/stage id but no live simulation
@@ -123,6 +123,28 @@ export function meshRootForStageBoss(stageId) {
   return bossId ? (BOSS_MODELS[bossId] ?? null) : null;
 }
 
+// Looks up a REWARDS catalog id's 3D portrait: PROP_MODELS for authored
+// modifier props (stillwater-hourglass/bulwark-brand/abyssal-banner/
+// warden-lantern/choir-ward-crystal), or -- for "kind":"companion" legacy
+// rewards -- the SAME character mesh meshRootForCompanion() would resolve
+// for that companionId (a captured elite's reward card and its eventual
+// companion-roster card show the identical portrait). "archive"/"record"
+// kind rewards and any id without a mapped prop return null, so callers
+// fall back to their existing text/glyph card exactly as before this
+// function existed.
+export function meshRootForReward(rewardId) {
+  if (PROP_MODELS[rewardId]) return PROP_MODELS[rewardId];
+  const companionId = REWARDS[rewardId]?.companionId;
+  return companionId ? meshRootForCompanion(companionId) : null;
+}
+
+// rpg-catalog.js EQUIPMENT_TIERS[].id ("T1".."T5") -> its 3D tier-gem
+// portrait. Returns null for an unrecognized tier id so callers keep their
+// existing .tier-icon CSS-shape fallback.
+export function meshRootForEquipmentTier(tierId) {
+  return EQUIPMENT_TIER_MODELS[tierId] ?? null;
+}
+
 export const COMMANDER_MESH_ROOT = COMMANDER_MODEL;
 
 // Event type -> one-shot VFX GLB + lifetime (ticks @ 60Hz). These 5 RPG-
@@ -131,12 +153,45 @@ export const COMMANDER_MESH_ROOT = COMMANDER_MODEL;
 // against the exact event-type strings verified against the emit() call
 // sites (grepped this session, not assumed).
 const VFX_MODELS = Object.freeze({
-  CRITICAL_HIT: "critical-hit-burst.glb",
-  BOSS_RALLY_WINDOW: "boss-rally-aura.glb",
-  GATE_BREACHED: "gate-breach-shockwave.glb",
-  WARDENS_WARD_TRIGGERED: "wardens-ward-shield.glb",
-  ECHO_WARDEN_AWAKENING_TRIGGERED: "echo-warden-awakening.glb",
-  COMPANION_DOWNED: "companion-downed-fade.glb",
+  CRITICAL_HIT: "vfx/critical-hit-burst.glb",
+  BOSS_RALLY_WINDOW: "vfx/boss-rally-aura.glb",
+  GATE_BREACHED: "vfx/gate-breach-shockwave.glb",
+  WARDENS_WARD_TRIGGERED: "vfx/wardens-ward-shield.glb",
+  ECHO_WARDEN_AWAKENING_TRIGGERED: "vfx/echo-warden-awakening.glb",
+  COMPANION_DOWNED: "vfx/companion-downed-fade.glb",
+});
+
+// REWARDS catalog entry id -> its 3D prop model, for reward cards (app.js
+// portrait wiring). Built by scripts/build-world-content-pack.py alongside
+// the character/terrain collections (same canon material palette) but
+// exported separately this session -- these 5 "kind":"modifier" REWARDS ids
+// (verified against defense-catalog.js REWARDS, not assumed) are the only
+// ones with an authored 3D prop; "*-legacy" reward kinds instead reuse
+// their companionId's existing character portrait (see meshRootForReward()
+// below), and "*-archive"/"*-record" kinds have no prop and keep their
+// existing text/glyph card.
+const PROP_MODELS = Object.freeze({
+  "stillwater-hourglass": "props/stillwater-hourglass.glb",
+  "bulwark-brand": "props/bulwark-brand.glb",
+  "abyssal-banner": "props/abyssal-banner.glb",
+  "warden-lantern": "props/warden-lantern.glb",
+  "choir-ward-crystal": "props/choir-ward-crystal.glb",
+});
+
+// rpg-catalog.js EQUIPMENT_TIERS[].id -> its 3D tier-gem model, one file per
+// tier (T3 merges the top+bottom cone halves the source collection authors
+// as two separate objects). Growth-panel equipment slots (app.js
+// renderEquipmentSlots) currently encode tier via the CSS .tier-icon
+// clip-path polygon (vertexCount 0/3/4/5/6) -- these give the same 5 tiers
+// an alternate 3D-rendered portrait for surfaces that want a mesh instead
+// of a flat CSS shape (e.g. an equipment-purchase card), without replacing
+// the existing accessible shape+text encoding.
+const EQUIPMENT_TIER_MODELS = Object.freeze({
+  T1: "props/tiers/tier-t1.glb",
+  T2: "props/tiers/tier-t2.glb",
+  T3: "props/tiers/tier-t3.glb",
+  T4: "props/tiers/tier-t4.glb",
+  T5: "props/tiers/tier-t5.glb",
 });
 const VFX_LIFETIME_TICKS = Object.freeze({
   CRITICAL_HIT: 18,
