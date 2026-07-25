@@ -105,6 +105,16 @@ function buildWaveSchedule(stage, seed, tactics, wavePlan) {
       rng = rngNext(rng);
       selected = alternatives[Math.floor(rng / 0x100000) % alternatives.length];
       timingJitter = 0;
+    } else if (alternatives.length > 1) {
+      // Non-authored stages with declared composition variants (STAGE_WAVE_VARIANTS): seed-select
+      // the enemy mix AND keep timing/density jitter. This is a superset of cinder-span's authored
+      // path (which trades jitter away for composition variety); here replays vary both what spawns
+      // and when. The extra RNG draw is taken ONLY when variants exist, so single-composition stages
+      // keep their exact draw order — their digests stay byte-identical.
+      rng = rngNext(rng);
+      selected = alternatives[rng % alternatives.length];
+      rng = rngNext(rng);
+      timingJitter = (rng % (2 * variation.timingJitterTicks + 1)) - variation.timingJitterTicks;
     } else {
       rng = rngNext(rng);
       selected = alternatives[0];
