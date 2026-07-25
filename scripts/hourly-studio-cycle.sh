@@ -19,6 +19,17 @@
 #   - bounded runtime: hard timeout below the 1h tick so a hung pass cannot
 #     block its successor indefinitely.
 #
+# NEVER EDIT THIS FILE WHILE A PASS IS RUNNING. bash reads a script
+# incrementally, holding a byte offset into the open file. A pass sits blocked
+# at `wait` for ~15 minutes, and bash has not yet read the lines below that
+# point; rewriting the file shifts those bytes and the interpreter resumes
+# mid-token. Measured consequence (pass #10): the claude subprocess finished
+# and its commit landed, but the driver died before the verification suite,
+# the end-of-pass log line, and the state write -- leaving passCount frozen,
+# a stale lock, and an unverified commit. Reverting the file did NOT rescue
+# it. Check `.studio-loop/pass.lock` first; stage patches elsewhere (e.g.
+# /tmp) and copy them in only between ticks.
+#
 # Usage:
 #   scripts/hourly-studio-cycle.sh            # one pass now
 #   scripts/hourly-studio-cycle.sh --dry-run  # print the prompt, run nothing
@@ -92,6 +103,28 @@ cd "$REPO" || { log "FATAL: repo missing"; exit 1; }
 # running fine -- which is the same class of invisible failure as a scheduler
 # that exits 127 every tick. `consecutiveSkips` makes starvation checkable
 # with a single `cat .studio-loop/state.json`.
+# Self-recovery, narrowly scoped: only when the previous pass died without
+# releasing its lock AND HEAD is still exactly where that pass started. Both
+# conditions together mean no other commit landed in between, so every dirty
+# file is that dead pass's own unfinished edit. Stash (never discard) so the
+# work is recoverable by hand -- `git stash list` keeps it, and a human can
+# inspect or restore it. Anything outside this exact case falls through to
+# the guard below untouched.
+if [[ -n "$STALE_PASS_HEAD" ]] && [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+  if [[ "$STALE_PASS_HEAD" == "$(git rev-parse HEAD)" ]]; then
+    log "recovering: previous pass died mid-edit at the current HEAD -- stashing its debris"
+    git status --short | head -20 | tee -a "$LOG"
+    if git stash push --quiet --include-untracked \
+         -m "studio-loop: debris from pass killed at ${STALE_PASS_HEAD:0:8} ($(date -u +%Y-%m-%dT%H:%M:%SZ))" 2>&1 | tee -a "$LOG"; then
+      log "recovered: debris stashed (recover with: git stash list / git stash show -p)"
+    else
+      log "WARN: stash failed -- leaving the tree as-is for the dirty-tree guard"
+    fi
+  else
+    log "NOT recovering: HEAD moved since the dead pass started (${STALE_PASS_HEAD:0:8} -> $(git rev-parse --short HEAD)); debris is not provably ours"
+  fi
+fi
+
 if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
   log "SKIP: working tree dirty -- refusing to run an autonomous pass over human/partial work"
   git status --short | head -20 | tee -a "$LOG"
@@ -116,6 +149,7 @@ if [[ -f "$STATE" ]]; then
   PASS_N=$(( $(node -e "try{process.stdout.write(String(JSON.parse(require('fs').readFileSync('$STATE','utf8')).passCount||0))}catch(e){process.stdout.write('0')}") + 1 ))
 fi
 HEAD_BEFORE="$(git rev-parse HEAD)"
+PASS_START_EPOCH=$(date +%s)
 
 log "=== PASS #$PASS_N start (model=$MODEL, head=${HEAD_BEFORE:0:8}) ==="
 
@@ -209,7 +243,55 @@ else
 fi
 
 COMMITS=$(git rev-list --count "$HEAD_BEFORE..$HEAD_AFTER" 2>/dev/null || echo 0)
-log "=== PASS #$PASS_N end: $COMMITS commit(s), tests=$([[ $TEST_RC -eq 0 ]] && echo PASS || echo FAIL) ==="
+
+# --- publish: make the loop's work reachable --------------------------------
+# The original rule was "never pushes: a broken auto-push deploys to live
+# Pages". That reasoning is sound but its scope was wider than the risk:
+# .github/workflows/static.yml deploys on `push: branches: [main]` only, so
+# pushing THIS branch cannot reach Pages.
+#
+# Not pushing had its own failure mode, and it is the one that actually bit:
+# 12 passes of real work accumulated in a local worktree on an unpushed
+# branch, invisible from the repo the human actually looks at, which reads
+# from the outside as "the hourly loop does nothing".
+#
+# Guards: only on a green suite, only when this pass actually committed, and
+# never for main/master whatever branch the worktree is on. A push failure is
+# reported, never fatal -- the commits are already safe locally.
+if [[ $TEST_RC -eq 0 && "$HEAD_AFTER" != "$HEAD_BEFORE" ]]; then
+  BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+  case "$BRANCH" in
+    main|master|HEAD)
+      log "NOT pushing: refusing to auto-push '$BRANCH' (Pages deploys from main)"
+      ;;
+    *)
+      if git push --quiet origin "HEAD:refs/heads/$BRANCH" 2>&1 | tee -a "$LOG"; then
+        log "pushed $BRANCH -> origin ($COMMITS new commit(s) now visible)"
+      else
+        log "WARN: push failed -- commits remain local and safe, will retry next pass"
+      fi
+      ;;
+  esac
+fi
+
+COMMITS=$(git rev-list --count "$HEAD_BEFORE..$HEAD_AFTER" 2>/dev/null || echo 0)
+PASS_SECONDS=$(( $(date +%s) - PASS_START_EPOCH ))
+log "=== PASS #$PASS_N end: $COMMITS commit(s), tests=$([[ $TEST_RC -eq 0 ]] && echo PASS || echo FAIL), ${PASS_SECONDS}s ==="
+
+# A pass that dies almost immediately produced nothing, whatever its exit code
+# says. The real case seen in production: two consecutive ticks exited rc=1
+# after 6 seconds on "You've hit your monthly spend limit" -- no commit, no
+# work, and completely invisible unless a human opened the log. That is the
+# same silent-starvation shape `consecutiveSkips` exists to catch, so it gets
+# the same treatment. Duration is the signal rather than the exit code because
+# quota exhaustion, auth failure, and a crashed CLI all look different in rc
+# but identical in "returned far too fast to have done anything".
+UNPRODUCTIVE=0
+if [[ $PASS_SECONDS -lt 60 || ( $RC -ne 0 && $COMMITS -eq 0 ) ]]; then
+  UNPRODUCTIVE=1
+  log "WARN: pass produced nothing (${PASS_SECONDS}s, rc=$RC, $COMMITS commits) -- likely quota/auth/CLI failure, see log head"
+  head -3 "$LOG" | grep -v "^\[" | head -2 | tee -a "$LOG" || true
+fi
 
 node -e "
 const fs = require('fs');
@@ -221,12 +303,17 @@ s.lastRun = new Date().toISOString();
 s.lastRc = $RC;
 s.lastTestRc = $TEST_RC;
 s.lastCommits = $COMMITS;
+s.lastDurationSec = $PASS_SECONDS;
 s.lastHead = '$HEAD_AFTER';
 s.consecutiveSkips = 0; // a pass actually ran; starvation streak (if any) is over
+s.consecutiveUnproductive = $UNPRODUCTIVE ? (s.consecutiveUnproductive || 0) + 1 : 0;
 s.history = (s.history || []).slice(-49);
-s.history.push({ pass: $PASS_N, at: new Date().toISOString(), rc: $RC, testRc: $TEST_RC, commits: $COMMITS, log: '$LOG' });
+s.history.push({ pass: $PASS_N, at: new Date().toISOString(), rc: $RC, testRc: $TEST_RC, commits: $COMMITS, durationSec: $PASS_SECONDS, unproductive: !!$UNPRODUCTIVE, log: '$LOG' });
 fs.writeFileSync(p, JSON.stringify(s, null, 2) + '\n');
-"
+if (s.consecutiveUnproductive >= 3) {
+  console.error('[studio-loop] WARNING: ' + s.consecutiveUnproductive + ' consecutive passes produced nothing. The loop is burning ticks without working -- check quota (claude.ai/settings/usage), auth, or lower STUDIO_LOOP_MODEL.');
+}
+" 2>&1 | tee -a "$LOG"
 
 # Keep the last 100 pass logs; older ones are noise.
 ls -1t "$LOG_DIR"/pass-*.log 2>/dev/null | tail -n +101 | xargs rm -f 2>/dev/null || true
