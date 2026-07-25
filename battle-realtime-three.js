@@ -8,7 +8,7 @@
 import * as THREE from "./vendor/three.module.js";
 import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "./vendor/utils/SkeletonUtils.js";
-import { REWARDS, STAGES } from "./defense-catalog.js";
+import { REWARDS, STAGE_PRESENTATION_BY_ID, STAGES } from "./defense-catalog.js";
 
 const MAX_VISUAL_EFFECTS = 24;
 const MAX_VISUAL_EVENT_KEYS = 128;
@@ -38,6 +38,45 @@ const TARGET_HEIGHT = Object.freeze({
   enemy: 1.7,
   companion: 1.3,
 });
+
+// Free-orbit camera bounds (camera-orbit-implementation-plan-20260725.md
+// §3.3, decision-log.md D22 judgment 6): pitch is a fixed angular clamp,
+// while the orbit distance clamp (MIN/MAX_ORBIT_DISTANCE) is derived
+// analytically from these already-deterministic scene constants (never
+// measured from a live GLB bounding box -- fitFootprint()/fitHeight()
+// already normalize every terrain/actor to a fixed size on load, so the
+// "true" bound is knowable before any model finishes loading). Distance
+// constants are populated once mount() creates `this.camera` (their
+// formula reads camera.fov live rather than duplicating the literal 42).
+const MIN_ORBIT_PITCH = THREE.MathUtils.degToRad(30);
+const MAX_ORBIT_PITCH = THREE.MathUtils.degToRad(85);
+// Worst-case exposed terrain radius at any yaw: camera looking at a
+// footprint corner (not an edge midpoint) of the square TERRAIN_TARGET_
+// HALF_EXTENT diorama.
+const TERRAIN_CORNER_RADIUS = TERRAIN_TARGET_HALF_EXTENT * Math.SQRT2;
+// Largest actor silhouette (boss) that must never clip the near plane at
+// the steepest (most oblique) permitted pitch.
+const BOSS_RADIUS = TARGET_HEIGHT.boss / 2;
+let MIN_ORBIT_DISTANCE = null;
+let MAX_ORBIT_DISTANCE = null;
+// zoomFactor default: matches the legacy fixed offset's camera-to-target
+// Euclidean distance (hypot(WORLD_SCALE*1.05, WORLD_SCALE*1.05)) so the
+// first rendered frame starts at the same "how far away" feel as the
+// pre-orbit camera -- only the viewing ANGLE changes to the new
+// presentation-spec default (65° pitch vs the legacy 45° isometric).
+const ORBIT_ZOOM_DEFAULT = Math.hypot(WORLD_SCALE * 1.05, WORLD_SCALE * 1.05);
+// Camera-relative rim light (stage-composition-20260725.md §1.2, D22
+// 판정 9): a DirectionalLight's illumination is direction-only (distance
+// doesn't affect its intensity), so a fixed distance/pitch -- independent
+// of the live zoomFactor/orbitPitch -- is sufficient to encode "opposite
+// side of the orbit, elevated" without needing to track the camera's
+// exact distance. Distance is arbitrary (any value produces the same
+// lighting direction once normalized by the light's target); pitch 35°
+// keeps the light source above the horizon, similar in feel to the
+// legacy fixed rim position (-8, 5, -6), which also always had a
+// meaningfully positive Y.
+const RIM_LIGHT_DISTANCE = 20;
+const RIM_LIGHT_PITCH = THREE.MathUtils.degToRad(35);
 
 // Generator pipeline (scripts/export-battle-glb.py) currently writes every
 // object flat into assets/images/battle/glb/ (co-located with this cycle's
@@ -244,6 +283,33 @@ const COLORS = Object.freeze({
   rim: 0x6ea8ff,
 });
 
+// Stage id -> single accent tint, mapping each stage's authored
+// STAGE_PRESENTATION_BY_ID palette (defense-catalog.js, semantic tokens
+// like "contour-ember"/"hazard-flood" -- design words, not colors) onto
+// this repo's already-shipped canon material palette (styles.css
+// --canon-* custom properties, measured from the actual GLB material
+// table per decision-log.md D15/D19) so stage lighting stays in the same
+// authored color language as the character/terrain art it lights, rather
+// than inventing a parallel palette. One tint per stage is intentionally
+// coarse (stage-composition-20260725.md §1.1 asks only for "at least
+// chromatically consistent" fog/light/envmap, not a full multi-color
+// re-lit scene) -- applyStagePalette() blends this single accent into the
+// existing fog/key/ambient/envmap base tones rather than replacing them
+// outright, so the overall lighting DIRECTION established by mount()
+// stays intact and only its color cast shifts per stage.
+const STAGE_PALETTE_TINTS = Object.freeze({
+  "cinder-span": 0xf3592c, // canon-cinder-ember -- "불씨와 재의 흐름" ember/ash motif
+  "veil-citadel": 0x2cadd6, // canon-cyan-rift -- "거울빛 장막" mirror-light motif
+  "echo-throne": 0x3c2c5b, // canon-void-obsidian -- moonless-court void motif
+  "sunken-bastion": 0x2cadd6, // canon-cyan-rift -- flood/tide waterline motif
+  "howling-sprawl": 0xddc869, // canon-zenith-gold -- dust/wind wasteland motif
+  "glass-necropolis": 0x2cadd6, // canon-cyan-rift -- crystal/shard reflective motif (see §3.6 mitigation note below)
+  "starless-canal": 0x737990, // canon-cold-steel -- moonless dark-water motif
+  "shattered-causeway": 0xf3592c, // canon-cinder-ember -- collapse/rubble dust motif
+  "abyss-chancel": 0x3c2c5b, // canon-void-obsidian -- oath/pressure heavy-fog motif
+  "gate-zenith": 0xddc869, // canon-zenith-gold -- threshold-rays open-vista motif
+});
+
 function prefersReducedMotion() {
   try {
     return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
@@ -291,6 +357,26 @@ function worldPoint(entity) {
     x: (x / WORLD_WIDTH * 2 - 1) * WORLD_SCALE,
     z: (y / WORLD_HEIGHT * 2 - 1) * WORLD_SCALE,
   };
+}
+
+// Numeric-hygiene wrap for orbitYaw, which accumulates without limit
+// across a session (camera-orbit-implementation-plan-20260725.md §3.1) --
+// a full 2*PI revolution is visually identical to no rotation at all, so
+// this only prevents unbounded float growth over a long play session, it
+// never changes the rendered camera angle.
+function wrapAngle(radians) {
+  const twoPi = Math.PI * 2;
+  return ((radians % twoPi) + twoPi + Math.PI) % twoPi - Math.PI;
+}
+
+// Orbit distance that frames a sphere of `radius` under `camera`'s live
+// FOV with `margin` headroom -- same bounding-sphere-fit formula
+// MeshThumbnailService already uses (battle-realtime-three.js:535), reused
+// here for the free-orbit zoom clamp instead of a portrait-crop shot.
+// Reads camera.fov live (fixed at construction, but this avoids a second
+// hardcoded "42") rather than reading it once and caching -- see mount().
+function orbitDistanceForRadius(camera, radius, margin) {
+  return (radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2))) * margin;
 }
 
 function resolveStageId(snapshot) {
@@ -579,7 +665,17 @@ export class MeshThumbnailService {
 // tinted from the SAME COLORS palette the live scene's directional lights
 // already use, so the reflected environment reads as an extension of the
 // existing lighting direction/color rather than an unrelated HDRI.
-function buildEnvironmentMap(renderer) {
+//
+// `tintColor` (optional): blends a per-stage accent into every face
+// (stage-composition-20260725.md §1.1/§3.6, decision-log.md D22 judgment
+// 8/10) so the environment reflection at least reads as chromatically
+// consistent with the current stage instead of the same fixed 6-color
+// cube for all 10 stages. This is explicitly a mitigation, not a real
+// fix -- a genuinely dynamic per-stage cubemap that actually reflects
+// each stage's own terrain/landmark geometry (most relevant for Glass
+// Necropolis's "reflective" stage identity, §3.6) is out of scope for
+// this cycle and deferred, per D22 judgment 8.
+function buildEnvironmentMap(renderer, tintColor = null) {
   const bakeScene = new THREE.Scene();
   const faceColors = [
     COLORS.rim, COLORS.rim, // +X / -X: cool rim tone on the sides
@@ -587,8 +683,11 @@ function buildEnvironmentMap(renderer) {
     COLORS.ambient, COLORS.ambient, // +Z / -Z: neutral ambient tone front/back
   ];
   const faceIntensity = [1.4, 1.4, 2.6, 0.3, 0.9, 0.9];
+  const tint = tintColor === null ? null : new THREE.Color(tintColor);
   const materials = faceColors.map((color, i) => {
-    const c = new THREE.Color(color).multiplyScalar(faceIntensity[i]);
+    const c = new THREE.Color(color);
+    if (tint) c.lerp(tint, 0.35);
+    c.multiplyScalar(faceIntensity[i]);
     return new THREE.MeshBasicMaterial({ color: c, side: THREE.BackSide });
   });
   const box = new THREE.Mesh(new THREE.BoxGeometry(50, 50, 50), materials);
@@ -631,6 +730,27 @@ export class RealtimeBattle {
     this.vfxInstances = []; // { root, untilTick } -- also holds death echoes: { root, untilTick, mixer }
     this.cameraTarget = new THREE.Vector3();
     this.cameraFollowInit = false;
+    // Free-orbit camera state (D17/D21/D22, presentation-spec.md:18-25).
+    // orbitYaw accumulates unrestricted (wrapped for float precision only,
+    // never clamped -- see wrapAngle()). orbitPitch and zoomFactor are
+    // clamped on every orbit()/zoom() call. Persisted across frames and
+    // across auto-follow re-acquisition (updateCamera() Section 1 only
+    // ever touches cameraTarget, never these three fields -- director
+    // decision, D21 발견 2/D22 판정 5); dispose() resets these to their
+    // mount-time defaults as a SESSION-boundary reset only, not a
+    // per-drag-release reset.
+    this.orbitYaw = 0;
+    this.orbitPitch = THREE.MathUtils.degToRad(65);
+    this.zoomFactor = ORBIT_ZOOM_DEFAULT;
+    // Populated by mount(); updateCamera() repositions rimLight every
+    // frame relative to the live camera orbit (stage-composition-
+    // 20260725.md §1.2, D22 판정 9). ambientLight/keyLight are kept as
+    // instance fields so applyStagePalette() can retint them per stage.
+    this.ambientLight = null;
+    this.keyLight = null;
+    this.rimLight = null;
+    this.rimLightTarget = null;
+    this.stagePaletteId = null; // last stageId applyStagePalette() was run for -- avoids redundant PMREM rebakes
 
     this.loadedStageId = null;
     this.loadingStageId = null;
@@ -673,13 +793,26 @@ export class RealtimeBattle {
 
     const { width, height } = bounds(this.canvas, this.viewport);
     this.camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 200);
+    // Orbit zoom clamp (camera-orbit-implementation-plan-20260725.md §3.3,
+    // D22 판정 6): analytically derived from this.camera.fov (fixed at
+    // construction, but read live here rather than hardcoding "42" a
+    // second time) plus the already-deterministic TERRAIN_TARGET_HALF_
+    // EXTENT/TARGET_HEIGHT.boss constants -- no async GLB measurement.
+    MIN_ORBIT_DISTANCE = orbitDistanceForRadius(this.camera, BOSS_RADIUS, 1.2);
+    MAX_ORBIT_DISTANCE = orbitDistanceForRadius(this.camera, TERRAIN_CORNER_RADIUS, 1.1);
 
-    const ambient = new THREE.AmbientLight(COLORS.ambient, 1.1);
-    const key = new THREE.DirectionalLight(COLORS.key, 1.6);
-    key.position.set(6, 10, 4);
-    const rim = new THREE.DirectionalLight(COLORS.rim, 0.6);
-    rim.position.set(-8, 5, -6);
-    this.scene.add(ambient, key, rim);
+    this.ambientLight = new THREE.AmbientLight(COLORS.ambient, 1.1);
+    this.keyLight = new THREE.DirectionalLight(COLORS.key, 1.6);
+    this.keyLight.position.set(6, 10, 4);
+    // rimLight starts at the legacy fixed world position; updateCamera()
+    // repositions it every frame relative to the live camera orbit once
+    // rendering begins (stage-composition-20260725.md §1.2, D22 판정 9) --
+    // this initial value only matters for the zero-frames-rendered window.
+    this.rimLight = new THREE.DirectionalLight(COLORS.rim, 0.6);
+    this.rimLight.position.set(-8, 5, -6);
+    this.rimLightTarget = new THREE.Object3D();
+    this.scene.add(this.ambientLight, this.keyLight, this.rimLight, this.rimLightTarget);
+    this.rimLight.target = this.rimLightTarget;
 
     this.terrainGroup = new THREE.Group();
     this.actorGroup = new THREE.Group();
@@ -701,6 +834,12 @@ export class RealtimeBattle {
   ensureStageTerrain(stageId) {
     if (!stageId || this.disposed) return;
     if (this.loadedStageId === stageId || this.loadingStageId === stageId) return;
+    // First resolution of a NEW stage id for this session (the dedup guard
+    // above already ruled out "same stage as last frame") -- the correct
+    // hook point for stage-scoped presentation, independent of whether the
+    // terrain GLB itself is found/loads successfully below (stage-
+    // composition-20260725.md §1.1, D22 판정 10).
+    this.applyStagePalette(stageId);
     const relPath = TERRAIN_MODELS[stageId];
     if (!relPath) return;
     this.loadingStageId = stageId;
@@ -722,6 +861,70 @@ export class RealtimeBattle {
       .catch(() => {
         if (this.loadingStageId === stageId) this.loadingStageId = null;
       });
+  }
+
+  // Maps STAGE_PRESENTATION_BY_ID[stageId]'s authored palette onto this
+  // scene's fog/key/ambient/environment-map colors (rim light is handled
+  // separately -- see updateCamera()'s camera-relative repositioning,
+  // §1.2 -- it stays a fixed color, only its POSITION is per-frame
+  // dynamic), so the 3D renderer finally reads the per-stage atmosphere
+  // data the design layer already
+  // completed for all 10 stages but the renderer previously never
+  // consumed (stage-composition-20260725.md §1.1: "디자인 데이터는 이미
+  // 스테이지별로 완비돼 있으나 3D 렌더러에 배선되지 않은 상태" -- D22
+  // 판정 10 confirms this cycle's implementation scope). Idempotent per
+  // stage id (stagePaletteId guard) since it rebuilds the PMREM
+  // environment map, which is comparatively expensive to redo every frame.
+  applyStagePalette(stageId) {
+    if (this.disposed || this.stagePaletteId === stageId) return;
+    this.stagePaletteId = stageId;
+    const presentation = STAGE_PRESENTATION_BY_ID[stageId];
+    const tint = presentation ? STAGE_PALETTE_TINTS[stageId] ?? null : null;
+    if (tint === null) return; // unknown stage id -- keep the existing global defaults rather than blank the scene
+
+    const backgroundTint = new THREE.Color(COLORS.backgroundBottom).lerp(new THREE.Color(tint), 0.22);
+    // scene.fog/keyLight/ambientLight are populated by mount() in normal
+    // operation, but some test harnesses construct a RealtimeBattle by
+    // hand-assembling a minimal scene graph without going through mount()
+    // (e.g. tests/world-presentation-contract.test.mjs's own
+    // realtimeBattleHarness(), which predates this cycle and only wires
+    // scene/camera/terrainGroup/actorGroup/vfxGroup/gateMesh) -- guard
+    // each independently so this method degrades gracefully instead of
+    // throwing, same defensive pattern as the this.renderer guard below
+    // and debugMetrics()'s this.renderer check.
+    if (this.scene.fog) this.scene.fog.color.copy(backgroundTint);
+    if (this.keyLight) this.keyLight.color.copy(new THREE.Color(COLORS.key).lerp(new THREE.Color(tint), 0.18));
+    if (this.ambientLight) this.ambientLight.color.copy(new THREE.Color(COLORS.ambient).lerp(new THREE.Color(tint), 0.3));
+
+    // Renderer-dependent operations (clear color, PMREM environment-map
+    // rebake) are guarded: this method's own scene/light/fog updates above
+    // are pure THREE.js graph state and always safe, but a real WebGL
+    // context (this.renderer) may not exist yet in every caller context --
+    // same defensive pattern as debugMetrics() below. In production this
+    // is never actually null (ensureStageTerrain(), this method's only
+    // caller, only ever runs from renderSnapshot() after a successful
+    // mount()).
+    if (this.renderer) {
+      this.renderer.setClearColor(backgroundTint, 1);
+      // Environment-map re-tint (stage-composition-20260725.md §3.6, D22
+      // 판정 8): buildEnvironmentMap() bakes ONE global 6-color cube
+      // shared by every stage regardless of stageId -- for a stage whose
+      // identity is explicitly built on reflection (Glass Necropolis:
+      // "반사면이 고지와 사선을 가른다"), that global cube has no
+      // relationship to this stage's actual terrain/landmark geometry. A
+      // truly dynamic per-stage cubemap that reflects the real stage
+      // geometry is out of scope this cycle (deferred, D22 판정 8) --
+      // this re-tint is only the minimal mitigation the decision
+      // explicitly asked for: at least chromatically consistent with the
+      // stage's own palette, not physically accurate. Applies to every
+      // stage uniformly (not special-cased to Glass Necropolis) since the
+      // underlying rebuild is the same operation regardless of which
+      // stage triggered it.
+      const nextEnvironmentTexture = buildEnvironmentMap(this.renderer, tint);
+      this.environmentTexture?.dispose();
+      this.environmentTexture = nextEnvironmentTexture;
+      this.scene.environment = this.environmentTexture;
+    }
   }
 
   ensureActor(entity, kind) {
@@ -922,7 +1125,34 @@ export class RealtimeBattle {
     }
   }
 
+  // Called by app.js's onPointerMove with already-sign-adjusted, already-
+  // sensitivity-scaled radians (app.js:940) -- this method does no further
+  // scaling or sign flips, just accumulate + clamp
+  // (camera-orbit-implementation-plan-20260725.md §3.1).
+  orbit(dYaw, dPitch) {
+    if (this.disposed) return;
+    // yaw: unrestricted, wrapped only for float hygiene over a long
+    // session -- never clamped (presentation-spec.md:18-25 "yaw
+    // unrestricted").
+    this.orbitYaw = wrapAngle(this.orbitYaw + dYaw);
+    this.orbitPitch = THREE.MathUtils.clamp(this.orbitPitch + dPitch, MIN_ORBIT_PITCH, MAX_ORBIT_PITCH);
+  }
+
+  // Called by app.js's pinch handler with an already-sign-adjusted delta
+  // (app.js:928-933) -- accumulate + clamp only, no scaling
+  // (camera-orbit-implementation-plan-20260725.md §3.2).
+  zoom(delta) {
+    if (this.disposed) return;
+    this.zoomFactor = THREE.MathUtils.clamp(this.zoomFactor + delta, MIN_ORBIT_DISTANCE, MAX_ORBIT_DISTANCE);
+  }
+
   updateCamera(snapshot) {
+    // --- Section 1: pan target (cameraTarget) -- BYTE-IDENTICAL to the
+    // pre-orbit implementation (camera-orbit-implementation-plan-
+    // 20260725.md §4.2/§4.3 director decision, D21 발견 2 / D22 판정 5):
+    // auto-follow only ever moves the orbit CENTER, never the viewing
+    // angle the player chose via orbit()/zoom() -- those are entirely
+    // separate fields, written only by orbit()/zoom() above, never here.
     const commander = snapshot?.commander ?? snapshot?.player;
     const commanderPoint = worldPoint(commander ?? {});
     const targetX = commanderPoint.x;
@@ -936,9 +1166,41 @@ export class RealtimeBattle {
     } else {
       this.cameraTarget.set(targetX, 0, targetZ);
     }
-    const offset = new THREE.Vector3(0, WORLD_SCALE * 1.05, WORLD_SCALE * 1.05);
-    this.camera.position.set(this.cameraTarget.x + offset.x, offset.y, this.cameraTarget.z + offset.z);
-    this.camera.lookAt(this.cameraTarget.x, 0.6, this.cameraTarget.z);
+
+    // --- Section 2: orbit position -- spherical coordinates around
+    // cameraTarget, replacing the legacy fixed offset (§4.2). orbitYaw=0
+    // looks from the +Z side, matching the legacy offset's viewing
+    // direction (offset.z > 0, offset.x = 0) for continuity at defaults.
+    const horizontalRadius = this.zoomFactor * Math.cos(this.orbitPitch);
+    const height = this.zoomFactor * Math.sin(this.orbitPitch);
+    const offsetX = horizontalRadius * Math.sin(this.orbitYaw);
+    const offsetZ = horizontalRadius * Math.cos(this.orbitYaw);
+    this.camera.position.set(
+      this.cameraTarget.x + offsetX,
+      this.cameraTarget.y + height, // cameraTarget.y is always 0 -- Section 1 never sets it otherwise
+      this.cameraTarget.z + offsetZ,
+    );
+    this.camera.lookAt(this.cameraTarget.x, 0.6, this.cameraTarget.z); // lookAt height offset unchanged
+
+    // --- Section 3: camera-relative rim light (stage-composition-
+    // 20260725.md §1.2, D22 판정 9). A world-fixed rim light loses its
+    // backlight/silhouette function once the camera can orbit freely --
+    // it only reads as "rim" light when it's roughly opposite the camera
+    // across the subject. Reuses Section 2's yaw/sin/cos convention,
+    // offset by PI so it lands on the opposite azimuth from wherever the
+    // camera currently is, independent of zoom distance (a directional
+    // light's falloff is distance-independent, so its position only needs
+    // to encode DIRECTION via rimLightTarget, not an accurately-scaled
+    // distance).
+    const rimYaw = this.orbitYaw + Math.PI;
+    const rimHorizontalRadius = RIM_LIGHT_DISTANCE * Math.cos(RIM_LIGHT_PITCH);
+    const rimHeight = RIM_LIGHT_DISTANCE * Math.sin(RIM_LIGHT_PITCH);
+    this.rimLight.position.set(
+      this.cameraTarget.x + rimHorizontalRadius * Math.sin(rimYaw),
+      this.cameraTarget.y + rimHeight,
+      this.cameraTarget.z + rimHorizontalRadius * Math.cos(rimYaw),
+    );
+    this.rimLightTarget.position.copy(this.cameraTarget);
   }
 
   rememberVisualEvent(key) {
@@ -1149,6 +1411,22 @@ export class RealtimeBattle {
     this.actorGroup = null;
     this.vfxGroup = null;
     this.cameraFollowInit = false;
+    // Session-boundary reset only (camera-orbit-implementation-plan-
+    // 20260725.md §2): a fresh mount() should start at the documented
+    // defaults, matching the "디폴트: yaw=0, pitch=65°, zoom=1.0" (this
+    // repo's zoomFactor is a world-unit distance, not a 0..1 ratio -- see
+    // ORBIT_ZOOM_DEFAULT) requirement. This is NOT the drag-release/auto-
+    // follow-reacquisition reset the director explicitly rejected (D21
+    // 발견 2 / D22 판정 5) -- those never touch these three fields at all,
+    // by construction (updateCamera() Section 1 only writes cameraTarget).
+    this.orbitYaw = 0;
+    this.orbitPitch = THREE.MathUtils.degToRad(65);
+    this.zoomFactor = ORBIT_ZOOM_DEFAULT;
+    this.ambientLight = null;
+    this.keyLight = null;
+    this.rimLight = null;
+    this.rimLightTarget = null;
+    this.stagePaletteId = null;
 
     this.renderer?.dispose();
     this.renderer = null;

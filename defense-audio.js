@@ -85,6 +85,11 @@ const CUE_VARIANTS = Object.freeze({
   "impact-hit:PICKUP_DENIED": Object.freeze([
     tone("square", 76, 42, 0.08, 0.045),
   ]),
+  // STANCE_SWITCH_BLOCKED reuses PICKUP_DENIED's exact profile — same "action rejected" semantic
+  // (control-feel-20260725.md §2.1: "의미가 동일하다 — '지금은 안 됨'").
+  "impact-hit:STANCE_SWITCH_BLOCKED": Object.freeze([
+    tone("square", 76, 42, 0.08, 0.045),
+  ]),
   "terminal:REWARD_SELECTED": Object.freeze([
     tone("sine", 240, 480, 0.2, 0.095),
     tone("triangle", 360, 720, 0.16, 0.045, 0.035),
@@ -133,7 +138,11 @@ const EVENT_CUE_IDS = Object.freeze({
   SKILL_SELECTED: "growth-offer",
   SKILL_CAST: "skill-cast",
   BOSS_SPAWNED: "boss-spawned",
-  TERMINAL: "terminal",
+  // STANCE_SWITCHED reuses the occupation-captured cue profile as-is (no variant needed) — both are
+  // "confirmed entry into a new state" (control-feel-20260725.md §2.1). STANCE_SWITCH_BLOCKED reuses
+  // impact-hit's PICKUP_DENIED variant (CUE_VARIANTS above) for "action rejected" feedback.
+  STANCE_SWITCHED: "occupation-captured",
+  STANCE_SWITCH_BLOCKED: "impact-hit",
   REWARD_SELECTED: "terminal",
 });
 

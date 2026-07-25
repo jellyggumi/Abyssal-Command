@@ -83,6 +83,16 @@ GDD §6.3은 이미 아이템 등급에 대해 "색상+아이콘(꼭짓점수)+�
   `.world-hud-nameplate--companion` / `.world-hud-nameplate--enemy` 두 클래스만 추가하면 되고, 신규 DOM 서브트리
   구조 변경은 없다(같은 컴포넌트에 modifier 클래스 부여).
 
+**구현 중 정정 (Implementation phase, CameraRenderLane 발견)**: 위 표의 "적(enemy)/엘리트" 행이 가정한
+"적 네임플레이트" DOM 요소는 실제로 존재한 적이 없다 — `app.js`의 `#world-hud-overlay` DOM 오버레이
+시스템은 설계상 companion 전용이며(`renderWorldHud()` 독스트링, "companion nameplates/health bars,
+elite capture prompt, floating damage numbers"), 적은 전량 WebGL 씬 내부 오브젝트로만 렌더링된다(별도
+in-world 체력 표시 방식, DOM 텍스트 아님). `.world-hud-nameplate--enemy` CSS 클래스는 구현됐으나
+(styles.css, 준비된 상태) 적용 지점이 코드베이스에 없다 — 이는 이번 사이클에서 신규 적 네임플레이트
+UI를 구축할 스코프가 아니라(§D의 원 취지는 companion 판독성 개선이었고 적 비교 대상은 리서치 근거일
+뿐), 표 자체의 가정 오류였다. 후속 사이클에서 적 전용 world-space HUD 요소가 실제로 필요해지면 이
+CSS 클래스를 재사용할 수 있다.
+
 ---
 
 ### E. 영구(Track A/B) vs 런스코프 아이콘 형태 차별화 — **ACCEPT with MODIFY (형태 변경)**

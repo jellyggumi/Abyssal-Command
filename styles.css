@@ -72,6 +72,17 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .world-nameplate-bar { width: 3.2rem; height: .22rem; overflow: hidden; border-radius: 999px; background: #27384f; }
 .world-nameplate-bar i { display: block; height: 100%; background: linear-gradient(90deg, #e26b72, #e9c46a, #70d3ae); }
 .world-nameplate.is-downed { opacity: .55; }
+/* Color-independent entity-type encoding for world-space nameplates
+   (ui-redesign-delta-20260725.md §D, decision-log.md D22): companion vs
+   enemy nameplates must be distinguishable by SHAPE alone (grayscale-safe),
+   not just the existing color-coded health-bar gradient. Applied as
+   modifier classes ALONGSIDE the base .world-nameplate class (same DOM
+   node, no new subtree) -- battle-realtime-three.js/app.js assign
+   whichever of these two matches the entity kind. Border accent reuses
+   the SAME existing color tokens as .gate-panel-bar-track.gate/.commander
+   below -- no new colors introduced, only a shape channel added on top. */
+.world-hud-nameplate--companion { border-radius: 999px; border: 1px solid rgb(92 142 207 / .55); }
+.world-hud-nameplate--enemy { border-radius: 2px; border: 1px solid rgb(226 107 114 / .55); }
 .world-capture-prompt { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); padding: .3rem .55rem; border: 1px solid #b992ff; border-radius: .5rem; background: rgb(12 11 30 / .85); color: #e7d9ff; font-size: .68rem; font-weight: 700; white-space: nowrap; animation: world-capture-pulse 1.6s ease-in-out infinite; }
 /* Row 17: offscreen objective waypoint arrow, screen-edge-clamped. rotate() applied inline per-frame (see app.js renderWorldHud). */
 .world-waypoint-arrow { position: absolute; left: 0; top: 0; transform-origin: center; font-size: 1.1rem; line-height: 1; color: #dfae51; text-shadow: 0 0 6px rgb(223 174 81 / .65), 0 1px 2px rgb(0 0 0 / .6); pointer-events: none; }
@@ -210,8 +221,16 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .growth-equip-slot { display: flex; align-items: center; gap: .5rem; padding: .5rem; border: 1px solid #2b4767; border-radius: .6rem; }
 .growth-equip-slot small { min-width: 3.5rem; text-transform: uppercase; color: #9ecce4; font-size: .68rem; }
 .growth-formation-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .6rem; margin-top: .5rem; }
-.growth-formation-slot { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .5rem; border: 1px solid #2b4767; border-radius: .6rem; min-height: 48px; }
+.growth-formation-slot { position: relative; display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .5rem; border: 1px solid #2b4767; border-radius: .6rem; min-height: 48px; }
 .growth-formation-slot button { min-width: 48px; min-height: 48px; }
+/* Formation validation badges (ui-redesign-delta-20260725.md §C, ACCEPT) — color-independent
+   (icon glyph inside the badge + aria-label text, never color alone): yellow "!" for a
+   low-ward-tier FRONT companion (off-battle formation-edit screen), red "✕" for a live-run
+   DOWNED companion (pause-overlay re-entry). Colors reuse .integrity-meter's existing
+   gradient stops (styles.css) — no new palette entries. */
+.formation-integrity-badge { position: absolute; top: -.35rem; right: -.35rem; display: grid; place-items: center; width: 1rem; height: 1rem; border-radius: 50%; font-size: .62rem; font-weight: 800; line-height: 1; color: #1a1408; }
+.formation-integrity-badge.is-low-ward { background: #e9c46a; }
+.formation-integrity-badge.is-downed { background: #e26b72; color: #2a0d0f; }
 /* Tier icon channel (§6.3 color-independent encoding): vertex count is the 2nd channel alongside tier-name text. */
 .tier-icon { display: inline-block; width: 14px; height: 14px; flex-shrink: 0; background: #9ecce4; }
 .tier-icon[data-tier-vertices="0"] { border-radius: 50%; }
@@ -219,6 +238,17 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .tier-icon[data-tier-vertices="4"] { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
 .tier-icon[data-tier-vertices="5"] { clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); }
 .tier-icon[data-tier-vertices="6"] { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); }
+/* Progression-track icon channel (ui-redesign-delta-20260725.md §E, ACCEPT with MODIFY —
+   decision-log.md D22 판정3): shape-only encoding of permanent (Track A/B) vs run-scoped
+   growth, deliberately independent of .tier-icon's vertex-count rarity channel above so the
+   two never collide (D22's stated reason the original hexagon proposal was rejected — hexagon
+   is already .tier-icon[data-tier-vertices="6"]/T5). Separate class from .tier-icon per §E §2
+   even where the run-scoped circle shape coincides with data-tier-vertices="0", because the
+   two are never visible in the same screen (§E's own collision-avoidance reasoning). Color is
+   not part of this encoding — shape alone carries the distinction. */
+.progression-icon { display: inline-block; width: 12px; height: 12px; flex-shrink: 0; background: #9ecce4; }
+.progression-icon[data-track="permanent"] { border-radius: 3px; }
+.progression-icon[data-track="run-scoped"] { border-radius: 50%; }
 
 @media (max-width: 720px) {
   .defense-lobby { padding-inline: .75rem; }
@@ -279,6 +309,10 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .defense-toast-levelup { border-color: #e9c46a; }
 .defense-toast-reward { border-color: #b992ff; }
 .defense-toast-rally { border-color: #f2a4a4; }
+.defense-toast-camera-hint { border-color: var(--canon-cyan-rift); }
+/* §2-b gesture pictograms — inline before each instruction clause, sized against the existing
+   .tier-icon scale reference per the design doc's "16-20px, 기존 .tier-icon 스케일 참고" note. */
+.defense-toast-camera-hint p span { font-size: 1.1rem; line-height: 1; vertical-align: middle; }
 
 /* Commander/gate HUD cluster — portrait + stacked resource bars composition
    (user-referenced layout). Reuses the existing gate-panel container and
@@ -378,6 +412,32 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
   opacity: .85;
 }
 @keyframes rc-glow-spin { to { --rc-glow-angle: 360deg; } }
+
+/* §2-a stance-cycle button (#battle-actions, leftmost) — reuses the .hud-actions button base
+   size and the SAME conic-gradient pseudo-element ring mechanism as .rc-glow-ring::before
+   above (mask-to-border-only technique), but JS-driven per-tick progress (--rc-cooldown-pct,
+   a plain percentage, set inline every render — see app.js stanceActionMarkup) instead of an
+   auto-animated angle custom property: ui-redesign-delta-20260725.md §2-a explicitly calls
+   for "무한 스핀이 아니라 JS 구동 진행률". Ring fully transparent (0%) once cooldown ends —
+   "쿨다운 종료 시 사라짐". */
+.stance-cycle-button { position: relative; overflow: visible; }
+.stance-cycle-button::before {
+  content: ""; position: absolute; inset: -2px; z-index: -1; border-radius: inherit; padding: 2px;
+  background: conic-gradient(from 0deg, var(--canon-cyan-rift) calc(var(--rc-cooldown-pct, 0) * 1%), transparent calc(var(--rc-cooldown-pct, 0) * 1%));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.stance-glyph { font-size: 1rem; line-height: 1; }
+/* Soft-block feedback (§2-a "소프트 블록 권장" — button stays tappable during cooldown; a
+   cooldown-rejected tap gets a brief shake, never a hard disabled+greyed state). Respects
+   reduced-motion via the file-wide `animation: none !important` rule below, AND app.js never
+   sets the triggering deadline at all when motionQuery.matches (belt and suspenders). */
+.stance-cycle-button.is-blocked { animation: stance-block-shake 220ms ease-in-out; }
+@keyframes stance-block-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
 
 /* Ambient aurora drift (react-bits Aurora pattern) for the lobby hero backdrop — large,
    slow-moving soft gradients, purely decorative (aria-hidden), never blocks pointer events. */

@@ -482,15 +482,6 @@
       "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
-      "currentPath": "assets/images/battle/glb/props/equipment-tier-gems.glb",
-      "replacementPath": null,
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
-    },
-    {
       "disposition": "retain",
       "currentPath": "assets/images/battle/glb/props/stillwater-hourglass.glb",
       "replacementPath": "assets/images/battle/glb/props/stillwater-hourglass.glb",
@@ -2808,6 +2799,15 @@
     {
       "disposition": "delete",
       "currentPath": "assets/images/battle/glb/previs/warden-lantern.previs.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/battle/glb/props/equipment-tier-gems.glb",
       "replacementPath": null,
       "extension": ".glb",
       "generator": "scripts/build-defense-asset-manifest.mjs",

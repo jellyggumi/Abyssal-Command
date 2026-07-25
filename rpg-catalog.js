@@ -14,6 +14,7 @@
  * number a derive function emits traces to a field on one of the tables
  * below, so a rebalance never requires a code change.
  */
+import { OCTANT_VECTORS } from "./defense-catalog.js";
 const freeze = (value) => {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
     Object.freeze(value);
@@ -93,13 +94,81 @@ const COMPANION_ROLE_BY_MEMBER = freeze(Object.fromEntries(
 ));
 export function roleForCompanion(companionId) { return COMPANION_ROLE_BY_MEMBER[companionId] || null; }
 
-/** Formation (UNIFIED-GDD.md §4.2): max_slots is owned by campaign-state.js MAX_LOADOUT_SIZE (3, unchanged). */
+/** Formation (UNIFIED-GDD.md §4.2): max_slots is owned by campaign-state.js MAX_LOADOUT_SIZE (3, unchanged).
+ * Legacy off-battle per-companion toggle — still backs campaign-state.js's companionFormation map and
+ * app.js's loadout-screen FRONT/BACK button (UI-only, does not drive in-run positioning). The in-run
+ * positioning/targeting layer is now FORMATION_STANCES/STANCE_CONFIG below (core-loop-redesign-20260725.md
+ * §2: "campaign-state.js's companionFormation schema can be kept for internal derived-value storage" —
+ * the two systems are intentionally parallel, not merged, this cycle). */
 export const MAX_FRONT_SLOTS = 2;
 export const FORMATION_SLOTS = freeze(["FRONT", "BACK"]);
-/** BACK companion damage bonus when >=1 FRONT companion is alive (fire-time stance multiplier, additive bp per UNIFIED-GDD.md §4.2). */
+/** BACK companion damage bonus when >=1 FRONT companion is alive (fire-time stance multiplier, additive bp per UNIFIED-GDD.md §4.2). Unchanged by the 3-stance formation redesign (core-loop-redesign-20260725.md §2: "후열 시너지... 변경 없음... 스탠스는 이 계산에 영향 없음, '몇 명이 FRONT인가'만 바꿈"). */
 export const BACK_ROW_SYNERGY_DAMAGE_BONUS = 0.25;
-/** Boss Rally Window: cooldown reduction applied to all living companions' fire cooldown when a boss spawns with >=1 FRONT filled. */
+/** Boss Rally Window: cooldown reduction applied to all living companions' fire cooldown when a boss spawns with >=1 FRONT filled. TURRET's derivedFrontCount=0 structurally, intentionally never satisfies this gate (decision-log.md D22 judgment 1: accepted trade-off, not a bug — "포대는 지속딜은 얻지만 랠리 버스트는 포기"). */
 export const BOSS_RALLY_COOLDOWN_REDUCTION = 0.20;
+
+/**
+ * In-run formation stances (UNIFIED-GDD.md §2.2/§4.2 table, `UNIFIED-GDD.md:79-85`): replaces the old
+ * "every companion snaps to the commander's coordinates" no-formation model. `STANCE_CYCLE`
+ * (defense-run-simulation.js) advances `run.formationStance` through this array, wrapping
+ * VANGUARD->TURRET->SPLIT->VANGUARD, gated by a 4-second cooldown (`UNIFIED-GDD.md:85`).
+ */
+export const FORMATION_STANCES = freeze(["VANGUARD", "TURRET", "SPLIT"]);
+
+/**
+ * Per-stance `{offsets, radius, derivedFrontCount}`, transcribed from the UNIFIED-GDD.md:79-85 table.
+ * `offsets[i]` is the `{x,y}` world-space delta added to the commander's position for the companion at
+ * loadout-order index `i` (0-2, matching campaign-state.js's `MAX_LOADOUT_SIZE=3`, decision-log D3) —
+ * built from the existing 8-direction `OCTANT_VECTORS` discrete system (defense-catalog.js) scaled to
+ * the table's authored magnitudes; no continuous-angle interpolation, per `UNIFIED-GDD.md:85`
+ * ("오프셋은 기존 OCTANT_VECTORS 8방향 이산 체계 재사용"). `derivedFrontCount` companions at indices
+ * `[0, derivedFrontCount)` are FRONT (enemy-targetable, DOWNED-capable, gate BACK's
+ * `BACK_ROW_SYNERGY_DAMAGE_BONUS`); the rest are BACK. `radius` is the stance's authored
+ * formation-width figure from the GDD table (informational data field, not itself an offset input).
+ */
+export const STANCE_CONFIG = freeze({
+  VANGUARD: {
+    // "이동방향 전방, 좌우분산 1,400유닛": forward = toward the enemy spawn/approach side (-x, W —
+    // enemies spawn from the arena's west edge and advance east toward the gate/commander,
+    // defense-run-simulation.js's `spawnPoint`/default `tactics.spawnDirections`) + 1,400-unit
+    // left/right spread for the 2 FRONT companions (NW/SW scaled to magnitude 1,400); the 3rd (BACK)
+    // companion trails 500 units to the rear (E, toward the gate), matching the stance's ±500-unit
+    // formation radius.
+    offsets: freeze([
+      freeze({ x: Math.round(OCTANT_VECTORS.NW.x * 1.4), y: Math.round(OCTANT_VECTORS.NW.y * 1.4) }),
+      freeze({ x: Math.round(OCTANT_VECTORS.SW.x * 1.4), y: Math.round(OCTANT_VECTORS.SW.y * 1.4) }),
+      freeze({ x: Math.round(OCTANT_VECTORS.E.x * 0.5), y: Math.round(OCTANT_VECTORS.E.y * 0.5) }),
+    ]),
+    radius: 500,
+    derivedFrontCount: 2,
+  },
+  TURRET: {
+    // "후방 300유닛", "300유닛(밀집)": all 3 companions cluster tight behind the commander toward the
+    // gate/rear side (+x, E — away from the enemy approach), 0 derived FRONT — sustained-fire
+    // posture, no targetable screen (decision-log D22 judgment 1: intentionally excluded from Boss
+    // Rally Window). E/NE/SE within the 300-unit radius avoids exact-overlap while staying compact.
+    offsets: freeze([
+      freeze({ x: Math.round(OCTANT_VECTORS.E.x * 0.3), y: Math.round(OCTANT_VECTORS.E.y * 0.3) }),
+      freeze({ x: Math.round(OCTANT_VECTORS.NE.x * 0.3), y: Math.round(OCTANT_VECTORS.NE.y * 0.3) }),
+      freeze({ x: Math.round(OCTANT_VECTORS.SE.x * 0.3), y: Math.round(OCTANT_VECTORS.SE.y * 0.3) }),
+    ]),
+    radius: 300,
+    derivedFrontCount: 0,
+  },
+  SPLIT: {
+    // "좌우 측면 2,000유닛 + 후방중앙 300유닛": left/right flank spread 2,000 units (N/S, lateral to
+    // the W-facing approach) for the 1 FRONT + 1 flank-BACK companion, 3rd (BACK) trails rear-center
+    // 300 units (E, toward the gate). Max formation width 9,000 (GDD table figure, informational
+    // `radius`).
+    offsets: freeze([
+      freeze({ x: Math.round(OCTANT_VECTORS.N.x * 2), y: Math.round(OCTANT_VECTORS.N.y * 2) }),
+      freeze({ x: Math.round(OCTANT_VECTORS.S.x * 2), y: Math.round(OCTANT_VECTORS.S.y * 2) }),
+      freeze({ x: Math.round(OCTANT_VECTORS.E.x * 0.3), y: Math.round(OCTANT_VECTORS.E.y * 0.3) }),
+    ]),
+    radius: 9000,
+    derivedFrontCount: 1,
+  },
+});
 
 /** Equipment: shared 5-tier ladder, 3 slots (weapon/ward/trinket), same structure for Warden and companions. */
 export const EQUIPMENT_SLOTS = freeze(["weapon", "ward", "trinket"]);

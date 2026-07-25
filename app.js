@@ -18,7 +18,7 @@ import {
   wardLevel,
 } from "./campaign-state.js";
 import {
-  EQUIPMENT_SLOTS, EQUIPMENT_TIERS, MAX_FRONT_SLOTS, WARDEN_SKILL_TREE,
+  EQUIPMENT_SLOTS, EQUIPMENT_TIERS, FORMATION_STANCES, MAX_FRONT_SLOTS, WARDEN_SKILL_TREE,
   WARDEN_STATS, WARDEN_TRAITS, WARDEN_TRAIT_UNLOCK_SEQUENCES, equipmentTierUpgradeCost, wardenStatPointCost,
   wardenTraitOffersForSequence,
 } from "./rpg-catalog.js";
@@ -72,6 +72,33 @@ const WORLD_NAMEPLATE_LIFT_PX = 34;
 const WORLD_DAMAGE_NUMBER_LIFT_PX = 18;
 const WORLD_CAPTURE_PROMPT_LIFT_PX = 12;
 const WORLD_WAYPOINT_EDGE_MARGIN_PX = 28; // clamped inset from the viewport edge, row 17's screen-clamp margin
+// 3-stance formation selector (D22 판정11/Implementation interface, §2-a
+// ui-redesign-delta-20260725.md) — glyph/label lookup keyed by
+// FORMATION_STANCES id, purely presentational (the cycle order/cooldown
+// itself is defense-run-simulation.js's authority via STANCE_CYCLE input).
+// Glyphs are plain-text Unicode (not emoji) to match the existing
+// .skill-glyph convention (app.js renderControls) rather than the design
+// doc's literal "화살촉/원/삼지창" suggestion — a real trident glyph renders
+// inconsistently across platforms as tofu/emoji-color-swap, so SPLIT uses
+// Greek Psi (Ψ) as a stable three-prong approximation (documented per the
+// design doc's "정확한 글리프는 디자이너 소관" escape hatch).
+const STANCE_GLYPHS = Object.freeze({ VANGUARD: "▲", TURRET: "●", SPLIT: "Ψ" });
+const STANCE_LABELS = Object.freeze({ VANGUARD: "전열", TURRET: "포대", SPLIT: "분산" });
+// UNIFIED-GDD.md:85 / decision-log D22 Implementation interface: 4-second
+// stance-switch cooldown, expressed in ticks against the shared TICK_RATE.
+const STANCE_COOLDOWN_TICKS = 4 * TICK_RATE;
+// Transient post-block shake feedback duration (§2-a "소프트 블록" — button
+// stays tappable during cooldown, a blocked tap gets a brief visual nudge
+// instead of a hard-disabled state).
+const STANCE_BLOCK_SHAKE_MS = 260;
+// One-shot campaign flag for the orbit-camera discovery toast (§2-b) —
+// reuses the existing achievementIds array (campaign-state.js) as its
+// storage exactly like the real "stage-clear:*" entries it already holds
+// (see applyCampaignRunResult); campaign-state.js's own validCampaign()
+// only requires unique non-empty strings here; namespacing with "ui-hint:"
+// keeps it visually distinct from gameplay achievements without needing a
+// schema change (this lane owns app.js/styles.css only, not campaign-state.js).
+const CAMERA_HINT_ACHIEVEMENT_ID = "ui-hint:camera-orbit-discovery";
 
 let campaign = null;
 let selectedStageId = STAGES[0].id;
@@ -361,7 +388,7 @@ function wardenSkillsMarkup(data, interactive = true) {
     const prereqMet = node.prereq.every((id) => wp.skillTreeIds.includes(id));
     const affordable = echoSpent + node.cost <= echoEarned;
     const canUnlock = !unlocked && prereqMet && affordable;
-    return `<div class="growth-skill-node rc-lift${unlocked ? " is-unlocked" : ""}"><div><strong>${escapeHtml(node.id)}</strong><small>${escapeHtml(node.description)} · 비용 ${node.cost} EC${node.prereq.length ? ` · 선행 ${node.prereq.join(", ")}` : ""}</small></div>${interactive ? `<button data-warden-skill="${node.id}" ${unlocked || !canUnlock ? "disabled" : ""}>${unlocked ? "해금됨" : "해금"}</button>` : `<span class="growth-readonly-value">${unlocked ? "해금됨" : "미해금"}</span>`}</div>`;
+    return `<div class="growth-skill-node rc-lift${unlocked ? " is-unlocked" : ""}"><span class="progression-icon" data-track="permanent" aria-hidden="true"></span><div><strong>${escapeHtml(node.id)}</strong><small>${escapeHtml(node.description)} · 비용 ${node.cost} EC${node.prereq.length ? ` · 선행 ${node.prereq.join(", ")}` : ""}</small></div>${interactive ? `<button data-warden-skill="${node.id}" ${unlocked || !canUnlock ? "disabled" : ""}>${unlocked ? "해금됨" : "해금"}</button>` : `<span class="growth-readonly-value">${unlocked ? "해금됨" : "미해금"}</span>`}</div>`;
   }).join("");
 }
 
@@ -387,15 +414,39 @@ function equipmentOwnersMarkup(data, interactive = true) {
       const currentTier = EQUIPMENT_TIERS[tierIndex];
       const cost = maxed ? null : equipmentTierUpgradeCost(tierIndex);
       const affordable = cost !== null && fragSpent + cost <= fragEarned;
-      return `<div class="growth-equip-slot rc-lift"><small>${slot}</small><span class="tier-icon" data-tier-vertices="${currentTier.vertexCount}" aria-hidden="true"></span><span>${escapeHtml(currentTier.name)} (${currentTier.id})</span>${interactive ? `<button data-warden-equip-owner="${owner.id}" data-warden-equip-slot="${slot}" ${maxed || !affordable ? "disabled" : ""}>${maxed ? "최대" : `강화 (${cost} BF)`}</button>` : ""}</div>`;
+      return `<div class="growth-equip-slot rc-lift"><small>${slot}</small><span class="progression-icon" data-track="permanent" aria-hidden="true"></span><span class="tier-icon" data-tier-vertices="${currentTier.vertexCount}" aria-hidden="true"></span><span>${escapeHtml(currentTier.name)} (${currentTier.id})</span>${interactive ? `<button data-warden-equip-owner="${owner.id}" data-warden-equip-slot="${slot}" ${maxed || !affordable ? "disabled" : ""}>${maxed ? "최대" : `강화 (${cost} BF)`}</button>` : ""}</div>`;
     }).join("")}</div></div>`).join("");
 }
 
-function formationRowMarkup(data, interactive = true) {
+/**
+ * Formation validation badges (ui-redesign-delta-20260725.md §C, ACCEPT) —
+ * color-independent (icon glyph + aria-label, never color alone) risk
+ * signal on `.growth-formation-slot`. Two mutually-exclusive triggers
+ * (§C's two-signal table):
+ *   - red (DOWNED, `✕`): `downedIds` is the LIVE run's currently-downed
+ *     companion set — only ever populated by the pause-overlay call site
+ *     (re-entry mid-run, run-scoped state, never persisted to campaign).
+ *     Takes priority when both would apply (a downed companion's ward tier
+ *     is moot until the run resets).
+ *   - yellow (low ward, `!`): off-battle formation-edit screen only
+ *     (`downedIds` omitted/null there) — FRONT slot + ward tier index 0
+ *     (T1, unreinforced) [INFERENCE per design doc: exact "low" threshold is
+ *     a balance-sheet.md decision, T1-baseline used as the proposed floor].
+ * Non-blocking: informational only, never disables the FRONT/BACK button.
+ */
+function formationRowMarkup(data, interactive = true, downedIds = null) {
   const { loadout } = data;
   return loadout.length ? `<div class="growth-formation-row">${loadout.map((id) => {
     const slot = campaign.companionFormation[id] || "BACK";
-    return `<div class="growth-formation-slot rc-lift"><strong>${escapeHtml(companionLabel(id))}</strong><span>${slot}</span>${interactive ? `<button data-warden-formation="${id}" data-warden-formation-target="${slot === "FRONT" ? "BACK" : "FRONT"}">${slot === "FRONT" ? "후열로" : "전열로"}</button>` : ""}</div>`;
+    const label = companionLabel(id);
+    const isDowned = downedIds?.has(id) ?? false;
+    const isLowWard = !isDowned && downedIds === null && slot === "FRONT" && equipmentTierIndexFor(campaign, id, "ward") === 0;
+    const badge = isDowned
+      ? `<span class="formation-integrity-badge is-downed" aria-label="편성 경고: ${escapeHtml(label)} 현재 전열 이탈(DOWNED) 상태">✕</span>`
+      : isLowWard
+        ? `<span class="formation-integrity-badge is-low-ward" aria-label="편성 경고: ${escapeHtml(label)} 전열 정예 편성 위험 — 워드 등급 낮음">!</span>`
+        : "";
+    return `<div class="growth-formation-slot rc-lift">${badge}<strong>${escapeHtml(label)}</strong><span>${slot}</span>${interactive ? `<button data-warden-formation="${id}" data-warden-formation-target="${slot === "FRONT" ? "BACK" : "FRONT"}">${slot === "FRONT" ? "후열로" : "전열로"}</button>` : ""}</div>`;
   }).join("")}</div>` : `<p class="section-copy">편성된 동료가 없습니다.</p>`;
 }
 
@@ -780,6 +831,12 @@ export class BattleSession {
     // pattern, auto-dismiss, never pause the sim themselves.
     this.toastTimer = null;
     this.rallyAcknowledgedBossIds = new Set();
+    // §2-a stance-switch soft-block shake feedback (see render()'s
+    // STANCE_SWITCH_BLOCKED scan) — lastStanceBlockEventId dedupes repeated
+    // renders of the same blocked event; stanceShakeUntil is a wall-clock
+    // deadline (performance.now()), never set at all under reduced-motion.
+    this.lastStanceBlockEventId = null;
+    this.stanceShakeUntil = 0;
     // World-space HUD (Track 3, DOM-overlay pattern — ui/lane-hud-layout.md
     // section 4, Option B): companion nameplates/health bars, elite capture
     // prompt, floating damage numbers, all positioned via
@@ -836,6 +893,7 @@ export class BattleSession {
     this.listen(window, "abyssal:defense-viewportchange", this.onResize);
     if (this.motionQuery) this.listen(this.motionQuery, "change", this.onReducedMotion);
     this.render();
+    this.maybeShowCameraHint();
     this.frame = requestAnimationFrame(this.loop);
   }
 
@@ -929,6 +987,7 @@ export class BattleSession {
       const distance = this.pinchDistance();
       const deltaDistance = distance - this.pinch.distance;
       this.pinch.distance = distance;
+      this.dismissCameraHint();
       this.renderer?.zoom?.(-deltaDistance * CAMERA_PINCH_ZOOM_SENSITIVITY);
       return;
     }
@@ -937,6 +996,7 @@ export class BattleSession {
     const dy = point.y - this.pointer.y;
     this.pointer.x = point.x;
     this.pointer.y = point.y;
+    this.dismissCameraHint();
     this.renderer?.orbit?.(dx * CAMERA_ORBIT_YAW_SENSITIVITY, -dy * CAMERA_ORBIT_PITCH_SENSITIVITY);
   }
 
@@ -1217,6 +1277,16 @@ export class BattleSession {
       const reductionPct = Math.round((rallyEvent.cooldownReductionBp ?? 0) / 100);
       this.showToast(`<h2>총공세 발동</h2><p>보스 등장 — 편성된 동료 쿨다운 ${reductionPct}% 감소</p>`, { className: "defense-toast-rally" });
     }
+    // Stance-switch soft-block feedback (§2-a "소프트 블록 권장" — button
+    // stays tappable during cooldown, a cooldown-rejected tap gets a brief
+    // shake instead of a hard-disabled state). Passive notification of a
+    // sim-emitted event, same pattern as the rally-window toast above —
+    // never a client-side re-derivation of the cooldown gate itself.
+    const blockedEvent = snapshot.events.find((event) => event.type === "STANCE_SWITCH_BLOCKED");
+    if (blockedEvent && blockedEvent.eventId !== this.lastStanceBlockEventId) {
+      this.lastStanceBlockEventId = blockedEvent.eventId;
+      if (!this.motionQuery?.matches) this.stanceShakeUntil = performance.now() + STANCE_BLOCK_SHAKE_MS;
+    }
     const projection = this.projected(snapshot);
     const camera = this.updateCamera(projection.commander);
     const frame = {
@@ -1269,7 +1339,7 @@ export class BattleSession {
     root.querySelector("#battle-gate-bar-fill").style.width = `${gateIntegrity.ratio * 100}%`;
     root.querySelector("#battle-enemies").textContent = `적 ${snapshot.enemies.length} · 처치 ${snapshot.progress.defeated} · 아이템 ${snapshot.progress.itemsCollected}`;
     this.renderControls(snapshot);
-    this.renderPauseOverlay();
+    this.renderPauseOverlay(snapshot);
     this.renderWorldHud(snapshot);
     if (snapshot.terminal && !this.terminalHandled) void this.resolveTerminal(snapshot);
     this.renderEventFeedback(snapshot);
@@ -1350,7 +1420,7 @@ export class BattleSession {
       let node = overlay.querySelector('[data-world-nameplate="' + companion.id + '"]');
       if (!node) {
         node = document.createElement("div");
-        node.className = "world-nameplate";
+        node.className = "world-nameplate world-hud-nameplate--companion";
         node.dataset.worldNameplate = companion.id;
         node.innerHTML = "<strong></strong><span class=\"world-nameplate-bar\"><i></i></span>";
         overlay.append(node);
@@ -1480,7 +1550,13 @@ export class BattleSession {
       });
     }
 
-    let card = root.querySelector(".edge-card:not(.defense-result)");
+    // Scoped to the growth-offer card's own id (not the broader .edge-card
+    // class) -- .edge-card is now shared with transient toasts (defense-toast,
+    // including the camera-hint toast, app.js maybeShowCameraHint()) that must
+    // survive this render pass untouched. A class-based :not() selector here
+    // previously caught and removed any other .edge-card present, including
+    // toasts that had nothing to do with the growth offer.
+    let card = root.querySelector("#defense-growth-offer");
     if (snapshot.growthOffer) {
       const offerKey = snapshot.growthOffer.choices.join(",");
       if (!card) {
@@ -1494,7 +1570,7 @@ export class BattleSession {
         card.dataset.offer = offerKey;
         const previews = snapshot.growthOffer.choices.map((id) => growthUpgradePreview(id, snapshot));
         telemetry.append("GROWTH_OFFER_VALUES", { tick: snapshot.tick, choices: previews });
-        card.innerHTML = `<h2>성장 선택 · 전투 일시 정지</h2><div class="choices">${previews.map(({ skillId, label }) => `<button data-pick="${skillId}"><strong>${escapeHtml(SKILLS[skillId]?.name ?? skillId)}</strong><span>${escapeHtml(label)}</span></button>`).join("")}</div>`;
+        card.innerHTML = `<h2>성장 선택 · 전투 일시 정지</h2><div class="choices">${previews.map(({ skillId, label }) => `<button data-pick="${skillId}"><span class="progression-icon" data-track="run-scoped" aria-hidden="true"></span><strong>${escapeHtml(SKILLS[skillId]?.name ?? skillId)}</strong><span class="growth-choice-copy">${escapeHtml(label)}</span></button>`).join("")}</div>`;
         card.querySelectorAll("[data-pick]").forEach((button) => {
           button.addEventListener("click", () => {
             const picked = previews.find((preview) => preview.skillId === button.dataset.pick);
@@ -1510,9 +1586,28 @@ export class BattleSession {
       card.remove();
     }
 
+    /**
+     * §2-a 3-stance selector — leftmost in #battle-actions (before pause):
+     * mid-run reselectable action needs steadier reach than the
+     * context-only extract-elite button (design doc's placement rationale).
+     * Regenerates every render (like the skill-action cooldown text above)
+     * so the JS-driven radial-fill ring (--rc-cooldown-pct, mirroring the
+     * existing --rc-glow-angle conic-gradient convention) advances every
+     * tick instead of animating continuously.
+     */
+    const stance = FORMATION_STANCES.includes(snapshot.formationStance) ? snapshot.formationStance : "VANGUARD";
+    const cooldownUntil = snapshot.stanceCooldownUntilTick ?? 0;
+    const ticksRemaining = Math.max(0, cooldownUntil - snapshot.tick);
+    const onCooldown = ticksRemaining > 0;
+    const cooldownPct = onCooldown ? Math.min(100, Math.round((ticksRemaining / STANCE_COOLDOWN_TICKS) * 100)) : 0;
+    const secondsRemaining = Math.ceil(ticksRemaining / TICK_RATE);
+    const isBlocked = performance.now() < this.stanceShakeUntil;
+    const stanceLabel = `편성 스탠스: ${STANCE_LABELS[stance]}${onCooldown ? ` (전환까지 ${secondsRemaining}초)` : ""}`;
+    const stanceMarkup = `<button id="stance-cycle" class="stance-cycle-button${isBlocked ? " is-blocked" : ""}" style="--rc-cooldown-pct:${cooldownPct}" aria-live="polite" aria-label="${escapeHtml(stanceLabel)}"><span class="stance-glyph" aria-hidden="true">${STANCE_GLYPHS[stance]}</span></button>`;
+
     const actions = root.querySelector("#battle-actions");
     const candidate = snapshot.eliteCandidate;
-    const actionMarkup = `<button id="toggle-pause" aria-pressed="${this.userPaused}">${this.userPaused ? "전투 계속" : "일시 정지"}</button>${
+    const actionMarkup = `${stanceMarkup}<button id="toggle-pause" aria-pressed="${this.userPaused}">${this.userPaused ? "전투 계속" : "일시 정지"}</button>${
       candidate && !snapshot.extracted
         ? `<button id="extract-elite" data-defense-extract="${candidate.enemyId}">정예 추출 · ${escapeHtml(companionLabel(candidate.prototype))}</button>`
         : ""
@@ -1520,6 +1615,7 @@ export class BattleSession {
     if (actions.dataset.actions !== actionMarkup) {
       actions.dataset.actions = actionMarkup;
       actions.innerHTML = actionMarkup;
+      actions.querySelector("#stance-cycle")?.addEventListener("click", () => this.send("STANCE_CYCLE"));
       actions.querySelector("#toggle-pause")?.addEventListener("click", () => this.togglePause());
       actions.querySelector("#extract-elite")?.addEventListener("click", () => {
         this.send("EXTRACT_ELITE", { enemyId: candidate.enemyId });
@@ -1559,17 +1655,21 @@ export class BattleSession {
    * interactive=false renders the identical growth-panel markup with inert
    * controls, so this never becomes a second input surface (D5 rationale).
    */
-  renderPauseOverlay() {
+  renderPauseOverlay(snapshot = getRunSnapshot(this.run)) {
     let overlay = this.surface.querySelector("#defense-pause-overlay");
     if (!this.userPaused) {
       overlay?.remove();
       return;
     }
     const data = wardenGrowthData();
+    // Red DOWNED badges (§C) are live-run state, unlike the yellow low-ward
+    // badge (a static campaign-equipment calculation) — only ever populated
+    // here (pause-overlay re-entry), never in the off-battle formation tab.
+    const downedIds = new Set(snapshot.companions.filter((companion) => companion.status === "DOWNED").map((companion) => companion.companionId));
     const segments = [
       { id: "stats", label: "스탯", html: `<div class="growth-stat-grid">${wardenStatsMarkup(data, false)}</div>` },
       { id: "inventory", label: "인벤토리", html: `<div class="growth-equip-grid">${equipmentOwnersMarkup(data, false)}</div>` },
-      { id: "companions", label: "동료", html: formationRowMarkup(data, false) },
+      { id: "companions", label: "동료", html: formationRowMarkup(data, false, downedIds) },
     ];
     if (!segments.some((segment) => segment.id === this.pauseOverlaySegment)) this.pauseOverlaySegment = "stats";
     const markup = `
@@ -1597,10 +1697,10 @@ export class BattleSession {
     }
   }
 
-  /** Non-blocking edge-card toast — level-up/reward-tier/rally notices. Single shared slot; auto-dismisses. */
+  /** Non-blocking edge-card toast — level-up/reward-tier/rally notices. Single shared slot; auto-dismisses. Returns the created toast element (camera-hint uses this to tag itself for early-dismiss lookup). */
   showToast(innerHtml, { className = "", durationMs = 4000 } = {}) {
     root.querySelector(".edge-card.defense-toast")?.remove();
-    if (this.toastTimer) clearTimeout(this.toastTimer);
+    clearTimeout(this.toastTimer);
     const toast = document.createElement("section");
     toast.className = `edge-card defense-toast ${className}`.trim();
     toast.setAttribute("role", "status");
@@ -1608,6 +1708,35 @@ export class BattleSession {
     toast.addEventListener("click", () => toast.remove());
     root.querySelector("#defense-edge-hud").append(toast);
     this.toastTimer = setTimeout(() => { toast.remove(); this.toastTimer = null; }, durationMs);
+    return toast;
+  }
+
+  /**
+   * §2-b orbit-camera discovery hint — one-shot per campaign
+   * (CAMERA_HINT_ACHIEVEMENT_ID flag on the existing achievementIds array,
+   * campaign-state.js's existing one-time-flag storage — see that constant's
+   * doc comment for why no new storage mechanism was introduced), shown on
+   * this battle canvas's first mount (called once from start()). Reuses
+   * showToast()/.edge-card.defense-toast verbatim — no new toast pattern.
+   * Copy text is verbatim from ui-redesign-delta-20260725.md §2-b.
+   */
+  maybeShowCameraHint() {
+    if (campaign.achievementIds?.includes(CAMERA_HINT_ACHIEVEMENT_ID)) return;
+    campaign = { ...campaign, achievementIds: [...campaign.achievementIds, CAMERA_HINT_ACHIEVEMENT_ID].sort() };
+    void persistCampaign("카메라 안내를 확인했습니다.");
+    const toast = this.showToast(
+      `<h2>궤도 카메라 안내</h2><p><span aria-hidden="true">🔄</span> 손가락 1개로 드래그해 시야를 돌리고(Orbit), <span aria-hidden="true">🤏</span> 손가락 2개로 꼬집어 확대/축소(Pinch Zoom)하세요</p>`,
+      { className: "defense-toast-camera-hint", durationMs: 5000 },
+    );
+    toast.dataset.cameraHint = "true";
+  }
+
+  /** Early-dismiss half of §2-b's "5초 또는 첫 제스처, 둘 중 빠른 쪽" rule — called from onPointerMove on any real orbit/pinch input. Idempotent no-op once already dismissed/timed out. */
+  dismissCameraHint() {
+    const toast = root.querySelector('.edge-card.defense-toast[data-camera-hint="true"]');
+    if (!toast) return;
+    if (this.toastTimer) { clearTimeout(this.toastTimer); this.toastTimer = null; }
+    toast.remove();
   }
 
   async resolveTerminal(snapshot) {

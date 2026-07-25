@@ -85,11 +85,15 @@ function webglTestCanvas() {
 // would create -- bypassing only THREE.WebGLRenderer, the one piece that
 // requires an actual GL implementation. Every method under test
 // (reconcileActors, updateCamera, ensureStageTerrain, dispose) runs its
-// real, unmodified implementation against this scene graph.
+// real, unmodified implementation against this scene graph. Includes
+// scene.fog/ambientLight/keyLight/rimLight/rimLightTarget -- the same
+// objects mount() itself creates (battle-realtime-three.js mount()) --
+// since applyStagePalette()/updateCamera() now read/write them directly.
 function realtimeBattleHarness() {
   const adapter = new RealtimeBattle();
   adapter.disposed = false;
   adapter.scene = new THREE.Scene();
+  adapter.scene.fog = new THREE.Fog(0x030712, 1, 100);
   adapter.camera = new THREE.PerspectiveCamera(42, 640 / 360, 0.1, 200);
   adapter.terrainGroup = new THREE.Group();
   adapter.actorGroup = new THREE.Group();
@@ -101,6 +105,12 @@ function realtimeBattleHarness() {
   );
   adapter.gateMesh.visible = false;
   adapter.scene.add(adapter.gateMesh);
+  adapter.ambientLight = new THREE.AmbientLight(0x33445a, 1.1);
+  adapter.keyLight = new THREE.DirectionalLight(0xfff0d8, 1.6);
+  adapter.rimLight = new THREE.DirectionalLight(0x6ea8ff, 0.6);
+  adapter.rimLightTarget = new THREE.Object3D();
+  adapter.rimLight.target = adapter.rimLightTarget;
+  adapter.scene.add(adapter.ambientLight, adapter.keyLight, adapter.rimLight, adapter.rimLightTarget);
   return adapter;
 }
 
@@ -284,7 +294,30 @@ test("RealtimeBattle eases its commander-follow camera and snaps immediately und
     "reduced motion snaps the camera target directly back to the commander position",
   );
 
-  assert.equal(adapter.camera.position.y, 14.700000000000001, "camera keeps its fixed elevation offset above the follow target");
+  // Fixed-elevation assertion superseded by the free-orbit camera
+  // (camera-orbit-implementation-plan-20260725.md §5.2, decision-log.md
+  // D22 판정 6/판정 11): "camera keeps a fixed elevation offset" is no
+  // longer a true invariant once orbit()/zoom() exist. What must hold
+  // instead is "the current orbit state (orbitYaw/orbitPitch/zoomFactor)
+  // is reflected deterministically in camera.position via the spherical-
+  // coordinate formula" -- verified here against the DEFAULT orbit state
+  // (adapter.updateCamera() was never given an orbit()/zoom() call above,
+  // so orbitYaw/orbitPitch/zoomFactor are still at their constructor
+  // defaults) using an independently-computed expectation, not by calling
+  // back into the implementation under test.
+  assert.equal(adapter.orbitYaw, 0, "orbit state is untouched by updateCamera -- still the default yaw");
+  const expectedPitch = 65 * (Math.PI / 180);
+  assert.ok(Math.abs(adapter.orbitPitch - expectedPitch) < 1e-12, "orbit state is untouched by updateCamera -- still the default 65° pitch");
+  const expectedZoom = Math.hypot(14.7, 14.7);
+  assert.ok(Math.abs(adapter.zoomFactor - expectedZoom) < 1e-9, "orbit state is untouched by updateCamera -- still the default zoom distance");
+
+  const expectedHorizontalRadius = expectedZoom * Math.cos(expectedPitch);
+  const expectedHeight = expectedZoom * Math.sin(expectedPitch);
+  const expectedX = adapter.cameraTarget.x + expectedHorizontalRadius * Math.sin(adapter.orbitYaw);
+  const expectedZ = adapter.cameraTarget.z + expectedHorizontalRadius * Math.cos(adapter.orbitYaw);
+  assert.ok(Math.abs(adapter.camera.position.y - expectedHeight) < 1e-9, "camera elevation is the default orbit state's zoomFactor*sin(orbitPitch), not a hardcoded constant");
+  assert.ok(Math.abs(adapter.camera.position.x - expectedX) < 1e-9, "camera X position matches the default orbit state's spherical-coordinate formula");
+  assert.ok(Math.abs(adapter.camera.position.z - expectedZ) < 1e-9, "camera Z position matches the default orbit state's spherical-coordinate formula");
 });
 
 test("RealtimeBattle resolves a terrain model for every authored stage without touching the snapshot", () => {
