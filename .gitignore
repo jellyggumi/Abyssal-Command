@@ -18,6 +18,12 @@ node_modules/
 results/
 tmp/
 
+# Hourly studio-loop runtime state (scripts/hourly-studio-cycle.sh): per-pass
+# logs, lockfile, and pass counter. Machine-local execution bookkeeping -- the
+# loop's actual OUTPUT is normal commits plus _workspace/ retrospectives, both
+# of which ARE tracked.
+.studio-loop/
+
 # Local generation diagnostics and Python bytecode
 .debug-codex-imagegen/
 
