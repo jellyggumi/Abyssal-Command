@@ -262,6 +262,27 @@ const RIG_ACTION_KEYS = Object.freeze([
 // WORLD_SCALE world units, so idle jitter from camera-relative rounding
 // never falsely reads as "move".
 const MOVE_EPSILON = 0.01;
+
+// --- Presentation-layer facing rotation (D23 Phase 1) ---------------------
+// Actors turn to face the direction they are travelling. This is PURELY a
+// render-side read of consecutive snapshot positions: nothing here is ever
+// written back into the simulation, so getRunDigest() cannot observe it
+// (D23's hard constraint -- the renderer may only read a frozen snapshot).
+//
+// MODEL_FORWARD_YAW_OFFSET compensates for the authored forward axis of the
+// GLB library. Measured, not assumed: rendering companions/ember-cohort.glb
+// from 4 cardinal angles under even 4-way lighting puts the face, chest
+// armour and forward-held weapon at Blender -Y, which the glTF importer's
+// Y-up conversion maps to +Z in three.js space -- so yaw 0 already aims the
+// model along +Z and no correction is needed. All 43 characters come from
+// one rig-and-animate batch (scripts/rig-and-animate-asset-blender.py), so
+// this is a library-wide constant rather than a per-asset table; a future
+// batch authored to a different axis is corrected here alone.
+const MODEL_FORWARD_YAW_OFFSET = 0;
+// Radians per second. Fast enough that a full reversal completes in ~0.26s
+// (visible as a turn, not a slide), slow enough that the turn reads as
+// motion at all -- an instant snap loses the cue entirely.
+const FACING_TURN_RATE = 12;
 // Verified event field shapes (defense-run-simulation.js emit() call
 // sites), not inferred: WEAPON_FIRED.entityId is the shooter (commander or
 // companion) on every ranged auto-attack; ENEMY_ATTACK.entityId is the
@@ -936,6 +957,11 @@ export class RealtimeBattle {
       root: null, kind, modelPath, loading: Boolean(modelPath),
       mixer: null, actions: {}, activeActionKey: null, targetHeight: actorTargetHeight(entity),
       oneShotUntilMs: 0, moving: false, lastX: null, lastZ: null,
+      // Facing state (D23 Phase 1). `yaw` is the rendered angle, eased
+      // toward `targetYaw` in updateAnimations(); both stay null until the
+      // actor's first real movement, so a freshly spawned actor keeps its
+      // authored orientation instead of snapping to an arbitrary default.
+      yaw: null, targetYaw: null,
     };
     this.actors.set(entity.id, record);
     if (!modelPath) {
@@ -1013,6 +1039,24 @@ export class RealtimeBattle {
       const dx = p.x - record.lastX;
       const dz = p.z - record.lastZ;
       record.moving = Math.hypot(dx, dz) > MOVE_EPSILON;
+      // Re-aim only while actually travelling (D23 Phase 1). Below
+      // MOVE_EPSILON the delta is rounding noise with no meaningful
+      // direction, and re-aiming on it would make a standing actor spin;
+      // reusing the locomotion threshold keeps facing and the move/idle
+      // animation switch agreeing about what counts as movement.
+      // atan2(dx, dz) -- not the usual (y, x) argument order -- because a
+      // three.js rotation.y of T aims local +Z at (sin T, cos T), so the
+      // x-component is the sine term here.
+      if (record.moving) {
+        record.targetYaw = wrapAngle(Math.atan2(dx, dz) + MODEL_FORWARD_YAW_OFFSET);
+        // First movement: adopt the heading outright. Easing in from a
+        // null/zero start would spin the actor from an arbitrary angle it
+        // was never actually facing.
+        if (record.yaw === null) {
+          record.yaw = record.targetYaw;
+          record.root.rotation.y = record.yaw;
+        }
+      }
     }
     record.lastX = p.x;
     record.lastZ = p.z;
@@ -1284,6 +1328,36 @@ export class RealtimeBattle {
       .catch(() => {});
   }
 
+  // Eases one actor's rendered yaw toward the heading syncActorPosition()
+  // derived from its travel direction (D23 Phase 1). Split out of
+  // updateAnimations() so the facing rule is testable on its own and so an
+  // unrigged actor (no mixer, so no animation work) still turns.
+  //
+  // Frame-rate independent: the per-frame factor is 1 - e^(-rate*dt), which
+  // converges on the same angle in the same wall-clock time whether the
+  // frame took 8ms or 33ms. A bare `yaw += diff * k` would turn faster on a
+  // high-refresh display and slower on a janky frame.
+  //
+  // Under reduced-motion the turn is applied instantly instead of eased,
+  // matching updateCamera()'s existing treatment of the follow-pan: the
+  // actor still ends up facing the right way (facing is information, not
+  // decoration -- suppressing it entirely would hide which way an enemy is
+  // heading), only the animated sweep is removed.
+  updateActorFacing(record, deltaSeconds) {
+    if (!record.root || record.targetYaw === null) return;
+    if (record.yaw === null) {
+      record.yaw = record.targetYaw;
+    } else if (this.reducedMotion) {
+      record.yaw = record.targetYaw;
+    } else {
+      // Shortest-path delta: wrapAngle folds a +350 degree turn into -10.
+      const diff = wrapAngle(record.targetYaw - record.yaw);
+      const t = 1 - Math.exp(-FACING_TURN_RATE * deltaSeconds);
+      record.yaw = wrapAngle(record.yaw + diff * t);
+    }
+    record.root.rotation.y = record.yaw;
+  }
+
   // Steps every live actor's AnimationMixer by real elapsed time and returns
   // one-shot combat beats (attack/hit/die/...) to locomotion (idle/move)
   // once their clip finishes -- called once per renderSnapshot() after
@@ -1294,6 +1368,7 @@ export class RealtimeBattle {
     this.lastAnimMs = nowMs;
     for (const record of this.actors.values()) {
       if (record.mixer) record.mixer.update(delta);
+      this.updateActorFacing(record, delta);
       if (record.oneShotUntilMs && nowMs >= record.oneShotUntilMs) {
         record.oneShotUntilMs = 0;
         this.crossfadeToAction(record, record.moving ? "move" : "idle", 0.15);

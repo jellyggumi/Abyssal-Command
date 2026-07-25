@@ -517,3 +517,54 @@ pedestal 원점 관례 설명, `vendor/three.core.js` 서드파티 주석)이었
 `snapshot -> 시각효과` 단방향이어야 하며, 이 조건은 렌더러 계약 테스트로 검증한다.
 
 **반영**: `production/task-manifest.md` 백로그 등록, 본 항목.
+
+## D24 — 시간별 자율 개선 루프 도입: 안전 봉투 우선, 동시 세션 충돌 방지
+
+**배경**: 사용자가 "매시간 반복해서 game-studio-harness로 UI·코어루프(디펜스/오펜스+RPG 성장)를
+개선, 레퍼런스 딥리서치, 기존 리소스 활용, 스테이지 분위기·조작감 집중, 매시간 회고로 직관성·밸런스·
+코어타임 디벨롭, 위키 업데이트"를 상시 작업으로 요청.
+
+**구조 판정**: 1회 호출 = **1개 축의 완결된 개선 패스**(3-스테이지 사이클 전체 아님). 5축
+(코어루프·조작감 / UI·정보구조 / RPG성장·캐릭터 / 스테이지구성·분위기 / 밸런스·코어타임)을
+패스번호 mod 5로 순환. 하네스 원칙 #1(사이클당 한 모드)의 시간 단위 적용 — 한 패스에 두 축을
+섞으면 둘 다 얕아진다.
+
+**측정으로 발견한 환경 결함 4건** (전부 루프를 조용히 망가뜨렸을 것):
+1. `timeout`(GNU coreutils) 이 머신에 없음 — `timeout 3000s claude ...`는 즉시 127로 종료해
+   매시간 틱이 "성공 로그를 남기는 no-op"이 됐을 것. bash 워치독으로 교체.
+2. `--permission-mode acceptEdits`만으로는 Bash가 차단됨(비대화형 `-p`에서 게이트된 도구 =
+   거부). 실측: 이 저장소에서 `git log`와 위키 `ls` 둘 다 BLOCKED → 매 패스가 테스트·커밋·위키
+   전부 불가. `--allowedTools` 명시로 해결.
+3. launchd의 최소 PATH에 `claude`(~/.local/bin)도 `node`(~/.nvm/...)도 없음 — 스크립트와
+   plist 양쪽에 고정.
+4. 사용자 전역 설정의 `LLM_WIKI_VAULT`/`OBSIDIAN_VAULT_PATH`가 **무관한 Unity 프로젝트**를
+   가리킴(stale) — 패스가 상속하면 이 게임의 위키 갱신을 엉뚱한 볼트에 기록. 드라이버에서 override.
+
+또한 상임 브리프를 헤드리스 런타임 기준으로 교정: 패스에는 대화형 `browser` 도구가 없으므로
+(Read/Edit/Bash/Write/Agent/Skill뿐) 라이브 UI 검증은 이 저장소가 이미 쓰는 `tests/*-browser.cjs`
+Playwright 패턴으로 라우팅. 스킬은 `skill://` URI가 아니라 이름으로 참조(game-studio-harness는
+`.claude/skills/`에 프로젝트 스코프).
+
+**동시 세션 충돌 — 실제로 발생**: 루프 구축 중 다른 에이전트 세션이 이 저장소에 활발히 쓰고 있음을
+확인(`battle-realtime-three.js` 수정 + 신규 리깅 스크립트 2개, 그중 하나가 12초 프로브 동안
+28377→30862 B로 증가). dirty-tree 가드가 설계대로 충돌 대신 스킵했으나, **패스 종료 시점의 두
+동작이 이 조건에서 위험**했다 — 트리가 clean하다고 보장되는 시점은 패스 *시작*뿐이기 때문:
+- green suite + dirty tree → `git add -A` 커밋: 남의 진행 중 작업을 이 루프 명의로 쓸어담음
+  (오늘 되돌린 graphify-out/ 300+ 파일 사고와 같은 실패).
+- red suite + dirty tree → `git checkout -- .`: 오귀속을 넘어 **남의 미커밋 작업을 복구 불가하게
+  삭제**. 가장 그럴듯한 사고 시퀀스가 바로 이 동시 케이스 — 남의 미완성 편집이 suite를 red로 만들고,
+  드라이버가 그것을 지운다.
+→ **판정**: 드라이버는 귀속 불가능한 상태를 절대 건드리지 않는다. 파괴적 git 연산 0건
+(`checkout`/`add -A`/`clean` 전부 제거), 보고만 한다. 패스 에이전트가 자기 작업을 커밋하는 것이
+계약이며, 남은 dirty는 사람에게 넘긴다.
+
+**안전 봉투 (각 항목은 이 프로젝트가 실제로 겪은 실패에 대응)**:
+- `git push` 절대 금지 — 자동 푸시는 라이브 Pages로 바로 배포됨
+- lockfile: 이전 패스가 시간을 초과하면 큐잉이 아니라 **스킵**
+- dirty tree에서 시작 거부
+- 드라이버가 **직접** 전체 테스트를 재실행 — 에이전트 자기 보고는 증거가 아니다
+- 스킵을 `state.json`에 기록(`consecutiveSkips`, 3회 연속 시 경고) — dirty 상태가 며칠 이어지면
+  루프가 **침묵 속에 굶는다**. 정상 동작과 구분 불가한 이 실패는 위 1번(127 no-op)과 같은 부류다.
+
+**반영**: `scripts/hourly-studio-cycle.sh`(드라이버), `scripts/hourly-studio-prompt.md`(상임 브리프),
+`~/Library/LaunchAgents/com.abyssalsurge.studio-loop.plist`(매시 정각), `.gitignore`(`.studio-loop/`).

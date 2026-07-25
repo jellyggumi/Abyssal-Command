@@ -320,6 +320,89 @@ test("RealtimeBattle eases its commander-follow camera and snaps immediately und
   assert.ok(Math.abs(adapter.camera.position.z - expectedZ) < 1e-9, "camera Z position matches the default orbit state's spherical-coordinate formula");
 });
 
+// D23 Phase 1: actors turn to face the direction they travel. These assert
+// the OBSERVABLE result (root.rotation.y) rather than the easing internals,
+// so a future re-tuning of FACING_TURN_RATE stays green while an actor that
+// silently stops turning fails.
+function facingActor(adapter, id) {
+  const record = adapter.actors.get(id);
+  // ensureActor() defers the real GLB load, so the harness stands in a bare
+  // Object3D root -- the facing code only ever touches root.rotation.y, so
+  // this exercises the identical path a loaded model takes.
+  record.root = new THREE.Object3D();
+  adapter.actorGroup.add(record.root);
+  return record;
+}
+
+test("RealtimeBattle turns an actor to face its direction of travel", () => {
+  const adapter = realtimeBattleHarness();
+  // ARENA-space coordinates (defense-run-simulation.js ARENA: 24000x12000),
+  // matching what getRunSnapshot() actually emits.
+  const at = (x, y) => ({ commander: { id: "commander", x, y } });
+
+  adapter.reconcileActors(at(12000, 6000));
+  const record = facingActor(adapter, "commander");
+  // Seed lastX/lastZ so the next sync produces a real delta.
+  adapter.reconcileActors(at(12000, 6000));
+
+  // Travel +y in ARENA space, which worldPoint() maps to +z in world space.
+  adapter.reconcileActors(at(12000, 9000));
+  assert.equal(record.moving, true, "a large position delta must read as movement");
+  assert.ok(record.targetYaw !== null, "movement must produce a facing target");
+  // atan2(dx=0, dz=+) === 0: +z is the model's authored forward.
+  assert.ok(Math.abs(record.targetYaw) < 1e-9, "travelling +z aims at yaw 0");
+  assert.ok(Math.abs(record.root.rotation.y) < 1e-9, "first movement adopts the heading outright rather than easing from an unfaced default");
+
+  // Travel +x, which must aim at +90 degrees.
+  adapter.reconcileActors(at(18000, 9000));
+  assert.ok(
+    Math.abs(record.targetYaw - Math.PI / 2) < 1e-9,
+    `travelling +x aims at +PI/2, got ${record.targetYaw}`,
+  );
+
+  // Easing is time-based: a generous step must converge on the target.
+  adapter.updateActorFacing(record, 1.0);
+  assert.ok(
+    Math.abs(record.root.rotation.y - Math.PI / 2) < 1e-3,
+    `a full second of easing must land on the target heading, got ${record.root.rotation.y}`,
+  );
+  assert.doesNotThrow(() => adapter.dispose());
+});
+
+test("RealtimeBattle holds an idle actor's facing steady and snaps it under reduced motion", () => {
+  const adapter = realtimeBattleHarness();
+  const at = (x, y) => ({ commander: { id: "commander", x, y } });
+
+  adapter.reconcileActors(at(12000, 6000));
+  const record = facingActor(adapter, "commander");
+  adapter.reconcileActors(at(12000, 6000));
+  adapter.reconcileActors(at(18000, 6000)); // travel +x -> yaw +PI/2
+  const aimed = record.targetYaw;
+
+  // Standing still must not re-aim: sub-epsilon jitter has no meaningful
+  // direction, and re-aiming on it would make a stationary actor spin.
+  adapter.reconcileActors(at(18000, 6000));
+  assert.equal(record.moving, false, "no movement between identical positions");
+  assert.equal(record.targetYaw, aimed, "an idle actor keeps its last heading instead of re-aiming on noise");
+
+  // Reduced motion keeps the information (final heading) but drops the
+  // animated sweep -- same treatment updateCamera() gives the follow-pan.
+  const reduced = realtimeBattleHarness();
+  reduced.reducedMotion = true;
+  reduced.reconcileActors(at(12000, 6000));
+  const rr = facingActor(reduced, "commander");
+  reduced.reconcileActors(at(12000, 6000));
+  reduced.reconcileActors(at(12000, 9000)); // yaw 0
+  reduced.reconcileActors(at(18000, 9000)); // yaw +PI/2
+  reduced.updateActorFacing(rr, 1 / 60);    // one frame only
+  assert.ok(
+    Math.abs(rr.root.rotation.y - Math.PI / 2) < 1e-9,
+    "reduced motion applies the new heading within a single frame instead of easing",
+  );
+  assert.doesNotThrow(() => adapter.dispose());
+  assert.doesNotThrow(() => reduced.dispose());
+});
+
 test("RealtimeBattle resolves a terrain model for every authored stage without touching the snapshot", () => {
   const adapter = realtimeBattleHarness();
   for (const stage of STAGES) {
