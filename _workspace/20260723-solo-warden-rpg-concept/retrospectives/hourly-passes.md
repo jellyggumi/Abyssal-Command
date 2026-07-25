@@ -206,3 +206,70 @@ HP 7,200인데 XP 8, 같은 레벨업에 2.4배 노동. 인런 성장 아크가 
   리팩터(볼라타일 쿨다운 스타일을 innerHTML 밖으로)해야 한다 — 이번엔 정적 글로우로 우회, 리팩터는
   범위 밖으로 유지.
 - Pass #1의 미해결(4초 스탠스 쿨다운 "체감 지루함")은 여전히 밸런스 축(%5=5) 소관.
+
+---
+
+## Pass #7 — 2026-07-26 05:00 KST · 축: UI / 정보구조 (%5 = 2)
+
+**HEAD at start**: `39fdddb`
+
+### 고른 초점
+축 순환 기본값(%5=2 → UI/정보구조) 채택. 더 시급한 다른 축 없음 — 직전 패스들이 이월한
+월드공간 HUD 회귀는 `41b12d5`(D25/D26)가 이미 복원 완료. **이 루프의 첫 성공한 UI 패스**
+(state.json history: 패스 #2~#4는 rc=1/커밋0으로 실패, 이후 UI 축 미실행).
+
+### 리서치 재사용 (재조사 안 함 — 규칙 준수)
+기존 UI survey `design/trend-survey/game-ui-behance-2026-07-25.md`가 이 축을 이미 커버
+(Dark RPG/디펜스 UI 3건 조사, "엣지 전용 HUD가 장르 관례와 이미 정합" 결론). 신규 survey
+미실시. 이 survey는 XP 진행 바를 직접 다루진 않았으나 "엣지 HUD 안에서의 정보 밀도 개선
+여지"를 백로그로 남겼고, 이번 패스가 그 정보 밀도 갭 중 가장 근본적인 것(성장 진행 가시성)을
+채운다.
+
+### 무엇을 바꿨는가 (측정값 포함)
+**발견 (실측)**: 전투 중 HUD는 커맨더 레벨을 `#battle-status` 텍스트 "Lv.N"으로만 노출
+(`app.js:1364`), 다음 성장/스킬 선택까지의 **진행도는 완전히 비가시**. `grep`으로 인런 XP
+바가 코드·CSS 어디에도 없음 확인. XP 진행 바는 서바이버/ARPG 정보구조의 최우선 요소
+(Vampire Survivors 상단 XP 바, Archero/Brotato XP 진행)인데 부재. Pass #5(D27)의 후반
+XP 스케일 개선이 레벨업 케이던스를 스테이지별로 바꿨으나 플레이어가 그 진행을 볼 수단이
+없어 체감이 반감됐다.
+
+**구현**: 엣지 HUD 상단 좌측 미션 패널에 `#battle-xp-label`("Lv.N · xp/cost") + 얇은 채움
+바 `#battle-xp-fill`. 비용은 시뮬 레벨업 임계값 미러링(`XP_GROWTH[level-1] || .at(-1)`,
+`defense-run-simulation.js:641/1689`)해 성장 오퍼 시점에 정확히 100% 도달. 매직넘버 0. 색은
+아케인 바이올렛→젠스골드 "에코" 그라디언트(내구·게이트 바와 시각 구별). reduced-motion에서
+transition 제거. 순수 클라 렌더(snapshot.commander) → getRunDigest 무영향, 신규 에셋/네트워크 0.
+
+**측정/검증 (자기보고 아님)**:
+- node --test 전체: **189 tests / 188 pass / 0 fail / 1 skip**(사전존재 g2 fixture) — 회귀 0.
+- 신규 브라우저 테스트 `verifyXpProgressBar`(결정론 frame-pump): (a) `#defense-edge-hud`
+  내 렌더(엣지 제약), (b) 비용이 공개 `XP_GROWTH` 계약값, (c) 채움 폭 == 라벨 xp/cost 비율
+  (정적 아님, 라이브 반영)을 실증. 격리 실행: `{level:1, xp:0, cost:30, widthPct:0,
+  label:"Lv.1 · 0/30", insideEdgeHud:true}`.
+- 채움 실증(400프레임 프로브): `Lv.1 0/30@0% → 20/30@66.7% → 78/30@100%(클램프) →
+  Lv.3 43/85@50.6%`. 레벨 1→3, 비용 30→85 갱신, 폭이 비율 정확 추종.
+- 스크린샷 `/tmp/xp-progress-bar-filled.png`: 상단 좌측 "Lv.3 · 43/85" + 바이올렛-골드 바
+  ~50% 채움, 중앙 미가림, 하단 내구 바와 색 구별 확인. 실행 명령: `node tests/defense-survivor-browser.cjs`.
+- 커밋 `e56c897`.
+
+### 무엇이 여전히 미해결인가 (은폐 없음)
+1. **`.cjs` 스위트 전체는 여전히 exit 1** — 원인은 **사전존재 노후 테스트
+   `verifyBossMeshRegression`**(제거된 `abyssal-command-resource-pack.glb` 로드 시도, D26 소관)
+   하나뿐. **다른 세션 소관 — 미접촉**(규칙: 남의 소관 미접촉). 내 테스트를 그 앞에 배치해
+   도달 가능하게 유지. 격리 실행으로 내 테스트의 positive 통과 증거 확보. 이 stale 테스트
+   정리는 여전히 다음 QA 패스 후보(pass #6도 동일 지적).
+2. **XP 라벨의 aria 미노출(의도적)**: XP 바 컨테이너는 `aria-hidden`(내구 바 `.gate-panel-bars`와
+   동종 처리). 레벨은 이미 `#battle-status`(aria-live polite)가 "Lv.N"으로 announce하므로 중복
+   방지. 단, "다음 레벨까지 남은 XP"는 스크린리더에 안 읽힌다 — 매 프레임 갱신이라 aria-live로
+   넣으면 스팸이 됨. 향후 접근성 패스에서 저빈도 요약(예: 레벨업 시 1회 announce)로 보강 여지.
+3. **정성 만족도는 사람 검증 필요** — 자동 테스트는 렌더·비용 계약·폭 비율까지 실증. "바 위치/
+   크기/색이 읽기 좋은가"는 사람이 브라우저에서 봐야 하는 정성 항목(Cycle1부터의 표준 결핍).
+
+### 다음 패스가 이 축(UI/정보구조)을 다시 잡을 때 알아야 할 것
+- 얇은 진행 바 인프라 패턴이 이제 3종(내구 `.integrity-meter`, 게이트 `.gate-panel-bar-track`,
+  XP `.hud-xp-track`). 새 진행 지표가 필요하면 같은 얇은-바 + reduced-motion 패턴 재사용.
+- UI survey(`game-ui-behance-2026-07-25.md`)가 남긴 다음 IA 갭 후보: **인벤토리 상세 패널**
+  (선택 아이템의 아이콘+설명+사용처를 좌우 분할로 크게 — 현재는 hover 요약 1줄). 낮은 우선순위로
+  기록됨. 다음 UI 패스 1순위 후보.
+- `#battle-xp-fill`은 인라인 `style.width` %로 갱신 — 다른 라이브 지표 추가 시 동일 방식.
+- 미해결 #2(XP aria 접근성)는 접근성 전용 패스가 잡을 것. 매 프레임 갱신 요소의 aria 정책
+  (저빈도 요약 announce)은 이 게임 전반의 미해결 주제.

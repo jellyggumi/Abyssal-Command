@@ -711,3 +711,40 @@ Cycle 3 커밋 `9a60a49`에는 존재했으나 렌더러를 통째로 교체한 
 
 **반영**: `defense-run-simulation.js`(spawnEnemy XP 스케일 + 주석), `tests/defense-run-simulation.test.mjs`
 (+1 테스트: cinder 항등 가드 + zenith 스케일 실증), 본 항목.
+
+## D28 — UI 패스 #7(%5=2): 인런 XP-투-넥스트레벨 진행 바 추가 (전투 중 성장 진행 가시화)
+
+> **번호 근거**: append-only 규약. 쓰기 직전 `awk`로 파일 끝 마지막 헤더 확인 → D27.
+> D26은 HEAD 커밋이 본문에서 선점 참조(verifyBossMeshRegression 노후 테스트)했으므로
+> 그 세션 소유로 두고 이 항목은 **D28**을 취한다.
+
+**축**: UI / 정보구조(%5=2). 순환 기본값 그대로 채택 — 더 시급한 다른 축 없음(직전 패스들이
+이월한 월드공간 HUD 회귀는 HEAD 이전 `41b12d5`(D25/D26)가 이미 복원 완료). 이 루프의 **첫
+성공한 UI 패스**(패스 #2~#4는 rc=1, 커밋 0으로 실패했음을 state.json history에서 확인).
+
+**발견 (실측)**: 전투 중 HUD는 커맨더 레벨을 `#battle-status` 텍스트 "Lv.N"으로만 노출
+(`app.js:1364`)했고, **다음 성장/스킬 선택까지의 진행도는 전혀 표시되지 않았다**. XP 진행
+바는 서바이버/ARPG 장르 정보구조의 가장 기본 요소(Vampire Survivors 상단 풀폭 XP 바,
+Archero·Brotato XP 진행)인데 부재. `grep` 실측으로 인런 XP 바가 코드·CSS 어디에도 없음 확인.
+Pass #5(D27)가 후반 스테이지 XP를 난이도에 비례 스케일하면서 레벨업 케이던스가 스테이지마다
+달라졌는데, 플레이어는 그 진행을 볼 수단이 없어 D27 개선의 체감이 반감됐다.
+
+**판정 — 채택**. 엣지 HUD 상단 좌측 미션 패널(`hud-mission`)에 얇은 진행 바 추가:
+`#battle-xp-label`("Lv.N · xp/cost") + 채움 바 `#battle-xp-fill`. 비용은 시뮬의 레벨업
+임계값을 그대로 미러링(`XP_GROWTH[level-1] || XP_GROWTH.at(-1)` — `defense-run-simulation.js:641/1689`)
+해 바가 성장 오퍼가 뜨는 정확한 순간 100%에 도달. 매직넘버 0(공개 `XP_GROWTH` 계약 재사용).
+
+- **결정론/무과금/오프라인 격리**: 순수 클라 렌더(`snapshot.commander` 읽기만) → 시뮬 미접촉,
+  `getRunDigest` 무영향. 신규 에셋/네트워크 0. 색은 아케인 바이올렛→젠스골드 "에코" 그라디언트로
+  내구(적/골드/녹)·게이트(청) 바와 시각 구별. reduced-motion에서 transition 제거.
+- **엣지 HUD 제약(D5) 준수**: 바는 `#defense-edge-hud` 상단 좌측 패널 안 — 중앙 미가림.
+  브라우저 테스트가 `#defense-edge-hud #battle-xp-fill` 존재로 이를 실증.
+- **검증(자기보고 아님)**: node --test 189/188/0/1(회귀 0). 신규 브라우저 테스트
+  `verifyXpProgressBar`가 (a) 엣지 HUD 내 렌더, (b) 비용이 공개 XP_GROWTH 계약값, (c) 채움
+  폭이 라벨 xp/cost 비율과 일치(정적 아님, 라이브 스냅샷 반영)를 결정론 frame-pump로 실증.
+  400프레임 프로브: Lv.1 0/30@0% → 78/30@100%(클램프 동작) → Lv.3 43/85@50.6%(레벨/비용
+  갱신·폭 비율 추종). 스크린샷 `/tmp/xp-progress-bar-filled.png`.
+
+**반영**: `app.js`(XP_GROWTH import + hud-xp 마크업 + render 로직), `styles.css`(.hud-xp
+스타일 + reduced-motion), `tests/defense-survivor-browser.cjs`(+verifyXpProgressBar), 본 항목.
+커밋 `e56c897`.
