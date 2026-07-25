@@ -1502,6 +1502,74 @@ export class RealtimeBattle {
     this.pendingInputFeedback = null;
   }
 
+  /**
+   * Projects a THREE world-space point to normalized device coordinates
+   * ([-1,1] both axes, +y up, THREE convention) via the camera's current
+   * view-projection matrix. Safe to call any time after renderSnapshot() has
+   * run at least once this session (WebGLRenderer.render() updates the
+   * camera's matrixWorldInverse/projectionMatrix internally before use).
+   *
+   * Returns null ONLY for points behind the camera (unrecoverable — no
+   * meaningful screen position exists: for this camera's 0 < near < far,
+   * ndc.z leaves [-1,1] only for view-space z >= 0, i.e. behind or exactly
+   * at the camera plane) or when the renderer is unmounted/disposed (no 3D
+   * camera at all — the Canvas2D fallback is a separate class without these
+   * methods, so its callers no-op via optional chaining).
+   *
+   * Otherwise ALWAYS returns { x, y, visible }: x/y are the raw (unclamped)
+   * NDC coordinates, visible=true only when both are within [-1,1]. This
+   * lets callers either hide on visible===false (nameplates, capture prompt)
+   * or clamp x/y to the viewport edge for an offscreen-direction indicator
+   * (waypoint arrow) — both are legitimate uses of an in-front-but-outside-
+   * frustum point, so the raw values are preserved rather than discarded.
+   *
+   * D25 regression restoration: this method and its two callers below were
+   * lost in the renderer-replacement merge 5a5f63a; every world-space HUD
+   * element (nameplates, damage numbers, waypoint, capture prompt) silently
+   * no-op'd via app.js's `?.` guards until this restore. Ported forward to
+   * the current field names (this.camera, this.actors/record.root, WORLD_SCALE).
+   */
+  worldToNDC(worldPoint) {
+    if (this.disposed || !this.camera) return null;
+    const ndc = worldPoint.clone().project(this.camera);
+    if (ndc.z > 1 || ndc.z < -1) return null; // behind camera (or beyond an inverted far plane — not reachable with this camera's near/far)
+    const visible = ndc.x >= -1 && ndc.x <= 1 && ndc.y >= -1 && ndc.y <= 1;
+    return { x: ndc.x, y: ndc.y, visible };
+  }
+
+  /**
+   * NDC projection of a tracked actor's current rendered GROUND anchor
+   * (record.root sits at y=0 on the ground plane per reconcileActors/
+   * updateEntity; its x/z ease toward the sim position, so this follows the
+   * mesh the player actually sees, trail and all). Callers that want a label
+   * to float "above" the actor (nameplate, damage number) apply that offset
+   * in CSS screen-space pixels AFTER this projection, not here — this scene's
+   * world-space extent is stage-dependent, so a world-unit height offset is
+   * not a stable "above the head" distance across stages/zoom and can
+   * trivially overshoot the frustum, incorrectly reporting visible:false for
+   * an on-screen actor. Screen-space pixel offsets are zoom-varying by design
+   * (matches how nameplates/floating text behave in practice) but never break
+   * visibility.
+   */
+  projectEntityToScreen(entityId) {
+    const record = this.actors.get(entityId);
+    if (!record?.root) return null;
+    return this.worldToNDC(record.root.position.clone());
+  }
+
+  /**
+   * NDC projection of a fixed sim-space ground point (extraction zone,
+   * objective gate), pre-normalized by the caller to [-1,1] sim space and
+   * mapped to world units with the same WORLD_SCALE worldPoint() uses for
+   * normalized entities. See projectEntityToScreen() for why there is no
+   * world-unit height offset here.
+   */
+  projectStaticPoint(normalizedX, normalizedY) {
+    if (this.disposed || !this.camera) return null;
+    const point = new THREE.Vector3(normalizedX * WORLD_SCALE, 0, normalizedY * WORLD_SCALE);
+    return this.worldToNDC(point);
+  }
+
   renderSnapshot(snapshot = {}, frame = {}) {
     if (this.disposed || !this.renderer || !this.camera || !this.scene) return;
     const { width, height } = bounds(this.canvas, this.viewport ?? frame?.viewport);
