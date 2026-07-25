@@ -147,3 +147,12 @@ onward) stays gated until that lands; `browser_contract` and
 - 4개 보스(gate-sovereign/tide-warden/lantern-tyrant/veiled-concordat) 리깅 — bone-heat weighting이 로브/케이프 실루엣에서 결정론적으로 실패, pedestal-cut 휴리스틱 자체의 개선(예: 볼록껍질 기반 waist 탐지) 또는 수동 리토폴로지가 필요. 정적 메시로 폴백 렌더링(형태/색상은 정상, 애니메이션만 없음) — 게임플레이 블로킹 아님
 - (정정: 이전 초안이 여기서 주장한 "5번째 적 아키타입 reinforce 미배치"는 오류 — `defense-catalog.js`/`battle-realtime-three.js` 재확인 결과 `ENEMY_MODELS`는 4개 아키타입(rusher/flanker/guardian/ranged→scout/shade/guard/possessed)만 정의, reinforce는 ASSET_AUDIT.md의 구 리소스팩 문서에만 존재하는 폐기된 5번째 유닛으로 현재 게임에 참조 없음 — 실제 결손 아님)
 - `--rc-*` 시맨틱 토큰(체력바/위협/역할배지 그라디언트)의 canon 팔레트 이관 — 이번 세션은 고노출 장식 표면(aurora/glow/portrait/glass)만 재도색, 기능색은 의도적으로 무변경(사용자가 명시적으로 "각 리소스" 개편을 요청했으나 기능적 UX 신호를 canon 팔레트로 대체하는 것은 별도 디자인 결정이 필요해 임의 확장하지 않음)
+
+## 백로그 — 물리엔진 2단계 도입 (D23, 사용자 승인)
+
+| 단계 | 범위 | 레이어 | 결정론 리스크 | 상태 |
+|---|---|---|---|---|
+| 1단계 | 연출 물리(동료 이동 관성/보간, 피격 반응, 이펙트 물리) | `battle-realtime-three.js` 전용 | **없음** — 렌더러 계약(`defense-renderer-contract.test.mjs`)이 스냅샷 읽기 전용을 강제하므로 `getRunDigest()`에 구조적 영향 불가 | 미착수 |
+| 2단계 | 시뮬 물리(넉백, 실제 비행 투사체, 유닛 충돌 분리) | `defense-run-simulation.js` | **높음** — 부동소수점 물리는 플랫폼 간 재현성 미보장, `defense-run-simulation.test.mjs:133` 바이트 동일 계약과 충돌 가능 | **스파이크 선행 필수** — "결정론 유지 가능한가" 측정 전 착수 금지 |
+
+**하드 제약**: 1단계 연출 물리는 어떤 경우에도 시뮬레이션 상태로 되먹이지 않는다(순수 `snapshot → 시각효과` 단방향). 렌더러 계약 테스트로 검증. 상세 근거: `decision-log.md` D23.
