@@ -91,6 +91,18 @@ const STANCE_COOLDOWN_TICKS = 4 * TICK_RATE;
 // stays tappable during cooldown, a blocked tap gets a brief visual nudge
 // instead of a hard-disabled state).
 const STANCE_BLOCK_SHAKE_MS = 260;
+// Transient post-SUCCESS confirmation window (control-feel-20260725.md §2.2:
+// a successful stance switch is the player's single most important real-time
+// decision — the defense↔offense transition — and until now landed with only
+// the STANCE_SWITCHED audio cue + a silent glyph swap, while a REJECTED tap
+// got a visible shake. Good feel gives success at least as much feedback as
+// failure. is-switched holds a STATIC glow (not a keyframe) for this window,
+// so it is churn-immune under the per-tick #battle-actions innerHTML rebuild
+// (the button subtree is torn down/recreated every ~40ms while the cooldown
+// ring advances; a keyframe would restart each rebuild and stutter, a static
+// held state re-applies identically). Non-motion, so it stays valid under
+// reduced-motion — the accessible success signal the shake cannot be.
+const STANCE_SWITCH_CONFIRM_MS = 520;
 // One-shot campaign flag for the orbit-camera discovery toast (§2-b) —
 // reuses the existing achievementIds array (campaign-state.js) as its
 // storage exactly like the real "stage-clear:*" entries it already holds
@@ -837,6 +849,13 @@ export class BattleSession {
     // deadline (performance.now()), never set at all under reduced-motion.
     this.lastStanceBlockEventId = null;
     this.stanceShakeUntil = 0;
+    // §2.2 stance-switch success confirmation (mirror of the block feedback
+    // above): lastStanceSwitchEventId dedupes repeated renders of the same
+    // STANCE_SWITCHED event; stanceConfirmUntil is a wall-clock deadline.
+    // Unlike the shake, this IS set under reduced-motion — the held glow is
+    // not motion, so it remains a valid accessible success signal.
+    this.lastStanceSwitchEventId = null;
+    this.stanceConfirmUntil = 0;
     // World-space HUD (Track 3, DOM-overlay pattern — ui/lane-hud-layout.md
     // section 4, Option B): companion nameplates/health bars, elite capture
     // prompt, floating damage numbers, all positioned via
@@ -1300,6 +1319,15 @@ export class BattleSession {
       this.lastStanceBlockEventId = blockedEvent.eventId;
       if (!this.motionQuery?.matches) this.stanceShakeUntil = performance.now() + STANCE_BLOCK_SHAKE_MS;
     }
+    // §2.2 stance-switch SUCCESS confirmation — same passive sim-event scan as
+    // the block feedback, applied to STANCE_SWITCHED. No reduced-motion guard:
+    // the is-switched glow is a static highlight, not motion, so it stays on
+    // as the accessible "switch confirmed" signal even when animations are off.
+    const switchedEvent = snapshot.events.find((event) => event.type === "STANCE_SWITCHED");
+    if (switchedEvent && switchedEvent.eventId !== this.lastStanceSwitchEventId) {
+      this.lastStanceSwitchEventId = switchedEvent.eventId;
+      this.stanceConfirmUntil = performance.now() + STANCE_SWITCH_CONFIRM_MS;
+    }
     const projection = this.projected(snapshot);
     const camera = this.updateCamera(projection.commander);
     const frame = {
@@ -1615,8 +1643,9 @@ export class BattleSession {
     const cooldownPct = onCooldown ? Math.min(100, Math.round((ticksRemaining / STANCE_COOLDOWN_TICKS) * 100)) : 0;
     const secondsRemaining = Math.ceil(ticksRemaining / TICK_RATE);
     const isBlocked = performance.now() < this.stanceShakeUntil;
+    const isSwitched = performance.now() < this.stanceConfirmUntil;
     const stanceLabel = `편성 스탠스: ${STANCE_LABELS[stance]}${onCooldown ? ` (전환까지 ${secondsRemaining}초)` : ""}`;
-    const stanceMarkup = `<button id="stance-cycle" class="stance-cycle-button${isBlocked ? " is-blocked" : ""}" style="--rc-cooldown-pct:${cooldownPct}" aria-live="polite" aria-label="${escapeHtml(stanceLabel)}"><span class="stance-glyph" aria-hidden="true">${STANCE_GLYPHS[stance]}</span></button>`;
+    const stanceMarkup = `<button id="stance-cycle" class="stance-cycle-button${isBlocked ? " is-blocked" : ""}${isSwitched ? " is-switched" : ""}" style="--rc-cooldown-pct:${cooldownPct}" aria-live="polite" aria-label="${escapeHtml(stanceLabel)}"><span class="stance-glyph" aria-hidden="true">${STANCE_GLYPHS[stance]}</span></button>`;
 
     const actions = root.querySelector("#battle-actions");
     const candidate = snapshot.eliteCandidate;

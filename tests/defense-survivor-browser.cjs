@@ -528,6 +528,125 @@ async function verifyBossMeshRegression(browser, hosting) {
   }
 }
 
+/**
+ * Stance-switch feedback coverage (control-feel-20260725.md §2.2/§2.3). The
+ * 3-stance selector IS the defense↔offense transition — the player's single
+ * most important real-time decision. A REJECTED (cooldown) tap has long shown a
+ * visible shake (.is-blocked), but a SUCCESSFUL switch landed with only the
+ * STANCE_SWITCHED audio cue + a silent glyph swap; this pass adds a static held
+ * glow (.is-switched) so success gets at least equal feedback. Both feedback
+ * paths are pure app.js render() reactions to sim-emitted STANCE_SWITCHED /
+ * STANCE_SWITCH_BLOCKED events — this exercises that real render path end to
+ * end (click -> queued input -> sim tick -> event -> DOM class), which no
+ * node-only test can (the class is set from performance.now() deadlines in the
+ * live render loop). Uses the same deterministic frame-pump harness as
+ * verifyWorldHudOverlay so tick advancement is a function of pump count, not
+ * the CI runner's real frame rate.
+ */
+async function verifyStanceSwitchFeedback(browser, hosting, campaign) {
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+  try {
+    await page.addInitScript(({ encoded, key }) => {
+      Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
+      localStorage.setItem(key, encoded);
+    }, { encoded: campaign.encoded, key: STORAGE_KEY });
+    await page.addInitScript(() => {
+      const queue = new Map();
+      let nextId = 1;
+      let syntheticNow = 0;
+      window.requestAnimationFrame = (callback) => { const id = nextId++; queue.set(id, callback); return id; };
+      window.cancelAnimationFrame = (id) => { queue.delete(id); };
+      window.__pumpFrame = (deltaMs) => {
+        syntheticNow += deltaMs;
+        const pending = [...queue.values()];
+        queue.clear();
+        for (const callback of pending) callback(syntheticNow);
+        return syntheticNow;
+      };
+    });
+    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").click();
+    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+
+    // Drive to a "quiet" battle frame (cutscene dismissed, no growth offer up —
+    // both pause tick advancement, so a queued STANCE_CYCLE would never process
+    // while either is present), then exercise the two feedback paths. Real
+    // wall-clock waits (setTimeout) drive the performance.now()-based confirm
+    // (520 ms) / shake (260 ms) deadlines, which the synthetic rAF clock does
+    // NOT touch (performance.now() is left real under the pump harness).
+    const pumpQuiet = async () => {
+      // Advance one frame while clearing anything that would pause ticks.
+      await page.evaluate(() => {
+        document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]")?.click();
+        const offer = document.querySelector("#defense-growth-offer");
+        offer?.querySelector("button[data-pick]")?.click();
+        window.__pumpFrame(100);
+      });
+      await page.waitForTimeout(0);
+    };
+    const stanceState = () => page.evaluate(() => {
+      const button = document.querySelector("#stance-cycle");
+      return {
+        exists: Boolean(button),
+        classes: button ? [...button.classList] : [],
+        glyph: button?.querySelector(".stance-glyph")?.textContent ?? null,
+        clean: !document.querySelector("#defense-growth-offer") && !document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]"),
+      };
+    });
+
+    // Phase A: reach a clean, actionable frame with the stance button present.
+    let ready = null;
+    for (let i = 0; i < 60; i += 1) {
+      await pumpQuiet();
+      const state = await stanceState();
+      if (state.exists && state.clean && state.glyph) { ready = state; break; }
+    }
+    assert.ok(ready, "the live battle must reach a clean frame exposing the #stance-cycle button");
+    const initialGlyph = ready.glyph;
+
+    // Phase B: a successful switch must add .is-switched and advance the glyph.
+    await page.evaluate(() => document.querySelector("#stance-cycle")?.click());
+    let switched = null;
+    for (let i = 0; i < 20; i += 1) {
+      await pumpQuiet();
+      const state = await stanceState();
+      if (state.glyph && state.glyph !== initialGlyph) { switched = state; break; }
+    }
+    assert.ok(switched, "clicking #stance-cycle must advance the formation stance (glyph changes)");
+    assert.ok(switched.classes.includes("is-switched"), `a successful stance switch must carry the .is-switched confirmation glow; saw classes ${JSON.stringify(switched.classes)}`);
+    assert.ok(!switched.classes.includes("is-blocked"), "a successful switch must not also carry the rejection shake class");
+
+    // Phase C: a second tap DURING the 4 s cooldown must be rejected — glyph
+    // frozen, .is-blocked shake shown (previously untested), no new switch.
+    await page.evaluate(() => document.querySelector("#stance-cycle")?.click());
+    let blocked = null;
+    for (let i = 0; i < 20; i += 1) {
+      await pumpQuiet();
+      const state = await stanceState();
+      if (state.classes.includes("is-blocked")) { blocked = state; break; }
+    }
+    assert.ok(blocked, "a cooldown-rejected stance tap must carry the .is-blocked shake class");
+    assert.equal(blocked.glyph, switched.glyph, "a rejected tap must not advance the formation stance");
+
+    // Phase D: after the confirm window elapses (520 ms real-time), the glow
+    // must clear (the class is a transient held state, not permanent).
+    await page.waitForTimeout(650);
+    await pumpQuiet();
+    const cleared = await stanceState();
+    assert.ok(!cleared.classes.includes("is-switched"), `the .is-switched glow must clear after its window; saw classes ${JSON.stringify(cleared.classes)}`);
+
+    assert.deepEqual(errors, [], "stance-switch feedback journey emitted unexpected page or console errors");
+    return { initialGlyph, switchedGlyph: switched.glyph, sawSwitched: true, sawBlocked: true, clearedAfterWindow: true };
+  } finally {
+    await context.close();
+  }
+}
+
 async function run() {
   const hosting = await startServer();
   let browser;
@@ -536,8 +655,9 @@ async function run() {
     const campaign = await seededWorldHudCampaign();
     const journey = await verifyPlaythroughJourney(browser, hosting);
     const worldHud = await verifyWorldHudOverlay(browser, hosting, campaign);
+    const stanceFeedback = await verifyStanceSwitchFeedback(browser, hosting, campaign);
     const bossMesh = await verifyBossMeshRegression(browser, hosting);
-    console.log(JSON.stringify({ pass: true, journey, worldHud, bossMesh }, null, 2));
+    console.log(JSON.stringify({ pass: true, journey, worldHud, bossMesh, stanceFeedback }, null, 2));
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => hosting.host.close(resolve));

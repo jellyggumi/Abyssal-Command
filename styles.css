@@ -438,6 +438,22 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
   25% { transform: translateX(-3px); }
   75% { transform: translateX(3px); }
 }
+/* Success confirmation (control-feel-20260725.md §2.2) — a successful stance
+   switch (the defense↔offense transition, the player's key real-time decision)
+   held only an audio cue + a silent glyph swap while a REJECTED tap got the
+   shake above; this gives success at least equal feedback. Deliberately a
+   STATIC held glow, NOT a keyframe: #battle-actions rebuilds the button subtree
+   every ~40ms as the cooldown ring advances, which would restart any animation
+   each rebuild and stutter — a static state re-applies identically, so the glow
+   is stable for STANCE_SWITCH_CONFIRM_MS then removed when the class drops.
+   Being non-motion it is intentionally NOT suppressed under reduced-motion
+   (unlike the shake), remaining the accessible "switch confirmed" signal. Uses
+   the same --canon-cyan-rift as the cooldown ring — one "confirmed entry" hue. */
+.stance-cycle-button.is-switched {
+  border-color: var(--canon-cyan-rift);
+  box-shadow: 0 0 0 1px var(--canon-cyan-rift), 0 0 12px -1px var(--canon-cyan-rift);
+}
+.stance-cycle-button.is-switched .stance-glyph { color: var(--canon-cyan-rift); }
 
 /* Ambient aurora drift (react-bits Aurora pattern) for the lobby hero backdrop — large,
    slow-moving soft gradients, purely decorative (aria-hidden), never blocks pointer events. */
