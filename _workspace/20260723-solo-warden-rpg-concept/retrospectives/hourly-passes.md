@@ -361,3 +361,43 @@ transition 제거. 순수 클라 렌더(snapshot.commander) → getRunDigest 무
   씬에 메서드 구동)으로 검증 가능. GPU 게이트 아닌 씬 상태는 브라우저 불필요.
 - §1.4 제약: 안개 near를 바깥으로 크게 드리프트시키면 저각/줌인에서 지형 가장자리가 노출된다 —
   조망 스테이지는 이게 의도(실루엣 노출)지만, 폐쇄 스테이지 near는 1.8 기준 근처 유지할 것.
+
+## 패스 #10 — 2026-07-26 08:00 KST · 축 5(밸런스/재미있는 코어타임) · 커밋 `d6f0ff7`+`7db70f0`(코드), 문서 별도
+
+**초점 선택**: 패스 #10 → %5=5 → 밸런스/재미있는 코어타임. 순환 기본값 그대로. 직전 축-5
+패스(#5/D27) 회고의 미해결 #3("스테이지 2~10 seeded wave variation 부재 = 반복플레이 권태
+원천, 다음 밸런스 패스 1순위 후보")을 그대로 입력으로 착수.
+
+### 무엇을 바꿨는가 (측정값 포함)
+- **발견(실측)**: `buildWaveSchedule`의 non-authored 경로(스테이지 2~10)는 타이밍/밀도/방향/
+  레인/정책은 시드로 변주하지만 웨이브 **조합**(어떤 적)은 `alternatives[0]` 고정. cinder-span만
+  authored 조합 변주 보유 → 스테이지 2~10 재플레이는 "언제·어디"는 바뀌어도 "무엇"이 불변.
+- **구현**: (a) `buildWaveSchedule` else-분기를 `alternatives.length>1`일 때만 선택 rng draw를
+  추가하도록 3분할 — 조합 변주 **+ 타이밍/밀도 지터 동시 유지**(cinder-span authored보다 상위집합),
+  단일조합 스테이지는 draw 순서 불변으로 디지털 바이트 동일. (b) 데이터: `STAGE_WAVE_VARIANTS`
+  테이블로 veil-citadel/echo-throne/sunken-bastion(스테이지 2~4, 최다 재플레이 초반밴드) 각 3웨이브에
+  pure↔mixed 2택 부여. mixed는 **동일 총합**을 그 스테이지 **기존 적 클래스**로만 재분배(예산 불변).
+- **측정**: 미변주 7스테이지 × seed{5,17,42} `getRunDigest` 편집 전/후 **byte-identical**(git
+  stash 대조). 변주 실측 12시드 오프닝웨이브 distinct 조합 veil 4 / echo 6 / bastion 6.
+  전체 **191 tests / 190 pass / 0 fail / 1 skip**(회귀 0), g2-full-route(10스테이지 실시뮬)
+  포함 전원 통과 — 밴드 위반·결정론 파손 0.
+- **격리**: 순수 시뮬 데이터+로직, 동일 시드→동일 디지털, 미변주 스테이지 바이트 동일. 렌더 0줄,
+  신규 에셋·네트워크 0. (D31)
+
+### 무엇이 여전히 미해결인가 (은폐 없음)
+1. **스테이지 5~10 미변주** — 동일 패턴 확장 가능(코드 변경 불요, `STAGE_WAVE_VARIANTS`에 항목
+   추가만). 후반은 재플레이 빈도 낮아 후순위로 의도적 스코프 제한. 다음 축-5 패스 후보.
+2. **cinder-span authored 경로는 여전히 지터 0** — 이번 상위집합 경로로 통일 시 cinder 디지털이
+   바뀌어 참조 baseline(결정론 goldens) 파손 → 보류. 통일하려면 별도 baseline 재생성 스파이크 필요.
+3. **D27 잔여 미해결**: 방어형 플레이 후반 XP 전량 denial → 레벨업 0. 웨이브 구성이 아닌 적
+   XP-denial 정책 소관, 이번 조합 변주와 직교. 별개 밸런스 축.
+4. **정성 검증(사람)**: 자동 테스트가 selectionId 다양성·예산 중립·결정론까지 실증. "실제
+   재플레이에서 조합 차이가 체감되는가"는 사람 몫(Cycle1부터 표준 결핍 항목).
+
+### 다음 패스가 이 축(밸런스)을 다시 잡을 때 알아야 할 것
+- 조합 변주 인프라 완비. 스테이지 확장은 `STAGE_WAVE_VARIANTS`에 `{slot: [pure, mixed]}` 추가만.
+  규칙: mixed 총합==authored 원본 카운트, 그 스테이지 기존 적 클래스만, alternatives[0]==원본.
+- 가드 테스트(`early stages replay with seeded ... variety`)가 새 스테이지도 자동 커버(데이터
+  계약 루프가 `STAGE_WAVE_VARIANTS` 전체 순회). 런타임 다양성 단언은 스테이지별로 추가하면 좋다.
+- non-authored 경로는 이제 length>1에서만 선택 draw를 소비 — 새 변주 추가는 그 스테이지만
+  디지털이 바뀌고 나머지는 불변. 결정론 goldens 없는 현 스위트(run-twice 자기일관)라 안전.

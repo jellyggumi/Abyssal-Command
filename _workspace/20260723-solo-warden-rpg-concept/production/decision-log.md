@@ -863,3 +863,63 @@ far 스프레드 **1.87×**(42.0 .. 78.4). near는 두 조망 스테이지를 �
 **반영**: `battle-realtime-three.js`(STAGE_FOG_MULTIPLIERS + stageFogRange export +
 applyStagePalette near/far 적용), `tests/world-presentation-contract.test.mjs`(신규 안개 심도
 테스트 + import), 본 항목. 커밋 `31e506d`.
+
+## D31 — 밸런스 패스 #10(%5=5): 초반 스테이지(2~4) 시드 기반 웨이브 조합 다양성 (반복플레이 권태 완화)
+
+> **번호 근거**: append-only 규약. 쓰기 직전 `grep -oE '^## D[0-9]+'`로 최대 번호 확인 → D30.
+> 그다음 번호 **D31**을 취한다. 커밋 직전 `git log -1`로 내 해시 확인.
+
+**축**: 밸런스/재미있는 코어타임(%5=5). 순환 기본값 그대로 — 더 시급한 축 없음. 직전 축-5
+패스(D27, 적 XP 스테이지 스케일)의 미해결 #3이 이 패스의 명시적 입력: "스테이지 2~10은
+seeded wave variation이 없다(cinder-span만 CINDER_SPAN_WAVE_PLAN 보유) — 스테이지5 재플레이는
+항상 동일 구성 ... '반복 플레이 권태' 원천". 이번 패스가 그 1순위 후보를 초반 스테이지부터 착수.
+
+**발견 (실측)**: `buildWaveSchedule`(`defense-run-simulation.js:85`)는 두 경로를 가진다 —
+(a) authored(cinder-span, `authoredAlternatives=true`): 조합을 시드로 선택하지만 **타이밍/밀도
+지터를 0으로 버린다**, (b) non-authored(스테이지 2~10): 타이밍/밀도/방향/레인/정책을 시드로
+변주하지만 **조합(어떤 적이 오는가)은 `alternatives[0]` 고정**. 즉 스테이지 2~10은 재플레이마다
+*언제·어디서·몇이* 오는지는 바뀌어도 *무엇이* 오는지는 불변 — 조합이라는 가장 체감 큰 변주
+레버가 죽어 있었다. cinder-span(가장 많이 재플레이되는 튜토리얼)만 조합 변주를 가진 비대칭.
+
+**판정 — 채택 (코드 1 + 데이터, 결정론 격리)**. non-authored 경로에 조합 변주를 추가하되
+**authored보다 상위집합**으로: 조합 시드선택 + 타이밍/밀도 지터를 **동시** 유지(cinder-span은
+지터를 포기했지만 여기선 둘 다 산다). 구현:
+- `buildWaveSchedule` else-분기 3분할: `alternatives.length>1`일 때만 선택용 rng draw 1회 추가
+  후 지터 draw, `length===1`이면 **기존 draw 순서 그대로**(선택 draw 없음). → 변주 없는
+  스테이지는 draw 시퀀스 불변 = 디지털 **바이트 동일**. cinder-span은 authored 분기라 미변경.
+- `defense-catalog.js`에 `STAGE_WAVE_VARIANTS`(export) 테이블 + `stage()` 팩토리 배선 +
+  `planWaveSources`가 슬롯별 `alternatives` 병합. 변주 대상: **veil-citadel/echo-throne/
+  sunken-bastion**(스테이지 2~4, 초반 그라인드 밴드 = 최다 재플레이).
+- **밸런스 중립 설계**: 각 변주 alternatives[0]=authored 원본, alternatives[1]=**동일 총합
+  카운트**를 그 스테이지에 **이미 등장하는 적 클래스**로만 재분배(신규 클래스·물량 증가 0).
+  예 veil wave0 rusher×5 → {rusher×3+flanker×2}(합 5). 스폰 예산=HP/XP 밴드 불변.
+
+**측정 (실측, 자기보고 아님)**:
+- 디지털 중립: 편집 전/후 트리에서 미변주 7스테이지(cinder-span + 후반 6종) × seed{5,17,42}
+  `getRunDigest` 전부 **byte-identical**(git stash 대조, `diff` IDENTICAL).
+- 변주 실측: 12시드 오프닝웨이브 distinct 조합 — veil 4종 / echo 6종 / bastion 6종
+  (pure↔mixed 혼재, ±1 밀도지터 동시 관측).
+- 전체 스위트 **191 tests / 190 pass / 0 fail / 1 skip**(기존 190 + 신규 가드테스트 1,
+  회귀 0). **g2-full-route-runner(10스테이지 실시뮬) 포함 전원 통과** — 조합 변주 후에도
+  밴드 위반·결정론 파손 0. 신규 테스트 `early stages replay with seeded ... variety`:
+  (a) 데이터 계약 — 각 변주 총합==authored 원본, 스테이지 내 기존 클래스만, alternatives[0]==원본,
+  (b) 런타임 계약 — veil 오프닝 `selectionId` 16시드 ≥2종(시드 선택 실증), gate-zenith ==1종
+  (미변주 스테이지 고정 실증).
+
+**격리(결정론/무과금/오프라인)**: 순수 시뮬 데이터+로직. 동일 시드→동일 디지털 유지(변주는
+시드 결정적), 미변주 스테이지 바이트 동일. 렌더링 코드 0줄, 신규 에셋·네트워크 0. 브라우저
+검증은 sim-only 변경이라 g2-full-route가 정당한 오라클(D27 선례와 동일 논거).
+
+**미해결(다음 축-5 패스 입력)**: (1) **스테이지 5~10 미변주** — 동일 패턴으로 확장 가능하나
+후반은 재플레이 빈도 낮아 우선순위 후순위. `STAGE_WAVE_VARIANTS`에 항목 추가만 하면 됨(코드
+변경 불요). (2) authored(cinder-span)는 여전히 지터 0 — 이번 상위집합 경로로 통일하면 cinder
+디지털이 바뀌어(참조 baseline 파손) 보류. (3) D27 미해결 잔여(방어형 플레이 후반 XP 전량 denied
+→ 레벨업 0)는 웨이브 구성이 아닌 적 XP-denial 정책 소관, 별개. (4) 정성 검증(사람): "재플레이
+시 조합 차이가 실제로 체감되는가"는 자동 테스트가 selectionId 다양성까지 실증했으나 체감은 사람 몫.
+
+**반영**: `defense-run-simulation.js`(buildWaveSchedule else-분기 3분할),
+`defense-catalog.js`(STAGE_WAVE_VARIANTS export + stage 팩토리 배선 + planWaveSources 병합),
+`tests/defense-run-simulation.test.mjs`(신규 가드테스트 + import), 본 항목. 커밋 `d6f0ff7`(feat:
+catalog+sim) + `7db70f0`(test) — 코드는 동시 세션/드라이버가 내 워킹트리 변경을 두 커밋으로
+스냅샷했다(작성자 akillness, 08:11/08:12, stat 일치: catalog+79/sim+10/test+48). 워킹트리==커밋==
+테스트한 트리(`git diff HEAD` 해당 파일 공집합, 스위트 191/190/0/1 green으로 검증).
