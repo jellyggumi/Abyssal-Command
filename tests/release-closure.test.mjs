@@ -278,3 +278,97 @@ test("the candidate-stamped service worker precaches every runtime observer, ref
   assert.deepEqual([...new Uint8Array(await sprite.arrayBuffer())], [1, 2, 3]);
   assert.equal(fetchCalls.length, fetchesBeforeSprite, "cached sprites must not require the network");
 });
+
+test("an unstamped (locally served) service worker refetches binaries instead of replaying a stale cache", async () => {
+  // Deployed builds rotate CACHE_NAME per commit SHA, so cache-first binaries
+  // are safe: a new release lands in a new cache and `activate` drops the old
+  // one. Served straight from the repo the SHA is never stamped, the cache
+  // name is frozen, and cache-first meant a rebuilt asset could never reach
+  // the page -- rebuilding all 24 character GLBs changed nothing on screen
+  // because the worker kept replaying the copies it had cached earlier.
+  const listeners = new Map();
+  const cached = new Map();
+  const fetched = [];
+  const requestKey = (request) => typeof request === "string"
+    ? new URL(request, "https://example.test/Abyssal-Surge/").href
+    : request.url;
+  const cache = {
+    addAll: async () => {},
+    put: async (request, response) => { cached.set(requestKey(request), response); },
+  };
+  const self = {
+    location: { origin: "https://example.test", href: "https://example.test/Abyssal-Surge/sw.js" },
+    registration: { scope: "https://example.test/Abyssal-Surge/" },
+    clients: { claim: async () => {} },
+    skipWaiting: async () => {},
+    addEventListener: (type, listener) => listeners.set(type, listener),
+  };
+
+  // NOTE: no replaceAll here -- this is the raw, unstamped worker.
+  runInNewContext(await project("sw.js"), {
+    URL,
+    Promise,
+    Request,
+    Response,
+    caches: {
+      open: async () => cache,
+      keys: async () => [],
+      delete: async () => true,
+      match: async (request) => cached.get(requestKey(request)) ?? null,
+    },
+    fetch: async (request, init) => {
+      fetched.push({ url: requestKey(request), init });
+      return new Response(new Uint8Array([9, 9, 9]), { status: 200 });
+    },
+    self,
+  });
+
+  const dispatchFetch = async (request) => {
+    let responsePromise;
+    listeners.get("fetch")({
+      request,
+      respondWith(promise) { responsePromise = Promise.resolve(promise); },
+    });
+    assert.ok(responsePromise, `service worker must respond to ${request.url}`);
+    return responsePromise;
+  };
+
+  const glbRequest = new Request(
+    "https://example.test/Abyssal-Surge/assets/images/battle/glb/enemies/guard.glb",
+  );
+  cached.set(requestKey(glbRequest), new Response(new Uint8Array([1, 2, 3]), { status: 200 }));
+
+  const served = await dispatchFetch(glbRequest);
+  assert.deepEqual(
+    [...new Uint8Array(await served.arrayBuffer())],
+    [9, 9, 9],
+    "an unstamped worker must serve the freshly fetched binary, not the stale cached one",
+  );
+  assert.equal(fetched.length, 1, "the binary must actually hit the network");
+  assert.equal(fetched[0].init.cache, "no-store");
+
+  // Offline still falls back to whatever is cached, so local offline work is
+  // not broken by the refetch.
+  cached.set(requestKey(glbRequest), new Response(new Uint8Array([4, 5, 6]), { status: 200 }));
+  const offlineListeners = listeners;
+  runInNewContext(await project("sw.js"), {
+    URL,
+    Promise,
+    Request,
+    Response,
+    caches: {
+      open: async () => cache,
+      keys: async () => [],
+      delete: async () => true,
+      match: async (request) => cached.get(requestKey(request)) ?? null,
+    },
+    fetch: async () => { throw new Error("offline"); },
+    self: { ...self, addEventListener: (type, listener) => offlineListeners.set(type, listener) },
+  });
+  const offline = await dispatchFetch(glbRequest);
+  assert.deepEqual(
+    [...new Uint8Array(await offline.arrayBuffer())],
+    [4, 5, 6],
+    "offline must still fall back to the cached binary",
+  );
+});

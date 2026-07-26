@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { BattleVisualizer } from "../battle-visualizer.js";
@@ -67,4 +68,10 @@ test("critical visual and audio observation is idempotent and cannot alter the d
   assert.equal(played[0].event, critical, "audio must observe the public event object without rewriting it");
   assert.deepEqual(getRunSnapshot(run), originalSnapshot, "visual/audio observation must not mutate the simulation snapshot");
   assert.equal(getRunDigest(run), digest, "visual/audio observation must not alter deterministic run outcome");
+});
+
+test("shipped app vocabulary does not retain the retired shadow-legion strings", async () => {
+  const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /그림자군단/);
+  assert.doesNotMatch(source, /그림자 군단/);
 });

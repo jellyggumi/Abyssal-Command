@@ -446,6 +446,9 @@ function effectAnchor(snapshot, event) {
 // mount in sequence). ---
 const gltfLoader = new GLTFLoader();
 const gltfCache = new Map();
+// SkeletonUtils.clone() gives each rendered instance an owned skeleton; this
+// identity set keeps repeated disposal idempotent when roots overlap.
+const disposedSkeletons = new WeakSet();
 
 function loadGltf(relPath) {
   if (!gltfCache.has(relPath)) {
@@ -541,21 +544,23 @@ async function instantiateActorModel(relPath, targetHeight) {
 
 async function instantiateTerrainModel(relPath) {
   const gltf = await loadGltf(relPath);
-  const instance = gltf.scene.clone(true);
+  const instance = SkeletonUtils.clone(gltf.scene);
   fitFootprint(instance, TERRAIN_TARGET_HALF_EXTENT);
   return instance;
 }
 
 async function instantiateVfxModel(relPath) {
   const gltf = await loadGltf(relPath);
-  const instance = gltf.scene.clone(true);
+  const instance = SkeletonUtils.clone(gltf.scene);
   fitHeight(instance, 1.2);
   instance.position.y = 0.6;
   return instance;
 }
 
 function disposeObject3D(root) {
+  const skeletons = new Set();
   root.traverse((node) => {
+    if (node.skeleton) skeletons.add(node.skeleton);
     if (!node.isMesh) return;
     node.geometry?.dispose();
     const materials = Array.isArray(node.material) ? node.material : [node.material];
@@ -567,6 +572,11 @@ function disposeObject3D(root) {
       material.dispose();
     }
   });
+  for (const skeleton of skeletons) {
+    if (disposedSkeletons.has(skeleton)) continue;
+    disposedSkeletons.add(skeleton);
+    skeleton.dispose?.();
+  }
 }
 
 /**
@@ -802,7 +812,9 @@ export class RealtimeBattle {
       return this;
     }
 
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false });
+    const webgl2 = this.canvas.getContext?.("webgl2", { alpha: false, antialias: true, failIfMajorPerformanceCaveat: false });
+    if (!webgl2) throw new Error("WebGL2 context unavailable");
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, context: webgl2, antialias: true, alpha: false });
     this.renderer.setClearColor(COLORS.backgroundBottom, 1);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 

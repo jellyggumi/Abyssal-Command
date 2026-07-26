@@ -243,10 +243,12 @@ async function verifyPlaythroughJourney(browser, hosting) {
  * tick advancement, see defense-run-simulation.js's advanceDefenseRun()
  * growthOffer early-break) until either: (a) a companion nameplate has
  * rendered with a real on-screen transform and at least two floating damage
- * numbers with distinct computed positions have been observed (proving Bug
- * #1 and Bug #2 stay fixed), and (b) the elite capture prompt has appeared
- * once an elite candidate + this stage's fixed extraction zone exist
- * (Bug #4 / "reasonably scoped" acceptance item).
+ * numbers with distinct computed positions have been observed (proving Bug #1
+ * and Bug #2 stay fixed), and (b) the elite capture prompt has appeared once
+ * an elite candidate + this stage's fixed extraction zone exist (Bug #4 /
+ * "reasonably scoped" acceptance item). The prompt intentionally distinguishes
+ * the pre-bind "Bind 대기" state from the actionable "추출 가능" state; the
+ * action button's disabled state must agree with that copy.
  */
 async function verifyWorldHudOverlay(browser, hosting, campaign) {
   const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
@@ -348,8 +350,12 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       // capture prompt genuinely never renders (a real Bug #4 regression),
       // which is exactly what the assertion below is here to catch.
       const MAX_PUMPS = 2000;
+      let initialCapturePromptText = null;
+      let initialCapturePromptState = null;
+      let extractionReadyPromptText = null;
+      let extractionReadyPromptState = null;
+      let bindStarted = false;
       let nameplateTransform = null;
-      let capturePromptText = null;
       const clickedOfferKeys = new Set();
       let pumps = 0;
       while (pumps < MAX_PUMPS) {
@@ -368,11 +374,30 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
           const nameplate = overlay.querySelector("[data-world-nameplate]");
           if (nameplate && nameplate.style.transform) nameplateTransform = nameplate.style.transform;
         }
-        if (capturePromptText === null) {
-          const prompt = overlay.querySelector(".world-capture-prompt");
-          if (prompt) capturePromptText = prompt.textContent;
+        const prompt = overlay.querySelector(".world-capture-prompt");
+        const promptText = prompt?.textContent?.trim();
+        if (promptText) {
+          const extractAction = document.querySelector("#extract-elite");
+          const promptState = extractAction
+            ? {
+              disabled: extractAction.disabled,
+              ariaDisabled: extractAction.getAttribute("aria-disabled"),
+            }
+            : null;
+          if (initialCapturePromptText === null) {
+            initialCapturePromptText = promptText;
+            initialCapturePromptState = promptState;
+          }
+          if (!bindStarted && promptText.startsWith("Bind 대기") && extractAction && !extractAction.disabled && extractAction.getAttribute("aria-disabled") === "false") {
+            extractAction.click();
+            bindStarted = true;
+          }
+          if (promptText.startsWith("추출 가능")) {
+            extractionReadyPromptText = promptText;
+            extractionReadyPromptState = promptState;
+          }
         }
-        if (nameplateTransform !== null && damageSamples.length >= 4 && capturePromptText !== null) break;
+        if (nameplateTransform !== null && damageSamples.length >= 4 && extractionReadyPromptText !== null) break;
         window.__pumpFrame(FRAME_MS);
         pumps += 1;
         // Yield a macrotask so the childList MutationObserver microtask (which
@@ -381,7 +406,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
       observer.disconnect();
-      return { nameplateTransform, damageSamples, capturePromptText, pumps, gameTimeMs: pumps * FRAME_MS };
+      return { nameplateTransform, damageSamples, initialCapturePromptText, initialCapturePromptState, extractionReadyPromptText, extractionReadyPromptState, bindStarted, pumps, gameTimeMs: pumps * FRAME_MS };
     });
 
     // Bug #1 guard: the companion nameplate must have appeared with a real
@@ -408,20 +433,32 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       `damage numbers must render at distinct computed screen positions across different hits, saw only ${distinctComputedTransforms.size} distinct computed transform(s) across ${drive.damageSamples.length} samples: ${JSON.stringify([...distinctComputedTransforms])}`,
     );
 
-    // Bug #4 (elite capture prompt, "if reasonably scoped"): once an elite
-    // candidate exists and this stage's extraction zone is projectable, the
-    // capture prompt must show the companion's real display name, not a raw
-    // prototype id or empty text.
-    assert.ok(drive.capturePromptText, "the elite capture prompt must appear once an elite candidate + extraction zone exist (Bug #4 guard)");
-    assert.match(drive.capturePromptText, /추출 가능/, "the capture prompt must carry the expected Korean call-to-action copy");
-    assert.match(drive.capturePromptText, /Ember Cohort/, "the capture prompt must name the real seeded elite companion prototype, not a placeholder");
+    // Bug #4 guard: the prompt starts in an explicit pre-bind state and, after
+    // the player activates that route, reaches the actionable extraction-ready
+    // state. Both states must name the real seeded elite companion prototype.
+    assert.ok(drive.initialCapturePromptText, "the elite capture prompt must appear once an elite candidate and extraction zone exist (Bug #4 guard)");
+    assert.match(drive.initialCapturePromptText, /^(?:Bind 대기|추출 가능) · Ember Cohort$/, "the initial capture prompt must expose the real companion name and an explicit bind/extraction state");
+    assert.ok(drive.initialCapturePromptState, "the initial capture prompt must have a matching extraction action");
+    const initiallyReady = drive.initialCapturePromptText.startsWith("추출 가능");
+    assert.equal(drive.initialCapturePromptState.disabled, false, "the extraction route CTA must be enabled before Bind starts or once extraction is ready");
+    assert.equal(drive.initialCapturePromptState.ariaDisabled, "false", "the extraction route CTA aria-disabled state must be false before Bind starts or once extraction is ready");
+    if (!initiallyReady) assert.equal(drive.bindStarted, true, "the enabled Bind CTA must be activated exactly once before waiting for extraction readiness");
+    assert.ok(drive.extractionReadyPromptText, "the elite extraction-ready prompt must appear after the Bind hold completes (Bug #4 guard)");
+    assert.match(drive.extractionReadyPromptText, /^추출 가능 · Ember Cohort$/, "the elite capture prompt must reach the concrete Korean extraction-ready CTA with the real companion name");
+    assert.ok(drive.extractionReadyPromptState, "the extraction-ready prompt must have a matching extraction action");
+    assert.equal(drive.extractionReadyPromptState.disabled, false, "the extraction-ready CTA must remain enabled");
+    assert.equal(drive.extractionReadyPromptState.ariaDisabled, "false", "the extraction-ready CTA aria-disabled state must be false");
 
     assert.deepEqual(errors, [], "world HUD overlay journey emitted unexpected page or console errors");
     return {
       nameplateTransform: drive.nameplateTransform,
       damageSampleCount: drive.damageSamples.length,
       distinctDamagePositions: distinctComputedTransforms.size,
-      capturePromptText: drive.capturePromptText,
+      initialCapturePromptText: drive.initialCapturePromptText,
+      initialCapturePromptState: drive.initialCapturePromptState,
+      extractionReadyPromptText: drive.extractionReadyPromptText,
+      extractionReadyPromptState: drive.extractionReadyPromptState,
+      bindStarted: drive.bindStarted,
       pumps: drive.pumps,
       gameTimeMs: drive.gameTimeMs,
     };
@@ -439,16 +476,14 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
  * correctly), drives the real defense-run-simulation.js state machine
  * headlessly (pure computation, no wall-clock wait) until a live boss
  * enemy exists, feeds that real simulation-produced snapshot through the
- * exact renderSnapshot()/updateEntity()/instanceFor() code path the bug
- * lived in, and inspects renderer.instances directly for a populated boss
- * entry with real cloned mesh geometry underneath it — the precise
- * regression (meshNameFor() returning null for class==="boss" with no
- * caller substituting the stage boss root) would leave that Map entry
- * entirely absent. This is strictly stronger evidence than any DOM/event
- * signal could give, and was chosen over driving a full live UI playthrough
- * to the boss (which requires completing a two-phase occupation+extraction
- * hold sequence, adding tens of seconds of real wall-clock wait for no
- * additional coverage of the actual bug).
+ * exact renderSnapshot()/reconcileActors() code path the bug lived in, and
+ * inspects renderer.actors directly for the loaded boss record. The guard
+ * verifies the real boss model path and that its GLTF scene root contains mesh
+ * geometry, which catches a missing or fallback actor without assuming an
+ * authored node name. This is strictly stronger evidence than any DOM/event
+ * signal could give, and was chosen over driving a full live UI playthrough to
+ * the boss, which requires completing a two-phase occupation+extraction hold
+ * sequence without additional coverage of the actual bug.
  */
 async function verifyBossMeshRegression(browser, hosting) {
   const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
@@ -499,27 +534,52 @@ async function verifyBossMeshRegression(browser, hosting) {
       document.body.appendChild(canvas);
       const renderer = new RealtimeBattle().mount({ canvas, viewport: canvas });
       if (renderer.usingFallback) return { error: "RealtimeBattle fell back to Canvas2D (no real WebGL2 in this context) -- cannot exercise the WebGL mesh-resolution code path" };
-      await renderer.modelPromise;
-      if (!renderer.modelReady) return { error: "the abyssal-command-resource-pack.glb model failed to load -- cannot verify mesh resolution" };
-
       renderer.renderSnapshot(projected, {});
 
-      const entry = renderer.instances.get(boss.id);
-      if (!entry) return { error: `renderer.instances has no entry for live boss id ${boss.id} -- Bug #3 has regressed (meshNameFor()/world.boss substitution broken)`, bossId: boss.id, bossHp: boss.hp, bossTick: snapshot.tick };
+      const expectedModelPath = "bosses/cinder-warden.glb";
+      const expectedGlbPath = "assets/images/battle/glb/bosses/cinder-warden.glb";
+      const MAX_ACTOR_POLLS = 100;
+      const actorKeys = () => (renderer.actors && typeof renderer.actors.keys === "function" ? [...renderer.actors.keys()] : []);
+      let record = null;
+      for (let poll = 0; poll < MAX_ACTOR_POLLS; poll += 1) {
+        const candidate = renderer.actors?.get?.(boss.id);
+        if (candidate?.loading === false && candidate.root) {
+          record = candidate;
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      if (!record) {
+        const candidate = renderer.actors?.get?.(boss.id);
+        return {
+          error: `renderer.actors has no loaded root for live boss id ${boss.id} within ${MAX_ACTOR_POLLS} polls -- expected GLB ${expectedGlbPath}`,
+          bossId: boss.id,
+          bossHp: boss.hp,
+          bossTick: snapshot.tick,
+          actorKeys: actorKeys(),
+          expectedModelPath,
+          modelPath: candidate?.modelPath ?? null,
+          rootName: candidate?.root?.name ?? null,
+        };
+      }
       let meshDescendantCount = 0;
-      entry.object.traverse((node) => { if (node.isMesh || node.isSkinnedMesh) meshDescendantCount += 1; });
+      record.root.traverse((node) => {
+        if (node.isMesh || node.isSkinnedMesh) meshDescendantCount += 1;
+      });
       return {
         bossId: boss.id,
         bossHp: boss.hp,
         bossTick: snapshot.tick,
-        meshRootName: entry.meshRootName,
+        modelPath: record.modelPath,
+        rootName: record.root.name,
         meshDescendantCount,
-        expectedMeshRootName: "cinder-warden-root",
+        expectedModelPath,
+        expectedGlbPath,
       };
     });
 
     assert.equal(result.error, undefined, `boss mesh regression check failed: ${result.error}`);
-    assert.equal(result.meshRootName, result.expectedMeshRootName, "the boss must resolve its mesh root from STAGE_WORLD, not the always-null meshNameFor() result");
+    assert.equal(result.modelPath, "bosses/cinder-warden.glb", "the live boss must resolve the current cinder-warden GLB through the renderer actors contract");
     assert.ok(result.meshDescendantCount > 0, `the boss's cloned scene-graph object must contain real mesh geometry, found ${result.meshDescendantCount} mesh descendants`);
     assert.deepEqual(errors, [], "boss mesh regression check emitted unexpected page or console errors");
     return result;

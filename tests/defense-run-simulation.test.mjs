@@ -58,35 +58,37 @@ function advanceUntilWithPrevious(run, predicate, maxSteps = 10000) {
 const FULL_LOADOUT = ["ember-cohort", "rift-lens", "veil-vanguard"];
 const FULL_REWARDS = ["abyssal-banner", "bulwark-brand", "stillwater-hourglass"];
 
-function queueObjectiveCommands(run) {
+function queueObjectiveCommands(run, { extractElite = true, castSkills = true, moveOctant = "IDLE" } = {}) {
   const snapshot = getRunSnapshot(run);
   if (snapshot.growthOffer) {
     return queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] });
   }
 
-  let next = queueInput(run, "MOVE", { octant: "IDLE" });
-  for (const skillId of snapshot.commander.skills) {
-    next = queueInput(next, "SKILL_CAST", { skillId });
+  let next = queueInput(run, "MOVE", { octant: moveOctant });
+  if (castSkills) {
+    for (const skillId of snapshot.commander.skills) {
+      next = queueInput(next, "SKILL_CAST", { skillId });
+    }
   }
-  if (snapshot.eliteCandidate && !snapshot.extracted) {
+  if (extractElite && snapshot.eliteCandidate && !snapshot.extracted) {
     next = queueInput(next, "EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
   }
   return next;
 }
 
-function advanceThroughObjectives(run, maxSteps = 12000) {
+function advanceThroughObjectives(run, maxSteps = 12000, options = {}) {
   let next = run;
   for (let step = 0; step < maxSteps && !isTerminalRun(next); step += 1) {
-    next = advanceDefenseRun(queueObjectiveCommands(next), 1);
+    next = advanceDefenseRun(queueObjectiveCommands(next, options), 1);
   }
   return next;
 }
 
-function advanceThroughObjectivesUntil(run, predicate, maxSteps = 12000) {
+function advanceThroughObjectivesUntil(run, predicate, maxSteps = 12000, options = {}) {
   let next = run;
   let previous = getRunSnapshot(next);
   for (let step = 0; step < maxSteps && !isTerminalRun(next); step += 1) {
-    next = advanceDefenseRun(queueObjectiveCommands(next), 1);
+    next = advanceDefenseRun(queueObjectiveCommands(next, options), 1);
     const snapshot = getRunSnapshot(next);
     if (predicate(snapshot)) return { run: next, previous, snapshot };
     previous = snapshot;
@@ -102,6 +104,7 @@ function advanceToGrowthOffer(run, maxSteps = 4000) {
   }
   return next;
 }
+
 function castMeasurementSkillAgainstTarget(profileId, seed = 17) {
   const profile = MEASUREMENT_PROFILES[profileId];
   let run = createDefenseRun({ stageId: "cinder-span", seed, measurementProfileId: profileId });
@@ -217,9 +220,121 @@ test("growth selection debits the reached-level threshold and preserves XP carry
     "later selection must debit the threshold for the level being left and retain overflow",
   );
 });
+test("Bind readiness does not extract an elite; matching input extracts once and FIFO rejects a duplicate", () => {
+  const initial = createDefenseRun({
+    stageId: "cinder-span",
+    seed: 9,
+    companionLoadout: FULL_LOADOUT,
+    rewardIds: FULL_REWARDS,
+  });
+  const candidateReady = advanceThroughObjectivesUntil(
+    initial,
+    (snapshot) => Boolean(snapshot.eliteCandidate),
+    3000,
+  );
+  const candidate = candidateReady.snapshot.eliteCandidate;
+  assert.ok(candidate, "defeating the post-Gate elite must expose its Echo candidate");
+  assert.equal(candidateReady.snapshot.extracted, false);
+  assert.equal(candidateReady.snapshot.progress.extracted, 0);
+  assert.deepEqual(
+    candidateReady.snapshot.companions.map(({ companionId }) => companionId),
+    FULL_LOADOUT,
+    "candidate readiness must not add an automatic companion",
+  );
 
-test("an elite can be extracted only after the spatial objective chain and only once", () => {
-  const ready = advanceThroughObjectivesUntil(
+  let run = candidateReady.run;
+  let snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer) {
+    run = advanceDefenseRun(queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] }), 1);
+  }
+  run = advanceDefenseRun(queueInput(run, "EXTRACT_ELITE", { enemyId: candidate.enemyId }), 1);
+  const routed = getRunSnapshot(run);
+  const preReadyRejection = routed.events.find((event) => event.type === "EXTRACTION_REJECTED");
+  assert.equal(routed.extracted, false, "a pre-Bind command cannot extract");
+  assert.equal(routed.progress.extracted, 0);
+  assert.ok(preReadyRejection);
+  assert.equal(preReadyRejection.reason, "EXTRACTION_HOLD_INCOMPLETE");
+  assert.equal(preReadyRejection.routeStarted, true);
+
+  const bindReady = advanceThroughObjectivesUntil(
+    run,
+    (next) => next.extractionProgress.ready,
+    3000,
+    { extractElite: false },
+  );
+  snapshot = bindReady.snapshot;
+  assert.equal(snapshot.extractionProgress.completed, true);
+  assert.equal(snapshot.extractionProgress.ready, true);
+  assert.equal(snapshot.extracted, false, "Bind completion is readiness, not player extraction");
+  assert.equal(snapshot.progress.extracted, 0);
+  assert.equal(snapshot.objectives.extraction.completed, false, "Bind readiness is not public objective completion");
+  assert.equal(snapshot.objectives.phase, "extraction");
+  assert.equal(snapshot.bossSpawned, false, "the boss remains gated until player extraction");
+  assert.deepEqual(snapshot.companions.map(({ companionId }) => companionId), FULL_LOADOUT);
+  const bindEvent = snapshot.events.find((event) => event.type === "EXTRACTION_COMPLETED");
+  assert.ok(bindEvent, "Bind readiness must emit EXTRACTION_COMPLETED");
+  assert.equal(snapshot.events.some((event) => event.type === "ELITE_EXTRACTED"), false);
+
+  run = bindReady.run;
+  snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer) {
+    run = advanceDefenseRun(queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] }), 1);
+  }
+  const wrong = getRunSnapshot(advanceDefenseRun(
+    queueInput(run, "EXTRACT_ELITE", { enemyId: "wrong-enemy-id" }),
+    1,
+  ));
+  assert.equal(wrong.extracted, false);
+  assert.equal(wrong.progress.extracted, 0);
+  assert.deepEqual(wrong.companions.map(({ companionId }) => companionId), FULL_LOADOUT);
+  assert.ok(wrong.events.some((event) => event.type === "EXTRACTION_REJECTED"));
+
+  const successfulRun = advanceDefenseRun(
+    queueInput(
+      queueInput(run, "EXTRACT_ELITE", { enemyId: candidate.enemyId }),
+      "EXTRACT_ELITE",
+      { enemyId: candidate.enemyId },
+    ),
+    1,
+  );
+  const successful = getRunSnapshot(successfulRun);
+  assert.equal(successful.extracted, true);
+  assert.equal(successful.progress.extracted, 1);
+  assert.equal(successful.companions.filter(({ companionId }) => companionId === candidate.prototype).length, 1);
+  assert.equal(successful.objectives.extraction.completed, true, "the accepted extraction completes the public objective");
+  assert.equal(successful.objectives.phase, "boss-kill");
+  assert.equal(successful.bossSpawned, true, "completed extraction unlocks the boss when its existing gate conditions hold");
+  const extractedEvent = successful.events.find((event) => event.type === "ELITE_EXTRACTED");
+  assert.ok(extractedEvent);
+  assert.equal(successful.events.filter((event) => event.type === "ELITE_EXTRACTED").length, 1);
+  const sameTickDuplicate = successful.events.find(
+    (event) => event.type === "INPUT_REJECTED"
+      && event.inputType === "EXTRACT_ELITE"
+      && event.reason === "ELITE_ALREADY_EXTRACTED",
+  );
+  assert.ok(sameTickDuplicate, "a same-tick duplicate is rejected after the first extraction");
+  assert.ok(extractedEvent.eventSequence < sameTickDuplicate.eventSequence, "same-tick extraction inputs are processed FIFO");
+  assert.ok(bindEvent.eventSequence < extractedEvent.eventSequence, "Bind readiness must precede player extraction");
+  const accepted = successful.events.find((event) => event.type === "INPUT_ACCEPTED" && event.inputType === "EXTRACT_ELITE");
+  assert.ok(accepted);
+  assert.ok(extractedEvent.eventSequence < accepted.eventSequence, "extraction event must precede input acknowledgement");
+
+  const duplicate = getRunSnapshot(advanceDefenseRun(
+    queueInput(successfulRun, "EXTRACT_ELITE", { enemyId: candidate.enemyId }),
+    1,
+  ));
+  assert.equal(duplicate.extracted, true);
+  assert.equal(duplicate.progress.extracted, 1);
+  assert.deepEqual(
+    duplicate.companions.map(({ companionId }) => companionId),
+    successful.companions.map(({ companionId }) => companionId),
+  );
+  assert.equal(duplicate.events.some((event) => event.type === "ELITE_EXTRACTED"), false);
+  assert.ok(duplicate.events.some((event) => event.type === "INPUT_REJECTED" && event.inputType === "EXTRACT_ELITE"));
+});
+
+test("an expired elite Bind window reaches terminal defeat before queued extraction can mutate state", () => {
+  const candidateReady = advanceThroughObjectivesUntil(
     createDefenseRun({
       stageId: "cinder-span",
       seed: 9,
@@ -227,31 +342,51 @@ test("an elite can be extracted only after the spatial objective chain and only 
       rewardIds: FULL_REWARDS,
     }),
     (snapshot) => Boolean(snapshot.eliteCandidate),
-    3000,
+    5000,
   );
-  const candidate = ready.snapshot.eliteCandidate;
-  assert.ok(candidate, "defeating the post-Gate elite must expose its Echo candidate");
-
-  let run = advanceDefenseRun(
-    queueInput(ready.run, "EXTRACT_ELITE", { enemyId: candidate.enemyId }),
+  const candidate = candidateReady.snapshot.eliteCandidate;
+  assert.ok(candidate);
+  let run = candidateReady.run;
+  let snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer) {
+    run = advanceDefenseRun(queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] }), 1);
+  }
+  const atOccupation = advanceThroughObjectivesUntil(
+    run,
+    (next) => next.occupationProgress.holdTicks > 0,
+    500,
+    { extractElite: false, moveOctant: "W" },
+  );
+  assert.ok(atOccupation.snapshot.occupationProgress.holdTicks > 0);
+  const occupation = advanceThroughObjectivesUntil(
+    atOccupation.run,
+    (next) => next.occupationProgress.captured,
+    500,
+    { extractElite: false, moveOctant: "IDLE" },
+  );
+  assert.equal(occupation.snapshot.occupationProgress.captured, true);
+  const expired = advanceThroughObjectivesUntil(
+    occupation.run,
+    (next) => next.extractionProgress.failed,
+    1000,
+    { extractElite: false, moveOctant: "IDLE" },
+  );
+  snapshot = expired.snapshot;
+  assert.equal(snapshot.extractionProgress.failed, true);
+  assert.ok(snapshot.tick > snapshot.extractionProgress.expiresAt);
+  assert.equal(snapshot.terminal, "DEFEAT");
+  assert.equal(isTerminalRun(expired.run), true);
+  const rejected = getRunSnapshot(advanceDefenseRun(
+    queueInput(expired.run, "EXTRACT_ELITE", { enemyId: candidate.enemyId }),
     1,
-  );
-  const routing = getRunSnapshot(run);
-  assert.equal(routing.extracted, false, "the extraction command cannot bypass occupation and Bind holds");
-  assert.ok(routing.events.some((event) => event.type === "EXTRACTION_REJECTED"
-    && event.reason === "EXTRACTION_HOLD_INCOMPLETE"
-    && event.routeStarted === true));
-
-  const completed = advanceThroughObjectivesUntil(run, (snapshot) => snapshot.extracted, 3000);
-  run = completed.run;
-  assert.equal(completed.snapshot.extracted, true);
-  assert.equal(completed.snapshot.companions.filter((entry) => entry.companionId === "ember-cohort").length, 1);
-
-  const repeat = advanceDefenseRun(queueInput(run, "EXTRACT_ELITE", { enemyId: candidate.enemyId }), 1);
-  assert.deepEqual(
-    getRunSnapshot(repeat).companions.map((entry) => entry.companionId),
-    completed.snapshot.companions.map((entry) => entry.companionId),
-  );
+  ));
+  assert.equal(rejected.terminal, "DEFEAT");
+  assert.equal(rejected.tick, snapshot.tick, "queued input is not processed after terminal defeat");
+  assert.equal(rejected.extracted, false);
+  assert.deepEqual(rejected.progress, snapshot.progress);
+  assert.deepEqual(rejected.companions, snapshot.companions);
+  assert.deepEqual(rejected.extractionProgress, snapshot.extractionProgress);
+  assert.equal(rejected.events.some((event) => event.type === "ELITE_EXTRACTED"), false);
 });
 
 test("boss waits for its stage gate and cleared authored waves; final completion is terminal", () => {

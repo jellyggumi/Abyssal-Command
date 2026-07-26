@@ -570,7 +570,7 @@ function renderLobby() {
         <div class="panel-heading"><div><p class="eyebrow">TACTICAL BRIEFING · ${escapeHtml(selectedPresentation.mapLabels.domain)}</p><h2 id="briefing-title">작전 브리핑</h2></div><span class="briefing-code">AC-${String(selected.sequence).padStart(2, "0")}</span></div>
         <div class="briefing-target" data-stage-briefing="selected" data-stage-id="${escapeHtml(selected.id)}">${portraitMarkup(meshRootForStageBoss(selected.id), "◉", "target-sigil rc-portrait")}<div><small>${escapeHtml(selectedPresentation.mapLabels.title)} · ${escapeHtml(selectedPresentation.atmosphere.descriptor)}</small><strong>${escapeHtml(selected.bossName)}</strong><span id="briefing-stage-narrative" data-stage-id="${escapeHtml(selected.id)}">${escapeHtml(selectedObjective)}</span></div></div>
         <dl class="briefing-stats"><div><dt>지형 / 고지</dt><dd>${escapeHtml(selectedPresentation.mapLabels.chokepath)} · ${escapeHtml(selectedPresentation.mapLabels.elevation)}</dd></div><div><dt>위협 / 측면</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)}</dd></div><div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div><div><dt>다음 보상</dt><dd>${escapeHtml(nextRewardName(selected.id))}</dd></div></dl>
-        <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 중앙 전장에서 손가락을 끌어 이동하세요. 적을 처치하고 <b>추출(Extract)</b>하여 그림자 군단으로 복속시킬 수 있습니다.</p>
+        <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 중앙 전장에서 손가락을 끌어 이동하세요. 적을 처치하고 <b>추출(Extract)</b>하여 Warden Corps로 복속시킬 수 있습니다.</p>
       </aside>
     </div>`;
   const tabBodies = {
@@ -582,7 +582,7 @@ function renderLobby() {
   };
   root.innerHTML = `
     <header class="command-header">
-      <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">AC</span><div><p class="eyebrow">ABYSSAL COMMAND · DEEP REFUGE</p><h1>그림자군단 방어선</h1></div></div>
+      <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">AC</span><div><p class="eyebrow">ABYSSAL COMMAND · DEEP REFUGE</p><h1>Warden Corps 방어선</h1></div></div>
       <div class="command-status"><span class="signal-dot" aria-hidden="true"></span><span>기록실 연결됨</span><strong>${completed}/10 봉쇄선</strong></div>
     </header>
     <p id="idle-return-summary" class="idle-return-banner" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p>
@@ -816,6 +816,7 @@ export class BattleSession {
     this.rewardPrompted = false;
     this.selectedRewardId = null;
     this.userPaused = false;
+    this.bindStartPending = false;
     this.cutsceneEventKeys = new Set();
     this.cutsceneTimer = null;
     this.stopped = false;
@@ -1444,6 +1445,7 @@ export class BattleSession {
     // + screen-space-lift pattern as the nameplate above.
     let capturePrompt = overlay.querySelector(".world-capture-prompt");
     const extraction = snapshot.tactics?.extraction;
+    const extractionReady = Boolean(snapshot.extractionProgress?.completed && snapshot.extractionProgress?.ready !== false);
     if (snapshot.eliteCandidate && !snapshot.extracted && extraction) {
       const normalizedX = extraction.x / ARENA.width * 2 - 1;
       const normalizedY = extraction.y / ARENA.height * 2 - 1;
@@ -1455,7 +1457,7 @@ export class BattleSession {
           capturePrompt.className = "world-capture-prompt";
           overlay.append(capturePrompt);
         }
-        capturePrompt.textContent = "추출 가능 · " + companionLabel(snapshot.eliteCandidate.prototype);
+        capturePrompt.textContent = (extractionReady ? "추출 가능 · " : "Bind 대기 · ") + companionLabel(snapshot.eliteCandidate.prototype);
         capturePrompt.style.transform = "translate(" + point.x + "px, " + (point.y - WORLD_CAPTURE_PROMPT_LIFT_PX) + "px) translate(-50%, -100%)";
       } else {
         capturePrompt?.remove();
@@ -1607,9 +1609,23 @@ export class BattleSession {
 
     const actions = root.querySelector("#battle-actions");
     const candidate = snapshot.eliteCandidate;
+    const extractionReady = Boolean(snapshot.extractionProgress?.completed && snapshot.extractionProgress?.ready !== false);
+    if (!candidate || extractionReady || snapshot.commander?.objectiveRoute) {
+      this.bindStartPending = false;
+    }
+    const extractionRouting = Boolean(snapshot.commander?.objectiveRoute || this.bindStartPending);
+    const extractionDisabled = !extractionReady && extractionRouting;
+    const extractionLabel = candidate
+      ? `${extractionReady ? "정예 추출" : extractionRouting ? "Bind 진행 중" : "Bind 시작"} · ${companionLabel(candidate.prototype)}`
+      : "";
+    const extractionTitle = extractionReady
+      ? "정예를 추출합니다"
+      : extractionRouting
+        ? "Bind 진행 중"
+        : "Bind를 시작합니다";
     const actionMarkup = `${stanceMarkup}<button id="toggle-pause" aria-pressed="${this.userPaused}">${this.userPaused ? "전투 계속" : "일시 정지"}</button>${
       candidate && !snapshot.extracted
-        ? `<button id="extract-elite" data-defense-extract="${candidate.enemyId}">정예 추출 · ${escapeHtml(companionLabel(candidate.prototype))}</button>`
+        ? `<button id="extract-elite" data-defense-extract="${candidate.enemyId}"${extractionDisabled ? " disabled" : ""} aria-disabled="${extractionDisabled ? "true" : "false"}" title="${extractionTitle}">${escapeHtml(extractionLabel)}</button>`
         : ""
     }`;
     if (actions.dataset.actions !== actionMarkup) {
@@ -1617,7 +1633,15 @@ export class BattleSession {
       actions.innerHTML = actionMarkup;
       actions.querySelector("#stance-cycle")?.addEventListener("click", () => this.send("STANCE_CYCLE"));
       actions.querySelector("#toggle-pause")?.addEventListener("click", () => this.togglePause());
-      actions.querySelector("#extract-elite")?.addEventListener("click", () => {
+      actions.querySelector("#extract-elite")?.addEventListener("click", (event) => {
+        if (!extractionReady && !extractionRouting) {
+          this.bindStartPending = true;
+          const button = event.currentTarget;
+          button.disabled = true;
+          button.setAttribute("aria-disabled", "true");
+          button.textContent = `Bind 진행 중 · ${companionLabel(candidate.prototype)}`;
+          button.title = "Bind 진행 중";
+        }
         this.send("EXTRACT_ELITE", { enemyId: candidate.enemyId });
       });
     }

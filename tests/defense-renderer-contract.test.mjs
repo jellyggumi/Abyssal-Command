@@ -274,6 +274,42 @@ test("RealtimeBattle reconciles a supplied snapshot into its real Three.js scene
   assert.equal(adapter.scene, null, "dispose releases the scene reference");
 });
 
+test("RealtimeBattle disposes shared skeleton resources once per unique skeleton", () => {
+  const adapter = realtimeBattleHarness();
+  const bone = new THREE.Bone();
+  const skeleton = new THREE.Skeleton([bone]);
+  const boneTexture = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1, THREE.RGBAFormat);
+  skeleton.boneTexture = boneTexture;
+  let skeletonDisposals = 0;
+  let boneTextureDisposals = 0;
+  const disposeSkeleton = skeleton.dispose.bind(skeleton);
+  const disposeBoneTexture = boneTexture.dispose.bind(boneTexture);
+  skeleton.dispose = () => {
+    skeletonDisposals += 1;
+    disposeSkeleton();
+  };
+  boneTexture.dispose = () => {
+    boneTextureDisposals += 1;
+    disposeBoneTexture();
+  };
+
+  const makeSharedRigRoot = () => {
+    const root = new THREE.Group();
+    const mesh = new THREE.SkinnedMesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
+    mesh.bind(skeleton);
+    root.add(mesh);
+    return root;
+  };
+  adapter.terrainGroup.add(makeSharedRigRoot(), makeSharedRigRoot());
+
+  adapter.dispose();
+  assert.equal(skeletonDisposals, 1, "two roots sharing one skeleton must dispose that skeleton once");
+  assert.equal(boneTextureDisposals, 1, "the shared skeleton's bone texture must dispose once");
+  adapter.dispose();
+  assert.equal(skeletonDisposals, 1, "repeated adapter disposal must not dispose a skeleton twice");
+  assert.equal(boneTextureDisposals, 1, "repeated adapter disposal must not dispose a bone texture twice");
+});
+
 test("RealtimeBattle eases its commander-follow camera and snaps immediately under reduced motion", () => {
   const adapter = realtimeBattleHarness();
 

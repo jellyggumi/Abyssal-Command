@@ -891,10 +891,11 @@ function processInput(run, input) {
       });
       accepted = true;
     } else rejectionReason = "M3_TARGET_PROBE_INVALID";
-  } else if (input.type === "EXTRACT_ELITE" && !run.extracted) {
+  } else if (input.type === "EXTRACT_ELITE") {
     const candidate = run.eliteCandidate;
     const enemyId = input.payload?.enemyId || input.payload;
-    if (candidate && candidate.enemyId === enemyId && (candidate.expiresAt === null || run.tick <= candidate.expiresAt) && run.extractionProgress.completed) {
+    const extractionReady = Boolean(run.extractionProgress.completed && run.extractionProgress.ready);
+    if (!run.extracted && candidate && candidate.enemyId === enemyId && (candidate.expiresAt === null || run.tick <= candidate.expiresAt) && extractionReady) {
       run.extracted = true;
       run.progress.extracted += 1;
       addCompanion(run, candidate.prototype);
@@ -909,9 +910,9 @@ function processInput(run, input) {
       });
       accepted = true;
     } else {
-      const routeStarted = Boolean(candidate && candidate.enemyId === enemyId && (candidate.expiresAt === null || run.tick <= candidate.expiresAt) && !run.extractionProgress.completed);
+      const routeStarted = Boolean(candidate && candidate.enemyId === enemyId && (candidate.expiresAt === null || run.tick <= candidate.expiresAt) && !extractionReady);
       if (routeStarted) run.commander.objectiveRoute = true;
-      rejectionReason = !candidate ? "NO_ECHO_CANDIDATE" : !run.extractionProgress.completed ? "EXTRACTION_HOLD_INCOMPLETE" : "WINDOW_EXPIRED";
+      rejectionReason = run.extracted ? "ELITE_ALREADY_EXTRACTED" : !candidate ? "NO_ECHO_CANDIDATE" : !extractionReady ? "EXTRACTION_HOLD_INCOMPLETE" : "WINDOW_EXPIRED";
       emit(run, "EXTRACTION_REJECTED", {
         entityId: enemyId || null,
         objectiveId: "extraction",
@@ -1237,7 +1238,7 @@ function updateObjectivePhase(run) {
     emit(run, "OBJECTIVE_COMPLETED", { objectiveId: "growth" });
   }
   objectives.occupation.completed = run.occupationProgress.captured;
-  objectives.extraction.completed = run.extractionProgress.completed;
+  objectives.extraction.completed = run.extracted;
   const ordered = [
     ["gate-defense", objectives.gateDefense],
     ["echo-recovery", objectives.echoRecovery],
@@ -1409,24 +1410,14 @@ function processTerrainEffects(run) {
       }
       if (run.extractionProgress.holdTicks >= run.extractionProgress.maxHoldTicks) {
         run.extractionProgress.completed = true;
+        run.extractionProgress.ready = true;
         run.extractionProgress.completedAt = run.tick;
-        run.extracted = true;
         run.commander.objectiveRoute = false;
-        run.progress.extracted += 1;
-        addCompanion(run, run.eliteCandidate.prototype);
         emit(run, "EXTRACTION_COMPLETED", {
           objectiveId: "extraction",
           extractionPointId: extraction.id,
+          ready: true,
           cue: eventCue("extractionReady"),
-        });
-        emit(run, "ELITE_EXTRACTED", {
-          eliteId: run.eliteCandidate.eliteId,
-          entityId: run.eliteCandidate.enemyId,
-          prototype: run.eliteCandidate.prototype,
-          companionId: run.eliteCandidate.prototype,
-          objectiveId: "echo-recovery",
-          extractionPointId: extraction.id,
-          cue: eventCue("eliteExtracted"),
         });
       }
     } else if (run.extractionProgress.holdTicks > 0) {
@@ -1820,6 +1811,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
       holdTicks: 0,
       maxHoldTicks: 120,
       completed: false,
+      ready: false,
       completedAt: null,
       failed: false,
       availableAt: null,
@@ -1917,6 +1909,9 @@ export function advanceDefenseRun(run, steps = 1) {
   if (!run || !Number.isInteger(steps) || steps < 0) throw new RangeError("steps must be a non-negative integer");
   const next = clone(run);
   if (!next.terrainRecovery) next.terrainRecovery = { commander: 0, gate: 0, capRatio: 0.25 };
+  if (next.extractionProgress && typeof next.extractionProgress.ready !== "boolean") {
+    next.extractionProgress.ready = Boolean(next.extractionProgress.completed);
+  }
   if (next.commander && typeof next.commander.objectiveRoute !== "boolean") next.commander.objectiveRoute = false;
   if (next.commander && typeof next.commander.engaged !== "boolean") next.commander.engaged = false;
   if (!Number.isInteger(next.combatRng)) next.combatRng = rngNext(next.seed ^ 0x9e3779b9);

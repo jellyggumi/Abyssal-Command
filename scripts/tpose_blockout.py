@@ -10,9 +10,15 @@ Two uses:
    of whatever dynamic pose the concept art shows. This is the intended path
    per the Rodin UI's own "Click T/A pose button for direct T/A pose assets"
    feature.
-2. As a standalone proportional reference for the Rigify metarig-fit step in
-   scripts/rig-and-animate-asset-blender.py, when no T-pose condition was
+2. As a standalone proportional reference for the landmark-fit step in
+   scripts/rig-character-asset-blender.py, when no T-pose condition was
    used at generation time and the resulting mesh is in an arbitrary pose.
+
+Path 1 is the one that matters for this project: automatic T-pose conversion
+AFTER generation was measured and does not work on Rodin output (the mesh is a
+single fused primitive with cape/pauldrons/weapons welded to the arms, so the
+arms cannot be isolated to rotate). Submitting this blockout as a generation
+condition is the cheap way to get genuinely T-posed source meshes.
 
 Run inside Blender (interactive MCP or --background --python).
 """

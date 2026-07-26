@@ -135,15 +135,26 @@ async function verifyPortraitViewportContract(browser, hosting) {
           left: Number.parseFloat(style.left),
         };
       };
+      const battleCard = [...document.querySelectorAll(".edge-card")].find((node) => !node.classList.contains("defense-toast"));
+      const toastCards = [...document.querySelectorAll(".edge-card.defense-toast")];
       return {
         top: read(document.querySelector(".defense-top")),
         bottom: read(document.querySelector(".defense-bottom")),
-        cardTop: Number.parseFloat(getComputedStyle(document.querySelector(".edge-card") ?? document.querySelector(".defense-top")).top),
+        cardTop: battleCard ? Number.parseFloat(getComputedStyle(battleCard).top) : null,
+        toastTops: toastCards.map((node) => Number.parseFloat(getComputedStyle(node).top)),
       };
     });
     assert.deepEqual({ top: safeInsets.top.top, right: safeInsets.top.right, left: safeInsets.top.left }, { top: 11, right: 17, left: 29 }, "portrait top HUD must stay on physical safe edges, not rotated logical mappings");
     assert.deepEqual({ bottom: safeInsets.bottom.bottom, right: safeInsets.bottom.right, left: safeInsets.bottom.left }, { bottom: 23, right: 17, left: 29 }, "portrait bottom HUD must stay on physical safe edges, not rotated logical mappings");
-    assert.equal(safeInsets.cardTop, 11, "portrait cards must avoid the physical top cutout, not the former rotated right edge");
+    if (safeInsets.cardTop === null) {
+      assert.ok(safeInsets.toastTops.length > 0, "portrait HUD must expose either a battle offer/result card or a transient toast");
+    } else {
+      assert.equal(safeInsets.cardTop, 11, "portrait battle offer/result cards must avoid the physical top cutout, not the former rotated right edge");
+    }
+    assert.ok(
+      safeInsets.toastTops.every((top) => top >= safeInsets.top.top),
+      `portrait camera/status toasts must remain below the physical safe top edge (safe top ${safeInsets.top.top}, toast tops ${safeInsets.toastTops.join(", ")})`,
+    );
 
     const preResize = await page.evaluate(() => {
       const canvas = document.querySelector("#defense-canvas");
