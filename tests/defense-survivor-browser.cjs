@@ -588,6 +588,323 @@ async function verifyBossMeshRegression(browser, hosting) {
   }
 }
 
+/**
+ * Stance-switch feedback coverage (control-feel-20260725.md §2.2/§2.3). The
+ * 3-stance selector IS the defense↔offense transition — the player's single
+ * most important real-time decision. A REJECTED (cooldown) tap has long shown a
+ * visible shake (.is-blocked), but a SUCCESSFUL switch landed with only the
+ * STANCE_SWITCHED audio cue + a silent glyph swap; this pass adds a static held
+ * glow (.is-switched) so success gets at least equal feedback. Both feedback
+ * paths are pure app.js render() reactions to sim-emitted STANCE_SWITCHED /
+ * STANCE_SWITCH_BLOCKED events — this exercises that real render path end to
+ * end (click -> queued input -> sim tick -> event -> DOM class), which no
+ * node-only test can (the class is set from performance.now() deadlines in the
+ * live render loop). Uses the same deterministic frame-pump harness as
+ * verifyWorldHudOverlay so tick advancement is a function of pump count, not
+ * the CI runner's real frame rate.
+ */
+async function verifyStanceSwitchFeedback(browser, hosting, campaign) {
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+  try {
+    await page.addInitScript(({ encoded, key }) => {
+      Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
+      localStorage.setItem(key, encoded);
+    }, { encoded: campaign.encoded, key: STORAGE_KEY });
+    await page.addInitScript(() => {
+      const queue = new Map();
+      let nextId = 1;
+      let syntheticNow = 0;
+      window.requestAnimationFrame = (callback) => { const id = nextId++; queue.set(id, callback); return id; };
+      window.cancelAnimationFrame = (id) => { queue.delete(id); };
+      window.__pumpFrame = (deltaMs) => {
+        syntheticNow += deltaMs;
+        const pending = [...queue.values()];
+        queue.clear();
+        for (const callback of pending) callback(syntheticNow);
+        return syntheticNow;
+      };
+    });
+    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").click();
+    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+
+    // Drive to a "quiet" battle frame (cutscene dismissed, no growth offer up —
+    // both pause tick advancement, so a queued STANCE_CYCLE would never process
+    // while either is present), then exercise the two feedback paths. Real
+    // wall-clock waits (setTimeout) drive the performance.now()-based confirm
+    // (520 ms) / shake (260 ms) deadlines, which the synthetic rAF clock does
+    // NOT touch (performance.now() is left real under the pump harness).
+    const pumpQuiet = async () => {
+      // Advance one frame while clearing anything that would pause ticks.
+      await page.evaluate(() => {
+        document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]")?.click();
+        const offer = document.querySelector("#defense-growth-offer");
+        offer?.querySelector("button[data-pick]")?.click();
+        window.__pumpFrame(100);
+      });
+      await page.waitForTimeout(0);
+    };
+    const stanceState = () => page.evaluate(() => {
+      const button = document.querySelector("#stance-cycle");
+      return {
+        exists: Boolean(button),
+        classes: button ? [...button.classList] : [],
+        glyph: button?.querySelector(".stance-glyph")?.textContent ?? null,
+        clean: !document.querySelector("#defense-growth-offer") && !document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]"),
+      };
+    });
+
+    // Phase A: reach a clean, actionable frame with the stance button present.
+    let ready = null;
+    for (let i = 0; i < 60; i += 1) {
+      await pumpQuiet();
+      const state = await stanceState();
+      if (state.exists && state.clean && state.glyph) { ready = state; break; }
+    }
+    assert.ok(ready, "the live battle must reach a clean frame exposing the #stance-cycle button");
+    const initialGlyph = ready.glyph;
+
+    // Phase B: a successful switch must add .is-switched and advance the glyph.
+    await page.evaluate(() => document.querySelector("#stance-cycle")?.click());
+    let switched = null;
+    for (let i = 0; i < 20; i += 1) {
+      await pumpQuiet();
+      const state = await stanceState();
+      if (state.glyph && state.glyph !== initialGlyph) { switched = state; break; }
+    }
+    assert.ok(switched, "clicking #stance-cycle must advance the formation stance (glyph changes)");
+    assert.ok(switched.classes.includes("is-switched"), `a successful stance switch must carry the .is-switched confirmation glow; saw classes ${JSON.stringify(switched.classes)}`);
+    assert.ok(!switched.classes.includes("is-blocked"), "a successful switch must not also carry the rejection shake class");
+
+    // Phase C: a second tap DURING the 4 s cooldown must be rejected — glyph
+    // frozen, .is-blocked shake shown (previously untested), no new switch.
+    await page.evaluate(() => document.querySelector("#stance-cycle")?.click());
+    let blocked = null;
+    for (let i = 0; i < 20; i += 1) {
+      await pumpQuiet();
+      const state = await stanceState();
+      if (state.classes.includes("is-blocked")) { blocked = state; break; }
+    }
+    assert.ok(blocked, "a cooldown-rejected stance tap must carry the .is-blocked shake class");
+    assert.equal(blocked.glyph, switched.glyph, "a rejected tap must not advance the formation stance");
+
+    // Phase D: after the confirm window elapses (520 ms real-time), the glow
+    // must clear (the class is a transient held state, not permanent).
+    await page.waitForTimeout(650);
+    await pumpQuiet();
+    const cleared = await stanceState();
+    assert.ok(!cleared.classes.includes("is-switched"), `the .is-switched glow must clear after its window; saw classes ${JSON.stringify(cleared.classes)}`);
+
+    assert.deepEqual(errors, [], "stance-switch feedback journey emitted unexpected page or console errors");
+    return { initialGlyph, switchedGlyph: switched.glyph, sawSwitched: true, sawBlocked: true, clearedAfterWindow: true };
+  } finally {
+    await context.close();
+  }
+}
+
+/**
+ * Pass #7 (UI/IA axis): the in-run XP-to-next-level bar (#battle-xp-fill +
+ * #battle-xp-label in the top mission panel). Before this the mid-combat HUD
+ * exposed only "Lv.N" text — the player had zero visibility into progress
+ * toward the next growth/skill choice, the core RPG decision. Proven live via
+ * the same deterministic frame-pump harness: the bar must render inside the
+ * edge HUD, its cost must come from the public XP_GROWTH contract, and its
+ * fill width must equal the label's xp/cost ratio (i.e. it reflects real
+ * snapshot.commander data, not a static element).
+ */
+async function verifyXpProgressBar(browser, hosting, campaign) {
+  // The public XP-growth contract (defense-catalog.js XP_GROWTH). Duplicated
+  // here as an independent oracle: the label's per-level cost MUST be one of
+  // these, which proves the cost is wired from the catalog and not fabricated.
+  const XP_GROWTH = [30, 55, 85, 120, 160, 205, 255, 310];
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+  try {
+    await page.addInitScript(({ encoded, key }) => {
+      Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
+      localStorage.setItem(key, encoded);
+    }, { encoded: campaign.encoded, key: STORAGE_KEY });
+    await page.addInitScript(() => {
+      const queue = new Map();
+      let nextId = 1;
+      let syntheticNow = 0;
+      window.requestAnimationFrame = (callback) => { const id = nextId++; queue.set(id, callback); return id; };
+      window.cancelAnimationFrame = (id) => { queue.delete(id); };
+      window.__pumpFrame = (deltaMs) => {
+        syntheticNow += deltaMs;
+        const pending = [...queue.values()];
+        queue.clear();
+        for (const callback of pending) callback(syntheticNow);
+        return syntheticNow;
+      };
+    });
+    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").click();
+    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+
+    const pumpQuiet = async () => {
+      await page.evaluate(() => {
+        document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]")?.click();
+        const offer = document.querySelector("#defense-growth-offer");
+        offer?.querySelector("button[data-pick]")?.click();
+        window.__pumpFrame(100);
+      });
+      await page.waitForTimeout(0);
+    };
+    const xpState = () => page.evaluate(() => {
+      const fill = document.querySelector("#battle-xp-fill");
+      const label = document.querySelector("#battle-xp-label");
+      return {
+        exists: Boolean(fill) && Boolean(label),
+        insideEdgeHud: Boolean(document.querySelector("#defense-edge-hud #battle-xp-fill")),
+        widthPct: fill ? parseFloat(fill.style.width) : NaN,
+        label: label?.textContent ?? "",
+        clean: !document.querySelector("#defense-growth-offer") && !document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]"),
+      };
+    });
+
+    // Reach a clean, actionable battle frame where the XP bar has been rendered.
+    let state = null;
+    for (let i = 0; i < 60; i += 1) {
+      await pumpQuiet();
+      const s = await xpState();
+      if (s.exists && s.clean && /^Lv\.\d+ · \d+\/\d+$/.test(s.label)) { state = s; break; }
+    }
+    assert.ok(state, "the live battle must render the #battle-xp progress bar with a Lv.N · xp/cost label");
+    assert.ok(state.insideEdgeHud, "the XP bar must live inside #defense-edge-hud (edge-HUD constraint, no center panel)");
+
+    const match = state.label.match(/^Lv\.(\d+) · (\d+)\/(\d+)$/);
+    assert.ok(match, `XP label must read "Lv.N · xp/cost"; saw ${JSON.stringify(state.label)}`);
+    const level = Number(match[1]);
+    const xp = Number(match[2]);
+    const cost = Number(match[3]);
+    assert.ok(level >= 1, `commander level must be >= 1; saw ${level}`);
+    assert.ok(XP_GROWTH.includes(cost), `level cost ${cost} must come from the XP_GROWTH contract ${JSON.stringify(XP_GROWTH)}`);
+    assert.ok(xp >= 0, `xp must be non-negative; saw ${xp}`);
+
+    // The rendered fill width must equal the clamped xp/cost ratio — proving the
+    // bar reflects live snapshot data, not a placeholder.
+    const expectedWidth = Math.max(0, Math.min(1, xp / cost)) * 100;
+    assert.ok(Number.isFinite(state.widthPct), `fill width must be a numeric percent; saw ${state.widthPct}`);
+    assert.ok(state.widthPct >= 0 && state.widthPct <= 100, `fill width must be within [0,100]; saw ${state.widthPct}`);
+    assert.ok(Math.abs(state.widthPct - expectedWidth) < 0.5, `fill width ${state.widthPct}% must match xp/cost ratio ${expectedWidth}% from label ${JSON.stringify(state.label)}`);
+
+    await page.screenshot({ path: "/tmp/xp-progress-bar.png" });
+    assert.deepEqual(errors, [], "XP progress-bar journey emitted unexpected page or console errors");
+    return { level, xp, cost, widthPct: state.widthPct, label: state.label, insideEdgeHud: state.insideEdgeHud };
+  } finally {
+    await context.close();
+  }
+}
+
+/**
+ * Passive-build legibility (RPG growth axis). #skill-actions renders only
+ * kind==="active" skills, so before this pass the 3 passive picks left no
+ * on-screen trace after the level-up toast. This drives real growth offers,
+ * prefers a passive choice, and proves each acquired passive renders a
+ * persistent read-only badge inside the edge HUD with exactly the catalog boon.
+ */
+async function verifyPassiveBadges(browser, hosting, campaign) {
+  // Independent oracle: the public SKILLS passive boons (defense-catalog.js).
+  // The rendered badge text MUST equal one of these, proving the value is wired
+  // from the catalog and not fabricated in the render layer.
+  const PASSIVE_BOONS = { "eclipse-edge": "+180 공격", "soul-magnet": "+1500 회수", "ward-binder": "+120 내구" };
+  const ACTIVE_IDS = ["rift-bolt", "soul-lance", "grave-pulse", "void-aegis", "shadow-step"];
+  const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 844, height: 390 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+  try {
+    await page.addInitScript(({ encoded, key }) => {
+      Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
+      localStorage.setItem(key, encoded);
+    }, { encoded: campaign.encoded, key: STORAGE_KEY });
+    await page.addInitScript(() => {
+      const queue = new Map();
+      let nextId = 1;
+      let syntheticNow = 0;
+      window.requestAnimationFrame = (callback) => { const id = nextId++; queue.set(id, callback); return id; };
+      window.cancelAnimationFrame = (id) => { queue.delete(id); };
+      window.__pumpFrame = (deltaMs) => {
+        syntheticNow += deltaMs;
+        const pending = [...queue.values()];
+        queue.clear();
+        for (const callback of pending) callback(syntheticNow);
+        return syntheticNow;
+      };
+    });
+    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").click();
+    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+
+    // Deterministic in-page pump drive (same controllable-rAF pattern as the
+    // world-HUD test): each __pumpFrame(100) advances EXACTLY 100 ms of
+    // game-time, so reaching a level-up is a pure function of pump COUNT, never
+    // of the CI runner's frame rate. On each growth offer prefer a passive pick
+    // (falling back to the first choice) so the passive-badge strip is exercised;
+    // break as soon as a badge renders. 1200 pumps = 120 s of game-time, ample
+    // margin over the first level-up (XP_GROWTH[0]=30 fires within a few seconds).
+    const passiveIds = Object.keys(PASSIVE_BOONS);
+    const state = await page.evaluate(async (passiveIds) => {
+      const FRAME_MS = 100;
+      const MAX_PUMPS = 1200;
+      const clickedOfferKeys = new Set();
+      const readBadges = () => [...(document.querySelectorAll("#passive-badges .passive-badge"))]
+        .map((b) => ({ id: b.dataset.passive ?? "", boon: b.querySelector("small")?.textContent ?? "" }));
+      let pumps = 0;
+      while (pumps < MAX_PUMPS) {
+        document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]")?.click();
+        const offer = document.querySelector("#defense-growth-offer");
+        if (offer) {
+          const key = offer.dataset.offer ?? "";
+          if (!clickedOfferKeys.has(key)) {
+            clickedOfferKeys.add(key);
+            const picks = [...offer.querySelectorAll("button[data-pick]")];
+            const passive = picks.find((b) => passiveIds.includes(b.dataset.pick));
+            (passive ?? picks[0])?.click();
+          }
+        }
+        if (readBadges().length > 0) break;
+        window.__pumpFrame(FRAME_MS);
+        pumps += 1;
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+      const badges = readBadges();
+      return {
+        badges,
+        pumps,
+        insideEdgeHud: Boolean(document.querySelector("#defense-edge-hud #passive-badges")),
+        activeInPassiveStrip: badges.map((b) => b.id),
+      };
+    }, passiveIds);
+    assert.ok(state.badges.length > 0, `a passive skill must be acquirable and render at least one #passive-badges chip within the drive budget (pumped ${state.pumps})`);
+    assert.ok(state.insideEdgeHud, "the passive-badge strip must live inside #defense-edge-hud (edge-HUD constraint, no center panel)");
+    for (const { id, boon } of state.badges) {
+      assert.ok(PASSIVE_BOONS[id], `badge ${JSON.stringify(id)} must be a real passive skill from the catalog`);
+      assert.equal(boon, PASSIVE_BOONS[id], `passive ${id} badge must show its catalog boon ${PASSIVE_BOONS[id]}; saw ${JSON.stringify(boon)}`);
+    }
+    for (const id of state.activeInPassiveStrip) {
+      assert.equal(ACTIVE_IDS.includes(id), false, `the passive strip must never render an active skill; saw ${id}`);
+    }
+    await page.screenshot({ path: "/tmp/passive-badges.png" });
+    assert.deepEqual(errors, [], "passive-badge journey emitted unexpected page or console errors");
+    return { badges: state.badges, insideEdgeHud: state.insideEdgeHud };
+  } finally {
+    await context.close();
+  }
+}
+
 async function run() {
   const hosting = await startServer();
   let browser;
@@ -596,8 +913,11 @@ async function run() {
     const campaign = await seededWorldHudCampaign();
     const journey = await verifyPlaythroughJourney(browser, hosting);
     const worldHud = await verifyWorldHudOverlay(browser, hosting, campaign);
+    const stanceFeedback = await verifyStanceSwitchFeedback(browser, hosting, campaign);
+    const xpProgress = await verifyXpProgressBar(browser, hosting, campaign);
+    const passiveBadges = await verifyPassiveBadges(browser, hosting, campaign);
     const bossMesh = await verifyBossMeshRegression(browser, hosting);
-    console.log(JSON.stringify({ pass: true, journey, worldHud, bossMesh }, null, 2));
+    console.log(JSON.stringify({ pass: true, journey, worldHud, bossMesh, stanceFeedback, xpProgress, passiveBadges }, null, 2));
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => hosting.host.close(resolve));

@@ -32,7 +32,7 @@ import {
 } from "./defense-run-simulation.js";
 import { RealtimeBattle, MeshThumbnailService, meshRootForCompanion, meshRootForStageBoss, COMMANDER_MESH_ROOT } from "./battle-realtime-three.js";
 import { BattleVisualizer } from "./battle-visualizer.js";
-import { ARENA, COMPANIONS, CUTSCENES, REWARDS, RULES_VERSION, SKILLS, STAGE_PRESENTATION_BY_ID, STAGE_REWARD_IDS, STAGE_TACTICS, TICK_RATE } from "./defense-catalog.js";
+import { ARENA, COMPANIONS, CUTSCENES, REWARDS, RULES_VERSION, SKILLS, STAGE_PRESENTATION_BY_ID, STAGE_REWARD_IDS, STAGE_TACTICS, TICK_RATE, XP_GROWTH } from "./defense-catalog.js";
 import { cutsceneEventKey, cutsceneFromEvent } from "./defense-cutscene.js";
 import { DefenseAudio } from "./defense-audio.js";
 import { DefenseViewport } from "./defense-viewport.js";
@@ -91,6 +91,18 @@ const STANCE_COOLDOWN_TICKS = 4 * TICK_RATE;
 // stays tappable during cooldown, a blocked tap gets a brief visual nudge
 // instead of a hard-disabled state).
 const STANCE_BLOCK_SHAKE_MS = 260;
+// Transient post-SUCCESS confirmation window (control-feel-20260725.md §2.2:
+// a successful stance switch is the player's single most important real-time
+// decision — the defense↔offense transition — and until now landed with only
+// the STANCE_SWITCHED audio cue + a silent glyph swap, while a REJECTED tap
+// got a visible shake. Good feel gives success at least as much feedback as
+// failure. is-switched holds a STATIC glow (not a keyframe) for this window,
+// so it is churn-immune under the per-tick #battle-actions innerHTML rebuild
+// (the button subtree is torn down/recreated every ~40ms while the cooldown
+// ring advances; a keyframe would restart each rebuild and stutter, a static
+// held state re-applies identically). Non-motion, so it stays valid under
+// reduced-motion — the accessible success signal the shake cannot be.
+const STANCE_SWITCH_CONFIRM_MS = 520;
 // One-shot campaign flag for the orbit-camera discovery toast (§2-b) —
 // reuses the existing achievementIds array (campaign-state.js) as its
 // storage exactly like the real "stage-clear:*" entries it already holds
@@ -749,8 +761,8 @@ function beginSession(stageId) {
       <div id="world-hud-overlay" aria-hidden="true"></div>
       <div id="defense-edge-hud">
         <div class="defense-edge defense-top">
-          <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">ABYSSAL COMMAND · SEAL ATLAS</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span></div>
-          <div class="top-right-hud"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div></div>
+          <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">ABYSSAL COMMAND · SEAL ATLAS</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span><div class="hud-xp" aria-hidden="true"><b id="battle-xp-label"></b><span class="hud-xp-track"><i id="battle-xp-fill"></i></span></div></div>
+          <div class="top-right-hud"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div><div class="hud-right-stack"><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
         </div>
         <output id="battle-event-feedback" class="battle-event-feedback" role="status" aria-live="polite" aria-atomic="true"></output>
         <div class="arena-callout" aria-hidden="true"><span>GATE CORE</span><i></i><span>전선을 유지하세요</span></div>
@@ -838,6 +850,13 @@ export class BattleSession {
     // deadline (performance.now()), never set at all under reduced-motion.
     this.lastStanceBlockEventId = null;
     this.stanceShakeUntil = 0;
+    // §2.2 stance-switch success confirmation (mirror of the block feedback
+    // above): lastStanceSwitchEventId dedupes repeated renders of the same
+    // STANCE_SWITCHED event; stanceConfirmUntil is a wall-clock deadline.
+    // Unlike the shake, this IS set under reduced-motion — the held glow is
+    // not motion, so it remains a valid accessible success signal.
+    this.lastStanceSwitchEventId = null;
+    this.stanceConfirmUntil = 0;
     // World-space HUD (Track 3, DOM-overlay pattern — ui/lane-hud-layout.md
     // section 4, Option B): companion nameplates/health bars, elite capture
     // prompt, floating damage numbers, all positioned via
@@ -989,7 +1008,7 @@ export class BattleSession {
       const deltaDistance = distance - this.pinch.distance;
       this.pinch.distance = distance;
       this.dismissCameraHint();
-      this.renderer?.zoom?.(-deltaDistance * CAMERA_PINCH_ZOOM_SENSITIVITY);
+      if (this.renderer?.zoom?.(-deltaDistance * CAMERA_PINCH_ZOOM_SENSITIVITY)) this.signalCameraClamp();
       return;
     }
     if (this.pointer?.id !== event.pointerId) return;
@@ -998,7 +1017,20 @@ export class BattleSession {
     this.pointer.x = point.x;
     this.pointer.y = point.y;
     this.dismissCameraHint();
-    this.renderer?.orbit?.(dx * CAMERA_ORBIT_YAW_SENSITIVITY, -dy * CAMERA_ORBIT_PITCH_SENSITIVITY);
+    if (this.renderer?.orbit?.(dx * CAMERA_ORBIT_YAW_SENSITIVITY, -dy * CAMERA_ORBIT_PITCH_SENSITIVITY)) this.signalCameraClamp();
+  }
+
+  // Plays the short low-volume boundary tick when a drag/pinch pushes
+  // against an already-saturated pitch/zoom clamp (control-feel-
+  // 20260725.md §3.3/§3.5). Pure renderer-side side channel: the
+  // simulation never sees this, so getRunDigest determinism is untouched.
+  // The cue's own 0.15s refractory (defense-audio.js) stops a continuous
+  // push into the wall from buzzing -- no app-side throttle needed. Audio
+  // is orthogonal to prefers-reduced-motion, so no motion-query branch:
+  // the tick is intentionally the one boundary signal that survives
+  // reduced-motion (§3.3 chose audio-only precisely for that reason).
+  signalCameraClamp() {
+    this.audio?.play?.("camera-clamp");
   }
 
   onPointerEnd(event) {
@@ -1288,6 +1320,15 @@ export class BattleSession {
       this.lastStanceBlockEventId = blockedEvent.eventId;
       if (!this.motionQuery?.matches) this.stanceShakeUntil = performance.now() + STANCE_BLOCK_SHAKE_MS;
     }
+    // §2.2 stance-switch SUCCESS confirmation — same passive sim-event scan as
+    // the block feedback, applied to STANCE_SWITCHED. No reduced-motion guard:
+    // the is-switched glow is a static highlight, not motion, so it stays on
+    // as the accessible "switch confirmed" signal even when animations are off.
+    const switchedEvent = snapshot.events.find((event) => event.type === "STANCE_SWITCHED");
+    if (switchedEvent && switchedEvent.eventId !== this.lastStanceSwitchEventId) {
+      this.lastStanceSwitchEventId = switchedEvent.eventId;
+      this.stanceConfirmUntil = performance.now() + STANCE_SWITCH_CONFIRM_MS;
+    }
     const projection = this.projected(snapshot);
     const camera = this.updateCamera(projection.commander);
     const frame = {
@@ -1323,6 +1364,16 @@ export class BattleSession {
             ? "전투 종료"
             : `시간 ${Math.floor(snapshot.tick / TICK_RATE)}초 · Lv.${snapshot.commander.level}`;
     root.querySelector("#battle-objective").textContent = presentation.mapLabels.objective;
+    // In-run XP-to-next-level progress (IA: the core RPG growth decision was
+    // previously invisible mid-combat — only "Lv.N" text, no progress toward
+    // the next skill/growth offer). Cost mirrors the simulation's own level-up
+    // threshold exactly (defense-run-simulation.js:641/1689) so the bar fills
+    // precisely to the moment the growth offer fires. Pure client render off
+    // snapshot.commander — no simulation state touched, getRunDigest unaffected.
+    const xpCost = XP_GROWTH[snapshot.commander.level - 1] || XP_GROWTH.at(-1);
+    const xpRatio = xpCost > 0 ? Math.max(0, Math.min(1, snapshot.commander.xp / xpCost)) : 0;
+    root.querySelector("#battle-xp-fill").style.width = `${xpRatio * 100}%`;
+    root.querySelector("#battle-xp-label").textContent = `Lv.${snapshot.commander.level} · ${snapshot.commander.xp}/${xpCost}`;
     const commanderNode = root.querySelector("#battle-commander-integrity");
     commanderNode.textContent = `지휘관 내구 ${commanderIntegrity.integrity}/${commanderIntegrity.maxIntegrity} · ${commanderIntegrity.state}`;
     commanderNode.dataset.integrityState = commanderIntegrity.state;
@@ -1552,6 +1603,33 @@ export class BattleSession {
       });
     }
 
+    // Persistent read-only badges for acquired PASSIVE skills. #skill-actions
+    // above filters kind==="active", so before this the 3 passive picks
+    // (Dusk Edge/Echo Magnet/Gate Binder) vanished into stats after the level-up
+    // toast -- half the growth pool left zero on-screen trace of the character's
+    // building kit. These non-interactive chips keep that accrued power visible
+    // for the whole run (survivor/ARPG "growth is felt" legibility), each chip
+    // labelled with exactly the per-skill boon the growth preview promised.
+    const passives = root.querySelector("#passive-badges");
+    if (passives) {
+      const passiveGlyphs = { "eclipse-edge": "†", "soul-magnet": "◎", "ward-binder": "❖" };
+      const passiveMarkup = snapshot.commander.skills
+        .filter((id) => SKILLS[id]?.kind === "passive")
+        .map((id) => {
+          const skill = SKILLS[id] ?? {};
+          const glyph = passiveGlyphs[id] ?? "◆";
+          const boon = skill.basicDamage ? `+${skill.basicDamage} 공격`
+            : skill.pickupRange ? `+${skill.pickupRange} 회수`
+            : skill.maxIntegrity ? `+${skill.maxIntegrity} 내구` : "지속";
+          const name = escapeHtml(skill.name ?? id);
+          return `<span class="passive-badge" data-passive="${id}" title="${name} · ${escapeHtml(boon)}"><span class="passive-glyph" aria-hidden="true">${glyph}</span><span class="passive-copy"><strong>${name}</strong><small>${escapeHtml(boon)}</small></span></span>`;
+        }).join("");
+      if (passives.dataset.passives !== passiveMarkup) {
+        passives.dataset.passives = passiveMarkup;
+        passives.innerHTML = passiveMarkup;
+      }
+    }
+
     // Scoped to the growth-offer card's own id (not the broader .edge-card
     // class) -- .edge-card is now shared with transient toasts (defense-toast,
     // including the camera-hint toast, app.js maybeShowCameraHint()) that must
@@ -1604,8 +1682,9 @@ export class BattleSession {
     const cooldownPct = onCooldown ? Math.min(100, Math.round((ticksRemaining / STANCE_COOLDOWN_TICKS) * 100)) : 0;
     const secondsRemaining = Math.ceil(ticksRemaining / TICK_RATE);
     const isBlocked = performance.now() < this.stanceShakeUntil;
+    const isSwitched = performance.now() < this.stanceConfirmUntil;
     const stanceLabel = `편성 스탠스: ${STANCE_LABELS[stance]}${onCooldown ? ` (전환까지 ${secondsRemaining}초)` : ""}`;
-    const stanceMarkup = `<button id="stance-cycle" class="stance-cycle-button${isBlocked ? " is-blocked" : ""}" style="--rc-cooldown-pct:${cooldownPct}" aria-live="polite" aria-label="${escapeHtml(stanceLabel)}"><span class="stance-glyph" aria-hidden="true">${STANCE_GLYPHS[stance]}</span></button>`;
+    const stanceMarkup = `<button id="stance-cycle" class="stance-cycle-button${isBlocked ? " is-blocked" : ""}${isSwitched ? " is-switched" : ""}" style="--rc-cooldown-pct:${cooldownPct}" aria-live="polite" aria-label="${escapeHtml(stanceLabel)}"><span class="stance-glyph" aria-hidden="true">${STANCE_GLYPHS[stance]}</span></button>`;
 
     const actions = root.querySelector("#battle-actions");
     const candidate = snapshot.eliteCandidate;

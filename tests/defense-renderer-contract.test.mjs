@@ -551,6 +551,38 @@ test("RealtimeBattle keeps raw out-of-frustum NDC so the waypoint arrow can clam
   }
   assert.doesNotThrow(() => adapter.dispose());
 });
+test("RealtimeBattle orbit()/zoom() report when input is cut by a saturated pitch/zoom clamp", () => {
+  const adapter = realtimeBattleHarness();
+  const defaultPitch = adapter.orbitPitch;
+  const defaultZoom = adapter.zoomFactor;
+
+  // Within range: a small pitch nudge is absorbed, no boundary hit.
+  assert.equal(adapter.orbit(0, 0.05), false, "an in-range pitch drag reports no clamp boundary");
+  // Yaw is unrestricted, so a yaw-only drag never reports a boundary even
+  // at a huge magnitude.
+  assert.equal(adapter.orbit(1000, 0), false, "an unrestricted-yaw drag never reports a clamp boundary");
+
+  // Push hard past the upper pitch clamp (85°): boundary hit, and the
+  // pitch is still clamped inside the range.
+  adapter.orbitPitch = defaultPitch;
+  assert.equal(adapter.orbit(0, 10), true, "dragging past the max pitch reports a clamp boundary");
+  assert.ok(adapter.orbitPitch <= THREE.MathUtils.degToRad(85) + 1e-9, "max-pitch clamp still holds the value in range");
+  // Continuing to push into the already-saturated boundary keeps reporting
+  // the hit (so app.js can re-tick after the audio refractory expires).
+  assert.equal(adapter.orbit(0, 10), true, "continuing to push into the saturated max pitch keeps reporting the boundary");
+
+  // Symmetric on the lower pitch clamp (30°).
+  assert.equal(adapter.orbit(0, -10), true, "dragging past the min pitch reports a clamp boundary");
+  assert.ok(adapter.orbitPitch >= THREE.MathUtils.degToRad(30) - 1e-9, "min-pitch clamp still holds the value in range");
+
+  // Zoom: in-range delta reports nothing; pushing past either distance
+  // bound reports a boundary. (Distance bounds have valid pre-mount
+  // defaults, so this holds without mount()'s fov/GLB-derived overwrite.)
+  adapter.zoomFactor = defaultZoom;
+  assert.equal(adapter.zoom(0), false, "a zero-delta zoom reports no clamp boundary");
+  assert.equal(adapter.zoom(100000), true, "pinching past the far distance bound reports a clamp boundary");
+  assert.equal(adapter.zoom(-100000), true, "pinching past the near distance bound reports a clamp boundary");
+});
 
 test("RealtimeBattle resolves a terrain model for every authored stage without touching the snapshot", () => {
   const adapter = realtimeBattleHarness();

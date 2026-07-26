@@ -57,14 +57,20 @@ const TERRAIN_CORNER_RADIUS = TERRAIN_TARGET_HALF_EXTENT * Math.SQRT2;
 // Largest actor silhouette (boss) that must never clip the near plane at
 // the steepest (most oblique) permitted pitch.
 const BOSS_RADIUS = TARGET_HEIGHT.boss / 2;
-let MIN_ORBIT_DISTANCE = null;
-let MAX_ORBIT_DISTANCE = null;
 // zoomFactor default: matches the legacy fixed offset's camera-to-target
 // Euclidean distance (hypot(WORLD_SCALE*1.05, WORLD_SCALE*1.05)) so the
 // first rendered frame starts at the same "how far away" feel as the
 // pre-orbit camera -- only the viewing ANGLE changes to the new
 // presentation-spec default (65° pitch vs the legacy 45° isometric).
 const ORBIT_ZOOM_DEFAULT = Math.hypot(WORLD_SCALE * 1.05, WORLD_SCALE * 1.05);
+// Pre-mount fallback bounds bracketing ORBIT_ZOOM_DEFAULT so zoom() has a
+// valid clamp range before mount() computes the precise fov/GLB-derived
+// values below. mount() always overwrites both before the first real
+// zoom() call, so this changes no production behavior -- it only keeps a
+// pre-mount zoom() (constructed-but-not-mounted, e.g. under test) from
+// clamping against null (which coerces to 0 and corrupts zoomFactor).
+let MIN_ORBIT_DISTANCE = ORBIT_ZOOM_DEFAULT * 0.5;
+let MAX_ORBIT_DISTANCE = ORBIT_ZOOM_DEFAULT * 2;
 // Camera-relative rim light (stage-composition-20260725.md §1.2, D22
 // 판정 9): a DirectionalLight's illumination is direction-only (distance
 // doesn't affect its intensity), so a fixed distance/pitch -- independent
@@ -334,6 +340,54 @@ const STAGE_PALETTE_TINTS = Object.freeze({
   "abyss-chancel": 0x3c2c5b, // canon-void-obsidian -- oath/pressure heavy-fog motif
   "gate-zenith": 0xddc869, // canon-zenith-gold -- threshold-rays open-vista motif
 });
+
+// Per-stage fog DEPTH (near/far as WORLD_SCALE multiples). applyStagePalette()
+// already retints fog COLOR per stage, but near/far distance stayed a single
+// global constant (mount(): WORLD_SCALE*1.8 / *4.2), so every stage read at the
+// same atmospheric depth regardless of its authored motif -- the exact
+// "스테이지마다 시각적 차별점이 있는가" gap this axis targets. This table gives
+// each stage its own openness, grounded in stage-composition-20260725.md §3:
+//   - heavy/close fog for void & night motifs so low silhouettes stay veiled:
+//     Echo Throne (§3.3 "가장 짙게 ... 저해상도 지오메트리 은폐"), Starless
+//     Canal (§3.7 "안개색을 가장 어둡게"), Abyss Chancel (§3.9 "안개를 무겁게"),
+//     Veil Citadel (§3.2 "장막이 신호와 시야를 삼킨다").
+//   - open/far fog for the two vista stages whose identity IS a readable long
+//     silhouette: Howling Sprawl (§3.5 "안개를 가장 옅게 ... 능선의 실루엣이
+//     원거리에서도 읽혀야"), Gate Zenith (§3.10 "안개를 가장 옅게 ... 가장 멀리,
+//     가장 넓게 본다").
+//   - tight fog for the bridge stage so its ends "fade into fog" instead of
+//     snapping off a card-flat bbox: Cinder Span (§3.1 "다리 양 끝단이 항상
+//     안개에 잠기도록 ... 안개 속으로 사라진다").
+// Unlisted stages fall back to STAGE_FOG_BASE (the mount() baseline). Pure
+// render values -- fog never feeds the snapshot or getRunDigest, so the
+// renderer-one-way / determinism contracts are untouched. Every listed near <
+// its far, and every near stays within ~±0.5 of the shipped 1.8 baseline so
+// the near-plane never crosses the character/gate the player is tracking
+// (§1.4's "안개 근거리가 지형 가장자리를 가리도록" concern only bounds how FAR
+// near may drift outward, which the two vista stages do intentionally so their
+// terrain silhouette reads -- exactly what §3.5/§3.10 ask for).
+const STAGE_FOG_BASE = Object.freeze({ near: 1.8, far: 4.2 });
+const STAGE_FOG_MULTIPLIERS = Object.freeze({
+  "cinder-span": { near: 1.6, far: 3.6 },
+  "veil-citadel": { near: 1.5, far: 3.4 },
+  "echo-throne": { near: 1.4, far: 3.0 },
+  "sunken-bastion": { near: 1.8, far: 4.0 },
+  "howling-sprawl": { near: 2.2, far: 5.4 },
+  "glass-necropolis": { near: 1.9, far: 4.4 },
+  "starless-canal": { near: 1.4, far: 3.1 },
+  "shattered-causeway": { near: 1.7, far: 3.9 },
+  "abyss-chancel": { near: 1.5, far: 3.3 },
+  "gate-zenith": { near: 2.3, far: 5.6 },
+});
+
+// Resolves a stage id to concrete world-unit fog near/far. Exported as the
+// single source of truth so world-presentation-contract.test.mjs can assert
+// applyStagePalette() actually wrote these values (not a render-layer
+// fabrication), the same oracle pattern the HUD tests use.
+export function stageFogRange(stageId) {
+  const m = STAGE_FOG_MULTIPLIERS[stageId] ?? STAGE_FOG_BASE;
+  return { near: WORLD_SCALE * m.near, far: WORLD_SCALE * m.far };
+}
 
 function prefersReducedMotion() {
   try {
@@ -929,7 +983,15 @@ export class RealtimeBattle {
     // each independently so this method degrades gracefully instead of
     // throwing, same defensive pattern as the this.renderer guard below
     // and debugMetrics()'s this.renderer check.
-    if (this.scene.fog) this.scene.fog.color.copy(backgroundTint);
+    if (this.scene.fog) {
+      this.scene.fog.color.copy(backgroundTint);
+      // Per-stage atmospheric depth (see STAGE_FOG_MULTIPLIERS). Overrides the
+      // single global near/far mount() set so each stage's openness matches its
+      // authored motif; pure render state, no snapshot/digest coupling.
+      const fogRange = stageFogRange(stageId);
+      this.scene.fog.near = fogRange.near;
+      this.scene.fog.far = fogRange.far;
+    }
     if (this.keyLight) this.keyLight.color.copy(new THREE.Color(COLORS.key).lerp(new THREE.Color(tint), 0.18));
     if (this.ambientLight) this.ambientLight.color.copy(new THREE.Color(COLORS.ambient).lerp(new THREE.Color(tint), 0.3));
 
@@ -1238,21 +1300,31 @@ export class RealtimeBattle {
   // sensitivity-scaled radians (app.js:940) -- this method does no further
   // scaling or sign flips, just accumulate + clamp
   // (camera-orbit-implementation-plan-20260725.md §3.1).
+  // Returns true when this call's pitch input was cut by the clamp -- i.e.
+  // the player kept dragging into an already-saturated [30°,85°] boundary.
+  // app.js uses that to fire the camera-clamp boundary tick (control-feel-
+  // 20260725.md §3.3). Yaw is unrestricted so it never contributes.
   orbit(dYaw, dPitch) {
-    if (this.disposed) return;
+    if (this.disposed) return false;
     // yaw: unrestricted, wrapped only for float hygiene over a long
     // session -- never clamped (presentation-spec.md:18-25 "yaw
     // unrestricted").
     this.orbitYaw = wrapAngle(this.orbitYaw + dYaw);
-    this.orbitPitch = THREE.MathUtils.clamp(this.orbitPitch + dPitch, MIN_ORBIT_PITCH, MAX_ORBIT_PITCH);
+    const desiredPitch = this.orbitPitch + dPitch;
+    this.orbitPitch = THREE.MathUtils.clamp(desiredPitch, MIN_ORBIT_PITCH, MAX_ORBIT_PITCH);
+    return Math.abs(desiredPitch - this.orbitPitch) > 1e-9;
   }
 
   // Called by app.js's pinch handler with an already-sign-adjusted delta
   // (app.js:928-933) -- accumulate + clamp only, no scaling
-  // (camera-orbit-implementation-plan-20260725.md §3.2).
+  // (camera-orbit-implementation-plan-20260725.md §3.2). Returns true when
+  // the pinch pushed against a saturated distance boundary (symmetric with
+  // orbit() above -- drives the same boundary tick).
   zoom(delta) {
-    if (this.disposed) return;
-    this.zoomFactor = THREE.MathUtils.clamp(this.zoomFactor + delta, MIN_ORBIT_DISTANCE, MAX_ORBIT_DISTANCE);
+    if (this.disposed) return false;
+    const desired = this.zoomFactor + delta;
+    this.zoomFactor = THREE.MathUtils.clamp(desired, MIN_ORBIT_DISTANCE, MAX_ORBIT_DISTANCE);
+    return Math.abs(desired - this.zoomFactor) > 1e-9;
   }
 
   updateCamera(snapshot) {
@@ -1581,6 +1653,7 @@ export class RealtimeBattle {
     }
     this.pendingInputFeedback = null;
   }
+
 
   renderSnapshot(snapshot = {}, frame = {}) {
     if (this.disposed || !this.renderer || !this.camera || !this.scene) return;

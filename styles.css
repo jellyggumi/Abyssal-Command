@@ -191,12 +191,28 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .hud-mission { max-width: min(46vw, 380px); }
 .hud-mission #battle-domain { color: #a7d9ee; font-weight: 700; }
 .hud-mission #battle-terrain-context { color: #bed0de; font-size: .72rem; line-height: 1.32; }
+/* In-run XP-to-next-level bar (top mission panel). Arcane violet->gold "echo"
+   hue keeps it distinct from the integrity (red/gold/green) and gate (blue/cyan)
+   bars; gold end signals imminent level-up. Thin-bar geometry reuses the
+   .integrity-meter / .gate-panel-bar-track pattern. */
+.hud-xp { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .4rem; margin-top: .32rem; }
+.hud-xp #battle-xp-label { font-size: .66rem; font-weight: 700; letter-spacing: .02em; color: var(--canon-zenith-gold); white-space: nowrap; }
+.hud-xp-track { height: .32rem; overflow: hidden; border-radius: 999px; background: #27384f; }
+.hud-xp-track i { display: block; height: 100%; background: linear-gradient(90deg, #7c5cc4, var(--canon-zenith-gold)); transition: width 120ms linear; }
 [data-stage-hud-context][data-terrain-pattern] { border-color: #5b85a5; }
 .top-right-hud { display: flex; gap: .45rem; align-items: flex-start; justify-content: flex-end; max-width: 53vw; pointer-events: auto; }
 .objective-chip { display: flex; align-items: center; gap: .4rem; max-width: 15rem; padding: .42rem .55rem; border: 1px solid #4a7a93; border-radius: .65rem; background: rgb(5 12 25 / .85); font-size: .76rem; }
 .objective-chip small { color: #9cb8ce; }
 .objective-chip strong { display: block; margin-top: .08rem; line-height: 1.28; }
 .objective-pulse { width: .6rem; height: .6rem; border: 2px solid #87d9bc; border-radius: 50%; }
+/* Right-edge stack: active-skill cooldown buttons over the read-only passive-build chips. */
+.hud-right-stack { display: flex; flex-direction: column; gap: .3rem; align-items: flex-end; min-width: 0; }
+.hud-passives { display: flex; gap: .3rem; flex-wrap: wrap; justify-content: flex-end; pointer-events: none; }
+.passive-badge { display: flex; align-items: center; gap: .3rem; padding: .28rem .42rem; border: 1px solid #6a4fa0; border-radius: .55rem; background: rgb(18 12 32 / .82); }
+.passive-glyph { color: #b79be6; font-size: .82rem; line-height: 1; }
+.passive-copy { display: flex; flex-direction: column; line-height: 1.15; }
+.passive-copy strong { font-size: .62rem; font-weight: 700; letter-spacing: .01em; color: #e8ddff; white-space: nowrap; }
+.passive-copy small { font-size: .58rem; color: #a98fd6; white-space: nowrap; }
 .one-thumb-controls { display: grid; grid-template-columns: repeat(5, minmax(44px, 1fr)); gap: .3rem; max-width: min(45vw, 320px); }
 .one-thumb-controls button { min-width: 44px; min-height: 44px; padding: .35rem; }
 .gate-panel { max-width: min(43vw, 360px); }
@@ -266,6 +282,8 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
   .top-right-hud { max-width: 49vw; }
   .objective-chip { max-width: 11rem; }
   .objective-chip strong { max-height: 2.6em; overflow: hidden; }
+  /* Narrow screens: passive chips keep the glyph + boon, drop the name (still in title/aria). */
+  .passive-copy strong { display: none; }
   .gate-panel { max-width: 42vw; }
   .one-thumb-controls { grid-template-columns: repeat(3, 44px); max-width: 8.8rem; }
   .defense-bottom { gap: .3rem; }
@@ -274,6 +292,7 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 @media (prefers-reduced-motion: reduce) {
   .tactical-map::after { opacity: .72; }
   .integrity-meter i { transition: none; }
+  .hud-xp-track i { transition: none; }
 }
 
 /* Command deck tab shell (Cycle 3 UI overhaul, ui/lane-info-architecture.md
@@ -438,6 +457,22 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
   25% { transform: translateX(-3px); }
   75% { transform: translateX(3px); }
 }
+/* Success confirmation (control-feel-20260725.md §2.2) — a successful stance
+   switch (the defense↔offense transition, the player's key real-time decision)
+   held only an audio cue + a silent glyph swap while a REJECTED tap got the
+   shake above; this gives success at least equal feedback. Deliberately a
+   STATIC held glow, NOT a keyframe: #battle-actions rebuilds the button subtree
+   every ~40ms as the cooldown ring advances, which would restart any animation
+   each rebuild and stutter — a static state re-applies identically, so the glow
+   is stable for STANCE_SWITCH_CONFIRM_MS then removed when the class drops.
+   Being non-motion it is intentionally NOT suppressed under reduced-motion
+   (unlike the shake), remaining the accessible "switch confirmed" signal. Uses
+   the same --canon-cyan-rift as the cooldown ring — one "confirmed entry" hue. */
+.stance-cycle-button.is-switched {
+  border-color: var(--canon-cyan-rift);
+  box-shadow: 0 0 0 1px var(--canon-cyan-rift), 0 0 12px -1px var(--canon-cyan-rift);
+}
+.stance-cycle-button.is-switched .stance-glyph { color: var(--canon-cyan-rift); }
 
 /* Ambient aurora drift (react-bits Aurora pattern) for the lobby hero backdrop — large,
    slow-moving soft gradients, purely decorative (aria-hidden), never blocks pointer events. */
