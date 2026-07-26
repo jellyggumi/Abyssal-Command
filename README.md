@@ -22,6 +22,7 @@
 - reduced motion을 존중하고, 움직임·번쩍임을 줄인 읽기 쉬운 표현을 제공합니다.
 
 상세한 규칙과 범위는 [디펜스 서바이버 설계 문서](docs/abyssal-command-defense-survivor-design.md), 제작 범위와 운영 원칙은 [production cycle](docs/abyssal-surge-production-cycle.md)을 따릅니다.
+- 캐릭터 리소스 생성·카툰 텍스처·T-pose 리깅·11개 모션 클립 후보를 분리된 lane에서 검증하는 방법은 [캐릭터 에셋 파이프라인 위키](docs/character-asset-pipeline.md)에 기록합니다.
 
 ## 로컬 실행
 

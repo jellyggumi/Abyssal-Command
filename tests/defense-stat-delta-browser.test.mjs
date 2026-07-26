@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
+import { webcrypto } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, resolve, sep } from "node:path";
 import test from "node:test";
 import { chromium } from "playwright";
+import { captureElite, createCampaign, setCompanionLoadout } from "../campaign-state.js";
+import { DefenseStorage } from "../defense-storage.js";
 
 const ROOT = resolve(new URL("..", import.meta.url).pathname);
 const CONTENT_TYPES = {
@@ -43,6 +46,17 @@ async function serveProject() {
   };
 }
 
+async function growthFixtureText() {
+  let campaign = createCampaign({ campaignId: "defense-0-1" });
+  campaign = captureElite(campaign, "s1-ember-hunter", "ember-cohort");
+  campaign = captureElite(campaign, "s2-veil-sentinel", "rift-lens");
+  campaign = captureElite(campaign, "s3-throne-wraith", "throne-echo");
+  campaign = setCompanionLoadout(campaign, ["ember-cohort", "rift-lens", "throne-echo"]);
+  const storage = new DefenseStorage({ indexedDB: null, localStorage: null, crypto: webcrypto });
+  await storage.open();
+  await storage.save(campaign);
+  return storage.exportText();
+}
 test("growth choices show truthful current → upgraded values to the player", { timeout: 60_000 }, async (t) => {
   const hosting = await serveProject();
   const browser = await chromium.launch({ headless: true });
@@ -58,6 +72,13 @@ test("growth choices show truthful current → upgraded values to the player", {
   });
 
   await page.goto(`${hosting.url}/index.html`, { waitUntil: "networkidle" });
+  const fixtureText = await growthFixtureText();
+  await page.locator("#import-defense").setInputFiles({
+    name: "growth-fixture.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(fixtureText),
+  });
+  await page.waitForFunction(() => document.body.innerText.includes("3/3 슬롯"));
   await page.locator("#start-defense").click();
   await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
   const cutscene = page.locator("#defense-cutscene-overlay");
@@ -67,7 +88,7 @@ test("growth choices show truthful current → upgraded values to the player", {
   }
 
   const offer = page.locator("#defense-growth-offer");
-  await offer.waitFor({ state: "visible", timeout: 30_000 });
+  await offer.waitFor({ state: "visible", timeout: 45_000 });
   const choices = await offer.locator("button[data-pick]").evaluateAll((buttons) => buttons.map((button) => ({
     skillId: button.dataset.pick,
     label: button.querySelector("span.growth-choice-copy")?.textContent?.trim() ?? "",
@@ -80,5 +101,10 @@ test("growth choices show truthful current → upgraded values to the player", {
     assert.ok(rankDelta, `${skillId} must show its current and upgraded rank: ${label}`);
     assert.equal(Number(rankDelta[2]), Number(rankDelta[1]) + 1, `${skillId} must show a one-rank upgrade`);
   }
+  const loopHud = page.locator(".hud-loop-state");
+  assert.equal(await loopHud.isVisible(), true, "the agency HUD must remain visible during growth");
+  assert.match(await page.locator("#battle-loop-phase").textContent(), /성장 선택/);
+  assert.match(await page.locator("#battle-growth-state").textContent(), /3개 성장 오퍼/);
+  assert.equal(await page.locator("#defense-battle-surface").getAttribute("data-objective-phase"), "growth");
   assert.deepEqual(errors, []);
 });

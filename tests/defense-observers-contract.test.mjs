@@ -175,7 +175,7 @@ test("telemetry exports the versioned offline schema and preserves objective, po
 });
 
 test("telemetry records policy and spawn data emitted by the live simulation", () => {
-  const telemetry = new DefenseTelemetry({ maxRecords: 32, now: () => 5 });
+  const telemetry = new DefenseTelemetry({ maxRecords: 128, now: () => 5 });
   telemetry.startRun({ stageId: "cinder-span", seed: 17, rulesVersion: "contract-v3" });
   let run = createDefenseRun({ stageId: "cinder-span", seed: 17 });
   let waveRecord = null;

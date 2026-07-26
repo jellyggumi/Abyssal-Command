@@ -1,96 +1,110 @@
-# Stage 2 Balance Sheet — Bounded Cinder Retune
+# Stage 2b Balance Sheet — Final Cinder Data-Retune Proposal
 
-**Gate state:** G2 **FIX**; G3 **FIX**. This is a data-only proposal, not an implemented or measured pass. It preserves G1 strings, runtime IDs, GLBs, campaign schema, and the no-monetization boundary.
+**Current gate state:** G2 **FIX**; G3 **FIX**; G5 **N/A**; G7 **BLOCKED**; G8 **BLOCKED**. This is the one permitted second-retune proposal, not an implementation, measurement, or gate verdict. A failed mandatory post-change retest returns this work to **REDO** under `quality-gates.md`; nothing here self-promotes a gate.
 
 ## Gate contract
 
 ```yaml
-gate: G2
-status: FIX
-rules_version: defense-survivor-v1
-scope: "Cinder Span pressure plus formation reward conversion; no renderer, ID, reward-economy, or extraction-schema change"
-data_mirrors:
-  combat_catalog: defense-catalog.js#ENEMIES
-  cinder_stage: defense-catalog.js#CINDER_SPAN_WAVE_PLAN
-  cinder_stage_timing: defense-catalog.js#STAGES[cinder-span]
-  formation: rpg-catalog.js#STANCE_CONFIG
-  formation_rally: rpg-catalog.js#BOSS_RALLY_COOLDOWN_REDUCTION
-  extraction_freeze: defense-catalog.js#STAGE_TACTICS[cinder-span].{occupation,extraction}
-mechanics_coverage:
-  required_systems: [enemy-stats, cinder-wave-composition, stage-gate-timing, boss-ttk, formation-front-back, boss-rally, back-row-synergy, companion-integrity, extraction-route]
-  covered_in_this_sheet: [enemy-stats, cinder-wave-composition, stage-gate-timing, boss-ttk, formation-front-back, boss-rally, back-row-synergy, companion-integrity, extraction-route]
-  required_coverage_fraction: 1.0
-  baseline_coverage_fraction: 0.0
-matchup_winrate_band: [0.45, 0.55]
-matchup_status: BLOCKED
-matchup_blocker: "Existing PvE runners emit campaign outcomes, not a symmetric archetype-versus-counterpressure matchup matrix. Do not infer a 45–55% matchup result from 50/50 saturated clears."
-ttk:
-  unit: seconds
-  cinder_boss_target: 7.0
-  tolerance_fraction: 0.15
-  permitted_band: [5.95, 8.05]
-  baseline_by_stance: {VANGUARD: 6.83, TURRET: 7.17, SPLIT: 6.77}
-  status: "target established; post-change measurement pending"
-combo_ev:
-  cap_vs_median: 1.3
-  baseline_status: BLOCKED
-  proposed_measure: "per-run companion damage dealt plus gate-loss cost, grouped by fixed stance/loadout/seed; EV = (damageDealt - 0.10 * gateDamageTaken) / runTicks, then normalized to the median legal combo"
-base_stage_pressure:
-  stage_id: cinder-span
-  baseline_min_gate_pct: 98.0
-  target_min_gate_pct_band: [55.0, 80.0]
-  target_defeat_rate_band: [0.0, 0.20]
-  sample: "15 bare-stage runs: 3 stances × seeds 401,402,403,404,405"
-g3:
-  status: FIX
-  archetypes_required: 5
-  independently_viable_required: 3
-  max_optimal_play_dominance_fraction: 0.50
-  baseline_companion_downs: 0
-  baseline_rally_then_turret_post_switch_damage: 0
+proposal:
+  id: stage-2b-final-cinder-data-retune
+  status: proposed_not_applied
+  authorization_limit: 1
+  permitted_runtime_data:
+    - defense-catalog.js#CINDER_SPAN_WAVE_PLAN[0]
+    - defense-catalog.js#CINDER_SPAN_WAVE_PLAN[1]
+    - defense-catalog.js#CINDER_SPAN_WAVE_PLAN[2]
+    - rpg-catalog.js#STANCE_CONFIG.TURRET.offsets[0]
+    - rpg-catalog.js#STANCE_CONFIG.VANGUARD.offsets[0]
+    - rpg-catalog.js#STANCE_CONFIG.VANGUARD.offsets[1]
+  retained_values:
+    cinder_gateTicks: 900
+    boss_rally_cooldown_reduction: 0.0
+    turret_derivedFrontCount: 1
+    vanguard_derivedFrontCount: 2
+  cinder_acceptance:
+    sample: "15 rows: VANGUARD, TURRET, SPLIT × seeds 401–405"
+    gateMinPct_band: [55.0, 80.0]
+    defeat_rate_band: [0.0, 0.20]
+    boss_TTK_s_band: [5.95, 8.05]
+  formation_acceptance:
+    rally_then_turret:
+      sample: "50 conversions at seeds 401–405"
+      boss_rally_cooldown_reduction: 0.0
+      turret_front_count: 1
+      zero_post_switch_damage_attempts_maximum: 0
+      post_switch_companion_damage_required: positive_every_conversion
+    non_turret_consequence:
+      sample: "50 VANGUARD plus 50 SPLIT runs at seeds 401–405"
+      companion_downs_minimum: 1
+      defeat_rate_ceiling: 0.20
+  frozen:
+    extraction:
+      occupation: {radius: 900, holdTicks: 180, moveMultiplier: 1.05, rangeMultiplier: 1.08, recoveryPerSecond: 4}
+      extraction: {radius: 1000, windowTicks: 600, hard_floor_windowTicks: 180}
+      accepted_elite_handoffs_per_run_maximum: 1
+    runtime_ids: [cinder-span, s1-ember-hunter, rusher, ember-cohort]
+    no_player_visible_canon_change: true
+    no_campaign_schema_change: true
+    no_GLB_or_renderer_change: true
+    no_monetization: [paid_path, account, premium_currency, ads, gacha, paid_power, paid_reroll, paid_recovery]
+    G5: N/A
 ```
 
-### Baseline evidence
+The current post-retune evidence is not a viable result: all Cinder minima are `88.0–96.8%` against a `55.0–80.0%` requirement, despite `0/15` defeats and `6.43–7.17 s` boss TTK; rally-then-TURRET has `0` post-switch companion damage in `50/50` conversions. Source: `qa/gate-measurements.md#g2`, `#g3`, and `qa/post-retune-derived-summary.json#cinderMargin`, `#exploit`.
 
-QA's deterministic baseline found Cinder Span at **98%** minimum gate integrity in every stance, **0/30** defeats and companion downs, and `rally-then-turret` retaining **10/10** rallies with **0** post-switch companion damage. Five scripted campaign policies cleared **50/50** stage attempts, including an RPG-inactive rusher clearing **10/10**. These are saturation findings, not balance success: `qa/gate-measurements.md#g2`, `#g3`; `qa/playtest-report.md#cinder-span-pressure`; `qa/exploit-register.md#s2-001`–`#s2-003`.
+## Exact current → proposed values
 
-## Before → proposed data change
-
-| Runtime data mirror | Before | Proposed | Bounded intent / gate condition |
+| Runtime data field | Current implemented value | Proposed value | Data-owned reason and bounded observable |
 |---|---|---|---|
-| `defense-catalog.js#STAGES[cinder-span].gateTicks` | `720` ticks (12.0 s) | `900` ticks (15.0 s) | Give the authored three-wave packet time to create a measurable gate decision; no stage ID or objective order changes. |
-| `defense-catalog.js#CINDER_SPAN_WAVE_PLAN[0]` | pure `4 rusher`; mixed `2 rusher + 2 flanker` | pure `7 rusher`; mixed `4 rusher + 3 flanker` | Raise opening pressure while preserving both existing variant IDs and total composition count parity. |
-| `defense-catalog.js#CINDER_SPAN_WAVE_PLAN[1]` | pure `3 flanker`; mixed `2 flanker + 1 rusher` | pure `5 flanker`; mixed `3 flanker + 2 rusher` | Make the flank response matter without changing enemy IDs, policies, or spawn directions. |
-| `defense-catalog.js#CINDER_SPAN_WAVE_PLAN[2]` | pure `2 ranged`; mixed `1 ranged + 1 flanker` | pure `4 ranged`; mixed `2 ranged + 2 flanker` | Make the denial packet compete with a passive hold; no new wave slot. |
-| `rpg-catalog.js#BOSS_RALLY_COOLDOWN_REDUCTION` | `0.20` | `0.00` | Remove the bankable numeric DPS benefit that survives a switch into TURRET. The event may remain observable, but it must have zero cooldown-reduction EV until a code-owned stance-scoped rally design exists. |
-| `rpg-catalog.js#STANCE_CONFIG.TURRET.derivedFrontCount` | `0` | `1` | Ensure TURRET retains one targetable companion rather than total companion immunity; remeasure its trade-off rather than assume one. |
-| `defense-catalog.js#STAGE_TACTICS[cinder-span].occupation` | radius `900`, hold `180`, move `1.05`, range `1.08` | **unchanged** | Freeze the pre-window decision; it is not the baseline failure. |
-| `defense-catalog.js#STAGE_TACTICS[cinder-span].extraction` | radius `1000`, window `600` | **unchanged** | Preserve the demonstrated scripted route and its 7.54 s readiness slack; no extraction retune is justified. |
+| `defense-catalog.js#CINDER_SPAN_WAVE_PLAN[0]` | `tick: 0`; pure `{rusher: 7}`; mixed `{rusher: 4, flanker: 3}` | `tick: 0`; pure `{rusher: 14}`; mixed `{rusher: 8, flanker: 6}` | Doubles the opening authored packet without adding an enemy ID, branch, or wave slot. The 15-row Cinder probe must keep every `gateMinPct` in `55.0–80.0`, total defeats in `0–3/15`, and each TTK in `5.95–8.05 s`. |
+| `defense-catalog.js#CINDER_SPAN_WAVE_PLAN[1]` | `tick: 180`; pure `{flanker: 5}`; mixed `{flanker: 3, rusher: 2}` | `tick: 120`; pure `{flanker: 10}`; mixed `{flanker: 7, rusher: 3}` | Moves the second existing packet forward exactly `60` ticks and doubles its total to prevent a fully cleared opening from restoring the current safe margin. The same 15-row Cinder envelope is the acceptance test. |
+| `defense-catalog.js#CINDER_SPAN_WAVE_PLAN[2]` | `tick: 390`; pure `{ranged: 4}`; mixed `{ranged: 2, flanker: 2}` | `tick: 240`; pure `{ranged: 8}`; mixed `{ranged: 5, flanker: 3}` | Moves the existing denial packet forward exactly `150` ticks and doubles its total. Both authored branches change from `16` to `32` total enemies over `0/120/240` ticks; no global enemy stat, reward, or `STAGES["cinder-span"].gateTicks` change. The same 15-row Cinder envelope is the acceptance test. |
+| `rpg-catalog.js#STANCE_CONFIG.TURRET.offsets[0]` | `freeze({x: Math.round(OCTANT_VECTORS.E.x * 0.3), y: Math.round(OCTANT_VECTORS.E.y * 0.3)})` | `freeze({x: Math.round(OCTANT_VECTORS.W.x * 0.3), y: Math.round(OCTANT_VECTORS.W.y * 0.3)})` | Keeps the one existing TURRET FRONT at exactly the `300`-unit stance magnitude but puts that indexed FRONT between the west-side approach and commander. In all `50` rally-then-TURRET conversions, `takenAfterSwitch` must be `>0`; zero-damage conversions must be `0/50`. |
+| `rpg-catalog.js#STANCE_CONFIG.VANGUARD.offsets[0]` | `freeze({x: Math.round(OCTANT_VECTORS.NW.x * 1.4), y: Math.round(OCTANT_VECTORS.NW.y * 1.4)})` | `freeze({x: Math.round(OCTANT_VECTORS.NW.x * 2.0), y: Math.round(OCTANT_VECTORS.NW.y * 2.0)})` | Moves the first of the existing two VANGUARD FRONT screens from magnitude `1,400` to `2,000`; `derivedFrontCount` remains `2`. Across the 50 VANGUARD and 50 SPLIT runs, QA must observe at least one non-TURRET `COMPANION_DOWNED` while the combined defeat rate remains `≤20%`. |
+| `rpg-catalog.js#STANCE_CONFIG.VANGUARD.offsets[1]` | `freeze({x: Math.round(OCTANT_VECTORS.SW.x * 1.4), y: Math.round(OCTANT_VECTORS.SW.y * 1.4)})` | `freeze({x: Math.round(OCTANT_VECTORS.SW.x * 2.0), y: Math.round(OCTANT_VECTORS.SW.y * 2.0)})` | Symmetric second VANGUARD screen at magnitude `2,000`; no stance ID, slot count, companion, or formation mechanic changes. It shares the same non-TURRET consequence and defeat-ceiling acceptance test. |
 
-The proposed Cinder wave total is **9 → 16** enemies on either seeded composition branch; `gateTicks` is **720 → 900**. This is intentionally the smallest stage-local pressure packet: it does not alter global `ENEMIES`, bosses, rewards, item effects, stage IDs, `eliteId`, `eliteKind`, or `eliteCompanion`.
+`STAGES["cinder-span"].gateTicks` remains `900`; `BOSS_RALLY_COOLDOWN_REDUCTION` remains `0.0`; and `STANCE_CONFIG.TURRET.derivedFrontCount` remains `1`. Repeating those already-applied values would not address the measured failures. Re-enabling rally cooldown reduction is excluded because it reintroduces a bankable retained-rally benefit.
 
-## Required verification — no gate claim before all rows are evidenced
+## Runtime ownership and source mapping
 
-1. **Data audit / mechanics coverage:** QA compares every `mechanics_coverage.required_systems` entry above to its named mirror after the programmer applies only the table values. Record `9/9` coverage and the final values in `qa/gate-measurements.md#g2`; any absent mirror or unapproved field change leaves G2 **FIX**.
-2. **Base pressure and TTK:**
+| Concern | Authoritative data owner | Runtime path that consumes it | Why this proposal can affect the measured field |
+|---|---|---|---|
+| Cinder packet size and arrival overlap | `defense-catalog.js#CINDER_SPAN_WAVE_PLAN` | `STAGES["cinder-span"].wavePlan` → `planWaveSources` → `STAGE_PLAN_DESCRIPTORS["cinder-span"].wavePlan.waves` → `defense-run-simulation.js#buildWaveSchedule` → `spawnEnemy` | `buildWaveSchedule` uses the authored Cinder alternatives without density jitter; each proposed count and tick is therefore the active schedule input for the margin probe. |
+| TURRET post-switch target exposure | `rpg-catalog.js#STANCE_CONFIG.TURRET.offsets[0]`, with retained `derivedFrontCount: 1` | `activeStanceConfig` → per-tick companion position sync → `stanceSlotForIndex` → `livingFrontCompanions` / `playerSideTarget` | The current first FRONT is east/rear of the commander. The proposed west/front offset makes that same living FRONT no farther than the commander for west-approaching player-targeting enemies, so `playerSideTarget` may select it after the switch. The exploit probe exposes this as `takenAfterSwitch`. |
+| Non-TURRET loss consequence | `rpg-catalog.js#STANCE_CONFIG.VANGUARD.offsets[0..1]`, with retained `derivedFrontCount: 2` | The same stance position sync and FRONT target selection path | The two existing VANGUARD FRONT companions move further into the approach. `COMPANION_DAMAGED` and `COMPANION_DOWNED` are emitted by the runtime when a selected companion reaches zero integrity; the stance probe records those events. |
+
+The data mapping is grounded in `engineering/architecture-contract.md#exact-field-to-runtime-mapping`, `defense-catalog.js#CINDER_SPAN_WAVE_PLAN`, `defense-catalog.js#planWaveSources`, `defense-run-simulation.js#buildWaveSchedule`, `#playerSideTarget`, and `rpg-catalog.js#STANCE_CONFIG`. It does not imply that the proposed values have been applied or that their targets are met.
+
+## Mandatory post-change measurement
+
+1. **Data audit:** confirm the six table values exactly; confirm untouched `gateTicks=900`, rally reduction `0.0`, TURRET FRONT count `1`, all extraction values, frozen IDs, canon/schema/GLB/renderer surfaces, the one-handoff cap, and every no-monetization exclusion. Any mismatch is a failed boundary audit, not a substitute value.
+2. **Cinder pressure and boss TTK:**
    ```sh
-   node scripts/run-g2-margin-probe.mjs --seeds 401,402,403,404,405 --stances VANGUARD,TURRET,SPLIT --output /tmp/abyssal-s2-retune-margin.json
+   node scripts/run-g2-margin-probe.mjs --seeds 401,402,403,404,405 --stances VANGUARD,TURRET,SPLIT --output /tmp/abyssal-s2-final-margin.json
    ```
-   Require all 15 Cinder rows, `gateMinPct` in **55–80%**, defeat rate **0–20%**, and boss TTK in **5.95–8.05 s**. The existing probe includes all stages; QA filters `stageId === "cinder-span"` and retains the raw file.
-3. **Five-archetype viability:** run the existing policy runner separately for `rusher`, `turtle`, `economy-greed`, `micro-optimizer`, and `casual`, each with `--seeds 401,402,403,404,405` and a distinct `/tmp/abyssal-s2-retune-<archetype>.json` output. At least three must remain independently viable under the pressure band; five tested is a count only, not a pass.
-4. **G2 matchup band — explicitly deferred runner requirement:** the owner must provide a deterministic, symmetric matchup export with 20 paired trials per archetype (five archetypes × four counterpressure profiles), fixed seeds `401–405`, identical value budgets, and fields `archetypeId`, `counterProfileId`, `seed`, `winner`. QA computes each legal matchup win rate as wins / paired trials; every rate must be **45–55%**. Until that exact export exists, `matchup_status` remains **BLOCKED**.
-5. **Combo EV / G3 exploit:**
+   Retain the raw output and attach the Cinder `15` rows to `qa/gate-measurements.md#g2`. Every row must be `55.0–80.0%` gate minimum; aggregate defeats must be `0–3/15`; every boss TTK must be `5.95–8.05 s`.
+3. **Five-archetype viability:** run:
    ```sh
-   node scripts/run-g3-stance-events.mjs --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-retune-stance.json
-   node scripts/run-g3-exploit-probe.mjs --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-retune-exploit.json
+   node scripts/run-g2-archetype-rotation.mjs rusher --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-rusher.json
+   node scripts/run-g2-archetype-rotation.mjs turtle --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-turtle.json
+   node scripts/run-g2-archetype-rotation.mjs economy-greed --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-economy-greed.json
+   node scripts/run-g2-archetype-rotation.mjs micro-optimizer --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-micro-optimizer.json
+   node scripts/run-g2-archetype-rotation.mjs casual --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-casual.json
    ```
-   QA calculates the declared EV for legal fixed stance/loadout combinations and verifies `maxEV / medianEV <= 1.30`. `rally-then-turret` must receive no cooldown-reduction benefit and must no longer report zero targetable FRONT companions. At least one consequential companion-risk signal (damage or down) must occur in a non-TURRET arm before G3 can pass; an all-zero-loss result remains **FIX**.
-6. **Elite decision regression:**
+   Retain the five outputs in `qa/playtest-report.md`; at least three must remain independently viable. Before any 45–55% G2 matchup statement, produce the still-missing deterministic symmetric export with `20` paired trials per archetype, fixed seeds `401–405`, identical value budgets, `archetypeId`, `counterProfileId`, `seed`, and `winner`; also calculate legal-combo `maxEV / medianEV <= 1.30`.
+4. **Formation and exploit:**
    ```sh
-   node scripts/measure-g7-core-loop.mjs --policy engaged --cadences 15 --output /tmp/abyssal-s2-retune-g7-scripted.json
+   node scripts/run-g3-stance-events.mjs --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-stance.json
+   node scripts/run-g3-exploit-probe.mjs --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-exploit.json
    ```
-   Scripted Cinder seeds `901,902,903` must still emit accepted `EXTRACT_ELITE`, `EXTRACTION_COMPLETED`, and `ELITE_EXTRACTED`; this only protects reachability and does not pass G7.
+   Attach outputs to `qa/gate-measurements.md#g3` and `qa/exploit-register.md`. Confirm `BOSS_RALLY_COOLDOWN_REDUCTION=0.0`, TURRET FRONT count `1`, `takenAfterSwitch > 0` in all `50` rally-then-TURRET conversions, zero zero-damage conversions, at least one VANGUARD-or-SPLIT down in `100` stated runs, `≤20%` defeat rate, and the EV ceiling. Failure of any one condition leaves G3 FIX and forces REDO; it does not prove G3.
+5. **Frozen extraction regression and evidence debt:** run
+   ```sh
+   node scripts/measure-g7-core-loop.mjs --policy engaged --cadences 15 --output /tmp/abyssal-s2-final-g7-scripted.json
+   ```
+   For Cinder seeds `901–903`, retain `EXTRACTION_WINDOW_OPENED`, window-open-to-ready `<10.00 s`, accepted `EXTRACT_ELITE`, `EXTRACTION_COMPLETED`, `ELITE_EXTRACTED`, `extracted=true`, and at most one accepted handoff. Retain event traces and campaign-state before/after diffs for victory, defeat-after-acceptance, and defeat-before-acceptance; reject duplicate handoffs or writes without acceptance. This is scripted regression evidence only.
+6. **Unchanged human evidence requirements:** G7 stays BLOCKED until a rendered moderated session records 10 participants, 20 eligible re-entry decisions, at least 14 voluntary Cinder re-entries, and visible prompt/movement/hold/accepted-action/result/persistence/re-entry evidence. G8 stays BLOCKED until a five-title `≤2/5` direct-feature survey and a ten-session human impression median `≥4.0/5` exist. G5 remains N/A because this proposal introduces no monetization surface.
 
 ## Gate conclusion
 
-The target, data mirrors, and measurement contract now exist. G2 remains **FIX** because the proposed values are not applied, the 45–55% matchup instrument does not exist, and combo EV is unmeasured. G3 remains **FIX** because no post-retune consequence/viability measurement exists. G5 remains **N/A** under the established no-monetization boundary.
+This proposal is bounded to six current data fields and has numeric acceptance observations for each. It leaves G2 and G3 **FIX**, G5 **N/A**, and G7/G8 **BLOCKED** pending the mandatory evidence above. It neither changes a runtime/source/test file nor claims the next retest will pass.

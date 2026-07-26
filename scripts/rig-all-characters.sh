@@ -15,7 +15,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GLB_DIR="$ROOT/assets/images/battle/glb"
 STAGE="${STAGE:-/tmp/rig-staging}"
 REPORTS="$STAGE/reports"
-BUDGETS="$ROOT/_workspace/20260723-solo-warden-rpg-concept/production/boss-motion-previs-action-pipeline.json"
+BUDGETS="$ROOT/_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/action-pipeline.json"
 REST_POSE="${REST_POSE:-natural}"
 
 INSTALL=0

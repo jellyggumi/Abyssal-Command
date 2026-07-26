@@ -222,7 +222,7 @@ test("critical mechanic: a solo FRONT companion's sustained combat drives status
   // Stance offsets (STANCE_CONFIG.VANGUARD) position the FRONT companion west of the commander
   // (toward the enemy approach) rather than pinned to the commander's exact coordinates, so the
   // DOWNED tick shifts from the pre-stance-redesign baseline — re-derived empirically for this seed.
-  assert.equal(downedTick, 1680, "seed 3 on gate-zenith with a solo FRONT veil-vanguard downs deterministically at tick 1680 under the VANGUARD stance offset");
+  assert.equal(downedTick, 1671, "seed 3 on gate-zenith with a solo FRONT veil-vanguard downs deterministically at tick 1671 under the VANGUARD stance offset");
   assert.equal(downedEventCount, 1, "the ACTIVE -> DOWNED transition fires exactly once");
   assert.equal(firedAfterDowned, 0, "a DOWNED companion must never fire WEAPON_FIRED again");
   assert.equal(damagedAfterDowned, 0, "a DOWNED companion must never take further COMPANION_DAMAGED hits");
@@ -247,7 +247,7 @@ test("critical mechanic: BACK_ROW_SYNERGY_DAMAGE_BONUS multiplies a BACK compani
   assert.ok(backFireDamages.every((damage) => damage === expectedSynergyDamage), `every BACK fire while a FRONT companion is alive must equal the synergy-boosted ${expectedSynergyDamage}, got ${JSON.stringify([...new Set(backFireDamages)])}`);
 });
 
-test("critical mechanic: TURRET's derivedFrontCount=0 means zero companions are ever FRONT, so BACK_ROW_SYNERGY_DAMAGE_BONUS never applies to anyone — every companion fires unmultiplied raw damage (supersedes the pre-redesign 'no formation input' 0-FRONT case)", () => {
+test("critical mechanic: TURRET applies BACK_ROW_SYNERGY_DAMAGE_BONUS only to the BACK companion while the FRONT companion keeps raw damage", () => {
   let run = createDefenseRun({
     stageId: "cinder-span", seed: 5,
     companionLoadout: ["veil-vanguard", "ember-cohort"],
@@ -255,18 +255,28 @@ test("critical mechanic: TURRET's derivedFrontCount=0 means zero companions are 
   run = queueInput(run, "STANCE_CYCLE"); // VANGUARD -> TURRET
   run = advanceDefenseRun(run, 1);
   assert.equal(getRunSnapshot(run).formationStance, "TURRET");
-  assert.deepEqual(run.companions.map((c) => c.slot), ["BACK", "BACK"]);
+  assert.deepEqual(run.companions.map((c) => c.slot), ["FRONT", "BACK"]);
 
   const fireDamages = { "veil-vanguard": [], "ember-cohort": [] };
   run = stepAndCollect(run, 2400, (_current, event) => {
     if (event.type === "WEAPON_FIRED" && fireDamages[event.owner]) fireDamages[event.owner].push(event.damage);
   });
   assert.ok(fireDamages["veil-vanguard"].length > 0 && fireDamages["ember-cohort"].length > 0, "both companions must fire at least once under TURRET");
-  assert.ok(fireDamages["veil-vanguard"].every((d) => d === COMPANIONS["veil-vanguard"].damage), `veil-vanguard fires under TURRET must be raw unmultiplied damage (${COMPANIONS["veil-vanguard"].damage}), got ${JSON.stringify([...new Set(fireDamages["veil-vanguard"])])}`);
-  assert.ok(fireDamages["ember-cohort"].every((d) => d === COMPANIONS["ember-cohort"].damage), `ember-cohort fires under TURRET must be raw unmultiplied damage (${COMPANIONS["ember-cohort"].damage}), got ${JSON.stringify([...new Set(fireDamages["ember-cohort"])])}`);
+  const expectedByOwner = Object.fromEntries(run.companions.map((companion) => [
+    companion.companionId,
+    companion.slot === "BACK"
+      ? Math.round(companion.damage * (1 + BACK_ROW_SYNERGY_DAMAGE_BONUS))
+      : companion.damage,
+  ]));
+  run.companions.forEach((companion) => {
+    assert.ok(
+      fireDamages[companion.companionId].every((damage) => damage === expectedByOwner[companion.companionId]),
+      `${companion.slot} ${companion.companionId} damage must equal ${expectedByOwner[companion.companionId]}, got ${JSON.stringify([...new Set(fireDamages[companion.companionId])])}`,
+    );
+  });
 });
 
-test("critical mechanic: BOSS_RALLY_WINDOW fires with cooldownReductionBp=2000 only when the active stance has >=1 living FRONT companion at boss spawn; TURRET's 0 derived FRONT structurally and intentionally never satisfies the gate (decision-log.md D22 judgment 1: accepted trade-off, not a bug)", () => {
+test("critical mechanic: TURRET targetability emits BOSS_RALLY_WINDOW with the retained zero cooldown reduction when its one FRONT companion is alive at boss spawn", () => {
   const withFront = createDefenseRun({
     stageId: "cinder-span", seed: 12,
     companionLoadout: ["ember-cohort", "rift-lens", "veil-vanguard"],
@@ -274,20 +284,21 @@ test("critical mechanic: BOSS_RALLY_WINDOW fires with cooldownReductionBp=2000 o
   const toBossWithFront = advanceThroughObjectivesUntil(withFront, (run) => run.bossSpawned, 3000);
   const rallyEvent = toBossWithFront.events.find((event) => event.type === "BOSS_RALLY_WINDOW");
   assert.ok(rallyEvent, "a filled FRONT slot at boss spawn must emit BOSS_RALLY_WINDOW");
-  assert.equal(rallyEvent.cooldownReductionBp, 2000);
+  assert.equal(rallyEvent.cooldownReductionBp, 0);
   assert.equal(toBossWithFront.rallyTargetId, rallyEvent.entityId);
 
-  let withoutFront = createDefenseRun({
+  let turretRun = createDefenseRun({
     stageId: "cinder-span", seed: 12,
     companionLoadout: ["ember-cohort", "rift-lens", "veil-vanguard"],
   });
-  withoutFront = queueInput(withoutFront, "STANCE_CYCLE"); // VANGUARD -> TURRET (derivedFrontCount=0)
-  withoutFront = advanceDefenseRun(withoutFront, 1);
-  assert.equal(getRunSnapshot(withoutFront).formationStance, "TURRET");
-  const toBossWithoutFront = advanceThroughObjectivesUntil(withoutFront, (run) => run.bossSpawned, 3000);
-  const noRally = toBossWithoutFront.events.find((event) => event.type === "BOSS_RALLY_WINDOW");
-  assert.equal(noRally, undefined, "TURRET's structural 0 FRONT at boss spawn must never emit BOSS_RALLY_WINDOW");
-  assert.equal(toBossWithoutFront.rallyTargetId, null);
+  turretRun = queueInput(turretRun, "STANCE_CYCLE"); // VANGUARD -> TURRET (derivedFrontCount=1)
+  turretRun = advanceDefenseRun(turretRun, 1);
+  assert.equal(getRunSnapshot(turretRun).formationStance, "TURRET");
+  const toBossTurret = advanceThroughObjectivesUntil(turretRun, (run) => run.bossSpawned, 3000);
+  const turretRally = toBossTurret.events.find((event) => event.type === "BOSS_RALLY_WINDOW");
+  assert.ok(turretRally, "TURRET's targetable FRONT at boss spawn must emit BOSS_RALLY_WINDOW");
+  assert.equal(turretRally.cooldownReductionBp, 0);
+  assert.equal(toBossTurret.rallyTargetId, turretRally.entityId);
 });
 
 test("critical mechanic: getRunDigest is byte-identical for two createDefenseRun calls with identical seed and full RPG params, through creation, mid-run, and terminal", () => {
@@ -356,7 +367,7 @@ test("STANCE_CYCLE: a second STANCE_CYCLE within the 4-second cooldown window is
   assert.equal(rejected.inputType, "STANCE_CYCLE");
 });
 
-test("STANCE_CYCLE: TURRET stance produces exactly 0 derived-FRONT companions in a 3-companion loadout — every companion's snapshot slot reads BACK, verified via the same living-FRONT-companion state BOSS_RALLY_WINDOW/synergy gating reads", () => {
+test("STANCE_CYCLE: TURRET stance produces exactly 1 derived-FRONT companion in a 3-companion loadout", () => {
   let run = createDefenseRun({
     stageId: "cinder-span", seed: 5,
     companionLoadout: ["ember-cohort", "rift-lens", "veil-vanguard"],
@@ -370,8 +381,8 @@ test("STANCE_CYCLE: TURRET stance produces exactly 0 derived-FRONT companions in
   const snapshot = getRunSnapshot(run);
   assert.equal(snapshot.formationStance, "TURRET");
   const afterSlots = snapshot.companions.map((c) => c.slot);
-  assert.deepEqual(afterSlots, ["BACK", "BACK", "BACK"], "every companion must be BACK under TURRET (derivedFrontCount=0)");
-  assert.equal(afterSlots.filter((slot) => slot === "FRONT").length, 0);
+  assert.deepEqual(afterSlots, ["FRONT", "BACK", "BACK"], "one targetable FRONT must remain under TURRET (derivedFrontCount=1)");
+  assert.equal(afterSlots.filter((slot) => slot === "FRONT").length, 1);
 });
 
 // Teeth test (decision-log.md D18 convention): intentionally break the STANCE_CYCLE wrap-order

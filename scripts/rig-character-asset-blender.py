@@ -78,6 +78,18 @@ DEFAULT_BUDGETS = {
 # Max |angle| between shoulder->hand and horizontal in the exported rest pose
 # for the asset to count as T-posed. scripts/audit-tpose.py uses the same value.
 TPOSE_TOLERANCE_DEG = 12.0
+FORBIDDEN_SOURCE_TOKENS = (
+    "terrain",
+    "floor",
+    "pedestal",
+    "platform",
+    "rock",
+    "weapon",
+    "sword",
+    "shield",
+    "staff",
+    "prop",
+)
 
 # Rigify-compatible deform skeleton. Each entry drives one bone; positions come
 # from per-asset landmarks at fit time. `parent` is the bone name, `connect`
@@ -184,6 +196,17 @@ def run(args, budgets):
     meshes = [o for o in bpy.data.objects if o.type == "MESH"]
     if not meshes:
         raise RuntimeError(f"no mesh in {args.glb}")
+    forbidden_named_meshes = [
+        obj.name
+        for obj in meshes
+        if not obj.name.endswith("_pedestal")
+        and any(token in obj.name.casefold() for token in FORBIDDEN_SOURCE_TOKENS)
+    ]
+    if forbidden_named_meshes:
+        raise RuntimeError(
+            "source contains forbidden terrain/weapon/prop mesh names; "
+            f"regenerate a character-only Rodin source: {forbidden_named_meshes}"
+        )
 
     # A previously-rigged GLB re-enters with `<id>_body` / `<id>_pedestal`
     # already split. Reuse that split (re-deriving the pedestal cut would drift
@@ -765,15 +788,16 @@ def run(args, budgets):
         raise RuntimeError(f"T-pose gate failed: axisDeviationDeg={achieved}")
 
 
+    pedestal_removed = pedestal is not None
+    if pedestal is not None:
+        bpy.data.objects.remove(pedestal, do_unlink=True)
+        pedestal = None
     # --- 7. Hierarchy + export ---------------------------------------------
     root = bpy.data.objects.new(args.asset_id, None)
     root.empty_display_type = "PLAIN_AXES"
     bpy.context.scene.collection.objects.link(root)
     rig.parent = root
     body.name = f"{args.asset_id}_body"
-    if pedestal is not None:
-        pedestal.name = f"{args.asset_id}_pedestal"
-        pedestal.parent = root
 
     if args.save_blend:
         Path(args.save_blend).parent.mkdir(parents=True, exist_ok=True)
@@ -795,11 +819,11 @@ def run(args, budgets):
         export_all_influences=False,
     )
     step("export", path=str(out), bytes=out.stat().st_size if out.exists() else 0,
-         pedestalRemoved=pedestal is not None)
+         pedestalRemoved=pedestal_removed)
     log["axisDeviationDeg"] = achieved
     log["elevationDeg"] = elevation
     log["bindMethod"] = method
-    log["pedestalRemoved"] = pedestal is not None
+    log["pedestalRemoved"] = pedestal_removed
     log["tposeOk"] = tpose_ok
     log["clipCount"] = len(authored)
     log["status"] = "completed"

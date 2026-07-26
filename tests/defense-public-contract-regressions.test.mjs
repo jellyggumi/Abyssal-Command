@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { BattleVisualizer } from "../battle-visualizer.js";
-import { CUTSCENES, STAGES } from "../defense-catalog.js";
+import { CUTSCENES, ITEMS, SKILLS, STAGES } from "../defense-catalog.js";
 import { DefenseAudio } from "../defense-audio.js";
 import {
   advanceDefenseRun,
@@ -70,8 +70,29 @@ test("critical visual and audio observation is idempotent and cannot alter the d
   assert.equal(getRunDigest(run), digest, "visual/audio observation must not alter deterministic run outcome");
 });
 
-test("shipped app vocabulary does not retain the retired shadow-legion strings", async () => {
+test("canonical catalog metadata retains stable labels and mechanical entries", () => {
+  const entries = [
+    [ITEMS["ashen-sigil"], "ashen-sigil", "Cinder Sigil", { damageBonus: 180 }],
+    [ITEMS["hourglass-fragment"], "hourglass-fragment", "Ration Sigil Fragment", { cooldownReduction: 0.1 }],
+    [SKILLS["void-aegis"], "void-aegis", "Zenith Aegis", { damage: 0, cooldown: 300, radius: 0, integrity: 50 }],
+    [SKILLS["ward-binder"], "ward-binder", "Zenith Binder", { maxIntegrity: 120 }],
+  ];
+
+  for (const [entry, id, name, numericFields] of entries) {
+    assert.equal(entry.id, id, `${name} must retain its stable runtime ID`);
+    assert.equal(entry.name, name, `${id} must retain its canonical catalog label`);
+    for (const [field, value] of Object.entries(numericFields)) {
+      assert.equal(entry[field], value, `${name} must retain ${field}=${value}`);
+    }
+  }
+});
+
+test("shipped command-deck vocabulary retains the canonical faction and companion terms", async () => {
   const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
-  assert.doesNotMatch(source, /그림자군단/);
-  assert.doesNotMatch(source, /그림자 군단/);
+
+  assert.match(source, /ABYSSAL COMMAND · FARWATCH HOLD/);
+  assert.match(source, /정예를 처치하고 <b>추출\(Extract\)<\/b>하여 동료를 확보/);
+  assert.doesNotMatch(source, /ABYSSAL COMMAND · DEEP REFUGE/);
+  assert.doesNotMatch(source, /복속/);
+  assert.doesNotMatch(source, /그림자\s*(?:군단|세력|진영)/);
 });

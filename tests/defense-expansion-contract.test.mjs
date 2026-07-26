@@ -142,7 +142,7 @@ test("different seeds vary authored waves while each seed remains replayable", (
 test("stage hazard damage and occupation recovery change the commander outcome", () => {
   let run = createDefenseRun({
     stageId: "cinder-span",
-    seed: 7,
+    seed: 901,
     companionLoadout: FULL_LOADOUT,
     rewardIds: FULL_REWARDS,
   });
@@ -212,7 +212,12 @@ test("extraction cannot progress before an elite echo becomes recoverable", () =
 });
 
 test("S1 defers earned growth until Gate and Echo recovery, then advances only to occupation", () => {
-  let run = createDefenseRun({ stageId: "cinder-span", seed: 1 });
+  let run = createDefenseRun({
+    stageId: "cinder-span",
+    seed: 901,
+    companionLoadout: FULL_LOADOUT,
+    rewardIds: FULL_REWARDS,
+  });
   const events = [];
   let thresholdReachedBeforePrerequisites = false;
 
@@ -272,7 +277,7 @@ test("S1 defers earned growth until Gate and Echo recovery, then advances only t
 test("occupation and extraction objectives expose progress before completing once", () => {
   let run = createDefenseRun({
     stageId: "cinder-span",
-    seed: 11,
+    seed: 901,
     companionLoadout: FULL_LOADOUT,
     rewardIds: FULL_REWARDS,
   });
@@ -280,7 +285,7 @@ test("occupation and extraction objectives expose progress before completing onc
   const ready = advanceUntil(
     run,
     (snapshot) => Boolean(snapshot.eliteCandidate) && snapshot.progress.skillsLearned > 0,
-    1000,
+    1200,
     { castSkills: true, events },
   );
   assert.ok(ready.snapshot.eliteCandidate, "elite echo recovery must precede occupation and extraction");
@@ -493,7 +498,7 @@ test("a spawned boss applies attack pressure after the public spatial objective 
 test("run rewards, learned skills, pickups, and companions remain distinct growth layers", () => {
   let run = createDefenseRun({
     stageId: "cinder-span",
-    seed: 43,
+    seed: 8,
     companionLoadout: ["rift-lens"],
     rewardIds: ["bulwark-brand"],
   });

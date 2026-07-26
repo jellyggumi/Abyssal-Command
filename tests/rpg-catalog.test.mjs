@@ -114,18 +114,18 @@ test("companion roles cover the 9 canonical companions three-per-role, and roleF
   assert.equal(roleForCompanion("not-a-companion"), null);
 });
 
-test("formation, back-row synergy, and boss-rally constants match the authored balance sheet", () => {
+test("formation, back-row synergy, and boss-rally constants match the retained Stage 2 balance contract", () => {
   assert.equal(MAX_FRONT_SLOTS, 2);
   assert.deepEqual(FORMATION_SLOTS, ["FRONT", "BACK"]);
   assert.equal(BACK_ROW_SYNERGY_DAMAGE_BONUS, 0.25);
-  assert.equal(BOSS_RALLY_COOLDOWN_REDUCTION, 0.20);
+  assert.equal(BOSS_RALLY_COOLDOWN_REDUCTION, 0);
 });
 
 test("FORMATION_STANCES is the 3 canonical stance ids in cycle order", () => {
   assert.deepEqual(FORMATION_STANCES, ["VANGUARD", "TURRET", "SPLIT"]);
 });
 
-test("STANCE_CONFIG has exactly the 3 FORMATION_STANCES as keys, each with a 3-entry offsets array (one per MAX_LOADOUT_SIZE slot), a radius, and a derivedFrontCount matching UNIFIED-GDD.md:79-85's table (Vanguard 2, Turret 0, Split 1)", () => {
+test("STANCE_CONFIG has exactly the 3 FORMATION_STANCES as keys, each with a 3-entry offsets array, a radius, and retained Stage 2 derived-front counts (Vanguard 2, Turret 1, Split 1)", () => {
   assert.deepEqual(Object.keys(STANCE_CONFIG).sort(), [...FORMATION_STANCES].sort());
   for (const stanceId of FORMATION_STANCES) {
     const stance = STANCE_CONFIG[stanceId];
@@ -136,19 +136,16 @@ test("STANCE_CONFIG has exactly the 3 FORMATION_STANCES as keys, each with a 3-e
     }
     assert.equal(typeof stance.radius, "number");
   }
-  assert.equal(STANCE_CONFIG.VANGUARD.derivedFrontCount, 2, "Vanguard derives 2 FRONT per UNIFIED-GDD.md:81");
-  assert.equal(STANCE_CONFIG.TURRET.derivedFrontCount, 0, "Turret derives 0 FRONT per UNIFIED-GDD.md:82");
-  assert.equal(STANCE_CONFIG.SPLIT.derivedFrontCount, 1, "Split derives 1 FRONT per UNIFIED-GDD.md:83");
+  assert.equal(STANCE_CONFIG.VANGUARD.derivedFrontCount, 2, "Vanguard retains 2 FRONT");
+  assert.equal(STANCE_CONFIG.TURRET.derivedFrontCount, 1, "Turret retains 1 targetable FRONT");
+  assert.equal(STANCE_CONFIG.SPLIT.derivedFrontCount, 1, "Split retains 1 FRONT");
   assert.equal(STANCE_CONFIG.VANGUARD.radius, 500);
   assert.equal(STANCE_CONFIG.TURRET.radius, 300);
   assert.equal(STANCE_CONFIG.SPLIT.radius, 9000);
 });
 
-// Teeth test (decision-log.md D18 convention): prove this assertion actually catches a broken
-// derivedFrontCount by asserting against the literal authored constant, not a value re-derived from
-// STANCE_CONFIG itself (which would trivially pass against any accidental edit).
-test("STANCE_CONFIG derivedFrontCount values are exactly [2, 0, 1] for [VANGUARD, TURRET, SPLIT] (regression pin)", () => {
-  assert.deepEqual(FORMATION_STANCES.map((id) => STANCE_CONFIG[id].derivedFrontCount), [2, 0, 1]);
+test("STANCE_CONFIG derivedFrontCount values are exactly [2, 1, 1] for [VANGUARD, TURRET, SPLIT]", () => {
+  assert.deepEqual(FORMATION_STANCES.map((id) => STANCE_CONFIG[id].derivedFrontCount), [2, 1, 1]);
 });
 
 

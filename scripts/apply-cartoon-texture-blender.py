@@ -24,10 +24,16 @@ Only the stdlib is imported at module load time.  ``bpy`` is imported inside
 import argparse
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 
-WORKSPACE = Path("_workspace/20260726-tpose-rig-animation")
+WORKSPACE = Path(
+    os.environ.get(
+        "ASSET_PIPELINE_WORKSPACE",
+        "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline",
+    )
+)
 RUNTIME_ROOT = Path("assets/images/battle/glb")
 DEFAULT_CANDIDATE_ROOT = WORKSPACE / "runtime-candidates"
 
@@ -50,7 +56,7 @@ def parse_args(argv=None):
     parser.add_argument(
         "--out",
         default=None,
-        help="candidate GLB output (defaults under _workspace/20260726-tpose-rig-animation)",
+        help="candidate GLB output (defaults under _workspace/20260726-stage2-balance-agency/engineering/asset-pipeline)",
     )
     parser.add_argument(
         "--report",
@@ -91,8 +97,11 @@ def _is_within(path, root):
 
 def _concept_provenance(texture):
     """Require an explicit non-runtime sidecar for tracked concept media."""
-    pilot_root = Path("assets/images/battle/pilot")
-    if not _is_within(texture, pilot_root):
+    concept_roots = (
+        Path("assets/images/battle/pilot"),
+        WORKSPACE / "concept-input",
+    )
+    if not any(_is_within(texture, root) for root in concept_roots):
         return None
     sidecar = texture.with_suffix(".provenance.json")
     if not sidecar.is_file():
@@ -131,7 +140,7 @@ def _validate_paths(args):
 
 
 def _lane_for_texture(texture):
-    if _is_within(texture, Path("assets/images/battle/pilot")):
+    if _is_within(texture, Path("assets/images/battle/pilot")) or _is_within(texture, WORKSPACE / "concept-input"):
         return "concept"
     return "external-reference"
 
@@ -149,7 +158,7 @@ def _texture_report(texture):
 
 
 def _lane_for_texture(texture):
-    if _is_within(texture, Path("assets/images/battle/pilot")):
+    if _is_within(texture, Path("assets/images/battle/pilot")) or _is_within(texture, WORKSPACE / "concept-input"):
         return "concept"
     return "external-reference"
 
@@ -173,7 +182,7 @@ def _base_report(args, source, texture, output, report, dry_run):
         "textureLane": _lane_for_texture(texture),
         "conceptLane": _lane_for_texture(texture),
         "runtimeLane": "assets/images/battle/glb",
-        "candidateLane": "_workspace/20260726-tpose-rig-animation/runtime-candidates",
+        "candidateLane": "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/runtime-candidates",
         "runtimeEligible": False,
         "dryRun": bool(dry_run),
         "source": {"path": str(source), "sha256": source_hash, "readOnly": True},
@@ -192,6 +201,8 @@ def _base_report(args, source, texture, output, report, dry_run):
             "name": f"{args.asset_id}_toon_cartoon",
             "bodyOnly": True,
             "imageToPrincipledBaseColor": True,
+            "mappingMode": "active-UV-to-Base-Color",
+            "requiresActiveUv": True,
             "lowRoughness": 0.22,
             "celCompatible": True,
         },
@@ -270,6 +281,10 @@ def _toon_material(asset_id, texture_path):
     image.name = "Concept Cartoon Albedo"
     image.label = "Concept texture (candidate only)"
     image.location = (-260, 0)
+    texcoord = nodes.new("ShaderNodeTexCoord")
+    texcoord.name = "Active UV Coordinates"
+    texcoord.location = (-480, 0)
+    links.new(texcoord.outputs["UV"], image.inputs["Vector"])
     image.image = bpy.data.images.load(str(texture_path), check_existing=True)
 
     base_color = shader.inputs.get("Base Color")
@@ -299,6 +314,9 @@ def run_in_blender(args, source, texture, output, report_path):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=str(source))
     body, armature, root, meshes = _body_and_hierarchy(args.asset_id)
+    if not body.data.uv_layers:
+        raise RuntimeError("body mesh has no UV map; unwrap it before cartoon texture mapping")
+    active_uv = body.data.uv_layers.active.name
     material = _toon_material(args.asset_id, texture)
 
     # Replace only the body's slots.  Pedestal/terrain, weapons, and every
@@ -336,6 +354,8 @@ def run_in_blender(args, source, texture, output, report_path):
             "bodyObject": body.name,
             "armatureObject": armature.name if armature else None,
             "rootObject": root.name if root else None,
+            "activeUvMap": active_uv,
+            "uvLayerCount": len(body.data.uv_layers),
             "selectedForExport": [obj.name for obj in selected],
             "meshCountImported": len(meshes),
             "materialName": material.name,

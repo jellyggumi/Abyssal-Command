@@ -289,6 +289,58 @@ function integrityProjection(actor) {
   return { integrity, maxIntegrity, ratio, state };
 }
 
+function loopPresentation(snapshot) {
+  const objectives = snapshot?.objectives ?? {};
+  const phase = objectives.phase ?? snapshot?.objectiveProgress?.phase ?? "gate-defense";
+  const pressure = snapshot?.objectivePressure ?? {};
+  const extraction = snapshot?.extractionProgress ?? {};
+  const gate = integrityProjection(snapshot?.gate);
+  const commander = integrityProjection(snapshot?.commander);
+  const stance = FORMATION_STANCES.includes(snapshot?.formationStance) ? snapshot.formationStance : "VANGUARD";
+  const routeStarted = Boolean(snapshot?.commander?.objectiveRoute);
+  const cooldownTicks = Math.max(0, (snapshot?.stanceCooldownUntilTick ?? 0) - (snapshot?.tick ?? 0));
+  const pressureSeconds = Number.isFinite(pressure.deadlineTick)
+    ? Math.max(0, Math.ceil((pressure.deadlineTick - (snapshot?.tick ?? 0)) / TICK_RATE))
+    : null;
+  const phaseLabels = {
+    "gate-defense": "관문 방어",
+    "echo-recovery": "메아리 회수",
+    growth: "성장 선택",
+    occupation: "전장 점유",
+    extraction: "엘리트 추출",
+    "boss-kill": "보스 결전",
+  };
+  const phaseLabel = snapshot?.terminal === "VICTORY"
+    ? "전투 승리 · 다음 출정"
+    : snapshot?.terminal === "DEFEAT"
+      ? "전투 패배 · 재출정"
+      : snapshot?.growthOffer
+        ? "성장 선택 · 전투 정지"
+        : phaseLabels[phase] ?? "전선 유지";
+  const pressureLabel = pressureSeconds === null
+    ? `압박 ${gate.state} · 관문 ${gate.integrity}/${gate.maxIntegrity}`
+    : `압박 ${pressureSeconds}초 · 관문 ${gate.integrity}/${gate.maxIntegrity} · 지휘관 ${commander.integrity}/${commander.maxIntegrity}`;
+  const growthLabel = snapshot?.growthOffer
+    ? `Lv.${snapshot.commander.level} · ${snapshot.growthOffer.choices.length}개 성장 오퍼`
+    : `성장 Lv.${snapshot?.commander?.level ?? 1} · XP ${snapshot?.commander?.xp ?? 0}`;
+  const formationLabel = cooldownTicks > 0
+    ? `편성 ${STANCE_LABELS[stance]} · 전환 ${Math.ceil(cooldownTicks / TICK_RATE)}초`
+    : `편성 ${STANCE_LABELS[stance]} · 전환 가능`;
+  const holdSeconds = Math.floor((extraction.holdTicks ?? 0) / TICK_RATE);
+  const maxHoldSeconds = Math.ceil((extraction.maxHoldTicks ?? 0) / TICK_RATE);
+  const extractionHolding = routeStarted && extraction.availableAt !== null && extraction.availableAt !== undefined;
+  const extractionLabel = snapshot?.extracted
+    ? "추출 완료 · 다음 출정 선택"
+    : extraction.failed
+      ? "추출 실패 · 재출정 필요"
+      : extraction.completed
+        ? "추출 준비 완료 · 정예 확정"
+        : extractionHolding
+          ? `추출 홀드 ${holdSeconds}/${maxHoldSeconds}초`
+          : "정예 추출 지점 대기";
+  return { phaseLabel, pressureLabel, growthLabel, formationLabel, extractionLabel };
+}
+
 function nextRewardName(stageId) {
   const authored = STAGE_REWARD_IDS[stageId] ?? [];
   const rewardId = authored.find((id) => !(campaign?.rewardIds ?? []).includes(id)) ?? authored[0];
@@ -582,7 +634,7 @@ function renderLobby() {
         <div class="panel-heading"><div><p class="eyebrow">TACTICAL BRIEFING · ${escapeHtml(selectedPresentation.mapLabels.domain)}</p><h2 id="briefing-title">작전 브리핑</h2></div><span class="briefing-code">AC-${String(selected.sequence).padStart(2, "0")}</span></div>
         <div class="briefing-target" data-stage-briefing="selected" data-stage-id="${escapeHtml(selected.id)}">${portraitMarkup(meshRootForStageBoss(selected.id), "◉", "target-sigil rc-portrait")}<div><small>${escapeHtml(selectedPresentation.mapLabels.title)} · ${escapeHtml(selectedPresentation.atmosphere.descriptor)}</small><strong>${escapeHtml(selected.bossName)}</strong><span id="briefing-stage-narrative" data-stage-id="${escapeHtml(selected.id)}">${escapeHtml(selectedObjective)}</span></div></div>
         <dl class="briefing-stats"><div><dt>지형 / 고지</dt><dd>${escapeHtml(selectedPresentation.mapLabels.chokepath)} · ${escapeHtml(selectedPresentation.mapLabels.elevation)}</dd></div><div><dt>위협 / 측면</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)}</dd></div><div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div><div><dt>다음 보상</dt><dd>${escapeHtml(nextRewardName(selected.id))}</dd></div></dl>
-        <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 중앙 전장에서 손가락을 끌어 이동하세요. 적을 처치하고 <b>추출(Extract)</b>하여 Warden Corps로 복속시킬 수 있습니다.</p>
+        <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 중앙 전장에서 손가락을 끌어 이동하세요. 정예를 처치하고 <b>추출(Extract)</b>하여 동료를 확보할 수 있습니다.</p>
       </aside>
     </div>`;
   const tabBodies = {
@@ -594,7 +646,7 @@ function renderLobby() {
   };
   root.innerHTML = `
     <header class="command-header">
-      <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">AC</span><div><p class="eyebrow">ABYSSAL COMMAND · DEEP REFUGE</p><h1>Warden Corps 방어선</h1></div></div>
+      <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">AC</span><div><p class="eyebrow">ABYSSAL COMMAND · FARWATCH HOLD</p><h1>Warden Corps 방어선</h1></div></div>
       <div class="command-status"><span class="signal-dot" aria-hidden="true"></span><span>기록실 연결됨</span><strong>${completed}/10 봉쇄선</strong></div>
     </header>
     <p id="idle-return-summary" class="idle-return-banner" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p>
@@ -762,6 +814,7 @@ function beginSession(stageId) {
       <div id="defense-edge-hud">
         <div class="defense-edge defense-top">
           <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">ABYSSAL COMMAND · SEAL ATLAS</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span><div class="hud-xp" aria-hidden="true"><b id="battle-xp-label"></b><span class="hud-xp-track"><i id="battle-xp-fill"></i></span></div></div>
+          <div class="hud-panel hud-loop-state" data-stage-hud-context="loop"><span class="hud-eyebrow">RUN STATE · AGENCY</span><strong id="battle-loop-phase" aria-live="polite"></strong><span id="battle-pressure-state"></span><span id="battle-growth-state"></span><span id="battle-formation-state"></span><span id="battle-extraction-state"></span></div>
           <div class="top-right-hud"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div><div class="hud-right-stack"><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
         </div>
         <output id="battle-event-feedback" class="battle-event-feedback" role="status" aria-live="polite" aria-atomic="true"></output>
@@ -1364,6 +1417,14 @@ export class BattleSession {
             ? "전투 종료"
             : `시간 ${Math.floor(snapshot.tick / TICK_RATE)}초 · Lv.${snapshot.commander.level}`;
     root.querySelector("#battle-objective").textContent = presentation.mapLabels.objective;
+    const loopState = loopPresentation(snapshot);
+    root.querySelector("#battle-loop-phase").textContent = loopState.phaseLabel;
+    root.querySelector("#battle-pressure-state").textContent = loopState.pressureLabel;
+    root.querySelector("#battle-growth-state").textContent = loopState.growthLabel;
+    root.querySelector("#battle-formation-state").textContent = loopState.formationLabel;
+    root.querySelector("#battle-extraction-state").textContent = loopState.extractionLabel;
+    this.surface.dataset.objectivePhase = snapshot.objectives?.phase ?? "unknown";
+    this.surface.dataset.extractionState = snapshot.extracted ? "extracted" : snapshot.extractionProgress?.failed ? "failed" : snapshot.extractionProgress?.completed ? "ready" : "pending";
     // In-run XP-to-next-level progress (IA: the core RPG growth decision was
     // previously invisible mid-combat — only "Lv.N" text, no progress toward
     // the next skill/growth offer). Cost mirrors the simulation's own level-up
@@ -1508,7 +1569,24 @@ export class BattleSession {
           capturePrompt.className = "world-capture-prompt";
           overlay.append(capturePrompt);
         }
-        capturePrompt.textContent = (extractionReady ? "추출 가능 · " : "Bind 대기 · ") + companionLabel(snapshot.eliteCandidate.prototype);
+        const extractionProgress = snapshot.extractionProgress ?? {};
+        const holdSeconds = Math.floor((extractionProgress.holdTicks ?? 0) / TICK_RATE);
+        const maxHoldSeconds = Math.ceil((extractionProgress.maxHoldTicks ?? 0) / TICK_RATE);
+        const holding = Boolean(snapshot.commander?.objectiveRoute)
+          && extractionProgress.availableAt !== null
+          && extractionProgress.availableAt !== undefined;
+        capturePrompt.textContent = extractionProgress.failed
+          ? "추출 실패 · 재출정"
+          : extractionReady
+            ? "추출 가능 · " + companionLabel(snapshot.eliteCandidate.prototype)
+            : `${holding ? `결속 홀드 ${holdSeconds}/${maxHoldSeconds}초 · ` : "Bind 대기 · "}${companionLabel(snapshot.eliteCandidate.prototype)}`;
+        capturePrompt.dataset.extractionState = extractionProgress.failed
+          ? "failed"
+          : extractionReady
+            ? "ready"
+            : holding
+              ? "holding"
+              : "pending";
         capturePrompt.style.transform = "translate(" + point.x + "px, " + (point.y - WORLD_CAPTURE_PROMPT_LIFT_PX) + "px) translate(-50%, -100%)";
       } else {
         capturePrompt?.remove();

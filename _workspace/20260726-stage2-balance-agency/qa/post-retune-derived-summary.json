@@ -1,0 +1,138 @@
+{
+  "runId": "20260726-stage2-balance-agency",
+  "decisionId": "D-20260726-S2C-02",
+  "kind": "final-post-change-remeasurement",
+  "measuredAt": "2026-07-26T02:25:53Z",
+  "measurementWindow": {
+    "startedAt": "2026-07-26T02:20:05Z",
+    "completedAt": "2026-07-26T02:25:53Z"
+  },
+  "method": "Deterministic headless scripts and one focused catalog contract test. Scripted runs are not human G7/G8 evidence.",
+  "priorMeasurementHistory": {
+    "citation": "messages/002-qa-post-retune.md; qa artifacts before this final remeasurement",
+    "measurementWindow": "2026-07-26T01:48:38.430Z–01:59:56.851Z",
+    "outcome": "Prior post-retune evidence is preserved in the cited broadcast and the earlier sections of the four QA Markdown artifacts; it is not used to replace this final run."
+  },
+  "commands": {
+    "retuneGuardrails": "node --test tests/stage2-balance-retune.test.mjs",
+    "cinderMargin": "node scripts/run-g2-margin-probe.mjs --seeds 401,402,403,404,405 --stances VANGUARD,TURRET,SPLIT --output /tmp/abyssal-s2-final-margin.json",
+    "rusher": "node scripts/run-g2-archetype-rotation.mjs rusher --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-rusher.json",
+    "turtle": "node scripts/run-g2-archetype-rotation.mjs turtle --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-turtle.json",
+    "economyGreed": "node scripts/run-g2-archetype-rotation.mjs economy-greed --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-economy-greed.json",
+    "microOptimizer": "node scripts/run-g2-archetype-rotation.mjs micro-optimizer --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-micro-optimizer.json",
+    "casual": "node scripts/run-g2-archetype-rotation.mjs casual --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-casual.json",
+    "stance": "node scripts/run-g3-stance-events.mjs --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-stance.json",
+    "exploit": "node scripts/run-g3-exploit-probe.mjs --seeds 401,402,403,404,405 --output /tmp/abyssal-s2-final-exploit.json",
+    "extraction": "node scripts/measure-g7-core-loop.mjs --policy engaged --cadences 15 --output /tmp/abyssal-s2-final-g7-scripted.json"
+  },
+  "rawInputLocations": {
+    "note": "These command-directed /tmp files are ephemeral inputs; every reported derived result is durably retained in this JSON and the QA Markdown artifacts.",
+    "margin": { "path": "/tmp/abyssal-s2-final-margin.json", "writtenAt": "2026-07-26T02:24:28.384984Z" },
+    "rusher": { "path": "/tmp/abyssal-s2-final-rusher.json", "writtenAt": "2026-07-26T02:21:40.313124Z" },
+    "turtle": { "path": "/tmp/abyssal-s2-final-turtle.json", "writtenAt": "2026-07-26T02:21:44.413297Z" },
+    "economyGreed": { "path": "/tmp/abyssal-s2-final-economy-greed.json", "writtenAt": "2026-07-26T02:21:45.210701Z" },
+    "microOptimizer": { "path": "/tmp/abyssal-s2-final-micro-optimizer.json", "writtenAt": "2026-07-26T02:21:40.880721Z" },
+    "casual": { "path": "/tmp/abyssal-s2-final-casual.json", "writtenAt": "2026-07-26T02:21:40.933636Z" },
+    "stance": { "path": "/tmp/abyssal-s2-final-stance.json", "writtenAt": "2026-07-26T02:24:28.724587Z" },
+    "exploit": { "path": "/tmp/abyssal-s2-final-exploit.json", "writtenAt": "2026-07-26T02:24:34.116440Z" },
+    "extraction": { "path": "/tmp/abyssal-s2-final-g7-scripted.json", "generatedAt": "2026-07-26T02:20:40.094Z" }
+  },
+  "frozenBoundaryChecks": {
+    "status": "PASS for values covered by the focused test and source-value check; this is not a gate promotion.",
+    "methodTimestamp": "node --test tests/stage2-balance-retune.test.mjs; 2026-07-26T02:20:05Z–02:20:13Z",
+    "testResult": { "tests": 1, "passed": 1, "failed": 0, "durationMs": 142.481167 },
+    "assertedValues": {
+      "cinderGateTicks": 900,
+      "cinderWavePlan": [
+        { "tick": 0, "primary": "rusher:14", "alternative": "rusher:8+flanker:6" },
+        { "tick": 120, "primary": "flanker:10", "alternative": "flanker:7+rusher:3" },
+        { "tick": 240, "primary": "ranged:8", "alternative": "ranged:5+flanker:3" }
+      ],
+      "turretFirstOffset": { "x": -300, "y": 0 },
+      "vanguardFirstTwoOffsets": [{ "x": -1414, "y": -1414 }, { "x": -1414, "y": 1414 }],
+      "bossRallyCooldownReduction": 0,
+      "turretDerivedFrontCount": 1,
+      "vanguardDerivedFrontCount": 2,
+      "cinderRuntimeIds": ["cinder-span", "s1-ember-hunter", "rusher", "ember-cohort"],
+      "cinderOccupation": { "id": "cinder-seal", "x": 17600, "y": 6000, "radius": 900, "holdTicks": 180, "moveMultiplier": 1.05, "rangeMultiplier": 1.08, "recoveryPerSecond": 4 },
+      "cinderExtraction": { "id": "cinder-bind", "x": 15400, "y": 6000, "radius": 1000, "windowTicks": 600 }
+    },
+    "sourceValueCheck": {
+      "methodTimestamp": "defense-catalog.js and rpg-catalog.js focused value search; 2026-07-26T02:25:53Z",
+      "result": "Cinder occupation/extraction values, Cinder gateTicks, rally reduction, and all derived FRONT counts match the frozen contract. The hard-floor runtime behavior is not emitted as a standalone field by the mandated probes; it is therefore not credited as persistence evidence."
+    }
+  },
+  "g2": {
+    "status": "FIX; mandatory REDO trigger",
+    "cinderMargin": {
+      "required": { "rows": 15, "gateMinPct": [55, 80], "defeats": [0, 3], "bossTtkSeconds": [5.95, 8.05] },
+      "rows": [
+        { "stance": "VANGUARD", "inputSeed": 401, "sessionSeed": 401000, "gateMinPct": 78, "bossTtkSeconds": 6.766667, "terminal": "VICTORY" },
+        { "stance": "VANGUARD", "inputSeed": 402, "sessionSeed": 402000, "gateMinPct": 85, "bossTtkSeconds": 6.966667, "terminal": "VICTORY" },
+        { "stance": "VANGUARD", "inputSeed": 403, "sessionSeed": 403000, "gateMinPct": 91, "bossTtkSeconds": 7.166667, "terminal": "VICTORY" },
+        { "stance": "VANGUARD", "inputSeed": 404, "sessionSeed": 404000, "gateMinPct": 77.4, "bossTtkSeconds": 6.9, "terminal": "VICTORY" },
+        { "stance": "VANGUARD", "inputSeed": 405, "sessionSeed": 405000, "gateMinPct": 88, "bossTtkSeconds": 7.566667, "terminal": "VICTORY" },
+        { "stance": "TURRET", "inputSeed": 401, "sessionSeed": 401000, "gateMinPct": 80.2, "bossTtkSeconds": 6.433333, "terminal": "VICTORY" },
+        { "stance": "TURRET", "inputSeed": 402, "sessionSeed": 402000, "gateMinPct": 85, "bossTtkSeconds": 6.766667, "terminal": "VICTORY" },
+        { "stance": "TURRET", "inputSeed": 403, "sessionSeed": 403000, "gateMinPct": 92.2, "bossTtkSeconds": 6.766667, "terminal": "VICTORY" },
+        { "stance": "TURRET", "inputSeed": 404, "sessionSeed": 404000, "gateMinPct": 78.4, "bossTtkSeconds": 6.766667, "terminal": "VICTORY" },
+        { "stance": "TURRET", "inputSeed": 405, "sessionSeed": 405000, "gateMinPct": 88, "bossTtkSeconds": 7.166667, "terminal": "VICTORY" },
+        { "stance": "SPLIT", "inputSeed": 401, "sessionSeed": 401000, "gateMinPct": 61.4, "bossTtkSeconds": 6.433333, "terminal": "VICTORY" },
+        { "stance": "SPLIT", "inputSeed": 402, "sessionSeed": 402000, "gateMinPct": 51, "bossTtkSeconds": 6.766667, "terminal": "VICTORY" },
+        { "stance": "SPLIT", "inputSeed": 403, "sessionSeed": 403000, "gateMinPct": 0, "bossTtkSeconds": null, "terminal": "DEFEAT" },
+        { "stance": "SPLIT", "inputSeed": 404, "sessionSeed": 404000, "gateMinPct": 61.6, "bossTtkSeconds": 6.566667, "terminal": "VICTORY" },
+        { "stance": "SPLIT", "inputSeed": 405, "sessionSeed": 405000, "gateMinPct": 41.2, "bossTtkSeconds": 7.366667, "terminal": "VICTORY" }
+      ],
+      "aggregate": { "gateBandViolations": 10, "gateBandPasses": 5, "defeats": 1, "defeatRatePct": 6.666667, "measuredTtkPasses": 14, "missingBossTtk": 1 },
+      "result": "FAIL: 10/15 gate minima breach 55.0–80.0%; SPLIT seed 403 is defeated with no boss TTK, so the required every-row TTK output is also absent. The 1/15 defeat count is within 0–3, and all 14 measured TTKs are in band."
+    },
+    "archetypeCampaigns": {
+      "inputSeeds": [401, 402, 403, 404, 405],
+      "results": {
+        "rusher": { "campaigns": 5, "successes": 30, "defeats": 2, "stageRecords": 32, "cinderDefeatSeeds": [403, 405], "meanMeasuredBossTtkTicks": 561.7333 },
+        "turtle": { "campaigns": 5, "successes": 30, "defeats": 2, "stageRecords": 32, "cinderDefeatSeeds": [403, 405], "meanMeasuredBossTtkTicks": 725.6667 },
+        "economy-greed": { "campaigns": 5, "successes": 30, "defeats": 2, "stageRecords": 32, "cinderDefeatSeeds": [403, 405], "meanMeasuredBossTtkTicks": 729.5 },
+        "micro-optimizer": { "campaigns": 5, "successes": 30, "defeats": 2, "stageRecords": 32, "cinderDefeatSeeds": [403, 405], "meanMeasuredBossTtkTicks": 600.9667 },
+        "casual": { "campaigns": 5, "successes": 30, "defeats": 2, "stageRecords": 32, "cinderDefeatSeeds": [403, 405], "meanMeasuredBossTtkTicks": 582.3667 }
+      },
+      "result": "Measured five archetype campaigns; no independent-viability conclusion is credited because the mandatory Cinder margin fails and no symmetric matchup/EV export exists."
+    },
+    "missingRequiredEvidence": [
+      "No symmetric export with 20 paired trials per archetype, fixed seeds 401–405, identical value budgets, archetypeId, counterProfileId, seed, and winner; no 45–55% matchup claim.",
+      "No legal-combo maxEV/medianEV series or <=1.30 result."
+    ]
+  },
+  "g3": {
+    "status": "FIX; mandatory REDO trigger",
+    "stanceEvents": {
+      "runsPerStance": 50,
+      "VANGUARD": { "frontCount": 2, "rallies": 50, "companionDamageTaken": 35826, "companionDowns": 0, "defeats": 0 },
+      "TURRET": { "frontCount": 1, "rallies": 50, "companionDamageTaken": 32902, "companionDowns": 0, "defeats": 0 },
+      "SPLIT": { "frontCount": 1, "rallies": 49, "companionDamageTaken": 5966, "companionDowns": 0, "defeats": 1 },
+      "vanguardPlusSplit": { "runs": 100, "companionDowns": 0, "defeats": 1, "defeatRatePct": 1 },
+      "result": "FAIL: combined VANGUARD+SPLIT condition requires at least one COMPANION_DOWNED; observed 0/100. Their 1% defeat rate is within <=20%."
+    },
+    "rallyThenTurret": { "runs": 50, "rallies": 50, "switches": 50, "frontCount": 1, "damageBeforeSwitch": 35826, "damageAfterSwitch": 0, "zeroDamageConversions": 50, "companionDowns": 0, "defeats": 0, "result": "FAIL: all 50 conversions require takenAfterSwitch >0 and zero zero-damage conversions; observed 0 post-switch damage and 50/50 zero-damage conversions." },
+    "missingRequiredEvidence": "No legal-combo maxEV/medianEV series or <=1.30 result."
+  },
+  "g7": {
+    "status": "BLOCKED; mandatory REDO trigger",
+    "scriptedCinder": {
+      "methodTimestamp": "node scripts/measure-g7-core-loop.mjs --policy engaged --cadences 15 --output /tmp/abyssal-s2-final-g7-scripted.json; generated 2026-07-26T02:20:40.094Z",
+      "rows": {
+        "901": { "terminal": "VICTORY", "extracted": true, "windowOpenedAtSeconds": 20.62, "completedAtSeconds": 23.1, "windowToCompletionSeconds": 2.48, "acceptedExtractElite": 1, "extractionCompleted": 1, "eliteExtracted": 1, "acceptedHandoffs": 1, "result": "PASS scripted happy path" },
+        "902": { "terminal": "DEFEAT", "extracted": false, "windowOpenedAtSeconds": null, "completedAtSeconds": null, "windowToCompletionSeconds": null, "acceptedExtractElite": 0, "extractionCompleted": 0, "eliteExtracted": 0, "acceptedHandoffs": 0, "result": "FAIL before extraction" },
+        "903": { "terminal": "DEFEAT", "extracted": false, "windowOpenedAtSeconds": null, "completedAtSeconds": null, "windowToCompletionSeconds": null, "acceptedExtractElite": 0, "extractionCompleted": 0, "eliteExtracted": 0, "acceptedHandoffs": 0, "result": "FAIL before extraction" }
+      },
+      "aggregate": { "runs": 3, "completeHappyPaths": 1, "defeatsBeforeExtraction": 2, "acceptedHandoffCapBreaches": 0 },
+      "result": "FAIL: seeds 902 and 903 do not retain the required window, accepted EXTRACT_ELITE, completion, extracted event chain, or extracted=true."
+    },
+    "missingRequiredEvidence": [
+      "No retained event traces and campaign-state before/after diffs for victory, defeat after acceptance, and defeat before acceptance.",
+      "No rendered moderated session with 10 participants, 20 eligible re-entry decisions, >=14 voluntary Cinder re-entries, or visible prompt/movement/hold/accepted-action/result/persistence/re-entry evidence."
+    ]
+  },
+  "g5": { "status": "N/A", "methodTimestamp": "Frozen-boundary check at 2026-07-26T02:25:53Z", "result": "No paid path, account, premium currency, ads, gacha, paid power, paid reroll, or paid recovery is introduced; N/A is not PASS." },
+  "g8": { "status": "BLOCKED; mandatory REDO trigger", "methodTimestamp": "Artifact check at 2026-07-26T02:25:53Z", "missing": "No five-title direct-feature survey <=2/5 and no ten-session human-impression median >=4.0/5." },
+  "finalVerdict": { "status": "REDO", "gateStates": { "G2": "FIX", "G3": "FIX", "G5": "N/A", "G7": "BLOCKED", "G8": "BLOCKED" }, "redoReasons": ["G2: 10/15 Cinder gate-minimum boundary breaches and one required boss-TTK omission.", "G2/G3: required symmetric matchup and legal-combo EV exports absent.", "G3: 0 COMPANION_DOWNED in 100 VANGUARD+SPLIT runs and 50/50 zero-damage rally-then-TURRET conversions.", "G7: Cinder scripted extraction fails for seeds 902 and 903; persistence scenarios and human evidence are absent.", "G8: mandatory survey and human-impression evidence are absent."], "rule": "Per D-20260726-S2C-02, any numeric miss, missing required output, or missing evidence requires REDO; no gate is promoted." }
+}

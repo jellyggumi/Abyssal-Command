@@ -40,6 +40,12 @@ button:disabled { opacity: .42; cursor: not-allowed; }
 .defense-bottom { bottom: max(.4rem, var(--defense-safe-bottom)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-end; }
 .hud-panel { max-width: min(42vw, 340px); padding: .45rem .6rem; border: 1px solid #38506f; border-radius: 10px; background: rgb(5 12 25 / .85); font-size: .82rem; }
 .hud-panel strong, .hud-panel span { display: block; }
+.hud-loop-state { display: grid; gap: .16rem; min-width: min(29vw, 15rem); border-color: #4b7895; }
+.hud-loop-state strong { color: #e8f4ff; font-size: .88rem; }
+.hud-loop-state span:not(.hud-eyebrow) { color: #b7c9dc; font-size: .7rem; line-height: 1.25; }
+#defense-battle-surface[data-objective-phase="extraction"] .hud-loop-state { border-color: #b992ff; box-shadow: 0 0 .9rem rgb(185 146 255 / .18); }
+#defense-battle-surface[data-extraction-state="ready"] .hud-loop-state { border-color: #76c4ae; }
+#defense-battle-surface[data-extraction-state="failed"] .hud-loop-state { border-color: #d46f75; }
 .hud-actions { display: flex; gap: .35rem; flex-wrap: wrap; justify-content: flex-end; }
 .hud-actions button { min-height: 44px; padding: .4rem .55rem; font-size: .78rem; }
 .edge-card { position: absolute; top: max(.5rem, var(--defense-safe-top)); left: 50%; transform: translateX(-50%); width: min(84vw, 620px); max-height: 13vh; overflow: auto; pointer-events: auto; padding: .5rem; border: 1px solid #8d6cd6; border-radius: 10px; background: rgb(12 11 30 / .94); }
@@ -84,6 +90,8 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .world-hud-nameplate--companion { border-radius: 999px; border: 1px solid rgb(92 142 207 / .55); }
 .world-hud-nameplate--enemy { border-radius: 2px; border: 1px solid rgb(226 107 114 / .55); }
 .world-capture-prompt { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); padding: .3rem .55rem; border: 1px solid #b992ff; border-radius: .5rem; background: rgb(12 11 30 / .85); color: #e7d9ff; font-size: .68rem; font-weight: 700; white-space: nowrap; animation: world-capture-pulse 1.6s ease-in-out infinite; }
+.world-capture-prompt[data-extraction-state="holding"] { border-color: #dfae51; color: #ffe2a8; }
+.world-capture-prompt[data-extraction-state="failed"] { border-color: #d46f75; color: #ffd4d7; animation: none; }
 /* Row 17: offscreen objective waypoint arrow, screen-edge-clamped. rotate() applied inline per-frame (see app.js renderWorldHud). */
 .world-waypoint-arrow { position: absolute; left: 0; top: 0; transform-origin: center; font-size: 1.1rem; line-height: 1; color: #dfae51; text-shadow: 0 0 6px rgb(223 174 81 / .65), 0 1px 2px rgb(0 0 0 / .6); pointer-events: none; }
 /* Outer element carries ONLY the JS-computed screen position (set once,
@@ -280,6 +288,7 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
   .defense-top { gap: .3rem; }
   .hud-mission { max-width: 49vw; }
   .top-right-hud { max-width: 49vw; }
+  .hud-loop-state { max-width: 44vw; min-width: 0; }
   .objective-chip { max-width: 11rem; }
   .objective-chip strong { max-height: 2.6em; overflow: hidden; }
   /* Narrow screens: passive chips keep the glyph + boon, drop the name (still in title/aria). */

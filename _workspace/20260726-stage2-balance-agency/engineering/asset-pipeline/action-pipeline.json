@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0.0",
+  "pipeline": "character-rig-animation",
+  "sourceFps": 60,
+  "runtimeFps": 30,
+  "actionDefinitions": [
+    {"action": "idle", "intent": "guarded breathing and readable weight shift", "signaturePoses": ["contact", "breath-in", "breath-out", "contact"], "loop": true},
+    {"action": "move", "intent": "controlled advance with a clear lead foot", "signaturePoses": ["anticipation", "left-step", "right-step", "settle"], "loop": true},
+    {"action": "run", "intent": "urgent pursuit without losing the silhouette", "signaturePoses": ["push-off", "left-stride", "right-stride", "brake"], "loop": true},
+    {"action": "hit", "intent": "short readable impact reaction", "signaturePoses": ["impact", "recoil", "recover"], "loop": false},
+    {"action": "bighit", "intent": "heavy stagger with a protected recovery", "signaturePoses": ["wind-up", "impact", "stagger", "brace", "recover"], "loop": false},
+    {"action": "attack", "intent": "disciplined close-range strike with a visible peak", "signaturePoses": ["guard", "wind-up", "strike", "follow-through", "recover"], "loop": false},
+    {"action": "critical", "intent": "signature extraction-finisher burst", "signaturePoses": ["focus", "charge", "release", "aftershock", "recover"], "loop": false},
+    {"action": "avoid", "intent": "compact lateral evade that preserves footing", "signaturePoses": ["read", "dip", "clear", "recenter"], "loop": false},
+    {"action": "defence", "intent": "hold the line and communicate protected timing", "signaturePoses": ["raise-guard", "hold", "absorb", "lower-guard"], "loop": false},
+    {"action": "die", "intent": "controlled collapse with a readable terminal pose", "signaturePoses": ["fail", "stagger", "kneel", "fall", "still"], "loop": false},
+    {"action": "show", "intent": "concept-aligned materialize and command reveal", "signaturePoses": ["still", "rise", "present", "command", "settle"], "loop": false}
+  ],
+  "keyframeBudgets": {
+    "idle": {"target": 120, "keyPoses": {"min": 4, "max": 6}},
+    "move": {"target": 72, "keyPoses": {"min": 5, "max": 8}},
+    "run": {"target": 84, "keyPoses": {"min": 6, "max": 9}},
+    "hit": {"target": 54, "keyPoses": {"min": 6, "max": 8}},
+    "bighit": {"target": 84, "keyPoses": {"min": 7, "max": 10}},
+    "attack": {"target": 90, "keyPoses": {"min": 7, "max": 10}},
+    "critical": {"target": 72, "keyPoses": {"min": 6, "max": 9}},
+    "avoid": {"target": 42, "keyPoses": {"min": 5, "max": 7}},
+    "defence": {"target": 78, "keyPoses": {"min": 5, "max": 8}},
+    "die": {"target": 72, "keyPoses": {"min": 5, "max": 8}},
+    "show": {"target": 96, "keyPoses": {"min": 6, "max": 9}}
+  },
+  "transitionMatrix": {
+    "strategy": "cross-fade only across compatible contact or recovery boundaries",
+    "defaultCrossFade": 8,
+    "minCrossFade": 2,
+    "maxCrossFade": 18
+  },
+  "characterPromptProfiles": {
+    "sung-hum": {
+      "motionTone": "disciplined-hunter",
+      "world": "Echo Deep approaching Gate Zenith",
+      "progression": "hunt→extract→materialize→capture→assault"
+    }
+  },
+  "runtimeContract": {
+    "authoring": "Blender NLA",
+    "requiredClipKeys": ["idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "die", "show"],
+    "runtimeEligible": false,
+    "requiredVerification": ["tpose", "no-terrain", "no-weapons", "skin-weights", "glb-animation-export", "browser-or-fallback-readability"]
+  }
+}

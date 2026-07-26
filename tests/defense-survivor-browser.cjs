@@ -69,10 +69,11 @@ function startServer() {
  */
 async function seededWorldHudCampaign() {
   const campaignState = await import("../campaign-state.js");
-  let campaign = campaignState.createCampaign({ campaignId: "world-hud-regression", resetEpoch: 1 });
-  campaign = campaignState.startRun(campaign, "cinder-span");
+  let campaign = campaignState.createCampaign({ campaignId: "defense-0-1", resetEpoch: 0 });
   campaign = campaignState.captureElite(campaign, "s1-ember-hunter", "ember-cohort");
-  campaign = campaignState.setCompanionLoadout(campaign, ["ember-cohort"]);
+  campaign = campaignState.captureElite(campaign, "s2-veil-sentinel", "rift-lens");
+  campaign = campaignState.captureElite(campaign, "s3-throne-wraith", "throne-echo");
+  campaign = campaignState.setCompanionLoadout(campaign, ["ember-cohort", "rift-lens", "throne-echo"]);
   const payload = campaignState.serializeCampaign(campaign);
   const text = JSON.stringify(payload);
   return {
@@ -84,13 +85,17 @@ async function seededWorldHudCampaign() {
   };
 }
 
-async function verifyPlaythroughJourney(browser, hosting) {
+async function verifyPlaythroughJourney(browser, hosting, campaign) {
   const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 390, height: 844 }, hasTouch: true });
   const page = await context.newPage();
   const report = { events: [], errors: [] };
   page.on("pageerror", (error) => report.errors.push({ kind: "page", message: error.message }));
   page.on("console", (message) => { if (message.type() === "error") report.errors.push({ kind: "console", message: message.text() }); });
   try {
+    await page.addInitScript(({ encoded, key }) => {
+      Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
+      localStorage.setItem(key, encoded);
+    }, { encoded: campaign.encoded, key: STORAGE_KEY });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
     await page.locator("#defense-app.defense-lobby").waitFor();
     assert.equal(await page.locator("#start-defense").isVisible(), true, "lobby must expose a live departure action");
@@ -353,6 +358,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       let initialCapturePromptText = null;
       let initialCapturePromptState = null;
       let extractionReadyPromptText = null;
+      let holdingCapturePromptText = null;
       let extractionReadyPromptState = null;
       let bindStarted = false;
       let nameplateTransform = null;
@@ -392,6 +398,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
             extractAction.click();
             bindStarted = true;
           }
+          if (promptText.startsWith("결속 홀드")) holdingCapturePromptText = holdingCapturePromptText ?? promptText;
           if (promptText.startsWith("추출 가능")) {
             extractionReadyPromptText = promptText;
             extractionReadyPromptState = promptState;
@@ -406,7 +413,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
       observer.disconnect();
-      return { nameplateTransform, damageSamples, initialCapturePromptText, initialCapturePromptState, extractionReadyPromptText, extractionReadyPromptState, bindStarted, pumps, gameTimeMs: pumps * FRAME_MS };
+      return { nameplateTransform, damageSamples, initialCapturePromptText, initialCapturePromptState, holdingCapturePromptText, extractionReadyPromptText, extractionReadyPromptState, bindStarted, pumps, gameTimeMs: pumps * FRAME_MS };
     });
 
     // Bug #1 guard: the companion nameplate must have appeared with a real
@@ -437,12 +444,14 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
     // the player activates that route, reaches the actionable extraction-ready
     // state. Both states must name the real seeded elite companion prototype.
     assert.ok(drive.initialCapturePromptText, "the elite capture prompt must appear once an elite candidate and extraction zone exist (Bug #4 guard)");
-    assert.match(drive.initialCapturePromptText, /^(?:Bind 대기|추출 가능) · Ember Cohort$/, "the initial capture prompt must expose the real companion name and an explicit bind/extraction state");
+    assert.match(drive.initialCapturePromptText, /^(?:Bind 대기|결속 홀드 \d+\/\d+초|추출 가능) · Ember Cohort$/, "the initial capture prompt must expose the real companion name and an explicit bind/extraction state");
     assert.ok(drive.initialCapturePromptState, "the initial capture prompt must have a matching extraction action");
     const initiallyReady = drive.initialCapturePromptText.startsWith("추출 가능");
     assert.equal(drive.initialCapturePromptState.disabled, false, "the extraction route CTA must be enabled before Bind starts or once extraction is ready");
     assert.equal(drive.initialCapturePromptState.ariaDisabled, "false", "the extraction route CTA aria-disabled state must be false before Bind starts or once extraction is ready");
     if (!initiallyReady) assert.equal(drive.bindStarted, true, "the enabled Bind CTA must be activated exactly once before waiting for extraction readiness");
+    assert.ok(drive.holdingCapturePromptText, "the elite capture prompt must expose the active hold state after the Bind route starts");
+    assert.match(drive.holdingCapturePromptText, /^결속 홀드 \d+\/\d+초 · Ember Cohort$/, "the active hold prompt must expose deterministic progress and the real companion name");
     assert.ok(drive.extractionReadyPromptText, "the elite extraction-ready prompt must appear after the Bind hold completes (Bug #4 guard)");
     assert.match(drive.extractionReadyPromptText, /^추출 가능 · Ember Cohort$/, "the elite capture prompt must reach the concrete Korean extraction-ready CTA with the real companion name");
     assert.ok(drive.extractionReadyPromptState, "the extraction-ready prompt must have a matching extraction action");
@@ -456,6 +465,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       distinctDamagePositions: distinctComputedTransforms.size,
       initialCapturePromptText: drive.initialCapturePromptText,
       initialCapturePromptState: drive.initialCapturePromptState,
+      holdingCapturePromptText: drive.holdingCapturePromptText,
       extractionReadyPromptText: drive.extractionReadyPromptText,
       extractionReadyPromptState: drive.extractionReadyPromptState,
       bindStarted: drive.bindStarted,
@@ -911,7 +921,7 @@ async function run() {
   try {
     browser = await playwright.chromium.launch({ headless: true });
     const campaign = await seededWorldHudCampaign();
-    const journey = await verifyPlaythroughJourney(browser, hosting);
+    const journey = await verifyPlaythroughJourney(browser, hosting, campaign);
     const worldHud = await verifyWorldHudOverlay(browser, hosting, campaign);
     const stanceFeedback = await verifyStanceSwitchFeedback(browser, hosting, campaign);
     const xpProgress = await verifyXpProgressBar(browser, hosting, campaign);
