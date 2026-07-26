@@ -247,17 +247,29 @@ const VFX_LIFETIME_TICKS = Object.freeze({
   COMPANION_DOWNED: 48,
 });
 
-// Rigged character GLBs (scripts/rig-character-asset-blender.py) embed an
-// 11-clip action library per asset, named "<assetId>::<action>::v01" in the
-// glTF `animations` array -- idle/move/run/hit/bighit/attack/critical/
-// avoid/defence/die/show (design/previs-rigging-guide.md). Every character
-// model in BOSS_MODELS / ENEMY_MODELS / COMPANION_MODELS / COMMANDER_MODEL
-// carries the full set; VFX and terrain GLBs carry none. RIG_ACTION_KEYS lets
-// loadActions() detect which clips (if any) a given loaded model actually has,
-// so unrigged models simply skip animation without special-casing.
+// Rigged character GLBs embed the canonical 11-clip action library named
+// "<assetId>::<action>::v01". The commander additionally authors exact
+// attack_melee / attack_ranged delivery clips; other actors may omit those
+// two and deterministically fall back to attack / critical. VFX and terrain
+// GLBs carry no actions, so unrigged models simply skip animation.
 const RIG_ACTION_KEYS = Object.freeze([
   "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "die", "show",
+  "attack_melee", "attack_ranged",
 ]);
+const LOCOMOTION_ACTION_KEYS = Object.freeze(["idle", "move", "run"]);
+const RANGED_COMBAT_IDENTITIES = Object.freeze(["ranged", "support"]);
+const MELEE_COMBAT_IDENTITIES = Object.freeze(["rusher", "flanker", "guardian", "vanguard", "striker"]);
+const COMBAT_PRESENTATION_MODELS = Object.freeze({
+  melee: Object.freeze({ weapon: "props/abyss-blade.glb", effects: Object.freeze(["vfx/melee-slash.glb"]) }),
+  ranged: Object.freeze({
+    weapon: "props/arc-caster.glb",
+    effects: Object.freeze(["vfx/abyss-orb.glb", "vfx/ranged-bolt.glb"]),
+  }),
+});
+// Commander/boss records have no authored combat role. Their delivery is
+// classified from the live source-target separation instead: one largest
+// authored actor silhouette is the presentation-space close-contact bound.
+const MELEE_PRESENTATION_DISTANCE = TARGET_HEIGHT.boss;
 // Movement in this simulation is continuous position sync (app.js's
 // projected() feeds ARENA-scale x/y every tick), not a discrete "moving"
 // flag -- MOVE_EPSILON is the per-frame world-unit position delta above
@@ -293,15 +305,6 @@ const FACING_TURN_RATE = 12;
 // in 90ms: enough softness to read as "following", short enough that a
 // companion never appears to be somewhere it is not.
 const FOLLOW_CATCHUP_RATE = 30;
-// Verified event field shapes (defense-run-simulation.js emit() call
-// sites), not inferred: WEAPON_FIRED.entityId is the shooter (commander or
-// companion) on every ranged auto-attack; ENEMY_ATTACK.entityId is the
-// attacking enemy/boss and .targetId is whoever it hit (commander id,
-// companion entity id, or "gate" -- gate has no actor mesh so a lookup miss
-// is a silent no-op, not a bug). One shared rule set drives both sides of
-// every attack without special-casing attacker kind.
-const ATTACKER_EVENT_ACTION = Object.freeze({ WEAPON_FIRED: "entityId", ENEMY_ATTACK: "entityId" });
-const TARGET_HIT_EVENT = "ENEMY_ATTACK";
 
 const COLORS = Object.freeze({
   backgroundTop: 0x0a0f1d,
@@ -426,16 +429,21 @@ const WORLD_HEIGHT = 12000;
 // the same heuristic the old code used (`entity.normalized === true` or
 // both axes within [-1, 1]) and map either to world units centered on the
 // WORLD_SCALE-sized ground plane.
-function worldPoint(entity) {
+function worldPointInto(target, entity) {
   const x = finite(entity?.x, 0);
   const y = finite(entity?.y, 0);
   if (entity?.normalized === true || (Math.abs(x) <= 1 && Math.abs(y) <= 1)) {
-    return { x: x * WORLD_SCALE, z: y * WORLD_SCALE };
+    target.x = x * WORLD_SCALE;
+    target.z = y * WORLD_SCALE;
+  } else {
+    target.x = (x / WORLD_WIDTH * 2 - 1) * WORLD_SCALE;
+    target.z = (y / WORLD_HEIGHT * 2 - 1) * WORLD_SCALE;
   }
-  return {
-    x: (x / WORLD_WIDTH * 2 - 1) * WORLD_SCALE,
-    z: (y / WORLD_HEIGHT * 2 - 1) * WORLD_SCALE,
-  };
+  return target;
+}
+
+function worldPoint(entity) {
+  return worldPointInto({}, entity);
 }
 
 // Numeric-hygiene wrap for orbitYaw, which accumulates without limit
@@ -560,7 +568,7 @@ function buildActions(mixer, clips) {
     const key = actionKeyFromClipName(clip.name);
     if (!key || actions[key]) continue;
     const action = mixer.clipAction(clip);
-    if (key === "idle" || key === "move" || key === "run") {
+    if (LOCOMOTION_ACTION_KEYS.includes(key)) {
       action.setLoop(THREE.LoopRepeat, Infinity);
     } else {
       action.setLoop(THREE.LoopOnce, 1);
@@ -601,6 +609,25 @@ async function instantiateTerrainModel(relPath) {
   const instance = SkeletonUtils.clone(gltf.scene);
   fitFootprint(instance, TERRAIN_TARGET_HALF_EXTENT);
   return instance;
+}
+
+async function instantiatePresentationModel(relPath, targetHeight) {
+  const gltf = await loadGltf(relPath);
+  const instance = SkeletonUtils.clone(gltf.scene);
+  fitHeight(instance, targetHeight);
+  return instance;
+}
+
+function weaponSocket(root) {
+  let fallback = null;
+  let socket = null;
+  root?.traverse((node) => {
+    if (!node.isBone || socket) return;
+    const name = String(node.name || "");
+    if (/hand[._-]?r|right[._-]?hand/i.test(name)) socket = node;
+    else if (!fallback && /hand/i.test(name)) fallback = node;
+  });
+  return socket ?? fallback ?? root;
 }
 
 async function instantiateVfxModel(relPath) {
@@ -814,11 +841,18 @@ export class RealtimeBattle {
     this.actorGroup = null;
     this.vfxGroup = null;
     this.environmentTexture = null;
+    this.pressureGroup = null;
+    this.pressureLane = null;
+    this.pressureArrow = null;
+    this.pressureTargetRing = null;
 
     this.actors = new Map(); // entity.id -> { root, kind, modelPath, loading }
     this.vfxInstances = []; // { root, untilTick } -- also holds death echoes: { root, untilTick, mixer }
     this.cameraTarget = new THREE.Vector3();
     this.cameraFollowInit = false;
+    this.pressureGatePoint = new THREE.Vector3();
+    this.pressureEnemyPoint = new THREE.Vector3();
+    this.pressureCandidatePoint = new THREE.Vector3();
     // Free-orbit camera state (D17/D21/D22, presentation-spec.md:18-25).
     // orbitYaw accumulates unrestricted (wrapped for float precision only,
     // never clamped -- see wrapAngle()). orbitPitch and zoomFactor are
@@ -847,12 +881,13 @@ export class RealtimeBattle {
     this.lastFeedback = null;
     this.pendingInputFeedback = null;
     this.visualEventKeys = new Set();
+    this.animationEventKeys = new Set();
     this.pendingVfx = [];
     this.pendingDeathEchoes = []; // captureDeathEchoes()-collected { modelPath, x, z }, drained by collectFeedback()
-    // Wall-clock delta for AnimationMixer stepping, derived from the same
-    // performance.now() timestamp updateAnimations() already receives for
-    // one-shot expiry -- deliberately NOT tied to snapshot.tick (60Hz sim
-    // ticks can batch/skip on a slow frame or a paused/backgrounded tab).
+    // Wall-clock delta for AnimationMixer stepping. One-shot completion is
+    // driven by the mixer's own "finished" event, never by a parallel timer.
+    // The delta remains presentation-local and is deliberately not tied to
+    // snapshot.tick, which can batch/skip while a tab is backgrounded.
     this.lastAnimMs = null;
   }
 
@@ -917,6 +952,55 @@ export class RealtimeBattle {
     this.gateMesh.rotation.x = Math.PI / 2;
     this.gateMesh.visible = false;
     this.scene.add(this.gateMesh);
+
+    // Snapshot-only gate-pressure readout: a tapered ground lane points
+    // from the closest live hostile into a second, thicker gate ring. The
+    // wedge + arrowhead + doubled target ring carry the meaning by shape;
+    // emissive materials keep it legible regardless of stage lighting.
+    this.pressureGroup = new THREE.Group();
+    const pressureLaneGeometry = new THREE.BufferGeometry();
+    pressureLaneGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute([-0.24, 0, -0.5, 0.24, 0, -0.5, 0, 0, 0.5], 3),
+    );
+    pressureLaneGeometry.computeVertexNormals();
+    this.pressureLane = new THREE.Mesh(
+      pressureLaneGeometry,
+      new THREE.MeshStandardMaterial({
+        color: STAGE_PALETTE_TINTS["cinder-span"],
+        emissive: STAGE_PALETTE_TINTS["cinder-span"],
+        emissiveIntensity: 0.85,
+        transparent: true,
+        opacity: 0.34,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+    );
+    this.pressureArrow = new THREE.Mesh(
+      new THREE.ConeGeometry(0.27, 0.68, 3),
+      new THREE.MeshStandardMaterial({
+        color: COLORS.pickup,
+        emissive: COLORS.pickup,
+        emissiveIntensity: 1.2,
+        roughness: 0.25,
+        depthWrite: false,
+      }),
+    );
+    this.pressureArrow.geometry.rotateX(Math.PI / 2);
+    this.pressureTargetRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1.28, 0.11, 8, 32),
+      new THREE.MeshStandardMaterial({
+        color: COLORS.pickup,
+        emissive: COLORS.pickup,
+        emissiveIntensity: 1.2,
+        roughness: 0.25,
+        depthWrite: false,
+      }),
+    );
+    this.pressureTargetRing.rotation.x = Math.PI / 2;
+    this.pressureGroup.add(this.pressureLane, this.pressureArrow, this.pressureTargetRing);
+    this.pressureGroup.visible = false;
+    this.scene.add(this.pressureGroup);
 
     this.disposed = false;
     return this;
@@ -1033,8 +1117,13 @@ export class RealtimeBattle {
     const modelPath = actorModelPath(entity) ?? (kind === "companion" ? null : null);
     const record = {
       root: null, kind, modelPath, loading: Boolean(modelPath),
+      entityKind: entity.kind ?? null, role: entity.role ?? null, moveState: entity.move ?? null,
       mixer: null, actions: {}, activeActionKey: null, targetHeight: actorTargetHeight(entity),
-      oneShotUntilMs: 0, moving: false, lastX: null, lastZ: null,
+      oneShotAction: null, oneShotActionKey: null,
+      queuedAction: { key: "show", presentation: null },
+      dead: false, hideAfterDeath: false,
+      presentationToken: 0, presentationRoots: [],
+      moving: false, lastX: null, lastZ: null,
       // Facing state (D23 Phase 1). `yaw` is the rendered angle, eased
       // toward `targetYaw` in updateAnimations(); both stay null until the
       // actor's first real movement, so a freshly spawned actor keeps its
@@ -1070,12 +1159,14 @@ export class RealtimeBattle {
           return;
         }
         this.actorGroup.add(instance);
-        // Start in idle immediately (no fade-in needed for a freshly
-        // mounted actor -- there is no prior pose to blend from).
-        const idle = actions.idle;
-        if (idle) {
-          idle.reset().play();
-          record.activeActionKey = "idle";
+        const queued = record.queuedAction;
+        record.queuedAction = null;
+        const startedQueued = queued
+          ? this.triggerAction(record, queued.key, undefined, queued.presentation)
+          : false;
+        if (!startedQueued) {
+          if (record.dead && record.hideAfterDeath) instance.visible = false;
+          else this.recoverLocomotion(record, 0);
         }
       })
       .catch(() => {
@@ -1084,12 +1175,34 @@ export class RealtimeBattle {
     return record;
   }
 
-  // Crossfades record's currently-playing action to `key` over `fadeSeconds`.
-  // No-op if the actor has no clip for `key` (some models are unrigged, see
-  // RIG_ACTION_KEYS doc comment) or is already playing it.
+  locomotionActionKey(record) {
+    // `commander.move` is an authoritative snapshot field. It remains stable
+    // across repeated renders of the same tick, unlike a derived position
+    // delta, so held player movement selects run without flickering idle.
+    if (record.kind === "commander" && typeof record.moveState === "string" && record.moveState !== "IDLE") {
+      return "run";
+    }
+    return record.moving ? "move" : "idle";
+  }
+
+  recoverLocomotion(record, fadeSeconds = 0.15) {
+    if (!record?.mixer || record.dead || record.oneShotAction) return false;
+    const preferred = this.locomotionActionKey(record);
+    const key = record.actions?.[preferred]
+      ? preferred
+      : (preferred === "run" && record.actions?.move ? "move" : "idle");
+    if (!record.actions?.[key]) return false;
+    if (record.activeActionKey === key) return true;
+    return this.crossfadeToAction(record, key, fadeSeconds);
+  }
+
+  // Crossfades only at locomotion boundaries or after a one-shot has
+  // completed. A live one-shot cannot be cross-faded into another one-shot;
+  // triggerAction() queues that beat until the mixer reports "finished".
   crossfadeToAction(record, key, fadeSeconds = 0.2) {
     const next = record.actions?.[key];
-    if (!next || record.activeActionKey === key) return false;
+    if (!next || record.activeActionKey === key || (record.dead && key !== "die")) return false;
+    if (record.oneShotAction && !LOCOMOTION_ACTION_KEYS.includes(key)) return false;
     const previous = record.activeActionKey ? record.actions[record.activeActionKey] : null;
     next.enabled = true;
     next.setEffectiveWeight(1);
@@ -1099,19 +1212,149 @@ export class RealtimeBattle {
     return true;
   }
 
-  // Plays a one-shot combat beat (attack/hit/bighit/critical/die/...) on top
-  // of locomotion, holding it for its authored clip duration before
-  // updateAnimations() lets locomotion resume. Silently ignored for actors
-  // without that clip or without a mixer (unrigged models) -- combat still
-  // functions identically, just without the visual flourish.
-  triggerAction(record, key, nowMs) {
-    if (!record?.mixer) return;
+  clearAttackPresentation(record) {
+    if (!record) return;
+    record.presentationToken = (record.presentationToken ?? 0) + 1;
+    for (const root of record.presentationRoots ?? []) {
+      root.parent?.remove(root);
+      disposeObject3D(root);
+    }
+    record.presentationRoots = [];
+  }
+
+  loadPresentationInto(record, anchor, relPath, targetHeight, token) {
+    instantiatePresentationModel(relPath, targetHeight)
+      .then((instance) => {
+        if (this.disposed || record.presentationToken !== token || !anchor.parent) {
+          disposeObject3D(instance);
+          return;
+        }
+        anchor.add(instance);
+      })
+      .catch(() => {});
+  }
+
+  beginAttackPresentation(record, presentation) {
+    if (!record?.root || !presentation?.delivery) return;
+    const models = COMBAT_PRESENTATION_MODELS[presentation.delivery];
+    if (!models) return;
+    this.clearAttackPresentation(record);
+    const token = record.presentationToken;
+    const height = record.targetHeight ?? TARGET_HEIGHT.enemy;
+
+    const weaponAnchor = new THREE.Group();
+    const socket = weaponSocket(record.root);
+    socket.add(weaponAnchor);
+    if (socket === record.root) weaponAnchor.position.set(0, height * 0.55, height * 0.12);
+    record.presentationRoots.push(weaponAnchor);
+    this.loadPresentationInto(record, weaponAnchor, models.weapon, height * 0.42, token);
+
+    models.effects.forEach((relPath, index) => {
+      const targetRoot = presentation.target?.root;
+      const isBolt = presentation.delivery === "ranged" && index === 1 && targetRoot;
+      const effectAnchor = new THREE.Group();
+      if (isBolt) {
+        record.root.updateWorldMatrix(true, false);
+        targetRoot.updateWorldMatrix(true, false);
+        const source = record.root.getWorldPosition(new THREE.Vector3());
+        const target = targetRoot.getWorldPosition(new THREE.Vector3());
+        effectAnchor.position.set(
+          (source.x + target.x) * 0.5,
+          Math.max(source.y, target.y) + height * 0.55,
+          (source.z + target.z) * 0.5,
+        );
+        effectAnchor.lookAt(target.x, target.y + height * 0.45, target.z);
+        this.vfxGroup.add(effectAnchor);
+      } else {
+        effectAnchor.position.set(0, height * 0.55, height * (presentation.delivery === "melee" ? 0.48 : 0.28));
+        record.root.add(effectAnchor);
+      }
+      record.presentationRoots.push(effectAnchor);
+      this.loadPresentationInto(record, effectAnchor, relPath, height * 0.55, token);
+    });
+  }
+
+  finishOneShot(record) {
+    if (!record?.oneShotAction) return;
+    const finishedKey = record.oneShotActionKey;
+    record.oneShotAction = null;
+    record.oneShotActionKey = null;
+    this.clearAttackPresentation(record);
+    if (finishedKey === "die" || record.dead) {
+      record.queuedAction = null;
+      if (record.hideAfterDeath && record.root) record.root.visible = false;
+      return;
+    }
+    const queued = record.queuedAction;
+    record.queuedAction = null;
+    if (queued && this.triggerAction(record, queued.key, undefined, queued.presentation)) return;
+    this.recoverLocomotion(record);
+  }
+
+  // One-shots are mixer-finished, not timer-finished. Repeated requests for
+  // the active clip are ignored; incompatible one-shots queue, while death
+  // hard-cuts immediately and permanently suppresses recovery.
+  triggerAction(record, key, nowMs, presentation = null) {
+    void nowMs;
+    if (!record || LOCOMOTION_ACTION_KEYS.includes(key)) return false;
+    if (key === "die") {
+      record.dead = true;
+      record.queuedAction = null;
+    } else if (record.dead) {
+      return false;
+    }
     const action = record.actions?.[key];
-    if (!action) return;
-    const played = this.crossfadeToAction(record, key, 0.08);
-    if (!played) return;
-    const clip = action.getClip();
-    record.oneShotUntilMs = nowMs + (Number.isFinite(clip?.duration) ? clip.duration * 1000 : 600);
+    if (!record.mixer || !action) {
+      if (record.loading && (key === "die" || !record.queuedAction || record.queuedAction.key === "show")) {
+        record.queuedAction = { key, presentation };
+      }
+      return false;
+    }
+    if (record.oneShotAction) {
+      if (record.oneShotAction === action || record.oneShotActionKey === key) return false;
+      if (key !== "die") {
+        record.queuedAction = { key, presentation };
+        return false;
+      }
+      record.oneShotAction.stop();
+      record.oneShotAction = null;
+      record.oneShotActionKey = null;
+      this.clearAttackPresentation(record);
+    }
+    let played;
+    if (key === "die") {
+      const previous = record.activeActionKey ? record.actions[record.activeActionKey] : null;
+      if (previous && previous !== action) previous.stop();
+      action.enabled = true;
+      action.setEffectiveWeight(1);
+      action.reset().play();
+      record.activeActionKey = key;
+      played = true;
+    } else {
+      played = this.crossfadeToAction(record, key, 0.08);
+    }
+    if (!played) return false;
+    record.oneShotAction = action;
+    record.oneShotActionKey = key;
+    if (presentation) this.beginAttackPresentation(record, presentation);
+    return true;
+  }
+
+  syncActorState(record, entity) {
+    if (!record || !entity) return;
+    record.entityKind = entity.kind ?? record.entityKind;
+    record.role = entity.role ?? record.role;
+    record.moveState = entity.move ?? null;
+    const status = entity.status;
+    const dead = status === "DOWNED" || status === "DEAD" || status === "DEFEATED"
+      || (Number.isFinite(entity.hp) && entity.hp <= 0)
+      || (Number.isFinite(entity.integrity) && entity.integrity <= 0);
+    if (!dead || record.dead) return;
+    record.hideAfterDeath = record.kind === "companion";
+    const started = this.triggerAction(record, "die");
+    if (!started && !record.loading && record.hideAfterDeath && record.root) {
+      record.root.visible = false;
+    }
   }
 
   // Writes the actor's rendered position and derives its heading. `record`
@@ -1195,11 +1438,74 @@ export class RealtimeBattle {
     const record = this.actors.get(id);
     if (!record) return;
     this.actors.delete(id);
+    this.clearAttackPresentation(record);
     if (record.mixer) record.mixer.stopAllAction();
     if (record.root) {
       this.actorGroup.remove(record.root);
       disposeObject3D(record.root);
     }
+  }
+
+  syncPressureIndicator(snapshot, gate) {
+    // Older/headless harnesses may assemble only the original scene groups.
+    if (!this.pressureGroup || !this.pressureLane || !this.pressureArrow || !this.pressureTargetRing) return;
+
+    const hostiles = list(snapshot, "enemies", "hostiles");
+    if (!gate || hostiles.length === 0) {
+      this.pressureGroup.visible = false;
+      return;
+    }
+
+    worldPointInto(this.pressureGatePoint, gate);
+    let closestDistanceSq = Infinity;
+    let foundHostile = false;
+    for (const hostile of hostiles) {
+      if (!hostile || hostile.active === false || hostile.status === "DEAD" || hostile.status === "DEFEATED") continue;
+      if (Number.isFinite(hostile.hp) && hostile.hp <= 0) continue;
+      worldPointInto(this.pressureCandidatePoint, hostile);
+      const dx = this.pressureGatePoint.x - this.pressureCandidatePoint.x;
+      const dz = this.pressureGatePoint.z - this.pressureCandidatePoint.z;
+      const distanceSq = dx * dx + dz * dz;
+      if (distanceSq >= closestDistanceSq) continue;
+      closestDistanceSq = distanceSq;
+      this.pressureEnemyPoint.copy(this.pressureCandidatePoint);
+      foundHostile = true;
+    }
+    if (!foundHostile) {
+      this.pressureGroup.visible = false;
+      return;
+    }
+    this.pressureTargetRing.position.set(this.pressureGatePoint.x, 1.02, this.pressureGatePoint.z);
+    this.pressureTargetRing.visible = true;
+    this.pressureGroup.visible = true;
+    if (closestDistanceSq < 1e-6) {
+      this.pressureLane.visible = false;
+      this.pressureArrow.visible = false;
+      return;
+    }
+
+    const distance = Math.sqrt(closestDistanceSq);
+    const dx = this.pressureGatePoint.x - this.pressureEnemyPoint.x;
+    const dz = this.pressureGatePoint.z - this.pressureEnemyPoint.z;
+    const invDistance = 1 / distance;
+    const heading = Math.atan2(dx, dz);
+    const gateClearance = Math.min(1.18, distance * 0.3);
+    const laneLength = Math.max(0.12, distance - gateClearance);
+    const endX = this.pressureGatePoint.x - dx * invDistance * gateClearance;
+    const endZ = this.pressureGatePoint.z - dz * invDistance * gateClearance;
+
+    this.pressureLane.visible = true;
+    this.pressureArrow.visible = true;
+    this.pressureLane.position.set(
+      (this.pressureEnemyPoint.x + endX) * 0.5,
+      0.055,
+      (this.pressureEnemyPoint.z + endZ) * 0.5,
+    );
+    this.pressureLane.rotation.y = heading;
+    this.pressureLane.scale.set(1, 1, laneLength);
+
+    this.pressureArrow.position.set(endX, 0.16, endZ);
+    this.pressureArrow.rotation.y = heading;
   }
 
   reconcileActors(snapshot) {
@@ -1209,6 +1515,7 @@ export class RealtimeBattle {
     if (commander?.id) {
       seen.add(commander.id);
       const record = this.ensureActor(commander, "commander");
+      this.syncActorState(record, commander);
       this.syncActorPosition(record, commander);
     }
 
@@ -1217,6 +1524,7 @@ export class RealtimeBattle {
       seen.add(enemy.id);
       const kind = enemy.class === "boss" ? "boss" : "enemy";
       const record = this.ensureActor(enemy, kind);
+      this.syncActorState(record, enemy);
       this.syncActorPosition(record, enemy);
     }
 
@@ -1224,32 +1532,8 @@ export class RealtimeBattle {
       if (!companion?.id) continue;
       seen.add(companion.id);
       const record = this.ensureActor(companion, "companion");
+      this.syncActorState(record, companion);
       this.syncActorPosition(record, companion);
-      const isDowned = companion.status === "DOWNED";
-      if (record.root) {
-        if (isDowned && record.prevStatus !== "DOWNED") {
-          // Just went down this frame: play the die clip once before
-          // hiding, instead of vanishing instantly -- triggerAction() is a
-          // no-op if this actor has no "die" clip, so unrigged companions
-          // fall through to the immediate-hide branch below exactly as
-          // before this session's change.
-          const hasDie = Boolean(record.actions?.die);
-          if (hasDie) {
-            this.triggerAction(record, "die", performance.now());
-            record.root.visible = true;
-            record.dieHideAtMs = record.oneShotUntilMs;
-          } else {
-            record.root.visible = false;
-          }
-        } else if (isDowned) {
-          // Already down (not this frame): stay in whatever the die-timer
-          // decided -- updateAnimations() flips visible=false once the die
-          // clip's duration elapses, never re-shown while still DOWNED.
-        } else {
-          record.root.visible = true;
-        }
-      }
-      record.prevStatus = companion.status;
     }
 
     for (const pickup of list(snapshot, "pickups", "drops")) {
@@ -1289,11 +1573,14 @@ export class RealtimeBattle {
     }
 
     const gate = snapshot?.gate ?? snapshot?.base;
-    if (gate && this.gateMesh) {
-      this.gateMesh.visible = true;
-      const p = worldPoint(gate);
-      this.gateMesh.position.set(p.x, 1, p.z);
+    if (this.gateMesh) {
+      this.gateMesh.visible = Boolean(gate);
+      if (gate) {
+        const p = worldPoint(gate);
+        this.gateMesh.position.set(p.x, 1, p.z);
+      }
     }
+    this.syncPressureIndicator(snapshot, gate);
   }
 
   // Called by app.js's onPointerMove with already-sign-adjusted, already-
@@ -1476,6 +1763,15 @@ export class RealtimeBattle {
     }
     return true;
   }
+  rememberAnimationEvent(key) {
+    if (this.animationEventKeys.has(key)) return false;
+    this.animationEventKeys.add(key);
+    if (this.animationEventKeys.size > MAX_VISUAL_EVENT_KEYS) {
+      this.animationEventKeys.delete(this.animationEventKeys.values().next().value);
+    }
+    return true;
+  }
+
 
   spawnVfx(snapshot, event, tick) {
     const relPath = VFX_MODELS[event?.type];
@@ -1579,54 +1875,112 @@ export class RealtimeBattle {
     record.root.rotation.y = record.yaw;
   }
 
-  // Steps every live actor's AnimationMixer by real elapsed time and returns
-  // one-shot combat beats (attack/hit/die/...) to locomotion (idle/move)
-  // once their clip finishes -- called once per renderSnapshot() after
-  // positions/state are reconciled for this frame, deliberately NOT tied to
-  // the 60Hz sim tick (see lastAnimMs field comment).
+  // Steps mixers by presentation wall-clock time. A LoopOnce action marks
+  // itself paused when its clamped final frame is reached; that boundary
+  // owns one-shot recovery while this loop keeps locomotion synchronized.
   updateAnimations(nowMs) {
     const delta = Math.min((nowMs - (this.lastAnimMs ?? nowMs)) / 1000, 0.1);
     this.lastAnimMs = nowMs;
     for (const record of this.actors.values()) {
       if (record.mixer) record.mixer.update(delta);
+      if (record.oneShotAction?.paused) this.finishOneShot(record);
       this.updateActorFollow(record, delta);
       this.updateActorFacing(record, delta);
-      if (record.oneShotUntilMs && nowMs >= record.oneShotUntilMs) {
-        record.oneShotUntilMs = 0;
-        this.crossfadeToAction(record, record.moving ? "move" : "idle", 0.15);
-      } else if (!record.oneShotUntilMs && record.mixer) {
-        // No one-shot in flight: keep locomotion honest every frame (a
-        // companion/enemy that starts moving mid-idle, or stops mid-walk,
-        // switches immediately rather than waiting for the next combat
-        // beat to resync it).
-        this.crossfadeToAction(record, record.moving ? "move" : "idle", 0.15);
-      }
-      if (record.dieHideAtMs && nowMs >= record.dieHideAtMs) {
-        record.dieHideAtMs = 0;
-        if (record.root) record.root.visible = false;
-      }
+      if (!record.oneShotAction && !record.dead) this.recoverLocomotion(record);
     }
     for (const echo of this.vfxInstances) {
       if (echo.mixer) echo.mixer.update(delta);
     }
   }
 
+  combatTarget(entityId) {
+    const actor = this.actors.get(entityId);
+    if (actor) return actor;
+    return entityId === "gate" && this.gateMesh ? { root: this.gateMesh } : null;
+  }
 
-  // Consumes WEAPON_FIRED (commander/companion ranged auto-attack) and
-  // ENEMY_ATTACK (enemy/boss attacking commander, a companion, or "gate")
-  // events to trigger the attack/hit clips on whichever live actors they
-  // name -- verified event field shapes, see ATTACKER_EVENT_ACTION/
-  // TARGET_HIT_EVENT doc comment above. A miss (id not in this.actors, e.g.
-  // "gate" which has no actor mesh) is a silent no-op by design.
+  combatDelivery(attacker, target) {
+    const identity = attacker?.role ?? attacker?.entityKind;
+    if (RANGED_COMBAT_IDENTITIES.includes(identity)) return "ranged";
+    if (MELEE_COMBAT_IDENTITIES.includes(identity)) return "melee";
+    if (!attacker?.root || !target?.root) return null;
+    const dx = attacker.root.position.x - target.root.position.x;
+    const dz = attacker.root.position.z - target.root.position.z;
+    return Math.hypot(dx, dz) > MELEE_PRESENTATION_DISTANCE ? "ranged" : "melee";
+  }
+
+  triggerAttackDelivery(attacker, target, nowMs, charged = false) {
+    if (!attacker) return false;
+    const delivery = this.combatDelivery(attacker, target);
+    const dedicatedKey = delivery === "melee"
+      ? "attack_melee"
+      : (delivery === "ranged" || charged ? "attack_ranged" : null);
+    if (attacker.kind === "commander" && !dedicatedKey) return false;
+    const key = dedicatedKey && (attacker.kind === "commander" || attacker.actions?.[dedicatedKey])
+      ? dedicatedKey
+      : (charged || delivery === "ranged" ? "critical" : "attack");
+    const presentation = delivery ? { delivery, target } : null;
+    return this.triggerAction(attacker, key, nowMs, presentation);
+  }
+
+  // Every transition is sourced from a public snapshot event field. A
+  // separate bounded event-key set makes repeated renders of one sim tick
+  // idempotent without mutating the frozen snapshot or restarting clips.
   triggerCombatActions(event, nowMs) {
-    const attackerId = ATTACKER_EVENT_ACTION[event?.type];
-    if (attackerId) {
-      const attacker = this.actors.get(event[attackerId]);
-      if (attacker) this.triggerAction(attacker, "attack", nowMs);
-    }
-    if (event?.type === TARGET_HIT_EVENT) {
-      const target = this.actors.get(event.targetId);
-      if (target) this.triggerAction(target, "hit", nowMs);
+    if (!event?.type || !this.rememberAnimationEvent(feedbackKey(event))) return;
+    const actor = (id) => this.actors.get(id);
+    const target = (id) => this.combatTarget(id);
+    switch (event.type) {
+      case "STAGE_STARTED":
+        this.triggerAction(actor("commander"), "show", nowMs);
+        break;
+      case "ENEMY_SPAWNED":
+      case "BOSS_SPAWNED":
+        this.triggerAction(actor(event.entityId), "show", nowMs);
+        break;
+      case "ECHO_WARDEN_AWAKENING_TRIGGERED":
+        this.triggerAction(actor(event.entityId), "show", nowMs);
+        break;
+      case "WEAPON_FIRED":
+        this.triggerAttackDelivery(actor(event.entityId), target(event.targetId), nowMs, event.critical === true);
+        if (event.critical === true) this.triggerAction(actor(event.targetId), "bighit", nowMs);
+        break;
+      case "SKILL_CAST":
+        this.triggerAttackDelivery(actor("commander"), null, nowMs, true);
+        break;
+      case "SKILL_RESOLVED_DAMAGE":
+        this.triggerAttackDelivery(actor(event.sourceId), target(event.targetId), nowMs, event.critical === true);
+        this.triggerAction(actor(event.targetId), event.critical === true ? "bighit" : "hit", nowMs);
+        break;
+      case "CRITICAL_HIT":
+        this.triggerAttackDelivery(actor(event.entityId), target(event.targetId), nowMs, true);
+        this.triggerAction(actor(event.targetId), "bighit", nowMs);
+        break;
+      case "ENEMY_ATTACK":
+        this.triggerAttackDelivery(actor(event.entityId), target(event.targetId), nowMs);
+        if (event.damage > 0) this.triggerAction(actor(event.targetId), "hit", nowMs);
+        break;
+      case "PROJECTILE_IMPACT":
+        if (event.guardedBy) this.triggerAction(actor(event.guardedBy), "defence", nowMs);
+        this.triggerAction(actor(event.targetId), event.hit === false ? "avoid" : "hit", nowMs);
+        break;
+      case "COMMANDER_DAMAGED":
+        this.triggerAction(actor("commander"), "hit", nowMs);
+        break;
+      case "COMPANION_DAMAGED":
+        this.triggerAction(actor(event.entityId), "hit", nowMs);
+        break;
+      case "BOSS_ATTACK_CANCELLED":
+        this.triggerAction(actor(event.targetId), "avoid", nowMs);
+        break;
+      case "WARDENS_WARD_TRIGGERED":
+        this.triggerAction(actor(event.entityId), "defence", nowMs);
+        break;
+      case "COMPANION_DOWNED":
+        this.triggerAction(actor(event.entityId), "die", nowMs);
+        break;
+      default:
+        break;
     }
   }
 
@@ -1688,6 +2042,7 @@ export class RealtimeBattle {
       }
     }
     for (const record of this.actors.values()) {
+      this.clearAttackPresentation(record);
       record.mixer?.stopAllAction();
       if (record.root) disposeObject3D(record.root);
     }
@@ -1700,6 +2055,11 @@ export class RealtimeBattle {
     this.pendingDeathEchoes = [];
     if (this.gateMesh) disposeObject3D(this.gateMesh);
     this.gateMesh = null;
+    if (this.pressureGroup) disposeObject3D(this.pressureGroup);
+    this.pressureGroup = null;
+    this.pressureLane = null;
+    this.pressureArrow = null;
+    this.pressureTargetRing = null;
     this.environmentTexture?.dispose();
     this.environmentTexture = null;
 
@@ -1732,6 +2092,7 @@ export class RealtimeBattle {
     this.viewport = null;
     this.pendingInputFeedback = null;
     this.visualEventKeys.clear();
+    this.animationEventKeys.clear();
     this.loadedStageId = null;
     this.loadingStageId = null;
     this.lastAnimMs = null;

@@ -94,14 +94,16 @@ const COMPANION_ROLE_BY_MEMBER = freeze(Object.fromEntries(
 ));
 export function roleForCompanion(companionId) { return COMPANION_ROLE_BY_MEMBER[companionId] || null; }
 
-/** Formation (UNIFIED-GDD.md §4.2): max_slots is owned by campaign-state.js MAX_LOADOUT_SIZE (3, unchanged).
- * Legacy off-battle per-companion toggle — still backs campaign-state.js's companionFormation map and
- * app.js's loadout-screen FRONT/BACK button (UI-only, does not drive in-run positioning). The in-run
- * positioning/targeting layer is now FORMATION_STANCES/STANCE_CONFIG below (core-loop-redesign-20260725.md
- * §2: "campaign-state.js's companionFormation schema can be kept for internal derived-value storage" —
- * the two systems are intentionally parallel, not merged, this cycle). */
+/** Formation intent (UNIFIED-GDD.md §4.2): max slots are owned by campaign-state.js
+ * MAX_LOADOUT_SIZE (3). The saved per-companion FRONT/BACK map chooses deterministic position
+ * rank at run creation; the active stance separately owns how many of those ranks are live FRONT. */
 export const MAX_FRONT_SLOTS = 2;
 export const FORMATION_SLOTS = freeze(["FRONT", "BACK"]);
+export function orderCompanionsByFormationIntent(companionIds, formation = {}) {
+  const intent = formation && typeof formation === "object" && !Array.isArray(formation) ? formation : {};
+  const rank = (companionId) => intent[companionId] === "FRONT" ? 0 : intent[companionId] === "BACK" ? 2 : 1;
+  return [...companionIds].sort((left, right) => rank(left) - rank(right) || left.localeCompare(right));
+}
 /** BACK companion damage bonus when >=1 FRONT companion is alive (fire-time stance multiplier, additive bp per UNIFIED-GDD.md §4.2). Unchanged by the 3-stance formation redesign (core-loop-redesign-20260725.md §2: "후열 시너지... 변경 없음... 스탠스는 이 계산에 영향 없음, '몇 명이 FRONT인가'만 바꿈"). */
 export const BACK_ROW_SYNERGY_DAMAGE_BONUS = 0.25;
 /** Boss Rally Window: cooldown reduction applied to all living companions' fire cooldown when a boss spawns with >=1 FRONT filled. The signed Stage 2d value is zero, so the rally event remains observable without a bankable cooldown-reduction benefit. */

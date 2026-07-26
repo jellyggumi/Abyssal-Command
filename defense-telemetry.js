@@ -104,6 +104,14 @@ export class DefenseTelemetry {
     });
   }
 
+  recordFormationCommit({ formationStance = null, savedIntent = {}, resolvedCompanionRows = [] } = {}) {
+    return this.append("FORMATION_COMMITTED", {
+      formationStance,
+      savedIntent,
+      resolvedCompanionRows,
+    });
+  }
+
   recordSnapshot(snapshot) {
     if (!snapshot || !Number.isFinite(snapshot.tick)) return null;
     const next = {

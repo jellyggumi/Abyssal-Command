@@ -11,7 +11,7 @@ import {
 import {
   BACK_ROW_SYNERGY_DAMAGE_BONUS, BOSS_RALLY_COOLDOWN_REDUCTION, COMPANION_ROLES,
   deriveWardenRuntimeStats, deriveCompanionRuntimeStats, companionFormationIntegrity,
-  FORMATION_STANCES, STANCE_CONFIG,
+  FORMATION_STANCES, orderCompanionsByFormationIntent, STANCE_CONFIG,
 } from "./rpg-catalog.js";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -221,13 +221,12 @@ function playerSideTarget(run, enemy) {
   if (distanceSquared(enemy, nearestFront) <= distanceSquared(enemy, run.commander)) return nearestFront;
   return run.commander;
 }
-/** Resolves a loadout into its deterministic companionId order (companionId asc, capped at 3 —
- * campaign-state.js MAX_LOADOUT_SIZE) — this order IS the stance position-rank index that
- * stanceSlotForIndex()/tick()'s position-sync read every tick. FRONT/BACK is no longer decided here
- * (legacy per-companion `formation` map input removed from this function — see createDefenseRun's
- * `formation` param doc for why it's still accepted at the public API boundary). */
-function resolveFormation(companionLoadout) {
-  return validLoadout(companionLoadout);
+/** Resolves a loadout into deterministic stance position-rank order, capped at 3.
+ * Saved FRONT intent ranks first, unassigned companions retain the deterministic companionId
+ * fallback, and saved BACK intent ranks last. The active stance still owns the live FRONT/BACK
+ * count through stanceSlotForIndex(); this map only chooses which companion occupies each rank. */
+function resolveFormation(companionLoadout, formation = {}) {
+  return orderCompanionsByFormationIntent(validLoadout(companionLoadout), formation);
 }
 
 /**
@@ -1693,9 +1692,9 @@ function tick(run) {
 }
 
 /** Creates a new run. `seed` is coerced to an unsigned xorshift32 state (zero becomes one).
- * `formation` (legacy per-companion FRONT/BACK map, e.g. campaign-state.js's `companionFormation`) is
- * accepted for call-site backward compatibility only — FRONT/BACK is now derived from stance
- * position-rank (STANCE_CONFIG, run.formationStance) each tick, not this map. See resolveFormation(). */
+ * `formation` is the saved per-companion FRONT/BACK intent map. It deterministically chooses
+ * companion position rank at run creation; the active stance still derives the live slot count
+ * from STANCE_CONFIG every tick. See resolveFormation(). */
 export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {} } = {}) {
   const stage = stageFor(stageId);
   const stagePlan = stagePlanFor(stage);
@@ -1877,7 +1876,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
       state.commander.cooldownScale = clamp(state.commander.cooldownScale - runtime.cooldownReduction, 0.4, 1);
       state.commander.critProfile.chanceBp = clamp(state.commander.critProfile.chanceBp + runtime.critChanceBonusBp, 0, 10000);
     }
-    resolveFormation(companionLoadout).forEach((id) => addCompanion(state, id, { equipment: companionEquipment[id] || {} }));
+    resolveFormation(companionLoadout, formation).forEach((id) => addCompanion(state, id, { equipment: companionEquipment[id] || {} }));
     applyOwnedRewards(state, rewardIds);
     if (rpgActive) {
       let incomingMultiplier = state.commander.incomingDamageMultiplier;

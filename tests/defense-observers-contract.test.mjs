@@ -174,6 +174,46 @@ test("telemetry exports the versioned offline schema and preserves objective, po
   assert.deepEqual(JSON.parse(telemetry.exportJson()), exported);
 });
 
+test("telemetry records one cloned formation commitment with deterministic position ranks", () => {
+  const telemetry = new DefenseTelemetry({ maxRecords: 8, now: () => 7 });
+  telemetry.startRun({ stageId: "cinder-span", seed: 17, rulesVersion: "contract-v3" });
+  const savedIntent = {
+    "rift-lens": "FRONT",
+    "veil-vanguard": "FRONT",
+  };
+  const resolvedCompanionRows = [
+    { positionRank: 1, companionId: "rift-lens", slot: "FRONT" },
+    { positionRank: 2, companionId: "veil-vanguard", slot: "FRONT" },
+    { positionRank: 3, companionId: "ember-cohort", slot: "BACK" },
+  ];
+
+  telemetry.recordFormationCommit({
+    formationStance: "VANGUARD",
+    savedIntent,
+    resolvedCompanionRows,
+  });
+  savedIntent["rift-lens"] = "BACK";
+  savedIntent["ember-cohort"] = "FRONT";
+  resolvedCompanionRows.reverse();
+  resolvedCompanionRows[0].slot = "FRONT";
+
+  const formationRecords = telemetry.exportObject().records
+    .filter(({ type }) => type === "FORMATION_COMMITTED");
+  assert.equal(formationRecords.length, 1);
+  assert.deepEqual(formationRecords[0].payload, {
+    formationStance: "VANGUARD",
+    savedIntent: {
+      "rift-lens": "FRONT",
+      "veil-vanguard": "FRONT",
+    },
+    resolvedCompanionRows: [
+      { positionRank: 1, companionId: "rift-lens", slot: "FRONT" },
+      { positionRank: 2, companionId: "veil-vanguard", slot: "FRONT" },
+      { positionRank: 3, companionId: "ember-cohort", slot: "BACK" },
+    ],
+  });
+});
+
 test("telemetry records policy and spawn data emitted by the live simulation", () => {
   const telemetry = new DefenseTelemetry({ maxRecords: 128, now: () => 5 });
   telemetry.startRun({ stageId: "cinder-span", seed: 17, rulesVersion: "contract-v3" });
