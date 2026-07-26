@@ -1241,7 +1241,12 @@ export class BattleSession {
     overlay.append(dismiss);
     this.surface.append(overlay);
     this.surface.dataset.defenseCutscene = cutscene.eventType;
-    this.cutsceneTimer = setTimeout(() => this.dismissCutscene(), 8000);
+    // Arm the existing 8s auto-dismiss only after this synchronous startup
+    // turn yields. A slow WebGL mount must not consume the visible window
+    // before the battle surface can be observed or interacted with.
+    this.cutsceneTimer = setTimeout(() => {
+      this.cutsceneTimer = setTimeout(() => this.dismissCutscene(), 8000);
+    }, 0);
   }
 
   consumeCutscenes(events) {
