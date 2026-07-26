@@ -12,6 +12,25 @@ import { REWARDS, STAGE_PRESENTATION_BY_ID, STAGES } from "./defense-catalog.js"
 
 const MAX_VISUAL_EFFECTS = 24;
 const MAX_VISUAL_EVENT_KEYS = 128;
+// Software rasterizers (SwiftShader/llvmpipe) make fragment cost dominate the
+// frame. Bound their drawn backbuffer while preserving the logical CSS viewport;
+// real GPUs remain full resolution.
+const SOFTWARE_MAX_BACKBUFFER_PX = 180000;
+
+function detectSoftwareWebGL() {
+  try {
+    const probe = typeof document !== "undefined" ? document.createElement("canvas") : null;
+    const gl = probe?.getContext?.("webgl2", { failIfMajorPerformanceCaveat: false });
+    if (!gl) return false;
+    const ext = gl.getExtension("WEBGL_debug_renderer_info");
+    const name = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || "") : "";
+    gl.getExtension("WEBGL_lose_context")?.loseContext?.();
+    return /swiftshader|llvmpipe|software|basic render|microsoft basic/i.test(name);
+  } catch {
+    return false;
+  }
+}
+
 
 // Actor-space is normalized to [-1, 1] by app.js's projected() (both axes
 // independently, since ARENA is 24000x12000 and each axis divides by its
@@ -835,6 +854,7 @@ export class RealtimeBattle {
     // frame relative to the live camera orbit (stage-composition-
     // 20260725.md §1.2, D22 판정 9). ambientLight/keyLight are kept as
     // instance fields so applyStagePalette() can retint them per stage.
+    this.softwareRenderer = false;
     this.ambientLight = null;
     this.keyLight = null;
     this.rimLight = null;
@@ -866,9 +886,23 @@ export class RealtimeBattle {
       return this;
     }
 
-    const webgl2 = this.canvas.getContext?.("webgl2", { alpha: false, antialias: true, failIfMajorPerformanceCaveat: false });
-    if (!webgl2) throw new Error("WebGL2 context unavailable");
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, context: webgl2, antialias: true, alpha: false });
+    // The context attributes are immutable after creation, so detect the
+    // software renderer before opening the real session context.
+    this.softwareRenderer = detectSoftwareWebGL();
+    const webgl2 = this.canvas.getContext?.("webgl2", {
+      alpha: false,
+      antialias: !this.softwareRenderer,
+      failIfMajorPerformanceCaveat: false,
+    });
+    if (!(typeof WebGL2RenderingContext !== "undefined" && webgl2 instanceof WebGL2RenderingContext)) {
+      throw new Error("WebGL2 context unavailable");
+    }
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
+      context: webgl2,
+      antialias: !this.softwareRenderer,
+      alpha: false,
+    });
     this.renderer.setClearColor(COLORS.backgroundBottom, 1);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -1658,8 +1692,20 @@ export class RealtimeBattle {
   renderSnapshot(snapshot = {}, frame = {}) {
     if (this.disposed || !this.renderer || !this.camera || !this.scene) return;
     const { width, height } = bounds(this.canvas, this.viewport ?? frame?.viewport);
-    if (this.canvas.width !== Math.round(width) || this.canvas.height !== Math.round(height)) {
-      this.renderer.setSize(width, height, false);
+    const bufferScale = this.softwareRenderer
+      ? Math.min(1, Math.sqrt(SOFTWARE_MAX_BACKBUFFER_PX / (width * height)))
+      : 1;
+    const bufferWidth = Math.max(1, Math.round(width * bufferScale));
+    const bufferHeight = Math.max(1, Math.round(height * bufferScale));
+    const currentSize = this.renderer.getSize(new THREE.Vector2());
+    if (
+      currentSize.x !== bufferWidth ||
+      currentSize.y !== bufferHeight ||
+      this.canvas.width !== bufferWidth ||
+      this.canvas.height !== bufferHeight
+    ) {
+      this.renderer.setSize(bufferWidth, bufferHeight, false);
+      if (this.canvas.dataset) this.canvas.dataset.renderScale = String(bufferScale);
     }
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
@@ -1728,6 +1774,7 @@ export class RealtimeBattle {
 
     this.renderer?.dispose();
     this.renderer = null;
+    this.softwareRenderer = false;
     this.canvas = null;
     this.viewport = null;
     this.pendingInputFeedback = null;
