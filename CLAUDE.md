@@ -4,17 +4,17 @@ This file is the repository-scoped instruction set for Claude sessions working i
 
 ## Shared-document source of truth
 
-- Treat tracked `_workspace/` documents as the checked-in, shared production-document surface for Abyssal Surge / Abyssal-Command. The Git ignore rules are authoritative: ignored `_workspace/` descendants are local/generated and are not shared source of truth.
+- Treat tracked `_workspace/` documents as the checked-in, shared production-document surface for Abyssal Surge / Abyssal-Command, and retain only the latest accepted dated run folder. The current retained run is `_workspace/20260726-stage2-balance-agency/`; when a newer run is accepted, update this path and remove superseded run folders under the explicit retention policy.
 - Before changing gameplay, assets, renderer behavior, production policy, or gate status, read the relevant run folder's `production/task-manifest.md` and the latest applicable `intake/`, `design/`, `engineering/`, `qa/`, `ops/`, `pm/`, `messages/`, and `retrospectives/` artifacts.
 - Prefer the newest authoritative run manifest and its gate review over older summaries. If runs disagree, preserve both records and state the conflict; do not silently merge claims.
 - Use exact repository-relative paths when citing evidence. A claim is not established by a file existing; cite the measurement, command, or test result that supports it.
 
 ## Run artifacts and writing rules
 
-- Keep each new production pass in a dated `_workspace/<run-id>/` folder with a `production/task-manifest.md`; place inputs and evidence in the owning lane (`intake/`, `design/`, `engineering/`, `qa/`, `ops/`, `pm/`, `messages/`, or `retrospectives/`).
+- Keep the retained production pass in a dated `_workspace/<run-id>/` folder with a `production/task-manifest.md`; place inputs and evidence in the owning lane (`intake/`, `design/`, `engineering/`, `qa/`, `ops/`, `pm/`, `messages/`, or `retrospectives/`).
 - Mark statements as `[OBSERVED]`, `[INFERENCE]`, or `[TARGET]` when their status could be confused. Never present a target, proposal, or inherited baseline as a new measurement.
 - Preserve append-only decision logs. Use a single writer per log, or acquire an agreed single-writer lock before allocation. Reread the tail immediately before writing, use a stale-content-protected edit, verify the new ID is unique repository-wide after writing and before commit, and abort on collision; never silently renumber.
-- Do not delete, rename, or rewrite existing `_workspace/` evidence to make a gate or summary look cleaner. If an artifact contains a secret, credential, personal data, restricted asset, or other sensitive value, stop propagation: do not quote or copy it, quarantine/redact the value, rotate or revoke credentials, and preserve only a dated redacted audit/tombstone note. A human owner must approve any separate history-remediation procedure; this rule never authorizes an agent to rewrite history or retain the sensitive payload.
+- Do not delete, rename, or rewrite files inside the retained run to make a gate or summary look cleaner. Superseded run folders may be removed only as part of the explicit latest-run retention policy. If an artifact contains a secret, credential, personal data, restricted asset, or other sensitive value, stop propagation: do not quote or copy it, quarantine/redact the value, rotate or revoke credentials, and preserve only a dated redacted audit/tombstone note. A human owner must approve any separate history-remediation procedure; this rule never authorizes an agent to rewrite history or retain the sensitive payload.
 - `_workspace/*/pipeline/`, `_workspace/*/models-out/`, ignored production keyframes, and ignored previs source/output descendants are generated/local material and are not shared source-of-truth documents. Do not promote them without an explicit provenance/rights/runtime receipt. Do not commit secrets or machine-local runtime state such as `.env.game-audio`, `.omc/`, or `.studio-loop/`.
 
 ## Concurrent-session Git safety
