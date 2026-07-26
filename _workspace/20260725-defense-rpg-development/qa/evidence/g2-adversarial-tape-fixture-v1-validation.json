@@ -1,0 +1,82 @@
+{
+  "receipt_id": "g2-adversarial-tape-fixture-v1-validation",
+  "fixture": "qa/g2-adversarial-tape-fixture-v1.json",
+  "validation_method": "Python standard library json.load with closed-set, identity, authority, evidence-schema, timeout, comparator, and no-pass assertions",
+  "json_parses": true,
+  "tuple_matrix": {
+    "expected_total": 150,
+    "observed_total": 150,
+    "unique_identity_count": 150,
+    "unique_tuple_identities": true,
+    "closed_matrix_exact": true,
+    "per_archetype": {
+      "rusher": 30,
+      "turtle": 30,
+      "economy-greed": 30,
+      "micro-optimizer": 30,
+      "casual": 30
+    },
+    "closed_archetype_set": [
+      "rusher",
+      "turtle",
+      "economy-greed",
+      "micro-optimizer",
+      "casual"
+    ],
+    "closed_stage_set": [
+      "cinder-span",
+      "veil-citadel",
+      "echo-throne",
+      "sunken-bastion",
+      "howling-sprawl",
+      "glass-necropolis",
+      "starless-canal",
+      "shattered-causeway",
+      "abyss-chancel",
+      "gate-zenith"
+    ],
+    "closed_seed_set": [
+      301,
+      302,
+      303
+    ]
+  },
+  "requested_policy_names": [
+    "rusher",
+    "turtle",
+    "economy-greed",
+    "micro-optimizer",
+    "casual"
+  ],
+  "authority_and_control_checks": {
+    "authorization_status": "authorized_narrow_measurement_and_ui_fix_only",
+    "scope": "input_only",
+    "measurement_only": true,
+    "duplicate_replay": "byte_stable",
+    "public_api_only": true,
+    "engineering_timeout_steps": 20000,
+    "engineering_timeout_tuple_status": "INVALID_TIMEOUT"
+  },
+  "comparator": {
+    "combo_ev_max_over_median": null,
+    "status": "UNBOUND_COMPARATOR"
+  },
+  "gate_verdict": "NOT_PASSED",
+  "checks": {
+    "json_parses": true,
+    "explicit_tuple_list": true,
+    "tuple_count_exact": true,
+    "unique_tuple_identities": true,
+    "closed_matrix_exact": true,
+    "per_archetype_exact": true,
+    "closed_archetype_set_exact": true,
+    "closed_stage_set_exact": true,
+    "closed_seed_set_exact": true,
+    "policy_names_exact": true,
+    "public_input_only": true,
+    "engineering_ceiling_exact": true,
+    "required_evidence_schema_present": true,
+    "comparator_unbound": true,
+    "gate_not_passed": true
+  }
+}

@@ -1,0 +1,560 @@
+{
+  "gate-sovereign (cohort A)": {
+    "idle": {
+      "name": "gate-sovereign::idle::v01",
+      "duration": 5,
+      "tracks": 72,
+      "animatedBones": 24,
+      "totalKeys": 144,
+      "keysPerTrackMin": 2,
+      "keysPerTrackMax": 2,
+      "keysPerBonePerSec": 1.2,
+      "constantTracks": 72,
+      "varyingTracks": 0,
+      "maxValueSpread": 1.2824470905040457e-17,
+      "varyingTrackList": []
+    },
+    "move": {
+      "name": "gate-sovereign::move::v01",
+      "duration": 3,
+      "tracks": 72,
+      "animatedBones": 24,
+      "totalKeys": 634,
+      "keysPerTrackMin": 2,
+      "keysPerTrackMax": 72,
+      "keysPerBonePerSec": 8.805555555555555,
+      "constantTracks": 65,
+      "varyingTracks": 7,
+      "maxValueSpread": 1.9999996423721313,
+      "varyingTrackList": [
+        {
+          "track": "DEF-thighL.quaternion",
+          "keys": 72,
+          "spread": 1.9999996423721313
+        },
+        {
+          "track": "DEF-thighR.quaternion",
+          "keys": 72,
+          "spread": 1.9999996423721313
+        },
+        {
+          "track": "DEF-upper_armL.quaternion",
+          "keys": 72,
+          "spread": 0.17091357707977295
+        },
+        {
+          "track": "DEF-upper_armR.quaternion",
+          "keys": 72,
+          "spread": 0.1663818061351776
+        },
+        {
+          "track": "DEF-spine002.quaternion",
+          "keys": 72,
+          "spread": 0.09065888077020645
+        },
+        {
+          "track": "DEF-forearmL.quaternion",
+          "keys": 72,
+          "spread": 0.07550308993086574
+        },
+        {
+          "track": "DEF-forearmR.quaternion",
+          "keys": 72,
+          "spread": 0.07550306245685334
+        }
+      ]
+    },
+    "clipNames": [
+      "gate-sovereign::attack::v01",
+      "gate-sovereign::avoid::v01",
+      "gate-sovereign::bighit::v01",
+      "gate-sovereign::critical::v01",
+      "gate-sovereign::defence::v01",
+      "gate-sovereign::die::v01",
+      "gate-sovereign::hit::v01",
+      "gate-sovereign::idle::v01",
+      "gate-sovereign::move::v01",
+      "gate-sovereign::run::v01",
+      "gate-sovereign::show::v01"
+    ]
+  },
+  "tide-warden (cohort A)": {
+    "idle": {
+      "name": "tide-warden::idle::v01",
+      "duration": 5,
+      "tracks": 72,
+      "animatedBones": 24,
+      "totalKeys": 144,
+      "keysPerTrackMin": 2,
+      "keysPerTrackMax": 2,
+      "keysPerBonePerSec": 1.2,
+      "constantTracks": 72,
+      "varyingTracks": 0,
+      "maxValueSpread": 2.5587171270657905e-17,
+      "varyingTrackList": []
+    },
+    "move": {
+      "name": "tide-warden::move::v01",
+      "duration": 3,
+      "tracks": 72,
+      "animatedBones": 24,
+      "totalKeys": 634,
+      "keysPerTrackMin": 2,
+      "keysPerTrackMax": 72,
+      "keysPerBonePerSec": 8.805555555555555,
+      "constantTracks": 65,
+      "varyingTracks": 7,
+      "maxValueSpread": 2,
+      "varyingTrackList": [
+        {
+          "track": "DEF-thighR.quaternion",
+          "keys": 72,
+          "spread": 2
+        },
+        {
+          "track": "DEF-thighL.quaternion",
+          "keys": 72,
+          "spread": 1.9999996423721313
+        },
+        {
+          "track": "DEF-upper_armR.quaternion",
+          "keys": 72,
+          "spread": 0.14657136797904968
+        },
+        {
+          "track": "DEF-upper_armL.quaternion",
+          "keys": 72,
+          "spread": 0.13796007633209229
+        },
+        {
+          "track": "DEF-spine002.quaternion",
+          "keys": 72,
+          "spread": 0.09065888077020645
+        },
+        {
+          "track": "DEF-forearmR.quaternion",
+          "keys": 72,
+          "spread": 0.07550306992561673
+        },
+        {
+          "track": "DEF-forearmL.quaternion",
+          "keys": 72,
+          "spread": 0.07550306571647514
+        }
+      ]
+    },
+    "clipNames": [
+      "tide-warden::attack::v01",
+      "tide-warden::avoid::v01",
+      "tide-warden::bighit::v01",
+      "tide-warden::critical::v01",
+      "tide-warden::defence::v01",
+      "tide-warden::die::v01",
+      "tide-warden::hit::v01",
+      "tide-warden::idle::v01",
+      "tide-warden::move::v01",
+      "tide-warden::run::v01",
+      "tide-warden::show::v01"
+    ]
+  },
+  "cinder-warden (cohort B)": {
+    "idle": {
+      "name": "cinder-warden::idle::v01",
+      "duration": 5,
+      "tracks": 72,
+      "animatedBones": 24,
+      "totalKeys": 1324,
+      "keysPerTrackMin": 2,
+      "keysPerTrackMax": 120,
+      "keysPerBonePerSec": 11.033333333333333,
+      "constantTracks": 62,
+      "varyingTracks": 10,
+      "maxValueSpread": 0.003509432077407837,
+      "varyingTrackList": [
+        {
+          "track": "DEF-shoulderR.quaternion",
+          "keys": 120,
+          "spread": 0.003509432077407837
+        },
+        {
+          "track": "DEF-shoulderL.quaternion",
+          "keys": 120,
+          "spread": 0.0035094022750854492
+        },
+        {
+          "track": "DEF-handR.quaternion",
+          "keys": 120,
+          "spread": 0.00281821750098743
+        },
+        {
+          "track": "DEF-handL.quaternion",
+          "keys": 120,
+          "spread": 0.0028179993386743263
+        },
+        {
+          "track": "DEF-spine003.quaternion",
+          "keys": 120,
+          "spread": 0.002559811342507601
+        },
+        {
+          "track": "DEF-spine004.quaternion",
+          "keys": 120,
+          "spread": 0.00255981134249339
+        },
+        {
+          "track": "DEF-shoulderL.position",
+          "keys": 120,
+          "spread": 0.001325454935296122
+        },
+        {
+          "track": "DEF-shoulderR.position",
+          "keys": 120,
+          "spread": 0.0013254543532124075
+        },
+        {
+          "track": "DEF-upper_armR.position",
+          "keys": 120,
+          "spread": 0.001198556856650157
+        },
+        {
+          "track": "DEF-upper_armL.position",
+          "keys": 120,
+          "spread": 0.001114107869767622
+        }
+      ]
+    },
+    "move": {
+      "name": "cinder-warden::move::v01",
+      "duration": 3,
+      "tracks": 72,
+      "animatedBones": 24,
+      "totalKeys": 1614,
+      "keysPerTrackMin": 2,
+      "keysPerTrackMax": 72,
+      "keysPerBonePerSec": 22.416666666666668,
+      "constantTracks": 51,
+      "varyingTracks": 21,
+      "maxValueSpread": 2,
+      "varyingTrackList": [
+        {
+          "track": "DEF-thighL.quaternion",
+          "keys": 72,
+          "spread": 2
+        },
+        {
+          "track": "DEF-thighR.quaternion",
+          "keys": 72,
+          "spread": 1.9999996423721313
+        },
+        {
+          "track": "DEF-upper_armL.quaternion",
+          "keys": 72,
+          "spread": 0.2066970318555832
+        },
+        {
+          "track": "DEF-upper_armR.quaternion",
+          "keys": 72,
+          "spread": 0.206583634018898
+        },
+        {
+          "track": "DEF-spine002.quaternion",
+          "keys": 72,
+          "spread": 0.09065888077020645
+        },
+        {
+          "track": "DEF-forearmR.quaternion",
+          "keys": 72,
+          "spread": 0.07550312858074903
+        },
+        {
+          "track": "DEF-forearmL.quaternion",
+          "keys": 72,
+          "spread": 0.07550306990742683
+        },
+        {
+          "track": "DEF-shoulderR.quaternion",
+          "keys": 72,
+          "spread": 0.012017548084259033
+        },
+        {
+          "track": "DEF-shoulderL.quaternion",
+          "keys": 72,
+          "spread": 0.012017518281936646
+        },
+        {
+          "track": "DEF-handR.quaternion",
+          "keys": 72,
+          "spread": 0.009629738517048736
+        },
+        {
+          "track": "DEF-handL.quaternion",
+          "keys": 72,
+          "spread": 0.009629555046501537
+        },
+        {
+          "track": "DEF-spine004.quaternion",
+          "keys": 72,
+          "spread": 0.008726656436905955
+        },
+        {
+          "track": "DEF-spine003.quaternion",
+          "keys": 72,
+          "spread": 0.00872653629630804
+        },
+        {
+          "track": "DEF-shoulderR.position",
+          "keys": 72,
+          "spread": 0.004499893542236677
+        },
+        {
+          "track": "DEF-shoulderL.position",
+          "keys": 72,
+          "spread": 0.004499879106743876
+        },
+        {
+          "track": "DEF-upper_armR.position",
+          "keys": 72,
+          "spread": 0.0040912950648248625
+        },
+        {
+          "track": "DEF-upper_armL.position",
+          "keys": 72,
+          "spread": 0.003805679936164097
+        },
+        {
+          "track": "DEF-handL.scale",
+          "keys": 72,
+          "spread": 0.00029736757278442383
+        },
+        {
+          "track": "DEF-handR.scale",
+          "keys": 72,
+          "spread": 0.0002969503402709961
+        },
+        {
+          "track": "DEF-upper_armR.scale",
+          "keys": 72,
+          "spread": 0.00026977062225341797
+        },
+        {
+          "track": "DEF-upper_armL.scale",
+          "keys": 72,
+          "spread": 0.0002697110176086426
+        }
+      ]
+    },
+    "clipNames": [
+      "cinder-warden::attack::v01",
+      "cinder-warden::avoid::v01",
+      "cinder-warden::bighit::v01",
+      "cinder-warden::critical::v01",
+      "cinder-warden::defence::v01",
+      "cinder-warden::die::v01",
+      "cinder-warden::hit::v01",
+      "cinder-warden::idle::v01",
+      "cinder-warden::move::v01",
+      "cinder-warden::run::v01",
+      "cinder-warden::show::v01"
+    ]
+  },
+  "abyss-regent (cohort B)": {
+    "idle": {
+      "name": "abyss-regent::idle::v01",
+      "duration": 5,
+      "tracks": 72,
+      "animatedBones": 24,
+      "totalKeys": 1324,
+      "keysPerTrackMin": 2,
+      "keysPerTrackMax": 120,
+      "keysPerBonePerSec": 11.033333333333333,
+      "constantTracks": 62,
+      "varyingTracks": 10,
+      "maxValueSpread": 0.003509432077407837,
+      "varyingTrackList": [
+        {
+          "track": "DEF-shoulderL.quaternion",
+          "keys": 120,
+          "spread": 0.003509432077407837
+        },
+        {
+          "track": "DEF-shoulderR.quaternion",
+          "keys": 120,
+          "spread": 0.003509432077407837
+        },
+        {
+          "track": "DEF-handR.quaternion",
+          "keys": 120,
+          "spread": 0.0028184489344766916
+        },
+        {
+          "track": "DEF-handL.quaternion",
+          "keys": 120,
+          "spread": 0.0028184482362121344
+        },
+        {
+          "track": "DEF-spine003.quaternion",
+          "keys": 120,
+          "spread": 0.002559870947152376
+        },
+        {
+          "track": "DEF-spine004.quaternion",
+          "keys": 120,
+          "spread": 0.002559870947152376
+        },
+        {
+          "track": "DEF-shoulderL.position",
+          "keys": 120,
+          "spread": 0.001158486148807203
+        },
+        {
+          "track": "DEF-shoulderR.position",
+          "keys": 120,
+          "spread": 0.001158486148807203
+        },
+        {
+          "track": "DEF-upper_armL.position",
+          "keys": 120,
+          "spread": 0.0011010480283459856
+        },
+        {
+          "track": "DEF-upper_armR.position",
+          "keys": 120,
+          "spread": 0.0011009795658232235
+        }
+      ]
+    },
+    "move": {
+      "name": "abyss-regent::move::v01",
+      "duration": 3,
+      "tracks": 72,
+      "animatedBones": 24,
+      "totalKeys": 1614,
+      "keysPerTrackMin": 2,
+      "keysPerTrackMax": 72,
+      "keysPerBonePerSec": 22.416666666666668,
+      "constantTracks": 51,
+      "varyingTracks": 21,
+      "maxValueSpread": 1.9999996423721313,
+      "varyingTrackList": [
+        {
+          "track": "DEF-thighL.quaternion",
+          "keys": 72,
+          "spread": 1.9999996423721313
+        },
+        {
+          "track": "DEF-thighR.quaternion",
+          "keys": 72,
+          "spread": 1.9999996423721313
+        },
+        {
+          "track": "DEF-upper_armL.quaternion",
+          "keys": 72,
+          "spread": 0.17537635564804077
+        },
+        {
+          "track": "DEF-upper_armR.quaternion",
+          "keys": 72,
+          "spread": 0.17537632584571838
+        },
+        {
+          "track": "DEF-spine002.quaternion",
+          "keys": 72,
+          "spread": 0.09065888077020645
+        },
+        {
+          "track": "DEF-forearmR.quaternion",
+          "keys": 72,
+          "spread": 0.07550308550707996
+        },
+        {
+          "track": "DEF-forearmL.quaternion",
+          "keys": 72,
+          "spread": 0.07550308364466218
+        },
+        {
+          "track": "DEF-shoulderL.quaternion",
+          "keys": 72,
+          "spread": 0.012017488479614258
+        },
+        {
+          "track": "DEF-shoulderR.quaternion",
+          "keys": 72,
+          "spread": 0.012017488479614258
+        },
+        {
+          "track": "DEF-handR.quaternion",
+          "keys": 72,
+          "spread": 0.009629927808191496
+        },
+        {
+          "track": "DEF-handL.quaternion",
+          "keys": 72,
+          "spread": 0.00962988450191915
+        },
+        {
+          "track": "DEF-spine003.quaternion",
+          "keys": 72,
+          "spread": 0.00872647762298584
+        },
+        {
+          "track": "DEF-spine004.quaternion",
+          "keys": 72,
+          "spread": 0.008726094849407673
+        },
+        {
+          "track": "DEF-shoulderL.position",
+          "keys": 72,
+          "spread": 0.003933114028069173
+        },
+        {
+          "track": "DEF-shoulderR.position",
+          "keys": 72,
+          "spread": 0.003933114028069173
+        },
+        {
+          "track": "DEF-upper_armL.position",
+          "keys": 72,
+          "spread": 0.003767019434150143
+        },
+        {
+          "track": "DEF-upper_armR.position",
+          "keys": 72,
+          "spread": 0.0037669591206999087
+        },
+        {
+          "track": "DEF-handL.scale",
+          "keys": 72,
+          "spread": 0.00029784440994262695
+        },
+        {
+          "track": "DEF-handR.scale",
+          "keys": 72,
+          "spread": 0.0002976655960083008
+        },
+        {
+          "track": "DEF-upper_armL.scale",
+          "keys": 72,
+          "spread": 0.00027000904083251953
+        },
+        {
+          "track": "DEF-upper_armR.scale",
+          "keys": 72,
+          "spread": 0.00027000904083251953
+        }
+      ]
+    },
+    "clipNames": [
+      "abyss-regent::attack::v01",
+      "abyss-regent::avoid::v01",
+      "abyss-regent::bighit::v01",
+      "abyss-regent::critical::v01",
+      "abyss-regent::defence::v01",
+      "abyss-regent::die::v01",
+      "abyss-regent::hit::v01",
+      "abyss-regent::idle::v01",
+      "abyss-regent::move::v01",
+      "abyss-regent::run::v01",
+      "abyss-regent::show::v01"
+    ]
+  }
+}

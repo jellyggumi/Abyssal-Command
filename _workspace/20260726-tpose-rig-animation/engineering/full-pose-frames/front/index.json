@@ -1,0 +1,170 @@
+[
+  {
+    "glb": "dusk-warden.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/dusk-warden.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.9813
+  },
+  {
+    "glb": "anchor-shard.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/anchor-shard.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.8895
+  },
+  {
+    "glb": "dawnless-crown.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/dawnless-crown.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.9052
+  },
+  {
+    "glb": "ember-cohort.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/ember-cohort.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.8564
+  },
+  {
+    "glb": "lantern-reaver.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/lantern-reaver.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.8901
+  },
+  {
+    "glb": "pack-warden.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/pack-warden.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.8543
+  },
+  {
+    "glb": "requiem-warden.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/requiem-warden.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.8826
+  },
+  {
+    "glb": "rift-lens.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/rift-lens.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.8827
+  },
+  {
+    "glb": "throne-echo.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/throne-echo.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.9117
+  },
+  {
+    "glb": "veil-vanguard.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/veil-vanguard.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.8929
+  },
+  {
+    "glb": "guard.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/guard.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.6043
+  },
+  {
+    "glb": "possessed.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/possessed.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.8991
+  },
+  {
+    "glb": "scout.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/scout.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.0932
+  },
+  {
+    "glb": "shade.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/shade.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.422
+  },
+  {
+    "glb": "abyss-regent.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/abyss-regent.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.8592
+  },
+  {
+    "glb": "bridge-colossus.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/bridge-colossus.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.722
+  },
+  {
+    "glb": "cinder-warden.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/cinder-warden.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.87
+  },
+  {
+    "glb": "gate-sovereign.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/gate-sovereign.png",
+    "meshes": 2,
+    "bones": 24,
+    "height": 2.9082
+  },
+  {
+    "glb": "lantern-tyrant.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/lantern-tyrant.png",
+    "meshes": 2,
+    "bones": 24,
+    "height": 2.8772
+  },
+  {
+    "glb": "pack-herald.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/pack-herald.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 3.16
+  },
+  {
+    "glb": "requiem-choir.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/requiem-choir.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.906
+  },
+  {
+    "glb": "tide-warden.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/tide-warden.png",
+    "meshes": 2,
+    "bones": 24,
+    "height": 2.9445
+  },
+  {
+    "glb": "veil-tactician.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/veil-tactician.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.8818
+  },
+  {
+    "glb": "veiled-concordat.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/engineering/full-pose-frames/front/veiled-concordat.png",
+    "meshes": 2,
+    "bones": 24,
+    "height": 2.8797
+  }
+]

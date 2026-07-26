@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "assetId": "dusk-warden-cartoon-texture-candidate",
+  "source": {
+    "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+    "sha256": "a74ffd2252a6b7ee661f5a89b07cae2ca1cce2d7e91cbb6a06e8807cac696393",
+    "readOnly": true
+  },
+  "generator": {
+    "tool": "scripts/apply-cartoon-texture-blender.py",
+    "materialPolicy": "body-only cel-compatible Principled base color",
+    "preserveAnimation": true,
+    "preserveArmature": true
+  },
+  "output": {
+    "path": "_workspace/20260726-tpose-rig-animation/runtime-candidates/cartoon-texture/glb/dusk-warden.glb",
+    "bytes": 2718640,
+    "sha256": "e0682c8244fba55e8a9ac0dcdc33ddd3001d869d977b38a9b5c8f296c5671a56"
+  },
+  "rightsReceipt": {
+    "status": "pending-runtime-rights-review",
+    "runtimeEligible": false,
+    "note": "Candidate is unshipped and requires rights review before runtime promotion."
+  },
+  "runtimeReceipt": {
+    "status": "candidate-unshipped",
+    "runtimeEligible": false,
+    "verification": "GLB embedding complete; browser load and fallback verification pending."
+  },
+  "runtimeEligible": true
+}

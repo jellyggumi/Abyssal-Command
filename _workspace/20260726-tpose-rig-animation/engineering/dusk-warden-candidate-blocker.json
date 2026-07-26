@@ -1,0 +1,51 @@
+{
+  "assetId": "dusk-warden",
+  "candidatePath": "_workspace/20260726-tpose-rig-animation/runtime-candidates/commander/dusk-warden.glb",
+  "status": "blocked_no_candidate_created",
+  "sourceReadiness": {
+    "source": "scripts/build-world-content-pack.py:build_commander",
+    "referenceImage": "_workspace/20260726-tpose-rig-animation/concept-input/dusk-warden-tpose-reference.png",
+    "referenceUse": "visual direction only; not a mesh or rig source",
+    "bodyGeometry": [
+      "warden-torso cylinder",
+      "warden-head icosphere",
+      "warden-cape cone",
+      "warden-core torus",
+      "crown spikes",
+      "two shoulder cones"
+    ],
+    "missingHumanoidGeometry": ["left arm", "right arm", "hands", "legs", "feet"],
+    "attachmentsDeclaredAsIndependentMeshes": [
+      "warden-lantern-chain",
+      "warden-lantern-body",
+      "warden-lantern-flame",
+      "warden-blade-shaft",
+      "warden-blade-tip"
+    ]
+  },
+  "pipelineBlocker": {
+    "script": "scripts/rig-character-asset-blender.py",
+    "sourceMergeLines": "209-219",
+    "fact": "An unsplit source collects every MESH and joins them into one body mesh.",
+    "consequence": "The procedural lantern, blade, cape, and body would be fused before the T-pose bake; lines 590-617 apply that bake and rebind only the resulting body. Lines 782-796 export only root/rig/body, with no independent attachment path."
+  },
+  "qualityDecision": {
+    "candidateCreated": false,
+    "reason": "Generating this source would be placeholder primitive anatomy and would intentionally destroy independent attachment boundaries, violating the assigned quality bar.",
+    "safeNextPrerequisite": "Provide a real Dusk Warden source mesh with symmetric horizontal arms and separate attachment meshes, then use a staging pipeline that preserves rigid/independently skinned lantern, blade, cape, and pedestal objects."
+  },
+  "deployedAudit": {
+    "source": "_workspace/20260726-tpose-rig-animation/engineering/tpose-rig-audit.json",
+    "restPose": "A-pose",
+    "shoulderToHandAnglesDegrees": {"L": 23.748, "R": 75.997},
+    "skin": {"joints": 24, "weightedVertices": "2137/2137"},
+    "actionLibrary": "11 actual runtime clips/tracks"
+  },
+  "sideEffects": {
+    "deployedAssetsModified": false,
+    "sourceScriptsModified": false,
+    "runtimeMappingsModified": false,
+    "creditsConsumed": false,
+    "authenticationAttempted": false
+  }
+}

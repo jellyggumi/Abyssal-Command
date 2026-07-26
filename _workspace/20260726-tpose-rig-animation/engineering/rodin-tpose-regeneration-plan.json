@@ -1,0 +1,814 @@
+{
+  "schemaVersion": 2,
+  "submitted": false,
+  "haveRodinAddon": true,
+  "assetLane": "concept",
+  "conceptOnly": true,
+  "conceptRoot": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot",
+  "candidateRoot": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates",
+  "candidateLayout": {
+    "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input",
+    "tposeConditions": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions",
+    "runtimeCandidates": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates"
+  },
+  "promptContract": {
+    "sourceMesh": "Generate a character source mesh in a genuine T-pose.",
+    "terrainPolicy": {
+      "assertion": "Generated source mesh must not contain terrain.",
+      "status": "pending-audit"
+    },
+    "weaponPolicy": {
+      "assertion": "Generated source mesh must not contain weapons.",
+      "status": "pending-audit"
+    },
+    "runtimePolicy": "Candidate output is not shipped runtime and must remain staged until separately audited."
+  },
+  "lanePolicy": {
+    "concept": "Source/reference images, prompts, and generated Rodin media.",
+    "runtimeCandidate": "Staged output only; never assets/images/battle/glb."
+  },
+  "assets": [
+    {
+      "assetId": "anchor-shard",
+      "category": "companions",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-anchor-shard.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-anchor-shard.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/anchor-shard-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/companions/anchor-shard.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-anchor-shard.png",
+      "measured": {
+        "height": 1.2069,
+        "shoulderHalf": 0.4993
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/anchor-shard-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "dawnless-crown",
+      "category": "companions",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-dawnless-crown.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-dawnless-crown.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/dawnless-crown-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/companions/dawnless-crown.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-dawnless-crown.png",
+      "measured": {
+        "height": 1.4419,
+        "shoulderHalf": 0.0925
+      },
+      "spanScale": 0.8,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/dawnless-crown-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "ember-cohort",
+      "category": "companions",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-ember-cohort.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-ember-cohort.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/ember-cohort-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/companions/ember-cohort.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-ember-cohort.png",
+      "measured": {
+        "height": 1.5596,
+        "shoulderHalf": 0.2369
+      },
+      "spanScale": 0.949,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/ember-cohort-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "lantern-reaver",
+      "category": "companions",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-lantern-reaver.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-lantern-reaver.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/lantern-reaver-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/companions/lantern-reaver.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-lantern-reaver.png",
+      "measured": {
+        "height": 1.5024,
+        "shoulderHalf": 0.8448
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/lantern-reaver-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "pack-warden",
+      "category": "companions",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-pack-warden.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-pack-warden.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/pack-warden-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/companions/pack-warden.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-pack-warden.png",
+      "measured": {
+        "height": 0.9663,
+        "shoulderHalf": 0.8494
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/pack-warden-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "requiem-warden",
+      "category": "companions",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-requiem-warden.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-requiem-warden.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/requiem-warden-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/companions/requiem-warden.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-requiem-warden.png",
+      "measured": {
+        "height": 1.5922,
+        "shoulderHalf": 0.5327
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/requiem-warden-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "rift-lens",
+      "category": "companions",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-rift-lens.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-rift-lens.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/rift-lens-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/companions/rift-lens.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-rift-lens.png",
+      "measured": {
+        "height": 1.6876,
+        "shoulderHalf": 0.6386
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/rift-lens-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "throne-echo",
+      "category": "companions",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-throne-echo.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-throne-echo.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/throne-echo-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/companions/throne-echo.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-throne-echo.png",
+      "measured": {
+        "height": 1.735,
+        "shoulderHalf": 0.2434
+      },
+      "spanScale": 0.877,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/throne-echo-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "veil-vanguard",
+      "category": "companions",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-veil-vanguard.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-veil-vanguard.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/veil-vanguard-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/companions/veil-vanguard.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-veil-vanguard.png",
+      "measured": {
+        "height": 1.7333,
+        "shoulderHalf": 0.5221
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/veil-vanguard-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "guard",
+      "category": "enemies",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-guard.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-guard.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/guard-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/enemies/guard.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-guard.png",
+      "measured": {
+        "height": 1.1397,
+        "shoulderHalf": 0.6914
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/guard-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "possessed",
+      "category": "enemies",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-possessed.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-possessed.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/possessed-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/enemies/possessed.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-possessed.png",
+      "measured": {
+        "height": 1.6384,
+        "shoulderHalf": 0.3421
+      },
+      "spanScale": 1.305,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/possessed-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "scout",
+      "category": "enemies",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-scout.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-scout.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/scout-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/enemies/scout.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-scout.png",
+      "measured": {
+        "height": 0.8804,
+        "shoulderHalf": 0.1688
+      },
+      "spanScale": 1.198,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/scout-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "shade",
+      "category": "enemies",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-shade.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-shade.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/shade-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/enemies/shade.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-shade.png",
+      "measured": {
+        "height": 1.2107,
+        "shoulderHalf": 0.1077
+      },
+      "spanScale": 0.8,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/shade-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "abyss-regent",
+      "category": "bosses",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s10-abyss-regent.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-s10-abyss-regent.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/abyss-regent-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/bosses/abyss-regent.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s10-abyss-regent.png",
+      "measured": {
+        "height": 1.0482,
+        "shoulderHalf": 0.2803
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/abyss-regent-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "bridge-colossus",
+      "category": "bosses",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s8-bridge-colossus.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-s8-bridge-colossus.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/bridge-colossus-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/bosses/bridge-colossus.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s8-bridge-colossus.png",
+      "measured": {
+        "height": 1.398,
+        "shoulderHalf": 0.5291
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/bridge-colossus-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "cinder-warden",
+      "category": "bosses",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s1-cinder-warden.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-s1-cinder-warden.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/cinder-warden-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/bosses/cinder-warden.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s1-cinder-warden.png",
+      "measured": {
+        "height": 1.1992,
+        "shoulderHalf": 0.2054
+      },
+      "spanScale": 1.071,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/cinder-warden-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "gate-sovereign",
+      "category": "bosses",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s3-gate-sovereign.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-s3-gate-sovereign.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/gate-sovereign-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/bosses/gate-sovereign.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s3-gate-sovereign.png",
+      "measured": {
+        "height": 1.8664,
+        "shoulderHalf": 0.9239
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/gate-sovereign-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "lantern-tyrant",
+      "category": "bosses",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s7-lantern-tyrant.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-s7-lantern-tyrant.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/lantern-tyrant-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/bosses/lantern-tyrant.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s7-lantern-tyrant.png",
+      "measured": {
+        "height": 1.8598,
+        "shoulderHalf": 0.2693
+      },
+      "spanScale": 0.905,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/lantern-tyrant-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "pack-herald",
+      "category": "bosses",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s5-pack-herald.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-s5-pack-herald.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/pack-herald-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/bosses/pack-herald.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s5-pack-herald.png",
+      "measured": {
+        "height": 1.0178,
+        "shoulderHalf": 0.9245
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/pack-herald-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "requiem-choir",
+      "category": "bosses",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s6-requiem-choir.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-s6-requiem-choir.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/requiem-choir-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/bosses/requiem-choir.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s6-requiem-choir.png",
+      "measured": {
+        "height": 1.0587,
+        "shoulderHalf": 0.5427
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/requiem-choir-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "tide-warden",
+      "category": "bosses",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s4-tide-warden.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-s4-tide-warden.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/tide-warden-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/bosses/tide-warden.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s4-tide-warden.png",
+      "measured": {
+        "height": 1.9045,
+        "shoulderHalf": 0.6416
+      },
+      "spanScale": 1.6,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/tide-warden-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "veil-tactician",
+      "category": "bosses",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s2-veil-tactician.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-s2-veil-tactician.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/veil-tactician-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/bosses/veil-tactician.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s2-veil-tactician.png",
+      "measured": {
+        "height": 1.7781,
+        "shoulderHalf": 0.3207
+      },
+      "spanScale": 1.127,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/veil-tactician-tpose-condition.glb",
+      "status": "planned"
+    },
+    {
+      "assetId": "veiled-concordat",
+      "category": "bosses",
+      "assetLane": "concept",
+      "conceptInput": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s9-veiled-concordat.png",
+      "conceptInputStaged": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/concept-input/concept-s9-veiled-concordat.png",
+      "conditionMesh": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/veiled-concordat-tpose-condition.glb",
+      "runtimeOutput": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/runtime-candidates/bosses/veiled-concordat.glb",
+      "runtimeEligible": false,
+      "runtimeProvenance": {
+        "candidateOnly": true,
+        "explicitAcceptance": false,
+        "rights": "pending",
+        "glbEmbedding": "pending",
+        "browserEvidence": "pending",
+        "fallbackEvidence": "pending"
+      },
+      "terrainPolicy": {
+        "assertion": "Generated source mesh must not contain terrain.",
+        "status": "pending-audit"
+      },
+      "weaponPolicy": {
+        "assertion": "Generated source mesh must not contain weapons.",
+        "status": "pending-audit"
+      },
+      "concept": "/Users/jangyoung/orca/Abyssal-Surge/assets/images/battle/pilot/concept-s9-veiled-concordat.png",
+      "measured": {
+        "height": 1.8818,
+        "shoulderHalf": 0.2582
+      },
+      "spanScale": 0.858,
+      "blockout": "/Users/jangyoung/orca/Abyssal-Surge/_workspace/20260726-tpose-rig-animation/tpose-conditions/veiled-concordat-tpose-condition.glb",
+      "status": "planned"
+    }
+  ]
+}

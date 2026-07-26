@@ -1,0 +1,30 @@
+[
+  {
+    "glb": "dusk-warden.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/design/pose-frames/side/dusk-warden.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.9813
+  },
+  {
+    "glb": "veil-vanguard.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/design/pose-frames/side/veil-vanguard.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.8929
+  },
+  {
+    "glb": "guard.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/design/pose-frames/side/guard.png",
+    "meshes": 3,
+    "bones": 24,
+    "height": 2.6043
+  },
+  {
+    "glb": "tide-warden.glb",
+    "png": "_workspace/20260726-tpose-rig-animation/design/pose-frames/side/tide-warden.png",
+    "meshes": 2,
+    "bones": 24,
+    "height": 2.9445
+  }
+]

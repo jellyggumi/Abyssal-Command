@@ -1,0 +1,2293 @@
+{
+  "generatedAt": "2026-07-25T23:40:03.500Z",
+  "runId": "20260725-wellmade-verification",
+  "tickRate": 60,
+  "method": "real createDefenseRun/advanceDefenseRun instrumented per-tick; events deduped by eventSequence; sim unmodified",
+  "stageIds": [
+    "cinder-span",
+    "echo-throne",
+    "howling-sprawl"
+  ],
+  "seeds": [
+    901,
+    902,
+    903
+  ],
+  "cadences": [
+    15
+  ],
+  "macroRewardEventTypes": [
+    "GROWTH_OFFER",
+    "SKILL_SELECTED",
+    "ITEM_COLLECTED",
+    "ELITE_CANDIDATE_AVAILABLE",
+    "EXTRACTION_WINDOW_OPENED",
+    "EXTRACTION_COMPLETED",
+    "ELITE_EXTRACTED",
+    "OCCUPATION_CAPTURED",
+    "OBJECTIVE_COMPLETED",
+    "BOSS_RALLY_WINDOW",
+    "REWARD_SELECTED"
+  ],
+  "summaries": [
+    {
+      "policy": "engaged",
+      "redecideTicks": 15,
+      "redecideHz": 4,
+      "runs": 9,
+      "outcomes": {
+        "VICTORY": 9
+      },
+      "victoryRate": 1,
+      "runSeconds": {
+        "n": 9,
+        "min": 26.9,
+        "p25": 27.7,
+        "median": 40.25,
+        "p75": 54.9,
+        "max": 58.43,
+        "mean": 40.72
+      },
+      "interMacroRewardS": {
+        "n": 111,
+        "min": 0,
+        "p25": 0,
+        "median": 0.02,
+        "p75": 2.53,
+        "max": 13.93,
+        "mean": 1.91
+      },
+      "interGrowthOfferS": {
+        "n": 14,
+        "min": 0.02,
+        "p25": 0.02,
+        "median": 0.02,
+        "p75": 0.02,
+        "max": 0.02,
+        "mean": 0.02
+      },
+      "interWaveS": {
+        "n": 18,
+        "min": 2.98,
+        "p25": 3.15,
+        "median": 3.52,
+        "p75": 4.55,
+        "max": 5.47,
+        "mean": 3.88
+      },
+      "interEncounterS": {
+        "n": 9,
+        "min": 6.02,
+        "p25": 6.2,
+        "median": 7.43,
+        "p75": 8.08,
+        "max": 8.4,
+        "mean": 7.26
+      },
+      "loopCandidates": {
+        "L1_growthOfferCircuit": {
+          "windowCount": 14,
+          "periodS": {
+            "n": 14,
+            "min": 0.02,
+            "p25": 0.02,
+            "median": 0.02,
+            "p75": 0.02,
+            "max": 0.02,
+            "mean": 0.02
+          },
+          "actionsPerLoop": {
+            "n": 14,
+            "min": 0,
+            "p25": 0,
+            "median": 0,
+            "p75": 0,
+            "max": 0,
+            "mean": 0
+          },
+          "distinctActionTypesPerLoop": {
+            "n": 14,
+            "min": 0,
+            "p25": 0,
+            "median": 0,
+            "p75": 0,
+            "max": 0,
+            "mean": 0
+          },
+          "macroRewardsPerLoop": {
+            "n": 14,
+            "min": 1,
+            "p25": 1,
+            "median": 2,
+            "p75": 2,
+            "max": 2,
+            "mean": 1.64
+          }
+        },
+        "L2_waveCircuit": {
+          "windowCount": 18,
+          "periodS": {
+            "n": 18,
+            "min": 2.98,
+            "p25": 3.15,
+            "median": 3.52,
+            "p75": 4.55,
+            "max": 5.47,
+            "mean": 3.88
+          },
+          "actionsPerLoop": {
+            "n": 18,
+            "min": 0,
+            "p25": 0,
+            "median": 5,
+            "p75": 7,
+            "max": 14,
+            "mean": 4.39
+          },
+          "distinctActionTypesPerLoop": {
+            "n": 18,
+            "min": 0,
+            "p25": 0,
+            "median": 2,
+            "p75": 2,
+            "max": 2,
+            "mean": 1.17
+          },
+          "macroRewardsPerLoop": {
+            "n": 18,
+            "min": 0,
+            "p25": 0,
+            "median": 0,
+            "p75": 0,
+            "max": 0,
+            "mean": 0
+          }
+        },
+        "L3_objectivePhaseBeat": {
+          "windowCount": 36,
+          "periodS": {
+            "n": 36,
+            "min": 0.03,
+            "p25": 2.1,
+            "median": 2.55,
+            "p75": 3.68,
+            "max": 13.8,
+            "mean": 3.35
+          },
+          "actionsPerLoop": {
+            "n": 36,
+            "min": 0,
+            "p25": 2,
+            "median": 5,
+            "p75": 7,
+            "max": 46,
+            "mean": 6
+          },
+          "distinctActionTypesPerLoop": {
+            "n": 36,
+            "min": 0,
+            "p25": 1,
+            "median": 2,
+            "p75": 3,
+            "max": 4,
+            "mean": 1.86
+          },
+          "macroRewardsPerLoop": {
+            "n": 36,
+            "min": 2,
+            "p25": 3,
+            "median": 3,
+            "p75": 3,
+            "max": 3,
+            "mean": 2.83
+          }
+        },
+        "L4_wholeStageRun": {
+          "windowCount": 9,
+          "periodS": {
+            "n": 9,
+            "min": 26.9,
+            "p25": 27.7,
+            "median": 40.25,
+            "p75": 54.9,
+            "max": 58.43,
+            "mean": 40.72
+          },
+          "actionsPerLoop": {
+            "n": 9,
+            "min": 32,
+            "p25": 35,
+            "median": 45,
+            "p75": 51,
+            "max": 108,
+            "mean": 54.67
+          },
+          "distinctActionTypesPerLoop": {
+            "n": 9,
+            "min": 3,
+            "p25": 3,
+            "median": 4,
+            "p75": 4,
+            "max": 4,
+            "mean": 3.67
+          },
+          "macroRewardsPerLoop": {
+            "n": 9,
+            "min": 13,
+            "p25": 13,
+            "median": 13,
+            "p75": 14,
+            "max": 14,
+            "mean": 13.33
+          }
+        }
+      },
+      "macroRewardsPerMinute": {
+        "n": 9,
+        "min": 14.02,
+        "p25": 14.38,
+        "median": 20.87,
+        "p75": 28.16,
+        "max": 29,
+        "mean": 21.37
+      },
+      "actionsPerMinute": {
+        "n": 9,
+        "min": 37.75,
+        "p25": 55.52,
+        "median": 72.02,
+        "p75": 103.83,
+        "max": 160.99,
+        "mean": 84.17
+      }
+    }
+  ],
+  "runs": [
+    {
+      "stageId": "cinder-span",
+      "seed": 901,
+      "policy": "engaged",
+      "redecideTicks": 15,
+      "redecideHz": 4,
+      "terminal": "VICTORY",
+      "ticks": 1614,
+      "seconds": 26.9,
+      "finalLevel": 3,
+      "extracted": true,
+      "bossSpawned": true,
+      "counts": {
+        "macroRewards": 13,
+        "microRewards": 155,
+        "actions": 45,
+        "acceptedInputs": 45,
+        "rejectedInputs": 1530,
+        "growthOffers": 2,
+        "stanceSwitches": 3
+      },
+      "macroRewardsByType": {
+        "OBJECTIVE_COMPLETED": 4,
+        "ELITE_CANDIDATE_AVAILABLE": 1,
+        "ITEM_COLLECTED": 1,
+        "GROWTH_OFFER": 2,
+        "EXTRACTION_WINDOW_OPENED": 1,
+        "OCCUPATION_CAPTURED": 1,
+        "EXTRACTION_COMPLETED": 1,
+        "ELITE_EXTRACTED": 1,
+        "BOSS_RALLY_WINDOW": 1
+      },
+      "actionsByType": {
+        "MOVE": 41,
+        "STANCE_CYCLE": 3,
+        "EXTRACT_ELITE": 1
+      },
+      "macroRewardTimeline": [
+        {
+          "atS": 12,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 14.1,
+          "type": "ELITE_CANDIDATE_AVAILABLE"
+        },
+        {
+          "atS": 14.1,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 14.1,
+          "type": "ITEM_COLLECTED"
+        },
+        {
+          "atS": 14.12,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 14.13,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 14.13,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 17.82,
+          "type": "EXTRACTION_WINDOW_OPENED"
+        },
+        {
+          "atS": 17.82,
+          "type": "OCCUPATION_CAPTURED"
+        },
+        {
+          "atS": 20.28,
+          "type": "EXTRACTION_COMPLETED"
+        },
+        {
+          "atS": 20.3,
+          "type": "ELITE_EXTRACTED"
+        },
+        {
+          "atS": 20.3,
+          "type": "BOSS_RALLY_WINDOW"
+        },
+        {
+          "atS": 26.9,
+          "type": "OBJECTIVE_COMPLETED"
+        }
+      ],
+      "interMacroRewardS": [
+        2.1,
+        0,
+        0,
+        0.016666666666666666,
+        0.016666666666666666,
+        0,
+        3.683333333333333,
+        0,
+        2.466666666666667,
+        0.016666666666666666,
+        0,
+        6.6
+      ],
+      "interGrowthOfferS": [
+        0.016666666666666666
+      ],
+      "interWaveS": [
+        2.9833333333333334,
+        3.5
+      ],
+      "phaseChanges": [
+        {
+          "atS": 12,
+          "phase": null
+        },
+        {
+          "atS": 14.1,
+          "phase": null
+        },
+        {
+          "atS": 14.13,
+          "phase": null
+        },
+        {
+          "atS": 17.82,
+          "phase": null
+        },
+        {
+          "atS": 20.3,
+          "phase": null
+        }
+      ],
+      "encounters": [
+        {
+          "tick": 846,
+          "type": "elite"
+        },
+        {
+          "tick": 1218,
+          "type": "boss"
+        }
+      ],
+      "interEncounterS": [
+        6.2
+      ],
+      "loopWindows": [
+        {
+          "fromTick": 847,
+          "toTick": 848,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 2
+        }
+      ],
+      "waveWindows": [
+        {
+          "fromTick": 1,
+          "toTick": 180,
+          "periodS": 2.9833333333333334,
+          "actions": 2,
+          "distinctActionTypes": 2,
+          "macroRewards": 0
+        },
+        {
+          "fromTick": 180,
+          "toTick": 390,
+          "periodS": 3.5,
+          "actions": 10,
+          "distinctActionTypes": 1,
+          "macroRewards": 0
+        }
+      ],
+      "phaseWindows": [
+        {
+          "fromTick": 720,
+          "toTick": 846,
+          "periodS": 2.1,
+          "actions": 9,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 846,
+          "toTick": 848,
+          "periodS": 0.03333333333333333,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 848,
+          "toTick": 1069,
+          "periodS": 3.683333333333333,
+          "actions": 2,
+          "distinctActionTypes": 1,
+          "macroRewards": 2
+        },
+        {
+          "fromTick": 1069,
+          "toTick": 1218,
+          "periodS": 2.4833333333333334,
+          "actions": 4,
+          "distinctActionTypes": 3,
+          "macroRewards": 3
+        }
+      ],
+      "wholeRunWindow": {
+        "fromTick": 0,
+        "toTick": 1614,
+        "periodS": 26.9,
+        "actions": 45,
+        "distinctActionTypes": 3,
+        "macroRewards": 13
+      }
+    },
+    {
+      "stageId": "cinder-span",
+      "seed": 902,
+      "policy": "engaged",
+      "redecideTicks": 15,
+      "redecideHz": 4,
+      "terminal": "VICTORY",
+      "ticks": 1638,
+      "seconds": 27.3,
+      "finalLevel": 3,
+      "extracted": true,
+      "bossSpawned": true,
+      "counts": {
+        "macroRewards": 13,
+        "microRewards": 155,
+        "actions": 32,
+        "acceptedInputs": 32,
+        "rejectedInputs": 1578,
+        "growthOffers": 2,
+        "stanceSwitches": 3
+      },
+      "macroRewardsByType": {
+        "OBJECTIVE_COMPLETED": 4,
+        "ELITE_CANDIDATE_AVAILABLE": 1,
+        "ITEM_COLLECTED": 1,
+        "GROWTH_OFFER": 2,
+        "EXTRACTION_WINDOW_OPENED": 1,
+        "OCCUPATION_CAPTURED": 1,
+        "EXTRACTION_COMPLETED": 1,
+        "ELITE_EXTRACTED": 1,
+        "BOSS_RALLY_WINDOW": 1
+      },
+      "actionsByType": {
+        "MOVE": 28,
+        "STANCE_CYCLE": 3,
+        "EXTRACT_ELITE": 1
+      },
+      "macroRewardTimeline": [
+        {
+          "atS": 12,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 14.1,
+          "type": "ELITE_CANDIDATE_AVAILABLE"
+        },
+        {
+          "atS": 14.1,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 14.1,
+          "type": "ITEM_COLLECTED"
+        },
+        {
+          "atS": 14.12,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 14.13,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 14.13,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 17.7,
+          "type": "EXTRACTION_WINDOW_OPENED"
+        },
+        {
+          "atS": 17.7,
+          "type": "OCCUPATION_CAPTURED"
+        },
+        {
+          "atS": 20.1,
+          "type": "EXTRACTION_COMPLETED"
+        },
+        {
+          "atS": 20.12,
+          "type": "ELITE_EXTRACTED"
+        },
+        {
+          "atS": 20.12,
+          "type": "BOSS_RALLY_WINDOW"
+        },
+        {
+          "atS": 27.3,
+          "type": "OBJECTIVE_COMPLETED"
+        }
+      ],
+      "interMacroRewardS": [
+        2.1,
+        0,
+        0,
+        0.016666666666666666,
+        0.016666666666666666,
+        0,
+        3.566666666666667,
+        0,
+        2.4,
+        0.016666666666666666,
+        0,
+        7.183333333333334
+      ],
+      "interGrowthOfferS": [
+        0.016666666666666666
+      ],
+      "interWaveS": [
+        2.9833333333333334,
+        3.5
+      ],
+      "phaseChanges": [
+        {
+          "atS": 12,
+          "phase": null
+        },
+        {
+          "atS": 14.1,
+          "phase": null
+        },
+        {
+          "atS": 14.13,
+          "phase": null
+        },
+        {
+          "atS": 17.7,
+          "phase": null
+        },
+        {
+          "atS": 20.12,
+          "phase": null
+        }
+      ],
+      "encounters": [
+        {
+          "tick": 846,
+          "type": "elite"
+        },
+        {
+          "tick": 1207,
+          "type": "boss"
+        }
+      ],
+      "interEncounterS": [
+        6.016666666666667
+      ],
+      "loopWindows": [
+        {
+          "fromTick": 847,
+          "toTick": 848,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 2
+        }
+      ],
+      "waveWindows": [
+        {
+          "fromTick": 1,
+          "toTick": 180,
+          "periodS": 2.9833333333333334,
+          "actions": 7,
+          "distinctActionTypes": 2,
+          "macroRewards": 0
+        },
+        {
+          "fromTick": 180,
+          "toTick": 390,
+          "periodS": 3.5,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 0
+        }
+      ],
+      "phaseWindows": [
+        {
+          "fromTick": 720,
+          "toTick": 846,
+          "periodS": 2.1,
+          "actions": 8,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 846,
+          "toTick": 848,
+          "periodS": 0.03333333333333333,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 848,
+          "toTick": 1062,
+          "periodS": 3.566666666666667,
+          "actions": 2,
+          "distinctActionTypes": 1,
+          "macroRewards": 2
+        },
+        {
+          "fromTick": 1062,
+          "toTick": 1207,
+          "periodS": 2.4166666666666665,
+          "actions": 4,
+          "distinctActionTypes": 3,
+          "macroRewards": 3
+        }
+      ],
+      "wholeRunWindow": {
+        "fromTick": 0,
+        "toTick": 1638,
+        "periodS": 27.3,
+        "actions": 32,
+        "distinctActionTypes": 3,
+        "macroRewards": 13
+      }
+    },
+    {
+      "stageId": "cinder-span",
+      "seed": 903,
+      "policy": "engaged",
+      "redecideTicks": 15,
+      "redecideHz": 4,
+      "terminal": "VICTORY",
+      "ticks": 1662,
+      "seconds": 27.7,
+      "finalLevel": 3,
+      "extracted": true,
+      "bossSpawned": true,
+      "counts": {
+        "macroRewards": 13,
+        "microRewards": 166,
+        "actions": 51,
+        "acceptedInputs": 51,
+        "rejectedInputs": 0,
+        "growthOffers": 2,
+        "stanceSwitches": 4
+      },
+      "macroRewardsByType": {
+        "OBJECTIVE_COMPLETED": 4,
+        "ELITE_CANDIDATE_AVAILABLE": 1,
+        "ITEM_COLLECTED": 1,
+        "GROWTH_OFFER": 2,
+        "EXTRACTION_WINDOW_OPENED": 1,
+        "OCCUPATION_CAPTURED": 1,
+        "EXTRACTION_COMPLETED": 1,
+        "ELITE_EXTRACTED": 1,
+        "BOSS_RALLY_WINDOW": 1
+      },
+      "actionsByType": {
+        "MOVE": 39,
+        "STANCE_CYCLE": 4,
+        "SKILL_CAST": 7,
+        "EXTRACT_ELITE": 1
+      },
+      "macroRewardTimeline": [
+        {
+          "atS": 12,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 14.1,
+          "type": "ELITE_CANDIDATE_AVAILABLE"
+        },
+        {
+          "atS": 14.1,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 14.1,
+          "type": "ITEM_COLLECTED"
+        },
+        {
+          "atS": 14.12,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 14.13,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 14.13,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 17.7,
+          "type": "EXTRACTION_WINDOW_OPENED"
+        },
+        {
+          "atS": 17.7,
+          "type": "OCCUPATION_CAPTURED"
+        },
+        {
+          "atS": 20.1,
+          "type": "EXTRACTION_COMPLETED"
+        },
+        {
+          "atS": 20.12,
+          "type": "ELITE_EXTRACTED"
+        },
+        {
+          "atS": 20.12,
+          "type": "BOSS_RALLY_WINDOW"
+        },
+        {
+          "atS": 27.7,
+          "type": "OBJECTIVE_COMPLETED"
+        }
+      ],
+      "interMacroRewardS": [
+        2.1,
+        0,
+        0,
+        0.016666666666666666,
+        0.016666666666666666,
+        0,
+        3.566666666666667,
+        0,
+        2.4,
+        0.016666666666666666,
+        0,
+        7.583333333333333
+      ],
+      "interGrowthOfferS": [
+        0.016666666666666666
+      ],
+      "interWaveS": [
+        2.9833333333333334,
+        3.5
+      ],
+      "phaseChanges": [
+        {
+          "atS": 12,
+          "phase": null
+        },
+        {
+          "atS": 14.1,
+          "phase": null
+        },
+        {
+          "atS": 14.13,
+          "phase": null
+        },
+        {
+          "atS": 17.7,
+          "phase": null
+        },
+        {
+          "atS": 20.12,
+          "phase": null
+        }
+      ],
+      "encounters": [
+        {
+          "tick": 846,
+          "type": "elite"
+        },
+        {
+          "tick": 1207,
+          "type": "boss"
+        }
+      ],
+      "interEncounterS": [
+        6.016666666666667
+      ],
+      "loopWindows": [
+        {
+          "fromTick": 847,
+          "toTick": 848,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 2
+        }
+      ],
+      "waveWindows": [
+        {
+          "fromTick": 1,
+          "toTick": 180,
+          "periodS": 2.9833333333333334,
+          "actions": 2,
+          "distinctActionTypes": 2,
+          "macroRewards": 0
+        },
+        {
+          "fromTick": 180,
+          "toTick": 390,
+          "periodS": 3.5,
+          "actions": 14,
+          "distinctActionTypes": 1,
+          "macroRewards": 0
+        }
+      ],
+      "phaseWindows": [
+        {
+          "fromTick": 720,
+          "toTick": 846,
+          "periodS": 2.1,
+          "actions": 3,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 846,
+          "toTick": 848,
+          "periodS": 0.03333333333333333,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 848,
+          "toTick": 1062,
+          "periodS": 3.566666666666667,
+          "actions": 4,
+          "distinctActionTypes": 2,
+          "macroRewards": 2
+        },
+        {
+          "fromTick": 1062,
+          "toTick": 1207,
+          "periodS": 2.4166666666666665,
+          "actions": 6,
+          "distinctActionTypes": 4,
+          "macroRewards": 3
+        }
+      ],
+      "wholeRunWindow": {
+        "fromTick": 0,
+        "toTick": 1662,
+        "periodS": 27.7,
+        "actions": 51,
+        "distinctActionTypes": 4,
+        "macroRewards": 13
+      }
+    },
+    {
+      "stageId": "echo-throne",
+      "seed": 901,
+      "policy": "engaged",
+      "redecideTicks": 15,
+      "redecideHz": 4,
+      "terminal": "VICTORY",
+      "ticks": 2075,
+      "seconds": 34.58,
+      "finalLevel": 3,
+      "extracted": true,
+      "bossSpawned": true,
+      "counts": {
+        "macroRewards": 13,
+        "microRewards": 233,
+        "actions": 32,
+        "acceptedInputs": 32,
+        "rejectedInputs": 2116,
+        "growthOffers": 2,
+        "stanceSwitches": 3
+      },
+      "macroRewardsByType": {
+        "OBJECTIVE_COMPLETED": 4,
+        "ELITE_CANDIDATE_AVAILABLE": 1,
+        "ITEM_COLLECTED": 1,
+        "GROWTH_OFFER": 2,
+        "EXTRACTION_WINDOW_OPENED": 1,
+        "OCCUPATION_CAPTURED": 1,
+        "EXTRACTION_COMPLETED": 1,
+        "ELITE_EXTRACTED": 1,
+        "BOSS_RALLY_WINDOW": 1
+      },
+      "actionsByType": {
+        "MOVE": 28,
+        "STANCE_CYCLE": 3,
+        "EXTRACT_ELITE": 1
+      },
+      "macroRewardTimeline": [
+        {
+          "atS": 14,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 16.9,
+          "type": "ELITE_CANDIDATE_AVAILABLE"
+        },
+        {
+          "atS": 16.9,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 16.9,
+          "type": "ITEM_COLLECTED"
+        },
+        {
+          "atS": 16.92,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 16.93,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 16.93,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 22.27,
+          "type": "EXTRACTION_WINDOW_OPENED"
+        },
+        {
+          "atS": 22.27,
+          "type": "OCCUPATION_CAPTURED"
+        },
+        {
+          "atS": 24.97,
+          "type": "EXTRACTION_COMPLETED"
+        },
+        {
+          "atS": 24.98,
+          "type": "ELITE_EXTRACTED"
+        },
+        {
+          "atS": 24.98,
+          "type": "BOSS_RALLY_WINDOW"
+        },
+        {
+          "atS": 34.58,
+          "type": "OBJECTIVE_COMPLETED"
+        }
+      ],
+      "interMacroRewardS": [
+        2.9,
+        0,
+        0,
+        0.016666666666666666,
+        0.016666666666666666,
+        0,
+        5.333333333333333,
+        0,
+        2.7,
+        0.016666666666666666,
+        0,
+        9.6
+      ],
+      "interGrowthOfferS": [
+        0.016666666666666666
+      ],
+      "interWaveS": [
+        3.15,
+        4.55
+      ],
+      "phaseChanges": [
+        {
+          "atS": 14,
+          "phase": null
+        },
+        {
+          "atS": 16.9,
+          "phase": null
+        },
+        {
+          "atS": 16.93,
+          "phase": null
+        },
+        {
+          "atS": 22.27,
+          "phase": null
+        },
+        {
+          "atS": 24.98,
+          "phase": null
+        }
+      ],
+      "encounters": [
+        {
+          "tick": 1014,
+          "type": "elite"
+        },
+        {
+          "tick": 1499,
+          "type": "boss"
+        }
+      ],
+      "interEncounterS": [
+        8.083333333333334
+      ],
+      "loopWindows": [
+        {
+          "fromTick": 1015,
+          "toTick": 1016,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 2
+        }
+      ],
+      "waveWindows": [
+        {
+          "fromTick": 8,
+          "toTick": 197,
+          "periodS": 3.15,
+          "actions": 6,
+          "distinctActionTypes": 2,
+          "macroRewards": 0
+        },
+        {
+          "fromTick": 197,
+          "toTick": 470,
+          "periodS": 4.55,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 0
+        }
+      ],
+      "phaseWindows": [
+        {
+          "fromTick": 840,
+          "toTick": 1014,
+          "periodS": 2.9,
+          "actions": 12,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 1014,
+          "toTick": 1016,
+          "periodS": 0.03333333333333333,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 1016,
+          "toTick": 1336,
+          "periodS": 5.333333333333333,
+          "actions": 2,
+          "distinctActionTypes": 1,
+          "macroRewards": 2
+        },
+        {
+          "fromTick": 1336,
+          "toTick": 1499,
+          "periodS": 2.716666666666667,
+          "actions": 5,
+          "distinctActionTypes": 3,
+          "macroRewards": 3
+        }
+      ],
+      "wholeRunWindow": {
+        "fromTick": 0,
+        "toTick": 2075,
+        "periodS": 34.583333333333336,
+        "actions": 32,
+        "distinctActionTypes": 3,
+        "macroRewards": 13
+      }
+    },
+    {
+      "stageId": "echo-throne",
+      "seed": 902,
+      "policy": "engaged",
+      "redecideTicks": 15,
+      "redecideHz": 4,
+      "terminal": "VICTORY",
+      "ticks": 2415,
+      "seconds": 40.25,
+      "finalLevel": 4,
+      "extracted": true,
+      "bossSpawned": true,
+      "counts": {
+        "macroRewards": 14,
+        "microRewards": 277,
+        "actions": 108,
+        "acceptedInputs": 108,
+        "rejectedInputs": 2122,
+        "growthOffers": 3,
+        "stanceSwitches": 5
+      },
+      "macroRewardsByType": {
+        "OBJECTIVE_COMPLETED": 4,
+        "ELITE_CANDIDATE_AVAILABLE": 1,
+        "ITEM_COLLECTED": 1,
+        "GROWTH_OFFER": 3,
+        "EXTRACTION_WINDOW_OPENED": 1,
+        "OCCUPATION_CAPTURED": 1,
+        "EXTRACTION_COMPLETED": 1,
+        "ELITE_EXTRACTED": 1,
+        "BOSS_RALLY_WINDOW": 1
+      },
+      "actionsByType": {
+        "MOVE": 98,
+        "STANCE_CYCLE": 5,
+        "SKILL_CAST": 4,
+        "EXTRACT_ELITE": 1
+      },
+      "macroRewardTimeline": [
+        {
+          "atS": 19.3,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 22.5,
+          "type": "ELITE_CANDIDATE_AVAILABLE"
+        },
+        {
+          "atS": 22.5,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 22.5,
+          "type": "ITEM_COLLECTED"
+        },
+        {
+          "atS": 22.52,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 22.53,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 22.53,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 22.55,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 27.45,
+          "type": "EXTRACTION_WINDOW_OPENED"
+        },
+        {
+          "atS": 27.45,
+          "type": "OCCUPATION_CAPTURED"
+        },
+        {
+          "atS": 29.82,
+          "type": "EXTRACTION_COMPLETED"
+        },
+        {
+          "atS": 29.83,
+          "type": "ELITE_EXTRACTED"
+        },
+        {
+          "atS": 29.83,
+          "type": "BOSS_RALLY_WINDOW"
+        },
+        {
+          "atS": 40.25,
+          "type": "OBJECTIVE_COMPLETED"
+        }
+      ],
+      "interMacroRewardS": [
+        3.2,
+        0,
+        0,
+        0.016666666666666666,
+        0.016666666666666666,
+        0,
+        0.016666666666666666,
+        4.9,
+        0,
+        2.3666666666666667,
+        0.016666666666666666,
+        0,
+        10.416666666666666
+      ],
+      "interGrowthOfferS": [
+        0.016666666666666666,
+        0.016666666666666666
+      ],
+      "interWaveS": [
+        3.45,
+        4.333333333333333
+      ],
+      "phaseChanges": [
+        {
+          "atS": 19.3,
+          "phase": null
+        },
+        {
+          "atS": 22.5,
+          "phase": null
+        },
+        {
+          "atS": 22.53,
+          "phase": null
+        },
+        {
+          "atS": 27.45,
+          "phase": null
+        },
+        {
+          "atS": 29.83,
+          "phase": null
+        }
+      ],
+      "encounters": [
+        {
+          "tick": 1350,
+          "type": "elite"
+        },
+        {
+          "tick": 1790,
+          "type": "boss"
+        }
+      ],
+      "interEncounterS": [
+        7.333333333333333
+      ],
+      "loopWindows": [
+        {
+          "fromTick": 1351,
+          "toTick": 1352,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 2
+        },
+        {
+          "fromTick": 1352,
+          "toTick": 1353,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 1
+        }
+      ],
+      "waveWindows": [
+        {
+          "fromTick": 15,
+          "toTick": 222,
+          "periodS": 3.45,
+          "actions": 5,
+          "distinctActionTypes": 2,
+          "macroRewards": 0
+        },
+        {
+          "fromTick": 222,
+          "toTick": 482,
+          "periodS": 4.333333333333333,
+          "actions": 5,
+          "distinctActionTypes": 1,
+          "macroRewards": 0
+        }
+      ],
+      "phaseWindows": [
+        {
+          "fromTick": 1158,
+          "toTick": 1350,
+          "periodS": 3.2,
+          "actions": 11,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 1350,
+          "toTick": 1352,
+          "periodS": 0.03333333333333333,
+          "actions": 1,
+          "distinctActionTypes": 1,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 1352,
+          "toTick": 1647,
+          "periodS": 4.916666666666667,
+          "actions": 18,
+          "distinctActionTypes": 3,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 1647,
+          "toTick": 1790,
+          "periodS": 2.3833333333333333,
+          "actions": 4,
+          "distinctActionTypes": 3,
+          "macroRewards": 3
+        }
+      ],
+      "wholeRunWindow": {
+        "fromTick": 0,
+        "toTick": 2415,
+        "periodS": 40.25,
+        "actions": 108,
+        "distinctActionTypes": 4,
+        "macroRewards": 14
+      }
+    },
+    {
+      "stageId": "echo-throne",
+      "seed": 903,
+      "policy": "engaged",
+      "redecideTicks": 15,
+      "redecideHz": 4,
+      "terminal": "VICTORY",
+      "ticks": 2449,
+      "seconds": 40.82,
+      "finalLevel": 4,
+      "extracted": true,
+      "bossSpawned": true,
+      "counts": {
+        "macroRewards": 14,
+        "microRewards": 279,
+        "actions": 49,
+        "acceptedInputs": 49,
+        "rejectedInputs": 1047,
+        "growthOffers": 3,
+        "stanceSwitches": 3
+      },
+      "macroRewardsByType": {
+        "OBJECTIVE_COMPLETED": 4,
+        "ELITE_CANDIDATE_AVAILABLE": 1,
+        "ITEM_COLLECTED": 1,
+        "GROWTH_OFFER": 3,
+        "EXTRACTION_WINDOW_OPENED": 1,
+        "OCCUPATION_CAPTURED": 1,
+        "EXTRACTION_COMPLETED": 1,
+        "ELITE_EXTRACTED": 1,
+        "BOSS_RALLY_WINDOW": 1
+      },
+      "actionsByType": {
+        "MOVE": 36,
+        "STANCE_CYCLE": 3,
+        "SKILL_CAST": 9,
+        "EXTRACT_ELITE": 1
+      },
+      "macroRewardTimeline": [
+        {
+          "atS": 20.37,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 23.3,
+          "type": "ELITE_CANDIDATE_AVAILABLE"
+        },
+        {
+          "atS": 23.3,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 23.3,
+          "type": "ITEM_COLLECTED"
+        },
+        {
+          "atS": 23.32,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 23.33,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 23.33,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 23.35,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 28.02,
+          "type": "EXTRACTION_WINDOW_OPENED"
+        },
+        {
+          "atS": 28.02,
+          "type": "OCCUPATION_CAPTURED"
+        },
+        {
+          "atS": 30.72,
+          "type": "EXTRACTION_COMPLETED"
+        },
+        {
+          "atS": 30.73,
+          "type": "ELITE_EXTRACTED"
+        },
+        {
+          "atS": 30.73,
+          "type": "BOSS_RALLY_WINDOW"
+        },
+        {
+          "atS": 40.82,
+          "type": "OBJECTIVE_COMPLETED"
+        }
+      ],
+      "interMacroRewardS": [
+        2.933333333333333,
+        0,
+        0,
+        0.016666666666666666,
+        0.016666666666666666,
+        0,
+        0.016666666666666666,
+        4.666666666666667,
+        0,
+        2.7,
+        0.016666666666666666,
+        0,
+        10.083333333333334
+      ],
+      "interGrowthOfferS": [
+        0.016666666666666666,
+        0.016666666666666666
+      ],
+      "interWaveS": [
+        3.1333333333333333,
+        4.8
+      ],
+      "phaseChanges": [
+        {
+          "atS": 20.37,
+          "phase": null
+        },
+        {
+          "atS": 23.3,
+          "phase": null
+        },
+        {
+          "atS": 23.33,
+          "phase": null
+        },
+        {
+          "atS": 28.02,
+          "phase": null
+        },
+        {
+          "atS": 30.73,
+          "phase": null
+        }
+      ],
+      "encounters": [
+        {
+          "tick": 1398,
+          "type": "elite"
+        },
+        {
+          "tick": 1844,
+          "type": "boss"
+        }
+      ],
+      "interEncounterS": [
+        7.433333333333334
+      ],
+      "loopWindows": [
+        {
+          "fromTick": 1399,
+          "toTick": 1400,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 2
+        },
+        {
+          "fromTick": 1400,
+          "toTick": 1401,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 1
+        }
+      ],
+      "waveWindows": [
+        {
+          "fromTick": 5,
+          "toTick": 193,
+          "periodS": 3.1333333333333333,
+          "actions": 6,
+          "distinctActionTypes": 2,
+          "macroRewards": 0
+        },
+        {
+          "fromTick": 193,
+          "toTick": 481,
+          "periodS": 4.8,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 0
+        }
+      ],
+      "phaseWindows": [
+        {
+          "fromTick": 1222,
+          "toTick": 1398,
+          "periodS": 2.933333333333333,
+          "actions": 13,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 1398,
+          "toTick": 1400,
+          "periodS": 0.03333333333333333,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 1400,
+          "toTick": 1681,
+          "periodS": 4.683333333333334,
+          "actions": 6,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 1681,
+          "toTick": 1844,
+          "periodS": 2.716666666666667,
+          "actions": 6,
+          "distinctActionTypes": 4,
+          "macroRewards": 3
+        }
+      ],
+      "wholeRunWindow": {
+        "fromTick": 0,
+        "toTick": 2449,
+        "periodS": 40.81666666666667,
+        "actions": 49,
+        "distinctActionTypes": 4,
+        "macroRewards": 14
+      }
+    },
+    {
+      "stageId": "howling-sprawl",
+      "seed": 901,
+      "policy": "engaged",
+      "redecideTicks": 15,
+      "redecideHz": 4,
+      "terminal": "VICTORY",
+      "ticks": 3338,
+      "seconds": 55.63,
+      "finalLevel": 4,
+      "extracted": true,
+      "bossSpawned": true,
+      "counts": {
+        "macroRewards": 13,
+        "microRewards": 385,
+        "actions": 35,
+        "acceptedInputs": 35,
+        "rejectedInputs": 2480,
+        "growthOffers": 3,
+        "stanceSwitches": 4
+      },
+      "macroRewardsByType": {
+        "OBJECTIVE_COMPLETED": 4,
+        "ELITE_CANDIDATE_AVAILABLE": 1,
+        "ITEM_COLLECTED": 1,
+        "GROWTH_OFFER": 3,
+        "EXTRACTION_WINDOW_OPENED": 1,
+        "OCCUPATION_CAPTURED": 1,
+        "EXTRACTION_COMPLETED": 1,
+        "ELITE_EXTRACTED": 1
+      },
+      "actionsByType": {
+        "MOVE": 25,
+        "STANCE_CYCLE": 4,
+        "SKILL_CAST": 5,
+        "EXTRACT_ELITE": 1
+      },
+      "macroRewardTimeline": [
+        {
+          "atS": 21.42,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 34.9,
+          "type": "ELITE_CANDIDATE_AVAILABLE"
+        },
+        {
+          "atS": 34.9,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 34.9,
+          "type": "ITEM_COLLECTED"
+        },
+        {
+          "atS": 34.92,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 34.93,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 34.93,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 34.95,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 40.45,
+          "type": "EXTRACTION_WINDOW_OPENED"
+        },
+        {
+          "atS": 40.45,
+          "type": "OCCUPATION_CAPTURED"
+        },
+        {
+          "atS": 42.98,
+          "type": "EXTRACTION_COMPLETED"
+        },
+        {
+          "atS": 43,
+          "type": "ELITE_EXTRACTED"
+        },
+        {
+          "atS": 55.63,
+          "type": "OBJECTIVE_COMPLETED"
+        }
+      ],
+      "interMacroRewardS": [
+        13.483333333333333,
+        0,
+        0,
+        0.016666666666666666,
+        0.016666666666666666,
+        0,
+        0.016666666666666666,
+        5.5,
+        0,
+        2.533333333333333,
+        0.016666666666666666,
+        12.633333333333333
+      ],
+      "interGrowthOfferS": [
+        0.016666666666666666,
+        0.016666666666666666
+      ],
+      "interWaveS": [
+        4.116666666666666,
+        4.883333333333334
+      ],
+      "phaseChanges": [
+        {
+          "atS": 21.42,
+          "phase": null
+        },
+        {
+          "atS": 34.9,
+          "phase": null
+        },
+        {
+          "atS": 34.93,
+          "phase": null
+        },
+        {
+          "atS": 40.45,
+          "phase": null
+        },
+        {
+          "atS": 43,
+          "phase": null
+        }
+      ],
+      "encounters": [
+        {
+          "tick": 2094,
+          "type": "elite"
+        },
+        {
+          "tick": 2580,
+          "type": "boss"
+        }
+      ],
+      "interEncounterS": [
+        8.1
+      ],
+      "loopWindows": [
+        {
+          "fromTick": 2095,
+          "toTick": 2096,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 2
+        },
+        {
+          "fromTick": 2096,
+          "toTick": 2097,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 1
+        }
+      ],
+      "waveWindows": [
+        {
+          "fromTick": 1,
+          "toTick": 248,
+          "periodS": 4.116666666666666,
+          "actions": 7,
+          "distinctActionTypes": 2,
+          "macroRewards": 0
+        },
+        {
+          "fromTick": 248,
+          "toTick": 541,
+          "periodS": 4.883333333333334,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 0
+        }
+      ],
+      "phaseWindows": [
+        {
+          "fromTick": 1285,
+          "toTick": 2094,
+          "periodS": 13.483333333333333,
+          "actions": 2,
+          "distinctActionTypes": 1,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 2094,
+          "toTick": 2096,
+          "periodS": 0.03333333333333333,
+          "actions": 1,
+          "distinctActionTypes": 1,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 2096,
+          "toTick": 2427,
+          "periodS": 5.516666666666667,
+          "actions": 7,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 2427,
+          "toTick": 2580,
+          "periodS": 2.55,
+          "actions": 6,
+          "distinctActionTypes": 3,
+          "macroRewards": 2
+        }
+      ],
+      "wholeRunWindow": {
+        "fromTick": 0,
+        "toTick": 3338,
+        "periodS": 55.63333333333333,
+        "actions": 35,
+        "distinctActionTypes": 4,
+        "macroRewards": 13
+      }
+    },
+    {
+      "stageId": "howling-sprawl",
+      "seed": 902,
+      "policy": "engaged",
+      "redecideTicks": 15,
+      "redecideHz": 4,
+      "terminal": "VICTORY",
+      "ticks": 3294,
+      "seconds": 54.9,
+      "finalLevel": 4,
+      "extracted": true,
+      "bossSpawned": true,
+      "counts": {
+        "macroRewards": 13,
+        "microRewards": 354,
+        "actions": 95,
+        "acceptedInputs": 95,
+        "rejectedInputs": 2488,
+        "growthOffers": 3,
+        "stanceSwitches": 5
+      },
+      "macroRewardsByType": {
+        "OBJECTIVE_COMPLETED": 4,
+        "ELITE_CANDIDATE_AVAILABLE": 1,
+        "ITEM_COLLECTED": 1,
+        "GROWTH_OFFER": 3,
+        "EXTRACTION_WINDOW_OPENED": 1,
+        "OCCUPATION_CAPTURED": 1,
+        "EXTRACTION_COMPLETED": 1,
+        "ELITE_EXTRACTED": 1
+      },
+      "actionsByType": {
+        "MOVE": 84,
+        "STANCE_CYCLE": 5,
+        "SKILL_CAST": 5,
+        "EXTRACT_ELITE": 1
+      },
+      "macroRewardTimeline": [
+        {
+          "atS": 21.6,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 34.1,
+          "type": "ELITE_CANDIDATE_AVAILABLE"
+        },
+        {
+          "atS": 34.1,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 34.1,
+          "type": "ITEM_COLLECTED"
+        },
+        {
+          "atS": 34.12,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 34.13,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 34.13,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 34.15,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 39.45,
+          "type": "EXTRACTION_WINDOW_OPENED"
+        },
+        {
+          "atS": 39.45,
+          "type": "OCCUPATION_CAPTURED"
+        },
+        {
+          "atS": 41.83,
+          "type": "EXTRACTION_COMPLETED"
+        },
+        {
+          "atS": 41.85,
+          "type": "ELITE_EXTRACTED"
+        },
+        {
+          "atS": 54.9,
+          "type": "OBJECTIVE_COMPLETED"
+        }
+      ],
+      "interMacroRewardS": [
+        12.5,
+        0,
+        0,
+        0.016666666666666666,
+        0.016666666666666666,
+        0,
+        0.016666666666666666,
+        5.3,
+        0,
+        2.3833333333333333,
+        0.016666666666666666,
+        13.05
+      ],
+      "interGrowthOfferS": [
+        0.016666666666666666,
+        0.016666666666666666
+      ],
+      "interWaveS": [
+        3.683333333333333,
+        5.316666666666666
+      ],
+      "phaseChanges": [
+        {
+          "atS": 21.6,
+          "phase": null
+        },
+        {
+          "atS": 34.1,
+          "phase": null
+        },
+        {
+          "atS": 34.13,
+          "phase": null
+        },
+        {
+          "atS": 39.45,
+          "phase": null
+        },
+        {
+          "atS": 41.85,
+          "phase": null
+        }
+      ],
+      "encounters": [
+        {
+          "tick": 2046,
+          "type": "elite"
+        },
+        {
+          "tick": 2511,
+          "type": "boss"
+        }
+      ],
+      "interEncounterS": [
+        7.75
+      ],
+      "loopWindows": [
+        {
+          "fromTick": 2047,
+          "toTick": 2048,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 2
+        },
+        {
+          "fromTick": 2048,
+          "toTick": 2049,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 1
+        }
+      ],
+      "waveWindows": [
+        {
+          "fromTick": 6,
+          "toTick": 227,
+          "periodS": 3.683333333333333,
+          "actions": 7,
+          "distinctActionTypes": 2,
+          "macroRewards": 0
+        },
+        {
+          "fromTick": 227,
+          "toTick": 546,
+          "periodS": 5.316666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 0
+        }
+      ],
+      "phaseWindows": [
+        {
+          "fromTick": 1296,
+          "toTick": 2046,
+          "periodS": 12.5,
+          "actions": 46,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 2046,
+          "toTick": 2048,
+          "periodS": 0.03333333333333333,
+          "actions": 1,
+          "distinctActionTypes": 1,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 2048,
+          "toTick": 2367,
+          "periodS": 5.316666666666666,
+          "actions": 5,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 2367,
+          "toTick": 2511,
+          "periodS": 2.4,
+          "actions": 5,
+          "distinctActionTypes": 3,
+          "macroRewards": 2
+        }
+      ],
+      "wholeRunWindow": {
+        "fromTick": 0,
+        "toTick": 3294,
+        "periodS": 54.9,
+        "actions": 95,
+        "distinctActionTypes": 4,
+        "macroRewards": 13
+      }
+    },
+    {
+      "stageId": "howling-sprawl",
+      "seed": 903,
+      "policy": "engaged",
+      "redecideTicks": 15,
+      "redecideHz": 4,
+      "terminal": "VICTORY",
+      "ticks": 3506,
+      "seconds": 58.43,
+      "finalLevel": 4,
+      "extracted": true,
+      "bossSpawned": true,
+      "counts": {
+        "macroRewards": 14,
+        "microRewards": 411,
+        "actions": 45,
+        "acceptedInputs": 45,
+        "rejectedInputs": 1336,
+        "growthOffers": 3,
+        "stanceSwitches": 6
+      },
+      "macroRewardsByType": {
+        "OBJECTIVE_COMPLETED": 4,
+        "ELITE_CANDIDATE_AVAILABLE": 1,
+        "ITEM_COLLECTED": 1,
+        "GROWTH_OFFER": 3,
+        "EXTRACTION_WINDOW_OPENED": 1,
+        "OCCUPATION_CAPTURED": 1,
+        "EXTRACTION_COMPLETED": 1,
+        "ELITE_EXTRACTED": 1,
+        "BOSS_RALLY_WINDOW": 1
+      },
+      "actionsByType": {
+        "MOVE": 27,
+        "STANCE_CYCLE": 6,
+        "SKILL_CAST": 11,
+        "EXTRACT_ELITE": 1
+      },
+      "macroRewardTimeline": [
+        {
+          "atS": 22.3,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 36.1,
+          "type": "ELITE_CANDIDATE_AVAILABLE"
+        },
+        {
+          "atS": 36.1,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 36.1,
+          "type": "ITEM_COLLECTED"
+        },
+        {
+          "atS": 36.12,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 36.13,
+          "type": "OBJECTIVE_COMPLETED"
+        },
+        {
+          "atS": 36.13,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 36.15,
+          "type": "GROWTH_OFFER"
+        },
+        {
+          "atS": 41.95,
+          "type": "EXTRACTION_WINDOW_OPENED"
+        },
+        {
+          "atS": 41.95,
+          "type": "OCCUPATION_CAPTURED"
+        },
+        {
+          "atS": 44.48,
+          "type": "EXTRACTION_COMPLETED"
+        },
+        {
+          "atS": 44.5,
+          "type": "ELITE_EXTRACTED"
+        },
+        {
+          "atS": 44.5,
+          "type": "BOSS_RALLY_WINDOW"
+        },
+        {
+          "atS": 58.43,
+          "type": "OBJECTIVE_COMPLETED"
+        }
+      ],
+      "interMacroRewardS": [
+        13.8,
+        0,
+        0,
+        0.016666666666666666,
+        0.016666666666666666,
+        0,
+        0.016666666666666666,
+        5.8,
+        0,
+        2.533333333333333,
+        0.016666666666666666,
+        0,
+        13.933333333333334
+      ],
+      "interGrowthOfferS": [
+        0.016666666666666666,
+        0.016666666666666666
+      ],
+      "interWaveS": [
+        3.5166666666666666,
+        5.466666666666667
+      ],
+      "phaseChanges": [
+        {
+          "atS": 22.3,
+          "phase": null
+        },
+        {
+          "atS": 36.1,
+          "phase": null
+        },
+        {
+          "atS": 36.13,
+          "phase": null
+        },
+        {
+          "atS": 41.95,
+          "phase": null
+        },
+        {
+          "atS": 44.5,
+          "phase": null
+        }
+      ],
+      "encounters": [
+        {
+          "tick": 2166,
+          "type": "elite"
+        },
+        {
+          "tick": 2670,
+          "type": "boss"
+        }
+      ],
+      "interEncounterS": [
+        8.4
+      ],
+      "loopWindows": [
+        {
+          "fromTick": 2167,
+          "toTick": 2168,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 2
+        },
+        {
+          "fromTick": 2168,
+          "toTick": 2169,
+          "periodS": 0.016666666666666666,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 1
+        }
+      ],
+      "waveWindows": [
+        {
+          "fromTick": 12,
+          "toTick": 223,
+          "periodS": 3.5166666666666666,
+          "actions": 8,
+          "distinctActionTypes": 2,
+          "macroRewards": 0
+        },
+        {
+          "fromTick": 223,
+          "toTick": 551,
+          "periodS": 5.466666666666667,
+          "actions": 0,
+          "distinctActionTypes": 0,
+          "macroRewards": 0
+        }
+      ],
+      "phaseWindows": [
+        {
+          "fromTick": 1338,
+          "toTick": 2166,
+          "periodS": 13.8,
+          "actions": 6,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 2166,
+          "toTick": 2168,
+          "periodS": 0.03333333333333333,
+          "actions": 1,
+          "distinctActionTypes": 1,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 2168,
+          "toTick": 2517,
+          "periodS": 5.816666666666666,
+          "actions": 9,
+          "distinctActionTypes": 2,
+          "macroRewards": 3
+        },
+        {
+          "fromTick": 2517,
+          "toTick": 2670,
+          "periodS": 2.55,
+          "actions": 7,
+          "distinctActionTypes": 4,
+          "macroRewards": 3
+        }
+      ],
+      "wholeRunWindow": {
+        "fromTick": 0,
+        "toTick": 3506,
+        "periodS": 58.43333333333333,
+        "actions": 45,
+        "distinctActionTypes": 4,
+        "macroRewards": 14
+      }
+    }
+  ]
+}
