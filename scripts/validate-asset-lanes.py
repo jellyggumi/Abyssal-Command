@@ -28,7 +28,7 @@ from typing import Any, Iterable
 
 SCRIPT_PATH = Path(__file__).resolve()
 REPO_ROOT = SCRIPT_PATH.parents[1]
-POLICY_PATH = REPO_ROOT / "_workspace/20260726-tpose-rig-animation/engineering/asset-lanes.json"
+DEFAULT_POLICY_PATH = REPO_ROOT / "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/asset-lanes.json"
 IGNORED_NAMES = {".git", ".DS_Store", "__pycache__"}
 
 
@@ -36,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("roots", nargs="*", type=Path, help="scan roots (default: repository root)")
     parser.add_argument("--root", dest="option_roots", action="append", type=Path, help="additional scan root")
+    parser.add_argument("--policy", type=Path, default=DEFAULT_POLICY_PATH, help="asset-lane policy JSON")
     parser.add_argument("--json", action="store_true", dest="as_json", help="emit a JSON report")
     parser.add_argument(
         "--allow-missing-candidates",
@@ -51,8 +52,8 @@ def violation(code: str, path: str, message: str, **extra: Any) -> dict[str, Any
     return result
 
 
-def load_policy() -> dict[str, Any]:
-    with POLICY_PATH.open("r", encoding="utf-8") as handle:
+def load_policy(policy_path: Path) -> dict[str, Any]:
+    with policy_path.open("r", encoding="utf-8") as handle:
         policy = json.load(handle)
     if not isinstance(policy, dict) or not isinstance(policy.get("lanes"), dict):
         raise ValueError("policy must contain a lanes object")
@@ -205,9 +206,16 @@ def validate_candidate_sidecar(
     return errors
 
 
-def validate(policy: dict[str, Any], roots: list[Path], allow_missing_candidates: bool) -> dict[str, Any]:
+def validate(
+    policy: dict[str, Any],
+    policy_path: Path,
+    roots: list[Path],
+    allow_missing_candidates: bool,
+) -> dict[str, Any]:
     report: dict[str, Any] = {
-        "policy": POLICY_PATH.relative_to(REPO_ROOT).as_posix(),
+        "policy": policy_path.relative_to(REPO_ROOT).as_posix()
+        if policy_path.is_relative_to(REPO_ROOT)
+        else policy_path.as_posix(),
         "roots": [root.as_posix() for root in roots],
         "lanes": {"concept": 0, "runtime": 0, "candidate": 0},
         "filesScanned": 0,
@@ -282,16 +290,17 @@ def main() -> int:
     args = parse_args()
     roots_input = list(args.roots) + list(args.option_roots or [])
     roots = [path.expanduser().resolve() for path in roots_input] if roots_input else [REPO_ROOT]
+    policy_path = args.policy.expanduser().resolve()
     try:
-        policy = load_policy()
-        report = validate(policy, roots, args.allow_missing_candidates)
+        policy = load_policy(policy_path)
+        report = validate(policy, policy_path, roots, args.allow_missing_candidates)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         report = {
-            "policy": POLICY_PATH.relative_to(REPO_ROOT).as_posix(),
+            "policy": policy_path.as_posix(),
             "roots": [root.as_posix() for root in roots],
             "lanes": {"concept": 0, "runtime": 0, "candidate": 0},
             "filesScanned": 0,
-            "violations": [violation("policy_invalid", POLICY_PATH.as_posix(), str(exc))],
+            "violations": [violation("policy_invalid", policy_path.as_posix(), str(exc))],
             "violationCount": 1,
             "ok": False,
         }

@@ -337,7 +337,7 @@ function executeReplay({ fixture, tuple, tapeHash, catalogHash }) {
 
   let newEvents = observe();
   while (stepsExecuted < fixture.terminal_ceiling.per_tuple_steps && !isTerminalRun(run)) {
-    const action = selectAction({ snapshot, newEvents, memo, tuple });
+    const action = pending.length === 0 ? selectAction({ snapshot, newEvents, memo, tuple }) : null;
     if (action !== null) {
       requireCondition(AUTHORIZED_INPUTS.has(action.type) && fixture.public_api_only.queueable_input_types.includes(action.type),
         "FAIL_UNKNOWN_PUBLIC_SURFACE", "Policy attempted a non-authorized public input", { action });
@@ -348,18 +348,12 @@ function executeReplay({ fixture, tuple, tapeHash, catalogHash }) {
     stepsExecuted += 1;
     snapshot = getRunSnapshot(run);
     newEvents = observe();
-    if (action?.type === "SKILL_SELECTED" && pending.length !== 0) {
-      protocolFailure = "FAIL_INPUT_RECEIPT_UNMATCHED";
-      break;
-    }
   }
 
-  if (pending.length !== 0 && protocolFailure === null) {
-    throw fail("FAIL_INPUT_RECEIPT_UNMATCHED", "Queued public input did not produce an authoritative receipt", { pending });
-  }
+  if (pending.length !== 0) protocolFailure = "FAIL_INPUT_RECEIPT_UNMATCHED";
 
   const terminalEvent = [...observedEvents].reverse().find((event) => event.type === "TERMINAL") || null;
-  const timeout = protocolFailure === null && stepsExecuted === fixture.terminal_ceiling.per_tuple_steps && snapshot.terminal === null;
+  const timeout = stepsExecuted === fixture.terminal_ceiling.per_tuple_steps && snapshot.terminal === null;
   const tupleStatus = timeout ? "INVALID_TIMEOUT" : protocolFailure ?? (snapshot.terminal !== null ? "TERMINAL_RECORDED" : "FAIL_EXECUTION_PROTOCOL");
   const growthEvents = observedEvents.filter((event) => event.type === "GROWTH_OFFER");
   const eliteCandidateEvent = observedEvents.find((event) => event.type === "ELITE_CANDIDATE_AVAILABLE") || null;

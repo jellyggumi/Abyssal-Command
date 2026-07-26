@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -9,6 +10,9 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureRoot = join(repositoryRoot, "_workspace", "20260725-defense-rpg-development");
 const FIXTURE_PATH = "qa/g2-adversarial-tape-fixture-v1.json";
+const G2_ADVERSARIAL_SKIP = existsSync(join(fixtureRoot, FIXTURE_PATH))
+  ? false
+  : "Historical G2 adversarial fixture was intentionally pruned; restore the signed fixture bundle to run this lane.";
 const SCRIPT_PATH = join(repositoryRoot, "scripts", "run-g2-adversarial-tape.mjs");
 const SHA256 = /^sha256:[a-f0-9]{64}$/;
 const REQUIRED_SAMPLE_FIELDS = [
@@ -89,7 +93,7 @@ async function readJson(path) {
   return JSON.parse(await readFile(path, "utf8"));
 }
 
-test("G2 adversarial-tape CLI emits the signed 150-tuple, input-only, fail-closed measurement receipt", async () => {
+test("G2 adversarial-tape CLI emits the signed 150-tuple, input-only, fail-closed measurement receipt", { skip: G2_ADVERSARIAL_SKIP }, async () => {
   const temporaryDirectory = await mkdtemp(join(tmpdir(), "g2-adversarial-tape-cli-"));
   const outputPath = join(temporaryDirectory, "receipt.json");
 

@@ -92,8 +92,8 @@ test("G2 archetype sweep CLI emits a bounded, checksummed diagnostic package wit
     );
     assert.equal(
       striker17.metrics.basic_attack_metrics.fires,
-      5,
-      "striker/17 must retain basic fires across the window, not only the final tick",
+      6,
+      "striker/17 must retain six basic fires across the window, not only final-tick events",
     );
     assert.equal(striker17.metrics.cooldown_metrics.setCount, 2);
     assert.equal(striker17.metrics.cooldown_metrics.readyCount, 1);

@@ -1,0 +1,65 @@
+{
+  "assetId": "dusk-warden",
+  "assetLane": "candidate",
+  "candidateLane": "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/runtime-candidates",
+  "conceptLane": "concept",
+  "dryRun": true,
+  "materialPolicy": {
+    "bodyOnly": true,
+    "celCompatible": true,
+    "imageToPrincipledBaseColor": true,
+    "lowRoughness": 0.22,
+    "mappingMode": "active-UV-to-Base-Color",
+    "name": "dusk-warden_toon_cartoon",
+    "requiresActiveUv": true
+  },
+  "output": {
+    "candidate": true,
+    "path": "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/texture-candidates/glb/dusk-warden.glb",
+    "wouldWrite": false
+  },
+  "preservation": {
+    "actions": "preserve imported actions/animation clips",
+    "armature": "preserve imported armature",
+    "sourceGlbUnmodified": true
+  },
+  "reportPath": "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/texture-candidates/reports/dusk-warden.json",
+  "runtimeEligible": false,
+  "runtimeLane": "assets/images/battle/glb",
+  "schemaVersion": 1,
+  "source": {
+    "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+    "readOnly": true,
+    "sha256": "a74ffd2252a6b7ee661f5a89b07cae2ca1cce2d7e91cbb6a06e8807cac696393"
+  },
+  "sourceLane": "runtime",
+  "sourceSha256": "a74ffd2252a6b7ee661f5a89b07cae2ca1cce2d7e91cbb6a06e8807cac696393",
+  "terrainPolicy": {
+    "audit": "Terrain/pedestal geometry is not recolored by this concept-texture pass.",
+    "runtimeEligible": false,
+    "status": "untouched"
+  },
+  "texture": {
+    "path": "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/concept-input/dusk-warden-cartoon-albedo-v3.png",
+    "provenance": {
+      "path": "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/concept-input/dusk-warden-cartoon-albedo-v3.provenance.json",
+      "required": true,
+      "runtimeEligible": false,
+      "sha256": "ab84afddd5e61866465b6c059ef1eb62833f0a6bb98408616debf81ffffd6faf"
+    },
+    "readOnly": true,
+    "sha256": "0f269d2f0de0b54c314697bda9ed9a6b629c6d84d61be1a536361b97e0c0668d"
+  },
+  "textureLane": "concept",
+  "textureSha256": "0f269d2f0de0b54c314697bda9ed9a6b629c6d84d61be1a536361b97e0c0668d",
+  "verification": {
+    "browserFallback": "pending",
+    "glbEmbedding": "pending",
+    "rightsReview": "pending"
+  },
+  "weaponPolicy": {
+    "audit": "Weapon geometry/materials are not copied into or promoted by this pass.",
+    "runtimeEligible": false,
+    "status": "untouched"
+  }
+}

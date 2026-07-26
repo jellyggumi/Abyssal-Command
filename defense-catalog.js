@@ -130,10 +130,10 @@ export const GATE = freeze({ maxIntegrity: 1000, radius: 900 });
 export const TARGET_PRIORITY = freeze({ boss: 0, elite: 1, ranged: 2, guardian: 3, flanker: 4, rusher: 5, interactable: 6 });
 export const XP_GROWTH = freeze([30, 55, 85, 120, 160, 205, 255, 310]);
 export const ITEMS = freeze({
-  "ashen-sigil": { id: "ashen-sigil", name: "Ashen Sigil", description: "기본 공격 피해 +180", damageBonus: 180 },
+  "ashen-sigil": { id: "ashen-sigil", name: "Cinder Sigil", description: "기본 공격 피해 +180", damageBonus: 180 },
   "ward-splinter": { id: "ward-splinter", name: "Ward Splinter", description: "관문 최대 내구 +80, 즉시 +80", maxIntegrity: 80, integrity: 80 },
   "echo-compass": { id: "echo-compass", name: "Echo Compass", description: "XP 흡수 반경 +2500", pickupRange: 2500 },
-  "hourglass-fragment": { id: "hourglass-fragment", name: "Hourglass Fragment", description: "스킬 쿨다운 10% 감소", cooldownReduction: 0.1 },
+  "hourglass-fragment": { id: "hourglass-fragment", name: "Ration Sigil Fragment", description: "스킬 쿨다운 10% 감소", cooldownReduction: 0.1 },
   "dawnless-crown-shard": { id: "dawnless-crown-shard", name: "Moonless Command Shard", description: "Moonless Court 명령 파편: 기본 공격 피해 +240, 관문 최대 내구 +120", damageBonus: 240, maxIntegrity: 120, integrity: 120 },
 });
 export const REWARDS = freeze({
@@ -288,11 +288,11 @@ export const SKILLS = freeze({
   "rift-bolt": { id: "rift-bolt", name: "Echo Bolt", role: "active", kind: "active", damage: 1800, cooldown: 390, radius: 0 },
   "soul-lance": { id: "soul-lance", name: "Echo Lance", role: "active", kind: "active", damage: 1200, cooldown: 270, radius: 0 },
   "grave-pulse": { id: "grave-pulse", name: "Echo Pulse", role: "active", kind: "active", damage: 650, cooldown: 240, radius: 3000 },
-  "void-aegis": { id: "void-aegis", name: "Gate Aegis", role: "active", kind: "active", damage: 0, cooldown: 300, radius: 0, integrity: 50 },
+  "void-aegis": { id: "void-aegis", name: "Zenith Aegis", role: "active", kind: "active", damage: 0, cooldown: 300, radius: 0, integrity: 50 },
   "shadow-step": { id: "shadow-step", name: "Dusk Step", role: "active", kind: "active", damage: 900, cooldown: 210, radius: 4500 },
   "eclipse-edge": { id: "eclipse-edge", name: "Dusk Edge", role: "passive", kind: "passive", basicDamage: 180 },
   "soul-magnet": { id: "soul-magnet", name: "Echo Magnet", role: "passive", kind: "passive", pickupRange: 1500 },
-  "ward-binder": { id: "ward-binder", name: "Gate Binder", role: "passive", kind: "passive", maxIntegrity: 120 },
+  "ward-binder": { id: "ward-binder", name: "Zenith Binder", role: "passive", kind: "passive", maxIntegrity: 120 },
 });
 export const BOSSES = freeze({
   "s1-cinder-warden": { id: "s1-cinder-warden", hp: 40000, speed: 1800, damage: 200, attackTicks: 90, xp: 100, radius: 900, policyId: "player-pursuit" },
@@ -320,28 +320,28 @@ export const CINDER_SPAN_WAVE_PLAN = freeze([
   {
     slot: 0,
     tick: 0,
-    primary: freeze({ enemy: "rusher", count: 4 }),
+    primary: freeze({ enemy: "rusher", count: 14 }),
     alternatives: freeze([
-      { id: "opening-rusher-pure", composition: freeze([{ enemy: "rusher", count: 4 }]) },
-      { id: "opening-rusher-flanker", composition: freeze([{ enemy: "rusher", count: 2 }, { enemy: "flanker", count: 2 }]) },
+      { id: "opening-rusher-pure", composition: freeze([{ enemy: "rusher", count: 14 }]) },
+      { id: "opening-rusher-flanker", composition: freeze([{ enemy: "rusher", count: 8 }, { enemy: "flanker", count: 6 }]) },
     ]),
   },
   {
     slot: 1,
-    tick: 180,
-    primary: freeze({ enemy: "flanker", count: 3 }),
+    tick: 120,
+    primary: freeze({ enemy: "flanker", count: 10 }),
     alternatives: freeze([
-      { id: "pressure-flanker-pure", composition: freeze([{ enemy: "flanker", count: 3 }]) },
-      { id: "pressure-flanker-rusher", composition: freeze([{ enemy: "flanker", count: 2 }, { enemy: "rusher", count: 1 }]) },
+      { id: "pressure-flanker-pure", composition: freeze([{ enemy: "flanker", count: 10 }]) },
+      { id: "pressure-flanker-rusher", composition: freeze([{ enemy: "flanker", count: 7 }, { enemy: "rusher", count: 3 }]) },
     ]),
   },
   {
     slot: 2,
-    tick: 390,
-    primary: freeze({ enemy: "ranged", count: 2 }),
+    tick: 240,
+    primary: freeze({ enemy: "ranged", count: 8 }),
     alternatives: freeze([
-      { id: "denial-ranged-pure", composition: freeze([{ enemy: "ranged", count: 2 }]) },
-      { id: "denial-ranged-flanker", composition: freeze([{ enemy: "ranged", count: 1 }, { enemy: "flanker", count: 1 }]) },
+      { id: "denial-ranged-pure", composition: freeze([{ enemy: "ranged", count: 8 }]) },
+      { id: "denial-ranged-flanker", composition: freeze([{ enemy: "ranged", count: 5 }, { enemy: "flanker", count: 3 }]) },
     ]),
   },
 ]);
@@ -511,7 +511,7 @@ const stage = (id, name, bossName, scale, eliteId, eliteKind, eliteCompanion, bo
   wavePattern: Object.freeze(["scout", "pressure", "flank", "ranged", "elite", "boss"]),
 });
 export const STAGES = freeze([
-  stage("cinder-span", "Cinder Span", "Cinder Warden", 100, "s1-ember-hunter", "rusher", "ember-cohort", "s1-cinder-warden", 720, [[0, "rusher", 4], [180, "flanker", 3], [390, "ranged", 2]], CINDER_SPAN_WAVE_PLAN),
+  stage("cinder-span", "Cinder Span", "Cinder Warden", 100, "s1-ember-hunter", "rusher", "ember-cohort", "s1-cinder-warden", 900, [[0, "rusher", 4], [180, "flanker", 3], [390, "ranged", 2]], CINDER_SPAN_WAVE_PLAN),
   stage("veil-citadel", "Veil Citadel", "Veil Tactician", 115, "s2-veil-sentinel", "flanker", "rift-lens", "s2-veil-tactician", 780, [[0, "rusher", 5], [180, "flanker", 4], [420, "ranged", 3]]),
   stage("echo-throne", "Echo Throne", "Gate Sovereign", 130, "s3-throne-wraith", "ranged", "throne-echo", "s3-gate-sovereign", 840, [[0, "flanker", 5], [210, "ranged", 3], [480, "guardian", 2]]),
   stage("sunken-bastion", "Sunken Bastion", "Tide Warden", 145, "s4-anchor-diver", "guardian", "anchor-shard", "s4-tide-warden", 900, [[0, "rusher", 6], [220, "ranged", 4], [510, "guardian", 2]]),

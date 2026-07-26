@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "assetId": "dusk-warden-cartoon-albedo-v3",
+  "source": "god-tibo-imagen",
+  "provider": "private-codex",
+  "model": "gpt-5.4",
+  "inputReference": "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/concept-input/dusk-warden-cartoon-albedo-v2.png",
+  "promptPurpose": "unlabelled cartoon-render albedo texture reference atlas for later UV projection/bake",
+  "output": {
+    "path": "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/concept-input/dusk-warden-cartoon-albedo-v3.png",
+    "format": "PNG",
+    "bytes": 2580684,
+    "sha256": "0f269d2f0de0b54c314697bda9ed9a6b629c6d84d61be1a536361b97e0c0668d"
+  },
+  "promptConstraints": {
+    "textureAtlasStyle": true,
+    "terrain": false,
+    "weapons": false,
+    "heldProps": false,
+    "backgroundScene": false,
+    "textOrLogo": false
+  },
+  "rightsReceipt": "pending-runtime-rights-review",
+  "runtimeReceipt": "not-promoted; concept/reference lane only",
+  "runtimeEligible": false,
+  "notes": [
+    "Visual review found no visible labels, weapons, terrain, or scene background in the revised candidate.",
+    "This remains a reference atlas, not a guaranteed UV-island layout for an arbitrary Rodin mesh.",
+    "Blender must unwrap/project/bake the body material before a candidate GLB can be considered runtime-ready.",
+    "Do not copy this image into assets/images/battle/glb."
+  ]
+}

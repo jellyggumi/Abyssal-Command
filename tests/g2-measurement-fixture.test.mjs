@@ -33,7 +33,12 @@ function queueObjectiveCommands(run) {
 }
 
 function traceM4Decisions(decisions) {
-  let run = createDefenseRun({ stageId: "cinder-span", seed: 71 });
+  let run = createDefenseRun({
+    stageId: "cinder-span",
+    seed: 71,
+    companionLoadout: FULL_LOADOUT,
+    rewardIds: FULL_REWARDS,
+  });
   let snapshot = getRunSnapshot(run);
   const events = [...snapshot.events.filter((event) => event.type.startsWith("M4_"))];
 

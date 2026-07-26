@@ -6,6 +6,27 @@
 
 **G5: N/A — not PASS.** G5 is applicable only when a concrete revenue point can be tested for paid/free outcome differences, comeback behavior, and free-path parity. This run has none. The QA baseline preserves the same decision; it does not provide a paid/free result.
 
+## Final-retune revenue boundary
+
+The one permitted final retune is **gameplay data only**. It may accept bounded Cinder pressure and formation-risk costs under `pm/reward-bands.md#one-final-data-only-retune--pm-boundary`, but it creates no sellable item, recovery entitlement, payer cohort, price, conversion event, or financial forecast. Therefore the forecast remains intentionally empty and **G5 remains N/A, not PASS**.
+
+```yaml
+final_retune_commerce_boundary:
+  retune_count: 1
+  commercial_effect: none
+  prohibited_surfaces: [paid_path, account, premium_currency, ads, gacha, paid_power, paid_reroll, paid_recovery]
+  paid_comeback_activations_per_run_maximum: 0
+  G5:
+    status: N/A
+    not_pass_because: "No paid/free comparison population, revenue point, or commerce measurement is introduced by the final data-only retune."
+  evidence_still_required_elsewhere:
+    - "G2 symmetric 20-paired-trial-per-archetype matchup export and legal-combo EV evidence."
+    - "G3 post-retune stance and rally-then-TURRET evidence."
+    - "G7 three persistence-path traces/state diffs and rendered moderated human re-entry evidence."
+    - "G8 five-title novelty frequency and human QA impression evidence."
+  gate_promotion: prohibited
+```
+
 ```yaml
 artifact_contract:
   schema_version: artifact-contract/1

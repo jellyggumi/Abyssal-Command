@@ -104,8 +104,8 @@ export const MAX_FRONT_SLOTS = 2;
 export const FORMATION_SLOTS = freeze(["FRONT", "BACK"]);
 /** BACK companion damage bonus when >=1 FRONT companion is alive (fire-time stance multiplier, additive bp per UNIFIED-GDD.md §4.2). Unchanged by the 3-stance formation redesign (core-loop-redesign-20260725.md §2: "후열 시너지... 변경 없음... 스탠스는 이 계산에 영향 없음, '몇 명이 FRONT인가'만 바꿈"). */
 export const BACK_ROW_SYNERGY_DAMAGE_BONUS = 0.25;
-/** Boss Rally Window: cooldown reduction applied to all living companions' fire cooldown when a boss spawns with >=1 FRONT filled. TURRET's derivedFrontCount=0 structurally, intentionally never satisfies this gate (decision-log.md D22 judgment 1: accepted trade-off, not a bug — "포대는 지속딜은 얻지만 랠리 버스트는 포기"). */
-export const BOSS_RALLY_COOLDOWN_REDUCTION = 0.20;
+/** Boss Rally Window: cooldown reduction applied to all living companions' fire cooldown when a boss spawns with >=1 FRONT filled. The signed Stage 2d value is zero, so the rally event remains observable without a bankable cooldown-reduction benefit. */
+export const BOSS_RALLY_COOLDOWN_REDUCTION = 0;
 
 /**
  * In-run formation stances (UNIFIED-GDD.md §2.2/§4.2 table, `UNIFIED-GDD.md:79-85`): replaces the old
@@ -128,32 +128,32 @@ export const FORMATION_STANCES = freeze(["VANGUARD", "TURRET", "SPLIT"]);
  */
 export const STANCE_CONFIG = freeze({
   VANGUARD: {
-    // "이동방향 전방, 좌우분산 1,400유닛": forward = toward the enemy spawn/approach side (-x, W —
+    // "이동방향 전방, 좌우분산 2,000유닛": forward = toward the enemy spawn/approach side (-x, W —
     // enemies spawn from the arena's west edge and advance east toward the gate/commander,
-    // defense-run-simulation.js's `spawnPoint`/default `tactics.spawnDirections`) + 1,400-unit
-    // left/right spread for the 2 FRONT companions (NW/SW scaled to magnitude 1,400); the 3rd (BACK)
+    // defense-run-simulation.js's `spawnPoint`/default `tactics.spawnDirections`) + 2,000-unit
+    // left/right spread for the 2 FRONT companions (NW/SW scaled to magnitude 2,000); the 3rd (BACK)
     // companion trails 500 units to the rear (E, toward the gate), matching the stance's ±500-unit
     // formation radius.
     offsets: freeze([
-      freeze({ x: Math.round(OCTANT_VECTORS.NW.x * 1.4), y: Math.round(OCTANT_VECTORS.NW.y * 1.4) }),
-      freeze({ x: Math.round(OCTANT_VECTORS.SW.x * 1.4), y: Math.round(OCTANT_VECTORS.SW.y * 1.4) }),
+      freeze({ x: Math.round(OCTANT_VECTORS.NW.x * 2.0), y: Math.round(OCTANT_VECTORS.NW.y * 2.0) }),
+      freeze({ x: Math.round(OCTANT_VECTORS.SW.x * 2.0), y: Math.round(OCTANT_VECTORS.SW.y * 2.0) }),
       freeze({ x: Math.round(OCTANT_VECTORS.E.x * 0.5), y: Math.round(OCTANT_VECTORS.E.y * 0.5) }),
     ]),
     radius: 500,
     derivedFrontCount: 2,
   },
   TURRET: {
-    // "후방 300유닛", "300유닛(밀집)": all 3 companions cluster tight behind the commander toward the
-    // gate/rear side (+x, E — away from the enemy approach), 0 derived FRONT — sustained-fire
-    // posture, no targetable screen (decision-log D22 judgment 1: intentionally excluded from Boss
-    // Rally Window). E/NE/SE within the 300-unit radius avoids exact-overlap while staying compact.
+    // "후방 300유닛", "300유닛(밀집)": companions cluster tight around the commander, with one derived
+    // FRONT companion toward the west-side enemy approach and the other two toward the gate/rear side
+    // (+x, E), so the posture retains a targetable screen. W/NE/SE within the 300-unit radius avoids
+    // exact-overlap while staying compact.
     offsets: freeze([
-      freeze({ x: Math.round(OCTANT_VECTORS.E.x * 0.3), y: Math.round(OCTANT_VECTORS.E.y * 0.3) }),
+      freeze({ x: Math.round(OCTANT_VECTORS.W.x * 0.3), y: Math.round(OCTANT_VECTORS.W.y * 0.3) }),
       freeze({ x: Math.round(OCTANT_VECTORS.NE.x * 0.3), y: Math.round(OCTANT_VECTORS.NE.y * 0.3) }),
       freeze({ x: Math.round(OCTANT_VECTORS.SE.x * 0.3), y: Math.round(OCTANT_VECTORS.SE.y * 0.3) }),
     ]),
     radius: 300,
-    derivedFrontCount: 0,
+    derivedFrontCount: 1,
   },
   SPLIT: {
     // "좌우 측면 2,000유닛 + 후방중앙 300유닛": left/right flank spread 2,000 units (N/S, lateral to

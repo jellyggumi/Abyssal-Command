@@ -198,7 +198,10 @@ jobs:
           git archive --format=tar "$RESOLVED_SHA" -- "${paths[@]}" | tar -x -C "$PAGES_ARTIFACT_DIR"
           test "$(grep -o '__CANDIDATE_SHA__' "$PAGES_ARTIFACT_DIR/sw.js" | wc -l)" -eq 1
           sed -i "s/__CANDIDATE_SHA__/$RESOLVED_SHA/" "$PAGES_ARTIFACT_DIR/sw.js"
-          ! grep -q '__CANDIDATE_SHA__' "$PAGES_ARTIFACT_DIR/sw.js"
+          if grep -q '__CANDIDATE_SHA__' "$PAGES_ARTIFACT_DIR/sw.js"; then
+            echo "sw.js still contains __CANDIDATE_SHA__" >&2
+            exit 1
+          fi
           grep -Fq "abyssal-command-defense-survivor-$RESOLVED_SHA" "$PAGES_ARTIFACT_DIR/sw.js"
           actual="$(find "$PAGES_ARTIFACT_DIR" -type f -print | sed "s#^$PAGES_ARTIFACT_DIR/##" | sort)"
           expected="$(printf '%s\n' "${paths[@]}" | sort)"

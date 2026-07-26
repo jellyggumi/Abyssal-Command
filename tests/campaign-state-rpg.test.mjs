@@ -2,6 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  advanceDefenseRun,
+  createDefenseRun,
+  getRunSnapshot,
+  isTerminalRun,
+  queueInput,
+} from "../defense-run-simulation.js";
+
+import {
   createCampaign,
   startRun,
   applyCampaignRunResult,
@@ -418,4 +426,38 @@ test("a valid current-shape campaign restores without modification", () => {
   const serialized = serializeCampaign(campaign);
   assert.deepEqual(restoreCampaign(serialized), campaign);
   assert.deepEqual(restoreCampaign(JSON.stringify(serialized)), campaign);
+});
+
+test("deterministic persistence trace preserves stable campaign fields across serialize and restore", () => {
+  let campaign = createCampaign({ campaignId: "deterministic-persistence-trace" });
+  campaign = captureElite(campaign, "trace-elite-ember", "ember-cohort");
+  campaign = captureElite(campaign, "trace-elite-rift", "rift-lens");
+  campaign = setCompanionLoadout(campaign, ["ember-cohort", "rift-lens"]);
+  campaign = setCompanionFormationSlot(campaign, "ember-cohort", "FRONT");
+  campaign = startRun(campaign, "cinder-span");
+  campaign = applyCampaignRunResult(campaign, { stageId: "cinder-span", outcome: "victory" });
+  campaign = allocateWardenStatPoint(campaign, "binding-might");
+  campaign = purchaseEquipmentTier(campaign, "warden", "weapon");
+  campaign = settleIdleReturn(campaign, { now: 123456 }).campaign;
+
+  const preSerialization = campaign;
+  const firstSerialized = serializeCampaign(preSerialization);
+  const restored = restoreCampaign(firstSerialized);
+  const secondSerialized = serializeCampaign(restored);
+
+  assert.deepEqual(restored, preSerialization);
+  assert.deepEqual(secondSerialized, firstSerialized);
+  assert.equal(restored.campaignId, preSerialization.campaignId);
+  for (const field of [
+    "resolvedIds",
+    "companionCollection",
+    "rewardIds",
+    "achievementIds",
+    "wardenProgress",
+    "ownedEquipmentIds",
+    "companionFormation",
+    "idleReturn",
+  ]) {
+    assert.deepEqual(restored[field], preSerialization[field], `${field} must survive persistence exactly`);
+  }
 });

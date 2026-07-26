@@ -24,7 +24,11 @@ import {
   createDefenseRun, advanceDefenseRun, isTerminalRun, queueInput, TICK_RATE,
 } from "../defense-run-simulation.js";
 import { STAGES } from "../campaign-state.js";
-import { STAGE_BY_ID, OCTANT_VECTORS } from "../defense-catalog.js";
+import { STAGE_BY_ID, OCTANT_VECTORS, SKILLS } from "../defense-catalog.js";
+
+const ACTIVE_SKILL_IDS = new Set(
+  Object.values(SKILLS).filter((skill) => skill.kind === "active").map((skill) => skill.id),
+);
 
 // ---------------------------------------------------------------------------
 // Event taxonomy. "Macro reward" = a discrete, player-facing gain the player is
@@ -142,7 +146,9 @@ function buildInputs(run, policy, memo, redecideTicks) {
   // Only cast a skill the commander actually owns and that is off cooldown — spamming a
   // cooling skill inflates the rejected-input count without representing player intent.
   for (const skillId of run.commander.skills) {
-    if ((run.commander.cooldowns?.[skillId] ?? 0) <= 0) push("SKILL_CAST", { skillId });
+    if (ACTIVE_SKILL_IDS.has(skillId) && (run.commander.cooldowns?.[skillId] ?? 0) <= 0) {
+      push("SKILL_CAST", { skillId });
+    }
   }
 
   // Only attempt extraction once the hold is actually complete (the UI only offers it then).
@@ -213,6 +219,17 @@ function measureRun({ stageId, seed, loadout, policy, redecideTicks, maxSteps = 
   const seconds = ticks / TICK_RATE;
   const deltas = (arr) => arr.slice(1).map((t, i) => (t - arr[i]) / TICK_RATE);
   const macroTicks = macroRewards.map((r) => r.tick);
+  // GROWTH_OFFER and its immediately-applied SKILL_SELECTED are one reward boundary.
+  // Duplicate records at the same tick/type are instrumentation duplicates, not extra rewards.
+  const macroRewardBoundaries = [];
+  for (const reward of macroRewards) {
+    const previous = macroRewardBoundaries.at(-1);
+    const sameTickType = previous && previous.tick === reward.tick && previous.type === reward.type;
+    const growthSelectionPair = previous?.type === "GROWTH_OFFER" && reward.type === "SKILL_SELECTED";
+    if (sameTickType || growthSelectionPair) continue;
+    macroRewardBoundaries.push(reward);
+  }
+  const macroRewardBoundaryTicks = macroRewardBoundaries.map((r) => r.tick);
 
   // Three competing loop-boundary definitions, all measured against the same run:
   //   L1 growth-offer circuit  — what `vanguard-circuit` models (XP threshold -> upgrade -> re-engage)
@@ -229,6 +246,7 @@ function measureRun({ stageId, seed, loadout, policy, redecideTicks, maxSteps = 
         actions: inWin.length,
         distinctActionTypes: new Set(inWin.map((a) => a.type)).size,
         macroRewards: macroRewards.filter((r) => r.tick > from && r.tick <= to).length,
+        macroRewardBoundaries: macroRewardBoundaries.filter((r) => r.tick > from && r.tick <= to).length,
       });
     }
     return out;
@@ -241,6 +259,7 @@ function measureRun({ stageId, seed, loadout, policy, redecideTicks, maxSteps = 
     actions: actions.length,
     distinctActionTypes: new Set(actions.map((a) => a.type)).size,
     macroRewards: macroRewards.length,
+    macroRewardBoundaries: macroRewardBoundaries.length,
   };
 
   const byType = {};
@@ -253,7 +272,8 @@ function measureRun({ stageId, seed, loadout, policy, redecideTicks, maxSteps = 
     terminal: run.terminal, ticks, seconds: Number(seconds.toFixed(2)),
     finalLevel: run.commander.level, extracted: run.extracted, bossSpawned: run.bossSpawned,
     counts: {
-      macroRewards: macroRewards.length, microRewards: microRewardCount.total,
+      macroRewards: macroRewards.length, macroRewardBoundaries: macroRewardBoundaries.length,
+      microRewards: microRewardCount.total,
       actions: actions.length, acceptedInputs, rejectedInputs,
       growthOffers: growthOffers.length, stanceSwitches: stanceSwitches.length,
     },
@@ -261,6 +281,8 @@ function measureRun({ stageId, seed, loadout, policy, redecideTicks, maxSteps = 
     actionsByType,
     macroRewardTimeline: macroRewards.map((r) => ({ atS: Number((r.tick / TICK_RATE).toFixed(2)), type: r.type })),
     interMacroRewardS: deltas(macroTicks),
+    macroRewardBoundaryTimeline: macroRewardBoundaries.map((r) => ({ atS: Number((r.tick / TICK_RATE).toFixed(2)), type: r.type })),
+    interMacroRewardBoundaryS: deltas(macroRewardBoundaryTicks),
     interGrowthOfferS: deltas(growthOffers),
     interWaveS: deltas(waveStarts),
     phaseChanges: phaseChanges.map((p) => ({ atS: Number((p.tick / TICK_RATE).toFixed(2)), phase: p.phase })),
@@ -315,6 +337,7 @@ const candidateStats = (windows) => ({
   actionsPerLoop: stats(windows.map((l) => l.actions)),
   distinctActionTypesPerLoop: stats(windows.map((l) => l.distinctActionTypes)),
   macroRewardsPerLoop: stats(windows.map((l) => l.macroRewards)),
+  macroRewardBoundariesPerLoop: stats(windows.map((l) => l.macroRewardBoundaries)),
 });
 
 const summaryFor = (policy, redecideTicks) => {
@@ -326,7 +349,7 @@ const summaryFor = (policy, redecideTicks) => {
     victoryRate: Number((rs.filter((r) => r.terminal === "VICTORY" || r.terminal === "FINAL_COMPLETION").length / rs.length).toFixed(3)),
     runSeconds: stats(rs.map((r) => r.seconds)),
     interMacroRewardS: stats(rs.flatMap((r) => r.interMacroRewardS)),
-    interGrowthOfferS: stats(rs.flatMap((r) => r.interGrowthOfferS)),
+    interMacroRewardBoundaryS: stats(rs.flatMap((r) => r.interMacroRewardBoundaryS)),
     interWaveS: stats(rs.flatMap((r) => r.interWaveS)),
     interEncounterS: stats(rs.flatMap((r) => r.interEncounterS)),
     loopCandidates: {
