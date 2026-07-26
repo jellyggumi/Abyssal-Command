@@ -140,9 +140,10 @@ def parse_args(argv):
     p.add_argument("--rest-pose", default="tpose", choices=["tpose", "natural"],
                    help="tpose = rotate arms onto +/-X and freeze as rest; "
                         "natural = keep the mesh's sculpted pose as the bind pose")
-    p.add_argument("--arm-fit", default="detect", choices=["detect", "prior"],
+    p.add_argument("--arm-fit", default="detect", choices=["detect", "prior", "tpose"],
                    help="detect = PCA over the mesh's outboard cloud; "
-                        "prior = anthropometric proportions (use for caped/robed silhouettes)")
+                        "prior = anthropometric proportions for arms-down silhouettes; "
+                        "tpose = fit an already-horizontal source without re-posing it")
     p.add_argument("--bind-method", default="auto",
                    choices=["auto", "bone_heat", "inverse_distance"],
                    help="auto = bone_heat -> envelope -> inverse_distance, gated on arm weight")
@@ -318,6 +319,34 @@ def run(args, budgets):
             # sculpted rest pose these characters actually stand in.
             arm[side] = np.array([cx + sgn * torso_half * 1.15, cy, shoulder_z - reach])
             arm_debug[side] = {"mode": "prior", "reach": round(reach, 4)}
+    elif args.arm_fit == "tpose":
+        # A generated T-pose has a dense, nearly horizontal outboard band.
+        # Derive its height from both arm tips instead of the torso-width
+        # minimum used for arms-down/caped sources (which resolves to the neck).
+        tpose_cloud = co[
+            (np.abs(x - cx) > half_span * 0.65)
+            & (z >= z_min + height * 0.55)
+            & (z <= z_min + height * 0.90)
+        ]
+        if len(tpose_cloud) < 48:
+            raise RuntimeError("arm-fit tpose found no horizontal outboard arm band")
+        shoulder_z = float(np.median(tpose_cloud[:, 2]))
+        torso_half = min(half_span * 0.33, height * 0.13)
+        for side, sgn in (("L", 1.0), ("R", -1.0)):
+            side_reach = sgn * (tpose_cloud[:, 0] - cx)
+            pts = tpose_cloud[side_reach > half_span * 0.65]
+            if len(pts) < 24:
+                arm[side] = None
+                continue
+            reach = float(np.quantile(sgn * (pts[:, 0] - cx), 0.97))
+            tips = pts[sgn * (pts[:, 0] - cx) >= reach * 0.92]
+            arm[side] = np.array([
+                cx + sgn * reach,
+                float(np.median(tips[:, 1])),
+                float(np.median(tips[:, 2])),
+            ])
+            arm_debug[side] = {"mode": "tpose", "reach": round(reach, 4),
+                               "pts": int(len(pts)), "tips": int(len(tips))}
     else:
         for side, sgn in (("L", 1.0), ("R", -1.0)):
             m = (z <= shoulder_z + height * 0.04) & (z >= z_min + height * 0.20) \

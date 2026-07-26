@@ -247,6 +247,11 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .growth-formation-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .6rem; margin-top: .5rem; }
 .growth-formation-slot { position: relative; display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .5rem; border: 1px solid #2b4767; border-radius: .6rem; min-height: 48px; }
 .growth-formation-slot button { min-width: 48px; min-height: 48px; }
+.formation-position-copy { display: grid; gap: .08rem; min-width: 0; }
+.formation-position-copy small { color: #9ecce4; font-size: .65rem; font-weight: 800; }
+.formation-position-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.formation-position-copy em { color: #b79be6; font-size: .65rem; font-style: normal; }
+.formation-saved-intent { color: #71cfb0; font-size: .68rem; font-weight: 700; white-space: nowrap; }
 /* Formation validation badges (ui-redesign-delta-20260725.md §C, ACCEPT) — color-independent
    (icon glyph inside the badge + aria-label text, never color alone): yellow "!" for a
    low-ward-tier FRONT companion (off-battle formation-edit screen), red "✕" for a live-run
@@ -520,4 +525,436 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
   .rc-aurora::before, .rc-aurora::after { animation: none; }
   .rc-lift { transition: none; }
   .rc-lift:hover, .rc-lift:focus-visible { transform: none; }
+}
+
+/* Abyssal command-deck composition: stage art remains presentation-only and is
+   supplied through trusted runtime stage IDs in app.js. */
+body {
+  background:
+    radial-gradient(circle at 20% -10%, rgb(44 173 214 / .12), transparent 34rem),
+    radial-gradient(circle at 90% 12%, rgb(60 44 91 / .28), transparent 30rem),
+    #050812;
+}
+.page-atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / .018) 1px, transparent 1px),
+    linear-gradient(rgb(255 255 255 / .014) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, #000, transparent 88%);
+}
+#defense-app { position: relative; isolation: isolate; }
+.defense-lobby {
+  width: min(100%, 1180px);
+  position: relative;
+}
+.defense-lobby::before {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  content: "";
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(5 8 18 / .48), #050812 76%),
+    var(--stage-art) center top / cover no-repeat;
+  filter: saturate(.8);
+  opacity: .32;
+  transition: background-image 260ms ease, opacity 260ms ease;
+}
+.command-header {
+  position: relative;
+  min-height: 4.5rem;
+  padding-inline: .25rem;
+}
+.brand-mark {
+  position: relative;
+  overflow: hidden;
+  border-radius: .55rem;
+  background: linear-gradient(145deg, rgb(44 173 214 / .22), rgb(60 44 91 / .42));
+  box-shadow: inset 0 0 1.2rem rgb(44 173 214 / .12), 0 0 1.6rem rgb(44 173 214 / .08);
+}
+.brand-mark::after {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgb(221 200 105 / .34);
+  content: "";
+  transform: rotate(45deg);
+}
+.command-tab-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin-inline: -.35rem;
+  padding: .55rem .35rem;
+  border: 1px solid rgb(115 121 144 / .18);
+  border-inline: 0;
+  background: linear-gradient(180deg, rgb(7 11 22 / .96), rgb(7 11 22 / .82));
+  backdrop-filter: blur(16px) saturate(1.25);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+  scrollbar-width: thin;
+}
+.command-tab {
+  position: relative;
+  border-color: transparent;
+  border-radius: .45rem;
+  background: transparent;
+  color: #aebdd0;
+  letter-spacing: .04em;
+}
+.command-tab::after {
+  position: absolute;
+  right: .85rem;
+  bottom: .2rem;
+  left: .85rem;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+  content: "";
+}
+.command-tab.is-active {
+  border-color: rgb(44 173 214 / .45);
+  background: linear-gradient(180deg, rgb(44 173 214 / .16), rgb(60 44 91 / .16));
+  color: #f1f7ff;
+}
+.command-tab.is-active::after {
+  background: linear-gradient(90deg, transparent, var(--canon-cyan-rift), var(--canon-zenith-gold), transparent);
+  box-shadow: 0 0 .7rem var(--canon-cyan-rift);
+}
+.command-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  margin-top: 1rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid rgb(115 121 144 / .25);
+  border-radius: 1.1rem;
+  background: linear-gradient(115deg, rgb(8 11 23 / .94) 0 36%, rgb(8 11 23 / .68) 62%, rgb(8 11 23 / .9));
+  box-shadow: 0 1.5rem 4rem -2.25rem rgb(0 0 0 / .9), inset 0 1px rgb(255 255 255 / .04);
+}
+.command-hero::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  background: radial-gradient(circle at var(--spotlight-x, 72%) 30%, rgb(221 200 105 / .12), transparent 30%);
+}
+.command-hero > :not(.rc-aurora) { position: relative; z-index: 2; }
+.hero-copy {
+  padding: clamp(.25rem, 2vw, 1.25rem);
+  text-shadow: 0 2px 16px rgb(0 0 0 / .82);
+  animation: command-copy-reveal 560ms cubic-bezier(.2, .8, .2, 1) both;
+}
+.hero-copy h2 {
+  color: #f5f3ee;
+  font-family: ui-serif, "Apple SD Gothic Neo", serif;
+  font-weight: 800;
+}
+.hero-copy h2 em {
+  background: linear-gradient(100deg, #f8f3d2, var(--canon-zenith-gold) 46%, var(--canon-cyan-rift));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.hero-cta {
+  position: relative;
+  overflow: hidden;
+  min-height: 4rem;
+  border-radius: .55rem;
+  background: linear-gradient(110deg, #123d55, #1f2a4b 56%, #493756);
+  box-shadow: inset 0 1px rgb(255 255 255 / .08), 0 .8rem 1.8rem -.9rem rgb(44 173 214 / .48);
+}
+.hero-cta::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 28%, rgb(255 255 255 / .12) 49%, transparent 70%);
+  transform: translateX(-120%);
+  animation: command-cta-sheen 4.8s ease-in-out infinite;
+}
+.stage-atlas {
+  min-height: clamp(22rem, 38vw, 31rem);
+  background: #070b14;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .04), 0 1rem 2.5rem -1.5rem #000;
+}
+.stage-art-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgb(5 8 18 / .18), rgb(5 8 18 / .26) 46%, rgb(5 8 18 / .92) 100%),
+    linear-gradient(90deg, rgb(5 8 18 / .42), transparent 48%),
+    var(--stage-art) center / cover no-repeat;
+  filter: saturate(.9) contrast(1.04);
+  transform: scale(1.015);
+  animation: stage-art-breathe 12s ease-in-out infinite alternate;
+}
+.stage-atlas::before {
+  z-index: 2;
+  inset: .75rem;
+  border-color: rgb(221 200 105 / .22);
+}
+.stage-atlas::after {
+  z-index: 1;
+  opacity: .56;
+  mix-blend-mode: screen;
+}
+.atlas-contours, .map-route, .map-node { opacity: .74; }
+.map-readout {
+  padding: .75rem;
+  border-left: 2px solid var(--canon-zenith-gold);
+  background: linear-gradient(90deg, rgb(4 8 17 / .86), transparent);
+  text-shadow: 0 2px 12px #000;
+}
+.atlas-context {
+  border-color: rgb(221 200 105 / .24);
+  background: linear-gradient(115deg, rgb(5 8 18 / .92), rgb(18 12 31 / .88));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.mission-panel, .briefing-panel, .loadout-panel, .archive-panel, .growth-panel {
+  border-color: rgb(115 121 144 / .24);
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / .025), transparent 30%),
+    linear-gradient(155deg, rgb(18 20 36 / .94), rgb(8 10 20 / .96));
+  box-shadow: inset 0 1px rgb(255 255 255 / .035), 0 1rem 2rem -1.8rem #000;
+}
+.stage-card {
+  grid-template-columns: 3.75rem 2.2rem minmax(0, 1fr) auto;
+  overflow: hidden;
+  min-height: 5.25rem;
+  padding: .45rem .65rem .45rem .45rem;
+  border-radius: .55rem;
+  background: linear-gradient(90deg, rgb(8 12 23 / .92), rgb(13 20 34 / .88));
+}
+.stage-card-art {
+  width: 3.75rem;
+  height: 3.75rem;
+  border: 1px solid rgb(115 121 144 / .28);
+  border-radius: .35rem;
+  background:
+    linear-gradient(135deg, transparent, rgb(5 8 18 / .64)),
+    var(--stage-card-art) center / cover no-repeat;
+  filter: saturate(.72);
+}
+.stage-card.is-selected .stage-card-art {
+  border-color: rgb(221 200 105 / .62);
+  filter: saturate(1.08);
+  box-shadow: 0 0 1rem rgb(44 173 214 / .18);
+}
+.stage-card:disabled .stage-card-art { filter: grayscale(1) brightness(.55); }
+.briefing-target {
+  padding: .75rem;
+  border: 1px solid rgb(44 173 214 / .16);
+  border-radius: .55rem;
+  background: linear-gradient(105deg, rgb(44 173 214 / .07), transparent);
+}
+
+/* The stage key art is an ornamental grade over the renderer, never an input or
+   simulation surface. HUD and world overlays remain above it. */
+#defense-canvas { z-index: 0; }
+.battle-stage-art {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(5 8 18 / .12), transparent 34%, rgb(5 8 18 / .28)),
+    var(--stage-art) center / cover no-repeat;
+  opacity: .12;
+  filter: saturate(.72) contrast(1.08);
+  mix-blend-mode: soft-light;
+}
+#world-hud-overlay { z-index: 2; }
+#defense-edge-hud { z-index: 3; }
+#defense-battle-surface::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  content: "";
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(3 5 12 / .38), transparent 22% 76%, rgb(3 5 12 / .42)),
+    radial-gradient(ellipse at center, transparent 55%, rgb(2 3 8 / .38));
+}
+.hud-panel, .objective-chip, .passive-badge {
+  border-color: rgb(128 168 196 / .38);
+  border-radius: .42rem;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / .035), transparent 30%),
+    linear-gradient(160deg, rgb(6 10 20 / .88), rgb(13 10 25 / .84));
+  box-shadow: inset 0 1px rgb(255 255 255 / .035), 0 .55rem 1.2rem -.8rem #000;
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+.hud-panel { border-left: 2px solid rgb(44 173 214 / .7); }
+.hud-loop-state { border-left-color: rgb(185 146 255 / .72); }
+.objective-chip { border-right: 2px solid rgb(221 200 105 / .65); }
+.hud-actions button, .one-thumb-controls button {
+  border-color: rgb(115 150 178 / .54);
+  border-radius: .4rem;
+  background: linear-gradient(160deg, rgb(18 28 44 / .92), rgb(8 12 22 / .94));
+  box-shadow: inset 0 1px rgb(255 255 255 / .045);
+}
+.hud-actions button:hover, .one-thumb-controls button:hover {
+  background: linear-gradient(160deg, rgb(25 48 68 / .96), rgb(16 21 38 / .96));
+}
+.arena-callout {
+  color: rgb(225 238 247 / .72);
+  text-shadow: 0 2px 8px #000;
+}
+
+/* Cutscene relay: authored beats change presentation only. Dialogue is a
+   speaker-led ink card; narration is a centered in-scene caption strip. */
+.defense-cutscene {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding:
+    max(1rem, var(--defense-safe-top))
+    max(1rem, var(--defense-safe-right))
+    max(1.25rem, calc(var(--defense-safe-bottom) + 1rem))
+    max(1rem, var(--defense-safe-left));
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(2 4 10 / .06) 0 45%, rgb(2 4 10 / .82) 100%),
+    linear-gradient(90deg, rgb(2 4 10 / .22), transparent 42% 58%, rgb(2 4 10 / .22));
+}
+.cutscene-frame {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(7rem, .24fr) minmax(0, 1fr) auto;
+  gap: .8rem 1rem;
+  align-items: end;
+  width: min(92vw, 58rem);
+  padding: .8rem;
+  border: 1px solid rgb(128 216 255 / .44);
+  border-left: 3px solid var(--canon-cyan-rift);
+  border-radius: .35rem;
+  background:
+    linear-gradient(110deg, rgb(7 11 21 / .96), rgb(18 12 31 / .92)),
+    var(--stage-art) center / cover no-repeat;
+  box-shadow: 0 1.25rem 3rem -1rem #000, inset 0 1px rgb(255 255 255 / .05);
+  pointer-events: auto;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.cutscene-heading { align-self: stretch; padding-right: .75rem; border-right: 1px solid rgb(128 216 255 / .2); }
+.cutscene-kicker, .cutscene-speaker {
+  display: block;
+  color: #9fdfff;
+  font-size: .64rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.cutscene-heading h2 { margin: .28rem 0 0; color: #f4f1ea; font-family: ui-serif, "Apple SD Gothic Neo", serif; font-size: clamp(.92rem, 2vw, 1.18rem); }
+.cutscene-beat { min-width: 0; }
+.cutscene-speaker { margin-bottom: .25rem; color: var(--canon-zenith-gold); }
+.cutscene-line { margin: 0; color: #f4f6fa; font-size: clamp(.92rem, 2vw, 1.16rem); font-weight: 650; line-height: 1.48; text-shadow: 0 2px 10px #000; animation: cutscene-line-reveal 280ms cubic-bezier(.2, .8, .2, 1) both; }
+.cutscene-progress { display: flex; gap: .25rem; margin-top: .55rem; }
+.cutscene-progress i {
+  width: 1.35rem;
+  height: 2px;
+  background: rgb(168 190 211 / .26);
+}
+.cutscene-progress i.is-current { background: var(--canon-zenith-gold); box-shadow: 0 0 .55rem rgb(221 200 105 / .62); }
+.defense-cutscene [data-cutscene-dismiss] {
+  align-self: center;
+  min-width: 5.4rem;
+  border-color: rgb(221 200 105 / .5);
+  border-radius: .35rem;
+  background: linear-gradient(135deg, rgb(72 56 38 / .88), rgb(28 24 34 / .94));
+  color: #fff6cf;
+}
+.defense-cutscene[data-caption-mode="narration"] {
+  padding-bottom: max(2rem, calc(var(--defense-safe-bottom) + 2rem));
+  background: linear-gradient(180deg, transparent 58%, rgb(2 4 10 / .72));
+}
+.defense-cutscene[data-caption-mode="narration"] .cutscene-frame {
+  grid-template-columns: 1fr auto;
+  width: min(86vw, 48rem);
+  border: 0;
+  border-block: 1px solid rgb(221 200 105 / .34);
+  border-radius: 0;
+  background: linear-gradient(90deg, transparent, rgb(3 6 14 / .94) 12% 88%, transparent);
+  box-shadow: none;
+  text-align: center;
+}
+.defense-cutscene[data-caption-mode="narration"] .cutscene-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.defense-cutscene[data-caption-mode="narration"] .cutscene-speaker { color: #b9c9da; }
+.defense-cutscene[data-caption-mode="narration"] .cutscene-line {
+  color: #fffaf0;
+  font-family: ui-serif, "Apple SD Gothic Neo", serif;
+  font-style: italic;
+  font-weight: 600;
+}
+
+@keyframes command-copy-reveal {
+  from { opacity: 0; transform: translateY(.75rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes command-cta-sheen {
+  0%, 68% { transform: translateX(-120%); }
+  86%, 100% { transform: translateX(120%); }
+}
+@keyframes stage-art-breathe {
+  from { transform: scale(1.015); }
+  to { transform: scale(1.045); }
+}
+@keyframes cutscene-line-reveal {
+  from { opacity: 0; transform: translateY(.45rem); filter: blur(3px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@media (max-width: 900px) {
+  .command-hero { grid-template-columns: 1fr; }
+  .stage-atlas { min-height: min(31rem, 68vw); }
+  .ops-grid { grid-template-columns: 1fr; }
+  .archive-panel { grid-column: 1; }
+}
+@media (max-width: 620px) {
+  .defense-lobby { padding-inline: .65rem; }
+  .brand-lockup { align-items: flex-start; }
+  .brand-lockup h1 { font-size: clamp(1.1rem, 6vw, 1.55rem); }
+  .command-hero { margin-inline: -.15rem; padding: .75rem; }
+  .hero-copy { padding: .4rem; }
+  .hero-copy h2 { font-size: clamp(2.15rem, 13vw, 3.35rem); }
+  .stage-atlas { min-height: 25rem; }
+  .atlas-contours, .map-route, .map-node { opacity: .48; }
+  .atlas-context { right: .65rem; bottom: .65rem; left: .65rem; }
+  .stage-card {
+    grid-template-columns: 3.15rem 1.8rem minmax(0, 1fr);
+    min-height: 4.65rem;
+  }
+  .stage-card-art { width: 3.15rem; height: 3.15rem; }
+  .stage-state { grid-column: 3; text-align: left; }
+  .cutscene-frame { grid-template-columns: 1fr auto; gap: .55rem; padding: .7rem; }
+  .cutscene-heading { grid-column: 1 / -1; border: 0; border-bottom: 1px solid rgb(128 216 255 / .2); padding: 0 0 .45rem; }
+  .cutscene-line { font-size: .9rem; }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .defense-cutscene { padding-block: .5rem max(.5rem, var(--defense-safe-bottom)); }
+  .cutscene-frame { width: min(86vw, 54rem); padding: .55rem .7rem; }
+  .cutscene-heading h2 { font-size: .9rem; }
+  .cutscene-line { font-size: .84rem; line-height: 1.35; }
+  .hud-panel { font-size: .72rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .defense-lobby::before { transition: none; }
+  .hero-copy, .hero-cta::before, .stage-art-frame, .cutscene-line { animation: none; }
+  .stage-art-frame { transform: none; }
 }

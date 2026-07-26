@@ -84,15 +84,37 @@ test("a solo companion is FRONT under the default VANGUARD stance (index 0 < der
   assert.equal(getRunSnapshot(run).companions[0].slot, "FRONT");
 });
 
-test("STANCE_CONFIG.VANGUARD.derivedFrontCount structurally caps FRONT at 2 even with a full 3-companion loadout — the 3rd (companionId-highest) companion is always BACK, with no per-companion 'formation' input able to override it", () => {
-  const run = createDefenseRun({
-    stageId: "cinder-span", seed: 5,
+test("saved FRONT formation intent determines stable position rank while live slots continue to follow stance counts", () => {
+  let run = createDefenseRun({
+    stageId: "cinder-span",
+    seed: 5,
     companionLoadout: ["ember-cohort", "rift-lens", "veil-vanguard"],
+    formation: { "rift-lens": "FRONT", "veil-vanguard": "FRONT" },
   });
-  const bySlot = Object.fromEntries(getRunSnapshot(run).companions.map((c) => [c.companionId, c.slot]));
-  const frontCount = Object.values(bySlot).filter((slot) => slot === "FRONT").length;
-  assert.equal(frontCount, STANCE_CONFIG.VANGUARD.derivedFrontCount);
-  assert.equal(bySlot["veil-vanguard"], "BACK", "the companionId-highest companion (3rd in asc order) must be BACK under VANGUARD's derivedFrontCount=2");
+  const companionPositions = () => getRunSnapshot(run).companions.map(({ companionId, slot }) => [companionId, slot]);
+
+  assert.deepEqual(companionPositions(), [
+    ["rift-lens", "FRONT"],
+    ["veil-vanguard", "FRONT"],
+    ["ember-cohort", "BACK"],
+  ]);
+
+  run = advanceDefenseRun(queueInput(run, "STANCE_CYCLE"), 1);
+  assert.equal(getRunSnapshot(run).formationStance, "TURRET");
+  assert.deepEqual(companionPositions(), [
+    ["rift-lens", "FRONT"],
+    ["veil-vanguard", "BACK"],
+    ["ember-cohort", "BACK"],
+  ]);
+
+  run = advanceDefenseRun(run, 4 * 60);
+  run = advanceDefenseRun(queueInput(run, "STANCE_CYCLE"), 1);
+  assert.equal(getRunSnapshot(run).formationStance, "SPLIT");
+  assert.deepEqual(companionPositions(), [
+    ["rift-lens", "FRONT"],
+    ["veil-vanguard", "BACK"],
+    ["ember-cohort", "BACK"],
+  ]);
 });
 
 test("getRunSnapshot companions carry slot, status, and an hp/maxHp pool equal to companionFormationIntegrity (not literal 1/1)", () => {

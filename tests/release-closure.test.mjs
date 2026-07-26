@@ -15,6 +15,25 @@ const CINDER_SPAN_WORLD_ASSETS = [
   "assets/images/battle/world/cinder-span-topdown-plate.webp",
   "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
 ];
+const STAGE_ART_ASSETS = Object.freeze([
+  "assets/images/battle/ui/stages/cinder-span.png",
+  "assets/images/battle/ui/stages/veil-citadel.png",
+  "assets/images/battle/ui/stages/echo-throne-steps.png",
+  "assets/images/battle/ui/stages/sunken-bastion.png",
+  "assets/images/battle/ui/stages/howling-sprawl.png",
+  "assets/images/battle/ui/stages/glass-necropolis.png",
+  "assets/images/battle/ui/stages/starless-canal.png",
+  "assets/images/battle/ui/stages/shattered-causeway.png",
+  "assets/images/battle/ui/stages/abyss-chancel.png",
+  "assets/images/battle/ui/stages/gate-zenith.png",
+]);
+const COMBAT_GLB_ASSETS = Object.freeze([
+  "assets/images/battle/glb/props/abyss-blade.glb",
+  "assets/images/battle/glb/props/arc-caster.glb",
+  "assets/images/battle/glb/vfx/abyss-orb.glb",
+  "assets/images/battle/glb/vfx/melee-slash.glb",
+  "assets/images/battle/glb/vfx/ranged-bolt.glb",
+]);
 const BATTLE_GLB_ASSETS = [
   "assets/images/battle/glb/terrain/abyss-chancel.glb", "assets/images/battle/glb/terrain/cinder-span.glb", "assets/images/battle/glb/terrain/echo-throne-steps.glb", "assets/images/battle/glb/terrain/gate-zenith.glb",
   "assets/images/battle/glb/terrain/glass-necropolis.glb", "assets/images/battle/glb/terrain/howling-sprawl.glb", "assets/images/battle/glb/terrain/shattered-causeway.glb", "assets/images/battle/glb/terrain/starless-canal.glb",
@@ -41,8 +60,10 @@ const RUNTIME_PATHS = new Set([
   "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
   "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
   ...CINDER_SPAN_WORLD_ASSETS,
+  ...STAGE_ART_ASSETS,
   "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
   ...BATTLE_GLB_ASSETS,
+  ...COMBAT_GLB_ASSETS,
 ]);
 
 async function project(path) {
@@ -134,8 +155,10 @@ test("version scripts enforce the exact defense rules version", async () => {
     "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
     "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
     ...CINDER_SPAN_WORLD_ASSETS,
+    ...STAGE_ART_ASSETS,
     "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
     ...BATTLE_GLB_ASSETS,
+    ...COMBAT_GLB_ASSETS,
   ];
   for (const file of required) {
     const target = join(directory, file);

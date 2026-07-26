@@ -2,9 +2,9 @@ import {
   STAGES,
   allocateWardenStatPoint,
   applyCampaignRunResult,
+  applyEliteExtractionEvents,
   boundFragmentEarned,
   boundFragmentSpent,
-  captureElite,
   createCampaign,
   echoCoreEarned,
   echoCoreSpent,
@@ -18,8 +18,9 @@ import {
   wardLevel,
 } from "./campaign-state.js";
 import {
-  EQUIPMENT_SLOTS, EQUIPMENT_TIERS, FORMATION_STANCES, MAX_FRONT_SLOTS, WARDEN_SKILL_TREE,
-  WARDEN_STATS, WARDEN_TRAITS, WARDEN_TRAIT_UNLOCK_SEQUENCES, equipmentTierUpgradeCost, wardenStatPointCost,
+  COMPANION_ROLES, EQUIPMENT_SLOTS, EQUIPMENT_TIERS, FORMATION_STANCES, MAX_FRONT_SLOTS, STANCE_CONFIG,
+  WARDEN_SKILL_TREE, WARDEN_STATS, WARDEN_TRAITS, WARDEN_TRAIT_UNLOCK_SEQUENCES,
+  equipmentTierUpgradeCost, orderCompanionsByFormationIntent, roleForCompanion, wardenStatPointCost,
   wardenTraitOffersForSequence,
 } from "./rpg-catalog.js";
 import { DefenseStorage } from "./defense-storage.js";
@@ -42,13 +43,9 @@ const root = document.querySelector("#defense-app");
 const storage = new DefenseStorage();
 const viewport = new DefenseViewport();
 const telemetry = new DefenseTelemetry();
-// Shared across the whole lobby/HUD lifecycle (independent of any battle session) -- see
-// MeshThumbnailService's own doc comment for why it owns a separate renderer from RealtimeBattle.
 const thumbnailService = new MeshThumbnailService();
+
 const STEP_MS = 1000 / TICK_RATE;
-// Canvas drag now orbits the free camera (Cycle 3 / D17) instead of driving
-// movement — movement is exclusively the D-pad (#movement-actions) and
-// keyboard, both independent of the canvas.
 const CAMERA_ORBIT_YAW_SENSITIVITY = 0.00372; // rad per logical px; full landscape width ~= 180deg
 const CAMERA_ORBIT_PITCH_SENSITIVITY = 0.00246; // rad per logical px; drag up = look down (steeper pitch)
 const CAMERA_PINCH_ZOOM_SENSITIVITY = 0.006; // zoomFactor delta per px of pinch-distance change
@@ -111,6 +108,18 @@ const STANCE_SWITCH_CONFIRM_MS = 520;
 // keeps it visually distinct from gameplay achievements without needing a
 // schema change (this lane owns app.js/styles.css only, not campaign-state.js).
 const CAMERA_HINT_ACHIEVEMENT_ID = "ui-hint:camera-orbit-discovery";
+const STAGE_ART_FILE_BY_ID = Object.freeze({
+  "cinder-span": "cinder-span",
+  "veil-citadel": "veil-citadel",
+  "echo-throne": "echo-throne-steps",
+  "sunken-bastion": "sunken-bastion",
+  "howling-sprawl": "howling-sprawl",
+  "glass-necropolis": "glass-necropolis",
+  "starless-canal": "starless-canal",
+  "shattered-causeway": "shattered-causeway",
+  "abyss-chancel": "abyss-chancel",
+  "gate-zenith": "gate-zenith",
+});
 
 let campaign = null;
 let selectedStageId = STAGES[0].id;
@@ -145,6 +154,11 @@ function selectedLoadout() {
 
 function stageFor(stageId) {
   return STAGES.find((stage) => stage.id === stageId) ?? STAGES[0];
+}
+
+function stageArtPath(stageId) {
+  const fileName = STAGE_ART_FILE_BY_ID[stageId] ?? STAGE_ART_FILE_BY_ID[STAGES[0].id];
+  return `assets/images/battle/ui/stages/${fileName}.png`;
 }
 
 
@@ -289,7 +303,7 @@ function integrityProjection(actor) {
   return { integrity, maxIntegrity, ratio, state };
 }
 
-function loopPresentation(snapshot) {
+function loopPresentation(snapshot, { userPaused = false } = {}) {
   const objectives = snapshot?.objectives ?? {};
   const phase = objectives.phase ?? snapshot?.objectiveProgress?.phase ?? "gate-defense";
   const pressure = snapshot?.objectivePressure ?? {};
@@ -310,13 +324,17 @@ function loopPresentation(snapshot) {
     extraction: "엘리트 추출",
     "boss-kill": "보스 결전",
   };
-  const phaseLabel = snapshot?.terminal === "VICTORY"
-    ? "전투 승리 · 다음 출정"
-    : snapshot?.terminal === "DEFEAT"
-      ? "전투 패배 · 재출정"
-      : snapshot?.growthOffer
-        ? "성장 선택 · 전투 정지"
-        : phaseLabels[phase] ?? "전선 유지";
+  const phaseLabel = userPaused
+    ? "사용자 일시 정지 · 전투 정지"
+    : snapshot?.terminal === "VICTORY"
+      ? "전투 승리 · 다음 출정"
+      : snapshot?.terminal === "DEFEAT"
+        ? "전투 패배 · 재출정"
+        : snapshot?.growthOffer
+          ? "성장 선택 · 전투 정지"
+          : (snapshot?.tick ?? 0) < TICK_RATE * 3
+            ? `작전 개시 · ${phaseLabels[phase] ?? "전선 유지"}`
+            : phaseLabels[phase] ?? "전선 유지";
   const pressureLabel = pressureSeconds === null
     ? `압박 ${gate.state} · 관문 ${gate.integrity}/${gate.maxIntegrity}`
     : `압박 ${pressureSeconds}초 · 관문 ${gate.integrity}/${gate.maxIntegrity} · 지휘관 ${commander.integrity}/${commander.maxIntegrity}`;
@@ -498,19 +516,28 @@ function equipmentOwnersMarkup(data, interactive = true) {
  *     a balance-sheet.md decision, T1-baseline used as the proposed floor].
  * Non-blocking: informational only, never disables the FRONT/BACK button.
  */
-function formationRowMarkup(data, interactive = true, downedIds = null) {
-  const { loadout } = data;
-  return loadout.length ? `<div class="growth-formation-row">${loadout.map((id) => {
-    const slot = campaign.companionFormation[id] || "BACK";
+function formationRowMarkup(data, interactive = true, downedIds = null, liveCompanions = null) {
+  const liveById = new Map((liveCompanions ?? []).map((companion) => [companion.companionId, companion]));
+  const orderedLoadout = liveCompanions?.length
+    ? liveCompanions.map((companion) => companion.companionId)
+    : orderCompanionsByFormationIntent(data.loadout, campaign.companionFormation);
+  const copy = liveCompanions?.length
+    ? "현재 전투 슬롯은 스탠스가 결정합니다. 선호 위치는 다음 출전 순위에 반영됩니다."
+    : "전열/후열 선호가 출전 순위를 정합니다. 현재 VANGUARD 시작 배치는 순위 1–2 전열, 순위 3 후열이며 전투 중 스탠스가 실제 슬롯 수를 바꿉니다.";
+  return orderedLoadout.length ? `<p class="section-copy">${copy}</p><div class="growth-formation-row">${orderedLoadout.map((id, index) => {
+    const savedIntent = campaign.companionFormation[id] || "BACK";
+    const openingSlot = liveById.get(id)?.slot ?? (index < STANCE_CONFIG.VANGUARD.derivedFrontCount ? "FRONT" : "BACK");
     const label = companionLabel(id);
+    const role = COMPANION_ROLES[roleForCompanion(id)]?.name || "미분류";
     const isDowned = downedIds?.has(id) ?? false;
-    const isLowWard = !isDowned && downedIds === null && slot === "FRONT" && equipmentTierIndexFor(campaign, id, "ward") === 0;
+    const isLowWard = !isDowned && downedIds === null && openingSlot === "FRONT" && equipmentTierIndexFor(campaign, id, "ward") === 0;
     const badge = isDowned
       ? `<span class="formation-integrity-badge is-downed" aria-label="편성 경고: ${escapeHtml(label)} 현재 전열 이탈(DOWNED) 상태">✕</span>`
       : isLowWard
-        ? `<span class="formation-integrity-badge is-low-ward" aria-label="편성 경고: ${escapeHtml(label)} 전열 정예 편성 위험 — 워드 등급 낮음">!</span>`
+        ? `<span class="formation-integrity-badge is-low-ward" aria-label="편성 경고: ${escapeHtml(label)} 출전 전열 배치 위험 — 워드 등급 낮음">!</span>`
         : "";
-    return `<div class="growth-formation-slot rc-lift">${badge}<strong>${escapeHtml(label)}</strong><span>${slot}</span>${interactive ? `<button data-warden-formation="${id}" data-warden-formation-target="${slot === "FRONT" ? "BACK" : "FRONT"}">${slot === "FRONT" ? "후열로" : "전열로"}</button>` : ""}</div>`;
+    const targetIntent = savedIntent === "FRONT" ? "BACK" : "FRONT";
+    return `<div class="growth-formation-slot rc-lift" data-position-rank="${index + 1}">${badge}<span class="formation-position-copy"><small>#${index + 1} · ${liveCompanions?.length ? "현재" : "출전"} ${openingSlot === "FRONT" ? "전열" : "후열"}</small><strong>${escapeHtml(label)}</strong><em>${escapeHtml(role)}</em></span><span class="formation-saved-intent">선호 ${savedIntent}</span>${interactive ? `<button data-warden-formation="${id}" data-warden-formation-target="${targetIntent}" aria-label="${escapeHtml(label)}의 선호 위치를 ${targetIntent}으로 변경">${targetIntent === "FRONT" ? "전열 우선" : "후열 우선"}</button>` : ""}</div>`;
   }).join("")}</div>` : `<p class="section-copy">편성된 동료가 없습니다.</p>`;
 }
 
@@ -549,7 +576,7 @@ function renderCompanionsTab() {
   const data = wardenGrowthData();
   const segments = [
     { id: "list", label: "목록", html: renderCompanionsListSegment(data) },
-    { id: "formation", label: `편성 (전열/후열, 최대 ${MAX_FRONT_SLOTS}전열)`, html: formationRowMarkup(data) },
+    { id: "formation", label: `편성 (출전 순위 · 전열 선호 최대 ${MAX_FRONT_SLOTS})`, html: formationRowMarkup(data) },
   ];
   if (!segments.some((segment) => segment.id === activeCompanionSegment)) activeCompanionSegment = "list";
   return `
@@ -596,9 +623,12 @@ function renderLobby() {
   document.body.classList.remove("defense-playing");
   document.body.style.overflow = "";
   root.className = "defense-lobby";
+  root.dataset.stageId = selected.id;
+  root.style.setProperty("--stage-art", `url("${stageArtPath(selected.id)}")`);
   if (!COMMAND_TABS.some((tab) => tab.id === activeCommandTab)) activeCommandTab = COMMAND_TABS[0].id;
   const sortieTabHtml = `
     <section class="command-hero" aria-labelledby="command-hero-title">
+      <div class="rc-aurora" aria-hidden="true"></div>
       <div class="hero-copy">
         <p class="eyebrow">COMMAND DECK · SECTOR ${String(selected.sequence).padStart(2, "0")}</p>
         <h2 id="command-hero-title">심연의 문을<br /><em>다시 닫아라.</em></h2>
@@ -606,7 +636,8 @@ function renderLobby() {
         <div class="hero-facts"><span><small>현재 목표</small><b>관문 방어</b></span><span><small>다음 위협</small><b>${escapeHtml(selected.bossName)}</b></span><span><small>출전 편성</small><b>${loadout.length}/3 슬롯</b></span></div>
         <button id="start-defense" class="primary-action hero-cta"><span>작전 개시</span><small>${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)} 전선으로</small><b aria-hidden="true">↗</b></button>
       </div>
-      <section class="tactical-map stage-atlas" data-stage-atlas="selected" data-stage-id="${escapeHtml(selected.id)}" data-terrain-pattern="${escapeHtml(selectedPresentation.terrain.patternId)}" aria-labelledby="atlas-title" aria-describedby="atlas-context">
+      <section class="tactical-map stage-atlas" data-stage-atlas="selected" data-stage-id="${escapeHtml(selected.id)}" data-terrain-pattern="${escapeHtml(selectedPresentation.terrain.patternId)}" style="--stage-art: url('${stageArtPath(selected.id)}')" aria-labelledby="atlas-title" aria-describedby="atlas-context">
+        <div class="stage-art-frame" aria-hidden="true"></div>
         <div class="map-grid atlas-contours" aria-hidden="true"></div>
         <div class="map-route route-a" aria-hidden="true"></div><div class="map-route route-b" aria-hidden="true"></div>
         <div class="map-node node-gate" aria-hidden="true"><span>GATE</span><b>관문</b></div><div class="map-node node-seal" aria-hidden="true"><span>BIND</span><b>점유점</b></div><div class="map-node node-threat" aria-hidden="true"><span>THREAT</span><b>위협</b></div>
@@ -626,7 +657,7 @@ function renderLobby() {
           ${STAGES.map((stage, index) => {
             const locked = index > campaign.unlockedStageIndex;
             const cleared = campaign.resolvedIds?.includes(stage.id);
-            return `<button class="stage-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage="${stage.id}" aria-pressed="${stage.id === selected.id}" ${locked ? "disabled" : ""}><span class="stage-index">${String(stage.sequence).padStart(2, "0")}</span><span class="stage-info"><strong>${escapeHtml(stage.name)}</strong><small>${escapeHtml(stage.bossName)}</small></span><span class="stage-state">${locked ? "잠김" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "출전 가능"}</span></button>`;
+            return `<button class="stage-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage="${stage.id}" style="--stage-card-art: url('${stageArtPath(stage.id)}')" aria-pressed="${stage.id === selected.id}" ${locked ? "disabled" : ""}><span class="stage-card-art" aria-hidden="true"></span><span class="stage-index">${String(stage.sequence).padStart(2, "0")}</span><span class="stage-info"><strong>${escapeHtml(stage.name)}</strong><small>${escapeHtml(stage.bossName)}</small></span><span class="stage-state">${locked ? "잠김" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "출전 가능"}</span></button>`;
           }).join("")}
         </div>
       </section>
@@ -808,7 +839,8 @@ function beginSession(stageId) {
   document.body.style.overflow = "hidden";
   root.className = "";
   root.innerHTML = `
-    <section id="defense-battle-surface" data-defense-ready="true" data-defense-input-seq="0" data-defense-skill="" data-defense-move="IDLE" data-defense-state="active" aria-label="심연 방어 전장">
+    <section id="defense-battle-surface" data-defense-ready="true" data-defense-input-seq="0" data-defense-skill="" data-defense-move="IDLE" data-defense-state="active" data-stage-id="${escapeHtml(stageId)}" style="--stage-art: url('${stageArtPath(stageId)}')" aria-label="심연 방어 전장">
+      <div class="battle-stage-art" aria-hidden="true"></div>
       <canvas id="defense-canvas" aria-label="방어 전장"></canvas>
       <div id="world-hud-overlay" aria-hidden="true"></div>
       <div id="defense-edge-hud">
@@ -845,18 +877,29 @@ export class BattleSession {
     this.statusNode = root.querySelector("#battle-status");
     const seed = stableRunSeed(stageId);
     const equipTiers = (ownerId) => Object.fromEntries(EQUIPMENT_SLOTS.map((slot) => [slot, equipmentTierIndexFor(campaign, ownerId, slot)]));
+    const companionLoadout = selectedLoadout();
     this.run = createDefenseRun({
       stageId,
       seed,
-      companionLoadout: selectedLoadout(),
+      companionLoadout,
       rewardIds: campaign.rewardIds ?? [],
       wardenProgress: campaign.wardenProgress,
       wardenEquipment: equipTiers("warden"),
-      companionEquipment: Object.fromEntries(selectedLoadout().map((id) => [id, equipTiers(id)])),
+      companionEquipment: Object.fromEntries(companionLoadout.map((id) => [id, equipTiers(id)])),
       formation: campaign.companionFormation,
     });
     this.motionQuery = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)") ?? null;
     telemetry.startRun({ stageId, seed, rulesVersion: RULES_VERSION, reducedMotion: this.motionQuery?.matches ?? false });
+    const openingSnapshot = getRunSnapshot(this.run);
+    telemetry.recordFormationCommit({
+      formationStance: openingSnapshot.formationStance,
+      savedIntent: Object.fromEntries(companionLoadout.map((id) => [id, campaign.companionFormation[id] || "BACK"])),
+      resolvedCompanionRows: openingSnapshot.companions.map((companion, index) => ({
+        positionRank: index + 1,
+        companionId: companion.companionId,
+        slot: companion.slot,
+      })),
+    });
     this.renderer = null;
     this.audio = new DefenseAudio();
     this.audioTick = null;
@@ -876,7 +919,7 @@ export class BattleSession {
     this.feedbackEventKeys = new Set();
     this.heldKeys = new Set();
     this.listenerCount = 0;
-    this.recordedEliteIds = new Set();
+    this.extractionEvents = [];
     this.terminalHandled = false;
     this.rewardPrompted = false;
     this.selectedRewardId = null;
@@ -884,6 +927,8 @@ export class BattleSession {
     this.bindStartPending = false;
     this.cutsceneEventKeys = new Set();
     this.cutsceneTimer = null;
+    this.cutsceneRelayTimers = [];
+    this.cutsceneQueue = [];
     this.stopped = false;
     this.camera = { x: 0, y: 0 };
     this.focusBeforeGrowth = null;
@@ -1249,11 +1294,8 @@ export class BattleSession {
 
   recordExtraction(snapshot) {
     for (const event of snapshot.events) {
-      const eliteId = event.eliteId ?? event.enemyId;
-      if (event.type !== "ELITE_EXTRACTED" || !eliteId || this.recordedEliteIds.has(eliteId)) continue;
-      this.recordedEliteIds.add(eliteId);
-      campaign = captureElite(campaign, eliteId, event.prototype);
-      void persistCampaign(`${companionLabel(event.prototype)} 동료를 기록했습니다.`);
+      if (event.type !== "ELITE_EXTRACTED") continue;
+      this.extractionEvents.push({ eventId: event.eventId, eliteId: event.eliteId, prototype: event.prototype });
     }
   }
 
@@ -1262,8 +1304,12 @@ export class BattleSession {
       clearTimeout(this.cutsceneTimer);
       this.cutsceneTimer = null;
     }
+    this.cutsceneRelayTimers.forEach((timer) => clearTimeout(timer));
+    this.cutsceneRelayTimers = [];
     this.surface?.querySelector("#defense-cutscene-overlay")?.remove();
     if (this.surface) delete this.surface.dataset.defenseCutscene;
+    const nextEntry = this.cutsceneQueue.shift();
+    if (nextEntry && !this.stopped) this.showCutscene(nextEntry.cutscene, nextEntry.event);
   }
 
   presentCutscene(event) {
@@ -1271,34 +1317,93 @@ export class BattleSession {
     const key = cutsceneEventKey(event);
     if (!cutscene || !key || this.cutsceneEventKeys.has(key)) return;
     this.cutsceneEventKeys.add(key);
-    this.dismissCutscene();
+    const entry = { cutscene, event };
+    if (this.surface?.querySelector("#defense-cutscene-overlay")) {
+      this.cutsceneQueue.push(entry);
+      return;
+    }
+    this.showCutscene(cutscene, event);
+  }
+
+  showCutscene(cutscene, event = null) {
     const overlay = document.createElement("section");
     overlay.id = "defense-cutscene-overlay";
     overlay.className = "defense-cutscene";
     overlay.dataset.cutsceneEvent = cutscene.eventType;
+    overlay.dataset.captionMode = cutscene.captionMode ?? "dialogue";
     overlay.setAttribute("role", "status");
     overlay.setAttribute("aria-live", "polite");
+    overlay.setAttribute("aria-atomic", "true");
+
+    const frame = document.createElement("div");
+    frame.className = "cutscene-frame";
+    const heading = document.createElement("header");
+    heading.className = "cutscene-heading";
+    const kicker = document.createElement("span");
+    kicker.className = "cutscene-kicker";
+    kicker.textContent = cutscene.captionMode === "narration" ? "IN-SCENE CAPTION" : "CINEMATIC RELAY";
     const title = document.createElement("h2");
     title.textContent = cutscene.title;
-    overlay.append(title);
-    cutscene.lines.forEach((line) => {
+    heading.append(kicker, title);
+
+    const beatNode = document.createElement("div");
+    beatNode.className = "cutscene-beat";
+    const beats = cutscene.beats?.length
+      ? cutscene.beats
+      : cutscene.lines.map((text, index) => ({
+        index,
+        text,
+        captionMode: cutscene.captionMode ?? "dialogue",
+        relay: { sequence: index + 1, speaker: cutscene.captionMode === "narration" ? "narrator" : `speaker-${index % 2 === 0 ? "a" : "b"}` },
+        timing: { startMs: index * 2400 },
+      }));
+    const speakerLabels = {
+      narrator: "NARRATION",
+      "speaker-a": "WARDEN CHANNEL",
+      "speaker-b": "FARWATCH RELAY",
+    };
+    const renderBeat = (beat) => {
+      beatNode.dataset.beat = String(beat.index);
+      beatNode.dataset.speaker = beat.relay.speaker;
+      const speaker = document.createElement("span");
+      speaker.className = "cutscene-speaker";
+      speaker.textContent = speakerLabels[beat.relay.speaker] ?? beat.relay.speaker;
       const copy = document.createElement("p");
-      copy.textContent = line;
-      overlay.append(copy);
-    });
+      copy.className = "cutscene-line";
+      copy.textContent = beat.text;
+      const progress = document.createElement("span");
+      progress.className = "cutscene-progress";
+      progress.setAttribute("aria-hidden", "true");
+      beats.forEach((_, index) => {
+        const marker = document.createElement("i");
+        if (index === beat.index) marker.className = "is-current";
+        progress.append(marker);
+      });
+      beatNode.replaceChildren(speaker, copy, progress);
+    };
+    renderBeat(beats[0]);
+
     const dismiss = document.createElement("button");
     dismiss.type = "button";
     dismiss.dataset.cutsceneDismiss = "true";
     dismiss.textContent = "계속";
     dismiss.addEventListener("click", () => this.dismissCutscene());
-    overlay.append(dismiss);
+    frame.append(heading, beatNode, dismiss);
+    overlay.append(frame);
     this.surface.append(overlay);
     this.surface.dataset.defenseCutscene = cutscene.eventType;
-    // Arm the existing 8s auto-dismiss only after this synchronous startup
-    // turn yields. A slow WebGL mount must not consume the visible window
-    // before the battle surface can be observed or interacted with.
+    if (event && !this.stopped) this.audio?.consume?.([event]);
+    beats.slice(1).forEach((beat) => {
+      this.cutsceneRelayTimers.push(setTimeout(() => renderBeat(beat), beat.timing.startMs));
+    });
+    // Arm auto-dismiss only after this synchronous startup turn yields. A slow
+    // WebGL mount must not consume the visible window before the battle can be
+    // observed or interacted with.
     this.cutsceneTimer = setTimeout(() => {
-      this.cutsceneTimer = setTimeout(() => this.dismissCutscene(), 8000);
+      this.cutsceneTimer = setTimeout(
+        () => this.dismissCutscene(),
+        cutscene.timing?.dismissAfterMs ?? 8000,
+      );
     }, 0);
   }
 
@@ -1348,6 +1453,7 @@ export class BattleSession {
       this.audioEventKeys.clear();
     }
     const newAudioEvents = snapshot.events.filter((event) => {
+      if (cutsceneFromEvent(event)) return false;
       const key = `${event.type}:${event.enemyId ?? event.itemId ?? event.rewardId ?? ""}`;
       if (this.audioEventKeys.has(key)) return false;
       this.audioEventKeys.add(key);
@@ -1412,6 +1518,17 @@ export class BattleSession {
     this.surface.dataset.stageId = this.stageId;
     this.surface.dataset.terrainPattern = presentation.terrain.patternId;
     this.surface.dataset.visualScale = String(VISUAL_ACTOR_SCALE);
+    this.surface.dataset.defenseState = this.userPaused
+      ? "paused"
+      : snapshot.terminal
+        ? snapshot.terminal.toLowerCase()
+        : snapshot.growthOffer
+          ? "growth"
+          : snapshot.rewardOffer
+            ? "reward"
+            : snapshot.tick < TICK_RATE * 3
+              ? "starting"
+              : "active";
     this.statusNode.textContent = this.userPaused
       ? "사용자 일시 정지"
       : snapshot.growthOffer
@@ -1422,7 +1539,7 @@ export class BattleSession {
             ? "전투 종료"
             : `시간 ${Math.floor(snapshot.tick / TICK_RATE)}초 · Lv.${snapshot.commander.level}`;
     root.querySelector("#battle-objective").textContent = presentation.mapLabels.objective;
-    const loopState = loopPresentation(snapshot);
+    const loopState = loopPresentation(snapshot, { userPaused: this.userPaused });
     root.querySelector("#battle-loop-phase").textContent = loopState.phaseLabel;
     root.querySelector("#battle-pressure-state").textContent = loopState.pressureLabel;
     root.querySelector("#battle-growth-state").textContent = loopState.growthLabel;
@@ -1862,7 +1979,7 @@ export class BattleSession {
     const segments = [
       { id: "stats", label: "스탯", html: `<div class="growth-stat-grid">${wardenStatsMarkup(data, false)}</div>` },
       { id: "inventory", label: "인벤토리", html: `<div class="growth-equip-grid">${equipmentOwnersMarkup(data, false)}</div>` },
-      { id: "companions", label: "동료", html: formationRowMarkup(data, false, downedIds) },
+      { id: "companions", label: "동료", html: formationRowMarkup(data, false, downedIds, snapshot.companions) },
     ];
     if (!segments.some((segment) => segment.id === this.pauseOverlaySegment)) this.pauseOverlaySegment = "stats";
     const markup = `
@@ -1960,6 +2077,14 @@ export class BattleSession {
       return;
     }
     this.terminalHandled = true;
+    // Extraction persistence now happens once at terminal from the ordered
+    // per-run event list, so duplicate events within a single run only
+    // promote to one canonical campaign mutation.
+    const campaignAfterExtraction = applyEliteExtractionEvents(campaign, this.extractionEvents);
+    if (campaignAfterExtraction !== campaign) {
+      campaign = campaignAfterExtraction;
+      await persistCampaign("동료를 기록했습니다.");
+    }
     // Level-up toast (IA screen #9): Echo Core (permanent-stat currency) is
     // only ever granted at campaign-resolution points (elite capture / boss
     // kill, see campaign-state.js echoCoreEarned) — there is no mid-battle
@@ -1971,7 +2096,6 @@ export class BattleSession {
     const echoDelta = echoCoreEarned(campaign) - echoBefore;
     telemetry.recordRunResult({ outcome, rewardId: this.selectedRewardId, campaignComplete: complete, stageId: this.stageId, tick: snapshot.tick });
     await persistCampaign(outcome === "defeat" ? "패배 기록을 저장했습니다." : "방어 기록과 보상을 저장했습니다.");
-    root.querySelector(".defense-reward")?.remove();
     if (outcome !== "defeat" && echoDelta > 0) {
       this.showToast(`<h2>LV UP · 진행 기록</h2><p>Echo Core +${echoDelta} (누적 ${echoCoreEarned(campaign)})</p>`, { className: "defense-toast-levelup" });
     }

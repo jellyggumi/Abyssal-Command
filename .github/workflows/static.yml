@@ -32,6 +32,10 @@ env:
     assets/images/battle/echo-rusher-frame-00.png assets/images/battle/echo-rusher-frame-01.png
     assets/images/battle/echo-rusher-frame-02.png assets/images/battle/echo-rusher-frame-03.png
     assets/images/battle/world/cinder-span-tactical-paper-plate.webp assets/images/battle/world/cinder-span-topdown-plate.webp
+    assets/images/battle/ui/stages/abyss-chancel.png assets/images/battle/ui/stages/cinder-span.png assets/images/battle/ui/stages/echo-throne-steps.png
+    assets/images/battle/ui/stages/gate-zenith.png assets/images/battle/ui/stages/glass-necropolis.png assets/images/battle/ui/stages/howling-sprawl.png
+    assets/images/battle/ui/stages/shattered-causeway.png assets/images/battle/ui/stages/starless-canal.png
+    assets/images/battle/ui/stages/sunken-bastion.png assets/images/battle/ui/stages/veil-citadel.png
     assets/video/abyssal-surge-defense-survivor-smoke.mp4
     assets/images/battle/glb/terrain/abyss-chancel.glb assets/images/battle/glb/terrain/cinder-span.glb assets/images/battle/glb/terrain/echo-throne-steps.glb
     assets/images/battle/glb/terrain/gate-zenith.glb assets/images/battle/glb/terrain/glass-necropolis.glb assets/images/battle/glb/terrain/howling-sprawl.glb
@@ -44,9 +48,12 @@ env:
     assets/images/battle/glb/companions/anchor-shard.glb assets/images/battle/glb/companions/dawnless-crown.glb assets/images/battle/glb/companions/ember-cohort.glb
     assets/images/battle/glb/companions/lantern-reaver.glb assets/images/battle/glb/companions/pack-warden.glb assets/images/battle/glb/companions/requiem-warden.glb
     assets/images/battle/glb/companions/rift-lens.glb assets/images/battle/glb/companions/throne-echo.glb assets/images/battle/glb/companions/veil-vanguard.glb
-    assets/images/battle/glb/commander/dusk-warden.glb assets/images/battle/glb/vfx/boss-rally-aura.glb assets/images/battle/glb/vfx/companion-downed-fade.glb
+    assets/images/battle/glb/commander/dusk-warden.glb assets/images/battle/glb/vfx/abyss-orb.glb assets/images/battle/glb/vfx/boss-rally-aura.glb
+    assets/images/battle/glb/vfx/companion-downed-fade.glb
     assets/images/battle/glb/vfx/critical-hit-burst.glb assets/images/battle/glb/vfx/echo-warden-awakening.glb assets/images/battle/glb/vfx/gate-breach-shockwave.glb
-    assets/images/battle/glb/vfx/wardens-ward-shield.glb assets/images/battle/glb/props/abyssal-banner.glb assets/images/battle/glb/props/bulwark-brand.glb
+    assets/images/battle/glb/vfx/melee-slash.glb assets/images/battle/glb/vfx/ranged-bolt.glb
+    assets/images/battle/glb/vfx/wardens-ward-shield.glb assets/images/battle/glb/props/abyss-blade.glb assets/images/battle/glb/props/abyssal-banner.glb
+    assets/images/battle/glb/props/arc-caster.glb assets/images/battle/glb/props/bulwark-brand.glb
     assets/images/battle/glb/props/choir-ward-crystal.glb assets/images/battle/glb/props/stillwater-hourglass.glb assets/images/battle/glb/props/warden-lantern.glb
     assets/images/battle/glb/props/tiers/tier-t1.glb assets/images/battle/glb/props/tiers/tier-t2.glb assets/images/battle/glb/props/tiers/tier-t3.glb
     assets/images/battle/glb/props/tiers/tier-t4.glb assets/images/battle/glb/props/tiers/tier-t5.glb

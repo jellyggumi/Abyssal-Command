@@ -455,9 +455,36 @@
       "testDisposition": "retain"
     },
     {
+      "disposition": "delete",
+      "currentPath": "assets/images/battle/glb/previs/anchor-shard.previs.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/glb/props/abyss-blade.glb",
+      "replacementPath": "assets/images/battle/glb/props/abyss-blade.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
       "disposition": "retain",
       "currentPath": "assets/images/battle/glb/props/abyssal-banner.glb",
       "replacementPath": "assets/images/battle/glb/props/abyssal-banner.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/glb/props/arc-caster.glb",
+      "replacementPath": "assets/images/battle/glb/props/arc-caster.glb",
       "extension": ".glb",
       "generator": "scripts/build-defense-asset-manifest.mjs",
       "runtimeReference": true,
@@ -636,6 +663,15 @@
     },
     {
       "disposition": "retain",
+      "currentPath": "assets/images/battle/glb/vfx/abyss-orb.glb",
+      "replacementPath": "assets/images/battle/glb/vfx/abyss-orb.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
       "currentPath": "assets/images/battle/glb/vfx/boss-rally-aura.glb",
       "replacementPath": "assets/images/battle/glb/vfx/boss-rally-aura.glb",
       "extension": ".glb",
@@ -674,6 +710,24 @@
       "disposition": "retain",
       "currentPath": "assets/images/battle/glb/vfx/gate-breach-shockwave.glb",
       "replacementPath": "assets/images/battle/glb/vfx/gate-breach-shockwave.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/glb/vfx/melee-slash.glb",
+      "replacementPath": "assets/images/battle/glb/vfx/melee-slash.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/glb/vfx/ranged-bolt.glb",
+      "replacementPath": "assets/images/battle/glb/vfx/ranged-bolt.glb",
       "extension": ".glb",
       "generator": "scripts/build-defense-asset-manifest.mjs",
       "runtimeReference": true,
@@ -1833,6 +1887,96 @@
     },
     {
       "disposition": "retain",
+      "currentPath": "assets/images/battle/ui/stages/abyss-chancel.png",
+      "replacementPath": "assets/images/battle/ui/stages/abyss-chancel.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/ui/stages/cinder-span.png",
+      "replacementPath": "assets/images/battle/ui/stages/cinder-span.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/ui/stages/echo-throne-steps.png",
+      "replacementPath": "assets/images/battle/ui/stages/echo-throne-steps.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/ui/stages/gate-zenith.png",
+      "replacementPath": "assets/images/battle/ui/stages/gate-zenith.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/ui/stages/glass-necropolis.png",
+      "replacementPath": "assets/images/battle/ui/stages/glass-necropolis.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/ui/stages/howling-sprawl.png",
+      "replacementPath": "assets/images/battle/ui/stages/howling-sprawl.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/ui/stages/shattered-causeway.png",
+      "replacementPath": "assets/images/battle/ui/stages/shattered-causeway.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/ui/stages/starless-canal.png",
+      "replacementPath": "assets/images/battle/ui/stages/starless-canal.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/ui/stages/sunken-bastion.png",
+      "replacementPath": "assets/images/battle/ui/stages/sunken-bastion.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/ui/stages/veil-citadel.png",
+      "replacementPath": "assets/images/battle/ui/stages/veil-citadel.png",
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
       "currentPath": "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
       "replacementPath": "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
       "extension": ".webp",
@@ -2790,15 +2934,6 @@
     {
       "disposition": "delete",
       "currentPath": "assets/images/battle/glb/previs/abyssal-banner.previs.glb",
-      "replacementPath": null,
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
-    },
-    {
-      "disposition": "delete",
-      "currentPath": "assets/images/battle/glb/previs/anchor-shard.previs.glb",
       "replacementPath": null,
       "extension": ".glb",
       "generator": "scripts/build-defense-asset-manifest.mjs",

@@ -213,6 +213,19 @@ const narrationText = (event) => {
   return event.text.trim().slice(0, MAX_NARRATION_CHARS);
 };
 
+export function audioCueForEvent(event) {
+  if (event?.type === "LORE_SURPRISE_RESOLVED") {
+    return Object.freeze({ eventType: event.type, method: "narrate", cueId: null });
+  }
+  const catalogCue = typeof event?.cue === "string" && byId[event.cue] ? event.cue : null;
+  const cueId = event?.type === "CRITICAL_HIT"
+    ? AUDIO_CUES.criticalHit.id
+    : EVENT_CUE_IDS[event?.type] || catalogCue;
+  return cueId
+    ? Object.freeze({ eventType: event?.type ?? null, method: "play", cueId })
+    : null;
+}
+
 const variantKey = (cueId, event) => {
   if (event?.type === "TERMINAL" && event.outcome) return `${cueId}:TERMINAL:${event.outcome}`;
   return event?.type ? `${cueId}:${event.type}` : "";
@@ -472,15 +485,12 @@ export class DefenseAudio {
     if (!Array.isArray(events)) return;
     events.forEach((event) => {
       if (!this.rememberFeedbackEvent(event)) return;
-      if (event?.type === "LORE_SURPRISE_RESOLVED") {
+      const audioCue = audioCueForEvent(event);
+      if (audioCue?.method === "narrate") {
         this.narrate(event);
-        return;
+      } else if (audioCue?.method === "play") {
+        this.play(audioCue.cueId, event);
       }
-      const catalogCue = typeof event?.cue === "string" && byId[event.cue] ? event.cue : null;
-      const cueId = event?.type === "CRITICAL_HIT"
-        ? AUDIO_CUES.criticalHit.id
-        : EVENT_CUE_IDS[event?.type] || catalogCue;
-      if (cueId) this.play(cueId, event);
     });
   }
 

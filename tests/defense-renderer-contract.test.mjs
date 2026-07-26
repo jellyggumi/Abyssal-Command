@@ -114,6 +114,22 @@ function realtimeBattleHarness() {
   return adapter;
 }
 
+function pressureIndicatorHarness() {
+  const adapter = realtimeBattleHarness();
+  adapter.pressureGroup = new THREE.Group();
+  adapter.pressureLane = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
+  adapter.pressureArrow = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
+  adapter.pressureTargetRing = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
+  adapter.pressureGroup.add(adapter.pressureLane, adapter.pressureArrow, adapter.pressureTargetRing);
+  adapter.pressureGroup.visible = false;
+  adapter.scene.add(adapter.pressureGroup);
+  return adapter;
+}
+
+function assertNear(actual, expected, message) {
+  assert.ok(Math.abs(actual - expected) < 1e-9, `${message}: expected ${expected}, got ${actual}`);
+}
+
 const CINDER_SPAN_WORLD_ASSETS = [
   "./assets/images/battle/world/cinder-span-topdown-plate.webp",
   "./assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
@@ -272,6 +288,112 @@ test("RealtimeBattle reconciles a supplied snapshot into its real Three.js scene
   assert.equal(adapter.disposed, true);
   assert.equal(adapter.actors.size, 0, "dispose clears all tracked actors");
   assert.equal(adapter.scene, null, "dispose releases the scene reference");
+});
+
+test("RealtimeBattle points gate pressure from the closest live hostile without writing to its snapshot", () => {
+  const adapter = pressureIndicatorHarness();
+  const frame = Object.freeze({
+    gate: Object.freeze({ id: "gate", x: 18000, y: 6000 }),
+    enemies: Object.freeze([
+      Object.freeze({ id: "dead-nearest", x: 17400, y: 6000, status: "DEAD" }),
+      Object.freeze({ id: "far-live", x: 12000, y: 3000, hp: 10 }),
+      Object.freeze({ id: "closest-live", x: 12000, y: 6000, hp: 10 }),
+    ]),
+  });
+  const before = structuredClone(frame);
+
+  adapter.reconcileActors(frame);
+
+  assert.deepEqual(frame, before, "reconciliation must leave the frozen simulation snapshot unchanged");
+  assert.equal(adapter.pressureGroup.visible, true, "a gate with a live hostile shows the pressure indicator");
+  assert.equal(adapter.pressureLane.visible, true);
+  assert.equal(adapter.pressureArrow.visible, true);
+  assert.equal(adapter.pressureTargetRing.visible, true);
+  assertNear(adapter.pressureTargetRing.position.x, 7, "the threatened-target ring follows the gate X");
+  assertNear(adapter.pressureTargetRing.position.z, 0, "the threatened-target ring follows the gate Z");
+
+  const headingX = Math.sin(adapter.pressureLane.rotation.y);
+  const headingZ = Math.cos(adapter.pressureLane.rotation.y);
+  const halfLength = adapter.pressureLane.scale.z / 2;
+  const laneStartX = adapter.pressureLane.position.x - headingX * halfLength;
+  const laneStartZ = adapter.pressureLane.position.z - headingZ * halfLength;
+  const laneEndX = adapter.pressureLane.position.x + headingX * halfLength;
+  const laneEndZ = adapter.pressureLane.position.z + headingZ * halfLength;
+  assertNear(laneStartX, 0, "the lane begins at the closest live hostile X");
+  assertNear(laneStartZ, 0, "the lane begins at the closest live hostile Z");
+  assertNear(laneEndX, adapter.pressureArrow.position.x, "the lane ends at the gate-facing arrow X");
+  assertNear(laneEndZ, adapter.pressureArrow.position.z, "the lane ends at the gate-facing arrow Z");
+  assert.ok(adapter.pressureLane.scale.z > 0, "separated hostile and gate produce a non-zero lane");
+  assert.ok(
+    adapter.pressureArrow.position.x > laneStartX
+      && adapter.pressureArrow.position.x < adapter.pressureTargetRing.position.x,
+    "the arrow points from the hostile toward, but not through, the gate ring",
+  );
+  adapter.dispose();
+});
+
+test("RealtimeBattle hides stale pressure and leaves only the target ring at zero separation", () => {
+  const adapter = pressureIndicatorHarness();
+  const gate = Object.freeze({ id: "gate", x: 18000, y: 6000 });
+
+  adapter.reconcileActors({
+    gate,
+    enemies: [{ id: "live", x: 12000, y: 6000, hp: 10 }],
+  });
+  assert.equal(adapter.pressureGroup.visible, true, "precondition: a live threat shows pressure");
+
+  adapter.reconcileActors({ enemies: [{ id: "live", x: 12000, y: 6000, hp: 10 }] });
+  assert.equal(adapter.pressureGroup.visible, false, "no gate hides the entire indicator");
+
+  adapter.reconcileActors({
+    gate,
+    enemies: [
+      { id: "dead-status", x: 12000, y: 6000, status: "DEAD" },
+      { id: "defeated-status", x: 12000, y: 6000, status: "DEFEATED" },
+      { id: "zero-hp", x: 12000, y: 6000, hp: 0 },
+      { id: "inactive", x: 12000, y: 6000, active: false },
+    ],
+  });
+  assert.equal(adapter.pressureGroup.visible, false, "a gate with only dead or inactive hostiles hides pressure");
+
+  adapter.reconcileActors({ gate, enemies: [] });
+  assert.equal(adapter.pressureGroup.visible, false, "an empty hostile roster hides pressure");
+
+  adapter.reconcileActors({
+    gate,
+    enemies: [{ id: "at-gate", x: gate.x, y: gate.y, hp: 10 }],
+  });
+  assert.equal(adapter.pressureGroup.visible, true, "a live hostile at the gate still marks the threatened target");
+  assert.equal(adapter.pressureTargetRing.visible, true, "the target ring remains visible at zero separation");
+  assert.equal(adapter.pressureLane.visible, false, "zero separation suppresses the directionless lane");
+  assert.equal(adapter.pressureArrow.visible, false, "zero separation suppresses the directionless arrow");
+  assertNear(adapter.pressureTargetRing.position.x, 7, "the zero-separation ring remains on the gate X");
+  assertNear(adapter.pressureTargetRing.position.z, 0, "the zero-separation ring remains on the gate Z");
+  adapter.dispose();
+});
+
+test("RealtimeBattle dispose releases every pressure-indicator mesh exactly once", () => {
+  const adapter = pressureIndicatorHarness();
+  const meshes = [adapter.pressureLane, adapter.pressureArrow, adapter.pressureTargetRing];
+  let geometryDisposals = 0;
+  let materialDisposals = 0;
+  for (const mesh of meshes) {
+    mesh.geometry.addEventListener("dispose", () => { geometryDisposals += 1; });
+    mesh.material.addEventListener("dispose", () => { materialDisposals += 1; });
+  }
+
+  adapter.dispose();
+
+  assert.equal(geometryDisposals, meshes.length, "dispose releases each owned pressure geometry");
+  assert.equal(materialDisposals, meshes.length, "dispose releases each owned pressure material");
+  assert.equal(adapter.pressureGroup, null);
+  assert.equal(adapter.pressureLane, null);
+  assert.equal(adapter.pressureArrow, null);
+  assert.equal(adapter.pressureTargetRing, null);
+
+  adapter.dispose();
+  assert.equal(geometryDisposals, meshes.length, "repeated dispose does not release pressure geometries twice");
+  assert.equal(materialDisposals, meshes.length, "repeated dispose does not release pressure materials twice");
 });
 
 test("RealtimeBattle disposes shared skeleton resources once per unique skeleton", () => {

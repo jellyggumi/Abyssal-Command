@@ -1,5 +1,5 @@
 // Contract: every character GLB the battle renderer can instantiate is rigged
-// and carries the full 11-clip action library.
+// with 11 unique base clips; the commander adds exact melee/ranged delivery clips.
 //
 // This exists because the previous rig pipeline shipped defects that were
 // invisible to every other test in this repo -- the models loaded, the scene
@@ -13,7 +13,7 @@
 //     pack-herald.glb put 47% of all weight on one head bone. Both still
 //     "animated" -- they just deformed from the wrong joints.
 //
-// So the assertions here are about weight SHAPE, not just presence.
+// The assertions defend both clip-library completeness and deformation weight shape.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -26,11 +26,16 @@ const GLB_DIR = join(ROOT, "assets/images/battle/glb");
 const RIG_ACTION_KEYS = [
   "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "die", "show",
 ];
+const COMMANDER_GLB = "commander/dusk-warden.glb";
+const COMMANDER_DELIVERY_CLIPS = [
+  "dusk-warden::attack_melee::v01",
+  "dusk-warden::attack_ranged::v01",
+];
 
 // Mirrors battle-realtime-three.js BOSS_MODELS / ENEMY_MODELS /
 // COMPANION_MODELS / COMMANDER_MODEL -- every path an actor can resolve to.
 const CHARACTER_GLBS = [
-  "commander/dusk-warden.glb",
+  COMMANDER_GLB,
   "companions/ember-cohort.glb", "companions/rift-lens.glb", "companions/veil-vanguard.glb",
   "companions/anchor-shard.glb", "companions/throne-echo.glb", "companions/dawnless-crown.glb",
   "companions/pack-warden.glb", "companions/lantern-reaver.glb", "companions/requiem-warden.glb",
@@ -129,6 +134,18 @@ for (const rel of CHARACTER_GLBS) {
     }
     const missing = RIG_ACTION_KEYS.filter((k) => !keys.has(k));
     assert.deepEqual(missing, [], `${rel}: missing clips ${missing.join(",")}`);
+
+    const animationNames = (json.animations ?? []).map((animation) => animation.name);
+    const expectedClipCount = rel === COMMANDER_GLB ? 13 : 11;
+    assert.equal(animationNames.length, expectedClipCount,
+      `${rel}: expected exactly ${expectedClipCount} clips, found ${animationNames.length}`);
+    assert.equal(new Set(animationNames).size, expectedClipCount,
+      `${rel}: clip names must be unique`);
+    if (rel === COMMANDER_GLB) {
+      for (const name of COMMANDER_DELIVERY_CLIPS) {
+        assert.ok(animationNames.includes(name), `${rel}: missing exact delivery clip ${name}`);
+      }
+    }
 
     const wq = jointWeightTotals(glb);
     assert.ok(wq, `${rel}: no skin weights`);

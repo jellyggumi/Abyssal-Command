@@ -248,6 +248,40 @@ export function settleIdleReturn(campaign, { now } = {}) {
   next.idleReturn.totalProgress += awardedProgress;
   return { campaign: next, receipt: idleReceipt("SETTLED", { requestedAt: now, elapsedMs, settledElapsedMs, completedStages, awardedProgress, settledAt: now }) };
 }
+export function applyEliteExtractionEvents(campaign, events) {
+  requireCampaign(campaign);
+  if (!Array.isArray(events)) fail("Extraction events must be passed as an array.");
+  const capturedElitePrototypes = new Map();
+  for (const record of campaign.companionCollection) {
+    for (const eliteId of record.capturedEliteIds) {
+      capturedElitePrototypes.set(eliteId, record.prototype);
+    }
+  }
+  let next = campaign;
+  const eventById = new Map();
+  const newCaptureCount = new Set();
+  for (const event of events) {
+    if (!isPlainObject(event)) fail("Extraction events must be plain objects.");
+    const { eventId, eliteId, prototype } = event;
+    if (!isNonEmptyString(eventId) || !isNonEmptyString(eliteId) || !isNonEmptyString(prototype)) fail("ELITE_EXTRACTED events must include eventId, eliteId, and prototype.");
+    const prior = eventById.get(eventId);
+    if (prior) {
+      if (prior.eliteId !== eliteId || prior.prototype !== prototype) fail("same eventId cannot carry conflicting elite payloads.");
+      continue;
+    }
+    eventById.set(eventId, { eliteId, prototype });
+    const priorPrototype = capturedElitePrototypes.get(eliteId);
+    if (priorPrototype !== undefined) {
+      if (priorPrototype !== prototype) fail("An eliteId cannot be captured by multiple companion prototypes.");
+      continue;
+    }
+    if (newCaptureCount.size > 0) fail("Only one elite handoff may be applied per run.");
+    next = captureElite(next, eliteId, prototype);
+    newCaptureCount.add(eliteId);
+    capturedElitePrototypes.set(eliteId, prototype);
+  }
+  return next;
+}
 export function captureElite(campaign, eliteId, prototype) {
   requireCampaign(campaign);
   if (!isNonEmptyString(eliteId) || !canonicalPrototype(prototype)) fail("eliteId and prototype must be canonical non-empty strings.");

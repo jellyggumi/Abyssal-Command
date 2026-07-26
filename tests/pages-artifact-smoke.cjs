@@ -3,6 +3,26 @@ const assert = require("node:assert/strict");
 const { existsSync, readFileSync } = require("node:fs");
 const { resolve, dirname, relative } = require("node:path");
 
+const STAGE_ART_ASSETS = Object.freeze([
+  "assets/images/battle/ui/stages/cinder-span.png",
+  "assets/images/battle/ui/stages/veil-citadel.png",
+  "assets/images/battle/ui/stages/echo-throne-steps.png",
+  "assets/images/battle/ui/stages/sunken-bastion.png",
+  "assets/images/battle/ui/stages/howling-sprawl.png",
+  "assets/images/battle/ui/stages/glass-necropolis.png",
+  "assets/images/battle/ui/stages/starless-canal.png",
+  "assets/images/battle/ui/stages/shattered-causeway.png",
+  "assets/images/battle/ui/stages/abyss-chancel.png",
+  "assets/images/battle/ui/stages/gate-zenith.png",
+]);
+const COMBAT_GLB_ASSETS = Object.freeze([
+  "assets/images/battle/glb/props/abyss-blade.glb",
+  "assets/images/battle/glb/props/arc-caster.glb",
+  "assets/images/battle/glb/vfx/abyss-orb.glb",
+  "assets/images/battle/glb/vfx/melee-slash.glb",
+  "assets/images/battle/glb/vfx/ranged-bolt.glb",
+]);
+
 const REQUIRED_FILES = [
   "index.html",
   "version.json",
@@ -31,12 +51,14 @@ const REQUIRED_FILES = [
   "assets/images/battle/echo-rusher-frame-03.png",
   "assets/images/battle/world/cinder-span-topdown-plate.webp",
   "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
+  ...STAGE_ART_ASSETS,
   "vendor/three.module.js",
   "vendor/three.core.js",
   "vendor/loaders/GLTFLoader.js",
   "vendor/utils/BufferGeometryUtils.js",
   "vendor/utils/SkeletonUtils.js",
   "assets/images/battle/glb/companions/anchor-shard.glb",
+  ...COMBAT_GLB_ASSETS,
 ];
 
 function argument(name) {
