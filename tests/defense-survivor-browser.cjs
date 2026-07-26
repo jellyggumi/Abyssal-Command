@@ -187,7 +187,10 @@ async function verifyPlaythroughJourney(browser, hosting) {
     const selectedGrowthSkills = new Set();
     const maxImmediateGrowthSelections = 8;
     let growthOfferClosed = false;
-    await growthOffer.waitFor({ state: "visible", timeout: 30000 });
+    // Real WebGL startup and the stage route can exceed 30s on hosted runners.
+    // Keep this presentation-only wait above the observed ~29.5s full journey
+    // without weakening any later growth-choice assertions.
+    await growthOffer.waitFor({ state: "visible", timeout: 60000 });
     for (let selection = 0; selection < maxImmediateGrowthSelections; selection += 1) {
       const choices = await growthOffer.locator("button[data-pick]").evaluateAll((buttons) => buttons.map((button) => button.dataset.pick ?? ""));
       assert.ok(choices.length > 0, "a visible growth offer must contain a selectable real skill");
