@@ -377,7 +377,7 @@ def run_in_blender(args, budgets):
     final_out = Path(args.final_glb_out) if args.final_glb_out else (outdir / ".." / "models-out" / f"{args.asset_id}.glb")
     final_out.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.object.select_all(action="DESELECT")
-    for o in (root, pedestal_obj, rig_obj, body_obj):
+    for o in (root, rig_obj, body_obj):
         o.select_set(True)
     bpy.ops.export_scene.gltf(
         filepath=str(final_out),
@@ -390,7 +390,13 @@ def run_in_blender(args, budgets):
         export_all_influences=False,
         export_def_bones=True,
     )
-    log["steps"].append({"step": "export", "wipBlend": str(wip_blend), "finalGlb": str(final_out)})
+    log["steps"].append({
+        "step": "export",
+        "wipBlend": str(wip_blend),
+        "finalGlb": str(final_out),
+        "pedestalRemoved": True,
+    })
+    log["pedestalRemoved"] = True
     log["status"] = "completed"
     return log
 

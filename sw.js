@@ -1,5 +1,16 @@
 const CACHE_PREFIX = "abyssal-command-defense-survivor-";
 const CACHE_NAME = "abyssal-command-defense-survivor-__CANDIDATE_SHA__";
+// The release workflow rewrites the suffix above into the deployed commit SHA
+// (.github/workflows/static.yml), which rotates CACHE_NAME and lets `activate`
+// drop the previous release's cache. Served locally the suffix stays the
+// literal placeholder, so the cache never rotates -- and because binaries are
+// cache-first below, a rebuilt asset stays invisible forever: the browser
+// keeps replaying the copy it cached on some earlier run. That is a
+// development-only trap (rebuilding all 24 character GLBs changed nothing on
+// screen until the cache was cleared by hand), so detect the unstamped suffix
+// and fall back to network-first for everything. Deployed builds always have a
+// hex SHA here and keep the cache-first binary path intact.
+const IS_RELEASE_BUILD = /^[0-9a-f]{7,40}$/i.test(CACHE_NAME.slice(CACHE_PREFIX.length));
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -87,7 +98,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(fetch(event.request, { cache: "no-store" }));
     return;
   }
-  if (isAppShellRequest(event.request, url)) {
+  if (isAppShellRequest(event.request, url) || !IS_RELEASE_BUILD) {
     event.respondWith(networkFirst(event.request));
     return;
   }

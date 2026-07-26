@@ -69,6 +69,14 @@ const CUE_PROFILES = Object.freeze({
     tone("triangle", 240, 360, 0.18, 0.075),
     tone("sine", 120, 240, 0.2, 0.04, 0.035),
   ]),
+  // Free-orbit camera boundary tick (control-feel-20260725.md §3.3 item 2 /
+  // §3.5): a single very short, low-volume descending click that says "you
+  // hit the wall" without demanding a visual overlay over the moving 3D
+  // world. Gain 0.03 is deliberately below impact-hit's 0.075 so a boundary
+  // push never competes with combat feedback for attention.
+  "camera-clamp": Object.freeze([
+    tone("sawtooth", 90, 60, 0.035, 0.03, 0, 0.004),
+  ]),
 });
 
 const CUE_VARIANTS = Object.freeze({
@@ -153,6 +161,10 @@ const CUE_REFRACTORY_SECONDS = Object.freeze({
   "extraction-ready": 0.12,
   "occupation-captured": 0.12,
   "critical-hit": 0.1,
+  // 0.15s keeps a continuous pitch/zoom push against the clamp from
+  // buzzing (onPointerMove fires many times per second) while still giving
+  // a crisp single tick on first contact (control-feel-20260725.md §3.3).
+  "camera-clamp": 0.15,
 });
 
 const AMBIENCE_LAYERS = Object.freeze([

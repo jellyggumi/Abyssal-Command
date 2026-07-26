@@ -1,0 +1,24 @@
+{
+  "assetId": "dusk-warden-cartoon-albedo-pilot",
+  "source": "god-tibo-imagen",
+  "provider": "private-codex",
+  "model": "gpt-5.4",
+  "requestId": "resp_07fa70dc5e09f71a016a6545f5802481918b599b5ee01a6669",
+  "sessionId": "47a2762e-d5c3-44de-85a4-c305e625a682",
+  "inputReference": "assets/images/battle/pilot/dusk-warden-idle-gti.png",
+  "prompt": "Using the supplied Dusk Warden reference as silhouette and palette guidance, generate an original square 1024x1024 cartoon-render albedo texture study for Abyssal Surge: blackened steel, ash-gray layered cloth, moonless silver edge accents, flat-shaded painterly 2.5D, clean readable material blocks, subtle hand-painted wear, no text, no logos, no copyrighted likeness, no magenta or purple character colors, no background, texture sheet only.",
+  "requested": {
+    "format": "png",
+    "size": "1024x1024"
+  },
+  "observed": {
+    "format": "PNG RGB",
+    "dimensions": [1254, 1254],
+    "sha256": "87e767ddfcb75d8ff2232019540bbae7832dfc2383d71b05133398d6cf529868",
+    "path": "assets/images/battle/pilot/dusk-warden-cartoon-albedo.png"
+  },
+  "rights": "pending-runtime-rights-review",
+  "runtimeEligible": false,
+  "reason": "Concept/texture pilot only; output dimensions differ from requested size and no GLB re-embedding or runtime load/fallback verification has been performed.",
+  "debugEvidence": ".debug-codex-imagegen/request.json and .debug-codex-imagegen/response.json"
+}

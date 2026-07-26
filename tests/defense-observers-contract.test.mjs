@@ -396,6 +396,35 @@ test("audio stop tears down every created Web Audio node and is idempotent", (t)
   assert.equal(context.closeCount, 1);
 });
 
+test("camera-clamp boundary tick is a real cue with its own refractory, independent of the sim event stream", (t) => {
+  FakeAudioContext.instances.length = 0;
+  replaceGlobal(t, "AudioContext", FakeAudioContext);
+  replaceGlobal(t, "webkitAudioContext", undefined);
+  const audio = new DefenseAudio({ reducedMotion: false });
+  assert.equal(audio.start(), true);
+
+  // The cue resolves to a real catalog-authored profile (not a fallback) --
+  // otherwise play() would no-op and the boundary would stay silent.
+  assert.ok(audio.lookup("camera-clamp")?.profile?.length > 0, "camera-clamp must resolve to an authored cue profile");
+
+  // First push against the clamp ticks; an immediate second push inside the
+  // 0.15s refractory is suppressed, so a continuous drag into the wall does
+  // not buzz (control-feel-20260725.md §3.3).
+  assert.equal(audio.play("camera-clamp"), true, "first boundary contact plays the tick");
+  assert.equal(audio.play("camera-clamp"), false, "a second contact within the refractory window is suppressed");
+
+  // The tick is a renderer-side signal, never a simulation event: consuming
+  // a CAMERA_CLAMP-shaped event must not route to any cue (no EVENT_CUE_IDS
+  // entry), keeping it fully out of the observed sim event stream.
+  const played = [];
+  const realPlay = audio.play.bind(audio);
+  audio.play = (cueId, event) => { played.push(cueId); return realPlay(cueId, event); };
+  audio.consume([{ type: "CAMERA_CLAMP" }]);
+  assert.deepEqual(played, [], "no simulation event maps to the camera-clamp cue");
+
+  audio.stop();
+});
+
 test("rendering, telemetry, and audio observation leave the simulation digest unchanged", (t) => {
   replaceGlobal(t, "AudioContext", undefined);
   replaceGlobal(t, "webkitAudioContext", undefined);

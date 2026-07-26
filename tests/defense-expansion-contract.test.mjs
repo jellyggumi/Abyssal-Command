@@ -332,11 +332,26 @@ test("occupation and extraction objectives expose progress before completing onc
     300,
     { castSkills: true, events },
   );
-  const extracted = completedExtraction.snapshot;
-  assert.equal(extracted.extractionProgress.completed, true);
-  assert.equal(extracted.extractionProgress.holdTicks, extracted.extractionProgress.maxHoldTicks);
+  const bindReady = completedExtraction.snapshot;
+  assert.equal(bindReady.extractionProgress.completed, true);
+  assert.equal(bindReady.extractionProgress.ready, true);
+  assert.equal(bindReady.extractionProgress.holdTicks, bindReady.extractionProgress.maxHoldTicks);
+  assert.equal(bindReady.extracted, false, "Bind completion must not auto-extract");
+  assert.equal(bindReady.progress.extracted, 0);
+  assert.equal(bindReady.objectives.extraction.completed, false, "Bind readiness must not complete public extraction");
+  assert.equal(bindReady.enemies.some((enemy) => enemy.class === "boss"), false, "Bind readiness must not spawn the boss");
+  assert.equal(events.some((event) => event.type === "ELITE_EXTRACTED"), false);
+  run = advanceDefenseRun(
+    queueInput(completedExtraction.run, "EXTRACT_ELITE", { enemyId: bindReady.eliteCandidate.enemyId }),
+    1,
+  );
+  const extracted = getRunSnapshot(run);
+  events.push(...extracted.events);
+  assert.equal(extracted.extracted, true);
   assert.equal(extracted.progress.extracted, 1);
+  assert.equal(extracted.companions.filter(({ companionId }) => companionId === bindReady.eliteCandidate.prototype).length, 1);
   assert.equal(events.filter((event) => event.type === "EXTRACTION_COMPLETED").length, 1);
+  assert.equal(events.filter((event) => event.type === "ELITE_EXTRACTED").length, 1);
 });
 
 test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and low-HP focus", async (t) => {
@@ -433,24 +448,39 @@ test("a run given no queued input loses to enemy pressure", () => {
 
 test("a spawned boss applies attack pressure after the public spatial objective route", () => {
   const events = [];
-  const appeared = advanceUntil(
+  const bindReady = advanceUntil(
     createDefenseRun({
       stageId: "gate-zenith",
       seed: 12,
       companionLoadout: FULL_LOADOUT,
       rewardIds: FULL_REWARDS,
     }),
-    (snapshot) => snapshot.enemies.some((enemy) => enemy.class === "boss"),
+    (snapshot) => snapshot.extractionProgress.ready && !snapshot.extracted,
     10000,
     { castSkills: true, events, routeObjectives: true },
   );
-  const boss = appeared.snapshot.enemies.find((enemy) => enemy.class === "boss");
-  assert.ok(boss, "completing Gate, Echo, growth, occupation, and extraction must spawn the boss");
-  assert.equal(appeared.snapshot.extractionProgress.completed, true);
-  assert.equal(appeared.snapshot.progress.extracted, 1);
+  assert.equal(bindReady.snapshot.extractionProgress.completed, true);
+  assert.equal(bindReady.snapshot.progress.extracted, 0, "Bind readiness must not recruit the elite");
+  assert.equal(bindReady.snapshot.objectives.extraction.completed, false, "Bind readiness must not complete public extraction");
+  assert.equal(bindReady.snapshot.enemies.some((enemy) => enemy.class === "boss"), false, "Bind readiness must not spawn the boss");
+
+  const extractedRun = advanceDefenseRun(
+    queueInput(bindReady.run, "EXTRACT_ELITE", { enemyId: bindReady.snapshot.eliteCandidate.enemyId }),
+    1,
+  );
+  const extracted = getRunSnapshot(extractedRun);
+  events.push(...extracted.events);
+  assert.equal(extracted.extracted, true);
+  assert.equal(extracted.progress.extracted, 1);
+  assert.equal(extracted.objectives.extraction.completed, true);
+  assert.equal(extracted.companions.filter(
+    ({ companionId }) => companionId === bindReady.snapshot.eliteCandidate.prototype,
+  ).length, 1);
+  const boss = extracted.enemies.find((enemy) => enemy.class === "boss");
+  assert.ok(boss, "a matching elite extraction must complete the public objective and spawn the boss");
 
   advanceUntil(
-    appeared.run,
+    extractedRun,
     () => events.some((event) => ["COMMANDER_DAMAGED", "GATE_BREACHED"].includes(event.type)
       && event.enemyId === boss.id),
     4000,

@@ -3,7 +3,7 @@ import test from "node:test";
 
 import * as THREE from "../vendor/three.module.js";
 import { BattleVisualizer } from "../battle-visualizer.js";
-import { RealtimeBattle } from "../battle-realtime-three.js";
+import { RealtimeBattle, stageFogRange } from "../battle-realtime-three.js";
 import { ARENA, STAGES, STAGE_PRESENTATION_BY_ID } from "../defense-catalog.js";
 import { advanceDefenseRun, createDefenseRun, getRunDigest, getRunSnapshot } from "../defense-run-simulation.js";
 
@@ -380,6 +380,45 @@ test("Cinder Span artwork availability remains passive to canonical simulation s
     assert.deepEqual(projection, projectionBeforeRender, `artwork availability=${available} does not mutate projection data`);
     assert.deepEqual(snapshot, canonical, `artwork availability=${available} does not mutate the canonical snapshot`);
     assert.equal(getRunDigest(run), digest, `artwork availability=${available} does not alter the deterministic run digest`);
+  }
+});
+test("applyStagePalette writes per-stage fog depth so stages read at distinct atmospheric distances", async () => {
+  const STAGES_FROM_CATALOG = Object.keys(STAGE_PRESENTATION_BY_ID);
+  assert.ok(STAGES_FROM_CATALOG.length >= 10, "fixture assumes the full 10-stage roster");
+
+  // Each stage's applyStagePalette() must land its fog on the exact near/far
+  // stageFogRange() authored for it -- proves the renderer consumed the data
+  // table, not that it happens to look tinted. A fresh harness per stage avoids
+  // the stagePaletteId idempotence guard short-circuiting the second call.
+  const seenFar = new Map();
+  for (const stageId of STAGES_FROM_CATALOG) {
+    const adapter = realtimeBattleHarness();
+    // mount() normally installs scene.fog; the harness bypasses mount(), so
+    // seed it with a deliberately wrong global value to prove the method
+    // overwrites it rather than leaving the mount() baseline in place.
+    adapter.scene.fog = new THREE.Fog(0x000000, 999, 1000);
+    adapter.applyStagePalette(stageId);
+    const expected = stageFogRange(stageId);
+    assert.equal(adapter.scene.fog.near, expected.near, `${stageId} fog.near must equal stageFogRange().near`);
+    assert.equal(adapter.scene.fog.far, expected.far, `${stageId} fog.far must equal stageFogRange().far`);
+    assert.ok(adapter.scene.fog.near < adapter.scene.fog.far, `${stageId} fog near must stay inside far`);
+    seenFar.set(stageId, adapter.scene.fog.far);
+    adapter.dispose();
+  }
+
+  // Differentiation is the whole point: the roster must span a real openness
+  // range, and the two vista stages (Howling Sprawl, Gate Zenith) must read
+  // strictly more open than the two closed motifs (Echo Throne, Starless Canal).
+  const fars = [...seenFar.values()];
+  const spread = Math.max(...fars) / Math.min(...fars);
+  assert.ok(spread >= 1.5, `stage fog depth must span >=1.5x (got ${spread.toFixed(2)}x) for visible per-stage contrast`);
+  for (const openId of ["howling-sprawl", "gate-zenith"]) {
+    for (const closedId of ["echo-throne", "starless-canal"]) {
+      assert.ok(
+        seenFar.get(openId) > seenFar.get(closedId),
+        `${openId} (vista motif) must read more open than ${closedId} (closed motif)`,
+      );
+    }
   }
 });
 test("commander-follow camera is bounded transient frame state and snaps or resets without touching simulation state", async () => {

@@ -167,6 +167,13 @@ export const AUDIO_CUES = freeze({
   extractionReady: { id: "extraction-ready", waveform: "sine", frequency: 360, duration: 0.22 },
   occupationCaptured: { id: "occupation-captured", waveform: "triangle", frequency: 240, duration: 0.18 },
   terminal: { id: "terminal", waveform: "sine", frequency: 120, duration: 0.5 },
+  // Free-orbit camera pitch/zoom boundary tick (control-feel-20260725.md
+  // §3.3/§3.5): a dedicated cue id — NOT a reuse of impact-hit — so its
+  // own refractory bucket and lastCueAt are independent of the constant
+  // combat impact-hit stream, which would otherwise both drown it out and
+  // buzz it. Played renderer-side from app.js's pointer handlers, never
+  // emitted as a simulation event (so it stays out of getRunDigest).
+  cameraClamp: { id: "camera-clamp", waveform: "sawtooth", frequency: 90, duration: 0.035 },
 });
 export const ARCHIVE_RETURN = freeze({
   ruleVersion: RULES_VERSION,
@@ -442,9 +449,64 @@ export const STAGE_TACTICS = freeze({
   },
 });
 
+/**
+ * Seeded per-wave composition variety for non-authored early stages (the most-replayed grind
+ * band). Each slot's alternatives[0] is the authored primary composition; alternatives[1] is a
+ * same-total-count remix drawn ONLY from enemy classes that already appear in that stage's wave
+ * list — so replays vary the enemy mix without introducing off-theme classes or changing the
+ * spawn budget (HP/XP band preserved). buildWaveSchedule seed-selects among these while keeping
+ * the stage's timing/density jitter (a superset of cinder-span's authored, jitter-free variety).
+ * Cinder-span (stage 1) uses CINDER_SPAN_WAVE_PLAN instead; stages 5-10 have no variants yet.
+ */
+export const STAGE_WAVE_VARIANTS = freeze({
+  "veil-citadel": freeze({
+    0: freeze([
+      freeze({ id: "veil-open-rusher-pure", composition: freeze([{ enemy: "rusher", count: 5 }]) }),
+      freeze({ id: "veil-open-rusher-flanker", composition: freeze([{ enemy: "rusher", count: 3 }, { enemy: "flanker", count: 2 }]) }),
+    ]),
+    1: freeze([
+      freeze({ id: "veil-press-flanker-pure", composition: freeze([{ enemy: "flanker", count: 4 }]) }),
+      freeze({ id: "veil-press-flanker-rusher", composition: freeze([{ enemy: "flanker", count: 2 }, { enemy: "rusher", count: 2 }]) }),
+    ]),
+    2: freeze([
+      freeze({ id: "veil-deny-ranged-pure", composition: freeze([{ enemy: "ranged", count: 3 }]) }),
+      freeze({ id: "veil-deny-ranged-flanker", composition: freeze([{ enemy: "ranged", count: 2 }, { enemy: "flanker", count: 1 }]) }),
+    ]),
+  }),
+  "echo-throne": freeze({
+    0: freeze([
+      freeze({ id: "throne-open-flanker-pure", composition: freeze([{ enemy: "flanker", count: 5 }]) }),
+      freeze({ id: "throne-open-flanker-ranged", composition: freeze([{ enemy: "flanker", count: 3 }, { enemy: "ranged", count: 2 }]) }),
+    ]),
+    1: freeze([
+      freeze({ id: "throne-press-ranged-pure", composition: freeze([{ enemy: "ranged", count: 3 }]) }),
+      freeze({ id: "throne-press-ranged-flanker", composition: freeze([{ enemy: "ranged", count: 2 }, { enemy: "flanker", count: 1 }]) }),
+    ]),
+    2: freeze([
+      freeze({ id: "throne-hold-guardian-pure", composition: freeze([{ enemy: "guardian", count: 2 }]) }),
+      freeze({ id: "throne-hold-guardian-ranged", composition: freeze([{ enemy: "guardian", count: 1 }, { enemy: "ranged", count: 1 }]) }),
+    ]),
+  }),
+  "sunken-bastion": freeze({
+    0: freeze([
+      freeze({ id: "bastion-open-rusher-pure", composition: freeze([{ enemy: "rusher", count: 6 }]) }),
+      freeze({ id: "bastion-open-rusher-ranged", composition: freeze([{ enemy: "rusher", count: 4 }, { enemy: "ranged", count: 2 }]) }),
+    ]),
+    1: freeze([
+      freeze({ id: "bastion-press-ranged-pure", composition: freeze([{ enemy: "ranged", count: 4 }]) }),
+      freeze({ id: "bastion-press-ranged-rusher", composition: freeze([{ enemy: "ranged", count: 3 }, { enemy: "rusher", count: 1 }]) }),
+    ]),
+    2: freeze([
+      freeze({ id: "bastion-hold-guardian-pure", composition: freeze([{ enemy: "guardian", count: 2 }]) }),
+      freeze({ id: "bastion-hold-guardian-rusher", composition: freeze([{ enemy: "guardian", count: 1 }, { enemy: "rusher", count: 1 }]) }),
+    ]),
+  }),
+});
+
 const stage = (id, name, bossName, scale, eliteId, eliteKind, eliteCompanion, boss, gateTicks, waves, wavePlan = null) => freeze({
   id, name, bossName, scale, eliteId, eliteKind, eliteCompanion, boss, gateTicks, waves,
   ...(wavePlan ? { wavePlan } : {}),
+  ...(STAGE_WAVE_VARIANTS[id] ? { waveVariants: STAGE_WAVE_VARIANTS[id] } : {}),
   tactics: STAGE_TACTICS[id],
   wavePattern: Object.freeze(["scout", "pressure", "flank", "ranged", "elite", "boss"]),
 });
@@ -574,11 +636,25 @@ export const STAGE_BY_ID = freeze(Object.fromEntries(STAGES.map((entry) => [entr
 const planWaveSources = (stageEntry) => freeze(
   (stageEntry.wavePlan?.length
     ? stageEntry.wavePlan
-    : stageEntry.waves.map(([tick, enemy, count], slot) => freeze({
-      slot,
-      tick,
-      primary: freeze({ enemy, count }),
-    }))),
+    : stageEntry.waves.map(([tick, enemy, count], slot) => {
+      const variants = stageEntry.waveVariants?.[slot];
+      return freeze({
+        slot,
+        tick,
+        primary: freeze({ enemy, count }),
+        // Seeded composition variety for non-authored stages. When present, buildWaveSchedule
+        // seed-selects among these while keeping timing/density jitter. alternatives[0] is always
+        // the authored primary composition, so an unlucky roll never drops below the base wave.
+        ...(variants
+          ? {
+            alternatives: freeze(variants.map((variant) => freeze({
+              id: variant.id,
+              composition: freeze(variant.composition.map((entry) => freeze({ enemy: entry.enemy, count: entry.count }))),
+            }))),
+          }
+          : {}),
+      });
+    })),
 );
 const stagePlanDescriptor = (stageEntry) => {
   const waveSources = planWaveSources(stageEntry);

@@ -12,9 +12,12 @@ import {
 import {
   COMMANDER,
   CUTSCENES,
+  ENEMIES,
   MEASUREMENT_FIXTURE_BUDGET_ID,
   MEASUREMENT_PROFILES,
   SKILLS,
+  STAGES,
+  STAGE_WAVE_VARIANTS,
   XP_GROWTH,
 } from "../defense-catalog.js";
 
@@ -58,35 +61,37 @@ function advanceUntilWithPrevious(run, predicate, maxSteps = 10000) {
 const FULL_LOADOUT = ["ember-cohort", "rift-lens", "veil-vanguard"];
 const FULL_REWARDS = ["abyssal-banner", "bulwark-brand", "stillwater-hourglass"];
 
-function queueObjectiveCommands(run) {
+function queueObjectiveCommands(run, { extractElite = true, castSkills = true, moveOctant = "IDLE" } = {}) {
   const snapshot = getRunSnapshot(run);
   if (snapshot.growthOffer) {
     return queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] });
   }
 
-  let next = queueInput(run, "MOVE", { octant: "IDLE" });
-  for (const skillId of snapshot.commander.skills) {
-    next = queueInput(next, "SKILL_CAST", { skillId });
+  let next = queueInput(run, "MOVE", { octant: moveOctant });
+  if (castSkills) {
+    for (const skillId of snapshot.commander.skills) {
+      next = queueInput(next, "SKILL_CAST", { skillId });
+    }
   }
-  if (snapshot.eliteCandidate && !snapshot.extracted) {
+  if (extractElite && snapshot.eliteCandidate && !snapshot.extracted) {
     next = queueInput(next, "EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
   }
   return next;
 }
 
-function advanceThroughObjectives(run, maxSteps = 12000) {
+function advanceThroughObjectives(run, maxSteps = 12000, options = {}) {
   let next = run;
   for (let step = 0; step < maxSteps && !isTerminalRun(next); step += 1) {
-    next = advanceDefenseRun(queueObjectiveCommands(next), 1);
+    next = advanceDefenseRun(queueObjectiveCommands(next, options), 1);
   }
   return next;
 }
 
-function advanceThroughObjectivesUntil(run, predicate, maxSteps = 12000) {
+function advanceThroughObjectivesUntil(run, predicate, maxSteps = 12000, options = {}) {
   let next = run;
   let previous = getRunSnapshot(next);
   for (let step = 0; step < maxSteps && !isTerminalRun(next); step += 1) {
-    next = advanceDefenseRun(queueObjectiveCommands(next), 1);
+    next = advanceDefenseRun(queueObjectiveCommands(next, options), 1);
     const snapshot = getRunSnapshot(next);
     if (predicate(snapshot)) return { run: next, previous, snapshot };
     previous = snapshot;
@@ -102,6 +107,7 @@ function advanceToGrowthOffer(run, maxSteps = 4000) {
   }
   return next;
 }
+
 function castMeasurementSkillAgainstTarget(profileId, seed = 17) {
   const profile = MEASUREMENT_PROFILES[profileId];
   let run = createDefenseRun({ stageId: "cinder-span", seed, measurementProfileId: profileId });
@@ -129,6 +135,79 @@ function castMeasurementSkillAgainstTarget(profileId, seed = 17) {
 
   assert.fail("the fixed measurement fixture must encounter a target within its active-skill range");
 }
+
+test("enemy XP reward scales with stage difficulty so late-stage level-up cadence tracks scaled enemy HP", () => {
+  const scaled = (value, stageScale) => Math.trunc((value * stageScale) / 100);
+  const firstRusherXp = (stageId) => {
+    const spawned = getRunSnapshot(advanceDefenseRun(createDefenseRun({ stageId, seed: 5 }), 1));
+    const rusher = spawned.enemies.find((enemy) => enemy.class === "rusher");
+    assert.ok(rusher, `${stageId} opening wave must spawn a rusher`);
+    return rusher.xp;
+  };
+
+  const cinderStage = STAGES.find((stage) => stage.id === "cinder-span");
+  const zenithStage = STAGES.find((stage) => stage.id === "gate-zenith");
+  assert.equal(cinderStage.scale, 100, "cinder-span must remain the scale-100 baseline stage");
+
+  // Stage 1 (scale 100) is an exact identity: scaled(xp, 100) === xp. This guards the
+  // determinism baseline — every cinder-span digest fixture must stay byte-identical.
+  assert.equal(firstRusherXp("cinder-span"), ENEMIES.rusher.xp);
+
+  // A late stage scales enemy HP by run.stage.scale; XP now tracks the same factor so
+  // the in-run reward rhythm no longer stalls as the campaign gets harder.
+  assert.equal(firstRusherXp("gate-zenith"), scaled(ENEMIES.rusher.xp, zenithStage.scale));
+  assert.ok(
+    firstRusherXp("gate-zenith") > firstRusherXp("cinder-span"),
+    "a rusher must be worth more XP at gate-zenith than at cinder-span",
+  );
+});
+
+test("early stages replay with seeded enemy-composition variety while preserving the spawn budget", () => {
+  // Data contract: every authored variant remixes the SAME total count using only enemy classes
+  // that already appear in that stage's own wave list — replays change the mix, not the budget.
+  for (const [stageId, slots] of Object.entries(STAGE_WAVE_VARIANTS)) {
+    const stage = STAGES.find((entry) => entry.id === stageId);
+    assert.ok(stage, `${stageId} in STAGE_WAVE_VARIANTS must be a real stage`);
+    const stageEnemyClasses = new Set(stage.waves.map(([, enemy]) => enemy));
+    for (const [slot, alternatives] of Object.entries(slots)) {
+      const [, primaryEnemy, primaryCount] = stage.waves[Number(slot)];
+      assert.deepEqual(
+        alternatives[0].composition.map(({ enemy, count }) => ({ enemy, count })),
+        [{ enemy: primaryEnemy, count: primaryCount }],
+        `${stageId} slot ${slot}: alternatives[0] must be the authored primary composition`,
+      );
+      for (const alternative of alternatives) {
+        const total = alternative.composition.reduce((sum, { count }) => sum + count, 0);
+        assert.equal(total, primaryCount, `${stageId} slot ${slot} (${alternative.id}): total count must equal the authored primary`);
+        for (const { enemy } of alternative.composition) {
+          assert.ok(stageEnemyClasses.has(enemy), `${stageId} slot ${slot} (${alternative.id}): "${enemy}" must already appear in this stage`);
+        }
+      }
+    }
+  }
+
+  // Runtime contract: the seed actually selects among variants for a variant stage, and an
+  // un-varied stage stays on a single composition. selectionId reflects the picked alternative
+  // independent of the ±1 density jitter, so it is the clean variety signal.
+  const openingSelectionId = (stageId, seed) => {
+    let run = createDefenseRun({ stageId, seed });
+    for (let tick = 0; tick < 240 && !isTerminalRun(run); tick += 1) {
+      run = advanceDefenseRun(run, 1);
+      const started = getRunSnapshot(run).events.find(
+        (event) => event.type === "WAVE_VARIANT_STARTED" && event.slot === 0,
+      );
+      if (started) return started.selectionId;
+    }
+    return null;
+  };
+  const seeds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+  const veilSelections = new Set(seeds.map((seed) => openingSelectionId("veil-citadel", seed)));
+  veilSelections.delete(null);
+  assert.ok(veilSelections.size >= 2, `veil-citadel opening wave must vary its composition across seeds (saw ${veilSelections.size})`);
+  const zenithSelections = new Set(seeds.map((seed) => openingSelectionId("gate-zenith", seed)));
+  zenithSelections.delete(null);
+  assert.equal(zenithSelections.size, 1, "gate-zenith has no authored variants, so its opening wave keeps one composition");
+});
 
 test("equal seeds and identical inputs produce identical deterministic digests", () => {
   let left = createDefenseRun({ stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] });
@@ -217,9 +296,121 @@ test("growth selection debits the reached-level threshold and preserves XP carry
     "later selection must debit the threshold for the level being left and retain overflow",
   );
 });
+test("Bind readiness does not extract an elite; matching input extracts once and FIFO rejects a duplicate", () => {
+  const initial = createDefenseRun({
+    stageId: "cinder-span",
+    seed: 9,
+    companionLoadout: FULL_LOADOUT,
+    rewardIds: FULL_REWARDS,
+  });
+  const candidateReady = advanceThroughObjectivesUntil(
+    initial,
+    (snapshot) => Boolean(snapshot.eliteCandidate),
+    3000,
+  );
+  const candidate = candidateReady.snapshot.eliteCandidate;
+  assert.ok(candidate, "defeating the post-Gate elite must expose its Echo candidate");
+  assert.equal(candidateReady.snapshot.extracted, false);
+  assert.equal(candidateReady.snapshot.progress.extracted, 0);
+  assert.deepEqual(
+    candidateReady.snapshot.companions.map(({ companionId }) => companionId),
+    FULL_LOADOUT,
+    "candidate readiness must not add an automatic companion",
+  );
 
-test("an elite can be extracted only after the spatial objective chain and only once", () => {
-  const ready = advanceThroughObjectivesUntil(
+  let run = candidateReady.run;
+  let snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer) {
+    run = advanceDefenseRun(queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] }), 1);
+  }
+  run = advanceDefenseRun(queueInput(run, "EXTRACT_ELITE", { enemyId: candidate.enemyId }), 1);
+  const routed = getRunSnapshot(run);
+  const preReadyRejection = routed.events.find((event) => event.type === "EXTRACTION_REJECTED");
+  assert.equal(routed.extracted, false, "a pre-Bind command cannot extract");
+  assert.equal(routed.progress.extracted, 0);
+  assert.ok(preReadyRejection);
+  assert.equal(preReadyRejection.reason, "EXTRACTION_HOLD_INCOMPLETE");
+  assert.equal(preReadyRejection.routeStarted, true);
+
+  const bindReady = advanceThroughObjectivesUntil(
+    run,
+    (next) => next.extractionProgress.ready,
+    3000,
+    { extractElite: false },
+  );
+  snapshot = bindReady.snapshot;
+  assert.equal(snapshot.extractionProgress.completed, true);
+  assert.equal(snapshot.extractionProgress.ready, true);
+  assert.equal(snapshot.extracted, false, "Bind completion is readiness, not player extraction");
+  assert.equal(snapshot.progress.extracted, 0);
+  assert.equal(snapshot.objectives.extraction.completed, false, "Bind readiness is not public objective completion");
+  assert.equal(snapshot.objectives.phase, "extraction");
+  assert.equal(snapshot.bossSpawned, false, "the boss remains gated until player extraction");
+  assert.deepEqual(snapshot.companions.map(({ companionId }) => companionId), FULL_LOADOUT);
+  const bindEvent = snapshot.events.find((event) => event.type === "EXTRACTION_COMPLETED");
+  assert.ok(bindEvent, "Bind readiness must emit EXTRACTION_COMPLETED");
+  assert.equal(snapshot.events.some((event) => event.type === "ELITE_EXTRACTED"), false);
+
+  run = bindReady.run;
+  snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer) {
+    run = advanceDefenseRun(queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] }), 1);
+  }
+  const wrong = getRunSnapshot(advanceDefenseRun(
+    queueInput(run, "EXTRACT_ELITE", { enemyId: "wrong-enemy-id" }),
+    1,
+  ));
+  assert.equal(wrong.extracted, false);
+  assert.equal(wrong.progress.extracted, 0);
+  assert.deepEqual(wrong.companions.map(({ companionId }) => companionId), FULL_LOADOUT);
+  assert.ok(wrong.events.some((event) => event.type === "EXTRACTION_REJECTED"));
+
+  const successfulRun = advanceDefenseRun(
+    queueInput(
+      queueInput(run, "EXTRACT_ELITE", { enemyId: candidate.enemyId }),
+      "EXTRACT_ELITE",
+      { enemyId: candidate.enemyId },
+    ),
+    1,
+  );
+  const successful = getRunSnapshot(successfulRun);
+  assert.equal(successful.extracted, true);
+  assert.equal(successful.progress.extracted, 1);
+  assert.equal(successful.companions.filter(({ companionId }) => companionId === candidate.prototype).length, 1);
+  assert.equal(successful.objectives.extraction.completed, true, "the accepted extraction completes the public objective");
+  assert.equal(successful.objectives.phase, "boss-kill");
+  assert.equal(successful.bossSpawned, true, "completed extraction unlocks the boss when its existing gate conditions hold");
+  const extractedEvent = successful.events.find((event) => event.type === "ELITE_EXTRACTED");
+  assert.ok(extractedEvent);
+  assert.equal(successful.events.filter((event) => event.type === "ELITE_EXTRACTED").length, 1);
+  const sameTickDuplicate = successful.events.find(
+    (event) => event.type === "INPUT_REJECTED"
+      && event.inputType === "EXTRACT_ELITE"
+      && event.reason === "ELITE_ALREADY_EXTRACTED",
+  );
+  assert.ok(sameTickDuplicate, "a same-tick duplicate is rejected after the first extraction");
+  assert.ok(extractedEvent.eventSequence < sameTickDuplicate.eventSequence, "same-tick extraction inputs are processed FIFO");
+  assert.ok(bindEvent.eventSequence < extractedEvent.eventSequence, "Bind readiness must precede player extraction");
+  const accepted = successful.events.find((event) => event.type === "INPUT_ACCEPTED" && event.inputType === "EXTRACT_ELITE");
+  assert.ok(accepted);
+  assert.ok(extractedEvent.eventSequence < accepted.eventSequence, "extraction event must precede input acknowledgement");
+
+  const duplicate = getRunSnapshot(advanceDefenseRun(
+    queueInput(successfulRun, "EXTRACT_ELITE", { enemyId: candidate.enemyId }),
+    1,
+  ));
+  assert.equal(duplicate.extracted, true);
+  assert.equal(duplicate.progress.extracted, 1);
+  assert.deepEqual(
+    duplicate.companions.map(({ companionId }) => companionId),
+    successful.companions.map(({ companionId }) => companionId),
+  );
+  assert.equal(duplicate.events.some((event) => event.type === "ELITE_EXTRACTED"), false);
+  assert.ok(duplicate.events.some((event) => event.type === "INPUT_REJECTED" && event.inputType === "EXTRACT_ELITE"));
+});
+
+test("an expired elite Bind window reaches terminal defeat before queued extraction can mutate state", () => {
+  const candidateReady = advanceThroughObjectivesUntil(
     createDefenseRun({
       stageId: "cinder-span",
       seed: 9,
@@ -227,31 +418,51 @@ test("an elite can be extracted only after the spatial objective chain and only 
       rewardIds: FULL_REWARDS,
     }),
     (snapshot) => Boolean(snapshot.eliteCandidate),
-    3000,
+    5000,
   );
-  const candidate = ready.snapshot.eliteCandidate;
-  assert.ok(candidate, "defeating the post-Gate elite must expose its Echo candidate");
-
-  let run = advanceDefenseRun(
-    queueInput(ready.run, "EXTRACT_ELITE", { enemyId: candidate.enemyId }),
+  const candidate = candidateReady.snapshot.eliteCandidate;
+  assert.ok(candidate);
+  let run = candidateReady.run;
+  let snapshot = getRunSnapshot(run);
+  if (snapshot.growthOffer) {
+    run = advanceDefenseRun(queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] }), 1);
+  }
+  const atOccupation = advanceThroughObjectivesUntil(
+    run,
+    (next) => next.occupationProgress.holdTicks > 0,
+    500,
+    { extractElite: false, moveOctant: "W" },
+  );
+  assert.ok(atOccupation.snapshot.occupationProgress.holdTicks > 0);
+  const occupation = advanceThroughObjectivesUntil(
+    atOccupation.run,
+    (next) => next.occupationProgress.captured,
+    500,
+    { extractElite: false, moveOctant: "IDLE" },
+  );
+  assert.equal(occupation.snapshot.occupationProgress.captured, true);
+  const expired = advanceThroughObjectivesUntil(
+    occupation.run,
+    (next) => next.extractionProgress.failed,
+    1000,
+    { extractElite: false, moveOctant: "IDLE" },
+  );
+  snapshot = expired.snapshot;
+  assert.equal(snapshot.extractionProgress.failed, true);
+  assert.ok(snapshot.tick > snapshot.extractionProgress.expiresAt);
+  assert.equal(snapshot.terminal, "DEFEAT");
+  assert.equal(isTerminalRun(expired.run), true);
+  const rejected = getRunSnapshot(advanceDefenseRun(
+    queueInput(expired.run, "EXTRACT_ELITE", { enemyId: candidate.enemyId }),
     1,
-  );
-  const routing = getRunSnapshot(run);
-  assert.equal(routing.extracted, false, "the extraction command cannot bypass occupation and Bind holds");
-  assert.ok(routing.events.some((event) => event.type === "EXTRACTION_REJECTED"
-    && event.reason === "EXTRACTION_HOLD_INCOMPLETE"
-    && event.routeStarted === true));
-
-  const completed = advanceThroughObjectivesUntil(run, (snapshot) => snapshot.extracted, 3000);
-  run = completed.run;
-  assert.equal(completed.snapshot.extracted, true);
-  assert.equal(completed.snapshot.companions.filter((entry) => entry.companionId === "ember-cohort").length, 1);
-
-  const repeat = advanceDefenseRun(queueInput(run, "EXTRACT_ELITE", { enemyId: candidate.enemyId }), 1);
-  assert.deepEqual(
-    getRunSnapshot(repeat).companions.map((entry) => entry.companionId),
-    completed.snapshot.companions.map((entry) => entry.companionId),
-  );
+  ));
+  assert.equal(rejected.terminal, "DEFEAT");
+  assert.equal(rejected.tick, snapshot.tick, "queued input is not processed after terminal defeat");
+  assert.equal(rejected.extracted, false);
+  assert.deepEqual(rejected.progress, snapshot.progress);
+  assert.deepEqual(rejected.companions, snapshot.companions);
+  assert.deepEqual(rejected.extractionProgress, snapshot.extractionProgress);
+  assert.equal(rejected.events.some((event) => event.type === "ELITE_EXTRACTED"), false);
 });
 
 test("boss waits for its stage gate and cleared authored waves; final completion is terminal", () => {

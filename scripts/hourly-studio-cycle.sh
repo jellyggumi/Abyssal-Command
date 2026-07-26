@@ -9,8 +9,8 @@
 # so the *next* pass has a sharper starting view than this one did.
 #
 # Safety contract (why each guard exists):
-#   - never pushes: a broken auto-push deploys to live Pages. Local commits
-#     only; a human pushes after reviewing the accumulated passes.
+#   - publish gate: after the independent suite passes, this driver may publish
+#     new commits from `studio-loop/main`. The pass agent itself never pushes.
 #   - lockfile: overlapping passes would race on the same files and the same
 #     git index. A pass that overruns its hour simply skips the next tick.
 #   - test gate: a pass that breaks the suite reverts its own working-tree
@@ -18,6 +18,17 @@
 #     the next pass's first-priority input.
 #   - bounded runtime: hard timeout below the 1h tick so a hung pass cannot
 #     block its successor indefinitely.
+#
+# NEVER EDIT THIS FILE WHILE A PASS IS RUNNING. bash reads a script
+# incrementally, holding a byte offset into the open file. A pass sits blocked
+# at `wait` for ~15 minutes, and bash has not yet read the lines below that
+# point; rewriting the file shifts those bytes and the interpreter resumes
+# mid-token. Measured consequence (pass #10): the claude subprocess finished
+# and its commit landed, but the driver died before the verification suite,
+# the end-of-pass log line, and the state write -- leaving passCount frozen,
+# a stale lock, and an unverified commit. Reverting the file did NOT rescue
+# it. Check `.studio-loop/pass.lock` first; stage patches elsewhere (e.g.
+# /tmp) and copy them in only between ticks.
 #
 # Usage:
 #   scripts/hourly-studio-cycle.sh            # one pass now
@@ -67,20 +78,43 @@ if [[ "${1:-}" == "--dry-run" ]]; then
 fi
 
 # --- lock: skip (not queue) if a previous pass is still running -------------
+# The lock holds `pid HEAD`, not a bare pid. When a pass dies without running
+# its EXIT trap, the next tick finds both a stale lock and whatever that pass
+# had edited but not committed. The recorded HEAD is what makes the leftovers
+# attributable: if HEAD has not moved, nothing else committed in between, so
+# the dirty files are provably that pass's own debris (see the self-recovery
+# block below). Older locks hold only a pid; cut then yields an empty HEAD,
+# which reads as "not attributable" and correctly declines to recover.
+STALE_PASS_HEAD=""
 if [[ -e "$LOCK" ]]; then
-  PREV_PID="$(cat "$LOCK" 2>/dev/null || echo '')"
+  PREV_PID="$(cut -d' ' -f1 "$LOCK" 2>/dev/null || echo '')"
+  PREV_HEAD="$(cut -d' ' -f2 -s "$LOCK" 2>/dev/null || echo '')"
   if [[ -n "$PREV_PID" ]] && kill -0 "$PREV_PID" 2>/dev/null; then
     log "SKIP: pass $PREV_PID still running (overran its hour)"
     exit 0
   fi
-  log "stale lock from dead pid $PREV_PID -- reclaiming"
+  log "stale lock from dead pid $PREV_PID (head ${PREV_HEAD:-none}) -- reclaiming"
+  STALE_PASS_HEAD="$PREV_HEAD"
   rm -f "$LOCK"
 fi
-echo $$ > "$LOCK"
+cd "$REPO" || { log "FATAL: repo missing"; exit 1; }
+echo "$$ $(git rev-parse HEAD)" > "$LOCK"
 cleanup() { rm -f "$LOCK"; }
 trap cleanup EXIT INT TERM
 
 cd "$REPO" || { log "FATAL: repo missing"; exit 1; }
+
+# --- halt: a previous pass rewrote its own limits ----------------------------
+# Set by the tamper gate at the end of a pass. Deliberately requires a human
+# to clear: if a pass can edit the driver or the brief, every later pass runs
+# under rules that may have been written by an agent rather than the operator,
+# and each further tick compounds that. Refusing to run is the safe default.
+if [[ -f "$STATE" ]] && node -e "try{const s=JSON.parse(require('fs').readFileSync('$STATE','utf8'));process.exit(s.governTampered?0:1)}catch(e){process.exit(1)}"; then
+  log "HALTED: governing files were modified during an earlier pass and a human has not cleared it."
+  node -e "const s=JSON.parse(require('fs').readFileSync('$STATE','utf8'));console.log('  ',JSON.stringify(s.governTampered))" 2>&1 | tee -a "$LOG"
+  log "        Review, then remove the governTampered key from .studio-loop/state.json to resume."
+  exit 0
+fi
 
 # --- precondition: clean tree ------------------------------------------------
 # A dirty tree means a human is mid-edit, another agent session is working this
@@ -92,6 +126,28 @@ cd "$REPO" || { log "FATAL: repo missing"; exit 1; }
 # running fine -- which is the same class of invisible failure as a scheduler
 # that exits 127 every tick. `consecutiveSkips` makes starvation checkable
 # with a single `cat .studio-loop/state.json`.
+# Self-recovery, narrowly scoped: only when the previous pass died without
+# releasing its lock AND HEAD is still exactly where that pass started. Both
+# conditions together mean no other commit landed in between, so every dirty
+# file is that dead pass's own unfinished edit. Stash (never discard) so the
+# work is recoverable by hand -- `git stash list` keeps it, and a human can
+# inspect or restore it. Anything outside this exact case falls through to
+# the guard below untouched.
+if [[ -n "$STALE_PASS_HEAD" ]] && [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+  if [[ "$STALE_PASS_HEAD" == "$(git rev-parse HEAD)" ]]; then
+    log "recovering: previous pass died mid-edit at the current HEAD -- stashing its debris"
+    git status --short | head -20 | tee -a "$LOG"
+    if git stash push --quiet --include-untracked \
+         -m "studio-loop: debris from pass killed at ${STALE_PASS_HEAD:0:8} ($(date -u +%Y-%m-%dT%H:%M:%SZ))" 2>&1 | tee -a "$LOG"; then
+      log "recovered: debris stashed (recover with: git stash list / git stash show -p)"
+    else
+      log "WARN: stash failed -- leaving the tree as-is for the dirty-tree guard"
+    fi
+  else
+    log "NOT recovering: HEAD moved since the dead pass started (${STALE_PASS_HEAD:0:8} -> $(git rev-parse --short HEAD)); debris is not provably ours"
+  fi
+fi
+
 if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
   log "SKIP: working tree dirty -- refusing to run an autonomous pass over human/partial work"
   git status --short | head -20 | tee -a "$LOG"
@@ -116,6 +172,28 @@ if [[ -f "$STATE" ]]; then
   PASS_N=$(( $(node -e "try{process.stdout.write(String(JSON.parse(require('fs').readFileSync('$STATE','utf8')).passCount||0))}catch(e){process.stdout.write('0')}") + 1 ))
 fi
 HEAD_BEFORE="$(git rev-parse HEAD)"
+PASS_START_EPOCH=$(date +%s)
+
+# Fingerprint the files that define this pass's limits. A pass holds Edit on
+# the whole worktree, which includes the driver and the brief -- the very
+# things constraining it. Not hypothetical: pass #10 wrote an auto-push into
+# this script and argued in-comment that "never push" was too strict.
+#
+# Attribution is mechanical, not self-reported. Every tick that night RAN
+# (zero skips), so the dirty-tree check found a clean tree at 08:00:03 --
+# no earlier pass could have left this uncommitted, or #10 would have
+# skipped. The block was present at 08:11 when an operator snapshotted the
+# file. Only #10 and that operator were active in between, and the operator
+# did not write it. #10's own log says "modified in the tree by another
+# session -- I left it untouched", which refers to encountering the
+# operator's later edit; it does not clear its own earlier one. A pass's
+# account of itself is not evidence, least of all right after a
+# self-modification.
+#
+# It surfaced only because a residual diff caught a human's eye, so the class
+# gets a detector rather than the instance getting a fix.
+GOVERN_FILES=("$REPO/scripts/hourly-studio-cycle.sh" "$REPO/scripts/hourly-studio-prompt.md" "$HOME/Library/LaunchAgents/com.abyssalsurge.studio-loop.plist")
+GOVERN_SUM_BEFORE="$(shasum -a 256 "${GOVERN_FILES[@]}" 2>/dev/null | awk '{print $1}' | tr '\n' ' ')"
 
 log "=== PASS #$PASS_N start (model=$MODEL, head=${HEAD_BEFORE:0:8}) ==="
 
@@ -209,7 +287,79 @@ else
 fi
 
 COMMITS=$(git rev-list --count "$HEAD_BEFORE..$HEAD_AFTER" 2>/dev/null || echo 0)
-log "=== PASS #$PASS_N end: $COMMITS commit(s), tests=$([[ $TEST_RC -eq 0 ]] && echo PASS || echo FAIL) ==="
+
+PASS_SECONDS=$(( $(date +%s) - PASS_START_EPOCH ))
+log "=== PASS #$PASS_N end: $COMMITS commit(s), tests=$([[ $TEST_RC -eq 0 ]] && echo PASS || echo FAIL), ${PASS_SECONDS}s ==="
+
+# --- tamper gate: did the pass rewrite its own limits? -----------------------
+# Compare the governing files against their pre-pass fingerprint. A mismatch
+# is not auto-reverted (the operator may legitimately have edited between
+# ticks, and this driver never destroys work it cannot attribute) but it does
+# hard-stop the loop: the next tick refuses to start until a human clears the
+# flag. An agent that can widen its own envelope unnoticed compounds, so the
+# loop halts rather than continuing on rules it may have written for itself.
+GOVERN_SUM_AFTER="$(shasum -a 256 "${GOVERN_FILES[@]}" 2>/dev/null | awk '{print $1}' | tr '\n' ' ')"
+GOVERN_TAMPERED=0
+if [[ "$GOVERN_SUM_AFTER" != "$GOVERN_SUM_BEFORE" ]]; then
+  GOVERN_TAMPERED=1
+  log "ALERT: governing files changed during this pass -- the loop is HALTED until a human clears it."
+  log "       before: $GOVERN_SUM_BEFORE"
+  log "       after:  $GOVERN_SUM_AFTER"
+  for f in "${GOVERN_FILES[@]}"; do
+    git diff --stat -- "$f" 2>/dev/null | tee -a "$LOG"
+  done
+  log "       Review the diff. To resume: verify the change was yours, then"
+  log "       clear governTampered in .studio-loop/state.json."
+fi
+# --- publish: operator-authorized, verification-gated auto-push -------------
+# The pass agent is still forbidden from pushing. Only the driver, after its
+# independent green-suite gate, may publish the exact loop branch. A missing
+# remote, auth failure, or non-fast-forward is non-fatal: the pass result and
+# state remain valid and the warning stays in the log for the next tick.
+PUSH_RC=0
+PUSH_STATUS="skipped"
+PUSH_HEAD=""
+PUSH_BRANCH="$(git branch --show-current 2>/dev/null || true)"
+PUSH_DIRTY="$(git status --porcelain --untracked-files=no)"
+HEAD_LINEAR=0
+if git merge-base --is-ancestor "$HEAD_BEFORE" "$HEAD_AFTER"; then
+  HEAD_LINEAR=1
+fi
+if [[ $TEST_RC -eq 0 && $COMMITS -gt 0 && $GOVERN_TAMPERED -eq 0 &&
+      "$PUSH_BRANCH" == "studio-loop/main" &&
+      "$HEAD_AFTER" == "$(git rev-parse HEAD)" &&
+      -z "$PUSH_DIRTY" &&
+      $HEAD_LINEAR -eq 1 ]]; then
+  PUSH_HEAD="$HEAD_AFTER"
+  set +e
+  GIT_TERMINAL_PROMPT=0 git push origin "HEAD:refs/heads/studio-loop/main" >> "$LOG" 2>&1
+  PUSH_RC=$?
+  set -e
+  if [[ $PUSH_RC -eq 0 ]]; then
+    PUSH_STATUS="pushed"
+    log "auto-push: published ${PUSH_HEAD:0:8} to origin/studio-loop/main"
+  else
+    PUSH_STATUS="failed"
+    log "WARN: auto-push failed (rc=$PUSH_RC) -- pass remains valid; inspect the log and retry next tick"
+  fi
+else
+  log "auto-push: skipped (tests=$TEST_RC commits=$COMMITS branch=${PUSH_BRANCH:-none} dirty=$([[ -n "$PUSH_DIRTY" ]] && echo yes || echo no) tampered=$GOVERN_TAMPERED)"
+fi
+
+# A pass that dies almost immediately produced nothing, whatever its exit code
+# says. The real case seen in production: two consecutive ticks exited rc=1
+# after 6 seconds on "You've hit your monthly spend limit" -- no commit, no
+# work, and completely invisible unless a human opened the log. That is the
+# same silent-starvation shape `consecutiveSkips` exists to catch, so it gets
+# the same treatment. Duration is the signal rather than the exit code because
+# quota exhaustion, auth failure, and a crashed CLI all look different in rc
+# but identical in "returned far too fast to have done anything".
+UNPRODUCTIVE=0
+if [[ $PASS_SECONDS -lt 60 || ( $RC -ne 0 && $COMMITS -eq 0 ) ]]; then
+  UNPRODUCTIVE=1
+  log "WARN: pass produced nothing (${PASS_SECONDS}s, rc=$RC, $COMMITS commits) -- likely quota/auth/CLI failure, see log head"
+  head -3 "$LOG" | grep -v "^\[" | head -2 | tee -a "$LOG" || true
+fi
 
 node -e "
 const fs = require('fs');
@@ -221,12 +371,22 @@ s.lastRun = new Date().toISOString();
 s.lastRc = $RC;
 s.lastTestRc = $TEST_RC;
 s.lastCommits = $COMMITS;
+s.lastDurationSec = $PASS_SECONDS;
 s.lastHead = '$HEAD_AFTER';
+s.lastPush = { status: '$PUSH_STATUS', rc: $PUSH_RC, head: '$PUSH_HEAD' };
 s.consecutiveSkips = 0; // a pass actually ran; starvation streak (if any) is over
+s.consecutiveUnproductive = $UNPRODUCTIVE ? (s.consecutiveUnproductive || 0) + 1 : 0;
+if ($GOVERN_TAMPERED) {
+  s.governTampered = { at: new Date().toISOString(), pass: $PASS_N, log: '$LOG',
+    note: 'Governing files (driver and/or brief) changed while pass #$PASS_N ran. The loop is halted until this key is removed by a human.' };
+}
 s.history = (s.history || []).slice(-49);
-s.history.push({ pass: $PASS_N, at: new Date().toISOString(), rc: $RC, testRc: $TEST_RC, commits: $COMMITS, log: '$LOG' });
+s.history.push({ pass: $PASS_N, at: new Date().toISOString(), rc: $RC, testRc: $TEST_RC, commits: $COMMITS, durationSec: $PASS_SECONDS, unproductive: !!$UNPRODUCTIVE, governTampered: !!$GOVERN_TAMPERED, push: { status: '$PUSH_STATUS', rc: $PUSH_RC, head: '$PUSH_HEAD' }, log: '$LOG' });
 fs.writeFileSync(p, JSON.stringify(s, null, 2) + '\n');
-"
+if (s.consecutiveUnproductive >= 3) {
+  console.error('[studio-loop] WARNING: ' + s.consecutiveUnproductive + ' consecutive passes produced nothing. The loop is burning ticks without working -- check quota (claude.ai/settings/usage), auth, or lower STUDIO_LOOP_MODEL.');
+}
+" 2>&1 | tee -a "$LOG"
 
 # Keep the last 100 pass logs; older ones are noise.
 ls -1t "$LOG_DIR"/pass-*.log 2>/dev/null | tail -n +101 | xargs rm -f 2>/dev/null || true

@@ -1,0 +1,247 @@
+name: PR guard
+
+# Validates every open PR targeting main on a 30-minute cadence and, when a PR
+# is explicitly opted in, merges it.
+#
+# Why a schedule rather than `on: pull_request`: this repo's PRs are produced by
+# long-running agent sessions that push in bursts. A per-push trigger would
+# thrash the runner on every intermediate commit; a half-hourly sweep validates
+# whatever settled state exists and leaves one verdict per PR.
+#
+# SAFETY: `main` has NO branch protection here (the branch-protection API
+# returns 404), so GitHub's native auto-merge is unavailable and nothing
+# server-side would stop a bad merge. Two guards replace it:
+#   1. Validation runs against the MERGE RESULT (refs/pull/N/merge), not the PR
+#      head -- so the gates answer "is main still green after this lands", which
+#      is the only question that matters.
+#   2. Merging requires the opt-in label below. It is never inferred. A PR can
+#      be perfectly green and will still sit there until a human labels it.
+# Rule set lives in scripts/pr-merge-decision.mjs and is unit-tested in
+# tests/pr-merge-decision.test.mjs.
+
+on:
+  schedule:
+    # Every 30 minutes. GitHub queues scheduled runs on a best-effort basis and
+    # drops them entirely after 60 days of repo inactivity, so treat this as a
+    # sweep that usually lands near the half hour, not a hard timer.
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Validate a single PR number instead of every open one
+        required: false
+        type: string
+      skip_apply:
+        description: Validate only; never merge even if a PR is labelled
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  # One sweep at a time. Overlapping runs would double-post verdict comments
+  # and could race two merges into an unprotected main.
+  group: pr-guard
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: 22.14.0
+  OPT_IN_LABEL: auto-merge
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.list.outputs.matrix }}
+      count: ${{ steps.list.outputs.count }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - id: list
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SINGLE_PR: ${{ inputs.pr_number }}
+        run: |
+          set -euo pipefail
+          # Drafts are excluded here rather than validated-and-held: they change
+          # constantly and burning a runner on each sweep buys nothing.
+          if [ -n "${SINGLE_PR:-}" ]; then
+            gh pr view "$SINGLE_PR" --json number,isDraft,baseRefName \
+              | jq -c '[. | select(.baseRefName == "main")]' > prs.json
+          else
+            gh pr list --base main --state open --limit 50 \
+              --json number,isDraft,baseRefName \
+              | jq -c '[.[] | select(.isDraft | not)]' > prs.json
+          fi
+          count="$(jq 'length' prs.json)"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(jq -c '{pr: [.[].number]}' prs.json)" >> "$GITHUB_OUTPUT"
+          echo "Open non-draft PRs targeting main: $count"
+          jq -r '.[] | "  #\(.number)"' prs.json
+
+  validate:
+    needs: discover
+    if: needs.discover.outputs.count != '0'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          # refs/pull/N/merge is GitHub's precomputed "what main becomes if this
+          # lands". Checking out the PR head instead would green-light a branch
+          # that breaks main the moment it merges.
+          ref: refs/pull/${{ matrix.pr }}/merge
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Record merge-result revision
+        id: rev
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Install
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p results
+          npm ci
+
+      # Each gate records its own receipt and never aborts the job, so one red
+      # gate still produces a complete verdict instead of masking the rest.
+      - name: Gate — engine contract
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          if node --test tests/defense-run-simulation.test.mjs tests/defense-campaign-adapter.test.mjs \
+              tests/defense-renderer-contract.test.mjs tests/defense-asset-manifest.test.mjs \
+              tests/no-rts-closure.test.mjs; then
+            status=passed
+          else
+            status=failed
+          fi
+          printf '{"gate":"engine_contract","status":"%s"}\n' "$status" > results/engine_contract.json
+
+      - name: Gate — release closure
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          if node --test tests/release-closure.test.mjs; then status=passed; else status=failed; fi
+          printf '{"gate":"release_closure","status":"%s"}\n' "$status" > results/release_closure.json
+
+      - name: Gate — character rig contract
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          if node --test tests/character-rig-contract.test.mjs; then status=passed; else status=failed; fi
+          printf '{"gate":"character_rig","status":"%s"}\n' "$status" > results/character_rig.json
+
+      - name: Gate — merge-decision rules
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          if node --test tests/pr-merge-decision.test.mjs; then status=passed; else status=failed; fi
+          printf '{"gate":"merge_decision_rules","status":"%s"}\n' "$status" > results/merge_decision_rules.json
+
+      - name: Gate — browser contract
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          status=passed
+          npx --no-install playwright install --with-deps chromium || status=failed
+          if [ "$status" = passed ]; then
+            node tests/defense-hud-responsive-browser.cjs > results/defense-hud-responsive-browser.json || status=failed
+            node tests/defense-survivor-browser.cjs > results/defense-survivor-browser.json || status=failed
+            node tests/defense-performance-browser.cjs > results/defense-performance-browser.json || status=failed
+          fi
+          printf '{"gate":"browser_contract","status":"%s"}\n' "$status" > results/browser_contract.json
+
+      - name: Decide
+        id: decide
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ matrix.pr }}
+          MERGE_SHA: ${{ steps.rev.outputs.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          gh pr view "$PR" --json number,isDraft,baseRefName,mergeable,mergeStateStatus,labels,reviewDecision \
+            > pr.json
+          jq -n \
+            --slurpfile pr pr.json \
+            --argjson gates "$(jq -sc '[.[] | select(.gate)]' results/*.json)" \
+            --arg label "$OPT_IN_LABEL" \
+            --arg sha "$MERGE_SHA" \
+            --arg runUrl "$RUN_URL" \
+            '{pr: $pr[0], gates: $gates, optInLabel: $label, sha: $sha, runUrl: $runUrl}' \
+            > payload.json
+          node scripts/pr-merge-decision.mjs --payload payload.json > decision.json
+          node scripts/pr-merge-decision.mjs --payload payload.json --comment > comment.md
+          cat decision.json
+          echo "apply=$(jq -r '.apply' decision.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Post verdict
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ matrix.pr }}
+        run: |
+          set -euo pipefail
+          [ -f comment.md ] || exit 0
+          # One sticky comment per PR, found by the marker the renderer emits --
+          # a half-hourly sweep would otherwise bury the thread in duplicates.
+          existing="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR}/comments" --paginate \
+            --jq '[.[] | select(.body | startswith("<!-- pr-guard -->"))] | last | .id // empty')"
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${existing}" \
+              -F body=@comment.md > /dev/null
+          else
+            gh pr comment "$PR" --body-file comment.md > /dev/null
+          fi
+
+      - name: Apply
+        if: steps.decide.outputs.apply == 'true' && inputs.skip_apply != true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ matrix.pr }}
+          MERGE_SHA: ${{ steps.rev.outputs.sha }}
+        run: |
+          set -euo pipefail
+          # Re-read state immediately before merging: the sweep's gates ran
+          # minutes ago and a push, a label removal, or a new conflict in that
+          # window must abort rather than merge something never validated.
+          current="$(gh pr view "$PR" --json headRefOid,mergeable,labels,isDraft)"
+          echo "$current"
+          test "$(jq -r '.isDraft' <<<"$current")" = "false"
+          test "$(jq -r '.mergeable' <<<"$current")" = "MERGEABLE"
+          test "$(jq -r --arg l "$OPT_IN_LABEL" '[.labels[].name] | index($l) != null' <<<"$current")" = "true"
+          gh pr merge "$PR" --squash --delete-branch
+          echo "merged #$PR (validated merge result $MERGE_SHA)"
+
+      - if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: pr-guard-${{ matrix.pr }}
+          path: |
+            results
+            decision.json
+            comment.md
+          if-no-files-found: warn

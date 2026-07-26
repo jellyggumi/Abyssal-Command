@@ -68,7 +68,7 @@ function applyPolicyInvestments(campaign, policy, rng) {
   if (nextSeq !== undefined && c.resolvedIds.length >= nextSeq) { const offers = wardenTraitOffersForSequence(nextSeq, c.wardenProgress.traitIds); const chosen = policy.traitPreference(offers, rng); try { c = selectWardenTrait(c, chosen); } catch (e) { console.error("trait select failed:", e.message); } }
   return c;
 }
-function runArchetypeCampaign(archetypeId, seed, maxStagesForSpeed = 10) {
+function runArchetypeCampaign(archetypeId, seed, maxStagesForSpeed = 10, { rpgActive = true } = {}) {
   const policy = ARCHETYPES[archetypeId]; const rng = mulberry32(seed * 7919 + archetypeId.length);
   let campaign = createCampaign({ campaignId: `${archetypeId}-${seed}` }); const stageResults = [];
   for (const stage of STAGES.slice(0, maxStagesForSpeed)) {
@@ -77,13 +77,13 @@ function runArchetypeCampaign(archetypeId, seed, maxStagesForSpeed = 10) {
     campaign = startRun(campaign, stage.id);
     const equipTiers = (ownerId) => Object.fromEntries(EQUIPMENT_SLOTS.map((slot) => [slot, equipmentTierIndexFor(campaign, ownerId, slot)]));
     const loadout = campaign.companionLoadout.prototypeIds;
-    let run = createDefenseRun({ stageId: stage.id, seed: seed * 1000 + stageIndex, companionLoadout: loadout, rewardIds: campaign.rewardIds, wardenProgress: campaign.wardenProgress, wardenEquipment: equipTiers("warden"), companionEquipment: Object.fromEntries(loadout.map((id) => [id, equipTiers(id)])), formation: campaign.companionFormation });
+    let run = createDefenseRun({ stageId: stage.id, seed: seed * 1000 + stageIndex, companionLoadout: loadout, rewardIds: campaign.rewardIds, wardenProgress: rpgActive ? campaign.wardenProgress : null, wardenEquipment: rpgActive ? equipTiers("warden") : {}, companionEquipment: rpgActive ? Object.fromEntries(loadout.map((id) => [id, equipTiers(id)])) : {}, formation: campaign.companionFormation });
     const { terminal, run: finalRun, ticksUsed, bossTtkTicks } = driveBattleToTerminal(run);
     const outcome = terminal === "DEFEAT" ? "defeat" : "victory";
     if (finalRun.extracted && finalRun.eliteCandidate) { const eliteCompanion = STAGE_BY_ID[stage.id]?.eliteCompanion; if (eliteCompanion) { try { campaign = captureElite(campaign, finalRun.eliteCandidate.eliteId, eliteCompanion); campaign = applyLoadoutPolicy(campaign, policy, rng); } catch (e) { console.error(`elite capture failed ${archetypeId}/${seed}/${stage.id}:`, e.message); } } }
     campaign = applyCampaignRunResult(campaign, { stageId: stage.id, outcome: terminal === "FINAL_COMPLETION" ? "FINAL_COMPLETION" : outcome });
     if (outcome === "victory" || terminal === "FINAL_COMPLETION") campaign = applyPolicyInvestments(campaign, policy, rng);
-    stageResults.push({ stageId: stage.id, outcome, terminal, ticksUsed, bossTtkTicks, echoCoreEarned: echoCoreEarned(campaign), wardLevel: wardLevel(campaign), loadout: campaign.companionLoadout.prototypeIds, statPoints: { ...campaign.wardenProgress.statPoints }, traitIds: [...campaign.wardenProgress.traitIds] });
+    stageResults.push({ stageId: stage.id, outcome, terminal, ticksUsed, bossTtkTicks, echoCoreEarned: echoCoreEarned(campaign), wardLevel: wardLevel(campaign), loadout: campaign.companionLoadout.prototypeIds, statPoints: { ...campaign.wardenProgress.statPoints }, traitIds: [...campaign.wardenProgress.traitIds], skillTreeIds: [...campaign.wardenProgress.skillTreeIds], wardenEquipment: equipTiers("warden"), companionEquipment: Object.fromEntries(loadout.map((id) => [id, equipTiers(id)])), rpgActive: finalRun.rpgActive ?? null, formationStance: finalRun.formationStance });
     if (outcome === "defeat") break;
   }
   return { archetypeId, seed, stageResults };
@@ -93,14 +93,16 @@ const args = process.argv.slice(2);
 const targetArchetype = args[0];
 const outputIndex = args.indexOf("--output");
 const output = outputIndex === -1 ? null : args[outputIndex + 1];
-const seeds = [301, 302, 303];
+const seedsIndex = args.indexOf("--seeds");
+const seeds = seedsIndex === -1 ? [301, 302, 303] : args[seedsIndex + 1].split(",").map((s) => Number(s.trim()));
+const rpgActive = !args.includes("--rpg-inactive");
 if (!targetArchetype || !ARCHETYPES[targetArchetype] || !output || output.startsWith("-")) {
-  console.error("Usage: node run-g2-archetype-rotation.mjs <archetypeId> --output <path.json>. Valid archetypeId:", Object.keys(ARCHETYPES).join(", "));
+  console.error("Usage: node run-g2-archetype-rotation.mjs <archetypeId> --output <path.json> [--seeds 301,302,303,304,305] [--rpg-inactive]. Valid archetypeId:", Object.keys(ARCHETYPES).join(", "));
   process.exit(1);
 }
 const t0 = Date.now();
-const results = seeds.map((seed) => runArchetypeCampaign(targetArchetype, seed, 10));
+const results = seeds.map((seed) => runArchetypeCampaign(targetArchetype, seed, 10, { rpgActive }));
 const outputPath = resolve(output);
 await mkdir(dirname(outputPath), { recursive: true });
 await writeFile(outputPath, JSON.stringify(results), "utf8");
-console.log(`${targetArchetype}: done in ${Date.now() - t0}ms, wrote ${outputPath}`);
+console.log(`${targetArchetype}: done in ${Date.now() - t0}ms, seeds=${seeds.join(",")}, rpgActive=${rpgActive}, wrote ${outputPath}`);
