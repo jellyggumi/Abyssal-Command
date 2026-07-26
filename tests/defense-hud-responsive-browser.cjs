@@ -135,15 +135,19 @@ async function verifyPortraitViewportContract(browser, hosting) {
           left: Number.parseFloat(style.left),
         };
       };
+      const portraitCard = document.querySelector(".edge-card:not(.defense-toast)");
+      const toast = document.querySelector(".edge-card.defense-toast");
       return {
         top: read(document.querySelector(".defense-top")),
         bottom: read(document.querySelector(".defense-bottom")),
-        cardTop: Number.parseFloat(getComputedStyle(document.querySelector(".edge-card") ?? document.querySelector(".defense-top")).top),
+        cardTop: Number.parseFloat(getComputedStyle(portraitCard ?? document.querySelector(".defense-top")).top),
+        toastTop: toast ? Number.parseFloat(getComputedStyle(toast).top) : null,
       };
     });
     assert.deepEqual({ top: safeInsets.top.top, right: safeInsets.top.right, left: safeInsets.top.left }, { top: 11, right: 17, left: 29 }, "portrait top HUD must stay on physical safe edges, not rotated logical mappings");
     assert.deepEqual({ bottom: safeInsets.bottom.bottom, right: safeInsets.bottom.right, left: safeInsets.bottom.left }, { bottom: 23, right: 17, left: 29 }, "portrait bottom HUD must stay on physical safe edges, not rotated logical mappings");
     assert.equal(safeInsets.cardTop, 11, "portrait cards must avoid the physical top cutout, not the former rotated right edge");
+    assert.ok(safeInsets.toastTop === null || safeInsets.toastTop >= 11, "transient edge toasts must also stay below the physical top cutout");
 
     const preResize = await page.evaluate(() => {
       const canvas = document.querySelector("#defense-canvas");
