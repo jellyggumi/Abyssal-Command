@@ -199,7 +199,7 @@ async function verifyPortraitViewportContract(browser, hosting) {
     assert.ok(Math.abs(shifted.canvasWidth / shifted.canvasHeight - 800 / 360) < 0.02, `canvas backing store must preserve the 800/360 aspect, got ${shifted.canvasWidth}x${shifted.canvasHeight}`);
     // (4) never upscales past native, and software clamps the backbuffer to the 180000px cap.
     assert.ok(shifted.canvasWidth <= nativeWidth && shifted.canvasHeight <= nativeHeight, `canvas backing store must not exceed native ${nativeWidth}x${nativeHeight}, got ${shifted.canvasWidth}x${shifted.canvasHeight}`);
-    if (renderScale < 1) assert.ok(shifted.canvasWidth * shifted.canvasHeight <= 181000, `software-clamped canvas must respect the 180000px backbuffer cap, got ${shifted.canvasWidth * shifted.canvasHeight}px`);
+    if (renderScale < 1) assert.ok(shifted.canvasWidth * shifted.canvasHeight <= 180000, `software-clamped canvas must respect the strict 180000px backbuffer cap, got ${shifted.canvasWidth * shifted.canvasHeight}px`);
     // (5) on GPU / no clamp, keep the original exact native-resolution check at full strength.
     if (renderScale === 1) {
       assert.equal(shifted.canvasWidth, nativeWidth, "visual viewport resize must update logical canvas width");
@@ -236,6 +236,127 @@ async function verifyPortraitViewportContract(browser, hosting) {
   }
 }
 
+async function verifyBackbufferContract(browser, hosting) {
+  const nativeContext = await browser.newContext({
+    viewport: { width: 200, height: 100 },
+    deviceScaleFactor: 2,
+    baseURL: hosting.url,
+  });
+  const nativePage = await nativeContext.newPage();
+  const nativeErrors = [];
+  nativePage.on("pageerror", (error) => nativeErrors.push(`page: ${error.message}`));
+  nativePage.on("console", (message) => {
+    if (message.type() === "error") nativeErrors.push(`console: ${message.text()}`);
+  });
+  try {
+    await battle(nativePage);
+    const native = await nativePage.evaluate(() => {
+      const canvas = document.querySelector("#defense-canvas");
+      const surface = document.querySelector("#defense-battle-surface");
+      const root = getComputedStyle(document.documentElement);
+      return {
+        dpr: window.devicePixelRatio,
+        logicalWidth: Number.parseFloat(root.getPropertyValue("--defense-logical-width")),
+        logicalHeight: Number.parseFloat(root.getPropertyValue("--defense-logical-height")),
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height,
+        renderScale: Number.parseFloat(canvas.dataset.renderScale ?? "NaN"),
+        renderer: surface.dataset.defenseRenderer,
+      };
+    });
+    assert.deepEqual(nativeErrors, [], "DPR=2 native-size browser contract emitted errors");
+    assert.equal(native.dpr, 2, "native-size contract must run at DPR=2");
+    assert.equal(native.renderer, "webgl", "native-size contract must exercise the WebGL renderer");
+    assert.equal(native.renderScale, 1, "native-size WebGL render must keep renderScale=1");
+    assert.equal(native.canvasWidth, Math.round(native.logicalWidth * native.dpr), "DPR=2 WebGL canvas width must preserve native physical pixels");
+    assert.equal(native.canvasHeight, Math.round(native.logicalHeight * native.dpr), "DPR=2 WebGL canvas height must preserve native physical pixels");
+  } finally {
+    await nativeContext.close();
+  }
+
+  const softwareBrowser = await playwright.chromium.launch({
+    headless: true,
+    args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"],
+  });
+  const softwareContext = await softwareBrowser.newContext({
+    viewport: { width: 844, height: 390 },
+    baseURL: hosting.url,
+  });
+  const softwarePage = await softwareContext.newPage();
+  const softwareErrors = [];
+  softwarePage.on("pageerror", (error) => softwareErrors.push(`page: ${error.message}`));
+  softwarePage.on("console", (message) => {
+    if (message.type() === "error") softwareErrors.push(`console: ${message.text()}`);
+  });
+  try {
+    await battle(softwarePage);
+    const software = await softwarePage.evaluate(() => {
+      const canvas = document.querySelector("#defense-canvas");
+      const surface = document.querySelector("#defense-battle-surface");
+      return {
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height,
+        renderScale: Number.parseFloat(canvas.dataset.renderScale ?? "NaN"),
+        renderer: surface.dataset.defenseRenderer,
+      };
+    });
+    assert.deepEqual(softwareErrors, [], "software backbuffer browser contract emitted errors");
+    assert.equal(software.renderer, "webgl", "software-cap contract must exercise software WebGL, not Canvas2D fallback");
+    assert.ok(Number.isFinite(software.renderScale) && software.renderScale > 0 && software.renderScale < 1, `software WebGL renderScale must be in (0,1), got ${software.renderScale}`);
+    assert.ok(software.canvasWidth * software.canvasHeight <= 180000, `software WebGL backbuffer must not exceed the strict 180000px cap, got ${software.canvasWidth * software.canvasHeight}px`);
+    const lifecycle = await softwarePage.evaluate(async () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 844;
+      canvas.height = 390;
+      canvas.style.width = "844px";
+      canvas.style.height = "390px";
+      document.body.append(canvas);
+      const { RealtimeBattle } = await import(`/battle-realtime-three.js?render-scale-lifecycle=${Date.now()}`);
+      const adapter = new RealtimeBattle();
+      adapter.mount({ canvas, viewport: canvas });
+      adapter.renderSnapshot({});
+      const mounted = {
+        value: Number.parseFloat(canvas.dataset.renderScale ?? "NaN"),
+        present: Object.hasOwn(canvas.dataset, "renderScale"),
+      };
+      adapter.dispose();
+      return { mounted, afterDispose: canvas.dataset.renderScale ?? null };
+    });
+    assert.ok(lifecycle.mounted.present && Number.isFinite(lifecycle.mounted.value), "renderScale must be publicly present after mount/render");
+    assert.equal(lifecycle.afterDispose, null, "dispose must remove the public renderScale marker");
+  } finally {
+    await softwareContext.close();
+    await softwareBrowser.close();
+  }
+  const fallbackContext = await browser.newContext({
+    viewport: { width: 844, height: 390 },
+    baseURL: hosting.url,
+  });
+  const fallbackPage = await fallbackContext.newPage();
+  try {
+    await fallbackPage.addInitScript(() => {
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function forcedNoWebGL(type, ...args) {
+        if (type === "webgl2" || type === "webgl") return null;
+        return originalGetContext.call(this, type, ...args);
+      };
+    });
+    await battle(fallbackPage);
+    const fallback = await fallbackPage.evaluate(() => {
+      const canvas = document.querySelector("#defense-canvas");
+      const surface = document.querySelector("#defense-battle-surface");
+      return {
+        renderer: surface.dataset.defenseRenderer,
+        renderScale: canvas.dataset.renderScale ?? null,
+      };
+    });
+    assert.equal(fallback.renderer, "canvas2d", "forced WebGL failure must expose the Canvas2D fallback");
+    assert.equal(fallback.renderScale, null, "falling back to Canvas2D must remove any renderScale marker");
+  } finally {
+    await fallbackContext.close();
+  }
+}
+
 async function run() {
   const hosting = await server();
   let browser;
@@ -261,7 +382,8 @@ async function run() {
       await context.close();
     }
     const portraitViewport = await verifyPortraitViewportContract(browser, hosting);
-    console.log(JSON.stringify({ pass: true, results, portraitViewport }, null, 2));
+    const backbuffer = await verifyBackbufferContract(browser, hosting);
+    console.log(JSON.stringify({ pass: true, results, portraitViewport, backbuffer }, null, 2));
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => hosting.host.close(resolve));

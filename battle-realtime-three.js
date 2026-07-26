@@ -855,6 +855,7 @@ export class RealtimeBattle {
     // 20260725.md §1.2, D22 판정 9). ambientLight/keyLight are kept as
     // instance fields so applyStagePalette() can retint them per stage.
     this.softwareRenderer = false;
+    this.pixelRatio = 1;
     this.ambientLight = null;
     this.keyLight = null;
     this.rimLight = null;
@@ -889,6 +890,16 @@ export class RealtimeBattle {
     // The context attributes are immutable after creation, so detect the
     // software renderer before opening the real session context.
     this.softwareRenderer = detectSoftwareWebGL();
+    const { width: mountWidth, height: mountHeight } = bounds(this.canvas, this.viewport);
+    const canvasRatio = Math.min(
+      2,
+      Math.max(
+        1,
+        finite(this.canvas.width, 0) / Math.max(1, mountWidth),
+        finite(this.canvas.height, 0) / Math.max(1, mountHeight),
+      ),
+    );
+    this.pixelRatio = canvasRatio;
     const webgl2 = this.canvas.getContext?.("webgl2", {
       alpha: false,
       antialias: !this.softwareRenderer,
@@ -1692,11 +1703,14 @@ export class RealtimeBattle {
   renderSnapshot(snapshot = {}, frame = {}) {
     if (this.disposed || !this.renderer || !this.camera || !this.scene) return;
     const { width, height } = bounds(this.canvas, this.viewport ?? frame?.viewport);
-    const bufferScale = this.softwareRenderer
-      ? Math.min(1, Math.sqrt(SOFTWARE_MAX_BACKBUFFER_PX / (width * height)))
+    const nativeWidth = Math.max(1, Math.round(width * this.pixelRatio));
+    const nativeHeight = Math.max(1, Math.round(height * this.pixelRatio));
+    const targetScale = this.softwareRenderer
+      ? Math.min(1, Math.sqrt(SOFTWARE_MAX_BACKBUFFER_PX / (nativeWidth * nativeHeight)))
       : 1;
-    const bufferWidth = Math.max(1, Math.round(width * bufferScale));
-    const bufferHeight = Math.max(1, Math.round(height * bufferScale));
+    const bufferWidth = Math.max(1, Math.floor(nativeWidth * targetScale));
+    const bufferHeight = Math.max(1, Math.floor(nativeHeight * targetScale));
+    const bufferScale = Math.min(1, bufferWidth / nativeWidth, bufferHeight / nativeHeight);
     const currentSize = this.renderer.getSize(new THREE.Vector2());
     if (
       currentSize.x !== bufferWidth ||
@@ -1705,8 +1719,8 @@ export class RealtimeBattle {
       this.canvas.height !== bufferHeight
     ) {
       this.renderer.setSize(bufferWidth, bufferHeight, false);
-      if (this.canvas.dataset) this.canvas.dataset.renderScale = String(bufferScale);
     }
+    if (this.canvas.dataset) this.canvas.dataset.renderScale = String(bufferScale);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
 
@@ -1774,7 +1788,9 @@ export class RealtimeBattle {
 
     this.renderer?.dispose();
     this.renderer = null;
+    if (this.canvas?.dataset) delete this.canvas.dataset.renderScale;
     this.softwareRenderer = false;
+    this.pixelRatio = 1;
     this.canvas = null;
     this.viewport = null;
     this.pendingInputFeedback = null;
