@@ -964,3 +964,29 @@ auto-push를 추가한 범인으로 pass #10을 지목하며 이렇게 논증했
 6초 만에 rc=1), #5 1커밋, #6~#9 각 2커밋(전부 tests=PASS), #10은 위 in-place 편집으로 사망.
 즉 9틱 중 7틱이 실제 산출물을 냈다. "안 보인" 이유는 **12개 커밋이 로컬 `studio-loop/main`에만
 쌓이고 원격에 푸시된 적이 없기 때문**이며, 이는 설계상 의도된 동작이다(사람이 리뷰 후 머지).
+
+## D33 — 운영자 승인: loop 브랜치 자동 푸시와 원격 복구
+
+**결정**: 2026-07-26 사용자의 `a,c 진행하자` 승인에 따라 두 가지를 적용했다.
+
+1. 기존 `studio-loop/main` 누적 커밋을 실제 원격 `https://github.com/jellyggumi/Abyssal-Command`의
+   `studio-loop/main`으로 수동 게시했다. 이전 `origin`은 실수로 삭제된 테스트용
+   `/tmp/loop-remote.git`를 가리키고 있었으므로, `FETCH_HEAD`의 권위 있는 URL로 복구한 뒤
+   `git ls-remote`와 푸시 결과로 검증했다.
+2. `scripts/hourly-studio-cycle.sh`가 패스 에이전트가 아니라 **드라이버**로서만, 독립 테스트
+   green, 새 커밋 존재, clean tracked tree, 선형 HEAD, 정확한 `studio-loop/main`, 무변조
+   governing files 조건을 모두 만족할 때 `origin/studio-loop/main`으로 자동 푸시한다.
+   원격·인증·non-fast-forward 오류는 `lastPush`/history에 기록하고 패스 자체는 실패시키지
+   않는다. `GIT_TERMINAL_PROMPT=0`으로 launchd에서 대화형 인증 대기를 금지했다.
+
+**검증**:
+- isolated driver probe: `lastRc=0`, `lastTestRc=0`, `lastCommits=1`,
+  `lastPush.status=pushed`, remote ref가 probe HEAD와 일치.
+- isolated push-failure probe: `lastRc=0`, `lastTestRc=0`, `lastPush.status=failed`,
+  `rc=128`인 경우에도 driver exit `0`.
+- 실제 회귀: `node --test 'tests/**/*.test.mjs'` → 191 tests, 190 pass, 0 fail, 1 skip.
+- host plist: `plutil -lint` OK, 24개 정시 이벤트(매시간), `RunAtLoad=false`, launchd 등록 확인.
+
+**범위 명시**: 다른 세션이 추가한 2시간 간격 변경(`43e865f`)은 사용자의 승인 범위에
+포함되지 않아 `0a8f9e0`으로 되돌렸다. host plist는 원래의 매시간 정시 스케줄로 복구했다.
+`1366111`의 host plist tamper fingerprint는 자동화 경계 보호에 필요하므로 유지했다.
