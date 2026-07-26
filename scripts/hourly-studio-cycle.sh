@@ -9,8 +9,8 @@
 # so the *next* pass has a sharper starting view than this one did.
 #
 # Safety contract (why each guard exists):
-#   - never pushes: a broken auto-push deploys to live Pages. Local commits
-#     only; a human pushes after reviewing the accumulated passes.
+#   - publish gate: after the independent suite passes, this driver may publish
+#     new commits from `studio-loop/main`. The pass agent itself never pushes.
 #   - lockfile: overlapping passes would race on the same files and the same
 #     git index. A pass that overruns its hour simply skips the next tick.
 #   - test gate: a pass that breaks the suite reverts its own working-tree
@@ -288,21 +288,6 @@ fi
 
 COMMITS=$(git rev-list --count "$HEAD_BEFORE..$HEAD_AFTER" 2>/dev/null || echo 0)
 
-# --- deliberately NO push ----------------------------------------------------
-# Pass #10 put an auto-push here and argued for it in-comment: Pages deploys
-# only from `main`, so pushing this branch cannot reach production, and
-# unpushed work is invisible to the operator. Both points are true. The block
-# was removed anyway.
-#
-# What matters is not whether the change was safe but who made it. "Never
-# pushes" is an operator boundary, and a pass rewrote the file that enforces
-# its own limits because it judged the limit too strict. That has to stay
-# closed even when the specific widening looks harmless -- the next one may
-# not be, and it would arrive with an equally reasonable comment.
-#
-# The visibility problem it named is real and solved elsewhere: the operator
-# reviews `studio-loop/main` and merges it. If publishing should be
-# automated, the operator edits this file. A pass never does.
 PASS_SECONDS=$(( $(date +%s) - PASS_START_EPOCH ))
 log "=== PASS #$PASS_N end: $COMMITS commit(s), tests=$([[ $TEST_RC -eq 0 ]] && echo PASS || echo FAIL), ${PASS_SECONDS}s ==="
 
@@ -325,6 +310,40 @@ if [[ "$GOVERN_SUM_AFTER" != "$GOVERN_SUM_BEFORE" ]]; then
   done
   log "       Review the diff. To resume: verify the change was yours, then"
   log "       clear governTampered in .studio-loop/state.json."
+fi
+# --- publish: operator-authorized, verification-gated auto-push -------------
+# The pass agent is still forbidden from pushing. Only the driver, after its
+# independent green-suite gate, may publish the exact loop branch. A missing
+# remote, auth failure, or non-fast-forward is non-fatal: the pass result and
+# state remain valid and the warning stays in the log for the next tick.
+PUSH_RC=0
+PUSH_STATUS="skipped"
+PUSH_HEAD=""
+PUSH_BRANCH="$(git branch --show-current 2>/dev/null || true)"
+PUSH_DIRTY="$(git status --porcelain --untracked-files=no)"
+HEAD_LINEAR=0
+if git merge-base --is-ancestor "$HEAD_BEFORE" "$HEAD_AFTER"; then
+  HEAD_LINEAR=1
+fi
+if [[ $TEST_RC -eq 0 && $COMMITS -gt 0 && $GOVERN_TAMPERED -eq 0 &&
+      "$PUSH_BRANCH" == "studio-loop/main" &&
+      "$HEAD_AFTER" == "$(git rev-parse HEAD)" &&
+      -z "$PUSH_DIRTY" &&
+      $HEAD_LINEAR -eq 1 ]]; then
+  PUSH_HEAD="$HEAD_AFTER"
+  set +e
+  git push origin "HEAD:refs/heads/studio-loop/main" >> "$LOG" 2>&1
+  PUSH_RC=$?
+  set -e
+  if [[ $PUSH_RC -eq 0 ]]; then
+    PUSH_STATUS="pushed"
+    log "auto-push: published ${PUSH_HEAD:0:8} to origin/studio-loop/main"
+  else
+    PUSH_STATUS="failed"
+    log "WARN: auto-push failed (rc=$PUSH_RC) -- pass remains valid; inspect the log and retry next tick"
+  fi
+else
+  log "auto-push: skipped (tests=$TEST_RC commits=$COMMITS branch=${PUSH_BRANCH:-none} dirty=$([[ -n "$PUSH_DIRTY" ]] && echo yes || echo no) tampered=$GOVERN_TAMPERED)"
 fi
 
 # A pass that dies almost immediately produced nothing, whatever its exit code
@@ -354,6 +373,7 @@ s.lastTestRc = $TEST_RC;
 s.lastCommits = $COMMITS;
 s.lastDurationSec = $PASS_SECONDS;
 s.lastHead = '$HEAD_AFTER';
+s.lastPush = { status: '$PUSH_STATUS', rc: $PUSH_RC, head: '$PUSH_HEAD' };
 s.consecutiveSkips = 0; // a pass actually ran; starvation streak (if any) is over
 s.consecutiveUnproductive = $UNPRODUCTIVE ? (s.consecutiveUnproductive || 0) + 1 : 0;
 if ($GOVERN_TAMPERED) {
@@ -361,7 +381,7 @@ if ($GOVERN_TAMPERED) {
     note: 'Governing files (driver and/or brief) changed while pass #$PASS_N ran. The loop is halted until this key is removed by a human.' };
 }
 s.history = (s.history || []).slice(-49);
-s.history.push({ pass: $PASS_N, at: new Date().toISOString(), rc: $RC, testRc: $TEST_RC, commits: $COMMITS, durationSec: $PASS_SECONDS, unproductive: !!$UNPRODUCTIVE, governTampered: !!$GOVERN_TAMPERED, log: '$LOG' });
+s.history.push({ pass: $PASS_N, at: new Date().toISOString(), rc: $RC, testRc: $TEST_RC, commits: $COMMITS, durationSec: $PASS_SECONDS, unproductive: !!$UNPRODUCTIVE, governTampered: !!$GOVERN_TAMPERED, push: { status: '$PUSH_STATUS', rc: $PUSH_RC, head: '$PUSH_HEAD' }, log: '$LOG' });
 fs.writeFileSync(p, JSON.stringify(s, null, 2) + '\n');
 if (s.consecutiveUnproductive >= 3) {
   console.error('[studio-loop] WARNING: ' + s.consecutiveUnproductive + ' consecutive passes produced nothing. The loop is burning ticks without working -- check quota (claude.ai/settings/usage), auth, or lower STUDIO_LOOP_MODEL.');

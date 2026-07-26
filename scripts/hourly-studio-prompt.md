@@ -129,6 +129,9 @@ dirty 트리에서 패스를 거부한다 — 격리 없이는 루프가 남의 
 ## 범위 밖 (이 루프가 건드리지 않는 것)
 
 - `git push` / 배포 / GitHub Pages 릴리스
+- 패스 에이전트는 여전히 `git push`와 배포를 실행하지 않는다. 패스 종료 후 드라이버가
+   독립 테스트 green, clean tree, `studio-loop/main` 브랜치 조건을 모두 확인한 경우에만
+   새 커밋을 자동 푸시한다. 원격 인증·네트워크 오류는 패스를 실패시키지 않고 로그에 남긴다.
 - **너를 통제하는 파일 자체** — `scripts/hourly-studio-cycle.sh`(드라이버),
   `scripts/hourly-studio-prompt.md`(이 브리프), 그리고 호스트의
   `~/Library/LaunchAgents/com.abyssalsurge.studio-loop.plist`. 읽는 것은 자유지만
