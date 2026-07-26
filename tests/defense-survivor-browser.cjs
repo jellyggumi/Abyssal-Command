@@ -99,6 +99,17 @@ async function verifyPlaythroughJourney(browser, hosting) {
     const surface = page.locator('[data-defense-ready="true"]');
     await surface.waitFor({ state: "visible" });
     report.events.push("battle-visible");
+    const cutscene = page.locator("#defense-cutscene-overlay");
+    await cutscene.waitFor({ state: "visible" });
+    assert.ok(
+      ["STAGE_STARTED", "LORE_SURPRISE_RESOLVED"].includes(await surface.getAttribute("data-defense-cutscene")),
+      "stage entry must present authored stage or resolved-lore snapshot copy",
+    );
+    const duringCutscene = await surface.getAttribute("data-defense-input-seq");
+    await page.keyboard.press("ArrowRight");
+    await page.waitForFunction((value) => document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq !== value, duringCutscene);
+    report.events.push("keyboard-movement-during-cutscene");
+    assert.equal(await surface.getAttribute("data-defense-move"), "IDLE", "keyboard release must leave the public movement state idle");
     const accessibility = await page.locator("#defense-battle-surface").evaluate((surface) => ({
       label: surface.getAttribute("aria-label"),
       canvasLabel: surface.querySelector("#defense-canvas")?.getAttribute("aria-label"),
@@ -139,17 +150,11 @@ async function verifyPlaythroughJourney(browser, hosting) {
       /\S/,
       "lore feedback must render safe snapshot-derived text through the live status region",
     );
-    const cutscene = page.locator("#defense-cutscene-overlay");
-    await cutscene.waitFor({ state: "visible" });
-    assert.ok(
-      ["STAGE_STARTED", "LORE_SURPRISE_RESOLVED"].includes(await surface.getAttribute("data-defense-cutscene")),
-      "stage entry must present authored stage or resolved-lore snapshot copy",
+    assert.equal(
+      await cutscene.isVisible(),
+      true,
+      "cutscene must remain visible until the test dismisses it; it auto-dismissed before dismissal interaction",
     );
-    const duringCutscene = await surface.getAttribute("data-defense-input-seq");
-    await page.keyboard.press("ArrowRight");
-    await page.waitForFunction((value) => document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq !== value, duringCutscene);
-    report.events.push("keyboard-movement-during-cutscene");
-    assert.equal(await surface.getAttribute("data-defense-move"), "IDLE", "keyboard release must leave the public movement state idle");
     await cutscene.locator("[data-cutscene-dismiss]").focus();
     await page.keyboard.press("Enter");
     await cutscene.waitFor({ state: "hidden" });
