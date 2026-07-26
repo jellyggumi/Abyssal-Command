@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Scheduled game-studio-harness improvement pass for Abyssal Surge.
+# Hourly game-studio-harness improvement pass for Abyssal Surge.
 #
 # One invocation = ONE bounded improvement pass, not a full 3-stage cycle.
 # The harness is a standing structure (skill://game-studio-harness): this
@@ -12,7 +12,7 @@
 #   - never pushes: a broken auto-push deploys to live Pages. Local commits
 #     only; a human pushes after reviewing the accumulated passes.
 #   - lockfile: overlapping passes would race on the same files and the same
-#     git index. A pass that overruns its two-hour interval simply skips the
+#     git index. A pass that overruns its hour simply skips the next tick.
 #   - test gate: a pass that breaks the suite reverts its own working-tree
 #     changes rather than committing red. The failure is logged and becomes
 #     the next pass's first-priority input.
@@ -57,7 +57,7 @@ LOCK="$STATE_DIR/pass.lock"
 STATE="$STATE_DIR/state.json"
 PROMPT="$REPO/scripts/hourly-studio-prompt.md"
 
-# Below the 2h tick so an overrunning pass never collides with the next.
+# Below the 3600s tick so an overrunning pass never collides with the next.
 PASS_TIMEOUT_SEC="${PASS_TIMEOUT_SEC:-3000}"
 MODEL="${STUDIO_LOOP_MODEL:-opus}"
 
@@ -90,7 +90,7 @@ if [[ -e "$LOCK" ]]; then
   PREV_PID="$(cut -d' ' -f1 "$LOCK" 2>/dev/null || echo '')"
   PREV_HEAD="$(cut -d' ' -f2 -s "$LOCK" 2>/dev/null || echo '')"
   if [[ -n "$PREV_PID" ]] && kill -0 "$PREV_PID" 2>/dev/null; then
-    log "SKIP: pass $PREV_PID still running (overran its two-hour interval)"
+    log "SKIP: pass $PREV_PID still running (overran its hour)"
     exit 0
   fi
   log "stale lock from dead pid $PREV_PID (head ${PREV_HEAD:-none}) -- reclaiming"
