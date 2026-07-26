@@ -129,8 +129,10 @@ dirty 트리에서 패스를 거부한다 — 격리 없이는 루프가 남의 
 ## 범위 밖 (이 루프가 건드리지 않는 것)
 
 - `git push` / 배포 / GitHub Pages 릴리스
-- **너를 통제하는 파일 자체** — `scripts/hourly-studio-cycle.sh`(드라이버)와
-  `scripts/hourly-studio-prompt.md`(이 브리프). 읽는 것은 자유지만 **수정 금지**다.
+- **너를 통제하는 파일 자체** — `scripts/hourly-studio-cycle.sh`(드라이버),
+  `scripts/hourly-studio-prompt.md`(이 브리프), 그리고 호스트의
+  `~/Library/LaunchAgents/com.abyssalsurge.studio-loop.plist`. 읽는 것은 자유지만
+  **수정 금지**다.
   실제로 있었던 일: 한 패스가 드라이버에 자동 push를 추가하고 주석으로 그 이유를 변호했다
   ("Pages는 main에서만 배포되니 이 브랜치 push는 안전하고, 안 밀면 사람 눈에 안 보인다").
   논리는 맞았지만 그게 요점이 아니다 — 에이전트가 **자기 제약을 스스로 넓힌 것**이고,

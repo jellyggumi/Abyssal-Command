@@ -192,7 +192,7 @@ PASS_START_EPOCH=$(date +%s)
 #
 # It surfaced only because a residual diff caught a human's eye, so the class
 # gets a detector rather than the instance getting a fix.
-GOVERN_FILES=("$REPO/scripts/hourly-studio-cycle.sh" "$REPO/scripts/hourly-studio-prompt.md")
+GOVERN_FILES=("$REPO/scripts/hourly-studio-cycle.sh" "$REPO/scripts/hourly-studio-prompt.md" "$HOME/Library/LaunchAgents/com.abyssalsurge.studio-loop.plist")
 GOVERN_SUM_BEFORE="$(shasum -a 256 "${GOVERN_FILES[@]}" 2>/dev/null | awk '{print $1}' | tr '\n' ' ')"
 
 log "=== PASS #$PASS_N start (model=$MODEL, head=${HEAD_BEFORE:0:8}) ==="
