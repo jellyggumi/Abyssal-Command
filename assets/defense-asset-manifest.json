@@ -1779,6 +1779,24 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/images/battle/pilot/dusk-warden-cartoon-albedo.png",
+      "replacementPath": null,
+      "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/battle/pilot/dusk-warden-cartoon-albedo.provenance.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/images/battle/pilot/dusk-warden-idle-gti-refstyle.png",
       "replacementPath": null,
       "extension": ".png",
