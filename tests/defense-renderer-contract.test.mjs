@@ -85,11 +85,15 @@ function webglTestCanvas() {
 // would create -- bypassing only THREE.WebGLRenderer, the one piece that
 // requires an actual GL implementation. Every method under test
 // (reconcileActors, updateCamera, ensureStageTerrain, dispose) runs its
-// real, unmodified implementation against this scene graph.
+// real, unmodified implementation against this scene graph. Includes
+// scene.fog/ambientLight/keyLight/rimLight/rimLightTarget -- the same
+// objects mount() itself creates (battle-realtime-three.js mount()) --
+// since applyStagePalette()/updateCamera() now read/write them directly.
 function realtimeBattleHarness() {
   const adapter = new RealtimeBattle();
   adapter.disposed = false;
   adapter.scene = new THREE.Scene();
+  adapter.scene.fog = new THREE.Fog(0x030712, 1, 100);
   adapter.camera = new THREE.PerspectiveCamera(42, 640 / 360, 0.1, 200);
   adapter.terrainGroup = new THREE.Group();
   adapter.actorGroup = new THREE.Group();
@@ -101,6 +105,12 @@ function realtimeBattleHarness() {
   );
   adapter.gateMesh.visible = false;
   adapter.scene.add(adapter.gateMesh);
+  adapter.ambientLight = new THREE.AmbientLight(0x33445a, 1.1);
+  adapter.keyLight = new THREE.DirectionalLight(0xfff0d8, 1.6);
+  adapter.rimLight = new THREE.DirectionalLight(0x6ea8ff, 0.6);
+  adapter.rimLightTarget = new THREE.Object3D();
+  adapter.rimLight.target = adapter.rimLightTarget;
+  adapter.scene.add(adapter.ambientLight, adapter.keyLight, adapter.rimLight, adapter.rimLightTarget);
   return adapter;
 }
 
@@ -284,7 +294,226 @@ test("RealtimeBattle eases its commander-follow camera and snaps immediately und
     "reduced motion snaps the camera target directly back to the commander position",
   );
 
-  assert.equal(adapter.camera.position.y, 14.700000000000001, "camera keeps its fixed elevation offset above the follow target");
+  // Fixed-elevation assertion superseded by the free-orbit camera
+  // (camera-orbit-implementation-plan-20260725.md §5.2, decision-log.md
+  // D22 판정 6/판정 11): "camera keeps a fixed elevation offset" is no
+  // longer a true invariant once orbit()/zoom() exist. What must hold
+  // instead is "the current orbit state (orbitYaw/orbitPitch/zoomFactor)
+  // is reflected deterministically in camera.position via the spherical-
+  // coordinate formula" -- verified here against the DEFAULT orbit state
+  // (adapter.updateCamera() was never given an orbit()/zoom() call above,
+  // so orbitYaw/orbitPitch/zoomFactor are still at their constructor
+  // defaults) using an independently-computed expectation, not by calling
+  // back into the implementation under test.
+  assert.equal(adapter.orbitYaw, 0, "orbit state is untouched by updateCamera -- still the default yaw");
+  const expectedPitch = 65 * (Math.PI / 180);
+  assert.ok(Math.abs(adapter.orbitPitch - expectedPitch) < 1e-12, "orbit state is untouched by updateCamera -- still the default 65° pitch");
+  const expectedZoom = Math.hypot(14.7, 14.7);
+  assert.ok(Math.abs(adapter.zoomFactor - expectedZoom) < 1e-9, "orbit state is untouched by updateCamera -- still the default zoom distance");
+
+  const expectedHorizontalRadius = expectedZoom * Math.cos(expectedPitch);
+  const expectedHeight = expectedZoom * Math.sin(expectedPitch);
+  const expectedX = adapter.cameraTarget.x + expectedHorizontalRadius * Math.sin(adapter.orbitYaw);
+  const expectedZ = adapter.cameraTarget.z + expectedHorizontalRadius * Math.cos(adapter.orbitYaw);
+  assert.ok(Math.abs(adapter.camera.position.y - expectedHeight) < 1e-9, "camera elevation is the default orbit state's zoomFactor*sin(orbitPitch), not a hardcoded constant");
+  assert.ok(Math.abs(adapter.camera.position.x - expectedX) < 1e-9, "camera X position matches the default orbit state's spherical-coordinate formula");
+  assert.ok(Math.abs(adapter.camera.position.z - expectedZ) < 1e-9, "camera Z position matches the default orbit state's spherical-coordinate formula");
+});
+
+// D23 Phase 1: actors turn to face the direction they travel. These assert
+// the OBSERVABLE result (root.rotation.y) rather than the easing internals,
+// so a future re-tuning of FACING_TURN_RATE stays green while an actor that
+// silently stops turning fails.
+function facingActor(adapter, id) {
+  const record = adapter.actors.get(id);
+  // ensureActor() defers the real GLB load, so the harness stands in a bare
+  // Object3D root -- the facing code only ever touches root.rotation.y, so
+  // this exercises the identical path a loaded model takes.
+  record.root = new THREE.Object3D();
+  adapter.actorGroup.add(record.root);
+  return record;
+}
+
+test("RealtimeBattle turns an actor to face its direction of travel", () => {
+  const adapter = realtimeBattleHarness();
+  // ARENA-space coordinates (defense-run-simulation.js ARENA: 24000x12000),
+  // matching what getRunSnapshot() actually emits.
+  const at = (x, y) => ({ commander: { id: "commander", x, y } });
+
+  adapter.reconcileActors(at(12000, 6000));
+  const record = facingActor(adapter, "commander");
+  // Seed lastX/lastZ so the next sync produces a real delta.
+  adapter.reconcileActors(at(12000, 6000));
+
+  // Travel +y in ARENA space, which worldPoint() maps to +z in world space.
+  adapter.reconcileActors(at(12000, 9000));
+  assert.equal(record.moving, true, "a large position delta must read as movement");
+  assert.ok(record.targetYaw !== null, "movement must produce a facing target");
+  // atan2(dx=0, dz=+) === 0: +z is the model's authored forward.
+  assert.ok(Math.abs(record.targetYaw) < 1e-9, "travelling +z aims at yaw 0");
+  assert.ok(Math.abs(record.root.rotation.y) < 1e-9, "first movement adopts the heading outright rather than easing from an unfaced default");
+
+  // Travel +x, which must aim at +90 degrees.
+  adapter.reconcileActors(at(18000, 9000));
+  assert.ok(
+    Math.abs(record.targetYaw - Math.PI / 2) < 1e-9,
+    `travelling +x aims at +PI/2, got ${record.targetYaw}`,
+  );
+
+  // Easing is time-based: a generous step must converge on the target.
+  adapter.updateActorFacing(record, 1.0);
+  assert.ok(
+    Math.abs(record.root.rotation.y - Math.PI / 2) < 1e-3,
+    `a full second of easing must land on the target heading, got ${record.root.rotation.y}`,
+  );
+  assert.doesNotThrow(() => adapter.dispose());
+});
+
+test("RealtimeBattle holds an idle actor's facing steady and snaps it under reduced motion", () => {
+  const adapter = realtimeBattleHarness();
+  const at = (x, y) => ({ commander: { id: "commander", x, y } });
+
+  adapter.reconcileActors(at(12000, 6000));
+  const record = facingActor(adapter, "commander");
+  adapter.reconcileActors(at(12000, 6000));
+  adapter.reconcileActors(at(18000, 6000)); // travel +x -> yaw +PI/2
+  const aimed = record.targetYaw;
+
+  // Standing still must not re-aim: sub-epsilon jitter has no meaningful
+  // direction, and re-aiming on it would make a stationary actor spin.
+  adapter.reconcileActors(at(18000, 6000));
+  assert.equal(record.moving, false, "no movement between identical positions");
+  assert.equal(record.targetYaw, aimed, "an idle actor keeps its last heading instead of re-aiming on noise");
+
+  // Reduced motion keeps the information (final heading) but drops the
+  // animated sweep -- same treatment updateCamera() gives the follow-pan.
+  const reduced = realtimeBattleHarness();
+  reduced.reducedMotion = true;
+  reduced.reconcileActors(at(12000, 6000));
+  const rr = facingActor(reduced, "commander");
+  reduced.reconcileActors(at(12000, 6000));
+  reduced.reconcileActors(at(12000, 9000)); // yaw 0
+  reduced.reconcileActors(at(18000, 9000)); // yaw +PI/2
+  reduced.updateActorFacing(rr, 1 / 60);    // one frame only
+  assert.ok(
+    Math.abs(rr.root.rotation.y - Math.PI / 2) < 1e-9,
+    "reduced motion applies the new heading within a single frame instead of easing",
+  );
+  assert.doesNotThrow(() => adapter.dispose());
+  assert.doesNotThrow(() => reduced.dispose());
+});
+
+test("RealtimeBattle trails companions behind their simulation position but never the commander", () => {
+  const adapter = realtimeBattleHarness();
+  // The simulation hard-snaps companions to commander+offset every tick;
+  // the renderer softens that. The commander itself must stay exact --
+  // smoothing direct player input would read as input lag.
+  const snapshot = (cx, cy, kx, ky) => ({
+    commander: { id: "commander", x: cx, y: cy },
+    companions: [{ id: "ally-1", x: kx, y: ky, status: "ACTIVE" }],
+  });
+
+  adapter.reconcileActors(snapshot(12000, 6000, 12000, 6000));
+  const cmd = facingActor(adapter, "commander");
+  const ally = facingActor(adapter, "ally-1");
+  // Second pass seeds both records' rendered position at the start point.
+  adapter.reconcileActors(snapshot(12000, 6000, 12000, 6000));
+  const allyStartX = ally.root.position.x;
+
+  // Both jump the same distance in one tick.
+  adapter.reconcileActors(snapshot(18000, 6000, 18000, 6000));
+
+  assert.ok(
+    Math.abs(cmd.root.position.x - cmd.goalX) < 1e-9,
+    "the commander renders exactly on its simulation position, never trailed",
+  );
+  assert.equal(
+    ally.root.position.x, allyStartX,
+    "a companion's rendered position does not teleport with the simulation on the same frame",
+  );
+  assert.ok(ally.goalX > allyStartX, "the companion's goal position did advance");
+
+  // The trail converges: enough elapsed time must close the gap.
+  adapter.updateActorFollow(ally, 1.0);
+  assert.ok(
+    Math.abs(ally.root.position.x - ally.goalX) < 1e-3,
+    `the companion catches up to its simulation position, got ${ally.root.position.x} vs goal ${ally.goalX}`,
+  );
+
+  // Reduced motion removes the trail entirely.
+  const reduced = realtimeBattleHarness();
+  reduced.reducedMotion = true;
+  reduced.reconcileActors(snapshot(12000, 6000, 12000, 6000));
+  const rAlly = facingActor(reduced, "ally-1");
+  reduced.reconcileActors(snapshot(12000, 6000, 12000, 6000));
+  reduced.reconcileActors(snapshot(18000, 6000, 18000, 6000));
+  assert.ok(
+    Math.abs(rAlly.root.position.x - rAlly.goalX) < 1e-9,
+    "reduced motion renders companions exactly on the simulation position",
+  );
+  assert.doesNotThrow(() => adapter.dispose());
+  assert.doesNotThrow(() => reduced.dispose());
+});
+
+// D26: the world-space HUD's projection contract. app.js calls these behind
+// `?.` at 4 sites, so their ABSENCE is silent -- that is exactly how they
+// stayed missing from merge 5a5f63a until now. These tests fail loudly if
+// they ever vanish again.
+test("RealtimeBattle projects tracked actors and static ground points for the world-space HUD", () => {
+  const adapter = realtimeBattleHarness();
+  // Point the camera at the origin so the projection has a defined frame.
+  adapter.updateCamera({ commander: { id: "commander", x: 12000, y: 6000 } });
+
+  // A static point at the arena centre normalizes to (0,0) and must land
+  // near the middle of the view the camera is centred on.
+  const centre = adapter.projectStaticPoint(0, 0);
+  assert.ok(centre, "the arena centre must project to a screen position");
+  assert.equal(centre.visible, true, "the point the camera is centred on must be visible");
+  assert.ok(Math.abs(centre.x) < 0.5, `centre should project near screen-centre x, got ${centre.x}`);
+
+  // An actor standing on that same normalized point must project to the
+  // same pixel -- static markers and actors share one mapping.
+  adapter.reconcileActors({ commander: { id: "commander", x: 12000, y: 6000 } });
+  const record = adapter.actors.get("commander");
+  record.root = new THREE.Object3D();
+  adapter.actorGroup.add(record.root);
+  adapter.reconcileActors({ commander: { id: "commander", x: 12000, y: 6000 } });
+  const actor = adapter.projectEntityToScreen("commander");
+  assert.ok(actor, "a tracked actor with a root must project");
+  assert.ok(
+    Math.abs(actor.x - centre.x) < 1e-9 && Math.abs(actor.y - centre.y) < 1e-9,
+    "an actor standing on a normalized point projects to the same place as that static point",
+  );
+
+  // Unknown ids are a miss, not a throw -- app.js iterates snapshot ids that
+  // may not have a mesh yet (async GLB load).
+  assert.equal(adapter.projectEntityToScreen("no-such-entity"), null);
+
+  assert.doesNotThrow(() => adapter.dispose());
+  assert.equal(adapter.projectStaticPoint(0, 0), null, "a disposed renderer has no camera to project through");
+});
+
+test("RealtimeBattle keeps raw out-of-frustum NDC so the waypoint arrow can clamp to an edge", () => {
+  const adapter = realtimeBattleHarness();
+  adapter.updateCamera({ commander: { id: "commander", x: 12000, y: 6000 } });
+
+  // Far outside the diorama but still in front of the camera: this MUST
+  // return a value with visible=false rather than null. app.js:1376 branches
+  // on `!ndc.visible` to place the offscreen objective arrow -- returning
+  // null here would silently disable that arrow, which is precisely the
+  // failure mode this test defends.
+  const offscreen = adapter.projectStaticPoint(-40, -40);
+  if (offscreen !== null) {
+    assert.equal(offscreen.visible, false, "a point far outside the frustum is not visible");
+    assert.ok(
+      Math.abs(offscreen.x) > 1 || Math.abs(offscreen.y) > 1,
+      "an off-frustum point keeps raw NDC outside [-1,1] instead of being clamped away",
+    );
+  } else {
+    // Acceptable only if it genuinely fell behind the camera plane.
+    assert.ok(true, "point resolved behind the camera, which correctly returns null");
+  }
+  assert.doesNotThrow(() => adapter.dispose());
 });
 
 test("RealtimeBattle resolves a terrain model for every authored stage without touching the snapshot", () => {

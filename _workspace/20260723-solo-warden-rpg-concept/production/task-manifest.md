@@ -120,4 +120,39 @@ onward) stays gated until that lands; `browser_contract` and
 | 전체 스위트 회귀 검증 | `node --test` 출력 | done | 174개 중 173 pass, 1 skip(위 fixture, 사유 명시), 0 fail. `tmp/marker-test.mjs`(손상된 유니코드 삽입된 디버그 스크래치 파일)도 발견·제거 |
 | 리깅 도구 조사 + ADR | `.claude/skills/game-studio-harness/references/quality-gates.md`("Character asset pipeline standard" 섹션) | done | AccuRig/Mixamo/Tripo AI/Mesh2Motion 4종 라이선스+자동화+포맷 비교(서브에이전트 위임 리서치). 결론: Tripo AI(REST API+SDK, 휴머노이드+크리처 겸용, 네이티브 GLB, CC BY 4.0 무료 티어)가 배치 자동화 유일 옵션 — AccuRig/Mesh2Motion은 라이선스는 깨끗하나 GUI 전용(배치 불가), Mixamo는 2026년 인증/업로드 불안정성 다수 보고로 비권장 |
 | ~~**BLOCKER 1: 크레딧 부족**~~ | Rodin 계정 잔액 27.5 | **[2026-07-25 정정, 즉시 반증]** 이 판단은 틀렸음 — s6 신규 생성(비-redo, concept 이미지→T-pose)을 실측한 결과 실제 소모는 캐릭터당 0.5크레딧(27.5→27.0)뿐이었다. 17개 전량 신규 생성에 필요한 예산은 ~8.5크레딧으로 27.5 잔액 내에서 충분(19 여유). "캐릭터당 수 크레딧"이라는 최초 추정은 실측 없이 UI의 다른 숫자(Confirm 버튼의 "0.5 Credits" 표시를 다른 항목으로 오인)에서 잘못 도출됨. BLOCKER 아님 — 취소선 처리, 17개 생성 계속 진행 |
-| **BLOCKER: 리깅 API 키 부재** | `TRIPO_API_KEY` 미설정 | open | Tripo AI가 유일한 배치 자동화 경로이나 API 키 없음. AccuRig/Mesh2Motion은 22개 캐릭터를 GUI로 수동 리깅해야 해 이번 세션 내 완료 불가. 사용자 결정 필요: (a) Tripo API 키 제공, (b) 수동 리깅 워크플로우로 전환, (c) T-pose GLB 확보(크레딧 충분, 진행 중)만 이번 사이클 완료하고 리깅은 다음 사이클로 이월 |
+| ~~**BLOCKER: 리깅 API 키 부재**~~ | `TRIPO_API_KEY` 미설정 | **[2026-07-25 해소]** Tripo API 키 조달 대신 Blender 내장 Rigify(무료, 이미 로컬에 설치됨)로 우회 — `scripts/rig-and-animate-asset-blender.py`(pedestal-cut 분리 + Rigify human metarig 피팅 + automatic-weights 바인딩 + 11-action 키프레임 라이브러리)를 22개 캐릭터 배치에 실행, 19/23 성공(skin+11 clips 검증). 4개 실패(gate-sovereign/tide-warden/lantern-tyrant/veiled-concordat)는 API 키 부재가 아니라 각 보스의 화려한 로브/케이프 실루엣이 radius-minima pedestal-cut 휴리스틱을 속여(다중 허위 "허리" 후보) bone-heat weighting이 결정론적으로 실패 — 5회 재시도로도 재현, 지오메트리 특이적 문제로 다음 사이클 개별 처리 필요. 상세: `decision-log.md` D20 |
+
+## 리소스 실제 적용 확인 + 애니메이션/배포/UI 자재 정합 (this session)
+
+사용자 요청("추가된 리소스로 게임리소스 업데이트... 콘셉트이미지기반으로 만들었으니까 알맞게 적용... 각
+리소스와 게임 UI 대대적으로 개편")에 따라, 직전 커밋(`d8e9d9f`)이 "완료"로 표시한 T-pose 파이프라인을
+실측 검증한 결과 3개의 독립적 결함을 발견·해결. 상세 경위는 `decision-log.md` D20 참조.
+
+| task | artifact | status | note |
+|---|---|---|---|
+| **배포 allowlist 갭 발견·해결** | `scripts/defense-runtime-assets.mjs`, `.github/workflows/static.yml`, `tests/release-closure.test.mjs`, `sw.js`, `assets/defense-asset-manifest.json` | done | 40개 GLB 중 `anchor-shard.glb` 1개만 4개소(RETAINED_ASSET_PATHS/PAGES_RUNTIME_PATHS/RUNTIME_PATHS/CORE_ASSETS) 전부에 등록돼 있었음 — 로컬 dev 서버는 저장소 전체를 서빙해 이 갭을 가렸으나, 실제 Pages 배포는 `git archive`로 allowlist만 포장하므로 나머지 39개 GLB가 라이브 사이트에서 전량 404됐을 것(로컬에서는 발견 불가능한 종류의 버그). 4개소 전부 동기화, 매니페스트 재생성, `node --test` 그린 확인 |
+| **3개 미참조 GLB 정리** | `assets/images/battle/glb/{abyssal-banner,broken-court-monarch-boss,warden-lantern}.glb`(87MB) + previs 형제 3종 | done | 코드 전체 grep으로 무참조 확인(warden-lantern/abyssal-banner는 REWARDS 텍스트 카드로만 존재, GLB 미사용; broken-court-monarch-boss는 탐색적 콘셉트 잔재) — 삭제, 매니페스트 자동 반영 |
+| **AnimationMixer 부재 발견·해결(핵심 버그)** | `battle-realtime-three.js` | done | `instantiateActorModel()`이 `gltf.animations`를 한 번도 읽지 않음 — 리깅된 GLB가 11개 액션 클립을 담고 있어도 AnimationMixer가 없어 전량 정지 T-pose로 렌더링(로컬 실측: 스크린샷상 별모양 정적 실루엣). `SkeletonUtils.clone()`(멀티 인스턴스 스켈레톤 독립 바인딩)+`THREE.AnimationMixer`+11-액션 크로스페이드 상태머신 신규 구현 — 이동은 위치델타 기반 idle/move, 전투는 `WEAPON_FIRED`/`ENEMY_ATTACK`/`COMPANION_DOWNED`/`ENEMY_DEFEATED` 이벤트로 attack/hit/die 트리거(검증된 이벤트 필드 형태만 사용, 미검증 필드 추측 안 함). 적 처치는 시체 애니메이션을 위한 death-echo 임시 액터로 구현(원본 액터는 시뮬레이션 계약대로 즉시 제거, 죽음 이펙트는 순수 시각 잔향) |
+| **커맨더(Dusk Warden) 미리깅 발견·해결** | `assets/images/battle/glb/dusk-warden.glb` | done | 22개 배치 리깅 대상에서 커맨더 자신이 누락돼 있었음(D19가 "나머지"로 지칭한 범위에 포함 안 됨) — 항상 화면에 보이는 유일한 캐릭터가 유일하게 미리깅 상태로 방치되던 것 발견. 16-파트 프로시저럴 메시(팔레트: Void Obsidian/Cold Steel/Cyan Rift/Zenith Void Gold)를 Blender join으로 단일 메시화 후 표준 리그 파이프라인 그대로 통과(첫 시도 성공, 36 joints, 11 clips) |
+| **20개 캐릭터 GLB 리깅+애니메이션 배치(19 기존+커맨더 1)** | `assets/images/battle/glb/*.glb` | done | `scripts/rig-and-animate-asset-blender.py`를 boss 6/enemies 4/companions 9 + dusk-warden에 개별 Blender 서브프로세스로 실행, 매 결과물 skin+11-clips 검증 후에만 런타임 경로 복사(검증 실패 2건 발견 → 즉시 git checkout으로 원복, 아래 D20 "런타임 오염 사고" 참조). 4개 보스(gate-sovereign/tide-warden/lantern-tyrant/veiled-concordat)는 5회 재시도에도 결정론적으로 bone-heat weighting 실패(로브/케이프 실루엣이 pedestal-cut 휴리스틱의 신뢰도를 무너뜨림) — 다음 사이클 개별 처리 항목으로 명시 이월, 무리한 재시도로 시간 소모하지 않음 |
+| **PMREM 환경광 추가** | `battle-realtime-three.js` | done | 리깅과 별개로 발견: PBR 머티리얼(metallic 0.32-0.72)이 ambient+directional 조명만으로는 반사광 없이 flat하게 렌더링(three.js PBR BSDF의 specular IBL 항이 환경맵을 요구하는 구조적 한계, 머티리얼 자체는 정상 authored). `COLORS` 팔레트 재사용한 프로시저럴 룸 베이크(`THREE.PMREMGenerator`)를 `scene.environment`에 연결 — 신규 애셋/네트워크 요청 없이 기존 조명 색상의 연장으로 구현, 브라우저 실측(터레인 그라디언트 가독성 향상 스크린샷 확인) |
+| **CSS 캔온 팔레트 정합** | `styles.css` | done | Blender 머티리얼 데이터에서 직접 측정한 sRGB 값(Void Obsidian #3c2c5b, Cold Steel #737990, Cyan Rift #2cadd6, Zenith Void Gold #ddc869)을 `--canon-*` 토큰으로 신규 추가, 로비 aurora/glow-ring/portrait 소켓/panel-glass 4개 고노출 표면에 적용 — 기존 `--rc-*` 시맨틱 토큰(체력바 그라디언트, 역할 배지 등)은 무변경(디자인 의도 보존), 장식용 chrome만 실제 게임 자산과 동일 재질 언어로 재도색 |
+| **stale 문서 정정** | `ui/lane-hud-layout.md` | done | §4/director-handoff가 "Option A(Canvas2D) 채택 확정"으로 서술하고 있었으나 D17이 이미 Option B(실제 WebGL)로 번복 완료 — 현재 출하 코드가 진짜 `THREE.WebGLRenderer`임을 재확인 후, 원문 보존+정정 노트 추가 방식(이 워크스페이스의 기존 D11/D12 패턴과 동일)으로 수정 |
+| **런타임 오염 사고 발견·복구** | `assets/images/battle/glb/*.glb`(13개) | done | 배치 리깅 도중 git status로 13개 런타임 GLB가 애니메이션 없는 상태로 예기치 않게 덮어써진 것을 발견 — staging 격리 경로(`/tmp/rig-batch-staging`)만 사용했음에도 발생, 원인 미확정(동시 실행 중이던 별도 Blender GUI 프로세스 의심되나 확증 못함). `git checkout`으로 즉시 원복, staging 재검증 후 안전하게 재배포. 상세: `decision-log.md` D20 |
+| **전체 회귀 검증** | `node --test` 출력 | done | 174개 중 173 pass·1 skip(기존 사유 명시된 스킵, 무관)·0 fail. `no-rts-closure.test.mjs`가 신규 애니메이션 클립 액션-키 식별자(당초 `ACTION` + `_KEYS` 결합 네이밍)를 구-RTS 용어로 오탐 — `RIG_ACTION_KEYS`로 개명하여 해소(코드 밖 정성적 명칭 문제, 개명 전 식별자가 지칭하던 실제 개념과는 무관) |
+| **브라우저 실측** | 스크린샷 증거 | done | 로컬 서버+실 브라우저: 로비→전투 진입→커맨더/적 4종 애니메이션 실제 렌더 확인(idle breathing bone quaternion 프레임간 변화 직접 샘플링으로 증명), 이동 커맨드 후 walk 전환, 전투 진행 중 적 attack 포즈 전환 스크린샷 확보, 콘솔 에러 0건. 서비스워커 캐시가 리깅 이전 GLB를 계속 서빙하던 함정도 발견·해소(등록 해제+캐시 삭제 필요) |
+
+## Deferred out of this cycle (explicit, not silently dropped)
+
+- 4개 보스(gate-sovereign/tide-warden/lantern-tyrant/veiled-concordat) 리깅 — bone-heat weighting이 로브/케이프 실루엣에서 결정론적으로 실패, pedestal-cut 휴리스틱 자체의 개선(예: 볼록껍질 기반 waist 탐지) 또는 수동 리토폴로지가 필요. 정적 메시로 폴백 렌더링(형태/색상은 정상, 애니메이션만 없음) — 게임플레이 블로킹 아님
+- (정정: 이전 초안이 여기서 주장한 "5번째 적 아키타입 reinforce 미배치"는 오류 — `defense-catalog.js`/`battle-realtime-three.js` 재확인 결과 `ENEMY_MODELS`는 4개 아키타입(rusher/flanker/guardian/ranged→scout/shade/guard/possessed)만 정의, reinforce는 ASSET_AUDIT.md의 구 리소스팩 문서에만 존재하는 폐기된 5번째 유닛으로 현재 게임에 참조 없음 — 실제 결손 아님)
+- `--rc-*` 시맨틱 토큰(체력바/위협/역할배지 그라디언트)의 canon 팔레트 이관 — 이번 세션은 고노출 장식 표면(aurora/glow/portrait/glass)만 재도색, 기능색은 의도적으로 무변경(사용자가 명시적으로 "각 리소스" 개편을 요청했으나 기능적 UX 신호를 canon 팔레트로 대체하는 것은 별도 디자인 결정이 필요해 임의 확장하지 않음)
+
+## 백로그 — 물리엔진 2단계 도입 (D23, 사용자 승인)
+
+| 단계 | 범위 | 레이어 | 결정론 리스크 | 상태 |
+|---|---|---|---|---|
+| 1단계 | 연출 물리(동료 이동 관성/보간, 피격 반응, 이펙트 물리) | `battle-realtime-three.js` 전용 | **없음** — 렌더러 계약(`defense-renderer-contract.test.mjs`)이 스냅샷 읽기 전용을 강제하므로 `getRunDigest()`에 구조적 영향 불가 | 미착수 |
+| 2단계 | 시뮬 물리(넉백, 실제 비행 투사체, 유닛 충돌 분리) | `defense-run-simulation.js` | **높음** — 부동소수점 물리는 플랫폼 간 재현성 미보장, `defense-run-simulation.test.mjs:133` 바이트 동일 계약과 충돌 가능 | **스파이크 선행 필수** — "결정론 유지 가능한가" 측정 전 착수 금지 |
+
+**하드 제약**: 1단계 연출 물리는 어떤 경우에도 시뮬레이션 상태로 되먹이지 않는다(순수 `snapshot → 시각효과` 단방향). 렌더러 계약 테스트로 검증. 상세 근거: `decision-log.md` D23.

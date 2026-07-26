@@ -70,7 +70,7 @@ test("growth choices show truthful current → upgraded values to the player", {
   await offer.waitFor({ state: "visible", timeout: 30_000 });
   const choices = await offer.locator("button[data-pick]").evaluateAll((buttons) => buttons.map((button) => ({
     skillId: button.dataset.pick,
-    label: button.querySelector("span")?.textContent?.trim() ?? "",
+    label: button.querySelector("span.growth-choice-copy")?.textContent?.trim() ?? "",
   })));
 
   assert.equal(choices.length, 3, "a growth decision must present three comparable deltas");

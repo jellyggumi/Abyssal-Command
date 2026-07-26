@@ -153,6 +153,27 @@ camera.position = followTarget + (reducedMotion ? 0 : shakeOffset)
 
 ## 4. 렌더링 경로별 앵커링 전략 — Option A 채택 확정, Option B 문서화된 대안
 
+**[2026-07-25 정정 — Cycle 3 D17로 대체됨, 2026-07-25 재정정 — Stage 1 재진입 D21/D22]** 아래 §4 본문
+전체("Option A 채택 확정")는 이 문서 작성 시점(Cycle 1)의 판정이며, `production/decision-log.md`
+D17("Cycle 3: Option A→B 렌더링 경로 번복")에서 **사용자가 자유 카메라 WebGL 재개를 명시적으로 요청**해
+뒤집혔다 — §0의 재검토 조건("Stage 2 이후 자유 회전 카메라나 동적 조명이 명시적으로 요구되면 재검토")이
+문자 그대로 발동됨. 실제 출하된 `battle-realtime-three.js`는 진짜 `THREE.WebGLRenderer`이며(D17 이후
+세션에서 Canvas2D로 위장하고 있던 이전 구현 자체를 재작성 확인, 커밋 `0e6389e`/`161a2ab`+), 아래 §4의
+"Option A 채택/Option B 미적용" 프레이밍은 **더 이상 사실이 아니다**.
+
+**재정정(D22 판정11)**: 이전 정정 노트가 "카메라는 여전히 고정 상방·무회전(자유 위치 이동 카메라일
+뿐)"이라고 서술했으나 이는 **오류**였다 — D17이 실제로 확정한 것은 렌더링 백엔드 번복(Canvas2D→WebGL)
+**및 카메라 자유 회전 재도입** 둘 다였다(D17 판정 원문 "Option B: 실시간 WebGL, **자유 카메라**"). Stage 1
+재진입 세션(D21)이 `presentation-spec.md:18-25`(yaw 무제한, pitch [30°,85°] 클램프, 핀치줌)와
+`camera-orbit-implementation-plan-20260725.md`를 근거로 완전한 자유 궤도 카메라를 실제 구현
+완료했다(`battle-realtime-three.js`의 `orbit()`/`zoom()`/재작성된 `updateCamera()`) — 카메라는 이제
+**진짜로 매 프레임 임의 각도로 회전한다**. 이는 §2/§3의 portrait 회전 보정 로직(캔버스 물리 1회성 90°
+회전) 및 §0의 전제와 **독립적으로 유지**된다 — canvas portrait 회전은 여전히 1회성 CSS 트랜스폼이고
+카메라 궤도 회전과는 별개 축이므로 두 로직이 충돌하지 않으나, "카메라 회전 없음"이라는 §0/§2의 문구
+자체는 더 이상 사실이 아니므로 재정정한다. 아래 원문(Option A 본문)은 Cycle 1 당시 판정 기록으로
+보존하며(아티팩트 계약), 현재 상태는 D21/D22 결정과 `camera-orbit-implementation-plan-20260725.md`를
+따른다.
+
 `ProgRenderArch`의 `engineering/lane-render-arch.md`가 **Option A(Blender-베이크 셀셰이드 스프라이트,
 기존 Canvas2D 스냅샷 계약 유지)를 이번 사이클 채택안으로 확정**했다(§6, "단일 추천: 옵션 A") — WebGL은
 검토·문서화되었으나 **이번 사이클에는 적용하지 않는다**(고정 북향 카메라가 자유 회전을 요구하지 않는 한
@@ -244,6 +265,14 @@ hud_layout_targets:
 ---
 
 ## director handoff note
+
+**[2026-07-25 정정]** 위 노트의 "렌더링 경로 분기가 해소되었다" 판정은 Cycle 1 시점 사실이며, D17에서
+Option B(실제 WebGL)로 번복됐다 — §4 정정 노트 참조. §1-3의 신규 HUD 요소(동료 네임플레이트/체력바,
+포획 프롬프트, 부유 대미지 숫자 등)는 실제로는 `battle-realtime-three.js`의 world-space HUD 오버레이로
+구현됐다(Cycle 3 Track 3, `#world-hud-overlay` DOM 오버레이 — 이 문서 §4의 Option B 절이 "재검토 시 적용"
+으로 미리 명세해 둔 DOM 앵커 패턴을 그대로 사용, `styles.css` 주석 "Cycle 3 Track 3, Option B DOM-overlay
+pattern... now the actually adopted rendering path per D17" 참조) — "DOM 노드 증가 없음"이라는 이 노트의
+결론은 뒤집혔다. 카메라 고정-상방·무회전 전제는 그대로 유효(위 §4 정정 노트 참조).
 
 가장 중요한 새 사실은 **렌더링 경로 분기가 해소되었다**는 것이다 — `ProgRenderArch`가
 `engineering/lane-render-arch.md`에서 Option A(Blender-베이크 셀셰이드 스프라이트, 기존 Canvas2D 계약

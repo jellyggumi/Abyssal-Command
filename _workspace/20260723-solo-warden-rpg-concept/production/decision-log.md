@@ -2,6 +2,13 @@
 
 run-id: `20260723-solo-warden-rpg-concept`
 
+> **ID 선점 규약 (동시 세션 대비)**: 이 저장소는 여러 에이전트 세션이 동시에 작업할 수 있고,
+> 실제로 2026-07-25에 두 세션이 같은 시간대에 각자 D24를 추가하는 충돌이 발생했다(§D25의
+> 정정 노트). 새 항목을 쓰기 전에 **(1)** 파일 끝의 마지막 번호를 다시 읽고, **(2)** 커밋
+> 직전에 `git pull`/`git status`로 그 사이 다른 세션이 항목을 추가했는지 확인하라. 충돌을
+> 발견하면 파일 순서 기준으로 뒤쪽 항목을 재번호하고, 재번호 전에 `grep -rn "D<번호>"`로
+> 외부 참조를 확인해 함께 갱신한다. 번호는 append-only이며 재사용하지 않는다.
+
 ## D1 — 스탠스 명칭 충돌: "결집(Rally)" → "포대(Turret)"
 
 **충돌**: DesignerCoreLoop가 0-FRONT 스탠스를 "결집(Rally)"로 명명했으나, ProgFormationSim이 독립적으로 "Boss Rally Window"(FRONT≥1 요구 메카닉)를 설계 — 동일 단어가 반대 조건(0 FRONT vs ≥1 FRONT)을 가리켜 혼동 유발.
@@ -264,3 +271,405 @@ DOWNED가 런스코프 한정(영구손실 없음)이라는 §4.4 설계 자체�
 **교훈(종합)**: 이번 세션 전체가 "이전 세션의 성공 주장을 실측 없이 믿지 말라"는 단일 패턴의 반복이었다 — Confirm 버튼 클릭이 "작동하는 것처럼 보였지만" 잘못된 요소를 클릭하고 있었고, GLB 룩업 테이블이 "완전해 보였지만" 39개가 404였고, workspace 삭제가 "안전해 보였지만" 11개 테스트를 깨뜨리고 있었다. 매번 해소 방법은 동일했다 — UI 텍스트나 커밋 메시지가 아니라 실제 DOM 좌표, 실제 네트워크 응답, 실제 테스트 실행 결과로 재확인.
 
 **반영**: `assets/images/battle/glb/*.glb`(40개 신규 export), `assets/models/abyssal-command/abyssal-command-resource-pack.blend`(형제 워크트리에서 복구), `_workspace/20260723-solo-warden-rpg-concept/production/world-content-pack.blend`(재빌드), `_workspace/20260723-solo-warden-rpg-concept/pipeline/bosses/raw/s{1-5}-*.raw.glb`(신규), `_workspace/20260722-{abyssal-command-bmad-gds-expansion,abyssal-command-vertical-slice-implementation,defense-survival-expansion}/`(복구), `assets/images/battle/{dusk-warden,echo-rusher}-*.png`(20개 복구), `assets/images/battle/pilot/concept-{shadow-commander,sung-hum}-boss.*`(복구), `assets/images/battle/animation-manifest.json`(복구), `tests/g2-prepared-prerequisite-bindings.test.mjs`(skip 가드 추가), `.claude/skills/game-studio-harness/references/quality-gates.md`(Character asset pipeline standard 섹션 신규), `production/task-manifest.md`(정정 주석 3건 + 신규 섹션).
+
+## D20 — 사용자 요청 "추가된 리소스로 게임리소스 업데이트... 각 리소스와 게임 UI 대대적으로 개편" 중 발견: D19가 "완료"로 표시한 파이프라인의 3개 독립 결함
+
+**배경**: 사용자가 "추가된 리소스로 게임리소스 업데이트할꺼야. 콘셉이미지기반으로 만들었으니까 알맞게
+적용해야하고 각 리소스와 게임 UI 대대적으로 개편"을 요청(원문 오탈자 포함). D19가 직전 커밋(`d8e9d9f`)에서
+"T-pose 캐릭터 파이프라인 완료"로 표시했으나, 실제 라이브 브라우저 렌더 실측 결과 캐릭터가 여전히 정지된
+T-pose로 표시되는 것을 발견 — D19의 "완료" 판정을 재검증한 결과 3개의 독립적 결함이 드러남.
+
+**발견 1 — 배포 allowlist 4개소가 40개 GLB 중 1개(`anchor-shard.glb`)만 등록하고 있었음**: `battle-realtime-three.js`의
+모델 룩업 테이블은 40개 GLB를 전부 참조하지만, 실제 배포 경로(`scripts/defense-runtime-assets.mjs`의
+`RETAINED_ASSET_PATHS`, `.github/workflows/static.yml`의 `PAGES_RUNTIME_PATHS`, `tests/release-closure.test.mjs`의
+`RUNTIME_PATHS`, `sw.js`의 `CORE_ASSETS`)는 전부 독립적으로 하드코딩된 목록이며 `anchor-shard.glb` 하나만
+등록돼 있었다. 로컬 `python3 -m http.server`는 저장소 전체를 그대로 서빙하므로 이 갭이 로컬 개발/테스트
+환경에서는 절대 드러나지 않는다 — Pages 배포만이 `git archive`로 allowlist에 명시된 파일만 포장하므로,
+실제 라이브 사이트는 나머지 39개 GLB에 대해 전량 404를 반환했을 것(확인은 로컬 환경 한계상 불가, 코드
+경로 분석으로 결론).
+**판정**: 4개소 전부에 40개 GLB 경로 동기화, `defense-asset-manifest.json` 재생성, `node --test`로
+매니페스트/release-closure 테스트 그린 확인. D19가 "배포 파이프라인 5개소 배선"(task-manifest.md 91행)으로
+완료 표시한 항목이 실제로는 워크플로 하드코딩 리스트 자체를 갱신하지 않은 채 GLB 파일만 디스크에 존재하는
+상태로 남아있었던 것으로 확인 — "파일이 저장소에 존재한다"와 "파일이 배포된다"는 별개의 사실이며, 이번
+세션 전까지 후자가 검증된 적이 없었다.
+
+**발견 2 — `AnimationMixer`가 렌더러 어디에도 없었음(가장 심각한 결함)**: 리깅 파이프라인
+(`scripts/rig-and-animate-asset-blender.py`)이 11개 액션 클립(idle/move/run/hit/bighit/attack/critical/
+avoid/defence/die/show)을 GLB의 `animations` 배열에 정확히 굽고 있음을 확인했으나, `battle-realtime-three.js`의
+`instantiateActorModel()`은 `gltf.scene.clone(true)`만 호출하고 `gltf.animations`를 한 번도 참조하지 않았다 —
+즉 리깅된 GLB를 로드해도 애니메이션을 재생할 메커니즘 자체가 렌더러에 없었다. 실 브라우저 스크린샷으로
+커맨더가 완전히 정지된 별모양 실루엣으로 렌더링되는 것을 확인해 실증(전투가 진행되며 게이트/커맨더 내구가
+실제로 변화하는데도 시각적으로는 고정 포즈).
+**판정**: `SkeletonUtils.clone()`(three.js 애드온, 이미 `vendor/utils/SkeletonUtils.js`에 벤더링돼 있었으나
+미사용 상태였음 — plain `Object3D#clone()`은 SkinnedMesh를 원본과 공유 스켈레톤에 바인딩한 채로 복제해
+동일 GLB의 다중 인스턴스가 서로의 포즈를 오염시키는 문제가 있어 필수)로 액터 인스턴스화를 교체,
+`THREE.AnimationMixer`+11-액션 크로스페이드 상태머신을 신규 구현. 이동 상태는 프레임간 위치델타로 idle/move
+추론(시뮬레이션에 명시적 "moving" 플래그가 없음, `syncActorPosition()`의 기존 위치 동기화 로직에 자연스럽게
+결합). 전투 액션(attack/hit/die)은 실제 코드에서 확인된 이벤트 필드 형태만 사용(`WEAPON_FIRED.entityId`,
+`ENEMY_ATTACK.entityId`/`.targetId`, `COMPANION_DOWNED`, `ENEMY_DEFEATED.enemyId`) — 존재 확인 안 된
+"COMMANDER_ATTACK" 류 이벤트를 추측으로 만들어내지 않음. 적 처치는 시뮬레이션 계약상 같은 틱에 액터가
+즉시 제거되므로(`resolveDeaths()`), 죽는 순간의 시각 피드백을 위해 death-echo라는 별도의 단명 액터를
+`captureDeathEchoes()`(reconcileActors 이전 실행, 제거 전 위치/모델 캡처)+`spawnDeathEcho()`(die 클립 재생 후
+자동 정리)로 구현 — 기존 `vfxInstances` 풀 패턴 재사용, 시뮬레이션 소유권 경계 위반 없음.
+
+**발견 3 — 커맨더(Dusk Warden) 자신이 22개 배치 리깅 대상에서 누락돼 있었음**: D19의 "나머지 T-pose
+생성+리깅" 범위는 보스 10+동료 9+적 4=23종(이미 리깅된 anchor-shard 포함하면 22개 신규)이었으나, 이
+목록에 커맨더가 포함돼 있지 않았다 — "나머지"라는 표현이 이전 사이클에서 커맨더는 이미 처리됐다고
+암묵적으로 가정했으나, 실제로는 `dusk-warden.glb`가 애초에 프로시저럴 리소스팩(`Void Obsidian`/`Cold Steel`/
+`Cyan Rift`/`Zenith Void Gold` 4개 캐논 머티리얼, 16개 별도 메시 파츠 — 팔/다리 없이 로브+블레이드+랜턴
+구성)의 구 버전 산출물이었고 스켈레톤도 애니메이션도 전혀 없는 상태로 방치돼 있었다. 매 전투마다 항상
+화면에 보이는 유일한 캐릭터가 유일하게 미처리 상태였다는 역설.
+**판정**: 리깅 스크립트는 단일 임포트 메시를 전제(`imported[0]`)하므로 16-파트 구조에 그대로 적용 불가 —
+Blender `bpy.ops.object.join()`으로 16개 파츠를 머티리얼 슬롯 4개를 보존한 채 단일 메시로 병합(시각적
+외형 무변경, 오브젝트 카운트만 축소) 후 표준 파이프라인 그대로 통과. 첫 시도에 성공(36 joints, 11 clips,
+bone-heat weighting 결함 없음) — 이 캐릭터의 지오메트리가 다른 로브형 보스들과 달리 pedestal-cut
+휴리스틱에 적합한 명확한 허리 실루엣을 가지고 있었던 것으로 추정.
+
+**부수 발견 — 배치 리깅 22종 중 4종(gate-sovereign/tide-warden/lantern-tyrant/veiled-concordat)이
+결정론적으로 실패**: bone-heat weighting이 매 시도(각 5회) 100% 실패, 스켈레톤은 생성되나 스킨 바인딩이
+0 vertex weight로 귀결. 원인 분석: 이 4개 보스는 모두 화려하게 부풀려진 로브/케이프 실루엣을 가지고 있어,
+radius-minima 기반 pedestal-cut 휴리스틱(허리 = 반경이 국소 최솟값인 지점)이 로브의 주름/단 구조를 다중
+허위 "허리" 후보로 오인 — 성공한 다른 6개 보스(cinder-warden/veil-tactician/pack-herald/requiem-choir/
+bridge-colossus/abyss-regent)는 상대적으로 명확한 실루엣을 가짐. 손 계산으로 cut fraction 클램프 범위를
+좁혀보는 실험(0.08-0.22)도 4개 전부에서 동일하게 실패해 단순 파라미터 튜닝으로는 해소 불가 확인.
+**판정**: 무리한 반복 재시도 대신 결함을 있는 그대로 문서화하고 다음 사이클로 이월(`task-manifest.md`
+Deferred 섹션) — 이 4개는 정적 메시로 폴백 렌더링되며(형태/색상은 정상, T-pose 애니메이션만 없음) 게임플레이
+자체를 막지 않는다. 근본 해결은 pedestal-cut 휴리스틱의 볼록껍질 기반 재설계 또는 수동 리토폴로지가 필요.
+
+**부수 발견 — 배치 리깅 도중 13개 런타임 GLB가 원인 불명으로 애니메이션 없는 상태로 오염됨**: staging
+격리 경로(`/tmp/rig-batch-staging`)만 사용하도록 설계된 배치 스크립트 실행 중, `git status`로 13개 런타임
+GLB(`assets/images/battle/glb/*.glb`)가 예기치 않게 애니메이션 0개 상태로 덮어써진 것을 발견 — 동일
+코드 경로를 격리 환경에서 재실행했을 때는 재현되지 않았고, 세션 시작부터 실행 중이던 별도 Blender GUI
+프로세스(BlenderMCP addon 등록 상태)가 원인일 가능성이 있으나 직접적 인과 확증은 못함. **미확정 원인을
+방치하지 않고**: `git checkout`으로 13개 파일 즉시 원복(hash 대조로 원본과 완전 일치 확인), staging
+디렉터리의 19개 원본 결과물을 재검증(skin+11-clips 재확인) 후 안전하게 재배포. 이후 재발 없음(전체 세션
+동안 이 1회만 관측).
+**교훈**: "안전한 staging 경로만 사용했다"는 설계 의도가 실제로 안전을 보장하지 않을 수 있다 —
+대량 GPU/CPU 작업(Blender 배치)을 실행하기 전과 직후 반드시 `git status`로 의도치 않은 워킹트리 변경을
+확인할 것. 이번 사고가 verification 없이 넘어갔다면 커밋 시점에 13개 캐릭터의 애니메이션이 조용히 사라진
+채로 배포됐을 것.
+
+**검증 범위**: `node --test 'tests/**/*.test.mjs'` 174개 중 173 pass/1 skip(기존 사유 있는 스킵)/0 fail.
+실 브라우저(headless Chromium)로 로비→전투 진입→커맨더/적 4종(scout/shade) 애니메이션 실제 렌더 확인 —
+idle 상태에서 뼈대(`DEF-spine`) quaternion을 800ms 간격 3회 샘플링해 실제로 변화함을 직접 증명(breathing
+loop), 이동 커맨드 입력 후 walk 전환, 전투 진행 중 적 attack 포즈(팔다리 확장) 전환을 스크린샷으로 확인.
+서비스워커가 리깅 이전 캐시된 GLB를 계속 서빙하는 함정도 발견 — `navigator.serviceWorker.getRegistrations()`
+unregister + `caches.delete()` 없이는 코드 변경이 반영되지 않음(이번 세션의 첫 애니메이션 검증 시도가
+정확히 이 함정에 걸려 "여전히 0 애니메이션"으로 오판할 뻔함, 재확인 후 정정).
+
+**반영**: `scripts/defense-runtime-assets.mjs`+`.github/workflows/static.yml`+`tests/release-closure.test.mjs`+
+`sw.js`+`assets/defense-asset-manifest.json`(배포 allowlist 4개소 동기화), `battle-realtime-three.js`(AnimationMixer
+통합, PMREM 환경광, RIG_ACTION_KEYS 개명), `assets/images/battle/glb/*.glb`(20개 리깅+애니메이션 신규 배포,
+3개 미참조 파일+previs 형제 3개 삭제), `styles.css`(canon 팔레트 토큰 8종 신규+4개 고노출 표면 재도색),
+`_workspace/20260723-solo-warden-rpg-concept/ui/lane-hud-layout.md`(stale Option A/B 서술 정정),
+`production/task-manifest.md`(D19 TRIPO_API_KEY 블로커 해소 표시+reinforce 오류 정정+신규 섹션).
+
+## D21 — Stage 1 재진입(핵심루프/UI 재설계) 착수 결정: 자유궤도 카메라 완성 확정 + 오토팔로우 정책 + D20 정정 노트 재정정 필요 발견
+
+**배경**: 사용자가 "레퍼런스 게임 리서치 기반 코어루프+UI 재설계, 기존 리소스 활용"을 요청. 8게임 심층
+리서치(`design/trend-survey/defense-offense-rpg-hybrid-deep-research-20260725.md`) 완료 후 실제 코드
+상태를 대조하며 두 개의 구체적 갭 발견.
+
+**발견 1 — D17이 확정한 자유궤도 카메라 스펙이 미구현**: `presentation-spec.md:18-25`(yaw 무제한, pitch
+[30°,85°] 클램프, 핀치줌)이 D17에서 명시적으로 확정됐고 `app.js`의 입력 레이어(`CAMERA_ORBIT_YAW_SENSITIVITY`
+등, `onPointerMove`의 `renderer?.orbit?.()`/`renderer?.zoom?.()` 호출)는 이미 구현돼 있으나,
+`battle-realtime-three.js`에는 `orbit()`/`zoom()` 메서드 자체가 존재하지 않아 입력이 조용히 no-op됨
+(optional chaining). `updateCamera()`는 여전히 매 프레임 고정 등각 오프셋을 강제 재계산.
+
+**판정 1**: 신규 리서치가 "장르 표준은 고정 카메라"(Diablo Immortal/Torchlight Infinite 둘 다 애셋이
+단일 시점 전제로 제작돼 회전 시 렌더링되지 않은 영역 노출 위험)라는 상반된 근거를 제시했음을 사용자에게
+명시적으로 알린 뒤, 사용자가 **D17 스펙대로 완전한 자유 궤도 카메라 구축을 재확인**(고정 카메라로의
+롤백 아님). 전제조건으로 51개 라이브 GLB 중 우선순위 23개(보스10+동료9+적4)를 8방위×2고도(30°/85°)로
+헤드리스 Blender 렌더링해 실루엣 커버리지 감사(`scripts/audit-glb-angle-readiness.py`, 신규) 실행 —
+전량 통과(최저 min/front 커버리지 비율 0.267/0.359, 각도별 급격한 커버리지 붕괴 없음, 육안 샘플 확인
+결과 pack-herald의 무기-손 미융합은 각도 무관 기존 결함으로 별도 이슈, 카메라 작업 블로커 아님).
+
+**발견 2 — 오토팔로우 재개 시 궤도 각도 유지 여부가 스펙에 미기재**: `presentation-spec.md:21`은
+"auto-follow lag 0.18, reduced-motion hard-cut"만 명시하고 드래그 종료 후 오토팔로우 재개가 사용자가
+설정한 `orbitYaw`/`orbitPitch`/`zoomFactor`까지 기본값으로 리셋하는지 침묵.
+
+**판정 2**: **각도는 유지, 팬 타겟(카메라가 추적하는 지점)만 커맨더로 재추종한다.** 근거: (1) 요구사항
+4의 "커맨더 추적 로직은 유지하되 타겟 지점만 궤도 중심으로 사용한다"는 문구에서 논리적으로 도출 —
+`ControlFeelDesign` 레인이 독립적으로 동일 결론에 도달. (2) 자유 궤도 카메라의 UX 원칙상 플레이어가
+고른 시야각을 매번 리셋하면 자유 궤도를 제공하는 목적 자체가 무력화됨. (3) 8게임 리서치에는 참고할
+자유궤도 선례가 없음(Diablo Immortal/Torchlight Infinite 전부 고정 카메라) — 순수 UX 설계 판단.
+
+**발견 3 — D20의 "stale Option A/B 서술 정정" 자체가 신규 오류를 도입**: `ui/lane-hud-layout.md` §4의
+"[2026-07-25 정정]" 노트(D20이 반영한 것)가 "카메라는 여전히 고정 상방·무회전(자유 회전 카메라가 아니라
+자유 위치 이동 카메라)"이라고 서술 — 이는 `presentation-spec.md`의 명시적 "yaw unrestricted, pitch
+clamped" 스펙 및 위 판정 1과 정면 모순된다. D20 세션이 렌더링 백엔드 번복(Canvas2D→WebGL)만 반영하고
+카메라 회전 자유도 자체는 D17이 이미 확정했다는 사실을 놓친 것으로 추정. **후속 조치**: `UILayoutRedesign`
+레인 산출물 병합 시 이 노트를 재정정 — 병합 전까지 `stage1-reentry-synthesis-20260725.md`가 정확한
+근거 소스로 우선한다.
+
+**반영**: `design/stage1-reentry-synthesis-20260725.md`(신규, §1 확인됨/§2 구현갭/§3 백로그 종합),
+`scripts/audit-glb-angle-readiness.py`(신규, 각도 감사 도구), 본 항목. `ui/lane-hud-layout.md` §4 재정정은
+후속 병합 커밋에서 반영 예정.
+
+## D22 — 5개 병렬 설계 레인 병합 결정: 3-스탠스/UI 백로그/스테이지 임의각/카메라 세부사항 확정
+
+**배경**: `stage1-reentry-synthesis-20260725.md`를 기준으로 5개 병렬 설계 레인(코어루프/UI/스테이지구성/
+조작감/카메라구현계획)을 실행, 전량 완료. 병합 시 승인이 필요하다고 각 레인이 명시적으로 플래그한
+항목을 정리하고 디렉터 판정을 기록한다.
+
+**판정 1 — 포대(Turret) 스탠스와 Boss Rally Window 구조적 상호배제**: `core-loop-redesign-20260725.md` §3.4가
+발견 — 포대는 파생 FRONT수 0이라 Boss Rally Window(FRONT≥1 요구)를 영구히 발동 못 시킴, 그러나 포대의
+설계 의도가 정확히 보스전 지속딜링이라 자신이 가장 필요한 시나리오에서 랠리 보너스를 못 받는 모순.
+**채택: 옵션 (c) 의도된 트레이드오프로 유지** — 신규 시스템 도입 없이 기존 §7.2 서술("포대 = 지속딜,
+대신 랠리 버스트는 포기")과 상충하지 않으므로 최소 변경. 밸런스 시트 시뮬레이션 이후 재검토 가능.
+
+**판정 2 — R2 검증 매트릭스 확장**: `core-loop-redesign-20260725.md` §3.4 — 3-스탠스는 R2의 "공간적
+다양성" 요구를 초과 충족하지만 "역할 다양성 붕괴" 우려는 미해결. **채택: `qa/lane-risk-register.md`의
+검증 매트릭스를 3(스탠스)×N(역할비율)로 확장 — Stage 2 `design/balance-sheet.md` 소관으로 이월.**
+
+**판정 3 — 항목 E 아이콘 형태 변경 승인**: `ui-redesign-delta-20260725.md` §E — synthesis §3 원문의
+"육각형" 제안이 `EQUIPMENT_TIERS` T5(`rpg-catalog.js:107-115` `vertexCount:6`)와 형태 충돌. **채택:
+영구(Track A/B) = 축정렬 정사각형(`border-radius:3px`), 런스코프 = 원형(`.tier-icon[data-tier-vertices="0"]`와
+별개 클래스로 안전 재사용)** — UI 레인의 MODIFY 제안 그대로 승인.
+
+**판정 4 — 동료 로스터 트레이 + 버프/디버프 트레이 통합**: `ui-redesign-delta-20260725.md` §3 밀도 경고 —
+미구현 신규 요소 2개(`lane-hud-layout.md` 행6/행7)가 그대로 합류하면 인-배틀 상시 정보 요소가
+7→9개로 늘어 Torchlight Infinite의 "지저분하다" 비판 밀도(12개) 방향으로 이동. **채택: 별개 2개 트레이
+대신 단일 통합 "상태 트레이"로 병합** — 요소 수 증가 없이 동료 상태+버프 정보를 한 컴포넌트에 표시.
+정확한 레이아웃은 UI 레인 후속 구현 소관.
+
+**판정 5 — 오토팔로우 재개 정책(재확인)**: D21에서 이미 확정("각도 유지, 팬 타겟만 재추종") —
+`CameraImplPlan`이 §4.2 구현계획에 구조적으로 반영 완료(Section 1/Section 2가 서로 다른 필드만 쓰도록
+분리) 확인. 추가 판정 불필요, 구현 검증만 남음.
+
+**판정 6 — 궤도 거리 clamp 산출 방식**: `camera-orbit-implementation-plan-20260725.md` §3.3 — 런타임 GLB
+바운딩박스 실측(B안, 비동기 타이밍 문제) 대신 기존 결정론적 상수(`TERRAIN_TARGET_HALF_EXTENT`,
+`TARGET_HEIGHT.boss`) 기반 분석적 유도(A안) 채택 제안. **승인.** margin 계수(1.1/1.2)는 이번 세션
+GLB 감사(아래 판정 7)로 검증됨 — 조정 불필요.
+
+**판정 7 — GLB 임의각 감사 범위 확대(터레인 10종)**: `stage-composition-20260725.md` 디렉터 노트가
+synthesis §2.2의 감사 범위(캐릭터 24종만)에 터레인 10종이 빠져있음을 지적. **채택: 즉시 확대 실행** —
+`scripts/audit-glb-angle-readiness.py`를 터레인 10종에 재실행(8방위×2고도, 256px, 알파-커버리지
+휴리스틱). 결과: 6/10 플래그(cinder-span/echo-throne-steps/shattered-causeway/starless-canal/
+sunken-bastion/veil-citadel) — **전량 육안 확인 결과 실제 지오메트리 결손(구멍/미완성 후면) 없음**,
+플래그는 전부 의도된 형태(다리형 편평 bbox, shattered-causeway의 "끊긴" 의도적 갭, 저폴리 슬랩)의
+정상적 반영. **결론: 10개 터레인 전량 임의각 뷰잉에 구조적 결손 없음 확인 — synthesis §2.2 GLB
+안전성 전제 조건이 캐릭터 23종+터레인 10종 총 33종 전량에 대해 충족됨.**
+
+**판정 8 — Glass Necropolis 환경맵 결함**: `stage-composition-20260725.md` §3.6 — `buildEnvironmentMap()`이
+전역 6색 큐브 1개를 전 스테이지 공유(`battle-realtime-three.js:582-603,671`), Glass Necropolis의
+"반사" 정체성과 서사적으로 불일치(GLB 형상과 무관한 확정 코드 결함). **채택: 이번 사이클 구현 대상에
+포함** — 최소 완화책(스테이지별 환경맵 틴트, `applyStagePalette` 확장)을 Implementation 단계에서 적용.
+근본 해결(스테이지 지오메트리를 실제로 반사하는 dynamic cubemap)은 스코프 초과로 다음 사이클 이월.
+
+**판정 9 — 림 라이트 카메라 상대화**: `stage-composition-20260725.md` §1.2 — 림 라이트가 씬 좌표
+고정(`battle-realtime-three.js:680-681`)이라 자유 궤도 도입 시 각도에 따라 역광 소실/과다 발생.
+**채택: 카메라 구현 작업에 포함** — `orbit()`/`updateCamera()` 갱신 시 림 라이트 위치를 카메라 상대
+좌표(궤도 반대편 방향)로 매 프레임 재계산.
+
+**판정 10 — `applyStagePalette(stageId)` 배선**: `stage-composition-20260725.md` §1.1 — `STAGE_PRESENTATION_BY_ID`가
+10개 스테이지 전부의 팔레트/분위기 데이터를 이미 보유하나 3D 렌더러가 전혀 읽지 않음. **채택: 이번
+사이클 구현 대상에 포함** — `mount()`/`ensureStageTerrain()`이 stageId 기준으로 안개색/조명색/환경맵
+틴트를 `STAGE_PRESENTATION_BY_ID[stageId].palette`에서 매핑하는 신규 함수 추가.
+
+**판정 11 — `lane-hud-layout.md` §4 정정 노트 재정정**: D21 발견 3(카메라 회전 자유도 관련 stale
+서술)을 여기서 실행 확정 — Implementation 단계 착수 시 `ui/lane-hud-layout.md` §4를
+`stage1-reentry-synthesis-20260725.md`/`presentation-spec.md:18-25` 기준으로 재정정.
+
+**Implementation 착수 인터페이스 확정** (코드 감사로 확인, 5개 레인 산출물 종합):
+- 신규 입력 타입 `STANCE_CYCLE` — `queueInput()`(`defense-run-simulation.js:1872-1873`) 화이트리스트에
+  추가, `processInput()`(`:828-903`)에 신규 분기: 4초 쿨다운(`run.stanceCooldownUntilTick`) 확인 후
+  `run.formationStance`를 `VANGUARD→TURRET→SPLIT→VANGUARD` 순환.
+- `FORMATION_SLOTS`(`rpg-catalog.js:98`)를 2값에서 3스탠스 표현으로 확장 — 정확한 스키마(스탠스별
+  오프셋 벡터 테이블, 파생 FRONT수 함수)는 `UNIFIED-GDD.md:81-83` 표 그대로 이식.
+- 컴패니언 포지션 동기화(`defense-run-simulation.js:1581-1583`, 현재 전원 커맨더 좌표 스냅)를
+  스탠스별 오프셋 적용 버전으로 교체 — `OCTANT_VECTORS`(`defense-catalog.js:13-16`) 패턴 재사용.
+- `RealtimeBattle`에 `orbit()`/`zoom()` 메서드 신설(`camera-orbit-implementation-plan-20260725.md` §3
+  의사코드 그대로), `updateCamera()` 재작성(§4.2), `tests/defense-renderer-contract.test.mjs:287`의
+  `camera.position.y===14.7` 하드코드 assertion 갱신 필수.
+
+**반영**: 본 항목. Implementation 단계 착수 준비 완료 — 5개 설계 델타 문서 전부 승인, 병합 판정 11건
+확정.
+
+## D23 — 물리엔진 도입 결정: 2단계(연출 우선 → 시뮬 스파이크 후 판정), 레이어 분리 강제
+
+**배경**: 사용자가 "물리엔진도 추가해야 한다"고 요청하며 현재 예약 여부를 질의. 확인 결과
+**물리엔진은 이 프로젝트 어디에도 예약된 적이 없다** — `task-manifest.md`의 Deferred 목록 2곳,
+UNIFIED-GDD 백로그, 이번 사이클 리서치 신규 백로그, D1~D22 전체에 항목 없음. 코드 검색으로 잡힌
+`rapier`/`physics` 매치는 전부 오탐(보스 컨셉의 **레이피어(검)**, `previs-rigging-guide.md`의
+pedestal 원점 관례 설명, `vendor/three.core.js` 서드파티 주석)이었다.
+
+**현 상태 실측**: 이 게임에는 물리 시뮬레이션이 사실상 없다.
+- 투사체는 비행하지 않음 — `fire(...ttl)`이 N틱 후 `targetId`에 확정 명중시키는 **지연-데미지
+  스케줄러**([OBSERVED] `defense-run-simulation.js:1548-1595`). 공간 궤적·비행 중 충돌 없음.
+- 넉백/속도/중력/충격량 코드 0건([OBSERVED] `knockback|velocity|gravity|impulse` grep 0 매치).
+- 동료는 매 틱 `commander.x + offset.x`로 **스냅**([OBSERVED] `defense-run-simulation.js:1612-1613`,
+  이번 사이클 3-스탠스 구현이 도입) — 가속·관성·유닛 분리 없음.
+- 충돌 판정은 `distanceSquared() <= range²` 원형 거리 검사뿐.
+- 의존성에 물리 라이브러리 없음(`three` 0.185.1 단독).
+
+**핵심 제약 — 결정론**: `defense-run-simulation.test.mjs:133`이 "동일 시드 + 동일 입력 →
+`getRunDigest()` 바이트 동일"을 강제하고, 리플레이·측정 프로파일·밸런스 실측 전체가 이 위에 얹혀
+있다. 부동소수점 물리엔진(Rapier/cannon-es 등)은 플랫폼/빌드 간 재현성을 일반적으로 보장하지
+않으므로, 시뮬레이션 레이어에 그대로 넣으면 이 계약을 깨뜨릴 수 있다.
+
+**판정: 2단계 도입, 레이어 분리를 하드 제약으로 강제** (사용자 선택)
+
+- **1단계 — 연출 레이어 물리만 (`battle-realtime-three.js`)**: 렌더러는 이미 "얼어붙은 스냅샷을
+  읽기만 하고 상태를 전진시킬 수 없다"는 계약(`defense-renderer-contract.test.mjs`)을 갖고 있어,
+  여기 들어간 물리는 `getRunDigest()`에 **구조적으로 영향 불가**다. 즉 기존 182개 테스트 리스크 0.
+  이번 사이클에 자유궤도 카메라를 넣은 직후라 동료 스냅 이동·무반응 피격의 뻣뻣함이 훨씬 눈에
+  띄게 된 상태이므로, 체감 개선 효과도 가장 크다.
+- **2단계 — 시뮬레이션 물리는 스파이크 후 판정**: 넉백·실제 비행 투사체·유닛 충돌 분리는
+  게임플레이를 실제로 바꾸므로 매력적이지만, 채택 전에 **"결정론을 유지한 채 가능한가"를 측정하는
+  스파이크를 먼저 돌린다**. 스파이크 결과 없이 시뮬레이션 레이어에 물리를 넣지 않는다.
+
+**금지 사항(하드 제약)**: 1단계 연출 물리는 어떤 경우에도 시뮬레이션 상태를 쓰지 않는다 — 렌더러가
+물리 결과를 시뮬레이션으로 되먹이는 경로를 만들면 결정론 계약이 즉시 깨진다. 연출 물리는 순수
+`snapshot -> 시각효과` 단방향이어야 하며, 이 조건은 렌더러 계약 테스트로 검증한다.
+
+**반영**: `production/task-manifest.md` 백로그 등록, 본 항목.
+
+## D24 — 시간별 자율 개선 루프 도입: 안전 봉투 우선, 동시 세션 충돌 방지
+
+**배경**: 사용자가 "매시간 반복해서 game-studio-harness로 UI·코어루프(디펜스/오펜스+RPG 성장)를
+개선, 레퍼런스 딥리서치, 기존 리소스 활용, 스테이지 분위기·조작감 집중, 매시간 회고로 직관성·밸런스·
+코어타임 디벨롭, 위키 업데이트"를 상시 작업으로 요청.
+
+**구조 판정**: 1회 호출 = **1개 축의 완결된 개선 패스**(3-스테이지 사이클 전체 아님). 5축
+(코어루프·조작감 / UI·정보구조 / RPG성장·캐릭터 / 스테이지구성·분위기 / 밸런스·코어타임)을
+패스번호 mod 5로 순환. 하네스 원칙 #1(사이클당 한 모드)의 시간 단위 적용 — 한 패스에 두 축을
+섞으면 둘 다 얕아진다.
+
+**측정으로 발견한 환경 결함 4건** (전부 루프를 조용히 망가뜨렸을 것):
+1. `timeout`(GNU coreutils) 이 머신에 없음 — `timeout 3000s claude ...`는 즉시 127로 종료해
+   매시간 틱이 "성공 로그를 남기는 no-op"이 됐을 것. bash 워치독으로 교체.
+2. `--permission-mode acceptEdits`만으로는 Bash가 차단됨(비대화형 `-p`에서 게이트된 도구 =
+   거부). 실측: 이 저장소에서 `git log`와 위키 `ls` 둘 다 BLOCKED → 매 패스가 테스트·커밋·위키
+   전부 불가. `--allowedTools` 명시로 해결.
+3. launchd의 최소 PATH에 `claude`(~/.local/bin)도 `node`(~/.nvm/...)도 없음 — 스크립트와
+   plist 양쪽에 고정.
+4. 사용자 전역 설정의 `LLM_WIKI_VAULT`/`OBSIDIAN_VAULT_PATH`가 **무관한 Unity 프로젝트**를
+   가리킴(stale) — 패스가 상속하면 이 게임의 위키 갱신을 엉뚱한 볼트에 기록. 드라이버에서 override.
+
+또한 상임 브리프를 헤드리스 런타임 기준으로 교정: 패스에는 대화형 `browser` 도구가 없으므로
+(Read/Edit/Bash/Write/Agent/Skill뿐) 라이브 UI 검증은 이 저장소가 이미 쓰는 `tests/*-browser.cjs`
+Playwright 패턴으로 라우팅. 스킬은 `skill://` URI가 아니라 이름으로 참조(game-studio-harness는
+`.claude/skills/`에 프로젝트 스코프).
+
+**동시 세션 충돌 — 실제로 발생**: 루프 구축 중 다른 에이전트 세션이 이 저장소에 활발히 쓰고 있음을
+확인(`battle-realtime-three.js` 수정 + 신규 리깅 스크립트 2개, 그중 하나가 12초 프로브 동안
+28377→30862 B로 증가). dirty-tree 가드가 설계대로 충돌 대신 스킵했으나, **패스 종료 시점의 두
+동작이 이 조건에서 위험**했다 — 트리가 clean하다고 보장되는 시점은 패스 *시작*뿐이기 때문:
+- green suite + dirty tree → `git add -A` 커밋: 남의 진행 중 작업을 이 루프 명의로 쓸어담음
+  (오늘 되돌린 graphify-out/ 300+ 파일 사고와 같은 실패).
+- red suite + dirty tree → `git checkout -- .`: 오귀속을 넘어 **남의 미커밋 작업을 복구 불가하게
+  삭제**. 가장 그럴듯한 사고 시퀀스가 바로 이 동시 케이스 — 남의 미완성 편집이 suite를 red로 만들고,
+  드라이버가 그것을 지운다.
+→ **판정**: 드라이버는 귀속 불가능한 상태를 절대 건드리지 않는다. 파괴적 git 연산 0건
+(`checkout`/`add -A`/`clean` 전부 제거), 보고만 한다. 패스 에이전트가 자기 작업을 커밋하는 것이
+계약이며, 남은 dirty는 사람에게 넘긴다.
+
+**안전 봉투 (각 항목은 이 프로젝트가 실제로 겪은 실패에 대응)**:
+- `git push` 절대 금지 — 자동 푸시는 라이브 Pages로 바로 배포됨
+- lockfile: 이전 패스가 시간을 초과하면 큐잉이 아니라 **스킵**
+- dirty tree에서 시작 거부
+- 드라이버가 **직접** 전체 테스트를 재실행 — 에이전트 자기 보고는 증거가 아니다
+- 스킵을 `state.json`에 기록(`consecutiveSkips`, 3회 연속 시 경고) — dirty 상태가 며칠 이어지면
+  루프가 **침묵 속에 굶는다**. 정상 동작과 구분 불가한 이 실패는 위 1번(127 no-op)과 같은 부류다.
+
+**반영**: `scripts/hourly-studio-cycle.sh`(드라이버), `scripts/hourly-studio-prompt.md`(상임 브리프),
+`~/Library/LaunchAgents/com.abyssalsurge.studio-loop.plist`(매시 정각), `.gitignore`(`.studio-loop/`).
+
+## D25 — D23 Phase 1 완료 + Phase 2 스파이크 판정(GO, 조건부) + 월드공간 HUD 전면 사망 발견
+
+> **번호 정정(2026-07-25)**: 이 항목은 원래 D24로 작성됐으나, 같은 시간대에 다른 세션이
+> 독립적으로 D24(시간별 자율 개선 루프, §521)를 추가해 **같은 파일에 D24가 둘** 생겼다.
+> append-only 로그의 관례대로 파일 순서를 기준으로 뒤쪽인 이 항목을 D25로 재번호했다.
+> 외부 참조는 재번호 시점에 0건이었음을 확인(`grep -rn "D24"` — 두 제목 라인 외 매치 없음).
+
+**Phase 1 완료 (연출 레이어 물리)**: D23이 정한 "연출 먼저" 단계를 구현·검증 완료.
+
+- **이동 방향 바라보기**(사용자 명시 요구): `syncActorPosition()`이 이미 계산하던 dx/dz 델타를
+  회전에도 사용. `updateActorFacing()`이 `1 - e^(-rate*dt)` 형태로 이징해 프레임레이트 독립.
+  기존 `wrapAngle()` 재사용으로 최단경로 회전(+350° → -10°).
+- **동료 추종 스무딩**: 시뮬레이션이 매 틱 `commander + offset`으로 하드 스냅하던 것을 렌더
+  측에서 트레일. 커맨더는 제외 — 직접 입력에 지연을 넣으면 입력 랙으로 읽힌다.
+- **authored forward 축은 추측이 아니라 실측으로 확정**: `companions/ember-cohort.glb`를 4방위
+  균등조명 렌더 → 얼굴·흉갑·전방무기가 Blender -Y에 위치 → glTF 변환으로 three.js +Z.
+  따라서 `MODEL_FORWARD_YAW_OFFSET = 0`. 초기에 발 본 방향(전 애셋 동일 `[0,-0.276,0.961]`)을
+  근거로 삼으려 했으나, 이는 같은 Rigify 메타릭을 일괄 적용한 결과라 **메시의 방향이 아니라
+  리그의 방향**임을 확인하고 기각했다.
+- **결정론 격리 실증**: 시뮬레이션 파일 변경 0건, 렌더러는 정적 카탈로그만 import, 스냅샷/엔티티
+  필드 기록 0건, digest 테스트 통과. D23의 하드 제약 충족.
+- 렌더러 계약 테스트 13/13(신규 3건: 방향전환, idle 유지+reduced-motion, 동료 트레일+커맨더 제외).
+
+**Phase 2 판정 — 시뮬레이션 물리: GO (조건부)**. 상세: `engineering/determinism-spike-sim-physics-20260725.md`.
+
+핵심 발견은 **이 시뮬레이션이 이미 무리수 부동소수점을 쓰고 있다**는 것이다(`Math.hypot`
+`:1059`/`:1469`가 위치 갱신에 직접 투입). digest가 안정적인 이유는 부동소수점을 피해서가 아니라
+**모든 상태 기록부가 정수로 양자화**되기 때문이다(위치 기록 8곳 전부, 비양자화 0건). 실측:
+
+| 측정 | 결과 |
+|---|---|
+| 수식 순서 민감도 (원시 float) | 57 / 20,000 발산 |
+| 동일 값 정수 양자화 후 | **0 / 20,000** |
+| 반올림 경계 최단 접근 | 6.841e-7 (해당 크기 ULP ≈1e-13, 약 7자릿수 마진) |
+| `hypot` 4-ULP 섭동 시 반올림 뒤집힘 | **0 / 200,000** |
+| 장기 누적: 양자화 (200×600틱) | **발산 없음** |
+| 장기 누적: 비양자화 | **틱 95에서 발산** |
+
+**조건**: (a) 모든 상태 기록 정수 양자화, (b) 부동소수점 상태를 틱 간 이월 금지,
+(c) **외부 물리엔진(Rapier/cannon-es/ammo.js)은 부적합** — 내부 solver 상태를 부동소수점으로
+이월하며 거기에 양자화를 삽입할 수 없다. 자체 구현이어야 한다. (d) 삼각함수 신규 도입 시 재측정.
+
+**발견 — 월드공간 HUD 전체가 사망 상태(이번 작업 범위 밖, 별건)**: 물리 통합 리스크를 조사하다
+`app.js`가 호출하는 `projectEntityToScreen`/`projectStaticPoint`가 **두 렌더러 어디에도 정의되어
+있지 않음**을 확인. Cycle 3 커밋 `9a60a49`의 렌더러 335행에는 존재했으나, 렌더러를 통째로 교체한
+머지 `5a5f63a`(+689/-812)에서 유실됐다. 전 호출부가 `?.`라 조용히 undefined가 되어 다음이 전부
+렌더되지 않는다: 동료 네임플레이트(`app.js:1416`), 부유 데미지 숫자(`:1517`), 목표 웨이포인트
+(`:1375`), 추출 링(`:1450`). 이번 세션 브라우저 검증에서 찍은 스크린샷 전량에 네임플레이트가
+없던 것이 그 증상이었다. 시간당 스튜디오 루프의 커밋 `05dafaa`도 독립적으로 같은 지점을
+"Bug #1 world-nameplate guard" 실패로 지목하고 있어 교차 확인된다. Cycle 3 회고가 "8/8 요소
+구현·검증 완료"로 기록한 기능이 현재 전량 비작동 — **다음 사이클 최우선 후보**이며, 물리
+Phase 2보다 앞선다.
+
+**반영**: `battle-realtime-three.js`(facing/follow), `tests/defense-renderer-contract.test.mjs`(+3),
+`engineering/determinism-spike-sim-physics-20260725.md`(신규), 본 항목.
+
+## D26 — 월드공간 HUD 투영 복구: 머지로 유실된 projectEntityToScreen/projectStaticPoint 재구현
+
+**배경**: D24가 기록한 "월드공간 HUD 전면 사망"을 복구. `app.js`가 4개 지점에서 호출하는
+`projectEntityToScreen`/`projectStaticPoint`가 두 렌더러 어디에도 정의되어 있지 않았고, 전 호출부가
+`?.`라 조용히 undefined가 되어 동료 네임플레이트·부유 데미지 숫자·목표 웨이포인트·추출 프롬프트가
+전부 비렌더 상태였다.
+
+**유실 경로 확정**: 머지 `5a5f63a`의 두 부모를 실측 — `d941490`(투영 보유, 2건)과
+`0b50089`(recovery/g2-stage2-binding, 0건). "유입 렌더러를 canonical로 채택"하며 반대편에만 있던
+기능을 통째로 버린 theirs 해소였다. 의도적 제거가 아니라 머지 사고.
+
+**재구현**: 구 렌더러와 현 렌더러는 필드가 완전히 다르므로(`instances`→`actors`,
+`entry.object`→`record.root`, `perspectiveCamera`→`camera`, `stageWorld.halfX`는 부재하고 고정
+`WORLD_SCALE` 사용, `usingFallback`은 D25가 phantom으로 확인) 이식이 아니라 현 구조에 맞춰 재작성.
+`projectStaticPoint`는 `worldPoint()`의 normalized 분기와 동일한 매핑을 써서 정적 마커와 그 위에 선
+액터가 같은 픽셀로 투영되도록 했다.
+
+**구현 중 발견한 실제 결함 — 숨은 호출 순서 결합**: `Vector3.project()`는
+`camera.matrixWorldInverse`를 읽는데 three.js는 이를 `renderer.render()` 안에서만 갱신한다. 현재
+app.js는 우연히 `renderSnapshot()` 다음에 월드 HUD 패스를 돌려서 성립하고 있었을 뿐, 호출 순서가
+바뀌면 조용히 stale(또는 한 번도 렌더 안 한 카메라에서는 항등행렬) 투영을 반환한다. 계약 테스트가
+정확히 이걸 잡아냈다(헤드리스 하네스는 렌더하지 않으므로 "화면 중앙이 보이지 않음"으로 실패).
+테스트를 순서에 맞추는 대신 `worldToNDC()`가 `camera.updateMatrixWorld()`를 직접 호출하도록 고쳐
+호출 순서와 무관하게 올바르도록 만들었다 — 행렬 합성 1회 비용으로 보이지 않는 결합을 제거.
+
+**검증**: 렌더러 계약 테스트 15/15(신규 2건). 라이브 브라우저에서 4개 중 3개 직접 확인 —
+동료 네임플레이트("Ember Cohort"), 부유 데미지 숫자 3개, 추출 프롬프트("추출 가능 · Ember Cohort").
+웨이포인트 화살표는 게이트가 프러스텀 밖일 때만 렌더되는데, 카메라 궤도·최대 줌·서쪽 이동을 모두
+시도해도 게이트 NDC가 항상 [-1,1] 안(0.247 → 궤도 후 -0.212)이라 트리거되지 않았다. 이는 Cycle 3
+회고가 이미 미해결 리스크로 기록한 알려진 속성(`cinder-span` 스케일에서 커맨더와 게이트가 FOV
+콘 안에 함께 들어옴)이며 신규 결함이 아니다 — 이번에 실측 NDC 수치로 재확인. raw out-of-frustum
+NDC를 보존하는 계약 자체는 단위 테스트로 검증했다(화살표가 소비하는 경로).
+
+**별건 — 다른 세션의 대량 삭제로 10개 테스트 red**: 전체 회귀 실행 중 `_workspace/
+20260722-abyssal-command-bmad-gds-expansion/`의 추적 파일 91개(작업 트리 전체로는 155개 삭제)가
+사라져 `no-rts-closure`/`g2-full-route-runner` 등 10개가 ENOENT로 실패. 제 변경을 stash하고 HEAD에서
+재실행해도 동일하게 실패하므로 **이번 작업과 무관한 선행 상태**임을 확인했다. 제 작업물이 아니므로
+복구하거나 커밋하지 않고 보고만 한다 — 커밋은 pathspec으로 제 파일만 지정.
+
+**반영**: `battle-realtime-three.js`(worldToNDC/projectEntityToScreen/projectStaticPoint),
+`tests/defense-renderer-contract.test.mjs`(+2), 본 항목.

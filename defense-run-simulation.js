@@ -9,8 +9,9 @@ import {
   STAGE_REWARD_IDS, TARGET_PRIORITY, TICK_RATE, XP_GROWTH
 } from "./defense-catalog.js";
 import {
-  MAX_FRONT_SLOTS, BACK_ROW_SYNERGY_DAMAGE_BONUS, BOSS_RALLY_COOLDOWN_REDUCTION, COMPANION_ROLES,
+  BACK_ROW_SYNERGY_DAMAGE_BONUS, BOSS_RALLY_COOLDOWN_REDUCTION, COMPANION_ROLES,
   deriveWardenRuntimeStats, deriveCompanionRuntimeStats, companionFormationIntegrity,
+  FORMATION_STANCES, STANCE_CONFIG,
 } from "./rpg-catalog.js";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -171,9 +172,22 @@ function laneRoute(tactics, policyId, laneOffset) {
   return [];
 }
 
+/** Resolves `run.formationStance` (falling back to VANGUARD for any unset/unrecognized value — same
+ * default `processInput`'s STANCE_CYCLE branch initializes to) to its STANCE_CONFIG entry. */
+function activeStanceConfig(run) {
+  return STANCE_CONFIG[FORMATION_STANCES.includes(run.formationStance) ? run.formationStance : "VANGUARD"];
+}
+/** FRONT/BACK is now derived from stance position-rank (loadout-order index into `run.companions`)
+ * against the active stance's `derivedFrontCount` (UNIFIED-GDD.md:79-85), not a stored per-companion
+ * slot map — `core-loop-redesign-20260725.md` §2 before/after table, row "FRONT 상한". Companions
+ * beyond the 3 stance-offset slots (elite-extracted 4th+) clamp to the last offset index, which is
+ * always >= every stance's derivedFrontCount (max 2), so they are always BACK. */
+function stanceSlotForIndex(run, index) {
+  return index < activeStanceConfig(run).derivedFrontCount ? "FRONT" : "BACK";
+}
 /** Formation targeting (UNIFIED-GDD.md §4.2/§4.3): FRONT companions still ACTIVE (not DOWNED) with formationIntegrity remaining. */
 function livingFrontCompanions(run) {
-  return run.companions.filter((entry) => entry.slot === "FRONT" && entry.status === "ACTIVE" && entry.hp > 0);
+  return run.companions.filter((entry, index) => stanceSlotForIndex(run, index) === "FRONT" && entry.status === "ACTIVE" && entry.hp > 0);
 }
 function nearestActor(origin, candidates) {
   return candidates.slice().sort((a, b) => {
@@ -183,11 +197,12 @@ function nearestActor(origin, candidates) {
 }
 /**
  * Enemies that would otherwise pick the commander now pick from {commander, living FRONT companions}.
- * Companions are position-pinned to the commander every tick (no distinct stance-offset positions
- * this cycle — deferred, see task-manifest.md), so distance is always tied; ties resolve in favor
- * of the nearest FRONT companion (vanguard-screen intent: front row is engaged before the commander)
- * rather than `nearestActor`'s generic id-lexical tiebreak, which would otherwise always pick
- * "commander" over "companion-N" and leave FRONT targeting permanently inert.
+ * Companions are offset from the commander every tick per the active formation stance
+ * (STANCE_CONFIG, applied in tick()'s companion position-sync), so distance is no longer always tied
+ * the way it was under the old raw-snap model — ties (and near-ties) still resolve in favor of the
+ * nearest FRONT companion (vanguard-screen intent: front row is engaged before the commander) rather
+ * than `nearestActor`'s generic id-lexical tiebreak, which would otherwise always pick "commander"
+ * over "companion-N" and leave FRONT targeting permanently inert.
  */
 function playerSideTarget(run, enemy) {
   const fronts = livingFrontCompanions(run);
@@ -196,20 +211,17 @@ function playerSideTarget(run, enemy) {
   if (distanceSquared(enemy, nearestFront) <= distanceSquared(enemy, run.commander)) return nearestFront;
   return run.commander;
 }
-/** Resolves loadout + optional formation map into a deterministic companionId -> "FRONT"|"BACK" Map. Legacy (no formation) = all BACK. */
-function resolveFormation(companionLoadout, formation) {
-  const result = new Map(validLoadout(companionLoadout).map((id) => [id, "BACK"]));
-  let frontCount = 0;
-  Object.entries(formation || {}).forEach(([id, slot]) => {
-    if (!result.has(id) || slot !== "FRONT" || frontCount >= MAX_FRONT_SLOTS) return;
-    result.set(id, "FRONT");
-    frontCount += 1;
-  });
-  return result;
+/** Resolves a loadout into its deterministic companionId order (companionId asc, capped at 3 —
+ * campaign-state.js MAX_LOADOUT_SIZE) — this order IS the stance position-rank index that
+ * stanceSlotForIndex()/tick()'s position-sync read every tick. FRONT/BACK is no longer decided here
+ * (legacy per-companion `formation` map input removed from this function — see createDefenseRun's
+ * `formation` param doc for why it's still accepted at the public API boundary). */
+function resolveFormation(companionLoadout) {
+  return validLoadout(companionLoadout);
 }
 
 /**
- * `options.slot`: "FRONT" | "BACK" (default BACK). `options.equipment`: {weapon,ward,trinket}
+ * `options.equipment`: {weapon,ward,trinket}
  * 0-based tier indices (default all T1/index 0). Role passives (damageBonus/eliteDamageBonus/
  * selfIntegrityMultiplier) only apply when `run.rpgActive` is true — an untouched campaign
  * (no Warden stat/skill/trait investment, no equipment purchased) produces byte-identical
@@ -222,7 +234,7 @@ function resolveFormation(companionLoadout, formation) {
  * trait multiplier (also step_1, Warden-sourced). Fire-time stance synergy (step_2) is applied
  * per-tick in the fire loop, not baked in here.
  */
-function addCompanion(run, companionId, { slot = "BACK", equipment = {} } = {}) {
+function addCompanion(run, companionId, { equipment = {} } = {}) {
   if (run.measurementProfile) return;
   const data = COMPANIONS[companionId];
   if (!data || run.companions.some((entry) => entry.companionId === companionId)) return;
@@ -237,9 +249,13 @@ function addCompanion(run, companionId, { slot = "BACK", equipment = {} } = {}) 
   const damage = Math.round(baseDamage * (1 + roleDamageBonus) * runtime.weaponTierMultiplier * wardpactDamageMultiplier);
   const range = Math.round(data.range * runtime.trinketTierMultiplier * wardpactRangeMultiplier);
   const maxFormationIntegrity = Math.round(companionFormationIntegrity(data.damage, runtime.wardTierIndex) * selfIntegrityMultiplier);
-  run.companions.push(actor(nextId(run, "companion"), "companion", run.commander.x, run.commander.y, maxFormationIntegrity, maxFormationIntegrity, {
+  const index = run.companions.length;
+  const offset = activeStanceConfig(run).offsets[Math.min(index, activeStanceConfig(run).offsets.length - 1)];
+  const x = clamp(run.commander.x + offset.x, 0, ARENA.width);
+  const y = clamp(run.commander.y + offset.y, 0, ARENA.height);
+  run.companions.push(actor(nextId(run, "companion"), "companion", x, y, maxFormationIntegrity, maxFormationIntegrity, {
     companionId, cooldown: 0, damage, fireTicks: data.fireTicks, range, radius: 300,
-    slot, status: "ACTIVE", role: runtime.role, eliteDamageBonus: rpgActive ? runtime.eliteDamageBonus : 0,
+    slot: stanceSlotForIndex(run, index), status: "ACTIVE", role: runtime.role, eliteDamageBonus: rpgActive ? runtime.eliteDamageBonus : 0,
   }));
 }
 
@@ -835,6 +851,18 @@ function processInput(run, input) {
       run.commander.move = direction;
       accepted = true;
     } else rejectionReason = "INVALID_DIRECTION";
+  } else if (input.type === "STANCE_CYCLE") {
+    if (run.tick >= (run.stanceCooldownUntilTick ?? 0)) {
+      const currentStance = FORMATION_STANCES.includes(run.formationStance) ? run.formationStance : "VANGUARD";
+      const nextIndex = (FORMATION_STANCES.indexOf(currentStance) + 1) % FORMATION_STANCES.length;
+      run.formationStance = FORMATION_STANCES[nextIndex];
+      run.stanceCooldownUntilTick = run.tick + 4 * TICK_RATE;
+      accepted = true;
+      emit(run, "STANCE_SWITCHED", { stance: run.formationStance, atTick: run.tick });
+    } else {
+      rejectionReason = "STANCE_ON_COOLDOWN";
+      emit(run, "STANCE_SWITCH_BLOCKED", { stance: run.formationStance, remainingTicks: run.stanceCooldownUntilTick - run.tick });
+    }
   } else if (input.type === "SKILL_SELECTED" || input.type === "GROWTH_OFFER_SELECTED") {
     accepted = applySkill(run, input.payload?.skillId || input.payload);
     rejectionReason = "GROWTH_OFFER_SELECTION_UNAVAILABLE";
@@ -1578,9 +1606,12 @@ function tick(run) {
     run.commander.basicCooldown = run.commander.basicTicks || COMMANDER.basicCooldown;
   }
 
-  run.companions.forEach((companion) => {
-    companion.x = run.commander.x;
-    companion.y = run.commander.y;
+  const stance = activeStanceConfig(run);
+  run.companions.forEach((companion, index) => {
+    const offset = stance.offsets[Math.min(index, stance.offsets.length - 1)];
+    companion.x = clamp(run.commander.x + offset.x, 0, ARENA.width);
+    companion.y = clamp(run.commander.y + offset.y, 0, ARENA.height);
+    companion.slot = stanceSlotForIndex(run, index);
     if (companion.status !== "ACTIVE") return;
     companion.cooldown -= 1;
     if (companion.cooldown <= 0) {
@@ -1654,7 +1685,10 @@ function tick(run) {
   }
 }
 
-/** Creates a new run. `seed` is coerced to an unsigned xorshift32 state (zero becomes one). */
+/** Creates a new run. `seed` is coerced to an unsigned xorshift32 state (zero becomes one).
+ * `formation` (legacy per-companion FRONT/BACK map, e.g. campaign-state.js's `companionFormation`) is
+ * accepted for call-site backward compatibility only — FRONT/BACK is now derived from stance
+ * position-rank (STANCE_CONFIG, run.formationStance) each tick, not this map. See resolveFormation(). */
 export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {} } = {}) {
   const stage = stageFor(stageId);
   const stagePlan = stagePlanFor(stage);
@@ -1746,6 +1780,8 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     gateDamageReduction: 0,
     terrainRecovery: { commander: 0, gate: 0, capRatio: 0.25 },
     rallyTargetId: null,
+    formationStance: "VANGUARD",
+    stanceCooldownUntilTick: 0,
     wardenState: null,
     gate: { id: "gate", x: ARENA.gateX, y: ARENA.gateY, integrity: GATE.maxIntegrity, maxIntegrity: GATE.maxIntegrity, radius: GATE.radius },
     commander: {
@@ -1833,8 +1869,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
       state.commander.cooldownScale = clamp(state.commander.cooldownScale - runtime.cooldownReduction, 0.4, 1);
       state.commander.critProfile.chanceBp = clamp(state.commander.critProfile.chanceBp + runtime.critChanceBonusBp, 0, 10000);
     }
-    const formationMap = resolveFormation(companionLoadout, formation);
-    formationMap.forEach((slot, id) => addCompanion(state, id, { slot, equipment: companionEquipment[id] || {} }));
+    resolveFormation(companionLoadout).forEach((id) => addCompanion(state, id, { equipment: companionEquipment[id] || {} }));
     applyOwnedRewards(state, rewardIds);
     if (rpgActive) {
       let incomingMultiplier = state.commander.incomingDamageMultiplier;
@@ -1870,7 +1905,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
 
 /** Queues one input for the next simulation tick and returns a new run. */
 export function queueInput(run, type, payload = null) {
-  if (!run || !["MOVE", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "REWARD_SELECTED", "EXTRACT_ELITE", "M4_CARD_DECISION", "M3_TARGET_PROBE"].includes(type)) return run;
+  if (!run || !["MOVE", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "REWARD_SELECTED", "EXTRACT_ELITE", "M4_CARD_DECISION", "M3_TARGET_PROBE", "STANCE_CYCLE"].includes(type)) return run;
   const next = clone(run);
   next.inputSequence = (next.inputSequence || 0) + 1;
   next.inputs.push({ at: next.tick + 1, inputId: `${next.planCommitment.identity}:input:${next.inputSequence}`, type, payload: clone(payload) });
@@ -1938,6 +1973,8 @@ export function getRunSnapshot(run) {
     terrainRecovery: run.terrainRecovery,
     commander: run.commander,
     rallyTargetId: run.rallyTargetId,
+    formationStance: run.formationStance,
+    stanceCooldownUntilTick: run.stanceCooldownUntilTick,
     wardenState: run.wardenState ? { chainReactionStacks: run.wardenState.chainReactionStacks, firstStrikeConsumed: run.wardenState.firstStrikeConsumed, wardensWardConsumed: run.wardenState.wardensWardConsumed, awakeningResetConsumed: run.wardenState.awakeningResetConsumed } : null,
     growthOffer: run.growthOffer,
     rewardOffer: run.rewardOffer,

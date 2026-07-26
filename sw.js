@@ -31,14 +31,13 @@ const CORE_ASSETS = [
   "./vendor/loaders/GLTFLoader.js",
   "./vendor/utils/BufferGeometryUtils.js",
   "./vendor/utils/SkeletonUtils.js",
-  // anchor-shard.glb (companion model, assets/images/battle/glb/) is deliberately
-  // NOT precached here: it is an unoptimized ~31MB pilot export (vs. the prior
-  // properly-baked companion GLBs at a few KB each). Precaching would force every
-  // visitor to download 31MB before install completes. networkFirst() below still
-  // caches it into CACHE_NAME on first real fetch (battle start), so offline replay
-  // works normally after one online session -- this only defers the cost off the
-  // install-blocking critical path. Re-add once the asset pipeline ships an
-  // optimized/compressed version.
+  // None of the 40 battle GLBs (assets/images/battle/glb/) are precached here:
+  // together they total ~29MB (grew from ~19MB once 19 of them were rigged and
+  // animated), and forcing every visitor to download that before install
+  // completes would block first paint on mobile. networkFirst() below still
+  // caches each one into CACHE_NAME on its first real fetch (battle start),
+  // so offline replay works normally after one online session -- this only
+  // defers the cost off the install-blocking critical path.
   "./styles.css",
   "./react-game-ui.css",
   "./manifest.json",

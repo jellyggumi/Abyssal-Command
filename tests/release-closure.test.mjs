@@ -15,6 +15,21 @@ const CINDER_SPAN_WORLD_ASSETS = [
   "assets/images/battle/world/cinder-span-topdown-plate.webp",
   "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
 ];
+const BATTLE_GLB_ASSETS = [
+  "assets/images/battle/glb/terrain/abyss-chancel.glb", "assets/images/battle/glb/terrain/cinder-span.glb", "assets/images/battle/glb/terrain/echo-throne-steps.glb", "assets/images/battle/glb/terrain/gate-zenith.glb",
+  "assets/images/battle/glb/terrain/glass-necropolis.glb", "assets/images/battle/glb/terrain/howling-sprawl.glb", "assets/images/battle/glb/terrain/shattered-causeway.glb", "assets/images/battle/glb/terrain/starless-canal.glb",
+  "assets/images/battle/glb/terrain/sunken-bastion.glb", "assets/images/battle/glb/terrain/veil-citadel.glb", "assets/images/battle/glb/bosses/abyss-regent.glb", "assets/images/battle/glb/bosses/bridge-colossus.glb",
+  "assets/images/battle/glb/bosses/cinder-warden.glb", "assets/images/battle/glb/bosses/gate-sovereign.glb", "assets/images/battle/glb/bosses/lantern-tyrant.glb", "assets/images/battle/glb/bosses/pack-herald.glb",
+  "assets/images/battle/glb/bosses/requiem-choir.glb", "assets/images/battle/glb/bosses/tide-warden.glb", "assets/images/battle/glb/bosses/veil-tactician.glb", "assets/images/battle/glb/bosses/veiled-concordat.glb",
+  "assets/images/battle/glb/enemies/guard.glb", "assets/images/battle/glb/enemies/possessed.glb", "assets/images/battle/glb/enemies/scout.glb", "assets/images/battle/glb/enemies/shade.glb",
+  "assets/images/battle/glb/companions/anchor-shard.glb", "assets/images/battle/glb/companions/dawnless-crown.glb", "assets/images/battle/glb/companions/ember-cohort.glb", "assets/images/battle/glb/companions/lantern-reaver.glb",
+  "assets/images/battle/glb/companions/pack-warden.glb", "assets/images/battle/glb/companions/requiem-warden.glb", "assets/images/battle/glb/companions/rift-lens.glb", "assets/images/battle/glb/companions/throne-echo.glb",
+  "assets/images/battle/glb/companions/veil-vanguard.glb", "assets/images/battle/glb/commander/dusk-warden.glb", "assets/images/battle/glb/vfx/boss-rally-aura.glb", "assets/images/battle/glb/vfx/companion-downed-fade.glb",
+  "assets/images/battle/glb/vfx/critical-hit-burst.glb", "assets/images/battle/glb/vfx/echo-warden-awakening.glb", "assets/images/battle/glb/vfx/gate-breach-shockwave.glb", "assets/images/battle/glb/vfx/wardens-ward-shield.glb",
+  "assets/images/battle/glb/props/abyssal-banner.glb", "assets/images/battle/glb/props/bulwark-brand.glb", "assets/images/battle/glb/props/choir-ward-crystal.glb", "assets/images/battle/glb/props/stillwater-hourglass.glb",
+  "assets/images/battle/glb/props/warden-lantern.glb", "assets/images/battle/glb/props/tiers/tier-t1.glb", "assets/images/battle/glb/props/tiers/tier-t2.glb", "assets/images/battle/glb/props/tiers/tier-t3.glb",
+  "assets/images/battle/glb/props/tiers/tier-t4.glb", "assets/images/battle/glb/props/tiers/tier-t5.glb",
+];
 const RUNTIME_PATHS = new Set([
   "index.html", "app.js", "rpg-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
   "campaign-state.js", "defense-storage.js", "defense-cutscene.js", "defense-telemetry.js", "defense-audio.js",
@@ -27,7 +42,7 @@ const RUNTIME_PATHS = new Set([
   "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
   ...CINDER_SPAN_WORLD_ASSETS,
   "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
-  "assets/images/battle/glb/anchor-shard.glb",
+  ...BATTLE_GLB_ASSETS,
 ]);
 
 async function project(path) {
@@ -120,7 +135,7 @@ test("version scripts enforce the exact defense rules version", async () => {
     "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
     ...CINDER_SPAN_WORLD_ASSETS,
     "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
-    "assets/images/battle/glb/anchor-shard.glb",
+    ...BATTLE_GLB_ASSETS,
   ];
   for (const file of required) {
     const target = join(directory, file);

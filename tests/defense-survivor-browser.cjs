@@ -498,28 +498,41 @@ async function verifyBossMeshRegression(browser, hosting) {
       canvas.height = 180;
       document.body.appendChild(canvas);
       const renderer = new RealtimeBattle().mount({ canvas, viewport: canvas });
-      if (renderer.usingFallback) return { error: "RealtimeBattle fell back to Canvas2D (no real WebGL2 in this context) -- cannot exercise the WebGL mesh-resolution code path" };
-      await renderer.modelPromise;
-      if (!renderer.modelReady) return { error: "the abyssal-command-resource-pack.glb model failed to load -- cannot verify mesh resolution" };
-
+      if (!renderer.renderer) return { error: "RealtimeBattle did not expose a WebGL renderer after mount -- cannot exercise the GLB mesh-resolution code path" };
       renderer.renderSnapshot(projected, {});
 
-      const entry = renderer.instances.get(boss.id);
-      if (!entry) return { error: `renderer.instances has no entry for live boss id ${boss.id} -- Bug #3 has regressed (meshNameFor()/world.boss substitution broken)`, bossId: boss.id, bossHp: boss.hp, bossTick: snapshot.tick };
+      // RealtimeBattle loads each actor path asynchronously. The old contract
+      // awaited a single resource-pack promise and read `instances`; the
+      // current renderer owns per-actor records in `actors` instead.
+      const entry = await new Promise((resolve) => {
+        const deadline = performance.now() + 10000;
+        const poll = () => {
+          const record = renderer.actors.get(boss.id);
+          if ((record && (!record.loading || record.root)) || performance.now() >= deadline) {
+            resolve(record ?? null);
+            return;
+          }
+          setTimeout(poll, 25);
+        };
+        poll();
+      });
+      if (!entry) return { error: `renderer.actors has no entry for live boss id ${boss.id} -- boss actor reconciliation regressed`, bossId: boss.id, bossHp: boss.hp, bossTick: snapshot.tick };
+      if (entry.loading || !entry.root) return { error: `boss model failed to load: ${entry.modelPath}`, bossId: boss.id, bossHp: boss.hp, bossTick: snapshot.tick };
+
       let meshDescendantCount = 0;
-      entry.object.traverse((node) => { if (node.isMesh || node.isSkinnedMesh) meshDescendantCount += 1; });
+      entry.root.traverse((node) => { if (node.isMesh || node.isSkinnedMesh) meshDescendantCount += 1; });
       return {
         bossId: boss.id,
         bossHp: boss.hp,
         bossTick: snapshot.tick,
-        meshRootName: entry.meshRootName,
+        modelPath: entry.modelPath,
         meshDescendantCount,
-        expectedMeshRootName: "cinder-warden-root",
+        expectedModelPath: "bosses/cinder-warden.glb",
       };
     });
 
     assert.equal(result.error, undefined, `boss mesh regression check failed: ${result.error}`);
-    assert.equal(result.meshRootName, result.expectedMeshRootName, "the boss must resolve its mesh root from STAGE_WORLD, not the always-null meshNameFor() result");
+    assert.equal(result.modelPath, result.expectedModelPath, "the boss must resolve its model path from the authored BOSS_MODELS table");
     assert.ok(result.meshDescendantCount > 0, `the boss's cloned scene-graph object must contain real mesh geometry, found ${result.meshDescendantCount} mesh descendants`);
     assert.deepEqual(errors, [], "boss mesh regression check emitted unexpected page or console errors");
     return result;

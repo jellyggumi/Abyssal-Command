@@ -36,7 +36,7 @@ const REQUIRED_FILES = [
   "vendor/loaders/GLTFLoader.js",
   "vendor/utils/BufferGeometryUtils.js",
   "vendor/utils/SkeletonUtils.js",
-  "assets/images/battle/glb/anchor-shard.glb",
+  "assets/images/battle/glb/companions/anchor-shard.glb",
 ];
 
 function argument(name) {
