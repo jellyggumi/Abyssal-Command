@@ -455,15 +455,6 @@
       "testDisposition": "retain"
     },
     {
-      "disposition": "delete",
-      "currentPath": "assets/images/battle/glb/previs/anchor-shard.previs.glb",
-      "replacementPath": null,
-      "extension": ".glb",
-      "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": false,
-      "testDisposition": "delete"
-    },
-    {
       "disposition": "retain",
       "currentPath": "assets/images/battle/glb/props/abyss-blade.glb",
       "replacementPath": "assets/images/battle/glb/props/abyss-blade.glb",
@@ -2934,6 +2925,15 @@
     {
       "disposition": "delete",
       "currentPath": "assets/images/battle/glb/previs/abyssal-banner.previs.glb",
+      "replacementPath": null,
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/images/battle/glb/previs/anchor-shard.previs.glb",
       "replacementPath": null,
       "extension": ".glb",
       "generator": "scripts/build-defense-asset-manifest.mjs",
