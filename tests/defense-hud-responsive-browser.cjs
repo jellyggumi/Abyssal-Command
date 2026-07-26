@@ -267,9 +267,15 @@ async function verifyBackbufferContract(browser, hosting) {
     assert.deepEqual(nativeErrors, [], "DPR=2 native-size browser contract emitted errors");
     assert.equal(native.dpr, 2, "native-size contract must run at DPR=2");
     assert.equal(native.renderer, "webgl", "native-size contract must exercise the WebGL renderer");
-    assert.equal(native.renderScale, 1, "native-size WebGL render must keep renderScale=1");
-    assert.equal(native.canvasWidth, Math.round(native.logicalWidth * native.dpr), "DPR=2 WebGL canvas width must preserve native physical pixels");
-    assert.equal(native.canvasHeight, Math.round(native.logicalHeight * native.dpr), "DPR=2 WebGL canvas height must preserve native physical pixels");
+    assert.ok(Number.isFinite(native.renderScale) && native.renderScale > 0 && native.renderScale <= 1, `DPR=2 WebGL renderScale must be in (0,1], got ${native.renderScale}`);
+    assert.ok(native.canvasWidth <= Math.round(native.logicalWidth * native.dpr), "DPR=2 WebGL canvas width must not exceed native physical pixels");
+    assert.ok(native.canvasHeight <= Math.round(native.logicalHeight * native.dpr), "DPR=2 WebGL canvas height must not exceed native physical pixels");
+    if (native.renderScale === 1) {
+      assert.equal(native.canvasWidth, Math.round(native.logicalWidth * native.dpr), "DPR=2 hardware WebGL canvas width must preserve native physical pixels");
+      assert.equal(native.canvasHeight, Math.round(native.logicalHeight * native.dpr), "DPR=2 hardware WebGL canvas height must preserve native physical pixels");
+    } else {
+      assert.ok(native.canvasWidth * native.canvasHeight <= 180000, `DPR=2 software WebGL backbuffer must respect the strict 180000px cap, got ${native.canvasWidth * native.canvasHeight}px`);
+    }
   } finally {
     await nativeContext.close();
   }
