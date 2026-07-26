@@ -332,7 +332,7 @@ if [[ $TEST_RC -eq 0 && $COMMITS -gt 0 && $GOVERN_TAMPERED -eq 0 &&
       $HEAD_LINEAR -eq 1 ]]; then
   PUSH_HEAD="$HEAD_AFTER"
   set +e
-  git push origin "HEAD:refs/heads/studio-loop/main" >> "$LOG" 2>&1
+  GIT_TERMINAL_PROMPT=0 git push origin "HEAD:refs/heads/studio-loop/main" >> "$LOG" 2>&1
   PUSH_RC=$?
   set -e
   if [[ $PUSH_RC -eq 0 ]]; then
