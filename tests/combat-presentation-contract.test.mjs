@@ -516,15 +516,24 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   );
   let state = adapter.debugPresentationState();
   const decor = state.stageDecor;
+  const { meshRootForStageBoss } = await rendererModule;
+  const bossModelPath = meshRootForStageBoss(profile.stageId);
+  assert.ok(bossModelPath, "the stage must resolve an authored boss rig");
   const expectedRequests = [
     profile.terrainGlbPath,
     ...profile.presentation.props.map(({ modelPath }) => modelPath),
     ...profile.presentation.npcs.map(({ modelPath }) => modelPath),
+    // Stage load warms the boss rig so it does not pop in mid-fight.
+    bossModelPath,
   ].map((modelPath) => `./${modelPath}`).sort();
   assert.deepEqual(
     [...new Set(gltfRequests.slice(requestStart))].sort(),
     expectedRequests,
-    "renderer requests the catalog terrain, prop, and NPC models without substituting generic assets",
+    "renderer requests the catalog terrain, prop, NPC, and boss models without substituting generic assets",
+  );
+  assert.ok(
+    gltfRequests.slice(requestStart).includes(`./${bossModelPath}`),
+    "stage load must warm the authored boss rig before the boss spawns",
   );
   assert.equal(decor.stageId, profile.stageId);
   assert.equal(decor.terrainLoaded, true);
