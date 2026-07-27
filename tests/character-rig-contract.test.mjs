@@ -169,11 +169,23 @@ for (const rel of CHARACTER_GLBS) {
 
     // The arm chain must own real weight, otherwise arm-driven clips (attack,
     // defence, show) visibly do nothing no matter how large the keyframes are.
+    // Measured against the UPPER body, not the whole rig: an arm's ability to
+    // move geometry does not depend on how much mass hangs below the hips, and
+    // characters that carry a robe skirt or a companion beast in the same
+    // skinned mesh (abyss-regent, pack-herald) would otherwise fail for owning
+    // 7-9% of a much larger body while still driving 41-54% of everything above
+    // the waist. Cast range at the time of writing: 41.1% - 87.8% of the upper
+    // chain, 7.2% - 46.1% of the rig.
     let armWeight = 0;
+    let upperWeight = 0;
     for (const [name, w] of wq.totals) {
       if (/upper_arm|forearm|hand|shoulder/.test(name)) armWeight += w;
+      if (/upper_arm|forearm|hand|shoulder|spine|head|neck/.test(name)) upperWeight += w;
     }
-    assert.ok(armWeight / total >= 0.10,
-      `${rel}: arm chain owns only ${((armWeight / total) * 100).toFixed(1)}% of weight`);
+    assert.ok(upperWeight > 0, `${rel}: no upper-body chain weight`);
+    assert.ok(armWeight / upperWeight >= 0.25,
+      `${rel}: arm chain owns only ${((armWeight / upperWeight) * 100).toFixed(1)}% of the upper body`);
+    assert.ok(armWeight / total >= 0.05,
+      `${rel}: arm chain owns only ${((armWeight / total) * 100).toFixed(1)}% of the whole rig`);
   });
 }

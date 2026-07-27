@@ -9,6 +9,7 @@ const OUTPUT_PATH = '_workspace/20260726-stage1b-cinder-pressure-agency/engineer
 const CATALOG_PATH = 'stage-world-catalog.js';
 const ALL_MESH_PROVENANCE_PATH = '_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json';
 const TERRAIN_PROVENANCE_PATH = 'assets/images/battle/glb/terrain/build-provenance.json';
+const CHARACTER_PROVENANCE_PATH = 'assets/images/battle/glb/character-build-provenance.json';
 const RUNTIME_REGISTRY_PATH = 'scripts/defense-runtime-assets.mjs';
 const JSON_CHUNK = 0x4e4f534a;
 const BIN_CHUNK = 0x004e4942;
@@ -81,7 +82,7 @@ function parseGlb(assetPath) {
   return { absolutePath, bytes, json, binary, version };
 }
 
-function normalizeProvenanceRecords(allMeshAudit, terrainBuildProvenance) {
+function normalizeProvenanceRecords(allMeshAudit, terrainBuildProvenance, characterBuildProvenance) {
   const allMeshByRelativePath = new Map((allMeshAudit.rows ?? []).map((row) => [
     row.relativePath,
     {
@@ -112,7 +113,24 @@ function normalizeProvenanceRecords(allMeshAudit, terrainBuildProvenance) {
       },
     },
   ]));
-  return { allMeshByRelativePath, terrainByOutputPath };
+  // Characters that were re-rigged and re-authored no longer come out of the
+  // texture pass, so -- exactly like terrain -- they carry their own build
+  // record and are verified against it instead.
+  const characterByOutputPath = new Map(Object.values(characterBuildProvenance.assets ?? {}).map((asset) => [
+    asset.outputPath,
+    {
+      auditPath: CHARACTER_PROVENANCE_PATH,
+      outputSha256: asset.outputSha256,
+      valid: typeof asset.outputPath === 'string' && typeof asset.outputSha256 === 'string',
+      report: {
+        auditPath: CHARACTER_PROVENANCE_PATH,
+        outputPath: asset.outputPath,
+        sourceCandidatePath: asset.sourceCandidatePath,
+        verifiedOutputSha256: asset.outputSha256,
+      },
+    },
+  ]));
+  return { allMeshByRelativePath, terrainByOutputPath, characterByOutputPath };
 }
 
 function auditGlb(assetPath, retainedPaths, provenanceRecords) {
@@ -250,17 +268,22 @@ function auditGlb(assetPath, retainedPaths, provenanceRecords) {
 
   const isTerrainAsset = assetPath.startsWith('assets/images/battle/glb/terrain/');
   const relativeGlbPath = assetPath.split('/glb/')[1];
+  // A promoted character owns its build record; everything else still answers
+  // to the texture pass that produced it.
+  const characterProvenance = provenanceRecords.characterByOutputPath.get(assetPath);
   const provenance = isTerrainAsset
     ? provenanceRecords.terrainByOutputPath.get(assetPath)
-    : provenanceRecords.allMeshByRelativePath.get(relativeGlbPath);
+    : (characterProvenance ?? provenanceRecords.allMeshByRelativePath.get(relativeGlbPath));
   const runtimeSha256 = sha256(glb.bytes);
   checks.verifiedProvenanceMatch = provenance?.valid === true
     && provenance.outputSha256 === runtimeSha256;
   if (!checks.verifiedProvenanceMatch) {
-    const requirement = isTerrainAsset
+    const requirement = isTerrainAsset || characterProvenance
       ? 'the outputSha256 for its exact outputPath'
       : 'an all-green row for its relative GLB path';
-    const auditPath = isTerrainAsset ? TERRAIN_PROVENANCE_PATH : ALL_MESH_PROVENANCE_PATH;
+    const auditPath = isTerrainAsset
+      ? TERRAIN_PROVENANCE_PATH
+      : (characterProvenance ? CHARACTER_PROVENANCE_PATH : ALL_MESH_PROVENANCE_PATH);
     errors.push(issue('provenance_mismatch', assetPath, `runtime SHA-256 does not match ${requirement} in ${auditPath}`));
   }
 
@@ -399,7 +422,12 @@ async function buildReport() {
     ALL_MESH_PROVENANCE_PATH,
     TERRAIN_PROVENANCE_PATH,
   ].map((path) => JSON.parse(readFileSync(resolve(ROOT, path), 'utf8')));
-  const provenanceRecords = normalizeProvenanceRecords(allMeshAudit, terrainBuildProvenance);
+  // Optional: absent until the first character promotion, and every other
+  // asset keeps answering to the texture-pass audit when it is missing.
+  const characterBuildProvenance = existsSync(resolve(ROOT, CHARACTER_PROVENANCE_PATH))
+    ? JSON.parse(readFileSync(resolve(ROOT, CHARACTER_PROVENANCE_PATH), 'utf8'))
+    : { assets: {} };
+  const provenanceRecords = normalizeProvenanceRecords(allMeshAudit, terrainBuildProvenance, characterBuildProvenance);
   const retainedPaths = new Set(RETAINED_ASSET_PATHS);
   const canonicalStageIds = STAGES.map(({ id }) => id);
   const assetPaths = new Set();

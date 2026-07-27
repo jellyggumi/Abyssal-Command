@@ -1,0 +1,2548 @@
+{
+  "assetCount": 23,
+  "assets": {
+    "assets/images/battle/glb/bosses/abyss-regent.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "abyss-regent::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4908,
+        "sampledVertices": 15409
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.3497,
+          "lowerTravel": 0.01776,
+          "participates": true,
+          "upperTravel": 0.0508
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.6518,
+          "lowerTravel": 0.07523,
+          "participates": true,
+          "upperTravel": 0.04903
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.3468,
+          "lowerTravel": 0.01528,
+          "participates": true,
+          "upperTravel": 0.04406
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.3498,
+          "lowerTravel": 0.02186,
+          "participates": true,
+          "upperTravel": 0.06249
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3503,
+          "lowerTravel": 0.00604,
+          "participates": true,
+          "upperTravel": 0.01723
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.2545,
+          "lowerTravel": 0.01585,
+          "participates": true,
+          "upperTravel": 0.06227
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.3501,
+          "lowerTravel": 0.0087,
+          "participates": true,
+          "upperTravel": 0.02484
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.8813,
+          "lowerTravel": 0.00288,
+          "participates": true,
+          "upperTravel": 0.00326
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.3493,
+          "lowerTravel": 0.09152,
+          "participates": true,
+          "upperTravel": 0.03197
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.2678,
+          "lowerTravel": 0.18728,
+          "participates": true,
+          "upperTravel": 0.05016
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3561,
+          "lowerTravel": 0.00721,
+          "participates": true,
+          "upperTravel": 0.02024
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/abyss-regent.glb",
+      "outputSha256": "228e0be78c9f94c65202b57dbe3842b1c928c4cee1ab523920dd087938488af8",
+      "runtimeContract": {
+        "animationNames": [
+          "abyss-regent::attack::v01",
+          "abyss-regent::avoid::v01",
+          "abyss-regent::bighit::v01",
+          "abyss-regent::critical::v01",
+          "abyss-regent::defence::v01",
+          "abyss-regent::die::v01",
+          "abyss-regent::hit::v01",
+          "abyss-regent::idle::v01",
+          "abyss-regent::move::v01",
+          "abyss-regent::run::v01",
+          "abyss-regent::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/abyss-regent.glb",
+      "sourceCandidateSha256": "228e0be78c9f94c65202b57dbe3842b1c928c4cee1ab523920dd087938488af8"
+    },
+    "assets/images/battle/glb/bosses/bridge-colossus.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "bridge-colossus::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.84,
+        "sampledVertices": 4794
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.108,
+          "lowerTravel": 0.0304,
+          "participates": true,
+          "upperTravel": 0.28163
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.5578,
+          "lowerTravel": 0.10887,
+          "participates": true,
+          "upperTravel": 0.19518
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1485,
+          "lowerTravel": 0.0228,
+          "participates": true,
+          "upperTravel": 0.15349
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.105,
+          "lowerTravel": 0.03641,
+          "participates": true,
+          "upperTravel": 0.34688
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3006,
+          "lowerTravel": 0.02338,
+          "participates": true,
+          "upperTravel": 0.07779
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1153,
+          "lowerTravel": 0.0238,
+          "participates": true,
+          "upperTravel": 0.20637
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2123,
+          "lowerTravel": 0.01733,
+          "participates": true,
+          "upperTravel": 0.08164
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.8353,
+          "lowerTravel": 0.00415,
+          "participates": true,
+          "upperTravel": 0.00497
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.5618,
+          "lowerTravel": 0.12691,
+          "participates": true,
+          "upperTravel": 0.0713
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5693,
+          "lowerTravel": 0.26508,
+          "participates": true,
+          "upperTravel": 0.15091
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2632,
+          "lowerTravel": 0.0169,
+          "participates": true,
+          "upperTravel": 0.06421
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/bridge-colossus.glb",
+      "outputSha256": "88d2f1e1115f28983e5220c747fe7e106dd1a183050f4053489c9eaae906e0e7",
+      "runtimeContract": {
+        "animationNames": [
+          "bridge-colossus::attack::v01",
+          "bridge-colossus::avoid::v01",
+          "bridge-colossus::bighit::v01",
+          "bridge-colossus::critical::v01",
+          "bridge-colossus::defence::v01",
+          "bridge-colossus::die::v01",
+          "bridge-colossus::hit::v01",
+          "bridge-colossus::idle::v01",
+          "bridge-colossus::move::v01",
+          "bridge-colossus::run::v01",
+          "bridge-colossus::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/bridge-colossus.glb",
+      "sourceCandidateSha256": "88d2f1e1115f28983e5220c747fe7e106dd1a183050f4053489c9eaae906e0e7"
+    },
+    "assets/images/battle/glb/bosses/cinder-warden.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "cinder-warden::move::v01",
+        "frame": 25,
+        "maxDisplacement": 1.0488,
+        "sampledVertices": 10933
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1046,
+          "lowerTravel": 0.02162,
+          "participates": true,
+          "upperTravel": 0.20661
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.5392,
+          "lowerTravel": 0.08415,
+          "participates": true,
+          "upperTravel": 0.15608
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1453,
+          "lowerTravel": 0.01751,
+          "participates": true,
+          "upperTravel": 0.12051
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1029,
+          "lowerTravel": 0.02355,
+          "participates": true,
+          "upperTravel": 0.22894
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2549,
+          "lowerTravel": 0.01811,
+          "participates": true,
+          "upperTravel": 0.07103
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1033,
+          "lowerTravel": 0.01814,
+          "participates": true,
+          "upperTravel": 0.17558
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2051,
+          "lowerTravel": 0.0134,
+          "participates": true,
+          "upperTravel": 0.06532
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.5352,
+          "lowerTravel": 0.00324,
+          "participates": true,
+          "upperTravel": 0.00605
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.562,
+          "lowerTravel": 0.09838,
+          "participates": true,
+          "upperTravel": 0.05529
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5673,
+          "lowerTravel": 0.2053,
+          "participates": true,
+          "upperTravel": 0.11646
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2605,
+          "lowerTravel": 0.01309,
+          "participates": true,
+          "upperTravel": 0.05024
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/cinder-warden.glb",
+      "outputSha256": "ded28b0ce4e2169ec19d48441884760c06eb27d1c144e64b461e3a55eaaa1ebd",
+      "runtimeContract": {
+        "animationNames": [
+          "cinder-warden::attack::v01",
+          "cinder-warden::avoid::v01",
+          "cinder-warden::bighit::v01",
+          "cinder-warden::critical::v01",
+          "cinder-warden::defence::v01",
+          "cinder-warden::die::v01",
+          "cinder-warden::hit::v01",
+          "cinder-warden::idle::v01",
+          "cinder-warden::move::v01",
+          "cinder-warden::run::v01",
+          "cinder-warden::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/cinder-warden.glb",
+      "sourceCandidateSha256": "ded28b0ce4e2169ec19d48441884760c06eb27d1c144e64b461e3a55eaaa1ebd"
+    },
+    "assets/images/battle/glb/bosses/gate-sovereign.glb": {
+      "boundLowerMeshMotion": null,
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1739,
+          "lowerTravel": 0.03902,
+          "participates": true,
+          "upperTravel": 0.22441
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8746,
+          "lowerTravel": 0.14008,
+          "participates": true,
+          "upperTravel": 0.12252
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1618,
+          "lowerTravel": 0.0287,
+          "participates": true,
+          "upperTravel": 0.17731
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1669,
+          "lowerTravel": 0.0449,
+          "participates": true,
+          "upperTravel": 0.26899
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3529,
+          "lowerTravel": 0.02094,
+          "participates": true,
+          "upperTravel": 0.05934
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1272,
+          "lowerTravel": 0.03041,
+          "participates": true,
+          "upperTravel": 0.23905
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2303,
+          "lowerTravel": 0.02181,
+          "participates": true,
+          "upperTravel": 0.09473
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6911,
+          "lowerTravel": 0.00532,
+          "participates": true,
+          "upperTravel": 0.0077
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.3825,
+          "lowerTravel": 0.16281,
+          "participates": true,
+          "upperTravel": 0.06227
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4352,
+          "lowerTravel": 0.34029,
+          "participates": true,
+          "upperTravel": 0.14808
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3613,
+          "lowerTravel": 0.01898,
+          "participates": true,
+          "upperTravel": 0.05252
+        }
+      ],
+      "lowerMeshBound": false,
+      "outputPath": "assets/images/battle/glb/bosses/gate-sovereign.glb",
+      "outputSha256": "4395c3f088f9abe8dfd7f629f89b49ed81fbe1dc080a899f0c651ae127faee93",
+      "runtimeContract": {
+        "animationNames": [
+          "gate-sovereign::attack::v01",
+          "gate-sovereign::avoid::v01",
+          "gate-sovereign::bighit::v01",
+          "gate-sovereign::critical::v01",
+          "gate-sovereign::defence::v01",
+          "gate-sovereign::die::v01",
+          "gate-sovereign::hit::v01",
+          "gate-sovereign::idle::v01",
+          "gate-sovereign::move::v01",
+          "gate-sovereign::run::v01",
+          "gate-sovereign::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/gate-sovereign.glb",
+      "sourceCandidateSha256": "4395c3f088f9abe8dfd7f629f89b49ed81fbe1dc080a899f0c651ae127faee93"
+    },
+    "assets/images/battle/glb/bosses/lantern-tyrant.glb": {
+      "boundLowerMeshMotion": null,
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.119,
+          "lowerTravel": 0.0383,
+          "participates": true,
+          "upperTravel": 0.32197
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.6508,
+          "lowerTravel": 0.13664,
+          "participates": true,
+          "upperTravel": 0.20994
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1473,
+          "lowerTravel": 0.02875,
+          "participates": true,
+          "upperTravel": 0.19518
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1165,
+          "lowerTravel": 0.04597,
+          "participates": true,
+          "upperTravel": 0.39461
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3139,
+          "lowerTravel": 0.02922,
+          "participates": true,
+          "upperTravel": 0.09309
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1135,
+          "lowerTravel": 0.03029,
+          "participates": true,
+          "upperTravel": 0.26691
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2108,
+          "lowerTravel": 0.02169,
+          "participates": true,
+          "upperTravel": 0.10289
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6828,
+          "lowerTravel": 0.00524,
+          "participates": true,
+          "upperTravel": 0.00767
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.511,
+          "lowerTravel": 0.15881,
+          "participates": true,
+          "upperTravel": 0.08115
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5233,
+          "lowerTravel": 0.33192,
+          "participates": true,
+          "upperTravel": 0.17369
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2756,
+          "lowerTravel": 0.02125,
+          "participates": true,
+          "upperTravel": 0.0771
+        }
+      ],
+      "lowerMeshBound": false,
+      "outputPath": "assets/images/battle/glb/bosses/lantern-tyrant.glb",
+      "outputSha256": "2f52145534424ff1ea61466ad959c405b3d4e781775be0a04b03b70b242c478f",
+      "runtimeContract": {
+        "animationNames": [
+          "lantern-tyrant::attack::v01",
+          "lantern-tyrant::avoid::v01",
+          "lantern-tyrant::bighit::v01",
+          "lantern-tyrant::critical::v01",
+          "lantern-tyrant::defence::v01",
+          "lantern-tyrant::die::v01",
+          "lantern-tyrant::hit::v01",
+          "lantern-tyrant::idle::v01",
+          "lantern-tyrant::move::v01",
+          "lantern-tyrant::run::v01",
+          "lantern-tyrant::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/lantern-tyrant.glb",
+      "sourceCandidateSha256": "2f52145534424ff1ea61466ad959c405b3d4e781775be0a04b03b70b242c478f"
+    },
+    "assets/images/battle/glb/bosses/pack-herald.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "pack-herald::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4834,
+        "sampledVertices": 10196
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.0711,
+          "lowerTravel": 0.01422,
+          "participates": true,
+          "upperTravel": 0.20007
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.3833,
+          "lowerTravel": 0.06067,
+          "participates": true,
+          "upperTravel": 0.1583
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.2438,
+          "lowerTravel": 0.01449,
+          "participates": true,
+          "upperTravel": 0.05945
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.0704,
+          "lowerTravel": 0.01779,
+          "participates": true,
+          "upperTravel": 0.25282
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2715,
+          "lowerTravel": 0.01436,
+          "participates": true,
+          "upperTravel": 0.05291
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1673,
+          "lowerTravel": 0.01494,
+          "participates": true,
+          "upperTravel": 0.08932
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.3502,
+          "lowerTravel": 0.01124,
+          "participates": true,
+          "upperTravel": 0.0321
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.3745,
+          "lowerTravel": 0.00272,
+          "participates": true,
+          "upperTravel": 0.00727
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.6878,
+          "lowerTravel": 0.07677,
+          "participates": true,
+          "upperTravel": 0.0528
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.7005,
+          "lowerTravel": 0.14538,
+          "participates": true,
+          "upperTravel": 0.10183
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2138,
+          "lowerTravel": 0.01063,
+          "participates": true,
+          "upperTravel": 0.04972
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/pack-herald.glb",
+      "outputSha256": "5afc09b96eea1c5d16ef2c7d3c9d878528d4dc2278fa341887eda84910b0811f",
+      "runtimeContract": {
+        "animationNames": [
+          "pack-herald::attack::v01",
+          "pack-herald::avoid::v01",
+          "pack-herald::bighit::v01",
+          "pack-herald::critical::v01",
+          "pack-herald::defence::v01",
+          "pack-herald::die::v01",
+          "pack-herald::hit::v01",
+          "pack-herald::idle::v01",
+          "pack-herald::move::v01",
+          "pack-herald::run::v01",
+          "pack-herald::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/pack-herald.glb",
+      "sourceCandidateSha256": "5afc09b96eea1c5d16ef2c7d3c9d878528d4dc2278fa341887eda84910b0811f"
+    },
+    "assets/images/battle/glb/bosses/requiem-choir.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "requiem-choir::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4686,
+        "sampledVertices": 13832
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1188,
+          "lowerTravel": 0.02075,
+          "participates": true,
+          "upperTravel": 0.1747
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.6081,
+          "lowerTravel": 0.07272,
+          "participates": true,
+          "upperTravel": 0.11959
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1371,
+          "lowerTravel": 0.01539,
+          "participates": true,
+          "upperTravel": 0.11221
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1155,
+          "lowerTravel": 0.02481,
+          "participates": true,
+          "upperTravel": 0.21475
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2698,
+          "lowerTravel": 0.01611,
+          "participates": true,
+          "upperTravel": 0.05971
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.109,
+          "lowerTravel": 0.01589,
+          "participates": true,
+          "upperTravel": 0.14574
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.1981,
+          "lowerTravel": 0.01213,
+          "participates": true,
+          "upperTravel": 0.06122
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6155,
+          "lowerTravel": 0.00281,
+          "participates": true,
+          "upperTravel": 0.00457
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.589,
+          "lowerTravel": 0.08525,
+          "participates": true,
+          "upperTravel": 0.05021
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5919,
+          "lowerTravel": 0.17771,
+          "participates": true,
+          "upperTravel": 0.1052
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2817,
+          "lowerTravel": 0.01171,
+          "participates": true,
+          "upperTravel": 0.04155
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/requiem-choir.glb",
+      "outputSha256": "853b88af72697e2414f777b9cbd70a51b1c3f8d032679316af99e5f94dba500c",
+      "runtimeContract": {
+        "animationNames": [
+          "requiem-choir::attack::v01",
+          "requiem-choir::avoid::v01",
+          "requiem-choir::bighit::v01",
+          "requiem-choir::critical::v01",
+          "requiem-choir::defence::v01",
+          "requiem-choir::die::v01",
+          "requiem-choir::hit::v01",
+          "requiem-choir::idle::v01",
+          "requiem-choir::move::v01",
+          "requiem-choir::run::v01",
+          "requiem-choir::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/requiem-choir.glb",
+      "sourceCandidateSha256": "853b88af72697e2414f777b9cbd70a51b1c3f8d032679316af99e5f94dba500c"
+    },
+    "assets/images/battle/glb/bosses/tide-warden.glb": {
+      "boundLowerMeshMotion": null,
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1733,
+          "lowerTravel": 0.03795,
+          "participates": true,
+          "upperTravel": 0.219
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8725,
+          "lowerTravel": 0.13352,
+          "participates": true,
+          "upperTravel": 0.1165
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1524,
+          "lowerTravel": 0.02858,
+          "participates": true,
+          "upperTravel": 0.18752
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1664,
+          "lowerTravel": 0.04581,
+          "participates": true,
+          "upperTravel": 0.27523
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3523,
+          "lowerTravel": 0.02231,
+          "participates": true,
+          "upperTravel": 0.06333
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1191,
+          "lowerTravel": 0.03001,
+          "participates": true,
+          "upperTravel": 0.25189
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2155,
+          "lowerTravel": 0.02183,
+          "participates": true,
+          "upperTravel": 0.1013
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6273,
+          "lowerTravel": 0.00517,
+          "participates": true,
+          "upperTravel": 0.00824
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4245,
+          "lowerTravel": 0.15539,
+          "participates": true,
+          "upperTravel": 0.06596
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4832,
+          "lowerTravel": 0.32463,
+          "participates": true,
+          "upperTravel": 0.15687
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3602,
+          "lowerTravel": 0.01972,
+          "participates": true,
+          "upperTravel": 0.05473
+        }
+      ],
+      "lowerMeshBound": false,
+      "outputPath": "assets/images/battle/glb/bosses/tide-warden.glb",
+      "outputSha256": "c2bf1aebf03e3df0a643692f545383b117e8ec450300fa70f37e168a3c45b670",
+      "runtimeContract": {
+        "animationNames": [
+          "tide-warden::attack::v01",
+          "tide-warden::avoid::v01",
+          "tide-warden::bighit::v01",
+          "tide-warden::critical::v01",
+          "tide-warden::defence::v01",
+          "tide-warden::die::v01",
+          "tide-warden::hit::v01",
+          "tide-warden::idle::v01",
+          "tide-warden::move::v01",
+          "tide-warden::run::v01",
+          "tide-warden::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/tide-warden.glb",
+      "sourceCandidateSha256": "c2bf1aebf03e3df0a643692f545383b117e8ec450300fa70f37e168a3c45b670"
+    },
+    "assets/images/battle/glb/bosses/veil-tactician.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "veil-tactician::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.3972,
+        "sampledVertices": 2430
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.2473,
+          "lowerTravel": 0.03538,
+          "participates": true,
+          "upperTravel": 0.14308
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8744,
+          "lowerTravel": 0.12584,
+          "participates": true,
+          "upperTravel": 0.14392
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.3112,
+          "lowerTravel": 0.02676,
+          "participates": true,
+          "upperTravel": 0.08598
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.2459,
+          "lowerTravel": 0.04273,
+          "participates": true,
+          "upperTravel": 0.17375
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3517,
+          "lowerTravel": 0.01992,
+          "participates": true,
+          "upperTravel": 0.05665
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.2373,
+          "lowerTravel": 0.02812,
+          "participates": true,
+          "upperTravel": 0.11848
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.3516,
+          "lowerTravel": 0.01641,
+          "participates": true,
+          "upperTravel": 0.04667
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.8179,
+          "lowerTravel": 0.00483,
+          "participates": true,
+          "upperTravel": 0.00591
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.5034,
+          "lowerTravel": 0.15097,
+          "participates": true,
+          "upperTravel": 0.076
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.3498,
+          "lowerTravel": 0.30996,
+          "participates": true,
+          "upperTravel": 0.10843
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3582,
+          "lowerTravel": 0.01718,
+          "participates": true,
+          "upperTravel": 0.04798
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/veil-tactician.glb",
+      "outputSha256": "40cf4ff38222b5f5e3eb3915c00e30b22eb1112a1fdbaa8aad793d9ed7a088ab",
+      "runtimeContract": {
+        "animationNames": [
+          "veil-tactician::attack::v01",
+          "veil-tactician::avoid::v01",
+          "veil-tactician::bighit::v01",
+          "veil-tactician::critical::v01",
+          "veil-tactician::defence::v01",
+          "veil-tactician::die::v01",
+          "veil-tactician::hit::v01",
+          "veil-tactician::idle::v01",
+          "veil-tactician::move::v01",
+          "veil-tactician::run::v01",
+          "veil-tactician::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/veil-tactician.glb",
+      "sourceCandidateSha256": "40cf4ff38222b5f5e3eb3915c00e30b22eb1112a1fdbaa8aad793d9ed7a088ab"
+    },
+    "assets/images/battle/glb/bosses/veiled-concordat.glb": {
+      "boundLowerMeshMotion": null,
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1375,
+          "lowerTravel": 0.03901,
+          "participates": true,
+          "upperTravel": 0.28367
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.7597,
+          "lowerTravel": 0.14003,
+          "participates": true,
+          "upperTravel": 0.18432
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1512,
+          "lowerTravel": 0.0287,
+          "participates": true,
+          "upperTravel": 0.18978
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1347,
+          "lowerTravel": 0.04716,
+          "participates": true,
+          "upperTravel": 0.35006
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3183,
+          "lowerTravel": 0.02938,
+          "participates": true,
+          "upperTravel": 0.09228
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1185,
+          "lowerTravel": 0.03041,
+          "participates": true,
+          "upperTravel": 0.25665
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2165,
+          "lowerTravel": 0.02181,
+          "participates": true,
+          "upperTravel": 0.10076
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6778,
+          "lowerTravel": 0.00535,
+          "participates": true,
+          "upperTravel": 0.00789
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4688,
+          "lowerTravel": 0.16275,
+          "participates": true,
+          "upperTravel": 0.0763
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4773,
+          "lowerTravel": 0.34015,
+          "participates": true,
+          "upperTravel": 0.16235
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3106,
+          "lowerTravel": 0.0221,
+          "participates": true,
+          "upperTravel": 0.07116
+        }
+      ],
+      "lowerMeshBound": false,
+      "outputPath": "assets/images/battle/glb/bosses/veiled-concordat.glb",
+      "outputSha256": "d4f655e9e303cc220ea51dc6cfe5fc8910d75f50fef35cf10f68d38b66a6dc0e",
+      "runtimeContract": {
+        "animationNames": [
+          "veiled-concordat::attack::v01",
+          "veiled-concordat::avoid::v01",
+          "veiled-concordat::bighit::v01",
+          "veiled-concordat::critical::v01",
+          "veiled-concordat::defence::v01",
+          "veiled-concordat::die::v01",
+          "veiled-concordat::hit::v01",
+          "veiled-concordat::idle::v01",
+          "veiled-concordat::move::v01",
+          "veiled-concordat::run::v01",
+          "veiled-concordat::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/veiled-concordat.glb",
+      "sourceCandidateSha256": "d4f655e9e303cc220ea51dc6cfe5fc8910d75f50fef35cf10f68d38b66a6dc0e"
+    },
+    "assets/images/battle/glb/companions/anchor-shard.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "anchor-shard::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4883,
+        "sampledVertices": 3004
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1208,
+          "lowerTravel": 0.02265,
+          "participates": true,
+          "upperTravel": 0.18751
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.6975,
+          "lowerTravel": 0.08376,
+          "participates": true,
+          "upperTravel": 0.12009
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1407,
+          "lowerTravel": 0.0175,
+          "participates": true,
+          "upperTravel": 0.1244
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1166,
+          "lowerTravel": 0.02445,
+          "participates": true,
+          "upperTravel": 0.20969
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3516,
+          "lowerTravel": 0.01261,
+          "participates": true,
+          "upperTravel": 0.03585
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1066,
+          "lowerTravel": 0.01813,
+          "participates": true,
+          "upperTravel": 0.17008
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2,
+          "lowerTravel": 0.01344,
+          "participates": true,
+          "upperTravel": 0.06722
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.7509,
+          "lowerTravel": 0.00321,
+          "participates": true,
+          "upperTravel": 0.00427
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.5302,
+          "lowerTravel": 0.09795,
+          "participates": true,
+          "upperTravel": 0.05194
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5463,
+          "lowerTravel": 0.20437,
+          "participates": true,
+          "upperTravel": 0.11165
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3441,
+          "lowerTravel": 0.01308,
+          "participates": true,
+          "upperTravel": 0.038
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/anchor-shard.glb",
+      "outputSha256": "c7f61de82e6d73fda38f079735ae193115af9472d3663bf2052d62456ef51093",
+      "runtimeContract": {
+        "animationNames": [
+          "anchor-shard::attack::v01",
+          "anchor-shard::avoid::v01",
+          "anchor-shard::bighit::v01",
+          "anchor-shard::critical::v01",
+          "anchor-shard::defence::v01",
+          "anchor-shard::die::v01",
+          "anchor-shard::hit::v01",
+          "anchor-shard::idle::v01",
+          "anchor-shard::move::v01",
+          "anchor-shard::run::v01",
+          "anchor-shard::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/anchor-shard.glb",
+      "sourceCandidateSha256": "c7f61de82e6d73fda38f079735ae193115af9472d3663bf2052d62456ef51093"
+    },
+    "assets/images/battle/glb/companions/dawnless-crown.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "dawnless-crown::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.9024,
+        "sampledVertices": 5142
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1543,
+          "lowerTravel": 0.02821,
+          "participates": true,
+          "upperTravel": 0.18281
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8525,
+          "lowerTravel": 0.10074,
+          "participates": true,
+          "upperTravel": 0.11817
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1731,
+          "lowerTravel": 0.02128,
+          "participates": true,
+          "upperTravel": 0.12289
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1503,
+          "lowerTravel": 0.03282,
+          "participates": true,
+          "upperTravel": 0.21836
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.347,
+          "lowerTravel": 0.02176,
+          "participates": true,
+          "upperTravel": 0.06271
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1247,
+          "lowerTravel": 0.02219,
+          "participates": true,
+          "upperTravel": 0.17793
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2404,
+          "lowerTravel": 0.01619,
+          "participates": true,
+          "upperTravel": 0.06734
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6486,
+          "lowerTravel": 0.00391,
+          "participates": true,
+          "upperTravel": 0.00603
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4547,
+          "lowerTravel": 0.11753,
+          "participates": true,
+          "upperTravel": 0.05344
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4792,
+          "lowerTravel": 0.24542,
+          "participates": true,
+          "upperTravel": 0.1176
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3593,
+          "lowerTravel": 0.01521,
+          "participates": true,
+          "upperTravel": 0.04233
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/dawnless-crown.glb",
+      "outputSha256": "f5f20f4daf4647b1e199f4f1df2be07b0bf734952ebb121abcb62e9640ab5372",
+      "runtimeContract": {
+        "animationNames": [
+          "dawnless-crown::attack::v01",
+          "dawnless-crown::avoid::v01",
+          "dawnless-crown::bighit::v01",
+          "dawnless-crown::critical::v01",
+          "dawnless-crown::defence::v01",
+          "dawnless-crown::die::v01",
+          "dawnless-crown::hit::v01",
+          "dawnless-crown::idle::v01",
+          "dawnless-crown::move::v01",
+          "dawnless-crown::run::v01",
+          "dawnless-crown::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/dawnless-crown.glb",
+      "sourceCandidateSha256": "f5f20f4daf4647b1e199f4f1df2be07b0bf734952ebb121abcb62e9640ab5372"
+    },
+    "assets/images/battle/glb/companions/ember-cohort.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "ember-cohort::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.3039,
+        "sampledVertices": 1189
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.2283,
+          "lowerTravel": 0.03561,
+          "participates": true,
+          "upperTravel": 0.15596
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8488,
+          "lowerTravel": 0.12564,
+          "participates": true,
+          "upperTravel": 0.10664
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1984,
+          "lowerTravel": 0.02671,
+          "participates": true,
+          "upperTravel": 0.13459
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.2198,
+          "lowerTravel": 0.04297,
+          "participates": true,
+          "upperTravel": 0.19553
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3514,
+          "lowerTravel": 0.02075,
+          "participates": true,
+          "upperTravel": 0.05906
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1431,
+          "lowerTravel": 0.02577,
+          "participates": true,
+          "upperTravel": 0.18011
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2765,
+          "lowerTravel": 0.02029,
+          "participates": true,
+          "upperTravel": 0.0734
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.73,
+          "lowerTravel": 0.00487,
+          "participates": true,
+          "upperTravel": 0.00667
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.3233,
+          "lowerTravel": 0.14622,
+          "participates": true,
+          "upperTravel": 0.04728
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.3394,
+          "lowerTravel": 0.30556,
+          "participates": true,
+          "upperTravel": 0.10371
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3576,
+          "lowerTravel": 0.01622,
+          "participates": true,
+          "upperTravel": 0.04535
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/ember-cohort.glb",
+      "outputSha256": "74fe3c02f1226ac0b7cc6541aeb41271ee318dea2d0021dd2dccf12305bbfc82",
+      "runtimeContract": {
+        "animationNames": [
+          "ember-cohort::attack::v01",
+          "ember-cohort::avoid::v01",
+          "ember-cohort::bighit::v01",
+          "ember-cohort::critical::v01",
+          "ember-cohort::defence::v01",
+          "ember-cohort::die::v01",
+          "ember-cohort::hit::v01",
+          "ember-cohort::idle::v01",
+          "ember-cohort::move::v01",
+          "ember-cohort::run::v01",
+          "ember-cohort::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/ember-cohort.glb",
+      "sourceCandidateSha256": "74fe3c02f1226ac0b7cc6541aeb41271ee318dea2d0021dd2dccf12305bbfc82"
+    },
+    "assets/images/battle/glb/companions/lantern-reaver.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "lantern-reaver::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.6864,
+        "sampledVertices": 2928
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1465,
+          "lowerTravel": 0.02756,
+          "participates": true,
+          "upperTravel": 0.18814
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8351,
+          "lowerTravel": 0.10336,
+          "participates": true,
+          "upperTravel": 0.12376
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1645,
+          "lowerTravel": 0.022,
+          "participates": true,
+          "upperTravel": 0.13374
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.142,
+          "lowerTravel": 0.03008,
+          "participates": true,
+          "upperTravel": 0.21186
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3369,
+          "lowerTravel": 0.02247,
+          "participates": true,
+          "upperTravel": 0.0667
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.119,
+          "lowerTravel": 0.02301,
+          "participates": true,
+          "upperTravel": 0.19334
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.23,
+          "lowerTravel": 0.01674,
+          "participates": true,
+          "upperTravel": 0.07278
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.5632,
+          "lowerTravel": 0.00401,
+          "participates": true,
+          "upperTravel": 0.00711
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4437,
+          "lowerTravel": 0.12167,
+          "participates": true,
+          "upperTravel": 0.05398
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4734,
+          "lowerTravel": 0.2541,
+          "participates": true,
+          "upperTravel": 0.12029
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3589,
+          "lowerTravel": 0.01612,
+          "participates": true,
+          "upperTravel": 0.0449
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/lantern-reaver.glb",
+      "outputSha256": "2537204bb36b46d49ff09d79744076dc4368773472276db4df1c5cbe910a51f9",
+      "runtimeContract": {
+        "animationNames": [
+          "lantern-reaver::attack::v01",
+          "lantern-reaver::avoid::v01",
+          "lantern-reaver::bighit::v01",
+          "lantern-reaver::critical::v01",
+          "lantern-reaver::defence::v01",
+          "lantern-reaver::die::v01",
+          "lantern-reaver::hit::v01",
+          "lantern-reaver::idle::v01",
+          "lantern-reaver::move::v01",
+          "lantern-reaver::run::v01",
+          "lantern-reaver::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/lantern-reaver.glb",
+      "sourceCandidateSha256": "2537204bb36b46d49ff09d79744076dc4368773472276db4df1c5cbe910a51f9"
+    },
+    "assets/images/battle/glb/companions/pack-warden.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "pack-warden::move::v01",
+        "frame": 25,
+        "maxDisplacement": 1.065,
+        "sampledVertices": 6871
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.0728,
+          "lowerTravel": 0.01652,
+          "participates": true,
+          "upperTravel": 0.22699
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.4367,
+          "lowerTravel": 0.07456,
+          "participates": true,
+          "upperTravel": 0.17072
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1266,
+          "lowerTravel": 0.01606,
+          "participates": true,
+          "upperTravel": 0.12688
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.071,
+          "lowerTravel": 0.0183,
+          "participates": true,
+          "upperTravel": 0.25788
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3441,
+          "lowerTravel": 0.0167,
+          "participates": true,
+          "upperTravel": 0.04855
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.0941,
+          "lowerTravel": 0.01659,
+          "participates": true,
+          "upperTravel": 0.17632
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.1869,
+          "lowerTravel": 0.01234,
+          "participates": true,
+          "upperTravel": 0.06605
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.4847,
+          "lowerTravel": 0.00298,
+          "participates": true,
+          "upperTravel": 0.00614
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.7227,
+          "lowerTravel": 0.09134,
+          "participates": true,
+          "upperTravel": 0.06601
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.7453,
+          "lowerTravel": 0.19055,
+          "participates": true,
+          "upperTravel": 0.14203
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2362,
+          "lowerTravel": 0.01223,
+          "participates": true,
+          "upperTravel": 0.05178
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/pack-warden.glb",
+      "outputSha256": "446b3ef1e935fb108545c6f12533d85beca8e62fd4a3a6deeb0eb1f55fb953eb",
+      "runtimeContract": {
+        "animationNames": [
+          "pack-warden::attack::v01",
+          "pack-warden::avoid::v01",
+          "pack-warden::bighit::v01",
+          "pack-warden::critical::v01",
+          "pack-warden::defence::v01",
+          "pack-warden::die::v01",
+          "pack-warden::hit::v01",
+          "pack-warden::idle::v01",
+          "pack-warden::move::v01",
+          "pack-warden::run::v01",
+          "pack-warden::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/pack-warden.glb",
+      "sourceCandidateSha256": "446b3ef1e935fb108545c6f12533d85beca8e62fd4a3a6deeb0eb1f55fb953eb"
+    },
+    "assets/images/battle/glb/companions/requiem-warden.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "requiem-warden::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.389,
+        "sampledVertices": 2691
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1111,
+          "lowerTravel": 0.02942,
+          "participates": true,
+          "upperTravel": 0.26491
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.5712,
+          "lowerTravel": 0.10789,
+          "participates": true,
+          "upperTravel": 0.18887
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1452,
+          "lowerTravel": 0.02339,
+          "participates": true,
+          "upperTravel": 0.16114
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1086,
+          "lowerTravel": 0.0312,
+          "participates": true,
+          "upperTravel": 0.28743
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2539,
+          "lowerTravel": 0.02415,
+          "participates": true,
+          "upperTravel": 0.09513
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1101,
+          "lowerTravel": 0.02433,
+          "participates": true,
+          "upperTravel": 0.22099
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2099,
+          "lowerTravel": 0.01832,
+          "participates": true,
+          "upperTravel": 0.08729
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.5166,
+          "lowerTravel": 0.0042,
+          "participates": true,
+          "upperTravel": 0.00813
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.5998,
+          "lowerTravel": 0.12607,
+          "participates": true,
+          "upperTravel": 0.07561
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.6057,
+          "lowerTravel": 0.26305,
+          "participates": true,
+          "upperTravel": 0.15933
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2763,
+          "lowerTravel": 0.01721,
+          "participates": true,
+          "upperTravel": 0.06228
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/requiem-warden.glb",
+      "outputSha256": "0c61a8438b01d12751c15287aacfa97e7e54e1232ced1d7f13a016adcbf4358a",
+      "runtimeContract": {
+        "animationNames": [
+          "requiem-warden::attack::v01",
+          "requiem-warden::avoid::v01",
+          "requiem-warden::bighit::v01",
+          "requiem-warden::critical::v01",
+          "requiem-warden::defence::v01",
+          "requiem-warden::die::v01",
+          "requiem-warden::hit::v01",
+          "requiem-warden::idle::v01",
+          "requiem-warden::move::v01",
+          "requiem-warden::run::v01",
+          "requiem-warden::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/requiem-warden.glb",
+      "sourceCandidateSha256": "0c61a8438b01d12751c15287aacfa97e7e54e1232ced1d7f13a016adcbf4358a"
+    },
+    "assets/images/battle/glb/companions/rift-lens.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "rift-lens::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.3801,
+        "sampledVertices": 1636
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.218,
+          "lowerTravel": 0.0333,
+          "participates": true,
+          "upperTravel": 0.15274
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.7875,
+          "lowerTravel": 0.11863,
+          "participates": true,
+          "upperTravel": 0.15065
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.2662,
+          "lowerTravel": 0.02517,
+          "participates": true,
+          "upperTravel": 0.09458
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.218,
+          "lowerTravel": 0.04018,
+          "participates": true,
+          "upperTravel": 0.18429
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3524,
+          "lowerTravel": 0.02147,
+          "participates": true,
+          "upperTravel": 0.06093
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1996,
+          "lowerTravel": 0.02638,
+          "participates": true,
+          "upperTravel": 0.13215
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.352,
+          "lowerTravel": 0.01829,
+          "participates": true,
+          "upperTravel": 0.05195
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.7862,
+          "lowerTravel": 0.00455,
+          "participates": true,
+          "upperTravel": 0.00578
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.5519,
+          "lowerTravel": 0.14258,
+          "participates": true,
+          "upperTravel": 0.07868
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.3649,
+          "lowerTravel": 0.29198,
+          "participates": true,
+          "upperTravel": 0.10654
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3586,
+          "lowerTravel": 0.01821,
+          "participates": true,
+          "upperTravel": 0.05079
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/rift-lens.glb",
+      "outputSha256": "55d4ce924a1204d18a06b13cc46f4640e41b62c32e64efcf6ca536102261223b",
+      "runtimeContract": {
+        "animationNames": [
+          "rift-lens::attack::v01",
+          "rift-lens::avoid::v01",
+          "rift-lens::bighit::v01",
+          "rift-lens::critical::v01",
+          "rift-lens::defence::v01",
+          "rift-lens::die::v01",
+          "rift-lens::hit::v01",
+          "rift-lens::idle::v01",
+          "rift-lens::move::v01",
+          "rift-lens::run::v01",
+          "rift-lens::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/rift-lens.glb",
+      "sourceCandidateSha256": "55d4ce924a1204d18a06b13cc46f4640e41b62c32e64efcf6ca536102261223b"
+    },
+    "assets/images/battle/glb/companions/throne-echo.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "throne-echo::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.5766,
+        "sampledVertices": 4449
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1425,
+          "lowerTravel": 0.03444,
+          "participates": true,
+          "upperTravel": 0.24166
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.7472,
+          "lowerTravel": 0.12293,
+          "participates": true,
+          "upperTravel": 0.16451
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1611,
+          "lowerTravel": 0.02592,
+          "participates": true,
+          "upperTravel": 0.1609
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1399,
+          "lowerTravel": 0.04157,
+          "participates": true,
+          "upperTravel": 0.29716
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3031,
+          "lowerTravel": 0.02643,
+          "participates": true,
+          "upperTravel": 0.08718
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1196,
+          "lowerTravel": 0.02717,
+          "participates": true,
+          "upperTravel": 0.2273
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2251,
+          "lowerTravel": 0.01962,
+          "participates": true,
+          "upperTravel": 0.08717
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6637,
+          "lowerTravel": 0.00472,
+          "participates": true,
+          "upperTravel": 0.00711
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4754,
+          "lowerTravel": 0.14307,
+          "participates": true,
+          "upperTravel": 0.06801
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4832,
+          "lowerTravel": 0.29898,
+          "participates": true,
+          "upperTravel": 0.14446
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3148,
+          "lowerTravel": 0.01902,
+          "participates": true,
+          "upperTravel": 0.0604
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/throne-echo.glb",
+      "outputSha256": "a17c4f7248449e5893765002539055dfe58825a284fdc7756971bc5722c9f6d3",
+      "runtimeContract": {
+        "animationNames": [
+          "throne-echo::attack::v01",
+          "throne-echo::avoid::v01",
+          "throne-echo::bighit::v01",
+          "throne-echo::critical::v01",
+          "throne-echo::defence::v01",
+          "throne-echo::die::v01",
+          "throne-echo::hit::v01",
+          "throne-echo::idle::v01",
+          "throne-echo::move::v01",
+          "throne-echo::run::v01",
+          "throne-echo::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/throne-echo.glb",
+      "sourceCandidateSha256": "a17c4f7248449e5893765002539055dfe58825a284fdc7756971bc5722c9f6d3"
+    },
+    "assets/images/battle/glb/companions/veil-vanguard.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "veil-vanguard::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4251,
+        "sampledVertices": 2140
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.14,
+          "lowerTravel": 0.02791,
+          "participates": true,
+          "upperTravel": 0.19933
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.7554,
+          "lowerTravel": 0.12057,
+          "participates": true,
+          "upperTravel": 0.15961
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1859,
+          "lowerTravel": 0.02585,
+          "participates": true,
+          "upperTravel": 0.13901
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1371,
+          "lowerTravel": 0.03212,
+          "participates": true,
+          "upperTravel": 0.23431
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3017,
+          "lowerTravel": 0.02636,
+          "participates": true,
+          "upperTravel": 0.08736
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1291,
+          "lowerTravel": 0.02709,
+          "participates": true,
+          "upperTravel": 0.20985
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2609,
+          "lowerTravel": 0.0198,
+          "participates": true,
+          "upperTravel": 0.0759
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.513,
+          "lowerTravel": 0.00463,
+          "participates": true,
+          "upperTravel": 0.00904
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4487,
+          "lowerTravel": 0.14049,
+          "participates": true,
+          "upperTravel": 0.06304
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4582,
+          "lowerTravel": 0.28929,
+          "participates": true,
+          "upperTravel": 0.13256
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3581,
+          "lowerTravel": 0.01709,
+          "participates": true,
+          "upperTravel": 0.04772
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/veil-vanguard.glb",
+      "outputSha256": "d48809d62108ccce8862c9653dad47db36bec327b41429ae8c731ba5e5fa2391",
+      "runtimeContract": {
+        "animationNames": [
+          "veil-vanguard::attack::v01",
+          "veil-vanguard::avoid::v01",
+          "veil-vanguard::bighit::v01",
+          "veil-vanguard::critical::v01",
+          "veil-vanguard::defence::v01",
+          "veil-vanguard::die::v01",
+          "veil-vanguard::hit::v01",
+          "veil-vanguard::idle::v01",
+          "veil-vanguard::move::v01",
+          "veil-vanguard::run::v01",
+          "veil-vanguard::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/veil-vanguard.glb",
+      "sourceCandidateSha256": "d48809d62108ccce8862c9653dad47db36bec327b41429ae8c731ba5e5fa2391"
+    },
+    "assets/images/battle/glb/enemies/guard.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "guard::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4257,
+        "sampledVertices": 3017
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1299,
+          "lowerTravel": 0.02723,
+          "participates": true,
+          "upperTravel": 0.20965
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.6694,
+          "lowerTravel": 0.09879,
+          "participates": true,
+          "upperTravel": 0.14757
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1494,
+          "lowerTravel": 0.01958,
+          "participates": true,
+          "upperTravel": 0.13109
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1248,
+          "lowerTravel": 0.03272,
+          "participates": true,
+          "upperTravel": 0.26213
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3548,
+          "lowerTravel": 0.01924,
+          "participates": true,
+          "upperTravel": 0.05423
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1173,
+          "lowerTravel": 0.01881,
+          "participates": true,
+          "upperTravel": 0.16037
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2135,
+          "lowerTravel": 0.01522,
+          "participates": true,
+          "upperTravel": 0.0713
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.7884,
+          "lowerTravel": 0.00373,
+          "participates": true,
+          "upperTravel": 0.00473
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4905,
+          "lowerTravel": 0.11535,
+          "participates": true,
+          "upperTravel": 0.05657
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4918,
+          "lowerTravel": 0.24081,
+          "participates": true,
+          "upperTravel": 0.11842
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3186,
+          "lowerTravel": 0.01571,
+          "participates": true,
+          "upperTravel": 0.04932
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/enemies/guard.glb",
+      "outputSha256": "9cce14cdd2d31d84844c357800cf4f575c3e86aae3313bf10f0b43ecc22593f8",
+      "runtimeContract": {
+        "animationNames": [
+          "guard::attack::v01",
+          "guard::avoid::v01",
+          "guard::bighit::v01",
+          "guard::critical::v01",
+          "guard::defence::v01",
+          "guard::die::v01",
+          "guard::hit::v01",
+          "guard::idle::v01",
+          "guard::move::v01",
+          "guard::run::v01",
+          "guard::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/guard.glb",
+      "sourceCandidateSha256": "9cce14cdd2d31d84844c357800cf4f575c3e86aae3313bf10f0b43ecc22593f8"
+    },
+    "assets/images/battle/glb/enemies/possessed.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "possessed::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4178,
+        "sampledVertices": 1746
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1986,
+          "lowerTravel": 0.03224,
+          "participates": true,
+          "upperTravel": 0.16235
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8901,
+          "lowerTravel": 0.11399,
+          "participates": true,
+          "upperTravel": 0.12807
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.2354,
+          "lowerTravel": 0.02254,
+          "participates": true,
+          "upperTravel": 0.09573
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.196,
+          "lowerTravel": 0.03884,
+          "participates": true,
+          "upperTravel": 0.19814
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3519,
+          "lowerTravel": 0.01882,
+          "participates": true,
+          "upperTravel": 0.05347
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.167,
+          "lowerTravel": 0.02338,
+          "participates": true,
+          "upperTravel": 0.14003
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.3215,
+          "lowerTravel": 0.01767,
+          "participates": true,
+          "upperTravel": 0.05498
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.5513,
+          "lowerTravel": 0.00437,
+          "participates": true,
+          "upperTravel": 0.00792
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.2631,
+          "lowerTravel": 0.13288,
+          "participates": true,
+          "upperTravel": 0.03496
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.275,
+          "lowerTravel": 0.27753,
+          "participates": true,
+          "upperTravel": 0.07632
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3595,
+          "lowerTravel": 0.01655,
+          "participates": true,
+          "upperTravel": 0.04603
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/enemies/possessed.glb",
+      "outputSha256": "3c67dd4a24b54a7df31d19cfa362e72d343fc9af6dc92102b895a860c04660ca",
+      "runtimeContract": {
+        "animationNames": [
+          "possessed::attack::v01",
+          "possessed::avoid::v01",
+          "possessed::bighit::v01",
+          "possessed::critical::v01",
+          "possessed::defence::v01",
+          "possessed::die::v01",
+          "possessed::hit::v01",
+          "possessed::idle::v01",
+          "possessed::move::v01",
+          "possessed::run::v01",
+          "possessed::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/possessed.glb",
+      "sourceCandidateSha256": "3c67dd4a24b54a7df31d19cfa362e72d343fc9af6dc92102b895a860c04660ca"
+    },
+    "assets/images/battle/glb/enemies/scout.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "scout::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.3506,
+        "sampledVertices": 1017
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1364,
+          "lowerTravel": 0.02289,
+          "participates": true,
+          "upperTravel": 0.16789
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.7463,
+          "lowerTravel": 0.10098,
+          "participates": true,
+          "upperTravel": 0.13531
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1763,
+          "lowerTravel": 0.02133,
+          "participates": true,
+          "upperTravel": 0.12094
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1341,
+          "lowerTravel": 0.02752,
+          "participates": true,
+          "upperTravel": 0.20522
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2592,
+          "lowerTravel": 0.02073,
+          "participates": true,
+          "upperTravel": 0.07997
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1168,
+          "lowerTravel": 0.02225,
+          "participates": true,
+          "upperTravel": 0.19057
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2402,
+          "lowerTravel": 0.01623,
+          "participates": true,
+          "upperTravel": 0.06756
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.4774,
+          "lowerTravel": 0.00389,
+          "participates": true,
+          "upperTravel": 0.00814
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4855,
+          "lowerTravel": 0.11781,
+          "participates": true,
+          "upperTravel": 0.0572
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4875,
+          "lowerTravel": 0.21486,
+          "participates": true,
+          "upperTravel": 0.10474
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3561,
+          "lowerTravel": 0.01553,
+          "participates": true,
+          "upperTravel": 0.0436
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/enemies/scout.glb",
+      "outputSha256": "0f04f6a5c6615ec35641733c7614e71924ae9dc40f74fd1a0cc8c178e8f5c38f",
+      "runtimeContract": {
+        "animationNames": [
+          "scout::attack::v01",
+          "scout::avoid::v01",
+          "scout::bighit::v01",
+          "scout::critical::v01",
+          "scout::defence::v01",
+          "scout::die::v01",
+          "scout::hit::v01",
+          "scout::idle::v01",
+          "scout::move::v01",
+          "scout::run::v01",
+          "scout::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/scout.glb",
+      "sourceCandidateSha256": "0f04f6a5c6615ec35641733c7614e71924ae9dc40f74fd1a0cc8c178e8f5c38f"
+    },
+    "assets/images/battle/glb/enemies/shade.glb": {
+      "boundLowerMeshMotion": {
+        "clip": "shade::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.7867,
+        "sampledVertices": 1865
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.0708,
+          "lowerTravel": 0.02056,
+          "participates": true,
+          "upperTravel": 0.29036
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.3961,
+          "lowerTravel": 0.11162,
+          "participates": true,
+          "upperTravel": 0.28183
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1577,
+          "lowerTravel": 0.02356,
+          "participates": true,
+          "upperTravel": 0.14937
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.0693,
+          "lowerTravel": 0.02307,
+          "participates": true,
+          "upperTravel": 0.33304
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2879,
+          "lowerTravel": 0.02401,
+          "participates": true,
+          "upperTravel": 0.0834
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1192,
+          "lowerTravel": 0.02471,
+          "participates": true,
+          "upperTravel": 0.20721
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2359,
+          "lowerTravel": 0.01789,
+          "participates": true,
+          "upperTravel": 0.07586
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.5711,
+          "lowerTravel": 0.00426,
+          "participates": true,
+          "upperTravel": 0.00747
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.7643,
+          "lowerTravel": 0.13007,
+          "participates": true,
+          "upperTravel": 0.0994
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.78,
+          "lowerTravel": 0.27171,
+          "participates": true,
+          "upperTravel": 0.21194
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2296,
+          "lowerTravel": 0.01727,
+          "participates": true,
+          "upperTravel": 0.07521
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/enemies/shade.glb",
+      "outputSha256": "e70e2e41b4722f424ac4e9a20afe2db5c00657b40fdcd0a89ba2eae56478ff0c",
+      "runtimeContract": {
+        "animationNames": [
+          "shade::attack::v01",
+          "shade::avoid::v01",
+          "shade::bighit::v01",
+          "shade::critical::v01",
+          "shade::defence::v01",
+          "shade::die::v01",
+          "shade::hit::v01",
+          "shade::idle::v01",
+          "shade::move::v01",
+          "shade::run::v01",
+          "shade::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/shade.glb",
+      "sourceCandidateSha256": "e70e2e41b4722f424ac4e9a20afe2db5c00657b40fdcd0a89ba2eae56478ff0c"
+    }
+  },
+  "excludedAssetIds": [
+    "dusk-warden"
+  ],
+  "excludedReason": "the commander ships from player-combat-animation-candidate/author_player_combat_clips.py and is byte-pinned by tests/commander-guard-pose.test.mjs",
+  "generatedBy": "scripts/promote-character-assets.py",
+  "pipeline": [
+    "scripts/bind-static-lower-mesh.py",
+    "scripts/author-wholebody-clips-blender.py"
+  ],
+  "schemaVersion": 1
+}
