@@ -152,6 +152,12 @@ function moveOnTerrain(run, entity, point) {
   const movementBudget = Math.hypot(point.x - origin.x, point.y - origin.y);
   let from = origin;
   let target = clampToWorld(world, entity, point);
+  /* Best position found so far. When an entity rests exactly on an obstacle contact circle the
+   * per-iteration backoff can clamp `safe` back to `from`, so keeping only `from` as the fallback
+   * would freeze that entity forever (it never leaves the grazing contact). Tracking the last
+   * tangential slide candidate — which is always bounded by this tick's movement budget and is
+   * pushed outside every obstacle by placeOnTerrain() — keeps deterministic sliding progress. */
+  let resolved = origin;
 
   for (let collision = 0; collision < 3; collision += 1) {
     const hit = firstObstacleHit(world, entity, from, target);
@@ -179,6 +185,7 @@ function moveOnTerrain(run, entity, point) {
     const remainingY = target.y - safe.y;
     const inward = remainingX * nx + remainingY * ny;
     from = safe;
+    resolved = safe;
     if (inward >= 0) break;
 
     const tangentX = -ny;
@@ -205,9 +212,10 @@ function moveOnTerrain(run, entity, point) {
       };
     }
     target = pushOutsideObstacle(world, entity, target, hit.obstacle);
+    resolved = target;
   }
 
-  placeOnTerrain(run, entity, from);
+  placeOnTerrain(run, entity, resolved);
 }
 const SNAPSHOT_VERSION = 7;
 const EVENT_VERSION = 4;
