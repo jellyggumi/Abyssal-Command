@@ -610,7 +610,15 @@ function renderStrongholdTab() {
 }
 
 
-function renderLobby() {
+/**
+ * Unified shell (D9, production/decision-log.md): renders into #command-shell only --
+ * NEVER touches #defense-battle-surface, which is mounted once in mountShell() and lives
+ * for the whole page lifetime. Replaces the old renderLobby() full-root swap: the canvas
+ * (real 3D scene, ticking or frozen at tick-0 depending on session.started) is always
+ * visible behind this overlay, so lobby and battle coexist from the first load -- there
+ * is no separate battle-only screen to "enter" anymore.
+ */
+function renderCommandShell() {
   if (!campaign) return;
   const selected = stageFor(selectedStageId);
   const selectedPresentation = stagePresentationFor(selected.id);
@@ -620,21 +628,26 @@ function renderLobby() {
   const unlocked = campaign.unlockedStageIndex + 1;
   const selectedObjective = stageObjective(selected.id);
   const idleSummary = idleReturnSummary();
-  document.body.classList.remove("defense-playing");
-  document.body.style.overflow = "";
-  root.className = "defense-lobby";
+  const started = session?.started ?? false;
+  const shell = root.querySelector("#command-shell");
+  if (!shell) return;
   root.dataset.stageId = selected.id;
   root.style.setProperty("--stage-art", `url("${stageArtPath(selected.id)}")`);
   if (!COMMAND_TABS.some((tab) => tab.id === activeCommandTab)) activeCommandTab = COMMAND_TABS[0].id;
+  // Hero copy: the real ticking-or-frozen 3D scene is the backdrop now (no lobby-only
+  // aurora/stage-art overlay competing with it). Hidden once started (edge-hud takes
+  // over as the primary combat surface); the CTA becomes a status readout instead of a
+  // start button.
   const sortieTabHtml = `
-    <section class="command-hero" aria-labelledby="command-hero-title">
-      <div class="rc-aurora" aria-hidden="true"></div>
+    <section class="command-hero rc-glass" aria-labelledby="command-hero-title">
       <div class="hero-copy">
         <p class="eyebrow">COMMAND DECK · SECTOR ${String(selected.sequence).padStart(2, "0")}</p>
         <h2 id="command-hero-title">심연의 문을<br /><em>다시 닫아라.</em></h2>
         <p class="hero-lede">자동 사격으로 전선을 버티고, 잔향을 모아 런을 성장시키세요. 지금은 ${escapeHtml(selected.name)}의 관문이 압박받고 있습니다.</p>
         <div class="hero-facts"><span><small>현재 목표</small><b>관문 방어</b></span><span><small>다음 위협</small><b>${escapeHtml(selected.bossName)}</b></span><span><small>출전 편성</small><b>${loadout.length}/3 슬롯</b></span></div>
-        <button id="start-defense" class="primary-action hero-cta"><span>작전 개시</span><small>${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)} 전선으로</small><b aria-hidden="true">↗</b></button>
+        ${started
+          ? `<p class="hero-live-note" aria-live="polite">전투 진행 중 · ${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)}</p>`
+          : `<button id="start-defense" class="primary-action hero-cta"><span>작전 개시</span><small>${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)} 전선으로</small><b aria-hidden="true">↗</b></button>`}
       </div>
       <section class="tactical-map stage-atlas" data-stage-atlas="selected" data-stage-id="${escapeHtml(selected.id)}" data-terrain-pattern="${escapeHtml(selectedPresentation.terrain.patternId)}" style="--stage-art: url('${stageArtPath(selected.id)}')" aria-labelledby="atlas-title" aria-describedby="atlas-context">
         <div class="stage-art-frame" aria-hidden="true"></div>
@@ -657,7 +670,8 @@ function renderLobby() {
           ${STAGES.map((stage, index) => {
             const locked = index > campaign.unlockedStageIndex;
             const cleared = campaign.resolvedIds?.includes(stage.id);
-            return `<button class="stage-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage="${stage.id}" style="--stage-card-art: url('${stageArtPath(stage.id)}')" aria-pressed="${stage.id === selected.id}" ${locked ? "disabled" : ""}><span class="stage-card-art" aria-hidden="true"></span><span class="stage-index">${String(stage.sequence).padStart(2, "0")}</span><span class="stage-info"><strong>${escapeHtml(stage.name)}</strong><small>${escapeHtml(stage.bossName)}</small></span><span class="stage-state">${locked ? "잠김" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "출전 가능"}</span></button>`;
+            const disabled = locked || (started && stage.id !== selected.id);
+            return `<button class="stage-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage="${stage.id}" style="--stage-card-art: url('${stageArtPath(stage.id)}')" aria-pressed="${stage.id === selected.id}" ${disabled ? "disabled" : ""}><span class="stage-card-art" aria-hidden="true"></span><span class="stage-index">${String(stage.sequence).padStart(2, "0")}</span><span class="stage-info"><strong>${escapeHtml(stage.name)}</strong><small>${escapeHtml(stage.bossName)}</small></span><span class="stage-state">${locked ? "잠김" : started && stage.id === selected.id ? "전투 중" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "출전 가능"}</span></button>`;
           }).join("")}
         </div>
       </section>
@@ -675,7 +689,7 @@ function renderLobby() {
     inventory: renderInventoryTab(),
     stronghold: renderStrongholdTab(),
   };
-  root.innerHTML = `
+  shell.innerHTML = `
     <header class="command-header">
       <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">AC</span><div><p class="eyebrow">ABYSSAL COMMAND · FARWATCH HOLD</p><h1>Warden Corps 방어선</h1></div></div>
       <div class="command-status"><span class="signal-dot" aria-hidden="true"></span><span>기록실 연결됨</span><strong>${completed}/10 봉쇄선</strong></div>
@@ -683,34 +697,36 @@ function renderLobby() {
     <p id="idle-return-summary" class="idle-return-banner" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p>
     <nav class="command-tab-bar" role="tablist" aria-label="커맨드 덱">${COMMAND_TABS.map((tab) => `<button class="command-tab${tab.id === activeCommandTab ? " is-active" : ""}" role="tab" aria-selected="${tab.id === activeCommandTab}" data-command-tab="${tab.id}">${tab.label}</button>`).join("")}</nav>
     <div class="command-tab-panel">${tabBodies[activeCommandTab]}</div>
-    <details class="archive-tools"><summary>기록 관리 <span>오프라인 저장 · ${escapeHtml(storage.backend ?? "확인 중")}</span></summary><div class="storage-row" aria-label="캠페인 제어"><button id="export-defense">기록 내보내기</button><label class="import-label">기록 가져오기<input id="import-defense" type="file" accept="application/json,text/plain" /></label><button id="export-telemetry">진단 내보내기</button><button id="reset-defense">새 기록</button><output aria-live="polite">${escapeHtml(statusText)}</output></div></details>`;
-  hydratePortraits(root);
+    <details class="archive-tools"><summary>기록 관리 <span>오프라인 저장 · ${escapeHtml(storage.backend ?? "확인 중")}</span></summary><div class="storage-row" aria-label="캠페인 제어"><button id="export-defense">기록 내보내기</button><label class="import-label">기록 가져오기<input id="import-defense" type="file" accept="application/json,text/plain" ${started ? "disabled" : ""} /></label><button id="export-telemetry">진단 내보내기</button><button id="reset-defense" ${started ? "disabled" : ""}>새 기록</button><output aria-live="polite">${escapeHtml(statusText)}</output></div></details>`;
+  hydratePortraits(shell);
 
-  root.querySelectorAll("[data-command-tab]").forEach((button) => {
+  shell.querySelectorAll("[data-command-tab]").forEach((button) => {
     button.addEventListener("click", () => {
       activeCommandTab = button.dataset.commandTab;
-      renderLobby();
+      renderCommandShell();
     });
   });
-  root.querySelectorAll("[data-growth-segment]").forEach((button) => {
+  shell.querySelectorAll("[data-growth-segment]").forEach((button) => {
     button.addEventListener("click", () => {
       activeGrowthSegment = button.dataset.growthSegment;
-      renderLobby();
+      renderCommandShell();
     });
   });
-  root.querySelectorAll("[data-companion-segment]").forEach((button) => {
+  shell.querySelectorAll("[data-companion-segment]").forEach((button) => {
     button.addEventListener("click", () => {
       activeCompanionSegment = button.dataset.companionSegment;
-      renderLobby();
+      renderCommandShell();
     });
   });
-  root.querySelectorAll("[data-stage]").forEach((button) => {
+  shell.querySelectorAll("[data-stage]").forEach((button) => {
     button.addEventListener("click", () => {
+      if (session?.started) return; // stage-rail is locked to the live stage once a run is committed
       selectedStageId = button.dataset.stage;
-      renderLobby();
+      session?.remountForStage(selectedStageId);
+      renderCommandShell();
     });
   });
-  root.querySelectorAll("[data-companion]").forEach((button) => {
+  shell.querySelectorAll("[data-companion]").forEach((button) => {
     button.addEventListener("click", async () => {
       const prototype = button.dataset.companion;
       const current = selectedLoadout();
@@ -719,10 +735,10 @@ function renderLobby() {
         : [...current, prototype].slice(0, 3);
       campaign = setCompanionLoadout(campaign, next);
       await persistCampaign("동료 편성을 저장했습니다.");
-      renderLobby();
+      renderCommandShell();
     });
   });
-  root.querySelectorAll("[data-warden-stat]").forEach((button) => {
+  shell.querySelectorAll("[data-warden-stat]").forEach((button) => {
     button.addEventListener("click", async () => {
       try {
         campaign = allocateWardenStatPoint(campaign, button.dataset.wardenStat);
@@ -730,10 +746,10 @@ function renderLobby() {
       } catch (error) {
         statusText = error.message;
       }
-      renderLobby();
+      renderCommandShell();
     });
   });
-  root.querySelectorAll("[data-warden-skill]").forEach((button) => {
+  shell.querySelectorAll("[data-warden-skill]").forEach((button) => {
     button.addEventListener("click", async () => {
       try {
         campaign = unlockWardenSkillNode(campaign, button.dataset.wardenSkill);
@@ -741,10 +757,10 @@ function renderLobby() {
       } catch (error) {
         statusText = error.message;
       }
-      renderLobby();
+      renderCommandShell();
     });
   });
-  root.querySelectorAll("[data-warden-trait]").forEach((button) => {
+  shell.querySelectorAll("[data-warden-trait]").forEach((button) => {
     button.addEventListener("click", async () => {
       try {
         campaign = selectWardenTrait(campaign, button.dataset.wardenTrait);
@@ -752,10 +768,10 @@ function renderLobby() {
       } catch (error) {
         statusText = error.message;
       }
-      renderLobby();
+      renderCommandShell();
     });
   });
-  root.querySelectorAll("[data-warden-equip-owner]").forEach((button) => {
+  shell.querySelectorAll("[data-warden-equip-owner]").forEach((button) => {
     button.addEventListener("click", async () => {
       try {
         campaign = purchaseEquipmentTier(campaign, button.dataset.wardenEquipOwner, button.dataset.wardenEquipSlot);
@@ -763,10 +779,10 @@ function renderLobby() {
       } catch (error) {
         statusText = error.message;
       }
-      renderLobby();
+      renderCommandShell();
     });
   });
-  root.querySelectorAll("[data-warden-formation]").forEach((button) => {
+  shell.querySelectorAll("[data-warden-formation]").forEach((button) => {
     button.addEventListener("click", async () => {
       try {
         campaign = setCompanionFormationSlot(campaign, button.dataset.wardenFormation, button.dataset.wardenFormationTarget);
@@ -774,15 +790,15 @@ function renderLobby() {
       } catch (error) {
         statusText = error.message;
       }
-      renderLobby();
+      renderCommandShell();
     });
   });
-  root.querySelector("#start-defense")?.addEventListener("click", () => beginSession(selectedStageId));
-  root.querySelector("#export-defense").addEventListener("click", async () => {
+  shell.querySelector("#start-defense")?.addEventListener("click", () => { session?.beginRun(); renderCommandShell(); });
+  shell.querySelector("#export-defense").addEventListener("click", async () => {
     const text = await storage.exportText();
     if (!text) {
       statusText = "내보낼 유효한 기록이 없습니다.";
-      renderLobby();
+      renderCommandShell();
       return;
     }
     const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
@@ -792,7 +808,7 @@ function renderLobby() {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   });
-  root.querySelector("#export-telemetry")?.addEventListener("click", () => {
+  shell.querySelector("#export-telemetry")?.addEventListener("click", () => {
     const url = URL.createObjectURL(new Blob([telemetry.exportJson()], { type: "application/json" }));
     const link = document.createElement("a");
     link.href = url;
@@ -800,25 +816,28 @@ function renderLobby() {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   });
-  root.querySelector("#import-defense")?.addEventListener("change", async (event) => {
+  shell.querySelector("#import-defense")?.addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     const text = file ? await file.text() : "";
     if (!text || !(await storage.importText(text))) {
       statusText = "기록 형식을 확인할 수 없습니다.";
-      renderLobby();
+      renderCommandShell();
       return;
     }
     campaign = (await storage.load()) ?? campaign;
     selectedStageId = STAGES[campaign.unlockedStageIndex].id;
     statusText = "기록을 가져왔습니다.";
-    renderLobby();
+    session?.remountForStage(selectedStageId);
+    renderCommandShell();
   });
-  root.querySelector("#reset-defense")?.addEventListener("click", async () => {
+  shell.querySelector("#reset-defense")?.addEventListener("click", async () => {
+    if (session?.started) return;
     await storage.clear();
     campaign = createCampaign({ resetEpoch: campaign.resetEpoch + 1 });
     selectedStageId = STAGES[0].id;
     await persistCampaign("새 기록을 시작했습니다.");
-    renderLobby();
+    session?.remountForStage(selectedStageId);
+    renderCommandShell();
   });
 }
 
@@ -830,16 +849,22 @@ function requestBattleImmersion() {
   });
 }
 
-function beginSession(stageId) {
-  session?.stop({ renderLobby: false });
-  requestBattleImmersion();
-  campaign = startRun(campaign, stageId);
-  void persistCampaign("출전 기록을 저장했습니다.");
-  document.body.classList.add("defense-playing");
+/**
+ * Unified shell (D9, production/decision-log.md) bootstrap: mounts the ENTIRE persistent
+ * DOM exactly once for the page's whole lifetime -- #defense-battle-surface (canvas +
+ * world-hud-overlay + edge-hud, unchanged markup from the old beginSession()) as the
+ * fixed-fullscreen base layer, #command-shell as the docked overlay renderCommandShell()
+ * targets. There is no second `root.innerHTML =` swap anywhere else in this module --
+ * "entering battle" is BattleSession.beginRun() flipping `started`, not a screen
+ * transition. `data-defense-ready="true"` is set immediately (the battle surface always
+ * exists now); `data-defense-started` reflects whether a real run is ticking, set by
+ * beginRun() -- CI browser contracts wait on the latter instead of a click transition.
+ */
+function mountShell(stageId) {
   document.body.style.overflow = "hidden";
   root.className = "";
   root.innerHTML = `
-    <section id="defense-battle-surface" data-defense-ready="true" data-defense-input-seq="0" data-defense-skill="" data-defense-move="IDLE" data-defense-state="active" data-stage-id="${escapeHtml(stageId)}" style="--stage-art: url('${stageArtPath(stageId)}')" aria-label="심연 방어 전장">
+    <section id="defense-battle-surface" data-defense-ready="true" data-defense-started="false" data-defense-input-seq="0" data-defense-skill="" data-defense-move="IDLE" data-defense-state="active" data-stage-id="${escapeHtml(stageId)}" style="--stage-art: url('${stageArtPath(stageId)}')" aria-label="심연 방어 전장">
       <div class="battle-stage-art" aria-hidden="true"></div>
       <canvas id="defense-canvas" aria-label="방어 전장"></canvas>
       <div id="world-hud-overlay" aria-hidden="true"></div>
@@ -863,10 +888,12 @@ function beginSession(stageId) {
           <div class="hud-actions" id="battle-actions" aria-label="전투 행동"></div>
         </div>
       </div>
-    </section>`;
+    </section>
+    <div id="command-shell"></div>`;
   hydratePortraits(root);
   session = new BattleSession(stageId);
   session.start();
+  renderCommandShell();
 }
 
 export class BattleSession {
@@ -875,31 +902,18 @@ export class BattleSession {
     this.surface = root.querySelector("#defense-battle-surface");
     this.canvas = root.querySelector("#defense-canvas");
     this.statusNode = root.querySelector("#battle-status");
-    const seed = stableRunSeed(stageId);
-    const equipTiers = (ownerId) => Object.fromEntries(EQUIPMENT_SLOTS.map((slot) => [slot, equipmentTierIndexFor(campaign, ownerId, slot)]));
-    const companionLoadout = selectedLoadout();
-    this.run = createDefenseRun({
-      stageId,
-      seed,
-      companionLoadout,
-      rewardIds: campaign.rewardIds ?? [],
-      wardenProgress: campaign.wardenProgress,
-      wardenEquipment: equipTiers("warden"),
-      companionEquipment: Object.fromEntries(companionLoadout.map((id) => [id, equipTiers(id)])),
-      formation: campaign.companionFormation,
-    });
+    this.run = this.createRunForStage(stageId);
     this.motionQuery = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)") ?? null;
-    telemetry.startRun({ stageId, seed, rulesVersion: RULES_VERSION, reducedMotion: this.motionQuery?.matches ?? false });
-    const openingSnapshot = getRunSnapshot(this.run);
-    telemetry.recordFormationCommit({
-      formationStance: openingSnapshot.formationStance,
-      savedIntent: Object.fromEntries(companionLoadout.map((id) => [id, campaign.companionFormation[id] || "BACK"])),
-      resolvedCompanionRows: openingSnapshot.companions.map((companion, index) => ({
-        positionRank: index + 1,
-        companionId: companion.companionId,
-        slot: companion.slot,
-      })),
-    });
+    // Unified shell (D9, production/decision-log.md): the run does NOT tick at
+    // construction -- `started` gates loop()'s advanceDefenseRun() call and every
+    // combat-only control surface (D-pad, pause, skill bar, objective chip, extraction).
+    // Before commit (started===false) this.run sits frozen at its real tick-0 state
+    // (terrain, commander, gate, any pre-placed companions) rendered through the exact
+    // same renderSnapshot() path as a live run -- not a fake preview image. beginRun()
+    // is the ONLY place this flips true and calls campaign-state.js startRun()
+    // (attemptsByStage) -- pre-commit stage switching must never record an attempt.
+    this.started = false;
+
     this.renderer = null;
     this.audio = new DefenseAudio();
     this.audioTick = null;
@@ -980,6 +994,91 @@ export class BattleSession {
       if (event.matches) this.camera = { x: 0, y: 0 };
     };
     this.loop = this.loop.bind(this);
+  }
+
+  /** Builds a fresh tick-0 DefenseRun for `stageId` from the current campaign snapshot
+   * (equipment/wardenProgress/loadout/formation) -- shared by the constructor and
+   * remountForStage() so pre-commit stage switching and initial mount build identical
+   * run shapes. Pure w.r.t. campaign/telemetry -- no attemptsByStage bump, no
+   * telemetry.startRun()/recordFormationCommit() call; those are beginRun()'s job alone
+   * (see this.started's doc comment on the constructor). */
+  createRunForStage(stageId) {
+    const seed = stableRunSeed(stageId);
+    const equipTiers = (ownerId) => Object.fromEntries(EQUIPMENT_SLOTS.map((slot) => [slot, equipmentTierIndexFor(campaign, ownerId, slot)]));
+    const companionLoadout = selectedLoadout();
+    return createDefenseRun({
+      stageId,
+      seed,
+      companionLoadout,
+      rewardIds: campaign.rewardIds ?? [],
+      wardenProgress: campaign.wardenProgress,
+      wardenEquipment: equipTiers("warden"),
+      companionEquipment: Object.fromEntries(companionLoadout.map((id) => [id, equipTiers(id)])),
+      formation: campaign.companionFormation,
+    });
+  }
+
+  /** Rebuilds this.run for `stageId` and resets ALL per-run/per-session tracking state --
+   * two callers, one behavior: (1) pre-commit stage-rail selection while !started (mirrors
+   * what the constructor does for the initial stage), and (2) resolveTerminal()'s
+   * result-action/lobby-action handlers returning a FINISHED run to a fresh preview
+   * (explicitly resets started=false here -- there is no third caller, so this is always
+   * either "not started yet" or "just finished", never mid-run). Never touches campaign
+   * or telemetry -- see beginRun()'s doc comment for why those live there alone. */
+  remountForStage(stageId) {
+    this.started = false;
+    document.documentElement.dataset.defenseStarted = "false";
+    this.stageId = stageId;
+    this.surface.dataset.stageId = stageId;
+    this.surface.dataset.defenseStarted = "false";
+    this.surface.style.setProperty("--stage-art", `url("${stageArtPath(stageId)}")`);
+    this.run = this.createRunForStage(stageId);
+    this.extractionEvents = [];
+    this.terminalHandled = false;
+    this.rewardPrompted = false;
+    this.selectedRewardId = null;
+    this.bindStartPending = false;
+    this.cutsceneEventKeys.clear();
+    this.cutsceneRelayTimers.forEach((timer) => clearTimeout(timer));
+    this.cutsceneRelayTimers = [];
+    this.cutsceneQueue = [];
+    this.dismissCutscene();
+    this.rallyAcknowledgedBossIds = new Set();
+    this.accumulator = 0;
+    this.resetCamera();
+    root.querySelectorAll("#defense-edge-hud .edge-card").forEach((card) => card.remove());
+    this.render();
+  }
+
+  /** Player-committed start (the ONLY place this.started flips true): records the real
+   * campaign attempt (attemptsByStage), starts telemetry/formation-commit tracking,
+   * requests fullscreen/landscape (must run inside this click handler's user-gesture
+   * stack), and lets loop() begin ticking this.run from its current tick-0 state -- the
+   * exact scene the player was just previewing, not a fresh remount, so there is no
+   * visible reset/flash. */
+  beginRun() {
+    if (this.started) return;
+    campaign = startRun(campaign, this.stageId);
+    void persistCampaign("출전 기록을 저장했습니다.");
+    requestBattleImmersion();
+    const seed = stableRunSeed(this.stageId);
+    telemetry.startRun({ stageId: this.stageId, seed, rulesVersion: RULES_VERSION, reducedMotion: this.motionQuery?.matches ?? false });
+    const openingSnapshot = getRunSnapshot(this.run);
+    telemetry.recordFormationCommit({
+      formationStance: openingSnapshot.formationStance,
+      savedIntent: Object.fromEntries(selectedLoadout().map((id) => [id, campaign.companionFormation[id] || "BACK"])),
+      resolvedCompanionRows: openingSnapshot.companions.map((companion, index) => ({
+        positionRank: index + 1,
+        companionId: companion.companionId,
+        slot: companion.slot,
+      })),
+    });
+    this.started = true;
+    this.accumulator = 0;
+    this.lastFrameAt = 0;
+    document.documentElement.dataset.defenseStarted = "true";
+    this.surface.dataset.defenseStarted = "true";
+    this.render();
   }
 
   start() {
@@ -1236,7 +1335,7 @@ export class BattleSession {
     // immediately after each call is exactly that one tick's events --
     // collecting them here recovers every tick's events for this frame.
     const frameEvents = [];
-    if (!document.hidden && !this.userPaused && !isTerminalRun(this.run)) {
+    if (this.started && !document.hidden && !this.userPaused && !isTerminalRun(this.run)) {
       this.accumulator += elapsed;
       while (this.accumulator >= STEP_MS) {
         this.run = advanceDefenseRun(this.run, 1);
@@ -1573,11 +1672,13 @@ export class BattleSession {
     root.querySelector("#battle-commander-bar-fill").style.width = `${commanderIntegrity.ratio * 100}%`;
     root.querySelector("#battle-gate-bar-fill").style.width = `${gateIntegrity.ratio * 100}%`;
     root.querySelector("#battle-enemies").textContent = `적 ${snapshot.enemies.length} · 처치 ${snapshot.progress.defeated} · 아이템 ${snapshot.progress.itemsCollected}`;
-    this.renderControls(snapshot);
-    this.renderPauseOverlay(snapshot);
+    if (this.started) {
+      this.renderControls(snapshot);
+      this.renderPauseOverlay(snapshot);
+      if (snapshot.terminal && !this.terminalHandled) void this.resolveTerminal(snapshot);
+      this.renderEventFeedback(snapshot);
+    }
     this.renderWorldHud(snapshot);
-    if (snapshot.terminal && !this.terminalHandled) void this.resolveTerminal(snapshot);
-    this.renderEventFeedback(snapshot);
   }
 
   /**
@@ -2110,17 +2211,22 @@ export class BattleSession {
     root.querySelector("#defense-edge-hud").append(card);
     card.querySelector("#result-action").addEventListener("click", () => {
       if (outcome === "defeat") {
-        this.stop({ renderLobby: false });
-        beginSession(this.stageId);
+        this.remountForStage(this.stageId);
+        this.beginRun();
       } else if (complete) {
-        this.stop({ renderLobby: true });
+        this.remountForStage(STAGES[0].id);
+        selectedStageId = STAGES[0].id;
       } else {
         selectedStageId = STAGES[campaign.unlockedStageIndex].id;
-        this.stop({ renderLobby: false });
-        beginSession(selectedStageId);
+        this.remountForStage(selectedStageId);
+        this.beginRun();
       }
+      renderCommandShell();
     });
-    card.querySelector("#lobby-action").addEventListener("click", () => this.stop({ renderLobby: true }));
+    card.querySelector("#lobby-action").addEventListener("click", () => {
+      this.remountForStage(this.stageId);
+      renderCommandShell();
+    });
     card.querySelector("button")?.focus();
   }
 
@@ -2134,37 +2240,6 @@ export class BattleSession {
       renderer: this.renderer?.debugMetrics?.() ?? { geometries: 0, textures: 0, programs: 0 },
       inputMarkerCount: this.inputSeq,
     };
-  }
-
-  stop({ renderLobby: shouldRenderLobby } = { renderLobby: true }) {
-    if (this.stopped) return;
-    this.stopped = true;
-    if (this.toastTimer) { clearTimeout(this.toastTimer); this.toastTimer = null; }
-    cancelAnimationFrame(this.frame);
-    this.unlisten(this.canvas, "pointerdown", this.onPointerDown);
-    this.unlisten(this.canvas, "pointermove", this.onPointerMove);
-    this.unlisten(this.canvas, "pointerup", this.onPointerEnd);
-    this.unlisten(this.canvas, "pointercancel", this.onPointerEnd);
-    this.unlisten(this.canvas, "lostpointercapture", this.onPointerEnd);
-    this.unlisten(this.movementControls, "pointerdown", this.onMoveControlDown);
-    this.unlisten(this.movementControls, "pointerup", this.onMoveControlEnd);
-    this.unlisten(this.movementControls, "pointercancel", this.onMoveControlEnd);
-    this.unlisten(this.movementControls, "lostpointercapture", this.onMoveControlEnd);
-    this.unlisten(this.movementControls, "click", this.onMoveControlClick);
-    this.unlisten(window, "blur", this.onWindowBlur);
-    this.unlisten(document, "visibilitychange", this.onVisibility);
-    this.unlisten(window, "keydown", this.onKey);
-    this.unlisten(window, "keyup", this.onKey);
-    this.unlisten(window, "resize", this.onResize);
-    this.unlisten(window, "abyssal:defense-viewportchange", this.onResize);
-    if (this.motionQuery) this.unlisten(this.motionQuery, "change", this.onReducedMotion);
-    this.renderer?.dispose?.();
-    this.resetCamera();
-    this.audio.stop();
-    this.dismissCutscene();
-    globalThis.screen?.orientation?.unlock?.();
-    session = null;
-    if (shouldRenderLobby) renderLobby();
   }
 }
 
@@ -2181,7 +2256,7 @@ async function initialize() {
   statusText = `저장소 ${storage.backend ?? "메모리"} 준비됨`;
   viewport.start();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }).catch(() => undefined);
-  renderLobby();
+  mountShell(selectedStageId);
 }
 
 void initialize();
