@@ -131,7 +131,7 @@ let selectedStageId = STAGES[0].id;
 const COMMAND_TABS = Object.freeze([
   { id: "sortie", label: "출정" },
   { id: "growth", label: "성장" },
-  { id: "companions", label: "동료" },
+  { id: "companions", label: "군단" },
   { id: "inventory", label: "인벤토리" },
   { id: "stronghold", label: "요새" },
 ]);
@@ -747,8 +747,8 @@ function renderLobby() {
         <div class="panel-heading"><div><p class="eyebrow">FIELD MANUAL</p><h2 id="lobby-guide-title">전투 작전 가이드</h2></div><button type="button" data-guide-close aria-label="전투 작전 가이드 닫기">닫기</button></div>
         <p class="section-copy">전장 화면에서 한 손가락으로 드래그하면 카메라 시야가 회전합니다. 지휘관 이동은 화면 방향 버튼 또는 <b>WASD·화살표 키</b>를 사용하세요.</p>
         <div class="lobby-guide-grid">
-          <section data-guide-section="companion" aria-labelledby="guide-companion-title"><span aria-hidden="true">01</span><h3 id="guide-companion-title">동료 편성·자율 행동</h3><ol><li><b>동료 → 목록</b>에서 최대 3명을 편성하세요.</li><li><b>편성</b>에서 전열·후열을 정하면 다음 출전부터 적용됩니다.</li><li>동료는 자동 교전·회수하며, 멀어지면 지휘관 곁으로 복귀합니다.</li></ol></section>
-          <section data-guide-section="extraction" aria-labelledby="guide-extraction-title"><span aria-hidden="true">02</span><h3 id="guide-extraction-title">정예 추출</h3><ol><li>정예를 처치한 뒤 <b>Bind 시작</b>을 누르세요.</li><li>표시된 추출 지점에 들어가 홀드가 끝날 때까지 버티세요.</li><li><b>정예 추출</b>이 활성화되면 눌러 영구 동료로 결속하세요.</li></ol></section>
+          <section data-guide-section="companion" aria-labelledby="guide-companion-title"><span aria-hidden="true">01</span><h3 id="guide-companion-title">동료 군단 편성·자율 행동</h3><ol><li><b>동료 → 목록</b>에서 최대 3명을 편성하세요.</li><li><b>편성</b>에서 전열·후열을 정하면 다음 출전부터 적용됩니다.</li><li>동료는 자동 교전·회수하며, 멀어지면 지휘관 곁으로 복귀합니다.</li></ol></section>
+          <section data-guide-section="extraction" aria-labelledby="guide-extraction-title"><span aria-hidden="true">02</span><h3 id="guide-extraction-title">정예 추출 · ARISE</h3><ol><li>정예를 처치한 뒤 <b>Bind 시작</b>을 누르세요.</li><li>표시된 추출 지점에 들어가 홀드가 끝날 때까지 버티세요.</li><li><b>정예 추출</b>이 활성화되면 눌러 <b>일어나라(ARISE)</b> — 영구 동료로 결속됩니다.</li></ol></section>
           <section data-guide-section="skills" aria-labelledby="guide-skills-title"><span aria-hidden="true">03</span><h3 id="guide-skills-title">스킬·쿨다운</h3><ol><li>전투 우측의 준비된 액티브 스킬을 눌러 즉시 사용하세요.</li><li>버튼의 초 단위 표시가 0이 되면 다시 사용할 수 있습니다.</li><li>레벨업 선택은 런 한정, 성장 탭의 스킬 노드는 영구 적용입니다.</li></ol></section>
         </div>
       </div>
@@ -929,11 +929,15 @@ function beginSession(stageId) {
       <div id="world-hud-overlay" aria-hidden="true"></div>
       <div id="defense-edge-hud">
         <div class="defense-edge defense-top">
-          <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">ABYSSAL COMMAND · SEAL ATLAS</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span><div class="hud-xp" aria-hidden="true"><b id="battle-xp-label"></b><span class="hud-xp-track"><i id="battle-xp-fill"></i></span></div></div>
+          <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">군단장 사령부 · SHADOW MONARCH</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span><div class="hud-xp" aria-hidden="true"><b id="battle-xp-label"></b><span class="hud-xp-track"><i id="battle-xp-fill"></i></span></div></div>
           <div class="hud-panel hud-loop-state" data-stage-hud-context="loop"><span class="hud-eyebrow">RUN STATE · AGENCY</span><strong id="battle-loop-phase" aria-live="polite"></strong><span id="battle-pressure-state"></span><span id="battle-growth-state"></span><span id="battle-formation-state"></span><span id="battle-extraction-state"></span></div>
+          <div class="hud-panel hud-legion"><span class="hud-eyebrow">SHADOW LEGION</span><span class="legion-mana-label" id="battle-legion-mana-label"></span><span class="legion-mana-track"><i id="battle-legion-mana-fill"></i></span><div class="legion-roster" id="battle-legion-roster"></div><span class="hud-stance-mode" id="battle-stance-mode"></span></div>
+
           <div class="top-right-hud"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div><div class="hud-right-stack"><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
         </div>
         <output id="battle-event-feedback" class="battle-event-feedback" role="status" aria-live="polite" aria-atomic="true"></output>
+        <div class="arise-banner" id="battle-arise-banner" data-active="false" aria-hidden="true">ARISE</div>
+
         <div class="arena-callout" aria-hidden="true"><span>GATE CORE</span><i></i><span>전선을 유지하세요</span></div>
         <div class="defense-edge defense-bottom">
           <div class="hud-panel gate-panel"><div class="gate-panel-copy">${portraitMarkup(COMMANDER_MESH_ROOT, "DW", "gate-panel-portrait rc-portrait")}<span class="hud-eyebrow">COMMANDER / GATE INTEGRITY</span><div class="gate-panel-bars" aria-hidden="true"><span class="gate-panel-bar-track commander"><i id="battle-commander-bar-fill"></i></span><span class="gate-panel-bar-track gate"><i id="battle-gate-bar-fill"></i></span></div><strong id="battle-commander-integrity"></strong><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div></div>
@@ -1011,6 +1015,11 @@ export class BattleSession {
     this.bindStartPending = false;
     this.cutsceneEventKeys = new Set();
     this.cutsceneTimer = null;
+    this.ariseTimer = null;
+    this.legionRosterSignature = "";
+    this.lastAriseState = null;
+
+
     this.cutsceneRelayTimers = [];
     this.cutsceneQueue = [];
     this.cutsceneActive = false;
@@ -1663,12 +1672,77 @@ export class BattleSession {
     root.querySelector("#battle-commander-bar-fill").style.width = `${commanderIntegrity.ratio * 100}%`;
     root.querySelector("#battle-gate-bar-fill").style.width = `${gateIntegrity.ratio * 100}%`;
     root.querySelector("#battle-enemies").textContent = `적 ${snapshot.enemies.length} · 처치 ${snapshot.progress.defeated} · 아이템 ${snapshot.progress.itemsCollected}`;
+    this.renderLegionHud(snapshot);
     this.renderControls(snapshot);
     this.renderPauseOverlay(snapshot);
     this.renderWorldHud(snapshot);
     if (snapshot.terminal && !this.terminalHandled) void this.resolveTerminal(snapshot);
     this.renderEventFeedback(snapshot);
   }
+
+  /**
+   * Shadow-legion HUD panel. Pure presentation off the snapshot:
+
+   * "그림자 마력" is the legion's aggregate integrity ratio (sum of companion
+   * integrity / max integrity), the roster chips mirror per-companion state,
+   * and the stance chip surfaces the committed formation as a defense/offense
+   * mode. No simulation state is written, so getRunDigest is unaffected.
+   */
+  renderLegionHud(snapshot) {
+    const companions = snapshot.companions ?? [];
+    const manaLabel = root.querySelector("#battle-legion-mana-label");
+    const manaFill = root.querySelector("#battle-legion-mana-fill");
+    const rosterNode = root.querySelector("#battle-legion-roster");
+    const stanceNode = root.querySelector("#battle-stance-mode");
+    if (!manaLabel || !manaFill || !rosterNode || !stanceNode) return;
+    const total = companions.length;
+    const maxSum = companions.reduce((sum, unit) => sum + (unit.maxIntegrity ?? 0), 0);
+    const liveSum = companions.reduce((sum, unit) => sum + Math.max(0, unit.integrity ?? 0), 0);
+    const alive = companions.filter((unit) => (unit.integrity ?? 0) > 0).length;
+    const ratio = maxSum > 0 ? Math.max(0, Math.min(1, liveSum / maxSum)) : 0;
+    const percent = Math.round(ratio * 100);
+    manaLabel.textContent = `그림자 마력 ${percent}% · 군단 ${alive}/${total}`;
+    manaFill.style.width = `${percent}%`;
+    // Signature is stored on the node (not the session) so a HUD re-mount,
+    // which resets innerHTML, always repopulates the roster.
+    const signature = companions.map((unit) => `${unit.companionId}:${(unit.integrity ?? 0) > 0 ? 1 : 0}`).join("|");
+    if (signature !== rosterNode.dataset.rosterSignature) {
+      rosterNode.dataset.rosterSignature = signature;
+      rosterNode.innerHTML = companions.length
+        ? companions.map((unit) => `<span class="legion-roster-unit" data-state="${(unit.integrity ?? 0) > 0 ? "active" : "downed"}">${escapeHtml(companionLabel(unit.companionId))}</span>`).join("")
+        : `<span class="legion-roster-unit" data-state="downed">편성된 그림자 없음</span>`;
+    }
+
+    const offense = snapshot.formationStance === "VANGUARD";
+    stanceNode.textContent = offense ? "돌격진형 · OFFENSE" : "방어진형 · DEFENSE";
+    stanceNode.dataset.stanceMode = offense ? "offense" : "defense";
+    // ARISE flash: fires on the transition into an extraction-ready/extracted
+    // state, read straight from the snapshot (same source the surface dataset
+    // uses) so it never depends on DOM state that a re-mount could reset.
+    const ariseState = snapshot.extracted
+      ? "extracted"
+      : snapshot.extractionProgress?.completed && !snapshot.extractionProgress?.failed
+        ? "ready"
+        : "pending";
+    if (ariseState !== this.lastAriseState) {
+      this.lastAriseState = ariseState;
+      if (ariseState === "ready" || ariseState === "extracted") this.pulseAriseBanner();
+    }
+
+  }
+
+  /** Flash the ARISE banner for ~1.2s; the timer is cleared in stop(). */
+  pulseAriseBanner() {
+    const banner = root.querySelector("#battle-arise-banner");
+    if (!banner) return;
+    banner.dataset.active = "true";
+    clearTimeout(this.ariseTimer);
+    this.ariseTimer = setTimeout(() => {
+      const node = root.querySelector("#battle-arise-banner");
+      if (node) node.dataset.active = "false";
+    }, 1200);
+  }
+
 
   /**
    * World-space HUD text/interactive anchors (companion nameplates+health
@@ -2230,6 +2304,7 @@ export class BattleSession {
     if (this.stopped) return;
     this.stopped = true;
     if (this.toastTimer) { clearTimeout(this.toastTimer); this.toastTimer = null; }
+    if (this.ariseTimer) { clearTimeout(this.ariseTimer); this.ariseTimer = null; }
     cancelAnimationFrame(this.frame);
     this.unlisten(this.canvas, "pointerdown", this.onPointerDown);
     this.unlisten(this.canvas, "pointermove", this.onPointerMove);
