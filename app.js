@@ -151,6 +151,10 @@ let statusText = "기록을 불러오는 중입니다.";
 let campaignWrite = Promise.resolve();
 let session = null;
 let idleReturnReceipt = null;
+// Item 6 (presentation-spec) — pooled screen-space particle burst for the 작전 개시 FAB.
+// Six reusable <span>s recycled across clicks (DOM pool, not three.js); each animates
+// transform+opacity then detaches. Lazily built on first use; skipped under reduced motion.
+let sortieBurstPool = null;
 
 /** component-contracts.md §1 computeDefaultDockOpen(): wide tier opens both docks;
  * compact tier opens ONLY the ops deck (sortie) so the existing zero-interaction
@@ -790,20 +794,23 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
           const locked = index > campaign.unlockedStageIndex;
           const cleared = campaign.resolvedIds?.includes(stage.id);
           const disabled = locked || (started && stage.id !== selected.id);
-          return `<button class="stage-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage="${stage.id}" style="--stage-card-art: url('${stageArtPath(stage.id)}')" aria-pressed="${stage.id === selected.id}" ${disabled ? "disabled" : ""}><span class="stage-card-art" aria-hidden="true"></span><span class="stage-index">${String(stage.sequence).padStart(2, "0")}</span><span class="stage-info"><strong>${escapeHtml(stage.name)}</strong><small>${escapeHtml(stage.bossName)}</small></span><span class="stage-state">${locked ? "잠김" : started && stage.id === selected.id ? "전투 중" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "출전 가능"}</span></button>`;
+          return `<button class="stage-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage="${stage.id}" style="--stage-card-art: url('${stageArtPath(stage.id)}')" aria-pressed="${stage.id === selected.id}" ${disabled ? "disabled" : ""}><span class="stage-card-art" aria-hidden="true"></span><span class="stage-index">${String(stage.sequence).padStart(2, "0")}</span><span class="stage-info"><strong>${escapeHtml(stage.name)}</strong><small>${escapeHtml(stage.bossName)}</small></span><span class="stage-state">${locked ? "잠김" : started && stage.id === selected.id ? "전투 중" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "출전 가능"}</span>${stage.id === selected.id ? '<span class="stage-reward-chip" aria-hidden="true">✦ 보상</span>' : ""}</button>`;
         }).join("")}
       </div>
     </section>
     <aside class="briefing-panel command-screen" aria-labelledby="briefing-title">
       <div class="panel-heading"><div><p class="eyebrow">TACTICAL BRIEFING · ${escapeHtml(selectedPresentation.mapLabels.domain)}</p><h2 id="briefing-title">작전 브리핑</h2></div><span class="briefing-code">AC-${String(selected.sequence).padStart(2, "0")}</span></div>
       <div class="briefing-target" data-stage-briefing="selected" data-stage-id="${escapeHtml(selected.id)}">${portraitMarkup(meshRootForStageBoss(selected.id), "◉", "target-sigil rc-portrait")}<div><small>${escapeHtml(selectedPresentation.mapLabels.title)} · ${escapeHtml(selectedPresentation.atmosphere.descriptor)}</small><strong>${escapeHtml(selected.bossName)}</strong><span id="briefing-stage-narrative" data-stage-id="${escapeHtml(selected.id)}">${escapeHtml(selectedObjective)}</span></div></div>
-      <dl class="briefing-stats">
-        <div><dt>지형 / 고지</dt><dd>${escapeHtml(selectedPresentation.terrain.label)} · ${escapeHtml(selectedPresentation.mapLabels.chokepath)} · ${escapeHtml(selectedPresentation.mapLabels.elevation)}</dd></div>
-        <div><dt>위협 / 측면</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)} (${escapeHtml(selectedTerrain.spawnDirections.join(", "))})</dd></div>
-        <div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div>
-        <div><dt>랜드마크</dt><dd>${escapeHtml(selectedPresentation.landmarks.map(({ label }) => label).join(" · "))}</dd></div>
-        <div><dt>다음 보상</dt><dd>${escapeHtml(nextRewardName(selected.id))}</dd></div>
-      </dl>
+      <p class="briefing-reward"><span>승리 시 →</span> <strong>${escapeHtml(nextRewardName(selected.id))}</strong></p>
+      <details class="briefing-detail">
+        <summary>전황 상세</summary>
+        <dl class="briefing-stats">
+          <div><dt>지형 / 고지</dt><dd>${escapeHtml(selectedPresentation.terrain.label)} · ${escapeHtml(selectedPresentation.mapLabels.chokepath)} · ${escapeHtml(selectedPresentation.mapLabels.elevation)}</dd></div>
+          <div><dt>위협 / 측면</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)} (${escapeHtml(selectedTerrain.spawnDirections.join(", "))})</dd></div>
+          <div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div>
+          <div><dt>랜드마크</dt><dd>${escapeHtml(selectedPresentation.landmarks.map(({ label }) => label).join(" · "))}</dd></div>
+        </dl>
+      </details>
       <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 중앙 전장에서 손가락을 끌어 이동하세요. 정예를 처치하고 <b>추출(Extract)</b>하여 동료를 확보할 수 있습니다.</p>
     </aside>`;
 }
@@ -915,6 +922,7 @@ function renderSortieFab() {
   button.className = "sortie-fab";
   button.innerHTML = `<span>작전 개시</span><small>${label}</small><b aria-hidden="true">↗</b>`;
   button.addEventListener("click", () => {
+    spawnSortieBurst(button);
     session?.beginRun();
     dockOpen = { left: false, right: false };
     renderShell();
@@ -930,6 +938,7 @@ function renderSortieFab() {
 function renderIdleReturnToast() {
   if (!idleReturnReceipt) return;
   const idleSummary = idleReturnSummary();
+  const receipt = idleReturnReceipt;
   const toast = document.createElement("output");
   toast.id = "idle-return-toast";
   toast.className = "idle-return-toast rc-glass";
@@ -937,8 +946,50 @@ function renderIdleReturnToast() {
   toast.setAttribute("aria-live", "polite");
   toast.dataset.idleReturnOutcome = idleSummary.outcome;
   toast.dataset.idleReturnTotal = String(idleSummary.total);
-  toast.innerHTML = `<p>${escapeHtml(idleSummary.text)}</p>`;
-  toast.addEventListener("click", () => toast.remove());
+  const settledPayday = idleSummary.outcome === "SETTLED" && (receipt?.awardedProgress ?? 0) > 0;
+  const reduceMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  if (settledPayday) {
+    // Item 5 — one-shot "payday" count-up. The static `누적 ${total}` line is present
+    // from first paint (keeps the public-contract textContent/total assertions holding
+    // regardless of count-up progress); the gold +N counts 0→awardedProgress once via a
+    // self-terminating rAF that clears itself (never a persistent loop).
+    const awarded = receipt.awardedProgress;
+    toast.classList.add("idle-return-payday");
+    toast.innerHTML = `<p class="idle-payday-eyebrow">귀환 · 봉쇄선이 버텼습니다</p><p class="idle-payday-count" aria-live="polite"><b>+0</b></p><p class="idle-payday-total">누적 ${idleSummary.total}</p>`;
+    const countNode = toast.querySelector(".idle-payday-count b");
+    let raf = null;
+    let done = false;
+    const paint = (value) => { countNode.textContent = `+${value}`; };
+    const finish = () => {
+      done = true;
+      if (raf !== null) { cancelAnimationFrame(raf); raf = null; }
+      paint(awarded);
+      countNode.parentElement.classList.add("idle-payday-reveal");
+    };
+    if (reduceMotion) {
+      paint(awarded); // G4 resting state: final number immediately, no count-up/rise
+      done = true;
+    } else {
+      const DURATION = 600;
+      const start = performance.now();
+      const step = (now) => {
+        const t = Math.min(1, Math.max(0, (now - start) / DURATION));
+        paint(Math.round(t * awarded));
+        if (t < 1) raf = requestAnimationFrame(step);
+        else finish();
+      };
+      raf = requestAnimationFrame(step);
+    }
+    toast.addEventListener("click", () => {
+      if (!done) { finish(); return; } // first tap skips to the final number
+      if (raf !== null) { cancelAnimationFrame(raf); raf = null; }
+      toast.remove();
+    });
+  } else {
+    if (idleSummary.outcome === "ENCROACHED") toast.classList.add("idle-return-encroached");
+    toast.innerHTML = `<p>${escapeHtml(idleSummary.text)}</p>`;
+    toast.addEventListener("click", () => toast.remove());
+  }
   root.append(toast);
   setTimeout(() => toast.remove(), 8000);
 }
@@ -951,6 +1002,71 @@ function renderShell() {
   renderDockLeft();
   renderDockRight();
   renderSortieFab();
+  renderCurrencyRail();
+}
+
+/** Item 2 (presentation-spec) — persistent 2-currency pill rail. Mounted once as a
+ * shell-level sibling (#currency-rail, see mountShell); value-refreshed on every
+ * renderShell(). EXACTLY two pills — Echo Core (cyan rim) and Bound Fragment (gold rim) —
+ * whose amounts are the earned−spent affordability balance the growth/inventory docks
+ * spend against (wardenGrowthData parity). Pills deep-link into the left dock rather than
+ * duplicating its controls; CSS hides the whole rail once data-defense-started flips. */
+function renderCurrencyRail() {
+  const rail = root.querySelector("#currency-rail");
+  if (!rail) return;
+  if (!campaign) { rail.innerHTML = ""; return; }
+  const ec = echoCoreEarned(campaign) - echoCoreSpent(campaign);
+  const bf = boundFragmentEarned(campaign) - boundFragmentSpent(campaign);
+  rail.innerHTML = `
+    <button type="button" class="currency-pill currency-pill-ec" data-currency="echo-core" aria-label="에코 코어 ${ec} · 성장 열기"><span class="currency-glyph" aria-hidden="true">◈</span><span class="currency-name">Echo Core</span><b class="currency-amount">${ec}</b></button>
+    <button type="button" class="currency-pill currency-pill-bf" data-currency="bound-fragment" aria-label="속박 파편 ${bf} · 인벤토리 열기"><span class="currency-glyph" aria-hidden="true">✦</span><span class="currency-name">Bound Fragment</span><b class="currency-amount">${bf}</b></button>`;
+  rail.querySelector('[data-currency="echo-core"]')?.addEventListener("click", () => openLeftDockTab("growth"));
+  rail.querySelector('[data-currency="bound-fragment"]')?.addEventListener("click", () => openLeftDockTab("inventory"));
+}
+
+/** Currency-pill deep link: opens the left (성장) dock on the named tab, mirroring the
+ * dock-rail tab-open behavior (compact tier force-closes the opposite dock). No-op mid-run
+ * (the rail is CSS-hidden then anyway). */
+function openLeftDockTab(tab) {
+  if (session?.started) return;
+  activeLeftDockTab = tab;
+  dockOpen.left = true;
+  if (dockTier === "compact") dockOpen.right = false;
+  renderShell();
+}
+
+/** Item 6 (presentation-spec) — pooled screen-space particle burst on 작전 개시 press.
+ * 5 of 6 recycled <span>s fly out on transform+opacity from the FAB centre then detach
+ * back to the pool. Skipped entirely under reduced motion (G4). */
+function spawnSortieBurst(button) {
+  if (globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+  const rect = button.getBoundingClientRect();
+  const originX = rect.left + rect.width / 2;
+  const originY = rect.top + rect.height / 2;
+  if (!sortieBurstPool) {
+    sortieBurstPool = Array.from({ length: 6 }, () => {
+      const span = document.createElement("span");
+      span.className = "sortie-burst-particle";
+      span.setAttribute("aria-hidden", "true");
+      return span;
+    });
+  }
+  const count = 5;
+  for (let i = 0; i < count; i += 1) {
+    const particle = sortieBurstPool[i];
+    if (particle.isConnected) continue;
+    const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
+    const distance = 46 + (i % 2) * 14;
+    particle.style.left = `${originX}px`;
+    particle.style.top = `${originY}px`;
+    particle.style.setProperty("--burst-dx", `${Math.cos(angle) * distance}px`);
+    particle.style.setProperty("--burst-dy", `${Math.sin(angle) * distance}px`);
+    particle.classList.remove("is-bursting");
+    root.append(particle);
+    void particle.offsetWidth; // restart the animation on a recycled node
+    particle.classList.add("is-bursting");
+    particle.addEventListener("animationend", () => particle.remove(), { once: true });
+  }
 }
 
 /** matchMedia('(min-width: 900px)') change listener (component-contracts.md §4
@@ -1019,7 +1135,8 @@ function mountShell(stageId) {
       </div>
     </section>
     <div id="command-dock-left"></div>
-    <div id="command-dock-right"></div>`;
+    <div id="command-dock-right"></div>
+    <div id="currency-rail" class="currency-rail" aria-label="보유 재화"></div>`;
   hydratePortraits(root);
   session = new BattleSession(stageId);
   session.start();

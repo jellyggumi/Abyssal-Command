@@ -1,0 +1,179 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Abyssal Surge — 아웃게임 로비 Pass 1 변경 요약</title>
+<style>
+  :root{
+    --void:#3c2c5b;--steel:#737990;--cyan:#2cadd6;--gold:#ddc869;--ember:#f3592c;
+    --ink:#eef5ff;--dim:#8ca9c8;--bg:#080a12;--card:#0f1424;--line:#243b5e;
+    --glass:linear-gradient(155deg,rgb(38 26 58/.82),rgb(16 10 28/.9));
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:radial-gradient(120% 80% at 50% -10%,rgb(44 173 214/.10),transparent 45%),
+       radial-gradient(90% 60% at 50% 120%,rgb(243 89 44/.10),transparent 50%),var(--bg);
+       color:var(--ink);font-family:"Apple SD Gothic Neo",system-ui,-apple-system,sans-serif;line-height:1.5;padding:0 0 80px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  header{padding:56px 20px 34px;text-align:center;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgb(44 173 214/.06),transparent)}
+  header .eyebrow{color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase}
+  header h1{font-size:clamp(26px,5vw,42px);margin:.3rem 0 .5rem;letter-spacing:-.02em}
+  header h1 em{color:var(--cyan);font-style:normal}
+  header p{color:var(--dim);max-width:660px;margin:.4rem auto 0;font-size:15px}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px}
+  .tag{font-size:12px;font-weight:800;padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--dim)}
+  .tag b{color:var(--ink)}
+  .tag.ok{border-color:rgb(112 211 174/.5);color:#9fe6c9}
+  .tag.run{border-color:rgb(233 196 106/.45);color:var(--gold)}
+
+  h2.sec{font-size:20px;margin:44px 0 6px;display:flex;align-items:center;gap:10px}
+  h2.sec::before{content:"";width:4px;height:20px;background:var(--cyan);border-radius:2px}
+  .sub{color:var(--dim);font-size:14px;margin-bottom:18px}
+
+  /* concept vs live gallery */
+  .gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:8px 0 10px}
+  figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  figure img{width:100%;display:block;background:#05060d}
+  figcap{padding:10px 14px;font-size:13px;color:var(--dim);border-top:1px solid var(--line)}
+  figcap b{color:var(--ink)}
+  .badge{display:inline-block;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;margin-right:6px}
+  .badge.live{background:rgb(112 211 174/.16);color:#9fe6c9;border:1px solid rgb(112 211 174/.4)}
+  .badge.concept{background:rgb(44 173 214/.14);color:#bfe9ff;border:1px solid rgb(44 173 214/.4)}
+  .badge.mood{background:rgb(185 146 255/.14);color:#d9c8ff;border:1px solid rgb(185 146 255/.4)}
+
+  /* change cards */
+  .items{display:grid;gap:14px;margin-top:8px}
+  .item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;grid-template-columns:44px 1fr;gap:16px;align-items:start}
+  .num{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:18px;
+    background:var(--glass);border:1px solid var(--line);color:var(--cyan)}
+  .item h3{font-size:16px;margin:2px 0 6px}
+  .item .pat{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.08em}
+  .item .ba{display:grid;gap:6px;margin-top:8px;font-size:14px}
+  .ba .before{color:var(--dim)} .ba .before b{color:#b98a8a;font-weight:700}
+  .ba .after b{color:#9fe6c9;font-weight:700}
+  .item .files{margin-top:8px;font-size:12px;color:var(--steel);font-family:ui-monospace,monospace}
+
+  .pill-demo{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:4px 10px;border-radius:14px;background:var(--glass)}
+  .pill-demo.ec{border:1px solid var(--cyan);color:#bfe9ff} .pill-demo.bf{border:1px solid var(--gold);color:var(--gold)}
+  .ember-demo{display:inline-block;font-size:12px;font-weight:800;padding:4px 12px;border-radius:8px;background:linear-gradient(110deg,#c8461e,#f3592c);color:#fff}
+
+  .note{margin-top:14px;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:rgb(44 173 214/.05);font-size:13px;color:var(--dim)}
+  .note b{color:var(--ink)}
+  footer{text-align:center;color:var(--steel);font-size:12px;margin-top:50px;padding-top:20px;border-top:1px solid var(--line)}
+  a{color:var(--cyan)}
+</style></head>
+<body>
+<header>
+  <div class="eyebrow">Abyssal Surge · Outgame Lobby</div>
+  <h1>아웃게임 로비 <em>Pass 1</em> — 게임다운 로비로</h1>
+  <p>조사(브라우저 웹게임 아웃게임 레퍼런스 + 12개월 웹서치 보강) → 회의(designer·ui·programmer 포지션 수렴) → 프레젠테이션 스펙 → 구현. 기존 좌/우 독 구조 위에 <b>값싼 연출 + 가독성</b>을 얹어 "폼"이 아니라 "심연을 향한 워룸"으로 만드는 7개 변경.</p>
+  <div class="meta">
+    <span class="tag"><b>app.js</b> +198 −12</span>
+    <span class="tag"><b>styles.css</b> +154</span>
+    <span class="tag">2 files · +282 −11</span>
+    <span class="tag run">검증: 유닛/CI 회귀 진행 중</span>
+    <span class="tag ok">직접 브라우저 확인 ✓ 390 · 2056 · reduced-motion</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <h2 class="sec">한눈에 — 실제 구현 화면</h2>
+  <p class="sub">아래는 개념 목업이 아니라 <b>지금 빌드에서 실제로 렌더된</b> 로비입니다.</p>
+  <div class="gal">
+    <figure><img src="summary-shots/live-mobile-390.png" alt="모바일 로비"><figcap><span class="badge live">LIVE</span><b>모바일 390×844</b> — 좌상단 2개 통화 pill, 봉쇄선 스파인 스테이지 레일, 선택 카드 확장 + ✦보상 칩, 하단 ember 작전 개시</figcap></figure>
+    <figure><img src="summary-shots/live-wide-2056.png" alt="와이드 로비"><figcap><span class="badge live">LIVE</span><b>와이드 2056×1082</b> — 좌 성장 덱 + 중앙 라이브 3D 심연 + 우 전황 덱, 양쪽 독 cyan 씸(seam), "승리 시 → Ember Cohort Legacy" 골드 헤드라인</figcap></figure>
+  </div>
+
+  <h2 class="sec">바뀐 것 7가지</h2>
+  <p class="sub">각 항목 = 결정된 방향(회의록) · 채택 패턴 · Before → After · 파일.</p>
+  <div class="items">
+
+    <div class="item"><div class="num">1</div><div>
+      <div class="pat">A6 · 아퍼처 프레이밍</div>
+      <h3>독이 라이브 씬에서 "떨어져 나온" 것처럼</h3>
+      <div class="ba">
+        <div class="before"><b>Before</b> · 글래스 독이 캔버스 위에 그냥 얹혀 있음(붙어있는 느낌 없음)</div>
+        <div class="after"><b>After</b> · 캔버스와 맞닿는 독 가장자리에 정적 1px <span style="color:var(--cyan)">cyan-rift 씸</span> — 씬에서 emit된 것처럼 읽힘 (per-frame 비용 0)</div>
+      </div>
+      <div class="files">styles.css · #command-dock-left/right .dock-panel inset box-shadow</div>
+    </div>
+
+    <div class="item"><div class="num">2</div><div>
+      <div class="pat">A5 · 상시 통화 readout</div>
+      <h3>상단 2개 통화 pill (이전엔 0개)</h3>
+      <div class="ba">
+        <div class="before"><b>Before</b> · 로비에 보유 재화 표시가 <b>전혀 없음</b> — 독을 열어야만 확인</div>
+        <div class="after"><b>After</b> · 좌상단 상시 pill <span class="pill-demo ec">◈ Echo Core</span> <span class="pill-demo bf">✦ Bound Fragment</span> — 값 = 성장/인벤토리 독의 소비 잔액과 동일. 탭하면 해당 독으로 딥링크. 전투 시작하면 자동 숨김. <b>딱 2개(통화 수프 방지)</b></div>
+      </div>
+      <div class="files">app.js · renderCurrencyRail() + #currency-rail (mountShell) · styles.css .currency-rail/.currency-pill</div>
+    </div>
+
+    <div class="item"><div class="num">3</div><div>
+      <div class="pat">A2 · 보상-우선 브리핑</div>
+      <h3>스펙시트 → 보상 헤드라인 + 접힌 상세</h3>
+      <div class="ba">
+        <div class="before"><b>Before</b> · 지형/위협/점유/랜드마크/보상 <b>5행 스탯 dl</b>이 항상 펼쳐진 "폼"</div>
+        <div class="after"><b>After</b> · <span style="color:var(--gold)">"승리 시 → [다음 보상]"</span> 골드 헤드라인이 먼저, 나머지 지형 4행은 <b>「전황 상세 ▸」 기본 접힘</b>(데이터 보존, 중복 보상행만 제거). 브리핑은 몇 초면 읽는 위협+보상 읽기로</div>
+      </div>
+      <div class="files">app.js · renderSortieTabBody (.briefing-reward + &lt;details&gt;)</div>
+    </div>
+
+    <div class="item"><div class="num">4</div><div>
+      <div class="pat">A3 · A4 · 스테이지 맵</div>
+      <h3>선택 카드 확장 + 봉쇄선 스파인</h3>
+      <div class="ba">
+        <div class="before"><b>Before</b> · 균등한 스테이지 카드 세로 스크롤(리스트)</div>
+        <div class="after"><b>After</b> · 선택 카드 확장(밝은 테두리 + 큰 아트) + <span style="color:var(--gold)">✦ 보상 칩</span>; 와이드(≥900px)에선 카드들이 <span style="color:var(--cyan)">봉쇄선 스파인</span>에 노드 점(clear=held / 선택=cyan 발광 / 잠김=dark)으로 연결 — "전선이 많다"가 한눈에. 모바일은 grid↔상세 읽기(스파인 없음)</div>
+      </div>
+      <div class="files">styles.css · .stage-card.is-selected / .stage-rail::before spine / .stage-card::after dots · app.js reward chip</div>
+    </div>
+
+    <div class="item"><div class="num">5</div><div>
+      <div class="pat">A1 · idle-return "payday"</div>
+      <h3>무음 잔고 증가 → 골드 카운트업 연출</h3>
+      <div class="ba">
+        <div class="before"><b>Before</b> · 복귀 시 정적 텍스트 토스트("정산 완료 +N")</div>
+        <div class="after"><b>After</b> · SETTLED일 때 <span style="color:var(--gold)">0→+N 골드 카운트업</span>(자기종료 rAF, ~600ms) + 상승 리빌; 탭하면 스킵; FAB 절대 안 가림; 실제 경과시간에만(로그인 leash 아님). reduced-motion이면 최종 숫자 즉시 표시</div>
+      </div>
+      <div class="files">app.js · renderIdleReturnToast (idle-payday count-up)</div>
+    </div>
+
+    <div class="item"><div class="num">6</div><div>
+      <div class="pat">패턴 #1 · 커밋 CTA</div>
+      <h3>작전 개시 = 화면 유일한 ember 요소 + 탭 juice</h3>
+      <div class="ba">
+        <div class="before"><b>Before</b> · 평범한 시안 테두리 버튼</div>
+        <div class="after"><b>After</b> · <span class="ember-demo">작전 개시</span> 유일한 ember 채움 + :active 스케일 + 풀드 DOM 파티클 버스트(스크린-스페이스, three.js 아님) + 은은한 breathe. reduced-motion이면 정적 눌림 상태로 대체</div>
+      </div>
+      <div class="files">app.js · renderSortieFab + spawnSortieBurst · styles.css .sortie-fab</div>
+    </div>
+
+    <div class="item"><div class="num">7</div><div>
+      <div class="pat">A5 · 팔레트 규율</div>
+      <h3>색 = 의미 (통화 수프 방지)</h3>
+      <div class="ba">
+        <div class="after"><b>규칙</b> · <span style="color:var(--gold)">골드 = 보상/payday 숫자에만</span>(BF pill·보상 헤드라인·보상 칩·카운트업) · <span style="color:var(--ember)">ember = 커밋 CTA + 심연 열기에만</span> · <span style="color:var(--cyan)">cyan = 월드/씸/선택</span> · void-obsidian/cold-steel = 크롬. 최종 diff 감사 통과</div>
+      </div>
+      <div class="files">cross-cutting · 최종 diff 팔레트 감사</div>
+    </div>
+
+  </div>
+
+  <h2 class="sec">개념 → 결과</h2>
+  <p class="sub">회의에서 결정한 방향(스키매틱/무드)과 실제 구현이 어떻게 맞는지.</p>
+  <div class="gal">
+    <figure><img src="mockups/lobby-schematic-wide.png" alt="레이아웃 스키매틱"><figcap><span class="badge concept">개념</span><b>레이아웃 스키매틱</b> — 결정된 7항목의 정확한 배치/라벨 레퍼런스(직접 HTML)</figcap></figure>
+    <figure><img src="mockups/lobby-war-room-aperture-wide.png" alt="무드 렌더"><figcap><span class="badge mood">무드</span><b>분위기 렌더</b>(Pollinations flux) — 심연 아퍼처 톤/조명. UI 텍스트는 부정확(분위기용)</figcap></figure>
+    <figure><img src="summary-shots/live-wide-2056.png" alt="실제 구현"><figcap><span class="badge live">LIVE</span><b>실제 구현 결과</b> — 스키매틱 방향 그대로 라이브 3D 씬 위에 구현</figcap></figure>
+  </div>
+
+  <div class="note">
+    <b>범위/안전</b> · 이번 Pass 1은 <b>app.js + styles.css (프레젠테이션 레이어)만</b> 변경 — 시뮬레이션/규칙/카탈로그/렌더러 모듈은 손대지 않음. 라이브 캔버스는 로비에서도 이미 60Hz로 그려지므로 sim JS 예산은 놀고 있어, 모든 연출은 compositor-thread transform/opacity + 자기종료 카운트업 + 풀드 파티클로 <b>값싸게</b>. 신규 blur/three.js VFX/parallax는 이번 패스에서 <b>보류</b>. 모든 애니메이션은 reduced-motion resting state 보유(G4).
+    <br><br>
+    <b>보류(기록됨)</b> · 스테이지 선택 시 씬 리틴트, 카메라 연동 parallax, gacha/리빌 극장, 적응형 오디오, prestige-reset, 데일리 로그인, 알림 뱃지 — recordFrameProbe 검증과 함께 다음 패스에서.
+  </div>
+
+  <footer>
+    Abyssal Surge · game-studio-harness · run 20260727-outgame-lobby-concept<br>
+    조사·회의·스펙·구현 산출물: _workspace/20260727-outgame-lobby-concept/ · 조사 원본: _workspace/20260727-outgame-reference-survey/
+  </footer>
+</div>
+</body></html>

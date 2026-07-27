@@ -1,0 +1,10 @@
+{
+  "game": "Soulstone Survivors",
+  "browser_playable": "false — Steam (PC) only; included as a secondary aesthetic/structure reference for a deep metagame",
+  "source_url": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2066020/d14d0825b69e963a2d610e23fe4881f693e48405/ss_d14d0825b69e963a2d610e23fe4881f693e48405.1920x1080.jpg?t=1783811889 (from Steam store page https://store.steampowered.com/app/2066020/Soulstone_Survivors/)",
+  "captured_at": "2026-07-27",
+  "what_it_is": "Survivor-like with an unusually deep persistent skill tree; screenshot is that meta Skill Tree screen.",
+  "how_similar_to_abyssal": "Top nav-tab dock (Fight / Character / Blacksmith / Runes / Skill Tree / Achievements / Profile) + multi-currency header + a huge radial node tree with X/5 node ranks and a selected-node tooltip — the aspirational 'game-like' version of Abyssal Surge's persistent skill-tree + nav dock.",
+  "capture_method": "browser screenshot: fetched full-res image from Steam store gallery CDN",
+  "license_note": "screenshot of publicly displayed store/marketing page for research reference — not redistributed as game asset"
+}

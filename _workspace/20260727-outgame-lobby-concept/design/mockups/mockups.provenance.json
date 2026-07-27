@@ -1,0 +1,28 @@
+{
+  "run_id": "20260727-outgame-lobby-concept",
+  "decided_direction_source": "../production/meeting-record-lobby-concept.md (DECIDED DIRECTION, items 1-7)",
+  "created_at": "2026-07-27",
+  "mockups": [
+    {
+      "file": "lobby-war-room-aperture-wide.png",
+      "kind": "mood render (atmosphere/framing only)",
+      "generator": "Pollinations flux (image.pollinations.ai), 1536x1024, seed 71727",
+      "why_this_backend": "Antigravity generate_image returned HTTP 404 and god-tibo-imagen (private-codex HTTP 400 / codex-cli exec failure) both unavailable this session; Pollinations flux is the working free no-auth fallback",
+      "prompt_file": "/tmp/lobby-mockup-prompt.txt (also embedded in meeting record intent)",
+      "shows": "the 'war-room aperture onto the 심연' framing (A6): commander Dusk Warden viewing an abyss battlefield, boss looming in the deep, cold cyan-rift vs warm ember-heat lighting split, translucent glass command dock on the right, void-obsidian palette",
+      "limitation": "Flux is a MOOD render only — it does NOT render legible Korean UI text, the exact 2 currency pills, the payday count-up, or the precise CTA. Use it for tone/framing, NOT as the pixel/label spec.",
+      "license_note": "generated concept art for internal design reference; not a shipped game asset"
+    },
+    {
+      "file": "lobby-schematic-wide.png",
+      "source_html": "lobby-schematic.html",
+      "kind": "precise labeled UI schematic (layout + copy + palette spec)",
+      "generator": "hand-authored HTML/CSS rendered + screenshotted at 1536x1024 (browser tool)",
+      "shows": "the decided lobby direction with EXACT Korean labels and canon palette tokens: A5 two-currency pills (Echo Core cyan-rim, Bound Fragment gold-rim) top-left; A1 idle-return payday count-up (+147, gold) top-center with a trail arcing to the pills; center abyss aperture with Dusk Warden + boss silhouette; left 성장 덱 rail (dim); right 전황 덱 open on 출정 with the 봉쇄선-spine stage rail (selected 재의 봉쇄선 card expanded + gold reward chip, 잠김/CLEAR states), A2 reward-forward briefing ('승리 시 → 다음 보상' gold line + threat line + '전황 상세 ▸' collapsed disclosure); the single ember 작전 개시 CTA bottom-center thumb-zone; cyan edge seam where the dock meets the scene",
+      "palette_tokens": {"void_obsidian": "#3c2c5b", "cold_steel": "#737990", "cyan_rift": "#2cadd6", "zenith_gold": "#ddc869", "cinder_ember": "#f3592c"},
+      "is_the_reference": "This schematic is the authoritative layout/label reference for a future presentation-spec; the Flux render is only the atmosphere companion.",
+      "license_note": "internal design mockup authored for this run"
+    }
+  ],
+  "note": "This is a CONCEPT visualization of the decided direction, not an implementation. No app.js/styles.css changed. Both files live under the run workspace per the standing 'save to workspace not .survey' directive."
+}

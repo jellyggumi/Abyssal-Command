@@ -829,3 +829,157 @@ body {
   .cutscene-line { animation: none; }
   .dock-panel { transition: none; }
 }
+
+/* ================================================================
+ * Lobby Pass 1 (presentation-spec.md items 1-6). Additive rules layered onto the
+ * existing dock/stage/briefing/FAB/toast markup — no rewrites. Every animated effect
+ * degrades to a meaningful static resting state under the global reduced-motion block
+ * (styles.css L248/L828: transition:none!important; animation:none!important).
+ * Palette discipline (item 7): zenith-gold = reward/payday numbers only; cinder-ember
+ * = CTA + abyss heat only; cyan-rift = world/seams/selected.
+ * ================================================================ */
+
+/* Item 1 — aperture framing: static 1px cyan-rift seam on each dock's canvas-facing edge. */
+#command-dock-right .dock-panel { box-shadow: inset 1px 0 0 rgb(44 173 214 / .5); }
+#command-dock-left .dock-panel { box-shadow: inset -1px 0 0 rgb(44 173 214 / .5); }
+
+/* Item 2 — persistent 2-currency pill rail (top-left, pre-run only, yields to combat HUD). */
+.currency-rail {
+  position: fixed;
+  top: max(.6rem, env(safe-area-inset-top));
+  left: max(.6rem, env(safe-area-inset-left));
+  z-index: 6;
+  display: flex;
+  gap: .5rem;
+  pointer-events: none;
+}
+html[data-defense-started="true"] .currency-rail { display: none; }
+.currency-pill {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 48px;
+  padding: .35rem .7rem;
+  border-radius: 999px;
+  background: var(--rc-panel-glass);
+  border: 1px solid var(--rc-panel-border);
+  font-size: .8rem;
+  line-height: 1;
+}
+.currency-pill .currency-name { color: #c8d6ea; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+.currency-pill .currency-amount { font-variant-numeric: tabular-nums; font-weight: 800; transition: color 120ms linear; }
+.currency-pill-ec { border-color: var(--canon-cyan-rift); }
+.currency-pill-ec .currency-glyph, .currency-pill-ec .currency-amount { color: var(--canon-cyan-rift); }
+.currency-pill-bf { border-color: var(--canon-zenith-gold); }
+.currency-pill-bf .currency-glyph, .currency-pill-bf .currency-amount { color: var(--canon-zenith-gold); }
+
+/* Item 3 — reward-forward briefing: gold reward headline + collapsed terrain detail. */
+.briefing-reward { margin: 0; display: flex; align-items: baseline; gap: .4rem; font-size: .82rem; }
+.briefing-reward span { color: #8fb9d2; font-weight: 700; white-space: nowrap; }
+.briefing-reward strong { color: var(--canon-zenith-gold); font-size: .95rem; font-weight: 800; }
+.briefing-detail { margin: 0; }
+.briefing-detail summary { cursor: pointer; color: #9ecce4; font-size: .78rem; font-weight: 700; padding: .3rem 0; }
+.briefing-detail summary:hover, .briefing-detail summary:focus-visible { color: #cfe6f5; }
+.briefing-detail[open] summary { margin-bottom: .5rem; }
+
+/* Item 4a — stage rail: selected-card expand + gold reward chip. */
+.stage-card.is-selected { border-color: rgb(128 216 255 / .62); box-shadow: 0 6px 20px -12px rgb(44 173 214 / .5); }
+.stage-card.is-selected .stage-info strong { font-size: .98rem; }
+.stage-reward-chip {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: .1rem;
+  padding: .1rem .5rem;
+  border: 1px solid rgb(221 200 105 / .55);
+  border-radius: 999px;
+  color: var(--canon-zenith-gold);
+  background: rgb(221 200 105 / .08);
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+/* Item 4b — 봉쇄선 spine + node dots, WIDE TIER ONLY. Compact tier keeps the plain
+ * grid-to-detail rail (no connector). Pure CSS, zero per-frame cost. */
+@media (min-width: 900px) {
+  .stage-rail { position: relative; padding-left: 1.25rem; }
+  .stage-rail::before {
+    content: "";
+    position: absolute;
+    left: .5rem;
+    top: .6rem;
+    bottom: .6rem;
+    width: 2px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--canon-cyan-rift), rgb(44 173 214 / .06));
+    pointer-events: none;
+  }
+  .stage-card { position: relative; overflow: visible; }
+  .stage-card::after {
+    content: "";
+    position: absolute;
+    left: -.98rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    background: var(--canon-cold-steel);
+    box-shadow: 0 0 0 2px rgb(5 8 18 / .6);
+    pointer-events: none;
+  }
+  .stage-card:disabled::after { background: #1c2436; }
+  .stage-card.is-selected::after { background: var(--canon-cyan-rift); box-shadow: 0 0 0 2px rgb(5 8 18 / .6), 0 0 .5rem rgb(44 173 214 / .7); }
+}
+
+/* Item 5 — idle-return "payday" count-up (SETTLED + awardedProgress>0). Static 누적 line
+ * always painted; gold +N counts once. Reduced-motion: JS paints the final +N immediately
+ * and never adds .idle-payday-reveal, so the resting state is the final number. */
+.idle-return-payday { display: grid; gap: .15rem; }
+.idle-return-payday .idle-payday-eyebrow { margin: 0; color: #9ecce4; font-size: .7rem; font-weight: 800; letter-spacing: .06em; }
+.idle-return-payday .idle-payday-count { margin: 0; }
+.idle-return-payday .idle-payday-count b { color: var(--canon-zenith-gold); font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.idle-return-payday .idle-payday-total { margin: 0; color: #b6c8df; font-size: .74rem; }
+.idle-payday-reveal { animation: idle-payday-reveal 300ms ease-out both; }
+@keyframes idle-payday-reveal { from { opacity: .35; transform: translateY(.35rem); } to { opacity: 1; transform: translateY(0); } }
+.idle-return-encroached { border-color: var(--canon-cinder-ember); }
+.idle-return-encroached p { color: #f3b7a4; }
+
+/* Item 6 — 작전 개시 CTA: the ONLY cinder-ember-filled element on the lobby. Sub-100ms
+ * :active scale + static pressed bg (survives reduced-motion), ambient breathe glow
+ * (compositor opacity on ::after), pooled screen-space particle burst on press. */
+.sortie-fab { border-color: var(--canon-cinder-ember); background: linear-gradient(110deg, #f3592c, #b83415); }
+.sortie-fab span { color: #fff2ea; font-weight: 800; }
+.sortie-fab small { color: #ffd7c4; }
+.sortie-fab b { color: #fff2ea; }
+.sortie-fab:hover, .sortie-fab:focus-visible { border-color: #ffb59c; }
+.sortie-fab:active { transform: translateX(-50%) scale(.97); background: linear-gradient(110deg, #d84a22, #7f2410); border-color: #ffd7c4; }
+.sortie-fab::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgb(243 89 44 / .5), transparent 72%);
+  opacity: .35;
+  animation: sortie-fab-breathe 3.2s ease-in-out infinite;
+}
+@keyframes sortie-fab-breathe { 0%, 100% { opacity: .22; } 50% { opacity: .6; } }
+.sortie-burst-particle {
+  position: fixed;
+  z-index: 5;
+  width: .5rem;
+  height: .5rem;
+  border-radius: 50%;
+  background: var(--canon-cinder-ember);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+.sortie-burst-particle.is-bursting { animation: sortie-burst .5s ease-out forwards; }
+@keyframes sortie-burst {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--burst-dx, 0px)), calc(-50% + var(--burst-dy, 0px))) scale(.4); }
+}

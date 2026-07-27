@@ -1,0 +1,5 @@
+# Triage
+
+- Problem: Abyssal Surge's outgame (lobby / metagame screens — sortie, growth, companions, inventory, stronghold) was just restructured into a left/right dock shell, but still reads as a functional UI layout rather than a "game-like" outgame with the framing, progression theater, reward hooks, and motion/juice that comparable browser games use. The dev wants a wholesale "make it feel like a game" pass, grounded in real reference games rather than invented taste.
+- Audience: solo dev shipping a mobile-first, browser-hosted (GitHub Pages, Three.js/WebGL) single-player defense-survivor with permanent RPG progression (warden stats, 5-node skill tree, equipment tiers, extractable companions, idle-return); players are mobile-web survivor/idle-RPG players.
+- Why now: the dock redesign (f1fcb5d) landed the structural layout but deliberately deferred the "game-feel" pass; before investing in outgame juice/theater, the dev wants a bounded survey of what browser-playable comparables actually do, with reference images and explicit similarity mapping, so the redesign is evidence-led.

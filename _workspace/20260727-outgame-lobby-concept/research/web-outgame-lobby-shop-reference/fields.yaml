@@ -1,0 +1,130 @@
+# Field definitions for the outgame/lobby/shop comparison.
+# detail_level: brief -> moderate -> detailed. uncertain[] auto-filled in deep phase.
+topic: "Web browser game outgame/lobby/shop UX comparable to Abyssal Surge"
+
+categories:
+  basic:
+    - name: game_name
+      description: "canonical title"
+      detail_level: brief
+    - name: browser_playable_where
+      description: "yes/no + exact host (itch.io / CrazyGames / own-site / static-Pages) or 'native-ref-only'"
+      detail_level: brief
+    - name: genre_bucket
+      description: "pure-survivor / survivor+RPG-meta / idle-RPG / roguelite-hub / .io-arena / gacha-idle"
+      detail_level: brief
+    - name: platform_reach_and_orientation
+      description: "[SUPP] desktop-only vs desktop+mobile+tablet; landscape-lock vs portrait vs both — strongest predictor of one-handed phone survivability"
+      detail_level: moderate
+    - name: host_model
+      description: "[SUPP] externally-hosted iframe vs native single-file HTML5 vs static-Pages build — sets first-paint + thread-contention budget"
+      detail_level: moderate
+
+  lobby_structure:
+    - name: lobby_layout_model
+      description: "how the lobby is composed (central-hub / tabbed-dock / stage-select-screen / basecamp / rebuildable-village)"
+      detail_level: detailed
+    - name: entry_to_play_flow
+      description: "clicks/steps from load to in-combat; is there a fast path that bypasses management"
+      detail_level: detailed
+    - name: start_cta_treatment
+      description: "the primary Play/Start CTA — placement, prominence, isolation, thumb-zone"
+      detail_level: moderate
+    - name: live_background_present
+      description: "static image vs live/diegetic scene behind the lobby"
+      detail_level: moderate
+    - name: hub_inhabitant_level
+      description: "[SUPP] static bg / populated hub (idle NPCs, wandering or collected characters, auto-nav town) — a gradient, now with browser proof (Crystal Saga, Rumble)"
+      detail_level: moderate
+
+  shop_economy:
+    - name: shop_model
+      description: "between-run upgrade shop / permanent powerup shop / gear-tier store / gacha-summon / marketplace / none"
+      detail_level: detailed
+    - name: currency_types_count
+      description: "how many distinct persistent currencies the outgame exposes (currency-soup risk metric)"
+      detail_level: moderate
+    - name: shop_entry_point
+      description: "where the shop lives (persistent dock tab / between-run popup / hub NPC)"
+      detail_level: moderate
+    - name: reward_claim_flow
+      description: "how earned rewards are claimed (claim-all / per-item / auto); shallow-login risk"
+      detail_level: moderate
+    - name: monetization_surface
+      description: "[SUPP] rewarded-ad / IAP placement in shop+return; the 'watch ad to DOUBLE offline reward' button that fuses juice + monetization; note if none/single-player"
+      detail_level: moderate
+    - name: currency_regen_economy
+      description: "[SUPP] timer-gated regenerating resource (energy / booster packs / summon tickets) as a return lever distinct from idle accrual"
+      detail_level: moderate
+
+  progression_surfacing:
+    - name: progression_map_style
+      description: "list vs laid-out node-map vs radial tree vs timeline-chart; is depth SHOWN"
+      detail_level: detailed
+    - name: upgrade_choice_presentation
+      description: "text-row vs illustrated card (icon+tags+stat-delta) + verb economy (reroll/lock/banish)"
+      detail_level: detailed
+    - name: collection_grid_pattern
+      description: "icon-grid + selected-detail-panel + locked/owned states, or absent"
+      detail_level: moderate
+    - name: summon_gacha_presentation
+      description: "[SUPP] pull/summon animation, rarity-reveal theater, pity/dup handling, multi-pull — transplantable as extract/companion reveal even without gacha"
+      detail_level: moderate
+    - name: prestige_reset_surface
+      description: "[SUPP] presence/shape of a meta-reset/ascension ritual vs purely additive permanent upgrades"
+      detail_level: moderate
+    - name: onboarding_disclosure
+      description: "[SUPP] how much outgame is shown on first open vs drip-unlocked (locked/greyed docks, staged reveals) — the heavy-first-open mitigation lever"
+      detail_level: moderate
+
+  retention_return:
+    - name: idle_return_treatment
+      description: "offline-accrual 'welcome back' recap — silent bump vs theatrical payday count-up + 'double it'"
+      detail_level: detailed
+    - name: daily_login_hook
+      description: "daily-reward/streak presence and whether tied to a play action vs bare login (backlash risk)"
+      detail_level: moderate
+    - name: session_reentry_moment
+      description: "what the player sees the instant they return; the re-arming of 'one more run'"
+      detail_level: moderate
+    - name: notification_badge_system
+      description: "[SUPP] unclaimed-reward badges/dots/counters on dock entries that pull re-entry"
+      detail_level: brief
+
+  juice_feel:
+    - name: motion_juice_level
+      description: "tween/particle/theater level in the outgame — none/subtle/rich"
+      detail_level: moderate
+    - name: tap_feedback
+      description: "sub-100ms visible response on tap (scale/particle/sound); reduced-motion resting state"
+      detail_level: moderate
+    - name: theater_vs_form
+      description: "does the lobby read as a composed game scene or a settings form"
+      detail_level: moderate
+    - name: audio_feedback_model
+      description: "[SUPP] reactive/adaptive music + layered SFX (randomized pitch) as a cheap outgame juice channel (Vibe Survivors Calm/Tense/Boss)"
+      detail_level: moderate
+
+  mobile_web_fit:
+    - name: viewport_adaptation
+      description: "how the outgame reflows desktop->phone; simultaneous vs sequenced regions"
+      detail_level: detailed
+    - name: touch_target_discipline
+      description: ">=44-48dp targets, spacing, thumb-zone primary action"
+      detail_level: moderate
+    - name: load_first_paint
+      description: "time-to-interactive / first-paint framing (progress state, cached assets); 53% >3s bounce risk"
+      detail_level: moderate
+    - name: save_persistence_model
+      description: "[SUPP] localStorage vs account/cloud/cross-device + export/import; cache-loss churn risk vs our stronghold export as differentiator"
+      detail_level: brief
+
+  fit_to_abyssal:
+    - name: how_similar_to_abyssal
+      description: "specific shared outgame structure mapped to our dock shell"
+      detail_level: detailed
+    - name: adoptable_pattern
+      description: "which shortlist pattern A1-A6 (or a new one) this title argues for adopting, and how"
+      detail_level: detailed
+
+uncertain: []   # reserved, auto-filled in deep phase

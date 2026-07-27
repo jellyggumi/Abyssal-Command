@@ -1,0 +1,10 @@
+{
+  "game": "Soulstone Survivors",
+  "browser_playable": "false — Steam (PC) only; secondary aesthetic reference",
+  "source_url": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2066020/8321f1b319f881634176a56acba040aa45c3b7a3/ss_8321f1b319f881634176a56acba040aa45c3b7a3.1920x1080.jpg?t=1783811889 (from Steam store page https://store.steampowered.com/app/2066020/Soulstone_Survivors/)",
+  "captured_at": "2026-07-27",
+  "what_it_is": "Soulstone Survivors' in-run level-up ability-choice screen (3 detailed skill cards + Reroll/Banish/Lock).",
+  "how_similar_to_abyssal": "Rich per-choice cards with icon, title, type tags, and a full stat breakdown (Damage/Cooldown/modifiers), plus a Skill-points panel with Reroll/Banish/Lock economy — a benchmark for how much theater a single upgrade choice can carry versus a plain list, relevant to Abyssal Surge's skill/trait selection.",
+  "capture_method": "browser screenshot: fetched full-res image from Steam store gallery CDN",
+  "license_note": "screenshot of publicly displayed store/marketing page for research reference — not redistributed as game asset"
+}

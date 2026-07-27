@@ -1,0 +1,97 @@
+topic: "Web browser game outgame/lobby/shop UX comparable to Abyssal Surge"
+description: >
+  Field-consistent comparison of browser-playable web-game OUTGAMES (lobby /
+  shop / progression / return-hook / menu) to ground an evidence-led "make the
+  outgame feel game-like" redesign of Abyssal Surge (mobile-first, browser-
+  hosted Three.js/WebGL defense-survivor + persistent RPG metagame + idle-
+  return). Seeded by the 20260727 outgame-reference survey + a last-12-months
+  web-search supplement. Native-only titles are kept as reference-tier only.
+time_range: "last 12 months (2025-07 .. 2026-07), genre progenitors allowed as anchors"
+current_date: "2026-07-27"
+
+items:
+  # --- Tier 1: browser-playable, highest decision value for lobby+shop ---
+  - name: "Vampire Survivors (itch.io HTML5)"
+    slug: vampire-survivors
+    tier: browser-primary
+    note: "genre progenitor; Stage Selection lobby ~1:1 with our right-dock sortie; Collection grid; PowerUp shop"
+  - name: "Firestone – Idle Clicker Online RPG"
+    slug: firestone-idle-rpg
+    tier: browser-primary
+    note: "closest mobile-web idle-RPG-hub twin; town hub + tavern hero-summon gacha + party-of-5 formation + gear shop + idle accrual; all-platform browser"
+  - name: "Crystal Saga: Nova"
+    slug: crystal-saga-nova
+    tier: browser-primary
+    note: "browser-playable LIVING-HUB + gacha proof (fills the pattern-13 gap); class-destiny select -> auto-nav town hub + daily quests (desktop-only)"
+  - name: "Idle Zombie Wave: Survivors"
+    slug: idle-zombie-wave
+    tier: browser-primary
+    note: "closest structural twin; squad-collection + Adjutant modifiers + 200+ item inventory + upgrade-defense shop + idle"
+  - name: "Immortal: Dark Slayer"
+    slug: immortal-dark-slayer
+    tier: browser-primary
+    note: "survivor-RPG home-base upgrade menu + gear-tier shop + god/passive select; Unity portrait mobile-web"
+  - name: "Autogun Heroes"
+    slug: autogun-heroes
+    tier: browser-primary
+    note: "basecamp hub + between-level gear shop + Alien-DNA skill tree + world/stage map"
+  - name: "Melvor Idle"
+    slug: melvor-idle
+    tier: browser-primary
+    note: "canonical dock-nav idle-RPG hub + Shop/Bank + save-slot lobby + offline progression; the pure-functional-dock model we risk feeling like"
+  - name: "WikiGacha (Wikipedia Gacha)"
+    slug: wikigacha
+    tier: browser-primary
+    note: "purest pack-opening gacha theater + currency-regen (pack timer) return economy; whole outgame IS the shop; localStorage"
+  - name: "Kill the Lich (KTL)"
+    slug: kill-the-lich
+    tier: browser-primary
+    note: "only prestige/reset (ascension) outgame shape; reset ritual grants randomized power vs additive upgrades; static-Pages host like ours"
+  - name: "Rumble Heroes (Adventure RPG)"
+    slug: rumble-heroes
+    tier: browser-primary
+    note: "second browser living-hub case: rebuildable village hub + hero roster/gacha-summon + dispatch-quest loop"
+  # --- Tier 2: browser-playable, minimum-viable-outgame floor (itch.io) ---
+  - name: "Void Idle"
+    slug: void-idle
+    tier: browser-secondary
+    note: "browser idle RPG: weapon ability trees + gear-chase (enhancement/tiers/runes) shop + party/world-boss"
+  - name: "G123 idle-RPG platform"
+    slug: g123-idle-rpg
+    tier: browser-secondary
+    note: "browser gacha-idle template at scale: central hub + summon + daily-login + shop + formation"
+  - name: "Vibe Survivors (Neuro-Juice Edition)"
+    slug: vibe-survivors
+    tier: browser-secondary
+    note: "thin metagame but standout CHEAP audio-reactive juice reference (Calm/Tense/Boss adaptive soundtrack); HTML5"
+  - name: "itch.io survivors-like browser floor"
+    slug: itchio-survivors-floor
+    tier: browser-secondary
+    note: "the 44-live-title lobby-quality floor (Blast Zone 2 weapon shop, Scavengers loot-meta, REARGUARD); static splash -> Play -> in-run upgrades"
+  # --- Reference tier: NOT browser-playable, aesthetic/structural anchors ---
+  - name: "Soulstone Survivors"
+    slug: soulstone-survivors
+    tier: reference-native
+    note: "aspirational skill-tree spectacle (radial tree) + level-up card theater w/ Reroll/Banish/Lock"
+  - name: "HoloCure – Save the Fans!"
+    slug: holocure
+    tier: reference-native
+    note: "left action-rail shop + explorable garden hub (menu-as-place)"
+  - name: "AFK Journey"
+    slug: afk-journey
+    tier: reference-native
+    note: "living animated hub + loved welcome-back recap theater (the idle-return 'payday' bar)"
+  - name: "Asbury Pines"
+    slug: asbury-pines
+    tier: reference-native
+    note: "timeline-chart progression-map + narrative-drip-in-loop UI (progression-as-map, briefings-if-actionable)"
+
+execution:
+  batch_size: 6            # user-confirmed: up to 6 parallel web-search agents
+  items_per_agent: 2       # user-confirmed
+  output_dir: "./results"  # relative to this outline dir
+  deep_scope: >
+    Run the deep JSON pass on the 10 browser-primary items first (highest
+    decision value for a lobby+shop redesign); browser-secondary + reference-
+    native items are captured at outline+note level and pulled into deep only
+    if a gap remains after batch 1-2. Confirm batch launch with the user.

@@ -1,0 +1,10 @@
+{
+  "game": "HoloCure - Save the Fans!",
+  "browser_playable": "false — free download on Steam and itch.io (not in-browser); secondary reference",
+  "source_url": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2420510/ss_de5c1fef005614d3492d43d8ef8da4a399c81b51.1920x1080.jpg?t=1740642230 (from Steam store page https://store.steampowered.com/app/2420510/HoloCure__Save_the_Fans/)",
+  "captured_at": "2026-07-27",
+  "what_it_is": "HoloCure's explorable hub/farm overworld with a context action menu.",
+  "how_similar_to_abyssal": "An always-present themed world-space (garden/pond hub) with a floating Buy/Sell/Help/Quit menu and CONFIRM/CANCEL prompts + currency — a benchmark for making the outgame a 'place' rather than a settings screen, matching Abyssal Surge's ambition to frame its dock around a live 3D scene.",
+  "capture_method": "browser screenshot: fetched full-res image from Steam store gallery CDN",
+  "license_note": "screenshot of publicly displayed store/marketing page for research reference — not redistributed as game asset"
+}
