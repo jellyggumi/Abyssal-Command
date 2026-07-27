@@ -97,7 +97,7 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
       localStorage.setItem(key, encoded);
     }, { encoded: campaign.encoded, key: STORAGE_KEY });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#command-shell #start-defense").waitFor();
+    await page.locator("#start-defense").waitFor();
     assert.equal(await page.locator("#start-defense").isVisible(), true, "lobby must expose a live departure action");
     report.events.push("lobby-visible");
     await page.locator("#start-defense").click();
@@ -308,7 +308,7 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       };
     });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#command-shell #start-defense").waitFor();
+    await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
     await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
 
@@ -648,7 +648,7 @@ async function verifyStanceSwitchFeedback(browser, hosting, campaign) {
       };
     });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#command-shell #start-defense").waitFor();
+    await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
     await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
 
@@ -766,7 +766,7 @@ async function verifyXpProgressBar(browser, hosting, campaign) {
       };
     });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#command-shell #start-defense").waitFor();
+    await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
     await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
 
@@ -863,7 +863,7 @@ async function verifyPassiveBadges(browser, hosting, campaign) {
       };
     });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#command-shell #start-defense").waitFor();
+    await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
     await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
 

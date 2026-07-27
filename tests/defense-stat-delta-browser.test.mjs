@@ -72,13 +72,18 @@ test("growth choices show truthful current → upgraded values to the player", {
   });
 
   await page.goto(`${hosting.url}/index.html`, { waitUntil: "networkidle" });
+  // Right dock defaults to its "sortie" tab (component-contracts.md §1
+  // computeDefaultDockOpen -- zero-interaction #start-defense reachability is the
+  // load-time contract other browser tests depend on); #import-defense lives in the
+  // "stronghold" tab instead, one tap away.
+  await page.locator('.dock-panel-tabs [data-dock-tab="stronghold"]').click();
   const fixtureText = await growthFixtureText();
   await page.locator("#import-defense").setInputFiles({
     name: "growth-fixture.json",
     mimeType: "application/json",
     buffer: Buffer.from(fixtureText),
   });
-  await page.waitForFunction(() => document.body.innerText.includes("3/3 슬롯"));
+  await page.waitForFunction(() => document.body.textContent.includes("기록을 가져왔습니다"));
   await page.locator("#start-defense").click();
   await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
   const cutscene = page.locator("#defense-cutscene-overlay");

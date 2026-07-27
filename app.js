@@ -123,28 +123,45 @@ const STAGE_ART_FILE_BY_ID = Object.freeze({
 
 let campaign = null;
 let selectedStageId = STAGES[0].id;
-// Command deck tab shell (Cycle 3 UI overhaul, ui/lane-info-architecture.md
-// section 2.1): 출정(existing stage-select)/성장/동료/인벤토리/요새.
-const COMMAND_TABS = Object.freeze([
-  { id: "sortie", label: "출정" },
-  { id: "growth", label: "성장" },
-  { id: "companions", label: "동료" },
-  { id: "inventory", label: "인벤토리" },
-  { id: "stronghold", label: "요새" },
+// Idle-style side-dock shell (20260727-lobby-dock-redesign, ui/hud-layout-spec.md +
+// ui/component-contracts.md): replaces the old full-viewport #command-shell lobby overlay.
+// Growth deck (left): 성장/동료/인벤토리. Ops deck (right): 출정/요새. Both docks are
+// screen-space fixed UI, permanently docked to the viewport edges -- there is no longer a
+// separate "lobby screen" to enter or leave; the live 3D battle canvas is always visible
+// beside whichever dock panel (if any) is open.
+const LEFT_DOCK_TABS = Object.freeze([
+  { id: "growth", label: "성장", icon: "◆" },
+  { id: "companions", label: "동료", icon: "❖" },
+  { id: "inventory", label: "인벤토리", icon: "▦" },
 ]);
-let activeCommandTab = COMMAND_TABS[0].id;
-// D9 unified shell: the command shell is a full overlay before a run starts (that's the
-// primary screen the player sees) and collapses to a small dock/FAB once beginRun() fires
-// (edge-hud becomes the primary combat surface). shellExpanded !== started -- after a
-// terminal result the player may re-open the shell while a NEW run hasn't begun yet, and
-// they can also explicitly re-collapse it back to full-screen combat while browsing tabs.
-let shellExpanded = true;
+const RIGHT_DOCK_TABS = Object.freeze([
+  { id: "sortie", label: "출정", icon: "◈" },
+  { id: "stronghold", label: "요새", icon: "▣" },
+]);
+// dockOpen invariants (component-contracts.md §1): at most one side is true while
+// dockTier==='compact'; both are forced false the instant BattleSession.beginRun() fires.
+let dockOpen = { left: false, right: false };
+let activeLeftDockTab = "growth";
+let activeRightDockTab = "sortie";
+let dockTier = "compact";
+let dockMediaQuery = null;
 let activeGrowthSegment = "stats"; // stats | skills | traits (성장 tab sub-nav)
 let activeCompanionSegment = "list"; // list | formation (동료 tab sub-nav)
 let statusText = "기록을 불러오는 중입니다.";
 let campaignWrite = Promise.resolve();
 let session = null;
 let idleReturnReceipt = null;
+
+/** component-contracts.md §1 computeDefaultDockOpen(): wide tier opens both docks;
+ * compact tier opens ONLY the ops deck (sortie) so the existing zero-interaction
+ * load-time browser contracts (#start-defense reachable immediately) keep passing. */
+function computeDefaultDockOpen(tier) {
+  return tier === "wide" ? { left: true, right: true } : { left: false, right: true };
+}
+
+function currentDockTier() {
+  return globalThis.matchMedia?.("(min-width: 900px)").matches ? "wide" : "compact";
+}
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -603,11 +620,16 @@ function renderInventoryTab() {
     </section>`;
 }
 
-/** 요새 tab: existing archive-panel (permanent rewards + idle-return summary) relabeled per the tab shell. */
+/** 요새 tab: existing archive-panel (permanent rewards + idle-return summary) relabeled per the tab shell.
+ * Prepends the idle-return-recap paragraph (component-contracts.md §3.4 secondary_placement) so a
+ * player who dismissed the load-time toast can still re-check what happened offline, every time this
+ * panel is open -- unlike the toast, this recap persists (not once-only). */
 function renderStrongholdTab() {
   const completed = campaign.resolvedIds?.length ?? 0;
+  const idleSummary = idleReturnSummary();
   return `
     <section class="archive-panel command-screen" aria-labelledby="reward-title">
+      <p class="idle-return-recap idle-return-banner" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p>
       <div class="panel-heading"><div><p class="eyebrow">ECHO DEEP</p><h2 id="reward-title">요새</h2></div></div>
       <div class="archive-summary"><span class="archive-ring"><b>${completed}</b><small>전선<br />완료</small></span><div><strong>영구 진행</strong><p>보스 보상과 동료 결속은 기록실에 남아 다음 런에도 이어집니다. 최근 오프라인 진행은 페이지 상단에 표시됩니다.</p></div></div>
       <div class="reward-grid">${(campaign.rewardIds?.length ?? 0) ? campaign.rewardIds.map((id) => `<article class="reward-card rc-lift rc-glass"><span class="reward-mark">✦</span><strong>${escapeHtml(REWARDS[id]?.name ?? id)}</strong><span>${escapeHtml(REWARDS[id]?.description ?? "기록된 보상")}</span></article>`).join("") : `<p class="empty-archive">첫 보스를 봉쇄하면 영구 보상을 선택할 수 있습니다.</p>`}</div>
@@ -617,140 +639,88 @@ function renderStrongholdTab() {
 
 
 /**
- * Unified shell (D9, production/decision-log.md): renders into #command-shell only --
- * NEVER touches #defense-battle-surface, which is mounted once in mountShell() and lives
- * for the whole page lifetime. Replaces the old renderLobby() full-root swap: the canvas
- * (real 3D scene, ticking or frozen at tick-0 depending on session.started) is always
- * visible behind this overlay, so lobby and battle coexist from the first load -- there
- * is no separate battle-only screen to "enter" anymore.
+ * Idle-style side-dock shell (20260727-lobby-dock-redesign): renders into the 4 persistent
+ * sibling nodes mounted once by mountShell() -- #command-dock-left, #command-dock-right,
+ * #start-defense.sortie-fab, #idle-return-toast -- NEVER touches #defense-battle-surface,
+ * which lives for the whole page lifetime, untouched by this pass. Both docks are
+ * screen-space fixed UI anchored to the viewport edges; the live 3D scene (ticking or
+ * frozen at tick-0 depending on session.started) is always visible beside them. There is
+ * no longer a single full-viewport "shell" -- see ui/hud-layout-spec.md for the rationale.
  */
-function renderCommandShell() {
-  if (!campaign) return;
-  const selected = stageFor(selectedStageId);
-  const selectedPresentation = stagePresentationFor(selected.id);
-  const selectedTerrain = stageTerrainProjection(selected.id);
-  const loadout = selectedLoadout();
-  const completed = campaign.resolvedIds?.length ?? 0;
-  const unlocked = campaign.unlockedStageIndex + 1;
-  const selectedObjective = stageObjective(selected.id);
-  const idleSummary = idleReturnSummary();
-  const started = session?.started ?? false;
-  const shell = root.querySelector("#command-shell");
-  if (!shell) return;
-  shell.dataset.expanded = String(shellExpanded);
-  const surfaceEl = root.querySelector("#defense-battle-surface");
-  if (surfaceEl) surfaceEl.dataset.shellExpanded = String(shellExpanded);
-  root.dataset.stageId = selected.id;
-  root.style.setProperty("--stage-art", `url("${stageArtPath(selected.id)}")`);
-  if (!COMMAND_TABS.some((tab) => tab.id === activeCommandTab)) activeCommandTab = COMMAND_TABS[0].id;
-  // Hero copy: the real ticking-or-frozen 3D scene is the backdrop now (no lobby-only
-  // aurora/stage-art overlay competing with it). Hidden once started (edge-hud takes
-  // over as the primary combat surface); the CTA becomes a status readout instead of a
-  // start button.
-  const sortieTabHtml = `
-    <section class="command-hero rc-glass" aria-labelledby="command-hero-title">
-      <div class="hero-copy">
-        <p class="eyebrow">COMMAND DECK · SECTOR ${String(selected.sequence).padStart(2, "0")}</p>
-        <h2 id="command-hero-title">심연의 문을<br /><em>다시 닫아라.</em></h2>
-        <p class="hero-lede">자동 사격으로 전선을 버티고, 잔향을 모아 런을 성장시키세요. 지금은 ${escapeHtml(selected.name)}의 관문이 압박받고 있습니다.</p>
-        <div class="hero-facts"><span><small>현재 목표</small><b>관문 방어</b></span><span><small>다음 위협</small><b>${escapeHtml(selected.bossName)}</b></span><span><small>출전 편성</small><b>${loadout.length}/3 슬롯</b></span></div>
-        ${started
-          ? `<p class="hero-live-note" aria-live="polite">전투 진행 중 · ${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)}</p>`
-          : `<button id="start-defense" class="primary-action hero-cta"><span>작전 개시</span><small>${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)} 전선으로</small><b aria-hidden="true">↗</b></button>`}
-      </div>
-      <section class="tactical-map stage-atlas" data-stage-atlas="selected" data-stage-id="${escapeHtml(selected.id)}" data-terrain-pattern="${escapeHtml(selectedPresentation.terrain.patternId)}" style="--stage-art: url('${stageArtPath(selected.id)}')" aria-labelledby="atlas-title" aria-describedby="atlas-context">
-        <div class="stage-art-frame" aria-hidden="true"></div>
-        <div class="map-grid atlas-contours" aria-hidden="true"></div>
-        <div class="map-route route-a" aria-hidden="true"></div><div class="map-route route-b" aria-hidden="true"></div>
-        <div class="map-node node-gate" aria-hidden="true"><span>GATE</span><b>관문</b></div><div class="map-node node-seal" aria-hidden="true"><span>BIND</span><b>점유점</b></div><div class="map-node node-threat" aria-hidden="true"><span>THREAT</span><b>위협</b></div>
-        <div class="map-readout"><span>SEAL ATLAS · ${escapeHtml(selectedPresentation.terrain.label)}</span><strong id="atlas-title">${escapeHtml(selectedPresentation.mapLabels.title)}</strong><small>${escapeHtml(selectedPresentation.mapLabels.domain)} · ${escapeHtml(selectedPresentation.atmosphere.motif)}</small></div>
-        <dl id="atlas-context" class="atlas-context" data-stage-map-context="terrain">
-          <div><dt>지형</dt><dd>${escapeHtml(selectedPresentation.terrain.label)} · ${escapeHtml(selectedPresentation.mapLabels.chokepath)}</dd></div>
-          <div><dt>랜드마크</dt><dd>${escapeHtml(selectedPresentation.landmarks.map(({ label }) => label).join(" · "))}</dd></div>
-          <div><dt>위협</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)} (${escapeHtml(selectedTerrain.spawnDirections.join(", "))})</dd></div>
-          <div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div>
-        </dl>
-      </section>
-    </section>
-    <div class="ops-grid ops-grid-sortie">
-      <section class="mission-panel command-screen" aria-labelledby="stage-title">
-        <div class="panel-heading"><div><p class="eyebrow">CAMPAIGN MAP</p><h2 id="stage-title">전선 선택</h2></div><span class="panel-count">${completed} CLEAR · ${unlocked} UNLOCKED</span></div>
-        <div class="stage-rail">
-          ${STAGES.map((stage, index) => {
-            const locked = index > campaign.unlockedStageIndex;
-            const cleared = campaign.resolvedIds?.includes(stage.id);
-            const disabled = locked || (started && stage.id !== selected.id);
-            return `<button class="stage-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage="${stage.id}" style="--stage-card-art: url('${stageArtPath(stage.id)}')" aria-pressed="${stage.id === selected.id}" ${disabled ? "disabled" : ""}><span class="stage-card-art" aria-hidden="true"></span><span class="stage-index">${String(stage.sequence).padStart(2, "0")}</span><span class="stage-info"><strong>${escapeHtml(stage.name)}</strong><small>${escapeHtml(stage.bossName)}</small></span><span class="stage-state">${locked ? "잠김" : started && stage.id === selected.id ? "전투 중" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "출전 가능"}</span></button>`;
-          }).join("")}
-        </div>
-      </section>
-      <aside class="briefing-panel command-screen" aria-labelledby="briefing-title">
-        <div class="panel-heading"><div><p class="eyebrow">TACTICAL BRIEFING · ${escapeHtml(selectedPresentation.mapLabels.domain)}</p><h2 id="briefing-title">작전 브리핑</h2></div><span class="briefing-code">AC-${String(selected.sequence).padStart(2, "0")}</span></div>
-        <div class="briefing-target" data-stage-briefing="selected" data-stage-id="${escapeHtml(selected.id)}">${portraitMarkup(meshRootForStageBoss(selected.id), "◉", "target-sigil rc-portrait")}<div><small>${escapeHtml(selectedPresentation.mapLabels.title)} · ${escapeHtml(selectedPresentation.atmosphere.descriptor)}</small><strong>${escapeHtml(selected.bossName)}</strong><span id="briefing-stage-narrative" data-stage-id="${escapeHtml(selected.id)}">${escapeHtml(selectedObjective)}</span></div></div>
-        <dl class="briefing-stats"><div><dt>지형 / 고지</dt><dd>${escapeHtml(selectedPresentation.mapLabels.chokepath)} · ${escapeHtml(selectedPresentation.mapLabels.elevation)}</dd></div><div><dt>위협 / 측면</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)}</dd></div><div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div><div><dt>다음 보상</dt><dd>${escapeHtml(nextRewardName(selected.id))}</dd></div></dl>
-        <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 중앙 전장에서 손가락을 끌어 이동하세요. 정예를 처치하고 <b>추출(Extract)</b>하여 동료를 확보할 수 있습니다.</p>
-      </aside>
-    </div>`;
-  const tabBodies = {
-    sortie: sortieTabHtml,
-    growth: renderGrowthTab(),
-    companions: renderCompanionsTab(),
-    inventory: renderInventoryTab(),
-    stronghold: renderStrongholdTab(),
-  };
-  shell.innerHTML = `
-    <button id="shell-dock-toggle" class="shell-dock-toggle" aria-expanded="${shellExpanded}" aria-label="${shellExpanded ? "커맨드 덱 접기" : "커맨드 덱 펼치기"}">${shellExpanded ? "✕" : "☰"}</button>
-    <div class="command-shell-inner">
-      <header class="command-header">
-        <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">AC</span><div><p class="eyebrow">ABYSSAL COMMAND · FARWATCH HOLD</p><h1>Warden Corps 방어선</h1></div></div>
-        <div class="command-status"><span class="signal-dot" aria-hidden="true"></span><span>기록실 연결됨</span><strong>${completed}/10 봉쇄선</strong></div>
-      </header>
-      <p id="idle-return-summary" class="idle-return-banner" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p>
-      <nav class="command-tab-bar" role="tablist" aria-label="커맨드 덱">${COMMAND_TABS.map((tab) => `<button class="command-tab${tab.id === activeCommandTab ? " is-active" : ""}" role="tab" aria-selected="${tab.id === activeCommandTab}" data-command-tab="${tab.id}">${tab.label}</button>`).join("")}</nav>
-      <div class="command-tab-panel">${tabBodies[activeCommandTab]}</div>
-      <details class="archive-tools"><summary>기록 관리 <span>오프라인 저장 · ${escapeHtml(storage.backend ?? "확인 중")}</span></summary><div class="storage-row" aria-label="캠페인 제어"><button id="export-defense">기록 내보내기</button><label class="import-label">기록 가져오기<input id="import-defense" type="file" accept="application/json,text/plain" ${started ? "disabled" : ""} /></label><button id="export-telemetry">진단 내보내기</button><button id="reset-defense" ${started ? "disabled" : ""}>새 기록</button><output aria-live="polite">${escapeHtml(statusText)}</output></div></details>
-    </div>`;
-  hydratePortraits(shell);
 
-  shell.querySelectorAll("[data-command-tab]").forEach((button) => {
+/** Shared DockRail + DockPanel markup/wiring for one side (component-contracts.md §3.1/§3.2). */
+function renderDockSide({ side, tabs, activeTab, isOpen, tabBodyHtml, brandLabel }) {
+  const container = root.querySelector(`#command-dock-${side}`);
+  if (!container) return;
+  const railTabsHtml = tabs.map((tab) => `<button class="dock-rail-tab" role="tab" aria-selected="${tab.id === activeTab}" aria-expanded="${isOpen && tab.id === activeTab}" aria-controls="dock-panel-${side}" data-dock-tab="${tab.id}"><span class="dock-rail-icon" aria-hidden="true">${tab.icon}</span><span class="sr-only">${escapeHtml(tab.label)}</span></button>`).join("");
+  const panelTabsHtml = tabs.map((tab) => `<button class="dock-rail-tab" role="tab" aria-selected="${tab.id === activeTab}" data-dock-tab="${tab.id}"><span class="dock-rail-icon" aria-hidden="true">${tab.icon}</span><span class="sr-only">${escapeHtml(tab.label)}</span></button>`).join("");
+  container.innerHTML = `
+    <nav class="dock-rail" data-dock-side="${side}" data-dock-open="${isOpen}" role="tablist" aria-label="${escapeHtml(brandLabel)}">${railTabsHtml}</nav>
+    ${isOpen ? `
+    <section class="dock-panel rc-glass" id="dock-panel-${side}" data-dock-side="${side}">
+      <header class="dock-panel-header">
+        <span class="dock-brand" role="img" aria-label="ABYSSAL COMMAND · FARWATCH HOLD" title="ABYSSAL COMMAND · FARWATCH HOLD">AC</span>
+        <nav class="dock-panel-tabs" role="tablist" aria-label="${escapeHtml(brandLabel)}">${panelTabsHtml}</nav>
+        <button type="button" class="dock-panel-close" aria-label="${escapeHtml(brandLabel)} 닫기">×</button>
+      </header>
+      <div class="dock-panel-body">${tabBodyHtml}</div>
+    </section>` : ""}`;
+  hydratePortraits(container);
+
+  container.querySelectorAll("[data-dock-tab]").forEach((button) => {
     button.addEventListener("click", () => {
-      activeCommandTab = button.dataset.commandTab;
-      renderCommandShell();
+      const clickedTab = button.dataset.dockTab;
+      if (isOpen && clickedTab === activeTab) {
+        dockOpen[side] = false;
+      } else {
+        if (side === "left") activeLeftDockTab = clickedTab; else activeRightDockTab = clickedTab;
+        dockOpen[side] = true;
+        if (dockTier === "compact") dockOpen[side === "left" ? "right" : "left"] = false;
+      }
+      renderShell();
+      root.querySelector(`#command-dock-${side} [data-dock-tab="${clickedTab}"]`)?.focus?.();
     });
   });
-  shell.querySelectorAll("[data-growth-segment]").forEach((button) => {
-    button.addEventListener("click", () => {
-      activeGrowthSegment = button.dataset.growthSegment;
-      renderCommandShell();
-    });
+  container.querySelector(".dock-panel-close")?.addEventListener("click", () => {
+    dockOpen[side] = false;
+    renderShell();
+    root.querySelector(`#command-dock-${side} [data-dock-tab="${activeTab}"]`)?.focus?.();
   });
-  shell.querySelectorAll("[data-companion-segment]").forEach((button) => {
-    button.addEventListener("click", () => {
-      activeCompanionSegment = button.dataset.companionSegment;
-      renderCommandShell();
-    });
+  if (isOpen) container.querySelector(".dock-panel-header")?.focus?.();
+  return container;
+}
+
+/** 성장 덱 (left dock): 성장/동료/인벤토리 -- character-power progression, no time pressure. */
+function renderDockLeft() {
+  if (!campaign) return;
+  if (!LEFT_DOCK_TABS.some((tab) => tab.id === activeLeftDockTab)) activeLeftDockTab = "growth";
+  const tabBodies = { growth: renderGrowthTab(), companions: renderCompanionsTab(), inventory: renderInventoryTab() };
+  const dock = renderDockSide({
+    side: "left",
+    tabs: LEFT_DOCK_TABS,
+    activeTab: activeLeftDockTab,
+    isOpen: dockOpen.left,
+    tabBodyHtml: tabBodies[activeLeftDockTab],
+    brandLabel: "성장 덱",
   });
-  shell.querySelectorAll("[data-stage]").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (session?.started) return; // stage-rail is locked to the live stage once a run is committed
-      selectedStageId = button.dataset.stage;
-      session?.remountForStage(selectedStageId);
-      renderCommandShell();
-    });
+  if (!dock) return;
+  dock.querySelectorAll("[data-growth-segment]").forEach((button) => {
+    button.addEventListener("click", () => { activeGrowthSegment = button.dataset.growthSegment; renderShell(); });
   });
-  shell.querySelectorAll("[data-companion]").forEach((button) => {
+  dock.querySelectorAll("[data-companion-segment]").forEach((button) => {
+    button.addEventListener("click", () => { activeCompanionSegment = button.dataset.companionSegment; renderShell(); });
+  });
+  dock.querySelectorAll("[data-companion]").forEach((button) => {
     button.addEventListener("click", async () => {
       const prototype = button.dataset.companion;
       const current = selectedLoadout();
-      const next = current.includes(prototype)
-        ? current.filter((entry) => entry !== prototype)
-        : [...current, prototype].slice(0, 3);
+      const next = current.includes(prototype) ? current.filter((entry) => entry !== prototype) : [...current, prototype].slice(0, 3);
       campaign = setCompanionLoadout(campaign, next);
       await persistCampaign("동료 편성을 저장했습니다.");
-      renderCommandShell();
+      renderShell();
     });
   });
-  shell.querySelectorAll("[data-warden-stat]").forEach((button) => {
+  dock.querySelectorAll("[data-warden-stat]").forEach((button) => {
     button.addEventListener("click", async () => {
       try {
         campaign = allocateWardenStatPoint(campaign, button.dataset.wardenStat);
@@ -758,10 +728,10 @@ function renderCommandShell() {
       } catch (error) {
         statusText = error.message;
       }
-      renderCommandShell();
+      renderShell();
     });
   });
-  shell.querySelectorAll("[data-warden-skill]").forEach((button) => {
+  dock.querySelectorAll("[data-warden-skill]").forEach((button) => {
     button.addEventListener("click", async () => {
       try {
         campaign = unlockWardenSkillNode(campaign, button.dataset.wardenSkill);
@@ -769,10 +739,10 @@ function renderCommandShell() {
       } catch (error) {
         statusText = error.message;
       }
-      renderCommandShell();
+      renderShell();
     });
   });
-  shell.querySelectorAll("[data-warden-trait]").forEach((button) => {
+  dock.querySelectorAll("[data-warden-trait]").forEach((button) => {
     button.addEventListener("click", async () => {
       try {
         campaign = selectWardenTrait(campaign, button.dataset.wardenTrait);
@@ -780,10 +750,10 @@ function renderCommandShell() {
       } catch (error) {
         statusText = error.message;
       }
-      renderCommandShell();
+      renderShell();
     });
   });
-  shell.querySelectorAll("[data-warden-equip-owner]").forEach((button) => {
+  dock.querySelectorAll("[data-warden-equip-owner]").forEach((button) => {
     button.addEventListener("click", async () => {
       try {
         campaign = purchaseEquipmentTier(campaign, button.dataset.wardenEquipOwner, button.dataset.wardenEquipSlot);
@@ -791,10 +761,10 @@ function renderCommandShell() {
       } catch (error) {
         statusText = error.message;
       }
-      renderCommandShell();
+      renderShell();
     });
   });
-  shell.querySelectorAll("[data-warden-formation]").forEach((button) => {
+  dock.querySelectorAll("[data-warden-formation]").forEach((button) => {
     button.addEventListener("click", async () => {
       try {
         campaign = setCompanionFormationSlot(campaign, button.dataset.wardenFormation, button.dataset.wardenFormationTarget);
@@ -802,16 +772,84 @@ function renderCommandShell() {
       } catch (error) {
         statusText = error.message;
       }
-      renderCommandShell();
+      renderShell();
     });
   });
-  shell.querySelector("#start-defense")?.addEventListener("click", () => { session?.beginRun(); shellExpanded = false; renderCommandShell(); });
-  shell.querySelector("#shell-dock-toggle")?.addEventListener("click", () => { shellExpanded = !shellExpanded; renderCommandShell(); });
-  shell.querySelector("#export-defense").addEventListener("click", async () => {
+}
+
+/** 출정 tab body, TRIMMED per hud-layout-spec.md §4: hero-copy and the decorative
+ * tactical-map/stage-atlas are dropped -- the live 3D canvas next to this panel IS the
+ * battlefield preview now. Every authored fact the atlas held (terrain, hazard, flank,
+ * chokepath, elevation, occupation, extraction, landmarks) is folded into briefing-stats. */
+function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, selectedObjective, completed, unlocked, started) {
+  return `
+    <section class="mission-panel command-screen" aria-labelledby="stage-title">
+      <div class="panel-heading"><div><p class="eyebrow">CAMPAIGN MAP</p><h2 id="stage-title">전선 선택</h2></div><span class="panel-count">${completed} CLEAR · ${unlocked} UNLOCKED</span></div>
+      <div class="stage-rail">
+        ${STAGES.map((stage, index) => {
+          const locked = index > campaign.unlockedStageIndex;
+          const cleared = campaign.resolvedIds?.includes(stage.id);
+          const disabled = locked || (started && stage.id !== selected.id);
+          return `<button class="stage-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage="${stage.id}" style="--stage-card-art: url('${stageArtPath(stage.id)}')" aria-pressed="${stage.id === selected.id}" ${disabled ? "disabled" : ""}><span class="stage-card-art" aria-hidden="true"></span><span class="stage-index">${String(stage.sequence).padStart(2, "0")}</span><span class="stage-info"><strong>${escapeHtml(stage.name)}</strong><small>${escapeHtml(stage.bossName)}</small></span><span class="stage-state">${locked ? "잠김" : started && stage.id === selected.id ? "전투 중" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "출전 가능"}</span></button>`;
+        }).join("")}
+      </div>
+    </section>
+    <aside class="briefing-panel command-screen" aria-labelledby="briefing-title">
+      <div class="panel-heading"><div><p class="eyebrow">TACTICAL BRIEFING · ${escapeHtml(selectedPresentation.mapLabels.domain)}</p><h2 id="briefing-title">작전 브리핑</h2></div><span class="briefing-code">AC-${String(selected.sequence).padStart(2, "0")}</span></div>
+      <div class="briefing-target" data-stage-briefing="selected" data-stage-id="${escapeHtml(selected.id)}">${portraitMarkup(meshRootForStageBoss(selected.id), "◉", "target-sigil rc-portrait")}<div><small>${escapeHtml(selectedPresentation.mapLabels.title)} · ${escapeHtml(selectedPresentation.atmosphere.descriptor)}</small><strong>${escapeHtml(selected.bossName)}</strong><span id="briefing-stage-narrative" data-stage-id="${escapeHtml(selected.id)}">${escapeHtml(selectedObjective)}</span></div></div>
+      <dl class="briefing-stats">
+        <div><dt>지형 / 고지</dt><dd>${escapeHtml(selectedPresentation.terrain.label)} · ${escapeHtml(selectedPresentation.mapLabels.chokepath)} · ${escapeHtml(selectedPresentation.mapLabels.elevation)}</dd></div>
+        <div><dt>위협 / 측면</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)} (${escapeHtml(selectedTerrain.spawnDirections.join(", "))})</dd></div>
+        <div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div>
+        <div><dt>랜드마크</dt><dd>${escapeHtml(selectedPresentation.landmarks.map(({ label }) => label).join(" · "))}</dd></div>
+        <div><dt>다음 보상</dt><dd>${escapeHtml(nextRewardName(selected.id))}</dd></div>
+      </dl>
+      <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 중앙 전장에서 손가락을 끌어 이동하세요. 정예를 처치하고 <b>추출(Extract)</b>하여 동료를 확보할 수 있습니다.</p>
+    </aside>`;
+}
+
+/** 전황 덱 (right dock): 출정/요새 -- where the campaign stands (current front + permanent record). */
+function renderDockRight() {
+  if (!campaign) return;
+  const selected = stageFor(selectedStageId);
+  const selectedPresentation = stagePresentationFor(selected.id);
+  const selectedTerrain = stageTerrainProjection(selected.id);
+  const completed = campaign.resolvedIds?.length ?? 0;
+  const unlocked = campaign.unlockedStageIndex + 1;
+  const selectedObjective = stageObjective(selected.id);
+  const started = session?.started ?? false;
+  root.dataset.stageId = selected.id;
+  root.style.setProperty("--stage-art", `url("${stageArtPath(selected.id)}")`);
+  if (!RIGHT_DOCK_TABS.some((tab) => tab.id === activeRightDockTab)) activeRightDockTab = "sortie";
+  const briefingLine = started
+    ? `전투 진행 중 · ${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)}`
+    : `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)}`;
+  const tabBodies = {
+    sortie: `<p class="dock-briefing-line" aria-live="polite">${briefingLine}</p>${renderSortieTabBody(selected, selectedPresentation, selectedTerrain, selectedObjective, completed, unlocked, started)}`,
+    stronghold: renderStrongholdTab(),
+  };
+  const dock = renderDockSide({
+    side: "right",
+    tabs: RIGHT_DOCK_TABS,
+    activeTab: activeRightDockTab,
+    isOpen: dockOpen.right,
+    tabBodyHtml: tabBodies[activeRightDockTab],
+    brandLabel: "전황 덱",
+  });
+  if (!dock) return;
+  dock.querySelectorAll("[data-stage]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (session?.started) return; // stage-rail is locked to the live stage once a run is committed
+      selectedStageId = button.dataset.stage;
+      session?.remountForStage(selectedStageId);
+      renderShell();
+    });
+  });
+  dock.querySelector("#export-defense")?.addEventListener("click", async () => {
     const text = await storage.exportText();
     if (!text) {
       statusText = "내보낼 유효한 기록이 없습니다.";
-      renderCommandShell();
+      renderShell();
       return;
     }
     const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
@@ -821,7 +859,7 @@ function renderCommandShell() {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   });
-  shell.querySelector("#export-telemetry")?.addEventListener("click", () => {
+  dock.querySelector("#export-telemetry")?.addEventListener("click", () => {
     const url = URL.createObjectURL(new Blob([telemetry.exportJson()], { type: "application/json" }));
     const link = document.createElement("a");
     link.href = url;
@@ -829,28 +867,105 @@ function renderCommandShell() {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   });
-  shell.querySelector("#import-defense")?.addEventListener("change", async (event) => {
+  dock.querySelector("#import-defense")?.addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     const text = file ? await file.text() : "";
     if (!text || !(await storage.importText(text))) {
       statusText = "기록 형식을 확인할 수 없습니다.";
-      renderCommandShell();
+      renderShell();
       return;
     }
     campaign = (await storage.load()) ?? campaign;
     selectedStageId = STAGES[campaign.unlockedStageIndex].id;
     statusText = "기록을 가져왔습니다.";
     session?.remountForStage(selectedStageId);
-    renderCommandShell();
+    renderShell();
   });
-  shell.querySelector("#reset-defense")?.addEventListener("click", async () => {
+  dock.querySelector("#reset-defense")?.addEventListener("click", async () => {
     if (session?.started) return;
     await storage.clear();
     campaign = createCampaign({ resetEpoch: campaign.resetEpoch + 1 });
     selectedStageId = STAGES[0].id;
     await persistCampaign("새 기록을 시작했습니다.");
     session?.remountForStage(selectedStageId);
-    renderCommandShell();
+    renderShell();
+  });
+}
+
+/** SortieFab (component-contracts.md §3.3): persistent floating action button, NOT inside
+ * any dock -- the single most important pre-run action stays reachable regardless of dock
+ * state. Removed from the DOM (not just hidden) once session.started, mirroring today's
+ * ternary swap for the CTA. id UNCHANGED ("#start-defense") -- required by the project's
+ * existing browser contracts. */
+function renderSortieFab() {
+  if (!campaign) return;
+  const existing = root.querySelector("#start-defense");
+  if (session?.started) {
+    existing?.remove();
+    return;
+  }
+  const selected = stageFor(selectedStageId);
+  const label = `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)} 전선으로`;
+  if (existing) {
+    existing.innerHTML = `<span>작전 개시</span><small>${label}</small><b aria-hidden="true">↗</b>`;
+    return;
+  }
+  const button = document.createElement("button");
+  button.id = "start-defense";
+  button.className = "sortie-fab";
+  button.innerHTML = `<span>작전 개시</span><small>${label}</small><b aria-hidden="true">↗</b>`;
+  button.addEventListener("click", () => {
+    session?.beginRun();
+    dockOpen = { left: false, right: false };
+    renderShell();
+  });
+  root.append(button);
+}
+
+/** IdleReturnToast (component-contracts.md §3.4): mounted ONCE at mountShell() time, only
+ * if idleReturnReceipt is present (i.e. settleIdleReturn() actually ran and reported back)
+ * -- a one-time "welcome back" notice, not persistent-progression UI. Self-removes on
+ * manual dismiss (click) or an 8s auto-timeout. The persisted recap lives inside the
+ * stronghold dock tab instead (renderStrongholdTab()'s .idle-return-recap). */
+function renderIdleReturnToast() {
+  if (!idleReturnReceipt) return;
+  const idleSummary = idleReturnSummary();
+  const toast = document.createElement("output");
+  toast.id = "idle-return-toast";
+  toast.className = "idle-return-toast rc-glass";
+  toast.setAttribute("role", "status");
+  toast.setAttribute("aria-live", "polite");
+  toast.dataset.idleReturnOutcome = idleSummary.outcome;
+  toast.dataset.idleReturnTotal = String(idleSummary.total);
+  toast.innerHTML = `<p>${escapeHtml(idleSummary.text)}</p>`;
+  toast.addEventListener("click", () => toast.remove());
+  root.append(toast);
+  setTimeout(() => toast.remove(), 8000);
+}
+
+/** Top-level dispatcher: re-renders both docks and the sortie FAB. Called by every
+ * dock/tab/campaign-mutation handler in place of the old single renderCommandShell(). The
+ * idle-return toast is NOT re-rendered here -- it is a one-shot mount, see
+ * renderIdleReturnToast()'s own doc comment. */
+function renderShell() {
+  renderDockLeft();
+  renderDockRight();
+  renderSortieFab();
+}
+
+/** matchMedia('(min-width: 900px)') change listener (component-contracts.md §4
+ * new_only row): recomputes dockTier and re-runs computeDefaultDockOpen() ONLY when the
+ * tier actually flipped, so a resize within the same tier never clobbers a user's manual
+ * open/close. Mid-run (session.started), a tier flip stays collapsed rather than
+ * reopening -- the run-start force-collapse invariant outranks the tier default. */
+function setupDockTierListener() {
+  dockMediaQuery = globalThis.matchMedia?.("(min-width: 900px)") ?? null;
+  dockMediaQuery?.addEventListener?.("change", () => {
+    const nextTier = currentDockTier();
+    if (nextTier === dockTier) return;
+    dockTier = nextTier;
+    dockOpen = session?.started ? { left: false, right: false } : computeDefaultDockOpen(dockTier);
+    renderShell();
   });
 }
 
@@ -863,15 +978,16 @@ function requestBattleImmersion() {
 }
 
 /**
- * Unified shell (D9, production/decision-log.md) bootstrap: mounts the ENTIRE persistent
- * DOM exactly once for the page's whole lifetime -- #defense-battle-surface (canvas +
- * world-hud-overlay + edge-hud, unchanged markup from the old beginSession()) as the
- * fixed-fullscreen base layer, #command-shell as the docked overlay renderCommandShell()
- * targets. There is no second `root.innerHTML =` swap anywhere else in this module --
- * "entering battle" is BattleSession.beginRun() flipping `started`, not a screen
- * transition. `data-defense-ready="true"` is set immediately (the battle surface always
- * exists now); `data-defense-started` reflects whether a real run is ticking, set by
- * beginRun() -- CI browser contracts wait on the latter instead of a click transition.
+ * Idle-style side-dock shell (20260727-lobby-dock-redesign) bootstrap: mounts the ENTIRE
+ * persistent DOM exactly once for the page's whole lifetime -- #defense-battle-surface
+ * (canvas + world-hud-overlay + edge-hud, unchanged markup from the old beginSession()) as
+ * the fixed-fullscreen base layer, plus #command-dock-left/#command-dock-right as the two
+ * edge-anchored dock wrappers renderDockLeft()/renderDockRight() target. There is no
+ * second `root.innerHTML =` swap anywhere else in this module -- "entering battle" is
+ * BattleSession.beginRun() flipping `started`, not a screen transition.
+ * `data-defense-ready="true"` is set immediately (the battle surface always exists now);
+ * `data-defense-started` reflects whether a real run is ticking, set by beginRun() -- CI
+ * browser contracts wait on the latter instead of a click transition.
  */
 function mountShell(stageId) {
   document.body.style.overflow = "hidden";
@@ -902,11 +1018,16 @@ function mountShell(stageId) {
         </div>
       </div>
     </section>
-    <div id="command-shell"></div>`;
+    <div id="command-dock-left"></div>
+    <div id="command-dock-right"></div>`;
   hydratePortraits(root);
   session = new BattleSession(stageId);
   session.start();
-  renderCommandShell();
+  dockTier = currentDockTier();
+  dockOpen = computeDefaultDockOpen(dockTier);
+  setupDockTierListener();
+  renderShell();
+  renderIdleReturnToast();
 }
 
 export class BattleSession {
@@ -2226,21 +2347,23 @@ export class BattleSession {
       if (outcome === "defeat") {
         this.remountForStage(this.stageId);
         this.beginRun();
+        dockOpen = { left: false, right: false };
       } else if (complete) {
         this.remountForStage(STAGES[0].id);
         selectedStageId = STAGES[0].id;
-        shellExpanded = true;
+        dockOpen = computeDefaultDockOpen(dockTier);
       } else {
         selectedStageId = STAGES[campaign.unlockedStageIndex].id;
         this.remountForStage(selectedStageId);
         this.beginRun();
+        dockOpen = { left: false, right: false };
       }
-      renderCommandShell();
+      renderShell();
     });
     card.querySelector("#lobby-action").addEventListener("click", () => {
       this.remountForStage(this.stageId);
-      shellExpanded = true;
-      renderCommandShell();
+      dockOpen = computeDefaultDockOpen(dockTier);
+      renderShell();
     });
     card.querySelector("button")?.focus();
   }

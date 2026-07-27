@@ -75,7 +75,7 @@ async function run() {
     }, { encoded: campaign.encoded, now: NOW, key: STORAGE_KEY });
 
     await page.goto("/index.html", { waitUntil: "networkidle" });
-    const idleSummary = page.locator("#idle-return-summary");
+    const idleSummary = page.locator("#idle-return-toast");
     await idleSummary.waitFor({ state: "visible" });
     assert.equal(await idleSummary.getAttribute("data-idle-return-outcome"), "SETTLED", "initialization must visibly settle a due offline return");
     assert.equal(await idleSummary.getAttribute("data-idle-return-total"), String(campaign.expectedAward), "the lobby must expose the durable canonical idle total");
