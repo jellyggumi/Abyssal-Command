@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-07-27T02:40:00Z",
+  "viewport": { "width": 390, "height": 844 },
+  "before": {
+    "pressure": "압박 165초 · 관문 1000/1000 · 지휘관 1000/1000",
+    "cutscene": true,
+    "overlay": "CINEMATIC RELAY\n봉쇄선 진입\nWARDEN CHANNEL\n\n심연의 문이 열렸다.\n\n계속"
+  },
+  "heldAfter600ms": {
+    "pressure": "압박 165초 · 관문 1000/1000 · 지휘관 1000/1000",
+    "cutscene": true
+  },
+  "afterDismiss1300ms": {
+    "pressure": "압박 164초 · 관문 1000/1000 · 지휘관 1000/1000",
+    "cutscene": false
+  },
+  "verdict": "Simulation holds while the cinematic relay is visible and resumes after dismissal."
+}

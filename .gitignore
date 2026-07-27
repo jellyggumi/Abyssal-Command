@@ -66,3 +66,47 @@ _workspace/*/models-out/
 _workspace/*/production/batch4-source-scene.blend
 _workspace/*/production/batch4-previs-out/*.blend
 assets/images/battle/glb/previs/
+
+# Rodin bridge downloads and generated diagnostics are reproducible inputs to
+# the promoted GLB, not release artifacts.
+assets/images/battle/glb/e42264aa-*.zip
+_workspace/**/__pycache__/
+_workspace/**/engineering/asset-pipeline/gti-debug/
+
+# Asset-pipeline working copies duplicate the promoted GLBs. Keep the authored
+# contracts, concept inputs, shared textures, v2 audit, and authoring scripts;
+# discard raw Rodin, rigging, combat, and per-asset export intermediates.
+_workspace/*/engineering/asset-pipeline/rodin-candidates/
+_workspace/*/engineering/asset-pipeline/rigged-candidates/
+_workspace/*/engineering/asset-pipeline/texture-candidates/
+_workspace/*/engineering/asset-pipeline/textured-candidates/
+_workspace/*/engineering/asset-pipeline/textured-candidates-v02/
+_workspace/*/engineering/asset-pipeline/runtime-candidates/
+_workspace/*/engineering/asset-pipeline/combat-candidates/
+_workspace/*/engineering/asset-pipeline/cinder-span-candidate/
+_workspace/*/engineering/asset-pipeline/textures/
+_workspace/*/engineering/asset-pipeline/rodin-player-core-submit.blend
+_workspace/*/engineering/asset-pipeline/player-combat-animation-candidate/*.glb
+_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates/
+_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/bosses/
+_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/commander/
+_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/companions/
+_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/enemies/
+_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/previs/
+_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/props/
+_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/terrain/
+_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/vfx/
+
+# Superseded monolithic stage-gallery/world authoring scenes. The final
+# per-stage sources live under blender/stage-overhaul/ and remain tracked.
+_workspace/*/blender/abyssal-surge-stage-gallery-v*.blend
+_workspace/*/blender/abyssal-surge-stage-worlds-v*.blend
+
+# Superseded gallery patch scripts and contact-sheet bookkeeping. Canonical
+# stage construction is scripts/build-authored-stage-environments.py plus the
+# tracked stage-overhaul source/evidence.
+_workspace/*/blender/apply_gallery_toon.py
+_workspace/*/blender/compose_stage_worlds_v05.py
+_workspace/*/blender/fix_gallery_glass.py
+_workspace/*/qa/stage-worlds-v06-rodin-contact-sheet.png
+_workspace/*/qa/stage-worlds-v06-rodin-evidence.json

@@ -1,0 +1,1820 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "scripts/audit-stage-scenes.mjs",
+  "deterministic": true,
+  "sources": {
+    "stageCatalog": "stage-world-catalog.js",
+    "runtimeAssetRegistry": "scripts/defense-runtime-assets.mjs",
+    "allMeshGlbAudit": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+    "terrainBuildProvenance": "assets/images/battle/glb/terrain/build-provenance.json"
+  },
+  "stageCount": 10,
+  "showcaseStageIds": [
+    "cinder-span",
+    "veil-citadel",
+    "echo-throne"
+  ],
+  "showcases": [
+    {
+      "stageId": "cinder-span",
+      "thumbnailPath": "assets/images/battle/ui/stages/cinder-span.png",
+      "bytes": 2853211,
+      "sha256": "71d52a24f48bbfc0fe28d4350fe4c57a984132ee1b0785b9843f11ada0a9eef5",
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readablePng": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "stageId": "veil-citadel",
+      "thumbnailPath": "assets/images/battle/ui/stages/veil-citadel.png",
+      "bytes": 2667098,
+      "sha256": "76a6c78eed15488900b3273f507e80c529a7ddc350f308f39e21e31fd2bf76d7",
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readablePng": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "stageId": "echo-throne",
+      "thumbnailPath": "assets/images/battle/ui/stages/echo-throne-steps.png",
+      "bytes": 3113384,
+      "sha256": "04860990bbd2916dd8adf34d903837a158861429bb91ae209ed164737967046c",
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readablePng": true
+      },
+      "issues": [],
+      "ok": true
+    }
+  ],
+  "runtimeAssetCount": 26,
+  "stages": [
+    {
+      "stageId": "cinder-span",
+      "sequence": 1,
+      "terrainGlbPath": "assets/images/battle/glb/terrain/cinder-span.glb",
+      "runtimeAssets": [
+        "assets/images/battle/glb/terrain/cinder-span.glb",
+        "assets/images/battle/glb/props/bulwark-brand.glb",
+        "assets/images/battle/glb/props/warden-lantern.glb",
+        "assets/images/battle/glb/companions/ember-cohort.glb"
+      ],
+      "placement": {
+        "sourcePath": "stage-world-catalog.js",
+        "gameplayBounds": {
+          "minX": 600,
+          "maxX": 23400,
+          "minY": 800,
+          "maxY": 11200
+        },
+        "counts": {
+          "obstacles": 2,
+          "elevationSurfaces": 2,
+          "props": 2,
+          "npcs": 1
+        },
+        "checks": {
+          "boundsValid": true,
+          "obstacleFootprintsValid": true,
+          "elevationSurfacesValid": true,
+          "propPlacementsValid": true,
+          "npcPlacementCoverage": true
+        },
+        "issues": [],
+        "ok": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "stageId": "veil-citadel",
+      "sequence": 2,
+      "terrainGlbPath": "assets/images/battle/glb/terrain/veil-citadel.glb",
+      "runtimeAssets": [
+        "assets/images/battle/glb/terrain/veil-citadel.glb",
+        "assets/images/battle/glb/props/abyssal-banner.glb",
+        "assets/images/battle/glb/props/stillwater-hourglass.glb",
+        "assets/images/battle/glb/companions/rift-lens.glb"
+      ],
+      "placement": {
+        "sourcePath": "stage-world-catalog.js",
+        "gameplayBounds": {
+          "minX": 600,
+          "maxX": 23400,
+          "minY": 600,
+          "maxY": 11400
+        },
+        "counts": {
+          "obstacles": 2,
+          "elevationSurfaces": 2,
+          "props": 2,
+          "npcs": 1
+        },
+        "checks": {
+          "boundsValid": true,
+          "obstacleFootprintsValid": true,
+          "elevationSurfacesValid": true,
+          "propPlacementsValid": true,
+          "npcPlacementCoverage": true
+        },
+        "issues": [],
+        "ok": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "stageId": "echo-throne",
+      "sequence": 3,
+      "terrainGlbPath": "assets/images/battle/glb/terrain/echo-throne-steps.glb",
+      "runtimeAssets": [
+        "assets/images/battle/glb/terrain/echo-throne-steps.glb",
+        "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb",
+        "assets/images/battle/glb/props/warden-lantern.glb",
+        "assets/images/battle/glb/companions/throne-echo.glb"
+      ],
+      "placement": {
+        "sourcePath": "stage-world-catalog.js",
+        "gameplayBounds": {
+          "minX": 800,
+          "maxX": 23400,
+          "minY": 700,
+          "maxY": 11300
+        },
+        "counts": {
+          "obstacles": 2,
+          "elevationSurfaces": 2,
+          "props": 2,
+          "npcs": 1
+        },
+        "checks": {
+          "boundsValid": true,
+          "obstacleFootprintsValid": true,
+          "elevationSurfacesValid": true,
+          "propPlacementsValid": true,
+          "npcPlacementCoverage": true
+        },
+        "issues": [],
+        "ok": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "stageId": "sunken-bastion",
+      "sequence": 4,
+      "terrainGlbPath": "assets/images/battle/glb/terrain/sunken-bastion.glb",
+      "runtimeAssets": [
+        "assets/images/battle/glb/terrain/sunken-bastion.glb",
+        "assets/images/battle/glb/props/bulwark-brand.glb",
+        "assets/images/battle/glb/props/warden-lantern.glb",
+        "assets/images/battle/glb/companions/anchor-shard.glb"
+      ],
+      "placement": {
+        "sourcePath": "stage-world-catalog.js",
+        "gameplayBounds": {
+          "minX": 700,
+          "maxX": 23400,
+          "minY": 700,
+          "maxY": 11300
+        },
+        "counts": {
+          "obstacles": 2,
+          "elevationSurfaces": 2,
+          "props": 2,
+          "npcs": 1
+        },
+        "checks": {
+          "boundsValid": true,
+          "obstacleFootprintsValid": true,
+          "elevationSurfacesValid": true,
+          "propPlacementsValid": true,
+          "npcPlacementCoverage": true
+        },
+        "issues": [],
+        "ok": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "stageId": "howling-sprawl",
+      "sequence": 5,
+      "terrainGlbPath": "assets/images/battle/glb/terrain/howling-sprawl.glb",
+      "runtimeAssets": [
+        "assets/images/battle/glb/terrain/howling-sprawl.glb",
+        "assets/images/battle/glb/props/abyssal-banner.glb",
+        "assets/images/battle/glb/props/warden-lantern.glb",
+        "assets/images/battle/glb/companions/pack-warden.glb"
+      ],
+      "placement": {
+        "sourcePath": "stage-world-catalog.js",
+        "gameplayBounds": {
+          "minX": 500,
+          "maxX": 23400,
+          "minY": 500,
+          "maxY": 11500
+        },
+        "counts": {
+          "obstacles": 3,
+          "elevationSurfaces": 2,
+          "props": 2,
+          "npcs": 1
+        },
+        "checks": {
+          "boundsValid": true,
+          "obstacleFootprintsValid": true,
+          "elevationSurfacesValid": true,
+          "propPlacementsValid": true,
+          "npcPlacementCoverage": true
+        },
+        "issues": [],
+        "ok": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "stageId": "glass-necropolis",
+      "sequence": 6,
+      "terrainGlbPath": "assets/images/battle/glb/terrain/glass-necropolis.glb",
+      "runtimeAssets": [
+        "assets/images/battle/glb/terrain/glass-necropolis.glb",
+        "assets/images/battle/glb/props/choir-ward-crystal.glb",
+        "assets/images/battle/glb/props/stillwater-hourglass.glb",
+        "assets/images/battle/glb/companions/requiem-warden.glb"
+      ],
+      "placement": {
+        "sourcePath": "stage-world-catalog.js",
+        "gameplayBounds": {
+          "minX": 800,
+          "maxX": 23400,
+          "minY": 700,
+          "maxY": 11300
+        },
+        "counts": {
+          "obstacles": 2,
+          "elevationSurfaces": 2,
+          "props": 2,
+          "npcs": 1
+        },
+        "checks": {
+          "boundsValid": true,
+          "obstacleFootprintsValid": true,
+          "elevationSurfacesValid": true,
+          "propPlacementsValid": true,
+          "npcPlacementCoverage": true
+        },
+        "issues": [],
+        "ok": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "stageId": "starless-canal",
+      "sequence": 7,
+      "terrainGlbPath": "assets/images/battle/glb/terrain/starless-canal.glb",
+      "runtimeAssets": [
+        "assets/images/battle/glb/terrain/starless-canal.glb",
+        "assets/images/battle/glb/props/warden-lantern.glb",
+        "assets/images/battle/glb/props/arc-caster.glb",
+        "assets/images/battle/glb/companions/lantern-reaver.glb"
+      ],
+      "placement": {
+        "sourcePath": "stage-world-catalog.js",
+        "gameplayBounds": {
+          "minX": 600,
+          "maxX": 23400,
+          "minY": 900,
+          "maxY": 11100
+        },
+        "counts": {
+          "obstacles": 3,
+          "elevationSurfaces": 2,
+          "props": 2,
+          "npcs": 1
+        },
+        "checks": {
+          "boundsValid": true,
+          "obstacleFootprintsValid": true,
+          "elevationSurfacesValid": true,
+          "propPlacementsValid": true,
+          "npcPlacementCoverage": true
+        },
+        "issues": [],
+        "ok": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "stageId": "shattered-causeway",
+      "sequence": 8,
+      "terrainGlbPath": "assets/images/battle/glb/terrain/shattered-causeway.glb",
+      "runtimeAssets": [
+        "assets/images/battle/glb/terrain/shattered-causeway.glb",
+        "assets/images/battle/glb/props/bulwark-brand.glb",
+        "assets/images/battle/glb/props/abyss-blade.glb",
+        "assets/images/battle/glb/companions/ember-cohort.glb"
+      ],
+      "placement": {
+        "sourcePath": "stage-world-catalog.js",
+        "gameplayBounds": {
+          "minX": 700,
+          "maxX": 23400,
+          "minY": 1100,
+          "maxY": 10900
+        },
+        "counts": {
+          "obstacles": 2,
+          "elevationSurfaces": 2,
+          "props": 2,
+          "npcs": 1
+        },
+        "checks": {
+          "boundsValid": true,
+          "obstacleFootprintsValid": true,
+          "elevationSurfacesValid": true,
+          "propPlacementsValid": true,
+          "npcPlacementCoverage": true
+        },
+        "issues": [],
+        "ok": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "stageId": "abyss-chancel",
+      "sequence": 9,
+      "terrainGlbPath": "assets/images/battle/glb/terrain/abyss-chancel.glb",
+      "runtimeAssets": [
+        "assets/images/battle/glb/terrain/abyss-chancel.glb",
+        "assets/images/battle/glb/props/choir-ward-crystal.glb",
+        "assets/images/battle/glb/props/abyssal-banner.glb",
+        "assets/images/battle/glb/companions/requiem-warden.glb"
+      ],
+      "placement": {
+        "sourcePath": "stage-world-catalog.js",
+        "gameplayBounds": {
+          "minX": 800,
+          "maxX": 23400,
+          "minY": 700,
+          "maxY": 11300
+        },
+        "counts": {
+          "obstacles": 3,
+          "elevationSurfaces": 2,
+          "props": 2,
+          "npcs": 1
+        },
+        "checks": {
+          "boundsValid": true,
+          "obstacleFootprintsValid": true,
+          "elevationSurfacesValid": true,
+          "propPlacementsValid": true,
+          "npcPlacementCoverage": true
+        },
+        "issues": [],
+        "ok": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "stageId": "gate-zenith",
+      "sequence": 10,
+      "terrainGlbPath": "assets/images/battle/glb/terrain/gate-zenith.glb",
+      "runtimeAssets": [
+        "assets/images/battle/glb/terrain/gate-zenith.glb",
+        "assets/images/battle/glb/props/abyssal-banner.glb",
+        "assets/images/battle/glb/props/warden-lantern.glb",
+        "assets/images/battle/glb/companions/dawnless-crown.glb"
+      ],
+      "placement": {
+        "sourcePath": "stage-world-catalog.js",
+        "gameplayBounds": {
+          "minX": 900,
+          "maxX": 23400,
+          "minY": 800,
+          "maxY": 11200
+        },
+        "counts": {
+          "obstacles": 2,
+          "elevationSurfaces": 2,
+          "props": 2,
+          "npcs": 1
+        },
+        "checks": {
+          "boundsValid": true,
+          "obstacleFootprintsValid": true,
+          "elevationSurfacesValid": true,
+          "propPlacementsValid": true,
+          "npcPlacementCoverage": true
+        },
+        "issues": [],
+        "ok": true
+      },
+      "issues": [],
+      "ok": true
+    }
+  ],
+  "assets": [
+    {
+      "path": "assets/images/battle/glb/companions/anchor-shard.glb",
+      "bytes": 3432912,
+      "sha256": "eb5ff374825476d9a6b24231e483db96b0a37fa31c6b99c6f0fd031c4bf6737f",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 28,
+        "meshes": 2,
+        "primitives": 2,
+        "materials": 1,
+        "textures": 2,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.7332789301872253,
+            0.0006555921863764524,
+            -0.7061028480529785
+          ],
+          "max": [
+            0.7293223738670349,
+            1.8948168754577637,
+            0.702035129070282
+          ],
+          "size": [
+            1.4626013040542603,
+            1.8941612832713872,
+            1.4081379771232605
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "companions/anchor-shard.glb",
+        "sourceSha256": "40a51516d6c93bb708b937fb0f1f8ea7f4c752e2da1221379b7737fc8e176ea9",
+        "verifiedOutputSha256": "eb5ff374825476d9a6b24231e483db96b0a37fa31c6b99c6f0fd031c4bf6737f",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
+      "bytes": 3501188,
+      "sha256": "e3296952e87018bd6c08749c7f959ad91114260b956a1bc2197d82dec5b8598a",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 28,
+        "meshes": 2,
+        "primitives": 2,
+        "materials": 1,
+        "textures": 2,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.5175158977508545,
+            0.0004708550695795566,
+            -0.6831340789794922
+          ],
+          "max": [
+            0.5192797780036926,
+            1.8920552730560303,
+            0.6859474778175354
+          ],
+          "size": [
+            1.0367956757545471,
+            1.8915844179864507,
+            1.3690815567970276
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "companions/dawnless-crown.glb",
+        "sourceSha256": "baa3aaa55c61313b0033190bfe2d25fed937f11ece575e65ab606aafb2bb9041",
+        "verifiedOutputSha256": "e3296952e87018bd6c08749c7f959ad91114260b956a1bc2197d82dec5b8598a",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/companions/ember-cohort.glb",
+      "bytes": 3474708,
+      "sha256": "eb1d685c923592f1aef8bf8985963dc0f323b924271cbc036f81635e49ab4e05",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 28,
+        "meshes": 2,
+        "primitives": 2,
+        "materials": 1,
+        "textures": 2,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.4176110625267029,
+            -0.0008088308968581259,
+            -0.9572147727012634
+          ],
+          "max": [
+            0.41756144165992737,
+            1.6619049310684204,
+            0.9517597556114197
+          ],
+          "size": [
+            0.8351725041866302,
+            1.6627137619652785,
+            1.908974528312683
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "companions/ember-cohort.glb",
+        "sourceSha256": "9c8321c34dfbdd968744b4671cbb51c494cc7fd22d95a15b63a634af597c83af",
+        "verifiedOutputSha256": "eb1d685c923592f1aef8bf8985963dc0f323b924271cbc036f81635e49ab4e05",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/companions/lantern-reaver.glb",
+      "bytes": 3502908,
+      "sha256": "72c5d084d192fa2bf10a5b8f489dbc52bc153350f5ae40a6200f09436cb7988e",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 28,
+        "meshes": 2,
+        "primitives": 2,
+        "materials": 1,
+        "textures": 2,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.793347179889679,
+            0.0012729119043797255,
+            -0.8639057278633118
+          ],
+          "max": [
+            0.7916020750999451,
+            1.910757303237915,
+            0.87409508228302
+          ],
+          "size": [
+            1.584949254989624,
+            1.9094843913335353,
+            1.7380008101463318
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "companions/lantern-reaver.glb",
+        "sourceSha256": "627912d14387054bf875b9e46600a28804e94925a28ccee346b6aa04f0cae1b1",
+        "verifiedOutputSha256": "72c5d084d192fa2bf10a5b8f489dbc52bc153350f5ae40a6200f09436cb7988e",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/companions/pack-warden.glb",
+      "bytes": 3523284,
+      "sha256": "dfb122d65b7b5d159a508e49ffa40933367eec1fbd71dc2ca226d070aa6b0eaf",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 28,
+        "meshes": 2,
+        "primitives": 2,
+        "materials": 1,
+        "textures": 2,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.955390214920044,
+            -0.0015209297416731715,
+            -0.6558825969696045
+          ],
+          "max": [
+            0.953521192073822,
+            1.6405705213546753,
+            0.649440348148346
+          ],
+          "size": [
+            1.908911406993866,
+            1.6420914510963485,
+            1.3053229451179504
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "companions/pack-warden.glb",
+        "sourceSha256": "dceda0d7f4d49f8775292fc15c38f4d85e43a90a52ccc71b78ffb6d5a5f1d003",
+        "verifiedOutputSha256": "dfb122d65b7b5d159a508e49ffa40933367eec1fbd71dc2ca226d070aa6b0eaf",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/companions/requiem-warden.glb",
+      "bytes": 3583716,
+      "sha256": "4aaf7015b1c31c9a911834f5586183743f3921aa962462f5158623b5722c33d2",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 28,
+        "meshes": 2,
+        "primitives": 2,
+        "materials": 1,
+        "textures": 2,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.6933367252349854,
+            0.0010689820628613234,
+            -0.4416600167751312
+          ],
+          "max": [
+            0.6949920058250427,
+            1.9034874439239502,
+            0.43737930059432983
+          ],
+          "size": [
+            1.388328731060028,
+            1.9024184618610889,
+            0.8790393173694611
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "companions/requiem-warden.glb",
+        "sourceSha256": "8b15e8d11ae0e4ac1cc6da0ad37180b2e95220cab40bd96b4b16ff9a59260017",
+        "verifiedOutputSha256": "4aaf7015b1c31c9a911834f5586183743f3921aa962462f5158623b5722c33d2",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/companions/rift-lens.glb",
+      "bytes": 3458788,
+      "sha256": "1092f59cbaff5e5fbb59c93f2fe52aacb33465ced188d4978f0b23f5e186fe63",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 28,
+        "meshes": 2,
+        "primitives": 2,
+        "materials": 1,
+        "textures": 2,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.7399759292602539,
+            0.00010964581451844424,
+            -0.4575004279613495
+          ],
+          "max": [
+            0.7371617555618286,
+            1.9018068313598633,
+            0.4583001732826233
+          ],
+          "size": [
+            1.4771376848220825,
+            1.9016971855453448,
+            0.9158006012439728
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "companions/rift-lens.glb",
+        "sourceSha256": "ab0698f55957687c728bc497c6ea279bb77713cb8d7b2d9ed5df13cc8ac54af0",
+        "verifiedOutputSha256": "1092f59cbaff5e5fbb59c93f2fe52aacb33465ced188d4978f0b23f5e186fe63",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/companions/throne-echo.glb",
+      "bytes": 3614184,
+      "sha256": "2282353114f74670ec60321b0f95f2ab537244d1289ef8d923cd9aba8a7c40a6",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 28,
+        "meshes": 2,
+        "primitives": 2,
+        "materials": 1,
+        "textures": 2,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.6365370154380798,
+            0.0005715204169973731,
+            -0.5892153978347778
+          ],
+          "max": [
+            0.6448342800140381,
+            1.902535319328308,
+            0.5890503525733948
+          ],
+          "size": [
+            1.281371295452118,
+            1.9019637989113107,
+            1.1782657504081726
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "companions/throne-echo.glb",
+        "sourceSha256": "00b95512ef683cbff86e176b7508a869bf3ff986016bc4937ce841dd6e132fc9",
+        "verifiedOutputSha256": "2282353114f74670ec60321b0f95f2ab537244d1289ef8d923cd9aba8a7c40a6",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/props/abyss-blade.glb",
+      "bytes": 61604,
+      "sha256": "49e361ee1ea943d11b87c66d2bc1b9aee3f593609ca7652a7af3d1583decd6bf",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 6,
+        "meshes": 5,
+        "primitives": 5,
+        "materials": 2,
+        "textures": 4,
+        "images": 3,
+        "accessorBounds": {
+          "min": [
+            -0.2150000035762787,
+            -0.5799999237060547,
+            -0.2150000035762787
+          ],
+          "max": [
+            0.2150000035762787,
+            0.5799999237060547,
+            0.2150000035762787
+          ],
+          "size": [
+            0.4300000071525574,
+            1.1599998474121094,
+            0.4300000071525574
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "props/abyss-blade.glb",
+        "sourceSha256": "3875b6f28555fe6e314d8e3192665fa2ba93e0feeb8834b063a3cca96263525b",
+        "verifiedOutputSha256": "49e361ee1ea943d11b87c66d2bc1b9aee3f593609ca7652a7af3d1583decd6bf",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+      "bytes": 2462148,
+      "sha256": "de9f2126194ec006020b741168d32a1bbb24432b149747909bf41660ac813bc5",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 6,
+        "meshes": 5,
+        "primitives": 5,
+        "materials": 3,
+        "textures": 6,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
+          "max": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "size": [
+            1,
+            1,
+            1
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "props/abyssal-banner.glb",
+        "sourceSha256": "b90a36bb63957836bc3e0dac163a3178a169d41aa1ea01b20a79edf8187db549",
+        "verifiedOutputSha256": "de9f2126194ec006020b741168d32a1bbb24432b149747909bf41660ac813bc5",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/props/arc-caster.glb",
+      "bytes": 109760,
+      "sha256": "c4453f6764651e234b66e75a32b60072708907e45c962e5933b2ab1e2bfc222a",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 6,
+        "meshes": 5,
+        "primitives": 5,
+        "materials": 2,
+        "textures": 4,
+        "images": 3,
+        "accessorBounds": {
+          "min": [
+            -0.2849999964237213,
+            -0.2800000011920929,
+            -0.2849999964237213
+          ],
+          "max": [
+            0.2849999964237213,
+            0.2800000011920929,
+            0.2849999964237213
+          ],
+          "size": [
+            0.5699999928474426,
+            0.5600000023841858,
+            0.5699999928474426
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "props/arc-caster.glb",
+        "sourceSha256": "c2ec1463e11987a083aa21160a37b096e84bfa165bc3139d9a08236b7204fe3c",
+        "verifiedOutputSha256": "c4453f6764651e234b66e75a32b60072708907e45c962e5933b2ab1e2bfc222a",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/props/bulwark-brand.glb",
+      "bytes": 2476888,
+      "sha256": "1f6afa4bf8d730580a5d136092709db527d8201994377913d7d52057b8f9359b",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 4,
+        "meshes": 3,
+        "primitives": 3,
+        "materials": 3,
+        "textures": 6,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.2199999988079071,
+            -0.07000000029802322,
+            -0.2199999988079071
+          ],
+          "max": [
+            0.2199999988079071,
+            0.07000000029802322,
+            0.2199999988079071
+          ],
+          "size": [
+            0.4399999976158142,
+            0.14000000059604645,
+            0.4399999976158142
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "props/bulwark-brand.glb",
+        "sourceSha256": "3a655a876d31f35d16ff37652a01b164958366ea402bb33b8ce3530b7d39e616",
+        "verifiedOutputSha256": "1f6afa4bf8d730580a5d136092709db527d8201994377913d7d52057b8f9359b",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/props/choir-ward-crystal.glb",
+      "bytes": 2447644,
+      "sha256": "1965e99fe04325d34a1dc7eedd20e54bbd11d95e8957b4046c3261fd33e12aea",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 4,
+        "meshes": 3,
+        "primitives": 3,
+        "materials": 2,
+        "textures": 4,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.12124355137348175,
+            -0.11999999731779099,
+            -0.14000000059604645
+          ],
+          "max": [
+            0.12124355137348175,
+            0.11999999731779099,
+            0.14000000059604645
+          ],
+          "size": [
+            0.2424871027469635,
+            0.23999999463558197,
+            0.2800000011920929
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "props/choir-ward-crystal.glb",
+        "sourceSha256": "1f070316b4af53bf07cab40a7d8c6c3a9bad3c849f302fa8634c2ddef58f6a9d",
+        "verifiedOutputSha256": "1965e99fe04325d34a1dc7eedd20e54bbd11d95e8957b4046c3261fd33e12aea",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/props/stillwater-hourglass.glb",
+      "bytes": 2471708,
+      "sha256": "18f925aa9402bd73f0ba5f8079731961d10c99c1281a0a0c68df79dc4520583a",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 8,
+        "meshes": 7,
+        "primitives": 7,
+        "materials": 3,
+        "textures": 6,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.17119018733501434,
+            -0.25,
+            -0.18000000715255737
+          ],
+          "max": [
+            0.17119018733501434,
+            0.25,
+            0.18000000715255737
+          ],
+          "size": [
+            0.3423803746700287,
+            0.5,
+            0.36000001430511475
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "props/stillwater-hourglass.glb",
+        "sourceSha256": "82d3f4195d04341a54a2e356475a9022ff9affbb7aedc53c0b09ff5822b79eb8",
+        "verifiedOutputSha256": "18f925aa9402bd73f0ba5f8079731961d10c99c1281a0a0c68df79dc4520583a",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb",
+      "bytes": 13017648,
+      "sha256": "8a92a6e2ac96eb66086e0a43bc5d470f50e3c9908690e3ff4028d80d386d3c9f",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "materials": 1,
+        "textures": 3,
+        "images": 3,
+        "accessorBounds": {
+          "min": [
+            -0.6280620098114014,
+            0,
+            -0.6450229287147522
+          ],
+          "max": [
+            0.6346259713172913,
+            1.8932409286499023,
+            0.5890330672264099
+          ],
+          "size": [
+            1.2626879811286926,
+            1.8932409286499023,
+            1.234055995941162
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "props/tide-lock-beacon-rodin.glb",
+        "sourceSha256": "8a92a6e2ac96eb66086e0a43bc5d470f50e3c9908690e3ff4028d80d386d3c9f",
+        "verifiedOutputSha256": "8a92a6e2ac96eb66086e0a43bc5d470f50e3c9908690e3ff4028d80d386d3c9f",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/props/warden-lantern.glb",
+      "bytes": 2486204,
+      "sha256": "575bf08deca84a5fd4d0ed5bb783a5987e58067ca8c0b925cdbd4d7477c1d6b2",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 5,
+        "meshes": 4,
+        "primitives": 4,
+        "materials": 4,
+        "textures": 8,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -0.12999999523162842,
+            -0.1599999964237213,
+            -0.12999999523162842
+          ],
+          "max": [
+            0.12999999523162842,
+            0.1599999964237213,
+            0.12999999523162842
+          ],
+          "size": [
+            0.25999999046325684,
+            0.3199999928474426,
+            0.25999999046325684
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json",
+        "candidateRelativePath": "props/warden-lantern.glb",
+        "sourceSha256": "3c9f526bc40f808b3a9c4014256a5fa0052af90252d4f0f7d99f5cb80d0e3191",
+        "verifiedOutputSha256": "575bf08deca84a5fd4d0ed5bb783a5987e58067ca8c0b925cdbd4d7477c1d6b2",
+        "auditStatus": "ok"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/terrain/abyss-chancel.glb",
+      "bytes": 5383356,
+      "sha256": "8c96560cef0eece6061d98a5860a66c8142df83fd6e62c051a6eab7807d3a6fc",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 125,
+        "meshes": 124,
+        "primitives": 124,
+        "materials": 4,
+        "textures": 8,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -2.7447168827056885,
+            -1.649999976158142,
+            -2.7447168827056885
+          ],
+          "max": [
+            2.7447168827056885,
+            1.649999976158142,
+            2.7447168827056885
+          ],
+          "size": [
+            5.489433765411377,
+            3.299999952316284,
+            5.489433765411377
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "assets/images/battle/glb/terrain/build-provenance.json",
+        "outputPath": "assets/images/battle/glb/terrain/abyss-chancel.glb",
+        "verifiedOutputSha256": "8c96560cef0eece6061d98a5860a66c8142df83fd6e62c051a6eab7807d3a6fc"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/terrain/cinder-span.glb",
+      "bytes": 5169332,
+      "sha256": "945cbea57b08b4f3faa11975dea48e65e54c32004cb2195135c5d9da0f40fa6e",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 71,
+        "meshes": 70,
+        "primitives": 70,
+        "materials": 4,
+        "textures": 8,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -2.25,
+            -1.4500000476837158,
+            -2.4000000953674316
+          ],
+          "max": [
+            2.25,
+            1.4500000476837158,
+            2.4000000953674316
+          ],
+          "size": [
+            4.5,
+            2.9000000953674316,
+            4.800000190734863
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "assets/images/battle/glb/terrain/build-provenance.json",
+        "outputPath": "assets/images/battle/glb/terrain/cinder-span.glb",
+        "verifiedOutputSha256": "945cbea57b08b4f3faa11975dea48e65e54c32004cb2195135c5d9da0f40fa6e"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/terrain/echo-throne-steps.glb",
+      "bytes": 5454524,
+      "sha256": "31c2cb58f8a1aacc65af6c80ff6dd94aff02069a12bc18ad343a394b18b7a5a3",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 124,
+        "meshes": 123,
+        "primitives": 123,
+        "materials": 4,
+        "textures": 8,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -1.6317169666290283,
+            -2.049999952316284,
+            -3.6500000953674316
+          ],
+          "max": [
+            1.6317169666290283,
+            2.049999952316284,
+            3.6500000953674316
+          ],
+          "size": [
+            3.2634339332580566,
+            4.099999904632568,
+            7.300000190734863
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "assets/images/battle/glb/terrain/build-provenance.json",
+        "outputPath": "assets/images/battle/glb/terrain/echo-throne-steps.glb",
+        "verifiedOutputSha256": "31c2cb58f8a1aacc65af6c80ff6dd94aff02069a12bc18ad343a394b18b7a5a3"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+      "bytes": 5475256,
+      "sha256": "c89e7b6e92664cfc6da3486579b0cae331ef3656be676a03be30bdc7f884489c",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 109,
+        "meshes": 108,
+        "primitives": 108,
+        "materials": 4,
+        "textures": 8,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -2.154716968536377,
+            -2.200000047683716,
+            -2.700000047683716
+          ],
+          "max": [
+            2.154716968536377,
+            2.200000047683716,
+            2.700000047683716
+          ],
+          "size": [
+            4.309433937072754,
+            4.400000095367432,
+            5.400000095367432
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "assets/images/battle/glb/terrain/build-provenance.json",
+        "outputPath": "assets/images/battle/glb/terrain/gate-zenith.glb",
+        "verifiedOutputSha256": "c89e7b6e92664cfc6da3486579b0cae331ef3656be676a03be30bdc7f884489c"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/terrain/glass-necropolis.glb",
+      "bytes": 5137524,
+      "sha256": "a1fa94dd0d9639c10b84c7491adef81387a396f31e6e813cd3e5b702d6d6858b",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 96,
+        "meshes": 95,
+        "primitives": 95,
+        "materials": 4,
+        "textures": 8,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -1.494717001914978,
+            -1.7999999523162842,
+            -1.494717001914978
+          ],
+          "max": [
+            1.494717001914978,
+            1.7999999523162842,
+            1.494717001914978
+          ],
+          "size": [
+            2.989434003829956,
+            3.5999999046325684,
+            2.989434003829956
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "assets/images/battle/glb/terrain/build-provenance.json",
+        "outputPath": "assets/images/battle/glb/terrain/glass-necropolis.glb",
+        "verifiedOutputSha256": "a1fa94dd0d9639c10b84c7491adef81387a396f31e6e813cd3e5b702d6d6858b"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/terrain/howling-sprawl.glb",
+      "bytes": 4932208,
+      "sha256": "f15d95ea600c72b2bdbbadb5be654fdd380041b8975c7b3e463077edfc3502d3",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 51,
+        "meshes": 50,
+        "primitives": 50,
+        "materials": 4,
+        "textures": 8,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -1.7999999523162842,
+            -1.7999999523162842,
+            -1.649999976158142
+          ],
+          "max": [
+            1.7999999523162842,
+            1.7999999523162842,
+            1.649999976158142
+          ],
+          "size": [
+            3.5999999046325684,
+            3.5999999046325684,
+            3.299999952316284
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "assets/images/battle/glb/terrain/build-provenance.json",
+        "outputPath": "assets/images/battle/glb/terrain/howling-sprawl.glb",
+        "verifiedOutputSha256": "f15d95ea600c72b2bdbbadb5be654fdd380041b8975c7b3e463077edfc3502d3"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/terrain/shattered-causeway.glb",
+      "bytes": 5274360,
+      "sha256": "8ffe7c2910e4185af57d4e7c31dd8add1048ed2c41b1c7db4a6e5c4cecb05643",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 86,
+        "meshes": 85,
+        "primitives": 85,
+        "materials": 4,
+        "textures": 8,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -1.7999999523162842,
+            -1.350000023841858,
+            -2.549999952316284
+          ],
+          "max": [
+            1.7999999523162842,
+            1.350000023841858,
+            2.549999952316284
+          ],
+          "size": [
+            3.5999999046325684,
+            2.700000047683716,
+            5.099999904632568
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "assets/images/battle/glb/terrain/build-provenance.json",
+        "outputPath": "assets/images/battle/glb/terrain/shattered-causeway.glb",
+        "verifiedOutputSha256": "8ffe7c2910e4185af57d4e7c31dd8add1048ed2c41b1c7db4a6e5c4cecb05643"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/terrain/starless-canal.glb",
+      "bytes": 5177572,
+      "sha256": "4ff508ea04cb20ed738ed3fb69bae24f1031099f12e0a57cfd968acd6d8f87ac",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 88,
+        "meshes": 87,
+        "primitives": 87,
+        "materials": 6,
+        "textures": 12,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -1.0737169981002808,
+            -1.3600000143051147,
+            -1.0737169981002808
+          ],
+          "max": [
+            1.0737169981002808,
+            1.3600000143051147,
+            1.0737169981002808
+          ],
+          "size": [
+            2.1474339962005615,
+            2.7200000286102295,
+            2.1474339962005615
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "assets/images/battle/glb/terrain/build-provenance.json",
+        "outputPath": "assets/images/battle/glb/terrain/starless-canal.glb",
+        "verifiedOutputSha256": "4ff508ea04cb20ed738ed3fb69bae24f1031099f12e0a57cfd968acd6d8f87ac"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/terrain/sunken-bastion.glb",
+      "bytes": 5248824,
+      "sha256": "647b04784571dbe0cb4e26d539451efc6df54a39d9f45f9b69b9e535ee83ec06",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 108,
+        "meshes": 107,
+        "primitives": 107,
+        "materials": 4,
+        "textures": 8,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -1.7999999523162842,
+            -1.625,
+            -2.9000000953674316
+          ],
+          "max": [
+            1.7999999523162842,
+            1.625,
+            2.9000000953674316
+          ],
+          "size": [
+            3.5999999046325684,
+            3.25,
+            5.800000190734863
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "assets/images/battle/glb/terrain/build-provenance.json",
+        "outputPath": "assets/images/battle/glb/terrain/sunken-bastion.glb",
+        "verifiedOutputSha256": "647b04784571dbe0cb4e26d539451efc6df54a39d9f45f9b69b9e535ee83ec06"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    },
+    {
+      "path": "assets/images/battle/glb/terrain/veil-citadel.glb",
+      "bytes": 5450072,
+      "sha256": "4d86e8e108f939555cb0466df7786eac12ce7e4ba0370749bf3e9b9720110f7c",
+      "gltfVersion": "2.0",
+      "structure": {
+        "nodes": 108,
+        "meshes": 107,
+        "primitives": 107,
+        "materials": 4,
+        "textures": 8,
+        "images": 2,
+        "accessorBounds": {
+          "min": [
+            -2.4000000953674316,
+            -2.25,
+            -3.450000047683716
+          ],
+          "max": [
+            2.4000000953674316,
+            2.25,
+            3.450000047683716
+          ],
+          "size": [
+            4.800000190734863,
+            4.5,
+            6.900000095367432
+          ]
+        }
+      },
+      "provenance": {
+        "auditPath": "assets/images/battle/glb/terrain/build-provenance.json",
+        "outputPath": "assets/images/battle/glb/terrain/veil-citadel.glb",
+        "verifiedOutputSha256": "4d86e8e108f939555cb0466df7786eac12ce7e4ba0370749bf3e9b9720110f7c"
+      },
+      "checks": {
+        "exists": true,
+        "retainedRuntimeAsset": true,
+        "readableGlb2": true,
+        "buffersReadable": true,
+        "imagesReadable": true,
+        "allPrimitivesHavePosition": true,
+        "allPrimitivesHaveUv0": true,
+        "allPrimitivesHaveNormals": true,
+        "allPrimitivesHaveTexturedMaterials": true,
+        "accessorBoundsComplete": true,
+        "nonDegenerateBounds": true,
+        "verifiedProvenanceMatch": true
+      },
+      "issues": [],
+      "ok": true
+    }
+  ],
+  "issueCount": 0,
+  "issues": [],
+  "ok": true
+}

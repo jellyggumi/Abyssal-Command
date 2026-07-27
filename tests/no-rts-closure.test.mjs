@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { extname, resolve } from "node:path";
 import test from "node:test";
 
@@ -39,6 +39,7 @@ function trackedFiles() {
   return execFileSync("git", ["ls-files", "-co", "--exclude-standard", "-z"], { cwd: ROOT, encoding: "utf8" })
     .split("\0")
     .filter(Boolean)
+    .filter((path) => existsSync(resolve(ROOT, path)))
     .sort();
 }
 

@@ -1,0 +1,314 @@
+{
+  "cycle": "20260727-stage3-world-composition-v05",
+  "blenderVersion": "5.1.2",
+  "sourceBlend": "_workspace/20260726-stage1b-cinder-pressure-agency/blender/abyssal-surge-stage-gallery-v04.blend",
+  "outputBlend": "_workspace/20260726-stage1b-cinder-pressure-agency/blender/abyssal-surge-stage-worlds-v05.blend",
+  "catalogSource": "stage-world-catalog.js",
+  "assetStates": {
+    "source": "abyssal-surge-stage-worlds-v05.blend embeds reused terrain and linked prop/NPC source assets",
+    "candidate": "ten QA review renders under stage-worlds-v05; not runtime assets",
+    "runtime": "unchanged; no candidate GLB exported or promoted in this bounded pass"
+  },
+  "mcpRecovery": {
+    "liveInteractivePreservedAs": "_workspace/20260726-stage1b-cinder-pressure-agency/blender/abyssal-surge-stage-gallery-v04.blend",
+    "status": "timeout-after-leaked-socket-recovery; background CLI fallback authorized by parent"
+  },
+  "stages": [
+    {
+      "stageId": "cinder-span",
+      "collection": "STAGE::cinder-span",
+      "terrainSource": "reused-existing-gallery-terrain",
+      "components": {
+        "terrainMeshes": 25,
+        "blockers": 2,
+        "ramps": 1,
+        "landmark": "Ember Relay Spire",
+        "linkedPropSource": "assets/images/battle/glb/props/bulwark-brand.glb",
+        "linkedNpcSource": "assets/images/battle/glb/companions/ember-cohort.glb",
+        "lights": 2
+      },
+      "checks": {
+        "nonBlank": true,
+        "geometryNonEmpty": true,
+        "meshCount": 35,
+        "materialMeshCount": 28,
+        "uvMeshCount": 35,
+        "npcInsideMappedWalkableFootprint": true,
+        "npcMappedPosition": [
+          2.6562,
+          -1.7849
+        ]
+      },
+      "render": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-worlds-v05/cinder-span.png",
+      "renderBytes": 298367
+    },
+    {
+      "stageId": "veil-citadel",
+      "collection": "STAGE::veil-citadel",
+      "terrainSource": "reused-existing-gallery-terrain",
+      "components": {
+        "terrainMeshes": 25,
+        "blockers": 2,
+        "ramps": 1,
+        "landmark": "Veil Rampart",
+        "linkedPropSource": "assets/images/battle/glb/props/abyssal-banner.glb",
+        "linkedNpcSource": "assets/images/battle/glb/companions/rift-lens.glb",
+        "lights": 2
+      },
+      "checks": {
+        "nonBlank": true,
+        "geometryNonEmpty": true,
+        "meshCount": 37,
+        "materialMeshCount": 30,
+        "uvMeshCount": 37,
+        "npcInsideMappedWalkableFootprint": true,
+        "npcMappedPosition": [
+          20.8125,
+          -2.4953
+        ]
+      },
+      "render": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-worlds-v05/veil-citadel.png",
+      "renderBytes": 303662
+    },
+    {
+      "stageId": "echo-throne",
+      "collection": "STAGE::echo-throne",
+      "terrainSource": "reused-existing-gallery-terrain",
+      "components": {
+        "terrainMeshes": 21,
+        "blockers": 2,
+        "ramps": 1,
+        "landmark": "Throne Dais",
+        "linkedPropSource": "assets/images/battle/glb/props/choir-ward-crystal.glb",
+        "linkedNpcSource": "assets/images/battle/glb/companions/throne-echo.glb",
+        "lights": 2
+      },
+      "checks": {
+        "nonBlank": true,
+        "geometryNonEmpty": true,
+        "meshCount": 31,
+        "materialMeshCount": 24,
+        "uvMeshCount": 31,
+        "npcInsideMappedWalkableFootprint": true,
+        "npcMappedPosition": [
+          39.5938,
+          0.2804
+        ]
+      },
+      "render": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-worlds-v05/echo-throne.png",
+      "renderBytes": 279583
+    },
+    {
+      "stageId": "sunken-bastion",
+      "collection": "STAGE::sunken-bastion",
+      "terrainSource": "reused-existing-gallery-terrain",
+      "components": {
+        "terrainMeshes": 23,
+        "blockers": 2,
+        "ramps": 1,
+        "landmark": "Bastion Anchor",
+        "linkedPropSource": "assets/images/battle/glb/props/bulwark-brand.glb",
+        "linkedNpcSource": "assets/images/battle/glb/companions/anchor-shard.glb",
+        "lights": 2
+      },
+      "checks": {
+        "nonBlank": true,
+        "geometryNonEmpty": true,
+        "meshCount": 33,
+        "materialMeshCount": 26,
+        "uvMeshCount": 33,
+        "npcInsideMappedWalkableFootprint": true,
+        "npcMappedPosition": [
+          57.0208,
+          -1.5967
+        ]
+      },
+      "render": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-worlds-v05/sunken-bastion.png",
+      "renderBytes": 334157
+    },
+    {
+      "stageId": "howling-sprawl",
+      "collection": "STAGE::howling-sprawl",
+      "terrainSource": "reused-existing-gallery-terrain",
+      "components": {
+        "terrainMeshes": 23,
+        "blockers": 3,
+        "ramps": 1,
+        "landmark": "Sprawl Ridge",
+        "linkedPropSource": "assets/images/battle/glb/props/abyssal-banner.glb",
+        "linkedNpcSource": "assets/images/battle/glb/companions/pack-warden.glb",
+        "lights": 2
+      },
+      "checks": {
+        "nonBlank": true,
+        "geometryNonEmpty": true,
+        "meshCount": 36,
+        "materialMeshCount": 29,
+        "uvMeshCount": 36,
+        "npcInsideMappedWalkableFootprint": true,
+        "npcMappedPosition": [
+          74.2661,
+          -1.719
+        ]
+      },
+      "render": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-worlds-v05/howling-sprawl.png",
+      "renderBytes": 303843
+    },
+    {
+      "stageId": "glass-necropolis",
+      "collection": "STAGE::glass-necropolis",
+      "terrainSource": "reused-existing-gallery-terrain",
+      "components": {
+        "terrainMeshes": 23,
+        "blockers": 2,
+        "ramps": 1,
+        "landmark": "Glass Spire",
+        "linkedPropSource": "assets/images/battle/glb/props/choir-ward-crystal.glb",
+        "linkedNpcSource": "assets/images/battle/glb/companions/requiem-warden.glb",
+        "lights": 2
+      },
+      "checks": {
+        "nonBlank": true,
+        "geometryNonEmpty": true,
+        "meshCount": 33,
+        "materialMeshCount": 26,
+        "uvMeshCount": 33,
+        "npcInsideMappedWalkableFootprint": true,
+        "npcMappedPosition": [
+          3.125,
+          -17.8021
+        ]
+      },
+      "render": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-worlds-v05/glass-necropolis.png",
+      "renderBytes": 286826
+    },
+    {
+      "stageId": "starless-canal",
+      "collection": "STAGE::starless-canal",
+      "terrainSource": "reused-existing-gallery-terrain",
+      "components": {
+        "terrainMeshes": 25,
+        "blockers": 3,
+        "ramps": 1,
+        "landmark": "Canal Towpath",
+        "linkedPropSource": "assets/images/battle/glb/props/warden-lantern.glb",
+        "linkedNpcSource": "assets/images/battle/glb/companions/lantern-reaver.glb",
+        "lights": 2
+      },
+      "checks": {
+        "nonBlank": true,
+        "geometryNonEmpty": true,
+        "meshCount": 37,
+        "materialMeshCount": 30,
+        "uvMeshCount": 37,
+        "npcInsideMappedWalkableFootprint": true,
+        "npcMappedPosition": [
+          20.8125,
+          -15.6442
+        ]
+      },
+      "render": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-worlds-v05/starless-canal.png",
+      "renderBytes": 295388
+    },
+    {
+      "stageId": "shattered-causeway",
+      "collection": "STAGE::shattered-causeway",
+      "terrainSource": "reused-existing-gallery-terrain",
+      "components": {
+        "terrainMeshes": 23,
+        "blockers": 2,
+        "ramps": 1,
+        "landmark": "Causeway Keystone",
+        "linkedPropSource": "assets/images/battle/glb/props/abyss-blade.glb",
+        "linkedNpcSource": "assets/images/battle/glb/companions/ember-cohort.glb",
+        "lights": 2
+      },
+      "checks": {
+        "nonBlank": true,
+        "geometryNonEmpty": true,
+        "meshCount": 35,
+        "materialMeshCount": 28,
+        "uvMeshCount": 35,
+        "npcInsideMappedWalkableFootprint": true,
+        "npcMappedPosition": [
+          39.2292,
+          -15.3522
+        ]
+      },
+      "render": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-worlds-v05/shattered-causeway.png",
+      "renderBytes": 289182
+    },
+    {
+      "stageId": "abyss-chancel",
+      "collection": "STAGE::abyss-chancel",
+      "terrainSource": "reused-existing-gallery-terrain",
+      "components": {
+        "terrainMeshes": 23,
+        "blockers": 3,
+        "ramps": 1,
+        "landmark": "Chancel Apse",
+        "linkedPropSource": "assets/images/battle/glb/props/choir-ward-crystal.glb",
+        "linkedNpcSource": "assets/images/battle/glb/companions/requiem-warden.glb",
+        "lights": 2
+      },
+      "checks": {
+        "nonBlank": true,
+        "geometryNonEmpty": true,
+        "meshCount": 34,
+        "materialMeshCount": 27,
+        "uvMeshCount": 34,
+        "npcInsideMappedWalkableFootprint": true,
+        "npcMappedPosition": [
+          57.1702,
+          -17.3854
+        ]
+      },
+      "render": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-worlds-v05/abyss-chancel.png",
+      "renderBytes": 330288
+    },
+    {
+      "stageId": "gate-zenith",
+      "collection": "STAGE::gate-zenith",
+      "terrainSource": "reused-existing-gallery-terrain",
+      "components": {
+        "terrainMeshes": 25,
+        "blockers": 2,
+        "ramps": 1,
+        "landmark": "Zenith Crown",
+        "linkedPropSource": "assets/images/battle/glb/props/abyssal-banner.glb",
+        "linkedNpcSource": "assets/images/battle/glb/companions/dawnless-crown.glb",
+        "lights": 2
+      },
+      "checks": {
+        "nonBlank": true,
+        "geometryNonEmpty": true,
+        "meshCount": 37,
+        "materialMeshCount": 30,
+        "uvMeshCount": 37,
+        "npcInsideMappedWalkableFootprint": true,
+        "npcMappedPosition": [
+          75.5417,
+          -17.8021
+        ]
+      },
+      "render": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-worlds-v05/gate-zenith.png",
+      "renderBytes": 304869
+    }
+  ],
+  "allTenNonBlank": true,
+  "allNpcPlacementsInside": true,
+  "runtimePromotion": "none",
+  "contactSheet": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-worlds-v05-contact-sheet.png",
+  "visualInspection": {
+    "status": "passed",
+    "observed": "All ten labeled stage frames are non-blank and visually distinct; terrain, blockers/ramps, landmark accents, lighting, and NPC/character silhouettes are visible.",
+    "inspectedAt": "2026-07-27T00:18:54.004Z"
+  },
+  "rodinSubmission": {
+    "receipt": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/rodin-landmark-submission-v05.json",
+    "submissionId": "stage3-landmark-20260727-0918",
+    "status": "pending",
+    "generatedMesh": null,
+    "runtimePromotion": "none"
+  }
+}

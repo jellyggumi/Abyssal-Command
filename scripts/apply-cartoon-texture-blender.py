@@ -31,7 +31,7 @@ from pathlib import Path
 WORKSPACE = Path(
     os.environ.get(
         "ASSET_PIPELINE_WORKSPACE",
-        "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline",
+        "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline",
     )
 )
 RUNTIME_ROOT = Path("assets/images/battle/glb")
@@ -56,7 +56,7 @@ def parse_args(argv=None):
     parser.add_argument(
         "--out",
         default=None,
-        help="candidate GLB output (defaults under _workspace/20260726-stage2-balance-agency/engineering/asset-pipeline)",
+        help="candidate GLB output (defaults under _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline)",
     )
     parser.add_argument(
         "--report",
@@ -100,6 +100,7 @@ def _concept_provenance(texture):
     concept_roots = (
         Path("assets/images/battle/pilot"),
         WORKSPACE / "concept-input",
+        WORKSPACE / "texture-candidates",
     )
     if not any(_is_within(texture, root) for root in concept_roots):
         return None
@@ -140,7 +141,7 @@ def _validate_paths(args):
 
 
 def _lane_for_texture(texture):
-    if _is_within(texture, Path("assets/images/battle/pilot")) or _is_within(texture, WORKSPACE / "concept-input"):
+    if _is_within(texture, Path("assets/images/battle/pilot")) or _is_within(texture, WORKSPACE / "concept-input") or _is_within(texture, WORKSPACE / "texture-candidates"):
         return "concept"
     return "external-reference"
 
@@ -158,7 +159,7 @@ def _texture_report(texture):
 
 
 def _lane_for_texture(texture):
-    if _is_within(texture, Path("assets/images/battle/pilot")) or _is_within(texture, WORKSPACE / "concept-input"):
+    if _is_within(texture, Path("assets/images/battle/pilot")) or _is_within(texture, WORKSPACE / "concept-input") or _is_within(texture, WORKSPACE / "texture-candidates"):
         return "concept"
     return "external-reference"
 
@@ -182,7 +183,7 @@ def _base_report(args, source, texture, output, report, dry_run):
         "textureLane": _lane_for_texture(texture),
         "conceptLane": _lane_for_texture(texture),
         "runtimeLane": "assets/images/battle/glb",
-        "candidateLane": "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/runtime-candidates",
+        "candidateLane": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates",
         "runtimeEligible": False,
         "dryRun": bool(dry_run),
         "source": {"path": str(source), "sha256": source_hash, "readOnly": True},

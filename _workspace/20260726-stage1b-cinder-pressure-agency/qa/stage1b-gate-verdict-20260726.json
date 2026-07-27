@@ -1,0 +1,576 @@
+{
+  "schemaVersion": "stage1b-gate-verdict-v1",
+  "thresholds": {
+    "G2": "each archetype 9-11 explicit wins out of 20 canonical symmetric pairs; ties are not wins; 15 pressure rows each gateMinPct 55.0-80.0%, 0-3 defeats, and MEASURED boss TTK 5.95-8.05 seconds",
+    "G3": "BOSS_RALLY_COOLDOWN_REDUCTION=0, one TURRET FRONT, 50/50 post-switch damage conversions, at least one control COMPANION_DOWNED, combined control defeat rate <=20%, and legal combo maxEV/medianEV <=1.30",
+    "G6": "all full-app tiers and 30-minute soak p95 frame <=16.7ms, long-frame ratio <0.5%, input p95 <=100ms, stable soak memory; DOM <5000; telemetry, rollback, release-readiness, and UI-browser provenance complete",
+    "G7": "at least 14 voluntary re-entries out of 20 eligible decisions across 10 participants; every circuit 30-180 seconds inclusive with at least 3 unique canonical player actions and at least 1 ELITE_EXTRACTED reward event",
+    "G8": "five sourced titles with direct-feature count <=2/5 and ten first-exposure raw scores with median >=4.0/5"
+  },
+  "inputs": {
+    "symmetric": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage1b-symmetric-trials-20260726.json",
+      "digest": "sha256:fc878a614ec45469c573171a9021ddd058bbea42002440db8ef28576a22e78e8",
+      "readStatus": "READ"
+    },
+    "g3": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage1b-g3-stance-events-20260726.json",
+      "digest": "sha256:5e776b7be15fd5a1f1fa4f8ed72adee3d5ed41c8253885700ea4d7e03b6da1fb",
+      "readStatus": "READ"
+    },
+    "pressure": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage1b-pressure-packets-20260726.json",
+      "digest": "sha256:b72791bb1f22ffa52735f93c42e43d06fc1ef2e0b20bbf3ea664be64fa4eeb54",
+      "readStatus": "READ"
+    },
+    "persistence": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage1b-persistence-scenarios-20260726.json",
+      "digest": "sha256:e5f090af0ac3b61ede868e71ecb054dceba9cb88457bc19b98a33a74f491a33f",
+      "readStatus": "READ"
+    },
+    "g7": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/study/g7-session-observer-template.json",
+      "digest": "sha256:29091c0ab810a4ca6695f8a78fd8f97ef51e4ae5b621269e34c9bca463ee2cd4",
+      "readStatus": "READ"
+    },
+    "g8-survey": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/study/g8-direct-feature-survey-template.json",
+      "digest": "sha256:8f03850daf5570edf59786778f7408af99f4822243037fc277a2a49c1bd0b46a",
+      "readStatus": "READ"
+    },
+    "g8-impression": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/study/g8-impression-session-template.json",
+      "digest": "sha256:893caa36dc3863e5d3ef1f207335aa1d4906c241f0ea400d11f68706ebd59452",
+      "readStatus": "READ"
+    },
+    "g6-provenance": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-provenance-20260726.json",
+      "digest": "sha256:c923b0e40a0f534929bd1eb21ff7096de3e7efce4202dbfaa4ccd18bae2c700d",
+      "readStatus": "READ"
+    },
+    "g6-scenario": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-scenario-20260726.json",
+      "digest": "sha256:8c48acebaa213abaeaf362ecc780c8866b3dd9345bc1b8c5cd22c818a1a4231f",
+      "readStatus": "READ"
+    },
+    "g6-fullapp": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-fullapp-isolated-20260726.json",
+      "digest": "sha256:0e06b17599520b6b094fd1a9b7bfe0996f18c2967e5aa2947c5ae36e348fe083",
+      "readStatus": "READ"
+    },
+    "g6-leak": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-leak-20260726.json",
+      "digest": "sha256:d8a6c3f7e76cacaa5c14e3521b140b1d999923c2873dcd15e04c093bed439bdb",
+      "readStatus": "READ"
+    },
+    "g6-soak": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-soak-30m-isolated-20260726.json",
+      "digest": "sha256:9c64a98808f5cc35ce2a83aded0f0cfb08826663314563d309beb1f8d0b7da10",
+      "readStatus": "READ"
+    }
+  },
+  "readiness": {
+    "pressureInstrumentation": {
+      "verdict": "PASS",
+      "observed": {
+        "runCount": 15,
+        "expectedRunCount": 15,
+        "packetCount": 45
+      },
+      "source": {
+        "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage1b-pressure-packets-20260726.json",
+        "digest": "sha256:b72791bb1f22ffa52735f93c42e43d06fc1ef2e0b20bbf3ea664be64fa4eeb54",
+        "readStatus": "READ"
+      },
+      "rawEvidenceReferences": [],
+      "failures": []
+    },
+    "persistenceInstrumentation": {
+      "verdict": "PASS",
+      "observed": {
+        "scenarioCount": 3,
+        "acceptedHandoffs": 2
+      },
+      "source": {
+        "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage1b-persistence-scenarios-20260726.json",
+        "digest": "sha256:e5f090af0ac3b61ede868e71ecb054dceba9cb88457bc19b98a33a74f491a33f",
+        "readStatus": "READ"
+      },
+      "rawEvidenceReferences": [],
+      "failures": []
+    }
+  },
+  "gates": {
+    "G2": {
+      "verdict": "FAIL",
+      "observed": {
+        "threshold": {
+          "minimumWins": 9,
+          "maximumWins": 11,
+          "denominator": 20
+        },
+        "archetypes": [
+          {
+            "archetypeId": "bulwark",
+            "explicitWins": 4,
+            "ties": 0,
+            "denominator": 20
+          },
+          {
+            "archetypeId": "conductor",
+            "explicitWins": 14,
+            "ties": 0,
+            "denominator": 20
+          },
+          {
+            "archetypeId": "gambit",
+            "explicitWins": 7,
+            "ties": 0,
+            "denominator": 20
+          },
+          {
+            "archetypeId": "rift",
+            "explicitWins": 5,
+            "ties": 0,
+            "denominator": 20
+          },
+          {
+            "archetypeId": "striker",
+            "explicitWins": 20,
+            "ties": 0,
+            "denominator": 20
+          }
+        ],
+        "pressure": {
+          "gateMinPctRange": [
+            55,
+            80
+          ],
+          "defeats": 2,
+          "denominator": 15,
+          "allowedDefeats": [
+            0,
+            3
+          ],
+          "measuredBossTtks": 13,
+          "bossTtkSecondsRange": [
+            5.95,
+            8.05
+          ]
+        }
+      },
+      "source": {
+        "symmetric": {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage1b-symmetric-trials-20260726.json",
+          "digest": "sha256:fc878a614ec45469c573171a9021ddd058bbea42002440db8ef28576a22e78e8",
+          "readStatus": "READ"
+        },
+        "pressure": {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage1b-pressure-packets-20260726.json",
+          "digest": "sha256:b72791bb1f22ffa52735f93c42e43d06fc1ef2e0b20bbf3ea664be64fa4eeb54",
+          "readStatus": "READ"
+        }
+      },
+      "rawEvidenceReferences": [],
+      "failures": [
+        "G2: bulwark observed 4/20 explicit wins; required 9-11/20",
+        "G2: conductor observed 14/20 explicit wins; required 9-11/20",
+        "G2: gambit observed 7/20 explicit wins; required 9-11/20",
+        "G2: rift observed 5/20 explicit wins; required 9-11/20",
+        "G2: striker observed 20/20 explicit wins; required 9-11/20",
+        "G2: pressure row VANGUARD/401 gateMinPct 89.8 is outside 55.0-80.0",
+        "G2: pressure row VANGUARD/402 gateMinPct 99 is outside 55.0-80.0",
+        "G2: pressure row VANGUARD/403 gateMinPct 99 is outside 55.0-80.0",
+        "G2: pressure row VANGUARD/404 gateMinPct 87 is outside 55.0-80.0",
+        "G2: pressure row VANGUARD/405 gateMinPct 88 is outside 55.0-80.0",
+        "G2: pressure row TURRET/401 gateMinPct 88.6 is outside 55.0-80.0",
+        "G2: pressure row TURRET/402 gateMinPct 89 is outside 55.0-80.0",
+        "G2: pressure row TURRET/403 gateMinPct 87 is outside 55.0-80.0",
+        "G2: pressure row TURRET/404 gateMinPct 87 is outside 55.0-80.0",
+        "G2: pressure row TURRET/405 gateMinPct 88 is outside 55.0-80.0",
+        "G2: pressure row SPLIT/401 gateMinPct 49.6 is outside 55.0-80.0",
+        "G2: pressure row SPLIT/402 gateMinPct 0 is outside 55.0-80.0",
+        "G2: pressure row SPLIT/402 boss TTK is NOT_SPAWNED_DEFEAT/null; required MEASURED and 5.95-8.05 seconds",
+        "G2: pressure row SPLIT/403 gateMinPct 0 is outside 55.0-80.0",
+        "G2: pressure row SPLIT/403 boss TTK is NOT_SPAWNED_DEFEAT/null; required MEASURED and 5.95-8.05 seconds"
+      ]
+    },
+    "G3": {
+      "verdict": "FAIL",
+      "observed": {
+        "legalCombo": {
+          "sampleCount": 5,
+          "maxEV": 2040,
+          "medianEV": 1200,
+          "maxOverMedian": 1.7,
+          "thresholdMaximumInclusive": 1.3
+        },
+        "attribution": {
+          "rallyToTurret": 50,
+          "vanguardControls": 50,
+          "splitControls": 50,
+          "exposed": 0,
+          "notExposed": 50,
+          "zeroDamageConversions": 50,
+          "turretFrontCounts": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "controlCompanionsDowned": 0,
+          "controlDefeats": 12,
+          "controlDefeatRate": 0.12,
+          "controlDefeatRateMaximumInclusive": 0.2,
+          "bossRallyCooldownReductionsBp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "source": {
+        "symmetric": {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage1b-symmetric-trials-20260726.json",
+          "digest": "sha256:fc878a614ec45469c573171a9021ddd058bbea42002440db8ef28576a22e78e8",
+          "readStatus": "READ"
+        },
+        "phaseAttribution": {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage1b-g3-stance-events-20260726.json",
+          "digest": "sha256:5e776b7be15fd5a1f1fa4f8ed72adee3d5ed41c8253885700ea4d7e03b6da1fb",
+          "readStatus": "READ"
+        }
+      },
+      "rawEvidenceReferences": [],
+      "failures": [
+        "G3: 50/50 rally-to-TURRET conversions had zero post-switch damage",
+        "G3: VANGUARD+SPLIT controls observed no COMPANION_DOWNED event",
+        "G3: recomputed maxEV/medianEV 1.7 exceeds 1.30"
+      ]
+    },
+    "G5": {
+      "verdict": "N_A",
+      "observed": {
+        "monetizationSurfaceIntroduced": false
+      },
+      "source": null,
+      "rawEvidenceReferences": [],
+      "failures": []
+    },
+    "G6": {
+      "verdict": "FAIL",
+      "observed": {
+        "fullappTiers": [
+          {
+            "tier": "desktop-m2pro-dsf1",
+            "frameDeltaP95Ms": 16.8,
+            "longFrameRatio": 0.00196,
+            "inputP95Ms": 0.4,
+            "domNodes": 100
+          },
+          {
+            "tier": "shipped-mobile-dsf2",
+            "frameDeltaP95Ms": 16.7,
+            "longFrameRatio": 0.0014,
+            "inputP95Ms": 0.3,
+            "domNodes": 100
+          },
+          {
+            "tier": "midtier-mobile-proxy-dsf2-cpu4x",
+            "frameDeltaP95Ms": 33.3,
+            "longFrameRatio": 0.02106,
+            "inputP95Ms": 1.7,
+            "domNodes": 103
+          },
+          {
+            "tier": "low-mobile-proxy-dsf2-cpu6x",
+            "frameDeltaP95Ms": 50,
+            "longFrameRatio": 0.19329,
+            "inputP95Ms": 2.7,
+            "domNodes": 109
+          }
+        ],
+        "scenarioTierCount": 3,
+        "measurementIsolation": {
+          "fullapp": true,
+          "soak": true
+        },
+        "soak": {
+          "actualDurationMs": 1807155,
+          "frameDeltaP95Ms": 16.7,
+          "longFrameRatio": 0.000903,
+          "inputP95Ms": 2.3,
+          "heapSlopeMiBPerMin": 0.1138,
+          "memoryStable": false,
+          "memorySignals": {
+            "explicit": null,
+            "status": null,
+            "slope": false,
+            "contradictory": false
+          }
+        },
+        "supplementalLeak": {
+          "supplied": true,
+          "generations": 40
+        },
+        "thresholds": {
+          "frameDeltaP95MsMaximumInclusive": 16.7,
+          "longFrameRatioMaximumExclusive": 0.005,
+          "inputP95MsMaximumInclusive": 100,
+          "domNodesMaximumExclusive": 5000,
+          "soakDurationMsMinimumInclusive": 1800000
+        }
+      },
+      "source": {
+        "provenance": {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-provenance-20260726.json",
+          "digest": "sha256:c923b0e40a0f534929bd1eb21ff7096de3e7efce4202dbfaa4ccd18bae2c700d",
+          "readStatus": "READ"
+        },
+        "scenario": {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-scenario-20260726.json",
+          "digest": "sha256:8c48acebaa213abaeaf362ecc780c8866b3dd9345bc1b8c5cd22c818a1a4231f",
+          "readStatus": "READ"
+        },
+        "fullapp": {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-fullapp-isolated-20260726.json",
+          "digest": "sha256:0e06b17599520b6b094fd1a9b7bfe0996f18c2967e5aa2947c5ae36e348fe083",
+          "readStatus": "READ"
+        },
+        "leak": {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-leak-20260726.json",
+          "digest": "sha256:d8a6c3f7e76cacaa5c14e3521b140b1d999923c2873dcd15e04c093bed439bdb",
+          "readStatus": "READ"
+        },
+        "soak": {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-soak-30m-isolated-20260726.json",
+          "digest": "sha256:9c64a98808f5cc35ce2a83aded0f0cfb08826663314563d309beb1f8d0b7da10",
+          "readStatus": "READ"
+        }
+      },
+      "rawEvidenceReferences": [
+        {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-telemetry-contract-20260726.tap",
+          "digest": "sha256:8544cad04d5567a65d8504b074aa31dbb7b8c1c17fe7211d5052c9407a48f8b3",
+          "kind": "telemetry-contract"
+        },
+        {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-ui-browser-gate-20260726.json",
+          "digest": "sha256:df1e5f551b9f12983c42bcdf4dd31edac5e3a9e6fc8cdd1f9c9800ed2bc79e67",
+          "kind": "ui-browser-gate"
+        }
+      ],
+      "failures": [
+        "G6: rollback-runbook verified provenance with path and sha256 digest is missing",
+        "G6: release-readiness verified provenance with path and sha256 digest is missing",
+        "G6: full-app tier desktop-m2pro-dsf1 frameDeltaMs.p95 16.8 exceeds 16.7ms",
+        "G6: full-app tier midtier-mobile-proxy-dsf2-cpu4x frameDeltaMs.p95 33.3 exceeds 16.7ms",
+        "G6: full-app tier midtier-mobile-proxy-dsf2-cpu4x longFrameRatio 0.02106 is not below 0.005",
+        "G6: full-app tier low-mobile-proxy-dsf2-cpu6x frameDeltaMs.p95 50 exceeds 16.7ms",
+        "G6: full-app tier low-mobile-proxy-dsf2-cpu6x longFrameRatio 0.19329 is not below 0.005",
+        "G6: soak heap slope/status does not establish stable memory (0.1138 MiB/min)"
+      ]
+    },
+    "G7": {
+      "verdict": "BLOCKED",
+      "observed": {
+        "voluntaryReentries": 0,
+        "eligibleDecisions": 0,
+        "participants": 0,
+        "durationRangeSeconds": [
+          30,
+          180
+        ],
+        "minimumPlayerActionsPerDecision": 3,
+        "minimumRewardEventsPerDecision": 1,
+        "playerActionCounts": [],
+        "rewardEventCounts": []
+      },
+      "source": {
+        "path": "_workspace/20260726-stage1b-cinder-pressure-agency/study/g7-session-observer-template.json",
+        "digest": "sha256:29091c0ab810a4ca6695f8a78fd8f97ef51e4ae5b621269e34c9bca463ee2cd4",
+        "readStatus": "READ"
+      },
+      "rawEvidenceReferences": [],
+      "failures": [
+        "G7: artifact status MISSING does not authorize evaluation",
+        "G7: canonical study metadata, 10 participants, or 20 decisions are missing"
+      ]
+    },
+    "G8": {
+      "verdict": "BLOCKED",
+      "observed": {
+        "survey": {
+          "directFeatureCount": 0,
+          "titleCount": 0,
+          "denominator": 5,
+          "thresholdMaximum": 2
+        },
+        "impression": {
+          "scoreCount": 0,
+          "median": null,
+          "denominator": 10,
+          "thresholdMinimum": 4
+        }
+      },
+      "source": {
+        "survey": {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/study/g8-direct-feature-survey-template.json",
+          "digest": "sha256:8f03850daf5570edf59786778f7408af99f4822243037fc277a2a49c1bd0b46a",
+          "readStatus": "READ"
+        },
+        "impression": {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/study/g8-impression-session-template.json",
+          "digest": "sha256:893caa36dc3863e5d3ef1f207335aa1d4906c241f0ea400d11f68706ebd59452",
+          "readStatus": "READ"
+        }
+      },
+      "rawEvidenceReferences": [],
+      "components": {
+        "survey": "BLOCKED",
+        "impression": "BLOCKED"
+      },
+      "failures": [
+        "G8 survey: artifact status MISSING does not authorize evaluation",
+        "G8 survey: canonical five-title collection is incomplete",
+        "G8 impression: artifact status MISSING does not authorize evaluation",
+        "G8 impression: canonical question, scale, or collection timestamp is missing or invalid",
+        "G8 impression: canonical ten-person first-exposure study is incomplete"
+      ]
+    }
+  },
+  "overallDisposition": "BLOCKED",
+  "failures": [
+    "G2: G2: bulwark observed 4/20 explicit wins; required 9-11/20",
+    "G2: G2: conductor observed 14/20 explicit wins; required 9-11/20",
+    "G2: G2: gambit observed 7/20 explicit wins; required 9-11/20",
+    "G2: G2: rift observed 5/20 explicit wins; required 9-11/20",
+    "G2: G2: striker observed 20/20 explicit wins; required 9-11/20",
+    "G2: G2: pressure row VANGUARD/401 gateMinPct 89.8 is outside 55.0-80.0",
+    "G2: G2: pressure row VANGUARD/402 gateMinPct 99 is outside 55.0-80.0",
+    "G2: G2: pressure row VANGUARD/403 gateMinPct 99 is outside 55.0-80.0",
+    "G2: G2: pressure row VANGUARD/404 gateMinPct 87 is outside 55.0-80.0",
+    "G2: G2: pressure row VANGUARD/405 gateMinPct 88 is outside 55.0-80.0",
+    "G2: G2: pressure row TURRET/401 gateMinPct 88.6 is outside 55.0-80.0",
+    "G2: G2: pressure row TURRET/402 gateMinPct 89 is outside 55.0-80.0",
+    "G2: G2: pressure row TURRET/403 gateMinPct 87 is outside 55.0-80.0",
+    "G2: G2: pressure row TURRET/404 gateMinPct 87 is outside 55.0-80.0",
+    "G2: G2: pressure row TURRET/405 gateMinPct 88 is outside 55.0-80.0",
+    "G2: G2: pressure row SPLIT/401 gateMinPct 49.6 is outside 55.0-80.0",
+    "G2: G2: pressure row SPLIT/402 gateMinPct 0 is outside 55.0-80.0",
+    "G2: G2: pressure row SPLIT/402 boss TTK is NOT_SPAWNED_DEFEAT/null; required MEASURED and 5.95-8.05 seconds",
+    "G2: G2: pressure row SPLIT/403 gateMinPct 0 is outside 55.0-80.0",
+    "G2: G2: pressure row SPLIT/403 boss TTK is NOT_SPAWNED_DEFEAT/null; required MEASURED and 5.95-8.05 seconds",
+    "G3: G3: 50/50 rally-to-TURRET conversions had zero post-switch damage",
+    "G3: G3: VANGUARD+SPLIT controls observed no COMPANION_DOWNED event",
+    "G3: G3: recomputed maxEV/medianEV 1.7 exceeds 1.30",
+    "G6: G6: rollback-runbook verified provenance with path and sha256 digest is missing",
+    "G6: G6: release-readiness verified provenance with path and sha256 digest is missing",
+    "G6: G6: full-app tier desktop-m2pro-dsf1 frameDeltaMs.p95 16.8 exceeds 16.7ms",
+    "G6: G6: full-app tier midtier-mobile-proxy-dsf2-cpu4x frameDeltaMs.p95 33.3 exceeds 16.7ms",
+    "G6: G6: full-app tier midtier-mobile-proxy-dsf2-cpu4x longFrameRatio 0.02106 is not below 0.005",
+    "G6: G6: full-app tier low-mobile-proxy-dsf2-cpu6x frameDeltaMs.p95 50 exceeds 16.7ms",
+    "G6: G6: full-app tier low-mobile-proxy-dsf2-cpu6x longFrameRatio 0.19329 is not below 0.005",
+    "G6: G6: soak heap slope/status does not establish stable memory (0.1138 MiB/min)",
+    "G7: G7: artifact status MISSING does not authorize evaluation",
+    "G7: G7: canonical study metadata, 10 participants, or 20 decisions are missing",
+    "G8: G8 survey: artifact status MISSING does not authorize evaluation",
+    "G8: G8 survey: canonical five-title collection is incomplete",
+    "G8: G8 impression: artifact status MISSING does not authorize evaluation",
+    "G8: G8 impression: canonical question, scale, or collection timestamp is missing or invalid",
+    "G8: G8 impression: canonical ten-person first-exposure study is incomplete"
+  ]
+}

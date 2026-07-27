@@ -4,7 +4,7 @@
  */
 import * as Catalog from "./defense-catalog.js";
 import {
-  ARENA, AUDIO_CUES, BOSSES, COMMANDER, COMPANIONS, CUTSCENES, ENEMIES,
+  ARENA, AUDIO_CUES, BOSSES, COMMANDER, COMPANION_AUTONOMY, COMPANIONS, CUTSCENES, ENEMIES,
   GATE, ITEMS, MEASUREMENT_PROFILES, OCTANT_VECTORS, REWARDS, SKILLS, STAGE_BY_ID, STAGE_ITEM_IDS,
   STAGE_REWARD_IDS, TARGET_PRIORITY, TICK_RATE, XP_GROWTH
 } from "./defense-catalog.js";
@@ -13,6 +13,7 @@ import {
   deriveWardenRuntimeStats, deriveCompanionRuntimeStats, companionFormationIntegrity,
   FORMATION_STANCES, orderCompanionsByFormationIntent, STANCE_CONFIG,
 } from "./rpg-catalog.js";
+import { stageWorldFor } from "./stage-world-catalog.js";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const freeze = (value) => {
@@ -33,12 +34,183 @@ const stageFor = (stageId) => {
 };
 const validLoadout = (loadout) => [...new Set((Array.isArray(loadout) ? loadout : []).filter((id) => COMPANIONS[id]))].sort().slice(0, 3);
 const nextId = (run, prefix) => `${prefix}-${++run.nextId}`;
-const actor = (id, kind, x, y, hp, maxHp, extra = {}) => ({ id, kind, x, y, hp, maxHp, ...extra });
+const actor = (id, kind, x, y, hp, maxHp, extra = {}) => ({ id, kind, x, y, elevation: 0, hp, maxHp, ...extra });
 const sortedActors = (entries) => [...entries].sort((left, right) => left.id.localeCompare(right.id));
 const stageCutscene = (stage) => CUTSCENES[stage.id] || CUTSCENES.default;
 const eventCue = (name) => AUDIO_CUES[name]?.id || null;
-const SNAPSHOT_VERSION = 6;
-const EVENT_VERSION = 3;
+
+const worldForRun = (run) => stageWorldFor(run.stage.id);
+
+function terrainElevationAt(world, x, y) {
+  let elevation = 0;
+  for (const surface of world.gameplay.surfaces) {
+    const area = surface.bounds;
+    if (x < area.minX || x > area.maxX || y < area.minY || y > area.maxY) continue;
+    const axis = surface.elevation.axis;
+    const min = axis === "x" ? area.minX : area.minY;
+    const max = axis === "x" ? area.maxX : area.maxY;
+    const coordinate = clamp(axis === "x" ? x : y, min, max);
+    const span = max - min;
+    const height = span === 0
+      ? surface.elevation.atMax
+      : Math.round(surface.elevation.atMin
+        + (surface.elevation.atMax - surface.elevation.atMin) * (coordinate - min) / span);
+    elevation = Math.max(elevation, height);
+  }
+  return elevation;
+}
+
+function clampToWorld(world, entity, point) {
+  const bounds = world.gameplay.bounds;
+  const radius = Math.max(0, Math.trunc(entity.radius || 0));
+  return {
+    x: clamp(Math.round(point.x), bounds.minX + radius, bounds.maxX - radius),
+    y: clamp(Math.round(point.y), bounds.minY + radius, bounds.maxY - radius),
+  };
+}
+
+function insideObstacle(entity, point, obstacle) {
+  const radius = obstacle.footprint.radius + Math.max(0, Math.trunc(entity.radius || 0));
+  const dx = point.x - obstacle.footprint.x;
+  const dy = point.y - obstacle.footprint.y;
+  return dx * dx + dy * dy < radius * radius;
+}
+
+function pushOutsideObstacle(world, entity, point, obstacle) {
+  let placed = clampToWorld(world, entity, point);
+  if (!insideObstacle(entity, placed, obstacle)) return placed;
+  const radius = obstacle.footprint.radius + Math.max(0, Math.trunc(entity.radius || 0));
+  const dx = placed.x - obstacle.footprint.x;
+  const dy = placed.y - obstacle.footprint.y;
+  const distance = Math.hypot(dx, dy);
+  const nx = distance === 0 ? 1 : dx / distance;
+  const ny = distance === 0 ? 0 : dy / distance;
+  placed = clampToWorld(world, entity, {
+    x: obstacle.footprint.x + nx * radius,
+    y: obstacle.footprint.y + ny * radius,
+  });
+  for (let nudge = 0; nudge < 4 && insideObstacle(entity, placed, obstacle); nudge += 1) {
+    placed = clampToWorld(world, entity, { x: placed.x + Math.sign(nx || 1), y: placed.y + Math.sign(ny) });
+  }
+  return placed;
+}
+
+function resolveTerrainPlacement(run, entity, point) {
+  const world = worldForRun(run);
+  let placed = clampToWorld(world, entity, point);
+  for (let pass = 0; pass < 4; pass += 1) {
+    let displaced = false;
+    for (const obstacle of world.gameplay.obstacles) {
+      if (!insideObstacle(entity, placed, obstacle)) continue;
+      placed = pushOutsideObstacle(world, entity, placed, obstacle);
+      displaced = true;
+    }
+    if (!displaced) break;
+  }
+  return {
+    x: placed.x,
+    y: placed.y,
+    elevation: terrainElevationAt(world, placed.x, placed.y),
+  };
+}
+
+function placeOnTerrain(run, entity, point) {
+  const placed = resolveTerrainPlacement(run, entity, point);
+  entity.x = placed.x;
+  entity.y = placed.y;
+  entity.elevation = placed.elevation;
+}
+
+function firstObstacleHit(world, entity, from, to) {
+  const movementX = to.x - from.x;
+  const movementY = to.y - from.y;
+  const movementSquared = movementX * movementX + movementY * movementY;
+  if (movementSquared === 0) return null;
+
+  let first = null;
+  for (const obstacle of world.gameplay.obstacles) {
+    const radius = obstacle.footprint.radius + Math.max(0, Math.trunc(entity.radius || 0));
+    const offsetX = from.x - obstacle.footprint.x;
+    const offsetY = from.y - obstacle.footprint.y;
+    const outsideSquared = offsetX * offsetX + offsetY * offsetY - radius * radius;
+    if (outsideSquared < 0) continue;
+    const projected = 2 * (offsetX * movementX + offsetY * movementY);
+    const discriminant = projected * projected - 4 * movementSquared * outsideSquared;
+    if (discriminant <= 0) continue;
+    const at = (-projected - Math.sqrt(discriminant)) / (2 * movementSquared);
+    if (at < 0 || at > 1) continue;
+    if (!first || at < first.at || (at === first.at && obstacle.id.localeCompare(first.obstacle.id) < 0)) {
+      first = { at, obstacle };
+    }
+  }
+  return first;
+}
+
+function moveOnTerrain(run, entity, point) {
+  const world = worldForRun(run);
+  const origin = { x: entity.x, y: entity.y };
+  const movementBudget = Math.hypot(point.x - origin.x, point.y - origin.y);
+  let from = origin;
+  let target = clampToWorld(world, entity, point);
+
+  for (let collision = 0; collision < 3; collision += 1) {
+    const hit = firstObstacleHit(world, entity, from, target);
+    if (!hit) {
+      placeOnTerrain(run, entity, target);
+      return;
+    }
+
+    const movementX = target.x - from.x;
+    const movementY = target.y - from.y;
+    const backoff = 1 / Math.max(Math.abs(movementX), Math.abs(movementY), 1);
+    const safeAt = Math.max(0, hit.at - backoff);
+    const safe = clampToWorld(world, entity, {
+      x: from.x + movementX * safeAt,
+      y: from.y + movementY * safeAt,
+    });
+    const contactX = from.x + movementX * hit.at;
+    const contactY = from.y + movementY * hit.at;
+    const normalX = contactX - hit.obstacle.footprint.x;
+    const normalY = contactY - hit.obstacle.footprint.y;
+    const normalLength = Math.hypot(normalX, normalY) || 1;
+    const nx = normalX / normalLength;
+    const ny = normalY / normalLength;
+    const remainingX = target.x - safe.x;
+    const remainingY = target.y - safe.y;
+    const inward = remainingX * nx + remainingY * ny;
+    from = safe;
+    if (inward >= 0) break;
+
+    const tangentX = -ny;
+    const tangentY = nx;
+    const tangential = remainingX * tangentX + remainingY * tangentY;
+    if (Math.abs(tangential) < 1) {
+      const travelled = Math.hypot(safe.x - origin.x, safe.y - origin.y);
+      const detourDistance = Math.max(0, movementBudget - travelled);
+      const counterClockwise = clampToWorld(world, entity, {
+        x: safe.x + tangentX * detourDistance,
+        y: safe.y + tangentY * detourDistance,
+      });
+      const clockwise = clampToWorld(world, entity, {
+        x: safe.x - tangentX * detourDistance,
+        y: safe.y - tangentY * detourDistance,
+      });
+      const counterClockwiseProgress = distanceSquared(counterClockwise, safe);
+      const clockwiseProgress = distanceSquared(clockwise, safe);
+      target = clockwiseProgress > counterClockwiseProgress ? clockwise : counterClockwise;
+    } else {
+      target = {
+        x: safe.x + tangentX * tangential,
+        y: safe.y + tangentY * tangential,
+      };
+    }
+    target = pushOutsideObstacle(world, entity, target, hit.obstacle);
+  }
+
+  placeOnTerrain(run, entity, from);
+}
+const SNAPSHOT_VERSION = 7;
+const EVENT_VERSION = 4;
 const emit = (run, type, payload = {}) => {
   const eventSequence = ++run.eventSequence;
   const identity = run.planCommitment?.identity || `uncommitted:${run.seed ?? 0}`;
@@ -260,12 +432,13 @@ function addCompanion(run, companionId, { equipment = {} } = {}) {
   const maxFormationIntegrity = Math.round(companionFormationIntegrity(data.damage, runtime.wardTierIndex) * selfIntegrityMultiplier);
   const index = run.companions.length;
   const offset = activeStanceConfig(run).offsets[Math.min(index, activeStanceConfig(run).offsets.length - 1)];
-  const x = clamp(run.commander.x + offset.x, 0, ARENA.width);
-  const y = clamp(run.commander.y + offset.y, 0, ARENA.height);
-  run.companions.push(actor(nextId(run, "companion"), "companion", x, y, maxFormationIntegrity, maxFormationIntegrity, {
+  const companion = actor(nextId(run, "companion"), "companion", run.commander.x + offset.x, run.commander.y + offset.y, maxFormationIntegrity, maxFormationIntegrity, {
     companionId, cooldown: 0, damage, fireTicks: data.fireTicks, range, radius: 300,
     slot: stanceSlotForIndex(run, index), status: "ACTIVE", role: runtime.role, eliteDamageBonus: rpgActive ? runtime.eliteDamageBonus : 0,
-  }));
+    aiState: "FOLLOW", aiTargetId: null, combatTargetId: null,
+  });
+  placeOnTerrain(run, companion, companion);
+  run.companions.push(companion);
 }
 
 function applyOwnedRewards(run, rewardIds) {
@@ -326,6 +499,7 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     route: laneRoute(run.tactics, policyId, laneOffset),
     waypointIndex: 0,
   });
+  placeOnTerrain(run, enemy, point);
   run.enemies.push(enemy);
   const spawnEvent = emit(run, "ENEMY_SPAWNED", {
     entityId: enemy.id,
@@ -371,6 +545,7 @@ function spawnBoss(run) {
     route: laneRoute(run.tactics, policyId, 0),
     waypointIndex: 0,
   });
+  placeOnTerrain(run, boss, boss);
   run.enemies.push(boss);
   run.bossSpawned = true;
   run.bossSpawnedAt = run.tick;
@@ -521,6 +696,135 @@ function orderedTargets(run, origin, range) {
   });
 }
 
+function companionFormationAnchor(run, companion, index) {
+  const stance = activeStanceConfig(run);
+  const offset = stance.offsets[Math.min(index, stance.offsets.length - 1)];
+  const placed = resolveTerrainPlacement(run, companion, {
+    x: run.commander.x + offset.x,
+    y: run.commander.y + offset.y,
+  });
+  return { x: placed.x, y: placed.y };
+}
+
+function moveToward(run, entity, destination, speed) {
+  const dx = destination.x - entity.x;
+  const dy = destination.y - entity.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance === 0) return;
+  const step = Math.min(Math.max(1, Math.trunc(speed / TICK_RATE)), distance);
+  const target = distance <= step
+    ? destination
+    : {
+      x: entity.x + Math.trunc(dx / distance * step),
+      y: entity.y + Math.trunc(dy / distance * step),
+    };
+  moveOnTerrain(run, entity, target);
+}
+
+function eligibleCompanionItem(run, companion, pickup) {
+  return pickup?.kind === "item"
+    && Boolean(ITEMS[pickup.itemId])
+    && (pickup.deniedUntil || -1) < run.tick
+    && distanceSquared(pickup, run.commander) <= COMPANION_AUTONOMY.hardLeashRange ** 2
+    && distanceSquared(pickup, companion) <= COMPANION_AUTONOMY.itemClaimRange ** 2;
+}
+
+function assignCompanionItemClaims(run) {
+  const claimedPickupIds = new Set();
+  for (const companion of run.companions) {
+    if (companion.status !== "ACTIVE") {
+      companion.aiState = "DOWNED";
+      companion.aiTargetId = null;
+      companion.combatTargetId = null;
+      continue;
+    }
+    const target = run.pickups.find((pickup) => pickup.id === companion.aiTargetId
+      && !claimedPickupIds.has(pickup.id)
+      && eligibleCompanionItem(run, companion, pickup));
+    companion.aiTargetId = target?.id ?? null;
+    if (target) {
+      companion.aiState = "COLLECT";
+      claimedPickupIds.add(target.id);
+    }
+  }
+
+  const availableItems = run.pickups
+    .filter((pickup) => pickup.kind === "item" && ITEMS[pickup.itemId] && !claimedPickupIds.has(pickup.id))
+    .sort((left, right) => left.id.localeCompare(right.id));
+  for (const pickup of availableItems) {
+    let claimant = null;
+    let claimantIndex = Infinity;
+    let claimantDistance = Infinity;
+    run.companions.forEach((companion, index) => {
+      if (companion.status !== "ACTIVE"
+          || companion.aiTargetId !== null
+          || !eligibleCompanionItem(run, companion, pickup)) return;
+      const candidateDistance = distanceSquared(pickup, companion);
+      if (candidateDistance < claimantDistance
+          || (candidateDistance === claimantDistance && index < claimantIndex)
+          || (candidateDistance === claimantDistance && index === claimantIndex
+            && companion.id.localeCompare(claimant?.id ?? "") < 0)) {
+        claimant = companion;
+        claimantIndex = index;
+        claimantDistance = candidateDistance;
+      }
+    });
+    if (!claimant) continue;
+    claimant.aiState = "COLLECT";
+    claimant.aiTargetId = pickup.id;
+    claimedPickupIds.add(pickup.id);
+  }
+}
+
+function companionCombatTarget(run, companion) {
+  if (run.rallyTargetId) {
+    const boss = run.enemies.find((entry) => entry.id === run.rallyTargetId && entry.hp > 0);
+    if (boss && distanceSquared(companion, boss) <= getEffectiveRange(run, companion.range) ** 2) return boss;
+  }
+  return orderedTargets(run, companion, companion.range)[0] || null;
+}
+
+function updateCompanions(run) {
+  assignCompanionItemClaims(run);
+  run.companions.forEach((companion, index) => {
+    const anchor = companionFormationAnchor(run, companion, index);
+    companion.slot = stanceSlotForIndex(run, index);
+    if (companion.status !== "ACTIVE") return;
+
+    if (distanceSquared(companion, run.commander) > COMPANION_AUTONOMY.hardLeashRange ** 2) {
+      companion.aiTargetId = null;
+      companion.aiState = "RETURN";
+    }
+
+    const itemTarget = companion.aiTargetId
+      ? run.pickups.find((pickup) => pickup.id === companion.aiTargetId) || null
+      : null;
+    if (itemTarget) {
+      companion.aiState = "COLLECT";
+      moveToward(run, companion, itemTarget, COMPANION_AUTONOMY.followSpeed);
+    } else {
+      const returning = companion.aiState === "COLLECT" || companion.aiState === "RETURN";
+      moveToward(run, companion, anchor, returning ? COMPANION_AUTONOMY.returnSpeed : COMPANION_AUTONOMY.followSpeed);
+      const atAnchor = companion.x === anchor.x && companion.y === anchor.y;
+      companion.aiState = returning && !atAnchor ? "RETURN" : "FOLLOW";
+    }
+
+    const target = companionCombatTarget(run, companion);
+    companion.combatTargetId = target?.id ?? null;
+    companion.cooldown -= 1;
+    if (companion.cooldown <= 0) {
+      if (target) {
+        const isElite = target.elite || target.class === "boss";
+        const synergyActive = companion.slot === "BACK" && livingFrontCompanions(run).length > 0;
+        const mult = (isElite ? 1 + (companion.eliteDamageBonus || 0) : 1)
+          * (synergyActive ? 1 + BACK_ROW_SYNERGY_DAMAGE_BONUS : 1);
+        fire(run, companion, target, Math.round(companion.damage * mult), companion.companionId);
+      }
+      companion.cooldown = companion.fireTicks;
+    }
+  });
+}
+
 function resolveCritical(run, source, baseDamage) {
   if (baseDamage <= 0) return { source, baseDamage, damage: baseDamage, critical: false };
   const profile = run?.commander?.critProfile || COMMANDER.critProfile;
@@ -540,6 +844,7 @@ function resolveCritical(run, source, baseDamage) {
 function fire(run, source, target, damage, owner, ttl = 5, combat = null) {
   const hit = combat || { source: null, baseDamage: damage, damage, critical: false };
   const projectile = actor(nextId(run, "projectile"), "projectile", source.x, source.y, 1, 1, {
+    elevation: source.elevation || 0,
     sourceId: source.id,
     targetId: target.id,
     damage: hit.damage,
@@ -594,10 +899,12 @@ function applyItem(run, itemId) {
 
 function collectPickups(run) {
   let gained = 0;
-  const radius = run.commander.pickupRange;
+  const commanderRadiusSquared = run.commander.pickupRange ** 2;
+  const companionContactSquared = COMPANION_AUTONOMY.itemContactRange ** 2;
   run.pickups = run.pickups.filter((pickup) => {
-    if (distanceSquared(pickup, run.commander) > radius * radius) return true;
+    const commanderInRange = distanceSquared(pickup, run.commander) <= commanderRadiusSquared;
     if (pickup.kind === "echo") {
+      if (!commanderInRange) return true;
       const denier = sortedActors(run.enemies).find((enemy) => enemy.policyId === "resource-denial"
         && distanceSquared(enemy, pickup) <= Math.max(enemy.radius + 150, enemy.projectileRange || 0) ** 2);
       if (denier && (pickup.deniedUntil || -1) < run.tick) {
@@ -616,14 +923,38 @@ function collectPickups(run) {
         emit(run, "PICKUP_DENIED", denial);
         emit(run, "ECHO_DENIED", denial);
       }
+      if (pickup.deniedUntil >= run.tick) return true;
+      gained += pickup.xp;
+      return false;
     }
-    if (pickup.kind === "echo" && pickup.deniedUntil >= run.tick) return true;
+
     if (pickup.kind === "item") {
+      const claimant = run.companions.find((companion) => companion.status === "ACTIVE"
+        && companion.aiState === "COLLECT"
+        && companion.aiTargetId === pickup.id);
+      const companionCollector = claimant && distanceSquared(claimant, pickup) <= companionContactSquared
+        ? claimant
+        : null;
+      if (claimant && !companionCollector) return true;
+      if (!companionCollector && !commanderInRange) return true;
       applyItem(run, pickup.itemId);
       run.itemIds.push(pickup.itemId);
       run.progress.itemsCollected += 1;
-      emit(run, "ITEM_COLLECTED", { itemId: pickup.itemId, cue: eventCue("itemCollected") });
-    } else gained += pickup.xp;
+      emit(run, "ITEM_COLLECTED", {
+        itemId: pickup.itemId,
+        entityId: companionCollector?.id ?? run.commander.id,
+        companionId: companionCollector?.companionId ?? null,
+        cue: eventCue("itemCollected"),
+      });
+      if (companionCollector) {
+        companionCollector.aiState = "RETURN";
+        companionCollector.aiTargetId = null;
+      }
+      return false;
+    }
+
+    if (!commanderInRange) return true;
+    gained += pickup.xp;
     return false;
   });
   run.commander.xp += gained;
@@ -952,7 +1283,9 @@ function resolveDeaths(run) {
   run.enemies = run.enemies.filter((entry) => entry.hp > 0);
   run.progress.defeated += dead.length;
   dead.forEach((entry) => {
-    run.pickups.push(actor(nextId(run, "pickup"), "pickup", entry.x, entry.y, 1, 1, { kind: "echo", xp: entry.xp }));
+    const echo = actor(nextId(run, "pickup"), "pickup", entry.x, entry.y, 1, 1, { kind: "echo", xp: entry.xp, elevation: entry.elevation || 0 });
+    placeOnTerrain(run, echo, echo);
+    run.pickups.push(echo);
     const killEvent = emit(run, "ENEMY_DEFEATED", {
       enemyId: entry.id,
       spawnEventId: entry.spawnEventId || null,
@@ -965,7 +1298,9 @@ function resolveDeaths(run) {
     if (entry.elite) {
       const itemId = run.measurementProfile ? null : (STAGE_ITEM_IDS[run.stage.id] || null);
       if (!run.measurementProfile) {
-        run.pickups.push(actor(nextId(run, "item"), "item", entry.x + 240, entry.y, 1, 1, { kind: "item", itemId, xp: 0 }));
+        const item = actor(nextId(run, "item"), "item", entry.x + 240, entry.y, 1, 1, { kind: "item", itemId, xp: 0 });
+        placeOnTerrain(run, item, item);
+        run.pickups.push(item);
       }
       run.eliteCandidate = {
         enemyId: entry.id,
@@ -1075,8 +1410,10 @@ function moveEnemies(run) {
     const distance = Math.hypot(dx, dy);
     if (distance > 0 && speed > 0) {
       const movement = Math.min(Math.max(1, Math.trunc(speed / TICK_RATE)), distance);
-      enemy.x = clamp(Math.round(enemy.x + dx / distance * movement), 0, ARENA.width);
-      enemy.y = clamp(Math.round(enemy.y + dy / distance * movement), 0, ARENA.height);
+      moveOnTerrain(run, enemy, {
+        x: Math.round(enemy.x + dx / distance * movement),
+        y: Math.round(enemy.y + dy / distance * movement),
+      });
     }
     if (enemy.x !== from.x || enemy.y !== from.y) {
       emit(run, "MOVE", {
@@ -1476,14 +1813,18 @@ function tick(run) {
     const holdRadius = Math.max(0, routeTarget.radius - 100);
     if (distance > holdRadius) {
       const movement = Math.min(Math.max(1, Math.trunc(commanderSpeed / TICK_RATE)), distance - holdRadius);
-      run.commander.x = clamp(Math.round(run.commander.x + dx / distance * movement), 0, ARENA.width);
-      run.commander.y = clamp(Math.round(run.commander.y + dy / distance * movement), 0, ARENA.height);
+      moveOnTerrain(run, run.commander, {
+        x: Math.round(run.commander.x + dx / distance * movement),
+        y: Math.round(run.commander.y + dy / distance * movement),
+      });
       moveDirection = "OBJECTIVE_ROUTE";
     }
   } else {
     const vector = OCTANT_VECTORS[run.commander.move];
-    run.commander.x = clamp(run.commander.x + Math.trunc(vector.x * commanderSpeed / 1000 / TICK_RATE), 0, ARENA.width);
-    run.commander.y = clamp(run.commander.y + Math.trunc(vector.y * commanderSpeed / 1000 / TICK_RATE), 0, ARENA.height);
+    moveOnTerrain(run, run.commander, {
+      x: run.commander.x + Math.trunc(vector.x * commanderSpeed / 1000 / TICK_RATE),
+      y: run.commander.y + Math.trunc(vector.y * commanderSpeed / 1000 / TICK_RATE),
+    });
   }
   if (run.commander.x !== commanderFrom.x || run.commander.y !== commanderFrom.y) {
     emit(run, "MOVE", {
@@ -1612,33 +1953,11 @@ function tick(run) {
     run.commander.basicCooldown = run.commander.basicTicks || COMMANDER.basicCooldown;
   }
 
-  const stance = activeStanceConfig(run);
-  run.companions.forEach((companion, index) => {
-    const offset = stance.offsets[Math.min(index, stance.offsets.length - 1)];
-    companion.x = clamp(run.commander.x + offset.x, 0, ARENA.width);
-    companion.y = clamp(run.commander.y + offset.y, 0, ARENA.height);
-    companion.slot = stanceSlotForIndex(run, index);
-    if (companion.status !== "ACTIVE") return;
-    companion.cooldown -= 1;
-    if (companion.cooldown <= 0) {
-      let target = null;
-      if (run.rallyTargetId) {
-        const boss = run.enemies.find((entry) => entry.id === run.rallyTargetId && entry.hp > 0);
-        if (boss && distanceSquared(companion, boss) <= getEffectiveRange(run, companion.range) ** 2) target = boss;
-      }
-      if (!target) target = orderedTargets(run, companion, companion.range)[0];
-      if (target) {
-        const isElite = target.elite || target.class === "boss";
-        const synergyActive = companion.slot === "BACK" && livingFrontCompanions(run).length > 0;
-        const mult = (isElite ? 1 + (companion.eliteDamageBonus || 0) : 1) * (synergyActive ? 1 + BACK_ROW_SYNERGY_DAMAGE_BONUS : 1);
-        fire(run, companion, target, Math.round(companion.damage * mult), companion.companionId);
-      }
-      companion.cooldown = companion.fireTicks;
-    }
-  });
+  updateCompanions(run);
 
   moveEnemies(run);
   resolveDeaths(run);
+  assignCompanionItemClaims(run);
   collectPickups(run);
   updateObjectivePhase(run);
   processObjectivePressure(run);
@@ -1789,11 +2108,12 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     formationStance: "VANGUARD",
     stanceCooldownUntilTick: 0,
     wardenState: null,
-    gate: { id: "gate", x: ARENA.gateX, y: ARENA.gateY, integrity: GATE.maxIntegrity, maxIntegrity: GATE.maxIntegrity, radius: GATE.radius },
+    gate: { id: "gate", x: ARENA.gateX, y: ARENA.gateY, elevation: 0, integrity: GATE.maxIntegrity, maxIntegrity: GATE.maxIntegrity, radius: GATE.radius },
     commander: {
       id: "commander",
       x: 19000,
       y: ARENA.gateY,
+      elevation: 0,
       radius: COMMANDER.radius,
       integrity: maxIntegrity,
       maxIntegrity,
@@ -1858,6 +2178,8 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     growthOffer: null,
     terminal: null,
   };
+  placeOnTerrain(state, state.gate, state.gate);
+  placeOnTerrain(state, state.commander, state.commander);
   if (!measurementProfile) {
     const hasWardenInvestment = wardenProgress && (Object.keys(wardenProgress.statPoints || {}).length || (wardenProgress.skillTreeIds || []).length || (wardenProgress.traitIds || []).length);
     const hasEquipmentInvestment = Object.values(wardenEquipment).some((tier) => tier > 0) || Object.values(companionEquipment).some((eq) => Object.values(eq || {}).some((tier) => tier > 0));
@@ -1923,6 +2245,9 @@ export function queueInput(run, type, payload = null) {
 export function advanceDefenseRun(run, steps = 1) {
   if (!run || !Number.isInteger(steps) || steps < 0) throw new RangeError("steps must be a non-negative integer");
   const next = clone(run);
+  for (const entity of [next.gate, next.commander, ...(next.enemies || []), ...(next.companions || []), ...(next.pickups || []), ...(next.projectiles || [])]) {
+    if (entity && !Number.isInteger(entity.elevation)) placeOnTerrain(next, entity, entity);
+  }
   if (!next.terrainRecovery) next.terrainRecovery = { commander: 0, gate: 0, capRatio: 0.25 };
   if (next.extractionProgress && typeof next.extractionProgress.ready !== "boolean") {
     next.extractionProgress.ready = Boolean(next.extractionProgress.completed);
@@ -2030,4 +2355,9 @@ export function getRunDigest(run) { return JSON.stringify(getRunSnapshot(run)); 
 /** True only after integrity failure or boss-stage completion. */
 export function isTerminalRun(run) { return Boolean(run?.terminal); }
 
-export { TICK_RATE };
+export {
+  TICK_RATE,
+  OBJECTIVE_PRESSURE_GRACE_TICKS,
+  BOSS_PRESSURE_GRACE_TICKS,
+  ECHO_RECOVERY_PRESSURE_GRACE_TICKS,
+};

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "gate": "G6",
+  "classification": "machine-measured-provenance-not-human-evidence",
+  "requirements": {
+    "telemetryContract": {
+      "status": "TESTED",
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-telemetry-contract-20260726.tap",
+      "digest": "sha256:8544cad04d5567a65d8504b074aa31dbb7b8c1c17fe7211d5052c9407a48f8b3",
+      "command": "node --test tests/defense-observers-contract.test.mjs",
+      "result": "11 pass, 0 fail"
+    },
+    "rollbackRunbook": {
+      "status": "BLOCKED_MISSING",
+      "path": null,
+      "digest": null,
+      "reason": "No ops/rollback-runbook.md or signed equivalent exists in the current repository."
+    },
+    "releaseReadiness": {
+      "status": "BLOCKED_MISSING",
+      "path": null,
+      "digest": null,
+      "reason": "No ops/release-readiness.md or signed equivalent exists in the current repository."
+    },
+    "uiBrowserGate": {
+      "status": "TESTED",
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/g6-ui-browser-gate-20260726.json",
+      "digest": "sha256:df1e5f551b9f12983c42bcdf4dd31edac5e3a9e6fc8cdd1f9c9800ed2bc79e67",
+      "command": "node tests/defense-performance-browser.cjs",
+      "result": "pass at 844x390 and 2056x1082"
+    }
+  }
+}

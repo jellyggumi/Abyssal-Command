@@ -1,0 +1,167 @@
+{
+  "generator": "Blender 5.1.2 background Python",
+  "command": "/Applications/Blender.app/Contents/MacOS/Blender --background --python _workspace/20260726-stage1b-cinder-pressure-agency/blender/stage-overhaul/starless-canal-shattered-causeway.py",
+  "source": "_workspace/20260726-stage1b-cinder-pressure-agency/blender/stage-overhaul/starless-canal-shattered-causeway.py",
+  "blend_sources": [
+    "_workspace/20260726-stage1b-cinder-pressure-agency/blender/stage-overhaul/starless-canal-shattered-causeway-starless.blend",
+    "_workspace/20260726-stage1b-cinder-pressure-agency/blender/stage-overhaul/starless-canal-shattered-causeway-shattered.blend"
+  ],
+  "concept_references": [
+    "_workspace/20260726-stage1b-cinder-pressure-agency/visual/stage-backgrounds/starless-canal-cartoon-v01.png",
+    "_workspace/20260726-stage1b-cinder-pressure-agency/visual/stage-backgrounds/shattered-causeway-cartoon-v01.png"
+  ],
+  "runtime_references": [
+    "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-runtime-proof/07-starless-canal.png",
+    "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-runtime-proof/08-shattered-causeway.png"
+  ],
+  "shared_textures": [
+    "abyssal-toon-surface-v01",
+    "abyssal-toon-normal-v01"
+  ],
+  "assets": [
+    {
+      "path": "assets/images/battle/glb/terrain/starless-canal.glb",
+      "bytes": 5728528,
+      "version": 2,
+      "meshes": 104,
+      "primitives": 104,
+      "materials": 5,
+      "all_normals": true,
+      "all_uvs": true,
+      "all_material": true,
+      "all_materials_albedo": true,
+      "all_materials_normal": true,
+      "images": 2,
+      "images_embedded": true,
+      "bounds_min": [
+        -4.650000095367432,
+        -2.5,
+        -13.5
+      ],
+      "bounds_max": [
+        4.650000095367432,
+        4.849999904632568,
+        13.5
+      ],
+      "extent": [
+        9.300000190734863,
+        7.349999904632568,
+        27.0
+      ],
+      "material_names": [
+        "Starless_Canal_OiledStone",
+        "Starless_Undertow_DeepWater",
+        "Starless_Towpath_BlueSlate",
+        "Starless_Lock_BlackIron",
+        "Starless_Toll_SilverSignal"
+      ],
+      "image_names": [
+        "abyssal-toon-normal-v01",
+        "abyssal-toon-surface-v01"
+      ],
+      "sha256": "5dc4de72effdcfac9d454b0e02bb98ef00cfce70b01e1c7ae6dce9aa170727a4",
+      "acceptance": {
+        "primitive_count_gte_20": true,
+        "material_count_gte_4": true,
+        "normals_every_primitive": true,
+        "uvs_every_primitive": true,
+        "material_every_primitive": true,
+        "albedo_every_material": true,
+        "normal_map_every_material": true,
+        "embedded_images": true,
+        "non_degenerate_3d_bounds": true
+      },
+      "previews": [
+        {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-overhaul/starless-canal-shattered-causeway-starless-canal-oblique.png",
+          "dimensions": [
+            960,
+            720
+          ],
+          "bytes": 869838
+        },
+        {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-overhaul/starless-canal-shattered-causeway-starless-canal-top.png",
+          "dimensions": [
+            960,
+            720
+          ],
+          "bytes": 968982
+        }
+      ]
+    },
+    {
+      "path": "assets/images/battle/glb/terrain/shattered-causeway.glb",
+      "bytes": 5642668,
+      "version": 2,
+      "meshes": 93,
+      "primitives": 93,
+      "materials": 5,
+      "all_normals": true,
+      "all_uvs": true,
+      "all_material": true,
+      "all_materials_albedo": true,
+      "all_materials_normal": true,
+      "images": 2,
+      "images_embedded": true,
+      "bounds_min": [
+        -5.079999923706055,
+        -2.3499999046325684,
+        -3.25
+      ],
+      "bounds_max": [
+        4.991042613983154,
+        6.300000190734863,
+        3.25
+      ],
+      "extent": [
+        10.071042537689209,
+        8.650000095367432,
+        6.5
+      ],
+      "material_names": [
+        "Shattered_Causeway_RustStone",
+        "Shattered_Rubble_RoseAshlar",
+        "Shattered_Fracture_LuminousSeam",
+        "Shattered_Keystone_ColossusBone",
+        "Shattered_Brace_ChainIron"
+      ],
+      "image_names": [
+        "abyssal-toon-normal-v01",
+        "abyssal-toon-surface-v01"
+      ],
+      "sha256": "f3bede2bc29bc824e163c6fb17ac9e417cbbc5a40153300c529ee8c4647863fe",
+      "acceptance": {
+        "primitive_count_gte_20": true,
+        "material_count_gte_4": true,
+        "normals_every_primitive": true,
+        "uvs_every_primitive": true,
+        "material_every_primitive": true,
+        "albedo_every_material": true,
+        "normal_map_every_material": true,
+        "embedded_images": true,
+        "non_degenerate_3d_bounds": true
+      },
+      "previews": [
+        {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-overhaul/starless-canal-shattered-causeway-shattered-causeway-oblique.png",
+          "dimensions": [
+            960,
+            720
+          ],
+          "bytes": 828189
+        },
+        {
+          "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-overhaul/starless-canal-shattered-causeway-shattered-causeway-top.png",
+          "dimensions": [
+            960,
+            720
+          ],
+          "bytes": 882162
+        }
+      ]
+    }
+  ],
+  "contract_command": "node --test tests/stage-terrain-environment-contract.test.mjs",
+  "contract_result": "13 tests passed, 0 failed"
+}

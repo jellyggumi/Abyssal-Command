@@ -1,11 +1,60 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { createServer } from "node:http";
+import { extname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { chromium } from "playwright";
 
 import * as THREE from "../vendor/three.module.js";
 import { RealtimeBattle } from "../battle-realtime-three.js";
 import { BattleVisualizer } from "../battle-visualizer.js";
 import { STAGES } from "../defense-catalog.js";
+
+const TEST_ROOT = fileURLToPath(new URL("../", import.meta.url));
+const CONTENT_TYPES = Object.freeze({
+  ".css": "text/css",
+  ".glb": "model/gltf-binary",
+  ".html": "text/html",
+  ".js": "text/javascript",
+  ".json": "application/json",
+  ".png": "image/png",
+});
+
+async function startStaticServer() {
+  const server = createServer(async (request, response) => {
+    const pathname = new URL(request.url ?? "/", "http://127.0.0.1").pathname;
+    if (pathname === "/renderer-contract.html") {
+      response.writeHead(200, { "Content-Type": "text/html" });
+      response.end('<!doctype html><link rel="stylesheet" href="/styles.css"><body></body>');
+      return;
+    }
+
+    const filePath = resolve(TEST_ROOT, `.${decodeURIComponent(pathname)}`);
+    if (!filePath.startsWith(TEST_ROOT)) {
+      response.writeHead(403).end();
+      return;
+    }
+
+    try {
+      const bytes = await readFile(filePath);
+      response.writeHead(200, { "Content-Type": CONTENT_TYPES[extname(filePath)] ?? "application/octet-stream" });
+      response.end(bytes);
+    } catch {
+      response.writeHead(404).end();
+    }
+  });
+
+  await new Promise((resolveListening, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      server.off("error", reject);
+      resolveListening();
+    });
+  });
+  return { server, url: `http://127.0.0.1:${server.address().port}` };
+}
 
 // RealtimeBattle (primary, WebGL/Three.js) and BattleVisualizer (fallback,
 // Canvas2D) are no longer parallel implementations of the same drawing
@@ -232,6 +281,196 @@ test("RealtimeBattle throws on WebGL context creation failure, matching app.js's
   assert.doesNotThrow(() => adapter.renderSnapshot(snapshot), "renderSnapshot is a safe no-op without a mounted renderer");
   assert.doesNotThrow(() => adapter.dispose(), "dispose is a safe no-op on a never-mounted adapter");
   assert.doesNotThrow(() => adapter.dispose(), "dispose remains idempotent");
+});
+
+test("RealtimeBattle preserves concept art through transparent WebGL and HUD-safe CSS layering", async (t) => {
+  const hosting = await startStaticServer();
+  t.after(() => new Promise((resolveClose) => hosting.server.close(resolveClose)));
+  const browser = await chromium.launch({ headless: true });
+  t.after(() => browser.close());
+
+  const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
+  await page.goto(`${hosting.url}/renderer-contract.html`, { waitUntil: "networkidle" });
+  const report = await page.evaluate(async () => {
+    const [{ RealtimeBattle: BrowserRealtimeBattle }, THREE] = await Promise.all([
+      import("/battle-realtime-three.js"),
+      import("/vendor/three.module.js"),
+    ]);
+    const surface = document.createElement("section");
+    surface.id = "defense-battle-surface";
+    surface.style.cssText = "position:relative;width:320px;height:180px;--stage-art:linear-gradient(#345,#123)";
+    const stageArt = document.createElement("div");
+    stageArt.className = "battle-stage-art";
+    const canvas = document.createElement("canvas");
+    canvas.id = "defense-canvas";
+    canvas.width = 320;
+    canvas.height = 180;
+    const worldHud = document.createElement("div");
+    worldHud.id = "world-hud-overlay";
+    const edgeHud = document.createElement("div");
+    edgeHud.id = "defense-edge-hud";
+    surface.append(stageArt, canvas, worldHud, edgeHud);
+    document.body.append(surface);
+
+    const adapter = new BrowserRealtimeBattle();
+    try {
+      adapter.mount({ canvas, viewport: { width: canvas.width, height: canvas.height } });
+      const contextAttributes = adapter.renderer.getContext().getContextAttributes();
+      const mountClearAlpha = adapter.renderer.getClearAlpha();
+      const mountClearColor = adapter.renderer.getClearColor(new THREE.Color()).getHex();
+
+      adapter.applyStagePalette("cinder-span");
+      const paletteClearAlpha = adapter.renderer.getClearAlpha();
+      const paletteClearColor = adapter.renderer.getClearColor(new THREE.Color()).getHex();
+
+      const stageStyle = getComputedStyle(stageArt);
+      const canvasStyle = getComputedStyle(canvas);
+      const worldHudStyle = getComputedStyle(worldHud);
+      const edgeHudStyle = getComputedStyle(edgeHud);
+      return {
+        contextAlpha: contextAttributes?.alpha,
+        mountClearAlpha,
+        mountClearColor,
+        paletteClearAlpha,
+        paletteClearColor,
+        stageOpacity: Number.parseFloat(stageStyle.opacity),
+        stageBlendMode: stageStyle.mixBlendMode,
+        stageMaskImage: stageStyle.maskImage,
+        stageZ: Number.parseInt(stageStyle.zIndex, 10),
+        canvasZ: Number.parseInt(canvasStyle.zIndex, 10),
+        worldHudZ: Number.parseInt(worldHudStyle.zIndex, 10),
+        edgeHudZ: Number.parseInt(edgeHudStyle.zIndex, 10),
+      };
+    } finally {
+      adapter.dispose();
+      surface.remove();
+    }
+  });
+
+  assert.equal(report.contextAlpha, true, "the mounted WebGL context must retain an alpha channel for the concept-art backplate");
+  assert.equal(report.mountClearAlpha, 0, "mount must leave the renderer clear fully transparent");
+  assert.notEqual(report.paletteClearColor, report.mountClearColor, "the authored stage palette must update the renderer clear color");
+  assert.equal(report.paletteClearAlpha, 0, "a stage palette update must preserve a fully transparent renderer clear");
+  assert.ok(report.stageOpacity >= 0.2, `stage art opacity ${report.stageOpacity} must remain visibly nontrivial`);
+  assert.equal(report.stageBlendMode, "screen", "stage art must use the authored screen composite over the WebGL terrain");
+  assert.match(report.stageMaskImage, /^linear-gradient\(rgb\(0, 0, 0\).+rgba\(0, 0, 0, 0\)/, "stage art must fade from an opaque upper mask to a transparent lower combat lane");
+  assert.ok(report.canvasZ < report.stageZ, `stage art z-index ${report.stageZ} must remain above canvas z-index ${report.canvasZ}`);
+  assert.ok(report.stageZ < report.worldHudZ, `stage art z-index ${report.stageZ} must remain below world HUD z-index ${report.worldHudZ}`);
+  assert.ok(report.stageZ < report.edgeHudZ, `stage art z-index ${report.stageZ} must remain below edge HUD z-index ${report.edgeHudZ}`);
+});
+
+test("RealtimeBattle gives ambient stage NPCs dedicated normalization and a non-horizontal guard pose", async (t) => {
+  const hosting = await startStaticServer();
+  t.after(() => new Promise((resolveClose) => hosting.server.close(resolveClose)));
+  const browser = await chromium.launch({ headless: true });
+  t.after(() => browser.close());
+
+  const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
+  await page.goto(`${hosting.url}/renderer-contract.html`, { waitUntil: "networkidle" });
+  const report = await page.evaluate(async () => {
+    const [{ RealtimeBattle: BrowserRealtimeBattle }, THREE] = await Promise.all([
+      import("/battle-realtime-three.js"),
+      import("/vendor/three.module.js"),
+    ]);
+    const canvas = document.createElement("canvas");
+    canvas.width = 640;
+    canvas.height = 360;
+    document.body.append(canvas);
+    const adapter = new BrowserRealtimeBattle();
+
+    try {
+      adapter.mount({ canvas, viewport: { width: canvas.width, height: canvas.height } });
+      adapter.ensureStageTerrain("cinder-span");
+      adapter.reconcileActors({
+        companions: [{
+          id: "ember-companion",
+          kind: "companion",
+          companionId: "ember-cohort",
+          status: "ACTIVE",
+          x: 17100,
+          y: 2700,
+        }],
+      });
+
+      const deadline = performance.now() + 10000;
+      let stageNpc = null;
+      let companion = null;
+      while (!stageNpc?.root || !companion?.root) {
+        stageNpc = adapter.stageDecorRecords.find((record) => record.kind === "stage-npc") ?? null;
+        companion = adapter.actors.get("ember-companion") ?? null;
+        if (performance.now() >= deadline) {
+          throw new Error(`stage NPC or companion GLB did not load: ${JSON.stringify(adapter.debugPresentationState())}`);
+        }
+        await new Promise(requestAnimationFrame);
+      }
+
+      const worldHeight = (root) => {
+        root.updateWorldMatrix(true, true);
+        return new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).y;
+      };
+      const findBone = (root, suffix) => {
+        let match = null;
+        root?.traverse((node) => {
+          const normalized = node.name.replace(/[._-]/g, "").toLowerCase();
+          if (node.isBone && normalized.endsWith(suffix)) match = node;
+        });
+        return match;
+      };
+      const armDisplacement = (root, side) => {
+        const upperArm = findBone(root, `upperarm${side}`);
+        const hand = findBone(upperArm, `hand${side}`);
+        if (!upperArm || !hand) throw new Error(`actor is missing its ${side} shoulder-to-hand bone chain`);
+        const shoulderPosition = upperArm.getWorldPosition(new THREE.Vector3());
+        const handPosition = hand.getWorldPosition(new THREE.Vector3());
+        return {
+          upperArmBone: upperArm.name,
+          handBone: hand.name,
+          verticalDrop: shoulderPosition.y - handPosition.y,
+          vertical: Math.abs(shoulderPosition.y - handPosition.y),
+          horizontal: Math.hypot(
+            shoulderPosition.x - handPosition.x,
+            shoulderPosition.z - handPosition.z,
+          ),
+        };
+      };
+      const stageNpcHeight = worldHeight(stageNpc.root);
+      const companionHeight = worldHeight(companion.root);
+      adapter.reducedMotion = true;
+      adapter.updateAnimations(0);
+      stageNpc.root.updateWorldMatrix(true, true);
+      companion.root.updateWorldMatrix(true, true);
+      return {
+        stageNpcHeight,
+        companionHeight,
+        stageNpcArms: {
+          left: armDisplacement(stageNpc.root, "l"),
+          right: armDisplacement(stageNpc.root, "r"),
+        },
+        companionArms: {
+          left: armDisplacement(companion.root, "l"),
+          right: armDisplacement(companion.root, "r"),
+        },
+      };
+    } finally {
+      adapter.dispose();
+      canvas.remove();
+    }
+  });
+
+  assertNear(report.stageNpcHeight, 1.8, "the ambient stage NPC keeps its dedicated readability normalization");
+  assertNear(report.companionHeight, 1.3, "the gameplay companion keeps its smaller actor normalization");
+  for (const side of ["left", "right"]) {
+    const guarded = report.stageNpcArms[side];
+    const control = report.companionArms[side];
+    assert.ok(
+      guarded.vertical / report.stageNpcHeight > control.vertical / report.companionHeight,
+      `${side} stage-NPC arm must have more normalized vertical displacement than the untouched companion control: ${JSON.stringify({ guarded, control })}`,
+    );
+    assert.ok(
+      guarded.horizontal / report.stageNpcHeight < control.horizontal / report.companionHeight,
+      `${side} stage-NPC arm must have less normalized horizontal reach than the untouched companion control: ${JSON.stringify({ guarded, control })}`,
+    );
+  }
 });
 
 test("defense renderer fallback adapter projects a supplied snapshot to a mocked Canvas2D context", () => {

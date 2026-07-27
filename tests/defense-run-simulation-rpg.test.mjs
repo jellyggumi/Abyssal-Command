@@ -60,16 +60,23 @@ function cycleStance(run, times = 1) {
   return next;
 }
 
-test("SNAPSHOT_VERSION is 6, and omitting all four new createDefenseRun params reproduces byte-identical legacy behavior", () => {
+test("SNAPSHOT_VERSION is 7, and omitted RPG createDefenseRun params match explicit defaults", () => {
   const legacy = createDefenseRun({ stageId: "cinder-span", seed: 5, companionLoadout: ["ember-cohort"] });
   const explicitDefaults = createDefenseRun({
     stageId: "cinder-span", seed: 5, companionLoadout: ["ember-cohort"],
     wardenProgress: null, wardenEquipment: {}, companionEquipment: {}, formation: {},
   });
-  assert.equal(getRunSnapshot(legacy).version, 6);
+  assert.equal(getRunSnapshot(legacy).version, 7);
   assert.equal(getRunDigest(legacy), getRunDigest(explicitDefaults));
   assert.equal(getRunSnapshot(legacy).wardenState, null);
   assert.equal(legacy.rpgActive, false);
+});
+
+test("snapshots and their initial emitted event advertise event schema version 4", () => {
+  const snapshot = getRunSnapshot(createDefenseRun({ stageId: "cinder-span", seed: 5 }));
+  assert.equal(snapshot.eventVersion, 4);
+  assert.ok(snapshot.events.length > 0, "run creation must emit at least one event");
+  assert.equal(snapshot.events[0].version, 4);
 });
 
 test("a 3-companion loadout with no explicit formation input derives FRONT/BACK purely from stance position-rank: the default VANGUARD stance's derivedFrontCount=2 puts the first 2 (companionId asc) FRONT and the 3rd BACK", () => {
@@ -241,10 +248,10 @@ test("critical mechanic: a solo FRONT companion's sustained combat drives status
     if (downedTick !== null && event.type === "WEAPON_FIRED" && event.owner === "veil-vanguard") firedAfterDowned += 1;
     if (downedTick !== null && event.type === "COMPANION_DAMAGED" && event.companionId === "veil-vanguard") damagedAfterDowned += 1;
   });
-  // Stance offsets (STANCE_CONFIG.VANGUARD) position the FRONT companion west of the commander
-  // (toward the enemy approach) rather than pinned to the commander's exact coordinates, so the
-  // DOWNED tick shifts from the pre-stance-redesign baseline — re-derived empirically for this seed.
-  assert.equal(downedTick, 1671, "seed 3 on gate-zenith with a solo FRONT veil-vanguard downs deterministically at tick 1671 under the VANGUARD stance offset");
+  // Gate Zenith's authored minX=900 clamps the full enemy footprint before its first movement
+  // (for a rusher radius 260, spawn center >=1160). That terrain-bounded ingress reaches the
+  // west-offset FRONT companion earlier than the pre-world-profile route; re-derived for this seed.
+  assert.equal(downedTick, 1605, "seed 3 on terrain-bounded gate-zenith downs the solo FRONT veil-vanguard deterministically at tick 1605");
   assert.equal(downedEventCount, 1, "the ACTIVE -> DOWNED transition fires exactly once");
   assert.equal(firedAfterDowned, 0, "a DOWNED companion must never fire WEAPON_FIRED again");
   assert.equal(damagedAfterDowned, 0, "a DOWNED companion must never take further COMPANION_DAMAGED hits");

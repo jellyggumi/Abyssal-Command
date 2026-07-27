@@ -30,6 +30,13 @@ export const COMMANDER = freeze({
     multiplierBp: 20000,
   }),
 });
+export const COMPANION_AUTONOMY = freeze({
+  itemClaimRange: COMMANDER.basicRange,
+  hardLeashRange: 12000,
+  followSpeed: COMMANDER.speed,
+  returnSpeed: COMMANDER.speed * 2,
+  itemContactRange: 300,
+});
 export const MEASUREMENT_FIXTURE_BUDGET_ID = "g2-measurement-fixture-budget-v1";
 export const QA_MULTI_SKILL_MEASUREMENT_FIXTURE_ID = "qa-multi-skill-measurement-v1";
 export const QA_MULTI_SKILL_MEASUREMENT_FIXTURE = freeze({

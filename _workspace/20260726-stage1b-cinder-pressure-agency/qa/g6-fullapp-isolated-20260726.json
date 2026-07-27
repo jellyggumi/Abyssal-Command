@@ -1,0 +1,167 @@
+{
+  "mode": "fullapp",
+  "startedAt": "2026-07-26T09:57:15.228Z",
+  "finishedAt": "2026-07-26T10:01:52.129Z",
+  "passes": [
+    {
+      "tier": {
+        "label": "desktop-m2pro-dsf1",
+        "dsf": 1,
+        "cpuThrottle": 1
+      },
+      "rendererMode": "webgl",
+      "durationMs": 60000,
+      "frameWorkMs": {
+        "n": 3566,
+        "mean": 2.549,
+        "p50": 2.3,
+        "p95": 3.9,
+        "p99": 6.9,
+        "max": 54
+      },
+      "frameDeltaMs": {
+        "n": 3566,
+        "mean": 16.918,
+        "p50": 16.7,
+        "p95": 16.8,
+        "p99": 16.8,
+        "max": 316.7
+      },
+      "longFrameCount": 7,
+      "longFrameRatio": 0.00196,
+      "inputLatencyMs": {
+        "n": 459,
+        "mean": 0.239,
+        "p50": 0.2,
+        "p95": 0.4,
+        "p99": 0.6,
+        "max": 3.1
+      },
+      "inputSamples": 459,
+      "domNodes": 100,
+      "errors": []
+    },
+    {
+      "tier": {
+        "label": "shipped-mobile-dsf2",
+        "dsf": 2,
+        "cpuThrottle": 1
+      },
+      "rendererMode": "webgl",
+      "durationMs": 60000,
+      "frameWorkMs": {
+        "n": 3577,
+        "mean": 2.565,
+        "p50": 2.4,
+        "p95": 3.6,
+        "p99": 9.3,
+        "max": 50.2
+      },
+      "frameDeltaMs": {
+        "n": 3577,
+        "mean": 16.806,
+        "p50": 16.7,
+        "p95": 16.7,
+        "p99": 16.8,
+        "max": 133.3
+      },
+      "longFrameCount": 5,
+      "longFrameRatio": 0.0014,
+      "inputLatencyMs": {
+        "n": 461,
+        "mean": 0.212,
+        "p50": 0.2,
+        "p95": 0.3,
+        "p99": 0.4,
+        "max": 0.4
+      },
+      "inputSamples": 461,
+      "domNodes": 100,
+      "errors": []
+    },
+    {
+      "tier": {
+        "label": "midtier-mobile-proxy-dsf2-cpu4x",
+        "dsf": 2,
+        "cpuThrottle": 4
+      },
+      "rendererMode": "webgl",
+      "durationMs": 60000,
+      "frameWorkMs": {
+        "n": 3277,
+        "mean": 12.512,
+        "p50": 11.7,
+        "p95": 19,
+        "p99": 30.2,
+        "max": 230
+      },
+      "frameDeltaMs": {
+        "n": 3277,
+        "mean": 18.324,
+        "p50": 16.7,
+        "p95": 33.3,
+        "p99": 33.4,
+        "max": 283.2
+      },
+      "longFrameCount": 69,
+      "longFrameRatio": 0.02106,
+      "inputLatencyMs": {
+        "n": 347,
+        "mean": 0.994,
+        "p50": 1,
+        "p95": 1.7,
+        "p99": 2,
+        "max": 4
+      },
+      "inputSamples": 347,
+      "domNodes": 103,
+      "errors": []
+    },
+    {
+      "tier": {
+        "label": "low-mobile-proxy-dsf2-cpu6x",
+        "dsf": 2,
+        "cpuThrottle": 6
+      },
+      "rendererMode": "webgl",
+      "durationMs": 60000,
+      "frameWorkMs": {
+        "n": 2116,
+        "mean": 21.93,
+        "p50": 19.5,
+        "p95": 37.3,
+        "p99": 51.6,
+        "max": 335
+      },
+      "frameDeltaMs": {
+        "n": 2116,
+        "mean": 28.622,
+        "p50": 33.3,
+        "p95": 50,
+        "p99": 66.7,
+        "max": 416.7
+      },
+      "longFrameCount": 409,
+      "longFrameRatio": 0.19329,
+      "inputLatencyMs": {
+        "n": 238,
+        "mean": 1.624,
+        "p50": 1.6,
+        "p95": 2.7,
+        "p99": 3.4,
+        "max": 3.8
+      },
+      "inputSamples": 238,
+      "domNodes": 109,
+      "errors": []
+    }
+  ],
+  "measurementIsolation": {
+    "status": "ISOLATED",
+    "scope": "no concurrent Stage 1b exporters, node --test processes, or other G6 probes in this session",
+    "preflightCommand": "pgrep -fl 'node.*(test|run-g[236]|run-stage1b)'",
+    "preflightResult": "NO_MATCHES_EXIT_1",
+    "measurementStartedAt": "2026-07-26T09:57:15.228Z",
+    "measurementFinishedAt": "2026-07-26T10:01:52.129Z"
+  }
+}

@@ -17,7 +17,9 @@ import {
   getRunSnapshot,
   isTerminalRun,
   queueInput,
+  BOSS_PRESSURE_GRACE_TICKS,
 } from "../defense-run-simulation.js";
+import { SKILLS } from "../defense-catalog.js";
 
 const RUN_ID = "20260726-stage1b-cinder-pressure-agency";
 const STAGE_ID = "cinder-span";
@@ -25,8 +27,6 @@ const LOADOUT = ["ember-cohort", "rift-lens", "veil-vanguard"];
 const REQUIRED_PER_ARM = 50;
 const MAX_CANDIDATE_SEEDS = 500;
 const MAX_CONTROLLER_STEPS = 20000;
-// Read-only instrumentation context pinned by the frozen Stage 1b contract.
-const BOSS_PRESSURE_GRACE_TICKS = 1800;
 const RETAINED_EVENT_TYPES = new Set([
   "BOSS_RALLY_WINDOW",
   "BOSS_SPAWNED",
@@ -44,6 +44,7 @@ function queueObjectiveCommands(run) {
   }
   let next = queueInput(run, "MOVE", { octant: "IDLE" });
   for (const skillId of run.commander.skills) {
+    if (SKILLS[skillId]?.kind !== "active") continue;
     next = queueInput(next, "SKILL_CAST", { skillId });
   }
   if (run.eliteCandidate && !run.extracted) {

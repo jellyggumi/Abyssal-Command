@@ -402,7 +402,10 @@ test("every deployed battle GLB has textured normal-mapped mesh primitives", asy
   const retainedPaths = RETAINED_ASSET_PATHS
     .filter((path) => path.startsWith("assets/images/battle/glb/") && path.endsWith(".glb"))
     .sort((left, right) => left.localeCompare(right));
-  const declaredNonRuntimePaths = new Set(manifest.rows
+  const declaredNonRuntimePaths = new Set([
+    ...(manifest.rows ?? []),
+    ...(manifest.historicalDeletionRows ?? []),
+  ]
     .filter((row) => row.currentPath.startsWith("assets/images/battle/glb/")
       && row.currentPath.endsWith(".glb")
       && row.disposition === "delete")

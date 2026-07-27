@@ -9,6 +9,7 @@ import * as THREE from "./vendor/three.module.js";
 import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "./vendor/utils/SkeletonUtils.js";
 import { REWARDS, STAGE_PRESENTATION_BY_ID, STAGES } from "./defense-catalog.js";
+import { stageWorldFor } from "./stage-world-catalog.js";
 
 const MAX_VISUAL_EFFECTS = 24;
 const MAX_VISUAL_EVENT_KEYS = 128;
@@ -56,6 +57,13 @@ const TARGET_HEIGHT = Object.freeze({
   elite: 2.2,
   enemy: 1.7,
   companion: 1.3,
+  stageNpc: 1.8,
+});
+// Imported ambient rigs use a local-X arm swing. Keep their idle silhouette guarded
+// after the mixer writes its authored horizontal pose each frame.
+const STAGE_NPC_GUARD_OFFSETS = Object.freeze({
+  left: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), THREE.MathUtils.degToRad(50)),
+  right: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), THREE.MathUtils.degToRad(-100)),
 });
 
 // Free-orbit camera bounds (camera-orbit-implementation-plan-20260725.md
@@ -110,23 +118,6 @@ const RIM_LIGHT_PITCH = THREE.MathUtils.degToRad(35);
 // against the current pipeline output, not the retired one.
 const MODEL_ROOT = "./assets/images/battle/glb/";
 
-// Stage id -> terrain GLB. Stages 1-3 use the canonical resource pack's
-// existing terrain sets (echo-throne-steps is the walkable terrain; the
-// echo-throne collection itself is a standalone decorative throne prop,
-// not used as a stage terrain root). Stages 4-10 use this cycle's new
-// world-content-pack terrain.
-const TERRAIN_MODELS = Object.freeze({
-  "cinder-span": "terrain/cinder-span.glb",
-  "veil-citadel": "terrain/veil-citadel.glb",
-  "echo-throne": "terrain/echo-throne-steps.glb",
-  "sunken-bastion": "terrain/sunken-bastion.glb",
-  "howling-sprawl": "terrain/howling-sprawl.glb",
-  "glass-necropolis": "terrain/glass-necropolis.glb",
-  "starless-canal": "terrain/starless-canal.glb",
-  "shattered-causeway": "terrain/shattered-causeway.glb",
-  "abyss-chancel": "terrain/abyss-chancel.glb",
-  "gate-zenith": "terrain/gate-zenith.glb",
-});
 
 // Boss actor's own `bossId` field (set verbatim from BOSSES[stage.boss].id
 // in spawnBoss(), defense-run-simulation.js) is the exact key -- no need to
@@ -285,6 +276,55 @@ const COMBAT_PRESENTATION_MODELS = Object.freeze({
     effects: Object.freeze(["vfx/abyss-orb.glb", "vfx/ranged-bolt.glb"]),
   }),
 });
+const PROJECTILE_PRESENTATIONS = Object.freeze({
+  orb: Object.freeze({
+    family: "orb",
+    geometry: "faceted-orb-ring",
+    material: "cyan-additive",
+    motion: "hover-pulse-orbit",
+  }),
+  bolt: Object.freeze({
+    family: "bolt",
+    geometry: "tapered-bolt",
+    material: "amber-additive",
+    motion: "forward-spin-stretch",
+  }),
+  slash: Object.freeze({
+    family: "slash",
+    geometry: "crescent-arc",
+    material: "violet-additive",
+    motion: "corkscrew-wave",
+  }),
+});
+const PROJECTILE_ROLE_FAMILY = Object.freeze({
+  support: "orb",
+  ranged: "bolt",
+  striker: "bolt",
+  vanguard: "slash",
+  guardian: "slash",
+  flanker: "slash",
+  rusher: "slash",
+});
+const PROJECTILE_OWNER_FAMILY = Object.freeze({
+  "throne-echo": "orb",
+  "dawnless-crown": "orb",
+  "requiem-warden": "orb",
+  "ember-cohort": "bolt",
+  "rift-lens": "bolt",
+  "lantern-reaver": "bolt",
+  "anchor-shard": "slash",
+  "veil-vanguard": "slash",
+  "pack-warden": "slash",
+});
+const PROJECTILE_FAMILIES = Object.freeze(["orb", "bolt", "slash"]);
+const PROJECTILE_HEIGHT = Object.freeze({ orb: 0.62, bolt: 0.48, slash: 0.58 });
+const PROJECTILE_ARC_HEIGHT = Object.freeze({ orb: 0.34, bolt: 0.08, slash: 0.2 });
+const AMBIENT_BREATH_CYCLE_SECONDS = 4.2;
+const AMBIENT_WEIGHT_CYCLE_SECONDS = 6.4;
+const AMBIENT_LOOK_CYCLE_SECONDS = 11;
+const AMBIENT_BREATH_SCALE = 0.012;
+const AMBIENT_WEIGHT_ROLL = THREE.MathUtils.degToRad(1.15);
+const AMBIENT_LOOK_YAW = THREE.MathUtils.degToRad(8);
 // Commander/boss records have no authored combat role. Their delivery is
 // classified from the live source-target separation instead: one largest
 // authored actor silhouette is the presentation-space close-contact bound.
@@ -458,6 +498,7 @@ function worldPointInto(target, entity) {
     target.x = (x / WORLD_WIDTH * 2 - 1) * WORLD_SCALE;
     target.z = (y / WORLD_HEIGHT * 2 - 1) * WORLD_SCALE;
   }
+  target.y = finite(entity?.elevation, 0) * WORLD_SCALE / (WORLD_WIDTH / 2);
   return target;
 }
 
@@ -473,6 +514,28 @@ function worldPoint(entity) {
 function wrapAngle(radians) {
   const twoPi = Math.PI * 2;
   return ((radians % twoPi) + twoPi + Math.PI) % twoPi - Math.PI;
+}
+
+function stableStringHash(value) {
+  let hash = 2166136261;
+  const text = String(value ?? "");
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+export function projectilePresentationFor(projectile = {}, sourceEntity = null) {
+  const identity = sourceEntity?.role ?? sourceEntity?.kind ?? null;
+  let family = PROJECTILE_ROLE_FAMILY[identity] ?? PROJECTILE_OWNER_FAMILY[projectile?.owner];
+  if (!family && projectile?.owner === "commander") family = "orb";
+  if (!family && (sourceEntity?.class === "boss" || sourceEntity?.kind === "ranged")) family = "bolt";
+  if (!family) {
+    const stableIdentity = projectile?.owner ?? projectile?.sourceId ?? projectile?.id ?? "";
+    family = PROJECTILE_FAMILIES[stableStringHash(stableIdentity) % PROJECTILE_FAMILIES.length];
+  }
+  return PROJECTILE_PRESENTATIONS[family];
 }
 
 // Orbit distance that frames a sphere of `radius` under `camera`'s live
@@ -521,6 +584,21 @@ function effectAnchor(snapshot, event) {
   return snapshot?.commander ?? snapshot?.player ?? snapshot?.gate ?? snapshot?.base;
 }
 
+function snapshotEntityById(snapshot, entityId) {
+  if (!entityId) return null;
+  const commander = snapshot?.commander ?? snapshot?.player;
+  if (commander?.id === entityId) return commander;
+  const gate = snapshot?.gate ?? snapshot?.base;
+  if (gate?.id === entityId || entityId === "gate") return gate;
+  for (const entity of list(snapshot, "enemies", "hostiles")) {
+    if (entity?.id === entityId) return entity;
+  }
+  for (const entity of list(snapshot, "companions", "allies")) {
+    if (entity?.id === entityId) return entity;
+  }
+  return null;
+}
+
 // --- GLTF loading: one shared loader + promise cache across every mounted
 // instance (pure asset-data caching, not per-instance scene state -- safe
 // to share, and avoids re-fetching the same 42 files if multiple sessions
@@ -531,16 +609,41 @@ const gltfCache = new Map();
 // identity set keeps repeated disposal idempotent when roots overlap.
 const disposedSkeletons = new WeakSet();
 
-function loadGltf(relPath) {
-  if (!gltfCache.has(relPath)) {
-    gltfCache.set(
-      relPath,
-      new Promise((resolve, reject) => {
-        gltfLoader.load(MODEL_ROOT + relPath, resolve, undefined, reject);
-      }),
-    );
+function modelUrl(path) {
+  if (typeof path !== "string" || !path) return null;
+  if (path.startsWith("./") || path.startsWith("../") || path.startsWith("/")) return path;
+  if (path.startsWith("assets/")) return `./${path}`;
+  return MODEL_ROOT + path;
+}
+
+function loadGltf(path) {
+  const url = modelUrl(path);
+  if (!url) return Promise.reject(new TypeError("Missing GLB model path"));
+  if (!gltfCache.has(url)) {
+    const request = new Promise((resolve, reject) => {
+      gltfLoader.load(url, resolve, undefined, reject);
+    }).catch((error) => {
+      if (gltfCache.get(url) === request) gltfCache.delete(url);
+      throw error;
+    });
+    gltfCache.set(url, request);
   }
-  return gltfCache.get(relPath);
+  return gltfCache.get(url);
+}
+
+function stageNpcFacingYaw(npc, sourcePoint) {
+  const target = npc?.attentionTarget
+    ?? npc?.presentationCue?.attentionTarget
+    ?? npc?.presentationCue?.lookAt;
+  if (Number.isFinite(target?.x) && Number.isFinite(target?.y)) {
+    const targetPoint = worldPoint(target);
+    const dx = targetPoint.x - sourcePoint.x;
+    const dz = targetPoint.z - sourcePoint.z;
+    if (dx !== 0 || dz !== 0) {
+      return wrapAngle(Math.atan2(dx, dz) + MODEL_FORWARD_YAW_OFFSET);
+    }
+  }
+  return finite(npc?.placement?.yawRadians, 0);
 }
 
 function fitHeight(object3d, targetHeight) {
@@ -564,6 +667,39 @@ function fitFootprint(object3d, targetHalfExtent) {
   const maxHorizontal = Math.max(size.x, size.z, 1e-6);
   const scale = (targetHalfExtent * 2) / maxHorizontal;
   object3d.scale.setScalar(scale);
+}
+
+const OWNED_TEXTURE_KEYS = Object.freeze(["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap"]);
+
+function ownRenderableResources(root) {
+  const geometries = new Map();
+  const materials = new Map();
+  const textures = new Map();
+  const ownTexture = (texture) => {
+    if (!texture?.isTexture) return texture;
+    if (!textures.has(texture)) textures.set(texture, texture.clone());
+    return textures.get(texture);
+  };
+  const ownMaterial = (material) => {
+    if (!material) return material;
+    if (!materials.has(material)) {
+      const owned = material.clone();
+      for (const key of OWNED_TEXTURE_KEYS) owned[key] = ownTexture(material[key]);
+      materials.set(material, owned);
+    }
+    return materials.get(material);
+  };
+  root.traverse((node) => {
+    if (!node.isMesh) return;
+    if (node.geometry) {
+      if (!geometries.has(node.geometry)) geometries.set(node.geometry, node.geometry.clone());
+      node.geometry = geometries.get(node.geometry);
+    }
+    node.material = Array.isArray(node.material)
+      ? node.material.map(ownMaterial)
+      : ownMaterial(node.material);
+  });
+  return root;
 }
 
 // Extracts "<action>" from a clip named "<assetId>::<action>::v01" (the rig
@@ -626,6 +762,7 @@ async function instantiateActorModel(relPath, targetHeight) {
 async function instantiateTerrainModel(relPath) {
   const gltf = await loadGltf(relPath);
   const instance = SkeletonUtils.clone(gltf.scene);
+  ownRenderableResources(instance);
   fitFootprint(instance, TERRAIN_TARGET_HALF_EXTENT);
   return instance;
 }
@@ -637,6 +774,185 @@ async function instantiatePresentationModel(relPath, targetHeight) {
   return instance;
 }
 
+async function instantiateStageProp(prop) {
+  const gltf = await loadGltf(prop.modelPath);
+  const instance = SkeletonUtils.clone(gltf.scene);
+  ownRenderableResources(instance);
+  const radius = finite(prop.footprintRadius, 180) * WORLD_SCALE / (WORLD_WIDTH / 2);
+  fitFootprint(instance, radius);
+  const rescan = new THREE.Box3().setFromObject(instance);
+  instance.position.y -= rescan.min.y;
+  const groundOffset = instance.position.y;
+  const point = worldPoint(prop.placement);
+  instance.position.set(point.x, point.y + groundOffset, point.z);
+  instance.rotation.y = finite(prop.placement?.yawRadians, 0);
+  instance.name = `stage-prop:${prop.id}`;
+  instance.userData.stageDecorId = prop.id;
+  instance.userData.stageDecorKind = "prop";
+  return {
+    id: prop.id,
+    kind: "prop",
+    role: prop.role,
+    modelPath: prop.modelPath,
+    placement: prop.placement,
+    root: instance,
+    mixer: null,
+    actions: {},
+  };
+}
+
+function stageNpcGuardBones(root) {
+  const bones = { left: null, right: null };
+  root.traverse((node) => {
+    if (!node.isBone) return;
+    const normalized = node.name.replace(/[._-]/g, "").toLowerCase();
+    if (normalized.endsWith("upperarml")) bones.left = node;
+    if (normalized.endsWith("upperarmr")) bones.right = node;
+  });
+  return bones;
+}
+
+function applyStageNpcGuardPose(record) {
+  if (record.oneShotAction || record.activeActionKey !== "idle") return;
+  record.guardBones.left?.quaternion.multiply(STAGE_NPC_GUARD_OFFSETS.left);
+  record.guardBones.right?.quaternion.multiply(STAGE_NPC_GUARD_OFFSETS.right);
+}
+
+async function instantiateStageNpc(npc) {
+  const { instance, mixer, actions } = await instantiateActorModel(npc.modelPath, TARGET_HEIGHT.stageNpc);
+  ownRenderableResources(instance);
+  const point = worldPoint(npc.placement);
+  const restGroundY = instance.position.y;
+  instance.position.set(point.x, point.y + restGroundY, point.z);
+  instance.rotation.y = stageNpcFacingYaw(npc, point);
+  instance.name = `stage-npc:${npc.id}`;
+  instance.userData.stageDecorId = npc.id;
+  instance.userData.stageDecorKind = "npc";
+  instance.userData.stageActorId = npc.actorId;
+  const idleKey = npc.presentationCue?.idleClip ?? "idle";
+  const idleAction = actions[idleKey] ?? actions.idle ?? null;
+  if (idleAction) idleAction.reset().play();
+  return {
+    id: npc.id,
+    kind: "stage-npc",
+    role: npc.role,
+    actorId: npc.actorId,
+    modelPath: npc.modelPath,
+    placement: npc.placement,
+    presentationCue: npc.presentationCue,
+    root: instance,
+    mixer,
+    actions,
+    guardBones: stageNpcGuardBones(instance),
+    activeActionKey: idleAction ? (actions[idleKey] ? idleKey : "idle") : null,
+    oneShotAction: null,
+    oneShotActionKey: null,
+    dead: false,
+    moving: false,
+    yaw: null,
+    targetYaw: null,
+    ambientPhase: stableStringHash(npc.id) / 0xffffffff * Math.PI * 2,
+    ambientState: "suppressed",
+    ambientActive: false,
+    ambientOffsets: { breath: 0, weight: 0, look: 0 },
+    restScale: instance.scale.clone(),
+    restYaw: instance.rotation.y,
+    restRoll: instance.rotation.z,
+    restGroundY,
+  };
+}
+
+function disposeStageRecord(record) {
+  record?.mixer?.stopAllAction();
+  if (record?.root) disposeObject3D(record.root);
+}
+
+function projectileMaterial(color, opacity = 1) {
+  return new THREE.MeshBasicMaterial({
+    color,
+    transparent: opacity < 1,
+    opacity,
+    depthWrite: opacity >= 1,
+    blending: THREE.AdditiveBlending,
+  });
+}
+
+function projectileMesh(name, geometry, material) {
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = name;
+  return mesh;
+}
+
+function createProjectileVisual(presentation) {
+  const root = new THREE.Group();
+  root.name = `projectile-${presentation.family}`;
+  root.userData.projectileFamily = presentation.family;
+  root.userData.projectilePresentation = presentation;
+
+  const effectRoot = new THREE.Group();
+  effectRoot.name = "projectile-effect";
+  root.add(effectRoot);
+
+  if (presentation.family === "orb") {
+    const core = projectileMesh(
+      "projectile-core",
+      new THREE.IcosahedronGeometry(0.13, 1),
+      projectileMaterial(0x9af7ff),
+    );
+    const ring = projectileMesh(
+      "projectile-ring",
+      new THREE.TorusGeometry(0.19, 0.022, 4, 12),
+      projectileMaterial(0x5de6ff, 0.78),
+    );
+    ring.rotation.x = Math.PI / 2;
+    const trail = projectileMesh(
+      "projectile-trail",
+      new THREE.ConeGeometry(0.11, 0.36, 6, 1, true),
+      projectileMaterial(0x39bde7, 0.34),
+    );
+    trail.rotation.x = Math.PI / 2;
+    trail.position.z = -0.24;
+    effectRoot.add(core, ring, trail);
+  } else if (presentation.family === "bolt") {
+    const core = projectileMesh(
+      "projectile-core",
+      new THREE.CylinderGeometry(0.045, 0.075, 0.5, 6),
+      projectileMaterial(0xffd36a),
+    );
+    core.rotation.x = Math.PI / 2;
+    const tip = projectileMesh(
+      "projectile-tip",
+      new THREE.ConeGeometry(0.075, 0.18, 6),
+      projectileMaterial(0xffffff),
+    );
+    tip.rotation.x = Math.PI / 2;
+    tip.position.z = 0.33;
+    const trail = projectileMesh(
+      "projectile-trail",
+      new THREE.ConeGeometry(0.1, 0.5, 6, 1, true),
+      projectileMaterial(0xff8d35, 0.4),
+    );
+    trail.rotation.x = -Math.PI / 2;
+    trail.position.z = -0.43;
+    effectRoot.add(core, tip, trail);
+  } else {
+    const core = projectileMesh(
+      "projectile-core",
+      new THREE.TorusGeometry(0.23, 0.045, 4, 14, Math.PI * 1.35),
+      projectileMaterial(0xf2a4ff),
+    );
+    const trail = projectileMesh(
+      "projectile-trail",
+      new THREE.TorusGeometry(0.3, 0.025, 3, 12, Math.PI * 1.2),
+      projectileMaterial(0x9d57ff, 0.34),
+    );
+    trail.position.z = -0.12;
+    trail.rotation.z = -0.18;
+    effectRoot.add(core, trail);
+  }
+
+  return { root, effectRoot };
+}
 function weaponSocket(root) {
   let fallback = null;
   let socket = null;
@@ -867,6 +1183,9 @@ export class RealtimeBattle {
 
     this.actors = new Map(); // entity.id -> { root, kind, modelPath, loading }
     this.vfxInstances = []; // { root, untilTick } -- also holds death echoes: { root, untilTick, mixer }
+    this.stageTerrainRecord = null;
+    this.stageDecorRecords = [];
+    this.stageLoadToken = 0;
     this.cameraTarget = new THREE.Vector3();
     this.cameraFollowInit = false;
     this.pressureGatePoint = new THREE.Vector3();
@@ -904,7 +1223,7 @@ export class RealtimeBattle {
     this.visualEventKeys = new Set();
     this.animationEventKeys = new Set();
     this.pendingVfx = [];
-    this.pendingDeathEchoes = []; // captureDeathEchoes()-collected { modelPath, x, z }, drained by collectFeedback()
+    this.pendingDeathEchoes = []; // captureDeathEchoes()-collected { modelPath, x, y, z }, drained by collectFeedback()
     // Wall-clock delta for AnimationMixer stepping. One-shot completion is
     // driven by the mixer's own "finished" event, never by a parallel timer.
     // The delta remains presentation-local and is deliberately not tied to
@@ -936,7 +1255,7 @@ export class RealtimeBattle {
     );
     this.pixelRatio = canvasRatio;
     const webgl2 = this.canvas.getContext?.("webgl2", {
-      alpha: false,
+      alpha: true,
       antialias: !this.softwareRenderer,
       failIfMajorPerformanceCaveat: false,
     });
@@ -947,9 +1266,9 @@ export class RealtimeBattle {
       canvas: this.canvas,
       context: webgl2,
       antialias: !this.softwareRenderer,
-      alpha: false,
+      alpha: true,
     });
-    this.renderer.setClearColor(COLORS.backgroundBottom, 1);
+    this.renderer.setClearColor(COLORS.backgroundBottom, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.scene = new THREE.Scene();
@@ -1051,36 +1370,74 @@ export class RealtimeBattle {
     return this;
   }
 
+  clearStageWorld() {
+    for (const record of this.stageDecorRecords) record.mixer?.stopAllAction();
+    this.stageDecorRecords = [];
+    this.stageTerrainRecord = null;
+    if (!this.terrainGroup) return;
+    while (this.terrainGroup.children.length) {
+      const child = this.terrainGroup.children[0];
+      this.terrainGroup.remove(child);
+      disposeObject3D(child);
+    }
+  }
+
   ensureStageTerrain(stageId) {
     if (!stageId || this.disposed) return;
     if (this.loadedStageId === stageId || this.loadingStageId === stageId) return;
-    // First resolution of a NEW stage id for this session (the dedup guard
-    // above already ruled out "same stage as last frame") -- the correct
-    // hook point for stage-scoped presentation, independent of whether the
-    // terrain GLB itself is found/loads successfully below (stage-
-    // composition-20260725.md §1.1, D22 판정 10).
+    const profile = stageWorldFor(stageId);
+    if (!profile?.terrainGlbPath) return;
+
     this.applyStagePalette(stageId);
-    const relPath = TERRAIN_MODELS[stageId];
-    if (!relPath) return;
     this.loadingStageId = stageId;
-    instantiateTerrainModel(relPath)
-      .then((instance) => {
-        if (this.disposed || this.loadingStageId !== stageId) {
-          disposeObject3D(instance);
+    this.loadedStageId = null;
+    const loadToken = ++this.stageLoadToken;
+    this.clearStageWorld();
+
+    const terrainRequest = instantiateTerrainModel(profile.terrainGlbPath).then((root) => ({
+      id: `${stageId}:terrain`,
+      kind: "terrain",
+      modelPath: profile.terrainGlbPath,
+      root,
+      mixer: null,
+      actions: {},
+    }));
+    terrainRequest.then(
+      (record) => {
+        if (this.disposed || this.stageLoadToken !== loadToken || this.loadingStageId !== stageId) {
+          disposeStageRecord(record);
           return;
         }
-        while (this.terrainGroup.children.length) {
-          const child = this.terrainGroup.children[0];
-          this.terrainGroup.remove(child);
-          disposeObject3D(child);
-        }
-        this.terrainGroup.add(instance);
+        this.terrainGroup.add(record.root);
+        this.stageTerrainRecord = record;
         this.loadedStageId = stageId;
         this.loadingStageId = null;
-      })
-      .catch(() => {
-        if (this.loadingStageId === stageId) this.loadingStageId = null;
-      });
+      },
+      () => {
+        if (this.disposed || this.stageLoadToken !== loadToken) return;
+        this.stageLoadToken += 1;
+        this.loadingStageId = null;
+        this.clearStageWorld();
+      },
+    );
+
+    const decorRequests = [
+      ...profile.presentation.props.map((prop) => instantiateStageProp(prop)),
+      ...profile.presentation.npcs.map((npc) => instantiateStageNpc(npc)),
+    ];
+    for (const request of decorRequests) {
+      request.then(
+        (record) => {
+          if (this.disposed || this.stageLoadToken !== loadToken) {
+            disposeStageRecord(record);
+            return;
+          }
+          this.terrainGroup.add(record.root);
+          this.stageDecorRecords.push(record);
+        },
+        () => {},
+      );
+    }
   }
 
   // Maps STAGE_PRESENTATION_BY_ID[stageId]'s authored palette onto this
@@ -1133,7 +1490,7 @@ export class RealtimeBattle {
     // caller, only ever runs from renderSnapshot() after a successful
     // mount()).
     if (this.renderer) {
-      this.renderer.setClearColor(backgroundTint, 1);
+      this.renderer.setClearColor(backgroundTint, 0);
       // Environment-map re-tint (stage-composition-20260725.md §3.6, D22
       // 판정 8): buildEnvironmentMap() bakes ONE global 6-color cube
       // shared by every stage regardless of stageId -- for a stage whose
@@ -1177,7 +1534,12 @@ export class RealtimeBattle {
       // Simulation-exact position, kept alongside the rendered one so a
       // companion's render trail (updateActorFollow) always has an
       // authoritative target to converge on.
-      goalX: null, goalZ: null,
+      goalX: null, goalY: null, goalZ: null,
+      ambientPhase: stableStringHash(entity.id) / 0xffffffff * Math.PI * 2,
+      ambientState: "suppressed",
+      ambientActive: false,
+      ambientOffsets: { breath: 0, weight: 0, look: 0 },
+      restScale: null, restYaw: 0, restRoll: 0, restGroundY: 0,
     };
     this.actors.set(entity.id, record);
     if (!modelPath) {
@@ -1189,6 +1551,10 @@ export class RealtimeBattle {
         new THREE.MeshStandardMaterial({ color: 0xff00ff, emissive: 0xff00ff, emissiveIntensity: 0.5 }),
       );
       record.root = marker;
+      record.restScale = marker.scale.clone();
+      record.restYaw = marker.rotation.y;
+      record.restRoll = marker.rotation.z;
+      record.restGroundY = marker.position.y;
       record.loading = false;
       this.actorGroup.add(marker);
       return record;
@@ -1196,6 +1562,10 @@ export class RealtimeBattle {
     instantiateActorModel(modelPath, actorTargetHeight(entity))
       .then(({ instance, mixer, actions }) => {
         record.root = instance;
+        record.restScale = instance.scale.clone();
+        record.restYaw = instance.rotation.y;
+        record.restRoll = instance.rotation.z;
+        record.restGroundY = instance.position.y;
         record.mixer = mixer;
         record.actions = actions;
         record.loading = false;
@@ -1218,6 +1588,55 @@ export class RealtimeBattle {
         record.loading = false;
       });
     return record;
+  }
+
+  resetAmbientIdle(record) {
+    if (!record?.root || !record.restScale) return;
+    record.root.scale.copy(record.restScale);
+    record.root.rotation.z = record.restRoll;
+    record.root.rotation.y = record.yaw ?? record.restYaw;
+    record.ambientState = "suppressed";
+    record.ambientActive = false;
+    record.ambientOffsets.breath = 0;
+    record.ambientOffsets.weight = 0;
+    record.ambientOffsets.look = 0;
+  }
+
+  updateAmbientIdle(record, nowMs) {
+    if (!record?.root || !["commander", "enemy", "boss", "companion", "stage-npc"].includes(record.kind)) return;
+    const idle = !this.reducedMotion
+      && !record.dead
+      && !record.oneShotAction
+      && !record.moving
+      && this.locomotionActionKey(record) === "idle"
+      && (!record.mixer || record.activeActionKey === "idle");
+    if (!idle) {
+      this.resetAmbientIdle(record);
+      return;
+    }
+
+    const seconds = nowMs / 1000;
+    const phase = record.ambientPhase;
+    const breath = Math.sin(seconds * Math.PI * 2 / AMBIENT_BREATH_CYCLE_SECONDS + phase) * AMBIENT_BREATH_SCALE;
+    const weight = Math.sin(seconds * Math.PI * 2 / AMBIENT_WEIGHT_CYCLE_SECONDS + phase * 0.7) * AMBIENT_WEIGHT_ROLL;
+    const lookCycle = (seconds + phase / (Math.PI * 2) * AMBIENT_LOOK_CYCLE_SECONDS) % AMBIENT_LOOK_CYCLE_SECONDS;
+    const lookWindow = lookCycle >= 4 && lookCycle <= 8
+      ? Math.sin((lookCycle - 4) / 4 * Math.PI * 2)
+      : 0;
+    const look = lookWindow * AMBIENT_LOOK_YAW;
+
+    record.root.scale.set(
+      record.restScale.x * (1 - breath * 0.25),
+      record.restScale.y * (1 + breath),
+      record.restScale.z * (1 - breath * 0.25),
+    );
+    record.root.rotation.z = record.restRoll + weight;
+    record.root.rotation.y = (record.yaw ?? record.restYaw) + look;
+    record.ambientState = "idle";
+    record.ambientActive = true;
+    record.ambientOffsets.breath = breath;
+    record.ambientOffsets.weight = weight;
+    record.ambientOffsets.look = look;
   }
 
   locomotionActionKey(record) {
@@ -1348,6 +1767,7 @@ export class RealtimeBattle {
     } else if (record.dead) {
       return false;
     }
+    this.resetAmbientIdle(record);
     const action = record.actions?.[key];
     if (!record.mixer || !action) {
       if (record.loading && (key === "die" || !record.queuedAction || record.queuedAction.key === "show")) {
@@ -1403,22 +1823,22 @@ export class RealtimeBattle {
   }
 
   // Writes the actor's rendered position and derives its heading. `record`
-  // keeps two positions: the simulation's exact one (goalX/goalZ) and the
-  // rendered one (root.position), which for companions trails slightly --
-  // see updateActorFollow(). Facing is derived from the RENDERED delta so a
-  // trailing companion faces where it is visibly going, not where the
-  // simulation already teleported it.
+  // keeps the simulation's exact x/elevation/z goal alongside the rendered
+  // transform. Companions trail toward all three axes together; every other
+  // actor stays exactly on the authoritative terrain surface.
   syncActorPosition(record, entity) {
     if (!record.root) return;
     const p = worldPoint(entity);
     record.goalX = p.x;
+    record.goalY = record.restGroundY + p.y;
     record.goalZ = p.z;
     // Commander and everything that is not a companion render exactly on
     // the simulation position. The commander especially: it answers direct
     // player input, and smoothing it would read as input lag.
     if (record.kind !== "companion" || this.reducedMotion || record.lastX === null) {
-      record.root.position.x = p.x;
-      record.root.position.z = p.z;
+      record.root.position.x = record.goalX;
+      record.root.position.y = record.goalY;
+      record.root.position.z = record.goalZ;
     }
     const rx = record.root.position.x;
     const rz = record.root.position.z;
@@ -1472,10 +1892,12 @@ export class RealtimeBattle {
     if (this.reducedMotion) {
       record.root.position.x = record.goalX;
       record.root.position.z = record.goalZ;
+      record.root.position.y = record.goalY;
       return;
     }
     const t = 1 - Math.exp(-FOLLOW_CATCHUP_RATE * deltaSeconds);
     record.root.position.x += (record.goalX - record.root.position.x) * t;
+    record.root.position.y += (record.goalY - record.root.position.y) * t;
     record.root.position.z += (record.goalZ - record.root.position.z) * t;
   }
 
@@ -1520,7 +1942,11 @@ export class RealtimeBattle {
       this.pressureGroup.visible = false;
       return;
     }
-    this.pressureTargetRing.position.set(this.pressureGatePoint.x, 1.02, this.pressureGatePoint.z);
+    this.pressureTargetRing.position.set(
+      this.pressureGatePoint.x,
+      this.pressureGatePoint.y + 1.02,
+      this.pressureGatePoint.z,
+    );
     this.pressureTargetRing.visible = true;
     this.pressureGroup.visible = true;
     if (closestDistanceSq < 1e-6) {
@@ -1543,14 +1969,65 @@ export class RealtimeBattle {
     this.pressureArrow.visible = true;
     this.pressureLane.position.set(
       (this.pressureEnemyPoint.x + endX) * 0.5,
-      0.055,
+      (this.pressureEnemyPoint.y + this.pressureGatePoint.y) * 0.5 + 0.055,
       (this.pressureEnemyPoint.z + endZ) * 0.5,
     );
     this.pressureLane.rotation.y = heading;
     this.pressureLane.scale.set(1, 1, laneLength);
 
-    this.pressureArrow.position.set(endX, 0.16, endZ);
+    this.pressureArrow.position.set(endX, this.pressureGatePoint.y + 0.16, endZ);
     this.pressureArrow.rotation.y = heading;
+  }
+
+  syncProjectile(record, projectile, snapshot) {
+    const source = record.projectileSourcePoint;
+    const target = record.projectileTargetPoint;
+    worldPointInto(source, projectile);
+    const targetEntity = snapshotEntityById(snapshot, projectile.targetId);
+    if (targetEntity) worldPointInto(target, targetEntity);
+    else target.copy(source);
+
+    const sourceActor = this.actors.get(projectile.sourceId);
+    const targetActor = this.actors.get(projectile.targetId);
+    const family = record.projectileFamily;
+    source.y = (sourceActor?.root?.position.y ?? source.y) + PROJECTILE_HEIGHT[family];
+    target.y = targetActor?.root
+      ? targetActor.root.position.y + (targetActor.targetHeight ?? PROJECTILE_HEIGHT[family]) * 0.45
+      : (projectile.targetId === "gate" && this.gateMesh
+        ? this.gateMesh.position.y
+        : target.y + PROJECTILE_HEIGHT[family]);
+
+    const ttl = Math.max(0, finite(projectile.ttl, record.initialTtl));
+    if (ttl >= record.initialTtl) record.initialTtl = ttl + 1;
+    const snapshotProgress = THREE.MathUtils.clamp(1 - ttl / record.initialTtl, 0, 0.98);
+    record.travelProgress = Math.max(record.travelProgress, snapshotProgress);
+    record.root.position.lerpVectors(source, target, record.travelProgress);
+    record.root.position.y += Math.sin(record.travelProgress * Math.PI) * PROJECTILE_ARC_HEIGHT[family];
+    record.root.userData.projectileTravelProgress = record.travelProgress;
+    if (target.distanceToSquared(record.root.position) > 1e-8) record.root.lookAt(target);
+  }
+
+  updateProjectilePresentation(record, nowMs) {
+    if (!record?.effectRoot) return;
+    const seconds = nowMs / 1000;
+    const phase = record.projectilePhase;
+    if (this.reducedMotion) {
+      record.effectRoot.rotation.z = 0;
+      record.effectRoot.scale.set(1, 1, 1);
+      return;
+    }
+    if (record.projectileFamily === "orb") {
+      const pulse = 1 + Math.sin(seconds * 12 + phase) * 0.12;
+      record.effectRoot.rotation.z = seconds * 2.4 + phase;
+      record.effectRoot.scale.setScalar(pulse);
+    } else if (record.projectileFamily === "bolt") {
+      record.effectRoot.rotation.z = seconds * 9 + phase;
+      record.effectRoot.scale.set(1, 1, 1 + Math.sin(seconds * 18 + phase) * 0.08);
+    } else {
+      const wave = 1 + Math.sin(seconds * 8 + phase) * 0.1;
+      record.effectRoot.rotation.z = seconds * 5.5 + phase;
+      record.effectRoot.scale.set(wave, wave, 1);
+    }
   }
 
   reconcileActors(snapshot) {
@@ -1600,18 +2077,32 @@ export class RealtimeBattle {
     for (const projectile of list(snapshot, "projectiles", "shots")) {
       if (!projectile?.id) continue;
       seen.add(projectile.id);
+      const sourceEntity = snapshotEntityById(snapshot, projectile.sourceId);
+      const presentation = projectilePresentationFor(projectile, sourceEntity);
       let record = this.actors.get(projectile.id);
       if (!record) {
-        const mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(0.08, 8, 8),
-          new THREE.MeshStandardMaterial({ color: COLORS.projectile, emissive: COLORS.projectile, emissiveIntensity: 1 }),
-        );
-        record = { root: mesh, kind: "projectile", modelPath: null, loading: false };
+        const { root, effectRoot } = createProjectileVisual(presentation);
+        const ttl = Math.max(0, finite(projectile.ttl, 0));
+        record = {
+          root,
+          effectRoot,
+          kind: "projectile",
+          modelPath: null,
+          loading: false,
+          projectileFamily: presentation.family,
+          projectilePresentation: presentation,
+          initialTtl: Math.max(1, ttl + 1),
+          travelProgress: 0,
+          projectilePhase: stableStringHash(projectile.id) / 0xffffffff * Math.PI * 2,
+          projectileSourcePoint: new THREE.Vector3(),
+          projectileTargetPoint: new THREE.Vector3(),
+        };
         this.actors.set(projectile.id, record);
-        this.actorGroup.add(mesh);
+        this.actorGroup.add(root);
       }
-      this.syncActorPosition(record, projectile);
+      this.syncProjectile(record, projectile, snapshot);
     }
+
 
     for (const id of [...this.actors.keys()]) {
       if (!seen.has(id)) this.retireActor(id);
@@ -1622,7 +2113,7 @@ export class RealtimeBattle {
       this.gateMesh.visible = Boolean(gate);
       if (gate) {
         const p = worldPoint(gate);
-        this.gateMesh.position.set(p.x, 1, p.z);
+        this.gateMesh.position.set(p.x, p.y + 1, p.z);
       }
     }
     this.syncPressureIndicator(snapshot, gate);
@@ -1660,24 +2151,23 @@ export class RealtimeBattle {
   }
 
   updateCamera(snapshot) {
-    // --- Section 1: pan target (cameraTarget) -- BYTE-IDENTICAL to the
-    // pre-orbit implementation (camera-orbit-implementation-plan-
-    // 20260725.md §4.2/§4.3 director decision, D21 발견 2 / D22 판정 5):
-    // auto-follow only ever moves the orbit CENTER, never the viewing
-    // angle the player chose via orbit()/zoom() -- those are entirely
-    // separate fields, written only by orbit()/zoom() above, never here.
+    // Auto-follow moves only the orbit center, including authoritative
+    // terrain elevation. It never changes the viewing angle selected
+    // through orbit()/zoom().
     const commander = snapshot?.commander ?? snapshot?.player;
     const commanderPoint = worldPoint(commander ?? {});
     const targetX = commanderPoint.x;
+    const targetY = commanderPoint.y;
     const targetZ = commanderPoint.z;
     if (!this.cameraFollowInit) {
-      this.cameraTarget.set(targetX, 0, targetZ);
+      this.cameraTarget.set(targetX, targetY, targetZ);
       this.cameraFollowInit = true;
     } else if (!this.reducedMotion) {
       this.cameraTarget.x += (targetX - this.cameraTarget.x) * 0.18;
+      this.cameraTarget.y += (targetY - this.cameraTarget.y) * 0.18;
       this.cameraTarget.z += (targetZ - this.cameraTarget.z) * 0.18;
     } else {
-      this.cameraTarget.set(targetX, 0, targetZ);
+      this.cameraTarget.set(targetX, targetY, targetZ);
     }
 
     // --- Section 2: orbit position -- spherical coordinates around
@@ -1690,10 +2180,10 @@ export class RealtimeBattle {
     const offsetZ = horizontalRadius * Math.cos(this.orbitYaw);
     this.camera.position.set(
       this.cameraTarget.x + offsetX,
-      this.cameraTarget.y + height, // cameraTarget.y is always 0 -- Section 1 never sets it otherwise
+      this.cameraTarget.y + height,
       this.cameraTarget.z + offsetZ,
     );
-    this.camera.lookAt(this.cameraTarget.x, 0.6, this.cameraTarget.z); // lookAt height offset unchanged
+    this.camera.lookAt(this.cameraTarget.x, this.cameraTarget.y + 0.6, this.cameraTarget.z);
 
     // --- Section 3: camera-relative rim light (stage-composition-
     // 20260725.md §1.2, D22 판정 9). A world-fixed rim light loses its
@@ -1758,9 +2248,9 @@ export class RealtimeBattle {
   }
 
   /**
-   * NDC projection of a tracked actor's GROUND anchor -- every actor mesh
-   * sits at y=0 (syncActorPosition only ever writes x/z), so this is the
-   * feet position, not the head.
+   * NDC projection of a tracked actor's rendered ground anchor, including
+   * authoritative terrain elevation. This is the feet position, not the
+   * head.
    *
    * Callers that want a label to float above the actor apply that lift in
    * CSS screen-space pixels AFTER projecting (app.js's
@@ -1784,20 +2274,16 @@ export class RealtimeBattle {
   }
 
   /**
-   * NDC projection of a fixed ground point given in the simulation's
-   * normalized [-1,1] space (callers divide an ARENA coordinate by
-   * ARENA.width/height and rescale -- see app.js:1373 and :1448).
-   *
-   * Uses the same normalized->world mapping worldPoint() applies to
-   * entities, so a static marker and an actor standing on it project to the
-   * same pixel. See projectEntityToScreen() for why there is no world-unit
-   * height offset.
+   * NDC projection of a fixed ground point in normalized simulation space.
+   * Optional `elevation` uses the same simulation-unit scale as actors.
    */
-  projectStaticPoint(normalizedX, normalizedY) {
+  projectStaticPoint(normalizedX, normalizedY, elevation = 0) {
     if (this.disposed || !this.camera) return null;
-    return this.worldToNDC(
-      new THREE.Vector3(finite(normalizedX, 0) * WORLD_SCALE, 0, finite(normalizedY, 0) * WORLD_SCALE),
-    );
+    return this.worldToNDC(new THREE.Vector3(
+      finite(normalizedX, 0) * WORLD_SCALE,
+      finite(elevation, 0) * WORLD_SCALE / (WORLD_WIDTH / 2),
+      finite(normalizedY, 0) * WORLD_SCALE,
+    ));
   }
 
   rememberVisualEvent(key) {
@@ -1827,7 +2313,7 @@ export class RealtimeBattle {
     const untilTick = tick + lifetime;
     const placeholder = new THREE.Group();
     const p = worldPoint(anchor);
-    placeholder.position.set(p.x, 0.6, p.z);
+    placeholder.position.set(p.x, p.y + 0.6, p.z);
     this.vfxGroup.add(placeholder);
     const record = { root: placeholder, untilTick, loaded: false };
     this.vfxInstances.push(record);
@@ -1863,6 +2349,7 @@ export class RealtimeBattle {
       this.pendingDeathEchoes.push({
         modelPath: record.modelPath,
         x: record.root.position.x,
+        y: record.root.position.y,
         z: record.root.position.z,
         targetHeight: record.targetHeight ?? TARGET_HEIGHT.enemy,
       });
@@ -1876,7 +2363,7 @@ export class RealtimeBattle {
           disposeObject3D(instance);
           return;
         }
-        instance.position.set(echo.x, 0, echo.z);
+        instance.position.set(echo.x, echo.y, echo.z);
         this.vfxGroup.add(instance);
         const action = actions.die;
         let untilTick = tick + 72; // DEFAULT_BUDGETS.die.targetFrames @ 60fps, scripts/rig-character-asset-blender.py
@@ -1931,10 +2418,18 @@ export class RealtimeBattle {
       if (record.oneShotAction?.paused) this.finishOneShot(record);
       this.updateActorFollow(record, delta);
       this.updateActorFacing(record, delta);
+      if (record.kind === "projectile") this.updateProjectilePresentation(record, nowMs);
+      else this.updateAmbientIdle(record, nowMs);
       if (!record.oneShotAction && !record.dead) this.recoverLocomotion(record);
     }
     for (const echo of this.vfxInstances) {
       if (echo.mixer) echo.mixer.update(delta);
+    }
+    for (const record of this.stageDecorRecords) {
+      if (record.kind !== "stage-npc") continue;
+      record.mixer?.update(delta);
+      applyStageNpcGuardPose(record);
+      this.updateAmbientIdle(record, nowMs);
     }
   }
 
@@ -2094,13 +2589,8 @@ export class RealtimeBattle {
   }
 
   dispose() {
-    if (this.terrainGroup) {
-      while (this.terrainGroup.children.length) {
-        const child = this.terrainGroup.children[0];
-        this.terrainGroup.remove(child);
-        disposeObject3D(child);
-      }
-    }
+    this.stageLoadToken += 1;
+    this.clearStageWorld();
     for (const record of this.actors.values()) {
       this.clearAttackPresentation(record);
       record.mixer?.stopAllAction();
@@ -2158,8 +2648,94 @@ export class RealtimeBattle {
     this.animationEventKeys.clear();
     this.loadedStageId = null;
     this.loadingStageId = null;
+    this.stageDecorRecords = [];
+    this.stageTerrainRecord = null;
     this.lastAnimMs = null;
     this.disposed = true;
+  }
+
+  debugPresentationState(id = null) {
+    const describe = (entityId, record) => {
+      const position = record.root
+        ? { x: record.root.position.x, y: record.root.position.y, z: record.root.position.z }
+        : null;
+      if (record.kind === "projectile") {
+        return {
+          id: entityId,
+          kind: record.kind,
+          projectileFamily: record.projectileFamily,
+          presentation: record.projectilePresentation,
+          travelProgress: record.travelProgress,
+          position,
+        };
+      }
+      return {
+        id: entityId,
+        kind: record.kind,
+        position,
+        ambient: {
+          state: record.ambientState ?? "suppressed",
+          active: record.ambientActive === true,
+          breath: record.ambientOffsets?.breath ?? 0,
+          weight: record.ambientOffsets?.weight ?? 0,
+          look: record.ambientOffsets?.look ?? 0,
+        },
+        moving: record.moving === true,
+        dead: record.dead === true,
+        activeActionKey: record.activeActionKey ?? null,
+        oneShotActionKey: record.oneShotActionKey ?? null,
+        hasMixer: Boolean(record.mixer),
+        actionCount: Object.keys(record.actions ?? {}).length,
+      };
+    };
+    const describeStageDecor = (record) => ({
+      id: record.id,
+      kind: record.kind,
+      role: record.role ?? null,
+      actorId: record.actorId ?? null,
+      modelPath: record.modelPath,
+      source: record.placement ?? null,
+      position: record.root
+        ? { x: record.root.position.x, y: record.root.position.y, z: record.root.position.z }
+        : null,
+      yaw: record.root?.rotation.y ?? null,
+      hasMixer: Boolean(record.mixer),
+      actionCount: Object.keys(record.actions ?? {}).length,
+      activeActionKey: record.activeActionKey ?? null,
+      ambientState: record.ambientState ?? null,
+    });
+    if (id !== null) {
+      const record = this.actors.get(id);
+      return record ? describe(id, record) : null;
+    }
+    const projectiles = [];
+    const actors = [];
+    for (const [entityId, record] of this.actors) {
+      const state = describe(entityId, record);
+      if (record.kind === "projectile") projectiles.push(state);
+      else if (["commander", "enemy", "boss", "companion"].includes(record.kind)) actors.push(state);
+    }
+    const stageDecorRecords = this.stageDecorRecords.map(describeStageDecor);
+    const stageDecor = {
+      stageId: this.loadedStageId ?? this.loadingStageId,
+      loading: this.loadingStageId !== null,
+      terrainLoaded: Boolean(this.stageTerrainRecord),
+      propCount: stageDecorRecords.filter((record) => record.kind === "prop").length,
+      npcCount: stageDecorRecords.filter((record) => record.kind === "stage-npc").length,
+      mixerCount: stageDecorRecords.reduce((count, record) => count + (record.hasMixer ? 1 : 0), 0),
+      actionCount: stageDecorRecords.reduce((count, record) => count + record.actionCount, 0),
+      records: stageDecorRecords,
+    };
+    return {
+      reducedMotion: this.reducedMotion,
+      actorCount: actors.length,
+      projectileCount: projectiles.length,
+      mixerCount: actors.reduce((count, actor) => count + (actor.hasMixer ? 1 : 0), 0),
+      actionCount: actors.reduce((count, actor) => count + actor.actionCount, 0),
+      stageDecor,
+      projectiles,
+      actors,
+    };
   }
 
   debugMetrics() {
