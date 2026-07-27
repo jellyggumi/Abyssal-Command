@@ -1396,3 +1396,86 @@ body {
 }
 .growth-stat-row, .growth-skill-node { border-color: rgba(92, 200, 255, .28); }
 .lobby-guide-launch { border-color: rgba(185, 146, 255, .4); }
+/* ── Lobby system status window (monarch readout) ──────────────────────────
+   Holographic quest-window framing for the lobby's player/legion state.
+   Fluid grid + min-width:0 everywhere so the 390x844 and 844x390 lobby
+   no-horizontal-overflow contract holds; no motion carries meaning. */
+.monarch-status {
+  display: grid;
+  gap: .6rem;
+  padding: .8rem;
+  min-width: 0;
+}
+.monarch-status .panel-heading { align-items: center; gap: .5rem; }
+.monarch-gauge { min-width: 0; }
+.monarch-gauge-label {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: .25rem .6rem;
+  margin: 0 0 .3rem;
+  font-size: .74rem;
+  color: #9fd8ff;
+}
+.monarch-gauge-label b { color: #e6f3ff; font-variant-numeric: tabular-nums; }
+.monarch-gauge-track {
+  height: 8px;
+  border: 1px solid rgba(92, 200, 255, .35);
+  border-radius: 4px;
+  background: rgb(6 12 24 / .85);
+  overflow: hidden;
+}
+.monarch-gauge-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #5cc8ff, #b992ff);
+  box-shadow: 0 0 10px rgba(92, 200, 255, .55);
+}
+.monarch-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(7.5rem, 100%), 1fr));
+  gap: .4rem;
+  margin: 0;
+  min-width: 0;
+}
+.monarch-stat-grid > div {
+  min-width: 0;
+  padding: .4rem .5rem;
+  border: 1px solid rgba(92, 200, 255, .22);
+  border-radius: 4px;
+  background: rgb(8 14 28 / .6);
+}
+.monarch-stat-grid dt {
+  margin: 0;
+  font-size: .66rem;
+  letter-spacing: .06em;
+  color: #7fd0ff;
+}
+.monarch-stat-grid dd {
+  margin: .15rem 0 0;
+  font-size: .95rem;
+  font-weight: 800;
+  color: #eaf4ff;
+  font-variant-numeric: tabular-nums;
+}
+.monarch-arise-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem;
+  margin: 0;
+  font-size: .74rem;
+  color: rgb(214 228 255 / .82);
+}
+.monarch-arise-chip {
+  padding: .1rem .45rem;
+  border: 1px solid rgba(185, 146, 255, .6);
+  border-radius: 3px;
+  color: #d9b0ff;
+  font-size: .64rem;
+  font-weight: 900;
+  letter-spacing: .2em;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .monarch-gauge-fill { transition: width .4s ease-out; }
+}

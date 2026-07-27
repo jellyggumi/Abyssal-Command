@@ -612,6 +612,47 @@ function renderStrongholdTab() {
     </section>`;
 }
 
+/** 저지 레벨 → 시스템 랭크 표기 (표시 전용, 시뮬레이션에 영향 없음). */
+function monarchRankFor(level) {
+  if (level >= 25) return "S";
+  if (level >= 20) return "A";
+  if (level >= 15) return "B";
+  if (level >= 10) return "C";
+  if (level >= 5) return "D";
+  return "E";
+}
+
+/**
+ * 로비 상단 시스템 상태창(표시 전용): 저지 레벨 / 그림자 마력(잔여 Echo Core)
+ * / 군단 정원 / 결속 병력 / 추출 기록을 한 창에 모아 보여준다.
+ * campaign 과 wardenGrowthData() 를 읽기만 하며 어떤 상태도 기록하지 않는다.
+ */
+function monarchStatusMarkup() {
+  const data = wardenGrowthData();
+  const mana = Math.max(0, data.echoEarned - data.echoSpent);
+  const manaRatio = data.echoEarned > 0 ? Math.min(1, Math.max(0, mana / data.echoEarned)) : 0;
+  const manaPercent = Math.round(manaRatio * 100);
+  const collection = campaign.companionCollection ?? [];
+  const extracted = new Set(collection.flatMap((record) => record.capturedEliteIds ?? [])).size;
+  const rank = monarchRankFor(data.level);
+  return `
+    <section id="monarch-status" class="monarch-status command-screen system-window" aria-labelledby="monarch-status-title">
+      <div class="panel-heading"><div><p class="eyebrow">SYSTEM WINDOW · SHADOW LEGION</p><h2 id="monarch-status-title">시스템 상태창</h2></div><span class="rank-badge">RANK ${rank}</span></div>
+      <div class="monarch-gauge" data-monarch-mana-percent="${manaPercent}">
+        <p class="monarch-gauge-label"><span>그림자 마력 (Echo Core)</span><b id="monarch-mana-readout">${mana} / ${data.echoEarned} EC</b></p>
+        <div class="monarch-gauge-track" role="img" aria-label="그림자 마력 잔량 ${manaPercent}%"><span id="monarch-mana-fill" class="monarch-gauge-fill" style="width: ${manaPercent}%"></span></div>
+      </div>
+      <dl class="monarch-stat-grid">
+        <div><dt>저지 레벨</dt><dd>Lv ${data.level}</dd></div>
+        <div><dt>군단 정원</dt><dd>${data.loadout.length}/3</dd></div>
+        <div><dt>결속 병력</dt><dd>${collection.length}</dd></div>
+        <div><dt>추출 기록</dt><dd>${extracted}</dd></div>
+      </dl>
+      <p class="monarch-arise-hint"><span class="monarch-arise-chip">ARISE</span>정예를 추출할 때마다 군단이 늘어나고, 남은 마력으로 성장 노드를 개방합니다.</p>
+    </section>`;
+}
+
+
 
 function renderLobby() {
   if (!campaign) return;
@@ -738,6 +779,8 @@ function renderLobby() {
       <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">AC</span><div><p class="eyebrow">ABYSSAL COMMAND · FARWATCH HOLD</p><h1>Warden Corps 방어선</h1></div></div>
       <div class="command-status"><span class="signal-dot" aria-hidden="true"></span><span>기록실 연결됨</span><strong>${completed}/10 봉쇄선</strong></div>
     </header>
+    ${monarchStatusMarkup()}
+
     <p id="idle-return-summary" class="idle-return-banner" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p>
     <nav class="command-tab-bar" role="tablist" aria-label="커맨드 덱">${COMMAND_TABS.map((tab) => `<button class="command-tab${tab.id === activeCommandTab ? " is-active" : ""}" role="tab" aria-selected="${tab.id === activeCommandTab}" data-command-tab="${tab.id}">${tab.label}</button>`).join("")}</nav>
     <div class="lobby-guide-launch"><p><strong>처음 출전하나요?</strong> 동료 편성, 정예 추출, 스킬 재사용 흐름을 1분 안에 확인하세요.</p><button type="button" data-guide-open aria-label="전투 작전 가이드 열기" aria-haspopup="dialog" aria-controls="lobby-guide-dialog">작전 가이드</button></div>
