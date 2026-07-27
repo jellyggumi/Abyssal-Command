@@ -111,6 +111,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$RESOLVED_SHA"
           npm ci
+          npx --no-install playwright install --with-deps chromium
           node --test tests/defense-run-simulation.test.mjs tests/defense-campaign-adapter.test.mjs tests/defense-renderer-contract.test.mjs tests/defense-asset-manifest.test.mjs tests/no-rts-closure.test.mjs
           mkdir -p results
           node scripts/run-defense-balance-sim.mjs --strict --output "results/defense-balance-$RESOLVED_SHA.json"

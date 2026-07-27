@@ -45,26 +45,47 @@ const BATTLE_GLB_ASSETS = [
   "assets/images/battle/glb/companions/pack-warden.glb", "assets/images/battle/glb/companions/requiem-warden.glb", "assets/images/battle/glb/companions/rift-lens.glb", "assets/images/battle/glb/companions/throne-echo.glb",
   "assets/images/battle/glb/companions/veil-vanguard.glb", "assets/images/battle/glb/commander/dusk-warden.glb", "assets/images/battle/glb/vfx/boss-rally-aura.glb", "assets/images/battle/glb/vfx/companion-downed-fade.glb",
   "assets/images/battle/glb/vfx/critical-hit-burst.glb", "assets/images/battle/glb/vfx/echo-warden-awakening.glb", "assets/images/battle/glb/vfx/gate-breach-shockwave.glb", "assets/images/battle/glb/vfx/wardens-ward-shield.glb",
-  "assets/images/battle/glb/props/abyssal-banner.glb", "assets/images/battle/glb/props/bulwark-brand.glb", "assets/images/battle/glb/props/choir-ward-crystal.glb", "assets/images/battle/glb/props/stillwater-hourglass.glb",
+  "assets/images/battle/glb/props/abyssal-banner.glb", "assets/images/battle/glb/props/bulwark-brand.glb", "assets/images/battle/glb/props/choir-ward-crystal.glb", "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb", "assets/images/battle/glb/props/stillwater-hourglass.glb",
   "assets/images/battle/glb/props/warden-lantern.glb", "assets/images/battle/glb/props/tiers/tier-t1.glb", "assets/images/battle/glb/props/tiers/tier-t2.glb", "assets/images/battle/glb/props/tiers/tier-t3.glb",
   "assets/images/battle/glb/props/tiers/tier-t4.glb", "assets/images/battle/glb/props/tiers/tier-t5.glb",
 ];
-const RUNTIME_PATHS = new Set([
-  "index.html", "app.js", "rpg-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
-  "campaign-state.js", "defense-storage.js", "defense-cutscene.js", "defense-telemetry.js", "defense-audio.js",
+const RUNTIME_PATHS = [
+  "index.html", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
+  "campaign-state.js", "defense-storage.js", "defense-audio.js", "defense-cutscene.js", "defense-telemetry.js",
   "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
+  "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png",
-  GAMEPLAY_VIDEO,
   "assets/images/battle/dusk-warden-frame-00.png", "assets/images/battle/dusk-warden-frame-01.png",
   "assets/images/battle/dusk-warden-frame-02.png", "assets/images/battle/dusk-warden-frame-03.png",
   "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
   "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
-  ...CINDER_SPAN_WORLD_ASSETS,
-  ...STAGE_ART_ASSETS,
-  "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
-  ...BATTLE_GLB_ASSETS,
-  ...COMBAT_GLB_ASSETS,
-]);
+  "assets/images/battle/world/cinder-span-tactical-paper-plate.webp", "assets/images/battle/world/cinder-span-topdown-plate.webp",
+  "assets/images/battle/ui/stages/abyss-chancel.png", "assets/images/battle/ui/stages/cinder-span.png", "assets/images/battle/ui/stages/echo-throne-steps.png",
+  "assets/images/battle/ui/stages/gate-zenith.png", "assets/images/battle/ui/stages/glass-necropolis.png", "assets/images/battle/ui/stages/howling-sprawl.png",
+  "assets/images/battle/ui/stages/shattered-causeway.png", "assets/images/battle/ui/stages/starless-canal.png",
+  "assets/images/battle/ui/stages/sunken-bastion.png", "assets/images/battle/ui/stages/veil-citadel.png",
+  GAMEPLAY_VIDEO,
+  "assets/images/battle/glb/terrain/abyss-chancel.glb", "assets/images/battle/glb/terrain/cinder-span.glb", "assets/images/battle/glb/terrain/echo-throne-steps.glb",
+  "assets/images/battle/glb/terrain/gate-zenith.glb", "assets/images/battle/glb/terrain/glass-necropolis.glb", "assets/images/battle/glb/terrain/howling-sprawl.glb",
+  "assets/images/battle/glb/terrain/shattered-causeway.glb", "assets/images/battle/glb/terrain/starless-canal.glb", "assets/images/battle/glb/terrain/sunken-bastion.glb",
+  "assets/images/battle/glb/terrain/veil-citadel.glb", "assets/images/battle/glb/bosses/abyss-regent.glb", "assets/images/battle/glb/bosses/bridge-colossus.glb",
+  "assets/images/battle/glb/bosses/cinder-warden.glb", "assets/images/battle/glb/bosses/gate-sovereign.glb", "assets/images/battle/glb/bosses/lantern-tyrant.glb",
+  "assets/images/battle/glb/bosses/pack-herald.glb", "assets/images/battle/glb/bosses/requiem-choir.glb", "assets/images/battle/glb/bosses/tide-warden.glb",
+  "assets/images/battle/glb/bosses/veil-tactician.glb", "assets/images/battle/glb/bosses/veiled-concordat.glb", "assets/images/battle/glb/enemies/guard.glb",
+  "assets/images/battle/glb/enemies/possessed.glb", "assets/images/battle/glb/enemies/scout.glb", "assets/images/battle/glb/enemies/shade.glb",
+  "assets/images/battle/glb/companions/anchor-shard.glb", "assets/images/battle/glb/companions/dawnless-crown.glb", "assets/images/battle/glb/companions/ember-cohort.glb",
+  "assets/images/battle/glb/companions/lantern-reaver.glb", "assets/images/battle/glb/companions/pack-warden.glb", "assets/images/battle/glb/companions/requiem-warden.glb",
+  "assets/images/battle/glb/companions/rift-lens.glb", "assets/images/battle/glb/companions/throne-echo.glb", "assets/images/battle/glb/companions/veil-vanguard.glb",
+  "assets/images/battle/glb/commander/dusk-warden.glb", "assets/images/battle/glb/vfx/abyss-orb.glb", "assets/images/battle/glb/vfx/boss-rally-aura.glb",
+  "assets/images/battle/glb/vfx/companion-downed-fade.glb",
+  "assets/images/battle/glb/vfx/critical-hit-burst.glb", "assets/images/battle/glb/vfx/echo-warden-awakening.glb", "assets/images/battle/glb/vfx/gate-breach-shockwave.glb",
+  "assets/images/battle/glb/vfx/melee-slash.glb", "assets/images/battle/glb/vfx/ranged-bolt.glb",
+  "assets/images/battle/glb/vfx/wardens-ward-shield.glb", "assets/images/battle/glb/props/abyss-blade.glb", "assets/images/battle/glb/props/abyssal-banner.glb",
+  "assets/images/battle/glb/props/arc-caster.glb", "assets/images/battle/glb/props/bulwark-brand.glb",
+  "assets/images/battle/glb/props/choir-ward-crystal.glb", "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb", "assets/images/battle/glb/props/stillwater-hourglass.glb", "assets/images/battle/glb/props/warden-lantern.glb",
+  "assets/images/battle/glb/props/tiers/tier-t1.glb", "assets/images/battle/glb/props/tiers/tier-t2.glb", "assets/images/battle/glb/props/tiers/tier-t3.glb",
+  "assets/images/battle/glb/props/tiers/tier-t4.glb", "assets/images/battle/glb/props/tiers/tier-t5.glb",
+];
 
 async function project(path) {
   return readFile(new URL(path, ROOT), "utf8");
@@ -80,7 +101,19 @@ function job(workflow, name) {
 function runtimePaths(workflow) {
   const match = workflow.match(/PAGES_RUNTIME_PATHS: >-\n(?<paths>(?: {4,}[^\n]+\n)+)/);
   assert.ok(match, "workflow must declare the Pages runtime allowlist");
-  return new Set(match.groups.paths.trim().split(/\s+/));
+  return match.groups.paths.trim().split(/\s+/);
+}
+
+function assertCommandsInOrder(workflow, jobName, commands) {
+  const body = job(workflow, jobName);
+  let previousIndex = -1;
+  let previousCommand = "the start of the job";
+  for (const command of commands) {
+    const index = body.indexOf(command, previousIndex + 1);
+    assert.ok(index > previousIndex, `${jobName} must run ${command} after ${previousCommand}`);
+    previousIndex = index;
+    previousCommand = command;
+  }
 }
 
 test("Pages workflow preserves the defense-survivor release DAG and closure", async () => {
@@ -106,6 +139,18 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assert.match(job(workflow, "release_receipt"), /needs: \[resolve_revision, engine_contract, release_closure, browser_contract, package_pages, artifact_smoke, deploy_pages, deployed_smoke\]/);
 
   assert.deepEqual(runtimePaths(workflow), RUNTIME_PATHS);
+  assertCommandsInOrder(workflow, "engine_contract", [
+    "npm ci",
+    "npx --no-install playwright install --with-deps chromium",
+    "tests/defense-renderer-contract.test.mjs",
+  ]);
+  assertCommandsInOrder(workflow, "browser_contract", [
+    "npm ci",
+    "npx --no-install playwright install --with-deps chromium",
+    "node tests/defense-hud-responsive-browser.cjs",
+    "node tests/defense-survivor-browser.cjs",
+    "node tests/defense-performance-browser.cjs",
+  ]);
   assert.match(job(workflow, "package_pages"), /read -r -a paths <<< "\$PAGES_RUNTIME_PATHS"/);
   assert.match(job(workflow, "package_pages"), /git archive --format=tar "\$RESOLVED_SHA" -- "\$\{paths\[@\]\}"/);
   assert.match(readme, new RegExp(`\\]\\(${GAMEPLAY_VIDEO.replaceAll(".", "\\.")}\\)`), `README must link ${GAMEPLAY_VIDEO}`);
