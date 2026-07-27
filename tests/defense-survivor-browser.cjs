@@ -140,7 +140,13 @@ async function waitForGrowthOfferThroughCutscenes(page, report, {
   const terminalStates = ["victory", "defeat", "final_completion"];
   const startedAt = Date.now();
   const overallDeadline = startedAt + overallTimeout;
-  const cleanupActionTimeout = Math.max(1, Math.min(2000, Math.floor(noProgressTimeout / 3)));
+  // Sized from the CI evidence, not guessed: at the failure the run was live
+  // (defenseState "active"), document.elementFromPoint over the D-pad returned
+  // the button itself (pointer owner null), and Playwright still could not
+  // complete one click -- the software-WebGL runner simply stops answering for
+  // seconds at a time. This bounds a CLEANUP action; the journey's actual
+  // movement assertion keeps its own operation budget.
+  const cleanupActionTimeout = Math.max(1, Math.min(8000, noProgressTimeout));
   let state = null;
   let lastSimulationSecond = null;
   let lastProgressAt = startedAt;
