@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abyssal-surge.local/study/g8-direct-feature-survey-template.schema.json",
+  "title": "G8 five-title direct-feature survey collection",
+  "description": "Schema and blank instance for source-backed comparison-title review. Empty rows are not evidence and cannot satisfy G8.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "gate",
+    "candidate_id",
+    "artifact_status",
+    "expected_titles",
+    "rows",
+    "calculation"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "gate": { "const": "G8" },
+    "candidate_id": { "const": "pressure-bound-elite-extraction" },
+    "artifact_status": {
+      "enum": [
+        "BLOCKED_UNMEASURED",
+        "COLLECTION_INCOMPLETE",
+        "READY_FOR_REVIEW",
+        "PASS",
+        "BLOCKED"
+      ]
+    },
+    "expected_titles": {
+      "const": [
+        "Arknights",
+        "Kingdom Rush",
+        "Dungeon Warfare 2",
+        "Vampire Survivors",
+        "Hades"
+      ]
+    },
+    "rows": {
+      "type": "array",
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/title_review" }
+    },
+    "calculation": { "$ref": "#/$defs/calculation" }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_url",
+        "source_title",
+        "source_kind",
+        "accessed_date",
+        "exact_quote_or_mechanical_evidence"
+      ],
+      "properties": {
+        "source_url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "source_title": { "type": "string", "minLength": 1 },
+        "source_kind": {
+          "enum": ["OFFICIAL_SITE", "OFFICIAL_STORE", "OFFICIAL_DOCUMENTATION", "PRIMARY_GAME_CAPTURE", "SECONDARY_REFERENCE"]
+        },
+        "accessed_date": { "type": "string", "format": "date" },
+        "exact_quote_or_mechanical_evidence": { "type": "string", "minLength": 1 }
+      }
+    },
+    "title_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "sources",
+        "review_date",
+        "reviewer_id",
+        "live_pve_player_choice",
+        "spatial_or_time_commitment_under_active_pressure",
+        "persistent_ally_or_companion_into_later_play",
+        "taxonomy",
+        "exact_feature_present",
+        "derivation_confirmed",
+        "uncertainty_note"
+      ],
+      "properties": {
+        "title": {
+          "enum": ["Arknights", "Kingdom Rush", "Dungeon Warfare 2", "Vampire Survivors", "Hades"]
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/source" }
+        },
+        "review_date": { "type": "string", "format": "date" },
+        "reviewer_id": { "type": "string", "minLength": 1 },
+        "live_pve_player_choice": { "enum": ["PRESENT", "ABSENT", "UNKNOWN"] },
+        "spatial_or_time_commitment_under_active_pressure": { "enum": ["PRESENT", "ABSENT", "UNKNOWN"] },
+        "persistent_ally_or_companion_into_later_play": { "enum": ["PRESENT", "ABSENT", "UNKNOWN"] },
+        "taxonomy": { "enum": ["DIRECT", "ADJACENT", "ABSENT", "UNKNOWN"] },
+        "exact_feature_present": { "type": "boolean" },
+        "derivation_confirmed": { "const": true },
+        "uncertainty_note": { "type": "string" }
+      }
+    },
+    "calculation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completed_unique_title_count",
+        "all_expected_titles_present_once",
+        "all_rows_source_backed",
+        "all_rows_have_date_and_reviewer",
+        "all_taxonomies_match_three_criteria",
+        "direct_feature_count",
+        "direct_feature_frequency",
+        "formula_version",
+        "survey_verdict"
+      ],
+      "properties": {
+        "completed_unique_title_count": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "all_expected_titles_present_once": { "type": "boolean" },
+        "all_rows_source_backed": { "type": "boolean" },
+        "all_rows_have_date_and_reviewer": { "type": "boolean" },
+        "all_taxonomies_match_three_criteria": { "type": "boolean" },
+        "direct_feature_count": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "direct_feature_frequency": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "formula_version": { "const": "G8-SURVEY-v1" },
+        "survey_verdict": { "enum": ["PASS", "BLOCKED", "BLOCKED_UNMEASURED"] }
+      }
+    }
+  },
+  "x-blank-instance": {
+    "schema_version": "1.0.0",
+    "gate": "G8",
+    "candidate_id": "pressure-bound-elite-extraction",
+    "artifact_status": "BLOCKED_UNMEASURED",
+    "expected_titles": [
+      "Arknights",
+      "Kingdom Rush",
+      "Dungeon Warfare 2",
+      "Vampire Survivors",
+      "Hades"
+    ],
+    "rows": [],
+    "calculation": {
+      "completed_unique_title_count": 0,
+      "all_expected_titles_present_once": false,
+      "all_rows_source_backed": false,
+      "all_rows_have_date_and_reviewer": false,
+      "all_taxonomies_match_three_criteria": false,
+      "direct_feature_count": 0,
+      "direct_feature_frequency": null,
+      "formula_version": "G8-SURVEY-v1",
+      "survey_verdict": "BLOCKED_UNMEASURED"
+    }
+  }
+}

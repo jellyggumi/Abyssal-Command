@@ -22,14 +22,18 @@ import argparse
 import json
 import os
 import sys
+import subprocess
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 
 SCRIPT_PATH = Path(__file__).resolve()
 REPO_ROOT = SCRIPT_PATH.parents[1]
-DEFAULT_POLICY_PATH = REPO_ROOT / "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/asset-lanes.json"
+DEFAULT_POLICY_PATH = REPO_ROOT / "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/asset-lanes.json"
 IGNORED_NAMES = {".git", ".DS_Store", "__pycache__"}
+
+class ScanError(RuntimeError):
+    """Repository file enumeration could not be completed."""
 
 
 def parse_args() -> argparse.Namespace:
@@ -108,6 +112,22 @@ def should_ignore(path: Path) -> bool:
 
 
 def iter_files(root: Path) -> Iterable[Path]:
+    if root.resolve() == REPO_ROOT.resolve():
+        try:
+            result = subprocess.run(
+                ["git", "ls-files", "-co", "--exclude-standard", "-z"],
+                cwd=root,
+                check=True,
+                stdout=subprocess.PIPE,
+            )
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise ScanError(f"repository Git enumeration failed: {exc}") from exc
+        for raw_path in sorted(filter(None, result.stdout.split(b"\0"))):
+            path = root / os.fsdecode(raw_path)
+            if path.is_file() and not should_ignore(path):
+                yield path
+        return
+
     for directory, dirnames, filenames in os.walk(root, topdown=True, followlinks=False):
         dirnames[:] = sorted(name for name in dirnames if name not in IGNORED_NAMES)
         for name in sorted(filenames):
@@ -294,6 +314,21 @@ def main() -> int:
     try:
         policy = load_policy(policy_path)
         report = validate(policy, policy_path, roots, args.allow_missing_candidates)
+    except ScanError as exc:
+        report = {
+            "policy": policy_path.as_posix(),
+            "roots": [root.as_posix() for root in roots],
+            "lanes": {"concept": 0, "runtime": 0, "candidate": 0},
+            "filesScanned": 0,
+            "violations": [violation("scan_failed", REPO_ROOT.as_posix(), str(exc))],
+            "violationCount": 1,
+            "ok": False,
+        }
+        if args.as_json:
+            print(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False))
+        else:
+            print(f"asset lane validation failed: {exc}", file=sys.stderr)
+        return 2
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         report = {
             "policy": policy_path.as_posix(),

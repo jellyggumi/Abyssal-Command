@@ -37,6 +37,20 @@ test('defense asset manifest has literal, complete dispositions when generated',
     return;
   }
 
+  for (const retainedPath of RETAINED_ASSET_PATHS) {
+    assert.deepEqual(
+      manifest.rows
+        .filter((row) => row.currentPath === retainedPath)
+        .map(({ disposition, replacementPath, runtimeReference }) => ({
+          disposition,
+          replacementPath,
+          runtimeReference,
+        })),
+      [{ disposition: 'retain', replacementPath: retainedPath, runtimeReference: true }],
+      `${retainedPath} must have exactly one retained runtime manifest row`,
+    );
+  }
+
   const currentPaths = trackedAssetPaths();
   const paths = manifest.rows.map((row) => row.currentPath);
   assert.deepEqual(paths, [...paths].sort((left, right) => left.localeCompare(right)));

@@ -38,6 +38,7 @@ import { cutsceneEventKey, cutsceneFromEvent } from "./defense-cutscene.js";
 import { DefenseAudio } from "./defense-audio.js";
 import { DefenseViewport } from "./defense-viewport.js";
 import { DefenseTelemetry } from "./defense-telemetry.js";
+import { STAGE_SHOWCASE_IDS, stageWorldFor } from "./stage-world-catalog.js";
 
 const root = document.querySelector("#defense-app");
 const storage = new DefenseStorage();
@@ -120,6 +121,8 @@ const STAGE_ART_FILE_BY_ID = Object.freeze({
   "abyss-chancel": "abyss-chancel",
   "gate-zenith": "gate-zenith",
 });
+const LOBBY_SHOWCASE_STAGE_ID_SET = new Set(STAGE_SHOWCASE_IDS);
+
 
 let campaign = null;
 let selectedStageId = STAGES[0].id;
@@ -613,8 +616,10 @@ function renderStrongholdTab() {
 function renderLobby() {
   if (!campaign) return;
   const selected = stageFor(selectedStageId);
-  const selectedPresentation = stagePresentationFor(selected.id);
-  const selectedTerrain = stageTerrainProjection(selected.id);
+  const selectedIndex = STAGES.findIndex(({ id }) => id === selected.id);
+  const selectedIsShowcase = LOBBY_SHOWCASE_STAGE_ID_SET.has(selected.id);
+  const selectedPresentation = selectedIsShowcase ? stagePresentationFor(selected.id) : null;
+  const selectedTerrain = selectedIsShowcase ? stageTerrainProjection(selected.id) : null;
   const loadout = selectedLoadout();
   const completed = campaign.resolvedIds?.length ?? 0;
   const unlocked = campaign.unlockedStageIndex + 1;
@@ -624,18 +629,42 @@ function renderLobby() {
   document.body.style.overflow = "";
   root.className = "defense-lobby";
   root.dataset.stageId = selected.id;
-  root.style.setProperty("--stage-art", `url("${stageArtPath(selected.id)}")`);
+  root.style.setProperty("--stage-art", selectedIsShowcase ? `url("${stageArtPath(selected.id)}")` : "none");
   if (!COMMAND_TABS.some((tab) => tab.id === activeCommandTab)) activeCommandTab = COMMAND_TABS[0].id;
-  const sortieTabHtml = `
-    <section class="command-hero" aria-labelledby="command-hero-title">
-      <div class="rc-aurora" aria-hidden="true"></div>
-      <div class="hero-copy">
-        <p class="eyebrow">COMMAND DECK · SECTOR ${String(selected.sequence).padStart(2, "0")}</p>
-        <h2 id="command-hero-title">심연의 문을<br /><em>다시 닫아라.</em></h2>
-        <p class="hero-lede">자동 사격으로 전선을 버티고, 잔향을 모아 런을 성장시키세요. 지금은 ${escapeHtml(selected.name)}의 관문이 압박받고 있습니다.</p>
-        <div class="hero-facts"><span><small>현재 목표</small><b>관문 방어</b></span><span><small>다음 위협</small><b>${escapeHtml(selected.bossName)}</b></span><span><small>출전 편성</small><b>${loadout.length}/3 슬롯</b></span></div>
-        <button id="start-defense" class="primary-action hero-cta"><span>작전 개시</span><small>${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)} 전선으로</small><b aria-hidden="true">↗</b></button>
-      </div>
+  const selectedCleared = campaign.resolvedIds?.includes(selected.id);
+  const selectedStatus = selectedCleared ? "CLEAR" : selectedIndex <= campaign.unlockedStageIndex ? "출전 가능" : "잠김";
+  const selectedEditorial = stageWorldFor(selected.id)?.editorial?.spoilerSafe;
+  const selectedReward = selectedIsShowcase
+    ? nextRewardName(selected.id)
+    : selectedEditorial?.rewardHint ?? "봉쇄 완료 후 공개";
+  const showcaseCards = STAGE_SHOWCASE_IDS
+    .map((stageId) => stageFor(stageId))
+    .map((stage) => {
+      const stageIndex = STAGES.findIndex(({ id }) => id === stage.id);
+      const locked = stageIndex > campaign.unlockedStageIndex;
+      const cleared = campaign.resolvedIds?.includes(stage.id);
+      const state = locked ? "잠김" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "열람 가능";
+      const cutsceneTeaser = CUTSCENES[stage.id]?.intro?.[0] ?? "봉쇄 기록을 열람합니다.";
+      return `
+        <button class="stage-showcase-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage-showcase="${escapeHtml(stage.id)}" style="--stage-card-art: url('${stageArtPath(stage.id)}')" aria-label="${escapeHtml(stage.name)} 쇼케이스 선택, ${state}" aria-pressed="${stage.id === selected.id}" ${locked ? "disabled" : ""}>
+          <span class="stage-showcase-art" aria-hidden="true"></span>
+          <span class="stage-showcase-copy"><small>SHOWCASE ${String(stage.sequence).padStart(2, "0")} · ${state}</small><strong>${escapeHtml(stage.name)}</strong><span>${escapeHtml(cutsceneTeaser)}</span><em>${escapeHtml(stage.bossName)}</em></span>
+        </button>`;
+    }).join("");
+  const progressionOptions = STAGES.map((stage, index) => {
+    const locked = index > campaign.unlockedStageIndex;
+    const cleared = campaign.resolvedIds?.includes(stage.id);
+    const state = locked ? "잠김" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "출전 가능";
+    const disclosure = stageWorldFor(stage.id)?.editorial?.spoilerSafe;
+    const title = disclosure?.title ?? stage.name;
+    const reward = disclosure?.rewardHint ?? "봉쇄 완료 후 공개";
+    return `<option value="${escapeHtml(stage.id)}" data-stage-id="${escapeHtml(stage.id)}" ${stage.id === selected.id ? "selected" : ""} ${locked ? "disabled" : ""}>${String(stage.sequence).padStart(2, "0")} · ${escapeHtml(title)} · ${state} · 보상 ${escapeHtml(reward)}</option>`;
+  }).join("");
+  const heroFacts = selectedIsShowcase
+    ? `<span><small>현재 목표</small><b>관문 방어</b></span><span><small>다음 위협</small><b>${escapeHtml(selected.bossName)}</b></span><span><small>출전 편성</small><b>${loadout.length}/3 슬롯</b></span>`
+    : `<span><small>전선 상태</small><b>${selectedStatus}</b></span><span><small>완료 보상</small><b>${escapeHtml(selectedReward)}</b></span><span><small>출전 편성</small><b>${loadout.length}/3 슬롯</b></span>`;
+  const stagePresentationPanel = selectedIsShowcase
+    ? `
       <section class="tactical-map stage-atlas" data-stage-atlas="selected" data-stage-id="${escapeHtml(selected.id)}" data-terrain-pattern="${escapeHtml(selectedPresentation.terrain.patternId)}" style="--stage-art: url('${stageArtPath(selected.id)}')" aria-labelledby="atlas-title" aria-describedby="atlas-context">
         <div class="stage-art-frame" aria-hidden="true"></div>
         <div class="map-grid atlas-contours" aria-hidden="true"></div>
@@ -648,25 +677,54 @@ function renderLobby() {
           <div><dt>위협</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)} (${escapeHtml(selectedTerrain.spawnDirections.join(", "))})</dd></div>
           <div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div>
         </dl>
-      </section>
-    </section>
-    <div class="ops-grid ops-grid-sortie">
-      <section class="mission-panel command-screen" aria-labelledby="stage-title">
-        <div class="panel-heading"><div><p class="eyebrow">CAMPAIGN MAP</p><h2 id="stage-title">전선 선택</h2></div><span class="panel-count">${completed} CLEAR · ${unlocked} UNLOCKED</span></div>
-        <div class="stage-rail">
-          ${STAGES.map((stage, index) => {
-            const locked = index > campaign.unlockedStageIndex;
-            const cleared = campaign.resolvedIds?.includes(stage.id);
-            return `<button class="stage-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage="${stage.id}" style="--stage-card-art: url('${stageArtPath(stage.id)}')" aria-pressed="${stage.id === selected.id}" ${locked ? "disabled" : ""}><span class="stage-card-art" aria-hidden="true"></span><span class="stage-index">${String(stage.sequence).padStart(2, "0")}</span><span class="stage-info"><strong>${escapeHtml(stage.name)}</strong><small>${escapeHtml(stage.bossName)}</small></span><span class="stage-state">${locked ? "잠김" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "출전 가능"}</span></button>`;
-          }).join("")}
-        </div>
-      </section>
+      </section>`
+    : `
+      <section class="spoiler-safe-stage" data-stage-disclosure="safe" aria-labelledby="safe-stage-title">
+        <span class="spoiler-safe-sigil" aria-hidden="true">AC</span>
+        <div><p class="eyebrow">SEALED FIELD DOSSIER · ${String(selected.sequence).padStart(2, "0")}</p><h3 id="safe-stage-title">${escapeHtml(selectedEditorial?.title ?? selected.name)}</h3><p>${escapeHtml(selectedEditorial?.summary ?? "전술 구성은 출전 후 현장에서 공개됩니다.")}</p></div>
+        <dl><div><dt>상태</dt><dd>${selectedStatus}</dd></div><div><dt>보상 단서</dt><dd>${escapeHtml(selectedReward)}</dd></div></dl>
+      </section>`;
+  const briefingPanel = selectedIsShowcase
+    ? `
       <aside class="briefing-panel command-screen" aria-labelledby="briefing-title">
         <div class="panel-heading"><div><p class="eyebrow">TACTICAL BRIEFING · ${escapeHtml(selectedPresentation.mapLabels.domain)}</p><h2 id="briefing-title">작전 브리핑</h2></div><span class="briefing-code">AC-${String(selected.sequence).padStart(2, "0")}</span></div>
         <div class="briefing-target" data-stage-briefing="selected" data-stage-id="${escapeHtml(selected.id)}">${portraitMarkup(meshRootForStageBoss(selected.id), "◉", "target-sigil rc-portrait")}<div><small>${escapeHtml(selectedPresentation.mapLabels.title)} · ${escapeHtml(selectedPresentation.atmosphere.descriptor)}</small><strong>${escapeHtml(selected.bossName)}</strong><span id="briefing-stage-narrative" data-stage-id="${escapeHtml(selected.id)}">${escapeHtml(selectedObjective)}</span></div></div>
-        <dl class="briefing-stats"><div><dt>지형 / 고지</dt><dd>${escapeHtml(selectedPresentation.mapLabels.chokepath)} · ${escapeHtml(selectedPresentation.mapLabels.elevation)}</dd></div><div><dt>위협 / 측면</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)}</dd></div><div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div><div><dt>다음 보상</dt><dd>${escapeHtml(nextRewardName(selected.id))}</dd></div></dl>
-        <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 중앙 전장에서 손가락을 끌어 이동하세요. 정예를 처치하고 <b>추출(Extract)</b>하여 동료를 확보할 수 있습니다.</p>
-      </aside>
+        <dl class="briefing-stats"><div><dt>지형 / 고지</dt><dd>${escapeHtml(selectedPresentation.mapLabels.chokepath)} · ${escapeHtml(selectedPresentation.mapLabels.elevation)}</dd></div><div><dt>위협 / 측면</dt><dd>${escapeHtml(selectedPresentation.mapLabels.hazard)} · ${escapeHtml(selectedPresentation.mapLabels.flank)}</dd></div><div><dt>점유 → 추출</dt><dd>${escapeHtml(selectedPresentation.mapLabels.occupation)} → ${escapeHtml(selectedPresentation.mapLabels.extraction)}</dd></div><div><dt>다음 보상</dt><dd>${escapeHtml(selectedReward)}</dd></div></dl>
+        <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 화면 방향 버튼 또는 <b>WASD·화살표 키</b>로 지휘관을 이동하세요. 전장 화면의 한 손가락 드래그는 카메라 시야를 회전합니다. 정예를 처치하고 <b>추출(Extract)</b>하여 동료를 확보할 수 있습니다.</p>
+      </aside>`
+    : `
+      <aside class="briefing-panel command-screen spoiler-safe-briefing" data-stage-disclosure="safe" aria-labelledby="briefing-title">
+        <div class="panel-heading"><div><p class="eyebrow">DEPLOYMENT SUMMARY</p><h2 id="briefing-title">출전 요약</h2></div><span class="briefing-code">AC-${String(selected.sequence).padStart(2, "0")}</span></div>
+        <div class="safe-briefing-row"><span>전선</span><strong>${escapeHtml(selectedEditorial?.title ?? selected.name)}</strong></div>
+        <div class="safe-briefing-row"><span>상태</span><strong>${selectedStatus}</strong></div>
+        <div class="safe-briefing-row"><span>보상 단서</span><strong>${escapeHtml(selectedReward)}</strong></div>
+        <p class="briefing-tip">${escapeHtml(selectedEditorial?.summary ?? "상세 위협과 전장 구성은 출전 전까지 봉인됩니다.")} 편성을 확인한 뒤 작전을 개시하세요.</p>
+      </aside>`;
+  const sortieTabHtml = `
+    <section class="command-hero" aria-labelledby="command-hero-title">
+      <div class="rc-aurora" aria-hidden="true"></div>
+      <div class="hero-copy">
+        <p class="eyebrow">COMMAND DECK · SECTOR ${String(selected.sequence).padStart(2, "0")}</p>
+        <h2 id="command-hero-title">심연의 문을<br /><em>다시 닫아라.</em></h2>
+        <p class="hero-lede">${selectedIsShowcase ? `자동 사격으로 전선을 버티고, 잔향을 모아 런을 성장시키세요. 지금은 ${escapeHtml(selected.name)}의 관문이 압박받고 있습니다.` : escapeHtml(selectedEditorial?.summary ?? `${selected.name} 전선은 스포일러 보호 상태입니다. 전술 정보는 현장 진입 후 공개됩니다.`)}</p>
+        <div class="hero-facts">${heroFacts}</div>
+        <p class="hero-action-cue"><strong>정예 확보:</strong> 전투에서 <b>Bind 시작</b> → 추출 지점 홀드 → <b>정예 추출</b>.</p>
+        <button id="start-defense" class="primary-action hero-cta"><span>작전 개시</span><small>${selectedIsShowcase ? `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)} 전선으로` : `${escapeHtml(selected.name)} · ${selectedStatus}`}</small><b aria-hidden="true">↗</b></button>
+      </div>
+      ${stagePresentationPanel}
+    </section>
+    <div class="ops-grid ops-grid-sortie">
+      <section class="mission-panel command-screen" aria-labelledby="stage-title">
+        <div class="panel-heading"><div><p class="eyebrow">EDITORIAL ARCHIVE</p><h2 id="stage-title">봉쇄선 쇼케이스</h2></div><span class="panel-count">3 SHOWCASE · ${unlocked} UNLOCKED</span></div>
+        <p class="section-copy">시네마틱·전장 구성은 아래 세 봉쇄선만 미리 공개됩니다.</p>
+        <div class="stage-showcase-grid">${showcaseCards}</div>
+        <div class="stage-progression-control">
+          <label for="stage-progression">진행 전선 선택</label>
+          <select id="stage-progression" data-stage-progress aria-label="진행 전선 선택">${progressionOptions}</select>
+          <div class="stage-progression-summary" aria-live="polite"><span>${selectedStatus}</span><strong>${escapeHtml(selected.name)}</strong><small>완료 보상 · ${escapeHtml(selectedReward)}</small></div>
+        </div>
+      </section>
+      ${briefingPanel}
     </div>`;
   const tabBodies = {
     sortie: sortieTabHtml,
@@ -682,7 +740,19 @@ function renderLobby() {
     </header>
     <p id="idle-return-summary" class="idle-return-banner" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p>
     <nav class="command-tab-bar" role="tablist" aria-label="커맨드 덱">${COMMAND_TABS.map((tab) => `<button class="command-tab${tab.id === activeCommandTab ? " is-active" : ""}" role="tab" aria-selected="${tab.id === activeCommandTab}" data-command-tab="${tab.id}">${tab.label}</button>`).join("")}</nav>
+    <div class="lobby-guide-launch"><p><strong>처음 출전하나요?</strong> 동료 편성, 정예 추출, 스킬 재사용 흐름을 1분 안에 확인하세요.</p><button type="button" data-guide-open aria-label="전투 작전 가이드 열기" aria-haspopup="dialog" aria-controls="lobby-guide-dialog">작전 가이드</button></div>
     <div class="command-tab-panel">${tabBodies[activeCommandTab]}</div>
+    <dialog id="lobby-guide-dialog" class="lobby-guide-dialog" aria-labelledby="lobby-guide-title">
+      <div class="lobby-guide-shell">
+        <div class="panel-heading"><div><p class="eyebrow">FIELD MANUAL</p><h2 id="lobby-guide-title">전투 작전 가이드</h2></div><button type="button" data-guide-close aria-label="전투 작전 가이드 닫기">닫기</button></div>
+        <p class="section-copy">전장 화면에서 한 손가락으로 드래그하면 카메라 시야가 회전합니다. 지휘관 이동은 화면 방향 버튼 또는 <b>WASD·화살표 키</b>를 사용하세요.</p>
+        <div class="lobby-guide-grid">
+          <section data-guide-section="companion" aria-labelledby="guide-companion-title"><span aria-hidden="true">01</span><h3 id="guide-companion-title">동료 편성·자율 행동</h3><ol><li><b>동료 → 목록</b>에서 최대 3명을 편성하세요.</li><li><b>편성</b>에서 전열·후열을 정하면 다음 출전부터 적용됩니다.</li><li>동료는 자동 교전·회수하며, 멀어지면 지휘관 곁으로 복귀합니다.</li></ol></section>
+          <section data-guide-section="extraction" aria-labelledby="guide-extraction-title"><span aria-hidden="true">02</span><h3 id="guide-extraction-title">정예 추출</h3><ol><li>정예를 처치한 뒤 <b>Bind 시작</b>을 누르세요.</li><li>표시된 추출 지점에 들어가 홀드가 끝날 때까지 버티세요.</li><li><b>정예 추출</b>이 활성화되면 눌러 영구 동료로 결속하세요.</li></ol></section>
+          <section data-guide-section="skills" aria-labelledby="guide-skills-title"><span aria-hidden="true">03</span><h3 id="guide-skills-title">스킬·쿨다운</h3><ol><li>전투 우측의 준비된 액티브 스킬을 눌러 즉시 사용하세요.</li><li>버튼의 초 단위 표시가 0이 되면 다시 사용할 수 있습니다.</li><li>레벨업 선택은 런 한정, 성장 탭의 스킬 노드는 영구 적용입니다.</li></ol></section>
+        </div>
+      </div>
+    </dialog>
     <details class="archive-tools"><summary>기록 관리 <span>오프라인 저장 · ${escapeHtml(storage.backend ?? "확인 중")}</span></summary><div class="storage-row" aria-label="캠페인 제어"><button id="export-defense">기록 내보내기</button><label class="import-label">기록 가져오기<input id="import-defense" type="file" accept="application/json,text/plain" /></label><button id="export-telemetry">진단 내보내기</button><button id="reset-defense">새 기록</button><output aria-live="polite">${escapeHtml(statusText)}</output></div></details>`;
   hydratePortraits(root);
 
@@ -704,12 +774,26 @@ function renderLobby() {
       renderLobby();
     });
   });
-  root.querySelectorAll("[data-stage]").forEach((button) => {
+  root.querySelectorAll("[data-stage-showcase]").forEach((button) => {
     button.addEventListener("click", () => {
-      selectedStageId = button.dataset.stage;
+      selectedStageId = button.dataset.stageShowcase;
       renderLobby();
     });
   });
+  root.querySelector("[data-stage-progress]")?.addEventListener("change", (event) => {
+    const stageId = event.currentTarget.selectedOptions[0]?.dataset.stageId;
+    if (!stageId) return;
+    selectedStageId = stageId;
+    renderLobby();
+  });
+  const guideDialog = root.querySelector("#lobby-guide-dialog");
+  const guideTrigger = root.querySelector("[data-guide-open]");
+  guideTrigger?.addEventListener("click", () => {
+    if (!guideDialog?.open) guideDialog?.showModal();
+    guideDialog?.querySelector("[data-guide-close]")?.focus();
+  });
+  guideDialog?.querySelector("[data-guide-close]")?.addEventListener("click", () => guideDialog.close());
+  guideDialog?.addEventListener("close", () => guideTrigger?.focus());
   root.querySelectorAll("[data-companion]").forEach((button) => {
     button.addEventListener("click", async () => {
       const prototype = button.dataset.companion;
@@ -929,6 +1013,7 @@ export class BattleSession {
     this.cutsceneTimer = null;
     this.cutsceneRelayTimers = [];
     this.cutsceneQueue = [];
+    this.cutsceneActive = false;
     this.stopped = false;
     this.camera = { x: 0, y: 0 };
     this.focusBeforeGrowth = null;
@@ -1236,7 +1321,7 @@ export class BattleSession {
     // immediately after each call is exactly that one tick's events --
     // collecting them here recovers every tick's events for this frame.
     const frameEvents = [];
-    if (!document.hidden && !this.userPaused && !isTerminalRun(this.run)) {
+    if (!document.hidden && !this.userPaused && !this.cutsceneActive && !isTerminalRun(this.run)) {
       this.accumulator += elapsed;
       while (this.accumulator >= STEP_MS) {
         this.run = advanceDefenseRun(this.run, 1);
@@ -1299,14 +1384,18 @@ export class BattleSession {
     }
   }
 
-  dismissCutscene() {
+  dismissCutscene(expectedOverlay = null) {
+    const overlay = this.surface?.querySelector("#defense-cutscene-overlay");
+    if (expectedOverlay && overlay !== expectedOverlay) return;
     if (this.cutsceneTimer !== null) {
       clearTimeout(this.cutsceneTimer);
       this.cutsceneTimer = null;
     }
     this.cutsceneRelayTimers.forEach((timer) => clearTimeout(timer));
     this.cutsceneRelayTimers = [];
-    this.surface?.querySelector("#defense-cutscene-overlay")?.remove();
+    if (!this.cutsceneActive && !overlay) return;
+    overlay?.remove();
+    this.cutsceneActive = false;
     if (this.surface) delete this.surface.dataset.defenseCutscene;
     const nextEntry = this.cutsceneQueue.shift();
     if (nextEntry && !this.stopped) this.showCutscene(nextEntry.cutscene, nextEntry.event);
@@ -1387,10 +1476,11 @@ export class BattleSession {
     dismiss.type = "button";
     dismiss.dataset.cutsceneDismiss = "true";
     dismiss.textContent = "계속";
-    dismiss.addEventListener("click", () => this.dismissCutscene());
+    dismiss.addEventListener("click", () => this.dismissCutscene(overlay));
     frame.append(heading, beatNode, dismiss);
     overlay.append(frame);
     this.surface.append(overlay);
+    this.cutsceneActive = true;
     this.surface.dataset.defenseCutscene = cutscene.eventType;
     if (event && !this.stopped) this.audio?.consume?.([event]);
     beats.slice(1).forEach((beat) => {
@@ -1401,7 +1491,7 @@ export class BattleSession {
     // observed or interacted with.
     this.cutsceneTimer = setTimeout(() => {
       this.cutsceneTimer = setTimeout(
-        () => this.dismissCutscene(),
+        () => this.dismissCutscene(overlay),
         cutscene.timing?.dismissAfterMs ?? 8000,
       );
     }, 0);

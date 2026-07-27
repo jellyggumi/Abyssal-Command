@@ -1,8 +1,8 @@
 # Stage 1, Phase 1b — Cinder Pressure and Agency Redesign Contract
 
 run-id: `20260726-stage1b-cinder-pressure-agency`
-status: `scope-review-required`
-source-decision: `../20260726-stage2-balance-agency/production/decision-log.md#d-20260726-s2c-03`
+status: `instrumented-and-remeasured-redesign-required`
+source-decision: `../production/decision-log.md#d-20260726-s2c-03`
 next-public-beat: `deferred until a rendered vertical slice reliably shows a persistent Elite Extract decision`
 
 ## 1. Why this packet exists
@@ -85,4 +85,8 @@ The director may consider a future bounded tuning proposal only when all are tru
 
 ## 5. Stop conditions
 
-Stop and return to director review on any runtime-ID, canon, extraction-boundary, monetization, renderer, GLB, or schema change; any threshold substitution; any hidden fallback; or any attempt to call synthetic scripted output human evidence.
+Stop and return to director review on any runtime-ID, canon, extraction-boundary, monetization, renderer-ownership, GLB, or campaign-schema change; any threshold substitution; any hidden fallback; or any attempt to call synthetic scripted output human evidence.
+
+## 6. Remeasurement disposition [OBSERVED]
+
+All five prerequisite evidence surfaces in §4 now exist. Their fail-closed evaluation did not authorize tuning or a public beat: G2 and G3 are `FAIL`, G6 is `FAIL`, G7 and G8 are `BLOCKED / UNMEASURED`, and G5 is `N/A`. The frozen evidence is `../qa/stage1b-gate-verdict-20260726.json`; the director disposition is `../production/decision-log.md#d-20260726-s1b-01`.

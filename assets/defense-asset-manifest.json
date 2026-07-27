@@ -510,6 +510,15 @@
     },
     {
       "disposition": "retain",
+      "currentPath": "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb",
+      "replacementPath": "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
       "currentPath": "assets/images/battle/glb/props/tiers/tier-t1.glb",
       "replacementPath": "assets/images/battle/glb/props/tiers/tier-t1.glb",
       "extension": ".glb",
@@ -567,6 +576,15 @@
       "currentPath": "assets/images/battle/glb/terrain/abyss-chancel.glb",
       "replacementPath": "assets/images/battle/glb/terrain/abyss-chancel.glb",
       "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/images/battle/glb/terrain/build-provenance.json",
+      "replacementPath": "assets/images/battle/glb/terrain/build-provenance.json",
+      "extension": ".json",
       "generator": "scripts/build-defense-asset-manifest.mjs",
       "runtimeReference": true,
       "testDisposition": "retain"

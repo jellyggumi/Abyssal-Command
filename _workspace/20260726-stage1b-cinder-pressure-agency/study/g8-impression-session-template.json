@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abyssal-surge.local/study/g8-impression-session-template.schema.json",
+  "title": "G8 first-exposure impression study collection",
+  "description": "Schema and blank instance for ten real first-exposure human impression scores. Empty sessions are not evidence and cannot satisfy G8.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "gate",
+    "study_id",
+    "candidate_id",
+    "artifact_status",
+    "build_sha",
+    "question",
+    "scale",
+    "collected_at_utc",
+    "participants",
+    "exclusions",
+    "sessions",
+    "calculation"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "gate": { "const": "G8" },
+    "study_id": { "type": "string", "minLength": 1 },
+    "candidate_id": { "const": "pressure-bound-elite-extraction" },
+    "artifact_status": {
+      "enum": [
+        "BLOCKED_UNMEASURED",
+        "COLLECTION_INCOMPLETE",
+        "READY_FOR_REVIEW",
+        "PASS",
+        "BLOCKED"
+      ]
+    },
+    "build_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Full lowercase Git build SHA; all included sessions must match it."
+    },
+    "question": {
+      "const": "How distinctive and memorable was choosing to leave the fight to bind this elite for future runs?"
+    },
+    "scale": {
+      "const": {
+        "minimum": 1,
+        "maximum": 5,
+        "minimum_label": "not distinctive",
+        "maximum_label": "very distinctive"
+      }
+    },
+    "collected_at_utc": { "type": "string", "format": "date-time" },
+    "participants": {
+      "type": "array",
+      "maxItems": 10,
+      "items": { "$ref": "#/$defs/participant" }
+    },
+    "exclusions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/exclusion" }
+    },
+    "sessions": {
+      "type": "array",
+      "maxItems": 10,
+      "items": { "$ref": "#/$defs/session" }
+    },
+    "calculation": { "$ref": "#/$defs/calculation" }
+  },
+  "$defs": {
+    "participant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participant_id",
+        "human_confirmed",
+        "consent_to_record_confirmed",
+        "first_exposure_confirmed",
+        "unique_for_build_confirmed",
+        "controls_accessible_confirmed",
+        "included"
+      ],
+      "properties": {
+        "participant_id": { "type": "string", "pattern": "^G8-P[0-9]{2}$" },
+        "human_confirmed": { "const": true },
+        "consent_to_record_confirmed": { "const": true },
+        "first_exposure_confirmed": { "const": true },
+        "unique_for_build_confirmed": { "const": true },
+        "controls_accessible_confirmed": { "const": true },
+        "accessibility_configuration_note": { "type": "string" },
+        "included": { "const": true }
+      }
+    },
+    "exclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "excluded_before_score", "reason_code", "note"],
+      "properties": {
+        "candidate_id": { "type": "string", "pattern": "^G8-X[0-9]{2}$" },
+        "excluded_before_score": { "const": true },
+        "reason_code": {
+          "enum": [
+            "NO_RECORDING_CONSENT",
+            "NOT_A_HUMAN_PARTICIPANT",
+            "PRIOR_EXPOSURE_TO_CANDIDATE_OR_BUILD",
+            "DUPLICATE_PARTICIPATION_ON_BUILD",
+            "UNRESOLVED_CONTROL_OR_ACCESSIBILITY_FAILURE",
+            "TECHNICAL_FAILURE_BEFORE_FIRST_EXTRACTION_OPPORTUNITY"
+          ]
+        },
+        "note": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidence_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_sequence",
+        "event_type",
+        "occurred",
+        "visible_in_rendered_build",
+        "captured_at_recording_ms",
+        "evidence_file_name",
+        "evidence_sha256"
+      ],
+      "properties": {
+        "event_sequence": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "event_type": {
+          "enum": [
+            "ELITE_PROMPT_VISIBLE",
+            "OCCUPATION_HOLD_OBSERVED",
+            "EXTRACTION_HOLD_OBSERVED",
+            "EXTRACTION_CHOICE_OBSERVED",
+            "RESULT_VISIBLE",
+            "EMBER_COHORT_PERSISTENCE_OBSERVED",
+            "STAGING_RETURN_VISIBLE",
+            "RAW_IMPRESSION_SCORE_RECORDED"
+          ]
+        },
+        "occurred": { "type": "boolean" },
+        "visible_in_rendered_build": { "type": "boolean" },
+        "captured_at_recording_ms": { "type": "integer", "minimum": 0 },
+        "evidence_file_name": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}__G8-P[0-9]{2}__s01__e00[1-8]__[a-z0-9-]+\\.(webm|mp4|mov|json|png)$"
+        },
+        "evidence_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "observer_note": { "type": "string" }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "build_sha",
+        "participant_id",
+        "sortie_sequence",
+        "rendered_build_confirmed",
+        "synthetic_controller",
+        "first_exposure_confirmed",
+        "screen_recording_file_name",
+        "screen_recording_sha256",
+        "route_outcome",
+        "first_extraction_opportunity_observed",
+        "choice_visible_to_participant",
+        "choice_comprehended",
+        "unresolved_comprehension_failure",
+        "question_asked_verbatim",
+        "raw_score",
+        "evidence_events",
+        "quoted_confusion",
+        "moderator_id",
+        "observer_id",
+        "recorded_at_utc"
+      ],
+      "properties": {
+        "build_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "participant_id": { "type": "string", "pattern": "^G8-P[0-9]{2}$" },
+        "sortie_sequence": { "const": 1 },
+        "rendered_build_confirmed": { "const": true },
+        "synthetic_controller": { "const": false },
+        "first_exposure_confirmed": { "const": true },
+        "screen_recording_file_name": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}__G8-P[0-9]{2}__s01__e000__session-recording\\.(webm|mp4|mov)$"
+        },
+        "screen_recording_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "route_outcome": { "enum": ["EXTRACTION_COMPLETED", "EXTRACTION_DELIBERATELY_DECLINED"] },
+        "first_extraction_opportunity_observed": { "const": true },
+        "choice_visible_to_participant": { "type": "boolean" },
+        "choice_comprehended": { "type": "boolean" },
+        "unresolved_comprehension_failure": { "type": "boolean" },
+        "question_asked_verbatim": { "const": true },
+        "raw_score": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "evidence_events": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/evidence_event" }
+        },
+        "quoted_confusion": { "type": ["string", "null"] },
+        "moderator_id": { "type": "string", "minLength": 1 },
+        "observer_id": { "type": "string", "minLength": 1 },
+        "recorded_at_utc": { "type": "string", "format": "date-time" },
+        "protocol_deviation": { "type": ["string", "null"] }
+      }
+    },
+    "calculation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "included_participant_count",
+        "scored_session_count",
+        "all_sessions_match_build_sha",
+        "all_sessions_first_exposure",
+        "all_raw_scores_are_integers_1_to_5",
+        "all_recordings_and_event_sequences_complete",
+        "unresolved_comprehension_failure_count",
+        "raw_scores_in_participant_order",
+        "sorted_raw_scores",
+        "median",
+        "formula_version",
+        "impression_verdict"
+      ],
+      "properties": {
+        "included_participant_count": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "scored_session_count": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "all_sessions_match_build_sha": { "type": "boolean" },
+        "all_sessions_first_exposure": { "type": "boolean" },
+        "all_raw_scores_are_integers_1_to_5": { "type": "boolean" },
+        "all_recordings_and_event_sequences_complete": { "type": "boolean" },
+        "unresolved_comprehension_failure_count": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "raw_scores_in_participant_order": {
+          "type": "array",
+          "maxItems": 10,
+          "items": { "type": "integer", "minimum": 1, "maximum": 5 }
+        },
+        "sorted_raw_scores": {
+          "type": "array",
+          "maxItems": 10,
+          "items": { "type": "integer", "minimum": 1, "maximum": 5 }
+        },
+        "median": { "type": ["number", "null"], "minimum": 1, "maximum": 5 },
+        "formula_version": { "const": "G8-IMPRESSION-v1" },
+        "impression_verdict": { "enum": ["PASS", "BLOCKED", "BLOCKED_UNMEASURED"] }
+      }
+    }
+  },
+  "x-blank-instance": {
+    "schema_version": "1.0.0",
+    "gate": "G8",
+    "study_id": "",
+    "candidate_id": "pressure-bound-elite-extraction",
+    "artifact_status": "BLOCKED_UNMEASURED",
+    "build_sha": null,
+    "question": "How distinctive and memorable was choosing to leave the fight to bind this elite for future runs?",
+    "scale": {
+      "minimum": 1,
+      "maximum": 5,
+      "minimum_label": "not distinctive",
+      "maximum_label": "very distinctive"
+    },
+    "collected_at_utc": null,
+    "participants": [],
+    "exclusions": [],
+    "sessions": [],
+    "calculation": {
+      "included_participant_count": 0,
+      "scored_session_count": 0,
+      "all_sessions_match_build_sha": false,
+      "all_sessions_first_exposure": false,
+      "all_raw_scores_are_integers_1_to_5": false,
+      "all_recordings_and_event_sequences_complete": false,
+      "unresolved_comprehension_failure_count": 0,
+      "raw_scores_in_participant_order": [],
+      "sorted_raw_scores": [],
+      "median": null,
+      "formula_version": "G8-IMPRESSION-v1",
+      "impression_verdict": "BLOCKED_UNMEASURED"
+    }
+  }
+}

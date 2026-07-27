@@ -1,0 +1,260 @@
+{
+  "capturedAtUtc": "2026-07-27T04:01:54.113327+00:00",
+  "result": "PASS",
+  "decision": "The final authored GLBs and current runtime already resolve both flagged desktop findings; no runtime source edit was required.",
+  "sourceEdits": [],
+  "server": {
+    "command": "python3 -m http.server 52267 --bind 127.0.0.1",
+    "origin": "http://127.0.0.1:52267",
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "deviceScaleFactor": 1
+    }
+  },
+  "cache": {
+    "clearedOnlyForOrigin": "http://127.0.0.1:52267",
+    "removedServiceWorkerScopes": [
+      "http://127.0.0.1:52267/"
+    ],
+    "removedCacheNames": [
+      "abyssal-command-defense-survivor-__CANDIDATE_SHA__"
+    ],
+    "activeController": "http://127.0.0.1:52267/sw.js",
+    "activeCacheNames": [
+      "abyssal-command-defense-survivor-__CANDIDATE_SHA__"
+    ],
+    "localBuildStrategy": "network-first with fetch cache=no-store because the candidate SHA placeholder is unstamped",
+    "releaseBuildStrategy": "candidate-SHA cache rotation with cache-first binaries",
+    "firstBattleResponses": [
+      {
+        "url": "http://127.0.0.1:52267/assets/images/battle/glb/commander/dusk-warden.glb",
+        "status": 200,
+        "fromServiceWorker": true
+      },
+      {
+        "url": "http://127.0.0.1:52267/assets/images/battle/glb/terrain/cinder-span.glb",
+        "status": 200,
+        "fromServiceWorker": true
+      }
+    ],
+    "cacheEntriesAfterLoad": {
+      "terrain": true,
+      "commander": true
+    },
+    "primedRepeatOriginRequestCounts": {
+      "terrainBefore": 2,
+      "terrainAfter": 3,
+      "commanderBefore": 3,
+      "commanderAfter": 4
+    },
+    "primedRepeatResponses": [
+      {
+        "url": "http://127.0.0.1:52267/assets/images/battle/glb/terrain/cinder-span.glb",
+        "status": 200,
+        "bytes": 5169332
+      },
+      {
+        "url": "http://127.0.0.1:52267/assets/images/battle/glb/commander/dusk-warden.glb",
+        "status": 200,
+        "bytes": 6621184
+      }
+    ],
+    "interpretation": "Each cached URL produced one additional origin GET, proving the raw local worker refetched rather than replaying its cached binary."
+  },
+  "assets": {
+    "terrain": {
+      "path": "assets/images/battle/glb/terrain/cinder-span.glb",
+      "url": "http://127.0.0.1:52267/assets/images/battle/glb/terrain/cinder-span.glb",
+      "bytes": 5169332,
+      "sha256": "945cbea57b08b4f3faa11975dea48e65e54c32004cb2195135c5d9da0f40fa6e",
+      "materials": [
+        {
+          "name": "cinder-span Basalt",
+          "baseColorTexture": 1,
+          "runtimeMap": "abyssal-toon-surface-v01",
+          "metalness": 0.07999999821186066,
+          "roughness": 0.8199999928474426
+        },
+        {
+          "name": "cinder-span Ash",
+          "baseColorTexture": 3,
+          "runtimeMap": "abyssal-toon-surface-v01",
+          "metalness": 0,
+          "roughness": 0.8999999761581421
+        },
+        {
+          "name": "cinder-span Iron",
+          "baseColorTexture": 5,
+          "runtimeMap": "abyssal-toon-surface-v01",
+          "metalness": 0.5799999833106995,
+          "roughness": 0.41999998688697815
+        },
+        {
+          "name": "cinder-span Ember",
+          "baseColorTexture": 7,
+          "runtimeMap": "abyssal-toon-surface-v01",
+          "metalness": 0.05000000074505806,
+          "roughness": 0.2800000011920929,
+          "emissiveFactor": [
+            1,
+            0.029999999329447746,
+            0
+          ],
+          "emissiveStrength": 4.800000190734863
+        }
+      ]
+    },
+    "commander": {
+      "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+      "url": "http://127.0.0.1:52267/assets/images/battle/glb/commander/dusk-warden.glb",
+      "bytes": 6621184,
+      "sha256": "eafd685e766dc9e590cafbfa2265c3a8dc439a615dbb1504653cc462d0f79e49",
+      "skinCount": 1,
+      "jointCount": 24,
+      "actionNames": [
+        "dusk-warden::attack::v01",
+        "dusk-warden::avoid::v01",
+        "dusk-warden::bighit::v01",
+        "dusk-warden::critical::v01",
+        "dusk-warden::defence::v01",
+        "dusk-warden::die::v01",
+        "dusk-warden::hit::v01",
+        "dusk-warden::idle::v01",
+        "dusk-warden::move::v01",
+        "dusk-warden::run::v01",
+        "dusk-warden::show::v01",
+        "dusk-warden::attack_melee::v01",
+        "dusk-warden::attack_ranged::v01"
+      ]
+    }
+  },
+  "runtime": {
+    "stageId": "cinder-span",
+    "renderer": "webgl",
+    "terrainLoaded": true,
+    "terrainModelPath": "assets/images/battle/glb/terrain/cinder-span.glb",
+    "stagePaletteId": "cinder-span",
+    "rendererColorPipeline": {
+      "outputColorSpace": "srgb",
+      "toneMapping": "NoToneMapping",
+      "toneMappingValue": 0,
+      "toneMappingExposure": 1
+    },
+    "observedCommanderActionSequence": [
+      {
+        "phase": "opening-cinematic-loaded",
+        "activeActionKey": "show",
+        "oneShotActionKey": "show",
+        "hasMixer": true,
+        "actionCount": 13,
+        "dead": false
+      },
+      {
+        "phase": "stationary-gameplay",
+        "activeActionKey": "idle",
+        "oneShotActionKey": null,
+        "ambientState": "idle",
+        "ambientActive": true,
+        "hasMixer": true,
+        "actionCount": 13,
+        "dead": false
+      },
+      {
+        "phase": "gameplay-screenshot",
+        "activeActionKey": "attack_melee",
+        "oneShotActionKey": "attack_melee",
+        "hasMixer": true,
+        "actionCount": 13,
+        "dead": false
+      }
+    ],
+    "runtimeErrorsDuringFreshCapture": []
+  },
+  "visualMeasurements": {
+    "gameplayCapture": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/browser-runtime-1440x900/cinder-span-current-runtime-1440x900.png",
+      "bytes": 1365777,
+      "sha256": "62cffeb4d2402db0ef3ddaf677eed4c485772dde445a5422b0fc13da9f6c7c4d",
+      "terrainRoi": {
+        "x": 30,
+        "y": 105,
+        "width": 1000,
+        "height": 500,
+        "pixelCount": 500000,
+        "pureWhiteRatio": 0,
+        "highlightClipRatio": 0,
+        "colorfulPixelRatio": 0.069874,
+        "edgeContrastRatio": 0.012924748395690279,
+        "luma": {
+          "p50": 0.2575733333333333,
+          "p90": 0.29991294117647055,
+          "p99": 0.602950588235294,
+          "max": 0.7786078431372548
+        }
+      },
+      "interpretation": "The measured terrain region contains no pure-white or >=0.95-luma clipped pixels; basalt texture, ember lanes, cracks, ramp edges, and the gate remain visibly distinct."
+    },
+    "isolatedActionCapture": {
+      "path": "_workspace/20260726-stage1b-cinder-pressure-agency/qa/browser-runtime-1440x900/commander-runtime-idle-melee-1440x900.png",
+      "bytes": 635204,
+      "sha256": "226e24e2054f35e6ae056fa268570cfc4ec1660024ab586a602745bfb781d1d3",
+      "idle": {
+        "clip": "dusk-warden::idle::v01",
+        "durationSeconds": 5,
+        "sampleTimeSeconds": 2.5,
+        "leftHandDropFromShoulder": 0.7912105283081416,
+        "rightHandDropFromShoulder": 0.9127559246024946,
+        "handSpan": 0.7664885853058844
+      },
+      "attackMelee": {
+        "clip": "dusk-warden::attack_melee::v01",
+        "durationSeconds": 1,
+        "sampleTimeSeconds": 0.46666666865348816,
+        "handSpan": 2.426676725665309
+      },
+      "maxHandTravelIdleToMelee": 1.5577295631831023,
+      "interpretation": "The deployed runtime clip visibly changes the skinned silhouette from guarded idle to the authored melee contact pose; it is not a bind-pose capture."
+    }
+  },
+  "verification": [
+    {
+      "command": "node --test tests/runtime-visual-assets.test.mjs tests/commander-guard-pose.test.mjs",
+      "result": "PASS",
+      "tests": 78,
+      "failed": 0
+    },
+    {
+      "command": "node --test tests/combat-presentation-contract.test.mjs tests/defense-renderer-contract.test.mjs tests/world-presentation-contract.test.mjs",
+      "result": "PASS",
+      "tests": 39,
+      "failed": 0
+    },
+    {
+      "command": "node --test --test-name-pattern='service worker|unstamped' tests/release-closure.test.mjs",
+      "result": "PASS",
+      "tests": 2,
+      "failed": 0
+    },
+    {
+      "command": "node --test tests/stage-runtime-proof-browser.test.mjs",
+      "result": "PASS",
+      "tests": 1,
+      "failed": 0,
+      "coverage": "all 10 canonical stages in isolated real-WebGL browser sessions"
+    },
+    {
+      "command": "node tests/world-presentation-browser.cjs",
+      "result": "FAIL_NON_TARGET_STALE_SELECTOR",
+      "tests": 0,
+      "failed": 1,
+      "error": "locator('[data-stage=gate-zenith]').click timed out because the current lobby no longer publishes that legacy selector",
+      "scope": "Lobby atlas selector contract; no runtime 3D, Cinder material, service-worker, or commander action assertion failed."
+    }
+  ],
+  "remainingRisks": [
+    "Release binary freshness still depends on the deployment workflow replacing __CANDIDATE_SHA__ with a new commit SHA; local unstamped serving is independently protected by network-first requests.",
+    "The commander is small in the full-stage gameplay framing, so the isolated current-runtime action proof remains the clearest visual evidence of the guarded idle and melee contact silhouettes.",
+    "tests/world-presentation-browser.cjs retains a legacy gate-zenith lobby selector and fails before reaching its battle assertions; the dedicated real-WebGL stage browser proof passes all ten stages."
+  ]
+}

@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abyssal-surge.local/study/g7-session-observer-template.schema.json",
+  "title": "G7 rendered moderated re-entry study collection",
+  "description": "Schema and blank instance for real human G7 evidence. The blank instance is not an observation and cannot satisfy G7.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "gate",
+    "study_id",
+    "artifact_status",
+    "build_sha",
+    "collected_at_utc",
+    "participants",
+    "exclusions",
+    "decisions",
+    "calculation"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "gate": { "const": "G7" },
+    "study_id": { "type": "string", "minLength": 1 },
+    "artifact_status": {
+      "enum": [
+        "BLOCKED_UNMEASURED",
+        "COLLECTION_INCOMPLETE",
+        "READY_FOR_REVIEW",
+        "PASS",
+        "BLOCKED"
+      ]
+    },
+    "build_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Full lowercase Git build SHA; all included decisions must match it."
+    },
+    "collected_at_utc": { "type": "string", "format": "date-time" },
+    "participants": {
+      "type": "array",
+      "maxItems": 10,
+      "items": { "$ref": "#/$defs/participant" }
+    },
+    "exclusions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/exclusion" }
+    },
+    "decisions": {
+      "type": "array",
+      "maxItems": 20,
+      "items": { "$ref": "#/$defs/decision" }
+    },
+    "calculation": { "$ref": "#/$defs/calculation" }
+  },
+  "$defs": {
+    "participant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participant_id",
+        "human_confirmed",
+        "consent_to_record_confirmed",
+        "unique_for_build_confirmed",
+        "controls_accessible_confirmed",
+        "included"
+      ],
+      "properties": {
+        "participant_id": { "type": "string", "pattern": "^G7-P[0-9]{2}$" },
+        "human_confirmed": { "const": true },
+        "consent_to_record_confirmed": { "const": true },
+        "unique_for_build_confirmed": { "const": true },
+        "controls_accessible_confirmed": { "const": true },
+        "prior_game_experience_note": { "type": "string" },
+        "accessibility_configuration_note": { "type": "string" },
+        "included": { "const": true }
+      }
+    },
+    "exclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "excluded_before_eligible_decision", "reason_code", "note"],
+      "properties": {
+        "candidate_id": { "type": "string", "pattern": "^G7-X[0-9]{2}$" },
+        "excluded_before_eligible_decision": { "const": true },
+        "reason_code": {
+          "enum": [
+            "NO_RECORDING_CONSENT",
+            "NOT_A_HUMAN_PARTICIPANT",
+            "DUPLICATE_PARTICIPATION_ON_BUILD",
+            "UNRESOLVED_CONTROL_OR_ACCESSIBILITY_FAILURE",
+            "TECHNICAL_FAILURE_BEFORE_STAGING_ELIGIBILITY"
+          ]
+        },
+        "note": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidence_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_sequence",
+        "event_type",
+        "occurred",
+        "visible_in_rendered_build",
+        "captured_at_recording_ms",
+        "evidence_file_name",
+        "evidence_sha256"
+      ],
+      "properties": {
+        "event_sequence": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "event_type": {
+          "enum": [
+            "ELITE_PROMPT_VISIBLE",
+            "MOVEMENT_INTO_EXTRACTION_ZONE",
+            "HOLD_PROGRESS_COMPLETED",
+            "EXTRACT_ELITE_ACCEPTED",
+            "ELITE_EXTRACTED_VISIBLE",
+            "EMBER_COHORT_PERSISTED_VISIBLE",
+            "STAGING_RETURN_VISIBLE",
+            "VOLUNTARY_REENTRY_DECISION"
+          ]
+        },
+        "occurred": { "type": "boolean" },
+        "visible_in_rendered_build": { "type": "boolean" },
+        "captured_at_recording_ms": { "type": "integer", "minimum": 0 },
+        "evidence_file_name": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}__G7-P[0-9]{2}__s(01|02)__e00[1-8]__[a-z0-9-]+\\.(webm|mp4|mov|json|png)$"
+        },
+        "evidence_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "observer_note": { "type": "string" }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "build_sha",
+        "participant_id",
+        "sortie_sequence",
+        "rendered_build_confirmed",
+        "synthetic_controller",
+        "screen_recording_file_name",
+        "screen_recording_sha256",
+        "timing_start_recording_ms",
+        "timing_end_recording_ms",
+        "circuit_duration_seconds",
+        "timing_start_definition_confirmed",
+        "timing_end_definition_confirmed",
+        "route_outcome",
+        "reached_post_result_staging_choice",
+        "eligible_decision",
+        "facilitator_prompted_reentry",
+        "facilitator_selected_player_action",
+        "voluntary_reentry",
+        "player_action_ids",
+        "reward_event_ids",
+        "evidence_events",
+        "observer_id",
+        "observer_signed_at_utc"
+      ],
+      "properties": {
+        "build_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "participant_id": { "type": "string", "pattern": "^G7-P[0-9]{2}$" },
+        "sortie_sequence": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "rendered_build_confirmed": { "const": true },
+        "synthetic_controller": { "const": false },
+        "screen_recording_file_name": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}__G7-P[0-9]{2}__s(01|02)__e000__session-recording\\.(webm|mp4|mov)$"
+        },
+        "screen_recording_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "timing_start_recording_ms": { "type": "integer", "minimum": 0 },
+        "timing_end_recording_ms": { "type": "integer", "minimum": 0 },
+        "circuit_duration_seconds": { "type": "number", "minimum": 0 },
+        "timing_start_definition_confirmed": { "const": true },
+        "timing_end_definition_confirmed": { "const": true },
+        "route_outcome": { "enum": ["EXTRACTION_SUCCESS", "EXTRACTION_DECLINED"] },
+        "reached_post_result_staging_choice": { "const": true },
+        "eligible_decision": { "const": true },
+        "facilitator_prompted_reentry": { "const": false },
+        "facilitator_selected_player_action": { "const": false },
+        "voluntary_reentry": { "type": "boolean" },
+        "player_action_ids": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "MOVE_TO_PRESSURE",
+              "SELECT_GROWTH_OR_CAST_SKILL",
+              "CHOOSE_FORMATION",
+              "HOLD_AND_EXTRACT_ELITE"
+            ]
+          }
+        },
+        "reward_event_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["ELITE_EXTRACTED"] }
+        },
+        "evidence_events": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/evidence_event" }
+        },
+        "observer_id": { "type": "string", "minLength": 1 },
+        "observer_signed_at_utc": { "type": "string", "format": "date-time" },
+        "protocol_deviation": { "type": ["string", "null"] }
+      }
+    },
+    "calculation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "included_participant_count",
+        "eligible_decision_count",
+        "voluntary_reentry_count",
+        "voluntary_reentry_rate",
+        "all_participants_have_two_decisions",
+        "all_decisions_match_build_sha",
+        "all_event_sequences_complete_and_ordered",
+        "all_required_events_occurred_and_visible",
+        "all_circuit_durations_in_30_to_180_seconds",
+        "all_circuits_have_minimum_actions_and_reward",
+        "formula_version",
+        "verdict"
+      ],
+      "properties": {
+        "included_participant_count": { "type": "integer", "minimum": 0 },
+        "eligible_decision_count": { "type": "integer", "minimum": 0 },
+        "voluntary_reentry_count": { "type": "integer", "minimum": 0 },
+        "voluntary_reentry_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "all_participants_have_two_decisions": { "type": "boolean" },
+        "all_decisions_match_build_sha": { "type": "boolean" },
+        "all_event_sequences_complete_and_ordered": { "type": "boolean" },
+        "all_required_events_occurred_and_visible": { "type": "boolean" },
+        "all_circuit_durations_in_30_to_180_seconds": { "type": "boolean" },
+        "all_circuits_have_minimum_actions_and_reward": { "type": "boolean" },
+        "formula_version": { "const": "G7-v1" },
+        "verdict": { "enum": ["PASS", "BLOCKED", "BLOCKED_UNMEASURED"] }
+      }
+    }
+  },
+  "x-blank-instance": {
+    "schema_version": "1.0.0",
+    "gate": "G7",
+    "study_id": "",
+    "artifact_status": "BLOCKED_UNMEASURED",
+    "build_sha": null,
+    "collected_at_utc": null,
+    "participants": [],
+    "exclusions": [],
+    "decisions": [],
+    "calculation": {
+      "included_participant_count": 0,
+      "eligible_decision_count": 0,
+      "voluntary_reentry_count": 0,
+      "voluntary_reentry_rate": null,
+      "all_participants_have_two_decisions": false,
+      "all_decisions_match_build_sha": false,
+      "all_event_sequences_complete_and_ordered": false,
+      "all_required_events_occurred_and_visible": false,
+      "all_circuit_durations_in_30_to_180_seconds": false,
+      "all_circuits_have_minimum_actions_and_reward": false,
+      "formula_version": "G7-v1",
+      "verdict": "BLOCKED_UNMEASURED"
+    }
+  }
+}

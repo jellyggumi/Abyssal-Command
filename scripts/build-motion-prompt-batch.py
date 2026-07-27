@@ -17,11 +17,11 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_ACTIONS_JSON = ROOT / "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/action-pipeline.json"
+DEFAULT_ACTIONS_JSON = ROOT / "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/action-pipeline.json"
 DEFAULT_CONCEPT_INPUTS = (
     "assets/images/battle/pilot/dusk-warden-idle-gti.png",
     "assets/images/battle/pilot/dusk-warden-idle-gti-refstyle.png",
-    "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/concept-input/dusk-warden-cartoon-albedo-v3.png",
+    "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/concept-input/dusk-warden-cartoon-albedo-v3.png",
 )
 EXPECTED_ACTIONS = (
     "idle",

@@ -1,0 +1,5598 @@
+{
+  "schemaVersion": 2,
+  "status": "ok",
+  "blenderVersion": "5.1.2",
+  "blenderCommand": "Blender --background --factory-startup --python _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/player-combat-animation-candidate/author_player_combat_clips.py -- --input _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/commander/dusk-warden.glb --output _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/player-combat-animation-candidate/dusk-warden.glb --audit _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/player-combat-animation-candidate/audit.json",
+  "blenderExecutable": "Blender",
+  "authorScriptSha256": "c7e6f4d0e7d5ff435684253338e24521078fde6d4736891f9904f57b7ff04ffd",
+  "inputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/commander/dusk-warden.glb",
+  "outputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/player-combat-animation-candidate/dusk-warden.glb",
+  "auditPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/player-combat-animation-candidate/audit.json",
+  "inputSha256": "746975a660f1027c4c9a572e117a7519eff459b7cbf3d3c1ef81db8880e7888f",
+  "outputSha256": "eafd685e766dc9e590cafbfa2265c3a8dc439a615dbb1504653cc462d0f79e49",
+  "guardPoseCorrection": {
+    "algorithm": "postmultiply-local-z-piecewise-contact-quaternion-v2",
+    "guardPoseDegrees": 95.0,
+    "actions": {
+      "attack": "strike",
+      "avoid": "guard",
+      "bighit": "guard",
+      "critical": "strike",
+      "defence": "guard",
+      "die": "guard",
+      "hit": "guard",
+      "idle": "guard",
+      "move": "guard",
+      "run": "guard",
+      "show": "guard",
+      "attack_melee": "strike",
+      "attack_ranged": "strike"
+    },
+    "channels": [
+      {
+        "action": "dusk-warden::attack::v01",
+        "actionKey": "attack",
+        "mode": "strike",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 14,
+        "valueAccessor": 30,
+        "keyframes": 90,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.75
+        ],
+        "contactSource": "source-max-hand-depth-sample-45",
+        "contactFrame": null,
+        "contactSample": 45,
+        "contactTimeSeconds": 1.875,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -0.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "067e900616d0e791ad4cae2d0de8c26dbb166e9ddd9f43b1c03ae6a45333f995"
+      },
+      {
+        "action": "dusk-warden::attack::v01",
+        "actionKey": "attack",
+        "mode": "strike",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 14,
+        "valueAccessor": 42,
+        "keyframes": 90,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.75
+        ],
+        "contactSource": "source-max-hand-depth-sample-45",
+        "contactFrame": null,
+        "contactSample": 45,
+        "contactTimeSeconds": 1.875,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 0.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "2b75fc2945d1d82a5d78c161d62a4a4493cbabbc2bf2479e201fdfbc050ad3d6"
+      },
+      {
+        "action": "dusk-warden::avoid::v01",
+        "actionKey": "avoid",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 75,
+        "valueAccessor": 91,
+        "keyframes": 42,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          1.75
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -95.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "fcfd797097ff14ac27a06a28bfd6b3c29bbcc84aa6b23702b914f9a48a161d05"
+      },
+      {
+        "action": "dusk-warden::avoid::v01",
+        "actionKey": "avoid",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 75,
+        "valueAccessor": 102,
+        "keyframes": 42,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          1.75
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 95.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "497469aa27f2f18f5b4537ff6a2a59b8c1c5d872e8f19cafe40c85d978417239"
+      },
+      {
+        "action": "dusk-warden::bighit::v01",
+        "actionKey": "bighit",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 131,
+        "valueAccessor": 147,
+        "keyframes": 84,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.5
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -95.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "b78b4b3eafa226ad721f264b082d29f917c66f42f8889babebdeea88a20173a5"
+      },
+      {
+        "action": "dusk-warden::bighit::v01",
+        "actionKey": "bighit",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 131,
+        "valueAccessor": 159,
+        "keyframes": 84,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.5
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 95.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "d2a837878a140247f2e4888300b74df34d3d6195856596724c5f2eb99f3e99ed"
+      },
+      {
+        "action": "dusk-warden::critical::v01",
+        "actionKey": "critical",
+        "mode": "strike",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 168,
+        "valueAccessor": 184,
+        "keyframes": 72,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.0
+        ],
+        "contactSource": "source-max-hand-depth-sample-29",
+        "contactFrame": null,
+        "contactSample": 29,
+        "contactTimeSeconds": 1.2083333730697632,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -0.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "6e42203f6a7b2005a5a670f7a2632db1403c7e1d64989b1c44322217c9655673"
+      },
+      {
+        "action": "dusk-warden::critical::v01",
+        "actionKey": "critical",
+        "mode": "strike",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 168,
+        "valueAccessor": 195,
+        "keyframes": 72,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.0
+        ],
+        "contactSource": "source-max-hand-depth-sample-29",
+        "contactFrame": null,
+        "contactSample": 29,
+        "contactTimeSeconds": 1.2083333730697632,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 0.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "bfa2dd39f10342259fd7334663d9b7c1947b32835e62a40aaf206b56a4f65a2f"
+      },
+      {
+        "action": "dusk-warden::defence::v01",
+        "actionKey": "defence",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 204,
+        "valueAccessor": 218,
+        "keyframes": 78,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.25
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -95.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "9d66cd74e0017b05e8f563cf98dfdf8989ca261aa468cd10687919bc412c4272"
+      },
+      {
+        "action": "dusk-warden::defence::v01",
+        "actionKey": "defence",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 204,
+        "valueAccessor": 228,
+        "keyframes": 78,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.25
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 95.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "99f22452f42b0f26ea0f35787a0f6cfa0ef4d5d3012adb8836875742182636f6"
+      },
+      {
+        "action": "dusk-warden::die::v01",
+        "actionKey": "die",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 168,
+        "valueAccessor": 251,
+        "keyframes": 72,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.0
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -95.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "be90bdb8c11cc05b8cffbe85a9f01a73871d23b6b8c9a448e5cf26444afdbbfd"
+      },
+      {
+        "action": "dusk-warden::die::v01",
+        "actionKey": "die",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 168,
+        "valueAccessor": 262,
+        "keyframes": 72,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.0
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 95.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "e4f816a4ba8c3bf65270e991f07294d1937aa189eba286f8f6e166b7b8da85fc"
+      },
+      {
+        "action": "dusk-warden::hit::v01",
+        "actionKey": "hit",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 271,
+        "valueAccessor": 287,
+        "keyframes": 54,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          2.25
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -95.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "ee505cae9c87336285eb5100742bfe366c630eb0f5532370448e7543ffbada68"
+      },
+      {
+        "action": "dusk-warden::hit::v01",
+        "actionKey": "hit",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 271,
+        "valueAccessor": 298,
+        "keyframes": 54,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          2.25
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 95.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "396ca02455ff84f9b09d2d6a9b28c71f789b1c096f1994b0e3cdce6029b98098"
+      },
+      {
+        "action": "dusk-warden::idle::v01",
+        "actionKey": "idle",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 307,
+        "valueAccessor": 318,
+        "keyframes": 120,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          5.0
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -95.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "4b13af3bc95f5781c98d590147a7fffd8fb11c8449b7ef0cfd611128f59a5fb7"
+      },
+      {
+        "action": "dusk-warden::idle::v01",
+        "actionKey": "idle",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 307,
+        "valueAccessor": 327,
+        "keyframes": 120,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          5.0
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 95.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "73502e9f2c2f8a1eb12fe624ba7d8ea19bdb566736fdd05bfda7a9b9a43c811f"
+      },
+      {
+        "action": "dusk-warden::move::v01",
+        "actionKey": "move",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 168,
+        "valueAccessor": 337,
+        "keyframes": 72,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.0
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -95.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "b9000cd13cad32a5ecfb005d3b599ca57949182095268802d683260189481286"
+      },
+      {
+        "action": "dusk-warden::move::v01",
+        "actionKey": "move",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 168,
+        "valueAccessor": 339,
+        "keyframes": 72,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.0
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 95.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "eed1006e109f72db21d07d383a357e0bdf49ad4c8ee017c0047a6167c8822ed6"
+      },
+      {
+        "action": "dusk-warden::run::v01",
+        "actionKey": "run",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 131,
+        "valueAccessor": 344,
+        "keyframes": 84,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.5
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -95.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "25ccbe0db99cb4f018ecab0bf0583b5a5c304b35cd40b6e3e89c378f8b13a0c2"
+      },
+      {
+        "action": "dusk-warden::run::v01",
+        "actionKey": "run",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 131,
+        "valueAccessor": 346,
+        "keyframes": 84,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          3.5
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 95.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "c708357c9131f6113491728e239cba881e5600f60e47722b05632d742e84d923"
+      },
+      {
+        "action": "dusk-warden::show::v01",
+        "actionKey": "show",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 351,
+        "valueAccessor": 366,
+        "keyframes": 96,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          4.0
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -95.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "8f95d7360fb48b41ae7a9969e0d8e5018f809fc41b34b9cab44b9da8581555bc"
+      },
+      {
+        "action": "dusk-warden::show::v01",
+        "actionKey": "show",
+        "mode": "guard",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 351,
+        "valueAccessor": 377,
+        "keyframes": 96,
+        "sampleTimeRangeSeconds": [
+          0.0416666679084301,
+          4.0
+        ],
+        "contactSource": null,
+        "contactFrame": null,
+        "contactSample": null,
+        "contactTimeSeconds": null,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 95.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "18c8e405e56cb987762a6fa84a19d6cbab15a73ae3cb50e3f020164e0b9e3bba"
+      },
+      {
+        "action": "dusk-warden::attack_melee::v01",
+        "actionKey": "attack_melee",
+        "mode": "strike",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 390,
+        "valueAccessor": 408,
+        "keyframes": 30,
+        "sampleTimeRangeSeconds": [
+          0.03333333507180214,
+          1.0
+        ],
+        "contactSource": "authored-frame-14",
+        "contactFrame": 14,
+        "contactSample": 14,
+        "contactTimeSeconds": 0.46666666865348816,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -0.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "7f7a94f8f05eb2b0a2f41024bc15931720ad4e695b1ef2354ce7ab2491d1985b"
+      },
+      {
+        "action": "dusk-warden::attack_melee::v01",
+        "actionKey": "attack_melee",
+        "mode": "strike",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 390,
+        "valueAccessor": 419,
+        "keyframes": 30,
+        "sampleTimeRangeSeconds": [
+          0.03333333507180214,
+          1.0
+        ],
+        "contactSource": "authored-frame-14",
+        "contactFrame": 14,
+        "contactSample": 14,
+        "contactTimeSeconds": 0.46666666865348816,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 0.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "0b3274e7bf4263008049102d86c20b03fc5ad69b4fdde0538969cad6803fc393"
+      },
+      {
+        "action": "dusk-warden::attack_ranged::v01",
+        "actionKey": "attack_ranged",
+        "mode": "strike",
+        "bone": "DEF-upper_arm.L",
+        "timeAccessor": 453,
+        "valueAccessor": 471,
+        "keyframes": 30,
+        "sampleTimeRangeSeconds": [
+          0.03333333507180214,
+          1.0
+        ],
+        "contactSource": "authored-frame-14",
+        "contactFrame": 14,
+        "contactSample": 14,
+        "contactTimeSeconds": 0.46666666865348816,
+        "guardDegreesAtStart": -95.0,
+        "guardDegreesAtContact": -0.0,
+        "guardDegreesAtRecovery": -95.0,
+        "correctedValuePayloadSha256": "73b75f850ccfb40192f0b6e6e476604559cf43333d81bd59d37bdcadf691035a"
+      },
+      {
+        "action": "dusk-warden::attack_ranged::v01",
+        "actionKey": "attack_ranged",
+        "mode": "strike",
+        "bone": "DEF-upper_arm.R",
+        "timeAccessor": 453,
+        "valueAccessor": 482,
+        "keyframes": 30,
+        "sampleTimeRangeSeconds": [
+          0.03333333507180214,
+          1.0
+        ],
+        "contactSource": "authored-frame-14",
+        "contactFrame": 14,
+        "contactSample": 14,
+        "contactTimeSeconds": 0.46666666865348816,
+        "guardDegreesAtStart": 95.0,
+        "guardDegreesAtContact": 0.0,
+        "guardDegreesAtRecovery": 95.0,
+        "correctedValuePayloadSha256": "b5e8bdf61e1fe87c1d739fddb9f22dbc53fabe0aeb525bebfe655f6160061f4c"
+      }
+    ],
+    "preCorrectionBinarySha256": "cbac503ebddedbdf63e308f866a42aeeb112d58d56141114c7ccf4654e6244a6",
+    "postCorrectionBinarySha256": "5d7554f175b618a9ac79925b59009ab6497683d09209c0127f525acf034efaba",
+    "changedByteCount": 25795,
+    "changedBytesOutsideCorrectedAccessors": 0,
+    "correctionPayloadSha256": "b48e63ea4045d71a6b51e2fb4d06edced3729cbd086109abfbc21827c9068fc9",
+    "outputGlbSha256": "eafd685e766dc9e590cafbfa2265c3a8dc439a615dbb1504653cc462d0f79e49"
+  },
+  "before": {
+    "nodes": 27,
+    "meshes": 1,
+    "primitives": 1,
+    "materials": 1,
+    "materialNames": [
+      "dusk-warden_toon_cartoon"
+    ],
+    "images": 2,
+    "textures": 2,
+    "skins": 1,
+    "skinJointCounts": [
+      24
+    ],
+    "deformJoints": 24,
+    "animations": 11,
+    "animationNames": [
+      "dusk-warden::attack::v01",
+      "dusk-warden::avoid::v01",
+      "dusk-warden::bighit::v01",
+      "dusk-warden::critical::v01",
+      "dusk-warden::defence::v01",
+      "dusk-warden::die::v01",
+      "dusk-warden::hit::v01",
+      "dusk-warden::idle::v01",
+      "dusk-warden::move::v01",
+      "dusk-warden::run::v01",
+      "dusk-warden::show::v01"
+    ],
+    "accessors": 385,
+    "bufferViews": 387
+  },
+  "after": {
+    "nodes": 27,
+    "meshes": 1,
+    "primitives": 1,
+    "materials": 1,
+    "materialNames": [
+      "dusk-warden_toon_cartoon"
+    ],
+    "images": 2,
+    "textures": 2,
+    "skins": 1,
+    "skinJointCounts": [
+      24
+    ],
+    "deformJoints": 24,
+    "animations": 13,
+    "animationNames": [
+      "dusk-warden::attack::v01",
+      "dusk-warden::avoid::v01",
+      "dusk-warden::bighit::v01",
+      "dusk-warden::critical::v01",
+      "dusk-warden::defence::v01",
+      "dusk-warden::die::v01",
+      "dusk-warden::hit::v01",
+      "dusk-warden::idle::v01",
+      "dusk-warden::move::v01",
+      "dusk-warden::run::v01",
+      "dusk-warden::show::v01",
+      "dusk-warden::attack_melee::v01",
+      "dusk-warden::attack_ranged::v01"
+    ],
+    "accessors": 511,
+    "bufferViews": 486
+  },
+  "authoredStageCensus": {
+    "nodes": 27,
+    "meshes": 1,
+    "primitives": 1,
+    "materials": 1,
+    "materialNames": [
+      "dusk-warden_toon_cartoon"
+    ],
+    "images": 2,
+    "textures": 2,
+    "skins": 1,
+    "skinJointCounts": [
+      24
+    ],
+    "deformJoints": 24,
+    "animations": 13,
+    "animationNames": [
+      "dusk-warden::attack::v01",
+      "dusk-warden::attack_melee::v01",
+      "dusk-warden::attack_ranged::v01",
+      "dusk-warden::avoid::v01",
+      "dusk-warden::bighit::v01",
+      "dusk-warden::critical::v01",
+      "dusk-warden::defence::v01",
+      "dusk-warden::die::v01",
+      "dusk-warden::hit::v01",
+      "dusk-warden::idle::v01",
+      "dusk-warden::move::v01",
+      "dusk-warden::run::v01",
+      "dusk-warden::show::v01"
+    ],
+    "accessors": 474,
+    "bufferViews": 476
+  },
+  "sourceAttackInspection": {
+    "name": "dusk-warden::attack::v01",
+    "frameRange": [
+      1.0,
+      90.0
+    ],
+    "poseBoneChannels": [
+      {
+        "dataPath": "pose.bones[\"DEF-foot.L\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.L\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.L\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.L\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.L\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.L\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.L\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.L\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.L\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.L\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.R\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.R\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.R\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.R\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.R\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.R\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.R\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.R\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.R\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-foot.R\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.L\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.L\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.L\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.L\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.L\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.L\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.L\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.L\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.L\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.L\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.R\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.R\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.R\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.R\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.R\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.R\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.R\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.R\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.R\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-forearm.R\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.L\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.L\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.L\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.L\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.L\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.L\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.L\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.L\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.L\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.L\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.R\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.R\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.R\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.R\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.R\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.R\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.R\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.R\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.R\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-hand.R\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.L\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.L\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.L\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.L\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.L\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.L\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.L\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.L\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.L\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.L\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.R\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.R\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.R\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.R\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.R\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.R\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.R\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.R\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.R\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-pelvis.R\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.L\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.L\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.L\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.L\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.L\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.L\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.L\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.L\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.L\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.L\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.R\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.R\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.R\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.R\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.R\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.R\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.R\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.R\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.R\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shin.R\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.L\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.L\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.L\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.L\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.L\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.L\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.L\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.L\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.L\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.L\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.R\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.R\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.R\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.R\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.R\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.R\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.R\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.R\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.R\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-shoulder.R\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.001\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.001\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.001\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.001\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.001\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.001\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.001\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.001\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.001\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.001\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.002\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.002\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.002\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.002\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.002\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.002\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.002\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.002\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.002\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.002\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.003\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.003\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.003\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.003\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.003\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.003\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.003\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.003\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.003\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.003\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.004\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.004\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.004\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.004\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.004\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.004\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.004\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.004\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.004\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.004\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.005\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.005\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.005\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.005\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.005\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.005\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.005\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.005\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.005\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-spine.005\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.L\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.L\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.L\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.L\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.L\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.L\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.L\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.L\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.L\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.L\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.R\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.R\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.R\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.R\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.R\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.R\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.R\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.R\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.R\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-thigh.R\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.L\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.L\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.L\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.L\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.L\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.L\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.L\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.L\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.L\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.L\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.R\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.R\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.R\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.R\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.R\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.R\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.R\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.R\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.R\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-toe.R\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.L\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.L\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.L\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.L\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.L\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.L\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.L\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.L\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.L\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.L\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.R\"].location",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.R\"].location",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.R\"].location",
+        "arrayIndex": 2,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.R\"].rotation_quaternion",
+        "arrayIndex": 0,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.R\"].rotation_quaternion",
+        "arrayIndex": 1,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.R\"].rotation_quaternion",
+        "arrayIndex": 2,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.R\"].rotation_quaternion",
+        "arrayIndex": 3,
+        "keyframes": 90
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.R\"].scale",
+        "arrayIndex": 0,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.R\"].scale",
+        "arrayIndex": 1,
+        "keyframes": 2
+      },
+      {
+        "dataPath": "pose.bones[\"DEF-upper_arm.R\"].scale",
+        "arrayIndex": 2,
+        "keyframes": 2
+      }
+    ]
+  },
+  "authoredActions": {
+    "dusk-warden::attack_melee::v01": {
+      "frameRange": [
+        1,
+        30
+      ],
+      "fps": 30,
+      "looping": false,
+      "poseStages": [
+        {
+          "frame": 1,
+          "stage": "guard"
+        },
+        {
+          "frame": 6,
+          "stage": "guarded_wind_up"
+        },
+        {
+          "frame": 10,
+          "stage": "loaded_strike"
+        },
+        {
+          "frame": 14,
+          "stage": "slash_contact"
+        },
+        {
+          "frame": 18,
+          "stage": "follow_through"
+        },
+        {
+          "frame": 24,
+          "stage": "recovery"
+        },
+        {
+          "frame": 30,
+          "stage": "settled_guard"
+        }
+      ],
+      "authoredPoseBones": [
+        "DEF-forearm.L",
+        "DEF-forearm.R",
+        "DEF-hand.L",
+        "DEF-hand.R",
+        "DEF-shoulder.L",
+        "DEF-shoulder.R",
+        "DEF-spine.001",
+        "DEF-spine.002",
+        "DEF-spine.003",
+        "DEF-spine.005",
+        "DEF-upper_arm.L",
+        "DEF-upper_arm.R"
+      ],
+      "blenderCurveCount": 48,
+      "exported": {
+        "name": "dusk-warden::attack_melee::v01",
+        "channels": [
+          {
+            "bone": "DEF-spine",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 386,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "84d02125f1a37a943036da1a2ff8381baff4c4a8454c27b412f1200499598e08"
+          },
+          {
+            "bone": "DEF-spine",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 387,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "4a90d490f5fd611aa3f0c3cff4e56a139c960e4a65ad8825d3d730ee5b6fe991"
+          },
+          {
+            "bone": "DEF-spine",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 388,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          },
+          {
+            "bone": "DEF-spine.001",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 389,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "2ed959eaee79b35cfb9d42768c08017afaf5138851dcfaa84f2800adb2593bff"
+          },
+          {
+            "bone": "DEF-spine.001",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 391,
+            "interpolation": "LINEAR",
+            "variation": 0.223014417,
+            "varying": true,
+            "valuePayloadSha256": "8ce5e9c615b1d905b2c51a4bf97c4440198793ea1f193d896d24a2381421f45b"
+          },
+          {
+            "bone": "DEF-spine.001",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 392,
+            "interpolation": "STEP",
+            "variation": 6e-08,
+            "varying": false,
+            "valuePayloadSha256": "ff03e83d1726dbc9cc4a838693cc7509cd491ae79aa7f7073309a7c0256c4cd5"
+          },
+          {
+            "bone": "DEF-spine.002",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 393,
+            "interpolation": "STEP",
+            "variation": 4.8e-08,
+            "varying": false,
+            "valuePayloadSha256": "2a4990694ccf412e16900d151901e97b755318a20b321e5bac45ac57352bff49"
+          },
+          {
+            "bone": "DEF-spine.002",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 394,
+            "interpolation": "LINEAR",
+            "variation": 0.427689324,
+            "varying": true,
+            "valuePayloadSha256": "a4d1a56ec649b86c035a0eba059f9e95f021b8947c64fb1ec8caec9d4b8d4047"
+          },
+          {
+            "bone": "DEF-spine.002",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 395,
+            "interpolation": "STEP",
+            "variation": 8.4e-08,
+            "varying": false,
+            "valuePayloadSha256": "b9caac7e61d93e18a32520d2a18640d544da861f8aead47f34f1b46c10601b91"
+          },
+          {
+            "bone": "DEF-spine.003",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 396,
+            "interpolation": "STEP",
+            "variation": 1.08e-07,
+            "varying": true,
+            "valuePayloadSha256": "7acf995fed63aa7ca8bcaae0881b9bc436c83d1bd456308c87be0ada0431025d"
+          },
+          {
+            "bone": "DEF-spine.003",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 397,
+            "interpolation": "LINEAR",
+            "variation": 0.253250392,
+            "varying": true,
+            "valuePayloadSha256": "41503094798d041f57c6ce7d1cf43062eeba600c3f8cf94e635ce41ff31acb8a"
+          },
+          {
+            "bone": "DEF-spine.003",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 398,
+            "interpolation": "STEP",
+            "variation": 6e-08,
+            "varying": false,
+            "valuePayloadSha256": "0a9d05a1be1de3c9e63295b8d3b7baddaeb2e15b78a998afd375b1611547648b"
+          },
+          {
+            "bone": "DEF-spine.004",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 399,
+            "interpolation": "STEP",
+            "variation": 1.81e-07,
+            "varying": true,
+            "valuePayloadSha256": "0e8580f890adce63c424c519edf80e8e991700bdd2fa63fd9f96c0ee416e1389"
+          },
+          {
+            "bone": "DEF-spine.004",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 400,
+            "interpolation": "STEP",
+            "variation": 1.5e-08,
+            "varying": false,
+            "valuePayloadSha256": "4616b3e42415b9cad4c2535d8bbe2b29d29ee3dc539e0d4b01410b175d18b53b"
+          },
+          {
+            "bone": "DEF-spine.004",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 401,
+            "interpolation": "STEP",
+            "variation": 1.46e-07,
+            "varying": true,
+            "valuePayloadSha256": "fe0b7ccd28354f0834fc3815aa4f7591b1f37fc3acbef59a3c34842251f37685"
+          },
+          {
+            "bone": "DEF-spine.005",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 402,
+            "interpolation": "STEP",
+            "variation": 5.4e-08,
+            "varying": false,
+            "valuePayloadSha256": "432b5708a43f08932d28380a2cd97c8601eef6812ebe06a1e5207d8a17588b61"
+          },
+          {
+            "bone": "DEF-spine.005",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 403,
+            "interpolation": "LINEAR",
+            "variation": 0.181889519,
+            "varying": true,
+            "valuePayloadSha256": "c1b78ffd8f512286731018debfdab0986dbb4433a5f3fc8ea6515905a18bfdf4"
+          },
+          {
+            "bone": "DEF-spine.005",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 395,
+            "interpolation": "STEP",
+            "variation": 8.4e-08,
+            "varying": false,
+            "valuePayloadSha256": "b9caac7e61d93e18a32520d2a18640d544da861f8aead47f34f1b46c10601b91"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 404,
+            "interpolation": "STEP",
+            "variation": 2.09e-07,
+            "varying": true,
+            "valuePayloadSha256": "dcaec3f1943d017a1087932de9738f7e6b2383331c31d6abddf9309411d0ca1c"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 405,
+            "interpolation": "LINEAR",
+            "variation": 0.184548767,
+            "varying": true,
+            "valuePayloadSha256": "2bb365fcef8689f741c5784c664b71a540abd6016f69b29ae3d91d3ca338f03f"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 406,
+            "interpolation": "STEP",
+            "variation": 1.79e-07,
+            "varying": true,
+            "valuePayloadSha256": "6eef8beaf0f31cd384b9bf4969625edde2b6d473d8c524321b05dc494ac18df3"
+          },
+          {
+            "bone": "DEF-upper_arm.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 407,
+            "interpolation": "STEP",
+            "variation": 1.75e-07,
+            "varying": true,
+            "valuePayloadSha256": "a7b952f31be71d93434b53797d9019df49dad62a7c3ab2f50aab610193d87f18"
+          },
+          {
+            "bone": "DEF-upper_arm.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 408,
+            "interpolation": "LINEAR",
+            "variation": 0.793450808,
+            "varying": true,
+            "valuePayloadSha256": "7f7a94f8f05eb2b0a2f41024bc15931720ad4e695b1ef2354ce7ab2491d1985b"
+          },
+          {
+            "bone": "DEF-upper_arm.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 388,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          },
+          {
+            "bone": "DEF-forearm.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 409,
+            "interpolation": "STEP",
+            "variation": 5.5e-08,
+            "varying": false,
+            "valuePayloadSha256": "7e9bf1f2415760804161a89afe4da505277ae3e67c503eea14d128281ed58e6b"
+          },
+          {
+            "bone": "DEF-forearm.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 410,
+            "interpolation": "LINEAR",
+            "variation": 0.200271812,
+            "varying": true,
+            "valuePayloadSha256": "780e5eb53ec50b30ae67b613f26b226d23367d42d5540afadda9464af4c3bfe6"
+          },
+          {
+            "bone": "DEF-forearm.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 411,
+            "interpolation": "STEP",
+            "variation": 1.33e-07,
+            "varying": true,
+            "valuePayloadSha256": "fea7b38fb9f8c92ecb564397904ae9227a8433e37c524ecf962b440b30d6d9cf"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 412,
+            "interpolation": "STEP",
+            "variation": 4.46e-07,
+            "varying": true,
+            "valuePayloadSha256": "e1d268ce28fd5af224ae7fe2b95143ab0a1ca48d8510704c5271fd361e318d96"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 413,
+            "interpolation": "LINEAR",
+            "variation": 0.200376174,
+            "varying": true,
+            "valuePayloadSha256": "9170a43f7eba641631f4210d2e98afbd007e4149b190f67b26162f939e99a001"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 414,
+            "interpolation": "STEP",
+            "variation": 2.23e-07,
+            "varying": true,
+            "valuePayloadSha256": "79edeafb571c801815f806cb02f1ac4297a4ffdbf4852a49c943cdc024e67a2e"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 415,
+            "interpolation": "STEP",
+            "variation": 2.6e-07,
+            "varying": true,
+            "valuePayloadSha256": "ece70e6e797c654091bd8991df886761afddce9f8e70cad4eb15b0ddb0307353"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 416,
+            "interpolation": "LINEAR",
+            "variation": 0.272478291,
+            "varying": true,
+            "valuePayloadSha256": "f99a8cff2740731b959e183e4d994a93850d0e5e34c4a280292210ef32e0adc9"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 417,
+            "interpolation": "STEP",
+            "variation": 2.38e-07,
+            "varying": true,
+            "valuePayloadSha256": "85de87917d5040bf3966c0333172033cd801204a0861d3d620db8648385197bc"
+          },
+          {
+            "bone": "DEF-upper_arm.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 418,
+            "interpolation": "STEP",
+            "variation": 9.2e-08,
+            "varying": false,
+            "valuePayloadSha256": "478c7724613b8622269b8839cf78b00eaeebd12538b3acaf6d6c64ba28a50a45"
+          },
+          {
+            "bone": "DEF-upper_arm.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 419,
+            "interpolation": "LINEAR",
+            "variation": 0.783330464,
+            "varying": true,
+            "valuePayloadSha256": "0b3274e7bf4263008049102d86c20b03fc5ad69b4fdde0538969cad6803fc393"
+          },
+          {
+            "bone": "DEF-upper_arm.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 420,
+            "interpolation": "STEP",
+            "variation": 1.33e-07,
+            "varying": true,
+            "valuePayloadSha256": "8d46458801dab639a7a8d452b0e85a72f45825714180cbf118be89da8a6b0b20"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 421,
+            "interpolation": "STEP",
+            "variation": 3.82e-07,
+            "varying": true,
+            "valuePayloadSha256": "ea7b6e5fe4a160d27f3415f92c4723247a7edec5585d79422d7e23eb9bb9f06c"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 422,
+            "interpolation": "LINEAR",
+            "variation": 0.503650817,
+            "varying": true,
+            "valuePayloadSha256": "4e6efa7c79b85d25a0df6d691ac57dd23aa3647e8a3b88e6ccb1a9a509669c19"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 423,
+            "interpolation": "STEP",
+            "variation": 3.21e-07,
+            "varying": true,
+            "valuePayloadSha256": "70f1cdffc6e0123b1a16b981a5ecdeb78853e19a0f03cf60b098002390bc394e"
+          },
+          {
+            "bone": "DEF-hand.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 424,
+            "interpolation": "STEP",
+            "variation": 1e-07,
+            "varying": false,
+            "valuePayloadSha256": "562751217ed05ca6cf8a3f6ecefda51cc72c5a5a1da36044ef8f89c72e344e5a"
+          },
+          {
+            "bone": "DEF-hand.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 425,
+            "interpolation": "LINEAR",
+            "variation": 0.40432048,
+            "varying": true,
+            "valuePayloadSha256": "5b7bcd5cf0aa53c78ae1f5101abbbf7ea2e49b0857960c8cc73f686eedba9f61"
+          },
+          {
+            "bone": "DEF-hand.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 426,
+            "interpolation": "STEP",
+            "variation": 1.79e-07,
+            "varying": true,
+            "valuePayloadSha256": "86c9c61c17d8ac3c336023b72d4064b3dd7d8c18a792bab638ce8d8fa5fafa11"
+          },
+          {
+            "bone": "DEF-pelvis.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 427,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "670aef7fdd2e0f9475b284d3ebad52395439def9548f08923149fd6400eeb07e"
+          },
+          {
+            "bone": "DEF-pelvis.L",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 428,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "5f39f31e55304fcb2416ac5f9ef984c9b5581681e659abd8a7559ad141677130"
+          },
+          {
+            "bone": "DEF-pelvis.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 429,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "0a819a9f33d35b925a86a26408f20bd3bf79e9fa52cfb8e5e5377b7f2c7766bf"
+          },
+          {
+            "bone": "DEF-pelvis.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 430,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "4e02add00f2dfcc1d5e8ae33dd9ef9bf2be061f37a9179e0cff383570f4b59db"
+          },
+          {
+            "bone": "DEF-pelvis.R",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 431,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "1ba26606d4afddc39d88263ac33d7adb6ab56253adcfc1289e0a6e41a77ce1df"
+          },
+          {
+            "bone": "DEF-pelvis.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 388,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          },
+          {
+            "bone": "DEF-thigh.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 432,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "90f61d79397399b59d3f8978bd019e30c20fd383da66ce10d323f0f1f54d90d9"
+          },
+          {
+            "bone": "DEF-thigh.L",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 433,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "fa5044ecedacd7cfb6af7e75ed38fa387e66df64645541cb581cce5915e753be"
+          },
+          {
+            "bone": "DEF-thigh.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 388,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          },
+          {
+            "bone": "DEF-shin.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 434,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "9cd43ee7e0b6a78f8ae6b0796ba82e3688bf22fdd21c298a97ff25932f27294a"
+          },
+          {
+            "bone": "DEF-shin.L",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 435,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "f132387ab8aad023b6f84d92712fc2dcbe5f12b89b3b8082f6b9bb245059ce66"
+          },
+          {
+            "bone": "DEF-shin.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 436,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "79c27f18a82a4d6c4a3e80ec99f0b13fe1f2af071abafb1e2483a29e375b4881"
+          },
+          {
+            "bone": "DEF-foot.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 437,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "ec7afba638f85e76ee459220a8b94ccd2b320c5b90710bdbe98430a069bf1140"
+          },
+          {
+            "bone": "DEF-foot.L",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 438,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "03d16bf40744062e8ae8717d3e66108211fb4d5382edcab2b63aa47f4a96b0c4"
+          },
+          {
+            "bone": "DEF-foot.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 436,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "79c27f18a82a4d6c4a3e80ec99f0b13fe1f2af071abafb1e2483a29e375b4881"
+          },
+          {
+            "bone": "DEF-toe.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 439,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "b6eb61c6316a40e85b10c6d314e3d78d369c760b6f04e7c53729b01615070e88"
+          },
+          {
+            "bone": "DEF-toe.L",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 440,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "88affaefa1601fb419654c8dd554e7eb918f42661805ec4ceb0966c8795919f8"
+          },
+          {
+            "bone": "DEF-toe.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 441,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "dbdca094a4406f76d14347aa588e22e67bc7536bccc5ae9e3679e2dc4f454211"
+          },
+          {
+            "bone": "DEF-thigh.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 442,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "0efd37a5fa01efbcba01c5b0242ec470d84a2f02e3b15e1138beba94cde07102"
+          },
+          {
+            "bone": "DEF-thigh.R",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 433,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "fa5044ecedacd7cfb6af7e75ed38fa387e66df64645541cb581cce5915e753be"
+          },
+          {
+            "bone": "DEF-thigh.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 388,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          },
+          {
+            "bone": "DEF-shin.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 443,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "5c43da4b50535d2a99ee1b2ad5142e6944bcb01cdd250803351de20d2972117f"
+          },
+          {
+            "bone": "DEF-shin.R",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 435,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "f132387ab8aad023b6f84d92712fc2dcbe5f12b89b3b8082f6b9bb245059ce66"
+          },
+          {
+            "bone": "DEF-shin.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 436,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "79c27f18a82a4d6c4a3e80ec99f0b13fe1f2af071abafb1e2483a29e375b4881"
+          },
+          {
+            "bone": "DEF-foot.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 444,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "a2d95d2476983c7e508abfe31df43440e049821e1f8e2807880879a39ad89d5d"
+          },
+          {
+            "bone": "DEF-foot.R",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 445,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e861aa11fa83f52c4c460cf69ded162c2c74d10e1f6a7b34b929152095657754"
+          },
+          {
+            "bone": "DEF-foot.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 436,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "79c27f18a82a4d6c4a3e80ec99f0b13fe1f2af071abafb1e2483a29e375b4881"
+          },
+          {
+            "bone": "DEF-toe.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 446,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "2f0461d0a02682d77d5f2861deaf7845581ac7218d2c6d9dc66e33901c131ab4"
+          },
+          {
+            "bone": "DEF-toe.R",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 447,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "29bf9c8994929ac6ec68e39ffd73f1786b257543cc1c62d6f68e8e26a1ab2e2b"
+          },
+          {
+            "bone": "DEF-toe.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 388,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          }
+        ],
+        "animatedBoneChannels": [
+          {
+            "bone": "DEF-spine.001",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 391,
+            "interpolation": "LINEAR",
+            "variation": 0.223014417,
+            "varying": true,
+            "valuePayloadSha256": "8ce5e9c615b1d905b2c51a4bf97c4440198793ea1f193d896d24a2381421f45b"
+          },
+          {
+            "bone": "DEF-spine.002",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 394,
+            "interpolation": "LINEAR",
+            "variation": 0.427689324,
+            "varying": true,
+            "valuePayloadSha256": "a4d1a56ec649b86c035a0eba059f9e95f021b8947c64fb1ec8caec9d4b8d4047"
+          },
+          {
+            "bone": "DEF-spine.003",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 396,
+            "interpolation": "STEP",
+            "variation": 1.08e-07,
+            "varying": true,
+            "valuePayloadSha256": "7acf995fed63aa7ca8bcaae0881b9bc436c83d1bd456308c87be0ada0431025d"
+          },
+          {
+            "bone": "DEF-spine.003",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 397,
+            "interpolation": "LINEAR",
+            "variation": 0.253250392,
+            "varying": true,
+            "valuePayloadSha256": "41503094798d041f57c6ce7d1cf43062eeba600c3f8cf94e635ce41ff31acb8a"
+          },
+          {
+            "bone": "DEF-spine.004",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 399,
+            "interpolation": "STEP",
+            "variation": 1.81e-07,
+            "varying": true,
+            "valuePayloadSha256": "0e8580f890adce63c424c519edf80e8e991700bdd2fa63fd9f96c0ee416e1389"
+          },
+          {
+            "bone": "DEF-spine.004",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 401,
+            "interpolation": "STEP",
+            "variation": 1.46e-07,
+            "varying": true,
+            "valuePayloadSha256": "fe0b7ccd28354f0834fc3815aa4f7591b1f37fc3acbef59a3c34842251f37685"
+          },
+          {
+            "bone": "DEF-spine.005",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 403,
+            "interpolation": "LINEAR",
+            "variation": 0.181889519,
+            "varying": true,
+            "valuePayloadSha256": "c1b78ffd8f512286731018debfdab0986dbb4433a5f3fc8ea6515905a18bfdf4"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 404,
+            "interpolation": "STEP",
+            "variation": 2.09e-07,
+            "varying": true,
+            "valuePayloadSha256": "dcaec3f1943d017a1087932de9738f7e6b2383331c31d6abddf9309411d0ca1c"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 405,
+            "interpolation": "LINEAR",
+            "variation": 0.184548767,
+            "varying": true,
+            "valuePayloadSha256": "2bb365fcef8689f741c5784c664b71a540abd6016f69b29ae3d91d3ca338f03f"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 406,
+            "interpolation": "STEP",
+            "variation": 1.79e-07,
+            "varying": true,
+            "valuePayloadSha256": "6eef8beaf0f31cd384b9bf4969625edde2b6d473d8c524321b05dc494ac18df3"
+          },
+          {
+            "bone": "DEF-upper_arm.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 407,
+            "interpolation": "STEP",
+            "variation": 1.75e-07,
+            "varying": true,
+            "valuePayloadSha256": "a7b952f31be71d93434b53797d9019df49dad62a7c3ab2f50aab610193d87f18"
+          },
+          {
+            "bone": "DEF-upper_arm.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 408,
+            "interpolation": "LINEAR",
+            "variation": 0.793450808,
+            "varying": true,
+            "valuePayloadSha256": "7f7a94f8f05eb2b0a2f41024bc15931720ad4e695b1ef2354ce7ab2491d1985b"
+          },
+          {
+            "bone": "DEF-forearm.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 410,
+            "interpolation": "LINEAR",
+            "variation": 0.200271812,
+            "varying": true,
+            "valuePayloadSha256": "780e5eb53ec50b30ae67b613f26b226d23367d42d5540afadda9464af4c3bfe6"
+          },
+          {
+            "bone": "DEF-forearm.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 411,
+            "interpolation": "STEP",
+            "variation": 1.33e-07,
+            "varying": true,
+            "valuePayloadSha256": "fea7b38fb9f8c92ecb564397904ae9227a8433e37c524ecf962b440b30d6d9cf"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 412,
+            "interpolation": "STEP",
+            "variation": 4.46e-07,
+            "varying": true,
+            "valuePayloadSha256": "e1d268ce28fd5af224ae7fe2b95143ab0a1ca48d8510704c5271fd361e318d96"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 413,
+            "interpolation": "LINEAR",
+            "variation": 0.200376174,
+            "varying": true,
+            "valuePayloadSha256": "9170a43f7eba641631f4210d2e98afbd007e4149b190f67b26162f939e99a001"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 414,
+            "interpolation": "STEP",
+            "variation": 2.23e-07,
+            "varying": true,
+            "valuePayloadSha256": "79edeafb571c801815f806cb02f1ac4297a4ffdbf4852a49c943cdc024e67a2e"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 415,
+            "interpolation": "STEP",
+            "variation": 2.6e-07,
+            "varying": true,
+            "valuePayloadSha256": "ece70e6e797c654091bd8991df886761afddce9f8e70cad4eb15b0ddb0307353"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 416,
+            "interpolation": "LINEAR",
+            "variation": 0.272478291,
+            "varying": true,
+            "valuePayloadSha256": "f99a8cff2740731b959e183e4d994a93850d0e5e34c4a280292210ef32e0adc9"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 417,
+            "interpolation": "STEP",
+            "variation": 2.38e-07,
+            "varying": true,
+            "valuePayloadSha256": "85de87917d5040bf3966c0333172033cd801204a0861d3d620db8648385197bc"
+          },
+          {
+            "bone": "DEF-upper_arm.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 419,
+            "interpolation": "LINEAR",
+            "variation": 0.783330464,
+            "varying": true,
+            "valuePayloadSha256": "0b3274e7bf4263008049102d86c20b03fc5ad69b4fdde0538969cad6803fc393"
+          },
+          {
+            "bone": "DEF-upper_arm.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 420,
+            "interpolation": "STEP",
+            "variation": 1.33e-07,
+            "varying": true,
+            "valuePayloadSha256": "8d46458801dab639a7a8d452b0e85a72f45825714180cbf118be89da8a6b0b20"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 421,
+            "interpolation": "STEP",
+            "variation": 3.82e-07,
+            "varying": true,
+            "valuePayloadSha256": "ea7b6e5fe4a160d27f3415f92c4723247a7edec5585d79422d7e23eb9bb9f06c"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 422,
+            "interpolation": "LINEAR",
+            "variation": 0.503650817,
+            "varying": true,
+            "valuePayloadSha256": "4e6efa7c79b85d25a0df6d691ac57dd23aa3647e8a3b88e6ccb1a9a509669c19"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 423,
+            "interpolation": "STEP",
+            "variation": 3.21e-07,
+            "varying": true,
+            "valuePayloadSha256": "70f1cdffc6e0123b1a16b981a5ecdeb78853e19a0f03cf60b098002390bc394e"
+          },
+          {
+            "bone": "DEF-hand.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 390,
+            "valueAccessor": 425,
+            "interpolation": "LINEAR",
+            "variation": 0.40432048,
+            "varying": true,
+            "valuePayloadSha256": "5b7bcd5cf0aa53c78ae1f5101abbbf7ea2e49b0857960c8cc73f686eedba9f61"
+          },
+          {
+            "bone": "DEF-hand.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 385,
+            "valueAccessor": 426,
+            "interpolation": "STEP",
+            "variation": 1.79e-07,
+            "varying": true,
+            "valuePayloadSha256": "86c9c61c17d8ac3c336023b72d4064b3dd7d8c18a792bab638ce8d8fa5fafa11"
+          }
+        ],
+        "animatedBones": [
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "samplerAccessorPairs": [
+          [
+            385,
+            386
+          ],
+          [
+            385,
+            387
+          ],
+          [
+            385,
+            388
+          ],
+          [
+            385,
+            389
+          ],
+          [
+            390,
+            391
+          ],
+          [
+            385,
+            392
+          ],
+          [
+            385,
+            393
+          ],
+          [
+            390,
+            394
+          ],
+          [
+            385,
+            395
+          ],
+          [
+            385,
+            396
+          ],
+          [
+            390,
+            397
+          ],
+          [
+            385,
+            398
+          ],
+          [
+            385,
+            399
+          ],
+          [
+            385,
+            400
+          ],
+          [
+            385,
+            401
+          ],
+          [
+            385,
+            402
+          ],
+          [
+            390,
+            403
+          ],
+          [
+            385,
+            395
+          ],
+          [
+            385,
+            404
+          ],
+          [
+            390,
+            405
+          ],
+          [
+            385,
+            406
+          ],
+          [
+            385,
+            407
+          ],
+          [
+            390,
+            408
+          ],
+          [
+            385,
+            388
+          ],
+          [
+            385,
+            409
+          ],
+          [
+            390,
+            410
+          ],
+          [
+            385,
+            411
+          ],
+          [
+            385,
+            412
+          ],
+          [
+            390,
+            413
+          ],
+          [
+            385,
+            414
+          ],
+          [
+            385,
+            415
+          ],
+          [
+            390,
+            416
+          ],
+          [
+            385,
+            417
+          ],
+          [
+            385,
+            418
+          ],
+          [
+            390,
+            419
+          ],
+          [
+            385,
+            420
+          ],
+          [
+            385,
+            421
+          ],
+          [
+            390,
+            422
+          ],
+          [
+            385,
+            423
+          ],
+          [
+            385,
+            424
+          ],
+          [
+            390,
+            425
+          ],
+          [
+            385,
+            426
+          ],
+          [
+            385,
+            427
+          ],
+          [
+            385,
+            428
+          ],
+          [
+            385,
+            429
+          ],
+          [
+            385,
+            430
+          ],
+          [
+            385,
+            431
+          ],
+          [
+            385,
+            388
+          ],
+          [
+            385,
+            432
+          ],
+          [
+            385,
+            433
+          ],
+          [
+            385,
+            388
+          ],
+          [
+            385,
+            434
+          ],
+          [
+            385,
+            435
+          ],
+          [
+            385,
+            436
+          ],
+          [
+            385,
+            437
+          ],
+          [
+            385,
+            438
+          ],
+          [
+            385,
+            436
+          ],
+          [
+            385,
+            439
+          ],
+          [
+            385,
+            440
+          ],
+          [
+            385,
+            441
+          ],
+          [
+            385,
+            442
+          ],
+          [
+            385,
+            433
+          ],
+          [
+            385,
+            388
+          ],
+          [
+            385,
+            443
+          ],
+          [
+            385,
+            435
+          ],
+          [
+            385,
+            436
+          ],
+          [
+            385,
+            444
+          ],
+          [
+            385,
+            445
+          ],
+          [
+            385,
+            436
+          ],
+          [
+            385,
+            446
+          ],
+          [
+            385,
+            447
+          ],
+          [
+            385,
+            388
+          ]
+        ],
+        "timingAccessors": [
+          {
+            "accessor": 385,
+            "sampleCount": 2,
+            "timeRangeSeconds": [
+              0.033333335,
+              1.0
+            ],
+            "max30FpsStepErrorSeconds": 0.933333332
+          },
+          {
+            "accessor": 390,
+            "sampleCount": 30,
+            "timeRangeSeconds": [
+              0.033333335,
+              1.0
+            ],
+            "max30FpsStepErrorSeconds": 3.2e-08
+          }
+        ],
+        "sampledAt30Fps": true,
+        "rootTranslationDriftMeters": 0.0,
+        "footTranslationDriftMeters": {
+          "DEF-foot.L": 0.0,
+          "DEF-toe.L": 0.0,
+          "DEF-foot.R": 0.0,
+          "DEF-toe.R": 0.0
+        },
+        "frameRange": [
+          1,
+          30
+        ],
+        "fps": 30,
+        "durationSeconds": 0.966666667,
+        "looping": false
+      }
+    },
+    "dusk-warden::attack_ranged::v01": {
+      "frameRange": [
+        1,
+        30
+      ],
+      "fps": 30,
+      "looping": false,
+      "poseStages": [
+        {
+          "frame": 1,
+          "stage": "brace"
+        },
+        {
+          "frame": 6,
+          "stage": "raise_aim"
+        },
+        {
+          "frame": 11,
+          "stage": "aim_hold"
+        },
+        {
+          "frame": 14,
+          "stage": "recoil"
+        },
+        {
+          "frame": 18,
+          "stage": "recoil_settle"
+        },
+        {
+          "frame": 24,
+          "stage": "lower_from_aim"
+        },
+        {
+          "frame": 30,
+          "stage": "settled_brace"
+        }
+      ],
+      "authoredPoseBones": [
+        "DEF-forearm.L",
+        "DEF-forearm.R",
+        "DEF-hand.L",
+        "DEF-hand.R",
+        "DEF-shoulder.L",
+        "DEF-shoulder.R",
+        "DEF-spine.001",
+        "DEF-spine.002",
+        "DEF-spine.003",
+        "DEF-spine.005",
+        "DEF-upper_arm.L",
+        "DEF-upper_arm.R"
+      ],
+      "blenderCurveCount": 48,
+      "exported": {
+        "name": "dusk-warden::attack_ranged::v01",
+        "channels": [
+          {
+            "bone": "DEF-spine",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 449,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "84d02125f1a37a943036da1a2ff8381baff4c4a8454c27b412f1200499598e08"
+          },
+          {
+            "bone": "DEF-spine",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 450,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "4a90d490f5fd611aa3f0c3cff4e56a139c960e4a65ad8825d3d730ee5b6fe991"
+          },
+          {
+            "bone": "DEF-spine",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 451,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          },
+          {
+            "bone": "DEF-spine.001",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 452,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "2ed959eaee79b35cfb9d42768c08017afaf5138851dcfaa84f2800adb2593bff"
+          },
+          {
+            "bone": "DEF-spine.001",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 454,
+            "interpolation": "LINEAR",
+            "variation": 0.078021011,
+            "varying": true,
+            "valuePayloadSha256": "9bbb23aeb0121e154408f1b601c580d3fedb824975368f109727e102d899af87"
+          },
+          {
+            "bone": "DEF-spine.001",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 451,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          },
+          {
+            "bone": "DEF-spine.002",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 455,
+            "interpolation": "STEP",
+            "variation": 1.34e-07,
+            "varying": true,
+            "valuePayloadSha256": "325426a6128f93a2b4c37518516d4a605af32042f905da34e0264e00a69a247f"
+          },
+          {
+            "bone": "DEF-spine.002",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 456,
+            "interpolation": "LINEAR",
+            "variation": 0.179429835,
+            "varying": true,
+            "valuePayloadSha256": "e27805609a95a47b2bed0bd33c9278d4d63e3d55a9f09347fbc9e373986821d1"
+          },
+          {
+            "bone": "DEF-spine.002",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 457,
+            "interpolation": "STEP",
+            "variation": 6e-08,
+            "varying": false,
+            "valuePayloadSha256": "2f4755ef64a34657fe3966d0228f29bab76a299f6f1e6b881ee5d439e91991d2"
+          },
+          {
+            "bone": "DEF-spine.003",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 458,
+            "interpolation": "STEP",
+            "variation": 1.24e-07,
+            "varying": true,
+            "valuePayloadSha256": "16025cd66374b21e0a7c9f5222001891d011cbc3a48428d71d3b5dba24f878d6"
+          },
+          {
+            "bone": "DEF-spine.003",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 459,
+            "interpolation": "LINEAR",
+            "variation": 0.117270977,
+            "varying": true,
+            "valuePayloadSha256": "f0ed9dbf5f9139dd5be63df0b933fd089988a2b9fe3b1887da0ebb5c2714c699"
+          },
+          {
+            "bone": "DEF-spine.003",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 460,
+            "interpolation": "STEP",
+            "variation": 1.98e-07,
+            "varying": true,
+            "valuePayloadSha256": "404f609d449bcc2b8ca72ca693835b485e2b55eb6be2b564902fe15c4b8d6e69"
+          },
+          {
+            "bone": "DEF-spine.004",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 461,
+            "interpolation": "STEP",
+            "variation": 6.6e-08,
+            "varying": false,
+            "valuePayloadSha256": "1128362a4005a94d5ce64fc0abdcda9a572f6b86f8c6f3f41ec626f0d145343b"
+          },
+          {
+            "bone": "DEF-spine.004",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 462,
+            "interpolation": "STEP",
+            "variation": 4e-09,
+            "varying": false,
+            "valuePayloadSha256": "079512785f58d927dd14379d797e1aaf42c311b41899de915b5761174d86a3d8"
+          },
+          {
+            "bone": "DEF-spine.004",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 463,
+            "interpolation": "STEP",
+            "variation": 6e-08,
+            "varying": false,
+            "valuePayloadSha256": "f902d97886712b201d0ecb3f6d35d47821ba6b15eda3473eeea5335e79cf6014"
+          },
+          {
+            "bone": "DEF-spine.005",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 464,
+            "interpolation": "STEP",
+            "variation": 3e-08,
+            "varying": false,
+            "valuePayloadSha256": "976e651d242ca4e95c9742a00a5f152fbaf9a0af2fe676d369918ead35902749"
+          },
+          {
+            "bone": "DEF-spine.005",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 465,
+            "interpolation": "LINEAR",
+            "variation": 0.082283292,
+            "varying": true,
+            "valuePayloadSha256": "fbea26977b17cd2c158713c830bc9ebf11313b0c3849bc7a7a1f74582ce0a1df"
+          },
+          {
+            "bone": "DEF-spine.005",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 466,
+            "interpolation": "STEP",
+            "variation": 8.4e-08,
+            "varying": false,
+            "valuePayloadSha256": "6424da52485b37bc1321885b3238b3ceb8f80185be3c33208229ef077618af06"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 467,
+            "interpolation": "STEP",
+            "variation": 1.56e-07,
+            "varying": true,
+            "valuePayloadSha256": "c3c1228231e08009cd21e988f0e47478f476435a94e94a18b85559de69a742aa"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 468,
+            "interpolation": "LINEAR",
+            "variation": 0.11115111,
+            "varying": true,
+            "valuePayloadSha256": "4e3bdf71dcb0199c31e8831850e385bdd957cfcdff91a18fde1403c9acbe0083"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 469,
+            "interpolation": "STEP",
+            "variation": 1.33e-07,
+            "varying": true,
+            "valuePayloadSha256": "686a382ac381a957a5ff8f94aaaaa3d34a95a1d609ef54354a36ea3c9255655c"
+          },
+          {
+            "bone": "DEF-upper_arm.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 470,
+            "interpolation": "STEP",
+            "variation": 3.61e-07,
+            "varying": true,
+            "valuePayloadSha256": "2898d8044c31835c5ceb00eb15f7b114250ce933684fee4c36d76d6a6c6b2858"
+          },
+          {
+            "bone": "DEF-upper_arm.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 471,
+            "interpolation": "LINEAR",
+            "variation": 0.714849408,
+            "varying": true,
+            "valuePayloadSha256": "73b75f850ccfb40192f0b6e6e476604559cf43333d81bd59d37bdcadf691035a"
+          },
+          {
+            "bone": "DEF-upper_arm.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 472,
+            "interpolation": "STEP",
+            "variation": 1.69e-07,
+            "varying": true,
+            "valuePayloadSha256": "b310b36a4510ac92670ba0ee903229d803ff91c78c8bc41d22721bd60cfee405"
+          },
+          {
+            "bone": "DEF-forearm.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 473,
+            "interpolation": "STEP",
+            "variation": 3.81e-07,
+            "varying": true,
+            "valuePayloadSha256": "5c53048dbb39516aab8ebc6851b9ebcfd12510ccbdca9dec0115c304e0e2a564"
+          },
+          {
+            "bone": "DEF-forearm.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 474,
+            "interpolation": "LINEAR",
+            "variation": 0.111874487,
+            "varying": true,
+            "valuePayloadSha256": "4bc504d72ea09861819a1acd86b1ccfcc3caf91c41e54e07a0d84966d69fa99b"
+          },
+          {
+            "bone": "DEF-forearm.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 463,
+            "interpolation": "STEP",
+            "variation": 6e-08,
+            "varying": false,
+            "valuePayloadSha256": "f902d97886712b201d0ecb3f6d35d47821ba6b15eda3473eeea5335e79cf6014"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 475,
+            "interpolation": "STEP",
+            "variation": 1.66e-07,
+            "varying": true,
+            "valuePayloadSha256": "3b7a9c92e21681b678c6e496dff4e6f0674b42cbb33a5556ca7a1011fb937cb8"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 476,
+            "interpolation": "LINEAR",
+            "variation": 0.135176672,
+            "varying": true,
+            "valuePayloadSha256": "0aebf1b6d26900e28a535a74818d3477f354cac99ece4f66b79b3cf40373864f"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 477,
+            "interpolation": "STEP",
+            "variation": 1.69e-07,
+            "varying": true,
+            "valuePayloadSha256": "bce2203053aced2209977b6156f52499683856fe764d382bc94d1bd4d58f5d9d"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 478,
+            "interpolation": "STEP",
+            "variation": 1.06e-07,
+            "varying": true,
+            "valuePayloadSha256": "7c24f3294668defe3dc7585e76c63010fc6e51850dba110c26d1e0fe90099111"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 479,
+            "interpolation": "LINEAR",
+            "variation": 0.144252311,
+            "varying": true,
+            "valuePayloadSha256": "9e458ee39ab5094fdd5fb7586bf95a285df9e95c258df13c466d2fb4da124480"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 480,
+            "interpolation": "STEP",
+            "variation": 1.33e-07,
+            "varying": true,
+            "valuePayloadSha256": "bc1f945f9252266e10a1ce14fb28c8931734c116312210893abf4b20641b1556"
+          },
+          {
+            "bone": "DEF-upper_arm.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 481,
+            "interpolation": "STEP",
+            "variation": 2.67e-07,
+            "varying": true,
+            "valuePayloadSha256": "4e1ae190ecde046375617b2d27d4d3fb2f4e17ceac1e618efb1bb54f09d9804d"
+          },
+          {
+            "bone": "DEF-upper_arm.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 482,
+            "interpolation": "LINEAR",
+            "variation": 0.655787283,
+            "varying": true,
+            "valuePayloadSha256": "b5e8bdf61e1fe87c1d739fddb9f22dbc53fabe0aeb525bebfe655f6160061f4c"
+          },
+          {
+            "bone": "DEF-upper_arm.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 483,
+            "interpolation": "STEP",
+            "variation": 6e-08,
+            "varying": false,
+            "valuePayloadSha256": "4750353284b5bd7cdce6d199461b61b280a53d4463dc0be41cd2281e18a7dcac"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 484,
+            "interpolation": "STEP",
+            "variation": 1.97e-07,
+            "varying": true,
+            "valuePayloadSha256": "1404812f9018a9d62e3e51d67d45c8c7cc7ad44efa123b6b44bd59eb9ac30814"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 485,
+            "interpolation": "LINEAR",
+            "variation": 0.364421073,
+            "varying": true,
+            "valuePayloadSha256": "faefcb5b8d750cd12160d537e2f1164136b83b17638f679ef6325d5e6c6db761"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 486,
+            "interpolation": "STEP",
+            "variation": 2.8e-07,
+            "varying": true,
+            "valuePayloadSha256": "c0b75f9609e455716542fe5435e9e08cd2f9852cd1f3d30a144448debe5a5dc0"
+          },
+          {
+            "bone": "DEF-hand.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 487,
+            "interpolation": "STEP",
+            "variation": 9.5e-08,
+            "varying": false,
+            "valuePayloadSha256": "8563b703c8cd34f72a481940e7f9a451631920b6b947e8faa4e063c6648c9d97"
+          },
+          {
+            "bone": "DEF-hand.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 488,
+            "interpolation": "LINEAR",
+            "variation": 0.164396663,
+            "varying": true,
+            "valuePayloadSha256": "20ce088664f9b0b7b41cdc6bdc92b75fe57522ef2110000a3aaeff222ecc7179"
+          },
+          {
+            "bone": "DEF-hand.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 489,
+            "interpolation": "STEP",
+            "variation": 2.53e-07,
+            "varying": true,
+            "valuePayloadSha256": "70d287bb609667726edc11687c36518e926f8885a144a27cc732b676a2b0e677"
+          },
+          {
+            "bone": "DEF-pelvis.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 490,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "670aef7fdd2e0f9475b284d3ebad52395439def9548f08923149fd6400eeb07e"
+          },
+          {
+            "bone": "DEF-pelvis.L",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 491,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "5f39f31e55304fcb2416ac5f9ef984c9b5581681e659abd8a7559ad141677130"
+          },
+          {
+            "bone": "DEF-pelvis.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 492,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "0a819a9f33d35b925a86a26408f20bd3bf79e9fa52cfb8e5e5377b7f2c7766bf"
+          },
+          {
+            "bone": "DEF-pelvis.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 493,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "4e02add00f2dfcc1d5e8ae33dd9ef9bf2be061f37a9179e0cff383570f4b59db"
+          },
+          {
+            "bone": "DEF-pelvis.R",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 494,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "1ba26606d4afddc39d88263ac33d7adb6ab56253adcfc1289e0a6e41a77ce1df"
+          },
+          {
+            "bone": "DEF-pelvis.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 451,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          },
+          {
+            "bone": "DEF-thigh.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 495,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "90f61d79397399b59d3f8978bd019e30c20fd383da66ce10d323f0f1f54d90d9"
+          },
+          {
+            "bone": "DEF-thigh.L",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 496,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "fa5044ecedacd7cfb6af7e75ed38fa387e66df64645541cb581cce5915e753be"
+          },
+          {
+            "bone": "DEF-thigh.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 451,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          },
+          {
+            "bone": "DEF-shin.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 497,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "9cd43ee7e0b6a78f8ae6b0796ba82e3688bf22fdd21c298a97ff25932f27294a"
+          },
+          {
+            "bone": "DEF-shin.L",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 498,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "f132387ab8aad023b6f84d92712fc2dcbe5f12b89b3b8082f6b9bb245059ce66"
+          },
+          {
+            "bone": "DEF-shin.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 499,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "79c27f18a82a4d6c4a3e80ec99f0b13fe1f2af071abafb1e2483a29e375b4881"
+          },
+          {
+            "bone": "DEF-foot.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 500,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "ec7afba638f85e76ee459220a8b94ccd2b320c5b90710bdbe98430a069bf1140"
+          },
+          {
+            "bone": "DEF-foot.L",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 501,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "03d16bf40744062e8ae8717d3e66108211fb4d5382edcab2b63aa47f4a96b0c4"
+          },
+          {
+            "bone": "DEF-foot.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 499,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "79c27f18a82a4d6c4a3e80ec99f0b13fe1f2af071abafb1e2483a29e375b4881"
+          },
+          {
+            "bone": "DEF-toe.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 502,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "b6eb61c6316a40e85b10c6d314e3d78d369c760b6f04e7c53729b01615070e88"
+          },
+          {
+            "bone": "DEF-toe.L",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 503,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "88affaefa1601fb419654c8dd554e7eb918f42661805ec4ceb0966c8795919f8"
+          },
+          {
+            "bone": "DEF-toe.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 504,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "dbdca094a4406f76d14347aa588e22e67bc7536bccc5ae9e3679e2dc4f454211"
+          },
+          {
+            "bone": "DEF-thigh.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 505,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "0efd37a5fa01efbcba01c5b0242ec470d84a2f02e3b15e1138beba94cde07102"
+          },
+          {
+            "bone": "DEF-thigh.R",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 496,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "fa5044ecedacd7cfb6af7e75ed38fa387e66df64645541cb581cce5915e753be"
+          },
+          {
+            "bone": "DEF-thigh.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 451,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          },
+          {
+            "bone": "DEF-shin.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 506,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "5c43da4b50535d2a99ee1b2ad5142e6944bcb01cdd250803351de20d2972117f"
+          },
+          {
+            "bone": "DEF-shin.R",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 498,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "f132387ab8aad023b6f84d92712fc2dcbe5f12b89b3b8082f6b9bb245059ce66"
+          },
+          {
+            "bone": "DEF-shin.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 499,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "79c27f18a82a4d6c4a3e80ec99f0b13fe1f2af071abafb1e2483a29e375b4881"
+          },
+          {
+            "bone": "DEF-foot.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 507,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "a2d95d2476983c7e508abfe31df43440e049821e1f8e2807880879a39ad89d5d"
+          },
+          {
+            "bone": "DEF-foot.R",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 508,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e861aa11fa83f52c4c460cf69ded162c2c74d10e1f6a7b34b929152095657754"
+          },
+          {
+            "bone": "DEF-foot.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 499,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "79c27f18a82a4d6c4a3e80ec99f0b13fe1f2af071abafb1e2483a29e375b4881"
+          },
+          {
+            "bone": "DEF-toe.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 509,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "2f0461d0a02682d77d5f2861deaf7845581ac7218d2c6d9dc66e33901c131ab4"
+          },
+          {
+            "bone": "DEF-toe.R",
+            "path": "rotation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 510,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "29bf9c8994929ac6ec68e39ffd73f1786b257543cc1c62d6f68e8e26a1ab2e2b"
+          },
+          {
+            "bone": "DEF-toe.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 451,
+            "interpolation": "STEP",
+            "variation": 0.0,
+            "varying": false,
+            "valuePayloadSha256": "e3ff4e8aea69bd104a958a33046ae19d5ace0c7da83194f4cb9ebac9aadd26c2"
+          }
+        ],
+        "animatedBoneChannels": [
+          {
+            "bone": "DEF-spine.001",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 454,
+            "interpolation": "LINEAR",
+            "variation": 0.078021011,
+            "varying": true,
+            "valuePayloadSha256": "9bbb23aeb0121e154408f1b601c580d3fedb824975368f109727e102d899af87"
+          },
+          {
+            "bone": "DEF-spine.002",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 455,
+            "interpolation": "STEP",
+            "variation": 1.34e-07,
+            "varying": true,
+            "valuePayloadSha256": "325426a6128f93a2b4c37518516d4a605af32042f905da34e0264e00a69a247f"
+          },
+          {
+            "bone": "DEF-spine.002",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 456,
+            "interpolation": "LINEAR",
+            "variation": 0.179429835,
+            "varying": true,
+            "valuePayloadSha256": "e27805609a95a47b2bed0bd33c9278d4d63e3d55a9f09347fbc9e373986821d1"
+          },
+          {
+            "bone": "DEF-spine.003",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 458,
+            "interpolation": "STEP",
+            "variation": 1.24e-07,
+            "varying": true,
+            "valuePayloadSha256": "16025cd66374b21e0a7c9f5222001891d011cbc3a48428d71d3b5dba24f878d6"
+          },
+          {
+            "bone": "DEF-spine.003",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 459,
+            "interpolation": "LINEAR",
+            "variation": 0.117270977,
+            "varying": true,
+            "valuePayloadSha256": "f0ed9dbf5f9139dd5be63df0b933fd089988a2b9fe3b1887da0ebb5c2714c699"
+          },
+          {
+            "bone": "DEF-spine.003",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 460,
+            "interpolation": "STEP",
+            "variation": 1.98e-07,
+            "varying": true,
+            "valuePayloadSha256": "404f609d449bcc2b8ca72ca693835b485e2b55eb6be2b564902fe15c4b8d6e69"
+          },
+          {
+            "bone": "DEF-spine.005",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 465,
+            "interpolation": "LINEAR",
+            "variation": 0.082283292,
+            "varying": true,
+            "valuePayloadSha256": "fbea26977b17cd2c158713c830bc9ebf11313b0c3849bc7a7a1f74582ce0a1df"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 467,
+            "interpolation": "STEP",
+            "variation": 1.56e-07,
+            "varying": true,
+            "valuePayloadSha256": "c3c1228231e08009cd21e988f0e47478f476435a94e94a18b85559de69a742aa"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 468,
+            "interpolation": "LINEAR",
+            "variation": 0.11115111,
+            "varying": true,
+            "valuePayloadSha256": "4e3bdf71dcb0199c31e8831850e385bdd957cfcdff91a18fde1403c9acbe0083"
+          },
+          {
+            "bone": "DEF-shoulder.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 469,
+            "interpolation": "STEP",
+            "variation": 1.33e-07,
+            "varying": true,
+            "valuePayloadSha256": "686a382ac381a957a5ff8f94aaaaa3d34a95a1d609ef54354a36ea3c9255655c"
+          },
+          {
+            "bone": "DEF-upper_arm.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 470,
+            "interpolation": "STEP",
+            "variation": 3.61e-07,
+            "varying": true,
+            "valuePayloadSha256": "2898d8044c31835c5ceb00eb15f7b114250ce933684fee4c36d76d6a6c6b2858"
+          },
+          {
+            "bone": "DEF-upper_arm.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 471,
+            "interpolation": "LINEAR",
+            "variation": 0.714849408,
+            "varying": true,
+            "valuePayloadSha256": "73b75f850ccfb40192f0b6e6e476604559cf43333d81bd59d37bdcadf691035a"
+          },
+          {
+            "bone": "DEF-upper_arm.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 472,
+            "interpolation": "STEP",
+            "variation": 1.69e-07,
+            "varying": true,
+            "valuePayloadSha256": "b310b36a4510ac92670ba0ee903229d803ff91c78c8bc41d22721bd60cfee405"
+          },
+          {
+            "bone": "DEF-forearm.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 473,
+            "interpolation": "STEP",
+            "variation": 3.81e-07,
+            "varying": true,
+            "valuePayloadSha256": "5c53048dbb39516aab8ebc6851b9ebcfd12510ccbdca9dec0115c304e0e2a564"
+          },
+          {
+            "bone": "DEF-forearm.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 474,
+            "interpolation": "LINEAR",
+            "variation": 0.111874487,
+            "varying": true,
+            "valuePayloadSha256": "4bc504d72ea09861819a1acd86b1ccfcc3caf91c41e54e07a0d84966d69fa99b"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 475,
+            "interpolation": "STEP",
+            "variation": 1.66e-07,
+            "varying": true,
+            "valuePayloadSha256": "3b7a9c92e21681b678c6e496dff4e6f0674b42cbb33a5556ca7a1011fb937cb8"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 476,
+            "interpolation": "LINEAR",
+            "variation": 0.135176672,
+            "varying": true,
+            "valuePayloadSha256": "0aebf1b6d26900e28a535a74818d3477f354cac99ece4f66b79b3cf40373864f"
+          },
+          {
+            "bone": "DEF-hand.L",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 477,
+            "interpolation": "STEP",
+            "variation": 1.69e-07,
+            "varying": true,
+            "valuePayloadSha256": "bce2203053aced2209977b6156f52499683856fe764d382bc94d1bd4d58f5d9d"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 478,
+            "interpolation": "STEP",
+            "variation": 1.06e-07,
+            "varying": true,
+            "valuePayloadSha256": "7c24f3294668defe3dc7585e76c63010fc6e51850dba110c26d1e0fe90099111"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 479,
+            "interpolation": "LINEAR",
+            "variation": 0.144252311,
+            "varying": true,
+            "valuePayloadSha256": "9e458ee39ab5094fdd5fb7586bf95a285df9e95c258df13c466d2fb4da124480"
+          },
+          {
+            "bone": "DEF-shoulder.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 480,
+            "interpolation": "STEP",
+            "variation": 1.33e-07,
+            "varying": true,
+            "valuePayloadSha256": "bc1f945f9252266e10a1ce14fb28c8931734c116312210893abf4b20641b1556"
+          },
+          {
+            "bone": "DEF-upper_arm.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 481,
+            "interpolation": "STEP",
+            "variation": 2.67e-07,
+            "varying": true,
+            "valuePayloadSha256": "4e1ae190ecde046375617b2d27d4d3fb2f4e17ceac1e618efb1bb54f09d9804d"
+          },
+          {
+            "bone": "DEF-upper_arm.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 482,
+            "interpolation": "LINEAR",
+            "variation": 0.655787283,
+            "varying": true,
+            "valuePayloadSha256": "b5e8bdf61e1fe87c1d739fddb9f22dbc53fabe0aeb525bebfe655f6160061f4c"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "translation",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 484,
+            "interpolation": "STEP",
+            "variation": 1.97e-07,
+            "varying": true,
+            "valuePayloadSha256": "1404812f9018a9d62e3e51d67d45c8c7cc7ad44efa123b6b44bd59eb9ac30814"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 485,
+            "interpolation": "LINEAR",
+            "variation": 0.364421073,
+            "varying": true,
+            "valuePayloadSha256": "faefcb5b8d750cd12160d537e2f1164136b83b17638f679ef6325d5e6c6db761"
+          },
+          {
+            "bone": "DEF-forearm.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 486,
+            "interpolation": "STEP",
+            "variation": 2.8e-07,
+            "varying": true,
+            "valuePayloadSha256": "c0b75f9609e455716542fe5435e9e08cd2f9852cd1f3d30a144448debe5a5dc0"
+          },
+          {
+            "bone": "DEF-hand.R",
+            "path": "rotation",
+            "keyframes": 30,
+            "timeAccessor": 453,
+            "valueAccessor": 488,
+            "interpolation": "LINEAR",
+            "variation": 0.164396663,
+            "varying": true,
+            "valuePayloadSha256": "20ce088664f9b0b7b41cdc6bdc92b75fe57522ef2110000a3aaeff222ecc7179"
+          },
+          {
+            "bone": "DEF-hand.R",
+            "path": "scale",
+            "keyframes": 2,
+            "timeAccessor": 448,
+            "valueAccessor": 489,
+            "interpolation": "STEP",
+            "variation": 2.53e-07,
+            "varying": true,
+            "valuePayloadSha256": "70d287bb609667726edc11687c36518e926f8885a144a27cc732b676a2b0e677"
+          }
+        ],
+        "animatedBones": [
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.005",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "samplerAccessorPairs": [
+          [
+            448,
+            449
+          ],
+          [
+            448,
+            450
+          ],
+          [
+            448,
+            451
+          ],
+          [
+            448,
+            452
+          ],
+          [
+            453,
+            454
+          ],
+          [
+            448,
+            451
+          ],
+          [
+            448,
+            455
+          ],
+          [
+            453,
+            456
+          ],
+          [
+            448,
+            457
+          ],
+          [
+            448,
+            458
+          ],
+          [
+            453,
+            459
+          ],
+          [
+            448,
+            460
+          ],
+          [
+            448,
+            461
+          ],
+          [
+            448,
+            462
+          ],
+          [
+            448,
+            463
+          ],
+          [
+            448,
+            464
+          ],
+          [
+            453,
+            465
+          ],
+          [
+            448,
+            466
+          ],
+          [
+            448,
+            467
+          ],
+          [
+            453,
+            468
+          ],
+          [
+            448,
+            469
+          ],
+          [
+            448,
+            470
+          ],
+          [
+            453,
+            471
+          ],
+          [
+            448,
+            472
+          ],
+          [
+            448,
+            473
+          ],
+          [
+            453,
+            474
+          ],
+          [
+            448,
+            463
+          ],
+          [
+            448,
+            475
+          ],
+          [
+            453,
+            476
+          ],
+          [
+            448,
+            477
+          ],
+          [
+            448,
+            478
+          ],
+          [
+            453,
+            479
+          ],
+          [
+            448,
+            480
+          ],
+          [
+            448,
+            481
+          ],
+          [
+            453,
+            482
+          ],
+          [
+            448,
+            483
+          ],
+          [
+            448,
+            484
+          ],
+          [
+            453,
+            485
+          ],
+          [
+            448,
+            486
+          ],
+          [
+            448,
+            487
+          ],
+          [
+            453,
+            488
+          ],
+          [
+            448,
+            489
+          ],
+          [
+            448,
+            490
+          ],
+          [
+            448,
+            491
+          ],
+          [
+            448,
+            492
+          ],
+          [
+            448,
+            493
+          ],
+          [
+            448,
+            494
+          ],
+          [
+            448,
+            451
+          ],
+          [
+            448,
+            495
+          ],
+          [
+            448,
+            496
+          ],
+          [
+            448,
+            451
+          ],
+          [
+            448,
+            497
+          ],
+          [
+            448,
+            498
+          ],
+          [
+            448,
+            499
+          ],
+          [
+            448,
+            500
+          ],
+          [
+            448,
+            501
+          ],
+          [
+            448,
+            499
+          ],
+          [
+            448,
+            502
+          ],
+          [
+            448,
+            503
+          ],
+          [
+            448,
+            504
+          ],
+          [
+            448,
+            505
+          ],
+          [
+            448,
+            496
+          ],
+          [
+            448,
+            451
+          ],
+          [
+            448,
+            506
+          ],
+          [
+            448,
+            498
+          ],
+          [
+            448,
+            499
+          ],
+          [
+            448,
+            507
+          ],
+          [
+            448,
+            508
+          ],
+          [
+            448,
+            499
+          ],
+          [
+            448,
+            509
+          ],
+          [
+            448,
+            510
+          ],
+          [
+            448,
+            451
+          ]
+        ],
+        "timingAccessors": [
+          {
+            "accessor": 448,
+            "sampleCount": 2,
+            "timeRangeSeconds": [
+              0.033333335,
+              1.0
+            ],
+            "max30FpsStepErrorSeconds": 0.933333332
+          },
+          {
+            "accessor": 453,
+            "sampleCount": 30,
+            "timeRangeSeconds": [
+              0.033333335,
+              1.0
+            ],
+            "max30FpsStepErrorSeconds": 3.2e-08
+          }
+        ],
+        "sampledAt30Fps": true,
+        "rootTranslationDriftMeters": 0.0,
+        "footTranslationDriftMeters": {
+          "DEF-foot.L": 0.0,
+          "DEF-toe.L": 0.0,
+          "DEF-foot.R": 0.0,
+          "DEF-toe.R": 0.0
+        },
+        "frameRange": [
+          1,
+          30
+        ],
+        "fps": 30,
+        "durationSeconds": 0.966666667,
+        "looping": false
+      }
+    }
+  },
+  "textures": [
+    {
+      "material": "dusk-warden_toon_cartoon",
+      "role": "baseColor",
+      "textureIndex": 1,
+      "imageIndex": 1,
+      "imageName": "albedo-cartoon-gti-v01",
+      "mimeType": "image/png",
+      "bufferView": 7,
+      "embedded": true
+    },
+    {
+      "material": "dusk-warden_toon_cartoon",
+      "role": "normal",
+      "textureIndex": 0,
+      "imageIndex": 0,
+      "imageName": "abyssal-toon-normal-v01",
+      "mimeType": "image/png",
+      "bufferView": 6,
+      "embedded": true
+    }
+  ],
+  "proof": {
+    "originalActionFingerprintsBefore": {
+      "dusk-warden::attack::v01": "46142871ff0ee5b13f2ce7263463bc426e1ce25e47ce472b568a7f931fc86ea1",
+      "dusk-warden::avoid::v01": "205113a69086dbe4f1f6457b5a085c8c89319863106e8e83876b5b713f28d3ba",
+      "dusk-warden::bighit::v01": "12946df7c2aee6433f5e8b1a89a170a4bf019e7b1b96f2b0854a59fe053d714c",
+      "dusk-warden::critical::v01": "5ce10b789cb8298e7826dac309a2caea221e151693f88f6b20119af813f60031",
+      "dusk-warden::defence::v01": "b2f9ee56a31b719dc7d95b4fb3463a27414750c08e34692797ff08e788e75942",
+      "dusk-warden::die::v01": "ca7467f55e81ba7d79e75a67915a7ca5c63a5130a990027955ccd8711d2cafc8",
+      "dusk-warden::hit::v01": "a12ea7304e01067245ae8273683da6d1a00b818310d0c9c28f1e74df9440055a",
+      "dusk-warden::idle::v01": "5cf2500dfe958c2ece7b4a4df64ee4a19a9fb9d8fc975bc831b1093812514848",
+      "dusk-warden::move::v01": "c10feb3732c45b61e65fbbacbd4efbedc704b1c252e1f1981cd974e5cfabffb7",
+      "dusk-warden::run::v01": "e17913f911d488c595fa85731dbe7ce9cd05f4dae07d0921b94facc44533cba0",
+      "dusk-warden::show::v01": "32e94a01e092520bfb3e0989256e2919a909e746aac80e46e26839794d87d397"
+    },
+    "originalActionFingerprintsAfter": {
+      "dusk-warden::attack::v01": "6ad82dffdb981de5bfebcb10039e748e6aea06a9592081a6f33b8cea0c81acfd",
+      "dusk-warden::avoid::v01": "8baa4b196674c29c4aa1b9c5fcb54697402793fe4fb48903c5bc30a8316c0dd4",
+      "dusk-warden::bighit::v01": "efdd838efb10eee0420a3f3fb771545eafb78d0fbb204a26daa1eb34d4d7f491",
+      "dusk-warden::critical::v01": "16c71e6459365c2e97dee5f13a55cc7e9df255da89927059b90d2d35df212135",
+      "dusk-warden::defence::v01": "1c223acf5292ff68f92112626320b3be72c8f8b6dd4835c710c67891569dc589",
+      "dusk-warden::die::v01": "1d01922fc9cdb3a7bfe7491838e2bf1e0a03e486f5b21658e2fd92df5be57180",
+      "dusk-warden::hit::v01": "0f2a6aa3d2b52bf1f85ded58adb643dd50ad38a5009935db83962b4f3ecf59c8",
+      "dusk-warden::idle::v01": "0fe799dd39337810e1b0bd327d00e0e9fe63c481c5990fec99ebfe6b787b4322",
+      "dusk-warden::move::v01": "3ab53675dd783a103b2602371d5f4add71918e65551ba81afab19e59a395c320",
+      "dusk-warden::run::v01": "8bc45dcdef52448b41ece943ca17c8e50bf9664aac5489da3ebf0a87e806d698",
+      "dusk-warden::show::v01": "a5107f665668726e25585b60e25b42758ee9db45ed044fdb17b4a10ca6e14a57"
+    },
+    "sourceActionPayloadsCorrected": {
+      "dusk-warden::attack::v01": true,
+      "dusk-warden::avoid::v01": true,
+      "dusk-warden::bighit::v01": true,
+      "dusk-warden::critical::v01": true,
+      "dusk-warden::defence::v01": true,
+      "dusk-warden::die::v01": true,
+      "dusk-warden::hit::v01": true,
+      "dusk-warden::idle::v01": true,
+      "dusk-warden::move::v01": true,
+      "dusk-warden::run::v01": true,
+      "dusk-warden::show::v01": true
+    },
+    "originalBlenderActionsUnchanged": {
+      "dusk-warden::attack::v01": true,
+      "dusk-warden::avoid::v01": true,
+      "dusk-warden::bighit::v01": true,
+      "dusk-warden::critical::v01": true,
+      "dusk-warden::defence::v01": true,
+      "dusk-warden::die::v01": true,
+      "dusk-warden::hit::v01": true,
+      "dusk-warden::idle::v01": true,
+      "dusk-warden::move::v01": true,
+      "dusk-warden::run::v01": true,
+      "dusk-warden::show::v01": true
+    },
+    "newClipPayloadSha256": {
+      "dusk-warden::attack_melee::v01": "b6fd8180ac12122d3974a4553cc58862a329a63f63ce4edc86a510f090fb5a6d",
+      "dusk-warden::attack_ranged::v01": "8a64890ddea194e508de405cae3fa6fb43ac74fa70efb9d941a891edde358c28"
+    },
+    "distinctSamplerAccessorPairs": {
+      "dusk-warden::attack_melee::v01": [
+        [
+          385,
+          386
+        ],
+        [
+          385,
+          387
+        ],
+        [
+          385,
+          388
+        ],
+        [
+          385,
+          389
+        ],
+        [
+          390,
+          391
+        ],
+        [
+          385,
+          392
+        ],
+        [
+          385,
+          393
+        ],
+        [
+          390,
+          394
+        ],
+        [
+          385,
+          395
+        ],
+        [
+          385,
+          396
+        ],
+        [
+          390,
+          397
+        ],
+        [
+          385,
+          398
+        ],
+        [
+          385,
+          399
+        ],
+        [
+          385,
+          400
+        ],
+        [
+          385,
+          401
+        ],
+        [
+          385,
+          402
+        ],
+        [
+          390,
+          403
+        ],
+        [
+          385,
+          395
+        ],
+        [
+          385,
+          404
+        ],
+        [
+          390,
+          405
+        ],
+        [
+          385,
+          406
+        ],
+        [
+          385,
+          407
+        ],
+        [
+          390,
+          408
+        ],
+        [
+          385,
+          388
+        ],
+        [
+          385,
+          409
+        ],
+        [
+          390,
+          410
+        ],
+        [
+          385,
+          411
+        ],
+        [
+          385,
+          412
+        ],
+        [
+          390,
+          413
+        ],
+        [
+          385,
+          414
+        ],
+        [
+          385,
+          415
+        ],
+        [
+          390,
+          416
+        ],
+        [
+          385,
+          417
+        ],
+        [
+          385,
+          418
+        ],
+        [
+          390,
+          419
+        ],
+        [
+          385,
+          420
+        ],
+        [
+          385,
+          421
+        ],
+        [
+          390,
+          422
+        ],
+        [
+          385,
+          423
+        ],
+        [
+          385,
+          424
+        ],
+        [
+          390,
+          425
+        ],
+        [
+          385,
+          426
+        ],
+        [
+          385,
+          427
+        ],
+        [
+          385,
+          428
+        ],
+        [
+          385,
+          429
+        ],
+        [
+          385,
+          430
+        ],
+        [
+          385,
+          431
+        ],
+        [
+          385,
+          388
+        ],
+        [
+          385,
+          432
+        ],
+        [
+          385,
+          433
+        ],
+        [
+          385,
+          388
+        ],
+        [
+          385,
+          434
+        ],
+        [
+          385,
+          435
+        ],
+        [
+          385,
+          436
+        ],
+        [
+          385,
+          437
+        ],
+        [
+          385,
+          438
+        ],
+        [
+          385,
+          436
+        ],
+        [
+          385,
+          439
+        ],
+        [
+          385,
+          440
+        ],
+        [
+          385,
+          441
+        ],
+        [
+          385,
+          442
+        ],
+        [
+          385,
+          433
+        ],
+        [
+          385,
+          388
+        ],
+        [
+          385,
+          443
+        ],
+        [
+          385,
+          435
+        ],
+        [
+          385,
+          436
+        ],
+        [
+          385,
+          444
+        ],
+        [
+          385,
+          445
+        ],
+        [
+          385,
+          436
+        ],
+        [
+          385,
+          446
+        ],
+        [
+          385,
+          447
+        ],
+        [
+          385,
+          388
+        ]
+      ],
+      "dusk-warden::attack_ranged::v01": [
+        [
+          448,
+          449
+        ],
+        [
+          448,
+          450
+        ],
+        [
+          448,
+          451
+        ],
+        [
+          448,
+          452
+        ],
+        [
+          453,
+          454
+        ],
+        [
+          448,
+          451
+        ],
+        [
+          448,
+          455
+        ],
+        [
+          453,
+          456
+        ],
+        [
+          448,
+          457
+        ],
+        [
+          448,
+          458
+        ],
+        [
+          453,
+          459
+        ],
+        [
+          448,
+          460
+        ],
+        [
+          448,
+          461
+        ],
+        [
+          448,
+          462
+        ],
+        [
+          448,
+          463
+        ],
+        [
+          448,
+          464
+        ],
+        [
+          453,
+          465
+        ],
+        [
+          448,
+          466
+        ],
+        [
+          448,
+          467
+        ],
+        [
+          453,
+          468
+        ],
+        [
+          448,
+          469
+        ],
+        [
+          448,
+          470
+        ],
+        [
+          453,
+          471
+        ],
+        [
+          448,
+          472
+        ],
+        [
+          448,
+          473
+        ],
+        [
+          453,
+          474
+        ],
+        [
+          448,
+          463
+        ],
+        [
+          448,
+          475
+        ],
+        [
+          453,
+          476
+        ],
+        [
+          448,
+          477
+        ],
+        [
+          448,
+          478
+        ],
+        [
+          453,
+          479
+        ],
+        [
+          448,
+          480
+        ],
+        [
+          448,
+          481
+        ],
+        [
+          453,
+          482
+        ],
+        [
+          448,
+          483
+        ],
+        [
+          448,
+          484
+        ],
+        [
+          453,
+          485
+        ],
+        [
+          448,
+          486
+        ],
+        [
+          448,
+          487
+        ],
+        [
+          453,
+          488
+        ],
+        [
+          448,
+          489
+        ],
+        [
+          448,
+          490
+        ],
+        [
+          448,
+          491
+        ],
+        [
+          448,
+          492
+        ],
+        [
+          448,
+          493
+        ],
+        [
+          448,
+          494
+        ],
+        [
+          448,
+          451
+        ],
+        [
+          448,
+          495
+        ],
+        [
+          448,
+          496
+        ],
+        [
+          448,
+          451
+        ],
+        [
+          448,
+          497
+        ],
+        [
+          448,
+          498
+        ],
+        [
+          448,
+          499
+        ],
+        [
+          448,
+          500
+        ],
+        [
+          448,
+          501
+        ],
+        [
+          448,
+          499
+        ],
+        [
+          448,
+          502
+        ],
+        [
+          448,
+          503
+        ],
+        [
+          448,
+          504
+        ],
+        [
+          448,
+          505
+        ],
+        [
+          448,
+          496
+        ],
+        [
+          448,
+          451
+        ],
+        [
+          448,
+          506
+        ],
+        [
+          448,
+          498
+        ],
+        [
+          448,
+          499
+        ],
+        [
+          448,
+          507
+        ],
+        [
+          448,
+          508
+        ],
+        [
+          448,
+          499
+        ],
+        [
+          448,
+          509
+        ],
+        [
+          448,
+          510
+        ],
+        [
+          448,
+          451
+        ]
+      ]
+    },
+    "sourceBinaryPrefixBytes": 6445540,
+    "sourceBinaryPrefixChangedByGuardCorrection": true,
+    "assetStructureFingerprintsBefore": {
+      "nodes": "1a9ba0cc8bbfb6f6b193a6731fe906601fcd5b786a1b2ec77538d83475891695",
+      "meshes": "e5588fac9ada849215de3f1e47bde577271aec4a5b17a5529a7336bb8301cd30",
+      "materials": "f8f83d123fb6e1f727217684787d03ad31e8ed37c841547b94281ab4824cb3d4",
+      "images": "f6fab580a3d60619bbce90bbbac169f40227448868b8761b76b6f5025033df96",
+      "textures": "e7f904b1f17adcbe6219fc712562823f810a4cfc15754f7b4b87ed6c723bd3eb",
+      "skins": "104bd123367b1df1e47a2303b85943f804b6557ee5ae501d9c42b2c2a7c2eea5"
+    },
+    "assetStructureFingerprintsAfter": {
+      "nodes": "1a9ba0cc8bbfb6f6b193a6731fe906601fcd5b786a1b2ec77538d83475891695",
+      "meshes": "e5588fac9ada849215de3f1e47bde577271aec4a5b17a5529a7336bb8301cd30",
+      "materials": "f8f83d123fb6e1f727217684787d03ad31e8ed37c841547b94281ab4824cb3d4",
+      "images": "f6fab580a3d60619bbce90bbbac169f40227448868b8761b76b6f5025033df96",
+      "textures": "e7f904b1f17adcbe6219fc712562823f810a4cfc15754f7b4b87ed6c723bd3eb",
+      "skins": "104bd123367b1df1e47a2303b85943f804b6557ee5ae501d9c42b2c2a7c2eea5"
+    },
+    "assetStructuresUnchanged": {
+      "nodes": true,
+      "meshes": true,
+      "materials": true,
+      "images": true,
+      "textures": true,
+      "skins": true
+    }
+  },
+  "checks": {
+    "outputParsesAsGlb": true,
+    "meshMaterialSkinCountsEqualInput": true,
+    "textureCountsEqualInput": true,
+    "oneSkin": true,
+    "twentyFourDeformJointRig": true,
+    "thirteenUniqueAnimations": true,
+    "allOriginalAnimationsPresent": true,
+    "exactNewAnimationNamesPresent": true,
+    "originalBlenderActionsUnchanged": true,
+    "allOriginalGlbActionsGuardCorrected": true,
+    "guardCorrectionCoversAllThirteenActions": true,
+    "guardCorrectionHasExpectedUpperArmChannels": true,
+    "guardCorrectionTouchesOnlyDeclaredQuaternionAccessors": true,
+    "meshSkinMaterialTextureDataUnchanged": true,
+    "newClipsHaveBoneDeformationChannels": true,
+    "newClipsHaveDistinctSamplerAccessors": true,
+    "newClipsSampledAt30Fps": true,
+    "newClipsHaveDistinctKeyframePayloads": true,
+    "rootDriftWithin002m": true,
+    "feetGrounded": true,
+    "noFootBoneDeformation": true,
+    "embeddedAlbedoAndNormalTextures": true,
+    "onlyAnimationLibraryExpanded": true
+  }
+}

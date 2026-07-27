@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "assetId": "dusk-warden-cartoon-albedo-v2",
+  "source": "god-tibo-imagen",
+  "provider": "private-codex",
+  "model": "gpt-5.4",
+  "inputReference": "assets/images/battle/pilot/dusk-warden-idle-gti-refstyle.png",
+  "promptPurpose": "cartoon-render albedo texture reference atlas for later UV projection/bake",
+  "output": {
+    "path": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/concept-input/dusk-warden-cartoon-albedo-v2.png",
+    "format": "PNG",
+    "bytes": 2659391,
+    "sha256": "f27c5162746cf64e3dfc1cf606072768d0657efbb463858d32e9e95a0ce57e54"
+  },
+  "promptConstraints": {
+    "textureAtlasStyle": true,
+    "terrain": false,
+    "weapons": false,
+    "heldProps": false,
+    "backgroundScene": false,
+    "textOrLogo": false
+  },
+  "rightsReceipt": "pending-runtime-rights-review",
+  "runtimeReceipt": "not-promoted; concept/reference lane only",
+  "runtimeEligible": false,
+  "notes": [
+    "Generated image is a texture reference atlas, not a guaranteed UV-island layout for an arbitrary Rodin mesh.",
+    "Blender must unwrap/project/bake the body material before a candidate GLB can be considered runtime-ready.",
+    "Do not copy this image into assets/images/battle/glb."
+  ]
+}

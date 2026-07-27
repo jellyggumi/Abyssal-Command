@@ -40,6 +40,139 @@ test("asset lane validator accepts the clean repository baseline with missing ca
   assert.ok(report.filesScanned > 0);
 });
 
+test("repository baseline excludes Git-ignored lane files while fixture roots still inspect them", async () => {
+  const relativeIgnoredPath = join(
+    "assets",
+    "images",
+    "battle",
+    "glb",
+    ".staging",
+    `concept-ignored-${process.pid}.glb`,
+  );
+  const repositoryIgnoredFile = join(repositoryRoot, relativeIgnoredPath);
+  const fixtureRoot = await mkdtemp(join(tmpdir(), "asset-lane-ignored-file-"));
+  const fixtureIgnoredFile = join(fixtureRoot, relativeIgnoredPath);
+  try {
+    await writeFixture(repositoryIgnoredFile, "ignored concept fixture");
+    const ignoreCheck = spawnSync("git", ["check-ignore", "--quiet", "--", relativeIgnoredPath], {
+      cwd: repositoryRoot,
+      encoding: "utf8",
+    });
+    assert.equal(ignoreCheck.error, undefined, ignoreCheck.error?.message);
+    assert.equal(ignoreCheck.status, 0, `${relativeIgnoredPath} must be ignored by Git`);
+
+    const repositoryReport = parseJsonOutput(
+      runPython("scripts/validate-asset-lanes.py", ["--json", "--allow-missing-candidates"]),
+    );
+    assert.equal(repositoryReport.ok, true);
+    assert.deepEqual(repositoryReport.violations, []);
+
+    await writeFixture(fixtureIgnoredFile, "fixture-root concept material");
+    const fixtureResult = runPython(
+      "scripts/validate-asset-lanes.py",
+      ["--json", "--allow-missing-candidates", fixtureRoot],
+    );
+    assert.equal(fixtureResult.status, 1, fixtureResult.stderr);
+    const fixtureReport = JSON.parse(fixtureResult.stdout);
+    assert.equal(fixtureReport.ok, false);
+    assert.equal(fixtureReport.filesScanned, 1);
+    assert.equal(fixtureReport.violationCount, 1);
+    assert.ok(
+      fixtureReport.violations.some(
+        (item) => item.code === "runtime_concept_asset"
+          && item.path === relativeIgnoredPath,
+      ),
+    );
+  } finally {
+    await rm(repositoryIgnoredFile, { force: true });
+    await rm(fixtureRoot, { recursive: true, force: true });
+  }
+});
+
+test("repository baseline includes and rejects a non-ignored untracked concept asset", async () => {
+  const relativeConceptPath = join(
+    "assets",
+    "images",
+    "battle",
+    "glb",
+    `concept-untracked-${process.pid}.glb`,
+  );
+  const repositoryConceptFile = join(repositoryRoot, relativeConceptPath);
+  try {
+    await writeFixture(repositoryConceptFile, "untracked concept fixture");
+
+    const ignoreCheck = spawnSync("git", ["check-ignore", "--quiet", "--", relativeConceptPath], {
+      cwd: repositoryRoot,
+      encoding: "utf8",
+    });
+    assert.equal(ignoreCheck.error, undefined, ignoreCheck.error?.message);
+    assert.equal(ignoreCheck.status, 1, `${relativeConceptPath} must not be ignored by Git`);
+
+    const untrackedCheck = spawnSync(
+      "git",
+      ["ls-files", "--others", "--exclude-standard", "--", relativeConceptPath],
+      { cwd: repositoryRoot, encoding: "utf8" },
+    );
+    assert.equal(untrackedCheck.error, undefined, untrackedCheck.error?.message);
+    assert.equal(untrackedCheck.status, 0, untrackedCheck.stderr);
+    assert.equal(untrackedCheck.stdout.trim(), relativeConceptPath);
+
+    const result = runPython(
+      "scripts/validate-asset-lanes.py",
+      ["--json", "--allow-missing-candidates"],
+    );
+    assert.equal(result.status, 1, result.stderr);
+    const report = JSON.parse(result.stdout);
+
+    assert.equal(report.ok, false);
+    assert.equal(report.violationCount, 1);
+    assert.equal(report.violations.length, 1);
+    assert.equal(report.violations[0].code, "runtime_concept_asset");
+    assert.equal(report.violations[0].path, relativeConceptPath);
+  } finally {
+    await rm(repositoryConceptFile, { force: true });
+  }
+});
+
+test("repository enumeration failure emits structured JSON without a traceback", async () => {
+  const emptyPath = await mkdtemp(join(tmpdir(), "asset-lane-empty-path-"));
+  try {
+    const interpreterProbe = runPython("-c", ["import sys; print(sys.executable)"]);
+    assert.equal(interpreterProbe.error, undefined, interpreterProbe.error?.message);
+    assert.equal(interpreterProbe.status, 0, interpreterProbe.stderr);
+    const absolutePython = interpreterProbe.stdout.trim();
+    assert.ok(absolutePython);
+
+    const result = spawnSync(
+      absolutePython,
+      ["scripts/validate-asset-lanes.py", "--json", "--allow-missing-candidates"],
+      {
+        cwd: repositoryRoot,
+        encoding: "utf8",
+        env: { ...process.env, PATH: emptyPath },
+      },
+    );
+    assert.equal(result.error, undefined, result.error?.message);
+    assert.equal(result.status, 2, result.stderr);
+    assert.equal(result.stderr, "");
+    assert.doesNotMatch(result.stdout, /Traceback/);
+
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.ok, false);
+    assert.deepEqual(report.roots, [repositoryRoot]);
+    assert.deepEqual(report.lanes, { concept: 0, runtime: 0, candidate: 0 });
+    assert.equal(report.filesScanned, 0);
+    assert.equal(report.violationCount, 1);
+    assert.equal(report.violations.length, 1);
+    assert.equal(report.violations[0].code, "scan_failed");
+    assert.equal(report.violations[0].path, repositoryRoot);
+    assert.equal(typeof report.violations[0].message, "string");
+    assert.ok(report.violations[0].message.startsWith("repository Git enumeration failed: "));
+  } finally {
+    await rm(emptyPath, { recursive: true, force: true });
+  }
+});
+
 test("asset lane validator rejects concept material placed under the runtime GLB lane", async () => {
   const fixtureRoot = await mkdtemp(join(tmpdir(), "asset-lane-runtime-concept-"));
   try {
@@ -63,7 +196,7 @@ test("asset lane validator rejects a generated candidate without its provenance 
   try {
     const candidate = join(
       fixtureRoot,
-      "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/runtime-candidates/dusk-warden.glb",
+      "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/dusk-warden.glb",
     );
     await writeFixture(candidate, "candidate glb bytes");
 

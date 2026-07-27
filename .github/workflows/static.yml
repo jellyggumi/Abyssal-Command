@@ -23,7 +23,7 @@ env:
   RULES_VERSION: defense-survivor-v1
   PAGES_ARTIFACT_DIR: .pages-artifact
   PAGES_RUNTIME_PATHS: >-
-    index.html app.js rpg-catalog.js defense-viewport.js defense-catalog.js defense-run-simulation.js campaign-state.js defense-storage.js defense-audio.js
+    index.html app.js rpg-catalog.js stage-world-catalog.js defense-viewport.js defense-catalog.js defense-run-simulation.js campaign-state.js defense-storage.js defense-audio.js
     defense-cutscene.js defense-telemetry.js battle-canvas-text.js battle-realtime-three.js battle-visualizer.js styles.css react-game-ui.css sw.js manifest.json icon.svg privacy.html
     vendor/three.module.js vendor/three.core.js vendor/loaders/GLTFLoader.js vendor/utils/BufferGeometryUtils.js vendor/utils/SkeletonUtils.js
     assets/icons/icon-192.png assets/icons/icon-512.png
@@ -54,7 +54,7 @@ env:
     assets/images/battle/glb/vfx/melee-slash.glb assets/images/battle/glb/vfx/ranged-bolt.glb
     assets/images/battle/glb/vfx/wardens-ward-shield.glb assets/images/battle/glb/props/abyss-blade.glb assets/images/battle/glb/props/abyssal-banner.glb
     assets/images/battle/glb/props/arc-caster.glb assets/images/battle/glb/props/bulwark-brand.glb
-    assets/images/battle/glb/props/choir-ward-crystal.glb assets/images/battle/glb/props/stillwater-hourglass.glb assets/images/battle/glb/props/warden-lantern.glb
+    assets/images/battle/glb/props/choir-ward-crystal.glb assets/images/battle/glb/props/tide-lock-beacon-rodin.glb assets/images/battle/glb/props/stillwater-hourglass.glb assets/images/battle/glb/props/warden-lantern.glb
     assets/images/battle/glb/props/tiers/tier-t1.glb assets/images/battle/glb/props/tiers/tier-t2.glb assets/images/battle/glb/props/tiers/tier-t3.glb
     assets/images/battle/glb/props/tiers/tier-t4.glb assets/images/battle/glb/props/tiers/tier-t5.glb
 

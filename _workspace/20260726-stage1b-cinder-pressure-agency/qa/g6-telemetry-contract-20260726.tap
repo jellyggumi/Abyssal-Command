@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: telemetry exports the versioned offline schema and preserves objective, policy, spawn, recovery, delta, and TTK fields
+ok 1 - telemetry exports the versioned offline schema and preserves objective, policy, spawn, recovery, delta, and TTK fields
+  ---
+  duration_ms: 1.950208
+  type: 'test'
+  ...
+# Subtest: telemetry records one cloned formation commitment with deterministic position ranks
+ok 2 - telemetry records one cloned formation commitment with deterministic position ranks
+  ---
+  duration_ms: 0.215083
+  type: 'test'
+  ...
+# Subtest: telemetry records policy and spawn data emitted by the live simulation
+ok 3 - telemetry records policy and spawn data emitted by the live simulation
+  ---
+  duration_ms: 14.765375
+  type: 'test'
+  ...
+# Subtest: telemetry retains complete active-skill payloads and distinct same-tick targets
+ok 4 - telemetry retains complete active-skill payloads and distinct same-tick targets
+  ---
+  duration_ms: 0.334084
+  type: 'test'
+  ...
+# Subtest: telemetry preserves target and cooldown observations from a real measurement fixture cast
+ok 5 - telemetry preserves target and cooldown observations from a real measurement fixture cast
+  ---
+  duration_ms: 122.82525
+  type: 'test'
+  ...
+# Subtest: telemetry retains only the configured newest records and reports the exact drop count
+ok 6 - telemetry retains only the configured newest records and reports the exact drop count
+  ---
+  duration_ms: 0.247542
+  type: 'test'
+  ...
+# Subtest: audio degrades to a silent observer when Web Audio is unavailable
+ok 7 - audio degrades to a silent observer when Web Audio is unavailable
+  ---
+  duration_ms: 1.081542
+  type: 'test'
+  ...
+# Subtest: audio observer maps a simulated critical hit to its catalog-authored cue
+ok 8 - audio observer maps a simulated critical hit to its catalog-authored cue
+  ---
+  duration_ms: 146.342542
+  type: 'test'
+  ...
+# Subtest: audio stop tears down every created Web Audio node and is idempotent
+ok 9 - audio stop tears down every created Web Audio node and is idempotent
+  ---
+  duration_ms: 1.100167
+  type: 'test'
+  ...
+# Subtest: camera-clamp boundary tick is a real cue with its own refractory, independent of the sim event stream
+ok 10 - camera-clamp boundary tick is a real cue with its own refractory, independent of the sim event stream
+  ---
+  duration_ms: 0.526167
+  type: 'test'
+  ...
+# Subtest: rendering, telemetry, and audio observation leave the simulation digest unchanged
+ok 11 - rendering, telemetry, and audio observation leave the simulation digest unchanged
+  ---
+  duration_ms: 3.121709
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 368.555042

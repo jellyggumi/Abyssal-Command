@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "source": "stage1b-cinder-pressure-agency/tpose-conditions/player-core-tpose-condition.glb",
+  "generator": "stage1b-asset-custody",
+  "output": "candidate-only T-pose condition; not promoted",
+  "rightsReceipt": "candidate-only-no-promotion",
+  "runtimeReceipt": "not-promoted",
+  "runtimeEligible": false
+}

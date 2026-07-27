@@ -1,0 +1,94 @@
+{
+  "authoringScript": "_workspace/20260726-stage1b-cinder-pressure-agency/blender/stage-overhaul/abyss-chancel-gate-zenith.py",
+  "sourceBlend": "_workspace/20260726-stage1b-cinder-pressure-agency/blender/stage-overhaul/abyss-chancel-gate-zenith.blend",
+  "runtimeCanonicalGenerator": "scripts/build-authored-stage-environments.py",
+  "canonicalPreviewRenderer": "_workspace/20260726-stage1b-cinder-pressure-agency/blender/stage-overhaul/abyss-chancel-gate-zenith-render.py",
+  "sharedTextures": [
+    "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/shared-textures/abyssal-toon-surface-v01.png",
+    "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/shared-textures/abyssal-toon-normal-v01.png"
+  ],
+  "stages": [
+    {
+      "stageId": "abyss-chancel",
+      "glb": "assets/images/battle/glb/terrain/abyss-chancel.glb",
+      "canonicalSourceBlend": "_workspace/20260726-stage1b-cinder-pressure-agency/blender/stage-overhaul/abyss-chancel-authored.blend",
+      "sha256": "8c96560cef0eece6061d98a5860a66c8142df83fd6e62c051a6eab7807d3a6fc",
+      "bytes": 5383356,
+      "meshCount": 124,
+      "meshPrimitiveCount": 124,
+      "materialCount": 4,
+      "embeddedImageCount": 2,
+      "normalMappedMaterialCount": 4,
+      "boundsMin": [
+        -2.7447168827056885,
+        -1.649999976158142,
+        -2.7447168827056885
+      ],
+      "boundsMax": [
+        2.7447168827056885,
+        1.649999976158142,
+        2.7447168827056885
+      ],
+      "dimensions": [
+        5.489433765411377,
+        3.299999952316284,
+        5.489433765411377
+      ],
+      "previews": [
+        "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-overhaul/abyss-chancel-gate-zenith.canonical-abyss-chancel-oblique.png",
+        "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-overhaul/abyss-chancel-gate-zenith.canonical-abyss-chancel-top.png"
+      ],
+      "checks": {
+        "glbParses": true,
+        "meshPrimitiveCountAtLeast20": true,
+        "materialCountAtLeast4": true,
+        "everyPrimitiveHasNormalsUvsMaterial": true,
+        "embeddedTextureImages": true,
+        "normalMappedMaterials": true,
+        "nonDegenerate3dBounds": true,
+        "previewFilesNonEmpty": true
+      }
+    },
+    {
+      "stageId": "gate-zenith",
+      "glb": "assets/images/battle/glb/terrain/gate-zenith.glb",
+      "canonicalSourceBlend": "_workspace/20260726-stage1b-cinder-pressure-agency/blender/stage-overhaul/gate-zenith-authored.blend",
+      "sha256": "c89e7b6e92664cfc6da3486579b0cae331ef3656be676a03be30bdc7f884489c",
+      "bytes": 5475256,
+      "meshCount": 108,
+      "meshPrimitiveCount": 108,
+      "materialCount": 4,
+      "embeddedImageCount": 2,
+      "normalMappedMaterialCount": 4,
+      "boundsMin": [
+        -2.154716968536377,
+        -2.200000047683716,
+        -2.700000047683716
+      ],
+      "boundsMax": [
+        2.154716968536377,
+        2.200000047683716,
+        2.700000047683716
+      ],
+      "dimensions": [
+        4.309433937072754,
+        4.400000095367432,
+        5.400000095367432
+      ],
+      "previews": [
+        "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-overhaul/abyss-chancel-gate-zenith.canonical-gate-zenith-oblique.png",
+        "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-overhaul/abyss-chancel-gate-zenith.canonical-gate-zenith-top.png"
+      ],
+      "checks": {
+        "glbParses": true,
+        "meshPrimitiveCountAtLeast20": true,
+        "materialCountAtLeast4": true,
+        "everyPrimitiveHasNormalsUvsMaterial": true,
+        "embeddedTextureImages": true,
+        "normalMappedMaterials": true,
+        "nonDegenerate3dBounds": true,
+        "previewFilesNonEmpty": true
+      }
+    }
+  ]
+}

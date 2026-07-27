@@ -1,0 +1,22 @@
+{
+  "cycle": "20260727-stage3-world-composition-v05",
+  "bridge": "a_Rodin",
+  "bridgeUrl": "ws://127.0.0.1:61863",
+  "bridgeHello": {
+    "type": "hello_server",
+    "data": "Hello Client!"
+  },
+  "submissionId": "stage3-landmark-20260727-0918",
+  "prompt": "Standalone stylized dark-fantasy abyssal tide-lock beacon landmark prop, vertical carved stone and oxidized brass silhouette, game-ready single object, no terrain, no weapons, no characters, no environment.",
+  "scopeGuards": [
+    "no terrain",
+    "no weapons",
+    "no characters",
+    "no environment"
+  ],
+  "status": "pending",
+  "statusMeaning": "submitted to local a_Rodin bridge; awaiting Rodin web client fetch/download; no mesh received or promoted",
+  "generatedMesh": null,
+  "runtimePromotion": "none",
+  "recordedAt": "2026-07-27T00:18:14.212Z"
+}

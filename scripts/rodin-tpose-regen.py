@@ -63,7 +63,7 @@ GLB is produced. That last hop needs a GUI Blender plus a logged-in session.
   blender -P scripts/rodin-tpose-regen.py -- --submit --only cinder-warden
 
 Downloaded results must be staged under
-  _workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/runtime-candidates/<category>/
+  _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/<category>/
 before any explicit `--accept-runtime` review; this script never writes
 assets/images/battle/glb.
 """
@@ -77,7 +77,7 @@ REPO = Path(__file__).resolve().parent.parent
 GLB_DIR = REPO / "assets/images/battle/glb"
 PILOT = REPO / "assets/images/battle/pilot"
 DEFAULT_CONCEPT_ROOT = "assets/images/battle/pilot"
-DEFAULT_CANDIDATE_ROOT = "_workspace/20260726-stage2-balance-agency/engineering/asset-pipeline/runtime-candidates"
+DEFAULT_CANDIDATE_ROOT = "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates"
 RODIN_PROMPT = (
     "Generate a game-ready humanoid character source mesh in a genuine T-pose: "
     "full body centered, arms extended horizontally, feet separated, neutral pose, "

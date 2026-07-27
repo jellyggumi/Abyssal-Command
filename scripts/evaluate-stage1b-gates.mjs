@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
+const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CANONICAL_SEEDS = [401, 402, 403, 404, 405];
 const G7_EVENT_TYPES = [
   "ELITE_PROMPT_VISIBLE",
@@ -106,7 +108,7 @@ async function loadArtifact(label, path) {
   }
   try {
     const raw = await readFile(path, "utf8");
-    const source = { path, digest: digest(raw), readStatus: "READ" };
+    const source = { path: relative(REPOSITORY_ROOT, path), digest: digest(raw), readStatus: "READ" };
     try {
       const value = JSON.parse(raw);
       if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -119,7 +121,7 @@ async function loadArtifact(label, path) {
   } catch (error) {
     return {
       label,
-      source: { path, digest: null, readStatus: "UNREADABLE" },
+      source: { path: relative(REPOSITORY_ROOT, path), digest: null, readStatus: "UNREADABLE" },
       value: null,
       failures: [`${label}: could not read artifact (${error.code ?? error.message})`],
     };
@@ -962,7 +964,7 @@ async function provenanceReference(claim, id, allowedStatuses, failures) {
     failures.push(`G6: ${id} provenance source is unreadable (${error.code ?? error.message})`);
     return null;
   }
-  return { path: sourcePath, digest: claim.digest, kind: id };
+  return { path: relative(REPOSITORY_ROOT, sourcePath), digest: claim.digest, kind: id };
 }
 
 async function evaluateG6(provenanceArtifact, scenarioArtifact, fullappArtifact, leakArtifact, soakArtifact) {

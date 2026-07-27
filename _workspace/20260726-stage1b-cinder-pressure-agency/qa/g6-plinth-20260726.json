@@ -1,0 +1,153 @@
+{
+  "mode": "plinth",
+  "startedAt": "2026-07-26T09:36:38.625Z",
+  "finishedAt": "2026-07-26T09:38:07.576Z",
+  "passes": [
+    {
+      "tier": {
+        "label": "shipped-mobile-dsf2",
+        "dsf": 2,
+        "cpuThrottle": 1
+      },
+      "stageId": "gate-zenith",
+      "wavePeakTick": 292,
+      "actorsOnScreen": 20,
+      "plinthNodesRemoved": 20,
+      "plinthTrianglesRemoved": 35391,
+      "withPlinth": {
+        "renderWorkMs": {
+          "n": 900,
+          "mean": 2.104,
+          "p50": 1.8,
+          "p95": 3.8,
+          "p99": 5.1,
+          "max": 9.6
+        },
+        "drawCalls": {
+          "n": 900,
+          "mean": 44,
+          "p50": 44,
+          "p95": 44,
+          "p99": 44,
+          "max": 44
+        },
+        "triangles": {
+          "n": 900,
+          "mean": 187209,
+          "p50": 187209,
+          "p95": 187209,
+          "p99": 187209,
+          "max": 187209
+        }
+      },
+      "withoutPlinth": {
+        "renderWorkMs": {
+          "n": 900,
+          "mean": 1.751,
+          "p50": 1.5,
+          "p95": 3.1,
+          "p99": 4.6,
+          "max": 9.7
+        },
+        "drawCalls": {
+          "n": 900,
+          "mean": 31,
+          "p50": 31,
+          "p95": 31,
+          "p99": 31,
+          "max": 31
+        },
+        "triangles": {
+          "n": 900,
+          "mean": 165839,
+          "p50": 165839,
+          "p95": 165839,
+          "p99": 165839,
+          "max": 165839
+        }
+      },
+      "sceneAfter": {
+        "mixers": 20,
+        "skinnedMeshes": 23,
+        "skeletons": 23,
+        "bones": 552,
+        "boneTextures": 16,
+        "actors": 23
+      },
+      "errors": []
+    },
+    {
+      "tier": {
+        "label": "midtier-mobile-proxy-dsf2-cpu4x",
+        "dsf": 2,
+        "cpuThrottle": 4
+      },
+      "stageId": "gate-zenith",
+      "wavePeakTick": 292,
+      "actorsOnScreen": 20,
+      "plinthNodesRemoved": 20,
+      "plinthTrianglesRemoved": 35391,
+      "withPlinth": {
+        "renderWorkMs": {
+          "n": 900,
+          "mean": 5.486,
+          "p50": 5.8,
+          "p95": 9.8,
+          "p99": 12.4,
+          "max": 19.4
+        },
+        "drawCalls": {
+          "n": 900,
+          "mean": 44,
+          "p50": 44,
+          "p95": 44,
+          "p99": 44,
+          "max": 44
+        },
+        "triangles": {
+          "n": 900,
+          "mean": 187209,
+          "p50": 187209,
+          "p95": 187209,
+          "p99": 187209,
+          "max": 187209
+        }
+      },
+      "withoutPlinth": {
+        "renderWorkMs": {
+          "n": 900,
+          "mean": 3.865,
+          "p50": 4.5,
+          "p95": 7.1,
+          "p99": 8.6,
+          "max": 11.5
+        },
+        "drawCalls": {
+          "n": 900,
+          "mean": 31,
+          "p50": 31,
+          "p95": 31,
+          "p99": 31,
+          "max": 31
+        },
+        "triangles": {
+          "n": 900,
+          "mean": 165839,
+          "p50": 165839,
+          "p95": 165839,
+          "p99": 165839,
+          "max": 165839
+        }
+      },
+      "sceneAfter": {
+        "mixers": 20,
+        "skinnedMeshes": 23,
+        "skeletons": 23,
+        "bones": 552,
+        "boneTextures": 16,
+        "actors": 23
+      },
+      "errors": []
+    }
+  ]
+}
