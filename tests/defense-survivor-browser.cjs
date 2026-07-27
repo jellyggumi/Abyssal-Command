@@ -875,11 +875,39 @@ async function verifyBossMeshRegression(browser, hosting) {
       const expectedModelPath = "bosses/cinder-warden.glb";
       const expectedGlbPath = "assets/images/battle/glb/bosses/cinder-warden.glb";
       const actorKeys = () => (renderer.actors && typeof renderer.actors.keys === "function" ? [...renderer.actors.keys()] : []);
+      // Wait on the record's own SETTLED state, not on the clock. ensureActor()
+      // clears `loading` on BOTH the success path (root assigned in the same
+      // synchronous .then() block) and the failure path (.catch() leaves root
+      // null), so `loading === false` is a real readiness signal and `root`
+      // discriminates success from failure. A genuinely missing/404/corrupt GLB
+      // therefore fails in tens of milliseconds (measured: 26ms for 404 and for
+      // a corrupt body, 45ms for an aborted request) instead of burning the
+      // whole budget -- the deadline below is only a backstop for a fetch that
+      // never settles at all.
+      //
+      // That backstop is renderer-aware, following tests/defense-performance-browser.cjs's
+      // precedent of branching budgets on software-WebGL detection. Under
+      // SwiftShader/llvmpipe the GLTF parse, texture decode and material
+      // compile all contend with software rasterization on the one main
+      // thread, so this 4MB boss GLB is legitimately slower to become
+      // renderable: measured ~0.13s on hardware vs ~2.9s under SwiftShader
+      // unthrottled, and ~1.5s vs ~14.9s with the main thread throttled 4x to
+      // model a 2-core CI runner (~16.9s at 8x). The hardware bound stays at
+      // 10s so a real regression on a normal GPU still fails fast; the
+      // software bound clears the worst measured cost with margin. Detection
+      // reads the renderer instance's own `softwareRenderer` field (set from
+      // detectSoftwareWebGL() at mount) rather than the canvas renderScale
+      // proxy the performance gate uses -- this off-DOM 320x180 canvas is
+      // below SOFTWARE_MAX_BACKBUFFER_PX, so its renderScale stays 1 (and is
+      // in fact never set) even under SwiftShader.
+      const softwareRenderer = renderer.softwareRenderer === true;
+      const readinessBudgetMs = softwareRenderer ? 45000 : 10000;
+      const startedAt = performance.now();
       const entry = await new Promise((resolve) => {
-        const deadline = performance.now() + 10000;
+        const deadline = startedAt + readinessBudgetMs;
         const poll = () => {
           const candidate = renderer.actors?.get?.(boss.id);
-          if ((candidate?.loading === false && candidate.root) || performance.now() >= deadline) {
+          if (candidate?.loading === false || performance.now() >= deadline) {
             resolve(candidate ?? null);
             return;
           }
@@ -887,9 +915,14 @@ async function verifyBossMeshRegression(browser, hosting) {
         };
         poll();
       });
+      const readyMs = Math.round(performance.now() - startedAt);
       if (!entry || entry.loading || !entry.root) {
+        const settled = entry?.loading === false;
+        const cause = settled
+          ? `its GLB load settled without producing a root after ${readyMs}ms (fetch/parse failed)`
+          : `its GLB load never settled within the ${readinessBudgetMs}ms ${softwareRenderer ? "software-WebGL" : "hardware-WebGL"} backstop (${readyMs}ms elapsed)`;
         return {
-          error: `renderer.actors has no loaded root for live boss id ${boss.id} within 10000ms -- expected GLB ${expectedGlbPath}`,
+          error: `renderer.actors has no loaded root for live boss id ${boss.id} -- ${cause}; expected GLB ${expectedGlbPath}`,
           bossId: boss.id,
           bossHp: boss.hp,
           bossTick: snapshot.tick,
@@ -897,6 +930,10 @@ async function verifyBossMeshRegression(browser, hosting) {
           expectedModelPath,
           modelPath: entry?.modelPath ?? null,
           rootName: entry?.root?.name ?? null,
+          softwareRenderer,
+          readinessBudgetMs,
+          readyMs,
+          settled,
         };
       }
       let meshDescendantCount = 0;
@@ -912,6 +949,9 @@ async function verifyBossMeshRegression(browser, hosting) {
         meshDescendantCount,
         expectedModelPath,
         expectedGlbPath,
+        softwareRenderer,
+        readinessBudgetMs,
+        readyMs,
       };
     });
 
