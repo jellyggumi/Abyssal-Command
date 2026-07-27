@@ -180,12 +180,33 @@ test("deployed commander is the byte-exact audited guard-pose candidate", async 
   const requiredAnimationNames = COMMANDER_CLIP_KEYS.map((key) => `dusk-warden::${key}::v01`);
 
   assert.equal(sourceHash, audit.inputSha256, "the audit must identify the checked-in source GLB");
-  assert.equal(candidateHash, deployedHash, "the deployed commander must be the authored pipeline candidate");
-  assert.equal(audit.outputSha256, deployedHash, "the top-level audit hash must identify the deployed GLB");
+  assert.equal(audit.outputSha256, candidateHash, "the top-level audit hash must identify its own candidate");
   assert.equal(
     audit.guardPoseCorrection.outputGlbSha256,
-    deployedHash,
-    "the guard correction audit must identify the deployed GLB",
+    candidateHash,
+    "the guard correction audit must identify its own candidate",
+  );
+
+  // The deployed commander is this candidate carried one stage further: the
+  // whole-body pass gives every clip a working lower half without touching the
+  // arm channels this audit describes. The build record has to close that link,
+  // so the chain stays source -> authored strikes + guard -> whole body -> ship.
+  const provenance = JSON.parse(
+    await readFile(resolve(ROOT, "assets/images/battle/glb/character-build-provenance.json"), "utf8"),
+  );
+  const commander = provenance.assets["assets/images/battle/glb/commander/dusk-warden.glb"];
+  assert.ok(commander, "the commander must appear in the character build record");
+  assert.equal(commander.outputSha256, deployedHash, "the build record must identify the deployed GLB");
+  assert.equal(
+    commander.sourceInputSha256,
+    candidateHash,
+    "the whole-body pass must have consumed this authored candidate",
+  );
+  assert.equal(
+    commander.upstreamPipeline,
+    "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline"
+      + "/player-combat-animation-candidate/author_player_combat_clips.py",
+    "the build record must name the authoring stage that produced the strikes and guard pose",
   );
   assert.equal(
     sha256(authorBytes),

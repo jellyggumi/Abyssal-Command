@@ -45,8 +45,16 @@ RIGGED_MANIFEST = (
 )
 PROVENANCE_PATH = RUNTIME_ROOT / "character-build-provenance.json"
 
-# Pinned elsewhere by a dedicated authoring pipeline; see the module docstring.
-EXCLUDED_ASSET_IDS = ("dusk-warden",)
+# Every character is promoted. The commander additionally carries the upstream
+# stage that authored its two commander-only strike clips and its guard-pose
+# correction, so the chain stays visible in the build record.
+EXCLUDED_ASSET_IDS: tuple[str, ...] = ()
+UPSTREAM_PIPELINE = {
+    "dusk-warden": (
+        "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline"
+        "/player-combat-animation-candidate/author_player_combat_clips.py"
+    ),
+}
 GLB_JSON_CHUNK = 0x4E4F534A
 SCHEMA_VERSION = 1
 
@@ -158,6 +166,13 @@ def plan_rows(root: Path) -> list[dict[str, Any]]:
                 "outputPath": (RUNTIME_ROOT / row["relativePath"]).as_posix(),
                 "candidatePath": row["outputPath"],
                 "candidateSha256": sha256(candidate),
+                "sourceInputPath": row["inputPath"],
+                "sourceInputSha256": row["inputSha256"],
+                # A runtime-lane input is the pre-promotion asset this pass
+                # consumed, and promotion overwrites it, so it stays historical
+                # and is not independently re-hashable afterwards.
+                "sourceInputLane": row["inputLane"],
+                "upstreamPipeline": UPSTREAM_PIPELINE.get(asset_id),
                 "clipBalance": row.get("clipBalance", []),
                 "lowerMeshBound": rigged_row.get("action") == "bind",
                 "boundLowerMeshMotion": (
@@ -179,11 +194,6 @@ def build_provenance(rows: list[dict[str, Any]]) -> dict[str, Any]:
             "scripts/author-wholebody-clips-blender.py",
         ],
         "excludedAssetIds": list(EXCLUDED_ASSET_IDS),
-        "excludedReason": (
-            "the commander ships from player-combat-animation-candidate/"
-            "author_player_combat_clips.py and is byte-pinned by "
-            "tests/commander-guard-pose.test.mjs"
-        ),
         "assetCount": len(rows),
         "assets": {
             row["outputPath"]: {
@@ -191,6 +201,10 @@ def build_provenance(rows: list[dict[str, Any]]) -> dict[str, Any]:
                 "outputSha256": row["outputSha256"],
                 "sourceCandidatePath": row["candidatePath"],
                 "sourceCandidateSha256": row["candidateSha256"],
+                "sourceInputPath": row["sourceInputPath"],
+                "sourceInputSha256": row["sourceInputSha256"],
+                "sourceInputLane": row["sourceInputLane"],
+                "upstreamPipeline": row["upstreamPipeline"],
                 "lowerMeshBound": row["lowerMeshBound"],
                 "boundLowerMeshMotion": row["boundLowerMeshMotion"],
                 "clipBalance": row["clipBalance"],

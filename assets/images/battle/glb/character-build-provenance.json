@@ -1,5 +1,5 @@
 {
-  "assetCount": 23,
+  "assetCount": 24,
   "assets": {
     "assets/images/battle/glb/bosses/abyss-regent.glb": {
       "boundLowerMeshMotion": {
@@ -110,7 +110,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/abyss-regent.glb",
-      "sourceCandidateSha256": "228e0be78c9f94c65202b57dbe3842b1c928c4cee1ab523920dd087938488af8"
+      "sourceCandidateSha256": "228e0be78c9f94c65202b57dbe3842b1c928c4cee1ab523920dd087938488af8",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/abyss-regent.glb",
+      "sourceInputSha256": "8e6d7843dbbb116cc868125670d05bea06b9afb2d04228144a5fe844cdfed797",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/bosses/bridge-colossus.glb": {
       "boundLowerMeshMotion": {
@@ -221,7 +225,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/bridge-colossus.glb",
-      "sourceCandidateSha256": "88d2f1e1115f28983e5220c747fe7e106dd1a183050f4053489c9eaae906e0e7"
+      "sourceCandidateSha256": "88d2f1e1115f28983e5220c747fe7e106dd1a183050f4053489c9eaae906e0e7",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/bridge-colossus.glb",
+      "sourceInputSha256": "206872359e3143d0a6a344d03eff339644b4b8b762960e02ef3dfb8f67e4fa4f",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/bosses/cinder-warden.glb": {
       "boundLowerMeshMotion": {
@@ -332,7 +340,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/cinder-warden.glb",
-      "sourceCandidateSha256": "ded28b0ce4e2169ec19d48441884760c06eb27d1c144e64b461e3a55eaaa1ebd"
+      "sourceCandidateSha256": "ded28b0ce4e2169ec19d48441884760c06eb27d1c144e64b461e3a55eaaa1ebd",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/cinder-warden.glb",
+      "sourceInputSha256": "54557826510d6da2981ccc02b927018a9cea3368f709ee3f8a783c873d7930de",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/bosses/gate-sovereign.glb": {
       "boundLowerMeshMotion": null,
@@ -438,7 +450,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/gate-sovereign.glb",
-      "sourceCandidateSha256": "4395c3f088f9abe8dfd7f629f89b49ed81fbe1dc080a899f0c651ae127faee93"
+      "sourceCandidateSha256": "4395c3f088f9abe8dfd7f629f89b49ed81fbe1dc080a899f0c651ae127faee93",
+      "sourceInputLane": "runtime",
+      "sourceInputPath": "assets/images/battle/glb/bosses/gate-sovereign.glb",
+      "sourceInputSha256": "9fad094f8b90ef5d6bb0b0106ac9501f41ff0e181bbc9c45464cea15cb6019c7",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/bosses/lantern-tyrant.glb": {
       "boundLowerMeshMotion": null,
@@ -544,7 +560,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/lantern-tyrant.glb",
-      "sourceCandidateSha256": "2f52145534424ff1ea61466ad959c405b3d4e781775be0a04b03b70b242c478f"
+      "sourceCandidateSha256": "2f52145534424ff1ea61466ad959c405b3d4e781775be0a04b03b70b242c478f",
+      "sourceInputLane": "runtime",
+      "sourceInputPath": "assets/images/battle/glb/bosses/lantern-tyrant.glb",
+      "sourceInputSha256": "5e24957de081474718aec8480988ba45803ebc2a8eb16fa237b2c6335704f2be",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/bosses/pack-herald.glb": {
       "boundLowerMeshMotion": {
@@ -655,7 +675,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/pack-herald.glb",
-      "sourceCandidateSha256": "5afc09b96eea1c5d16ef2c7d3c9d878528d4dc2278fa341887eda84910b0811f"
+      "sourceCandidateSha256": "5afc09b96eea1c5d16ef2c7d3c9d878528d4dc2278fa341887eda84910b0811f",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/pack-herald.glb",
+      "sourceInputSha256": "0aa69c13654d2b774da3e921a570c696468636db134318baf0446b45fae9e938",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/bosses/requiem-choir.glb": {
       "boundLowerMeshMotion": {
@@ -766,7 +790,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/requiem-choir.glb",
-      "sourceCandidateSha256": "853b88af72697e2414f777b9cbd70a51b1c3f8d032679316af99e5f94dba500c"
+      "sourceCandidateSha256": "853b88af72697e2414f777b9cbd70a51b1c3f8d032679316af99e5f94dba500c",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/requiem-choir.glb",
+      "sourceInputSha256": "0bed526c7a810f786a86e62dee4fe52e85c946908b39c539c85a33c72adbcf4a",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/bosses/tide-warden.glb": {
       "boundLowerMeshMotion": null,
@@ -872,7 +900,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/tide-warden.glb",
-      "sourceCandidateSha256": "c2bf1aebf03e3df0a643692f545383b117e8ec450300fa70f37e168a3c45b670"
+      "sourceCandidateSha256": "c2bf1aebf03e3df0a643692f545383b117e8ec450300fa70f37e168a3c45b670",
+      "sourceInputLane": "runtime",
+      "sourceInputPath": "assets/images/battle/glb/bosses/tide-warden.glb",
+      "sourceInputSha256": "e883bf05685d3708a3cd9069c81ee978e119706094778882fb98c7985dc5634a",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/bosses/veil-tactician.glb": {
       "boundLowerMeshMotion": {
@@ -983,7 +1015,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/veil-tactician.glb",
-      "sourceCandidateSha256": "40cf4ff38222b5f5e3eb3915c00e30b22eb1112a1fdbaa8aad793d9ed7a088ab"
+      "sourceCandidateSha256": "40cf4ff38222b5f5e3eb3915c00e30b22eb1112a1fdbaa8aad793d9ed7a088ab",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/veil-tactician.glb",
+      "sourceInputSha256": "d4c4e5459724ab7ee96ad8e1400a5cace45b8d0aa832c281354c3f88c5646321",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/bosses/veiled-concordat.glb": {
       "boundLowerMeshMotion": null,
@@ -1089,7 +1125,137 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/veiled-concordat.glb",
-      "sourceCandidateSha256": "d4f655e9e303cc220ea51dc6cfe5fc8910d75f50fef35cf10f68d38b66a6dc0e"
+      "sourceCandidateSha256": "d4f655e9e303cc220ea51dc6cfe5fc8910d75f50fef35cf10f68d38b66a6dc0e",
+      "sourceInputLane": "runtime",
+      "sourceInputPath": "assets/images/battle/glb/bosses/veiled-concordat.glb",
+      "sourceInputSha256": "7208045928a9078047d460fa6a3446cf4cf13af133db89625314edcd20b97e66",
+      "upstreamPipeline": null
+    },
+    "assets/images/battle/glb/commander/dusk-warden.glb": {
+      "boundLowerMeshMotion": null,
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1643,
+          "lowerTravel": 0.03712,
+          "participates": true,
+          "upperTravel": 0.22596
+        },
+        {
+          "clip": "attack_melee",
+          "halfBalance": 0.0499,
+          "lowerTravel": 0.06944,
+          "participates": true,
+          "upperTravel": 1.39291
+        },
+        {
+          "clip": "attack_ranged",
+          "halfBalance": 0.1263,
+          "lowerTravel": 0.06956,
+          "participates": true,
+          "upperTravel": 0.55088
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8008,
+          "lowerTravel": 0.1534,
+          "participates": true,
+          "upperTravel": 0.12284
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.2558,
+          "lowerTravel": 0.0277,
+          "participates": true,
+          "upperTravel": 0.10833
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1229,
+          "lowerTravel": 0.04492,
+          "participates": true,
+          "upperTravel": 0.36543
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3525,
+          "lowerTravel": 0.02281,
+          "participates": true,
+          "upperTravel": 0.06471
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1545,
+          "lowerTravel": 0.02986,
+          "participates": true,
+          "upperTravel": 0.19328
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2579,
+          "lowerTravel": 0.02122,
+          "participates": true,
+          "upperTravel": 0.08227
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.8268,
+          "lowerTravel": 0.00384,
+          "participates": true,
+          "upperTravel": 0.00465
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.6046,
+          "lowerTravel": 0.21536,
+          "participates": true,
+          "upperTravel": 0.1302
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5644,
+          "lowerTravel": 0.28723,
+          "participates": true,
+          "upperTravel": 0.16211
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2326,
+          "lowerTravel": 0.02088,
+          "participates": true,
+          "upperTravel": 0.08975
+        }
+      ],
+      "lowerMeshBound": false,
+      "outputPath": "assets/images/battle/glb/commander/dusk-warden.glb",
+      "outputSha256": "f2023c08ad69a4b75a200b6275da1dbf0594b6cb3a5e0bfd5ba278f6142175cc",
+      "runtimeContract": {
+        "animationNames": [
+          "dusk-warden::attack::v01",
+          "dusk-warden::attack_melee::v01",
+          "dusk-warden::attack_ranged::v01",
+          "dusk-warden::avoid::v01",
+          "dusk-warden::bighit::v01",
+          "dusk-warden::critical::v01",
+          "dusk-warden::defence::v01",
+          "dusk-warden::die::v01",
+          "dusk-warden::hit::v01",
+          "dusk-warden::idle::v01",
+          "dusk-warden::move::v01",
+          "dusk-warden::run::v01",
+          "dusk-warden::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/commander/dusk-warden.glb",
+      "sourceCandidateSha256": "f2023c08ad69a4b75a200b6275da1dbf0594b6cb3a5e0bfd5ba278f6142175cc",
+      "sourceInputLane": "runtime",
+      "sourceInputPath": "assets/images/battle/glb/commander/dusk-warden.glb",
+      "sourceInputSha256": "eafd685e766dc9e590cafbfa2265c3a8dc439a615dbb1504653cc462d0f79e49",
+      "upstreamPipeline": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/player-combat-animation-candidate/author_player_combat_clips.py"
     },
     "assets/images/battle/glb/companions/anchor-shard.glb": {
       "boundLowerMeshMotion": {
@@ -1200,7 +1366,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/anchor-shard.glb",
-      "sourceCandidateSha256": "c7f61de82e6d73fda38f079735ae193115af9472d3663bf2052d62456ef51093"
+      "sourceCandidateSha256": "c7f61de82e6d73fda38f079735ae193115af9472d3663bf2052d62456ef51093",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/anchor-shard.glb",
+      "sourceInputSha256": "57224f308c1b7379ffbbab716697f481a020d04ff62fedbe362a3701f9f24788",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/companions/dawnless-crown.glb": {
       "boundLowerMeshMotion": {
@@ -1311,7 +1481,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/dawnless-crown.glb",
-      "sourceCandidateSha256": "f5f20f4daf4647b1e199f4f1df2be07b0bf734952ebb121abcb62e9640ab5372"
+      "sourceCandidateSha256": "f5f20f4daf4647b1e199f4f1df2be07b0bf734952ebb121abcb62e9640ab5372",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/dawnless-crown.glb",
+      "sourceInputSha256": "56bb9f88b32f95b5ff7b7ee63b3baba8cf49058950a6d0fdfee643fd3a682fa5",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/companions/ember-cohort.glb": {
       "boundLowerMeshMotion": {
@@ -1422,7 +1596,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/ember-cohort.glb",
-      "sourceCandidateSha256": "74fe3c02f1226ac0b7cc6541aeb41271ee318dea2d0021dd2dccf12305bbfc82"
+      "sourceCandidateSha256": "74fe3c02f1226ac0b7cc6541aeb41271ee318dea2d0021dd2dccf12305bbfc82",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/ember-cohort.glb",
+      "sourceInputSha256": "844c68393f98f5c4e8e8b056a9a7f2b68ecc11c238f69e809b153bbf61f137ad",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/companions/lantern-reaver.glb": {
       "boundLowerMeshMotion": {
@@ -1533,7 +1711,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/lantern-reaver.glb",
-      "sourceCandidateSha256": "2537204bb36b46d49ff09d79744076dc4368773472276db4df1c5cbe910a51f9"
+      "sourceCandidateSha256": "2537204bb36b46d49ff09d79744076dc4368773472276db4df1c5cbe910a51f9",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/lantern-reaver.glb",
+      "sourceInputSha256": "670d4346d0ffa440734f82403e2a59e3ccef01eae59cd0dbf317f8962e81a4dc",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/companions/pack-warden.glb": {
       "boundLowerMeshMotion": {
@@ -1644,7 +1826,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/pack-warden.glb",
-      "sourceCandidateSha256": "446b3ef1e935fb108545c6f12533d85beca8e62fd4a3a6deeb0eb1f55fb953eb"
+      "sourceCandidateSha256": "446b3ef1e935fb108545c6f12533d85beca8e62fd4a3a6deeb0eb1f55fb953eb",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/pack-warden.glb",
+      "sourceInputSha256": "63b07ca170686e3d0a0da6afd99b00e8e4e6a42758907a4b1b233ead6a8a93ab",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/companions/requiem-warden.glb": {
       "boundLowerMeshMotion": {
@@ -1755,7 +1941,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/requiem-warden.glb",
-      "sourceCandidateSha256": "0c61a8438b01d12751c15287aacfa97e7e54e1232ced1d7f13a016adcbf4358a"
+      "sourceCandidateSha256": "0c61a8438b01d12751c15287aacfa97e7e54e1232ced1d7f13a016adcbf4358a",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/requiem-warden.glb",
+      "sourceInputSha256": "2490b6b76f17614c798248dc14b1af03c351f9cc57515803efc392b7b5bbd590",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/companions/rift-lens.glb": {
       "boundLowerMeshMotion": {
@@ -1866,7 +2056,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/rift-lens.glb",
-      "sourceCandidateSha256": "55d4ce924a1204d18a06b13cc46f4640e41b62c32e64efcf6ca536102261223b"
+      "sourceCandidateSha256": "55d4ce924a1204d18a06b13cc46f4640e41b62c32e64efcf6ca536102261223b",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/rift-lens.glb",
+      "sourceInputSha256": "6c585935a634a31619807831a3b45c01faaacea7021352c9668a7a9e90fb5c2d",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/companions/throne-echo.glb": {
       "boundLowerMeshMotion": {
@@ -1977,7 +2171,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/throne-echo.glb",
-      "sourceCandidateSha256": "a17c4f7248449e5893765002539055dfe58825a284fdc7756971bc5722c9f6d3"
+      "sourceCandidateSha256": "a17c4f7248449e5893765002539055dfe58825a284fdc7756971bc5722c9f6d3",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/throne-echo.glb",
+      "sourceInputSha256": "82635f323851ff7ba7e294212666635cffb683df9a71a0ccf3ad446d5a83ba47",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/companions/veil-vanguard.glb": {
       "boundLowerMeshMotion": {
@@ -2088,7 +2286,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/veil-vanguard.glb",
-      "sourceCandidateSha256": "d48809d62108ccce8862c9653dad47db36bec327b41429ae8c731ba5e5fa2391"
+      "sourceCandidateSha256": "d48809d62108ccce8862c9653dad47db36bec327b41429ae8c731ba5e5fa2391",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/veil-vanguard.glb",
+      "sourceInputSha256": "14fc3d05f3ccf4d8df8549439c91162f8fa963a721964901ed7d14a5b5fb641a",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/enemies/guard.glb": {
       "boundLowerMeshMotion": {
@@ -2199,7 +2401,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/guard.glb",
-      "sourceCandidateSha256": "9cce14cdd2d31d84844c357800cf4f575c3e86aae3313bf10f0b43ecc22593f8"
+      "sourceCandidateSha256": "9cce14cdd2d31d84844c357800cf4f575c3e86aae3313bf10f0b43ecc22593f8",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/enemies/guard.glb",
+      "sourceInputSha256": "aee62ae6cf40c954d8c4e0e39385a0dff5427583ecae7fcc7b62b95717ec8a81",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/enemies/possessed.glb": {
       "boundLowerMeshMotion": {
@@ -2310,7 +2516,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/possessed.glb",
-      "sourceCandidateSha256": "3c67dd4a24b54a7df31d19cfa362e72d343fc9af6dc92102b895a860c04660ca"
+      "sourceCandidateSha256": "3c67dd4a24b54a7df31d19cfa362e72d343fc9af6dc92102b895a860c04660ca",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/enemies/possessed.glb",
+      "sourceInputSha256": "129a83dbbd117ef94f78609c5a57b2c12fb626e56a1dcd0fed215e445ab2a3b9",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/enemies/scout.glb": {
       "boundLowerMeshMotion": {
@@ -2421,7 +2631,11 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/scout.glb",
-      "sourceCandidateSha256": "0f04f6a5c6615ec35641733c7614e71924ae9dc40f74fd1a0cc8c178e8f5c38f"
+      "sourceCandidateSha256": "0f04f6a5c6615ec35641733c7614e71924ae9dc40f74fd1a0cc8c178e8f5c38f",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/enemies/scout.glb",
+      "sourceInputSha256": "532005fbf1dcea6adea1bfa46eb087a84a51e210745f05478b3a072442ab8a6e",
+      "upstreamPipeline": null
     },
     "assets/images/battle/glb/enemies/shade.glb": {
       "boundLowerMeshMotion": {
@@ -2532,13 +2746,14 @@
         "skins": 1
       },
       "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/shade.glb",
-      "sourceCandidateSha256": "e70e2e41b4722f424ac4e9a20afe2db5c00657b40fdcd0a89ba2eae56478ff0c"
+      "sourceCandidateSha256": "e70e2e41b4722f424ac4e9a20afe2db5c00657b40fdcd0a89ba2eae56478ff0c",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/enemies/shade.glb",
+      "sourceInputSha256": "f923d7a574a0361ee62af69b25be79cf717884812d911753ab30a0b509c1955e",
+      "upstreamPipeline": null
     }
   },
-  "excludedAssetIds": [
-    "dusk-warden"
-  ],
-  "excludedReason": "the commander ships from player-combat-animation-candidate/author_player_combat_clips.py and is byte-pinned by tests/commander-guard-pose.test.mjs",
+  "excludedAssetIds": [],
   "generatedBy": "scripts/promote-character-assets.py",
   "pipeline": [
     "scripts/bind-static-lower-mesh.py",

@@ -13,7 +13,7 @@ const SCRIPT = "scripts/promote-character-assets.py";
 const PROVENANCE = resolve(ROOT, "assets/images/battle/glb/character-build-provenance.json");
 const COMMANDER = "assets/images/battle/glb/commander/dusk-warden.glb";
 
-const EXPECTED_PROMOTED = 23;
+const EXPECTED_PROMOTED = 24;
 const MIN_HALF_TRAVEL = 0.004;
 const BALANCED_RATIO = 0.25;
 
@@ -48,13 +48,13 @@ test("promote-character-assets --check passes on the runtime lane", () => {
   assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
   const payload = JSON.parse(result.stdout);
   assert.equal(payload.promoted, EXPECTED_PROMOTED);
-  assert.deepEqual(payload.excluded, ["dusk-warden"]);
+  assert.deepEqual(payload.excluded, []);
 });
 
 test("every promoted character ships one skinned mesh with no frozen lower half", async (t) => {
   const provenance = JSON.parse(await readFile(PROVENANCE, "utf8"));
   assert.equal(provenance.assetCount, EXPECTED_PROMOTED);
-  assert.deepEqual(provenance.excludedAssetIds, ["dusk-warden"]);
+  assert.deepEqual(provenance.excludedAssetIds, []);
   assert.deepEqual(provenance.pipeline, [
     "scripts/bind-static-lower-mesh.py",
     "scripts/author-wholebody-clips-blender.py",
@@ -119,24 +119,49 @@ test("every promoted character ships one skinned mesh with no frozen lower half"
   }
 });
 
-test("the commander is excluded from bulk promotion and keeps its authored pipeline", async () => {
+test("the commander keeps its authored strike pipeline upstream of the whole-body pass", async () => {
   const provenance = JSON.parse(await readFile(PROVENANCE, "utf8"));
+  const commander = provenance.assets[COMMANDER];
+  assert.ok(commander, "the commander must appear in the character build record");
+
+  // The commander is the one character whose strikes and guard pose are hand
+  // authored, so its record must name that upstream stage and prove the
+  // whole-body pass consumed exactly its output.
   assert.equal(
-    Object.hasOwn(provenance.assets, COMMANDER),
-    false,
-    "the commander must not be promoted by the bulk pass",
+    commander.upstreamPipeline,
+    "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline"
+      + "/player-combat-animation-candidate/author_player_combat_clips.py",
+    "the commander must record its authoring stage",
   );
-  // Its clips come from author_player_combat_clips.py and its bytes are pinned
-  // by tests/commander-guard-pose.test.mjs, which stays the owner of that lane.
-  const candidate = resolve(
+  const authored = resolve(
     ROOT,
     "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline",
     "player-combat-animation-candidate/dusk-warden.glb",
   );
-  if (!existsSync(candidate)) return;
-  assert.equal(
-    hashFile(resolve(ROOT, COMMANDER)),
-    hashFile(candidate),
-    "the deployed commander must remain its authored candidate",
-  );
+  if (existsSync(authored)) {
+    assert.equal(
+      commander.sourceInputSha256,
+      hashFile(authored),
+      "the whole-body pass must have consumed the authored strike candidate",
+    );
+  }
+  assert.equal(commander.lowerMeshBound, false, "the commander was already fully skinned");
+});
+
+test("every character records the input its whole-body pass consumed", async () => {
+  const provenance = JSON.parse(await readFile(PROVENANCE, "utf8"));
+  for (const asset of Object.values(provenance.assets)) {
+    assert.equal(typeof asset.sourceInputPath, "string", `${asset.outputPath}: no recorded input`);
+    assert.match(asset.sourceInputSha256 ?? "", /^[0-9a-f]{64}$/u, `${asset.outputPath}: no input hash`);
+    assert.ok(
+      ["runtime", "rigged-lower-mesh-candidate"].includes(asset.sourceInputLane),
+      `${asset.outputPath}: unknown input lane ${asset.sourceInputLane}`,
+    );
+    // A runtime-lane input was overwritten by this very promotion, so only a
+    // candidate-lane input is still independently verifiable.
+    if (asset.sourceInputLane !== "rigged-lower-mesh-candidate") continue;
+    const input = resolve(ROOT, asset.sourceInputPath);
+    if (!existsSync(input)) continue;
+    assert.equal(hashFile(input), asset.sourceInputSha256, `${asset.outputPath}: input drifted`);
+  }
 });
