@@ -57,13 +57,16 @@ button:disabled { opacity: .42; cursor: not-allowed; }
   isolation: isolate;
   transition: transform 200ms ease;
 }
-/* Mid-run height reserve (component-contracts.md §6): protects #defense-edge-hud's
-   .defense-bottom (D-pad/skill bar) from a peeked panel; gated on data-defense-started
-   set on <html> by BattleSession.beginRun()/remountForStage() so pre-run panels stay
-   full-height (no D-pad to protect yet). */
+/* Open dock panel fills the full viewport height in combat too (was height:auto +
+   max-height reserve, which left the canvas showing below short-content tabs and hurt
+   readability). The mid-run corner-HUD de-overlap (padding-inline on .defense-top/.bottom)
+   already pushes the D-pad/gate readout to the FREE side when a panel is open, so the
+   panel's own side no longer needs a bottom reserve gap -- it can run edge-to-edge. The
+   panel body stays flex:1 + overflow-y:auto, so a short tab fills the background and a long
+   tab scrolls within the full height. */
 html[data-defense-started="true"] .dock-panel {
-  height: auto;
-  max-height: calc(100dvh - max(3.5rem, env(safe-area-inset-bottom) + 3.5rem));
+  height: 100dvh;
+  max-height: 100dvh;
 }
 .dock-panel::before {
   position: absolute;
@@ -171,6 +174,15 @@ html[data-defense-started="true"] .dock-panel {
    (20260727-lobby-dock-redesign, component-contracts.md §7): a mid-run dock peek must
    never black out the live combat readout underneath it. */
 #defense-battle-surface[data-defense-started="false"] #defense-edge-hud { display: none; }
+/* Compact + a dock peeked open in combat: the 273px panel + combat HUD + D-pad cannot
+   coexist on a phone, and the panel now fills full height (for the background the user
+   wants), so hide the edge-HUD entirely while a panel is open on compact -- the panel reads
+   as a clean full-height screen, exactly like pre-run; closing it restores the HUD. Wide
+   tier keeps the HUD (it is pushed to the free side by the padding rules below). */
+@media (max-width: 899px) {
+  #defense-battle-surface[data-defense-started="true"][data-peek-left="true"] #defense-edge-hud,
+  #defense-battle-surface[data-defense-started="true"][data-peek-right="true"] #defense-edge-hud { display: none; }
+}
 .defense-edge { position: absolute; display: flex; gap: .45rem; pointer-events: auto; }
 .defense-top { top: max(.4rem, var(--defense-safe-top)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-start; }
 .defense-bottom { bottom: max(.4rem, var(--defense-safe-bottom)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-end; }
