@@ -329,6 +329,15 @@
       "testDisposition": "retain"
     },
     {
+      "disposition": "delete",
+      "currentPath": "assets/images/battle/glb/character-build-provenance.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
       "disposition": "retain",
       "currentPath": "assets/images/battle/glb/commander/dusk-warden.glb",
       "replacementPath": "assets/images/battle/glb/commander/dusk-warden.glb",
