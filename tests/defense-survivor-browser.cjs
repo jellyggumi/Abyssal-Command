@@ -140,18 +140,10 @@ async function waitForGrowthOfferThroughCutscenes(page, report, {
   const terminalStates = ["victory", "defeat", "final_completion"];
   const startedAt = Date.now();
   const overallDeadline = startedAt + overallTimeout;
-  // Sized from the CI evidence, not guessed: at the failure the run was live
-  // (defenseState "active"), document.elementFromPoint over the D-pad returned
-  // the button itself (pointer owner null), and Playwright still could not
-  // complete one click -- the software-WebGL runner simply stops answering for
-  // seconds at a time. This bounds a CLEANUP action; the journey's actual
-  // movement assertion keeps its own operation budget.
-  const cleanupActionTimeout = Math.max(1, Math.min(8000, noProgressTimeout));
+
   let state = null;
   let lastSimulationSecond = null;
   let lastProgressAt = startedAt;
-  let patrolStartedAt = null;
-  let patrolStopped = false;
   const readState = (timeout) => page.locator("html").evaluate(() => {
     const status = (document.querySelector("#battle-status")?.textContent ?? "").trim();
     const simulationSecondMatch = status.match(/시간\s+(\d+)초/);
@@ -197,30 +189,18 @@ async function waitForGrowthOfferThroughCutscenes(page, report, {
       + `journey bounds ${JSON.stringify({ noProgressTimeout, overallTimeout })}; last state: ${JSON.stringify(currentState)}`,
     );
   };
-  const moveAsPlayer = async (direction, deadline) => {
-    const remaining = (operation) => {
-      const milliseconds = deadline - Date.now();
-      assert.ok(milliseconds > 0, `player ${direction} movement deadline exhausted before ${operation}`);
-      return milliseconds;
-    };
-    const surface = page.locator("#defense-battle-surface");
-    const before = await surface.getAttribute(
-      "data-defense-input-seq",
-      { timeout: remaining("reading the input sequence") },
-    );
-    await page.locator(`[data-move="${direction}"]`).click({
-      timeout: remaining("activating the public movement control"),
-    });
-    await page.waitForFunction(
-      (previousInputSequence) => (
-        document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq !== previousInputSequence
-      ),
-      before,
-      { timeout: remaining("observing the admitted movement command") },
-    );
-  };
-  // Reports what actually owns the pointer over a control, so a cleanup failure
+  // Reports what actually owns the pointer over a control, so a blocked press
   // names the blocking element instead of leaving a bare Playwright timeout.
+  //
+  // Retained from 887e5df / dd94ba0. That investigation established the blocker
+  // over the D-pad is the run's outcome card (section.edge-card.defense-result,
+  // appended into #defense-edge-hud), which exists ONLY once the run has ended.
+  // The patrol those commits guarded is gone from this function -- it was a
+  // proven no-op (a click emits MOVE W and MOVE IDLE in one event turn), and its
+  // press deterministically lost the run, so the blocked cleanup click was a
+  // symptom of a dead run rather than a cause. The held-movement contract in
+  // verifyPlaythroughJourney replaces it. This helper stays because the same
+  // diagnosis applies wherever a real player press must hit-test a control.
   const pointerOwner = async (selector) => page
     .locator(selector)
     .evaluate((element) => {
@@ -235,176 +215,96 @@ async function waitForGrowthOfferThroughCutscenes(page, report, {
       };
     })
     .catch(() => null);
-  const restorePatrol = async (reason, deadline) => {
-    if (patrolStartedAt === null || patrolStopped) return;
-    // A terminal run legitimately covers the D-pad with its outcome overlay, and
-    // stopping a patrol the run already ended is a no-op. Only a LIVE run owes
-    // the player a working movement control, so only a live run may fail here.
-    const terminal = await page
-      .locator("#defense-battle-surface")
-      .evaluate(
-        (surface, states) => states.includes(surface?.dataset?.defenseState)
-          // The outcome card is appended into the edge HUD over the D-pad, and
-          // it only ever exists once the run has ended.
-          || Boolean(document.querySelector(".defense-result")),
-        terminalStates,
-      )
-      .catch(() => false);
-    if (terminal) {
-      patrolStopped = true;
-      report.events.push({ event: "growth-patrol-skipped-terminal-run", reason });
-      return;
-    }
-    // The no-progress window measures SIMULATION progress, and reaching this
-    // line proves the simulation advanced two seconds. Clamping a UI click to
-    // that shrinking window conflates two budgets and left the cleanup 1.6 s on
-    // a software-WebGL runner; the click keeps its own bounded budget instead.
-    const cleanupDeadline = Math.min(overallDeadline, Date.now() + cleanupActionTimeout);
-    try {
-      await moveAsPlayer("IDLE", cleanupDeadline);
-    } catch (error) {
-      const blocker = await pointerOwner('[data-move="IDLE"]');
-      const detail = `failed to restore W patrol for ${reason}`
-        + `; pointer owner ${JSON.stringify(blocker)}; last state: ${JSON.stringify(state)}`;
-      error.message = `${error.message}; ${detail}`;
-      // Node prints error.stack, which is snapshotted when the Error is built,
-      // so appending to error.message alone never reaches a CI log -- which is
-      // why this failure has only ever been reported as a bare click timeout.
-      error.stack = `${error.stack}\n    ${detail}`;
-      throw error;
-    }
-    patrolStopped = true;
-    report.events.push({
-      event: "growth-patrol-command",
-      move: "IDLE",
-      simulationSecond: state?.simulationSecond ?? lastSimulationSecond,
-      reason,
-    });
-  };
   const failReason = (progressDeadline) => progressDeadline <= overallDeadline
     ? "live battle stopped advancing before a selectable growth offer appeared"
     : "live battle exceeded the overall growth-journey safety bound";
 
-  try {
-    state = await readState(Math.max(1, Math.min(noProgressTimeout, overallDeadline - Date.now())));
-    lastSimulationSecond = state.simulationSecond;
-    lastProgressAt = Date.now();
+  state = await readState(Math.max(1, Math.min(noProgressTimeout, overallDeadline - Date.now())));
+  lastSimulationSecond = state.simulationSecond;
+  lastProgressAt = Date.now();
 
-    while (Date.now() < overallDeadline) {
-      if (terminalStates.includes(state.surface?.defenseState)) {
-        failWithState("live battle became terminal before a selectable growth offer appeared", state, lastProgressAt);
-      }
-      if (state.growthOfferVisible && state.growthChoices.length > 0) {
-        await restorePatrol("growth-offer-ready", Date.now() + cleanupActionTimeout);
-        return growthOffer;
-      }
+  while (Date.now() < overallDeadline) {
+    if (terminalStates.includes(state.surface?.defenseState)) {
+      failWithState("live battle became terminal before a selectable growth offer appeared", state, lastProgressAt);
+    }
+    if (state.growthOfferVisible && state.growthChoices.length > 0) {
+      return growthOffer;
+    }
 
-      const progressDeadline = lastProgressAt + noProgressTimeout;
-      const operationDeadline = Math.min(progressDeadline, overallDeadline);
-      if (Date.now() >= operationDeadline) {
-        failWithState(failReason(progressDeadline), state, lastProgressAt);
-      }
+    const progressDeadline = lastProgressAt + noProgressTimeout;
+    const operationDeadline = Math.min(progressDeadline, overallDeadline);
+    if (Date.now() >= operationDeadline) {
+      failWithState(failReason(progressDeadline), state, lastProgressAt);
+    }
 
-      const dismissed = await dismissCutsceneAsPlayer(page, operationDeadline);
-      if (dismissed) {
-        report.events.push({ event: "cutscene-dismissed-before-growth", ...dismissed });
-        state = await readState(Math.max(1, operationDeadline - Date.now()));
-        continue;
-      }
-      // The earlier keyboard smoke queues movement and release on adjacent browser
-      // events, so slow frames can vary how long the command affects combat. Keep
-      // the journey player-driven with a westward patrol measured by the public
-      // battle clock, then stop through the real D-pad after two simulation seconds.
-      if (
-        patrolStartedAt === null
-        && state.simulationSecond !== null
-        && state.simulationSecond >= 20
-        && state.surface?.objectivePhase === "gate-defense"
-      ) {
-        patrolStartedAt = state.simulationSecond;
-        await moveAsPlayer("W", operationDeadline);
-        report.events.push({ event: "growth-patrol-command", move: "W", simulationSecond: patrolStartedAt });
-      } else if (
-        patrolStartedAt !== null
-        && !patrolStopped
-        && state.simulationSecond !== null
-        && state.simulationSecond >= patrolStartedAt + 2
-      ) {
-        await restorePatrol("two-simulation-second-patrol-complete", operationDeadline);
-      }
-
-      const signalTimeout = Math.max(1, Math.min(progressDeadline, overallDeadline) - Date.now());
+    const dismissed = await dismissCutsceneAsPlayer(page, operationDeadline);
+    if (dismissed) {
+      report.events.push({ event: "cutscene-dismissed-before-growth", ...dismissed });
+      state = await readState(Math.max(1, operationDeadline - Date.now()));
+      continue;
+    }
+    const signalTimeout = Math.max(1, Math.min(progressDeadline, overallDeadline) - Date.now());
+    try {
+      await page.waitForFunction(({ previousSimulationSecond, terminalStates }) => {
+        const offer = document.querySelector("#defense-growth-offer");
+        const offerStyle = offer ? getComputedStyle(offer) : null;
+        const offerReady = Boolean(
+          offer
+          && offer.getClientRects().length > 0
+          && offerStyle?.display !== "none"
+          && offerStyle?.visibility !== "hidden"
+          && [...offer.querySelectorAll("button[data-pick]")].some(
+            (button) => !button.disabled && button.getAttribute("aria-disabled") !== "true",
+          )
+        );
+        const dismiss = document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]");
+        const dismissStyle = dismiss ? getComputedStyle(dismiss) : null;
+        const dismissReady = Boolean(
+          dismiss
+          && dismiss.getClientRects().length > 0
+          && dismissStyle?.display !== "none"
+          && dismissStyle?.visibility !== "hidden",
+        );
+        const surfaceState = document.querySelector("#defense-battle-surface")?.dataset.defenseState;
+        const terminal = terminalStates.includes(surfaceState);
+        const status = document.querySelector("#battle-status")?.textContent ?? "";
+        const match = status.match(/시간\s+(\d+)초/);
+        const simulationSecond = match ? Number(match[1]) : null;
+        const simulationAdvanced = simulationSecond !== null
+          && (previousSimulationSecond === null || simulationSecond > previousSimulationSecond);
+        return terminal || offerReady || dismissReady || simulationAdvanced;
+      }, { previousSimulationSecond: lastSimulationSecond, terminalStates }, { timeout: signalTimeout });
+      state = await readState(Math.max(1, Math.min(progressDeadline, overallDeadline) - Date.now()));
+    } catch (error) {
+      if (error?.name !== "TimeoutError") throw error;
       try {
-        await page.waitForFunction(({ previousSimulationSecond, terminalStates }) => {
-          const offer = document.querySelector("#defense-growth-offer");
-          const offerStyle = offer ? getComputedStyle(offer) : null;
-          const offerReady = Boolean(
-            offer
-            && offer.getClientRects().length > 0
-            && offerStyle?.display !== "none"
-            && offerStyle?.visibility !== "hidden"
-            && [...offer.querySelectorAll("button[data-pick]")].some(
-              (button) => !button.disabled && button.getAttribute("aria-disabled") !== "true",
-            )
-          );
-          const dismiss = document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]");
-          const dismissStyle = dismiss ? getComputedStyle(dismiss) : null;
-          const dismissReady = Boolean(
-            dismiss
-            && dismiss.getClientRects().length > 0
-            && dismissStyle?.display !== "none"
-            && dismissStyle?.visibility !== "hidden",
-          );
-          const surfaceState = document.querySelector("#defense-battle-surface")?.dataset.defenseState;
-          const terminal = terminalStates.includes(surfaceState);
-          const status = document.querySelector("#battle-status")?.textContent ?? "";
-          const match = status.match(/시간\s+(\d+)초/);
-          const simulationSecond = match ? Number(match[1]) : null;
-          const simulationAdvanced = simulationSecond !== null
-            && (previousSimulationSecond === null || simulationSecond > previousSimulationSecond);
-          return terminal || offerReady || dismissReady || simulationAdvanced;
-        }, { previousSimulationSecond: lastSimulationSecond, terminalStates }, { timeout: signalTimeout });
-        state = await readState(Math.max(1, Math.min(progressDeadline, overallDeadline) - Date.now()));
-      } catch (error) {
-        if (error?.name !== "TimeoutError") throw error;
-        try {
-          state = await readState(Math.min(2000, Math.max(1, overallDeadline - Date.now())));
-        } catch {
-          // Preserve the last readable public state when the page itself is unresponsive.
-        }
-        const stateIsTerminal = terminalStates.includes(state?.surface?.defenseState);
-        const simulationAdvanced = state?.simulationSecond !== null
-          && (lastSimulationSecond === null || state.simulationSecond > lastSimulationSecond);
-        if (simulationAdvanced) {
-          lastSimulationSecond = state.simulationSecond;
-          lastProgressAt = Date.now();
-        }
-        if (stateIsTerminal || state?.growthOfferVisible || state?.cutsceneDismissVisible || simulationAdvanced) {
-          continue;
-        }
-        failWithState(failReason(progressDeadline), state, lastProgressAt);
+        state = await readState(Math.min(2000, Math.max(1, overallDeadline - Date.now())));
+      } catch {
+        // Preserve the last readable public state when the page itself is unresponsive.
       }
-
-      if (
-        state.simulationSecond !== null
-        && (lastSimulationSecond === null || state.simulationSecond > lastSimulationSecond)
-      ) {
+      const stateIsTerminal = terminalStates.includes(state?.surface?.defenseState);
+      const simulationAdvanced = state?.simulationSecond !== null
+        && (lastSimulationSecond === null || state.simulationSecond > lastSimulationSecond);
+      if (simulationAdvanced) {
         lastSimulationSecond = state.simulationSecond;
         lastProgressAt = Date.now();
       }
+      if (stateIsTerminal || state?.growthOfferVisible || state?.cutsceneDismissVisible || simulationAdvanced) {
+        continue;
+      }
+      failWithState(failReason(progressDeadline), state, lastProgressAt);
     }
 
-    failWithState("live battle exceeded the overall growth-journey safety bound", state, lastProgressAt);
-  } catch (error) {
-    if (patrolStartedAt !== null && !patrolStopped) {
-      try {
-        await restorePatrol("error-exit", Date.now() + cleanupActionTimeout);
-      } catch (cleanupError) {
-        error.message = `${error.message}; patrol cleanup also failed without replacing the original failure: ${cleanupError.message}`;
-      }
+    if (
+      state.simulationSecond !== null
+      && (lastSimulationSecond === null || state.simulationSecond > lastSimulationSecond)
+    ) {
+      lastSimulationSecond = state.simulationSecond;
+      lastProgressAt = Date.now();
     }
-    throw error;
   }
+
+  failWithState("live battle exceeded the overall growth-journey safety bound", state, lastProgressAt);
 }
 
 async function verifyPlaythroughJourney(browser, hosting, campaign) {
@@ -561,6 +461,110 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
       }
     }
     assert.equal(growthOfferClosed, true, "growth selections must settle without leaving an unresolved offer");
+    // Held-movement contract. Deliberately placed AFTER the growth journey.
+    //
+    // What it defends: app.js binds pointerdown/pointerup on #movement-actions.
+    // onMoveControlDown sends MOVE <dir> and captures the pointer on the button,
+    // onMoveControlEnd sends MOVE IDLE on pointerup, and onMoveControlClick
+    // ignores anything with event.detail !== 0. A click() therefore emits MOVE W
+    // and MOVE IDLE inside one event turn and holds nothing -- it cannot
+    // distinguish a working held input from a broken one.
+    //
+    // The press uses hover() so it must land on a genuinely reachable control;
+    // pressing "through" an overlay would not be a player action. The RELEASE is
+    // a raw mouse.up(): the pressed button holds pointer capture, so pointerup
+    // retargets to it and bubbles to #movement-actions without hit-testing a
+    // control that may have been covered or reflowed out from under the cursor.
+    //
+    // WHY AFTER THE JOURNEY -- do not move this back above it. Holding W walks
+    // the commander off the gate. The growth offer requires every normal enemy
+    // dead (defense-run-simulation.js:1579-1583), which lets the elite spawn
+    // (:1886-1889), whose death sets echoRecovery.completed (:1314); the offer
+    // needs both (:2004-2009). Lose the gate and no offer is ever created, so
+    // the journey fails with the offer ABSENT rather than late -- no timeout
+    // increase can fix that. A headless sweep on the seed this test uses
+    // (2962819252) reached the offer at tick 2166 with no press, and produced no
+    // offer at all for any of 21 press alignments across the first 10 simulation
+    // seconds. Down here the offer has already been produced and consumed, so
+    // the press has no downstream consumer and its tick alignment cannot matter.
+    const readHeldMovement = () => surface.evaluate((node) => {
+      const status = document.querySelector("#battle-status")?.textContent ?? "";
+      const simulationSecondMatch = status.match(/시간\s+(\d+)초/);
+      return {
+        inputSeq: node.dataset.defenseInputSeq ?? null,
+        move: node.dataset.defenseMove ?? null,
+        simulationSecond: simulationSecondMatch ? Number(simulationSecondMatch[1]) : null,
+        defenseState: node.dataset.defenseState ?? null,
+      };
+    });
+    const beforePress = await readHeldMovement();
+    assert.notEqual(beforePress.simulationSecond, null, "the public battle clock must be readable before a held movement command");
+    // app.js send() early-returns once the run is terminal, which freezes both
+    // the input sequence and the clock. Without this the hold below would
+    // surface as an unexplained timeout instead of naming the real cause.
+    assert.ok(
+      !["victory", "defeat", "final_completion"].includes(beforePress.defenseState),
+      `the held-movement contract needs a live battle; public state was ${String(beforePress.defenseState)}`,
+    );
+    await page.locator('[data-move="W"]').hover();
+    await page.mouse.down();
+    let heldMovement = null;
+    try {
+      await page.waitForFunction(
+        (previousInputSequence) => {
+          const dataset = document.querySelector("#defense-battle-surface")?.dataset;
+          return dataset?.defenseInputSeq !== previousInputSequence && dataset?.defenseMove === "W";
+        },
+        beforePress.inputSeq,
+        { timeout: 5000 },
+      );
+      const afterPress = await readHeldMovement();
+      // Hold past a public simulation-second boundary. The predicate runs in the
+      // page (per animation frame), so the hold cannot overshoot by whatever a
+      // Node-side observation gap happens to be on a slow runner.
+      await page.waitForFunction(
+        (target) => {
+          const status = document.querySelector("#battle-status")?.textContent ?? "";
+          const match = status.match(/시간\s+(\d+)초/);
+          return Boolean(match) && Number(match[1]) >= target;
+        },
+        afterPress.simulationSecond + 1,
+        { timeout: 15000 },
+      );
+      const duringHold = await readHeldMovement();
+      // The command must SURVIVE the boundary: this is what a click() cannot do.
+      assert.equal(duringHold.move, "W", "a held direction must still be the public movement command after a simulation-second boundary");
+      assert.equal(
+        duringHold.inputSeq,
+        afterPress.inputSeq,
+        "holding a direction must not re-queue input; the original command stays in force until release",
+      );
+      heldMovement = { afterPress, duringHold };
+    } finally {
+      await page.mouse.up();
+    }
+    await page.waitForFunction(
+      (previousInputSequence) => {
+        const dataset = document.querySelector("#defense-battle-surface")?.dataset;
+        return dataset?.defenseInputSeq !== previousInputSequence && dataset?.defenseMove === "IDLE";
+      },
+      heldMovement.duringHold.inputSeq,
+      { timeout: 5000 },
+    );
+    const afterRelease = await readHeldMovement();
+    assert.equal(afterRelease.move, "IDLE", "releasing a held direction must return the public movement state to idle");
+    report.events.push({
+      event: "held-movement-command",
+      move: "W",
+      pressedAtSimulationSecond: heldMovement.afterPress.simulationSecond,
+      releasedAtSimulationSecond: afterRelease.simulationSecond,
+      heldSimulationSeconds: afterRelease.simulationSecond - heldMovement.afterPress.simulationSecond,
+      inputSeq: {
+        beforePress: beforePress.inputSeq,
+        afterPress: heldMovement.afterPress.inputSeq,
+        afterRelease: afterRelease.inputSeq,
+      },
+    });
     // This test (unlike the portrait/landscape .cjs tests, which deliberately
     // force the Canvas2D fallback to test that path) does NOT stub WebGL2 —
     // by this point in the playthrough many real frames have rendered.
@@ -887,11 +891,39 @@ async function verifyBossMeshRegression(browser, hosting) {
       const expectedModelPath = "bosses/cinder-warden.glb";
       const expectedGlbPath = "assets/images/battle/glb/bosses/cinder-warden.glb";
       const actorKeys = () => (renderer.actors && typeof renderer.actors.keys === "function" ? [...renderer.actors.keys()] : []);
+      // Wait on the record's own SETTLED state, not on the clock. ensureActor()
+      // clears `loading` on BOTH the success path (root assigned in the same
+      // synchronous .then() block) and the failure path (.catch() leaves root
+      // null), so `loading === false` is a real readiness signal and `root`
+      // discriminates success from failure. A genuinely missing/404/corrupt GLB
+      // therefore fails in tens of milliseconds (measured: 26ms for 404 and for
+      // a corrupt body, 45ms for an aborted request) instead of burning the
+      // whole budget -- the deadline below is only a backstop for a fetch that
+      // never settles at all.
+      //
+      // That backstop is renderer-aware, following tests/defense-performance-browser.cjs's
+      // precedent of branching budgets on software-WebGL detection. Under
+      // SwiftShader/llvmpipe the GLTF parse, texture decode and material
+      // compile all contend with software rasterization on the one main
+      // thread, so this 4MB boss GLB is legitimately slower to become
+      // renderable: measured ~0.13s on hardware vs ~2.9s under SwiftShader
+      // unthrottled, and ~1.5s vs ~14.9s with the main thread throttled 4x to
+      // model a 2-core CI runner (~16.9s at 8x). The hardware bound stays at
+      // 10s so a real regression on a normal GPU still fails fast; the
+      // software bound clears the worst measured cost with margin. Detection
+      // reads the renderer instance's own `softwareRenderer` field (set from
+      // detectSoftwareWebGL() at mount) rather than the canvas renderScale
+      // proxy the performance gate uses -- this off-DOM 320x180 canvas is
+      // below SOFTWARE_MAX_BACKBUFFER_PX, so its renderScale stays 1 (and is
+      // in fact never set) even under SwiftShader.
+      const softwareRenderer = renderer.softwareRenderer === true;
+      const readinessBudgetMs = softwareRenderer ? 45000 : 10000;
+      const startedAt = performance.now();
       const entry = await new Promise((resolve) => {
-        const deadline = performance.now() + 10000;
+        const deadline = startedAt + readinessBudgetMs;
         const poll = () => {
           const candidate = renderer.actors?.get?.(boss.id);
-          if ((candidate?.loading === false && candidate.root) || performance.now() >= deadline) {
+          if (candidate?.loading === false || performance.now() >= deadline) {
             resolve(candidate ?? null);
             return;
           }
@@ -899,9 +931,14 @@ async function verifyBossMeshRegression(browser, hosting) {
         };
         poll();
       });
+      const readyMs = Math.round(performance.now() - startedAt);
       if (!entry || entry.loading || !entry.root) {
+        const settled = entry?.loading === false;
+        const cause = settled
+          ? `its GLB load settled without producing a root after ${readyMs}ms (fetch/parse failed)`
+          : `its GLB load never settled within the ${readinessBudgetMs}ms ${softwareRenderer ? "software-WebGL" : "hardware-WebGL"} backstop (${readyMs}ms elapsed)`;
         return {
-          error: `renderer.actors has no loaded root for live boss id ${boss.id} within 10000ms -- expected GLB ${expectedGlbPath}`,
+          error: `renderer.actors has no loaded root for live boss id ${boss.id} -- ${cause}; expected GLB ${expectedGlbPath}`,
           bossId: boss.id,
           bossHp: boss.hp,
           bossTick: snapshot.tick,
@@ -909,6 +946,10 @@ async function verifyBossMeshRegression(browser, hosting) {
           expectedModelPath,
           modelPath: entry?.modelPath ?? null,
           rootName: entry?.root?.name ?? null,
+          softwareRenderer,
+          readinessBudgetMs,
+          readyMs,
+          settled,
         };
       }
       let meshDescendantCount = 0;
@@ -924,6 +965,9 @@ async function verifyBossMeshRegression(browser, hosting) {
         meshDescendantCount,
         expectedModelPath,
         expectedGlbPath,
+        softwareRenderer,
+        readinessBudgetMs,
+        readyMs,
       };
     });
 
