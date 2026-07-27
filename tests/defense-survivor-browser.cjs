@@ -417,24 +417,76 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
     assert.equal(Number(await surface.getAttribute("data-defense-input-seq")), beforeTouch, "canvas taps must not queue movement input (orbit/movement decoupled, D17)");
     assert.equal(await surface.getAttribute("data-defense-move"), moveBeforeTouch, "canvas taps must leave the public movement state unaffected");
     report.events.push("touch-canvas-no-movement");
-    // Held-movement contract. app.js binds pointerdown/pointerup on
-    // #movement-actions: onMoveControlDown sends MOVE <dir> and captures the
-    // pointer on the button, onMoveControlEnd sends MOVE IDLE on pointerup, and
-    // onMoveControlClick ignores anything with event.detail !== 0. A click()
-    // therefore emits MOVE W and MOVE IDLE inside one event turn and holds
-    // nothing -- it cannot distinguish a working held input from a broken one.
-    // Press the real control, hold it across a public simulation-second
-    // boundary, and release it, asserting the public admission of both edges.
+    // Advance by the public battle clock rather than wall time: software WebGL
+    // can render slowly in CI, while a frozen clock still fails promptly.
+    const growthOffer = await waitForGrowthOfferThroughCutscenes(page, report, {
+      noProgressTimeout: 15000,
+      overallTimeout: 180000,
+    });
+    const selectedGrowthSkills = new Set();
+    const maxImmediateGrowthSelections = 8;
+    let growthOfferClosed = false;
+    for (let selection = 0; selection < maxImmediateGrowthSelections; selection += 1) {
+      const choices = await growthOffer.locator("button[data-pick]").evaluateAll((buttons) => buttons.map((button) => button.dataset.pick ?? ""));
+      assert.ok(choices.length > 0, "a visible growth offer must contain a selectable real skill");
+      assert.equal(new Set(choices).size, choices.length, "a growth offer must not repeat a selectable skill");
+      choices.forEach((skill) => assert.match(skill, /\S/, "each growth choice must identify a real skill"));
+      const skill = choices[0];
+      assert.equal(selectedGrowthSkills.has(skill), false, "a selected growth skill must not be offered again");
+      const offerKey = choices.join(",");
+      await growthOffer.locator(`button[data-pick="${skill}"]`).click();
+      selectedGrowthSkills.add(skill);
+      report.events.push({ event: "growth-selected", skill });
+      await page.waitForFunction(({ offerKey, skill }) => {
+        const status = document.querySelector("#battle-status")?.textContent ?? "";
+        if (!status.includes("성장 선택 중")) return true;
+        const nextOffer = document.querySelector("#defense-growth-offer");
+        const nextChoices = [...nextOffer?.querySelectorAll("button[data-pick]") ?? []]
+          .map((button) => button.dataset.pick ?? "");
+        return Boolean(nextOffer) && (
+          nextChoices.length === 0
+          || (nextChoices.join(",") !== offerKey && !nextChoices.includes(skill))
+        );
+      }, { offerKey, skill });
+      if (await growthOffer.isHidden()) {
+        growthOfferClosed = true;
+        break;
+      }
+      const nextChoices = await growthOffer.locator("button[data-pick]").count();
+      if (nextChoices === 0) {
+        assert.equal(selectedGrowthSkills.size, maxImmediateGrowthSelections, "an empty growth offer is valid only after every skill is owned");
+        await growthOffer.waitFor({ state: "hidden" });
+        growthOfferClosed = true;
+        break;
+      }
+    }
+    assert.equal(growthOfferClosed, true, "growth selections must settle without leaving an unresolved offer");
+    // Held-movement contract. Deliberately placed AFTER the growth journey.
+    //
+    // What it defends: app.js binds pointerdown/pointerup on #movement-actions.
+    // onMoveControlDown sends MOVE <dir> and captures the pointer on the button,
+    // onMoveControlEnd sends MOVE IDLE on pointerup, and onMoveControlClick
+    // ignores anything with event.detail !== 0. A click() therefore emits MOVE W
+    // and MOVE IDLE inside one event turn and holds nothing -- it cannot
+    // distinguish a working held input from a broken one.
     //
     // The press uses hover() so it must land on a genuinely reachable control;
     // pressing "through" an overlay would not be a player action. The RELEASE is
-    // a raw mouse.up(), which is the point: the pressed button holds pointer
-    // capture, so pointerup retargets to it and bubbles to #movement-actions
-    // even when the cutscene frame covers the D-pad or the growth card reflows
-    // it out from under the cursor. Measured at 844x390, where .cutscene-frame
-    // does overlap the D-pad: click([data-move="IDLE"]) is blocked for ~1722ms
-    // by "cutscene-beat ... intercepts pointer events", while this capture-based
-    // release is admitted in ~3ms.
+    // a raw mouse.up(): the pressed button holds pointer capture, so pointerup
+    // retargets to it and bubbles to #movement-actions without hit-testing a
+    // control that may have been covered or reflowed out from under the cursor.
+    //
+    // WHY AFTER THE JOURNEY -- do not move this back above it. Holding W walks
+    // the commander off the gate. The growth offer requires every normal enemy
+    // dead (defense-run-simulation.js:1579-1583), which lets the elite spawn
+    // (:1886-1889), whose death sets echoRecovery.completed (:1314); the offer
+    // needs both (:2004-2009). Lose the gate and no offer is ever created, so
+    // the journey fails with the offer ABSENT rather than late -- no timeout
+    // increase can fix that. A headless sweep on the seed this test uses
+    // (2962819252) reached the offer at tick 2166 with no press, and produced no
+    // offer at all for any of 21 press alignments across the first 10 simulation
+    // seconds. Down here the offer has already been produced and consumed, so
+    // the press has no downstream consumer and its tick alignment cannot matter.
     const readHeldMovement = () => surface.evaluate((node) => {
       const status = document.querySelector("#battle-status")?.textContent ?? "";
       const simulationSecondMatch = status.match(/시간\s+(\d+)초/);
@@ -442,10 +494,18 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
         inputSeq: node.dataset.defenseInputSeq ?? null,
         move: node.dataset.defenseMove ?? null,
         simulationSecond: simulationSecondMatch ? Number(simulationSecondMatch[1]) : null,
+        defenseState: node.dataset.defenseState ?? null,
       };
     });
     const beforePress = await readHeldMovement();
     assert.notEqual(beforePress.simulationSecond, null, "the public battle clock must be readable before a held movement command");
+    // app.js send() early-returns once the run is terminal, which freezes both
+    // the input sequence and the clock. Without this the hold below would
+    // surface as an unexplained timeout instead of naming the real cause.
+    assert.ok(
+      !["victory", "defeat", "final_completion"].includes(beforePress.defenseState),
+      `the held-movement contract needs a live battle; public state was ${String(beforePress.defenseState)}`,
+    );
     await page.locator('[data-move="W"]').hover();
     await page.mouse.down();
     let heldMovement = null;
@@ -505,50 +565,6 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
         afterRelease: afterRelease.inputSeq,
       },
     });
-    // Advance by the public battle clock rather than wall time: software WebGL
-    // can render slowly in CI, while a frozen clock still fails promptly.
-    const growthOffer = await waitForGrowthOfferThroughCutscenes(page, report, {
-      noProgressTimeout: 15000,
-      overallTimeout: 180000,
-    });
-    const selectedGrowthSkills = new Set();
-    const maxImmediateGrowthSelections = 8;
-    let growthOfferClosed = false;
-    for (let selection = 0; selection < maxImmediateGrowthSelections; selection += 1) {
-      const choices = await growthOffer.locator("button[data-pick]").evaluateAll((buttons) => buttons.map((button) => button.dataset.pick ?? ""));
-      assert.ok(choices.length > 0, "a visible growth offer must contain a selectable real skill");
-      assert.equal(new Set(choices).size, choices.length, "a growth offer must not repeat a selectable skill");
-      choices.forEach((skill) => assert.match(skill, /\S/, "each growth choice must identify a real skill"));
-      const skill = choices[0];
-      assert.equal(selectedGrowthSkills.has(skill), false, "a selected growth skill must not be offered again");
-      const offerKey = choices.join(",");
-      await growthOffer.locator(`button[data-pick="${skill}"]`).click();
-      selectedGrowthSkills.add(skill);
-      report.events.push({ event: "growth-selected", skill });
-      await page.waitForFunction(({ offerKey, skill }) => {
-        const status = document.querySelector("#battle-status")?.textContent ?? "";
-        if (!status.includes("성장 선택 중")) return true;
-        const nextOffer = document.querySelector("#defense-growth-offer");
-        const nextChoices = [...nextOffer?.querySelectorAll("button[data-pick]") ?? []]
-          .map((button) => button.dataset.pick ?? "");
-        return Boolean(nextOffer) && (
-          nextChoices.length === 0
-          || (nextChoices.join(",") !== offerKey && !nextChoices.includes(skill))
-        );
-      }, { offerKey, skill });
-      if (await growthOffer.isHidden()) {
-        growthOfferClosed = true;
-        break;
-      }
-      const nextChoices = await growthOffer.locator("button[data-pick]").count();
-      if (nextChoices === 0) {
-        assert.equal(selectedGrowthSkills.size, maxImmediateGrowthSelections, "an empty growth offer is valid only after every skill is owned");
-        await growthOffer.waitFor({ state: "hidden" });
-        growthOfferClosed = true;
-        break;
-      }
-    }
-    assert.equal(growthOfferClosed, true, "growth selections must settle without leaving an unresolved offer");
     // This test (unlike the portrait/landscape .cjs tests, which deliberately
     // force the Canvas2D fallback to test that path) does NOT stub WebGL2 —
     // by this point in the playthrough many real frames have rendered.
