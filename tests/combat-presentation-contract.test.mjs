@@ -519,20 +519,28 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   const { meshRootForStageBoss } = await rendererModule;
   const bossModelPath = meshRootForStageBoss(profile.stageId);
   assert.ok(bossModelPath, "the stage must resolve an authored boss rig");
+  // BOSS_MODELS entries are stored relative to the renderer's model root,
+  // unlike the catalog's absolute decor paths, so resolve it the same way the
+  // renderer's modelUrl() does before comparing request URLs.
+  const bossRequestPath = bossModelPath.startsWith("assets/")
+    ? `./${bossModelPath}`
+    : `./assets/images/battle/glb/${bossModelPath}`;
   const expectedRequests = [
-    profile.terrainGlbPath,
-    ...profile.presentation.props.map(({ modelPath }) => modelPath),
-    ...profile.presentation.npcs.map(({ modelPath }) => modelPath),
+    ...[
+      profile.terrainGlbPath,
+      ...profile.presentation.props.map(({ modelPath }) => modelPath),
+      ...profile.presentation.npcs.map(({ modelPath }) => modelPath),
+    ].map((modelPath) => `./${modelPath}`),
     // Stage load warms the boss rig so it does not pop in mid-fight.
-    bossModelPath,
-  ].map((modelPath) => `./${modelPath}`).sort();
+    bossRequestPath,
+  ].sort();
   assert.deepEqual(
     [...new Set(gltfRequests.slice(requestStart))].sort(),
     expectedRequests,
     "renderer requests the catalog terrain, prop, NPC, and boss models without substituting generic assets",
   );
   assert.ok(
-    gltfRequests.slice(requestStart).includes(`./${bossModelPath}`),
+    gltfRequests.slice(requestStart).includes(bossRequestPath),
     "stage load must warm the authored boss rig before the boss spawns",
   );
   assert.equal(decor.stageId, profile.stageId);
