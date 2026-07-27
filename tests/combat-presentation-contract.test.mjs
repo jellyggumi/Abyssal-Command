@@ -5,7 +5,21 @@ import * as THREE from "../vendor/three.module.js";
 import { GLTFLoader } from "../vendor/loaders/GLTFLoader.js";
 import { stageWorldFor } from "../stage-world-catalog.js";
 
-const COMBAT_CLIP_KEYS = ["idle", "move", "run", "attack", "hit", "die", "show"];
+// Mirrors the rig pipeline's authored library so the harness exercises the same
+// beat set the deployed characters carry, not a subset.
+const COMBAT_CLIP_KEYS = [
+  "idle",
+  "move",
+  "run",
+  "attack",
+  "hit",
+  "bighit",
+  "avoid",
+  "defence",
+  "critical",
+  "die",
+  "show",
+];
 
 function syntheticRig() {
   const scene = new THREE.Group();
@@ -265,6 +279,179 @@ test("combat one-shots preempt ambient idle, recover cleanly, and death stays te
   assert.equal(retired.actorCount, 0, "retirement removes actor presentation records");
   assert.equal(retired.mixerCount, 0, "retirement releases tracked mixers");
   assert.equal(retired.actionCount, 0, "retirement releases tracked actions");
+  adapter.dispose();
+});
+
+test("a repeated combat beat restarts its clip and cannot be pinned at frame zero", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  adapter.reconcileActors({
+    tick: 1,
+    enemies: [
+      { id: "combo-actor", kind: "rusher", x: 12000, y: 6000 },
+      { id: "terminal-actor", kind: "rusher", x: 13000, y: 6000 },
+    ],
+  });
+  await settleLoadedActors(adapter, ["combo-actor", "terminal-actor"]);
+
+  const combo = adapter.actors.get("combo-actor");
+  const baselineActionCount = adapter.debugPresentationState("combo-actor").actionCount;
+  assert.equal(adapter.triggerAction(combo, "attack", 0), true, "the first beat plays");
+  const action = combo.oneShotAction;
+  assert.ok(action, "the attack clip is the live one-shot");
+  assert.equal(action.time, 0, "a fresh beat starts at frame zero");
+
+  // A snapshot can carry several same-beat events in one frame. Without the
+  // one-frame floor those repeats would rewind the clip every call and the
+  // character would never leave frame zero.
+  assert.equal(adapter.triggerAction(combo, "attack", 0), false, "a same-frame repeat is floored");
+  assert.equal(action.time, 0, "the floored repeat leaves the clip untouched");
+
+  adapter.updateAnimations(adapter.lastAnimMs + 20);
+  assert.ok(action.time > 0, "the mixer advanced the live beat");
+  assert.equal(
+    adapter.debugPresentationState("combo-actor").oneShotActionKey,
+    "attack",
+    "the beat is still playing before the repeat",
+  );
+
+  assert.equal(adapter.triggerAction(combo, "attack", 0), true, "a rapid repeat restarts the beat");
+  assert.equal(action.time, 0, "the restart rewinds the clip so the combo reads as a second hit");
+  const restarted = adapter.debugPresentationState("combo-actor");
+  assert.equal(restarted.oneShotActionKey, "attack", "the restarted beat stays the live one-shot");
+  assert.equal(restarted.activeActionKey, "attack", "the restarted beat stays the active clip");
+  assert.equal(
+    restarted.actionCount,
+    baselineActionCount,
+    "restarting reuses the loaded action instead of allocating a replacement",
+  );
+
+  // A different beat still queues rather than cutting the live one.
+  assert.equal(adapter.triggerAction(combo, "hit", 0), false, "an incompatible beat still queues");
+  assert.equal(combo.queuedAction?.key, "hit", "the incompatible beat is the queued follow-up");
+  assert.equal(
+    adapter.debugPresentationState("combo-actor").oneShotActionKey,
+    "attack",
+    "queuing must not preempt the live beat",
+  );
+
+  const terminal = adapter.actors.get("terminal-actor");
+  assert.equal(adapter.triggerAction(terminal, "die", 0), true, "death preempts idle");
+  adapter.updateAnimations(adapter.lastAnimMs + 20);
+  assert.equal(adapter.triggerAction(terminal, "die", 0), false, "death never restarts");
+  const dead = adapter.debugPresentationState("terminal-actor");
+  assert.equal(dead.oneShotActionKey, "die", "death stays the live one-shot");
+  assert.equal(dead.dead, true, "death stays terminal");
+
+  adapter.dispose();
+});
+
+test("a queued beat is chosen by presentation weight, not by arrival order", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  adapter.reconcileActors({
+    tick: 1,
+    enemies: [
+      { id: "queue-actor", kind: "rusher", x: 12000, y: 6000 },
+      { id: "tie-actor", kind: "rusher", x: 13000, y: 6000 },
+    ],
+  });
+  await settleLoadedActors(adapter, ["queue-actor", "tie-actor"]);
+
+  const queueActor = adapter.actors.get("queue-actor");
+  assert.equal(adapter.triggerAction(queueActor, "attack", 0), true, "the live beat starts");
+
+  assert.equal(adapter.triggerAction(queueActor, "hit", 0), false, "a flinch queues behind the swing");
+  assert.equal(queueActor.queuedAction.key, "hit");
+
+  assert.equal(adapter.triggerAction(queueActor, "bighit", 0), false, "a stagger queues behind the swing");
+  assert.equal(
+    queueActor.queuedAction.key,
+    "bighit",
+    "the heavier reaction takes the slot from the lighter one",
+  );
+
+  assert.equal(adapter.triggerAction(queueActor, "hit", 0), false, "a later flinch still queues");
+  assert.equal(
+    queueActor.queuedAction.key,
+    "bighit",
+    "arriving later must not evict the reaction the player has to read",
+  );
+
+  assert.equal(adapter.triggerAction(queueActor, "avoid", 0), false, "a dodge still queues");
+  assert.equal(queueActor.queuedAction.key, "bighit", "a mid-weight reaction loses to the stagger");
+
+  // The surviving beat is the one that actually plays on completion.
+  adapter.updateAnimations(adapter.lastAnimMs + 100);
+  const resolved = adapter.debugPresentationState("queue-actor");
+  assert.equal(resolved.oneShotActionKey, "bighit", "the surviving reaction plays next");
+  assert.equal(queueActor.queuedAction, null, "the slot is released once its beat plays");
+
+  const tieActor = adapter.actors.get("tie-actor");
+  assert.equal(adapter.triggerAction(tieActor, "attack", 0), true, "the live beat starts");
+  assert.equal(adapter.triggerAction(tieActor, "avoid", 0), false, "a dodge queues");
+  assert.equal(tieActor.queuedAction.key, "avoid");
+  assert.equal(adapter.triggerAction(tieActor, "defence", 0), false, "a guard queues");
+  assert.equal(
+    tieActor.queuedAction.key,
+    "defence",
+    "equal-weight reactions resolve to the freshest simulation event",
+  );
+
+  adapter.dispose();
+});
+
+test("beat entry and recovery fades carry the weight of the beat", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  adapter.reconcileActors({
+    tick: 1,
+    enemies: [
+      { id: "snap-actor", kind: "rusher", x: 12000, y: 6000 },
+      { id: "ease-actor", kind: "rusher", x: 13000, y: 6000 },
+    ],
+  });
+  await settleLoadedActors(adapter, ["snap-actor", "ease-actor"]);
+
+  const snap = adapter.actors.get("snap-actor");
+  const ease = adapter.actors.get("ease-actor");
+  assert.equal(adapter.triggerAction(snap, "bighit", 0), true, "the stagger starts");
+  assert.equal(adapter.triggerAction(ease, "show", 0), true, "the entrance starts");
+
+  adapter.updateAnimations(adapter.lastAnimMs + 20);
+  const snapWeight = snap.actions.bighit.getEffectiveWeight();
+  const easeWeight = ease.actions.show.getEffectiveWeight();
+  assert.ok(snapWeight > 0.5, `impact must be readable on arrival, got ${snapWeight}`);
+  assert.ok(easeWeight < 0.5, `an entrance must ease in rather than pop, got ${easeWeight}`);
+  assert.ok(snapWeight > easeWeight, "a stagger snaps in faster than an entrance");
+
+  // Recovery: a stagger drains back to locomotion slower than a swing does.
+  adapter.reconcileActors({
+    tick: 2,
+    enemies: [
+      { id: "stagger-actor", kind: "rusher", x: 12000, y: 6000 },
+      { id: "swing-actor", kind: "rusher", x: 13000, y: 6000 },
+    ],
+  });
+  await settleLoadedActors(adapter, ["stagger-actor", "swing-actor"]);
+  const stagger = adapter.actors.get("stagger-actor");
+  const swing = adapter.actors.get("swing-actor");
+  assert.equal(adapter.triggerAction(stagger, "bighit", 0), true, "the stagger starts");
+  assert.equal(adapter.triggerAction(swing, "attack", 0), true, "the swing starts");
+
+  adapter.updateAnimations(adapter.lastAnimMs + 100);
+  assert.equal(adapter.debugPresentationState("stagger-actor").oneShotActionKey, null, "the stagger completed");
+  assert.equal(adapter.debugPresentationState("swing-actor").oneShotActionKey, null, "the swing completed");
+
+  adapter.updateAnimations(adapter.lastAnimMs + 60);
+  const staggerRecovery = stagger.actions.idle.getEffectiveWeight();
+  const swingRecovery = swing.actions.idle.getEffectiveWeight();
+  assert.ok(
+    swingRecovery > staggerRecovery,
+    `a swing must snap back faster than a stagger (swing ${swingRecovery}, stagger ${staggerRecovery})`,
+  );
+  assert.ok(staggerRecovery > 0, "the stagger still recovers rather than stalling");
+
   adapter.dispose();
 });
 

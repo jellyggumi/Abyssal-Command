@@ -54,6 +54,11 @@ def parse_args(argv=None):
     parser.add_argument("--texture", required=True, help="concept/reference texture image")
     parser.add_argument("--asset-id", required=True, help="catalog id, for example dusk-warden")
     parser.add_argument(
+        "--normal",
+        default=None,
+        help="optional shared tangent-space normal texture",
+    )
+    parser.add_argument(
         "--out",
         default=None,
         help="candidate GLB output (defaults under _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline)",
@@ -74,6 +79,7 @@ def parse_args(argv=None):
         args.report = str(DEFAULT_CANDIDATE_ROOT / "cartoon-texture" / "reports" / f"{args.asset_id}.json")
     args.glb = str(Path(args.glb))
     args.texture = str(Path(args.texture))
+    args.normal = str(Path(args.normal)) if args.normal is not None else None
     args.out = str(Path(args.out))
     args.report = str(Path(args.report))
     return args
@@ -121,11 +127,14 @@ def _validate_paths(args):
     texture = Path(args.texture).expanduser()
     output = Path(args.out).expanduser()
     report = Path(args.report).expanduser()
+    normal = Path(args.normal).expanduser() if args.normal else None
     if not source.is_file():
         raise FileNotFoundError(f"source GLB does not exist: {source}")
     if not texture.is_file():
         # Missing concept media must stop the pipeline before Blender starts.
         raise FileNotFoundError(f"texture does not exist: {texture}")
+    if normal is not None and not normal.is_file():
+        raise FileNotFoundError(f"normal texture does not exist: {normal}")
     if _is_within(texture, RUNTIME_ROOT):
         raise ValueError("concept texture cannot be sourced from the runtime asset lane")
     _concept_provenance(texture)
@@ -137,7 +146,7 @@ def _validate_paths(args):
         raise ValueError(f"candidate output must be a .glb: {output}")
     if report.suffix.lower() != ".json":
         raise ValueError(f"candidate report must be a .json: {report}")
-    return source, texture, output, report
+    return source, texture, normal, output, report
 
 
 def _lane_for_texture(texture):
@@ -172,7 +181,7 @@ def _lane_for_source(source):
     return "external"
 
 
-def _base_report(args, source, texture, output, report, dry_run):
+def _base_report(args, source, texture, normal, output, report, dry_run):
     source_hash = _sha256(source)
     texture_hash = _sha256(texture)
     return {
@@ -192,6 +201,11 @@ def _base_report(args, source, texture, output, report, dry_run):
             "sha256": texture_hash,
             "readOnly": True,
             "provenance": _texture_report(texture),
+        },
+        "normal": {
+            "path": str(normal) if normal is not None else None,
+            "sha256": _sha256(normal) if normal is not None else None,
+            "readOnly": True,
         },
         # Flat aliases keep the hashes easy to consume from shell validators.
         "sourceSha256": source_hash,
@@ -255,7 +269,7 @@ def _body_and_hierarchy(asset_id):
     return body, armature, root, meshes
 
 
-def _toon_material(asset_id, texture_path):
+def _toon_material(asset_id, texture_path, normal_path=None):
     """Create or repair one deterministic image->Principled toon material."""
     import bpy
 
@@ -292,6 +306,21 @@ def _toon_material(asset_id, texture_path):
     if base_color is None:
         raise RuntimeError("Blender Principled BSDF has no Base Color input")
     links.new(image.outputs["Color"], base_color)
+
+    if normal_path is not None:
+        normal_image = nodes.new("ShaderNodeTexImage")
+        normal_image.name = "Shared Toon Normal"
+        normal_image.label = "Shared tangent-space normal (candidate only)"
+        normal_image.location = (-260, -180)
+        normal_image.image = bpy.data.images.load(str(normal_path), check_existing=True)
+        normal_image.image.colorspace_settings.name = "Non-Color"
+        normal_map = nodes.new("ShaderNodeNormalMap")
+        normal_map.name = "Shared Toon Normal Map"
+        normal_map.location = (80, -180)
+        normal_map.inputs["Strength"].default_value = 0.15
+        links.new(normal_image.outputs["Color"], normal_map.inputs["Color"])
+        links.new(normal_map.outputs["Normal"], shader.inputs["Normal"])
+
     links.new(shader.outputs["BSDF"], output.inputs["Surface"])
     roughness = shader.inputs.get("Roughness")
     if roughness is not None:
@@ -299,7 +328,8 @@ def _toon_material(asset_id, texture_path):
     metallic = shader.inputs.get("Metallic")
     if metallic is not None:
         metallic.default_value = 0.0
-    # The direct image->Base Color link is glTF-compatible.  These custom
+
+    # The direct image->Base Color link is glTF-compatible. These custom
     # properties document the cel banding contract without introducing a
     # Shader-to-RGB node that would be dropped by the glTF exporter.
     material["celShadowBands"] = 3
@@ -307,20 +337,20 @@ def _toon_material(asset_id, texture_path):
     return material
 
 
-def run_in_blender(args, source, texture, output, report_path):
+def run_in_blender(args, source, texture, normal, output, report_path):
     """Import, recolor only the body, and export a staged candidate GLB."""
     import bpy
 
-    report = _base_report(args, source, texture, output, report_path, dry_run=False)
+    report = _base_report(args, source, texture, normal, output, report_path, dry_run=False)
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=str(source))
     body, armature, root, meshes = _body_and_hierarchy(args.asset_id)
     if not body.data.uv_layers:
         raise RuntimeError("body mesh has no UV map; unwrap it before cartoon texture mapping")
     active_uv = body.data.uv_layers.active.name
-    material = _toon_material(args.asset_id, texture)
+    material = _toon_material(args.asset_id, texture, normal)
 
-    # Replace only the body's slots.  Pedestal/terrain, weapons, and every
+    # Replace only the body's slots. Pedestal/terrain, weapons, and every
     # other imported mesh retain their source materials and geometry.
     body.data.materials.clear()
     body.data.materials.append(material)
@@ -376,12 +406,12 @@ def run_in_blender(args, source, texture, output, report_path):
 def main(argv=None):
     args = parse_args(argv)
     try:
-        source, texture, output, report_path = _validate_paths(args)
+        source, texture, normal, output, report_path = _validate_paths(args)
         if args.dry_run:
-            report = _base_report(args, source, texture, output, report_path, dry_run=True)
+            report = _base_report(args, source, texture, normal, output, report_path, dry_run=True)
             _write_report(report_path, report)
         else:
-            report = run_in_blender(args, source, texture, output, report_path)
+            report = run_in_blender(args, source, texture, normal, output, report_path)
     except (FileNotFoundError, OSError, ValueError, RuntimeError) as exc:
         error = {"ok": False, "error": str(exc), "runtimeEligible": False, "assetLane": "candidate"}
         print(json.dumps(error, sort_keys=True), file=sys.stderr)

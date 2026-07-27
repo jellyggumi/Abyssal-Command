@@ -319,6 +319,71 @@ const PROJECTILE_OWNER_FAMILY = Object.freeze({
 const PROJECTILE_FAMILIES = Object.freeze(["orb", "bolt", "slash"]);
 const PROJECTILE_HEIGHT = Object.freeze({ orb: 0.62, bolt: 0.48, slash: 0.58 });
 const PROJECTILE_ARC_HEIGHT = Object.freeze({ orb: 0.34, bolt: 0.08, slash: 0.2 });
+// A repeated combat beat restarts its clip instead of being swallowed, so a
+// fast combo reads as N hits rather than one long hit. The restart is floored
+// by one frame of the clip's OWN elapsed time (AnimationAction#time), so a
+// snapshot carrying several same-beat events cannot pin the clip at frame 0.
+// Using the action's clock keeps this free of any parallel timer.
+const ONE_SHOT_RESTART_MIN_ELAPSED_SECONDS = 1 / 60;
+// Presentation weight of each one-shot beat. Reactions outrank actions: a
+// flinch, guard, dodge, or stagger tells the player what just happened to them,
+// while a repeated swing is re-announced by the next fire event anyway. The
+// queue keeps ONE slot -- a deeper queue would replay stale reactions seconds
+// after the hit that caused them -- so the highest-priority beat wins and ties
+// go to the freshest event.
+const BEAT_PRIORITY = Object.freeze({
+  die: 100,
+  bighit: 60,
+  defence: 50,
+  avoid: 50,
+  hit: 40,
+  critical: 30,
+  attack: 30,
+  attack_melee: 30,
+  attack_ranged: 30,
+  show: 10,
+});
+const DEFAULT_BEAT_PRIORITY = 20;
+// Impact must land on the first frame, so heavy beats snap in; an entrance is
+// the one beat that should ease in instead of popping.
+const ONE_SHOT_ENTRY_FADE_SECONDS = Object.freeze({
+  bighit: 0.03,
+  hit: 0.05,
+  avoid: 0.06,
+  defence: 0.06,
+  attack: 0.08,
+  attack_melee: 0.08,
+  attack_ranged: 0.08,
+  critical: 0.08,
+  show: 0.2,
+});
+const DEFAULT_ONE_SHOT_ENTRY_FADE_SECONDS = 0.08;
+// Returning to locomotion carries the beat's weight: a stagger drains back
+// slowly, a swing snaps back so the next swing reads as its own beat.
+const LOCOMOTION_RECOVERY_FADE_SECONDS = Object.freeze({
+  bighit: 0.28,
+  defence: 0.2,
+  show: 0.2,
+  avoid: 0.18,
+  hit: 0.15,
+  attack: 0.12,
+  attack_melee: 0.12,
+  attack_ranged: 0.12,
+  critical: 0.12,
+});
+const DEFAULT_LOCOMOTION_RECOVERY_FADE_SECONDS = 0.15;
+
+function beatPriority(key) {
+  return BEAT_PRIORITY[key] ?? DEFAULT_BEAT_PRIORITY;
+}
+
+function oneShotEntryFadeSeconds(key) {
+  return ONE_SHOT_ENTRY_FADE_SECONDS[key] ?? DEFAULT_ONE_SHOT_ENTRY_FADE_SECONDS;
+}
+
+function locomotionRecoveryFadeSeconds(key) {
+  return LOCOMOTION_RECOVERY_FADE_SECONDS[key] ?? DEFAULT_LOCOMOTION_RECOVERY_FADE_SECONDS;
+}
 const AMBIENT_BREATH_CYCLE_SECONDS = 4.2;
 const AMBIENT_WEIGHT_CYCLE_SECONDS = 6.4;
 const AMBIENT_LOOK_CYCLE_SECONDS = 11;
@@ -1225,7 +1290,8 @@ export class RealtimeBattle {
     this.pendingVfx = [];
     this.pendingDeathEchoes = []; // captureDeathEchoes()-collected { modelPath, x, y, z }, drained by collectFeedback()
     // Wall-clock delta for AnimationMixer stepping. One-shot completion is
-    // driven by the mixer's own "finished" event, never by a parallel timer.
+    // observed from the mixer's own clamped/paused action state in
+    // updateAnimations(), never from a parallel timer.
     // The delta remains presentation-local and is deliberately not tied to
     // snapshot.tick, which can batch/skip while a tab is backgrounded.
     this.lastAnimMs = null;
@@ -1752,12 +1818,24 @@ export class RealtimeBattle {
     const queued = record.queuedAction;
     record.queuedAction = null;
     if (queued && this.triggerAction(record, queued.key, undefined, queued.presentation)) return;
-    this.recoverLocomotion(record);
+    this.recoverLocomotion(record, locomotionRecoveryFadeSeconds(finishedKey));
   }
 
-  // One-shots are mixer-finished, not timer-finished. Repeated requests for
-  // the active clip are ignored; incompatible one-shots queue, while death
-  // hard-cuts immediately and permanently suppresses recovery.
+  // One slot, highest-priority beat wins, ties go to the freshest event. A
+  // reaction the player must read never loses its slot to a lower-weight beat
+  // that merely arrived later.
+  queueBeat(record, key, presentation) {
+    const queued = record.queuedAction ? beatPriority(record.queuedAction.key) : -1;
+    if (beatPriority(key) < queued) return false;
+    record.queuedAction = { key, presentation };
+    return true;
+  }
+
+  // One-shots are mixer-finished, not timer-finished. A repeated request for
+  // the beat already playing restarts it (a fast combo must read as N hits,
+  // never one long hit) once the clip has advanced at least one frame;
+  // incompatible one-shots queue, while death hard-cuts immediately, stays
+  // terminal, and never restarts.
   triggerAction(record, key, nowMs, presentation = null) {
     void nowMs;
     if (!record || LOCOMOTION_ACTION_KEYS.includes(key)) return false;
@@ -1770,15 +1848,27 @@ export class RealtimeBattle {
     this.resetAmbientIdle(record);
     const action = record.actions?.[key];
     if (!record.mixer || !action) {
-      if (record.loading && (key === "die" || !record.queuedAction || record.queuedAction.key === "show")) {
-        record.queuedAction = { key, presentation };
-      }
+      if (record.loading) this.queueBeat(record, key, presentation);
       return false;
     }
     if (record.oneShotAction) {
-      if (record.oneShotAction === action || record.oneShotActionKey === key) return false;
+      if (record.oneShotAction === action || record.oneShotActionKey === key) {
+        if (key === "die") return false;
+        if (action.time < ONE_SHOT_RESTART_MIN_ELAPSED_SECONDS) return false;
+        action.enabled = true;
+        action.setEffectiveWeight(1);
+        action.reset().play();
+        record.activeActionKey = key;
+        record.oneShotAction = action;
+        record.oneShotActionKey = key;
+        if (presentation) {
+          this.clearAttackPresentation(record);
+          this.beginAttackPresentation(record, presentation);
+        }
+        return true;
+      }
       if (key !== "die") {
-        record.queuedAction = { key, presentation };
+        this.queueBeat(record, key, presentation);
         return false;
       }
       record.oneShotAction.stop();
@@ -1796,7 +1886,7 @@ export class RealtimeBattle {
       record.activeActionKey = key;
       played = true;
     } else {
-      played = this.crossfadeToAction(record, key, 0.08);
+      played = this.crossfadeToAction(record, key, oneShotEntryFadeSeconds(key));
     }
     if (!played) return false;
     record.oneShotAction = action;

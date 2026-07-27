@@ -478,8 +478,13 @@ def main():
     derived = make_derived_surface(v1, surface_path, derived_path)
     tile_hash = derived["sha256"]
     rows = []
+    external_relative_paths = {
+        item["relativePath"] for item in EXTERNAL_PRETEXTURED_ASSETS
+    }
     for source_row in v1_audit["rows"]:
         relative_path = source_row["relativePath"]
+        if relative_path in external_relative_paths:
+            continue
         source = v1_root / relative_path
         output = candidate_root / relative_path
         replacements = {
