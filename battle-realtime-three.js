@@ -1861,10 +1861,10 @@ export class RealtimeBattle {
         record.activeActionKey = key;
         record.oneShotAction = action;
         record.oneShotActionKey = key;
-        if (presentation) {
-          this.clearAttackPresentation(record);
-          this.beginAttackPresentation(record, presentation);
-        }
+        // The weapon/VFX rig is NOT rebuilt here. A restart can only ever be
+        // the same beat -- melee and ranged are distinct keys, so the delivery
+        // cannot have changed -- and tearing down two or three GLB instances
+        // per repeat is pure churn that starves the frame during a fast combo.
         return true;
       }
       if (key !== "die") {
