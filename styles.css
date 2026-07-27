@@ -843,36 +843,31 @@ body {
 #command-dock-right .dock-panel { box-shadow: inset 1px 0 0 rgb(44 173 214 / .5); }
 #command-dock-left .dock-panel { box-shadow: inset -1px 0 0 rgb(44 173 214 / .5); }
 
-/* Item 2 — persistent 2-currency pill rail (top-left, pre-run only, yields to combat HUD). */
-.currency-rail {
-  position: fixed;
-  top: max(.6rem, env(safe-area-inset-top));
-  left: max(.6rem, env(safe-area-inset-left));
-  z-index: 6;
-  display: flex;
-  gap: .5rem;
-  pointer-events: none;
-}
-html[data-defense-started="true"] .currency-rail { display: none; }
-.currency-pill {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: .4rem;
+/* Item 2 (revised) — the 2 currencies live INSIDE the left dock rail as compact icon
+   chips pinned to the bottom (below the tab icons), no longer a floating overlay that
+   overlapped the rail. margin-top:auto pushes them to the rail's foot; they collapse with
+   the rail when the left panel opens (rail width:0/overflow:hidden), and hide once a run
+   starts so they never fight the combat HUD/D-pad. */
+.rail-currency { margin-top: auto; margin-bottom: calc(4.5rem + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: .4rem; width: 100%; align-items: center; padding-top: .4rem; border-top: 1px solid var(--rc-panel-border, rgb(150 156 180 / .18)); }
+.rail-currency-chip {
+  display: grid;
+  place-items: center;
+  gap: .05rem;
+  width: 48px;
+  min-width: 48px;
   min-height: 48px;
-  padding: .35rem .7rem;
-  border-radius: 999px;
+  padding: .2rem 0;
+  border-radius: .6rem;
   background: var(--rc-panel-glass);
   border: 1px solid var(--rc-panel-border);
-  font-size: .8rem;
   line-height: 1;
 }
-.currency-pill .currency-name { color: #c8d6ea; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
-.currency-pill .currency-amount { font-variant-numeric: tabular-nums; font-weight: 800; transition: color 120ms linear; }
-.currency-pill-ec { border-color: var(--canon-cyan-rift); }
-.currency-pill-ec .currency-glyph, .currency-pill-ec .currency-amount { color: var(--canon-cyan-rift); }
-.currency-pill-bf { border-color: var(--canon-zenith-gold); }
-.currency-pill-bf .currency-glyph, .currency-pill-bf .currency-amount { color: var(--canon-zenith-gold); }
+.rail-currency-glyph { font-size: 1.05rem; }
+.rail-currency-amount { font-size: .68rem; font-weight: 800; font-variant-numeric: tabular-nums; transition: color 120ms linear; }
+.rail-currency-ec { border-color: var(--canon-cyan-rift); }
+.rail-currency-ec .rail-currency-glyph, .rail-currency-ec .rail-currency-amount { color: var(--canon-cyan-rift); }
+.rail-currency-bf { border-color: var(--canon-zenith-gold); }
+.rail-currency-bf .rail-currency-glyph, .rail-currency-bf .rail-currency-amount { color: var(--canon-zenith-gold); }
 
 /* Item 3 — reward-forward briefing: gold reward headline + collapsed terrain detail. */
 .briefing-reward { margin: 0; display: flex; align-items: baseline; gap: .4rem; font-size: .82rem; }

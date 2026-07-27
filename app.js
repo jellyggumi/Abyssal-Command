@@ -779,6 +779,7 @@ function renderDockLeft() {
       renderShell();
     });
   });
+  renderRailCurrency();
 }
 
 /** 출정 tab body, TRIMMED per hud-layout-spec.md §4: hero-copy and the decorative
@@ -1002,26 +1003,29 @@ function renderShell() {
   renderDockLeft();
   renderDockRight();
   renderSortieFab();
-  renderCurrencyRail();
 }
 
-/** Item 2 (presentation-spec) — persistent 2-currency pill rail. Mounted once as a
- * shell-level sibling (#currency-rail, see mountShell); value-refreshed on every
- * renderShell(). EXACTLY two pills — Echo Core (cyan rim) and Bound Fragment (gold rim) —
- * whose amounts are the earned−spent affordability balance the growth/inventory docks
- * spend against (wardenGrowthData parity). Pills deep-link into the left dock rather than
- * duplicating its controls; CSS hides the whole rail once data-defense-started flips. */
-function renderCurrencyRail() {
-  const rail = root.querySelector("#currency-rail");
-  if (!rail) return;
-  if (!campaign) { rail.innerHTML = ""; return; }
+/** Item 2 (presentation-spec, revised) — the two persistent currencies live INSIDE the
+ * left (성장) dock rail as compact icon chips pinned to the bottom, below the tab icons,
+ * instead of a floating top-left overlay (which overlapped the rail's own tab UI).
+ * Amounts = earned−spent affordability balance the growth/inventory docks spend against
+ * (wardenGrowthData parity). Each chip deep-links to where it is spent (EC→성장, BF→인벤토리).
+ * Rendered into the freshly-rebuilt left rail by renderDockLeft(); collapses with the rail
+ * when the left panel opens, and CSS-hidden once data-defense-started flips (yields to the
+ * combat HUD / D-pad). */
+function renderRailCurrency() {
+  const railEl = root.querySelector("#command-dock-left .dock-rail");
+  if (!railEl || !campaign) return;
   const ec = echoCoreEarned(campaign) - echoCoreSpent(campaign);
   const bf = boundFragmentEarned(campaign) - boundFragmentSpent(campaign);
-  rail.innerHTML = `
-    <button type="button" class="currency-pill currency-pill-ec" data-currency="echo-core" aria-label="에코 코어 ${ec} · 성장 열기"><span class="currency-glyph" aria-hidden="true">◈</span><span class="currency-name">Echo Core</span><b class="currency-amount">${ec}</b></button>
-    <button type="button" class="currency-pill currency-pill-bf" data-currency="bound-fragment" aria-label="속박 파편 ${bf} · 인벤토리 열기"><span class="currency-glyph" aria-hidden="true">✦</span><span class="currency-name">Bound Fragment</span><b class="currency-amount">${bf}</b></button>`;
-  rail.querySelector('[data-currency="echo-core"]')?.addEventListener("click", () => openLeftDockTab("growth"));
-  rail.querySelector('[data-currency="bound-fragment"]')?.addEventListener("click", () => openLeftDockTab("inventory"));
+  const group = document.createElement("div");
+  group.className = "rail-currency";
+  group.innerHTML = `
+    <button type="button" class="rail-currency-chip rail-currency-ec" data-currency="echo-core" aria-label="에코 코어 ${ec} · 성장 열기"><span class="rail-currency-glyph" aria-hidden="true">◈</span><b class="rail-currency-amount">${ec}</b></button>
+    <button type="button" class="rail-currency-chip rail-currency-bf" data-currency="bound-fragment" aria-label="속박 파편 ${bf} · 인벤토리 열기"><span class="rail-currency-glyph" aria-hidden="true">✦</span><b class="rail-currency-amount">${bf}</b></button>`;
+  railEl.append(group);
+  group.querySelector('[data-currency="echo-core"]').addEventListener("click", () => openLeftDockTab("growth"));
+  group.querySelector('[data-currency="bound-fragment"]').addEventListener("click", () => openLeftDockTab("inventory"));
 }
 
 /** Currency-pill deep link: opens the left (성장) dock on the named tab, mirroring the
@@ -1135,8 +1139,7 @@ function mountShell(stageId) {
       </div>
     </section>
     <div id="command-dock-left"></div>
-    <div id="command-dock-right"></div>
-    <div id="currency-rail" class="currency-rail" aria-label="보유 재화"></div>`;
+    <div id="command-dock-right"></div>`;
   hydratePortraits(root);
   session = new BattleSession(stageId);
   session.start();
