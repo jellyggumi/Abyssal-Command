@@ -116,6 +116,23 @@ jobs:
           mkdir -p results
           npm ci
 
+      # Provisioned once for the whole job, before any gate runs. This is NOT
+      # only for the browser gate: the engine gate's renderer-contract tests
+      # call chromium.launch() directly, so the binary must already exist by
+      # the time the first gate starts. Folding it into a per-gate step would
+      # either repeat the download or leave earlier gates without a browser.
+      #
+      # Deliberately not a receipt-writing gate. A missing browser is an
+      # infrastructure fault, not a contract violation, so this step keeps
+      # `set -euo pipefail` with no `|| status=failed`: a failed provision
+      # reddens the job outright instead of being laundered into a gate verdict
+      # that Decide would read as an ordinary test failure.
+      - name: Provision Playwright browsers
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --no-install playwright install --with-deps chromium
+
       # Each gate records its own receipt and never aborts the job, so one red
       # gate still produces a complete verdict instead of masking the rest.
       - name: Gate — engine contract
@@ -161,13 +178,13 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          # Chromium comes from the shared provisioning step above; re-installing
+          # here would repeat the download and its `|| status=failed` would
+          # disguise a provisioning fault as a plain red gate.
           status=passed
-          npx --no-install playwright install --with-deps chromium || status=failed
-          if [ "$status" = passed ]; then
-            node tests/defense-hud-responsive-browser.cjs > results/defense-hud-responsive-browser.json || status=failed
-            node tests/defense-survivor-browser.cjs > results/defense-survivor-browser.json || status=failed
-            node tests/defense-performance-browser.cjs > results/defense-performance-browser.json || status=failed
-          fi
+          node tests/defense-hud-responsive-browser.cjs > results/defense-hud-responsive-browser.json || status=failed
+          node tests/defense-survivor-browser.cjs > results/defense-survivor-browser.json || status=failed
+          node tests/defense-performance-browser.cjs > results/defense-performance-browser.json || status=failed
           printf '{"gate":"browser_contract","status":"%s"}\n' "$status" > results/browser_contract.json
 
       - name: Decide
