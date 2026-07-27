@@ -174,6 +174,31 @@ html[data-defense-started="true"] .dock-panel {
 .defense-edge { position: absolute; display: flex; gap: .45rem; pointer-events: auto; }
 .defense-top { top: max(.4rem, var(--defense-safe-top)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-start; }
 .defense-bottom { bottom: max(.4rem, var(--defense-safe-bottom)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-end; }
+/* Mid-run corner-HUD / dock de-overlap (fix): during combat the left/right dock RAILS
+   (3.5rem, z-index 4) sit on the same screen edges as the edge-HUD corner panels, so they
+   overlap. We must NOT move the band's own left/right anchors -- the portrait contract
+   (defense-hud-responsive-browser.cjs) asserts .defense-top/.defense-bottom stay exactly on
+   the physical safe insets (D17 portrait-rotation correctness). So instead push the band's
+   flex CHILDREN inward with padding-inline: the band edge stays on the safe inset, its
+   content clears the rails. When a dock is peeked open (data-peek-left/right from
+   renderShell) that side's rail collapses to 0 but the panel takes the edge, so at wide
+   tier widen that side's padding to clear the whole panel (pushing the corner HUD to the
+   free side). Pre-run the edge-HUD is display:none, so this only applies in combat. */
+#defense-battle-surface[data-defense-started="true"] .defense-top,
+#defense-battle-surface[data-defense-started="true"] .defense-bottom {
+  padding-left: 3.5rem;
+  padding-right: 3.5rem;
+}
+@media (min-width: 900px) {
+  #defense-battle-surface[data-defense-started="true"][data-peek-left="true"] .defense-top,
+  #defense-battle-surface[data-defense-started="true"][data-peek-left="true"] .defense-bottom {
+    padding-left: clamp(15rem, 70vw, 21rem);
+  }
+  #defense-battle-surface[data-defense-started="true"][data-peek-right="true"] .defense-top,
+  #defense-battle-surface[data-defense-started="true"][data-peek-right="true"] .defense-bottom {
+    padding-right: clamp(15rem, 70vw, 21rem);
+  }
+}
 .hud-panel { max-width: min(42vw, 340px); padding: .45rem .6rem; border: 1px solid #38506f; border-radius: 10px; background: rgb(5 12 25 / .85); font-size: .82rem; }
 .hud-panel strong, .hud-panel span { display: block; }
 .hud-loop-state { display: grid; gap: .16rem; min-width: min(29vw, 15rem); border-color: #4b7895; }

@@ -1003,6 +1003,14 @@ function renderShell() {
   renderDockLeft();
   renderDockRight();
   renderSortieFab();
+  // Reflect each dock's open state onto the battle surface so the combat edge-HUD can shift
+  // its corner panels clear of an open peek panel in CSS (docks are siblings, unreachable
+  // otherwise). Per-side (not one value) because at wide tier BOTH docks can be open at once.
+  const surface = root.querySelector("#defense-battle-surface");
+  if (surface) {
+    surface.dataset.peekLeft = dockOpen.left ? "true" : "false";
+    surface.dataset.peekRight = dockOpen.right ? "true" : "false";
+  }
 }
 
 /** Item 2 (presentation-spec, revised) — the two persistent currencies live INSIDE the
