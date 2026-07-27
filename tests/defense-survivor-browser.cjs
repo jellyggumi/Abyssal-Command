@@ -249,13 +249,22 @@ async function waitForGrowthOfferThroughCutscenes(page, report, {
       report.events.push({ event: "growth-patrol-skipped-terminal-run", reason });
       return;
     }
-    const cleanupDeadline = Math.min(deadline, Date.now() + cleanupActionTimeout);
+    // The no-progress window measures SIMULATION progress, and reaching this
+    // line proves the simulation advanced two seconds. Clamping a UI click to
+    // that shrinking window conflates two budgets and left the cleanup 1.6 s on
+    // a software-WebGL runner; the click keeps its own bounded budget instead.
+    const cleanupDeadline = Math.min(overallDeadline, Date.now() + cleanupActionTimeout);
     try {
       await moveAsPlayer("IDLE", cleanupDeadline);
     } catch (error) {
       const blocker = await pointerOwner('[data-move="IDLE"]');
-      error.message = `${error.message}; failed to restore W patrol for ${reason}`
+      const detail = `failed to restore W patrol for ${reason}`
         + `; pointer owner ${JSON.stringify(blocker)}; last state: ${JSON.stringify(state)}`;
+      error.message = `${error.message}; ${detail}`;
+      // Node prints error.stack, which is snapshotted when the Error is built,
+      // so appending to error.message alone never reaches a CI log -- which is
+      // why this failure has only ever been reported as a bare click timeout.
+      error.stack = `${error.stack}\n    ${detail}`;
       throw error;
     }
     patrolStopped = true;
