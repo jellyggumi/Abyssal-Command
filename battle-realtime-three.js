@@ -828,6 +828,71 @@ function serializeInstantiation(work) {
   return scheduled;
 }
 
+// The character pipeline stamps `celShadowBands: 3` and
+// `celRampPolicy: "runtime-lighting"` on every authored toon material and then
+// stops: the banding is deliberately left to the renderer, because a baked ramp
+// would fight the per-stage palette. Nothing implemented it, so the cast shipped
+// as smooth PBR over a single flat albedo tint -- 23 of 24 characters carry no
+// albedo art at all, only a shared 256 px detail tile times one baseColorFactor,
+// which is exactly why they read as soft blobs instead of drawn characters.
+//
+// A 3-step gradient ramp with nearest filtering turns the diffuse term into hard
+// bands, which is what makes a flat tint read as cel shading. MeshToonMaterial
+// also drops the PBR environment work, so this is cheaper than what it replaces.
+const CEL_SHADOW_BANDS = 3;
+let celGradientMap = null;
+
+function celGradient() {
+  if (celGradientMap) return celGradientMap;
+  const steps = new Uint8Array(CEL_SHADOW_BANDS);
+  for (let index = 0; index < CEL_SHADOW_BANDS; index += 1) {
+    // Lift the darkest band off zero so shadowed sides stay readable silhouettes
+    // rather than collapsing into the background.
+    steps[index] = Math.round(70 + (185 * index) / (CEL_SHADOW_BANDS - 1));
+  }
+  celGradientMap = new THREE.DataTexture(steps, CEL_SHADOW_BANDS, 1, THREE.RedFormat);
+  celGradientMap.minFilter = THREE.NearestFilter;
+  celGradientMap.magFilter = THREE.NearestFilter;
+  celGradientMap.generateMipmaps = false;
+  celGradientMap.needsUpdate = true;
+  return celGradientMap;
+}
+
+function toonMaterial(material) {
+  if (!material || material.isMeshToonMaterial) return material;
+  const toon = new THREE.MeshToonMaterial({
+    name: material.name,
+    color: material.color ? material.color.clone() : undefined,
+    map: material.map ?? null,
+    normalMap: material.normalMap ?? null,
+    normalScale: material.normalScale ? material.normalScale.clone() : undefined,
+    emissive: material.emissive ? material.emissive.clone() : undefined,
+    emissiveMap: material.emissiveMap ?? null,
+    emissiveIntensity: material.emissiveIntensity ?? 1,
+    alphaMap: material.alphaMap ?? null,
+    transparent: material.transparent ?? false,
+    opacity: material.opacity ?? 1,
+    alphaTest: material.alphaTest ?? 0,
+    side: material.side,
+    gradientMap: celGradient(),
+  });
+  toon.userData = { ...material.userData, celShadowBands: CEL_SHADOW_BANDS };
+  return toon;
+}
+
+function applyCelShading(root) {
+  const converted = new Map();
+  root.traverse((node) => {
+    if (!node.isMesh) return;
+    const convert = (material) => {
+      if (!converted.has(material)) converted.set(material, toonMaterial(material));
+      return converted.get(material);
+    };
+    node.material = Array.isArray(node.material) ? node.material.map(convert) : convert(node.material);
+  });
+  return root;
+}
+
 async function instantiateActorModel(relPath, targetHeight) {
   const gltf = await loadGltf(relPath);
   return serializeInstantiation(() => {
@@ -840,6 +905,7 @@ async function instantiateActorModel(relPath, targetHeight) {
     // is safe for every actor kind uniformly.
     const instance = SkeletonUtils.clone(gltf.scene);
     fitHeight(instance, targetHeight);
+    applyCelShading(instance);
     let mixer = null;
     let actions = {};
     if (Array.isArray(gltf.animations) && gltf.animations.length) {

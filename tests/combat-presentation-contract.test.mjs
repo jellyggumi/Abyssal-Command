@@ -735,3 +735,58 @@ test("stage switches replace decor resources and dispose clears all tracked stag
   assert.equal(disposed.actionCount, 0);
   assert.deepEqual(disposed.records, []);
 });
+
+test("actors render with banded cel shading rather than smooth PBR", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  adapter.reconcileActors({
+    tick: 1,
+    enemies: [{ id: "cel-actor", kind: "rusher", x: 12000, y: 6000 }],
+  });
+  await settleLoadedActors(adapter, ["cel-actor"]);
+
+  const record = adapter.actors.get("cel-actor");
+  const materials = [];
+  record.root.traverse((node) => {
+    if (!node.isMesh) return;
+    for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+      if (material) materials.push(material);
+    }
+  });
+  assert.ok(materials.length > 0, "the actor must expose materials");
+
+  for (const material of materials) {
+    assert.equal(material.isMeshToonMaterial, true, `${material.name}: actor materials must be toon shaded`);
+    const ramp = material.gradientMap;
+    assert.ok(ramp?.isTexture, `${material.name}: cel shading needs a gradient ramp`);
+    // Nearest filtering is what makes the ramp read as hard bands; a filtered
+    // ramp would interpolate straight back into the smooth gradient this
+    // replaces.
+    assert.equal(ramp.magFilter, THREE.NearestFilter, "the ramp must not interpolate between bands");
+    assert.equal(ramp.minFilter, THREE.NearestFilter, "the ramp must not interpolate between bands");
+    assert.equal(ramp.image.width, 3, "the authored contract is three shadow bands");
+    assert.ok(ramp.image.data[0] > 0, "the darkest band must stay readable rather than crushing to black");
+    assert.ok(
+      ramp.image.data[2] > ramp.image.data[0],
+      "the ramp must actually rise from shadow to light",
+    );
+  }
+
+  // The ramp is shared, not rebuilt per actor.
+  adapter.reconcileActors({
+    tick: 2,
+    enemies: [
+      { id: "cel-actor", kind: "rusher", x: 12000, y: 6000 },
+      { id: "cel-actor-2", kind: "rusher", x: 13000, y: 6000 },
+    ],
+  });
+  await settleLoadedActors(adapter, ["cel-actor", "cel-actor-2"]);
+  const second = adapter.actors.get("cel-actor-2");
+  let secondRamp = null;
+  second.root.traverse((node) => {
+    if (node.isMesh && !secondRamp) secondRamp = (Array.isArray(node.material) ? node.material[0] : node.material)?.gradientMap;
+  });
+  assert.equal(secondRamp, materials[0].gradientMap, "every actor shares one cel ramp");
+
+  adapter.dispose();
+});
