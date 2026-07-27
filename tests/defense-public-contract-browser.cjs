@@ -87,7 +87,7 @@ async function run() {
     assert.match(await narrative.textContent() ?? "", new RegExp(catalog.CUTSCENES["gate-zenith"].intro.at(-1)), "a later stage briefing must retain its authored narrative instead of generic fallback copy");
 
     await page.locator("#start-defense").click();
-    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+    await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
     const expectedIntegrity = `${catalog.COMMANDER.integrity}/${catalog.COMMANDER.maxIntegrity}`;
     const expectedGateMaximum = campaign.payload.rewardIds.reduce(
       (maximum, rewardId) => maximum + (catalog.REWARDS[rewardId]?.integrity ?? 0),

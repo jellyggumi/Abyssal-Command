@@ -80,7 +80,7 @@ test("growth choices show truthful current → upgraded values to the player", {
   });
   await page.waitForFunction(() => document.body.innerText.includes("3/3 슬롯"));
   await page.locator("#start-defense").click();
-  await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+  await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
   const cutscene = page.locator("#defense-cutscene-overlay");
   if (await cutscene.isVisible()) {
     await page.keyboard.press("Enter");
