@@ -213,13 +213,49 @@ async function waitForGrowthOfferThroughCutscenes(page, report, {
       { timeout: remaining("observing the admitted movement command") },
     );
   };
+  // Reports what actually owns the pointer over a control, so a cleanup failure
+  // names the blocking element instead of leaving a bare Playwright timeout.
+  const pointerOwner = async (selector) => page
+    .locator(selector)
+    .evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const top = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+      if (!top || top === element || element.contains(top)) return null;
+      return {
+        tag: top.tagName,
+        id: top.id || null,
+        className: typeof top.className === "string" ? top.className.slice(0, 80) : null,
+        text: (top.textContent ?? "").trim().slice(0, 60),
+      };
+    })
+    .catch(() => null);
   const restorePatrol = async (reason, deadline) => {
     if (patrolStartedAt === null || patrolStopped) return;
+    // A terminal run legitimately covers the D-pad with its outcome overlay, and
+    // stopping a patrol the run already ended is a no-op. Only a LIVE run owes
+    // the player a working movement control, so only a live run may fail here.
+    const terminal = await page
+      .locator("#defense-battle-surface")
+      .evaluate(
+        (surface, states) => states.includes(surface?.dataset?.defenseState)
+          // The outcome card is appended into the edge HUD over the D-pad, and
+          // it only ever exists once the run has ended.
+          || Boolean(document.querySelector(".defense-result")),
+        terminalStates,
+      )
+      .catch(() => false);
+    if (terminal) {
+      patrolStopped = true;
+      report.events.push({ event: "growth-patrol-skipped-terminal-run", reason });
+      return;
+    }
     const cleanupDeadline = Math.min(deadline, Date.now() + cleanupActionTimeout);
     try {
       await moveAsPlayer("IDLE", cleanupDeadline);
     } catch (error) {
-      error.message = `${error.message}; failed to restore W patrol for ${reason}; last state: ${JSON.stringify(state)}`;
+      const blocker = await pointerOwner('[data-move="IDLE"]');
+      error.message = `${error.message}; failed to restore W patrol for ${reason}`
+        + `; pointer owner ${JSON.stringify(blocker)}; last state: ${JSON.stringify(state)}`;
       throw error;
     }
     patrolStopped = true;
