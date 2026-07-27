@@ -799,60 +799,29 @@ function buildActions(mixer, clips) {
   return actions;
 }
 
-// Heavy instantiation (SkeletonUtils.clone of a rigged GLB plus its bounding
-// passes) is serialized across frames. Several actors can spawn on one
-// simulation tick, and cloning them back to back inside one frame starves the
-// main thread long enough that a software-WebGL device stops answering input.
-// Work still starts as soon as the previous unit finishes, so this costs a
-// frame of latency, never a dropped actor.
-let instantiationQueue = Promise.resolve();
-let instantiationBusy = false;
-
-function serializeInstantiation(work) {
-  // Nothing in flight: run now. A lone spawn must not pay a frame of latency
-  // just because a burst is possible.
-  if (!instantiationBusy) {
-    instantiationBusy = true;
-    const immediate = (async () => work())();
-    const settle = () => { instantiationBusy = false; };
-    instantiationQueue = immediate.then(settle, settle);
-    return immediate;
-  }
-  // Contended: yield to the compositor so a tick that spawns several actors
-  // cannot clone them all inside one frame.
-  const scheduled = instantiationQueue.then(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    return work();
-  });
-  instantiationQueue = scheduled.then(() => {}, () => {});
-  return scheduled;
-}
-
 async function instantiateActorModel(relPath, targetHeight) {
   const gltf = await loadGltf(relPath);
-  return serializeInstantiation(() => {
-    // SkeletonUtils.clone() (not gltf.scene.clone()) so a SkinnedMesh instance
-    // gets bound to ITS OWN cloned skeleton -- plain Object3D#clone() copies
-    // the mesh but leaves every clone bound to the ORIGINAL shared skeleton,
-    // so multiple live instances of the same rigged GLB (e.g. two "scout"
-    // enemies on screen at once) would corrupt each other's pose every frame.
-    // No-op for non-skinned nodes (terrain/VFX never hit this path), so this
-    // is safe for every actor kind uniformly.
-    const instance = SkeletonUtils.clone(gltf.scene);
-    fitHeight(instance, targetHeight);
-    let mixer = null;
-    let actions = {};
-    if (Array.isArray(gltf.animations) && gltf.animations.length) {
-      // AnimationClip keyframe tracks address bones/nodes by NAME, not object
-      // reference, and SkeletonUtils.clone() preserves every name -- binding
-      // the mixer to `instance` (the clone) makes clipAction() resolve tracks
-      // against the clone's own bones, standard three.js multi-instance
-      // pattern, one mixer per instance sharing the same immutable clip data.
-      mixer = new THREE.AnimationMixer(instance);
-      actions = buildActions(mixer, gltf.animations);
-    }
-    return { instance, mixer, actions };
-  });
+  // SkeletonUtils.clone() (not gltf.scene.clone()) so a SkinnedMesh instance
+  // gets bound to ITS OWN cloned skeleton -- plain Object3D#clone() copies
+  // the mesh but leaves every clone bound to the ORIGINAL shared skeleton,
+  // so multiple live instances of the same rigged GLB (e.g. two "scout"
+  // enemies on screen at once) would corrupt each other's pose every frame.
+  // No-op for non-skinned nodes (terrain/VFX never hit this path), so this
+  // is safe for every actor kind uniformly.
+  const instance = SkeletonUtils.clone(gltf.scene);
+  fitHeight(instance, targetHeight);
+  let mixer = null;
+  let actions = {};
+  if (Array.isArray(gltf.animations) && gltf.animations.length) {
+    // AnimationClip keyframe tracks address bones/nodes by NAME, not object
+    // reference, and SkeletonUtils.clone() preserves every name -- binding
+    // the mixer to `instance` (the clone) makes clipAction() resolve tracks
+    // against the clone's own bones, standard three.js multi-instance
+    // pattern, one mixer per instance sharing the same immutable clip data.
+    mixer = new THREE.AnimationMixer(instance);
+    actions = buildActions(mixer, gltf.animations);
+  }
+  return { instance, mixer, actions };
 }
 
 async function instantiateTerrainModel(relPath) {
