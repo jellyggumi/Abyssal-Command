@@ -85,6 +85,89 @@ async function seededWorldHudCampaign() {
   };
 }
 
+async function dismissCutsceneAsPlayer(page, deadline) {
+  const overlay = page.locator("#defense-cutscene-overlay");
+  const dismiss = overlay.locator("[data-cutscene-dismiss]");
+  const diagnostics = { cutsceneEvent: null, line: null, status: null };
+  const remaining = (operation) => {
+    const milliseconds = deadline - Date.now();
+    assert.ok(
+      milliseconds > 0,
+      `cutscene dismissal deadline exhausted before ${operation}; cutscene state: ${JSON.stringify(diagnostics)}`,
+    );
+    return milliseconds;
+  };
+  try {
+    if (!(await dismiss.isVisible({ timeout: remaining("checking dismiss visibility") }))) return null;
+
+    const overlayNode = await overlay.elementHandle({ timeout: remaining("capturing overlay") });
+    assert(overlayNode, "a visible cutscene must have a live overlay");
+    diagnostics.cutsceneEvent = await overlay.getAttribute(
+      "data-cutscene-event",
+      { timeout: remaining("reading cutscene event") },
+    );
+    diagnostics.line = (
+      await overlay.locator(".cutscene-line").textContent({
+        timeout: remaining("reading cutscene line"),
+      }) ?? ""
+    ).trim();
+    diagnostics.status = (
+      await page.locator("#battle-status").textContent({
+        timeout: remaining("reading battle status"),
+      }) ?? ""
+    ).trim();
+    assert.match(diagnostics.line, /\S/, "a visible cutscene must present dialogue or narration before dismissal");
+    await dismiss.press("Enter", { timeout: remaining("activating cutscene dismissal") });
+    await page.waitForFunction(
+      (node) => !node.isConnected,
+      overlayNode,
+      { timeout: remaining("waiting for captured overlay to detach") },
+    );
+    return diagnostics;
+  } catch (error) {
+    error.message = `${error.message}; cutscene state: ${JSON.stringify(diagnostics)}`;
+    throw error;
+  }
+}
+
+async function waitForGrowthOfferThroughCutscenes(page, report, timeout) {
+  const growthOffer = page.locator("#defense-growth-offer");
+  const deadline = Date.now() + timeout;
+  const readState = (remaining) => page.locator("html").evaluate(() => ({
+    hidden: document.hidden,
+    surface: { ...document.querySelector("#defense-battle-surface")?.dataset },
+    status: document.querySelector("#battle-status")?.textContent,
+    xp: document.querySelector("#battle-xp-label")?.textContent,
+    enemies: document.querySelector("#battle-enemies")?.textContent,
+    formation: document.querySelector("#battle-formation-state")?.textContent,
+    cutscene: document.querySelector("#defense-cutscene-overlay")?.dataset.cutsceneEvent,
+    cutsceneLine: document.querySelector("#defense-cutscene-overlay .cutscene-line")?.textContent,
+    growthOffer: Boolean(document.querySelector("#defense-growth-offer")),
+  }), { timeout: remaining });
+  let state = await readState(deadline - Date.now());
+
+  while (Date.now() < deadline) {
+    const dismissed = await dismissCutsceneAsPlayer(page, deadline);
+    if (dismissed) {
+      report.events.push({ event: "cutscene-dismissed-before-growth", ...dismissed });
+      continue;
+    }
+    const offerRemaining = deadline - Date.now();
+    if (offerRemaining <= 0) break;
+    if (await growthOffer.isVisible({ timeout: offerRemaining })) return growthOffer;
+    let waitRemaining = deadline - Date.now();
+    if (waitRemaining <= 0) break;
+    if (waitRemaining <= 100) {
+      state = await readState(waitRemaining);
+      waitRemaining = deadline - Date.now();
+      if (waitRemaining <= 0) break;
+    }
+    await page.waitForTimeout(Math.min(100, waitRemaining));
+  }
+
+  assert.fail(`a selectable growth offer must appear after relayed cutscenes are dismissed; stalled state: ${JSON.stringify(state)}`);
+}
+
 async function verifyPlaythroughJourney(browser, hosting, campaign) {
   const context = await browser.newContext({ baseURL: hosting.url, viewport: { width: 390, height: 844 }, hasTouch: true });
   const page = await context.newPage();
@@ -160,10 +243,17 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
       true,
       "cutscene must remain visible until the test dismisses it; it auto-dismissed before dismissal interaction",
     );
-    await cutscene.locator("[data-cutscene-dismiss]").focus();
-    await page.keyboard.press("Enter");
-    await cutscene.waitFor({ state: "hidden" });
+    const openingCutscenes = [];
+    const openingCutsceneDeadline = Date.now() + 30000;
+    for (let index = 0; index < 8 && await cutscene.isVisible(); index += 1) {
+      const dismissed = await dismissCutsceneAsPlayer(page, openingCutsceneDeadline);
+      assert(dismissed, "each visible opening cutscene must expose a player dismissal action");
+      openingCutscenes.push(dismissed);
+    }
+    assert.ok(openingCutscenes.length > 0, "the player must dismiss the opening cutscene");
+    assert.equal(await cutscene.isVisible(), false, "all queued opening dialogue and narration must be dismissed");
     assert.equal(await surface.getAttribute("data-defense-cutscene"), null, "cutscene dismissal must not leave stale presentation state");
+    report.events.push(...openingCutscenes.map((entry) => ({ event: "opening-cutscene-dismissed", ...entry })));
     const beforeControlKeyboard = await surface.getAttribute("data-defense-input-seq");
     await page.locator('[data-move="E"]').focus();
     await page.keyboard.press("Enter");
@@ -188,14 +278,13 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
     assert.equal(Number(await surface.getAttribute("data-defense-input-seq")), beforeTouch, "canvas taps must not queue movement input (orbit/movement decoupled, D17)");
     assert.equal(await surface.getAttribute("data-defense-move"), moveBeforeTouch, "canvas taps must leave the public movement state unaffected");
     report.events.push("touch-canvas-no-movement");
-    const growthOffer = page.locator("#defense-growth-offer");
+    // Keep one bounded journey deadline while behaving like a player whenever
+    // an elite/boss narration or queued relay pauses simulation on the way to
+    // the offer. The offer must still become visible and selectable below.
+    const growthOffer = await waitForGrowthOfferThroughCutscenes(page, report, 60000);
     const selectedGrowthSkills = new Set();
     const maxImmediateGrowthSelections = 8;
     let growthOfferClosed = false;
-    // Real WebGL startup and the stage route can exceed 30s on hosted runners.
-    // Keep this presentation-only wait above the observed ~29.5s full journey
-    // without weakening any later growth-choice assertions.
-    await growthOffer.waitFor({ state: "visible", timeout: 60000 });
     for (let selection = 0; selection < maxImmediateGrowthSelections; selection += 1) {
       const choices = await growthOffer.locator("button[data-pick]").evaluateAll((buttons) => buttons.map((button) => button.dataset.pick ?? ""));
       assert.ok(choices.length > 0, "a visible growth offer must contain a selectable real skill");
