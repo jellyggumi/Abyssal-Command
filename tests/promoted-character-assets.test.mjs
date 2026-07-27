@@ -58,7 +58,9 @@ test("every promoted character ships one skinned mesh with no frozen lower half"
   assert.deepEqual(provenance.pipeline, [
     "scripts/bind-static-lower-mesh.py",
     "scripts/author-wholebody-clips-blender.py",
+    "scripts/bake-character-albedo.py",
   ]);
+
 
   const assets = Object.values(provenance.assets);
   assert.equal(assets.length, EXPECTED_PROMOTED);

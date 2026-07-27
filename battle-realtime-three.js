@@ -832,9 +832,13 @@ function serializeInstantiation(work) {
 // `celRampPolicy: "runtime-lighting"` on every authored toon material and then
 // stops: the banding is deliberately left to the renderer, because a baked ramp
 // would fight the per-stage palette. Nothing implemented it, so the cast shipped
-// as smooth PBR over a single flat albedo tint -- 23 of 24 characters carry no
-// albedo art at all, only a shared 256 px detail tile times one baseColorFactor,
-// which is exactly why they read as soft blobs instead of drawn characters.
+// as smooth PBR.
+//
+// The albedo half of that problem is fixed upstream now:
+// scripts/bake-character-albedo.py bakes a per-character cartoon atlas into each
+// character's own UV unwrap, so the diffuse term has authored banding to shade
+// instead of one shared 256 px detail tile times a flat baseColorFactor.
+
 //
 // A 3-step gradient ramp with nearest filtering turns the diffuse term into hard
 // bands, which is what makes a flat tint read as cel shading. MeshToonMaterial
