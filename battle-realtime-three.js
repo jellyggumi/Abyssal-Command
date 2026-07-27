@@ -1459,6 +1459,13 @@ export class RealtimeBattle {
     this.loadedStageId = null;
     const loadToken = ++this.stageLoadToken;
     this.clearStageWorld();
+    // Warm the stage boss's GLB while the player is still in the opening
+    // cutscene. It is 4 MB of authored rig that otherwise starts downloading
+    // only when the boss spawns mid-fight, which pops the boss in late on a
+    // slow connection or a software renderer. loadGltf() caches by path, so
+    // the spawn then costs a clone instead of a fetch plus parse.
+    const bossModelPath = meshRootForStageBoss(stageId);
+    if (bossModelPath) loadGltf(bossModelPath).catch(() => {});
 
     const terrainRequest = instantiateTerrainModel(profile.terrainGlbPath).then((root) => ({
       id: `${stageId}:terrain`,
