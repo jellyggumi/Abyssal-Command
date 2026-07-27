@@ -133,6 +133,12 @@ const COMMAND_TABS = Object.freeze([
   { id: "stronghold", label: "요새" },
 ]);
 let activeCommandTab = COMMAND_TABS[0].id;
+// D9 unified shell: the command shell is a full overlay before a run starts (that's the
+// primary screen the player sees) and collapses to a small dock/FAB once beginRun() fires
+// (edge-hud becomes the primary combat surface). shellExpanded !== started -- after a
+// terminal result the player may re-open the shell while a NEW run hasn't begun yet, and
+// they can also explicitly re-collapse it back to full-screen combat while browsing tabs.
+let shellExpanded = true;
 let activeGrowthSegment = "stats"; // stats | skills | traits (성장 tab sub-nav)
 let activeCompanionSegment = "list"; // list | formation (동료 tab sub-nav)
 let statusText = "기록을 불러오는 중입니다.";
@@ -631,6 +637,9 @@ function renderCommandShell() {
   const started = session?.started ?? false;
   const shell = root.querySelector("#command-shell");
   if (!shell) return;
+  shell.dataset.expanded = String(shellExpanded);
+  const surfaceEl = root.querySelector("#defense-battle-surface");
+  if (surfaceEl) surfaceEl.dataset.shellExpanded = String(shellExpanded);
   root.dataset.stageId = selected.id;
   root.style.setProperty("--stage-art", `url("${stageArtPath(selected.id)}")`);
   if (!COMMAND_TABS.some((tab) => tab.id === activeCommandTab)) activeCommandTab = COMMAND_TABS[0].id;
@@ -690,14 +699,17 @@ function renderCommandShell() {
     stronghold: renderStrongholdTab(),
   };
   shell.innerHTML = `
-    <header class="command-header">
-      <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">AC</span><div><p class="eyebrow">ABYSSAL COMMAND · FARWATCH HOLD</p><h1>Warden Corps 방어선</h1></div></div>
-      <div class="command-status"><span class="signal-dot" aria-hidden="true"></span><span>기록실 연결됨</span><strong>${completed}/10 봉쇄선</strong></div>
-    </header>
-    <p id="idle-return-summary" class="idle-return-banner" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p>
-    <nav class="command-tab-bar" role="tablist" aria-label="커맨드 덱">${COMMAND_TABS.map((tab) => `<button class="command-tab${tab.id === activeCommandTab ? " is-active" : ""}" role="tab" aria-selected="${tab.id === activeCommandTab}" data-command-tab="${tab.id}">${tab.label}</button>`).join("")}</nav>
-    <div class="command-tab-panel">${tabBodies[activeCommandTab]}</div>
-    <details class="archive-tools"><summary>기록 관리 <span>오프라인 저장 · ${escapeHtml(storage.backend ?? "확인 중")}</span></summary><div class="storage-row" aria-label="캠페인 제어"><button id="export-defense">기록 내보내기</button><label class="import-label">기록 가져오기<input id="import-defense" type="file" accept="application/json,text/plain" ${started ? "disabled" : ""} /></label><button id="export-telemetry">진단 내보내기</button><button id="reset-defense" ${started ? "disabled" : ""}>새 기록</button><output aria-live="polite">${escapeHtml(statusText)}</output></div></details>`;
+    <button id="shell-dock-toggle" class="shell-dock-toggle" aria-expanded="${shellExpanded}" aria-label="${shellExpanded ? "커맨드 덱 접기" : "커맨드 덱 펼치기"}">${shellExpanded ? "✕" : "☰"}</button>
+    <div class="command-shell-inner">
+      <header class="command-header">
+        <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">AC</span><div><p class="eyebrow">ABYSSAL COMMAND · FARWATCH HOLD</p><h1>Warden Corps 방어선</h1></div></div>
+        <div class="command-status"><span class="signal-dot" aria-hidden="true"></span><span>기록실 연결됨</span><strong>${completed}/10 봉쇄선</strong></div>
+      </header>
+      <p id="idle-return-summary" class="idle-return-banner" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p>
+      <nav class="command-tab-bar" role="tablist" aria-label="커맨드 덱">${COMMAND_TABS.map((tab) => `<button class="command-tab${tab.id === activeCommandTab ? " is-active" : ""}" role="tab" aria-selected="${tab.id === activeCommandTab}" data-command-tab="${tab.id}">${tab.label}</button>`).join("")}</nav>
+      <div class="command-tab-panel">${tabBodies[activeCommandTab]}</div>
+      <details class="archive-tools"><summary>기록 관리 <span>오프라인 저장 · ${escapeHtml(storage.backend ?? "확인 중")}</span></summary><div class="storage-row" aria-label="캠페인 제어"><button id="export-defense">기록 내보내기</button><label class="import-label">기록 가져오기<input id="import-defense" type="file" accept="application/json,text/plain" ${started ? "disabled" : ""} /></label><button id="export-telemetry">진단 내보내기</button><button id="reset-defense" ${started ? "disabled" : ""}>새 기록</button><output aria-live="polite">${escapeHtml(statusText)}</output></div></details>
+    </div>`;
   hydratePortraits(shell);
 
   shell.querySelectorAll("[data-command-tab]").forEach((button) => {
@@ -793,7 +805,8 @@ function renderCommandShell() {
       renderCommandShell();
     });
   });
-  shell.querySelector("#start-defense")?.addEventListener("click", () => { session?.beginRun(); renderCommandShell(); });
+  shell.querySelector("#start-defense")?.addEventListener("click", () => { session?.beginRun(); shellExpanded = false; renderCommandShell(); });
+  shell.querySelector("#shell-dock-toggle")?.addEventListener("click", () => { shellExpanded = !shellExpanded; renderCommandShell(); });
   shell.querySelector("#export-defense").addEventListener("click", async () => {
     const text = await storage.exportText();
     if (!text) {
@@ -1046,7 +1059,7 @@ export class BattleSession {
     this.rallyAcknowledgedBossIds = new Set();
     this.accumulator = 0;
     this.resetCamera();
-    root.querySelectorAll("#defense-edge-hud .edge-card").forEach((card) => card.remove());
+    this.surface.querySelectorAll(".edge-card").forEach((card) => card.remove());
     this.render();
   }
 
@@ -1944,7 +1957,7 @@ export class BattleSession {
         card = document.createElement("section");
         card.className = "edge-card";
         card.id = "defense-growth-offer";
-        root.querySelector("#defense-edge-hud").append(card);
+        this.surface.append(card);
         this.focusBeforeGrowth = document.activeElement;
       }
       if (card.dataset.offer !== offerKey) {
@@ -2117,7 +2130,7 @@ export class BattleSession {
     toast.setAttribute("role", "status");
     toast.innerHTML = innerHtml;
     toast.addEventListener("click", () => toast.remove());
-    root.querySelector("#defense-edge-hud").append(toast);
+    this.surface.append(toast);
     this.toastTimer = setTimeout(() => { toast.remove(); this.toastTimer = null; }, durationMs);
     return toast;
   }
@@ -2165,7 +2178,7 @@ export class BattleSession {
       const rewardPreviews = choices.map((id) => rewardUpgradePreview(id, snapshot));
       telemetry.append("REWARD_OFFER_VALUES", { tick: snapshot.tick, choices: rewardPreviews });
       card.innerHTML = `<h2>보상 선택 · 영구 기록</h2><p>이번 승리의 보상 하나를 다음 출전에 적용합니다.</p><div class="choices">${rewardPreviews.map(({ rewardId, label }) => `<button data-reward="${rewardId}"><strong>${escapeHtml(REWARDS[rewardId]?.name ?? rewardId)}</strong><span>${escapeHtml(REWARDS[rewardId]?.description ?? "기록 보상")}</span><span>${escapeHtml(label)}</span></button>`).join("")}</div>`;
-      root.querySelector("#defense-edge-hud").append(card);
+      this.surface.append(card);
       card.querySelectorAll("[data-reward]").forEach((button) => {
         button.addEventListener("click", () => {
           this.selectedRewardId = button.dataset.reward;
@@ -2208,7 +2221,7 @@ export class BattleSession {
     card.className = "edge-card defense-result";
     card.innerHTML = `<h2>${outcome === "defeat" ? "방어선이 무너졌습니다" : complete ? "심연 방어선 완수" : "관문 방어 성공"}</h2>
       <div class="choices"><button id="result-action">${outcome === "defeat" ? "같은 구역 재도전" : complete ? "기록실로" : "다음 구역"}</button><button id="lobby-action">로비</button></div>`;
-    root.querySelector("#defense-edge-hud").append(card);
+    this.surface.append(card);
     card.querySelector("#result-action").addEventListener("click", () => {
       if (outcome === "defeat") {
         this.remountForStage(this.stageId);
@@ -2216,6 +2229,7 @@ export class BattleSession {
       } else if (complete) {
         this.remountForStage(STAGES[0].id);
         selectedStageId = STAGES[0].id;
+        shellExpanded = true;
       } else {
         selectedStageId = STAGES[campaign.unlockedStageIndex].id;
         this.remountForStage(selectedStageId);
@@ -2225,6 +2239,7 @@ export class BattleSession {
     });
     card.querySelector("#lobby-action").addEventListener("click", () => {
       this.remountForStage(this.stageId);
+      shellExpanded = true;
       renderCommandShell();
     });
     card.querySelector("button")?.focus();

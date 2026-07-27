@@ -7,11 +7,22 @@ button:hover, button:focus-visible { border-color: #81d6ff; outline: 2px solid #
 button:disabled { opacity: .42; cursor: not-allowed; }
 .noscript { padding: 1rem; }
 #defense-app { min-height: 100dvh; }
-.defense-lobby { width: min(100%, 960px); margin: 0 auto; padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom)); }
-.defense-lobby header { padding: 1.2rem 0 .8rem; border-bottom: 1px solid #243b5e; }
-.defense-lobby h1 { margin: 0; font-size: clamp(1.55rem, 5vw, 2.5rem); }
-.defense-lobby h2 { font-size: 1.1rem; margin: 1.5rem 0 .6rem; }
-.defense-lobby p { color: #b6c8df; }
+/* Unified shell (D9, production/decision-log.md): #command-shell is a fixed full-viewport
+   overlay ON TOP of #defense-battle-surface (later in DOM = stacks above by default, no
+   z-index needed) so the live canvas is always visible behind it -- lobby and battle
+   coexist from first load, satisfying the explicit "처음 들어갔을 때 로비와 전투가 같이
+   있어야 돼" requirement. pointer-events:none on the wrapper lets clicks reach the D-pad/
+   pause button underneath when collapsed; only .command-shell-inner (and the always-
+   visible dock toggle) opt back in. Content stays translucent (.rc-glass panels) so the
+   scene reads through even while expanded -- an opaque lobby would defeat the point. */
+#command-shell { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.command-shell-inner { height: 100%; overflow-y: auto; pointer-events: auto; width: min(100%, 960px); margin: 0 auto; padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom)); transition: opacity 200ms ease, transform 200ms ease; }
+#command-shell[data-expanded="false"] .command-shell-inner { opacity: 0; transform: translateY(1rem); pointer-events: none; visibility: hidden; }
+.shell-dock-toggle { position: fixed; z-index: 6; top: max(.6rem, var(--defense-safe-top, env(safe-area-inset-top))); right: max(.6rem, var(--defense-safe-right, env(safe-area-inset-right))); pointer-events: auto; width: 2.6rem; height: 2.6rem; min-width: 0; min-height: 0; padding: 0; border-radius: 50%; background: rgb(5 12 25 / .82); backdrop-filter: blur(6px); font-size: 1.1rem; }
+.command-shell-inner header { padding: 1.2rem 0 .8rem; border-bottom: 1px solid #243b5e; }
+.command-shell-inner h1 { margin: 0; font-size: clamp(1.55rem, 5vw, 2.5rem); }
+.command-shell-inner h2 { font-size: 1.1rem; margin: 1.5rem 0 .6rem; }
+.command-shell-inner p { color: #b6c8df; }
 .defense-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .65rem; }
 .stage-card, .companion-card { text-align: left; min-height: 96px; }
 .stage-card[aria-pressed="true"], .companion-card[aria-pressed="true"] { background: #163b5d; border-color: #79d6ff; }
@@ -35,6 +46,13 @@ button:disabled { opacity: .42; cursor: not-allowed; }
 }
 #defense-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 #defense-edge-hud { position: absolute; inset: 0; pointer-events: none; }
+/* Combat-only HUD (mission/loop-state panels, D-pad, pause) has nothing meaningful to show
+   before a run is committed (tick-0 placeholder text would overlap the command-shell
+   header sharing the same top-edge real estate) -- the pre-start briefing lives in the
+   shell's own hero/briefing panels instead. Hidden via the surface's own dataset flag
+   (set by BattleSession.beginRun()/remountForStage()), not JS-toggled per-element. */
+#defense-battle-surface[data-defense-started="false"] #defense-edge-hud,
+#defense-battle-surface[data-shell-expanded="true"] #defense-edge-hud { display: none; }
 .defense-edge { position: absolute; display: flex; gap: .45rem; pointer-events: auto; }
 .defense-top { top: max(.4rem, var(--defense-safe-top)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-start; }
 .defense-bottom { bottom: max(.4rem, var(--defense-safe-bottom)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-end; }
@@ -280,7 +298,7 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .progression-icon[data-track="run-scoped"] { border-radius: 50%; }
 
 @media (max-width: 720px) {
-  .defense-lobby { padding-inline: .75rem; }
+  .command-shell-inner { padding-inline: .75rem; }
   .command-header { align-items: flex-start; }
   .command-status { display: none; }
   .command-hero, .ops-grid { grid-template-columns: 1fr; }
@@ -547,11 +565,8 @@ body {
   mask-image: linear-gradient(to bottom, #000, transparent 88%);
 }
 #defense-app { position: relative; isolation: isolate; }
-.defense-lobby {
-  width: min(100%, 1180px);
-  position: relative;
-}
-.defense-lobby::before {
+.command-shell-inner { width: min(100%, 1180px); position: relative; }
+#command-shell::before {
   position: fixed;
   inset: 0;
   z-index: -2;
@@ -927,7 +942,7 @@ body {
   .archive-panel { grid-column: 1; }
 }
 @media (max-width: 620px) {
-  .defense-lobby { padding-inline: .65rem; }
+  .command-shell-inner { padding-inline: .65rem; }
   .brand-lockup { align-items: flex-start; }
   .brand-lockup h1 { font-size: clamp(1.1rem, 6vw, 1.55rem); }
   .command-hero { margin-inline: -.15rem; padding: .75rem; }
@@ -954,7 +969,8 @@ body {
   .hud-panel { font-size: .72rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .defense-lobby::before { transition: none; }
+  #command-shell::before { transition: none; }
   .hero-copy, .hero-cta::before, .stage-art-frame, .cutscene-line { animation: none; }
   .stage-art-frame { transform: none; }
+  .command-shell-inner { transition: none; }
 }
