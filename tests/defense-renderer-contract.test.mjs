@@ -367,7 +367,13 @@ test("RealtimeBattle gives ambient stage NPCs dedicated normalization and a non-
 
   const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
   await page.goto(`${hosting.url}/renderer-contract.html`, { waitUntil: "networkidle" });
-  const report = await page.evaluate(async () => {
+  const setupTimeoutMs = 45000;
+  const glbReadinessTimeoutMs = 45000;
+  // Budget imports/mount/reconciliation separately so setup cannot consume the
+  // full post-setup GLB readiness window enforced inside the page.
+  const totalEvaluationTimeoutMs = setupTimeoutMs + glbReadinessTimeoutMs + 1000;
+  let totalEvaluationDeadlineTimer;
+  const evaluation = page.evaluate(async (pageGlbReadinessTimeoutMs) => {
     const [{ RealtimeBattle: BrowserRealtimeBattle }, THREE] = await Promise.all([
       import("/battle-realtime-three.js"),
       import("/vendor/three.module.js"),
@@ -392,17 +398,37 @@ test("RealtimeBattle gives ambient stage NPCs dedicated normalization and a non-
         }],
       });
 
-      const deadline = performance.now() + 10000;
-      let stageNpc = null;
-      let companion = null;
-      while (!stageNpc?.root || !companion?.root) {
-        stageNpc = adapter.stageDecorRecords.find((record) => record.kind === "stage-npc") ?? null;
-        companion = adapter.actors.get("ember-companion") ?? null;
+      const deadline = performance.now() + pageGlbReadinessTimeoutMs;
+      let presentation = null;
+      while (true) {
+        presentation = adapter.debugPresentationState();
+        const stageDecor = presentation.stageDecor;
+        const stageNpcState = stageDecor.records.find((record) => record.kind === "stage-npc");
+        const companionState = adapter.debugPresentationState("ember-companion");
+        const requiredGlbsReady = stageDecor.stageId === "cinder-span"
+          && stageDecor.loading === false
+          && stageDecor.terrainLoaded === true
+          && Boolean(stageNpcState?.position)
+          && Boolean(companionState?.position);
+        if (requiredGlbsReady) break;
         if (performance.now() >= deadline) {
-          throw new Error(`stage NPC or companion GLB did not load: ${JSON.stringify(adapter.debugPresentationState())}`);
+          throw new Error(
+            `required Cinder Span terrain, stage-NPC, and companion GLBs did not load within ${pageGlbReadinessTimeoutMs}ms: ${JSON.stringify(presentation)}`,
+          );
         }
-        await new Promise(requestAnimationFrame);
+        await new Promise((resolveWake) => {
+          const timerId = setTimeout(() => {
+            cancelAnimationFrame(frameId);
+            resolveWake();
+          }, 50);
+          const frameId = requestAnimationFrame(() => {
+            clearTimeout(timerId);
+            resolveWake();
+          });
+        });
       }
+      const stageNpc = adapter.stageDecorRecords.find((record) => record.kind === "stage-npc");
+      const companion = adapter.actors.get("ember-companion");
 
       const worldHeight = (root) => {
         root.updateWorldMatrix(true, true);
@@ -455,7 +481,20 @@ test("RealtimeBattle gives ambient stage NPCs dedicated normalization and a non-
       adapter.dispose();
       canvas.remove();
     }
-  });
+  }, glbReadinessTimeoutMs);
+  const report = await Promise.race([
+    evaluation,
+    new Promise((_, reject) => {
+      totalEvaluationDeadlineTimer = setTimeout(() => {
+        reject(new Error(
+          `ambient stage-NPC renderer evaluation did not settle within ${totalEvaluationTimeoutMs}ms; `
+          + `the page may be frozen or its animation frames and timers may be starved `
+          + `(setup allowance: ${setupTimeoutMs}ms; `
+          + `post-setup in-page GLB readiness allowance: ${glbReadinessTimeoutMs}ms)`,
+        ));
+      }, totalEvaluationTimeoutMs);
+    }),
+  ]).finally(() => clearTimeout(totalEvaluationDeadlineTimer));
 
   assertNear(report.stageNpcHeight, 1.8, "the ambient stage NPC keeps its dedicated readability normalization");
   assertNear(report.companionHeight, 1.3, "the gameplay companion keeps its smaller actor normalization");
