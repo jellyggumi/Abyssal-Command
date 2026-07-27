@@ -98,7 +98,7 @@ async function dismissCutsceneAsPlayer(page, deadline) {
     return milliseconds;
   };
   try {
-    if (!(await dismiss.isVisible({ timeout: remaining("checking dismiss visibility") }))) return null;
+    if (!(await dismiss.isVisible())) return null;
 
     const overlayNode = await overlay.elementHandle({ timeout: remaining("capturing overlay") });
     assert(overlayNode, "a visible cutscene must have a live overlay");
@@ -130,42 +130,230 @@ async function dismissCutsceneAsPlayer(page, deadline) {
   }
 }
 
-async function waitForGrowthOfferThroughCutscenes(page, report, timeout) {
+async function waitForGrowthOfferThroughCutscenes(page, report, {
+  noProgressTimeout,
+  overallTimeout,
+}) {
+  assert.ok(noProgressTimeout > 0, "growth journey no-progress timeout must be positive");
+  assert.ok(overallTimeout > noProgressTimeout, "growth journey overall timeout must exceed its no-progress timeout");
   const growthOffer = page.locator("#defense-growth-offer");
-  const deadline = Date.now() + timeout;
-  const readState = (remaining) => page.locator("html").evaluate(() => ({
-    hidden: document.hidden,
-    surface: { ...document.querySelector("#defense-battle-surface")?.dataset },
-    status: document.querySelector("#battle-status")?.textContent,
-    xp: document.querySelector("#battle-xp-label")?.textContent,
-    enemies: document.querySelector("#battle-enemies")?.textContent,
-    formation: document.querySelector("#battle-formation-state")?.textContent,
-    cutscene: document.querySelector("#defense-cutscene-overlay")?.dataset.cutsceneEvent,
-    cutsceneLine: document.querySelector("#defense-cutscene-overlay .cutscene-line")?.textContent,
-    growthOffer: Boolean(document.querySelector("#defense-growth-offer")),
-  }), { timeout: remaining });
-  let state = await readState(deadline - Date.now());
+  const terminalStates = ["victory", "defeat", "final_completion"];
+  const startedAt = Date.now();
+  const overallDeadline = startedAt + overallTimeout;
+  const cleanupActionTimeout = Math.max(1, Math.min(2000, Math.floor(noProgressTimeout / 3)));
+  let state = null;
+  let lastSimulationSecond = null;
+  let lastProgressAt = startedAt;
+  let patrolStartedAt = null;
+  let patrolStopped = false;
+  const readState = (timeout) => page.locator("html").evaluate(() => {
+    const status = (document.querySelector("#battle-status")?.textContent ?? "").trim();
+    const simulationSecondMatch = status.match(/시간\s+(\d+)초/);
+    const offer = document.querySelector("#defense-growth-offer");
+    const offerStyle = offer ? getComputedStyle(offer) : null;
+    const offerVisible = Boolean(
+      offer
+      && offer.getClientRects().length > 0
+      && offerStyle?.display !== "none"
+      && offerStyle?.visibility !== "hidden",
+    );
+    const growthChoices = [...offer?.querySelectorAll("button[data-pick]") ?? []]
+      .filter((button) => !button.disabled && button.getAttribute("aria-disabled") !== "true")
+      .map((button) => button.dataset.pick ?? "");
+    const cutscene = document.querySelector("#defense-cutscene-overlay");
+    const dismiss = cutscene?.querySelector("[data-cutscene-dismiss]");
+    const dismissStyle = dismiss ? getComputedStyle(dismiss) : null;
+    return {
+      hidden: document.hidden,
+      surface: { ...document.querySelector("#defense-battle-surface")?.dataset },
+      status,
+      simulationSecond: simulationSecondMatch ? Number(simulationSecondMatch[1]) : null,
+      xp: document.querySelector("#battle-xp-label")?.textContent,
+      enemies: document.querySelector("#battle-enemies")?.textContent,
+      formation: document.querySelector("#battle-formation-state")?.textContent,
+      cutscene: cutscene?.dataset.cutsceneEvent,
+      cutsceneLine: cutscene?.querySelector(".cutscene-line")?.textContent,
+      cutsceneDismissVisible: Boolean(
+        dismiss
+        && dismiss.getClientRects().length > 0
+        && dismissStyle?.display !== "none"
+        && dismissStyle?.visibility !== "hidden",
+      ),
+      growthOffer: Boolean(offer),
+      growthOfferVisible: offerVisible,
+      growthChoices,
+    };
+  }, undefined, { timeout });
+  const failWithState = (reason, currentState, progressAt) => {
+    assert.fail(
+      `${reason}; wall elapsed ${Date.now() - startedAt}ms, time since last observable simulation progress ${Date.now() - progressAt}ms, `
+      + `last observed simulation second ${String(lastSimulationSecond)}; `
+      + `journey bounds ${JSON.stringify({ noProgressTimeout, overallTimeout })}; last state: ${JSON.stringify(currentState)}`,
+    );
+  };
+  const moveAsPlayer = async (direction, deadline) => {
+    const remaining = (operation) => {
+      const milliseconds = deadline - Date.now();
+      assert.ok(milliseconds > 0, `player ${direction} movement deadline exhausted before ${operation}`);
+      return milliseconds;
+    };
+    const surface = page.locator("#defense-battle-surface");
+    const before = await surface.getAttribute(
+      "data-defense-input-seq",
+      { timeout: remaining("reading the input sequence") },
+    );
+    await page.locator(`[data-move="${direction}"]`).click({
+      timeout: remaining("activating the public movement control"),
+    });
+    await page.waitForFunction(
+      (previousInputSequence) => (
+        document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq !== previousInputSequence
+      ),
+      before,
+      { timeout: remaining("observing the admitted movement command") },
+    );
+  };
+  const restorePatrol = async (reason, deadline) => {
+    if (patrolStartedAt === null || patrolStopped) return;
+    const cleanupDeadline = Math.min(deadline, Date.now() + cleanupActionTimeout);
+    try {
+      await moveAsPlayer("IDLE", cleanupDeadline);
+    } catch (error) {
+      error.message = `${error.message}; failed to restore W patrol for ${reason}; last state: ${JSON.stringify(state)}`;
+      throw error;
+    }
+    patrolStopped = true;
+    report.events.push({
+      event: "growth-patrol-command",
+      move: "IDLE",
+      simulationSecond: state?.simulationSecond ?? lastSimulationSecond,
+      reason,
+    });
+  };
+  const failReason = (progressDeadline) => progressDeadline <= overallDeadline
+    ? "live battle stopped advancing before a selectable growth offer appeared"
+    : "live battle exceeded the overall growth-journey safety bound";
 
-  while (Date.now() < deadline) {
-    const dismissed = await dismissCutsceneAsPlayer(page, deadline);
-    if (dismissed) {
-      report.events.push({ event: "cutscene-dismissed-before-growth", ...dismissed });
-      continue;
+  try {
+    state = await readState(Math.max(1, Math.min(noProgressTimeout, overallDeadline - Date.now())));
+    lastSimulationSecond = state.simulationSecond;
+    lastProgressAt = Date.now();
+
+    while (Date.now() < overallDeadline) {
+      if (terminalStates.includes(state.surface?.defenseState)) {
+        failWithState("live battle became terminal before a selectable growth offer appeared", state, lastProgressAt);
+      }
+      if (state.growthOfferVisible && state.growthChoices.length > 0) {
+        await restorePatrol("growth-offer-ready", Date.now() + cleanupActionTimeout);
+        return growthOffer;
+      }
+
+      const progressDeadline = lastProgressAt + noProgressTimeout;
+      const operationDeadline = Math.min(progressDeadline, overallDeadline);
+      if (Date.now() >= operationDeadline) {
+        failWithState(failReason(progressDeadline), state, lastProgressAt);
+      }
+
+      const dismissed = await dismissCutsceneAsPlayer(page, operationDeadline);
+      if (dismissed) {
+        report.events.push({ event: "cutscene-dismissed-before-growth", ...dismissed });
+        state = await readState(Math.max(1, operationDeadline - Date.now()));
+        continue;
+      }
+      // The earlier keyboard smoke queues movement and release on adjacent browser
+      // events, so slow frames can vary how long the command affects combat. Keep
+      // the journey player-driven with a westward patrol measured by the public
+      // battle clock, then stop through the real D-pad after two simulation seconds.
+      if (
+        patrolStartedAt === null
+        && state.simulationSecond !== null
+        && state.simulationSecond >= 20
+        && state.surface?.objectivePhase === "gate-defense"
+      ) {
+        patrolStartedAt = state.simulationSecond;
+        await moveAsPlayer("W", operationDeadline);
+        report.events.push({ event: "growth-patrol-command", move: "W", simulationSecond: patrolStartedAt });
+      } else if (
+        patrolStartedAt !== null
+        && !patrolStopped
+        && state.simulationSecond !== null
+        && state.simulationSecond >= patrolStartedAt + 2
+      ) {
+        await restorePatrol("two-simulation-second-patrol-complete", operationDeadline);
+      }
+
+      const signalTimeout = Math.max(1, Math.min(progressDeadline, overallDeadline) - Date.now());
+      try {
+        await page.waitForFunction(({ previousSimulationSecond, terminalStates }) => {
+          const offer = document.querySelector("#defense-growth-offer");
+          const offerStyle = offer ? getComputedStyle(offer) : null;
+          const offerReady = Boolean(
+            offer
+            && offer.getClientRects().length > 0
+            && offerStyle?.display !== "none"
+            && offerStyle?.visibility !== "hidden"
+            && [...offer.querySelectorAll("button[data-pick]")].some(
+              (button) => !button.disabled && button.getAttribute("aria-disabled") !== "true",
+            )
+          );
+          const dismiss = document.querySelector("#defense-cutscene-overlay [data-cutscene-dismiss]");
+          const dismissStyle = dismiss ? getComputedStyle(dismiss) : null;
+          const dismissReady = Boolean(
+            dismiss
+            && dismiss.getClientRects().length > 0
+            && dismissStyle?.display !== "none"
+            && dismissStyle?.visibility !== "hidden",
+          );
+          const surfaceState = document.querySelector("#defense-battle-surface")?.dataset.defenseState;
+          const terminal = terminalStates.includes(surfaceState);
+          const status = document.querySelector("#battle-status")?.textContent ?? "";
+          const match = status.match(/시간\s+(\d+)초/);
+          const simulationSecond = match ? Number(match[1]) : null;
+          const simulationAdvanced = simulationSecond !== null
+            && (previousSimulationSecond === null || simulationSecond > previousSimulationSecond);
+          return terminal || offerReady || dismissReady || simulationAdvanced;
+        }, { previousSimulationSecond: lastSimulationSecond, terminalStates }, { timeout: signalTimeout });
+        state = await readState(Math.max(1, Math.min(progressDeadline, overallDeadline) - Date.now()));
+      } catch (error) {
+        if (error?.name !== "TimeoutError") throw error;
+        try {
+          state = await readState(Math.min(2000, Math.max(1, overallDeadline - Date.now())));
+        } catch {
+          // Preserve the last readable public state when the page itself is unresponsive.
+        }
+        const stateIsTerminal = terminalStates.includes(state?.surface?.defenseState);
+        const simulationAdvanced = state?.simulationSecond !== null
+          && (lastSimulationSecond === null || state.simulationSecond > lastSimulationSecond);
+        if (simulationAdvanced) {
+          lastSimulationSecond = state.simulationSecond;
+          lastProgressAt = Date.now();
+        }
+        if (stateIsTerminal || state?.growthOfferVisible || state?.cutsceneDismissVisible || simulationAdvanced) {
+          continue;
+        }
+        failWithState(failReason(progressDeadline), state, lastProgressAt);
+      }
+
+      if (
+        state.simulationSecond !== null
+        && (lastSimulationSecond === null || state.simulationSecond > lastSimulationSecond)
+      ) {
+        lastSimulationSecond = state.simulationSecond;
+        lastProgressAt = Date.now();
+      }
     }
-    const offerRemaining = deadline - Date.now();
-    if (offerRemaining <= 0) break;
-    if (await growthOffer.isVisible({ timeout: offerRemaining })) return growthOffer;
-    let waitRemaining = deadline - Date.now();
-    if (waitRemaining <= 0) break;
-    if (waitRemaining <= 100) {
-      state = await readState(waitRemaining);
-      waitRemaining = deadline - Date.now();
-      if (waitRemaining <= 0) break;
+
+    failWithState("live battle exceeded the overall growth-journey safety bound", state, lastProgressAt);
+  } catch (error) {
+    if (patrolStartedAt !== null && !patrolStopped) {
+      try {
+        await restorePatrol("error-exit", Date.now() + cleanupActionTimeout);
+      } catch (cleanupError) {
+        error.message = `${error.message}; patrol cleanup also failed without replacing the original failure: ${cleanupError.message}`;
+      }
     }
-    await page.waitForTimeout(Math.min(100, waitRemaining));
+    throw error;
   }
-
-  assert.fail(`a selectable growth offer must appear after relayed cutscenes are dismissed; stalled state: ${JSON.stringify(state)}`);
 }
 
 async function verifyPlaythroughJourney(browser, hosting, campaign) {
@@ -278,10 +466,12 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
     assert.equal(Number(await surface.getAttribute("data-defense-input-seq")), beforeTouch, "canvas taps must not queue movement input (orbit/movement decoupled, D17)");
     assert.equal(await surface.getAttribute("data-defense-move"), moveBeforeTouch, "canvas taps must leave the public movement state unaffected");
     report.events.push("touch-canvas-no-movement");
-    // Keep one bounded journey deadline while behaving like a player whenever
-    // an elite/boss narration or queued relay pauses simulation on the way to
-    // the offer. The offer must still become visible and selectable below.
-    const growthOffer = await waitForGrowthOfferThroughCutscenes(page, report, 60000);
+    // Advance by the public battle clock rather than wall time: software WebGL
+    // can render slowly in CI, while a frozen clock still fails promptly.
+    const growthOffer = await waitForGrowthOfferThroughCutscenes(page, report, {
+      noProgressTimeout: 15000,
+      overallTimeout: 180000,
+    });
     const selectedGrowthSkills = new Set();
     const maxImmediateGrowthSelections = 8;
     let growthOfferClosed = false;
