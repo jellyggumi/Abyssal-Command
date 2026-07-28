@@ -1479,3 +1479,24 @@ body {
 @media (prefers-reduced-motion: no-preference) {
   .monarch-gauge-fill { transition: width .4s ease-out; }
 }
+
+/* 성장 오퍼를 나혼렙 시스템 알림창 톤으로 표시(표시 전용). */
+.growth-system-window {
+  border-color: rgba(160, 107, 255, .5);
+}
+.growth-system-window .system-alert-line {
+  margin: 0 0 .15rem;
+  color: #9ad8ff;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-shadow: 0 0 8px rgba(92, 200, 255, .55);
+}
+.growth-system-window .system-alert-sub {
+  margin: .1rem 0 .5rem;
+  color: rgb(214 226 255 / .72);
+  font-size: .68rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .growth-system-window .system-alert-line { text-shadow: none; }
+}
