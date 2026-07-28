@@ -215,16 +215,20 @@ async function installInstrumentation(page) {
       pendingInputSource: null,
       startedAt: performance.now(),
     };
-    const seenBattles = new WeakSet();
+    // D9 unified shell: #defense-battle-surface is now a SINGLE node mounted once at page
+    // load and reused for the whole session (never replaced by a screen swap) -- the old
+    // "new node = new battle" WeakSet-by-identity pattern would only ever fire once here.
+    // A "battle start" is now data-defense-started flipping "false" -> "true"
+    // (BattleSession.beginRun()), so count that attribute TRANSITION instead.
+    let wasStarted = false;
     const observeBattle = () => {
-      const surface = document.querySelector('[data-defense-ready="true"]');
-      if (surface && !seenBattles.has(surface)) {
-        seenBattles.add(surface);
-        sample.battleStarts += 1;
-      }
+      const surface = document.querySelector("#defense-battle-surface");
+      const isStarted = surface?.dataset.defenseStarted === "true";
+      if (isStarted && !wasStarted) sample.battleStarts += 1;
+      wasStarted = isStarted;
     };
     observeBattle();
-    new MutationObserver(observeBattle).observe(document.documentElement, { childList: true, subtree: true });
+    new MutationObserver(observeBattle).observe(document.documentElement, { attributes: true, attributeFilter: ["data-defense-started"], subtree: true });
     let previous;
     const frame = (now) => {
       if (previous !== undefined) sample.frames.push(now - previous);
@@ -404,7 +408,7 @@ async function run() {
     await page.goto("/index.html", { waitUntil: "networkidle" });
     if (!await clickVisible(page.locator("#start-defense"))) throw new Error("lobby did not expose #start-defense");
     actions.departures += 1;
-    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+    await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
     await installInstrumentation(page);
     const cdp = await context.newCDPSession(page);
     await cdp.send("Performance.enable");

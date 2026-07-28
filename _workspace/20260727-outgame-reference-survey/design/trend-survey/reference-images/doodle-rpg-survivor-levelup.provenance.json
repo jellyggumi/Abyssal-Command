@@ -1,0 +1,10 @@
+{
+  "game": "Doodle RPG Survivor",
+  "browser_playable": "true — plays directly in-browser on CrazyGames at https://www.crazygames.com/game/doodle-rpg-survivor (HTML5 iframe games.crazygames.com/en_US/doodle-rpg-survivor/index.html)",
+  "source_url": "https://www.crazygames.com/game/doodle-rpg-survivor",
+  "captured_at": "2026-07-27",
+  "what_it_is": "A browser-native (CrazyGames) survivor-like RPG with spell leveling; screenshot is its in-run level-up spell-choice.",
+  "how_similar_to_abyssal": "Live browser survivor proof: paged spell-choice cards (Ink Bolt Lv.1→2 +50% damage / new spells Pen Zap, Ink Rain) with a reroll option — the same card-based progression-choice moment Abyssal Surge presents, shown running in a plain web page like Abyssal's GitHub-Pages host.",
+  "capture_method": "browser screenshot (live play): launched the game on CrazyGames, reached the in-run level-up screen, full-page page.screenshot()",
+  "license_note": "screenshot of a publicly playable browser game for research reference — not redistributed as game asset"
+}

@@ -1,0 +1,10 @@
+{
+  "game": "Vampire Survivors (itch.io HTML5 build)",
+  "browser_playable": "true — captured live from the in-browser build at https://poncle.itch.io/vampire-survivors running in HTML5 frame html-classic.itch.zone/html/5185382/index.html",
+  "source_url": "https://poncle.itch.io/vampire-survivors",
+  "captured_at": "2026-07-27",
+  "what_it_is": "The actual main-menu/title screen of Vampire Survivors running live in a browser via itch.io's Run-game HTML5 player.",
+  "how_similar_to_abyssal": "Direct proof of a browser-hosted survivor outgame: title art + persistent gold counter + OPTIONS + a single prominent START button — the minimal 'title-to-run' front door Abyssal Surge's shell wraps around its live 3D canvas.",
+  "capture_method": "browser screenshot (live play): launched the itch.io Run-game HTML5 build, advanced past title to the START menu, full-page page.screenshot()",
+  "license_note": "screenshot of a publicly playable browser game for research reference — not redistributed as game asset"
+}

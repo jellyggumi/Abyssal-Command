@@ -66,23 +66,19 @@ async function openLobby(browser, hosting, campaign, reducedMotion = "no-prefere
 }
 
 async function atlasSnapshot(page, stage, profile) {
-  await page.locator(`[data-stage="${stage.id}"]`).click();
-  const atlas = page.locator('[data-stage-atlas="selected"]');
-  await atlas.waitFor({ state: "visible" });
-  assert.equal(await atlas.getAttribute("data-stage-id"), stage.id, `${stage.id} atlas must identify its selected authored stage`);
-  assert.equal(await atlas.getAttribute("data-terrain-pattern"), profile.terrain.patternId, `${stage.id} atlas must use its catalog terrain profile`);
-  const mapContext = page.locator('[data-stage-map-context="terrain"]');
+  // The 출정 dock carries the showcase cards; open it before selecting a front.
+  if (await page.locator(`[data-stage-showcase="${stage.id}"]`).count() === 0) {
+    await page.locator('#command-dock-right .dock-rail [data-dock-tab="sortie"]').click();
+    await page.locator(`[data-stage-showcase="${stage.id}"]`).waitFor();
+  }
+  await page.locator(`[data-stage-showcase="${stage.id}"]`).click();
   const briefing = page.locator('[data-stage-briefing="selected"]');
+  await briefing.waitFor({ state: "visible" });
   assert.equal(await briefing.getAttribute("data-stage-id"), stage.id, `${stage.id} briefing must remain attached to the selected stage`);
-  const [atlasText, mapText] = await Promise.all([
-    atlas.textContent(),
-    mapContext.textContent(),
-  ]);
-  assert.match((atlasText ?? "").replace(/\s+/g, " "), new RegExp(profile.mapLabels.title), `${stage.id} atlas must expose its catalog title`);
-  assert.match((atlasText ?? "").replace(/\s+/g, " "), new RegExp(profile.mapLabels.domain), `${stage.id} atlas must expose its catalog domain`);
-  const text = (mapText ?? "").replace(/\s+/g, " ");
-  for (const label of [profile.terrain.label, profile.mapLabels.chokepath, profile.mapLabels.hazard, profile.mapLabels.occupation, profile.mapLabels.extraction, ...profile.landmarks.map(({ label }) => label)]) {
-    assert.match(text, new RegExp(label), `${stage.id} map context must expose its catalog ${label} label`);
+  const briefingPanel = page.locator(".briefing-panel");
+  const panelText = (await briefingPanel.textContent() ?? "").replace(/\s+/g, " ");
+  for (const label of [profile.mapLabels.title, profile.mapLabels.domain, profile.terrain.label, profile.mapLabels.chokepath, profile.mapLabels.hazard, profile.mapLabels.occupation, profile.mapLabels.extraction, ...profile.landmarks.map(({ label }) => label)]) {
+    assert.match(panelText, new RegExp(label), `${stage.id} briefing panel must expose its catalog ${label} label`);
   }
 }
 
@@ -130,7 +126,12 @@ async function run() {
   let browser;
   try {
     browser = await playwright.chromium.launch({ headless: true });
-    const stage = catalog.STAGES.at(-1);
+    // Authored world presentation is disclosed pre-run only for the editorial showcase
+    // fronts; the rest stay spoiler-safe until deployment. Exercise the contract on the
+    // last showcase front rather than the last campaign stage.
+    const worldCatalog = await import("../stage-world-catalog.js");
+    const showcaseStageId = worldCatalog.STAGE_SHOWCASE_IDS.at(-1);
+    const stage = catalog.STAGES.find(({ id }) => id === showcaseStageId);
     const profile = catalog.STAGE_PRESENTATION_BY_ID[stage.id];
     const normal = await openLobby(browser, hosting, campaign);
     try {

@@ -1,7 +1,12 @@
-// Regression guard for the lobby system status window (#monarch-status):
-// the shadow-mana gauge must be driven by the real Echo Core numbers, the
-// legion counters must agree with the 군단 tab, and the panel must not break
-// the lobby's no-horizontal-overflow contract on phone viewports.
+// Regression guard for the system status window (#monarch-status): the shadow-mana gauge
+// must be driven by the real Echo Core numbers, the legion counters must agree with the
+// 군단 tab, and the panel must not break the no-horizontal-overflow contract on phone
+// viewports.
+//
+// Since the unified dock shell replaced the full-viewport lobby screen, the status window
+// is the header of the left (성장) dock panel body rather than a band above the lobby's
+// idle-return banner, so these tests open that dock first. Every value assertion below is
+// unchanged -- only where the panel is mounted moved.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import http from "node:http";
@@ -58,7 +63,7 @@ test("the lobby system window reports the real warden/legion state", async () =>
     page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
     page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
     await page.goto("/index.html", { waitUntil: "networkidle" });
-    await page.locator("#monarch-status").waitFor({ state: "visible" });
+    await openGrowthDock(page);
 
     const observed = await page.evaluate(() => {
       const stats = {};
@@ -73,7 +78,7 @@ test("the lobby system window reports the real warden/legion state", async () =>
         gaugeLabel: document.querySelector("#monarch-status .monarch-gauge-track")?.getAttribute("aria-label") ?? "",
         chip: document.querySelector(".monarch-arise-chip")?.textContent ?? "",
         stats,
-        beforeIdleBanner: document.querySelector("#monarch-status")?.nextElementSibling?.id ?? "",
+        firstInPanelBody: document.querySelector("#command-dock-left .dock-panel-body")?.firstElementChild?.id ?? "",
       };
     });
 
@@ -87,18 +92,19 @@ test("the lobby system window reports the real warden/legion state", async () =>
     assert.equal(observed.fillWidth, `${expectedPercent}%`, "gauge fill width must be driven by the Echo Core ratio");
     assert.equal(observed.gaugeLabel, `그림자 마력 잔량 ${expectedPercent}%`, "gauge must expose the same ratio to assistive tech");
     assert.equal(observed.chip.trim(), "ARISE", "the extraction hint chip must be present");
-    assert.equal(observed.beforeIdleBanner, "idle-return-summary", "the status window must sit directly above the idle-return banner");
+    assert.equal(observed.firstInPanelBody, "monarch-status", "the status window must head the 성장 dock panel body");
 
     assert.match(observed.stats["저지 레벨"] ?? "", /^Lv \d+$/, "warden level must be reported");
     assert.match(observed.stats["군단 정원"] ?? "", /^[0-3]\/3$/, "legion capacity must be reported as n/3");
 
-    await page.locator('[data-command-tab="companions"]').click();
+    // While the panel is open the rail collapses and its tab strip moves into the panel
+    // header, so an open-dock tab switch has to go through the header's tablist.
+    await page.locator('#dock-panel-left [data-dock-tab="companions"]').click();
+    await page.locator("#monarch-status").waitFor({ state: "visible" });
     const roster = await page.evaluate(() => ({
       cards: document.querySelectorAll(".companion-grid .companion-card").length,
       filledSlots: document.querySelectorAll(".loadout-slot.is-filled").length,
     }));
-    await page.locator('[data-command-tab="sortie"]').click();
-    await page.locator("#monarch-status").waitFor({ state: "visible" });
 
     assert.equal(observed.stats["결속 병력"], String(roster.cards), "bonded-troop count must match the 군단 tab collection");
     assert.equal(observed.stats["군단 정원"], `${roster.filledSlots}/3`, "legion capacity must match the filled loadout slots");
@@ -115,7 +121,7 @@ test("the lobby system window keeps phone viewports free of horizontal overflow"
     try {
       const page = await context.newPage();
       await page.goto("/index.html", { waitUntil: "networkidle" });
-      await page.locator("#monarch-status").waitFor({ state: "visible" });
+      await openGrowthDock(page);
       const measured = await page.evaluate(() => {
         const panel = document.querySelector("#monarch-status").getBoundingClientRect();
         return {
@@ -134,3 +140,14 @@ test("the lobby system window keeps phone viewports free of horizontal overflow"
     }
   }
 });
+
+/** Reveals the 성장 tab of the left-hand dock, which carries #monarch-status as its panel
+ *  header. Idempotent: wide viewports may already have the dock open by default, and
+ *  clicking an already-active tab would collapse it again. */
+async function openGrowthDock(page) {
+  const statusWindow = page.locator("#command-dock-left #monarch-status");
+  if (await statusWindow.count() === 0) {
+    await page.locator('#command-dock-left .dock-rail [data-dock-tab="growth"]').click();
+  }
+  await statusWindow.waitFor({ state: "visible" });
+}

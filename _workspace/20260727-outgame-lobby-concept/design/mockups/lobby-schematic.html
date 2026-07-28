@@ -1,0 +1,161 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
+  :root{
+    --void:#3c2c5b; --steel:#737990; --cyan:#2cadd6; --gold:#ddc869; --ember:#f3592c;
+    --ink:#eef5ff; --dim:#8ca9c8; --panel:linear-gradient(155deg,rgb(38 26 58/.82),rgb(16 10 28/.9));
+    --glass-b:rgb(150 156 180/.22);
+  }
+  *{box-sizing:border-box;margin:0;font-family:"Apple SD Gothic Neo",system-ui,sans-serif}
+  body{background:#05060d}
+  .stage{position:relative;width:1536px;height:1024px;overflow:hidden;color:var(--ink);
+    /* the live-canvas abyss aperture behind everything */
+    background:
+      radial-gradient(120% 80% at 50% 18%, rgb(44 173 214/.20), transparent 42%),
+      radial-gradient(90% 60% at 50% 108%, rgb(243 89 44/.34), transparent 46%),
+      radial-gradient(60% 40% at 50% 44%, rgb(44 173 214/.14), transparent 60%),
+      linear-gradient(180deg,#0a0a16 0%,#141021 46%,#241521 78%,#3a1c1a 100%);}
+  /* boss silhouette looming in the deep */
+  .boss{position:absolute;top:70px;left:50%;transform:translateX(-50%);width:520px;height:250px;
+    background:radial-gradient(50% 60% at 50% 60%, rgb(243 89 44/.28), transparent 70%);filter:blur(2px)}
+  .boss::before{content:"";position:absolute;inset:0;
+    clip-path:polygon(20% 60%,8% 20%,30% 46%,42% 18%,50% 40%,58% 18%,70% 46%,92% 20%,80% 60%,62% 86%,38% 86%);
+    background:rgb(10 8 18/.82);border:1px solid rgb(243 89 44/.35)}
+  .horizon{position:absolute;left:0;right:0;top:430px;height:2px;background:linear-gradient(90deg,transparent,rgb(44 173 214/.5),transparent)}
+  /* commander (Dusk Warden), back-view, left of center */
+  .warden{position:absolute;bottom:150px;left:398px;width:150px;height:360px;
+    background:linear-gradient(180deg,#241a33,#0c0913);border-radius:60px 60px 10px 10px/90px 90px 10px 10px;
+    box-shadow:0 0 44px rgb(44 173 214/.16), inset 6px 0 14px rgb(44 173 214/.14), inset -6px 0 14px rgb(243 89 44/.10)}
+  .warden::before{content:"";position:absolute;top:-6px;left:34px;width:82px;height:96px;background:#0c0913;border-radius:50% 50% 42% 42%;box-shadow:inset 3px 0 8px rgb(44 173 214/.25)}
+
+  .label{position:absolute;font-size:11px;letter-spacing:.14em;color:var(--dim);font-weight:800;text-transform:uppercase}
+  .callout{position:absolute;font-size:12px;color:var(--cyan);font-weight:700;background:rgb(5 8 18/.72);border:1px dashed rgb(44 173 214/.5);border-radius:6px;padding:3px 7px}
+
+  /* ---- top-left currency pills (A5) ---- */
+  .pills{position:absolute;top:22px;left:22px;display:flex;gap:10px}
+  .pill{display:flex;align-items:center;gap:8px;height:44px;padding:0 14px;border-radius:22px;background:var(--panel);font-weight:800;font-size:15px}
+  .pill.ec{border:1.5px solid var(--cyan);box-shadow:0 0 14px rgb(44 173 214/.25)}
+  .pill.bf{border:1.5px solid var(--gold);box-shadow:0 0 14px rgb(221 200 105/.22)}
+  .pill .g{font-size:16px}
+  .pill.ec .g{color:var(--cyan)} .pill.bf .g{color:var(--gold)}
+  .pill small{color:var(--dim);font-weight:700;font-size:11px;letter-spacing:.06em}
+
+  /* ---- top-center payday recap (A1) ---- */
+  .payday{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:330px;text-align:center;
+    background:var(--panel);border:1px solid var(--glass-b);border-radius:12px;padding:12px 16px;backdrop-filter:blur(4px)}
+  .payday .eyebrow{font-size:10px;letter-spacing:.18em;color:var(--dim);font-weight:800}
+  .payday .num{font-size:40px;font-weight:900;color:var(--gold);line-height:1.05;text-shadow:0 0 18px rgb(221 200 105/.4)}
+  .payday .tot{font-size:12px;color:var(--dim);margin-top:2px}
+  .trail{position:absolute;top:96px;left:calc(50% - 250px);width:250px;height:2px;
+    background:linear-gradient(90deg,rgb(221 200 105/.6),transparent);transform:rotate(28deg);transform-origin:right}
+
+  /* ---- left rail (성장 덱, dim/secondary) ---- */
+  .rail{position:absolute;top:96px;bottom:150px;left:0;width:56px;display:flex;flex-direction:column;
+    align-items:center;gap:14px;padding-top:18px;background:linear-gradient(90deg,rgb(16 10 28/.92),rgb(16 10 28/.4));border-right:1px solid var(--glass-b)}
+  .rail .t{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;color:var(--steel);
+    border:1px solid rgb(115 121 144/.3);font-size:18px;background:rgb(20 16 34/.6)}
+
+  /* ---- right dock panel (전황 덱 open on 출정) ---- */
+  .dock{position:absolute;top:78px;right:0;bottom:0;width:380px;background:var(--panel);
+    border-left:1px solid var(--cyan);box-shadow:-1px 0 0 rgb(44 173 214/.5), -18px 0 40px rgb(0 0 0/.4);
+    padding:18px 18px 20px;display:flex;flex-direction:column;gap:12px;backdrop-filter:blur(3px)}
+  .dockhead{display:flex;align-items:center;gap:10px}
+  .brand{width:34px;height:34px;border:1px solid #6aaee0;border-radius:50%;display:grid;place-items:center;color:#a6e2ff;font-weight:800;font-size:12px}
+  .tabs{display:flex;gap:6px;flex:1}
+  .tab{height:34px;padding:0 12px;border-radius:16px;background:rgb(13 25 40/.7);color:var(--dim);font-size:13px;font-weight:700;display:grid;place-items:center}
+  .tab.on{border:1px solid var(--cyan);background:linear-gradient(90deg,rgb(22 59 93/.7),rgb(16 41 64/.7));color:#dff3ff}
+  .sectitle{font-size:11px;letter-spacing:.14em;color:var(--dim);font-weight:800;margin-top:2px}
+
+  /* stage rail with blockade-line spine (A3) */
+  .spine{position:relative;display:flex;flex-direction:column;gap:9px;padding-left:20px}
+  .spine::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:linear-gradient(180deg,var(--cyan),rgb(44 173 214/.25))}
+  .node{position:absolute;left:2px;width:12px;height:12px;border-radius:50%;background:#0c0913;border:2px solid var(--steel)}
+  .card{position:relative;border-radius:10px;padding:9px 11px;background:rgb(8 20 34/.6);border:1px solid rgb(43 71 103/.7);display:flex;align-items:center;gap:10px}
+  .card.sel{border-color:var(--cyan);background:linear-gradient(90deg,rgb(22 59 93/.55),rgb(16 41 64/.4));box-shadow:0 0 0 1px rgb(44 173 214/.4),0 0 18px rgb(44 173 214/.2)}
+  .card.sel .node{border-color:var(--cyan);background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+  .card.lock{opacity:.5} .card.lock .node{border-color:#3a3550}
+  .card.clr .node{background:var(--steel)}
+  .art{width:52px;height:40px;border-radius:6px;flex:none;background:linear-gradient(135deg,#3a1c1a,#241521);border:1px solid rgb(243 89 44/.3)}
+  .card.sel .art{width:70px;height:52px;background:linear-gradient(135deg,#5a2a1e,#2a1630);box-shadow:inset 0 0 14px rgb(243 89 44/.35)}
+  .ci{flex:1;min-width:0}
+  .idx{font-size:11px;font-weight:800;color:#8bd8ff}
+  .nm{font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bn{font-size:11px;color:var(--dim)}
+  .chip{font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;white-space:nowrap}
+  .chip.st{background:rgb(44 173 214/.16);color:#bfe9ff;border:1px solid rgb(44 173 214/.4)}
+  .chip.lk{background:rgb(58 53 80/.5);color:#9aa}
+  .chip.cl{background:rgb(112 211 174/.14);color:#9fe6c9}
+  .chip.rw{background:rgb(221 200 105/.15);color:var(--gold);border:1px solid rgb(221 200 105/.45)}
+
+  /* briefing block — reward forward (A2) */
+  .brief{border-top:1px solid rgb(43 71 103/.6);padding-top:11px;display:flex;flex-direction:column;gap:8px}
+  .rewardline{display:flex;align-items:center;gap:8px;background:rgb(221 200 105/.1);border:1px solid rgb(221 200 105/.4);border-radius:10px;padding:8px 11px}
+  .rewardline b{color:var(--gold);font-size:14px} .rewardline span{color:var(--dim);font-size:12px}
+  .threat{display:flex;gap:10px;align-items:center}
+  .bport{width:44px;height:44px;border-radius:8px;flex:none;background:radial-gradient(60% 60% at 50% 40%,rgb(243 89 44/.4),#1a0f14);border:1px solid rgb(243 89 44/.4)}
+  .threat p{font-size:12px;color:#cdd9e6;line-height:1.35}
+  .disc{font-size:12px;color:var(--dim);font-weight:700;padding:7px 10px;border:1px solid rgb(43 71 103/.6);border-radius:8px}
+
+  /* bottom-center CTA (pattern 1) */
+  .cta{position:absolute;bottom:26px;left:calc((100% - 380px)/2);transform:translateX(-50%);width:440px;
+    height:64px;border-radius:12px;display:flex;align-items:center;gap:14px;padding:0 22px;
+    background:linear-gradient(110deg,#c8461e,#f3592c 55%,#ff7a45);border:1px solid #ffb083;
+    box-shadow:0 0 34px rgb(243 89 44/.5),inset 0 1px rgb(255 255 255/.2);color:#fff}
+  .cta .big{font-size:22px;font-weight:900} .cta .sub{font-size:12px;color:rgb(255 240 230/.9);margin-top:1px}
+  .cta .arw{margin-left:auto;font-size:22px;font-weight:900}
+  .seam{position:absolute;top:78px;bottom:0;right:380px;width:1px;background:linear-gradient(180deg,transparent,var(--cyan),transparent)}
+  .title{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:none}
+</style></head>
+<body><div class="stage" id="stage">
+  <div class="boss"></div><div class="horizon"></div><div class="warden"></div>
+  <div class="seam"></div>
+
+  <!-- center label -->
+  <div class="callout" style="top:250px;left:640px">중앙 = 심연 아퍼처 (라이브 3D 씬 = 전선 맵)</div>
+  <div class="callout" style="bottom:200px;left:120px">Dusk Warden · 재의 봉쇄선</div>
+
+  <!-- A5 currency pills -->
+  <div class="pills">
+    <div class="pill ec"><span class="g">◈</span><span>Echo Core</span><small>0</small></div>
+    <div class="pill bf"><span class="g">✦</span><span>Bound Fragment</span><small>0</small></div>
+  </div>
+  <div class="label" style="top:70px;left:24px">A5 · 상시 통화 pill (2개만)</div>
+
+  <!-- A1 payday -->
+  <div class="payday">
+    <div class="eyebrow">귀환 · 봉쇄선이 버텼습니다</div>
+    <div class="num">+147</div>
+    <div class="tot">누적 3,916 · Echo Core</div>
+  </div>
+  <div class="trail"></div>
+  <div class="label" style="top:132px;left:50%;transform:translateX(-50%)">A1 · idle-return "payday" 카운트업 → pill로 착지</div>
+
+  <!-- left rail -->
+  <div class="rail"><div class="t">◆</div><div class="t">❖</div><div class="t">▦</div></div>
+  <div class="label" style="top:520px;left:4px;writing-mode:vertical-rl">성장 덱 (dim)</div>
+
+  <!-- right dock -->
+  <div class="dock">
+    <div class="dockhead"><div class="brand">AC</div>
+      <div class="tabs"><div class="tab on">출정</div><div class="tab">요새</div></div>
+      <div class="tab" style="width:34px;padding:0">×</div></div>
+    <div class="sectitle">전선 선택 · CAMPAIGN MAP　　0 CLEAR · 1 UNLOCKED</div>
+    <div class="spine">
+      <div class="card sel"><span class="node"></span><div class="art"></div>
+        <div class="ci"><div class="idx">01</div><div class="nm">재의 봉쇄선</div><div class="bn">Cinder Warden</div></div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><span class="chip st">선택됨</span><span class="chip rw">✦ 보상</span></div></div>
+      <div class="card lock"><span class="node"></span><div class="art"></div>
+        <div class="ci"><div class="idx">02</div><div class="nm">서리 성채</div><div class="bn">Veil Tactician</div></div><span class="chip lk">잠김</span></div>
+      <div class="card clr"><span class="node"></span><div class="art"></div>
+        <div class="ci"><div class="idx">03</div><div class="nm">메아리 왕좌</div><div class="bn">Gate Sovereign</div></div><span class="chip cl">CLEAR</span></div>
+    </div>
+    <div class="brief">
+      <div class="rewardline"><span>승리 시 →</span><b>다음 보상: 불씨의 인장</b></div>
+      <div class="threat"><div class="bport"></div><p>Cinder Warden · 재의 봉쇄선 관문이 압박받고 있습니다. 자동 사격으로 버티고 정예를 추출하세요.</p></div>
+      <div class="disc">전황 상세 ▸　(지형 · 위협 · 점유→추출 · 랜드마크)</div>
+    </div>
+    <div class="label" style="position:static;margin-top:auto;color:var(--dim)">A2 보상-우선 브리핑 · A3/A4 봉쇄선 스파인 + 선택 카드 확장</div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta"><div><div class="big">작전 개시</div><div class="sub">재의 봉쇄선 · Cinder Warden 전선으로</div></div><div class="arw">↗</div></div>
+  <div class="label" style="bottom:8px;left:calc((100% - 380px)/2 - 150px)">패턴1 · 유일한 ember CTA · thumb-zone</div>
+</div></body></html>

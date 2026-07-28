@@ -83,6 +83,14 @@ function fullyUnlockedCampaign() {
   });
 }
 
+/**
+ * Opens the page and reveals the 출정 dock panel, which is where the editorial showcase,
+ * the spoiler-free progression control and the guide launcher live since the unified
+ * dock shell replaced the full-viewport lobby screen. There is no longer a
+ * `#defense-app.defense-lobby` screen to wait for: the battle surface is mounted from
+ * first paint and the outgame UI is a dock peeked open over it. Everything these tests
+ * assert about disclosure is unchanged -- only the navigation to reach it is.
+ */
 async function openLobby(viewport = VIEWPORTS[0], { touch = false } = {}) {
   const context = await browser.newContext({
     baseURL,
@@ -102,8 +110,18 @@ async function openLobby(viewport = VIEWPORTS[0], { touch = false } = {}) {
     localStorage.setItem(storageKey, campaign);
   }, { campaign: unlockedCampaign, now: NOW, storageKey: STORAGE_KEY });
   await page.goto("/index.html", { waitUntil: "networkidle" });
-  await page.locator("#defense-app.defense-lobby").waitFor();
+  await page.locator('#defense-battle-surface[data-defense-ready="true"]').waitFor();
+  await openSortieDock(page);
   return { context, errors, page };
+}
+
+/** Reveals the 출정 tab of the right-hand dock, idempotently (wide viewports may already
+ *  have it open by default, and clicking an open tab would collapse it). */
+async function openSortieDock(page) {
+  const panelSortie = page.locator('#dock-panel-right [data-stage-progress]');
+  if (await panelSortie.count() > 0) return;
+  await page.locator('#command-dock-right .dock-rail [data-dock-tab="sortie"]').click();
+  await panelSortie.waitFor();
 }
 
 function normalized(value) {

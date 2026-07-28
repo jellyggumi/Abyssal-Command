@@ -61,8 +61,8 @@ async function run() {
       const response = await page.goto(absolute("index.html"), { waitUntil: "networkidle" });
       assert(response?.ok(), `${width}x${height} app response must succeed`);
       await page.locator("#start-defense").click();
-      const surface = page.locator('[data-defense-ready="true"]');
-      await surface.waitFor({ state: "visible", timeout: 15_000 });
+      const surface = page.locator('#defense-battle-surface[data-defense-started="true"]');
+      await surface.waitFor({ state: "attached", timeout: 15_000 });
       const before = await surface.getAttribute("data-defense-input-seq");
       await page.keyboard.press("ArrowRight");
       await page.waitForFunction((value) => document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq !== value, before);
