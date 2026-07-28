@@ -265,6 +265,14 @@ export const ANIMATION_CLIPS = freeze({
   effects: Object.freeze(["extract", "extraction-ready", "item", "skill", "reward", "occupation", "echo-recovery", "boss-defeat"]),
 });
 
+/**
+ * Stage-to-stage carry-over budget (스킬/아이템 효과 이어가기). Authored here so the simulation and the
+ * campaign layer share one source of truth for what a victory may hand the next stage.
+ */
+export const CARRY_OVER_MAX_RANK = 3;
+export const CARRY_OVER_RANK_DECAY = 1;
+export const CARRY_OVER_MAX_ITEMS = 3;
+
 export const ENEMY_POLICIES = freeze({
   "gate-pressure": { id: "gate-pressure", target: "gate", intent: "breach" },
   "player-pursuit": { id: "player-pursuit", target: "commander", intent: "attack" },
@@ -322,36 +330,6 @@ export const CINDER_SPAN_SURPRISE_TABLE = freeze({
     { id: "forge-ember-flicker", text: "잠긴 용광로 잔해에서 작은 불씨 하나가 튀어오른다." },
   ]),
 });
-
-export const CINDER_SPAN_WAVE_PLAN = freeze([
-  {
-    slot: 0,
-    tick: 0,
-    primary: freeze({ enemy: "rusher", count: 14 }),
-    alternatives: freeze([
-      { id: "opening-rusher-pure", composition: freeze([{ enemy: "rusher", count: 14 }]) },
-      { id: "opening-rusher-flanker", composition: freeze([{ enemy: "rusher", count: 8 }, { enemy: "flanker", count: 6 }]) },
-    ]),
-  },
-  {
-    slot: 1,
-    tick: 120,
-    primary: freeze({ enemy: "flanker", count: 10 }),
-    alternatives: freeze([
-      { id: "pressure-flanker-pure", composition: freeze([{ enemy: "flanker", count: 10 }]) },
-      { id: "pressure-flanker-rusher", composition: freeze([{ enemy: "flanker", count: 7 }, { enemy: "rusher", count: 3 }]) },
-    ]),
-  },
-  {
-    slot: 2,
-    tick: 240,
-    primary: freeze({ enemy: "ranged", count: 8 }),
-    alternatives: freeze([
-      { id: "denial-ranged-pure", composition: freeze([{ enemy: "ranged", count: 8 }]) },
-      { id: "denial-ranged-flanker", composition: freeze([{ enemy: "ranged", count: 5 }, { enemy: "flanker", count: 3 }]) },
-    ]),
-  },
-]);
 
 export const STAGE_TACTICS = freeze({
   "cinder-span": {
@@ -455,70 +433,198 @@ export const STAGE_TACTICS = freeze({
     spawnDirections: ["W", "NW", "SW"], seededVariation: { timingJitterTicks: 30, densityDelta: 1, laneJitter: 720 },
   },
 });
+/*
+ * REMOVED (run-id 20260728-stage-playtime-doctrine): CINDER_SPAN_WAVE_PLAN and STAGE_WAVE_VARIANTS.
+ * Every stage now generates its wave plan from STAGE_WAVE_DOCTRINE, including two seeded
+ * composition alternatives per wave, so the old single authored plan and the separate slot-variant
+ * table were a second, dead source of wave truth. `stage.waves` (the legacy triples) is kept
+ * because the spawn-budget and stage-catalog contracts still read it as authored data.
+ */
 
 /**
- * Seeded per-wave composition variety for non-authored early stages (the most-replayed grind
- * band). Each slot's alternatives[0] is the authored primary composition; alternatives[1] is a
- * same-total-count remix drawn ONLY from enemy classes that already appear in that stage's wave
- * list — so replays vary the enemy mix without introducing off-theme classes or changing the
- * spawn budget (HP/XP band preserved). buildWaveSchedule seed-selects among these while keeping
- * the stage's timing/density jitter (a superset of cinder-span's authored, jitter-free variety).
- * Cinder-span (stage 1) uses CINDER_SPAN_WAVE_PLAN instead; stages 5-10 have no variants yet.
+ * --- Long-form stage doctrine (run-id 20260728-stage-playtime-doctrine) -------------------------
+ *
+ * Goal (design target): one stage = 3-6 minutes of authored defense instead of the ~30-45 s
+ * gate-hold the stage-2 retune shipped. The playtime is produced by CONTENT (wave count and the
+ * gate-hold requirement), not by inflating enemy HP, so time-to-kill per enemy is unchanged.
+ *
+ * Every stage now publishes an authored wave plan generated from its doctrine row below:
+ *   - `defenseTicks` becomes the stage's `gateTicks` (gate-hold requirement, 60 ticks = 1 s).
+ *   - `waveCount` waves are spaced evenly across `defenseTicks`, so the last wave lands with
+ *     roughly one cadence slot of clear-up time left before the gate-defense objective can close.
+ *   - Wave kinds alternate on an authored cycle so pacing is legible:
+ *       normal (웨이브)     - baseline squad, the stage's rotating enemy class.
+ *       big    (빅 웨이브)   - 1.75x squad split across two classes, pushed down the map's own
+ *                             pressure lane (chokepath push, or the flank lane on flank-biased maps).
+ *       mid    (미들 웨이브) - a mid-boss plus a small escort; the mid-boss is an ordinary
+ *                             (non-elite) enemy with MIDBOSS_PROFILE multipliers, so it blocks the
+ *                             gate-defense clear check without touching elite/extraction/boss logic.
+ *   - Direction and policy come from the stage's own `STAGE_TACTICS` (spawnDirections, chokepath,
+ *     flank), which is what makes each map's wave pattern read differently.
+ *
+ * Numbers are pure authored data; `scripts/measure-stage-playtime.mjs` is the measurement harness
+ * that validates the 180-360 s window against the shipped simulation.
  */
-export const STAGE_WAVE_VARIANTS = freeze({
-  "veil-citadel": freeze({
-    0: freeze([
-      freeze({ id: "veil-open-rusher-pure", composition: freeze([{ enemy: "rusher", count: 5 }]) }),
-      freeze({ id: "veil-open-rusher-flanker", composition: freeze([{ enemy: "rusher", count: 3 }, { enemy: "flanker", count: 2 }]) }),
-    ]),
-    1: freeze([
-      freeze({ id: "veil-press-flanker-pure", composition: freeze([{ enemy: "flanker", count: 4 }]) }),
-      freeze({ id: "veil-press-flanker-rusher", composition: freeze([{ enemy: "flanker", count: 2 }, { enemy: "rusher", count: 2 }]) }),
-    ]),
-    2: freeze([
-      freeze({ id: "veil-deny-ranged-pure", composition: freeze([{ enemy: "ranged", count: 3 }]) }),
-      freeze({ id: "veil-deny-ranged-flanker", composition: freeze([{ enemy: "ranged", count: 2 }, { enemy: "flanker", count: 1 }]) }),
-    ]),
-  }),
-  "echo-throne": freeze({
-    0: freeze([
-      freeze({ id: "throne-open-flanker-pure", composition: freeze([{ enemy: "flanker", count: 5 }]) }),
-      freeze({ id: "throne-open-flanker-ranged", composition: freeze([{ enemy: "flanker", count: 3 }, { enemy: "ranged", count: 2 }]) }),
-    ]),
-    1: freeze([
-      freeze({ id: "throne-press-ranged-pure", composition: freeze([{ enemy: "ranged", count: 3 }]) }),
-      freeze({ id: "throne-press-ranged-flanker", composition: freeze([{ enemy: "ranged", count: 2 }, { enemy: "flanker", count: 1 }]) }),
-    ]),
-    2: freeze([
-      freeze({ id: "throne-hold-guardian-pure", composition: freeze([{ enemy: "guardian", count: 2 }]) }),
-      freeze({ id: "throne-hold-guardian-ranged", composition: freeze([{ enemy: "guardian", count: 1 }, { enemy: "ranged", count: 1 }]) }),
-    ]),
-  }),
-  "sunken-bastion": freeze({
-    0: freeze([
-      freeze({ id: "bastion-open-rusher-pure", composition: freeze([{ enemy: "rusher", count: 6 }]) }),
-      freeze({ id: "bastion-open-rusher-ranged", composition: freeze([{ enemy: "rusher", count: 4 }, { enemy: "ranged", count: 2 }]) }),
-    ]),
-    1: freeze([
-      freeze({ id: "bastion-press-ranged-pure", composition: freeze([{ enemy: "ranged", count: 4 }]) }),
-      freeze({ id: "bastion-press-ranged-rusher", composition: freeze([{ enemy: "ranged", count: 3 }, { enemy: "rusher", count: 1 }]) }),
-    ]),
-    2: freeze([
-      freeze({ id: "bastion-hold-guardian-pure", composition: freeze([{ enemy: "guardian", count: 2 }]) }),
-      freeze({ id: "bastion-hold-guardian-rusher", composition: freeze([{ enemy: "guardian", count: 1 }, { enemy: "rusher", count: 1 }]) }),
-    ]),
-  }),
+export const WAVE_KIND_PROFILE = freeze({
+  normal: { id: "normal", label: "웨이브", countBp: 10000 },
+  big: { id: "big", label: "빅 웨이브", countBp: 17500 },
+  mid: { id: "mid", label: "미들 웨이브", countBp: 5000, midboss: true },
+});
+export const WAVE_KINDS = freeze(Object.keys(WAVE_KIND_PROFILE));
+/** Mid-boss stat multipliers, in basis points, applied to the base enemy class it is built from. */
+export const MIDBOSS_PROFILE = freeze({
+  /**
+   * Mid-boss HP is a share of the wave CLEAR BUDGET (see PLAYER_BASELINE_DPS below), not a multiple
+   * of its base class: a guardian-based mid-boss at a flat 3.2x on a scale-240 stage was a 57k-HP
+   * wall that stalled the whole gate-defense hold during measurement. At 60% of one cadence slot it
+   * is ~10-12 s of focused fire for the floor player, with escorts sized inside the same budget.
+   */
+  hpBudgetBp: 6000,
+  damageBp: 16000,
+  xpBp: 40000,
+  speedBp: 8500,
+  radiusBp: 14000,
+});
+/**
+ * Per-stage doctrine. `defenseTicks` climbs 140 s -> 230 s across the campaign; `squadBase` and
+ * `waveCount` climb with it so density rises with the stage's own HP `scale`.
+ * `kindCycle` is the authored wave-kind rhythm (the last wave is always forced to `big`).
+ * `classes` are the enemy classes this map fields, in rotation order.
+ */
+export const STAGE_WAVE_DOCTRINE = freeze({
+  "cinder-span": { gateIntegrity: 1600, defenseTicks: 10200, waveCount: 10, classes: freeze(["rusher", "flanker", "ranged"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
+  "veil-citadel": { gateIntegrity: 1700, defenseTicks: 10200, waveCount: 10, classes: freeze(["rusher", "flanker", "ranged"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "flank", midbossEnemy: "flanker" },
+  "echo-throne": { gateIntegrity: 1800, defenseTicks: 10800, waveCount: 11, classes: freeze(["flanker", "ranged", "guardian"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
+  "sunken-bastion": { gateIntegrity: 1900, defenseTicks: 11400, waveCount: 11, classes: freeze(["rusher", "ranged", "guardian"]), kindCycle: freeze(["big", "normal", "normal", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
+  "howling-sprawl": { gateIntegrity: 2000, defenseTicks: 12000, waveCount: 11, classes: freeze(["flanker", "ranged", "guardian"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "flank", midbossEnemy: "flanker" },
+  "glass-necropolis": { gateIntegrity: 2100, defenseTicks: 12600, waveCount: 12, classes: freeze(["rusher", "ranged", "guardian"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "ranged" },
+  "starless-canal": { gateIntegrity: 2200, defenseTicks: 13200, waveCount: 12, classes: freeze(["flanker", "ranged", "guardian"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "flank", midbossEnemy: "ranged" },
+  "shattered-causeway": { gateIntegrity: 2300, defenseTicks: 13800, waveCount: 12, classes: freeze(["rusher", "ranged", "guardian"]), kindCycle: freeze(["big", "normal", "normal", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
+  "abyss-chancel": { gateIntegrity: 2400, defenseTicks: 14400, waveCount: 13, classes: freeze(["flanker", "ranged", "guardian"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
+  "gate-zenith": { gateIntegrity: 2500, defenseTicks: 15000, waveCount: 13, classes: freeze(["rusher", "ranged", "guardian"]), kindCycle: freeze(["big", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
 });
 
-const stage = (id, name, bossName, scale, eliteId, eliteKind, eliteCompanion, boss, gateTicks, waves, wavePlan = null) => freeze({
-  id, name, bossName, scale, eliteId, eliteKind, eliteCompanion, boss, gateTicks, waves,
-  ...(wavePlan ? { wavePlan } : {}),
-  ...(STAGE_WAVE_VARIANTS[id] ? { waveVariants: STAGE_WAVE_VARIANTS[id] } : {}),
-  tactics: STAGE_TACTICS[id],
-  wavePattern: Object.freeze(["scout", "pressure", "flank", "ranged", "elite", "boss"]),
-});
+/**
+ * Wave size is derived from a CLEAR BUDGET, not from a raw authored count.
+ *
+ *   clearableHp(cadence) = cadenceSeconds * PLAYER_BASELINE_DPS
+ *   waveHp               = clearableHp * WAVE_PRESSURE_BP * kind.countBp
+ *   count                = waveHp / (enemyHp * stageScale / 100)
+ *
+ * PLAYER_BASELINE_DPS is the shipped bare commander's single-target output
+ * (COMMANDER.basicDamage 900 per COMMANDER.basicCooldown 24 ticks = 2250/s), so the budget is the
+ * FLOOR case: companions, items, rewards, skill ranks and meta progression are all headroom on top.
+ * WAVE_PRESSURE_BP leaves that headroom deliberately — a normal wave asks for 55% of the floor
+ * player's clear capacity in one cadence slot, so a well-played wave clears (and pays the
+ * WAVE_CLEARED recovery) while a sloppy one leaks into the next wave.
+ *
+ * The critical property for a 10-13 wave stage: because the divisor carries `stageScale`, late
+ * stages field FEWER, TOUGHER bodies instead of the same count at 2.4x HP, which is what made the
+ * long format unclearable at gate-zenith during measurement.
+ */
+export const PLAYER_BASELINE_DPS = 2250;
+export const WAVE_PRESSURE_BP = 5500;
+/** Builds one stage's authored, doctrine-driven wave plan. Deterministic and data-only. */
+function buildDoctrineWavePlan(stageId, doctrine, tactics, stageScale) {
+  const directions = tactics.spawnDirections?.length ? tactics.spawnDirections : ["W", "NW", "SW"];
+  const cadence = Math.floor(doctrine.defenseTicks / doctrine.waveCount);
+  const cadenceSeconds = cadence / TICK_RATE;
+  const flankLane = doctrine.pressureLane === "flank" && tactics.flank;
+  return freeze(Array.from({ length: doctrine.waveCount }, (unused, slot) => {
+    const kind = slot === doctrine.waveCount - 1
+      ? "big"
+      : doctrine.kindCycle[slot % doctrine.kindCycle.length];
+    const profile = WAVE_KIND_PROFILE[kind];
+    const leadClass = doctrine.classes[slot % doctrine.classes.length];
+    const supportClass = doctrine.classes[(slot + 1) % doctrine.classes.length];
+    // Ramp: the stage's later waves ask for progressively more of the clear budget (100% -> 130%).
+    const rampBp = 10000 + Math.floor((slot * 3000) / Math.max(1, doctrine.waveCount - 1));
+    const waveHp = (cadenceSeconds * PLAYER_BASELINE_DPS * WAVE_PRESSURE_BP * profile.countBp * rampBp) / 1e12;
+    // Every composition — primary AND remix — is sized from the SAME HP budget, split by share.
+    // Sizing by body count instead would let a guardian-heavy remix carry several times the HP of
+    // its rusher-led primary at the identical "count", which is how a big wave silently became
+    // unclearable on the guardian stages.
+    const scaledHp = (enemyId) => (ENEMIES[enemyId].hp * stageScale) / 100;
+    /**
+     * Sizes a composition from the wave's HP budget. A class whose single body already costs more
+     * than its share is DROPPED and its share is handed to the other class, because rounding one
+     * guardian up to a minimum of 1 body is how a "remix" silently became several times the work of
+     * the primary it is supposed to mirror.
+     */
+    const budgetComposition = (shares) => {
+      const affordable = shares.filter(([enemyId, shareBp]) => scaledHp(enemyId) <= (waveHp * shareBp) / 10000);
+      const usable = affordable.length ? affordable : [shares.slice().sort((left, right) => scaledHp(left[0]) - scaledHp(right[0]))[0]];
+      const totalShareBp = usable.reduce((sum, [, shareBp]) => sum + shareBp, 0);
+      return usable.map(([enemyId, shareBp]) => ({
+        enemy: enemyId,
+        count: Math.max(1, Math.round(((waveHp * (shareBp / totalShareBp)) / scaledHp(enemyId)))),
+      }));
+    };
+    const primaryComposition = kind === "big"
+      ? budgetComposition([[leadClass, 6000], [supportClass, 4000]])
+      : budgetComposition([[leadClass, 10000]]);
+    const remixComposition = kind === "big"
+      ? budgetComposition([[supportClass, 6000], [leadClass, 4000]])
+      : budgetComposition([[leadClass, 6700], [supportClass, 3300]]);
+    const count = primaryComposition[0].count;
+    // Only the STATEMENT waves pin a policy: a big wave is the map's pressure push (chokepath or
+    // flank) and a mid wave escorts its mid-boss. Normal waves deliberately leave the policy
+    // unpinned so buildWaveSchedule keeps rolling the seeded pool, which is where player-pursuit and
+    // low-hp-focus behaviour comes from — pinning every wave would delete those policies from play.
+    const policyId = kind === "big"
+      ? (flankLane ? "flank" : "gate-pressure")
+      : kind === "mid" ? "elite-escort" : null;
+    return freeze({
+      slot,
+      tick: slot * cadence,
+      kind,
+      label: profile.label,
+      direction: directions[slot % directions.length],
+      ...(policyId ? { policyId } : {}),
+      primary: freeze({ enemy: leadClass, count }),
+      alternatives: freeze([
+        freeze({ id: `${stageId}-w${slot}-${kind}-primary`, composition: freeze(primaryComposition.map((entry) => freeze({ ...entry }))) }),
+        freeze({ id: `${stageId}-w${slot}-${kind}-remix`, composition: freeze(remixComposition.map((entry) => freeze({ ...entry }))) }),
+      ]),
+      ...(profile.midboss
+        ? {
+          midboss: freeze({
+            id: `${stageId}-midboss-${slot}`,
+            enemy: doctrine.midbossEnemy,
+            policyId: "gate-pressure",
+            ...MIDBOSS_PROFILE,
+            hp: Math.round((cadenceSeconds * PLAYER_BASELINE_DPS * MIDBOSS_PROFILE.hpBudgetBp) / 10000),
+          }),
+        }
+        : {}),
+    });
+  }));
+}
+
+/**
+ * `legacyGateTicks`/`legacyWaves` are the pre-doctrine short-hold values. They are kept as the
+ * stage's `waves` triples (the spawn-budget and catalog contracts still read them as authored
+ * data) while `gateTicks` and `wavePlan` now come from STAGE_WAVE_DOCTRINE, which is what the
+ * simulation actually schedules.
+ */
+const stage = (id, name, bossName, scale, eliteId, eliteKind, eliteCompanion, boss, legacyGateTicks, waves) => {
+  const doctrine = STAGE_WAVE_DOCTRINE[id];
+  if (!doctrine) throw new RangeError(`Missing wave doctrine for stage: ${id}`);
+  const tactics = STAGE_TACTICS[id];
+  return freeze({
+    id, name, bossName, scale, eliteId, eliteKind, eliteCompanion, boss,
+    gateTicks: doctrine.defenseTicks,
+    legacyGateTicks,
+    waves,
+    doctrine,
+    wavePlan: buildDoctrineWavePlan(id, doctrine, tactics, scale),
+    tactics,
+    wavePattern: Object.freeze(["scout", "pressure", "flank", "ranged", "elite", "boss"]),
+  });
+};
+
 export const STAGES = freeze([
-  stage("cinder-span", "Cinder Span", "Cinder Warden", 100, "s1-ember-hunter", "rusher", "ember-cohort", "s1-cinder-warden", 900, [[0, "rusher", 4], [180, "flanker", 3], [390, "ranged", 2]], CINDER_SPAN_WAVE_PLAN),
+  stage("cinder-span", "Cinder Span", "Cinder Warden", 100, "s1-ember-hunter", "rusher", "ember-cohort", "s1-cinder-warden", 900, [[0, "rusher", 4], [180, "flanker", 3], [390, "ranged", 2]]),
   stage("veil-citadel", "Veil Citadel", "Veil Tactician", 115, "s2-veil-sentinel", "flanker", "rift-lens", "s2-veil-tactician", 780, [[0, "rusher", 5], [180, "flanker", 4], [420, "ranged", 3]]),
   stage("echo-throne", "Echo Throne", "Gate Sovereign", 130, "s3-throne-wraith", "ranged", "throne-echo", "s3-gate-sovereign", 840, [[0, "flanker", 5], [210, "ranged", 3], [480, "guardian", 2]]),
   stage("sunken-bastion", "Sunken Bastion", "Tide Warden", 145, "s4-anchor-diver", "guardian", "anchor-shard", "s4-tide-warden", 900, [[0, "rusher", 6], [220, "ranged", 4], [510, "guardian", 2]]),
@@ -640,28 +746,16 @@ export const STAGE_REWARD_IDS = freeze({
 });
 export const STAGE_BY_ID = freeze(Object.fromEntries(STAGES.map((entry) => [entry.id, entry])));
 
+// Every stage now publishes a doctrine `wavePlan`; the legacy `waves` triples remain as the
+// fallback source (and as authored data for the spawn-budget contract).
 const planWaveSources = (stageEntry) => freeze(
   (stageEntry.wavePlan?.length
     ? stageEntry.wavePlan
-    : stageEntry.waves.map(([tick, enemy, count], slot) => {
-      const variants = stageEntry.waveVariants?.[slot];
-      return freeze({
-        slot,
-        tick,
-        primary: freeze({ enemy, count }),
-        // Seeded composition variety for non-authored stages. When present, buildWaveSchedule
-        // seed-selects among these while keeping timing/density jitter. alternatives[0] is always
-        // the authored primary composition, so an unlucky roll never drops below the base wave.
-        ...(variants
-          ? {
-            alternatives: freeze(variants.map((variant) => freeze({
-              id: variant.id,
-              composition: freeze(variant.composition.map((entry) => freeze({ enemy: entry.enemy, count: entry.count }))),
-            }))),
-          }
-          : {}),
-      });
-    })),
+    : stageEntry.waves.map(([tick, enemy, count], slot) => freeze({
+      slot,
+      tick,
+      primary: freeze({ enemy, count }),
+    }))),
 );
 const stagePlanDescriptor = (stageEntry) => {
   const waveSources = planWaveSources(stageEntry);

@@ -8,6 +8,7 @@
 # project source.
 .omc/
 .gjc/
+.omo/
 
 # OS files
 .DS_Store

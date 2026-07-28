@@ -5,6 +5,7 @@
 import * as Catalog from "./defense-catalog.js";
 import {
   ARENA, AUDIO_CUES, BOSSES, COMMANDER, COMPANION_AUTONOMY, COMPANIONS, CUTSCENES, ENEMIES,
+  CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, CARRY_OVER_RANK_DECAY,
   GATE, ITEMS, MEASUREMENT_PROFILES, OCTANT_VECTORS, REWARDS, SKILLS, STAGE_BY_ID, STAGE_ITEM_IDS,
   STAGE_REWARD_IDS, TARGET_PRIORITY, TICK_RATE, XP_GROWTH
 } from "./defense-catalog.js";
@@ -233,6 +234,10 @@ const emit = (run, type, payload = {}) => {
   run.events.push(event);
   return event;
 };
+// Anti-stall pressure grace. The gate-defense phase is now an AUTHORED long hold
+// (STAGE_WAVE_DOCTRINE defenseTicks, 140-230 s), so its grace is the authored hold plus the
+// standard 60 s slack — otherwise the 100-damage pulse would grind the 1000-integrity gate down
+// during normal, non-stalled play. Every later phase keeps the original flat 60 s grace.
 const OBJECTIVE_PRESSURE_GRACE_TICKS = 3600;
 const OBJECTIVE_PRESSURE_INTERVAL_TICKS = 600;
 const OBJECTIVE_PRESSURE_DAMAGE = 100;
@@ -305,12 +310,17 @@ function buildWaveSchedule(stage, seed, tactics, wavePlan) {
     rng = rngNext(rng);
     const densityDelta = authoredPlan ? 0 : (rng % (2 * variation.densityDelta + 1)) - variation.densityDelta;
     rng = rngNext(rng);
-    const direction = directions[rng % directions.length];
+    // Doctrine-authored waves (defense-catalog.js STAGE_WAVE_DOCTRINE) pin their own approach lane
+    // and policy so each map's wave pattern reads distinctly; unauthored sources keep the seeded
+    // roll. The RNG draw is taken either way so the draw order (and every other stage's schedule)
+    // is unaffected by whether a wave authored its lane.
+    const rolledDirection = directions[rng % directions.length];
+    const direction = source.direction || rolledDirection;
     rng = rngNext(rng);
     const laneOffset = (rng % (2 * variation.laneJitter + 1)) - variation.laneJitter;
     rng = rngNext(rng);
     const policies = policyChoices[primary.enemy] || [ENEMIES[primary.enemy]?.policyId || "gate-pressure"];
-    const policyId = policies[rng % policies.length];
+    const policyId = source.policyId || policies[rng % policies.length];
     const adjustedComposition = composition.map((entry, index) => ({
       enemy: entry.enemy,
       count: Math.max(1, entry.count + (index === 0 ? densityDelta : 0)),
@@ -320,6 +330,8 @@ function buildWaveSchedule(stage, seed, tactics, wavePlan) {
       slot: source.slot ?? waveIndex,
       alternativeId: selected.id,
       pattern: stage.wavePattern?.[waveIndex] || primary.enemy,
+      kind: source.kind || "normal",
+      label: source.label || null,
       baseAt: source.tick,
       at: Math.max(0, source.tick + timingJitter),
       type: primary.enemy,
@@ -330,11 +342,12 @@ function buildWaveSchedule(stage, seed, tactics, wavePlan) {
       direction,
       laneOffset,
       policyId,
+      midboss: source.midboss ? { ...source.midboss } : null,
     };
   });
   schedule.sort((a, b) => a.at - b.at || a.waveIndex - b.waveIndex);
-  const variantId = schedule.map(({ at, composition, direction, laneOffset, policyId, selectionId }) =>
-    `${at}:${selectionId}:${composition.map(({ enemy, count }) => `${enemy}x${count}`).join("+")}:${direction}:${laneOffset}:${policyId}`).join("|");
+  const variantId = schedule.map(({ at, kind, composition, direction, laneOffset, policyId, selectionId }) =>
+    `${at}:${kind}:${selectionId}:${composition.map(({ enemy, count }) => `${enemy}x${count}`).join("+")}:${direction}:${laneOffset}:${policyId}`).join("|");
   return { schedule, nextRng: rng, variantId };
 }
 
@@ -487,13 +500,21 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
   const direction = spawnOpt.direction || "W";
   const laneOffset = spawnOpt.laneOffset || 0;
   const point = elite ? { x: 14000, y: ARENA.gateY } : spawnPoint(direction, laneOffset);
-  const enemy = actor(nextId(run, elite ? "elite" : "enemy"), type, point.x, point.y, elite ? hp * 4 : hp, elite ? hp * 4 : hp, {
+  // Mid-boss (미들 웨이브 리더): an ordinary, NON-elite enemy carrying MIDBOSS_PROFILE multipliers.
+  // Keeping it non-elite is deliberate — elite spawns drive the extraction/capture flow, while a
+  // mid-boss only has to be a mid-wave damage sponge that the gate-defense clear check must wait on.
+  const midboss = spawnOpt.midboss || null;
+  const bp = (value, points) => Math.max(1, Math.trunc((value * points) / 10000));
+  const baseHp = elite ? hp * 4 : (midboss ? Math.max(1, Math.trunc(midboss.hp)) : hp);
+  const enemy = actor(nextId(run, elite ? "elite" : midboss ? "midboss" : "enemy"), type, point.x, point.y, baseHp, baseHp, {
     class: elite ? "elite" : type,
-    speed: elite ? Math.trunc(data.speed * 0.8) : data.speed,
-    damage: data.damage,
-    xp: elite ? xpReward * 4 : xpReward,
+    speed: elite ? Math.trunc(data.speed * 0.8) : (midboss ? bp(data.speed, midboss.speedBp) : data.speed),
+    damage: midboss ? bp(data.damage, midboss.damageBp) : data.damage,
+    xp: elite ? xpReward * 4 : (midboss ? bp(xpReward, midboss.xpBp) : xpReward),
     elite,
-    radius: data.radius,
+    midboss: Boolean(midboss),
+    midbossId: midboss?.id ?? null,
+    radius: midboss ? bp(data.radius, midboss.radiusBp) : data.radius,
     stageEliteId: elite ? run.stage.eliteId : null,
     rangedCooldown: 0,
     projectileTicks: data.projectileTicks ?? 120,
@@ -513,11 +534,23 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     entityId: enemy.id,
     enemyType: type,
     elite,
+    midboss: Boolean(midboss),
+    midbossId: midboss?.id ?? null,
     spawnDirection: direction,
     route: clone(enemy.route),
   });
   spawnEvent.spawnEventId = spawnEvent.eventId;
   enemy.spawnEventId = spawnEvent.eventId;
+  if (midboss) {
+    emit(run, "MIDBOSS_SPAWNED", {
+      entityId: enemy.id,
+      midbossId: midboss.id,
+      enemyType: type,
+      hp: enemy.hp,
+      spawnDirection: direction,
+      cue: eventCue("bossSpawned"),
+    });
+  }
   emit(run, "ENEMY_POLICY_SELECTED", {
     entityId: enemy.id,
     spawnEventId: enemy.spawnEventId,
@@ -971,7 +1004,11 @@ function collectPickups(run) {
 function makeOffer(run) {
   if (run.measurementProfile) return;
   let seed = run.rng;
-  const available = Object.keys(SKILLS).filter((id) => !run.commander.skills.includes(id)).sort();
+  // Rank-up offers: a skill the commander already owns stays in the pool until MAX_SKILL_RANK, so a
+  // long stage deepens a build (특성 강화) instead of only widening it with new skill ids.
+  const available = Object.keys(SKILLS)
+    .filter((id) => !run.commander.skills.includes(id) || (run.commander.skillRanks[id] ?? 1) < MAX_SKILL_RANK)
+    .sort();
   const choices = [];
   while (available.length && choices.length < 3) {
     seed = rngNext(seed);
@@ -987,23 +1024,50 @@ function applySkill(run, skillId) {
   const skill = SKILLS[skillId];
   if (!skill || !run.growthOffer || !run.growthOffer.choices.includes(skillId)) return false;
   const completedLevelCost = XP_GROWTH[run.commander.level - 1] || XP_GROWTH.at(-1);
-  run.commander.skills.push(skillId);
-  run.commander.skills.sort();
-  run.commander.skillRanks[skillId] = 1;
+  const owned = run.commander.skills.includes(skillId);
+  const rank = owned ? Math.min(MAX_SKILL_RANK, (run.commander.skillRanks[skillId] ?? 1) + 1) : 1;
+  if (!owned) {
+    run.commander.skills.push(skillId);
+    run.commander.skills.sort();
+  }
+  run.commander.skillRanks[skillId] = rank;
   run.commander.level = run.growthOffer.level;
   run.progress.skillsLearned += 1;
-  if (skill.kind === "passive") {
-    run.commander.basicDamage += skill.basicDamage || 0;
-    if (skill.maxIntegrity) {
-      run.commander.maxIntegrity += skill.maxIntegrity;
-      run.commander.integrity += skill.maxIntegrity;
-    }
-    run.commander.pickupRange += skill.pickupRange || 0;
-  } else run.commander.cooldowns[skillId] = 0;
+  applySkillRankEffects(run, skill, rank);
   run.commander.xp -= completedLevelCost;
   run.growthOffer = null;
-  emit(run, "SKILL_SELECTED", { skillId, objectiveId: "growth", cue: eventCue("growthOffer") });
+  emit(run, "SKILL_SELECTED", { skillId, rank, rankUp: owned, objectiveId: "growth", cue: eventCue("growthOffer") });
   return true;
+}
+
+/**
+ * Skill rank scaling (특성 강화). Rank 1 is the shipped effect; every extra rank adds a fixed share
+ * of it. Passives bank their bonus immediately; actives read their rank at cast time through
+ * `skillRankDamage` / `skillRankCooldown`, so a rank carried in from the previous stage is worth
+ * exactly what it would be worth if it had been earned in this one.
+ */
+function applySkillRankEffects(run, skill, rank) {
+  if (skill.kind === "passive") {
+    const share = rank === 1 ? 1 : SKILL_RANK_PASSIVE_SHARE;
+    run.commander.basicDamage += Math.round((skill.basicDamage || 0) * share);
+    if (skill.maxIntegrity) {
+      const gain = Math.round(skill.maxIntegrity * share);
+      run.commander.maxIntegrity += gain;
+      run.commander.integrity += gain;
+    }
+    run.commander.pickupRange += Math.round((skill.pickupRange || 0) * share);
+  } else if (rank === 1) run.commander.cooldowns[skill.id] = 0;
+}
+/** Active-skill damage at its current rank: +25% of base per rank beyond the first. */
+function skillRankDamage(run, skill) {
+  const rank = run.commander.skillRanks?.[skill.id] ?? 1;
+  return Math.round((skill.damage || 0) * (1 + SKILL_RANK_DAMAGE_STEP * (rank - 1)));
+}
+/** Active-skill cooldown at its current rank: -6% of base per rank beyond the first, floored at 70%. */
+function skillRankCooldown(run, skill, baseCooldownTicks) {
+  const rank = run.commander.skillRanks?.[skill.id] ?? 1;
+  const scale = Math.max(SKILL_RANK_COOLDOWN_FLOOR, 1 - SKILL_RANK_COOLDOWN_STEP * (rank - 1));
+  return Math.max(1, Math.trunc(baseCooldownTicks * scale));
 }
 
 function castSkill(run, skillId) {
@@ -1018,7 +1082,7 @@ function castSkill(run, skillId) {
     const firstStrikeFactor = targets.length ? consumeFirstStrikeFactor(run) : 1;
     targets.forEach((entry) => {
       const healthBefore = entry.hp;
-      const hit = resolveCritical(run, "skill", Math.round(skill.damage * commanderDamageMultiplier(run, entry, { skill: true, firstStrikeFactor })));
+      const hit = resolveCritical(run, "skill", Math.round(skillRankDamage(run, skill) * commanderDamageMultiplier(run, entry, { skill: true, firstStrikeFactor })));
       entry.hp -= hit.damage;
       const healthAfter = entry.hp;
       entry.lastCastInstanceId = castInstanceId;
@@ -1057,7 +1121,7 @@ function castSkill(run, skillId) {
   } else if (targets[0]) {
     const entry = targets[0];
     const healthBefore = entry.hp;
-    const hit = resolveCritical(run, "skill", Math.round(skill.damage * commanderDamageMultiplier(run, entry, { skill: true })));
+    const hit = resolveCritical(run, "skill", Math.round(skillRankDamage(run, skill) * commanderDamageMultiplier(run, entry, { skill: true })));
     entry.hp -= hit.damage;
     const healthAfter = entry.hp;
     entry.lastCastInstanceId = castInstanceId;
@@ -1095,7 +1159,7 @@ function castSkill(run, skillId) {
   }
 
   const baseCooldownTicks = run.measurementProfile?.fixtureActiveCooldownTicks ?? skill.cooldown;
-  const effectiveCooldownTicks = Math.max(1, Math.trunc(baseCooldownTicks * run.commander.cooldownScale));
+  const effectiveCooldownTicks = Math.max(1, Math.trunc(skillRankCooldown(run, skill, baseCooldownTicks) * run.commander.cooldownScale));
   run.commander.cooldowns[skillId] = effectiveCooldownTicks;
 
   const readyTick = run.tick + effectiveCooldownTicks - 1;
@@ -1296,6 +1360,8 @@ function resolveDeaths(run) {
     run.pickups.push(echo);
     const killEvent = emit(run, "ENEMY_DEFEATED", {
       enemyId: entry.id,
+      midboss: Boolean(entry.midboss),
+      midbossId: entry.midbossId || null,
       spawnEventId: entry.spawnEventId || null,
       castInstanceId: entry.lastCastInstanceId || null,
       causalRootId: entry.lastCausalRootId || null,
@@ -1582,6 +1648,21 @@ function moveEnemies(run) {
   if (breachedIds.size) run.enemies = run.enemies.filter((enemy) => !breachedIds.has(enemy.id));
 }
 
+/** Opens the extraction window once occupation capture and an Echo candidate coexist (either order). */
+function openExtractionWindow(run, tactics) {
+  if (!run.occupationProgress.captured || !run.eliteCandidate) return;
+  if (run.extractionProgress.expiresAt !== null) return;
+  const windowTicks = tactics.extraction?.windowTicks || 600;
+  run.extractionProgress.expiresAt = run.tick + windowTicks;
+  run.eliteCandidate.expiresAt = run.extractionProgress.expiresAt;
+  emit(run, "EXTRACTION_WINDOW_OPENED", {
+    objectiveId: "extraction",
+    extractionPointId: tactics.extraction?.id || null,
+    expiresAt: run.extractionProgress.expiresAt,
+    windowTicks,
+  });
+}
+
 function updateObjectivePhase(run) {
   const objectives = run.objectives;
   if (!objectives.gateDefense.completed
@@ -1624,12 +1705,55 @@ function applyFixedRate(run, key, ratePerSecond) {
   run.terrainRemainders[key] %= TICK_RATE;
   return value;
 }
+/**
+ * Wave-clear recovery (long-stage sustain, run-id 20260728-stage-playtime-doctrine).
+ *
+ * A 3-6 minute hold is an attrition problem: with no sustain the commander is chipped to zero long
+ * before the last wave, which is exactly what the pre-doctrine 30-45 s stages never had to answer.
+ * Clearing a wave's spawns before the next wave lands is the authored breathing beat, and it pays
+ * back a fixed fraction of BOTH bars. It fires at most once per scheduled wave, only while the
+ * gate-defense hold is live, so it can never be farmed after the hold closes.
+ */
+export const MAX_SKILL_RANK = 5;
+const SKILL_RANK_DAMAGE_STEP = 0.25;
+const SKILL_RANK_COOLDOWN_STEP = 0.06;
+const SKILL_RANK_COOLDOWN_FLOOR = 0.7;
+const SKILL_RANK_PASSIVE_SHARE = 0.5;
+const WAVE_CLEAR_COMMANDER_RECOVERY_BP = 800;
+const WAVE_CLEAR_GATE_RECOVERY_BP = 500;
+function processWaveClearRecovery(run) {
+  if (run.objectives.gateDefense.completed) return;
+  if (run.waveIndex <= run.waveClearIndex || run.waveIndex === 0) return;
+  if (run.enemies.some((enemy) => enemy.hp > 0 && !enemy.elite && enemy.class !== "boss")) return;
+  run.waveClearIndex = run.waveIndex;
+  const commanderGain = Math.min(
+    Math.trunc((run.commander.maxIntegrity * WAVE_CLEAR_COMMANDER_RECOVERY_BP) / 10000),
+    run.commander.maxIntegrity - run.commander.integrity,
+  );
+  const gateGain = Math.min(
+    Math.trunc((run.gate.maxIntegrity * WAVE_CLEAR_GATE_RECOVERY_BP) / 10000),
+    run.gate.maxIntegrity - run.gate.integrity,
+  );
+  run.commander.integrity += commanderGain;
+  run.gate.integrity += gateGain;
+  emit(run, "WAVE_CLEARED", {
+    waveIndex: run.waveClearIndex - 1,
+    objectiveId: "gate-defense",
+    commanderRecovered: commanderGain,
+    gateRecovered: gateGain,
+    commanderIntegrity: run.commander.integrity,
+    gateIntegrity: run.gate.integrity,
+  });
+}
 function processObjectivePressure(run) {
   const pressure = run.objectivePressure;
   if (!pressure || run.objectives.phase === "complete") return;
   const elapsed = run.tick - pressure.phaseStartedAt;
-  if (elapsed >= OBJECTIVE_PRESSURE_GRACE_TICKS
-      && (elapsed - OBJECTIVE_PRESSURE_GRACE_TICKS) % OBJECTIVE_PRESSURE_INTERVAL_TICKS === 0) {
+  const grace = run.objectives.phase === "gate-defense"
+    ? run.stage.gateTicks + OBJECTIVE_PRESSURE_GRACE_TICKS
+    : OBJECTIVE_PRESSURE_GRACE_TICKS;
+  if (elapsed >= grace
+      && (elapsed - grace) % OBJECTIVE_PRESSURE_INTERVAL_TICKS === 0) {
     pressure.pulses += 1;
     const damage = Math.min(OBJECTIVE_PRESSURE_DAMAGE, run.gate.integrity);
     run.gate.integrity -= damage;
@@ -1696,17 +1820,7 @@ function processTerrainEffects(run) {
       if (run.occupationProgress.holdTicks >= run.occupationProgress.maxHoldTicks) {
         run.occupationProgress.captured = true;
         run.occupationProgress.capturedAt = run.tick;
-        if (run.eliteCandidate && run.extractionProgress.expiresAt === null) {
-          const windowTicks = tactics.extraction?.windowTicks || 600;
-          run.extractionProgress.expiresAt = run.tick + windowTicks;
-          run.eliteCandidate.expiresAt = run.extractionProgress.expiresAt;
-          emit(run, "EXTRACTION_WINDOW_OPENED", {
-            objectiveId: "extraction",
-            extractionPointId: tactics.extraction?.id || null,
-            expiresAt: run.extractionProgress.expiresAt,
-            windowTicks,
-          });
-        }
+        openExtractionWindow(run, tactics);
         emit(run, "OCCUPATION_CAPTURED", {
           objectiveId: "occupation",
           occupationPointId: occupation.id,
@@ -1750,6 +1864,10 @@ function processTerrainEffects(run) {
     }
   }
 
+  // The extraction window needs BOTH the captured occupation point and a live Echo candidate, and
+  // either can land first: with the authored long hold the elite is frequently defeated AFTER the
+  // point is captured, which used to leave the window permanently closed and wedge the run.
+  openExtractionWindow(run, tactics);
   const extraction = tactics.extraction;
   const extractionOpen = extraction
     && run.objectives.occupation.completed
@@ -1867,12 +1985,15 @@ function tick(run) {
       waveIndex: wave.waveIndex,
       pattern: wave.pattern,
       slot: wave.slot,
+      kind: wave.kind || "normal",
+      label: wave.label || null,
       alternativeId: wave.alternativeId,
       count: wave.count,
       composition: clone(wave.composition),
       selectionId: wave.selectionId,
       policyId: wave.policyId,
       spawnDirection: wave.direction,
+      midbossId: wave.midboss?.id ?? null,
       variantId: run.waveVariant.id,
     });
     let spawnIndex = 0;
@@ -1887,6 +2008,14 @@ function tick(run) {
         spawnIndex += 1;
       }
     });
+    if (wave.midboss) {
+      spawnEnemy(run, wave.midboss.enemy, false, {
+        direction: wave.direction,
+        laneOffset: wave.laneOffset,
+        policyId: wave.midboss.policyId,
+        midboss: wave.midboss,
+      });
+    }
     run.waveIndex += 1;
   }
 
@@ -1965,6 +2094,7 @@ function tick(run) {
 
   moveEnemies(run);
   resolveDeaths(run);
+  processWaveClearRecovery(run);
   assignCompanionItemClaims(run);
   collectPickups(run);
   updateObjectivePhase(run);
@@ -2009,12 +2139,63 @@ function tick(run) {
   }
 
   const itemCollected = run.events.some((event) => event.type === "ITEM_COLLECTED");
+  // Growth offers used to be gated behind the completed gate-defense + echo-recovery objectives,
+  // which was survivable when the hold was 15-45 s. With the authored 160-250 s hold
+  // (STAGE_WAVE_DOCTRINE) that gate meant the ENTIRE defense was played at level 1 with no
+  // upgrades, and the level-up circuit only opened after the fight was effectively over. The XP
+  // threshold itself is now the only progression gate; the integrity and pending-item guards
+  // (never interrupt a near-death moment or an item pickup beat) are unchanged.
   if (!run.terminal && !run.growthOffer && !itemCollected
-      && run.objectives.gateDefense.completed
-      && run.objectives.echoRecovery.completed
       && run.commander.integrity * 10 > run.commander.maxIntegrity
       && run.commander.xp >= (XP_GROWTH[run.commander.level - 1] || XP_GROWTH.at(-1))) {
     makeOffer(run);
+  }
+}
+
+/**
+ * Stage-to-stage carry-over (스킬/아이템 효과 이어가기).
+ *
+ * A victory hands the NEXT stage the build the player actually assembled, one rank lighter and
+ * capped, so a long campaign compounds without becoming a snowball:
+ *   carriedRank = clamp(earnedRank - CARRY_OVER_RANK_DECAY, 1, CARRY_OVER_MAX_RANK)
+ *   items       = the last CARRY_OVER_MAX_ITEMS collected in-run, re-applied at full effect
+ * Defeat carries nothing. `runCarryOver()` is what the campaign layer persists.
+ */
+export function runCarryOver(run) {
+  const snapshotRanks = run?.commander?.skillRanks || {};
+  const skillRanks = {};
+  for (const [skillId, rank] of Object.entries(snapshotRanks)) {
+    if (!SKILLS[skillId]) continue;
+    skillRanks[skillId] = clamp(rank - CARRY_OVER_RANK_DECAY, 1, CARRY_OVER_MAX_RANK);
+  }
+  return {
+    version: 1,
+    skillRanks,
+    itemIds: [...(run?.itemIds || [])].slice(-CARRY_OVER_MAX_ITEMS),
+  };
+}
+function applyCarryOver(state, carryOver) {
+  if (!carryOver) return;
+  const skillRanks = carryOver.skillRanks || {};
+  const carriedSkills = [];
+  for (const skillId of Object.keys(skillRanks).sort()) {
+    const skill = SKILLS[skillId];
+    if (!skill) continue;
+    const rank = clamp(Math.trunc(skillRanks[skillId]), 1, CARRY_OVER_MAX_RANK);
+    if (!state.commander.skills.includes(skillId)) state.commander.skills.push(skillId);
+    state.commander.skillRanks[skillId] = rank;
+    for (let step = 1; step <= rank; step += 1) applySkillRankEffects(state, skill, step);
+    carriedSkills.push({ skillId, rank });
+  }
+  state.commander.skills.sort();
+  const carriedItems = [...(carryOver.itemIds || [])].filter((itemId) => ITEMS[itemId]).slice(-CARRY_OVER_MAX_ITEMS);
+  carriedItems.forEach((itemId) => applyItem(state, itemId));
+  if (carriedSkills.length || carriedItems.length) {
+    emit(state, "CARRY_OVER_APPLIED", {
+      skills: carriedSkills,
+      itemIds: [...carriedItems],
+      objectiveId: "growth",
+    });
   }
 }
 
@@ -2022,7 +2203,7 @@ function tick(run) {
  * `formation` is the saved per-companion FRONT/BACK intent map. It deterministically chooses
  * companion position rank at run creation; the active stance still derives the live slot count
  * from STANCE_CONFIG every tick. See resolveFormation(). */
-export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {} } = {}) {
+export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, carryOver = null } = {}) {
   const stage = stageFor(stageId);
   const stagePlan = stagePlanFor(stage);
   const unsignedSeed = (seed >>> 0) || 1;
@@ -2051,6 +2232,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     : profileKey ? MEASUREMENT_PROFILES[profileKey] : null;
 
   const maxIntegrity = measurementProfile ? measurementProfile.maxIntegrity : GATE.maxIntegrity;
+  const stageGateIntegrity = stage.doctrine?.gateIntegrity ?? GATE.maxIntegrity;
   const basicTicks = measurementProfile ? measurementProfile.basicCooldownTicks : COMMANDER.basicCooldown;
   const critProfile = measurementProfile ? clone(measurementProfile.critProfile) : clone(COMMANDER.critProfile);
   const initialSkills = measurementProfile
@@ -2088,6 +2270,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
       schedule: clone(schedule),
     },
     waveIndex: 0,
+    waveClearIndex: 0,
     inputs: [],
     inputSequence: 0,
     events: [],
@@ -2116,7 +2299,10 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     formationStance: "VANGUARD",
     stanceCooldownUntilTick: 0,
     wardenState: null,
-    gate: { id: "gate", x: ARENA.gateX, y: ARENA.gateY, elevation: 0, integrity: GATE.maxIntegrity, maxIntegrity: GATE.maxIntegrity, radius: GATE.radius },
+    // Gate durability is now a per-stage doctrine number: a 3-6 minute hold takes several times
+    // the total incoming damage the pre-doctrine 30-45 s hold did, so the 1000-integrity gate is
+    // scaled to the authored hold length instead of leaving the format unwinnable.
+    gate: { id: "gate", x: ARENA.gateX, y: ARENA.gateY, elevation: 0, integrity: stageGateIntegrity, maxIntegrity: stageGateIntegrity, radius: GATE.radius },
     commander: {
       id: "commander",
       x: 19000,
@@ -2208,6 +2394,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     }
     resolveFormation(companionLoadout, formation).forEach((id) => addCompanion(state, id, { equipment: companionEquipment[id] || {} }));
     applyOwnedRewards(state, rewardIds);
+    applyCarryOver(state, carryOver);
     if (rpgActive) {
       let incomingMultiplier = state.commander.incomingDamageMultiplier;
       if (state.wardenState?.runtime?.incomingDamageMultiplier) incomingMultiplier *= state.wardenState.runtime.incomingDamageMultiplier;
@@ -2364,6 +2551,9 @@ export function getRunDigest(run) { return JSON.stringify(getRunSnapshot(run)); 
 export function isTerminalRun(run) { return Boolean(run?.terminal); }
 
 export {
+  CARRY_OVER_MAX_ITEMS,
+  CARRY_OVER_MAX_RANK,
+  CARRY_OVER_RANK_DECAY,
   TICK_RATE,
   OBJECTIVE_PRESSURE_GRACE_TICKS,
   BOSS_PRESSURE_GRACE_TICKS,

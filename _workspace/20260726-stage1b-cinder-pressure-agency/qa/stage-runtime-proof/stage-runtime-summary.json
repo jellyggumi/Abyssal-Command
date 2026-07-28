@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-27T20:37:19.464Z",
+  "generatedAt": "2026-07-28T03:13:32.480Z",
   "canonicalStageIds": [
     "cinder-span",
     "veil-citadel",
@@ -57,8 +57,8 @@
         "surfaceStageId": "cinder-span",
         "loadedStageId": "cinder-span",
         "renderer": "webgl",
-        "renderedFrames": 74,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:57423/assets/images/battle/ui/stages/cinder-span.png\")",
+        "renderedFrames": 22,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/cinder-span.png\")",
         "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/cinder-span.png')",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/cinder-span.glb",
@@ -188,8 +188,8 @@
         "surfaceStageId": "veil-citadel",
         "loadedStageId": "veil-citadel",
         "renderer": "webgl",
-        "renderedFrames": 37,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:57423/assets/images/battle/ui/stages/veil-citadel.png\")",
+        "renderedFrames": 21,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/veil-citadel.png\")",
         "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/veil-citadel.png')",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/veil-citadel.glb",
@@ -244,10 +244,6 @@
           },
           {
             "path": "assets/images/battle/glb/enemies/scout.glb",
-            "status": 200
-          },
-          {
-            "path": "assets/images/battle/glb/enemies/shade.glb",
             "status": 200
           },
           {
@@ -323,8 +319,8 @@
         "surfaceStageId": "echo-throne",
         "loadedStageId": "echo-throne",
         "renderer": "webgl",
-        "renderedFrames": 61,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:57423/assets/images/battle/ui/stages/echo-throne-steps.png\")",
+        "renderedFrames": 24,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/echo-throne-steps.png\")",
         "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/echo-throne-steps.png')",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/echo-throne-steps.glb",
@@ -458,8 +454,8 @@
         "surfaceStageId": "sunken-bastion",
         "loadedStageId": "sunken-bastion",
         "renderer": "webgl",
-        "renderedFrames": 50,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:57423/assets/images/battle/ui/stages/sunken-bastion.png\")",
+        "renderedFrames": 21,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/sunken-bastion.png\")",
         "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/sunken-bastion.png')",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/sunken-bastion.glb",
@@ -597,8 +593,8 @@
         "surfaceStageId": "howling-sprawl",
         "loadedStageId": "howling-sprawl",
         "renderer": "webgl",
-        "renderedFrames": 21,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:57423/assets/images/battle/ui/stages/howling-sprawl.png\")",
+        "renderedFrames": 18,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/howling-sprawl.png\")",
         "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/howling-sprawl.png')",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/howling-sprawl.glb",
@@ -649,6 +645,10 @@
           },
           {
             "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/possessed.glb",
             "status": 200
           },
           {
@@ -732,8 +732,8 @@
         "surfaceStageId": "glass-necropolis",
         "loadedStageId": "glass-necropolis",
         "renderer": "webgl",
-        "renderedFrames": 25,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:57423/assets/images/battle/ui/stages/glass-necropolis.png\")",
+        "renderedFrames": 23,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/glass-necropolis.png\")",
         "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/glass-necropolis.png')",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/glass-necropolis.glb",
@@ -867,8 +867,8 @@
         "surfaceStageId": "starless-canal",
         "loadedStageId": "starless-canal",
         "renderer": "webgl",
-        "renderedFrames": 21,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:57423/assets/images/battle/ui/stages/starless-canal.png\")",
+        "renderedFrames": 19,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/starless-canal.png\")",
         "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/starless-canal.png')",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/starless-canal.glb",
@@ -1002,8 +1002,8 @@
         "surfaceStageId": "shattered-causeway",
         "loadedStageId": "shattered-causeway",
         "renderer": "webgl",
-        "renderedFrames": 20,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:57423/assets/images/battle/ui/stages/shattered-causeway.png\")",
+        "renderedFrames": 19,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/shattered-causeway.png\")",
         "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/shattered-causeway.png')",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/shattered-causeway.glb",
@@ -1050,6 +1050,10 @@
           },
           {
             "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/possessed.glb",
             "status": 200
           },
           {
@@ -1133,8 +1137,8 @@
         "surfaceStageId": "abyss-chancel",
         "loadedStageId": "abyss-chancel",
         "renderer": "webgl",
-        "renderedFrames": 22,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:57423/assets/images/battle/ui/stages/abyss-chancel.png\")",
+        "renderedFrames": 27,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/abyss-chancel.png\")",
         "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/abyss-chancel.png')",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/abyss-chancel.glb",
@@ -1185,6 +1189,10 @@
           },
           {
             "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/possessed.glb",
             "status": 200
           },
           {
@@ -1268,8 +1276,8 @@
         "surfaceStageId": "gate-zenith",
         "loadedStageId": "gate-zenith",
         "renderer": "webgl",
-        "renderedFrames": 20,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:57423/assets/images/battle/ui/stages/gate-zenith.png\")",
+        "renderedFrames": 17,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/gate-zenith.png\")",
         "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/gate-zenith.png')",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/gate-zenith.glb",
@@ -1323,6 +1331,10 @@
             "status": 200
           },
           {
+            "path": "assets/images/battle/glb/enemies/possessed.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/enemies/scout.glb",
             "status": 200
           },
@@ -1364,5 +1376,5 @@
     }
   ],
   "pass": true,
-  "finishedAt": "2026-07-27T20:37:46.015Z"
+  "finishedAt": "2026-07-28T03:13:55.300Z"
 }

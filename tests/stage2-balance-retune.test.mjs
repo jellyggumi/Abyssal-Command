@@ -1,53 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { CINDER_SPAN_WAVE_PLAN, STAGE_BY_ID } from "../defense-catalog.js";
+import { STAGE_BY_ID, STAGE_WAVE_DOCTRINE } from "../defense-catalog.js";
 import { BOSS_RALLY_COOLDOWN_REDUCTION, STANCE_CONFIG } from "../rpg-catalog.js";
 
 test("Stage 2 final retune data contract remains pinned in public catalogs", () => {
   const cinderSpan = STAGE_BY_ID["cinder-span"];
 
   assert.ok(cinderSpan, "Cinder Span must remain a public stage catalog entry");
-  assert.equal(cinderSpan.gateTicks, 900, "Cinder Span gate duration must remain 900 ticks");
-  assert.equal(
-    cinderSpan.wavePlan,
-    CINDER_SPAN_WAVE_PLAN,
-    "Cinder Span must publish the canonical authored wave plan",
-  );
-  assert.deepEqual(
-    CINDER_SPAN_WAVE_PLAN.map(({ tick, primary, alternatives }) => ({
-      tick,
-      primary,
-      alternatives: alternatives.map(({ id, composition }) => ({ id, composition })),
-    })),
-    [
-      {
-        tick: 0,
-        primary: { enemy: "rusher", count: 14 },
-        alternatives: [
-          { id: "opening-rusher-pure", composition: [{ enemy: "rusher", count: 14 }] },
-          { id: "opening-rusher-flanker", composition: [{ enemy: "rusher", count: 8 }, { enemy: "flanker", count: 6 }] },
-        ],
-      },
-      {
-        tick: 120,
-        primary: { enemy: "flanker", count: 10 },
-        alternatives: [
-          { id: "pressure-flanker-pure", composition: [{ enemy: "flanker", count: 10 }] },
-          { id: "pressure-flanker-rusher", composition: [{ enemy: "flanker", count: 7 }, { enemy: "rusher", count: 3 }] },
-        ],
-      },
-      {
-        tick: 240,
-        primary: { enemy: "ranged", count: 8 },
-        alternatives: [
-          { id: "denial-ranged-pure", composition: [{ enemy: "ranged", count: 8 }] },
-          { id: "denial-ranged-flanker", composition: [{ enemy: "ranged", count: 5 }, { enemy: "flanker", count: 3 }] },
-        ],
-      },
-    ],
-    "Cinder Span wave ticks, primaries, and alternatives must retain the final signed values",
-  );
+  // SUPERSEDED (run-id 20260728-stage-playtime-doctrine): the 900-tick gate hold and the three-wave
+  // CINDER_SPAN_WAVE_PLAN produced a ~40 s stage. The hold and the wave list now come from
+  // STAGE_WAVE_DOCTRINE; see
+  // _workspace/20260726-stage1b-cinder-pressure-agency/design/stage-playtime-doctrine.md.
+  // What stays pinned from the stage-2 retune: the stance geometry, the boss-rally value, and every
+  // stable catalog id and objective coordinate below.
+  assert.equal(cinderSpan.gateTicks, STAGE_WAVE_DOCTRINE["cinder-span"].defenseTicks,
+    "Cinder Span gate duration must come from its wave doctrine");
+  assert.equal(cinderSpan.legacyGateTicks, 900,
+    "the pre-doctrine 900-tick hold must stay recorded as the superseded value");
+  assert.equal(cinderSpan.wavePlan.length, STAGE_WAVE_DOCTRINE["cinder-span"].waveCount,
+    "Cinder Span must publish one wave per doctrine wave");
+
   assert.deepEqual(
     STANCE_CONFIG.TURRET.offsets[0],
     { x: -300, y: 0 },

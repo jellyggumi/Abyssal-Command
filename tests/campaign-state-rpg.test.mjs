@@ -301,7 +301,9 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   campaign = startRun(campaign, "cinder-span");
   campaign = applyCampaignRunResult(campaign, { stageId: "cinder-span", outcome: "victory" });
   const current = serializeCampaign(campaign);
-  assert.equal(Object.keys(current).length, 14);
+  // 15 = the 14 RPG-era keys plus `stageCarryOver`
+  // (run-id 20260728-stage-playtime-doctrine, stage-to-stage skill/item carry-over).
+  assert.equal(Object.keys(current).length, 15);
   assert.ok(current.rewardIds.length > 0);
   assert.ok(current.achievementIds.length > 0);
 
@@ -313,6 +315,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   delete shapeA.wardenProgress;
   delete shapeA.ownedEquipmentIds;
   delete shapeA.companionFormation;
+  delete shapeA.stageCarryOver;
   assert.equal(Object.keys(shapeA).length, 8);
   const restoredA = restoreCampaign(shapeA);
   assert.ok(restoredA);
@@ -322,6 +325,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   assert.deepEqual(restoredA.wardenProgress, { statPoints: {}, skillTreeIds: [], traitIds: [] });
   assert.deepEqual(restoredA.ownedEquipmentIds, []);
   assert.deepEqual(restoredA.companionFormation, {});
+  assert.deepEqual(restoredA.stageCarryOver, { version: 1, stageId: null, skillRanks: {}, itemIds: [] });
 
   // shape (b): 9-key (+idleReturn, no rewards)
   const shapeB = { ...current };
@@ -330,6 +334,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   delete shapeB.wardenProgress;
   delete shapeB.ownedEquipmentIds;
   delete shapeB.companionFormation;
+  delete shapeB.stageCarryOver;
   assert.equal(Object.keys(shapeB).length, 9);
   const restoredB = restoreCampaign(shapeB);
   assert.ok(restoredB);
@@ -342,6 +347,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   delete shapeC.wardenProgress;
   delete shapeC.ownedEquipmentIds;
   delete shapeC.companionFormation;
+  delete shapeC.stageCarryOver;
   assert.equal(Object.keys(shapeC).length, 10);
   const restoredC = restoreCampaign(shapeC);
   assert.ok(restoredC);
@@ -354,6 +360,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   delete shapeD.wardenProgress;
   delete shapeD.ownedEquipmentIds;
   delete shapeD.companionFormation;
+  delete shapeD.stageCarryOver;
   assert.equal(Object.keys(shapeD).length, 11);
   const restoredD = restoreCampaign(shapeD);
   assert.ok(restoredD);

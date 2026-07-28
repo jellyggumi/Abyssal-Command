@@ -1,4 +1,6 @@
-import { COMPANIONS, REWARDS, STAGE_REWARD_IDS } from "./defense-catalog.js";
+import {
+  CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, COMPANIONS, ITEMS, REWARDS, SKILLS, STAGE_REWARD_IDS,
+} from "./defense-catalog.js";
 import {
   WARDEN_STATS, wardenStatTotalCost, WARDEN_SKILL_TREE,
   WARDEN_TRAITS, WARDEN_TRAIT_UNLOCK_SEQUENCES, wardenTraitOffersForSequence,
@@ -43,6 +45,32 @@ function idleReceipt(outcome, { requestedAt = null, elapsedMs = 0, settledElapse
 
 // --- RPG layer (Solo Warden concept, `_workspace/20260723-solo-warden-rpg-concept/`) ---
 const initialWardenProgress = () => ({ statPoints: {}, skillTreeIds: [], traitIds: [] });
+/**
+ * Stage-to-stage carry-over (스킬/아이템 효과 이어가기). A victory persists the in-run build the
+ * simulation hands back through `runCarryOver()`; the next `createDefenseRun` re-applies it.
+ * A defeat clears it, so carry-over is a reward for closing a stage, never a floor.
+ */
+export const CARRY_OVER_VERSION = 1;
+const initialStageCarryOver = () => ({ version: CARRY_OVER_VERSION, stageId: null, skillRanks: {}, itemIds: [] });
+function copyStageCarryOver(stageCarryOver) {
+  return {
+    version: stageCarryOver.version,
+    stageId: stageCarryOver.stageId,
+    skillRanks: { ...stageCarryOver.skillRanks },
+    itemIds: [...stageCarryOver.itemIds],
+  };
+}
+function validStageCarryOver(stageCarryOver) {
+  if (!isPlainObject(stageCarryOver) || !hasOnlyKeys(stageCarryOver, ["version", "stageId", "skillRanks", "itemIds"])) return false;
+  if (stageCarryOver.version !== CARRY_OVER_VERSION) return false;
+  if (stageCarryOver.stageId !== null && !STAGE_INDEX.has(stageCarryOver.stageId)) return false;
+  if (!isPlainObject(stageCarryOver.skillRanks)) return false;
+  if (!Object.entries(stageCarryOver.skillRanks).every(([skillId, rank]) =>
+    Object.hasOwn(SKILLS, skillId) && Number.isInteger(rank) && rank >= 1 && rank <= CARRY_OVER_MAX_RANK)) return false;
+  return validIds(stageCarryOver.itemIds)
+    && stageCarryOver.itemIds.length <= CARRY_OVER_MAX_ITEMS
+    && stageCarryOver.itemIds.every((itemId) => Object.hasOwn(ITEMS, itemId));
+}
 function copyWardenProgress(wardenProgress) {
   return {
     statPoints: { ...wardenProgress.statPoints },
@@ -137,12 +165,13 @@ function copyCampaign(campaign) {
     wardenProgress: copyWardenProgress(campaign.wardenProgress ?? initialWardenProgress()),
     ownedEquipmentIds: [...(campaign.ownedEquipmentIds ?? [])],
     companionFormation: copyCompanionFormation(campaign.companionFormation ?? {}),
+    stageCarryOver: copyStageCarryOver(campaign.stageCarryOver ?? initialStageCarryOver()),
   };
 }
 const LEGACY_KEYS = ["campaignId", "resetEpoch", "unlockedStageIndex", "companionCollection", "companionLoadout", "resolvedIds", "attemptsByStage", "lastResolution"];
 const REWARD_KEYS = [...LEGACY_KEYS, "rewardIds", "achievementIds"];
 const IDLE_KEYS = [...REWARD_KEYS, "idleReturn"];
-const CURRENT_KEYS = [...IDLE_KEYS, "wardenProgress", "ownedEquipmentIds", "companionFormation"];
+const CURRENT_KEYS = [...IDLE_KEYS, "wardenProgress", "ownedEquipmentIds", "companionFormation", "stageCarryOver"];
 const initialIdleReturn = () => ({ version: IDLE_RETURN_VERSION, lastSettledAt: null, totalProgress: 0 });
 function migrateCampaign(value) {
   if (!isPlainObject(value)) return value;
@@ -154,6 +183,7 @@ function migrateCampaign(value) {
   if (!Object.hasOwn(value, "wardenProgress")) patch.wardenProgress = initialWardenProgress();
   if (!Object.hasOwn(value, "ownedEquipmentIds")) patch.ownedEquipmentIds = [];
   if (!Object.hasOwn(value, "companionFormation")) patch.companionFormation = {};
+  if (!Object.hasOwn(value, "stageCarryOver")) patch.stageCarryOver = initialStageCarryOver();
   return Object.keys(patch).length ? { ...value, ...patch } : value;
 }
 function validCampaign(value) {
@@ -167,6 +197,7 @@ function validCampaign(value) {
   if (!validIds(candidate.rewardIds) || !candidate.rewardIds.every((id) => Object.hasOwn(REWARDS, id)) || !validIds(candidate.achievementIds)) return false;
   if (!isPlainObject(candidate.idleReturn) || !hasOnlyKeys(candidate.idleReturn, ["version", "lastSettledAt", "totalProgress"]) || candidate.idleReturn.version !== IDLE_RETURN_VERSION || (candidate.idleReturn.lastSettledAt !== null && !isTimestamp(candidate.idleReturn.lastSettledAt)) || !isTimestamp(candidate.idleReturn.totalProgress)) return false;
   if (candidate.lastResolution !== null && !(isPlainObject(candidate.lastResolution) && hasOnlyKeys(candidate.lastResolution, ["stageId", "outcome", "campaignComplete"]) && STAGE_INDEX.has(candidate.lastResolution.stageId) && ["victory", "defeat", "FINAL_COMPLETION"].includes(candidate.lastResolution.outcome) && typeof candidate.lastResolution.campaignComplete === "boolean")) return false;
+  if (!validStageCarryOver(candidate.stageCarryOver)) return false;
   if (!validWardenProgress(candidate, candidate.wardenProgress)) return false;
   if (!validOwnedEquipmentIds(candidate, candidate.ownedEquipmentIds)) return false;
   return validCompanionFormation(candidate, candidate.companionFormation);
@@ -181,6 +212,7 @@ export function createCampaign({ campaignId, resetEpoch = 0 } = {}) {
     campaignId: id, resetEpoch, unlockedStageIndex: 0, companionCollection: [], companionLoadout: { prototypeIds: [] },
     resolvedIds: [], attemptsByStage: {}, rewardIds: [], achievementIds: [], idleReturn: initialIdleReturn(), lastResolution: null,
     wardenProgress: initialWardenProgress(), ownedEquipmentIds: [], companionFormation: {},
+    stageCarryOver: initialStageCarryOver(),
   };
 }
 export function startRun(campaign, stageId = STAGES[campaign?.unlockedStageIndex]?.id) {
@@ -211,6 +243,34 @@ export function applyCampaignRunResult(campaign, { stageId, outcome, rewardId = 
   next.achievementIds.sort();
   next.rewardIds.sort();
   next.lastResolution = { stageId, outcome, campaignComplete: victory && stageIndex === STAGES.length - 1 && next.resolvedIds.includes(stageId) };
+  return next;
+}
+
+/**
+ * Records (victory) or clears (defeat) the stage-to-stage carry-over.
+ *
+ * `carryOver` is exactly what `runCarryOver()` returns from the finished run: skill ranks already
+ * decayed and capped at CARRY_OVER_MAX_RANK, and at most CARRY_OVER_MAX_ITEMS collected items.
+ * Unknown skill/item ids and out-of-range ranks are dropped rather than throwing, so a run from an
+ * older rules version can never wedge a saved campaign.
+ */
+export function applyRunCarryOver(campaign, { stageId, outcome, carryOver = null } = {}) {
+  requireCampaign(campaign);
+  if (!STAGE_INDEX.has(stageId)) fail("Unknown stage for carry-over.");
+  if (!["victory", "defeat", "FINAL_COMPLETION"].includes(outcome)) fail("Run outcome must be victory, defeat, or FINAL_COMPLETION.");
+  const next = copyCampaign(campaign);
+  if (outcome === "defeat" || !carryOver) {
+    next.stageCarryOver = initialStageCarryOver();
+    return next;
+  }
+  const skillRanks = {};
+  for (const [skillId, rank] of Object.entries(carryOver.skillRanks ?? {})) {
+    if (!Object.hasOwn(SKILLS, skillId) || !Number.isInteger(rank) || rank < 1) continue;
+    skillRanks[skillId] = Math.min(rank, CARRY_OVER_MAX_RANK);
+  }
+  const itemIds = [...new Set((carryOver.itemIds ?? []).filter((itemId) => Object.hasOwn(ITEMS, itemId)))]
+    .slice(-CARRY_OVER_MAX_ITEMS);
+  next.stageCarryOver = { version: CARRY_OVER_VERSION, stageId, skillRanks, itemIds };
   return next;
 }
 

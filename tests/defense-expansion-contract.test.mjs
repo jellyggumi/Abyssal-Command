@@ -9,7 +9,7 @@ import {
   isTerminalRun,
   queueInput,
 } from "../defense-run-simulation.js";
-import { XP_GROWTH } from "../defense-catalog.js";
+import { STAGE_BY_ID, XP_GROWTH } from "../defense-catalog.js";
 
 const FULL_LOADOUT = ["ember-cohort", "rift-lens", "veil-vanguard"];
 const FULL_REWARDS = ["abyssal-banner", "bulwark-brand", "stillwater-hourglass"];
@@ -65,6 +65,10 @@ function advanceUntil(run, predicate, maxTicks = 4000, options = {}) {
   return { run: next, snapshot: getRunSnapshot(next) };
 }
 
+// Policy scenarios have to be searched across the authored wave cadence: a doctrine stage lands one
+// wave every ~1000 ticks (STAGE_WAVE_DOCTRINE), so the flank/denial/escort lanes simply do not
+// exist in the first few hundred ticks any more.
+const POLICY_SEARCH_TICKS = 6000;
 function findPolicyScenario({
   stageId = "cinder-span",
   policyId,
@@ -150,8 +154,8 @@ test("stage hazard damage and occupation recovery change the commander outcome",
   const ready = advanceUntil(
     run,
     (snapshot) => Boolean(snapshot.eliteCandidate) && snapshot.progress.skillsLearned > 0,
-    1200,
-    { castSkills: true, events },
+    STAGE_BY_ID["cinder-span"].gateTicks + 6000,
+    { castSkills: true, events, routeObjectives: true },
   );
   assert.ok(ready.snapshot.eliteCandidate, "echo recovery must unlock occupation recovery");
   run = ready.run;
@@ -211,7 +215,12 @@ test("extraction cannot progress before an elite echo becomes recoverable", () =
   assert.equal(snapshot.progress.extracted, 0);
 });
 
-test("S1 defers earned growth until Gate and Echo recovery, then advances only to occupation", () => {
+test("S1 offers growth as soon as XP is earned and still orders the objective chain", () => {
+  // SUPERSEDED (run-id 20260728-stage-playtime-doctrine): growth used to be withheld until the
+  // gate-defense and echo-recovery objectives were complete. With the authored 170-250 s hold that
+  // meant the entire defense was played at level 1, so the XP threshold is now the only gate.
+  // What is still contractual: the offer appears while the hold is live, a selection completes the
+  // growth objective, and the objective/phase chain keeps its authored order.
   let run = createDefenseRun({
     stageId: "cinder-span",
     seed: 901,
@@ -219,37 +228,26 @@ test("S1 defers earned growth until Gate and Echo recovery, then advances only t
     rewardIds: FULL_REWARDS,
   });
   const events = [];
-  let thresholdReachedBeforePrerequisites = false;
+  let offerDuringHold = false;
 
-  for (let tick = 0; tick < 3000 && !isTerminalRun(run); tick += 1) {
+  for (let tick = 0; tick < STAGE_BY_ID["cinder-span"].gateTicks && !isTerminalRun(run); tick += 1) {
     const before = getRunSnapshot(run);
-    const prerequisitesComplete = before.objectives.gateDefense.completed
-      && before.objectives.echoRecovery.completed;
-    if (!prerequisitesComplete) {
-      if (before.commander.xp >= XP_GROWTH[before.commander.level - 1]) {
-        thresholdReachedBeforePrerequisites = true;
-      }
-      assert.equal(before.growthOffer, null, "earned XP must not bypass Gate or Echo recovery");
-      assert.equal(before.progress.skillsLearned, 0);
+    if (before.growthOffer) {
+      assert.ok(before.commander.xp >= XP_GROWTH[before.commander.level - 1],
+        "an offer must be backed by earned XP");
+      assert.equal(before.objectives.gateDefense.completed, false);
+      offerDuringHold = true;
+      break;
     }
-
     run = advanceDefenseRun(queueInput(run, "MOVE", { octant: "IDLE" }), 1);
-    const after = getRunSnapshot(run);
-    events.push(...after.events);
-    if (after.objectives.gateDefense.completed
-        && after.objectives.echoRecovery.completed
-        && after.growthOffer) break;
+    events.push(...getRunSnapshot(run).events);
   }
 
   const offered = getRunSnapshot(run);
-  assert.equal(thresholdReachedBeforePrerequisites, true, "S1 must bank threshold XP before the source gate opens");
-  assert.equal(offered.objectives.gateDefense.completed, true);
-  assert.equal(offered.objectives.echoRecovery.completed, true);
-  assert.ok(offered.objectives.gateDefense.completedAt < offered.objectives.echoRecovery.completedAt);
-  assert.equal(offered.objectives.phase, "growth");
-  assert.ok(offered.growthOffer, "growth must become observable once Gate and Echo recovery complete");
-  assert.equal(events.filter((event) => event.type === "GROWTH_OFFER").length, 1);
-  assert.equal(events.some((event) => event.type === "SKILL_SELECTED"), false);
+  assert.equal(offerDuringHold, true, "growth must be reachable during the authored gate hold");
+  assert.ok(offered.growthOffer);
+  assert.equal(offered.progress.skillsLearned, 0);
+  assert.equal(events.filter((event) => event.type === "SKILL_SELECTED").length, 0);
 
   run = advanceDefenseRun(
     queueInput(run, "SKILL_SELECTED", { skillId: offered.growthOffer.choices[0] }),
@@ -260,18 +258,13 @@ test("S1 defers earned growth until Gate and Echo recovery, then advances only t
   assert.ok(selected.commander.skills.includes(offered.growthOffer.choices[0]));
   assert.equal(selected.progress.skillsLearned, 1);
   assert.equal(selected.objectives.growth.completed, true);
-  assert.equal(selected.objectives.phase, "occupation");
+  // The growth objective completing early does NOT skip the chain: the phase is still whatever the
+  // ordered objective list says, which during the hold is gate-defense.
+  assert.equal(selected.objectives.phase, "gate-defense");
+  assert.equal(selected.objectives.gateDefense.completed, false);
   assert.equal(selected.objectives.occupation.completed, false);
   assert.equal(selected.objectives.extraction.completed, false);
   assert.equal(selected.objectives.bossKill.completed, false);
-  assert.deepEqual(
-    events.filter((event) => event.type === "OBJECTIVE_COMPLETED").map((event) => event.objectiveId),
-    ["gate-defense", "echo-recovery", "growth"],
-  );
-  assert.deepEqual(
-    events.filter((event) => event.type === "OBJECTIVE_PHASE_CHANGED").map((event) => event.objectiveId),
-    ["echo-recovery", "growth", "occupation"],
-  );
 });
 
 test("occupation and extraction objectives expose progress before completing once", () => {
@@ -285,8 +278,8 @@ test("occupation and extraction objectives expose progress before completing onc
   const ready = advanceUntil(
     run,
     (snapshot) => Boolean(snapshot.eliteCandidate) && snapshot.progress.skillsLearned > 0,
-    1200,
-    { castSkills: true, events },
+    STAGE_BY_ID["cinder-span"].gateTicks + 6000,
+    { castSkills: true, events, routeObjectives: true },
   );
   assert.ok(ready.snapshot.eliteCandidate, "elite echo recovery must precede occupation and extraction");
   run = ready.run;
@@ -361,7 +354,7 @@ test("occupation and extraction objectives expose progress before completing onc
 
 test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and low-HP focus", async (t) => {
   await t.test("gate pressure advances toward the gate", () => {
-    const appeared = findPolicyScenario({ policyId: "gate-pressure", maxTicks: 120 });
+    const appeared = findPolicyScenario({ policyId: "gate-pressure", maxTicks: POLICY_SEARCH_TICKS });
     assert.ok(appeared, "a seeded opening wave must expose gate pressure");
     const before = appeared.snapshot.enemies.find((enemy) => enemy.policyId === "gate-pressure");
     const after = getRunSnapshot(advanceTicks(appeared.run, 1)).enemies.find((enemy) => enemy.id === before.id);
@@ -370,7 +363,7 @@ test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and 
   });
 
   await t.test("flank policy takes the authored flank route", () => {
-    const appeared = findPolicyScenario({ policyId: "flank", maxTicks: 400 });
+    const appeared = findPolicyScenario({ policyId: "flank", maxTicks: POLICY_SEARCH_TICKS });
     assert.ok(appeared, "seeded waves must expose a flanker");
     const before = appeared.snapshot.enemies.find((enemy) => enemy.policyId === "flank");
     const after = getRunSnapshot(advanceTicks(appeared.run, 1)).enemies.find((enemy) => enemy.id === before.id);
@@ -380,7 +373,7 @@ test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and 
   });
 
   await t.test("resource denial suppresses an available echo pickup", () => {
-    const appeared = findPolicyScenario({ stageId: "veil-citadel", policyId: "resource-denial", maxTicks: 550 });
+    const appeared = findPolicyScenario({ stageId: "veil-citadel", policyId: "resource-denial", maxTicks: POLICY_SEARCH_TICKS });
     assert.ok(appeared, "seeded ranged waves must expose resource denial");
     const events = [];
     advanceUntil(
@@ -404,8 +397,8 @@ test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and 
       (snapshot) => snapshot.enemies.some(
         (enemy) => enemy.policyId === "elite-escort" && enemy.escortLeaderId,
       ),
-      2500,
-      { castSkills: true, events },
+      STAGE_BY_ID["cinder-span"].gateTicks + 6000,
+      { castSkills: true, events, routeObjectives: true },
     );
     const escort = appeared.snapshot.enemies.find(
       (enemy) => enemy.policyId === "elite-escort" && enemy.escortLeaderId,
@@ -427,7 +420,7 @@ test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and 
 
   for (const policyId of ["player-pursuit", "low-hp-focus"]) {
     await t.test(`${policyId} closes on the selected friendly target`, () => {
-      const appeared = findPolicyScenario({ policyId, maxTicks: 400, maxSeed: 8 });
+      const appeared = findPolicyScenario({ policyId, maxTicks: POLICY_SEARCH_TICKS, maxSeed: 8 });
       assert.ok(appeared, `seeded waves must expose ${policyId}`);
       const enemy = appeared.snapshot.enemies.find((entry) => entry.policyId === policyId);
       const target = policyId === "player-pursuit"
@@ -443,12 +436,29 @@ test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and 
   }
 });
 
-test("a run given no queued input loses to enemy pressure", () => {
-  const run = advanceDefenseRun(createDefenseRun({ stageId: "gate-zenith", seed: 37 }), 5000);
+test("a run that never fights loses to enemy pressure", () => {
+  // A pending growth offer PAUSES the simulation, so "no input at all" now means "stalled at the
+  // first offer" rather than "played passively". The pressure contract is measured with the offers
+  // resolved and nothing else done: no movement, no casts, no extraction.
+  let run = createDefenseRun({ stageId: "gate-zenith", seed: 37 });
+  const budget = STAGE_BY_ID["gate-zenith"].gateTicks + 9000;
+  let offersSeen = 0;
+  for (let tick = 0; tick < budget && !isTerminalRun(run); tick += 1) {
+    const snapshot = getRunSnapshot(run);
+    if (snapshot.growthOffer) {
+      offersSeen += 1;
+      run = queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] });
+    }
+    run = advanceDefenseRun(run, 1);
+  }
   const snapshot = getRunSnapshot(run);
 
+  assert.ok(offersSeen > 0, "a stalled run must still have been offered growth during the hold");
   assert.equal(snapshot.terminal, "DEFEAT");
-  assert.ok(snapshot.gate.integrity === 0 || snapshot.commander.integrity === 0);
+  // A run that never fights loses either bar, or loses the extraction window it never worked.
+  assert.ok(snapshot.gate.integrity === 0
+    || snapshot.commander.integrity === 0
+    || snapshot.extractionProgress.failed === true);
 });
 
 test("a spawned boss applies attack pressure after the public spatial objective route", () => {
@@ -461,7 +471,7 @@ test("a spawned boss applies attack pressure after the public spatial objective 
       rewardIds: FULL_REWARDS,
     }),
     (snapshot) => snapshot.extractionProgress.ready && !snapshot.extracted,
-    10000,
+    STAGE_BY_ID["gate-zenith"].gateTicks + 9000,
     { castSkills: true, events, routeObjectives: true },
   );
   assert.equal(bindReady.snapshot.extractionProgress.completed, true);
@@ -481,11 +491,19 @@ test("a spawned boss applies attack pressure after the public spatial objective 
   assert.equal(extracted.companions.filter(
     ({ companionId }) => companionId === bindReady.snapshot.eliteCandidate.prototype,
   ).length, 1);
-  const boss = extracted.enemies.find((enemy) => enemy.class === "boss");
+  // The boss spawns once the extraction is done AND the field is clear of the authored waves, which
+  // with the doctrine hold is no longer guaranteed to be the same tick as the extraction itself.
+  const bossAppeared = advanceUntil(
+    extractedRun,
+    (snapshot) => snapshot.enemies.some((enemy) => enemy.class === "boss"),
+    STAGE_BY_ID["gate-zenith"].gateTicks + 9000,
+    { castSkills: true, events, routeObjectives: true },
+  );
+  const boss = bossAppeared.snapshot.enemies.find((enemy) => enemy.class === "boss");
   assert.ok(boss, "a matching elite extraction must complete the public objective and spawn the boss");
 
   advanceUntil(
-    extractedRun,
+    bossAppeared.run,
     () => events.some((event) => ["COMMANDER_DAMAGED", "GATE_BREACHED"].includes(event.type)
       && event.enemyId === boss.id),
     4000,

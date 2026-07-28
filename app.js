@@ -3,6 +3,7 @@ import {
   allocateWardenStatPoint,
   applyCampaignRunResult,
   applyEliteExtractionEvents,
+  applyRunCarryOver,
   boundFragmentEarned,
   boundFragmentSpent,
   createCampaign,
@@ -30,6 +31,7 @@ import {
   getRunSnapshot,
   isTerminalRun,
   queueInput,
+  runCarryOver,
 } from "./defense-run-simulation.js";
 import { RealtimeBattle, MeshThumbnailService, meshRootForCompanion, meshRootForStageBoss, COMMANDER_MESH_ROOT } from "./battle-realtime-three.js";
 import { BattleVisualizer } from "./battle-visualizer.js";
@@ -1018,6 +1020,8 @@ export class BattleSession {
       wardenEquipment: equipTiers("warden"),
       companionEquipment: Object.fromEntries(companionLoadout.map((id) => [id, equipTiers(id)])),
       formation: campaign.companionFormation,
+      // Stage-to-stage carry-over: the skill ranks and items the previous cleared stage handed back.
+      carryOver: campaign.stageCarryOver ?? null,
     });
     this.motionQuery = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)") ?? null;
     telemetry.startRun({ stageId, seed, rulesVersion: RULES_VERSION, reducedMotion: this.motionQuery?.matches ?? false });
@@ -2048,7 +2052,7 @@ export class BattleSession {
       const offerKey = snapshot.growthOffer.choices.join(",");
       if (!card) {
         card = document.createElement("section");
-        card.className = "edge-card";
+        card.className = "edge-card system-window growth-system-window";
         card.id = "defense-growth-offer";
         root.querySelector("#defense-edge-hud").append(card);
         this.focusBeforeGrowth = document.activeElement;
@@ -2057,7 +2061,7 @@ export class BattleSession {
         card.dataset.offer = offerKey;
         const previews = snapshot.growthOffer.choices.map((id) => growthUpgradePreview(id, snapshot));
         telemetry.append("GROWTH_OFFER_VALUES", { tick: snapshot.tick, choices: previews });
-        card.innerHTML = `<h2>성장 선택 · 전투 일시 정지</h2><div class="choices">${previews.map(({ skillId, label }) => `<button data-pick="${skillId}"><span class="progression-icon" data-track="run-scoped" aria-hidden="true"></span><strong>${escapeHtml(SKILLS[skillId]?.name ?? skillId)}</strong><span class="growth-choice-copy">${escapeHtml(label)}</span></button>`).join("")}</div>`;
+        card.innerHTML = `<p class="system-alert-line" role="status">[알림] 플레이어에게 퀘스트가 도착했습니다.</p><h2>성장 선택 · 전투 일시 정지</h2><p class="system-alert-sub">Lv.${escapeHtml(String(snapshot.commander?.level ?? 1))} · 군단 강화 노드를 하나 개방하십시오.</p><div class="choices">${previews.map(({ skillId, label }) => `<button data-pick="${skillId}"><span class="progression-icon" data-track="run-scoped" aria-hidden="true"></span><strong>${escapeHtml(SKILLS[skillId]?.name ?? skillId)}</strong><span class="growth-choice-copy">${escapeHtml(label)}</span></button>`).join("")}</div>`;
         card.querySelectorAll("[data-pick]").forEach((button) => {
           button.addEventListener("click", () => {
             const picked = previews.find((preview) => preview.skillId === button.dataset.pick);
@@ -2299,6 +2303,9 @@ export class BattleSession {
     // moment the gain happens, keyed to a real before/after delta.
     const echoBefore = echoCoreEarned(campaign);
     campaign = applyCampaignRunResult(campaign, { stageId: this.stageId, outcome, rewardId: this.selectedRewardId });
+    // Stage-to-stage carry-over: a cleared stage hands its skill ranks and collected items to the
+    // next run (defeat clears them). Persisted below with the rest of the resolution.
+    campaign = applyRunCarryOver(campaign, { stageId: this.stageId, outcome, carryOver: runCarryOver(this.run) });
     const complete = campaign.lastResolution.campaignComplete;
     const echoDelta = echoCoreEarned(campaign) - echoBefore;
     telemetry.recordRunResult({ outcome, rewardId: this.selectedRewardId, campaignComplete: complete, stageId: this.stageId, tick: snapshot.tick });
