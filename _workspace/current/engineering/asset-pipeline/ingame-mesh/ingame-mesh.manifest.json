@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "lane": "candidate/ingame-mesh",
+  "runtimeEligible": false,
+  "createdAt": "2026-07-28",
+  "purpose": "Staged replacement assets; do not copy to assets/images/battle/glb until Rodin, toon-texture, motion, and runtime QA gates pass.",
+  "sourceLane": "_workspace/current/engineering/asset-pipeline/concept-layers",
+  "rodin": {
+    "bridge": "Blender Rodin Bridge addon detected during headless Blender runs",
+    "meshSubmission": "not completed",
+    "blocker": "Rodin generation requires GUI Blender plus authenticated Hyper3D browser handoff; headless mode only registered the local bridge",
+    "promptContract": "docs/concept-to-web-game-3d-pipeline.md#phase-2-t-pose--3d-메시-생성-rodin-bridge"
+  },
+  "texture": {
+    "generator": "god-tibo-imagen",
+    "status": "blocked-after-live-attempt",
+    "blocker": "private-codex HTTP 429; gti generation stopped after first rate-limit response; no generated PNG was written",
+    "attemptedAsset": "broken-court-monarch-boss",
+    "outputCount": 0,
+    "requestManifest": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/generation-requests.json",
+    "requestedCounts": {
+      "characterTextures": 6,
+      "itemTextures": 8,
+      "backgroundTextures": 2,
+      "total": 16,
+      "generated": 0
+    }
+  },
+  "motion": {
+    "referenceSources": [
+      {
+        "url": "https://www.mixamo.com/#/?page=1&type=Motion%2CMotionPack",
+        "capture": "_workspace/current/engineering/asset-pipeline/ingame-mesh/references/mixamo-motion.html",
+        "httpStatus": 200
+      },
+      {
+        "url": "https://actorcore.reallusion.com/3d-motion/free",
+        "capture": "_workspace/current/engineering/asset-pipeline/ingame-mesh/references/actorcore-free-motion.html",
+        "httpStatus": 200
+      }
+    ],
+    "generator": "motion-previs-studio",
+    "status": "prompt-batches-created; motion-previs-blocked",
+    "blocker": "motion-previs-studio executable/project is not available in this repository or PATH",
+    "rigAnimationFallback": "scripts/rig-and-animate-asset-blender.py authored the existing 11 contract clips only; it is not Motion Previs output",
+    "promptBatchCount": 6,
+    "promptCountPerCharacter": 11
+  },
+  "assets": [
+    {
+      "assetId": "broken-court-monarch-boss",
+      "category": "bosses",
+      "source": "_workspace/current/engineering/asset-pipeline/tpose-conditions/broken-court-monarch-boss-tpose-condition.glb",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/glb/broken-court-monarch-boss.glb",
+      "generator": "scripts/rig-and-animate-asset-blender.py",
+      "status": "staged-candidate",
+      "runtimeEligible": false,
+      "clips": 11,
+      "motionPromptOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/animations/broken-court-monarch-boss.motion-prompts.json"
+    },
+    {
+      "assetId": "broken-court-monarch-v04",
+      "category": "bosses",
+      "source": "_workspace/current/engineering/asset-pipeline/tpose-conditions/broken-court-monarch-v04-tpose-condition.glb",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/glb/broken-court-monarch-v04.glb",
+      "generator": "scripts/rig-and-animate-asset-blender.py",
+      "status": "staged-candidate",
+      "runtimeEligible": false,
+      "clips": 11,
+      "motionPromptOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/animations/broken-court-monarch-v04.motion-prompts.json"
+    },
+    {
+      "assetId": "ember-cohort",
+      "category": "enemies",
+      "source": "_workspace/current/engineering/asset-pipeline/tpose-conditions/ember-cohort-tpose-condition.glb",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/glb/ember-cohort.glb",
+      "generator": "scripts/rig-and-animate-asset-blender.py",
+      "status": "staged-candidate",
+      "runtimeEligible": false,
+      "clips": 11,
+      "motionPromptOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/animations/ember-cohort.motion-prompts.json"
+    },
+    {
+      "assetId": "guard",
+      "category": "enemies",
+      "source": "_workspace/current/engineering/asset-pipeline/tpose-conditions/guard-tpose-condition.glb",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/glb/guard.glb",
+      "generator": "scripts/rig-and-animate-asset-blender.py",
+      "status": "staged-candidate",
+      "runtimeEligible": false,
+      "clips": 11,
+      "motionPromptOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/animations/guard.motion-prompts.json"
+    },
+    {
+      "assetId": "human-command-boss",
+      "category": "bosses",
+      "source": "_workspace/current/engineering/asset-pipeline/tpose-conditions/human-command-boss-tpose-condition.glb",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/glb/human-command-boss.glb",
+      "generator": "scripts/rig-and-animate-asset-blender.py",
+      "status": "staged-candidate",
+      "runtimeEligible": false,
+      "clips": 11,
+      "motionPromptOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/animations/human-command-boss.motion-prompts.json"
+    },
+    {
+      "assetId": "lantern-reaver",
+      "category": "enemies",
+      "source": "_workspace/current/engineering/asset-pipeline/tpose-conditions/lantern-reaver-tpose-condition.glb",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/glb/lantern-reaver.glb",
+      "generator": "scripts/rig-and-animate-asset-blender.py",
+      "status": "staged-candidate",
+      "runtimeEligible": false,
+      "clips": 11,
+      "motionPromptOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/animations/lantern-reaver.motion-prompts.json"
+    }
+  ],
+  "deployment": {
+    "deployedGlbRoot": "assets/images/battle/glb",
+    "deletedExistingGlbCount": 0,
+    "note": "The deployed GLB root contained no deployed GLB files at execution time; existing tpose-condition GLBs were preserved as candidate inputs. No runtime replacement was performed."
+  }
+}
