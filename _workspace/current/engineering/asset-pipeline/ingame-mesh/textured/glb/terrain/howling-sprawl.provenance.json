@@ -1,0 +1,137 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 6,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/howling-sprawl.glb",
+    "sha256": "f5d4a772245aa1787e4b5a51b2447e75d9a8cd114e66c1c3ec4c8c6668e836eb"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/howling-sprawl.glb",
+    "readOnly": true,
+    "sha256": "77922ecc3a943774b39798ecfb09fb1271c0d4575583c84dbaa9f63ee7ef0f36"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.62,
+        0.56,
+        0.46,
+        1.0
+      ],
+      "bytes": 11389,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 3,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "36a61991c48685019eee14a950028fdd16464aefa53dbc2cbe7fc57c0cc13c54",
+      "uvCoverage": 0.845291,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.56,
+        0.46,
+        0.31,
+        1.0
+      ],
+      "bytes": 20597,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "3c4a7a635295a76dd7c9b1e4ebcdf330419cad76d8a9e8d640a14d525380724e",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.54,
+        0.48,
+        0.37,
+        1.0
+      ],
+      "bytes": 15353,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 5,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "ed4c45e4d2843611465c1894b3df3e2a9f56b2540635a8a1998d177a76fda14d",
+      "uvCoverage": 0.852921,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.62,
+        0.56,
+        0.46,
+        1.0
+      ],
+      "bytes": 24462,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 6,
+      "meshIndex": 3,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m3-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "85f844c26b48f805736f5b6ae5429ac658054f42e045a72371a7c8c480a8183e",
+      "uvCoverage": 0.845291,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.62,
+        0.56,
+        0.46,
+        1.0
+      ],
+      "bytes": 23302,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 7,
+      "meshIndex": 4,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m4-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "9262109c4dc0df982dadd46f8209c31a747721ecfce83ae3627811a96cebf353",
+      "uvCoverage": 0.845291,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.56,
+        0.46,
+        0.31,
+        1.0
+      ],
+      "bytes": 20582,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 8,
+      "meshIndex": 5,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m5-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "1d7b3e684b96506a30fdd9fecd5be97baeab5afc01802287be387f10b3850998",
+      "uvCoverage": 0.845291,
+      "width": 256
+    }
+  ]
+}

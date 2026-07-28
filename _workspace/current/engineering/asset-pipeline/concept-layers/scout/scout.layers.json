@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "scout",
+  "concept": "assets/images/battle/pilot/concept-scout.png",
+  "conceptSha256": "68400899e22765b3f9506dd8fb6458be5446a6a5af115cd0e9bd4fa82a0ed28b",
+  "generatedAt": "2026-07-28T08:18:24.914956+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      251,
+      2,
+      249
+    ],
+    "borderSpread": 1.876,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/scout/scout-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/scout/raw/scout-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.502,
+        "tolerance": 26,
+        "alphaCoverage": 0.21688,
+        "size": [
+          1219,
+          1181
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "b32c66034f3b2f512b1e9b675c4ba2c3ccd157327f8beee2ede1a5a5948d03d4"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/scout/scout-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/scout/raw/scout-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.515,
+        "tolerance": 26,
+        "alphaCoverage": 0.0,
+        "size": [
+          1254,
+          1254
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "7b8e2970dd6392bf60bea2931fa28fa5869565388180b53c896185090ea84f61"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/scout/scout-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/scout/raw/scout-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.488,
+        "tolerance": 26,
+        "alphaCoverage": 0.33659,
+        "size": [
+          1185,
+          1173
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "8a80ce7e0b200a65eac48587b2d3ff14f70a8d58a83a1c145c13112e74db52e9"
+    }
+  ]
+}

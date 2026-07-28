@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "lantern-reaver",
+  "concept": "assets/images/battle/pilot/concept-lantern-reaver.png",
+  "conceptSha256": "e4a2da7f5c3e662f73ab4ce1ab15f97225458f7cf36811d0ea3d0185c6717d2b",
+  "generatedAt": "2026-07-28T07:21:33.321021+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      251,
+      2,
+      250
+    ],
+    "borderSpread": 1.899,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/lantern-reaver/lantern-reaver-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/lantern-reaver/raw/lantern-reaver-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.466,
+        "tolerance": 26,
+        "alphaCoverage": 0.19794,
+        "size": [
+          1020,
+          1186
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "0570141daaeb0f04ac25e081a22a5dbf821c328b19eddeef826d4867fd7c3a53"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/lantern-reaver/lantern-reaver-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/lantern-reaver/raw/lantern-reaver-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.459,
+        "tolerance": 26,
+        "alphaCoverage": 0.09623,
+        "size": [
+          497,
+          1431
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "1e51593cd8c650115e14a03eecd4cf0dc3ed9668e521a2368bf4a5f6bab3932f"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/lantern-reaver/lantern-reaver-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/lantern-reaver/raw/lantern-reaver-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.469,
+        "tolerance": 26,
+        "alphaCoverage": 0.32654,
+        "size": [
+          1428,
+          940
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "901dfc985e501aa8c729c1b25669f83a947cc48860a48c37f4bed7a5936fdc8b"
+    }
+  ]
+}

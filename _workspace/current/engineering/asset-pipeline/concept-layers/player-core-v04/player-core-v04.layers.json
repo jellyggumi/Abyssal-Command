@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "player-core-v04",
+  "concept": "assets/images/battle/pilot/concept-player-core-v04.png",
+  "conceptSha256": "b310c162a24c112f1182a42ae9b7585ff9897f6638fb4791b5b6a62ea2c90623",
+  "generatedAt": "2026-07-28T07:29:01.103547+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      140,
+      2,
+      62
+    ],
+    "borderSpread": 3.786,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/player-core-v04/player-core-v04-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/player-core-v04/raw/player-core-v04-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.48,
+        "tolerance": 26,
+        "alphaCoverage": 0.24268,
+        "size": [
+          1024,
+          1148
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "46ba953d3d9e29180481636d228f5c674d137e4232cbb0d4523ab2df817ef908"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/player-core-v04/player-core-v04-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/player-core-v04/raw/player-core-v04-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.451,
+        "tolerance": 26,
+        "alphaCoverage": 0.08384,
+        "size": [
+          342,
+          1486
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "4160b434a1ae83b3b65277f0498d7b9230b9feab81b6b18c86c0cf570e0c5ea5"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/player-core-v04/player-core-v04-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/player-core-v04/raw/player-core-v04-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.446,
+        "tolerance": 26,
+        "alphaCoverage": 0.39326,
+        "size": [
+          1490,
+          1008
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "4b6c565f8c90c61e98c8a852ed7914d0b7641368f848b541f32c08871ded1422"
+    }
+  ]
+}

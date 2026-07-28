@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "attemptId": "20260728T130457Z",
+  "generator": "god-tibo-imagen / gti",
+  "provider": "private-codex",
+  "lane": "candidate/ingame-mesh",
+  "runtimeEligible": false,
+  "status": "blocked-after-rate-limit",
+  "requests": [
+    {
+      "assetId": "broken-court-monarch-boss",
+      "class": "character-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-input/broken-court-monarch-boss-character.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/characters/broken-court-monarch-boss-albedo.png",
+      "status": "blocked-rate-limit",
+      "startedAt": "2026-07-28T13:04:57.190564+00:00",
+      "outputExistedBefore": false,
+      "finishedAt": "2026-07-28T13:04:58.315713+00:00",
+      "durationSeconds": 1.125,
+      "exitCode": 1,
+      "outputExistsAfter": false,
+      "error": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nWARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nError: Private Codex backend request failed with HTTP 429.\n    at classifyFailure (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:25:17)\n    at Object.generateImage (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/cli/generate.js:179:18)\n"
+    }
+  ],
+  "blocker": "private-codex HTTP 429/rate limit; stopped without spending further requests",
+  "completed": 0,
+  "attempted": 1,
+  "finishedAt": "2026-07-28T13:04:58.315863+00:00"
+}

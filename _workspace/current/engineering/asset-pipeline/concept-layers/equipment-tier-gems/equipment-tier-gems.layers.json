@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "assetId": "equipment-tier-gems",
+  "concept": "assets/images/battle/pilot/concept-equipment-tier-gems.png",
+  "conceptSha256": "7b658d9483552cc52be2a4c6626818bbcac784e5fcac052923977578baecb76d",
+  "generatedAt": "2026-07-28T07:14:06.338066+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      250,
+      3,
+      238
+    ],
+    "borderSpread": 1.888,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "prop",
+      "prompt": "Isolate ONLY the prop object itself from the reference image, rendered as a standalone game asset in the same art style, in a clean three-quarter orthographic view. Exclude the pedestal, base, plinth, platform, podium, display stand, and the ground plane it rests on -- the object must float free with nothing underneath it. Exclude every character, hand, arm, creature, terrain, scenery, and background object. Pure flat white background, no cast shadow, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/equipment-tier-gems/equipment-tier-gems-prop.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/equipment-tier-gems/raw/equipment-tier-gems-prop.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.431,
+        "tolerance": 26,
+        "alphaCoverage": 0.35506,
+        "size": [
+          718,
+          1132
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "648ad31f5c3a910d66c1d04817e5c01d092f4ca113a625ad18fa9718371fd2ad"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 2,
+  "policy": "character-asset-pipeline",
+  "runtimePath": "assets/images/battle/glb",
+  "notes": [
+    "Paths follow the _workspace/current convention; archived runs keep their own copy.",
+    "concept-layers is the separated in-game plate lane produced by scripts/separate-concept-layers.py.",
+    "The runtime lane is intentionally empty during a full asset regeneration and refills only via promotion.",
+    "ingame-mesh is a dedicated candidate lane for newly rigged mesh outputs; it is never loaded directly by the runtime."
+  ],
+  "lanes": {
+    "concept": {
+      "paths": [
+        {"path": "assets/images/battle/pilot", "recursive": true},
+        {"path": "_workspace/current/engineering/asset-pipeline/concept-input", "recursive": true},
+        {"path": "_workspace/current/engineering/asset-pipeline/concept-layers", "recursive": true},
+        {"path": "_workspace/current/engineering/asset-pipeline/motion-prompts", "recursive": true}
+      ],
+      "allowedExtensions": [".png", ".jpg", ".jpeg", ".webp", ".json", ".md"]
+    },
+    "runtime": {
+      "paths": [
+        {"path": "assets/images/battle/glb", "recursive": true}
+      ],
+      "excludedPaths": [
+        {"path": "assets/images/battle/glb/previs/anchor-shard.previs.glb"}
+      ],
+      "allowedExtensions": [".glb", ".json"],
+      "forbiddenConceptMarkers": {
+        "pathSegments": ["pilot", "concept", "previs", "candidate", "tpose", "texture", "layers"],
+        "filePrefixes": ["concept-", "tpose-"],
+        "metadataSuffixesExcluded": [".provenance.json"]
+      }
+    },
+    "candidate": {
+      "paths": [
+        {"path": "_workspace/current/engineering/asset-pipeline/tpose-conditions", "recursive": true},
+        {"path": "_workspace/current/engineering/asset-pipeline/runtime-candidates", "recursive": true},
+        {"path": "_workspace/current/engineering/asset-pipeline/texture-candidates", "recursive": true},
+        {"path": "_workspace/current/engineering/asset-pipeline/rig-candidates", "recursive": true},
+        {"path": "_workspace/current/engineering/asset-pipeline/animation-candidates", "recursive": true},
+        {"path": "_workspace/current/engineering/asset-pipeline/ingame-mesh", "recursive": true}
+      ],
+      "allowedExtensions": [".glb", ".png", ".jpg", ".jpeg", ".webp", ".json"],
+      "artifactExtensions": [".glb", ".png", ".jpg", ".jpeg", ".webp"],
+      "sidecar": {
+        "suffix": ".provenance.json",
+        "requiredFields": ["source", "generator", "output", "rightsReceipt", "runtimeReceipt"],
+        "runtimeEligibleValue": false
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "shade",
+  "concept": "assets/images/battle/pilot/concept-shade.png",
+  "conceptSha256": "805bc4906005de955dca50eea928916f80cbc7362c031db6e05c3973ec25d695",
+  "generatedAt": "2026-07-28T08:21:53.144217+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      250,
+      4,
+      248
+    ],
+    "borderSpread": 1.919,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/shade/shade-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/shade/raw/shade-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.493,
+        "tolerance": 26,
+        "alphaCoverage": 0.18926,
+        "size": [
+          1202,
+          1091
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "e5d8eb7970b61450dee15fe329b6efdcf6044431e61566b594d376a4c17c31e6"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/shade/shade-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/shade/raw/shade-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.485,
+        "tolerance": 26,
+        "alphaCoverage": 0.17389,
+        "size": [
+          577,
+          1145
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "697dd446b82813d01fa886348d8b142314d73865ca6a82ef099c463d2176b524"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/shade/shade-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/shade/raw/shade-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.514,
+        "tolerance": 26,
+        "alphaCoverage": 0.0,
+        "size": [
+          1254,
+          1254
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "537ba6f1bc4f402125b7b988ed30b615e4354a584d0ea776479b1485d6c9818d"
+    }
+  ]
+}

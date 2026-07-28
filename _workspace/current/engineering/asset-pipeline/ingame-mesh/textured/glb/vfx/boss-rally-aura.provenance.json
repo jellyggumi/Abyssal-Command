@@ -1,0 +1,65 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 2,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/boss-rally-aura.glb",
+    "sha256": "92272b0c261e059138dcf89b3e59c805d260bdc417b6bb821f72badacf71103f"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "vfx/boss-rally-aura.glb",
+    "readOnly": true,
+    "sha256": "bbeee9da654dd290a2b2b802a23a44b49681d3ce490d251085c869714481c5c5"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        1.0,
+        0.87,
+        0.23,
+        1.0
+      ],
+      "bytes": 8221,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 2,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/boss-rally-aura/boss-rally-aura-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "456d5cdda2a7c6ecbc15a99d744be0f7d1b121bac90d90b22c864f01289a41a4",
+      "uvCoverage": 1.0,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.75,
+        0.34,
+        0.05,
+        1.0
+      ],
+      "bytes": 11133,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 3,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/boss-rally-aura/boss-rally-aura-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "4c4076a81d80e2f9ba5c23476a6ce1ab78d8641451a2735065d3813307ddac41",
+      "uvCoverage": 1.0,
+      "width": 256
+    }
+  ]
+}

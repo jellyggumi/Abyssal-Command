@@ -1,0 +1,137 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 6,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/gate-breach-shockwave.glb",
+    "sha256": "ca8d4a20517d8117099a799ad740ed93868e5fc49e9ff7837656aa6d7a7f7425"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "vfx/gate-breach-shockwave.glb",
+    "readOnly": true,
+    "sha256": "9987107c3502d1b3524949d0b65e15dd75c516020f24bab329031ec917b01124"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.23,
+        0.23,
+        0.25,
+        1.0
+      ],
+      "bytes": 17177,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 2,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "55e5785b2a4e561c469390d48672da66ea615bcc6f57ebecd0cb90b944978e33",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.23,
+        0.23,
+        0.25,
+        1.0
+      ],
+      "bytes": 17016,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 3,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "272d19bc9b5f361e041d57ee3aad43e7c1edc50103d1aaa86442e5f3242f7b74",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.23,
+        0.23,
+        0.25,
+        1.0
+      ],
+      "bytes": 17018,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "65394bb332fc7ccbd502467d04f73bbcd0dbc61629272de5c0a71622f2c4b77b",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.23,
+        0.23,
+        0.25,
+        1.0
+      ],
+      "bytes": 17105,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 5,
+      "meshIndex": 3,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m3-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "6b11acc6a92e2e9899ca7e91dae321f34e838a668f8b98cce66ef8d69c0e7323",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.23,
+        0.23,
+        0.25,
+        1.0
+      ],
+      "bytes": 16912,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 6,
+      "meshIndex": 4,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m4-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "40d48de9a0c83e9d0e7cfe3c00e925c39020a4004b12cfa57c97fc11d8170a2e",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.17,
+        0.19,
+        0.28,
+        1.0
+      ],
+      "bytes": 18609,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 7,
+      "meshIndex": 5,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m5-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "3dc91a6e8490dd9e2dd1f77ff6f632a8ec194a96ee72fd13b095ef77b1ac4759",
+      "uvCoverage": 1.0,
+      "width": 256
+    }
+  ]
+}

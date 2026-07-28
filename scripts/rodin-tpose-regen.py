@@ -69,6 +69,7 @@ assets/images/battle/glb.
 """
 import sys
 import json
+from contextlib import contextmanager
 import math
 import shutil
 from pathlib import Path
@@ -76,8 +77,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 GLB_DIR = REPO / "assets/images/battle/glb"
 PILOT = REPO / "assets/images/battle/pilot"
-DEFAULT_CONCEPT_ROOT = "assets/images/battle/pilot"
-DEFAULT_CANDIDATE_ROOT = "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates"
+DEFAULT_CONCEPT_ROOT = "_workspace/current/engineering/asset-pipeline/concept-layers"
+SCALE_CONTRACT = "_workspace/current/engineering/asset-pipeline/character-scale.json"
+DEFAULT_CANDIDATE_ROOT = "_workspace/current/engineering/asset-pipeline/runtime-candidates"
 RODIN_PROMPT = (
     "Generate a game-ready humanoid character source mesh in a genuine T-pose: "
     "full body centered, arms extended horizontally, feet separated, neutral pose, "
@@ -132,6 +134,9 @@ def parse_args(argv):
     p.add_argument("--plan-only", action="store_true")
     p.add_argument("--only", default=None, help="single asset id")
     p.add_argument("--plan-out", default="/tmp/rodin-tpose-plan.json")
+    p.add_argument("--submit-delay", type=float, default=2.0,
+                   help="seconds to wait after the local bridge is up before the first "
+                        "submit, so the browser plugin can connect first")
     p.add_argument("--blockout-dir", default=None,
                    help="legacy override; defaults to the staged tpose-conditions lane")
     p.add_argument("--concept-root", default=DEFAULT_CONCEPT_ROOT,
@@ -195,9 +200,42 @@ def copy_concept_input(concept, destination):
     return destination
 
 
+def load_scale_contract():
+    """Heights frozen from the pre-regeneration meshes.
+
+    Regenerating every mesh from scratch would otherwise reset all relative
+    scale in the game -- a 1.15 m scout and a 1.99 m commander would both come
+    back as generic humans. The contract keeps that hierarchy intact.
+    """
+    path = REPO / SCALE_CONTRACT
+    if not path.exists():
+        return {}, None
+    doc = json.loads(path.read_text())
+    return doc.get("characters", {}), doc.get("medianHeight")
+
+
+PLATE_METRICS = "_workspace/current/engineering/asset-pipeline/plate-metrics.json"
+
+
+def load_plate_metrics():
+    """Silhouette metrics precomputed outside Blender.
+
+    Blender ships without Pillow and mutating its install would make the
+    pipeline unreproducible, so scripts/measure-character-plates.py does the
+    image work with the system Python and leaves plain JSON here.
+    """
+    path = REPO / PLATE_METRICS
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text()).get("assets", {})
+
+
 def measure_asset(glb_path):
-    """Height and shoulder half-width of the shipped mesh, so the blockout is
-    proportioned to THIS character rather than a generic 1.8 m human."""
+    """Height and shoulder half-width of a shipped mesh.
+
+    Retained for assets that still have a deployed GLB; the regeneration path
+    uses measure_plate() instead.
+    """
     import struct
     import numpy as np
 
@@ -242,6 +280,47 @@ def measure_asset(glb_path):
     return {"height": round(height, 4), "shoulderHalf": round(shoulder_half, 4)}
 
 
+def ui_override(bpy):
+    """Build a context override that satisfies UI-dependent operators.
+
+    Both the glTF exporter and the Rodin submit operator read
+    `bpy.context.active_object`. That attribute only exists on a window-backed
+    context, which a `-P` startup script and a timer callback do not have --
+    headless mode is unaffected because `-b` gives operators the full context
+    directly. Supplying window/screen/area explicitly closes the gap without
+    changing how the script behaves under `-b`.
+    """
+    if bpy.app.background:
+        return None
+    wm = bpy.context.window_manager
+    if not wm or not wm.windows:
+        return None
+    window = wm.windows[0]
+    screen = window.screen
+    override = {
+        "window": window,
+        "screen": screen,
+        "scene": bpy.context.scene,
+        "view_layer": bpy.context.view_layer,
+    }
+    for area in getattr(screen, "areas", []):
+        if area.type == "VIEW_3D":
+            region = next((r for r in area.regions if r.type == "WINDOW"), None)
+            override.update({"area": area, "region": region, "space_data": area.spaces.active})
+            break
+    return override
+
+
+@contextmanager
+def ui_context(bpy):
+    override = ui_override(bpy)
+    if override is None:
+        yield
+        return
+    with bpy.context.temp_override(**override):
+        yield
+
+
 def run():
     import bpy
     import addon_utils
@@ -266,15 +345,25 @@ def run():
         print(f"[warn] could not enable a_Rodin: {exc}")
     have_rodin = hasattr(bpy.ops, "rodin") and hasattr(bpy.ops.rodin, "submit")
 
+    scale_contract, median_height = load_scale_contract()
+    plate_metrics = load_plate_metrics()
+    plate_root = repo_path(args.concept_root)
     targets = []
-    for cat in ("companions", "enemies", "bosses"):
-        for glb in sorted((GLB_DIR / cat).glob("*.glb")):
-            aid = glb.stem
-            if aid in SKIP:
-                continue
-            if args.only and aid != args.only:
-                continue
-            targets.append((cat, aid, glb))
+    for plate in sorted(plate_root.glob("*/*-character.png")):
+        aid = plate.parent.name
+        if aid in SKIP:
+            continue
+        if args.only and aid != args.only:
+            continue
+        known = scale_contract.get(aid)
+        # An asset with no frozen height is new art with no shipped predecessor;
+        # the median keeps it in scale with the cast instead of guessing.
+        height = known["height"] if known else median_height
+        category = known["category"] if known else "characters"
+        if height is None:
+            print(f"{aid:22} skipped:no-scale")
+            continue
+        targets.append((category, aid, plate, height))
 
     concept_only = bool(args.concept_only or not args.accept_runtime)
     plan = {
@@ -304,7 +393,7 @@ def run():
         },
         "assets": [],
     }
-    for cat, aid, glb in targets:
+    for cat, aid, plate, height in targets:
         runtime_output = runtime_root / cat / f"{aid}.glb"
         assert_staged_path(runtime_output, "runtime candidate output")
         entry = {
@@ -327,11 +416,13 @@ def run():
             "terrainPolicy": dict(TERRAIN_POLICY),
             "weaponPolicy": dict(WEAPON_POLICY),
         }
-        concept = concept_for(aid, concept_root)
-        dims = measure_asset(glb)
+        concept = plate
+        dims = plate_metrics.get(aid)
         # Keep the historical key readable while making the lane-specific key
         # authoritative for validators and downstream tooling.
         entry["concept"] = str(concept) if concept else None
+        entry["conceptKind"] = "separated-character-plate"
+        entry["scaleSource"] = "frozen-contract" if scale_contract.get(aid) else "median-fallback"
         entry["measured"] = dims
         if concept is None or dims is None:
             entry["status"] = "skipped:no-concept" if concept is None else "skipped:no-dims"
@@ -356,7 +447,9 @@ def run():
                                         height=dims["height"])
         # Widen the blockout's arm span to this character's own shoulders so the
         # ControlNet bias matches its silhouette rather than a generic human.
-        span_scale = max(0.8, min(1.6, dims["shoulderHalf"] / (dims["height"] * 0.16)))
+        # A T-pose condition is judged by its arm reach, so bias the blockout
+        # with the plate's measured arm span rather than its torso width.
+        span_scale = max(0.8, min(1.6, dims["armSpanHalf"] / (dims["height"] * 0.5)))
         blockout.scale = (span_scale, 1.0, 1.0)
         bpy.context.view_layer.objects.active = blockout
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
@@ -364,10 +457,11 @@ def run():
 
         out_glb = condition_dir / f"{aid}-tpose-condition.glb"
         assert_staged_path(out_glb, "condition mesh output")
-        bpy.ops.object.select_all(action="DESELECT")
-        blockout.select_set(True)
-        bpy.ops.export_scene.gltf(filepath=str(out_glb), export_format="GLB",
-                                  use_selection=True)
+        with ui_context(bpy):
+            bpy.ops.object.select_all(action="DESELECT")
+            blockout.select_set(True)
+            bpy.ops.export_scene.gltf(filepath=str(out_glb), export_format="GLB",
+                                      use_selection=True)
         # Preserve the old key for consumers of the existing plan.
         entry["blockout"] = str(out_glb)
         entry["conditionMesh"] = str(out_glb)
@@ -392,23 +486,24 @@ def run():
         prop.condition_type = "bbox"
         prop.textTo = "Image"
 
-        bpy.ops.object.select_all(action="DESELECT")
-        blockout.select_set(True)
-        bpy.context.view_layer.objects.active = blockout
+        with ui_context(bpy):
+            bpy.ops.object.select_all(action="DESELECT")
+            blockout.select_set(True)
+            bpy.context.view_layer.objects.active = blockout
 
-        if not bpy.ops.rodin.submit.poll():
-            entry["status"] = "failed:poll"
-            plan["assets"].append(entry)
-            print(f"{aid:22} poll failed -- addon rejected the payload")
-            continue
-        try:
-            res = bpy.ops.rodin.submit()
-            entry["status"] = "submitted"
-            entry["operatorResult"] = list(res)
-            print(f"{aid:22} submitted")
-        except Exception as exc:
-            entry["status"] = f"failed:{exc}"
-            print(f"{aid:22} submit raised: {exc}")
+            if not bpy.ops.rodin.submit.poll():
+                entry["status"] = "failed:poll"
+                plan["assets"].append(entry)
+                print(f"{aid:22} poll failed -- addon rejected the payload")
+                continue
+            try:
+                res = bpy.ops.rodin.submit()
+                entry["status"] = "submitted"
+                entry["operatorResult"] = list(res)
+                print(f"{aid:22} submitted")
+            except Exception as exc:
+                entry["status"] = f"failed:{exc}"
+                print(f"{aid:22} submit raised: {exc}")
         # Eligibility is deliberately recomputed after submission but remains
         # false unless --accept-runtime and a staged candidate already exists.
         entry["runtimeEligible"] = bool(args.accept_runtime and runtime_output.exists())
@@ -424,5 +519,41 @@ def run():
         {"count": len(plan["assets"]), "ready": done, "submitted": submit}))
 
 
+def _main():
+    """Entry point that respects Blender's startup context.
+
+    In GUI mode a `-P` script executes before the window manager finishes
+    building the context, so `bpy.context.active_object` does not exist yet and
+    every glTF export raises AttributeError. Headless mode has no such gap.
+    Defer to a one-shot timer when running with a UI so the exports and the
+    Rodin submit both see a real context -- and the process stays alive
+    afterwards, which is exactly what the Chrome handoff needs.
+    """
+    import bpy
+
+    if bpy.app.background:
+        run()
+        return
+    def _deferred():
+        try:
+            run()
+        except Exception:
+            import traceback
+            traceback.print_exc()
+        return None
+    # The bridge pushes a task to whichever plugin client is connected AT THAT
+    # MOMENT; a client that connects afterwards never receives the pending task.
+    # Holding the first submit gives the browser time to attach.
+    delay = 2.0
+    argv = script_args()
+    if "--submit-delay" in argv:
+        try:
+            delay = float(argv[argv.index("--submit-delay") + 1])
+        except (IndexError, ValueError):
+            pass
+    print(f"[rodin] bridge up; first submit in {delay:.0f}s -- connect the plugin page now")
+    bpy.app.timers.register(_deferred, first_interval=delay)
+
+
 if __name__ == "__main__":
-    run()
+    _main()

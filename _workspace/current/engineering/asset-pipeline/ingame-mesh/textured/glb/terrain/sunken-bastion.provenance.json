@@ -1,0 +1,155 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 7,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/sunken-bastion.glb",
+    "sha256": "90b9ec862b73578fda50a8d98bd7fe656a156a3d068de6429eff5d7b7f4892e7"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/sunken-bastion.glb",
+    "readOnly": true,
+    "sha256": "b17705722adc6d46a25f6f4b049bfa512aa2e270af47864ab258b3ea44e8231b"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.17,
+        0.19,
+        0.28,
+        1.0
+      ],
+      "bytes": 14957,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "3ba2a077d92c74187e5fa09fccefbb449022b9b6a7a4599459a658fe0d5c19ad",
+      "uvCoverage": 0.852921,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.17,
+        0.19,
+        0.28,
+        1.0
+      ],
+      "bytes": 14918,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 5,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "5146f48577526b8113c40590aabee826464736e4d8b26b83b0031b2c795572a0",
+      "uvCoverage": 0.852921,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.42,
+        0.44,
+        0.4,
+        1.0
+      ],
+      "bytes": 19964,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 6,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "4ae697f782abfe7081d81b9d0df4408b0a1aea1d9684925655b08755ea55ac24",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.055,
+        0.32,
+        0.31,
+        1.0
+      ],
+      "bytes": 17593,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 7,
+      "meshIndex": 3,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m3-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "2ab7017aec8f56856bd0fb8c3a9b630d512ccc5044e74c6b2e225400f2adb455",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.42,
+        0.44,
+        0.4,
+        1.0
+      ],
+      "bytes": 20067,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 8,
+      "meshIndex": 4,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m4-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "8e1e6681166a6eae9cbf509ae76537b003b378297f6f8b123c3f093d29ccdd2a",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.42,
+        0.44,
+        0.4,
+        1.0
+      ],
+      "bytes": 20200,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 9,
+      "meshIndex": 5,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m5-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "4f0eeec1378a15efea89a2564c61876c4429d5868cedffe2da5b6754e370ed6e",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.025,
+        0.42,
+        0.67,
+        1.0
+      ],
+      "bytes": 40217,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 10,
+      "meshIndex": 6,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m6-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "ff30b4ecf5bed678b90643be403fd502ec569d0eed8468bf08ac6ad7ddc29f0b",
+      "uvCoverage": 1.0,
+      "width": 256
+    }
+  ]
+}

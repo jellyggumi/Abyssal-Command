@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "source": "_workspace/current/engineering/asset-pipeline/tpose-conditions/broken-court-monarch-v04-tpose-condition.glb",
+  "generator": "scripts/rig-and-animate-asset-blender.py",
+  "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/glb/broken-court-monarch-v04.glb",
+  "rightsReceipt": "internal-generated-candidate; external tool provenance pending",
+  "runtimeReceipt": "not-issued",
+  "runtimeEligible": false,
+  "meshOrigin": "tpose-condition-input; not a completed Rodin download",
+  "rigged": true,
+  "clipCount": 11,
+  "textureStatus": "blocked:god-tibo-imagen-private-codex-http-429",
+  "motionStatus": "blocked:motion-previs-studio-unavailable",
+  "qaStatus": "candidate-only; Blender export emitted mesh validity warning"
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "status": "blocked-no-png-produced",
+  "attemptedAt": "2026-07-28",
+  "generator": "gti --provider auto",
+  "assetId": "sunken-bastion",
+  "assetClass": "terrain",
+  "requestedOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/terrain/sunken-bastion-concept.png",
+  "primaryProviderResult": "no private-codex image response was returned",
+  "fallbackResult": "codex-cli fallback failed: spawn codex ENOENT",
+  "pngProduced": false,
+  "runtimeEligible": false,
+  "nextAction": "make the Codex CLI executable available on PATH or wait for private-codex image generation to accept a new request, then generate a candidate terrain concept plate and perform UV projection/bake before any material embedding"
+}

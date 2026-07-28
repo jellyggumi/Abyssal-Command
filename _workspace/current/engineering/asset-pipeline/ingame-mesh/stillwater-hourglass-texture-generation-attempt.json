@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "status": "concept-reference-generated-albedo-blocked",
+  "attemptedAt": "2026-07-28",
+  "generator": "god-tibo-imagen",
+  "provider": "private-codex",
+  "assetId": "stillwater-hourglass",
+  "assetClass": "prop",
+  "reference": "_workspace/current/engineering/asset-pipeline/concept-layers/stillwater-hourglass/raw/stillwater-hourglass-prop.raw.png",
+  "requestedAlbedoOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/props/stillwater-hourglass-albedo.png",
+  "requestedAlbedoSize": "2048x2048",
+  "dryRun": "passed using installed gti --image syntax",
+  "inputConditionedAttempt": "private-codex HTTP 429; no output",
+  "fallbackConceptAttempt": {
+    "provider": "private-codex via gti --provider auto",
+    "responseId": "resp_06bb51006931bc3b016a68a33d812481918c06c3b6fc12f3bd",
+    "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/props/stillwater-hourglass-concept.png",
+    "dimensions": "1254x1254",
+    "bytes": 1765901,
+    "httpStatus": 200
+  },
+  "pngProduced": true,
+  "runtimeEligible": false,
+  "nextAction": "project this concept plate into the verified UV layout, bake and resample a power-of-two albedo atlas, then attach a per-asset provenance receipt before texture embedding or runtime promotion"
+}

@@ -1,0 +1,47 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 1,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/tiers/tier-t2.glb",
+    "sha256": "98e28e2a5397c8527739174253adbc829c0d301bf219a83ff94063424cc147fb"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "props/tiers/tier-t2.glb",
+    "readOnly": true,
+    "sha256": "749fc57f244da0939813834f56a41c040dc914804279e9d77327690e4aa680f7"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.72,
+        0.7,
+        0.76,
+        1.0
+      ],
+      "bytes": 22833,
+      "dilatedCoverage": 0.946655,
+      "height": 256,
+      "materialIndex": 1,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/tiers/tier-t2/tier-t2-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "e7f7efbc45330246f7ee8ff13096ecfd60011b76a1b17d4bd2de4692c4e851e9",
+      "uvCoverage": 0.651886,
+      "width": 256
+    }
+  ]
+}

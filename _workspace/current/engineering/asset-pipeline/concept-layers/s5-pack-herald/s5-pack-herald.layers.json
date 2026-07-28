@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "s5-pack-herald",
+  "concept": "assets/images/battle/pilot/concept-s5-pack-herald.png",
+  "conceptSha256": "16cc7a894e6499a1fb1ffac8f40428de0cd9b43dbbdea73ca8c45760dfed7ade",
+  "generatedAt": "2026-07-28T08:00:28.725017+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      246,
+      2,
+      231
+    ],
+    "borderSpread": 2.095,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s5-pack-herald/s5-pack-herald-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s5-pack-herald/raw/s5-pack-herald-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.489,
+        "tolerance": 26,
+        "alphaCoverage": 0.21576,
+        "size": [
+          1024,
+          1180
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "ad1d2f3396f0110281adb871a782cb05cfe58a4b48536063bec6149488f35a79"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s5-pack-herald/s5-pack-herald-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s5-pack-herald/raw/s5-pack-herald-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.476,
+        "tolerance": 26,
+        "alphaCoverage": 0.10474,
+        "size": [
+          296,
+          1416
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "36e710828f00f661a0c3b7a60653f7334959ca3cf7d24ab27e6e9a6f4947ff47"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s5-pack-herald/s5-pack-herald-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s5-pack-herald/raw/s5-pack-herald-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.434,
+        "tolerance": 26,
+        "alphaCoverage": 0.35549,
+        "size": [
+          1008,
+          1492
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "e64aaeac2fa7c5780f926d94b9c4a36b3151a1522e1dd91ec07e0689e83214d5"
+    }
+  ]
+}

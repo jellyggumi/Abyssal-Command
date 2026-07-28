@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "assetId": "choir-ward-crystal",
+  "concept": "assets/images/battle/pilot/concept-choir-ward-crystal.png",
+  "conceptSha256": "c306e4ca9503b4ea2750ca2b49ca8eab32bda2b1e16e1673d86d3d0fdb42eacb",
+  "generatedAt": "2026-07-28T07:08:27.432824+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      251,
+      4,
+      234
+    ],
+    "borderSpread": 1.896,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "prop",
+      "prompt": "Isolate ONLY the prop object itself from the reference image, rendered as a standalone game asset in the same art style, in a clean three-quarter orthographic view. Exclude the pedestal, base, plinth, platform, podium, display stand, and the ground plane it rests on -- the object must float free with nothing underneath it. Exclude every character, hand, arm, creature, terrain, scenery, and background object. Pure flat white background, no cast shadow, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/choir-ward-crystal/choir-ward-crystal-prop.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/choir-ward-crystal/raw/choir-ward-crystal-prop.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.493,
+        "tolerance": 26,
+        "alphaCoverage": 0.20014,
+        "size": [
+          427,
+          1193
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "d9c72b00729f5a54d32c4a88b1641ebf04b3ddb4f9575b00bc3a5f65dc850f51"
+    }
+  ]
+}

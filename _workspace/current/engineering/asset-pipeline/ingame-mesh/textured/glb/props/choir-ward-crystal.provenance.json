@@ -1,0 +1,83 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 3,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/choir-ward-crystal.glb",
+    "sha256": "a3f7608e40b54108019560252a09a18fd68a81712e3c726176a442c90a7e015a"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "props/choir-ward-crystal.glb",
+    "readOnly": true,
+    "sha256": "5ac2ade750b69d084a4ebe505b987548686e40d60815f35c1dc2ffc2441cb8e2"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.72,
+        0.7,
+        0.76,
+        1.0
+      ],
+      "bytes": 24281,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 2,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/choir-ward-crystal/choir-ward-crystal-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "f72b6270d422fdb2c4cedb39db1fd7a45317ec8df00b82c3d29566aa2a9ffdb5",
+      "uvCoverage": 0.82692,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.68,
+        0.72,
+        0.78,
+        0.55
+      ],
+      "bytes": 16809,
+      "dilatedCoverage": 0.525696,
+      "height": 256,
+      "materialIndex": 3,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/choir-ward-crystal/choir-ward-crystal-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "f89a21752c00492c6e8133fff6792152cc0b538101c2da9a78a012e5ca18199d",
+      "uvCoverage": 0.2995,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.68,
+        0.72,
+        0.78,
+        0.55
+      ],
+      "bytes": 17133,
+      "dilatedCoverage": 0.525696,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/choir-ward-crystal/choir-ward-crystal-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "897468ced68989e3c7984b73f25d6d64df13fce637ac083d41b0969ce84b6a2f",
+      "uvCoverage": 0.2995,
+      "width": 256
+    }
+  ]
+}

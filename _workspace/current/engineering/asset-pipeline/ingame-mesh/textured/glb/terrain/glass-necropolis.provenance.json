@@ -1,0 +1,137 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 6,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/glass-necropolis.glb",
+    "sha256": "ff46018dc034b55f39300ccbe7e962b06963fa0fa23c89dca3e35f25a43ae4d9"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/glass-necropolis.glb",
+    "readOnly": true,
+    "sha256": "b8ee81a6f82899714b2a7b5c79a4b9167f2b778a2b3deadaff02bad659f14996"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.68,
+        0.72,
+        0.78,
+        0.55
+      ],
+      "bytes": 21159,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 3,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "5fb3c5a684fbcfad020e56121b83577745abbffd3ee17d3e9b1e0dd7c6ae93d9",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.68,
+        0.72,
+        0.78,
+        0.55
+      ],
+      "bytes": 21493,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "4f0b5b2a85e11bc64b2222fada3b58ae0090290df784069b58607578aacf4f85",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.54,
+        0.48,
+        0.37,
+        1.0
+      ],
+      "bytes": 20394,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 5,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "7c4c2518b7a7f44d3bafe6c90843f575304de84393af317473c01af5dc9de9cb",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.72,
+        0.7,
+        0.76,
+        1.0
+      ],
+      "bytes": 40604,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 6,
+      "meshIndex": 3,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m3-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "46acb366f7afa4a59496b260c605c0acbcfd705f8a81dcf4e6204e132b5efe8d",
+      "uvCoverage": 0.82692,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.54,
+        0.48,
+        0.37,
+        1.0
+      ],
+      "bytes": 20645,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 7,
+      "meshIndex": 4,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m4-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "b867940b7d5de9f9d4fe04cf406fe19901f7434ebd0911307cb5aa84e2ac41ae",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.72,
+        0.7,
+        0.76,
+        1.0
+      ],
+      "bytes": 16394,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 8,
+      "meshIndex": 5,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m5-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "66d3f7ab284d46f004156e457e731f2e104232b85bb9c5c6e16a74e909d64e76",
+      "uvCoverage": 0.845291,
+      "width": 256
+    }
+  ]
+}

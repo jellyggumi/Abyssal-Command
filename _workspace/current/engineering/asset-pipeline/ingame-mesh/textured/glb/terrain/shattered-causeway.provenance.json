@@ -1,0 +1,137 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 6,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/shattered-causeway.glb",
+    "sha256": "04951ed1b4a3ed798c448c06a57bbe974638bdbf38fd86012178bf21b8b475ee"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/shattered-causeway.glb",
+    "readOnly": true,
+    "sha256": "9f303e8b7401f89938f52fdb0fa29940d71e4ae7fda3b3c7e43f011c01e2762e"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.42,
+        0.19,
+        0.08,
+        1.0
+      ],
+      "bytes": 16498,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 3,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "c0788f9d0e3b4bba1a2e7701b1eae5aac12bbec5728c4ee86a71cdce48aa7e0c",
+      "uvCoverage": 1.0,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.23,
+        0.23,
+        0.25,
+        1.0
+      ],
+      "bytes": 14686,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "5b16571e0e9aeb68bcb74c7b361afa3d21d51401e2b19250c5f02a282e5b53b3",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.23,
+        0.23,
+        0.25,
+        1.0
+      ],
+      "bytes": 14852,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 5,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "88c83e3835afdd38168d170b4b31665bd7ff69c22bfa5f43d40ddfda3a864110",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.42,
+        0.19,
+        0.08,
+        1.0
+      ],
+      "bytes": 18757,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 6,
+      "meshIndex": 3,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m3-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "8915ad2bb89b2b09fae15320923bb5fcbc41e3b68d4a0e134c70e6b41bf9a611",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.42,
+        0.19,
+        0.08,
+        1.0
+      ],
+      "bytes": 18663,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 7,
+      "meshIndex": 4,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m4-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "549f44465878237c4e7baa0e327a3258cb42e2703e712f2cce8d65ef37ba651b",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.17,
+        0.19,
+        0.28,
+        1.0
+      ],
+      "bytes": 18871,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 8,
+      "meshIndex": 5,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m5-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "eca50505f9940229fe5314b4dfd616e212d205f1f9f2831eb9fa7de25a60f48b",
+      "uvCoverage": 0.82692,
+      "width": 256
+    }
+  ]
+}

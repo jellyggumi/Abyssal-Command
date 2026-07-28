@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "s2-veil-tactician",
+  "concept": "assets/images/battle/pilot/concept-s2-veil-tactician.png",
+  "conceptSha256": "b5dae636e292ac8299a4d3f3ba7d6398e711723e472656dfa9fda0873241d067",
+  "generatedAt": "2026-07-28T07:49:08.031092+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      249,
+      2,
+      242
+    ],
+    "borderSpread": 2.084,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s2-veil-tactician/s2-veil-tactician-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s2-veil-tactician/raw/s2-veil-tactician-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.507,
+        "tolerance": 26,
+        "alphaCoverage": 0.3451,
+        "size": [
+          1024,
+          1356
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "ae304cfa00a1555105df7b73bfe2cef80a5f01be30f74b9cd3b2c26d5ca63659"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s2-veil-tactician/s2-veil-tactician-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s2-veil-tactician/raw/s2-veil-tactician-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.438,
+        "tolerance": 26,
+        "alphaCoverage": 0.12103,
+        "size": [
+          941,
+          1028
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "6402a0c3e54b4696249cc362c54287f342a1a8f957a18bcd1c45a1fef1561fce"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s2-veil-tactician/s2-veil-tactician-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s2-veil-tactician/raw/s2-veil-tactician-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.464,
+        "tolerance": 26,
+        "alphaCoverage": 0.21386,
+        "size": [
+          954,
+          1427
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "bd592dd378708093fd4c5f02d548c228fca98fc884d63fb73ae6c12179bf8d29"
+    }
+  ]
+}

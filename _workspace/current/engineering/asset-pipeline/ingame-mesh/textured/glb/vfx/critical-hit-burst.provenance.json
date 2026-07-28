@@ -1,0 +1,191 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 9,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/critical-hit-burst.glb",
+    "sha256": "d9c50ea4bed40d169e9fb65f1466bd75aff64ea06d62200473cdc64d91b98bcc"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "vfx/critical-hit-burst.glb",
+    "readOnly": true,
+    "sha256": "55e2c60b89603467fa308811471a9093c153afbdcc4dd8c3dcb7c7b286611db6"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        1.0,
+        0.87,
+        0.23,
+        1.0
+      ],
+      "bytes": 17917,
+      "dilatedCoverage": 0.56778,
+      "height": 256,
+      "materialIndex": 1,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "503a6b42f4a042ae789911c25df942ffcc4b7930b4a976c28a0c40f16851ccd8",
+      "uvCoverage": 0.287109,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        1.0,
+        0.87,
+        0.23,
+        1.0
+      ],
+      "bytes": 18929,
+      "dilatedCoverage": 0.555664,
+      "height": 256,
+      "materialIndex": 2,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "3c7425937485b7d2b02576739e2df74e8bf65653001b3cfcb714ab3620794d35",
+      "uvCoverage": 0.34668,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        1.0,
+        0.87,
+        0.23,
+        1.0
+      ],
+      "bytes": 20291,
+      "dilatedCoverage": 0.555664,
+      "height": 256,
+      "materialIndex": 3,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "f3e00590fa538b7f3053302bead4f4c6d8e50ab65aa87237a5b0a5724739de36",
+      "uvCoverage": 0.34668,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        1.0,
+        0.87,
+        0.23,
+        1.0
+      ],
+      "bytes": 20655,
+      "dilatedCoverage": 0.555664,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 3,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m3-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "cb5aee0582d3517afccf5714d65763f1517daefe1345b171bceaef3c20f21af6",
+      "uvCoverage": 0.34668,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        1.0,
+        0.87,
+        0.23,
+        1.0
+      ],
+      "bytes": 18044,
+      "dilatedCoverage": 0.555664,
+      "height": 256,
+      "materialIndex": 5,
+      "meshIndex": 4,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m4-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "413e9fa015371cd74cabe78bd2f060625f43754cf73ae19e6b3b97e7eb142695",
+      "uvCoverage": 0.34668,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        1.0,
+        0.87,
+        0.23,
+        1.0
+      ],
+      "bytes": 19657,
+      "dilatedCoverage": 0.555664,
+      "height": 256,
+      "materialIndex": 6,
+      "meshIndex": 5,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m5-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "afc60972297e88f77d249db253668bc83e0643463e2d6af8278eb60856e11627",
+      "uvCoverage": 0.34668,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        1.0,
+        0.87,
+        0.23,
+        1.0
+      ],
+      "bytes": 19778,
+      "dilatedCoverage": 0.555664,
+      "height": 256,
+      "materialIndex": 7,
+      "meshIndex": 6,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m6-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "a08d1b760e78f6e00faf796b864142d7e9cc50774ed33a8845a7f461e4240352",
+      "uvCoverage": 0.34668,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        1.0,
+        0.87,
+        0.23,
+        1.0
+      ],
+      "bytes": 19254,
+      "dilatedCoverage": 0.555664,
+      "height": 256,
+      "materialIndex": 8,
+      "meshIndex": 7,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m7-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "fe365b357b524d5575002f6d498667bf0e7c47def079b502e1497b58507ec5f6",
+      "uvCoverage": 0.34668,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        1.0,
+        0.87,
+        0.23,
+        1.0
+      ],
+      "bytes": 20448,
+      "dilatedCoverage": 0.555664,
+      "height": 256,
+      "materialIndex": 9,
+      "meshIndex": 8,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m8-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "8e9c32519c0dbb9bc1e54589a4b9afb922d167dccd1fea85bae7ca328a713dfd",
+      "uvCoverage": 0.34668,
+      "width": 256
+    }
+  ]
+}

@@ -1,0 +1,401 @@
+{
+  "runId": "textured-candidate-browser-qa",
+  "startedAt": "2026-07-28T13:24:14.658Z",
+  "host": "privacy.html",
+  "atlasSize": 256,
+  "assetCount": 23,
+  "textureCount": 102,
+  "candidateGlbBytes": 2687128,
+  "textureBytes": 1956059,
+  "rows": [
+    {
+      "assetId": "abyssal-banner",
+      "status": 200,
+      "meshCount": 5,
+      "mappedPrimitiveCount": 5,
+      "mipmappedTextureCount": 5,
+      "litPixels": 430,
+      "meanLitRgb": 223.474,
+      "peakRgb": 366
+    },
+    {
+      "assetId": "bulwark-brand",
+      "status": 200,
+      "meshCount": 3,
+      "mappedPrimitiveCount": 3,
+      "mipmappedTextureCount": 3,
+      "litPixels": 1668,
+      "meanLitRgb": 199.327,
+      "peakRgb": 554
+    },
+    {
+      "assetId": "choir-ward-crystal",
+      "status": 200,
+      "meshCount": 3,
+      "mappedPrimitiveCount": 3,
+      "mipmappedTextureCount": 3,
+      "litPixels": 1564,
+      "meanLitRgb": 477.69,
+      "peakRgb": 592
+    },
+    {
+      "assetId": "stillwater-hourglass",
+      "status": 200,
+      "meshCount": 7,
+      "mappedPrimitiveCount": 7,
+      "mipmappedTextureCount": 7,
+      "litPixels": 1864,
+      "meanLitRgb": 266.83,
+      "peakRgb": 583
+    },
+    {
+      "assetId": "tier-t1",
+      "status": 200,
+      "meshCount": 1,
+      "mappedPrimitiveCount": 1,
+      "mipmappedTextureCount": 1,
+      "litPixels": 1730,
+      "meanLitRgb": 218.339,
+      "peakRgb": 484
+    },
+    {
+      "assetId": "tier-t2",
+      "status": 200,
+      "meshCount": 1,
+      "mappedPrimitiveCount": 1,
+      "mipmappedTextureCount": 1,
+      "litPixels": 2517,
+      "meanLitRgb": 370.095,
+      "peakRgb": 482
+    },
+    {
+      "assetId": "tier-t3",
+      "status": 200,
+      "meshCount": 2,
+      "mappedPrimitiveCount": 2,
+      "mipmappedTextureCount": 2,
+      "litPixels": 1008,
+      "meanLitRgb": 444.361,
+      "peakRgb": 713
+    },
+    {
+      "assetId": "tier-t4",
+      "status": 200,
+      "meshCount": 1,
+      "mappedPrimitiveCount": 1,
+      "mipmappedTextureCount": 1,
+      "litPixels": 2703,
+      "meanLitRgb": 339.684,
+      "peakRgb": 417
+    },
+    {
+      "assetId": "tier-t5",
+      "status": 200,
+      "meshCount": 1,
+      "mappedPrimitiveCount": 1,
+      "mipmappedTextureCount": 1,
+      "litPixels": 2662,
+      "meanLitRgb": 199.486,
+      "peakRgb": 243
+    },
+    {
+      "assetId": "warden-lantern",
+      "status": 200,
+      "meshCount": 4,
+      "mappedPrimitiveCount": 4,
+      "mipmappedTextureCount": 4,
+      "litPixels": 1676,
+      "meanLitRgb": 192.172,
+      "peakRgb": 557
+    },
+    {
+      "assetId": "abyss-chancel",
+      "status": 200,
+      "meshCount": 7,
+      "mappedPrimitiveCount": 7,
+      "mipmappedTextureCount": 7,
+      "litPixels": 1558,
+      "meanLitRgb": 357.698,
+      "peakRgb": 422
+    },
+    {
+      "assetId": "gate-zenith",
+      "status": 200,
+      "meshCount": 8,
+      "mappedPrimitiveCount": 8,
+      "mipmappedTextureCount": 8,
+      "litPixels": 1425,
+      "meanLitRgb": 221.201,
+      "peakRgb": 345
+    },
+    {
+      "assetId": "glass-necropolis",
+      "status": 200,
+      "meshCount": 6,
+      "mappedPrimitiveCount": 6,
+      "mipmappedTextureCount": 6,
+      "litPixels": 1416,
+      "meanLitRgb": 430.057,
+      "peakRgb": 514
+    },
+    {
+      "assetId": "howling-sprawl",
+      "status": 200,
+      "meshCount": 6,
+      "mappedPrimitiveCount": 6,
+      "mipmappedTextureCount": 6,
+      "litPixels": 1218,
+      "meanLitRgb": 535.657,
+      "peakRgb": 675
+    },
+    {
+      "assetId": "shattered-causeway",
+      "status": 200,
+      "meshCount": 6,
+      "mappedPrimitiveCount": 6,
+      "mipmappedTextureCount": 6,
+      "litPixels": 559,
+      "meanLitRgb": 265.701,
+      "peakRgb": 428
+    },
+    {
+      "assetId": "starless-canal",
+      "status": 200,
+      "meshCount": 9,
+      "mappedPrimitiveCount": 9,
+      "mipmappedTextureCount": 9,
+      "litPixels": 1877,
+      "meanLitRgb": 329.926,
+      "peakRgb": 554
+    },
+    {
+      "assetId": "sunken-bastion",
+      "status": 200,
+      "meshCount": 7,
+      "mappedPrimitiveCount": 7,
+      "mipmappedTextureCount": 7,
+      "litPixels": 1606,
+      "meanLitRgb": 382.823,
+      "peakRgb": 568
+    },
+    {
+      "assetId": "boss-rally-aura",
+      "status": 200,
+      "meshCount": 2,
+      "mappedPrimitiveCount": 2,
+      "mipmappedTextureCount": 2,
+      "litPixels": 691,
+      "meanLitRgb": 297.41,
+      "peakRgb": 662
+    },
+    {
+      "assetId": "companion-downed-fade",
+      "status": 200,
+      "meshCount": 2,
+      "mappedPrimitiveCount": 2,
+      "mipmappedTextureCount": 2,
+      "litPixels": 994,
+      "meanLitRgb": 153.245,
+      "peakRgb": 185
+    },
+    {
+      "assetId": "critical-hit-burst",
+      "status": 200,
+      "meshCount": 9,
+      "mappedPrimitiveCount": 9,
+      "mipmappedTextureCount": 9,
+      "litPixels": 432,
+      "meanLitRgb": 547.884,
+      "peakRgb": 654
+    },
+    {
+      "assetId": "echo-warden-awakening",
+      "status": 200,
+      "meshCount": 4,
+      "mappedPrimitiveCount": 4,
+      "mipmappedTextureCount": 4,
+      "litPixels": 739,
+      "meanLitRgb": 329.867,
+      "peakRgb": 476
+    },
+    {
+      "assetId": "gate-breach-shockwave",
+      "status": 200,
+      "meshCount": 6,
+      "mappedPrimitiveCount": 6,
+      "mipmappedTextureCount": 6,
+      "litPixels": 612,
+      "meanLitRgb": 173.029,
+      "peakRgb": 373
+    },
+    {
+      "assetId": "wardens-ward-shield",
+      "status": 200,
+      "meshCount": 2,
+      "mappedPrimitiveCount": 2,
+      "mipmappedTextureCount": 2,
+      "litPixels": 1675,
+      "meanLitRgb": 383.149,
+      "peakRgb": 478
+    }
+  ],
+  "served": [
+    {
+      "path": "/privacy.html",
+      "status": 200,
+      "bytes": 1714
+    },
+    {
+      "path": "/styles.css",
+      "status": 200,
+      "bytes": 82523
+    },
+    {
+      "path": "/vendor/three.module.js",
+      "status": 200,
+      "bytes": 650153
+    },
+    {
+      "path": "/vendor/three.core.js",
+      "status": 200,
+      "bytes": 1443056
+    },
+    {
+      "path": "/vendor/loaders/GLTFLoader.js",
+      "status": 200,
+      "bytes": 114972
+    },
+    {
+      "path": "/vendor/utils/BufferGeometryUtils.js",
+      "status": 200,
+      "bytes": 37634
+    },
+    {
+      "path": "/vendor/utils/SkeletonUtils.js",
+      "status": 200,
+      "bytes": 11548
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textured-procedural-resources.manifest.json",
+      "status": 200,
+      "bytes": 83217
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/abyssal-banner.glb",
+      "status": 200,
+      "bytes": 111160
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/bulwark-brand.glb",
+      "status": 200,
+      "bytes": 115388
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/choir-ward-crystal.glb",
+      "status": 200,
+      "bytes": 66304
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/stillwater-hourglass.glb",
+      "status": 200,
+      "bytes": 189616
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/tiers/tier-t1.glb",
+      "status": 200,
+      "bytes": 26756
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/tiers/tier-t2.glb",
+      "status": 200,
+      "bytes": 25340
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/tiers/tier-t3.glb",
+      "status": 200,
+      "bytes": 34628
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/tiers/tier-t4.glb",
+      "status": 200,
+      "bytes": 24796
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/tiers/tier-t5.glb",
+      "status": 200,
+      "bytes": 26416
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/warden-lantern.glb",
+      "status": 200,
+      "bytes": 133028
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/abyss-chancel.glb",
+      "status": 200,
+      "bytes": 206276
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/gate-zenith.glb",
+      "status": 200,
+      "bytes": 257032
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/glass-necropolis.glb",
+      "status": 200,
+      "bytes": 157052
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/howling-sprawl.glb",
+      "status": 200,
+      "bytes": 138004
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/shattered-causeway.glb",
+      "status": 200,
+      "bytes": 142968
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/starless-canal.glb",
+      "status": 200,
+      "bytes": 165004
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/sunken-bastion.glb",
+      "status": 200,
+      "bytes": 194560
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/boss-rally-aura.glb",
+      "status": 200,
+      "bytes": 74048
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/companion-downed-fade.glb",
+      "status": 200,
+      "bytes": 39864
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/critical-hit-burst.glb",
+      "status": 200,
+      "bytes": 207452
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/echo-warden-awakening.glb",
+      "status": 200,
+      "bytes": 135984
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/gate-breach-shockwave.glb",
+      "status": 200,
+      "bytes": 143472
+    },
+    {
+      "path": "/_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/wardens-ward-shield.glb",
+      "status": 200,
+      "bytes": 71980
+    }
+  ],
+  "non200": [],
+  "ok": true
+}

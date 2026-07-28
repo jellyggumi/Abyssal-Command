@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "assetId": "broken-court-monarch-v04",
+  "concept": "assets/images/battle/pilot/concept-broken-court-monarch-v04.png",
+  "conceptSha256": "96e7a2eab07db9dd9ba791425c420aa68c39ef21c1b43f920fd812d222fb3f9c",
+  "generatedAt": "2026-07-28T08:49:21.234457+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "gen",
+    "mode": "gen",
+    "borderMedianRgb": [
+      251,
+      2,
+      250
+    ],
+    "borderSpread": 30.368,
+    "rationale": "full-bleed scene -> layers are not separable in pixel space"
+  },
+  "layers": [
+    {
+      "layer": "full-plate",
+      "prompt": "(deterministic alpha cut of the source concept -- no model call)",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/broken-court-monarch-v04/broken-court-monarch-v04-full-plate.png",
+      "status": "skipped:not-applicable",
+      "source": "n/a"
+    }
+  ]
+}

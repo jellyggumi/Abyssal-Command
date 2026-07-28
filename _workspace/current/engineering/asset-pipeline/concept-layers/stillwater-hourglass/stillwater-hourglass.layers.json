@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "assetId": "stillwater-hourglass",
+  "concept": "assets/images/battle/pilot/concept-stillwater-hourglass.png",
+  "conceptSha256": "4550d6d444c85300b485f0a036081990c19c17702f5df891900dd68fd5f5f433",
+  "generatedAt": "2026-07-28T08:33:54.511513+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      250,
+      4,
+      229
+    ],
+    "borderSpread": 1.909,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "prop",
+      "prompt": "Isolate ONLY the prop object itself from the reference image, rendered as a standalone game asset in the same art style, in a clean three-quarter orthographic view. Exclude the pedestal, base, plinth, platform, podium, display stand, and the ground plane it rests on -- the object must float free with nothing underneath it. Exclude every character, hand, arm, creature, terrain, scenery, and background object. Pure flat white background, no cast shadow, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/stillwater-hourglass/stillwater-hourglass-prop.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/stillwater-hourglass/raw/stillwater-hourglass-prop.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.489,
+        "tolerance": 26,
+        "alphaCoverage": 0.29967,
+        "size": [
+          661,
+          1078
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "e6839f310063216cf4742d7647c583899b92024c3e45a828354ff83deb6fe2aa"
+    }
+  ]
+}

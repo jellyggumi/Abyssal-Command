@@ -1,0 +1,65 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 2,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/wardens-ward-shield.glb",
+    "sha256": "44438368661a84b70b33686a8632ec1792ba93933341c953087c67cbfbe05e3e"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "vfx/wardens-ward-shield.glb",
+    "readOnly": true,
+    "sha256": "0811c083c69e0a2dbae874d371e124731512affd3b28864ce91c36bdc3a6a53e"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.12,
+        0.68,
+        0.82,
+        0.55
+      ],
+      "bytes": 21574,
+      "dilatedCoverage": 0.56778,
+      "height": 256,
+      "materialIndex": 2,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/wardens-ward-shield/wardens-ward-shield-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "9291890f89bc56848257435c686affc6f6130e185713517ce044f84350b342ee",
+      "uvCoverage": 0.287109,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.025,
+        0.42,
+        0.67,
+        1.0
+      ],
+      "bytes": 11913,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 3,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/wardens-ward-shield/wardens-ward-shield-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "d01315c7642ef9922bffa3e2a00b6d027929a1aa2cf4aac7e6b3d1b01baa7e1b",
+      "uvCoverage": 1.0,
+      "width": 256
+    }
+  ]
+}

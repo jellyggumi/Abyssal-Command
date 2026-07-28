@@ -1,0 +1,41 @@
+<html style="overflow-y: hidden"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="language" content="english"><meta property="og:image" content="https://actorcore.reallusion.com/static/image/FB_og_actorcore.638b1ef.jpg"><script src="https://actorcore.reallusion.com/Player/api/reallusion_player.js"></script><link rel="stylesheet" href="https://www.reallusion.com/includes/rl-modules/faq/rl_faq.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css"><link rel="shortcut icon" href="/favicon.ico"><link href="https://fonts.googleapis.com/css?family=Roboto:400,300,200,500,700,900|Roboto+Condensed&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&amp;display=swap" rel="stylesheet"><link href="/static/css/element-reallusion-b223b94c487503f40f90.css" rel="stylesheet"><link href="/static/css/vuetify-reallusion-b223b94c487503f40f90.css" rel="stylesheet"><link href="/static/css/commons-reallusion-b223b94c487503f40f90.css" rel="stylesheet"></head><body><span data-layout-name="actorcore-home"></span><script>getBrowserSupportLevel();
+
+        function getChromeVersion() {
+            let raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
+
+            return raw ? parseInt(raw[2], 10) : false;
+        }
+
+        function getSafariVersion() {
+            const IS_SAFARI = /^((?!chrome|android).)*safari/i.test(
+                navigator.userAgent
+            );
+
+            if (!IS_SAFARI) {
+                return false;
+            }
+
+            let version = navigator.userAgent.match(/version\/(\d+)/i);
+            return version != null ? parseFloat(version[1]) : false;
+        }
+
+        function getFirefoxVersion() {
+            let match = window.navigator.userAgent.match(/Firefox\/([0-9]+)\./);
+            return match ? parseInt(match[1]) : false;
+        }
+
+        function getBrowserSupportLevel() {
+            const chromeVersion = getChromeVersion();
+            const safariVersion = getSafariVersion();
+            const firefoxVersion = getFirefoxVersion();
+
+            if (!chromeVersion && !safariVersion && !firefoxVersion) {
+                return;
+            }
+
+            if ((chromeVersion && chromeVersion <= 81) || (safariVersion && safariVersion < 12) || (firefoxVersion && firefoxVersion <= 79)) {
+                setTimeout(function () {
+                    alert("Unfortunately, your browser is too old to work on this site.");
+                }, 0)
+            }
+        }</script><div id="app"></div><script type="text/javascript" src="/static/js/element-reallusion-d0cc0be2e4d1c6037b25.js"></script><script type="text/javascript" src="/static/js/vuetify-reallusion-6f986f7c74802a806adb.js"></script><script type="text/javascript" src="/static/js/commons-reallusion-c220fe0ee08accc2a2de.js"></script><script type="text/javascript" src="/static/js/vendors-reallusion-8cf9a2637664c13f3c96.js"></script><script type="text/javascript" src="/static/js/app-reallusion-2e99b1ad4e661eb87c9f.js"></script></body></html>

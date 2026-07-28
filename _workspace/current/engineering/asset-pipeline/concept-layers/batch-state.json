@@ -1,0 +1,347 @@
+{
+  "schemaVersion": 1,
+  "done": {
+    "broken-court-monarch-boss": [
+      "accessory",
+      "character",
+      "weapon"
+    ],
+    "broken-court-monarch-v04": [
+      "accessory",
+      "character",
+      "weapon"
+    ],
+    "ember-cohort": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "guard": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "human-command-boss": [
+      "accessory",
+      "character",
+      "weapon"
+    ],
+    "lantern-reaver": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "pack-warden": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "player-core-v04": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "possessed": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "requiem-warden": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "s1-cinder-warden": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "s10-abyss-regent": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "s2-veil-tactician": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "s3-gate-sovereign": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "s4-tide-warden": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "s5-pack-herald": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "s6-requiem-choir": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "s7-lantern-tyrant": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "s8-bridge-colossus": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "s9-veiled-concordat": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "scout": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "shade": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "shadow-commander-boss": [
+      "accessory",
+      "character",
+      "weapon"
+    ],
+    "shadow-soldier-v04": [
+      "accessory",
+      "character",
+      "weapon"
+    ],
+    "sung-hum-boss": [
+      "accessory",
+      "weapon"
+    ],
+    "sung-hum-v04": [
+      "character",
+      "full-plate"
+    ],
+    "throne-echo": [
+      "full-plate"
+    ],
+    "veil-vanguard": [
+      "full-plate"
+    ],
+    "abyssal-banner": [
+      "prop"
+    ],
+    "anchor-shard": [
+      "prop"
+    ],
+    "bulwark-brand": [
+      "prop"
+    ],
+    "choir-ward-crystal": [
+      "prop"
+    ],
+    "dawnless-crown": [
+      "prop"
+    ],
+    "equipment-tier-gems": [
+      "prop"
+    ],
+    "rift-lens": [
+      "prop"
+    ],
+    "stillwater-hourglass": [
+      "prop"
+    ],
+    "terrain-abyss-chancel": [],
+    "terrain-cinder-span": [],
+    "terrain-echo-throne": [],
+    "terrain-echo-throne-steps": [],
+    "terrain-gate-zenith": [],
+    "terrain-glass-necropolis": [],
+    "terrain-howling-sprawl": [],
+    "terrain-shattered-causeway": [],
+    "terrain-starless-canal": [],
+    "terrain-sunken-bastion": [],
+    "terrain-veil-citadel": [],
+    "warden-lantern": []
+  },
+  "failed": {
+    "sung-hum-boss": {
+      "layers": [
+        "character"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "sung-hum-v04": {
+      "layers": [
+        "weapon",
+        "accessory"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "terrain-abyss-chancel": {
+      "layers": [
+        "terrain",
+        "background-terrain",
+        "terrain-feature",
+        "background-object"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "terrain-cinder-span": {
+      "layers": [
+        "terrain",
+        "background-terrain",
+        "terrain-feature",
+        "background-object"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "terrain-echo-throne": {
+      "layers": [
+        "terrain",
+        "background-terrain",
+        "terrain-feature",
+        "background-object"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "terrain-echo-throne-steps": {
+      "layers": [
+        "terrain",
+        "background-terrain",
+        "terrain-feature",
+        "background-object"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "terrain-gate-zenith": {
+      "layers": [
+        "terrain",
+        "background-terrain",
+        "terrain-feature",
+        "background-object"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "terrain-glass-necropolis": {
+      "layers": [
+        "terrain",
+        "background-terrain",
+        "terrain-feature",
+        "background-object"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "terrain-howling-sprawl": {
+      "layers": [
+        "terrain",
+        "background-terrain",
+        "terrain-feature",
+        "background-object"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "terrain-shattered-causeway": {
+      "layers": [
+        "terrain",
+        "background-terrain",
+        "terrain-feature",
+        "background-object"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "terrain-starless-canal": {
+      "layers": [
+        "terrain",
+        "background-terrain",
+        "terrain-feature",
+        "background-object"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "terrain-sunken-bastion": {
+      "layers": [
+        "terrain",
+        "background-terrain",
+        "terrain-feature",
+        "background-object"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "terrain-veil-citadel": {
+      "layers": [
+        "terrain",
+        "background-terrain",
+        "terrain-feature",
+        "background-object"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "throne-echo": {
+      "layers": [
+        "character",
+        "weapon",
+        "accessory"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "veil-vanguard": {
+      "layers": [
+        "character",
+        "weapon",
+        "accessory"
+      ],
+      "rc": 0,
+      "stderr": ""
+    },
+    "warden-lantern": {
+      "layers": [
+        "prop"
+      ],
+      "rc": 0,
+      "stderr": ""
+    }
+  },
+  "updatedAt": "2026-07-28T09:02:50.161465+00:00"
+}

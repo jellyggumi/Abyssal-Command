@@ -1,0 +1,101 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 4,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/echo-warden-awakening.glb",
+    "sha256": "1595099784b47aa154bb327df4550f599b40ddff4b78083792b27366834df30e"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "vfx/echo-warden-awakening.glb",
+    "readOnly": true,
+    "sha256": "8f07abae1a65fffdd1cdfbf55981358383dad67e9fc81a9064a86ec537039713"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.48,
+        0.14,
+        0.78,
+        0.65
+      ],
+      "bytes": 17471,
+      "dilatedCoverage": 0.56778,
+      "height": 256,
+      "materialIndex": 2,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/echo-warden-awakening/echo-warden-awakening-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "2794ba3f745615521b1238c856fa2826cc9065cadccf3cda915d23ef005f3c9f",
+      "uvCoverage": 0.287109,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.25,
+        0.055,
+        0.55,
+        1.0
+      ],
+      "bytes": 11672,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 3,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/echo-warden-awakening/echo-warden-awakening-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "4f3261be83862267d6aa2de76d353ca5c6733e86850c2711016ec854225b2b4c",
+      "uvCoverage": 1.0,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.25,
+        0.055,
+        0.55,
+        1.0
+      ],
+      "bytes": 11077,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/echo-warden-awakening/echo-warden-awakening-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "05a0245e2269c9394b87d6dec037cc907b83473ddab023cc46e808a3023bb7d9",
+      "uvCoverage": 1.0,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.25,
+        0.055,
+        0.55,
+        1.0
+      ],
+      "bytes": 5620,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 5,
+      "meshIndex": 3,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/echo-warden-awakening/echo-warden-awakening-m3-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "31f97f7585a96a9ceadd5171bca702f49b1978139e52f931d40d1a6baa0c525a",
+      "uvCoverage": 1.0,
+      "width": 256
+    }
+  ]
+}

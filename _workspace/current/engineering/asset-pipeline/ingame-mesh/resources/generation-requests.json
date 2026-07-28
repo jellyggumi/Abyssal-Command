@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "lane": "candidate/ingame-mesh",
+  "runtimeEligible": false,
+  "generator": "god-tibo-imagen / gti",
+  "status": "blocked-after-live-retry",
+  "blocker": "private-codex HTTP 429/rate limit persisted; latest single-asset retry stopped after first rate-limit response",
+  "dryRunVerified": true,
+  "dryRunCommand": "gti --provider private-codex --dry-run --image <source> --prompt <prompt> --output <output> --size <size>",
+  "counts": {
+    "characterTextures": 6,
+    "itemTextures": 8,
+    "backgroundTextures": 2,
+    "total": 16,
+    "generated": 0
+  },
+  "requests": [
+    {
+      "assetId": "broken-court-monarch-boss",
+      "class": "character-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-input/broken-court-monarch-boss-character.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/characters/broken-court-monarch-boss-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game character. Preserve silhouette, armor panel placement, face identity, and faction markings. Use clean flat colors, controlled hand-painted gradients, readable roughness-friendly color separation, no magenta, pink, or purple on the character, no background, no text, no transparency checkerboard. Candidate-only asset.",
+      "status": "blocked",
+      "error": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nWARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nError: Private Codex backend request failed with HTTP 429.\n    at classifyFailure (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:25:17)\n    at Object.generateImage (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/cli/generate.js:179:18)"
+    },
+    {
+      "assetId": "broken-court-monarch-v04",
+      "class": "character-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-input/broken-court-monarch-v04-character.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/characters/broken-court-monarch-v04-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game character. Preserve silhouette, armor panel placement, face identity, and faction markings. Use clean flat colors, controlled hand-painted gradients, readable roughness-friendly color separation, no magenta, pink, or purple on the character, no background, no text, no transparency checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "ember-cohort",
+      "class": "character-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-input/ember-cohort-character.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/characters/ember-cohort-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game character. Preserve silhouette, armor panel placement, face identity, and faction markings. Use clean flat colors, controlled hand-painted gradients, readable roughness-friendly color separation, no magenta, pink, or purple on the character, no background, no text, no transparency checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "guard",
+      "class": "character-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-input/guard-character.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/characters/guard-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game character. Preserve silhouette, armor panel placement, face identity, and faction markings. Use clean flat colors, controlled hand-painted gradients, readable roughness-friendly color separation, no magenta, pink, or purple on the character, no background, no text, no transparency checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "human-command-boss",
+      "class": "character-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-input/human-command-boss-character.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/characters/human-command-boss-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game character. Preserve silhouette, armor panel placement, face identity, and faction markings. Use clean flat colors, controlled hand-painted gradients, readable roughness-friendly color separation, no magenta, pink, or purple on the character, no background, no text, no transparency checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "lantern-reaver",
+      "class": "character-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-input/lantern-reaver-character.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/characters/lantern-reaver-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game character. Preserve silhouette, armor panel placement, face identity, and faction markings. Use clean flat colors, controlled hand-painted gradients, readable roughness-friendly color separation, no magenta, pink, or purple on the character, no background, no text, no transparency checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "abyssal-banner",
+      "class": "item-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-layers/abyssal-banner/abyssal-banner-prop.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/items/abyssal-banner-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game item/prop. Preserve the exact design language, readable silhouette, material separation, and emblem details. Use clean flat colors with controlled hand-painted gradients; no magenta, pink, or purple in the item, no environment, no text, no checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "anchor-shard",
+      "class": "item-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-layers/anchor-shard/anchor-shard-prop.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/items/anchor-shard-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game item/prop. Preserve the exact design language, readable silhouette, material separation, and emblem details. Use clean flat colors with controlled hand-painted gradients; no magenta, pink, or purple in the item, no environment, no text, no checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "bulwark-brand",
+      "class": "item-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-layers/bulwark-brand/bulwark-brand-prop.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/items/bulwark-brand-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game item/prop. Preserve the exact design language, readable silhouette, material separation, and emblem details. Use clean flat colors with controlled hand-painted gradients; no magenta, pink, or purple in the item, no environment, no text, no checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "choir-ward-crystal",
+      "class": "item-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-layers/choir-ward-crystal/choir-ward-crystal-prop.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/items/choir-ward-crystal-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game item/prop. Preserve the exact design language, readable silhouette, material separation, and emblem details. Use clean flat colors with controlled hand-painted gradients; no magenta, pink, or purple in the item, no environment, no text, no checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "dawnless-crown",
+      "class": "item-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-layers/dawnless-crown/dawnless-crown-prop.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/items/dawnless-crown-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game item/prop. Preserve the exact design language, readable silhouette, material separation, and emblem details. Use clean flat colors with controlled hand-painted gradients; no magenta, pink, or purple in the item, no environment, no text, no checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "equipment-tier-gems",
+      "class": "item-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-layers/equipment-tier-gems/equipment-tier-gems-prop.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/items/equipment-tier-gems-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game item/prop. Preserve the exact design language, readable silhouette, material separation, and emblem details. Use clean flat colors with controlled hand-painted gradients; no magenta, pink, or purple in the item, no environment, no text, no checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "rift-lens",
+      "class": "item-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-layers/rift-lens/rift-lens-prop.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/items/rift-lens-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game item/prop. Preserve the exact design language, readable silhouette, material separation, and emblem details. Use clean flat colors with controlled hand-painted gradients; no magenta, pink, or purple in the item, no environment, no text, no checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "stillwater-hourglass",
+      "class": "item-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-layers/stillwater-hourglass/stillwater-hourglass-prop.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/items/stillwater-hourglass-albedo.png",
+      "size": "2048x2048",
+      "prompt": "Create a production-ready stylized cartoon albedo texture sheet for the referenced in-game item/prop. Preserve the exact design language, readable silhouette, material separation, and emblem details. Use clean flat colors with controlled hand-painted gradients; no magenta, pink, or purple in the item, no environment, no text, no checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "abyss-chancel",
+      "class": "background-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-abyss-chancel/terrain-abyss-chancel-background-terrain.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/backgrounds/abyss-chancel-background.png",
+      "size": "3840x2160",
+      "prompt": "Create a production-ready stylized cartoon environment background texture/plate from the reference. Preserve the landmark composition, color mood, and readable gameplay silhouettes while adding layered painted depth and tile-friendly surface breakup. No characters, no UI, no text, no magenta/pink/purple focal lighting, and no transparency checkerboard. Candidate-only asset."
+    },
+    {
+      "assetId": "cinder-span",
+      "class": "background-texture",
+      "source": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-cinder-span/terrain-cinder-span-terrain-feature.png",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/backgrounds/cinder-span-background.png",
+      "size": "3840x2160",
+      "prompt": "Create a production-ready stylized cartoon environment background texture/plate from the reference. Preserve the landmark composition, color mood, and readable gameplay silhouettes while adding layered painted depth and tile-friendly surface breakup. No characters, no UI, no text, no magenta/pink/purple focal lighting, and no transparency checkerboard. Candidate-only asset."
+    }
+  ],
+  "attemptedAt": "2026-07-28T13:34:48.645275000Z",
+  "completed": 0,
+  "lastAttempt": {
+    "attemptId": "20260728T133448Z",
+    "receipt": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/generation-attempt-20260728T133448Z.json",
+    "status": "blocked-after-rate-limit",
+    "assetId": "broken-court-monarch-boss",
+    "attempted": 1,
+    "completed": 0,
+    "finishedAt": "2026-07-28T13:34:49.908086000Z"
+  },
+  "retryHistory": [
+    {
+      "attemptId": "20260728T130457Z",
+      "receipt": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/regeneration-attempt-20260728T130457Z.json",
+      "status": "blocked-after-rate-limit",
+      "attempted": 1,
+      "completed": 0,
+      "finishedAt": "2026-07-28T13:04:58.315863+00:00"
+    },
+    {
+      "attemptId": "20260728T133448Z",
+      "receipt": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/generation-attempt-20260728T133448Z.json",
+      "status": "blocked-after-rate-limit",
+      "assetId": "broken-court-monarch-boss",
+      "attempted": 1,
+      "completed": 0,
+      "finishedAt": "2026-07-28T13:34:49.908086000Z"
+    }
+  ]
+}

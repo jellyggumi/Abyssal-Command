@@ -1,0 +1,904 @@
+{
+  "artifactStatus": "candidate-not-shipped",
+  "artifactType": "motion-prompt-batch",
+  "assetDisplayName": "Guard",
+  "assetId": "guard",
+  "candidateArtifacts": {
+    "lane": "staging/candidate",
+    "note": "Prompt and generated media candidates remain separate from deployed runtime assets until provenance, rights, GLB embedding, and browser/fallback verification are recorded.",
+    "requiredProvenanceFields": [
+      "runtimeEligible",
+      "source",
+      "generator",
+      "output",
+      "rightsReceipt",
+      "runtimeReceipt"
+    ],
+    "requiredSidecars": [
+      "{candidate}.provenance.json"
+    ],
+    "runtimeEligible": false,
+    "shipped": false
+  },
+  "category": "character",
+  "conceptVocabulary": {
+    "character": "Dusk Warden",
+    "progression": "hunt→extract→materialize→capture→assault",
+    "world": [
+      "Echo Deep",
+      "Gate Zenith"
+    ]
+  },
+  "lane": "concept/reference",
+  "productionContract": {
+    "actionIds": [
+      "idle",
+      "move",
+      "run",
+      "hit",
+      "bighit",
+      "attack",
+      "critical",
+      "avoid",
+      "defence",
+      "die",
+      "show"
+    ],
+    "animationAuthoring": "Blender NLA",
+    "clipIdPattern": "{assetId}::{action}::{variant}",
+    "frameToRuntimeRatio": 2,
+    "runtimeFps": 30,
+    "runtimeVerificationRequired": true,
+    "sourceFps": 60
+  },
+  "prompts": [
+    {
+      "action": "idle",
+      "boss": "guard",
+      "camera": {
+        "angleDeg": 45,
+        "distance": 4.0,
+        "fov": 35,
+        "pitchDeg": 35
+      },
+      "clipId": "guard::idle::v01",
+      "constraints": [
+        "concept/reference lane only",
+        "no logos, trademarked silhouettes, copied emblems, watermarks, or text",
+        "no pedestal, terrain, or weapons in the generated motion reference",
+        "preserve a clean T-pose-compatible character silhouette",
+        "actual animation is produced by Blender NLA; this prompt is not a runtime clip"
+      ],
+      "framing": "full-body centered silhouette, unobstructed feet and hands, 2.5D isometric readability",
+      "keyPoses": [
+        {
+          "poseLabel": "contact",
+          "speedHint": "hold",
+          "timePct": 0.0
+        },
+        {
+          "poseLabel": "breath-in",
+          "speedHint": "drive",
+          "timePct": 33.33
+        },
+        {
+          "poseLabel": "breath-out",
+          "speedHint": "drive",
+          "timePct": 66.67
+        },
+        {
+          "poseLabel": "contact",
+          "speedHint": "hold",
+          "timePct": 100.0
+        }
+      ],
+      "motionIntent": "guarded breathing and readable weight shift",
+      "production": {
+        "animationAuthoring": "Blender NLA",
+        "runtimeEligible": false,
+        "runtimeVerificationRequired": true
+      },
+      "prompt": "Concept/reference motion study for Guard, action idle, variant v01. Abyssal Surge vocabulary: Dusk Warden in the Echo Deep approaching Gate Zenith; dramatic progression hunt→extract→materialize→capture→assault. Use the disciplined-hunter tone and guarded breathing and readable weight shift; stage anticipation, clear action peak, and settle/recovery. Original cel-shaded painterly 2.5D silhouette with sharp edge contrast and restrained particle accents. No logos, no trademarked silhouettes, no copied emblems, no watermarks, no text. Concept/reference lane only: do not produce a runtime asset; Blender NLA authors the actual animation and runtime verification is required.",
+      "promptId": "motion-prompt::guard::idle::v01",
+      "qualityTags": [
+        "Dusk Warden",
+        "Echo Deep",
+        "Gate Zenith",
+        "hunt→extract→materialize→capture→assault",
+        "cel-shaded",
+        "original silhouette"
+      ],
+      "runtimeClipKey": "idle",
+      "timing": {
+        "frameToRuntimeRatio": 2,
+        "loop": true,
+        "runtimeFps": 30,
+        "runtimeFrameBudget": 60,
+        "sourceFps": 60,
+        "sourceFrameBudget": 120
+      },
+      "variant": "v01",
+      "version": "1.0.0"
+    },
+    {
+      "action": "move",
+      "boss": "guard",
+      "camera": {
+        "angleDeg": 45,
+        "distance": 4.0,
+        "fov": 35,
+        "pitchDeg": 35
+      },
+      "clipId": "guard::move::v01",
+      "constraints": [
+        "concept/reference lane only",
+        "no logos, trademarked silhouettes, copied emblems, watermarks, or text",
+        "no pedestal, terrain, or weapons in the generated motion reference",
+        "preserve a clean T-pose-compatible character silhouette",
+        "actual animation is produced by Blender NLA; this prompt is not a runtime clip"
+      ],
+      "framing": "full-body centered silhouette, unobstructed feet and hands, 2.5D isometric readability",
+      "keyPoses": [
+        {
+          "poseLabel": "anticipation",
+          "speedHint": "hold",
+          "timePct": 0.0
+        },
+        {
+          "poseLabel": "left-step",
+          "speedHint": "drive",
+          "timePct": 33.33
+        },
+        {
+          "poseLabel": "right-step",
+          "speedHint": "drive",
+          "timePct": 66.67
+        },
+        {
+          "poseLabel": "settle",
+          "speedHint": "hold",
+          "timePct": 100.0
+        }
+      ],
+      "motionIntent": "controlled advance with a clear lead foot",
+      "production": {
+        "animationAuthoring": "Blender NLA",
+        "runtimeEligible": false,
+        "runtimeVerificationRequired": true
+      },
+      "prompt": "Concept/reference motion study for Guard, action move, variant v01. Abyssal Surge vocabulary: Dusk Warden in the Echo Deep approaching Gate Zenith; dramatic progression hunt→extract→materialize→capture→assault. Use the disciplined-hunter tone and controlled advance with a clear lead foot; stage anticipation, clear action peak, and settle/recovery. Original cel-shaded painterly 2.5D silhouette with sharp edge contrast and restrained particle accents. No logos, no trademarked silhouettes, no copied emblems, no watermarks, no text. Concept/reference lane only: do not produce a runtime asset; Blender NLA authors the actual animation and runtime verification is required.",
+      "promptId": "motion-prompt::guard::move::v01",
+      "qualityTags": [
+        "Dusk Warden",
+        "Echo Deep",
+        "Gate Zenith",
+        "hunt→extract→materialize→capture→assault",
+        "cel-shaded",
+        "original silhouette"
+      ],
+      "runtimeClipKey": "move",
+      "timing": {
+        "frameToRuntimeRatio": 2,
+        "loop": true,
+        "runtimeFps": 30,
+        "runtimeFrameBudget": 36,
+        "sourceFps": 60,
+        "sourceFrameBudget": 72
+      },
+      "variant": "v01",
+      "version": "1.0.0"
+    },
+    {
+      "action": "run",
+      "boss": "guard",
+      "camera": {
+        "angleDeg": 45,
+        "distance": 4.0,
+        "fov": 35,
+        "pitchDeg": 35
+      },
+      "clipId": "guard::run::v01",
+      "constraints": [
+        "concept/reference lane only",
+        "no logos, trademarked silhouettes, copied emblems, watermarks, or text",
+        "no pedestal, terrain, or weapons in the generated motion reference",
+        "preserve a clean T-pose-compatible character silhouette",
+        "actual animation is produced by Blender NLA; this prompt is not a runtime clip"
+      ],
+      "framing": "full-body centered silhouette, unobstructed feet and hands, 2.5D isometric readability",
+      "keyPoses": [
+        {
+          "poseLabel": "push-off",
+          "speedHint": "hold",
+          "timePct": 0.0
+        },
+        {
+          "poseLabel": "left-stride",
+          "speedHint": "drive",
+          "timePct": 33.33
+        },
+        {
+          "poseLabel": "right-stride",
+          "speedHint": "drive",
+          "timePct": 66.67
+        },
+        {
+          "poseLabel": "brake",
+          "speedHint": "hold",
+          "timePct": 100.0
+        }
+      ],
+      "motionIntent": "urgent pursuit without losing the silhouette",
+      "production": {
+        "animationAuthoring": "Blender NLA",
+        "runtimeEligible": false,
+        "runtimeVerificationRequired": true
+      },
+      "prompt": "Concept/reference motion study for Guard, action run, variant v01. Abyssal Surge vocabulary: Dusk Warden in the Echo Deep approaching Gate Zenith; dramatic progression hunt→extract→materialize→capture→assault. Use the disciplined-hunter tone and urgent pursuit without losing the silhouette; stage anticipation, clear action peak, and settle/recovery. Original cel-shaded painterly 2.5D silhouette with sharp edge contrast and restrained particle accents. No logos, no trademarked silhouettes, no copied emblems, no watermarks, no text. Concept/reference lane only: do not produce a runtime asset; Blender NLA authors the actual animation and runtime verification is required.",
+      "promptId": "motion-prompt::guard::run::v01",
+      "qualityTags": [
+        "Dusk Warden",
+        "Echo Deep",
+        "Gate Zenith",
+        "hunt→extract→materialize→capture→assault",
+        "cel-shaded",
+        "original silhouette"
+      ],
+      "runtimeClipKey": "run",
+      "timing": {
+        "frameToRuntimeRatio": 2,
+        "loop": true,
+        "runtimeFps": 30,
+        "runtimeFrameBudget": 42,
+        "sourceFps": 60,
+        "sourceFrameBudget": 84
+      },
+      "variant": "v01",
+      "version": "1.0.0"
+    },
+    {
+      "action": "hit",
+      "boss": "guard",
+      "camera": {
+        "angleDeg": 45,
+        "distance": 4.0,
+        "fov": 35,
+        "pitchDeg": 35
+      },
+      "clipId": "guard::hit::v01",
+      "constraints": [
+        "concept/reference lane only",
+        "no logos, trademarked silhouettes, copied emblems, watermarks, or text",
+        "no pedestal, terrain, or weapons in the generated motion reference",
+        "preserve a clean T-pose-compatible character silhouette",
+        "actual animation is produced by Blender NLA; this prompt is not a runtime clip"
+      ],
+      "framing": "full-body centered silhouette, unobstructed feet and hands, 2.5D isometric readability",
+      "keyPoses": [
+        {
+          "poseLabel": "impact",
+          "speedHint": "hold",
+          "timePct": 0.0
+        },
+        {
+          "poseLabel": "recoil",
+          "speedHint": "drive",
+          "timePct": 50.0
+        },
+        {
+          "poseLabel": "recover",
+          "speedHint": "hold",
+          "timePct": 100.0
+        }
+      ],
+      "motionIntent": "short readable impact reaction",
+      "production": {
+        "animationAuthoring": "Blender NLA",
+        "runtimeEligible": false,
+        "runtimeVerificationRequired": true
+      },
+      "prompt": "Concept/reference motion study for Guard, action hit, variant v01. Abyssal Surge vocabulary: Dusk Warden in the Echo Deep approaching Gate Zenith; dramatic progression hunt→extract→materialize→capture→assault. Use the disciplined-hunter tone and short readable impact reaction; stage anticipation, clear action peak, and settle/recovery. Original cel-shaded painterly 2.5D silhouette with sharp edge contrast and restrained particle accents. No logos, no trademarked silhouettes, no copied emblems, no watermarks, no text. Concept/reference lane only: do not produce a runtime asset; Blender NLA authors the actual animation and runtime verification is required.",
+      "promptId": "motion-prompt::guard::hit::v01",
+      "qualityTags": [
+        "Dusk Warden",
+        "Echo Deep",
+        "Gate Zenith",
+        "hunt→extract→materialize→capture→assault",
+        "cel-shaded",
+        "original silhouette"
+      ],
+      "runtimeClipKey": "hit",
+      "timing": {
+        "frameToRuntimeRatio": 2,
+        "loop": false,
+        "runtimeFps": 30,
+        "runtimeFrameBudget": 27,
+        "sourceFps": 60,
+        "sourceFrameBudget": 54
+      },
+      "variant": "v01",
+      "version": "1.0.0"
+    },
+    {
+      "action": "bighit",
+      "boss": "guard",
+      "camera": {
+        "angleDeg": 45,
+        "distance": 4.0,
+        "fov": 35,
+        "pitchDeg": 35
+      },
+      "clipId": "guard::bighit::v01",
+      "constraints": [
+        "concept/reference lane only",
+        "no logos, trademarked silhouettes, copied emblems, watermarks, or text",
+        "no pedestal, terrain, or weapons in the generated motion reference",
+        "preserve a clean T-pose-compatible character silhouette",
+        "actual animation is produced by Blender NLA; this prompt is not a runtime clip"
+      ],
+      "framing": "full-body centered silhouette, unobstructed feet and hands, 2.5D isometric readability",
+      "keyPoses": [
+        {
+          "poseLabel": "wind-up",
+          "speedHint": "hold",
+          "timePct": 0.0
+        },
+        {
+          "poseLabel": "impact",
+          "speedHint": "drive",
+          "timePct": 25.0
+        },
+        {
+          "poseLabel": "stagger",
+          "speedHint": "drive",
+          "timePct": 50.0
+        },
+        {
+          "poseLabel": "brace",
+          "speedHint": "drive",
+          "timePct": 75.0
+        },
+        {
+          "poseLabel": "recover",
+          "speedHint": "hold",
+          "timePct": 100.0
+        }
+      ],
+      "motionIntent": "heavy stagger with a protected recovery",
+      "production": {
+        "animationAuthoring": "Blender NLA",
+        "runtimeEligible": false,
+        "runtimeVerificationRequired": true
+      },
+      "prompt": "Concept/reference motion study for Guard, action bighit, variant v01. Abyssal Surge vocabulary: Dusk Warden in the Echo Deep approaching Gate Zenith; dramatic progression hunt→extract→materialize→capture→assault. Use the disciplined-hunter tone and heavy stagger with a protected recovery; stage anticipation, clear action peak, and settle/recovery. Original cel-shaded painterly 2.5D silhouette with sharp edge contrast and restrained particle accents. No logos, no trademarked silhouettes, no copied emblems, no watermarks, no text. Concept/reference lane only: do not produce a runtime asset; Blender NLA authors the actual animation and runtime verification is required.",
+      "promptId": "motion-prompt::guard::bighit::v01",
+      "qualityTags": [
+        "Dusk Warden",
+        "Echo Deep",
+        "Gate Zenith",
+        "hunt→extract→materialize→capture→assault",
+        "cel-shaded",
+        "original silhouette"
+      ],
+      "runtimeClipKey": "bighit",
+      "timing": {
+        "frameToRuntimeRatio": 2,
+        "loop": false,
+        "runtimeFps": 30,
+        "runtimeFrameBudget": 42,
+        "sourceFps": 60,
+        "sourceFrameBudget": 84
+      },
+      "variant": "v01",
+      "version": "1.0.0"
+    },
+    {
+      "action": "attack",
+      "boss": "guard",
+      "camera": {
+        "angleDeg": 45,
+        "distance": 4.0,
+        "fov": 35,
+        "pitchDeg": 35
+      },
+      "clipId": "guard::attack::v01",
+      "constraints": [
+        "concept/reference lane only",
+        "no logos, trademarked silhouettes, copied emblems, watermarks, or text",
+        "no pedestal, terrain, or weapons in the generated motion reference",
+        "preserve a clean T-pose-compatible character silhouette",
+        "actual animation is produced by Blender NLA; this prompt is not a runtime clip"
+      ],
+      "framing": "full-body centered silhouette, unobstructed feet and hands, 2.5D isometric readability",
+      "keyPoses": [
+        {
+          "poseLabel": "guard",
+          "speedHint": "hold",
+          "timePct": 0.0
+        },
+        {
+          "poseLabel": "wind-up",
+          "speedHint": "drive",
+          "timePct": 25.0
+        },
+        {
+          "poseLabel": "strike",
+          "speedHint": "drive",
+          "timePct": 50.0
+        },
+        {
+          "poseLabel": "follow-through",
+          "speedHint": "drive",
+          "timePct": 75.0
+        },
+        {
+          "poseLabel": "recover",
+          "speedHint": "hold",
+          "timePct": 100.0
+        }
+      ],
+      "motionIntent": "disciplined close-range strike with a visible peak",
+      "production": {
+        "animationAuthoring": "Blender NLA",
+        "runtimeEligible": false,
+        "runtimeVerificationRequired": true
+      },
+      "prompt": "Concept/reference motion study for Guard, action attack, variant v01. Abyssal Surge vocabulary: Dusk Warden in the Echo Deep approaching Gate Zenith; dramatic progression hunt→extract→materialize→capture→assault. Use the disciplined-hunter tone and disciplined close-range strike with a visible peak; stage anticipation, clear action peak, and settle/recovery. Original cel-shaded painterly 2.5D silhouette with sharp edge contrast and restrained particle accents. No logos, no trademarked silhouettes, no copied emblems, no watermarks, no text. Concept/reference lane only: do not produce a runtime asset; Blender NLA authors the actual animation and runtime verification is required.",
+      "promptId": "motion-prompt::guard::attack::v01",
+      "qualityTags": [
+        "Dusk Warden",
+        "Echo Deep",
+        "Gate Zenith",
+        "hunt→extract→materialize→capture→assault",
+        "cel-shaded",
+        "original silhouette"
+      ],
+      "runtimeClipKey": "attack",
+      "timing": {
+        "frameToRuntimeRatio": 2,
+        "loop": false,
+        "runtimeFps": 30,
+        "runtimeFrameBudget": 45,
+        "sourceFps": 60,
+        "sourceFrameBudget": 90
+      },
+      "variant": "v01",
+      "version": "1.0.0"
+    },
+    {
+      "action": "critical",
+      "boss": "guard",
+      "camera": {
+        "angleDeg": 45,
+        "distance": 4.0,
+        "fov": 35,
+        "pitchDeg": 35
+      },
+      "clipId": "guard::critical::v01",
+      "constraints": [
+        "concept/reference lane only",
+        "no logos, trademarked silhouettes, copied emblems, watermarks, or text",
+        "no pedestal, terrain, or weapons in the generated motion reference",
+        "preserve a clean T-pose-compatible character silhouette",
+        "actual animation is produced by Blender NLA; this prompt is not a runtime clip"
+      ],
+      "framing": "full-body centered silhouette, unobstructed feet and hands, 2.5D isometric readability",
+      "keyPoses": [
+        {
+          "poseLabel": "focus",
+          "speedHint": "hold",
+          "timePct": 0.0
+        },
+        {
+          "poseLabel": "charge",
+          "speedHint": "drive",
+          "timePct": 25.0
+        },
+        {
+          "poseLabel": "release",
+          "speedHint": "drive",
+          "timePct": 50.0
+        },
+        {
+          "poseLabel": "aftershock",
+          "speedHint": "drive",
+          "timePct": 75.0
+        },
+        {
+          "poseLabel": "recover",
+          "speedHint": "hold",
+          "timePct": 100.0
+        }
+      ],
+      "motionIntent": "signature extraction-finisher burst",
+      "production": {
+        "animationAuthoring": "Blender NLA",
+        "runtimeEligible": false,
+        "runtimeVerificationRequired": true
+      },
+      "prompt": "Concept/reference motion study for Guard, action critical, variant v01. Abyssal Surge vocabulary: Dusk Warden in the Echo Deep approaching Gate Zenith; dramatic progression hunt→extract→materialize→capture→assault. Use the disciplined-hunter tone and signature extraction-finisher burst; stage anticipation, clear action peak, and settle/recovery. Original cel-shaded painterly 2.5D silhouette with sharp edge contrast and restrained particle accents. No logos, no trademarked silhouettes, no copied emblems, no watermarks, no text. Concept/reference lane only: do not produce a runtime asset; Blender NLA authors the actual animation and runtime verification is required.",
+      "promptId": "motion-prompt::guard::critical::v01",
+      "qualityTags": [
+        "Dusk Warden",
+        "Echo Deep",
+        "Gate Zenith",
+        "hunt→extract→materialize→capture→assault",
+        "cel-shaded",
+        "original silhouette"
+      ],
+      "runtimeClipKey": "critical",
+      "timing": {
+        "frameToRuntimeRatio": 2,
+        "loop": false,
+        "runtimeFps": 30,
+        "runtimeFrameBudget": 36,
+        "sourceFps": 60,
+        "sourceFrameBudget": 72
+      },
+      "variant": "v01",
+      "version": "1.0.0"
+    },
+    {
+      "action": "avoid",
+      "boss": "guard",
+      "camera": {
+        "angleDeg": 45,
+        "distance": 4.0,
+        "fov": 35,
+        "pitchDeg": 35
+      },
+      "clipId": "guard::avoid::v01",
+      "constraints": [
+        "concept/reference lane only",
+        "no logos, trademarked silhouettes, copied emblems, watermarks, or text",
+        "no pedestal, terrain, or weapons in the generated motion reference",
+        "preserve a clean T-pose-compatible character silhouette",
+        "actual animation is produced by Blender NLA; this prompt is not a runtime clip"
+      ],
+      "framing": "full-body centered silhouette, unobstructed feet and hands, 2.5D isometric readability",
+      "keyPoses": [
+        {
+          "poseLabel": "read",
+          "speedHint": "hold",
+          "timePct": 0.0
+        },
+        {
+          "poseLabel": "dip",
+          "speedHint": "drive",
+          "timePct": 33.33
+        },
+        {
+          "poseLabel": "clear",
+          "speedHint": "drive",
+          "timePct": 66.67
+        },
+        {
+          "poseLabel": "recenter",
+          "speedHint": "hold",
+          "timePct": 100.0
+        }
+      ],
+      "motionIntent": "compact lateral evade that preserves footing",
+      "production": {
+        "animationAuthoring": "Blender NLA",
+        "runtimeEligible": false,
+        "runtimeVerificationRequired": true
+      },
+      "prompt": "Concept/reference motion study for Guard, action avoid, variant v01. Abyssal Surge vocabulary: Dusk Warden in the Echo Deep approaching Gate Zenith; dramatic progression hunt→extract→materialize→capture→assault. Use the disciplined-hunter tone and compact lateral evade that preserves footing; stage anticipation, clear action peak, and settle/recovery. Original cel-shaded painterly 2.5D silhouette with sharp edge contrast and restrained particle accents. No logos, no trademarked silhouettes, no copied emblems, no watermarks, no text. Concept/reference lane only: do not produce a runtime asset; Blender NLA authors the actual animation and runtime verification is required.",
+      "promptId": "motion-prompt::guard::avoid::v01",
+      "qualityTags": [
+        "Dusk Warden",
+        "Echo Deep",
+        "Gate Zenith",
+        "hunt→extract→materialize→capture→assault",
+        "cel-shaded",
+        "original silhouette"
+      ],
+      "runtimeClipKey": "avoid",
+      "timing": {
+        "frameToRuntimeRatio": 2,
+        "loop": false,
+        "runtimeFps": 30,
+        "runtimeFrameBudget": 21,
+        "sourceFps": 60,
+        "sourceFrameBudget": 42
+      },
+      "variant": "v01",
+      "version": "1.0.0"
+    },
+    {
+      "action": "defence",
+      "boss": "guard",
+      "camera": {
+        "angleDeg": 45,
+        "distance": 4.0,
+        "fov": 35,
+        "pitchDeg": 35
+      },
+      "clipId": "guard::defence::v01",
+      "constraints": [
+        "concept/reference lane only",
+        "no logos, trademarked silhouettes, copied emblems, watermarks, or text",
+        "no pedestal, terrain, or weapons in the generated motion reference",
+        "preserve a clean T-pose-compatible character silhouette",
+        "actual animation is produced by Blender NLA; this prompt is not a runtime clip"
+      ],
+      "framing": "full-body centered silhouette, unobstructed feet and hands, 2.5D isometric readability",
+      "keyPoses": [
+        {
+          "poseLabel": "raise-guard",
+          "speedHint": "hold",
+          "timePct": 0.0
+        },
+        {
+          "poseLabel": "hold",
+          "speedHint": "drive",
+          "timePct": 33.33
+        },
+        {
+          "poseLabel": "absorb",
+          "speedHint": "drive",
+          "timePct": 66.67
+        },
+        {
+          "poseLabel": "lower-guard",
+          "speedHint": "hold",
+          "timePct": 100.0
+        }
+      ],
+      "motionIntent": "hold the line and communicate protected timing",
+      "production": {
+        "animationAuthoring": "Blender NLA",
+        "runtimeEligible": false,
+        "runtimeVerificationRequired": true
+      },
+      "prompt": "Concept/reference motion study for Guard, action defence, variant v01. Abyssal Surge vocabulary: Dusk Warden in the Echo Deep approaching Gate Zenith; dramatic progression hunt→extract→materialize→capture→assault. Use the disciplined-hunter tone and hold the line and communicate protected timing; stage anticipation, clear action peak, and settle/recovery. Original cel-shaded painterly 2.5D silhouette with sharp edge contrast and restrained particle accents. No logos, no trademarked silhouettes, no copied emblems, no watermarks, no text. Concept/reference lane only: do not produce a runtime asset; Blender NLA authors the actual animation and runtime verification is required.",
+      "promptId": "motion-prompt::guard::defence::v01",
+      "qualityTags": [
+        "Dusk Warden",
+        "Echo Deep",
+        "Gate Zenith",
+        "hunt→extract→materialize→capture→assault",
+        "cel-shaded",
+        "original silhouette"
+      ],
+      "runtimeClipKey": "defence",
+      "timing": {
+        "frameToRuntimeRatio": 2,
+        "loop": false,
+        "runtimeFps": 30,
+        "runtimeFrameBudget": 39,
+        "sourceFps": 60,
+        "sourceFrameBudget": 78
+      },
+      "variant": "v01",
+      "version": "1.0.0"
+    },
+    {
+      "action": "die",
+      "boss": "guard",
+      "camera": {
+        "angleDeg": 45,
+        "distance": 4.0,
+        "fov": 35,
+        "pitchDeg": 35
+      },
+      "clipId": "guard::die::v01",
+      "constraints": [
+        "concept/reference lane only",
+        "no logos, trademarked silhouettes, copied emblems, watermarks, or text",
+        "no pedestal, terrain, or weapons in the generated motion reference",
+        "preserve a clean T-pose-compatible character silhouette",
+        "actual animation is produced by Blender NLA; this prompt is not a runtime clip"
+      ],
+      "framing": "full-body centered silhouette, unobstructed feet and hands, 2.5D isometric readability",
+      "keyPoses": [
+        {
+          "poseLabel": "fail",
+          "speedHint": "hold",
+          "timePct": 0.0
+        },
+        {
+          "poseLabel": "stagger",
+          "speedHint": "drive",
+          "timePct": 25.0
+        },
+        {
+          "poseLabel": "kneel",
+          "speedHint": "drive",
+          "timePct": 50.0
+        },
+        {
+          "poseLabel": "fall",
+          "speedHint": "drive",
+          "timePct": 75.0
+        },
+        {
+          "poseLabel": "still",
+          "speedHint": "hold",
+          "timePct": 100.0
+        }
+      ],
+      "motionIntent": "controlled collapse with a readable terminal pose",
+      "production": {
+        "animationAuthoring": "Blender NLA",
+        "runtimeEligible": false,
+        "runtimeVerificationRequired": true
+      },
+      "prompt": "Concept/reference motion study for Guard, action die, variant v01. Abyssal Surge vocabulary: Dusk Warden in the Echo Deep approaching Gate Zenith; dramatic progression hunt→extract→materialize→capture→assault. Use the disciplined-hunter tone and controlled collapse with a readable terminal pose; stage anticipation, clear action peak, and settle/recovery. Original cel-shaded painterly 2.5D silhouette with sharp edge contrast and restrained particle accents. No logos, no trademarked silhouettes, no copied emblems, no watermarks, no text. Concept/reference lane only: do not produce a runtime asset; Blender NLA authors the actual animation and runtime verification is required.",
+      "promptId": "motion-prompt::guard::die::v01",
+      "qualityTags": [
+        "Dusk Warden",
+        "Echo Deep",
+        "Gate Zenith",
+        "hunt→extract→materialize→capture→assault",
+        "cel-shaded",
+        "original silhouette"
+      ],
+      "runtimeClipKey": "die",
+      "timing": {
+        "frameToRuntimeRatio": 2,
+        "loop": false,
+        "runtimeFps": 30,
+        "runtimeFrameBudget": 36,
+        "sourceFps": 60,
+        "sourceFrameBudget": 72
+      },
+      "variant": "v01",
+      "version": "1.0.0"
+    },
+    {
+      "action": "show",
+      "boss": "guard",
+      "camera": {
+        "angleDeg": 45,
+        "distance": 4.0,
+        "fov": 35,
+        "pitchDeg": 35
+      },
+      "clipId": "guard::show::v01",
+      "constraints": [
+        "concept/reference lane only",
+        "no logos, trademarked silhouettes, copied emblems, watermarks, or text",
+        "no pedestal, terrain, or weapons in the generated motion reference",
+        "preserve a clean T-pose-compatible character silhouette",
+        "actual animation is produced by Blender NLA; this prompt is not a runtime clip"
+      ],
+      "framing": "full-body centered silhouette, unobstructed feet and hands, 2.5D isometric readability",
+      "keyPoses": [
+        {
+          "poseLabel": "still",
+          "speedHint": "hold",
+          "timePct": 0.0
+        },
+        {
+          "poseLabel": "rise",
+          "speedHint": "drive",
+          "timePct": 25.0
+        },
+        {
+          "poseLabel": "present",
+          "speedHint": "drive",
+          "timePct": 50.0
+        },
+        {
+          "poseLabel": "command",
+          "speedHint": "drive",
+          "timePct": 75.0
+        },
+        {
+          "poseLabel": "settle",
+          "speedHint": "hold",
+          "timePct": 100.0
+        }
+      ],
+      "motionIntent": "concept-aligned materialize and command reveal",
+      "production": {
+        "animationAuthoring": "Blender NLA",
+        "runtimeEligible": false,
+        "runtimeVerificationRequired": true
+      },
+      "prompt": "Concept/reference motion study for Guard, action show, variant v01. Abyssal Surge vocabulary: Dusk Warden in the Echo Deep approaching Gate Zenith; dramatic progression hunt→extract→materialize→capture→assault. Use the disciplined-hunter tone and concept-aligned materialize and command reveal; stage anticipation, clear action peak, and settle/recovery. Original cel-shaded painterly 2.5D silhouette with sharp edge contrast and restrained particle accents. No logos, no trademarked silhouettes, no copied emblems, no watermarks, no text. Concept/reference lane only: do not produce a runtime asset; Blender NLA authors the actual animation and runtime verification is required.",
+      "promptId": "motion-prompt::guard::show::v01",
+      "qualityTags": [
+        "Dusk Warden",
+        "Echo Deep",
+        "Gate Zenith",
+        "hunt→extract→materialize→capture→assault",
+        "cel-shaded",
+        "original silhouette"
+      ],
+      "runtimeClipKey": "show",
+      "timing": {
+        "frameToRuntimeRatio": 2,
+        "loop": false,
+        "runtimeFps": 30,
+        "runtimeFrameBudget": 48,
+        "sourceFps": 60,
+        "sourceFrameBudget": 96
+      },
+      "variant": "v01",
+      "version": "1.0.0"
+    }
+  ],
+  "runtimeHandoff": {
+    "note": "Do not copy concept/reference media into the runtime lane. Blender NLA bake, GLB embedding, rights/provenance, and browser/fallback checks must pass before eligibility can change.",
+    "preserveExistingRuntimePath": true,
+    "required": {
+      "noPedestal": true,
+      "noTerrain": true,
+      "noWeapons": true,
+      "requiredClipIds": [
+        "guard::idle::v01",
+        "guard::move::v01",
+        "guard::run::v01",
+        "guard::hit::v01",
+        "guard::bighit::v01",
+        "guard::attack::v01",
+        "guard::critical::v01",
+        "guard::avoid::v01",
+        "guard::defence::v01",
+        "guard::die::v01",
+        "guard::show::v01"
+      ],
+      "requiredClipKeys": [
+        "idle",
+        "move",
+        "run",
+        "hit",
+        "bighit",
+        "attack",
+        "critical",
+        "avoid",
+        "defence",
+        "die",
+        "show"
+      ],
+      "tposeOk": true
+    },
+    "runtimeAssetPath": "assets/images/battle/glb/commander/guard.glb",
+    "runtimeEligible": false,
+    "verificationStatus": "pending-runtime-verification",
+    "verified": {
+      "noPedestal": false,
+      "noTerrain": false,
+      "noWeapons": false,
+      "requiredClipKeys": false,
+      "tposeOk": false
+    }
+  },
+  "schemaVersion": "motion-prompt-batch-1.0",
+  "sourceInputRecords": [
+    {
+      "lane": "concept/reference",
+      "path": "assets/images/battle/pilot/dusk-warden-idle-gti.png",
+      "runtimeEligible": false,
+      "sidecarPath": "assets/images/battle/pilot/dusk-warden-idle-gti.provenance.json"
+    },
+    {
+      "lane": "concept/reference",
+      "path": "assets/images/battle/pilot/dusk-warden-idle-gti-refstyle.png",
+      "runtimeEligible": false,
+      "sidecarPath": "assets/images/battle/pilot/dusk-warden-idle-gti-refstyle.provenance.json"
+    },
+    {
+      "lane": "concept/reference",
+      "path": "assets/images/battle/pilot/dusk-warden-cartoon-albedo.png",
+      "runtimeEligible": false,
+      "sidecarPath": "assets/images/battle/pilot/dusk-warden-cartoon-albedo.provenance.json"
+    },
+    {
+      "kind": "action-pipeline",
+      "lane": "concept/reference",
+      "path": "_workspace/current/engineering/asset-pipeline/action-pipeline.json",
+      "runtimeEligible": false
+    }
+  ],
+  "sourceInputs": [
+    "assets/images/battle/pilot/dusk-warden-idle-gti.png",
+    "assets/images/battle/pilot/dusk-warden-idle-gti-refstyle.png",
+    "assets/images/battle/pilot/dusk-warden-cartoon-albedo.png",
+    "_workspace/current/engineering/asset-pipeline/action-pipeline.json"
+  ],
+  "sourcePipeline": "_workspace/current/engineering/asset-pipeline/action-pipeline.json"
+}

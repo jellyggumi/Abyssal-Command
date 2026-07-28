@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "assetId": "sung-hum-v04",
+  "concept": "assets/images/battle/pilot/concept-sung-hum-v04.png",
+  "conceptSha256": "b3427620441aa1df032ebb02e61b73c3ca103c2b5b9395d9928b1c109d11b8a5",
+  "generatedAt": "2026-07-28T08:49:22.933588+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      1,
+      3,
+      4
+    ],
+    "borderSpread": 3.323,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/sung-hum-v04/sung-hum-v04-weapon.png",
+      "generate": {
+        "returncode": 1,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nWARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nError: Private Codex backend request failed with HTTP 429.\n    at classifyFailure (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:25:17)\n    at Object.generateImage (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/cli/generate.js:179:18)\n"
+      },
+      "status": "failed:generate"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/sung-hum-v04/sung-hum-v04-accessory.png",
+      "generate": {
+        "returncode": 1,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nWARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nError: Private Codex backend request failed with HTTP 429.\n    at classifyFailure (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:25:17)\n    at Object.generateImage (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/cli/generate.js:179:18)\n"
+      },
+      "status": "failed:generate"
+    }
+  ]
+}

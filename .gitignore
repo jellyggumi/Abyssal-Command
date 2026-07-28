@@ -34,9 +34,10 @@ generated-*.png
 
 # Session tooling scratch output (graphify indexing cache, ad-hoc deep-research
 # reports) -- generated at repo root by tools invoked during a session, not
-# project source or game resources. graphify output belongs under the
-# separate llm-wiki vault, not this repo.
+# project source or game resources. The llm-wiki vault root IS this project
+# root, so graphify's scratch index stays ignored while wiki/ is tracked.
 graphify-out/
+.graphify/
 ai-narration-tools/
 ai-rigging-tools/
 scripts/__pycache__/
@@ -56,16 +57,16 @@ assets/images/battle/glb/.staging/
 # copies) -- regeneratable from Rodin API + Blender scripts; only the final
 # composed GLBs under assets/images/battle/glb/ ship. Also exceeds GitHub's
 # 100MB single-file limit in places.
-_workspace/*/pipeline/
-_workspace/*/models-out/
+_workspace/**/pipeline/
+_workspace/**/models-out/
 
 # Motion-previs working files (multi-hundred-MB Blender scenes) and their
 # exported previs-only GLBs -- previs output is superseded by the final
 # rigged/retopo'd asset; the workfile is a local scratch scene, not a
 # tracked source (unlike world-content-pack.blend, which the resource-pack
 # build script and its test treat as a real tracked source).
-_workspace/*/production/batch4-source-scene.blend
-_workspace/*/production/batch4-previs-out/*.blend
+_workspace/**/production/batch4-source-scene.blend
+_workspace/**/production/batch4-previs-out/*.blend
 assets/images/battle/glb/previs/
 
 # Rodin bridge downloads and generated diagnostics are reproducible inputs to
@@ -77,37 +78,45 @@ _workspace/**/engineering/asset-pipeline/gti-debug/
 # Asset-pipeline working copies duplicate the promoted GLBs. Keep the authored
 # contracts, concept inputs, shared textures, v2 audit, and authoring scripts;
 # discard raw Rodin, rigging, combat, and per-asset export intermediates.
-_workspace/*/engineering/asset-pipeline/rodin-candidates/
-_workspace/*/engineering/asset-pipeline/rigged-candidates/
-_workspace/*/engineering/asset-pipeline/texture-candidates/
-_workspace/*/engineering/asset-pipeline/textured-candidates/
-_workspace/*/engineering/asset-pipeline/textured-candidates-v02/
-_workspace/*/engineering/asset-pipeline/runtime-candidates/
-_workspace/*/engineering/asset-pipeline/combat-candidates/
-_workspace/*/engineering/asset-pipeline/cinder-span-candidate/
-_workspace/*/engineering/asset-pipeline/textures/
-_workspace/*/engineering/asset-pipeline/rodin-player-core-submit.blend
-_workspace/*/engineering/asset-pipeline/player-combat-animation-candidate/*.glb
-_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates/
-_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/bosses/
-_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/commander/
-_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/companions/
-_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/enemies/
-_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/previs/
-_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/props/
-_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/terrain/
-_workspace/*/engineering/asset-pipeline/all-mesh-texture-candidates-v2/vfx/
+_workspace/**/engineering/asset-pipeline/rodin-candidates/
+_workspace/**/engineering/asset-pipeline/rigged-candidates/
+_workspace/**/engineering/asset-pipeline/texture-candidates/
+_workspace/**/engineering/asset-pipeline/textured-candidates/
+_workspace/**/engineering/asset-pipeline/textured-candidates-v02/
+_workspace/**/engineering/asset-pipeline/runtime-candidates/
+_workspace/**/engineering/asset-pipeline/combat-candidates/
+_workspace/**/engineering/asset-pipeline/cinder-span-candidate/
+_workspace/**/engineering/asset-pipeline/textures/
+_workspace/**/engineering/asset-pipeline/rodin-player-core-submit.blend
+_workspace/**/engineering/asset-pipeline/player-combat-animation-candidate/*.glb
+_workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates/
+_workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/bosses/
+_workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/commander/
+_workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/companions/
+_workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/enemies/
+_workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/previs/
+_workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/props/
+_workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/terrain/
+_workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/vfx/
 
 # Superseded monolithic stage-gallery/world authoring scenes. The final
 # per-stage sources live under blender/stage-overhaul/ and remain tracked.
-_workspace/*/blender/abyssal-surge-stage-gallery-v*.blend
-_workspace/*/blender/abyssal-surge-stage-worlds-v*.blend
+_workspace/**/blender/abyssal-surge-stage-gallery-v*.blend
+_workspace/**/blender/abyssal-surge-stage-worlds-v*.blend
 
 # Superseded gallery patch scripts and contact-sheet bookkeeping. Canonical
 # stage construction is scripts/build-authored-stage-environments.py plus the
 # tracked stage-overhaul source/evidence.
-_workspace/*/blender/apply_gallery_toon.py
-_workspace/*/blender/compose_stage_worlds_v05.py
-_workspace/*/blender/fix_gallery_glass.py
-_workspace/*/qa/stage-worlds-v06-rodin-contact-sheet.png
-_workspace/*/qa/stage-worlds-v06-rodin-evidence.json
+_workspace/**/blender/apply_gallery_toon.py
+_workspace/**/blender/compose_stage_worlds_v05.py
+_workspace/**/blender/fix_gallery_glass.py
+_workspace/**/qa/stage-worlds-v06-rodin-contact-sheet.png
+_workspace/**/qa/stage-worlds-v06-rodin-evidence.json
+
+# --- llm-wiki vault (root = this project root) ---
+# wiki/ and raw/ are tracked knowledge artifacts. Two exceptions:
+#   wiki/graph/  regenerated by `graphify export obsidian` -- derived, not source
+#   .obsidian/workspace*  machine-local pane layout, not vault config
+wiki/graph/
+.obsidian/workspace*
+.obsidian/plugins/
