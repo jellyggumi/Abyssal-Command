@@ -21,8 +21,33 @@
 - 전장 투영은 스냅샷 어댑터로 게임 규칙과 분리됩니다. 기본 어댑터(`battle-realtime-three.js`)는 GLB 모델을 로드하는 실제 Three.js 씬 그래프이며, 렌더러 오류나 WebGL 컨텍스트 생성 실패 시 같은 스냅샷 계약의 Canvas 2D 대체 어댑터(`battle-visualizer.js`)가 표시를 이어갑니다.
 - reduced motion을 존중하고, 움직임·번쩍임을 줄인 읽기 쉬운 표현을 제공합니다.
 
-상세한 규칙과 범위는 [디펜스 서바이버 설계 문서](docs/abyssal-command-defense-survivor-design.md), 제작 범위와 운영 원칙은 [production cycle](docs/abyssal-surge-production-cycle.md)을 따릅니다.
-- 캐릭터 리소스 생성·카툰 텍스처·T-pose 리깅·11개 모션 클립 후보를 분리된 lane에서 검증하는 방법은 [캐릭터 에셋 파이프라인 위키](docs/character-asset-pipeline.md)에 기록합니다.
+캐릭터 리소스 생성·카툰 텍스처·T-pose 리깅·11개 모션 클립 후보를 분리된 lane에서 검증하는
+방법은 [캐릭터 에셋 파이프라인 위키](docs/character-asset-pipeline.md)에 기록합니다.
+
+> **문서 상태 안내.** 이전에 이 자리에서 참조하던 `docs/abyssal-command-defense-survivor-design.md`와
+> `docs/abyssal-surge-production-cycle.md`는 현재 저장소에 없습니다. 위 문단의 플레이·기술
+> 계약이 현재 배포 빌드에 대한 유효한 요약입니다.
+
+## 설계 중인 방향 전환 (미승인 · 미구현)
+
+`_workspace/current/`에 **액션 핵앤슬래시로의 장르 피벗** 설계가 진행 중입니다.
+아래 표의 "이후"는 전부 `[TARGET]`이며 **현재 빌드에는 반영되어 있지 않습니다.**
+
+| 축 | 현재 배포 빌드 | 피벗 제안 |
+|---|---|---|
+| 장르 | 디펜스 서바이버 | 액션 핵앤슬래시 로그라이트 |
+| 조작 | 이동만, 전투 자동 | 이동 + 공격 3동사 + 액티브 스킬 |
+| 한 판 길이 | 약 27초 | 300–480초 |
+| 맵 | authored 고정 배치 | 시드 기반 셀 배치 |
+| 서사 | 인게임 텍스트 컷신 | 로비 비디오·연출 이미지 |
+
+시작점은 [제품 델타](_workspace/current/design/master-gdd-delta.md)와
+[마스터 수치 계약](_workspace/current/design/master-numeric-contract.md)이며,
+게이트 상태와 미해결 결정 12건은
+[태스크 매니페스트](_workspace/current/production/task-manifest.md)에 있습니다.
+
+**어떤 게이트도 통과하지 않았습니다.** 피벗은 director 승인 전이며, 승인 시 이 README와
+제품 계약 문서를 함께 갱신합니다.
 
 ## 로컬 실행
 
