@@ -1,0 +1,3769 @@
+{
+  "assetCount": 24,
+  "assets": [
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "abyss-regent::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "abyss-regent::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "abyss-regent::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "abyss-regent::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "abyss-regent::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "abyss-regent::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "abyss-regent::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "abyss-regent::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "abyss-regent::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "abyss-regent::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "abyss-regent::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "abyss-regent",
+      "category": "bosses",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "abyss-regent-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.08,
+          "name": "abyss-regent_toon_albedo",
+          "roughness": 0.55,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 39518,
+      "relativePath": "bosses/abyss-regent.glb",
+      "sourceBytes": 4863232,
+      "sourcePath": "assets/images/battle/glb/bosses/abyss-regent.glb",
+      "sourceSha256": "805e2d28de3bb6a22834dda9aebee9ebca6aa39a8e503a759035c1d73fd56344",
+      "triangleCount": 39518,
+      "uvLayerCount": 1,
+      "vertexCount": 27056
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "bridge-colossus::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "bridge-colossus::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "bridge-colossus::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "bridge-colossus::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "bridge-colossus::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "bridge-colossus::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "bridge-colossus::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "bridge-colossus::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "bridge-colossus::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "bridge-colossus::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "bridge-colossus::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "bridge-colossus",
+      "category": "bosses",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "bridge-colossus-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.08,
+          "name": "bridge-colossus_toon_albedo",
+          "roughness": 0.55,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 37555,
+      "relativePath": "bosses/bridge-colossus.glb",
+      "sourceBytes": 4681124,
+      "sourcePath": "assets/images/battle/glb/bosses/bridge-colossus.glb",
+      "sourceSha256": "8454627998fe3071b18a5c5aae0a0ae10fd39f62252af18a13b7c5317db715c8",
+      "triangleCount": 37555,
+      "uvLayerCount": 1,
+      "vertexCount": 23633
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "cinder-warden::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "cinder-warden::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "cinder-warden::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "cinder-warden::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "cinder-warden::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "cinder-warden::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "cinder-warden::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "cinder-warden::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "cinder-warden::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "cinder-warden::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "cinder-warden::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "cinder-warden",
+      "category": "bosses",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "cinder-warden-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.08,
+          "name": "cinder-warden_toon_albedo",
+          "roughness": 0.55,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 37254,
+      "relativePath": "bosses/cinder-warden.glb",
+      "sourceBytes": 4629792,
+      "sourcePath": "assets/images/battle/glb/bosses/cinder-warden.glb",
+      "sourceSha256": "54451393cbad200cff7a74d07f68e85aa39a47a2cadf4443bb6fa9b3cea010d0",
+      "triangleCount": 37254,
+      "uvLayerCount": 1,
+      "vertexCount": 23573
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "gate-sovereign::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "gate-sovereign::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "gate-sovereign::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "gate-sovereign::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "gate-sovereign::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "gate-sovereign::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "gate-sovereign::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "gate-sovereign::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "gate-sovereign::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "gate-sovereign::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "gate-sovereign::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "gate-sovereign",
+      "category": "bosses",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "gate-sovereign-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.08,
+          "name": "gate-sovereign_toon_albedo",
+          "roughness": 0.55,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 38040,
+      "relativePath": "bosses/gate-sovereign.glb",
+      "sourceBytes": 4408408,
+      "sourcePath": "assets/images/battle/glb/bosses/gate-sovereign.glb",
+      "sourceSha256": "4ce59dc8cf7255199cd537cb4af678c689b9d5cb4213b1a635ce69171311e063",
+      "triangleCount": 38040,
+      "uvLayerCount": 1,
+      "vertexCount": 23556
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "lantern-tyrant::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "lantern-tyrant::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "lantern-tyrant::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "lantern-tyrant::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "lantern-tyrant::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "lantern-tyrant::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "lantern-tyrant::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "lantern-tyrant::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "lantern-tyrant::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "lantern-tyrant::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "lantern-tyrant::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "lantern-tyrant",
+      "category": "bosses",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "lantern-tyrant-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.08,
+          "name": "lantern-tyrant_toon_albedo",
+          "roughness": 0.55,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 38179,
+      "relativePath": "bosses/lantern-tyrant.glb",
+      "sourceBytes": 4334556,
+      "sourcePath": "assets/images/battle/glb/bosses/lantern-tyrant.glb",
+      "sourceSha256": "e5a91ba24e3dd93cbd792924fa76b3bde74cefda5fee6b84ab64d20bf90500cb",
+      "triangleCount": 38179,
+      "uvLayerCount": 1,
+      "vertexCount": 22824
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "pack-herald::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "pack-herald::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "pack-herald::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "pack-herald::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "pack-herald::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "pack-herald::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "pack-herald::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "pack-herald::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "pack-herald::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "pack-herald::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "pack-herald::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "pack-herald",
+      "category": "bosses",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "pack-herald-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.08,
+          "name": "pack-herald_toon_albedo",
+          "roughness": 0.55,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 38762,
+      "relativePath": "bosses/pack-herald.glb",
+      "sourceBytes": 4699320,
+      "sourcePath": "assets/images/battle/glb/bosses/pack-herald.glb",
+      "sourceSha256": "00ba2d4b04d5863a76bc166251959d546ec9ef225417cc2d1fe876047967574b",
+      "triangleCount": 38762,
+      "uvLayerCount": 1,
+      "vertexCount": 25342
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "requiem-choir::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "requiem-choir::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "requiem-choir::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "requiem-choir::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "requiem-choir::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "requiem-choir::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "requiem-choir::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "requiem-choir::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "requiem-choir::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "requiem-choir::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "requiem-choir::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "requiem-choir",
+      "category": "bosses",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "requiem-choir-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.08,
+          "name": "requiem-choir_toon_albedo",
+          "roughness": 0.55,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 39327,
+      "relativePath": "bosses/requiem-choir.glb",
+      "sourceBytes": 4697140,
+      "sourcePath": "assets/images/battle/glb/bosses/requiem-choir.glb",
+      "sourceSha256": "d9a0e9212a7b6a8f9f53f67279ee8ed76c477fd81711c2fa80c32ab67f523c8c",
+      "triangleCount": 39327,
+      "uvLayerCount": 1,
+      "vertexCount": 26138
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "tide-warden::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "tide-warden::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "tide-warden::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "tide-warden::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "tide-warden::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "tide-warden::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "tide-warden::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "tide-warden::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "tide-warden::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "tide-warden::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "tide-warden::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "tide-warden",
+      "category": "bosses",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "tide-warden-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.08,
+          "name": "tide-warden_toon_albedo",
+          "roughness": 0.55,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15067,
+      "relativePath": "bosses/tide-warden.glb",
+      "sourceBytes": 4263396,
+      "sourcePath": "assets/images/battle/glb/bosses/tide-warden.glb",
+      "sourceSha256": "ec0628e439f685c933f76467ac2801ae631a46861449fab24d9c35e3ba7d3ebb",
+      "triangleCount": 15067,
+      "uvLayerCount": 1,
+      "vertexCount": 21680
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "veil-tactician::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "veil-tactician::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "veil-tactician::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "veil-tactician::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "veil-tactician::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "veil-tactician::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "veil-tactician::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "veil-tactician::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "veil-tactician::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "veil-tactician::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "veil-tactician::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "veil-tactician",
+      "category": "bosses",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "veil-tactician-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.08,
+          "name": "veil-tactician_toon_albedo",
+          "roughness": 0.55,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 38097,
+      "relativePath": "bosses/veil-tactician.glb",
+      "sourceBytes": 4667832,
+      "sourcePath": "assets/images/battle/glb/bosses/veil-tactician.glb",
+      "sourceSha256": "9f502a570e22615e1d47a77a9b61e84bd94398dd31b63f6b169bfb578de18876",
+      "triangleCount": 38097,
+      "uvLayerCount": 1,
+      "vertexCount": 24207
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "veiled-concordat::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "veiled-concordat::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "veiled-concordat::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "veiled-concordat::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "veiled-concordat::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "veiled-concordat::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "veiled-concordat::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "veiled-concordat::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "veiled-concordat::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "veiled-concordat::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "veiled-concordat::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "veiled-concordat",
+      "category": "bosses",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "veiled-concordat-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.08,
+          "name": "veiled-concordat_toon_albedo",
+          "roughness": 0.55,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 39344,
+      "relativePath": "bosses/veiled-concordat.glb",
+      "sourceBytes": 4518020,
+      "sourcePath": "assets/images/battle/glb/bosses/veiled-concordat.glb",
+      "sourceSha256": "048500e5956df2b424c4d4d317e468ad704b100a768d74f60f95627f903e02a0",
+      "triangleCount": 39344,
+      "uvLayerCount": 1,
+      "vertexCount": 23647
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 13,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "dusk-warden::attack::v01"
+        },
+        {
+          "durationSeconds": 1.0417,
+          "fps": 24.0,
+          "frameCount": 25,
+          "frameEnd": 24.0,
+          "frameStart": 0.0,
+          "name": "dusk-warden::attack_melee::v01"
+        },
+        {
+          "durationSeconds": 1.0417,
+          "fps": 24.0,
+          "frameCount": 25,
+          "frameEnd": 24.0,
+          "frameStart": 0.0,
+          "name": "dusk-warden::attack_ranged::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "dusk-warden::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "dusk-warden::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "dusk-warden::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "dusk-warden::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "dusk-warden::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "dusk-warden::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "dusk-warden::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "dusk-warden::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "dusk-warden::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "dusk-warden::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "dusk-warden",
+      "category": "commander",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1254,
+            "name": "albedo-cartoon-gti-v01",
+            "packed": true,
+            "width": 1254
+          },
+          "metallic": 0.0,
+          "name": "dusk-warden_toon_cartoon",
+          "roughness": 0.22,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 30062,
+      "relativePath": "commander/dusk-warden.glb",
+      "sourceBytes": 6734720,
+      "sourcePath": "assets/images/battle/glb/commander/dusk-warden.glb",
+      "sourceSha256": "f2023c08ad69a4b75a200b6275da1dbf0594b6cb3a5e0bfd5ba278f6142175cc",
+      "triangleCount": 30062,
+      "uvLayerCount": 1,
+      "vertexCount": 26611
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "anchor-shard::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "anchor-shard::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "anchor-shard::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "anchor-shard::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "anchor-shard::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "anchor-shard::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "anchor-shard::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "anchor-shard::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "anchor-shard::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "anchor-shard::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "anchor-shard::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "anchor-shard",
+      "category": "companions",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "anchor-shard-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "anchor-shard_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15686,
+      "relativePath": "companions/anchor-shard.glb",
+      "sourceBytes": 3824956,
+      "sourcePath": "assets/images/battle/glb/companions/anchor-shard.glb",
+      "sourceSha256": "ff85010934e1cd53db64c1823508a75021c1c416593d73335734fccfc587e8ee",
+      "triangleCount": 15686,
+      "uvLayerCount": 1,
+      "vertexCount": 11287
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "dawnless-crown::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "dawnless-crown::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "dawnless-crown::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "dawnless-crown::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "dawnless-crown::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "dawnless-crown::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "dawnless-crown::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "dawnless-crown::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "dawnless-crown::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "dawnless-crown::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "dawnless-crown::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "dawnless-crown",
+      "category": "companions",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "dawnless-crown-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "dawnless-crown_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15754,
+      "relativePath": "companions/dawnless-crown.glb",
+      "sourceBytes": 3984728,
+      "sourcePath": "assets/images/battle/glb/companions/dawnless-crown.glb",
+      "sourceSha256": "241ab57aa9610daa8f9626be42321aff35c46eacbe2f8dc3e116330fae219b7d",
+      "triangleCount": 15754,
+      "uvLayerCount": 1,
+      "vertexCount": 13240
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "ember-cohort::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "ember-cohort::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "ember-cohort::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "ember-cohort::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "ember-cohort::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "ember-cohort::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "ember-cohort::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "ember-cohort::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "ember-cohort::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "ember-cohort::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "ember-cohort::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "ember-cohort",
+      "category": "companions",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "ember-cohort-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "ember-cohort_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15520,
+      "relativePath": "companions/ember-cohort.glb",
+      "sourceBytes": 3882636,
+      "sourcePath": "assets/images/battle/glb/companions/ember-cohort.glb",
+      "sourceSha256": "63d10feef2eba2958b03b684a7be496095e36bdc4602947981ef198800bcbae6",
+      "triangleCount": 15520,
+      "uvLayerCount": 1,
+      "vertexCount": 11319
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "lantern-reaver::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "lantern-reaver::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "lantern-reaver::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "lantern-reaver::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "lantern-reaver::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "lantern-reaver::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "lantern-reaver::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "lantern-reaver::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "lantern-reaver::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "lantern-reaver::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "lantern-reaver::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "lantern-reaver",
+      "category": "companions",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "lantern-reaver-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "lantern-reaver_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15545,
+      "relativePath": "companions/lantern-reaver.glb",
+      "sourceBytes": 3947524,
+      "sourcePath": "assets/images/battle/glb/companions/lantern-reaver.glb",
+      "sourceSha256": "02d23adf9a5de1476464b3bf456aa80d3f50220bcfafd74b1dd3ad1a1212f8d5",
+      "triangleCount": 15545,
+      "uvLayerCount": 1,
+      "vertexCount": 12423
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "pack-warden::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "pack-warden::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "pack-warden::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "pack-warden::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "pack-warden::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "pack-warden::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "pack-warden::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "pack-warden::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "pack-warden::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "pack-warden::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "pack-warden::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "pack-warden",
+      "category": "companions",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "pack-warden-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "pack-warden_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 16132,
+      "relativePath": "companions/pack-warden.glb",
+      "sourceBytes": 4044788,
+      "sourcePath": "assets/images/battle/glb/companions/pack-warden.glb",
+      "sourceSha256": "b9773b986d4eec215d030112cc1de1ece9a2412578cd09a3fd30626e1211a5b4",
+      "triangleCount": 16132,
+      "uvLayerCount": 1,
+      "vertexCount": 14112
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "requiem-warden::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "requiem-warden::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "requiem-warden::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "requiem-warden::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "requiem-warden::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "requiem-warden::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "requiem-warden::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "requiem-warden::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "requiem-warden::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "requiem-warden::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "requiem-warden::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "requiem-warden",
+      "category": "companions",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "requiem-warden-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "requiem-warden_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15549,
+      "relativePath": "companions/requiem-warden.glb",
+      "sourceBytes": 4024532,
+      "sourcePath": "assets/images/battle/glb/companions/requiem-warden.glb",
+      "sourceSha256": "1916766191a366415070e3c842743aed7678ae1d71af09c513df857e7bb1d68b",
+      "triangleCount": 15549,
+      "uvLayerCount": 1,
+      "vertexCount": 13871
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "rift-lens::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "rift-lens::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "rift-lens::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "rift-lens::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "rift-lens::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "rift-lens::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "rift-lens::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "rift-lens::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "rift-lens::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "rift-lens::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "rift-lens::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "rift-lens",
+      "category": "companions",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "rift-lens-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "rift-lens_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15347,
+      "relativePath": "companions/rift-lens.glb",
+      "sourceBytes": 3919524,
+      "sourcePath": "assets/images/battle/glb/companions/rift-lens.glb",
+      "sourceSha256": "a72158dd9071b0b359f327fae4f0592e5806697c06fddf7307835c7a9364c453",
+      "triangleCount": 15347,
+      "uvLayerCount": 1,
+      "vertexCount": 11203
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "throne-echo::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "throne-echo::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "throne-echo::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "throne-echo::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "throne-echo::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "throne-echo::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "throne-echo::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "throne-echo::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "throne-echo::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "throne-echo::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "throne-echo::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "throne-echo",
+      "category": "companions",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "throne-echo-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "throne-echo_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 16166,
+      "relativePath": "companions/throne-echo.glb",
+      "sourceBytes": 4183900,
+      "sourcePath": "assets/images/battle/glb/companions/throne-echo.glb",
+      "sourceSha256": "a4b7af10b4e22931f8f1021512b9e40ce24c169c54c52b173d67c7cbd8f1e6e6",
+      "triangleCount": 16166,
+      "uvLayerCount": 1,
+      "vertexCount": 15015
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "veil-vanguard::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "veil-vanguard::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "veil-vanguard::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "veil-vanguard::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "veil-vanguard::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "veil-vanguard::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "veil-vanguard::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "veil-vanguard::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "veil-vanguard::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "veil-vanguard::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "veil-vanguard::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "veil-vanguard",
+      "category": "companions",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "veil-vanguard-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "veil-vanguard_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15562,
+      "relativePath": "companions/veil-vanguard.glb",
+      "sourceBytes": 3926268,
+      "sourcePath": "assets/images/battle/glb/companions/veil-vanguard.glb",
+      "sourceSha256": "a72ecb96dd3a3642ec60fb07e3bec310fcfc4b1f097a7b852b203be598bbb2d3",
+      "triangleCount": 15562,
+      "uvLayerCount": 1,
+      "vertexCount": 12342
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "guard::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "guard::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "guard::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "guard::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "guard::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "guard::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "guard::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "guard::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "guard::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "guard::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "guard::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "guard",
+      "category": "enemies",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "guard-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "guard_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15813,
+      "relativePath": "enemies/guard.glb",
+      "sourceBytes": 3743448,
+      "sourcePath": "assets/images/battle/glb/enemies/guard.glb",
+      "sourceSha256": "c2301bde88b20df4d77af32b97cd656044b37d29b5b916ef734e7e2e0c08315f",
+      "triangleCount": 15813,
+      "uvLayerCount": 1,
+      "vertexCount": 10309
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "possessed::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "possessed::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "possessed::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "possessed::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "possessed::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "possessed::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "possessed::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "possessed::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "possessed::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "possessed::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "possessed::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "possessed",
+      "category": "enemies",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "possessed-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "possessed_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15214,
+      "relativePath": "enemies/possessed.glb",
+      "sourceBytes": 3881792,
+      "sourcePath": "assets/images/battle/glb/enemies/possessed.glb",
+      "sourceSha256": "1a42393763c4966b309fe9b7cea6460c21a715a0e6db4263e3105dceb89e050d",
+      "triangleCount": 15214,
+      "uvLayerCount": 1,
+      "vertexCount": 11814
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "scout::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "scout::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "scout::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "scout::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "scout::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "scout::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "scout::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "scout::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "scout::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "scout::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "scout::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "scout",
+      "category": "enemies",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "scout-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "scout_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15344,
+      "relativePath": "enemies/scout.glb",
+      "sourceBytes": 3943356,
+      "sourcePath": "assets/images/battle/glb/enemies/scout.glb",
+      "sourceSha256": "d5f73595964d5a136aa6870b7012ca9607ed3d8d2c32143c57ad7c0b6017f52a",
+      "triangleCount": 15344,
+      "uvLayerCount": 1,
+      "vertexCount": 11193
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 11,
+      "animations": [
+        {
+          "durationSeconds": 3.75,
+          "fps": 24.0,
+          "frameCount": 90,
+          "frameEnd": 90.0,
+          "frameStart": 1.0,
+          "name": "shade::attack::v01"
+        },
+        {
+          "durationSeconds": 1.75,
+          "fps": 24.0,
+          "frameCount": 42,
+          "frameEnd": 42.0,
+          "frameStart": 1.0,
+          "name": "shade::avoid::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "shade::bighit::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "shade::critical::v01"
+        },
+        {
+          "durationSeconds": 3.25,
+          "fps": 24.0,
+          "frameCount": 78,
+          "frameEnd": 78.0,
+          "frameStart": 1.0,
+          "name": "shade::defence::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "shade::die::v01"
+        },
+        {
+          "durationSeconds": 2.25,
+          "fps": 24.0,
+          "frameCount": 54,
+          "frameEnd": 54.0,
+          "frameStart": 1.0,
+          "name": "shade::hit::v01"
+        },
+        {
+          "durationSeconds": 5.0,
+          "fps": 24.0,
+          "frameCount": 120,
+          "frameEnd": 120.0,
+          "frameStart": 1.0,
+          "name": "shade::idle::v01"
+        },
+        {
+          "durationSeconds": 3.0,
+          "fps": 24.0,
+          "frameCount": 72,
+          "frameEnd": 72.0,
+          "frameStart": 1.0,
+          "name": "shade::move::v01"
+        },
+        {
+          "durationSeconds": 3.5,
+          "fps": 24.0,
+          "frameCount": 84,
+          "frameEnd": 84.0,
+          "frameStart": 1.0,
+          "name": "shade::run::v01"
+        },
+        {
+          "durationSeconds": 4.0,
+          "fps": 24.0,
+          "frameCount": 96,
+          "frameEnd": 96.0,
+          "frameStart": 1.0,
+          "name": "shade::show::v01"
+        }
+      ],
+      "armature": {
+        "boneCount": 24,
+        "boneNames": [
+          "DEF-foot.L",
+          "DEF-foot.R",
+          "DEF-forearm.L",
+          "DEF-forearm.R",
+          "DEF-hand.L",
+          "DEF-hand.R",
+          "DEF-pelvis.L",
+          "DEF-pelvis.R",
+          "DEF-shin.L",
+          "DEF-shin.R",
+          "DEF-shoulder.L",
+          "DEF-shoulder.R",
+          "DEF-spine",
+          "DEF-spine.001",
+          "DEF-spine.002",
+          "DEF-spine.003",
+          "DEF-spine.004",
+          "DEF-spine.005",
+          "DEF-thigh.L",
+          "DEF-thigh.R",
+          "DEF-toe.L",
+          "DEF-toe.R",
+          "DEF-upper_arm.L",
+          "DEF-upper_arm.R"
+        ],
+        "defBoneCount": 24,
+        "present": true
+      },
+      "assetId": "shade",
+      "category": "enemies",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "shade-cartoon-albedo-v01",
+            "packed": true,
+            "width": 1024
+          },
+          "metallic": 0.0,
+          "name": "shade_toon_albedo",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 15280,
+      "relativePath": "enemies/shade.glb",
+      "sourceBytes": 3747504,
+      "sourcePath": "assets/images/battle/glb/enemies/shade.glb",
+      "sourceSha256": "97ef5ec2e12a05e6b89eb28c4ecd832e2f5c6913a473e0d001d23eb5e2d7fb6e",
+      "triangleCount": 15280,
+      "uvLayerCount": 1,
+      "vertexCount": 10369
+    }
+  ],
+  "generator": "scripts/audit-mesh-detail-blender.py",
+  "measurementTool": "Blender 5.1.2 headless bpy import",
+  "runtimeRoot": "assets/images/battle/glb",
+  "schemaVersion": 1
+}

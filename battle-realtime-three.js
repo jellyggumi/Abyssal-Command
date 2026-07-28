@@ -394,6 +394,47 @@ const AMBIENT_LOOK_YAW = THREE.MathUtils.degToRad(8);
 // classified from the live source-target separation instead: one largest
 // authored actor silhouette is the presentation-space close-contact bound.
 const MELEE_PRESENTATION_DISTANCE = TARGET_HEIGHT.boss;
+// --- Impact feel constants (presentation-only) ---------------------------
+// Neon blue for a normal connect, shadow-violet for a heavy/critical one, to
+// match the Solo-Leveling system-window palette used by the DOM HUD.
+const IMPACT_FLASH_COLOR = new THREE.Color(0x5de6ff);
+const IMPACT_FLASH_HEAVY_COLOR = new THREE.Color(0xa06bff);
+const IMPACT_FLASH_MS = 180;
+const IMPACT_FLASH_HEAVY_MS = 320;
+const IMPACT_FLASH_PEAK = 0.55;
+const IMPACT_FLASH_HEAVY_PEAK = 1.1;
+// Knockback is a render-space offset in world units along the attacker to
+// target axis; updateActorFollow() pulls the root back to the authoritative
+// position every frame, so these stay well under one actor width.
+const IMPACT_KNOCKBACK_MS = 160;
+const IMPACT_KNOCKBACK_HEAVY_MS = 260;
+const IMPACT_KNOCKBACK_DISTANCE = 0.12;
+const IMPACT_KNOCKBACK_HEAVY_DISTANCE = 0.26;
+// Camera shake fires only on heavy hits and is bounded so the orbit framing
+// stays readable; it is skipped entirely under prefers-reduced-motion.
+const IMPACT_SHAKE_MS = 220;
+const IMPACT_SHAKE_AMPLITUDE = 0.07;
+const IMPACT_SHAKE_BOSS_AMPLITUDE = 0.13;
+const IMPACT_SHAKE_FREQUENCY = 38;
+// Each entry maps one public snapshot event to { attackerId, targetId, heavy }
+// or null when that event did not actually land damage.
+const IMPACT_FEEDBACK_SOURCES = Object.freeze({
+  WEAPON_FIRED: (event) =>
+    event?.critical === true ? { attackerId: event.entityId, targetId: event.targetId, heavy: true } : null,
+  SKILL_RESOLVED_DAMAGE: (event) => ({
+    attackerId: event?.sourceId,
+    targetId: event?.targetId,
+    heavy: event?.critical === true,
+  }),
+  CRITICAL_HIT: (event) => ({ attackerId: event?.entityId, targetId: event?.targetId, heavy: true }),
+  ENEMY_ATTACK: (event) =>
+    finite(event?.damage, 0) > 0 ? { attackerId: event.entityId, targetId: event.targetId, heavy: false } : null,
+  PROJECTILE_IMPACT: (event) =>
+    event?.hit === false
+      ? null
+      : { attackerId: event?.sourceId ?? event?.ownerId, targetId: event?.targetId, heavy: false },
+  COMMANDER_DAMAGED: (event) => ({ attackerId: event?.sourceId ?? event?.entityId, targetId: "commander", heavy: false }),
+});
 // Movement in this simulation is continuous position sync (app.js's
 // projected() feeds ARENA-scale x/y every tick), not a discrete "moving"
 // flag -- MOVE_EPSILON is the per-frame world-unit position delta above
@@ -1396,6 +1437,13 @@ export class RealtimeBattle {
     // The delta remains presentation-local and is deliberately not tied to
     // snapshot.tick, which can batch/skip while a tab is backgrounded.
     this.lastAnimMs = null;
+    // Impact feel (presentation-only). Every entry is keyed by entity id and
+    // expires on wall-clock time; nothing here is read back into the
+    // snapshot, so getRunDigest() inputs stay untouched.
+    this.hitFlashes = new Map(); // entityId -> { startMs, untilMs, color, peak }
+    this.knockbacks = new Map(); // entityId -> { startMs, untilMs, dx, dz, distance }
+    this.cameraShake = null; // { startMs, untilMs, amplitude, seed }
+    this.impactShakeSeed = 0;
   }
 
   mount({ canvas, handoff, viewport } = {}) {
@@ -2661,11 +2709,156 @@ export class RealtimeBattle {
     return this.triggerAction(attacker, key, nowMs, presentation);
   }
 
+  // --- Impact feel (hit flash / knockback / camera shake) -------------------
+  // All three are presentation-only: they read the frozen snapshot events,
+  // keep their state on the renderer instance, and are applied to owned
+  // material clones, actor root offsets, and the camera AFTER updateCamera()
+  // has placed it. Nothing writes back into the snapshot.
+
+  registerImpactFeedback(event, nowMs) {
+    const impact = IMPACT_FEEDBACK_SOURCES[event?.type]?.(event);
+    if (!impact?.targetId) return;
+    const targetRecord = this.actors.get(impact.targetId) ?? this.combatTarget(impact.targetId);
+    if (!targetRecord?.root) return;
+    const heavy = impact.heavy === true;
+    this.hitFlashes.set(impact.targetId, {
+      startMs: nowMs,
+      untilMs: nowMs + (heavy ? IMPACT_FLASH_HEAVY_MS : IMPACT_FLASH_MS),
+      color: heavy ? IMPACT_FLASH_HEAVY_COLOR : IMPACT_FLASH_COLOR,
+      peak: heavy ? IMPACT_FLASH_HEAVY_PEAK : IMPACT_FLASH_PEAK,
+      record: targetRecord,
+    });
+    if (this.reducedMotion) return;
+
+    const attacker = impact.attackerId ? this.actors.get(impact.attackerId) : null;
+    let dx = 0;
+    let dz = 0;
+    if (attacker?.root) {
+      dx = targetRecord.root.position.x - attacker.root.position.x;
+      dz = targetRecord.root.position.z - attacker.root.position.z;
+    }
+    const length = Math.hypot(dx, dz);
+    if (length > 1e-4) {
+      this.knockbacks.set(impact.targetId, {
+        startMs: nowMs,
+        untilMs: nowMs + (heavy ? IMPACT_KNOCKBACK_HEAVY_MS : IMPACT_KNOCKBACK_MS),
+        dx: dx / length,
+        dz: dz / length,
+        distance: heavy ? IMPACT_KNOCKBACK_HEAVY_DISTANCE : IMPACT_KNOCKBACK_DISTANCE,
+      });
+    }
+    if (!heavy) return;
+    this.impactShakeSeed = (this.impactShakeSeed + 1) % 1024;
+    this.cameraShake = {
+      startMs: nowMs,
+      untilMs: nowMs + IMPACT_SHAKE_MS,
+      amplitude: targetRecord.kind === "boss" ? IMPACT_SHAKE_BOSS_AMPLITUDE : IMPACT_SHAKE_AMPLITUDE,
+      seed: this.impactShakeSeed,
+    };
+  }
+
+  // Emissive flash on the actor's own material clones. The pre-flash emissive
+  // value is captured once per material and always restored, so an actor that
+  // is hit repeatedly never accumulates brightness.
+  applyHitFlashes(nowMs) {
+    for (const [entityId, flash] of this.hitFlashes) {
+      const root = flash.record?.root;
+      if (!root || !root.parent) {
+        this.hitFlashes.delete(entityId);
+        continue;
+      }
+      const span = Math.max(1, flash.untilMs - flash.startMs);
+      const progress = (nowMs - flash.startMs) / span;
+      const done = progress >= 1;
+      const strength = done ? 0 : flash.peak * (1 - progress) * (1 - progress);
+      root.traverse((node) => {
+        const materials = Array.isArray(node.material) ? node.material : node.material ? [node.material] : [];
+        for (const material of materials) {
+          if (!material?.emissive) continue;
+          if (!material.userData.impactBaseEmissive) {
+            material.userData.impactBaseEmissive = material.emissive.clone();
+            material.userData.impactBaseEmissiveIntensity = finite(material.emissiveIntensity, 1);
+          }
+          const base = material.userData.impactBaseEmissive;
+          if (done) {
+            material.emissive.copy(base);
+            material.emissiveIntensity = material.userData.impactBaseEmissiveIntensity;
+            continue;
+          }
+          material.emissive.copy(base).lerp(flash.color, Math.min(1, strength));
+          material.emissiveIntensity = material.userData.impactBaseEmissiveIntensity + strength;
+        }
+      });
+      if (done) this.hitFlashes.delete(entityId);
+    }
+  }
+
+  // Render-only displacement. updateActorFollow() re-lerps the root toward the
+  // authoritative goal every frame, so this offset decays on its own and can
+  // never desync the actor from its snapshot position.
+  applyKnockbacks(nowMs) {
+    for (const [entityId, knockback] of this.knockbacks) {
+      const record = this.actors.get(entityId);
+      if (!record?.root) {
+        this.knockbacks.delete(entityId);
+        continue;
+      }
+      const span = Math.max(1, knockback.untilMs - knockback.startMs);
+      const progress = (nowMs - knockback.startMs) / span;
+      if (progress >= 1) {
+        this.knockbacks.delete(entityId);
+        continue;
+      }
+      const eased = Math.sin(Math.PI * (1 - progress)) * (1 - progress);
+      record.root.position.x += knockback.dx * knockback.distance * eased;
+      record.root.position.z += knockback.dz * knockback.distance * eased;
+    }
+  }
+
+  // Decaying positional jitter applied after updateCamera() has committed the
+  // orbit position, so the orbit state itself (yaw/pitch/zoom) is never
+  // perturbed and the shake fully cancels when it expires.
+  applyCameraShake(nowMs) {
+    const shake = this.cameraShake;
+    if (!shake || !this.camera) return;
+    const span = Math.max(1, shake.untilMs - shake.startMs);
+    const progress = (nowMs - shake.startMs) / span;
+    if (progress >= 1) {
+      this.cameraShake = null;
+      return;
+    }
+    const decay = (1 - progress) * (1 - progress);
+    const phase = shake.seed * 1.7 + progress * IMPACT_SHAKE_FREQUENCY;
+    this.camera.position.x += Math.sin(phase) * shake.amplitude * decay;
+    this.camera.position.y += Math.sin(phase * 1.37 + 1.1) * shake.amplitude * decay * 0.6;
+    this.camera.position.z += Math.cos(phase * 0.91 + 0.4) * shake.amplitude * decay;
+  }
+
+  updateImpactFeedback(nowMs) {
+    try {
+      this.applyHitFlashes(nowMs);
+      if (this.reducedMotion) {
+        this.knockbacks.clear();
+        this.cameraShake = null;
+        return;
+      }
+      this.applyKnockbacks(nowMs);
+      this.applyCameraShake(nowMs);
+    } catch {
+      // Impact feel is cosmetic; never let it break the render loop.
+      this.hitFlashes.clear();
+      this.knockbacks.clear();
+      this.cameraShake = null;
+    }
+  }
+
+
   // Every transition is sourced from a public snapshot event field. A
   // separate bounded event-key set makes repeated renders of one sim tick
   // idempotent without mutating the frozen snapshot or restarting clips.
   triggerCombatActions(event, nowMs) {
     if (!event?.type || !this.rememberAnimationEvent(feedbackKey(event))) return;
+    this.registerImpactFeedback(event, nowMs);
     const actor = (id) => this.actors.get(id);
     const target = (id) => this.combatTarget(id);
     switch (event.type) {
@@ -2777,6 +2970,9 @@ export class RealtimeBattle {
     this.updateCamera(snapshot);
     this.updateAnimations(performance.now());
     this.collectFeedback(snapshot);
+    // Impact feel runs last: the flash/knockback/shake it applies must land on
+    // top of the camera and actor placement committed above.
+    this.updateImpactFeedback(performance.now());
 
     this.renderer.render(this.scene, this.camera);
   }
@@ -2795,6 +2991,9 @@ export class RealtimeBattle {
       if (record.root) disposeObject3D(record.root);
     }
     this.actors.clear();
+    this.hitFlashes.clear();
+    this.knockbacks.clear();
+    this.cameraShake = null;
     for (const record of this.vfxInstances) {
       record.mixer?.stopAllAction();
       disposeObject3D(record.root);
