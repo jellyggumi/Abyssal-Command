@@ -1,0 +1,10 @@
+{
+  "game": "Melvor Idle",
+  "browser_playable": "true — free browser demo + full game at https://melvoridle.com (Play in browser); also Steam/mobile",
+  "source_url": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1267910/ss_a7988926d18b0035cce632cb860c00a295b47d36.1920x1080.jpg?t=1718290779 (from Steam store page https://store.steampowered.com/app/1267910/Melvor_Idle/)",
+  "captured_at": "2026-07-27",
+  "what_it_is": "Idle/incremental RuneScape-inspired RPG that is entirely menu-driven (skills, combat, bank, shop) with persistent leveling.",
+  "how_similar_to_abyssal": "Persistent left progression rail (Combat / Passive / Non-combat skills, each showing X/99 level) + main content panel — structurally the same left-dock-of-progression-tabs around a content area that Abyssal Surge's outgame uses for stats/skilltree/traits.",
+  "capture_method": "browser screenshot: fetched full-res image from Steam store gallery CDN",
+  "license_note": "screenshot of publicly displayed store/marketing page for research reference — not redistributed as game asset"
+}

@@ -44,6 +44,7 @@ function fakeNode() {
     append: noop,
     focus: noop,
     remove: noop,
+    getBoundingClientRect: () => ({ bottom: 360, height: 360, left: 0, right: 640, top: 0, width: 640, x: 0, y: 0 }),
     querySelector: () => fakeNode(),
     querySelectorAll: () => [],
     setAttribute: noop,
@@ -62,6 +63,7 @@ async function loadBattleSession() {
       addEventListener: noop,
       documentElement,
       body: fakeNode(),
+      createElement: () => fakeNode(),
       get hidden() { return false; },
       querySelector: () => root,
       removeEventListener: noop,
@@ -81,6 +83,11 @@ async function loadBattleSession() {
   globalThis.CustomEvent ??= class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } };
   globalThis.requestAnimationFrame = () => 0;
   globalThis.cancelAnimationFrame = noop;
+  // app.js's module-level initialize() now mounts the persistent battle surface (and with it
+  // BattleSession.start() -> resize()) at import time instead of on a lobby "작전 개시"
+  // click, so this DOM double has to answer getComputedStyle and getBoundingClientRect or
+  // the import raises asynchronously after the test that triggered it has ended.
+  globalThis.getComputedStyle = () => ({ getPropertyValue: () => "" });
   battleSessionPromise = import("../app.js").then(({ BattleSession }) => BattleSession);
   return battleSessionPromise;
 }

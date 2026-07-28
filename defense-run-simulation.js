@@ -6,6 +6,8 @@ import * as Catalog from "./defense-catalog.js";
 import {
   ARENA, AUDIO_CUES, BOSSES, COMMANDER, COMPANION_AUTONOMY, COMPANIONS, CUTSCENES, ENEMIES,
   CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, CARRY_OVER_RANK_DECAY,
+  MAX_SKILL_RANK, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP,
+  SKILL_RANK_PASSIVE_SHARE,
   GATE, ITEMS, MEASUREMENT_PROFILES, OCTANT_VECTORS, REWARDS, SKILLS, STAGE_BY_ID, STAGE_ITEM_IDS,
   STAGE_REWARD_IDS, TARGET_PRIORITY, TICK_RATE, XP_GROWTH
 } from "./defense-catalog.js";
@@ -1615,7 +1617,7 @@ function moveEnemies(run) {
       run.gate.integrity = clamp(run.gate.integrity - damage, 0, run.gate.maxIntegrity);
       emit(run, "GATE_BREACHED", { enemyId: enemy.id, damage, policyId: enemy.policyId });
       if (enemy.class !== "boss" && !enemy.elite) breachedIds.add(enemy.id);
-    } else if (target.kind === "companion") {
+    } else if (target.kind === "companion" && target.status !== "DOWNED") {
       target.hp = clamp(target.hp - damage, 0, target.maxHp);
       emit(run, "COMPANION_DAMAGED", { enemyId: enemy.id, entityId: target.id, companionId: target.companionId, damage, hp: target.hp, maxHp: target.maxHp, policyId: enemy.policyId });
       if (target.hp <= 0 && target.status === "ACTIVE") {
@@ -1714,11 +1716,6 @@ function applyFixedRate(run, key, ratePerSecond) {
  * back a fixed fraction of BOTH bars. It fires at most once per scheduled wave, only while the
  * gate-defense hold is live, so it can never be farmed after the hold closes.
  */
-export const MAX_SKILL_RANK = 5;
-const SKILL_RANK_DAMAGE_STEP = 0.25;
-const SKILL_RANK_COOLDOWN_STEP = 0.06;
-const SKILL_RANK_COOLDOWN_FLOOR = 0.7;
-const SKILL_RANK_PASSIVE_SHARE = 0.5;
 const WAVE_CLEAR_COMMANDER_RECOVERY_BP = 800;
 const WAVE_CLEAR_GATE_RECOVERY_BP = 500;
 function processWaveClearRecovery(run) {
@@ -2039,7 +2036,9 @@ function tick(run) {
     } else if (projectile.targetId === "commander") {
       run.commander.integrity = clamp(run.commander.integrity - damage, 0, run.commander.maxIntegrity);
       applyWardenDamageResponse(run);
-    } else if (run.companions.some((entry) => entry.id === projectile.targetId)) {
+    } else if (run.companions.some((entry) => entry.id === projectile.targetId && entry.status !== "DOWNED")) {
+      // A projectile already in flight when its target went DOWNED must not keep hitting it: a DOWNED
+      // companion is out of the fight until it is restored. Long stages make this window common.
       const target = run.companions.find((entry) => entry.id === projectile.targetId);
       target.hp = clamp(target.hp - damage, 0, target.maxHp);
       emit(run, "COMPANION_DAMAGED", { entityId: target.id, companionId: target.companionId, damage, hp: target.hp, maxHp: target.maxHp, owner: projectile.owner });
@@ -2552,6 +2551,8 @@ export function isTerminalRun(run) { return Boolean(run?.terminal); }
 
 export {
   CARRY_OVER_MAX_ITEMS,
+  MAX_SKILL_RANK,
+  SKILL_RANK_DAMAGE_STEP,
   CARRY_OVER_MAX_RANK,
   CARRY_OVER_RANK_DECAY,
   TICK_RATE,

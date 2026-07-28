@@ -266,6 +266,17 @@ export const ANIMATION_CLIPS = freeze({
 });
 
 /**
+ * Skill rank ladder (특성 강화). Rank 1 is the shipped effect; each further rank adds a fixed share
+ * of it. Authored here so the simulation, the growth preview UI, and the carry-over layer all read
+ * the same numbers.
+ */
+export const MAX_SKILL_RANK = 5;
+export const SKILL_RANK_DAMAGE_STEP = 0.25;
+export const SKILL_RANK_COOLDOWN_STEP = 0.06;
+export const SKILL_RANK_COOLDOWN_FLOOR = 0.7;
+export const SKILL_RANK_PASSIVE_SHARE = 0.5;
+
+/**
  * Stage-to-stage carry-over budget (스킬/아이템 효과 이어가기). Authored here so the simulation and the
  * campaign layer share one source of truth for what a victory may hand the next stage.
  */

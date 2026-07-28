@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-28T03:13:32.480Z",
+  "generatedAt": "2026-07-28T08:22:17.820Z",
   "canonicalStageIds": [
     "cinder-span",
     "veil-citadel",
@@ -57,9 +57,9 @@
         "surfaceStageId": "cinder-span",
         "loadedStageId": "cinder-span",
         "renderer": "webgl",
-        "renderedFrames": 22,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/cinder-span.png\")",
-        "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/cinder-span.png')",
+        "renderedFrames": 34,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:49605/assets/images/battle/ui/stages/cinder-span.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/cinder-span.png\")",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/cinder-span.glb",
         "palette": {
@@ -92,11 +92,19 @@
         "pageErrors": [],
         "runtimeAssetResponses": [
           {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/bosses/cinder-warden.glb",
             "status": 200
           },
           {
             "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
             "status": 200
           },
           {
@@ -112,7 +120,7 @@
             "status": 200
           },
           {
-            "path": "assets/images/battle/glb/enemies/shade.glb",
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
             "status": 200
           },
           {
@@ -128,11 +136,19 @@
             "status": 200
           },
           {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/ui/stages/cinder-span.png",
             "status": 200
           },
           {
             "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
             "status": 200
           },
           {
@@ -188,9 +204,9 @@
         "surfaceStageId": "veil-citadel",
         "loadedStageId": "veil-citadel",
         "renderer": "webgl",
-        "renderedFrames": 21,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/veil-citadel.png\")",
-        "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/veil-citadel.png')",
+        "renderedFrames": 33,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:49605/assets/images/battle/ui/stages/veil-citadel.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/veil-citadel.png\")",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/veil-citadel.glb",
         "palette": {
@@ -223,11 +239,19 @@
         "pageErrors": [],
         "runtimeAssetResponses": [
           {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/bosses/veil-tactician.glb",
             "status": 200
           },
           {
             "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
             "status": 200
           },
           {
@@ -255,6 +279,14 @@
             "status": 200
           },
           {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/terrain/veil-citadel.glb",
             "status": 200
           },
@@ -264,6 +296,10 @@
           },
           {
             "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
             "status": 200
           },
           {
@@ -319,9 +355,9 @@
         "surfaceStageId": "echo-throne",
         "loadedStageId": "echo-throne",
         "renderer": "webgl",
-        "renderedFrames": 24,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/echo-throne-steps.png\")",
-        "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/echo-throne-steps.png')",
+        "renderedFrames": 37,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:49605/assets/images/battle/ui/stages/echo-throne-steps.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/echo-throne-steps.png\")",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/echo-throne-steps.glb",
         "palette": {
@@ -354,11 +390,19 @@
         "pageErrors": [],
         "runtimeAssetResponses": [
           {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/bosses/gate-sovereign.glb",
             "status": 200
           },
           {
             "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
             "status": 200
           },
           {
@@ -382,6 +426,10 @@
             "status": 200
           },
           {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb",
             "status": 200
           },
@@ -394,11 +442,19 @@
             "status": 200
           },
           {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/ui/stages/cinder-span.png",
             "status": 200
           },
           {
             "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
             "status": 200
           },
           {
@@ -454,9 +510,9 @@
         "surfaceStageId": "sunken-bastion",
         "loadedStageId": "sunken-bastion",
         "renderer": "webgl",
-        "renderedFrames": 21,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/sunken-bastion.png\")",
-        "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/sunken-bastion.png')",
+        "renderedFrames": 30,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:49605/assets/images/battle/ui/stages/sunken-bastion.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/sunken-bastion.png\")",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/sunken-bastion.glb",
         "palette": {
@@ -489,6 +545,10 @@
         "pageErrors": [],
         "runtimeAssetResponses": [
           {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/bosses/tide-warden.glb",
             "status": 200
           },
@@ -498,6 +558,10 @@
           },
           {
             "path": "assets/images/battle/glb/companions/anchor-shard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
             "status": 200
           },
           {
@@ -517,11 +581,19 @@
             "status": 200
           },
           {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/props/bulwark-brand.glb",
             "status": 200
           },
           {
             "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
             "status": 200
           },
           {
@@ -534,6 +606,10 @@
           },
           {
             "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
             "status": 200
           },
           {
@@ -593,9 +669,9 @@
         "surfaceStageId": "howling-sprawl",
         "loadedStageId": "howling-sprawl",
         "renderer": "webgl",
-        "renderedFrames": 18,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/howling-sprawl.png\")",
-        "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/howling-sprawl.png')",
+        "renderedFrames": 27,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:49605/assets/images/battle/ui/stages/howling-sprawl.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/howling-sprawl.png\")",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/howling-sprawl.glb",
         "palette": {
@@ -628,11 +704,19 @@
         "pageErrors": [],
         "runtimeAssetResponses": [
           {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/bosses/pack-herald.glb",
             "status": 200
           },
           {
             "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
             "status": 200
           },
           {
@@ -664,6 +748,10 @@
             "status": 200
           },
           {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/terrain/howling-sprawl.glb",
             "status": 200
           },
@@ -673,6 +761,10 @@
           },
           {
             "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
             "status": 200
           },
           {
@@ -732,9 +824,9 @@
         "surfaceStageId": "glass-necropolis",
         "loadedStageId": "glass-necropolis",
         "renderer": "webgl",
-        "renderedFrames": 23,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/glass-necropolis.png\")",
-        "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/glass-necropolis.png')",
+        "renderedFrames": 30,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:49605/assets/images/battle/ui/stages/glass-necropolis.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/glass-necropolis.png\")",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/glass-necropolis.glb",
         "palette": {
@@ -767,11 +859,19 @@
         "pageErrors": [],
         "runtimeAssetResponses": [
           {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/bosses/requiem-choir.glb",
             "status": 200
           },
           {
             "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
             "status": 200
           },
           {
@@ -791,11 +891,23 @@
             "status": 200
           },
           {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/props/choir-ward-crystal.glb",
             "status": 200
           },
           {
             "path": "assets/images/battle/glb/props/stillwater-hourglass.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
             "status": 200
           },
           {
@@ -808,6 +920,10 @@
           },
           {
             "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
             "status": 200
           },
           {
@@ -867,9 +983,9 @@
         "surfaceStageId": "starless-canal",
         "loadedStageId": "starless-canal",
         "renderer": "webgl",
-        "renderedFrames": 19,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/starless-canal.png\")",
-        "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/starless-canal.png')",
+        "renderedFrames": 27,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:49605/assets/images/battle/ui/stages/starless-canal.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/starless-canal.png\")",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/starless-canal.glb",
         "palette": {
@@ -902,11 +1018,19 @@
         "pageErrors": [],
         "runtimeAssetResponses": [
           {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/bosses/lantern-tyrant.glb",
             "status": 200
           },
           {
             "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
             "status": 200
           },
           {
@@ -926,11 +1050,19 @@
             "status": 200
           },
           {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/props/arc-caster.glb",
             "status": 200
           },
           {
             "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
             "status": 200
           },
           {
@@ -943,6 +1075,10 @@
           },
           {
             "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
             "status": 200
           },
           {
@@ -1002,9 +1138,9 @@
         "surfaceStageId": "shattered-causeway",
         "loadedStageId": "shattered-causeway",
         "renderer": "webgl",
-        "renderedFrames": 19,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/shattered-causeway.png\")",
-        "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/shattered-causeway.png')",
+        "renderedFrames": 28,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:49605/assets/images/battle/ui/stages/shattered-causeway.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/shattered-causeway.png\")",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/shattered-causeway.glb",
         "palette": {
@@ -1037,11 +1173,19 @@
         "pageErrors": [],
         "runtimeAssetResponses": [
           {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/bosses/bridge-colossus.glb",
             "status": 200
           },
           {
             "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
             "status": 200
           },
           {
@@ -1065,7 +1209,19 @@
             "status": 200
           },
           {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/props/bulwark-brand.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
             "status": 200
           },
           {
@@ -1078,6 +1234,10 @@
           },
           {
             "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
             "status": 200
           },
           {
@@ -1137,9 +1297,9 @@
         "surfaceStageId": "abyss-chancel",
         "loadedStageId": "abyss-chancel",
         "renderer": "webgl",
-        "renderedFrames": 27,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/abyss-chancel.png\")",
-        "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/abyss-chancel.png')",
+        "renderedFrames": 28,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:49605/assets/images/battle/ui/stages/abyss-chancel.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/abyss-chancel.png\")",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/abyss-chancel.glb",
         "palette": {
@@ -1172,11 +1332,19 @@
         "pageErrors": [],
         "runtimeAssetResponses": [
           {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/bosses/veiled-concordat.glb",
             "status": 200
           },
           {
             "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
             "status": 200
           },
           {
@@ -1192,10 +1360,6 @@
             "status": 200
           },
           {
-            "path": "assets/images/battle/glb/enemies/possessed.glb",
-            "status": 200
-          },
-          {
             "path": "assets/images/battle/glb/enemies/shade.glb",
             "status": 200
           },
@@ -1208,7 +1372,15 @@
             "status": 200
           },
           {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
             "path": "assets/images/battle/glb/terrain/abyss-chancel.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
             "status": 200
           },
           {
@@ -1221,6 +1393,10 @@
           },
           {
             "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
             "status": 200
           },
           {
@@ -1276,9 +1452,9 @@
         "surfaceStageId": "gate-zenith",
         "loadedStageId": "gate-zenith",
         "renderer": "webgl",
-        "renderedFrames": 17,
-        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:51312/assets/images/battle/ui/stages/gate-zenith.png\")",
-        "conceptBackplateCustomProperty": "url('assets/images/battle/ui/stages/gate-zenith.png')",
+        "renderedFrames": 24,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:49605/assets/images/battle/ui/stages/gate-zenith.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/gate-zenith.png\")",
         "terrainLoaded": true,
         "terrainGlbPath": "assets/images/battle/glb/terrain/gate-zenith.glb",
         "palette": {
@@ -1376,5 +1552,5 @@
     }
   ],
   "pass": true,
-  "finishedAt": "2026-07-28T03:13:55.300Z"
+  "finishedAt": "2026-07-28T08:22:31.780Z"
 }

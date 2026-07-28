@@ -39,7 +39,7 @@ function server() {
 async function battle(page) {
   await page.goto("/index.html", { waitUntil: "networkidle" });
   await page.locator("#start-defense").click();
-  await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+  await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
 }
 
 function approximately(actual, expected, message) {

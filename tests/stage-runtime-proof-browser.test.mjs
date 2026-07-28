@@ -202,7 +202,10 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
     await page.addInitScript(INSTALL_RUNTIME_PROBE, { campaign, fixedNow: FIXED_NOW, storageKey: STORAGE_KEY });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#defense-app.defense-lobby").waitFor();
+    // The unified dock shell mounts the battle surface from first paint; the stage
+    // progression control now lives in the right-hand 출정 dock rather than on a separate
+    // lobby screen, so wait on the surface and reveal that dock before driving selection.
+    await page.locator('#defense-battle-surface[data-defense-ready="true"]').waitFor();
     await page.waitForFunction(() => window.__stageRuntimeQa?.patched || window.__stageRuntimeQa?.patchError, null, { timeout: 15000 });
     const probeState = await page.evaluate(() => ({
       patchError: window.__stageRuntimeQa?.patchError ?? null,
@@ -211,6 +214,10 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     assert.equal(probeState.patchError, null, `${stage.id} runtime probe import must succeed`);
     assert.equal(probeState.patched, true, `${stage.id} runtime renderer must be observable before launch`);
 
+    if (await page.locator("[data-stage-progress]").count() === 0) {
+      await page.locator('#command-dock-right .dock-rail [data-dock-tab="sortie"]').click();
+      await page.locator("[data-stage-progress]").waitFor();
+    }
     await page.locator("[data-stage-progress]").selectOption(stage.id);
     await page.locator(`#defense-app[data-stage-id="${stage.id}"]`).waitFor();
     const lobbySelection = await page.evaluate(() => ({

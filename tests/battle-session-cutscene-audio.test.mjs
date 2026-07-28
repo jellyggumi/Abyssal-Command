@@ -1,3 +1,8 @@
+// BattleSession fixtures below carry `started: true`. Since the unified dock shell landed,
+// the frame loop only advances simulation ticks for a run the player actually committed via
+// BattleSession.beginRun() -- the persistent battle surface otherwise sits frozen at tick 0
+// behind the lobby docks. These tests assert cutscene pause/resume tick semantics, which
+// presuppose a live run, so the fixtures declare that state explicitly.
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -71,6 +76,10 @@ class TestElement {
     return [];
   }
 
+  getBoundingClientRect() {
+    return { bottom: 360, height: 360, left: 0, right: 640, top: 0, width: 640, x: 0, y: 0 };
+  }
+
   focus() {}
 }
 
@@ -117,6 +126,11 @@ async function loadBattleSession() {
   };
   globalThis.requestAnimationFrame = () => 0;
   globalThis.cancelAnimationFrame = noop;
+  // app.js's module-level initialize() now mounts the persistent battle surface (and with it
+  // BattleSession.start() -> resize()) as soon as the module is imported, instead of waiting
+  // for a lobby "작전 개시" click. resize() reads the --defense-logical-* custom properties,
+  // so this DOM double has to answer getComputedStyle or import raises asynchronously.
+  globalThis.getComputedStyle = () => ({ getPropertyValue: () => "" });
   battleSessionPromise = import("../app.js").then(({ BattleSession }) => BattleSession);
   return battleSessionPromise;
 }
@@ -151,6 +165,7 @@ test("BattleSession starts queued cutscene audio only when its overlay becomes v
     cutsceneTimer: null,
     cutsceneRelayTimers: [],
     cutsceneQueue: [],
+    started: true,
     stopped: false,
     rallyAcknowledgedBossIds: new Set(),
     motionQuery: { matches: false },
@@ -239,6 +254,7 @@ test("BattleSession pauses simulation across queued dialogue and narration, then
     cutsceneTimer: null,
     cutsceneRelayTimers: [],
     cutsceneQueue: [],
+    started: true,
     stopped: false,
     userPaused: false,
     lastFrameAt: 0,
@@ -300,6 +316,7 @@ test("BattleSession timer completion removes the overlay and resumes without pau
     cutsceneTimer: null,
     cutsceneRelayTimers: [],
     cutsceneQueue: [],
+    started: true,
     stopped: false,
     userPaused: false,
     lastFrameAt: 0,
@@ -359,6 +376,7 @@ test("BattleSession timer completion hands off to queued narration and ignores t
     cutsceneTimer: null,
     cutsceneRelayTimers: [],
     cutsceneQueue: [],
+    started: true,
     stopped: false,
     userPaused: false,
     lastFrameAt: 0,
@@ -424,6 +442,7 @@ test("BattleSession keeps timer-completed cutscenes paused by user intent until 
     cutsceneTimer: null,
     cutsceneRelayTimers: [],
     cutsceneQueue: [],
+    started: true,
     stopped: false,
     userPaused: true,
     lastFrameAt: 0,

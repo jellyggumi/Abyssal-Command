@@ -1,0 +1,10 @@
+{
+  "game": "Vampire Survivors",
+  "browser_playable": "true — free HTML5 build playable in-browser at https://poncle.itch.io/vampire-survivors (Run game); paid on Steam/mobile/console",
+  "source_url": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1794680/ss_3e82b3bdc06e40b15252490c25a9afe09a086fdf.1920x1080.jpg?t=1781096909 (from Steam store page https://store.steampowered.com/app/1794680/Vampire_Survivors/)",
+  "captured_at": "2026-07-27",
+  "what_it_is": "The canonical survivor/auto-battler roguelite; screenshot is its Stage Selection pre-run lobby.",
+  "how_similar_to_abyssal": "Near 1:1 with Abyssal Surge's right-dock: left loadout/modifier stat panel (Time Limit, Move Speed, Gold/Luck/XP bonus = a briefing), center scrollable stage list with thumbnail + lore briefing text, bottom modifier toggles, and a prominent green START CTA + top currency/BACK.",
+  "capture_method": "browser screenshot: fetched full-res image from Steam store gallery CDN",
+  "license_note": "screenshot of publicly displayed store/marketing page for research reference — not redistributed as game asset"
+}

@@ -35,7 +35,7 @@ async function sample(page) {
   await page.bringToFront().catch(() => {});
   await page.goto("/index.html", { waitUntil: "networkidle" });
   await page.locator("#start-defense").click();
-  await page.locator('[data-defense-ready="true"]').waitFor();
+  await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
   const probe = page.evaluate(async () => {
     const WARMUP_DEADLINE_MS = 10000;
     const SAMPLE_DEADLINE_MS = 5000;

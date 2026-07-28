@@ -1,0 +1,10 @@
+{
+  "game": "HoloCure - Save the Fans!",
+  "browser_playable": "false — free download on Steam and itch.io (not in-browser); secondary reference for outgame shop juice",
+  "source_url": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2420510/ss_4f201257bdbcef36f748a754d0b8180f0e38002a.1920x1080.jpg?t=1740642230 (from Steam store page https://store.steampowered.com/app/2420510/HoloCure__Save_the_Fans/)",
+  "captured_at": "2026-07-27",
+  "what_it_is": "Free hololive fangame survivor-like with a hub town; screenshot is Bloop's Fish Shop purchase menu.",
+  "how_similar_to_abyssal": "Left action-menu rail (Buy / Sell / Exchange / Quit) + right scrollable item list with icon, name, description and cost, plus a top-right currency readout — the same left-rail + right-item-list + currency pattern Abyssal Surge uses for its equipment/stronghold docks.",
+  "capture_method": "browser screenshot: fetched full-res image from Steam store gallery CDN",
+  "license_note": "screenshot of publicly displayed store/marketing page for research reference — not redistributed as game asset"
+}

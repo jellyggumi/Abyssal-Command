@@ -9,16 +9,47 @@ import {
   isTerminalRun,
   queueInput,
 } from "../defense-run-simulation.js";
-import { COMPANIONS } from "../defense-catalog.js";
+import { COMPANIONS, OCTANT_VECTORS, STAGE_BY_ID } from "../defense-catalog.js";
 import { BACK_ROW_SYNERGY_DAMAGE_BONUS, FORMATION_STANCES, STANCE_CONFIG } from "../rpg-catalog.js";
 
 /** Matches this repo's queueObjectiveCommands convention (see defense-run-simulation.test.mjs). */
-function queueObjectiveCommands(run) {
+/**
+ * Octant toward whatever the current objective phase needs: the point for occupation/extraction, the
+ * nearest living enemy otherwise. Standing still no longer holds the authored 170-250 s gate
+ * (STAGE_WAVE_DOCTRINE), and companions only see sustained combat if the commander closes with it.
+ */
+function objectiveOctant(snapshot) {
+  const phase = snapshot.objectives.phase;
+  let target = null;
+  if (phase === "occupation") target = snapshot.tactics.occupation;
+  else if (phase === "extraction") target = snapshot.tactics.extraction;
+  else {
+    const living = snapshot.enemies.filter((enemy) => enemy.hp > 0);
+    const distance = (entry) => (entry.x - snapshot.commander.x) ** 2 + (entry.y - snapshot.commander.y) ** 2;
+    if (living.length) target = living.slice().sort((left, right) => distance(left) - distance(right))[0];
+  }
+  if (!target) return "IDLE";
+  const dx = target.x - snapshot.commander.x;
+  const dy = target.y - snapshot.commander.y;
+  if (target.radius && Math.hypot(dx, dy) < target.radius * 0.5) return "IDLE";
+  let best = "IDLE";
+  let bestDot = -Infinity;
+  const length = Math.hypot(dx, dy) || 1;
+  for (const [name, vector] of Object.entries(OCTANT_VECTORS)) {
+    if (name === "IDLE") continue;
+    const vectorLength = Math.hypot(vector.x, vector.y) || 1;
+    const dot = (dx / length) * (vector.x / vectorLength) + (dy / length) * (vector.y / vectorLength);
+    if (dot > bestDot) { bestDot = dot; best = name; }
+  }
+  return best;
+}
+
+function queueObjectiveCommands(run, { holdPosition = false } = {}) {
   const snapshot = getRunSnapshot(run);
   if (snapshot.growthOffer) {
     return queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] });
   }
-  let next = queueInput(run, "MOVE", { octant: "IDLE" });
+  let next = queueInput(run, "MOVE", { octant: holdPosition ? "IDLE" : objectiveOctant(snapshot) });
   for (const skillId of snapshot.commander.skills) {
     next = queueInput(next, "SKILL_CAST", { skillId });
   }
@@ -30,10 +61,10 @@ function queueObjectiveCommands(run) {
 
 /** Drives one raw tick at a time (not advanceDefenseRun's multi-step form) so `run.events`
  *  — which resets every tick — can be inspected on every single tick, not just the last of a jump. */
-function stepAndCollect(run, steps, onEvent) {
+function stepAndCollect(run, steps, onEvent, options = {}) {
   let next = run;
   for (let i = 0; i < steps && !isTerminalRun(next); i += 1) {
-    next = advanceDefenseRun(queueObjectiveCommands(next), 1);
+    next = advanceDefenseRun(queueObjectiveCommands(next, options), 1);
     for (const event of next.events) onEvent(next, event);
   }
   return next;
@@ -59,6 +90,10 @@ function cycleStance(run, times = 1) {
   }
   return next;
 }
+
+// Step budgets are expressed against the authored gate hold (STAGE_WAVE_DOCTRINE): the boss and the
+// terminal state now sit on the far side of a 170-250 s defense.
+const HOLD_BUDGET = (stageId) => STAGE_BY_ID[stageId].gateTicks + 9000;
 
 test("SNAPSHOT_VERSION is 7, and omitted RPG createDefenseRun params match explicit defaults", () => {
   const legacy = createDefenseRun({ stageId: "cinder-span", seed: 5, companionLoadout: ["ember-cohort"] });
@@ -231,8 +266,12 @@ test("critical mechanic: FRONT companions (stance position-rank index < derivedF
 test("critical mechanic: a solo FRONT companion's sustained combat drives status ACTIVE -> DOWNED exactly once, and it stops firing and taking further damage afterward", () => {
   // Solo companion under the default VANGUARD stance is FRONT (index 0 < derivedFrontCount 2) —
   // no formation param needed.
+  // Re-derived for the authored wave doctrine (run-id 20260728-stage-playtime-doctrine): with
+  // gate-zenith now fielding fewer, tougher bodies, a solo FRONT companion out-tanks its waves and
+  // never transitions. veil-citadel seed 3 is the deterministic sustained-contact scenario, driven
+  // with a stationary commander so the waves reach the companion instead of dying to the player.
   let run = createDefenseRun({
-    stageId: "gate-zenith", seed: 3,
+    stageId: "veil-citadel", seed: 3,
     companionLoadout: ["veil-vanguard"],
   });
   assert.equal(run.companions[0].slot, "FRONT");
@@ -240,18 +279,15 @@ test("critical mechanic: a solo FRONT companion's sustained combat drives status
   let downedEventCount = 0;
   let firedAfterDowned = 0;
   let damagedAfterDowned = 0;
-  run = stepAndCollect(run, 2400, (current, event) => {
+  run = stepAndCollect(run, HOLD_BUDGET("veil-citadel"), (current, event) => {
     if (event.type === "COMPANION_DOWNED") {
       downedTick = downedTick ?? current.tick;
       downedEventCount += 1;
     }
     if (downedTick !== null && event.type === "WEAPON_FIRED" && event.owner === "veil-vanguard") firedAfterDowned += 1;
     if (downedTick !== null && event.type === "COMPANION_DAMAGED" && event.companionId === "veil-vanguard") damagedAfterDowned += 1;
-  });
-  // Gate Zenith's authored minX=900 clamps the full enemy footprint before its first movement
-  // (for a rusher radius 260, spawn center >=1160). That terrain-bounded ingress reaches the
-  // west-offset FRONT companion earlier than the pre-world-profile route; re-derived for this seed.
-  assert.equal(downedTick, 1605, "seed 3 on terrain-bounded gate-zenith downs the solo FRONT veil-vanguard deterministically at tick 1605");
+  }, { holdPosition: true });
+  assert.equal(downedTick, 8614, "seed 3 on veil-citadel downs the solo FRONT veil-vanguard deterministically at tick 8614");
   assert.equal(downedEventCount, 1, "the ACTIVE -> DOWNED transition fires exactly once");
   assert.equal(firedAfterDowned, 0, "a DOWNED companion must never fire WEAPON_FIRED again");
   assert.equal(damagedAfterDowned, 0, "a DOWNED companion must never take further COMPANION_DAMAGED hits");
@@ -310,7 +346,7 @@ test("critical mechanic: TURRET targetability emits BOSS_RALLY_WINDOW with the r
     stageId: "cinder-span", seed: 12,
     companionLoadout: ["ember-cohort", "rift-lens", "veil-vanguard"],
   }); // default VANGUARD, derivedFrontCount=2 -> ember-cohort + rift-lens are FRONT
-  const toBossWithFront = advanceThroughObjectivesUntil(withFront, (run) => run.bossSpawned, 3000);
+  const toBossWithFront = advanceThroughObjectivesUntil(withFront, (run) => run.bossSpawned, HOLD_BUDGET("cinder-span"));
   const rallyEvent = toBossWithFront.events.find((event) => event.type === "BOSS_RALLY_WINDOW");
   assert.ok(rallyEvent, "a filled FRONT slot at boss spawn must emit BOSS_RALLY_WINDOW");
   assert.equal(rallyEvent.cooldownReductionBp, 0);
@@ -323,7 +359,7 @@ test("critical mechanic: TURRET targetability emits BOSS_RALLY_WINDOW with the r
   turretRun = queueInput(turretRun, "STANCE_CYCLE"); // VANGUARD -> TURRET (derivedFrontCount=1)
   turretRun = advanceDefenseRun(turretRun, 1);
   assert.equal(getRunSnapshot(turretRun).formationStance, "TURRET");
-  const toBossTurret = advanceThroughObjectivesUntil(turretRun, (run) => run.bossSpawned, 3000);
+  const toBossTurret = advanceThroughObjectivesUntil(turretRun, (run) => run.bossSpawned, HOLD_BUDGET("cinder-span"));
   const turretRally = toBossTurret.events.find((event) => event.type === "BOSS_RALLY_WINDOW");
   assert.ok(turretRally, "TURRET's targetable FRONT at boss spawn must emit BOSS_RALLY_WINDOW");
   assert.equal(turretRally.cooldownReductionBp, 0);
@@ -346,8 +382,8 @@ test("critical mechanic: getRunDigest is byte-identical for two createDefenseRun
   let right = advanceThroughObjectivesUntil(right0, (run) => run.tick >= 400, 400);
   assert.equal(getRunDigest(left), getRunDigest(right), "digests must match after identical driven ticks mid-run");
 
-  left = advanceThroughObjectivesUntil(left, (run) => isTerminalRun(run), 6000);
-  right = advanceThroughObjectivesUntil(right, (run) => isTerminalRun(run), 6000);
+  left = advanceThroughObjectivesUntil(left, (run) => isTerminalRun(run), HOLD_BUDGET("cinder-span"));
+  right = advanceThroughObjectivesUntil(right, (run) => isTerminalRun(run), HOLD_BUDGET("cinder-span"));
   assert.ok(isTerminalRun(left) && isTerminalRun(right));
   assert.equal(left.terminal, right.terminal);
   assert.equal(getRunDigest(left), getRunDigest(right), "digests must match at the terminal state");

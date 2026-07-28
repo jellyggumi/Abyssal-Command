@@ -319,12 +319,12 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
       localStorage.setItem(key, encoded);
     }, { encoded: campaign.encoded, key: STORAGE_KEY });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").waitFor();
     assert.equal(await page.locator("#start-defense").isVisible(), true, "lobby must expose a live departure action");
     report.events.push("lobby-visible");
     await page.locator("#start-defense").click();
-    const surface = page.locator('[data-defense-ready="true"]');
-    await surface.waitFor({ state: "visible" });
+    const surface = page.locator('#defense-battle-surface[data-defense-started="true"]');
+    await surface.waitFor({ state: "attached" });
     report.events.push("battle-visible");
     const cutscene = page.locator("#defense-cutscene-overlay");
     await cutscene.waitFor({ state: "visible" });
@@ -642,9 +642,9 @@ async function verifyWorldHudOverlay(browser, hosting, campaign) {
       };
     });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
-    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+    await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
 
     // Drive the live loop entirely inside the page: repeatedly dismiss the
     // stage-entry cutscene and click through growth offers (both otherwise
@@ -1022,9 +1022,9 @@ async function verifyStanceSwitchFeedback(browser, hosting, campaign) {
       };
     });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
-    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+    await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
 
     // Drive to a "quiet" battle frame (cutscene dismissed, no growth offer up —
     // both pause tick advancement, so a queued STANCE_CYCLE would never process
@@ -1140,9 +1140,9 @@ async function verifyXpProgressBar(browser, hosting, campaign) {
       };
     });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
-    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+    await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
 
     const pumpQuiet = async () => {
       await page.evaluate(() => {
@@ -1237,9 +1237,9 @@ async function verifyPassiveBadges(browser, hosting, campaign) {
       };
     });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#defense-app.defense-lobby").waitFor();
+    await page.locator("#start-defense").waitFor();
     await page.locator("#start-defense").click();
-    await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+    await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
 
     // Deterministic in-page pump drive (same controllable-rAF pattern as the
     // world-HUD test): each __pumpFrame(100) advances EXACTLY 100 ms of

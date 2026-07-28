@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-28T00:58:22.386Z",
+  "generatedAt": "2026-07-28T05:20:13.652Z",
   "runId": "20260728-stage-playtime-doctrine",
   "method": "objective-seeking bot, shipped simulation imported unmodified",
   "tickRate": 60,
@@ -18,29 +18,29 @@
       "stageId": "cinder-span",
       "runs": 3,
       "victories": 3,
-      "medianSeconds": 179.3,
-      "minSeconds": 178.1,
-      "maxSeconds": 179.7,
-      "withinTarget": 0,
+      "medianSeconds": 187.7,
+      "minSeconds": 187.3,
+      "maxSeconds": 188.5,
+      "withinTarget": 3,
       "midbossSpawns": 6
     },
     {
       "stageId": "veil-citadel",
       "runs": 3,
       "victories": 3,
-      "medianSeconds": 192.1,
-      "minSeconds": 190.9,
-      "maxSeconds": 192.9,
+      "medianSeconds": 192.05,
+      "minSeconds": 191.13,
+      "maxSeconds": 192.5,
       "withinTarget": 3,
       "midbossSpawns": 6
     },
     {
       "stageId": "echo-throne",
       "runs": 3,
-      "victories": 1,
-      "medianSeconds": 330,
-      "minSeconds": 204.57,
-      "maxSeconds": 330,
+      "victories": 3,
+      "medianSeconds": 205.3,
+      "minSeconds": 201.12,
+      "maxSeconds": 208.9,
       "withinTarget": 3,
       "midbossSpawns": 6
     },
@@ -48,18 +48,18 @@
       "stageId": "sunken-bastion",
       "runs": 3,
       "victories": 3,
-      "medianSeconds": 232.5,
-      "minSeconds": 229.52,
-      "maxSeconds": 238.9,
+      "medianSeconds": 231.38,
+      "minSeconds": 229.97,
+      "maxSeconds": 237.7,
       "withinTarget": 3,
       "midbossSpawns": 6
     },
     {
       "stageId": "howling-sprawl",
       "runs": 3,
-      "victories": 2,
-      "medianSeconds": 241.8,
-      "minSeconds": 236.02,
+      "victories": 3,
+      "medianSeconds": 247.33,
+      "minSeconds": 240.1,
       "maxSeconds": 252.5,
       "withinTarget": 3,
       "midbossSpawns": 6
@@ -68,9 +68,9 @@
       "stageId": "glass-necropolis",
       "runs": 3,
       "victories": 3,
-      "medianSeconds": 241.3,
-      "minSeconds": 240.5,
-      "maxSeconds": 241.3,
+      "medianSeconds": 240.9,
+      "minSeconds": 239.3,
+      "maxSeconds": 242.9,
       "withinTarget": 3,
       "midbossSpawns": 6
     },
@@ -78,9 +78,9 @@
       "stageId": "starless-canal",
       "runs": 3,
       "victories": 3,
-      "medianSeconds": 252.95,
-      "minSeconds": 251.45,
-      "maxSeconds": 259.23,
+      "medianSeconds": 251.45,
+      "minSeconds": 250.9,
+      "maxSeconds": 254.5,
       "withinTarget": 3,
       "midbossSpawns": 6
     },
@@ -88,8 +88,8 @@
       "stageId": "shattered-causeway",
       "runs": 3,
       "victories": 3,
-      "medianSeconds": 281.77,
-      "minSeconds": 276.5,
+      "medianSeconds": 279.3,
+      "minSeconds": 275.7,
       "maxSeconds": 283.3,
       "withinTarget": 3,
       "midbossSpawns": 6
@@ -97,20 +97,20 @@
     {
       "stageId": "abyss-chancel",
       "runs": 3,
-      "victories": 2,
-      "medianSeconds": 303.55,
-      "minSeconds": 295.7,
-      "maxSeconds": 336.62,
+      "victories": 3,
+      "medianSeconds": 296.1,
+      "minSeconds": 293.3,
+      "maxSeconds": 302.5,
       "withinTarget": 3,
       "midbossSpawns": 9
     },
     {
       "stageId": "gate-zenith",
       "runs": 3,
-      "victories": 1,
-      "medianSeconds": 312.18,
-      "minSeconds": 298.5,
-      "maxSeconds": 316.23,
+      "victories": 3,
+      "medianSeconds": 296.9,
+      "minSeconds": 292.9,
+      "maxSeconds": 298.5,
       "withinTarget": 3,
       "midbossSpawns": 9
     }
@@ -120,9 +120,9 @@
       "stageId": "cinder-span",
       "seed": 101,
       "terminal": "VICTORY",
-      "ticks": 10782,
-      "seconds": 179.7,
-      "withinTarget": false,
+      "ticks": 11238,
+      "seconds": 187.3,
+      "withinTarget": true,
       "wavesByKind": {
         "normal": 5,
         "big": 3,
@@ -134,15 +134,15 @@
       "skillSelections": 0,
       "rankUps": 0,
       "finalLevel": 7,
-      "gateIntegrity": 1590
+      "gateIntegrity": 1565
     },
     {
       "stageId": "cinder-span",
       "seed": 138,
       "terminal": "VICTORY",
-      "ticks": 10686,
-      "seconds": 178.1,
-      "withinTarget": false,
+      "ticks": 11262,
+      "seconds": 187.7,
+      "withinTarget": true,
       "wavesByKind": {
         "normal": 5,
         "big": 3,
@@ -160,28 +160,28 @@
       "stageId": "cinder-span",
       "seed": 175,
       "terminal": "VICTORY",
-      "ticks": 10758,
-      "seconds": 179.3,
-      "withinTarget": false,
+      "ticks": 11310,
+      "seconds": 188.5,
+      "withinTarget": true,
       "wavesByKind": {
         "normal": 5,
         "big": 3,
         "mid": 2
       },
       "midbossSpawns": 2,
-      "midbossKills": 2,
+      "midbossKills": 1,
       "growthOffers": 6,
       "skillSelections": 0,
       "rankUps": 0,
       "finalLevel": 7,
-      "gateIntegrity": 1590
+      "gateIntegrity": 1586
     },
     {
       "stageId": "veil-citadel",
       "seed": 101,
       "terminal": "VICTORY",
-      "ticks": 11526,
-      "seconds": 192.1,
+      "ticks": 11550,
+      "seconds": 192.5,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 5,
@@ -200,8 +200,8 @@
       "stageId": "veil-citadel",
       "seed": 138,
       "terminal": "VICTORY",
-      "ticks": 11454,
-      "seconds": 190.9,
+      "ticks": 11468,
+      "seconds": 191.13,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 5,
@@ -209,7 +209,7 @@
         "mid": 2
       },
       "midbossSpawns": 2,
-      "midbossKills": 0,
+      "midbossKills": 1,
       "growthOffers": 6,
       "skillSelections": 0,
       "rankUps": 0,
@@ -220,8 +220,8 @@
       "stageId": "veil-citadel",
       "seed": 175,
       "terminal": "VICTORY",
-      "ticks": 11574,
-      "seconds": 192.9,
+      "ticks": 11523,
+      "seconds": 192.05,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 5,
@@ -239,29 +239,9 @@
     {
       "stageId": "echo-throne",
       "seed": 101,
-      "terminal": "DEFEAT",
-      "ticks": 19800,
-      "seconds": 330,
-      "withinTarget": true,
-      "wavesByKind": {
-        "normal": 6,
-        "big": 3,
-        "mid": 2
-      },
-      "midbossSpawns": 2,
-      "midbossKills": 2,
-      "growthOffers": 6,
-      "skillSelections": 0,
-      "rankUps": 0,
-      "finalLevel": 7,
-      "gateIntegrity": 0
-    },
-    {
-      "stageId": "echo-throne",
-      "seed": 138,
-      "terminal": "DEFEAT",
-      "ticks": 19800,
-      "seconds": 330,
+      "terminal": "VICTORY",
+      "ticks": 12318,
+      "seconds": 205.3,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 6,
@@ -274,14 +254,14 @@
       "skillSelections": 0,
       "rankUps": 0,
       "finalLevel": 8,
-      "gateIntegrity": 0
+      "gateIntegrity": 1785
     },
     {
       "stageId": "echo-throne",
-      "seed": 175,
+      "seed": 138,
       "terminal": "VICTORY",
-      "ticks": 12274,
-      "seconds": 204.57,
+      "ticks": 12534,
+      "seconds": 208.9,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 6,
@@ -297,51 +277,31 @@
       "gateIntegrity": 1793
     },
     {
+      "stageId": "echo-throne",
+      "seed": 175,
+      "terminal": "VICTORY",
+      "ticks": 12067,
+      "seconds": 201.12,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 6,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 1,
+      "growthOffers": 7,
+      "skillSelections": 0,
+      "rankUps": 0,
+      "finalLevel": 8,
+      "gateIntegrity": 1793
+    },
+    {
       "stageId": "sunken-bastion",
       "seed": 101,
       "terminal": "VICTORY",
-      "ticks": 13950,
-      "seconds": 232.5,
-      "withinTarget": true,
-      "wavesByKind": {
-        "normal": 5,
-        "big": 4,
-        "mid": 2
-      },
-      "midbossSpawns": 2,
-      "midbossKills": 0,
-      "growthOffers": 5,
-      "skillSelections": 0,
-      "rankUps": 0,
-      "finalLevel": 6,
-      "gateIntegrity": 1855
-    },
-    {
-      "stageId": "sunken-bastion",
-      "seed": 138,
-      "terminal": "VICTORY",
-      "ticks": 14334,
-      "seconds": 238.9,
-      "withinTarget": true,
-      "wavesByKind": {
-        "normal": 5,
-        "big": 4,
-        "mid": 2
-      },
-      "midbossSpawns": 2,
-      "midbossKills": 0,
-      "growthOffers": 6,
-      "skillSelections": 0,
-      "rankUps": 0,
-      "finalLevel": 7,
-      "gateIntegrity": 1656
-    },
-    {
-      "stageId": "sunken-bastion",
-      "seed": 175,
-      "terminal": "VICTORY",
-      "ticks": 13771,
-      "seconds": 229.52,
+      "ticks": 13883,
+      "seconds": 231.38,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 5,
@@ -354,14 +314,54 @@
       "skillSelections": 0,
       "rankUps": 0,
       "finalLevel": 8,
+      "gateIntegrity": 1883
+    },
+    {
+      "stageId": "sunken-bastion",
+      "seed": 138,
+      "terminal": "VICTORY",
+      "ticks": 14262,
+      "seconds": 237.7,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 4,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 1,
+      "growthOffers": 6,
+      "skillSelections": 0,
+      "rankUps": 0,
+      "finalLevel": 7,
+      "gateIntegrity": 1875
+    },
+    {
+      "stageId": "sunken-bastion",
+      "seed": 175,
+      "terminal": "VICTORY",
+      "ticks": 13798,
+      "seconds": 229.97,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 4,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 1,
+      "growthOffers": 7,
+      "skillSelections": 0,
+      "rankUps": 0,
+      "finalLevel": 8,
       "gateIntegrity": 1890
     },
     {
       "stageId": "howling-sprawl",
       "seed": 101,
-      "terminal": "DEFEAT",
-      "ticks": 14161,
-      "seconds": 236.02,
+      "terminal": "VICTORY",
+      "ticks": 14840,
+      "seconds": 247.33,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 5,
@@ -374,7 +374,7 @@
       "skillSelections": 0,
       "rankUps": 0,
       "finalLevel": 8,
-      "gateIntegrity": 2000
+      "gateIntegrity": 1779
     },
     {
       "stageId": "howling-sprawl",
@@ -400,8 +400,8 @@
       "stageId": "howling-sprawl",
       "seed": 175,
       "terminal": "VICTORY",
-      "ticks": 14508,
-      "seconds": 241.8,
+      "ticks": 14406,
+      "seconds": 240.1,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 5,
@@ -420,8 +420,8 @@
       "stageId": "glass-necropolis",
       "seed": 101,
       "terminal": "VICTORY",
-      "ticks": 14478,
-      "seconds": 241.3,
+      "ticks": 14454,
+      "seconds": 240.9,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 6,
@@ -440,8 +440,28 @@
       "stageId": "glass-necropolis",
       "seed": 138,
       "terminal": "VICTORY",
-      "ticks": 14430,
-      "seconds": 240.5,
+      "ticks": 14358,
+      "seconds": 239.3,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 6,
+        "big": 4,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 7,
+      "skillSelections": 0,
+      "rankUps": 0,
+      "finalLevel": 8,
+      "gateIntegrity": 2170
+    },
+    {
+      "stageId": "glass-necropolis",
+      "seed": 175,
+      "terminal": "VICTORY",
+      "ticks": 14574,
+      "seconds": 242.9,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 6,
@@ -457,31 +477,11 @@
       "gateIntegrity": 2170
     },
     {
-      "stageId": "glass-necropolis",
-      "seed": 175,
-      "terminal": "VICTORY",
-      "ticks": 14478,
-      "seconds": 241.3,
-      "withinTarget": true,
-      "wavesByKind": {
-        "normal": 6,
-        "big": 4,
-        "mid": 2
-      },
-      "midbossSpawns": 2,
-      "midbossKills": 0,
-      "growthOffers": 6,
-      "skillSelections": 0,
-      "rankUps": 0,
-      "finalLevel": 7,
-      "gateIntegrity": 2170
-    },
-    {
       "stageId": "starless-canal",
       "seed": 101,
       "terminal": "VICTORY",
-      "ticks": 15177,
-      "seconds": 252.95,
+      "ticks": 15054,
+      "seconds": 250.9,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 6,
@@ -490,10 +490,10 @@
       },
       "midbossSpawns": 2,
       "midbossKills": 0,
-      "growthOffers": 7,
+      "growthOffers": 8,
       "skillSelections": 0,
       "rankUps": 0,
-      "finalLevel": 8,
+      "finalLevel": 9,
       "gateIntegrity": 2190
     },
     {
@@ -520,8 +520,28 @@
       "stageId": "starless-canal",
       "seed": 175,
       "terminal": "VICTORY",
-      "ticks": 15554,
-      "seconds": 259.23,
+      "ticks": 15270,
+      "seconds": 254.5,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 6,
+        "big": 4,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 0,
+      "growthOffers": 7,
+      "skillSelections": 0,
+      "rankUps": 0,
+      "finalLevel": 8,
+      "gateIntegrity": 2190
+    },
+    {
+      "stageId": "shattered-causeway",
+      "seed": 101,
+      "terminal": "VICTORY",
+      "ticks": 16758,
+      "seconds": 279.3,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 6,
@@ -534,34 +554,14 @@
       "skillSelections": 0,
       "rankUps": 0,
       "finalLevel": 9,
-      "gateIntegrity": 2190
-    },
-    {
-      "stageId": "shattered-causeway",
-      "seed": 101,
-      "terminal": "VICTORY",
-      "ticks": 16906,
-      "seconds": 281.77,
-      "withinTarget": true,
-      "wavesByKind": {
-        "normal": 6,
-        "big": 4,
-        "mid": 2
-      },
-      "midbossSpawns": 2,
-      "midbossKills": 1,
-      "growthOffers": 6,
-      "skillSelections": 0,
-      "rankUps": 0,
-      "finalLevel": 7,
       "gateIntegrity": 2285
     },
     {
       "stageId": "shattered-causeway",
       "seed": 138,
       "terminal": "VICTORY",
-      "ticks": 16590,
-      "seconds": 276.5,
+      "ticks": 16542,
+      "seconds": 275.7,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 6,
@@ -589,19 +589,59 @@
         "mid": 2
       },
       "midbossSpawns": 2,
-      "midbossKills": 0,
-      "growthOffers": 6,
+      "midbossKills": 2,
+      "growthOffers": 8,
       "skillSelections": 0,
       "rankUps": 0,
-      "finalLevel": 7,
+      "finalLevel": 9,
       "gateIntegrity": 2285
     },
     {
       "stageId": "abyss-chancel",
       "seed": 101,
-      "terminal": "DEFEAT",
-      "ticks": 20197,
-      "seconds": 336.62,
+      "terminal": "VICTORY",
+      "ticks": 17766,
+      "seconds": 296.1,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 6,
+        "big": 4,
+        "mid": 3
+      },
+      "midbossSpawns": 3,
+      "midbossKills": 3,
+      "growthOffers": 9,
+      "skillSelections": 0,
+      "rankUps": 0,
+      "finalLevel": 10,
+      "gateIntegrity": 2390
+    },
+    {
+      "stageId": "abyss-chancel",
+      "seed": 138,
+      "terminal": "VICTORY",
+      "ticks": 18150,
+      "seconds": 302.5,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 6,
+        "big": 4,
+        "mid": 3
+      },
+      "midbossSpawns": 3,
+      "midbossKills": 3,
+      "growthOffers": 9,
+      "skillSelections": 0,
+      "rankUps": 0,
+      "finalLevel": 10,
+      "gateIntegrity": 2390
+    },
+    {
+      "stageId": "abyss-chancel",
+      "seed": 175,
+      "terminal": "VICTORY",
+      "ticks": 17598,
+      "seconds": 293.3,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 6,
@@ -614,46 +654,6 @@
       "skillSelections": 0,
       "rankUps": 0,
       "finalLevel": 9,
-      "gateIntegrity": 1920
-    },
-    {
-      "stageId": "abyss-chancel",
-      "seed": 138,
-      "terminal": "VICTORY",
-      "ticks": 18213,
-      "seconds": 303.55,
-      "withinTarget": true,
-      "wavesByKind": {
-        "normal": 6,
-        "big": 4,
-        "mid": 3
-      },
-      "midbossSpawns": 3,
-      "midbossKills": 3,
-      "growthOffers": 8,
-      "skillSelections": 0,
-      "rankUps": 0,
-      "finalLevel": 9,
-      "gateIntegrity": 2390
-    },
-    {
-      "stageId": "abyss-chancel",
-      "seed": 175,
-      "terminal": "VICTORY",
-      "ticks": 17742,
-      "seconds": 295.7,
-      "withinTarget": true,
-      "wavesByKind": {
-        "normal": 6,
-        "big": 4,
-        "mid": 3
-      },
-      "midbossSpawns": 3,
-      "midbossKills": 1,
-      "growthOffers": 7,
-      "skillSelections": 0,
-      "rankUps": 0,
-      "finalLevel": 8,
       "gateIntegrity": 2390
     },
     {
@@ -669,19 +669,19 @@
         "mid": 3
       },
       "midbossSpawns": 3,
-      "midbossKills": 1,
-      "growthOffers": 7,
+      "midbossKills": 2,
+      "growthOffers": 8,
       "skillSelections": 0,
       "rankUps": 0,
-      "finalLevel": 8,
+      "finalLevel": 9,
       "gateIntegrity": 2605
     },
     {
       "stageId": "gate-zenith",
       "seed": 138,
-      "terminal": "DEFEAT",
-      "ticks": 18974,
-      "seconds": 316.23,
+      "terminal": "FINAL_COMPLETION",
+      "ticks": 17814,
+      "seconds": 296.9,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 3,
@@ -694,14 +694,14 @@
       "skillSelections": 0,
       "rankUps": 0,
       "finalLevel": 8,
-      "gateIntegrity": 2600
+      "gateIntegrity": 2585
     },
     {
       "stageId": "gate-zenith",
       "seed": 175,
-      "terminal": "DEFEAT",
-      "ticks": 18731,
-      "seconds": 312.18,
+      "terminal": "FINAL_COMPLETION",
+      "ticks": 17574,
+      "seconds": 292.9,
       "withinTarget": true,
       "wavesByKind": {
         "normal": 3,
@@ -709,12 +709,12 @@
         "mid": 3
       },
       "midbossSpawns": 3,
-      "midbossKills": 0,
+      "midbossKills": 1,
       "growthOffers": 7,
       "skillSelections": 0,
       "rankUps": 0,
       "finalLevel": 8,
-      "gateIntegrity": 2600
+      "gateIntegrity": 2585
     }
   ]
 }

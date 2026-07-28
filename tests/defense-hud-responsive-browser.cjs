@@ -31,10 +31,19 @@ function server() {
   })).on("error", reject));
 }
 
-async function battle(page) {
+async function battle(page, { force = false } = {}) {
   await page.goto("/index.html", { waitUntil: "networkidle" });
-  await page.locator("#start-defense").click();
-  await page.locator('[data-defense-ready="true"]').waitFor({ state: "visible" });
+  // D9 unified shell: #defense-battle-surface (and its data-defense-ready="true") exists
+  // from page load -- the lobby/battle screens no longer swap. data-defense-started is
+  // the real "a run is now ticking" signal, set only by BattleSession.beginRun().
+  // force: the synthetic 200x100 backbuffer-contract viewport (verifyBackbufferContract)
+  // exists only to probe canvas/DPR math -- the CTA is taller than that viewport (no CSS
+  // can make it fully in-viewport there), and Playwright's mouse-coordinate `force` click
+  // still no-ops when the target point falls outside the viewport, so dispatch a real
+  // click event directly instead of driving synthetic mouse coordinates.
+  if (force) await page.evaluate(() => document.querySelector("#start-defense").click());
+  else await page.locator("#start-defense").click();
+  await page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
 }
 
 async function inspect(page, width, height) {
@@ -249,7 +258,7 @@ async function verifyBackbufferContract(browser, hosting) {
     if (message.type() === "error") nativeErrors.push(`console: ${message.text()}`);
   });
   try {
-    await battle(nativePage);
+    await battle(nativePage, { force: true });
     const native = await nativePage.evaluate(() => {
       const canvas = document.querySelector("#defense-canvas");
       const surface = document.querySelector("#defense-battle-surface");

@@ -1,0 +1,10 @@
+{
+  "game": "Vampire Survivors",
+  "browser_playable": "true — free HTML5 build playable in-browser at https://poncle.itch.io/vampire-survivors; paid on Steam/mobile/console",
+  "source_url": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1794680/ss_bea7831ae00c044d9cd31c3f8e0fee766b4fe1c6.1920x1080.jpg?t=1781096909 (from Steam store page https://store.steampowered.com/app/1794680/Vampire_Survivors/)",
+  "captured_at": "2026-07-27",
+  "what_it_is": "Vampire Survivors' Collection/compendium menu (weapons & items unlocked, 124/127).",
+  "how_similar_to_abyssal": "Grid of unlockable icons with a selected-item detail tooltip, a persistent gold counter, and a BACK button — the same unlockables-grid + detail pattern Abyssal Surge needs for equipment tiers and stage-clear traits.",
+  "capture_method": "browser screenshot: fetched full-res image from Steam store gallery CDN",
+  "license_note": "screenshot of publicly displayed store/marketing page for research reference — not redistributed as game asset"
+}
