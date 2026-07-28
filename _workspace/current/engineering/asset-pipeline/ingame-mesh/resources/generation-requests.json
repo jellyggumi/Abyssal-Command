@@ -4,7 +4,7 @@
   "runtimeEligible": false,
   "generator": "god-tibo-imagen / gti",
   "status": "blocked-after-live-retry",
-  "blocker": "private-codex HTTP 429/rate limit persisted; retry stopped after first rate-limit response",
+  "blocker": "private-codex HTTP 429/rate limit persisted; latest single-asset retry stopped after first rate-limit response",
   "dryRunVerified": true,
   "dryRunCommand": "gti --provider private-codex --dry-run --image <source> --prompt <prompt> --output <output> --size <size>",
   "counts": {
@@ -146,15 +146,16 @@
       "prompt": "Create a production-ready stylized cartoon environment background texture/plate from the reference. Preserve the landmark composition, color mood, and readable gameplay silhouettes while adding layered painted depth and tile-friendly surface breakup. No characters, no UI, no text, no magenta/pink/purple focal lighting, and no transparency checkerboard. Candidate-only asset."
     }
   ],
-  "attemptedAt": "2026-07-28T11:53:28.716649+00:00",
+  "attemptedAt": "2026-07-28T13:34:48.645275000Z",
   "completed": 0,
   "lastAttempt": {
-    "attemptId": "20260728T130457Z",
-    "receipt": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/regeneration-attempt-20260728T130457Z.json",
+    "attemptId": "20260728T133448Z",
+    "receipt": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/generation-attempt-20260728T133448Z.json",
     "status": "blocked-after-rate-limit",
+    "assetId": "broken-court-monarch-boss",
     "attempted": 1,
     "completed": 0,
-    "finishedAt": "2026-07-28T13:04:58.315863+00:00"
+    "finishedAt": "2026-07-28T13:34:49.908086000Z"
   },
   "retryHistory": [
     {
@@ -164,6 +165,15 @@
       "attempted": 1,
       "completed": 0,
       "finishedAt": "2026-07-28T13:04:58.315863+00:00"
+    },
+    {
+      "attemptId": "20260728T133448Z",
+      "receipt": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/generation-attempt-20260728T133448Z.json",
+      "status": "blocked-after-rate-limit",
+      "assetId": "broken-court-monarch-boss",
+      "attempted": 1,
+      "completed": 0,
+      "finishedAt": "2026-07-28T13:34:49.908086000Z"
     }
   ]
 }
