@@ -3,8 +3,8 @@
   "lane": "candidate/ingame-mesh",
   "runtimeEligible": false,
   "generator": "god-tibo-imagen / gti",
-  "status": "blocked-after-live-attempt",
-  "blocker": "private-codex HTTP 429; generation stopped after first rate-limit response",
+  "status": "blocked-after-live-retry",
+  "blocker": "private-codex HTTP 429/rate limit persisted; retry stopped after first rate-limit response",
   "dryRunVerified": true,
   "dryRunCommand": "gti --provider private-codex --dry-run --image <source> --prompt <prompt> --output <output> --size <size>",
   "counts": {
@@ -147,5 +147,23 @@
     }
   ],
   "attemptedAt": "2026-07-28T11:53:28.716649+00:00",
-  "completed": 0
+  "completed": 0,
+  "lastAttempt": {
+    "attemptId": "20260728T130457Z",
+    "receipt": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/regeneration-attempt-20260728T130457Z.json",
+    "status": "blocked-after-rate-limit",
+    "attempted": 1,
+    "completed": 0,
+    "finishedAt": "2026-07-28T13:04:58.315863+00:00"
+  },
+  "retryHistory": [
+    {
+      "attemptId": "20260728T130457Z",
+      "receipt": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/regeneration-attempt-20260728T130457Z.json",
+      "status": "blocked-after-rate-limit",
+      "attempted": 1,
+      "completed": 0,
+      "finishedAt": "2026-07-28T13:04:58.315863+00:00"
+    }
+  ]
 }
