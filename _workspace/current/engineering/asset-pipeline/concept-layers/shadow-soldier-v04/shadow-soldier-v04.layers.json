@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "assetId": "shadow-soldier-v04",
+  "concept": "assets/images/battle/pilot/concept-shadow-soldier-v04.png",
+  "conceptSha256": "c3f37a2fed04f7d3650ba8f01aa71333111cfc9e456bd8fcd5129dafc38bd678",
+  "generatedAt": "2026-07-28T08:49:21.636464+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "gen",
+    "mode": "gen",
+    "borderMedianRgb": [
+      27,
+      21,
+      29
+    ],
+    "borderSpread": 19.091,
+    "rationale": "full-bleed scene -> layers are not separable in pixel space"
+  },
+  "layers": [
+    {
+      "layer": "full-plate",
+      "prompt": "(deterministic alpha cut of the source concept -- no model call)",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/shadow-soldier-v04/shadow-soldier-v04-full-plate.png",
+      "status": "skipped:not-applicable",
+      "source": "n/a"
+    }
+  ]
+}

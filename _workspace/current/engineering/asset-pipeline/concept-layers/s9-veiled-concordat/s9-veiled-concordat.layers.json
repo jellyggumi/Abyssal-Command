@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "s9-veiled-concordat",
+  "concept": "assets/images/battle/pilot/concept-s9-veiled-concordat.png",
+  "conceptSha256": "2f72f286f7eceda95fc5bd60ce9a22664d3a93cd267d71eec4b2019ab9efc9df",
+  "generatedAt": "2026-07-28T08:14:19.093839+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      248,
+      2,
+      246
+    ],
+    "borderSpread": 2.215,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s9-veiled-concordat/s9-veiled-concordat-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s9-veiled-concordat/raw/s9-veiled-concordat-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.463,
+        "tolerance": 26,
+        "alphaCoverage": 0.37942,
+        "size": [
+          1007,
+          1437
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "166d7121243271279749bc1116e3d4d25a6fa7507330aefc35b7099591887ced"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s9-veiled-concordat/s9-veiled-concordat-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s9-veiled-concordat/raw/s9-veiled-concordat-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.403,
+        "tolerance": 26,
+        "alphaCoverage": 0.08059,
+        "size": [
+          337,
+          1497
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "86c4fe9a7bc087459ce85e845e59e748c195e89db64492bf6dcfb371e4145d58"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s9-veiled-concordat/s9-veiled-concordat-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s9-veiled-concordat/raw/s9-veiled-concordat-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.467,
+        "tolerance": 26,
+        "alphaCoverage": 0.233,
+        "size": [
+          927,
+          1433
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "c06c2c6094b5dddacc51e3529a9fe623395fa2f0f419b9b4f5d5f29bbea3628e"
+    }
+  ]
+}

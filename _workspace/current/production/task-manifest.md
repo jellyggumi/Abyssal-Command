@@ -52,30 +52,22 @@ next-beat: director 스코프 리뷰 → 슬라이스 2 사람 플레이 판정
 
 ---
 
-## 2. 사이클 2 — director 리뷰 (대기)
+## 2. 사이클 2 — director 리뷰 (완료)
 
-| task | owner | 산출물 | 게이트 |
-|---|---|---|---|
-| 피벗 승인 여부 판정 | game-production-director | `production/decision-log.md` | 전체 |
-| 미해결 결정 6건 재정 | game-production-director | 동일 | G3/G6 |
-| 기존 무효화 테스트 처분 | game-production-director | 동일 | G6 |
-| 아카이브 이관 | game-production-director | `_workspace/archive/` | — |
+| task | owner | 산출물 | 게이트 | 상태 |
+|---|---|---|---|---|
+| 액션 피벗 승인·범위 동결 | game-production-director | `production/decision-log.md#D-20260728-OAP-01` | 전체 | done — 설계 착수 승인, 게이트 통과 아님 |
+| 제품 계약 SSOT 작성 | game-production-director | `design/onslaught-action-product-contract.md` | G1/G7 입력 | done — 제품 정의가 델타 문서에만 남지 않음 |
+| 엔지니어링 결정 6건 확정 | game-production-director | `production/decision-log.md#엔지니어링-선택-확정` | G3/G6 입력 | done |
+| 권위 수치 충돌 정정 | game-production-director | `design/encounter-wave-spec.md`, `design/master-gdd-delta.md`, `engineering/migration-map.md` | G2/G3 입력 | done |
 
-### 2.1 director 결정 필요 항목
+### 2.1 director 결정 결과
 
-`engineering/migration-map.md#10`의 6건 + 아래:
-
-| # | 사안 | 쟁점 |
-|---|---|---|
-| 7 | 피벗 자체 승인 | 27초 오토배틀 → 5–8분 액션. 기존 G2/G3/G7 측정이 전부 무효화된다 |
-| 8 | 동료 시스템 축소 | 자동 추종만 남길지, 정예 추출 동기까지 재설계할지 |
-| 9 | 스탠스 폐기 | G3 게이트 재정의를 수반 |
-| 10 | 178 신규 픽스처 | 작성 순서와 CI 편입 시점 |
-| 11 | **제품 계약 문서 부재** | 다른 세션이 `docs/abyssal-command-defense-survivor-design.md`와 `docs/abyssal-surge-production-cycle.md`를 삭제(스테이징). **현재 "이 게임이 무엇인가"를 진술하는 문서가 없다.** 복원할지, 피벗 승인 후 액션 기준으로 신규 작성할지 |
-| 12 | `README.md` 정합성 | 디펜스 서바이버 기준으로 작성되어 피벗 후 사실과 어긋난다. 갱신 시점 결정 |
-
-11–12는 이 런이 만든 문제가 아니라 **발견한 상태**다. 상세와 갱신 대상 목록은
-`design/master-gdd-delta.md#0`, `#9`.
+- `D-20260728-OAP-01`은 Cinder Span 5–8분 세로 슬라이스의 **계획·구현 순서만** 승인한다.
+- 동료는 자동 추종과 최종 보상 정예 추출만 유지하며, `FORMATION_STANCES`는 폐기한다.
+- `layoutVersion` 불일치는 사용자 고지 후 해당 원정을 재시작하고, 기존 무효화 테스트는 대체 픽스처가 생긴 뒤에만 교체한다.
+- README 공개 제품 설명은 슬라이스 2의 사람 플레이 판정 뒤에 갱신한다. 아직 구현되지 않은 목표를 현재 기능으로 표기하지 않는다.
+- 모든 신규 수치와 설계는 `[TARGET]`이며, 기존 게이트를 PASS로 바꾸지 않는다.
 
 ---
 
@@ -103,13 +95,14 @@ next-beat: director 스코프 리뷰 → 슬라이스 2 사람 플레이 판정
   경제 곡선)는 **설계 산술의 내적 정합성**을 증명할 뿐, 게임이 재미있다는 증거가 아니다.
 - 27초 오토배틀 측정치는 5–8분 액션 루프의 증거가 되지 않는다.
 - 사람 플레이 판정 없이 G4/G7/G8을 PASS로 바꾸지 않는다.
+- [OBSERVED] 이 세션의 `git status --short`는 Git이 아닌 실행 샌드박스에서 `fatal: not a git repository`로 차단됐다. 저장소 손상 증거가 아니다.
+- 커밋 전에는 Git 실행이 가능한 환경에서 `git status --short`와 아래 변경 경로의 diff를 반드시 검토한다: `production/task-manifest.md`, `design/encounter-wave-spec.md`, `design/master-gdd-delta.md`, `engineering/migration-map.md`.
 
 ---
 
 ## 5. 다음 물리적 단계
 
-1. director가 §2.1의 10건을 재정한다.
-2. 승인 시 `engineering/migration-map.md#9`의 슬라이스 1–2를 착수한다.
-3. **슬라이스 2 완료 시점에 사람 플레이 판정을 받는다** — "때리는 느낌"이 나지 않으면
-   이후 슬라이스는 무의미하다.
-4. 판정 통과 후 슬라이스 3–12를 순차 진행한다.
+1. `engineering/migration-map.md#9` 슬라이스 1(이동·카메라)과 `cam-*` 픽스처를 구현한다.
+2. 슬라이스 2(전투 동사)와 `combat-*` 픽스처를 구현하고, 실제 브라우저에서 사람 플레이 판정을 받는다.
+3. 손맛 판정이 통과할 때만 슬라이스 3–12를 문서 순서대로 진행한다. 통과 전 VFX·HUD·로비 구현은 시작하지 않는다.
+4. 슬라이스 12 뒤 빅웨이브 성능, 전체 플레이 여정 QA, 배포 증명을 별도 실행한다.

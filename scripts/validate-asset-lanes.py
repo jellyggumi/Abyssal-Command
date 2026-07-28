@@ -29,7 +29,29 @@ from typing import Any, Iterable
 
 SCRIPT_PATH = Path(__file__).resolve()
 REPO_ROOT = SCRIPT_PATH.parents[1]
-DEFAULT_POLICY_PATH = REPO_ROOT / "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/asset-lanes.json"
+def _discover_policy_path(repo_root: Path) -> Path:
+    """Locate the asset-lane policy without pinning one run directory.
+
+    The workspace layout moves: a run that was `_workspace/<run-id>/` gets
+    rotated into `_workspace/archive/<run-id>/` when the next cycle starts, and
+    a hardcoded path silently breaks the validator the moment that happens.
+    Resolve by convention instead -- active run first, then the newest archived
+    run -- so lane enforcement survives the rotation.
+    """
+    relative = Path("engineering/asset-pipeline/asset-lanes.json")
+    current = repo_root / "_workspace/current" / relative
+    if current.exists():
+        return current
+    archive = repo_root / "_workspace/archive"
+    if archive.is_dir():
+        found = sorted(archive.glob(f"*/{relative.as_posix()}"), reverse=True)
+        if found:
+            return found[0]
+    legacy = sorted((repo_root / "_workspace").glob(f"*/{relative.as_posix()}"), reverse=True)
+    return legacy[0] if legacy else current
+
+
+DEFAULT_POLICY_PATH = _discover_policy_path(REPO_ROOT)
 IGNORED_NAMES = {".git", ".DS_Store", "__pycache__"}
 
 class ScanError(RuntimeError):

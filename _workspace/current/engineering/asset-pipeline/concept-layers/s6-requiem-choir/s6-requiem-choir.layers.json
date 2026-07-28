@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "s6-requiem-choir",
+  "concept": "assets/images/battle/pilot/concept-s6-requiem-choir.png",
+  "conceptSha256": "2a8fc06730bd98e4eb04f4b64f3f36aa36be1ed40af962faa24377d060ebdbd5",
+  "generatedAt": "2026-07-28T08:04:03.195325+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      249,
+      2,
+      247
+    ],
+    "borderSpread": 2.212,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s6-requiem-choir/s6-requiem-choir-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s6-requiem-choir/raw/s6-requiem-choir-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.489,
+        "tolerance": 26,
+        "alphaCoverage": 0.25214,
+        "size": [
+          1024,
+          1349
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "0c11eef6ff74c30fdb1ea2df116631cee7538cb5ff17d2c2f5dce4d98f86d69a"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s6-requiem-choir/s6-requiem-choir-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s6-requiem-choir/raw/s6-requiem-choir-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.434,
+        "tolerance": 26,
+        "alphaCoverage": 0.04329,
+        "size": [
+          732,
+          1302
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "8bdca6a0913d879f22990372aa03f97defe08992d49e1461414747eecf26a8a3"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s6-requiem-choir/s6-requiem-choir-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s6-requiem-choir/raw/s6-requiem-choir-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.451,
+        "tolerance": 26,
+        "alphaCoverage": 0.25186,
+        "size": [
+          1348,
+          880
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "080119944fa9e2ce694d4c4df68a9f8ebc9c54eb75ebf36b7563d8ac314a8cb0"
+    }
+  ]
+}

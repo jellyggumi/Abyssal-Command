@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "assetId": "abyssal-banner",
+  "concept": "assets/images/battle/pilot/concept-abyssal-banner.png",
+  "conceptSha256": "1f1421c81387245d5f1376d2eb1ed700c2317dd770b1a54d49652d72f5b052fb",
+  "generatedAt": "2026-07-28T06:47:43.013448+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      251,
+      2,
+      250
+    ],
+    "borderSpread": 1.84,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "prop",
+      "prompt": "Isolate ONLY the prop object itself from the reference image, rendered as a standalone game asset in the same art style, in a clean three-quarter orthographic view. Exclude the pedestal, base, plinth, platform, podium, display stand, and the ground plane it rests on -- the object must float free with nothing underneath it. Exclude every character, hand, arm, creature, terrain, scenery, and background object. Pure flat white background, no cast shadow, no text, no logo, no watermark.",
+      "output": "_workspace/20260728-fullasset-regen/engineering/asset-pipeline/concept-layers/abyssal-banner/abyssal-banner-prop.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/20260728-fullasset-regen/engineering/asset-pipeline/concept-layers/abyssal-banner/raw/abyssal-banner-prop.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.497,
+        "tolerance": 26,
+        "alphaCoverage": 0.19824,
+        "size": [
+          630,
+          1193
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "7373ffd85f81f41e295624ce61eb4cf79da416d4140a7c2f7ae3dc732d0704f9"
+    }
+  ]
+}

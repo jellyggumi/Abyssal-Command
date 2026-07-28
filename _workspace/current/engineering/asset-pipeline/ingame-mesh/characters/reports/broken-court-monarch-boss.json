@@ -1,0 +1,6 @@
+{
+  "assetId": "broken-court-monarch-boss",
+  "status": "failed",
+  "error": "T-pose gate failed: axisDeviationDeg={'L': 60.1, 'R': 60.1}",
+  "traceback": "Traceback (most recent call last):\n  File \"/Users/supercent/orca/Abyssal-Command/scripts/rig-character-asset-blender.py\", line 866, in main\n    log = run(args, budgets)\n  File \"/Users/supercent/orca/Abyssal-Command/scripts/rig-character-asset-blender.py\", line 817, in run\n    raise RuntimeError(f\"T-pose gate failed: axisDeviationDeg={achieved}\")\nRuntimeError: T-pose gate failed: axisDeviationDeg={'L': 60.1, 'R': 60.1}\n"
+}

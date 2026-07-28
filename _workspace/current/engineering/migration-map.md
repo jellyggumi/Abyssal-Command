@@ -175,7 +175,7 @@ campaign.schemaVersion: 2               // 신규
 | `MAX_FRONT_SLOTS` / `orderCompanionsByFormationIntent` | 단순 추종으로 축소 |
 | `BOSS_RALLY_COOLDOWN_REDUCTION` | 삭제 (값이 0이라 무효과) |
 | `WARDEN_SKILL_TREE` 5노드 | **2노드로 축소** — `echo-backlash`/`echo-cascade`/`wardens-ward`는 신규 스킬과 중복 |
-| `WARDEN_STATS` | 유지, 상한 15 |
+| `WARDEN_STATS` | 유지, 상한 19 |
 | `WARDEN_TRAITS` 8종 | 유지 |
 | `EQUIPMENT` | 유지 |
 | `COMPANION_ROLES` | 유지 |

@@ -1,0 +1,173 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 8,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/gate-zenith.glb",
+    "sha256": "2c2c8cd4d52d6418361945d519c56e76c54aff4bf06e61599d2c457c1fce8b7d"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/gate-zenith.glb",
+    "readOnly": true,
+    "sha256": "388df008365f0943ee26f0091a00b2f661d17f2063f65516042a9a17fdf9d914"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.045,
+        0.025,
+        0.105,
+        1.0
+      ],
+      "bytes": 7959,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "e7c660b0ad665b34a9a89d6d4092a073cb17a223145d231b8986ef18c92a0a2f",
+      "uvCoverage": 0.852921,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.095,
+        0.075,
+        0.145,
+        1.0
+      ],
+      "bytes": 33811,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 5,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "7cf071c46feff5c466bbe7ed1f7875248fa069775060bbebecf06ddfcbec3a93",
+      "uvCoverage": 0.845291,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.045,
+        0.025,
+        0.105,
+        1.0
+      ],
+      "bytes": 12210,
+      "dilatedCoverage": 0.56778,
+      "height": 256,
+      "materialIndex": 6,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "5b7eb4d069061f5f54077d725a2eb5db840a54bfac64eba6020c7d7ccb491090",
+      "uvCoverage": 0.287109,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.56,
+        0.045,
+        0.06,
+        1.0
+      ],
+      "bytes": 18667,
+      "dilatedCoverage": 0.565536,
+      "height": 256,
+      "materialIndex": 7,
+      "meshIndex": 3,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m3-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "e21156a9548f2bafbd5f25b2618be3394af14b9cd00c640cef11ff366e49b10c",
+      "uvCoverage": 0.375107,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.56,
+        0.045,
+        0.06,
+        1.0
+      ],
+      "bytes": 35723,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 8,
+      "meshIndex": 4,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m4-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "c6a68efe58ba56efa94c88e1ecb42c41c349232abef6e47059ef3b05043055e1",
+      "uvCoverage": 1.0,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.72,
+        0.58,
+        0.14,
+        1.0
+      ],
+      "bytes": 42118,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 9,
+      "meshIndex": 5,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m5-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "eb504e2fee992b41397d743f4b25c2bfc1315a8711fdab4b67c1d0bbd03a73b4",
+      "uvCoverage": 1.0,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.56,
+        0.045,
+        0.06,
+        1.0
+      ],
+      "bytes": 12097,
+      "dilatedCoverage": 0.555664,
+      "height": 256,
+      "materialIndex": 10,
+      "meshIndex": 6,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m6-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "e8b967d3a809fed10eafcae8a51699ecb0d1ec16515b2ea30804b7efe93ea6fb",
+      "uvCoverage": 0.34668,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.56,
+        0.045,
+        0.06,
+        1.0
+      ],
+      "bytes": 13012,
+      "dilatedCoverage": 0.555664,
+      "height": 256,
+      "materialIndex": 11,
+      "meshIndex": 7,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m7-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "cca06e26affa1f8dd986938e1d6083efd25f3b297239d89399620dd26008a6b1",
+      "uvCoverage": 0.34668,
+      "width": 256
+    }
+  ]
+}

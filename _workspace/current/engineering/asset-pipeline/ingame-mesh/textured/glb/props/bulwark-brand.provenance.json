@@ -1,0 +1,83 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 3,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/bulwark-brand.glb",
+    "sha256": "e799983744a6875d758037f08de6ebbe43bf730ca25c244bc2076203d90b5ce7"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "props/bulwark-brand.glb",
+    "readOnly": true,
+    "sha256": "7844b8ef8641b33da8526e96eeec24dfd3ac460f92d4c03e688f2b8aca5c0d87"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.54,
+        0.48,
+        0.37,
+        1.0
+      ],
+      "bytes": 23573,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 3,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/bulwark-brand/bulwark-brand-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "21b9a2c3caa4fdd1b80dbb244f7c47188ce2fc2cd312f32e5a426ff66705f58a",
+      "uvCoverage": 0.852921,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.75,
+        0.34,
+        0.05,
+        1.0
+      ],
+      "bytes": 31477,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/bulwark-brand/bulwark-brand-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "2a67ae28bb4ef0a4517d5e1c26f6bc47c1276701e246fd243a310d4a31f496f6",
+      "uvCoverage": 1.0,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.17,
+        0.19,
+        0.28,
+        1.0
+      ],
+      "bytes": 23291,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 5,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/bulwark-brand/bulwark-brand-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "18223baa597d01707e92cb8f43590f07929141d8bc32ef5016d9d7826fb26086",
+      "uvCoverage": 0.82692,
+      "width": 256
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "frozenFrom": "pre-fullasset-regen-20260728",
+  "frozenAt": "2026-07-28T07:22:02.487079+00:00",
+  "purpose": "Scale contract the regenerated character meshes must reproduce.",
+  "shoulderPolicy": "re-measured from the new concept character plate, not frozen",
+  "medianHeight": 1.8869,
+  "characters": {
+    "abyss-regent": {
+      "category": "bosses",
+      "height": 1.8634,
+      "scope": "body"
+    },
+    "anchor-shard": {
+      "category": "companions",
+      "height": 1.8942,
+      "scope": "body"
+    },
+    "bridge-colossus": {
+      "category": "bosses",
+      "height": 1.7206,
+      "scope": "body"
+    },
+    "cinder-warden": {
+      "category": "bosses",
+      "height": 1.8811,
+      "scope": "body"
+    },
+    "dawnless-crown": {
+      "category": "companions",
+      "height": 1.8916,
+      "scope": "body"
+    },
+    "dusk-warden": {
+      "category": "commander",
+      "height": 1.9855,
+      "scope": "body"
+    },
+    "ember-cohort": {
+      "category": "companions",
+      "height": 1.6627,
+      "scope": "body"
+    },
+    "gate-sovereign": {
+      "category": "bosses",
+      "height": 1.8664,
+      "scope": "body"
+    },
+    "guard": {
+      "category": "enemies",
+      "height": 1.6002,
+      "scope": "body"
+    },
+    "lantern-reaver": {
+      "category": "companions",
+      "height": 1.9095,
+      "scope": "body"
+    },
+    "lantern-tyrant": {
+      "category": "bosses",
+      "height": 1.8598,
+      "scope": "body"
+    },
+    "pack-herald": {
+      "category": "bosses",
+      "height": 1.8936,
+      "scope": "body"
+    },
+    "pack-warden": {
+      "category": "companions",
+      "height": 1.6421,
+      "scope": "body"
+    },
+    "possessed": {
+      "category": "enemies",
+      "height": 1.8998,
+      "scope": "body"
+    },
+    "requiem-choir": {
+      "category": "bosses",
+      "height": 1.8822,
+      "scope": "body"
+    },
+    "requiem-warden": {
+      "category": "companions",
+      "height": 1.9024,
+      "scope": "body"
+    },
+    "rift-lens": {
+      "category": "companions",
+      "height": 1.9017,
+      "scope": "body"
+    },
+    "scout": {
+      "category": "enemies",
+      "height": 1.1536,
+      "scope": "body"
+    },
+    "shade": {
+      "category": "enemies",
+      "height": 1.446,
+      "scope": "body"
+    },
+    "throne-echo": {
+      "category": "companions",
+      "height": 1.902,
+      "scope": "body"
+    },
+    "tide-warden": {
+      "category": "bosses",
+      "height": 1.9045,
+      "scope": "body"
+    },
+    "veil-tactician": {
+      "category": "bosses",
+      "height": 1.8966,
+      "scope": "body"
+    },
+    "veil-vanguard": {
+      "category": "companions",
+      "height": 1.8992,
+      "scope": "body"
+    },
+    "veiled-concordat": {
+      "category": "bosses",
+      "height": 1.8818,
+      "scope": "body"
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "s8-bridge-colossus",
+  "concept": "assets/images/battle/pilot/concept-s8-bridge-colossus.png",
+  "conceptSha256": "88b06785e401bddcef1601b781d24a6e94b8d54a2c4356fc8463e6c1a1dde4de",
+  "generatedAt": "2026-07-28T08:10:59.893956+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      249,
+      2,
+      228
+    ],
+    "borderSpread": 2.036,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s8-bridge-colossus/s8-bridge-colossus-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s8-bridge-colossus/raw/s8-bridge-colossus-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 2.016,
+        "tolerance": 26,
+        "alphaCoverage": 0.20919,
+        "size": [
+          1024,
+          1026
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "3b2695e02e6e7ae52f6a82fc9b233e41b9c71506f48af3624201d745e4bf599f"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s8-bridge-colossus/s8-bridge-colossus-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s8-bridge-colossus/raw/s8-bridge-colossus-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.46,
+        "tolerance": 26,
+        "alphaCoverage": 0.27197,
+        "size": [
+          704,
+          1408
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "b274074ef0f5c8b117ccc05e403c824309b431712bac73ef1148c83865f086c4"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s8-bridge-colossus/s8-bridge-colossus-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s8-bridge-colossus/raw/s8-bridge-colossus-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.463,
+        "tolerance": 26,
+        "alphaCoverage": 0.34136,
+        "size": [
+          1502,
+          965
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "d3e6d0111951b56fac0e74382359a3bfc4fd6c5283ab15413a7b95665cca1d7b"
+    }
+  ]
+}

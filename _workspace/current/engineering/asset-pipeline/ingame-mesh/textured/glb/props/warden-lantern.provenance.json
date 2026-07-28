@@ -1,0 +1,101 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 4,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/warden-lantern.glb",
+    "sha256": "12f1ca6051e57576a469a11d651116c0e6d2f4511482dffd53f754612623c4c4"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "props/warden-lantern.glb",
+    "readOnly": true,
+    "sha256": "8a6c3e25bb30c57c3fea5790d2892765b4ab61657a3a8fe1626b4d7169d09b73"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.17,
+        0.19,
+        0.28,
+        1.0
+      ],
+      "bytes": 21433,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/warden-lantern/warden-lantern-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "a56790d8bbbd57c400912854d9341cc132b56663b147715429b064d32a7b3434",
+      "uvCoverage": 0.82692,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.045,
+        0.035,
+        0.14,
+        1.0
+      ],
+      "bytes": 23389,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 5,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/warden-lantern/warden-lantern-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "cb8b4fb7965d13da6657ad8b58154df8379c9230d5e680a10f612c059e3ae819",
+      "uvCoverage": 1.0,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.85,
+        0.52,
+        0.08,
+        1.0
+      ],
+      "bytes": 18107,
+      "dilatedCoverage": 0.56778,
+      "height": 256,
+      "materialIndex": 6,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/warden-lantern/warden-lantern-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "2ef8d45dfcf49ae2527122482eb4e42c18931b90c9d8b8e096e7aca5f0d935bd",
+      "uvCoverage": 0.287109,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.54,
+        0.48,
+        0.37,
+        1.0
+      ],
+      "bytes": 23418,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 7,
+      "meshIndex": 3,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/warden-lantern/warden-lantern-m3-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "c962ad2b71fc0ba8ebaf717b937f675c12fb8369abf982ce9cc2f2ea9ae183b2",
+      "uvCoverage": 0.852921,
+      "width": 256
+    }
+  ]
+}

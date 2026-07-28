@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "s3-gate-sovereign",
+  "concept": "assets/images/battle/pilot/concept-s3-gate-sovereign.png",
+  "conceptSha256": "db8882cef616ec4d17de76c377b7da9fecd4ea0948cad55017abd23e9b616ecc",
+  "generatedAt": "2026-07-28T07:52:55.656096+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      247,
+      3,
+      223
+    ],
+    "borderSpread": 2.119,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s3-gate-sovereign/s3-gate-sovereign-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s3-gate-sovereign/raw/s3-gate-sovereign-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.444,
+        "tolerance": 26,
+        "alphaCoverage": 0.34317,
+        "size": [
+          1017,
+          1260
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "4655fce5fbdb4247f8df1e68c402215a6b1cf7e53f57137dd414030075e8f4dd"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s3-gate-sovereign/s3-gate-sovereign-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s3-gate-sovereign/raw/s3-gate-sovereign-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.42,
+        "tolerance": 26,
+        "alphaCoverage": 0.09022,
+        "size": [
+          285,
+          1510
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "35acb67c373698efd15ac1f1efde76913eff3c073b05b6f26c53ec4ce466fb3d"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/s3-gate-sovereign/s3-gate-sovereign-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/s3-gate-sovereign/raw/s3-gate-sovereign-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.468,
+        "tolerance": 26,
+        "alphaCoverage": 0.32454,
+        "size": [
+          1438,
+          996
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "18fbc0444facebfef8f33ea7fa7cd69cbde3645cc1d78366aa7427d73f619533"
+    }
+  ]
+}

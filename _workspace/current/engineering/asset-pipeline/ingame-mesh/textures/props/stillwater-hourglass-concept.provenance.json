@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "AI-generated candidate appearance reference",
+    "referenceInput": "_workspace/current/engineering/asset-pipeline/concept-layers/stillwater-hourglass/raw/stillwater-hourglass-prop.raw.png",
+    "promptIntent": "frost-blue glass, aged bronze filigree, cyan crystal glow, and readable material zones for the Stillwater Hourglass"
+  },
+  "generator": {
+    "tool": "gti",
+    "provider": "private-codex",
+    "responseId": "resp_06bb51006931bc3b016a68a33d812481918c06c3b6fc12f3bd",
+    "httpStatus": 200,
+    "generatedAt": "2026-07-28"
+  },
+  "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/props/stillwater-hourglass-concept.png",
+  "sha256": "2bf8bb9257de69b1dd0ede0107d28e6004af63bbfb4d12fade0fa6bc615371e7",
+  "rightsReceipt": "AI-generated candidate image; evaluate project licensing and texture provenance before any shipment",
+  "runtimeReceipt": {
+    "runtimeEligible": false,
+    "status": "not-issued",
+    "reason": "This is an appearance reference, not a UV-baked albedo atlas; it must pass UV mapping, texture embedding, and in-browser material QA first."
+  },
+  "assetRole": "candidate-appearance-reference",
+  "textureStatus": "generated-concept-reference-not-embedded"
+}

@@ -1,0 +1,1850 @@
+{
+  "actorContract": {
+    "clipNamePattern": "{assetId}::{action}::v01",
+    "excludeFromRodin": [
+      "terrain",
+      "floor",
+      "pedestal",
+      "platform",
+      "rocks",
+      "weapons",
+      "shields",
+      "held props",
+      "equipment",
+      "debris",
+      "background geometry"
+    ],
+    "requiredClipKeys": [
+      "idle",
+      "move",
+      "run",
+      "hit",
+      "bighit",
+      "attack",
+      "critical",
+      "avoid",
+      "defence",
+      "die",
+      "show"
+    ],
+    "runtimeFps": 30,
+    "sourceFps": 60
+  },
+  "assets": [
+    {
+      "assetClass": "terrain",
+      "assetId": "abyss-chancel",
+      "blockers": [
+        "concept-layer-generation-failed",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/abyss-chancel.glb",
+        "runtimeEligible": false,
+        "sha256": "8e78c8b2ecbd926d2fa501319e6a2ea419a83626d9ffeadce72cdbbf4d8c5bc1",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/abyss-chancel.glb",
+      "category": "terrain",
+      "conceptReference": {
+        "assetId": "terrain-abyss-chancel",
+        "concept": "assets/images/battle/pilot/concept-terrain-abyss-chancel.png",
+        "failedLayers": [
+          "background-object",
+          "background-terrain",
+          "terrain",
+          "terrain-feature"
+        ],
+        "generatedLayers": [],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-abyss-chancel/terrain-abyss-chancel.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Blender-authored playable diorama from separated terrain references",
+        "motion": "not applicable",
+        "texture": "god-tibo-imagen environment atlas after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/terrain/abyss-chancel.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "terrain",
+      "assetId": "cinder-span",
+      "blockers": [
+        "concept-layer-generation-failed",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/cinder-span.glb",
+      "category": "terrain",
+      "conceptReference": {
+        "assetId": "terrain-cinder-span",
+        "concept": "assets/images/battle/pilot/concept-terrain-cinder-span.png",
+        "failedLayers": [
+          "background-object",
+          "background-terrain",
+          "terrain",
+          "terrain-feature"
+        ],
+        "generatedLayers": [],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-cinder-span/terrain-cinder-span.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Blender-authored playable diorama from separated terrain references",
+        "motion": "not applicable",
+        "texture": "god-tibo-imagen environment atlas after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/terrain/cinder-span.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "terrain",
+      "assetId": "echo-throne-steps",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/echo-throne-steps.glb",
+      "category": "terrain",
+      "conceptReference": {
+        "assetId": "echo-throne-steps",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored playable diorama from separated terrain references",
+        "motion": "not applicable",
+        "texture": "god-tibo-imagen environment atlas after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/terrain/echo-throne-steps.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "terrain",
+      "assetId": "gate-zenith",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/gate-zenith.glb",
+        "runtimeEligible": false,
+        "sha256": "388df008365f0943ee26f0091a00b2f661d17f2063f65516042a9a17fdf9d914",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/gate-zenith.glb",
+      "category": "terrain",
+      "conceptReference": {
+        "assetId": "gate-zenith",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored playable diorama from separated terrain references",
+        "motion": "not applicable",
+        "texture": "god-tibo-imagen environment atlas after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/terrain/gate-zenith.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "terrain",
+      "assetId": "glass-necropolis",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/glass-necropolis.glb",
+        "runtimeEligible": false,
+        "sha256": "b8ee81a6f82899714b2a7b5c79a4b9167f2b778a2b3deadaff02bad659f14996",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/glass-necropolis.glb",
+      "category": "terrain",
+      "conceptReference": {
+        "assetId": "glass-necropolis",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored playable diorama from separated terrain references",
+        "motion": "not applicable",
+        "texture": "god-tibo-imagen environment atlas after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/terrain/glass-necropolis.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "terrain",
+      "assetId": "howling-sprawl",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/howling-sprawl.glb",
+        "runtimeEligible": false,
+        "sha256": "77922ecc3a943774b39798ecfb09fb1271c0d4575583c84dbaa9f63ee7ef0f36",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/howling-sprawl.glb",
+      "category": "terrain",
+      "conceptReference": {
+        "assetId": "howling-sprawl",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored playable diorama from separated terrain references",
+        "motion": "not applicable",
+        "texture": "god-tibo-imagen environment atlas after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/terrain/howling-sprawl.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "terrain",
+      "assetId": "shattered-causeway",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/shattered-causeway.glb",
+        "runtimeEligible": false,
+        "sha256": "9f303e8b7401f89938f52fdb0fa29940d71e4ae7fda3b3c7e43f011c01e2762e",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/shattered-causeway.glb",
+      "category": "terrain",
+      "conceptReference": {
+        "assetId": "shattered-causeway",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored playable diorama from separated terrain references",
+        "motion": "not applicable",
+        "texture": "god-tibo-imagen environment atlas after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/terrain/shattered-causeway.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "terrain",
+      "assetId": "starless-canal",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/starless-canal.glb",
+        "runtimeEligible": false,
+        "sha256": "d3341ad55ea685ce091046fd5a2147c53610d7a06b329674aa8d67c2cc9eec30",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/starless-canal.glb",
+      "category": "terrain",
+      "conceptReference": {
+        "assetId": "starless-canal",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored playable diorama from separated terrain references",
+        "motion": "not applicable",
+        "texture": "god-tibo-imagen environment atlas after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/terrain/starless-canal.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "terrain",
+      "assetId": "sunken-bastion",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/sunken-bastion.glb",
+        "runtimeEligible": false,
+        "sha256": "b17705722adc6d46a25f6f4b049bfa512aa2e270af47864ab258b3ea44e8231b",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/sunken-bastion.glb",
+      "category": "terrain",
+      "conceptReference": {
+        "assetId": "sunken-bastion",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored playable diorama from separated terrain references",
+        "motion": "not applicable",
+        "texture": "god-tibo-imagen environment atlas after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/terrain/sunken-bastion.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "terrain",
+      "assetId": "veil-citadel",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/terrain/veil-citadel.glb",
+      "category": "terrain",
+      "conceptReference": {
+        "assetId": "veil-citadel",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored playable diorama from separated terrain references",
+        "motion": "not applicable",
+        "texture": "god-tibo-imagen environment atlas after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/terrain/veil-citadel.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "abyss-regent",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/bosses/abyss-regent.glb",
+      "category": "bosses",
+      "conceptReference": {
+        "assetId": "s10-abyss-regent",
+        "concept": "assets/images/battle/pilot/concept-s10-abyss-regent.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/s10-abyss-regent/s10-abyss-regent.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/bosses/abyss-regent.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "bridge-colossus",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/bosses/bridge-colossus.glb",
+      "category": "bosses",
+      "conceptReference": {
+        "assetId": "s8-bridge-colossus",
+        "concept": "assets/images/battle/pilot/concept-s8-bridge-colossus.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/s8-bridge-colossus/s8-bridge-colossus.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/bosses/bridge-colossus.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "cinder-warden",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/bosses/cinder-warden.glb",
+      "category": "bosses",
+      "conceptReference": {
+        "assetId": "s1-cinder-warden",
+        "concept": "assets/images/battle/pilot/concept-s1-cinder-warden.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/s1-cinder-warden/s1-cinder-warden.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/bosses/cinder-warden.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "gate-sovereign",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/bosses/gate-sovereign.glb",
+      "category": "bosses",
+      "conceptReference": {
+        "assetId": "s3-gate-sovereign",
+        "concept": "assets/images/battle/pilot/concept-s3-gate-sovereign.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/s3-gate-sovereign/s3-gate-sovereign.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/bosses/gate-sovereign.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "lantern-tyrant",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/bosses/lantern-tyrant.glb",
+      "category": "bosses",
+      "conceptReference": {
+        "assetId": "s7-lantern-tyrant",
+        "concept": "assets/images/battle/pilot/concept-s7-lantern-tyrant.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/s7-lantern-tyrant/s7-lantern-tyrant.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/bosses/lantern-tyrant.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "pack-herald",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/bosses/pack-herald.glb",
+      "category": "bosses",
+      "conceptReference": {
+        "assetId": "s5-pack-herald",
+        "concept": "assets/images/battle/pilot/concept-s5-pack-herald.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/s5-pack-herald/s5-pack-herald.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/bosses/pack-herald.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "requiem-choir",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/bosses/requiem-choir.glb",
+      "category": "bosses",
+      "conceptReference": {
+        "assetId": "s6-requiem-choir",
+        "concept": "assets/images/battle/pilot/concept-s6-requiem-choir.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/s6-requiem-choir/s6-requiem-choir.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/bosses/requiem-choir.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "tide-warden",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/bosses/tide-warden.glb",
+      "category": "bosses",
+      "conceptReference": {
+        "assetId": "s4-tide-warden",
+        "concept": "assets/images/battle/pilot/concept-s4-tide-warden.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/s4-tide-warden/s4-tide-warden.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/bosses/tide-warden.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "veil-tactician",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/bosses/veil-tactician.glb",
+      "category": "bosses",
+      "conceptReference": {
+        "assetId": "s2-veil-tactician",
+        "concept": "assets/images/battle/pilot/concept-s2-veil-tactician.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/s2-veil-tactician/s2-veil-tactician.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/bosses/veil-tactician.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "veiled-concordat",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/bosses/veiled-concordat.glb",
+      "category": "bosses",
+      "conceptReference": {
+        "assetId": "s9-veiled-concordat",
+        "concept": "assets/images/battle/pilot/concept-s9-veiled-concordat.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/s9-veiled-concordat/s9-veiled-concordat.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/bosses/veiled-concordat.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "guard",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/enemies/guard.glb",
+      "category": "enemies",
+      "conceptReference": {
+        "assetId": "guard",
+        "concept": "assets/images/battle/pilot/concept-guard.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/guard/guard.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/enemies/guard.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "possessed",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/enemies/possessed.glb",
+      "category": "enemies",
+      "conceptReference": {
+        "assetId": "possessed",
+        "concept": "assets/images/battle/pilot/concept-possessed.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/possessed/possessed.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/enemies/possessed.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "scout",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/enemies/scout.glb",
+      "category": "enemies",
+      "conceptReference": {
+        "assetId": "scout",
+        "concept": "assets/images/battle/pilot/concept-scout.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/scout/scout.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/enemies/scout.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "shade",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/enemies/shade.glb",
+      "category": "enemies",
+      "conceptReference": {
+        "assetId": "shade",
+        "concept": "assets/images/battle/pilot/concept-shade.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/shade/shade.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/enemies/shade.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "anchor-shard",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/companions/anchor-shard.glb",
+      "category": "companions",
+      "conceptReference": {
+        "assetId": "anchor-shard",
+        "concept": "assets/images/battle/pilot/concept-anchor-shard.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/anchor-shard/anchor-shard.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/companions/anchor-shard.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "dawnless-crown",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/companions/dawnless-crown.glb",
+      "category": "companions",
+      "conceptReference": {
+        "assetId": "dawnless-crown",
+        "concept": "assets/images/battle/pilot/concept-dawnless-crown.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/dawnless-crown/dawnless-crown.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/companions/dawnless-crown.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "ember-cohort",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/companions/ember-cohort.glb",
+      "category": "companions",
+      "conceptReference": {
+        "assetId": "ember-cohort",
+        "concept": "assets/images/battle/pilot/concept-ember-cohort.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/ember-cohort/ember-cohort.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/companions/ember-cohort.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "lantern-reaver",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/companions/lantern-reaver.glb",
+      "category": "companions",
+      "conceptReference": {
+        "assetId": "lantern-reaver",
+        "concept": "assets/images/battle/pilot/concept-lantern-reaver.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/lantern-reaver/lantern-reaver.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/companions/lantern-reaver.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "pack-warden",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/companions/pack-warden.glb",
+      "category": "companions",
+      "conceptReference": {
+        "assetId": "pack-warden",
+        "concept": "assets/images/battle/pilot/concept-pack-warden.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/pack-warden/pack-warden.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/companions/pack-warden.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "requiem-warden",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/companions/requiem-warden.glb",
+      "category": "companions",
+      "conceptReference": {
+        "assetId": "requiem-warden",
+        "concept": "assets/images/battle/pilot/concept-requiem-warden.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/requiem-warden/requiem-warden.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/companions/requiem-warden.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "rift-lens",
+      "blockers": [
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/companions/rift-lens.glb",
+      "category": "companions",
+      "conceptReference": {
+        "assetId": "rift-lens",
+        "concept": "assets/images/battle/pilot/concept-rift-lens.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/rift-lens/rift-lens.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/companions/rift-lens.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "throne-echo",
+      "blockers": [
+        "concept-layer-generation-failed",
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/companions/throne-echo.glb",
+      "category": "companions",
+      "conceptReference": {
+        "assetId": "throne-echo",
+        "concept": "assets/images/battle/pilot/concept-throne-echo.png",
+        "failedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "generatedLayers": [],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/throne-echo/throne-echo.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/companions/throne-echo.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "veil-vanguard",
+      "blockers": [
+        "concept-layer-generation-failed",
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/companions/veil-vanguard.glb",
+      "category": "companions",
+      "conceptReference": {
+        "assetId": "veil-vanguard",
+        "concept": "assets/images/battle/pilot/concept-veil-vanguard.png",
+        "failedLayers": [
+          "accessory",
+          "character",
+          "weapon"
+        ],
+        "generatedLayers": [],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/veil-vanguard/veil-vanguard.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/companions/veil-vanguard.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "actor",
+      "assetId": "dusk-warden",
+      "blockers": [
+        "concept-layer-generation-pending",
+        "interactive-Rodin-Bridge-submission-required",
+        "Motion-Previs-bundle-required",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/commander/dusk-warden.glb",
+      "category": "commander",
+      "conceptReference": {
+        "assetId": "player-core",
+        "concept": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/concept-input/player-core-tpose-v01.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "character"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/player-core/player-core.layers.json",
+        "pendingLayers": [
+          "accessory",
+          "weapon"
+        ]
+      },
+      "generation": {
+        "mesh": "Rodin Bridge genuine-T-pose body mesh",
+        "motion": "Motion Previs reference then Blender deform rig and NLA 11-clip bake",
+        "texture": "god-tibo-imagen per-asset cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/commander/dusk-warden.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "vfx",
+      "assetId": "abyss-orb",
+      "blockers": [
+        "missing-separated-concept-reference"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/abyss-orb.glb",
+      "category": "vfx",
+      "conceptReference": {
+        "assetId": "abyss-orb",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored lightweight VFX GLB; do not route VFX through Rodin",
+        "motion": "authored one-shot transform or shader timing; no humanoid retargeting",
+        "texture": "provenanced emissive/material atlas when a texture is required"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/vfx/abyss-orb.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "vfx",
+      "assetId": "boss-rally-aura",
+      "blockers": [
+        "missing-separated-concept-reference"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/boss-rally-aura.glb",
+        "runtimeEligible": false,
+        "sha256": "bbeee9da654dd290a2b2b802a23a44b49681d3ce490d251085c869714481c5c5",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/boss-rally-aura.glb",
+      "category": "vfx",
+      "conceptReference": {
+        "assetId": "boss-rally-aura",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored lightweight VFX GLB; do not route VFX through Rodin",
+        "motion": "authored one-shot transform or shader timing; no humanoid retargeting",
+        "texture": "provenanced emissive/material atlas when a texture is required"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/vfx/boss-rally-aura.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "vfx",
+      "assetId": "companion-downed-fade",
+      "blockers": [
+        "missing-separated-concept-reference"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/companion-downed-fade.glb",
+        "runtimeEligible": false,
+        "sha256": "939768df286234389a642cb9c55fdb609d2f9a7e21878638b5bfe8f3ae71115b",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/companion-downed-fade.glb",
+      "category": "vfx",
+      "conceptReference": {
+        "assetId": "companion-downed-fade",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored lightweight VFX GLB; do not route VFX through Rodin",
+        "motion": "authored one-shot transform or shader timing; no humanoid retargeting",
+        "texture": "provenanced emissive/material atlas when a texture is required"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/vfx/companion-downed-fade.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "vfx",
+      "assetId": "critical-hit-burst",
+      "blockers": [
+        "missing-separated-concept-reference"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/critical-hit-burst.glb",
+        "runtimeEligible": false,
+        "sha256": "55e2c60b89603467fa308811471a9093c153afbdcc4dd8c3dcb7c7b286611db6",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/critical-hit-burst.glb",
+      "category": "vfx",
+      "conceptReference": {
+        "assetId": "critical-hit-burst",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored lightweight VFX GLB; do not route VFX through Rodin",
+        "motion": "authored one-shot transform or shader timing; no humanoid retargeting",
+        "texture": "provenanced emissive/material atlas when a texture is required"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/vfx/critical-hit-burst.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "vfx",
+      "assetId": "echo-warden-awakening",
+      "blockers": [
+        "missing-separated-concept-reference"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/echo-warden-awakening.glb",
+        "runtimeEligible": false,
+        "sha256": "8f07abae1a65fffdd1cdfbf55981358383dad67e9fc81a9064a86ec537039713",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/echo-warden-awakening.glb",
+      "category": "vfx",
+      "conceptReference": {
+        "assetId": "echo-warden-awakening",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored lightweight VFX GLB; do not route VFX through Rodin",
+        "motion": "authored one-shot transform or shader timing; no humanoid retargeting",
+        "texture": "provenanced emissive/material atlas when a texture is required"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/vfx/echo-warden-awakening.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "vfx",
+      "assetId": "gate-breach-shockwave",
+      "blockers": [
+        "missing-separated-concept-reference"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/gate-breach-shockwave.glb",
+        "runtimeEligible": false,
+        "sha256": "9987107c3502d1b3524949d0b65e15dd75c516020f24bab329031ec917b01124",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/gate-breach-shockwave.glb",
+      "category": "vfx",
+      "conceptReference": {
+        "assetId": "gate-breach-shockwave",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored lightweight VFX GLB; do not route VFX through Rodin",
+        "motion": "authored one-shot transform or shader timing; no humanoid retargeting",
+        "texture": "provenanced emissive/material atlas when a texture is required"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/vfx/gate-breach-shockwave.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "vfx",
+      "assetId": "melee-slash",
+      "blockers": [
+        "missing-separated-concept-reference"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/melee-slash.glb",
+      "category": "vfx",
+      "conceptReference": {
+        "assetId": "melee-slash",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored lightweight VFX GLB; do not route VFX through Rodin",
+        "motion": "authored one-shot transform or shader timing; no humanoid retargeting",
+        "texture": "provenanced emissive/material atlas when a texture is required"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/vfx/melee-slash.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "vfx",
+      "assetId": "ranged-bolt",
+      "blockers": [
+        "missing-separated-concept-reference"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/ranged-bolt.glb",
+      "category": "vfx",
+      "conceptReference": {
+        "assetId": "ranged-bolt",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored lightweight VFX GLB; do not route VFX through Rodin",
+        "motion": "authored one-shot transform or shader timing; no humanoid retargeting",
+        "texture": "provenanced emissive/material atlas when a texture is required"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/vfx/ranged-bolt.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "vfx",
+      "assetId": "wardens-ward-shield",
+      "blockers": [
+        "missing-separated-concept-reference"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/wardens-ward-shield.glb",
+        "runtimeEligible": false,
+        "sha256": "0811c083c69e0a2dbae874d371e124731512affd3b28864ce91c36bdc3a6a53e",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/vfx/wardens-ward-shield.glb",
+      "category": "vfx",
+      "conceptReference": {
+        "assetId": "wardens-ward-shield",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored lightweight VFX GLB; do not route VFX through Rodin",
+        "motion": "authored one-shot transform or shader timing; no humanoid retargeting",
+        "texture": "provenanced emissive/material atlas when a texture is required"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/vfx/wardens-ward-shield.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "abyss-blade",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/abyss-blade.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "abyss-blade",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/abyss-blade.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "arc-caster",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/arc-caster.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "arc-caster",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/arc-caster.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "abyssal-banner",
+      "blockers": [
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/abyssal-banner.glb",
+        "runtimeEligible": false,
+        "sha256": "25e42989ec9582df01af314295c8b641f3cfc0645095129c31bb6a31ecdd855b",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/abyssal-banner.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "abyssal-banner",
+        "concept": "assets/images/battle/pilot/concept-abyssal-banner.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/abyssal-banner/abyssal-banner.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/abyssal-banner.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "bulwark-brand",
+      "blockers": [
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/bulwark-brand.glb",
+        "runtimeEligible": false,
+        "sha256": "7844b8ef8641b33da8526e96eeec24dfd3ac460f92d4c03e688f2b8aca5c0d87",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/bulwark-brand.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "bulwark-brand",
+        "concept": "assets/images/battle/pilot/concept-bulwark-brand.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/bulwark-brand/bulwark-brand.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/bulwark-brand.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "choir-ward-crystal",
+      "blockers": [
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/choir-ward-crystal.glb",
+        "runtimeEligible": false,
+        "sha256": "5ac2ade750b69d084a4ebe505b987548686e40d60815f35c1dc2ffc2441cb8e2",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/choir-ward-crystal.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "choir-ward-crystal",
+        "concept": "assets/images/battle/pilot/concept-choir-ward-crystal.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/choir-ward-crystal/choir-ward-crystal.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/choir-ward-crystal.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "stillwater-hourglass",
+      "blockers": [
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/stillwater-hourglass.glb",
+        "runtimeEligible": false,
+        "sha256": "3f664d6c77e6d0bb92f7412d01da08adb9b1740956e6f7f84920808da16be201",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/stillwater-hourglass.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "stillwater-hourglass",
+        "concept": "assets/images/battle/pilot/concept-stillwater-hourglass.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/stillwater-hourglass/stillwater-hourglass.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/stillwater-hourglass.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": {
+        "assetRole": "candidate-appearance-reference",
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/props/stillwater-hourglass-concept.png",
+        "runtimeEligible": false,
+        "sha256": "2bf8bb9257de69b1dd0ede0107d28e6004af63bbfb4d12fade0fa6bc615371e7",
+        "textureStatus": "generated-concept-reference-not-embedded"
+      }
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "tide-lock-beacon-rodin",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": null,
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tide-lock-beacon-rodin.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "tide-lock-beacon-rodin",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb",
+      "status": "blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "warden-lantern",
+      "blockers": [
+        "missing-separated-concept-reference",
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/warden-lantern.glb",
+        "runtimeEligible": false,
+        "sha256": "8a6c3e25bb30c57c3fea5790d2892765b4ab61657a3a8fe1626b4d7169d09b73",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/warden-lantern.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "warden-lantern",
+        "status": "missing"
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/warden-lantern.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "tier-t1",
+      "blockers": [
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t1.glb",
+        "runtimeEligible": false,
+        "sha256": "91510fe3232ea4e317716e5ea9e3976eb2ecb32fb15015503865fbf796c148a8",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t1.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "equipment-tier-gems",
+        "concept": "assets/images/battle/pilot/concept-equipment-tier-gems.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/equipment-tier-gems/equipment-tier-gems.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/tiers/tier-t1.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "tier-t2",
+      "blockers": [
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t2.glb",
+        "runtimeEligible": false,
+        "sha256": "749fc57f244da0939813834f56a41c040dc914804279e9d77327690e4aa680f7",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t2.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "equipment-tier-gems",
+        "concept": "assets/images/battle/pilot/concept-equipment-tier-gems.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/equipment-tier-gems/equipment-tier-gems.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/tiers/tier-t2.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "tier-t3",
+      "blockers": [
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t3.glb",
+        "runtimeEligible": false,
+        "sha256": "2e1e1bcdfea87969b1f996c1712c5569fe2e9105281549a06bc0077ca14f70b9",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t3.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "equipment-tier-gems",
+        "concept": "assets/images/battle/pilot/concept-equipment-tier-gems.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/equipment-tier-gems/equipment-tier-gems.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/tiers/tier-t3.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "tier-t4",
+      "blockers": [
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t4.glb",
+        "runtimeEligible": false,
+        "sha256": "e2b0c5d070e5cf193c0134ce6625309d9646c16072d11e39d3fb4058080e2a60",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t4.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "equipment-tier-gems",
+        "concept": "assets/images/battle/pilot/concept-equipment-tier-gems.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/equipment-tier-gems/equipment-tier-gems.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/tiers/tier-t4.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    },
+    {
+      "assetClass": "prop",
+      "assetId": "tier-t5",
+      "blockers": [
+        "per-asset-texture-generation-required"
+      ],
+      "candidateArtifact": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t5.glb",
+        "runtimeEligible": false,
+        "sha256": "27c56b57c9e7c2593498fd1104f198cf51f33e294ff5c4b71aaecec82350dd61",
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "visualFidelityStatus": "not-a-baseline-replacement"
+      },
+      "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t5.glb",
+      "category": "props",
+      "conceptReference": {
+        "assetId": "equipment-tier-gems",
+        "concept": "assets/images/battle/pilot/concept-equipment-tier-gems.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/equipment-tier-gems/equipment-tier-gems.layers.json",
+        "pendingLayers": []
+      },
+      "generation": {
+        "mesh": "Blender-authored prop mesh from separated prop references",
+        "motion": "not applicable unless this prop has an authored state",
+        "texture": "god-tibo-imagen per-prop cartoon albedo after active-UV audit"
+      },
+      "runtimeEligible": false,
+      "runtimePath": "assets/images/battle/glb/props/tiers/tier-t5.glb",
+      "status": "candidate-exported-blocked",
+      "textureArtifact": null
+    }
+  ],
+  "authority": {
+    "assetLanePolicy": "_workspace/current/engineering/asset-pipeline/asset-lanes.json",
+    "characterContract": "docs/character-asset-pipeline.md",
+    "motionContract": "_workspace/current/engineering/asset-pipeline/action-pipeline.json",
+    "runtimeRegistry": "scripts/defense-runtime-assets.mjs",
+    "runtimeRegistrySha256": "50af8678b94b3499360dee5ab66a6b535d838c3971eee45dbe5d33c520562e5d"
+  },
+  "createdAt": "2026-07-28",
+  "lane": "candidate/ingame-mesh",
+  "ownerSkills": {
+    "motionReference": "motion-previs-studio",
+    "primary": "build-hybrid-game-assets",
+    "rigging": "build-game-monster-system"
+  },
+  "promotionContract": {
+    "candidateRoot": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged",
+    "forbidDirectWrites": "assets/images/battle/glb",
+    "mode": "clean-cutover-only-after-per-asset-receipt",
+    "requiredBeforeRuntimePromotion": [
+      "source-and-rights receipt",
+      "class-specific mesh audit",
+      "active UV map and texture embedding audit when textured",
+      "actor skin weights and 11 canonical clips when the asset class is actor",
+      "Three.js load and Canvas fallback evidence",
+      "explicit runtime receipt"
+    ],
+    "requiredCandidateSidecarFields": [
+      "source",
+      "generator",
+      "output",
+      "rightsReceipt",
+      "runtimeReceipt"
+    ],
+    "runtimeEligibleDefault": false
+  },
+  "schemaVersion": 1,
+  "scope": {
+    "byCategory": {
+      "bosses": 10,
+      "commander": 1,
+      "companions": 9,
+      "enemies": 4,
+      "props": 13,
+      "terrain": 10,
+      "vfx": 9
+    },
+    "candidateExportedByCategory": {
+      "props": 10,
+      "terrain": 7,
+      "vfx": 6
+    },
+    "candidateExportedCount": 23,
+    "deployedRuntimeGlbsObserved": 0,
+    "runtimeDeletionPerformed": false,
+    "runtimeGlbRoot": "assets/images/battle/glb",
+    "runtimeTargetCount": 56,
+    "textureConceptCount": 1
+  },
+  "status": "partial-candidate-coverage-no-runtime-promotion"
+}

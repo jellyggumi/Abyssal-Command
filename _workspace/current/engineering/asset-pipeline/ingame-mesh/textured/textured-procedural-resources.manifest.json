@@ -1,0 +1,2296 @@
+{
+  "assetCount": 23,
+  "atlasSize": 256,
+  "candidateGlbBytes": 2687128,
+  "dilationTexels": 16,
+  "generatedBy": "scripts/bake-procedural-resource-albedo.py",
+  "lane": "candidate/ingame-mesh/textured",
+  "lowCoverageTextureCount": 0,
+  "lowCoverageThreshold": 0.15,
+  "outputRoot": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured",
+  "promotionStatus": "not-issued",
+  "rows": [
+    {
+      "appearanceReference": null,
+      "assetClass": "props",
+      "assetId": "abyssal-banner",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/abyssal-banner.glb",
+      "outputBytes": 111160,
+      "outputSha256": "55fdd3199b3bbe75b01fa24d15aaf0ae873827aaed7babd672f5e88cff5ff542",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "props/abyssal-banner.glb",
+      "sourceSha256": "25e42989ec9582df01af314295c8b641f3cfc0645095129c31bb6a31ecdd855b",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.25,
+            0.055,
+            0.55,
+            1.0
+          ],
+          "bytes": 20793,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/abyssal-banner/abyssal-banner-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "1698f153e5b386433506673222e28f11064f3f0802862efec9113b6816f4b8bf",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.75,
+            0.34,
+            0.05,
+            1.0
+          ],
+          "bytes": 17488,
+          "dilatedCoverage": 0.56778,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/abyssal-banner/abyssal-banner-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "668422b6402d1209c728a0d6f70467c6e70051d297ea1d758ce994a03003b73f",
+          "uvCoverage": 0.287109,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.045,
+            0.025,
+            0.105,
+            1.0
+          ],
+          "bytes": 17877,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/abyssal-banner/abyssal-banner-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "07537746eda72afe29dd2470005df250a51af3754ba823ab2d762b0211208316",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.25,
+            0.055,
+            0.55,
+            1.0
+          ],
+          "bytes": 16007,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/abyssal-banner/abyssal-banner-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "854afb7c996584422b0f93e5c977a2364b98563c6a69f8a7d065af91ebbef2c1",
+          "uvCoverage": 0.34668,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.25,
+            0.055,
+            0.55,
+            1.0
+          ],
+          "bytes": 16007,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 4,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/abyssal-banner/abyssal-banner-m4-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "c4b3b124fb91201c9b8f2cf83329a580ab680e3ba8c707987eff277b6ff63523",
+          "uvCoverage": 0.34668,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "props",
+      "assetId": "bulwark-brand",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/bulwark-brand.glb",
+      "outputBytes": 115388,
+      "outputSha256": "e799983744a6875d758037f08de6ebbe43bf730ca25c244bc2076203d90b5ce7",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "props/bulwark-brand.glb",
+      "sourceSha256": "7844b8ef8641b33da8526e96eeec24dfd3ac460f92d4c03e688f2b8aca5c0d87",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.54,
+            0.48,
+            0.37,
+            1.0
+          ],
+          "bytes": 23573,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/bulwark-brand/bulwark-brand-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "21b9a2c3caa4fdd1b80dbb244f7c47188ce2fc2cd312f32e5a426ff66705f58a",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.75,
+            0.34,
+            0.05,
+            1.0
+          ],
+          "bytes": 31477,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/bulwark-brand/bulwark-brand-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "2a67ae28bb4ef0a4517d5e1c26f6bc47c1276701e246fd243a310d4a31f496f6",
+          "uvCoverage": 1.0,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 23291,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/bulwark-brand/bulwark-brand-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "18223baa597d01707e92cb8f43590f07929141d8bc32ef5016d9d7826fb26086",
+          "uvCoverage": 0.82692,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "props",
+      "assetId": "choir-ward-crystal",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/choir-ward-crystal.glb",
+      "outputBytes": 66304,
+      "outputSha256": "a3f7608e40b54108019560252a09a18fd68a81712e3c726176a442c90a7e015a",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "props/choir-ward-crystal.glb",
+      "sourceSha256": "5ac2ade750b69d084a4ebe505b987548686e40d60815f35c1dc2ffc2441cb8e2",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.72,
+            0.7,
+            0.76,
+            1.0
+          ],
+          "bytes": 24281,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 2,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/choir-ward-crystal/choir-ward-crystal-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "f72b6270d422fdb2c4cedb39db1fd7a45317ec8df00b82c3d29566aa2a9ffdb5",
+          "uvCoverage": 0.82692,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.68,
+            0.72,
+            0.78,
+            0.55
+          ],
+          "bytes": 16809,
+          "dilatedCoverage": 0.525696,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/choir-ward-crystal/choir-ward-crystal-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "f89a21752c00492c6e8133fff6792152cc0b538101c2da9a78a012e5ca18199d",
+          "uvCoverage": 0.2995,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.68,
+            0.72,
+            0.78,
+            0.55
+          ],
+          "bytes": 17133,
+          "dilatedCoverage": 0.525696,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/choir-ward-crystal/choir-ward-crystal-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "897468ced68989e3c7984b73f25d6d64df13fce637ac083d41b0969ce84b6a2f",
+          "uvCoverage": 0.2995,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": {
+        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/props/stillwater-hourglass-concept.png",
+        "provenance": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/props/stillwater-hourglass-concept.provenance.json",
+        "sha256": "2bf8bb9257de69b1dd0ede0107d28e6004af63bbfb4d12fade0fa6bc615371e7"
+      },
+      "assetClass": "props",
+      "assetId": "stillwater-hourglass",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/stillwater-hourglass.glb",
+      "outputBytes": 189616,
+      "outputSha256": "066033bab2df6172245cb5f41a96f095ae2af63e249fb9fd8443307d9d858d8e",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "props/stillwater-hourglass.glb",
+      "sourceSha256": "3f664d6c77e6d0bb92f7412d01da08adb9b1740956e6f7f84920808da16be201",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.025,
+            0.42,
+            0.67,
+            1.0
+          ],
+          "bytes": 24266,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/stillwater-hourglass/stillwater-hourglass-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "e7d141d9b6db81ec346b1318531c66245fea856a85dfa0e16f21e4d3d2f1cbfd",
+          "uvCoverage": 0.845291,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.025,
+            0.42,
+            0.67,
+            1.0
+          ],
+          "bytes": 24377,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/stillwater-hourglass/stillwater-hourglass-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "f06cbafafd9400fa1fb52015085eb3df30a663df688c7145ef363e47e91cacb3",
+          "uvCoverage": 0.845291,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 22485,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/stillwater-hourglass/stillwater-hourglass-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "85983fb4022fbadfd91ede0998cb2fb943c44c1425e643ddbe84c46ee747c674",
+          "uvCoverage": 0.838242,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 22490,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/stillwater-hourglass/stillwater-hourglass-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "86e1c3afcca93070f11b7688fdc1bc400e9e0e1be64e28a38e986f83bdcad18b",
+          "uvCoverage": 0.838242,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 22123,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 4,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/stillwater-hourglass/stillwater-hourglass-m4-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "8592c725d6b49b436948eb3a29a20d0b34bfda11d21489c22ee4cd44a8c27673",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 21722,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 8,
+          "meshIndex": 5,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/stillwater-hourglass/stillwater-hourglass-m5-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "5cd84b4058f75a450ce6fc8198b8da6a057b8ec7e1e67f5de113cb4823b45668",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.85,
+            0.52,
+            0.08,
+            1.0
+          ],
+          "bytes": 18590,
+          "dilatedCoverage": 0.56778,
+          "height": 256,
+          "materialIndex": 9,
+          "meshIndex": 6,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/stillwater-hourglass/stillwater-hourglass-m6-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "1904c6bf41069d8793a851d39450131d1556d6541d1948bc196940e144891525",
+          "uvCoverage": 0.287109,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "props",
+      "assetId": "tier-t1",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/tiers/tier-t1.glb",
+      "outputBytes": 26756,
+      "outputSha256": "55d0413e86e661324cdeb8946862ef934837561e15337a1b9245188469d8a82c",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "props/tiers/tier-t1.glb",
+      "sourceSha256": "91510fe3232ea4e317716e5ea9e3976eb2ecb32fb15015503865fbf796c148a8",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 16712,
+          "dilatedCoverage": 0.56778,
+          "height": 256,
+          "materialIndex": 1,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/tiers/tier-t1/tier-t1-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "7763bd175d8c1a187682e8a7b5e110bd15345563fb990940b0301c2605e90381",
+          "uvCoverage": 0.287109,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "props",
+      "assetId": "tier-t2",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/tiers/tier-t2.glb",
+      "outputBytes": 25340,
+      "outputSha256": "98e28e2a5397c8527739174253adbc829c0d301bf219a83ff94063424cc147fb",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "props/tiers/tier-t2.glb",
+      "sourceSha256": "749fc57f244da0939813834f56a41c040dc914804279e9d77327690e4aa680f7",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.72,
+            0.7,
+            0.76,
+            1.0
+          ],
+          "bytes": 22833,
+          "dilatedCoverage": 0.946655,
+          "height": 256,
+          "materialIndex": 1,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/tiers/tier-t2/tier-t2-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "e7f7efbc45330246f7ee8ff13096ecfd60011b76a1b17d4bd2de4692c4e851e9",
+          "uvCoverage": 0.651886,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "props",
+      "assetId": "tier-t3",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/tiers/tier-t3.glb",
+      "outputBytes": 34628,
+      "outputSha256": "afc9216b074a37d519f7349be253c63c19a03a58ef79ea5237ed906b64bc7c20",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "props/tiers/tier-t3.glb",
+      "sourceSha256": "2e1e1bcdfea87969b1f996c1712c5569fe2e9105281549a06bc0077ca14f70b9",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.025,
+            0.42,
+            0.67,
+            1.0
+          ],
+          "bytes": 15247,
+          "dilatedCoverage": 0.465881,
+          "height": 256,
+          "materialIndex": 1,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/tiers/tier-t3/tier-t3-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "36208234945595acaecc153745ed84d8e6d3fefbbd087b59067b250e8ea98a3c",
+          "uvCoverage": 0.230957,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.025,
+            0.42,
+            0.67,
+            1.0
+          ],
+          "bytes": 15256,
+          "dilatedCoverage": 0.465881,
+          "height": 256,
+          "materialIndex": 2,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/tiers/tier-t3/tier-t3-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "cb40cc3c27ab64e412178884b50c1b47e337f6709a47df438e7b55f12ff5b9f8",
+          "uvCoverage": 0.230957,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "props",
+      "assetId": "tier-t4",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/tiers/tier-t4.glb",
+      "outputBytes": 24796,
+      "outputSha256": "14afd7dfbe8e5028dc77953ba958d9f33dcf1790a970ed77d5a0a24c8e1e2a29",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "props/tiers/tier-t4.glb",
+      "sourceSha256": "e2b0c5d070e5cf193c0134ce6625309d9646c16072d11e39d3fb4058080e2a60",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.32,
+            0.075,
+            0.42,
+            1.0
+          ],
+          "bytes": 21854,
+          "dilatedCoverage": 0.995636,
+          "height": 256,
+          "materialIndex": 1,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/tiers/tier-t4/tier-t4-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "65c048637f6ed6d318e6d2a5689949148f8ca92b5cc1ec5fd60abb0419eb6dc8",
+          "uvCoverage": 0.776108,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "props",
+      "assetId": "tier-t5",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/tiers/tier-t5.glb",
+      "outputBytes": 26416,
+      "outputSha256": "4829f6cb3070d42b93ef1e3104abfda10947deffd06d7cf7c3e0ef86c14efe43",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "props/tiers/tier-t5.glb",
+      "sourceSha256": "27c56b57c9e7c2593498fd1104f198cf51f33e294ff5c4b71aaecec82350dd61",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.75,
+            0.34,
+            0.05,
+            1.0
+          ],
+          "bytes": 23312,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 1,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/tiers/tier-t5/tier-t5-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "f07d06a01a29c2472dd9b6344fba2ecf3b16ec83219d5c0bcc9cee86fbdbe3c5",
+          "uvCoverage": 0.799606,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "props",
+      "assetId": "warden-lantern",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/props/warden-lantern.glb",
+      "outputBytes": 133028,
+      "outputSha256": "12f1ca6051e57576a469a11d651116c0e6d2f4511482dffd53f754612623c4c4",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "props/warden-lantern.glb",
+      "sourceSha256": "8a6c3e25bb30c57c3fea5790d2892765b4ab61657a3a8fe1626b4d7169d09b73",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 21433,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/warden-lantern/warden-lantern-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "a56790d8bbbd57c400912854d9341cc132b56663b147715429b064d32a7b3434",
+          "uvCoverage": 0.82692,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.045,
+            0.035,
+            0.14,
+            1.0
+          ],
+          "bytes": 23389,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/warden-lantern/warden-lantern-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "cb8b4fb7965d13da6657ad8b58154df8379c9230d5e680a10f612c059e3ae819",
+          "uvCoverage": 1.0,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.85,
+            0.52,
+            0.08,
+            1.0
+          ],
+          "bytes": 18107,
+          "dilatedCoverage": 0.56778,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/warden-lantern/warden-lantern-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "2ef8d45dfcf49ae2527122482eb4e42c18931b90c9d8b8e096e7aca5f0d935bd",
+          "uvCoverage": 0.287109,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.54,
+            0.48,
+            0.37,
+            1.0
+          ],
+          "bytes": 23418,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/warden-lantern/warden-lantern-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "c962ad2b71fc0ba8ebaf717b937f675c12fb8369abf982ce9cc2f2ea9ae183b2",
+          "uvCoverage": 0.852921,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "terrain",
+      "assetId": "abyss-chancel",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/abyss-chancel.glb",
+      "outputBytes": 206276,
+      "outputSha256": "2972236e7970c71fb447b92192109fac150631e0cd75f5531ae86e6e4deace91",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "terrain/abyss-chancel.glb",
+      "sourceSha256": "8e78c8b2ecbd926d2fa501319e6a2ea419a83626d9ffeadce72cdbbf4d8c5bc1",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.32,
+            0.075,
+            0.42,
+            1.0
+          ],
+          "bytes": 36093,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "6ae089c0a08142a55decfc4db5c8f105cfff07820a9f948f4671131255703172",
+          "uvCoverage": 0.838242,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.68,
+            0.56,
+            0.18,
+            1.0
+          ],
+          "bytes": 19840,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "007f2ed578ab379265dc0e194bc174f68dc90d611501ce70d62d6c00b680e4ba",
+          "uvCoverage": 0.845291,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.68,
+            0.56,
+            0.18,
+            1.0
+          ],
+          "bytes": 18793,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "7fdc540e6e971621574684020ab18f35ff36b6caca45ca06b87cb328cb171023",
+          "uvCoverage": 0.845291,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.68,
+            0.56,
+            0.18,
+            1.0
+          ],
+          "bytes": 18269,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "a7542b379211478d8a34a18b97fb46948394c5660234140789959adb2a425186",
+          "uvCoverage": 0.845291,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.68,
+            0.56,
+            0.18,
+            1.0
+          ],
+          "bytes": 18359,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 4,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m4-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "afa5e51ed3e54f8a006916782a3d5cd4e8e7eeca55ef5e731c02ed9209da9cff",
+          "uvCoverage": 0.845291,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.68,
+            0.56,
+            0.18,
+            1.0
+          ],
+          "bytes": 8913,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 8,
+          "meshIndex": 5,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m5-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "8c83e22584e2c014715cff1340f3888947de0031096a247a21e9c36ebaa4ea48",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.75,
+            0.34,
+            0.05,
+            1.0
+          ],
+          "bytes": 34290,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 9,
+          "meshIndex": 6,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m6-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "45b93e74cf2cc78665804166dc7ed810d87aaf6e6c51f55e5956774b96fe2396",
+          "uvCoverage": 1.0,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "terrain",
+      "assetId": "gate-zenith",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/gate-zenith.glb",
+      "outputBytes": 257032,
+      "outputSha256": "2c2c8cd4d52d6418361945d519c56e76c54aff4bf06e61599d2c457c1fce8b7d",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "terrain/gate-zenith.glb",
+      "sourceSha256": "388df008365f0943ee26f0091a00b2f661d17f2063f65516042a9a17fdf9d914",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.045,
+            0.025,
+            0.105,
+            1.0
+          ],
+          "bytes": 7959,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "e7c660b0ad665b34a9a89d6d4092a073cb17a223145d231b8986ef18c92a0a2f",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.095,
+            0.075,
+            0.145,
+            1.0
+          ],
+          "bytes": 33811,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "7cf071c46feff5c466bbe7ed1f7875248fa069775060bbebecf06ddfcbec3a93",
+          "uvCoverage": 0.845291,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.045,
+            0.025,
+            0.105,
+            1.0
+          ],
+          "bytes": 12210,
+          "dilatedCoverage": 0.56778,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "5b7eb4d069061f5f54077d725a2eb5db840a54bfac64eba6020c7d7ccb491090",
+          "uvCoverage": 0.287109,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.56,
+            0.045,
+            0.06,
+            1.0
+          ],
+          "bytes": 18667,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "e21156a9548f2bafbd5f25b2618be3394af14b9cd00c640cef11ff366e49b10c",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.56,
+            0.045,
+            0.06,
+            1.0
+          ],
+          "bytes": 35723,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 8,
+          "meshIndex": 4,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m4-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "c6a68efe58ba56efa94c88e1ecb42c41c349232abef6e47059ef3b05043055e1",
+          "uvCoverage": 1.0,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.72,
+            0.58,
+            0.14,
+            1.0
+          ],
+          "bytes": 42118,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 9,
+          "meshIndex": 5,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m5-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "eb504e2fee992b41397d743f4b25c2bfc1315a8711fdab4b67c1d0bbd03a73b4",
+          "uvCoverage": 1.0,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.56,
+            0.045,
+            0.06,
+            1.0
+          ],
+          "bytes": 12097,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 10,
+          "meshIndex": 6,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m6-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "e8b967d3a809fed10eafcae8a51699ecb0d1ec16515b2ea30804b7efe93ea6fb",
+          "uvCoverage": 0.34668,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.56,
+            0.045,
+            0.06,
+            1.0
+          ],
+          "bytes": 13012,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 11,
+          "meshIndex": 7,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m7-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "cca06e26affa1f8dd986938e1d6083efd25f3b297239d89399620dd26008a6b1",
+          "uvCoverage": 0.34668,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "terrain",
+      "assetId": "glass-necropolis",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/glass-necropolis.glb",
+      "outputBytes": 157052,
+      "outputSha256": "ff46018dc034b55f39300ccbe7e962b06963fa0fa23c89dca3e35f25a43ae4d9",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "terrain/glass-necropolis.glb",
+      "sourceSha256": "b8ee81a6f82899714b2a7b5c79a4b9167f2b778a2b3deadaff02bad659f14996",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.68,
+            0.72,
+            0.78,
+            0.55
+          ],
+          "bytes": 21159,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "5fb3c5a684fbcfad020e56121b83577745abbffd3ee17d3e9b1e0dd7c6ae93d9",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.68,
+            0.72,
+            0.78,
+            0.55
+          ],
+          "bytes": 21493,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "4f0b5b2a85e11bc64b2222fada3b58ae0090290df784069b58607578aacf4f85",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.54,
+            0.48,
+            0.37,
+            1.0
+          ],
+          "bytes": 20394,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "7c4c2518b7a7f44d3bafe6c90843f575304de84393af317473c01af5dc9de9cb",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.72,
+            0.7,
+            0.76,
+            1.0
+          ],
+          "bytes": 40604,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "46acb366f7afa4a59496b260c605c0acbcfd705f8a81dcf4e6204e132b5efe8d",
+          "uvCoverage": 0.82692,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.54,
+            0.48,
+            0.37,
+            1.0
+          ],
+          "bytes": 20645,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 4,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m4-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "b867940b7d5de9f9d4fe04cf406fe19901f7434ebd0911307cb5aa84e2ac41ae",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.72,
+            0.7,
+            0.76,
+            1.0
+          ],
+          "bytes": 16394,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 8,
+          "meshIndex": 5,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m5-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "66d3f7ab284d46f004156e457e731f2e104232b85bb9c5c6e16a74e909d64e76",
+          "uvCoverage": 0.845291,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "terrain",
+      "assetId": "howling-sprawl",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/howling-sprawl.glb",
+      "outputBytes": 138004,
+      "outputSha256": "f5d4a772245aa1787e4b5a51b2447e75d9a8cd114e66c1c3ec4c8c6668e836eb",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "terrain/howling-sprawl.glb",
+      "sourceSha256": "77922ecc3a943774b39798ecfb09fb1271c0d4575583c84dbaa9f63ee7ef0f36",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.62,
+            0.56,
+            0.46,
+            1.0
+          ],
+          "bytes": 11389,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "36a61991c48685019eee14a950028fdd16464aefa53dbc2cbe7fc57c0cc13c54",
+          "uvCoverage": 0.845291,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.56,
+            0.46,
+            0.31,
+            1.0
+          ],
+          "bytes": 20597,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "3c4a7a635295a76dd7c9b1e4ebcdf330419cad76d8a9e8d640a14d525380724e",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.54,
+            0.48,
+            0.37,
+            1.0
+          ],
+          "bytes": 15353,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "ed4c45e4d2843611465c1894b3df3e2a9f56b2540635a8a1998d177a76fda14d",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.62,
+            0.56,
+            0.46,
+            1.0
+          ],
+          "bytes": 24462,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "85f844c26b48f805736f5b6ae5429ac658054f42e045a72371a7c8c480a8183e",
+          "uvCoverage": 0.845291,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.62,
+            0.56,
+            0.46,
+            1.0
+          ],
+          "bytes": 23302,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 4,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m4-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "9262109c4dc0df982dadd46f8209c31a747721ecfce83ae3627811a96cebf353",
+          "uvCoverage": 0.845291,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.56,
+            0.46,
+            0.31,
+            1.0
+          ],
+          "bytes": 20582,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 8,
+          "meshIndex": 5,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m5-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "1d7b3e684b96506a30fdd9fecd5be97baeab5afc01802287be387f10b3850998",
+          "uvCoverage": 0.845291,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "terrain",
+      "assetId": "shattered-causeway",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/shattered-causeway.glb",
+      "outputBytes": 142968,
+      "outputSha256": "04951ed1b4a3ed798c448c06a57bbe974638bdbf38fd86012178bf21b8b475ee",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "terrain/shattered-causeway.glb",
+      "sourceSha256": "9f303e8b7401f89938f52fdb0fa29940d71e4ae7fda3b3c7e43f011c01e2762e",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.42,
+            0.19,
+            0.08,
+            1.0
+          ],
+          "bytes": 16498,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "c0788f9d0e3b4bba1a2e7701b1eae5aac12bbec5728c4ee86a71cdce48aa7e0c",
+          "uvCoverage": 1.0,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.23,
+            0.23,
+            0.25,
+            1.0
+          ],
+          "bytes": 14686,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "5b16571e0e9aeb68bcb74c7b361afa3d21d51401e2b19250c5f02a282e5b53b3",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.23,
+            0.23,
+            0.25,
+            1.0
+          ],
+          "bytes": 14852,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "88c83e3835afdd38168d170b4b31665bd7ff69c22bfa5f43d40ddfda3a864110",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.42,
+            0.19,
+            0.08,
+            1.0
+          ],
+          "bytes": 18757,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "8915ad2bb89b2b09fae15320923bb5fcbc41e3b68d4a0e134c70e6b41bf9a611",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.42,
+            0.19,
+            0.08,
+            1.0
+          ],
+          "bytes": 18663,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 4,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m4-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "549f44465878237c4e7baa0e327a3258cb42e2703e712f2cce8d65ef37ba651b",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 18871,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 8,
+          "meshIndex": 5,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m5-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "eca50505f9940229fe5314b4dfd616e212d205f1f9f2831eb9fa7de25a60f48b",
+          "uvCoverage": 0.82692,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "terrain",
+      "assetId": "starless-canal",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/starless-canal.glb",
+      "outputBytes": 165004,
+      "outputSha256": "99d07d1124720f3a21b5c42a47cc578956d4cbdf3314e6d99a4a259386c7cf13",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "terrain/starless-canal.glb",
+      "sourceSha256": "d3341ad55ea685ce091046fd5a2147c53610d7a06b329674aa8d67c2cc9eec30",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.045,
+            0.035,
+            0.14,
+            1.0
+          ],
+          "bytes": 15668,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/starless-canal/starless-canal-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "ad9285f30e93b9251e3d87e141e43da3d2c6058cb265fe0f48e36fe2f1ba1aec",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 18572,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/starless-canal/starless-canal-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "acf54bdbb5f780ad7d7e15a73d81a1d57b98678b84ae231fa7e2a738273412c8",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.85,
+            0.52,
+            0.08,
+            1.0
+          ],
+          "bytes": 16005,
+          "dilatedCoverage": 0.56778,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/starless-canal/starless-canal-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "ef4f699eee6bf35ceca588b7a885f8f9603ffceb1832740078954052ecf09912",
+          "uvCoverage": 0.287109,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.85,
+            0.52,
+            0.08,
+            1.0
+          ],
+          "bytes": 16604,
+          "dilatedCoverage": 0.56778,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/starless-canal/starless-canal-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "187c99d8e3deb8463d2e071cbb1605a639d058f604fb3cadcb3bc1e19a5b8aa1",
+          "uvCoverage": 0.287109,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 8995,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 8,
+          "meshIndex": 4,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/starless-canal/starless-canal-m4-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "12842613336e41b1510cce75873e37e4b4b2dd56e8b6b738227fa1482db8deb4",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 8887,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 9,
+          "meshIndex": 5,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/starless-canal/starless-canal-m5-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "13dc63e4ccc13d4955bb7f867fc7359b776bfcf2e287a1f7b9dc049caa63f940",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.23,
+            0.23,
+            0.25,
+            1.0
+          ],
+          "bytes": 14675,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 10,
+          "meshIndex": 6,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/starless-canal/starless-canal-m6-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "56defae3047791720301302ec54f0ea197d41c80f59b9568f26bed2c2583be68",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 10362,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 11,
+          "meshIndex": 7,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/starless-canal/starless-canal-m7-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "020bf9fd45309194b7837c691f0285ddf0e07edb245eef058c8e442274b955cb",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.23,
+            0.23,
+            0.25,
+            1.0
+          ],
+          "bytes": 14495,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 12,
+          "meshIndex": 8,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/starless-canal/starless-canal-m8-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "98324a18277629e7461e386ca0bfa6f2d069edd827a45cc68451665dd7118ba0",
+          "uvCoverage": 0.375107,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "terrain",
+      "assetId": "sunken-bastion",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/sunken-bastion.glb",
+      "outputBytes": 194560,
+      "outputSha256": "90b9ec862b73578fda50a8d98bd7fe656a156a3d068de6429eff5d7b7f4892e7",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "terrain/sunken-bastion.glb",
+      "sourceSha256": "b17705722adc6d46a25f6f4b049bfa512aa2e270af47864ab258b3ea44e8231b",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 14957,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "3ba2a077d92c74187e5fa09fccefbb449022b9b6a7a4599459a658fe0d5c19ad",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 14918,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "5146f48577526b8113c40590aabee826464736e4d8b26b83b0031b2c795572a0",
+          "uvCoverage": 0.852921,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.42,
+            0.44,
+            0.4,
+            1.0
+          ],
+          "bytes": 19964,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "4ae697f782abfe7081d81b9d0df4408b0a1aea1d9684925655b08755ea55ac24",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.055,
+            0.32,
+            0.31,
+            1.0
+          ],
+          "bytes": 17593,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "2ab7017aec8f56856bd0fb8c3a9b630d512ccc5044e74c6b2e225400f2adb455",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.42,
+            0.44,
+            0.4,
+            1.0
+          ],
+          "bytes": 20067,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 8,
+          "meshIndex": 4,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m4-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "8e1e6681166a6eae9cbf509ae76537b003b378297f6f8b123c3f093d29ccdd2a",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.42,
+            0.44,
+            0.4,
+            1.0
+          ],
+          "bytes": 20200,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 9,
+          "meshIndex": 5,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m5-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "4f0eeec1378a15efea89a2564c61876c4429d5868cedffe2da5b6754e370ed6e",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.025,
+            0.42,
+            0.67,
+            1.0
+          ],
+          "bytes": 40217,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 10,
+          "meshIndex": 6,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m6-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "ff30b4ecf5bed678b90643be403fd502ec569d0eed8468bf08ac6ad7ddc29f0b",
+          "uvCoverage": 1.0,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "vfx",
+      "assetId": "boss-rally-aura",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/boss-rally-aura.glb",
+      "outputBytes": 74048,
+      "outputSha256": "92272b0c261e059138dcf89b3e59c805d260bdc417b6bb821f72badacf71103f",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "vfx/boss-rally-aura.glb",
+      "sourceSha256": "bbeee9da654dd290a2b2b802a23a44b49681d3ce490d251085c869714481c5c5",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            1.0,
+            0.87,
+            0.23,
+            1.0
+          ],
+          "bytes": 8221,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 2,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/boss-rally-aura/boss-rally-aura-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "456d5cdda2a7c6ecbc15a99d744be0f7d1b121bac90d90b22c864f01289a41a4",
+          "uvCoverage": 1.0,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.75,
+            0.34,
+            0.05,
+            1.0
+          ],
+          "bytes": 11133,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/boss-rally-aura/boss-rally-aura-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "4c4076a81d80e2f9ba5c23476a6ce1ab78d8641451a2735065d3813307ddac41",
+          "uvCoverage": 1.0,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "vfx",
+      "assetId": "companion-downed-fade",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/companion-downed-fade.glb",
+      "outputBytes": 39864,
+      "outputSha256": "318000914250187309795bb7a2d064da711d504ffea68be5fe3cccaef1e6402d",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "vfx/companion-downed-fade.glb",
+      "sourceSha256": "939768df286234389a642cb9c55fdb609d2f9a7e21878638b5bfe8f3ae71115b",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.045,
+            0.025,
+            0.105,
+            1.0
+          ],
+          "bytes": 17501,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 1,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/companion-downed-fade/companion-downed-fade-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "eebeef2a38733d8e518da2ac7dcb9b22ea7cf4dc7de83adef043d034b33c901e",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.045,
+            0.025,
+            0.105,
+            1.0
+          ],
+          "bytes": 17683,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 2,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/companion-downed-fade/companion-downed-fade-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "b0df6f082d82d07ae10c2646d012499065dbd83a57e3c0752c31f47390bb1acf",
+          "uvCoverage": 0.375107,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "vfx",
+      "assetId": "critical-hit-burst",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/critical-hit-burst.glb",
+      "outputBytes": 207452,
+      "outputSha256": "d9c50ea4bed40d169e9fb65f1466bd75aff64ea06d62200473cdc64d91b98bcc",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "vfx/critical-hit-burst.glb",
+      "sourceSha256": "55e2c60b89603467fa308811471a9093c153afbdcc4dd8c3dcb7c7b286611db6",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            1.0,
+            0.87,
+            0.23,
+            1.0
+          ],
+          "bytes": 17917,
+          "dilatedCoverage": 0.56778,
+          "height": 256,
+          "materialIndex": 1,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "503a6b42f4a042ae789911c25df942ffcc4b7930b4a976c28a0c40f16851ccd8",
+          "uvCoverage": 0.287109,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            1.0,
+            0.87,
+            0.23,
+            1.0
+          ],
+          "bytes": 18929,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 2,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "3c7425937485b7d2b02576739e2df74e8bf65653001b3cfcb714ab3620794d35",
+          "uvCoverage": 0.34668,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            1.0,
+            0.87,
+            0.23,
+            1.0
+          ],
+          "bytes": 20291,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "f3e00590fa538b7f3053302bead4f4c6d8e50ab65aa87237a5b0a5724739de36",
+          "uvCoverage": 0.34668,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            1.0,
+            0.87,
+            0.23,
+            1.0
+          ],
+          "bytes": 20655,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "cb5aee0582d3517afccf5714d65763f1517daefe1345b171bceaef3c20f21af6",
+          "uvCoverage": 0.34668,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            1.0,
+            0.87,
+            0.23,
+            1.0
+          ],
+          "bytes": 18044,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 4,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m4-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "413e9fa015371cd74cabe78bd2f060625f43754cf73ae19e6b3b97e7eb142695",
+          "uvCoverage": 0.34668,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            1.0,
+            0.87,
+            0.23,
+            1.0
+          ],
+          "bytes": 19657,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 5,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m5-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "afc60972297e88f77d249db253668bc83e0643463e2d6af8278eb60856e11627",
+          "uvCoverage": 0.34668,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            1.0,
+            0.87,
+            0.23,
+            1.0
+          ],
+          "bytes": 19778,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 6,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m6-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "a08d1b760e78f6e00faf796b864142d7e9cc50774ed33a8845a7f461e4240352",
+          "uvCoverage": 0.34668,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            1.0,
+            0.87,
+            0.23,
+            1.0
+          ],
+          "bytes": 19254,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 8,
+          "meshIndex": 7,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m7-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "fe365b357b524d5575002f6d498667bf0e7c47def079b502e1497b58507ec5f6",
+          "uvCoverage": 0.34668,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            1.0,
+            0.87,
+            0.23,
+            1.0
+          ],
+          "bytes": 20448,
+          "dilatedCoverage": 0.555664,
+          "height": 256,
+          "materialIndex": 9,
+          "meshIndex": 8,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m8-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "8e9c32519c0dbb9bc1e54589a4b9afb922d167dccd1fea85bae7ca328a713dfd",
+          "uvCoverage": 0.34668,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "vfx",
+      "assetId": "echo-warden-awakening",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/echo-warden-awakening.glb",
+      "outputBytes": 135984,
+      "outputSha256": "1595099784b47aa154bb327df4550f599b40ddff4b78083792b27366834df30e",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "vfx/echo-warden-awakening.glb",
+      "sourceSha256": "8f07abae1a65fffdd1cdfbf55981358383dad67e9fc81a9064a86ec537039713",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.48,
+            0.14,
+            0.78,
+            0.65
+          ],
+          "bytes": 17471,
+          "dilatedCoverage": 0.56778,
+          "height": 256,
+          "materialIndex": 2,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/echo-warden-awakening/echo-warden-awakening-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "2794ba3f745615521b1238c856fa2826cc9065cadccf3cda915d23ef005f3c9f",
+          "uvCoverage": 0.287109,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.25,
+            0.055,
+            0.55,
+            1.0
+          ],
+          "bytes": 11672,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/echo-warden-awakening/echo-warden-awakening-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "4f3261be83862267d6aa2de76d353ca5c6733e86850c2711016ec854225b2b4c",
+          "uvCoverage": 1.0,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.25,
+            0.055,
+            0.55,
+            1.0
+          ],
+          "bytes": 11077,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/echo-warden-awakening/echo-warden-awakening-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "05a0245e2269c9394b87d6dec037cc907b83473ddab023cc46e808a3023bb7d9",
+          "uvCoverage": 1.0,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.25,
+            0.055,
+            0.55,
+            1.0
+          ],
+          "bytes": 5620,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/echo-warden-awakening/echo-warden-awakening-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "31f97f7585a96a9ceadd5171bca702f49b1978139e52f931d40d1a6baa0c525a",
+          "uvCoverage": 1.0,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "vfx",
+      "assetId": "gate-breach-shockwave",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/gate-breach-shockwave.glb",
+      "outputBytes": 143472,
+      "outputSha256": "ca8d4a20517d8117099a799ad740ed93868e5fc49e9ff7837656aa6d7a7f7425",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "vfx/gate-breach-shockwave.glb",
+      "sourceSha256": "9987107c3502d1b3524949d0b65e15dd75c516020f24bab329031ec917b01124",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.23,
+            0.23,
+            0.25,
+            1.0
+          ],
+          "bytes": 17177,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 2,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "55e5785b2a4e561c469390d48672da66ea615bcc6f57ebecd0cb90b944978e33",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.23,
+            0.23,
+            0.25,
+            1.0
+          ],
+          "bytes": 17016,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "272d19bc9b5f361e041d57ee3aad43e7c1edc50103d1aaa86442e5f3242f7b74",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.23,
+            0.23,
+            0.25,
+            1.0
+          ],
+          "bytes": 17018,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 4,
+          "meshIndex": 2,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m2-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "65394bb332fc7ccbd502467d04f73bbcd0dbc61629272de5c0a71622f2c4b77b",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.23,
+            0.23,
+            0.25,
+            1.0
+          ],
+          "bytes": 17105,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 5,
+          "meshIndex": 3,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m3-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "6b11acc6a92e2e9899ca7e91dae321f34e838a668f8b98cce66ef8d69c0e7323",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.23,
+            0.23,
+            0.25,
+            1.0
+          ],
+          "bytes": 16912,
+          "dilatedCoverage": 0.565536,
+          "height": 256,
+          "materialIndex": 6,
+          "meshIndex": 4,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m4-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "40d48de9a0c83e9d0e7cfe3c00e925c39020a4004b12cfa57c97fc11d8170a2e",
+          "uvCoverage": 0.375107,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.17,
+            0.19,
+            0.28,
+            1.0
+          ],
+          "bytes": 18609,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 7,
+          "meshIndex": 5,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m5-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "3dc91a6e8490dd9e2dd1f77ff6f632a8ec194a96ee72fd13b095ef77b1ac4759",
+          "uvCoverage": 1.0,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    },
+    {
+      "appearanceReference": null,
+      "assetClass": "vfx",
+      "assetId": "wardens-ward-shield",
+      "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/vfx/wardens-ward-shield.glb",
+      "outputBytes": 71980,
+      "outputSha256": "44438368661a84b70b33686a8632ec1792ba93933341c953087c67cbfbe05e3e",
+      "runtimeEligible": false,
+      "runtimeReceipt": {
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+        "runtimeEligible": false,
+        "status": "not-issued"
+      },
+      "source": "vfx/wardens-ward-shield.glb",
+      "sourceSha256": "0811c083c69e0a2dbae874d371e124731512affd3b28864ce91c36bdc3a6a53e",
+      "textureArtifacts": [
+        {
+          "baseColorFactor": [
+            0.12,
+            0.68,
+            0.82,
+            0.55
+          ],
+          "bytes": 21574,
+          "dilatedCoverage": 0.56778,
+          "height": 256,
+          "materialIndex": 2,
+          "meshIndex": 0,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/wardens-ward-shield/wardens-ward-shield-m0-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "9291890f89bc56848257435c686affc6f6130e185713517ce044f84350b342ee",
+          "uvCoverage": 0.287109,
+          "width": 256
+        },
+        {
+          "baseColorFactor": [
+            0.025,
+            0.42,
+            0.67,
+            1.0
+          ],
+          "bytes": 11913,
+          "dilatedCoverage": 1.0,
+          "height": 256,
+          "materialIndex": 3,
+          "meshIndex": 1,
+          "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/wardens-ward-shield/wardens-ward-shield-m1-p0-albedo-v01.png",
+          "primitiveIndex": 0,
+          "sha256": "d01315c7642ef9922bffa3e2a00b6d027929a1aa2cf4aac7e6b3d1b01baa7e1b",
+          "uvCoverage": 1.0,
+          "width": 256
+        }
+      ],
+      "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB"
+    }
+  ],
+  "runtimeEligible": false,
+  "schemaVersion": 1,
+  "sourceRoot": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged",
+  "textureBytes": 1956059,
+  "textureCount": 102
+}

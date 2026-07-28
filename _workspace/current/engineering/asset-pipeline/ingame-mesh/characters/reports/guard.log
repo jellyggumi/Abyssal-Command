@@ -1,0 +1,47 @@
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: register[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mPort 61863 is in use[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mServer running on port 61864[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mon_scene_load[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mensure_default_image[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: unregister[0m
+BlenderMCP: cannot start server in background mode (blender -b) - commands would never execute
+BlenderMCP: run Blender with a GUI, or use a virtual display: xvfb-run -a blender
+BlenderMCP addon registered
+BlenderMCP server stopped
+BlenderMCP addon unregistered
+18:53:29 | INFO: Data are loaded, start creating Blender stuff
+18:53:29 | INFO: Blender create Mesh node guard_tpose_condition
+18:53:29 | INFO: glTF import finished in 0.00s
+Reloading external rigs...
+Reloading external metarigs...
+Fetch rig.
+Clear rig animation data.
+Create widgets collection: 0.000
+Duplicate rig: 0.002
+Instantiate rigs: 0.000
+Initialize rigs: 0.000
+Prepare bones: 0.000
+Generate bones: 0.006
+Parent bones: 0.003
+Configure bones: 0.004
+Preapply bones: 0.001
+Apply bones: 0.001
+Rig bones: 0.007
+Generate widgets: 0.006
+Assign layers: 0.006
+Finalize: 0.014
+The rest: 0.006
+Warning: Bone Heat Weighting: failed to find solution for one or more bones
+Info: Saved copy as "guard_rigged.blend"
+INFO Draco is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_draco_bridge.dylib
+INFO MeshOptimizer is available, use library at /Applications/Blender.app/Contents/Resources/5.2/scripts/addons_core/io_scene_gltf2/libbf_intern_meshopt_bridge.dylib
+18:53:29 | INFO: Starting glTF 2.0 export
+18:53:29 | INFO: Extracting primitive: guard_tpose_condition
+18:53:29 | INFO: Primitives created: 1
+18:53:29 | WARNING: guard_body has no skin, skipping adding neutral bone data on it.
+18:53:30 | INFO: Finished glTF 2.0 export in 1.124243974685669 s
+
+RIG_ANIMATE_RESULT_JSON:{"assetId": "guard", "category": "enemies", "steps": [{"step": "import", "object": "guard_tpose_condition", "vertCount": 384}, {"step": "merge_by_distance", "vertsBefore": 384, "vertsAfter": 128}, {"step": "pedestal_cut_detect", "cutHeightFrac": 0.4875, "cutZ": 0.8152, "radiusProfile": [0.232, 0.232, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.232, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.232, 0.0, 0.0, 0.208, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8321, 0.9761, 0.9761, 0.208, 0.096, 0.0, 0.0, 0.0, 0.0]}, {"step": "separate", "pedestalVerts": 56, "bodyVerts": 104}, {"step": "rigify_generate", "armature": "guard_armature", "boneCount": 222, "bodyHeight": 0.857}, {"step": "bind_automatic_weights", "defBoneCount": 35, "missingVertexGroups": []}, {"step": "author_animations", "actions": [{"clipId": "guard::idle::v01", "frames": 120, "keyPoses": 4}, {"clipId": "guard::move::v01", "frames": 72, "keyPoses": 5}, {"clipId": "guard::run::v01", "frames": 84, "keyPoses": 6}, {"clipId": "guard::hit::v01", "frames": 54, "keyPoses": 6}, {"clipId": "guard::bighit::v01", "frames": 84, "keyPoses": 7}, {"clipId": "guard::attack::v01", "frames": 90, "keyPoses": 7}, {"clipId": "guard::critical::v01", "frames": 72, "keyPoses": 6}, {"clipId": "guard::avoid::v01", "frames": 42, "keyPoses": 5}, {"clipId": "guard::defence::v01", "frames": 78, "keyPoses": 5}, {"clipId": "guard::die::v01", "frames": 72, "keyPoses": 5}, {"clipId": "guard::show::v01", "frames": 96, "keyPoses": 6}]}, {"step": "export", "wipBlend": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/enemies/rig/guard_rigged.blend", "finalGlb": "_workspace/current/engineering/asset-pipeline/ingame-mesh/characters/glb/guard.glb", "pedestalRemoved": true}], "pedestalRemoved": true, "status": "completed"}
+Blender 5.2.0 LTS (hash fbe6228777e7 built 2026-07-14 01:31:22)
+
+Blender quit

@@ -1,0 +1,155 @@
+{
+  "appearanceReference": null,
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "embeddedAlbedoTextures": 7,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/glb/terrain/abyss-chancel.glb",
+    "sha256": "2972236e7970c71fb447b92192109fac150631e0cd75f5531ae86e6e4deace91"
+  },
+  "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/abyss-chancel.glb",
+    "readOnly": true,
+    "sha256": "8e78c8b2ecbd926d2fa501319e6a2ea419a83626d9ffeadce72cdbbf4d8c5bc1"
+  },
+  "textureArtifacts": [
+    {
+      "baseColorFactor": [
+        0.32,
+        0.075,
+        0.42,
+        1.0
+      ],
+      "bytes": 36093,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 3,
+      "meshIndex": 0,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m0-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "6ae089c0a08142a55decfc4db5c8f105cfff07820a9f948f4671131255703172",
+      "uvCoverage": 0.838242,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.68,
+        0.56,
+        0.18,
+        1.0
+      ],
+      "bytes": 19840,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 4,
+      "meshIndex": 1,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m1-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "007f2ed578ab379265dc0e194bc174f68dc90d611501ce70d62d6c00b680e4ba",
+      "uvCoverage": 0.845291,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.68,
+        0.56,
+        0.18,
+        1.0
+      ],
+      "bytes": 18793,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 5,
+      "meshIndex": 2,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m2-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "7fdc540e6e971621574684020ab18f35ff36b6caca45ca06b87cb328cb171023",
+      "uvCoverage": 0.845291,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.68,
+        0.56,
+        0.18,
+        1.0
+      ],
+      "bytes": 18269,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 6,
+      "meshIndex": 3,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m3-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "a7542b379211478d8a34a18b97fb46948394c5660234140789959adb2a425186",
+      "uvCoverage": 0.845291,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.68,
+        0.56,
+        0.18,
+        1.0
+      ],
+      "bytes": 18359,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 7,
+      "meshIndex": 4,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m4-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "afa5e51ed3e54f8a006916782a3d5cd4e8e7eeca55ef5e731c02ed9209da9cff",
+      "uvCoverage": 0.845291,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.68,
+        0.56,
+        0.18,
+        1.0
+      ],
+      "bytes": 8913,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 8,
+      "meshIndex": 5,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m5-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "8c83e22584e2c014715cff1340f3888947de0031096a247a21e9c36ebaa4ea48",
+      "uvCoverage": 0.852921,
+      "width": 256
+    },
+    {
+      "baseColorFactor": [
+        0.75,
+        0.34,
+        0.05,
+        1.0
+      ],
+      "bytes": 34290,
+      "dilatedCoverage": 1.0,
+      "height": 256,
+      "materialIndex": 9,
+      "meshIndex": 6,
+      "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m6-p0-albedo-v01.png",
+      "primitiveIndex": 0,
+      "sha256": "45b93e74cf2cc78665804166dc7ed810d87aaf6e6c51f55e5956774b96fe2396",
+      "uvCoverage": 1.0,
+      "width": 256
+    }
+  ]
+}

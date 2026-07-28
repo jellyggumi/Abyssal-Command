@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "guard",
+  "concept": "assets/images/battle/pilot/concept-guard.png",
+  "conceptSha256": "0dc1b1848fe5886d5e9cefe8104da8a5894a0553931b9b7b66331b98c1d24468",
+  "generatedAt": "2026-07-28T07:14:46.183446+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      251,
+      2,
+      250
+    ],
+    "borderSpread": 1.798,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/guard/guard-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/guard/raw/guard-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.472,
+        "tolerance": 26,
+        "alphaCoverage": 0.25079,
+        "size": [
+          1452,
+          961
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "8ceb64b6e98078e639f835fcbe390d7be84e6d47429b85f99064836f84821dbf"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/guard/guard-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/guard/raw/guard-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.409,
+        "tolerance": 26,
+        "alphaCoverage": 0.46529,
+        "size": [
+          717,
+          1348
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "9bb3540cdc5e9dad77948adc6775f4048fa0767d5220ccc17a8ae196c6c9ade7"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/guard/guard-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/guard/raw/guard-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.455,
+        "tolerance": 26,
+        "alphaCoverage": 0.33944,
+        "size": [
+          1280,
+          983
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "720954af3827a869fceaa1ba3a02e636d0494f4dfb2cc7219cce6e4574c0835f"
+    }
+  ]
+}

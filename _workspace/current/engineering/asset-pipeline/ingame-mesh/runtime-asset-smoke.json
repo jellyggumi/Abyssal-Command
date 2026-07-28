@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "testedAt": "2026-07-28",
+  "method": "Headless Chromium fetched every unique GLB URL declared by scripts/defense-runtime-assets.mjs through the local static server",
+  "runtimeRegistry": "scripts/defense-runtime-assets.mjs",
+  "declaredRuntimeGlbs": 56,
+  "available": 0,
+  "missing": 56,
+  "verdict": "failed-runtime-smoke-no-runtime-meshes-loadable",
+  "runtimeEligible": false,
+  "nextAction": "Do not repoint runtime references to the candidate lane. Restore an approved baseline or complete per-asset promotion after Rodin, texture, rig, motion, and browser QA gates pass."
+}

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "possessed",
+  "concept": "assets/images/battle/pilot/concept-possessed.png",
+  "conceptSha256": "fafaa16ac0f8867f88fbbbc482e5c3465c70f39ccdf1c6281c9fe12f30ebd96a",
+  "generatedAt": "2026-07-28T07:32:11.458864+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      249,
+      3,
+      236
+    ],
+    "borderSpread": 1.982,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/possessed/possessed-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/possessed/raw/possessed-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.605,
+        "tolerance": 26,
+        "alphaCoverage": 0.1495,
+        "size": [
+          1024,
+          1276
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "a62ee28f9bdf5298452cc699abb8aa54708a6e8614842e7baefbca666ac5c208"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/possessed/possessed-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/possessed/raw/possessed-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.442,
+        "tolerance": 26,
+        "alphaCoverage": 0.1362,
+        "size": [
+          393,
+          1486
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "c958bb977a108305e21368283c2c50257ca7f89095308fcbf5f93bb55d1c5945"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/possessed/possessed-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/possessed/raw/possessed-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.484,
+        "tolerance": 26,
+        "alphaCoverage": 0.22607,
+        "size": [
+          1428,
+          953
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "79a66ad5c9d68c919e732acb6237b64eb2055e6228ff45779276819ac3b9804a"
+    }
+  ]
+}

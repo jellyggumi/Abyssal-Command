@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "assetId": "rift-lens",
+  "concept": "assets/images/battle/pilot/concept-rift-lens.png",
+  "conceptSha256": "a3d76ad1e342876a469027eb787db9de390e9287c01753aa8e3b955a20ec12da",
+  "generatedAt": "2026-07-28T07:40:27.801999+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      249,
+      2,
+      243
+    ],
+    "borderSpread": 2.121,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "prop",
+      "prompt": "Isolate ONLY the prop object itself from the reference image, rendered as a standalone game asset in the same art style, in a clean three-quarter orthographic view. Exclude the pedestal, base, plinth, platform, podium, display stand, and the ground plane it rests on -- the object must float free with nothing underneath it. Exclude every character, hand, arm, creature, terrain, scenery, and background object. Pure flat white background, no cast shadow, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/rift-lens/rift-lens-prop.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/rift-lens/raw/rift-lens-prop.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.443,
+        "tolerance": 26,
+        "alphaCoverage": 0.27866,
+        "size": [
+          580,
+          1389
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "5d60234760c00e81fd62cd10bb6346daf049db0dbf0f8fb93fcb88a500abbb32"
+    }
+  ]
+}

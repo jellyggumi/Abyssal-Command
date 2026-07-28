@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "ember-cohort",
+  "concept": "assets/images/battle/pilot/concept-ember-cohort.png",
+  "conceptSha256": "3838cba657744cfddd6e2afb31074129b356497e50737b53062b2c015ecf87d0",
+  "generatedAt": "2026-07-28T07:10:47.497966+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      249,
+      2,
+      248
+    ],
+    "borderSpread": 2.231,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/ember-cohort/ember-cohort-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/ember-cohort/raw/ember-cohort-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.473,
+        "tolerance": 26,
+        "alphaCoverage": 0.24234,
+        "size": [
+          1024,
+          1230
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "201bb7ecc50f009b138b71c9a5d49bfea1b4a7ceaf80ef34ad89a6010e3fe9f5"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/ember-cohort/ember-cohort-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/ember-cohort/raw/ember-cohort-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.453,
+        "tolerance": 26,
+        "alphaCoverage": 0.06826,
+        "size": [
+          947,
+          1432
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "f37d0b746083eb07c882791c9fcc10afb33e33064378331bb82e29a32564170f"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/ember-cohort/ember-cohort-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/ember-cohort/raw/ember-cohort-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.433,
+        "tolerance": 26,
+        "alphaCoverage": 0.35499,
+        "size": [
+          923,
+          1356
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "1b2933a31a614888394c97c02684300031801cc58531aa7e07d7f15fcb8e8110"
+    }
+  ]
+}

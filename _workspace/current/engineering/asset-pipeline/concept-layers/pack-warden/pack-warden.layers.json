@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "pack-warden",
+  "concept": "assets/images/battle/pilot/concept-pack-warden.png",
+  "conceptSha256": "eb4e7beea5018de4dc1aa18f9156ed5afcafe90dee041ecc567119f04182064e",
+  "generatedAt": "2026-07-28T07:24:54.555938+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      250,
+      3,
+      220
+    ],
+    "borderSpread": 2.004,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/pack-warden/pack-warden-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/pack-warden/raw/pack-warden-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.498,
+        "tolerance": 26,
+        "alphaCoverage": 0.22691,
+        "size": [
+          1079,
+          1102
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "56214dcf17234104f150522b9b74450a6fb79f02c2abd48052ca4e6402cdd1e6"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/pack-warden/pack-warden-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/pack-warden/raw/pack-warden-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.447,
+        "tolerance": 26,
+        "alphaCoverage": 0.11399,
+        "size": [
+          699,
+          1480
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "50b41f120d246cae93b48780204c58136095385ea48e9e956478b904b51dd030"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/pack-warden/pack-warden-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/pack-warden/raw/pack-warden-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.458,
+        "tolerance": 26,
+        "alphaCoverage": 0.32241,
+        "size": [
+          1429,
+          952
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "9f1348f2a1d26631e90447c75cd05e5ac95137c7213b09473cde6f8611682dfe"
+    }
+  ]
+}
