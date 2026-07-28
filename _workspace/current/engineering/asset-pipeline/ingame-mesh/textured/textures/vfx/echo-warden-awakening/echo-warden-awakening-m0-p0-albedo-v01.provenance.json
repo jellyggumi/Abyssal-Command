@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.48,
+      0.14,
+      0.78,
+      0.65
+    ],
+    "bytes": 17471,
+    "dilatedCoverage": 0.56778,
+    "height": 256,
+    "materialIndex": 2,
+    "meshIndex": 0,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/echo-warden-awakening/echo-warden-awakening-m0-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "2794ba3f745615521b1238c856fa2826cc9065cadccf3cda915d23ef005f3c9f",
+    "uvCoverage": 0.287109,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "vfx/echo-warden-awakening.glb",
+    "readOnly": true,
+    "sha256": "8f07abae1a65fffdd1cdfbf55981358383dad67e9fc81a9064a86ec537039713"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.17,
+      0.19,
+      0.28,
+      1.0
+    ],
+    "bytes": 18609,
+    "dilatedCoverage": 1.0,
+    "height": 256,
+    "materialIndex": 7,
+    "meshIndex": 5,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/gate-breach-shockwave/gate-breach-shockwave-m5-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "3dc91a6e8490dd9e2dd1f77ff6f632a8ec194a96ee72fd13b095ef77b1ac4759",
+    "uvCoverage": 1.0,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "vfx/gate-breach-shockwave.glb",
+    "readOnly": true,
+    "sha256": "9987107c3502d1b3524949d0b65e15dd75c516020f24bab329031ec917b01124"
+  }
+}

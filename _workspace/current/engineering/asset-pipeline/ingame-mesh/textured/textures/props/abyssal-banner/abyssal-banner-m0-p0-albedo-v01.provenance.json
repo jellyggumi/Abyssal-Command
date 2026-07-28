@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.25,
+      0.055,
+      0.55,
+      1.0
+    ],
+    "bytes": 20793,
+    "dilatedCoverage": 0.565536,
+    "height": 256,
+    "materialIndex": 3,
+    "meshIndex": 0,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/abyssal-banner/abyssal-banner-m0-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "1698f153e5b386433506673222e28f11064f3f0802862efec9113b6816f4b8bf",
+    "uvCoverage": 0.375107,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "props/abyssal-banner.glb",
+    "readOnly": true,
+    "sha256": "25e42989ec9582df01af314295c8b641f3cfc0645095129c31bb6a31ecdd855b"
+  }
+}

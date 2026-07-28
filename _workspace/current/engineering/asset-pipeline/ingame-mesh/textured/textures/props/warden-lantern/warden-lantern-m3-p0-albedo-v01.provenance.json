@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.54,
+      0.48,
+      0.37,
+      1.0
+    ],
+    "bytes": 23418,
+    "dilatedCoverage": 1.0,
+    "height": 256,
+    "materialIndex": 7,
+    "meshIndex": 3,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/warden-lantern/warden-lantern-m3-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "c962ad2b71fc0ba8ebaf717b937f675c12fb8369abf982ce9cc2f2ea9ae183b2",
+    "uvCoverage": 0.852921,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "props/warden-lantern.glb",
+    "readOnly": true,
+    "sha256": "8a6c3e25bb30c57c3fea5790d2892765b4ab61657a3a8fe1626b4d7169d09b73"
+  }
+}
