@@ -1,0 +1,80 @@
+{
+  "generator": {
+    "blenderVersion": "5.1.2",
+    "scriptPath": "scripts/build-authored-stage-environments.py",
+    "scriptSha256": "6a4a0a98c4ee6e3ca23af94a188af1752dced0405c4ec22e41a158669dc4ca83"
+  },
+  "inputs": {
+    "normal": {
+      "path": "_workspace/archive/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/shared-textures/abyssal-toon-normal-v01.png",
+      "sha256": "bb780818b4a81de46e792f208669b0ee907ca82c09b76a567eaee7394c06f287"
+    },
+    "surface": {
+      "path": "_workspace/archive/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/shared-textures/abyssal-toon-surface-v01.png",
+      "sha256": "96e2c1010f807ac07a6d716689b9b42cfe9fc25f4118167698a6a9c76c2ba81a"
+    }
+  },
+  "schemaVersion": 1,
+  "stages": {
+    "abyss-chancel": {
+      "conceptPath": "assets/images/battle/pilot/concept-terrain-abyss-chancel.png",
+      "conceptSha256": "af4949635f80e7c4ed5b80e5ff3f9c849b162dbc95bfcacddb06569efbd8a6e0",
+      "outputPath": "assets/images/battle/glb/terrain/abyss-chancel.glb",
+      "outputSha256": "8c96560cef0eece6061d98a5860a66c8142df83fd6e62c051a6eab7807d3a6fc"
+    },
+    "cinder-span": {
+      "conceptPath": "assets/images/battle/pilot/concept-terrain-cinder-span.png",
+      "conceptSha256": "8430b1494e8dabac3c913d25ab0093de0c4d50d08f7f7e8db49b12dcfe2160ac",
+      "outputPath": "assets/images/battle/glb/terrain/cinder-span.glb",
+      "outputSha256": "945cbea57b08b4f3faa11975dea48e65e54c32004cb2195135c5d9da0f40fa6e"
+    },
+    "echo-throne": {
+      "conceptPath": "assets/images/battle/pilot/concept-terrain-echo-throne.png",
+      "conceptSha256": "841ca777da56074789ed654d95d4056ed65b3b5facacc607b018a8f840aff577",
+      "outputPath": "assets/images/battle/glb/terrain/echo-throne-steps.glb",
+      "outputSha256": "31c2cb58f8a1aacc65af6c80ff6dd94aff02069a12bc18ad343a394b18b7a5a3"
+    },
+    "gate-zenith": {
+      "conceptPath": "assets/images/battle/pilot/concept-terrain-gate-zenith.png",
+      "conceptSha256": "14975f9aa4d9ee5eeb449232bb98ef73b7bfde227876e77e6dad2cca994f4635",
+      "outputPath": "assets/images/battle/glb/terrain/gate-zenith.glb",
+      "outputSha256": "c89e7b6e92664cfc6da3486579b0cae331ef3656be676a03be30bdc7f884489c"
+    },
+    "glass-necropolis": {
+      "conceptPath": "assets/images/battle/pilot/concept-terrain-glass-necropolis.png",
+      "conceptSha256": "bac017ba2809e2d96d37000fc5df971e38f83b5fa080cb97c46e84dd9f9c6c77",
+      "outputPath": "assets/images/battle/glb/terrain/glass-necropolis.glb",
+      "outputSha256": "a1fa94dd0d9639c10b84c7491adef81387a396f31e6e813cd3e5b702d6d6858b"
+    },
+    "howling-sprawl": {
+      "conceptPath": "assets/images/battle/pilot/concept-terrain-howling-sprawl.png",
+      "conceptSha256": "a41d861d3795d3b20a4c973d32dec357c3ee4c71ced12317a29574473e867470",
+      "outputPath": "assets/images/battle/glb/terrain/howling-sprawl.glb",
+      "outputSha256": "f15d95ea600c72b2bdbbadb5be654fdd380041b8975c7b3e463077edfc3502d3"
+    },
+    "shattered-causeway": {
+      "conceptPath": "assets/images/battle/pilot/concept-terrain-shattered-causeway.png",
+      "conceptSha256": "ab62019649e731dc073fc031c6c09d88197b3bade2f1e4e1e0ecf8ca3067391b",
+      "outputPath": "assets/images/battle/glb/terrain/shattered-causeway.glb",
+      "outputSha256": "8ffe7c2910e4185af57d4e7c31dd8add1048ed2c41b1c7db4a6e5c4cecb05643"
+    },
+    "starless-canal": {
+      "conceptPath": "assets/images/battle/pilot/concept-terrain-starless-canal.png",
+      "conceptSha256": "54579def8b9796e019b676f590ec078150ef20141cc2217f1e7100290211a1b4",
+      "outputPath": "assets/images/battle/glb/terrain/starless-canal.glb",
+      "outputSha256": "4ff508ea04cb20ed738ed3fb69bae24f1031099f12e0a57cfd968acd6d8f87ac"
+    },
+    "sunken-bastion": {
+      "conceptPath": "assets/images/battle/pilot/concept-terrain-sunken-bastion.png",
+      "conceptSha256": "19e37b0789b7a1a2723dd5ebca5091b6381034bf32775c818f77ed4a6fd6183a",
+      "outputPath": "assets/images/battle/glb/terrain/sunken-bastion.glb",
+      "outputSha256": "647b04784571dbe0cb4e26d539451efc6df54a39d9f45f9b69b9e535ee83ec06"
+    },
+    "veil-citadel": {
+      "conceptPath": "assets/images/battle/pilot/concept-terrain-veil-citadel.png",
+      "conceptSha256": "2a9262f1e0e4c3621d2ec102b812270d7b693d0af247ecbbbe7f96c3905322fb",
+      "outputPath": "assets/images/battle/glb/terrain/veil-citadel.glb",
+      "outputSha256": "4d86e8e108f939555cb0466df7786eac12ce7e4ba0370749bf3e9b9720110f7c"
+    }
+  }
+}

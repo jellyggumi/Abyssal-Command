@@ -1,0 +1,3956 @@
+{
+  "assetCount": 24,
+  "assets": {
+    "assets/images/battle/glb/bosses/abyss-regent.glb": {
+      "albedoBake": {
+        "atlasBytes": 312987,
+        "atlasHeight": 1024,
+        "atlasSha256": "363ebf4c9c710d6d1b3c6296649cc46866e2258048785a1089dca86655aec36c",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.97016,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.7364,
+            0.8333,
+            0.478
+          ],
+          "body": [
+            0.407,
+            0.22,
+            0.356
+          ],
+          "lit": [
+            0.69434,
+            0.376,
+            0.54764
+          ],
+          "rim": [
+            0.98505,
+            0.561,
+            0.8042
+          ],
+          "shadow": [
+            0.17908,
+            0.088,
+            0.22072
+          ]
+        },
+        "uvCoverage": 0.599306
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "abyss-regent::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4908,
+        "sampledVertices": 15409
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.3497,
+          "lowerTravel": 0.01776,
+          "participates": true,
+          "upperTravel": 0.0508
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.6518,
+          "lowerTravel": 0.07523,
+          "participates": true,
+          "upperTravel": 0.04903
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.3468,
+          "lowerTravel": 0.01528,
+          "participates": true,
+          "upperTravel": 0.04406
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.3498,
+          "lowerTravel": 0.02186,
+          "participates": true,
+          "upperTravel": 0.06249
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3503,
+          "lowerTravel": 0.00604,
+          "participates": true,
+          "upperTravel": 0.01723
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.2545,
+          "lowerTravel": 0.01585,
+          "participates": true,
+          "upperTravel": 0.06227
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.3501,
+          "lowerTravel": 0.0087,
+          "participates": true,
+          "upperTravel": 0.02484
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.8813,
+          "lowerTravel": 0.00288,
+          "participates": true,
+          "upperTravel": 0.00326
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.3493,
+          "lowerTravel": 0.09152,
+          "participates": true,
+          "upperTravel": 0.03197
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.2678,
+          "lowerTravel": 0.18728,
+          "participates": true,
+          "upperTravel": 0.05016
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3561,
+          "lowerTravel": 0.00721,
+          "participates": true,
+          "upperTravel": 0.02024
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/abyss-regent.glb",
+      "outputSha256": "805e2d28de3bb6a22834dda9aebee9ebca6aa39a8e503a759035c1d73fd56344",
+      "runtimeContract": {
+        "animationNames": [
+          "abyss-regent::attack::v01",
+          "abyss-regent::avoid::v01",
+          "abyss-regent::bighit::v01",
+          "abyss-regent::critical::v01",
+          "abyss-regent::defence::v01",
+          "abyss-regent::die::v01",
+          "abyss-regent::hit::v01",
+          "abyss-regent::idle::v01",
+          "abyss-regent::move::v01",
+          "abyss-regent::run::v01",
+          "abyss-regent::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/bosses/abyss-regent.glb",
+      "sourceCandidateSha256": "805e2d28de3bb6a22834dda9aebee9ebca6aa39a8e503a759035c1d73fd56344",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/abyss-regent.glb",
+      "sourceInputSha256": "8e6d7843dbbb116cc868125670d05bea06b9afb2d04228144a5fe844cdfed797",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/abyss-regent.glb",
+      "wholebodyCandidateSha256": "228e0be78c9f94c65202b57dbe3842b1c928c4cee1ab523920dd087938488af8"
+    },
+    "assets/images/battle/glb/bosses/bridge-colossus.glb": {
+      "albedoBake": {
+        "atlasBytes": 326481,
+        "atlasHeight": 1024,
+        "atlasSha256": "d10f091fa46739e47c0577e96abd23c64b0e56988f125d245350811de22b3c56",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.96505,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.5122,
+            0.8428,
+            0.4438
+          ],
+          "body": [
+            0.412,
+            0.202,
+            0.238
+          ],
+          "lit": [
+            0.70244,
+            0.3481,
+            0.37772
+          ],
+          "rim": [
+            0.9958,
+            0.5241,
+            0.5741
+          ],
+          "shadow": [
+            0.18128,
+            0.0808,
+            0.14756
+          ]
+        },
+        "uvCoverage": 0.640498
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "bridge-colossus::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.84,
+        "sampledVertices": 4794
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.108,
+          "lowerTravel": 0.0304,
+          "participates": true,
+          "upperTravel": 0.28163
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.5578,
+          "lowerTravel": 0.10887,
+          "participates": true,
+          "upperTravel": 0.19518
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1485,
+          "lowerTravel": 0.0228,
+          "participates": true,
+          "upperTravel": 0.15349
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.105,
+          "lowerTravel": 0.03641,
+          "participates": true,
+          "upperTravel": 0.34688
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3006,
+          "lowerTravel": 0.02338,
+          "participates": true,
+          "upperTravel": 0.07779
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1153,
+          "lowerTravel": 0.0238,
+          "participates": true,
+          "upperTravel": 0.20637
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2123,
+          "lowerTravel": 0.01733,
+          "participates": true,
+          "upperTravel": 0.08164
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.8353,
+          "lowerTravel": 0.00415,
+          "participates": true,
+          "upperTravel": 0.00497
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.5618,
+          "lowerTravel": 0.12691,
+          "participates": true,
+          "upperTravel": 0.0713
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5693,
+          "lowerTravel": 0.26508,
+          "participates": true,
+          "upperTravel": 0.15091
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2632,
+          "lowerTravel": 0.0169,
+          "participates": true,
+          "upperTravel": 0.06421
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/bridge-colossus.glb",
+      "outputSha256": "8454627998fe3071b18a5c5aae0a0ae10fd39f62252af18a13b7c5317db715c8",
+      "runtimeContract": {
+        "animationNames": [
+          "bridge-colossus::attack::v01",
+          "bridge-colossus::avoid::v01",
+          "bridge-colossus::bighit::v01",
+          "bridge-colossus::critical::v01",
+          "bridge-colossus::defence::v01",
+          "bridge-colossus::die::v01",
+          "bridge-colossus::hit::v01",
+          "bridge-colossus::idle::v01",
+          "bridge-colossus::move::v01",
+          "bridge-colossus::run::v01",
+          "bridge-colossus::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/bosses/bridge-colossus.glb",
+      "sourceCandidateSha256": "8454627998fe3071b18a5c5aae0a0ae10fd39f62252af18a13b7c5317db715c8",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/bridge-colossus.glb",
+      "sourceInputSha256": "206872359e3143d0a6a344d03eff339644b4b8b762960e02ef3dfb8f67e4fa4f",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/bridge-colossus.glb",
+      "wholebodyCandidateSha256": "88d2f1e1115f28983e5220c747fe7e106dd1a183050f4053489c9eaae906e0e7"
+    },
+    "assets/images/battle/glb/bosses/cinder-warden.glb": {
+      "albedoBake": {
+        "atlasBytes": 281059,
+        "atlasHeight": 1024,
+        "atlasSha256": "bdb4f38fab70db05047fa133e8cc0e4e3f5a715a33b4f5792f09c674f08a3eda",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.9383,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.421,
+            0.687,
+            0.2614
+          ],
+          "body": [
+            0.33,
+            0.106,
+            0.19
+          ],
+          "lit": [
+            0.5696,
+            0.1993,
+            0.3086
+          ],
+          "rim": [
+            0.8195,
+            0.3273,
+            0.4805
+          ],
+          "shadow": [
+            0.1452,
+            0.0424,
+            0.1178
+          ]
+        },
+        "uvCoverage": 0.610331
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "cinder-warden::move::v01",
+        "frame": 25,
+        "maxDisplacement": 1.0488,
+        "sampledVertices": 10933
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1046,
+          "lowerTravel": 0.02162,
+          "participates": true,
+          "upperTravel": 0.20661
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.5392,
+          "lowerTravel": 0.08415,
+          "participates": true,
+          "upperTravel": 0.15608
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1453,
+          "lowerTravel": 0.01751,
+          "participates": true,
+          "upperTravel": 0.12051
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1029,
+          "lowerTravel": 0.02355,
+          "participates": true,
+          "upperTravel": 0.22894
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2549,
+          "lowerTravel": 0.01811,
+          "participates": true,
+          "upperTravel": 0.07103
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1033,
+          "lowerTravel": 0.01814,
+          "participates": true,
+          "upperTravel": 0.17558
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2051,
+          "lowerTravel": 0.0134,
+          "participates": true,
+          "upperTravel": 0.06532
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.5352,
+          "lowerTravel": 0.00324,
+          "participates": true,
+          "upperTravel": 0.00605
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.562,
+          "lowerTravel": 0.09838,
+          "participates": true,
+          "upperTravel": 0.05529
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5673,
+          "lowerTravel": 0.2053,
+          "participates": true,
+          "upperTravel": 0.11646
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2605,
+          "lowerTravel": 0.01309,
+          "participates": true,
+          "upperTravel": 0.05024
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/cinder-warden.glb",
+      "outputSha256": "54451393cbad200cff7a74d07f68e85aa39a47a2cadf4443bb6fa9b3cea010d0",
+      "runtimeContract": {
+        "animationNames": [
+          "cinder-warden::attack::v01",
+          "cinder-warden::avoid::v01",
+          "cinder-warden::bighit::v01",
+          "cinder-warden::critical::v01",
+          "cinder-warden::defence::v01",
+          "cinder-warden::die::v01",
+          "cinder-warden::hit::v01",
+          "cinder-warden::idle::v01",
+          "cinder-warden::move::v01",
+          "cinder-warden::run::v01",
+          "cinder-warden::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/bosses/cinder-warden.glb",
+      "sourceCandidateSha256": "54451393cbad200cff7a74d07f68e85aa39a47a2cadf4443bb6fa9b3cea010d0",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/cinder-warden.glb",
+      "sourceInputSha256": "54557826510d6da2981ccc02b927018a9cea3368f709ee3f8a783c873d7930de",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/cinder-warden.glb",
+      "wholebodyCandidateSha256": "ded28b0ce4e2169ec19d48441884760c06eb27d1c144e64b461e3a55eaaa1ebd"
+    },
+    "assets/images/battle/glb/bosses/gate-sovereign.glb": {
+      "albedoBake": {
+        "atlasBytes": 223430,
+        "atlasHeight": 1024,
+        "atlasSha256": "2b8fe3ed81783ca7da6dd9d9091d6bf667399926f4b4013e08ddc6316c5fb4b4",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.967995,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.8732,
+            0.801,
+            0.3868
+          ],
+          "body": [
+            0.39,
+            0.172,
+            0.428
+          ],
+          "lit": [
+            0.6668,
+            0.3016,
+            0.65132
+          ],
+          "rim": [
+            0.9485,
+            0.4626,
+            0.9446
+          ],
+          "shadow": [
+            0.1716,
+            0.0688,
+            0.26536
+          ]
+        },
+        "uvCoverage": 0.64587
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": null,
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1739,
+          "lowerTravel": 0.03902,
+          "participates": true,
+          "upperTravel": 0.22441
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8746,
+          "lowerTravel": 0.14008,
+          "participates": true,
+          "upperTravel": 0.12252
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1618,
+          "lowerTravel": 0.0287,
+          "participates": true,
+          "upperTravel": 0.17731
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1669,
+          "lowerTravel": 0.0449,
+          "participates": true,
+          "upperTravel": 0.26899
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3529,
+          "lowerTravel": 0.02094,
+          "participates": true,
+          "upperTravel": 0.05934
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1272,
+          "lowerTravel": 0.03041,
+          "participates": true,
+          "upperTravel": 0.23905
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2303,
+          "lowerTravel": 0.02181,
+          "participates": true,
+          "upperTravel": 0.09473
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6911,
+          "lowerTravel": 0.00532,
+          "participates": true,
+          "upperTravel": 0.0077
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.3825,
+          "lowerTravel": 0.16281,
+          "participates": true,
+          "upperTravel": 0.06227
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4352,
+          "lowerTravel": 0.34029,
+          "participates": true,
+          "upperTravel": 0.14808
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3613,
+          "lowerTravel": 0.01898,
+          "participates": true,
+          "upperTravel": 0.05252
+        }
+      ],
+      "lowerMeshBound": false,
+      "outputPath": "assets/images/battle/glb/bosses/gate-sovereign.glb",
+      "outputSha256": "4ce59dc8cf7255199cd537cb4af678c689b9d5cb4213b1a635ce69171311e063",
+      "runtimeContract": {
+        "animationNames": [
+          "gate-sovereign::attack::v01",
+          "gate-sovereign::avoid::v01",
+          "gate-sovereign::bighit::v01",
+          "gate-sovereign::critical::v01",
+          "gate-sovereign::defence::v01",
+          "gate-sovereign::die::v01",
+          "gate-sovereign::hit::v01",
+          "gate-sovereign::idle::v01",
+          "gate-sovereign::move::v01",
+          "gate-sovereign::run::v01",
+          "gate-sovereign::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/bosses/gate-sovereign.glb",
+      "sourceCandidateSha256": "4ce59dc8cf7255199cd537cb4af678c689b9d5cb4213b1a635ce69171311e063",
+      "sourceInputLane": "runtime",
+      "sourceInputPath": "assets/images/battle/glb/bosses/gate-sovereign.glb",
+      "sourceInputSha256": "9fad094f8b90ef5d6bb0b0106ac9501f41ff0e181bbc9c45464cea15cb6019c7",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/gate-sovereign.glb",
+      "wholebodyCandidateSha256": "4395c3f088f9abe8dfd7f629f89b49ed81fbe1dc080a899f0c651ae127faee93"
+    },
+    "assets/images/battle/glb/bosses/lantern-tyrant.glb": {
+      "albedoBake": {
+        "atlasBytes": 190292,
+        "atlasHeight": 1024,
+        "atlasSha256": "f8c3c11bb91b723ce1d148070eee13c3a47c6be80f0ce145929015f1994bce30",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.905012,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.4628,
+            0.4153,
+            0.2101
+          ],
+          "body": [
+            0.187,
+            0.079,
+            0.212
+          ],
+          "lit": [
+            0.33794,
+            0.15745,
+            0.34028
+          ],
+          "rim": [
+            0.51205,
+            0.27195,
+            0.5234
+          ],
+          "shadow": [
+            0.08228,
+            0.0316,
+            0.13144
+          ]
+        },
+        "uvCoverage": 0.598073
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": null,
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.119,
+          "lowerTravel": 0.0383,
+          "participates": true,
+          "upperTravel": 0.32197
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.6508,
+          "lowerTravel": 0.13664,
+          "participates": true,
+          "upperTravel": 0.20994
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1473,
+          "lowerTravel": 0.02875,
+          "participates": true,
+          "upperTravel": 0.19518
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1165,
+          "lowerTravel": 0.04597,
+          "participates": true,
+          "upperTravel": 0.39461
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3139,
+          "lowerTravel": 0.02922,
+          "participates": true,
+          "upperTravel": 0.09309
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1135,
+          "lowerTravel": 0.03029,
+          "participates": true,
+          "upperTravel": 0.26691
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2108,
+          "lowerTravel": 0.02169,
+          "participates": true,
+          "upperTravel": 0.10289
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6828,
+          "lowerTravel": 0.00524,
+          "participates": true,
+          "upperTravel": 0.00767
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.511,
+          "lowerTravel": 0.15881,
+          "participates": true,
+          "upperTravel": 0.08115
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5233,
+          "lowerTravel": 0.33192,
+          "participates": true,
+          "upperTravel": 0.17369
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2756,
+          "lowerTravel": 0.02125,
+          "participates": true,
+          "upperTravel": 0.0771
+        }
+      ],
+      "lowerMeshBound": false,
+      "outputPath": "assets/images/battle/glb/bosses/lantern-tyrant.glb",
+      "outputSha256": "e5a91ba24e3dd93cbd792924fa76b3bde74cefda5fee6b84ab64d20bf90500cb",
+      "runtimeContract": {
+        "animationNames": [
+          "lantern-tyrant::attack::v01",
+          "lantern-tyrant::avoid::v01",
+          "lantern-tyrant::bighit::v01",
+          "lantern-tyrant::critical::v01",
+          "lantern-tyrant::defence::v01",
+          "lantern-tyrant::die::v01",
+          "lantern-tyrant::hit::v01",
+          "lantern-tyrant::idle::v01",
+          "lantern-tyrant::move::v01",
+          "lantern-tyrant::run::v01",
+          "lantern-tyrant::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/bosses/lantern-tyrant.glb",
+      "sourceCandidateSha256": "e5a91ba24e3dd93cbd792924fa76b3bde74cefda5fee6b84ab64d20bf90500cb",
+      "sourceInputLane": "runtime",
+      "sourceInputPath": "assets/images/battle/glb/bosses/lantern-tyrant.glb",
+      "sourceInputSha256": "5e24957de081474718aec8480988ba45803ebc2a8eb16fa237b2c6335704f2be",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/lantern-tyrant.glb",
+      "wholebodyCandidateSha256": "2f52145534424ff1ea61466ad959c405b3d4e781775be0a04b03b70b242c478f"
+    },
+    "assets/images/battle/glb/bosses/pack-herald.glb": {
+      "albedoBake": {
+        "atlasBytes": 251046,
+        "atlasHeight": 1024,
+        "atlasSha256": "033bbc6801ab59ac1febd31cadb4734bb5c3c138449479fb23ea05f1bdb00ddf",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.958829,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.5217,
+            0.8903,
+            0.5369
+          ],
+          "body": [
+            0.437,
+            0.251,
+            0.243
+          ],
+          "lit": [
+            0.74294,
+            0.42405,
+            0.38492
+          ],
+          "rim": [
+            1.0,
+            0.62455,
+            0.58385
+          ],
+          "shadow": [
+            0.19228,
+            0.1004,
+            0.15066
+          ]
+        },
+        "uvCoverage": 0.605452
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "pack-herald::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4834,
+        "sampledVertices": 10196
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.0711,
+          "lowerTravel": 0.01422,
+          "participates": true,
+          "upperTravel": 0.20007
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.3833,
+          "lowerTravel": 0.06067,
+          "participates": true,
+          "upperTravel": 0.1583
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.2438,
+          "lowerTravel": 0.01449,
+          "participates": true,
+          "upperTravel": 0.05945
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.0704,
+          "lowerTravel": 0.01779,
+          "participates": true,
+          "upperTravel": 0.25282
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2715,
+          "lowerTravel": 0.01436,
+          "participates": true,
+          "upperTravel": 0.05291
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1673,
+          "lowerTravel": 0.01494,
+          "participates": true,
+          "upperTravel": 0.08932
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.3502,
+          "lowerTravel": 0.01124,
+          "participates": true,
+          "upperTravel": 0.0321
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.3745,
+          "lowerTravel": 0.00272,
+          "participates": true,
+          "upperTravel": 0.00727
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.6878,
+          "lowerTravel": 0.07677,
+          "participates": true,
+          "upperTravel": 0.0528
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.7005,
+          "lowerTravel": 0.14538,
+          "participates": true,
+          "upperTravel": 0.10183
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2138,
+          "lowerTravel": 0.01063,
+          "participates": true,
+          "upperTravel": 0.04972
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/pack-herald.glb",
+      "outputSha256": "00ba2d4b04d5863a76bc166251959d546ec9ef225417cc2d1fe876047967574b",
+      "runtimeContract": {
+        "animationNames": [
+          "pack-herald::attack::v01",
+          "pack-herald::avoid::v01",
+          "pack-herald::bighit::v01",
+          "pack-herald::critical::v01",
+          "pack-herald::defence::v01",
+          "pack-herald::die::v01",
+          "pack-herald::hit::v01",
+          "pack-herald::idle::v01",
+          "pack-herald::move::v01",
+          "pack-herald::run::v01",
+          "pack-herald::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/bosses/pack-herald.glb",
+      "sourceCandidateSha256": "00ba2d4b04d5863a76bc166251959d546ec9ef225417cc2d1fe876047967574b",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/pack-herald.glb",
+      "sourceInputSha256": "0aa69c13654d2b774da3e921a570c696468636db134318baf0446b45fae9e938",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/pack-herald.glb",
+      "wholebodyCandidateSha256": "5afc09b96eea1c5d16ef2c7d3c9d878528d4dc2278fa341887eda84910b0811f"
+    },
+    "assets/images/battle/glb/bosses/requiem-choir.glb": {
+      "albedoBake": {
+        "atlasBytes": 199721,
+        "atlasHeight": 1024,
+        "atlasSha256": "f3ac44bd3743a5f36d9b410f38da0f3d60c18a66572d909ce8b325e39a86e287",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.957373,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            1.0,
+            1.0,
+            0.8732
+          ],
+          "body": [
+            0.667,
+            0.428,
+            0.854
+          ],
+          "lit": [
+            1.0,
+            0.6984,
+            1.0
+          ],
+          "rim": [
+            1.0,
+            0.9874,
+            1.0
+          ],
+          "shadow": [
+            0.29348,
+            0.1712,
+            0.52948
+          ]
+        },
+        "uvCoverage": 0.607359
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "requiem-choir::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4686,
+        "sampledVertices": 13832
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1188,
+          "lowerTravel": 0.02075,
+          "participates": true,
+          "upperTravel": 0.1747
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.6081,
+          "lowerTravel": 0.07272,
+          "participates": true,
+          "upperTravel": 0.11959
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1371,
+          "lowerTravel": 0.01539,
+          "participates": true,
+          "upperTravel": 0.11221
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1155,
+          "lowerTravel": 0.02481,
+          "participates": true,
+          "upperTravel": 0.21475
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2698,
+          "lowerTravel": 0.01611,
+          "participates": true,
+          "upperTravel": 0.05971
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.109,
+          "lowerTravel": 0.01589,
+          "participates": true,
+          "upperTravel": 0.14574
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.1981,
+          "lowerTravel": 0.01213,
+          "participates": true,
+          "upperTravel": 0.06122
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6155,
+          "lowerTravel": 0.00281,
+          "participates": true,
+          "upperTravel": 0.00457
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.589,
+          "lowerTravel": 0.08525,
+          "participates": true,
+          "upperTravel": 0.05021
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5919,
+          "lowerTravel": 0.17771,
+          "participates": true,
+          "upperTravel": 0.1052
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2817,
+          "lowerTravel": 0.01171,
+          "participates": true,
+          "upperTravel": 0.04155
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/requiem-choir.glb",
+      "outputSha256": "d9a0e9212a7b6a8f9f53f67279ee8ed76c477fd81711c2fa80c32ab67f523c8c",
+      "runtimeContract": {
+        "animationNames": [
+          "requiem-choir::attack::v01",
+          "requiem-choir::avoid::v01",
+          "requiem-choir::bighit::v01",
+          "requiem-choir::critical::v01",
+          "requiem-choir::defence::v01",
+          "requiem-choir::die::v01",
+          "requiem-choir::hit::v01",
+          "requiem-choir::idle::v01",
+          "requiem-choir::move::v01",
+          "requiem-choir::run::v01",
+          "requiem-choir::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/bosses/requiem-choir.glb",
+      "sourceCandidateSha256": "d9a0e9212a7b6a8f9f53f67279ee8ed76c477fd81711c2fa80c32ab67f523c8c",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/requiem-choir.glb",
+      "sourceInputSha256": "0bed526c7a810f786a86e62dee4fe52e85c946908b39c539c85a33c72adbcf4a",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/requiem-choir.glb",
+      "wholebodyCandidateSha256": "853b88af72697e2414f777b9cbd70a51b1c3f8d032679316af99e5f94dba500c"
+    },
+    "assets/images/battle/glb/bosses/tide-warden.glb": {
+      "albedoBake": {
+        "atlasBytes": 319700,
+        "atlasHeight": 1024,
+        "atlasSha256": "c908e678d63316d5f1a185c2668a37ead78b8191f62087dbd0b9cadcd2e6715a",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.977389,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.6414,
+            0.5369,
+            0.516
+          ],
+          "body": [
+            0.251,
+            0.24,
+            0.306
+          ],
+          "lit": [
+            0.44162,
+            0.407,
+            0.47564
+          ],
+          "rim": [
+            0.64965,
+            0.602,
+            0.7067
+          ],
+          "shadow": [
+            0.11044,
+            0.096,
+            0.18972
+          ]
+        },
+        "uvCoverage": 0.501898
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": null,
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1733,
+          "lowerTravel": 0.03795,
+          "participates": true,
+          "upperTravel": 0.219
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8725,
+          "lowerTravel": 0.13352,
+          "participates": true,
+          "upperTravel": 0.1165
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1524,
+          "lowerTravel": 0.02858,
+          "participates": true,
+          "upperTravel": 0.18752
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1664,
+          "lowerTravel": 0.04581,
+          "participates": true,
+          "upperTravel": 0.27523
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3523,
+          "lowerTravel": 0.02231,
+          "participates": true,
+          "upperTravel": 0.06333
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1191,
+          "lowerTravel": 0.03001,
+          "participates": true,
+          "upperTravel": 0.25189
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2155,
+          "lowerTravel": 0.02183,
+          "participates": true,
+          "upperTravel": 0.1013
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6273,
+          "lowerTravel": 0.00517,
+          "participates": true,
+          "upperTravel": 0.00824
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4245,
+          "lowerTravel": 0.15539,
+          "participates": true,
+          "upperTravel": 0.06596
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4832,
+          "lowerTravel": 0.32463,
+          "participates": true,
+          "upperTravel": 0.15687
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3602,
+          "lowerTravel": 0.01972,
+          "participates": true,
+          "upperTravel": 0.05473
+        }
+      ],
+      "lowerMeshBound": false,
+      "outputPath": "assets/images/battle/glb/bosses/tide-warden.glb",
+      "outputSha256": "ec0628e439f685c933f76467ac2801ae631a46861449fab24d9c35e3ba7d3ebb",
+      "runtimeContract": {
+        "animationNames": [
+          "tide-warden::attack::v01",
+          "tide-warden::avoid::v01",
+          "tide-warden::bighit::v01",
+          "tide-warden::critical::v01",
+          "tide-warden::defence::v01",
+          "tide-warden::die::v01",
+          "tide-warden::hit::v01",
+          "tide-warden::idle::v01",
+          "tide-warden::move::v01",
+          "tide-warden::run::v01",
+          "tide-warden::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/bosses/tide-warden.glb",
+      "sourceCandidateSha256": "ec0628e439f685c933f76467ac2801ae631a46861449fab24d9c35e3ba7d3ebb",
+      "sourceInputLane": "runtime",
+      "sourceInputPath": "assets/images/battle/glb/bosses/tide-warden.glb",
+      "sourceInputSha256": "e883bf05685d3708a3cd9069c81ee978e119706094778882fb98c7985dc5634a",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/tide-warden.glb",
+      "wholebodyCandidateSha256": "c2bf1aebf03e3df0a643692f545383b117e8ec450300fa70f37e168a3c45b670"
+    },
+    "assets/images/battle/glb/bosses/veil-tactician.glb": {
+      "albedoBake": {
+        "atlasBytes": 273159,
+        "atlasHeight": 1024,
+        "atlasSha256": "d4f8039770ae9687fe904b38bb3b8a9c807cd924df2e948b2a0b1994d4593e69",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.954029,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            1.0,
+            0.9131,
+            0.9036
+          ],
+          "body": [
+            0.449,
+            0.444,
+            0.633
+          ],
+          "lit": [
+            0.76238,
+            0.7232,
+            0.94652
+          ],
+          "rim": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "shadow": [
+            0.19756,
+            0.1776,
+            0.39246
+          ]
+        },
+        "uvCoverage": 0.578503
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "veil-tactician::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.3972,
+        "sampledVertices": 2430
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.2473,
+          "lowerTravel": 0.03538,
+          "participates": true,
+          "upperTravel": 0.14308
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8744,
+          "lowerTravel": 0.12584,
+          "participates": true,
+          "upperTravel": 0.14392
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.3112,
+          "lowerTravel": 0.02676,
+          "participates": true,
+          "upperTravel": 0.08598
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.2459,
+          "lowerTravel": 0.04273,
+          "participates": true,
+          "upperTravel": 0.17375
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3517,
+          "lowerTravel": 0.01992,
+          "participates": true,
+          "upperTravel": 0.05665
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.2373,
+          "lowerTravel": 0.02812,
+          "participates": true,
+          "upperTravel": 0.11848
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.3516,
+          "lowerTravel": 0.01641,
+          "participates": true,
+          "upperTravel": 0.04667
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.8179,
+          "lowerTravel": 0.00483,
+          "participates": true,
+          "upperTravel": 0.00591
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.5034,
+          "lowerTravel": 0.15097,
+          "participates": true,
+          "upperTravel": 0.076
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.3498,
+          "lowerTravel": 0.30996,
+          "participates": true,
+          "upperTravel": 0.10843
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3582,
+          "lowerTravel": 0.01718,
+          "participates": true,
+          "upperTravel": 0.04798
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/bosses/veil-tactician.glb",
+      "outputSha256": "9f502a570e22615e1d47a77a9b61e84bd94398dd31b63f6b169bfb578de18876",
+      "runtimeContract": {
+        "animationNames": [
+          "veil-tactician::attack::v01",
+          "veil-tactician::avoid::v01",
+          "veil-tactician::bighit::v01",
+          "veil-tactician::critical::v01",
+          "veil-tactician::defence::v01",
+          "veil-tactician::die::v01",
+          "veil-tactician::hit::v01",
+          "veil-tactician::idle::v01",
+          "veil-tactician::move::v01",
+          "veil-tactician::run::v01",
+          "veil-tactician::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/bosses/veil-tactician.glb",
+      "sourceCandidateSha256": "9f502a570e22615e1d47a77a9b61e84bd94398dd31b63f6b169bfb578de18876",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/bosses/veil-tactician.glb",
+      "sourceInputSha256": "d4c4e5459724ab7ee96ad8e1400a5cace45b8d0aa832c281354c3f88c5646321",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/veil-tactician.glb",
+      "wholebodyCandidateSha256": "40cf4ff38222b5f5e3eb3915c00e30b22eb1112a1fdbaa8aad793d9ed7a088ab"
+    },
+    "assets/images/battle/glb/bosses/veiled-concordat.glb": {
+      "albedoBake": {
+        "atlasBytes": 323594,
+        "atlasHeight": 1024,
+        "atlasSha256": "e134e94453171d16e1ac5bb2b60973ae152d60e038dd9a82d3935c426d04d3e6",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.954895,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.9321,
+            0.4286,
+            0.4058
+          ],
+          "body": [
+            0.194,
+            0.182,
+            0.459
+          ],
+          "lit": [
+            0.34928,
+            0.3171,
+            0.69596
+          ],
+          "rim": [
+            0.5271,
+            0.4831,
+            1.0
+          ],
+          "shadow": [
+            0.08536,
+            0.0728,
+            0.28458
+          ]
+        },
+        "uvCoverage": 0.628342
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": null,
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1375,
+          "lowerTravel": 0.03901,
+          "participates": true,
+          "upperTravel": 0.28367
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.7597,
+          "lowerTravel": 0.14003,
+          "participates": true,
+          "upperTravel": 0.18432
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1512,
+          "lowerTravel": 0.0287,
+          "participates": true,
+          "upperTravel": 0.18978
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1347,
+          "lowerTravel": 0.04716,
+          "participates": true,
+          "upperTravel": 0.35006
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3183,
+          "lowerTravel": 0.02938,
+          "participates": true,
+          "upperTravel": 0.09228
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1185,
+          "lowerTravel": 0.03041,
+          "participates": true,
+          "upperTravel": 0.25665
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2165,
+          "lowerTravel": 0.02181,
+          "participates": true,
+          "upperTravel": 0.10076
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6778,
+          "lowerTravel": 0.00535,
+          "participates": true,
+          "upperTravel": 0.00789
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4688,
+          "lowerTravel": 0.16275,
+          "participates": true,
+          "upperTravel": 0.0763
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4773,
+          "lowerTravel": 0.34015,
+          "participates": true,
+          "upperTravel": 0.16235
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3106,
+          "lowerTravel": 0.0221,
+          "participates": true,
+          "upperTravel": 0.07116
+        }
+      ],
+      "lowerMeshBound": false,
+      "outputPath": "assets/images/battle/glb/bosses/veiled-concordat.glb",
+      "outputSha256": "048500e5956df2b424c4d4d317e468ad704b100a768d74f60f95627f903e02a0",
+      "runtimeContract": {
+        "animationNames": [
+          "veiled-concordat::attack::v01",
+          "veiled-concordat::avoid::v01",
+          "veiled-concordat::bighit::v01",
+          "veiled-concordat::critical::v01",
+          "veiled-concordat::defence::v01",
+          "veiled-concordat::die::v01",
+          "veiled-concordat::hit::v01",
+          "veiled-concordat::idle::v01",
+          "veiled-concordat::move::v01",
+          "veiled-concordat::run::v01",
+          "veiled-concordat::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/bosses/veiled-concordat.glb",
+      "sourceCandidateSha256": "048500e5956df2b424c4d4d317e468ad704b100a768d74f60f95627f903e02a0",
+      "sourceInputLane": "runtime",
+      "sourceInputPath": "assets/images/battle/glb/bosses/veiled-concordat.glb",
+      "sourceInputSha256": "7208045928a9078047d460fa6a3446cf4cf13af133db89625314edcd20b97e66",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/bosses/veiled-concordat.glb",
+      "wholebodyCandidateSha256": "d4f655e9e303cc220ea51dc6cfe5fc8910d75f50fef35cf10f68d38b66a6dc0e"
+    },
+    "assets/images/battle/glb/commander/dusk-warden.glb": {
+      "albedoBake": {
+        "atlasSha256": null,
+        "baked": false,
+        "reason": "authored cartoon albedo already ships with this character and its deployed bytes are pinned by tests/commander-guard-pose.test.mjs"
+      },
+      "albedoOrigin": {
+        "conceptReference": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/concept-input/dusk-warden-cartoon-albedo-v3.png",
+        "note": "the god-tibo-imagen concept atlas is reference input only (runtimeEligible:false in its provenance sidecar); the shipped atlas is the Blender-authored bake",
+        "stage": "authored-cartoon-atlas",
+        "tool": "scripts/apply-cartoon-texture-blender.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/rodin-candidates/commander/player-core-rodin-tpose-v01.glb",
+        "note": "the only character body generated through the Rodin bridge",
+        "stage": "rodin-bridge",
+        "tool": "scripts/rodin-tpose-regen.py"
+      },
+      "boundLowerMeshMotion": null,
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1643,
+          "lowerTravel": 0.03712,
+          "participates": true,
+          "upperTravel": 0.22596
+        },
+        {
+          "clip": "attack_melee",
+          "halfBalance": 0.0499,
+          "lowerTravel": 0.06944,
+          "participates": true,
+          "upperTravel": 1.39291
+        },
+        {
+          "clip": "attack_ranged",
+          "halfBalance": 0.1263,
+          "lowerTravel": 0.06956,
+          "participates": true,
+          "upperTravel": 0.55088
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8008,
+          "lowerTravel": 0.1534,
+          "participates": true,
+          "upperTravel": 0.12284
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.2558,
+          "lowerTravel": 0.0277,
+          "participates": true,
+          "upperTravel": 0.10833
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1229,
+          "lowerTravel": 0.04492,
+          "participates": true,
+          "upperTravel": 0.36543
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3525,
+          "lowerTravel": 0.02281,
+          "participates": true,
+          "upperTravel": 0.06471
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1545,
+          "lowerTravel": 0.02986,
+          "participates": true,
+          "upperTravel": 0.19328
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2579,
+          "lowerTravel": 0.02122,
+          "participates": true,
+          "upperTravel": 0.08227
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.8268,
+          "lowerTravel": 0.00384,
+          "participates": true,
+          "upperTravel": 0.00465
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.6046,
+          "lowerTravel": 0.21536,
+          "participates": true,
+          "upperTravel": 0.1302
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5644,
+          "lowerTravel": 0.28723,
+          "participates": true,
+          "upperTravel": 0.16211
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2326,
+          "lowerTravel": 0.02088,
+          "participates": true,
+          "upperTravel": 0.08975
+        }
+      ],
+      "lowerMeshBound": false,
+      "outputPath": "assets/images/battle/glb/commander/dusk-warden.glb",
+      "outputSha256": "f2023c08ad69a4b75a200b6275da1dbf0594b6cb3a5e0bfd5ba278f6142175cc",
+      "runtimeContract": {
+        "animationNames": [
+          "dusk-warden::attack::v01",
+          "dusk-warden::attack_melee::v01",
+          "dusk-warden::attack_ranged::v01",
+          "dusk-warden::avoid::v01",
+          "dusk-warden::bighit::v01",
+          "dusk-warden::critical::v01",
+          "dusk-warden::defence::v01",
+          "dusk-warden::die::v01",
+          "dusk-warden::hit::v01",
+          "dusk-warden::idle::v01",
+          "dusk-warden::move::v01",
+          "dusk-warden::run::v01",
+          "dusk-warden::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/commander/dusk-warden.glb",
+      "sourceCandidateSha256": "f2023c08ad69a4b75a200b6275da1dbf0594b6cb3a5e0bfd5ba278f6142175cc",
+      "sourceInputLane": "runtime",
+      "sourceInputPath": "assets/images/battle/glb/commander/dusk-warden.glb",
+      "sourceInputSha256": "eafd685e766dc9e590cafbfa2265c3a8dc439a615dbb1504653cc462d0f79e49",
+      "upstreamPipeline": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/player-combat-animation-candidate/author_player_combat_clips.py",
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/commander/dusk-warden.glb",
+      "wholebodyCandidateSha256": "f2023c08ad69a4b75a200b6275da1dbf0594b6cb3a5e0bfd5ba278f6142175cc"
+    },
+    "assets/images/battle/glb/companions/anchor-shard.glb": {
+      "albedoBake": {
+        "atlasBytes": 245949,
+        "atlasHeight": 1024,
+        "atlasSha256": "4b86f9178c36b6d12e293c093def0ae8d13953f6a28db0f9ab4db28320c3e026",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.936499,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.5046,
+            0.5806,
+            0.4115
+          ],
+          "body": [
+            0.274,
+            0.185,
+            0.234
+          ],
+          "lit": [
+            0.47888,
+            0.32175,
+            0.37196
+          ],
+          "rim": [
+            0.6991,
+            0.48925,
+            0.5663
+          ],
+          "shadow": [
+            0.12056,
+            0.074,
+            0.14508
+          ]
+        },
+        "uvCoverage": 0.598913
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "anchor-shard::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4883,
+        "sampledVertices": 3004
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1208,
+          "lowerTravel": 0.02265,
+          "participates": true,
+          "upperTravel": 0.18751
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.6975,
+          "lowerTravel": 0.08376,
+          "participates": true,
+          "upperTravel": 0.12009
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1407,
+          "lowerTravel": 0.0175,
+          "participates": true,
+          "upperTravel": 0.1244
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1166,
+          "lowerTravel": 0.02445,
+          "participates": true,
+          "upperTravel": 0.20969
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3516,
+          "lowerTravel": 0.01261,
+          "participates": true,
+          "upperTravel": 0.03585
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1066,
+          "lowerTravel": 0.01813,
+          "participates": true,
+          "upperTravel": 0.17008
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2,
+          "lowerTravel": 0.01344,
+          "participates": true,
+          "upperTravel": 0.06722
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.7509,
+          "lowerTravel": 0.00321,
+          "participates": true,
+          "upperTravel": 0.00427
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.5302,
+          "lowerTravel": 0.09795,
+          "participates": true,
+          "upperTravel": 0.05194
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.5463,
+          "lowerTravel": 0.20437,
+          "participates": true,
+          "upperTravel": 0.11165
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3441,
+          "lowerTravel": 0.01308,
+          "participates": true,
+          "upperTravel": 0.038
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/anchor-shard.glb",
+      "outputSha256": "ff85010934e1cd53db64c1823508a75021c1c416593d73335734fccfc587e8ee",
+      "runtimeContract": {
+        "animationNames": [
+          "anchor-shard::attack::v01",
+          "anchor-shard::avoid::v01",
+          "anchor-shard::bighit::v01",
+          "anchor-shard::critical::v01",
+          "anchor-shard::defence::v01",
+          "anchor-shard::die::v01",
+          "anchor-shard::hit::v01",
+          "anchor-shard::idle::v01",
+          "anchor-shard::move::v01",
+          "anchor-shard::run::v01",
+          "anchor-shard::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/companions/anchor-shard.glb",
+      "sourceCandidateSha256": "ff85010934e1cd53db64c1823508a75021c1c416593d73335734fccfc587e8ee",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/anchor-shard.glb",
+      "sourceInputSha256": "57224f308c1b7379ffbbab716697f481a020d04ff62fedbe362a3701f9f24788",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/anchor-shard.glb",
+      "wholebodyCandidateSha256": "c7f61de82e6d73fda38f079735ae193115af9472d3663bf2052d62456ef51093"
+    },
+    "assets/images/battle/glb/companions/dawnless-crown.glb": {
+      "albedoBake": {
+        "atlasBytes": 300984,
+        "atlasHeight": 1024,
+        "atlasSha256": "783b3baee4cd19f13918fcd8087b03af56eaf8d2eb2bde95f06418f7e429783f",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.965523,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.7136,
+            0.5578,
+            0.4229
+          ],
+          "body": [
+            0.262,
+            0.191,
+            0.344
+          ],
+          "lit": [
+            0.45944,
+            0.33105,
+            0.53036
+          ],
+          "rim": [
+            0.6733,
+            0.50155,
+            0.7808
+          ],
+          "shadow": [
+            0.11528,
+            0.0764,
+            0.21328
+          ]
+        },
+        "uvCoverage": 0.549037
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "dawnless-crown::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.9024,
+        "sampledVertices": 5142
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1543,
+          "lowerTravel": 0.02821,
+          "participates": true,
+          "upperTravel": 0.18281
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8525,
+          "lowerTravel": 0.10074,
+          "participates": true,
+          "upperTravel": 0.11817
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1731,
+          "lowerTravel": 0.02128,
+          "participates": true,
+          "upperTravel": 0.12289
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1503,
+          "lowerTravel": 0.03282,
+          "participates": true,
+          "upperTravel": 0.21836
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.347,
+          "lowerTravel": 0.02176,
+          "participates": true,
+          "upperTravel": 0.06271
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1247,
+          "lowerTravel": 0.02219,
+          "participates": true,
+          "upperTravel": 0.17793
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2404,
+          "lowerTravel": 0.01619,
+          "participates": true,
+          "upperTravel": 0.06734
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6486,
+          "lowerTravel": 0.00391,
+          "participates": true,
+          "upperTravel": 0.00603
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4547,
+          "lowerTravel": 0.11753,
+          "participates": true,
+          "upperTravel": 0.05344
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4792,
+          "lowerTravel": 0.24542,
+          "participates": true,
+          "upperTravel": 0.1176
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3593,
+          "lowerTravel": 0.01521,
+          "participates": true,
+          "upperTravel": 0.04233
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/dawnless-crown.glb",
+      "outputSha256": "241ab57aa9610daa8f9626be42321aff35c46eacbe2f8dc3e116330fae219b7d",
+      "runtimeContract": {
+        "animationNames": [
+          "dawnless-crown::attack::v01",
+          "dawnless-crown::avoid::v01",
+          "dawnless-crown::bighit::v01",
+          "dawnless-crown::critical::v01",
+          "dawnless-crown::defence::v01",
+          "dawnless-crown::die::v01",
+          "dawnless-crown::hit::v01",
+          "dawnless-crown::idle::v01",
+          "dawnless-crown::move::v01",
+          "dawnless-crown::run::v01",
+          "dawnless-crown::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/companions/dawnless-crown.glb",
+      "sourceCandidateSha256": "241ab57aa9610daa8f9626be42321aff35c46eacbe2f8dc3e116330fae219b7d",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/dawnless-crown.glb",
+      "sourceInputSha256": "56bb9f88b32f95b5ff7b7ee63b3baba8cf49058950a6d0fdfee643fd3a682fa5",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/dawnless-crown.glb",
+      "wholebodyCandidateSha256": "f5f20f4daf4647b1e199f4f1df2be07b0bf734952ebb121abcb62e9640ab5372"
+    },
+    "assets/images/battle/glb/companions/ember-cohort.glb": {
+      "albedoBake": {
+        "atlasBytes": 304594,
+        "atlasHeight": 1024,
+        "atlasSha256": "3f285163677f989c6b8a161649a0e3468a763e23ce8ff3caa8d5239904ee6e81",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.964401,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.3963,
+            0.9283,
+            0.2842
+          ],
+          "body": [
+            0.457,
+            0.118,
+            0.177
+          ],
+          "lit": [
+            0.77534,
+            0.2179,
+            0.28988
+          ],
+          "rim": [
+            1.0,
+            0.3519,
+            0.45515
+          ],
+          "shadow": [
+            0.20108,
+            0.0472,
+            0.10974
+          ]
+        },
+        "uvCoverage": 0.582482
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "ember-cohort::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.3039,
+        "sampledVertices": 1189
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.2283,
+          "lowerTravel": 0.03561,
+          "participates": true,
+          "upperTravel": 0.15596
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8488,
+          "lowerTravel": 0.12564,
+          "participates": true,
+          "upperTravel": 0.10664
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1984,
+          "lowerTravel": 0.02671,
+          "participates": true,
+          "upperTravel": 0.13459
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.2198,
+          "lowerTravel": 0.04297,
+          "participates": true,
+          "upperTravel": 0.19553
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3514,
+          "lowerTravel": 0.02075,
+          "participates": true,
+          "upperTravel": 0.05906
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1431,
+          "lowerTravel": 0.02577,
+          "participates": true,
+          "upperTravel": 0.18011
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2765,
+          "lowerTravel": 0.02029,
+          "participates": true,
+          "upperTravel": 0.0734
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.73,
+          "lowerTravel": 0.00487,
+          "participates": true,
+          "upperTravel": 0.00667
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.3233,
+          "lowerTravel": 0.14622,
+          "participates": true,
+          "upperTravel": 0.04728
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.3394,
+          "lowerTravel": 0.30556,
+          "participates": true,
+          "upperTravel": 0.10371
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3576,
+          "lowerTravel": 0.01622,
+          "participates": true,
+          "upperTravel": 0.04535
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/ember-cohort.glb",
+      "outputSha256": "63d10feef2eba2958b03b684a7be496095e36bdc4602947981ef198800bcbae6",
+      "runtimeContract": {
+        "animationNames": [
+          "ember-cohort::attack::v01",
+          "ember-cohort::avoid::v01",
+          "ember-cohort::bighit::v01",
+          "ember-cohort::critical::v01",
+          "ember-cohort::defence::v01",
+          "ember-cohort::die::v01",
+          "ember-cohort::hit::v01",
+          "ember-cohort::idle::v01",
+          "ember-cohort::move::v01",
+          "ember-cohort::run::v01",
+          "ember-cohort::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/companions/ember-cohort.glb",
+      "sourceCandidateSha256": "63d10feef2eba2958b03b684a7be496095e36bdc4602947981ef198800bcbae6",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/ember-cohort.glb",
+      "sourceInputSha256": "844c68393f98f5c4e8e8b056a9a7f2b68ecc11c238f69e809b153bbf61f137ad",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/ember-cohort.glb",
+      "wholebodyCandidateSha256": "74fe3c02f1226ac0b7cc6541aeb41271ee318dea2d0021dd2dccf12305bbfc82"
+    },
+    "assets/images/battle/glb/companions/lantern-reaver.glb": {
+      "albedoBake": {
+        "atlasBytes": 310591,
+        "atlasHeight": 1024,
+        "atlasSha256": "59a763e9038b3f37b85b4b2a3a79cae89d53c4fb04392cbeb6412f48aac5cda7",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.94968,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.7668,
+            0.7782,
+            0.5065
+          ],
+          "body": [
+            0.378,
+            0.235,
+            0.372
+          ],
+          "lit": [
+            0.64736,
+            0.39925,
+            0.57068
+          ],
+          "rim": [
+            0.9227,
+            0.59175,
+            0.8354
+          ],
+          "shadow": [
+            0.16632,
+            0.094,
+            0.23064
+          ]
+        },
+        "uvCoverage": 0.542527
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "lantern-reaver::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.6864,
+        "sampledVertices": 2928
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1465,
+          "lowerTravel": 0.02756,
+          "participates": true,
+          "upperTravel": 0.18814
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8351,
+          "lowerTravel": 0.10336,
+          "participates": true,
+          "upperTravel": 0.12376
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1645,
+          "lowerTravel": 0.022,
+          "participates": true,
+          "upperTravel": 0.13374
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.142,
+          "lowerTravel": 0.03008,
+          "participates": true,
+          "upperTravel": 0.21186
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3369,
+          "lowerTravel": 0.02247,
+          "participates": true,
+          "upperTravel": 0.0667
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.119,
+          "lowerTravel": 0.02301,
+          "participates": true,
+          "upperTravel": 0.19334
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.23,
+          "lowerTravel": 0.01674,
+          "participates": true,
+          "upperTravel": 0.07278
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.5632,
+          "lowerTravel": 0.00401,
+          "participates": true,
+          "upperTravel": 0.00711
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4437,
+          "lowerTravel": 0.12167,
+          "participates": true,
+          "upperTravel": 0.05398
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4734,
+          "lowerTravel": 0.2541,
+          "participates": true,
+          "upperTravel": 0.12029
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3589,
+          "lowerTravel": 0.01612,
+          "participates": true,
+          "upperTravel": 0.0449
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/lantern-reaver.glb",
+      "outputSha256": "02d23adf9a5de1476464b3bf456aa80d3f50220bcfafd74b1dd3ad1a1212f8d5",
+      "runtimeContract": {
+        "animationNames": [
+          "lantern-reaver::attack::v01",
+          "lantern-reaver::avoid::v01",
+          "lantern-reaver::bighit::v01",
+          "lantern-reaver::critical::v01",
+          "lantern-reaver::defence::v01",
+          "lantern-reaver::die::v01",
+          "lantern-reaver::hit::v01",
+          "lantern-reaver::idle::v01",
+          "lantern-reaver::move::v01",
+          "lantern-reaver::run::v01",
+          "lantern-reaver::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/companions/lantern-reaver.glb",
+      "sourceCandidateSha256": "02d23adf9a5de1476464b3bf456aa80d3f50220bcfafd74b1dd3ad1a1212f8d5",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/lantern-reaver.glb",
+      "sourceInputSha256": "670d4346d0ffa440734f82403e2a59e3ccef01eae59cd0dbf317f8962e81a4dc",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/lantern-reaver.glb",
+      "wholebodyCandidateSha256": "2537204bb36b46d49ff09d79744076dc4368773472276db4df1c5cbe910a51f9"
+    },
+    "assets/images/battle/glb/companions/pack-warden.glb": {
+      "albedoBake": {
+        "atlasBytes": 321172,
+        "atlasHeight": 1024,
+        "atlasSha256": "17f321fb11bc09330440806c637101ca0b863fc02bc0f8dad85e2e197d98b7fc",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.974866,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.4685,
+            0.7269,
+            0.364
+          ],
+          "body": [
+            0.351,
+            0.16,
+            0.215
+          ],
+          "lit": [
+            0.60362,
+            0.283,
+            0.3446
+          ],
+          "rim": [
+            0.86465,
+            0.438,
+            0.52925
+          ],
+          "shadow": [
+            0.15444,
+            0.064,
+            0.1333
+          ]
+        },
+        "uvCoverage": 0.530159
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "pack-warden::move::v01",
+        "frame": 25,
+        "maxDisplacement": 1.065,
+        "sampledVertices": 6871
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.0728,
+          "lowerTravel": 0.01652,
+          "participates": true,
+          "upperTravel": 0.22699
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.4367,
+          "lowerTravel": 0.07456,
+          "participates": true,
+          "upperTravel": 0.17072
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1266,
+          "lowerTravel": 0.01606,
+          "participates": true,
+          "upperTravel": 0.12688
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.071,
+          "lowerTravel": 0.0183,
+          "participates": true,
+          "upperTravel": 0.25788
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3441,
+          "lowerTravel": 0.0167,
+          "participates": true,
+          "upperTravel": 0.04855
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.0941,
+          "lowerTravel": 0.01659,
+          "participates": true,
+          "upperTravel": 0.17632
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.1869,
+          "lowerTravel": 0.01234,
+          "participates": true,
+          "upperTravel": 0.06605
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.4847,
+          "lowerTravel": 0.00298,
+          "participates": true,
+          "upperTravel": 0.00614
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.7227,
+          "lowerTravel": 0.09134,
+          "participates": true,
+          "upperTravel": 0.06601
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.7453,
+          "lowerTravel": 0.19055,
+          "participates": true,
+          "upperTravel": 0.14203
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2362,
+          "lowerTravel": 0.01223,
+          "participates": true,
+          "upperTravel": 0.05178
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/pack-warden.glb",
+      "outputSha256": "b9773b986d4eec215d030112cc1de1ece9a2412578cd09a3fd30626e1211a5b4",
+      "runtimeContract": {
+        "animationNames": [
+          "pack-warden::attack::v01",
+          "pack-warden::avoid::v01",
+          "pack-warden::bighit::v01",
+          "pack-warden::critical::v01",
+          "pack-warden::defence::v01",
+          "pack-warden::die::v01",
+          "pack-warden::hit::v01",
+          "pack-warden::idle::v01",
+          "pack-warden::move::v01",
+          "pack-warden::run::v01",
+          "pack-warden::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/companions/pack-warden.glb",
+      "sourceCandidateSha256": "b9773b986d4eec215d030112cc1de1ece9a2412578cd09a3fd30626e1211a5b4",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/pack-warden.glb",
+      "sourceInputSha256": "63b07ca170686e3d0a0da6afd99b00e8e4e6a42758907a4b1b233ead6a8a93ab",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/pack-warden.glb",
+      "wholebodyCandidateSha256": "446b3ef1e935fb108545c6f12533d85beca8e62fd4a3a6deeb0eb1f55fb953eb"
+    },
+    "assets/images/battle/glb/companions/requiem-warden.glb": {
+      "albedoBake": {
+        "atlasBytes": 309599,
+        "atlasHeight": 1024,
+        "atlasSha256": "a6b2e81c11f752455b7ada8659fb35baa08b484af302af039dded96e93519fb4",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.974406,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            1.0,
+            1.0,
+            0.8732
+          ],
+          "body": [
+            0.667,
+            0.428,
+            0.854
+          ],
+          "lit": [
+            1.0,
+            0.6984,
+            1.0
+          ],
+          "rim": [
+            1.0,
+            0.9874,
+            1.0
+          ],
+          "shadow": [
+            0.29348,
+            0.1712,
+            0.52948
+          ]
+        },
+        "uvCoverage": 0.535528
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "requiem-warden::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.389,
+        "sampledVertices": 2691
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1111,
+          "lowerTravel": 0.02942,
+          "participates": true,
+          "upperTravel": 0.26491
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.5712,
+          "lowerTravel": 0.10789,
+          "participates": true,
+          "upperTravel": 0.18887
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1452,
+          "lowerTravel": 0.02339,
+          "participates": true,
+          "upperTravel": 0.16114
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1086,
+          "lowerTravel": 0.0312,
+          "participates": true,
+          "upperTravel": 0.28743
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2539,
+          "lowerTravel": 0.02415,
+          "participates": true,
+          "upperTravel": 0.09513
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1101,
+          "lowerTravel": 0.02433,
+          "participates": true,
+          "upperTravel": 0.22099
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2099,
+          "lowerTravel": 0.01832,
+          "participates": true,
+          "upperTravel": 0.08729
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.5166,
+          "lowerTravel": 0.0042,
+          "participates": true,
+          "upperTravel": 0.00813
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.5998,
+          "lowerTravel": 0.12607,
+          "participates": true,
+          "upperTravel": 0.07561
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.6057,
+          "lowerTravel": 0.26305,
+          "participates": true,
+          "upperTravel": 0.15933
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2763,
+          "lowerTravel": 0.01721,
+          "participates": true,
+          "upperTravel": 0.06228
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/requiem-warden.glb",
+      "outputSha256": "1916766191a366415070e3c842743aed7678ae1d71af09c513df857e7bb1d68b",
+      "runtimeContract": {
+        "animationNames": [
+          "requiem-warden::attack::v01",
+          "requiem-warden::avoid::v01",
+          "requiem-warden::bighit::v01",
+          "requiem-warden::critical::v01",
+          "requiem-warden::defence::v01",
+          "requiem-warden::die::v01",
+          "requiem-warden::hit::v01",
+          "requiem-warden::idle::v01",
+          "requiem-warden::move::v01",
+          "requiem-warden::run::v01",
+          "requiem-warden::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/companions/requiem-warden.glb",
+      "sourceCandidateSha256": "1916766191a366415070e3c842743aed7678ae1d71af09c513df857e7bb1d68b",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/requiem-warden.glb",
+      "sourceInputSha256": "2490b6b76f17614c798248dc14b1af03c351f9cc57515803efc392b7b5bbd590",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/requiem-warden.glb",
+      "wholebodyCandidateSha256": "0c61a8438b01d12751c15287aacfa97e7e54e1232ced1d7f13a016adcbf4358a"
+    },
+    "assets/images/battle/glb/companions/rift-lens.glb": {
+      "albedoBake": {
+        "atlasBytes": 339558,
+        "atlasHeight": 1024,
+        "atlasSha256": "a92972f6195a3290dcf6bcea877ac4ae2fa372711c6e1782691a262c791ebeff",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.954405,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            1.0,
+            0.8713,
+            0.4134
+          ],
+          "body": [
+            0.427,
+            0.186,
+            0.574
+          ],
+          "lit": [
+            0.72674,
+            0.3233,
+            0.86156
+          ],
+          "rim": [
+            1.0,
+            0.4913,
+            1.0
+          ],
+          "shadow": [
+            0.18788,
+            0.0744,
+            0.35588
+          ]
+        },
+        "uvCoverage": 0.589305
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "rift-lens::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.3801,
+        "sampledVertices": 1636
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.218,
+          "lowerTravel": 0.0333,
+          "participates": true,
+          "upperTravel": 0.15274
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.7875,
+          "lowerTravel": 0.11863,
+          "participates": true,
+          "upperTravel": 0.15065
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.2662,
+          "lowerTravel": 0.02517,
+          "participates": true,
+          "upperTravel": 0.09458
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.218,
+          "lowerTravel": 0.04018,
+          "participates": true,
+          "upperTravel": 0.18429
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3524,
+          "lowerTravel": 0.02147,
+          "participates": true,
+          "upperTravel": 0.06093
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1996,
+          "lowerTravel": 0.02638,
+          "participates": true,
+          "upperTravel": 0.13215
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.352,
+          "lowerTravel": 0.01829,
+          "participates": true,
+          "upperTravel": 0.05195
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.7862,
+          "lowerTravel": 0.00455,
+          "participates": true,
+          "upperTravel": 0.00578
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.5519,
+          "lowerTravel": 0.14258,
+          "participates": true,
+          "upperTravel": 0.07868
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.3649,
+          "lowerTravel": 0.29198,
+          "participates": true,
+          "upperTravel": 0.10654
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3586,
+          "lowerTravel": 0.01821,
+          "participates": true,
+          "upperTravel": 0.05079
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/rift-lens.glb",
+      "outputSha256": "a72158dd9071b0b359f327fae4f0592e5806697c06fddf7307835c7a9364c453",
+      "runtimeContract": {
+        "animationNames": [
+          "rift-lens::attack::v01",
+          "rift-lens::avoid::v01",
+          "rift-lens::bighit::v01",
+          "rift-lens::critical::v01",
+          "rift-lens::defence::v01",
+          "rift-lens::die::v01",
+          "rift-lens::hit::v01",
+          "rift-lens::idle::v01",
+          "rift-lens::move::v01",
+          "rift-lens::run::v01",
+          "rift-lens::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/companions/rift-lens.glb",
+      "sourceCandidateSha256": "a72158dd9071b0b359f327fae4f0592e5806697c06fddf7307835c7a9364c453",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/rift-lens.glb",
+      "sourceInputSha256": "6c585935a634a31619807831a3b45c01faaacea7021352c9668a7a9e90fb5c2d",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/rift-lens.glb",
+      "wholebodyCandidateSha256": "55d4ce924a1204d18a06b13cc46f4640e41b62c32e64efcf6ca536102261223b"
+    },
+    "assets/images/battle/glb/companions/throne-echo.glb": {
+      "albedoBake": {
+        "atlasBytes": 406170,
+        "atlasHeight": 1024,
+        "atlasSha256": "7e45c206b6b02c10ff4fa648f12101688a9b9f6acaa3565f0fcf224e34a9149e",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.974215,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            1.0,
+            1.0,
+            0.9644
+          ],
+          "body": [
+            0.665,
+            0.476,
+            0.563
+          ],
+          "lit": [
+            1.0,
+            0.7728,
+            0.84572
+          ],
+          "rim": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "shadow": [
+            0.2926,
+            0.1904,
+            0.34906
+          ]
+        },
+        "uvCoverage": 0.532419
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "throne-echo::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.5766,
+        "sampledVertices": 4449
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1425,
+          "lowerTravel": 0.03444,
+          "participates": true,
+          "upperTravel": 0.24166
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.7472,
+          "lowerTravel": 0.12293,
+          "participates": true,
+          "upperTravel": 0.16451
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1611,
+          "lowerTravel": 0.02592,
+          "participates": true,
+          "upperTravel": 0.1609
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1399,
+          "lowerTravel": 0.04157,
+          "participates": true,
+          "upperTravel": 0.29716
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3031,
+          "lowerTravel": 0.02643,
+          "participates": true,
+          "upperTravel": 0.08718
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1196,
+          "lowerTravel": 0.02717,
+          "participates": true,
+          "upperTravel": 0.2273
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2251,
+          "lowerTravel": 0.01962,
+          "participates": true,
+          "upperTravel": 0.08717
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.6637,
+          "lowerTravel": 0.00472,
+          "participates": true,
+          "upperTravel": 0.00711
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4754,
+          "lowerTravel": 0.14307,
+          "participates": true,
+          "upperTravel": 0.06801
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4832,
+          "lowerTravel": 0.29898,
+          "participates": true,
+          "upperTravel": 0.14446
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3148,
+          "lowerTravel": 0.01902,
+          "participates": true,
+          "upperTravel": 0.0604
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/throne-echo.glb",
+      "outputSha256": "a4b7af10b4e22931f8f1021512b9e40ce24c169c54c52b173d67c7cbd8f1e6e6",
+      "runtimeContract": {
+        "animationNames": [
+          "throne-echo::attack::v01",
+          "throne-echo::avoid::v01",
+          "throne-echo::bighit::v01",
+          "throne-echo::critical::v01",
+          "throne-echo::defence::v01",
+          "throne-echo::die::v01",
+          "throne-echo::hit::v01",
+          "throne-echo::idle::v01",
+          "throne-echo::move::v01",
+          "throne-echo::run::v01",
+          "throne-echo::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/companions/throne-echo.glb",
+      "sourceCandidateSha256": "a4b7af10b4e22931f8f1021512b9e40ce24c169c54c52b173d67c7cbd8f1e6e6",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/throne-echo.glb",
+      "sourceInputSha256": "82635f323851ff7ba7e294212666635cffb683df9a71a0ccf3ad446d5a83ba47",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/throne-echo.glb",
+      "wholebodyCandidateSha256": "a17c4f7248449e5893765002539055dfe58825a284fdc7756971bc5722c9f6d3"
+    },
+    "assets/images/battle/glb/companions/veil-vanguard.glb": {
+      "albedoBake": {
+        "atlasBytes": 292514,
+        "atlasHeight": 1024,
+        "atlasSha256": "26a5d8e50435ce45781d6f327208c0163dc58de70dc3cfbe245629edc734959e",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.975986,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.8751,
+            0.5958,
+            0.7326
+          ],
+          "body": [
+            0.282,
+            0.354,
+            0.429
+          ],
+          "lit": [
+            0.49184,
+            0.5837,
+            0.65276
+          ],
+          "rim": [
+            0.7163,
+            0.8357,
+            0.94655
+          ],
+          "shadow": [
+            0.12408,
+            0.1416,
+            0.26598
+          ]
+        },
+        "uvCoverage": 0.574644
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "veil-vanguard::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4251,
+        "sampledVertices": 2140
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.14,
+          "lowerTravel": 0.02791,
+          "participates": true,
+          "upperTravel": 0.19933
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.7554,
+          "lowerTravel": 0.12057,
+          "participates": true,
+          "upperTravel": 0.15961
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1859,
+          "lowerTravel": 0.02585,
+          "participates": true,
+          "upperTravel": 0.13901
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1371,
+          "lowerTravel": 0.03212,
+          "participates": true,
+          "upperTravel": 0.23431
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3017,
+          "lowerTravel": 0.02636,
+          "participates": true,
+          "upperTravel": 0.08736
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1291,
+          "lowerTravel": 0.02709,
+          "participates": true,
+          "upperTravel": 0.20985
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2609,
+          "lowerTravel": 0.0198,
+          "participates": true,
+          "upperTravel": 0.0759
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.513,
+          "lowerTravel": 0.00463,
+          "participates": true,
+          "upperTravel": 0.00904
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4487,
+          "lowerTravel": 0.14049,
+          "participates": true,
+          "upperTravel": 0.06304
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4582,
+          "lowerTravel": 0.28929,
+          "participates": true,
+          "upperTravel": 0.13256
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3581,
+          "lowerTravel": 0.01709,
+          "participates": true,
+          "upperTravel": 0.04772
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/companions/veil-vanguard.glb",
+      "outputSha256": "a72ecb96dd3a3642ec60fb07e3bec310fcfc4b1f097a7b852b203be598bbb2d3",
+      "runtimeContract": {
+        "animationNames": [
+          "veil-vanguard::attack::v01",
+          "veil-vanguard::avoid::v01",
+          "veil-vanguard::bighit::v01",
+          "veil-vanguard::critical::v01",
+          "veil-vanguard::defence::v01",
+          "veil-vanguard::die::v01",
+          "veil-vanguard::hit::v01",
+          "veil-vanguard::idle::v01",
+          "veil-vanguard::move::v01",
+          "veil-vanguard::run::v01",
+          "veil-vanguard::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/companions/veil-vanguard.glb",
+      "sourceCandidateSha256": "a72ecb96dd3a3642ec60fb07e3bec310fcfc4b1f097a7b852b203be598bbb2d3",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/companions/veil-vanguard.glb",
+      "sourceInputSha256": "14fc3d05f3ccf4d8df8549439c91162f8fa963a721964901ed7d14a5b5fb641a",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/companions/veil-vanguard.glb",
+      "wholebodyCandidateSha256": "d48809d62108ccce8862c9653dad47db36bec327b41429ae8c731ba5e5fa2391"
+    },
+    "assets/images/battle/glb/enemies/guard.glb": {
+      "albedoBake": {
+        "atlasBytes": 212146,
+        "atlasHeight": 1024,
+        "atlasSha256": "8436bc89d7343ddb6e01953b7475b1e19501850036be32ff956cb810505f70a6",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.926141,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.5407,
+            0.5825,
+            0.4894
+          ],
+          "body": [
+            0.275,
+            0.226,
+            0.253
+          ],
+          "lit": [
+            0.4805,
+            0.3853,
+            0.39932
+          ],
+          "rim": [
+            0.70125,
+            0.5733,
+            0.60335
+          ],
+          "shadow": [
+            0.121,
+            0.0904,
+            0.15686
+          ]
+        },
+        "uvCoverage": 0.635489
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "guard::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4257,
+        "sampledVertices": 3017
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1299,
+          "lowerTravel": 0.02723,
+          "participates": true,
+          "upperTravel": 0.20965
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.6694,
+          "lowerTravel": 0.09879,
+          "participates": true,
+          "upperTravel": 0.14757
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1494,
+          "lowerTravel": 0.01958,
+          "participates": true,
+          "upperTravel": 0.13109
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1248,
+          "lowerTravel": 0.03272,
+          "participates": true,
+          "upperTravel": 0.26213
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3548,
+          "lowerTravel": 0.01924,
+          "participates": true,
+          "upperTravel": 0.05423
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1173,
+          "lowerTravel": 0.01881,
+          "participates": true,
+          "upperTravel": 0.16037
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2135,
+          "lowerTravel": 0.01522,
+          "participates": true,
+          "upperTravel": 0.0713
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.7884,
+          "lowerTravel": 0.00373,
+          "participates": true,
+          "upperTravel": 0.00473
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4905,
+          "lowerTravel": 0.11535,
+          "participates": true,
+          "upperTravel": 0.05657
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4918,
+          "lowerTravel": 0.24081,
+          "participates": true,
+          "upperTravel": 0.11842
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3186,
+          "lowerTravel": 0.01571,
+          "participates": true,
+          "upperTravel": 0.04932
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/enemies/guard.glb",
+      "outputSha256": "c2301bde88b20df4d77af32b97cd656044b37d29b5b916ef734e7e2e0c08315f",
+      "runtimeContract": {
+        "animationNames": [
+          "guard::attack::v01",
+          "guard::avoid::v01",
+          "guard::bighit::v01",
+          "guard::critical::v01",
+          "guard::defence::v01",
+          "guard::die::v01",
+          "guard::hit::v01",
+          "guard::idle::v01",
+          "guard::move::v01",
+          "guard::run::v01",
+          "guard::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/enemies/guard.glb",
+      "sourceCandidateSha256": "c2301bde88b20df4d77af32b97cd656044b37d29b5b916ef734e7e2e0c08315f",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/enemies/guard.glb",
+      "sourceInputSha256": "aee62ae6cf40c954d8c4e0e39385a0dff5427583ecae7fcc7b62b95717ec8a81",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/guard.glb",
+      "wholebodyCandidateSha256": "9cce14cdd2d31d84844c357800cf4f575c3e86aae3313bf10f0b43ecc22593f8"
+    },
+    "assets/images/battle/glb/enemies/possessed.glb": {
+      "albedoBake": {
+        "atlasBytes": 283409,
+        "atlasHeight": 1024,
+        "atlasSha256": "7f347c188cbbe2c8739464c7edbb1a4fc73b358efd8b5a869a3068184e3b8e70",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.95519,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.8941,
+            0.9378,
+            0.4115
+          ],
+          "body": [
+            0.462,
+            0.185,
+            0.439
+          ],
+          "lit": [
+            0.78344,
+            0.32175,
+            0.66716
+          ],
+          "rim": [
+            1.0,
+            0.48925,
+            0.96605
+          ],
+          "shadow": [
+            0.20328,
+            0.074,
+            0.27218
+          ]
+        },
+        "uvCoverage": 0.519092
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "possessed::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.4178,
+        "sampledVertices": 1746
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1986,
+          "lowerTravel": 0.03224,
+          "participates": true,
+          "upperTravel": 0.16235
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.8901,
+          "lowerTravel": 0.11399,
+          "participates": true,
+          "upperTravel": 0.12807
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.2354,
+          "lowerTravel": 0.02254,
+          "participates": true,
+          "upperTravel": 0.09573
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.196,
+          "lowerTravel": 0.03884,
+          "participates": true,
+          "upperTravel": 0.19814
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.3519,
+          "lowerTravel": 0.01882,
+          "participates": true,
+          "upperTravel": 0.05347
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.167,
+          "lowerTravel": 0.02338,
+          "participates": true,
+          "upperTravel": 0.14003
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.3215,
+          "lowerTravel": 0.01767,
+          "participates": true,
+          "upperTravel": 0.05498
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.5513,
+          "lowerTravel": 0.00437,
+          "participates": true,
+          "upperTravel": 0.00792
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.2631,
+          "lowerTravel": 0.13288,
+          "participates": true,
+          "upperTravel": 0.03496
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.275,
+          "lowerTravel": 0.27753,
+          "participates": true,
+          "upperTravel": 0.07632
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3595,
+          "lowerTravel": 0.01655,
+          "participates": true,
+          "upperTravel": 0.04603
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/enemies/possessed.glb",
+      "outputSha256": "1a42393763c4966b309fe9b7cea6460c21a715a0e6db4263e3105dceb89e050d",
+      "runtimeContract": {
+        "animationNames": [
+          "possessed::attack::v01",
+          "possessed::avoid::v01",
+          "possessed::bighit::v01",
+          "possessed::critical::v01",
+          "possessed::defence::v01",
+          "possessed::die::v01",
+          "possessed::hit::v01",
+          "possessed::idle::v01",
+          "possessed::move::v01",
+          "possessed::run::v01",
+          "possessed::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/enemies/possessed.glb",
+      "sourceCandidateSha256": "1a42393763c4966b309fe9b7cea6460c21a715a0e6db4263e3105dceb89e050d",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/enemies/possessed.glb",
+      "sourceInputSha256": "129a83dbbd117ef94f78609c5a57b2c12fb626e56a1dcd0fed215e445ab2a3b9",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/possessed.glb",
+      "wholebodyCandidateSha256": "3c67dd4a24b54a7df31d19cfa362e72d343fc9af6dc92102b895a860c04660ca"
+    },
+    "assets/images/battle/glb/enemies/scout.glb": {
+      "albedoBake": {
+        "atlasBytes": 368507,
+        "atlasHeight": 1024,
+        "atlasSha256": "1de6b5127ad22468bf7c13a80f749a5e024408dffa905581e66b015ce430b5cd",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.945539,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.7478,
+            0.5331,
+            0.3887
+          ],
+          "body": [
+            0.249,
+            0.173,
+            0.362
+          ],
+          "lit": [
+            0.43838,
+            0.30315,
+            0.55628
+          ],
+          "rim": [
+            0.64535,
+            0.46465,
+            0.8159
+          ],
+          "shadow": [
+            0.10956,
+            0.0692,
+            0.22444
+          ]
+        },
+        "uvCoverage": 0.572078
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "scout::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.3506,
+        "sampledVertices": 1017
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.1364,
+          "lowerTravel": 0.02289,
+          "participates": true,
+          "upperTravel": 0.16789
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.7463,
+          "lowerTravel": 0.10098,
+          "participates": true,
+          "upperTravel": 0.13531
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1763,
+          "lowerTravel": 0.02133,
+          "participates": true,
+          "upperTravel": 0.12094
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.1341,
+          "lowerTravel": 0.02752,
+          "participates": true,
+          "upperTravel": 0.20522
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2592,
+          "lowerTravel": 0.02073,
+          "participates": true,
+          "upperTravel": 0.07997
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1168,
+          "lowerTravel": 0.02225,
+          "participates": true,
+          "upperTravel": 0.19057
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2402,
+          "lowerTravel": 0.01623,
+          "participates": true,
+          "upperTravel": 0.06756
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.4774,
+          "lowerTravel": 0.00389,
+          "participates": true,
+          "upperTravel": 0.00814
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.4855,
+          "lowerTravel": 0.11781,
+          "participates": true,
+          "upperTravel": 0.0572
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.4875,
+          "lowerTravel": 0.21486,
+          "participates": true,
+          "upperTravel": 0.10474
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.3561,
+          "lowerTravel": 0.01553,
+          "participates": true,
+          "upperTravel": 0.0436
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/enemies/scout.glb",
+      "outputSha256": "d5f73595964d5a136aa6870b7012ca9607ed3d8d2c32143c57ad7c0b6017f52a",
+      "runtimeContract": {
+        "animationNames": [
+          "scout::attack::v01",
+          "scout::avoid::v01",
+          "scout::bighit::v01",
+          "scout::critical::v01",
+          "scout::defence::v01",
+          "scout::die::v01",
+          "scout::hit::v01",
+          "scout::idle::v01",
+          "scout::move::v01",
+          "scout::run::v01",
+          "scout::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/enemies/scout.glb",
+      "sourceCandidateSha256": "d5f73595964d5a136aa6870b7012ca9607ed3d8d2c32143c57ad7c0b6017f52a",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/enemies/scout.glb",
+      "sourceInputSha256": "532005fbf1dcea6adea1bfa46eb087a84a51e210745f05478b3a072442ab8a6e",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/scout.glb",
+      "wholebodyCandidateSha256": "0f04f6a5c6615ec35641733c7614e71924ae9dc40f74fd1a0cc8c178e8f5c38f"
+    },
+    "assets/images/battle/glb/enemies/shade.glb": {
+      "albedoBake": {
+        "atlasBytes": 217817,
+        "atlasHeight": 1024,
+        "atlasSha256": "829412c43f0af4990625523b06fa17bf19f503cedf5c7ecc6338cee586e7f896",
+        "atlasWidth": 1024,
+        "baked": true,
+        "dilatedCoverage": 0.915901,
+        "dilationTexels": 12,
+        "palette": {
+          "accent": [
+            0.763,
+            0.6642,
+            0.2804
+          ],
+          "body": [
+            0.318,
+            0.116,
+            0.37
+          ],
+          "lit": [
+            0.55016,
+            0.2148,
+            0.5678
+          ],
+          "rim": [
+            0.7937,
+            0.3478,
+            0.8315
+          ],
+          "shadow": [
+            0.13992,
+            0.0464,
+            0.2294
+          ]
+        },
+        "uvCoverage": 0.570046
+      },
+      "albedoOrigin": {
+        "conceptReference": null,
+        "note": "generated against the character's own UV unwrap, not a shared detail tile",
+        "stage": "baked-cartoon-albedo",
+        "tool": "scripts/bake-character-albedo.py"
+      },
+      "bodyOrigin": {
+        "candidateLane": null,
+        "note": "procedural blockout body shipped in d8e9d9f; not a Rodin generation",
+        "stage": "parametric-tpose-blockout",
+        "tool": "scripts/tpose_blockout.py"
+      },
+      "boundLowerMeshMotion": {
+        "clip": "shade::move::v01",
+        "frame": 25,
+        "maxDisplacement": 0.7867,
+        "sampledVertices": 1865
+      },
+      "clipBalance": [
+        {
+          "clip": "attack",
+          "halfBalance": 0.0708,
+          "lowerTravel": 0.02056,
+          "participates": true,
+          "upperTravel": 0.29036
+        },
+        {
+          "clip": "avoid",
+          "halfBalance": 0.3961,
+          "lowerTravel": 0.11162,
+          "participates": true,
+          "upperTravel": 0.28183
+        },
+        {
+          "clip": "bighit",
+          "halfBalance": 0.1577,
+          "lowerTravel": 0.02356,
+          "participates": true,
+          "upperTravel": 0.14937
+        },
+        {
+          "clip": "critical",
+          "halfBalance": 0.0693,
+          "lowerTravel": 0.02307,
+          "participates": true,
+          "upperTravel": 0.33304
+        },
+        {
+          "clip": "defence",
+          "halfBalance": 0.2879,
+          "lowerTravel": 0.02401,
+          "participates": true,
+          "upperTravel": 0.0834
+        },
+        {
+          "clip": "die",
+          "halfBalance": 0.1192,
+          "lowerTravel": 0.02471,
+          "participates": true,
+          "upperTravel": 0.20721
+        },
+        {
+          "clip": "hit",
+          "halfBalance": 0.2359,
+          "lowerTravel": 0.01789,
+          "participates": true,
+          "upperTravel": 0.07586
+        },
+        {
+          "clip": "idle",
+          "halfBalance": 0.5711,
+          "lowerTravel": 0.00426,
+          "participates": true,
+          "upperTravel": 0.00747
+        },
+        {
+          "clip": "move",
+          "halfBalance": 0.7643,
+          "lowerTravel": 0.13007,
+          "participates": true,
+          "upperTravel": 0.0994
+        },
+        {
+          "clip": "run",
+          "halfBalance": 0.78,
+          "lowerTravel": 0.27171,
+          "participates": true,
+          "upperTravel": 0.21194
+        },
+        {
+          "clip": "show",
+          "halfBalance": 0.2296,
+          "lowerTravel": 0.01727,
+          "participates": true,
+          "upperTravel": 0.07521
+        }
+      ],
+      "lowerMeshBound": true,
+      "outputPath": "assets/images/battle/glb/enemies/shade.glb",
+      "outputSha256": "97ef5ec2e12a05e6b89eb28c4ecd832e2f5c6913a473e0d001d23eb5e2d7fb6e",
+      "runtimeContract": {
+        "animationNames": [
+          "shade::attack::v01",
+          "shade::avoid::v01",
+          "shade::bighit::v01",
+          "shade::critical::v01",
+          "shade::defence::v01",
+          "shade::die::v01",
+          "shade::hit::v01",
+          "shade::idle::v01",
+          "shade::move::v01",
+          "shade::run::v01",
+          "shade::show::v01"
+        ],
+        "materials": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "skins": 1
+      },
+      "sourceCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/character-albedo/glb/enemies/shade.glb",
+      "sourceCandidateSha256": "97ef5ec2e12a05e6b89eb28c4ecd832e2f5c6913a473e0d001d23eb5e2d7fb6e",
+      "sourceInputLane": "rigged-lower-mesh-candidate",
+      "sourceInputPath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/rigged-lower-mesh/glb/enemies/shade.glb",
+      "sourceInputSha256": "f923d7a574a0361ee62af69b25be79cf717884812d911753ab30a0b509c1955e",
+      "upstreamPipeline": null,
+      "wholebodyCandidatePath": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/wholebody-motion/glb/enemies/shade.glb",
+      "wholebodyCandidateSha256": "e70e2e41b4722f424ac4e9a20afe2db5c00657b40fdcd0a89ba2eae56478ff0c"
+    }
+  },
+  "excludedAssetIds": [],
+  "generatedBy": "scripts/promote-character-assets.py",
+  "pipeline": [
+    "scripts/bind-static-lower-mesh.py",
+    "scripts/author-wholebody-clips-blender.py",
+    "scripts/bake-character-albedo.py"
+  ],
+  "schemaVersion": 1
+}
