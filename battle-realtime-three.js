@@ -214,6 +214,13 @@ const VFX_MODELS = Object.freeze({
   ECHO_WARDEN_AWAKENING_TRIGGERED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
   COMPANION_DOWNED: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
 });
+const SKILL_VFX_MODELS = Object.freeze({
+  "rift-bolt": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  "soul-lance": "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  "grave-pulse": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  "void-aegis": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  "shadow-step": "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+});
 
 // Reward and equipment card previews use the same authored prop meshes that
 // appear in the live world. Text/glyph fallbacks remain for semantic reward
@@ -709,6 +716,10 @@ const gltfCache = new Map();
 const objCache = new Map();
 const CINDER_TERRAIN_TEXTURE_ROOT = "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack";
 let cinderTerrainMapsPromise = null;
+// Last terrain decomposition, for the runtime proof that the split is lossless. Read by
+// tests/stage-runtime-proof-browser.test.mjs through the export below rather than by scraping
+// the scene graph, so the assertion sees the same numbers the offline splitter reports.
+let lastTerrainSplitStats = null;
 
 // SkeletonUtils.clone() gives each rendered instance an owned skeleton; this
 // identity set keeps repeated disposal idempotent when roots overlap.
@@ -779,17 +790,216 @@ function cinderTerrainMaps() {
 
 async function applyObjTerrainMaterials(instance) {
   const maps = await cinderTerrainMaps();
-  instance.traverse((node) => {
-    if (!node.isMesh) return;
-    node.material = new THREE.MeshStandardMaterial({
-      map: maps?.map ?? null,
-      normalMap: maps?.normalMap ?? null,
-      roughnessMap: maps?.roughnessMap ?? null,
-      metalnessMap: maps?.metalnessMap ?? null,
-      roughness: 1,
-      metalness: 0,
-    });
+  // ONE material shared across every mesh in the instance, not one per mesh. The instance is
+  // now a group of independently-placed parts (see splitObjIntoPlaceableParts), so per-mesh
+  // materials would mint ~89 identical MeshStandardMaterials and defeat batching. Sharing is
+  // safe with ownRenderableResources(), which dedupes by identity when it clones for ownership.
+  const material = new THREE.MeshStandardMaterial({
+    map: maps?.map ?? null,
+    normalMap: maps?.normalMap ?? null,
+    roughnessMap: maps?.roughnessMap ?? null,
+    metalnessMap: maps?.metalnessMap ?? null,
+    roughness: 1,
+    metalness: 0,
   });
+  instance.traverse((node) => {
+    if (node.isMesh) node.material = material;
+  });
+}
+
+// Below this TRIANGLE count a component is scenery grit, not a placeable piece. Note the unit:
+// this runs after OBJLoader triangulates, so it counts triangles, while the offline splitter's
+// --min-faces counts authored faces (the source is 19630 quads + 130 tris). The same numeric 20
+// is therefore a different bar in each, and the runtime keeps some pieces the offline pass bins
+// as debris. Nothing is discarded either way -- sub-threshold components are merged into one
+// debris mesh rather than dropped.
+const TERRAIN_PART_MIN_FACES = 20;
+// Position quantum for welding coincident corners. OBJLoader expands faces to a non-indexed
+// buffer, so the shared corner between two adjacent triangles arrives as two distinct vertices
+// with bit-identical coordinates; without welding, every triangle would read as its own island.
+const TERRAIN_WELD_QUANTUM = 1e-4;
+
+/**
+ * Splits a loaded OBJ into its connected components so each becomes an independently
+ * transformable, independently frustum-culled child.
+ *
+ * Why this exists: the shipped Cinder Span terrain is one welded mesh placed as ONE object, so
+ * no piece can be moved, hidden, LOD-swapped, or culled on its own, and the whole span renders
+ * whenever any corner of it is on screen.
+ *
+ * Why at runtime rather than as separate files on disk: the split is derivable from bytes
+ * already fetched. Shipping the parts separately would cost ~88 extra HTTP requests on a
+ * mobile-first game and ~267 service-worker/manifest/allowlist entries, to reach the same scene
+ * graph this produces from one fetch and zero new assets.
+ *
+ * `scripts/split-terrain-obj-parts.py` is NOT a check on this function, and the two are not
+ * expected to agree on component count. It unions faces by shared authored vertex INDEX; this
+ * unions by quantized POSITION. Position adjacency is strictly coarser -- two faces authored
+ * with duplicate `v` entries at the same coordinate are two components offline and one here --
+ * so runtime components are always <= offline components by construction (measured: 108 vs 160).
+ * Position is the better rule for "placeable piece", since a duplicate-vertex authoring artifact
+ * should not split one bridge rib into two objects. The only invariant that holds across both
+ * rules is face conservation, which is what `partFaces === faces` asserts; component count is
+ * rule-dependent and must never be asserted against the offline figure.
+ *
+ * Geometry is rebased so each part's vertices are relative to its own centroid, with the
+ * centroid restored as the part's position. The assembled render is therefore identical to the
+ * merged original, while each part gains a meaningful transform origin and a tight bounding
+ * sphere. Face count is conserved exactly -- this is a regrouping, not a simplification.
+ */
+export function splitObjIntoPlaceableParts(root) {
+  const stats = { sourceMeshes: 0, faces: 0, components: 0, parts: 0, partFaces: 0, debrisFaces: 0 };
+  const sources = [];
+  root.traverse((node) => {
+    if (node.isMesh && node.geometry?.attributes?.position) sources.push(node);
+  });
+  if (!sources.length) return { root, stats };
+
+  for (const mesh of sources) {
+    stats.sourceMeshes += 1;
+    const geometry = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry;
+    const position = geometry.attributes.position;
+    const faceCount = Math.floor(position.count / 3);
+    stats.faces += faceCount;
+
+    // Weld coincident corners: quantized position -> canonical vertex id.
+    const canonical = new Map();
+    const vertexId = new Int32Array(position.count);
+    for (let v = 0; v < position.count; v += 1) {
+      const key = `${Math.round(position.getX(v) / TERRAIN_WELD_QUANTUM)},`
+        + `${Math.round(position.getY(v) / TERRAIN_WELD_QUANTUM)},`
+        + `${Math.round(position.getZ(v) / TERRAIN_WELD_QUANTUM)}`;
+      let id = canonical.get(key);
+      if (id === undefined) {
+        id = canonical.size;
+        canonical.set(key, id);
+      }
+      vertexId[v] = id;
+    }
+
+    // Union-find over welded vertices; faces sharing any corner join one component.
+    const parent = new Int32Array(canonical.size);
+    for (let i = 0; i < parent.length; i += 1) parent[i] = i;
+    const find = (x) => {
+      let r = x;
+      while (parent[r] !== r) r = parent[r];
+      while (parent[x] !== r) { const next = parent[x]; parent[x] = r; x = next; }
+      return r;
+    };
+    const union = (a, b) => {
+      const ra = find(a);
+      const rb = find(b);
+      if (ra !== rb) parent[rb] = ra;
+    };
+    for (let f = 0; f < faceCount; f += 1) {
+      const a = vertexId[f * 3];
+      union(a, vertexId[f * 3 + 1]);
+      union(a, vertexId[f * 3 + 2]);
+    }
+
+    const byComponent = new Map();
+    for (let f = 0; f < faceCount; f += 1) {
+      const key = find(vertexId[f * 3]);
+      let faces = byComponent.get(key);
+      if (!faces) byComponent.set(key, faces = []);
+      faces.push(f);
+    }
+    stats.components += byComponent.size;
+
+    // Substantial components become their own part; the remainder pools into one debris mesh.
+    const groups = [];
+    const debris = [];
+    for (const faces of byComponent.values()) {
+      if (faces.length >= TERRAIN_PART_MIN_FACES) groups.push(faces);
+      else debris.push(...faces);
+    }
+    groups.sort((a, b) => b.length - a.length);
+    if (debris.length) {
+      stats.debrisFaces += debris.length;
+      groups.push(debris);
+    }
+
+    const container = new THREE.Group();
+    container.name = `${mesh.name || "terrain"}_parts`;
+    groups.forEach((faces, index) => {
+      const part = buildTerrainPartMesh(geometry, faces, mesh, index, faces === debris);
+      // Cheap smoke stat only. `partFaces === faces` is a TAUTOLOGY -- every face index lands in
+      // exactly one bucket and every bucket becomes a group, both read from the same in-memory
+      // arrays -- so it can never fail and must not be treated as the correctness check. It also
+      // never observes buildTerrainPartMesh: that buffer is allocated at faces.length*3, so a
+      // botched copy writes zeros into untouched slots rather than changing any count. The check
+      // with teeth is spatial: the union of part world bboxes against the pre-split root bbox,
+      // which catches wrong vertices, dropped corners, and centroid-rebase sign errors.
+      stats.partFaces += faces.length;
+      container.add(part);
+    });
+    stats.parts += groups.length;
+
+    mesh.parent?.add(container);
+    container.position.copy(mesh.position);
+    container.quaternion.copy(mesh.quaternion);
+    container.scale.copy(mesh.scale);
+    mesh.parent?.remove(mesh);
+    if (geometry !== mesh.geometry) mesh.geometry.dispose();
+  }
+  return { root, stats };
+}
+
+/** Extracts `faces` from `geometry` into a standalone mesh rebased on its own centroid. */
+function buildTerrainPartMesh(geometry, faces, sourceMesh, index, isDebris) {
+  const source = geometry.attributes;
+  const vertexCount = faces.length * 3;
+  const positions = new Float32Array(vertexCount * 3);
+  const normals = source.normal ? new Float32Array(vertexCount * 3) : null;
+  const uvs = source.uv ? new Float32Array(vertexCount * 2) : null;
+
+  let cx = 0;
+  let cy = 0;
+  let cz = 0;
+  for (let i = 0; i < faces.length; i += 1) {
+    for (let corner = 0; corner < 3; corner += 1) {
+      const src = faces[i] * 3 + corner;
+      const dst = i * 3 + corner;
+      const x = source.position.getX(src);
+      const y = source.position.getY(src);
+      const z = source.position.getZ(src);
+      positions[dst * 3] = x;
+      positions[dst * 3 + 1] = y;
+      positions[dst * 3 + 2] = z;
+      cx += x; cy += y; cz += z;
+      if (normals) {
+        normals[dst * 3] = source.normal.getX(src);
+        normals[dst * 3 + 1] = source.normal.getY(src);
+        normals[dst * 3 + 2] = source.normal.getZ(src);
+      }
+      if (uvs) {
+        uvs[dst * 2] = source.uv.getX(src);
+        uvs[dst * 2 + 1] = source.uv.getY(src);
+      }
+    }
+  }
+  cx /= vertexCount; cy /= vertexCount; cz /= vertexCount;
+  // Rebase onto the centroid, then restore it as the mesh position: same render, own origin.
+  for (let v = 0; v < vertexCount; v += 1) {
+    positions[v * 3] -= cx;
+    positions[v * 3 + 1] -= cy;
+    positions[v * 3 + 2] -= cz;
+  }
+
+  const partGeometry = new THREE.BufferGeometry();
+  partGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  if (normals) partGeometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+  else partGeometry.computeVertexNormals();
+  if (uvs) partGeometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
+  partGeometry.computeBoundingSphere();
+
+  const part = new THREE.Mesh(partGeometry, sourceMesh.material);
+  part.name = isDebris ? "terrain_part_debris" : `terrain_part_${String(index).padStart(3, "0")}`;
+  part.position.set(cx, cy, cz);
+  part.castShadow = sourceMesh.castShadow;
+  part.receiveShadow = sourceMesh.receiveShadow;
+  part.userData.terrainPartFaces = faces.length;
+  return part;
 }
 
 
@@ -1014,11 +1224,46 @@ async function instantiateActorModel(relPath, targetHeight) {
   });
 }
 
-async function instantiateTerrainModel(relPath) {
+/**
+ * Per-part terrain placement is OFF by default, and the reason is measured, not assumed.
+ *
+ * `splitObjIntoPlaceableParts()` works and is pixel-exact (bbox delta ~1e-9 across all three
+ * axes), but three.js issues one draw call per Mesh -- only InstancedMesh/BatchedMesh batch, and
+ * neither applies here: InstancedMesh needs repeated identical geometry, and the vendored build
+ * has no BatchedMesh. A shared material saves shader and uniform rebinds, not draw calls.
+ *
+ * Measured on the Cinder Span terrain (39390 triangles after triangulation), 1280x800:
+ *
+ *   framing            merged            split (95 parts)
+ *   whole span         1 call, 0.007ms   95 calls, 0.180ms   (25x)
+ *   game-like camera   1 call, 0.005ms   33 calls, 0.087ms   (17x)
+ *
+ * Frustum culling does work -- the game-like framing submits 16043 of 39390 triangles, 59%
+ * culled -- but at this asset's scale the triangles it saves are worth less than the draw calls
+ * it adds. 39k triangles is small; the CPU-side per-call cost dominates.
+ *
+ * So the split stays available and unused until a consumer actually needs per-piece transforms
+ * (moving a collapsing rib, hiding a section, per-part LOD). Turning it on today would buy an
+ * identical picture for 17x the frame time, which is the same mobile-first cost that made
+ * shipping 89 separate .obj files the wrong answer -- re-entering through a different door.
+ * Callers opt in explicitly; when a real consumer arrives, re-measure with its framing.
+ */
+const TERRAIN_SPLIT_PARTS_DEFAULT = false;
+
+async function instantiateTerrainModel(relPath, { splitParts = TERRAIN_SPLIT_PARTS_DEFAULT } = {}) {
   const isObj = relPath.endsWith(".obj");
   const source = isObj ? await loadObj(relPath) : (await loadGltf(relPath)).scene;
   const instance = isObj ? source.clone(true) : SkeletonUtils.clone(source);
-  if (isObj) await applyObjTerrainMaterials(instance);
+  if (isObj) {
+    if (splitParts) {
+      // Split before materials and before fitFootprint: the split must see the raw merged mesh,
+      // and fitFootprint() reads a Box3 of the whole subtree, so it scales the assembled parts
+      // as one unit exactly as it did the single mesh. Order matters -- splitting after the fit
+      // would rebase each part's geometry against an already-scaled parent.
+      lastTerrainSplitStats = splitObjIntoPlaceableParts(instance).stats;
+    }
+    await applyObjTerrainMaterials(instance);
+  }
   ownRenderableResources(instance);
   fitFootprint(instance, TERRAIN_TARGET_HALF_EXTENT);
   return instance;
@@ -1324,6 +1569,16 @@ function disposeObject3D(root) {
     disposedSkeletons.add(skeleton);
     skeleton.dispose?.();
   }
+}
+
+/**
+ * Decomposition counts from the most recent OBJ terrain instantiation, or null if none has run.
+ * Exists so the split is provable from outside: face conservation is the correctness property
+ * (a regrouping must not lose or duplicate a triangle), and it cannot be observed by counting
+ * scene-graph children.
+ */
+export function lastTerrainDecomposition() {
+  return lastTerrainSplitStats ? { ...lastTerrainSplitStats } : null;
 }
 
 /**
@@ -2803,9 +3058,10 @@ export class RealtimeBattle {
     return true;
   }
 
-
   spawnVfx(snapshot, event, tick) {
-    const relPath = VFX_MODELS[event?.type];
+    const relPath = event?.type === "SKILL_CAST"
+      ? SKILL_VFX_MODELS[event?.vfx || event?.skillId]
+      : VFX_MODELS[event?.type];
     if (!relPath) return;
     const anchor = effectAnchor(snapshot, event);
     if (!anchor) return;
@@ -3161,8 +3417,12 @@ export class RealtimeBattle {
         this.triggerAttackDelivery(actor(event.entityId), target(event.targetId), nowMs, event.critical === true);
         if (event.critical === true) this.triggerAction(actor(event.targetId), "bighit", nowMs);
         break;
+      case "BASIC_ATTACK":
+        this.triggerAttackDelivery(actor(event.entityId), target(event.targetId), nowMs, event.critical === true);
+        this.triggerAction(actor(event.entityId), "attack", nowMs);
+        break;
       case "SKILL_CAST":
-        this.triggerAttackDelivery(actor("commander"), null, nowMs, true);
+        this.triggerAction(actor("commander"), event.motion || "critical", nowMs);
         break;
       case "SKILL_RESOLVED_DAMAGE":
         this.triggerAttackDelivery(actor(event.sourceId), target(event.targetId), nowMs, event.critical === true);
@@ -3213,7 +3473,9 @@ export class RealtimeBattle {
 
     const nowMs = performance.now();
     for (const event of Array.isArray(snapshot?.events) ? snapshot.events : []) {
-      if (VFX_MODELS[event?.type]) {
+      const hasVfx = Boolean(VFX_MODELS[event?.type]
+        || (event?.type === "SKILL_CAST" && SKILL_VFX_MODELS[event?.vfx || event?.skillId]));
+      if (hasVfx) {
         const key = feedbackKey(event);
         if (this.rememberVisualEvent(key)) this.spawnVfx(snapshot, event, tick);
       }
