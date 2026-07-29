@@ -507,17 +507,18 @@ function lobbyCinematicMarkup() {
     <div id="lobby-cinematic" class="lobby-cinematic" data-active="true" data-framing="wide" data-speaker="commander">
       <div class="lobby-cine-vignette" aria-hidden="true"></div>
       <header class="lobby-cine-head">
-        <p class="lobby-cine-eyebrow">SHADOW LEGION · 봉쇄선 <span id="lobby-cine-seq"></span></p>
+        <p class="lobby-brand-lockup" aria-label="Abyssal Lantern, 심연의 등불"><span>ABYSSAL</span><b>LANTERN</b><small>심연의 등불</small></p>
+        <p class="lobby-cine-eyebrow">LANTERN ROUTE · STAGE <span id="lobby-cine-seq"></span></p>
         <h1 class="lobby-cine-stage" id="lobby-cine-stage"></h1>
         <p class="lobby-cine-domain" id="lobby-cine-domain"></p>
       </header>
       <div class="lobby-boss-plate" id="lobby-boss-plate" data-visible="false">
-        <span class="lobby-boss-eyebrow">STAGE BOSS</span>
+        <span class="lobby-boss-eyebrow">STAGE THREAT</span>
         <strong class="lobby-boss-name" id="lobby-boss-name"></strong>
         <span class="lobby-boss-threat" id="lobby-boss-threat"></span>
       </div>
       <section class="lobby-objective" aria-labelledby="lobby-objective-title">
-        <h2 class="lobby-objective-title" id="lobby-objective-title">주요 목표</h2>
+        <h2 class="lobby-objective-title" id="lobby-objective-title">작전 목표 · OBJECTIVE</h2>
         <p class="lobby-objective-text" id="lobby-objective-text"></p>
         <p class="lobby-objective-reward" id="lobby-objective-reward"></p>
       </section>
@@ -528,14 +529,14 @@ function lobbyCinematicMarkup() {
           <span class="lobby-dialogue-text" id="lobby-dialogue-text"></span>
         </span>
       </output>
-      <section class="lobby-setup" id="lobby-setup" aria-label="출전 설정">
+      <section class="lobby-setup" id="lobby-setup" aria-label="출전 준비">
         <div class="lobby-setup-block" data-setup="strategy">
-          <h3 class="lobby-setup-title">전략 편성</h3>
+          <h3 class="lobby-setup-title">전략 배치 · FORMATION</h3>
           <div class="lobby-strategy-row" role="radiogroup" aria-label="전략 편성" id="lobby-strategy-row"></div>
           <p class="lobby-setup-hint" id="lobby-strategy-hint"></p>
         </div>
         <div class="lobby-setup-block" data-setup="companions">
-          <h3 class="lobby-setup-title">동료 선택 <small id="lobby-companion-count"></small></h3>
+          <h3 class="lobby-setup-title">동료 선택 · SQUAD <small id="lobby-companion-count"></small></h3>
           <div class="lobby-companion-row" id="lobby-companion-row"></div>
           <p class="lobby-setup-hint" id="lobby-companion-hint"></p>
         </div>
@@ -1183,25 +1184,25 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
   // guide launcher trails. Nothing is removed; the reading order matches the task order.
   return `
     <section class="mission-panel command-screen" id="ops-section-sortie" aria-labelledby="stage-title">
-      <div class="panel-heading"><span class="panel-mark" data-ui-icon="nav-sortie" aria-hidden="true"></span><div><p class="eyebrow">EDITORIAL ARCHIVE</p><h2 id="stage-title">봉쇄선 쇼케이스</h2></div><span class="panel-count">${completed} CLEAR · ${unlocked} UNLOCKED</span></div>
+      <div class="panel-heading"><span class="panel-mark" data-ui-icon="nav-sortie" aria-hidden="true"></span><div><p class="eyebrow">LANTERN ROUTE · DEPLOYMENT</p><h2 id="stage-title">등불 항로</h2></div><span class="panel-count">${completed} CLEAR · ${unlocked} OPEN</span></div>
       <div class="stage-progression-control">
-        <label for="stage-progression">진행 전선 선택</label>
-        <select id="stage-progression" data-stage-progress aria-label="진행 전선 선택" ${started ? "disabled" : ""}>${progressionOptions}</select>
+        <label for="stage-progression">출전 스테이지 선택</label>
+        <select id="stage-progression" data-stage-progress aria-label="출전 스테이지 선택" ${started ? "disabled" : ""}>${progressionOptions}</select>
         <div class="stage-progression-summary" aria-live="polite"><span>${selectedStatus}</span><strong>${escapeHtml(selectedEditorial?.title ?? selected.name)}</strong><small>완료 보상 · ${escapeHtml(selectedReward)}</small></div>
       </div>
-      <p class="section-copy sr-only">시네마틱·전장 구성은 아래 세 봉쇄선만 미리 공개됩니다.</p>
+      <p class="section-copy sr-only">세 스테이지의 등불 항로와 출전 상태를 확인합니다.</p>
       <div class="stage-showcase-grid">${showcaseCards}</div>
     </section>
     ${briefingPanel}
-    <div class="lobby-guide-launch"><button type="button" data-guide-open aria-label="전투 작전 가이드 열기" aria-haspopup="dialog" aria-controls="lobby-guide-dialog"><span class="guide-launch-mark" aria-hidden="true">?</span><span>작전 가이드</span></button></div>
+    <div class="lobby-guide-launch"><button type="button" data-guide-open aria-label="전투 작전 가이드 열기" aria-haspopup="dialog" aria-controls="lobby-guide-dialog"><span class="guide-launch-mark" aria-hidden="true">?</span><span>조작·전투 가이드</span></button></div>
     <dialog id="lobby-guide-dialog" class="lobby-guide-dialog" aria-labelledby="lobby-guide-title">
       <div class="lobby-guide-shell">
-        <div class="panel-heading"><div><p class="eyebrow">FIELD MANUAL</p><h2 id="lobby-guide-title">전투 작전 가이드</h2></div><button type="button" data-guide-close aria-label="전투 작전 가이드 닫기">닫기</button></div>
-        <p class="section-copy">전장 화면에서 한 손가락으로 드래그하면 카메라 시야가 회전합니다. 지휘관 이동은 화면 방향 버튼 또는 <b>WASD·화살표 키</b>를 사용하세요.</p>
+        <div class="panel-heading"><div><p class="eyebrow">ABYSSAL LANTERN · FIELD MANUAL</p><h2 id="lobby-guide-title">전투 작전 가이드</h2></div><button type="button" data-guide-close aria-label="전투 작전 가이드 닫기">닫기</button></div>
+        <p class="section-copy">전투 화면을 한 손가락으로 드래그해 시야(카메라)를 회전하고, 화면 방향 버튼 또는 <b>WASD·화살표 키</b>로 지휘관을 이동하세요. <b>Space·J</b>는 기본 공격입니다.</p>
         <div class="lobby-guide-grid">
-          <section data-guide-section="companion" aria-labelledby="guide-companion-title"><span aria-hidden="true">01</span><h3 id="guide-companion-title">동료 군단 편성·자율 행동</h3><ol><li><b>군단 → 목록</b>에서 최대 3명을 편성하세요.</li><li><b>편성</b>에서 전열·후열을 정하면 다음 출전부터 적용됩니다.</li><li>동료는 자동 교전·회수하며, 멀어지면 지휘관 곁으로 복귀합니다.</li></ol></section>
-          <section data-guide-section="extraction" aria-labelledby="guide-extraction-title"><span aria-hidden="true">02</span><h3 id="guide-extraction-title">정예 추출 · ARISE</h3><ol><li>정예를 처치한 뒤 <b>Bind 시작</b>을 누르세요.</li><li>표시된 추출 지점에 들어가 홀드가 끝날 때까지 버티세요.</li><li><b>정예 추출</b>이 활성화되면 눌러 <b>일어나라(ARISE)</b> — 영구 동료로 결속됩니다.</li></ol></section>
-          <section data-guide-section="skills" aria-labelledby="guide-skills-title"><span aria-hidden="true">03</span><h3 id="guide-skills-title">스킬·쿨다운</h3><ol><li>전투 우측의 준비된 액티브 스킬을 눌러 즉시 사용하세요.</li><li>버튼의 초 단위 표시가 0이 되면 다시 사용할 수 있습니다.</li><li>레벨업 선택은 런 한정, 성장 탭의 스킬 노드는 영구 적용입니다.</li></ol></section>
+          <section data-guide-section="companion" aria-labelledby="guide-companion-title"><span aria-hidden="true">01</span><h3 id="guide-companion-title">동료 편성·자율 전투</h3><ol><li><b>군단</b>에서 최대 3명을 출전 편성하세요.</li><li>전열·후열 선호는 다음 출전의 배치 순위에 반영됩니다.</li><li>동료는 자동 교전하고, 멀어지면 지휘관 곁으로 복귀합니다.</li></ol></section>
+          <section data-guide-section="extraction" aria-labelledby="guide-extraction-title"><span aria-hidden="true">02</span><h3 id="guide-extraction-title">정예 추출 · ARISE</h3><ol><li>정예를 처치한 뒤 <b>Bind 시작</b>을 누르세요.</li><li>추출 지점 안에서 홀드가 끝날 때까지 버티세요.</li><li><b>정예 추출</b>이 준비되면 눌러 영구 동료로 결속하세요.</li></ol></section>
+          <section data-guide-section="skills" aria-labelledby="guide-skills-title"><span aria-hidden="true">03</span><h3 id="guide-skills-title">공격·스킬·쿨다운</h3><ol><li><b>공격</b> 버튼은 언제든 기본 공격을 보냅니다.</li><li>준비된 액티브 스킬을 누르면 즉시 사용합니다.</li><li>레벨업 선택은 이번 런, 성장 탭의 스킬 노드는 영구 적용입니다.</li></ol></section>
         </div>
       </div>
     </dialog>`;
@@ -1240,7 +1241,8 @@ function renderCommandDeckRight() {
     side: "right",
     deckLabel: "전황 시트",
     mastheadHtml: `
-      <span class="deck-brand" data-ui-icon="brand-mark" role="img" aria-label="ABYSSAL LANTERN · FARWATCH HOLD" title="ABYSSAL LANTERN · FARWATCH HOLD"></span>
+      <span class="deck-brand" data-ui-icon="brand-mark" role="img" aria-label="Abyssal Lantern"></span>
+      <span class="deck-brand-copy"><b>ABYSSAL LANTERN</b><small>심연의 등불</small></span>
       <p class="deck-front-line" aria-live="polite">${started ? `전투 진행 중 · ${frontLabel}` : frontLabel}</p>
       ${rightDeckSegmentBarMarkup()}`,
     bodyHtml: `${opsHtml}${recordToolsMarkup()}`,
@@ -1338,11 +1340,11 @@ function renderSortieFab() {
     return;
   }
   const selected = stageFor(selectedStageId);
-  const label = `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)} 전선으로`;
+  const label = `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)}`;
   // One markup string for both the create and the update path: the update path used to
   // rebuild the chevron WITHOUT data-ui-icon, so a re-render silently downgraded the
   // generated plate back to the ↗ glyph.
-  const innerHtml = `<span>작전 개시</span><small>${label}</small><b data-ui-icon="control-sortie" aria-hidden="true"></b>`;
+  const innerHtml = `<span class="sortie-action-label">등불 점화 · 작전 개시</span><small>${label}</small><b data-ui-icon="control-sortie" aria-hidden="true"></b>`;
   if (existing) {
     existing.innerHTML = innerHtml;
     return;
@@ -1508,24 +1510,24 @@ function mountShell(stageId) {
   document.body.style.overflow = "hidden";
   root.className = "";
   root.innerHTML = `
-    <section id="defense-battle-surface" data-defense-ready="true" data-defense-started="false" data-defense-input-seq="0" data-defense-skill="" data-defense-move="IDLE" data-defense-state="active" data-stage-id="${escapeHtml(stageId)}" aria-label="심연 방어 전장">
-      <canvas id="defense-canvas" aria-label="방어 전장"></canvas>
+    <section id="defense-battle-surface" data-defense-ready="true" data-defense-started="false" data-defense-input-seq="0" data-defense-skill="" data-defense-move="IDLE" data-defense-state="active" data-stage-id="${escapeHtml(stageId)}" aria-label="Abyssal Lantern 전장">
+      <canvas id="defense-canvas" aria-label="Abyssal Lantern 실시간 전장"></canvas>
       <div id="world-hud-overlay" aria-hidden="true"></div>
 ${lobbyCinematicMarkup()}
       <div id="defense-edge-hud">
         <div class="defense-edge defense-top">
-          <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">군단장 사령부 · SHADOW MONARCH</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span><div class="hud-xp" aria-hidden="true" data-ui-icon-lead="stat-echo-xp"><b id="battle-xp-label"></b><span class="hud-xp-track"><i id="battle-xp-fill"></i></span></div></div>
-          <div class="hud-panel hud-loop-state" data-stage-hud-context="loop"><span class="hud-eyebrow">RUN STATE · AGENCY</span><strong id="battle-loop-phase" aria-live="polite"></strong><div class="hud-loop-grid"><span id="battle-pressure-state"></span><span id="battle-growth-state"></span><span id="battle-formation-state"></span><span id="battle-extraction-state"></span></div></div>
-          <div class="hud-panel hud-legion"><span class="hud-eyebrow">SHADOW LEGION</span><div class="hud-legion-stack"><span class="legion-mana-label" id="battle-legion-mana-label"></span><span class="legion-mana-track"><i id="battle-legion-mana-fill"></i></span><div class="legion-roster" id="battle-legion-roster"></div><span class="hud-stance-mode" id="battle-stance-mode"></span></div></div>
+          <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">ABYSSAL LANTERN · 전장</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span><div class="hud-xp" aria-hidden="true" data-ui-icon-lead="stat-echo-xp"><b id="battle-xp-label"></b><span class="hud-xp-track"><i id="battle-xp-fill"></i></span></div></div>
+          <div class="hud-panel hud-loop-state" data-stage-hud-context="loop"><span class="hud-eyebrow">OBJECTIVE FLOW · 진행</span><strong id="battle-loop-phase" aria-live="polite"></strong><div class="hud-loop-grid"><span id="battle-pressure-state"></span><span id="battle-growth-state"></span><span id="battle-formation-state"></span><span id="battle-extraction-state"></span></div></div>
+          <div class="hud-panel hud-legion"><span class="hud-eyebrow">LANTERN LEGION · 군단</span><div class="hud-legion-stack"><span class="legion-mana-label" id="battle-legion-mana-label"></span><span class="legion-mana-track"><i id="battle-legion-mana-fill"></i></span><div class="legion-roster" id="battle-legion-roster"></div><span class="hud-stance-mode" id="battle-stance-mode"></span></div></div>
 
-          <div class="top-right-hud"><div class="hud-order-strip"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div></div><div class="hud-right-stack"><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
+          <div class="top-right-hud"><div class="hud-order-strip"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 목표 · OBJECTIVE</small><strong id="battle-objective"></strong></span></div></div><div class="hud-right-stack"><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
         </div>
         <output id="battle-event-feedback" class="battle-event-feedback" role="status" aria-live="polite" aria-atomic="true"></output>
         <div class="arise-banner" id="battle-arise-banner" data-active="false" aria-hidden="true">ARISE</div>
 
-        <div class="arena-callout" aria-hidden="true"><span>GATE CORE</span><i></i><span>전선을 유지하세요</span></div>
+        <div class="arena-callout" aria-hidden="true"><span>LANTERN GATE</span><i></i><span>등불을 지키세요</span></div>
         <div class="defense-edge defense-bottom">
-          <div class="hud-panel gate-panel"><div class="gate-panel-copy">${portraitMarkup(COMMANDER_MESH_ROOT, "DW", "gate-panel-portrait rc-portrait")}<span class="hud-eyebrow">COMMANDER / GATE INTEGRITY</span><div class="gate-panel-bars" aria-hidden="true"><span class="gate-panel-bar-icon" data-ui-icon="stat-commander"></span><span class="gate-panel-bar-track commander"><i id="battle-commander-bar-fill"></i></span><span class="gate-panel-bar-icon" data-ui-icon="stat-gate-integrity"></span><span class="gate-panel-bar-track gate"><i id="battle-gate-bar-fill"></i></span></div><strong id="battle-commander-integrity"></strong><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div></div>
+          <div class="hud-panel gate-panel"><div class="gate-panel-copy">${portraitMarkup(COMMANDER_MESH_ROOT, "DW", "gate-panel-portrait rc-portrait")}<span class="hud-eyebrow">WARDEN / LANTERN INTEGRITY</span><div class="gate-panel-bars" aria-hidden="true"><span class="gate-panel-bar-icon" data-ui-icon="stat-commander"></span><span class="gate-panel-bar-track commander"><i id="battle-commander-bar-fill"></i></span><span class="gate-panel-bar-icon" data-ui-icon="stat-gate-integrity"></span><span class="gate-panel-bar-track gate"><i id="battle-gate-bar-fill"></i></span></div><strong id="battle-commander-integrity"></strong><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div></div>
           <div class="one-thumb-controls" id="movement-actions" role="group" aria-label="한 손 이동 조작">
             <button type="button" data-move="N" aria-label="위로 이동">↑</button>
             <button type="button" data-move="W" aria-label="왼쪽으로 이동">←</button>
@@ -1607,11 +1609,7 @@ export class BattleSession {
     this.stopped = false;
     this.camera = { x: 0, y: 0 };
     this.focusBeforeGrowth = null;
-    // Pause overlay (D5, Option A): a read-only glance at stats/inventory/
-    // companions, only ever shown while userPaused===true (no real-time
-    // threat exists to hide, so the "no central panel" rule's intent holds).
     this.pauseOverlaySegment = "stats";
-    this.focusBeforePause = null;
     // Non-blocking edge-card toasts (level-up on victory, reward-tier gain on
     // stage clear, boss-rally-window notice) — reuse the existing .edge-card
     // pattern, auto-dismiss, never pause the sim themselves.
@@ -1657,6 +1655,8 @@ export class BattleSession {
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
     this.onPointerEnd = this.onPointerEnd.bind(this);
+    this.onAttackSurfacePointerDown = this.onAttackSurfacePointerDown.bind(this);
+    this.onAttackSurfaceClick = this.onAttackSurfaceClick.bind(this);
     this.onWindowBlur = this.onWindowBlur.bind(this);
     this.onKey = this.onKey.bind(this);
     this.onMoveControlDown = this.onMoveControlDown.bind(this);
@@ -2098,18 +2098,17 @@ export class BattleSession {
     const target = event.target;
     if (target?.closest?.("input, textarea, select, [contenteditable='true']")) return;
     const key = event.key.toLowerCase();
+    if ((key === "escape" || key === "p") && event.type === "keydown" && this.started && !isTerminalRun(this.run)) {
+      event.preventDefault();
+      this.togglePause();
+      return;
+    }
     // A focused control owns its ACTIVATION keys (Enter and Space) -- that is how keyboard
     // activation works, and the `preventDefault()` below would otherwise cancel it.
     // ATTACK_KEYS contains "enter" and " ", so without this exemption Enter/Space stopped
     // activating EVERY button in the app: measured, focusing a showcase card and pressing
     // Enter left the selection unchanged, which is exactly what
     // tests/lobby-guide-disclosure-browser.test.mjs asserts as "keyboard operable".
-    //
-    // Scoped to activation keys ON PURPOSE, not to every key on a focused control. The
-    // manual-attack button and the D-pad live INSIDE the battle HUD, so a player who taps
-    // 공격 or a move button leaves focus there; a blanket exemption would then swallow J/F
-    // and the arrow keys and break tap-then-keyboard play. J/F and directions still reach
-    // this handler regardless of what holds focus.
     const isActivationKey = key === "enter" || key === " " || event.code === "Space";
     if (isActivationKey && target?.closest?.("button, a[href], summary, [role='button']")) return;
     if (ATTACK_KEYS.has(key) || ATTACK_CODES.has(event.code)) {
@@ -2952,6 +2951,7 @@ export class BattleSession {
         : ""
     }`;
     if (actions.dataset.actions !== actionMarkup) {
+      const focusedActionId = actions.contains(document.activeElement) ? document.activeElement.id : "";
       actions.dataset.actions = actionMarkup;
       actions.innerHTML = actionMarkup;
       actions.querySelector("#stance-cycle")?.addEventListener("click", () => this.send("STANCE_CYCLE"));
@@ -2967,6 +2967,8 @@ export class BattleSession {
         }
         this.send("EXTRACT_ELITE", { enemyId: candidate.enemyId });
       });
+      const focusTarget = focusedActionId ? document.getElementById(focusedActionId) : null;
+      if (focusTarget && actions.contains(focusTarget)) focusTarget.focus();
     }
   }
 
@@ -2974,9 +2976,12 @@ export class BattleSession {
     this.userPaused = !this.userPaused;
     this.surface.dataset.defenseState = this.userPaused ? "paused" : "active";
     this.accumulator = 0;
-    if (this.userPaused) this.focusBeforePause = document.activeElement;
     this.render();
-    if (!this.userPaused) this.focusBeforePause?.focus?.();
+    // #battle-actions is reconciled when aria-pressed changes, so the button
+    // that opened the overlay is detached. Resume always lands on the live
+    // replacement pause control, which is also the stable keyboard target
+    // when P/Escape opened the overlay without a focused trigger.
+    if (!this.userPaused) this.surface.querySelector("#toggle-pause")?.focus();
   }
 
   /**
@@ -3027,15 +3032,20 @@ export class BattleSession {
     ];
     if (!segments.some((segment) => segment.id === this.pauseOverlaySegment)) this.pauseOverlaySegment = "stats";
     const markup = `
-      <div class="pause-overlay-panel" role="dialog" aria-modal="true" aria-labelledby="pause-overlay-title">
-        <div class="panel-heading"><h2 id="pause-overlay-title">일시 정지 · 빌드 확인</h2><button id="pause-overlay-resume" class="primary-action">전투 재개</button></div>
+      <div class="pause-overlay-panel" role="dialog" aria-modal="true" aria-labelledby="pause-overlay-title" aria-describedby="pause-overlay-copy">
+        <div class="pause-overlay-head">
+          <div><p class="eyebrow">ABYSSAL LANTERN · PAUSED</p><h2 id="pause-overlay-title">전투 일시 정지</h2><p id="pause-overlay-copy">현재 빌드와 편성을 확인하세요. Esc 또는 P로 바로 복귀할 수 있습니다.</p></div>
+          <button id="pause-overlay-resume" class="primary-action">전투 재개</button>
+        </div>
         <div class="command-segment-bar" role="tablist" aria-label="일시정지 요약">${segments.map((segment) => `<button class="command-segment${segment.id === this.pauseOverlaySegment ? " is-active" : ""}" role="tab" aria-selected="${segment.id === this.pauseOverlaySegment}" data-pause-segment="${segment.id}">${segment.label}</button>`).join("")}</div>
         <div class="command-segment-body pause-overlay-readonly">${segments.find((segment) => segment.id === this.pauseOverlaySegment).html}</div>
       </div>`;
+    let created = false;
     if (!overlay) {
       overlay = document.createElement("div");
       overlay.id = "defense-pause-overlay";
       this.surface.append(overlay);
+      created = true;
     }
     if (overlay.dataset.segment !== this.pauseOverlaySegment) {
       overlay.dataset.segment = this.pauseOverlaySegment;
@@ -3049,6 +3059,7 @@ export class BattleSession {
         });
       });
     }
+    if (created) overlay.querySelector("#pause-overlay-resume")?.focus();
   }
 
   /** Non-blocking edge-card toast — level-up/reward-tier/rally notices. Single shared slot; auto-dismisses. Returns the created toast element (camera-hint uses this to tag itself for early-dismiss lookup). */
@@ -3152,10 +3163,9 @@ export class BattleSession {
     }
     const card = document.createElement("section");
     card.className = "edge-card defense-result";
-    // "심연의 등불" tracks the game title (index.html <title>); the other two branches are
-    // gameplay outcomes, not title copy, so they stay as authored.
-    card.innerHTML = `<h2>${outcome === "defeat" ? "방어선이 무너졌습니다" : complete ? "심연의 등불 완주" : "관문 방어 성공"}</h2>
-      <div class="choices"><button id="result-action">${outcome === "defeat" ? "같은 구역 재도전" : complete ? "기록실로" : "다음 구역"}</button><button id="lobby-action">로비</button></div>`;
+    card.innerHTML = `<p class="eyebrow">ABYSSAL LANTERN · RUN COMPLETE</p><h2>${outcome === "defeat" ? "등불이 꺼졌습니다" : complete ? "Abyssal Lantern 완주" : "스테이지 봉쇄 성공"}</h2>
+      <p>${outcome === "defeat" ? "같은 스테이지를 즉시 다시 시작하거나 출전 준비로 돌아갈 수 있습니다." : complete ? "세 등불이 연결되었습니다. 기록실에서 완주 기록을 확인하세요." : "다음 스테이지로 이어가거나 출전 준비에서 빌드를 정비하세요."}</p>
+      <div class="choices"><button id="result-action">${outcome === "defeat" ? "같은 스테이지 재도전" : complete ? "기록실로" : "다음 스테이지"}</button><button id="lobby-action">출전 준비로</button></div>`;
     this.surface.append(card);
     // Deck visibility is derived from session.started inside renderShell(), so
     // remountForStage()/beginRun() alone are enough here -- there is no separate open/close

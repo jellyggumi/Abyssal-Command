@@ -337,6 +337,7 @@ function separateBodies(run) {
     if (!displaced) break;
   }
 
+
   /* Separation can be the last position writer in a tick. Re-place every mover so each uses its
    * own radius for world bounds and refreshes support mesh/elevation after any displacement. */
   movable.forEach((entity) => placeOnTerrain(run, entity, entity));
@@ -476,6 +477,7 @@ function buildWaveSchedule(stage, seed, tactics, wavePlan) {
     return {
       waveIndex,
       slot: source.slot ?? waveIndex,
+      objectiveId: source.objectiveId || "gate-defense",
       alternativeId: selected.id,
       pattern: stage.wavePattern?.[waveIndex] || primary.enemy,
       kind: source.kind || "normal",
@@ -630,7 +632,8 @@ function applyOwnedRewards(run, rewardIds) {
 }
 
 function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
-  const data = ENEMIES[type] || ENEMIES.rusher;
+  const data = ENEMIES[type];
+  if (!data) throw new RangeError(`Unknown authored enemy type: ${type}`);
   const hp = scaled(data.hp, run.stage.scale);
   // XP reward tracks enemy toughness: late stages scale enemy HP (line above) by
   // run.stage.scale, so a flat XP grant would stretch the in-run level-up cadence
@@ -675,6 +678,8 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     spawnDirection: direction,
     route: laneRoute(run.tactics, policyId, laneOffset),
     waypointIndex: 0,
+    encounterObjectiveId: spawnOpt.objectiveId || null,
+    waveIndex: Number.isInteger(spawnOpt.waveIndex) ? spawnOpt.waveIndex : null,
   });
   placeOnTerrain(run, enemy, point);
   run.enemies.push(enemy);
@@ -686,6 +691,8 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     midbossId: midboss?.id ?? null,
     spawnDirection: direction,
     route: clone(enemy.route),
+    objectiveId: enemy.encounterObjectiveId,
+    waveIndex: enemy.waveIndex,
   });
   spawnEvent.spawnEventId = spawnEvent.eventId;
   enemy.spawnEventId = spawnEvent.eventId;
@@ -773,6 +780,276 @@ function spawnBoss(run) {
     objectiveId: "boss-kill",
     arrival: true,
   });
+}
+
+function encounterStateFor(route) {
+  const first = route?.objectives?.[0] || null;
+  return {
+    version: 1,
+    routeId: route?.id || null,
+    status: first ? "ACTIVE" : "COMPLETE",
+    objectiveIndex: 0,
+    objectiveId: first?.id || null,
+    attempt: 1,
+    retries: 0,
+    recoveryUntil: null,
+    commitmentCap: Math.max(1, route?.commitmentCap || 1),
+    maxConcurrentEnemies: Math.max(1, route?.maxConcurrentEnemies || 1),
+    committedAttackerIds: [],
+    committedAttackerCount: 0,
+    rewardKeys: [],
+    spawnQueue: [],
+    nextSpawnAt: 0,
+    startedWaveIndices: [],
+    retryWaveIndices: [],
+    objectives: Object.fromEntries((route?.objectives || []).map((objective) => [objective.id, {
+      id: objective.id,
+      kind: objective.kind,
+      completed: false,
+      completedAt: null,
+      attempts: 1,
+      retries: 0,
+    }])),
+  };
+}
+
+function ensureEncounterState(run) {
+  if (run.encounter) return run.encounter;
+  const route = Catalog.STAGE_ENCOUNTER_ROUTES?.[run.stage.id] || run.stage.encounterRoute;
+  run.encounter = encounterStateFor(route);
+  return run.encounter;
+}
+
+function encounterRouteFor(run) {
+  return Catalog.STAGE_ENCOUNTER_ROUTES?.[run.stage.id] || run.stage.encounterRoute || null;
+}
+
+function activeEncounterObjective(run) {
+  const route = encounterRouteFor(run);
+  return route?.objectives?.[run.encounter?.objectiveIndex] || null;
+}
+
+function encounterSnapshot(run) {
+  const encounter = run.encounter || encounterStateFor(encounterRouteFor(run));
+  return {
+    version: encounter.version,
+    routeId: encounter.routeId,
+    status: encounter.status,
+    objectiveIndex: encounter.objectiveIndex,
+    objectiveId: encounter.objectiveId,
+    attempt: encounter.attempt,
+    retries: encounter.retries,
+    recoveryUntil: encounter.recoveryUntil,
+    commitmentCap: encounter.commitmentCap,
+    maxConcurrentEnemies: encounter.maxConcurrentEnemies,
+    committedAttackerIds: [...encounter.committedAttackerIds],
+    committedAttackerCount: encounter.committedAttackerCount,
+    rewardKeys: [...encounter.rewardKeys],
+    pendingSpawnCount: encounter.spawnQueue.length,
+    objectives: clone(encounter.objectives),
+  };
+}
+
+function grantEncounterRecovery(run, rewardKey, recovery, payload = {}) {
+  const encounter = ensureEncounterState(run);
+  if (encounter.rewardKeys.includes(rewardKey)) return null;
+  encounter.rewardKeys.push(rewardKey);
+  const commanderGain = Math.min(
+    Math.trunc((run.commander.maxIntegrity * Math.max(0, recovery?.commanderBp || 0)) / 10000),
+    run.commander.maxIntegrity - run.commander.integrity,
+  );
+  const gateGain = Math.min(
+    Math.trunc((run.gate.maxIntegrity * Math.max(0, recovery?.gateBp || 0)) / 10000),
+    run.gate.maxIntegrity - run.gate.integrity,
+  );
+  run.commander.integrity += commanderGain;
+  run.gate.integrity += gateGain;
+  emit(run, "ENCOUNTER_REWARD_GRANTED", {
+    rewardKey,
+    commanderRecovered: commanderGain,
+    gateRecovered: gateGain,
+    ...payload,
+  });
+  return { commanderGain, gateGain };
+}
+
+function enqueueEncounterWave(run, wave, retryAttempt = null) {
+  const encounter = ensureEncounterState(run);
+  const objectiveId = wave.objectiveId || encounter.objectiveId || "gate-defense";
+  emit(run, "WAVE_VARIANT_STARTED", {
+    waveIndex: wave.waveIndex,
+    pattern: wave.pattern,
+    slot: wave.slot,
+    kind: wave.kind || "normal",
+    label: wave.label || null,
+    alternativeId: wave.alternativeId,
+    count: wave.count,
+    composition: clone(wave.composition),
+    selectionId: wave.selectionId,
+    policyId: wave.policyId,
+    spawnDirection: wave.direction,
+    midbossId: wave.midboss?.id ?? null,
+    variantId: run.waveVariant.id,
+    objectiveId,
+    retryAttempt,
+  });
+  const pending = [];
+  if (wave.midboss) {
+    pending.push({
+      waveIndex: wave.waveIndex,
+      objectiveId,
+      type: wave.midboss.enemy,
+      spawnOpt: {
+        direction: wave.direction,
+        laneOffset: wave.laneOffset,
+        policyId: wave.midboss.policyId,
+        midboss: wave.midboss,
+      },
+    });
+  }
+  let spawnIndex = 0;
+  wave.composition.forEach(({ enemy, count }) => {
+    const policyId = enemy === wave.type ? wave.policyId : (ENEMIES[enemy]?.policyId || wave.policyId);
+    for (let index = 0; index < count; index += 1) {
+      pending.push({
+        waveIndex: wave.waveIndex,
+        objectiveId,
+        type: enemy,
+        spawnOpt: {
+          direction: wave.direction,
+          laneOffset: wave.laneOffset + spawnIndex * 200,
+          policyId,
+        },
+      });
+      spawnIndex += 1;
+    }
+  });
+  encounter.spawnQueue.push(...pending);
+  if (!encounter.startedWaveIndices.includes(wave.waveIndex)) {
+    encounter.startedWaveIndices.push(wave.waveIndex);
+    encounter.startedWaveIndices.sort((left, right) => left - right);
+  }
+}
+
+function processEncounterSpawns(run) {
+  const encounter = ensureEncounterState(run);
+  if (encounter.status !== "ACTIVE" || !encounter.spawnQueue.length || run.tick < encounter.nextSpawnAt) return;
+  const activeBodies = run.enemies.filter((enemy) => enemy.class !== "boss" && !enemy.elite).length;
+  if (activeBodies >= encounter.maxConcurrentEnemies) return;
+  const pending = encounter.spawnQueue.shift();
+  spawnEnemy(run, pending.type, false, {
+    ...pending.spawnOpt,
+    objectiveId: pending.objectiveId,
+    waveIndex: pending.waveIndex,
+  });
+  encounter.nextSpawnAt = run.tick + Math.max(1, encounterRouteFor(run)?.spawnIntervalTicks || 1);
+}
+
+function beginEncounterRecovery(run, reason = "PLAYER_RETRY") {
+  const encounter = ensureEncounterState(run);
+  const objective = activeEncounterObjective(run);
+  if (!objective || encounter.status !== "ACTIVE" || encounter.attempt >= objective.retry.maxAttempts) return false;
+  const objectiveId = objective.id;
+  const retryWaveIndices = encounter.startedWaveIndices.filter((waveIndex) =>
+    run.waveSchedule.find((wave) => wave.waveIndex === waveIndex)?.objectiveId === objectiveId);
+  const withdrawn = run.enemies.filter((enemy) => enemy.encounterObjectiveId === objectiveId);
+  const withdrawnIds = new Set(withdrawn.map((enemy) => enemy.id));
+  run.enemies = run.enemies.filter((enemy) => !withdrawnIds.has(enemy.id));
+  encounter.spawnQueue = encounter.spawnQueue.filter((pending) => pending.objectiveId !== objectiveId);
+  encounter.retryWaveIndices = retryWaveIndices;
+  encounter.status = "RECOVERY";
+  encounter.recoveryUntil = run.tick + objective.retry.recoveryTicks;
+  encounter.committedAttackerIds = [];
+  encounter.committedAttackerCount = 0;
+  const commanderFloor = Math.trunc((run.commander.maxIntegrity * objective.retry.commanderFloorBp) / 10000);
+  const gateFloor = Math.trunc((run.gate.maxIntegrity * objective.retry.gateFloorBp) / 10000);
+  run.commander.integrity = Math.max(run.commander.integrity, commanderFloor);
+  run.gate.integrity = Math.max(run.gate.integrity, gateFloor);
+  emit(run, "ENCOUNTER_OBJECTIVE_FAILED", {
+    objectiveId,
+    attempt: encounter.attempt,
+    reason,
+    withdrawnEnemyIds: withdrawn.map(({ id }) => id),
+  });
+  emit(run, "ENCOUNTER_RECOVERY_STARTED", {
+    objectiveId,
+    attempt: encounter.attempt,
+    recoveryUntil: encounter.recoveryUntil,
+    recoveryTicks: objective.retry.recoveryTicks,
+  });
+  return true;
+}
+
+function processEncounterRecovery(run) {
+  const encounter = ensureEncounterState(run);
+  if (encounter.status !== "RECOVERY" || run.tick < encounter.recoveryUntil) return;
+  const objective = activeEncounterObjective(run);
+  encounter.status = "ACTIVE";
+  encounter.attempt += 1;
+  encounter.retries += 1;
+  encounter.recoveryUntil = null;
+  encounter.nextSpawnAt = run.tick;
+  const objectiveState = encounter.objectives[objective.id];
+  objectiveState.attempts = encounter.attempt;
+  objectiveState.retries = encounter.retries;
+  emit(run, "ENCOUNTER_RETRY_STARTED", {
+    objectiveId: objective.id,
+    attempt: encounter.attempt,
+    retries: encounter.retries,
+  });
+  const retryIndices = [...encounter.retryWaveIndices];
+  encounter.retryWaveIndices = [];
+  retryIndices.forEach((waveIndex) => {
+    const wave = run.waveSchedule.find((entry) => entry.waveIndex === waveIndex);
+    if (wave) enqueueEncounterWave(run, wave, encounter.attempt);
+  });
+}
+
+function updateEncounterObjective(run) {
+  const encounter = ensureEncounterState(run);
+  if (encounter.status !== "ACTIVE") return;
+  const route = encounterRouteFor(run);
+  const objective = activeEncounterObjective(run);
+  if (!route || !objective) return;
+  const objectiveWaves = run.waveSchedule.filter((wave) => wave.objectiveId === objective.id);
+  const allStarted = objectiveWaves.length > 0
+    && objectiveWaves.every((wave) => encounter.startedWaveIndices.includes(wave.waveIndex));
+  const pending = encounter.spawnQueue.some((entry) => entry.objectiveId === objective.id);
+  const alive = run.enemies.some((enemy) => enemy.encounterObjectiveId === objective.id && enemy.hp > 0);
+  if (!allStarted || pending || alive) return;
+  const objectiveState = encounter.objectives[objective.id];
+  objectiveState.completed = true;
+  objectiveState.completedAt = run.tick;
+  grantEncounterRecovery(run, `objective:${objective.id}`, objective.recovery, {
+    objectiveId: objective.id,
+    rewardType: "objective-recovery",
+  });
+  emit(run, "ENCOUNTER_OBJECTIVE_COMPLETED", {
+    objectiveId: objective.id,
+    objectiveKind: objective.kind,
+    attempt: encounter.attempt,
+    retries: encounter.retries,
+  });
+  const nextIndex = encounter.objectiveIndex + 1;
+  const nextObjective = route.objectives[nextIndex] || null;
+  encounter.objectiveIndex = nextIndex;
+  encounter.objectiveId = nextObjective?.id || null;
+  encounter.attempt = 1;
+  encounter.retries = 0;
+  encounter.status = nextObjective ? "ACTIVE" : "COMPLETE";
+  if (run.objectives.route) {
+    run.objectives.route.phase = encounter.objectiveId || "complete";
+    run.objectives.route.completed = encounter.status === "COMPLETE";
+  }
+  if (nextObjective) {
+    emit(run, "ENCOUNTER_OBJECTIVE_STARTED", {
+      objectiveId: nextObjective.id,
+      objectiveKind: nextObjective.kind,
+      objectiveIndex: nextIndex,
+      point: clone(nextObjective.point),
+      previousObjectiveId: objective.id,
+    });
+  }
 }
 
 function getEffectiveRange(run, baseRange) {
@@ -1654,12 +1931,27 @@ function castSkill(run, skillId) {
 }
 
 function applyReward(run, rewardId) {
-  if (run.measurementProfile) return;
-  if (!run.rewardOffer || !run.rewardOffer.choices.includes(rewardId) || !REWARDS[rewardId]) return;
+  if (run.measurementProfile) return false;
+  if (!run.rewardOffer || !run.rewardOffer.choices.includes(rewardId) || !REWARDS[rewardId]) return false;
+  const rewardEmissionId = `reward:${rewardId}`;
   const alreadyOwned = run.rewardIds.includes(rewardId);
-  if (!alreadyOwned) run.rewardIds.push(rewardId);
   run.rewardOffer = null;
-  emit(run, "REWARD_SELECTED", { rewardId, alreadyOwned, cue: eventCue("terminal") });
+  if (alreadyOwned) {
+    emit(run, "REWARD_SELECTION_DUPLICATE_IGNORED", {
+      rewardId,
+      rewardEmissionId,
+      reason: "REWARD_ALREADY_OWNED",
+    });
+    return true;
+  }
+  run.rewardIds.push(rewardId);
+  emit(run, "REWARD_SELECTED", {
+    rewardId,
+    rewardEmissionId,
+    alreadyOwned: false,
+    cue: eventCue("terminal"),
+  });
+  return true;
 }
 
 
@@ -1770,11 +2062,18 @@ function processInput(run, input) {
   } else if (input.type === "SKILL_CAST") {
     accepted = castSkill(run, input.payload?.skillId || input.payload);
     rejectionReason = "SKILL_NOT_READY_OR_UNAVAILABLE";
+  } else if (input.type === "RETRY_OBJECTIVE") {
+    const encounter = ensureEncounterState(run);
+    accepted = beginEncounterRecovery(run, "PLAYER_RETRY");
+    rejectionReason = encounter.status === "RECOVERY"
+      ? "ENCOUNTER_RECOVERY_ACTIVE"
+      : encounter.status === "COMPLETE"
+        ? "ENCOUNTER_ROUTE_COMPLETE"
+        : "ENCOUNTER_RETRY_LIMIT_REACHED";
   } else if (input.type === "REWARD_SELECTED") {
     const rewardId = input.payload?.rewardId || input.payload;
     if (!run.measurementProfile && run.rewardOffer?.choices.includes(rewardId) && REWARDS[rewardId]) {
-      applyReward(run, rewardId);
-      accepted = true;
+      accepted = applyReward(run, rewardId);
     } else rejectionReason = "REWARD_SELECTION_UNAVAILABLE";
   } else if (input.type === "M4_CARD_DECISION") {
     accepted = processM4Decision(run, input.payload);
@@ -1949,15 +2248,57 @@ function pressureTarget(run, enemy) {
   return run.gate;
 }
 
+function refreshAttackerCommitment(run) {
+  const encounter = ensureEncounterState(run);
+  const candidates = run.enemies
+    .filter((enemy) => {
+      if (enemy.hp <= 0 || (enemy.policyId === "elite-escort" && enemy.escortLeaderId)) return false;
+      if (enemy.class === "boss" && run.tick < run.bossSpawnedAt + BOSS_PRESSURE_GRACE_TICKS) return false;
+      const target = pressureTarget(run, enemy);
+      const attackRange = enemy.projectileRange > 0
+        ? enemy.projectileRange
+        : enemy.radius + (target.radius || 0);
+      const approachStep = Math.max(1, Math.trunc(enemy.speed / TICK_RATE));
+      return distanceSquared(enemy, target) <= (attackRange + approachStep) ** 2;
+    })
+    .sort((left, right) => {
+      const distanceDelta = distanceSquared(left, pressureTarget(run, left))
+        - distanceSquared(right, pressureTarget(run, right));
+      return distanceDelta || left.id.localeCompare(right.id);
+    });
+  const nextIds = candidates.slice(0, encounter.commitmentCap).map(({ id }) => id);
+  const changed = nextIds.length !== encounter.committedAttackerIds.length
+    || nextIds.some((id, index) => encounter.committedAttackerIds[index] !== id);
+  encounter.committedAttackerIds = nextIds;
+  encounter.committedAttackerCount = nextIds.length;
+  if (changed) {
+    emit(run, "ATTACKER_COMMITMENT_CHANGED", {
+      objectiveId: encounter.objectiveId || run.objectives.phase,
+      committedAttackerIds: [...nextIds],
+      committedAttackerCount: nextIds.length,
+      commitmentCap: encounter.commitmentCap,
+    });
+  }
+}
+
 function moveEnemies(run) {
   const breachedIds = new Set();
   const chokepath = run.tactics?.chokepath;
+  refreshAttackerCommitment(run);
+  const committedIds = new Set(run.encounter.committedAttackerIds);
 
   run.enemies.forEach((enemy) => {
     if (enemy.attackCooldown > 0) enemy.attackCooldown -= 1;
     if (enemy.rangedCooldown > 0) enemy.rangedCooldown -= 1;
 
-    let speed = enemy.class === "boss" && enemy.attackWindup ? 0 : enemy.speed;
+    const commitmentTarget = pressureTarget(run, enemy);
+    const commitmentRange = enemy.projectileRange > 0
+      ? enemy.projectileRange
+      : enemy.radius + (commitmentTarget.radius || 0);
+    const approachStep = Math.max(1, Math.trunc(enemy.speed / TICK_RATE));
+    const waitingForCommitment = !committedIds.has(enemy.id)
+      && distanceSquared(enemy, commitmentTarget) <= (commitmentRange + approachStep) ** 2;
+    let speed = waitingForCommitment || (enemy.class === "boss" && enemy.attackWindup) ? 0 : enemy.speed;
     if (chokepath && Math.abs(enemy.x - chokepath.x) <= chokepath.halfWidth) speed = Math.trunc(speed * 0.85);
 
     const targetPosition = getTargetPosition(run, enemy);
@@ -2008,6 +2349,10 @@ function moveEnemies(run) {
     if (enemy.policyId === "elite-escort" && enemy.escortLeaderId) return;
     const target = pressureTarget(run, enemy);
     const targetDistance = Math.sqrt(distanceSquared(enemy, target));
+    const attackRange = enemy.projectileRange > 0
+      ? enemy.projectileRange
+      : enemy.radius + (target.radius || 0);
+    if (targetDistance <= attackRange && !committedIds.has(enemy.id)) return;
     const pressureReleaseTick = run.objectives.phase === "echo-recovery"
       ? run.objectives.gateDefense.completedAt + ECHO_RECOVERY_PRESSURE_GRACE_TICKS
       : run.stage.gateTicks - (GATE_PRESSURE_RELEASE_LEAD[enemy.policyId] || 0);
@@ -2151,6 +2496,8 @@ function updateObjectivePhase(run) {
   if (!objectives.gateDefense.completed
       && run.tick >= run.stage.gateTicks
       && run.waveIndex >= run.waveSchedule.length
+      && ensureEncounterState(run).status === "COMPLETE"
+      && !run.encounter.spawnQueue.length
       && !run.enemies.some((enemy) => !enemy.elite && enemy.class !== "boss")) {
     objectives.gateDefense.completed = true;
     objectives.gateDefense.completedAt = run.tick;
@@ -2202,23 +2549,22 @@ const WAVE_CLEAR_GATE_RECOVERY_BP = 500;
 function processWaveClearRecovery(run) {
   if (run.objectives.gateDefense.completed) return;
   if (run.waveIndex <= run.waveClearIndex || run.waveIndex === 0) return;
+  if (ensureEncounterState(run).spawnQueue.length) return;
   if (run.enemies.some((enemy) => enemy.hp > 0 && !enemy.elite && enemy.class !== "boss")) return;
   run.waveClearIndex = run.waveIndex;
-  const commanderGain = Math.min(
-    Math.trunc((run.commander.maxIntegrity * WAVE_CLEAR_COMMANDER_RECOVERY_BP) / 10000),
-    run.commander.maxIntegrity - run.commander.integrity,
+  const waveIndex = run.waveClearIndex - 1;
+  const recovery = grantEncounterRecovery(
+    run,
+    `wave:${waveIndex}`,
+    { commanderBp: WAVE_CLEAR_COMMANDER_RECOVERY_BP, gateBp: WAVE_CLEAR_GATE_RECOVERY_BP },
+    { objectiveId: run.waveSchedule[waveIndex]?.objectiveId || "gate-defense", rewardType: "wave-recovery", waveIndex },
   );
-  const gateGain = Math.min(
-    Math.trunc((run.gate.maxIntegrity * WAVE_CLEAR_GATE_RECOVERY_BP) / 10000),
-    run.gate.maxIntegrity - run.gate.integrity,
-  );
-  run.commander.integrity += commanderGain;
-  run.gate.integrity += gateGain;
+  if (!recovery) return;
   emit(run, "WAVE_CLEARED", {
-    waveIndex: run.waveClearIndex - 1,
-    objectiveId: "gate-defense",
-    commanderRecovered: commanderGain,
-    gateRecovered: gateGain,
+    waveIndex,
+    objectiveId: run.waveSchedule[waveIndex]?.objectiveId || "gate-defense",
+    commanderRecovered: recovery.commanderGain,
+    gateRecovered: recovery.gateGain,
     commanderIntegrity: run.commander.integrity,
     gateIntegrity: run.gate.integrity,
   });
@@ -2401,6 +2747,7 @@ function tick(run) {
   run.events = [];
   while (run.inputs.length && run.inputs[0].at <= run.tick) processInput(run, run.inputs.shift());
   if (run.growthOffer) return;
+  processEncounterRecovery(run);
 
   const commanderFrom = { x: run.commander.x, y: run.commander.y };
   const commanderSpeed = getCommanderSpeed(run);
@@ -2457,45 +2804,16 @@ function tick(run) {
   applyWardenVigilRegen(run);
 
 
-  while (run.waveIndex < run.waveSchedule.length && run.waveSchedule[run.waveIndex].at <= run.tick) {
+  const encounter = ensureEncounterState(run);
+  while (encounter.status === "ACTIVE"
+      && run.waveIndex < run.waveSchedule.length
+      && run.waveSchedule[run.waveIndex].at <= run.tick) {
     const wave = run.waveSchedule[run.waveIndex];
-    emit(run, "WAVE_VARIANT_STARTED", {
-      waveIndex: wave.waveIndex,
-      pattern: wave.pattern,
-      slot: wave.slot,
-      kind: wave.kind || "normal",
-      label: wave.label || null,
-      alternativeId: wave.alternativeId,
-      count: wave.count,
-      composition: clone(wave.composition),
-      selectionId: wave.selectionId,
-      policyId: wave.policyId,
-      spawnDirection: wave.direction,
-      midbossId: wave.midboss?.id ?? null,
-      variantId: run.waveVariant.id,
-    });
-    let spawnIndex = 0;
-    wave.composition.forEach(({ enemy, count }) => {
-      const policyId = enemy === wave.type ? wave.policyId : (ENEMIES[enemy]?.policyId || wave.policyId);
-      for (let index = 0; index < count; index += 1) {
-        spawnEnemy(run, enemy, false, {
-          direction: wave.direction,
-          laneOffset: wave.laneOffset + spawnIndex * 200,
-          policyId,
-        });
-        spawnIndex += 1;
-      }
-    });
-    if (wave.midboss) {
-      spawnEnemy(run, wave.midboss.enemy, false, {
-        direction: wave.direction,
-        laneOffset: wave.laneOffset,
-        policyId: wave.midboss.policyId,
-        midboss: wave.midboss,
-      });
-    }
+    if (wave.objectiveId && wave.objectiveId !== encounter.objectiveId) break;
+    enqueueEncounterWave(run, wave);
     run.waveIndex += 1;
   }
+  processEncounterSpawns(run);
 
   processTerrainEffects(run);
   if (!run.eliteSpawned && run.objectives.gateDefense.completed) {
@@ -2588,6 +2906,7 @@ function tick(run) {
   processWaveClearRecovery(run);
   assignCompanionItemClaims(run);
   collectPickups(run);
+  updateEncounterObjective(run);
   updateObjectivePhase(run);
   processObjectivePressure(run);
 
@@ -2762,6 +3081,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     },
     waveIndex: 0,
     waveClearIndex: 0,
+    encounter: encounterStateFor(stage.encounterRoute),
     inputs: [],
     inputSequence: 0,
     events: [],
@@ -2841,6 +3161,13 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     objectives: {
       version: 1,
       phase: "gate-defense",
+      route: {
+        version: 1,
+        id: stage.encounterRoute.id,
+        phase: stage.encounterRoute.objectives[0]?.id || "complete",
+        order: stage.encounterRoute.objectives.map(({ id }) => id),
+        completed: false,
+      },
       gateDefense: { completed: false, completedAt: null, requiredTick: stage.gateTicks },
       echoRecovery: { completed: false, completedAt: null },
       growth: { completed: false, completedAt: null },
@@ -2909,6 +3236,16 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     cutscene: stageCutscene(stage).intro,
     cue: eventCue("stageStart"),
   });
+  const openingEncounterObjective = stage.encounterRoute.objectives[0];
+  if (openingEncounterObjective) {
+    emit(state, "ENCOUNTER_OBJECTIVE_STARTED", {
+      objectiveId: openingEncounterObjective.id,
+      objectiveKind: openingEncounterObjective.kind,
+      objectiveIndex: 0,
+      point: clone(openingEncounterObjective.point),
+      previousObjectiveId: null,
+    });
+  }
   if (loreSurprise) state.loreSurprise = emit(state, "LORE_SURPRISE_RESOLVED", loreSurprise);
   emit(state, "M4_CARD_AVAILABLE", {
     cardId: state.m4.inventory[0],
@@ -2920,7 +3257,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
 
 /** Queues one input for the next simulation tick and returns a new run. */
 export function queueInput(run, type, payload = null) {
-  if (!run || !["MOVE", "ATTACK", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "REWARD_SELECTED", "EXTRACT_ELITE", "M4_CARD_DECISION", "M3_TARGET_PROBE", "STANCE_CYCLE"].includes(type)) return run;
+  if (!run || !["MOVE", "ATTACK", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "REWARD_SELECTED", "RETRY_OBJECTIVE", "EXTRACT_ELITE", "M4_CARD_DECISION", "M3_TARGET_PROBE", "STANCE_CYCLE"].includes(type)) return run;
   const next = clone(run);
   next.inputSequence = (next.inputSequence || 0) + 1;
   next.inputs.push({ at: next.tick + 1, inputId: `${next.planCommitment.identity}:input:${next.inputSequence}`, type, payload: clone(payload) });
@@ -2951,6 +3288,17 @@ export function advanceDefenseRun(run, steps = 1) {
   if (next.commander && typeof next.commander.objectiveRoute !== "boolean") next.commander.objectiveRoute = false;
   if (next.commander && typeof next.commander.engaged !== "boolean") next.commander.engaged = false;
   if (!Number.isInteger(next.combatRng)) next.combatRng = rngNext(next.seed ^ 0x9e3779b9);
+  ensureEncounterState(next);
+  if (!next.objectives.route) {
+    const route = encounterRouteFor(next);
+    next.objectives.route = {
+      version: 1,
+      id: route?.id || null,
+      phase: next.encounter.objectiveId || "complete",
+      order: (route?.objectives || []).map(({ id }) => id),
+      completed: next.encounter.status === "COMPLETE",
+    };
+  }
   if (!next.objectivePressure) {
     next.objectivePressure = {
       phase: next.objectives?.phase || "gate-defense",
@@ -3011,6 +3359,7 @@ export function getRunSnapshot(run) {
     rewardOffer: run.rewardOffer,
     itemIds: run.itemIds,
     rewardIds: run.rewardIds,
+    encounter: encounterSnapshot(run),
     progress: run.progress,
     loreSurprise: run.loreSurprise,
     m4: run.m4,
