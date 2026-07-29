@@ -11,6 +11,12 @@ const MAX_NARRATION_CHARS = 240;
 const tone = (waveform, frequency, endFrequency, duration, gain, delay = 0, attack = 0.008) =>
   Object.freeze({ waveform, frequency, endFrequency, duration, gain, delay, attack });
 
+const NARRATION_VOICE_HINTS = Object.freeze(["ko-KR", "ko_KR", "Korean"]);
+const NARRATION_SETTINGS = Object.freeze({ rate: 0.92, pitch: 0.88, volume: 0.86 });
+const pickNarrationVoice = (voices = []) => voices.find((voice) =>
+  NARRATION_VOICE_HINTS.some((hint) => `${voice.lang} ${voice.name}`.includes(hint))
+) || voices.find((voice) => String(voice.lang || "").toLowerCase().startsWith("ko")) || voices[0] || null;
+
 const CUE_PROFILES = Object.freeze({
   "stage-start": Object.freeze([
     tone("sine", 220, 330, 0.18, 0.16),
@@ -453,16 +459,17 @@ export class DefenseAudio {
     const text = narrationText(event);
     const speech = globalThis.speechSynthesis;
     const Utterance = globalThis.SpeechSynthesisUtterance;
-    if (
-      !text
-      || typeof speech?.speak !== "function"
-      || typeof Utterance !== "function"
-      || speech.speaking
-      || speech.pending
-      || this.activeNarrations.size
-    ) return false;
+    if (!text || typeof speech?.speak !== "function" || typeof Utterance !== "function"
+      || speech.speaking || speech.pending || this.activeNarrations.size) return false;
     try {
       const utterance = new Utterance(text);
+      const voices = typeof speech.getVoices === "function" ? speech.getVoices() : [];
+      const voice = pickNarrationVoice(voices);
+      if (voice) utterance.voice = voice;
+      utterance.lang = voice?.lang || "ko-KR";
+      utterance.rate = NARRATION_SETTINGS.rate;
+      utterance.pitch = NARRATION_SETTINGS.pitch;
+      utterance.volume = NARRATION_SETTINGS.volume;
       const release = () => this.activeNarrations.delete(utterance);
       utterance.onend = release;
       utterance.onerror = release;
