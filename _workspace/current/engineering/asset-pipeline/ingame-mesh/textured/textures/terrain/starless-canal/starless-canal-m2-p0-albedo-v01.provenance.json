@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.85,
+      0.52,
+      0.08,
+      1.0
+    ],
+    "bytes": 16005,
+    "dilatedCoverage": 0.56778,
+    "height": 256,
+    "materialIndex": 6,
+    "meshIndex": 2,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/starless-canal/starless-canal-m2-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "ef4f699eee6bf35ceca588b7a885f8f9603ffceb1832740078954052ecf09912",
+    "uvCoverage": 0.287109,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/starless-canal.glb",
+    "readOnly": true,
+    "sha256": "d3341ad55ea685ce091046fd5a2147c53610d7a06b329674aa8d67c2cc9eec30"
+  }
+}

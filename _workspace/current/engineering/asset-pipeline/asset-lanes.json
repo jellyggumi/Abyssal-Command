@@ -41,7 +41,7 @@
         {"path": "_workspace/current/engineering/asset-pipeline/animation-candidates", "recursive": true},
         {"path": "_workspace/current/engineering/asset-pipeline/ingame-mesh", "recursive": true}
       ],
-      "allowedExtensions": [".glb", ".png", ".jpg", ".jpeg", ".webp", ".json"],
+      "allowedExtensions": [".glb", ".png", ".jpg", ".jpeg", ".webp", ".json", ".blend", ".html", ".log", ".md"],
       "artifactExtensions": [".glb", ".png", ".jpg", ".jpeg", ".webp"],
       "sidecar": {
         "suffix": ".provenance.json",

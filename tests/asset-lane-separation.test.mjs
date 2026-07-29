@@ -196,7 +196,7 @@ test("asset lane validator rejects a generated candidate without its provenance 
   try {
     const candidate = join(
       fixtureRoot,
-      "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/dusk-warden.glb",
+      "_workspace/current/engineering/asset-pipeline/runtime-candidates/dusk-warden.glb",
     );
     await writeFixture(candidate, "candidate glb bytes");
 

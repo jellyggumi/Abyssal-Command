@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.045,
+      0.025,
+      0.105,
+      1.0
+    ],
+    "bytes": 17683,
+    "dilatedCoverage": 0.565536,
+    "height": 256,
+    "materialIndex": 2,
+    "meshIndex": 1,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/companion-downed-fade/companion-downed-fade-m1-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "b0df6f082d82d07ae10c2646d012499065dbd83a57e3c0752c31f47390bb1acf",
+    "uvCoverage": 0.375107,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "vfx/companion-downed-fade.glb",
+    "readOnly": true,
+    "sha256": "939768df286234389a642cb9c55fdb609d2f9a7e21878638b5bfe8f3ae71115b"
+  }
+}

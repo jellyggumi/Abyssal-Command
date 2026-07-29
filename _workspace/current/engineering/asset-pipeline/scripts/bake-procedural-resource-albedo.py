@@ -360,6 +360,11 @@ def bake_asset(repo: Path, source: Path, source_root: Path, output_root: Path, a
     asset_id = source.stem
     document, binary = read_glb(source)
     source_sha = sha256_file(source)
+    runtime_receipt = {
+        "runtimeEligible": False,
+        "status": "not-issued",
+        "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    }
     texture_dir = output_root / "textures" / relative.with_suffix("")
     artifacts: list[dict[str, Any]] = []
     primitive_index = 0
@@ -404,12 +409,33 @@ def bake_asset(repo: Path, source: Path, source_root: Path, output_root: Path, a
         "appearanceReference": concept_reference(repo, asset_id),
         "runtimeEligible": False,
         "textureStatus": "UV-baked generated albedo atlas embedded in candidate GLB",
-        "runtimeReceipt": {
-            "runtimeEligible": False,
-            "status": "not-issued",
-            "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
-        },
+        "runtimeReceipt": runtime_receipt,
     }
+    for artifact in artifacts:
+        texture = repo / artifact["path"]
+        texture_receipt = {
+            "schemaVersion": SCHEMA_VERSION,
+            "source": {
+                "kind": "repository-authored-procedural-candidate",
+                "path": row["source"],
+                "sha256": source_sha,
+                "readOnly": True,
+            },
+            "generator": {
+                "tool": "scripts/bake-procedural-resource-albedo.py",
+                "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+                "atlasSize": atlas_size,
+                "dilationTexels": DILATION_TEXELS,
+            },
+            "output": artifact,
+            "rightsReceipt": "repository-authored deterministic texture output",
+            "runtimeReceipt": runtime_receipt,
+            "runtimeEligible": False,
+        }
+        texture.with_name(f"{texture.stem}.provenance.json").write_text(
+            json.dumps(texture_receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     receipt = {
         "schemaVersion": SCHEMA_VERSION,
         "source": {
@@ -433,6 +459,7 @@ def bake_asset(repo: Path, source: Path, source_root: Path, output_root: Path, a
         "appearanceReference": row["appearanceReference"],
         "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
         "runtimeReceipt": row["runtimeReceipt"],
+        "runtimeEligible": False,
     }
     output.with_suffix(".provenance.json").write_text(
         json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -483,6 +510,18 @@ def verify_asset(repo: Path, source_root: Path, row: Mapping[str, Any], atlas_si
         texture = repo / artifact["path"]
         if not texture.is_file() or sha256_file(texture) != artifact["sha256"]:
             raise BakeError(f"{row['assetId']}: generated PNG missing or changed")
+        texture_receipt = texture.with_name(f"{texture.stem}.provenance.json")
+        if not texture_receipt.is_file():
+            raise BakeError(f"{row['assetId']}: generated PNG provenance missing")
+        texture_data = json.loads(texture_receipt.read_text(encoding="utf-8"))
+        output_data = texture_data.get("output", {})
+        if (
+            texture_data.get("runtimeEligible") is not False
+            or texture_data.get("runtimeReceipt", {}).get("runtimeEligible") is not False
+            or output_data.get("path") != artifact["path"]
+            or output_data.get("sha256") != artifact["sha256"]
+        ):
+            raise BakeError(f"{row['assetId']}: generated PNG provenance is incomplete or stale")
         with Image.open(texture) as image:
             if image.size != (atlas_size, atlas_size) or image.mode != "RGB":
                 raise BakeError(f"{row['assetId']}: atlas is not {atlas_size}px RGB")

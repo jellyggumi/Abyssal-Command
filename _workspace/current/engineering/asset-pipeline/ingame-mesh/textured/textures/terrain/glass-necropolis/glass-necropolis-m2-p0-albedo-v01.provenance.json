@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.54,
+      0.48,
+      0.37,
+      1.0
+    ],
+    "bytes": 20394,
+    "dilatedCoverage": 0.565536,
+    "height": 256,
+    "materialIndex": 5,
+    "meshIndex": 2,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/glass-necropolis/glass-necropolis-m2-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "7c4c2518b7a7f44d3bafe6c90843f575304de84393af317473c01af5dc9de9cb",
+    "uvCoverage": 0.375107,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/glass-necropolis.glb",
+    "readOnly": true,
+    "sha256": "b8ee81a6f82899714b2a7b5c79a4b9167f2b778a2b3deadaff02bad659f14996"
+  }
+}

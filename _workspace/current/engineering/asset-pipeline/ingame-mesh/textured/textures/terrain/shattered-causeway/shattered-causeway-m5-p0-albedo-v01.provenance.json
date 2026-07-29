@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.17,
+      0.19,
+      0.28,
+      1.0
+    ],
+    "bytes": 18871,
+    "dilatedCoverage": 1.0,
+    "height": 256,
+    "materialIndex": 8,
+    "meshIndex": 5,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/shattered-causeway/shattered-causeway-m5-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "eca50505f9940229fe5314b4dfd616e212d205f1f9f2831eb9fa7de25a60f48b",
+    "uvCoverage": 0.82692,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/shattered-causeway.glb",
+    "readOnly": true,
+    "sha256": "9f303e8b7401f89938f52fdb0fa29940d71e4ae7fda3b3c7e43f011c01e2762e"
+  }
+}

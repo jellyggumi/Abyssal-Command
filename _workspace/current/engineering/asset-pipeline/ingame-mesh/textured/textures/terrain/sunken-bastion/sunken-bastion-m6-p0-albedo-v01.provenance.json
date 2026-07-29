@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.025,
+      0.42,
+      0.67,
+      1.0
+    ],
+    "bytes": 40217,
+    "dilatedCoverage": 1.0,
+    "height": 256,
+    "materialIndex": 10,
+    "meshIndex": 6,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/sunken-bastion/sunken-bastion-m6-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "ff30b4ecf5bed678b90643be403fd502ec569d0eed8468bf08ac6ad7ddc29f0b",
+    "uvCoverage": 1.0,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/sunken-bastion.glb",
+    "readOnly": true,
+    "sha256": "b17705722adc6d46a25f6f4b049bfa512aa2e270af47864ab258b3ea44e8231b"
+  }
+}
