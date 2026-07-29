@@ -18,7 +18,9 @@ const output = outputIndex === -1 ? null : args[outputIndex + 1];
 if (outputIndex !== -1 && !output) throw new Error("--output requires a path");
 const SEEDS = Object.freeze([1, 17, 991]);
 const MOVE_IDLE = "IDLE";
-const MAX_TICKS = 18_000;
+// Stage 10's authored long hold approaches 18,000 ticks under valid deterministic
+// seeds; keep this as a non-termination guard with enough headroom for the release gate.
+const MAX_TICKS = 24_000;
 
 function play(stageId, seed) {
   let run = createDefenseRun({ stageId, seed });

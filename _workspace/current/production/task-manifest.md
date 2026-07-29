@@ -106,3 +106,60 @@ next-beat: director 스코프 리뷰 → 슬라이스 2 사람 플레이 판정
 2. 슬라이스 2(전투 동사)와 `combat-*` 픽스처를 구현하고, 실제 브라우저에서 사람 플레이 판정을 받는다.
 3. 손맛 판정이 통과할 때만 슬라이스 3–12를 문서 순서대로 진행한다. 통과 전 VFX·HUD·로비 구현은 시작하지 않는다.
 4. 슬라이스 12 뒤 빅웨이브 성능, 전체 플레이 여정 QA, 배포 증명을 별도 실행한다.
+
+---
+
+## 6. 2026-07-28 — `_workspace/` 레이아웃 정규화
+
+| task | owner | 산출물 | 게이트 | 상태 |
+|---|---|---|---|---|
+| 루트 날짜 폴더 위반 기록 | workspace-normalization | `production/workspace-normalization-20260728.md` | — | done — 기록 전용, 파일시스템·Git 변경 0건 |
+| 아카이브 삭제 36개 복원 확인 | 부모 세션 (기록: workspace-normalization) | `archive/20260726-stage1b-cinder-pressure-agency/qa/browser-runtime-1440x900/` | — | done — [OBSERVED] 36개, 0바이트 0개, PNG 33/33·JSON 3/3 유효 |
+| 루트 날짜 폴더 추적분 소유 레인 통합 | WorkspacePathMigration (기록: workspace-normalization) | `current/qa/`, `current/engineering/blender/textures/` | — | done — [OBSERVED] 비무시 14개 전부 이동, wellmade 폴더 소멸, 아카이브 245개 불변 |
+| 생성물·후보 레인 미승격 유지 | 부모 세션 | — | — | done — [OBSERVED] 434개 중 420개가 `.gitignore` 선언 대상, 승격 영수증 0건 |
+
+### 6.1 위반 수량 [OBSERVED]
+
+- `_workspace/` 루트에 날짜 폴더 2개가 존재했다: `20260725-wellmade-verification`(파일 1개),
+  `20260726-stage1b-cinder-pressure-agency`(파일 434개). CLAUDE.md §1은 `current/` 와
+  `archive/<run-id>/` 만 허용한다.
+- 루트 434개 ↔ 아카이브 245개 비교: 경로 겹침 **11**, 루트 전용 **423**, 아카이브 전용 **234**.
+  겹침이 2.5%뿐이므로 루트는 아카이브의 사본이 아니다.
+- 겹치는 11개는 SHA-256 **11/11 불일치**이며 루트가 더 최신이다
+  (`generatedAt` 루트 2026-07-28T14:30:40Z vs 아카이브 2026-07-27T20:37:19Z).
+- 루트 434개 중 **비무시 14개 / 무시 420개**. 승격 가능 판정은 0건 — §1이 요구하는
+  provenance/rights/runtime receipt 가 어느 항목에도 없다.
+- 복원된 36개는 ctime == mtime == **2026-07-29 00:58:44** 단일 초(신규 inode, 일괄 복사)이고
+  같은 트리 나머지 209개는 2026-07-28 22:45 다. 삭제·복원이 실제로 일어나 완료됐다는 양성
+  증거다. 단, 이 36개의 mtime 은 더 이상 출처 신호가 아니므로 이후 인용은 내용 해시로 한다.
+- 정규화 종료 상태 [OBSERVED]: `20260725-wellmade-verification/` 소멸, `20260726-...` 루트는
+  434 → **1개**(무시 대상 `.blend1` 잔존물), 아카이브는 **245개 불변**. 최신
+  `qa/stage-runtime-proof/` 11개는 `current/qa/stage-runtime-proof/` 에 놓이고 아카이브 사본은
+  `generatedAt` 2026-07-27T20:37:19Z 원본을 유지했다 — 덮어쓰기 없음, §1 불변성 충족.
+
+### 6.2 재발 원인 — 코드가 위반을 재생성한다 [OBSERVED]
+
+날짜 루트 경로를 참조하는 파일 **35개**(그중 생성 호출 포함 **22개**). 직접 생성이 확인된
+6개 중 결정적인 둘:
+
+- `tests/stage-runtime-proof-browser.test.mjs:26` 의 `OUTPUT_DIR` + `:350`
+  `mkdir(recursive)` → `20260726-.../qa/stage-runtime-proof` 재생성. 루트 비무시 11개와 1:1 일치.
+- `scripts/qa-motion-probe.mjs:19-21,179` → `20260725-.../qa/evidence/data/motion.json`.
+  wellmade 폴더의 유일한 파일과 1:1 일치.
+
+`scripts/audit-stage-scenes.mjs` 는 `:10` 에서 아카이브를 올바로 읽으면서 `:8` 은 날짜 루트에
+쓴다. **폴더만 정리하면 다음 브라우저 테스트 실행에서 즉시 회귀한다** — 상수 수정이 선행
+조건이다. 소스 수정은 부모 세션 소관이며 이 항목으로는 수행하지 않았다.
+
+### 6.3 타 세션 작업 보존 [INFERENCE]
+
+선행 세션의 슬라이스 2 전투 작업이 Git 인덱스에 스테이지된 상태로 남아 있다
+(`app.js`, `defense-catalog.js`, `defense-run-simulation.js`, `battle-realtime-three.js`,
+`stage-world-catalog.js`, 테스트 4개). CLAUDE.md §5는 흡수·폐기를 금지하므로 부모 세션은
+**명시적 pathspec 만으로 커밋한다.** 정규화 작업이 이 경로들을 스테이징에 끌어들이지 않는다.
+
+### 6.4 상시 규칙
+
+`_workspace/` 직하위에는 `current/` 와 `archive/<run-id>/` 만 둔다. 산출물 경로는
+`_workspace/current/<lane>/` 로 향하게 하고 날짜 run-id 를 코드 상수에 박지 않는다. 루트에
+날짜 폴더가 보이면 지우기 전에 그것을 만든 상수를 먼저 찾는다.

@@ -476,7 +476,7 @@ test("an expired elite Bind window reaches terminal defeat before queued extract
     run,
     (next) => next.occupationProgress.holdTicks > 0,
     500,
-    { extractElite: false, moveOctant: "W" },
+    { extractElite: false },
   );
   assert.ok(atOccupation.snapshot.occupationProgress.holdTicks > 0);
   const occupation = advanceThroughObjectivesUntil(

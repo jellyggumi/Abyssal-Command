@@ -4,8 +4,9 @@
  */
 import * as Catalog from "./defense-catalog.js";
 import {
-  ARENA, AUDIO_CUES, BOSSES, COMMANDER, COMPANION_AUTONOMY, COMPANIONS, CUTSCENES, ENEMIES,
-  CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, CARRY_OVER_RANK_DECAY,
+  ARENA, AUDIO_CUES, BOSSES, COLLISION, COMBAT_TARGETING, COMMANDER, COMPANION_AUTONOMY, COMPANIONS,
+  CUTSCENES, ENEMIES, CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, CARRY_OVER_RANK_DECAY,
+
   MAX_SKILL_RANK, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP,
   SKILL_RANK_PASSIVE_SHARE,
   GATE, ITEMS, MEASUREMENT_PROFILES, OCTANT_VECTORS, REWARDS, SKILLS, STAGE_BY_ID, STAGE_ITEM_IDS,
@@ -44,7 +45,40 @@ const eventCue = (name) => AUDIO_CUES[name]?.id || null;
 
 const worldForRun = (run) => stageWorldFor(run.stage.id);
 
-function terrainElevationAt(world, x, y) {
+function meshSupportAt(world, x, y) {
+  const colliders = world.gameplay.meshColliders;
+  if (!Array.isArray(colliders)) return null;
+  let support = null;
+  colliders.forEach((collider) => {
+    collider.triangles.forEach((vertices, triangleIndex) => {
+      const [first, second, third] = vertices;
+      const denominator = (second.y - third.y) * (first.x - third.x)
+        + (third.x - second.x) * (first.y - third.y);
+      const firstWeight = ((second.y - third.y) * (x - third.x)
+        + (third.x - second.x) * (y - third.y)) / denominator;
+      const secondWeight = ((third.y - first.y) * (x - third.x)
+        + (first.x - third.x) * (y - third.y)) / denominator;
+      const thirdWeight = 1 - firstWeight - secondWeight;
+      if (firstWeight < 0 || secondWeight < 0 || thirdWeight < 0
+        || firstWeight > 1 || secondWeight > 1 || thirdWeight > 1) return;
+      const elevation = Math.round(firstWeight * first.elevation
+        + secondWeight * second.elevation + thirdWeight * third.elevation);
+      const candidate = { elevation, supportMeshId: collider.id, triangleIndex };
+      if (!support || candidate.elevation > support.elevation
+        || (candidate.elevation === support.elevation
+          && (candidate.supportMeshId.localeCompare(support.supportMeshId) < 0
+            || (candidate.supportMeshId === support.supportMeshId
+              && candidate.triangleIndex < support.triangleIndex)))) {
+        support = candidate;
+      }
+    });
+  });
+  return support;
+}
+
+function terrainSupportAt(world, x, y) {
+  const meshSupport = meshSupportAt(world, x, y);
+  if (meshSupport) return meshSupport;
   let elevation = 0;
   for (const surface of world.gameplay.surfaces) {
     const area = surface.bounds;
@@ -60,7 +94,7 @@ function terrainElevationAt(world, x, y) {
         + (surface.elevation.atMax - surface.elevation.atMin) * (coordinate - min) / span);
     elevation = Math.max(elevation, height);
   }
-  return elevation;
+  return { elevation, supportMeshId: null };
 }
 
 function clampToWorld(world, entity, point) {
@@ -110,10 +144,12 @@ function resolveTerrainPlacement(run, entity, point) {
     }
     if (!displaced) break;
   }
+  const support = terrainSupportAt(world, placed.x, placed.y);
   return {
     x: placed.x,
     y: placed.y,
-    elevation: terrainElevationAt(world, placed.x, placed.y),
+    elevation: support.elevation,
+    supportMeshId: support.supportMeshId,
   };
 }
 
@@ -122,6 +158,8 @@ function placeOnTerrain(run, entity, point) {
   entity.x = placed.x;
   entity.y = placed.y;
   entity.elevation = placed.elevation;
+  if (placed.supportMeshId) entity.supportMeshId = placed.supportMeshId;
+  else delete entity.supportMeshId;
 }
 
 function firstObstacleHit(world, entity, from, to) {
@@ -149,9 +187,36 @@ function firstObstacleHit(world, entity, from, to) {
   return first;
 }
 
+/** Facing is stored as a fixed-point unit vector (x1000) so snapshots stay integer-deterministic. */
+const FACING_SCALE = 1000;
+function setFacing(entity, dx, dy) {
+  const length = Math.hypot(dx, dy);
+  if (length === 0) return;
+  entity.facingX = Math.round(dx / length * FACING_SCALE);
+  entity.facingY = Math.round(dy / length * FACING_SCALE);
+}
+function facingOf(entity) {
+  const x = entity.facingX || 0;
+  const y = entity.facingY || 0;
+  const length = Math.hypot(x, y);
+  if (length === 0) return null;
+  return { x: x / length, y: y / length };
+}
+
+/**
+ * A body may only walk onto ground it can step up to. Anything steeper than COLLISION.stepHeight is
+ * a wall, not a ramp, so the mover keeps its origin (or an axis-aligned slide) instead of teleporting
+ * up a cliff face — the z/height dimension gates movement exactly like the obstacle footprints do.
+ */
+function climbableFrom(world, entity, fromElevation, point) {
+  return terrainSupportAt(world, point.x, point.y).elevation - fromElevation <= COLLISION.stepHeight;
+}
+
 function moveOnTerrain(run, entity, point) {
   const world = worldForRun(run);
   const origin = { x: entity.x, y: entity.y };
+  const originElevation = entity.elevation || 0;
+  setFacing(entity, point.x - origin.x, point.y - origin.y);
   const movementBudget = Math.hypot(point.x - origin.x, point.y - origin.y);
   let from = origin;
   let target = clampToWorld(world, entity, point);
@@ -165,8 +230,8 @@ function moveOnTerrain(run, entity, point) {
   for (let collision = 0; collision < 3; collision += 1) {
     const hit = firstObstacleHit(world, entity, from, target);
     if (!hit) {
-      placeOnTerrain(run, entity, target);
-      return;
+      resolved = target;
+      break;
     }
 
     const movementX = target.x - from.x;
@@ -218,8 +283,89 @@ function moveOnTerrain(run, entity, point) {
     resolved = target;
   }
 
+  const rounded = { x: Math.round(resolved.x), y: Math.round(resolved.y) };
+  if (!climbableFrom(world, entity, originElevation, rounded)) {
+    const slideX = clampToWorld(world, entity, { x: rounded.x, y: origin.y });
+    const slideY = clampToWorld(world, entity, { x: origin.x, y: rounded.y });
+    if (climbableFrom(world, entity, originElevation, slideX)) resolved = slideX;
+    else if (climbableFrom(world, entity, originElevation, slideY)) resolved = slideY;
+    else resolved = origin;
+  }
+
   placeOnTerrain(run, entity, resolved);
 }
+
+/** Circular body footprint used by body-vs-body separation. */
+const bodyRadius = (entity) => Math.max(0, Math.trunc(entity.radius || 0));
+
+/**
+ * Bodies must never occupy the same footprint (the visible "objects glued through each other"
+ * glitch). After every mover has been integrated for the tick, overlapping pairs are pushed apart
+ * along their centre axis, then re-placed through the terrain resolver so the separation can never
+ * shove a body inside an obstacle or outside the arena. Bodies standing on different decks
+ * (elevation gap beyond COLLISION.separationElevationTolerance) do not collide.
+ */
+function separateBodies(run) {
+  const movable = sortedActors([
+    run.commander,
+    ...run.companions.filter((companion) => companion.status !== "DOWNED"),
+    ...run.enemies.filter((enemy) => enemy.hp > 0),
+  ].filter(Boolean));
+  if (movable.length === 0) return;
+  const anchors = run.gate ? [run.gate] : [];
+  const isPlayerSide = (entity) => entity.id === "commander" || entity.kind === "companion";
+
+  for (let pass = 0; pass < COLLISION.separationPasses; pass += 1) {
+    let displaced = false;
+    for (let index = 0; index < movable.length; index += 1) {
+      const body = movable[index];
+      /* The gate is a hostile collision anchor, not a party formation blocker: authored companion
+       * anchors intentionally sit inside its display footprint, and must remain reachable. */
+      if (!isPlayerSide(body)) {
+        for (const anchor of anchors) {
+          if (resolveOverlap(run, body, anchor, true)) displaced = true;
+        }
+      }
+      for (let other = index + 1; other < movable.length; other += 1) {
+        const candidate = movable[other];
+        /* Formation slots are authored party-relative positions, including deliberately overlapping
+         * commander/companion silhouettes; only physical enemy contacts are separated. */
+        if (isPlayerSide(body) && isPlayerSide(candidate)) continue;
+        if (resolveOverlap(run, body, candidate, false)) displaced = true;
+      }
+    }
+    if (!displaced) break;
+  }
+
+  /* Separation can be the last position writer in a tick. Re-place every mover so each uses its
+   * own radius for world bounds and refreshes support mesh/elevation after any displacement. */
+  movable.forEach((entity) => placeOnTerrain(run, entity, entity));
+}
+
+/** Pushes one overlapping pair apart; returns true when a push happened. `anchorFixed` pins `other`. */
+function resolveOverlap(run, body, other, anchorFixed) {
+  const minimum = bodyRadius(body) + bodyRadius(other);
+  if (minimum <= 0) return false;
+  if (Math.abs((body.elevation || 0) - (other.elevation || 0)) > COLLISION.separationElevationTolerance) return false;
+  const dx = body.x - other.x;
+  const dy = body.y - other.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance >= minimum) return false;
+  const overlap = minimum - distance;
+  /* Perfectly coincident bodies have no separation axis; break the tie deterministically by id so
+   * replays stay identical instead of depending on floating-point noise. */
+  const nx = distance === 0 ? (body.id.localeCompare(other.id) <= 0 ? 1 : -1) : dx / distance;
+  const ny = distance === 0 ? 0 : dy / distance;
+  /* One extra unit past contact absorbs the integer rounding in placeOnTerrain, so a pushed pair
+   * lands strictly outside each other instead of oscillating on the contact circle. */
+  const push = overlap + 1;
+  const bodyShare = anchorFixed ? push : push / 2;
+  const otherShare = anchorFixed ? 0 : push / 2;
+  placeOnTerrain(run, body, { x: body.x + nx * bodyShare, y: body.y + ny * bodyShare });
+  if (otherShare > 0) placeOnTerrain(run, other, { x: other.x - nx * otherShare, y: other.y - ny * otherShare });
+  return true;
+}
+
 const SNAPSHOT_VERSION = 7;
 const EVENT_VERSION = 4;
 const emit = (run, type, payload = {}) => {
@@ -692,7 +838,8 @@ function maybeFireExtraHit(run, target) {
   run.combatRng = rngNext(run.combatRng);
   if (run.combatRng % 10000 >= extraHit.extraHitChance * 10000) return;
   const hit = resolveCritical(run, "basic", Math.round(run.commander.basicDamage * extraHit.extraHitDamageMultiplier));
-  fire(run, run.commander, target, hit.damage, "commander", 5, hit);
+  playerAttack(run, run.commander, hit.damage, "commander", hit, COMMANDER.basicRange);
+
 }
 /** wardens-ward (once/run shield-as-heal at <=30% integrity) + echo-warden-awakening (once/run full cooldown reset at <=15% integrity). Called after any commander integrity loss. */
 function applyWardenDamageResponse(run) {
@@ -861,7 +1008,8 @@ function updateCompanions(run) {
         const synergyActive = companion.slot === "BACK" && livingFrontCompanions(run).length > 0;
         const mult = (isElite ? 1 + (companion.eliteDamageBonus || 0) : 1)
           * (synergyActive ? 1 + BACK_ROW_SYNERGY_DAMAGE_BONUS : 1);
-        fire(run, companion, target, Math.round(companion.damage * mult), companion.companionId);
+        playerAttack(run, companion, Math.round(companion.damage * mult), companion.companionId, null, companion.range);
+
       }
       companion.cooldown = companion.fireTicks;
     }
@@ -927,6 +1075,297 @@ function fire(run, source, target, damage, owner, ttl = 5, combat = null) {
     cue: eventCue("criticalHit"),
   });
 }
+
+/* ---------------------------------------------------------------------------------------------
+ * None-target combat (COMBAT_TARGETING).
+ *
+ * Player-side attacks no longer lock onto an enemy id. A swing damages every body inside the
+ * adjacent frontal arc, and ranged fire spawns a travelling orb whose swept sphere damages the
+ * first body it touches — whichever enemy walks into the line, not the one that was aimed at.
+ * Enemy fire keeps the legacy timed projectile so wave pressure pacing is unchanged.
+ * ------------------------------------------------------------------------------------------- */
+
+/** Elite escorts soak a quarter of the damage aimed at the leader they guard. */
+function damageEnemyBody(run, target, damage) {
+  const escort = sortedActors(run.enemies).find((entry) => entry.policyId === "elite-escort"
+    && entry.escortLeaderId === target.id
+    && distanceSquared(entry, target) <= 1600 ** 2);
+  const applied = escort ? Math.max(1, Math.trunc(damage * 3 / 4)) : damage;
+  target.hp -= applied;
+  return { damage: applied, guardedBy: escort ? escort.id : null };
+}
+
+const withinStrikeHeight = (source, other) =>
+  Math.abs((other.elevation || 0) - (source.elevation || 0)) <= COMBAT_TARGETING.elevationTolerance;
+
+/** Nearest living enemy inside `range` that is also within strike height — direction only, no lock. */
+function nearestEnemy(run, source, range) {
+  const maxSquared = getEffectiveRange(run, range) ** 2;
+  let best = null;
+  for (const enemy of run.enemies) {
+    if (enemy.hp <= 0) continue;
+    if (!withinStrikeHeight(source, enemy)) continue;
+    const distance = distanceSquared(enemy, source);
+    if (distance > maxSquared) continue;
+    if (!best || distance < best.distance
+      || (distance === best.distance && enemy.id.localeCompare(best.enemy.id) < 0)) {
+      best = { enemy, distance };
+    }
+  }
+  return best?.enemy || null;
+}
+
+/** Unit aim vector: toward the nearest body in range, else the direction the attacker faces. */
+function aimDirection(run, source, range) {
+  const near = nearestEnemy(run, source, range);
+  if (near) {
+    const dx = near.x - source.x;
+    const dy = near.y - source.y;
+    const length = Math.hypot(dx, dy);
+    if (length > 0) return { x: dx / length, y: dy / length, aimId: near.id };
+  }
+  const facing = facingOf(source);
+  if (facing) return { x: facing.x, y: facing.y, aimId: near?.id || null };
+  return near ? { x: 1, y: 0, aimId: near.id } : null;
+}
+
+/** Every living enemy whose body touches the adjacent frontal sweep, nearest first. */
+function meleeSweepTargets(run, source, aim) {
+  const { reach, arcCosBp, maxTargets } = COMBAT_TARGETING.melee;
+  const arcCos = arcCosBp / 10000;
+  const sourceRadius = Math.max(0, Math.trunc(source.radius || 0));
+  return run.enemies
+    .filter((enemy) => enemy.hp > 0 && withinStrikeHeight(source, enemy))
+    .map((enemy) => {
+      const dx = enemy.x - source.x;
+      const dy = enemy.y - source.y;
+      const distance = Math.hypot(dx, dy);
+      const gap = distance - sourceRadius - Math.max(0, Math.trunc(enemy.radius || 0));
+      const facingDot = distance === 0 ? 1 : (dx / distance) * aim.x + (dy / distance) * aim.y;
+      return { enemy, distance, gap, facingDot };
+    })
+    .filter((entry) => entry.gap <= reach && entry.facingDot >= arcCos)
+    .sort((left, right) => left.distance - right.distance || left.enemy.id.localeCompare(right.enemy.id))
+    .slice(0, maxTargets)
+    .map((entry) => entry.enemy);
+}
+
+/** Resolves one adjacent sweep; returns the number of bodies struck. */
+function meleeSweep(run, source, targets, damage, owner, combat) {
+  const hit = combat || { source: null, baseDamage: damage, damage, critical: false };
+  const sweepEvent = emit(run, "MELEE_SWEEP", {
+    entityId: source.id,
+    sourceSpawnEventId: source.spawnEventId || null,
+    owner,
+    reach: COMBAT_TARGETING.melee.reach,
+    arcCosBp: COMBAT_TARGETING.melee.arcCosBp,
+    targetIds: targets.map((target) => target.id),
+    damage: hit.damage,
+    baseDamage: hit.baseDamage,
+    combatSource: hit.source,
+    critical: hit.critical,
+    cue: eventCue("weaponFire"),
+  });
+  sweepEvent.spawnEventId = sweepEvent.eventId;
+  if (hit.critical) emit(run, "CRITICAL_HIT", {
+    entityId: source.id,
+    sourceSpawnEventId: source.spawnEventId || null,
+    targetId: targets[0]?.id || null,
+    causalRootId: sweepEvent.eventId,
+    source: hit.source,
+    baseDamage: hit.baseDamage,
+    damage: hit.damage,
+    chanceBp: hit.chanceBp,
+    multiplierBp: hit.multiplierBp,
+    cue: eventCue("criticalHit"),
+  });
+  targets.forEach((target) => {
+    const applied = damageEnemyBody(run, target, hit.damage);
+    target.lastCausalRootId = sweepEvent.eventId;
+    emit(run, "MELEE_IMPACT", {
+      entityId: source.id,
+      sourceId: source.id,
+      causalRootId: sweepEvent.eventId,
+      targetId: target.id,
+      targetSpawnEventId: target.spawnEventId || null,
+      owner,
+      damage: applied.damage,
+      guardedBy: applied.guardedBy,
+      hit: true,
+      cue: eventCue("impactHit"),
+    });
+  });
+  return targets.length;
+}
+
+/** Spawns a travelling orb along `aim`; it damages the first body its swept sphere touches. */
+function fireTravellingOrb(run, source, aim, damage, owner, range, combat) {
+  const hit = combat || { source: null, baseDamage: damage, damage, critical: false };
+  const speed = COMBAT_TARGETING.ranged.projectileSpeed;
+  const maxRange = getEffectiveRange(run, range);
+  const projectile = actor(nextId(run, "projectile"), "projectile", source.x, source.y, 1, 1, {
+    elevation: source.elevation || 0,
+    sourceId: source.id,
+    targetId: null,
+    aimId: aim.aimId,
+    mode: "travel",
+    faction: "player",
+    radius: COMBAT_TARGETING.ranged.projectileRadius,
+    vx: Math.round(aim.x * speed),
+    vy: Math.round(aim.y * speed),
+    remainingRange: maxRange,
+    damage: hit.damage,
+    owner,
+    ttl: COMBAT_TARGETING.ranged.maxTicks,
+    combat: hit,
+  });
+  run.projectiles.push(projectile);
+  const firedEvent = emit(run, "WEAPON_FIRED", {
+    entityId: source.id,
+    sourceSpawnEventId: source.spawnEventId || null,
+    projectileId: projectile.id,
+    targetId: null,
+    aimId: aim.aimId,
+    mode: "travel",
+    targetSpawnEventId: null,
+    owner,
+    damage: hit.damage,
+    baseDamage: hit.baseDamage,
+    combatSource: hit.source,
+    critical: hit.critical,
+    cue: eventCue("weaponFire"),
+  });
+  firedEvent.spawnEventId = firedEvent.eventId;
+  projectile.spawnEventId = firedEvent.eventId;
+  projectile.causalRootId = firedEvent.eventId;
+  if (hit.critical) emit(run, "CRITICAL_HIT", {
+    entityId: source.id,
+    sourceSpawnEventId: source.spawnEventId || null,
+    targetId: null,
+    projectileId: projectile.id,
+    causalRootId: projectile.causalRootId,
+    source: hit.source,
+    baseDamage: hit.baseDamage,
+    damage: hit.damage,
+    chanceBp: hit.chanceBp,
+    multiplierBp: hit.multiplierBp,
+    cue: eventCue("criticalHit"),
+  });
+  return projectile;
+}
+
+/**
+ * One player-side attack: adjacent bodies are swept in melee, otherwise an orb is launched down the
+ * aim line. Returns true when the attack resolved (so cooldown bookkeeping stays with the caller).
+ */
+function playerAttack(run, source, damage, owner, combat, range) {
+  const aim = aimDirection(run, source, range);
+  if (!aim) return false;
+  const adjacent = meleeSweepTargets(run, source, aim);
+  setFacing(source, aim.x * FACING_SCALE, aim.y * FACING_SCALE);
+  if (adjacent.length > 0) {
+    meleeSweep(run, source, adjacent, damage, owner, combat);
+    return true;
+  }
+  if (!aim.aimId) return false;
+  fireTravellingOrb(run, source, aim, damage, owner, range, combat);
+  return true;
+}
+
+/** Closest point parameter (0..1) of segment `from`->`delta` to `point`. */
+function segmentClosestFraction(from, delta, point) {
+  const lengthSquared = delta.x * delta.x + delta.y * delta.y;
+  if (lengthSquared === 0) return 0;
+  const at = ((point.x - from.x) * delta.x + (point.y - from.y) * delta.y) / lengthSquared;
+  return clamp(at, 0, 1);
+}
+
+/**
+ * Advances travelling orbs one tick with a swept-sphere test: whichever living body the orb's path
+ * touches first (ties broken by id) takes the hit. Terrain obstacles and the arena bounds stop the
+ * orb without damage, so a shot can be blocked by cover exactly like a body can.
+ */
+function advanceTravellingProjectiles(run) {
+  const world = worldForRun(run);
+  const bounds = world.gameplay.bounds;
+  const survivors = [];
+  for (const projectile of run.projectiles) {
+    if (projectile.mode !== "travel") { survivors.push(projectile); continue; }
+    const from = { x: projectile.x, y: projectile.y };
+    const step = Math.min(Math.hypot(projectile.vx, projectile.vy), Math.max(0, projectile.remainingRange));
+    const heading = Math.hypot(projectile.vx, projectile.vy) || 1;
+    const delta = { x: projectile.vx / heading * step, y: projectile.vy / heading * step };
+    const to = { x: from.x + delta.x, y: from.y + delta.y };
+
+    let struck = null;
+    for (const enemy of run.enemies) {
+      if (enemy.hp <= 0) continue;
+      if (!withinStrikeHeight(projectile, enemy)) continue;
+      const at = segmentClosestFraction(from, delta, enemy);
+      const closestX = from.x + delta.x * at;
+      const closestY = from.y + delta.y * at;
+      const reach = projectile.radius + Math.max(0, Math.trunc(enemy.radius || 0));
+      const gapSquared = (closestX - enemy.x) ** 2 + (closestY - enemy.y) ** 2;
+      if (gapSquared > reach * reach) continue;
+      if (!struck || at < struck.at || (at === struck.at && enemy.id.localeCompare(struck.enemy.id) < 0)) {
+        struck = { enemy, at };
+      }
+    }
+
+    const blocker = firstObstacleHit(world, { radius: projectile.radius }, from, to);
+    if (blocker && (!struck || blocker.at < struck.at)) {
+      emit(run, "PROJECTILE_BLOCKED", {
+        projectileId: projectile.id,
+        sourceId: projectile.sourceId,
+        causalRootId: projectile.causalRootId,
+        obstacleId: blocker.obstacle.id,
+        owner: projectile.owner,
+      });
+      continue;
+    }
+
+    if (struck) {
+      const applied = damageEnemyBody(run, struck.enemy, projectile.damage);
+      struck.enemy.lastCausalRootId = projectile.causalRootId;
+      emit(run, "PROJECTILE_IMPACT", {
+        projectileId: projectile.id,
+        sourceId: projectile.sourceId,
+        causalRootId: projectile.causalRootId,
+        projectileSpawnEventId: projectile.spawnEventId,
+        targetId: struck.enemy.id,
+        targetSpawnEventId: struck.enemy.spawnEventId || null,
+        owner: projectile.owner,
+        damage: applied.damage,
+        hit: true,
+        guardedBy: applied.guardedBy,
+        cue: eventCue("impactHit"),
+      });
+      continue;
+    }
+
+    projectile.x = Math.round(to.x);
+    projectile.y = Math.round(to.y);
+    projectile.remainingRange -= step;
+    projectile.ttl -= 1;
+    projectile.elevation = terrainSupportAt(world, projectile.x, projectile.y).elevation
+      + COMBAT_TARGETING.ranged.projectileRadius;
+    const outside = projectile.x <= bounds.minX || projectile.x >= bounds.maxX
+      || projectile.y <= bounds.minY || projectile.y >= bounds.maxY;
+    if (projectile.ttl <= 0 || projectile.remainingRange <= 0 || outside) {
+      emit(run, "PROJECTILE_EXPIRED", {
+        projectileId: projectile.id,
+        sourceId: projectile.sourceId,
+        causalRootId: projectile.causalRootId,
+        owner: projectile.owner,
+        reason: outside ? "bounds" : "range",
+      });
+      continue;
+    }
+    survivors.push(projectile);
+  }
+  run.projectiles = survivors;
+}
+
 
 function applyItem(run, itemId) {
   if (run.measurementProfile) return;
@@ -2023,9 +2462,14 @@ function tick(run) {
     run.eliteSpawned = true;
   }
 
-  run.projectiles.forEach((projectile) => { projectile.ttl -= 1; });
-  const impacts = run.projectiles.filter((projectile) => projectile.ttl <= 0).sort((a, b) => a.id.localeCompare(b.id));
-  run.projectiles = run.projectiles.filter((projectile) => projectile.ttl > 0);
+  advanceTravellingProjectiles(run);
+
+  /* Legacy timed projectiles (enemy fire) only: travelling orbs were already integrated above. */
+  run.projectiles.forEach((projectile) => { if (projectile.mode !== "travel") projectile.ttl -= 1; });
+  const impacts = run.projectiles.filter((projectile) => projectile.mode !== "travel" && projectile.ttl <= 0)
+    .sort((a, b) => a.id.localeCompare(b.id));
+  run.projectiles = run.projectiles.filter((projectile) => projectile.mode === "travel" || projectile.ttl > 0);
+
   impacts.forEach((projectile) => {
     let damage = projectile.damage;
     let hit = true;
@@ -2079,19 +2523,27 @@ function tick(run) {
 
   run.commander.basicCooldown -= 1;
   if (run.commander.basicCooldown <= 0) {
-    const target = orderedTargets(run, run.commander, COMMANDER.basicRange)[0];
-    if (target) {
-      const mult = commanderDamageMultiplier(run, target, { skill: false });
+    /* None-target: the aim reference only feeds conditional damage multipliers — the hit itself is
+     * resolved by the melee arc or by the travelling orb's swept sphere. */
+    const aimReference = nearestEnemy(run, run.commander, COMMANDER.basicRange);
+    if (aimReference) {
+      const mult = commanderDamageMultiplier(run, aimReference, { skill: false });
       const hit = resolveCritical(run, "basic", Math.round(run.commander.basicDamage * mult));
-      fire(run, run.commander, target, hit.damage, "commander", 5, hit);
-      maybeFireExtraHit(run, target);
+      if (playerAttack(run, run.commander, hit.damage, "commander", hit, COMMANDER.basicRange)) {
+        maybeFireExtraHit(run, aimReference);
+      }
     }
     run.commander.basicCooldown = run.commander.basicTicks || COMMANDER.basicCooldown;
   }
 
+
   updateCompanions(run);
 
   moveEnemies(run);
+  /* Bodies are integrated independently, so unstick every overlapping pair before the tick is
+   * snapshotted — no two bodies may share a footprint. */
+  separateBodies(run);
+
   resolveDeaths(run);
   processWaveClearRecovery(run);
   assignCompanionItemClaims(run);
@@ -2439,8 +2891,17 @@ export function queueInput(run, type, payload = null) {
 export function advanceDefenseRun(run, steps = 1) {
   if (!run || !Number.isInteger(steps) || steps < 0) throw new RangeError("steps must be a non-negative integer");
   const next = clone(run);
+  const world = worldForRun(next);
+  const usesMeshSupport = Boolean(world.gameplay.meshColliders?.length);
+  const supportMeshIds = new Set((world.gameplay.meshColliders || [])
+    .map((collider) => collider.id)
+    .filter((id) => typeof id === "string"));
   for (const entity of [next.gate, next.commander, ...(next.enemies || []), ...(next.companions || []), ...(next.pickups || []), ...(next.projectiles || [])]) {
-    if (entity && !Number.isInteger(entity.elevation)) placeOnTerrain(next, entity, entity);
+    const meshContactInvalid = usesMeshSupport && !supportMeshIds.has(entity?.supportMeshId);
+    const staleNonMeshContact = !usesMeshSupport && Object.hasOwn(entity || {}, "supportMeshId");
+    if (entity && (!Number.isInteger(entity.elevation) || meshContactInvalid || staleNonMeshContact)) {
+      placeOnTerrain(next, entity, entity);
+    }
   }
   if (!next.terrainRecovery) next.terrainRecovery = { commander: 0, gate: 0, capRatio: 0.25 };
   if (next.extractionProgress && typeof next.extractionProgress.ready !== "boolean") {

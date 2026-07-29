@@ -86,6 +86,25 @@ function realtimeBattleHarness(RealtimeBattle) {
   return adapter;
 }
 
+function snapshotRenderHarness(RealtimeBattle, options = {}) {
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  adapter.reducedMotion = options.reducedMotion === true;
+  adapter.canvas = { width: 640, height: 360, dataset: {} };
+  adapter.viewport = { width: 640, height: 360 };
+  adapter.rimLight = new THREE.DirectionalLight();
+  adapter.rimLightTarget = new THREE.Object3D();
+  adapter.renderer = {
+    info: { memory: { geometries: 0, textures: 0 }, programs: [] },
+    getSize(target) { return target.set(640, 360); },
+    setSize() {},
+    setClearColor() {},
+    render() {},
+    dispose() {},
+  };
+  adapter.ensureStageTerrain = () => {};
+  return adapter;
+}
+
 async function waitFor(predicate, message) {
   for (let attempt = 0; attempt < 30; attempt += 1) {
     const value = predicate();
@@ -222,6 +241,74 @@ test("a newly loaded stationary actor enters bounded ambient idle instead of a T
   assert.ok(samples.every(({ ambient }) => Math.abs(ambient.breath) <= 0.02), "breathing scale remains subtle and bounded");
   assert.ok(samples.every(({ ambient }) => Math.abs(ambient.weight) <= THREE.MathUtils.degToRad(2)), "weight shift remains bounded");
   assert.ok(samples.every(({ ambient }) => Math.abs(ambient.look) <= THREE.MathUtils.degToRad(10)), "look yaw remains bounded");
+  adapter.dispose();
+});
+
+test("realtime animation ticks advance one 60 Hz slice while no-tick calls retain wall-clock advancement", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  adapter.reconcileActors({
+    tick: 1,
+    enemies: [{ id: "tick-clock-actor", kind: "rusher", x: 12000, y: 6000 }],
+  });
+  await settleLoadedActors(adapter, ["tick-clock-actor"]);
+
+  const idle = adapter.actors.get("tick-clock-actor").actions.idle;
+  idle.reset().play();
+  adapter.lastAnimMs = null;
+  adapter.updateAnimations(0, 240);
+  const atTick = idle.time;
+  adapter.updateAnimations(600000, 240);
+  assert.equal(idle.time, atTick, "a repeated simulation tick cannot consume wall-clock animation time");
+
+  adapter.updateAnimations(1200000, 241);
+  assertNear(idle.time, atTick + 1 / 60, "the next simulation tick advances exactly one fixed slice");
+
+  idle.reset().play();
+  adapter.lastAnimMs = null;
+  adapter.updateAnimations(0);
+  adapter.updateAnimations(20);
+  assert.ok(idle.time > 0, "direct no-tick animation calls preserve their wall-clock behavior");
+  adapter.dispose();
+});
+
+test("fresh Stage 1 tick zero resets animation timing while stale tick regression remains non-advancing", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = snapshotRenderHarness(RealtimeBattle);
+  const snapshotAt = (tick, fresh = false) => ({
+    tick,
+    stageId: "cinder-span",
+    commander: { id: "commander", x: 19000, y: 6000, elevation: 0 },
+    enemies: [{ id: "reused-tick-actor", kind: "rusher", x: 12000, y: 6000 }],
+    companions: [],
+    projectiles: [],
+    pickups: [],
+    events: fresh ? [{
+      type: "STAGE_STARTED",
+      eventId: `stage-start-${tick}`,
+      stageId: "cinder-span",
+      tick,
+    }] : [],
+  });
+
+  adapter.renderSnapshot(snapshotAt(0, true));
+  await settleLoadedActors(adapter, ["reused-tick-actor"]);
+  const record = adapter.actors.get("reused-tick-actor");
+  record.actions.idle.reset().play();
+
+  adapter.renderSnapshot(snapshotAt(1));
+  adapter.renderSnapshot(snapshotAt(2));
+  assert.ok(record.mixer.time > 0, "the reused renderer must have progressed through its prior run");
+
+  adapter.renderSnapshot(snapshotAt(0, true));
+  const freshBaseline = record.mixer.time;
+  adapter.renderSnapshot(snapshotAt(1));
+  assertNear(record.mixer.time, freshBaseline + 1 / 60, "a fresh Stage 1 tick zero establishes a new one-tick animation baseline");
+
+  adapter.renderSnapshot(snapshotAt(0));
+  const staleBaseline = record.mixer.time;
+  adapter.renderSnapshot(snapshotAt(2));
+  assertNear(record.mixer.time, staleBaseline + 1 / 60, "a stale regressing snapshot in the active run cannot restart animation timing");
   adapter.dispose();
 });
 
@@ -574,6 +661,277 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   assert.equal(lookout.activeActionKey, "idle", "decorative lookout starts its ambient standing clip");
   assert.equal(lookout.ambientState, "idle", "decorative lookout receives ambient look/breath presentation");
   assert.equal(adapter.debugPresentationState(lookout.id), null, "stage NPC ids remain separate from simulation actor lookup");
+  adapter.dispose();
+});
+
+test("Cinder Span stage intro dolly is tick-bounded, preserves selected orbit, and never mutates its snapshot", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const profile = stageWorldFor("cinder-span");
+  const intro = profile.presentation.cinematic?.intro;
+  assert.ok(intro, "Cinder Span exposes its Stage 1 intro from the stage catalog");
+  assert.deepEqual(
+    intro.from,
+    { distance: 6, azimuth: -0.24, polar: -0.34 },
+    "Cinder Span opens from its authored oblique camera offset",
+  );
+  assert.equal(intro.durationTicks, 90, "Cinder Span keeps its authored 90-tick intro duration");
+  assert.ok(Number.isInteger(intro.durationTicks) && intro.durationTicks > 0, "intro duration is an authored tick budget");
+
+  const makeSnapshot = (tick, events) => ({
+    tick,
+    stageId: profile.stageId,
+    commander: { id: "commander", x: 19000, y: 6000, elevation: 0 },
+    enemies: [],
+    companions: [],
+    projectiles: [],
+    pickups: [],
+    events,
+  });
+  const start = makeSnapshot(420, [{ type: "STAGE_STARTED", eventId: "cinder-stage-start", tick: 420 }]);
+  const startBefore = structuredClone(start);
+  const adapter = snapshotRenderHarness(RealtimeBattle);
+  adapter.orbit(0.31, -0.08);
+  adapter.zoom(-0.4);
+  const selectedOrbit = {
+    yaw: adapter.orbitYaw,
+    pitch: adapter.orbitPitch,
+    zoom: adapter.zoomFactor,
+  };
+
+  adapter.updateCamera(start);
+  const baseline = adapter.camera.position.clone();
+  adapter.renderSnapshot(start);
+  assert.notDeepEqual(
+    adapter.camera.position.toArray(),
+    baseline.toArray(),
+    "the authored Stage 1 intro transiently changes the actual camera framing",
+  );
+  assert.deepEqual(
+    { yaw: adapter.orbitYaw, pitch: adapter.orbitPitch, zoom: adapter.zoomFactor },
+    selectedOrbit,
+    "the intro must not replace the player's selected orbit or zoom",
+  );
+  assert.deepEqual(start, startBefore, "the renderer keeps the supplied STAGE_STARTED snapshot immutable");
+
+  const settled = makeSnapshot(start.tick + intro.durationTicks, []);
+  adapter.renderSnapshot(settled);
+  assertNear(adapter.camera.position.x, baseline.x, "the bounded intro returns the selected camera x framing");
+  assertNear(adapter.camera.position.y, baseline.y, "the bounded intro returns the selected camera y framing");
+  assertNear(adapter.camera.position.z, baseline.z, "the bounded intro returns the selected camera z framing");
+  adapter.dispose();
+
+  const reduced = snapshotRenderHarness(RealtimeBattle, { reducedMotion: true });
+  reduced.orbit(0.31, -0.08);
+  reduced.zoom(-0.4);
+  reduced.updateCamera(start);
+  const reducedBaseline = reduced.camera.position.clone();
+  reduced.renderSnapshot(start);
+  assert.deepEqual(
+    reduced.camera.position.toArray(),
+    reducedBaseline.toArray(),
+    "reduced motion suppresses the nonessential Stage 1 camera dolly",
+  );
+  assert.deepEqual(start, startBefore, "reduced-motion rendering still leaves the supplied snapshot immutable");
+  reduced.dispose();
+});
+
+test("confirmed same-stage same-seed tick-zero restarts replay the stage intro without stale de-dupe resets", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const profile = stageWorldFor("cinder-span");
+  const intro = profile.presentation.cinematic?.intro;
+  assert.ok(intro?.durationTicks > 13, "the fixture needs a positive-tick interval inside the authored intro");
+
+  const stageStarted = () => Object.freeze({
+    type: "STAGE_STARTED",
+    eventId: "cinder-span:seed-73:stage-start",
+    stageId: profile.stageId,
+    tick: 0,
+  });
+  const snapshot = (tick, events = []) => Object.freeze({
+    tick,
+    seed: 73,
+    stageId: profile.stageId,
+    commander: Object.freeze({ id: "commander", x: 19000, y: 6000, elevation: 0 }),
+    enemies: Object.freeze([]),
+    companions: Object.freeze([]),
+    projectiles: Object.freeze([]),
+    pickups: Object.freeze([]),
+    events: Object.freeze(events),
+  });
+  const firstStart = snapshot(0, [stageStarted()]);
+  const progressed = snapshot(12);
+  const staleTickZero = snapshot(0);
+  const duplicateWithinRun = snapshot(13, [stageStarted()]);
+  const restarted = snapshot(0, [stageStarted()]);
+  const snapshots = [firstStart, progressed, staleTickZero, duplicateWithinRun, restarted];
+  const snapshotsBefore = structuredClone(snapshots);
+  const adapter = snapshotRenderHarness(RealtimeBattle);
+
+  adapter.renderSnapshot(firstStart);
+  await waitFor(
+    () => adapter.debugPresentationState("commander")?.hasMixer === true,
+    "the first stage-start commander rig did not load",
+  );
+  assert.equal(
+    adapter.debugPresentationState("commander")?.oneShotActionKey,
+    "show",
+    "the initial confirmed start plays the commander's show presentation",
+  );
+  const initialIntro = adapter.stageIntro;
+  assert.ok(initialIntro, "the initial confirmed start begins the stage intro");
+
+  adapter.renderSnapshot(progressed);
+  adapter.renderSnapshot(staleTickZero);
+  adapter.renderSnapshot(duplicateWithinRun);
+  assert.strictEqual(
+    adapter.stageIntro,
+    initialIntro,
+    "an event-less tick-zero snapshot cannot clear de-dupe state and replay an in-run stage start",
+  );
+
+  adapter.renderSnapshot(restarted);
+  assert.notStrictEqual(
+    adapter.stageIntro,
+    initialIntro,
+    "a later confirmed tick-zero stage start creates a fresh stage intro despite its deterministic event id",
+  );
+  assert.equal(
+    adapter.debugPresentationState("commander")?.oneShotActionKey,
+    "show",
+    "the later confirmed start replays the commander's show presentation",
+  );
+  assert.deepEqual(snapshots, snapshotsBefore, "restart and stale snapshots remain immutable during presentation");
+  adapter.dispose();
+});
+
+test("only an event tick-zero stage start confirms a retry without replaying carried VFX", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const profile = stageWorldFor("cinder-span");
+  const stageStarted = (tick) => Object.freeze({
+    type: "STAGE_STARTED",
+    eventId: "cinder-span:seed-97:stage-start",
+    stageId: profile.stageId,
+    tick,
+  });
+  const rallyWindow = (tick) => Object.freeze({
+    type: "BOSS_RALLY_WINDOW",
+    eventId: "cinder-span:seed-97:rally-window",
+    targetId: "commander",
+    tick,
+  });
+  const snapshot = (tick, events = []) => Object.freeze({
+    tick,
+    seed: 97,
+    stageId: profile.stageId,
+    commander: Object.freeze({ id: "commander", x: 19000, y: 6000, elevation: 0 }),
+    enemies: Object.freeze([]),
+    companions: Object.freeze([]),
+    projectiles: Object.freeze([]),
+    pickups: Object.freeze([]),
+    events: Object.freeze(events),
+  });
+  const firstStart = snapshot(0, [stageStarted(0)]);
+  const progressed = snapshot(12);
+  const priorRally = snapshot(13, [rallyWindow(13)]);
+  const staleEventTimestamp = snapshot(0, [stageStarted(13)]);
+  const confirmedRetry = snapshot(0, [stageStarted(0), rallyWindow(13)]);
+  const newRunRally = snapshot(1, [rallyWindow(1)]);
+  const snapshots = [firstStart, progressed, priorRally, staleEventTimestamp, confirmedRetry, newRunRally];
+  const snapshotsBefore = structuredClone(snapshots);
+  const adapter = snapshotRenderHarness(RealtimeBattle);
+
+  adapter.renderSnapshot(firstStart);
+  await waitFor(
+    () => adapter.debugPresentationState("commander")?.hasMixer === true,
+    "the first stage-start commander rig did not load",
+  );
+  const firstIntro = adapter.stageIntro;
+  assert.ok(firstIntro, "the initial stage-start event begins the stage intro");
+
+  adapter.renderSnapshot(progressed);
+  assert.equal(
+    adapter.debugPresentationState("commander")?.activeActionKey,
+    "idle",
+    "the initial stage-start one-shot completes before retry detection is exercised",
+  );
+  adapter.renderSnapshot(priorRally);
+  assert.equal(adapter.vfxInstances.length, 1, "the prior-run rally VFX is recorded for duplicate suppression");
+
+  adapter.renderSnapshot(staleEventTimestamp);
+  assert.strictEqual(
+    adapter.stageIntro,
+    firstIntro,
+    "a tick-zero snapshot paired with a positive-tick stage-start event cannot reset the intro",
+  );
+  assert.equal(
+    adapter.debugPresentationState("commander")?.activeActionKey,
+    "idle",
+    "a mismatched stage-start timestamp cannot clear animation de-dupe and replay show",
+  );
+
+  adapter.renderSnapshot(confirmedRetry);
+  assert.notStrictEqual(
+    adapter.stageIntro,
+    firstIntro,
+    "the actual tick-zero stage-start event remains eligible to begin the retry intro",
+  );
+  assert.equal(
+    adapter.debugPresentationState("commander")?.oneShotActionKey,
+    "show",
+    "the confirmed retry remains eligible for its stage-start animation",
+  );
+  assert.equal(
+    adapter.vfxInstances.length,
+    1,
+    "the confirming batch does not replay an unrelated VFX event from the prior run",
+  );
+
+  adapter.renderSnapshot(newRunRally);
+  assert.equal(adapter.vfxInstances.length, 2, "visual de-dupe resets after the confirming batch for new-run events");
+  adapter.renderSnapshot(newRunRally);
+  assert.equal(adapter.vfxInstances.length, 2, "duplicate new-run VFX remains suppressed after the reset");
+  assert.deepEqual(snapshots, snapshotsBefore, "retry snapshots remain immutable during presentation");
+  adapter.dispose();
+});
+
+test("runtime reduced-motion toggle cancels an active Cinder intro without mutating or reviving snapshots", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const profile = stageWorldFor("cinder-span");
+  const makeSnapshot = (tick, events = []) => ({
+    tick,
+    stageId: profile.stageId,
+    commander: { id: "commander", x: 19000, y: 6000, elevation: 0 },
+    enemies: [],
+    companions: [],
+    projectiles: [],
+    pickups: [],
+    events,
+  });
+  const start = makeSnapshot(420, [{ type: "STAGE_STARTED", eventId: "runtime-motion-start", tick: 420 }]);
+  const whileReduced = makeSnapshot(421);
+  const restoredMotion = makeSnapshot(422);
+  const snapshotsBefore = structuredClone([start, whileReduced, restoredMotion]);
+  const adapter = snapshotRenderHarness(RealtimeBattle);
+  adapter.orbit(0.31, -0.08);
+  adapter.zoom(-0.4);
+  adapter.updateCamera(start);
+  const baseline = adapter.camera.position.clone();
+
+  adapter.renderSnapshot(start);
+  assert.notDeepEqual(adapter.camera.position.toArray(), baseline.toArray(), "the active intro visibly changes camera framing before the preference changes");
+
+  adapter.setReducedMotion(true);
+  adapter.updateCamera(whileReduced);
+  assertNear(adapter.camera.position.x, baseline.x, "enabling reduced motion cancels the active dolly x offset immediately");
+  assertNear(adapter.camera.position.y, baseline.y, "enabling reduced motion cancels the active dolly y offset immediately");
+  assertNear(adapter.camera.position.z, baseline.z, "enabling reduced motion cancels the active dolly z offset immediately");
+
+  adapter.setReducedMotion(false);
+  adapter.updateCamera(restoredMotion);
+  assertNear(adapter.camera.position.x, baseline.x, "re-enabling motion does not resurrect the cancelled dolly x offset");
+  assertNear(adapter.camera.position.y, baseline.y, "re-enabling motion does not resurrect the cancelled dolly y offset");
+  assertNear(adapter.camera.position.z, baseline.z, "re-enabling motion does not resurrect the cancelled dolly z offset");
+  assert.deepEqual([start, whileReduced, restoredMotion], snapshotsBefore, "runtime preference changes leave every supplied snapshot immutable");
   adapter.dispose();
 });
 

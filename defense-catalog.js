@@ -30,6 +30,44 @@ export const COMMANDER = freeze({
     multiplierBp: 20000,
   }),
 });
+
+/**
+ * None-target combat geometry (no lock-on): melee resolves as an adjacent frontal sweep and
+ * ranged fire resolves as a travelling orb that damages the first body its swept sphere touches.
+ * All values are world units / ticks so the simulation stays integer-deterministic.
+ */
+export const COMBAT_TARGETING = freeze({
+  mode: "none-target",
+  melee: freeze({
+    /** Extra reach past the two body radii that still counts as "adjacent". */
+    reach: 900,
+    /** Frontal half-arc as a cosine in basis points: 0 bp => 180° total sweep. */
+    arcCosBp: 0,
+    /** Sweep hits every body in the arc, capped so a single swing cannot clear a whole wave. */
+    maxTargets: 5,
+  }),
+  ranged: freeze({
+    /** World units advanced per tick by a travelling orb. */
+    projectileSpeed: 1400,
+    /** Orb body radius used for the swept-sphere overlap test. */
+    projectileRadius: 220,
+    /** Hard flight cap so a miss always expires. */
+    maxTicks: 12,
+  }),
+  /** Vertical gap (elevation units) beyond which a body is out of reach of a hit. */
+  elevationTolerance: 700,
+});
+
+/** Body-vs-body and body-vs-terrain collision limits shared by placement and movement. */
+export const COLLISION = freeze({
+  /** Elevation rise a body can walk up in one tick; anything steeper blocks like a wall. */
+  stepHeight: 600,
+  /** Separation passes run per tick to unstick overlapping bodies. */
+  separationPasses: 12,
+  /** Bodies further apart than this in elevation occupy different decks and never overlap-push. */
+  separationElevationTolerance: 900,
+});
+
 export const COMPANION_AUTONOMY = freeze({
   itemClaimRange: COMMANDER.basicRange,
   hardLeashRange: 12000,

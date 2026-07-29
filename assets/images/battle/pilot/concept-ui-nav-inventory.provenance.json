@@ -1,0 +1,23 @@
+{
+  "asset": "assets/images/battle/pilot/concept-ui-nav-inventory.png",
+  "assetId": "nav-inventory",
+  "lane": "concept",
+  "runtimeEligible": false,
+  "tool": "god-tibo-imagen",
+  "toolInvocation": "gti --prompt \"<prompt>\" --output assets/images/battle/pilot/concept-ui-nav-inventory.png",
+  "model": "gpt-5.4 image_generation (private-codex backend)",
+  "prompt": "dark-fantasy abyssal stone-gothic game UI icon, carved granite and bone-white relief, cold soul-teal rim light (#81d6ff) and zenith-gold accent (#e9c46a), deep abyssal navy (#050812) ground, engraved bevelled edges, subtle inner glow, high contrast, crisp readable silhouette, no text, no letters, no numbers, no watermark, centered single subject, flat pure-black background. Subject: a 2x2 engraved reliquary vault grid of stone cells, one cell holding a small teal shard.",
+  "revisedPrompt": "dark-fantasy abyssal stone-gothic game UI icon, carved granite and bone-white relief, cold soul-teal rim light (#81d6ff) and zenith-gold accent (#e9c46a), deep abyssal navy (#050812) ground, engraved bevelled edges, subtle inner glow, high contrast, crisp readable silhouette, no text, no letters, no numbers, no watermark, centered single subject, flat pure-black background. Subject: a 2x2 engraved reliquary vault grid of stone cells, one cell holding a small teal shard.",
+  "referenceInputs": [],
+  "responseId": "resp_028687bc041f6452016a68d28fc5988191ac8eabe803b207f5",
+  "generationRounds": 1,
+  "generatedAtMs": 76656,
+  "sha256": "2abe2c2fd0b237228ade4cc6f6da7cc39ed83e06ec5f5db21bcd7c137a29e5f8",
+  "bytes": 2443520,
+  "boundRuntimeSurface": ".dock-rail-icon[inventory]",
+  "promotionPath": "assets/images/battle/ui/hud/nav-inventory.webp",
+  "promotedBy": "scripts/build-ui-icon-assets.py",
+  "repositoryRevision": "cbe937ed342393d97b5232ab5366ec2f0770adfe",
+  "legibilityAudit": "rendered at its real CSS box on the .dock-rail background and inspected; round 1 is the first to pass",
+  "notes": "Generated in the concept lane per CLAUDE.md §3. Promotion to the runtime lane is performed only by scripts/build-ui-icon-assets.py after the legibility audit."
+}

@@ -24,6 +24,10 @@
 캐릭터 리소스 생성·카툰 텍스처·T-pose 리깅·11개 모션 클립 후보를 분리된 lane에서 검증하는
 방법은 [캐릭터 에셋 파이프라인 위키](docs/character-asset-pipeline.md)에 기록합니다.
 
+로비 → 인게임 HUD → 버튼/컨트롤에 쓰이는 16개 UI 리소스는 `god-tibo-imagen`으로 생성해
+`assets/images/battle/ui/`에 배치하며, 생성 근거와 실측 증거는
+[UI 리소스 계약](_workspace/current/ui/ui-asset-refresh-routing-and-contract.md)에 기록합니다.
+
 > **문서 상태 안내.** 이전에 이 자리에서 참조하던 `docs/abyssal-command-defense-survivor-design.md`와
 > `docs/abyssal-surge-production-cycle.md`는 현재 저장소에 없습니다. 위 문단의 플레이·기술
 > 계약이 현재 배포 빌드에 대한 유효한 요약입니다.
@@ -70,6 +74,28 @@ node tests/defense-performance-browser.cjs
 
 브라우저 계약은 로비 → Cinder Span 전투 → 키보드/터치 이동 → 성장 수치 비교와 선택을 확인합니다. 성능 프로브는 모바일/데스크톱 뷰포트의 DOM 수, 프레임 간격, 입력 피드백을 검사합니다. Pages 아티팩트는 `.github/workflows/static.yml`의 candidate-SHA 런타임 allowlist와 `tests/pages-artifact-smoke.cjs`로 별도 폐쇄 검증합니다.
 
+### UI 리소스 레이어
+
+`styles.css`는 두 계열의 속성으로 생성 리소스를 바인딩합니다. `[data-ui-icon]`은 요소
+자체가 아이콘인 경우(독 레일 탭, 브랜드 마크, 닫기, 통화 칩, 출정 셰브런)이고,
+`[data-ui-icon-lead]`는 요소가 자기 내용을 유지하면서 `::before`로 선행 아이콘만 얻는
+경우(HUD 게이지, XP 행, 일시정지 버튼)입니다. 후자는 요소의 레이아웃 역할을 바꾸지 않으므로
+기존 HUD 기하 검증이 그대로 유효합니다.
+
+아이콘을 지닌 노드는 모두 이미 `aria-hidden="true"` + 인접 `.sr-only` 라벨이거나 자체
+`aria-label`을 갖고 있어, 글리프를 이미지로 교체해도 보조기술 노출은 달라지지 않습니다.
+`iconId`가 없으면 이전 글리프로 폴백하므로 리소스 누락이 빈 상자로 나타나지 않습니다.
+
+```bash
+python3 scripts/build-ui-icon-assets.py --json    # 컨셉 plate -> 런타임 lane (idempotent)
+python3 scripts/build-ui-icon-assets.py --check   # 런타임 리소스 최신 여부만 확인
+```
+
+런타임 allowlist는 네 곳이 동시에 일치해야 합니다:
+`scripts/defense-runtime-assets.mjs`의 `RETAINED_ASSET_PATHS`,
+`assets/defense-asset-manifest.json`, `.github/workflows/static.yml`의
+`PAGES_RUNTIME_PATHS`, 그리고 오프라인 부팅을 위한 `sw.js`의 `CORE_ASSETS`입니다.
+
 ## 플레이 영상
 
 실제 브라우저에서 새 저장소로 시작해 Cinder Span의 컷신, 전투, Gate/Echo 이후 성장 수치 비교와 선택까지 캡처한 영상은 [`assets/video/abyssal-surge-defense-survivor-smoke.mp4`](assets/video/abyssal-surge-defense-survivor-smoke.mp4)입니다. H.264 1280×720 25fps 영상과 AAC-LC 48kHz 스테레오 사운드트랙을 담은 32.20초 MP4입니다.
@@ -94,7 +120,11 @@ Abyssal-Command/
 ├── campaign-state.js          # 영구 캠페인·동료 진행 상태
 ├── battle-realtime-three.js   # 기본 Canvas 스냅샷 전장 투영과 텍스처 프레임
 ├── battle-visualizer.js       # 대체 Canvas 스냅샷 전장 투영
+├── lobby-cinematic.js         # 출전 전 로비 연출 카메라·대사 릴레이
+├── assets/images/battle/ui/   # 생성 UI 리소스 (hud/ 아이콘 14, plates/ 배경 2)
+├── assets/images/battle/pilot/ # 컨셉 lane — 생성 원본 + .provenance.json (런타임 비적격)
 ├── assets/video/              # 캡처된 플레이 영상
+├── scripts/                   # 리소스 파이프라인·측정·검증 스크립트
 ├── docs/                      # 현재 제품·제작 문서
 └── tests/                     # 자동화된 테스트 소스
 ```

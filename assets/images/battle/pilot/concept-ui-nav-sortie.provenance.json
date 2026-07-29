@@ -1,0 +1,23 @@
+{
+  "asset": "assets/images/battle/pilot/concept-ui-nav-sortie.png",
+  "assetId": "nav-sortie",
+  "lane": "concept",
+  "runtimeEligible": false,
+  "tool": "god-tibo-imagen",
+  "toolInvocation": "gti --prompt \"<prompt>\" --output assets/images/battle/pilot/concept-ui-nav-sortie.png",
+  "model": "gpt-5.4 image_generation (private-codex backend)",
+  "prompt": "dark-fantasy abyssal stone-gothic game UI medallion icon on pure black, carved dark granite outer frame with pointed gothic cusps and thin gold rim, cold soul-teal (#81d6ff) inner glow and zenith-gold (#e9c46a) rim accent, the interior subject rendered as ONE bold simplified bone-white mass with heavy strokes and almost no fine internal detail so it stays unmistakable at 48 pixels, engraved relief, high contrast between dark frame and bright interior subject, the medallion frame FILLS the square canvas edge to edge, centered single subject, no text, no letters, no numbers, no watermark. Interior subject: one wide simplified pharaonic gate arch as a solid bone-white mass, thick square pillars either side, a single broad teal beam of light filling the archway.",
+  "revisedPrompt": "dark-fantasy abyssal stone-gothic game UI medallion icon on pure black, carved dark granite outer frame with pointed gothic cusps and thin gold rim, cold soul-teal (#81d6ff) inner glow and zenith-gold (#e9c46a) rim accent, the interior subject rendered as ONE bold simplified bone-white mass with heavy strokes and almost no fine internal detail so it stays unmistakable at 48 pixels, engraved relief, high contrast between dark frame and bright interior subject, the medallion frame FILLS the square canvas edge to edge, centered single subject, no text, no letters, no numbers, no watermark. Interior subject: one wide simplified pharaonic gate arch as a solid bone-white mass, thick square pillars either side, a single broad teal beam of light filling the archway.",
+  "referenceInputs": [],
+  "responseId": "resp_073c2eacdd9b20ea016a68d5d853a88191a687e6ffcca6739b",
+  "generationRounds": 2,
+  "generatedAtMs": 69278,
+  "sha256": "efcf31c1e5811df3f47cb27281a799a7a26aa096450df9690c6659c96b7fc11e",
+  "bytes": 3024985,
+  "boundRuntimeSurface": ".dock-rail-icon[sortie]",
+  "promotionPath": "assets/images/battle/ui/hud/nav-sortie.webp",
+  "promotedBy": "scripts/build-ui-icon-assets.py",
+  "repositoryRevision": "cbe937ed342393d97b5232ab5366ec2f0770adfe",
+  "legibilityAudit": "rendered at its real CSS box on the .dock-rail background and inspected; round 2 is the first to pass",
+  "notes": "Generated in the concept lane per CLAUDE.md §3. Promotion to the runtime lane is performed only by scripts/build-ui-icon-assets.py after the legibility audit."
+}

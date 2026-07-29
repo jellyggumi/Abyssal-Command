@@ -243,6 +243,23 @@ async function waitForGrowthOfferThroughCutscenes(page, report, {
       state = await readState(Math.max(1, operationDeadline - Date.now()));
       continue;
     }
+    const advancedByPump = await page.evaluate(() => {
+      if (typeof window.__pumpFrame !== "function") return false;
+      window.__pumpFrame(100);
+      return true;
+    });
+    if (advancedByPump) {
+      await page.waitForTimeout(0);
+      state = await readState(Math.max(1, Math.min(progressDeadline, overallDeadline) - Date.now()));
+      if (
+        state.simulationSecond !== null
+        && (lastSimulationSecond === null || state.simulationSecond > lastSimulationSecond)
+      ) {
+        lastSimulationSecond = state.simulationSecond;
+        lastProgressAt = Date.now();
+      }
+      continue;
+    }
     const signalTimeout = Math.max(1, Math.min(progressDeadline, overallDeadline) - Date.now());
     try {
       await page.waitForFunction(({ previousSimulationSecond, terminalStates }) => {
@@ -318,6 +335,24 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
       Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
       localStorage.setItem(key, encoded);
     }, { encoded: campaign.encoded, key: STORAGE_KEY });
+    await page.addInitScript(() => {
+      const queue = new Map();
+      let nextId = 1;
+      let syntheticNow = 0;
+      window.requestAnimationFrame = (callback) => {
+        const id = nextId++;
+        queue.set(id, callback);
+        return id;
+      };
+      window.cancelAnimationFrame = (id) => { queue.delete(id); };
+      window.__pumpFrame = (deltaMs) => {
+        syntheticNow += deltaMs;
+        const pending = [...queue.values()];
+        queue.clear();
+        for (const callback of pending) callback(syntheticNow);
+        return syntheticNow;
+      };
+    });
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
     await page.locator("#start-defense").waitFor();
     assert.equal(await page.locator("#start-defense").isVisible(), true, "lobby must expose a live departure action");
@@ -437,6 +472,8 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
       await growthOffer.locator(`button[data-pick="${skill}"]`).click();
       selectedGrowthSkills.add(skill);
       report.events.push({ event: "growth-selected", skill });
+      await page.evaluate(() => window.__pumpFrame?.(100));
+      await page.waitForTimeout(0);
       await page.waitForFunction(({ offerKey, skill }) => {
         const status = document.querySelector("#battle-status")?.textContent ?? "";
         if (!status.includes("성장 선택 중")) return true;
@@ -519,6 +556,9 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
         { timeout: 5000 },
       );
       const afterPress = await readHeldMovement();
+      await page.evaluate(() => {
+        for (let index = 0; index < 12; index += 1) window.__pumpFrame?.(100);
+      });
       // Hold past a public simulation-second boundary. The predicate runs in the
       // page (per animation frame), so the hold cannot overshoot by whatever a
       // Node-side observation gap happens to be on a slow runner.
@@ -847,29 +887,57 @@ async function verifyBossMeshRegression(browser, hosting) {
     await page.goto("/index.html", { waitUntil: "domcontentloaded" });
     const result = await page.evaluate(async () => {
       const sim = await import("/defense-run-simulation.js");
-      const { ARENA } = await import("/defense-catalog.js");
+      const { ARENA, OCTANT_VECTORS } = await import("/defense-catalog.js");
       const { RealtimeBattle } = await import("/battle-realtime-three.js");
       const { createDefenseRun, advanceDefenseRun, getRunSnapshot, isTerminalRun, queueInput } = sim;
 
+      function objectiveOctant(snapshot) {
+        const phase = snapshot.objectives.phase;
+        let target = null;
+        if (phase === "occupation") target = snapshot.tactics.occupation;
+        else if (phase === "extraction") target = snapshot.tactics.extraction;
+        else {
+          const living = snapshot.enemies.filter((enemy) => enemy.hp > 0);
+          const distance = (entry) => (entry.x - snapshot.commander.x) ** 2 + (entry.y - snapshot.commander.y) ** 2;
+          if (living.length) target = living.slice().sort((left, right) => distance(left) - distance(right))[0];
+        }
+        if (!target) return "IDLE";
+        const dx = target.x - snapshot.commander.x;
+        const dy = target.y - snapshot.commander.y;
+        if (target.radius && Math.hypot(dx, dy) < target.radius * 0.5) return "IDLE";
+        let best = "IDLE";
+        let bestDot = -Infinity;
+        const length = Math.hypot(dx, dy) || 1;
+        for (const [name, vector] of Object.entries(OCTANT_VECTORS)) {
+          if (name === "IDLE") continue;
+          const vectorLength = Math.hypot(vector.x, vector.y) || 1;
+          const dot = (dx / length) * (vector.x / vectorLength) + (dy / length) * (vector.y / vectorLength);
+          if (dot > bestDot) { bestDot = dot; best = name; }
+        }
+        return best;
+      }
+
       function step(run) {
-        const offer = getRunSnapshot(run).growthOffer;
-        let next = offer ? queueInput(run, "SKILL_SELECTED", { skillId: offer.choices[0] }) : run;
-        const snapshot = getRunSnapshot(next);
-        next = queueInput(next, "MOVE", { octant: "IDLE" });
+        const snapshot = getRunSnapshot(run);
+        if (snapshot.growthOffer) {
+          return advanceDefenseRun(queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] }), 1);
+        }
+        let next = queueInput(run, "MOVE", { octant: objectiveOctant(snapshot) });
         if (snapshot.eliteCandidate && !snapshot.extracted) next = queueInput(next, "EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
         return advanceDefenseRun(next, 1);
       }
 
+      const MAX_BOSS_TICKS = 24000;
       let run = createDefenseRun({ stageId: "cinder-span", seed: 2962819252, companionLoadout: ["ember-cohort"] });
       let snapshot = getRunSnapshot(run);
       let boss = null;
-      for (let i = 0; i < 3000 && !isTerminalRun(run); i += 1) {
+      for (let i = 0; i < MAX_BOSS_TICKS && !isTerminalRun(run); i += 1) {
         run = step(run);
         snapshot = getRunSnapshot(run);
-        boss = snapshot.enemies.find((enemy) => enemy.class === "boss");
+        boss = snapshot.enemies.find((enemy) => enemy.class === "boss" && enemy.hp > 0);
         if (boss) break;
       }
-      if (!boss) return { error: `no live boss appeared within the simulated tick budget (final tick ${snapshot.tick}, terminal=${String(isTerminalRun(run))})` };
+      if (!boss) return { error: `no active boss appeared within the ${MAX_BOSS_TICKS}-tick simulated budget (final tick ${snapshot.tick}, terminal=${String(isTerminalRun(run))})` };
 
       const project = (entity) => ({ ...entity, x: (entity.x / ARENA.width) * 2 - 1, y: (entity.y / ARENA.height) * 2 - 1 });
       const projected = {
@@ -960,6 +1028,8 @@ async function verifyBossMeshRegression(browser, hosting) {
         bossId: boss.id,
         bossHp: boss.hp,
         bossTick: snapshot.tick,
+        bossActive: boss.hp > 0,
+        terminalAtBoss: isTerminalRun(run),
         modelPath: entry.modelPath,
         rootName: entry.root.name,
         meshDescendantCount,
@@ -972,6 +1042,8 @@ async function verifyBossMeshRegression(browser, hosting) {
     });
 
     assert.equal(result.error, undefined, `boss mesh regression check failed: ${result.error}`);
+    assert.equal(result.bossActive, true, "the fixture must reach a living boss rather than merely exhaust its tick budget");
+    assert.equal(result.terminalAtBoss, false, "the fixture must reach the boss before the run becomes terminal");
     assert.equal(result.modelPath, result.expectedModelPath, "the boss must resolve its model path from the authored BOSS_MODELS table");
     assert.ok(result.meshDescendantCount > 0, `the boss's cloned scene-graph object must contain real mesh geometry, found ${result.meshDescendantCount} mesh descendants`);
     assert.deepEqual(errors, [], "boss mesh regression check emitted unexpected page or console errors");

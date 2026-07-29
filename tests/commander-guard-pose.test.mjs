@@ -12,15 +12,25 @@ import { chromium } from "playwright";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE_GLB = resolve(
   ROOT,
-  "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/commander/dusk-warden.glb",
+  "_workspace/current/engineering/asset-pipeline/all-mesh-texture-candidates-v2/commander/dusk-warden.glb",
 );
 const CANDIDATE_ROOT = resolve(
   ROOT,
-  "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/player-combat-animation-candidate",
+  "_workspace/current/engineering/asset-pipeline/player-combat-animation-candidate",
 );
 const CANDIDATE_GLB = resolve(CANDIDATE_ROOT, "dusk-warden.glb");
-const CANDIDATE_AUDIT = resolve(CANDIDATE_ROOT, "audit.json");
-const AUTHOR_SCRIPT = resolve(CANDIDATE_ROOT, "author_player_combat_clips.py");
+/* The audit record and the authoring script are FROZEN evidence for a closed cycle and
+   live in the immutable archive, not the live lane -- an earlier session moved them
+   there while the candidate GLB stayed in the working lane. Read them from the archive
+   (same pattern as scripts/audit-stage-scenes.mjs, which writes to `current/` but reads
+   its frozen provenance from `_workspace/archive/`). CLAUDE.md §1 permits reading the
+   archive for evidence; nothing here writes to it. */
+const FROZEN_CANDIDATE_ROOT = resolve(
+  ROOT,
+  "_workspace/archive/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/player-combat-animation-candidate",
+);
+const CANDIDATE_AUDIT = resolve(FROZEN_CANDIDATE_ROOT, "audit.json");
+const AUTHOR_SCRIPT = resolve(FROZEN_CANDIDATE_ROOT, "author_player_combat_clips.py");
 const DEPLOYED_GLB = resolve(ROOT, "assets/images/battle/glb/commander/dusk-warden.glb");
 const COMMANDER_CLIP_KEYS = [
   "attack", "avoid", "bighit", "critical", "defence", "die", "hit",
@@ -204,7 +214,7 @@ test("deployed commander is the byte-exact audited guard-pose candidate", async 
   );
   assert.equal(
     commander.upstreamPipeline,
-    "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline"
+    "_workspace/current/engineering/asset-pipeline"
       + "/player-combat-animation-candidate/author_player_combat_clips.py",
     "the build record must name the authoring stage that produced the strikes and guard pose",
   );

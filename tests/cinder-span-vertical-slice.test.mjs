@@ -10,6 +10,7 @@ import {
   advanceDefenseRun,
   createDefenseRun,
   getRunSnapshot,
+  queueInput,
 } from "../defense-run-simulation.js";
 
 const STAGE_ID = "cinder-span";
@@ -21,6 +22,10 @@ function advanceCollectingEvents(run, steps) {
   let next = run;
   const events = [];
   for (let step = 0; step < steps; step += 1) {
+    const beforeAdvance = getRunSnapshot(next);
+    if (beforeAdvance.growthOffer) {
+      next = queueInput(next, "GROWTH_OFFER_SELECTED", { skillId: beforeAdvance.growthOffer.choices[0] });
+    }
     next = advanceDefenseRun(next, 1);
     const snapshot = getRunSnapshot(next);
     events.push(...snapshot.events);

@@ -39,6 +39,7 @@ const TARGET_CAUSE_ORDER = Object.freeze([
   "OBJECTIVE_PRESSURE_PULSE",
   "OBJECTIVE_PRESSURE_DEADLINE",
   "TERRAIN_RECOVERY",
+  "WAVE_CLEARED",
   "PROJECTILE_IMPACT",
   "SKILL_SELECTED_PASSIVE_INTEGRITY",
   "SKILL_CAST_INTEGRITY",
@@ -232,6 +233,8 @@ function eventCauseForTarget(event, target) {
   if (event.type === "OBJECTIVE_PRESSURE_DEADLINE" && target === "gate" && event.damage > 0) return "OBJECTIVE_PRESSURE_DEADLINE";
   if (event.type === "TERRAIN_RECOVERY" && target === "gate" && event.gateRecovery > 0) return "TERRAIN_RECOVERY";
   if (event.type === "TERRAIN_RECOVERY" && target === "commander" && event.commanderRecovery > 0) return "TERRAIN_RECOVERY";
+  if (event.type === "WAVE_CLEARED" && target === "gate" && event.gateRecovered > 0) return "WAVE_CLEARED";
+  if (event.type === "WAVE_CLEARED" && target === "commander" && event.commanderRecovered > 0) return "WAVE_CLEARED";
   if (event.type === "SKILL_SELECTED" && target === "commander" && Number.isFinite(SKILLS[event.skillId]?.maxIntegrity) && SKILLS[event.skillId].maxIntegrity > 0) return "SKILL_SELECTED_PASSIVE_INTEGRITY";
   if (event.type === "SKILL_CAST" && target === "commander" && Number.isFinite(SKILLS[event.skillId]?.integrity) && SKILLS[event.skillId].integrity > 0) return "SKILL_CAST_INTEGRITY";
   if (event.type === "GATE_BREACHED" && target === "gate" && event.damage > 0) {
@@ -274,16 +277,19 @@ function buildCompositeRecord(before, after, events, target) {
   const signals = events
     .map((event) => ({ cause: eventCauseForTarget(event, target), event }))
     .filter(({ cause }) => cause !== null);
-  const expectedDelta = signals.reduce((total, { event, cause }) => {
-    if (cause === "TERRAIN_RECOVERY") {
-      return total + (target === "gate" ? event.gateRecovery : event.commanderRecovery);
-    }
-    if (cause === "SKILL_SELECTED_PASSIVE_INTEGRITY") return total + SKILLS[event.skillId].maxIntegrity;
-    if (cause === "SKILL_CAST_INTEGRITY") return total + SKILLS[event.skillId].integrity;
-    return total - event.damage;
-  }, 0);
+  const deltaFor = ({ event, cause }) => cause === "TERRAIN_RECOVERY"
+    ? (target === "gate" ? event.gateRecovery : event.commanderRecovery)
+    : cause === "WAVE_CLEARED"
+      ? (target === "gate" ? event.gateRecovered : event.commanderRecovered)
+      : cause === "SKILL_SELECTED_PASSIVE_INTEGRITY"
+        ? SKILLS[event.skillId].maxIntegrity
+        : cause === "SKILL_CAST_INTEGRITY"
+          ? SKILLS[event.skillId].integrity
+          : -event.damage;
+  const expectedDelta = signals.reduce((total, signal) => total + deltaFor(signal), 0);
+  const expectedTo = signals.reduce((value, signal) => Math.max(0, Math.min(max, value + deltaFor(signal))), from);
   const appliedDelta = to - from;
-  const clampedExpected = Math.max(-from, Math.min(max - from, expectedDelta));
+  const clampedExpected = expectedTo - from;
   if (!Number.isInteger(from) || !Number.isInteger(to) || !Number.isInteger(max) || from < 0 || to < 0 || from > max || to > max) {
     fail(`invalid ${target} integrity state at tick ${before.tick}: from=${from}, to=${to}, max=${max}`);
   }
@@ -588,7 +594,7 @@ async function buildReceipt(outputPath, sourceRevision, outputBytes) {
       simulation: `sha256:${await fileSha256(new URL("../defense-run-simulation.js", import.meta.url))}`,
       catalog: `sha256:${await fileSha256(new URL("../defense-catalog.js", import.meta.url))}`,
       rpgCatalog: `sha256:${await fileSha256(new URL("../rpg-catalog.js", import.meta.url))}`,
-      contract: `sha256:${await fileSha256(new URL("../_workspace/20260726-stage1b-cinder-pressure-agency/engineering/instrumentation-contract.md", import.meta.url))}`,
+      contract: `sha256:${await fileSha256(new URL("../_workspace/archive/20260726-stage1b-cinder-pressure-agency/engineering/instrumentation-contract.md", import.meta.url))}`,
     },
     outputSha256: `sha256:${sha256(outputBytes)}`,
     outputByteLength: Buffer.byteLength(outputBytes, "utf8"),

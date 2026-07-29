@@ -234,15 +234,18 @@ test("Stage 1b persistence has no second extraction and keeps acceptance boundar
 
     for (const scenario of payload.scenarios) {
       const extractInputs = scenario.inputs.filter((input) => input.inputType === "EXTRACT_ELITE");
-      assert.equal(extractInputs.length <= 1, true, `${scenario.scenario} must never queue more than one EXTRACT_ELITE input`);
+      const acceptedExtractInputs = extractInputs.filter((input) => input.accepted);
+      assert.equal(extractInputs.length <= 2, true, `${scenario.scenario} may request a route and one accepted EXTRACT_ELITE handoff`);
       assert.equal(scenario.invariantChecks?.acceptanceConsistent, true, `${scenario.scenario} should maintain accepted handoff consistency`);
       assert.equal(scenario.invariantChecks?.acceptanceConsistentWithEvents, true);
       assert.equal(scenario.acceptance?.inputAcceptedCount, scenario.acceptedEliteExtractCount);
+      assert.equal(acceptedExtractInputs.length, scenario.acceptedEliteExtractCount, `${scenario.scenario} must retain exactly its accepted extraction inputs`);
       if (scenario.scenario === "defeat-before-acceptance") {
         assert.equal(scenario.acceptedEliteExtractCount, 0);
       }
       if (scenario.acceptedEliteExtractCount > 0) {
-        assert.equal(extractInputs.length, 1, `${scenario.scenario} must request a single extraction when handoff is expected`);
+        assert.equal(acceptedExtractInputs.length, 1, `${scenario.scenario} must accept exactly one extraction handoff`);
+        assert.equal(extractInputs.length, 2, `${scenario.scenario} must record the rejected route request before its accepted handoff`);
       }
     }
   } finally {

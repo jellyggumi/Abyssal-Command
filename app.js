@@ -41,6 +41,12 @@ import { DefenseAudio } from "./defense-audio.js";
 import { DefenseViewport } from "./defense-viewport.js";
 import { DefenseTelemetry } from "./defense-telemetry.js";
 import { STAGE_SHOWCASE_IDS, stageWorldFor } from "./stage-world-catalog.js";
+import {
+  dialogueLineAt,
+  dialogueScriptFor,
+  showcaseCamera,
+  stagingFor,
+} from "./lobby-cinematic.js";
 
 const root = document.querySelector("#defense-app");
 const storage = new DefenseStorage();
@@ -125,6 +131,42 @@ const STAGE_ART_FILE_BY_ID = Object.freeze({
 });
 const LOBBY_SHOWCASE_STAGE_ID_SET = new Set(STAGE_SHOWCASE_IDS);
 
+/** Lobby cinematic (ui/lobby-cinematic-spec.md) — the GitHub-Pages main screen is the
+ * SAME persistent shell as combat, so "the lobby" is `session.started === false`. While
+ * that holds, the live 3D surface stages a presentation-only face-off between the
+ * commander and the selected front's boss, and the showcase camera loops through the
+ * wide → closeup → wide breathing cycle from lobby-cinematic.js. Everything here is
+ * presentation: nothing in this block writes simulation state or feeds getRunDigest(). */
+const LOBBY_STRATEGY_PRESETS = Object.freeze([
+  {
+    id: "ASSAULT",
+    glyph: "▲",
+    label: "돌격",
+    // Every deployed companion is marked FRONT. The SIMULATION still caps how many can
+    // actually hold the line (rpg-catalog MAX_FRONT_SLOTS and the live stance's
+    // derivedFrontCount) -- this preset only expresses intent, so the hint says so.
+    slotFor: () => "FRONT",
+    hint: `모든 동료를 전열 의도로 표시합니다. 실제 전열 인원은 전투 중 편성 태세의 전열 정원(최대 ${MAX_FRONT_SLOTS})까지만 적용됩니다.`,
+  },
+  {
+    id: "BALANCED",
+    glyph: "Ψ",
+    label: "균형",
+    slotFor: (index) => (index === 0 ? "FRONT" : "BACK"),
+    hint: "선두 1명만 전열 의도, 나머지는 후열입니다. 전열 손실과 화력을 함께 유지하는 기본값입니다.",
+  },
+  {
+    id: "RANGED",
+    glyph: "●",
+    label: "후위",
+    slotFor: () => "BACK",
+    hint: "모든 동료를 후열 의도로 둡니다. 지휘관이 전면을 맡고 동료는 사거리를 유지합니다.",
+  },
+]);
+/** Fallback used when the stored formation matches no preset (e.g. a hand-edited mix from
+ * the 군단 → 편성 tab). The lobby then shows nothing checked rather than lying about it. */
+const LOBBY_STRATEGY_CUSTOM = "CUSTOM";
+
 
 let campaign = null;
 let selectedStageId = STAGES[0].id;
@@ -134,14 +176,18 @@ let selectedStageId = STAGES[0].id;
 // screen-space fixed UI, permanently docked to the viewport edges -- there is no longer a
 // separate "lobby screen" to enter or leave; the live 3D battle canvas is always visible
 // beside whichever dock panel (if any) is open.
+// `icon` stays as the text fallback the glyph rendered before the art pass; `iconId`
+// names the generated plate in assets/images/battle/ui/hud/ that styles.css binds via
+// [data-ui-icon]. The glyph is kept in the DOM only when no iconId is present, so a
+// missing asset degrades to the old readable glyph instead of an empty box.
 const LEFT_DOCK_TABS = Object.freeze([
-  { id: "growth", label: "성장", icon: "◆" },
-  { id: "companions", label: "군단", icon: "❖" },
-  { id: "inventory", label: "인벤토리", icon: "▦" },
+  { id: "growth", label: "성장", icon: "◆", iconId: "nav-growth" },
+  { id: "companions", label: "군단", icon: "❖", iconId: "nav-companions" },
+  { id: "inventory", label: "인벤토리", icon: "▦", iconId: "nav-inventory" },
 ]);
 const RIGHT_DOCK_TABS = Object.freeze([
-  { id: "sortie", label: "출정", icon: "◈" },
-  { id: "stronghold", label: "요새", icon: "▣" },
+  { id: "sortie", label: "출정", icon: "◈", iconId: "nav-sortie" },
+  { id: "stronghold", label: "요새", icon: "▣", iconId: "nav-stronghold" },
 ]);
 // dockOpen invariants (component-contracts.md §1): at most one side is true while
 // dockTier==='compact'; both are forced false the instant BattleSession.beginRun() fires.
@@ -395,6 +441,185 @@ function nextRewardName(stageId) {
   const authored = STAGE_REWARD_IDS[stageId] ?? [];
   const rewardId = authored.find((id) => !(campaign?.rewardIds ?? []).includes(id)) ?? authored[0];
   return REWARDS[rewardId]?.name ?? "봉쇄 기록";
+}
+
+/** Spoiler discipline, applied to the lobby cinematic exactly as the 출정 dock applies it
+ * (renderSortieTabBody()): only the three STAGE_SHOWCASE_IDS fronts may disclose the boss
+ * name, domain and objective. Every other front renders the sealed editorial copy, so the
+ * main screen never leaks a boss the player has not deployed against yet. */
+function lobbyStageFacts(stageId) {
+  const stage = stageFor(stageId);
+  const disclosed = LOBBY_SHOWCASE_STAGE_ID_SET.has(stage.id);
+  const spoilerSafe = stageWorldFor(stage.id)?.editorial?.spoilerSafe ?? null;
+  const presentation = stagePresentationFor(stage.id);
+  return {
+    stage,
+    disclosed,
+    sequenceLabel: String(stage.sequence).padStart(2, "0"),
+    stageName: disclosed ? stage.name : spoilerSafe?.title ?? stage.name,
+    bossName: disclosed ? stage.bossName : "미확인 위협",
+    domain: disclosed ? `${presentation.mapLabels.title} · ${presentation.mapLabels.domain}` : "좌표 봉인 · 배치 후 공개",
+    threat: disclosed ? `${presentation.terrain.label} · ${presentation.mapLabels.hazard}` : "위협 등급 미상",
+    objective: disclosed ? stageObjective(stage.id) : spoilerSafe?.summary ?? "상세 위협은 출전 전까지 봉인됩니다.",
+    reward: disclosed ? nextRewardName(stage.id) : spoilerSafe?.rewardHint ?? "봉쇄 완료 후 공개",
+  };
+}
+
+/** Derives the checked strategy preset from the STORED formation intent rather than holding
+ * a second copy of it: the 군단 → 편성 tab writes the same campaign.companionFormation map,
+ * so a hand-built mix there must show up here as CUSTOM instead of silently claiming a
+ * preset the player never chose. */
+function activeLobbyStrategyId() {
+  const loadout = selectedLoadout();
+  if (!loadout.length) return LOBBY_STRATEGY_CUSTOM;
+  const stored = loadout.map((id) => campaign?.companionFormation?.[id] || "BACK");
+  const match = LOBBY_STRATEGY_PRESETS.find((preset) => stored.every((slot, index) => slot === preset.slotFor(index)));
+  return match?.id ?? LOBBY_STRATEGY_CUSTOM;
+}
+
+/** Applies a preset by writing every deployed companion's slot through the campaign-state
+ * API the 편성 tab already uses -- no parallel persistence path, so both surfaces stay one
+ * source of truth. Returns false when nothing changed, so a redundant tap does not spend a
+ * storage write. */
+function applyLobbyStrategy(presetId) {
+  const preset = LOBBY_STRATEGY_PRESETS.find((entry) => entry.id === presetId);
+  const loadout = selectedLoadout();
+  if (!preset || !loadout.length) return false;
+  let changed = false;
+  loadout.forEach((prototypeId, index) => {
+    const slot = preset.slotFor(index);
+    if ((campaign.companionFormation?.[prototypeId] || "BACK") === slot) return;
+    campaign = setCompanionFormationSlot(campaign, prototypeId, slot);
+    changed = true;
+  });
+  return changed;
+}
+
+/** Toggles one companion in/out of the 3-slot deployment through setCompanionLoadout(), which
+ * owns the size validation. Returns false when the toggle would be rejected (roster full), so
+ * the caller can leave the persisted state and the preview run untouched. */
+function toggleLobbyCompanion(prototypeId) {
+  const loadout = selectedLoadout();
+  const next = loadout.includes(prototypeId)
+    ? loadout.filter((id) => id !== prototypeId)
+    : [...loadout, prototypeId];
+  if (next.length === loadout.length) return false;
+  const updated = setCompanionLoadout(campaign, next);
+  if (updated === campaign) return false;
+  campaign = updated;
+  return true;
+}
+
+/** Static skeleton for #lobby-cinematic, mounted ONCE by mountShell(). Text nodes are filled
+ * by renderLobbyCinematic()/BattleSession.updateLobbyCinematic() so the per-frame camera and
+ * dialogue passes never re-parse markup. Ids match ui/lobby-cinematic-spec.md §2. */
+function lobbyCinematicMarkup() {
+  return `
+    <div id="lobby-cinematic" class="lobby-cinematic" data-active="true" data-framing="wide" data-speaker="commander">
+      <div class="lobby-cine-vignette" aria-hidden="true"></div>
+      <header class="lobby-cine-head">
+        <p class="lobby-cine-eyebrow">SHADOW LEGION · 봉쇄선 <span id="lobby-cine-seq"></span></p>
+        <h1 class="lobby-cine-stage" id="lobby-cine-stage"></h1>
+        <p class="lobby-cine-domain" id="lobby-cine-domain"></p>
+      </header>
+      <div class="lobby-boss-plate" id="lobby-boss-plate" data-visible="false">
+        <span class="lobby-boss-eyebrow">STAGE BOSS</span>
+        <strong class="lobby-boss-name" id="lobby-boss-name"></strong>
+        <span class="lobby-boss-threat" id="lobby-boss-threat"></span>
+      </div>
+      <section class="lobby-objective" aria-labelledby="lobby-objective-title">
+        <h2 class="lobby-objective-title" id="lobby-objective-title">주요 목표</h2>
+        <p class="lobby-objective-text" id="lobby-objective-text"></p>
+        <p class="lobby-objective-reward" id="lobby-objective-reward"></p>
+      </section>
+      <output class="lobby-dialogue" id="lobby-dialogue" role="status" aria-live="polite">
+        <span class="lobby-dialogue-portrait" id="lobby-dialogue-portrait" aria-hidden="true"></span>
+        <span class="lobby-dialogue-bubble">
+          <b class="lobby-dialogue-speaker" id="lobby-dialogue-speaker"></b>
+          <span class="lobby-dialogue-text" id="lobby-dialogue-text"></span>
+        </span>
+      </output>
+      <section class="lobby-setup" id="lobby-setup" aria-label="출전 설정">
+        <div class="lobby-setup-block" data-setup="strategy">
+          <h3 class="lobby-setup-title">전략 편성</h3>
+          <div class="lobby-strategy-row" role="radiogroup" aria-label="전략 편성" id="lobby-strategy-row"></div>
+          <p class="lobby-setup-hint" id="lobby-strategy-hint"></p>
+        </div>
+        <div class="lobby-setup-block" data-setup="companions">
+          <h3 class="lobby-setup-title">동료 선택 <small id="lobby-companion-count"></small></h3>
+          <div class="lobby-companion-row" id="lobby-companion-row"></div>
+          <p class="lobby-setup-hint" id="lobby-companion-hint"></p>
+        </div>
+      </section>
+    </div>`;
+}
+
+/** Repaints every campaign-driven part of the lobby overlay (stage identity, objective,
+ * strategy row, companion chips) and rebinds their handlers. Called from renderShell(), so
+ * it re-runs on exactly the same beats as the docks -- one render dispatcher, not two. The
+ * per-frame camera/dialogue pass lives separately in BattleSession.updateLobbyCinematic(). */
+function renderLobbyCinematic() {
+  const overlay = root.querySelector("#lobby-cinematic");
+  if (!overlay || !campaign) return;
+  const started = session?.started ?? false;
+  overlay.dataset.active = started ? "false" : "true";
+  if (started) return;
+
+  const facts = lobbyStageFacts(selectedStageId);
+  overlay.querySelector("#lobby-cine-seq").textContent = facts.sequenceLabel;
+  overlay.querySelector("#lobby-cine-stage").textContent = facts.stageName;
+  overlay.querySelector("#lobby-cine-domain").textContent = facts.domain;
+  overlay.querySelector("#lobby-boss-name").textContent = facts.bossName;
+  overlay.querySelector("#lobby-boss-threat").textContent = facts.threat;
+  overlay.querySelector("#lobby-objective-text").textContent = facts.objective;
+  overlay.querySelector("#lobby-objective-reward").textContent = `승리 시 → ${facts.reward}`;
+
+  const activeStrategy = activeLobbyStrategyId();
+  const loadout = selectedLoadout();
+  const strategyRow = overlay.querySelector("#lobby-strategy-row");
+  strategyRow.innerHTML = LOBBY_STRATEGY_PRESETS.map((preset) => `
+    <button type="button" class="lobby-strategy" data-strategy="${escapeHtml(preset.id)}" role="radio" aria-checked="${preset.id === activeStrategy}" aria-label="${escapeHtml(preset.label)} 전략 선택"${loadout.length ? "" : " disabled"}><b aria-hidden="true">${preset.glyph}</b><span>${escapeHtml(preset.label)}</span></button>`).join("");
+  const activePreset = LOBBY_STRATEGY_PRESETS.find((preset) => preset.id === activeStrategy);
+  overlay.querySelector("#lobby-strategy-hint").textContent = loadout.length
+    ? activePreset?.hint ?? "군단 → 편성 탭에서 직접 지정한 혼합 편성입니다."
+    : "결속한 동료가 없어 전략 편성을 적용할 수 없습니다.";
+
+  const collection = campaign.companionCollection ?? [];
+  const companionRow = overlay.querySelector("#lobby-companion-row");
+  companionRow.innerHTML = collection.length
+    ? collection.map((prototypeId) => {
+      const deployed = loadout.includes(prototypeId);
+      const roleName = COMPANION_ROLES[roleForCompanion(prototypeId)]?.name ?? "미분류";
+      const full = !deployed && loadout.length >= 3;
+      return `
+        <button type="button" class="lobby-companion-chip rc-lift" data-companion="${escapeHtml(prototypeId)}" aria-pressed="${deployed}" aria-label="${escapeHtml(companionLabel(prototypeId))} ${deployed ? "출전 해제" : "출전 편성"}"${full ? " disabled" : ""}><span class="lobby-companion-glyph" aria-hidden="true">${companionGlyph(prototypeId)}</span><b class="lobby-companion-name">${escapeHtml(companionLabel(prototypeId))}</b><small class="lobby-companion-role">${escapeHtml(roleName)}</small></button>`;
+    }).join("")
+    : `<p class="lobby-companion-empty">아직 결속한 동료가 없습니다. 전투에서 정예를 처치한 뒤 추출하세요.</p>`;
+  overlay.querySelector("#lobby-companion-count").textContent = `${loadout.length}/3`;
+  overlay.querySelector("#lobby-companion-hint").textContent = collection.length
+    ? loadout.length >= 3
+      ? "출전 슬롯이 가득 찼습니다. 해제하려면 편성된 동료를 다시 누르세요."
+      : "최대 3명까지 편성할 수 있습니다."
+    : "정예 추출로 동료를 확보하면 이곳에서 바로 편성할 수 있습니다.";
+
+  strategyRow.querySelectorAll("[data-strategy]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (session?.started) return;
+      if (!applyLobbyStrategy(button.dataset.strategy)) return;
+      void persistCampaign("전략 편성을 저장했습니다.");
+      session?.remountForStage(selectedStageId);
+      renderShell();
+    });
+  });
+  companionRow.querySelectorAll("[data-companion]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (session?.started) return;
+      if (!toggleLobbyCompanion(button.dataset.companion)) return;
+      void persistCampaign("출전 동료를 저장했습니다.");
+      session?.remountForStage(selectedStageId);
+      renderShell();
+    });
+  });
 }
 
 
@@ -708,16 +933,21 @@ function monarchStatusMarkup() {
 function renderDockSide({ side, tabs, activeTab, isOpen, tabBodyHtml, brandLabel }) {
   const container = root.querySelector(`#command-dock-${side}`);
   if (!container) return;
-  const railTabsHtml = tabs.map((tab) => `<button class="dock-rail-tab" role="tab" aria-selected="${tab.id === activeTab}" aria-expanded="${isOpen && tab.id === activeTab}" aria-controls="dock-panel-${side}" data-dock-tab="${tab.id}"><span class="dock-rail-icon" aria-hidden="true">${tab.icon}</span><span class="sr-only">${escapeHtml(tab.label)}</span></button>`).join("");
-  const panelTabsHtml = tabs.map((tab) => `<button class="dock-rail-tab" role="tab" aria-selected="${tab.id === activeTab}" data-dock-tab="${tab.id}"><span class="dock-rail-icon" aria-hidden="true">${tab.icon}</span><span class="sr-only">${escapeHtml(tab.label)}</span></button>`).join("");
+  // The icon span stays aria-hidden with the label in an adjacent .sr-only span, so
+  // whether it carries a glyph or a background image is invisible to assistive tech.
+  const railIcon = (tab) => tab.iconId
+    ? `<span class="dock-rail-icon" data-ui-icon="${tab.iconId}" aria-hidden="true"></span>`
+    : `<span class="dock-rail-icon" aria-hidden="true">${tab.icon}</span>`;
+  const railTabsHtml = tabs.map((tab) => `<button class="dock-rail-tab" role="tab" aria-selected="${tab.id === activeTab}" aria-expanded="${isOpen && tab.id === activeTab}" aria-controls="dock-panel-${side}" data-dock-tab="${tab.id}">${railIcon(tab)}<span class="sr-only">${escapeHtml(tab.label)}</span></button>`).join("");
+  const panelTabsHtml = tabs.map((tab) => `<button class="dock-rail-tab" role="tab" aria-selected="${tab.id === activeTab}" data-dock-tab="${tab.id}">${railIcon(tab)}<span class="sr-only">${escapeHtml(tab.label)}</span></button>`).join("");
   container.innerHTML = `
     <nav class="dock-rail" data-dock-side="${side}" data-dock-open="${isOpen}" role="tablist" aria-label="${escapeHtml(brandLabel)}">${railTabsHtml}</nav>
     ${isOpen ? `
     <section class="dock-panel rc-glass" id="dock-panel-${side}" data-dock-side="${side}">
       <header class="dock-panel-header">
-        <span class="dock-brand" role="img" aria-label="ABYSSAL COMMAND · FARWATCH HOLD" title="ABYSSAL COMMAND · FARWATCH HOLD">AC</span>
+        <span class="dock-brand" data-ui-icon="brand-mark" role="img" aria-label="ABYSSAL COMMAND · FARWATCH HOLD" title="ABYSSAL COMMAND · FARWATCH HOLD"></span>
         <nav class="dock-panel-tabs" role="tablist" aria-label="${escapeHtml(brandLabel)}">${panelTabsHtml}</nav>
-        <button type="button" class="dock-panel-close" aria-label="${escapeHtml(brandLabel)} 닫기">×</button>
+        <button type="button" class="dock-panel-close" data-ui-icon="control-close" aria-label="${escapeHtml(brandLabel)} 닫기"></button>
       </header>
       <div class="dock-panel-body">${tabBodyHtml}</div>
     </section>` : ""}`;
@@ -907,7 +1137,7 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
       <p class="briefing-tip">${escapeHtml(selectedEditorial?.summary ?? "상세 위협과 전장 구성은 출전 전까지 봉인됩니다.")} 편성을 확인한 뒤 작전을 개시하세요.</p>
     </aside>`;
   return `
-    <section class="mission-panel command-screen" aria-labelledby="stage-title">
+    <section class="mission-panel command-screen has-atlas-plate" aria-labelledby="stage-title">
       <div class="panel-heading"><div><p class="eyebrow">EDITORIAL ARCHIVE</p><h2 id="stage-title">봉쇄선 쇼케이스</h2></div><span class="panel-count">${completed} CLEAR · ${unlocked} UNLOCKED</span></div>
       <p class="section-copy">시네마틱·전장 구성은 아래 세 봉쇄선만 미리 공개됩니다.</p>
       <div class="stage-showcase-grid">${showcaseCards}</div>
@@ -1057,7 +1287,7 @@ function renderSortieFab() {
   const button = document.createElement("button");
   button.id = "start-defense";
   button.className = "sortie-fab";
-  button.innerHTML = `<span>작전 개시</span><small>${label}</small><b aria-hidden="true">↗</b>`;
+  button.innerHTML = `<span>작전 개시</span><small>${label}</small><b data-ui-icon="control-sortie" aria-hidden="true"></b>`;
   button.addEventListener("click", () => {
     spawnSortieBurst(button);
     session?.beginRun();
@@ -1139,6 +1369,7 @@ function renderShell() {
   renderDockLeft();
   renderDockRight();
   renderSortieFab();
+  renderLobbyCinematic();
   // Reflect each dock's open state onto the battle surface so the combat edge-HUD can shift
   // its corner panels clear of an open peek panel in CSS (docks are siblings, unreachable
   // otherwise). Per-side (not one value) because at wide tier BOTH docks can be open at once.
@@ -1165,8 +1396,8 @@ function renderRailCurrency() {
   const group = document.createElement("div");
   group.className = "rail-currency";
   group.innerHTML = `
-    <button type="button" class="rail-currency-chip rail-currency-ec" data-currency="echo-core" aria-label="에코 코어 ${ec} · 성장 열기"><span class="rail-currency-glyph" aria-hidden="true">◈</span><b class="rail-currency-amount">${ec}</b></button>
-    <button type="button" class="rail-currency-chip rail-currency-bf" data-currency="bound-fragment" aria-label="속박 파편 ${bf} · 인벤토리 열기"><span class="rail-currency-glyph" aria-hidden="true">✦</span><b class="rail-currency-amount">${bf}</b></button>`;
+    <button type="button" class="rail-currency-chip rail-currency-ec" data-currency="echo-core" aria-label="에코 코어 ${ec} · 성장 열기"><span class="rail-currency-glyph" data-ui-icon="currency-echo-core" aria-hidden="true"></span><b class="rail-currency-amount">${ec}</b></button>
+    <button type="button" class="rail-currency-chip rail-currency-bf" data-currency="bound-fragment" aria-label="속박 파편 ${bf} · 인벤토리 열기"><span class="rail-currency-glyph" data-ui-icon="currency-bound-fragment" aria-hidden="true"></span><b class="rail-currency-amount">${bf}</b></button>`;
   railEl.append(group);
   group.querySelector('[data-currency="echo-core"]')?.addEventListener("click", () => openLeftDockTab("growth"));
   group.querySelector('[data-currency="bound-fragment"]')?.addEventListener("click", () => openLeftDockTab("inventory"));
@@ -1261,20 +1492,21 @@ function mountShell(stageId) {
       <div class="battle-stage-art" aria-hidden="true"></div>
       <canvas id="defense-canvas" aria-label="방어 전장"></canvas>
       <div id="world-hud-overlay" aria-hidden="true"></div>
+${lobbyCinematicMarkup()}
       <div id="defense-edge-hud">
         <div class="defense-edge defense-top">
-          <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">군단장 사령부 · SHADOW MONARCH</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span><div class="hud-xp" aria-hidden="true"><b id="battle-xp-label"></b><span class="hud-xp-track"><i id="battle-xp-fill"></i></span></div></div>
-          <div class="hud-panel hud-loop-state" data-stage-hud-context="loop"><span class="hud-eyebrow">RUN STATE · AGENCY</span><strong id="battle-loop-phase" aria-live="polite"></strong><span id="battle-pressure-state"></span><span id="battle-growth-state"></span><span id="battle-formation-state"></span><span id="battle-extraction-state"></span></div>
-          <div class="hud-panel hud-legion"><span class="hud-eyebrow">SHADOW LEGION</span><span class="legion-mana-label" id="battle-legion-mana-label"></span><span class="legion-mana-track"><i id="battle-legion-mana-fill"></i></span><div class="legion-roster" id="battle-legion-roster"></div><span class="hud-stance-mode" id="battle-stance-mode"></span></div>
+          <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">군단장 사령부 · SHADOW MONARCH</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span><div class="hud-xp" aria-hidden="true" data-ui-icon-lead="stat-echo-xp"><b id="battle-xp-label"></b><span class="hud-xp-track"><i id="battle-xp-fill"></i></span></div></div>
+          <div class="hud-panel hud-loop-state" data-stage-hud-context="loop"><span class="hud-eyebrow">RUN STATE · AGENCY</span><strong id="battle-loop-phase" aria-live="polite"></strong><div class="hud-loop-grid"><span id="battle-pressure-state"></span><span id="battle-growth-state"></span><span id="battle-formation-state"></span><span id="battle-extraction-state"></span></div></div>
+          <div class="hud-panel hud-legion"><span class="hud-eyebrow">SHADOW LEGION</span><div class="hud-legion-stack"><span class="legion-mana-label" id="battle-legion-mana-label"></span><span class="legion-mana-track"><i id="battle-legion-mana-fill"></i></span><div class="legion-roster" id="battle-legion-roster"></div><span class="hud-stance-mode" id="battle-stance-mode"></span></div></div>
 
-          <div class="top-right-hud"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div><div class="hud-right-stack"><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
+          <div class="top-right-hud"><div class="hud-order-strip"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div></div><div class="hud-right-stack"><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
         </div>
         <output id="battle-event-feedback" class="battle-event-feedback" role="status" aria-live="polite" aria-atomic="true"></output>
         <div class="arise-banner" id="battle-arise-banner" data-active="false" aria-hidden="true">ARISE</div>
 
         <div class="arena-callout" aria-hidden="true"><span>GATE CORE</span><i></i><span>전선을 유지하세요</span></div>
         <div class="defense-edge defense-bottom">
-          <div class="hud-panel gate-panel"><div class="gate-panel-copy">${portraitMarkup(COMMANDER_MESH_ROOT, "DW", "gate-panel-portrait rc-portrait")}<span class="hud-eyebrow">COMMANDER / GATE INTEGRITY</span><div class="gate-panel-bars" aria-hidden="true"><span class="gate-panel-bar-track commander"><i id="battle-commander-bar-fill"></i></span><span class="gate-panel-bar-track gate"><i id="battle-gate-bar-fill"></i></span></div><strong id="battle-commander-integrity"></strong><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div></div>
+          <div class="hud-panel gate-panel"><div class="gate-panel-copy">${portraitMarkup(COMMANDER_MESH_ROOT, "DW", "gate-panel-portrait rc-portrait")}<span class="hud-eyebrow">COMMANDER / GATE INTEGRITY</span><div class="gate-panel-bars" aria-hidden="true"><span class="gate-panel-bar-icon" data-ui-icon="stat-commander"></span><span class="gate-panel-bar-track commander"><i id="battle-commander-bar-fill"></i></span><span class="gate-panel-bar-icon" data-ui-icon="stat-gate-integrity"></span><span class="gate-panel-bar-track gate"><i id="battle-gate-bar-fill"></i></span></div><strong id="battle-commander-integrity"></strong><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div></div>
           <div class="one-thumb-controls" id="movement-actions" role="group" aria-label="한 손 이동 조작">
             <button type="button" data-move="N" aria-label="위로 이동">↑</button>
             <button type="button" data-move="W" aria-label="왼쪽으로 이동">←</button>
@@ -1387,6 +1619,19 @@ export class BattleSession {
     // Canvas2D drawing code, unaffected by this DOM layer.
     this.worldHudDamageEventKeys = new Set();
     this.worldHudDamageTick = null;
+    // Lobby cinematic (ui/lobby-cinematic-spec.md §3). Presentation-only, pre-run only:
+    // `showcaseStartedAt` is the wall clock the camera cycle and the dialogue relay are
+    // measured from, `showcaseBaselineZoom` is the renderer's own resting orbit distance
+    // captured on the first showcase frame (so the cycle scales the renderer's clamped
+    // range instead of hard-coding world units), and `showcaseSuppressed` latches true the
+    // moment the player takes the camera or moves, permanently handing control back for
+    // this pre-run session. remountForStage() resets all three.
+    this.showcaseStartedAt = performance.now();
+    this.showcaseBaselineZoom = null;
+    this.showcaseSuppressed = false;
+    this.lobbyDialogueIndex = null;
+    this.lobbyDialogueStageId = null;
+    this.lobbyDialogueScript = null;
     this.onResize = this.resize.bind(this);
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
@@ -1398,8 +1643,13 @@ export class BattleSession {
     this.onMoveControlClick = this.onMoveControlClick.bind(this);
     this.onVisibility = this.onVisibility.bind(this);
     this.onReducedMotion = (event) => {
-      telemetry.recordReducedMotion(event.matches);
-      if (event.matches) this.camera = { x: 0, y: 0 };
+      const reducedMotion = event.matches;
+      telemetry.recordReducedMotion(reducedMotion);
+      this.renderer?.setReducedMotion?.(reducedMotion);
+      if (reducedMotion) {
+        this.camera = { x: 0, y: 0 };
+        this.render();
+      }
     };
     this.loop = this.loop.bind(this);
   }
@@ -1458,8 +1708,94 @@ export class BattleSession {
     this.rallyAcknowledgedBossIds = new Set();
     this.accumulator = 0;
     this.resetCamera();
+    // A stage switch restarts the lobby showcase from its wide establishing beat and hands
+    // the camera back to the choreography, because the player is now looking at a different
+    // front and boss -- carrying the previous front's suppression/clock over would strand
+    // the new boss off-frame.
+    this.resetLobbyShowcase();
     this.surface.querySelectorAll(".edge-card").forEach((card) => card.remove());
     this.render();
+  }
+
+  /** Restarts the pre-run camera cycle and dialogue relay from their establishing beat. */
+  resetLobbyShowcase() {
+    this.showcaseStartedAt = performance.now();
+    this.showcaseBaselineZoom = null;
+    this.showcaseSuppressed = false;
+    this.lobbyDialogueIndex = null;
+    this.lobbyDialogueStageId = null;
+    this.lobbyDialogueScript = null;
+  }
+
+  /** Player input owns the camera/movement for the rest of this lobby visit. */
+  suppressLobbyShowcase() {
+    this.showcaseSuppressed = true;
+  }
+
+  /** The lobby is the existing combat shell before a run is committed. */
+  inLobby() {
+    return !this.started && !this.stopped;
+  }
+
+  /** Presentation-only per-frame pass. It uses renderer public APIs exclusively and
+   * never writes to the deterministic simulation snapshot or run digest inputs. */
+  updateLobbyCinematic() {
+    const overlay = root.querySelector("#lobby-cinematic");
+    if (!overlay) return;
+    if (!this.inLobby()) {
+      overlay.dataset.active = "false";
+      return;
+    }
+    overlay.dataset.active = "true";
+    const reducedMotion = this.motionQuery?.matches ?? false;
+    const elapsed = performance.now() - this.showcaseStartedAt;
+    const shot = showcaseCamera(elapsed, { reducedMotion });
+    if (!this.showcaseSuppressed) this.applyShowcaseCamera(shot);
+    overlay.dataset.framing = shot.framing;
+
+    const plate = overlay.querySelector("#lobby-boss-plate");
+    if (plate) {
+      plate.dataset.visible = LOBBY_SHOWCASE_STAGE_ID_SET.has(this.stageId)
+        && (shot.framing === "mid" || shot.framing === "closeup") ? "true" : "false";
+    }
+    this.updateLobbyDialogue(overlay, reducedMotion ? 0 : elapsed);
+  }
+
+  /** Converts the absolute choreography pose into public incremental orbit/zoom calls.
+   * Renderer-owned clamps remain authoritative; Canvas2D simply has no such API. */
+  applyShowcaseCamera(shot) {
+    const renderer = this.renderer;
+    if (typeof renderer?.orbit !== "function" || typeof renderer?.zoom !== "function") return;
+    if (![renderer.orbitYaw, renderer.orbitPitch, renderer.zoomFactor].every(Number.isFinite)) return;
+    if (this.showcaseBaselineZoom === null) this.showcaseBaselineZoom = renderer.zoomFactor;
+    renderer.orbit(shot.yaw - renderer.orbitYaw, shot.pitch - renderer.orbitPitch);
+    renderer.zoom(this.showcaseBaselineZoom * shot.distanceScale - renderer.zoomFactor);
+  }
+
+  /** Updates the aria-live dialogue only when its actual scripted line changes. */
+  updateLobbyDialogue(overlay, elapsed) {
+    if (this.lobbyDialogueStageId !== this.stageId || !this.lobbyDialogueScript) {
+      const facts = lobbyStageFacts(this.stageId);
+      this.lobbyDialogueScript = dialogueScriptFor({
+        stageId: this.stageId,
+        stageName: facts.stageName,
+        bossName: facts.bossName,
+        objective: facts.objective,
+      });
+      this.lobbyDialogueStageId = this.stageId;
+      this.lobbyDialogueIndex = null;
+    }
+    const resolved = dialogueLineAt(elapsed, this.lobbyDialogueScript);
+    if (!resolved || resolved.index === this.lobbyDialogueIndex) return;
+    this.lobbyDialogueIndex = resolved.index;
+    const speaker = resolved.line.speaker === "boss" ? "boss" : "commander";
+    overlay.dataset.speaker = speaker;
+    const facts = lobbyStageFacts(this.stageId);
+    overlay.querySelector("#lobby-dialogue-speaker").textContent = speaker === "boss"
+      ? facts.bossName
+      : "지휘관 · DUSK WARDEN";
+    overlay.querySelector("#lobby-dialogue-text").textContent = resolved.line.text;
+    overlay.querySelector("#lobby-dialogue-portrait").textContent = speaker === "boss" ? "◉" : "◈";
   }
 
   /** Player-committed start (the ONLY place this.started flips true): records the real
@@ -1617,6 +1953,7 @@ export class BattleSession {
       const deltaDistance = distance - this.pinch.distance;
       this.pinch.distance = distance;
       this.dismissCameraHint();
+      if (this.inLobby()) this.suppressLobbyShowcase();
       if (this.renderer?.zoom?.(-deltaDistance * CAMERA_PINCH_ZOOM_SENSITIVITY)) this.signalCameraClamp();
       return;
     }
@@ -1626,6 +1963,7 @@ export class BattleSession {
     this.pointer.x = point.x;
     this.pointer.y = point.y;
     this.dismissCameraHint();
+    if (this.inLobby() && (dx !== 0 || dy !== 0)) this.suppressLobbyShowcase();
     if (this.renderer?.orbit?.(dx * CAMERA_ORBIT_YAW_SENSITIVITY, -dy * CAMERA_ORBIT_PITCH_SENSITIVITY)) this.signalCameraClamp();
   }
 
@@ -1662,6 +2000,7 @@ export class BattleSession {
     this.controlPointerId = event.pointerId;
     button.setPointerCapture?.(event.pointerId);
     this.send("MOVE", button.dataset.move);
+    if (this.inLobby()) this.suppressLobbyShowcase();
   }
 
   onMoveControlEnd(event) {
@@ -1676,6 +2015,7 @@ export class BattleSession {
     if (event.detail !== 0) return;
     const button = event.target.closest?.("[data-move]");
     if (button) this.send("MOVE", button.dataset.move);
+    if (button && this.inLobby()) this.suppressLobbyShowcase();
   }
 
   onWindowBlur() {
@@ -1698,6 +2038,7 @@ export class BattleSession {
     const key = event.key.toLowerCase();
     if (!KEY_DIRECTIONS[key]) return;
     event.preventDefault();
+    if (event.type === "keydown" && this.inLobby()) this.suppressLobbyShowcase();
     if (event.type === "keydown") this.heldKeys.add(key);
     else this.heldKeys.delete(key);
     const directions = [...this.heldKeys].map((entry) => KEY_DIRECTIONS[entry]);
@@ -1791,12 +2132,34 @@ export class BattleSession {
       stagePresentation: stagePresentationFor(this.stageId),
       terrain: stageTerrainProjection(this.stageId),
     });
+    const lobbyStaging = this.inLobby() ? stagingFor(this.stageId, ARENA) : null;
+    const stagedCommander = lobbyStaging
+      ? { ...snapshot.commander, x: lobbyStaging.commander.x, y: lobbyStaging.commander.y, facing: lobbyStaging.facing }
+      : snapshot.commander;
+    // The pre-run boss is a presentation-only synthetic entity. It is deliberately appended
+    // after the authoritative snapshot is read, never fed to advanceDefenseRun(), telemetry,
+    // or getRunDigest(). RealtimeBattle resolves its mesh solely from `class === "boss"` and
+    // `bossId`, while the Canvas fallback has all normal health/radius fields it expects.
+    const lobbyBoss = lobbyStaging
+      ? {
+        id: `lobby-preview:${this.stageId}`,
+        kind: "boss",
+        class: "boss",
+        bossId: stageFor(this.stageId).boss,
+        hp: stageFor(this.stageId).scale,
+        maxHp: stageFor(this.stageId).scale,
+        radius: 25,
+        x: lobbyStaging.boss.x,
+        y: lobbyStaging.boss.y,
+        facing: lobbyStaging.facing + Math.PI,
+      }
+      : null;
     return {
       ...snapshot,
       presentation,
       gate: project(snapshot.gate),
-      commander: project(snapshot.commander),
-      enemies: snapshot.enemies.map(project),
+      commander: project(stagedCommander),
+      enemies: [...snapshot.enemies, ...(lobbyBoss ? [lobbyBoss] : [])].map(project),
       projectiles: snapshot.projectiles.map(project),
       pickups: snapshot.pickups.map(project),
       companions: snapshot.companions.map(project),
@@ -2097,6 +2460,7 @@ export class BattleSession {
       this.renderEventFeedback(snapshot);
     }
     this.renderWorldHud(snapshot);
+    this.updateLobbyCinematic();
   }
 
   /**
@@ -2485,7 +2849,7 @@ export class BattleSession {
       : extractionRouting
         ? "Bind 진행 중"
         : "Bind를 시작합니다";
-    const actionMarkup = `${stanceMarkup}<button id="toggle-pause" aria-pressed="${this.userPaused}">${this.userPaused ? "전투 계속" : "일시 정지"}</button>${
+    const actionMarkup = `${stanceMarkup}<button id="toggle-pause" data-ui-icon-lead="control-pause" aria-pressed="${this.userPaused}">${this.userPaused ? "전투 계속" : "일시 정지"}</button>${
       candidate && !snapshot.extracted
         ? `<button id="extract-elite" data-defense-extract="${candidate.enemyId}"${extractionDisabled ? " disabled" : ""} aria-disabled="${extractionDisabled ? "true" : "false"}" title="${extractionTitle}">${escapeHtml(extractionLabel)}</button>`
         : ""

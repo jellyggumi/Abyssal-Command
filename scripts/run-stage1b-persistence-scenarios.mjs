@@ -398,15 +398,11 @@ function buildInputs(run, snapshot, definition, memo, state) {
     }
   }
 
-  if (
-    definition.acceptExtract
-    && !memo.extractionRequested
-    && snapshot.eliteCandidate
-    && snapshot.extractionProgress?.ready
-    && snapshot.tick >= (definition.extractAfterTick ?? 0)
-  ) {
-    queue("EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
-    memo.extractionRequested = true;
+  if (definition.acceptExtract && snapshot.eliteCandidate && !snapshot.extracted) {
+    if (!memo.extractionRequested || snapshot.extractionProgress?.ready) {
+      queue("EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
+      memo.extractionRequested = true;
+    }
   }
 
   return { run: next, nextInputs };
@@ -504,7 +500,8 @@ function runSingleScenario(definition) {
     const progressed = after.commander.x !== before.commander.x || after.commander.y !== before.commander.y;
     consecutiveNoProgress = progressed ? 0 : consecutiveNoProgress + 1;
 
-    if (consecutiveNoProgress > MAX_CONSECUTIVE_NO_PROGRESS) {
+    const intentionallyHoldingPosition = definition.moveOnlyAfterAcceptance && memo.acceptedEliteExtractCount > 0;
+    if (consecutiveNoProgress > MAX_CONSECUTIVE_NO_PROGRESS && !intentionallyHoldingPosition) {
       fail(`${definition.scenario} exceeded maxConsecutiveNoProgress ${MAX_CONSECUTIVE_NO_PROGRESS} at tick ${after.tick}`);
     }
 
@@ -570,8 +567,9 @@ function runSingleScenario(definition) {
   }
 
   const requestedExtractCount = state.inputs.filter((input) => input.inputType === "EXTRACT_ELITE").length;
-  if (requestedExtractCount > 1) {
-    fail(`${definition.scenario} must not queue more than one EXTRACT_ELITE input`);
+  const acceptedExtractCount = state.inputs.filter((input) => input.inputType === "EXTRACT_ELITE" && input.accepted).length;
+  if (requestedExtractCount > 2 || acceptedExtractCount > 1) {
+    fail(`${definition.scenario} may queue one rejected route request and one accepted EXTRACT_ELITE handoff`);
   }
 
   const applyCandidates = handoffs.map(({ eventId, eliteId, prototype }) => ({ eventId, eliteId, prototype }));

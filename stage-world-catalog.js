@@ -26,6 +26,12 @@ const surface = (id, type, minX, maxX, minY, maxY, axis, atMin, atMax) => ({
   bounds: bounds(minX, maxX, minY, maxY),
   elevation: { axis, atMin, atMax },
 });
+const meshCollider = (id, triangles) => ({ id, triangles });
+const triangle = (ax, ay, ae, bx, by, be, cx, cy, ce) => ([
+  { x: ax, y: ay, elevation: ae },
+  { x: bx, y: by, elevation: be },
+  { x: cx, y: cy, elevation: ce },
+]);
 const landmark = (id, label, x, y, elevation, propId) => ({
   id,
   label,
@@ -79,10 +85,27 @@ const profiles = [
         surface("cinder-span:overlook-ramp", "ramp", 15000, 16600, 2100, 3300, "x", 0, 420),
         surface("cinder-span:overlook-platform", "platform", 16600, 17900, 1900, 3400, "x", 420, 420),
       ],
+      meshColliders: [
+        meshCollider("cinder-span:walkable-support", [
+          triangle(600, 800, 0, 23400, 800, 0, 23400, 11200, 0),
+          triangle(600, 800, 0, 23400, 11200, 0, 600, 11200, 0),
+          triangle(15000, 2100, 0, 16600, 2100, 420, 16600, 3300, 420),
+          triangle(15000, 2100, 0, 16600, 3300, 420, 15000, 3300, 0),
+          triangle(16600, 1900, 420, 17900, 1900, 420, 17900, 3400, 420),
+          triangle(16600, 1900, 420, 17900, 3400, 420, 16600, 3400, 420),
+        ]),
+      ],
     },
     presentation: {
       palette: { surface: "surface-cinder-ash", contour: "contour-ember", landmark: "landmark-forge", hazard: "hazard-ash", objective: "objective-seal", accent: "#f3592c" },
       atmosphere: { descriptor: "Ash wind combs the bridge blockade.", motif: "embers moving through ash", fogNear: 22.4, fogFar: 50.4 },
+      cinematic: {
+        intro: {
+          durationTicks: 90,
+          from: { distance: 6, azimuth: -0.24, polar: -0.34 },
+          to: { distance: 0, azimuth: 0, polar: 0 },
+        },
+      },
       landmarks: [
         landmark("landmark.ember-relay-spire", "Ember Relay Spire", 17600, 6000, 0, "cinder-span:seal-brand"),
         landmark("landmark.drowned-forge-arch", "Drowned Forge Arch", 12600, 2800, 0, "cinder-span:forge-lantern"),
@@ -462,6 +485,34 @@ const validateProfile = (profile) => {
     || profile.gameplay.surfaces.filter(({ type }) => type === "platform").length !== 1) {
     throw new Error(`Stage world requires one ramp and one platform: ${profile.stageId}`);
   }
+  const meshColliders = profile.gameplay.meshColliders ?? [];
+  if (!Array.isArray(meshColliders)) throw new Error(`Invalid mesh collider collection: ${profile.stageId}`);
+  meshColliders.forEach((collider) => {
+    claimId(collider);
+    if (!Array.isArray(collider.triangles) || collider.triangles.length === 0) {
+      throw new Error(`Mesh collider requires triangles: ${collider.id}`);
+    }
+    collider.triangles.forEach((vertices, index) => {
+      if (!Array.isArray(vertices) || vertices.length !== 3) {
+        throw new Error(`Mesh collider triangle must have three vertices: ${collider.id}[${index}]`);
+      }
+      const [first, second, third] = vertices;
+      const validVertex = (vertex) => vertex && inside(vertex.x, minX, maxX)
+        && inside(vertex.y, minY, maxY) && Number.isFinite(vertex.elevation) && vertex.elevation >= 0;
+      if (!(validVertex(first) && validVertex(second) && validVertex(third))) {
+        throw new Error(`Invalid mesh collider triangle: ${collider.id}[${index}]`);
+      }
+      const twiceArea = (second.x - first.x) * (third.y - first.y)
+        - (second.y - first.y) * (third.x - first.x);
+      if (!(Number.isFinite(twiceArea) && twiceArea !== 0)) {
+        throw new Error(`Degenerate mesh collider triangle: ${collider.id}[${index}]`);
+      }
+    });
+  });
+  if (profile.stageId === "cinder-span" && meshColliders.length === 0) {
+    throw new Error("Cinder Span requires an authored walkable support mesh.");
+  }
+
 
 
   for (const entry of profile.presentation.props) {
@@ -486,6 +537,22 @@ const validateProfile = (profile) => {
       throw new Error(`NPC presentation cue leaves walkable bounds: ${entry.id}`);
     }
   }
+  const intro = profile.presentation.cinematic?.intro;
+  if (profile.presentation.cinematic && !intro) {
+    throw new Error(`Invalid cinematic profile: ${profile.stageId}`);
+  }
+  if (intro) {
+    const validOffset = (offset) => offset && Number.isFinite(offset.distance)
+      && Number.isFinite(offset.azimuth) && Number.isFinite(offset.polar);
+    if (!(Number.isInteger(intro.durationTicks) && intro.durationTicks > 0 && intro.durationTicks <= 300
+      && validOffset(intro.from) && validOffset(intro.to))) {
+      throw new Error(`Invalid intro dolly profile: ${profile.stageId}`);
+    }
+  }
+  if (profile.stageId === "cinder-span" && !intro) {
+    throw new Error("Cinder Span requires an intro dolly profile.");
+  }
+
 
   const propIds = new Set(profile.presentation.props.map(({ id }) => id));
   profile.presentation.landmarks.forEach((entry) => {

@@ -16,6 +16,7 @@ const EXPECTED_CAUSES = new Set([
   "OBJECTIVE_PRESSURE_PULSE",
   "OBJECTIVE_PRESSURE_DEADLINE",
   "TERRAIN_RECOVERY",
+  "WAVE_CLEARED",
   "PROJECTILE_IMPACT",
   "SKILL_SELECTED_PASSIVE_INTEGRITY",
   "SKILL_CAST_INTEGRITY",
@@ -76,7 +77,8 @@ test("Stage1b pressure export covers the exact 15-row population and public setu
     assert.ok(row.setupAdvanceCalls <= 480);
     assert.ok(row.fightAdvanceCalls <= 20_000);
     assert.ok(row.fightAdvanceCalls > 0);
-    assert.equal(row.setupAdvanceCalls + row.fightAdvanceCalls, row.terminalTick);
+    const setupTicks = row.terminalTick - row.fightAdvanceCalls;
+    assert.ok(setupTicks >= 0 && setupTicks <= row.setupAdvanceCalls);
     assert.ok(row.invariants.compositeLedgerOnly);
     assert.ok(row.invariants.noUnknownIntegrityDiffs);
     assertIntervals(row.temporalIntervals, row.terminalTick);

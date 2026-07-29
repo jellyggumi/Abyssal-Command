@@ -1,0 +1,23 @@
+{
+  "asset": "assets/images/battle/pilot/concept-ui-nav-companions.png",
+  "assetId": "nav-companions",
+  "lane": "concept",
+  "runtimeEligible": false,
+  "tool": "god-tibo-imagen",
+  "toolInvocation": "gti --prompt \"<prompt>\" --output assets/images/battle/pilot/concept-ui-nav-companions.png",
+  "model": "gpt-5.4 image_generation (private-codex backend)",
+  "prompt": "dark-fantasy abyssal stone-gothic game UI medallion icon on pure black, carved dark granite outer frame with pointed gothic cusps and thin gold rim, cold soul-teal (#81d6ff) inner glow and zenith-gold (#e9c46a) rim accent, the interior subject rendered as ONE bold simplified bone-white mass with heavy strokes and almost no fine internal detail so it stays unmistakable at 48 pixels, engraved relief, high contrast between dark frame and bright interior subject, centered single subject, no text, no letters, no numbers, no watermark. Interior subject: three simplified hooded warden figures side by side as one solid bone-white silhouette group, plain dome heads, no faces, no fine drapery.",
+  "revisedPrompt": "dark-fantasy abyssal stone-gothic game UI medallion icon on pure black, carved dark granite outer frame with pointed gothic cusps and thin gold rim, cold soul-teal (#81d6ff) inner glow and zenith-gold (#e9c46a) rim accent, the interior subject rendered as ONE bold simplified bone-white mass with heavy strokes and almost no fine internal detail so it stays unmistakable at 48 pixels, engraved relief, high contrast between dark frame and bright interior subject, centered single subject, no text, no letters, no numbers, no watermark. Interior subject: three simplified hooded warden figures side by side as one solid bone-white silhouette group, plain dome heads, no faces, no fine drapery.",
+  "referenceInputs": [],
+  "responseId": "resp_01cf2d50871fc89b016a68d50a5260819181c30023097bbe24",
+  "generationRounds": 3,
+  "generatedAtMs": 66769,
+  "sha256": "5d113e6983d663eb199308020d2eb997684f371e1b440773e0227407a53ddedd",
+  "bytes": 2193483,
+  "boundRuntimeSurface": ".dock-rail-icon[companions]",
+  "promotionPath": "assets/images/battle/ui/hud/nav-companions.webp",
+  "promotedBy": "scripts/build-ui-icon-assets.py",
+  "repositoryRevision": "cbe937ed342393d97b5232ab5366ec2f0770adfe",
+  "legibilityAudit": "rendered at its real CSS box on the .dock-rail background and inspected; round 3 is the first to pass",
+  "notes": "Generated in the concept lane per CLAUDE.md §3. Promotion to the runtime lane is performed only by scripts/build-ui-icon-assets.py after the legibility audit."
+}

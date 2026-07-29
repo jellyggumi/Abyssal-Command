@@ -12,6 +12,8 @@ import { REWARDS, STAGE_PRESENTATION_BY_ID, STAGES } from "./defense-catalog.js"
 import { stageWorldFor } from "./stage-world-catalog.js";
 
 const MAX_VISUAL_EFFECTS = 24;
+const SIM_TICK_RATE = 60;
+const MAX_ANIMATION_TICK_DELTA = 6;
 const MAX_VISUAL_EVENT_KEYS = 128;
 // Software rasterizers (SwiftShader/llvmpipe) make fragment cost dominate the
 // frame. Bound their drawn backbuffer while preserving the logical CSS viewport;
@@ -1431,12 +1433,14 @@ export class RealtimeBattle {
     this.animationEventKeys = new Set();
     this.pendingVfx = [];
     this.pendingDeathEchoes = []; // captureDeathEchoes()-collected { modelPath, x, y, z }, drained by collectFeedback()
-    // Wall-clock delta for AnimationMixer stepping. One-shot completion is
-    // observed from the mixer's own clamped/paused action state in
-    // updateAnimations(), never from a parallel timer.
-    // The delta remains presentation-local and is deliberately not tied to
-    // snapshot.tick, which can batch/skip while a tab is backgrounded.
+    // Tick-bearing snapshots advance mixers, follow, and facing from the
+    // authoritative 60 Hz simulation timeline. Utility callers that omit a
+    // tick retain the wall-clock path below.
     this.lastAnimMs = null;
+    this.lastAnimTick = null;
+    // Renderer-local camera offsets authored by a consumed STAGE_STARTED
+    // event. They never feed back into user orbit state or simulation.
+    this.stageIntro = null;
     // Impact feel (presentation-only). Every entry is keyed by entity id and
     // expires on wall-clock time; nothing here is read back into the
     // snapshot, so getRunDigest() inputs stay untouched.
@@ -2229,9 +2233,31 @@ export class RealtimeBattle {
     const source = record.projectileSourcePoint;
     const target = record.projectileTargetPoint;
     worldPointInto(source, projectile);
+    /* None-target orbs carry their own simulated position each tick: the renderer follows the
+     * simulation point and aims along the velocity instead of interpolating toward a locked
+     * target id (travelling orbs have no target until they actually touch a body). */
+    if (projectile.mode === "travel") {
+      const family = record.projectileFamily;
+      const sourceActor = this.actors.get(projectile.sourceId);
+      const muzzleHeight = (sourceActor?.root?.position.y ?? source.y) + PROJECTILE_HEIGHT[family];
+      record.root.position.set(source.x, muzzleHeight, source.z);
+      record.travelProgress = 0;
+      record.root.userData.projectileTravelProgress = 0;
+      const heading = Math.hypot(finite(projectile.vx, 0), finite(projectile.vy, 0));
+      if (heading > 0) {
+        target.set(
+          source.x + finite(projectile.vx, 0) / heading,
+          muzzleHeight,
+          source.z + finite(projectile.vy, 0) / heading,
+        );
+        record.root.lookAt(target);
+      }
+      return;
+    }
     const targetEntity = snapshotEntityById(snapshot, projectile.targetId);
     if (targetEntity) worldPointInto(target, targetEntity);
     else target.copy(source);
+
 
     const sourceActor = this.actors.get(projectile.sourceId);
     const targetActor = this.actors.get(projectile.targetId);
@@ -2395,6 +2421,66 @@ export class RealtimeBattle {
     this.zoomFactor = THREE.MathUtils.clamp(desired, MIN_ORBIT_DISTANCE, MAX_ORBIT_DISTANCE);
     return Math.abs(desired - this.zoomFactor) > 1e-9;
   }
+  // App-owned accessibility observers call this whenever the system
+  // preference changes. The renderer keeps only its local presentation
+  // policy; enabling reduced motion cancels rather than pauses an intro so
+  // disabling it cannot resume a partially completed dolly.
+  setReducedMotion(reducedMotion) {
+    this.reducedMotion = reducedMotion === true;
+    if (this.reducedMotion) this.stageIntro = null;
+  }
+
+  startsStageAtTickZero(snapshot) {
+    const tick = snapshot?.tick;
+    return tick === 0
+      && Array.isArray(snapshot?.events)
+      && snapshot.events.some((event) => event?.type === "STAGE_STARTED" && event.tick === 0);
+  }
+  // A second tick-zero STAGE_STARTED after a progressed timeline is a new
+  // session run, even when the event keeps its deterministic id. Clear
+  // animation keys before the confirming frame so its intro can replay, but
+  // retain visual keys until that batch has filtered its existing VFX.
+  resetPresentationEventDeduplicationForNewRun(startsStageAtTickZero) {
+    if (!startsStageAtTickZero || !(this.lastAnimTick > 0)) return false;
+    this.animationEventKeys.clear();
+    return true;
+  }
+
+
+
+  startStageIntro(snapshot) {
+    if (this.reducedMotion || !Number.isInteger(snapshot?.tick)) return;
+    const intro = stageWorldFor(resolveStageId(snapshot))?.presentation?.cinematic?.intro;
+    const durationTicks = intro?.durationTicks;
+    const from = intro?.from;
+    const to = intro?.to;
+    const offsets = [
+      from?.distance, from?.azimuth, from?.polar,
+      to?.distance, to?.azimuth, to?.polar,
+    ];
+    if (!Number.isInteger(durationTicks) || durationTicks <= 0 || !offsets.every(Number.isFinite)) return;
+    this.stageIntro = {
+      startTick: snapshot.tick,
+      durationTicks,
+      from: { distance: from.distance, azimuth: from.azimuth, polar: from.polar },
+      to: { distance: to.distance, azimuth: to.azimuth, polar: to.polar },
+    };
+  }
+
+  stageIntroOffsets(tick) {
+    const intro = this.stageIntro;
+    if (!intro || this.reducedMotion || !Number.isInteger(tick)) return null;
+    const progress = THREE.MathUtils.clamp((tick - intro.startTick) / intro.durationTicks, 0, 1);
+    if (progress >= 1) {
+      this.stageIntro = null;
+      return null;
+    }
+    return {
+      distance: THREE.MathUtils.lerp(intro.from.distance, intro.to.distance, progress),
+      azimuth: THREE.MathUtils.lerp(intro.from.azimuth, intro.to.azimuth, progress),
+      polar: THREE.MathUtils.lerp(intro.from.polar, intro.to.polar, progress),
+    };
+  }
 
   updateCamera(snapshot) {
     // Auto-follow moves only the orbit center, including authoritative
@@ -2416,14 +2502,24 @@ export class RealtimeBattle {
       this.cameraTarget.set(targetX, targetY, targetZ);
     }
 
-    // --- Section 2: orbit position -- spherical coordinates around
-    // cameraTarget, replacing the legacy fixed offset (§4.2). orbitYaw=0
-    // looks from the +Z side, matching the legacy offset's viewing
-    // direction (offset.z > 0, offset.x = 0) for continuity at defaults.
-    const horizontalRadius = this.zoomFactor * Math.cos(this.orbitPitch);
-    const height = this.zoomFactor * Math.sin(this.orbitPitch);
-    const offsetX = horizontalRadius * Math.sin(this.orbitYaw);
-    const offsetZ = horizontalRadius * Math.cos(this.orbitYaw);
+    // --- Section 2: orbit position -- cinematic offsets are calculated
+    // locally, so player-selected orbit state remains the unmodified base.
+    const intro = this.stageIntroOffsets(snapshot?.tick);
+    const cameraDistance = THREE.MathUtils.clamp(
+      this.zoomFactor + (intro?.distance ?? 0),
+      MIN_ORBIT_DISTANCE,
+      MAX_ORBIT_DISTANCE,
+    );
+    const cameraYaw = wrapAngle(this.orbitYaw + (intro?.azimuth ?? 0));
+    const cameraPitch = THREE.MathUtils.clamp(
+      this.orbitPitch + (intro?.polar ?? 0),
+      MIN_ORBIT_PITCH,
+      MAX_ORBIT_PITCH,
+    );
+    const horizontalRadius = cameraDistance * Math.cos(cameraPitch);
+    const height = cameraDistance * Math.sin(cameraPitch);
+    const offsetX = horizontalRadius * Math.sin(cameraYaw);
+    const offsetZ = horizontalRadius * Math.cos(cameraYaw);
     this.camera.position.set(
       this.cameraTarget.x + offsetX,
       this.cameraTarget.y + height,
@@ -2441,7 +2537,7 @@ export class RealtimeBattle {
     // light's falloff is distance-independent, so its position only needs
     // to encode DIRECTION via rimLightTarget, not an accurately-scaled
     // distance).
-    const rimYaw = this.orbitYaw + Math.PI;
+    const rimYaw = cameraYaw + Math.PI;
     const rimHorizontalRadius = RIM_LIGHT_DISTANCE * Math.cos(RIM_LIGHT_PITCH);
     const rimHeight = RIM_LIGHT_DISTANCE * Math.sin(RIM_LIGHT_PITCH);
     this.rimLight.position.set(
@@ -2653,12 +2749,34 @@ export class RealtimeBattle {
     record.root.rotation.y = record.yaw;
   }
 
-  // Steps mixers by presentation wall-clock time. A LoopOnce action marks
-  // itself paused when its clamped final frame is reached; that boundary
-  // owns one-shot recovery while this loop keeps locomotion synchronized.
-  updateAnimations(nowMs) {
+  // Tick-bearing snapshots use their monotonic 60 Hz progression. A
+  // STAGE_STARTED snapshot at tick zero is a fresh timeline boundary; other
+  // regressing ticks remain stale and never move the baseline backward.
+  // The wall-clock path remains for direct utility callers without a tick.
+  animationDelta(nowMs, tick, startsStageAtTickZero = false) {
+    if (Number.isInteger(tick)) {
+      let delta = 0;
+      if (startsStageAtTickZero) {
+        this.lastAnimTick = tick;
+      } else if (this.lastAnimTick === null) {
+        this.lastAnimTick = tick;
+      } else if (tick > this.lastAnimTick) {
+        delta = Math.min(tick - this.lastAnimTick, MAX_ANIMATION_TICK_DELTA) / SIM_TICK_RATE;
+        this.lastAnimTick = tick;
+      }
+      this.lastAnimMs = nowMs;
+      return delta;
+    }
     const delta = Math.min((nowMs - (this.lastAnimMs ?? nowMs)) / 1000, 0.1);
     this.lastAnimMs = nowMs;
+    return delta;
+  }
+
+  // A LoopOnce action marks itself paused when its clamped final frame is
+  // reached; that boundary owns one-shot recovery while this loop keeps
+  // locomotion synchronized.
+  updateAnimations(nowMs, tick, startsStageAtTickZero = false) {
+    const delta = this.animationDelta(nowMs, tick, startsStageAtTickZero);
     for (const record of this.actors.values()) {
       if (record.mixer) record.mixer.update(delta);
       if (record.oneShotAction?.paused) this.finishOneShot(record);
@@ -2856,13 +2974,14 @@ export class RealtimeBattle {
   // Every transition is sourced from a public snapshot event field. A
   // separate bounded event-key set makes repeated renders of one sim tick
   // idempotent without mutating the frozen snapshot or restarting clips.
-  triggerCombatActions(event, nowMs) {
+  triggerCombatActions(event, nowMs, snapshot) {
     if (!event?.type || !this.rememberAnimationEvent(feedbackKey(event))) return;
     this.registerImpactFeedback(event, nowMs);
     const actor = (id) => this.actors.get(id);
     const target = (id) => this.combatTarget(id);
     switch (event.type) {
       case "STAGE_STARTED":
+        this.startStageIntro(snapshot);
         this.triggerAction(actor("commander"), "show", nowMs);
         break;
       case "ENEMY_SPAWNED":
@@ -2931,7 +3050,7 @@ export class RealtimeBattle {
         const key = feedbackKey(event);
         if (this.rememberVisualEvent(key)) this.spawnVfx(snapshot, event, tick);
       }
-      this.triggerCombatActions(event, nowMs);
+      this.triggerCombatActions(event, nowMs, snapshot);
     }
     for (const echo of this.pendingDeathEchoes.splice(0)) {
       this.spawnDeathEcho(echo, tick);
@@ -2964,12 +3083,15 @@ export class RealtimeBattle {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
 
+    const startsStageAtTickZero = this.startsStageAtTickZero(snapshot);
+    const resetVisualEventDeduplication = this.resetPresentationEventDeduplicationForNewRun(startsStageAtTickZero);
     this.ensureStageTerrain(resolveStageId(snapshot));
     this.captureDeathEchoes(snapshot);
     this.reconcileActors(snapshot);
-    this.updateCamera(snapshot);
-    this.updateAnimations(performance.now());
     this.collectFeedback(snapshot);
+    if (resetVisualEventDeduplication) this.visualEventKeys.clear();
+    this.updateCamera(snapshot);
+    this.updateAnimations(performance.now(), snapshot?.tick, startsStageAtTickZero);
     // Impact feel runs last: the flash/knockback/shake it applies must land on
     // top of the camera and actor placement committed above.
     this.updateImpactFeedback(performance.now());
@@ -3048,6 +3170,8 @@ export class RealtimeBattle {
     this.stageDecorRecords = [];
     this.stageTerrainRecord = null;
     this.lastAnimMs = null;
+    this.lastAnimTick = null;
+    this.stageIntro = null;
     this.disposed = true;
   }
 

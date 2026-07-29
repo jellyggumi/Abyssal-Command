@@ -35,7 +35,7 @@ const COMPONENT_TYPES = Object.freeze({
 
 const PROVENANCE_PATH = "assets/images/battle/glb/terrain/build-provenance.json";
 const TERRAIN_BUILDER_PATH = "scripts/build-authored-stage-environments.py";
-const ALL_MESH_PROVENANCE_PATH = "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json";
+const ALL_MESH_PROVENANCE_PATH = "_workspace/archive/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json";
 const STAGE_SCENE_AUDIT_PATH = "scripts/audit-stage-scenes.mjs";
 const SHA256_PATTERN = /^[0-9a-f]{64}$/u;
 

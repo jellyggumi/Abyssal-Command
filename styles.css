@@ -47,6 +47,102 @@ button:disabled { opacity: .42; cursor: not-allowed; }
 .dock-rail-tab { display: grid; place-items: center; width: 48px; height: 48px; min-width: 48px; min-height: 48px; padding: 0; border-radius: .6rem; background: transparent; border-color: transparent; }
 .dock-rail-tab[aria-selected="true"] { border-color: #80d8ff; background: linear-gradient(180deg, rgb(44 173 214 / .2), rgb(60 44 91 / .2)); }
 .dock-rail-icon { font-size: 1.15rem; line-height: 1; }
+
+/* ---------------------------------------------------------------------------
+   Generated UI icon layer (scripts/build-ui-icon-assets.py -> assets/images/battle/ui/hud/).
+
+   Two attribute families, deliberately separate:
+     [data-ui-icon]       the element IS the icon (dock rail tab, brand, close,
+                          currency glyph, sortie chevron). Needs an explicit box
+                          because the glyph text it replaced is gone.
+     [data-ui-icon-lead]  the element KEEPS its own content and gains a small
+                          leading icon via ::before (HUD bar tracks, XP row,
+                          pause button). Never changes the element's own layout
+                          role, so the existing HUD geometry tests still hold.
+
+   Every icon-bearing element is already either aria-hidden or paired with an
+   .sr-only label, so moving from a text glyph to an image is invisible to
+   assistive tech. Sizes here are the CSS box; the assets ship at 2x that box.
+   --------------------------------------------------------------------------- */
+[data-ui-icon] {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  /* The replaced glyph is gone, so kill any inherited text metrics that would
+     otherwise add phantom line-height to the box. */
+  font-size: 0;
+  line-height: 0;
+  color: transparent;
+}
+.dock-rail-icon[data-ui-icon] { width: 40px; height: 40px; }
+.dock-brand[data-ui-icon] {
+  width: 1.9rem;
+  height: 1.9rem;
+  /* The art carries its own carved ring, so the CSS ring and plate would
+     double up on it. */
+  border: 0;
+  background-color: transparent;
+  background-image: url("assets/images/battle/ui/hud/brand-mark.webp");
+}
+.dock-panel-close[data-ui-icon] {
+  background-image: url("assets/images/battle/ui/hud/control-close.webp");
+  background-size: 26px 26px;
+}
+.rail-currency-glyph[data-ui-icon] { width: 22px; height: 22px; }
+.sortie-fab b[data-ui-icon] { width: 26px; height: 26px; }
+
+.dock-rail-icon[data-ui-icon="nav-growth"] { background-image: url("assets/images/battle/ui/hud/nav-growth.webp"); }
+.dock-rail-icon[data-ui-icon="nav-companions"] { background-image: url("assets/images/battle/ui/hud/nav-companions.webp"); }
+.dock-rail-icon[data-ui-icon="nav-inventory"] { background-image: url("assets/images/battle/ui/hud/nav-inventory.webp"); }
+.dock-rail-icon[data-ui-icon="nav-sortie"] { background-image: url("assets/images/battle/ui/hud/nav-sortie.webp"); }
+.dock-rail-icon[data-ui-icon="nav-stronghold"] { background-image: url("assets/images/battle/ui/hud/nav-stronghold.webp"); }
+[data-ui-icon="currency-echo-core"] { background-image: url("assets/images/battle/ui/hud/currency-echo-core.webp"); }
+[data-ui-icon="currency-bound-fragment"] { background-image: url("assets/images/battle/ui/hud/currency-bound-fragment.webp"); }
+[data-ui-icon="control-sortie"] { background-image: url("assets/images/battle/ui/hud/control-sortie.webp"); }
+
+/* Leading-icon family. `flex-shrink: 0` matters on the bar tracks: they live in
+   a narrow grid column and would otherwise crush the icon before the bar. */
+[data-ui-icon-lead]::before {
+  content: "";
+  display: inline-block;
+  flex-shrink: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+/* The bar tracks are the one place the icon can be neither a flex sibling of the
+   fill nor a pseudo-element on the track:
+     - `#battle-commander-bar-fill` / `#battle-gate-bar-fill` are driven by
+       `style.width = "<ratio>%"` (app.js), so any flex-basis on the fill would
+       silently override that width -- both bars would render permanently full
+       and damage would become invisible;
+     - `.gate-panel-bar-track` carries `overflow: hidden` (it needs it, to clip
+       the fill to the pill radius), which also clips an absolutely positioned
+       ::before on that same track.
+   So each icon is a REAL element and a grid sibling of its track inside
+   `.gate-panel-bars`, leaving the track's original geometry untouched. */
+.gate-panel-bars:has(> .gate-panel-bar-icon) {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: .18rem .3rem;
+  align-items: center;
+}
+.gate-panel-bar-icon { width: 13px; height: 13px; }
+[data-ui-icon="stat-commander"] { background-image: url("assets/images/battle/ui/hud/stat-commander.webp"); }
+[data-ui-icon="stat-gate-integrity"] { background-image: url("assets/images/battle/ui/hud/stat-gate-integrity.webp"); }
+.hud-xp[data-ui-icon-lead]::before { width: 14px; height: 14px; }
+.hud-xp[data-ui-icon-lead="stat-echo-xp"] { grid-template-columns: auto auto 1fr; }
+.hud-xp[data-ui-icon-lead="stat-echo-xp"]::before { background-image: url("assets/images/battle/ui/hud/stat-echo-xp.webp"); }
+#toggle-pause[data-ui-icon-lead] { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; }
+#toggle-pause[data-ui-icon-lead]::before {
+  width: 15px;
+  height: 15px;
+  background-image: url("assets/images/battle/ui/hud/control-pause.webp");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The icon layer is static; this only documents that nothing here animates. */
+  [data-ui-icon], [data-ui-icon-lead]::before { transition: none; }
+}
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .dock-panel {
   position: relative;
@@ -676,6 +772,41 @@ body {
     linear-gradient(rgb(255 255 255 / .014) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: linear-gradient(to bottom, #000, transparent 88%);
+}
+/* Generated lobby key plate (assets/images/battle/ui/plates/). It rides on the
+   EXISTING .page-atmosphere element as an extra ::before layer rather than being
+   added to that element's own `background` shorthand, because the grid lines above
+   are sized by `background-size: 48px 48px` -- folding a cover-sized plate into
+   the same shorthand would inherit that 48px sizing. Sits at the very back of the
+   page (the host is already z-index:-1) and never intercepts pointer events. */
+.page-atmosphere::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: url("assets/images/battle/ui/plates/lobby-command-plate.webp") center / cover no-repeat;
+  opacity: .16;
+  filter: saturate(.9) contrast(1.05);
+  mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / .35) 52%, transparent 92%);
+}
+/* The battle surface already paints its own stage art full-bleed, so the lobby
+   plate must not sit behind a live run and double up on it. */
+html[data-defense-started="true"] .page-atmosphere::before { opacity: 0; }
+/* Seal Atlas header plate: the campaign-map tablet reads as the showcase panel's
+   own masthead. Contained to the panel heading band so it never competes with the
+   three per-stage card arts below it. */
+.mission-panel.has-atlas-plate { position: relative; isolation: isolate; }
+.mission-panel.has-atlas-plate::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: -1;
+  height: 6.5rem;
+  content: "";
+  pointer-events: none;
+  background: url("assets/images/battle/ui/plates/seal-atlas-plate.webp") center top / cover no-repeat;
+  opacity: .3;
+  mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / .5) 58%, transparent 100%);
 }
 #defense-app { position: relative; isolation: isolate; }
 .mission-panel, .briefing-panel, .loadout-panel, .archive-panel, .growth-panel {
@@ -1487,4 +1618,235 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .growth-system-window .system-alert-line { text-shadow: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Pre-run lobby cinematic — Shadow Legion face-off (lobby-cinematic.js).
+   The overlay is a presentation layer within the persistent battle shell: it
+   never replaces the canvas or combat HUD, and its controls write campaign
+   state through app.js rather than storing a parallel lobby selection.
+   --------------------------------------------------------------------------- */
+/* These two overrides were authored unscoped, which broke the renderer layering
+   contract (tests/defense-renderer-contract.test.mjs asserts
+   `.battle-stage-art` z-index 2 < `#world-hud-overlay`): lowering the world HUD to
+   2 globally tied it with the stage art and let the backplate cover the live
+   combat readout mid-run. The lobby cinematic only ever renders pre-run, so the
+   overrides are scoped to that state -- the intent (lobby overlay at z-index 3
+   sitting above both) is preserved exactly, and combat-time layering returns to
+   its authored 4/5 order. */
+#defense-battle-surface[data-defense-started="false"] #world-hud-overlay { z-index: 2; }
+#defense-battle-surface[data-defense-started="false"]::after { z-index: 2; }
+.lobby-cinematic {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(13rem, 22rem);
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "head boss"
+    "objective ."
+    "dialogue setup";
+  gap: clamp(.5rem, 1.4vw, 1rem);
+  padding:
+    max(.75rem, calc(var(--defense-safe-top) + .25rem))
+    max(.75rem, calc(var(--defense-safe-right) + .25rem))
+    max(.75rem, calc(var(--defense-safe-bottom) + .25rem))
+    max(.75rem, calc(var(--defense-safe-left) + .25rem));
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 180ms ease;
+}
+.lobby-cinematic[data-active="false"] { display: none; }
+.lobby-cine-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgb(3 5 12 / .68), transparent 28% 72%, rgb(3 5 12 / .62)),
+    linear-gradient(180deg, rgb(3 5 12 / .48), transparent 26% 70%, rgb(3 5 12 / .72)),
+    radial-gradient(ellipse at 50% 46%, transparent 25%, rgb(2 3 8 / .32) 78%);
+}
+.lobby-cine-head,
+.lobby-boss-plate,
+.lobby-objective,
+.lobby-dialogue,
+.lobby-setup { position: relative; min-width: 0; }
+.lobby-cine-head { grid-area: head; align-self: start; max-width: min(35rem, 72vw); }
+.lobby-cine-eyebrow,
+.lobby-boss-eyebrow,
+.lobby-setup-title,
+.lobby-objective-title {
+  margin: 0;
+  color: var(--rc-cyan);
+  font-size: clamp(.6rem, 1.25vw, .72rem);
+  font-weight: 900;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+.lobby-cine-stage {
+  margin: .2rem 0 0;
+  color: #f2f7ff;
+  font-size: clamp(1.15rem, 3vw, 2.25rem);
+  letter-spacing: .03em;
+  line-height: 1.05;
+  text-shadow: 0 .16rem .8rem rgb(0 0 0 / .7);
+}
+.lobby-cine-domain { margin: .28rem 0 0; color: rgb(222 231 248 / .82); font-size: clamp(.72rem, 1.5vw, .9rem); }
+.lobby-boss-plate {
+  grid-area: boss;
+  align-self: start;
+  justify-self: end;
+  display: grid;
+  gap: .16rem;
+  width: min(100%, 19rem);
+  padding: .65rem .75rem;
+  border: 1px solid color-mix(in srgb, var(--canon-cinder-ember) 62%, transparent);
+  border-right: .28rem solid var(--canon-cinder-ember);
+  background: linear-gradient(105deg, rgb(17 8 16 / .9), rgb(48 15 17 / .7));
+  box-shadow: inset 0 1px rgb(255 255 255 / .06), 0 .6rem 1.5rem rgb(0 0 0 / .35);
+  opacity: 0;
+  transform: translateY(-.45rem);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.lobby-boss-plate[data-visible="true"] { opacity: 1; transform: none; }
+.lobby-boss-eyebrow { color: var(--canon-cinder-ember); }
+.lobby-boss-name { color: #fff0ed; font-size: clamp(.88rem, 1.8vw, 1.15rem); }
+.lobby-boss-threat { color: rgb(255 208 196 / .8); font-size: .72rem; }
+.lobby-objective {
+  grid-area: objective;
+  align-self: center;
+  width: min(100%, 25rem);
+  padding: .7rem .8rem;
+  border: 1px solid var(--rc-panel-border);
+  border-left: .22rem solid var(--canon-zenith-gold);
+  background: var(--rc-panel-glass);
+  box-shadow: inset 0 1px rgb(255 255 255 / .05), 0 .7rem 1.5rem rgb(0 0 0 / .32);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.lobby-objective-title { color: var(--canon-zenith-gold); }
+.lobby-objective-text { margin: .35rem 0 0; color: #edf2fa; font-size: clamp(.75rem, 1.5vw, .9rem); line-height: 1.4; }
+.lobby-objective-reward { margin: .35rem 0 0; color: var(--rc-green); font-size: .72rem; font-weight: 700; }
+.lobby-dialogue {
+  grid-area: dialogue;
+  align-self: end;
+  display: flex;
+  align-items: end;
+  gap: .5rem;
+  width: min(100%, 34rem);
+  color: #eef5ff;
+}
+.lobby-dialogue-portrait {
+  display: grid;
+  place-items: center;
+  flex: 0 0 2.35rem;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 1px solid var(--rc-cyan);
+  border-radius: 50%;
+  background: rgb(8 17 30 / .92);
+  color: var(--rc-cyan);
+  font-size: 1.1rem;
+  box-shadow: 0 0 1rem var(--rc-cyan-soft);
+}
+.lobby-dialogue-bubble {
+  position: relative;
+  display: grid;
+  gap: .18rem;
+  min-width: 0;
+  padding: .62rem .75rem;
+  border: 1px solid rgb(128 216 255 / .45);
+  border-radius: .15rem .55rem .55rem .55rem;
+  background: linear-gradient(145deg, rgb(10 18 33 / .94), rgb(20 13 35 / .88));
+  box-shadow: 0 .6rem 1.3rem rgb(0 0 0 / .35);
+}
+.lobby-dialogue-bubble::before {
+  position: absolute;
+  left: -.38rem;
+  bottom: .55rem;
+  width: .65rem;
+  height: .65rem;
+  content: "";
+  border-left: 1px solid rgb(128 216 255 / .45);
+  border-bottom: 1px solid rgb(128 216 255 / .45);
+  background: rgb(11 18 33 / .94);
+  transform: rotate(45deg);
+}
+.lobby-dialogue-speaker { color: var(--rc-cyan); font-size: .67rem; letter-spacing: .09em; }
+.lobby-dialogue-text { color: #f0f4fb; font-size: clamp(.76rem, 1.5vw, .92rem); line-height: 1.4; }
+.lobby-cinematic[data-speaker="boss"] .lobby-dialogue { justify-self: end; flex-direction: row-reverse; }
+.lobby-cinematic[data-speaker="boss"] .lobby-dialogue-portrait { border-color: var(--canon-cinder-ember); color: var(--canon-cinder-ember); box-shadow: 0 0 1rem var(--canon-cinder-ember-soft); }
+.lobby-cinematic[data-speaker="boss"] .lobby-dialogue-bubble { border-color: rgb(243 89 44 / .48); border-radius: .55rem .15rem .55rem .55rem; }
+.lobby-cinematic[data-speaker="boss"] .lobby-dialogue-bubble::before { right: -.38rem; left: auto; border: 0; border-top: 1px solid rgb(243 89 44 / .48); border-right: 1px solid rgb(243 89 44 / .48); background: rgb(28 12 25 / .94); }
+.lobby-cinematic[data-speaker="boss"] .lobby-dialogue-speaker { color: var(--canon-cinder-ember); }
+.lobby-setup {
+  grid-area: setup;
+  align-self: end;
+  display: grid;
+  gap: .55rem;
+  width: min(100%, 22rem);
+  padding: .65rem;
+  border: 1px solid var(--rc-panel-border);
+  background: linear-gradient(145deg, rgb(16 10 28 / .88), rgb(7 12 24 / .9));
+  box-shadow: 0 .7rem 1.5rem rgb(0 0 0 / .38);
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.lobby-setup-block { display: grid; gap: .35rem; min-width: 0; }
+.lobby-setup-block + .lobby-setup-block { padding-top: .55rem; border-top: 1px solid var(--rc-panel-border); }
+.lobby-setup-title { display: flex; justify-content: space-between; color: #dceafe; }
+.lobby-setup-title small { color: var(--rc-amber); font-size: .7rem; }
+.lobby-strategy-row, .lobby-companion-row { display: flex; flex-wrap: wrap; gap: .35rem; }
+.lobby-strategy, .lobby-companion-chip {
+  min-width: 0;
+  min-height: 42px;
+  border-color: rgb(128 216 255 / .26);
+  border-radius: .35rem;
+  background: rgb(7 15 28 / .78);
+}
+.lobby-strategy { display: grid; flex: 1 1 4rem; place-items: center; gap: .05rem; padding: .32rem; font-size: .68rem; }
+.lobby-strategy b { color: var(--rc-cyan); font-size: .9rem; }
+.lobby-strategy[aria-checked="true"], .lobby-companion-chip[aria-pressed="true"] { border-color: var(--rc-cyan); background: linear-gradient(145deg, var(--rc-cyan-soft), var(--rc-purple-soft)); box-shadow: inset 0 0 0 1px var(--rc-cyan), 0 0 .8rem var(--rc-cyan-soft); }
+.lobby-strategy[aria-checked="true"]::after, .lobby-companion-chip[aria-pressed="true"]::after { content: "✓"; color: var(--rc-green); font-weight: 900; }
+.lobby-companion-chip { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; flex: 1 1 8rem; gap: .25rem; padding: .38rem .45rem; text-align: left; }
+.lobby-companion-glyph { color: var(--rc-purple); font-size: .95rem; }
+.lobby-companion-name { overflow: hidden; color: #eef5ff; font-size: .7rem; text-overflow: ellipsis; white-space: nowrap; }
+.lobby-companion-role { color: rgb(202 215 234 / .74); font-size: .58rem; }
+.lobby-setup-hint, .lobby-companion-empty { margin: 0; color: rgb(210 223 240 / .72); font-size: .64rem; line-height: 1.35; }
+.lobby-companion-empty { grid-column: 1 / -1; }
+.lobby-cinematic[data-framing="closeup"] .lobby-objective,
+.lobby-cinematic[data-framing="closeup"] .lobby-setup { opacity: .56; }
+
+/* Keep the combat HUD's three information zones explicit after the DOM regrouping. */
+.hud-order-strip, .hud-legion-stack { display: grid; gap: .3rem; }
+.hud-order-strip { justify-items: center; }
+.hud-legion-stack { min-width: 10rem; }
+
+@media (max-width: 620px), (max-height: 500px) {
+  .lobby-cinematic {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas: "head" "boss" "objective" "dialogue";
+    gap: .4rem;
+    padding: max(.45rem, var(--defense-safe-top)) max(.45rem, var(--defense-safe-right)) max(.45rem, var(--defense-safe-bottom)) max(.45rem, var(--defense-safe-left));
+  }
+  .lobby-cine-head { max-width: 100%; }
+  .lobby-boss-plate { justify-self: start; width: min(100%, 16rem); padding: .42rem .55rem; }
+  .lobby-objective { align-self: start; width: min(100%, 20rem); padding: .48rem .58rem; }
+  .lobby-dialogue { width: min(100%, 26rem); }
+  .lobby-setup { position: absolute; right: max(.45rem, var(--defense-safe-right)); bottom: max(.45rem, var(--defense-safe-bottom)); width: min(calc(100% - .9rem), 20rem); max-height: 43%; overflow: auto; }
+  .lobby-cine-stage { font-size: clamp(1rem, 5.2vw, 1.45rem); }
+  .lobby-cine-domain, .lobby-objective-text { font-size: .68rem; }
+  .lobby-dialogue-text { font-size: .7rem; }
+}
+@media (max-width: 420px) and (min-height: 700px) {
+  .lobby-setup { width: min(calc(100% - .9rem), 19rem); }
+  .lobby-companion-role { display: none; }
+  .lobby-companion-chip { flex-basis: 7rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lobby-cinematic, .lobby-boss-plate { transition: none; }
 }

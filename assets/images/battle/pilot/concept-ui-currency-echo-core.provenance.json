@@ -1,0 +1,23 @@
+{
+  "asset": "assets/images/battle/pilot/concept-ui-currency-echo-core.png",
+  "assetId": "currency-echo-core",
+  "lane": "concept",
+  "runtimeEligible": false,
+  "tool": "god-tibo-imagen",
+  "toolInvocation": "gti --prompt \"<prompt>\" --output assets/images/battle/pilot/concept-ui-currency-echo-core.png",
+  "model": "gpt-5.4 image_generation (private-codex backend)",
+  "prompt": "bold flat game UI glyph, ONE single solid silhouette shape centered on pure black, NO decorative frame, NO ornate border, NO circular ring, NO filigree, thick heavy strokes, minimal internal detail, extreme contrast, bone-white (#eef5ff) form with cold soul-teal (#81d6ff) accent and one zenith-gold (#e9c46a) highlight, designed to stay unmistakable when shrunk to 20 pixels, poster-simple, iconographic, no text, no letters, no numbers, no watermark. Subject: one solid teal diamond crystal with two short echo arcs on either side.",
+  "revisedPrompt": "bold flat game UI glyph, ONE single solid silhouette shape centered on pure black, NO decorative frame, NO ornate border, NO circular ring, NO filigree, thick heavy strokes, minimal internal detail, extreme contrast, designed to stay unmistakable when shrunk to 20 pixels, poster-simple, iconographic, no text, no letters, no numbers, no watermark. Subject: one solid cold soul-teal (#81d6ff) diamond crystal with two short echo arcs on either side, rendered as a single strong silhouette with minimal internal detail, bone-white (#eef5ff) secondary form and one tiny zenith-gold (#e9c46a) highlight, centered on pure black background.",
+  "referenceInputs": [],
+  "responseId": "resp_011c208b200a5460016a68d47679d08191ad69d62643f68d0c",
+  "generationRounds": 2,
+  "generatedAtMs": 59219,
+  "sha256": "76019bd6b14f80edbbc61726f9b047404f25709cd2c1040f2de5b0cac9c2aa32",
+  "bytes": 715993,
+  "boundRuntimeSurface": ".rail-currency-glyph[echo-core]",
+  "promotionPath": "assets/images/battle/ui/hud/currency-echo-core.webp",
+  "promotedBy": "scripts/build-ui-icon-assets.py",
+  "repositoryRevision": "cbe937ed342393d97b5232ab5366ec2f0770adfe",
+  "legibilityAudit": "rendered at its real CSS box on the .dock-rail background and inspected; round 2 is the first to pass",
+  "notes": "Generated in the concept lane per CLAUDE.md §3. Promotion to the runtime lane is performed only by scripts/build-ui-icon-assets.py after the legibility audit."
+}

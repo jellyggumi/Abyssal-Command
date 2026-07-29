@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUTPUT_PATH = '_workspace/20260726-stage1b-cinder-pressure-agency/engineering/stage-scene-audit.json';
 const CATALOG_PATH = 'stage-world-catalog.js';
-const ALL_MESH_PROVENANCE_PATH = '_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json';
+const ALL_MESH_PROVENANCE_PATH = '_workspace/archive/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json';
 const TERRAIN_PROVENANCE_PATH = 'assets/images/battle/glb/terrain/build-provenance.json';
 const CHARACTER_PROVENANCE_PATH = 'assets/images/battle/glb/character-build-provenance.json';
 const RUNTIME_REGISTRY_PATH = 'scripts/defense-runtime-assets.mjs';

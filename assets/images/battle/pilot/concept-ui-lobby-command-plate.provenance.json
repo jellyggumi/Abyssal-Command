@@ -1,0 +1,23 @@
+{
+  "asset": "assets/images/battle/pilot/concept-ui-lobby-command-plate.png",
+  "assetId": "lobby-command-plate",
+  "lane": "concept",
+  "runtimeEligible": false,
+  "tool": "god-tibo-imagen",
+  "toolInvocation": "gti --prompt \"<prompt>\" --output assets/images/battle/pilot/concept-ui-lobby-command-plate.png",
+  "model": "gpt-5.4 image_generation (private-codex backend)",
+  "prompt": "a wide cinematic matte painting of a colossal abyssal defence gate seen from behind the defenders line: towering pharaonic stone gate wreathed in teal soul-light, ash and embers drifting, silhouetted warden ranks below, deep navy void above, gold braziers marking the causeway. Dark fantasy abyssal stone-gothic game key art, cold soul-teal (#81d6ff) and zenith-gold (#e9c46a) light against deep abyssal navy (#050812), painterly cinematic matte, wide 16:9 composition, no text, no letters, no watermark, no UI chrome.",
+  "revisedPrompt": "a wide cinematic matte painting of a colossal abyssal defence gate seen from behind the defenders line: towering pharaonic stone gate wreathed in teal soul-light, ash and embers drifting, silhouetted warden ranks below, deep navy void above, gold braziers marking the causeway. Dark fantasy abyssal stone-gothic game key art, cold soul-teal (#81d6ff) and zenith-gold (#e9c46a) light against deep abyssal navy (#050812), painterly cinematic matte, wide 16:9 composition, no text, no letters, no watermark, no UI chrome.",
+  "referenceInputs": [],
+  "responseId": "resp_09c0cbcaf2cdf19e016a68d35be9548191a3c7b291d37fdf4a",
+  "generationRounds": 1,
+  "generatedAtMs": 57817,
+  "sha256": "10c06384f2ce4bc284e1c6fdc78a5b5177f6569de9b287b17a8eafaa6c0999ea",
+  "bytes": 2477575,
+  "boundRuntimeSurface": "lobby backplate",
+  "promotionPath": "assets/images/battle/ui/plates/lobby-command-plate.webp",
+  "promotedBy": "scripts/build-ui-icon-assets.py",
+  "repositoryRevision": "cbe937ed342393d97b5232ab5366ec2f0770adfe",
+  "legibilityAudit": "n/a — backplate, not a glyph",
+  "notes": "Generated in the concept lane per CLAUDE.md §3. Promotion to the runtime lane is performed only by scripts/build-ui-icon-assets.py after the legibility audit."
+}

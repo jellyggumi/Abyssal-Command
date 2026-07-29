@@ -16,6 +16,8 @@ const STAGE_ID = "cinder-span";
 const WORLD = stageWorldFor(STAGE_ID);
 const OBSTACLE = WORLD.gameplay.obstacles.find(({ id }) => id === "cinder-span:drowned-forge-arch");
 const RAMP = WORLD.gameplay.surfaces.find(({ id }) => id === "cinder-span:overlook-ramp");
+const PLATFORM = WORLD.gameplay.surfaces.find(({ id }) => id === "cinder-span:overlook-platform");
+const SUPPORT_MESH = WORLD.gameplay.meshColliders?.find(({ id }) => id === "cinder-span:walkable-support");
 
 function isolatedRun(options = {}) {
   const run = structuredClone(createDefenseRun({ stageId: STAGE_ID, seed: 37, ...options }));
@@ -145,6 +147,70 @@ test("commander elevation ascends and descends the authored ramp deterministical
   for (let index = 1; index < descending.length; index += 1) {
     assert.ok(descending[index].elevation <= descending[index - 1].elevation, "descent elevation must not rise");
   }
+});
+
+test("Cinder Span support triangles determine ramp and platform contact without weakening bounds or circle safety", () => {
+  assert.ok(SUPPORT_MESH, "Cinder Span declares its authored walkable support mesh");
+  assert.ok(Array.isArray(SUPPORT_MESH.triangles) && SUPPORT_MESH.triangles.length > 0, "support mesh contains collision triangles");
+  for (const triangle of SUPPORT_MESH.triangles) {
+    assert.equal(triangle.length, 3, "each support mesh primitive is a triangle");
+    for (const vertex of triangle) {
+      assert.ok(Number.isInteger(vertex.x) && Number.isInteger(vertex.y) && Number.isInteger(vertex.elevation));
+    }
+  }
+
+  const run = isolatedRun();
+  const y = Math.round((RAMP.bounds.minY + RAMP.bounds.maxY) / 2);
+  placeCommander(run, RAMP.bounds.minX, y);
+  let next = step(run, "IDLE");
+  const contacts = [getRunSnapshot(next).commander];
+
+  for (let tick = 0; contacts.at(-1).x < PLATFORM.bounds.minX + 300 && tick < 200; tick += 1) {
+    next = step(next, "E");
+    contacts.push(getRunSnapshot(next).commander);
+  }
+  assert.ok(contacts.at(-1).x >= PLATFORM.bounds.minX + 300, "fixture reaches the authored platform");
+
+  assert.equal(contacts[0].supportMeshId, SUPPORT_MESH.id, "ramp placement publishes its deterministic mesh contact");
+  assert.equal(contacts[0].elevation, RAMP.elevation.atMin, "ramp placement keeps the authored base elevation");
+  for (const commander of contacts) {
+    assert.equal(commander.supportMeshId, SUPPORT_MESH.id, "walkable ramp and platform contact stays on the authored mesh");
+    assert.equal(
+      commander.elevation,
+      commander.x < PLATFORM.bounds.minX ? rampElevationAt(RAMP, commander) : PLATFORM.elevation.atMax,
+      "mesh contact publishes the authoritative support elevation",
+    );
+    assertWalkable(commander);
+  }
+  assert.equal(contacts.at(-1).elevation, PLATFORM.elevation.atMax, "platform traversal reaches the authored top elevation");
+});
+
+test("legacy Cinder entities with integer elevation reacquire authored mesh contact without advancing time", () => {
+  const y = Math.round((RAMP.bounds.minY + RAMP.bounds.maxY) / 2);
+  const legacyContacts = [
+    { label: "absent", prepare(entity) { delete entity.supportMeshId; } },
+    { label: "invalid", prepare(entity) { entity.supportMeshId = "legacy:missing-support"; } },
+  ].map(({ label, prepare }) => {
+    const run = isolatedRun();
+    placeCommander(run, RAMP.bounds.minX, y);
+    run.commander.elevation = 999;
+    prepare(run.commander);
+
+    const snapshot = getRunSnapshot(advanceDefenseRun(run, 0));
+    assert.equal(snapshot.tick, 0, `${label} legacy migration must not consume a simulation tick`);
+    assert.equal(snapshot.commander.supportMeshId, SUPPORT_MESH.id, `${label} legacy contact resolves to the authored mesh`);
+    assert.equal(snapshot.commander.elevation, RAMP.elevation.atMin, `${label} legacy elevation resolves at the authored ramp contact`);
+    return snapshot.commander;
+  });
+
+  assert.deepEqual(
+    legacyContacts.map(({ supportMeshId, elevation }) => ({ supportMeshId, elevation })),
+    [
+      { supportMeshId: SUPPORT_MESH.id, elevation: RAMP.elevation.atMin },
+      { supportMeshId: SUPPORT_MESH.id, elevation: RAMP.elevation.atMin },
+    ],
+    "missing and invalid legacy contact fields normalize to the same deterministic result",
+  );
 });
 
 test("companions and enemies cannot follow targets or routes beyond walkable terrain", () => {

@@ -27,6 +27,27 @@ const STAGE_ART_ASSETS = Object.freeze([
   "assets/images/battle/ui/stages/abyss-chancel.png",
   "assets/images/battle/ui/stages/gate-zenith.png",
 ]);
+/* Generated UI icon layer (scripts/build-ui-icon-assets.py). Ordered exactly as the
+   workflow's PAGES_RUNTIME_PATHS lists them, because this list is compared as a
+   sequence against that env value. */
+const UI_ICON_ASSETS = Object.freeze([
+  "assets/images/battle/ui/hud/control-close.webp",
+  "assets/images/battle/ui/hud/control-pause.webp",
+  "assets/images/battle/ui/hud/control-sortie.webp",
+  "assets/images/battle/ui/hud/brand-mark.webp",
+  "assets/images/battle/ui/hud/currency-bound-fragment.webp",
+  "assets/images/battle/ui/hud/currency-echo-core.webp",
+  "assets/images/battle/ui/hud/nav-companions.webp",
+  "assets/images/battle/ui/hud/nav-growth.webp",
+  "assets/images/battle/ui/hud/nav-inventory.webp",
+  "assets/images/battle/ui/hud/nav-sortie.webp",
+  "assets/images/battle/ui/hud/nav-stronghold.webp",
+  "assets/images/battle/ui/hud/stat-commander.webp",
+  "assets/images/battle/ui/hud/stat-echo-xp.webp",
+  "assets/images/battle/ui/hud/stat-gate-integrity.webp",
+  "assets/images/battle/ui/plates/lobby-command-plate.webp",
+  "assets/images/battle/ui/plates/seal-atlas-plate.webp",
+]);
 const COMBAT_GLB_ASSETS = Object.freeze([
   "assets/images/battle/glb/props/abyss-blade.glb",
   "assets/images/battle/glb/props/arc-caster.glb",
@@ -52,7 +73,7 @@ const BATTLE_GLB_ASSETS = [
 const RUNTIME_PATHS = [
   "index.html", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
   "campaign-state.js", "defense-storage.js", "defense-audio.js", "defense-cutscene.js", "defense-telemetry.js",
-  "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
+  "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "lobby-cinematic.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
   "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png",
   "assets/images/battle/dusk-warden-frame-00.png", "assets/images/battle/dusk-warden-frame-01.png",
@@ -64,6 +85,7 @@ const RUNTIME_PATHS = [
   "assets/images/battle/ui/stages/gate-zenith.png", "assets/images/battle/ui/stages/glass-necropolis.png", "assets/images/battle/ui/stages/howling-sprawl.png",
   "assets/images/battle/ui/stages/shattered-causeway.png", "assets/images/battle/ui/stages/starless-canal.png",
   "assets/images/battle/ui/stages/sunken-bastion.png", "assets/images/battle/ui/stages/veil-citadel.png",
+  ...UI_ICON_ASSETS,
   GAMEPLAY_VIDEO,
   "assets/images/battle/glb/terrain/abyss-chancel.glb", "assets/images/battle/glb/terrain/cinder-span.glb", "assets/images/battle/glb/terrain/echo-throne-steps.glb",
   "assets/images/battle/glb/terrain/gate-zenith.glb", "assets/images/battle/glb/terrain/glass-necropolis.glb", "assets/images/battle/glb/terrain/howling-sprawl.glb",

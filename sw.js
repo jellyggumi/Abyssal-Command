@@ -27,6 +27,10 @@ const CORE_ASSETS = [
   "./defense-audio.js",
   "./defense-cutscene.js",
   "./defense-telemetry.js",
+  // app.js statically imports both of these, so a cold offline load fails on a
+  // module-resolution error without them in the install-time precache.
+  "./lobby-cinematic.js",
+  "./stage-world-catalog.js",
   "./assets/images/battle/dusk-warden-frame-00.png",
   "./assets/images/battle/dusk-warden-frame-01.png",
   "./assets/images/battle/dusk-warden-frame-02.png",
@@ -37,6 +41,26 @@ const CORE_ASSETS = [
   "./assets/images/battle/echo-rusher-frame-03.png",
   "./assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
   "./assets/images/battle/world/cinder-span-topdown-plate.webp",
+  // Generated UI icon layer (scripts/build-ui-icon-assets.py). These ARE precached,
+  // unlike the battle GLBs below: all 16 together are ~440KB and they paint the
+  // dock rail, brand, currency chips, and HUD glyphs on first frame, so deferring
+  // them would show an empty shell on a cold offline load.
+  "./assets/images/battle/ui/hud/control-close.webp",
+  "./assets/images/battle/ui/hud/control-pause.webp",
+  "./assets/images/battle/ui/hud/control-sortie.webp",
+  "./assets/images/battle/ui/hud/brand-mark.webp",
+  "./assets/images/battle/ui/hud/currency-bound-fragment.webp",
+  "./assets/images/battle/ui/hud/currency-echo-core.webp",
+  "./assets/images/battle/ui/hud/nav-companions.webp",
+  "./assets/images/battle/ui/hud/nav-growth.webp",
+  "./assets/images/battle/ui/hud/nav-inventory.webp",
+  "./assets/images/battle/ui/hud/nav-sortie.webp",
+  "./assets/images/battle/ui/hud/nav-stronghold.webp",
+  "./assets/images/battle/ui/hud/stat-commander.webp",
+  "./assets/images/battle/ui/hud/stat-echo-xp.webp",
+  "./assets/images/battle/ui/hud/stat-gate-integrity.webp",
+  "./assets/images/battle/ui/plates/lobby-command-plate.webp",
+  "./assets/images/battle/ui/plates/seal-atlas-plate.webp",
   "./vendor/three.module.js",
   "./vendor/three.core.js",
   "./vendor/loaders/GLTFLoader.js",

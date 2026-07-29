@@ -1,0 +1,23 @@
+{
+  "asset": "assets/images/battle/pilot/concept-ui-nav-stronghold.png",
+  "assetId": "nav-stronghold",
+  "lane": "concept",
+  "runtimeEligible": false,
+  "tool": "god-tibo-imagen",
+  "toolInvocation": "gti --prompt \"<prompt>\" --output assets/images/battle/pilot/concept-ui-nav-stronghold.png",
+  "model": "gpt-5.4 image_generation (private-codex backend)",
+  "prompt": "dark-fantasy abyssal stone-gothic game UI medallion icon on pure black, carved dark granite outer frame with pointed gothic cusps and thin gold rim, cold soul-teal (#81d6ff) inner glow and zenith-gold (#e9c46a) rim accent, the interior subject rendered as ONE bold simplified bone-white mass with heavy strokes and almost no fine internal detail so it stays unmistakable at 48 pixels, engraved relief, high contrast between dark frame and bright interior subject, centered single subject, no text, no letters, no numbers, no watermark. Interior subject: one simplified fortress keep as a solid bone-white mass: wide block, three square crenellations, one dark arched gate.",
+  "revisedPrompt": "Dark-fantasy abyssal stone-gothic game UI medallion icon on pure black. Carved dark granite outer frame with pointed gothic cusps and a thin gold rim. Cold soul-teal (#81d6ff) inner glow and zenith-gold (#e9c46a) rim accent. Interior subject rendered as ONE bold simplified bone-white mass with heavy strokes and almost no fine internal detail so it stays unmistakable at 48 pixels. Engraved relief, high contrast between dark frame and bright interior subject, centered single subject, no text, no letters, no numbers, no watermark. Interior subject: one simplified fortress keep as a solid bone-white mass, wide block, three square crenellations, one dark arched gate.",
+  "referenceInputs": [],
+  "responseId": "resp_052fc3f6287a09f0016a68d509c1c08191a132c05bfc34cdb6",
+  "generationRounds": 3,
+  "generatedAtMs": 35162,
+  "sha256": "4acab4d653f360271f4daabc5f1d35be7d1b25a877bb910910a089f7ba4bab45",
+  "bytes": 2113039,
+  "boundRuntimeSurface": ".dock-rail-icon[stronghold]",
+  "promotionPath": "assets/images/battle/ui/hud/nav-stronghold.webp",
+  "promotedBy": "scripts/build-ui-icon-assets.py",
+  "repositoryRevision": "cbe937ed342393d97b5232ab5366ec2f0770adfe",
+  "legibilityAudit": "rendered at its real CSS box on the .dock-rail background and inspected; round 3 is the first to pass",
+  "notes": "Generated in the concept lane per CLAUDE.md §3. Promotion to the runtime lane is performed only by scripts/build-ui-icon-assets.py after the legibility audit."
+}
