@@ -108,13 +108,12 @@ test('defense asset manifest has literal, complete dispositions when generated',
   }
 });
 
-test('Cinder Span direct terrain source and material channels remain retained runtime assets', () => {
+test('Cinder Span packaged terrain resources remain retained runtime assets', () => {
   const directPaths = [
-    'assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj',
-    'assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_diffuse.png',
-    'assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_normal.png',
-    'assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_roughness.png',
-    'assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_metallic.png',
+    'assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb',
+    'assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb',
+    'assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb',
+    'assets/mesh/terrain/terrain-cinder-span/runtime/terrain-cinder-span-resources.manifest.json',
   ];
   const retiredWorldPlates = [
     'assets/images/battle/world/cinder-span-topdown-plate.webp',

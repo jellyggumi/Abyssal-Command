@@ -294,51 +294,97 @@ def crossing_edges(mesh, dominant: dict[int, str]) -> dict[tuple[str, str], list
     return out
 
 
-def measure_asset(asset: dict[str, Any]) -> dict[str, Any]:
-    model_path = ROOT / asset["model"]
-    reset_scene()
-    import_glb(model_path)
-    arm, meshes = armature_and_meshes()
-    if arm is None or not meshes:
-        return {
-            "assetId": asset["assetId"],
-            "model": asset["model"],
-            "error": "armature or mesh missing",
-        }
+def skinned_meshes(armature, meshes) -> list[Any]:
+    """Return every mesh whose enabled Armature modifier binds this armature."""
+    return sorted(
+        (
+            mesh
+            for mesh in meshes
+            if any(
+                modifier.type == "ARMATURE"
+                and modifier.object == armature
+                and modifier.show_viewport
+                for modifier in mesh.modifiers
+            )
+        ),
+        key=lambda mesh: mesh.name,
+    )
 
-    mesh = max(meshes, key=lambda m: len(m.data.vertices))
-    dominant = dominant_bone_map(mesh)
-    totals = weight_totals(mesh)
+
+def weight_concentration(totals: dict[str, float]) -> dict[str, Any]:
     total_weight = sum(totals.values()) or 1.0
-    spread = chain_spread(mesh, arm)
-
-    local = [v.co for v in mesh.data.vertices]
-    bbox_diagonal = (
-        mathutils.Vector((max(v.x for v in local), max(v.y for v in local), max(v.z for v in local)))
-        - mathutils.Vector((min(v.x for v in local), min(v.y for v in local), min(v.z for v in local)))
-    ).length
-    min_rest_length = bbox_diagonal * MIN_REST_LENGTH_FRACTION
-
     spine_weight = sum(totals.get(name, 0.0) for name in SPINE_BONES)
     heaviest_name, heaviest_weight = max(totals.items(), key=lambda kv: kv[1]) if totals else ("", 0.0)
+    return {
+        "heaviestBone": heaviest_name,
+        "heaviestShare": round(heaviest_weight / total_weight, 5),
+        "spineShare": round(spine_weight / total_weight, 5),
+        "heaviestOverSpine": round(heaviest_weight / spine_weight, 5) if spine_weight > 0 else None,
+        "boneShare": {
+            name: round(value / total_weight, 5)
+            for name, value in sorted(totals.items(), key=lambda kv: -kv[1])
+        },
+    }
+
+
+def clip_row(
+    clip: str,
+    frames_sampled: int,
+    segment_ratios: list[float],
+    worst_segment: dict[str, Any],
+    joint_flex: dict[str, float],
+) -> dict[str, Any]:
+    return {
+        "clip": clip,
+        "framesSampled": frames_sampled,
+        "segmentDeviationMax": round(max(segment_ratios), 5) if segment_ratios else 0.0,
+        "segmentDeviationP95": round(statistics.quantiles(segment_ratios, n=20)[18], 5)
+        if len(segment_ratios) >= 20
+        else (round(max(segment_ratios), 5) if segment_ratios else 0.0),
+        "worstSegment": worst_segment,
+        "jointFlexMax": {key: round(value, 5) for key, value in sorted(joint_flex.items())},
+    }
+
+
+def measure_mesh(mesh, armature, actions) -> tuple[dict[str, Any], dict[str, Any]]:
+    dominant = dominant_bone_map(mesh)
+    totals = weight_totals(mesh)
+    spread = chain_spread(mesh, armature)
+    local = [vertex.co for vertex in mesh.data.vertices]
+    if local:
+        bbox_diagonal = (
+            mathutils.Vector(
+                (
+                    max(vertex.x for vertex in local),
+                    max(vertex.y for vertex in local),
+                    max(vertex.z for vertex in local),
+                )
+            )
+            - mathutils.Vector(
+                (
+                    min(vertex.x for vertex in local),
+                    min(vertex.y for vertex in local),
+                    min(vertex.z for vertex in local),
+                )
+            )
+        ).length
+    else:
+        bbox_diagonal = 0.0
+    min_rest_length = bbox_diagonal * MIN_REST_LENGTH_FRACTION
 
     territory: dict[str, list[int]] = {}
     for index, bone in dominant.items():
         territory.setdefault(bone, []).append(index)
     for bone in territory:
         territory[bone].sort()
-
-    bone_pairs = {bone: pair_indices(idx) for bone, idx in territory.items() if len(idx) >= 2}
+    bone_pairs = {bone: pair_indices(indices) for bone, indices in territory.items() if len(indices) >= 2}
     joint_edges = crossing_edges(mesh, dominant)
 
-    # Rest reference.
     bpy.context.scene.frame_set(int(round(bpy.context.scene.frame_start)))
-    for action_holder in (arm,):
-        if action_holder.animation_data:
-            action_holder.animation_data.action = None
+    if armature.animation_data:
+        armature.animation_data.action = None
     bpy.context.view_layer.update()
     rest_coords = evaluated_coords(mesh)
-
     rest_pair_len = {
         bone: [(rest_coords[a] - rest_coords[b]).length for a, b in pairs]
         for bone, pairs in bone_pairs.items()
@@ -348,14 +394,12 @@ def measure_asset(asset: dict[str, Any]) -> dict[str, Any]:
         for key, edges in joint_edges.items()
     }
 
-    if arm.animation_data is None:
-        arm.animation_data_create()
-
     clip_rows: list[dict[str, Any]] = []
-    for action in sorted(bpy.data.actions, key=lambda a: a.name):
-        arm.animation_data.action = action
+    diagnostics: dict[str, dict[str, Any]] = {}
+    for action in actions:
+        armature.animation_data.action = action
         frames = sample_frames(action)
-        worst_segment = {"bone": None, "ratio": 1.0, "frame": None}
+        worst_segment = {"mesh": mesh.name, "bone": None, "ratio": 1.0, "frame": None}
         segment_ratios: list[float] = []
         joint_flex: dict[str, float] = {}
         for frame in frames:
@@ -371,12 +415,15 @@ def measure_asset(asset: dict[str, Any]) -> dict[str, Any]:
                     ratios.append((coords[a] - coords[b]).length / rest_len)
                 if not ratios:
                     continue
-                # A rigid segment keeps every internal distance. Track the
-                # single worst deviation, which is what reads as rubber.
-                deviation = max(abs(x - 1.0) for x in ratios)
+                deviation = max(abs(value - 1.0) for value in ratios)
                 segment_ratios.append(deviation)
-                if deviation > abs(worst_segment["ratio"] - 1.0):
-                    worst_segment = {"bone": bone, "ratio": 1.0 + deviation, "frame": frame}
+                if deviation > abs(float(worst_segment["ratio"]) - 1.0):
+                    worst_segment = {
+                        "mesh": mesh.name,
+                        "bone": bone,
+                        "ratio": 1.0 + deviation,
+                        "frame": frame,
+                    }
             for key, edges in joint_edges.items():
                 rest_lengths = rest_joint_len[key]
                 ratios = []
@@ -386,57 +433,184 @@ def measure_asset(asset: dict[str, Any]) -> dict[str, Any]:
                     ratios.append((coords[a] - coords[b]).length / rest_len)
                 if ratios:
                     label = f"{key[0]}->{key[1]}"
-                    joint_flex[label] = max(joint_flex.get(label, 0.0), max(abs(x - 1.0) for x in ratios))
-
+                    joint_flex[label] = max(
+                        joint_flex.get(label, 0.0),
+                        max(abs(value - 1.0) for value in ratios),
+                    )
         clip_rows.append(
-            {
-                "clip": action.name,
-                "framesSampled": len(frames),
-                "segmentDeviationMax": round(max(segment_ratios), 5) if segment_ratios else 0.0,
-                "segmentDeviationP95": round(
-                    statistics.quantiles(segment_ratios, n=20)[18], 5
-                )
-                if len(segment_ratios) >= 20
-                else (round(max(segment_ratios), 5) if segment_ratios else 0.0),
-                "worstSegment": worst_segment,
-                "jointFlexMax": {k: round(v, 5) for k, v in sorted(joint_flex.items())},
-            }
+            clip_row(action.name, len(frames), segment_ratios, worst_segment, joint_flex)
         )
+        diagnostics[action.name] = {
+            "framesSampled": len(frames),
+            "segmentRatios": segment_ratios,
+            "worstSegment": worst_segment,
+            "jointFlex": joint_flex,
+        }
 
-    bone_share = {
-        name: round(value / total_weight, 5)
-        for name, value in sorted(totals.items(), key=lambda kv: -kv[1])
+    pairs_below_floor = sum(
+        1 for lengths in rest_pair_len.values() for value in lengths if value < min_rest_length
+    )
+    pairs_total = sum(len(lengths) for lengths in rest_pair_len.values())
+    return {
+        "mesh": mesh.name,
+        "vertexCount": len(mesh.data.vertices),
+        "weightConcentration": weight_concentration(totals),
+        "chainSpread": spread,
+        "restLengthFloor": {
+            "bboxDiagonal": round(bbox_diagonal, 5),
+            "fraction": MIN_REST_LENGTH_FRACTION,
+            "absolute": round(min_rest_length, 6),
+            "pairsBelowFloor": pairs_below_floor,
+            "pairsTotal": pairs_total,
+        },
+        "territorySizes": {bone: len(indices) for bone, indices in sorted(territory.items())},
+        "unownedVertices": len(mesh.data.vertices) - len(dominant),
+        "jointEdgeCoverage": {
+            f"{key[0]}->{key[1]}": len(edges) for key, edges in sorted(joint_edges.items())
+        },
+        "clips": clip_rows,
+    }, {"totals": totals, "clips": diagnostics}
+
+
+def aggregate_chain_spread(mesh_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    rows = [row["chainSpread"] for row in mesh_rows]
+    measured = sum(row["verticesMeasured"] for row in rows)
+    over = sum(row["overSpreadVertices"] for row in rows)
+    offenders: dict[str, int] = {}
+    for row in rows:
+        for bone, count in row["overSpreadByDominantBone"].items():
+            offenders[bone] = offenders.get(bone, 0) + count
+    worst = {"mesh": None, "vertex": None, "spread": 0, "bones": []}
+    for mesh_row, row in zip(mesh_rows, rows):
+        candidate = row["worstVertex"]
+        if candidate["spread"] > worst["spread"]:
+            worst = {"mesh": mesh_row["mesh"], **candidate}
+    return {
+        "influenceEpsilon": INFLUENCE_EPSILON,
+        "maxAcceptableSpread": MAX_ACCEPTABLE_CHAIN_SPREAD,
+        "verticesMeasured": measured,
+        "meanInfluences": round(
+            sum(row["meanInfluences"] * row["verticesMeasured"] for row in rows) / (measured or 1),
+            3,
+        ),
+        "maxInfluences": max((row["maxInfluences"] for row in rows), default=0),
+        "meanSpread": round(
+            sum(row["meanSpread"] * row["verticesMeasured"] for row in rows) / (measured or 1),
+            3,
+        ),
+        "maxSpread": max((row["maxSpread"] for row in rows), default=0),
+        "overSpreadVertices": over,
+        "overSpreadFraction": round(over / (measured or 1), 5),
+        "overSpreadByDominantBone": dict(sorted(offenders.items(), key=lambda kv: -kv[1])),
+        "worstVertex": worst,
     }
+
+
+def aggregate_clips(
+    actions,
+    mesh_diagnostics: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = []
+    for action in actions:
+        diagnostics = [item["clips"][action.name] for item in mesh_diagnostics]
+        segment_ratios = [
+            ratio for diagnostic in diagnostics for ratio in diagnostic["segmentRatios"]
+        ]
+        worst_segment = {"mesh": None, "bone": None, "ratio": 1.0, "frame": None}
+        joint_flex: dict[str, float] = {}
+        for diagnostic in diagnostics:
+            candidate = diagnostic["worstSegment"]
+            if abs(float(candidate["ratio"]) - 1.0) > abs(float(worst_segment["ratio"]) - 1.0):
+                worst_segment = candidate
+            for key, value in diagnostic["jointFlex"].items():
+                joint_flex[key] = max(joint_flex.get(key, 0.0), value)
+        rows.append(
+            clip_row(
+                action.name,
+                max((diagnostic["framesSampled"] for diagnostic in diagnostics), default=0),
+                segment_ratios,
+                worst_segment,
+                joint_flex,
+            )
+        )
+    return rows
+
+
+def sum_counts(mesh_rows: list[dict[str, Any]], key: str) -> dict[str, int]:
+    totals: dict[str, int] = {}
+    for row in mesh_rows:
+        for name, count in row[key].items():
+            totals[name] = totals.get(name, 0) + int(count)
+    return dict(sorted(totals.items()))
+
+
+def measure_asset(asset: dict[str, Any]) -> dict[str, Any]:
+    model_path = ROOT / asset["model"]
+    reset_scene()
+    import_glb(model_path)
+    armature, scene_meshes = armature_and_meshes()
+    if armature is None:
+        return {
+            "assetId": asset["assetId"],
+            "model": asset["model"],
+            "error": "armature missing",
+        }
+    meshes = skinned_meshes(armature, scene_meshes)
+    if not meshes:
+        return {
+            "assetId": asset["assetId"],
+            "model": asset["model"],
+            "error": "skinned mesh missing",
+        }
+    if armature.animation_data is None:
+        armature.animation_data_create()
+    actions = sorted(bpy.data.actions, key=lambda action: action.name)
+    measured = [measure_mesh(mesh, armature, actions) for mesh in meshes]
+    mesh_rows = [row for row, _ in measured]
+    mesh_diagnostics = [diagnostic for _, diagnostic in measured]
+
+    aggregate_totals: dict[str, float] = {}
+    for diagnostic in mesh_diagnostics:
+        for bone, value in diagnostic["totals"].items():
+            aggregate_totals[bone] = aggregate_totals.get(bone, 0.0) + value
+    spread = aggregate_chain_spread(mesh_rows)
+    vertex_count = sum(row["vertexCount"] for row in mesh_rows)
+    unowned_vertices = sum(row["unownedVertices"] for row in mesh_rows)
+    pairs_below_floor = sum(row["restLengthFloor"]["pairsBelowFloor"] for row in mesh_rows)
+    pairs_total = sum(row["restLengthFloor"]["pairsTotal"] for row in mesh_rows)
+    joint_edge_coverage = sum_counts(mesh_rows, "jointEdgeCoverage")
 
     return {
         "assetId": asset["assetId"],
         "role": asset.get("role"),
         "category": asset.get("category"),
         "model": asset["model"],
-        "mesh": mesh.name,
-        "vertexCount": len(mesh.data.vertices),
-        "boneCount": len(arm.data.bones),
-        "weightConcentration": {
-            "heaviestBone": heaviest_name,
-            "heaviestShare": round(heaviest_weight / total_weight, 5),
-            "spineShare": round(spine_weight / total_weight, 5),
-            "heaviestOverSpine": round(heaviest_weight / spine_weight, 5) if spine_weight > 0 else None,
-            "boneShare": bone_share,
+        "meshCount": len(mesh_rows),
+        "vertexCount": vertex_count,
+        "boneCount": len(armature.data.bones),
+        "aggregateCounts": {
+            "meshCount": len(mesh_rows),
+            "vertexCount": vertex_count,
+            "verticesMeasured": spread["verticesMeasured"],
+            "unownedVertices": unowned_vertices,
+            "overSpreadVertices": spread["overSpreadVertices"],
+            "jointEdges": sum(joint_edge_coverage.values()),
+            "pairsBelowRestLengthFloor": pairs_below_floor,
+            "pairsTotal": pairs_total,
         },
+        "weightConcentration": weight_concentration(aggregate_totals),
         "chainSpread": spread,
         "restLengthFloor": {
-            "bboxDiagonal": round(bbox_diagonal, 5),
+            "strategy": "per-mesh-bbox-diagonal",
             "fraction": MIN_REST_LENGTH_FRACTION,
-            "absolute": round(min_rest_length, 6),
-            "pairsBelowFloor": sum(
-                1 for lengths in rest_pair_len.values() for value in lengths if value < min_rest_length
-            ),
-            "pairsTotal": sum(len(lengths) for lengths in rest_pair_len.values()),
+            "pairsBelowFloor": pairs_below_floor,
+            "pairsTotal": pairs_total,
         },
-        "territorySizes": {bone: len(idx) for bone, idx in sorted(territory.items())},
-        "unownedVertices": len(mesh.data.vertices) - len(dominant),
-        "jointEdgeCoverage": {f"{k[0]}->{k[1]}": len(v) for k, v in sorted(joint_edges.items())},
-        "clips": clip_rows,
+        "territorySizes": sum_counts(mesh_rows, "territorySizes"),
+        "unownedVertices": unowned_vertices,
+        "jointEdgeCoverage": joint_edge_coverage,
+        "clips": aggregate_clips(actions, mesh_diagnostics),
+        "meshes": mesh_rows,
     }
 
 

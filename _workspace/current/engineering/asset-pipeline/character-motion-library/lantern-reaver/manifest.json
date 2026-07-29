@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T16:27:57.447324+00:00",
+  "generatedAt": "2026-07-29T17:57:33.293091+00:00",
   "assetId": "lantern-reaver",
   "role": "abyssal-reaper-caster",
   "category": "enemies",
@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/model.glb",
-  "modelSha256": "19a2fa27052002d264e6f662a15d343eac7c541e0b01b6e6b87cef192a37337f",
+  "modelSha256": "065f7b8195e5c4d8e2abe850da4238274a547395fabffd8d8b49609a37f0dc67",
   "modelBytes": 12510868,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/rig-report.json",
@@ -262,6 +262,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -290,6 +291,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -406,6 +408,11 @@
         "maxWeightSumError": 2.9802322387695312e-08,
         "singleInfluenceFraction": 0.199779
       }
+    },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 21440,
+      "signFlips": 532
     },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,

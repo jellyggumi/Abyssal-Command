@@ -1,6 +1,7 @@
 // Snapshot-only Canvas2D presentation adapter for the defense session.
 import { ANIMATION_CLIPS, AUDIO_CUES, TICK_RATE } from "./defense-catalog.js";
 import { drawWorldText } from "./battle-canvas-text.js";
+import { AUDIO_EVENT_POLICY } from "./defense-audio.js";
 
 const MAX_VISUAL_EFFECTS = 24;
 const MAX_VISUAL_EVENT_KEYS = 128;
@@ -21,37 +22,206 @@ const PALETTE = Object.freeze({
 
 const CATALOG_EFFECTS = new Set([...ANIMATION_CLIPS.commander, ...ANIMATION_CLIPS.effects]);
 const FEEDBACK_CUES = Object.freeze({
+  STAGE_STARTED: AUDIO_CUES.stageStart,
+  INPUT_ACK: AUDIO_CUES.stageStart,
+  INPUT_ACCEPTED: AUDIO_CUES.stageStart,
+  INPUT_REJECTED: AUDIO_CUES.impactHit,
+  PICKUP_DENIED: AUDIO_CUES.impactHit,
+  ECHO_DENIED: AUDIO_CUES.impactHit,
+  EXTRACTION_REJECTED: AUDIO_CUES.impactHit,
+  BASIC_ATTACK: AUDIO_CUES.skillCast,
+  WEAPON_FIRED: AUDIO_CUES.weaponFire,
+  MELEE_SWEEP: AUDIO_CUES.skillCast,
+  PROJECTILE_IMPACT: AUDIO_CUES.impactHit,
+  MELEE_IMPACT: AUDIO_CUES.impactHit,
+  PROJECTILE_BLOCKED: AUDIO_CUES.impactHit,
+  PROJECTILE_EXPIRED: AUDIO_CUES.weaponFire,
+  BOSS_ATTACK_CANCELLED: AUDIO_CUES.weaponFire,
   CRITICAL_HIT: AUDIO_CUES.criticalHit,
+  SKILL_RESOLVED_DAMAGE: AUDIO_CUES.impactHit,
   COMMANDER_DAMAGED: AUDIO_CUES.impactHit,
+  COMPANION_DAMAGED: AUDIO_CUES.impactHit,
+  COMPANION_DOWNED: AUDIO_CUES.impactHit,
+  COMMANDER_DOWNED: AUDIO_CUES.terminal,
   GATE_BREACHED: AUDIO_CUES.impactHit,
   HAZARD_DAMAGE: AUDIO_CUES.impactHit,
+  OCCUPATION_INTERRUPTED: AUDIO_CUES.impactHit,
+  EXTRACTION_INTERRUPTED: AUDIO_CUES.impactHit,
   OBJECTIVE_FAILED: AUDIO_CUES.impactHit,
+  ENCOUNTER_OBJECTIVE_FAILED: AUDIO_CUES.impactHit,
+  OBJECTIVE_PRESSURE_PULSE: AUDIO_CUES.bossSpawned,
+  OBJECTIVE_PRESSURE_DEADLINE: AUDIO_CUES.bossSpawned,
   ITEM_COLLECTED: AUDIO_CUES.itemCollected,
   TERRAIN_RECOVERY: AUDIO_CUES.itemCollected,
+  OBJECTIVE_PHASE_CHANGED: AUDIO_CUES.extractionReady,
+  ENCOUNTER_OBJECTIVE_STARTED: AUDIO_CUES.extractionReady,
+  OBJECTIVE_COMPLETED: AUDIO_CUES.occupationCaptured,
+  ENCOUNTER_OBJECTIVE_COMPLETED: AUDIO_CUES.occupationCaptured,
+  WAVE_CLEARED: AUDIO_CUES.occupationCaptured,
+  EXTRACTION_WINDOW_OPENED: AUDIO_CUES.extractionReady,
+  OCCUPATION_CAPTURED: AUDIO_CUES.occupationCaptured,
+  EXTRACTION_COMPLETED: AUDIO_CUES.eliteExtracted,
   GROWTH_OFFER: AUDIO_CUES.growthOffer,
   SKILL_SELECTED: AUDIO_CUES.growthOffer,
   SKILL_CAST: AUDIO_CUES.skillCast,
   REWARD_SELECTED: AUDIO_CUES.terminal,
   TERMINAL: AUDIO_CUES.terminal,
+  RETRY_STARTED: AUDIO_CUES.stageStart,
+  RUN_RETRIED: AUDIO_CUES.stageStart,
+  ELITE_CANDIDATE_AVAILABLE: AUDIO_CUES.extractionReady,
   ELITE_EXTRACTED: AUDIO_CUES.eliteExtracted,
+  MIDBOSS_SPAWNED: AUDIO_CUES.bossSpawned,
+  BOSS_ATTACK_TELEGRAPHED: AUDIO_CUES.bossSpawned,
   BOSS_SPAWNED: AUDIO_CUES.bossSpawned,
+  BOSS_RALLY_WINDOW: AUDIO_CUES.bossSpawned,
 });
 const FEEDBACK_EFFECTS = Object.freeze({
+  STAGE_STARTED: "reward",
+  INPUT_ACK: ANIMATION_CLIPS.commander[0],
+  INPUT_ACCEPTED: ANIMATION_CLIPS.commander[0],
+  INPUT_REJECTED: "damage",
+  PICKUP_DENIED: "damage",
+  ECHO_DENIED: "damage",
+  EXTRACTION_REJECTED: "damage",
+  BASIC_ATTACK: "skill",
+  WEAPON_FIRED: "skill",
+  MELEE_SWEEP: "skill",
+  PROJECTILE_IMPACT: "damage",
+  MELEE_IMPACT: "damage",
+  PROJECTILE_BLOCKED: "damage",
+  PROJECTILE_EXPIRED: "skill",
+  BOSS_ATTACK_CANCELLED: "skill",
   CRITICAL_HIT: "skill",
+  SKILL_RESOLVED_DAMAGE: "damage",
   COMMANDER_DAMAGED: "damage",
+  COMPANION_DAMAGED: "damage",
+  COMPANION_DOWNED: "damage",
+  COMMANDER_DOWNED: "reward",
   GATE_BREACHED: "damage",
   HAZARD_DAMAGE: "damage",
+  OCCUPATION_INTERRUPTED: "damage",
+  EXTRACTION_INTERRUPTED: "damage",
   OBJECTIVE_FAILED: "damage",
+  ENCOUNTER_OBJECTIVE_FAILED: "damage",
+  OBJECTIVE_PRESSURE_PULSE: "extraction-ready",
+  OBJECTIVE_PRESSURE_DEADLINE: "extraction-ready",
   ITEM_COLLECTED: "item",
   TERRAIN_RECOVERY: "echo-recovery",
+  OBJECTIVE_PHASE_CHANGED: "extraction-ready",
+  ENCOUNTER_OBJECTIVE_STARTED: "extraction-ready",
+  OBJECTIVE_COMPLETED: "occupation",
+  ENCOUNTER_OBJECTIVE_COMPLETED: "occupation",
+  WAVE_CLEARED: "occupation",
+  EXTRACTION_WINDOW_OPENED: "extraction-ready",
+  OCCUPATION_CAPTURED: "occupation",
+  EXTRACTION_COMPLETED: "extract",
   GROWTH_OFFER: "skill",
   SKILL_SELECTED: "skill",
   SKILL_CAST: "skill",
   REWARD_SELECTED: "reward",
   TERMINAL: "reward",
+  RETRY_STARTED: "reward",
+  RUN_RETRIED: "reward",
+  ELITE_CANDIDATE_AVAILABLE: "extraction-ready",
   ELITE_EXTRACTED: "extract",
+  MIDBOSS_SPAWNED: "extraction-ready",
+  BOSS_ATTACK_TELEGRAPHED: "extraction-ready",
   BOSS_SPAWNED: "extraction-ready",
+  BOSS_RALLY_WINDOW: "extraction-ready",
 });
+const FEEDBACK_LABELS = Object.freeze({
+  STAGE_STARTED: "Stage started",
+  INPUT_ACCEPTED: "Command accepted",
+  INPUT_REJECTED: "Command blocked",
+  PICKUP_DENIED: "Pickup blocked",
+  ECHO_DENIED: "Echo unavailable",
+  EXTRACTION_REJECTED: "Extraction blocked",
+  COMPANION_DOWNED: "Ally down",
+  COMMANDER_DOWNED: "Commander down — retry ready",
+  OCCUPATION_INTERRUPTED: "Waypoint interrupted",
+  EXTRACTION_INTERRUPTED: "Extraction interrupted",
+  OBJECTIVE_FAILED: "Objective failed",
+  ENCOUNTER_OBJECTIVE_FAILED: "Objective failed",
+  OBJECTIVE_PRESSURE_PULSE: "Gate under pressure",
+  OBJECTIVE_PRESSURE_DEADLINE: "Gate collapse imminent",
+  OBJECTIVE_PHASE_CHANGED: "Waypoint updated",
+  ENCOUNTER_OBJECTIVE_STARTED: "Waypoint updated",
+  OBJECTIVE_COMPLETED: "Objective complete",
+  ENCOUNTER_OBJECTIVE_COMPLETED: "Objective complete",
+  WAVE_CLEARED: "Wave cleared",
+  EXTRACTION_WINDOW_OPENED: "Extraction waypoint open",
+  OCCUPATION_CAPTURED: "Ground secured",
+  EXTRACTION_COMPLETED: "Extraction ready",
+  ELITE_CANDIDATE_AVAILABLE: "Echo located",
+  ELITE_EXTRACTED: "Echo extracted",
+  RETRY_STARTED: "Retrying stage",
+  RUN_RETRIED: "Retrying stage",
+  MIDBOSS_SPAWNED: "Elite threat entered",
+  BOSS_ATTACK_TELEGRAPHED: "Boss attack incoming",
+  BOSS_ATTACK_CANCELLED: "Boss attack avoided",
+  BOSS_SPAWNED: "Boss entered",
+  BOSS_RALLY_WINDOW: "Rally window active",
+});
+
+export function semanticVfxIdForEvent(event) {
+  if (event?.type === "SKILL_CAST") return event.vfx || event.skillId || "skill-cast";
+  switch (event?.type) {
+    case "ENCOUNTER_OBJECTIVE_STARTED":
+      return "objective-phase-changed";
+    case "CRITICAL_HIT":
+      return "critical-hit";
+    case "PROJECTILE_BLOCKED":
+      return "block-contact";
+    case "PROJECTILE_EXPIRED":
+    case "BOSS_ATTACK_CANCELLED":
+      return "attack-miss";
+    case "INPUT_REJECTED":
+    case "OBJECTIVE_FAILED":
+    case "ENCOUNTER_OBJECTIVE_FAILED":
+    case "PICKUP_DENIED":
+    case "ECHO_DENIED":
+    case "EXTRACTION_REJECTED":
+      return "rejected";
+    case "ITEM_COLLECTED":
+    case "TERRAIN_RECOVERY":
+      return "pickup";
+    case "OBJECTIVE_COMPLETED":
+    case "ENCOUNTER_OBJECTIVE_COMPLETED":
+    case "WAVE_CLEARED":
+    case "OCCUPATION_CAPTURED":
+      return "objective-complete";
+    case "BOSS_ATTACK_TELEGRAPHED":
+    case "BOSS_SPAWNED":
+    case "BOSS_RALLY_WINDOW":
+      return "boss-warning";
+    default:
+      return event?.type ? event.type.toLowerCase().replaceAll("_", "-") : null;
+  }
+}
+
+function feedbackLabel(event) {
+  if (event?.type === "TERMINAL") {
+    if (event.outcome === "FINAL_COMPLETION") return "Abyssal Lantern restored";
+    if (event.outcome === "VICTORY") return "Stage complete";
+    if (event.outcome === "DEFEAT") return "Run failed — retry ready";
+  }
+  return FEEDBACK_LABELS[event?.type] || "";
+}
+
+export function visualFeedbackForEvent(event) {
+  const cue = FEEDBACK_CUES[event?.type];
+  const animation = FEEDBACK_EFFECTS[event?.type];
+  if (!cue || !animation) return null;
+  const policy = AUDIO_EVENT_POLICY[event.type];
+  return Object.freeze({
+    eventType: event.type,
+    cueId: policy?.cueId ?? cue.id,
+    animation,
+    semanticVfxId: semanticVfxIdForEvent(event),
+    priority: policy?.priority ?? 40,
+    label: feedbackLabel(event),
+  });
+}
 
 function prefersReducedMotion() {
   try {
@@ -381,16 +551,36 @@ function drawHealthRing(context, entity, width, height, fallbackRadius) {
 }
 
 function feedbackKey(event) {
-  if (event?.eventId) return String(event.eventId);
-  return [
+  if (event?.eventId) return `event:${event.eventId}`;
+  return JSON.stringify([
     event?.version ?? "",
     event?.tick ?? "",
     event?.eventSequence ?? "",
     event?.type ?? "",
-    event?.entityId ?? event?.enemyId ?? "",
+    event?.inputId ?? "",
+    event?.entityId ?? "",
+    event?.enemyId ?? "",
+    event?.sourceId ?? "",
     event?.targetId ?? "",
-    event?.itemId ?? event?.rewardId ?? "",
-  ].join(":");
+    event?.projectileId ?? "",
+    event?.itemId ?? "",
+    event?.rewardId ?? "",
+    event?.skillId ?? "",
+    event?.objectiveId ?? "",
+    event?.bossId ?? "",
+    event?.companionId ?? "",
+    event?.pickupId ?? "",
+    event?.tableId ?? "",
+    event?.outcomeId ?? "",
+    event?.outcome ?? "",
+    event?.phase ?? "",
+    event?.policyId ?? "",
+    event?.source ?? "",
+    event?.reason ?? "",
+    event?.damage ?? "",
+    event?.pulse ?? "",
+    event?.text ?? "",
+  ]);
 }
 
 function effectAnchor(snapshot, event) {
@@ -401,6 +591,7 @@ function effectAnchor(snapshot, event) {
     ...entities(snapshot, ["enemies", "hostiles"]),
     ...entities(snapshot, ["bosses"]),
     snapshot?.boss,
+    ...entities(snapshot, ["companions", "allies"]),
   ]) {
     if (entity?.id === targetId) return entity;
   }
@@ -420,20 +611,64 @@ function drawEffect(context, effect, tick, width, height, reducedMotion) {
   const progress = reducedMotion ? 0 : Math.max(0, Math.min(1, (tick - effect.startTick) / span));
   const point = project(effect.anchor, width, height);
   const radius = radiusOf(effect.anchor, 10) * (1 + progress * 1.6);
+  const semantic = effect.semanticVfxId;
   context.save?.();
   context.globalAlpha = reducedMotion ? 1 : Math.max(0.18, 1 - progress);
   context.strokeStyle = effectColor(effect.cue);
+  context.fillStyle = effectColor(effect.cue);
   context.lineWidth = effect.cue.id === AUDIO_CUES.criticalHit.id ? 3 : 2;
   context.beginPath();
-  context.arc(point.x, point.y, radius, 0, Math.PI * 2);
+  if (semantic === "soul-lance") {
+    context.moveTo(point.x - radius * 2.2, point.y);
+    context.lineTo(point.x + radius * 2.2, point.y);
+    context.lineTo(point.x + radius * 1.55, point.y - radius * 0.42);
+  } else if (semantic === "rift-bolt") {
+    context.moveTo(point.x - radius * 1.9, point.y + radius * 0.32);
+    context.lineTo(point.x + radius * 1.5, point.y - radius * 0.32);
+    context.arc(point.x + radius * 1.55, point.y - radius * 0.34, radius * 0.32, 0, Math.PI * 2);
+  } else if (semantic === "grave-pulse") {
+    context.arc(point.x, point.y, radius, 0, Math.PI * 2);
+    context.moveTo(point.x + radius * 1.45, point.y);
+    context.arc(point.x, point.y, radius * 1.45, 0, Math.PI * 2);
+  } else if (semantic === "shadow-step") {
+    for (let index = -1; index <= 1; index += 1) {
+      const offset = index * radius * 0.62;
+      context.moveTo(point.x - radius + offset, point.y + radius * 0.55);
+      context.lineTo(point.x + offset, point.y);
+      context.lineTo(point.x - radius + offset, point.y - radius * 0.55);
+    }
+  } else if (semantic === "void-aegis" || semantic === "block-contact") {
+    context.arc(point.x, point.y, radius * 1.15, Math.PI * 1.08, Math.PI * 1.92);
+    context.moveTo(point.x - radius, point.y + radius * 0.35);
+    context.lineTo(point.x, point.y + radius * 1.2);
+    context.lineTo(point.x + radius, point.y + radius * 0.35);
+  } else if (semantic === "attack-miss" || semantic === "rejected") {
+    context.moveTo(point.x - radius, point.y - radius);
+    context.lineTo(point.x + radius, point.y + radius);
+    context.moveTo(point.x + radius, point.y - radius);
+    context.lineTo(point.x - radius, point.y + radius);
+  } else if (semantic === "boss-warning") {
+    context.setLineDash?.(reducedMotion ? [] : [5, 4]);
+    context.arc(point.x, point.y, radius * 1.4, 0, Math.PI * 2);
+    context.moveTo(point.x, point.y - radius * 1.65);
+    context.lineTo(point.x, point.y - radius * 0.75);
+  } else {
+    context.arc(point.x, point.y, radius, 0, Math.PI * 2);
+  }
   context.stroke();
-  if (effect.cue.id === AUDIO_CUES.criticalHit.id) {
+  if (semantic === "critical-hit") {
     context.beginPath();
     context.moveTo(point.x - radius, point.y);
     context.lineTo(point.x + radius, point.y);
     context.moveTo(point.x, point.y - radius);
     context.lineTo(point.x, point.y + radius);
     context.stroke();
+  }
+  if (effect.label && typeof context.fillText === "function") {
+    context.font = "600 12px system-ui, sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "bottom";
+    context.fillText(effect.label, point.x, point.y - radius - 8);
   }
   context.restore?.();
 }
@@ -447,8 +682,10 @@ export class BattleVisualizer {
     this.viewport = null;
     this.lastFeedback = null;
     this.pendingInputFeedback = null;
+    this.lastEventFeedback = null;
     this.visualEffects = [];
     this.visualEventKeys = new Set();
+    this.lastRenderTick = null;
     this.reducedMotion = options.reducedMotion ?? prefersReducedMotion();
     this.disposed = false;
   }
@@ -472,31 +709,64 @@ export class BattleVisualizer {
     return true;
   }
 
-  addEffect(snapshot, event, cue, animation, tick) {
-    if (!cue || !CATALOG_EFFECTS.has(animation)) return;
+  addEffect(snapshot, event, feedback, tick) {
+    const cue = FEEDBACK_CUES[event?.type];
+    if (!cue || !feedback || !CATALOG_EFFECTS.has(feedback.animation)) return false;
     const anchor = effectAnchor(snapshot, event);
-    if (!anchor) return;
+    if (!anchor) return false;
     const startTick = number(event?.tick, tick);
-    this.visualEffects.push({
+    const effect = {
       anchor: { ...pointOf(anchor), normalized: anchor.normalized === true, radius: radiusOf(anchor, 10) },
       cue,
+      label: feedback.label,
+      semanticVfxId: feedback.semanticVfxId,
+      priority: feedback.priority,
       startTick,
-      untilTick: startTick + Math.max(1, Math.ceil(cue.duration * TICK_RATE)),
-    });
-    if (this.visualEffects.length > MAX_VISUAL_EFFECTS) this.visualEffects.shift();
+      untilTick: startTick + Math.max(
+        1,
+        Math.ceil(cue.duration * TICK_RATE),
+        feedback.label ? Math.ceil(TICK_RATE * 0.9) : 1,
+      ),
+    };
+    if (this.visualEffects.length < MAX_VISUAL_EFFECTS) {
+      this.visualEffects.push(effect);
+      return true;
+    }
+    let lowestIndex = 0;
+    for (let index = 1; index < this.visualEffects.length; index += 1) {
+      const candidate = this.visualEffects[index];
+      const lowest = this.visualEffects[lowestIndex];
+      if (candidate.priority < lowest.priority
+        || (candidate.priority === lowest.priority && candidate.startTick < lowest.startTick)) {
+        lowestIndex = index;
+      }
+    }
+    if (this.visualEffects[lowestIndex].priority >= effect.priority) return false;
+    this.visualEffects[lowestIndex] = effect;
+    return true;
   }
 
   collectFeedback(snapshot) {
     const tick = number(snapshot?.tick, 0);
-    this.visualEffects = this.visualEffects.filter((effect) => effect.untilTick > tick);
+    let retainedEffectCount = 0;
+    for (const effect of this.visualEffects) {
+      if (effect.untilTick <= tick) continue;
+      this.visualEffects[retainedEffectCount] = effect;
+      retainedEffectCount += 1;
+    }
+    this.visualEffects.length = retainedEffectCount;
     for (const event of Array.isArray(snapshot?.events) ? snapshot.events : []) {
-      const cue = FEEDBACK_CUES[event?.type];
-      const animation = FEEDBACK_EFFECTS[event?.type];
+      const feedback = visualFeedbackForEvent(event);
       const key = feedbackKey(event);
-      if (cue && animation && this.rememberVisualEvent(key)) this.addEffect(snapshot, event, cue, animation, tick);
+      if (!feedback || !this.rememberVisualEvent(key)) continue;
+      this.lastEventFeedback = feedback;
+      this.addEffect(snapshot, event, feedback, tick);
+      try { this.options.onEventFeedback?.(feedback, event); } catch { /* optional presentation observer */ }
     }
     if (this.pendingInputFeedback !== null) {
-      this.addEffect(snapshot, { tick, type: "INPUT_ACK" }, AUDIO_CUES.stageStart, ANIMATION_CLIPS.commander[0], tick);
+      const event = { tick, type: "INPUT_ACK", inputId: this.pendingInputFeedback };
+      const feedback = visualFeedbackForEvent(event);
+      if (feedback) this.addEffect(snapshot, event, feedback, tick);
       this.pendingInputFeedback = null;
     }
   }
@@ -506,7 +776,16 @@ export class BattleVisualizer {
     const { width, height } = canvasSize(this.canvas, this.viewport ?? frame?.viewport);
     const context = this.context;
     const tick = number(snapshot.tick, 0);
+    const startsRunAtTickZero = tick === 0
+      && Array.isArray(snapshot?.events)
+      && snapshot.events.some((event) => event?.type === "STAGE_STARTED" && event.tick === 0);
+    const resetVisualEventDeduplication = startsRunAtTickZero && (this.lastRenderTick ?? 0) > 0;
+    if (resetVisualEventDeduplication) {
+      this.visualEventKeys.clear();
+      this.visualEffects.length = 0;
+    }
     this.collectFeedback(snapshot);
+    this.lastRenderTick = tick;
 
     context.clearRect(0, 0, width, height);
     const mist = context.createRadialGradient?.(width / 2, height * 0.5, 0, width / 2, height * 0.5, Math.max(width, height));
@@ -545,6 +824,10 @@ export class BattleVisualizer {
     context.restore?.();
   }
 
+  setReducedMotion(reducedMotion) {
+    this.reducedMotion = reducedMotion === true;
+  }
+
   onVisualFeedback(inputSeq) {
     this.lastFeedback = inputSeq;
     this.pendingInputFeedback = inputSeq;
@@ -555,8 +838,10 @@ export class BattleVisualizer {
     this.context = null;
     this.viewport = null;
     this.pendingInputFeedback = null;
+    this.lastEventFeedback = null;
     this.visualEffects.length = 0;
     this.visualEventKeys.clear();
+    this.lastRenderTick = null;
     this.disposed = true;
   }
 

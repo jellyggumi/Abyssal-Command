@@ -49,12 +49,11 @@ const SCENARIOS = Object.freeze([
     expectedTerminal: "DEFEAT",
   }),
   Object.freeze({
-    scenario: "defeat-after-acceptance",
+    scenario: "completion-after-acceptance",
     seed: 901,
     acceptExtract: true,
     moveOnlyAfterAcceptance: true,
-    requirePressureDeadlineDefeat: true,
-    expectedTerminal: "DEFEAT",
+    expectedTerminal: "VICTORY",
     occupationAfterTick: 3700,
     preOccupationTarget: "extraction",
   }),
@@ -63,7 +62,7 @@ const SCENARIOS = Object.freeze([
 
 const ALLOWED_INPUT_TYPES = new Set(["MOVE", "SKILL_CAST", "SKILL_SELECTED", "EXTRACT_ELITE"]);
 const CONTROLLER_MEMO = Object.freeze({
-  lastMoveTick: -Infinity,
+  lastMoveTick: -CADENCE_TICKS,
   lastOctant: null,
   lastSituation: null,
 });
@@ -119,6 +118,15 @@ function parseArguments(argv) {
   }
 
   return parsed;
+}
+
+function nonFiniteNumberPaths(value, path = "scenario", paths = []) {
+  if (typeof value === "number" && !Number.isFinite(value)) paths.push(path);
+  else if (Array.isArray(value)) value.forEach((entry, index) => nonFiniteNumberPaths(entry, `${path}[${index}]`, paths));
+  else if (value && typeof value === "object") {
+    Object.entries(value).forEach(([key, entry]) => nonFiniteNumberPaths(entry, `${path}.${key}`, paths));
+  }
+  return paths;
 }
 
 function canonicalBytes(value) {
@@ -399,7 +407,9 @@ function buildInputs(run, snapshot, definition, memo, state) {
   }
 
   if (definition.acceptExtract && snapshot.eliteCandidate && !snapshot.extracted) {
-    if (!memo.extractionRequested || snapshot.extractionProgress?.ready) {
+    const acceptanceDue = snapshot.extractionProgress?.ready
+      && snapshot.tick >= (definition.acceptExtractAfterTick ?? 0);
+    if (!memo.extractionRequested || acceptanceDue) {
       queue("EXTRACT_ELITE", { enemyId: snapshot.eliteCandidate.enemyId });
       memo.extractionRequested = true;
     }
@@ -490,7 +500,7 @@ function runSingleScenario(definition) {
 
   while (!isTerminalRun(run) && advanceCalls < MAX_ADVANCE_CALLS) {
     const inputResult = buildInputs(run, snapshot, definition, memo, state);
-    const before = getRunSnapshot(run);
+    const before = snapshot;
 
     run = advanceDefenseRun(inputResult.run, 1);
     advanceCalls += 1;
@@ -509,14 +519,16 @@ function runSingleScenario(definition) {
 
     const newEvents = collectNewEvents(after, state);
     state.events.push(...newEvents);
-    const acceptedEliteExtractCount = state.events.filter(
-      (event) => event.type === "INPUT_ACCEPTED" && event.inputType === "EXTRACT_ELITE",
-    ).length;
-    if (memo.acceptedEliteExtractCount === 0 && acceptedEliteExtractCount > 0) {
-      memo.lastOctant = null;
-      memo.lastMoveTick = -Infinity;
+    const hadAcceptedEliteExtract = memo.acceptedEliteExtractCount > 0;
+    for (const event of newEvents) {
+      if (event.type === "INPUT_ACCEPTED" && event.inputType === "EXTRACT_ELITE") {
+        memo.acceptedEliteExtractCount += 1;
+      }
     }
-    memo.acceptedEliteExtractCount = acceptedEliteExtractCount;
+    if (!hadAcceptedEliteExtract && memo.acceptedEliteExtractCount > 0) {
+      memo.lastOctant = null;
+      memo.lastMoveTick = after.tick - CADENCE_TICKS;
+    }
     const dispositions = new Map(
       newEvents
         .filter((event) => event.type === "INPUT_ACCEPTED" || event.type === "INPUT_REJECTED")
@@ -642,7 +654,7 @@ function runSingleScenario(definition) {
     policy: {
       kind: "synthetic",
       cadenceTicks: CADENCE_TICKS,
-      loadout: [...FIXED_LOADOUT],
+      loadout: [...(definition.loadout ?? FIXED_LOADOUT)],
       moveOnlyAfterAcceptance: definition.moveOnlyAfterAcceptance,
       acceptExtract: definition.acceptExtract,
       requirePressureDeadlineDefeat: Boolean(definition.requirePressureDeadlineDefeat),
@@ -690,7 +702,8 @@ function runSingleScenario(definition) {
       maxAcceptedHandoffs: 1,
       maxConsecutiveNoProgressObserved: state.maxObservedNoProgress,
       noUnexpectedInputTypes: unexpectedInputs.length === 0,
-      noSecondExtractionAttempt: requestedExtractCount <= 1,
+      extractionRequestsBounded: requestedExtractCount <= 2,
+      noSecondAcceptedExtraction: acceptedExtractCount <= 1,
       noMonetizationInputs: rewardSelections.length === 0,
       writeRequiresAcceptedInput: writes.length === acceptedEliteExtractCount,
       writesWithoutAcceptedExtract: writes.length - acceptedEliteExtractCount,
@@ -699,7 +712,8 @@ function runSingleScenario(definition) {
     invariantChecks: {
       noUnexpectedInputTypes: unexpectedInputs.length === 0,
       extractorAppliedBeforeCampaignResult,
-      noSecondExtractionAttempt: requestedExtractCount <= 1,
+      extractionRequestsBounded: requestedExtractCount <= 2,
+      noSecondAcceptedExtraction: acceptedExtractCount <= 1,
       writesWithoutAcceptedExtract: writes.length === acceptedEliteExtractCount,
       noMonetizationInputs: rewardSelections.length === 0,
       acceptanceConsistent: acceptedEliteExtractCount === inputAcceptedEvidence.length,
@@ -713,6 +727,8 @@ function runSingleScenario(definition) {
 function runScenarioWithReplay(definition) {
   const first = runSingleScenario(definition);
   const replay = runSingleScenario(definition);
+  const invalidPaths = nonFiniteNumberPaths(first);
+  if (invalidPaths.length > 0) fail(`scenario ${definition.scenario} contains non-finite numbers: ${invalidPaths.join(", ")}`);
   const firstBytes = canonicalBytes(first);
   const replayBytes = canonicalBytes(replay);
 

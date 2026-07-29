@@ -75,11 +75,7 @@ test("cutscene adapter normalizes authored stage copy without mutating the event
             id: "relay-1:start",
             phase: "start",
             atMs: 0,
-            audio: {
-              eventType: "STAGE_STARTED",
-              method: "play",
-              cueId: "stage-start",
-            },
+            audio: audioCueForEvent(event),
             visual: {
               action: "show-caption",
               captionMode: "dialogue",
@@ -186,7 +182,7 @@ test("cutscene adapter accepts terminal and elite copy but rejects empty present
             id: "relay-1:start",
             phase: "start",
             atMs: 0,
-            audio: null,
+            audio: audioCueForEvent(event),
             visual: {
               action: "show-caption",
               captionMode: "dialogue",
@@ -263,11 +259,7 @@ test("lore surprise projects its authored snapshot text locally without a provid
             id: "narration-1:start",
             phase: "start",
             atMs: 0,
-            audio: {
-              eventType: "LORE_SURPRISE_RESOLVED",
-              method: "narrate",
-              cueId: null,
-            },
+            audio: audioCueForEvent(event),
             visual: {
               action: "show-caption",
               captionMode: "narration",

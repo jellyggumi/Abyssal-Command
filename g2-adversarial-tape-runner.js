@@ -12,11 +12,10 @@ import { canonicalStringify, sha256 } from "./g2-full-route-runner.js";
 export const G2_ADVERSARIAL_TAPE_SCHEMA = "g2-adversarial-tape-evidence/1";
 
 const EXPECTED_ARCHETYPES = Object.freeze(["rusher", "turtle", "economy-greed", "micro-optimizer", "casual"]);
-const EXPECTED_STAGES = Object.freeze([
-  "cinder-span", "veil-citadel", "echo-throne", "sunken-bastion", "howling-sprawl",
-  "glass-necropolis", "starless-canal", "shattered-causeway", "abyss-chancel", "gate-zenith",
-]);
+const EXPECTED_STAGES = Object.freeze(Catalog.STAGES.map(({ id }) => id));
 const EXPECTED_SEEDS = Object.freeze([301, 302, 303]);
+const EXPECTED_TUPLE_COUNT = EXPECTED_ARCHETYPES.length * EXPECTED_STAGES.length * EXPECTED_SEEDS.length;
+const EXPECTED_SAMPLES_PER_ARCHETYPE = EXPECTED_STAGES.length * EXPECTED_SEEDS.length;
 const AUTHORIZED_INPUTS = new Set(["MOVE", "SKILL_CAST", "SKILL_SELECTED", "EXTRACT_ELITE", "STANCE_CYCLE"]);
 const WIN_OUTCOMES = new Set(["VICTORY", "FINAL_COMPLETION"]);
 
@@ -66,12 +65,14 @@ function validateFixture(fixture) {
   requireCondition(exactSet(population.archetypes || [], EXPECTED_ARCHETYPES), "FAIL_ARCHETYPE_MATRIX", "Archetype matrix is not exact");
   requireCondition(exactSet(population.stage_ids || [], EXPECTED_STAGES), "FAIL_STAGE_MATRIX", "Stage matrix is not exact");
   requireCondition(exactSet(population.seeds || [], EXPECTED_SEEDS), "FAIL_SEED_MATRIX", "Seed matrix is not exact");
-  requireCondition(population.tuple_count === 150 && population.samples_per_archetype === 30 && population.expansion === "FORBIDDEN",
-    "FAIL_TUPLE_COUNT", "Finite population metadata is not exact");
-  requireCondition(Array.isArray(population.tuples) && population.tuples.length === 150,
-    "FAIL_TUPLES_MISSING", "Fixture must enumerate exactly 150 tuples");
+  requireCondition(population.tuple_count === EXPECTED_TUPLE_COUNT
+    && population.samples_per_archetype === EXPECTED_SAMPLES_PER_ARCHETYPE
+    && population.expansion === "FORBIDDEN",
+  "FAIL_TUPLE_COUNT", "Finite population metadata is not exact");
+  requireCondition(Array.isArray(population.tuples) && population.tuples.length === EXPECTED_TUPLE_COUNT,
+    "FAIL_TUPLES_MISSING", `Fixture must enumerate exactly ${EXPECTED_TUPLE_COUNT} tuples`);
   const tupleKeys = population.tuples.map(tupleKey);
-  requireCondition(new Set(tupleKeys).size === 150, "FAIL_TUPLES_DUPLICATE", "Fixture has duplicate tuple identities");
+  requireCondition(new Set(tupleKeys).size === EXPECTED_TUPLE_COUNT, "FAIL_TUPLES_DUPLICATE", "Fixture has duplicate tuple identities");
   const expectedKeys = EXPECTED_ARCHETYPES.flatMap((archetype) => EXPECTED_STAGES.flatMap((stage_id) =>
     EXPECTED_SEEDS.map((seed) => `${archetype}/${stage_id}/${seed}`))).sort();
   requireCondition(canonicalStringify([...tupleKeys].sort()) === canonicalStringify(expectedKeys),
@@ -87,9 +88,9 @@ function validateFixture(fixture) {
     && isPlainObject(options.wardenEquipment) && isPlainObject(options.companionEquipment) && isPlainObject(options.formation),
   "FAIL_INITIAL_OPTIONS", "Fixture run construction options are not authorized");
 
-  requireCondition(fixture.terminal_ceiling?.per_tuple_steps === 20000
+  requireCondition(fixture.terminal_ceiling?.per_tuple_steps === 2000
     && fixture.terminal_ceiling?.required_fail_closed_result?.tuple_status === "INVALID_TIMEOUT",
-  "FAIL_TERMINAL_CEILING", "Fixture must freeze the engineering-only 20,000-step ceiling");
+  "FAIL_TERMINAL_CEILING", "Fixture must freeze the engineering-only 2,000-step ceiling");
   requireCondition(fixture.combo_ev?.combo_ev_max_over_median === null && fixture.combo_ev?.status === "UNBOUND_COMPARATOR",
     "FAIL_COMPARATOR_BOUNDARY", "Fixture must retain the unbound combo comparator");
   requireCondition(fixture.gate_verdict === "NOT_PASSED", "FAIL_GATE_BOUNDARY", "Fixture must retain NOT_PASSED gate status");
@@ -468,7 +469,7 @@ export function runG2AdversarialTape(fixture) {
     measurement_status: "INCOMPLETE",
     gate_verdict: "NOT_PASSED",
     comparator: { combo_ev_max_over_median: null, status: "UNBOUND_COMPARATOR" },
-    expected_tuple_count: 150,
+    expected_tuple_count: EXPECTED_TUPLE_COUNT,
     samples,
     aggregates: buildAggregates(samples),
     failure_count: samples.filter((sample) => sample.tuple_status !== "TERMINAL_RECORDED").length,

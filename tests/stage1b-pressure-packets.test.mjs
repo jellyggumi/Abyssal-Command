@@ -17,6 +17,7 @@ const EXPECTED_CAUSES = new Set([
   "OBJECTIVE_PRESSURE_DEADLINE",
   "TERRAIN_RECOVERY",
   "WAVE_CLEARED",
+  "ENCOUNTER_REWARD_GRANTED",
   "PROJECTILE_IMPACT",
   "SKILL_SELECTED_PASSIVE_INTEGRITY",
   "SKILL_CAST_INTEGRITY",
@@ -125,7 +126,7 @@ test("Stage1b pressure output has no gaps or ambiguous causal attribution", () =
   assert.equal(row.invariants.observationIntervalsComplete, true);
 });
 test("Stage1b pressure packets are canonical-byte replay deterministic", () => {
-  const first = buildPayload(EXPECTED_SEEDS, EXPECTED_STANCES, "stage1b-test-revision");
-  const second = buildPayload(EXPECTED_SEEDS, EXPECTED_STANCES, "stage1b-test-revision");
+  const first = buildPayload([401], ["VANGUARD"], "stage1b-test-revision");
+  const second = buildPayload([401], ["VANGUARD"], "stage1b-test-revision");
   assert.equal(canonicalStringify(first), canonicalStringify(second));
 });

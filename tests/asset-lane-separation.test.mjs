@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -262,17 +262,33 @@ test("cartoon texture dry-run reports a candidate that is not runtime eligible",
   }
 });
 
+
 test("motion prompt batch emits the eleven runtime action prompts without a runtime handoff", async () => {
   const fixtureRoot = await mkdtemp(join(tmpdir(), "motion-prompt-batch-"));
   try {
     const output = join(fixtureRoot, "dusk-warden-motion-prompts.json");
+    const conceptInputs = [
+      join(fixtureRoot, "dusk-warden-idle-gti.png"),
+      join(fixtureRoot, "dusk-warden-idle-gti-refstyle.png"),
+      join(fixtureRoot, "dusk-warden-cartoon-albedo.png"),
+    ];
+    for (const input of conceptInputs) {
+      await writeFixture(input, "concept fixture");
+      await writeFile(
+        input.replace(/\.png$/, ".provenance.json"),
+        JSON.stringify({ runtimeEligible: false }),
+      );
+    }
+    const resolvedConceptInputs = await Promise.all(conceptInputs.map((input) => realpath(input)));
     const result = runPython("scripts/build-motion-prompt-batch.py", [
       "--asset-id",
       "dusk-warden",
       "--out",
       output,
+      ...conceptInputs.flatMap((input) => ["--concept-input", input]),
     ]);
     assert.equal(result.status, 0, result.stderr);
+
     const packet = JSON.parse(await readFile(output, "utf8"));
     const expectedActions = [
       "idle",
@@ -291,9 +307,53 @@ test("motion prompt batch emits the eleven runtime action prompts without a runt
     assert.equal(packet.prompts.length, 11);
     assert.deepEqual(packet.prompts.map((prompt) => prompt.action), expectedActions);
     assert.deepEqual(packet.productionContract.actionIds, expectedActions);
+    assert.deepEqual(packet.sourceInputs, [
+      ...resolvedConceptInputs,
+      "_workspace/current/engineering/asset-pipeline/action-pipeline.json",
+    ]);
+    assert.deepEqual(
+      packet.sourceInputRecords.map(({ path }) => path),
+      packet.sourceInputs,
+    );
+    assert.ok(packet.sourceInputRecords.slice(0, -1).every(
+      ({ runtimeEligible, lane }) => runtimeEligible === false && lane === "concept/reference",
+    ));
     assert.equal(packet.runtimeHandoff.runtimeEligible, false);
     assert.equal(packet.candidateArtifacts.runtimeEligible, false);
     assert.equal(packet.candidateArtifacts.shipped, false);
+  } finally {
+    await rm(fixtureRoot, { recursive: true, force: true });
+  }
+});
+
+test("motion prompt batch rejects missing or runtime-eligible concept provenance", async () => {
+  const fixtureRoot = await mkdtemp(join(tmpdir(), "motion-prompt-provenance-"));
+  try {
+    const conceptInput = join(fixtureRoot, "concept.png");
+    const output = join(fixtureRoot, "motion-prompts.json");
+    await writeFixture(conceptInput, "concept fixture");
+
+    const args = [
+      "--asset-id",
+      "dusk-warden",
+      "--out",
+      output,
+      "--concept-input",
+      conceptInput,
+    ];
+    const missingSidecar = runPython("scripts/build-motion-prompt-batch.py", args);
+    assert.equal(missingSidecar.status, 2);
+    assert.match(missingSidecar.stderr, /missing concept provenance sidecar/u);
+    assert.equal(existsSync(output), false);
+
+    await writeFile(
+      conceptInput.replace(/\.png$/, ".provenance.json"),
+      JSON.stringify({ runtimeEligible: true }),
+    );
+    const runtimeEligible = runPython("scripts/build-motion-prompt-batch.py", args);
+    assert.equal(runtimeEligible.status, 2);
+    assert.match(runtimeEligible.stderr, /not explicitly runtimeEligible=false/u);
+    assert.equal(existsSync(output), false);
   } finally {
     await rm(fixtureRoot, { recursive: true, force: true });
   }

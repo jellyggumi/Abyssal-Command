@@ -105,8 +105,12 @@ test("combat targeting remains orthogonal while a COLLECT companion fires automa
 
   assert.equal(collecting.aiState, "COLLECT");
   assert.equal(collecting.aiTargetId, "combat-item");
-  assert.equal(collecting.combatTargetId, fired?.targetId);
   assert.ok(fired, "an ACTIVE companion must keep automatic fire while collecting an item");
+  assert.equal(fired.targetId, null, "none-target combat must not create a target lock");
+  assert.notEqual(collecting.combatTargetId, collecting.aiTargetId);
+  assert.notEqual(fired.aimId, collecting.aiTargetId);
+  assert.match(collecting.combatTargetId, /^enemy-/u);
+  assert.match(fired.aimId, /^enemy-/u);
   assert.equal(fired.entityId, collecting.id);
 });
 

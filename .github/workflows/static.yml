@@ -1,4 +1,4 @@
-name: Defense survivor Pages release
+name: Abyssal Lantern Pages release
 
 on:
   push:
@@ -25,18 +25,17 @@ env:
   PAGES_RUNTIME_PATHS: >-
     index.html app.js rpg-catalog.js stage-world-catalog.js defense-viewport.js defense-catalog.js defense-run-simulation.js campaign-state.js defense-storage.js defense-audio.js
     defense-cutscene.js defense-telemetry.js battle-canvas-text.js battle-realtime-three.js battle-visualizer.js lobby-cinematic.js styles.css react-game-ui.css sw.js manifest.json icon.svg privacy.html
-    vendor/three.module.js vendor/three.core.js vendor/loaders/GLTFLoader.js vendor/loaders/OBJLoader.js vendor/utils/BufferGeometryUtils.js vendor/utils/SkeletonUtils.js
+    vendor/three.module.js vendor/three.core.js vendor/loaders/GLTFLoader.js vendor/utils/BufferGeometryUtils.js vendor/utils/SkeletonUtils.js
     assets/icons/icon-192.png assets/icons/icon-512.png
     assets/images/battle/ui/hud/control-close.webp assets/images/battle/ui/hud/control-pause.webp assets/images/battle/ui/hud/control-sortie.webp
     assets/images/battle/ui/hud/brand-mark.webp assets/images/battle/ui/hud/currency-bound-fragment.webp assets/images/battle/ui/hud/currency-echo-core.webp
     assets/images/battle/ui/hud/nav-companions.webp assets/images/battle/ui/hud/nav-growth.webp assets/images/battle/ui/hud/nav-inventory.webp
     assets/images/battle/ui/hud/nav-sortie.webp assets/images/battle/ui/hud/nav-stronghold.webp assets/images/battle/ui/hud/stat-commander.webp
     assets/images/battle/ui/hud/stat-echo-xp.webp assets/images/battle/ui/hud/stat-gate-integrity.webp
-    assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj
-    assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_diffuse.png
-    assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_normal.png
-    assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_roughness.png
-    assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_metallic.png
+    assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb
+    assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb
+    assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb
+    assets/mesh/terrain/terrain-cinder-span/runtime/terrain-cinder-span-resources.manifest.json
     assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb
     assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb
     assets/mesh/boss/s1-cinder-warden/glb/base_basic_pbr.glb assets/mesh/boss/s2-veil-tactician/glb/base_basic_pbr.glb
@@ -173,7 +172,7 @@ jobs:
           npm ci
           npx --no-install playwright install --with-deps chromium
           status=passed
-          for browser_contract in defense-hud-responsive-browser defense-survivor-browser defense-performance-browser; do
+          for browser_contract in defense-hud-responsive-browser defense-phone-battle-hud-browser.test defense-survivor-browser defense-performance-browser; do
             result="results/${browser_contract}.json"
             echo "::group::${browser_contract}"
             set +e

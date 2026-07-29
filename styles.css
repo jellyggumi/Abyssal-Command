@@ -1178,7 +1178,6 @@ body {
   .objective-chip strong {
     word-break: keep-all;
   }
-  .battle-event-feedback,
   .hud-mission #battle-terrain-context,
   .hud-mission #battle-status,
   .hud-loop-state #battle-pressure-state,
@@ -2457,7 +2456,12 @@ button:disabled {
   .hud-panel,
   .objective-chip,
   .command-deck,
-  .edge-card { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .edge-card,
+  .shell-audio-settings,
+  .pause-overlay-settings {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 
 @media (max-width: 699px) {
@@ -2511,4 +2515,310 @@ button:disabled {
 
 html[data-defense-started="true"] .idle-return-toast {
   top: max(7.5rem, calc(env(safe-area-inset-top) + 7rem));
+}
+
+/* Audio controls & settings panel */
+.shell-audio-settings {
+  margin-top: .75rem;
+  padding: .65rem;
+  border: 1px solid var(--lantern-line);
+  border-radius: .6rem;
+  background: rgb(255 255 255 / .025);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.pause-overlay-settings {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  margin-top: 1rem;
+  padding: .75rem;
+  border: 1px solid var(--lantern-line);
+  border-radius: .6rem;
+  background: rgb(255 255 255 / .025);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.audio-control-row {
+  display: flex;
+  flex-direction: column;
+  gap: .65rem;
+}
+
+.audio-mute-button {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: .5rem .8rem;
+  font-weight: 700;
+  border: 1px solid var(--lantern-line);
+  border-radius: 6px;
+  background: var(--lantern-panel);
+  color: var(--lantern-text);
+  cursor: pointer;
+  touch-action: manipulation;
+  justify-content: center;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.audio-mute-button:hover,
+.audio-mute-button:focus-visible {
+  border-color: var(--lantern-focus);
+  outline: 3px solid var(--lantern-focus);
+}
+
+.audio-volume-slider-container {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  width: 100%;
+  min-height: 44px;
+}
+
+.audio-volume-slider-container label {
+  font-size: .72rem;
+  color: var(--lantern-muted);
+  font-weight: 800;
+  white-space: nowrap;
+  flex: 0 0 4.5rem;
+}
+
+.audio-volume-slider-container input[type="range"] {
+  flex: 1;
+  min-width: 44px;
+  height: 44px;
+  border-radius: 3px;
+  background: linear-gradient(#27384f, #27384f) center / 100% 6px no-repeat;
+  outline: none;
+  margin: 0;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.audio-volume-slider-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--lantern-focus, #fff0a8);
+  border: 1px solid #000;
+  cursor: pointer;
+}
+
+.audio-volume-slider-container input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--lantern-focus, #fff0a8);
+  border: 1px solid #000;
+  cursor: pointer;
+}
+
+.audio-volume-slider-container input[type="range"]:focus-visible {
+  outline: 3px solid var(--lantern-focus);
+  outline-offset: 3px;
+}
+
+/* Pause overlay settings overrides */
+.pause-overlay-settings .audio-mute-button {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.pause-overlay-settings .audio-volume-slider-container {
+  flex: 1;
+  gap: .75rem;
+}
+
+.pause-overlay-settings .audio-volume-slider-container label {
+  flex: 0 0 auto;
+}
+
+/* Modality Selectors & Tabs */
+.modality-selectors {
+  display: flex;
+  gap: .5rem;
+  margin: 1rem 0;
+  border-bottom: 1px solid var(--lantern-line);
+  padding-bottom: .5rem;
+}
+
+.modality-tab {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid var(--lantern-line);
+  background: var(--lantern-panel);
+  color: var(--lantern-muted);
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+}
+
+.modality-tab[aria-selected="true"] {
+  border-color: var(--lantern-focus);
+  color: var(--lantern-focus);
+  background: rgba(255, 240, 168, 0.1);
+  box-shadow: 0 0 10px rgba(255, 240, 168, 0.2);
+}
+
+.modality-tab:hover,
+.modality-tab:focus-visible {
+  border-color: var(--lantern-focus);
+  color: var(--lantern-text);
+}
+
+/* Modality Panes & Visibility */
+.modality-content {
+  margin-top: .75rem;
+  margin-bottom: 1rem;
+}
+
+.modality-pane {
+  display: none;
+}
+
+.modality-content[data-active-modality="keyboard"] [data-pane="keyboard"],
+.modality-content[data-active-modality="pointer"] [data-pane="pointer"],
+.modality-content[data-active-modality="touch"] [data-pane="touch"] {
+  display: block;
+}
+
+.guide-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: .45rem;
+}
+
+.guide-list li {
+  line-height: 1.5;
+  font-size: .88rem;
+}
+
+.guide-list kbd {
+  display: inline-block;
+  background: #1b2e46;
+  border: 1px solid var(--lantern-line);
+  border-radius: 4px;
+  padding: .1rem .35rem;
+  font-family: monospace;
+  font-size: .8rem;
+  margin: 0 .15rem;
+  color: var(--lantern-text);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+}
+
+/* Screen-space vignette warning when critical/pressured threat is active */
+#defense-battle-surface[data-commander-integrity="critical"]::after,
+#defense-battle-surface[data-gate-integrity="critical"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  box-shadow: inset 0 0 4rem rgba(255, 74, 90, 0.45);
+  animation: vignette-pulse 1s infinite alternate;
+}
+
+#defense-battle-surface[data-commander-integrity="pressured"]::after,
+#defense-battle-surface[data-gate-integrity="pressured"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  box-shadow: inset 0 0 3rem rgba(255, 154, 122, 0.25);
+  animation: vignette-pulse 2s infinite alternate;
+}
+
+@keyframes vignette-pulse {
+  from { opacity: 0.6; }
+  to { opacity: 1.0; }
+}
+
+/* Make critical health bars bright pulsing red/orange */
+.gate-panel-bar-track.commander i {
+  transition: width 150ms ease-out;
+}
+#defense-battle-surface[data-commander-integrity="critical"] .gate-panel-bar-track.commander i {
+  background: #ff4a5a !important;
+  box-shadow: 0 0 8px #ff4a5a;
+}
+#defense-battle-surface[data-gate-integrity="critical"] .gate-panel-bar-track.gate i {
+  background: #ff4a5a !important;
+  box-shadow: 0 0 8px #ff4a5a;
+}
+
+/* High-priority warning / downed state styling */
+.legion-roster-unit[data-state="downed"] {
+  border-color: #ff4a5a !important;
+  box-shadow: 0 0 10px rgba(255, 74, 90, 0.4);
+}
+
+.formation-integrity-badge.is-downed {
+  background: #ff4a5a !important;
+  color: #fff !important;
+  font-weight: 900;
+  animation: pulse-red-glow 1.5s infinite alternate;
+}
+
+@keyframes pulse-red-glow {
+  from { box-shadow: 0 0 4px #ff4a5a; }
+  to { box-shadow: 0 0 12px #ff4a5a; }
+}
+
+/* Event feedback toast styles */
+.battle-event-feedback {
+  position: absolute;
+  top: max(4.5rem, calc(var(--defense-safe-top) + 4rem));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  padding: .5rem 1rem;
+  border-radius: 8px;
+  background: rgba(3, 7, 17, 0.85);
+  border: 1px solid var(--lantern-line);
+  color: var(--lantern-text);
+  font-size: .88rem;
+  font-weight: 700;
+  pointer-events: none;
+  text-align: center;
+  width: max-content;
+  max-width: min(calc(100vw - 1rem), 36rem);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  display: none;
+}
+.battle-event-feedback:not(:empty) {
+  display: block;
+}
+.battle-event-feedback[data-feedback*="critical"] {
+  border-color: #ff9a7a;
+  color: #ff9a7a;
+  box-shadow: 0 0 15px rgba(255, 154, 122, 0.3);
+}
+.battle-event-feedback[data-feedback*="lore"] {
+  border-color: #ffe487;
+  color: #ffe487;
+  box-shadow: 0 0 15px rgba(255, 228, 135, 0.3);
+}
+
+/* Adjustments for max-width 699px (mobile viewport) */
+@media (max-width: 699px) {
+  .pause-overlay-settings {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .75rem;
+  }
+  .pause-overlay-settings .audio-volume-slider-container {
+    width: 100%;
+  }
 }

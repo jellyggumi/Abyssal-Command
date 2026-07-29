@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T16:27:53.462336+00:00",
+  "generatedAt": "2026-07-29T17:57:29.132114+00:00",
   "assetId": "human-command-boss",
   "role": "stone-command-colossus",
   "category": "bosses",
@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/model.glb",
-  "modelSha256": "80a8d5f2d1dba1262bfb50e48a1c20818a590426768d0cbb59fde0895c3046de",
+  "modelSha256": "a2fd435880d12a56d70599d701c3b562c0869a0d51062e7d7db26b4a066137e6",
   "modelBytes": 9750392,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/rig-report.json",
@@ -262,6 +262,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -290,6 +291,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -406,6 +408,11 @@
         "maxWeightSumError": 2.9802322387695312e-08,
         "singleInfluenceFraction": 0.159741
       }
+    },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 17722,
+      "signFlips": 622
     },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,

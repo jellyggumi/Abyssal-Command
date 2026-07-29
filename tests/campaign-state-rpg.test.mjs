@@ -10,6 +10,7 @@ import {
 } from "../defense-run-simulation.js";
 
 import {
+  STAGES,
   createCampaign,
   startRun,
   applyCampaignRunResult,
@@ -66,10 +67,37 @@ test("echoCoreEarned counts distinct captured elite ids, not total capture calls
   assert.equal(echoCoreEarned(repeatCapture), 2, "recapturing an already-captured elite id does not double count");
 });
 
-test("echoCoreEarned caps captured-elite contribution at the canonical stage count (10), closing a budget-bypass exploit via excess elite captures", () => {
+test("echoCoreEarned caps captured-elite contribution at the current canonical stage count", () => {
   let campaign = createCampaign({ campaignId: "echo-cap-exploit-guard" });
   for (let i = 0; i < 40; i += 1) campaign = captureElite(campaign, `elite-${i}`, "ember-cohort");
-  assert.equal(echoCoreEarned(campaign), 10, "40 distinct captured elites must still only contribute 10 Echo Core, not 40 -- otherwise validWardenProgress's budget check can be bypassed via a tampered save with fabricated elite ids");
+  assert.equal(
+    echoCoreEarned(campaign),
+    STAGES.length,
+    "fabricated elite ids must never contribute more Echo Core than the canonical stage count",
+  );
+});
+
+
+test("allocateWardenStatPoint stops at the Echo Core ceiling of the current campaign", () => {
+  const stageOrder = STAGES.map(({ id }) => id);
+  const companionCycle = ["ember-cohort", "rift-lens", "veil-vanguard"];
+  let campaign = createCampaign({ campaignId: "stat-current-campaign-cap" });
+  stageOrder.forEach((stageId, index) => {
+    campaign = captureElite(campaign, `elite-${index}`, companionCycle[index]);
+    campaign = startRun(campaign, stageId);
+    campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
+  });
+  assert.equal(echoCoreEarned(campaign), STAGES.length * 4);
+
+  let allocated = campaign;
+  for (let i = 0; i < 4; i += 1) allocated = allocateWardenStatPoint(allocated, "binding-might");
+  assert.equal(allocated.wardenProgress.statPoints["binding-might"], 4);
+  assert.equal(echoCoreSpent(allocated), 10);
+  assert.throws(
+    () => allocateWardenStatPoint(allocated, "binding-might"),
+    /Not enough Echo Core/u,
+    "the next point costs 4 Echo Core and must not exceed the current 12-Core campaign ceiling",
+  );
 });
 
 test("boundFragmentEarned equals the resolved stage count", () => {
@@ -93,24 +121,7 @@ test("companionFormationSlot defaults to BACK for an unassigned companion", () =
   assert.equal(companionFormationSlot(campaign, "ember-cohort"), "BACK");
 });
 
-test("allocateWardenStatPoint enforces the per-stat max points cap", () => {
-  // Legitimately earn the full 40 Echo Core budget via a complete campaign: 10 resolved stages (30 EC)
-  // + 10 distinct captured elites, stage-capped (10 EC) -- matches the real economy, not an exploit path.
-  const stageOrder = ["cinder-span", "veil-citadel", "echo-throne", "sunken-bastion", "howling-sprawl", "glass-necropolis", "starless-canal", "shattered-causeway", "abyss-chancel", "gate-zenith"];
-  const companionCycle = ["ember-cohort", "rift-lens", "veil-vanguard", "anchor-shard", "throne-echo", "dawnless-crown"];
-  let campaign = createCampaign({ campaignId: "stat-maxpoints" });
-  stageOrder.forEach((stageId, i) => {
-    campaign = captureElite(campaign, `elite-${i}`, companionCycle[i % companionCycle.length]);
-    campaign = startRun(campaign, stageId);
-    campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
-  });
-  assert.equal(echoCoreEarned(campaign), 40, `expected exactly 40 Echo Core from a full campaign, got ${echoCoreEarned(campaign)}`);
 
-  let maxed = campaign;
-  for (let i = 0; i < 10; i += 1) maxed = allocateWardenStatPoint(maxed, "binding-might");
-  assert.equal(maxed.wardenProgress.statPoints["binding-might"], 10);
-  assert.throws(() => allocateWardenStatPoint(maxed, "binding-might"), TypeError, "cannot exceed maxPoints");
-});
 
 test("allocateWardenStatPoint enforces the shared Echo Core budget, including cross-blocking against skill-tree spending", () => {
   const campaign = campaignWithElitesAndResolves("stat-budget", {
@@ -152,7 +163,7 @@ test("selectWardenTrait gates by stage-clear sequence count and only accepts tha
   assert.throws(() => selectWardenTrait(campaign, "first-strike"), TypeError, "no stages resolved yet, sequence 2 not reached");
 
   let resolved = campaign;
-  for (const stageId of ["cinder-span", "veil-citadel"]) {
+  for (const stageId of STAGES.slice(0, 2).map(({ id }) => id)) {
     resolved = startRun(resolved, stageId);
     resolved = applyCampaignRunResult(resolved, { stageId, outcome: "victory" });
   }
@@ -185,18 +196,23 @@ test("purchaseEquipmentTier validates ownerId, enforces max tier, and enforces t
   assert.equal(equipmentTierIndexFor(companionEquip, "ember-cohort", "trinket"), 1);
 });
 
-test("purchaseEquipmentTier rejects advancing past the top tier (T5)", () => {
-  let campaign = createCampaign({ campaignId: "equip-max-tier" });
-  // build up enough Bound Fragment to reach T5 on one slot (cost 1+2+3+4=10)
-  for (const stageId of ["cinder-span", "veil-citadel", "echo-throne", "sunken-bastion", "howling-sprawl", "glass-necropolis", "starless-canal", "shattered-causeway", "abyss-chancel", "gate-zenith"]) {
+test("purchaseEquipmentTier cannot spend beyond the current campaign's Bound Fragment ceiling", () => {
+  let campaign = createCampaign({ campaignId: "equip-current-campaign-cap" });
+  for (const { id: stageId } of STAGES) {
     campaign = startRun(campaign, stageId);
     campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
   }
-  assert.equal(boundFragmentEarned(campaign), 10);
-  let maxed = campaign;
-  for (let i = 0; i < 4; i += 1) maxed = purchaseEquipmentTier(maxed, "warden", "weapon");
-  assert.equal(equipmentTierIndexFor(maxed, "warden", "weapon"), 4);
-  assert.throws(() => purchaseEquipmentTier(maxed, "warden", "weapon"), TypeError, "already at T5 (max index 4)");
+  assert.equal(boundFragmentEarned(campaign), STAGES.length);
+
+  const tierTwo = purchaseEquipmentTier(campaign, "warden", "weapon");
+  const tierThree = purchaseEquipmentTier(tierTwo, "warden", "weapon");
+  assert.equal(equipmentTierIndexFor(tierThree, "warden", "weapon"), 2);
+  assert.equal(boundFragmentSpent(tierThree), 3);
+  assert.throws(
+    () => purchaseEquipmentTier(tierThree, "warden", "weapon"),
+    /Not enough Bound Fragment/u,
+    "a T4 purchase costs 3 more fragments and must not exceed the three-stage campaign ceiling",
+  );
 });
 
 test("setCompanionFormationSlot requires loadout membership and enforces MAX_FRONT_SLOTS", () => {
@@ -284,7 +300,7 @@ test("settleIdleReturn returns ENCROACHED and forfeits the award when pressure e
 test("settleIdleReturn SETTLES normally when pressure does not exceed wardLevel (guard against an always-ENCROACHED regression)", () => {
   // build wardLevel up to 3 (3 resolved stages) so a 2-hour-equivalent pressure of 2 does not encroach
   let campaign = createCampaign({ campaignId: "idle-not-encroached" });
-  for (const stageId of ["cinder-span", "veil-citadel", "echo-throne"]) {
+  for (const { id: stageId } of STAGES) {
     campaign = startRun(campaign, stageId);
     campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
   }

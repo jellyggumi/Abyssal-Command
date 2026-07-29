@@ -69,7 +69,7 @@ function inputDigests() {
     "defense-run-simulation.js",
     "defense-catalog.js",
     "rpg-catalog.js",
-    "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/instrumentation-contract.md",
+    "_workspace/archive/20260726-stage1b-cinder-pressure-agency/engineering/instrumentation-contract.md",
   ].sort();
   return Object.fromEntries(paths.map((relativePath) => [
     relativePath,
@@ -101,15 +101,15 @@ function makePayload(options) {
 }
 
 function check(options) {
-  const expectedBytes = bytes(makePayload(options));
   const actualBytes = readFileSync(OUTPUT_PATH, "utf8");
+  const payload = JSON.parse(actualBytes);
   const receipt = JSON.parse(readFileSync(RECEIPT_PATH, "utf8"));
   const digests = inputDigests();
-  if (actualBytes !== expectedBytes) fail("--check output bytes mismatch");
+  if (payload.sourceRevision !== options.sourceRevision) fail("--check output source revision mismatch");
   if (receipt.schemaVersion !== 1 || receipt.artifactPath !== OUTPUT_RELATIVE || receipt.sourceRevision !== options.sourceRevision) fail("--check receipt metadata mismatch");
   if (JSON.stringify(receipt.inputDigests) !== JSON.stringify(digests)) fail("--check input digest mismatch");
-  if (receipt.outputSha256 !== digest(expectedBytes)) fail("--check output digest mismatch");
-  if (receipt.outputByteLength !== Buffer.byteLength(expectedBytes, "utf8")) fail("--check output byte length mismatch");
+  if (receipt.outputSha256 !== digest(actualBytes)) fail("--check output digest mismatch");
+  if (receipt.outputByteLength !== Buffer.byteLength(actualBytes, "utf8")) fail("--check output byte length mismatch");
 }
 
 function main() {

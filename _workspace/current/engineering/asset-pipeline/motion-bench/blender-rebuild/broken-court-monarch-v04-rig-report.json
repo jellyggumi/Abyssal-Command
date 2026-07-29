@@ -1,0 +1,315 @@
+{
+  "assetId": "broken-court-monarch-v04",
+  "category": "enemies",
+  "source": "assets/mesh/character/broken-court-monarch-v04-character/glb/base_basic_pbr.glb",
+  "steps": [
+    {
+      "step": "import",
+      "meshes": 1,
+      "reusedBodySplit": false,
+      "hadPedestal": false
+    },
+    {
+      "step": "weld",
+      "weldDistance": 0.0,
+      "vertsBefore": 5788,
+      "vertsAfter": 5788,
+      "merged": false
+    },
+    {
+      "step": "landmarks",
+      "height": 1.89,
+      "shoulderZFrac": 0.74,
+      "shoulderHalfWidth": 0.3484,
+      "hipHalfWidth": 0.1345,
+      "handL": [
+        0.2017,
+        -0.1224,
+        1.4515
+      ],
+      "handR": [
+        -0.1992,
+        -0.1212,
+        1.4476
+      ],
+      "synthesizedArms": [],
+      "center": [
+        0.0014,
+        -0.1133
+      ]
+    },
+    {
+      "step": "roll_alignment",
+      "phase": "pre_bind",
+      "referencePolicy": {
+        "axial": "+Y",
+        "lateral": "+Z"
+      },
+      "rows": [
+        {
+          "bone": "DEF-spine",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.001",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.002",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.003",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.004",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.005",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-pelvis.L",
+          "policy": "axial",
+          "rollDeg": -134.5205
+        },
+        {
+          "bone": "DEF-pelvis.R",
+          "policy": "axial",
+          "rollDeg": 134.5205
+        },
+        {
+          "bone": "DEF-shoulder.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.L",
+          "policy": "lateral",
+          "rollDeg": -126.3694
+        },
+        {
+          "bone": "DEF-forearm.L",
+          "policy": "lateral",
+          "rollDeg": -126.3693
+        },
+        {
+          "bone": "DEF-hand.L",
+          "policy": "lateral",
+          "rollDeg": -126.3696
+        },
+        {
+          "bone": "DEF-shoulder.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.R",
+          "policy": "lateral",
+          "rollDeg": 120.025
+        },
+        {
+          "bone": "DEF-forearm.R",
+          "policy": "lateral",
+          "rollDeg": 120.0249
+        },
+        {
+          "bone": "DEF-hand.R",
+          "policy": "lateral",
+          "rollDeg": 120.025
+        },
+        {
+          "bone": "DEF-thigh.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.L",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.L",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        },
+        {
+          "bone": "DEF-thigh.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.R",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.R",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        }
+      ]
+    },
+    {
+      "step": "armature_fit",
+      "bones": 24,
+      "shoulderZ": 1.3986,
+      "arms": {
+        "L": {
+          "restAngleDeg": -76.7,
+          "length": 0.0543
+        },
+        "R": {
+          "restAngleDeg": -76.36,
+          "length": 0.0505
+        }
+      },
+      "preBindRollCount": 24
+    },
+    {
+      "step": "orphan_fill",
+      "filled": 1018
+    },
+    {
+      "step": "bind",
+      "method": "envelope",
+      "boundGroups": 24,
+      "weightedVerts": 5788,
+      "totalVerts": 5788,
+      "armWeightFrac": 0.3057,
+      "attempts": [
+        [
+          "bone_heat",
+          0,
+          0.0
+        ],
+        [
+          "envelope",
+          4770,
+          0.3004
+        ]
+      ],
+      "topWeights": [
+        [
+          1232.5,
+          "DEF-thigh.R"
+        ],
+        [
+          1167.1,
+          "DEF-thigh.L"
+        ],
+        [
+          1096.9,
+          "DEF-shin.R"
+        ],
+        [
+          1082.8,
+          "DEF-shin.L"
+        ],
+        [
+          902.7,
+          "DEF-shoulder.L"
+        ]
+      ]
+    },
+    {
+      "step": "weight_refine",
+      "enabledArmatureModifiers": 1,
+      "correctedVertices": 4356,
+      "oppositeLeak": 0,
+      "ambiguous": 1403,
+      "orphanCount": 0,
+      "invalidCount": 0,
+      "nonDefCount": 0,
+      "maxInfluences": 4,
+      "maxWeightSum": 1.0000000093132257,
+      "minWeightSum": 0.9999999906867743,
+      "deformVerts": 5788,
+      "deformVertsTotal": 5788
+    },
+    {
+      "step": "rest_pose",
+      "mode": "natural",
+      "rotatedDeg": {},
+      "axisDeviationDeg": {
+        "L": 80.87,
+        "R": 79.78
+      },
+      "elevationDeg": {
+        "L": -76.7,
+        "R": -76.36
+      },
+      "tposeToleranceDeg": 12.0,
+      "ok": true
+    },
+    {
+      "step": "author_animations",
+      "count": 11,
+      "clips": [
+        "broken-court-monarch-v04::idle::v01",
+        "broken-court-monarch-v04::move::v01",
+        "broken-court-monarch-v04::run::v01",
+        "broken-court-monarch-v04::hit::v01",
+        "broken-court-monarch-v04::bighit::v01",
+        "broken-court-monarch-v04::attack::v01",
+        "broken-court-monarch-v04::critical::v01",
+        "broken-court-monarch-v04::avoid::v01",
+        "broken-court-monarch-v04::defence::v01",
+        "broken-court-monarch-v04::die::v01",
+        "broken-court-monarch-v04::show::v01"
+      ]
+    },
+    {
+      "step": "rigid_loose_parts",
+      "enabled": true,
+      "parts": 98,
+      "influences": 1
+    },
+    {
+      "step": "mesh_split",
+      "enabled": true,
+      "parts": 98,
+      "rigidLooseParts": true,
+      "vertices": 5788
+    },
+    {
+      "step": "export",
+      "path": "/tmp/abyssal-blender-rebuild/broken-court-monarch-v04/model-final3.glb",
+      "bytes": 11097316,
+      "pedestalRemoved": false,
+      "meshParts": 98
+    }
+  ],
+  "axisDeviationDeg": {
+    "L": 80.87,
+    "R": 79.78
+  },
+  "elevationDeg": {
+    "L": -76.7,
+    "R": -76.36
+  },
+  "bindMethod": "envelope",
+  "pedestalRemoved": false,
+  "restPose": "natural",
+  "restPoseOk": true,
+  "clipCount": 11,
+  "status": "completed"
+}

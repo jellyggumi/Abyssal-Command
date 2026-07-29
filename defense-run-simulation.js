@@ -459,10 +459,8 @@ function buildWaveSchedule(stage, seed, tactics, wavePlan) {
     rng = rngNext(rng);
     const densityDelta = authoredPlan ? 0 : (rng % (2 * variation.densityDelta + 1)) - variation.densityDelta;
     rng = rngNext(rng);
-    // Doctrine-authored waves (defense-catalog.js STAGE_WAVE_DOCTRINE) pin their own approach lane
-    // and policy so each map's wave pattern reads distinctly; unauthored sources keep the seeded
-    // roll. The RNG draw is taken either way so the draw order (and every other stage's schedule)
-    // is unaffected by whether a wave authored its lane.
+    // Every authored wave carries its encounter path. Direction and policy are still recorded for
+    // presentation/AI intent, but neither may be used to invent navigation from scene decoration.
     const rolledDirection = directions[rng % directions.length];
     const direction = source.direction || rolledDirection;
     rng = rngNext(rng);
@@ -478,6 +476,7 @@ function buildWaveSchedule(stage, seed, tactics, wavePlan) {
       waveIndex,
       slot: source.slot ?? waveIndex,
       objectiveId: source.objectiveId || "gate-defense",
+      routeId: source.routeId || null,
       alternativeId: selected.id,
       pattern: stage.wavePattern?.[waveIndex] || primary.enemy,
       kind: source.kind || "normal",
@@ -496,8 +495,8 @@ function buildWaveSchedule(stage, seed, tactics, wavePlan) {
     };
   });
   schedule.sort((a, b) => a.at - b.at || a.waveIndex - b.waveIndex);
-  const variantId = schedule.map(({ at, kind, composition, direction, laneOffset, policyId, selectionId }) =>
-    `${at}:${kind}:${selectionId}:${composition.map(({ enemy, count }) => `${enemy}x${count}`).join("+")}:${direction}:${laneOffset}:${policyId}`).join("|");
+  const variantId = schedule.map(({ at, kind, composition, direction, laneOffset, policyId, selectionId, routeId }) =>
+    `${at}:${kind}:${selectionId}:${composition.map(({ enemy, count }) => `${enemy}x${count}`).join("+")}:${direction}:${laneOffset}:${policyId}:${routeId || "legacy-route"}`).join("|");
   return { schedule, nextRng: rng, variantId };
 }
 
@@ -509,7 +508,8 @@ function spawnPoint(direction, laneOffset) {
   return { x: 500, y: clamp(ARENA.gateY + laneOffset, 1000, ARENA.height - 1000) };
 }
 
-function laneRoute(tactics, policyId, laneOffset) {
+/** Legacy saves may retain policy-derived lanes. New authored waves must resolve one immutable path. */
+function legacyLaneRoute(tactics, policyId, laneOffset) {
   if (policyId === "flank" && tactics.flank) {
     return [{ id: tactics.flank.id, x: tactics.flank.entryX, y: tactics.flank.entryY, zone: "flank" }];
   }
@@ -523,6 +523,18 @@ function laneRoute(tactics, policyId, laneOffset) {
     }];
   }
   return [];
+}
+
+function encounterPathFor(run, routeId) {
+  if (!routeId) return null;
+  return encounterRouteFor(run)?.paths?.find((path) => path.id === routeId) || null;
+}
+
+function spawnRoute(run, routeId, policyId, laneOffset) {
+  if (!routeId) return legacyLaneRoute(run.tactics, policyId, laneOffset);
+  const path = encounterPathFor(run, routeId);
+  if (!path) throw new RangeError(`Unknown authored encounter path: ${routeId}`);
+  return path.waypoints.map((waypoint) => ({ ...waypoint }));
 }
 
 /** Resolves `run.formationStance` (falling back to VANGUARD for any unset/unrecognized value — same
@@ -650,6 +662,7 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
   const policy = ENEMY_POLICIES[policyId] || ENEMY_POLICIES["gate-pressure"];
   const direction = spawnOpt.direction || "W";
   const laneOffset = spawnOpt.laneOffset || 0;
+  const routeId = spawnOpt.routeId || null;
   const point = elite ? { x: 14000, y: ARENA.gateY } : spawnPoint(direction, laneOffset);
   // Mid-boss (미들 웨이브 리더): an ordinary, NON-elite enemy carrying MIDBOSS_PROFILE multipliers.
   // Keeping it non-elite is deliberate — elite spawns drive the extraction/capture flow, while a
@@ -676,7 +689,8 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     policyIntent: policy?.intent || null,
     policyTarget: policy?.target || null,
     spawnDirection: direction,
-    route: laneRoute(run.tactics, policyId, laneOffset),
+    routeId,
+    route: spawnRoute(run, routeId, policyId, laneOffset),
     waypointIndex: 0,
     encounterObjectiveId: spawnOpt.objectiveId || null,
     waveIndex: Number.isInteger(spawnOpt.waveIndex) ? spawnOpt.waveIndex : null,
@@ -690,6 +704,7 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     midboss: Boolean(midboss),
     midbossId: midboss?.id ?? null,
     spawnDirection: direction,
+    routeId: enemy.routeId,
     route: clone(enemy.route),
     objectiveId: enemy.encounterObjectiveId,
     waveIndex: enemy.waveIndex,
@@ -714,6 +729,7 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     target: enemy.policyTarget,
     spawnDirection: direction,
   });
+  return enemy;
 }
 
 function spawnBoss(run) {
@@ -721,6 +737,7 @@ function spawnBoss(run) {
   const hp = data.hp;
   const policyId = data.policyId || "low-hp-focus";
   const policy = ENEMY_POLICIES[policyId] || ENEMY_POLICIES["low-hp-focus"];
+  const routeId = encounterRouteFor(run)?.finale?.bossPathId || null;
   const boss = actor(nextId(run, "boss"), "boss", 11000, ARENA.gateY, hp, hp, {
     class: "boss",
     speed: data.speed,
@@ -738,8 +755,10 @@ function spawnBoss(run) {
     policyIntent: policy?.intent || null,
     policyTarget: policy?.target || null,
     spawnDirection: "W",
-    route: laneRoute(run.tactics, policyId, 0),
+    routeId,
+    route: spawnRoute(run, routeId, policyId, 0),
     waypointIndex: 0,
+    encounterObjectiveId: "boss-kill",
   });
   placeOnTerrain(run, boss, boss);
   run.enemies.push(boss);
@@ -758,28 +777,13 @@ function spawnBoss(run) {
     policyId,
     intent: boss.policyIntent,
     spawnDirection: "W",
+    routeId,
+    route: clone(boss.route),
+    objectiveId: "boss-kill",
     cue: eventCue("bossSpawned"),
   });
   spawnEvent.spawnEventId = spawnEvent.eventId;
   boss.spawnEventId = spawnEvent.eventId;
-  const arrivalDamage = Math.max(1, Math.trunc(data.damage / 20) - run.gateDamageReduction);
-  run.gate.integrity = clamp(run.gate.integrity - arrivalDamage, 0, run.gate.maxIntegrity);
-  emit(run, "ENEMY_ATTACK", {
-    entityId: boss.id,
-    targetId: run.gate.id,
-    damage: arrivalDamage,
-    policyId: boss.policyId,
-    intent: boss.policyIntent,
-    objectiveId: "boss-kill",
-    arrival: true,
-  });
-  emit(run, "GATE_BREACHED", {
-    enemyId: boss.id,
-    damage: arrivalDamage,
-    policyId: boss.policyId,
-    objectiveId: "boss-kill",
-    arrival: true,
-  });
 }
 
 function encounterStateFor(route) {
@@ -793,6 +797,7 @@ function encounterStateFor(route) {
     attempt: 1,
     retries: 0,
     recoveryUntil: null,
+    pressurePausedAt: null,
     commitmentCap: Math.max(1, route?.commitmentCap || 1),
     maxConcurrentEnemies: Math.max(1, route?.maxConcurrentEnemies || 1),
     committedAttackerIds: [],
@@ -807,6 +812,7 @@ function encounterStateFor(route) {
       kind: objective.kind,
       completed: false,
       completedAt: null,
+      contestedAt: null,
       attempts: 1,
       retries: 0,
     }])),
@@ -828,6 +834,22 @@ function activeEncounterObjective(run) {
   const route = encounterRouteFor(run);
   return route?.objectives?.[run.encounter?.objectiveIndex] || null;
 }
+function encounterObjectiveHandoff(run, objective, objectiveIndex = null) {
+  const route = encounterRouteFor(run);
+  const resolvedIndex = Number.isInteger(objectiveIndex)
+    ? objectiveIndex
+    : route?.objectives?.findIndex(({ id }) => id === objective?.id);
+  return {
+    stageId: run.stage.id,
+    routeId: route?.id || run.encounter?.routeId || null,
+    objectiveId: objective?.id || null,
+    objectiveKind: objective?.kind || null,
+    objectiveIndex: resolvedIndex >= 0 ? resolvedIndex : null,
+    cameraCueId: objective?.cameraCueId || null,
+    point: objective?.point ? clone(objective.point) : null,
+  };
+}
+
 
 function encounterSnapshot(run) {
   const encounter = run.encounter || encounterStateFor(encounterRouteFor(run));
@@ -890,23 +912,25 @@ function enqueueEncounterWave(run, wave, retryAttempt = null) {
     spawnDirection: wave.direction,
     midbossId: wave.midboss?.id ?? null,
     variantId: run.waveVariant.id,
+    routeId: wave.routeId || null,
     objectiveId,
     retryAttempt,
   });
-  const pending = [];
   if (wave.midboss) {
-    pending.push({
-      waveIndex: wave.waveIndex,
+    // Statement enemies must enter on the authored wave beat. Queuing the
+    // mid-boss behind leftovers from the previous wave hides the cue and can
+    // delay it by hundreds of ticks under the concurrency cap.
+    spawnEnemy(run, wave.midboss.enemy, false, {
+      direction: wave.direction,
+      laneOffset: wave.laneOffset,
+      policyId: wave.midboss.policyId,
+      routeId: wave.routeId || null,
       objectiveId,
-      type: wave.midboss.enemy,
-      spawnOpt: {
-        direction: wave.direction,
-        laneOffset: wave.laneOffset,
-        policyId: wave.midboss.policyId,
-        midboss: wave.midboss,
-      },
+      waveIndex: wave.waveIndex,
+      midboss: wave.midboss,
     });
   }
+  const pending = [];
   let spawnIndex = 0;
   wave.composition.forEach(({ enemy, count }) => {
     const policyId = enemy === wave.type ? wave.policyId : (ENEMIES[enemy]?.policyId || wave.policyId);
@@ -919,6 +943,7 @@ function enqueueEncounterWave(run, wave, retryAttempt = null) {
           direction: wave.direction,
           laneOffset: wave.laneOffset + spawnIndex * 200,
           policyId,
+          routeId: wave.routeId || null,
         },
       });
       spawnIndex += 1;
@@ -934,9 +959,11 @@ function enqueueEncounterWave(run, wave, retryAttempt = null) {
 function processEncounterSpawns(run) {
   const encounter = ensureEncounterState(run);
   if (encounter.status !== "ACTIVE" || !encounter.spawnQueue.length || run.tick < encounter.nextSpawnAt) return;
+  const pending = encounter.spawnQueue[0];
+  if (pending.objectiveId !== encounter.objectiveId) return;
   const activeBodies = run.enemies.filter((enemy) => enemy.class !== "boss" && !enemy.elite).length;
   if (activeBodies >= encounter.maxConcurrentEnemies) return;
-  const pending = encounter.spawnQueue.shift();
+  encounter.spawnQueue.shift();
   spawnEnemy(run, pending.type, false, {
     ...pending.spawnOpt,
     objectiveId: pending.objectiveId,
@@ -959,6 +986,7 @@ function beginEncounterRecovery(run, reason = "PLAYER_RETRY") {
   encounter.retryWaveIndices = retryWaveIndices;
   encounter.status = "RECOVERY";
   encounter.recoveryUntil = run.tick + objective.retry.recoveryTicks;
+  encounter.pressurePausedAt = run.tick;
   encounter.committedAttackerIds = [];
   encounter.committedAttackerCount = 0;
   const commanderFloor = Math.trunc((run.commander.maxIntegrity * objective.retry.commanderFloorBp) / 10000);
@@ -966,7 +994,7 @@ function beginEncounterRecovery(run, reason = "PLAYER_RETRY") {
   run.commander.integrity = Math.max(run.commander.integrity, commanderFloor);
   run.gate.integrity = Math.max(run.gate.integrity, gateFloor);
   emit(run, "ENCOUNTER_OBJECTIVE_FAILED", {
-    objectiveId,
+    ...encounterObjectiveHandoff(run, objective),
     attempt: encounter.attempt,
     reason,
     withdrawnEnemyIds: withdrawn.map(({ id }) => id),
@@ -984,10 +1012,17 @@ function processEncounterRecovery(run) {
   const encounter = ensureEncounterState(run);
   if (encounter.status !== "RECOVERY" || run.tick < encounter.recoveryUntil) return;
   const objective = activeEncounterObjective(run);
+  const pausedAt = Number.isInteger(encounter.pressurePausedAt) ? encounter.pressurePausedAt : run.tick;
+  const pausedTicks = Math.max(0, run.tick - pausedAt);
+  if (run.objectivePressure && pausedTicks > 0) {
+    run.objectivePressure.phaseStartedAt += pausedTicks;
+    run.objectivePressure.deadlineTick += pausedTicks;
+  }
   encounter.status = "ACTIVE";
   encounter.attempt += 1;
   encounter.retries += 1;
   encounter.recoveryUntil = null;
+  encounter.pressurePausedAt = null;
   encounter.nextSpawnAt = run.tick;
   const objectiveState = encounter.objectives[objective.id];
   objectiveState.attempts = encounter.attempt;
@@ -1018,6 +1053,7 @@ function updateEncounterObjective(run) {
   const alive = run.enemies.some((enemy) => enemy.encounterObjectiveId === objective.id && enemy.hp > 0);
   if (!allStarted || pending || alive) return;
   const objectiveState = encounter.objectives[objective.id];
+  if (!objectiveState || objectiveState.completed) return;
   objectiveState.completed = true;
   objectiveState.completedAt = run.tick;
   grantEncounterRecovery(run, `objective:${objective.id}`, objective.recovery, {
@@ -1025,8 +1061,7 @@ function updateEncounterObjective(run) {
     rewardType: "objective-recovery",
   });
   emit(run, "ENCOUNTER_OBJECTIVE_COMPLETED", {
-    objectiveId: objective.id,
-    objectiveKind: objective.kind,
+    ...encounterObjectiveHandoff(run, objective),
     attempt: encounter.attempt,
     retries: encounter.retries,
   });
@@ -1043,10 +1078,7 @@ function updateEncounterObjective(run) {
   }
   if (nextObjective) {
     emit(run, "ENCOUNTER_OBJECTIVE_STARTED", {
-      objectiveId: nextObjective.id,
-      objectiveKind: nextObjective.kind,
-      objectiveIndex: nextIndex,
-      point: clone(nextObjective.point),
+      ...encounterObjectiveHandoff(run, nextObjective, nextIndex),
       previousObjectiveId: objective.id,
     });
   }
@@ -2178,7 +2210,8 @@ function resolveDeaths(run) {
         objectiveId: "echo-recovery",
         cutscene: stageCutscene(run.stage).elite,
       });
-      const escorts = run.enemies.filter((enemy) => enemy.policyId === "elite-escort" && enemy.escortLeaderId === entry.id);
+      const escorts = run.enemies.filter((enemy) =>
+        enemy.policyId === "elite-escort" && enemy.encounterObjectiveId === "echo-recovery");
       if (escorts.length) {
         const escortIds = new Set(escorts.map((enemy) => enemy.id));
         run.enemies = run.enemies.filter((enemy) => !escortIds.has(enemy.id));
@@ -2200,7 +2233,28 @@ function resolveDeaths(run) {
 function getTargetPosition(run, enemy) {
   while (enemy.waypointIndex < enemy.route.length) {
     const waypoint = enemy.route[enemy.waypointIndex];
-    if (distanceSquared(enemy, waypoint) > 400 * 400) return waypoint;
+    const reachRadius = Math.max(1, waypoint.radius || 400);
+    if (distanceSquared(enemy, waypoint) > reachRadius * reachRadius) return waypoint;
+    if (waypoint.contest) {
+      if (enemy.routeContestWaypointId !== waypoint.id) {
+        const objective = encounterRouteFor(run)?.objectives?.find(({ id }) => id === enemy.encounterObjectiveId);
+        const contestTicks = Math.max(1, waypoint.contestTicks || objective?.contestTicks || 60);
+        enemy.routeContestWaypointId = waypoint.id;
+        enemy.routeContestedAt = run.tick;
+        enemy.routeReleaseAt = run.tick + contestTicks;
+        const objectiveState = run.encounter?.objectives?.[enemy.encounterObjectiveId];
+        if (objectiveState && objectiveState.contestedAt == null) objectiveState.contestedAt = run.tick;
+        emit(run, "ENCOUNTER_PATH_CONTESTED", {
+          entityId: enemy.id,
+          routeId: enemy.routeId,
+          waypointId: waypoint.id,
+          objectiveId: enemy.encounterObjectiveId,
+          releaseAt: enemy.routeReleaseAt,
+          telegraphTicks: contestTicks,
+        });
+      }
+      if (run.tick < enemy.routeReleaseAt) return waypoint;
+    }
     enemy.waypointIndex += 1;
   }
 
@@ -2476,14 +2530,15 @@ function moveEnemies(run) {
   if (breachedIds.size) run.enemies = run.enemies.filter((enemy) => !breachedIds.has(enemy.id));
 }
 
-/** Opens the extraction window once occupation capture and an Echo candidate coexist (either order). */
+/** Opens extraction only after the occupation has been secured and its boss guardian is defeated. */
 function openExtractionWindow(run, tactics) {
-  if (!run.occupationProgress.captured || !run.eliteCandidate) return;
+  if (!run.occupationProgress.captured || !run.objectives.bossKill.completed || !run.eliteCandidate) return;
   if (run.extractionProgress.expiresAt !== null) return;
   const windowTicks = tactics.extraction?.windowTicks || 600;
   run.extractionProgress.expiresAt = run.tick + windowTicks;
   run.eliteCandidate.expiresAt = run.extractionProgress.expiresAt;
   emit(run, "EXTRACTION_WINDOW_OPENED", {
+    stageId: run.stage.id,
     objectiveId: "extraction",
     extractionPointId: tactics.extraction?.id || null,
     expiresAt: run.extractionProgress.expiresAt,
@@ -2515,8 +2570,8 @@ function updateObjectivePhase(run) {
     ["echo-recovery", objectives.echoRecovery],
     ["growth", objectives.growth],
     ["occupation", objectives.occupation],
-    ["extraction", objectives.extraction],
     ["boss-kill", objectives.bossKill],
+    ["extraction", objectives.extraction],
   ];
   const nextPhase = ordered.find(([, objective]) => !objective.completed)?.[0] || "complete";
   if (nextPhase !== objectives.phase) {
@@ -2571,7 +2626,7 @@ function processWaveClearRecovery(run) {
 }
 function processObjectivePressure(run) {
   const pressure = run.objectivePressure;
-  if (!pressure || run.objectives.phase === "complete") return;
+  if (!pressure || run.objectives.phase === "complete" || ensureEncounterState(run).status === "RECOVERY") return;
   const elapsed = run.tick - pressure.phaseStartedAt;
   const grace = run.objectives.phase === "gate-defense"
     ? run.stage.gateTicks + OBJECTIVE_PRESSURE_GRACE_TICKS
@@ -2630,7 +2685,7 @@ function processTerrainEffects(run) {
   if (occupation && run.objectives.growth.completed) {
     const inZone = distanceSquared(run.commander, occupation) <= occupation.radius ** 2;
     const contested = run.enemies.some((enemy) => distanceSquared(enemy, occupation) <= occupation.radius ** 2);
-    if (!run.occupationProgress.captured && inZone && !contested) {
+    if (!run.occupationProgress.captured && run.objectives.phase === "occupation" && inZone && !contested) {
       run.occupationProgress.holdTicks = Math.min(run.occupationProgress.maxHoldTicks, run.occupationProgress.holdTicks + 1);
       if (run.occupationProgress.holdTicks % 60 === 0 && run.occupationProgress.holdTicks < run.occupationProgress.maxHoldTicks) {
         emit(run, "OCCUPATION_PROGRESS", {
@@ -2688,13 +2743,13 @@ function processTerrainEffects(run) {
     }
   }
 
-  // The extraction window needs BOTH the captured occupation point and a live Echo candidate, and
-  // either can land first: with the authored long hold the elite is frequently defeated AFTER the
-  // point is captured, which used to leave the window permanently closed and wedge the run.
+  // Extraction is the post-boss exit beat. The window may open only after boss-kill, regardless
+  // of whether occupation or the Echo candidate was secured first.
   openExtractionWindow(run, tactics);
   const extraction = tactics.extraction;
   const extractionOpen = extraction
-    && run.objectives.occupation.completed
+    && run.objectives.phase === "extraction"
+    && run.objectives.bossKill.completed
     && run.extractionProgress.availableAt !== null
     && run.tick <= run.extractionProgress.expiresAt;
   if (extractionOpen && !run.extractionProgress.completed) {
@@ -2817,8 +2872,27 @@ function tick(run) {
 
   processTerrainEffects(run);
   if (!run.eliteSpawned && run.objectives.gateDefense.completed) {
-    spawnEnemy(run, run.stage.eliteKind, true, { policyId: "low-hp-focus", direction: "W" });
-    spawnEnemy(run, "guardian", false, { policyId: "elite-escort", direction: "W", laneOffset: 500 });
+    const elitePathId = encounterRouteFor(run)?.finale?.elitePathId || null;
+    const elite = spawnEnemy(run, run.stage.eliteKind, true, {
+      policyId: "low-hp-focus",
+      direction: "W",
+      routeId: elitePathId,
+      objectiveId: "echo-recovery",
+    });
+    const escort = spawnEnemy(run, "guardian", false, {
+      policyId: "elite-escort",
+      direction: "W",
+      laneOffset: 500,
+      routeId: elitePathId,
+      objectiveId: "echo-recovery",
+    });
+    escort.escortLeaderId = elite.id;
+    emit(run, "ESCORT_LEADER_ACQUIRED", {
+      entityId: escort.id,
+      leaderId: elite.id,
+      policyId: escort.policyId,
+      objectiveId: "echo-recovery",
+    });
     run.eliteSpawned = true;
   }
 
@@ -2911,7 +2985,8 @@ function tick(run) {
   processObjectivePressure(run);
 
   if (!run.bossSpawned
-      && run.objectives.extraction.completed
+      && run.objectives.occupation.completed
+      && run.objectives.phase === "boss-kill"
       && run.tick >= run.stage.gateTicks
       && !run.enemies.some((enemy) => enemy.class !== "boss")) {
     spawnBoss(run);
@@ -2926,26 +3001,36 @@ function tick(run) {
       cutscene: stageCutscene(run.stage).defeat,
       cue: eventCue("terminal"),
     });
-  } else if (run.bossSpawned && !run.enemies.some((entry) => entry.class === "boss")) {
-    run.objectives.bossKill.completed = true;
-    run.objectives.bossKill.completedAt = run.tick;
-    run.objectives.phase = "complete";
-    run.terminal = run.stage.id === "echo-throne" ? "FINAL_COMPLETION" : "VICTORY";
-    run.progress.achievements.push(`stage-clear:${run.stage.id}`);
-    run.rewardOffer = { choices: [...(STAGE_REWARD_IDS[run.stage.id] || [])] };
-    emit(run, "OBJECTIVE_COMPLETED", {
-      objectiveId: "boss-kill",
-      bossTtkTicks: run.bossSpawnedAt === null ? null : run.tick - run.bossSpawnedAt,
-    });
-    emit(run, "TERMINAL", {
-      outcome: run.terminal,
-      planIdentity: run.planCommitment.identity,
-      objectiveId: "boss-kill",
-      bossTtkTicks: run.bossSpawnedAt === null ? null : run.tick - run.bossSpawnedAt,
-      rewardChoices: [...run.rewardOffer.choices],
-      cutscene: stageCutscene(run.stage).victory,
-      cue: eventCue("terminal"),
-    });
+  } else {
+    if (run.bossSpawned
+        && !run.objectives.bossKill.completed
+        && !run.enemies.some((entry) => entry.class === "boss")) {
+      run.objectives.bossKill.completed = true;
+      run.objectives.bossKill.completedAt = run.tick;
+      emit(run, "OBJECTIVE_COMPLETED", {
+        stageId: run.stage.id,
+        objectiveId: "boss-kill",
+        bossTtkTicks: run.bossSpawnedAt === null ? null : run.tick - run.bossSpawnedAt,
+      });
+      updateObjectivePhase(run);
+      openExtractionWindow(run, run.tactics);
+    }
+    if (run.objectives.bossKill.completed && run.extracted) {
+      run.terminal = run.stage.id === "echo-throne" ? "FINAL_COMPLETION" : "VICTORY";
+      if (!run.progress.achievements.includes(`stage-clear:${run.stage.id}`)) {
+        run.progress.achievements.push(`stage-clear:${run.stage.id}`);
+      }
+      run.rewardOffer = { choices: [...(STAGE_REWARD_IDS[run.stage.id] || [])] };
+      emit(run, "TERMINAL", {
+        outcome: run.terminal,
+        planIdentity: run.planCommitment.identity,
+        objectiveId: "extraction",
+        bossTtkTicks: run.bossSpawnedAt === null ? null : run.objectives.bossKill.completedAt - run.bossSpawnedAt,
+        rewardChoices: [...run.rewardOffer.choices],
+        cutscene: stageCutscene(run.stage).victory,
+        cue: eventCue("terminal"),
+      });
+    }
   }
 
   const itemCollected = run.events.some((event) => event.type === "ITEM_COLLECTED");
@@ -3239,10 +3324,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
   const openingEncounterObjective = stage.encounterRoute.objectives[0];
   if (openingEncounterObjective) {
     emit(state, "ENCOUNTER_OBJECTIVE_STARTED", {
-      objectiveId: openingEncounterObjective.id,
-      objectiveKind: openingEncounterObjective.kind,
-      objectiveIndex: 0,
-      point: clone(openingEncounterObjective.point),
+      ...encounterObjectiveHandoff(state, openingEncounterObjective, 0),
       previousObjectiveId: null,
     });
   }

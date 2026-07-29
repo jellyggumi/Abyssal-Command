@@ -12,9 +12,10 @@ const FIXTURE_PATH = join(repositoryRoot, "qa/fixtures/g2-adversarial-tape-fixtu
 const OUTPUT_PATH = join(repositoryRoot, "qa/evidence/gates/G2/g2-adversarial-tape-evidence.json");
 const RECEIPT_PATH = join(repositoryRoot, "qa/evidence/gates/G2/g2-adversarial-tape-evidence.receipt.json");
 const SOURCE_REVISION = "g2-adversarial-tape-test-revision";
-const FIXTURE_LENGTH = 53146;
-const FIXTURE_RAW_SHA256 = "sha256:8869964ba710ba09be1784650d71e875f5d7c8094971236e152bc719a2daa2f9";
-const FIXTURE_BLOB_SHA1 = "3bcf35a0be2777b2156f736f7753683c15c6541c";
+const FIXTURE_LENGTH = 41491;
+const FIXTURE_RAW_SHA256 = "sha256:28da17e2e72bf15505c8d1d5d62fabc2b193507172987ce74f63e13304145c9b";
+const FIXTURE_BLOB_SHA1 = "35e0778fc67d1a67572e9538eab1c63f4c258e87";
+const EXPECTED_TUPLE_COUNT = 45;
 const SHA256 = /^sha256:[a-f0-9]{64}$/;
 
 const REQUIRED_SAMPLE_FIELDS = [
@@ -156,7 +157,7 @@ test("G2 adversarial-tape CLI writes canonical fixed-path evidence and determini
     assert.equal(evidence.schema_version, "g2-adversarial-tape-evidence/1");
     assert.equal(evidence.tape_id, fixture.contract_id);
     assert.match(evidence.tape_hash, SHA256, "the receipt must identify the frozen tape by SHA-256");
-    assert.equal(evidence.expected_tuple_count, 150);
+    assert.equal(evidence.expected_tuple_count, EXPECTED_TUPLE_COUNT);
     assert.equal(evidence.measurement_status, "INCOMPLETE");
     assert.equal(evidence.gate_verdict, "NOT_PASSED");
     assert.deepEqual(evidence.comparator, {
@@ -165,7 +166,7 @@ test("G2 adversarial-tape CLI writes canonical fixed-path evidence and determini
     });
 
     assert.ok(Array.isArray(evidence.samples), "the public receipt must expose its per-tuple samples");
-    assert.equal(evidence.samples.length, 150, "the receipt must contain exactly the frozen 5 × 10 × 3 matrix");
+    assert.equal(evidence.samples.length, EXPECTED_TUPLE_COUNT, "the receipt must contain exactly the frozen 5 × 3 × 3 matrix");
 
     const expectedTupleKeys = (fixture.finite_population.tuples || []).map(tupleKey).sort();
     const observedTupleKeys = evidence.samples.map(tupleKey).sort();
@@ -210,8 +211,8 @@ test("G2 adversarial-tape CLI writes canonical fixed-path evidence and determini
       assert.ok(sample.accepted_input_rows.some(({ event_trigger: trigger }) => trigger === expectedPolicyReceipts[sample.archetype]), `${sampleKey} must retain policy-specific public receipt`);
 
       const timedOut = sample.tuple_status === "INVALID_TIMEOUT";
-      const reachedEngineeringCeilingWithoutTerminal = sample.steps_executed === 20000 && sample.terminal_outcome === null;
-      assert.equal(timedOut, reachedEngineeringCeilingWithoutTerminal, `${sampleKey} must classify exactly a 20,000-step missing terminal as INVALID_TIMEOUT`);
+      const reachedEngineeringCeilingWithoutTerminal = sample.steps_executed === fixture.terminal_ceiling.per_tuple_steps && sample.terminal_outcome === null;
+      assert.equal(timedOut, reachedEngineeringCeilingWithoutTerminal, `${sampleKey} must classify exactly a ceiling-bound missing terminal as INVALID_TIMEOUT`);
       if (timedOut) {
         assert.equal(sample.terminal_outcome, null, `${sampleKey} timeout must not become a win`);
         assert.equal(sample.terminal_cause, "TIMEOUT_ENGINEERING_CEILING");

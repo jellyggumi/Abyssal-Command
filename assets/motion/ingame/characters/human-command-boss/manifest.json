@@ -10,7 +10,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "assets/motion/ingame/characters/human-command-boss/model.glb",
-  "modelSha256": "80a8d5f2d1dba1262bfb50e48a1c20818a590426768d0cbb59fde0895c3046de",
+  "modelSha256": "a2fd435880d12a56d70599d701c3b562c0869a0d51062e7d7db26b4a066137e6",
   "modelBytes": 9750392,
   "targetBoneNames": [
     "DEF-spine",
@@ -259,6 +259,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -287,6 +288,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -404,6 +406,11 @@
         "singleInfluenceFraction": 0.159741
       }
     },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 17722,
+      "signFlips": 622
+    },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,
       "weightStatsMatchAdjacentReceipt": true
@@ -411,7 +418,7 @@
   },
   "runtimeEligible": true,
   "gateErrors": [],
-  "generationId": "b0178e95651a0b29beffe28d8006d9c5cb2cb6ce7c6a00ebec36e4e7108529be",
+  "generationId": "ada19f5524d2a384e3545923281945026bf683b46e974a39217b9e104c6599ef",
   "sourceAssetRights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",

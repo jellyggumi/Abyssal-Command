@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T16:28:11.230659+00:00",
+  "generatedAt": "2026-07-29T17:57:49.084290+00:00",
   "assetId": "shadow-soldier-v04",
   "role": "shadow-guardian",
   "category": "enemies",
@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/model.glb",
-  "modelSha256": "d8828a8d7bbefe416ecd5d87f56f1bfea03acd6358743c9012084f0ce4450864",
+  "modelSha256": "822e359bb749d90d30b75c006ef10d6ba70ff8580967f5b4008e49ebbd23ef85",
   "modelBytes": 12278972,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/rig-report.json",
@@ -262,6 +262,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -290,6 +291,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -406,6 +408,11 @@
         "maxWeightSumError": 2.9802322387695312e-08,
         "singleInfluenceFraction": 0.041122
       }
+    },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 13674,
+      "signFlips": 531
     },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,

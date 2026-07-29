@@ -14,10 +14,7 @@ import { STANCE_CONFIG } from "../rpg-catalog.js";
 
 const STAGE_ID = "cinder-span";
 const WORLD = stageWorldFor(STAGE_ID);
-const OBSTACLE = WORLD.gameplay.obstacles.find(({ id }) => id === "cinder-span:drowned-forge-arch");
-const RAMP = WORLD.gameplay.surfaces.find(({ id }) => id === "cinder-span:overlook-ramp");
-const PLATFORM = WORLD.gameplay.surfaces.find(({ id }) => id === "cinder-span:overlook-platform");
-const SUPPORT_MESH = WORLD.gameplay.meshColliders?.find(({ id }) => id === "cinder-span:walkable-support");
+const OBSTACLE = WORLD.gameplay.obstacles.find(({ id }) => id === "cinder-span:west-ash-wall");
 
 function isolatedRun(options = {}) {
   const run = structuredClone(createDefenseRun({ stageId: STAGE_ID, seed: 37, ...options }));
@@ -55,13 +52,6 @@ function assertWalkable(actor, profile = WORLD) {
   }
 }
 
-function rampElevationAt(surface, actor) {
-  const { axis, atMin, atMax } = surface.elevation;
-  const min = axis === "x" ? surface.bounds.minX : surface.bounds.minY;
-  const max = axis === "x" ? surface.bounds.maxX : surface.bounds.maxY;
-  const position = Math.min(max, Math.max(min, actor[axis]));
-  return Math.round(atMin + ((position - min) / (max - min)) * (atMax - atMin));
-}
 
 function openingEnemy() {
   const opening = getRunSnapshot(advanceDefenseRun(createDefenseRun({ stageId: STAGE_ID, seed: 37 }), 1));
@@ -69,7 +59,7 @@ function openingEnemy() {
   return structuredClone(opening.enemies[0]);
 }
 
-test("commander movement clamps the full actor footprint to all ten authored stage bounds", () => {
+test("commander movement clamps the full actor footprint to all three authored stage bounds", () => {
   for (const { id: stageId } of STAGES) {
     const profile = stageWorldFor(stageId);
     const run = isolatedRun({ stageId });
@@ -111,106 +101,79 @@ test("diagonal obstacle contact slides tangentially instead of clamp-only penetr
   );
 });
 
-test("commander elevation ascends and descends the authored ramp deterministically", () => {
-  const run = isolatedRun();
-  const y = Math.round((RAMP.bounds.minY + RAMP.bounds.maxY) / 2);
-  placeCommander(run, RAMP.bounds.minX, y);
-  let next = step(run, "IDLE");
-  const ascending = [getRunSnapshot(next).commander];
-
-  while (ascending.at(-1).x < RAMP.bounds.maxX) {
-    next = step(next, "E");
-    ascending.push(getRunSnapshot(next).commander);
-  }
-
-  assert.equal(ascending[0].elevation, RAMP.elevation.atMin);
-  assert.equal(ascending.at(-1).elevation, RAMP.elevation.atMax);
-  for (const actor of ascending) {
-    if (actor.x <= RAMP.bounds.maxX) assert.equal(actor.elevation, rampElevationAt(RAMP, actor));
-  }
-  assert.ok(
-    ascending.some((actor, index) => index > 0 && actor.elevation > ascending[index - 1].elevation),
-    "eastbound traversal must visibly gain elevation",
-  );
-
-  const descending = [];
-  while (getRunSnapshot(next).commander.x > RAMP.bounds.minX) {
-    next = step(next, "W");
-    descending.push(getRunSnapshot(next).commander);
-  }
-
-  assert.equal(descending.at(-1).elevation, RAMP.elevation.atMin);
-  assert.ok(
-    descending.some((actor, index) => index > 0 && actor.elevation < descending[index - 1].elevation),
-    "westbound traversal must visibly lose elevation",
-  );
-  for (let index = 1; index < descending.length; index += 1) {
-    assert.ok(descending[index].elevation <= descending[index - 1].elevation, "descent elevation must not rise");
-  }
-});
-
-test("Cinder Span support triangles determine ramp and platform contact without weakening bounds or circle safety", () => {
-  assert.ok(SUPPORT_MESH, "Cinder Span declares its authored walkable support mesh");
-  assert.ok(Array.isArray(SUPPORT_MESH.triangles) && SUPPORT_MESH.triangles.length > 0, "support mesh contains collision triangles");
-  for (const triangle of SUPPORT_MESH.triangles) {
-    assert.equal(triangle.length, 3, "each support mesh primitive is a triangle");
-    for (const vertex of triangle) {
-      assert.ok(Number.isInteger(vertex.x) && Number.isInteger(vertex.y) && Number.isInteger(vertex.elevation));
+test("all three stage worlds publish flat routes with two replacement intermediate objectives", () => {
+  for (const { id: stageId } of STAGES) {
+    const profile = stageWorldFor(stageId);
+    assert.deepEqual(profile.gameplay.surfaces, [], `${stageId} must not retain stale ramp or platform surfaces`);
+    const critical = profile.gameplay.routes.filter(({ kind }) => kind === "critical");
+    assert.equal(critical.length, 1, `${stageId} must publish one critical route`);
+    assert.deepEqual(
+      critical[0].waypoints.map(({ role }) => role),
+      ["ingress", "intermediate-objective", "intermediate-gate", "final-gate"],
+    );
+    assert.equal(
+      critical[0].waypoints.filter(({ role }) => role.startsWith("intermediate-")).length,
+      2,
+      `${stageId} must replace elevation traversal with two routed intermediate objectives`,
+    );
+    for (const route of profile.gameplay.routes) {
+      for (const waypoint of route.waypoints) {
+        assert.equal(waypoint.placement.elevation, 0, `${waypoint.id} must stay on the flat gameplay plane`);
+      }
     }
   }
-
-  const run = isolatedRun();
-  const y = Math.round((RAMP.bounds.minY + RAMP.bounds.maxY) / 2);
-  placeCommander(run, RAMP.bounds.minX, y);
-  let next = step(run, "IDLE");
-  const contacts = [getRunSnapshot(next).commander];
-
-  for (let tick = 0; contacts.at(-1).x < PLATFORM.bounds.minX + 300 && tick < 200; tick += 1) {
-    next = step(next, "E");
-    contacts.push(getRunSnapshot(next).commander);
-  }
-  assert.ok(contacts.at(-1).x >= PLATFORM.bounds.minX + 300, "fixture reaches the authored platform");
-
-  assert.equal(contacts[0].supportMeshId, SUPPORT_MESH.id, "ramp placement publishes its deterministic mesh contact");
-  assert.equal(contacts[0].elevation, RAMP.elevation.atMin, "ramp placement keeps the authored base elevation");
-  for (const commander of contacts) {
-    assert.equal(commander.supportMeshId, SUPPORT_MESH.id, "walkable ramp and platform contact stays on the authored mesh");
-    assert.equal(
-      commander.elevation,
-      commander.x < PLATFORM.bounds.minX ? rampElevationAt(RAMP, commander) : PLATFORM.elevation.atMax,
-      "mesh contact publishes the authoritative support elevation",
-    );
-    assertWalkable(commander);
-  }
-  assert.equal(contacts.at(-1).elevation, PLATFORM.elevation.atMax, "platform traversal reaches the authored top elevation");
 });
 
-test("legacy Cinder entities with integer elevation reacquire authored mesh contact without advancing time", () => {
-  const y = Math.round((RAMP.bounds.minY + RAMP.bounds.maxY) / 2);
-  const legacyContacts = [
-    { label: "absent", prepare(entity) { delete entity.supportMeshId; } },
-    { label: "invalid", prepare(entity) { entity.supportMeshId = "legacy:missing-support"; } },
-  ].map(({ label, prepare }) => {
-    const run = isolatedRun();
-    placeCommander(run, RAMP.bounds.minX, y);
-    run.commander.elevation = 999;
-    prepare(run.commander);
+test("flat support triangles keep replacement intermediate objectives on deterministic terrain", () => {
+  for (const { id: stageId } of STAGES) {
+    const profile = stageWorldFor(stageId);
+    const support = profile.gameplay.meshColliders[0];
+    assert.ok(support, `${stageId} declares an authored walkable support mesh`);
+    assert.ok(support.triangles.length > 0, `${stageId} support mesh contains collision triangles`);
+    for (const triangle of support.triangles) {
+      assert.equal(triangle.length, 3);
+      for (const vertex of triangle) {
+        assert.ok(Number.isInteger(vertex.x) && Number.isInteger(vertex.y));
+        assert.equal(vertex.elevation, 0, `${stageId} support triangles must stay flat`);
+      }
+    }
 
-    const snapshot = getRunSnapshot(advanceDefenseRun(run, 0));
-    assert.equal(snapshot.tick, 0, `${label} legacy migration must not consume a simulation tick`);
-    assert.equal(snapshot.commander.supportMeshId, SUPPORT_MESH.id, `${label} legacy contact resolves to the authored mesh`);
-    assert.equal(snapshot.commander.elevation, RAMP.elevation.atMin, `${label} legacy elevation resolves at the authored ramp contact`);
-    return snapshot.commander;
-  });
+    const intermediates = profile.gameplay.routes
+      .find(({ kind }) => kind === "critical")
+      .waypoints.filter(({ role }) => role.startsWith("intermediate-"));
+    for (const waypoint of intermediates) {
+      const run = isolatedRun({ stageId });
+      placeCommander(run, waypoint.placement.x, waypoint.placement.y);
+      const commander = getRunSnapshot(advanceDefenseRun(run, 0)).commander;
+      assert.equal(commander.supportMeshId, support.id, `${waypoint.id} resolves to the authored support`);
+      assert.equal(commander.elevation, 0, `${waypoint.id} remains on the flat support`);
+      assertWalkable(commander, profile);
+    }
+  }
+});
 
-  assert.deepEqual(
-    legacyContacts.map(({ supportMeshId, elevation }) => ({ supportMeshId, elevation })),
-    [
-      { supportMeshId: SUPPORT_MESH.id, elevation: RAMP.elevation.atMin },
-      { supportMeshId: SUPPORT_MESH.id, elevation: RAMP.elevation.atMin },
-    ],
-    "missing and invalid legacy contact fields normalize to the same deterministic result",
-  );
+test("legacy entities with integer elevation reacquire each stage's flat support without advancing time", () => {
+  for (const { id: stageId } of STAGES) {
+    const profile = stageWorldFor(stageId);
+    const support = profile.gameplay.meshColliders[0];
+    const waypoint = profile.gameplay.routes
+      .find(({ kind }) => kind === "critical")
+      .waypoints.find(({ role }) => role === "intermediate-objective");
+    for (const prepare of [
+      (entity) => { delete entity.supportMeshId; },
+      (entity) => { entity.supportMeshId = "legacy:missing-support"; },
+    ]) {
+      const run = isolatedRun({ stageId });
+      placeCommander(run, waypoint.placement.x, waypoint.placement.y);
+      run.commander.elevation = 999;
+      prepare(run.commander);
+
+      const snapshot = getRunSnapshot(advanceDefenseRun(run, 0));
+      assert.equal(snapshot.tick, 0, `${stageId} legacy migration must not consume a simulation tick`);
+      assert.equal(snapshot.commander.supportMeshId, support.id);
+      assert.equal(snapshot.commander.elevation, 0, `${stageId} legacy elevation resolves to the flat plane`);
+    }
+  }
 });
 
 test("companions and enemies cannot follow targets or routes beyond walkable terrain", () => {
@@ -286,18 +249,18 @@ test("a boundary-clipped RETURN companion reaches its walkable formation anchor 
   assertWalkable(returned);
 });
 
-test("a head-on RETURN companion takes a deterministic bounded tangent around the drowned forge arch", () => {
+test("a head-on RETURN companion takes a deterministic bounded tangent around the west ash wall", () => {
   const makeFixture = () => {
     const run = isolatedRun({ companionLoadout: ["ember-cohort"] });
     const actor = run.companions[0];
     const clearance = OBSTACLE.footprint.radius + actor.radius;
     const anchor = {
-      x: OBSTACLE.footprint.x + clearance + 1000,
+      x: OBSTACLE.footprint.x - clearance - 1000,
       y: OBSTACLE.footprint.y,
     };
     const offset = STANCE_CONFIG.VANGUARD.offsets[0];
     placeCommander(run, anchor.x - offset.x, anchor.y - offset.y);
-    actor.x = OBSTACLE.footprint.x - clearance;
+    actor.x = OBSTACLE.footprint.x + clearance;
     actor.y = OBSTACLE.footprint.y;
     actor.elevation = 0;
     actor.aiState = "RETURN";
@@ -422,24 +385,24 @@ test("maximum authored commander speed cannot tunnel into a circular obstacle", 
   assertWalkable(snapshot.commander);
 });
 
-test("same-seed terrain traversal preserves digest identity including elevation", () => {
+test("same-seed routed terrain traversal preserves digest identity on the flat gameplay plane", () => {
+  const critical = WORLD.gameplay.routes.find(({ kind }) => kind === "critical");
+  const ingress = critical.waypoints.find(({ role }) => role === "ingress").placement;
   const makeReplay = () => {
     const run = isolatedRun({ seed: 91, companionLoadout: ["ember-cohort"] });
-    placeCommander(run, RAMP.bounds.minX, Math.round((RAMP.bounds.minY + RAMP.bounds.maxY) / 2));
+    placeCommander(run, ingress.x, ingress.y);
     return run;
   };
   let left = makeReplay();
   let right = makeReplay();
-  let peakElevation = 0;
   const inputs = [...Array(28).fill("E"), ...Array(28).fill("W")];
 
   for (const octant of inputs) {
     left = step(left, octant);
     right = step(right, octant);
-    peakElevation = Math.max(peakElevation, getRunSnapshot(left).commander.elevation);
+    assert.equal(getRunSnapshot(left).commander.elevation, 0);
     assert.equal(getRunDigest(left), getRunDigest(right));
   }
 
-  assert.equal(peakElevation, RAMP.elevation.atMax, "replay must exercise the full ramp elevation range");
-  assert.equal(getRunSnapshot(left).commander.elevation, RAMP.elevation.atMin);
+  assert.equal(getRunSnapshot(left).commander.elevation, 0);
 });

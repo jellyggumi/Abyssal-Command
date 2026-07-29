@@ -298,6 +298,64 @@ test("battle controls, companion, extraction, and skill guides are labelled, dis
   }
 });
 
+test("modality tabs keep one roving stop and switch their selected panel with Arrow, Home, and End", async () => {
+  const { context, errors, page } = await openLobby();
+  try {
+    const opener = page.locator("[data-guide-open]");
+    await opener.focus();
+    await page.keyboard.press("Enter");
+    const dialog = page.getByRole("dialog", { name: /가이드|도움|안내/i });
+    await dialog.waitFor({ state: "visible" });
+
+    const modalityState = () => dialog.evaluate((node) => ({
+      activeId: document.activeElement?.id ?? "",
+      panels: [...node.querySelectorAll('[role="tabpanel"]')].map((panel) => ({
+        hidden: panel.hidden,
+        id: panel.id,
+      })),
+      tabs: [...node.querySelectorAll('[role="tab"]')].map((tab) => ({
+        id: tab.id,
+        selected: tab.getAttribute("aria-selected"),
+        tabIndex: tab.tabIndex,
+      })),
+    }));
+    const assertSelected = async (modality) => {
+      const state = await modalityState();
+      const selectedId = `modality-tab-${modality}`;
+      const panelId = `modality-panel-${modality}`;
+      assert.deepEqual(
+        state.tabs.filter(({ selected }) => selected === "true").map(({ id }) => id),
+        [selectedId],
+        `${modality} must be the only selected modality tab`,
+      );
+      assert.deepEqual(
+        state.tabs.filter(({ tabIndex }) => tabIndex === 0).map(({ id }) => id),
+        [selectedId],
+        `${modality} must own the only tab stop`,
+      );
+      assert.deepEqual(
+        state.panels.filter(({ hidden }) => !hidden).map(({ id }) => id),
+        [panelId],
+        `${modality} must expose only its associated panel`,
+      );
+      assert.equal(state.activeId, selectedId, `${modality} keyboard selection must retain focus on the selected tab`);
+    };
+
+    const keyboardTab = dialog.locator("#modality-tab-keyboard");
+    await keyboardTab.focus();
+    await assertSelected("keyboard");
+    await page.keyboard.press("ArrowRight");
+    await assertSelected("pointer");
+    await page.keyboard.press("End");
+    await assertSelected("touch");
+    await page.keyboard.press("Home");
+    await assertSelected("keyboard");
+    assert.deepEqual(errors, [], "modality tab keyboard navigation emitted browser errors");
+  } finally {
+    await context.close();
+  }
+});
+
 test("guide controls remain touch operable without horizontal overflow in portrait and compact landscape", async () => {
   for (const viewport of VIEWPORTS) {
     const { context, errors, page } = await openLobby(viewport, { touch: true });

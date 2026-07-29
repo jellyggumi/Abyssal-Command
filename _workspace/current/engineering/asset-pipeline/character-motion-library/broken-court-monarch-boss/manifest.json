@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T16:27:40.133865+00:00",
+  "generatedAt": "2026-07-29T17:57:12.353230+00:00",
   "assetId": "broken-court-monarch-boss",
   "role": "shadow-duelist",
   "category": "bosses",
@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/model.glb",
-  "modelSha256": "8637759665b3a43d44cc7cb82103fbca55a40fcbcc44c29c6b56e08588895f35",
+  "modelSha256": "bc00d72b65a235b787162c5167d151060623b154a10d9ad044cf4e748446b0c4",
   "modelBytes": 13722704,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/rig-report.json",
@@ -262,6 +262,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -290,6 +291,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -406,6 +408,11 @@
         "maxWeightSumError": 2.9802322387695312e-08,
         "singleInfluenceFraction": 0.129372
       }
+    },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 11958,
+      "signFlips": 409
     },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,

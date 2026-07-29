@@ -10,7 +10,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "assets/motion/ingame/characters/ember-cohort/model.glb",
-  "modelSha256": "ba8c5a24969c633793350de6993a00901d82255900b1f8b9bd3b98f0d62dede7",
+  "modelSha256": "4b59c24d94c9eb827ad3ff82e2450802250297d562d4ee4acd7d5411a249c5af",
   "modelBytes": 12305508,
   "targetBoneNames": [
     "DEF-spine",
@@ -259,6 +259,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -287,6 +288,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -404,6 +406,11 @@
         "singleInfluenceFraction": 0.141398
       }
     },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 9384,
+      "signFlips": 416
+    },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,
       "weightStatsMatchAdjacentReceipt": true
@@ -411,7 +418,7 @@
   },
   "runtimeEligible": true,
   "gateErrors": [],
-  "generationId": "b0178e95651a0b29beffe28d8006d9c5cb2cb6ce7c6a00ebec36e4e7108529be",
+  "generationId": "ada19f5524d2a384e3545923281945026bf683b46e974a39217b9e104c6599ef",
   "sourceAssetRights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",

@@ -1,0 +1,169 @@
+{
+  "blenderVersion": "5.1.2",
+  "source": "Blender 5.1.2 glTF import audit; Blender MCP bridge verified on port 9877",
+  "assets": [
+    {
+      "allObjects": [
+        [
+          "model",
+          "MESH"
+        ]
+      ],
+      "objects": [
+        {
+          "coincidentGroupsRounded1e-5": 6804,
+          "coincidentVerticesRounded1e-5": 8091,
+          "connectedComponents": 610,
+          "edges": 69465,
+          "hasShapeKeys": false,
+          "looseSingletonVertices": 0,
+          "materials": 1,
+          "modifiers": [],
+          "name": "model",
+          "polygons": 41355,
+          "vertices": 28708,
+          "zeroOrDegenerateFaces": 0
+        }
+      ],
+      "path": "assets/mesh/character/broken-court-monarch-boss-character/glb/base_basic_pbr.glb"
+    },
+    {
+      "allObjects": [
+        [
+          "model",
+          "MESH"
+        ]
+      ],
+      "objects": [
+        {
+          "coincidentGroupsRounded1e-5": 1107,
+          "coincidentVerticesRounded1e-5": 1247,
+          "connectedComponents": 63,
+          "edges": 14500,
+          "hasShapeKeys": false,
+          "looseSingletonVertices": 0,
+          "materials": 1,
+          "modifiers": [],
+          "name": "model",
+          "polygons": 8884,
+          "vertices": 5679,
+          "zeroOrDegenerateFaces": 0
+        }
+      ],
+      "path": "assets/mesh/character/ember-cohort-character/glb/base_basic_pbr.glb"
+    },
+    {
+      "allObjects": [
+        [
+          "model",
+          "MESH"
+        ]
+      ],
+      "objects": [
+        {
+          "coincidentGroupsRounded1e-5": 1376,
+          "coincidentVerticesRounded1e-5": 1570,
+          "connectedComponents": 98,
+          "edges": 14130,
+          "hasShapeKeys": false,
+          "looseSingletonVertices": 0,
+          "materials": 1,
+          "modifiers": [],
+          "name": "model",
+          "polygons": 8439,
+          "vertices": 5788,
+          "zeroOrDegenerateFaces": 0
+        }
+      ],
+      "path": "assets/mesh/character/broken-court-monarch-v04-character/glb/base_basic_pbr.glb"
+    },
+    {
+      "allObjects": [
+        [
+          "model",
+          "MESH"
+        ]
+      ],
+      "objects": [
+        {
+          "coincidentGroupsRounded1e-5": 899,
+          "coincidentVerticesRounded1e-5": 974,
+          "connectedComponents": 35,
+          "edges": 14000,
+          "hasShapeKeys": false,
+          "looseSingletonVertices": 0,
+          "materials": 1,
+          "modifiers": [],
+          "name": "model",
+          "polygons": 8710,
+          "vertices": 5325,
+          "zeroOrDegenerateFaces": 0
+        }
+      ],
+      "path": "assets/mesh/character/guard-character/glb/base_basic_pbr.glb"
+    },
+    {
+      "allObjects": [
+        [
+          "model",
+          "MESH"
+        ]
+      ],
+      "objects": [
+        {
+          "coincidentGroupsRounded1e-5": 964,
+          "coincidentVerticesRounded1e-5": 1083,
+          "connectedComponents": 60,
+          "edges": 12586,
+          "hasShapeKeys": false,
+          "looseSingletonVertices": 0,
+          "materials": 1,
+          "modifiers": [],
+          "name": "model",
+          "polygons": 7711,
+          "vertices": 4933,
+          "zeroOrDegenerateFaces": 0
+        }
+      ],
+      "path": "assets/mesh/character/human-command-boss-character/glb/base_basic_pbr.glb"
+    },
+    {
+      "allObjects": [
+        [
+          "model",
+          "MESH"
+        ]
+      ],
+      "objects": [
+        {
+          "coincidentGroupsRounded1e-5": 1173,
+          "coincidentVerticesRounded1e-5": 1301,
+          "connectedComponents": 67,
+          "edges": 13640,
+          "hasShapeKeys": false,
+          "looseSingletonVertices": 0,
+          "materials": 1,
+          "modifiers": [],
+          "name": "model",
+          "polygons": 8271,
+          "vertices": 5436,
+          "zeroOrDegenerateFaces": 0
+        }
+      ],
+      "path": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb"
+    }
+  ],
+  "mcpProbe": {
+    "status": "ok",
+    "host": "127.0.0.1",
+    "port": 9877,
+    "blenderVersion": "5.1.2",
+    "operation": "import source GLB, count topology, separate loose parts, import rebuilt GLB and render attack frame"
+  },
+  "finalMcpConnection": {
+    "status": "connected",
+    "host": "127.0.0.1",
+    "port": 9876,
+    "blenderVersion": "5.1.2"
+  }
+}

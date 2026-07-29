@@ -105,23 +105,16 @@
     ],
     "stage_ids": [
       "cinder-span",
-      "veil-citadel",
-      "echo-throne",
-      "sunken-bastion",
-      "howling-sprawl",
-      "glass-necropolis",
-      "starless-canal",
-      "shattered-causeway",
       "abyss-chancel",
-      "gate-zenith"
+      "echo-throne"
     ],
     "seeds": [
       301,
       302,
       303
     ],
-    "tuple_count": 150,
-    "samples_per_archetype": 30,
+    "tuple_count": 45,
+    "samples_per_archetype": 9,
     "expansion": "FORBIDDEN",
     "tuple_identities_explicit": true,
     "tuples": [
@@ -142,21 +135,6 @@
       },
       {
         "archetype": "rusher",
-        "stage_id": "veil-citadel",
-        "seed": 301
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "veil-citadel",
-        "seed": 302
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "veil-citadel",
-        "seed": 303
-      },
-      {
-        "archetype": "rusher",
         "stage_id": "echo-throne",
         "seed": 301
       },
@@ -172,81 +150,6 @@
       },
       {
         "archetype": "rusher",
-        "stage_id": "sunken-bastion",
-        "seed": 301
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "sunken-bastion",
-        "seed": 302
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "sunken-bastion",
-        "seed": 303
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "howling-sprawl",
-        "seed": 301
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "howling-sprawl",
-        "seed": 302
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "howling-sprawl",
-        "seed": 303
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "glass-necropolis",
-        "seed": 301
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "glass-necropolis",
-        "seed": 302
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "glass-necropolis",
-        "seed": 303
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "starless-canal",
-        "seed": 301
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "starless-canal",
-        "seed": 302
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "starless-canal",
-        "seed": 303
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "shattered-causeway",
-        "seed": 301
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "shattered-causeway",
-        "seed": 302
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "shattered-causeway",
-        "seed": 303
-      },
-      {
-        "archetype": "rusher",
         "stage_id": "abyss-chancel",
         "seed": 301
       },
@@ -258,21 +161,6 @@
       {
         "archetype": "rusher",
         "stage_id": "abyss-chancel",
-        "seed": 303
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "gate-zenith",
-        "seed": 301
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "gate-zenith",
-        "seed": 302
-      },
-      {
-        "archetype": "rusher",
-        "stage_id": "gate-zenith",
         "seed": 303
       },
       {
@@ -292,21 +180,6 @@
       },
       {
         "archetype": "turtle",
-        "stage_id": "veil-citadel",
-        "seed": 301
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "veil-citadel",
-        "seed": 302
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "veil-citadel",
-        "seed": 303
-      },
-      {
-        "archetype": "turtle",
         "stage_id": "echo-throne",
         "seed": 301
       },
@@ -322,81 +195,6 @@
       },
       {
         "archetype": "turtle",
-        "stage_id": "sunken-bastion",
-        "seed": 301
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "sunken-bastion",
-        "seed": 302
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "sunken-bastion",
-        "seed": 303
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "howling-sprawl",
-        "seed": 301
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "howling-sprawl",
-        "seed": 302
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "howling-sprawl",
-        "seed": 303
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "glass-necropolis",
-        "seed": 301
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "glass-necropolis",
-        "seed": 302
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "glass-necropolis",
-        "seed": 303
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "starless-canal",
-        "seed": 301
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "starless-canal",
-        "seed": 302
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "starless-canal",
-        "seed": 303
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "shattered-causeway",
-        "seed": 301
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "shattered-causeway",
-        "seed": 302
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "shattered-causeway",
-        "seed": 303
-      },
-      {
-        "archetype": "turtle",
         "stage_id": "abyss-chancel",
         "seed": 301
       },
@@ -408,21 +206,6 @@
       {
         "archetype": "turtle",
         "stage_id": "abyss-chancel",
-        "seed": 303
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "gate-zenith",
-        "seed": 301
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "gate-zenith",
-        "seed": 302
-      },
-      {
-        "archetype": "turtle",
-        "stage_id": "gate-zenith",
         "seed": 303
       },
       {
@@ -442,21 +225,6 @@
       },
       {
         "archetype": "economy-greed",
-        "stage_id": "veil-citadel",
-        "seed": 301
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "veil-citadel",
-        "seed": 302
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "veil-citadel",
-        "seed": 303
-      },
-      {
-        "archetype": "economy-greed",
         "stage_id": "echo-throne",
         "seed": 301
       },
@@ -472,81 +240,6 @@
       },
       {
         "archetype": "economy-greed",
-        "stage_id": "sunken-bastion",
-        "seed": 301
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "sunken-bastion",
-        "seed": 302
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "sunken-bastion",
-        "seed": 303
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "howling-sprawl",
-        "seed": 301
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "howling-sprawl",
-        "seed": 302
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "howling-sprawl",
-        "seed": 303
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "glass-necropolis",
-        "seed": 301
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "glass-necropolis",
-        "seed": 302
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "glass-necropolis",
-        "seed": 303
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "starless-canal",
-        "seed": 301
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "starless-canal",
-        "seed": 302
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "starless-canal",
-        "seed": 303
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "shattered-causeway",
-        "seed": 301
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "shattered-causeway",
-        "seed": 302
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "shattered-causeway",
-        "seed": 303
-      },
-      {
-        "archetype": "economy-greed",
         "stage_id": "abyss-chancel",
         "seed": 301
       },
@@ -558,21 +251,6 @@
       {
         "archetype": "economy-greed",
         "stage_id": "abyss-chancel",
-        "seed": 303
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "gate-zenith",
-        "seed": 301
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "gate-zenith",
-        "seed": 302
-      },
-      {
-        "archetype": "economy-greed",
-        "stage_id": "gate-zenith",
         "seed": 303
       },
       {
@@ -592,21 +270,6 @@
       },
       {
         "archetype": "micro-optimizer",
-        "stage_id": "veil-citadel",
-        "seed": 301
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "veil-citadel",
-        "seed": 302
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "veil-citadel",
-        "seed": 303
-      },
-      {
-        "archetype": "micro-optimizer",
         "stage_id": "echo-throne",
         "seed": 301
       },
@@ -622,81 +285,6 @@
       },
       {
         "archetype": "micro-optimizer",
-        "stage_id": "sunken-bastion",
-        "seed": 301
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "sunken-bastion",
-        "seed": 302
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "sunken-bastion",
-        "seed": 303
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "howling-sprawl",
-        "seed": 301
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "howling-sprawl",
-        "seed": 302
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "howling-sprawl",
-        "seed": 303
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "glass-necropolis",
-        "seed": 301
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "glass-necropolis",
-        "seed": 302
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "glass-necropolis",
-        "seed": 303
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "starless-canal",
-        "seed": 301
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "starless-canal",
-        "seed": 302
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "starless-canal",
-        "seed": 303
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "shattered-causeway",
-        "seed": 301
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "shattered-causeway",
-        "seed": 302
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "shattered-causeway",
-        "seed": 303
-      },
-      {
-        "archetype": "micro-optimizer",
         "stage_id": "abyss-chancel",
         "seed": 301
       },
@@ -708,21 +296,6 @@
       {
         "archetype": "micro-optimizer",
         "stage_id": "abyss-chancel",
-        "seed": 303
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "gate-zenith",
-        "seed": 301
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "gate-zenith",
-        "seed": 302
-      },
-      {
-        "archetype": "micro-optimizer",
-        "stage_id": "gate-zenith",
         "seed": 303
       },
       {
@@ -742,21 +315,6 @@
       },
       {
         "archetype": "casual",
-        "stage_id": "veil-citadel",
-        "seed": 301
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "veil-citadel",
-        "seed": 302
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "veil-citadel",
-        "seed": 303
-      },
-      {
-        "archetype": "casual",
         "stage_id": "echo-throne",
         "seed": 301
       },
@@ -772,81 +330,6 @@
       },
       {
         "archetype": "casual",
-        "stage_id": "sunken-bastion",
-        "seed": 301
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "sunken-bastion",
-        "seed": 302
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "sunken-bastion",
-        "seed": 303
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "howling-sprawl",
-        "seed": 301
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "howling-sprawl",
-        "seed": 302
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "howling-sprawl",
-        "seed": 303
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "glass-necropolis",
-        "seed": 301
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "glass-necropolis",
-        "seed": 302
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "glass-necropolis",
-        "seed": 303
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "starless-canal",
-        "seed": 301
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "starless-canal",
-        "seed": 302
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "starless-canal",
-        "seed": 303
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "shattered-causeway",
-        "seed": 301
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "shattered-causeway",
-        "seed": 302
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "shattered-causeway",
-        "seed": 303
-      },
-      {
-        "archetype": "casual",
         "stage_id": "abyss-chancel",
         "seed": 301
       },
@@ -858,21 +341,6 @@
       {
         "archetype": "casual",
         "stage_id": "abyss-chancel",
-        "seed": 303
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "gate-zenith",
-        "seed": 301
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "gate-zenith",
-        "seed": 302
-      },
-      {
-        "archetype": "casual",
-        "stage_id": "gate-zenith",
         "seed": 303
       }
     ]
@@ -1655,7 +1123,7 @@
       "steps_executed": "count_of_calls_to_advanceDefenseRun_for_tuple",
       "tuple_status": {
         "terminal_before_or_at_engineering_ceiling": "TERMINAL_RECORDED",
-        "steps_executed_equals_20000_and_final_snapshot.terminal_is_null": "INVALID_TIMEOUT",
+        "steps_executed_equals_2000_and_final_snapshot.terminal_is_null": "INVALID_TIMEOUT",
         "otherwise": "FAIL_EXECUTION_PROTOCOL"
       },
       "terminal_outcome": "final_snapshot.terminal when tuple_status == TERMINAL_RECORDED else null",
@@ -1725,9 +1193,9 @@
   },
   "terminal_ceiling": {
     "status": "ENGINEERING_TERMINAL_SAFETY_CEILING",
-    "per_tuple_steps": 20000,
+    "per_tuple_steps": 2000,
     "purpose": "technical_fail_closed_upper_bound_only",
-    "timeout_predicate": "steps_executed == 20000 and final_snapshot.terminal == null",
+    "timeout_predicate": "steps_executed == 2000 and final_snapshot.terminal == null",
     "required_fail_closed_result": {
       "tuple_status": "INVALID_TIMEOUT",
       "terminal_outcome": null,

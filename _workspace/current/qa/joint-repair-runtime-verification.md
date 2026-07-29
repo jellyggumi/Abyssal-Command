@@ -193,3 +193,49 @@ Both agree with §6 and with each other. A vertex bound to exactly one bone cann
 their parts pose rigidly instead. Whether that is the intended design of the replacing
 pipeline is that lane's call; this section only fixes the measurement so the question can be
 asked precisely.
+
+## 8. Sections 6 and 7 are STALE — the regression was fixed `[OBSERVED]`
+
+Recorded rather than edited away, because the numbers in §6/§7 were真 when measured and the
+correction is the useful part.
+
+§6 and §7 report six assets at 100% single-influence. **That is no longer true.** The gate ran
+at 23:48; the other session regenerated the assets at 23:41–23:53, i.e. partly after the
+measurement. Re-measured directly from the GLBs at 00:2x, every asset is healthy:
+
+| asset | skinned meshes | verts | inf1 | inf1 % | max &#124;Σw−1&#124; | attack bone travel |
+|---|---|---|---|---|---|---|
+| guard | 35 | 5325 | 0 | 0.0% | 4.5e-08 | 3.127 rad |
+| lantern-reaver | 67 | 5436 | 5 | 0.1% | 4.0e-08 | 2.437 rad |
+| human-command-boss | 60 | 4933 | 6 | 0.1% | 4.5e-08 | 1.437 rad |
+| broken-court-monarch-v04 | 98 | 5788 | 0 | 0.0% | 4.5e-08 | 2.547 rad |
+| ember-cohort | 63 | 5679 | 1 | 0.0% | 4.5e-08 | 3.127 rad |
+| broken-court-monarch-boss | 610 | 28708 | 0 | 0.0% | 4.5e-08 | 2.569 rad |
+| scout | 1 | 5443 | 7 | 0.1% | 4.5e-08 | 1.432 rad |
+| shade | 1 | 5441 | 19 | 0.3% | 4.5e-08 | 2.641 rad |
+| possessed | 1 | 5788 | 72 | 1.2% | 4.5e-08 | 2.547 rad |
+| shadow-soldier-v04 | 1 | 21111 | 56 | 0.3% | 4.5e-08 | 3.136 rad |
+| shadow-commander-boss | 1 | 23715 | 127 | 0.5% | 4.5e-08 | 3.095 rad |
+
+**11 of 11 animate**, worst single-influence share 1.2%, weight sums normalized throughout. The
+two assets this session could not repair (the fused capes on the monarch bosses) are resolved:
+`broken-court-monarch-boss` is now 610 meshes at 0% rigid. The other session's regeneration is
+the right fix and it landed — this section exists so nobody acts on §6's stale figures.
+
+### Probe bug 3: `Box3.setFromObject` on a SkinnedMesh reads BIND pose
+
+Third in the family, and the most tempting. Measuring per-part motion by bounding-box centroid
+returns **zero movement for every asset**, including ones independently proven to animate:
+
+```
+guard  maxPartMove 0.0000   relativeSpread 0.0000     <- false negative
+scout  maxPartMove 0.0000   relativeSpread 0.0000     <- false negative
+```
+
+`Box3.setFromObject()` transforms the geometry's bounding box by the node's world matrix. Under
+skinning the mesh node **never moves** — the bones do, and deformation happens in the vertex
+shader. So the box is constant by construction, whatever the animation does. Measure bone
+quaternion travel under `mixer.update(delta)` instead, as the table above does.
+
+Running total of ways to "prove" a working rig is broken: sanitized bone names (`.` is the
+track-path separator), `setTime()` without `update()`, and now bind-pose bounding boxes.

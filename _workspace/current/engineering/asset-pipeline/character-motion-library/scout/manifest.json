@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T16:28:05.051589+00:00",
+  "generatedAt": "2026-07-29T17:57:41.328499+00:00",
   "assetId": "scout",
   "role": "rush-scout",
   "category": "enemies",
@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/model.glb",
-  "modelSha256": "0f035c4b9330527957f1d7e6316ce7ef2e8d66f034d79b581d2dbe32d6c2a7a7",
+  "modelSha256": "e05c9eda304e21574ff3654028967d0bb7ebb153e0d24b335eb031ffb0a191f9",
   "modelBytes": 12510880,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/rig-report.json",
@@ -262,6 +262,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -290,6 +291,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -406,6 +408,11 @@
         "maxWeightSumError": 2.9802322387695312e-08,
         "singleInfluenceFraction": 0.14808
       }
+    },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 12244,
+      "signFlips": 845
     },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,

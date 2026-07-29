@@ -1,8 +1,8 @@
-# Task Manifest — Onslaught 액션 피벗
+# Task Manifest — Abyssal Lantern 자연 관절 모션·3스테이지 통합
 
 run-id: `20260728-onslaught-action-pivot`
-cycle: 1 (설계)
-next-beat: director 스코프 리뷰 → 슬라이스 2 사람 플레이 판정
+cycle: 8 (런타임 통합·배포 검증)
+next-beat: 독립 사람 플레이 판정으로 G4/G7/G8 재측정
 
 ---
 
@@ -217,3 +217,74 @@ next-beat: director 스코프 리뷰 → 슬라이스 2 사람 플레이 판정
 - 회귀 게이트: character library Node test 13/13, ingame motion pack 5/5,
   realtime routing 2/2, release closure 4/4. `build-character-motion-library-index.py
   --check`은 동일 generation/총 byte 수로 성공했다.
+---
+
+## Combat & Extraction Systems (Phase: engineering)
+
+### Delivered Files
+
+| File | Lane | Status |
+|---|---|---|
+| `engineering/enemy-grade-system.js` | engineering | delivered |
+| `engineering/item-weapon-catalog.js` | engineering | delivered |
+| `engineering/collision-system.js` | engineering | delivered |
+| `engineering/extraction-system.js` | engineering | delivered |
+| `engineering/equipment-database.js` | engineering | delivered |
+| `engineering/leveling-system.js` | engineering | delivered |
+| `design/combat-extraction-systems-design.md` | design | delivered |
+
+### System Summary
+
+- **적 등급 시스템**: BASIC/SHADOW/BOSS 3단계, 65% 스탯 편차, 등급별 절대적 수치 상승
+- **무기/아이탬 시스템**: 근거리/중거리/원거리 범위공격 (논타겟팅), 12종 무기, AoE 패턴 5종
+- **충돌 시스템**: 메쉬 오브젝트간 Sphere/Mesh 충돌처리, 고도 인식, 12-pass 분리
+- **추출 시스템**: 적 사체 10초 유지 → 추출 채널링 2초 → 동료 소환 (보스 포함 모든 적 대상)
+- **장비 DB**: 프롭 오브젝트 → 착용가능 아이탬, 15종 특성, 3종 세트 보너스, 적/보스/플레이어/동료 모두 착용
+- **레벨링 시스템**: 동료/장비 레벨업, 등급 조합 (3개 합성 → 상위등급), 장비 강화 (성공률 체계)
+
+### Deferred work (not part of the verified §8 runtime slice)
+
+- [ ] Integration into defense-run-simulation.js tick loop
+- [ ] Three.js renderer support for extraction VFX, equipment attachment
+- [ ] Blender MCP pipeline for individual mesh rigging & attachment points
+- [ ] Test coverage for all new systems
+- [ ] Balance pass with QA simulation
+- [ ] webtoon-harness 캐릭터 특성 연동
+
+---
+
+## 8. 2026-07-29 — 자연 관절 모션·3스테이지 런타임 통합
+
+| task | owner | 산출물 | 게이트 | 상태 |
+|---|---|---|---|---|
+| 자연 rest-pose 기반 semantic rig 재빌드 | character-motion-pipeline | `assets/motion/ingame/characters/*/model.glb`, `registry.json` | asset 11, clip 121, library test 15/15 | done |
+| 인접 관절 weight repair·변형 계측 | Blender technical animation | `motion-bench/joint-weight-repair-gate.json`, `joint-articulation-report.json` | joint gate 11/11, MCP 24 DEF bones·9 split meshes | done |
+| runtime action·facing·카메라 전환 | game-programmer | `battle-realtime-three.js` | focused integration 78/78 | done |
+| 전투·목표·보스·추출 음향 정책 | game-audio | `defense-audio.js`, `battle-visualizer.js`, `defense-catalog.js` | audio/cutscene test 13/13 | done |
+| Cinder/Chancel/Throne 개별 소품·route·objective | level-designer | `stage-world-catalog.js` | movement 11/11, route contract 12/12 | done |
+| corridor wave·실패/회복/재시도·보상 멱등성 | game-programmer | `defense-run-simulation.js`, `defense-catalog.js` | stage contract 12/12 | done |
+| 세 스테이지 시놉시스·연출 handoff | narrative director | `design/abyssal-lantern-world-synopsis.md` | stage order 3, dialogue 5/5/6, gameplay links | done |
+| 로비·가이드·전투 HUD 접근성 회귀 | UI/UX | `app.js`, `styles.css` | focused integration 78/78 | done |
+| real-WebGL 3스테이지 proof | QA | `qa/stage-runtime-proof/` | isolated canonical stages 3/3 | done |
+| 최종 개선 실행 프롬프트 | prompt editor | `design/abyssal-lantern-final-development-prompt.md` | prompts.chat 구조·runtime/narrative 독립 재검토 PASS | done |
+
+### 8.1 이번 사이클의 [OBSERVED] 기준선
+
+- `build-character-motion-library-index.py --check`:
+  generation `b0178e95651a0b29beffe28d8006d9c5cb2cb6ce7c6a00ebec36e4e7108529be`,
+  asset **11**, clip **121**, **133,242,428 bytes**.
+- Blender MCP의 Lantern Reaver 장면은 armature **1**, DEF bone **24**, 분리 mesh part **9**,
+  semantic action **11**을 노출했고 모든 mesh가 같은 armature modifier에 바인딩됐다.
+- `gate-joint-weight-repair.py --check`는 11개 asset 전부 PASS했다. 이 판정은 해당 gate의
+  허용치를 만족했다는 뜻이며, 사람 눈으로 모든 동작이 완벽하다는 뜻이 아니다.
+- focused runtime 통합은 test **78/78**, character-motion 묶음은 **15/15**,
+  real-WebGL stage proof는 canonical stage **3/3**을 통과했다.
+- Cinder obstacle 재배치 중 companion RETURN deadlock이 한 차례 재현됐고,
+  겹치는 clearance circle을 제거한 뒤 movement contract **11/11**로 회귀를 닫았다.
+
+### 8.2 게이트 해석
+
+- 위 자동화 증거는 asset/runtime/route/browser 로딩 계약을 증명한다.
+- 사람 플레이 관찰 없이 손맛·장기 몰입·G4/G7/G8을 PASS로 승격하지 않는다.
+- final prompt의 다음 개선 실행은 이 기준선을 다시 측정해야 하며 과거 PASS를 새 변경의
+  증거로 재사용하지 않는다.

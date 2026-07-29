@@ -132,7 +132,7 @@ test("same seed and edge-equivalent seeds replay terrain, wave, and policy snaps
 
 test("different seeds vary authored waves while each seed remains replayable", () => {
   const snapshotFor = (seed) => wavePolicySnapshot(getRunSnapshot(advanceTicks(
-    createDefenseRun({ stageId: "veil-citadel", seed, companionLoadout: FULL_LOADOUT }),
+    createDefenseRun({ stageId: "abyss-chancel", seed, companionLoadout: FULL_LOADOUT }),
     150,
   )));
 
@@ -158,19 +158,17 @@ test("stage hazard damage and occupation recovery change the commander outcome",
     { castSkills: true, events, routeObjectives: true },
   );
   assert.ok(ready.snapshot.eliteCandidate, "echo recovery must unlock occupation recovery");
-  run = ready.run;
-
-  run = queueInput(run, "MOVE", { octant: "W" });
-  run = advanceTicks(run, 50, { castSkills: true, events });
-  run = queueInput(run, "MOVE", { octant: "IDLE" });
-  run = advanceTicks(run, 10, { castSkills: true, events });
+  run = structuredClone(ready.run);
+  run.commander.x = ready.snapshot.tactics.hazard.x;
+  run.commander.y = ready.snapshot.tactics.hazard.y;
+  run = advanceTicks(run, 60, { castSkills: true, events });
   const damaged = getRunSnapshot(run);
   assert.ok(damaged.commander.integrity < damaged.commander.maxIntegrity);
   assert.ok(events.some((event) => event.type === "HAZARD_DAMAGE" && event.entityId === "commander"));
 
-  run = queueInput(run, "MOVE", { octant: "E" });
-  run = advanceTicks(run, 29, { castSkills: true, events });
-  run = queueInput(run, "MOVE", { octant: "IDLE" });
+  run = structuredClone(run);
+  run.commander.x = damaged.tactics.occupation.x;
+  run.commander.y = damaged.tactics.occupation.y;
   const recoveryEventsBefore = events.filter((event) => event.type === "TERRAIN_RECOVERY").length;
   run = advanceTicks(run, 60, { castSkills: true, events });
   const recovered = getRunSnapshot(run);
@@ -267,7 +265,7 @@ test("S1 offers growth as soon as XP is earned and still orders the objective ch
   assert.equal(selected.objectives.bossKill.completed, false);
 });
 
-test("occupation and extraction objectives expose progress before completing once", () => {
+test("occupation and post-boss extraction expose progress before completing once", () => {
   let run = createDefenseRun({
     stageId: "cinder-span",
     seed: 901,
@@ -281,12 +279,11 @@ test("occupation and extraction objectives expose progress before completing onc
     STAGE_BY_ID["cinder-span"].gateTicks + 6000,
     { castSkills: true, events, routeObjectives: true },
   );
-  assert.ok(ready.snapshot.eliteCandidate, "elite echo recovery must precede occupation and extraction");
-  run = ready.run;
-
-  run = queueInput(run, "MOVE", { octant: "W" });
-  run = advanceTicks(run, 8, { castSkills: true, events });
-  run = queueInput(run, "MOVE", { octant: "IDLE" });
+  assert.ok(ready.snapshot.eliteCandidate, "elite echo recovery must precede occupation");
+  const eliteCandidate = ready.snapshot.eliteCandidate;
+  run = structuredClone(ready.run);
+  run.commander.x = ready.snapshot.tactics.occupation.x;
+  run.commander.y = ready.snapshot.tactics.occupation.y;
   const progressingOccupation = advanceUntil(
     run,
     () => events.some((event) => event.type === "OCCUPATION_PROGRESS"),
@@ -309,10 +306,51 @@ test("occupation and extraction objectives expose progress before completing onc
   assert.equal(occupied.occupationProgress.captured, true);
   assert.equal(occupied.occupationProgress.holdTicks, occupied.occupationProgress.maxHoldTicks);
   assert.equal(events.filter((event) => event.type === "OCCUPATION_CAPTURED").length, 1);
+  assert.equal(occupied.eliteCandidate.enemyId, eliteCandidate.enemyId,
+    "the defeated elite must remain recoverable through occupation");
+  assert.equal(occupied.extractionProgress.expiresAt, null,
+    "occupation must not open extraction before the boss is defeated");
+  assert.equal(occupied.extractionProgress.holdTicks, 0);
+  assert.equal(occupied.extractionProgress.completed, false);
+  assert.equal(events.filter((event) => event.type === "EXTRACTION_WINDOW_OPENED").length, 0);
 
-  run = queueInput(run, "MOVE", { octant: "W" });
-  run = advanceTicks(run, 32, { castSkills: true, events });
-  run = queueInput(run, "MOVE", { octant: "IDLE" });
+  const bossAppeared = advanceUntil(
+    run,
+    (snapshot) => snapshot.enemies.some((enemy) => enemy.class === "boss"),
+    4000,
+    { castSkills: true, events },
+  );
+  const boss = bossAppeared.snapshot.enemies.find((enemy) => enemy.class === "boss");
+  assert.ok(boss, "occupation must advance into a spawned boss phase");
+  assert.equal(bossAppeared.snapshot.objectives.phase, "boss-kill");
+  assert.equal(bossAppeared.snapshot.objectives.bossKill.completed, false);
+  assert.equal(bossAppeared.snapshot.extractionProgress.expiresAt, null);
+  assert.equal(events.filter((event) => event.type === "BOSS_SPAWNED").length, 1);
+
+  const defeatedBoss = advanceUntil(
+    bossAppeared.run,
+    (snapshot) => snapshot.objectives.bossKill.completed,
+    6000,
+    { castSkills: true, events },
+  );
+  run = defeatedBoss.run;
+  const postBoss = defeatedBoss.snapshot;
+  assert.equal(postBoss.objectives.bossKill.completed, true);
+  assert.equal(postBoss.enemies.some((enemy) => enemy.class === "boss"), false);
+  assert.equal(postBoss.eliteCandidate.enemyId, eliteCandidate.enemyId,
+    "the elite candidate must survive the boss phase");
+  assert.equal(postBoss.objectives.phase, "extraction");
+  assert.ok(postBoss.extractionProgress.expiresAt > postBoss.tick);
+  assert.equal(postBoss.extractionProgress.holdTicks, 0);
+  assert.equal(postBoss.extractionProgress.completed, false);
+  assert.equal(postBoss.extractionProgress.ready, false);
+  assert.equal(events.filter((event) => event.type === "OBJECTIVE_COMPLETED"
+    && event.objectiveId === "boss-kill").length, 1);
+  assert.equal(events.filter((event) => event.type === "EXTRACTION_WINDOW_OPENED").length, 1);
+
+  run = structuredClone(run);
+  run.commander.x = postBoss.tactics.extraction.x;
+  run.commander.y = postBoss.tactics.extraction.y;
   const progressingExtraction = advanceUntil(
     run,
     () => events.some((event) => event.type === "EXTRACTION_PROGRESS"),
@@ -337,7 +375,7 @@ test("occupation and extraction objectives expose progress before completing onc
   assert.equal(bindReady.extracted, false, "Bind completion must not auto-extract");
   assert.equal(bindReady.progress.extracted, 0);
   assert.equal(bindReady.objectives.extraction.completed, false, "Bind readiness must not complete public extraction");
-  assert.equal(bindReady.enemies.some((enemy) => enemy.class === "boss"), false, "Bind readiness must not spawn the boss");
+  assert.equal(bindReady.enemies.some((enemy) => enemy.class === "boss"), false);
   assert.equal(events.some((event) => event.type === "ELITE_EXTRACTED"), false);
   run = advanceDefenseRun(
     queueInput(completedExtraction.run, "EXTRACT_ELITE", { enemyId: bindReady.eliteCandidate.enemyId }),
@@ -347,7 +385,7 @@ test("occupation and extraction objectives expose progress before completing onc
   events.push(...extracted.events);
   assert.equal(extracted.extracted, true);
   assert.equal(extracted.progress.extracted, 1);
-  assert.equal(extracted.companions.filter(({ companionId }) => companionId === bindReady.eliteCandidate.prototype).length, 1);
+  assert.equal(extracted.companions.filter(({ companionId }) => companionId === eliteCandidate.prototype).length, 1);
   assert.equal(events.filter((event) => event.type === "EXTRACTION_COMPLETED").length, 1);
   assert.equal(events.filter((event) => event.type === "ELITE_EXTRACTED").length, 1);
 });
@@ -373,7 +411,7 @@ test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and 
   });
 
   await t.test("resource denial suppresses an available echo pickup", () => {
-    const appeared = findPolicyScenario({ stageId: "veil-citadel", policyId: "resource-denial", maxTicks: POLICY_SEARCH_TICKS });
+    const appeared = findPolicyScenario({ stageId: "abyss-chancel", policyId: "resource-denial", maxTicks: POLICY_SEARCH_TICKS });
     assert.ok(appeared, "seeded ranged waves must expose resource denial");
     const events = [];
     advanceUntil(
@@ -385,7 +423,7 @@ test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and 
     assert.ok(events.some((event) => event.type === "PICKUP_DENIED"));
   });
 
-  await t.test("elite escort acquires and closes on the post-Gate elite", () => {
+  await t.test("elite escort acquisition is emitted at spawn and the escort retreats with its leader", () => {
     const events = [];
     const appeared = advanceUntil(
       createDefenseRun({
@@ -407,15 +445,28 @@ test("enemy policies produce gate pressure, pursuit, flank, denial, escort, and 
     assert.equal(appeared.snapshot.objectives.gateDefense.completed, true);
     const leader = appeared.snapshot.enemies.find((enemy) => enemy.id === escort.escortLeaderId);
     assert.ok(leader?.elite || leader?.class === "boss");
-    assert.ok(events.some((event) => event.type === "ESCORT_LEADER_ACQUIRED"
+    assert.equal(events.filter((event) => event.type === "ESCORT_LEADER_ACQUIRED"
       && event.entityId === escort.id
-      && event.leaderId === leader.id));
+      && event.leaderId === leader.id).length, 1);
 
     const after = getRunSnapshot(
       advanceTicks(appeared.run, 1, { castSkills: true }),
     ).enemies.find((enemy) => enemy.id === escort.id);
     assert.ok(after, "the escort must survive long enough to act");
     assert.ok(squaredDistance(after, leader) < squaredDistance(escort, leader));
+
+    const recovered = advanceUntil(
+      appeared.run,
+      (snapshot) => snapshot.eliteCandidate?.enemyId === leader.id,
+      3000,
+      { castSkills: true, events },
+    );
+    assert.equal(recovered.snapshot.eliteCandidate?.enemyId, leader.id);
+    assert.equal(recovered.snapshot.enemies.some((enemy) => enemy.id === escort.id), false,
+      "an escort must not remain orphaned after its elite leader dies");
+    assert.equal(events.filter((event) => event.type === "ESCORT_RETREATED"
+      && event.entityId === escort.id
+      && event.leaderId === leader.id).length, 1);
   });
 
   for (const policyId of ["player-pursuit", "low-hp-focus"]) {
@@ -440,8 +491,8 @@ test("a run that never fights loses to enemy pressure", () => {
   // A pending growth offer PAUSES the simulation, so "no input at all" now means "stalled at the
   // first offer" rather than "played passively". The pressure contract is measured with the offers
   // resolved and nothing else done: no movement, no casts, no extraction.
-  let run = createDefenseRun({ stageId: "gate-zenith", seed: 37 });
-  const budget = STAGE_BY_ID["gate-zenith"].gateTicks + 9000;
+  let run = createDefenseRun({ stageId: "echo-throne", seed: 37 });
+  const budget = STAGE_BY_ID["echo-throne"].gateTicks + 9000;
   let offersSeen = 0;
   for (let tick = 0; tick < budget && !isTerminalRun(run); tick += 1) {
     const snapshot = getRunSnapshot(run);
@@ -461,56 +512,95 @@ test("a run that never fights loses to enemy pressure", () => {
     || snapshot.extractionProgress.failed === true);
 });
 
-test("a spawned boss applies attack pressure after the public spatial objective route", () => {
+test("a spawned boss applies attack pressure before it dies and opens extraction", () => {
   const events = [];
-  const bindReady = advanceUntil(
+  const bossAppeared = advanceUntil(
     createDefenseRun({
-      stageId: "gate-zenith",
+      stageId: "echo-throne",
       seed: 12,
       companionLoadout: FULL_LOADOUT,
       rewardIds: FULL_REWARDS,
     }),
-    (snapshot) => snapshot.extractionProgress.ready && !snapshot.extracted,
-    STAGE_BY_ID["gate-zenith"].gateTicks + 9000,
-    { castSkills: true, events, routeObjectives: true },
-  );
-  assert.equal(bindReady.snapshot.extractionProgress.completed, true);
-  assert.equal(bindReady.snapshot.progress.extracted, 0, "Bind readiness must not recruit the elite");
-  assert.equal(bindReady.snapshot.objectives.extraction.completed, false, "Bind readiness must not complete public extraction");
-  assert.equal(bindReady.snapshot.enemies.some((enemy) => enemy.class === "boss"), false, "Bind readiness must not spawn the boss");
-
-  const extractedRun = advanceDefenseRun(
-    queueInput(bindReady.run, "EXTRACT_ELITE", { enemyId: bindReady.snapshot.eliteCandidate.enemyId }),
-    1,
-  );
-  const extracted = getRunSnapshot(extractedRun);
-  events.push(...extracted.events);
-  assert.equal(extracted.extracted, true);
-  assert.equal(extracted.progress.extracted, 1);
-  assert.equal(extracted.objectives.extraction.completed, true);
-  assert.equal(extracted.companions.filter(
-    ({ companionId }) => companionId === bindReady.snapshot.eliteCandidate.prototype,
-  ).length, 1);
-  // The boss spawns once the extraction is done AND the field is clear of the authored waves, which
-  // with the doctrine hold is no longer guaranteed to be the same tick as the extraction itself.
-  const bossAppeared = advanceUntil(
-    extractedRun,
     (snapshot) => snapshot.enemies.some((enemy) => enemy.class === "boss"),
-    STAGE_BY_ID["gate-zenith"].gateTicks + 9000,
+    STAGE_BY_ID["echo-throne"].gateTicks + 9000,
     { castSkills: true, events, routeObjectives: true },
   );
   const boss = bossAppeared.snapshot.enemies.find((enemy) => enemy.class === "boss");
-  assert.ok(boss, "a matching elite extraction must complete the public objective and spawn the boss");
+  assert.ok(boss, "the public route must capture occupation and spawn the boss");
+  assert.equal(bossAppeared.snapshot.objectives.occupation.completed, true);
+  assert.equal(bossAppeared.snapshot.objectives.phase, "boss-kill");
+  assert.equal(bossAppeared.snapshot.objectives.bossKill.completed, false);
+  assert.equal(bossAppeared.snapshot.extractionProgress.expiresAt, null,
+    "the extraction window must remain closed while the boss lives");
+  assert.equal(bossAppeared.snapshot.extractionProgress.completed, false);
+  assert.equal(bossAppeared.snapshot.progress.extracted, 0);
+  assert.equal(events.filter((event) => event.type === "BOSS_SPAWNED"
+    && event.entityId === boss.id).length, 1);
 
-  advanceUntil(
-    bossAppeared.run,
+  const pressureRun = structuredClone(bossAppeared.run);
+  pressureRun.commander.integrity = pressureRun.commander.maxIntegrity;
+  pressureRun.gate.integrity = pressureRun.gate.maxIntegrity;
+  pressureRun.commander.x = pressureRun.gate.x + 2000;
+  pressureRun.commander.y = 0;
+  const combatCompanions = structuredClone(pressureRun.companions);
+  const combatBasicCooldown = pressureRun.commander.basicCooldown;
+  pressureRun.companions = [];
+  pressureRun.commander.basicCooldown = 4001;
+  const positionedBoss = pressureRun.enemies.find((enemy) => enemy.id === boss.id);
+  positionedBoss.x = pressureRun.gate.x - positionedBoss.radius - pressureRun.gate.radius + 300;
+  positionedBoss.y = pressureRun.gate.y;
+  positionedBoss.waypointIndex = positionedBoss.route.length;
+  const telegraphed = advanceUntil(
+    pressureRun,
+    () => events.some((event) => event.type === "BOSS_ATTACK_TELEGRAPHED"
+      && event.entityId === boss.id),
+    2500,
+    { events },
+  );
+  assert.ok(events.some((event) => event.type === "BOSS_ATTACK_TELEGRAPHED"
+    && event.entityId === boss.id));
+
+  const attackRun = structuredClone(telegraphed.run);
+  const attackingBoss = attackRun.enemies.find((enemy) => enemy.id === boss.id);
+  attackingBoss.x = attackRun.gate.x - attackingBoss.radius - attackRun.gate.radius + 300;
+  attackingBoss.y = attackRun.gate.y;
+  attackingBoss.waypointIndex = attackingBoss.route.length;
+  attackingBoss.attackCooldown = 0;
+  const pressured = advanceUntil(
+    attackRun,
     () => events.some((event) => ["COMMANDER_DAMAGED", "GATE_BREACHED"].includes(event.type)
       && event.enemyId === boss.id),
-    4000,
-    { events, routeObjectives: true },
+    2,
+    { events },
   );
-  assert.ok(events.some((event) => ["COMMANDER_DAMAGED", "GATE_BREACHED"].includes(event.type)
-    && event.enemyId === boss.id));
+  const pressureEvent = events.find((event) =>
+    ["COMMANDER_DAMAGED", "GATE_BREACHED"].includes(event.type) && event.enemyId === boss.id);
+  assert.ok(pressureEvent, "the spawned boss must land pressure before being defeated");
+  assert.ok(pressureEvent.damage > 0);
+  assert.ok(pressured.snapshot.commander.integrity < pressured.snapshot.commander.maxIntegrity
+    || pressured.snapshot.gate.integrity < pressured.snapshot.gate.maxIntegrity);
+
+  const resumedCombat = structuredClone(pressured.run);
+  resumedCombat.companions = combatCompanions;
+  resumedCombat.commander.basicCooldown = combatBasicCooldown;
+  const pressuredBoss = pressured.snapshot.enemies.find((enemy) => enemy.id === boss.id);
+  assert.ok(pressuredBoss, "the boss must still be alive after applying pressure");
+  resumedCombat.commander.x = pressuredBoss.x;
+  resumedCombat.commander.y = pressuredBoss.y;
+  const defeatedBoss = advanceUntil(
+    resumedCombat,
+    (snapshot) => snapshot.objectives.bossKill.completed,
+    6000,
+    { castSkills: true, events },
+  );
+  assert.equal(defeatedBoss.snapshot.objectives.bossKill.completed, true,
+    "resumed combat must defeat the pressured boss");
+  assert.equal(defeatedBoss.snapshot.enemies.some((enemy) => enemy.id === boss.id), false);
+  assert.equal(defeatedBoss.snapshot.objectives.phase, "extraction");
+  assert.ok(defeatedBoss.snapshot.extractionProgress.expiresAt > defeatedBoss.snapshot.tick);
+  assert.equal(events.filter((event) => event.type === "OBJECTIVE_COMPLETED"
+    && event.objectiveId === "boss-kill").length, 1);
+  assert.equal(events.filter((event) => event.type === "EXTRACTION_WINDOW_OPENED").length, 1);
 });
 
 test("run rewards, learned skills, pickups, and companions remain distinct growth layers", () => {

@@ -10,7 +10,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "assets/motion/ingame/characters/lantern-reaver/model.glb",
-  "modelSha256": "19a2fa27052002d264e6f662a15d343eac7c541e0b01b6e6b87cef192a37337f",
+  "modelSha256": "065f7b8195e5c4d8e2abe850da4238274a547395fabffd8d8b49609a37f0dc67",
   "modelBytes": 12510868,
   "targetBoneNames": [
     "DEF-spine",
@@ -259,6 +259,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -287,6 +288,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -404,6 +406,11 @@
         "singleInfluenceFraction": 0.199779
       }
     },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 21440,
+      "signFlips": 532
+    },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,
       "weightStatsMatchAdjacentReceipt": true
@@ -411,7 +418,7 @@
   },
   "runtimeEligible": true,
   "gateErrors": [],
-  "generationId": "b0178e95651a0b29beffe28d8006d9c5cb2cb6ce7c6a00ebec36e4e7108529be",
+  "generationId": "ada19f5524d2a384e3545923281945026bf683b46e974a39217b9e104c6599ef",
   "sourceAssetRights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",

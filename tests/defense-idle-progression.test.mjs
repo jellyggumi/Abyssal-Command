@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   IDLE_RETURN_INTERVAL_MS,
+  STAGES,
   IDLE_RETURN_MAX_ELAPSED_MS,
   applyCampaignRunResult,
   createCampaign,
@@ -181,7 +182,7 @@ function completesWithin(promise, timeoutMs = 1_000) {
 
 function campaignWithCompletedStages(count = 1) {
   let campaign = createCampaign({ campaignId: `idle-${count}` });
-  const stageOrder = ["cinder-span", "veil-citadel", "echo-throne", "sunken-bastion", "howling-sprawl", "glass-necropolis", "starless-canal", "shattered-causeway"];
+  const stageOrder = STAGES.map(({ id }) => id);
   for (const stageId of stageOrder.slice(0, count)) {
     campaign = startRun(campaign, stageId);
     campaign = applyCampaignRunResult(campaign, { stageId, outcome: "victory" });
@@ -189,24 +190,23 @@ function campaignWithCompletedStages(count = 1) {
   return campaign;
 }
 
-test("idle settlement caps elapsed time, awards only completed-stage progress, and leaves an active run unchanged", () => {
-  const campaign = campaignWithCompletedStages(8); // wardLevel=8 clears the 8h-elapsed-cap pressure=8 wardline gate (balance-sheet.md undertow-encroachment); this test's actual subject is elapsed-time capping/award-scaling/immutability, not wardline
+test("idle settlement caps elapsed time, applies encroachment, and leaves an active run unchanged", () => {
+  const campaign = campaignWithCompletedStages(STAGES.length);
   const activeRun = createDefenseRun({ stageId: "cinder-span", seed: 41 });
   const activeRunSnapshot = getRunSnapshot(activeRun);
   const campaignBeforeSettlement = serializeCampaign(campaign);
   const anchored = settleIdleReturn(campaign, { now: 10_000 });
-  const settled = settleIdleReturn(anchored.campaign, {
-    now: 10_000 + IDLE_RETURN_MAX_ELAPSED_MS + (3 * IDLE_RETURN_INTERVAL_MS),
-  });
+  const settledAt = 10_000 + IDLE_RETURN_MAX_ELAPSED_MS + (3 * IDLE_RETURN_INTERVAL_MS);
+  const settled = settleIdleReturn(anchored.campaign, { now: settledAt });
 
   assert.deepEqual(settled.receipt, {
-    outcome: "SETTLED",
-    requestedAt: 10_000 + IDLE_RETURN_MAX_ELAPSED_MS + (3 * IDLE_RETURN_INTERVAL_MS),
+    outcome: "ENCROACHED",
+    requestedAt: settledAt,
     elapsedMs: IDLE_RETURN_MAX_ELAPSED_MS + (3 * IDLE_RETURN_INTERVAL_MS),
     settledElapsedMs: IDLE_RETURN_MAX_ELAPSED_MS,
-    completedStages: 8,
-    awardedProgress: 8 * (IDLE_RETURN_MAX_ELAPSED_MS / IDLE_RETURN_INTERVAL_MS),
-    settledAt: 10_000 + IDLE_RETURN_MAX_ELAPSED_MS + (3 * IDLE_RETURN_INTERVAL_MS),
+    completedStages: STAGES.length,
+    awardedProgress: 0,
+    settledAt,
   });
   assert.deepEqual(serializeCampaign(campaign), campaignBeforeSettlement, "settlement must not mutate its campaign input");
   assert.deepEqual(getRunSnapshot(activeRun), activeRunSnapshot, "idle settlement must not mutate an active deterministic run");

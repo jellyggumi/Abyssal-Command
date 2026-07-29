@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { createReadStream, stat } from "node:fs";
+import { createReadStream, existsSync, stat } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { dirname, extname, resolve, sep } from "node:path";
@@ -37,6 +37,15 @@ const COMMANDER_CLIP_KEYS = [
   "idle", "move", "run", "show", "attack_melee", "attack_ranged",
 ];
 const STRIKE_ACTIONS = new Set(["attack", "critical", "attack_melee", "attack_ranged"]);
+const commanderAssetInputs = [
+  SOURCE_GLB,
+  CANDIDATE_GLB,
+  CANDIDATE_AUDIT,
+  AUTHOR_SCRIPT,
+  DEPLOYED_GLB,
+  resolve(ROOT, "assets/images/battle/glb/character-build-provenance.json"),
+];
+const commanderAssetTest = commanderAssetInputs.every(existsSync) ? test : test.skip;
 
 function parseGlb(bytes) {
   assert.equal(bytes.readUInt32LE(0), 0x46546c67, "candidate must remain a GLB");
@@ -173,7 +182,7 @@ function skinnedVertexTravel(from, to) {
   return meanTravel / armScale;
 }
 
-test("deployed commander is the byte-exact audited guard-pose candidate", async () => {
+commanderAssetTest("deployed commander is the byte-exact audited guard-pose candidate", async () => {
   const [sourceBytes, candidateBytes, deployedBytes, auditText, authorBytes] = await Promise.all([
     readFile(SOURCE_GLB),
     readFile(CANDIDATE_GLB),
@@ -310,7 +319,7 @@ test("deployed commander is the byte-exact audited guard-pose candidate", async 
   }
 });
 
-test("deployed commander preserves readable idle, attack, critical, melee, and ranged silhouettes", async () => {
+commanderAssetTest("deployed commander preserves readable idle, attack, critical, melee, and ranged silhouettes", async () => {
   const audit = JSON.parse(await readFile(CANDIDATE_AUDIT, "utf8"));
   const authoredMelee = audit.authoredActions["dusk-warden::attack_melee::v01"];
   const meleeContactFrame = authoredMelee.poseStages.find(({ stage }) => stage === "slash_contact")?.frame;

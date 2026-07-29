@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { buildPayload } from "../scripts/run-stage1b-persistence-scenarios.mjs";
 import {
@@ -21,13 +22,14 @@ const persistenceReceipt = resolve(repositoryRoot, "qa/evidence/gates/G7/stage1b
 const EXPECTED_SCENARIOS = [
   { scenario: "victory", seed: 901, acceptedEliteExtractCount: 1, terminalPattern: /^(VICTORY|FINAL_COMPLETION|DEFEAT)$/ },
   { scenario: "defeat-before-acceptance", seed: 902, acceptedEliteExtractCount: 0, terminal: "DEFEAT" },
-  { scenario: "defeat-after-acceptance", seed: 901, acceptedEliteExtractCount: 1, terminal: "DEFEAT" },
+  { scenario: "completion-after-acceptance", seed: 901, acceptedEliteExtractCount: 1, terminal: "VICTORY" },
 ];
 
 const EXPECTED_INPUT_TYPES = new Set(["MOVE", "SKILL_CAST", "SKILL_SELECTED", "EXTRACT_ELITE"]);
+let cachedPersistencePayload = null;
 
 function runPersistenceScript() {
-  const payload = buildPayload(sourceRevision);
+  const payload = cachedPersistencePayload ??= buildPayload(sourceRevision);
   const raw = Buffer.from(`${canonicalStringify(payload)}\n`, "utf8");
   return {
     payload,
@@ -125,13 +127,13 @@ test("Stage 1b persistence terminal outcomes satisfy scenario contracts", async 
       assert.equal(scenario.acceptedEliteExtractCount, expected.acceptedEliteExtractCount);
     }
 
-    const afterAcceptance = lookup.get("defeat-after-acceptance");
+    const afterAcceptance = lookup.get("completion-after-acceptance");
     assert.ok(afterAcceptance);
     assert.equal(afterAcceptance.policy?.moveOnlyAfterAcceptance, true);
-    assert.equal(afterAcceptance.objectivePressure.deadlineSatisfied, true);
+    assert.equal(afterAcceptance.terminal, "VICTORY");
     assert.ok(
-      afterAcceptance.events.some((event) => event.type === "OBJECTIVE_PRESSURE_DEADLINE" && event.targetId === "gate"),
-      "defeat-after-acceptance must terminate through the pressure deadline event",
+      afterAcceptance.events.some((event) => event.type === "INPUT_ACCEPTED" && event.inputType === "EXTRACT_ELITE"),
+      "completion-after-acceptance must retain its accepted extraction event",
     );
   } finally {
     await cleanup();
@@ -177,19 +179,19 @@ test("Stage 1b persistence keeps MOVE-only behavior after accepted extraction", 
     const lookup = byScenario(payload);
 
     const victory = lookup.get("victory");
-    const defeatAfter = lookup.get("defeat-after-acceptance");
+    const completionAfter = lookup.get("completion-after-acceptance");
     assert.ok(victory);
-    assert.ok(defeatAfter);
+    assert.ok(completionAfter);
 
     const victoryAccept = acceptedExtractionInputIndex(victory.inputs);
-    const defeatAccept = acceptedExtractionInputIndex(defeatAfter.inputs);
+    const completionAccept = acceptedExtractionInputIndex(completionAfter.inputs);
     assert.ok(victoryAccept >= 0, "victory must include an accepted extraction input");
-    assert.ok(defeatAccept >= 0, "defeat-after-acceptance must include an accepted extraction input");
-    assert.equal(defeatAfter.policy?.moveOnlyAfterAcceptance, true);
-    assert.equal(defeatAfter.policy?.occupationAfterTick, 3700);
-    assert.equal(defeatAfter.policy?.preOccupationTarget, "extraction");
+    assert.ok(completionAccept >= 0, "completion-after-acceptance must include an accepted extraction input");
+    assert.equal(completionAfter.policy?.moveOnlyAfterAcceptance, true);
+    assert.equal(completionAfter.policy?.occupationAfterTick, 3700);
+    assert.equal(completionAfter.policy?.preOccupationTarget, "extraction");
 
-    for (const input of defeatAfter.inputs.slice(defeatAccept + 1)) {
+    for (const input of completionAfter.inputs.slice(completionAccept + 1)) {
       assert.notEqual(input.inputType, "SKILL_CAST");
       assert.notEqual(input.inputType, "EXTRACT_ELITE");
       assert.equal(input.inputType, "MOVE");
@@ -227,7 +229,7 @@ test("Stage 1b persistence is replay-deterministic at canonical-byte level", asy
   }
 });
 
-test("Stage 1b persistence has no second extraction and keeps acceptance boundaries", async () => {
+test("Stage 1b persistence bounds extraction requests and prevents a second accepted extraction", async () => {
   const { payload, result, cleanup } = await runPersistenceScript();
   try {
     assert.equal(result.status, 0, `script exit status must be 0\nstderr: ${result.stderr}`);
@@ -236,6 +238,11 @@ test("Stage 1b persistence has no second extraction and keeps acceptance boundar
       const extractInputs = scenario.inputs.filter((input) => input.inputType === "EXTRACT_ELITE");
       const acceptedExtractInputs = extractInputs.filter((input) => input.accepted);
       assert.equal(extractInputs.length <= 2, true, `${scenario.scenario} may request a route and one accepted EXTRACT_ELITE handoff`);
+      assert.equal(acceptedExtractInputs.length <= 1, true, `${scenario.scenario} may accept at most one EXTRACT_ELITE handoff`);
+      assert.equal(scenario.invariants?.extractionRequestsBounded, true, `${scenario.scenario} invariant must bound extraction requests`);
+      assert.equal(scenario.invariants?.noSecondAcceptedExtraction, true, `${scenario.scenario} invariant must prevent a second accepted extraction`);
+      assert.equal(scenario.invariantChecks?.extractionRequestsBounded, true, `${scenario.scenario} check must bound extraction requests`);
+      assert.equal(scenario.invariantChecks?.noSecondAcceptedExtraction, true, `${scenario.scenario} check must prevent a second accepted extraction`);
       assert.equal(scenario.invariantChecks?.acceptanceConsistent, true, `${scenario.scenario} should maintain accepted handoff consistency`);
       assert.equal(scenario.invariantChecks?.acceptanceConsistentWithEvents, true);
       assert.equal(scenario.acceptance?.inputAcceptedCount, scenario.acceptedEliteExtractCount);
@@ -327,14 +334,32 @@ test("Stage 1b persistence exporter exercises the real CLI and fails closed on m
     assert.equal(result.status, 0, `real exporter --check must succeed: ${result.stderr}`);
 
     const outputBeforeTamper = readFileSync(persistenceOutput, "utf8");
+    const receiptBeforeTamper = readFileSync(persistenceReceipt, "utf8");
+    const semanticallyTamperedPayload = JSON.parse(outputBeforeTamper);
+    semanticallyTamperedPayload.classification = "tampered-valid-semantic-payload";
+    const semanticallyTamperedOutput = `${canonicalStringify(semanticallyTamperedPayload)}\n`;
+    const refreshedReceipt = JSON.parse(receiptBeforeTamper);
+    refreshedReceipt.outputSha256 = `sha256:${createHash("sha256").update(semanticallyTamperedOutput).digest("hex")}`;
+    refreshedReceipt.outputByteLength = Buffer.byteLength(semanticallyTamperedOutput, "utf8");
+    writeFileSync(persistenceOutput, semanticallyTamperedOutput, "utf8");
+    writeFileSync(persistenceReceipt, `${JSON.stringify(refreshedReceipt, null, 2)}\n`, "utf8");
+    result = run(...canonicalArgs, "--check");
+    assert.notEqual(
+      result.status,
+      0,
+      "valid semantic payload tamper with a refreshed receipt must fail closed",
+    );
+    writeFileSync(persistenceOutput, outputBeforeTamper, "utf8");
+    writeFileSync(persistenceReceipt, receiptBeforeTamper, "utf8");
+
     writeFileSync(persistenceOutput, `${outputBeforeTamper}tampered`, "utf8");
     result = run(...canonicalArgs, "--check");
     assert.notEqual(result.status, 0, "tampered persistence output must fail closed");
     writeFileSync(persistenceOutput, outputBeforeTamper, "utf8");
 
-    const receiptBeforeTamper = JSON.parse(readFileSync(persistenceReceipt, "utf8"));
-    receiptBeforeTamper.sourceRevision = "tampered-source-revision";
-    writeFileSync(persistenceReceipt, `${JSON.stringify(receiptBeforeTamper, null, 2)}\n`, "utf8");
+    const tamperedReceipt = JSON.parse(receiptBeforeTamper);
+    tamperedReceipt.sourceRevision = "tampered-source-revision";
+    writeFileSync(persistenceReceipt, `${JSON.stringify(tamperedReceipt, null, 2)}\n`, "utf8");
     result = run(...canonicalArgs, "--check");
     assert.notEqual(result.status, 0, "tampered persistence receipt must fail closed");
 

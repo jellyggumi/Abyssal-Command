@@ -10,7 +10,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
-  "modelSha256": "8637759665b3a43d44cc7cb82103fbca55a40fcbcc44c29c6b56e08588895f35",
+  "modelSha256": "bc00d72b65a235b787162c5167d151060623b154a10d9ad044cf4e748446b0c4",
   "modelBytes": 13722704,
   "targetBoneNames": [
     "DEF-spine",
@@ -259,6 +259,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -287,6 +288,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -404,6 +406,11 @@
         "singleInfluenceFraction": 0.129372
       }
     },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 11958,
+      "signFlips": 409
+    },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,
       "weightStatsMatchAdjacentReceipt": true
@@ -411,7 +418,7 @@
   },
   "runtimeEligible": true,
   "gateErrors": [],
-  "generationId": "b0178e95651a0b29beffe28d8006d9c5cb2cb6ce7c6a00ebec36e4e7108529be",
+  "generationId": "ada19f5524d2a384e3545923281945026bf683b46e974a39217b9e104c6599ef",
   "sourceAssetRights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",

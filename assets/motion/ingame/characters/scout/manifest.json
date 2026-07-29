@@ -10,7 +10,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "assets/motion/ingame/characters/scout/model.glb",
-  "modelSha256": "0f035c4b9330527957f1d7e6316ce7ef2e8d66f034d79b581d2dbe32d6c2a7a7",
+  "modelSha256": "e05c9eda304e21574ff3654028967d0bb7ebb153e0d24b335eb031ffb0a191f9",
   "modelBytes": 12510880,
   "targetBoneNames": [
     "DEF-spine",
@@ -259,6 +259,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -287,6 +288,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -404,6 +406,11 @@
         "singleInfluenceFraction": 0.14808
       }
     },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 12244,
+      "signFlips": 845
+    },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,
       "weightStatsMatchAdjacentReceipt": true
@@ -411,7 +418,7 @@
   },
   "runtimeEligible": true,
   "gateErrors": [],
-  "generationId": "b0178e95651a0b29beffe28d8006d9c5cb2cb6ce7c6a00ebec36e4e7108529be",
+  "generationId": "ada19f5524d2a384e3545923281945026bf683b46e974a39217b9e104c6599ef",
   "sourceAssetRights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",

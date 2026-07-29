@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T16:28:15.281014+00:00",
+  "generatedAt": "2026-07-29T17:57:54.740365+00:00",
   "assetId": "shadow-commander-boss",
   "role": "shadow-command-boss",
   "category": "bosses",
@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/model.glb",
-  "modelSha256": "2820c0f1a02e8020cd96be4fadb9d920eb39544dc8b15fae0f550b7431c3560f",
+  "modelSha256": "4e63e57f630a7dcd6d194897c743e32afe4d0df404ecc5730a38d299ec1167a8",
   "modelBytes": 13690896,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/rig-report.json",
@@ -262,6 +262,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -290,6 +291,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -406,6 +408,11 @@
         "maxWeightSumError": 2.9802322387695312e-08,
         "singleInfluenceFraction": 0.091963
       }
+    },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 19988,
+      "signFlips": 871
     },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,

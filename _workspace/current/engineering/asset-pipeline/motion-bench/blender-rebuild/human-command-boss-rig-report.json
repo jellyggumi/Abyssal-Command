@@ -1,0 +1,310 @@
+{
+  "assetId": "human-command-boss",
+  "category": "bosses",
+  "source": "assets/mesh/character/human-command-boss-character/glb/base_basic_pbr.glb",
+  "steps": [
+    {
+      "step": "import",
+      "meshes": 1,
+      "reusedBodySplit": false,
+      "hadPedestal": false
+    },
+    {
+      "step": "weld",
+      "weldDistance": 0.0,
+      "vertsBefore": 4933,
+      "vertsAfter": 4933,
+      "merged": false
+    },
+    {
+      "step": "landmarks",
+      "height": 1.8909,
+      "shoulderZFrac": 0.78,
+      "shoulderHalfWidth": 0.3167,
+      "hipHalfWidth": 0.2486,
+      "handL": [
+        0.2052,
+        0.2136,
+        0.4246
+      ],
+      "handR": [
+        -0.2396,
+        0.2099,
+        0.4095
+      ],
+      "synthesizedArms": [],
+      "center": [
+        0.0006,
+        0.101
+      ]
+    },
+    {
+      "step": "roll_alignment",
+      "phase": "pre_bind",
+      "referencePolicy": {
+        "axial": "+Y",
+        "lateral": "+Z"
+      },
+      "rows": [
+        {
+          "bone": "DEF-spine",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.001",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.002",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.003",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.004",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.005",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-pelvis.L",
+          "policy": "axial",
+          "rollDeg": -118.0345
+        },
+        {
+          "bone": "DEF-pelvis.R",
+          "policy": "axial",
+          "rollDeg": 118.0345
+        },
+        {
+          "bone": "DEF-shoulder.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.L",
+          "policy": "lateral",
+          "rollDeg": 13.5285
+        },
+        {
+          "bone": "DEF-forearm.L",
+          "policy": "lateral",
+          "rollDeg": 13.5286
+        },
+        {
+          "bone": "DEF-hand.L",
+          "policy": "lateral",
+          "rollDeg": 13.5285
+        },
+        {
+          "bone": "DEF-shoulder.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.R",
+          "policy": "lateral",
+          "rollDeg": -27.8506
+        },
+        {
+          "bone": "DEF-forearm.R",
+          "policy": "lateral",
+          "rollDeg": -27.8507
+        },
+        {
+          "bone": "DEF-hand.R",
+          "policy": "lateral",
+          "rollDeg": -27.8506
+        },
+        {
+          "bone": "DEF-thigh.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.L",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.L",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        },
+        {
+          "bone": "DEF-thigh.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.R",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.R",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        }
+      ]
+    },
+    {
+      "step": "armature_fit",
+      "bones": 24,
+      "shoulderZ": 1.4749,
+      "arms": {
+        "L": {
+          "restAngleDeg": 83.66,
+          "length": 1.0568
+        },
+        "R": {
+          "restAngleDeg": 83.18,
+          "length": 1.0731
+        }
+      },
+      "preBindRollCount": 24
+    },
+    {
+      "step": "orphan_fill",
+      "filled": 56
+    },
+    {
+      "step": "bind",
+      "method": "bone_heat",
+      "boundGroups": 24,
+      "weightedVerts": 4933,
+      "totalVerts": 4933,
+      "armWeightFrac": 0.3255,
+      "attempts": [
+        [
+          "bone_heat",
+          4877,
+          0.3271
+        ]
+      ],
+      "topWeights": [
+        [
+          498.3,
+          "DEF-thigh.R"
+        ],
+        [
+          490.3,
+          "DEF-thigh.L"
+        ],
+        [
+          419.3,
+          "DEF-upper_arm.R"
+        ],
+        [
+          387.2,
+          "DEF-upper_arm.L"
+        ],
+        [
+          338.0,
+          "DEF-shin.L"
+        ]
+      ]
+    },
+    {
+      "step": "weight_refine",
+      "enabledArmatureModifiers": 1,
+      "correctedVertices": 4182,
+      "oppositeLeak": 0,
+      "ambiguous": 631,
+      "orphanCount": 0,
+      "invalidCount": 0,
+      "nonDefCount": 0,
+      "maxInfluences": 4,
+      "maxWeightSum": 1.000000009778887,
+      "minWeightSum": 0.999999990221113,
+      "deformVerts": 4933,
+      "deformVertsTotal": 4933
+    },
+    {
+      "step": "rest_pose",
+      "mode": "natural",
+      "rotatedDeg": {},
+      "axisDeviationDeg": {
+        "L": 88.35,
+        "R": 86.47
+      },
+      "elevationDeg": {
+        "L": 83.66,
+        "R": 83.18
+      },
+      "tposeToleranceDeg": 12.0,
+      "ok": true
+    },
+    {
+      "step": "author_animations",
+      "count": 11,
+      "clips": [
+        "human-command-boss::idle::v01",
+        "human-command-boss::move::v01",
+        "human-command-boss::run::v01",
+        "human-command-boss::hit::v01",
+        "human-command-boss::bighit::v01",
+        "human-command-boss::attack::v01",
+        "human-command-boss::critical::v01",
+        "human-command-boss::avoid::v01",
+        "human-command-boss::defence::v01",
+        "human-command-boss::die::v01",
+        "human-command-boss::show::v01"
+      ]
+    },
+    {
+      "step": "rigid_loose_parts",
+      "enabled": true,
+      "parts": 60,
+      "influences": 1
+    },
+    {
+      "step": "mesh_split",
+      "enabled": true,
+      "parts": 60,
+      "rigidLooseParts": true,
+      "vertices": 4933
+    },
+    {
+      "step": "export",
+      "path": "/tmp/abyssal-blender-rebuild/human-command-boss/model-final3.glb",
+      "bytes": 9471516,
+      "pedestalRemoved": false,
+      "meshParts": 60
+    }
+  ],
+  "axisDeviationDeg": {
+    "L": 88.35,
+    "R": 86.47
+  },
+  "elevationDeg": {
+    "L": 83.66,
+    "R": 83.18
+  },
+  "bindMethod": "bone_heat",
+  "pedestalRemoved": false,
+  "restPose": "natural",
+  "restPoseOk": true,
+  "clipCount": 11,
+  "status": "completed"
+}

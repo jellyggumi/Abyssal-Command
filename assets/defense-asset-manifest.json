@@ -5243,6 +5243,42 @@
       "testDisposition": "delete"
     },
     {
+      "disposition": "retain",
+      "currentPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb",
+      "replacementPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb",
+      "replacementPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain-cinder-span-resources.manifest.json",
+      "replacementPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain-cinder-span-resources.manifest.json",
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
+      "replacementPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
       "disposition": "delete",
       "currentPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-background-object.obj",
       "replacementPath": null,
@@ -5333,13 +5369,13 @@
       "testDisposition": "delete"
     },
     {
-      "disposition": "retain",
+      "disposition": "delete",
       "currentPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj",
-      "replacementPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj",
+      "replacementPath": null,
       "extension": ".obj",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
+      "runtimeReference": false,
+      "testDisposition": "delete"
     },
     {
       "disposition": "delete",
@@ -5351,31 +5387,31 @@
       "testDisposition": "delete"
     },
     {
-      "disposition": "retain",
+      "disposition": "delete",
       "currentPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_diffuse.png",
-      "replacementPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_diffuse.png",
+      "replacementPath": null,
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
+      "runtimeReference": false,
+      "testDisposition": "delete"
     },
     {
-      "disposition": "retain",
+      "disposition": "delete",
       "currentPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_metallic.png",
-      "replacementPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_metallic.png",
+      "replacementPath": null,
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
+      "runtimeReference": false,
+      "testDisposition": "delete"
     },
     {
-      "disposition": "retain",
+      "disposition": "delete",
       "currentPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_normal.png",
-      "replacementPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_normal.png",
+      "replacementPath": null,
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
+      "runtimeReference": false,
+      "testDisposition": "delete"
     },
     {
       "disposition": "delete",
@@ -5387,13 +5423,13 @@
       "testDisposition": "delete"
     },
     {
-      "disposition": "retain",
+      "disposition": "delete",
       "currentPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_roughness.png",
-      "replacementPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_roughness.png",
+      "replacementPath": null,
       "extension": ".png",
       "generator": "scripts/build-defense-asset-manifest.mjs",
-      "runtimeReference": true,
-      "testDisposition": "retain"
+      "runtimeReference": false,
+      "testDisposition": "delete"
     },
     {
       "disposition": "delete",

@@ -39,6 +39,7 @@ const TARGET_CAUSE_ORDER = Object.freeze([
   "OBJECTIVE_PRESSURE_PULSE",
   "OBJECTIVE_PRESSURE_DEADLINE",
   "TERRAIN_RECOVERY",
+  "ENCOUNTER_REWARD_GRANTED",
   "WAVE_CLEARED",
   "PROJECTILE_IMPACT",
   "SKILL_SELECTED_PASSIVE_INTEGRITY",
@@ -236,6 +237,8 @@ function eventCauseForTarget(event, target) {
   if (event.type === "WAVE_CLEARED" && target === "gate" && event.gateRecovered > 0) return "WAVE_CLEARED";
   if (event.type === "WAVE_CLEARED" && target === "commander" && event.commanderRecovered > 0) return "WAVE_CLEARED";
   if (event.type === "SKILL_SELECTED" && target === "commander" && Number.isFinite(SKILLS[event.skillId]?.maxIntegrity) && SKILLS[event.skillId].maxIntegrity > 0) return "SKILL_SELECTED_PASSIVE_INTEGRITY";
+  if (event.type === "ENCOUNTER_REWARD_GRANTED" && target === "gate" && event.gateRecovered > 0) return "ENCOUNTER_REWARD_GRANTED";
+  if (event.type === "ENCOUNTER_REWARD_GRANTED" && target === "commander" && event.commanderRecovered > 0) return "ENCOUNTER_REWARD_GRANTED";
   if (event.type === "SKILL_CAST" && target === "commander" && Number.isFinite(SKILLS[event.skillId]?.integrity) && SKILLS[event.skillId].integrity > 0) return "SKILL_CAST_INTEGRITY";
   if (event.type === "GATE_BREACHED" && target === "gate" && event.damage > 0) {
     return "GATE_BREACHED";
@@ -279,7 +282,7 @@ function buildCompositeRecord(before, after, events, target) {
     .filter(({ cause }) => cause !== null);
   const deltaFor = ({ event, cause }) => cause === "TERRAIN_RECOVERY"
     ? (target === "gate" ? event.gateRecovery : event.commanderRecovery)
-    : cause === "WAVE_CLEARED"
+    : cause === "WAVE_CLEARED" || cause === "ENCOUNTER_REWARD_GRANTED"
       ? (target === "gate" ? event.gateRecovered : event.commanderRecovered)
       : cause === "SKILL_SELECTED_PASSIVE_INTEGRITY"
         ? SKILLS[event.skillId].maxIntegrity

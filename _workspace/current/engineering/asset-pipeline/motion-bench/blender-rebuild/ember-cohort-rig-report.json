@@ -1,0 +1,315 @@
+{
+  "assetId": "ember-cohort",
+  "category": "enemies",
+  "source": "assets/mesh/character/ember-cohort-character/glb/base_basic_pbr.glb",
+  "steps": [
+    {
+      "step": "import",
+      "meshes": 1,
+      "reusedBodySplit": false,
+      "hadPedestal": false
+    },
+    {
+      "step": "weld",
+      "weldDistance": 0.0,
+      "vertsBefore": 5679,
+      "vertsAfter": 5679,
+      "merged": false
+    },
+    {
+      "step": "landmarks",
+      "height": 1.7979,
+      "shoulderZFrac": 0.76,
+      "shoulderHalfWidth": 0.3498,
+      "hipHalfWidth": 0.2831,
+      "handL": [
+        0.2052,
+        -0.0419,
+        1.4461
+      ],
+      "handR": [
+        -0.2118,
+        -0.0417,
+        1.4438
+      ],
+      "synthesizedArms": [],
+      "center": [
+        -0.0038,
+        -0.0351
+      ]
+    },
+    {
+      "step": "roll_alignment",
+      "phase": "pre_bind",
+      "referencePolicy": {
+        "axial": "+Y",
+        "lateral": "+Z"
+      },
+      "rows": [
+        {
+          "bone": "DEF-spine",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.001",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.002",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.003",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.004",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.005",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-pelvis.L",
+          "policy": "axial",
+          "rollDeg": -113.9683
+        },
+        {
+          "bone": "DEF-pelvis.R",
+          "policy": "axial",
+          "rollDeg": 113.9683
+        },
+        {
+          "bone": "DEF-shoulder.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.L",
+          "policy": "lateral",
+          "rollDeg": -100.1292
+        },
+        {
+          "bone": "DEF-forearm.L",
+          "policy": "lateral",
+          "rollDeg": -100.1293
+        },
+        {
+          "bone": "DEF-hand.L",
+          "policy": "lateral",
+          "rollDeg": -100.1291
+        },
+        {
+          "bone": "DEF-shoulder.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.R",
+          "policy": "lateral",
+          "rollDeg": 100.8706
+        },
+        {
+          "bone": "DEF-forearm.R",
+          "policy": "lateral",
+          "rollDeg": 100.8705
+        },
+        {
+          "bone": "DEF-hand.R",
+          "policy": "lateral",
+          "rollDeg": 100.8705
+        },
+        {
+          "bone": "DEF-thigh.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.L",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.L",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        },
+        {
+          "bone": "DEF-thigh.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.R",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.R",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        }
+      ]
+    },
+    {
+      "step": "armature_fit",
+      "bones": 24,
+      "shoulderZ": 1.3664,
+      "arms": {
+        "L": {
+          "restAngleDeg": -77.36,
+          "length": 0.0817
+        },
+        "R": {
+          "restAngleDeg": -77.64,
+          "length": 0.0792
+        }
+      },
+      "preBindRollCount": 24
+    },
+    {
+      "step": "orphan_fill",
+      "filled": 551
+    },
+    {
+      "step": "bind",
+      "method": "envelope",
+      "boundGroups": 24,
+      "weightedVerts": 5679,
+      "totalVerts": 5679,
+      "armWeightFrac": 0.3826,
+      "attempts": [
+        [
+          "bone_heat",
+          0,
+          0.0
+        ],
+        [
+          "envelope",
+          5128,
+          0.3845
+        ]
+      ],
+      "topWeights": [
+        [
+          1299.9,
+          "DEF-shoulder.L"
+        ],
+        [
+          1281.6,
+          "DEF-shoulder.R"
+        ],
+        [
+          1281.0,
+          "DEF-spine.003"
+        ],
+        [
+          1152.8,
+          "DEF-spine.004"
+        ],
+        [
+          1152.0,
+          "DEF-spine.002"
+        ]
+      ]
+    },
+    {
+      "step": "weight_refine",
+      "enabledArmatureModifiers": 1,
+      "correctedVertices": 4300,
+      "oppositeLeak": 0,
+      "ambiguous": 1379,
+      "orphanCount": 0,
+      "invalidCount": 0,
+      "nonDefCount": 0,
+      "maxInfluences": 4,
+      "maxWeightSum": 1.000000009778887,
+      "minWeightSum": 0.999999990221113,
+      "deformVerts": 5679,
+      "deformVertsTotal": 5679
+    },
+    {
+      "step": "rest_pose",
+      "mode": "natural",
+      "rotatedDeg": {},
+      "axisDeviationDeg": {
+        "L": 78.32,
+        "R": 78.62
+      },
+      "elevationDeg": {
+        "L": -77.36,
+        "R": -77.64
+      },
+      "tposeToleranceDeg": 12.0,
+      "ok": true
+    },
+    {
+      "step": "author_animations",
+      "count": 11,
+      "clips": [
+        "ember-cohort::idle::v01",
+        "ember-cohort::move::v01",
+        "ember-cohort::run::v01",
+        "ember-cohort::hit::v01",
+        "ember-cohort::bighit::v01",
+        "ember-cohort::attack::v01",
+        "ember-cohort::critical::v01",
+        "ember-cohort::avoid::v01",
+        "ember-cohort::defence::v01",
+        "ember-cohort::die::v01",
+        "ember-cohort::show::v01"
+      ]
+    },
+    {
+      "step": "rigid_loose_parts",
+      "enabled": true,
+      "parts": 63,
+      "influences": 1
+    },
+    {
+      "step": "mesh_split",
+      "enabled": true,
+      "parts": 63,
+      "rigidLooseParts": true,
+      "vertices": 5679
+    },
+    {
+      "step": "export",
+      "path": "/tmp/abyssal-blender-rebuild/ember-cohort/model-final3.glb",
+      "bytes": 12174956,
+      "pedestalRemoved": false,
+      "meshParts": 63
+    }
+  ],
+  "axisDeviationDeg": {
+    "L": 78.32,
+    "R": 78.62
+  },
+  "elevationDeg": {
+    "L": -77.36,
+    "R": -77.64
+  },
+  "bindMethod": "envelope",
+  "pedestalRemoved": false,
+  "restPose": "natural",
+  "restPoseOk": true,
+  "clipCount": 11,
+  "status": "completed"
+}

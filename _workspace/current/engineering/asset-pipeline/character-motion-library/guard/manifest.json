@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T16:27:49.658762+00:00",
+  "generatedAt": "2026-07-29T17:57:24.897264+00:00",
   "assetId": "guard",
   "role": "ember-greatsword-guard",
   "category": "enemies",
@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/model.glb",
-  "modelSha256": "91d1bfe3026af70aa93a02e71c4f33a9fee5c6ff13b38537e008ea889813bc9e",
+  "modelSha256": "4c629a7f707c3fb3672488b9ed6177f3daff2d53d734b8de838347096eb7cf3b",
   "modelBytes": 13444940,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/rig-report.json",
@@ -262,6 +262,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -290,6 +291,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -406,6 +408,11 @@
         "maxWeightSumError": 2.9802322387695312e-08,
         "singleInfluenceFraction": 0.005822
       }
+    },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 13674,
+      "signFlips": 532
     },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,

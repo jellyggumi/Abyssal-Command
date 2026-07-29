@@ -119,6 +119,6 @@ test("growth choices show truthful current → upgraded values to the player", {
   assert.equal(await loopHud.isVisible(), true, "the agency HUD must remain visible during growth");
   assert.match(await page.locator("#battle-loop-phase").textContent(), /성장 선택/);
   assert.match(await page.locator("#battle-growth-state").textContent(), /3개 성장 오퍼/);
-  assert.equal(await page.locator("#defense-battle-surface").getAttribute("data-objective-phase"), "growth");
+  assert.equal(await page.locator("#defense-battle-surface").getAttribute("data-objective-phase"), "gate-defense");
   assert.deepEqual(errors, []);
 });

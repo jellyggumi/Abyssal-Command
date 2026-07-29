@@ -424,6 +424,57 @@ test("defense renderer fallback adapter projects a supplied snapshot to a mocked
   assert.doesNotThrow(() => adapter.renderSnapshot(snapshot));
 });
 
+test("Canvas fallback remount forgets prior event identities and pending input feedback", () => {
+  const feedbackEvents = [];
+  const canvas = cameraCanvas();
+  const adapter = new BattleVisualizer({
+    onEventFeedback: (_feedback, event) => feedbackEvents.push(event.eventId),
+  });
+  const critical = Object.freeze({
+    type: "CRITICAL_HIT",
+    tick: 12,
+    eventId: "critical:12:enemy-1",
+    targetId: "enemy-1",
+  });
+  const eventSnapshot = { ...snapshot, tick: 12, events: [critical] };
+
+  adapter.mount({ canvas, viewport: { width: 640, height: 360 } });
+  adapter.renderSnapshot(eventSnapshot);
+  adapter.renderSnapshot(eventSnapshot);
+  assert.deepEqual(feedbackEvents, [critical.eventId], "one mounted fallback must announce one stable event once");
+
+  adapter.onVisualFeedback(17);
+  adapter.dispose();
+  adapter.mount({ canvas, viewport: { width: 640, height: 360 } });
+  const cleanSnapshot = { ...snapshot, tick: 13, events: [] };
+  const remountCallOffset = canvas.calls.length;
+  adapter.renderSnapshot(cleanSnapshot);
+  const remountedArcCount = canvas.calls.slice(remountCallOffset).filter(([name]) => name === "arc").length;
+
+  const referenceCanvas = cameraCanvas();
+  const reference = new BattleVisualizer().mount({
+    canvas: referenceCanvas,
+    viewport: { width: 640, height: 360 },
+  });
+  reference.renderSnapshot(cleanSnapshot);
+  const cleanArcCount = referenceCanvas.calls.filter(([name]) => name === "arc").length;
+  assert.equal(
+    remountedArcCount,
+    cleanArcCount,
+    "input feedback queued by the disposed mount must not draw into the replacement mount",
+  );
+
+  adapter.renderSnapshot(eventSnapshot);
+  assert.deepEqual(
+    feedbackEvents,
+    [critical.eventId, critical.eventId],
+    "the replacement mount must accept the same stable event in its new lifecycle",
+  );
+
+  adapter.dispose();
+  reference.dispose();
+});
+
 test("RealtimeBattle reconciles a supplied snapshot into its real Three.js scene graph without mutation", () => {
   const adapter = realtimeBattleHarness();
   // Shaped like the real simulation's snapshot contract (defense-run-
@@ -641,10 +692,10 @@ test("RealtimeBattle eases its commander-follow camera and snaps immediately und
   // defaults) using an independently-computed expectation, not by calling
   // back into the implementation under test.
   assert.equal(adapter.orbitYaw, 0, "orbit state is untouched by updateCamera -- still the default yaw");
-  const expectedPitch = 65 * (Math.PI / 180);
-  assert.ok(Math.abs(adapter.orbitPitch - expectedPitch) < 1e-12, "orbit state is untouched by updateCamera -- still the default 65° pitch");
-  const expectedZoom = Math.hypot(14.7, 14.7);
-  assert.ok(Math.abs(adapter.zoomFactor - expectedZoom) < 1e-9, "orbit state is untouched by updateCamera -- still the default zoom distance");
+  const expectedPitch = 55 * (Math.PI / 180);
+  assert.ok(Math.abs(adapter.orbitPitch - expectedPitch) < 1e-12, "orbit state is untouched by updateCamera -- still the authored default 55° pitch");
+  const expectedZoom = 20.8;
+  assert.ok(Math.abs(adapter.zoomFactor - expectedZoom) < 1e-9, "orbit state is untouched by updateCamera -- still the authored DESCENT zoom distance");
 
   const expectedHorizontalRadius = expectedZoom * Math.cos(expectedPitch);
   const expectedHeight = expectedZoom * Math.sin(expectedPitch);

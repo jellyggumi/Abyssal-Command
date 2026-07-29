@@ -1,0 +1,310 @@
+{
+  "assetId": "guard",
+  "category": "enemies",
+  "source": "assets/mesh/character/guard-character/glb/base_basic_pbr.glb",
+  "steps": [
+    {
+      "step": "import",
+      "meshes": 1,
+      "reusedBodySplit": false,
+      "hadPedestal": false
+    },
+    {
+      "step": "weld",
+      "weldDistance": 0.0,
+      "vertsBefore": 5325,
+      "vertsAfter": 5325,
+      "merged": false
+    },
+    {
+      "step": "landmarks",
+      "height": 1.211,
+      "shoulderZFrac": 0.74,
+      "shoulderHalfWidth": 0.395,
+      "hipHalfWidth": 0.1173,
+      "handL": [
+        0.8213,
+        -0.0448,
+        1.0856
+      ],
+      "handR": [
+        -0.8178,
+        -0.0526,
+        1.0834
+      ],
+      "synthesizedArms": [],
+      "center": [
+        -0.0007,
+        -0.0219
+      ]
+    },
+    {
+      "step": "roll_alignment",
+      "phase": "pre_bind",
+      "referencePolicy": {
+        "axial": "+Y",
+        "lateral": "+Z"
+      },
+      "rows": [
+        {
+          "bone": "DEF-spine",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.001",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.002",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.003",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.004",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.005",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-pelvis.L",
+          "policy": "axial",
+          "rollDeg": -125.8491
+        },
+        {
+          "bone": "DEF-pelvis.R",
+          "policy": "axial",
+          "rollDeg": 125.8491
+        },
+        {
+          "bone": "DEF-shoulder.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.L",
+          "policy": "lateral",
+          "rollDeg": -18.0409
+        },
+        {
+          "bone": "DEF-forearm.L",
+          "policy": "lateral",
+          "rollDeg": -18.0409
+        },
+        {
+          "bone": "DEF-hand.L",
+          "policy": "lateral",
+          "rollDeg": -18.041
+        },
+        {
+          "bone": "DEF-shoulder.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.R",
+          "policy": "lateral",
+          "rollDeg": 18.2113
+        },
+        {
+          "bone": "DEF-forearm.R",
+          "policy": "lateral",
+          "rollDeg": 18.2113
+        },
+        {
+          "bone": "DEF-hand.R",
+          "policy": "lateral",
+          "rollDeg": 18.2113
+        },
+        {
+          "bone": "DEF-thigh.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.L",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.L",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        },
+        {
+          "bone": "DEF-thigh.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.R",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.R",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        }
+      ]
+    },
+    {
+      "step": "armature_fit",
+      "bones": 24,
+      "shoulderZ": 0.8962,
+      "arms": {
+        "L": {
+          "restAngleDeg": -17.38,
+          "length": 0.6342
+        },
+        "R": {
+          "restAngleDeg": -17.32,
+          "length": 0.6292
+        }
+      },
+      "preBindRollCount": 24
+    },
+    {
+      "step": "orphan_fill",
+      "filled": 0
+    },
+    {
+      "step": "bind",
+      "method": "bone_heat",
+      "boundGroups": 24,
+      "weightedVerts": 5325,
+      "totalVerts": 5325,
+      "armWeightFrac": 0.523,
+      "attempts": [
+        [
+          "bone_heat",
+          5325,
+          0.523
+        ]
+      ],
+      "topWeights": [
+        [
+          692.4,
+          "DEF-upper_arm.L"
+        ],
+        [
+          660.9,
+          "DEF-upper_arm.R"
+        ],
+        [
+          345.6,
+          "DEF-thigh.L"
+        ],
+        [
+          335.1,
+          "DEF-thigh.R"
+        ],
+        [
+          316.7,
+          "DEF-forearm.L"
+        ]
+      ]
+    },
+    {
+      "step": "weight_refine",
+      "enabledArmatureModifiers": 1,
+      "correctedVertices": 4566,
+      "oppositeLeak": 0,
+      "ambiguous": 589,
+      "orphanCount": 0,
+      "invalidCount": 0,
+      "nonDefCount": 0,
+      "maxInfluences": 4,
+      "maxWeightSum": 1.000000009778887,
+      "minWeightSum": 0.9999999906867743,
+      "deformVerts": 5325,
+      "deformVertsTotal": 5325
+    },
+    {
+      "step": "rest_pose",
+      "mode": "natural",
+      "rotatedDeg": {},
+      "axisDeviationDeg": {
+        "L": 17.51,
+        "R": 17.56
+      },
+      "elevationDeg": {
+        "L": -17.38,
+        "R": -17.32
+      },
+      "tposeToleranceDeg": 12.0,
+      "ok": true
+    },
+    {
+      "step": "author_animations",
+      "count": 11,
+      "clips": [
+        "guard::idle::v01",
+        "guard::move::v01",
+        "guard::run::v01",
+        "guard::hit::v01",
+        "guard::bighit::v01",
+        "guard::attack::v01",
+        "guard::critical::v01",
+        "guard::avoid::v01",
+        "guard::defence::v01",
+        "guard::die::v01",
+        "guard::show::v01"
+      ]
+    },
+    {
+      "step": "rigid_loose_parts",
+      "enabled": true,
+      "parts": 35,
+      "influences": 1
+    },
+    {
+      "step": "mesh_split",
+      "enabled": true,
+      "parts": 35,
+      "rigidLooseParts": true,
+      "vertices": 5325
+    },
+    {
+      "step": "export",
+      "path": "/tmp/abyssal-blender-rebuild/guard/model-final3.glb",
+      "bytes": 13213944,
+      "pedestalRemoved": false,
+      "meshParts": 35
+    }
+  ],
+  "axisDeviationDeg": {
+    "L": 17.51,
+    "R": 17.56
+  },
+  "elevationDeg": {
+    "L": -17.38,
+    "R": -17.32
+  },
+  "bindMethod": "bone_heat",
+  "pedestalRemoved": false,
+  "restPose": "natural",
+  "restPoseOk": true,
+  "clipCount": 11,
+  "status": "completed"
+}

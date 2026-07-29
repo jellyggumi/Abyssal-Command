@@ -59,7 +59,6 @@ const CORE_ASSETS = [
   "./vendor/three.module.js",
   "./vendor/three.core.js",
   "./vendor/loaders/GLTFLoader.js",
-  "./vendor/loaders/OBJLoader.js",
   "./vendor/utils/BufferGeometryUtils.js",
   "./vendor/utils/SkeletonUtils.js",
   // Stage meshes, actor rigs, props, and motion GLBs are intentionally

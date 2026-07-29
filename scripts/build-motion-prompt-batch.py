@@ -40,6 +40,7 @@ DEFAULT_VARIANT = "v01"
 
 
 def parse_args() -> argparse.Namespace:
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--actions-json",
@@ -53,14 +54,25 @@ def parse_args() -> argparse.Namespace:
         default="concept-reference",
         help="Concept lane category label (default: concept-reference).",
     )
+    parser.add_argument(
+        "--concept-input",
+        action="append",
+        dest="concept_inputs",
+        metavar="PATH",
+        help=(
+            "Concept/reference input image (repeat for multiple inputs). "
+            "Defaults to the canonical Dusk Warden inputs."
+        ),
+    )
     return parser.parse_args()
-
 
 def relative_project_path(path: Path) -> str:
     try:
         return path.resolve().relative_to(ROOT).as_posix()
     except ValueError:
-        return path.as_posix()
+        return path.resolve().as_posix()
+
+
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -104,47 +116,60 @@ def action_records(pipeline: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return by_action
 
 
-def ensure_concept_inputs() -> tuple[list[str], list[dict[str, Any]]]:
+def ensure_concept_inputs(
+    concept_inputs: tuple[str, ...],
+    actions_path: Path,
+) -> tuple[list[str], list[dict[str, Any]]]:
     """Fail closed when concept art lacks its provenance sidecar."""
-    paths = [*DEFAULT_CONCEPT_INPUTS, relative_project_path(DEFAULT_ACTIONS_JSON)]
+    source_labels: list[str] = []
     records: list[dict[str, Any]] = []
-    for rel in DEFAULT_CONCEPT_INPUTS:
-        source = ROOT / rel
+    for input_path in concept_inputs:
+        source = Path(input_path)
+        if not source.is_absolute():
+            source = ROOT / source
+        source_label = relative_project_path(source)
         sidecar = source.with_suffix(".provenance.json")
         if not source.is_file():
-            raise ValueError(f"missing concept source input: {rel}")
+            raise ValueError(f"missing concept source input: {source_label}")
         if not sidecar.is_file():
-            raise ValueError(f"missing concept provenance sidecar: {sidecar.relative_to(ROOT)}")
+            raise ValueError(f"missing concept provenance sidecar: {relative_project_path(sidecar)}")
         try:
             with sidecar.open("r", encoding="utf-8") as handle:
                 provenance = json.load(handle)
         except (OSError, json.JSONDecodeError) as exc:
             raise ValueError(f"invalid concept provenance sidecar {sidecar}: {exc}") from exc
+        if not isinstance(provenance, dict):
+            raise ValueError(
+                f"concept provenance sidecar must contain an object: {relative_project_path(sidecar)}"
+            )
         # A concept reference may never silently become a runtime input.
         if provenance.get("runtimeEligible") is not False:
-            raise ValueError(f"concept source is not explicitly runtimeEligible=false: {rel}")
-        if "/glb/" in rel or "/models/" in rel:
-            raise ValueError(f"runtime path cannot be a concept source input: {rel}")
+            raise ValueError(f"concept source is not explicitly runtimeEligible=false: {source_label}")
+        if "/glb/" in source_label or "/models/" in source_label:
+            raise ValueError(f"runtime path cannot be a concept source input: {source_label}")
+        source_labels.append(source_label)
         records.append(
             {
-                "path": rel,
+                "path": source_label,
                 "sidecarPath": relative_project_path(sidecar),
                 "lane": "concept/reference",
                 "runtimeEligible": False,
             }
         )
-    pipeline_rel = relative_project_path(DEFAULT_ACTIONS_JSON)
-    if not (ROOT / pipeline_rel).is_file():
-        raise ValueError(f"missing action pipeline source input: {pipeline_rel}")
+    pipeline_label = relative_project_path(actions_path)
+    if not actions_path.is_file():
+        raise ValueError(f"missing action pipeline source input: {pipeline_label}")
+    source_labels.append(pipeline_label)
     records.append(
         {
-            "path": pipeline_rel,
+            "path": pipeline_label,
             "kind": "action-pipeline",
             "lane": "concept/reference",
             "runtimeEligible": False,
         }
     )
-    return paths, records
+    return source_labels, records
+
 
 
 def display_name(asset_id: str) -> str:
@@ -240,10 +265,17 @@ def make_prompt(
     }
 
 
-def build_batch(actions_path: Path, asset_id: str, category: str) -> dict[str, Any]:
+
+def build_batch(
+    actions_path: Path,
+    asset_id: str,
+    category: str,
+    concept_inputs: tuple[str, ...] = DEFAULT_CONCEPT_INPUTS,
+) -> dict[str, Any]:
     pipeline = load_json(actions_path)
     by_action = action_records(pipeline)
-    source_inputs, source_records = ensure_concept_inputs()
+    source_inputs, source_records = ensure_concept_inputs(concept_inputs, actions_path)
+
     budgets = pipeline.get("keyframeBudgets")
     if not isinstance(budgets, dict):
         raise ValueError("actions JSON is missing keyframeBudgets")
@@ -326,8 +358,8 @@ def build_batch(actions_path: Path, asset_id: str, category: str) -> dict[str, A
         },
     }
 
-
 def main() -> int:
+
     args = parse_args()
     try:
         asset_id = validate_asset_id(args.asset_id)
@@ -339,7 +371,9 @@ def main() -> int:
             output_path = ROOT / output_path
         if "/assets/images/battle/glb/" in output_path.as_posix():
             raise ValueError("refusing to write a concept batch under the runtime GLB path")
-        batch = build_batch(actions_path.resolve(), asset_id, args.category)
+        concept_inputs = tuple(args.concept_inputs or DEFAULT_CONCEPT_INPUTS)
+        batch = build_batch(actions_path.resolve(), asset_id, args.category, concept_inputs)
+
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with output_path.open("w", encoding="utf-8", newline="\n") as handle:
             json.dump(batch, handle, ensure_ascii=False, indent=2, sort_keys=True)

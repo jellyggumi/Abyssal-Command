@@ -38,6 +38,12 @@ const TERRAIN_BUILDER_PATH = "scripts/build-authored-stage-environments.py";
 const ALL_MESH_PROVENANCE_PATH = "_workspace/archive/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json";
 const STAGE_SCENE_AUDIT_PATH = "scripts/audit-stage-scenes.mjs";
 const SHA256_PATTERN = /^[0-9a-f]{64}$/u;
+const CINDER_RESOURCE_MANIFEST_PATH = "assets/mesh/terrain/terrain-cinder-span/runtime/terrain-cinder-span-resources.manifest.json";
+const CINDER_RUNTIME_GLBS = Object.freeze([
+  "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
+  "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb",
+  "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb",
+]);
 
 function assertExactObjectKeys(value, expectedKeys, label) {
   assert.ok(value !== null && typeof value === "object" && !Array.isArray(value), `${label}: expected an object`);
@@ -186,6 +192,38 @@ function parseGlb(path, label) {
     json,
     path,
   };
+}
+
+function assertNamedMeshNode(glb, nodeName, label) {
+  assert.equal(typeof nodeName, "string", `${label}: requested modelNode must be a string`);
+  assert.notEqual(nodeName.trim(), "", `${label}: requested modelNode must not be empty`);
+  const nodes = glb.json.nodes ?? [];
+  const reachable = new Set();
+  const pending = [...activeSceneRoots(glb.json)];
+  while (pending.length > 0) {
+    const nodeIndex = pending.pop();
+    if (reachable.has(nodeIndex)) continue;
+    const node = nodes[nodeIndex];
+    assert.ok(node, `${label}: active scene references missing node ${nodeIndex}`);
+    reachable.add(nodeIndex);
+    pending.push(...(node.children ?? []));
+  }
+
+  const rootIndex = [...reachable].find((nodeIndex) => nodes[nodeIndex].name === nodeName) ?? -1;
+  assert.notEqual(rootIndex, -1, `${label}: active scene is missing requested node ${nodeName}`);
+  const descendants = [rootIndex];
+  const visited = new Set();
+  let hasMesh = false;
+  while (descendants.length > 0) {
+    const nodeIndex = descendants.pop();
+    if (visited.has(nodeIndex)) continue;
+    visited.add(nodeIndex);
+    const node = nodes[nodeIndex];
+    assert.ok(node, `${label}: node ${nodeName} references missing child ${nodeIndex}`);
+    hasMesh ||= node.mesh !== undefined;
+    descendants.push(...(node.children ?? []));
+  }
+  assert.equal(hasMesh, true, `${label}: requested node ${nodeName} has no renderable mesh`);
 }
 
 function decodeDataUri(uri, label) {
@@ -555,6 +593,21 @@ test("three canonical runtime terrains use distinct direct source assets", () =>
   const profiles = Object.values(STAGE_WORLD_PROFILES);
   assert.equal(profiles.length, 3, `terrain contract: expected 3 canonical stages, found ${profiles.length}`);
   const hashes = new Set();
+  const cinderManifestPath = join(ROOT, CINDER_RESOURCE_MANIFEST_PATH);
+  assert.ok(existsSync(cinderManifestPath), "Cinder Span: missing packaged resource manifest");
+  const cinderManifest = JSON.parse(readFileSync(cinderManifestPath, "utf8"));
+  assert.deepEqual(
+    cinderManifest.promotionAudit?.resources?.map(({ path }) => path),
+    CINDER_RUNTIME_GLBS,
+    "Cinder Span: promotion audit must name the terrain GLB and both node-addressable pack GLBs",
+  );
+  const cinderProps = STAGE_WORLD_PROFILES["cinder-span"].presentation.props;
+  for (const packPath of CINDER_RUNTIME_GLBS.slice(1)) {
+    const pack = parseGlb(join(ROOT, packPath), packPath);
+    const requestedNodes = cinderProps.filter(({ modelPath }) => modelPath === packPath).map(({ modelNode }) => modelNode);
+    assert.ok(requestedNodes.length > 0, `${packPath}: no Cinder placements address this pack`);
+    for (const modelNode of requestedNodes) assertNamedMeshNode(pack, modelNode, packPath);
+  }
 
   for (const profile of profiles) {
     const label = `${profile.stageId} (${profile.terrainGlbPath})`;
@@ -565,17 +618,6 @@ test("three canonical runtime terrains use distinct direct source assets", () =>
     assert.ok(bytes.length > 1024, `${label}: terrain source is unexpectedly small`);
     hashes.add(createHash("sha256").update(bytes).digest("hex"));
 
-    if (profile.terrainGlbPath.endsWith(".obj")) {
-      const source = bytes.toString("utf8");
-      assert.match(source, /^v\s+/mu, `${label}: OBJ needs vertex data`);
-      assert.match(source, /^f\s+/mu, `${label}: OBJ needs faces`);
-      for (const channel of ["texture_diffuse.png", "texture_normal.png", "texture_roughness.png", "texture_metallic.png"]) {
-        const texturePath = join(ROOT, "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack", channel);
-        assert.ok(existsSync(texturePath), `${label}: missing Cinder Span ${channel}`);
-        assert.ok(readFileSync(texturePath).length > 1024, `${label}: empty Cinder Span ${channel}`);
-      }
-      continue;
-    }
 
     const glb = parseGlb(absolutePath, label);
     const buffers = resolveBuffers(glb, label);

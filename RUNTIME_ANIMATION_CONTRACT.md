@@ -1,11 +1,83 @@
 # Three.js Runtime Animation Asset Contract
 
-**Status:** OBSERVED & LOCKED  
+**Status:** CURRENT NORMATIVE CONTRACT
 **Date:** 2026-07-29  
-**Repository:** Abyssal-Command  
-**Runtime File:** `battle-realtime-three.js` (3382 lines, main WebGL adapter)
+**Repository:** Abyssal-Lantern
+**Runtime File:** `battle-realtime-three.js`
 
 ---
+## 0. 2026-07-29 NATURAL JOINT-MOTION AMENDMENT
+
+This section is normative and supersedes any conflicting inventory count, line
+number, or “locked” statement in the observational appendix below. The runtime
+library now owns 11 promoted source characters, 121 embedded action clips
+(110 retargeted plus 11 authored fallbacks), and the registry at
+`assets/motion/ingame/characters/registry.json` is the machine-readable source
+of truth.
+
+### Source and mesh boundary
+
+- `assets/mesh/character/` and `assets/mesh/enemy/` are authoring inputs, not
+  directly playable actors.
+- A character source cannot be one fused OBJ whose unrelated costume, body, and
+  accessory islands are treated as one rigid part. The Blender authoring pass
+  partitions visible faces into semantic body regions, binds those regions to
+  the adjacent parent/child joint chain, and exports a skinned GLB.
+- Stage architecture and props use separately addressable mesh nodes and
+  placements. A merged terrain OBJ is never the default runtime draw path.
+- Simulation translation owns actor movement. Every promoted locomotion clip is
+  in-place (`inPlaceRootMotion: true`); animation may articulate joints but may
+  not displace the gameplay root.
+
+### Skinning and joint articulation
+
+1. Every rendered character mesh must have an enabled armature modifier and a
+   `def-humanoid-v1` skeleton with the expected DEF joint chain.
+2. Each vertex weight sum must be finite and normalized. A vertex may use at
+   most four influences; influences must stay on one adjacent anatomical chain.
+   Orphan vertices, disconnected chain influence, and whole-body single-bone
+   collapse are release blockers.
+3. Elbow, knee, shoulder, hip, wrist, and ankle test poses must deform the
+   adjacent semantic regions without leaving detached islands, collapsing the
+   limb cross-section, or moving unrelated torso/head geometry.
+4. Every action track uses finite, normalized local quaternions with `LINEAR`
+   glTF interpolation. Quaternion signs must be continuity-normalized so adjacent
+   keys take the shortest rotation path.
+5. Source motion is sampled at 24 fps and baked into the exported action. Runtime
+   playback must not synthesize key poses from a merged mesh or replace
+   joint motion with whole-object rotation.
+
+### Action and transition ownership
+
+- The canonical library is exactly `idle`, `move`, `run`, `hit`, `bighit`,
+  `attack`, `critical`, `avoid`, `defence`, `die`, and `show`, named
+  `<assetId>::<action>::v01`. The commander may additionally author
+  `attack_melee` and `attack_ranged`.
+- `idle`, `move`, and `run` loop. All other actions are mixer-finished one-shots.
+- Locomotion changes and one-shot entry/recovery use `AnimationAction` fades;
+  they never hard-snap between ordinary poses. A live one-shot queues an
+  incompatible beat by presentation priority. `die` alone is a terminal hard
+  cut.
+- The mixer advances once per presented simulation tick at 60 Hz. Repeated or
+  regressing snapshots consume no animation time; a new stage tick zero resets
+  the animation clock.
+- Reduced-motion preserves pose meaning and facing direction while removing
+  decorative easing. It does not disable necessary joint articulation.
+
+### Release evidence
+
+The release gate is not a mesh-count check. It requires all of the following:
+
+1. Blender rig report: expected armature, enabled modifiers, semantic region
+   coverage, normalized bounded weights, and joint deformation samples.
+2. Registry/manifests: current model SHA-256, 11 unique action names, motion
+   lineage, rights receipt, and `runtimeEligible: true`.
+3. Runtime tests: promoted model loading, namespaced action routing, fixed-tick
+   mixer advancement, action queuing, crossfade recovery, and browser playback.
+4. Visual review at rest and extreme joint poses for every promoted actor.
+
+---
+
 
 ## 1. ASSET LOADER & FORMAT CONTRACT
 
@@ -625,16 +697,17 @@ node tests/release-closure.test.mjs
 
 ## 15. SUMMARY
 
-**Three.js Runtime Animation Contract is LOCKED and OBSERVED.**
+The authoritative contract is the amendment in §0 plus the generated runtime
+registry and per-asset manifests.
 
-- **Loader:** GLTFLoader (Three.js) with module-level cache
-- **Format:** GLB (binary glTF 2.0)
-- **Characters:** 23 (10 bosses, 4 enemies, 9 companions, 1 commander)
-- **Skeleton:** Rigid 24-bone DEF-* humanoid (Blender Rigify)
-- **Clips:** 11-13 per character, named `<assetId>::<actionKey>::v01`, looping + one-shot
-- **Overlay:** Optional unarmed motion pack (9 quaternion-delta clips, retargets dynamically)
-- **Fallback:** Built-in die/show/attack_melee/attack_ranged; no retry on overlay load failure
-- **Sizing:** Per-actor-kind target heights (boss 12.6u, commander 11.2u, companion 9.1u, etc.)
-- **Tests:** ingame-motion-pack.test.mjs validates manifest, overlay, and runtime behavior
-
-**Next step for assets:** SkeletonAudit will produce bone hierarchy compatibility matrix.
+- **Loader:** Three.js `GLTFLoader`, cloned per actor with its own skeleton.
+- **Runtime motion library:** 11 promoted character assets and 121 embedded
+  clips in the current registry.
+- **Skeleton:** `def-humanoid-v1`, with semantic regions weighted to adjacent
+  parent/child joint chains.
+- **Playback:** fixed-tick mixer updates, in-place locomotion, ordinary
+  crossfades, priority-queued one-shots, and terminal death.
+- **Source boundary:** individual semantic character/prop meshes are promoted;
+  fused OBJ presentation is not a runtime shortcut.
+- **Proof:** Blender deformation reports, registry hashes, targeted Node tests,
+  and browser playback must agree before promotion.

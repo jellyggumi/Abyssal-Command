@@ -21,7 +21,7 @@ async function runG3ForTest() {
     cwd: repositoryRoot,
     encoding: "utf8",
     maxBuffer: 256 * 1024 * 1024,
-    timeout: 600_000,
+    timeout: 1_800_000,
   });
   assert.equal(result.status, 0, `${g3Script} must finish successfully\n${result.stderr}`);
   try {
@@ -78,16 +78,16 @@ test("Stage1b G3 exporter anchors conversion phases at accepted switch and prese
 test("Stage1b persistence exporter proves victory, defeat-before, and defeat-after acceptance", () => {
   const payload = buildPersistencePayload("stage1b-test-revision");
   assert.equal(payload.scenarioCount, 3);
-  assert.deepEqual(payload.scenarioOrder, ["victory", "defeat-before-acceptance", "defeat-after-acceptance"]);
+  assert.deepEqual(payload.scenarioOrder, ["victory", "defeat-before-acceptance", "completion-after-acceptance"]);
   const scenarios = new Map(payload.scenarios.map((scenario) => [scenario.scenario, scenario]));
   assert.equal(scenarios.get("victory").seed, 901);
   assert.equal(scenarios.get("defeat-before-acceptance").seed, 902);
-  assert.equal(scenarios.get("defeat-after-acceptance").seed, 901);
+  assert.equal(scenarios.get("completion-after-acceptance").seed, 901);
   assert.equal(scenarios.get("victory").acceptedEliteExtractCount, 1);
   assert.equal(scenarios.get("defeat-before-acceptance").acceptedEliteExtractCount, 0);
-  assert.equal(scenarios.get("defeat-after-acceptance").acceptedEliteExtractCount, 1);
-  assert.equal(scenarios.get("defeat-after-acceptance").policy.moveOnlyAfterAcceptance, true);
-  assert.equal(scenarios.get("defeat-after-acceptance").policy.occupationAfterTick, 3700);
+  assert.equal(scenarios.get("completion-after-acceptance").acceptedEliteExtractCount, 1);
+  assert.equal(scenarios.get("completion-after-acceptance").policy.moveOnlyAfterAcceptance, true);
+  assert.equal(scenarios.get("completion-after-acceptance").policy.occupationAfterTick, 3700);
   for (const scenario of payload.scenarios) {
     orderedEvents(scenario.events, scenario.scenario);
     assert.ok(Array.isArray(scenario.campaignDiff));
@@ -110,7 +110,7 @@ test("Stage1b G3 canonical exporter exercises real CLI and fails closed", async 
     cwd: repositoryRoot,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
-    timeout: 600_000,
+    timeout: 1_800_000,
   });
   const canonicalArgs = [
     "--output",

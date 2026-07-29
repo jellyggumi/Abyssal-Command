@@ -28,17 +28,11 @@ function parseGlb(assetPath) {
   return json;
 }
 
-function assertObjMesh(assetPath) {
-  const text = readFileSync(join(ROOT, assetPath), "utf8");
-  assert.match(text, /^v\s+[-+\d.]+\s+[-+\d.]+\s+[-+\d.]+/m, `${assetPath}: missing vertex data`);
-  assert.match(text, /^f\s+\d+/m, `${assetPath}: missing face data`);
-}
 
 function assertModel(assetPath) {
   assert.ok(existsSync(join(ROOT, assetPath)), `${assetPath}: missing runtime model`);
-  if (assetPath.endsWith(".glb")) parseGlb(assetPath);
-  else if (assetPath.endsWith(".obj")) assertObjMesh(assetPath);
-  else assert.fail(`${assetPath}: unsupported runtime model extension`);
+  assert.equal(assetPath.endsWith(".glb"), true, `${assetPath}: active runtime models must use GLB`);
+  parseGlb(assetPath);
 }
 
 test("the three-stage catalog resolves only retained mesh and motion resources", async (t) => {
@@ -71,10 +65,14 @@ test("the retained runtime manifest excludes retired battle artwork except UI", 
   assert.deepEqual(invalidBattleAssets, [], "only UI artwork may remain in the retained battle-image lane");
 });
 
-test("each canonical stage publishes two prop meshes, one VFX effect, and one Lantern Reaver lookout", () => {
+test("each canonical stage publishes dense prop meshes, one VFX effect, and one Lantern Reaver lookout", () => {
   for (const { id: stageId } of STAGES) {
     const profile = stageWorldFor(stageId);
-    assert.equal(profile.presentation.props.length, 2, `${stageId}: requires two placed prop meshes`);
+    if (stageId === "cinder-span") {
+      assert.equal(profile.presentation.props.length, 12, "Cinder Span requires its twelve authored pack-node placements");
+    } else {
+      assert.ok(profile.presentation.props.length >= 2, `${stageId}: requires multiple placed prop meshes`);
+    }
     assert.equal(profile.presentation.vfxCues.length, 1, `${stageId}: requires one authored stage VFX cue`);
     assert.equal(profile.presentation.npcs.length, 1, `${stageId}: requires one Lantern Reaver lookout`);
     assert.equal(
@@ -83,4 +81,61 @@ test("each canonical stage publishes two prop meshes, one VFX effect, and one La
       `${stageId}: lookout must use the supplied Lantern Reaver source mesh`,
     );
   }
+});
+
+test("Cinder Span publishes twelve frozen, independently placed nodes across its two runtime packs", () => {
+  const props = stageWorldFor("cinder-span").presentation.props;
+  const expectedPlacements = {
+    "cinder-span:collapsed-parapet-prop": { x: 13200, y: 9300, elevation: 0, yawRadians: 1.5708 },
+    "cinder-span:east-ash-wall-prop": { x: 20800, y: 9900, elevation: 0, yawRadians: 1.5708 },
+    "cinder-span:forge-arch": { x: 12600, y: 2800, elevation: 0, yawRadians: 0 },
+    "cinder-span:forge-relic": { x: 15400, y: 7400, elevation: 0, yawRadians: 1.5708 },
+    "cinder-span:gate-beacon-prop": { x: 22500, y: 10100, elevation: 0, yawRadians: 2.8 },
+    "cinder-span:ingress-beacon-prop": { x: 3000, y: 1700, elevation: 0, yawRadians: -0.35 },
+    "cinder-span:north-ash-talon-prop": { x: 2400, y: 10100, elevation: 0, yawRadians: 0.35 },
+    "cinder-span:relay-debris-north-prop": { x: 5000, y: 10400, elevation: 0, yawRadians: 0.5 },
+    "cinder-span:relay-debris-south-prop": { x: 15000, y: 1500, elevation: 0, yawRadians: -0.4 },
+    "cinder-span:seal-brand": { x: 17600, y: 7400, elevation: 0, yawRadians: 0 },
+    "cinder-span:south-forge-teeth-prop": { x: 9000, y: 1700, elevation: 0, yawRadians: 1.5708 },
+    "cinder-span:west-ash-wall-prop": { x: 19000, y: 4400, elevation: 0, yawRadians: 1.5708 },
+  };
+  assert.deepEqual(
+    props.map(({ id }) => id).sort(),
+    Object.keys(expectedPlacements).sort(),
+    "the twelve authored Cinder prop IDs are the runtime placement identities",
+  );
+  assert.deepEqual(
+    props.map(({ modelNode }) => modelNode).sort(),
+    [
+      "terrain-cinder-span-feature-005",
+      "terrain-cinder-span-feature-008",
+      "terrain-cinder-span-feature-016",
+      "terrain-cinder-span-feature-026",
+      "terrain-cinder-span-feature-039",
+      "terrain-cinder-span-prop-006",
+      "terrain-cinder-span-prop-011",
+      "terrain-cinder-span-prop-012",
+      "terrain-cinder-span-prop-014",
+      "terrain-cinder-span-prop-030",
+      "terrain-cinder-span-prop-033",
+      "terrain-cinder-span-prop-044",
+    ],
+    "every Cinder placement addresses one exact pack node",
+  );
+  assert.deepEqual(
+    [...new Set(props.map(({ modelPath }) => modelPath))].sort(),
+    [
+      "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb",
+      "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb",
+    ],
+    "the twelve placements share exactly two runtime pack URLs",
+  );
+  assert.deepEqual(
+    Object.fromEntries(props.map(({ id, placement }) => [id, placement])),
+    expectedPlacements,
+    "each Cinder prop keeps its separate authored placement",
+  );
+  assert.equal(new Set(props.map(({ placement }) => placement)).size, 12, "placements must not share mutable object identity");
+  assert.equal(new Set(props.map(({ placement }) => JSON.stringify(placement))).size, 12, "placements must not collapse to duplicate coordinates");
+  assert.equal(props.every((entry) => Object.isFrozen(entry) && Object.isFrozen(entry.placement)), true, "prop records and placements stay immutable");
 });

@@ -907,6 +907,23 @@ function renderLegionSection(data) {
  * to 출정, leaving these inside 요새 would put record management behind a segment tap and
  * break that contract. They stay collapsed inside their own `<details>`, so the cost of
  * always mounting them is one summary row. */
+function audioSettingsMarkup() {
+  const muted = session?.audio?.muted ?? false;
+  const volume = session?.audio?.volume ?? 1.0;
+  return `
+    <div class="shell-audio-settings" role="group" aria-label="오디오 설정">
+      <div class="audio-control-row">
+        <button type="button" id="shell-audio-mute-btn" class="audio-mute-button" aria-pressed="${muted}" aria-label="음소거 토글">
+          <span>${muted ? "소리 켜기" : "음소거"}</span>
+        </button>
+        <div class="audio-volume-slider-container">
+          <label id="shell-volume-label" for="shell-audio-volume">볼륨: ${Math.round(volume * 100)}%</label>
+          <input type="range" id="shell-audio-volume" min="0" max="1" step="0.05" value="${volume}" aria-labelledby="shell-volume-label" />
+        </div>
+      </div>
+    </div>`;
+}
+
 function recordToolsMarkup() {
   return `
     <details class="archive-tools"><summary>기록 관리 <span>오프라인 저장 · ${escapeHtml(storage.backend ?? "확인 중")}</span></summary><div class="storage-row" aria-label="캠페인 제어"><button id="export-defense">기록 내보내기</button><label class="import-label">기록 가져오기<input id="import-defense" type="file" accept="application/json,text/plain" /></label><button id="export-telemetry">진단 내보내기</button><button id="reset-defense">새 기록</button><output aria-live="polite">${escapeHtml(statusText)}</output></div></details>`;
@@ -1118,6 +1135,7 @@ function renderCommandDeckLeft() {
  * sealed dossier instead -- no boss name, terrain label, hazard or objective leaks before
  * the player actually deploys there. That is why the flat 10-card stage rail is not used. */
 function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, selectedObjective, completed, unlocked, started) {
+  const activeModality = session?.inputModality || "keyboard";
   const selectedIndex = STAGES.findIndex(({ id }) => id === selected.id);
   const selectedIsShowcase = LOBBY_SHOWCASE_STAGE_ID_SET.has(selected.id);
   const selectedCleared = campaign.resolvedIds?.includes(selected.id);
@@ -1198,7 +1216,51 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
     <dialog id="lobby-guide-dialog" class="lobby-guide-dialog" aria-labelledby="lobby-guide-title">
       <div class="lobby-guide-shell">
         <div class="panel-heading"><div><p class="eyebrow">ABYSSAL LANTERN · FIELD MANUAL</p><h2 id="lobby-guide-title">전투 작전 가이드</h2></div><button type="button" data-guide-close aria-label="전투 작전 가이드 닫기">닫기</button></div>
-        <p class="section-copy">전투 화면을 한 손가락으로 드래그해 시야(카메라)를 회전하고, 화면 방향 버튼 또는 <b>WASD·화살표 키</b>로 지휘관을 이동하세요. <b>Space·J</b>는 기본 공격입니다.</p>
+
+        <div class="modality-selectors" role="tablist" aria-label="기기별 조작법">
+          <button type="button" id="modality-tab-keyboard" role="tab" class="modality-tab" aria-selected="${activeModality === "keyboard"}" aria-controls="modality-panel-keyboard" tabindex="${activeModality === "keyboard" ? "0" : "-1"}" data-modality-select="keyboard">키보드</button>
+          <button type="button" id="modality-tab-pointer" role="tab" class="modality-tab" aria-selected="${activeModality === "pointer"}" aria-controls="modality-panel-pointer" tabindex="${activeModality === "pointer" ? "0" : "-1"}" data-modality-select="pointer">마우스</button>
+          <button type="button" id="modality-tab-touch" role="tab" class="modality-tab" aria-selected="${activeModality === "touch"}" aria-controls="modality-panel-touch" tabindex="${activeModality === "touch" ? "0" : "-1"}" data-modality-select="touch">터치</button>
+        </div>
+
+        <div class="modality-content" data-active-modality="${activeModality}">
+          <div id="modality-panel-keyboard" class="modality-pane" data-pane="keyboard" role="tabpanel" aria-labelledby="modality-tab-keyboard" ${activeModality === "keyboard" ? "" : "hidden"}>
+            <ul class="guide-list">
+              <li><b>지휘관 이동:</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 또는 <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> (화살표 키)</li>
+              <li><b>기본 공격:</b> <kbd>Space</kbd> 또는 <kbd>J</kbd> 키</li>
+              <li><b>스탠스 / 스킬 / 정예 추출:</b> <kbd>Tab</kbd> 키로 해당 버튼 포커스 후 <kbd>Space</kbd> 또는 <kbd>Enter</kbd></li>
+              <li><b>전투 일시 정지:</b> <kbd>P</kbd> 또는 <kbd>Escape</kbd> 키</li>
+              <li><b>카메라 제어:</b> 키보드 포커스 조작 지원</li>
+            </ul>
+          </div>
+
+          <div id="modality-panel-pointer" class="modality-pane" data-pane="pointer" role="tabpanel" aria-labelledby="modality-tab-pointer" ${activeModality === "pointer" ? "" : "hidden"}>
+            <ul class="guide-list">
+              <li><b>지휘관 이동:</b> 좌측 하단 D-pad 이동 버튼 클릭</li>
+              <li><b>기본 공격:</b> 우측 하단 공격 버튼 클릭</li>
+              <li><b>스킬 사용:</b> 활성 스킬 아이콘 클릭</li>
+              <li><b>스탠스 전환:</b> 좌측 하단 스탠스 아이콘 클릭</li>
+              <li><b>정예 추출:</b> 정예 적 처치 후 우측 하단 추출 버튼 클릭</li>
+              <li><b>카메라 회전:</b> 화면 클릭 후 드래그 (Orbit)</li>
+              <li><b>카메라 줌:</b> 마우스 휠 스크롤 (Zoom)</li>
+              <li><b>일시 정지:</b> 일시 정지 버튼 클릭</li>
+            </ul>
+          </div>
+
+          <div id="modality-panel-touch" class="modality-pane" data-pane="touch" role="tabpanel" aria-labelledby="modality-tab-touch" ${activeModality === "touch" ? "" : "hidden"}>
+            <ul class="guide-list">
+              <li><b>지휘관 이동:</b> 전장 화면 좌측 하단 D-pad 방향키 터치 및 홀드</li>
+              <li><b>기본 공격:</b> 우측 하단 공격 버튼 터치</li>
+              <li><b>스킬 사용:</b> 활성 스킬 아이콘 터치</li>
+              <li><b>스탠스 전환:</b> 좌측 하단 스탠스 아이콘 터치</li>
+              <li><b>정예 추출:</b> 정예 적 처치 후 우측 하단 추출 버튼 터치</li>
+              <li><b>카메라 회전:</b> 전장 화면을 손가락 1개로 드래그 (Orbit)</li>
+              <li><b>카메라 줌:</b> 화면 손가락 2개 꼬집기 (Pinch Zoom)</li>
+              <li><b>일시 정지:</b> 일시 정지 버튼 터치</li>
+            </ul>
+          </div>
+        </div>
+
         <div class="lobby-guide-grid">
           <section data-guide-section="companion" aria-labelledby="guide-companion-title"><span aria-hidden="true">01</span><h3 id="guide-companion-title">동료 편성·자율 전투</h3><ol><li><b>군단</b>에서 최대 3명을 출전 편성하세요.</li><li>전열·후열 선호는 다음 출전의 배치 순위에 반영됩니다.</li><li>동료는 자동 교전하고, 멀어지면 지휘관 곁으로 복귀합니다.</li></ol></section>
           <section data-guide-section="extraction" aria-labelledby="guide-extraction-title"><span aria-hidden="true">02</span><h3 id="guide-extraction-title">정예 추출 · ARISE</h3><ol><li>정예를 처치한 뒤 <b>Bind 시작</b>을 누르세요.</li><li>추출 지점 안에서 홀드가 끝날 때까지 버티세요.</li><li><b>정예 추출</b>이 준비되면 눌러 영구 동료로 결속하세요.</li></ol></section>
@@ -1245,9 +1307,29 @@ function renderCommandDeckRight() {
       <span class="deck-brand-copy"><b>ABYSSAL LANTERN</b><small>심연의 등불</small></span>
       <p class="deck-front-line" aria-live="polite">${started ? `전투 진행 중 · ${frontLabel}` : frontLabel}</p>
       ${rightDeckSegmentBarMarkup()}`,
-    bodyHtml: `${opsHtml}${recordToolsMarkup()}`,
+    bodyHtml: `${opsHtml}${audioSettingsMarkup()}${recordToolsMarkup()}`,
   });
   if (!deck) return;
+
+  const shellMuteBtn = deck.querySelector("#shell-audio-mute-btn");
+  shellMuteBtn?.addEventListener("click", () => {
+    if (!session?.audio) return;
+    const nextMuted = !session.audio.muted;
+    session.audio.setMuted(nextMuted);
+    shellMuteBtn.setAttribute("aria-pressed", String(nextMuted));
+    const textSpan = shellMuteBtn.querySelector("span");
+    if (textSpan) textSpan.textContent = nextMuted ? "소리 켜기" : "음소거";
+  });
+
+  const shellVolumeInput = deck.querySelector("#shell-audio-volume");
+  shellVolumeInput?.addEventListener("input", (e) => {
+    if (!session?.audio) return;
+    const val = parseFloat(e.target.value);
+    session.audio.setVolume(val);
+    const label = deck.querySelector("#shell-volume-label");
+    if (label) label.textContent = `볼륨: ${Math.round(val * 100)}%`;
+  });
+
   deck.querySelectorAll("[data-ops-section]").forEach((button) => {
     button.addEventListener("click", () => {
       if (button.dataset.opsSection === activeRightSection) return;
@@ -1280,6 +1362,30 @@ function renderCommandDeckRight() {
   });
   guideDialog?.querySelector("[data-guide-close]")?.addEventListener("click", () => guideDialog.close());
   guideDialog?.addEventListener("close", () => guideTrigger?.focus());
+  const modalityTabs = [...deck.querySelectorAll("[data-modality-select]")];
+  const activateModalityTab = (button, { focus = false } = {}) => {
+    session?.updateInputModality(button.dataset.modalitySelect);
+    if (focus) deck.querySelector(`[data-modality-select="${button.dataset.modalitySelect}"]`)?.focus();
+  };
+  modalityTabs.forEach((button, index) => {
+    button.addEventListener("click", () => activateModalityTab(button));
+    button.addEventListener("keydown", (event) => {
+      const last = modalityTabs.length - 1;
+      const nextIndex = event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? last
+          : event.key === "ArrowRight" || event.key === "ArrowDown"
+            ? (index + 1) % modalityTabs.length
+            : event.key === "ArrowLeft" || event.key === "ArrowUp"
+              ? (index - 1 + modalityTabs.length) % modalityTabs.length
+              : null;
+      if (nextIndex === null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      activateModalityTab(modalityTabs[nextIndex], { focus: true });
+    });
+  });
   deck.querySelector("#export-defense")?.addEventListener("click", async () => {
     const text = await storage.exportText();
     if (!text) {
@@ -1577,6 +1683,8 @@ export class BattleSession {
     this.audioEventKeys = new Set();
     this.frame = 0;
     this.lastFrameAt = 0;
+    this.inputModality = "keyboard";
+    this.onGlobalPointerDown = this.onGlobalPointerDown.bind(this);
     this.accumulator = 0;
     this.inputSeq = 0;
     // this.pointer tracks the single active orbit-drag pointer (last known
@@ -1588,6 +1696,7 @@ export class BattleSession {
     this.controlPointerId = null;
     this.feedbackTick = null;
     this.feedbackEventKeys = new Set();
+    this.feedbackTimer = null;
     this.heldKeys = new Set();
     this.listenerCount = 0;
     this.extractionEvents = [];
@@ -1721,6 +1830,14 @@ export class BattleSession {
     this.selectedRewardId = null;
     this.bindStartPending = false;
     this.cutsceneEventKeys.clear();
+    clearTimeout(this.feedbackTimer);
+    this.feedbackTimer = null;
+    const feedback = root.querySelector("#battle-event-feedback");
+    if (feedback) {
+      feedback.textContent = "";
+      delete feedback.dataset.feedback;
+    }
+    delete this.surface.dataset.defenseFeedback;
     this.cutsceneRelayTimers.forEach((timer) => clearTimeout(timer));
     this.cutsceneRelayTimers = [];
     this.cutsceneQueue = [];
@@ -1881,6 +1998,7 @@ export class BattleSession {
     this.listen(document, "visibilitychange", this.onVisibility);
     this.listen(window, "keydown", this.onKey);
     this.listen(window, "keyup", this.onKey);
+    this.listen(window, "pointerdown", this.onGlobalPointerDown);
     this.listen(window, "resize", this.onResize);
     this.listen(window, "abyssal:defense-viewportchange", this.onResize);
     if (this.motionQuery) this.listen(this.motionQuery, "change", this.onReducedMotion);
@@ -2093,16 +2211,42 @@ export class BattleSession {
     this.onWindowBlur();
   }
 
+  onGlobalPointerDown(event) {
+    this.updateInputModality(event.pointerType === "touch" ? "touch" : "pointer");
+  }
+
+  updateInputModality(modality) {
+    if (!["keyboard", "pointer", "touch"].includes(modality)) return;
+    this.inputModality = modality;
+    root.setAttribute("data-input-modality", modality);
+    const dialog = root.querySelector("#lobby-guide-dialog");
+    if (!dialog?.open) return;
+    dialog.querySelectorAll("[data-modality-select]").forEach((button) => {
+      const selected = button.dataset.modalitySelect === modality;
+      button.setAttribute("aria-selected", String(selected));
+      button.tabIndex = selected ? 0 : -1;
+    });
+    dialog.querySelectorAll("[data-pane]").forEach((panel) => {
+      panel.hidden = panel.dataset.pane !== modality;
+    });
+    dialog.querySelector(".modality-content")?.setAttribute("data-active-modality", modality);
+  }
+
   onKey(event) {
-    // Text fields own every key, as before.
     const target = event.target;
-    if (target?.closest?.("input, textarea, select, [contenteditable='true']")) return;
     const key = event.key.toLowerCase();
     if ((key === "escape" || key === "p") && event.type === "keydown" && this.started && !isTerminalRun(this.run)) {
+      this.updateInputModality("keyboard");
       event.preventDefault();
       this.togglePause();
       return;
     }
+    // Editable controls own gameplay keys, but the pause hotkeys above remain global so a
+    // focused volume range cannot strand keyboard users inside the modal pause screen.
+    if (target?.closest?.("input, textarea, select, [contenteditable='true']")) return;
+    const compositeNavigationKey = ["arrowleft", "arrowright", "arrowup", "arrowdown", "home", "end"].includes(key);
+    if (compositeNavigationKey && target?.closest?.('[role="tablist"]')) return;
+    this.updateInputModality("keyboard");
     // A focused control owns its ACTIVATION keys (Enter and Space) -- that is how keyboard
     // activation works, and the `preventDefault()` below would otherwise cancel it.
     // ATTACK_KEYS contains "enter" and " ", so without this exemption Enter/Space stopped
@@ -2132,7 +2276,7 @@ export class BattleSession {
   }
 
   send(type, payload) {
-    if (this.stopped || (isTerminalRun(this.run) && type !== "REWARD_SELECTED")) return;
+    if (this.stopped || this.userPaused || (isTerminalRun(this.run) && type !== "REWARD_SELECTED")) return;
     const inputAt = performance.now();
     this.run = queueInput(this.run, type, payload);
     const inputSeq = ++this.inputSeq;
@@ -2406,6 +2550,14 @@ export class BattleSession {
       ? "CRIT · 치명타 확정"
       : event.text ?? event.message ?? event.summary ?? event.lore ?? "심연의 비밀이 해소되었습니다.").join(" · ");
     this.surface.dataset.defenseFeedback = feedback.dataset.feedback;
+    clearTimeout(this.feedbackTimer);
+    this.feedbackTimer = setTimeout(() => {
+      if (feedback.isConnected === false) return;
+      feedback.textContent = "";
+      delete feedback.dataset.feedback;
+      delete this.surface?.dataset.defenseFeedback;
+      this.feedbackTimer = null;
+    }, 1800);
   }
   render(frameEvents = null) {
     // The module-level session can outlive a test/page teardown by one animation
@@ -2973,15 +3125,60 @@ export class BattleSession {
   }
 
   togglePause() {
-    this.userPaused = !this.userPaused;
+    const nextPaused = !this.userPaused;
+    if (nextPaused) {
+      this.heldKeys.clear();
+      this.send("MOVE", "IDLE");
+    }
+    this.userPaused = nextPaused;
     this.surface.dataset.defenseState = this.userPaused ? "paused" : "active";
     this.accumulator = 0;
+    if (this.userPaused) {
+      this.audio.pause();
+    } else {
+      this.audio.resume();
+    }
     this.render();
     // #battle-actions is reconciled when aria-pressed changes, so the button
     // that opened the overlay is detached. Resume always lands on the live
     // replacement pause control, which is also the stable keyboard target
     // when P/Escape opened the overlay without a focused trigger.
     if (!this.userPaused) this.surface.querySelector("#toggle-pause")?.focus();
+  }
+
+  setPauseBackgroundInert(active, overlay = null) {
+    if (!active) {
+      root.querySelectorAll('[data-pause-inert="true"]').forEach((node) => {
+        node.inert = false;
+        delete node.dataset.pauseInert;
+      });
+      return;
+    }
+    const candidates = [
+      ...this.surface.children,
+      ...root.querySelectorAll("#command-deck-left, #command-deck-right, #sortie-fab"),
+    ];
+    candidates.forEach((node) => {
+      if (node === overlay || node.inert) return;
+      node.inert = true;
+      node.dataset.pauseInert = "true";
+    });
+  }
+
+  trapPauseFocus(event, overlay) {
+    if (event.key !== "Tab") return;
+    const focusable = [...overlay.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')]
+      .filter((node) => !node.hidden && node.getAttribute("aria-hidden") !== "true");
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   /**
@@ -3018,6 +3215,7 @@ export class BattleSession {
     let overlay = this.surface.querySelector("#defense-pause-overlay");
     if (!this.userPaused) {
       overlay?.remove();
+      this.setPauseBackgroundInert(false);
       return;
     }
     const data = wardenGrowthData();
@@ -3031,32 +3229,111 @@ export class BattleSession {
       { id: "companions", label: "동료", html: formationRowMarkup(data, false, downedIds, snapshot.companions) },
     ];
     if (!segments.some((segment) => segment.id === this.pauseOverlaySegment)) this.pauseOverlaySegment = "stats";
+    const muted = this.audio.muted;
+    const volume = this.audio.volume;
     const markup = `
       <div class="pause-overlay-panel" role="dialog" aria-modal="true" aria-labelledby="pause-overlay-title" aria-describedby="pause-overlay-copy">
         <div class="pause-overlay-head">
           <div><p class="eyebrow">ABYSSAL LANTERN · PAUSED</p><h2 id="pause-overlay-title">전투 일시 정지</h2><p id="pause-overlay-copy">현재 빌드와 편성을 확인하세요. Esc 또는 P로 바로 복귀할 수 있습니다.</p></div>
           <button id="pause-overlay-resume" class="primary-action">전투 재개</button>
         </div>
-        <div class="command-segment-bar" role="tablist" aria-label="일시정지 요약">${segments.map((segment) => `<button class="command-segment${segment.id === this.pauseOverlaySegment ? " is-active" : ""}" role="tab" aria-selected="${segment.id === this.pauseOverlaySegment}" data-pause-segment="${segment.id}">${segment.label}</button>`).join("")}</div>
-        <div class="command-segment-body pause-overlay-readonly">${segments.find((segment) => segment.id === this.pauseOverlaySegment).html}</div>
+        <div class="pause-overlay-settings" role="group" aria-label="오디오 설정">
+          <button type="button" id="pause-audio-mute-btn" class="audio-mute-button" aria-pressed="${muted}" aria-label="음소거 토글">
+            <span>${muted ? "소리 켜기" : "음소거"}</span>
+          </button>
+          <div class="audio-volume-slider-container">
+            <label id="pause-volume-label" for="pause-audio-volume">볼륨: ${Math.round(volume * 100)}%</label>
+            <input type="range" id="pause-audio-volume" min="0" max="1" step="0.05" value="${volume}" aria-labelledby="pause-volume-label" />
+          </div>
+        </div>
+        <div class="command-segment-bar" role="tablist" aria-label="일시정지 요약">${segments.map((segment) => `<button id="pause-tab-${segment.id}" class="command-segment${segment.id === this.pauseOverlaySegment ? " is-active" : ""}" role="tab" aria-selected="${segment.id === this.pauseOverlaySegment}" aria-controls="pause-panel-${segment.id}" tabindex="${segment.id === this.pauseOverlaySegment ? "0" : "-1"}" data-pause-segment="${segment.id}">${segment.label}</button>`).join("")}</div>
+        <div id="pause-panel-${this.pauseOverlaySegment}" class="command-segment-body pause-overlay-readonly" role="tabpanel" aria-labelledby="pause-tab-${this.pauseOverlaySegment}">${segments.find((segment) => segment.id === this.pauseOverlaySegment).html}</div>
       </div>`;
     let created = false;
     if (!overlay) {
       overlay = document.createElement("div");
       overlay.id = "defense-pause-overlay";
+      overlay.addEventListener("keydown", (event) => this.trapPauseFocus(event, overlay));
       this.surface.append(overlay);
       created = true;
     }
+    this.setPauseBackgroundInert(true, overlay);
     if (overlay.dataset.segment !== this.pauseOverlaySegment) {
       overlay.dataset.segment = this.pauseOverlaySegment;
       overlay.innerHTML = markup;
       overlay.querySelector("#pause-overlay-resume").addEventListener("click", () => this.togglePause());
-      overlay.querySelectorAll("[data-pause-segment]").forEach((button) => {
-        button.addEventListener("click", () => {
-          this.pauseOverlaySegment = button.dataset.pauseSegment;
-          overlay.dataset.segment = "";
-          this.renderPauseOverlay();
+      overlay.onkeydown = (event) => {
+        if (event.key.toLowerCase() === "p") {
+          event.preventDefault();
+          event.stopPropagation();
+          this.togglePause();
+          return;
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          this.togglePause();
+          return;
+        }
+        if (event.key !== "Tab") return;
+        const focusable = [...overlay.querySelectorAll(
+          'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+        )].filter((node) => !node.hidden && node.getAttribute("aria-hidden") !== "true");
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      };
+      const pauseTabs = [...overlay.querySelectorAll("[data-pause-segment]")];
+      const selectPauseSegment = (button) => {
+        this.pauseOverlaySegment = button.dataset.pauseSegment;
+        overlay.dataset.segment = "";
+        this.renderPauseOverlay();
+        overlay.querySelector(`[data-pause-segment="${this.pauseOverlaySegment}"]`)?.focus();
+      };
+      pauseTabs.forEach((button, index) => {
+        button.addEventListener("click", () => selectPauseSegment(button));
+        button.addEventListener("keydown", (event) => {
+          const last = pauseTabs.length - 1;
+          const nextIndex = event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? last
+              : event.key === "ArrowRight" || event.key === "ArrowDown"
+                ? (index + 1) % pauseTabs.length
+                : event.key === "ArrowLeft" || event.key === "ArrowUp"
+                  ? (index - 1 + pauseTabs.length) % pauseTabs.length
+                  : null;
+          if (nextIndex === null) return;
+          event.preventDefault();
+          event.stopPropagation();
+          selectPauseSegment(pauseTabs[nextIndex]);
         });
+      });
+
+      const muteBtn = overlay.querySelector("#pause-audio-mute-btn");
+      muteBtn?.addEventListener("click", () => {
+        const nextMuted = !this.audio.muted;
+        this.audio.setMuted(nextMuted);
+        muteBtn.setAttribute("aria-pressed", String(nextMuted));
+        const textSpan = muteBtn.querySelector("span");
+        if (textSpan) textSpan.textContent = nextMuted ? "소리 켜기" : "음소거";
+
+      });
+
+      const volumeInput = overlay.querySelector("#pause-audio-volume");
+      volumeInput?.addEventListener("input", (e) => {
+        const val = parseFloat(e.target.value);
+        this.audio.setVolume(val);
+        const label = overlay.querySelector("#pause-volume-label");
+        if (label) label.textContent = `볼륨: ${Math.round(val * 100)}%`;
+
       });
     }
     if (created) overlay.querySelector("#pause-overlay-resume")?.focus();

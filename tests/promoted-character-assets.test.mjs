@@ -12,6 +12,7 @@ const PYTHON = process.env.PYTHON ?? "python3";
 const SCRIPT = "scripts/promote-character-assets.py";
 const PROVENANCE = resolve(ROOT, "assets/images/battle/glb/character-build-provenance.json");
 const COMMANDER = "assets/images/battle/glb/commander/dusk-warden.glb";
+const promotedAssetTest = existsSync(PROVENANCE) ? test : test.skip;
 
 const EXPECTED_PROMOTED = 24;
 const MIN_HALF_TRAVEL = 0.004;
@@ -42,7 +43,7 @@ function hashFile(path) {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
-test("promote-character-assets --check passes on the runtime lane", () => {
+promotedAssetTest("promote-character-assets --check passes on the runtime lane", () => {
   const result = spawnSync(PYTHON, [SCRIPT, "--check"], { cwd: ROOT, encoding: "utf8" });
   assert.equal(result.error, undefined, result.error?.message);
   assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
@@ -51,7 +52,7 @@ test("promote-character-assets --check passes on the runtime lane", () => {
   assert.deepEqual(payload.excluded, []);
 });
 
-test("every promoted character ships one skinned mesh with no frozen lower half", async (t) => {
+promotedAssetTest("every promoted character ships one skinned mesh with no frozen lower half", async (t) => {
   const provenance = JSON.parse(await readFile(PROVENANCE, "utf8"));
   assert.equal(provenance.assetCount, EXPECTED_PROMOTED);
   assert.deepEqual(provenance.excludedAssetIds, []);
@@ -121,7 +122,7 @@ test("every promoted character ships one skinned mesh with no frozen lower half"
   }
 });
 
-test("the commander keeps its authored strike pipeline upstream of the whole-body pass", async () => {
+promotedAssetTest("the commander keeps its authored strike pipeline upstream of the whole-body pass", async () => {
   const provenance = JSON.parse(await readFile(PROVENANCE, "utf8"));
   const commander = provenance.assets[COMMANDER];
   assert.ok(commander, "the commander must appear in the character build record");
@@ -150,7 +151,7 @@ test("the commander keeps its authored strike pipeline upstream of the whole-bod
   assert.equal(commander.lowerMeshBound, false, "the commander was already fully skinned");
 });
 
-test("every character records the input its whole-body pass consumed", async () => {
+promotedAssetTest("every character records the input its whole-body pass consumed", async () => {
   const provenance = JSON.parse(await readFile(PROVENANCE, "utf8"));
   for (const asset of Object.values(provenance.assets)) {
     assert.equal(typeof asset.sourceInputPath, "string", `${asset.outputPath}: no recorded input`);

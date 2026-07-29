@@ -13,9 +13,9 @@ const OUTPUT_PATH = resolve(REPOSITORY_ROOT, "qa/evidence/gates/G2/g2-adversaria
 const RECEIPT_PATH = resolve(REPOSITORY_ROOT, "qa/evidence/gates/G2/g2-adversarial-tape-evidence.receipt.json");
 const FIXTURE_RECEIPT_PATH = resolve(REPOSITORY_ROOT, "qa/evidence/gates/G2/g2-adversarial-tape-fixture.receipt.json");
 
-const FIXTURE_EXPECTED_LENGTH = 53146;
-const FIXTURE_EXPECTED_RAW_SHA = "sha256:8869964ba710ba09be1784650d71e875f5d7c8094971236e152bc719a2daa2f9";
-const FIXTURE_EXPECTED_BLOB_SHA = "3bcf35a0be2777b2156f736f7753683c15c6541c";
+const FIXTURE_EXPECTED_LENGTH = 41491;
+const FIXTURE_EXPECTED_RAW_SHA = "sha256:28da17e2e72bf15505c8d1d5d62fabc2b193507172987ce74f63e13304145c9b";
+const FIXTURE_EXPECTED_BLOB_SHA = "35e0778fc67d1a67572e9538eab1c63f4c258e87";
 const RECEIPT_SCHEMA_VERSION = "g2-adversarial-tape-evidence-receipt/1";
 
 const RECEIPT_PATH_RELATIVE = "qa/evidence/gates/G2/g2-adversarial-tape-evidence.receipt.json";

@@ -400,7 +400,15 @@ test("Bind readiness does not extract an elite; matching input extracts once and
   assert.equal(snapshot.progress.extracted, 0);
   assert.equal(snapshot.objectives.extraction.completed, false, "Bind readiness is not public objective completion");
   assert.equal(snapshot.objectives.phase, "extraction");
-  assert.equal(snapshot.bossSpawned, false, "the boss remains gated until player extraction");
+  assert.equal(snapshot.bossSpawned, true, "occupation unlocks the boss before extraction can complete");
+  assert.equal(snapshot.objectives.occupation.completed, true);
+  assert.equal(snapshot.objectives.bossKill.completed, true, "Bind readiness stays gated behind the boss kill");
+  assert.equal(snapshot.terminal, null, "boss defeat and Bind readiness are not terminal before player extraction");
+  assert.ok(
+    snapshot.occupationProgress.capturedAt < snapshot.objectives.bossKill.completedAt
+      && snapshot.objectives.bossKill.completedAt < snapshot.extractionProgress.completedAt,
+    "the public timestamps must preserve occupation, boss kill, then extraction readiness",
+  );
   assert.deepEqual(snapshot.companions.map(({ companionId }) => companionId), FULL_LOADOUT);
   const bindEvent = snapshot.events.find((event) => event.type === "EXTRACTION_COMPLETED");
   assert.ok(bindEvent, "Bind readiness must emit EXTRACTION_COMPLETED");
@@ -433,8 +441,9 @@ test("Bind readiness does not extract an elite; matching input extracts once and
   assert.equal(successful.progress.extracted, 1);
   assert.equal(successful.companions.filter(({ companionId }) => companionId === candidate.prototype).length, 1);
   assert.equal(successful.objectives.extraction.completed, true, "the accepted extraction completes the public objective");
-  assert.equal(successful.objectives.phase, "boss-kill");
-  assert.equal(successful.bossSpawned, true, "completed extraction unlocks the boss when its existing gate conditions hold");
+  assert.equal(successful.objectives.phase, "complete");
+  assert.equal(successful.bossSpawned, true, "the defeated boss remains recorded when extraction completes");
+  assert.equal(successful.terminal, "VICTORY", "accepted extraction is the terminal victory transition");
   const extractedEvent = successful.events.find((event) => event.type === "ELITE_EXTRACTED");
   assert.ok(extractedEvent);
   assert.equal(successful.events.filter((event) => event.type === "ELITE_EXTRACTED").length, 1);
@@ -449,6 +458,9 @@ test("Bind readiness does not extract an elite; matching input extracts once and
   const accepted = successful.events.find((event) => event.type === "INPUT_ACCEPTED" && event.inputType === "EXTRACT_ELITE");
   assert.ok(accepted);
   assert.ok(extractedEvent.eventSequence < accepted.eventSequence, "extraction event must precede input acknowledgement");
+  const terminalEvent = successful.events.find((event) => event.type === "TERMINAL");
+  assert.ok(terminalEvent);
+  assert.ok(extractedEvent.eventSequence < terminalEvent.eventSequence, "extraction must settle before terminal victory");
 
   const duplicate = getRunSnapshot(advanceDefenseRun(
     queueInput(successfulRun, "EXTRACT_ELITE", { enemyId: candidate.enemyId }),
@@ -460,8 +472,9 @@ test("Bind readiness does not extract an elite; matching input extracts once and
     duplicate.companions.map(({ companionId }) => companionId),
     successful.companions.map(({ companionId }) => companionId),
   );
-  assert.equal(duplicate.events.some((event) => event.type === "ELITE_EXTRACTED"), false);
-  assert.ok(duplicate.events.some((event) => event.type === "INPUT_REJECTED" && event.inputType === "EXTRACT_ELITE"));
+  assert.equal(duplicate.events.filter((event) => event.type === "ELITE_EXTRACTED").length, 1);
+  assert.equal(duplicate.tick, successful.tick, "queued input is not processed after terminal extraction");
+  assert.deepEqual(duplicate.events, successful.events, "terminal snapshots retain the settled event batch unchanged");
 });
 
 test("an expired elite Bind window reaches terminal defeat before queued extraction can mutate state", () => {
@@ -496,8 +509,16 @@ test("an expired elite Bind window reaches terminal defeat before queued extract
     { extractElite: false, moveOctant: "IDLE" },
   );
   assert.equal(occupation.snapshot.occupationProgress.captured, true);
-  const expired = advanceThroughObjectivesUntil(
+  const bossKilled = advanceThroughObjectivesUntil(
     occupation.run,
+    (next) => next.objectives.bossKill.completed,
+    OBJECTIVE_STEP_BUDGET,
+    { extractElite: false },
+  );
+  assert.equal(bossKilled.snapshot.objectives.phase, "extraction");
+  assert.equal(bossKilled.snapshot.terminal, null);
+  const expired = advanceThroughObjectivesUntil(
+    bossKilled.run,
     (next) => next.extractionProgress.failed,
     1000,
     { extractElite: false, moveOctant: "IDLE" },
@@ -541,31 +562,54 @@ test("boss waits for its stage gate and cleared authored waves; final completion
   assert.match(terminalEvent.eventId, new RegExp(`^${committedPlan}:event:\\d+$`));
 });
 
-test("terminal victory suppresses a growth offer when boss XP crosses the next threshold", () => {
-  const { previous, snapshot } = advanceThroughObjectivesUntil(
-    createDefenseRun({
-      stageId: "cinder-span",
-      seed: 12,
-      companionLoadout: FULL_LOADOUT,
-      rewardIds: FULL_REWARDS,
-    }),
+test("boss rewards settle exactly once before extraction terminal victory", () => {
+  const started = createDefenseRun({
+    stageId: "cinder-span",
+    seed: 12,
+    companionLoadout: FULL_LOADOUT,
+    rewardIds: FULL_REWARDS,
+  });
+  const bossKilled = advanceThroughObjectivesUntil(
+    started,
+    (candidate) => candidate.objectives.bossKill.completed,
+  );
+  const defeatedBoss = bossKilled.previous.enemies.find((enemy) => enemy.class === "boss");
+  const bossKillEvents = bossKilled.snapshot.events.filter(
+    (event) => event.type === "ENEMY_DEFEATED" && event.enemyId === defeatedBoss?.id,
+  );
+
+  assert.ok(defeatedBoss, "the transition must expose the living boss immediately before its defeat");
+  assert.equal(bossKillEvents.length, 1, "the boss defeat must be recorded exactly once");
+  assert.equal(
+    bossKilled.snapshot.commander.xp,
+    bossKilled.previous.commander.xp + defeatedBoss.xp,
+    "the boss XP must be credited exactly once on the boss-kill tick",
+  );
+  assert.equal(bossKilled.snapshot.progress.defeated, bossKilled.previous.progress.defeated + 1);
+  assert.equal(bossKilled.snapshot.objectives.phase, "extraction");
+  assert.equal(bossKilled.snapshot.terminal, null, "boss defeat opens extraction instead of ending the run");
+  assert.ok(bossKilled.snapshot.events.some((event) => event.type === "EXTRACTION_WINDOW_OPENED"));
+
+  const terminal = advanceThroughObjectivesUntil(
+    bossKilled.run,
     (candidate) => candidate.terminal === "VICTORY",
   );
-  const nextGrowthThreshold = XP_GROWTH[previous.commander.level - 1] ?? XP_GROWTH.at(-1);
+  const terminalEvents = terminal.snapshot.events.filter((event) => event.type === "TERMINAL");
+  assert.equal(terminal.snapshot.terminal, "VICTORY");
+  assert.equal(terminal.snapshot.objectives.extraction.completed, true);
+  assert.equal(terminal.snapshot.commander.xp, terminal.previous.commander.xp,
+    "extraction settlement must not credit the boss XP a second time");
+  assert.equal(terminal.snapshot.progress.defeated, terminal.previous.progress.defeated,
+    "extraction settlement must not count the boss defeat a second time");
+  assert.equal(terminal.snapshot.events.some((event) => event.type === "ENEMY_DEFEATED"), false);
+  assert.equal(terminalEvents.length, 1, "extraction completion emits one terminal settlement");
+  assert.deepEqual(terminal.snapshot.rewardOffer?.choices, terminalEvents[0].rewardChoices,
+    "the single terminal event must carry the public loot offer");
+  assert.equal(terminal.snapshot.growthOffer, null);
 
-  assert.equal(snapshot.terminal, "VICTORY");
-  // The boss kill banks XP on the very tick the run terminates.
-  assert.ok(snapshot.commander.xp > previous.commander.xp,
-    "the boss kill must still credit its XP on the terminal tick");
-  // Terminal victory must never leave a growth offer hanging, whether or not that XP crossed the
-  // threshold. (The pre-doctrine seed-12 run crossed it exactly at the boss kill; with the authored
-  // long hold the commander now levels during the hold instead, so the crossing is no longer the
-  // guaranteed shape of the scenario — the suppression invariant is.)
-  assert.equal(snapshot.commander.level, previous.commander.level);
-  assert.equal(snapshot.growthOffer, null);
-  if (snapshot.commander.xp >= nextGrowthThreshold) {
-    assert.equal(snapshot.growthOffer, null, "a threshold crossing on the terminal tick must stay suppressed");
-  }
+  const settledAgain = advanceDefenseRun(terminal.run, 1);
+  assert.equal(getRunDigest(settledAgain), getRunDigest(terminal.run),
+    "a settled terminal run must keep its deterministic digest and rewards unchanged");
 });
 
 test("terminal victory accepts a queued reward selection and closes the offer", () => {
@@ -1025,5 +1069,8 @@ test("selecting an already-owned reward closes an all-owned terminal offer", () 
   const after = getRunSnapshot(selected);
   assert.equal(after.rewardOffer, null);
   assert.deepEqual(after.rewardIds, ["stillwater-hourglass", "throne-echo-record", "veil-vanguard-legacy"]);
-  assert.equal(after.events.find((e) => e.type === "REWARD_SELECTED")?.alreadyOwned, true);
+  assert.equal(
+    after.events.find((event) => event.type === "REWARD_SELECTION_DUPLICATE_IGNORED")?.reason,
+    "REWARD_ALREADY_OWNED",
+  );
 });

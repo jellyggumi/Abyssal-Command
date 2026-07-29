@@ -246,8 +246,8 @@ test("carry-over decays one rank, caps ranks and items, and re-applies at the ne
   assert.equal(carried.skillRanks["eclipse-edge"], 1, "rank 1 never decays below 1");
   assert.equal(carried.itemIds.length, CARRY_OVER_MAX_ITEMS, "at most the authored number of items carry");
 
-  const baseline = createDefenseRun({ stageId: "veil-citadel", seed: 9 });
-  const carriedRun = createDefenseRun({ stageId: "veil-citadel", seed: 9, carryOver: carried });
+  const baseline = createDefenseRun({ stageId: "abyss-chancel", seed: 9 });
+  const carriedRun = createDefenseRun({ stageId: "abyss-chancel", seed: 9, carryOver: carried });
   const baseSnapshot = getRunSnapshot(baseline);
   const carriedSnapshot = getRunSnapshot(carriedRun);
   assert.deepEqual(carriedSnapshot.commander.skills, ["eclipse-edge", "rift-bolt"], "carried skills start the run learned");

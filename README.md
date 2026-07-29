@@ -3,7 +3,7 @@
 [![Deploy to Pages](https://github.com/jellyggumi/Abyssal-Lantern/actions/workflows/static.yml/badge.svg)](https://github.com/jellyggumi/Abyssal-Lantern/actions/workflows/static.yml)
 [![GitHub Pages](https://img.shields.io/github/deployments/jellyggumi/Abyssal-Lantern/github-pages?label=GitHub%20Pages)](https://jellyggumi.github.io/Abyssal-Lantern/)
 
-**Abyssal Lantern**(심연의 등불)은 심연 세계관의 모바일 우선 싱글플레이 캠페인입니다. 마지막 등불을 든 Dusk Warden이 `Cinder Span → Abyss Chancel → Echo Throne`의 세 구역을 내려가며 세 보스와 맞섭니다. 플레이어는 워든을 이동시키고 자동 공격으로 적군을 막으며, 런마다 스킬을 선택하고 정예를 추출해 영구 동료로 성장시킵니다. 전장은 실시간 3D(Three.js/WebGL) 씬으로 렌더링되며, 카메라는 커맨더를 따라가는 고정 앵글 버드아이 시점을 유지합니다. WebGL을 사용할 수 없는 환경에서는 동일한 스냅샷 계약을 공유하는 Canvas 2D 대체 어댑터가 표시를 이어갑니다.
+**Abyssal Lantern**(심연의 등불)은 심연 세계관의 모바일 우선 싱글플레이 액션 온슬로트 캠페인입니다. 마지막 등불을 든 Dusk Warden이 `Cinder Span -> Abyss Chancel -> Echo Throne`의 세 구역을 내려가며 세 보스와 맞섭니다. 플레이어는 워든을 직접 이동·공격하고 런마다 스킬을 선택하며, 쓰러뜨린 정예의 Echo를 회수해 영구 동료로 성장시킵니다. 전장은 실시간 3D(Three.js/WebGL) 씬으로 렌더링되며, 단계별 전술 카메라와 플레이어 오빗·줌 입력을 함께 제공합니다. WebGL을 사용할 수 없는 환경에서는 동일한 스냅샷 계약을 공유하는 Canvas 2D 대체 어댑터가 표시를 이어갑니다.
 
 제목 근거와 인픽션 해설은 [제목 컨셉 근거](_workspace/current/design/title-concept-rationale.md),
 서사는 [시놉시스](_workspace/current/design/abyssal-lantern-synopsis.md),
@@ -13,10 +13,10 @@
 
 - 전장은 모바일 화면을 가득 쓰는 full-bleed Canvas입니다. HUD는 화면 가장자리에 배치하여 전장과 적의 위험 신호를 가리지 않습니다.
 - 브라우저가 허용하는 범위에서 fullscreen과 landscape lock을 자동 요청합니다. 잠금할 수 없는 세로 화면에서는 회전 안내를 띄우지 않고, 시계 방향 논리 가로 화면을 세로 뷰포트에 표시합니다.
-- 이동 입력 외에 기본 공격은 자동입니다. XP를 얻을 때마다 현재 런에만 적용되는 스킬 제안 중 하나를 선택합니다.
+- 이동은 `W/A/S/D` 또는 방향키, 수동 공격은 `Space/J`, 스킬 선택·시전은 숫자키와 HUD 버튼으로 조작합니다. 적절한 표적에는 지원 공격이 이어지며, XP 제안은 현재 런에만 적용됩니다.
 - 캠페인 진행은 워든 스탯 포인트, 5노드 스킬 트리, 5단계 장비 티어(무기/방어구/장신구), 스테이지 클리어 시퀀스로 해금되는 특성(trait)으로 영구 성장합니다. 스탯 포인트와 스킬 트리는 같은 Echo Core 예산을 공유합니다.
 - 정예 적은 처치 뒤 추출할 수 있으며, 추출한 동료는 영구 캠페인 진행으로 남습니다. 동료는 전열(FRONT, 최대 2)/후열(BACK) 포메이션에 배치되어 역할(선봉/타격대/지원)별 패시브를 받습니다.
-- 보스를 쓰러뜨리면 다음 구역으로 진행합니다. Stage 3 `Gate Sovereign` 승리가 캠페인을 마칩니다.
+- 각 스테이지는 `gate-defense → echo-recovery → growth → occupation → boss-kill → extraction` 순서로 닫힙니다. Stage 3 `Gate Sovereign` 처치 뒤 최종 Echo를 추출하면 캠페인이 완료됩니다.
 
 ## 기술 계약
 
@@ -71,20 +71,21 @@ python3 scripts/gate-joint-weight-repair.py --check                             
 > `docs/abyssal-surge-production-cycle.md`는 현재 저장소에 없습니다. 위 문단의 플레이·기술
 > 계약이 현재 배포 빌드에 대한 유효한 요약입니다.
 
-## 계획 중인 액션 전환
+## 구현된 액션 온슬로트
 
-`_workspace/current/`은 최신 액션 온슬로트 설계의 단일 작업 폴더다. 아래는 `[TARGET]`이며
-현재 배포 빌드에는 아직 반영되지 않았다. 세 구역·세 보스 메시 계약과 UI 외 `assets/images/battle/`
-배제는 이 설계의 변경 불가 자원 경계다.
+`_workspace/current/`은 2026-07-29 액션 전환 사이클의 설계·제작·검증 근거를 보존하는
+단일 작업 폴더입니다. 현재 배포 빌드는 다음 계약을 구현합니다.
 
-| 축 | 현재 배포 빌드 | 액션 전환 목표 |
-|---|---|---|
-| 장르 | 디펜스 서바이버 | 액션 핵앤슬래시 로그라이트 |
-| 조작 | 이동만, 전투 자동 | 이동 + 공격 3동사 + 액티브 스킬 |
-| 한 판 길이 | 약 27초 | 300–480초 |
-| 월드 | 저밀도 전장 장식 | 넓은 평면 메쉬 지형 + 시드 기반 셀 배치 |
-| 캠페인 | `Cinder Span → Abyss Chancel → Echo Throne` | 동일한 3구역·3보스 서사 |
-| 연출 | HUD·단일 전장 카메라 | 카메라 키프레임, GLB 애니메이션, `assets/motion/` VFX |
+| 축 | 현재 배포 계약 |
+|---|---|
+| 장르 | 모바일 우선 싱글플레이 액션 온슬로트 로그라이트 |
+| 조작 | 이동, 수동 공격, 스탠스 전환, 액티브 스킬, 동료 포메이션 |
+| 한 판 길이 | 목적지를 추적하는 봇 기준 스테이지당 3–6분 |
+| 월드 | 분리된 지형·소품 GLB를 배치한 `Cinder Span → Abyss Chancel → Echo Throne` |
+| 전투 흐름 | 게이트 방어, Echo 회수, 성장, 점령, 보스 처치, 최종 추출 |
+| 캐릭터 | 11개 동작 클립을 가진 관절 구동 GLB; 런타임 OBJ/외부 텍스처 경로 없음 |
+| 연출 | 단계별 전술 카메라, GLB 키프레임 크로스페이드, 사건 기반 VFX·오디오 |
+| UI | full-bleed 전장, 목적·상태·행동을 분리한 반응형 3패널 HUD |
 
 제품·수치·월드·보스·로비 서사의 권위 문서는 각각
 [제품 계약](_workspace/current/design/onslaught-action-product-contract.md),
@@ -94,8 +95,8 @@ python3 scripts/gate-joint-weight-repair.py --check                             
 [로비 프레젠테이션](_workspace/current/design/lobby-story-presentation-spec.md)이다.
 게이트 상태와 미해결 결정은 [태스크 매니페스트](_workspace/current/production/task-manifest.md)에 기록한다.
 
-**액션 전환 구현 게이트는 아직 통과하지 않았다.** 현행 런타임은 위의 메시·이미지 경계와
-세 구역 카탈로그만 반영한다.
+액션 전환 구현 게이트는 런타임·에셋·브라우저 계약으로 검증되었으며, 남은 판단과 배포
+증거는 [태스크 매니페스트](_workspace/current/production/task-manifest.md)에 기록합니다.
 
 ## 로컬 실행
 

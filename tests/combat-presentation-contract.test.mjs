@@ -3,7 +3,6 @@ import { after, test } from "node:test";
 
 import * as THREE from "../vendor/three.module.js";
 import { GLTFLoader } from "../vendor/loaders/GLTFLoader.js";
-import { OBJLoader } from "../vendor/loaders/OBJLoader.js";
 import { stageWorldFor, STAGE_WORLD_PROFILES } from "../stage-world-catalog.js";
 
 // Mirrors the rig pipeline's authored library so the harness exercises the same
@@ -46,7 +45,6 @@ function syntheticRig() {
 // action selection, reconciliation, and cleanup remain the production code.
 const gltfRequests = [];
 const gltfFailuresRemaining = new Map();
-const objRequests = [];
 
 // Every authored stage VFX cue, keyed by the request URL RealtimeBattle
 // actually issues (modelUrl() prefixes catalog-relative paths with "./").
@@ -58,6 +56,45 @@ for (const profile of Object.values(STAGE_WORLD_PROFILES)) {
   for (const cue of profile.presentation.vfxCues ?? []) {
     stageVfxCueByUrl.set(`./${cue.modelPath}`, cue);
   }
+}
+
+const stagePropNodesByUrl = new Map();
+for (const profile of Object.values(STAGE_WORLD_PROFILES)) {
+  for (const prop of profile.presentation.props ?? []) {
+    if (!prop.modelNode) continue;
+    const requestUrl = `./${prop.modelPath}`;
+    if (!stagePropNodesByUrl.has(requestUrl)) stagePropNodesByUrl.set(requestUrl, new Set());
+    stagePropNodesByUrl.get(requestUrl).add(prop.modelNode);
+  }
+}
+const staticPropPacksByUrl = new Map();
+
+function syntheticStaticPropPack(requestUrl) {
+  const scene = new THREE.Group();
+  scene.name = "synthetic-static-prop-pack";
+  for (const modelNode of stagePropNodesByUrl.get(requestUrl) ?? []) {
+    const node = new THREE.Group();
+    node.name = modelNode;
+    node.userData.syntheticModelNode = modelNode;
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute([
+      -0.5, 0, -0.5,
+      0.5, 0, -0.5,
+      0.5, 1, 0.5,
+      -0.5, 0, -0.5,
+      0.5, 1, 0.5,
+      -0.5, 1, 0.5,
+    ], 3));
+    const mesh = new THREE.Mesh(
+      geometry,
+      new THREE.MeshBasicMaterial({ color: 0xffffff }),
+    );
+    node.add(mesh);
+    scene.add(node);
+  }
+  const gltf = { scene, animations: [] };
+  staticPropPacksByUrl.set(requestUrl, gltf);
+  return gltf;
 }
 
 function syntheticStageVfxRig(cue) {
@@ -93,6 +130,10 @@ GLTFLoader.prototype.load = function loadSyntheticRig(url, onLoad, _onProgress, 
       onLoad(syntheticStageVfxRig(stageVfxCue));
       return;
     }
+    if (stagePropNodesByUrl.has(requestUrl)) {
+      onLoad(syntheticStaticPropPack(requestUrl));
+      return;
+    }
     const gltf = syntheticRig();
     onLoad(gltf);
   });
@@ -102,23 +143,6 @@ after(() => {
   GLTFLoader.prototype.load = originalGltfLoad;
 });
 
-// Cinder Span's terrain ships as an authored OBJ, unlike the other stages'
-// GLBs, so it needs its own synthetic-load boundary alongside GLTFLoader's.
-const originalObjLoad = OBJLoader.prototype.load;
-OBJLoader.prototype.load = function loadSyntheticTerrain(url, onLoad, _onProgress, _onError) {
-  const requestUrl = String(url);
-  objRequests.push(requestUrl);
-  queueMicrotask(() => {
-    const group = new THREE.Group();
-    group.name = "synthetic-terrain";
-    group.add(new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 4), new THREE.MeshBasicMaterial()));
-    onLoad(group);
-  });
-  return this;
-};
-after(() => {
-  OBJLoader.prototype.load = originalObjLoad;
-});
 
 const rendererModule = import(`../battle-realtime-three.js?combat-presentation-contract=${Date.now()}`);
 
@@ -644,7 +668,6 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   const adapter = realtimeBattleHarness(RealtimeBattle);
   const profile = stageWorldFor("cinder-span");
   const requestStart = gltfRequests.length;
-  const objRequestStart = objRequests.length;
 
   adapter.ensureStageTerrain(profile.stageId);
   const loading = adapter.debugPresentationState().stageDecor;
@@ -655,6 +678,10 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   await waitFor(
     () => adapter.debugPresentationState().stageDecor.loading === false,
     "Cinder Span stage dressing did not finish loading",
+  );
+  await waitFor(
+    () => adapter.debugPresentationState().stageDecor.propCount === profile.presentation.props.length,
+    "Cinder Span pack-node props did not finish instantiating",
   );
   let state = adapter.debugPresentationState();
   const decor = state.stageDecor;
@@ -667,7 +694,6 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   const bossRequestPath = bossModelPath.startsWith("assets/")
     ? `./${bossModelPath}`
     : `./assets/images/battle/glb/${bossModelPath}`;
-  const isObjTerrain = profile.terrainGlbPath.endsWith(".obj");
   // loadGltf() caches by URL for the lifetime of this module import, so a
   // URL an earlier test in this file already requested (e.g. the shared
   // commander/companion/lookout mesh, PLAYER_MESH) settles from cache here
@@ -678,7 +704,7 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   const alreadyCached = new Set(gltfRequests.slice(0, requestStart));
   const expectedRequests = [
     ...[
-      ...(isObjTerrain ? [] : [profile.terrainGlbPath]),
+      profile.terrainGlbPath,
       ...profile.presentation.props.map(({ modelPath }) => modelPath),
       ...profile.presentation.npcs.map(({ modelPath }) => modelPath),
       ...profile.presentation.vfxCues.map(({ modelPath }) => modelPath),
@@ -687,17 +713,10 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
     bossRequestPath,
   ].filter((requestUrl) => !alreadyCached.has(requestUrl)).sort();
   assert.deepEqual(
-    [...new Set(gltfRequests.slice(requestStart))].sort(),
-    expectedRequests,
-    "renderer requests the catalog prop, NPC, VFX, and boss models without substituting generic assets",
+    gltfRequests.slice(requestStart).sort(),
+    [...new Set(expectedRequests)].sort(),
+    "renderer requests each unique catalog prop, NPC, VFX, and boss model exactly once",
   );
-  if (isObjTerrain) {
-    assert.deepEqual(
-      objRequests.slice(objRequestStart),
-      [`./${profile.terrainGlbPath}`],
-      "Cinder Span's authored OBJ terrain is requested through the OBJ loader boundary",
-    );
-  }
   assert.ok(
     gltfRequests.slice(requestStart).includes(bossRequestPath),
     "stage load must warm the authored boss rig before the boss spawns",
@@ -708,6 +727,31 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   assert.equal(decor.npcCount, profile.presentation.npcs.length);
   assert.equal(decor.vfxCount, profile.presentation.vfxCues.length, "the authored ember-wake cue counts as loaded stage decor");
   assert.equal(state.actorCount, 0, "decorative lookouts never enter the simulation actor map");
+
+  const authoredProps = profile.presentation.props;
+  const loadedProps = adapter.stageDecorRecords.filter(({ kind }) => kind === "prop");
+  assert.equal(loadedProps.length, 12, "all twelve authored Cinder pack nodes become stage prop records");
+  assert.equal(new Set(loadedProps.map(({ id }) => id)).size, 12, "Cinder prop instances keep twelve independent IDs");
+  assert.equal(new Set(loadedProps.map(({ modelNode }) => modelNode)).size, 12, "Cinder prop instances keep twelve independent pack-node selections");
+  assert.equal(new Set(loadedProps.map(({ root }) => root)).size, 12, "Cinder pack-node selections become twelve independent scene instances");
+  assert.equal(new Set(loadedProps.map(({ placement }) => placement)).size, 12, "Cinder prop instances keep twelve separate immutable placements");
+  assert.equal(loadedProps.every(({ placement }) => Object.isFrozen(placement)), true, "loaded prop placements remain immutable catalog records");
+  assert.equal(
+    loadedProps.every(({ modelNode, root }) => root.userData.syntheticModelNode === modelNode),
+    true,
+    "each instance must clone the requested named node rather than the whole pack scene",
+  );
+  assert.deepEqual(
+    loadedProps.map(({ id, modelNode }) => ({ id, modelNode })).sort((left, right) => left.id.localeCompare(right.id)),
+    authoredProps.map(({ id, modelNode }) => ({ id, modelNode })).sort((left, right) => left.id.localeCompare(right.id)),
+    "each scene instance keeps its authored ID-to-modelNode binding",
+  );
+  const cinderPackRequestUrls = [...new Set(authoredProps.map(({ modelPath }) => `./${modelPath}`))].sort();
+  assert.deepEqual(
+    cinderPackRequestUrls.map((requestUrl) => gltfRequests.filter((seenUrl) => seenUrl === requestUrl).length),
+    [1, 1],
+    "the GLTF cache issues one loader request per unique Cinder pack URL",
+  );
 
   const records = new Map(decor.records.map((record) => [record.id, record]));
   for (const authored of [...profile.presentation.props, ...profile.presentation.npcs]) {
@@ -758,6 +802,42 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   assert.equal(restored.activeActionKey, "loop", "disabling reduced motion resumes the stage VFX loop");
   assert.equal(restored.quality, "full");
   adapter.dispose();
+});
+
+test("a missing static Cinder pack node fails closed instead of cloning the whole pack scene", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const profile = stageWorldFor("cinder-span");
+  const missingProp = profile.presentation.props[0];
+  const requestUrl = `./${missingProp.modelPath}`;
+  const pack = staticPropPacksByUrl.get(requestUrl);
+  assert.ok(pack, "the successful Cinder load must seed the cached static pack fixture");
+  const missingNode = pack.scene.getObjectByName(missingProp.modelNode);
+  assert.ok(missingNode, "the static pack fixture must expose the requested modelNode");
+  const parent = missingNode.parent;
+  parent.remove(missingNode);
+
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  try {
+    adapter.ensureStageTerrain(profile.stageId);
+    await waitFor(
+      () => adapter.debugPresentationState().stageDecor.terrainLoaded === true,
+      "Cinder terrain did not settle after removing one static pack node",
+    );
+    await waitFor(
+      () => adapter.debugPresentationState().stageDecor.propCount === 11,
+      "the eleven resolvable Cinder props did not finish instantiating",
+    );
+    const decor = adapter.debugPresentationState().stageDecor;
+    assert.equal(decor.propCount, 11, "the absent requested node must omit exactly that prop");
+    assert.equal(
+      decor.records.some(({ id }) => id === missingProp.id),
+      false,
+      "the renderer must not substitute the whole pack scene for an absent static modelNode",
+    );
+  } finally {
+    parent.add(missingNode);
+    adapter.dispose();
+  }
 });
 
 test("Cinder Span stage intro dolly is tick-bounded, preserves selected orbit, and never mutates its snapshot", async () => {

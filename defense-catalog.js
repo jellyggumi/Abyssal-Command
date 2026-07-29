@@ -1,4 +1,4 @@
-/** Immutable authored data for the renderer-neutral Abyssal Command defense run. */
+/** Immutable authored data for the renderer-neutral Abyssal Lantern defense run. */
 const freeze = (value) => {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
     Object.freeze(value);
@@ -322,13 +322,6 @@ export const BOSSES = freeze({
   "s1-cinder-warden": { id: "s1-cinder-warden", hp: 40000, speed: 1800, damage: 200, attackTicks: 90, xp: 100, radius: 900, policyId: "player-pursuit" },
   "s2-veil-tactician": { id: "s2-veil-tactician", hp: 48000, speed: 1650, damage: 200, attackTicks: 90, xp: 110, radius: 900, policyId: "resource-denial" },
   "s3-gate-sovereign": { id: "s3-gate-sovereign", hp: 60000, speed: 1500, damage: 300, attackTicks: 90, xp: 120, radius: 980, policyId: "low-hp-focus" },
-  "s4-tide-warden": { id: "s4-tide-warden", hp: 68000, speed: 1500, damage: 200, attackTicks: 90, xp: 130, radius: 980, policyId: "gate-pressure" },
-  "s5-pack-herald": { id: "s5-pack-herald", hp: 76000, speed: 2100, damage: 200, attackTicks: 90, xp: 140, radius: 900, policyId: "flank" },
-  "s6-requiem-choir": { id: "s6-requiem-choir", hp: 84000, speed: 1350, damage: 200, attackTicks: 90, xp: 150, radius: 980, policyId: "low-hp-focus" },
-  "s7-lantern-tyrant": { id: "s7-lantern-tyrant", hp: 92000, speed: 1650, damage: 200, attackTicks: 90, xp: 160, radius: 980, policyId: "resource-denial" },
-  "s8-bridge-colossus": { id: "s8-bridge-colossus", hp: 100000, speed: 1200, damage: 300, attackTicks: 90, xp: 170, radius: 1100, policyId: "gate-pressure" },
-  "s9-veiled-concordat": { id: "s9-veiled-concordat", hp: 110000, speed: 1500, damage: 200, attackTicks: 90, xp: 180, radius: 1040, policyId: "elite-escort" },
-  "s10-abyss-regent": { id: "s10-abyss-regent", hp: 150000, speed: 1800, damage: 300, attackTicks: 90, xp: 200, radius: 1100, policyId: "player-pursuit" },
 });
 
 export const CINDER_SPAN_SURPRISE_TABLE = freeze({
@@ -379,6 +372,219 @@ export const STAGE_TACTICS = freeze({
     spawnDirections: ["W", "SW", "NW"], seededVariation: { timingJitterTicks: 18, densityDelta: 1, laneJitter: 420 },
   },
 });
+/**
+ * Stage encounter routes are authored independently from stage-world presentation. Objective
+ * points are simulation coordinates; renderers may decorate them, but may not redefine their
+ * order, wave ownership, pacing, retry budget, or fairness caps.
+ */
+const encounterPath = (id, objectiveId, direction, waypoints) => freeze({
+  id,
+  objectiveId,
+  direction,
+  waypoints: freeze(waypoints.map((waypoint) => freeze({ radius: 400, ...waypoint }))),
+});
+
+const routeWaypoint = (id, x, y, extra = {}) => freeze({ id, x, y, ...extra });
+
+const objectiveRoutePaths = (stageId, objectiveId, point, approaches) => approaches.map(
+  ({ direction, via }) => encounterPath(
+    `encounter-path:${stageId}:${objectiveId}:${direction.toLowerCase()}`,
+    objectiveId,
+    direction,
+    [
+      ...via,
+      routeWaypoint(`contest:${objectiveId}`, point.x, point.y, {
+        radius: Math.max(400, Math.trunc(point.radius / 2)),
+        contest: true,
+      }),
+    ],
+  ),
+);
+
+const stageEncounterRoute = ({
+  stageId,
+  commitmentCap,
+  maxConcurrentEnemies,
+  spawnIntervalTicks,
+  objectives,
+  approaches,
+  finale,
+}) => freeze({
+  id: `encounter-route:${stageId}:v1`,
+  commitmentCap,
+  maxConcurrentEnemies,
+  spawnIntervalTicks,
+  objectives: freeze(objectives),
+  paths: freeze([
+    ...objectives.flatMap((objective) => objectiveRoutePaths(
+      stageId,
+      objective.id,
+      objective.point,
+      approaches[objective.id],
+    )),
+    ...finale.paths,
+  ]),
+  finale: freeze({
+    objectiveOrder: freeze(["echo-recovery", "occupation", "boss-kill", "extraction"]),
+    elitePathId: finale.elitePathId,
+    bossPathId: finale.bossPathId,
+  }),
+});
+
+const objectiveDefinition = (id, kind, point, waveSlots, retry, recovery, contestTicks) => freeze({
+  id,
+  kind,
+  cameraCueId: `camera:encounter:${id}`,
+  point: freeze(point),
+  waveSlots: freeze(waveSlots),
+  retry: freeze(retry),
+  recovery: freeze(recovery),
+  contestTicks,
+});
+
+const finalePaths = (stageId, eliteVia, bossVia) => {
+  const elitePathId = `encounter-path:${stageId}:echo-recovery`;
+  const bossPathId = `encounter-path:${stageId}:boss-kill`;
+  return freeze({
+    elitePathId,
+    bossPathId,
+    paths: freeze([
+      encounterPath(elitePathId, "echo-recovery", "W", eliteVia),
+      encounterPath(bossPathId, "boss-kill", "W", bossVia),
+    ]),
+  });
+};
+
+export const STAGE_ENCOUNTER_ROUTES = freeze({
+  "cinder-span": stageEncounterRoute({
+    stageId: "cinder-span",
+    commitmentCap: 3,
+    maxConcurrentEnemies: 8,
+    spawnIntervalTicks: 18,
+    objectives: [
+      objectiveDefinition(
+        "cinder-relay-crossing",
+        "corridor",
+        { x: 14600, y: 5200, radius: 1100 },
+        [0, 1, 2, 3, 4],
+        { recoveryTicks: 180, maxAttempts: 3, commanderFloorBp: 3500, gateFloorBp: 3000 },
+        { commanderBp: 900, gateBp: 600 },
+        60,
+      ),
+      objectiveDefinition(
+        "cinder-forge-stand",
+        "arena",
+        { x: 17400, y: 6000, radius: 1400 },
+        [5, 6, 7, 8, 9],
+        { recoveryTicks: 210, maxAttempts: 3, commanderFloorBp: 4000, gateFloorBp: 3500 },
+        { commanderBp: 1100, gateBp: 700 },
+        75,
+      ),
+    ],
+    approaches: {
+      "cinder-relay-crossing": [
+        { direction: "W", via: [routeWaypoint("cinder-west-entry", 6200, 5800), routeWaypoint("cinder-relay-west", 11200, 5200)] },
+        { direction: "SW", via: [routeWaypoint("cinder-south-entry", 6000, 9800), routeWaypoint("cinder-relay-south", 11800, 7200)] },
+      ],
+      "cinder-forge-stand": [
+        { direction: "W", via: [routeWaypoint("cinder-west-entry", 6200, 5800), routeWaypoint("contest:cinder-relay-crossing", 14600, 5200)] },
+        { direction: "SW", via: [routeWaypoint("cinder-south-entry", 6000, 9800), routeWaypoint("contest:cinder-relay-crossing", 14600, 5200)] },
+      ],
+    },
+    finale: finalePaths(
+      "cinder-span",
+      [routeWaypoint("contest:cinder-forge-stand", 17400, 6000), routeWaypoint("cinder-echo-recovery", 17600, 6000, { contest: true, contestTicks: 90, radius: 500 })],
+      [routeWaypoint("cinder-bind-approach", 15400, 6000), routeWaypoint("cinder-boss-threshold", 19000, 6000, { contest: true, contestTicks: 120, radius: 600 })],
+    ),
+  }),
+  "abyss-chancel": stageEncounterRoute({
+    stageId: "abyss-chancel",
+    commitmentCap: 4,
+    maxConcurrentEnemies: 9,
+    spawnIntervalTicks: 24,
+    objectives: [
+      objectiveDefinition(
+        "chancel-nave-advance",
+        "corridor",
+        { x: 15000, y: 6000, radius: 1000 },
+        [0, 1, 2, 3],
+        { recoveryTicks: 240, maxAttempts: 3, commanderFloorBp: 4000, gateFloorBp: 3500 },
+        { commanderBp: 1000, gateBp: 700 },
+        75,
+      ),
+      objectiveDefinition(
+        "chancel-transept-lock",
+        "arena",
+        { x: 17600, y: 8200, radius: 1500 },
+        [4, 5, 6, 7, 8, 9],
+        { recoveryTicks: 270, maxAttempts: 3, commanderFloorBp: 4500, gateFloorBp: 4000 },
+        { commanderBp: 1200, gateBp: 800 },
+        90,
+      ),
+    ],
+    approaches: {
+      "chancel-nave-advance": [
+        { direction: "W", via: [routeWaypoint("chancel-west-entry", 6200, 6000), routeWaypoint("chancel-nave-west", 11400, 6000)] },
+        { direction: "SW", via: [routeWaypoint("chancel-south-entry", 6200, 9800), routeWaypoint("chancel-nave-south", 11600, 7600)] },
+        { direction: "NW", via: [routeWaypoint("chancel-north-entry", 6200, 2000), routeWaypoint("chancel-nave-north", 11600, 4400)] },
+      ],
+      "chancel-transept-lock": [
+        { direction: "W", via: [routeWaypoint("chancel-west-entry", 6200, 6000), routeWaypoint("contest:chancel-nave-advance", 15000, 6000)] },
+        { direction: "SW", via: [routeWaypoint("chancel-south-entry", 6200, 9800), routeWaypoint("contest:chancel-nave-advance", 15000, 6000)] },
+        { direction: "NW", via: [routeWaypoint("chancel-north-entry", 6200, 2000), routeWaypoint("contest:chancel-nave-advance", 15000, 6000)] },
+      ],
+    },
+    finale: finalePaths(
+      "abyss-chancel",
+      [routeWaypoint("contest:chancel-transept-lock", 17600, 8200), routeWaypoint("chancel-echo-recovery", 18200, 5200, { contest: true, contestTicks: 105, radius: 500 })],
+      [routeWaypoint("chancel-bind-approach", 16000, 7000), routeWaypoint("chancel-boss-threshold", 19300, 6000, { contest: true, contestTicks: 135, radius: 600 })],
+    ),
+  }),
+  "echo-throne": stageEncounterRoute({
+    stageId: "echo-throne",
+    commitmentCap: 4,
+    maxConcurrentEnemies: 10,
+    spawnIntervalTicks: 15,
+    objectives: [
+      objectiveDefinition(
+        "throne-aisle-break",
+        "corridor",
+        { x: 15200, y: 6000, radius: 1050 },
+        [0, 1, 2, 3, 4, 5],
+        { recoveryTicks: 210, maxAttempts: 3, commanderFloorBp: 4500, gateFloorBp: 4000 },
+        { commanderBp: 1100, gateBp: 750 },
+        90,
+      ),
+      objectiveDefinition(
+        "throne-dais-stand",
+        "arena",
+        { x: 18000, y: 6000, radius: 1550 },
+        [6, 7, 8, 9, 10],
+        { recoveryTicks: 300, maxAttempts: 3, commanderFloorBp: 5000, gateFloorBp: 4500 },
+        { commanderBp: 1300, gateBp: 900 },
+        105,
+      ),
+    ],
+    approaches: {
+      "throne-aisle-break": [
+        { direction: "W", via: [routeWaypoint("throne-west-entry", 6000, 6000), routeWaypoint("throne-aisle-west", 11600, 6000)] },
+        { direction: "SW", via: [routeWaypoint("throne-south-entry", 6000, 10000), routeWaypoint("throne-aisle-south", 11800, 7600)] },
+        { direction: "NW", via: [routeWaypoint("throne-north-entry", 6000, 2000), routeWaypoint("throne-aisle-north", 11800, 4400)] },
+      ],
+      "throne-dais-stand": [
+        { direction: "W", via: [routeWaypoint("throne-west-entry", 6000, 6000), routeWaypoint("contest:throne-aisle-break", 15200, 6000)] },
+        { direction: "SW", via: [routeWaypoint("throne-south-entry", 6000, 10000), routeWaypoint("contest:throne-aisle-break", 15200, 6000)] },
+        { direction: "NW", via: [routeWaypoint("throne-north-entry", 6000, 2000), routeWaypoint("contest:throne-aisle-break", 15200, 6000)] },
+      ],
+    },
+    finale: finalePaths(
+      "echo-throne",
+      [routeWaypoint("contest:throne-dais-stand", 18000, 6000), routeWaypoint("throne-echo-recovery", 18400, 6000, { contest: true, contestTicks: 120, radius: 550 })],
+      [routeWaypoint("throne-bind-approach", 16200, 7600), routeWaypoint("throne-boss-threshold", 19400, 6000, { contest: true, contestTicks: 150, radius: 650 })],
+    ),
+  }),
+});
+
 /*
  * REMOVED (run-id 20260728-stage-playtime-doctrine): CINDER_SPAN_WAVE_PLAN and STAGE_WAVE_VARIANTS.
  * Every stage now generates its wave plan from STAGE_WAVE_DOCTRINE, including two seeded
@@ -439,7 +645,7 @@ export const MIDBOSS_PROFILE = freeze({
  */
 export const STAGE_WAVE_DOCTRINE = freeze({
   "cinder-span": { gateIntegrity: 1600, defenseTicks: 10200, waveCount: 10, classes: freeze(["rusher", "flanker", "ranged"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
-  "abyss-chancel": { gateIntegrity: 1700, defenseTicks: 10200, waveCount: 10, classes: freeze(["rusher", "flanker", "ranged"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "flank", midbossEnemy: "flanker" },
+  "abyss-chancel": { gateIntegrity: 1700, defenseTicks: 10500, waveCount: 10, classes: freeze(["ranged", "flanker", "rusher", "guardian"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "flank", midbossEnemy: "flanker" },
   "echo-throne": { gateIntegrity: 1800, defenseTicks: 10800, waveCount: 11, classes: freeze(["flanker", "ranged", "guardian"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
 });
 
@@ -466,6 +672,7 @@ export const WAVE_PRESSURE_BP = 5500;
 /** Builds one stage's authored, doctrine-driven wave plan. Deterministic and data-only. */
 function buildDoctrineWavePlan(stageId, doctrine, tactics, stageScale) {
   const directions = tactics.spawnDirections?.length ? tactics.spawnDirections : ["W", "NW", "SW"];
+  const encounterRoute = STAGE_ENCOUNTER_ROUTES[stageId];
   const cadence = Math.floor(doctrine.defenseTicks / doctrine.waveCount);
   const cadenceSeconds = cadence / TICK_RATE;
   const flankLane = doctrine.pressureLane === "flank" && tactics.flank;
@@ -473,6 +680,7 @@ function buildDoctrineWavePlan(stageId, doctrine, tactics, stageScale) {
     const kind = slot === doctrine.waveCount - 1
       ? "big"
       : doctrine.kindCycle[slot % doctrine.kindCycle.length];
+    const encounterObjective = encounterRoute.objectives.find((objective) => objective.waveSlots.includes(slot));
     const profile = WAVE_KIND_PROFILE[kind];
     const leadClass = doctrine.classes[slot % doctrine.classes.length];
     const supportClass = doctrine.classes[(slot + 1) % doctrine.classes.length];
@@ -513,12 +721,20 @@ function buildDoctrineWavePlan(stageId, doctrine, tactics, stageScale) {
     const policyId = kind === "big"
       ? (flankLane ? "flank" : "gate-pressure")
       : kind === "mid" ? "elite-escort" : null;
+    const direction = directions[slot % directions.length];
+    const encounterPath = encounterRoute.paths.find((path) =>
+      path.objectiveId === encounterObjective?.id && path.direction === direction);
+    if (!encounterObjective || !encounterPath) {
+      throw new RangeError(`Wave ${stageId}:${slot} requires an authored objective path for ${direction}`);
+    }
     return freeze({
       slot,
       tick: slot * cadence,
       kind,
       label: profile.label,
-      direction: directions[slot % directions.length],
+      direction,
+      routeId: encounterPath.id,
+      objectiveId: encounterObjective.id,
       ...(policyId ? { policyId } : {}),
       primary: freeze({ enemy: leadClass, count }),
       alternatives: freeze([
@@ -550,6 +766,26 @@ const stage = (id, name, bossName, scale, eliteId, eliteKind, eliteCompanion, bo
   const doctrine = STAGE_WAVE_DOCTRINE[id];
   if (!doctrine) throw new RangeError(`Missing wave doctrine for stage: ${id}`);
   const tactics = STAGE_TACTICS[id];
+  const encounterRoute = STAGE_ENCOUNTER_ROUTES[id];
+  if (!encounterRoute || encounterRoute.objectives.length < 2) {
+    throw new RangeError(`Stage requires at least two encounter objectives: ${id}`);
+  }
+  const routedSlots = encounterRoute.objectives.flatMap(({ waveSlots }) => waveSlots);
+  const orderedSlots = encounterRoute.objectives.map(({ waveSlots }) => [...waveSlots].sort((left, right) => left - right));
+  if (routedSlots.length !== doctrine.waveCount
+      || new Set(routedSlots).size !== doctrine.waveCount
+      || routedSlots.some((slot) => slot < 0 || slot >= doctrine.waveCount)
+      || orderedSlots.some((slots, index) => index > 0 && slots[0] <= orderedSlots[index - 1].at(-1))) {
+    throw new RangeError(`Encounter route must own every wave slot once and in objective order: ${id}`);
+  }
+  const pathIds = new Set(encounterRoute.paths.map(({ id: pathId }) => pathId));
+  if (pathIds.size !== encounterRoute.paths.length
+      || !pathIds.has(encounterRoute.finale.elitePathId)
+      || !pathIds.has(encounterRoute.finale.bossPathId)
+      || encounterRoute.paths.some((path) => !path.waypoints.length
+        || new Set(path.waypoints.map(({ id: waypointId }) => waypointId)).size !== path.waypoints.length)) {
+    throw new RangeError(`Encounter route paths must be unique, non-empty, and cover the finale: ${id}`);
+  }
   return freeze({
     id, name, bossName, scale, eliteId, eliteKind, eliteCompanion, boss,
     gateTicks: doctrine.defenseTicks,
@@ -558,6 +794,7 @@ const stage = (id, name, bossName, scale, eliteId, eliteKind, eliteCompanion, bo
     doctrine,
     wavePlan: buildDoctrineWavePlan(id, doctrine, tactics, scale),
     tactics,
+    encounterRoute,
     wavePattern: Object.freeze(["scout", "pressure", "flank", "ranged", "elite", "boss"]),
   });
 };
@@ -632,7 +869,15 @@ const stagePlanDescriptor = (stageEntry) => {
     id: `map-plan:${stageEntry.id}:v1`,
     stageId: stageEntry.id,
     tactics: stageEntry.tactics,
-    objectiveOrder: freeze(["gate-defense", "echo-recovery", "growth", "occupation", "extraction", "boss-kill"]),
+    objectiveOrder: freeze([
+      "gate-defense",
+      ...stageEntry.encounterRoute.objectives.map(({ id }) => id),
+      "echo-recovery",
+      "growth",
+      "occupation",
+      "boss-kill",
+      "extraction",
+    ]),
   });
   const wavePlan = freeze({
     id: `wave-plan:${stageEntry.id}:v1`,

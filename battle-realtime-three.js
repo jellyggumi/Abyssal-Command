@@ -7,7 +7,6 @@
 // ownership" check.
 import * as THREE from "./vendor/three.module.js";
 import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
-import { OBJLoader } from "./vendor/loaders/OBJLoader.js";
 import * as SkeletonUtils from "./vendor/utils/SkeletonUtils.js";
 import { REWARDS, STAGE_PRESENTATION_BY_ID, STAGES } from "./defense-catalog.js";
 import { stageWorldFor } from "./stage-world-catalog.js";
@@ -227,12 +226,34 @@ export const COMMANDER_MESH_ROOT = COMMANDER_MODEL;
 // three authored stage effects from `assets/motion/`; there is no image-lane
 // fallback for combat feedback.
 const VFX_MODELS = Object.freeze({
+  INPUT_ACCEPTED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  INPUT_REJECTED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  PICKUP_DENIED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  ECHO_DENIED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  EXTRACTION_REJECTED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  OBJECTIVE_FAILED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  ENCOUNTER_OBJECTIVE_FAILED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  PROJECTILE_BLOCKED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  PROJECTILE_EXPIRED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  BOSS_ATTACK_CANCELLED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
   CRITICAL_HIT: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  ITEM_COLLECTED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  OBJECTIVE_PHASE_CHANGED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  ENCOUNTER_OBJECTIVE_STARTED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  OBJECTIVE_COMPLETED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  ENCOUNTER_OBJECTIVE_COMPLETED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  WAVE_CLEARED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  EXTRACTION_WINDOW_OPENED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  OCCUPATION_CAPTURED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  EXTRACTION_COMPLETED: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  BOSS_ATTACK_TELEGRAPHED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  BOSS_SPAWNED: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
   BOSS_RALLY_WINDOW: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
   GATE_BREACHED: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
   WARDENS_WARD_TRIGGERED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
   ECHO_WARDEN_AWAKENING_TRIGGERED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
   COMPANION_DOWNED: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  TERMINAL: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
 });
 const SKILL_VFX_MODELS = Object.freeze({
   "rift-bolt": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
@@ -241,6 +262,30 @@ const SKILL_VFX_MODELS = Object.freeze({
   "void-aegis": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
   "shadow-step": "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
 });
+
+const SKILL_VFX_SILHOUETTES = Object.freeze({
+  "soul-lance": Object.freeze({ x: 0.42, y: 0.42, z: 1.9 }),
+  "rift-bolt": Object.freeze({ x: 0.5, y: 0.5, z: 1.65 }),
+  "grave-pulse": Object.freeze({ x: 1.65, y: 0.42, z: 1.65 }),
+  "shadow-step": Object.freeze({ x: 0.55, y: 0.9, z: 1.45 }),
+  "void-aegis": Object.freeze({ x: 1.25, y: 1.7, z: 1.25 }),
+});
+
+function semanticVfxIdForEvent(event) {
+  if (event?.type === "SKILL_CAST") return event.vfx || event.skillId || "skill-cast";
+  switch (event?.type) {
+    case "ENCOUNTER_OBJECTIVE_STARTED": return "objective-phase-changed";
+    case "ENCOUNTER_OBJECTIVE_COMPLETED": return "objective-completed";
+    case "ENCOUNTER_OBJECTIVE_FAILED": return "objective-failed";
+    case "CRITICAL_HIT": return "critical-hit";
+    case "BOSS_RALLY_WINDOW": return "boss-warning";
+    case "GATE_BREACHED": return "gate-breach";
+    case "WARDENS_WARD_TRIGGERED": return "void-aegis";
+    case "ECHO_WARDEN_AWAKENING_TRIGGERED": return "boss-warning";
+    case "COMPANION_DOWNED": return "ally-down";
+    default: return event?.type ? event.type.toLowerCase().replaceAll("_", "-") : null;
+  }
+}
 
 // Reward and equipment card previews use the same authored prop meshes that
 // appear in the live world. Text/glyph fallbacks remain for semantic reward
@@ -260,12 +305,30 @@ const EQUIPMENT_TIER_MODELS = Object.freeze({
   T5: PROP_BLADE_MESH,
 });
 const VFX_LIFETIME_TICKS = Object.freeze({
+  INPUT_ACCEPTED: 12,
+  INPUT_REJECTED: 18,
+  OBJECTIVE_FAILED: 18,
+  ENCOUNTER_OBJECTIVE_FAILED: 18,
+  PROJECTILE_BLOCKED: 18,
+  PROJECTILE_EXPIRED: 12,
   CRITICAL_HIT: 18,
+  ITEM_COLLECTED: 24,
+  OBJECTIVE_PHASE_CHANGED: 36,
+  ENCOUNTER_OBJECTIVE_STARTED: 36,
+  OBJECTIVE_COMPLETED: 48,
+  ENCOUNTER_OBJECTIVE_COMPLETED: 48,
+  WAVE_CLEARED: 36,
+  EXTRACTION_WINDOW_OPENED: 60,
+  OCCUPATION_CAPTURED: 48,
+  EXTRACTION_COMPLETED: 60,
+  BOSS_ATTACK_TELEGRAPHED: 45,
+  BOSS_SPAWNED: 90,
   BOSS_RALLY_WINDOW: 90,
   GATE_BREACHED: 36,
   WARDENS_WARD_TRIGGERED: 60,
   ECHO_WARDEN_AWAKENING_TRIGGERED: 120,
   COMPANION_DOWNED: 48,
+  TERMINAL: 90,
 });
 
 // Rigged character GLBs embed the canonical 11-clip action library named
@@ -520,9 +583,11 @@ const STAGE_FOG_MULTIPLIERS = Object.freeze({
 });
 const MIN_BOUNDARY_CLARITY = 0.75;
 
-// The default phase is intentionally DESCENT: old stage-only callers retain
-// the authored opening atmosphere rather than unexpectedly clearing the fog.
-export function stageFogRange(stageId, phase = DEFAULT_CAMERA_PHASE) {
+// A stage-only fog query describes the first playable encounter tier. Camera
+// motion still opens at DESCENT, while the encounter state enters SKIRMISH as
+// soon as objective zero is active; explicit phase callers retain the authored
+// DESCENT range for cutscenes.
+export function stageFogRange(stageId, phase = "SKIRMISH") {
   const authored = STAGE_FOG_MULTIPLIERS[stageId] ?? STAGE_FOG_BASE;
   const phaseTier = CAMERA_PHASE_TIERS[phase] ?? CAMERA_PHASE_TIERS[DEFAULT_CAMERA_PHASE];
   const near = WORLD_SCALE * authored.near;
@@ -623,12 +688,72 @@ function resolveStageId(snapshot) {
   return snapshot?.presentation?.stageId ?? (typeof snapshot?.stageId === "string" ? snapshot.stageId : null);
 }
 
-// `objectives.phase` is the simulation-owned phase field. The renderer never
-// keeps a second phase enum; legacy objective ids and malformed snapshots use
-// the safe opening tier until the six-phase timeline owns this field.
+// The simulation may expose either an accepted camera tier, this tick's
+// immutable presentation events, or stable objective state. Resolve those
+// sources in that order without inventing a renderer-owned phase enum.
 function resolveCameraPhase(snapshot) {
   const phase = snapshot?.objectives?.phase;
-  return Object.hasOwn(CAMERA_PHASE_TIERS, phase) ? phase : DEFAULT_CAMERA_PHASE;
+  if (Object.hasOwn(CAMERA_PHASE_TIERS, phase)) return phase;
+
+  const tick = snapshot?.tick;
+  let eventTier = null;
+  let eventTierRank = 0;
+  if (Number.isInteger(tick) && Array.isArray(snapshot?.events)) {
+    for (const event of snapshot.events) {
+      if (event?.tick !== tick) continue;
+      let tier = null;
+      let rank = 0;
+      switch (event.type) {
+        case "BOSS_SPAWNED":
+          tier = "FINALE";
+          rank = 5;
+          break;
+        case "MIDBOSS_SPAWNED":
+          tier = "MIDBOSS";
+          rank = 4;
+          break;
+        case "WAVE_VARIANT_STARTED":
+          if (event.kind === "big") {
+            tier = "BIGWAVE";
+            rank = 3;
+          } else if (event.kind === "normal") {
+            tier = "SKIRMISH";
+            rank = 2;
+          }
+          break;
+        case "ENCOUNTER_OBJECTIVE_STARTED":
+          if (Number.isInteger(event.objectiveIndex) && event.objectiveIndex >= 0) {
+            tier = event.objectiveIndex === 0 ? "SKIRMISH" : "SURGE";
+            rank = 1;
+          }
+          break;
+        default:
+          break;
+      }
+      if (rank > eventTierRank) {
+        eventTier = tier;
+        eventTierRank = rank;
+      }
+    }
+  }
+  if (eventTier) return eventTier;
+
+  const encounterObjectiveId = snapshot?.encounter?.objectiveId;
+  if (phase === "boss-kill" || encounterObjectiveId === "boss-kill") return "FINALE";
+  if (
+    phase === "extraction"
+    || phase === "complete"
+    || encounterObjectiveId === "extraction"
+    || snapshot?.objectives?.bossKill?.completed === true
+    || snapshot?.extracted === true
+  ) {
+    return "SURGE";
+  }
+  const encounterObjectiveIndex = snapshot?.encounter?.objectiveIndex;
+  if (Number.isInteger(encounterObjectiveIndex) && encounterObjectiveIndex >= 0) {
+    return encounterObjectiveIndex === 0 ? "SKIRMISH" : "SURGE";
+  }
+  return DEFAULT_CAMERA_PHASE;
 }
 
 function standardActorModelPath(entity) {
@@ -702,7 +827,36 @@ function attachMissingActorMarker(record, actorGroup) {
 }
 
 function feedbackKey(event) {
-  return event?.eventId ?? `${event?.type ?? "?"}:${event?.tick ?? "?"}:${event?.entityId ?? event?.targetId ?? event?.enemyId ?? ""}`;
+  if (event?.eventId) return `event:${event.eventId}`;
+  return JSON.stringify([
+    event?.version ?? "",
+    event?.tick ?? "",
+    event?.eventSequence ?? "",
+    event?.type ?? "",
+    event?.inputId ?? "",
+    event?.entityId ?? "",
+    event?.enemyId ?? "",
+    event?.sourceId ?? "",
+    event?.targetId ?? "",
+    event?.projectileId ?? "",
+    event?.itemId ?? "",
+    event?.rewardId ?? "",
+    event?.skillId ?? "",
+    event?.objectiveId ?? "",
+    event?.bossId ?? "",
+    event?.companionId ?? "",
+    event?.pickupId ?? "",
+    event?.tableId ?? "",
+    event?.outcomeId ?? "",
+    event?.outcome ?? "",
+    event?.phase ?? "",
+    event?.policyId ?? "",
+    event?.source ?? "",
+    event?.reason ?? "",
+    event?.damage ?? "",
+    event?.pulse ?? "",
+    event?.text ?? "",
+  ]);
 }
 
 function effectAnchor(snapshot, event) {
@@ -731,25 +885,14 @@ function snapshotEntityById(snapshot, entityId) {
 }
 
 // Shared loaders and promise caches preserve immutable source data while each
-// mounted scene owns its cloned renderables. Terrain may be a supplied OBJ;
-// actor, prop, and VFX assets remain GLB.
+// mounted scene owns its cloned renderables. All runtime assets are GLB.
 const gltfLoader = new GLTFLoader();
-const objLoader = new OBJLoader();
 const gltfCache = new Map();
-const objCache = new Map();
-const CINDER_TERRAIN_TEXTURE_ROOT = "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack";
-let cinderTerrainMapsPromise = null;
-// Last terrain decomposition, or null. Null in every production path today, because splitParts
-// defaults false (see instantiateTerrainModel for the measurement behind that default) -- this
-// is populated only when a caller opts in, and exists so an opt-in caller can read the counts
-// without walking the scene graph. No test asserts against it: the correctness property is
-// spatial (reassembled bbox vs pre-split bbox), and component count is welding-rule dependent,
-// so it must never be compared against the offline splitter's figure.
-let lastTerrainSplitStats = null;
 
 // SkeletonUtils.clone() gives each rendered instance an owned skeleton; this
 // identity set keeps repeated disposal idempotent when roots overlap.
 const disposedSkeletons = new WeakSet();
+
 
 function modelUrl(path) {
   if (typeof path !== "string" || !path) return null;
@@ -773,267 +916,6 @@ function loadGltf(path) {
   return gltfCache.get(url);
 }
 
-function loadObj(path) {
-  const url = modelUrl(path);
-  if (!url) return Promise.reject(new TypeError("Missing OBJ model path"));
-  if (!objCache.has(url)) {
-    const request = new Promise((resolve, reject) => {
-      objLoader.load(url, resolve, undefined, reject);
-    }).catch((error) => {
-      if (objCache.get(url) === request) objCache.delete(url);
-      throw error;
-    });
-    objCache.set(url, request);
-  }
-  return objCache.get(url);
-}
-
-function loadTexture(path) {
-  const url = modelUrl(path);
-  if (!url) return Promise.reject(new TypeError("Missing terrain texture path"));
-  const loader = new THREE.TextureLoader();
-  return new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
-}
-
-function cinderTerrainMaps() {
-  if (!cinderTerrainMapsPromise) {
-    cinderTerrainMapsPromise = Promise.all([
-      loadTexture(`${CINDER_TERRAIN_TEXTURE_ROOT}/texture_diffuse.png`),
-      loadTexture(`${CINDER_TERRAIN_TEXTURE_ROOT}/texture_normal.png`),
-      loadTexture(`${CINDER_TERRAIN_TEXTURE_ROOT}/texture_roughness.png`),
-      loadTexture(`${CINDER_TERRAIN_TEXTURE_ROOT}/texture_metallic.png`),
-    ]).then(([map, normalMap, roughnessMap, metalnessMap]) => {
-      map.colorSpace = THREE.SRGBColorSpace;
-      return { map, normalMap, roughnessMap, metalnessMap };
-    }).catch((error) => {
-      console.warn("Cinder Span terrain textures unavailable; using neutral PBR material.", error);
-      cinderTerrainMapsPromise = null;
-      return null;
-    });
-  }
-  return cinderTerrainMapsPromise;
-}
-
-async function applyObjTerrainMaterials(instance) {
-  const maps = await cinderTerrainMaps();
-  // ONE material shared across every mesh in the instance, not one per mesh. The instance is
-  // now a group of independently-placed parts (see splitObjIntoPlaceableParts), so per-mesh
-  // materials would mint ~89 identical MeshStandardMaterials and defeat batching. Sharing is
-  // safe with ownRenderableResources(), which dedupes by identity when it clones for ownership.
-  const material = new THREE.MeshStandardMaterial({
-    map: maps?.map ?? null,
-    normalMap: maps?.normalMap ?? null,
-    roughnessMap: maps?.roughnessMap ?? null,
-    metalnessMap: maps?.metalnessMap ?? null,
-    roughness: 1,
-    metalness: 0,
-  });
-  instance.traverse((node) => {
-    if (node.isMesh) node.material = material;
-  });
-}
-
-// Below this TRIANGLE count a component is scenery grit, not a placeable piece. Note the unit:
-// this runs after OBJLoader triangulates, so it counts triangles, while the offline splitter's
-// --min-faces counts authored faces (the source is 19630 quads + 130 tris). The same numeric 20
-// is therefore a different bar in each, and the runtime keeps some pieces the offline pass bins
-// as debris. Nothing is discarded either way -- sub-threshold components are merged into one
-// debris mesh rather than dropped.
-const TERRAIN_PART_MIN_FACES = 20;
-// Position quantum for welding coincident corners. OBJLoader expands faces to a non-indexed
-// buffer, so the shared corner between two adjacent triangles arrives as two distinct vertices
-// with bit-identical coordinates; without welding, every triangle would read as its own island.
-const TERRAIN_WELD_QUANTUM = 1e-4;
-
-/**
- * Splits a loaded OBJ into its connected components so each becomes an independently
- * transformable, independently frustum-culled child.
- *
- * Why this exists: the shipped Cinder Span terrain is one welded mesh placed as ONE object, so
- * no piece can be moved, hidden, LOD-swapped, or culled on its own, and the whole span renders
- * whenever any corner of it is on screen.
- *
- * Why at runtime rather than as separate files on disk: the split is derivable from bytes
- * already fetched. Shipping the parts separately would cost ~88 extra HTTP requests on a
- * mobile-first game and ~267 service-worker/manifest/allowlist entries, to reach the same scene
- * graph this produces from one fetch and zero new assets.
- *
- * `scripts/split-terrain-obj-parts.py` is NOT a check on this function, and the two are not
- * expected to agree on component count. It unions faces by shared authored vertex INDEX; this
- * unions by quantized POSITION. Position adjacency is strictly coarser -- two faces authored
- * with duplicate `v` entries at the same coordinate are two components offline and one here --
- * so runtime components are always <= offline components by construction (measured: 108 vs 160).
- * Position is the better rule for "placeable piece", since a duplicate-vertex authoring artifact
- * should not split one bridge rib into two objects. The only invariant that holds across both
- * rules is face conservation, which is what `partFaces === faces` asserts; component count is
- * rule-dependent and must never be asserted against the offline figure.
- *
- * Geometry is rebased so each part's vertices are relative to its own centroid, with the
- * centroid restored as the part's position. The assembled render is therefore identical to the
- * merged original, while each part gains a meaningful transform origin and a tight bounding
- * sphere. Face count is conserved exactly -- this is a regrouping, not a simplification.
- */
-export function splitObjIntoPlaceableParts(root) {
-  const stats = { sourceMeshes: 0, faces: 0, components: 0, parts: 0, partFaces: 0, debrisFaces: 0 };
-  const sources = [];
-  root.traverse((node) => {
-    if (node.isMesh && node.geometry?.attributes?.position) sources.push(node);
-  });
-  if (!sources.length) return { root, stats };
-
-  for (const mesh of sources) {
-    stats.sourceMeshes += 1;
-    // `converted` tracks whether `geometry` is a temporary WE created. It matters for disposal:
-    // after source.clone(true) three.js shares geometry by reference, so when the source is
-    // non-indexed `mesh.geometry` IS objCache's cached geometry, and disposing it would break
-    // every later instantiateTerrainModel() for the same URL. Only the temporary is ours to free.
-    const converted = Boolean(mesh.geometry.index);
-    const geometry = converted ? mesh.geometry.toNonIndexed() : mesh.geometry;
-    const position = geometry.attributes.position;
-    const faceCount = Math.floor(position.count / 3);
-    stats.faces += faceCount;
-
-    // Weld coincident corners: quantized position -> canonical vertex id.
-    const canonical = new Map();
-    const vertexId = new Int32Array(position.count);
-    for (let v = 0; v < position.count; v += 1) {
-      const key = `${Math.round(position.getX(v) / TERRAIN_WELD_QUANTUM)},`
-        + `${Math.round(position.getY(v) / TERRAIN_WELD_QUANTUM)},`
-        + `${Math.round(position.getZ(v) / TERRAIN_WELD_QUANTUM)}`;
-      let id = canonical.get(key);
-      if (id === undefined) {
-        id = canonical.size;
-        canonical.set(key, id);
-      }
-      vertexId[v] = id;
-    }
-
-    // Union-find over welded vertices; faces sharing any corner join one component.
-    const parent = new Int32Array(canonical.size);
-    for (let i = 0; i < parent.length; i += 1) parent[i] = i;
-    const find = (x) => {
-      let r = x;
-      while (parent[r] !== r) r = parent[r];
-      while (parent[x] !== r) { const next = parent[x]; parent[x] = r; x = next; }
-      return r;
-    };
-    const union = (a, b) => {
-      const ra = find(a);
-      const rb = find(b);
-      if (ra !== rb) parent[rb] = ra;
-    };
-    for (let f = 0; f < faceCount; f += 1) {
-      const a = vertexId[f * 3];
-      union(a, vertexId[f * 3 + 1]);
-      union(a, vertexId[f * 3 + 2]);
-    }
-
-    const byComponent = new Map();
-    for (let f = 0; f < faceCount; f += 1) {
-      const key = find(vertexId[f * 3]);
-      let faces = byComponent.get(key);
-      if (!faces) byComponent.set(key, faces = []);
-      faces.push(f);
-    }
-    stats.components += byComponent.size;
-
-    // Substantial components become their own part; the remainder pools into one debris mesh.
-    const groups = [];
-    const debris = [];
-    for (const faces of byComponent.values()) {
-      if (faces.length >= TERRAIN_PART_MIN_FACES) groups.push(faces);
-      else debris.push(...faces);
-    }
-    groups.sort((a, b) => b.length - a.length);
-    if (debris.length) {
-      stats.debrisFaces += debris.length;
-      groups.push(debris);
-    }
-
-    const container = new THREE.Group();
-    container.name = `${mesh.name || "terrain"}_parts`;
-    groups.forEach((faces, index) => {
-      const part = buildTerrainPartMesh(geometry, faces, mesh, index, faces === debris);
-      // Cheap smoke stat only. `partFaces === faces` is a TAUTOLOGY -- every face index lands in
-      // exactly one bucket and every bucket becomes a group, both read from the same in-memory
-      // arrays -- so it can never fail and must not be treated as the correctness check. It also
-      // never observes buildTerrainPartMesh: that buffer is allocated at faces.length*3, so a
-      // botched copy writes zeros into untouched slots rather than changing any count. The check
-      // with teeth is spatial: the union of part world bboxes against the pre-split root bbox,
-      // which catches wrong vertices, dropped corners, and centroid-rebase sign errors.
-      stats.partFaces += faces.length;
-      container.add(part);
-    });
-    stats.parts += groups.length;
-
-    mesh.parent?.add(container);
-    container.position.copy(mesh.position);
-    container.quaternion.copy(mesh.quaternion);
-    container.scale.copy(mesh.scale);
-    mesh.parent?.remove(mesh);
-    // Free only the temporary produced by toNonIndexed(); never mesh.geometry, which the
-    // OBJ cache still owns and other instances still reference.
-    if (converted) geometry.dispose();
-  }
-  return { root, stats };
-}
-
-/** Extracts `faces` from `geometry` into a standalone mesh rebased on its own centroid. */
-function buildTerrainPartMesh(geometry, faces, sourceMesh, index, isDebris) {
-  const source = geometry.attributes;
-  const vertexCount = faces.length * 3;
-  const positions = new Float32Array(vertexCount * 3);
-  const normals = source.normal ? new Float32Array(vertexCount * 3) : null;
-  const uvs = source.uv ? new Float32Array(vertexCount * 2) : null;
-
-  let cx = 0;
-  let cy = 0;
-  let cz = 0;
-  for (let i = 0; i < faces.length; i += 1) {
-    for (let corner = 0; corner < 3; corner += 1) {
-      const src = faces[i] * 3 + corner;
-      const dst = i * 3 + corner;
-      const x = source.position.getX(src);
-      const y = source.position.getY(src);
-      const z = source.position.getZ(src);
-      positions[dst * 3] = x;
-      positions[dst * 3 + 1] = y;
-      positions[dst * 3 + 2] = z;
-      cx += x; cy += y; cz += z;
-      if (normals) {
-        normals[dst * 3] = source.normal.getX(src);
-        normals[dst * 3 + 1] = source.normal.getY(src);
-        normals[dst * 3 + 2] = source.normal.getZ(src);
-      }
-      if (uvs) {
-        uvs[dst * 2] = source.uv.getX(src);
-        uvs[dst * 2 + 1] = source.uv.getY(src);
-      }
-    }
-  }
-  cx /= vertexCount; cy /= vertexCount; cz /= vertexCount;
-  // Rebase onto the centroid, then restore it as the mesh position: same render, own origin.
-  for (let v = 0; v < vertexCount; v += 1) {
-    positions[v * 3] -= cx;
-    positions[v * 3 + 1] -= cy;
-    positions[v * 3 + 2] -= cz;
-  }
-
-  const partGeometry = new THREE.BufferGeometry();
-  partGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  if (normals) partGeometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-  else partGeometry.computeVertexNormals();
-  if (uvs) partGeometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
-  partGeometry.computeBoundingSphere();
-
-  const part = new THREE.Mesh(partGeometry, sourceMesh.material);
-  part.name = isDebris ? "terrain_part_debris" : `terrain_part_${String(index).padStart(3, "0")}`;
-  part.position.set(cx, cy, cz);
-  part.castShadow = sourceMesh.castShadow;
-  part.receiveShadow = sourceMesh.receiveShadow;
-  part.userData.terrainPartFaces = faces.length;
-  return part;
-}
 
 
 function stageNpcFacingYaw(npc, sourcePoint) {
@@ -1258,45 +1140,11 @@ async function instantiateActorModel(relPath, targetHeight) {
 }
 
 /**
- * Per-part terrain placement is OFF by default, and the reason is measured, not assumed.
- *
- * `splitObjIntoPlaceableParts()` works and is pixel-exact (bbox delta ~1e-9 across all three
- * axes), but three.js issues one draw call per Mesh -- only InstancedMesh/BatchedMesh batch, and
- * neither applies here: InstancedMesh needs repeated identical geometry, and the vendored build
- * has no BatchedMesh. A shared material saves shader and uniform rebinds, not draw calls.
- *
- * Measured on the Cinder Span terrain (39390 triangles after triangulation), 1280x800:
- *
- *   framing            merged            split (95 parts)
- *   whole span         1 call, 0.007ms   95 calls, 0.180ms   (25x)
- *   game-like camera   1 call, 0.005ms   33 calls, 0.087ms   (17x)
- *
- * Frustum culling does work -- the game-like framing submits 16043 of 39390 triangles, 59%
- * culled -- but at this asset's scale the triangles it saves are worth less than the draw calls
- * it adds. 39k triangles is small; the CPU-side per-call cost dominates.
- *
- * So the split stays available and unused until a consumer actually needs per-piece transforms
- * (moving a collapsing rib, hiding a section, per-part LOD). Turning it on today would buy an
- * identical picture for 17x the frame time, which is the same mobile-first cost that made
- * shipping 89 separate .obj files the wrong answer -- re-entering through a different door.
- * Callers opt in explicitly; when a real consumer arrives, re-measure with its framing.
+ * Terrain is authored as a GLB and instantiated by cloning the loaded scene.
  */
-const TERRAIN_SPLIT_PARTS_DEFAULT = false;
-
-async function instantiateTerrainModel(relPath, { splitParts = TERRAIN_SPLIT_PARTS_DEFAULT } = {}) {
-  const isObj = relPath.endsWith(".obj");
-  const source = isObj ? await loadObj(relPath) : (await loadGltf(relPath)).scene;
-  const instance = isObj ? source.clone(true) : SkeletonUtils.clone(source);
-  if (isObj) {
-    if (splitParts) {
-      // Split before materials and before fitFootprint: the split must see the raw merged mesh,
-      // and fitFootprint() reads a Box3 of the whole subtree, so it scales the assembled parts
-      // as one unit exactly as it did the single mesh. Order matters -- splitting after the fit
-      // would rebase each part's geometry against an already-scaled parent.
-      lastTerrainSplitStats = splitObjIntoPlaceableParts(instance).stats;
-    }
-    await applyObjTerrainMaterials(instance);
-  }
+async function instantiateTerrainModel(relPath) {
+  const gltf = await loadGltf(relPath);
+  const instance = SkeletonUtils.clone(gltf.scene);
   ownRenderableResources(instance);
   fitFootprint(instance, TERRAIN_TARGET_HALF_EXTENT);
   return instance;
@@ -1314,10 +1162,14 @@ async function instantiatePresentationModel(relPath, targetHeight) {
   return { instance, mixer, action };
 }
 
+
 async function instantiateStageProp(prop) {
   const gltf = await loadGltf(prop.modelPath);
-  const source = prop.modelNode ? gltf.scene.getObjectByName(prop.modelNode) : gltf.scene;
-  if (!source) throw new Error(`Stage prop node not found: ${prop.modelPath}#${prop.modelNode}`);
+  const selectedNode = prop.modelNode ? gltf.scene.getObjectByName(prop.modelNode) : null;
+  if (prop.modelNode && !selectedNode) {
+    throw new Error(`Stage prop node not found: ${prop.modelPath}#${prop.modelNode}`);
+  }
+  const source = selectedNode ?? gltf.scene;
   source.updateWorldMatrix(true, true);
   const instance = SkeletonUtils.clone(source);
   if (prop.modelNode) source.matrixWorld.decompose(instance.position, instance.quaternion, instance.scale);
@@ -1399,6 +1251,17 @@ function applyTransientVfxPolicy(record, reducedMotion) {
   if (!record?.action) return;
   if (reducedMotion) record.action.stop();
   else record.action.reset().play();
+}
+
+function applySkillVfxSilhouette(instance, semanticVfxId) {
+  const silhouette = SKILL_VFX_SILHOUETTES[semanticVfxId];
+  if (!instance || !silhouette) return;
+  instance.scale.set(
+    instance.scale.x * silhouette.x,
+    instance.scale.y * silhouette.y,
+    instance.scale.z * silhouette.z,
+  );
+  instance.userData.semanticVfxId = semanticVfxId;
 }
 
 
@@ -1569,8 +1432,9 @@ function weaponSocket(root) {
   return socket ?? fallback ?? root;
 }
 
-async function instantiateVfxModel(relPath) {
+async function instantiateVfxModel(relPath, isCurrent = null) {
   const gltf = await loadGltf(relPath);
+  if (typeof isCurrent === "function" && !isCurrent()) return null;
   const instance = SkeletonUtils.clone(gltf.scene);
   ownRenderableResources(instance);
   fitHeight(instance, 1.2);
@@ -1604,15 +1468,6 @@ function disposeObject3D(root) {
   }
 }
 
-/**
- * Decomposition counts from the most recent OBJ terrain instantiation, or null if none has run.
- * Exists so the split is provable from outside: face conservation is the correctness property
- * (a regrouping must not lose or duplicate a triangle), and it cannot be observed by counting
- * scene-graph children.
- */
-export function lastTerrainDecomposition() {
-  return lastTerrainSplitStats ? { ...lastTerrainSplitStats } : null;
-}
 
 /**
  * Standalone offscreen WebGL renderer that turns a single per-object GLB
@@ -1841,8 +1696,10 @@ export class RealtimeBattle {
     this.pendingInputFeedback = null;
     this.visualEventKeys = new Set();
     this.animationEventKeys = new Set();
-    this.pendingVfx = [];
+    this.pendingVfxLoads = new Set();
+    this.pendingDeathEchoLoads = new Set();
     this.pendingDeathEchoes = []; // captureDeathEchoes()-collected { modelPath, x, y, z }, drained by collectFeedback()
+    this.vfxGeneration = 0;
     // Tick-bearing snapshots advance mixers, follow, and facing from the
     // authoritative 60 Hz simulation timeline. Utility callers that omit a
     // tick retain the wall-clock path below.
@@ -1857,6 +1714,8 @@ export class RealtimeBattle {
     this.hitFlashes = new Map(); // entityId -> { startMs, untilMs, color, peak }
     this.knockbacks = new Map(); // entityId -> { startMs, untilMs, dx, dz, distance }
     this.cameraShake = null; // { startMs, untilMs, amplitude, seed }
+    this.cameraShakeOffset = new THREE.Vector3();
+    this.rendererSize = new THREE.Vector2();
     this.impactShakeSeed = 0;
   }
 
@@ -2086,7 +1945,7 @@ export class RealtimeBattle {
   // 판정 10 confirms this cycle's implementation scope). Idempotent per
   // stage id (stagePaletteId guard) since it rebuilds the PMREM
   // environment map, which is comparatively expensive to redo every frame.
-  applyStagePalette(stageId, phase = DEFAULT_CAMERA_PHASE, tick = null) {
+  applyStagePalette(stageId, phase = "SKIRMISH", tick = null) {
     if (this.disposed) return;
     const stageChanged = this.stagePaletteId !== stageId;
     const presentation = STAGE_PRESENTATION_BY_ID[stageId];
@@ -2936,6 +2795,10 @@ export class RealtimeBattle {
       from: { distance: from.distance, azimuth: from.azimuth, polar: from.polar },
       to: { distance: to.distance, azimuth: to.azimuth, polar: to.polar },
     };
+    // The event can arrive on the same authoritative tick as a preceding
+    // baseline camera update. Re-seed follow once so zero delta time cannot
+    // suppress the authored opening offset.
+    this.cameraFollowInit = false;
   }
 
   stageIntroOffsets(tick) {
@@ -2944,6 +2807,7 @@ export class RealtimeBattle {
     const progress = THREE.MathUtils.clamp((tick - intro.startTick) / intro.durationTicks, 0, 1);
     if (progress >= 1) {
       this.stageIntro = null;
+      this.cameraFollowInit = false;
       return null;
     }
     return {
@@ -2954,6 +2818,7 @@ export class RealtimeBattle {
   }
 
   updateCamera(snapshot, nowMs = performance.now()) {
+    this.clearCameraShakeOffset();
     const tick = snapshot?.tick;
     const phaseTarget = cameraTierTarget(resolveCameraPhase(snapshot));
     if (Number.isInteger(tick)) {
@@ -3158,39 +3023,66 @@ export class RealtimeBattle {
     return true;
   }
 
+  retireVfxRecord(record) {
+    if (!record) return;
+    this.vfxGroup?.remove(record.root);
+    record.mixer?.stopAllAction();
+    disposeObject3D(record.root);
+  }
+
+  trackVfxInstance(record) {
+    if (!record) return false;
+    this.vfxInstances.push(record);
+    while (this.vfxInstances.length > MAX_VISUAL_EFFECTS) {
+      this.retireVfxRecord(this.vfxInstances.shift());
+    }
+    return this.vfxInstances.includes(record);
+  }
+
   spawnVfx(snapshot, event, tick) {
     const relPath = event?.type === "SKILL_CAST"
       ? SKILL_VFX_MODELS[event?.vfx || event?.skillId]
       : VFX_MODELS[event?.type];
     if (!relPath) return;
+    if (this.pendingVfxLoads.size >= MAX_VISUAL_EFFECTS) return;
+    const generation = this.vfxGeneration;
     const anchor = effectAnchor(snapshot, event);
     if (!anchor) return;
-    const lifetime = VFX_LIFETIME_TICKS[event.type] ?? 30;
+    const lifetime = event.type === "BOSS_ATTACK_TELEGRAPHED"
+      ? Math.max(1, finite(event.windupTicks, VFX_LIFETIME_TICKS[event.type] ?? 30))
+      : (VFX_LIFETIME_TICKS[event.type] ?? 30);
     const untilTick = tick + lifetime;
     const placeholder = new THREE.Group();
     const p = worldPoint(anchor);
     placeholder.position.set(p.x, p.y + 0.6, p.z);
     this.vfxGroup.add(placeholder);
-    const record = { root: placeholder, untilTick, loaded: false };
-    this.vfxInstances.push(record);
-    if (this.vfxInstances.length > MAX_VISUAL_EFFECTS) {
-      const stale = this.vfxInstances.shift();
-      this.vfxGroup.remove(stale.root);
-      stale.mixer?.stopAllAction();
-      disposeObject3D(stale.root);
-    }
-    instantiateVfxModel(relPath).then(({ instance, mixer, action }) => {
-      if (!this.vfxInstances.includes(record)) {
+    const semanticVfxId = semanticVfxIdForEvent(event);
+    const record = { root: placeholder, untilTick, loaded: false, semanticVfxId };
+    this.trackVfxInstance(record);
+    const loadRequest = instantiateVfxModel(
+      relPath,
+      () => generation === this.vfxGeneration && this.vfxInstances.includes(record),
+    ).then((loaded) => {
+      if (!loaded) return;
+      const { instance, mixer, action } = loaded;
+      if (generation !== this.vfxGeneration || !this.vfxInstances.includes(record)) {
         mixer?.stopAllAction();
         disposeObject3D(instance);
         return;
       }
       placeholder.add(instance);
+      applySkillVfxSilhouette(instance, semanticVfxId);
       record.mixer = mixer;
       record.action = action;
       record.loaded = true;
       applyTransientVfxPolicy(record, this.reducedMotion);
+    }).catch(() => {
+      const index = this.vfxInstances.indexOf(record);
+      if (index >= 0) this.vfxInstances.splice(index, 1);
+      this.retireVfxRecord(record);
     });
+    this.pendingVfxLoads.add(loadRequest);
+    loadRequest.finally(() => this.pendingVfxLoads.delete(loadRequest));
   }
 
   // Runs BEFORE reconcileActors() retires this tick's dead enemies, so their
@@ -3207,6 +3099,7 @@ export class RealtimeBattle {
       if (!this.rememberVisualEvent(key)) continue;
       const record = this.actors.get(event.enemyId);
       if (!record?.root || !record.modelPath || !record.actions?.die) continue;
+      if (this.pendingDeathEchoes.length >= MAX_VISUAL_EFFECTS) this.pendingDeathEchoes.shift();
       this.pendingDeathEchoes.push({
         modelPath: record.modelPath,
         x: record.root.position.x,
@@ -3218,9 +3111,11 @@ export class RealtimeBattle {
   }
 
   spawnDeathEcho(echo, tick) {
-    instantiateActorModel(echo.modelPath, echo.targetHeight)
+    if (this.pendingDeathEchoLoads.size >= MAX_VISUAL_EFFECTS) return;
+    const generation = this.vfxGeneration;
+    const loadRequest = instantiateActorModel(echo.modelPath, echo.targetHeight)
       .then(({ instance, mixer, actions }) => {
-        if (this.disposed) {
+        if (this.disposed || generation !== this.vfxGeneration) {
           mixer?.stopAllAction();
           disposeObject3D(instance);
           return;
@@ -3233,11 +3128,20 @@ export class RealtimeBattle {
           const clip = action.getClip();
           if (Number.isFinite(clip?.duration)) untilTick = tick + Math.ceil(clip.duration * 60);
         }
-        const record = { root: instance, untilTick, mixer, action, loaded: true };
-        this.vfxInstances.push(record);
+        const record = {
+          root: instance,
+          untilTick,
+          mixer,
+          action,
+          loaded: true,
+          semanticVfxId: "death-echo",
+        };
+        this.trackVfxInstance(record);
         applyTransientVfxPolicy(record, this.reducedMotion);
       })
       .catch(() => {});
+    this.pendingDeathEchoLoads.add(loadRequest);
+    loadRequest.finally(() => this.pendingDeathEchoLoads.delete(loadRequest));
   }
 
   // Eases one actor's rendered yaw toward the heading syncActorPosition()
@@ -3458,20 +3362,30 @@ export class RealtimeBattle {
   // Decaying positional jitter applied after updateCamera() has committed the
   // orbit position, so the orbit state itself (yaw/pitch/zoom) is never
   // perturbed and the shake fully cancels when it expires.
+  clearCameraShakeOffset() {
+    if (!this.camera || !this.cameraShakeOffset) return;
+    this.camera.position.sub(this.cameraShakeOffset);
+    this.cameraShakeOffset.set(0, 0, 0);
+  }
+
   applyCameraShake(nowMs) {
     const shake = this.cameraShake;
     if (!shake || !this.camera) return;
     const span = Math.max(1, shake.untilMs - shake.startMs);
     const progress = (nowMs - shake.startMs) / span;
     if (progress >= 1) {
+      this.clearCameraShakeOffset();
       this.cameraShake = null;
       return;
     }
     const decay = (1 - progress) * (1 - progress);
     const phase = shake.seed * 1.7 + progress * IMPACT_SHAKE_FREQUENCY;
-    this.camera.position.x += Math.sin(phase) * shake.amplitude * decay;
-    this.camera.position.y += Math.sin(phase * 1.37 + 1.1) * shake.amplitude * decay * 0.6;
-    this.camera.position.z += Math.cos(phase * 0.91 + 0.4) * shake.amplitude * decay;
+    this.cameraShakeOffset.set(
+      Math.sin(phase) * shake.amplitude * decay,
+      Math.sin(phase * 1.37 + 1.1) * shake.amplitude * decay * 0.6,
+      Math.cos(phase * 0.91 + 0.4) * shake.amplitude * decay,
+    );
+    this.camera.position.add(this.cameraShakeOffset);
   }
 
   updateImpactFeedback(nowMs) {
@@ -3562,14 +3476,16 @@ export class RealtimeBattle {
 
   collectFeedback(snapshot) {
     const tick = finite(snapshot?.tick, 0);
+    let retainedVfxCount = 0;
     for (const record of this.vfxInstances) {
       if (record.untilTick <= tick) {
-        this.vfxGroup.remove(record.root);
-        record.mixer?.stopAllAction();
-        disposeObject3D(record.root);
+        this.retireVfxRecord(record);
+        continue;
       }
+      this.vfxInstances[retainedVfxCount] = record;
+      retainedVfxCount += 1;
     }
-    this.vfxInstances = this.vfxInstances.filter((record) => record.untilTick > tick);
+    this.vfxInstances.length = retainedVfxCount;
 
     const nowMs = performance.now();
     for (const event of Array.isArray(snapshot?.events) ? snapshot.events : []) {
@@ -3599,7 +3515,7 @@ export class RealtimeBattle {
     const bufferWidth = Math.max(1, Math.floor(nativeWidth * targetScale));
     const bufferHeight = Math.max(1, Math.floor(nativeHeight * targetScale));
     const bufferScale = Math.min(1, bufferWidth / nativeWidth, bufferHeight / nativeHeight);
-    const currentSize = this.renderer.getSize(new THREE.Vector2());
+    const currentSize = this.renderer.getSize(this.rendererSize);
     if (
       currentSize.x !== bufferWidth ||
       currentSize.y !== bufferHeight ||
@@ -3614,6 +3530,27 @@ export class RealtimeBattle {
 
     const startsStageAtTickZero = this.startsStageAtTickZero(snapshot);
     const resetVisualEventDeduplication = this.resetPresentationEventDeduplicationForNewRun(startsStageAtTickZero);
+    if (resetVisualEventDeduplication) {
+      // RealtimeBattle is reused for retries. A tick-zero run boundary must
+      // not inherit the previous run's late-phase framing or smoothing clock.
+      const phase = resolveCameraPhase(snapshot);
+      this.cameraFollowInit = false;
+      this.cameraLastTick = null;
+      this.cameraLastMs = null;
+      this.cameraTierTransition = null;
+      this.phaseZoomFactor = cameraTierTarget(phase);
+      this.manualZoomRatio = 1;
+      this.zoomFactor = this.phaseZoomFactor;
+      this.orbitYaw = 0;
+      this.orbitPitch = THREE.MathUtils.degToRad(55);
+      this.stageIntro = null;
+      this.fogFarTransition = null;
+      if (this.scene.fog) {
+        const fogRange = stageFogRange(resolveStageId(snapshot), phase);
+        this.scene.fog.near = fogRange.near;
+        this.scene.fog.far = fogRange.far;
+      }
+    }
     this.ensureStageTerrain(resolveStageId(snapshot), resolveCameraPhase(snapshot), snapshot?.tick);
     this.captureDeathEchoes(snapshot);
     this.reconcileActors(snapshot);
@@ -3635,7 +3572,9 @@ export class RealtimeBattle {
   }
 
   dispose() {
+    this.clearCameraShakeOffset();
     this.stageLoadToken += 1;
+    this.vfxGeneration += 1;
     this.clearStageWorld();
     for (const record of this.actors.values()) {
       this.clearAttackPresentation(record);
@@ -3652,6 +3591,8 @@ export class RealtimeBattle {
     }
     this.vfxInstances = [];
     this.pendingDeathEchoes = [];
+    this.pendingVfxLoads.clear();
+    this.pendingDeathEchoLoads.clear();
     if (this.gateMesh) disposeObject3D(this.gateMesh);
     this.gateMesh = null;
     if (this.pressureGroup) disposeObject3D(this.pressureGroup);

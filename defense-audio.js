@@ -1,15 +1,36 @@
 import { AUDIO_CUES } from "./defense-catalog.js";
 
-const byId = Object.freeze(Object.fromEntries(Object.values(AUDIO_CUES).map((cue) => [cue.id, cue])));
-
 const MAX_AUDIO_NODES = 64;
 const MAX_TRANSIENT_NODES = 48;
+const MAX_ACTIVE_VOICES = 12;
+const MASTER_GAIN = 0.055;
 const SILENCE = 0.0001;
 const MAX_FEEDBACK_EVENT_KEYS = 128;
 const MAX_NARRATION_CHARS = 240;
 
 const tone = (waveform, frequency, endFrequency, duration, gain, delay = 0, attack = 0.008) =>
   Object.freeze({ waveform, frequency, endFrequency, duration, gain, delay, attack });
+
+const syntheticCue = (id, waveform, frequency, duration) =>
+  Object.freeze({ id, waveform, frequency, duration, synthesized: true });
+
+const SYNTHETIC_CUES = Object.freeze({
+  inputAccepted: syntheticCue("input-accepted", "sine", 360, 0.08),
+  inputRejected: syntheticCue("input-rejected", "square", 110, 0.09),
+  attackWindup: syntheticCue("attack-windup", "sawtooth", 180, 0.11),
+  blockContact: syntheticCue("block-contact", "triangle", 140, 0.1),
+  attackMiss: syntheticCue("attack-miss", "sine", 190, 0.08),
+  interruptAlert: syntheticCue("interrupt-alert", "square", 92, 0.13),
+  warningPulse: syntheticCue("warning-pulse", "sawtooth", 170, 0.2),
+  objectiveWaypoint: syntheticCue("objective-waypoint", "sine", 300, 0.24),
+  objectiveComplete: syntheticCue("objective-complete", "triangle", 260, 0.28),
+  bossPhase: syntheticCue("boss-phase", "sawtooth", 82, 0.42),
+  deathRetry: syntheticCue("death-retry", "triangle", 146, 0.34),
+});
+
+const byId = Object.freeze(Object.fromEntries(
+  [...Object.values(AUDIO_CUES), ...Object.values(SYNTHETIC_CUES)].map((cue) => [cue.id, cue]),
+));
 
 const NARRATION_VOICE_HINTS = Object.freeze(["ko-KR", "ko_KR", "Korean"]);
 const NARRATION_SETTINGS = Object.freeze({ rate: 0.92, pitch: 0.88, volume: 0.86 });
@@ -83,6 +104,45 @@ const CUE_PROFILES = Object.freeze({
   "camera-clamp": Object.freeze([
     tone("sawtooth", 90, 60, 0.035, 0.03, 0, 0.004),
   ]),
+  "input-accepted": Object.freeze([
+    tone("sine", 360, 480, 0.08, 0.04, 0, 0.004),
+  ]),
+  "input-rejected": Object.freeze([
+    tone("square", 110, 70, 0.09, 0.045, 0, 0.004),
+  ]),
+  "attack-windup": Object.freeze([
+    tone("sawtooth", 180, 260, 0.11, 0.045, 0, 0.006),
+  ]),
+  "block-contact": Object.freeze([
+    tone("triangle", 140, 92, 0.1, 0.05, 0, 0.004),
+  ]),
+  "attack-miss": Object.freeze([
+    tone("sine", 190, 120, 0.08, 0.026, 0, 0.004),
+  ]),
+  "interrupt-alert": Object.freeze([
+    tone("square", 92, 54, 0.13, 0.055, 0, 0.006),
+    tone("triangle", 184, 92, 0.1, 0.028, 0.02, 0.004),
+  ]),
+  "warning-pulse": Object.freeze([
+    tone("sawtooth", 170, 85, 0.2, 0.055, 0, 0.012),
+    tone("sine", 255, 127.5, 0.16, 0.025, 0.035, 0.008),
+  ]),
+  "objective-waypoint": Object.freeze([
+    tone("sine", 300, 450, 0.24, 0.065),
+    tone("triangle", 450, 600, 0.18, 0.032, 0.045),
+  ]),
+  "objective-complete": Object.freeze([
+    tone("triangle", 260, 520, 0.28, 0.075),
+    tone("sine", 390, 780, 0.22, 0.038, 0.05),
+  ]),
+  "boss-phase": Object.freeze([
+    tone("sawtooth", 82, 55, 0.42, 0.065, 0, 0.02),
+    tone("triangle", 123, 82, 0.38, 0.038, 0.045, 0.018),
+  ]),
+  "death-retry": Object.freeze([
+    tone("triangle", 146, 219, 0.34, 0.065),
+    tone("sine", 219, 328.5, 0.28, 0.032, 0.055),
+  ]),
 });
 
 const CUE_VARIANTS = Object.freeze({
@@ -123,47 +183,86 @@ const CUE_VARIANTS = Object.freeze({
   ]),
 });
 
-const EVENT_CUE_IDS = Object.freeze({
-  STAGE_STARTED: "stage-start",
-  MOVE: "movement-step",
-  WEAPON_FIRED: "weapon-fire",
-  PROJECTILE_IMPACT: "impact-hit",
-  ENEMY_ATTACK: "weapon-fire",
-  CRITICAL_HIT: AUDIO_CUES.criticalHit.id,
-  GATE_BREACHED: "impact-hit",
-  OCCUPATION_CAPTURED: "occupation-captured",
-  OCCUPATION_PROGRESS: "occupation-captured",
-  OCCUPATION_INTERRUPTED: "impact-hit",
-  EXTRACTION_PROGRESS: "extraction-ready",
-  EXTRACTION_COMPLETED: "elite-extracted",
-  EXTRACTION_REJECTED: "impact-hit",
-  EXTRACTION_INTERRUPTED: "impact-hit",
-  HAZARD_DAMAGE: "impact-hit",
-  COMMANDER_DAMAGED: "impact-hit",
-  PICKUP_DENIED: "impact-hit",
-  ECHO_DENIED: "impact-hit",
-  OBJECTIVE_FAILED: "impact-hit",
-  ENEMY_DEFEATED: "enemy-defeated",
-  ELITE_CANDIDATE_AVAILABLE: "extraction-ready",
-  ELITE_EXTRACTED: "elite-extracted",
-  ITEM_COLLECTED: "item-collected",
-  TERRAIN_RECOVERY: "item-collected",
-  GROWTH_OFFER: "growth-offer",
-  SKILL_SELECTED: "growth-offer",
-  SKILL_CAST: "skill-cast",
-  BOSS_SPAWNED: "boss-spawned",
-  // STANCE_SWITCHED reuses the occupation-captured cue profile as-is (no variant needed) — both are
-  // "confirmed entry into a new state" (control-feel-20260725.md §2.1). STANCE_SWITCH_BLOCKED reuses
-  // impact-hit's PICKUP_DENIED variant (CUE_VARIANTS above) for "action rejected" feedback.
-  STANCE_SWITCHED: "occupation-captured",
-  STANCE_SWITCH_BLOCKED: "impact-hit",
-  REWARD_SELECTED: "terminal",
+const feedbackPolicy = (cueId, priority, category) =>
+  Object.freeze({ cueId, priority, category, intentionalSilence: false });
+const silentPolicy = (category) =>
+  Object.freeze({ cueId: null, priority: 0, category, intentionalSilence: true });
+
+export const AUDIO_EVENT_POLICY = Object.freeze({
+  STAGE_STARTED: feedbackPolicy("stage-start", 72, "stage"),
+  INPUT_ACCEPTED: feedbackPolicy("input-accepted", 34, "input"),
+  INPUT_REJECTED: feedbackPolicy("input-rejected", 48, "input"),
+  MOVE: silentPolicy("movement"),
+  BASIC_ATTACK: feedbackPolicy("attack-windup", 34, "windup"),
+  WEAPON_FIRED: feedbackPolicy("attack-windup", 32, "windup"),
+  MELEE_SWEEP: feedbackPolicy("attack-windup", 35, "windup"),
+  MIDBOSS_SPAWNED: feedbackPolicy("warning-pulse", 82, "boss"),
+  SKILL_CAST: feedbackPolicy("skill-cast", 42, "windup"),
+  BOSS_ATTACK_TELEGRAPHED: feedbackPolicy("warning-pulse", 86, "warning"),
+  BOSS_ATTACK_CANCELLED: feedbackPolicy("attack-miss", 44, "miss"),
+  ENEMY_ATTACK: feedbackPolicy("impact-hit", 46, "contact"),
+  PROJECTILE_IMPACT: feedbackPolicy("impact-hit", 45, "contact"),
+  MELEE_IMPACT: feedbackPolicy("impact-hit", 47, "contact"),
+  PROJECTILE_BLOCKED: feedbackPolicy("block-contact", 52, "block"),
+  PROJECTILE_EXPIRED: feedbackPolicy("attack-miss", 28, "miss"),
+  CRITICAL_HIT: feedbackPolicy(AUDIO_CUES.criticalHit.id, 68, "damage"),
+  SKILL_RESOLVED_DAMAGE: feedbackPolicy("impact-hit", 58, "damage"),
+  COMMANDER_DAMAGED: feedbackPolicy("impact-hit", 74, "damage"),
+  COMPANION_DAMAGED: feedbackPolicy("impact-hit", 70, "damage"),
+  GATE_BREACHED: feedbackPolicy("impact-hit", 76, "damage"),
+  HAZARD_DAMAGE: feedbackPolicy("impact-hit", 72, "damage"),
+  COMPANION_DOWNED: feedbackPolicy("interrupt-alert", 78, "interrupt"),
+  COMMANDER_DOWNED: feedbackPolicy("terminal", 98, "death"),
+  OCCUPATION_INTERRUPTED: feedbackPolicy("interrupt-alert", 74, "interrupt"),
+  EXTRACTION_INTERRUPTED: feedbackPolicy("interrupt-alert", 76, "interrupt"),
+  EXTRACTION_REJECTED: feedbackPolicy("input-rejected", 62, "interrupt"),
+  PICKUP_DENIED: feedbackPolicy("input-rejected", 50, "block"),
+  ECHO_DENIED: feedbackPolicy("input-rejected", 50, "block"),
+  OBJECTIVE_FAILED: feedbackPolicy("interrupt-alert", 84, "warning"),
+  ENCOUNTER_OBJECTIVE_FAILED: feedbackPolicy("interrupt-alert", 84, "warning"),
+  OBJECTIVE_PRESSURE_PULSE: feedbackPolicy("warning-pulse", 80, "warning"),
+  OBJECTIVE_PRESSURE_DEADLINE: feedbackPolicy("warning-pulse", 88, "warning"),
+  WAVE_VARIANT_STARTED: feedbackPolicy("warning-pulse", 64, "warning"),
+  ITEM_COLLECTED: feedbackPolicy("item-collected", 56, "pickup"),
+  TERRAIN_RECOVERY: feedbackPolicy("item-collected", 54, "pickup"),
+  ENEMY_DEFEATED: feedbackPolicy("enemy-defeated", 36, "contact"),
+  ELITE_CANDIDATE_AVAILABLE: feedbackPolicy("extraction-ready", 66, "objective"),
+  EXTRACTION_WINDOW_OPENED: feedbackPolicy("objective-waypoint", 68, "objective"),
+  OCCUPATION_PROGRESS: feedbackPolicy("occupation-captured", 40, "objective"),
+  OCCUPATION_CAPTURED: feedbackPolicy("occupation-captured", 64, "objective"),
+  EXTRACTION_PROGRESS: feedbackPolicy("extraction-ready", 42, "objective"),
+  EXTRACTION_COMPLETED: feedbackPolicy("elite-extracted", 72, "objective"),
+  ELITE_EXTRACTED: feedbackPolicy("elite-extracted", 74, "objective"),
+  OBJECTIVE_PHASE_CHANGED: feedbackPolicy("objective-waypoint", 60, "waypoint"),
+  ENCOUNTER_OBJECTIVE_STARTED: feedbackPolicy("objective-waypoint", 60, "waypoint"),
+  OBJECTIVE_COMPLETED: feedbackPolicy("objective-complete", 64, "objective"),
+  ENCOUNTER_OBJECTIVE_COMPLETED: feedbackPolicy("objective-complete", 64, "objective"),
+  WAVE_CLEARED: feedbackPolicy("objective-complete", 58, "objective"),
+  GROWTH_OFFER: feedbackPolicy("growth-offer", 58, "pickup"),
+  SKILL_SELECTED: feedbackPolicy("growth-offer", 56, "input"),
+  STANCE_SWITCHED: feedbackPolicy("occupation-captured", 52, "input"),
+  STANCE_SWITCH_BLOCKED: feedbackPolicy("input-rejected", 54, "input"),
+  REWARD_SELECTED: feedbackPolicy("terminal", 70, "input"),
+  BOSS_SPAWNED: feedbackPolicy("boss-spawned", 90, "boss"),
+  BOSS_RALLY_WINDOW: feedbackPolicy("boss-phase", 88, "boss"),
+  RETRY_STARTED: feedbackPolicy("death-retry", 94, "retry"),
+  RUN_RETRIED: feedbackPolicy("death-retry", 94, "retry"),
+  TERMINAL: feedbackPolicy("terminal", 100, "terminal"),
+  ENEMY_SPAWNED: silentPolicy("spawn"),
+  ENEMY_POLICY_SELECTED: silentPolicy("policy"),
+  SKILL_COOLDOWN_SET: silentPolicy("cooldown"),
+  SKILL_COOLDOWN_READY: silentPolicy("cooldown"),
+  ESCORT_LEADER_ACQUIRED: silentPolicy("policy"),
+  ENEMY_PRESSURE_DELAYED: silentPolicy("policy"),
 });
+
 
 const CUE_REFRACTORY_SECONDS = Object.freeze({
   "movement-step": 0.07,
-  "weapon-fire": 0.025,
-  "impact-hit": 0.025,
+  "weapon-fire": 0.04,
+  "impact-hit": 0.045,
+  "enemy-defeated": 0.06,
+  "item-collected": 0.08,
   "extraction-ready": 0.12,
   "occupation-captured": 0.12,
   "critical-hit": 0.1,
@@ -171,6 +270,17 @@ const CUE_REFRACTORY_SECONDS = Object.freeze({
   // buzzing (onPointerMove fires many times per second) while still giving
   // a crisp single tick on first contact (control-feel-20260725.md §3.3).
   "camera-clamp": 0.15,
+  "input-accepted": 0.06,
+  "input-rejected": 0.1,
+  "attack-windup": 0.12,
+  "block-contact": 0.05,
+  "attack-miss": 0.08,
+  "interrupt-alert": 0.12,
+  "warning-pulse": 0.35,
+  "objective-waypoint": 0.3,
+  "objective-complete": 0.2,
+  "boss-phase": 0.5,
+  "death-retry": 0.5,
 });
 
 const AMBIENCE_LAYERS = Object.freeze([
@@ -184,6 +294,110 @@ const MUSIC_LAYERS = Object.freeze([
   Object.freeze({ waveform: "sine", frequency: 123.47, gain: 0.012 }),
 ]);
 
+const DEFAULT_SOUNDSCAPE_STAGE = "cinder-span";
+const SOUNDSCAPE_RAMP_SECONDS = 0.35;
+const STAGE_SOUNDSCAPES = Object.freeze({
+  "cinder-span": Object.freeze({
+    ambience: Object.freeze([
+      Object.freeze({ waveform: "sawtooth", frequency: 29 }),
+      Object.freeze({ waveform: "triangle", frequency: 43.5 }),
+    ]),
+    music: Object.freeze([
+      Object.freeze({ waveform: "sawtooth", frequency: 55 }),
+      Object.freeze({ waveform: "square", frequency: 82.41 }),
+      Object.freeze({ waveform: "triangle", frequency: 123.47 }),
+    ]),
+  }),
+  "abyss-chancel": Object.freeze({
+    ambience: Object.freeze([
+      Object.freeze({ waveform: "sine", frequency: 36.71 }),
+      Object.freeze({ waveform: "sine", frequency: 55 }),
+    ]),
+    music: Object.freeze([
+      Object.freeze({ waveform: "sine", frequency: 73.42 }),
+      Object.freeze({ waveform: "triangle", frequency: 110 }),
+      Object.freeze({ waveform: "sine", frequency: 164.81 }),
+    ]),
+  }),
+  "echo-throne": Object.freeze({
+    ambience: Object.freeze([
+      Object.freeze({ waveform: "sine", frequency: 24.5 }),
+      Object.freeze({ waveform: "sawtooth", frequency: 36.71 }),
+    ]),
+    music: Object.freeze([
+      Object.freeze({ waveform: "sine", frequency: 49 }),
+      Object.freeze({ waveform: "sawtooth", frequency: 73.42 }),
+      Object.freeze({ waveform: "triangle", frequency: 98 }),
+    ]),
+  }),
+});
+const SOUNDSCAPE_STATES = Object.freeze({
+  descent: Object.freeze({ ambienceGain: 0.72, musicGain: 0.42, pitch: 0.82 }),
+  "active-wave": Object.freeze({ ambienceGain: 1, musicGain: 1, pitch: 1 }),
+  "objective-pressure": Object.freeze({ ambienceGain: 1.12, musicGain: 1.18, pitch: 1.12 }),
+  boss: Object.freeze({ ambienceGain: 0.86, musicGain: 1.36, pitch: 0.68 }),
+  victory: Object.freeze({ ambienceGain: 0.5, musicGain: 0.72, pitch: 1.5 }),
+  defeat: Object.freeze({ ambienceGain: 0.38, musicGain: 0.5, pitch: 0.55 }),
+});
+
+export function audioSoundscapeForEvent(
+  event,
+  currentState = "descent",
+  currentStageId = DEFAULT_SOUNDSCAPE_STAGE,
+) {
+  const stageId = Object.hasOwn(STAGE_SOUNDSCAPES, event?.stageId)
+    ? event.stageId
+    : currentStageId;
+  switch (event?.type) {
+    case "STAGE_STARTED":
+    case "RETRY_STARTED":
+    case "RUN_RETRIED":
+      return Object.freeze({ stageId, state: "descent" });
+    case "TERMINAL":
+      return Object.freeze({
+        stageId,
+        state: event.outcome === "DEFEAT" ? "defeat" : "victory",
+      });
+    case "BOSS_SPAWNED":
+    case "BOSS_RALLY_WINDOW":
+      return Object.freeze({ stageId, state: "boss" });
+    case "OBJECTIVE_PHASE_CHANGED":
+      return Object.freeze({
+        stageId,
+        state: event.objectiveId === "boss-kill" ? "boss" : "active-wave",
+      });
+    case "OBJECTIVE_PRESSURE_PULSE":
+    case "OBJECTIVE_PRESSURE_DEADLINE":
+    case "OBJECTIVE_FAILED":
+      if (currentState === "boss" || currentState === "victory" || currentState === "defeat") return null;
+      return Object.freeze({ stageId, state: "objective-pressure" });
+    case "ENEMY_SPAWNED":
+    case "WAVE_VARIANT_STARTED":
+      if (currentState !== "descent" && currentState !== "active-wave") return null;
+      return Object.freeze({ stageId, state: "active-wave" });
+    case "WAVE_CLEARED":
+    case "OBJECTIVE_COMPLETED":
+      if (currentState !== "objective-pressure") return null;
+      return Object.freeze({ stageId, state: "active-wave" });
+    default:
+      return null;
+  }
+}
+
+const persistentLayerTarget = (kind, index, stageId, state) => {
+  const stage = STAGE_SOUNDSCAPES[stageId] ?? STAGE_SOUNDSCAPES[DEFAULT_SOUNDSCAPE_STAGE];
+  const stateMix = SOUNDSCAPE_STATES[state] ?? SOUNDSCAPE_STATES.descent;
+  const baseLayers = kind === "ambience" ? AMBIENCE_LAYERS : MUSIC_LAYERS;
+  const stageLayer = stage[kind][index] ?? stage[kind][0];
+  const baseLayer = baseLayers[index] ?? baseLayers[0];
+  const gainScale = kind === "ambience" ? stateMix.ambienceGain : stateMix.musicGain;
+  return {
+    waveform: stageLayer.waveform,
+    frequency: Math.max(20, stageLayer.frequency * stateMix.pitch),
+    gain: baseLayer.gain * gainScale,
+  };
+};
+
 const prefersReducedMotion = () => {
   try {
     return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
@@ -194,24 +408,40 @@ const prefersReducedMotion = () => {
 
 const safePromise = (value) => value?.catch?.(() => undefined);
 
-const FEEDBACK_EVENT_TYPES = new Set(["LORE_SURPRISE_RESOLVED", ...Object.keys(EVENT_CUE_IDS)]);
+const FEEDBACK_EVENT_TYPES = new Set(["LORE_SURPRISE_RESOLVED", ...Object.keys(AUDIO_EVENT_POLICY)]);
 
 const feedbackEventKey = (event) => {
   if (!FEEDBACK_EVENT_TYPES.has(event?.type) && !byId[event?.cue]) return null;
   if (event?.eventId) return `event:${event.eventId}`;
-  return [
+  return JSON.stringify([
     event?.version ?? "",
-    event?.tick ?? 0,
+    event?.tick ?? "",
     event?.eventSequence ?? "",
     event?.type ?? "",
+    event?.inputId ?? "",
     event?.entityId ?? "",
+    event?.enemyId ?? "",
+    event?.sourceId ?? "",
     event?.targetId ?? "",
+    event?.projectileId ?? "",
+    event?.itemId ?? "",
+    event?.rewardId ?? "",
+    event?.skillId ?? "",
+    event?.objectiveId ?? "",
+    event?.bossId ?? "",
+    event?.companionId ?? "",
+    event?.pickupId ?? "",
     event?.tableId ?? "",
     event?.outcomeId ?? "",
+    event?.outcome ?? "",
+    event?.phase ?? "",
+    event?.policyId ?? "",
     event?.source ?? "",
+    event?.reason ?? "",
     event?.damage ?? "",
+    event?.pulse ?? "",
     event?.text ?? "",
-  ].join(":");
+  ]);
 };
 
 const narrationText = (event) => {
@@ -221,14 +451,33 @@ const narrationText = (event) => {
 
 export function audioCueForEvent(event) {
   if (event?.type === "LORE_SURPRISE_RESOLVED") {
-    return Object.freeze({ eventType: event.type, method: "narrate", cueId: null });
+    return Object.freeze({
+      eventType: event.type,
+      method: "narrate",
+      cueId: null,
+      priority: 45,
+      category: "narration",
+      intentionalSilence: false,
+    });
+  }
+  const policy = AUDIO_EVENT_POLICY[event?.type];
+  if (policy) {
+    return Object.freeze({
+      eventType: event.type,
+      method: policy.intentionalSilence ? "silent" : "play",
+      ...policy,
+    });
   }
   const catalogCue = typeof event?.cue === "string" && byId[event.cue] ? event.cue : null;
-  const cueId = event?.type === "CRITICAL_HIT"
-    ? AUDIO_CUES.criticalHit.id
-    : EVENT_CUE_IDS[event?.type] || catalogCue;
-  return cueId
-    ? Object.freeze({ eventType: event?.type ?? null, method: "play", cueId })
+  return catalogCue
+    ? Object.freeze({
+      eventType: event?.type ?? null,
+      method: "play",
+      cueId: catalogCue,
+      priority: 40,
+      category: "catalog",
+      intentionalSilence: false,
+    })
     : null;
 }
 
@@ -257,7 +506,11 @@ const disconnectNode = (node) => {
 
 
 export class DefenseAudio {
-  constructor({ reducedMotion = prefersReducedMotion() } = {}) {
+  constructor({
+    reducedMotion = prefersReducedMotion(),
+    muted = false,
+    volume = 1,
+  } = {}) {
     this.context = null;
     this.master = null;
     this.sfxBus = null;
@@ -265,6 +518,10 @@ export class DefenseAudio {
     this.musicBus = null;
     this.started = false;
     this.reducedMotion = Boolean(reducedMotion);
+    this.muted = Boolean(muted);
+    this.volume = Math.max(0, Math.min(1, Number.isFinite(volume) ? volume : 1));
+    this.paused = false;
+    this.backgrounded = false;
     this.nodes = new Set();
     this.transientNodes = new Set();
     this.stoppableNodes = new Set();
@@ -273,7 +530,125 @@ export class DefenseAudio {
     this.musicVoices = [];
     this.lastCueAt = new Map();
     this.feedbackEventKeys = new Set();
+    this.lastFeedbackTick = null;
     this.activeNarrations = new Set();
+    this.visibilityTarget = null;
+    this.windowTarget = null;
+    this.onVisibilityChange = () => {
+      const hidden = this.visibilityTarget?.hidden === true
+        || this.visibilityTarget?.visibilityState === "hidden";
+      if (hidden) this.suspendForBackground();
+      else this.resumeFromBackground();
+    };
+    this.onWindowBlur = () => this.suspendForBackground();
+    this.onWindowFocus = () => {
+      const hidden = this.visibilityTarget?.hidden === true
+        || this.visibilityTarget?.visibilityState === "hidden";
+      if (!hidden) this.resumeFromBackground();
+    };
+    this.onUserGesture = () => this.unlock();
+    this.soundscapeStageId = DEFAULT_SOUNDSCAPE_STAGE;
+    this.soundscapeState = "descent";
+  }
+  applyMasterGain() {
+    if (!this.master?.gain) return;
+    const value = this.muted ? 0 : MASTER_GAIN * this.volume;
+    setParam(this.master.gain, "setValueAtTime", value, this.context?.currentTime ?? 0);
+  }
+
+  setMuted(muted) {
+    this.muted = Boolean(muted);
+    this.applyMasterGain();
+    if (this.muted) {
+      this.stopTransientVoices();
+      this.stopNarration();
+    } else {
+      this.unlock();
+    }
+    return this.muted;
+  }
+
+  setVolume(volume) {
+    const numeric = Number(volume);
+    if (!Number.isFinite(numeric)) return this.volume;
+    this.volume = Math.max(0, Math.min(1, numeric));
+    this.applyMasterGain();
+    return this.volume;
+  }
+
+  attachLifecycle() {
+    const target = globalThis.document;
+    const windowTarget = globalThis.window;
+    if (this.visibilityTarget === target && this.windowTarget === windowTarget) return;
+    this.detachLifecycle();
+    this.visibilityTarget = target;
+    this.windowTarget = windowTarget;
+    target?.addEventListener?.("visibilitychange", this.onVisibilityChange);
+    target?.addEventListener?.("pointerdown", this.onUserGesture);
+    target?.addEventListener?.("keydown", this.onUserGesture);
+    windowTarget?.addEventListener?.("blur", this.onWindowBlur);
+    windowTarget?.addEventListener?.("focus", this.onWindowFocus);
+    this.onVisibilityChange();
+  }
+
+  detachLifecycle() {
+    this.visibilityTarget?.removeEventListener?.("visibilitychange", this.onVisibilityChange);
+    this.visibilityTarget?.removeEventListener?.("pointerdown", this.onUserGesture);
+    this.visibilityTarget?.removeEventListener?.("keydown", this.onUserGesture);
+    this.windowTarget?.removeEventListener?.("blur", this.onWindowBlur);
+    this.windowTarget?.removeEventListener?.("focus", this.onWindowFocus);
+    this.visibilityTarget = null;
+    this.windowTarget = null;
+  }
+
+  unlock() {
+    if (!this.started || this.muted || this.paused || this.backgrounded
+      || !this.context || this.context.state === "closed") return false;
+    if (this.context.state !== "suspended") return true;
+    try {
+      safePromise(this.context.resume?.());
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  suspendForBackground() {
+    if (!this.started || this.backgrounded) return false;
+    this.backgrounded = true;
+    this.stopTransientVoices();
+    this.stopNarration();
+    try { safePromise(this.context?.suspend?.()); } catch { /* optional Web Audio failure */ }
+    return true;
+  }
+
+  resumeFromBackground() {
+    if (!this.backgrounded) return false;
+    const hidden = this.visibilityTarget?.hidden === true
+      || this.visibilityTarget?.visibilityState === "hidden";
+    if (hidden) return false;
+    this.backgrounded = false;
+    this.unlock();
+    return true;
+  }
+
+  pause() {
+    if (this.paused) return true;
+    this.paused = true;
+    this.stopTransientVoices();
+    this.stopNarration();
+    try { safePromise(this.context?.suspend?.()); } catch { /* optional Web Audio failure */ }
+    return true;
+  }
+
+  resume() {
+    if (this.paused) this.paused = false;
+    this.unlock();
+    if (!this.reducedMotion && !this.backgrounded) {
+      this.startAmbience();
+      this.startBattleMusic();
+    }
+    return true;
   }
 
   register(node, { transient = false, stoppable = false } = {}) {
@@ -299,20 +674,24 @@ export class DefenseAudio {
   }
 
   start() {
-    if (this.started) return true;
+    if (this.started) {
+      this.unlock();
+      return true;
+    }
     const AudioContextCtor = globalThis.AudioContext || globalThis.webkitAudioContext;
     if (!AudioContextCtor) return false;
     try {
       this.context = new AudioContextCtor();
       this.master = this.register(this.context.createGain());
-      this.master.gain.value = 0.055;
+      this.applyMasterGain();
       this.master.connect(this.context.destination);
       this.sfxBus = this.createBus(1, this.master);
       this.ambienceBus = this.createBus(0.32, this.master);
       this.musicBus = this.createBus(0.26, this.master);
       this.started = true;
-      safePromise(this.context.resume?.());
-      if (!this.reducedMotion) {
+      this.attachLifecycle();
+      this.unlock();
+      if (!this.reducedMotion && !this.paused && !this.backgrounded) {
         this.startAmbience();
         this.startBattleMusic();
       }
@@ -323,7 +702,7 @@ export class DefenseAudio {
     }
   }
 
-  startPersistentLayer(layer, destination) {
+  startPersistentLayer(layer, destination, kind, index) {
     if (!this.context || !destination || this.nodes.size + 2 > MAX_AUDIO_NODES) return null;
     let oscillator = null;
     let gain = null;
@@ -335,7 +714,7 @@ export class DefenseAudio {
       gain.gain.value = layer.gain;
       oscillator.connect(gain).connect(destination);
       oscillator.start();
-      return { oscillator, gain };
+      return { oscillator, gain, kind, index };
     } catch {
       stopNode(oscillator);
       this.release(oscillator);
@@ -345,10 +724,11 @@ export class DefenseAudio {
   }
 
   startAmbience() {
-    if (!this.started || this.reducedMotion || this.ambienceVoices.length) return;
-    AMBIENCE_LAYERS.forEach((layer) => {
+    if (!this.started || this.paused || this.backgrounded || this.reducedMotion || this.ambienceVoices.length) return;
+    AMBIENCE_LAYERS.forEach((_, index) => {
       try {
-        const voice = this.startPersistentLayer(layer, this.ambienceBus);
+        const layer = persistentLayerTarget("ambience", index, this.soundscapeStageId, this.soundscapeState);
+        const voice = this.startPersistentLayer(layer, this.ambienceBus, "ambience", index);
         if (voice) this.ambienceVoices.push(voice);
       } catch {
         // A partial ambience layer must never block the battle.
@@ -357,15 +737,47 @@ export class DefenseAudio {
   }
 
   startBattleMusic() {
-    if (!this.started || this.reducedMotion || this.musicVoices.length) return;
-    MUSIC_LAYERS.forEach((layer) => {
+    if (!this.started || this.paused || this.backgrounded || this.reducedMotion || this.musicVoices.length) return;
+    MUSIC_LAYERS.forEach((_, index) => {
       try {
-        const voice = this.startPersistentLayer(layer, this.musicBus);
+        const layer = persistentLayerTarget("music", index, this.soundscapeStageId, this.soundscapeState);
+        const voice = this.startPersistentLayer(layer, this.musicBus, "music", index);
         if (voice) this.musicVoices.push(voice);
       } catch {
         // Battle music is optional and may fail independently of micro-cues.
       }
     });
+  }
+
+  applySoundscape() {
+    if (!this.context || this.context.state === "closed") return;
+    const now = this.context.currentTime;
+    const end = now + SOUNDSCAPE_RAMP_SECONDS;
+    for (const voice of [...this.ambienceVoices, ...this.musicVoices]) {
+      const target = persistentLayerTarget(
+        voice.kind,
+        voice.index,
+        this.soundscapeStageId,
+        this.soundscapeState,
+      );
+      voice.oscillator.type = target.waveform;
+      setParam(voice.oscillator.frequency, "setValueAtTime", Math.max(20, voice.oscillator.frequency.value), now);
+      setParam(voice.oscillator.frequency, "exponentialRampToValueAtTime", target.frequency, end);
+      setParam(voice.gain.gain, "setValueAtTime", Math.max(SILENCE, voice.gain.gain.value), now);
+      setParam(voice.gain.gain, "linearRampToValueAtTime", target.gain, end);
+    }
+  }
+
+  setSoundscape(state, stageId = this.soundscapeStageId) {
+    const nextState = Object.hasOwn(SOUNDSCAPE_STATES, state) ? state : "descent";
+    const nextStageId = Object.hasOwn(STAGE_SOUNDSCAPES, stageId)
+      ? stageId
+      : this.soundscapeStageId;
+    if (nextState === this.soundscapeState && nextStageId === this.soundscapeStageId) return false;
+    this.soundscapeState = nextState;
+    this.soundscapeStageId = nextStageId;
+    this.applySoundscape();
+    return true;
   }
 
   stopVoices(voices) {
@@ -384,6 +796,37 @@ export class DefenseAudio {
     this.stopVoices(this.musicVoices);
   }
 
+  stopVoice(voice) {
+    if (!voice || voice.released) return;
+    voice.released = true;
+    this.activeVoices.delete(voice);
+    voice.nodes.splice(0).forEach((node) => {
+      stopNode(node);
+      this.release(node);
+    });
+    voice.remaining = 0;
+  }
+
+  stopTransientVoices() {
+    [...this.activeVoices].forEach((voice) => this.stopVoice(voice));
+  }
+
+  makeRoomForVoice(requiredNodes, priority) {
+    if (requiredNodes > MAX_TRANSIENT_NODES) return false;
+    while (
+      this.activeVoices.size >= MAX_ACTIVE_VOICES
+      || this.transientNodes.size + requiredNodes > MAX_TRANSIENT_NODES
+      || this.nodes.size + requiredNodes > MAX_AUDIO_NODES
+    ) {
+      const candidate = [...this.activeVoices].sort((left, right) =>
+        left.priority - right.priority || left.startedAt - right.startedAt
+      )[0];
+      if (!candidate || candidate.priority >= priority) return false;
+      this.stopVoice(candidate);
+    }
+    return true;
+  }
+
   lookup(cueId, event = null) {
     const cue = byId[cueId];
     if (!cue) return null;
@@ -393,19 +836,31 @@ export class DefenseAudio {
 
   play(cueId, event = null) {
     const resolved = this.lookup(cueId, event);
-    if (!resolved || !this.context || !this.sfxBus || this.context.state === "closed") return false;
+    if (
+      !resolved
+      || !this.context
+      || !this.sfxBus
+      || this.context.state === "closed"
+      || this.muted
+      || this.paused
+      || this.backgrounded
+    ) return false;
     const now = this.context.currentTime;
     const refractory = CUE_REFRACTORY_SECONDS[cueId] || 0;
     const lastPlayedAt = this.lastCueAt.get(cueId);
     if (refractory && Number.isFinite(lastPlayedAt) && now - lastPlayedAt < refractory) return false;
     const requiredNodes = resolved.profile.length * 2;
-    if (
-      requiredNodes > MAX_TRANSIENT_NODES
-      || this.transientNodes.size + requiredNodes > MAX_TRANSIENT_NODES
-      || this.nodes.size + requiredNodes > MAX_AUDIO_NODES
-    ) return false;
+    const priority = AUDIO_EVENT_POLICY[event?.type]?.priority
+      ?? (cueId === "camera-clamp" ? 5 : 40);
+    if (!this.makeRoomForVoice(requiredNodes, priority)) return false;
 
-    const voice = { remaining: resolved.profile.length, nodes: [] };
+    const voice = {
+      remaining: resolved.profile.length,
+      nodes: [],
+      priority,
+      startedAt: now,
+      released: false,
+    };
     try {
       resolved.profile.forEach((layer) => {
         const oscillator = this.register(this.context.createOscillator(), { transient: true, stoppable: true });
@@ -422,24 +877,25 @@ export class DefenseAudio {
         setParam(gain.gain, "exponentialRampToValueAtTime", SILENCE, ends);
         oscillator.connect(gain).connect(this.sfxBus);
         oscillator.addEventListener?.("ended", () => {
+          if (voice.released) return;
           this.release(oscillator);
           this.release(gain);
+          voice.nodes = voice.nodes.filter((node) => node !== oscillator && node !== gain);
           voice.remaining -= 1;
-          if (voice.remaining <= 0) this.activeVoices.delete(voice);
+          if (voice.remaining <= 0) {
+            voice.released = true;
+            this.activeVoices.delete(voice);
+          }
         }, { once: true });
         oscillator.start(begins);
         oscillator.stop(ends);
       });
       this.activeVoices.add(voice);
       this.lastCueAt.set(cueId, now);
-      safePromise(this.context.resume?.());
+      if (this.context.state === "suspended") safePromise(this.context.resume?.());
       return true;
     } catch {
-      voice.nodes.forEach((node) => {
-        stopNode(node);
-        this.release(node);
-      });
-      this.activeVoices.delete(voice);
+      this.stopVoice(voice);
       return false;
     }
   }
@@ -459,7 +915,8 @@ export class DefenseAudio {
     const text = narrationText(event);
     const speech = globalThis.speechSynthesis;
     const Utterance = globalThis.SpeechSynthesisUtterance;
-    if (!text || typeof speech?.speak !== "function" || typeof Utterance !== "function"
+    if (!text || this.muted || this.paused || this.backgrounded
+      || typeof speech?.speak !== "function" || typeof Utterance !== "function"
       || speech.speaking || speech.pending || this.activeNarrations.size) return false;
     try {
       const utterance = new Utterance(text);
@@ -469,7 +926,7 @@ export class DefenseAudio {
       utterance.lang = voice?.lang || "ko-KR";
       utterance.rate = NARRATION_SETTINGS.rate;
       utterance.pitch = NARRATION_SETTINGS.pitch;
-      utterance.volume = NARRATION_SETTINGS.volume;
+      utterance.volume = NARRATION_SETTINGS.volume * this.volume;
       const release = () => this.activeNarrations.delete(utterance);
       utterance.onend = release;
       utterance.onerror = release;
@@ -490,19 +947,46 @@ export class DefenseAudio {
 
   consume(events = []) {
     if (!Array.isArray(events)) return;
-    events.forEach((event) => {
-      if (!this.rememberFeedbackEvent(event)) return;
-      const audioCue = audioCueForEvent(event);
-      if (audioCue?.method === "narrate") {
-        this.narrate(event);
-      } else if (audioCue?.method === "play") {
-        this.play(audioCue.cueId, event);
+    let feedbackTick = null;
+    let startsRunAtTickZero = false;
+    for (const event of events) {
+      if (Number.isFinite(event?.tick)) {
+        feedbackTick = feedbackTick === null ? event.tick : Math.max(feedbackTick, event.tick);
       }
-    });
+      if (event?.type === "STAGE_STARTED" && event.tick === 0) startsRunAtTickZero = true;
+    }
+    const resetFeedbackDeduplication = startsRunAtTickZero && (this.lastFeedbackTick ?? 0) > 0;
+    if (resetFeedbackDeduplication) {
+      this.feedbackEventKeys.clear();
+      this.lastCueAt.clear();
+    }
+    const fresh = events
+      .map((event, index) => ({ event, index, audioCue: audioCueForEvent(event) }))
+      .filter(({ event, audioCue }) => audioCue && this.rememberFeedbackEvent(event));
+    for (const { event } of fresh) {
+      const transition = audioSoundscapeForEvent(
+        event,
+        this.soundscapeState,
+        this.soundscapeStageId,
+      );
+      if (transition) this.setSoundscape(transition.state, transition.stageId);
+    }
+    fresh
+      .sort((left, right) => right.audioCue.priority - left.audioCue.priority || left.index - right.index)
+      .forEach(({ event, audioCue }) => {
+        if (audioCue.method === "narrate") {
+          this.narrate(event);
+        } else if (audioCue.method === "play") {
+          this.play(audioCue.cueId, event);
+        }
+      });
+    if (feedbackTick !== null) this.lastFeedbackTick = feedbackTick;
   }
 
   stop() {
+    this.detachLifecycle();
     this.stopNarration();
+    this.stopTransientVoices();
     this.stopBattleMusic();
     this.stopAmbience();
     [...this.stoppableNodes].forEach(stopNode);
@@ -511,6 +995,7 @@ export class DefenseAudio {
     this.activeVoices.clear();
     this.lastCueAt.clear();
     this.feedbackEventKeys.clear();
+    this.lastFeedbackTick = null;
     this.stoppableNodes.clear();
     this.transientNodes.clear();
     this.nodes.clear();
@@ -522,6 +1007,10 @@ export class DefenseAudio {
     this.master = null;
     this.context = null;
     this.started = false;
+    this.paused = false;
+    this.backgrounded = false;
+    this.soundscapeStageId = DEFAULT_SOUNDSCAPE_STAGE;
+    this.soundscapeState = "descent";
   }
 
   debugMetrics() {
@@ -531,7 +1020,14 @@ export class DefenseAudio {
       voices: this.activeVoices.size,
       started: this.started,
       reducedMotion: this.reducedMotion,
+      muted: this.muted,
+      paused: this.paused,
+      backgrounded: this.backgrounded,
+      volume: this.volume,
+      soundscapeStageId: this.soundscapeStageId,
+      soundscapeState: this.soundscapeState,
       maxNodes: MAX_AUDIO_NODES,
+      maxVoices: MAX_ACTIVE_VOICES,
       feedbackEvents: this.feedbackEventKeys.size,
       narrations: this.activeNarrations.size,
     };

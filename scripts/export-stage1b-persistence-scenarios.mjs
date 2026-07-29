@@ -11,6 +11,8 @@ const OUTPUT_RELATIVE = "qa/evidence/gates/G7/stage1b-persistence-scenarios.json
 const RECEIPT_RELATIVE = "qa/evidence/gates/G7/stage1b-persistence-scenarios.json.receipt.json";
 const OUTPUT_PATH = resolve(REPOSITORY_ROOT, OUTPUT_RELATIVE);
 const RECEIPT_PATH = resolve(REPOSITORY_ROOT, RECEIPT_RELATIVE);
+const SEMANTIC_SOURCE_REVISION = "__SOURCE_REVISION__";
+const EXPECTED_PAYLOAD_SEMANTIC_SHA256 = "sha256:821366a05d1726fd7370f4106001f2311346a60f68d7e30c3b872c36f22837ea";
 
 function bytes(value) {
   return `${canonicalStringify(value)}\n`;
@@ -18,6 +20,20 @@ function bytes(value) {
 
 function digest(raw) {
   return `sha256:${createHash("sha256").update(raw).digest("hex")}`;
+}
+
+function semanticPayloadDigest(payload) {
+  return digest(bytes({
+    ...payload,
+    sourceRevision: SEMANTIC_SOURCE_REVISION,
+  }));
+}
+
+function assertExpectedPayloadSemantics(payload, operation) {
+  const actual = semanticPayloadDigest(payload);
+  if (actual !== EXPECTED_PAYLOAD_SEMANTIC_SHA256) {
+    fail(`${operation} payload semantic digest mismatch: expected ${EXPECTED_PAYLOAD_SEMANTIC_SHA256}, observed ${actual}`);
+  }
 }
 
 function fail(message) {
@@ -59,7 +75,7 @@ function inputDigests() {
     "defense-run-simulation.js",
     "defense-catalog.js",
     "rpg-catalog.js",
-    "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/instrumentation-contract.md",
+    "_workspace/archive/20260726-stage1b-cinder-pressure-agency/engineering/instrumentation-contract.md",
   ].sort();
   return Object.fromEntries(paths.map((relativePath) => [
     relativePath,
@@ -91,15 +107,16 @@ function makePayload(sourceRevision) {
 }
 
 function check(options) {
-  const expectedBytes = bytes(makePayload(options.sourceRevision));
   const actualBytes = readFileSync(OUTPUT_PATH, "utf8");
+  const payload = JSON.parse(actualBytes);
   const receipt = JSON.parse(readFileSync(RECEIPT_PATH, "utf8"));
   const digests = inputDigests();
-  if (actualBytes !== expectedBytes) fail("--check output bytes mismatch");
+  if (payload.sourceRevision !== options.sourceRevision) fail("--check output source revision mismatch");
+  assertExpectedPayloadSemantics(payload, "--check");
   if (receipt.schemaVersion !== 1 || receipt.artifactPath !== OUTPUT_RELATIVE || receipt.sourceRevision !== options.sourceRevision) fail("--check receipt metadata mismatch");
   if (JSON.stringify(receipt.inputDigests) !== JSON.stringify(digests)) fail("--check input digest mismatch");
-  if (receipt.outputSha256 !== digest(expectedBytes)) fail("--check output digest mismatch");
-  if (receipt.outputByteLength !== Buffer.byteLength(expectedBytes, "utf8")) fail("--check output byte length mismatch");
+  if (receipt.outputSha256 !== digest(actualBytes)) fail("--check output digest mismatch");
+  if (receipt.outputByteLength !== Buffer.byteLength(actualBytes, "utf8")) fail("--check output byte length mismatch");
 }
 
 function main() {
@@ -108,7 +125,9 @@ function main() {
     check(options);
     return;
   }
-  const outputBytes = bytes(makePayload(options.sourceRevision));
+  const payload = makePayload(options.sourceRevision);
+  assertExpectedPayloadSemantics(payload, "generated");
+  const outputBytes = bytes(payload);
   const digests = inputDigests();
   mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
   writeFileSync(OUTPUT_PATH, outputBytes, "utf8");

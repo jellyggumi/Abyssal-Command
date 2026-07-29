@@ -44,7 +44,14 @@ def require_file(path: Path, label: str) -> Path:
 
 
 def relative_path(path: Path, root: Path) -> str:
-    return path.resolve().relative_to(root).as_posix()
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(root).as_posix()
+    except ValueError:
+        for anchor in ("assets", "_workspace"):
+            if anchor in resolved.parts:
+                return Path(*resolved.parts[resolved.parts.index(anchor):]).as_posix()
+        raise RuntimeError(f"path is outside the repository and has no portable anchor: {resolved}")
 
 
 def normalize_paths(value, root: Path):
@@ -65,9 +72,11 @@ def receipt(path: Path, root: Path) -> dict:
     }
 
 
+
 def main() -> None:
     args = parse_args()
     root = args.root.resolve()
+    out = args.out.resolve()
     staged_manifest_path = require_file(args.staged_manifest, "staged resource manifest")
     audit_path = require_file(args.audit, "Blender audit")
     final_paths = {
@@ -113,7 +122,6 @@ def main() -> None:
         "resources": promoted,
     }
 
-    out = args.out.resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"manifest": relative_path(out, root), "resources": promoted}, sort_keys=True))

@@ -1,558 +1,204 @@
-# Camera & VFX Direction — 화려한 연출과 판독성의 우선순위
+# Abyssal Lantern — Three-Stage Camera, VFX & Audio Direction
 
 ```yaml
-run_id: 20260728-onslaught-action-pivot
-status: "[TARGET] — 미측정 설계 목표"
-owner_skill: build-game-camera-controls + create-game-vfx
-authority: design/master-numeric-contract.md
-depends_on: [design/action-combat-spec.md, design/boss-pattern-spec.md, design/encounter-wave-spec.md]
-scope: 카메라 계약, 거리 티어, 연출 모디파이어, 흔들림 예산, VFX 사양, 색 위계, 성능
+run_id: 20260729-three-stage-refinement
+status: "[CURRENT] — runtime-grounded presentation contract"
+title: Abyssal Lantern
+owner_skill: game-vfx + build-game-camera-controls + build-game-audio-feedback
+authorities:
+  - stage-world-catalog.js
+  - battle-realtime-three.js
+  - defense-audio.js
+  - defense-run-simulation.js
+scope: flat-stage framing, per-stage VFX lifecycle, quality/reduced-motion policy, browser soundscape transitions
 ```
 
 ---
 
-## 0. 최우선 원칙
+## 1. Non-negotiable presentation hierarchy
 
-사용자 요구는 "카메라 연출과 VFX 등 화려한 연출이 주"다. 그러나 **판독성이 화려함보다
-먼저다.** 순서는 협상 불가:
+1. Keep the commander, active objective, routed ingress, committed attackers, and telegraph readable.
+2. Keep the one-plane dungeon route and extraction direction unambiguous.
+3. Add stage identity and spectacle only inside those constraints.
 
-1. 플레이어·즉시 위협·목표·예고 데칼이 프레임 안에 있는가
-2. 위험과 안전이 구분되는가
-3. 그 위에 화려함
+The renderer consumes frozen snapshots/events. Camera, joint animation, transient offsets, VFX, and
+audio state never mutate simulation state.
 
-예고 데칼을 가리는 연출은 어떤 미적 가치가 있어도 삭제한다. `boss-pattern-spec.md#8`의
-공정성 불변식이 연출보다 상위다.
+All three design documents use:
 
----
-
-## 1. 기본 카메라 계약
-
-### 1.1 현재 구현 `[OBSERVED]`
-
-`battle-realtime-three.js`:
-
-| 항목 | 값 | 위치 |
-|---|---|---|
-| 카메라 | `PerspectiveCamera(42, w/h, 0.1, 200)` | 라인 1500 |
-| 오빗 피치 clamp | 30° – 85° | `MIN_ORBIT_PITCH` / `MAX_ORBIT_PITCH` |
-| 추적 | `cameraTarget` + yaw 오프셋 → `lookAt` | 라인 2426–2432 |
-| 충격 흔들림 | `sin` 위상 + 감쇠, 3축 | 라인 2831–2834 |
-| 림 라이트 | 카메라 상대 | 라인 2434~ |
-
-### 1.2 유지 / 변경
-
-| 항목 | 처분 |
-|---|---|
-| FOV 42 | **유지** — 거리 티어 계산의 기준 |
-| 피치 clamp 30–85 | **유지** |
-| 기본 피치 | **55°로 고정** `[TARGET]` — 버드아이와 근접 가독의 절충 |
-| 오빗 yaw | **유지** (터치 드래그로 회전, `[OBSERVED]` app.js 안내문) |
-| 충격 흔들림 | **유지 + 예산 도입** (§4) |
-| `cameraTarget` 직결 | **변경** — 위치/시선 독립 스무딩(§1.3) |
-
-### 1.3 스무딩 규칙
-
-```
-// 위치와 시선을 독립적으로 보간한다
-camPos.lerp(desiredPos, 1 - exp(-POS_LAMBDA * dt))
-camLook.lerp(desiredLook, 1 - exp(-LOOK_LAMBDA * dt))
-
-POS_LAMBDA  = 6.0   // 위치는 느리게 — 급격한 이동 억제
-LOOK_LAMBDA = 11.0  // 시선은 빠르게 — 타겟을 놓치지 않음
+```text
+ingress -> intermediate objective(s) -> final objective/boss -> extraction
 ```
 
-- **지수 보간을 쓰는 이유:** 프레임률 독립이다. `lerp(a,b,0.1)`은 60fps와 30fps에서 다른
-  속도가 되어 저사양 기기에서 카메라가 늘어진다.
-- 렌더 상태(지터가 있는 보간 포즈)에 직결하지 않는다. **시뮬레이션 스냅샷의 지휘관
-  위치**를 목표로 삼는다.
-- 히트스톱 중에는 스무딩을 **정지**한다(`action-combat-spec.md#6.2`의 표시 시계와 동기).
+`[SHIPPED]` Runtime now resolves `boss-kill` before `extraction`. Presentation follows the emitted
+boss-death and extraction-window events; it never fabricates a camera- or VFX-only objective state.
 
-### 1.4 권위 타겟과 경계
+## 2. Exactly three stage worlds
 
-| 항목 | 규칙 |
-|---|---|
-| 권위 타겟 | 지휘관 1인. 보스·적은 타겟이 아니다 |
-| 카메라 경계 | 셀 경계 + 여유 2000. 아레나 밖을 담지 않는다 |
-| 줌 범위 | 거리 티어(§2)가 정한다. 수동 줌은 ±15%만 허용 |
-| 오클루전 | 지휘관과 카메라 사이 장식은 **페이드 40%**. 전역 투명화 금지 |
-| reduced-motion | §3.6 |
-
-**오클루전에서 지오메트리를 숨기지 않는 이유:** 통째로 사라지면 공간 판독이 깨진다.
-페이드는 실루엣을 남긴다.
-
----
-
-## 2. 거리 티어 (렌더러 좌표계)
-
-### 2.1 좌표계 — 게임플레이 단위로 카메라를 논하지 않는다
-
-`[OBSERVED]` `battle-realtime-three.js`:
-
-```
-WORLD_SCALE = 14
-worldPointInto:  world.x = (gp.x / 24000 × 2 − 1) × 14
-                 world.z = (gp.y / 12000 × 2 − 1) × 14
-```
-
-| 사실 | 값 |
-|---|---|
-| 월드 평면 | **28 × 28** 월드 단위 (게임플레이 24000 × 12000이 정사각으로 압축) |
-| x축 환산 | 1 월드 = 857.1 게임플레이 |
-| z축 환산 | 1 월드 = 428.6 게임플레이 |
-| **이방성** | **z/x = 2.0** — 게임플레이 원이 월드에서 z로 2배 늘어난 타원 |
-| `ORBIT_ZOOM_DEFAULT` | `hypot(14×1.05, 14×1.05)` = **20.79** |
-| 줌 clamp | `[10.39, 41.58]` (기본 ×0.5 ~ ×2) |
-| 카메라 far | **200** |
-| 안개 | `near 25.2 / far 58.8` |
-
-**따라서 `dist = radius × sin(pitch) / tan(FOV/2)` 같은 등방 공식은 쓸 수 없다.**
-게임플레이 반경 9000을 월드로 옮기면 x반경 10.5 / **z반경 21.0**이며, 평면 절반이 14이므로
-아레나 자체를 넘는다.
-
-### 2.2 실측 — 경계를 카메라로 투영해 NDC로 검증
-
-8개 yaw × 24개 경계점을 `worldPointInto` → 뷰 변환 → NDC로 투영하고, HUD 안전 경계
-(`|x| ≤ 0.95`, `y ≤ 0.95`, `y ≥ −0.55` — 하단은 `ui/hud-information-architecture.md`의
-컨트롤 클러스터를 피함) 안에 드는 최소 거리를 이분 탐색했다.
-
-**줌 clamp 상한(41.58)에서 달성 가능한 최대 게임플레이 반경:**
-
-| 피치 | landscape 844×390 | portrait 390×844 |
-|---|---|---|
-| 45° | 4393 | 3003 |
-| 55° | **4001** | **3003** |
-| 65° | 3779 | 3003 |
-| 75° | 3686 | 3003 |
-
-**기본 줌(20.79)에서:** landscape 2001 / portrait 1501 (피치 55°).
-
-### 2.3 결론 — `VISIBILITY_RADIUS`를 3000으로 정정
-
-`encounter-wave-spec.md#4.4`의 `VISIBILITY_RADIUS = 9000`은 **이 렌더러에서 구현
-불가능하다.** 근거:
-
-- 게임플레이 9000 → 월드 z반경 21.0 > 평면 절반 14.
-- clamp를 ×3으로 올리면 반경 8002가 나오지만 카메라 거리 62.4가 **안개 far 58.8을 넘어**
-  씬 전체가 안개에 묻힌다. 안개까지 재조정하면 스테이지 분위기 계약
-  (`STAGE_FOG_MULTIPLIERS`)이 무너진다.
-
-**정정:** `VISIBILITY_RADIUS = 3000`. portrait 한계값을 채택한다 — portrait는 landscape
-lock 실패 시의 폴백이며(`ui#2.4`), 폴백에서 공정성이 깨지면 안 된다. landscape는 4001까지
-되므로 여유가 있다.
-
-이 정정은 `boss-pattern-spec.md`의 패턴 치수와 `pcg-stage-layout-spec.md`의 시야선 정의에
-영향을 준다.
-
-### 2.4 페이즈별 티어 (렌더러 단위)
-
-피치 55° 고정. 값은 `zoomFactor`(월드 단위 거리)다.
-
-| 페이즈 | `zoomFactor` | 보장 가시 반경 (게임플레이, portrait) | 근거 |
-|---|---|---|---|
-| `DESCENT` | 20.8 (기본) | 1500 | 조작 학습 — 캐릭터를 크게 |
-| `SKIRMISH` | 26.0 | 1880 | 적 4–6체 + 회피 공간 |
-| `SURGE` | 33.0 | 2380 | 동시 34체 |
-| `MIDBOSS` | 38.0 | 2740 | 보스 + 패턴 2종 데칼 |
-| `BIGWAVE` | **41.5** | **3000** | `VISIBILITY_RADIUS` — clamp 상한 |
-| `FINALE` | 41.5 | 3000 | `arena-close` 안전지대 2600 + 여유 |
-
-전 티어가 기존 clamp `[10.39, 41.58]` 안에 든다. **clamp를 바꾸지 않는다.**
-
-### 2.5 근접 가독 검증
-
-`LIGHT_3` 반경 2200은 `BIGWAVE` 티어(가시 반경 3000)에서 화면의 **73%**를 차지한다.
-근접 전투 가독은 문제가 아니라 오히려 과하며, 이것이 `DESCENT`를 20.8로 당겨두는 이유다.
-
-실제 긴장은 `DESCENT`(20.8)와 `BIGWAVE`(41.5) 사이의 **2.0배 차이**다. 해소:
-
-| 규칙 | 값 |
-|---|---|
-| 티어 전환 시간 | 90 tick (1.5 s) 지수 보간 |
-| 전환 시점 | 페이즈 전이 이벤트 |
-| 전환 중 입력 | 정상 수락 (카메라가 조작을 막지 않는다) |
-| 급격한 컷 | 금지. 보스 등장 오빗(§3.1)만 예외 |
-| 수동 줌 | 티어 값 ±10% (clamp 상한을 넘지 않음) |
-
-2.0배를 1.5초에 걸쳐 넘기므로 멀미가 나지 않으며, 페이즈가 바뀌었다는 **체감 신호**가 된다.
-
-### 2.6 이방성이 남기는 문제
-
-z/x = 2.0이므로 **같은 게임플레이 반경이라도 남북 방향이 동서보다 2배 크게 보인다.**
-원형 예고 데칼은 월드에서 타원이 된다.
-
-| 선택지 | 결과 |
-|---|---|
-| A. 데칼을 월드 타원으로 그린다 | 화면에서 원. **게임플레이 판정과 일치** |
-| B. 데칼을 월드 원으로 그린다 | 화면에서 원. 게임플레이 판정과 **불일치** — 금지 |
-
-**A를 채택한다.** 데칼 생성 시 게임플레이 반경을 축별로 환산해
-`scale.x = r × 0.001167`, `scale.z = r × 0.002333`을 적용한다. 판정과 표시가 어긋나면
-`boss-pattern-spec.md#8`의 공정성 불변식이 깨진다.
-
-### 2.7 안개 — NDC 안에 있다고 보이는 것이 아니다
-
-§2.2의 NDC 검증은 **필요조건이지 충분조건이 아니다.** 현행 안개 `[OBSERVED]`
-(`battle-realtime-three.js:1497`, `THREE.Fog(color, WORLD_SCALE*1.8, WORLD_SCALE*4.2)`)는
-선형이며 `near 25.2 / far 58.8`이다. 큰 줌을 기각한 근거가 안개였으므로, 채택한 티어도
-안개로 검증해야 한다.
-
-**선명도** `clarity = (fogFar − d) / (fogFar − fogNear)` (1 = 선명, 0 = 완전 안개).
-
-**현행 안개에서 티어별 경계 위협 선명도:**
-
-| 페이즈 | `zoomFactor` | 중심 선명도 | 경계 최악 선명도 | 판정 |
+| Sequence / stage | Flat spatial intent | Camera intent | Authored ambient VFX | Sound intent |
 |---|---|---|---|---|
-| `DESCENT` | 20.8 | 1.00 | 1.00 | 가독 |
-| `SKIRMISH` | 26.0 | 0.98 | 0.89 | 가독 |
-| `SURGE` | 33.0 | 0.77 | 0.66 | 가독 |
-| `MIDBOSS` | 38.0 | 0.62 | 0.50 | 경계 |
-| `BIGWAVE` | 41.5 | 0.51 | **0.38** | **불가** |
-| `FINALE` | 41.5 | 0.51 | **0.38** | **불가** |
+| 1 — `cinder-span` | Low-wide ash bridge blockade; `cinder-span:critical-route` carries `cinder-span:ingress → cinder-relay-crossing → cinder-forge-stand → encounter-path:cinder-span:boss-kill → cinder-bind`, corridor width `1200`, W/SW ingress. | Focus `(13800,6000,0)`; intro `90` ticks from distance `6`, azimuth `-0.24`, polar `-0.34`; hold the long route axis and show the final gate before commitment. | cue `cinder-span:ember-wake`, effect `cinder-span-ember-wake`, clip `stage-vfx::cinder-span::loop::v01`; warm moving embers indicate forward pressure. | Saw/triangle ash ambience; music fundamentals `55/82.41/123.47 Hz`; the least complex lane mix teaches warning versus contact. |
+| 2 — `abyss-chancel` | Bent nave/colonnade; `abyss-chancel:critical-route` carries `abyss-chancel:ingress → chancel-nave-advance → chancel-transept-lock → encounter-path:abyss-chancel:boss-kill → chancel-bind`, corridor width `1000`, three approaches. | Focus `(13600,6000,0)`; intro `96` ticks from distance `6.4`, azimuth `0.30`, polar `-0.30`; frame side ingress without letting apse props occlude the contest point. | cue `abyss-chancel:mirror-static`, effect `abyss-chancel-mirror-static`, clip `stage-vfx::abyss-chancel::loop::v01`; violet static makes locks and denials legible. | Sine-led chancel bed at `73.42/110/164.81 Hz`; cleaner sustained tones leave warning pulses room during three-way pressure. |
+| 3 — `echo-throne` | Axial fractured court; `echo-throne:critical-route` carries `echo-throne:ingress → throne-aisle-break → throne-dais-stand → encounter-path:echo-throne:boss-kill → throne-bind`, corridor width `1100`, fastest W/SW/NW convergence. | Focus `(14200,6000,0)`; intro `102` ticks from distance `6.8`, azimuth `-0.40`, polar `-0.28`; widest opening establishes the final court, then keeps dais, boss path, and extraction direction readable. | cue `echo-throne:fracture-echo`, effect `echo-throne-fracture-echo`, clip `stage-vfx::echo-throne::loop::v01`; cold fracture echoes carry boss and terminal beats. | Low `49/73.42/98 Hz` throne bed with saw pressure; boss mix is heaviest but never masks terminal or extraction cues. |
 
-`BIGWAVE` 경계 위협은 62%가 안개에 묻힌다. **공정성 계약 위반이다.**
+Every stage has one rectangular support mesh at elevation `0`, an empty `surfaces` list, one critical
+route, an optional detour, at least eight non-overlapping retained props, and motivated lights attached to
+visible emitters. Tall scenery is non-walkable dressing and may not create stairs, ramps, ledges, pits,
+shortcuts, target elevation, or hidden spawn volumes.
 
-#### 2.7.1 채택 — 2단 대응
+## 3. Camera state and route framing
 
-**(1) 정보 레이어는 안개 면제.** 다음은 `material.fog = false`로 렌더한다:
+### 3.1 Existing camera envelope
 
-| 대상 | 사유 |
+| Contract | Current value |
 |---|---|
-| 예고 데칼 5종 | 회피 가능성의 근거. 흐려지면 `UNAVOIDABLE_PATTERNS = 0`이 깨진다 |
-| 안전지대 표시 | 동일 |
-| 위협 실루엣 외곽선 | 적 본체는 안개를 받되 **외곽선 1 px은 면제** — 위치는 항상 읽힌다 |
-| `hit-blocked` 회피 성공 신호 | 피드백 소실 방지 |
-| 지휘관 실루엣 | 자기 위치 상실 방지 |
+| perspective | FOV `42`, near `0.1`, far `200` |
+| pitch clamp | `30°–85°`; authored baseline `55°` |
+| orbit distance | base `20.8`, clamp `10.4–41.6`, manual layer `±10%` |
+| smoothing | position lambda `6`, look lambda `11`, exponential and delta-time based |
+| tier transition | `90` ticks, normalized exponential |
+| phase tier values | `DESCENT 20.8`, `SKIRMISH 26`, `SURGE 33`, `MIDBOSS 38`, `BIGWAVE/FINALE 41.5` |
 
-적 **본체**는 안개를 받는다. 전량 면제하면 안개 낀 지형 위에 선명한 액터가 떠 있는
-합성 오류처럼 보인다. 외곽선만 면제해 위치는 읽히되 원근감은 남긴다.
+### 3.2 Bind existing events to readable beats
 
-**(2) 스테이지별 절대 하한.** 공통 배수는 쓸 수 없다 — `STAGE_FOG_MULTIPLIERS`
-`[OBSERVED]`의 `far`는 3.0–5.6으로 제각각이고 `near`도 1.4–2.3으로 다르다. 기본 4.2로
-역산한 ×1.84를 곱하면 `echo-throne`(far 3.0)은 77.3에 그쳐 요구 124.7에 한참 못 미친다.
-
-**경계 깊이** (피치 55°, yaw 8방향 최악):
-
-| 페이즈 | `zoomFactor` | 경계 깊이 |
+| Existing event/state | Camera beat | Never hide |
 |---|---|---|
-| `DESCENT` | 20.8 | 23.0 |
-| `SKIRMISH` | 26.0 | 28.7 |
-| `SURGE` | 33.0 | 36.5 |
-| `MIDBOSS` | 38.0 | 42.0 |
-| `BIGWAVE` / `FINALE` | 41.5 | 45.9 |
+| `STAGE_STARTED` / ingress | play that stage's authored intro, then settle to `DESCENT` | ingress, first objective marker |
+| `ENCOUNTER_OBJECTIVE_STARTED` | ease look target between current and next contest point; no cut | commander, previous safe route, new objective |
+| `WAVE_VARIANT_STARTED kind=normal` | `SKIRMISH`; no shake | routed ingress arrow and contest radius |
+| `WAVE_VARIANT_STARTED kind=big` | `BIGWAVE`; pull back over `90` ticks | every committed attacker and escape corridor |
+| `MIDBOSS_SPAWNED` | `MIDBOSS`; one bounded emphasis | midboss path, telegraph, commander |
+| `ENCOUNTER_RECOVERY_STARTED` | hold position and reduce motion; do not orbit a failed state | retry floor, withdrawn route, countdown |
+| `BOSS_SPAWNED` | `FINALE`; use the existing `show` beat and boss cue | boss path and threat silhouette |
+| post-boss extraction `[SHIPPED]` | relax toward route overview without a hard reset | extraction point, remaining safe corridor |
 
-**공정성 하한 공식** (경계 위협 선명도 ≥ 0.75):
+`[SHIPPED]` `resolveCameraPhase()` maps objective IDs and emitted encounter events onto the existing
+camera tiers, including `gate-defense`, `echo-recovery`, `occupation`, `boss-kill`, and `extraction`.
+Unknown values still fail safely to `DESCENT`; no renderer-owned simulation phase enum was added.
 
-```
-requiredFar(stageNear, depth) = (depth − 0.75 × stageNear) / (1 − 0.75)
-fogFar(stage, phase)          = max(stageBaseFar, requiredFar(stageNear, depth[phase]))
-fogNear(stage)                = STAGE_FOG_MULTIPLIERS[stage].near × 14   // 불변
-```
+Stage fog is authored per world and remains stage-specific:
 
-**스테이지 × 페이즈 `fogFar`** (월드 단위):
+| Stage | `fogNear` | `fogFar` |
+|---|---:|---:|
+| `cinder-span` | 22.4 | 50.4 |
+| `abyss-chancel` | 24 | 54 |
+| `echo-throne` | 23 | 55 |
 
-| 스테이지 | `near` | 기본 `far` | DESCENT | SKIRMISH | SURGE | MIDBOSS | BIGWAVE | FINALE |
-|---|---|---|---|---|---|---|---|---|
-| `cinder-span` | 22.4 | 50.4 | 50.4 | 50.4 | 78.7 | 100.8 | 116.3 | 116.3 |
-| `veil-citadel` | 21.0 | 47.6 | 47.6 | 52.0 | 82.9 | 105.0 | 120.5 | 120.5 |
-| `echo-throne` | 19.6 | 42.0 | 42.0 | 56.2 | 87.1 | 109.2 | **124.7** | **124.7** |
-| `sunken-bastion` | 25.2 | 56.0 | 56.0 | 56.0 | 70.3 | 92.4 | 107.9 | 107.9 |
-| `howling-sprawl` | 30.8 | 75.6 | 75.6 | 75.6 | 75.6 | 75.6 | 91.1 | 91.1 |
-| `glass-necropolis` | 26.6 | 61.6 | 61.6 | 61.6 | 66.1 | 88.2 | 103.7 | 103.7 |
-| `starless-canal` | 19.6 | 43.4 | 43.4 | 56.2 | 87.1 | 109.2 | **124.7** | **124.7** |
-| `shattered-causeway` | 23.8 | 54.6 | 54.6 | 54.6 | 74.5 | 96.6 | 112.1 | 112.1 |
-| `abyss-chancel` | 21.0 | 46.2 | 46.2 | 52.0 | 82.9 | 105.0 | 120.5 | 120.5 |
-| `gate-zenith` | 32.2 | 78.4 | 78.4 | 78.4 | 78.4 | 78.4 | 86.9 | 86.9 |
+Telegraphs, objective rings, ingress arrows, and extraction markers must remain readable at the worst
+allowed orbit/pitch. Atmosphere may be thinned; information layers may not.
 
-최대 요구 **124.7 < 카메라 `far` 200** — 클리핑 없음.
+## 4. VFX lifecycle
 
-`max(stageBaseFar, …)`이므로 **안개가 저작값보다 짙어지는 경우는 없다.** 개방적인
-스테이지(`gate-zenith` 78.4, `howling-sprawl` 75.6)는 초반 페이즈에서 저작값을 그대로
-유지하고, 폐쇄적인 스테이지(`echo-throne` 42.0)만 후반에 크게 걷힌다.
+### 4.1 Stage ambient lifecycle
 
-#### 2.7.2 스테이지 분위기 보존
+Each official stage mounts exactly its single `presentation.vfxCues` record. The loader requires the exact
+named loop clip, creates one mixer/action for that cloned root, and separates groups
+`vfx-core`, `vfx-detail`, and `vfx-decor`.
 
-`fogNear`는 스테이지 저작값 그대로다. **근경 분위기는 전혀 바뀌지 않는다.** 바뀌는 것은
-원경 `far`뿐이며, 그것도 공정성 하한에 걸릴 때만이다.
-
-상대적 개방감 순서(`gate-zenith` > `howling-sprawl` > … > `echo-throne`)는
-`DESCENT`/`SKIRMISH`에서 완전히 보존되고 후반 페이즈에서 압축된다. 이것은 부작용이 아니라
-**의도된 연출**로 읽힌다 — 전투가 격해질수록 시야가 트인다.
-
-티어 전환 시 `fogFar`도 90 tick에 걸쳐 함께 보간한다(§2.4).
-
-`stageFogRange(stageId)` `[OBSERVED]`가 현재 단일 near/far를 반환한다. 페이즈 인자를 받는
-`stageFogRange(stageId, phase)`로 확장해야 한다 — **엔지니어링 변경 필요**.
-기존 `world-presentation-contract.test.mjs`가 이 함수를 오라클로 쓰므로 테스트도 함께 갱신한다.
-
----
-
-## 3. 연출 모디파이어
-
-모든 연출은 기본 카메라 위에 얹는 **일시적 모디파이어**다. 기본 카메라를 대체하지 않는다.
-모디파이어가 끝나면 항상 기본 상태로 복귀한다.
-
-| # | 연출 | 트리거 | 길이 | 곡선 | 가리면 안 되는 것 | reduced-motion 등가물 |
-|---|---|---|---|---|---|---|
-| 1 | 보스 등장 오빗 | `BOSS_SPAWNED` | 180 tick | yaw 120° 등속 + 거리 −15% | 없음 (전투 정지 구간) | 오빗 없이 정지 프레임 3장 크로스페이드 |
-| 2 | 페이즈 전환 푸시인 | `BOSS_PHASE_CHANGED` | 60 tick | 거리 −20% ease-out | 보스 실루엣 | 거리 고정 + 보스 외곽선 2 tick 점멸 |
-| 3 | 대형 패턴 풀백 | `TELEGRAPH_BIG` 시작 | 예고 tick과 동일 | 거리 +12% ease-in-out | **예고 데칼 전체** | 거리 고정 + 데칼 외곽선 굵기 ×1.5 |
-| 4 | 피니셔 슬로우 오빗 | `LIGHT_3` 접촉 ≥4체 | 20 tick | yaw +8°, 표시 시계 ×0.65 | 주변 적 위치 | 오빗·슬로우 없음, 충격파 링만 |
-| 5 | 히트스톱 프레이밍 | `MELEE_CONTACT` | §`master#3.2` | 정지 후 스냅 | — | 정지 길이 절반 |
-| 6 | 대시 모션 트레일 | `DASH_IFRAME_START` | 18 tick | 잔상 3장, 알파 0.5→0 | 진행 방향 | 잔상 1장, 알파 0.3 |
-| 7 | 처치 줌 펄스 | `ENEMY_DEFEATED` (정예) | 12 tick | 거리 −4% → 복귀 | — | 없음 |
-| 8 | 저체력 비네트 | 지휘관 HP <25% | 지속 | 화면 가장자리 60% 알파 | 중앙 70% 영역 | 비네트 대신 정적 테두리 |
-
-### 3.1 보스 등장 오빗의 예외
-
-유일하게 기본 카메라를 **일시 대체**하는 연출이다. 정당화:
-
-- 전투가 정지된 구간(`encounter-wave-spec.md` 컷 연출 60 tick + 오빗 120 tick)이므로
-  판독해야 할 위협이 없다.
-- 보스의 실루엣과 아레나 크기를 각인시키는 유일한 기회다.
-- 오빗 중 입력은 **버퍼링**되며 종료 즉시 소비된다. 입력을 잃지 않는다.
-- 건너뛰기: 어떤 입력이든 즉시 종료하고 기본 카메라로 복귀한다.
-
-### 3.2 모디파이어 합성 규칙
-
-동시 적용 시:
-
-```
-finalDist = baseDist × Π(modifier.distMultiplier)
-finalYaw  = baseYaw  + Σ(modifier.yawOffset)
+```text
+stage mount -> load/clone -> exact clip lookup -> loop -> quality/reduced-motion policy
+            -> stage change/dispose -> stop actions -> remove owned root/resources
 ```
 
-- 거리 배율의 **곱 결과가 [0.7, 1.25] 범위를 벗어나면 클램프**한다. 풀백과 푸시인이
-  겹쳐 극단으로 가는 것을 막는다.
-- 동시 활성 모디파이어 **최대 3개**. 초과 시 우선순위 낮은 것부터 드롭한다.
-- 우선순위: 보스 등장 > 대형 패턴 풀백 > 페이즈 전환 > 나머지.
+- Full: core + detail + decor visible; loop action plays.
+- Low quality: core stays; detail and decor hide; loop may continue.
+- Reduced motion: core remains static; detail/decor hide; loop action stops.
+- A missing exact clip yields a static core, not an arbitrary first animation.
+- Stage VFX stays at elevation `0` plus the renderer's `0.04` ground lift and never becomes collision.
 
-**대형 패턴 풀백이 페이즈 전환보다 높은 이유:** 풀백은 예고 데칼 전체를 프레임에 담기
-위한 것이며, 이는 회피 가능성 = 공정성 문제다.
+### 4.2 Transient event lifecycle
 
----
+Transient GLB VFX are keyed from existing events and anchored from the snapshot. The current renderer caps
+active instances and pending loads at `24`; the oldest active record retires first. Load completion checks
+the current generation before attachment so late promises cannot resurrect a disposed effect.
 
-## 4. 흔들림 예산
+| Existing event | Asset family | Lifetime |
+|---|---|---:|
+| `INPUT_ACCEPTED`, `PROJECTILE_EXPIRED` | ember wake | `12` ticks |
+| `INPUT_REJECTED`, `PROJECTILE_BLOCKED`, `CRITICAL_HIT` | mirror static / ember wake | `18` ticks |
+| `OBJECTIVE_PHASE_CHANGED`, `WAVE_CLEARED` | mirror static / ember wake | `36` ticks |
+| `OBJECTIVE_COMPLETED`, `OCCUPATION_CAPTURED` | ember wake | `48` ticks |
+| `EXTRACTION_WINDOW_OPENED`, `EXTRACTION_COMPLETED` | mirror static / fracture echo | `60` ticks |
+| `BOSS_ATTACK_TELEGRAPHED` | mirror static | exact `windupTicks`, fallback `45` |
+| `BOSS_SPAWNED`, `TERMINAL` | fracture echo | `90` ticks |
+| `ECHO_WARDEN_AWAKENING_TRIGGERED` | ember wake | `120` ticks |
 
-### 4.1 이벤트별 진폭
+Skill events keep their current semantic IDs and silhouettes:
+`rift-bolt`, `soul-lance`, `grave-pulse`, `void-aegis`, `shadow-step`.
+No new particle emitter API is implied by this document.
 
-| 이벤트 | 진폭 (월드 유닛) | 길이 tick |
-|---|---|---|
-| 일반 접촉 | 0.6 | 6 |
-| `LIGHT_3` 피니셔 | 1.4 | 10 |
-| `HEAVY` 접촉 | 1.8 | 12 |
-| 정예 처치 | 2.2 | 14 |
-| 보스 패턴 착탄 | 3.0 | 18 |
-| 페이즈 전환 | 4.0 | 24 |
+### 4.3 Information priority and overlap
 
-### 4.2 누적 상한 — `BIGWAVE`가 읽히게 만드는 장치
+1. Boss telegraph / objective deadline / terminal.
+2. Damage, block, interrupt, extraction readiness.
+3. Attack, skill contact, pickup.
+4. Decorative stage particles and death texture.
 
+When the `24`-instance cap is pressured, decorative/oldest transient work yields first. A warning or
+objective marker must also have a non-animated geometry/UI equivalent so its meaning survives a missed
+GLB load, reduced motion, or low quality. Additive effects may not wash out route arrows, contest rings,
+actor silhouettes, or attached motivated lights.
+
+## 5. Audio priorities and music state
+
+Web Audio is event-driven and browser-safe:
+
+- Unlock on `pointerdown`/`keydown`; respect mute and master volume.
+- Suspend and stop transient voices/narration on pause, blur, or hidden document; resume only after the
+  browser allows it.
+- Maximums are `12` active transient voices, `48` transient nodes, and `64` total nodes.
+- When full, the oldest lowest-priority voice is stolen only if its priority is lower than the incoming
+  cue. Per-cue refractory windows prevent buzz.
+- Meaningful audio always has a visible equivalent: ingress/waypoint arrow, telegraph, damage flash,
+  objective state, retry countdown, boss silhouette, or terminal panel.
+
+Existing soundscape states transition over `0.35 s` by ramping persistent oscillators:
+
+```text
+descent -> active-wave -> objective-pressure -> active-wave
+        -> boss -> victory/defeat
 ```
-SHAKE_ACCUM_CAP = 6.0      // 초당 진폭 합 상한
-SHAKE_DECAY     = 0.88     // tick당 감쇠 계수
-```
 
-- 매 tick `shakeAccum × SHAKE_DECAY`. 새 이벤트는 진폭을 **가산**한다.
-- `shakeAccum > SHAKE_ACCUM_CAP`이면 초과분을 버린다(이벤트를 무시하는 게 아니라 진폭만
-  깎는다 — VFX와 사운드는 정상 재생).
-- **검산:** `BIGWAVE` 처치율 4.2/s × 일반 접촉 0.6 = 2.5/s. 상한 6.0에 여유 3.5가 남아
-  보스 패턴 착탄(3.0)이 들어와도 포화되지 않는다.
+`STAGE_STARTED`/retry selects `descent`; wave ingress selects `active-wave`; pressure events select
+`objective-pressure`; `BOSS_SPAWNED`/`BOSS_RALLY_WINDOW` selects `boss`; `TERMINAL` selects
+`victory` or `defeat`. `OBJECTIVE_COMPLETED`/`WAVE_CLEARED` only relax pressure back to active wave.
+State changes do not restart persistent layers.
 
-**상한이 없으면** 동시 60체 전투에서 흔들림이 누적되어 예고 데칼이 읽히지 않는다. 이것은
-연출 문제가 아니라 **공정성 문제**다.
+Priority proof points are current IDs: `TERMINAL 100`, `COMMANDER_DOWNED 98`, retry `94`,
+`BOSS_SPAWNED 90`, pressure deadline/boss rally `88`, boss telegraph `86`, objective failure `84`,
+midboss `82`, normal wave warning `64`, kill texture `36`. This keeps survival information audible
+above density noise.
 
-### 4.3 감쇠
+Reduced motion disables persistent ambience/music and transient VFX motion in the current runtime, but
+micro-cues remain available. The visual equivalent is still mandatory; reduced motion is never reduced
+information.
 
-```
-amplitude(t) = A₀ × SHAKE_DECAY^t × sin(seed × 1.7 + t × FREQ)
-```
+## 6. Performance, accessibility, and glitch-prevention gates
 
-기존 구현 `[OBSERVED]`(라인 2831)의 위상 방식을 유지하되 `A₀`를 §4.1 표에서 가져오고
-누적 상한을 적용한다.
-
----
-
-## 5. VFX 사양표
-
-모든 효과는 9개 필드를 갖는다. **예고 / 접촉 / 성공 / 실패 / 지속** 을 시각적으로 분리한다.
-
-### 5.1 예고 (telegraph) — 가장 중요
-
-| 효과 | 트리거 | 소유 | 길이 | 게임플레이 의미 | 실루엣 (19206 거리) | 색 위계 | 스폰 상한 | 정리 | reduced-motion |
-|---|---|---|---|---|---|---|---|---|---|
-| `tele-radial` | `radial-burst` windup | 보스 | 90 tick | 반경 3000 안 위험 | 채워지는 원 + 외곽선 | 위험 적색 | 1 | 패턴 종료 시 | 점멸 대신 정적 외곽선 + 채움 진행 바 |
-| `tele-line` | `line-sweep` windup | 보스 | 45 tick | 반폭 900 직선 위험 | 2줄 띠 + 진행 화살 | 위험 적색 | 2 | 동일 | 화살 애니 제거, 정적 띠 |
-| `tele-cluster` | `ground-cluster` windup | 보스 | 90 tick | 장판 6개 위험 | 원 6개 + 개별 타이머 링 | 위험 적색 | 6 | 동일 | 링 회전 제거, 채움만 |
-| `tele-charge` | `charge-rush` windup | 보스 | 45 tick | 돌진 경로 | 반폭 1100 띠 + 시작점 마커 | 위험 적색 | 1 | 동일 | 정적 띠 |
-| `tele-arena` | `arena-close` windup | 보스 | 120 tick | 외곽 수축, 안전지대 | 수축 링 + **안전 청색** 원 | 위험 적 + 안전 청 | 1 | 동일 | 수축 애니 → 3단계 스텝 |
-| `tele-mob` | 잡몹 windup | 적 | 16–34 tick | 근접 위험 | 발밑 짧은 호 | 경고 주황 | 8 (동시 커밋 상한) | active 진입 시 | 호 → 정적 삼각 마커 |
-
-**예고 데칼은 월드 공간에 눕는다.** 지면 투영이므로 카메라 각도와 무관하게 실제 위험
-영역과 1:1 대응한다. 화면 공간 오버레이는 각도에 따라 왜곡되어 회피 판단을 망친다.
-
-### 5.2 접촉 (contact)
-
-| 효과 | 트리거 | 길이 | 실루엣 | 색 | 상한 | 정리 |
-|---|---|---|---|---|---|---|
-| `hit-light` | `MELEE_CONTACT` (`LIGHT_1/2`) | 8 tick | 짧은 검광 호 + 스파크 4 | 플레이어 백금 | 12 | 자동 만료 |
-| `hit-finisher` | `MELEE_CONTACT` (`LIGHT_3`) | 18 tick | 360° 충격파 링 | 플레이어 백금 + 금 | 3 | 자동 만료 |
-| `hit-heavy` | `MELEE_CONTACT` (`HEAVY`) | 22 tick | 원뿔 균열 + 지면 크랙 데칼 | 플레이어 금 | 3 | 크랙은 120 tick 후 페이드 |
-| `hit-taken` | 지휘관 피격 | 12 tick | 화면 가장자리 적색 플래시 | 위험 적 | 1 | 자동 만료 |
-| `hit-blocked` | `DASH` 무적으로 무효화 | 10 tick | 청색 굴절 링 | 안전 청 | 2 | 자동 만료 |
-
-`hit-blocked`는 **회피 성공을 즉시 알리는 유일한 신호**다. 이것이 없으면 플레이어는
-무적이 작동했는지 모른다.
-
-### 5.3 스킬 (카테고리별 시각 언어)
-
-| 카테고리 | 시각 언어 | 색 | 예시 |
-|---|---|---|---|
-| `melee-amp` | 무기에 붙는 광휘, 짧고 날카로움 | 백금 | `cinder-edge` 검신 발광 |
-| `aoe-burst` | 지면에서 솟는 대형 형상 | 심연 보라 | `ash-nova` 원형 폭발 |
-| `mobility` | 잔상·왜곡, 반투명 | 청록 | `phase-recoil` 위상 잔상 |
-| `sustain` | 지휘관을 감싸는 껍질 | 호박 | `ward-flicker` 실드 구 |
-
-**카테고리별로 색과 형태 언어가 다르다.** 6개 스킬이 동시에 터져도 어느 카테고리가
-발동했는지 구분된다.
-
-### 5.4 상태·기타
-
-| 효과 | 트리거 | 길이 | 색 | 상한 | 비색 채널 |
-|---|---|---|---|---|---|
-| `status-stagger` | 적 경직 | 경직 tick | 흰 점멸 | 8 | 모델 위 별 아이콘 |
-| `status-debuff` | 방어 저하 등 | 지속 | 보라 오라 | 12 | 아래쪽 삼각 아이콘 |
-| `wave-incoming` | 웨이브 스폰 3 s 전 | 180 tick | 주황 | 4 | 스폰 방향 화살 + 카운트다운 |
-| `death-normal` | 잡몹 처치 | 20 tick | 회색 분해 | 20 | — |
-| `death-elite` | 정예 처치 | 40 tick | 금 파열 | 2 | — |
-| `extract-ready` | 정예 추출 가능 | 지속 | 금 기둥 | 1 | 상단 아이콘 |
-| `phase-transition` | 보스 페이즈 전환 | 60 tick | 백색 확산 | 1 | 보스 HP 바 단계 표시 |
-
----
-
-## 6. 색 위계
-
-`BIGWAVE` 밀도에서 위험이 즉시 읽혀야 한다. **색만으로 정보를 전달하지 않는다.**
-
-| 의미 | 색 | HEX `[TARGET]` | 비색 중복 채널 |
-|---|---|---|---|
-| 적 예고 / 위험 | 위험 적 | `#FF3B30` | 채워지는 진행 애니 + 굵은 외곽선 |
-| 안전지대 | 안전 청 | `#32ADE6` | 격자 패턴 텍스처 |
-| 플레이어 능력 | 백금 | `#E8E4DA` | 무기 부착 위치 (항상 손 근처) |
-| 광역 스킬 | 심연 보라 | `#7B5FD3` | 지면에서 솟는 방향성 |
-| 기동 스킬 | 청록 | `#3ED6C0` | 잔상 반복 형태 |
-| 방어 스킬 | 호박 | `#FFB340` | 지휘관을 감싸는 구 형태 |
-| 보상 / 획득 | 금 | `#FFD60A` | 위로 떠오르는 궤적 |
-| 경고 (웨이브) | 주황 | `#FF9500` | 방향 화살 + 숫자 카운트 |
-| 상태 이상 | 자주 | `#BF5AF2` | 모델 위 아이콘 |
-
-### 6.1 색맹 검증
-
-- 적록 색맹: 위험 적(`#FF3B30`)과 보상 금(`#FFD60A`)이 혼동될 수 있다. → **위험은 항상
-  지면 데칼, 보상은 항상 공중 부유**로 위치가 다르다.
-- 청황 색맹: 안전 청과 호박이 혼동될 수 있다. → 안전지대는 **격자 텍스처**, 방어 실드는
-  **구 형태**로 형태가 다르다.
-- 전색맹: 모든 예고가 **채워지는 진행 애니**를 갖는다. 명도 대비 ≥4.5:1을 유지한다.
-
-### 6.2 금지
-
-- 예고 데칼에 가산 블렌딩(additive) 금지. 여러 장이 겹치면 흰색으로 포화되어 개별 영역
-  경계가 사라진다. **알파 블렌딩 + 외곽선**만 사용.
-- 지휘관 주변 반경 1500 안에 장식용 가산 이펙트 금지. 캐릭터 실루엣이 묻힌다.
-
----
-
-## 7. 성능 안전장치
-
-### 7.1 기본 규칙
-
-| 규칙 | 내용 |
+| Gate ID | Pass condition |
 |---|---|
-| 풀링 | 모든 단명 오브젝트는 사전 할당 풀에서 꺼낸다. 런타임 `new` 금지 |
-| 머티리얼 재사용 | 효과 종류당 머티리얼 1개. 인스턴스별 유니폼만 변경 |
-| 지오메트리 재사용 | 동일 형상은 `InstancedMesh` |
-| 프레임 할당 | 업데이트 루프에서 배열·객체 생성 0 |
-| 정리 멱등성 | `dispose()` 2회 호출이 안전해야 한다 |
-| 리셋 안전 | 런 리셋·사망·일시정지 시 전 효과 즉시 회수 |
+| `stage-count` | `STAGE_SHOWCASE_IDS` is exactly `cinder-span`, `abyss-chancel`, `echo-throne`; no Stage 4 content appears. |
+| `flat-plane` | Every route/objective/prop/VFX placement has elevation `0`; one support mesh; zero walkable surfaces/slopes/links. |
+| `camera-route-readability` | At min/max pitch and zoom on desktop and `390×844`, commander, active objective, one ingress indicator, and safe corridor remain simultaneously visible. |
+| `camera-event-mapping` | Each event in §3.2 reaches its listed tier within `90±1` ticks; unknown objective strings never silently hold `DESCENT` in an accepted capture. |
+| `camera-no-pop` | Stage intro skip, objective change, retry, boss entry, and extraction produce no one-frame origin/bind-pose/camera jump. |
+| `vfx-stage-lifecycle` | Ten stage switches leave one current ambient cue, zero retired mixers/actions, and zero late-load resurrection. |
+| `vfx-cap` | Active transient records `≤24`, pending loads `≤24`; oldest retirement leaves no attached root or active action. |
+| `vfx-reduced-motion` | Ambient core remains static, detail/decor hidden, all transient actions stopped, and every warning/objective meaning still visible. |
+| `vfx-overlap` | Boss telegraph, objective ring, and three simultaneous contacts retain separable silhouettes with no additive white-out. |
+| `audio-priority` | With 12 active voices, priority 86+ warning/terminal cues play by evicting only lower-priority voices; equal/higher voices are preserved. |
+| `audio-transition` | Every soundscape state reaches target gain/pitch in `0.35±0.02 s` without creating another persistent layer. |
+| `audio-lifecycle` | Gesture unlock, mute, pause, hidden tab, focus return, and stop leave `voices=0`, no duplicate ambience/music, and no closed-context exception. |
+| `accessibility` | Color-independent shape/position cue exists for danger, safe route, objective, boss, extraction, and reward; reduced motion removes motion, not meaning. |
+| `route-contract` | Captures show `ingress → two intermediate objectives → boss → extraction` with the stable IDs in §2 after the runtime ordering gap is closed. |
 
-### 7.2 품질 티어와 열화 순서
+## 7. Source IDs
 
-`master-numeric-contract.md#9`: VFX 인스턴스 상한 `high 120 / balanced 70 / low 35`.
-
-**무엇을 먼저 버리는가** — 순서가 곧 계약이다:
-
-| 순위 | 대상 | high | balanced | low |
-|---|---|---|---|---|
-| 1 (먼저 버림) | 장식 파티클 (먼지, 불티) | 전량 | 50% | 0 |
-| 2 | 처치 분해 효과 | 개별 | 4체 묶음 | 단순 페이드 |
-| 3 | 지면 크랙 데칼 잔류 | 120 tick | 60 tick | 0 |
-| 4 | 대시 잔상 | 3장 | 2장 | 1장 |
-| 5 | 접촉 스파크 수 | 4 | 2 | 1 |
-| 6 | 스킬 이펙트 디테일 | 풀 | 중간 | 코어 형상만 |
-| **버리지 않음** | **예고 데칼** | **전량** | **전량** | **전량** |
-| **버리지 않음** | **`hit-blocked` 회피 성공 신호** | **유지** | **유지** | **유지** |
-| **버리지 않음** | **안전지대 표시** | **유지** | **유지** | **유지** |
-
-**예고·회피성공·안전지대는 어떤 품질에서도 삭제하지 않는다.** 이 셋은 연출이 아니라
-게임 규칙의 가시화이며, 없으면 게임이 불공정해진다.
-
-### 7.3 자동 열화
-
-```
-if (p95FrameMs > 20 for 180 ticks) → 티어 1단 하강
-if (p95FrameMs < 13 for 600 ticks) → 티어 1단 상승 (최초 설정값 상한)
-```
-
-하강은 빠르게(3초), 상승은 느리게(10초). 진동을 막는다.
-
----
-
-## 8. reduced-motion
-
-`prefers-reduced-motion` 감지 시:
-
-| 항목 | 동작 |
-|---|---|
-| 카메라 모디파이어 | §3 표의 등가물로 대체 |
-| 흔들림 | 진폭 전량 0 |
-| 히트스톱 | 길이 절반 |
-| 예고 애니메이션 | 채움 진행만, 점멸·회전 제거 |
-| 파티클 | 저품질 티어 상한 적용 |
-| 화면 플래시 | 알파 상한 0.3 |
-| 비네트 | 정적 테두리 |
-| **예고 자체** | **유지** — 정보이지 연출이 아니다 |
-
----
-
-## 9. 검증 표
-
-| # | 검사 id | 시나리오 | 통과 기준 |
-|---|---|---|---|
-| 1 | `cam-tier-zoom` | 각 페이즈 진입 | `zoomFactor`가 §2.4 값 ±2%, clamp `[10.39, 41.58]` 이내 |
-| 2 | `cam-visibility-radius` | 전 페이즈 × portrait/landscape | 보장 가시 반경이 §2.4 값 이상, 화면 밖 적 공격 0건 |
-| 2b | `cam-fog-clarity` | **3 스테이지 × 6 페이즈 = 18 조합** | 경계 위협 선명도 ≥0.75, §2.7.1 표와 일치 |
-| 2c | `cam-fog-never-thicker` | 18 조합 | `fogFar ≥ stageBaseFar` — 저작값보다 짙어지는 조합 0건 |
-| 2d | `cam-fog-near-preserved` | 18 조합 | `fogNear` = 스테이지 저작값, 변경 0건 |
-| 2e | `cam-fog-within-far` | 18 조합 | `fogFar` < 카메라 `far` 200 |
-| 2f | `cam-fog-exempt-layers` | 전 페이즈 | 예고 데칼·안전지대·회피신호·실루엣 외곽선의 `material.fog === false` |
-| 2g | `cam-decal-anisotropy` | 원형 예고 5종 | 월드 스케일 `x = r×0.001167`, `z = r×0.002333`, 판정 원과 일치 |
-| 3 | `cam-tier-transition` | `SURGE`→`MIDBOSS` | 90 tick 보간, 급격한 컷 0, 입력 수락 유지 |
-| 4 | `cam-frame-independence` | 60fps vs 30fps | 같은 tick에 카메라 위치 동일 (±1 유닛) |
-| 5 | `cam-corner` | 아레나 모서리 셀 | 카메라가 경계 밖 2000 초과 노출 0 |
-| 6 | `cam-tall-prop` | 높은 장식 뒤 지휘관 | 장식 페이드 40%, 전역 투명화 0 |
-| 7 | `cam-connector` | 연결부 통과 | 지휘관·출구 동시 프레임 유지 |
-| 8 | `cam-many-enemies` | 동시 60체 | 지휘관 실루엣 식별 가능, 프레임 p95 ≤16.7 ms |
-| 9 | `cam-modifier-clamp` | 풀백+푸시인 동시 | 거리 배율 [0.7, 1.25] 클램프 |
-| 10 | `cam-modifier-priority` | 4개 동시 트리거 | 최대 3개 활성, 풀백 우선 유지 |
-| 11 | `cam-boss-orbit-skip` | 오빗 중 입력 | 즉시 종료, 입력 버퍼 소비, 손실 0 |
-| 12 | `cam-pause-resume` | 모디파이어 중 일시정지 | 재개 시 모디파이어 상태 보존, 점프 0 |
-| 13 | `cam-portrait-landscape` | 방향 전환 | 가시 반경 유지, 게임 상태 보존 |
-| 14 | `vfx-telegraph-visible` | 전 품질 티어 × 5패턴 | 예고 데칼 100% 표시 |
-| 15 | `vfx-telegraph-overlap` | 예고 6장 동시 | 개별 경계 식별 가능, 가산 포화 0 |
-| 16 | `vfx-blocked-signal` | `low` 티어 대시 무적 | `hit-blocked` 표시됨 |
-| 17 | `vfx-rapid-repeat` | 1초에 접촉 20회 | 인스턴스 상한 준수, 누수 0 |
-| 18 | `vfx-cleanup-idempotent` | `dispose()` 2회 | 예외 0 |
-| 19 | `vfx-reset-leak` | 리셋 ×10 | 잔존 인스턴스 0, 메모리 증가 0 |
-| 20 | `vfx-shake-cap` | `BIGWAVE` + 보스 패턴 | 초당 누적 진폭 ≤6.0 |
-| 21 | `vfx-reduced-motion` | `prefers-reduced-motion` | 흔들림 0, 예고 유지, 등가물 동작 |
-| 22 | `vfx-quality-degrade` | p95 >20 ms 180 tick | 티어 하강, 예고·안전지대·회피신호 유지 |
-| 23 | `vfx-colorblind` | 3종 색맹 시뮬레이션 | 위험/안전/보상 구분 가능 (형태+위치) |
-| 24 | `vfx-touch-viewport` | 390 × 844 | 예고 데칼이 HUD에 가려지지 않음 |
+- `stage-world-catalog.js#STAGE_WORLD_PROFILES`, `#STAGE_SHOWCASE_IDS`, `#vfxCue`,
+  `#validateProfile`
+- `defense-catalog.js#STAGE_TACTICS`, `#STAGE_ENCOUNTER_ROUTES`, `#STAGES`, `#AUDIO_CUES`
+- `battle-realtime-three.js#CAMERA_PHASE_TIERS`, `#resolveCameraPhase`, `#VFX_MODELS`,
+  `#VFX_LIFETIME_TICKS`, `#instantiateStageVfx`, `#applyStageVfxPolicy`,
+  `#spawnVfx`, `#trackVfxInstance`
+- `defense-audio.js#AUDIO_EVENT_POLICY`, `#STAGE_SOUNDSCAPES`, `#SOUNDSCAPE_STATES`,
+  `#audioSoundscapeForEvent`, `#DefenseAudio`

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-29T10:23:37.458Z",
+  "generatedAt": "2026-07-29T20:28:12.332Z",
   "canonicalStageIds": [
     "cinder-span",
     "abyss-chancel",
@@ -13,15 +13,55 @@
       "stageId": "cinder-span",
       "pass": true,
       "expected": {
-        "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj",
+        "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
         "propRecords": [
           {
+            "id": "cinder-span:collapsed-parapet-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
+          },
+          {
+            "id": "cinder-span:east-ash-wall-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
+          },
+          {
+            "id": "cinder-span:forge-arch",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
+          },
+          {
             "id": "cinder-span:forge-relic",
-            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:gate-beacon-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:ingress-beacon-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:north-ash-talon-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:relay-debris-north-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:relay-debris-south-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
           },
           {
             "id": "cinder-span:seal-brand",
-            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:south-forge-teeth-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
+          },
+          {
+            "id": "cinder-span:west-ash-wall-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
           }
         ],
         "npcRecords": [
@@ -56,9 +96,9 @@
         "surfaceStageId": "cinder-span",
         "loadedStageId": "cinder-span",
         "renderer": "webgl",
-        "renderedFrames": 53,
+        "renderedFrames": 88,
         "terrainLoaded": true,
-        "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj",
+        "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
         "palette": {
           "stagePaletteId": "cinder-span",
           "fogColor": "#7b2a1a",
@@ -69,12 +109,52 @@
         },
         "propRecords": [
           {
+            "id": "cinder-span:collapsed-parapet-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
+          },
+          {
+            "id": "cinder-span:east-ash-wall-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
+          },
+          {
+            "id": "cinder-span:forge-arch",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
+          },
+          {
             "id": "cinder-span:forge-relic",
-            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:gate-beacon-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:ingress-beacon-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:north-ash-talon-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:relay-debris-north-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:relay-debris-south-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
           },
           {
             "id": "cinder-span:seal-brand",
-            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb"
+          },
+          {
+            "id": "cinder-span:south-forge-teeth-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
+          },
+          {
+            "id": "cinder-span:west-ash-wall-prop",
+            "modelPath": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb"
           }
         ],
         "npcRecords": [
@@ -116,23 +196,15 @@
             "status": 200
           },
           {
-            "path": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj",
+            "path": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb",
             "status": 200
           },
           {
-            "path": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_diffuse.png",
+            "path": "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb",
             "status": 200
           },
           {
-            "path": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_metallic.png",
-            "status": 200
-          },
-          {
-            "path": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_normal.png",
-            "status": 200
-          },
-          {
-            "path": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_roughness.png",
+            "path": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
             "status": 200
           },
           {
@@ -149,6 +221,10 @@
           },
           {
             "path": "assets/motion/ingame/characters/scout/model.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
             "status": 200
           },
           {
@@ -174,11 +250,51 @@
         "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
         "propRecords": [
           {
+            "id": "abyss-chancel:apse-wing-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:east-colonnade-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:east-processional-lamp-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
             "id": "abyss-chancel:nave-blade",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
+            "id": "abyss-chancel:nave-seal-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:oath-apse-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
             "id": "abyss-chancel:oath-relic",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:south-nave-screen-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:vestry-debris-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:vestry-screen-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:west-colonnade-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:west-processional-lamp-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           }
         ],
@@ -206,7 +322,7 @@
           },
           "clearColor": "#463282",
           "fogNear": 21,
-          "fogFar": 46.199999999999996
+          "fogFar": 51.8
         }
       },
       "observed": {
@@ -214,24 +330,64 @@
         "surfaceStageId": "abyss-chancel",
         "loadedStageId": "abyss-chancel",
         "renderer": "webgl",
-        "renderedFrames": 46,
+        "renderedFrames": 38,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
         "palette": {
           "stagePaletteId": "abyss-chancel",
           "fogColor": "#463282",
           "fogNear": 21,
-          "fogFar": 46.199999999999996,
+          "fogFar": 51.8,
           "clearColor": "#463282",
           "clearAlpha": 0
         },
         "propRecords": [
           {
+            "id": "abyss-chancel:apse-wing-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:east-colonnade-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:east-processional-lamp-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
             "id": "abyss-chancel:nave-blade",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
+            "id": "abyss-chancel:nave-seal-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:oath-apse-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
             "id": "abyss-chancel:oath-relic",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:south-nave-screen-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:vestry-debris-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:vestry-screen-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:west-colonnade-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:west-processional-lamp-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           }
         ],
@@ -290,7 +446,7 @@
             "status": 200
           },
           {
-            "path": "assets/motion/ingame/characters/scout/model.glb",
+            "path": "assets/motion/ingame/characters/possessed/model.glb",
             "status": 200
           },
           {
@@ -320,8 +476,48 @@
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
+            "id": "echo-throne:court-crescent-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:crown-shard-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
             "id": "echo-throne:dais-relic",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:east-crown-light-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:east-fractured-wing-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:echo-aisle-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:fractured-dais-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:gallery-debris-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:south-gallery-shard-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:west-crown-light-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:west-fractured-wing-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           }
         ],
         "npcRecords": [
@@ -348,7 +544,7 @@
           },
           "clearColor": "#376482",
           "fogNear": 19.599999999999998,
-          "fogFar": 42
+          "fogFar": 56
         }
       },
       "observed": {
@@ -356,14 +552,14 @@
         "surfaceStageId": "echo-throne",
         "loadedStageId": "echo-throne",
         "renderer": "webgl",
-        "renderedFrames": 42,
+        "renderedFrames": 34,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
         "palette": {
           "stagePaletteId": "echo-throne",
           "fogColor": "#376482",
           "fogNear": 19.599999999999998,
-          "fogFar": 42,
+          "fogFar": 56,
           "clearColor": "#376482",
           "clearAlpha": 0
         },
@@ -373,8 +569,48 @@
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
+            "id": "echo-throne:court-crescent-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:crown-shard-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
             "id": "echo-throne:dais-relic",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:east-crown-light-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:east-fractured-wing-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:echo-aisle-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:fractured-dais-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:gallery-debris-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:south-gallery-shard-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:west-crown-light-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "echo-throne:west-fractured-wing-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           }
         ],
         "npcRecords": [
@@ -428,6 +664,10 @@
             "status": 200
           },
           {
+            "path": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+            "status": 200
+          },
+          {
             "path": "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
             "status": 200
           }
@@ -441,5 +681,5 @@
     }
   ],
   "pass": true,
-  "finishedAt": "2026-07-29T10:23:44.077Z"
+  "finishedAt": "2026-07-29T20:28:20.108Z"
 }

@@ -18,11 +18,10 @@ export const RETAINED_ASSET_PATHS = Object.freeze([
   "assets/images/battle/ui/hud/stat-gate-integrity.webp",
   // Live terrain, NPC, bosses, and props are loaded directly from their
   // generated mesh outputs.
-  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj",
-  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_diffuse.png",
-  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_normal.png",
-  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_roughness.png",
-  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_metallic.png",
+  "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
+  "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb",
+  "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb",
+  "assets/mesh/terrain/terrain-cinder-span/runtime/terrain-cinder-span-resources.manifest.json",
   "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
   "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
   "assets/mesh/boss/s1-cinder-warden/glb/base_basic_pbr.glb",

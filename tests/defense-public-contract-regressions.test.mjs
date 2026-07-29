@@ -37,7 +37,7 @@ test("every authored stage exposes its own public narrative rather than default 
 });
 
 test("public snapshots retain truthful commander and Gate integrity envelopes", () => {
-  const snapshot = getRunSnapshot(createDefenseRun({ stageId: "gate-zenith", seed: 19 }));
+  const snapshot = getRunSnapshot(createDefenseRun({ stageId: "echo-throne", seed: 19 }));
 
   for (const [label, subject] of [["commander", snapshot.commander], ["Gate", snapshot.gate]]) {
     assert.equal(typeof subject.integrity, "number", `${label} must publish current integrity`);
@@ -87,12 +87,12 @@ test("canonical catalog metadata retains stable labels and mechanical entries", 
   }
 });
 
-test("shipped command-deck vocabulary retains the canonical faction and companion terms", async () => {
+test("shipped command-deck vocabulary retains the Abyssal Lantern and extraction terms", async () => {
   const source = await readFile(new URL("../app.js", import.meta.url), "utf8");
 
-  assert.match(source, /ABYSSAL COMMAND · FARWATCH HOLD/);
-  assert.match(source, /정예를 처치하고 <b>추출\(Extract\)<\/b>하여 동료를 확보/);
-  assert.doesNotMatch(source, /ABYSSAL COMMAND · DEEP REFUGE/);
-  assert.doesNotMatch(source, /복속/);
-  assert.doesNotMatch(source, /그림자\s*(?:군단|세력|진영)/);
+  assert.match(source, /ABYSSAL LANTERN/);
+  assert.match(source, /정예를 .*추출/u);
+  assert.match(source, /그림자 마력 \(Echo Core\)/u);
+  assert.doesNotMatch(source, /ABYSSAL COMMAND · (?:FARWATCH HOLD|DEEP REFUGE)/u);
+  assert.doesNotMatch(source, /복속/u);
 });

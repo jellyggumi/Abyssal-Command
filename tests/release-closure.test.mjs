@@ -53,11 +53,10 @@ const PROMOTED_MOTION_CHARACTER_ASSETS = Object.freeze([
   "assets/motion/ingame/characters/rights-receipt.json",
 ]);
 const DIRECT_RUNTIME_ASSETS = Object.freeze([
-  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj",
-  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_diffuse.png",
-  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_normal.png",
-  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_roughness.png",
-  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_metallic.png",
+  "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
+  "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb",
+  "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb",
+  "assets/mesh/terrain/terrain-cinder-span/runtime/terrain-cinder-span-resources.manifest.json",
   "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
   "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
   "assets/mesh/boss/s1-cinder-warden/glb/base_basic_pbr.glb",
@@ -78,7 +77,7 @@ const RUNTIME_PATHS = [
   "index.html", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
   "campaign-state.js", "defense-storage.js", "defense-audio.js", "defense-cutscene.js", "defense-telemetry.js",
   "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "lobby-cinematic.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
-  "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/loaders/OBJLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
+  "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png",
   ...UI_ICON_ASSETS,
   ...DIRECT_RUNTIME_ASSETS,
@@ -174,10 +173,27 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assertCommandsInOrder(workflow, "browser_contract", [
     "npm ci",
     "npx --no-install playwright install --with-deps chromium",
-    "node tests/defense-hud-responsive-browser.cjs",
-    "node tests/defense-survivor-browser.cjs",
-    "node tests/defense-performance-browser.cjs",
   ]);
+  const browserContractJob = job(workflow, "browser_contract");
+  const browserLoop = browserContractJob.match(
+    /^\s*for browser_contract in defense-hud-responsive-browser defense-phone-battle-hud-browser\.test defense-survivor-browser defense-performance-browser; do\n(?<body>[\s\S]*?)^\s*done$/m,
+  );
+  assert.ok(browserLoop, "browser_contract must iterate the exact bounded browser suite allowlist");
+  assert.match(
+    browserLoop.groups.body,
+    /^\s*set \+e\n\s*node "tests\/\$\{browser_contract\}\.cjs" 2>&1 \| tee "\$result"\n\s*test_status=\$\{PIPESTATUS\[0\]\}\n\s*set -e\n\s*if \[ "\$test_status" -ne 0 \]; then\n\s*status=failed$/m,
+    "browser_contract must run the exact templated node command and retain each suite's nonzero status",
+  );
+  assert.doesNotMatch(
+    browserLoop.groups.body,
+    /^\s*status=(?!failed\s*$)/m,
+    "browser_contract must not reset an observed failure before the aggregate gate",
+  );
+  assert.match(
+    browserContractJob.slice(browserLoop.index + browserLoop[0].length),
+    /^\s*printf [^\n]+\n\s*test "\$status" = passed$/m,
+    "browser_contract must fail the aggregate gate after recording every suite result",
+  );
   assert.match(job(workflow, "package_pages"), /read -r -a paths <<< "\$PAGES_RUNTIME_PATHS"/);
   assert.match(job(workflow, "package_pages"), /git archive --format=tar "\$RESOLVED_SHA" -- "\$\{paths\[@\]\}"/);
   assert.match(readme, new RegExp(`\\]\\(${GAMEPLAY_VIDEO.replaceAll(".", "\\.")}\\)`), `README must link ${GAMEPLAY_VIDEO}`);

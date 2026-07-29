@@ -16,6 +16,7 @@ import importlib.util
 import json
 import math
 import sys
+import struct
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -66,6 +67,8 @@ WEIGHT_RECEIPT_FIELDS = (
     "singleInfluenceFraction",
 )
 WEIGHT_EPSILON = 1e-8
+QUATERNION_NORM_TOLERANCE = 1e-6
+QUATERNION_CONTINUITY_TOLERANCE = -1e-6
 
 
 def script_args(argv: list[str] | None = None) -> list[str]:
@@ -202,6 +205,545 @@ def is_finite_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
 
 
+def normalize_glb_quaternion_continuity(path: Path) -> dict[str, int]:
+    raw = bytearray(path.read_bytes())
+    if len(raw) < 20 or raw[:4] != b"glTF":
+        raise ValueError(f"{path}: not a GLB file")
+    version, declared_length = struct.unpack_from("<II", raw, 4)
+    if version != 2 or declared_length != len(raw):
+        raise ValueError(
+            f"{path}: invalid GLB header version={version} "
+            f"declaredLength={declared_length} actualLength={len(raw)}"
+        )
+
+    json_chunks: list[tuple[int, int]] = []
+    bin_chunks: list[tuple[int, int]] = []
+    chunk_types: list[int] = []
+    offset = 12
+    while offset < len(raw):
+        if offset + 8 > len(raw):
+            raise ValueError(f"{path}: truncated GLB chunk header at byte {offset}")
+        chunk_length, chunk_type = struct.unpack_from("<II", raw, offset)
+        if chunk_length % 4:
+            raise ValueError(
+                f"{path}: GLB chunk at byte {offset} is not 4-byte aligned"
+            )
+        chunk_start = offset + 8
+        chunk_end = chunk_start + chunk_length
+        if chunk_end > len(raw):
+            raise ValueError(f"{path}: truncated GLB chunk at byte {offset}")
+        if chunk_type == 0x4E4F534A:
+            json_chunks.append((chunk_start, chunk_end))
+        elif chunk_type == 0x004E4942:
+            bin_chunks.append((chunk_start, chunk_end))
+        chunk_types.append(chunk_type)
+        offset = chunk_end
+    if offset != len(raw):
+        raise ValueError(f"{path}: GLB chunk lengths do not consume the file")
+    if len(json_chunks) != 1 or len(bin_chunks) != 1:
+        raise ValueError(
+            f"{path}: expected one JSON and one BIN chunk, "
+            f"found JSON={len(json_chunks)} BIN={len(bin_chunks)}"
+        )
+    if chunk_types[:2] != [0x4E4F534A, 0x004E4942]:
+        raise ValueError(f"{path}: GLB JSON/BIN chunks are not first and second")
+
+    json_start, json_end = json_chunks[0]
+    try:
+        json_text = bytes(raw[json_start:json_end]).decode("utf-8")
+        document, json_payload_end = json.JSONDecoder().raw_decode(json_text)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"{path}: invalid GLB JSON chunk: {exc}") from exc
+    if any(character != " " for character in json_text[json_payload_end:]):
+        raise ValueError(f"{path}: GLB JSON chunk has invalid padding")
+    if not isinstance(document, dict):
+        raise ValueError(f"{path}: GLB JSON payload is not an object")
+    asset = document.get("asset")
+    if (
+        not isinstance(asset, dict)
+        or asset.get("version") != "2.0"
+        or asset.get("minVersion") not in (None, "2.0")
+    ):
+        raise ValueError(f"{path}: unsupported glTF asset version: {asset}")
+
+    accessors = document.get("accessors")
+    buffer_views = document.get("bufferViews")
+    buffers = document.get("buffers")
+    animations = document.get("animations")
+    nodes = document.get("nodes")
+    if not isinstance(accessors, list):
+        raise ValueError(f"{path}: GLB accessors are missing")
+    if not isinstance(buffer_views, list):
+        raise ValueError(f"{path}: GLB bufferViews are missing")
+    if not isinstance(buffers, list):
+        raise ValueError(f"{path}: GLB buffers are missing")
+    if not isinstance(animations, list):
+        raise ValueError(f"{path}: GLB animations are missing")
+    nodes = nodes if isinstance(nodes, list) else []
+    bin_start, bin_end = bin_chunks[0]
+    binary_length = bin_end - bin_start
+    if not buffers or not isinstance(buffers[0], dict) or "uri" in buffers[0]:
+        raise ValueError(f"{path}: GLB buffer 0 is missing or external")
+    declared_binary_length = buffers[0].get("byteLength")
+    binary_padding_length = (
+        binary_length - declared_binary_length
+        if isinstance(declared_binary_length, int)
+        and not isinstance(declared_binary_length, bool)
+        else -1
+    )
+    if (
+        binary_padding_length not in (0, 1, 2, 3)
+        or any(raw[bin_start + declared_binary_length : bin_end])
+    ):
+        raise ValueError(
+            f"{path}: invalid GLB BIN byteLength/padding "
+            f"declared={declared_binary_length} actual={binary_length}"
+        )
+
+    rotation_outputs: dict[int, tuple[str, str]] = {}
+    non_rotation_outputs: set[int] = set()
+    sampler_inputs: set[int] = set()
+    for animation_index, animation in enumerate(animations):
+        if not isinstance(animation, dict):
+            raise ValueError(f"{path}: animation {animation_index} is not an object")
+        animation_name = str(animation.get("name", f"animation[{animation_index}]"))
+        samplers = animation.get("samplers")
+        channels = animation.get("channels")
+        if not isinstance(samplers, list) or not isinstance(channels, list):
+            raise ValueError(f"{path}: {animation_name}: samplers/channels are invalid")
+        for channel_index, channel in enumerate(channels):
+            if not isinstance(channel, dict):
+                raise ValueError(
+                    f"{path}: {animation_name}: channel {channel_index} is not an object"
+                )
+            sampler_index = channel.get("sampler")
+            if (
+                not isinstance(sampler_index, int)
+                or isinstance(sampler_index, bool)
+                or not 0 <= sampler_index < len(samplers)
+            ):
+                raise ValueError(
+                    f"{path}: {animation_name}: channel {channel_index} "
+                    f"has invalid sampler {sampler_index}"
+                )
+            sampler = samplers[sampler_index]
+            if not isinstance(sampler, dict):
+                raise ValueError(
+                    f"{path}: {animation_name}: sampler {sampler_index} is not an object"
+                )
+            input_index = sampler.get("input")
+            if (
+                not isinstance(input_index, int)
+                or isinstance(input_index, bool)
+                or not 0 <= input_index < len(accessors)
+            ):
+                raise ValueError(
+                    f"{path}: {animation_name}: sampler {sampler_index} "
+                    f"has invalid input accessor {input_index}"
+                )
+            sampler_inputs.add(input_index)
+            output_index = sampler.get("output")
+            if (
+                not isinstance(output_index, int)
+                or isinstance(output_index, bool)
+                or not 0 <= output_index < len(accessors)
+            ):
+                raise ValueError(
+                    f"{path}: {animation_name}: sampler {sampler_index} "
+                    f"has invalid output accessor {output_index}"
+                )
+            target = channel.get("target")
+            target = target if isinstance(target, dict) else {}
+            target_path = target.get("path")
+            if target_path != "rotation":
+                non_rotation_outputs.add(output_index)
+                continue
+            if sampler.get("interpolation", "LINEAR") != "LINEAR":
+                raise ValueError(
+                    f"{path}: {animation_name}: rotation sampler {sampler_index} "
+                    f"uses unsupported interpolation "
+                    f"{sampler.get('interpolation')}"
+                )
+            node_index = target.get("node")
+            node_name = (
+                str(nodes[node_index].get("name", f"node[{node_index}]"))
+                if isinstance(node_index, int)
+                and not isinstance(node_index, bool)
+                and 0 <= node_index < len(nodes)
+                and isinstance(nodes[node_index], dict)
+                else f"node[{node_index}]"
+            )
+            rotation_outputs.setdefault(output_index, (animation_name, node_name))
+
+    shared_with_non_rotation = sorted(set(rotation_outputs).intersection(non_rotation_outputs))
+    if shared_with_non_rotation:
+        raise ValueError(
+            f"{path}: rotation output accessors are shared with non-rotation channels: "
+            f"{shared_with_non_rotation}"
+        )
+    shared_with_inputs = sorted(set(rotation_outputs).intersection(sampler_inputs))
+    if shared_with_inputs:
+        raise ValueError(
+            f"{path}: rotation output accessors are shared with sampler inputs: "
+            f"{shared_with_inputs}"
+        )
+
+    component_sizes = {
+        5120: 1,
+        5121: 1,
+        5122: 2,
+        5123: 2,
+        5125: 4,
+        5126: 4,
+    }
+    component_counts = {
+        "SCALAR": 1,
+        "VEC2": 2,
+        "VEC3": 3,
+        "VEC4": 4,
+        "MAT2": 4,
+        "MAT3": 9,
+        "MAT4": 16,
+    }
+
+    def accessor_element_size(accessor: dict[str, Any]) -> int | None:
+        component_size = component_sizes.get(accessor.get("componentType"))
+        component_count = component_counts.get(accessor.get("type"))
+        if component_size is None or component_count is None:
+            return None
+        accessor_type = accessor["type"]
+        if accessor_type.startswith("MAT"):
+            matrix_size = int(accessor_type[-1])
+            column_size = matrix_size * component_size
+            return matrix_size * ((column_size + 3) // 4 * 4)
+        return component_size * component_count
+
+    def storage_layout(
+        view_index: Any,
+        byte_offset: Any,
+        count: Any,
+        element_size: Any,
+    ) -> tuple[int, int, int, int] | None:
+        if (
+            not isinstance(view_index, int)
+            or isinstance(view_index, bool)
+            or not 0 <= view_index < len(buffer_views)
+            or not isinstance(byte_offset, int)
+            or isinstance(byte_offset, bool)
+            or byte_offset < 0
+            or not isinstance(count, int)
+            or isinstance(count, bool)
+            or count <= 0
+            or not isinstance(element_size, int)
+            or isinstance(element_size, bool)
+            or element_size <= 0
+        ):
+            return None
+        view = buffer_views[view_index]
+        if not isinstance(view, dict) or view.get("buffer") != 0:
+            return None
+        view_offset = view.get("byteOffset", 0)
+        stride = view.get("byteStride", element_size)
+        if (
+            not isinstance(view_offset, int)
+            or isinstance(view_offset, bool)
+            or view_offset < 0
+            or not isinstance(stride, int)
+            or isinstance(stride, bool)
+            or stride < element_size
+        ):
+            return None
+        return view_offset + byte_offset, count, stride, element_size
+
+    def accessor_layout(accessor: Any) -> tuple[int, int, int, int] | None:
+        if not isinstance(accessor, dict):
+            return None
+        return storage_layout(
+            accessor.get("bufferView"),
+            accessor.get("byteOffset", 0),
+            accessor.get("count"),
+            accessor_element_size(accessor),
+        )
+
+    def whole_view_layout(view_index: Any) -> tuple[int, int, int, int] | None:
+        if (
+            not isinstance(view_index, int)
+            or isinstance(view_index, bool)
+            or not 0 <= view_index < len(buffer_views)
+        ):
+            return None
+        view = buffer_views[view_index]
+        if not isinstance(view, dict) or view.get("buffer") != 0:
+            return None
+        view_length = view.get("byteLength")
+        return storage_layout(view_index, 0, 1, view_length)
+
+    def overlaps_rotation_spans(
+        rotation_spans: list[tuple[int, int]],
+        layout: tuple[int, int, int, int],
+    ) -> bool:
+        start, count, stride, element_size = layout
+        layout_end = start + (count - 1) * stride + element_size
+        for rotation_start, rotation_end in rotation_spans:
+            if rotation_end <= start or rotation_start >= layout_end:
+                continue
+            first = max(
+                0,
+                (rotation_start - start - element_size) // stride + 1,
+            )
+            last = min(count - 1, (rotation_end - 1 - start) // stride)
+            if first <= last:
+                return True
+        return False
+
+    non_rotation_references = set(sampler_inputs).union(non_rotation_outputs)
+    for mesh in document.get("meshes", []) or []:
+        if not isinstance(mesh, dict):
+            continue
+        for primitive in mesh.get("primitives", []) or []:
+            if not isinstance(primitive, dict):
+                continue
+            if isinstance(primitive.get("indices"), int):
+                non_rotation_references.add(primitive["indices"])
+            attributes = primitive.get("attributes")
+            if isinstance(attributes, dict):
+                non_rotation_references.update(
+                    value for value in attributes.values() if isinstance(value, int)
+                )
+            for target in primitive.get("targets", []) or []:
+                if isinstance(target, dict):
+                    non_rotation_references.update(
+                        value for value in target.values() if isinstance(value, int)
+                    )
+    for skin in document.get("skins", []) or []:
+        if isinstance(skin, dict) and isinstance(skin.get("inverseBindMatrices"), int):
+            non_rotation_references.add(skin["inverseBindMatrices"])
+    shared_with_other_data = sorted(
+        set(rotation_outputs).intersection(non_rotation_references)
+    )
+    if shared_with_other_data:
+        raise ValueError(
+            f"{path}: rotation output accessors are reused by non-rotation data: "
+            f"{shared_with_other_data}"
+        )
+
+    rotation_span_sets: dict[int, list[tuple[int, int]]] = {}
+    for accessor_index in rotation_outputs:
+        layout = accessor_layout(accessors[accessor_index])
+        if layout is None:
+            continue
+        start, count, stride, element_size = layout
+        rotation_span_sets[accessor_index] = [
+            (
+                start + key_index * stride,
+                start + key_index * stride + element_size,
+            )
+            for key_index in range(count)
+        ]
+
+    rotation_span_rows = sorted(rotation_span_sets.items())
+    for row_index, (accessor_index, spans) in enumerate(rotation_span_rows):
+        for other_index, other_spans in rotation_span_rows[row_index + 1 :]:
+            other_layout = accessor_layout(accessors[other_index])
+            if other_layout is not None and overlaps_rotation_spans(spans, other_layout):
+                raise ValueError(
+                    f"{path}: rotation accessors {accessor_index} and {other_index} "
+                    "alias BIN bytes"
+                )
+
+    other_layouts: list[tuple[str, tuple[int, int, int, int]]] = []
+    for other_index, other_accessor in enumerate(accessors):
+        if other_index in rotation_outputs or not isinstance(other_accessor, dict):
+            continue
+        base_layout = accessor_layout(other_accessor)
+        if base_layout is not None:
+            other_layouts.append((f"accessor {other_index}", base_layout))
+        elif "bufferView" in other_accessor:
+            view_layout = whole_view_layout(other_accessor.get("bufferView"))
+            if view_layout is not None:
+                other_layouts.append((f"accessor {other_index}", view_layout))
+
+        sparse = other_accessor.get("sparse")
+        if not isinstance(sparse, dict):
+            continue
+        sparse_count = sparse.get("count")
+        sparse_indices = sparse.get("indices")
+        if isinstance(sparse_indices, dict):
+            indices_layout = storage_layout(
+                sparse_indices.get("bufferView"),
+                sparse_indices.get("byteOffset", 0),
+                sparse_count,
+                component_sizes.get(sparse_indices.get("componentType")),
+            )
+            if indices_layout is None:
+                indices_layout = whole_view_layout(sparse_indices.get("bufferView"))
+            if indices_layout is not None:
+                other_layouts.append(
+                    (f"accessor {other_index} sparse indices", indices_layout)
+                )
+        sparse_values = sparse.get("values")
+        if isinstance(sparse_values, dict):
+            values_layout = storage_layout(
+                sparse_values.get("bufferView"),
+                sparse_values.get("byteOffset", 0),
+                sparse_count,
+                accessor_element_size(other_accessor),
+            )
+            if values_layout is None:
+                values_layout = whole_view_layout(sparse_values.get("bufferView"))
+            if values_layout is not None:
+                other_layouts.append(
+                    (f"accessor {other_index} sparse values", values_layout)
+                )
+
+    for image_index, image in enumerate(document.get("images", []) or []):
+        if not isinstance(image, dict) or "bufferView" not in image:
+            continue
+        image_layout = whole_view_layout(image.get("bufferView"))
+        if image_layout is not None:
+            other_layouts.append((f"image {image_index}", image_layout))
+
+    for accessor_index, rotation_spans in rotation_span_sets.items():
+        for owner, owner_layout in other_layouts:
+            if overlaps_rotation_spans(rotation_spans, owner_layout):
+                raise ValueError(
+                    f"{path}: rotation accessor {accessor_index} aliases {owner} BIN bytes"
+                )
+
+    rotation_keyframes = 0
+    sign_flips = 0
+    for accessor_index, (animation_name, node_name) in rotation_outputs.items():
+        accessor = accessors[accessor_index]
+        context = (
+            f"{path}: clip={animation_name} node={node_name} "
+            f"accessor={accessor_index}"
+        )
+        if not isinstance(accessor, dict):
+            raise ValueError(f"{context}: accessor is not an object")
+        if "sparse" in accessor:
+            raise ValueError(f"{context}: sparse rotation outputs are unsupported")
+        if accessor.get("componentType") != 5126 or accessor.get("type") != "VEC4":
+            raise ValueError(
+                f"{context}: rotation output must be FLOAT VEC4, "
+                f"found componentType={accessor.get('componentType')} "
+                f"type={accessor.get('type')}"
+            )
+        if "normalized" in accessor and accessor["normalized"] is not False:
+            raise ValueError(f"{context}: normalized FLOAT accessor is invalid")
+        count = accessor.get("count")
+        if (
+            not isinstance(count, int)
+            or isinstance(count, bool)
+            or count <= 0
+        ):
+            raise ValueError(f"{context}: invalid accessor count {count}")
+        view_index = accessor.get("bufferView")
+        if (
+            not isinstance(view_index, int)
+            or isinstance(view_index, bool)
+            or not 0 <= view_index < len(buffer_views)
+        ):
+            raise ValueError(f"{context}: bufferless or invalid output accessor")
+        view = buffer_views[view_index]
+        if not isinstance(view, dict):
+            raise ValueError(f"{context}: bufferView {view_index} is not an object")
+        buffer_index = view.get("buffer")
+        if (
+            not isinstance(buffer_index, int)
+            or isinstance(buffer_index, bool)
+            or buffer_index != 0
+            or buffer_index >= len(buffers)
+        ):
+            raise ValueError(
+                f"{context}: bufferView {view_index} has invalid buffer {buffer_index}"
+            )
+        buffer = buffers[buffer_index]
+        if not isinstance(buffer, dict) or "uri" in buffer:
+            raise ValueError(f"{context}: rotation output is not backed by the GLB BIN chunk")
+        buffer_length = buffer.get("byteLength")
+        if (
+            not isinstance(buffer_length, int)
+            or isinstance(buffer_length, bool)
+            or buffer_length < 0
+            or buffer_length > binary_length
+        ):
+            raise ValueError(
+                f"{context}: invalid buffer byteLength {buffer_length} "
+                f"for BIN length {binary_length}"
+            )
+        view_offset = view.get("byteOffset", 0)
+        view_length = view.get("byteLength")
+        accessor_offset = accessor.get("byteOffset", 0)
+        stride = view.get("byteStride", 16)
+        if (
+            not isinstance(view_offset, int)
+            or isinstance(view_offset, bool)
+            or view_offset < 0
+            or view_offset % 4
+            or not isinstance(view_length, int)
+            or isinstance(view_length, bool)
+            or view_length < 0
+            or not isinstance(accessor_offset, int)
+            or isinstance(accessor_offset, bool)
+            or accessor_offset < 0
+            or accessor_offset % 4
+            or not isinstance(stride, int)
+            or isinstance(stride, bool)
+            or stride < 16
+            or stride > 252
+            or stride % 4
+        ):
+            raise ValueError(
+                f"{context}: invalid offsets/length/stride "
+                f"viewOffset={view_offset} viewLength={view_length} "
+                f"accessorOffset={accessor_offset} stride={stride}"
+            )
+        view_end = view_offset + view_length
+        accessor_end = accessor_offset + (count - 1) * stride + 16
+        if view_end > buffer_length or accessor_end > view_length:
+            raise ValueError(
+                f"{context}: accessor range exceeds its bufferView or buffer "
+                f"viewEnd={view_end} bufferLength={buffer_length} "
+                f"accessorEnd={accessor_end} viewLength={view_length}"
+            )
+
+        previous: tuple[float, float, float, float] | None = None
+        previous_norm = 0.0
+        for key_index in range(count):
+            value_offset = bin_start + view_offset + accessor_offset + key_index * stride
+            quaternion = struct.unpack_from("<4f", raw, value_offset)
+            if not all(math.isfinite(value) for value in quaternion):
+                raise ValueError(f"{context}: key={key_index} contains non-finite values")
+            quaternion_norm = math.sqrt(sum(value * value for value in quaternion))
+            if (
+                not math.isfinite(quaternion_norm)
+                or abs(quaternion_norm - 1.0) > QUATERNION_NORM_TOLERANCE
+            ):
+                raise ValueError(
+                    f"{context}: key={key_index} quaternion norm={quaternion_norm} "
+                    f"exceeds tolerance={QUATERNION_NORM_TOLERANCE}"
+                )
+            if previous is not None:
+                dot = (
+                    sum(a * b for a, b in zip(previous, quaternion))
+                    / (previous_norm * quaternion_norm)
+                )
+                if dot < 0.0:
+                    quaternion = tuple(-value for value in quaternion)
+                    struct.pack_into("<4f", raw, value_offset, *quaternion)
+                    sign_flips += 1
+            previous = quaternion
+            previous_norm = quaternion_norm
+            rotation_keyframes += 1
+
+    path.write_bytes(raw)
+    return {
+        "rotationAccessors": len(rotation_outputs),
+        "rotationKeyframes": rotation_keyframes,
+        "signFlips": sign_flips,
+    }
+
+
 def validate_rig_receipts(asset_id: str, rig_report: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     steps = rig_report.get("steps", [])
     steps = steps if isinstance(steps, list) else []
@@ -311,6 +853,20 @@ def validate_glb(
 ) -> tuple[dict[str, Any], list[str]]:
     document, binary = retarget.parse_glb_json_and_bin(path)
     errors: list[str] = []
+    with path.open("rb") as handle:
+        glb_header = handle.read(12)
+    document_asset = document.get("asset")
+    glb2 = (
+        len(glb_header) == 12
+        and glb_header[:4] == b"glTF"
+        and struct.unpack_from("<I", glb_header, 4)[0] == 2
+        and struct.unpack_from("<I", glb_header, 8)[0] == path.stat().st_size
+        and isinstance(document_asset, dict)
+        and document_asset.get("version") == "2.0"
+        and document_asset.get("minVersion") in (None, "2.0")
+    )
+    if not glb2:
+        errors.append("GLB 2.0 container/asset version contract failed")
     animations = document.get("animations", []) or []
     nodes = document.get("nodes", []) or []
     skins = document.get("skins", []) or []
@@ -480,7 +1036,7 @@ def validate_glb(
     nonconstant_actions: set[str] = set()
     loop_closed = True
     linear_sampling = True
-
+    quaternion_continuity = True
     loop_names = {name for name in expected_action_names if any(f"::{key}::" in name for key in ("idle", "move", "run"))}
     for animation in animations:
         animation_name = str(animation.get("name", ""))
@@ -516,6 +1072,45 @@ def validate_glb(
             if not all(math.isfinite(float(value)) for value in flattened):
                 finite_keyframes = False
                 errors.append(f"{animation_name}: non-finite keyframe")
+            if path_name == "rotation":
+                normalized_values: list[tuple[float, float, float, float] | None] = []
+                for key_index, row in enumerate(values):
+                    if len(row) != 4 or not all(math.isfinite(float(value)) for value in row):
+                        quaternion_continuity = False
+                        normalized_values.append(None)
+                        errors.append(
+                            f"quaternion invalid clip={animation_name} node={target_name} "
+                            f"key={key_index}"
+                        )
+                        continue
+                    quaternion = tuple(float(value) for value in row)
+                    quaternion_norm = math.sqrt(sum(value * value for value in quaternion))
+                    if (
+                        not math.isfinite(quaternion_norm)
+                        or abs(quaternion_norm - 1.0) > QUATERNION_NORM_TOLERANCE
+                    ):
+                        quaternion_continuity = False
+                        normalized_values.append(None)
+                        errors.append(
+                            f"quaternion invalid clip={animation_name} node={target_name} "
+                            f"key={key_index} norm={quaternion_norm}"
+                        )
+                        continue
+                    normalized_values.append(
+                        tuple(value / quaternion_norm for value in quaternion)
+                    )
+                for key_index in range(1, len(normalized_values)):
+                    previous = normalized_values[key_index - 1]
+                    current = normalized_values[key_index]
+                    if previous is None or current is None:
+                        continue
+                    dot = sum(a * b for a, b in zip(previous, current))
+                    if dot < QUATERNION_CONTINUITY_TOLERANCE:
+                        quaternion_continuity = False
+                        errors.append(
+                            f"quaternion continuity violation clip={animation_name} "
+                            f"node={target_name} key={key_index} dot={dot}"
+                        )
             if len(values) >= 2 and any(any(abs(float(a) - float(b)) > 1e-6 for a, b in zip(row, values[0])) for row in values[1:]):
                 nonconstant_actions.add(animation_name)
             if animation_name in loop_names and values:
@@ -529,7 +1124,7 @@ def validate_glb(
             errors.append(f"{action_name}: no non-constant track")
 
     checks = {
-        "glb2": path.read_bytes()[:4] == b"glTF",
+        "glb2": glb2,
         "meshPresent": bool(meshes),
         "meshNodeCount5To9": mesh_node_count_ok,
         "singleSkin": len(skins) == 1,
@@ -546,6 +1141,7 @@ def validate_glb(
         "onlyDefBoneTracks": targets_def_bones,
         "loopClosure": loop_closed,
         "linearSampling": linear_sampling,
+        "quaternionContinuity": quaternion_continuity,
         "nonconstantActions": len(nonconstant_actions) == len(expected_action_names),
     }
     return {
@@ -738,6 +1334,8 @@ def main() -> int:
     if not model_path.exists():
         raise RuntimeError(f"GLB export missing: {model_path}")
 
+    quaternion_normalization = normalize_glb_quaternion_continuity(model_path)
+
     validation, glb_gate_errors = validate_glb(
         model_path,
         asset_id,
@@ -745,6 +1343,7 @@ def main() -> int:
         retarget,
     )
     validation["rigReportReceipts"] = rig_receipt_validation
+    validation["quaternionNormalization"] = quaternion_normalization
     gate_errors = [*rig_receipt_errors, *glb_gate_errors]
     checks = dict(validation["checks"])
     checks.update(rig_receipt_validation["checks"])

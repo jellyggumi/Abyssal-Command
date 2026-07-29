@@ -354,6 +354,60 @@ test("public motion registry exports 11 self-contained promoted character GLBs",
   );
 });
 
+test("raw promoted GLBs contain normalized sign-continuous rotation accessors", async () => {
+  const { MOTION_MODELS } = await rendererModule;
+
+  for (const [assetId, relPath] of Object.entries(MOTION_MODELS)) {
+    const { json, bin } = readGlb(resolve(ROOT, relPath));
+    for (const animation of json.animations) {
+      for (const channel of animation.channels) {
+        if (channel.target.path !== "rotation") continue;
+
+        const nodeName = json.nodes[channel.target.node].name;
+        const outputAccessorIndex = animation.samplers[channel.sampler].output;
+        const outputAccessor = json.accessors[outputAccessorIndex];
+        const label = `${assetId}/${animation.name}/${nodeName}`;
+        assert.equal(
+          outputAccessor.componentType,
+          5126,
+          `${label}: rotation output accessor ${outputAccessorIndex} must use FLOAT components`,
+        );
+        assert.equal(
+          outputAccessor.type,
+          "VEC4",
+          `${label}: rotation output accessor ${outputAccessorIndex} must contain VEC4 quaternions`,
+        );
+
+        const quaternions = readAccessor(json, bin, outputAccessorIndex).values;
+        let previous = null;
+        for (let key = 0; key < quaternions.length; key += 1) {
+          const quaternion = quaternions[key];
+          for (const value of quaternion) {
+            assert.ok(Number.isFinite(value), `${label}: key ${key} contains a non-finite quaternion value`);
+          }
+
+          const length = Math.hypot(...quaternion);
+          assert.ok(
+            Math.abs(length - 1) <= 1e-6,
+            `${label}: key ${key} quaternion length ${length} exceeds the 1e-6 normalization tolerance`,
+          );
+          const normalized = quaternion.map((value) => value / length);
+          if (previous) {
+            const dot = normalized.reduce((sum, value, component) => (
+              sum + value * previous[component]
+            ), 0);
+            assert.ok(
+              dot >= -1e-6,
+              `${label}: adjacent keys ${key - 1}/${key} have discontinuous normalized dot ${dot}`,
+            );
+          }
+          previous = normalized;
+        }
+      }
+    }
+  }
+});
+
 // 4. A failed promoted override falls back to the actor's standard promoted model
 test("failed promoted model load recovers with the standard actor base clips", async () => {
   const { MOTION_MODELS, RealtimeBattle } = await rendererModule;

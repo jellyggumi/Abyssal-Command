@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T16:28:08.309173+00:00",
+  "generatedAt": "2026-07-29T17:57:45.527251+00:00",
   "assetId": "shade",
   "role": "void-flanker",
   "category": "enemies",
@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/model.glb",
-  "modelSha256": "752f18954f494808ac55e1b2e152d700db0fc411a8f59e58fb86f11cbf68e70d",
+  "modelSha256": "e9fa49f2fd114574f7e149a54e847f6edb35a294610fa0bde04dcbe8810a79c1",
   "modelBytes": 9744232,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/rig-report.json",
@@ -262,6 +262,7 @@
     "onlyDefBoneTracks": true,
     "loopClosure": true,
     "linearSampling": true,
+    "quaternionContinuity": true,
     "nonconstantActions": true,
     "semanticPartitionReceipt": true,
     "adjacentWeightRepairReceipt": true,
@@ -290,6 +291,7 @@
       "onlyDefBoneTracks": true,
       "loopClosure": true,
       "linearSampling": true,
+      "quaternionContinuity": true,
       "nonconstantActions": true
     },
     "animationNames": [
@@ -406,6 +408,11 @@
         "maxWeightSumError": 2.9802322387695312e-08,
         "singleInfluenceFraction": 0.22014
       }
+    },
+    "quaternionNormalization": {
+      "rotationAccessors": 244,
+      "rotationKeyframes": 15566,
+      "signFlips": 2643
     },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,
