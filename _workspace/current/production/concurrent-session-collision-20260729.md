@@ -145,3 +145,56 @@ than by exhaustion.
   `tests/{world-presentation,defense-public-contract}-browser.cjs` — these assert deck
   selectors and must travel with `app.js`, never ahead of it.
 - `defense-run-simulation.js` — the writer's file; untouched in the commit.
+
+## 8. What the other session is actually building `[INFERENCE]`
+
+The collision is not noise. The writer is landing a coherent combat/extraction systems layer,
+which is why the splices cluster in `mountShell`'s HUD region and `tick()`:
+
+- untracked, theirs: `_workspace/current/engineering/{collision-system,enemy-grade-system,
+  equipment-database,extraction-system,item-weapon-catalog,leveling-system}.js` and
+  `combat-extraction-systems-design.md`;
+- in `app.js`: a manual-attack control (`#manual-attack`, Space/J) with a radial skill
+  cluster, plus `onMoveControlDown` / `onAttackControlDown` handlers on `BattleSession`;
+- in `defense-run-simulation.js`: `commanderBasicAttack(run, mode)` for manual vs automatic
+  basics, `updateM4Recovery` / `processM4Decision` restructuring, and an input allowlist.
+
+`defense-catalog.js` is also modified by them and parses cleanly, as does
+`scripts/rig-character-asset-blender.py`.
+
+**Merge expectation for whoever resolves this:** their manual-attack HUD and this session's
+persistent-deck refactor both rewrite `mountShell`'s template region, and both touch
+`renderShell`'s started/not-started branches. That is a genuine merge, not a file-level pick.
+The deck side is fully described in `ui/dock-removal-plan.md` with measured geometry, so the
+merge can be driven from the documented contract rather than by reading the diff.
+
+## 9. Rename residual: one orphaned service-worker cache `[OBSERVED]`
+
+Recorded here rather than appended to `production/task-manifest.md` because that file was
+being written by the other session at 22:17:53 (its "Combat & Extraction Systems" section),
+and CLAUDE.md §1 requires append-only logs to have a single writer.
+
+`sw.js` `activate` reaps stale caches with `startsWith(CACHE_PREFIX)`. Rotating the prefix
+from `abyssal-command-defense-survivor-` to `abyssal-lantern-defense-survivor-` means a
+returning player's existing cache no longer matches the reaper, so **one orphaned cache
+survives until the browser evicts it**. Every subsequent release rotates normally.
+
+This is a one-time cost of the rename, not a defect, and the alternative -- matching both
+prefixes forever -- would carry the old name indefinitely. The tradeoff is documented at the
+`CACHE_PREFIX` declaration in `sw.js`.
+
+**Save data is unaffected.** `defense-storage.js` deliberately keeps
+`abyssal-command-defense` as its localStorage key and IndexedDB database name; renaming that
+would orphan every existing player's campaign, which is data loss rather than a cache miss.
+
+Live deploy evidence for the rename (fetched from the running site, not CI):
+
+| surface | observed |
+|---|---|
+| `<title>` | `Abyssal Lantern — 심연의 등불` |
+| `manifest.json` | `"Abyssal Lantern"` / `"AbyssalLantern"` |
+| `sw.js` `CACHE_NAME` | `abyssal-lantern-defense-survivor-6e2ab06d4182ff2220961aa9b417666140317ed9` |
+| repaired runtime GLB | `assets/motion/ingame/characters/guard/model.glb` HTTP 200, 13426364 bytes |
+
+The SHA suffix matches `HEAD` exactly, so the `static.yml:213` grep and the sed substitution
+both resolved against the new prefix in production.
