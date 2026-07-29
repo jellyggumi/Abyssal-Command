@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T10:12:25.673241+00:00",
+  "generatedAt": "2026-07-29T10:28:41.077839+00:00",
   "assetId": "broken-court-monarch-v04",
   "role": "regal-void-caster",
   "category": "bosses",
@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/model.glb",
-  "modelSha256": "2a27ffea538856381b3b9108d99574f06b1aab42e2742e6a86cd7bfd7682909b",
+  "modelSha256": "d3b51240ba5bc4c4b424f2283a169187f904be49a77461ae1772cb95b09eeddc",
   "modelBytes": 11416220,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/rig-report.json",
@@ -226,7 +226,7 @@
       "action": "die",
       "clipName": "broken-court-monarch-v04::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+      "sourceSha256": "60a0c2b9146e14dd1128834954e62664412cbc8ae9572f6b9c452030ee059477",
       "loop": false,
       "kind": "authored-fallback"
     }

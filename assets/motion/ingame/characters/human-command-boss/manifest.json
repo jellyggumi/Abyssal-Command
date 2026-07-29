@@ -10,7 +10,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "assets/motion/ingame/characters/human-command-boss/model.glb",
-  "modelSha256": "530ea5967ac431f8c5a62270c6673d90156df749b07924b15ce7908bc88d9939",
+  "modelSha256": "b51810aa620762a01c3c7f4ffa2226bbbe30e6b8d6ba3c86aacb69aa0048a3ad",
   "modelBytes": 9720304,
   "targetBoneNames": [
     "DEF-spine",
@@ -205,7 +205,7 @@
       "action": "die",
       "clipName": "human-command-boss::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+      "sourceSha256": "60a0c2b9146e14dd1128834954e62664412cbc8ae9572f6b9c452030ee059477",
       "loop": false,
       "kind": "authored-fallback"
     },
@@ -315,7 +315,7 @@
   },
   "runtimeEligible": true,
   "gateErrors": [],
-  "generationId": "8bab6c499986308411640900cddf7947c321fd2f22e8b5ad9200f7b001d6ae8e",
+  "generationId": "18f2f33f00b2825777fc9753c81281c2a5aee0bd9c97ad441bd11ba54fe53e7c",
   "sourceAssetRights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",

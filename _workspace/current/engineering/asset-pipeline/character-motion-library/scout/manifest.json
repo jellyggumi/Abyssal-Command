@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T10:14:13.705270+00:00",
+  "generatedAt": "2026-07-29T10:29:48.535952+00:00",
   "assetId": "scout",
   "role": "rush-scout",
   "category": "enemies",
@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/model.glb",
-  "modelSha256": "bf925108ee922eeca4773f9282ee772c71648f2b27460c76c12970111e4d44b8",
+  "modelSha256": "fc2d338e267c7f3637f7090b9a84986c1dca9d32c9adc90c15fc66d060849e2a",
   "modelBytes": 12489432,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/rig-report.json",
@@ -226,7 +226,7 @@
       "action": "die",
       "clipName": "scout::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+      "sourceSha256": "60a0c2b9146e14dd1128834954e62664412cbc8ae9572f6b9c452030ee059477",
       "loop": false,
       "kind": "authored-fallback"
     }

@@ -10,7 +10,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "assets/motion/ingame/characters/lantern-reaver/model.glb",
-  "modelSha256": "04adec440c5a4aff4746e4536bdc65eaa83eced65fe6f53472a34e659056ef84",
+  "modelSha256": "ea07c888748bd528e0e79e2a95e757c765b318c43b534ecc0cb01e6563c69809",
   "modelBytes": 12492748,
   "targetBoneNames": [
     "DEF-spine",
@@ -205,7 +205,7 @@
       "action": "die",
       "clipName": "lantern-reaver::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+      "sourceSha256": "60a0c2b9146e14dd1128834954e62664412cbc8ae9572f6b9c452030ee059477",
       "loop": false,
       "kind": "authored-fallback"
     },
@@ -315,7 +315,7 @@
   },
   "runtimeEligible": true,
   "gateErrors": [],
-  "generationId": "8bab6c499986308411640900cddf7947c321fd2f22e8b5ad9200f7b001d6ae8e",
+  "generationId": "18f2f33f00b2825777fc9753c81281c2a5aee0bd9c97ad441bd11ba54fe53e7c",
   "sourceAssetRights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",

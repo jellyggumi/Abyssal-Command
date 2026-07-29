@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T10:12:48.354085+00:00",
+  "generatedAt": "2026-07-29T10:28:51.280889+00:00",
   "assetId": "ember-cohort",
   "role": "radiant-vanguard",
   "category": "enemies",
@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/model.glb",
-  "modelSha256": "978aa2c95de63367e748e8a4d30b14c85ed6afbec458b1f03f69211840ea572a",
+  "modelSha256": "c25a66e0740b9273c58fb189346071ee4a6abc1eb8986d2e804a46984333f3d4",
   "modelBytes": 12286784,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/rig-report.json",
@@ -226,7 +226,7 @@
       "action": "die",
       "clipName": "ember-cohort::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+      "sourceSha256": "60a0c2b9146e14dd1128834954e62664412cbc8ae9572f6b9c452030ee059477",
       "loop": false,
       "kind": "authored-fallback"
     }

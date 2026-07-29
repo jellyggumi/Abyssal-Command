@@ -82,7 +82,7 @@ const EXPECTED_REGISTRY_COUNTS = {
   retargetedClips: ASSET_IDS.length * RETARGETED_ACTIONS.length,
   authoredFallbackClips: ASSET_IDS.length,
 };
-const EXPECTED_REGISTRY_BYTES = 132794048;
+const EXPECTED_REGISTRY_BYTES = 132800560;
 
 // Provenance a retargeted clip must carry and an authored fallback must not:
 // the fallback has no source frame range to cite.
@@ -817,20 +817,36 @@ test("every registry entry declares clipKinds with an authored-fallback die and 
     }
   }
 });
+test("authoring rig-report manifests are completed, natural, and free of legacy fields", () => {
+  for (const assetId of ASSET_IDS) {
+    const authoringManifest = readJson(authoringManifestPath(assetId));
+    assertFile(authoringManifest.rigReport);
+    const rigReport = readJson(authoringManifest.rigReport);
+
+    assert.equal(rigReport.status, "completed", `${assetId}: rig report status`);
+    assert.equal(rigReport.restPose, "natural", `${assetId}: rig report restPose`);
+    assert.equal(rigReport.restPoseOk, true, `${assetId}: rig report restPoseOk`);
+    assert.equal(Object.hasOwn(rigReport, "tposeOk"), false, `${assetId}: legacy tposeOk removed`);
+  }
+});
 test("runtime manifests preserve older unverified rights and newly user-attested rights", () => {
+
   const receipt = readJson(RIGHTS_RECEIPT_PATH);
   assert.equal(receipt.redistributionStatus, "user-attested");
   assert.deepEqual(
     receipt.sourceAssetRedistributionStatuses,
-    ["unverified", "user-attested"],
+    ["user-attested"],
   );
 
   for (const assetId of ASSET_IDS) {
     const runtimeManifest = readJson(runtimeManifestPath(assetId));
     const authoringManifest = readJson(authoringManifestPath(assetId));
-    const sourceRightsStatus = NEW_USER_ATTESTED_ASSET_IDS.includes(assetId)
-      ? "user-attested"
-      : "unverified";
+    const sourceRightsStatus = "user-attested";
+    const rigReport = readJson(authoringManifest.rigReport);
+
+    assert.equal(rigReport.restPose, "natural", `${assetId}: rig report should be natural`);
+    assert.equal(rigReport.restPoseOk, true, `${assetId}: rig report should be accepted as natural`);
+    assertFile(authoringManifest.rigReport);
 
     for (const field of AUTHORING_ONLY_MANIFEST_FIELDS) {
       assert.equal(

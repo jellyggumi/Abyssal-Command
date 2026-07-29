@@ -180,7 +180,7 @@ next-beat: director 스코프 리뷰 → 슬라이스 2 사람 플레이 판정
 ### 7.1 산출물 상태 [OBSERVED]
 
 - `registry.json`은 runtime-eligible asset **11**, clip **121**(retargeted 110,
-  authored fallback 11), 총 **132,794,048 bytes**를 checksum과 권리 receipt로 고정한다.
+  authored fallback 11), 총 **132,800,560 bytes**를 checksum과 권리 receipt로 고정한다.
 - 런타임의 플레이어 원본 식별은
   `assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb`이며,
   애니메이션 렌더 경로는 `assets/motion/ingame/characters/lantern-reaver/model.glb`다.
@@ -198,3 +198,22 @@ next-beat: director 스코프 리뷰 → 슬라이스 2 사람 플레이 판정
 - `assets/images/battle/`은 UI만 남기며, 비 UI 전장 이미지와 GLB는 런타임 allowlist에서 제거했다.
 - `tests/runtime-visual-assets.test.mjs`가 세 구역의 메쉬·VFX·Lantern Reaver lookout 계약과
   UI 외 이미지 배제를 검증한다.
+
+---
+
+### 7.3 자연 rest-pose 컷오버 [OBSERVED]
+
+- 기존 T-pose bake는 융합된 망토·견갑·무기 지오메트리를 팔과 함께 벌려 고무처럼
+  늘어나는 원인이었다. `scripts/rig-character-asset-blender.py`는 이제 source의
+  `natural` bind pose를 기본값으로 보존하며, T-pose는 명시적 진단 모드에만 남긴다.
+- 11/11 authoring `rig-report.json`은 `status: completed`, `restPose: natural`,
+  `restPoseOk: true`, orphan vertex 0, 최대 influence 4를 기록한다. legacy `tposeOk`는
+  모든 현재 report에서 제거됐다.
+- 승격 generation은 `18f2f33f00b2825777fc9753c81281c2a5aee0bd9c97ad441bd11ba54fe53e7c`이며,
+  browser 증거는 `_workspace/current/qa/natural-motion-runtime-smoke.json` 및
+  `natural-motion-battle-browser.webp`에 있다. live battle canvas가 표시됐고 registry의
+  11 model GLB는 모두 HTTP 200, 실제 전투는 commander/scout/shade/possessed motion
+  model을 요청했다.
+- 회귀 게이트: character library Node test 13/13, ingame motion pack 5/5,
+  realtime routing 2/2, release closure 4/4. `build-character-motion-library-index.py
+  --check`은 동일 generation/총 byte 수로 성공했다.

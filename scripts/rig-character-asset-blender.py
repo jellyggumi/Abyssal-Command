@@ -1201,7 +1201,7 @@ def main():
     if args.report:
         Path(args.report).parent.mkdir(parents=True, exist_ok=True)
         Path(args.report).write_text(json.dumps(log, indent=2))
-    print("RIG_TPOSE_RESULT_JSON:" + json.dumps(log))
+    print("RIG_RESULT_JSON:" + json.dumps(log))
     if log.get("status") != "completed":
         sys.exit(1)
 
