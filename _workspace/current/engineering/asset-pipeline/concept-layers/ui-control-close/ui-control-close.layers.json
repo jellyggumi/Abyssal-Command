@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "assetId": "ui-control-close",
+  "concept": "assets/images/battle/pilot/concept-ui-control-close.png",
+  "conceptSha256": "09e3b86583e9a357c37e2f9ab5ffeb6911784826aa574e5a4d3084e55a2a4942",
+  "generatedAt": "2026-07-29T05:45:24.906786+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      0,
+      0,
+      0
+    ],
+    "borderSpread": 0.174,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "full-plate",
+      "prompt": "(deterministic alpha cut of the source concept -- no model call)",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-control-close/ui-control-close-full-plate.png",
+      "key": {
+        "keyRgb": [
+          0,
+          0,
+          0
+        ],
+        "borderSpread": 0.174,
+        "tolerance": 26,
+        "alphaCoverage": 0.32041,
+        "size": [
+          896,
+          914
+        ]
+      },
+      "status": "keyed",
+      "source": "deterministic-key",
+      "sha256": "fd3fe35864d4b05e47581f74ebb6b5e809fa76b6df3a4bc8a73a52190c69b141"
+    },
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-control-close/ui-control-close-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-control-close/raw/ui-control-close-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.49,
+        "tolerance": 26,
+        "alphaCoverage": 0.19792,
+        "size": [
+          1021,
+          1247
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "6f8f1dd63d1006c248d4e2200c17f13a2981d8f1607bb74b378c946555219293"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-control-close/ui-control-close-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-control-close/raw/ui-control-close-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.463,
+        "tolerance": 26,
+        "alphaCoverage": 0.18473,
+        "size": [
+          638,
+          1465
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "20ed9d183cb624834774b950b43474dd2fbda4c6a88ce47dfd3839322b12aa36"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-control-close/ui-control-close-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-control-close/raw/ui-control-close-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.445,
+        "tolerance": 26,
+        "alphaCoverage": 0.3537,
+        "size": [
+          1483,
+          1003
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "7e345cee95e7564038b0524a0c467ce9167ccd8feb1648a23c950cc7a8fa793d"
+    }
+  ]
+}

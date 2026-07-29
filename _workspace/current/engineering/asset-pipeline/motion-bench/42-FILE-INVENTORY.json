@@ -1,0 +1,369 @@
+{
+  "schema": "fbx-motion-bench-inventory-1.0",
+  "metadata": {
+    "total_files": 42,
+    "analysis_date": "2026-07-29",
+    "source": "Blender import verified; filename classification + expert audit",
+    "parser_notes": "extract-fbx-metadata.py non-functional (reports 'Invalid FBX magic header' for all 42). Source of truth: Blender import."
+  },
+  "action_library_status": {
+    "idle": {
+      "count": 9,
+      "replace": "Unarmed Idle.fbx",
+      "status": "OVERCOVERED"
+    },
+    "move": {
+      "count": 5,
+      "replace": "Walking.fbx",
+      "status": "COVERED"
+    },
+    "run": {
+      "count": 4,
+      "replace": "Running.fbx",
+      "status": "COVERED"
+    },
+    "hit": {
+      "count": 4,
+      "replace": "Receive Uppercut To The Face.fbx",
+      "status": "COVERED"
+    },
+    "bighit": {
+      "count": 2,
+      "replace": "Drop Kick.fbx",
+      "status": "COVERED"
+    },
+    "attack": {
+      "count": 5,
+      "replace": "Punching.fbx",
+      "status": "OVERCOVERED"
+    },
+    "critical": {
+      "count": 0,
+      "replace": "[GENERATE]",
+      "status": "MISSING"
+    },
+    "avoid": {
+      "count": 1,
+      "replace": "Dodging.fbx",
+      "status": "MINIMAL"
+    },
+    "defence": {
+      "count": 4,
+      "replace": "Sword And Shield Block.fbx",
+      "status": "OVERCOVERED"
+    },
+    "die": {
+      "count": 0,
+      "replace": "[GENERATE]",
+      "status": "MISSING"
+    },
+    "show": {
+      "count": 1,
+      "replace": "Opening.fbx",
+      "status": "MINIMAL"
+    }
+  },
+  "summary": {
+    "candidates": 23,
+    "bench": 19,
+    "replace_slots": 8,
+    "augment_candidates": 22,
+    "reject_candidates": 12
+  },
+  "files": [
+    {
+      "file": "Walking.fbx",
+      "action": "move",
+      "slot": "REPLACE",
+      "bin": "locomotion",
+      "status": "candidate"
+    },
+    {
+      "file": "Running.fbx",
+      "action": "run",
+      "slot": "REPLACE",
+      "bin": "locomotion",
+      "status": "candidate"
+    },
+    {
+      "file": "Jog In Circle.fbx",
+      "action": "run",
+      "slot": "augment",
+      "bin": "locomotion",
+      "status": "bench"
+    },
+    {
+      "file": "Crawling.fbx",
+      "action": "move",
+      "slot": "augment",
+      "bin": "locomotion",
+      "status": "candidate"
+    },
+    {
+      "file": "Start Walking.fbx",
+      "action": "move",
+      "slot": "augment",
+      "bin": "locomotion",
+      "status": "candidate"
+    },
+    {
+      "file": "Catwalk Walk Forward HighKnees.fbx",
+      "action": "move",
+      "slot": "augment",
+      "bin": "locomotion",
+      "status": "bench"
+    },
+    {
+      "file": "Catwalk Walk Start Turn 180 Right.fbx",
+      "action": "move",
+      "slot": "augment",
+      "bin": "locomotion",
+      "status": "bench"
+    },
+    {
+      "file": "Backwards Rifle Walk.fbx",
+      "action": "move",
+      "slot": "augment",
+      "bin": "locomotion",
+      "status": "candidate"
+    },
+    {
+      "file": "Unarmed Idle.fbx",
+      "action": "idle",
+      "slot": "REPLACE",
+      "bin": "idle",
+      "status": "candidate"
+    },
+    {
+      "file": "Idle.fbx",
+      "action": "idle",
+      "slot": "augment",
+      "bin": "idle",
+      "status": "candidate"
+    },
+    {
+      "file": "Standing Idle 03.fbx",
+      "action": "idle",
+      "slot": "augment",
+      "bin": "idle",
+      "status": "candidate"
+    },
+    {
+      "file": "Catwalk Idle To Twist R.fbx",
+      "action": "idle",
+      "slot": "augment",
+      "bin": "idle",
+      "status": "candidate"
+    },
+    {
+      "file": "Rifle Aiming Idle.fbx",
+      "action": "idle",
+      "slot": "augment",
+      "bin": "idle",
+      "status": "bench"
+    },
+    {
+      "file": "Look Over Shoulder.fbx",
+      "action": "idle",
+      "slot": "augment",
+      "bin": "idle",
+      "status": "bench"
+    },
+    {
+      "file": "Standing Block React Large.fbx",
+      "action": "hit",
+      "slot": "augment",
+      "bin": "idle",
+      "status": "candidate"
+    },
+    {
+      "file": "Standing React Small From Left.fbx",
+      "action": "hit",
+      "slot": "bench",
+      "bin": "idle",
+      "status": "bench"
+    },
+    {
+      "file": "Standing Torch Jump.fbx",
+      "action": "idle",
+      "slot": "augment",
+      "bin": "traversal",
+      "status": "bench"
+    },
+    {
+      "file": "Unarmed Turn Left 90.fbx",
+      "action": "idle",
+      "slot": "bench",
+      "bin": "idle",
+      "status": "bench"
+    },
+    {
+      "file": "Punching.fbx",
+      "action": "attack",
+      "slot": "REPLACE",
+      "bin": "combat",
+      "status": "candidate"
+    },
+    {
+      "file": "Great Sword Slash.fbx",
+      "action": "attack",
+      "slot": "augment",
+      "bin": "combat",
+      "status": "candidate"
+    },
+    {
+      "file": "Double Dagger Stab.fbx",
+      "action": "attack",
+      "slot": "augment",
+      "bin": "combat",
+      "status": "candidate"
+    },
+    {
+      "file": "Shooting Arrow.fbx",
+      "action": "attack",
+      "slot": "augment",
+      "bin": "combat",
+      "status": "candidate"
+    },
+    {
+      "file": "Firing Rifle.fbx",
+      "action": "attack",
+      "slot": "augment",
+      "bin": "combat",
+      "status": "candidate"
+    },
+    {
+      "file": "Illegal Elbow Punch.fbx",
+      "action": "attack",
+      "slot": "bench",
+      "bin": "combat",
+      "status": "bench"
+    },
+    {
+      "file": "Body Block.fbx",
+      "action": "attack",
+      "slot": "bench",
+      "bin": "defense",
+      "status": "bench"
+    },
+    {
+      "file": "Punching Bag.fbx",
+      "action": "attack",
+      "slot": "bench",
+      "bin": "combat",
+      "status": "bench"
+    },
+    {
+      "file": "Standing 2H Magic Attack 01.fbx",
+      "action": "attack",
+      "slot": "augment",
+      "bin": "combat",
+      "status": "bench"
+    },
+    {
+      "file": "Sword And Shield Block.fbx",
+      "action": "defence",
+      "slot": "REPLACE",
+      "bin": "defense",
+      "status": "candidate"
+    },
+    {
+      "file": "Great Sword Blocking.fbx",
+      "action": "defence",
+      "slot": "augment",
+      "bin": "defense",
+      "status": "candidate"
+    },
+    {
+      "file": "Block With Rifle.fbx",
+      "action": "defence",
+      "slot": "augment",
+      "bin": "defense",
+      "status": "candidate"
+    },
+    {
+      "file": "Receive Uppercut To The Face.fbx",
+      "action": "bighit",
+      "slot": "REPLACE",
+      "bin": "defense",
+      "status": "candidate"
+    },
+    {
+      "file": "Dodging.fbx",
+      "action": "avoid",
+      "slot": "REPLACE",
+      "bin": "defense",
+      "status": "candidate"
+    },
+    {
+      "file": "Drop Kick.fbx",
+      "action": "bighit",
+      "slot": "augment",
+      "bin": "combat",
+      "status": "candidate"
+    },
+    {
+      "file": "Opening.fbx",
+      "action": "show",
+      "slot": "REPLACE",
+      "bin": "special",
+      "status": "candidate"
+    },
+    {
+      "file": "Draw Sword 1.fbx",
+      "action": "bench",
+      "slot": "bench",
+      "bin": "special",
+      "status": "bench"
+    },
+    {
+      "file": "Jump Attack.fbx",
+      "action": "attack",
+      "slot": "bench",
+      "bin": "combat",
+      "status": "bench"
+    },
+    {
+      "file": "Sword And Shield Jump.fbx",
+      "action": "bench",
+      "slot": "bench",
+      "bin": "combat",
+      "status": "bench"
+    },
+    {
+      "file": "Left Turn 45.fbx",
+      "action": "bench",
+      "slot": "bench",
+      "bin": "bench",
+      "status": "bench"
+    },
+    {
+      "file": "Right Turn W_ Briefcase.fbx",
+      "action": "bench",
+      "slot": "bench",
+      "bin": "bench",
+      "status": "bench"
+    },
+    {
+      "file": "Change Direction.fbx",
+      "action": "bench",
+      "slot": "bench",
+      "bin": "bench",
+      "status": "bench"
+    },
+    {
+      "file": "Grabbing Ammo.fbx",
+      "action": "bench",
+      "slot": "bench",
+      "bin": "bench",
+      "status": "bench"
+    },
+    {
+      "file": "Run To Stop.fbx",
+      "action": "run",
+      "slot": "augment",
+      "bin": "locomotion",
+      "status": "candidate"
+    }
+  ]
+}

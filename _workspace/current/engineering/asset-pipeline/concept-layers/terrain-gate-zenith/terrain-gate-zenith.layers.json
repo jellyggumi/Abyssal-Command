@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "assetId": "terrain-gate-zenith",
+  "concept": "assets/images/battle/pilot/concept-terrain-gate-zenith.png",
+  "conceptSha256": "14975f9aa4d9ee5eeb449232bb98ef73b7bfde227876e77e6dad2cca994f4635",
+  "generatedAt": "2026-07-29T05:02:08.250290+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "gen",
+    "mode": "gen",
+    "borderMedianRgb": [
+      43,
+      50,
+      62
+    ],
+    "borderSpread": 19.614,
+    "rationale": "full-bleed scene -> layers are not separable in pixel space"
+  },
+  "layers": [
+    {
+      "layer": "terrain",
+      "prompt": "Isolate ONLY the playable ground surface from the reference scene, rendered as a standalone terrain tile in the same art style: the walkable floor plane, its material, and its edge treatment, viewed from a raised three-quarter angle. Exclude every character, creature, weapon, and prop. Exclude distant background landforms, sky, pillars, walls, bridges, statues, debris, foliage, and set dressing. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-gate-zenith/terrain-gate-zenith-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-gate-zenith/raw/terrain-gate-zenith-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.451,
+        "tolerance": 26,
+        "alphaCoverage": 0.40348,
+        "size": [
+          1363,
+          764
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "f7bfb65493b0d8df96f8726bad6e5ed6a17c1add5cbc3bcc5d41f9b69e687fcb"
+    },
+    {
+      "layer": "background-terrain",
+      "prompt": "Isolate ONLY the distant background landform from the reference scene -- the far silhouette of cliffs, ruins, mountains, or skyline -- rendered as a standalone backdrop layer in the same art style, flattened for parallax use. Exclude the playable foreground ground plane. Exclude every character, creature, weapon, prop, and near-field object. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-gate-zenith/terrain-gate-zenith-background-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-gate-zenith/raw/terrain-gate-zenith-background-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.687,
+        "tolerance": 26,
+        "alphaCoverage": 0.74573,
+        "size": [
+          1520,
+          890
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "0acb6cdcb96c091dca004bee8063d61f48b828624875ccbf58482f5624960020"
+    },
+    {
+      "layer": "terrain-feature",
+      "prompt": "Isolate ONLY the placeable structural features from the reference scene -- pillars, broken walls, bridge spans, stairs, arches, gates -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane itself and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-gate-zenith/terrain-gate-zenith-terrain-feature.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-gate-zenith/raw/terrain-gate-zenith-terrain-feature.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.469,
+        "tolerance": 26,
+        "alphaCoverage": 0.43956,
+        "size": [
+          1518,
+          1021
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "118152a89eaa8fe47faa6c73fad48e790f7e6ca8dae37226bbd0c78103063320"
+    },
+    {
+      "layer": "background-object",
+      "prompt": "Isolate ONLY the loose set-dressing objects from the reference scene -- debris, rubble, crates, foliage, hanging banners, lanterns, bones -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane, structural architecture, and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-gate-zenith/terrain-gate-zenith-background-object.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-gate-zenith/raw/terrain-gate-zenith-background-object.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.47,
+        "tolerance": 26,
+        "alphaCoverage": 0.33685,
+        "size": [
+          1517,
+          996
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "de2ef0dae9964e73ba3ff496141c51dd025d1259e4c82bee5867bef7365fb4bc"
+    }
+  ]
+}

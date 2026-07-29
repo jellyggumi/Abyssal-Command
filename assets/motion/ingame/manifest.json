@@ -1,0 +1,1274 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "scripts/retarget-ingame-motion-blender.py",
+  "generatedAt": "2026-07-29T03:52:19.284031+00:00",
+  "sourceBoneNames": [
+    "mixamorig:Head",
+    "mixamorig:HeadTop_End",
+    "mixamorig:Hips",
+    "mixamorig:LeftArm",
+    "mixamorig:LeftFoot",
+    "mixamorig:LeftForeArm",
+    "mixamorig:LeftHand",
+    "mixamorig:LeftLeg",
+    "mixamorig:LeftShoulder",
+    "mixamorig:LeftToeBase",
+    "mixamorig:LeftToe_End",
+    "mixamorig:LeftUpLeg",
+    "mixamorig:Neck",
+    "mixamorig:RightArm",
+    "mixamorig:RightFoot",
+    "mixamorig:RightForeArm",
+    "mixamorig:RightHand",
+    "mixamorig:RightHandIndex1",
+    "mixamorig:RightHandIndex2",
+    "mixamorig:RightHandIndex3",
+    "mixamorig:RightHandIndex4",
+    "mixamorig:RightHandPinky1",
+    "mixamorig:RightHandPinky2",
+    "mixamorig:RightHandPinky3",
+    "mixamorig:RightHandPinky4",
+    "mixamorig:RightHandThumb1",
+    "mixamorig:RightHandThumb2",
+    "mixamorig:RightHandThumb3",
+    "mixamorig:RightHandThumb4",
+    "mixamorig:RightLeg",
+    "mixamorig:RightShoulder",
+    "mixamorig:RightToeBase",
+    "mixamorig:RightToe_End",
+    "mixamorig:RightUpLeg",
+    "mixamorig:Spine",
+    "mixamorig:Spine1",
+    "mixamorig:Spine2"
+  ],
+  "mappedSourceBones": [
+    "mixamorig:Head",
+    "mixamorig:Hips",
+    "mixamorig:LeftArm",
+    "mixamorig:LeftFoot",
+    "mixamorig:LeftForeArm",
+    "mixamorig:LeftHand",
+    "mixamorig:LeftLeg",
+    "mixamorig:LeftShoulder",
+    "mixamorig:LeftToeBase",
+    "mixamorig:LeftUpLeg",
+    "mixamorig:Neck",
+    "mixamorig:RightArm",
+    "mixamorig:RightFoot",
+    "mixamorig:RightForeArm",
+    "mixamorig:RightHand",
+    "mixamorig:RightLeg",
+    "mixamorig:RightShoulder",
+    "mixamorig:RightToeBase",
+    "mixamorig:RightUpLeg",
+    "mixamorig:Spine",
+    "mixamorig:Spine1",
+    "mixamorig:Spine2"
+  ],
+  "unmappedSourceBones": [
+    "mixamorig:HeadTop_End",
+    "mixamorig:LeftToe_End",
+    "mixamorig:RightHandIndex1",
+    "mixamorig:RightHandIndex2",
+    "mixamorig:RightHandIndex3",
+    "mixamorig:RightHandIndex4",
+    "mixamorig:RightHandPinky1",
+    "mixamorig:RightHandPinky2",
+    "mixamorig:RightHandPinky3",
+    "mixamorig:RightHandPinky4",
+    "mixamorig:RightHandThumb1",
+    "mixamorig:RightHandThumb2",
+    "mixamorig:RightHandThumb3",
+    "mixamorig:RightHandThumb4",
+    "mixamorig:RightToe_End"
+  ],
+  "unmappedTargetBones": [
+    "DEF-pelvis.L",
+    "DEF-pelvis.R"
+  ],
+  "synthesizedTargetBones": [],
+  "sourceRig": "mixamo-37",
+  "targetRig": "def-humanoid-v1",
+  "targetBoneNames": [
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-shoulder.L",
+    "DEF-upper_arm.L",
+    "DEF-forearm.L",
+    "DEF-hand.L",
+    "DEF-shoulder.R",
+    "DEF-upper_arm.R",
+    "DEF-forearm.R",
+    "DEF-hand.R",
+    "DEF-pelvis.L",
+    "DEF-pelvis.R",
+    "DEF-thigh.L",
+    "DEF-shin.L",
+    "DEF-foot.L",
+    "DEF-toe.L",
+    "DEF-thigh.R",
+    "DEF-shin.R",
+    "DEF-foot.R",
+    "DEF-toe.R"
+  ],
+  "boneMapping": {
+    "rows": [
+      {
+        "targetBoneName": "DEF-spine",
+        "sourceBoneName": "mixamorig:Hips",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-spine.001",
+        "sourceBoneName": "mixamorig:Spine",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-spine.002",
+        "sourceBoneName": "mixamorig:Spine1",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-spine.003",
+        "sourceBoneName": "mixamorig:Spine2",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-spine.004",
+        "sourceBoneName": "mixamorig:Neck",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-spine.005",
+        "sourceBoneName": "mixamorig:Head",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-shoulder.L",
+        "sourceBoneName": "mixamorig:LeftShoulder",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-upper_arm.L",
+        "sourceBoneName": "mixamorig:LeftArm",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-forearm.L",
+        "sourceBoneName": "mixamorig:LeftForeArm",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-hand.L",
+        "sourceBoneName": "mixamorig:LeftHand",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-shoulder.R",
+        "sourceBoneName": "mixamorig:RightShoulder",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-upper_arm.R",
+        "sourceBoneName": "mixamorig:RightArm",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-forearm.R",
+        "sourceBoneName": "mixamorig:RightForeArm",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-hand.R",
+        "sourceBoneName": "mixamorig:RightHand",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-thigh.L",
+        "sourceBoneName": "mixamorig:LeftUpLeg",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-shin.L",
+        "sourceBoneName": "mixamorig:LeftLeg",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-foot.L",
+        "sourceBoneName": "mixamorig:LeftFoot",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-toe.L",
+        "sourceBoneName": "mixamorig:LeftToeBase",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-thigh.R",
+        "sourceBoneName": "mixamorig:RightUpLeg",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-shin.R",
+        "sourceBoneName": "mixamorig:RightLeg",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-foot.R",
+        "sourceBoneName": "mixamorig:RightFoot",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      },
+      {
+        "targetBoneName": "DEF-toe.R",
+        "sourceBoneName": "mixamorig:RightToeBase",
+        "mode": "copy",
+        "weight": 1.0,
+        "synthesized": false
+      }
+    ],
+    "mapping": [
+      {
+        "targetBone": "DEF-spine",
+        "sourceBone": "mixamorig:Hips",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-spine.001",
+        "sourceBone": "mixamorig:Spine",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-spine.002",
+        "sourceBone": "mixamorig:Spine1",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-spine.003",
+        "sourceBone": "mixamorig:Spine2",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-spine.004",
+        "sourceBone": "mixamorig:Neck",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-spine.005",
+        "sourceBone": "mixamorig:Head",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-shoulder.L",
+        "sourceBone": "mixamorig:LeftShoulder",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-upper_arm.L",
+        "sourceBone": "mixamorig:LeftArm",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-forearm.L",
+        "sourceBone": "mixamorig:LeftForeArm",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-hand.L",
+        "sourceBone": "mixamorig:LeftHand",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-shoulder.R",
+        "sourceBone": "mixamorig:RightShoulder",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-upper_arm.R",
+        "sourceBone": "mixamorig:RightArm",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-forearm.R",
+        "sourceBone": "mixamorig:RightForeArm",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-hand.R",
+        "sourceBone": "mixamorig:RightHand",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-thigh.L",
+        "sourceBone": "mixamorig:LeftUpLeg",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-shin.L",
+        "sourceBone": "mixamorig:LeftLeg",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-foot.L",
+        "sourceBone": "mixamorig:LeftFoot",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-toe.L",
+        "sourceBone": "mixamorig:LeftToeBase",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-thigh.R",
+        "sourceBone": "mixamorig:RightUpLeg",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-shin.R",
+        "sourceBone": "mixamorig:RightLeg",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-foot.R",
+        "sourceBone": "mixamorig:RightFoot",
+        "mode": "copy",
+        "weight": 1.0
+      },
+      {
+        "targetBone": "DEF-toe.R",
+        "sourceBone": "mixamorig:RightToeBase",
+        "mode": "copy",
+        "weight": 1.0
+      }
+    ]
+  },
+  "pack": {
+    "id": "unarmed-core",
+    "path": "assets/motion/ingame/unarmed-core.glb",
+    "sha256": "dc0244fee4c442285f9febb1485756948a7ec42dec475d6b81fbaef9ada080b0",
+    "sourceRig": "mixamo-37",
+    "targetRig": "def-humanoid-v1",
+    "sourceFps": 24,
+    "targetBoneNames": [
+      "DEF-spine",
+      "DEF-spine.001",
+      "DEF-spine.002",
+      "DEF-spine.003",
+      "DEF-spine.004",
+      "DEF-spine.005",
+      "DEF-shoulder.L",
+      "DEF-upper_arm.L",
+      "DEF-forearm.L",
+      "DEF-hand.L",
+      "DEF-shoulder.R",
+      "DEF-upper_arm.R",
+      "DEF-forearm.R",
+      "DEF-hand.R",
+      "DEF-pelvis.L",
+      "DEF-pelvis.R",
+      "DEF-thigh.L",
+      "DEF-shin.L",
+      "DEF-foot.L",
+      "DEF-toe.L",
+      "DEF-thigh.R",
+      "DEF-shin.R",
+      "DEF-foot.R",
+      "DEF-toe.R"
+    ],
+    "sourceBoneNames": [
+      "mixamorig:Head",
+      "mixamorig:HeadTop_End",
+      "mixamorig:Hips",
+      "mixamorig:LeftArm",
+      "mixamorig:LeftFoot",
+      "mixamorig:LeftForeArm",
+      "mixamorig:LeftHand",
+      "mixamorig:LeftLeg",
+      "mixamorig:LeftShoulder",
+      "mixamorig:LeftToeBase",
+      "mixamorig:LeftToe_End",
+      "mixamorig:LeftUpLeg",
+      "mixamorig:Neck",
+      "mixamorig:RightArm",
+      "mixamorig:RightFoot",
+      "mixamorig:RightForeArm",
+      "mixamorig:RightHand",
+      "mixamorig:RightHandIndex1",
+      "mixamorig:RightHandIndex2",
+      "mixamorig:RightHandIndex3",
+      "mixamorig:RightHandIndex4",
+      "mixamorig:RightHandPinky1",
+      "mixamorig:RightHandPinky2",
+      "mixamorig:RightHandPinky3",
+      "mixamorig:RightHandPinky4",
+      "mixamorig:RightHandThumb1",
+      "mixamorig:RightHandThumb2",
+      "mixamorig:RightHandThumb3",
+      "mixamorig:RightHandThumb4",
+      "mixamorig:RightLeg",
+      "mixamorig:RightShoulder",
+      "mixamorig:RightToeBase",
+      "mixamorig:RightToe_End",
+      "mixamorig:RightUpLeg",
+      "mixamorig:Spine",
+      "mixamorig:Spine1",
+      "mixamorig:Spine2"
+    ],
+    "mappedSourceBones": [
+      "mixamorig:Head",
+      "mixamorig:Hips",
+      "mixamorig:LeftArm",
+      "mixamorig:LeftFoot",
+      "mixamorig:LeftForeArm",
+      "mixamorig:LeftHand",
+      "mixamorig:LeftLeg",
+      "mixamorig:LeftShoulder",
+      "mixamorig:LeftToeBase",
+      "mixamorig:LeftUpLeg",
+      "mixamorig:Neck",
+      "mixamorig:RightArm",
+      "mixamorig:RightFoot",
+      "mixamorig:RightForeArm",
+      "mixamorig:RightHand",
+      "mixamorig:RightLeg",
+      "mixamorig:RightShoulder",
+      "mixamorig:RightToeBase",
+      "mixamorig:RightUpLeg",
+      "mixamorig:Spine",
+      "mixamorig:Spine1",
+      "mixamorig:Spine2"
+    ],
+    "unmappedSourceBones": [
+      "mixamorig:HeadTop_End",
+      "mixamorig:LeftToe_End",
+      "mixamorig:RightHandIndex1",
+      "mixamorig:RightHandIndex2",
+      "mixamorig:RightHandIndex3",
+      "mixamorig:RightHandIndex4",
+      "mixamorig:RightHandPinky1",
+      "mixamorig:RightHandPinky2",
+      "mixamorig:RightHandPinky3",
+      "mixamorig:RightHandPinky4",
+      "mixamorig:RightHandThumb1",
+      "mixamorig:RightHandThumb2",
+      "mixamorig:RightHandThumb3",
+      "mixamorig:RightHandThumb4",
+      "mixamorig:RightToe_End"
+    ],
+    "unmappedTargetBones": [
+      "DEF-pelvis.L",
+      "DEF-pelvis.R"
+    ],
+    "synthesizedTargetBones": [],
+    "boneMapping": {
+      "rows": [
+        {
+          "targetBoneName": "DEF-spine",
+          "sourceBoneName": "mixamorig:Hips",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-spine.001",
+          "sourceBoneName": "mixamorig:Spine",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-spine.002",
+          "sourceBoneName": "mixamorig:Spine1",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-spine.003",
+          "sourceBoneName": "mixamorig:Spine2",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-spine.004",
+          "sourceBoneName": "mixamorig:Neck",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-spine.005",
+          "sourceBoneName": "mixamorig:Head",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-shoulder.L",
+          "sourceBoneName": "mixamorig:LeftShoulder",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-upper_arm.L",
+          "sourceBoneName": "mixamorig:LeftArm",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-forearm.L",
+          "sourceBoneName": "mixamorig:LeftForeArm",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-hand.L",
+          "sourceBoneName": "mixamorig:LeftHand",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-shoulder.R",
+          "sourceBoneName": "mixamorig:RightShoulder",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-upper_arm.R",
+          "sourceBoneName": "mixamorig:RightArm",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-forearm.R",
+          "sourceBoneName": "mixamorig:RightForeArm",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-hand.R",
+          "sourceBoneName": "mixamorig:RightHand",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-thigh.L",
+          "sourceBoneName": "mixamorig:LeftUpLeg",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-shin.L",
+          "sourceBoneName": "mixamorig:LeftLeg",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-foot.L",
+          "sourceBoneName": "mixamorig:LeftFoot",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-toe.L",
+          "sourceBoneName": "mixamorig:LeftToeBase",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-thigh.R",
+          "sourceBoneName": "mixamorig:RightUpLeg",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-shin.R",
+          "sourceBoneName": "mixamorig:RightLeg",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-foot.R",
+          "sourceBoneName": "mixamorig:RightFoot",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        },
+        {
+          "targetBoneName": "DEF-toe.R",
+          "sourceBoneName": "mixamorig:RightToeBase",
+          "mode": "copy",
+          "weight": 1.0,
+          "synthesized": false
+        }
+      ],
+      "mapping": [
+        {
+          "targetBone": "DEF-spine",
+          "sourceBone": "mixamorig:Hips",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-spine.001",
+          "sourceBone": "mixamorig:Spine",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-spine.002",
+          "sourceBone": "mixamorig:Spine1",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-spine.003",
+          "sourceBone": "mixamorig:Spine2",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-spine.004",
+          "sourceBone": "mixamorig:Neck",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-spine.005",
+          "sourceBone": "mixamorig:Head",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-shoulder.L",
+          "sourceBone": "mixamorig:LeftShoulder",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-upper_arm.L",
+          "sourceBone": "mixamorig:LeftArm",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-forearm.L",
+          "sourceBone": "mixamorig:LeftForeArm",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-hand.L",
+          "sourceBone": "mixamorig:LeftHand",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-shoulder.R",
+          "sourceBone": "mixamorig:RightShoulder",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-upper_arm.R",
+          "sourceBone": "mixamorig:RightArm",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-forearm.R",
+          "sourceBone": "mixamorig:RightForeArm",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-hand.R",
+          "sourceBone": "mixamorig:RightHand",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-thigh.L",
+          "sourceBone": "mixamorig:LeftUpLeg",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-shin.L",
+          "sourceBone": "mixamorig:LeftLeg",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-foot.L",
+          "sourceBone": "mixamorig:LeftFoot",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-toe.L",
+          "sourceBone": "mixamorig:LeftToeBase",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-thigh.R",
+          "sourceBone": "mixamorig:RightUpLeg",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-shin.R",
+          "sourceBone": "mixamorig:RightLeg",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-foot.R",
+          "sourceBone": "mixamorig:RightFoot",
+          "mode": "copy",
+          "weight": 1.0
+        },
+        {
+          "targetBone": "DEF-toe.R",
+          "sourceBone": "mixamorig:RightToeBase",
+          "mode": "copy",
+          "weight": 1.0
+        }
+      ]
+    },
+    "animationEncoding": "local-rest-relative-quaternion-deltas",
+    "unmappedBones": [
+      "mixamorig:HeadTop_End",
+      "mixamorig:LeftToe_End",
+      "mixamorig:RightHandIndex1",
+      "mixamorig:RightHandIndex2",
+      "mixamorig:RightHandIndex3",
+      "mixamorig:RightHandIndex4",
+      "mixamorig:RightHandPinky1",
+      "mixamorig:RightHandPinky2",
+      "mixamorig:RightHandPinky3",
+      "mixamorig:RightHandPinky4",
+      "mixamorig:RightHandThumb1",
+      "mixamorig:RightHandThumb2",
+      "mixamorig:RightHandThumb3",
+      "mixamorig:RightHandThumb4",
+      "mixamorig:RightToe_End"
+    ],
+    "clipOverrides": [
+      {
+        "action": "idle",
+        "source": "Unarmed Idle.fbx",
+        "sourceFile": "Unarmed Idle.fbx",
+        "clipName": "unarmed-core::idle::v01",
+        "frameStart": 1,
+        "frameEnd": 47,
+        "sourceFps": 24,
+        "durationSeconds": 1.9166666666666667,
+        "sourceRootTravel": {
+          "x": -4.4e-05,
+          "y": 1.5e-05,
+          "z": -6e-06
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": true,
+        "sourceSha256": "b4ae5c34ac0dc3923e5c24ab2883dd003c324c39edd86a9a94be3358016f5bfa"
+      },
+      {
+        "action": "move",
+        "source": "Walking.fbx",
+        "sourceFile": "Walking.fbx",
+        "clipName": "unarmed-core::move::v01",
+        "frameStart": 1,
+        "frameEnd": 34,
+        "sourceFps": 24,
+        "durationSeconds": 1.375,
+        "sourceRootTravel": {
+          "x": -2e-06,
+          "y": 1.5e-05,
+          "z": 145.083625
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": true,
+        "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7"
+      },
+      {
+        "action": "run",
+        "source": "Running.fbx",
+        "sourceFile": "Running.fbx",
+        "clipName": "unarmed-core::run::v01",
+        "frameStart": 1,
+        "frameEnd": 31,
+        "sourceFps": 24,
+        "durationSeconds": 1.25,
+        "sourceRootTravel": {
+          "x": -1e-06,
+          "y": 0.0,
+          "z": 350.087158
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": true,
+        "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802"
+      },
+      {
+        "action": "hit",
+        "source": "Standing React Small From Left.fbx",
+        "sourceFile": "Standing React Small From Left.fbx",
+        "clipName": "unarmed-core::hit::v01",
+        "frameStart": 1,
+        "frameEnd": 19,
+        "sourceFps": 24,
+        "durationSeconds": 0.75,
+        "sourceRootTravel": {
+          "x": -2e-05,
+          "y": 8e-06,
+          "z": 1.2e-05
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf"
+      },
+      {
+        "action": "bighit",
+        "source": "Receive Uppercut To The Face.fbx",
+        "sourceFile": "Receive Uppercut To The Face.fbx",
+        "clipName": "unarmed-core::bighit::v01",
+        "frameStart": 1,
+        "frameEnd": 31,
+        "sourceFps": 24,
+        "durationSeconds": 1.25,
+        "sourceRootTravel": {
+          "x": 0.000427,
+          "y": -3.8e-05,
+          "z": 3.9e-05
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945"
+      },
+      {
+        "action": "attack",
+        "source": "Punching.fbx",
+        "sourceFile": "Punching.fbx",
+        "clipName": "unarmed-core::attack::v01",
+        "frameStart": 1,
+        "frameEnd": 31,
+        "sourceFps": 24,
+        "durationSeconds": 1.25,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "c8dcecaf2d21fe449f20b74076ccb0e67534aca8dd909d4065deddc3faf48466"
+      },
+      {
+        "action": "critical",
+        "source": "Illegal Elbow Punch.fbx",
+        "sourceFile": "Illegal Elbow Punch.fbx",
+        "clipName": "unarmed-core::critical::v01",
+        "frameStart": 1,
+        "frameEnd": 55,
+        "sourceFps": 24,
+        "durationSeconds": 2.25,
+        "sourceRootTravel": {
+          "x": 2e-06,
+          "y": 1.5e-05,
+          "z": -1e-06
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "ee735d328ddcb77506b38fb6d2e5befec5619a2fa76a1d713bf8e9409feceb13"
+      },
+      {
+        "action": "avoid",
+        "source": "Dodging.fbx",
+        "sourceFile": "Dodging.fbx",
+        "clipName": "unarmed-core::avoid::v01",
+        "frameStart": 1,
+        "frameEnd": 40,
+        "sourceFps": 24,
+        "durationSeconds": 1.625,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6"
+      },
+      {
+        "action": "defence",
+        "source": "Body Block.fbx",
+        "sourceFile": "Body Block.fbx",
+        "clipName": "unarmed-core::defence::v01",
+        "frameStart": 1,
+        "frameEnd": 83,
+        "sourceFps": 24,
+        "durationSeconds": 3.4166666666666665,
+        "sourceRootTravel": {
+          "x": -2e-06,
+          "y": -1.5e-05,
+          "z": -2e-06
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4"
+      }
+    ]
+  },
+  "clipOverrides": [
+    {
+      "action": "idle",
+      "source": "Unarmed Idle.fbx",
+      "sourceFile": "Unarmed Idle.fbx",
+      "clipName": "unarmed-core::idle::v01",
+      "frameStart": 1,
+      "frameEnd": 47,
+      "sourceFps": 24,
+      "durationSeconds": 1.9166666666666667,
+      "sourceRootTravel": {
+        "x": -4.4e-05,
+        "y": 1.5e-05,
+        "z": -6e-06
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": true,
+      "sourceSha256": "b4ae5c34ac0dc3923e5c24ab2883dd003c324c39edd86a9a94be3358016f5bfa"
+    },
+    {
+      "action": "move",
+      "source": "Walking.fbx",
+      "sourceFile": "Walking.fbx",
+      "clipName": "unarmed-core::move::v01",
+      "frameStart": 1,
+      "frameEnd": 34,
+      "sourceFps": 24,
+      "durationSeconds": 1.375,
+      "sourceRootTravel": {
+        "x": -2e-06,
+        "y": 1.5e-05,
+        "z": 145.083625
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": true,
+      "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7"
+    },
+    {
+      "action": "run",
+      "source": "Running.fbx",
+      "sourceFile": "Running.fbx",
+      "clipName": "unarmed-core::run::v01",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": -1e-06,
+        "y": 0.0,
+        "z": 350.087158
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": true,
+      "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802"
+    },
+    {
+      "action": "hit",
+      "source": "Standing React Small From Left.fbx",
+      "sourceFile": "Standing React Small From Left.fbx",
+      "clipName": "unarmed-core::hit::v01",
+      "frameStart": 1,
+      "frameEnd": 19,
+      "sourceFps": 24,
+      "durationSeconds": 0.75,
+      "sourceRootTravel": {
+        "x": -2e-05,
+        "y": 8e-06,
+        "z": 1.2e-05
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf"
+    },
+    {
+      "action": "bighit",
+      "source": "Receive Uppercut To The Face.fbx",
+      "sourceFile": "Receive Uppercut To The Face.fbx",
+      "clipName": "unarmed-core::bighit::v01",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": 0.000427,
+        "y": -3.8e-05,
+        "z": 3.9e-05
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945"
+    },
+    {
+      "action": "attack",
+      "source": "Punching.fbx",
+      "sourceFile": "Punching.fbx",
+      "clipName": "unarmed-core::attack::v01",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "c8dcecaf2d21fe449f20b74076ccb0e67534aca8dd909d4065deddc3faf48466"
+    },
+    {
+      "action": "critical",
+      "source": "Illegal Elbow Punch.fbx",
+      "sourceFile": "Illegal Elbow Punch.fbx",
+      "clipName": "unarmed-core::critical::v01",
+      "frameStart": 1,
+      "frameEnd": 55,
+      "sourceFps": 24,
+      "durationSeconds": 2.25,
+      "sourceRootTravel": {
+        "x": 2e-06,
+        "y": 1.5e-05,
+        "z": -1e-06
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "ee735d328ddcb77506b38fb6d2e5befec5619a2fa76a1d713bf8e9409feceb13"
+    },
+    {
+      "action": "avoid",
+      "source": "Dodging.fbx",
+      "sourceFile": "Dodging.fbx",
+      "clipName": "unarmed-core::avoid::v01",
+      "frameStart": 1,
+      "frameEnd": 40,
+      "sourceFps": 24,
+      "durationSeconds": 1.625,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6"
+    },
+    {
+      "action": "defence",
+      "source": "Body Block.fbx",
+      "sourceFile": "Body Block.fbx",
+      "clipName": "unarmed-core::defence::v01",
+      "frameStart": 1,
+      "frameEnd": 83,
+      "sourceFps": 24,
+      "durationSeconds": 3.4166666666666665,
+      "sourceRootTravel": {
+        "x": -2e-06,
+        "y": -1.5e-05,
+        "z": -2e-06
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4"
+    }
+  ],
+  "rights": {
+    "source": "user-provided",
+    "runtimeUseDirectedAt": "2026-07-29",
+    "redistributionStatus": "unverified"
+  },
+  "rightsReceipt": "rotation-only-overlay-retarget-computed-with-audit-frame-ranges",
+  "fallbackActions": [
+    "die",
+    "show",
+    "attack_melee",
+    "attack_ranged"
+  ],
+  "compatibleMeshes": [
+    "assets/images/battle/glb/commander/dusk-warden.glb",
+    "assets/images/battle/glb/companions/ember-cohort.glb",
+    "assets/images/battle/glb/companions/rift-lens.glb",
+    "assets/images/battle/glb/companions/veil-vanguard.glb",
+    "assets/images/battle/glb/companions/anchor-shard.glb",
+    "assets/images/battle/glb/companions/throne-echo.glb",
+    "assets/images/battle/glb/companions/dawnless-crown.glb",
+    "assets/images/battle/glb/companions/pack-warden.glb",
+    "assets/images/battle/glb/companions/lantern-reaver.glb",
+    "assets/images/battle/glb/companions/requiem-warden.glb",
+    "assets/images/battle/glb/enemies/scout.glb",
+    "assets/images/battle/glb/enemies/shade.glb",
+    "assets/images/battle/glb/enemies/guard.glb",
+    "assets/images/battle/glb/enemies/possessed.glb",
+    "assets/images/battle/glb/bosses/cinder-warden.glb",
+    "assets/images/battle/glb/bosses/veil-tactician.glb",
+    "assets/images/battle/glb/bosses/gate-sovereign.glb",
+    "assets/images/battle/glb/bosses/tide-warden.glb",
+    "assets/images/battle/glb/bosses/pack-herald.glb",
+    "assets/images/battle/glb/bosses/requiem-choir.glb",
+    "assets/images/battle/glb/bosses/lantern-tyrant.glb",
+    "assets/images/battle/glb/bosses/bridge-colossus.glb",
+    "assets/images/battle/glb/bosses/veiled-concordat.glb",
+    "assets/images/battle/glb/bosses/abyss-regent.glb"
+  ],
+  "checks": {
+    "glb2": true,
+    "animationOnly": true,
+    "finiteKeyframes": true,
+    "onlyTargetBoneTracks": true,
+    "rotationOnly": true,
+    "inPlaceRoot": true,
+    "loopClosure": true,
+    "expectedNodes": true,
+    "expectedClipCount": true,
+    "restRelativeDeltas": true,
+    "sampledQuaternionOutputs": true
+  },
+  "runtimeEligible": true,
+  "gateErrors": []
+}

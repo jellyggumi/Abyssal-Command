@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "assetId": "terrain-veil-citadel",
+  "concept": "assets/images/battle/pilot/concept-terrain-veil-citadel.png",
+  "conceptSha256": "2a9262f1e0e4c3621d2ec102b812270d7b693d0af247ecbbbe7f96c3905322fb",
+  "generatedAt": "2026-07-29T05:27:59.552910+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "gen",
+    "mode": "gen",
+    "borderMedianRgb": [
+      67,
+      92,
+      119
+    ],
+    "borderSpread": 32.614,
+    "rationale": "full-bleed scene -> layers are not separable in pixel space"
+  },
+  "layers": [
+    {
+      "layer": "terrain",
+      "prompt": "Isolate ONLY the playable ground surface from the reference scene, rendered as a standalone terrain tile in the same art style: the walkable floor plane, its material, and its edge treatment, viewed from a raised three-quarter angle. Exclude every character, creature, weapon, and prop. Exclude distant background landforms, sky, pillars, walls, bridges, statues, debris, foliage, and set dressing. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-veil-citadel/terrain-veil-citadel-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-veil-citadel/raw/terrain-veil-citadel-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.463,
+        "tolerance": 26,
+        "alphaCoverage": 0.49487,
+        "size": [
+          1463,
+          966
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "8d02d079e292f9c829e1120a1ec1976a127db576a482b6b8117c9c27fcb19634"
+    },
+    {
+      "layer": "background-terrain",
+      "prompt": "Isolate ONLY the distant background landform from the reference scene -- the far silhouette of cliffs, ruins, mountains, or skyline -- rendered as a standalone backdrop layer in the same art style, flattened for parallax use. Exclude the playable foreground ground plane. Exclude every character, creature, weapon, prop, and near-field object. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-veil-citadel/terrain-veil-citadel-background-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-veil-citadel/raw/terrain-veil-citadel-background-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          253,
+          253
+        ],
+        "borderSpread": 2.446,
+        "tolerance": 26,
+        "alphaCoverage": 0.73127,
+        "size": [
+          1504,
+          996
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "975a18e312aedc0b8794c4e86830ce56e3f6e2c1cd1d0f3392141e68011e6afe"
+    },
+    {
+      "layer": "terrain-feature",
+      "prompt": "Isolate ONLY the placeable structural features from the reference scene -- pillars, broken walls, bridge spans, stairs, arches, gates -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane itself and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-veil-citadel/terrain-veil-citadel-terrain-feature.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-veil-citadel/raw/terrain-veil-citadel-terrain-feature.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.478,
+        "tolerance": 26,
+        "alphaCoverage": 0.33372,
+        "size": [
+          1497,
+          1001
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "d092d784b344f5138b8aa1879e59cf5bf345338679096bcfffc6acca94305d49"
+    },
+    {
+      "layer": "background-object",
+      "prompt": "Isolate ONLY the loose set-dressing objects from the reference scene -- debris, rubble, crates, foliage, hanging banners, lanterns, bones -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane, structural architecture, and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-veil-citadel/terrain-veil-citadel-background-object.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-veil-citadel/raw/terrain-veil-citadel-background-object.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.49,
+        "tolerance": 26,
+        "alphaCoverage": 0.24961,
+        "size": [
+          1499,
+          887
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "d8a0287ca49ec4f4569b7d6f829a10131fa4698b20a27287692c3c0398fd07c3"
+    }
+  ]
+}

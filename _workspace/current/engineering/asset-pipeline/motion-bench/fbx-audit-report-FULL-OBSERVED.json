@@ -1,0 +1,1668 @@
+{
+  "schema": "fbx-audit-report-FULL-3.0",
+  "tool": "batch-fbx-import-audit.py (Blender 5.2 headless)",
+  "bench_directory": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench",
+  "total_files": 42,
+  "analysis_complete": true,
+  "files": [
+    {
+      "file": "Backwards Rifle Walk.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Backwards Rifle Walk.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 31,
+          "count": 31
+        },
+        "hips_displacement": {
+          "x": 1e-06,
+          "y": 8e-06,
+          "z": -117.050844,
+          "total": 117.050844
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Block With Rifle.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Block With Rifle.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 40,
+          "count": 40
+        },
+        "hips_displacement": {
+          "x": 0.000372,
+          "y": 0.0,
+          "z": -0.000412,
+          "total": 0.000555
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Body Block.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Body Block.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 83,
+          "count": 83
+        },
+        "hips_displacement": {
+          "x": -2e-06,
+          "y": -1.5e-05,
+          "z": -2e-06,
+          "total": 1.6e-05
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Catwalk Idle To Twist R.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Catwalk Idle To Twist R.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 53,
+          "count": 53
+        },
+        "hips_displacement": {
+          "x": 23.788079,
+          "y": -0.75666,
+          "z": -0.164365,
+          "total": 23.800678
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Catwalk Walk Forward HighKnees.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Catwalk Walk Forward HighKnees.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 31,
+          "count": 31
+        },
+        "hips_displacement": {
+          "x": 0.025248,
+          "y": 3.1e-05,
+          "z": 119.008526,
+          "total": 119.008528
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Catwalk Walk Start Turn 180 Right.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Catwalk Walk Start Turn 180 Right.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 79,
+          "count": 79
+        },
+        "hips_displacement": {
+          "x": -8.405023,
+          "y": -1.206039,
+          "z": -143.957427,
+          "total": 144.207627
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Change Direction.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Change Direction.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 53,
+          "count": 53
+        },
+        "hips_displacement": {
+          "x": 4.270783,
+          "y": -8e-06,
+          "z": 10.199233,
+          "total": 11.057302
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Crawling.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Crawling.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 44,
+          "count": 44
+        },
+        "hips_displacement": {
+          "x": -3e-06,
+          "y": 0.0,
+          "z": 84.684587,
+          "total": 84.684587
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Dodging.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Dodging.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 40,
+          "count": 40
+        },
+        "hips_displacement": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "total": 0.0
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Double Dagger Stab.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Double Dagger Stab.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 75,
+          "count": 75
+        },
+        "hips_displacement": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "total": 0.0
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Draw Sword 1.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Draw Sword 1.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 13,
+          "count": 13
+        },
+        "hips_displacement": {
+          "x": 2.373616,
+          "y": -1.28862,
+          "z": -6.690092,
+          "total": 7.214702
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Drop Kick.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Drop Kick.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 71,
+          "count": 71
+        },
+        "hips_displacement": {
+          "x": 69.30455,
+          "y": -6.149719,
+          "z": -0.131122,
+          "total": 69.576985
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Firing Rifle.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Firing Rifle.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 29,
+          "count": 29
+        },
+        "hips_displacement": {
+          "x": -0.000736,
+          "y": 0.000206,
+          "z": -0.000551,
+          "total": 0.000942
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Grabbing Ammo.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Grabbing Ammo.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 99,
+          "count": 99
+        },
+        "hips_displacement": {
+          "x": -135.976911,
+          "y": -8.345917,
+          "z": 7.432796,
+          "total": 136.43541
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Great Sword Blocking.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Great Sword Blocking.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 13,
+          "count": 13
+        },
+        "hips_displacement": {
+          "x": -9.71545,
+          "y": -20.980751,
+          "z": -0.098319,
+          "total": 23.121236
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Great Sword Slash.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Great Sword Slash.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 45,
+          "count": 45
+        },
+        "hips_displacement": {
+          "x": -6e-06,
+          "y": 1.5e-05,
+          "z": -2e-06,
+          "total": 1.7e-05
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Idle.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Idle.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 97,
+          "count": 97
+        },
+        "hips_displacement": {
+          "x": -4e-06,
+          "y": 0.0,
+          "z": 4e-06,
+          "total": 6e-06
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Illegal Elbow Punch.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Illegal Elbow Punch.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 55,
+          "count": 55
+        },
+        "hips_displacement": {
+          "x": 2e-06,
+          "y": 1.5e-05,
+          "z": -1e-06,
+          "total": 1.5e-05
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Jog In Circle.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Jog In Circle.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 143,
+          "count": 143
+        },
+        "hips_displacement": {
+          "x": -6e-06,
+          "y": 0.0,
+          "z": 7e-06,
+          "total": 9e-06
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Jump Attack.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Jump Attack.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 92,
+          "count": 92
+        },
+        "hips_displacement": {
+          "x": 13.448752,
+          "y": -10.138176,
+          "z": 211.311373,
+          "total": 211.98148
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Left Turn 45.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Left Turn 45.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 33,
+          "count": 33
+        },
+        "hips_displacement": {
+          "x": 2.8e-05,
+          "y": 1.5e-05,
+          "z": 8e-06,
+          "total": 3.3e-05
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Look Over Shoulder.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Look Over Shoulder.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 91,
+          "count": 91
+        },
+        "hips_displacement": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "total": 0.0
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Opening.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Opening.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 264,
+          "count": 264
+        },
+        "hips_displacement": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "total": 0.0
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Punching Bag.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Punching Bag.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 78,
+          "count": 78
+        },
+        "hips_displacement": {
+          "x": -5e-06,
+          "y": 0.0,
+          "z": 3e-06,
+          "total": 6e-06
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Punching.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Punching.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 31,
+          "count": 31
+        },
+        "hips_displacement": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "total": 0.0
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Receive Uppercut To The Face.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Receive Uppercut To The Face.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 31,
+          "count": 31
+        },
+        "hips_displacement": {
+          "x": 0.000427,
+          "y": -3.8e-05,
+          "z": 3.9e-05,
+          "total": 0.000431
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Rifle Aiming Idle.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Rifle Aiming Idle.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 75,
+          "count": 75
+        },
+        "hips_displacement": {
+          "x": 0.000674,
+          "y": 0.005074,
+          "z": -0.000717,
+          "total": 0.005168
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Right Turn W_ Briefcase.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Right Turn W_ Briefcase.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 52,
+          "count": 52
+        },
+        "hips_displacement": {
+          "x": -165.95723,
+          "y": -1.137947,
+          "z": 208.742868,
+          "total": 266.677112
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Run To Stop.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Run To Stop.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 44,
+          "count": 44
+        },
+        "hips_displacement": {
+          "x": 1.417,
+          "y": 12.581543,
+          "z": 248.983351,
+          "total": 249.305058
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Running.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Running.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 31,
+          "count": 31
+        },
+        "hips_displacement": {
+          "x": -1e-06,
+          "y": 0.0,
+          "z": 350.087158,
+          "total": 350.087158
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Shooting Arrow.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Shooting Arrow.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 121,
+          "count": 121
+        },
+        "hips_displacement": {
+          "x": 3e-06,
+          "y": -8e-06,
+          "z": 0.0,
+          "total": 8e-06
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Standing 2H Magic Attack 01.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Standing 2H Magic Attack 01.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 66,
+          "count": 66
+        },
+        "hips_displacement": {
+          "x": 1e-05,
+          "y": 0.000305,
+          "z": 8e-06,
+          "total": 0.000305
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Standing Block React Large.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Standing Block React Large.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 33,
+          "count": 33
+        },
+        "hips_displacement": {
+          "x": 6e-06,
+          "y": -1.5e-05,
+          "z": 3e-06,
+          "total": 1.7e-05
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Standing Idle 03.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Standing Idle 03.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 275,
+          "count": 275
+        },
+        "hips_displacement": {
+          "x": 1e-06,
+          "y": 0.000153,
+          "z": -7e-06,
+          "total": 0.000153
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Standing React Small From Left.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Standing React Small From Left.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 19,
+          "count": 19
+        },
+        "hips_displacement": {
+          "x": -2e-05,
+          "y": 8e-06,
+          "z": 1.2e-05,
+          "total": 2.5e-05
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Standing Torch Jump.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Standing Torch Jump.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 42,
+          "count": 42
+        },
+        "hips_displacement": {
+          "x": 1.3e-05,
+          "y": -1.5e-05,
+          "z": 4.7e-05,
+          "total": 5.1e-05
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Start Walking.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Start Walking.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 71,
+          "count": 71
+        },
+        "hips_displacement": {
+          "x": -2.59822,
+          "y": -3.447403,
+          "z": 183.657561,
+          "total": 183.708287
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Sword And Shield Block.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Sword And Shield Block.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 15,
+          "count": 15
+        },
+        "hips_displacement": {
+          "x": -3.022201,
+          "y": -11.730621,
+          "z": 23.226719,
+          "total": 26.195833
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Sword And Shield Jump.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Sword And Shield Jump.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 21,
+          "count": 21
+        },
+        "hips_displacement": {
+          "x": -0.0032,
+          "y": 0.0,
+          "z": 242.86956,
+          "total": 242.869561
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Unarmed Idle.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Unarmed Idle.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 47,
+          "count": 47
+        },
+        "hips_displacement": {
+          "x": -4.4e-05,
+          "y": 1.5e-05,
+          "z": -6e-06,
+          "total": 4.7e-05
+        },
+        "hips_travel_type": "in-place",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Unarmed Turn Left 90.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Unarmed Turn Left 90.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 37,
+          "count": 37
+        },
+        "hips_displacement": {
+          "x": -0.123808,
+          "y": 0.000153,
+          "z": -0.197725,
+          "total": 0.233288
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    },
+    {
+      "file": "Walking.fbx",
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/motion/bench/Walking.fbx",
+      "import_success": true,
+      "error": null,
+      "metrics": {
+        "scene_fps": 24,
+        "armature_name": "Armature",
+        "bone_count": 37,
+        "mesh_count": 0,
+        "mesh_names": [],
+        "frame_range": {
+          "start": 1,
+          "end": 34,
+          "count": 34
+        },
+        "hips_displacement": {
+          "x": -2e-06,
+          "y": 1.5e-05,
+          "z": 145.083625,
+          "total": 145.083625
+        },
+        "hips_travel_type": "travel",
+        "bones_sample": [
+          "mixamorig:Hips",
+          "mixamorig:Spine",
+          "mixamorig:Spine1",
+          "mixamorig:Spine2",
+          "mixamorig:Neck",
+          "mixamorig:Head",
+          "mixamorig:HeadTop_End",
+          "mixamorig:LeftShoulder",
+          "mixamorig:LeftArm",
+          "mixamorig:LeftForeArm"
+        ],
+        "total_bones": 37
+      }
+    }
+  ],
+  "summary": {
+    "import_success": 42,
+    "import_failed": 0,
+    "travel_clips": 19,
+    "in_place_clips": 23,
+    "no_animation": 0,
+    "bone_count_range": {
+      "min": 37,
+      "max": 37,
+      "avg": 37.0
+    },
+    "frame_count_range": {
+      "min": 13,
+      "max": 275,
+      "avg": 64.2
+    },
+    "travel_clips_list": [
+      "Backwards Rifle Walk.fbx",
+      "Catwalk Idle To Twist R.fbx",
+      "Catwalk Walk Forward HighKnees.fbx",
+      "Catwalk Walk Start Turn 180 Right.fbx",
+      "Change Direction.fbx",
+      "Crawling.fbx",
+      "Draw Sword 1.fbx",
+      "Drop Kick.fbx",
+      "Grabbing Ammo.fbx",
+      "Great Sword Blocking.fbx",
+      "Jump Attack.fbx",
+      "Right Turn W_ Briefcase.fbx",
+      "Run To Stop.fbx",
+      "Running.fbx",
+      "Start Walking.fbx",
+      "Sword And Shield Block.fbx",
+      "Sword And Shield Jump.fbx",
+      "Unarmed Turn Left 90.fbx",
+      "Walking.fbx"
+    ],
+    "in_place_clips_list": [
+      "Block With Rifle.fbx",
+      "Body Block.fbx",
+      "Dodging.fbx",
+      "Double Dagger Stab.fbx",
+      "Firing Rifle.fbx",
+      "Great Sword Slash.fbx",
+      "Idle.fbx",
+      "Illegal Elbow Punch.fbx",
+      "Jog In Circle.fbx",
+      "Left Turn 45.fbx",
+      "Look Over Shoulder.fbx",
+      "Opening.fbx",
+      "Punching Bag.fbx",
+      "Punching.fbx",
+      "Receive Uppercut To The Face.fbx",
+      "Rifle Aiming Idle.fbx",
+      "Shooting Arrow.fbx",
+      "Standing 2H Magic Attack 01.fbx",
+      "Standing Block React Large.fbx",
+      "Standing Idle 03.fbx",
+      "Standing React Small From Left.fbx",
+      "Standing Torch Jump.fbx",
+      "Unarmed Idle.fbx"
+    ]
+  }
+}

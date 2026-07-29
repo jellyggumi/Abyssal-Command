@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "assetId": "terrain-sunken-bastion",
+  "concept": "assets/images/battle/pilot/concept-terrain-sunken-bastion.png",
+  "conceptSha256": "19e37b0789b7a1a2723dd5ebca5091b6381034bf32775c818f77ed4a6fd6183a",
+  "generatedAt": "2026-07-29T05:23:55.379476+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      14,
+      21,
+      23
+    ],
+    "borderSpread": 5.0,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "terrain",
+      "prompt": "Isolate ONLY the playable ground surface from the reference scene, rendered as a standalone terrain tile in the same art style: the walkable floor plane, its material, and its edge treatment, viewed from a raised three-quarter angle. Exclude every character, creature, weapon, and prop. Exclude distant background landforms, sky, pillars, walls, bridges, statues, debris, foliage, and set dressing. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-sunken-bastion/terrain-sunken-bastion-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-sunken-bastion/raw/terrain-sunken-bastion-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.449,
+        "tolerance": 26,
+        "alphaCoverage": 0.41695,
+        "size": [
+          1456,
+          903
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "369316d74e1ef90be858d66c5a8619284d5a48ad9df90909a31da8e87c581b1c"
+    },
+    {
+      "layer": "background-terrain",
+      "prompt": "Isolate ONLY the distant background landform from the reference scene -- the far silhouette of cliffs, ruins, mountains, or skyline -- rendered as a standalone backdrop layer in the same art style, flattened for parallax use. Exclude the playable foreground ground plane. Exclude every character, creature, weapon, prop, and near-field object. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-sunken-bastion/terrain-sunken-bastion-background-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-sunken-bastion/raw/terrain-sunken-bastion-background-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 7.185,
+        "tolerance": 26,
+        "alphaCoverage": 0.2907,
+        "size": [
+          1536,
+          568
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "cc7506649be3c90cff054bdda11e5b7a5d5c48a82c831bcf576c3ed9941da56b"
+    },
+    {
+      "layer": "terrain-feature",
+      "prompt": "Isolate ONLY the placeable structural features from the reference scene -- pillars, broken walls, bridge spans, stairs, arches, gates -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane itself and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-sunken-bastion/terrain-sunken-bastion-terrain-feature.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-sunken-bastion/raw/terrain-sunken-bastion-terrain-feature.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.454,
+        "tolerance": 26,
+        "alphaCoverage": 0.35568,
+        "size": [
+          1499,
+          965
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "38cd1f5098acd6869685f9f822312917960ef6564f8554e497c73c96ccd89e17"
+    },
+    {
+      "layer": "background-object",
+      "prompt": "Isolate ONLY the loose set-dressing objects from the reference scene -- debris, rubble, crates, foliage, hanging banners, lanterns, bones -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane, structural architecture, and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-sunken-bastion/terrain-sunken-bastion-background-object.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-sunken-bastion/raw/terrain-sunken-bastion-background-object.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.438,
+        "tolerance": 26,
+        "alphaCoverage": 0.32734,
+        "size": [
+          1502,
+          958
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "3afead98ee29a2e12a9f7382a7b32c930c7c67ba576ffb4eeac025f0b4fb3d79"
+    }
+  ]
+}

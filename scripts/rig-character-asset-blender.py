@@ -78,6 +78,20 @@ DEFAULT_BUDGETS = {
 # Max |angle| between shoulder->hand and horizontal in the exported rest pose
 # for the asset to count as T-posed. scripts/audit-tpose.py uses the same value.
 TPOSE_TOLERANCE_DEG = 12.0
+
+# Canonical DEF roll policy used before bind.
+# Axial rig bones (spine/pelvis/legs) align to global +Y;
+# arms/shoulders/hands/feet/toes align to global +Z.
+# These choices match the production contract used by downstream tooling.
+ROLL_POLICY = {
+    "axial": (0.0, 1.0, 0.0),   # +Y
+    "lateral": (0.0, 0.0, 1.0),  # +Z
+}
+
+# Weight refinement thresholds.
+WEIGHT_EPSILON = 1e-6
+WEIGHT_OWNERSHIP_THRESHOLD = 2.5e-4
+LATERAL_LEAK_THRESHOLD = 0.22
 FORBIDDEN_SOURCE_TOKENS = (
     "terrain",
     "floor",
@@ -190,6 +204,68 @@ def run(args, budgets):
         entry.update(kw)
         log["steps"].append(entry)
         return entry
+    def classify_roll_reference(name):
+        for prefix in ("DEF-upper_arm.", "DEF-forearm.", "DEF-hand.", "DEF-shoulder.",
+                       "DEF-foot.", "DEF-toe."):
+            if name.startswith(prefix):
+                return "lateral"
+        for prefix in ("DEF-spine", "DEF-pelvis.", "DEF-thigh.", "DEF-shin."):
+            if name.startswith(prefix):
+                return "axial"
+        return "axial"
+
+    def align_def_bone_roll(phase):
+        # Canonical roll alignment must run before binding so the armature and
+        # initial skinning share the same orientation contract.
+        prev_obj = bpy.context.view_layer.objects.active
+        prev_mode = prev_obj.mode if prev_obj else "OBJECT"
+        if prev_obj is not rig:
+            bpy.context.view_layer.objects.active = rig
+        if bpy.context.view_layer.objects.active != rig:
+            raise RuntimeError("roll alignment failed: failed to activate generated rig")
+        if rig.mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
+
+        eb = rig.data.edit_bones
+        local_matrix = rig.matrix_world.to_3x3().inverted()
+        axis_ref = {
+            "axial": local_matrix @ Vector(ROLL_POLICY["axial"]),
+            "lateral": local_matrix @ Vector(ROLL_POLICY["lateral"]),
+        }
+        reference_policy = {"axial": "+Y", "lateral": "+Z"}
+        fallback_ref = Vector((1.0, 0.0, 0.0))
+        near_parallel = 0.99995
+        report_rows = []
+        for name in list(eb.keys()):
+            if not name.startswith("DEF-"):
+                continue
+            ebone = eb[name]
+            policy = classify_roll_reference(name)
+            ref = axis_ref[policy].normalized()
+            bone_vec = ebone.vector.normalized() if ebone.vector.length else Vector((0.0, 1.0, 0.0))
+            used = policy
+            if abs(bone_vec.dot(ref)) > near_parallel:
+                used = f"{policy}Fallback"
+                alt = fallback_ref
+                if abs(bone_vec.dot(alt.normalized())) > near_parallel:
+                    alt = Vector((0.0, 1.0, 0.0))
+                ebone.align_roll(alt.normalized())
+            else:
+                ebone.align_roll(ref)
+            report_rows.append({
+                "bone": name,
+                "policy": used,
+                "rollDeg": round(math.degrees(ebone.roll), 4),
+            })
+        step("roll_alignment", phase=phase, referencePolicy=reference_policy, rows=report_rows)
+        if prev_obj:
+            bpy.context.view_layer.objects.active = prev_obj
+            bpy.ops.object.mode_set(mode=prev_mode)
+        else:
+            bpy.ops.object.mode_set(mode="OBJECT")
+        return report_rows
+
+
 
     # --- 1. Import --------------------------------------------------------
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -462,8 +538,11 @@ def run(args, budgets):
         if parent:
             eb[name].parent = eb[parent]
             eb[name].use_connect = connect
+    # Roll is aligned to contract now, before any binding happens.
+    pre_bind_roll = align_def_bone_roll("pre_bind")
     bpy.ops.object.mode_set(mode="OBJECT")
-    step("armature_fit", bones=len(arm_data.bones), shoulderZ=round(shoulder_z, 4), arms=arm_fit)
+    step("armature_fit", bones=len(arm_data.bones), shoulderZ=round(shoulder_z, 4), arms=arm_fit,
+         preBindRollCount=len(pre_bind_roll))
 
     # --- 4. Bind in the mesh's natural pose --------------------------------
     # Bone-heat ("Automatic Weights") is the quality option but it fails hard
@@ -663,10 +742,266 @@ def run(args, budgets):
 
     # ...and re-bind the (now T-posed) mesh to it. Vertex groups survived the
     # modifier application, so this restores skinning without re-weighting.
+    # The armature is now in a fresh rest-pose state and has no active
+    # Armature modifier yet; reapply roll in this unbound window so the final
+    # rest orientation is canonical.
+    final_rest_roll = align_def_bone_roll("post_tpose_rest")
+    if not final_rest_roll:
+        raise RuntimeError("roll invariant failed: expected DEF bones after post-T-pose roll alignment")
     newmod = body.modifiers.new(name="Armature", type="ARMATURE")
     newmod.object = rig
     body.parent = rig
     body.matrix_parent_inverse = rig.matrix_world.inverted()
+    # Reweight only around limbs, and only where a limb chain already owns the
+    # vertex weight, so accessories, gear, and non-limb attachments keep their
+    # existing ownership while we remove major-joint leakage.
+    def refine_limb_weights():
+        # Deterministic post-T-pose correction around the major limb chains.
+        body_to_world = np.array(body.matrix_world)
+        vertex_world = np.array([list(v.co) for v in body.data.vertices], dtype=float)
+        vertex_world = vertex_world @ body_to_world[:3, :3].T + body_to_world[:3, 3]
+        inv_world_to_rig = np.linalg.inv(np.array(rig.matrix_world))
+        vertex_rig_local = (np.c_[vertex_world, np.ones(len(vertex_world))] @ inv_world_to_rig)[:, :3]
+
+        chain_specs = [
+            {"name": "arm.L", "side": "L", "sideSign": 1.0,
+             "bones": ["DEF-shoulder.L", "DEF-upper_arm.L", "DEF-forearm.L", "DEF-hand.L"],
+             "anchor": "DEF-spine.003"},
+            {"name": "arm.R", "side": "R", "sideSign": -1.0,
+             "bones": ["DEF-shoulder.R", "DEF-upper_arm.R", "DEF-forearm.R", "DEF-hand.R"],
+             "anchor": "DEF-spine.003"},
+            {"name": "leg.L", "side": "L", "sideSign": 1.0,
+             "bones": ["DEF-pelvis.L", "DEF-thigh.L", "DEF-shin.L", "DEF-foot.L", "DEF-toe.L"],
+             "anchor": "DEF-spine"},
+            {"name": "leg.R", "side": "R", "sideSign": -1.0,
+             "bones": ["DEF-pelvis.R", "DEF-thigh.R", "DEF-shin.R", "DEF-foot.R", "DEF-toe.R"],
+             "anchor": "DEF-spine"},
+        ]
+
+        def chain_index_set(names):
+            out = []
+            seen = set()
+            for nm in names:
+                if nm in seen:
+                    continue
+                seen.add(nm)
+                vg = body.vertex_groups.get(nm)
+                if vg is not None:
+                    out.append(vg.index)
+            return out
+
+        for spec in chain_specs:
+            chain = spec["bones"] + [spec["anchor"]]
+            spec["indices"] = chain_index_set(chain)
+            spec["segments"] = []
+            for bone in chain:
+                vg = body.vertex_groups.get(bone)
+                if vg is None:
+                    continue
+                ebone = rig.data.bones.get(bone)
+                if not ebone:
+                    continue
+                spec["segments"].append((
+                    ebone.head_local.copy(),
+                    ebone.tail_local.copy(),
+                    vg.index,
+                ))
+
+        all_group_names = [g.name for g in body.vertex_groups]
+        x = vertex_rig_local[:, 0]
+        center_x = float(np.median(x)) if len(x) else 0.0
+        span = float(x.max() - x.min()) if len(x) else 0.0
+        lateral_margin = max(span * LATERAL_LEAK_THRESHOLD, 0.0)
+
+        def point_segment_distance(p, head, tail):
+            v = tail - head
+            vl2 = float(v.dot(v))
+            if vl2 < 1e-12:
+                return float((p - head).length)
+            t = float((p - head).dot(v) / vl2)
+            if t < 0.0:
+                t = 0.0
+            elif t > 1.0:
+                t = 1.0
+            return float((p - (head + v * t)).length)
+
+        corrected = 0
+        opposite_leak = 0
+        ambiguous = 0
+        for vi, p_xyz in enumerate(vertex_rig_local):
+            point = Vector((float(p_xyz[0]), float(p_xyz[1]), float(p_xyz[2])))
+            active = [(g.group, g.weight) for g in body.data.vertices[vi].groups
+                      if g.weight > WEIGHT_EPSILON]
+            if not active:
+                continue
+
+            chain_weights = []
+            for spec in chain_specs:
+                chain_w = 0.0
+                for gi, w in active:
+                    if gi in spec["indices"]:
+                        chain_w += float(w)
+                if chain_w >= WEIGHT_OWNERSHIP_THRESHOLD:
+                    chain_weights.append((chain_w, spec))
+            if not chain_weights:
+                continue
+
+            chain_weights.sort(key=lambda item: item[0], reverse=True)
+            top_w, top = chain_weights[0]
+            if len(chain_weights) > 1 and chain_weights[1][0] > top_w * 0.55:
+                ambiguous += 1
+                continue
+
+            # Reject clearly opposite-side bleed: keep left vertices on +X and
+            # right vertices on -X, plus a small center margin.
+            if (point.x - center_x) * top["sideSign"] < -lateral_margin:
+                for gi, _ in active:
+                    body.vertex_groups[gi].remove([vi])
+                opposite_leak += 1
+                continue
+
+            if not top["segments"]:
+                continue
+
+            dists = []
+            for head, tail, gi in top["segments"]:
+                dists.append((point_segment_distance(point, head, tail), gi))
+            if not dists:
+                continue
+
+            dists.sort(key=lambda kv: kv[0])
+            k = min(4, len(dists))
+            raw_w = np.array([1.0 / max(d, 1e-5) ** 2 for d, _ in dists[:k]], dtype=float)
+            raw_w_sum = float(raw_w.sum())
+            if raw_w_sum <= 0.0:
+                continue
+            new_pairs = [(gi, float(w / raw_w_sum)) for w, (_, gi) in zip(raw_w, dists[:k])]
+
+            for gi, _ in active:
+                body.vertex_groups[gi].remove([vi])
+            for gi, w in new_pairs:
+                body.vertex_groups[gi].add([vi], w, "REPLACE")
+            corrected += 1
+
+        all_mods = [m for m in body.modifiers if m.type == "ARMATURE"]
+        for m in all_mods:
+            if not m.show_viewport:
+                m.show_viewport = True
+
+        heads_np = np.array([list(ebone.head_local) for ebone in rig.data.bones], dtype=float)
+        tails_np = np.array([list(ebone.tail_local) for ebone in rig.data.bones], dtype=float)
+        seg_np = tails_np - heads_np
+        seg_l2 = np.maximum(np.einsum("ij,ij->i", seg_np, seg_np), 1e-12)
+        bone_names = [b.name for b in rig.data.bones]
+        orphans = []
+        for vi, groups in enumerate([v.groups for v in body.data.vertices]):
+            if not any(g.weight > WEIGHT_EPSILON for g in groups):
+                orphans.append(vi)
+
+        for vi in orphans:
+            if len(bone_names) == 0:
+                break
+            p = vertex_rig_local[vi]
+            t = np.clip(np.einsum("ij,ij->i", p - heads_np, seg_np) / seg_l2, 0.0, 1.0)
+            d = np.linalg.norm(p - (heads_np + seg_np * t[:, None]), axis=1)
+            name = bone_names[int(np.argmin(d))]
+            vg = body.vertex_groups.get(name)
+            if vg is not None:
+                vg.add([vi], 1.0, "REPLACE")
+
+        for v in body.data.vertices:
+            pairs = [(g.group, g.weight) for g in v.groups if g.weight > WEIGHT_EPSILON]
+            if len(pairs) <= 4:
+                continue
+            pairs.sort(key=lambda item: item[1], reverse=True)
+            for gi, _ in pairs[4:]:
+                body.vertex_groups[gi].remove([v.index])
+
+        invalid_count = 0
+        non_def_count = 0
+        max_influences = 0
+        min_sum = float("inf")
+        max_sum = 0.0
+        deform_vertex = 0
+        for v in body.data.vertices:
+            pairs = [(g.group, g.weight) for g in v.groups if g.weight > WEIGHT_EPSILON]
+            if not pairs:
+                continue
+            deform_vertex += 1
+            total = sum(w for _, w in pairs)
+            if total <= 0.0 or not math.isfinite(total):
+                invalid_count += 1
+                continue
+
+            vertex_invalid = False
+            for gi, w in pairs:
+                if gi < 0 or gi >= len(all_group_names):
+                    vertex_invalid = True
+                    break
+                if not math.isfinite(w) or w < 0.0:
+                    vertex_invalid = True
+                    break
+                if all_group_names[gi][:4] != "DEF-":
+                    non_def_count += 1
+                    vertex_invalid = True
+                    break
+            if vertex_invalid:
+                invalid_count += 1
+                continue
+
+            if len(pairs) > 4:
+                vertex_invalid = True
+                invalid_count += 1
+                continue
+
+            if abs(total - 1.0) > 1e-8:
+                inv_total = 1.0 / total
+                for gi, w in pairs:
+                    body.vertex_groups[gi].add([v.index], w * inv_total, "REPLACE")
+                total = 1.0
+            if total > 0.0:
+                min_sum = min(min_sum, total)
+                max_sum = max(max_sum, total)
+            max_influences = max(max_influences, len(pairs))
+
+        if deform_vertex:
+            min_sum = float(min_sum)
+            max_sum = float(max_sum)
+        else:
+            min_sum = 0.0
+            max_sum = 0.0
+
+        enabled_mods = [m for m in body.modifiers if m.type == "ARMATURE"
+                        and m.show_viewport and m.object == rig]
+        enabled_count = len(enabled_mods)
+        return {
+            "enabledArmatureModifiers": enabled_count,
+            "correctedVertices": corrected,
+            "oppositeLeak": opposite_leak,
+            "ambiguous": ambiguous,
+            "orphanCount": len(orphans),
+            "invalidCount": invalid_count,
+            "nonDefCount": non_def_count,
+            "maxInfluences": max_influences,
+            "maxWeightSum": max_sum,
+            "minWeightSum": min_sum,
+            "deformVerts": deform_vertex,
+            "deformVertsTotal": len(body.data.vertices),
+        }
+
+    weights_report = refine_limb_weights()
+    if weights_report["enabledArmatureModifiers"] != 1:
+        raise RuntimeError("weight invariant failed: expected 1 enabled Armature modifier on target rig")
+    if weights_report["invalidCount"] != 0:
+        raise RuntimeError(f"weight invariant failed: {weights_report['invalidCount']} invalid vertices")
+    if weights_report["nonDefCount"] != 0:
+        raise RuntimeError(f"weight invariant failed: {weights_report['nonDefCount']} vertices with non-DEF groups")
+    if weights_report["orphanCount"] != 0:
+        raise RuntimeError(f"weight invariant failed: {weights_report['orphanCount']} orphan vertices after refine")
+    if weights_report["maxInfluences"] > 4:
+        raise RuntimeError(f"weight invariant failed: {weights_report['maxInfluences']} max influences > 4")
+
+    step("weight_refine", **weights_report)
 
     # Report BOTH numbers: elevation is what a viewer reads as "arms level",
     # axis deviation is the real T-pose test (includes forward/back yaw).

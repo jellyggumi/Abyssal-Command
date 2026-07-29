@@ -37,6 +37,7 @@ import json
 import shutil
 import struct
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -111,9 +112,14 @@ ALBEDO_ORIGINS = {
         "note": "generated against the character's own UV unwrap, not a shared detail tile",
     },
 }
-
 GLB_JSON_CHUNK = 0x4E4F534A
 SCHEMA_VERSION = 1
+RIG_REPORT_TOOL = "scripts/rig-character-asset-blender.py"
+RIG_BATCH_TOOL = "scripts/rig-all-characters.sh"
+RIG_CHARACTER_CATEGORIES = {"commander", "companions", "enemies", "bosses"}
+EXPECTED_RIG_ASSET_COUNT = 24
+EXPECTED_DEF_BONES = 24
+EXPECTED_AUTHORED_CLIPS = 11
 
 
 class PromoteError(RuntimeError):
@@ -133,6 +139,15 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def read_file_json(path: Path, description: str) -> Mapping[str, Any]:
+    if not path.is_file():
+        raise PromoteError(f"missing {description}: {path}")
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise PromoteError(f"invalid {description}: {path}: {error}") from error
 
 
 def read_glb_json(path: Path) -> Mapping[str, Any]:
@@ -199,7 +214,207 @@ def load_manifest(root: Path, relative: Path) -> Mapping[str, Any]:
     path = root / relative
     if not path.is_file():
         raise PromoteError(f"missing candidate manifest, stage it first: {path}")
-    return json.loads(path.read_text(encoding="utf-8"))
+    return read_file_json(path, f"manifest {path}")
+
+
+def report_step(report: Mapping[str, Any], step_name: str, *, required: bool = True) -> Mapping[str, Any]:
+    found = None
+    for step in report.get("steps", []):
+        if not isinstance(step, Mapping):
+            continue
+        if step.get("step") == step_name:
+            found = step
+            break
+    if found is None and required:
+        raise PromoteError(f"missing required report step '{step_name}'")
+    if found is None:
+        return {}
+    return found
+
+
+def parse_rig_build(report: Mapping[str, Any], asset_id: str, category: str, report_path: Path) -> dict[str, Any]:
+    if report.get("assetId") != asset_id:
+        raise PromoteError(
+            f"report {report_path}: expected assetId {asset_id}, got {report.get('assetId')}"
+        )
+    if report.get("category") != category:
+        raise PromoteError(
+            f"report {report_path}: expected category {category}, got {report.get('category')}"
+        )
+    if report.get("status") != "completed":
+        raise PromoteError(f"report {report_path}: expected status completed")
+
+    roll_steps = [step for step in report.get("steps", []) if isinstance(step, Mapping) and step.get("step") == "roll_alignment"]
+    final_roll = None
+    for step in reversed(roll_steps):
+        if step.get("phase") == "post_tpose_rest":
+            final_roll = step
+            break
+    if final_roll is None:
+        raise PromoteError(f"{report_path}: missing post-T-pose roll alignment step")
+    roll_rows = final_roll.get("rows")
+    if not isinstance(roll_rows, list):
+        raise PromoteError(f"{report_path}: malformed post-T-pose roll_alignment rows")
+    if len(roll_rows) != EXPECTED_DEF_BONES:
+        raise PromoteError(
+            f"{report_path}: expected {EXPECTED_DEF_BONES} DEF bones in final roll alignment, got {len(roll_rows)}"
+        )
+    roll_policy_counts = Counter()
+    for row in roll_rows:
+        if not isinstance(row, Mapping):
+            raise PromoteError(f"{report_path}: malformed roll_alignment row")
+        bone = row.get("bone")
+        if not isinstance(bone, str) or not bone.startswith("DEF-"):
+            raise PromoteError(f"{report_path}: non-DEF bone in final roll_alignment: {bone}")
+        policy = row.get("policy")
+        if not isinstance(policy, str):
+            raise PromoteError(f"{report_path}: roll_alignment row missing policy: {row}")
+        roll_policy_counts[policy] += 1
+
+    animation = report_step(report, "author_animations")
+    authored_clips = animation.get("clips")
+    authored_count = animation.get("count")
+    if not isinstance(authored_clips, list):
+        raise PromoteError(f"{report_path}: malformed author_animations clips list")
+    if authored_count != EXPECTED_AUTHORED_CLIPS:
+        raise PromoteError(
+            f"{report_path}: expected {EXPECTED_AUTHORED_CLIPS} authored clips, got {authored_count}"
+        )
+    if len(authored_clips) != EXPECTED_AUTHORED_CLIPS:
+        raise PromoteError(
+            f"{report_path}: expected {EXPECTED_AUTHORED_CLIPS} authored clip names, got {len(authored_clips)}"
+        )
+    if not all(isinstance(name, str) for name in authored_clips):
+        raise PromoteError(f"{report_path}: malformed author_animations clip name")
+
+    weights = report_step(report, "weight_refine")
+    enabled_modifiers = weights.get("enabledArmatureModifiers")
+    if enabled_modifiers != 1:
+        raise PromoteError(
+            f"{report_path}: expected one enabled Armature modifier, got {enabled_modifiers}"
+        )
+    orphan_count = weights.get("orphanCount")
+    invalid_count = weights.get("invalidCount")
+    non_def_count = weights.get("nonDefCount")
+    max_influences = weights.get("maxInfluences")
+    if orphan_count != 0:
+        raise PromoteError(f"{report_path}: expected orphanCount 0, got {orphan_count}")
+    if invalid_count != 0:
+        raise PromoteError(f"{report_path}: expected invalidCount 0, got {invalid_count}")
+    if non_def_count != 0:
+        raise PromoteError(f"{report_path}: expected nonDefCount 0, got {non_def_count}")
+    if not isinstance(max_influences, int) or max_influences > 4:
+        raise PromoteError(
+            f"{report_path}: expected maxInfluences <= 4, got {max_influences}"
+        )
+
+    min_sum = weights.get("minWeightSum")
+    max_sum = weights.get("maxWeightSum")
+    if not isinstance(min_sum, int | float) or not isinstance(max_sum, int | float):
+        raise PromoteError(f"{report_path}: malformed normalized weight sums")
+    if min_sum < 0 or max_sum > 1.0005 or min_sum > max_sum:
+        raise PromoteError(f"{report_path}: expected normalized weight sum range")
+
+    tpose_ok = report.get("tposeOk")
+    if tpose_ok is not True:
+        raise PromoteError(f"{report_path}: tposeOk is false")
+
+    axis_deviation = report.get("axisDeviationDeg")
+    if not isinstance(axis_deviation, Mapping):
+        raise PromoteError(f"{report_path}: missing axisDeviationDeg in T-pose result")
+
+    return {
+        "tool": RIG_REPORT_TOOL,
+        "batchTool": RIG_BATCH_TOOL,
+        "reportPath": report_path.as_posix(),
+        "assetId": asset_id,
+        "category": category,
+        "status": "completed",
+        "tpose": {
+            "ok": True,
+            "axisDeviationDeg": dict(axis_deviation),
+            "elevationDeg": report.get("elevationDeg"),
+        },
+        "rollAlignment": {
+            "phase": final_roll.get("phase"),
+            "referencePolicy": final_roll.get("referencePolicy"),
+            "defBoneCount": len(roll_rows),
+            "policyCount": dict(sorted(Counter(roll_policy_counts).items())),
+        },
+        "authorAnimations": {
+            "count": authored_count,
+            "clips": authored_clips,
+        },
+        "weights": {
+            "enabledArmatureModifiers": enabled_modifiers,
+            "orphanCount": orphan_count,
+            "invalidCount": invalid_count,
+            "nonDefCount": non_def_count,
+            "maxInfluences": max_influences,
+            "minWeightSum": min_sum,
+            "maxWeightSum": max_sum,
+        },
+    }
+
+
+def refresh_rows(root: Path, report_dir: Path) -> list[dict[str, Any]]:
+    provenance_path = root / PROVENANCE_PATH
+    provenance = read_file_json(provenance_path, "character-build provenance")
+    assets = provenance.get("assets")
+    if not isinstance(assets, Mapping):
+        raise PromoteError(f"invalid provenance record: missing assets map: {provenance_path}")
+
+    if len(assets) != EXPECTED_RIG_ASSET_COUNT:
+        raise PromoteError(
+            f"expected {EXPECTED_RIG_ASSET_COUNT} character assets in provenance, got {len(assets)}"
+        )
+    if not report_dir.is_dir():
+        raise PromoteError(f"missing report directory: {report_dir}")
+
+    expected_reports = {
+        Path(output_path).stem: Path(output_path)
+        for output_path in assets
+        if isinstance(output_path, str)
+    }
+    if len(expected_reports) != EXPECTED_RIG_ASSET_COUNT:
+        raise PromoteError("provenance asset keys are malformed")
+
+    report_stems = {path.stem for path in report_dir.glob("*.json")}
+    expected_asset_ids = set(expected_reports.keys())
+    if report_stems != expected_asset_ids:
+        missing = ", ".join(sorted(expected_asset_ids - report_stems))
+        extra = ", ".join(sorted(report_stems - expected_asset_ids))
+        if missing:
+            raise PromoteError(f"missing rig reports for {missing}")
+        raise PromoteError(f"unexpected extra rig reports: {extra}")
+
+    rows = []
+    for output_path, entry in assets.items():
+        if not isinstance(output_path, str) or not isinstance(entry, Mapping):
+            raise PromoteError(f"invalid provenance entry for path {output_path!r}")
+        runtime = root / output_path
+        if not runtime.is_file():
+            raise PromoteError(f"runtime asset missing: {runtime}")
+        asset_id = Path(output_path).stem
+        category = Path(output_path).parent.name
+        if category not in RIG_CHARACTER_CATEGORIES:
+            raise PromoteError(f"unexpected asset category for {output_path}: {category}")
+        report_path = report_dir / f"{asset_id}.json"
+        report = read_file_json(report_path, f"rig report {report_path}")
+        row = dict(entry)
+        row["outputPath"] = output_path
+        row["candidatePath"] = row.get("candidatePath", row.get("sourceCandidatePath"))
+        row["candidateSha256"] = row.get("candidateSha256", row.get("sourceCandidateSha256"))
+        if row["candidatePath"] is None or row["candidateSha256"] is None:
+            raise PromoteError(
+                f"provenance entry is missing source candidate tracking: {output_path}"
+            )
+        row["outputSha256"] = sha256(runtime)
+        row["runtimeContract"] = runtime_contract(runtime)
+        row["rigBuild"] = parse_rig_build(report, asset_id, category, report_path)
+        rows.append(row)
+
+    return rows
 
 
 def albedo_block(row: Mapping[str, Any]) -> dict[str, Any]:
@@ -279,6 +494,31 @@ def plan_rows(root: Path) -> list[dict[str, Any]]:
 
 
 def build_provenance(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    assets: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        asset_record = {
+            "outputPath": row["outputPath"],
+            "outputSha256": row["outputSha256"],
+            "sourceCandidatePath": row["candidatePath"],
+            "sourceCandidateSha256": row["candidateSha256"],
+            "wholebodyCandidatePath": row["wholebodyCandidatePath"],
+            "wholebodyCandidateSha256": row["wholebodyCandidateSha256"],
+            "sourceInputPath": row["sourceInputPath"],
+            "sourceInputSha256": row["sourceInputSha256"],
+            "sourceInputLane": row["sourceInputLane"],
+            "upstreamPipeline": row["upstreamPipeline"],
+            "bodyOrigin": row["bodyOrigin"],
+            "albedoOrigin": row["albedoOrigin"],
+            "albedoBake": row["albedoBake"],
+            "lowerMeshBound": row["lowerMeshBound"],
+            "boundLowerMeshMotion": row["boundLowerMeshMotion"],
+            "clipBalance": row["clipBalance"],
+            "runtimeContract": row["runtimeContract"],
+        }
+        if "rigBuild" in row:
+            asset_record["rigBuild"] = row["rigBuild"]
+        assets[row["outputPath"]] = asset_record
+
     return {
         "schemaVersion": SCHEMA_VERSION,
         "generatedBy": "scripts/promote-character-assets.py",
@@ -289,54 +529,48 @@ def build_provenance(rows: list[dict[str, Any]]) -> dict[str, Any]:
         ],
         "excludedAssetIds": list(EXCLUDED_ASSET_IDS),
         "assetCount": len(rows),
-        "assets": {
-            row["outputPath"]: {
-                "outputPath": row["outputPath"],
-                "outputSha256": row["outputSha256"],
-                "sourceCandidatePath": row["candidatePath"],
-                "sourceCandidateSha256": row["candidateSha256"],
-                "wholebodyCandidatePath": row["wholebodyCandidatePath"],
-                "wholebodyCandidateSha256": row["wholebodyCandidateSha256"],
-                "sourceInputPath": row["sourceInputPath"],
-                "sourceInputSha256": row["sourceInputSha256"],
-                "sourceInputLane": row["sourceInputLane"],
-                "upstreamPipeline": row["upstreamPipeline"],
-                "bodyOrigin": row["bodyOrigin"],
-                "albedoOrigin": row["albedoOrigin"],
-                "albedoBake": row["albedoBake"],
-                "lowerMeshBound": row["lowerMeshBound"],
-                "boundLowerMeshMotion": row["boundLowerMeshMotion"],
-                "clipBalance": row["clipBalance"],
-                "runtimeContract": row["runtimeContract"],
-            }
-
-            for row in rows
-        },
+        "assets": assets,
     }
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Promote character candidates into the runtime lane")
     parser.add_argument("--check", action="store_true", help="verify the runtime lane without writing")
+    parser.add_argument(
+        "--refresh-rig",
+        action="store_true",
+        help="refresh provenance records from rig reports without copying candidates",
+    )
+    parser.add_argument(
+        "--report-dir",
+        type=Path,
+        help="directory containing rig-character-asset-blender report JSON files",
+    )
     args = parser.parse_args(argv)
 
+    if args.refresh_rig and args.check:
+        raise PromoteError("--refresh-rig mode does not support --check")
+    if args.refresh_rig and args.report_dir is None:
+        raise PromoteError("--refresh-rig requires --report-dir")
+
     root = repository_root()
-    rows = plan_rows(root)
+    rows = refresh_rows(root, args.report_dir) if args.refresh_rig else plan_rows(root)
 
     for row in rows:
-        candidate = root / row["candidatePath"]
         runtime = root / row["outputPath"]
-        if not args.check:
-            runtime.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(candidate, runtime)
-        if not runtime.is_file():
-            raise PromoteError(f"runtime asset missing: {runtime}")
-        row["outputSha256"] = sha256(runtime)
-        row["runtimeContract"] = runtime_contract(runtime)
-        if row["outputSha256"] != row["candidateSha256"]:
-            raise PromoteError(
-                f"{row['relativePath']}: runtime bytes differ from the promoted candidate"
-            )
+        if not args.refresh_rig:
+            candidate = root / row["candidatePath"]
+            if not args.check:
+                runtime.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(candidate, runtime)
+            if not runtime.is_file():
+                raise PromoteError(f"runtime asset missing: {runtime}")
+            row["outputSha256"] = sha256(runtime)
+            row["runtimeContract"] = runtime_contract(runtime)
+            if row["outputSha256"] != row["candidateSha256"]:
+                raise PromoteError(
+                    f"{row['relativePath']}: runtime bytes differ from the promoted candidate"
+                )
 
     provenance = build_provenance(rows)
     provenance_path = root / PROVENANCE_PATH
@@ -356,6 +590,7 @@ def main(argv: list[str] | None = None) -> int:
                 "promoted": len(rows),
                 "excluded": list(EXCLUDED_ASSET_IDS),
                 "checked": bool(args.check),
+                "refreshedRig": bool(args.refresh_rig),
             },
             sort_keys=True,
         )

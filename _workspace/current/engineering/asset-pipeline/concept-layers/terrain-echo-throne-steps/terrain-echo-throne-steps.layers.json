@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "assetId": "terrain-echo-throne-steps",
+  "concept": "assets/images/battle/pilot/concept-terrain-echo-throne-steps.png",
+  "conceptSha256": "2dad142ff0b0e3c1f0305e2937f465b8d42edb14d99f232b2d02e1fbdbb721b4",
+  "generatedAt": "2026-07-29T04:58:15.295915+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      29,
+      29,
+      30
+    ],
+    "borderSpread": 7.37,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "terrain",
+      "prompt": "Isolate ONLY the playable ground surface from the reference scene, rendered as a standalone terrain tile in the same art style: the walkable floor plane, its material, and its edge treatment, viewed from a raised three-quarter angle. Exclude every character, creature, weapon, and prop. Exclude distant background landforms, sky, pillars, walls, bridges, statues, debris, foliage, and set dressing. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne-steps/terrain-echo-throne-steps-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne-steps/raw/terrain-echo-throne-steps-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.508,
+        "tolerance": 26,
+        "alphaCoverage": 0.44663,
+        "size": [
+          1009,
+          1300
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "d5f194a8785fb8563e2b5b4e6f0c9432ef23f534983c32e887fa4da58f467201"
+    },
+    {
+      "layer": "background-terrain",
+      "prompt": "Isolate ONLY the distant background landform from the reference scene -- the far silhouette of cliffs, ruins, mountains, or skyline -- rendered as a standalone backdrop layer in the same art style, flattened for parallax use. Exclude the playable foreground ground plane. Exclude every character, creature, weapon, prop, and near-field object. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne-steps/terrain-echo-throne-steps-background-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne-steps/raw/terrain-echo-throne-steps-background-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.586,
+        "tolerance": 26,
+        "alphaCoverage": 0.46281,
+        "size": [
+          1024,
+          1155
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "1742989d328f09a733d27aa98ac8e99334623ec60377aeef6119a75ec1139b20"
+    },
+    {
+      "layer": "terrain-feature",
+      "prompt": "Isolate ONLY the placeable structural features from the reference scene -- pillars, broken walls, bridge spans, stairs, arches, gates -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane itself and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne-steps/terrain-echo-throne-steps-terrain-feature.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne-steps/raw/terrain-echo-throne-steps-terrain-feature.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.479,
+        "tolerance": 26,
+        "alphaCoverage": 0.41784,
+        "size": [
+          1002,
+          1478
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "08d1734ed90ff5ed782016434c9ff502eb1b35d4bbbd03c3e45f31a24ce61734"
+    },
+    {
+      "layer": "background-object",
+      "prompt": "Isolate ONLY the loose set-dressing objects from the reference scene -- debris, rubble, crates, foliage, hanging banners, lanterns, bones -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane, structural architecture, and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne-steps/terrain-echo-throne-steps-background-object.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne-steps/raw/terrain-echo-throne-steps-background-object.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.46,
+        "tolerance": 26,
+        "alphaCoverage": 0.34916,
+        "size": [
+          983,
+          1504
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "08b5090522b7a4d3f7c1e23a383b400504dd77f1239796d721ecc311303bbbc4"
+    }
+  ]
+}

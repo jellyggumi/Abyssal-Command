@@ -35,7 +35,6 @@
       "assetClass": "terrain",
       "assetId": "abyss-chancel",
       "blockers": [
-        "concept-layer-generation-failed",
         "per-asset-texture-generation-required"
       ],
       "candidateArtifact": {
@@ -50,13 +49,13 @@
       "conceptReference": {
         "assetId": "terrain-abyss-chancel",
         "concept": "assets/images/battle/pilot/concept-terrain-abyss-chancel.png",
-        "failedLayers": [
+        "failedLayers": [],
+        "generatedLayers": [
           "background-object",
           "background-terrain",
           "terrain",
           "terrain-feature"
         ],
-        "generatedLayers": [],
         "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-abyss-chancel/terrain-abyss-chancel.layers.json",
         "pendingLayers": []
       },
@@ -74,7 +73,6 @@
       "assetClass": "terrain",
       "assetId": "cinder-span",
       "blockers": [
-        "concept-layer-generation-failed",
         "per-asset-texture-generation-required"
       ],
       "candidateArtifact": null,
@@ -83,13 +81,13 @@
       "conceptReference": {
         "assetId": "terrain-cinder-span",
         "concept": "assets/images/battle/pilot/concept-terrain-cinder-span.png",
-        "failedLayers": [
+        "failedLayers": [],
+        "generatedLayers": [
           "background-object",
           "background-terrain",
           "terrain",
           "terrain-feature"
         ],
-        "generatedLayers": [],
         "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-cinder-span/terrain-cinder-span.layers.json",
         "pendingLayers": []
       },
@@ -1022,7 +1020,6 @@
       "assetClass": "actor",
       "assetId": "throne-echo",
       "blockers": [
-        "concept-layer-generation-failed",
         "interactive-Rodin-Bridge-submission-required",
         "Motion-Previs-bundle-required",
         "per-asset-texture-generation-required"
@@ -1033,12 +1030,12 @@
       "conceptReference": {
         "assetId": "throne-echo",
         "concept": "assets/images/battle/pilot/concept-throne-echo.png",
-        "failedLayers": [
+        "failedLayers": [],
+        "generatedLayers": [
           "accessory",
           "character",
           "weapon"
         ],
-        "generatedLayers": [],
         "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/throne-echo/throne-echo.layers.json",
         "pendingLayers": []
       },
@@ -1056,7 +1053,6 @@
       "assetClass": "actor",
       "assetId": "veil-vanguard",
       "blockers": [
-        "concept-layer-generation-failed",
         "interactive-Rodin-Bridge-submission-required",
         "Motion-Previs-bundle-required",
         "per-asset-texture-generation-required"
@@ -1067,12 +1063,12 @@
       "conceptReference": {
         "assetId": "veil-vanguard",
         "concept": "assets/images/battle/pilot/concept-veil-vanguard.png",
-        "failedLayers": [
+        "failedLayers": [],
+        "generatedLayers": [
           "accessory",
           "character",
           "weapon"
         ],
-        "generatedLayers": [],
         "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/veil-vanguard/veil-vanguard.layers.json",
         "pendingLayers": []
       },
@@ -1090,7 +1086,6 @@
       "assetClass": "actor",
       "assetId": "dusk-warden",
       "blockers": [
-        "concept-layer-generation-pending",
         "interactive-Rodin-Bridge-submission-required",
         "Motion-Previs-bundle-required",
         "per-asset-texture-generation-required"
@@ -1099,17 +1094,16 @@
       "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/commander/dusk-warden.glb",
       "category": "commander",
       "conceptReference": {
-        "assetId": "player-core",
-        "concept": "_workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/concept-input/player-core-tpose-v01.png",
+        "assetId": "player-core-v04",
+        "concept": "assets/images/battle/pilot/concept-player-core-v04.png",
         "failedLayers": [],
         "generatedLayers": [
-          "character"
-        ],
-        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/player-core/player-core.layers.json",
-        "pendingLayers": [
           "accessory",
+          "character",
           "weapon"
-        ]
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/player-core-v04/player-core-v04.layers.json",
+        "pendingLayers": []
       },
       "generation": {
         "mesh": "Rodin Bridge genuine-T-pose body mesh",
@@ -1418,13 +1412,7 @@
       "blockers": [
         "per-asset-texture-generation-required"
       ],
-      "candidateArtifact": {
-        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/abyssal-banner.glb",
-        "runtimeEligible": false,
-        "sha256": "25e42989ec9582df01af314295c8b641f3cfc0645095129c31bb6a31ecdd855b",
-        "textureStatus": "material-only; no generated albedo atlas embedded",
-        "visualFidelityStatus": "not-a-baseline-replacement"
-      },
+      "candidateArtifact": null,
       "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/abyssal-banner.glb",
       "category": "props",
       "conceptReference": {
@@ -1444,7 +1432,7 @@
       },
       "runtimeEligible": false,
       "runtimePath": "assets/images/battle/glb/props/abyssal-banner.glb",
-      "status": "candidate-exported-blocked",
+      "status": "blocked",
       "textureArtifact": null
     },
     {
@@ -1453,13 +1441,7 @@
       "blockers": [
         "per-asset-texture-generation-required"
       ],
-      "candidateArtifact": {
-        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/bulwark-brand.glb",
-        "runtimeEligible": false,
-        "sha256": "7844b8ef8641b33da8526e96eeec24dfd3ac460f92d4c03e688f2b8aca5c0d87",
-        "textureStatus": "material-only; no generated albedo atlas embedded",
-        "visualFidelityStatus": "not-a-baseline-replacement"
-      },
+      "candidateArtifact": null,
       "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/bulwark-brand.glb",
       "category": "props",
       "conceptReference": {
@@ -1479,7 +1461,7 @@
       },
       "runtimeEligible": false,
       "runtimePath": "assets/images/battle/glb/props/bulwark-brand.glb",
-      "status": "candidate-exported-blocked",
+      "status": "blocked",
       "textureArtifact": null
     },
     {
@@ -1488,13 +1470,7 @@
       "blockers": [
         "per-asset-texture-generation-required"
       ],
-      "candidateArtifact": {
-        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/choir-ward-crystal.glb",
-        "runtimeEligible": false,
-        "sha256": "5ac2ade750b69d084a4ebe505b987548686e40d60815f35c1dc2ffc2441cb8e2",
-        "textureStatus": "material-only; no generated albedo atlas embedded",
-        "visualFidelityStatus": "not-a-baseline-replacement"
-      },
+      "candidateArtifact": null,
       "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/choir-ward-crystal.glb",
       "category": "props",
       "conceptReference": {
@@ -1514,7 +1490,7 @@
       },
       "runtimeEligible": false,
       "runtimePath": "assets/images/battle/glb/props/choir-ward-crystal.glb",
-      "status": "candidate-exported-blocked",
+      "status": "blocked",
       "textureArtifact": null
     },
     {
@@ -1523,13 +1499,7 @@
       "blockers": [
         "per-asset-texture-generation-required"
       ],
-      "candidateArtifact": {
-        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/stillwater-hourglass.glb",
-        "runtimeEligible": false,
-        "sha256": "3f664d6c77e6d0bb92f7412d01da08adb9b1740956e6f7f84920808da16be201",
-        "textureStatus": "material-only; no generated albedo atlas embedded",
-        "visualFidelityStatus": "not-a-baseline-replacement"
-      },
+      "candidateArtifact": null,
       "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/stillwater-hourglass.glb",
       "category": "props",
       "conceptReference": {
@@ -1549,7 +1519,7 @@
       },
       "runtimeEligible": false,
       "runtimePath": "assets/images/battle/glb/props/stillwater-hourglass.glb",
-      "status": "candidate-exported-blocked",
+      "status": "blocked",
       "textureArtifact": {
         "assetRole": "candidate-appearance-reference",
         "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/props/stillwater-hourglass-concept.png",
@@ -1586,21 +1556,20 @@
       "assetClass": "prop",
       "assetId": "warden-lantern",
       "blockers": [
-        "missing-separated-concept-reference",
         "per-asset-texture-generation-required"
       ],
-      "candidateArtifact": {
-        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/warden-lantern.glb",
-        "runtimeEligible": false,
-        "sha256": "8a6c3e25bb30c57c3fea5790d2892765b4ab61657a3a8fe1626b4d7169d09b73",
-        "textureStatus": "material-only; no generated albedo atlas embedded",
-        "visualFidelityStatus": "not-a-baseline-replacement"
-      },
+      "candidateArtifact": null,
       "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/warden-lantern.glb",
       "category": "props",
       "conceptReference": {
         "assetId": "warden-lantern",
-        "status": "missing"
+        "concept": "assets/images/battle/pilot/concept-warden-lantern.png",
+        "failedLayers": [],
+        "generatedLayers": [
+          "prop"
+        ],
+        "manifest": "_workspace/current/engineering/asset-pipeline/concept-layers/warden-lantern/warden-lantern.layers.json",
+        "pendingLayers": []
       },
       "generation": {
         "mesh": "Blender-authored prop mesh from separated prop references",
@@ -1609,7 +1578,7 @@
       },
       "runtimeEligible": false,
       "runtimePath": "assets/images/battle/glb/props/warden-lantern.glb",
-      "status": "candidate-exported-blocked",
+      "status": "blocked",
       "textureArtifact": null
     },
     {
@@ -1618,13 +1587,7 @@
       "blockers": [
         "per-asset-texture-generation-required"
       ],
-      "candidateArtifact": {
-        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t1.glb",
-        "runtimeEligible": false,
-        "sha256": "91510fe3232ea4e317716e5ea9e3976eb2ecb32fb15015503865fbf796c148a8",
-        "textureStatus": "material-only; no generated albedo atlas embedded",
-        "visualFidelityStatus": "not-a-baseline-replacement"
-      },
+      "candidateArtifact": null,
       "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t1.glb",
       "category": "props",
       "conceptReference": {
@@ -1644,7 +1607,7 @@
       },
       "runtimeEligible": false,
       "runtimePath": "assets/images/battle/glb/props/tiers/tier-t1.glb",
-      "status": "candidate-exported-blocked",
+      "status": "blocked",
       "textureArtifact": null
     },
     {
@@ -1653,13 +1616,7 @@
       "blockers": [
         "per-asset-texture-generation-required"
       ],
-      "candidateArtifact": {
-        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t2.glb",
-        "runtimeEligible": false,
-        "sha256": "749fc57f244da0939813834f56a41c040dc914804279e9d77327690e4aa680f7",
-        "textureStatus": "material-only; no generated albedo atlas embedded",
-        "visualFidelityStatus": "not-a-baseline-replacement"
-      },
+      "candidateArtifact": null,
       "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t2.glb",
       "category": "props",
       "conceptReference": {
@@ -1679,7 +1636,7 @@
       },
       "runtimeEligible": false,
       "runtimePath": "assets/images/battle/glb/props/tiers/tier-t2.glb",
-      "status": "candidate-exported-blocked",
+      "status": "blocked",
       "textureArtifact": null
     },
     {
@@ -1688,13 +1645,7 @@
       "blockers": [
         "per-asset-texture-generation-required"
       ],
-      "candidateArtifact": {
-        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t3.glb",
-        "runtimeEligible": false,
-        "sha256": "2e1e1bcdfea87969b1f996c1712c5569fe2e9105281549a06bc0077ca14f70b9",
-        "textureStatus": "material-only; no generated albedo atlas embedded",
-        "visualFidelityStatus": "not-a-baseline-replacement"
-      },
+      "candidateArtifact": null,
       "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t3.glb",
       "category": "props",
       "conceptReference": {
@@ -1714,7 +1665,7 @@
       },
       "runtimeEligible": false,
       "runtimePath": "assets/images/battle/glb/props/tiers/tier-t3.glb",
-      "status": "candidate-exported-blocked",
+      "status": "blocked",
       "textureArtifact": null
     },
     {
@@ -1723,13 +1674,7 @@
       "blockers": [
         "per-asset-texture-generation-required"
       ],
-      "candidateArtifact": {
-        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t4.glb",
-        "runtimeEligible": false,
-        "sha256": "e2b0c5d070e5cf193c0134ce6625309d9646c16072d11e39d3fb4058080e2a60",
-        "textureStatus": "material-only; no generated albedo atlas embedded",
-        "visualFidelityStatus": "not-a-baseline-replacement"
-      },
+      "candidateArtifact": null,
       "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t4.glb",
       "category": "props",
       "conceptReference": {
@@ -1749,7 +1694,7 @@
       },
       "runtimeEligible": false,
       "runtimePath": "assets/images/battle/glb/props/tiers/tier-t4.glb",
-      "status": "candidate-exported-blocked",
+      "status": "blocked",
       "textureArtifact": null
     },
     {
@@ -1758,13 +1703,7 @@
       "blockers": [
         "per-asset-texture-generation-required"
       ],
-      "candidateArtifact": {
-        "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t5.glb",
-        "runtimeEligible": false,
-        "sha256": "27c56b57c9e7c2593498fd1104f198cf51f33e294ff5c4b71aaecec82350dd61",
-        "textureStatus": "material-only; no generated albedo atlas embedded",
-        "visualFidelityStatus": "not-a-baseline-replacement"
-      },
+      "candidateArtifact": null,
       "candidateOutput": "_workspace/current/engineering/asset-pipeline/ingame-mesh/staged/props/tiers/tier-t5.glb",
       "category": "props",
       "conceptReference": {
@@ -1784,7 +1723,7 @@
       },
       "runtimeEligible": false,
       "runtimePath": "assets/images/battle/glb/props/tiers/tier-t5.glb",
-      "status": "candidate-exported-blocked",
+      "status": "blocked",
       "textureArtifact": null
     }
   ],
@@ -1793,7 +1732,7 @@
     "characterContract": "docs/character-asset-pipeline.md",
     "motionContract": "_workspace/current/engineering/asset-pipeline/action-pipeline.json",
     "runtimeRegistry": "scripts/defense-runtime-assets.mjs",
-    "runtimeRegistrySha256": "50af8678b94b3499360dee5ab66a6b535d838c3971eee45dbe5d33c520562e5d"
+    "runtimeRegistrySha256": "89e4359dff727a51931fc61e03f2e01c7b7ef183b847a0e9e547026ed98dd940"
   },
   "createdAt": "2026-07-28",
   "lane": "candidate/ingame-mesh",
@@ -1835,11 +1774,10 @@
       "vfx": 9
     },
     "candidateExportedByCategory": {
-      "props": 10,
       "terrain": 7,
       "vfx": 6
     },
-    "candidateExportedCount": 23,
+    "candidateExportedCount": 13,
     "deployedRuntimeGlbsObserved": 0,
     "runtimeDeletionPerformed": false,
     "runtimeGlbRoot": "assets/images/battle/glb",

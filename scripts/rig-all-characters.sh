@@ -74,12 +74,24 @@ if [[ $INSTALL -eq 1 ]]; then
     echo "refusing to install with failures present" >&2
     exit 1
   fi
+  COPY_FAILED=0
   for cat in "${CATEGORIES[@]}"; do
     for staged in "$STAGE/$cat"/*.glb; do
       [[ -e "$staged" ]] || continue
-      cp "$staged" "$GLB_DIR/$cat/$(basename "$staged")"
+      if ! cp "$staged" "$GLB_DIR/$cat/$(basename "$staged")"; then
+        echo "failed to copy staged runtime asset: $(basename "$staged")" >&2
+        COPY_FAILED=1
+      fi
     done
   done
+  if [[ $COPY_FAILED -ne 0 ]]; then
+    echo "refusing to install with copy failures present" >&2
+    exit 1
+  fi
+  if ! python3 "$ROOT/scripts/promote-character-assets.py" --refresh-rig --report-dir "$REPORTS"; then
+    echo "refusing to install because provenance refresh failed" >&2
+    exit 1
+  fi
   echo "installed into $GLB_DIR"
 fi
 

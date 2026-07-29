@@ -142,17 +142,26 @@
     ],
     "sung-hum-boss": [
       "accessory",
+      "character",
       "weapon"
     ],
     "sung-hum-v04": [
+      "accessory",
       "character",
-      "full-plate"
+      "full-plate",
+      "weapon"
     ],
     "throne-echo": [
-      "full-plate"
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
     ],
     "veil-vanguard": [
-      "full-plate"
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
     ],
     "abyssal-banner": [
       "prop"
@@ -178,170 +187,94 @@
     "stillwater-hourglass": [
       "prop"
     ],
-    "terrain-abyss-chancel": [],
-    "terrain-cinder-span": [],
-    "terrain-echo-throne": [],
-    "terrain-echo-throne-steps": [],
-    "terrain-gate-zenith": [],
-    "terrain-glass-necropolis": [],
-    "terrain-howling-sprawl": [],
-    "terrain-shattered-causeway": [],
-    "terrain-starless-canal": [],
-    "terrain-sunken-bastion": [],
-    "terrain-veil-citadel": [],
-    "warden-lantern": []
+    "terrain-abyss-chancel": [
+      "background-object",
+      "background-terrain",
+      "terrain",
+      "terrain-feature"
+    ],
+    "terrain-cinder-span": [
+      "background-object",
+      "background-terrain",
+      "terrain",
+      "terrain-feature"
+    ],
+    "terrain-echo-throne": [
+      "background-object",
+      "background-terrain",
+      "terrain",
+      "terrain-feature"
+    ],
+    "terrain-echo-throne-steps": [
+      "background-object",
+      "background-terrain",
+      "terrain",
+      "terrain-feature"
+    ],
+    "terrain-gate-zenith": [
+      "background-object",
+      "background-terrain",
+      "terrain",
+      "terrain-feature"
+    ],
+    "terrain-glass-necropolis": [
+      "background-object",
+      "background-terrain",
+      "terrain",
+      "terrain-feature"
+    ],
+    "terrain-howling-sprawl": [
+      "background-object",
+      "background-terrain",
+      "terrain",
+      "terrain-feature"
+    ],
+    "terrain-shattered-causeway": [
+      "background-object",
+      "background-terrain",
+      "terrain",
+      "terrain-feature"
+    ],
+    "terrain-starless-canal": [
+      "background-object",
+      "background-terrain",
+      "terrain",
+      "terrain-feature"
+    ],
+    "terrain-sunken-bastion": [
+      "background-object",
+      "background-terrain",
+      "terrain",
+      "terrain-feature"
+    ],
+    "terrain-veil-citadel": [
+      "background-object",
+      "background-terrain",
+      "terrain",
+      "terrain-feature"
+    ],
+    "warden-lantern": [
+      "prop"
+    ],
+    "ui-brand-mark": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-control-close": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-control-pause": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ]
   },
-  "failed": {
-    "sung-hum-boss": {
-      "layers": [
-        "character"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "sung-hum-v04": {
-      "layers": [
-        "weapon",
-        "accessory"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "terrain-abyss-chancel": {
-      "layers": [
-        "terrain",
-        "background-terrain",
-        "terrain-feature",
-        "background-object"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "terrain-cinder-span": {
-      "layers": [
-        "terrain",
-        "background-terrain",
-        "terrain-feature",
-        "background-object"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "terrain-echo-throne": {
-      "layers": [
-        "terrain",
-        "background-terrain",
-        "terrain-feature",
-        "background-object"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "terrain-echo-throne-steps": {
-      "layers": [
-        "terrain",
-        "background-terrain",
-        "terrain-feature",
-        "background-object"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "terrain-gate-zenith": {
-      "layers": [
-        "terrain",
-        "background-terrain",
-        "terrain-feature",
-        "background-object"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "terrain-glass-necropolis": {
-      "layers": [
-        "terrain",
-        "background-terrain",
-        "terrain-feature",
-        "background-object"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "terrain-howling-sprawl": {
-      "layers": [
-        "terrain",
-        "background-terrain",
-        "terrain-feature",
-        "background-object"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "terrain-shattered-causeway": {
-      "layers": [
-        "terrain",
-        "background-terrain",
-        "terrain-feature",
-        "background-object"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "terrain-starless-canal": {
-      "layers": [
-        "terrain",
-        "background-terrain",
-        "terrain-feature",
-        "background-object"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "terrain-sunken-bastion": {
-      "layers": [
-        "terrain",
-        "background-terrain",
-        "terrain-feature",
-        "background-object"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "terrain-veil-citadel": {
-      "layers": [
-        "terrain",
-        "background-terrain",
-        "terrain-feature",
-        "background-object"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "throne-echo": {
-      "layers": [
-        "character",
-        "weapon",
-        "accessory"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "veil-vanguard": {
-      "layers": [
-        "character",
-        "weapon",
-        "accessory"
-      ],
-      "rc": 0,
-      "stderr": ""
-    },
-    "warden-lantern": {
-      "layers": [
-        "prop"
-      ],
-      "rc": 0,
-      "stderr": ""
-    }
-  },
-  "updatedAt": "2026-07-28T09:02:50.161465+00:00"
+  "failed": {},
+  "updatedAt": "2026-07-29T05:51:05.678551+00:00"
 }

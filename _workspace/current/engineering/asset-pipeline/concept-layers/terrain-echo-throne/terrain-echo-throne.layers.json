@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "assetId": "terrain-echo-throne",
+  "concept": "assets/images/battle/pilot/concept-terrain-echo-throne.png",
+  "conceptSha256": "841ca777da56074789ed654d95d4056ed65b3b5facacc607b018a8f840aff577",
+  "generatedAt": "2026-07-29T04:54:02.125707+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      5,
+      7,
+      10
+    ],
+    "borderSpread": 8.397,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "terrain",
+      "prompt": "Isolate ONLY the playable ground surface from the reference scene, rendered as a standalone terrain tile in the same art style: the walkable floor plane, its material, and its edge treatment, viewed from a raised three-quarter angle. Exclude every character, creature, weapon, and prop. Exclude distant background landforms, sky, pillars, walls, bridges, statues, debris, foliage, and set dressing. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne/terrain-echo-throne-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne/raw/terrain-echo-throne-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.45,
+        "tolerance": 26,
+        "alphaCoverage": 0.48248,
+        "size": [
+          1496,
+          996
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "e3f165d4dbffb9d1a84039be12699985b40f5a23d43c928ed5877dc5f37238f9"
+    },
+    {
+      "layer": "background-terrain",
+      "prompt": "Isolate ONLY the distant background landform from the reference scene -- the far silhouette of cliffs, ruins, mountains, or skyline -- rendered as a standalone backdrop layer in the same art style, flattened for parallax use. Exclude the playable foreground ground plane. Exclude every character, creature, weapon, prop, and near-field object. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne/terrain-echo-throne-background-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne/raw/terrain-echo-throne-background-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 1.289,
+        "tolerance": 26,
+        "alphaCoverage": 0.61005,
+        "size": [
+          1536,
+          914
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "1fbaa231297d3d818865492b18e18acb1359fb459ca55d1db406532165b9f51c"
+    },
+    {
+      "layer": "terrain-feature",
+      "prompt": "Isolate ONLY the placeable structural features from the reference scene -- pillars, broken walls, bridge spans, stairs, arches, gates -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane itself and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne/terrain-echo-throne-terrain-feature.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne/raw/terrain-echo-throne-terrain-feature.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.475,
+        "tolerance": 26,
+        "alphaCoverage": 0.40818,
+        "size": [
+          1517,
+          996
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "095de0829eb9a23487446ff42bc467cd85c1a427de963652f3c0e19af2940714"
+    },
+    {
+      "layer": "background-object",
+      "prompt": "Isolate ONLY the loose set-dressing objects from the reference scene -- debris, rubble, crates, foliage, hanging banners, lanterns, bones -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane, structural architecture, and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne/terrain-echo-throne-background-object.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-echo-throne/raw/terrain-echo-throne-background-object.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.444,
+        "tolerance": 26,
+        "alphaCoverage": 0.37521,
+        "size": [
+          1491,
+          1001
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "014be3c069baea81221f60da3878841a8526235d7474682986535df77026e858"
+    }
+  ]
+}

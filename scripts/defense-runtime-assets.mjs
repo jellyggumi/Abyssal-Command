@@ -98,4 +98,6 @@ export const RETAINED_ASSET_PATHS = Object.freeze([
   'assets/images/battle/glb/props/tiers/tier-t3.glb',
   'assets/images/battle/glb/props/tiers/tier-t4.glb',
   'assets/images/battle/glb/props/tiers/tier-t5.glb',
+  'assets/motion/ingame/unarmed-core.glb',
+  'assets/motion/ingame/manifest.json',
 ]);

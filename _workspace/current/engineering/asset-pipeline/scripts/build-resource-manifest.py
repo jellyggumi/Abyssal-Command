@@ -36,7 +36,7 @@ BOSS_CONCEPT_IDS = {
 CONCEPT_ALIASES = {
     "abyss-chancel": "terrain-abyss-chancel",
     "cinder-span": "terrain-cinder-span",
-    "dusk-warden": "player-core",
+    "dusk-warden": "player-core-v04",
     **BOSS_CONCEPT_IDS,
     **{f"tier-t{tier}": "equipment-tier-gems" for tier in range(1, 6)},
 }

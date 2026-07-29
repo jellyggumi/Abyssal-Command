@@ -3,7 +3,7 @@
   "assetId": "veil-vanguard",
   "concept": "assets/images/battle/pilot/concept-veil-vanguard.png",
   "conceptSha256": "0cdbef5587d0f34783766b20ea467ff1d95d62e3211235b008a4f8f60030c54c",
-  "generatedAt": "2026-07-28T08:50:17.385057+00:00",
+  "generatedAt": "2026-07-29T05:35:25.881632+00:00",
   "assetLane": "concept",
   "runtimeEligible": false,
   "separation": {
@@ -23,30 +23,81 @@
       "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
       "output": "_workspace/current/engineering/asset-pipeline/concept-layers/veil-vanguard/veil-vanguard-character.png",
       "generate": {
-        "returncode": 1,
-        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nWARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nError: Private Codex backend request failed with HTTP 429.\n    at classifyFailure (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:25:17)\n    at Object.generateImage (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/cli/generate.js:179:18)\n"
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
       },
-      "status": "failed:generate"
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/veil-vanguard/raw/veil-vanguard-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.815,
+        "tolerance": 26,
+        "alphaCoverage": 0.41034,
+        "size": [
+          1024,
+          1236
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "350d45783dd1ff247e01d078623ec4d8ef06491c3cdbeb61c6327a8e4d6cf889"
     },
     {
       "layer": "weapon",
       "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
       "output": "_workspace/current/engineering/asset-pipeline/concept-layers/veil-vanguard/veil-vanguard-weapon.png",
       "generate": {
-        "returncode": 1,
-        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nWARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nError: Private Codex backend request failed with HTTP 429.\n    at classifyFailure (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:25:17)\n    at Object.generateImage (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/cli/generate.js:179:18)\n"
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
       },
-      "status": "failed:generate"
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/veil-vanguard/raw/veil-vanguard-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.472,
+        "tolerance": 26,
+        "alphaCoverage": 0.36601,
+        "size": [
+          580,
+          1512
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "325c0f23674a35eb9eabc75c441ecaca1ef1c255e3784bae3a8c4c40a02ea1a1"
     },
     {
       "layer": "accessory",
       "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
       "output": "_workspace/current/engineering/asset-pipeline/concept-layers/veil-vanguard/veil-vanguard-accessory.png",
       "generate": {
-        "returncode": 1,
-        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nWARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nError: Private Codex backend request failed with HTTP 429.\n    at classifyFailure (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:25:17)\n    at Object.generateImage (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/cli/generate.js:179:18)\n"
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
       },
-      "status": "failed:generate"
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/veil-vanguard/raw/veil-vanguard-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.462,
+        "tolerance": 26,
+        "alphaCoverage": 0.27442,
+        "size": [
+          1381,
+          914
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "f2309251a5fedfe90494cadb525c3c9d407e5989fe142ffb5533c12997ca6bfc"
     }
   ]
 }

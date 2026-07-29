@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "assetId": "terrain-starless-canal",
+  "concept": "assets/images/battle/pilot/concept-terrain-starless-canal.png",
+  "conceptSha256": "54579def8b9796e019b676f590ec078150ef20141cc2217f1e7100290211a1b4",
+  "generatedAt": "2026-07-29T05:19:31.446373+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      3,
+      4,
+      6
+    ],
+    "borderSpread": 1.145,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "terrain",
+      "prompt": "Isolate ONLY the playable ground surface from the reference scene, rendered as a standalone terrain tile in the same art style: the walkable floor plane, its material, and its edge treatment, viewed from a raised three-quarter angle. Exclude every character, creature, weapon, and prop. Exclude distant background landforms, sky, pillars, walls, bridges, statues, debris, foliage, and set dressing. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-starless-canal/terrain-starless-canal-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-starless-canal/raw/terrain-starless-canal-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.5,
+        "tolerance": 26,
+        "alphaCoverage": 0.40793,
+        "size": [
+          1457,
+          973
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "890950861b2bb78b4e10a1de45b6cf0ae84d9c6769f6b6ff0c98ced0721e1118"
+    },
+    {
+      "layer": "background-terrain",
+      "prompt": "Isolate ONLY the distant background landform from the reference scene -- the far silhouette of cliffs, ruins, mountains, or skyline -- rendered as a standalone backdrop layer in the same art style, flattened for parallax use. Exclude the playable foreground ground plane. Exclude every character, creature, weapon, prop, and near-field object. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-starless-canal/terrain-starless-canal-background-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-starless-canal/raw/terrain-starless-canal-background-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.475,
+        "tolerance": 26,
+        "alphaCoverage": 0.17566,
+        "size": [
+          1504,
+          439
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "e431f3c2394697a3c5b627a7430e9b1bf579ae2ec79c8c1360d15d0a51effb23"
+    },
+    {
+      "layer": "terrain-feature",
+      "prompt": "Isolate ONLY the placeable structural features from the reference scene -- pillars, broken walls, bridge spans, stairs, arches, gates -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane itself and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-starless-canal/terrain-starless-canal-terrain-feature.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-starless-canal/raw/terrain-starless-canal-terrain-feature.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.455,
+        "tolerance": 26,
+        "alphaCoverage": 0.40232,
+        "size": [
+          976,
+          1510
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "c712c1cf6f9d7a902eee65c40caaadd84da0215c4dbcbe94fc593382a3bc78fe"
+    },
+    {
+      "layer": "background-object",
+      "prompt": "Isolate ONLY the loose set-dressing objects from the reference scene -- debris, rubble, crates, foliage, hanging banners, lanterns, bones -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane, structural architecture, and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-starless-canal/terrain-starless-canal-background-object.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-starless-canal/raw/terrain-starless-canal-background-object.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.474,
+        "tolerance": 26,
+        "alphaCoverage": 0.28513,
+        "size": [
+          986,
+          1459
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "8a33cb5daaa2c909a6dfaf4d18565f09be12a0cacbde3b8ddbff733afd12669d"
+    }
+  ]
+}

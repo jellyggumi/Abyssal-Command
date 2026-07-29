@@ -3,7 +3,7 @@
   "assetId": "throne-echo",
   "concept": "assets/images/battle/pilot/concept-throne-echo.png",
   "conceptSha256": "058d088866be8e5bb6ef45a74649c0cb76c8166a6ccad1f417da3ff06c2fa1f7",
-  "generatedAt": "2026-07-28T08:50:14.078034+00:00",
+  "generatedAt": "2026-07-29T05:32:14.417963+00:00",
   "assetLane": "concept",
   "runtimeEligible": false,
   "separation": {
@@ -23,30 +23,81 @@
       "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
       "output": "_workspace/current/engineering/asset-pipeline/concept-layers/throne-echo/throne-echo-character.png",
       "generate": {
-        "returncode": 1,
-        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nWARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nError: Private Codex backend request failed with HTTP 429.\n    at classifyFailure (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:25:17)\n    at Object.generateImage (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/cli/generate.js:179:18)\n"
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
       },
-      "status": "failed:generate"
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/throne-echo/raw/throne-echo-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.426,
+        "tolerance": 26,
+        "alphaCoverage": 0.46863,
+        "size": [
+          1016,
+          1315
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "690783b33ed1997bef4c605640802e48a7defea2671ab246e22678cfd360ddd9"
     },
     {
       "layer": "weapon",
       "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
       "output": "_workspace/current/engineering/asset-pipeline/concept-layers/throne-echo/throne-echo-weapon.png",
       "generate": {
-        "returncode": 1,
-        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nWARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nError: Private Codex backend request failed with HTTP 429.\n    at classifyFailure (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:25:17)\n    at Object.generateImage (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/cli/generate.js:179:18)\n"
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
       },
-      "status": "failed:generate"
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/throne-echo/raw/throne-echo-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.452,
+        "tolerance": 26,
+        "alphaCoverage": 0.06996,
+        "size": [
+          391,
+          1475
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "065268e4131fdf9328c6b011c9a40e3e87ae877e1f4f92016908d8442e8e2cbf"
     },
     {
       "layer": "accessory",
       "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
       "output": "_workspace/current/engineering/asset-pipeline/concept-layers/throne-echo/throne-echo-accessory.png",
       "generate": {
-        "returncode": 1,
-        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nWARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\nError: Private Codex backend request failed with HTTP 429.\n    at classifyFailure (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:25:17)\n    at Object.generateImage (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/providers/privateCodexProvider.js:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async main (file:///Users/supercent/.nvm/versions/node/v24.11.1/lib/node_modules/god-tibo-imagen/src/cli/generate.js:179:18)\n"
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
       },
-      "status": "failed:generate"
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/throne-echo/raw/throne-echo-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.439,
+        "tolerance": 26,
+        "alphaCoverage": 0.38128,
+        "size": [
+          982,
+          1502
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "c928786aaa3f33210afd03806bf79c3805351cb238cf735da51afa299f0ed202"
     }
   ]
 }

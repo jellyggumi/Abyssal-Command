@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "assetId": "terrain-shattered-causeway",
+  "concept": "assets/images/battle/pilot/concept-terrain-shattered-causeway.png",
+  "conceptSha256": "ab62019649e731dc073fc031c6c09d88197b3bade2f1e4e1e0ecf8ca3067391b",
+  "generatedAt": "2026-07-29T05:15:17.183730+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      18,
+      17,
+      16
+    ],
+    "borderSpread": 7.981,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "terrain",
+      "prompt": "Isolate ONLY the playable ground surface from the reference scene, rendered as a standalone terrain tile in the same art style: the walkable floor plane, its material, and its edge treatment, viewed from a raised three-quarter angle. Exclude every character, creature, weapon, and prop. Exclude distant background landforms, sky, pillars, walls, bridges, statues, debris, foliage, and set dressing. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-shattered-causeway/terrain-shattered-causeway-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-shattered-causeway/raw/terrain-shattered-causeway-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.399,
+        "tolerance": 26,
+        "alphaCoverage": 0.36427,
+        "size": [
+          1445,
+          899
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "4f0c7f0eb7206386a5fd048c9d4b867efa01e9b2c0fe73784f08c1587d38016f"
+    },
+    {
+      "layer": "background-terrain",
+      "prompt": "Isolate ONLY the distant background landform from the reference scene -- the far silhouette of cliffs, ruins, mountains, or skyline -- rendered as a standalone backdrop layer in the same art style, flattened for parallax use. Exclude the playable foreground ground plane. Exclude every character, creature, weapon, prop, and near-field object. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-shattered-causeway/terrain-shattered-causeway-background-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-shattered-causeway/raw/terrain-shattered-causeway-background-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          79,
+          87,
+          94
+        ],
+        "borderSpread": 99.885,
+        "tolerance": 26,
+        "alphaCoverage": 0.92886,
+        "size": [
+          1536,
+          1024
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "6a7862f51b26ae7681c162477126aa837f6a97b69342e71b62a99a59f4316d9d"
+    },
+    {
+      "layer": "terrain-feature",
+      "prompt": "Isolate ONLY the placeable structural features from the reference scene -- pillars, broken walls, bridge spans, stairs, arches, gates -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane itself and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-shattered-causeway/terrain-shattered-causeway-terrain-feature.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-shattered-causeway/raw/terrain-shattered-causeway-terrain-feature.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.486,
+        "tolerance": 26,
+        "alphaCoverage": 0.34048,
+        "size": [
+          1512,
+          996
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "44622b279c7f0b8d4243a98da0119128b6c876fe221d801ee437c828957686e8"
+    },
+    {
+      "layer": "background-object",
+      "prompt": "Isolate ONLY the loose set-dressing objects from the reference scene -- debris, rubble, crates, foliage, hanging banners, lanterns, bones -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane, structural architecture, and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-shattered-causeway/terrain-shattered-causeway-background-object.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-shattered-causeway/raw/terrain-shattered-causeway-background-object.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.479,
+        "tolerance": 26,
+        "alphaCoverage": 0.27137,
+        "size": [
+          1474,
+          970
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "d40f2727b1ff148dc3ff9582e87e1499d361ef69ff8a057da3fc588d639996ec"
+    }
+  ]
+}

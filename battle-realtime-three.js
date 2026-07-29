@@ -713,6 +713,15 @@ function snapshotEntityById(snapshot, entityId) {
 // mount in sequence). ---
 const gltfLoader = new GLTFLoader();
 const gltfCache = new Map();
+
+const OVERLAY_ANIMATION_PATH = "assets/motion/ingame/unarmed-core.glb";
+const OVERLAY_ACTION_KEYS = new Set(["idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence"]);
+let overlayDeltaEntriesPromise = null;
+let warnedOverlayLoadFailure = false;
+// Raw overlay clips are rig-independent quaternion deltas. This cache holds
+// absolute clips composed once per model rest pose, then shared by every
+// instance of that model path.
+const adaptedOverlayEntriesByModel = new Map();
 // SkeletonUtils.clone() gives each rendered instance an owned skeleton; this
 // identity set keeps repeated disposal idempotent when roots overlap.
 const disposedSkeletons = new WeakSet();
@@ -737,6 +746,100 @@ function loadGltf(path) {
     gltfCache.set(url, request);
   }
   return gltfCache.get(url);
+}
+
+function overlayTrackBoneName(trackName) {
+  if (typeof trackName !== "string" || !trackName.endsWith(".quaternion")) return null;
+  const nodePath = trackName.slice(0, -".quaternion".length);
+  const bonesMatch = nodePath.match(/\.bones\[([^\]]+)\]$/);
+  if (bonesMatch) return bonesMatch[1];
+  const slash = nodePath.lastIndexOf("/");
+  return nodePath.slice(slash + 1);
+}
+
+function normalizeOverlayDeltaClip(clip) {
+  const tracks = [];
+  for (const track of clip?.tracks ?? []) {
+    const boneName = overlayTrackBoneName(track.name);
+    if (!boneName?.startsWith("DEF-") || track.values.length % 4 !== 0) continue;
+    const normalized = track.clone();
+    normalized.name = `${boneName}.quaternion`;
+    tracks.push(normalized);
+  }
+  return tracks.length
+    ? new THREE.AnimationClip(clip.name, clip.duration, tracks, clip.blendMode)
+    : null;
+}
+
+function loadOverlayDeltaEntries() {
+  if (overlayDeltaEntriesPromise) return overlayDeltaEntriesPromise;
+  const request = loadGltf(OVERLAY_ANIMATION_PATH)
+    .then((gltf) => {
+      const entries = [];
+      const seen = new Set();
+      for (const rawClip of gltf?.animations ?? []) {
+        const key = actionKeyFromClipName(rawClip.name);
+        if (!OVERLAY_ACTION_KEYS.has(key) || seen.has(key)) continue;
+        const clip = normalizeOverlayDeltaClip(rawClip);
+        if (!clip) continue;
+        entries.push({ key, clip, source: "overlay" });
+        seen.add(key);
+      }
+      return entries;
+    })
+    .catch((error) => {
+      if (!warnedOverlayLoadFailure) {
+        console.warn(`Failed to load animation overlay ${OVERLAY_ANIMATION_PATH}:`, error);
+        warnedOverlayLoadFailure = true;
+      }
+      if (overlayDeltaEntriesPromise === request) overlayDeltaEntriesPromise = null;
+      return [];
+    });
+  overlayDeltaEntriesPromise = request;
+  return request;
+}
+
+function adaptOverlayEntries(modelPath, instance, deltaEntries) {
+  if (!deltaEntries.length) return [];
+  if (adaptedOverlayEntriesByModel.has(modelPath)) return adaptedOverlayEntriesByModel.get(modelPath);
+  const deltaQuaternion = new THREE.Quaternion();
+  const composedQuaternion = new THREE.Quaternion();
+  const entries = [];
+  for (const entry of deltaEntries) {
+    const tracks = [];
+    for (const deltaTrack of entry.clip.tracks) {
+      const boneName = overlayTrackBoneName(deltaTrack.name);
+      const bone = boneName ? instance.getObjectByName(boneName) : null;
+      if (!bone?.isBone) continue;
+      const restQuaternion = bone.quaternion.clone();
+      const track = deltaTrack.clone();
+      let previous = null;
+      for (let index = 0; index < track.values.length; index += 4) {
+        deltaQuaternion.fromArray(track.values, index).normalize();
+        composedQuaternion.copy(restQuaternion).multiply(deltaQuaternion).normalize();
+        if (previous && composedQuaternion.dot(previous) < 0) {
+          composedQuaternion.set(
+            -composedQuaternion.x,
+            -composedQuaternion.y,
+            -composedQuaternion.z,
+            -composedQuaternion.w,
+          );
+        }
+        composedQuaternion.toArray(track.values, index);
+        previous = composedQuaternion.clone();
+      }
+      track.name = `${boneName}.quaternion`;
+      tracks.push(track);
+    }
+    if (!tracks.length) continue;
+    entries.push({
+      key: entry.key,
+      source: entry.source,
+      clip: new THREE.AnimationClip(entry.clip.name, entry.clip.duration, tracks, entry.clip.blendMode),
+    });
+  }
+  adaptedOverlayEntriesByModel.set(modelPath, entries);
+  return entries;
 }
 
 function stageNpcFacingYaw(npc, sourcePoint) {
@@ -825,9 +928,12 @@ function actionKeyFromClipName(name) {
 // explains why not every model has any). idle/move/run loop; every other
 // action is a one-shot combat beat that holds its last pose instead of
 // snapping back to frame 0.
-function buildActions(mixer, clips) {
+function buildActions(mixer, clipEntries) {
   const actions = {};
-  for (const clip of clips) {
+  const actionSources = {};
+  for (const entry of clipEntries) {
+    const clip = entry?.clip ?? entry;
+    const source = entry?.source ?? "base";
     const key = actionKeyFromClipName(clip.name);
     if (!key || actions[key]) continue;
     const action = mixer.clipAction(clip);
@@ -838,8 +944,9 @@ function buildActions(mixer, clips) {
       action.clampWhenFinished = true;
     }
     actions[key] = action;
+    actionSources[key] = source;
   }
-  return actions;
+  return { actions, actionSources };
 }
 
 // Heavy instantiation (SkeletonUtils.clone of a rigged GLB plus its bounding
@@ -941,30 +1048,23 @@ function applyCelShading(root) {
 }
 
 async function instantiateActorModel(relPath, targetHeight) {
-  const gltf = await loadGltf(relPath);
+  const [gltf, overlayDeltaEntries] = await Promise.all([
+    loadGltf(relPath),
+    loadOverlayDeltaEntries(),
+  ]);
   return serializeInstantiation(() => {
     // SkeletonUtils.clone() (not gltf.scene.clone()) so a SkinnedMesh instance
-    // gets bound to ITS OWN cloned skeleton -- plain Object3D#clone() copies
-    // the mesh but leaves every clone bound to the ORIGINAL shared skeleton,
-    // so multiple live instances of the same rigged GLB (e.g. two "scout"
-    // enemies on screen at once) would corrupt each other's pose every frame.
-    // No-op for non-skinned nodes (terrain/VFX never hit this path), so this
-    // is safe for every actor kind uniformly.
+    // gets bound to its own cloned skeleton.
     const instance = SkeletonUtils.clone(gltf.scene);
     fitHeight(instance, targetHeight);
     applyCelShading(instance);
-    let mixer = null;
-    let actions = {};
-    if (Array.isArray(gltf.animations) && gltf.animations.length) {
-      // AnimationClip keyframe tracks address bones/nodes by NAME, not object
-      // reference, and SkeletonUtils.clone() preserves every name -- binding
-      // the mixer to `instance` (the clone) makes clipAction() resolve tracks
-      // against the clone's own bones, standard three.js multi-instance
-      // pattern, one mixer per instance sharing the same immutable clip data.
-      mixer = new THREE.AnimationMixer(instance);
-      actions = buildActions(mixer, gltf.animations);
-    }
-    return { instance, mixer, actions };
+    const overlayEntries = adaptOverlayEntries(relPath, instance, overlayDeltaEntries);
+    const baseEntries = (gltf.animations ?? []).map((clip) => ({ clip, source: "base" }));
+    const clipEntries = [...overlayEntries, ...baseEntries];
+    if (!clipEntries.length) return { instance, mixer: null, actions: {}, actionSources: {} };
+    const mixer = new THREE.AnimationMixer(instance);
+    const { actions, actionSources } = buildActions(mixer, clipEntries);
+    return { instance, mixer, actions, actionSources };
   });
 }
 
@@ -1028,7 +1128,7 @@ function applyStageNpcGuardPose(record) {
 }
 
 async function instantiateStageNpc(npc) {
-  const { instance, mixer, actions } = await instantiateActorModel(npc.modelPath, TARGET_HEIGHT.stageNpc);
+  const { instance, mixer, actions, actionSources } = await instantiateActorModel(npc.modelPath, TARGET_HEIGHT.stageNpc);
   ownRenderableResources(instance);
   const point = worldPoint(npc.placement);
   const restGroundY = instance.position.y;
@@ -1052,6 +1152,9 @@ async function instantiateStageNpc(npc) {
     root: instance,
     mixer,
     actions,
+    actionSources,
+    activeActionSource: idleAction ? (actionSources[actions[idleKey] ? idleKey : "idle"] ?? "base") : null,
+    activeActionClip: idleAction?.getClip()?.name ?? null,
     guardBones: stageNpcGuardBones(instance),
     activeActionKey: idleAction ? (actions[idleKey] ? idleKey : "idle") : null,
     oneShotAction: null,
@@ -1746,7 +1849,8 @@ export class RealtimeBattle {
     const record = {
       root: null, kind, modelPath, loading: Boolean(modelPath),
       entityKind: entity.kind ?? null, role: entity.role ?? null, moveState: entity.move ?? null,
-      mixer: null, actions: {}, activeActionKey: null, targetHeight: actorTargetHeight(entity),
+      mixer: null, actions: {}, actionSources: {}, activeActionKey: null, targetHeight: actorTargetHeight(entity),
+      activeActionSource: null, activeActionClip: null,
       oneShotAction: null, oneShotActionKey: null,
       queuedAction: { key: "show", presentation: null },
       dead: false, hideAfterDeath: false,
@@ -1786,7 +1890,7 @@ export class RealtimeBattle {
       return record;
     }
     instantiateActorModel(modelPath, actorTargetHeight(entity))
-      .then(({ instance, mixer, actions }) => {
+      .then(({ instance, mixer, actions, actionSources }) => {
         record.root = instance;
         record.restScale = instance.scale.clone();
         record.restYaw = instance.rotation.y;
@@ -1794,6 +1898,7 @@ export class RealtimeBattle {
         record.restGroundY = instance.position.y;
         record.mixer = mixer;
         record.actions = actions;
+        record.actionSources = actionSources;
         record.loading = false;
         if (this.disposed || !this.actors.has(entity.id) || this.actors.get(entity.id) !== record) {
           disposeObject3D(instance);
@@ -1899,6 +2004,8 @@ export class RealtimeBattle {
     next.reset().fadeIn(fadeSeconds).play();
     if (previous && previous !== next) previous.fadeOut(fadeSeconds);
     record.activeActionKey = key;
+    record.activeActionSource = record.actionSources?.[key] ?? "base";
+    record.activeActionClip = next.getClip()?.name ?? null;
     return true;
   }
 
@@ -2019,6 +2126,8 @@ export class RealtimeBattle {
         action.setEffectiveWeight(1);
         action.reset().play();
         record.activeActionKey = key;
+        record.activeActionSource = record.actionSources?.[key] ?? "base";
+        record.activeActionClip = action.getClip()?.name ?? null;
         record.oneShotAction = action;
         record.oneShotActionKey = key;
         // The weapon/VFX rig is NOT rebuilt here. A restart can only ever be
@@ -3205,6 +3314,8 @@ export class RealtimeBattle {
         dead: record.dead === true,
         activeActionKey: record.activeActionKey ?? null,
         oneShotActionKey: record.oneShotActionKey ?? null,
+        activeActionSource: record.activeActionSource ?? null,
+        activeActionClip: record.activeActionClip ?? null,
         hasMixer: Boolean(record.mixer),
         actionCount: Object.keys(record.actions ?? {}).length,
       };

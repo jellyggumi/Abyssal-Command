@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "assetId": "terrain-glass-necropolis",
+  "concept": "assets/images/battle/pilot/concept-terrain-glass-necropolis.png",
+  "conceptSha256": "bac017ba2809e2d96d37000fc5df971e38f83b5fa080cb97c46e84dd9f9c6c77",
+  "generatedAt": "2026-07-29T05:07:19.029147+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      55,
+      61,
+      69
+    ],
+    "borderSpread": 14.755,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "terrain",
+      "prompt": "Isolate ONLY the playable ground surface from the reference scene, rendered as a standalone terrain tile in the same art style: the walkable floor plane, its material, and its edge treatment, viewed from a raised three-quarter angle. Exclude every character, creature, weapon, and prop. Exclude distant background landforms, sky, pillars, walls, bridges, statues, debris, foliage, and set dressing. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-glass-necropolis/terrain-glass-necropolis-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-glass-necropolis/raw/terrain-glass-necropolis-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.394,
+        "tolerance": 26,
+        "alphaCoverage": 0.44146,
+        "size": [
+          1419,
+          906
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "16af2a8bb7bcab8a60d8b6c842c502bdba876b7a02ed5ba4d1efa348a92e70b2"
+    },
+    {
+      "layer": "background-terrain",
+      "prompt": "Isolate ONLY the distant background landform from the reference scene -- the far silhouette of cliffs, ruins, mountains, or skyline -- rendered as a standalone backdrop layer in the same art style, flattened for parallax use. Exclude the playable foreground ground plane. Exclude every character, creature, weapon, prop, and near-field object. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-glass-necropolis/terrain-glass-necropolis-background-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-glass-necropolis/raw/terrain-glass-necropolis-background-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.438,
+        "tolerance": 26,
+        "alphaCoverage": 0.29432,
+        "size": [
+          1529,
+          633
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "dd0dc9b3eb665665992fbd892959a1596090b2df35c40ffc65b0159d0425f95e"
+    },
+    {
+      "layer": "terrain-feature",
+      "prompt": "Isolate ONLY the placeable structural features from the reference scene -- pillars, broken walls, bridge spans, stairs, arches, gates -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane itself and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-glass-necropolis/terrain-glass-necropolis-terrain-feature.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-glass-necropolis/raw/terrain-glass-necropolis-terrain-feature.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.422,
+        "tolerance": 26,
+        "alphaCoverage": 0.41102,
+        "size": [
+          1522,
+          958
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "3d14792218e40752c9692e729d458e9c1816fc6f1bf1a7a3945d39e998b4d452"
+    },
+    {
+      "layer": "background-object",
+      "prompt": "Isolate ONLY the loose set-dressing objects from the reference scene -- debris, rubble, crates, foliage, hanging banners, lanterns, bones -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane, structural architecture, and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-glass-necropolis/terrain-glass-necropolis-background-object.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-glass-necropolis/raw/terrain-glass-necropolis-background-object.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.456,
+        "tolerance": 26,
+        "alphaCoverage": 0.26875,
+        "size": [
+          1425,
+          953
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "50eeb6c1a4301705e4cbad01790f63346e54f3af46c6f84deb8dc5a0e4e6f3a6"
+    }
+  ]
+}

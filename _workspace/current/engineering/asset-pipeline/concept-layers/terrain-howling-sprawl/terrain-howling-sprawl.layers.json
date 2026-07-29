@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "assetId": "terrain-howling-sprawl",
+  "concept": "assets/images/battle/pilot/concept-terrain-howling-sprawl.png",
+  "conceptSha256": "a41d861d3795d3b20a4c973d32dec357c3ee4c71ced12317a29574473e867470",
+  "generatedAt": "2026-07-29T05:11:32.884847+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "gen",
+    "mode": "gen",
+    "borderMedianRgb": [
+      22,
+      24,
+      24
+    ],
+    "borderSpread": 20.7,
+    "rationale": "full-bleed scene -> layers are not separable in pixel space"
+  },
+  "layers": [
+    {
+      "layer": "terrain",
+      "prompt": "Isolate ONLY the playable ground surface from the reference scene, rendered as a standalone terrain tile in the same art style: the walkable floor plane, its material, and its edge treatment, viewed from a raised three-quarter angle. Exclude every character, creature, weapon, and prop. Exclude distant background landforms, sky, pillars, walls, bridges, statues, debris, foliage, and set dressing. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-howling-sprawl/terrain-howling-sprawl-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-howling-sprawl/raw/terrain-howling-sprawl-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.533,
+        "tolerance": 26,
+        "alphaCoverage": 0.55607,
+        "size": [
+          1490,
+          957
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "b6fce8f0cbc3a9015083156a3a60e28b59fdf07004f273ee6a2a8d083752767a"
+    },
+    {
+      "layer": "background-terrain",
+      "prompt": "Isolate ONLY the distant background landform from the reference scene -- the far silhouette of cliffs, ruins, mountains, or skyline -- rendered as a standalone backdrop layer in the same art style, flattened for parallax use. Exclude the playable foreground ground plane. Exclude every character, creature, weapon, prop, and near-field object. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-howling-sprawl/terrain-howling-sprawl-background-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-howling-sprawl/raw/terrain-howling-sprawl-background-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.499,
+        "tolerance": 26,
+        "alphaCoverage": 0.14195,
+        "size": [
+          1898,
+          188
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "c75920d51d77cb3d24fe38e7cd92549ad1140fb41935e7bcc452c2ec4303e101"
+    },
+    {
+      "layer": "terrain-feature",
+      "prompt": "Isolate ONLY the placeable structural features from the reference scene -- pillars, broken walls, bridge spans, stairs, arches, gates -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane itself and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-howling-sprawl/terrain-howling-sprawl-terrain-feature.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-howling-sprawl/raw/terrain-howling-sprawl-terrain-feature.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.466,
+        "tolerance": 26,
+        "alphaCoverage": 0.31445,
+        "size": [
+          1502,
+          939
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "3fa6f7bddb1cdd8f9d0277a2c61a72b49b11d681acc960aa6c4d772f1eb1b096"
+    },
+    {
+      "layer": "background-object",
+      "prompt": "Isolate ONLY the loose set-dressing objects from the reference scene -- debris, rubble, crates, foliage, hanging banners, lanterns, bones -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane, structural architecture, and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-howling-sprawl/terrain-howling-sprawl-background-object.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-howling-sprawl/raw/terrain-howling-sprawl-background-object.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.476,
+        "tolerance": 26,
+        "alphaCoverage": 0.24049,
+        "size": [
+          1496,
+          956
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "5d9b7a3d387fcf436bbd502ff0c5ae473eef96aabb675f69dbaa806bc7987138"
+    }
+  ]
+}
