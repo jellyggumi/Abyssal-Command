@@ -1,12 +1,13 @@
 // Regression guard for the system status window (#monarch-status): the shadow-mana gauge
 // must be driven by the real Echo Core numbers, the legion counters must agree with the
-// 군단 tab, and the panel must not break the no-horizontal-overflow contract on phone
+// 군단 section, and the panel must not break the no-horizontal-overflow contract on phone
 // viewports.
 //
-// Since the unified dock shell replaced the full-viewport lobby screen, the status window
-// is the header of the left (성장) dock panel body rather than a band above the lobby's
-// idle-return banner, so these tests open that dock first. Every value assertion below is
-// unchanged -- only where the panel is mounted moved.
+// The persistent command decks (20260729-ui-dock-removal) replaced the slide-open side
+// docks: the status window heads the left deck body and is visible with ZERO interaction,
+// and the companion roster it is cross-checked against is mounted in the same deck at the
+// same time. Every value assertion below is unchanged -- what moved is that nothing has to
+// be opened first, which is a strictly stronger reachability claim than the old tab hop.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import http from "node:http";
@@ -63,7 +64,7 @@ test("the lobby system window reports the real warden/legion state", async () =>
     page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
     page.on("console", (message) => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
     await page.goto("/index.html", { waitUntil: "networkidle" });
-    await openGrowthDock(page);
+    await assertDeckMountedWithoutInteraction(page);
 
     const observed = await page.evaluate(() => {
       const stats = {};
@@ -78,7 +79,7 @@ test("the lobby system window reports the real warden/legion state", async () =>
         gaugeLabel: document.querySelector("#monarch-status .monarch-gauge-track")?.getAttribute("aria-label") ?? "",
         chip: document.querySelector(".monarch-arise-chip")?.textContent ?? "",
         stats,
-        firstInPanelBody: document.querySelector("#command-dock-left .dock-panel-body")?.firstElementChild?.id ?? "",
+        firstInDeckBody: document.querySelector("#command-deck-left .deck-body")?.firstElementChild?.id ?? "",
       };
     });
 
@@ -92,21 +93,50 @@ test("the lobby system window reports the real warden/legion state", async () =>
     assert.equal(observed.fillWidth, `${expectedPercent}%`, "gauge fill width must be driven by the Echo Core ratio");
     assert.equal(observed.gaugeLabel, `그림자 마력 잔량 ${expectedPercent}%`, "gauge must expose the same ratio to assistive tech");
     assert.equal(observed.chip.trim(), "ARISE", "the extraction hint chip must be present");
-    assert.equal(observed.firstInPanelBody, "monarch-status", "the status window must head the 성장 dock panel body");
+    assert.equal(observed.firstInDeckBody, "monarch-status", "the status window must head the left command-deck body");
 
     assert.match(observed.stats["저지 레벨"] ?? "", /^Lv \d+$/, "warden level must be reported");
     assert.match(observed.stats["군단 정원"] ?? "", /^[0-3]\/3$/, "legion capacity must be reported as n/3");
 
-    // While the panel is open the rail collapses and its tab strip moves into the panel
-    // header, so an open-dock tab switch has to go through the header's tablist.
-    await page.locator('#dock-panel-left [data-dock-tab="companions"]').click();
-    await page.locator("#monarch-status").waitFor({ state: "visible" });
-    const roster = await page.evaluate(() => ({
-      cards: document.querySelectorAll(".companion-grid .companion-card").length,
-      filledSlots: document.querySelectorAll(".loadout-slot.is-filled").length,
-    }));
+    // 인벤토리 is the default section, so it is readable with ZERO interaction.
+    // 스킬 / 성장 / 군단 are ONE tap away on the always-visible segment bar. That bar is not a
+    // slide menu and not a scroll: every label is permanently on screen and switching is
+    // instant. The deck deliberately mounts one section at a time because mounting all four
+    // measured 3446px of scroll inside a 779px body -- 4.4 screens to reach 군단 -- and the
+    // directive is that scrolling belongs to 인벤토리's own list and nowhere else.
+    // What this asserts is therefore reachability in one tap, plus that the tap target is on
+    // screen without scrolling the masthead.
+    const inventoryRows = await page.locator("#deck-section-inventory .growth-equip-slot").count();
+    assert.ok(inventoryRows > 0, "the 인벤토리 section must be usable with zero interaction");
 
-    assert.equal(observed.stats["결속 병력"], String(roster.cards), "bonded-troop count must match the 군단 tab collection");
+    // Each entry names the selectors that prove the section actually rendered. 군단 lists two
+    // because its content is fixture-dependent: with no extracted elites it renders
+    // `.empty-companions` and three empty loadout slots rather than companion cards.
+    // Asserting on cards alone would be asserting on fixture content, not on reachability --
+    // which is what this test is for.
+    for (const [sectionId, selectors, label] of [
+      ["skills", ["#deck-section-skills .growth-skill-node"], "스킬"],
+      ["legion", [
+        "#deck-section-legion .companion-grid .companion-card",
+        "#deck-section-legion .empty-companions",
+      ], "군단"],
+    ]) {
+      const chip = page.locator(`.deck-segment-bar [data-deck-section="${sectionId}"]`);
+      assert.equal(await chip.count(), 1, `${label} must have a permanently visible segment chip`);
+      assert.equal(await chip.isVisible(), true, `${label}'s chip must be on screen without scrolling`);
+      await chip.click();
+      const counts = await Promise.all(selectors.map((selector) => page.locator(selector).count()));
+      assert.ok(
+        counts.some((count) => count > 0),
+        `${label} must be usable one tap away (matched none of ${selectors.join(", ")})`,
+      );
+    }
+
+    const roster = await page.evaluate(() => ({
+      cards: document.querySelectorAll("#deck-section-legion .companion-grid .companion-card").length,
+      filledSlots: document.querySelectorAll("#deck-section-legion .loadout-slot.is-filled").length,
+    }));
+    assert.equal(observed.stats["결속 병력"], String(roster.cards), "bonded-troop count must match the 군단 roster collection");
     assert.equal(observed.stats["군단 정원"], `${roster.filledSlots}/3`, "legion capacity must match the filled loadout slots");
     assert.ok(Number(observed.stats["추출 기록"]) >= 0, "extraction record must be a non-negative count");
     assert.deepEqual(errors, [], "the lobby system window must not raise browser errors");
@@ -121,7 +151,7 @@ test("the lobby system window keeps phone viewports free of horizontal overflow"
     try {
       const page = await context.newPage();
       await page.goto("/index.html", { waitUntil: "networkidle" });
-      await openGrowthDock(page);
+      await assertDeckMountedWithoutInteraction(page);
       const measured = await page.evaluate(() => {
         const panel = document.querySelector("#monarch-status").getBoundingClientRect();
         return {
@@ -141,13 +171,15 @@ test("the lobby system window keeps phone viewports free of horizontal overflow"
   }
 });
 
-/** Reveals the 성장 tab of the left-hand dock, which carries #monarch-status as its panel
- *  header. Idempotent: wide viewports may already have the dock open by default, and
- *  clicking an already-active tab would collapse it again. */
-async function openGrowthDock(page) {
-  const statusWindow = page.locator("#command-dock-left #monarch-status");
-  if (await statusWindow.count() === 0) {
-    await page.locator('#command-dock-left .dock-rail [data-dock-tab="growth"]').click();
-  }
+/** Asserts the left command deck carries #monarch-status with ZERO prior interaction. The
+ *  slide-open dock this replaced needed a rail tap (and at compact width the left dock
+ *  defaulted closed), so the old helper had to click first. Nothing is clicked here on
+ *  purpose: if a future change reintroduces a disclosure gesture in front of the character
+ *  sheet, this call fails instead of silently clicking through it. */
+async function assertDeckMountedWithoutInteraction(page) {
+  const statusWindow = page.locator("#command-deck-left #monarch-status");
   await statusWindow.waitFor({ state: "visible" });
+  assert.equal(await statusWindow.count(), 1, "the status window must be mounted in the left command deck without any interaction");
+  const canvas = await page.locator("#defense-canvas").boundingBox();
+  assert.ok(canvas && canvas.width > 0 && canvas.height > 0, "the live battle canvas must stay laid out beside the deck");
 }

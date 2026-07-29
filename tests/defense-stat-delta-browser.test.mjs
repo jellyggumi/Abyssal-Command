@@ -72,11 +72,20 @@ test("growth choices show truthful current → upgraded values to the player", {
   });
 
   await page.goto(`${hosting.url}/index.html`, { waitUntil: "networkidle" });
-  // Right dock defaults to its "sortie" tab (component-contracts.md §1
-  // computeDefaultDockOpen -- zero-interaction #start-defense reachability is the
-  // load-time contract other browser tests depend on); #import-defense lives in the
-  // "stronghold" tab instead, one tap away.
-  await page.locator('.dock-panel-tabs [data-dock-tab="stronghold"]').click();
+  // The persistent 전황 시트 deck inlines the 요새 record room, so #import-defense is in the
+  // DOM from load and no tab hop exists (20260729-ui-dock-removal, replacing
+  // component-contracts.md §1 computeDefaultDockOpen). The zero-interaction
+  // #start-defense reachability that other browser tests depend on is preserved by the
+  // sortie FAB, which mounts outside both decks.
+  // `attached`, not visible: the input sits inside the 요새 <details>, which renders
+  // collapsed. setInputFiles drives a hidden input fine -- what this defends is that no tab
+  // hop is needed to reach it, which is DOM presence, not visibility.
+  await page.locator("#import-defense").waitFor({ state: "attached" });
+  assert.equal(
+    await page.locator("#start-defense").count(),
+    1,
+    "#start-defense must remain reachable with zero interaction at load",
+  );
   const fixtureText = await growthFixtureText();
   await page.locator("#import-defense").setInputFiles({
     name: "growth-fixture.json",

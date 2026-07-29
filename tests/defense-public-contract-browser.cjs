@@ -85,10 +85,10 @@ async function run() {
     // publish a tactical briefing, every other front stays behind the spoiler-safe dossier.
     // Assert the narrative contract on a front that is actually allowed to disclose it.
     const briefingStageId = "echo-throne";
-    if (await page.locator(`[data-stage-showcase="${briefingStageId}"]`).count() === 0) {
-      await page.locator('#command-dock-right .dock-rail [data-dock-tab="sortie"]').click();
-      await page.locator(`[data-stage-showcase="${briefingStageId}"]`).waitFor();
-    }
+    // No reveal step: the persistent 전황 시트 deck mounts every showcase button at load
+    // (20260729-ui-dock-removal). Asserting presence without a click defends the
+    // zero-interaction deck contract.
+    await page.locator(`[data-stage-showcase="${briefingStageId}"]`).waitFor();
     await page.locator(`[data-stage-showcase="${briefingStageId}"]`).click();
     const narrative = page.locator("#briefing-stage-narrative");
     assert.equal(await narrative.getAttribute("data-stage-id"), briefingStageId, "the briefing must identify the selected authored stage");

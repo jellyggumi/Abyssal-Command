@@ -66,6 +66,8 @@ const KEY_DIRECTIONS = Object.freeze({
   w: "N", arrowup: "N", d: "E", arrowright: "E",
   s: "S", arrowdown: "S", a: "W", arrowleft: "W",
 });
+const ATTACK_KEYS = new Set([" ", "space", "spacebar", "j", "f", "enter"]);
+const ATTACK_CODES = new Set(["Space", "KeyJ", "KeyF", "Numpad0"]);
 const SNAPSHOT_FEEDBACK_TYPES = new Set(["CRITICAL_HIT", "LORE_SURPRISE_RESOLVED"]);
 const VISUAL_ACTOR_SCALE = 2.5;
 const CAMERA_FOLLOW_X_LIMIT = 0.18;
@@ -158,34 +160,48 @@ const LOBBY_STRATEGY_CUSTOM = "CUSTOM";
 
 let campaign = null;
 let selectedStageId = STAGES[0].id;
-// Idle-style side-dock shell (20260727-lobby-dock-redesign, ui/hud-layout-spec.md +
-// ui/component-contracts.md): replaces the old full-viewport #command-shell lobby overlay.
-// Growth deck (left): 성장/군단/인벤토리. Ops deck (right): 출정/요새. Both docks are
-// screen-space fixed UI, permanently docked to the viewport edges -- there is no longer a
-// separate "lobby screen" to enter or leave; the live 3D battle canvas is always visible
-// beside whichever dock panel (if any) is open.
-// `icon` stays as the text fallback the glyph rendered before the art pass; `iconId`
-// names the generated plate in assets/images/battle/ui/hud/ that styles.css binds via
-// [data-ui-icon]. The glyph is kept in the DOM only when no iconId is present, so a
-// missing asset degrades to the old readable glyph instead of an empty box.
-const LEFT_DOCK_TABS = Object.freeze([
-  { id: "growth", label: "성장", icon: "◆", iconId: "nav-growth" },
-  { id: "companions", label: "군단", icon: "❖", iconId: "nav-companions" },
+// Persistent RPG command decks (20260729-ui-dock-removal, ui/dock-removal-plan.md):
+// replaces the slide-open side docks. Two fixed edge columns, siblings of
+// #defense-battle-surface, mounted ONLY before a run and emptied the instant a run starts:
+//   left  #command-deck-left  -- 캐릭터 시트: 상태창 + 인벤토리 | 성장 | 군단 (one at a time)
+//   right #command-deck-right -- 전황 시트: 구역 미니맵 / 브리핑 / 진행 / 요새 기록실
+// There is no open/close state and no slide gesture: the segment bar is always visible and
+// switching is instant, so 인벤토리 and 스킬 are one tap away with nothing to reveal.
+//
+// Why ONE section at a time rather than all four stacked: mounting all of them measured a
+// 3505px scroll height inside a 325px deck body -- 10.8 screens of vertical scrolling to
+// reach 군단. Scrolling is acceptable INSIDE 인벤토리 (a list that legitimately grows) and
+// nowhere else, so the deck shows the compact status window plus exactly one section, and
+// each section is sized to fit its band. That is a layout fix, not a disclosure mechanic:
+// no section is hidden behind a gesture, and the control that switches them never scrolls
+// away.
+// `icon` is the text fallback the glyph rendered before the art pass; `iconId` names the
+// generated plate in assets/images/battle/ui/hud/ that styles.css binds via [data-ui-icon].
+// The glyph is kept in the DOM only when no iconId is present, so a missing asset degrades
+// to the old readable glyph instead of an empty box.
+const LEFT_DECK_SECTIONS = Object.freeze([
   { id: "inventory", label: "인벤토리", icon: "▦", iconId: "nav-inventory" },
+  { id: "skills", label: "스킬", icon: "✦", iconId: "nav-growth" },
+  { id: "growth", label: "성장", icon: "◆", iconId: "nav-growth" },
+  { id: "legion", label: "군단", icon: "❖", iconId: "nav-companions" },
 ]);
-const RIGHT_DOCK_TABS = Object.freeze([
-  { id: "sortie", label: "출정", icon: "◈", iconId: "nav-sortie" },
-  { id: "stronghold", label: "요새", icon: "▣", iconId: "nav-stronghold" },
+// A 5th segment is NOT available: the landscape bar measures 203px, and 5 chips at the 48dp
+// floor plus gaps need 252px, while 4 need 201px and fit with 2px spare. Any further surface
+// must share an existing segment or be trimmed -- never added as a chip.
+// Which left-deck section is on screen. Defaults to 인벤토리 because the user directive names
+// it first; persisted only in memory, so a reload lands on the same default rather than a
+// remembered state the player cannot see the reason for.
+let activeLeftSection = LEFT_DECK_SECTIONS[0].id;
+
+// Which right-deck (전황 시트) section is on screen. Same reason as the left deck: mounting
+// 출정 and 요새 together measured 1951px of content in a 307px body at portrait, putting the
+// stage-progression control at y=1224 and the guide launcher at y=1935 -- both off-screen,
+// with no affordance revealing them. Defaults to 출정 because that is the pre-run task.
+const RIGHT_DECK_SECTIONS = Object.freeze([
+  { id: "sortie", label: "출정", icon: "➤", iconId: "nav-sortie" },
+  { id: "stronghold", label: "요새", icon: "▤", iconId: "nav-stronghold" },
 ]);
-// dockOpen invariants (component-contracts.md §1): at most one side is true while
-// dockTier==='compact'; both are forced false the instant BattleSession.beginRun() fires.
-let dockOpen = { left: false, right: false };
-let activeLeftDockTab = "growth";
-let activeRightDockTab = "sortie";
-let dockTier = "compact";
-let dockMediaQuery = null;
-let activeGrowthSegment = "stats"; // stats | skills | traits (성장 tab sub-nav)
-let activeCompanionSegment = "list"; // list | formation (동료 tab sub-nav)
+let activeRightSection = RIGHT_DECK_SECTIONS[0].id;
 let statusText = "기록을 불러오는 중입니다.";
 let campaignWrite = Promise.resolve();
 let session = null;
@@ -194,17 +210,6 @@ let idleReturnReceipt = null;
 // Six reusable <span>s recycled across clicks (DOM pool, not three.js); each animates
 // transform+opacity then detaches. Lazily built on first use; skipped under reduced motion.
 let sortieBurstPool = null;
-
-/** component-contracts.md §1 computeDefaultDockOpen(): wide tier opens both docks;
- * compact tier opens ONLY the ops deck (sortie) so the existing zero-interaction
- * load-time browser contracts (#start-defense reachable immediately) keep passing. */
-function computeDefaultDockOpen(tier) {
-  return tier === "wide" ? { left: true, right: true } : { left: false, right: true };
-}
-
-function currentDockTier() {
-  return globalThis.matchMedia?.("(min-width: 900px)").matches ? "wide" : "compact";
-}
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -427,7 +432,7 @@ function nextRewardName(stageId) {
   return REWARDS[rewardId]?.name ?? "봉쇄 기록";
 }
 
-/** Spoiler discipline, applied to the lobby cinematic exactly as the 출정 dock applies it
+/** Spoiler discipline, applied to the lobby cinematic exactly as the 출정 deck applies it
  * (renderSortieTabBody()): only the three STAGE_SHOWCASE_IDS fronts may disclose the boss
  * name, domain and objective. Every other front renders the sealed editorial copy, so the
  * main screen never leaks a boss the player has not deployed against yet. */
@@ -540,7 +545,7 @@ function lobbyCinematicMarkup() {
 
 /** Repaints every campaign-driven part of the lobby overlay (stage identity, objective,
  * strategy row, companion chips) and rebinds their handlers. Called from renderShell(), so
- * it re-runs on exactly the same beats as the docks -- one render dispatcher, not two. The
+ * it re-runs on exactly the same beats as the decks -- one render dispatcher, not two. The
  * per-frame camera/dialogue pass lives separately in BattleSession.updateLobbyCinematic(). */
 function renderLobbyCinematic() {
   const overlay = root.querySelector("#lobby-cinematic");
@@ -788,76 +793,131 @@ function formationRowMarkup(data, interactive = true, downedIds = null, liveComp
   }).join("")}</div>` : `<p class="section-copy">편성된 동료가 없습니다.</p>`;
 }
 
-/** 성장 tab: stats/skills/traits, sub-navigated by `activeGrowthSegment`. */
-function renderGrowthTab() {
-  const data = wardenGrowthData();
-  const segments = [
-    { id: "stats", label: "스탯 (Echo Core)", html: `<div class="growth-stat-grid">${wardenStatsMarkup(data)}</div>` },
-    { id: "skills", label: "스킬트리 (Echo Core 공용)", html: `<div class="growth-skill-grid">${wardenSkillsMarkup(data)}</div>` },
-    { id: "traits", label: "특성 (전선 클리어 시 3택1)", html: wardenTraitsMarkup(data) },
-  ];
-  if (!segments.some((segment) => segment.id === activeGrowthSegment)) activeGrowthSegment = "stats";
+/** Shared shell for one left-deck section (ui/dock-removal-plan.md §4.1). Icon-led
+ * heading + a numeric state chip + the body. The heading plate is aria-hidden and the
+ * readable name lives in the <h2>, so swapping glyph for image is invisible to assistive
+ * tech; a section without a generated plate renders its text glyph instead, which is the
+ * same missing-asset degradation the old rail had. */
+function deckSectionMarkup(id, { titleId, chipHtml = "", bodyHtml }) {
+  const section = LEFT_DECK_SECTIONS.find((entry) => entry.id === id);
+  const mark = section.iconId
+    ? `<span class="deck-section-icon" data-ui-icon="${section.iconId}" aria-hidden="true"></span>`
+    : `<span class="deck-section-icon" aria-hidden="true">${section.icon}</span>`;
   return `
-    <section class="growth-panel command-screen" aria-labelledby="growth-title">
-      <div class="panel-heading"><div><p class="eyebrow">DUSK WARDEN · TRACK A</p><h2 id="growth-title">성장</h2></div><span class="panel-count">EC ${data.echoSpent}/${data.echoEarned} · 저지 Lv${data.level}</span></div>
-      <div class="command-segment-bar" role="tablist" aria-label="성장 항목">${segments.map((segment) => `<button class="command-segment${segment.id === activeGrowthSegment ? " is-active" : ""}" role="tab" aria-selected="${segment.id === activeGrowthSegment}" data-growth-segment="${segment.id}">${segment.label}</button>`).join("")}</div>
-      <div class="command-segment-body">${segments.find((segment) => segment.id === activeGrowthSegment).html}</div>
+    <section class="deck-section command-screen" id="deck-section-${id}" tabindex="-1" aria-labelledby="${titleId}">
+      <div class="deck-section-head">${mark}<h2 id="${titleId}">${escapeHtml(section.label)}</h2><span class="deck-section-chips">${chipHtml}</span></div>
+      <div class="deck-section-body">${bodyHtml}</div>
     </section>`;
 }
 
-/**
- * 동료 tab: list/detail (IA screen #5) + 편성 (IA screen #6) as sub-nav
- * segments — mirrors 성장 tab's segment-bar pattern for the same reason
- * (ui/lane-info-architecture.md section 2.1 lists these as two distinct
- * numbered screens under one tab, not one flat scroll).
- */
-function renderCompanionsListSegment(data) {
+/** Currency/state chip: the generated plate carries the unit, so no "EC"/"BF" text is
+ * printed next to the number (ui/dock-removal-plan.md §5). The unit name is still spoken
+ * -- role="img" + aria-label -- so the figure is never unit-less to a screen reader. */
+function deckCurrencyChip(kind, amount, unitName) {
+  return `<span class="deck-chip deck-chip-${kind}" role="img" aria-label="${escapeHtml(`${unitName} 잔량 ${amount}`)}"><span class="deck-chip-glyph" data-ui-icon="currency-${kind}" aria-hidden="true"></span><b>${amount}</b></span>`;
+}
+
+/** 인벤토리 section: the 3-slot x 5-tier equipment ladder (weapon/ward/trinket) -- no
+ * discrete item-drop inventory exists in this build. Mounted unconditionally and placed
+ * first in the deck body after the status window, because the directive names it. */
+function renderInventorySection(data) {
+  const bf = data.fragEarned - data.fragSpent;
+  return deckSectionMarkup("inventory", {
+    titleId: "inventory-title",
+    chipHtml: deckCurrencyChip("bound-fragment", bf, "속박 파편"),
+    bodyHtml: `<div class="growth-equip-grid">${equipmentOwnersMarkup(data)}</div>`,
+  });
+}
+
+/** 스킬 section: the skill tree alone. Measured reason for the split -- 스킬트리 + 스탯 + 특성
+ * in one section came to 2016px inside a 779px deck body (58% of a 3446px scroll), so the
+ * one surface the directive names by hand was the least reachable thing in the deck. Skills
+ * now own a segment, and 스탯/특성 own another. Neither is behind a disclosure: both labels
+ * sit permanently on the segment bar. */
+function renderSkillSection(data) {
+  const ec = data.echoEarned - data.echoSpent;
+  return deckSectionMarkup("skills", {
+    titleId: "skills-title",
+    chipHtml: `${deckCurrencyChip("echo-core", ec, "에코 코어")}<span class="deck-chip deck-chip-level"><b>Lv ${data.level}</b></span>`,
+    bodyHtml: `<div class="growth-skill-grid">${wardenSkillsMarkup(data)}</div>`,
+  });
+}
+
+/** 성장 section: 스탯 + 특성.
+ *
+ * This section is the ONE documented exception to "no scrolling outside 인벤토리". Measured
+ * at 824px against a 251px band (+485 portrait, +589 landscape), and every alternative was
+ * rejected on measurement:
+ *   - splitting it into 스탯 / 특성 chips needs a 5th segment, and 5 chips at the 48dp floor
+ *     need 252px in a bar that measures 203px at landscape;
+ *   - shrinking the type further collides with the same 48dp floor on the +/- controls;
+ *   - dropping either surface would remove a permanent-progression axis the player spends
+ *     Echo Core on, which is not "필요한 요소만" -- it is removing a required element.
+ * So the scroll is scoped to THIS section's own body wrapper: the status window and the
+ * section heading stay pinned, and 인벤토리 / 스킬 / 군단 remain non-scrolling. One explicit
+ * exception is honest; four silent ones would not be. */
+function renderGrowthSection(data) {
+  const ec = data.echoEarned - data.echoSpent;
+  return deckSectionMarkup("growth", {
+    titleId: "growth-title",
+    chipHtml: `${deckCurrencyChip("echo-core", ec, "에코 코어")}<span class="deck-chip deck-chip-level"><b>Lv ${data.level}</b></span>`,
+    bodyHtml: `
+      <div class="deck-subsection"><h3 class="deck-subhead">스탯</h3><div class="growth-stat-grid">${wardenStatsMarkup(data)}</div></div>
+      <div class="deck-subsection"><h3 class="deck-subhead">특성</h3>${wardenTraitsMarkup(data)}</div>`,
+  });
+}
+
+/** 군단 section: bond slots + roster (IA screen #5) and 편성 (IA screen #6) together.
+ * They were two segments of one tab; both are views of the same three loadout slots, so
+ * mounting both removes a tap without adding a screen. Portraits carry the identity --
+ * the roster is a picture grid, not a list of names. */
+function renderLegionSection(data) {
   const collection = campaign.companionCollection;
-  return `
-    <p class="section-copy">정예를 추출하면 영구 동료가 됩니다. 편성한 동료는 다음 출전부터 자동으로 함께합니다.</p>
-    <div class="loadout-slots" aria-label="현재 동료 편성">${[0, 1, 2].map((index) => { const prototype = data.loadout[index]; return prototype ? `<div class="loadout-slot is-filled">${portraitMarkup(meshRootForCompanion(prototype), companionGlyph(prototype), "rc-portrait rc-portrait-sm")}<strong>${escapeHtml(companionLabel(prototype))}</strong><small>결속 ${index + 1}</small></div>` : `<div class="loadout-slot"><span class="slot-plus">+</span><small>빈 슬롯</small></div>`; }).join("")}</div>
-    <div class="companion-grid">${collection.length ? collection.map((record) => `<button class="companion-card rc-lift${data.loadout.includes(record.prototype) ? " is-selected rc-glow-ring" : ""}" data-companion="${record.prototype}" aria-pressed="${data.loadout.includes(record.prototype)}">${portraitMarkup(meshRootForCompanion(record.prototype), companionGlyph(record.prototype), "rc-portrait rc-portrait-md")}<span><strong>${escapeHtml(companionLabel(record.prototype))}</strong><small>진화 ${record.evolution} · 추출 ${record.capturedEliteIds.length}</small></span><i>${data.loadout.includes(record.prototype) ? "편성됨" : "편성"}</i></button>`).join("") : `<div class="empty-companions"><span class="companion-glyph">?</span><div><strong>아직 결속한 동료가 없습니다.</strong><p>전투 중 빛나는 정예를 쓰러뜨린 뒤 <b>추출</b>하세요.</p></div></div>`}</div>`;
+  const slotsHtml = [0, 1, 2].map((index) => {
+    const prototype = data.loadout[index];
+    return prototype
+      ? `<div class="loadout-slot is-filled">${portraitMarkup(meshRootForCompanion(prototype), companionGlyph(prototype), "rc-portrait rc-portrait-sm")}<strong>${escapeHtml(companionLabel(prototype))}</strong><small>결속 ${index + 1}</small></div>`
+      : `<div class="loadout-slot"><span class="slot-plus">+</span><small>빈 슬롯</small></div>`;
+  }).join("");
+  const rosterHtml = collection.length
+    ? collection.map((record) => `<button class="companion-card rc-lift${data.loadout.includes(record.prototype) ? " is-selected rc-glow-ring" : ""}" data-companion="${record.prototype}" aria-pressed="${data.loadout.includes(record.prototype)}">${portraitMarkup(meshRootForCompanion(record.prototype), companionGlyph(record.prototype), "rc-portrait rc-portrait-md")}<span><strong>${escapeHtml(companionLabel(record.prototype))}</strong><small>진화 ${record.evolution} · 추출 ${record.capturedEliteIds.length}</small></span><i>${data.loadout.includes(record.prototype) ? "편성됨" : "편성"}</i></button>`).join("")
+    : `<div class="empty-companions"><span class="companion-glyph">?</span><div><strong>결속한 동료가 없습니다.</strong><p>정예를 쓰러뜨린 뒤 <b>추출</b>하세요.</p></div></div>`;
+  return deckSectionMarkup("legion", {
+    titleId: "companion-title",
+    chipHtml: `<span class="deck-chip deck-chip-count" role="img" aria-label="편성 ${data.loadout.length} / 정원 3"><b>${data.loadout.length}/3</b></span>`,
+    bodyHtml: `
+      <div class="loadout-slots" aria-label="현재 동료 편성">${slotsHtml}</div>
+      <div class="companion-grid">${rosterHtml}</div>
+      <div class="deck-subsection"><h3 class="deck-subhead">편성</h3>${formationRowMarkup(data)}</div>`,
+  });
 }
 
-function renderCompanionsTab() {
-  const data = wardenGrowthData();
-  const segments = [
-    { id: "list", label: "목록", html: renderCompanionsListSegment(data) },
-    { id: "formation", label: `편성 (출전 순위 · 전열 선호 최대 ${MAX_FRONT_SLOTS})`, html: formationRowMarkup(data) },
-  ];
-  if (!segments.some((segment) => segment.id === activeCompanionSegment)) activeCompanionSegment = "list";
+/** Record-management tools, mounted OUTSIDE the right deck's switched region.
+ *
+ * `#import-defense` must be in the DOM with zero interaction: it is a documented load-time
+ * contract (`tests/defense-stat-delta-browser.test.mjs` waits on it immediately after
+ * `goto`, with no tap). Since the right deck now renders one section at a time and defaults
+ * to 출정, leaving these inside 요새 would put record management behind a segment tap and
+ * break that contract. They stay collapsed inside their own `<details>`, so the cost of
+ * always mounting them is one summary row. */
+function recordToolsMarkup() {
   return `
-    <section class="loadout-panel command-screen" aria-labelledby="companion-title">
-      <div class="panel-heading"><div><p class="eyebrow">COMMAND BOND</p><h2 id="companion-title">동료</h2></div><span class="panel-count">${data.loadout.length}/3 ACTIVE</span></div>
-      <div class="command-segment-bar" role="tablist" aria-label="동료 항목">${segments.map((segment) => `<button class="command-segment${segment.id === activeCompanionSegment ? " is-active" : ""}" role="tab" aria-selected="${segment.id === activeCompanionSegment}" data-companion-segment="${segment.id}">${segment.label}</button>`).join("")}</div>
-      <div class="command-segment-body">${segments.find((segment) => segment.id === activeCompanionSegment).html}</div>
-    </section>`;
+    <details class="archive-tools"><summary>기록 관리 <span>오프라인 저장 · ${escapeHtml(storage.backend ?? "확인 중")}</span></summary><div class="storage-row" aria-label="캠페인 제어"><button id="export-defense">기록 내보내기</button><label class="import-label">기록 가져오기<input id="import-defense" type="file" accept="application/json,text/plain" /></label><button id="export-telemetry">진단 내보내기</button><button id="reset-defense">새 기록</button><output aria-live="polite">${escapeHtml(statusText)}</output></div></details>`;
 }
 
-/** 인벤토리 tab: the 3-slot x 5-tier equipment ladder (weapon/ward/trinket) — no discrete item-drop inventory exists in this build. */
-function renderInventoryTab() {
-  const data = wardenGrowthData();
-  return `
-    <section class="growth-panel command-screen" aria-labelledby="inventory-title">
-      <div class="panel-heading"><div><p class="eyebrow">DUSK WARDEN · TRACK B</p><h2 id="inventory-title">인벤토리</h2></div><span class="panel-count">BF ${data.fragSpent}/${data.fragEarned}</span></div>
-      <div class="growth-equip-grid">${equipmentOwnersMarkup(data)}</div>
-    </section>`;
-}
-
-/** 요새 tab: existing archive-panel (permanent rewards + idle-return summary) relabeled per the tab shell.
- * Prepends the idle-return-recap paragraph (component-contracts.md §3.4 secondary_placement) so a
- * player who dismissed the load-time toast can still re-check what happened offline, every time this
- * panel is open -- unlike the toast, this recap persists (not once-only). */
+/** 요새 (right deck): permanent rewards + idle-return recap. The recap paragraph persists
+ * here (unlike the one-shot load-time toast) so a player who dismissed the toast can still
+ * re-read what happened offline. Record tools live in recordToolsMarkup() instead -- see
+ * why there. */
 function renderStrongholdTab() {
   const completed = campaign.resolvedIds?.length ?? 0;
   const idleSummary = idleReturnSummary();
   return `
-    <section class="archive-panel command-screen" aria-labelledby="reward-title">
+    <section class="archive-panel command-screen" id="ops-section-stronghold" aria-labelledby="reward-title">
       <p class="idle-return-recap idle-return-banner" data-idle-return-outcome="${escapeHtml(idleSummary.outcome)}" data-idle-return-total="${idleSummary.total}" aria-live="polite">${escapeHtml(idleSummary.text)}</p>
-      <div class="panel-heading"><div><p class="eyebrow">ECHO DEEP</p><h2 id="reward-title">요새</h2></div></div>
-      <div class="archive-summary"><span class="archive-ring"><b>${completed}</b><small>전선<br />완료</small></span><div><strong>영구 진행</strong><p>보스 보상과 동료 결속은 기록실에 남아 다음 런에도 이어집니다. 최근 오프라인 진행은 페이지 상단에 표시됩니다.</p></div></div>
+      <div class="panel-heading"><span class="panel-mark" data-ui-icon="nav-stronghold" aria-hidden="true"></span><div><p class="eyebrow">ECHO DEEP</p><h2 id="reward-title">요새</h2></div></div>
+      <div class="archive-summary"><span class="archive-ring"><b>${completed}</b><small>전선<br />완료</small></span><div class="reward-mark-row" aria-hidden="true">${(campaign.rewardIds ?? []).slice(0, 4).map(() => `<span class="reward-pip"></span>`).join("")}</div></div>
       <div class="reward-grid">${(campaign.rewardIds?.length ?? 0) ? campaign.rewardIds.map((id) => `<article class="reward-card rc-lift rc-glass"><span class="reward-mark">✦</span><strong>${escapeHtml(REWARDS[id]?.name ?? id)}</strong><span>${escapeHtml(REWARDS[id]?.description ?? "기록된 보상")}</span></article>`).join("") : `<p class="empty-archive">첫 보스를 봉쇄하면 영구 보상을 선택할 수 있습니다.</p>`}</div>
-      <details class="archive-tools"><summary>기록 관리 <span>오프라인 저장 · ${escapeHtml(storage.backend ?? "확인 중")}</span></summary><div class="storage-row" aria-label="캠페인 제어"><button id="export-defense">기록 내보내기</button><label class="import-label">기록 가져오기<input id="import-defense" type="file" accept="application/json,text/plain" /></label><button id="export-telemetry">진단 내보내기</button><button id="reset-defense">새 기록</button><output aria-live="polite">${escapeHtml(statusText)}</output></div></details>
     </section>`;
 }
 
@@ -886,7 +946,7 @@ function monarchStatusMarkup() {
   const rank = monarchRankFor(data.level);
   return `
     <section id="monarch-status" class="monarch-status command-screen system-window" aria-labelledby="monarch-status-title">
-      <div class="panel-heading"><div><p class="eyebrow">SYSTEM WINDOW · SHADOW LEGION</p><h2 id="monarch-status-title">시스템 상태창</h2></div><span class="rank-badge">RANK ${rank}</span></div>
+      <div class="panel-heading">${portraitMarkup(COMMANDER_MESH_ROOT, "DW", "monarch-portrait rc-portrait")}<div><p class="eyebrow">SYSTEM WINDOW · SHADOW LEGION</p><h2 id="monarch-status-title">시스템 상태창</h2></div><span class="rank-badge">RANK ${rank}</span></div>
       <div class="monarch-gauge" data-monarch-mana-percent="${manaPercent}">
         <p class="monarch-gauge-label"><span>그림자 마력 (Echo Core)</span><b id="monarch-mana-readout">${mana} / ${data.echoEarned} EC</b></p>
         <div class="monarch-gauge-track" role="img" aria-label="그림자 마력 잔량 ${manaPercent}%"><span id="monarch-mana-fill" class="monarch-gauge-fill" style="width: ${manaPercent}%"></span></div>
@@ -897,93 +957,115 @@ function monarchStatusMarkup() {
         <div><dt>결속 병력</dt><dd>${collection.length}</dd></div>
         <div><dt>추출 기록</dt><dd>${extracted}</dd></div>
       </dl>
-      <p class="monarch-arise-hint"><span class="monarch-arise-chip">ARISE</span>정예를 추출할 때마다 군단이 늘어나고, 남은 마력으로 성장 노드를 개방합니다.</p>
+      <p class="monarch-arise-hint"><span class="monarch-arise-chip">ARISE</span><span class="monarch-arise-pips" role="img" aria-label="추출한 정예 ${extracted}">${Array.from({ length: Math.min(extracted, 6) }, () => `<i></i>`).join("")}</span></p>
     </section>`;
 }
 
 
 
 /**
- * Idle-style side-dock shell (20260727-lobby-dock-redesign): renders into the 4 persistent
- * sibling nodes mounted once by mountShell() -- #command-dock-left, #command-dock-right,
- * #start-defense.sortie-fab, #idle-return-toast -- NEVER touches #defense-battle-surface,
- * which lives for the whole page lifetime, untouched by this pass. Both docks are
- * screen-space fixed UI anchored to the viewport edges; the live 3D scene (ticking or
- * frozen at tick-0 depending on session.started) is always visible beside them. There is
- * no longer a single full-viewport "shell" -- see ui/hud-layout-spec.md for the rationale.
+ * Persistent RPG command decks (20260729-ui-dock-removal, ui/dock-removal-plan.md §4):
+ * renders into the persistent sibling nodes mounted once by mountShell() --
+ * #command-deck-left, #command-deck-right, #start-defense.sortie-fab, #idle-return-toast --
+ * and NEVER touches #defense-battle-surface, which lives for the whole page lifetime.
+ * Both decks are screen-space fixed columns on the viewport edges; the live 3D scene
+ * (frozen at tick-0 until session.started) is always visible in the band between them.
+ * There is no open/close mechanic: a deck is either mounted (pre-run) or emptied (mid-run).
  */
 
-/** Shared DockRail + DockPanel markup/wiring for one side (component-contracts.md §3.1/§3.2). */
-function renderDockSide({ side, tabs, activeTab, isOpen, tabBodyHtml, brandLabel }) {
-  const container = root.querySelector(`#command-dock-${side}`);
+/** Shared shell for one deck column: sticky masthead + scrolling body. No open/close arg,
+ * no tablist, no close button -- the whole point of this pass. */
+function renderDeckSide({ side, mastheadHtml, bodyHtml, deckLabel }) {
+  const container = root.querySelector(`#command-deck-${side}`);
   if (!container) return;
-  // The icon span stays aria-hidden with the label in an adjacent .sr-only span, so
-  // whether it carries a glyph or a background image is invisible to assistive tech.
-  const railIcon = (tab) => tab.iconId
-    ? `<span class="dock-rail-icon" data-ui-icon="${tab.iconId}" aria-hidden="true"></span>`
-    : `<span class="dock-rail-icon" aria-hidden="true">${tab.icon}</span>`;
-  const railTabsHtml = tabs.map((tab) => `<button class="dock-rail-tab" role="tab" aria-selected="${tab.id === activeTab}" aria-expanded="${isOpen && tab.id === activeTab}" aria-controls="dock-panel-${side}" data-dock-tab="${tab.id}">${railIcon(tab)}<span class="sr-only">${escapeHtml(tab.label)}</span></button>`).join("");
-  const panelTabsHtml = tabs.map((tab) => `<button class="dock-rail-tab" role="tab" aria-selected="${tab.id === activeTab}" data-dock-tab="${tab.id}">${railIcon(tab)}<span class="sr-only">${escapeHtml(tab.label)}</span></button>`).join("");
   container.innerHTML = `
-    <nav class="dock-rail" data-dock-side="${side}" data-dock-open="${isOpen}" role="tablist" aria-label="${escapeHtml(brandLabel)}">${railTabsHtml}</nav>
-    ${isOpen ? `
-    <section class="dock-panel rc-glass" id="dock-panel-${side}" data-dock-side="${side}">
-      <header class="dock-panel-header">
-        <span class="dock-brand" data-ui-icon="brand-mark" role="img" aria-label="ABYSSAL COMMAND · FARWATCH HOLD" title="ABYSSAL COMMAND · FARWATCH HOLD"></span>
-        <nav class="dock-panel-tabs" role="tablist" aria-label="${escapeHtml(brandLabel)}">${panelTabsHtml}</nav>
-        <button type="button" class="dock-panel-close" data-ui-icon="control-close" aria-label="${escapeHtml(brandLabel)} 닫기"></button>
-      </header>
-      <div class="dock-panel-body">${tabBodyHtml}</div>
-    </section>` : ""}`;
+    <section class="command-deck rc-glass" data-deck-side="${side}" aria-label="${escapeHtml(deckLabel)}">
+      <header class="deck-masthead">${mastheadHtml}</header>
+      <div class="deck-body">${bodyHtml}</div>
+    </section>`;
   hydratePortraits(container);
-
-  container.querySelectorAll("[data-dock-tab]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const clickedTab = button.dataset.dockTab;
-      if (isOpen && clickedTab === activeTab) {
-        dockOpen[side] = false;
-      } else {
-        if (side === "left") activeLeftDockTab = clickedTab; else activeRightDockTab = clickedTab;
-        dockOpen[side] = true;
-        if (dockTier === "compact") dockOpen[side === "left" ? "right" : "left"] = false;
-      }
-      renderShell();
-      root.querySelector(`#command-dock-${side} [data-dock-tab="${clickedTab}"]`)?.focus?.();
-    });
-  });
-  container.querySelector(".dock-panel-close")?.addEventListener("click", () => {
-    dockOpen[side] = false;
-    renderShell();
-    root.querySelector(`#command-dock-${side} [data-dock-tab="${activeTab}"]`)?.focus?.();
-  });
-  if (isOpen) container.querySelector(".dock-panel-header")?.focus?.();
   return container;
 }
 
-/** 성장 덱 (left dock): 성장/군단/인벤토리 -- character-power progression, no time pressure.
- * The system status window (#monarch-status) rides above the tab body as a deck header: it
- * summarises exactly what this deck governs (저지 레벨 / 그림자 마력 / 군단 정원 / 결속 병력),
- * so it stays visible across all three left tabs instead of being tied to one of them. */
-function renderDockLeft() {
+/** Left deck masthead: an always-visible segment bar that switches which section occupies the
+ * deck body. Not a disclosure mechanic and not a slide menu -- the bar never scrolls away,
+ * every label is permanently on screen, and switching is a single tap with no reveal
+ * animation. It exists because mounting all four sections at once measured a 3505px scroll
+ * height in a 325px body; scrolling belongs to 인벤토리's own list, not to the deck.
+ * Each chip carries its icon plate plus a visible label, so the control is readable without
+ * relying on the icon alone. */
+function segmentBarMarkup({ sections, activeId, attr, label }) {
+  return `<nav class="deck-segment-bar" role="tablist" aria-label="${escapeHtml(label)}">${sections.map((section) => {
+    const active = section.id === activeId;
+    const mark = section.iconId
+      ? `<span class="deck-jump-icon" data-ui-icon="${section.iconId}" aria-hidden="true"></span>`
+      : `<span class="deck-jump-icon" aria-hidden="true">${section.icon}</span>`;
+    // aria-label rather than a parallel .sr-only span: the short-viewport block in
+    // styles.css hides .deck-segment-label with `display: none`, which removes it from the
+    // accessibility tree too, and the icon plate is aria-hidden. Without this the
+    // role="tab" buttons would have no accessible name at all in landscape. An aria-label
+    // also avoids the duplicate announcement a visible label plus .sr-only would produce.
+    //
+    // Deliberately NO `aria-controls`: only ONE section is mounted at a time, so a reference
+    // from every chip would dangle for every inactive tab -- measured, both right-deck
+    // targets resolved to nothing. `role="tab"` + `aria-selected` already convey the
+    // relationship, and a dangling aria-controls is worse than an absent one.
+    return `<button type="button" class="deck-segment${active ? " is-active" : ""}" role="tab" aria-selected="${active}" aria-label="${escapeHtml(section.label)}" ${attr}="${section.id}">${mark}<span class="deck-segment-label">${escapeHtml(section.label)}</span></button>`;
+  }).join("")}</nav>`;
+}
+
+function deckSegmentBarMarkup() {
+  return segmentBarMarkup({
+    sections: LEFT_DECK_SECTIONS,
+    activeId: activeLeftSection,
+    attr: "data-deck-section",
+    label: "캐릭터 시트 구역",
+  });
+}
+
+/** Right deck masthead bar. Same contract as the left: always visible, no slide gesture,
+ * one section mounted at a time. 요새's record tools stay OUTSIDE the switched region (see
+ * renderCommandDeckRight) so `#import-defense` remains in the DOM with zero interaction --
+ * `tests/defense-stat-delta-browser.test.mjs` waits on it right after load. */
+function rightDeckSegmentBarMarkup() {
+  return segmentBarMarkup({
+    sections: RIGHT_DECK_SECTIONS,
+    activeId: activeRightSection,
+    attr: "data-ops-section",
+    label: "전황 시트 구역",
+  });
+}
+
+/** 캐릭터 시트 (left deck): the compact status window plus exactly ONE of
+ * 인벤토리 / 성장 / 군단. #monarch-status stays the first element child of .deck-body -- it
+ * summarises what this deck governs (저지 레벨 / 그림자 마력 / 군단 정원 / 결속 병력) and the
+ * section below spends against those numbers. */
+function renderCommandDeckLeft() {
   if (!campaign) return;
-  if (!LEFT_DOCK_TABS.some((tab) => tab.id === activeLeftDockTab)) activeLeftDockTab = "growth";
-  const tabBodies = { growth: renderGrowthTab(), companions: renderCompanionsTab(), inventory: renderInventoryTab() };
-  const dock = renderDockSide({
+  const data = wardenGrowthData();
+  const sectionHtml = activeLeftSection === "skills"
+    ? renderSkillSection(data)
+    : activeLeftSection === "growth"
+      ? renderGrowthSection(data)
+      : activeLeftSection === "legion"
+        ? renderLegionSection(data)
+        : renderInventorySection(data);
+  const deck = renderDeckSide({
     side: "left",
-    tabs: LEFT_DOCK_TABS,
-    activeTab: activeLeftDockTab,
-    isOpen: dockOpen.left,
-    tabBodyHtml: `${monarchStatusMarkup()}${tabBodies[activeLeftDockTab]}`,
-    brandLabel: "성장 덱",
+    deckLabel: "캐릭터 시트",
+    mastheadHtml: deckSegmentBarMarkup(),
+    bodyHtml: `${monarchStatusMarkup()}${sectionHtml}`,
   });
-  if (!dock) return;
-  dock.querySelectorAll("[data-growth-segment]").forEach((button) => {
-    button.addEventListener("click", () => { activeGrowthSegment = button.dataset.growthSegment; renderShell(); });
+  if (!deck) return;
+  deck.querySelectorAll("[data-deck-section]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.deckSection === activeLeftSection) return;
+      activeLeftSection = button.dataset.deckSection;
+      renderShell();
+      root.querySelector(`#command-deck-left [data-deck-section="${activeLeftSection}"]`)?.focus?.();
+    });
   });
-  dock.querySelectorAll("[data-companion-segment]").forEach((button) => {
-    button.addEventListener("click", () => { activeCompanionSegment = button.dataset.companionSegment; renderShell(); });
-  });
-  dock.querySelectorAll("[data-companion]").forEach((button) => {
+  deck.querySelectorAll("[data-companion]").forEach((button) => {
     button.addEventListener("click", async () => {
       const prototype = button.dataset.companion;
       const current = selectedLoadout();
@@ -993,68 +1075,35 @@ function renderDockLeft() {
       renderShell();
     });
   });
-  dock.querySelectorAll("[data-warden-stat]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      try {
-        campaign = allocateWardenStatPoint(campaign, button.dataset.wardenStat);
-        await persistCampaign("스탯 포인트를 배분했습니다.");
-      } catch (error) {
-        statusText = error.message;
-      }
-      renderShell();
+  // Every growth control is the same shape: read one/two data attributes, call the pure
+  // campaign-state transition, persist, re-render. Table instead of five near-identical
+  // try/catch blocks. None of these touch live simulation state (CLAUDE.md §2).
+  const growthActions = [
+    { attr: "data-warden-stat", apply: (el) => allocateWardenStatPoint(campaign, el.dataset.wardenStat), status: "스탯 포인트를 배분했습니다." },
+    { attr: "data-warden-skill", apply: (el) => unlockWardenSkillNode(campaign, el.dataset.wardenSkill), status: "스킬 노드를 해금했습니다." },
+    { attr: "data-warden-trait", apply: (el) => selectWardenTrait(campaign, el.dataset.wardenTrait), status: "특성을 선택했습니다." },
+    { attr: "data-warden-equip-owner", apply: (el) => purchaseEquipmentTier(campaign, el.dataset.wardenEquipOwner, el.dataset.wardenEquipSlot), status: "장비를 강화했습니다." },
+    { attr: "data-warden-formation", apply: (el) => setCompanionFormationSlot(campaign, el.dataset.wardenFormation, el.dataset.wardenFormationTarget), status: "편성을 변경했습니다." },
+  ];
+  for (const { attr, apply, status } of growthActions) {
+    deck.querySelectorAll(`[${attr}]`).forEach((button) => {
+      button.addEventListener("click", async () => {
+        try {
+          campaign = apply(button);
+          await persistCampaign(status);
+        } catch (error) {
+          statusText = error.message;
+        }
+        renderShell();
+      });
     });
-  });
-  dock.querySelectorAll("[data-warden-skill]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      try {
-        campaign = unlockWardenSkillNode(campaign, button.dataset.wardenSkill);
-        await persistCampaign("스킬 노드를 해금했습니다.");
-      } catch (error) {
-        statusText = error.message;
-      }
-      renderShell();
-    });
-  });
-  dock.querySelectorAll("[data-warden-trait]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      try {
-        campaign = selectWardenTrait(campaign, button.dataset.wardenTrait);
-        await persistCampaign("특성을 선택했습니다.");
-      } catch (error) {
-        statusText = error.message;
-      }
-      renderShell();
-    });
-  });
-  dock.querySelectorAll("[data-warden-equip-owner]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      try {
-        campaign = purchaseEquipmentTier(campaign, button.dataset.wardenEquipOwner, button.dataset.wardenEquipSlot);
-        await persistCampaign("장비를 강화했습니다.");
-      } catch (error) {
-        statusText = error.message;
-      }
-      renderShell();
-    });
-  });
-  dock.querySelectorAll("[data-warden-formation]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      try {
-        campaign = setCompanionFormationSlot(campaign, button.dataset.wardenFormation, button.dataset.wardenFormationTarget);
-        await persistCampaign("편성을 변경했습니다.");
-      } catch (error) {
-        statusText = error.message;
-      }
-      renderShell();
-    });
-  });
-  renderRailCurrency();
+  }
 }
 
-/** 출정 tab body, TRIMMED per hud-layout-spec.md §4: hero-copy and the decorative
- * tactical-map/stage-atlas are dropped -- the live 3D canvas next to this panel IS the
- * battlefield preview now. Every authored fact the atlas held (terrain, hazard, flank,
- * chokepath, elevation, occupation, extraction, landmarks) is folded into briefing-stats.
+/** 출정 body: hero-copy and the decorative tactical-map/stage-atlas are dropped -- the live
+ * 3D canvas next to this deck IS the battlefield preview now. Every authored fact the atlas
+ * held (terrain, hazard, flank, chokepath, elevation, occupation, extraction, landmarks) is
+ * folded into briefing-stats.
  *
  * Editorial spoiler discipline is preserved from the authored-stage-presentation pass: only
  * the three STAGE_SHOWCASE_IDS fronts disclose named cards + a tactical briefing. Every
@@ -1078,7 +1127,7 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
       const cleared = campaign.resolvedIds?.includes(stage.id);
       const state = locked ? "잠김" : started && stage.id === selected.id ? "전투 중" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "열람 가능";
       const cutsceneTeaser = CUTSCENES[stage.id]?.intro?.[0] ?? "봉쇄 기록을 열람합니다.";
-      // Mid-run the rail is locked to the committed front, mirroring the dock's stage-rail rule.
+      // Mid-run the showcase is locked to the committed front, mirroring the progression rule.
       const disabled = locked || (started && stage.id !== selected.id);
       return `
         <button class="stage-showcase-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage-showcase="${escapeHtml(stage.id)}" aria-label="${escapeHtml(stage.name)} 쇼케이스 선택, ${state}" aria-pressed="${stage.id === selected.id}" ${disabled ? "disabled" : ""}>
@@ -1110,7 +1159,7 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
           <div><dt>랜드마크</dt><dd>${escapeHtml(selectedPresentation.landmarks.map(({ label }) => label).join(" · "))}</dd></div>
         </dl>
       </details>
-      <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong> 중앙 전장에서 손가락을 끌어 이동하면 카메라 시야가 회전합니다. 지휘관 이동은 화면 방향 버튼 또는 <b>WASD·화살표 키</b>를 사용하세요. 정예를 처치하고 <b>추출(Extract)</b>하여 동료를 확보할 수 있습니다.</p>
+      <p class="briefing-tip"><strong>${escapeHtml(selectedPresentation.mapLabels.objective)}</strong></p>
     </aside>`
     : `
     <aside class="briefing-panel command-screen spoiler-safe-briefing" data-stage-disclosure="safe" aria-labelledby="briefing-title">
@@ -1118,21 +1167,27 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
       <div class="safe-briefing-row"><span>전선</span><strong>${escapeHtml(selectedEditorial?.title ?? selected.name)}</strong></div>
       <div class="safe-briefing-row"><span>상태</span><strong>${selectedStatus}</strong></div>
       <div class="safe-briefing-row"><span>보상 단서</span><strong>${escapeHtml(selectedReward)}</strong></div>
-      <p class="briefing-tip">${escapeHtml(selectedEditorial?.summary ?? "상세 위협과 전장 구성은 출전 전까지 봉인됩니다.")} 편성을 확인한 뒤 작전을 개시하세요.</p>
+      <p class="briefing-tip">${escapeHtml(selectedEditorial?.summary ?? "상세 위협과 전장 구성은 출전 전까지 봉인됩니다.")}</p>
     </aside>`;
+  // Order is load-bearing. The progression <select> is the PRIMARY pre-run control -- it is
+  // how the player picks a front and it is the only launch-selectable surface for the seven
+  // non-showcase stages. It used to sit after the showcase grid, which measured y=1324 in an
+  // 844-tall viewport: 1300px of scrolling to reach the one control the deck exists for.
+  // Progression now leads, the showcase grid and briefing follow as browse content, and the
+  // guide launcher trails. Nothing is removed; the reading order matches the task order.
   return `
-    <section class="mission-panel command-screen" aria-labelledby="stage-title">
-      <div class="panel-heading"><div><p class="eyebrow">EDITORIAL ARCHIVE</p><h2 id="stage-title">봉쇄선 쇼케이스</h2></div><span class="panel-count">${completed} CLEAR · ${unlocked} UNLOCKED</span></div>
-      <p class="section-copy">시네마틱·전장 구성은 아래 세 봉쇄선만 미리 공개됩니다.</p>
-      <div class="stage-showcase-grid">${showcaseCards}</div>
+    <section class="mission-panel command-screen" id="ops-section-sortie" aria-labelledby="stage-title">
+      <div class="panel-heading"><span class="panel-mark" data-ui-icon="nav-sortie" aria-hidden="true"></span><div><p class="eyebrow">EDITORIAL ARCHIVE</p><h2 id="stage-title">봉쇄선 쇼케이스</h2></div><span class="panel-count">${completed} CLEAR · ${unlocked} UNLOCKED</span></div>
       <div class="stage-progression-control">
         <label for="stage-progression">진행 전선 선택</label>
         <select id="stage-progression" data-stage-progress aria-label="진행 전선 선택" ${started ? "disabled" : ""}>${progressionOptions}</select>
         <div class="stage-progression-summary" aria-live="polite"><span>${selectedStatus}</span><strong>${escapeHtml(selectedEditorial?.title ?? selected.name)}</strong><small>완료 보상 · ${escapeHtml(selectedReward)}</small></div>
       </div>
+      <p class="section-copy sr-only">시네마틱·전장 구성은 아래 세 봉쇄선만 미리 공개됩니다.</p>
+      <div class="stage-showcase-grid">${showcaseCards}</div>
     </section>
     ${briefingPanel}
-    <div class="lobby-guide-launch"><p><strong>처음 출전하나요?</strong> 동료 편성, 정예 추출, 스킬 재사용 흐름을 1분 안에 확인하세요.</p><button type="button" data-guide-open aria-label="전투 작전 가이드 열기" aria-haspopup="dialog" aria-controls="lobby-guide-dialog">작전 가이드</button></div>
+    <div class="lobby-guide-launch"><button type="button" data-guide-open aria-label="전투 작전 가이드 열기" aria-haspopup="dialog" aria-controls="lobby-guide-dialog"><span class="guide-launch-mark" aria-hidden="true">?</span><span>작전 가이드</span></button></div>
     <dialog id="lobby-guide-dialog" class="lobby-guide-dialog" aria-labelledby="lobby-guide-title">
       <div class="lobby-guide-shell">
         <div class="panel-heading"><div><p class="eyebrow">FIELD MANUAL</p><h2 id="lobby-guide-title">전투 작전 가이드</h2></div><button type="button" data-guide-close aria-label="전투 작전 가이드 닫기">닫기</button></div>
@@ -1146,8 +1201,17 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
     </dialog>`;
 }
 
-/** 전황 덱 (right dock): 출정/요새 -- where the campaign stands (current front + permanent record). */
-function renderDockRight() {
+/** 전황 시트 (right deck): ONE of 출정 / 요새 at a time, plus the record tools mounted
+ * unconditionally beneath them.
+ *
+ * Measured reason for switching rather than stacking: 출정 + 요새 together came to 1951px of
+ * content in a 307px body at portrait, which put the stage-progression control at y=1224 and
+ * the guide launcher at y=1935 -- both off-screen with nothing revealing them. Same defect
+ * the left deck had, same fix.
+ *
+ * `recordToolsMarkup()` is appended OUTSIDE the switched section on purpose: `#import-defense`
+ * is a zero-interaction load-time contract, so it must not sit behind a segment tap. */
+function renderCommandDeckRight() {
   if (!campaign) return;
   const selected = stageFor(selectedStageId);
   // Spoiler discipline: authored presentation/terrain are only resolved for the three
@@ -1160,25 +1224,31 @@ function renderDockRight() {
   const selectedObjective = stageObjective(selected.id);
   const started = session?.started ?? false;
   root.dataset.stageId = selected.id;
-  if (!RIGHT_DOCK_TABS.some((tab) => tab.id === activeRightDockTab)) activeRightDockTab = "sortie";
   const frontLabel = selectedIsShowcase
     ? `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)}`
     : escapeHtml(stageWorldFor(selected.id)?.editorial?.spoilerSafe?.title ?? selected.name);
-  const briefingLine = started ? `전투 진행 중 · ${frontLabel}` : frontLabel;
-  const tabBodies = {
-    sortie: `<p class="dock-briefing-line" aria-live="polite">${briefingLine}</p>${renderSortieTabBody(selected, selectedPresentation, selectedTerrain, selectedObjective, completed, unlocked, started)}`,
-    stronghold: renderStrongholdTab(),
-  };
-  const dock = renderDockSide({
+  const opsHtml = activeRightSection === "stronghold"
+    ? renderStrongholdTab()
+    : renderSortieTabBody(selected, selectedPresentation, selectedTerrain, selectedObjective, completed, unlocked, started);
+  const deck = renderDeckSide({
     side: "right",
-    tabs: RIGHT_DOCK_TABS,
-    activeTab: activeRightDockTab,
-    isOpen: dockOpen.right,
-    tabBodyHtml: tabBodies[activeRightDockTab],
-    brandLabel: "전황 덱",
+    deckLabel: "전황 시트",
+    mastheadHtml: `
+      <span class="deck-brand" data-ui-icon="brand-mark" role="img" aria-label="ABYSSAL LANTERN · FARWATCH HOLD" title="ABYSSAL LANTERN · FARWATCH HOLD"></span>
+      <p class="deck-front-line" aria-live="polite">${started ? `전투 진행 중 · ${frontLabel}` : frontLabel}</p>
+      ${rightDeckSegmentBarMarkup()}`,
+    bodyHtml: `${opsHtml}${recordToolsMarkup()}`,
   });
-  if (!dock) return;
-  dock.querySelectorAll("[data-stage-showcase]").forEach((button) => {
+  if (!deck) return;
+  deck.querySelectorAll("[data-ops-section]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.opsSection === activeRightSection) return;
+      activeRightSection = button.dataset.opsSection;
+      renderShell();
+      root.querySelector(`#command-deck-right [data-ops-section="${activeRightSection}"]`)?.focus?.();
+    });
+  });
+  deck.querySelectorAll("[data-stage-showcase]").forEach((button) => {
     button.addEventListener("click", () => {
       if (session?.started) return; // stage selection is locked to the live front once a run is committed
       selectedStageId = button.dataset.stageShowcase;
@@ -1186,7 +1256,7 @@ function renderDockRight() {
       renderShell();
     });
   });
-  dock.querySelector("[data-stage-progress]")?.addEventListener("change", (event) => {
+  deck.querySelector("[data-stage-progress]")?.addEventListener("change", (event) => {
     if (session?.started) return;
     const stageId = event.currentTarget.selectedOptions[0]?.dataset.stageId;
     if (!stageId) return;
@@ -1194,15 +1264,15 @@ function renderDockRight() {
     session?.remountForStage(selectedStageId);
     renderShell();
   });
-  const guideDialog = dock.querySelector("#lobby-guide-dialog");
-  const guideTrigger = dock.querySelector("[data-guide-open]");
+  const guideDialog = deck.querySelector("#lobby-guide-dialog");
+  const guideTrigger = deck.querySelector("[data-guide-open]");
   guideTrigger?.addEventListener("click", () => {
     if (!guideDialog?.open) guideDialog?.showModal();
     guideDialog?.querySelector("[data-guide-close]")?.focus();
   });
   guideDialog?.querySelector("[data-guide-close]")?.addEventListener("click", () => guideDialog.close());
   guideDialog?.addEventListener("close", () => guideTrigger?.focus());
-  dock.querySelector("#export-defense")?.addEventListener("click", async () => {
+  deck.querySelector("#export-defense")?.addEventListener("click", async () => {
     const text = await storage.exportText();
     if (!text) {
       statusText = "내보낼 유효한 기록이 없습니다.";
@@ -1216,7 +1286,7 @@ function renderDockRight() {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   });
-  dock.querySelector("#export-telemetry")?.addEventListener("click", () => {
+  deck.querySelector("#export-telemetry")?.addEventListener("click", () => {
     const url = URL.createObjectURL(new Blob([telemetry.exportJson()], { type: "application/json" }));
     const link = document.createElement("a");
     link.href = url;
@@ -1224,7 +1294,7 @@ function renderDockRight() {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   });
-  dock.querySelector("#import-defense")?.addEventListener("change", async (event) => {
+  deck.querySelector("#import-defense")?.addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     const text = file ? await file.text() : "";
     if (!text || !(await storage.importText(text))) {
@@ -1238,7 +1308,7 @@ function renderDockRight() {
     session?.remountForStage(selectedStageId);
     renderShell();
   });
-  dock.querySelector("#reset-defense")?.addEventListener("click", async () => {
+  deck.querySelector("#reset-defense")?.addEventListener("click", async () => {
     if (session?.started) return;
     await storage.clear();
     campaign = createCampaign({ resetEpoch: campaign.resetEpoch + 1 });
@@ -1249,11 +1319,11 @@ function renderDockRight() {
   });
 }
 
-/** SortieFab (component-contracts.md §3.3): persistent floating action button, NOT inside
- * any dock -- the single most important pre-run action stays reachable regardless of dock
- * state. Removed from the DOM (not just hidden) once session.started, mirroring today's
- * ternary swap for the CTA. id UNCHANGED ("#start-defense") -- required by the project's
- * existing browser contracts. */
+/** SortieFab: fixed bottom-centre floating action button, NOT inside either deck -- the
+ * single most important pre-run action is reachable with zero interaction at load, which is
+ * a documented browser contract (tests/defense-survivor-browser.cjs,
+ * tests/defense-hud-responsive-browser.cjs). Removed from the DOM (not just hidden) once
+ * session.started. id UNCHANGED ("#start-defense"). */
 function renderSortieFab() {
   if (!campaign) return;
   const existing = root.querySelector("#start-defense");
@@ -1263,28 +1333,31 @@ function renderSortieFab() {
   }
   const selected = stageFor(selectedStageId);
   const label = `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)} 전선으로`;
+  // One markup string for both the create and the update path: the update path used to
+  // rebuild the chevron WITHOUT data-ui-icon, so a re-render silently downgraded the
+  // generated plate back to the ↗ glyph.
+  const innerHtml = `<span>작전 개시</span><small>${label}</small><b data-ui-icon="control-sortie" aria-hidden="true"></b>`;
   if (existing) {
-    existing.innerHTML = `<span>작전 개시</span><small>${label}</small><b aria-hidden="true">↗</b>`;
+    existing.innerHTML = innerHtml;
     return;
   }
   const button = document.createElement("button");
   button.id = "start-defense";
   button.className = "sortie-fab";
-  button.innerHTML = `<span>작전 개시</span><small>${label}</small><b data-ui-icon="control-sortie" aria-hidden="true"></b>`;
+  button.innerHTML = innerHtml;
   button.addEventListener("click", () => {
     spawnSortieBurst(button);
     session?.beginRun();
-    dockOpen = { left: false, right: false };
     renderShell();
   });
   root.append(button);
 }
 
-/** IdleReturnToast (component-contracts.md §3.4): mounted ONCE at mountShell() time, only
+/** IdleReturnToast (ui/component-contracts.md §4): mounted ONCE at mountShell() time, only
  * if idleReturnReceipt is present (i.e. settleIdleReturn() actually ran and reported back)
  * -- a one-time "welcome back" notice, not persistent-progression UI. Self-removes on
  * manual dismiss (click) or an 8s auto-timeout. The persisted recap lives inside the
- * stronghold dock tab instead (renderStrongholdTab()'s .idle-return-recap). */
+ * 요새 section instead (renderStrongholdTab()'s .idle-return-recap). */
 function renderIdleReturnToast() {
   if (!idleReturnReceipt) return;
   const idleSummary = idleReturnSummary();
@@ -1344,57 +1417,31 @@ function renderIdleReturnToast() {
   setTimeout(() => toast.remove(), 8000);
 }
 
-/** Top-level dispatcher: re-renders both docks and the sortie FAB. Called by every
- * dock/tab/campaign-mutation handler in place of the old single renderCommandShell(). The
- * idle-return toast is NOT re-rendered here -- it is a one-shot mount, see
- * renderIdleReturnToast()'s own doc comment. */
+/** Top-level dispatcher: re-renders both command decks and the sortie FAB. Called by every
+ * deck/campaign-mutation handler. The idle-return toast is NOT re-rendered here -- it is a
+ * one-shot mount, see renderIdleReturnToast()'s own doc comment.
+ *
+ * Mid-run both decks are EMPTIED rather than restyled: combat owns the whole screen, so the
+ * lobby columns leave no nodes behind to hit-test against canvas touches, and the combat HUD
+ * budget in ui/hud-information-architecture.md §6 is unaffected by this pass. */
 function renderShell() {
-  renderDockLeft();
-  renderDockRight();
+  // `data-stage-id` must track the SELECTED front in both branches. It used to be set only
+  // on the started branch, so `mountShell` seeded it once and selecting a different front
+  // pre-run left it stale -- `tests/lobby-guide-disclosure-browser.test.mjs:184` waits on
+  // `#defense-app[data-stage-id="<selected>"]` after a keyboard selection and timed out
+  // against the seeded value. The attribute is a selection readout, not a run readout.
+  root.dataset.stageId = stageFor(selectedStageId).id;
+  if (session?.started) {
+    const leftDeck = root.querySelector("#command-deck-left");
+    const rightDeck = root.querySelector("#command-deck-right");
+    if (leftDeck) leftDeck.innerHTML = "";
+    if (rightDeck) rightDeck.innerHTML = "";
+  } else {
+    renderCommandDeckLeft();
+    renderCommandDeckRight();
+  }
   renderSortieFab();
   renderLobbyCinematic();
-  // Reflect each dock's open state onto the battle surface so the combat edge-HUD can shift
-  // its corner panels clear of an open peek panel in CSS (docks are siblings, unreachable
-  // otherwise). Per-side (not one value) because at wide tier BOTH docks can be open at once.
-  const surface = root.querySelector("#defense-battle-surface");
-  if (surface) {
-    surface.dataset.peekLeft = dockOpen.left ? "true" : "false";
-    surface.dataset.peekRight = dockOpen.right ? "true" : "false";
-  }
-}
-
-/** Item 2 (presentation-spec, revised) — the two persistent currencies live INSIDE the
- * left (성장) dock rail as compact icon chips pinned to the bottom, below the tab icons,
- * instead of a floating top-left overlay (which overlapped the rail's own tab UI).
- * Amounts = earned−spent affordability balance the growth/inventory docks spend against
- * (wardenGrowthData parity). Each chip deep-links to where it is spent (EC→성장, BF→인벤토리).
- * Rendered into the freshly-rebuilt left rail by renderDockLeft(); collapses with the rail
- * when the left panel opens, and CSS-hidden once data-defense-started flips (yields to the
- * combat HUD / D-pad). */
-function renderRailCurrency() {
-  const railEl = root.querySelector("#command-dock-left .dock-rail");
-  if (!railEl || !campaign) return;
-  const ec = echoCoreEarned(campaign) - echoCoreSpent(campaign);
-  const bf = boundFragmentEarned(campaign) - boundFragmentSpent(campaign);
-  const group = document.createElement("div");
-  group.className = "rail-currency";
-  group.innerHTML = `
-    <button type="button" class="rail-currency-chip rail-currency-ec" data-currency="echo-core" aria-label="에코 코어 ${ec} · 성장 열기"><span class="rail-currency-glyph" data-ui-icon="currency-echo-core" aria-hidden="true"></span><b class="rail-currency-amount">${ec}</b></button>
-    <button type="button" class="rail-currency-chip rail-currency-bf" data-currency="bound-fragment" aria-label="속박 파편 ${bf} · 인벤토리 열기"><span class="rail-currency-glyph" data-ui-icon="currency-bound-fragment" aria-hidden="true"></span><b class="rail-currency-amount">${bf}</b></button>`;
-  railEl.append(group);
-  group.querySelector('[data-currency="echo-core"]')?.addEventListener("click", () => openLeftDockTab("growth"));
-  group.querySelector('[data-currency="bound-fragment"]')?.addEventListener("click", () => openLeftDockTab("inventory"));
-}
-
-/** Currency-pill deep link: opens the left (성장) dock on the named tab, mirroring the
- * dock-rail tab-open behavior (compact tier force-closes the opposite dock). No-op mid-run
- * (the rail is CSS-hidden then anyway). */
-function openLeftDockTab(tab) {
-  if (session?.started) return;
-  activeLeftDockTab = tab;
-  dockOpen.left = true;
-  if (dockTier === "compact") dockOpen.right = false;
-  renderShell();
 }
 
 /** Item 6 (presentation-spec) — pooled screen-space particle burst on 작전 개시 press.
@@ -1431,23 +1478,6 @@ function spawnSortieBurst(button) {
   }
 }
 
-/** matchMedia('(min-width: 900px)') change listener (component-contracts.md §4
- * new_only row): recomputes dockTier and re-runs computeDefaultDockOpen() ONLY when the
- * tier actually flipped, so a resize within the same tier never clobbers a user's manual
- * open/close. Mid-run (session.started), a tier flip stays collapsed rather than
- * reopening -- the run-start force-collapse invariant outranks the tier default. */
-function setupDockTierListener() {
-  dockMediaQuery = globalThis.matchMedia?.("(min-width: 900px)") ?? null;
-  dockMediaQuery?.addEventListener?.("change", () => {
-    const nextTier = currentDockTier();
-    if (nextTier === dockTier) return;
-    dockTier = nextTier;
-    dockOpen = session?.started ? { left: false, right: false } : computeDefaultDockOpen(dockTier);
-    renderShell();
-  });
-}
-
-
 function requestBattleImmersion() {
   const fullscreen = document.documentElement.requestFullscreen?.().catch(() => undefined);
   Promise.resolve(fullscreen).finally(() => {
@@ -1456,16 +1486,17 @@ function requestBattleImmersion() {
 }
 
 /**
- * Idle-style side-dock shell (20260727-lobby-dock-redesign) bootstrap: mounts the ENTIRE
- * persistent DOM exactly once for the page's whole lifetime -- #defense-battle-surface
- * (canvas + world-hud-overlay + edge-hud, unchanged markup from the old beginSession()) as
- * the fixed-fullscreen base layer, plus #command-dock-left/#command-dock-right as the two
- * edge-anchored dock wrappers renderDockLeft()/renderDockRight() target. There is no
- * second `root.innerHTML =` swap anywhere else in this module -- "entering battle" is
+ * Persistent command-deck bootstrap: mounts the ENTIRE persistent DOM exactly once for the
+ * page's whole lifetime -- #defense-battle-surface (canvas + world-hud-overlay + edge-hud)
+ * as the fixed-fullscreen base layer, plus #command-deck-left/#command-deck-right as the two
+ * edge-anchored deck wrappers renderCommandDeckLeft()/renderCommandDeckRight() target. There
+ * is no second `root.innerHTML =` swap anywhere else in this module -- "entering battle" is
  * BattleSession.beginRun() flipping `started`, not a screen transition.
  * `data-defense-ready="true"` is set immediately (the battle surface always exists now);
  * `data-defense-started` reflects whether a real run is ticking, set by beginRun() -- CI
  * browser contracts wait on the latter instead of a click transition.
+ * No deck open/close state is initialised here: the decks are always mounted pre-run, and
+ * their responsive geometry is entirely CSS, so there is nothing to seed or listen for.
  */
 function mountShell(stageId) {
   document.body.style.overflow = "hidden";
@@ -1481,7 +1512,7 @@ ${lobbyCinematicMarkup()}
           <div class="hud-panel hud-loop-state" data-stage-hud-context="loop"><span class="hud-eyebrow">RUN STATE · AGENCY</span><strong id="battle-loop-phase" aria-live="polite"></strong><div class="hud-loop-grid"><span id="battle-pressure-state"></span><span id="battle-growth-state"></span><span id="battle-formation-state"></span><span id="battle-extraction-state"></span></div></div>
           <div class="hud-panel hud-legion"><span class="hud-eyebrow">SHADOW LEGION</span><div class="hud-legion-stack"><span class="legion-mana-label" id="battle-legion-mana-label"></span><span class="legion-mana-track"><i id="battle-legion-mana-fill"></i></span><div class="legion-roster" id="battle-legion-roster"></div><span class="hud-stance-mode" id="battle-stance-mode"></span></div></div>
 
-          <div class="top-right-hud"><div class="hud-order-strip"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div></div><div class="hud-right-stack"><div class="hud-actions" id="skill-actions" aria-label="활성 스킬"></div><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
+          <div class="top-right-hud"><div class="hud-order-strip"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 명령</small><strong id="battle-objective"></strong></span></div></div><div class="hud-right-stack"><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
         </div>
         <output id="battle-event-feedback" class="battle-event-feedback" role="status" aria-live="polite" aria-atomic="true"></output>
         <div class="arise-banner" id="battle-arise-banner" data-active="false" aria-hidden="true">ARISE</div>
@@ -1496,18 +1527,20 @@ ${lobbyCinematicMarkup()}
             <button type="button" data-move="E" aria-label="오른쪽으로 이동">→</button>
             <button type="button" data-move="S" aria-label="아래로 이동">↓</button>
           </div>
+          <div class="combat-input-cluster" id="combat-input-cluster" role="group" aria-label="전투 입력">
+            <button type="button" id="manual-attack" class="manual-attack-action" aria-label="수동 공격 (Space 또는 J)"><span class="manual-attack-glyph" aria-hidden="true">✦</span><span class="manual-attack-label">공격</span><kbd>SPACE</kbd></button>
+            <div class="skill-actions skill-radial" id="skill-actions" aria-label="활성 스킬"></div>
+          </div>
           <div class="hud-actions" id="battle-actions" aria-label="전투 행동"></div>
         </div>
       </div>
     </section>
-    <div id="command-dock-left"></div>
-    <div id="command-dock-right"></div>`;
+    <div id="command-deck-left"></div>
+    <div id="command-deck-right"></div>`;
+
   hydratePortraits(root);
   session = new BattleSession(stageId);
   session.start();
-  dockTier = currentDockTier();
-  dockOpen = computeDefaultDockOpen(dockTier);
-  setupDockTierListener();
   renderShell();
   renderIdleReturnToast();
 }
@@ -1755,6 +1788,7 @@ export class BattleSession {
 
   /** Updates the aria-live dialogue only when its actual scripted line changes. */
   updateLobbyDialogue(overlay, elapsed) {
+    if (!overlay?.isConnected || this.stopped) return;
     if (this.lobbyDialogueStageId !== this.stageId || !this.lobbyDialogueScript) {
       const facts = lobbyStageFacts(this.stageId);
       this.lobbyDialogueScript = dialogueScriptFor({
@@ -1772,11 +1806,15 @@ export class BattleSession {
     const speaker = resolved.line.speaker === "boss" ? "boss" : "commander";
     overlay.dataset.speaker = speaker;
     const facts = lobbyStageFacts(this.stageId);
-    overlay.querySelector("#lobby-dialogue-speaker").textContent = speaker === "boss"
+    const speakerNode = overlay.querySelector("#lobby-dialogue-speaker");
+    const textNode = overlay.querySelector("#lobby-dialogue-text");
+    const portraitNode = overlay.querySelector("#lobby-dialogue-portrait");
+    if (!speakerNode || !textNode || !portraitNode) return;
+    speakerNode.textContent = speaker === "boss"
       ? facts.bossName
       : "지휘관 · DUSK WARDEN";
-    overlay.querySelector("#lobby-dialogue-text").textContent = resolved.line.text;
-    overlay.querySelector("#lobby-dialogue-portrait").textContent = speaker === "boss" ? "◉" : "◈";
+    textNode.textContent = resolved.line.text;
+    portraitNode.textContent = speaker === "boss" ? "◉" : "◈";
   }
 
   /** Player-committed start (the ONLY place this.started flips true): records the real
@@ -1831,6 +1869,9 @@ export class BattleSession {
     this.listen(this.movementControls, "pointercancel", this.onMoveControlEnd);
     this.listen(this.movementControls, "lostpointercapture", this.onMoveControlEnd);
     this.listen(this.movementControls, "click", this.onMoveControlClick);
+    this.attackControl = root.querySelector("#manual-attack");
+    this.listen(this.attackControl, "pointerdown", this.onAttackControlDown);
+    this.listen(this.attackControl, "click", this.onAttackControlClick);
     this.listen(window, "blur", this.onWindowBlur);
     this.listen(document, "visibilitychange", this.onVisibility);
     this.listen(window, "keydown", this.onKey);
@@ -1974,6 +2015,27 @@ export class BattleSession {
     }
   }
 
+  onAttackControlDown(event) {
+    if (event.button !== undefined && event.button !== 0) return;
+    event.preventDefault();
+    this.send("ATTACK");
+    this.signalAttackFeedback();
+  }
+
+  onAttackControlClick(event) {
+    if (event.detail !== 0) return;
+    this.send("ATTACK");
+    this.signalAttackFeedback();
+  }
+
+  signalAttackFeedback() {
+    const control = root.querySelector("#manual-attack");
+    if (!control) return;
+    control.dataset.feedback = "true";
+    clearTimeout(this.attackFeedbackTimer);
+    this.attackFeedbackTimer = setTimeout(() => control.removeAttribute("data-feedback"), 180);
+  }
+
   onMoveControlDown(event) {
     const button = event.target.closest?.("[data-move]");
     if (!button || this.controlPointerId !== null) return;
@@ -2016,7 +2078,33 @@ export class BattleSession {
   }
 
   onKey(event) {
+    // Text fields own every key, as before.
+    const target = event.target;
+    if (target?.closest?.("input, textarea, select, [contenteditable='true']")) return;
     const key = event.key.toLowerCase();
+    // A focused control owns its ACTIVATION keys (Enter and Space) -- that is how keyboard
+    // activation works, and the `preventDefault()` below would otherwise cancel it.
+    // ATTACK_KEYS contains "enter" and " ", so without this exemption Enter/Space stopped
+    // activating EVERY button in the app: measured, focusing a showcase card and pressing
+    // Enter left the selection unchanged, which is exactly what
+    // tests/lobby-guide-disclosure-browser.test.mjs asserts as "keyboard operable".
+    //
+    // Scoped to activation keys ON PURPOSE, not to every key on a focused control. The
+    // manual-attack button and the D-pad live INSIDE the battle HUD, so a player who taps
+    // 공격 or a move button leaves focus there; a blanket exemption would then swallow J/F
+    // and the arrow keys and break tap-then-keyboard play. J/F and directions still reach
+    // this handler regardless of what holds focus.
+    const isActivationKey = key === "enter" || key === " " || event.code === "Space";
+    if (isActivationKey && target?.closest?.("button, a[href], summary, [role='button']")) return;
+    if (ATTACK_KEYS.has(key) || ATTACK_CODES.has(event.code)) {
+      event.preventDefault();
+      if (event.type === "keydown" && !event.repeat) {
+        if (this.inLobby()) this.suppressLobbyShowcase();
+        this.send("ATTACK");
+        this.signalAttackFeedback();
+      }
+      return;
+    }
     if (!KEY_DIRECTIONS[key]) return;
     event.preventDefault();
     if (event.type === "keydown" && this.inLobby()) this.suppressLobbyShowcase();
@@ -2035,6 +2123,7 @@ export class BattleSession {
     const inputSeq = ++this.inputSeq;
     this.surface.dataset.defenseInputSeq = String(inputSeq);
     if (type === "MOVE") this.surface.dataset.defenseMove = payload;
+    if (type === "ATTACK") this.surface.dataset.defenseAttack = String(inputSeq);
     if (type === "SKILL_CAST" || type === "SKILL_SELECTED" || type === "REWARD_SELECTED") {
       this.surface.dataset.defenseSkill = payload?.skillId ?? payload?.rewardId ?? payload ?? "";
     }
@@ -2222,6 +2311,7 @@ export class BattleSession {
       "speaker-b": "FARWATCH RELAY",
     };
     const renderBeat = (beat) => {
+      if (this.stopped || !overlay.isConnected || !beatNode.isConnected) return;
       beatNode.dataset.beat = String(beat.index);
       beatNode.dataset.speaker = beat.relay.speaker;
       const speaker = document.createElement("span");
@@ -2721,7 +2811,7 @@ export class BattleSession {
       const cooldown = snapshot.commander.cooldowns[id] ?? 0;
       const skill = SKILLS[id] ?? {};
       const glyph = { "rift-bolt": "✦", "soul-lance": "╱", "grave-pulse": "◉", "void-aegis": "⬡", "shadow-step": "◇" }[id] ?? "✦";
-      return `<button class="skill-action" data-cast="${id}" data-defense-skill="${id}" ${cooldown ? "disabled" : ""}><span class="skill-glyph" aria-hidden="true">${glyph}</span><span class="skill-copy"><strong>${escapeHtml(skill.name ?? id)}</strong><small>${cooldown ? `${(cooldown / TICK_RATE).toFixed(1)}s` : "준비됨"}</small></span></button>`;
+      return `<button class="skill-action" data-cast="${id}" data-defense-skill="${id}" aria-label="${escapeHtml(skill.name ?? id)} 스킬 사용" ${cooldown ? "disabled" : ""}><span class="skill-glyph" aria-hidden="true">${glyph}</span><span class="skill-copy"><strong>${escapeHtml(skill.name ?? id)}</strong><small>${cooldown ? `${(cooldown / TICK_RATE).toFixed(1)}s` : "준비됨"}</small></span></button>`;
     }).join("");
     if (skills.dataset.skills !== markup) {
       skills.dataset.skills = markup;
@@ -3036,29 +3126,30 @@ export class BattleSession {
     }
     const card = document.createElement("section");
     card.className = "edge-card defense-result";
-    card.innerHTML = `<h2>${outcome === "defeat" ? "방어선이 무너졌습니다" : complete ? "심연 방어선 완수" : "관문 방어 성공"}</h2>
+    // "심연의 등불" tracks the game title (index.html <title>); the other two branches are
+    // gameplay outcomes, not title copy, so they stay as authored.
+    card.innerHTML = `<h2>${outcome === "defeat" ? "방어선이 무너졌습니다" : complete ? "심연의 등불 완주" : "관문 방어 성공"}</h2>
       <div class="choices"><button id="result-action">${outcome === "defeat" ? "같은 구역 재도전" : complete ? "기록실로" : "다음 구역"}</button><button id="lobby-action">로비</button></div>`;
     this.surface.append(card);
+    // Deck visibility is derived from session.started inside renderShell(), so
+    // remountForStage()/beginRun() alone are enough here -- there is no separate open/close
+    // state left to reset on either branch.
     card.querySelector("#result-action").addEventListener("click", () => {
       if (outcome === "defeat") {
         this.remountForStage(this.stageId);
         this.beginRun();
-        dockOpen = { left: false, right: false };
       } else if (complete) {
         this.remountForStage(STAGES[0].id);
         selectedStageId = STAGES[0].id;
-        dockOpen = computeDefaultDockOpen(dockTier);
       } else {
         selectedStageId = STAGES[campaign.unlockedStageIndex].id;
         this.remountForStage(selectedStageId);
         this.beginRun();
-        dockOpen = { left: false, right: false };
       }
       renderShell();
     });
     card.querySelector("#lobby-action").addEventListener("click", () => {
       this.remountForStage(this.stageId);
-      dockOpen = computeDefaultDockOpen(dockTier);
       renderShell();
     });
     card.querySelector("button")?.focus();

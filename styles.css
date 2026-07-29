@@ -7,54 +7,151 @@ button:hover, button:focus-visible { border-color: #81d6ff; outline: 2px solid #
 button:disabled { opacity: .42; cursor: not-allowed; }
 .noscript { padding: 1rem; }
 #defense-app { min-height: 100dvh; }
-/* Idle-style side-dock shell (20260727-lobby-dock-redesign, ui/hud-layout-spec.md +
-   ui/component-contracts.md §5): replaces the old full-viewport #command-shell overlay.
-   #command-dock-left/#command-dock-right are edge-anchored fixed wrappers, siblings of
-   #defense-battle-surface -- each covers only its own edge, never the full viewport, so
-   the live canvas is always visible beside them. Width is content-sized: the wrapper
-   carries no explicit width, letting .dock-rail (always 3.5rem) and .dock-panel (only
-   present while open) sum to the wrapper's total footprint. z-index:4 sits above
-   #world-hud-overlay but below #defense-edge-hud's 5, so the live combat readout is never
-   blacked out by a peek panel; geometric overlap is prevented by the de-overlap padding
-   rules on .defense-top/.defense-bottom rather than by stacking order. These
-   wrappers do NOT inherit #defense-battle-surface's --defense-safe-* custom properties
-   (siblings, not descendants) so safe-area padding is applied directly via env(). */
-#command-dock-left, #command-dock-right {
+/* ===========================================================================
+   Persistent RPG command decks (20260729-ui-dock-removal, ui/dock-removal-plan.md §4,
+   ui/component-contracts.md). Replaces the slide-open side docks: there is no rail, no
+   open/close state and no peek mechanic left. Two fixed edge columns, siblings of
+   #defense-battle-surface, mounted only pre-run:
+     #command-deck-left   캐릭터 시트 (상태창 / 인벤토리 / 성장 / 군단)
+     #command-deck-right  전황 시트 (출정 / 브리핑 / 진행 / 요새)
+   The union of their widths is always < 100vw, so a live-canvas band is always visible
+   between them -- that invariant is measured, not asserted (ui/dock-removal-evidence.md).
+   z-index 4 sits above #world-hud-overlay and below #defense-edge-hud's 5. These wrappers
+   do NOT inherit #defense-battle-surface's --defense-safe-* custom properties (siblings,
+   not descendants) so safe-area padding is applied directly via env().
+   =========================================================================== */
+#command-deck-left, #command-deck-right {
   position: fixed;
   top: 0;
   bottom: 0;
-  height: 100dvh;
   z-index: 4;
   display: flex;
   pointer-events: auto;
 }
-#command-dock-left { left: 0; }
-#command-dock-right { right: 0; flex-direction: row-reverse; }
-.dock-rail {
+#command-deck-left { left: 0; width: clamp(11rem, 26vw, 20rem); }
+#command-deck-right { right: 0; width: clamp(10rem, 24vw, 18rem); }
+/* Combat owns the whole screen. renderShell() also empties both wrappers mid-run, so this
+   is belt-and-braces against a stale node ever hit-testing a canvas touch. */
+html[data-defense-started="true"] #command-deck-left,
+html[data-defense-started="true"] #command-deck-right { display: none; }
+.command-deck {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: .5rem;
-  width: 3.5rem;
-  height: 100%;
-  padding: max(.6rem, env(safe-area-inset-top)) .25rem max(.6rem, env(safe-area-inset-bottom));
-  background: var(--rc-panel-glass, rgb(16 10 28 / .88));
-  border-right: 1px solid var(--rc-panel-border, rgb(150 156 180 / .18));
+  width: 100%;
+  height: 100dvh;
+  min-width: 0;
+  overflow: hidden;
+  isolation: isolate;
 }
-#command-dock-right .dock-rail { border-right: 0; border-left: 1px solid var(--rc-panel-border, rgb(150 156 180 / .18)); }
-.dock-rail[data-dock-open="true"] { width: 0; min-width: 0; padding-inline: 0; border: 0; overflow: hidden; }
-.dock-rail[data-dock-open="true"] .dock-rail-tab { visibility: hidden; }
-.dock-rail-tab { display: grid; place-items: center; width: 48px; height: 48px; min-width: 48px; min-height: 48px; padding: 0; border-radius: .6rem; background: transparent; border-color: transparent; }
-.dock-rail-tab[aria-selected="true"] { border-color: #80d8ff; background: linear-gradient(180deg, rgb(44 173 214 / .2), rgb(60 44 91 / .2)); }
-.dock-rail-icon { font-size: 1.15rem; line-height: 1; }
+#command-deck-left .command-deck { border-right: 1px solid var(--rc-panel-border, rgb(150 156 180 / .18)); box-shadow: inset -1px 0 0 rgb(44 173 214 / .5); }
+#command-deck-right .command-deck { border-left: 1px solid var(--rc-panel-border, rgb(150 156 180 / .18)); box-shadow: inset 1px 0 0 rgb(44 173 214 / .5); }
+/* Masthead never scrolls away: the jump rail (left) and the current-front line (right) are
+   the two things that must stay reachable while the body is scrolled. */
+.deck-masthead {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-shrink: 0;
+  padding: max(.45rem, env(safe-area-inset-top)) .45rem .45rem;
+  border-bottom: 1px solid rgb(115 121 144 / .18);
+}
+/* The deck body itself does NOT scroll. Measured reason: with `overflow-y: auto` here,
+   #monarch-status (342px) + #deck-section-inventory (442px) = 784px in a 739px body, so the
+   status window scrolled off the top as soon as the player reached the end of the inventory
+   list. The directive permits scrolling INSIDE 인벤토리 and nowhere else, so the scroller
+   moves inward: the status window is fixed, the active section takes the remaining band, and
+   only the equipment list scrolls within it.
+   `min-height: 0` on the section is load-bearing -- without it a flex child refuses to
+   shrink below its content height and the outer body starts scrolling again. */
+.deck-body {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: .5rem .4rem max(.5rem, env(safe-area-inset-bottom));
+}
+.deck-body h2 { font-size: .96rem; }
+.deck-body p { color: #b6c8df; }
+.deck-body > #monarch-status { flex: 0 0 auto; }
+.deck-body > .deck-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* Neither the deck body nor a section head scrolls: `#monarch-status` is a `flex: 0 0 auto`
+   sibling of the active section, so a scrolling deck body would slide the status readout off
+   the top -- exactly what the directive rules out. The scroll lives inside each section's
+   own `.deck-section-body` wrapper, which keeps both the status window and the section
+   heading pinned.
+
+   Honest statement of scope, because an earlier revision of this comment claimed only 성장
+   scrolled and that was not what the CSS did: THREE sections can scroll internally -- 인벤토리
+   (explicitly permitted by the directive), 성장 (824px of two progression axes), and 스킬
+   (5 nodes; at 186px of band only 1 was reachable, and `overflow: hidden` there hid 4 skill
+   nodes the player can spend Echo Core on, which is worse than a scrollbar). 군단 fits once
+   the status window is compacted below. No section scroll ever moves the status window or
+   the section heading, and the deck body itself never scrolls at any viewport.
+
+   The wrapper is an explicit `.deck-section-body`, not `*:last-child`: 성장 and 군단 each
+   render TWO sibling body children, so a last-child selector made only the second scrollable
+   while the first kept full height and the deck body picked the scroll back up. */
+.deck-body > .deck-section > .deck-section-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.deck-section-head { flex: 0 0 auto; }
+/* Segment bar: switches which section occupies the deck body. Always visible, never scrolls
+   away, and each chip carries an icon plate PLUS a text label, so the control stays readable
+   even if a plate fails to load. The 48dp floor is the project's accessibility contract, not
+   a suggestion -- the label sits under the icon so a chip grows vertically instead of
+   shrinking below the floor. */
+/* 4 chips x 48px + 3 gaps = 204px, which does not fit the measured 163px bar at a 390px-wide
+   portrait deck. The 48dp floor cannot move (GDD 6.3), so the bar wraps rather than clipping
+   the 4th chip. */
+.deck-segment-bar { display: flex; flex-wrap: wrap; gap: .25rem; flex: 1; min-width: 0; }
+.deck-segment {
+  display: grid;
+  place-items: center;
+  gap: .1rem;
+  flex: 1;
+  min-width: 48px;
+  min-height: 48px;
+  padding: .2rem .1rem;
+  border-radius: .6rem;
+  background: transparent;
+  border: 1px solid transparent;
+}
+.deck-segment-label { font-size: .62rem; letter-spacing: .02em; color: #9fd8ff; white-space: nowrap; }
+.deck-segment.is-active { border-color: #80d8ff; background: linear-gradient(180deg, rgb(44 173 214 / .22), rgb(60 44 91 / .22)); }
+.deck-segment.is-active .deck-segment-label { color: #e6f3ff; font-weight: 700; }
+.deck-segment:hover, .deck-segment:focus-visible { border-color: #80d8ff; background: linear-gradient(180deg, rgb(44 173 214 / .2), rgb(60 44 91 / .2)); }
+.deck-jump-icon { font-size: 1.15rem; line-height: 1; }
+/* State chips: the plate carries the unit, the number carries the amount. No unit text. */
+.deck-chip { display: inline-flex; align-items: center; gap: .2rem; padding: .1rem .35rem; border: 1px solid var(--rc-panel-border, rgb(150 156 180 / .18)); border-radius: 999px; }
+.deck-chip b { font-size: .72rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.deck-chip-echo-core { border-color: var(--canon-cyan-rift); }
+.deck-chip-echo-core b { color: var(--canon-cyan-rift); }
+.deck-chip-bound-fragment { border-color: var(--canon-zenith-gold); }
+.deck-chip-bound-fragment b { color: var(--canon-zenith-gold); }
+.deck-chip-level b, .deck-chip-count b { color: #d9b0ff; }
+.deck-front-line { margin: 0; flex: 1; min-width: 0; color: #9ecce4; font-size: .76rem; font-weight: 700; }
+.deck-brand { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border: 1px solid #6aaee0; border-radius: 50%; color: #a6e2ff; font-size: .68rem; font-weight: 800; flex-shrink: 0; }
 
 /* ---------------------------------------------------------------------------
    Generated UI icon layer (scripts/build-ui-icon-assets.py -> assets/images/battle/ui/hud/).
 
    Two attribute families, deliberately separate:
-     [data-ui-icon]       the element IS the icon (dock rail tab, brand, close,
-                          currency glyph, sortie chevron). Needs an explicit box
-                          because the glyph text it replaced is gone.
+     [data-ui-icon]       the element IS the icon (deck jump chip, section mark,
+                          brand, guide close, currency glyph, sortie chevron).
+                          Needs an explicit box because the glyph text it
+                          replaced is gone.
      [data-ui-icon-lead]  the element KEEPS its own content and gains a small
                           leading icon via ::before (HUD bar tracks, XP row,
                           pause button). Never changes the element's own layout
@@ -74,8 +171,9 @@ button:disabled { opacity: .42; cursor: not-allowed; }
   line-height: 0;
   color: transparent;
 }
-.dock-rail-icon[data-ui-icon] { width: 40px; height: 40px; }
-.dock-brand[data-ui-icon] {
+.deck-jump-icon[data-ui-icon] { width: 40px; height: 40px; }
+.deck-section-icon[data-ui-icon], .panel-mark[data-ui-icon] { width: 26px; height: 26px; }
+.deck-brand[data-ui-icon] {
   width: 1.9rem;
   height: 1.9rem;
   /* The art carries its own carved ring, so the CSS ring and plate would
@@ -84,18 +182,26 @@ button:disabled { opacity: .42; cursor: not-allowed; }
   background-color: transparent;
   background-image: url("assets/images/battle/ui/hud/brand-mark.webp");
 }
-.dock-panel-close[data-ui-icon] {
-  background-image: url("assets/images/battle/ui/hud/control-close.webp");
-  background-size: 26px 26px;
+/* The guide dialog's 닫기 button is the one remaining close affordance, so the generated
+   close plate rides in front of its text label rather than replacing it -- the button keeps
+   its accessible name either way. */
+.lobby-guide-shell .panel-heading [data-guide-close]::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-right: .3rem;
+  vertical-align: -.2em;
+  background: url("assets/images/battle/ui/hud/control-close.webp") center / contain no-repeat;
 }
-.rail-currency-glyph[data-ui-icon] { width: 22px; height: 22px; }
+.deck-chip-glyph[data-ui-icon] { width: 18px; height: 18px; }
 .sortie-fab b[data-ui-icon] { width: 26px; height: 26px; }
 
-.dock-rail-icon[data-ui-icon="nav-growth"] { background-image: url("assets/images/battle/ui/hud/nav-growth.webp"); }
-.dock-rail-icon[data-ui-icon="nav-companions"] { background-image: url("assets/images/battle/ui/hud/nav-companions.webp"); }
-.dock-rail-icon[data-ui-icon="nav-inventory"] { background-image: url("assets/images/battle/ui/hud/nav-inventory.webp"); }
-.dock-rail-icon[data-ui-icon="nav-sortie"] { background-image: url("assets/images/battle/ui/hud/nav-sortie.webp"); }
-.dock-rail-icon[data-ui-icon="nav-stronghold"] { background-image: url("assets/images/battle/ui/hud/nav-stronghold.webp"); }
+[data-ui-icon="nav-growth"] { background-image: url("assets/images/battle/ui/hud/nav-growth.webp"); }
+[data-ui-icon="nav-companions"] { background-image: url("assets/images/battle/ui/hud/nav-companions.webp"); }
+[data-ui-icon="nav-inventory"] { background-image: url("assets/images/battle/ui/hud/nav-inventory.webp"); }
+[data-ui-icon="nav-sortie"] { background-image: url("assets/images/battle/ui/hud/nav-sortie.webp"); }
+[data-ui-icon="nav-stronghold"] { background-image: url("assets/images/battle/ui/hud/nav-stronghold.webp"); }
 [data-ui-icon="currency-echo-core"] { background-image: url("assets/images/battle/ui/hud/currency-echo-core.webp"); }
 [data-ui-icon="currency-bound-fragment"] { background-image: url("assets/images/battle/ui/hud/currency-bound-fragment.webp"); }
 [data-ui-icon="control-sortie"] { background-image: url("assets/images/battle/ui/hud/control-sortie.webp"); }
@@ -144,72 +250,55 @@ button:disabled { opacity: .42; cursor: not-allowed; }
   [data-ui-icon], [data-ui-icon-lead]::before { transition: none; }
 }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-.dock-panel {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: clamp(15rem, 70vw, 21rem);
-  height: 100dvh;
-  overflow: hidden;
-  isolation: isolate;
-  transition: transform 200ms ease;
+/* Deck body bottom reserve: the pre-run sortie FAB is fixed bottom-centre and overlaps the
+   bottom of both deck columns, so the scroll content must reserve room for it. Without this
+   the last control in a deck (the 작전 가이드 launcher, the archive buttons) sits underneath
+   the FAB and cannot be tapped at all. The FAB leaves the DOM once a run is committed, but so
+   do the decks, so no release rule is needed. */
+.deck-body { padding-bottom: calc(max(.5rem, env(safe-area-inset-bottom)) + 5rem); }
+:root { --deck-left-width: clamp(9.5rem, 46vw, 13rem); }
+/* Portrait-ish fallback (< 700px): two side columns would leave a canvas sliver, so the ops
+   deck re-anchors to the bottom, spanning from the character sheet's right edge to the
+   viewport edge. The character sheet keeps the side column -- it is the surface the player
+   works in. Canvas keeps the top-right region. Landscape (>= 700px) keeps both side columns.
+   --deck-left-width is declared once so the bottom strip's left offset and the column width
+   can never drift apart. */
+@media (max-width: 699px) {
+  #command-deck-left { width: var(--deck-left-width); }
+  #command-deck-right {
+    top: auto;
+    left: var(--deck-left-width);
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: 42dvh;
+  }
+  #command-deck-right .command-deck {
+    height: 100%;
+    border-left: 0;
+    border-top: 1px solid var(--rc-panel-border, rgb(150 156 180 / .18));
+    box-shadow: inset 0 1px 0 rgb(44 173 214 / .5);
+  }
 }
-/* Open dock panel fills the full viewport height in combat too (was height:auto +
-   max-height reserve, which left the canvas showing below short-content tabs and hurt
-   readability). The mid-run corner-HUD de-overlap (padding-inline on .defense-top/.bottom)
-   already pushes the D-pad/gate readout to the FREE side when a panel is open, so the
-   panel's own side no longer needs a bottom reserve gap -- it can run edge-to-edge. The
-   panel body stays flex:1 + overflow-y:auto, so a short tab fills the background and a long
-   tab scrolls within the full height. */
-html[data-defense-started="true"] .dock-panel {
-  height: 100dvh;
-  max-height: 100dvh;
-}
-.dock-panel::before {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  content: "";
-  pointer-events: none;
-  background: linear-gradient(180deg, rgb(5 8 18 / .48), #050812 76%);
-  filter: saturate(.8);
-  opacity: .32;
-  transition: opacity 260ms ease;
-}
-.dock-panel-header { display: flex; align-items: center; gap: .5rem; padding: max(.6rem, env(safe-area-inset-top)) .6rem .5rem; border-bottom: 1px solid rgb(115 121 144 / .18); }
-.dock-brand { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border: 1px solid #6aaee0; border-radius: 50%; color: #a6e2ff; font-size: .68rem; font-weight: 800; flex-shrink: 0; }
-.dock-panel-tabs { display: flex; gap: .3rem; flex: 1; min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.dock-panel-tabs .dock-rail-tab { width: 48px; height: 48px; min-width: 48px; min-height: 48px; }
-.dock-panel-close { width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; border-radius: 50%; flex-shrink: 0; font-size: 1.1rem; line-height: 1; }
-.dock-panel-body { container-type: inline-size; flex: 1; overflow-y: auto; padding: .75rem .6rem max(.75rem, env(safe-area-inset-bottom)); }
-/* Compact tier: the pre-run sortie FAB is fixed bottom-center and is wide enough to cover
-   the bottom of an open dock panel, so the panel's scroll content must reserve room for
-   it. Without this the last control in a tab (the 작전 가이드 launcher, the archive
-   buttons) sits underneath the FAB and cannot be tapped at all. The FAB is removed from
-   the DOM once a run is committed, so the reserve is released again then. */
-@media (max-width: 899px) {
-  .dock-panel-body { padding-bottom: calc(max(.75rem, env(safe-area-inset-bottom)) + 5rem); }
-  html[data-defense-started="true"] .dock-panel-body { padding-bottom: max(.75rem, env(safe-area-inset-bottom)); }
-}
-.dock-panel-body h2 { font-size: 1.1rem; }
-.dock-panel-body p { color: #b6c8df; }
-.dock-briefing-line { margin: 0 0 .6rem; color: #9ecce4; font-size: .82rem; font-weight: 700; }
-/* Panel-own-width container query (component-contracts.md §5 container_query_note): the
-   panel is always narrow (240-336px) relative to the viewport, so its internal content
-   reuses the existing ≤620px "compact" layout as its baseline regardless of outer
-   viewport width -- a viewport media query would never fire on a wide-tier screen even
-   though the panel itself is just as narrow there. */
+/* Deck-body-width container query: a deck body is always narrow (150-320px) relative to the
+   viewport, so its internal content reuses the existing narrow layout as its baseline
+   regardless of outer viewport width -- a viewport media query would never fire on a desktop
+   screen even though the column itself is just as narrow there. */
 @container (max-width: 21rem) {
   .stage-showcase-grid { grid-template-columns: 1fr; }
   .stage-showcase-card { grid-template-columns: 6rem minmax(0, 1fr); grid-template-rows: minmax(8rem, auto); min-height: 8rem; }
   .briefing-stats { grid-template-columns: 1fr; }
+  .growth-stat-row, .growth-skill-node { flex-wrap: wrap; }
+  .loadout-slots, .companion-grid, .reward-grid { grid-template-columns: 1fr; }
+  .growth-trait-offers, .growth-formation-row { grid-template-columns: 1fr; }
+  .stage-progression-control { grid-template-columns: 1fr; }
 }
-/* SortieFab (component-contracts.md §3.3): persistent floating action button, NOT inside
-   any dock -- fixed bottom-center, thumb-zone anchored, reachable regardless of dock
-   state. z-index matches the dock system (below the pause overlay). */
+/* SortieFab: fixed bottom-centre, thumb-zone anchored. z-index 6 puts it above both deck
+   columns (4) so the single most important pre-run action is never occluded by the ops
+   strip on a portrait viewport; it stays below the pause overlay. */
 .sortie-fab {
   position: fixed;
-  z-index: 4;
+  z-index: 6;
   left: 50%;
   bottom: max(.75rem, env(safe-area-inset-bottom));
   transform: translateX(-50%);
@@ -229,13 +318,22 @@ html[data-defense-started="true"] .dock-panel {
    language as .edge-card (border/background) but NOT .edge-card itself -- that class is
    positioned relative to #defense-battle-surface; this toast is a shell-level sibling and
    needs its own top-center fixed rule. */
+/* `width: min(84vw, 620px)` centred on the viewport put this on top of the left deck's
+   segment bar: measured at 390x844 the toast occupied x31..359 y8..43 while the 스킬 chip sits
+   at x92..172 y8..71, so `elementFromPoint` at the chip centre returned the toast and every
+   segment tap was swallowed for the 8s the toast lives. The toast is click-to-dismiss, so
+   `pointer-events: none` is not available. Instead it is inset past both decks -- the same
+   variable the ops deck uses at narrow widths -- so it can only ever cover the canvas band
+   it belongs to. */
 .idle-return-toast {
   position: fixed;
   z-index: 4;
   top: max(.5rem, env(safe-area-inset-top));
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(84vw, 620px);
+  left: calc(var(--deck-left-width, 13rem) + .5rem);
+  right: .5rem;
+  width: auto;
+  max-width: 620px;
+  margin-inline: auto;
   max-height: 20vh;
   overflow: auto;
   padding: .5rem .7rem;
@@ -270,50 +368,18 @@ html[data-defense-started="true"] .dock-panel {
 #defense-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 #defense-edge-hud { position: absolute; inset: 0; pointer-events: none; }
 /* Combat-only HUD (mission/loop-state panels, D-pad, pause) has nothing meaningful to show
-   before a run is committed -- the pre-start briefing lives in the sortie dock panel
-   instead. Hidden via the surface's own dataset flag (set by
-   BattleSession.beginRun()/remountForStage()), not JS-toggled per-element. Visibility is
-   now solely a function of data-defense-started -- no longer coupled to shell/dock state
-   (20260727-lobby-dock-redesign, component-contracts.md §7): a mid-run dock peek must
-   never black out the live combat readout underneath it. */
+   before a run is committed -- the pre-start briefing lives in the ops deck instead. Hidden
+   via the surface's own dataset flag (set by BattleSession.beginRun()/remountForStage()),
+   not JS-toggled per-element. Visibility is solely a function of data-defense-started. */
 #defense-battle-surface[data-defense-started="false"] #defense-edge-hud { display: none; }
-/* Compact + a dock peeked open in combat: the 273px panel + combat HUD + D-pad cannot
-   coexist on a phone, and the panel now fills full height (for the background the user
-   wants), so hide the edge-HUD entirely while a panel is open on compact -- the panel reads
-   as a clean full-height screen, exactly like pre-run; closing it restores the HUD. Wide
-   tier keeps the HUD (it is pushed to the free side by the padding rules below). */
-@media (max-width: 899px) {
-  #defense-battle-surface[data-defense-started="true"][data-peek-left="true"] #defense-edge-hud,
-  #defense-battle-surface[data-defense-started="true"][data-peek-right="true"] #defense-edge-hud { display: none; }
-}
 .defense-edge { position: absolute; display: flex; gap: .45rem; pointer-events: auto; }
 .defense-top { top: max(.4rem, var(--defense-safe-top)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-start; }
 .defense-bottom { bottom: max(.4rem, var(--defense-safe-bottom)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-end; }
-/* Mid-run corner-HUD / dock de-overlap (fix): during combat the left/right dock RAILS
-   (3.5rem, z-index 4) sit on the same screen edges as the edge-HUD corner panels, so they
-   overlap. We must NOT move the band's own left/right anchors -- the portrait contract
-   (defense-hud-responsive-browser.cjs) asserts .defense-top/.defense-bottom stay exactly on
-   the physical safe insets (D17 portrait-rotation correctness). So instead push the band's
-   flex CHILDREN inward with padding-inline: the band edge stays on the safe inset, its
-   content clears the rails. When a dock is peeked open (data-peek-left/right from
-   renderShell) that side's rail collapses to 0 but the panel takes the edge, so at wide
-   tier widen that side's padding to clear the whole panel (pushing the corner HUD to the
-   free side). Pre-run the edge-HUD is display:none, so this only applies in combat. */
-#defense-battle-surface[data-defense-started="true"] .defense-top,
-#defense-battle-surface[data-defense-started="true"] .defense-bottom {
-  padding-left: 3.5rem;
-  padding-right: 3.5rem;
-}
-@media (min-width: 900px) {
-  #defense-battle-surface[data-defense-started="true"][data-peek-left="true"] .defense-top,
-  #defense-battle-surface[data-defense-started="true"][data-peek-left="true"] .defense-bottom {
-    padding-left: clamp(15rem, 70vw, 21rem);
-  }
-  #defense-battle-surface[data-defense-started="true"][data-peek-right="true"] .defense-top,
-  #defense-battle-surface[data-defense-started="true"][data-peek-right="true"] .defense-bottom {
-    padding-right: clamp(15rem, 70vw, 21rem);
-  }
-}
+/* No mid-run deck exists any more (renderShell() empties both columns and CSS hides their
+   wrappers once data-defense-started flips), so the edge-HUD bands need no rail-clearance
+   padding and no per-side widening: combat owns the full width again. The band's own
+   left/right anchors stay exactly on the physical safe insets, which the portrait contract
+   in defense-hud-responsive-browser.cjs asserts (D17 portrait-rotation correctness). */
 .hud-panel { max-width: min(42vw, 340px); padding: .45rem .6rem; border: 1px solid rgba(92, 200, 255, 0.45); border-radius: 6px; background: linear-gradient(135deg, rgba(6, 10, 20, 0.88), rgba(13, 10, 25, 0.84)); font-size: .82rem; backdrop-filter: blur(16px) saturate(1.1); -webkit-backdrop-filter: blur(16px) saturate(1.1); box-shadow: inset 0 0 0 1px rgba(185, 146, 255, 0.15), 0 0 20px rgba(92, 200, 255, 0.2), 0 4px 16px rgba(0, 0, 0, 0.5); position: relative; }
 .hud-panel::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(92, 200, 255, 0.6), transparent); pointer-events: none; }
 .hud-panel::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(92, 200, 255, 0.03) 0px, transparent 1px, transparent 2px, rgba(92, 200, 255, 0.03) 3px); pointer-events: none; border-radius: inherit; }
@@ -329,12 +395,12 @@ html[data-defense-started="true"] .dock-panel {
 #defense-battle-surface[data-extraction-state="failed"] .hud-loop-state { border-color: #d46f75; box-shadow: inset 0 0 0 1px rgba(212, 111, 117, 0.25), 0 0 16px rgba(212, 111, 117, 0.3); }
 .hud-actions { display: flex; gap: .35rem; flex-wrap: wrap; justify-content: flex-end; }
 .hud-actions button { min-height: 44px; padding: .4rem .55rem; font-size: .78rem; border: 1px solid rgba(92, 200, 255, 0.4); background: linear-gradient(135deg, rgba(16, 28, 48, 0.85), rgba(10, 16, 30, 0.9)); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: inset 0 0 0 1px rgba(92, 200, 255, 0.15), 0 0 12px rgba(92, 200, 255, 0.2); letter-spacing: 0.05em; border-radius: 6px; }
+.skill-actions button { min-height: 44px; padding: .4rem .55rem; font-size: .78rem; border: 1px solid rgba(92, 200, 255, 0.4); background: linear-gradient(135deg, rgba(16, 28, 48, 0.85), rgba(10, 16, 30, 0.9)); border-radius: 6px; letter-spacing: .05em; }
 
 /* .edge-card (growth offer / result / reward) is a sibling of #defense-edge-hud rather than
-   one of its children, so that a mid-run dock peek -- which hides the edge HUD -- can never
-   also hide a growth offer the player must answer to unpause. Being a sibling, it has to
-   outrank the edge HUD's own 5 explicitly; at 4 the HUD's corner panels intercepted clicks
-   on the offer buttons underneath them. */
+   one of its children, so a growth offer the player must answer to unpause can never be
+   hidden with the edge HUD. Being a sibling, it has to outrank the edge HUD's own 5
+   explicitly; at 4 the HUD's corner panels intercepted clicks on the offer buttons. */
 .edge-card { position: absolute; z-index: 6; top: max(.5rem, var(--defense-safe-top)); left: 50%; transform: translateX(-50%); width: min(84vw, 620px); max-height: 13vh; overflow: auto; pointer-events: auto; padding: .5rem; border: 1px solid #8d6cd6; border-radius: 10px; background: rgb(12 11 30 / .94); }
 .edge-card h2 { margin: 0 0 .35rem; font-size: .95rem; }
 .edge-card .choices { display: flex; gap: .4rem; justify-content: center; flex-wrap: wrap; }
@@ -543,7 +609,7 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 
 /* Growth/companions sub-nav (성장 tab: 스탯/스킬트리/특성; 동료 tab: 목록/편성; pause
    overlay: 스탯/인벤토리/동료) share this command-segment-bar pattern, nested one level
-   inside a dock panel or the pause overlay. */
+   inside a deck section or the pause overlay. */
 .command-segment-bar { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .75rem; }
 .command-segment { min-height: 44px; padding: .4rem .75rem; font-size: .76rem; border-radius: 999px; background: #0d1928; }
 .command-segment.is-active { border-color: #71cfb0; background: rgb(113 207 176 / .12); color: #d6fff0; }
@@ -1052,10 +1118,10 @@ body {
   to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
-/* Dock-panel responsive rules for the editorial-showcase sortie body. The old lobby-shell
+/* Deck responsive rules for the editorial-showcase sortie body. The old lobby-shell
    breakpoints (.command-hero/.brand-lockup/.stage-atlas/.ops-grid) are gone with the shell
    itself; what survives is the showcase grid, the spoiler-free progression control and the
-   guide launcher, all of which now live inside the right dock panel. */
+   guide launcher, all of which now live inside the right command deck. */
 @media (max-width: 900px) {
   .lobby-guide-grid { grid-template-columns: 1fr; }
 }
@@ -1086,11 +1152,10 @@ body {
    upper center of the battlefield to play. Secondary text remains in the
    accessibility tree rather than being removed with display: none. */
 @media (max-width: 480px) {
-  /* Single column, not the former "mission objective" / "run run" pair. Mid-run the band
-     reserves 3.5rem on each side to clear the dock rails, leaving ~266px of content width
-     at 390px and ~196px at 320px -- two columns of the 144px minimum readable panel width
-     no longer fit in either. Stacking keeps every panel at the full band width and
-     preserves the mission → objective → run reading order. */
+  /* Single column, not the former "mission objective" / "run run" pair. Even at the full
+     band width a phone leaves ~266px of content at 390px and ~196px at 320px -- two columns
+     of the 144px minimum readable panel width do not fit in either. Stacking keeps every
+     panel at the full band width and preserves the mission → objective → run reading order. */
   .defense-top {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -1170,12 +1235,12 @@ body {
       "gate movement";
     align-items: end;
   }
-  /* The dock de-overlap padding narrows this band by 2x3.5rem on phones, so the actions
-     column can no longer be allowed its max-content width: it starved the gate column down
-     to ~23px, and the gate readout's block children (main's HUD skin makes them display:
-     block) spilled sideways across the D-pad and swallowed movement input. Cap the actions
-     column at the movement control's own width and keep the gate readout clipped inside
-     its column, so neither can reach the other regardless of how many skills are owned. */
+  /* Phone bands are narrow enough on their own that the actions column can not be allowed
+     its max-content width: it starved the gate column down to ~23px, and the gate readout's
+     block children (main's HUD skin makes them display: block) spilled sideways across the
+     D-pad and swallowed movement input. Cap the actions column at the movement control's
+     own width and keep the gate readout clipped inside its column, so neither can reach the
+     other regardless of how many skills are owned. */
   .defense-bottom > .gate-panel {
     grid-area: gate;
     min-width: 0;
@@ -1195,47 +1260,21 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .cutscene-line { animation: none; }
-  .dock-panel { transition: none; }
 }
 
 /* ================================================================
  * Lobby Pass 1 (presentation-spec.md items 1-6). Additive rules layered onto the
- * existing dock/stage/briefing/FAB/toast markup — no rewrites. Every animated effect
+ * existing deck/stage/briefing/FAB/toast markup — no rewrites. Every animated effect
  * degrades to a meaningful static resting state under the global reduced-motion block
  * (styles.css L248/L828: transition:none!important; animation:none!important).
  * Palette discipline (item 7): zenith-gold = reward/payday numbers only; cinder-ember
  * = CTA + abyss heat only; cyan-rift = world/seams/selected.
  * ================================================================ */
 
-/* Item 1 — aperture framing: static 1px cyan-rift seam on each dock's canvas-facing edge. */
-#command-dock-right .dock-panel { box-shadow: inset 1px 0 0 rgb(44 173 214 / .5); }
-#command-dock-left .dock-panel { box-shadow: inset -1px 0 0 rgb(44 173 214 / .5); }
-
-/* Item 2 (revised) — the 2 currencies live INSIDE the left dock rail as compact icon
-   chips pinned to the bottom (below the tab icons), no longer a floating overlay that
-   overlapped the rail. margin-top:auto pushes them to the rail's foot; they collapse with
-   the rail when the left panel opens (rail width:0/overflow:hidden), and hide once a run
-   starts so they never fight the combat HUD/D-pad. */
-.rail-currency { margin-top: auto; margin-bottom: calc(4.5rem + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: .4rem; width: 100%; align-items: center; padding-top: .4rem; border-top: 1px solid var(--rc-panel-border, rgb(150 156 180 / .18)); }
-.rail-currency-chip {
-  display: grid;
-  place-items: center;
-  gap: .05rem;
-  width: 48px;
-  min-width: 48px;
-  min-height: 48px;
-  padding: .2rem 0;
-  border-radius: .6rem;
-  background: var(--rc-panel-glass);
-  border: 1px solid var(--rc-panel-border);
-  line-height: 1;
-}
-.rail-currency-glyph { font-size: 1.05rem; }
-.rail-currency-amount { font-size: .68rem; font-weight: 800; font-variant-numeric: tabular-nums; transition: color 120ms linear; }
-.rail-currency-ec { border-color: var(--canon-cyan-rift); }
-.rail-currency-ec .rail-currency-glyph, .rail-currency-ec .rail-currency-amount { color: var(--canon-cyan-rift); }
-.rail-currency-bf { border-color: var(--canon-zenith-gold); }
-.rail-currency-bf .rail-currency-glyph, .rail-currency-bf .rail-currency-amount { color: var(--canon-zenith-gold); }
+/* Item 1 — aperture framing: the static 1px cyan-rift seam on each deck's canvas-facing
+   edge now lives with the deck geometry itself (see .command-deck box-shadow above), since
+   the seam belongs to the column, not to a panel that used to slide over it.
+   Item 2 — the two currencies are .deck-chips in the left masthead / section heads. */
 
 /* Item 3 — reward-forward briefing: gold reward headline + collapsed terrain detail. */
 .briefing-reward { margin: 0; display: flex; align-items: baseline; gap: .4rem; font-size: .82rem; }
@@ -1427,16 +1466,16 @@ body {
    Colour/border/glow only (no layout metrics) so the existing responsive and
    touch-target contracts are untouched: holographic glass panels, neon blue
    structure and violet accents for monarch-tier affordances. */
-/* The AC lockup moved from the lobby header's .brand-mark to the dock panel header's
-   .dock-brand when the lobby screen was replaced by the docks; the monarch-tier violet
-   treatment follows it. */
-.dock-brand {
+/* The AC lockup moved from the lobby header's .brand-mark to the ops deck masthead's
+   .deck-brand when the lobby screen was replaced by the command decks; the monarch-tier
+   violet treatment follows it. */
+.deck-brand {
   border-color: rgba(185, 146, 255, .6);
   color: #d9b0ff;
   background: radial-gradient(circle at 50% 40%, rgb(38 18 66 / .9), rgb(6 10 20 / .9));
   box-shadow: 0 0 14px rgba(185, 146, 255, .35);
 }
-.command-screen, .growth-panel, .lobby-guide-launch, .stage-showcase-card, .companion-card, .loadout-slot, .reward-card, .growth-stat-row, .growth-skill-node {
+.command-screen, .growth-panel, .deck-section, .command-deck, .lobby-guide-launch, .stage-showcase-card, .companion-card, .loadout-slot, .reward-card, .growth-stat-row, .growth-skill-node {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -1467,6 +1506,18 @@ body {
   min-width: 0;
 }
 .monarch-status .panel-heading { align-items: center; gap: .5rem; }
+/* The portrait carries NO rc-portrait size class, so `.rc-portrait img { width:100% }`
+   let it stretch to the deck's full width. Measured at 844x390: 258x258px, which made
+   #monarch-status 602px tall inside a 325px deck body and pushed 인벤토리 292px below the
+   fold -- the section the user asked to be directly usable. Bound it to the deck width and
+   to a share of viewport height so the status window can never own more than its band.
+   `min()` against `vh` is what keeps a short landscape viewport honest; a fixed rem value
+   would be correct at 844x390 and wrong again at 390x844. */
+.monarch-status .monarch-portrait {
+  width: min(5.2rem, 28cqi);
+  height: min(5.2rem, 28cqi);
+  max-height: 22vh;
+}
 .monarch-gauge { min-width: 0; }
 .monarch-gauge-label {
   display: flex;
@@ -1491,9 +1542,14 @@ body {
   background: linear-gradient(90deg, #5cc8ff, #b992ff);
   box-shadow: 0 0 10px rgba(92, 200, 255, .55);
 }
+/* 2-up inside the deck. The old 7.5rem (120px) minimum could not fit twice in the measured
+   205px deck body, so all four cells collapsed to one column and the status window ran
+   434px tall on a 390px viewport. `cqi` resolves against .deck-body's inline size (it sets
+   container-type: inline-size), so this tracks the deck's real width rather than guessing
+   from the viewport. */
 .monarch-stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(7.5rem, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(44cqi, 100%), 1fr));
   gap: .4rem;
   margin: 0;
   min-width: 0;
@@ -1784,4 +1840,146 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .lobby-cinematic, .lobby-boss-plate { transition: none; }
+}
+
+/* `flex: 1` packs as many chips as fit and orphans the remainder (measured
+   52/52/52/163 at portrait). A 44% basis forces exactly two per row, so the wrapped
+   bar reads as a 2x2 block. The short-viewport block below overrides this back to a
+   single nowrap row, so declaration order matters: this must precede it. */
+.deck-segment { flex: 1 1 44%; }
+
+/* ── Short-viewport (phone landscape) deck compaction ───────────────────────
+   Placed at the END of the file deliberately: an identical block earlier in the
+   sheet lost the cascade to the base `.monarch-status` / `.monarch-stat-grid`
+   rules further down, so it matched (`matchMedia` true) while changing nothing.
+
+   Measured at 844x390 before this block: the segment bar took 130px (2 wrapped
+   rows) and #monarch-status 389px against a 243px deck body, so the active
+   section resolved to clientHeight 0 -- 인벤토리 was mounted but could not render
+   a single row. Two changes reclaim the band:
+
+   1. The bar goes icon-only and single-row (130px -> 48px). The visible label is
+      dropped, NOT the accessible name: each chip keeps its .sr-only label, which
+      is how the previous rail worked. 4x48 + 3x3 = 201px, inside the measured
+      203px landscape bar, so the 48dp floor is never breached.
+   2. The status window becomes a strip: smaller portrait, no eyebrow, and the
+      four stat cells on one row. Every number stays on screen.  */
+@media (max-height: 520px) {
+  .deck-segment-bar { flex-wrap: nowrap; gap: 3px; }
+  .deck-segment { flex: 1 1 48px; min-width: 48px; min-height: 48px; padding: .1rem; }
+  .deck-segment-label { display: none; }
+
+  .monarch-status { gap: .3rem; padding: .4rem .45rem; }
+  .monarch-status .panel-heading { margin-bottom: 0; gap: .35rem; }
+  .monarch-status .monarch-portrait { width: 2.2rem; height: 2.2rem; max-height: 2.2rem; }
+  .monarch-status .eyebrow { display: none; }
+  .monarch-status h2 { font-size: .74rem; }
+  .monarch-status .rank-badge { font-size: .58rem; padding: .05rem .3rem; }
+  .monarch-gauge-label { font-size: .58rem; margin-bottom: .15rem; }
+  .monarch-gauge-track { height: 5px; }
+  .monarch-stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .2rem; }
+  .monarch-stat-grid > div { padding: .2rem .25rem; }
+  .monarch-stat-grid dt { font-size: .52rem; }
+  .monarch-stat-grid dd { margin-top: .05rem; font-size: .7rem; }
+  .monarch-arise-hint { display: none; }
+}
+
+/* ── Status window band budget ──────────────────────────────────────────────
+   #monarch-status measured 342px of a 697px deck body at portrait -- 49% of the column for a
+   readout the player consults rather than operates, which left every section under half the
+   deck. It is a summary, so it gets summary geometry at every viewport, not just the short
+   ones: 2x2 stat cells instead of 1-up, a bounded portrait, and no decorative eyebrow line.
+   The four numbers and the mana gauge all stay on screen -- nothing is removed, only tightened.
+   The (max-height: 520px) block further above compacts this again for phone landscape. */
+.monarch-status { gap: .4rem; padding: .55rem .6rem; }
+.monarch-status .eyebrow { display: none; }
+.monarch-status .monarch-portrait { width: min(3.6rem, 22cqi); height: min(3.6rem, 22cqi); max-height: 14vh; }
+.monarch-status h2 { font-size: .84rem; }
+.monarch-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .3rem; }
+.monarch-stat-grid > div { padding: .28rem .35rem; }
+.monarch-stat-grid dt { font-size: .6rem; }
+.monarch-stat-grid dd { margin-top: .1rem; font-size: .82rem; }
+
+/* Combat input cluster: mobile-first one-thumb placement keeps the manual attack and
+   active skills together without covering the battlefield or integrity read-out. */
+.combat-input-cluster {
+  position: relative;
+  width: clamp(10.5rem, 20vw, 13rem);
+  height: clamp(8.8rem, 18vw, 11rem);
+  flex: 0 0 auto;
+  pointer-events: auto;
+  isolation: isolate;
+}
+.manual-attack-action {
+  position: absolute;
+  z-index: 3;
+  right: .5rem;
+  bottom: .25rem;
+  display: grid;
+  place-items: center;
+  width: clamp(4.25rem, 8vw, 5.6rem);
+  height: clamp(4.25rem, 8vw, 5.6rem);
+  padding: .35rem;
+  border: 2px solid #e9c46a;
+  border-radius: 50%;
+  color: #fff4d2;
+  background: radial-gradient(circle at 35% 25%, #735f2d, #211a18 68%, #090b14);
+  box-shadow: 0 0 0 .2rem rgb(233 196 106 / .14), 0 0 1.4rem rgb(233 196 106 / .34), inset 0 0 1rem rgb(255 255 255 / .08);
+  touch-action: manipulation;
+  user-select: none;
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+.manual-attack-action:active,
+.manual-attack-action[data-feedback="true"] { transform: scale(.92); filter: brightness(1.3); box-shadow: 0 0 0 .3rem rgb(233 196 106 / .2), 0 0 2rem rgb(233 196 106 / .62), inset 0 0 1rem rgb(255 255 255 / .12); }
+.manual-attack-glyph { font-size: clamp(1.45rem, 3vw, 2rem); line-height: 1; }
+.manual-attack-label { font-size: .62rem; font-weight: 900; letter-spacing: .08em; }
+.manual-attack-action kbd { color: #f4d98f; font-size: .48rem; letter-spacing: .08em; }
+.skill-radial { position: absolute; inset: 0; display: block; pointer-events: none; }
+.skill-radial .skill-action {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: clamp(2.75rem, 5vw, 3.75rem);
+  height: clamp(2.75rem, 5vw, 3.75rem);
+  padding: .2rem;
+  border-radius: 50%;
+  pointer-events: auto;
+  touch-action: manipulation;
+  transition: transform 140ms ease, border-color 140ms ease, filter 140ms ease;
+}
+.skill-radial .skill-action:nth-child(1) { left: .1rem; bottom: 4.8rem; }
+.skill-radial .skill-action:nth-child(2) { left: 2.45rem; top: .35rem; }
+.skill-radial .skill-action:nth-child(3) { right: .15rem; top: .15rem; }
+.skill-radial .skill-action:nth-child(4) { right: .05rem; bottom: 3.9rem; }
+.skill-radial .skill-action:nth-child(5) { left: 2.35rem; bottom: .15rem; }
+.skill-radial .skill-action:not(:disabled):hover,
+.skill-radial .skill-action:not(:disabled):focus-visible { transform: scale(1.08); filter: brightness(1.25); border-color: #b992ff; }
+.skill-radial .skill-glyph { font-size: 1rem; line-height: 1; }
+.skill-radial .skill-copy { display: grid; justify-items: center; min-width: 0; }
+.skill-radial .skill-copy strong { max-width: 4.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .48rem; }
+.skill-radial .skill-copy small { font-size: .45rem; color: #b9d7e8; }
+@media (max-width: 720px), (max-height: 500px) {
+  .combat-input-cluster { width: 10.2rem; height: 8.35rem; }
+  .manual-attack-action { right: .2rem; bottom: .05rem; }
+  .skill-radial .skill-action { width: 2.8rem; height: 2.8rem; }
+  .skill-radial .skill-action:nth-child(1) { left: 0; bottom: 4.3rem; }
+  .skill-radial .skill-action:nth-child(2) { left: 2.2rem; top: .1rem; }
+  .skill-radial .skill-action:nth-child(3) { right: .05rem; top: 0; }
+  .skill-radial .skill-action:nth-child(4) { right: 0; bottom: 3.6rem; }
+  .skill-radial .skill-action:nth-child(5) { left: 2.1rem; bottom: 0; }
+  .skill-radial .skill-copy strong { display: none; }
+  .skill-radial .skill-copy small { font-size: .42rem; }
+  .defense-bottom { align-items: flex-end; gap: .25rem; }
+}
+@media (max-width: 480px) {
+  .combat-input-cluster { width: 9.4rem; height: 7.9rem; }
+  .manual-attack-action { width: 4rem; height: 4rem; }
+  .manual-attack-label { font-size: .55rem; }
+  .manual-attack-action kbd { display: none; }
+  .skill-radial .skill-action { width: 2.55rem; height: 2.55rem; }
+  .skill-radial .skill-glyph { font-size: .88rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .manual-attack-action, .skill-radial .skill-action { transition: none; }
 }

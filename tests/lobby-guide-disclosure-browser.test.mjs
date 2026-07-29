@@ -111,17 +111,19 @@ async function openLobby(viewport = VIEWPORTS[0], { touch = false } = {}) {
   }, { campaign: unlockedCampaign, now: NOW, storageKey: STORAGE_KEY });
   await page.goto("/index.html", { waitUntil: "networkidle" });
   await page.locator('#defense-battle-surface[data-defense-ready="true"]').waitFor();
-  await openSortieDock(page);
+  await assertOpsDeckMountedWithoutInteraction(page);
   return { context, errors, page };
 }
 
-/** Reveals the 출정 tab of the right-hand dock, idempotently (wide viewports may already
- *  have it open by default, and clicking an open tab would collapse it). */
-async function openSortieDock(page) {
-  const panelSortie = page.locator('#dock-panel-right [data-stage-progress]');
-  if (await panelSortie.count() > 0) return;
-  await page.locator('#command-dock-right .dock-rail [data-dock-tab="sortie"]').click();
-  await panelSortie.waitFor();
+/** Asserts the right command deck's 출정 surface is present with ZERO prior interaction.
+ *  The slide-open dock this replaced needed a rail tap when its panel happened to be closed,
+ *  so the old helper clicked conditionally. Nothing is clicked here on purpose: a future
+ *  change that puts a disclosure gesture back in front of stage selection fails here instead
+ *  of being silently clicked through. */
+async function assertOpsDeckMountedWithoutInteraction(page) {
+  const progression = page.locator("#command-deck-right [data-stage-progress]");
+  await progression.waitFor({ state: "visible" });
+  assert.equal(await progression.count(), 1, "stage progression must be mounted in the right command deck without any interaction");
 }
 
 function normalized(value) {

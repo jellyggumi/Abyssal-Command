@@ -66,11 +66,10 @@ async function openLobby(browser, hosting, campaign, reducedMotion = "no-prefere
 }
 
 async function atlasSnapshot(page, stage, profile) {
-  // The 출정 dock carries the showcase cards; open it before selecting a front.
-  if (await page.locator(`[data-stage-showcase="${stage.id}"]`).count() === 0) {
-    await page.locator('#command-dock-right .dock-rail [data-dock-tab="sortie"]').click();
-    await page.locator(`[data-stage-showcase="${stage.id}"]`).waitFor();
-  }
+  // The persistent 전황 시트 deck mounts every showcase card at load
+  // (20260729-ui-dock-removal) -- no open step exists. Asserting presence without a click
+  // defends the zero-interaction deck contract.
+  await page.locator(`[data-stage-showcase="${stage.id}"]`).waitFor();
   await page.locator(`[data-stage-showcase="${stage.id}"]`).click();
   const briefing = page.locator('[data-stage-briefing="selected"]');
   await briefing.waitFor({ state: "visible" });
