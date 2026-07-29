@@ -113,3 +113,53 @@ absorbed and not reported as passing.
   immersion/accessibility verdict.
 - The serial full-suite run produced **no verdict** and is reported as abandoned, not
   as a pass.
+
+---
+
+## 6. Release receipt — `de45c89`
+
+[OBSERVED] `git push origin de45c89:refs/heads/main` → `12c550b..de45c89`, exit 0.
+
+Pushed history: `fa1f599` (UI asset layer) → `0af55ea` (dated-root migration completed
+in the index) → `de45c89` (merge of upstream `12c550b`). The merge was performed in an
+isolated worktree because two other sessions hold uncommitted work in the shared tree;
+`git merge --ff-only` on the real branch refused non-destructively, so local `main`
+intentionally stays at `0af55ea` while `origin/main` is `de45c89`. No other session's
+file was overwritten, stashed, or discarded (CLAUDE.md §5).
+
+All nine release gates green — GitHub Actions run `30416003568`:
+
+| Job | Conclusion |
+|---|---|
+| `resolve_revision` | success |
+| `engine_contract` | success |
+| `release_closure` | success |
+| `browser_contract` | success |
+| `package_pages` | success |
+| `artifact_smoke` | success |
+| `deploy_pages` | success |
+| `deployed_smoke` | success |
+| `release_receipt` | success |
+
+`release_receipt` asserts `all_gate_pass == true` and fails the run otherwise, so its
+success is itself the closure proof.
+
+### 6.1 Live site verification
+
+[OBSERVED] `https://jellyggumi.github.io/Abyssal-Command/version.json` returns
+`{"candidate_sha":"de45c89cf13070c12d232378be84ff44dfc30056","rules_version":"defense-survivor-v1"}`
+— the deployed artifact is this commit, not a cached predecessor.
+
+[OBSERVED] booted in Chromium against the live URL: shell mounts, lobby cinematic
+present, sortie FAB present, **19 `[data-ui-icon]` nodes / 17 visible, every one
+resolving a `.webp`**, zero console errors, zero responses ≥400. Evidence:
+`05-live-pages-de45c89.png`.
+
+### 6.2 Post-merge validation of the upstream interaction
+
+Upstream `12c550b` ("enforce candidate provenance receipts") tightened the
+candidate-lane provenance rules while this pass added 32 files to the concept lane.
+[OBSERVED] `tests/asset-lane-separation.test.mjs` on a worktree at the exact pushed
+commit `de45c89`: **9 pass / 0 fail** — the concept-lane `.provenance.json` sidecars
+satisfy the stricter receipts, and the earlier failure of this file was confirmed to be
+only the parallel-run race documented in §3 row 1.
