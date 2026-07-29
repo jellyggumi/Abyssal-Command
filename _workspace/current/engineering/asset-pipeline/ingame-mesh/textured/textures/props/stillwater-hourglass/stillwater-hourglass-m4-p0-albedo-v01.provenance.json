@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.17,
+      0.19,
+      0.28,
+      1.0
+    ],
+    "bytes": 22123,
+    "dilatedCoverage": 1.0,
+    "height": 256,
+    "materialIndex": 7,
+    "meshIndex": 4,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/stillwater-hourglass/stillwater-hourglass-m4-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "8592c725d6b49b436948eb3a29a20d0b34bfda11d21489c22ee4cd44a8c27673",
+    "uvCoverage": 0.852921,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "props/stillwater-hourglass.glb",
+    "readOnly": true,
+    "sha256": "3f664d6c77e6d0bb92f7412d01da08adb9b1740956e6f7f84920808da16be201"
+  }
+}

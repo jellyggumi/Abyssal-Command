@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      1.0,
+      0.87,
+      0.23,
+      1.0
+    ],
+    "bytes": 20448,
+    "dilatedCoverage": 0.555664,
+    "height": 256,
+    "materialIndex": 9,
+    "meshIndex": 8,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/critical-hit-burst/critical-hit-burst-m8-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "8e9c32519c0dbb9bc1e54589a4b9afb922d167dccd1fea85bae7ca328a713dfd",
+    "uvCoverage": 0.34668,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "vfx/critical-hit-burst.glb",
+    "readOnly": true,
+    "sha256": "55e2c60b89603467fa308811471a9093c153afbdcc4dd8c3dcb7c7b286611db6"
+  }
+}

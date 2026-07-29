@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.68,
+      0.56,
+      0.18,
+      1.0
+    ],
+    "bytes": 18269,
+    "dilatedCoverage": 1.0,
+    "height": 256,
+    "materialIndex": 6,
+    "meshIndex": 3,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/abyss-chancel/abyss-chancel-m3-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "a7542b379211478d8a34a18b97fb46948394c5660234140789959adb2a425186",
+    "uvCoverage": 0.845291,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/abyss-chancel.glb",
+    "readOnly": true,
+    "sha256": "8e78c8b2ecbd926d2fa501319e6a2ea419a83626d9ffeadce72cdbbf4d8c5bc1"
+  }
+}

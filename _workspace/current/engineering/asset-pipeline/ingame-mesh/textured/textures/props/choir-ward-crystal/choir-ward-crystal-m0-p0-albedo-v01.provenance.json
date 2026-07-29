@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.72,
+      0.7,
+      0.76,
+      1.0
+    ],
+    "bytes": 24281,
+    "dilatedCoverage": 1.0,
+    "height": 256,
+    "materialIndex": 2,
+    "meshIndex": 0,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/props/choir-ward-crystal/choir-ward-crystal-m0-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "f72b6270d422fdb2c4cedb39db1fd7a45317ec8df00b82c3d29566aa2a9ffdb5",
+    "uvCoverage": 0.82692,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "props/choir-ward-crystal.glb",
+    "readOnly": true,
+    "sha256": "5ac2ade750b69d084a4ebe505b987548686e40d60815f35c1dc2ffc2441cb8e2"
+  }
+}

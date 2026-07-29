@@ -1,0 +1,24 @@
+{
+  "assetClass": "tpose-condition",
+  "generator": "Blender 5.2.0 LTS",
+  "motionStatus": "not-applicable",
+  "output": "_workspace/current/engineering/asset-pipeline/tpose-conditions/guard-tpose-condition.glb",
+  "rightsReceipt": "repository-authored procedural condition mesh; no third-party generated asset is embedded",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: T-pose condition mesh has not passed scale, visual-fidelity, or runtime browser gates",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "sha256": "bb571bef889d0eef6fd342f3f57bd8ed4c8090e33bdd481fd62a2ee0be0277e1",
+  "source": {
+    "assetId": "guard",
+    "builder": "scripts/rodin-tpose-regen.py",
+    "concept": "_workspace/current/engineering/asset-pipeline/concept-input/guard-character.png",
+    "exporter": "Blender glTF exporter",
+    "kind": "repository-authored-procedural-tpose-condition"
+  },
+  "textureStatus": "material-only; no generated albedo atlas embedded",
+  "visualFidelityStatus": "not-a-baseline-replacement"
+}

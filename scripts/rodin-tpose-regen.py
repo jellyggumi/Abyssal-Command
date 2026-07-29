@@ -63,12 +63,13 @@ GLB is produced. That last hop needs a GUI Blender plus a logged-in session.
   blender -P scripts/rodin-tpose-regen.py -- --submit --only cinder-warden
 
 Downloaded results must be staged under
-  _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/runtime-candidates/<category>/
+  _workspace/current/engineering/asset-pipeline/runtime-candidates/<category>/
 before any explicit `--accept-runtime` review; this script never writes
 assets/images/battle/glb.
 """
 import sys
 import json
+import hashlib
 from contextlib import contextmanager
 import math
 import shutil
@@ -164,6 +165,46 @@ def assert_staged_path(path, label):
     except ValueError:
         return
     raise ValueError(f"{label} must not be under deployed runtime path {GLB_DIR}: {path}")
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def write_condition_receipt(glb_path, asset_id, concept_path):
+    relative = glb_path.relative_to(REPO).as_posix()
+    concept_relative = concept_path.relative_to(REPO).as_posix()
+    receipt = {
+        "schemaVersion": 1,
+        "source": {
+            "kind": "repository-authored-procedural-tpose-condition",
+            "assetId": asset_id,
+            "concept": concept_relative,
+            "builder": "scripts/rodin-tpose-regen.py",
+            "exporter": "Blender glTF exporter",
+        },
+        "generator": "Blender 5.2.0 LTS",
+        "output": relative,
+        "sha256": sha256_file(glb_path),
+        "assetClass": "tpose-condition",
+        "rightsReceipt": "repository-authored procedural condition mesh; no third-party generated asset is embedded",
+        "runtimeReceipt": {
+            "runtimeEligible": False,
+            "status": "not-issued",
+            "reason": "candidate-only: T-pose condition mesh has not passed scale, visual-fidelity, or runtime browser gates",
+        },
+        "runtimeEligible": False,
+        "textureStatus": "material-only; no generated albedo atlas embedded",
+        "motionStatus": "not-applicable",
+        "visualFidelityStatus": "not-a-baseline-replacement",
+    }
+    glb_path.with_suffix(".provenance.json").write_text(
+        json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
 
 def lane_paths(args):
@@ -462,6 +503,7 @@ def run():
             blockout.select_set(True)
             bpy.ops.export_scene.gltf(filepath=str(out_glb), export_format="GLB",
                                       use_selection=True)
+        write_condition_receipt(out_glb, aid, staged_concept)
         # Preserve the old key for consumers of the existing plan.
         entry["blockout"] = str(out_glb)
         entry["conditionMesh"] = str(out_glb)

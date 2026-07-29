@@ -1,0 +1,24 @@
+{
+  "assetClass": "tpose-condition",
+  "generator": "Blender 5.2.0 LTS",
+  "motionStatus": "not-applicable",
+  "output": "_workspace/current/engineering/asset-pipeline/tpose-conditions/human-command-boss-tpose-condition.glb",
+  "rightsReceipt": "repository-authored procedural condition mesh; no third-party generated asset is embedded",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: T-pose condition mesh has not passed scale, visual-fidelity, or runtime browser gates",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "sha256": "70292bf6030d9bfb0363ca518de19fb0cfa857b2a0ea9b4a8722cb6f997e0639",
+  "source": {
+    "assetId": "human-command-boss",
+    "builder": "scripts/rodin-tpose-regen.py",
+    "concept": "_workspace/current/engineering/asset-pipeline/concept-input/human-command-boss-character.png",
+    "exporter": "Blender glTF exporter",
+    "kind": "repository-authored-procedural-tpose-condition"
+  },
+  "textureStatus": "material-only; no generated albedo atlas embedded",
+  "visualFidelityStatus": "not-a-baseline-replacement"
+}

@@ -1,0 +1,24 @@
+{
+  "assetClass": "tpose-condition",
+  "generator": "Blender 5.2.0 LTS",
+  "motionStatus": "not-applicable",
+  "output": "_workspace/current/engineering/asset-pipeline/tpose-conditions/broken-court-monarch-v04-tpose-condition.glb",
+  "rightsReceipt": "repository-authored procedural condition mesh; no third-party generated asset is embedded",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: T-pose condition mesh has not passed scale, visual-fidelity, or runtime browser gates",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "sha256": "2fec1ede55c591b1b1cac5f9289f14c7bda337dfba7c2f5f3cae2ba687f355e9",
+  "source": {
+    "assetId": "broken-court-monarch-v04",
+    "builder": "scripts/rodin-tpose-regen.py",
+    "concept": "_workspace/current/engineering/asset-pipeline/concept-input/broken-court-monarch-v04-character.png",
+    "exporter": "Blender glTF exporter",
+    "kind": "repository-authored-procedural-tpose-condition"
+  },
+  "textureStatus": "material-only; no generated albedo atlas embedded",
+  "visualFidelityStatus": "not-a-baseline-replacement"
+}

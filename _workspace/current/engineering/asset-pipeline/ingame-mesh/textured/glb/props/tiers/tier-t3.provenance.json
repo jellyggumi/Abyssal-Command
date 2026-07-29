@@ -12,6 +12,7 @@
     "sha256": "afc9216b074a37d519f7349be253c63c19a03a58ef79ea5237ed906b64bc7c20"
   },
   "rightsReceipt": "repository-authored deterministic texture output; any candidate appearance reference remains separately recorded",
+  "runtimeEligible": false,
   "runtimeReceipt": {
     "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
     "runtimeEligible": false,

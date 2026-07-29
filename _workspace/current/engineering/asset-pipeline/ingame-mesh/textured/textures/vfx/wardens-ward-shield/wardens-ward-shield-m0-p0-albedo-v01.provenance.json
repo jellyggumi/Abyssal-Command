@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.12,
+      0.68,
+      0.82,
+      0.55
+    ],
+    "bytes": 21574,
+    "dilatedCoverage": 0.56778,
+    "height": 256,
+    "materialIndex": 2,
+    "meshIndex": 0,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/vfx/wardens-ward-shield/wardens-ward-shield-m0-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "9291890f89bc56848257435c686affc6f6130e185713517ce044f84350b342ee",
+    "uvCoverage": 0.287109,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "vfx/wardens-ward-shield.glb",
+    "readOnly": true,
+    "sha256": "0811c083c69e0a2dbae874d371e124731512affd3b28864ce91c36bdc3a6a53e"
+  }
+}

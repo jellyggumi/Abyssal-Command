@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.56,
+      0.045,
+      0.06,
+      1.0
+    ],
+    "bytes": 18667,
+    "dilatedCoverage": 0.565536,
+    "height": 256,
+    "materialIndex": 7,
+    "meshIndex": 3,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/gate-zenith/gate-zenith-m3-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "e21156a9548f2bafbd5f25b2618be3394af14b9cd00c640cef11ff366e49b10c",
+    "uvCoverage": 0.375107,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/gate-zenith.glb",
+    "readOnly": true,
+    "sha256": "388df008365f0943ee26f0091a00b2f661d17f2063f65516042a9a17fdf9d914"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "generator": {
+    "atlasSize": 256,
+    "dilationTexels": 16,
+    "technique": "deterministic UV rasterization with category-specific procedural color breakup",
+    "tool": "scripts/bake-procedural-resource-albedo.py"
+  },
+  "output": {
+    "baseColorFactor": [
+      0.54,
+      0.48,
+      0.37,
+      1.0
+    ],
+    "bytes": 15353,
+    "dilatedCoverage": 1.0,
+    "height": 256,
+    "materialIndex": 5,
+    "meshIndex": 2,
+    "path": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textured/textures/terrain/howling-sprawl/howling-sprawl-m2-p0-albedo-v01.png",
+    "primitiveIndex": 0,
+    "sha256": "ed4c45e4d2843611465c1894b3df3e2a9f56b2540635a8a1998d177a76fda14d",
+    "uvCoverage": 0.852921,
+    "width": 256
+  },
+  "rightsReceipt": "repository-authored deterministic texture output",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: texture mapping is complete, but visual-fidelity and in-browser runtime gates remain pending",
+    "runtimeEligible": false,
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "kind": "repository-authored-procedural-candidate",
+    "path": "terrain/howling-sprawl.glb",
+    "readOnly": true,
+    "sha256": "77922ecc3a943774b39798ecfb09fb1271c0d4575583c84dbaa9f63ee7ef0f36"
+  }
+}
