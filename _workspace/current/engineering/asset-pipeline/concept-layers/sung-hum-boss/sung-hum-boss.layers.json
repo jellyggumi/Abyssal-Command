@@ -3,12 +3,12 @@
   "assetId": "sung-hum-boss",
   "concept": "assets/images/battle/pilot/concept-sung-hum-boss.png",
   "conceptSha256": "64c1fadab0ba0bffa24a9bb537a3afec1aa34e828dae5152b5f382a089847ffc",
-  "generatedAt": "2026-07-29T05:42:13.968165+00:00",
+  "generatedAt": "2026-07-29T06:33:59.757877+00:00",
   "assetLane": "concept",
   "runtimeEligible": false,
   "separation": {
     "detectedMode": "gen",
-    "mode": "gen",
+    "mode": "key",
     "borderMedianRgb": [
       20,
       24,
@@ -22,8 +22,23 @@
       "layer": "full-plate",
       "prompt": "(deterministic alpha cut of the source concept -- no model call)",
       "output": "_workspace/current/engineering/asset-pipeline/concept-layers/sung-hum-boss/sung-hum-boss-full-plate.png",
-      "status": "skipped:not-applicable",
-      "source": "n/a"
+      "key": {
+        "keyRgb": [
+          20,
+          24,
+          50
+        ],
+        "borderSpread": 29.353,
+        "tolerance": 26,
+        "alphaCoverage": 0.72651,
+        "size": [
+          1024,
+          1536
+        ]
+      },
+      "status": "keyed",
+      "source": "deterministic-key",
+      "sha256": "841b398a67c96a7d41cec4965c9aad819186bc07e09cc18e2b8ef2fa0a45db23"
     }
   ]
 }

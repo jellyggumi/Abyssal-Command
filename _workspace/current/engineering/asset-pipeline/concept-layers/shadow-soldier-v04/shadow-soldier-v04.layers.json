@@ -3,12 +3,12 @@
   "assetId": "shadow-soldier-v04",
   "concept": "assets/images/battle/pilot/concept-shadow-soldier-v04.png",
   "conceptSha256": "c3f37a2fed04f7d3650ba8f01aa71333111cfc9e456bd8fcd5129dafc38bd678",
-  "generatedAt": "2026-07-29T05:42:13.833661+00:00",
+  "generatedAt": "2026-07-29T06:33:58.737097+00:00",
   "assetLane": "concept",
   "runtimeEligible": false,
   "separation": {
     "detectedMode": "gen",
-    "mode": "gen",
+    "mode": "key",
     "borderMedianRgb": [
       27,
       21,
@@ -22,8 +22,23 @@
       "layer": "full-plate",
       "prompt": "(deterministic alpha cut of the source concept -- no model call)",
       "output": "_workspace/current/engineering/asset-pipeline/concept-layers/shadow-soldier-v04/shadow-soldier-v04-full-plate.png",
-      "status": "skipped:not-applicable",
-      "source": "n/a"
+      "key": {
+        "keyRgb": [
+          27,
+          21,
+          29
+        ],
+        "borderSpread": 19.091,
+        "tolerance": 26,
+        "alphaCoverage": 0.36758,
+        "size": [
+          1024,
+          1536
+        ]
+      },
+      "status": "keyed",
+      "source": "deterministic-key",
+      "sha256": "f48632099e2ca9a05992300357df3a3e70fccaa1222f08393c861f8d8c90e02f"
     }
   ]
 }

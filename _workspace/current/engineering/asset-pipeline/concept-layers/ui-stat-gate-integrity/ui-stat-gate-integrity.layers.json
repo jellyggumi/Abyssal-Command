@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assetId": "ui-stat-gate-integrity",
+  "concept": "assets/images/battle/pilot/concept-ui-stat-gate-integrity.png",
+  "conceptSha256": "f0fbeb7740021b2e71aa2ac18136835fa9ce02e0397e49117d7e3a29131a2ae0",
+  "generatedAt": "2026-07-29T06:39:34.274097+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "key",
+    "mode": "key",
+    "borderMedianRgb": [
+      0,
+      0,
+      0
+    ],
+    "borderSpread": 0.202,
+    "rationale": "uniform keyable border -> pixel key is exact and free"
+  },
+  "layers": [
+    {
+      "layer": "character",
+      "prompt": "Isolate ONLY the character body and the clothing worn on that body, in the same T-pose and the same art style as the reference. Full body centered, arms extended horizontally, feet separated, clean readable silhouette. Exclude every held weapon, sword, blade, staff, shield, gun, and held prop. Exclude detachable accessories, lantern, banner, pouch, satchel, and loose chain. Exclude terrain, ground, floor, pedestal, platform, rocks, scenery, and background objects. Pure flat white background, no shadow cast on the background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-stat-gate-integrity/ui-stat-gate-integrity-character.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-stat-gate-integrity/raw/ui-stat-gate-integrity-character.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.488,
+        "tolerance": 26,
+        "alphaCoverage": 0.16318,
+        "size": [
+          1010,
+          1199
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "c19005ea9527e438e054adb2554f1d92f589d2b6f7449af7118537327e7a5cb1"
+    },
+    {
+      "layer": "weapon",
+      "prompt": "Isolate ONLY the weapon carried by the character in the reference image, rendered as a standalone game prop in the same art style. Present the weapon alone in a clean three-quarter orthographic view, full length visible, correct proportions. Exclude the character, any hand, arm, glove, or body part gripping it. Exclude terrain, ground, pedestal, scenery, background objects, and all other equipment. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-stat-gate-integrity/ui-stat-gate-integrity-weapon.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-stat-gate-integrity/raw/ui-stat-gate-integrity-weapon.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.446,
+        "tolerance": 26,
+        "alphaCoverage": 0.04162,
+        "size": [
+          253,
+          989
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "f315367c89fa20f551d35e334f59ad66fc28169bfc85f6b0fdd40fa32660a9e9"
+    },
+    {
+      "layer": "accessory",
+      "prompt": "Isolate ONLY the detachable worn accessories from the reference image -- lantern, pouch, satchel, belt hardware, chain, pendant, banner -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the character body, clothing worn flat against the body, and any held weapon. Exclude terrain, ground, pedestal, scenery, and background objects. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-stat-gate-integrity/ui-stat-gate-integrity-accessory.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/ui-stat-gate-integrity/raw/ui-stat-gate-integrity-accessory.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.411,
+        "tolerance": 26,
+        "alphaCoverage": 0.3815,
+        "size": [
+          1471,
+          970
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "e5fb65456f65601b7f524ad83e5fbcf232b8a306453cf86ef60a15002ede60a8"
+    }
+  ]
+}

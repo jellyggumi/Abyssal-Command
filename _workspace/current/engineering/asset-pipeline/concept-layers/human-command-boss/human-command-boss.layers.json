@@ -3,12 +3,12 @@
   "assetId": "human-command-boss",
   "concept": "assets/images/battle/pilot/concept-human-command-boss.png",
   "conceptSha256": "5c4c186f1fc4d3be33270776cc339ccc061d03a11168aa26bfda07be2463f4c8",
-  "generatedAt": "2026-07-29T05:42:13.559746+00:00",
+  "generatedAt": "2026-07-29T06:33:57.447819+00:00",
   "assetLane": "concept",
   "runtimeEligible": false,
   "separation": {
     "detectedMode": "gen",
-    "mode": "gen",
+    "mode": "key",
     "borderMedianRgb": [
       40,
       53,
@@ -22,8 +22,23 @@
       "layer": "full-plate",
       "prompt": "(deterministic alpha cut of the source concept -- no model call)",
       "output": "_workspace/current/engineering/asset-pipeline/concept-layers/human-command-boss/human-command-boss-full-plate.png",
-      "status": "skipped:not-applicable",
-      "source": "n/a"
+      "key": {
+        "keyRgb": [
+          40,
+          53,
+          83
+        ],
+        "borderSpread": 53.744,
+        "tolerance": 26,
+        "alphaCoverage": 0.90575,
+        "size": [
+          1024,
+          1536
+        ]
+      },
+      "status": "keyed",
+      "source": "deterministic-key",
+      "sha256": "a9662905c724de9b11fd8ba326f9a69415c30b2ce206b2cb37cdbe313f7ebc75"
     }
   ]
 }

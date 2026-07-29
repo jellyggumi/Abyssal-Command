@@ -3,12 +3,12 @@
   "assetId": "shadow-commander-boss",
   "concept": "assets/images/battle/pilot/concept-shadow-commander-boss.png",
   "conceptSha256": "841a4d20445346c37f4bb763af217b4b53cb90e1ba4e54e2bf02b3039fa8d795",
-  "generatedAt": "2026-07-29T05:42:13.698040+00:00",
+  "generatedAt": "2026-07-29T06:33:58.037473+00:00",
   "assetLane": "concept",
   "runtimeEligible": false,
   "separation": {
     "detectedMode": "gen",
-    "mode": "gen",
+    "mode": "key",
     "borderMedianRgb": [
       28,
       29,
@@ -22,8 +22,23 @@
       "layer": "full-plate",
       "prompt": "(deterministic alpha cut of the source concept -- no model call)",
       "output": "_workspace/current/engineering/asset-pipeline/concept-layers/shadow-commander-boss/shadow-commander-boss-full-plate.png",
-      "status": "skipped:not-applicable",
-      "source": "n/a"
+      "key": {
+        "keyRgb": [
+          28,
+          29,
+          55
+        ],
+        "borderSpread": 30.462,
+        "tolerance": 26,
+        "alphaCoverage": 0.78337,
+        "size": [
+          1024,
+          1536
+        ]
+      },
+      "status": "keyed",
+      "source": "deterministic-key",
+      "sha256": "4e8eb35d4664fe249a2a0fb3f45ec29b40774d361615904f94afd0b9934036a5"
     }
   ]
 }

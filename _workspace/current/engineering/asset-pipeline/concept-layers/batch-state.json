@@ -273,8 +273,86 @@
       "character",
       "full-plate",
       "weapon"
+    ],
+    "ui-control-sortie": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-currency-bound-fragment": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-currency-echo-core": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-lobby-command-plate": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-nav-companions": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-nav-growth": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-nav-inventory": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-nav-sortie": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-nav-stronghold": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-seal-atlas-plate": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-stat-commander": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-stat-echo-xp": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
+    ],
+    "ui-stat-gate-integrity": [
+      "accessory",
+      "character",
+      "full-plate",
+      "weapon"
     ]
   },
   "failed": {},
-  "updatedAt": "2026-07-29T05:51:05.678551+00:00"
+  "updatedAt": "2026-07-29T06:42:18.750128+00:00"
 }

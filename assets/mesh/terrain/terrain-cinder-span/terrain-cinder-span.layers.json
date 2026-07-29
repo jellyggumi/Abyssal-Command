@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "assetId": "terrain-cinder-span",
+  "concept": "assets/images/battle/pilot/concept-terrain-cinder-span.png",
+  "conceptSha256": "8430b1494e8dabac3c913d25ab0093de0c4d50d08f7f7e8db49b12dcfe2160ac",
+  "generatedAt": "2026-07-29T04:50:10.592941+00:00",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "separation": {
+    "detectedMode": "gen",
+    "mode": "gen",
+    "borderMedianRgb": [
+      33,
+      25,
+      24
+    ],
+    "borderSpread": 26.383,
+    "rationale": "full-bleed scene -> layers are not separable in pixel space"
+  },
+  "layers": [
+    {
+      "layer": "terrain",
+      "prompt": "Isolate ONLY the playable ground surface from the reference scene, rendered as a standalone terrain tile in the same art style: the walkable floor plane, its material, and its edge treatment, viewed from a raised three-quarter angle. Exclude every character, creature, weapon, and prop. Exclude distant background landforms, sky, pillars, walls, bridges, statues, debris, foliage, and set dressing. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-cinder-span/terrain-cinder-span-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-cinder-span/raw/terrain-cinder-span-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.464,
+        "tolerance": 26,
+        "alphaCoverage": 0.48516,
+        "size": [
+          1504,
+          958
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "b63fef5134461c89aa460e6392ef9627d49005def864e6d61e4d3924707d2756"
+    },
+    {
+      "layer": "background-terrain",
+      "prompt": "Isolate ONLY the distant background landform from the reference scene -- the far silhouette of cliffs, ruins, mountains, or skyline -- rendered as a standalone backdrop layer in the same art style, flattened for parallax use. Exclude the playable foreground ground plane. Exclude every character, creature, weapon, prop, and near-field object. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-cinder-span/terrain-cinder-span-background-terrain.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-cinder-span/raw/terrain-cinder-span-background-terrain.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.504,
+        "tolerance": 26,
+        "alphaCoverage": 0.25192,
+        "size": [
+          1528,
+          400
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "89f5e61288026d183b0f0ec4649efdcfaf6c4f5d97d1013a93e498899573e81b"
+    },
+    {
+      "layer": "terrain-feature",
+      "prompt": "Isolate ONLY the placeable structural features from the reference scene -- pillars, broken walls, bridge spans, stairs, arches, gates -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane itself and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-cinder-span/terrain-cinder-span-terrain-feature.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-cinder-span/raw/terrain-cinder-span-terrain-feature.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.481,
+        "tolerance": 26,
+        "alphaCoverage": 0.37952,
+        "size": [
+          1510,
+          976
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "631990e8e64924f91ebed165632863f8088546df41ee5dd7dc8bc6432d414ab8"
+    },
+    {
+      "layer": "background-object",
+      "prompt": "Isolate ONLY the loose set-dressing objects from the reference scene -- debris, rubble, crates, foliage, hanging banners, lanterns, bones -- laid out as separate standalone game props in the same art style, evenly spaced on one sheet. Exclude the ground plane, structural architecture, and the distant background landform. Exclude every character, creature, and weapon. Pure flat white background, no text, no logo, no watermark.",
+      "output": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-cinder-span/terrain-cinder-span-background-object.png",
+      "generate": {
+        "returncode": 0,
+        "stderr": "WARNING: This project calls an unsupported private Codex backend path. The contract may break without notice.\n"
+      },
+      "rawOutput": "_workspace/current/engineering/asset-pipeline/concept-layers/terrain-cinder-span/raw/terrain-cinder-span-background-object.raw.png",
+      "key": {
+        "keyRgb": [
+          254,
+          254,
+          254
+        ],
+        "borderSpread": 0.487,
+        "tolerance": 26,
+        "alphaCoverage": 0.31144,
+        "size": [
+          1516,
+          956
+        ]
+      },
+      "status": "generated+keyed",
+      "source": "gti",
+      "sha256": "3aa04fec8bd50a5b4b6e72361514009b829c866709c0648284ae8bcfc00e2b82"
+    }
+  ]
+}

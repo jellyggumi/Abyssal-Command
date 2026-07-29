@@ -3,12 +3,12 @@
   "assetId": "broken-court-monarch-v04",
   "concept": "assets/images/battle/pilot/concept-broken-court-monarch-v04.png",
   "conceptSha256": "96e7a2eab07db9dd9ba791425c420aa68c39ef21c1b43f920fd812d222fb3f9c",
-  "generatedAt": "2026-07-29T05:42:13.419039+00:00",
+  "generatedAt": "2026-07-29T06:33:56.659240+00:00",
   "assetLane": "concept",
   "runtimeEligible": false,
   "separation": {
     "detectedMode": "gen",
-    "mode": "gen",
+    "mode": "key",
     "borderMedianRgb": [
       251,
       2,
@@ -22,8 +22,23 @@
       "layer": "full-plate",
       "prompt": "(deterministic alpha cut of the source concept -- no model call)",
       "output": "_workspace/current/engineering/asset-pipeline/concept-layers/broken-court-monarch-v04/broken-court-monarch-v04-full-plate.png",
-      "status": "skipped:not-applicable",
-      "source": "n/a"
+      "key": {
+        "keyRgb": [
+          251,
+          2,
+          250
+        ],
+        "borderSpread": 30.368,
+        "tolerance": 26,
+        "alphaCoverage": 0.48211,
+        "size": [
+          1086,
+          1389
+        ]
+      },
+      "status": "keyed",
+      "source": "deterministic-key",
+      "sha256": "3cff6f518515114f2ca6d82ddfc0cba8c7b8051c8e9443c266fb7ba954a296f2"
     }
   ]
 }
