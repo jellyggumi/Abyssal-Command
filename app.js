@@ -550,6 +550,12 @@ function lobbyCinematicMarkup() {
 function renderLobbyCinematic() {
   const overlay = root.querySelector("#lobby-cinematic");
   if (!overlay || !campaign) return;
+  const requiredNodes = [
+    "#lobby-cine-seq", "#lobby-cine-stage", "#lobby-cine-domain",
+    "#lobby-boss-name", "#lobby-boss-threat", "#lobby-objective-text",
+    "#lobby-objective-reward",
+  ];
+  if (requiredNodes.some((selector) => !overlay.querySelector(selector))) return;
   const started = session?.started ?? false;
   overlay.dataset.active = started ? "false" : "true";
   if (started) return;
@@ -1788,7 +1794,7 @@ export class BattleSession {
 
   /** Updates the aria-live dialogue only when its actual scripted line changes. */
   updateLobbyDialogue(overlay, elapsed) {
-    if (!overlay?.isConnected || this.stopped) return;
+    if (!overlay || overlay.isConnected === false || this.stopped) return;
     if (this.lobbyDialogueStageId !== this.stageId || !this.lobbyDialogueScript) {
       const facts = lobbyStageFacts(this.stageId);
       this.lobbyDialogueScript = dialogueScriptFor({
@@ -1869,9 +1875,8 @@ export class BattleSession {
     this.listen(this.movementControls, "pointercancel", this.onMoveControlEnd);
     this.listen(this.movementControls, "lostpointercapture", this.onMoveControlEnd);
     this.listen(this.movementControls, "click", this.onMoveControlClick);
-    this.attackControl = root.querySelector("#manual-attack");
-    this.listen(this.attackControl, "pointerdown", this.onAttackControlDown);
-    this.listen(this.attackControl, "click", this.onAttackControlClick);
+    this.listen(root, "pointerdown", this.onAttackSurfacePointerDown);
+    this.listen(root, "click", this.onAttackSurfaceClick);
     this.listen(window, "blur", this.onWindowBlur);
     this.listen(document, "visibilitychange", this.onVisibility);
     this.listen(window, "keydown", this.onKey);
@@ -2001,6 +2006,17 @@ export class BattleSession {
   signalCameraClamp() {
     this.audio?.play?.("camera-clamp");
   }
+
+  onAttackSurfacePointerDown(event) {
+    if (!event.target.closest?.("#manual-attack")) return;
+    this.onAttackControlDown(event);
+  }
+
+  onAttackSurfaceClick(event) {
+    if (!event.target.closest?.("#manual-attack")) return;
+    this.onAttackControlClick(event);
+  }
+
 
   onPointerEnd(event) {
     if (!this.activePointers.has(event.pointerId)) return;
@@ -2311,7 +2327,7 @@ export class BattleSession {
       "speaker-b": "FARWATCH RELAY",
     };
     const renderBeat = (beat) => {
-      if (this.stopped || !overlay.isConnected || !beatNode.isConnected) return;
+      if (this.stopped || overlay.isConnected === false || beatNode.isConnected === false) return;
       beatNode.dataset.beat = String(beat.index);
       beatNode.dataset.speaker = beat.relay.speaker;
       const speaker = document.createElement("span");
@@ -2350,8 +2366,15 @@ export class BattleSession {
     // WebGL mount must not consume the visible window before the battle can be
     // observed or interacted with.
     this.cutsceneTimer = setTimeout(() => {
+      if (this.stopped || overlay.isConnected === false || !this.cutsceneActive) {
+        this.cutsceneTimer = null;
+        return;
+      }
       this.cutsceneTimer = setTimeout(
-        () => this.dismissCutscene(overlay),
+        () => {
+          if (this.stopped || overlay.isConnected === false || !this.cutsceneActive) return;
+          this.dismissCutscene(overlay);
+        },
         cutscene.timing?.dismissAfterMs ?? 8000,
       );
     }, 0);
@@ -2386,6 +2409,9 @@ export class BattleSession {
     this.surface.dataset.defenseFeedback = feedback.dataset.feedback;
   }
   render(frameEvents = null) {
+    // The module-level session can outlive a test/page teardown by one animation
+    // frame. Do not let presentation callbacks write into a dismantled shell.
+    if (!this.surface || this.surface.isConnected === false || !root.querySelector("#battle-stage")) return;
     const rawSnapshot = getRunSnapshot(this.run);
     // frameEvents (see loop()'s doc comment) carries every tick's events from
     // this render's catch-up burst, when more than one real tick ran since
