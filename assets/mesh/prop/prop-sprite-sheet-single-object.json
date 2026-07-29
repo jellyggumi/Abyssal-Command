@@ -1,238 +1,532 @@
 {
-  "sheet": "assets/mesh/prop/prop-sprite-sheet-single-object.png",
-  "width": 8185,
-  "height": 13896,
-  "pad": 4,
+  "version": 2,
+  "split": true,
   "packMode": "shelf-height-desc",
   "sheetWidthLimit": 8192,
+  "pad": 4,
+  "sourceSheet": "prop-sprite-sheet-single-object.png",
+  "sourceMeta": "prop-sprite-sheet-single-object.json",
+  "frameCount": 38,
   "frames": {
+    "s3-gate-sovereign.png": {
+      "x": 0,
+      "y": 0,
+      "width": 1438,
+      "height": 2506,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "s4-tide-warden.png": {
+      "x": 1442,
+      "y": 0,
+      "width": 1418,
+      "height": 2499,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "s10-abyss-regent.png": {
+      "x": 2864,
+      "y": 0,
+      "width": 1499,
+      "height": 2496,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "player-core-v04.png": {
+      "x": 4367,
+      "y": 0,
+      "width": 1490,
+      "height": 2494,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "s7-lantern-tyrant.png": {
+      "x": 5861,
+      "y": 0,
+      "width": 1489,
+      "height": 2494,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "requiem-warden.png": {
+      "x": 0,
+      "y": 2510,
+      "width": 1485,
+      "height": 2479,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "ui-control-close.png": {
+      "x": 1489,
+      "y": 2510,
+      "width": 1483,
+      "height": 2468,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "sung-hum-boss.png": {
+      "x": 2976,
+      "y": 2510,
+      "width": 1448,
+      "height": 2458,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "possessed.png": {
+      "x": 4428,
+      "y": 2510,
+      "width": 1428,
+      "height": 2439,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "shadow-soldier-v04.png": {
+      "x": 5860,
+      "y": 2510,
+      "width": 1487,
+      "height": 2436,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "human-command-boss.png": {
+      "x": 0,
+      "y": 4993,
+      "width": 1492,
+      "height": 2433,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "pack-warden.png": {
+      "x": 1496,
+      "y": 4993,
+      "width": 1429,
+      "height": 2432,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "sung-hum-v04.png": {
+      "x": 2929,
+      "y": 4993,
+      "width": 1453,
+      "height": 2396,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "s8-bridge-colossus.png": {
+      "x": 4386,
+      "y": 4993,
+      "width": 1502,
+      "height": 2373,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
+    "lantern-reaver.png": {
+      "x": 5892,
+      "y": 4993,
+      "width": 1428,
+      "height": 2371,
+      "sheet": "prop-sprite-sheet-single-object.01.png"
+    },
     "throne-echo.png": {
       "x": 0,
       "y": 0,
       "width": 982,
-      "height": 2977
+      "height": 2977,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "broken-court-monarch-v04.png": {
       "x": 986,
       "y": 0,
       "width": 927,
-      "height": 2955
+      "height": 2955,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "s9-veiled-concordat.png": {
       "x": 1917,
       "y": 0,
       "width": 927,
-      "height": 2930
+      "height": 2930,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "ember-cohort.png": {
       "x": 2848,
       "y": 0,
       "width": 947,
-      "height": 2788
-    },
-    "s3-gate-sovereign.png": {
-      "x": 3799,
-      "y": 0,
-      "width": 1438,
-      "height": 2506
-    },
-    "s4-tide-warden.png": {
-      "x": 5241,
-      "y": 0,
-      "width": 1418,
-      "height": 2499
-    },
-    "s10-abyss-regent.png": {
-      "x": 6663,
-      "y": 0,
-      "width": 1499,
-      "height": 2496
-    },
-    "player-core-v04.png": {
-      "x": 0,
-      "y": 2981,
-      "width": 1490,
-      "height": 2494
-    },
-    "s7-lantern-tyrant.png": {
-      "x": 1494,
-      "y": 2981,
-      "width": 1489,
-      "height": 2494
-    },
-    "requiem-warden.png": {
-      "x": 2987,
-      "y": 2981,
-      "width": 1485,
-      "height": 2479
-    },
-    "ui-control-close.png": {
-      "x": 4476,
-      "y": 2981,
-      "width": 1483,
-      "height": 2468
-    },
-    "sung-hum-boss.png": {
-      "x": 5963,
-      "y": 2981,
-      "width": 1448,
-      "height": 2458
+      "height": 2788,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "s2-veil-tactician.png": {
-      "x": 0,
-      "y": 5479,
+      "x": 3799,
+      "y": 0,
       "width": 954,
-      "height": 2455
-    },
-    "possessed.png": {
-      "x": 958,
-      "y": 5479,
-      "width": 1428,
-      "height": 2439
+      "height": 2455,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "s1-cinder-warden.png": {
-      "x": 2390,
-      "y": 5479,
+      "x": 4757,
+      "y": 0,
       "width": 1371,
-      "height": 2436
-    },
-    "shadow-soldier-v04.png": {
-      "x": 3765,
-      "y": 5479,
-      "width": 1487,
-      "height": 2436
-    },
-    "human-command-boss.png": {
-      "x": 5256,
-      "y": 5479,
-      "width": 1492,
-      "height": 2433
-    },
-    "pack-warden.png": {
-      "x": 6752,
-      "y": 5479,
-      "width": 1429,
-      "height": 2432
+      "height": 2436,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "veil-vanguard.png": {
-      "x": 0,
-      "y": 7938,
+      "x": 6132,
+      "y": 0,
       "width": 1381,
-      "height": 2426
-    },
-    "sung-hum-v04.png": {
-      "x": 1385,
-      "y": 7938,
-      "width": 1453,
-      "height": 2396
-    },
-    "s8-bridge-colossus.png": {
-      "x": 2842,
-      "y": 7938,
-      "width": 1502,
-      "height": 2373
-    },
-    "lantern-reaver.png": {
-      "x": 4348,
-      "y": 7938,
-      "width": 1428,
-      "height": 2371
+      "height": 2426,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "shadow-commander-boss.png": {
-      "x": 5780,
-      "y": 7938,
+      "x": 0,
+      "y": 2981,
       "width": 1420,
-      "height": 2342
+      "height": 2342,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "guard.png": {
-      "x": 0,
-      "y": 10368,
+      "x": 1424,
+      "y": 2981,
       "width": 1280,
-      "height": 2331
+      "height": 2331,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "s6-requiem-choir.png": {
-      "x": 1284,
-      "y": 10368,
+      "x": 2708,
+      "y": 2981,
       "width": 1348,
-      "height": 2182
+      "height": 2182,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "ui-brand-mark.png": {
-      "x": 2636,
-      "y": 10368,
+      "x": 4060,
+      "y": 2981,
       "width": 1495,
-      "height": 2138
+      "height": 2138,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "ui-control-sortie.png": {
-      "x": 4135,
-      "y": 10368,
+      "x": 5559,
+      "y": 2981,
       "width": 1447,
-      "height": 1907
+      "height": 1907,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "dawnless-crown.png": {
-      "x": 5586,
-      "y": 10368,
+      "x": 7010,
+      "y": 2981,
       "width": 473,
-      "height": 1511
+      "height": 1511,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "rift-lens.png": {
-      "x": 6063,
-      "y": 10368,
+      "x": 7487,
+      "y": 2981,
       "width": 580,
-      "height": 1389
+      "height": 1389,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "anchor-shard.png": {
-      "x": 6647,
-      "y": 10368,
+      "x": 0,
+      "y": 5327,
       "width": 959,
-      "height": 1384
+      "height": 1384,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "abyssal-banner.png": {
-      "x": 0,
-      "y": 12703,
+      "x": 963,
+      "y": 5327,
       "width": 630,
-      "height": 1193
+      "height": 1193,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "choir-ward-crystal.png": {
-      "x": 634,
-      "y": 12703,
+      "x": 1597,
+      "y": 5327,
       "width": 427,
-      "height": 1193
+      "height": 1193,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "scout.png": {
-      "x": 1065,
-      "y": 12703,
+      "x": 2028,
+      "y": 5327,
       "width": 1185,
-      "height": 1173
+      "height": 1173,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "warden-lantern.png": {
-      "x": 2254,
-      "y": 12703,
+      "x": 3217,
+      "y": 5327,
       "width": 591,
-      "height": 1150
+      "height": 1150,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "equipment-tier-gems.png": {
-      "x": 2849,
-      "y": 12703,
+      "x": 3812,
+      "y": 5327,
       "width": 718,
-      "height": 1132
+      "height": 1132,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "stillwater-hourglass.png": {
-      "x": 3571,
-      "y": 12703,
+      "x": 4534,
+      "y": 5327,
       "width": 661,
-      "height": 1078
+      "height": 1078,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "broken-court-monarch-boss.png": {
-      "x": 4236,
-      "y": 12703,
+      "x": 5199,
+      "y": 5327,
       "width": 1470,
-      "height": 983
+      "height": 983,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     },
     "bulwark-brand.png": {
-      "x": 5710,
-      "y": 12703,
+      "x": 6673,
+      "y": 5327,
       "width": 1205,
-      "height": 785
+      "height": 785,
+      "sheet": "prop-sprite-sheet-single-object.02.png"
     }
-  }
+  },
+  "sheets": [
+    {
+      "sheet": "assets/mesh/prop/prop-sprite-sheet-single-object.01.png",
+      "sheetIndex": 1,
+      "width": 7354,
+      "height": 7426,
+      "pad": 4,
+      "packMode": "shelf-height-desc",
+      "sheetWidthLimit": 8192,
+      "frameCount": 15,
+      "frames": {
+        "s3-gate-sovereign.png": {
+          "x": 0,
+          "y": 0,
+          "width": 1438,
+          "height": 2506
+        },
+        "s4-tide-warden.png": {
+          "x": 1442,
+          "y": 0,
+          "width": 1418,
+          "height": 2499
+        },
+        "s10-abyss-regent.png": {
+          "x": 2864,
+          "y": 0,
+          "width": 1499,
+          "height": 2496
+        },
+        "player-core-v04.png": {
+          "x": 4367,
+          "y": 0,
+          "width": 1490,
+          "height": 2494
+        },
+        "s7-lantern-tyrant.png": {
+          "x": 5861,
+          "y": 0,
+          "width": 1489,
+          "height": 2494
+        },
+        "requiem-warden.png": {
+          "x": 0,
+          "y": 2510,
+          "width": 1485,
+          "height": 2479
+        },
+        "ui-control-close.png": {
+          "x": 1489,
+          "y": 2510,
+          "width": 1483,
+          "height": 2468
+        },
+        "sung-hum-boss.png": {
+          "x": 2976,
+          "y": 2510,
+          "width": 1448,
+          "height": 2458
+        },
+        "possessed.png": {
+          "x": 4428,
+          "y": 2510,
+          "width": 1428,
+          "height": 2439
+        },
+        "shadow-soldier-v04.png": {
+          "x": 5860,
+          "y": 2510,
+          "width": 1487,
+          "height": 2436
+        },
+        "human-command-boss.png": {
+          "x": 0,
+          "y": 4993,
+          "width": 1492,
+          "height": 2433
+        },
+        "pack-warden.png": {
+          "x": 1496,
+          "y": 4993,
+          "width": 1429,
+          "height": 2432
+        },
+        "sung-hum-v04.png": {
+          "x": 2929,
+          "y": 4993,
+          "width": 1453,
+          "height": 2396
+        },
+        "s8-bridge-colossus.png": {
+          "x": 4386,
+          "y": 4993,
+          "width": 1502,
+          "height": 2373
+        },
+        "lantern-reaver.png": {
+          "x": 5892,
+          "y": 4993,
+          "width": 1428,
+          "height": 2371
+        }
+      }
+    },
+    {
+      "sheet": "assets/mesh/prop/prop-sprite-sheet-single-object.02.png",
+      "sheetIndex": 2,
+      "width": 8071,
+      "height": 6711,
+      "pad": 4,
+      "packMode": "shelf-height-desc",
+      "sheetWidthLimit": 8192,
+      "frameCount": 23,
+      "frames": {
+        "throne-echo.png": {
+          "x": 0,
+          "y": 0,
+          "width": 982,
+          "height": 2977
+        },
+        "broken-court-monarch-v04.png": {
+          "x": 986,
+          "y": 0,
+          "width": 927,
+          "height": 2955
+        },
+        "s9-veiled-concordat.png": {
+          "x": 1917,
+          "y": 0,
+          "width": 927,
+          "height": 2930
+        },
+        "ember-cohort.png": {
+          "x": 2848,
+          "y": 0,
+          "width": 947,
+          "height": 2788
+        },
+        "s2-veil-tactician.png": {
+          "x": 3799,
+          "y": 0,
+          "width": 954,
+          "height": 2455
+        },
+        "s1-cinder-warden.png": {
+          "x": 4757,
+          "y": 0,
+          "width": 1371,
+          "height": 2436
+        },
+        "veil-vanguard.png": {
+          "x": 6132,
+          "y": 0,
+          "width": 1381,
+          "height": 2426
+        },
+        "shadow-commander-boss.png": {
+          "x": 0,
+          "y": 2981,
+          "width": 1420,
+          "height": 2342
+        },
+        "guard.png": {
+          "x": 1424,
+          "y": 2981,
+          "width": 1280,
+          "height": 2331
+        },
+        "s6-requiem-choir.png": {
+          "x": 2708,
+          "y": 2981,
+          "width": 1348,
+          "height": 2182
+        },
+        "ui-brand-mark.png": {
+          "x": 4060,
+          "y": 2981,
+          "width": 1495,
+          "height": 2138
+        },
+        "ui-control-sortie.png": {
+          "x": 5559,
+          "y": 2981,
+          "width": 1447,
+          "height": 1907
+        },
+        "dawnless-crown.png": {
+          "x": 7010,
+          "y": 2981,
+          "width": 473,
+          "height": 1511
+        },
+        "rift-lens.png": {
+          "x": 7487,
+          "y": 2981,
+          "width": 580,
+          "height": 1389
+        },
+        "anchor-shard.png": {
+          "x": 0,
+          "y": 5327,
+          "width": 959,
+          "height": 1384
+        },
+        "abyssal-banner.png": {
+          "x": 963,
+          "y": 5327,
+          "width": 630,
+          "height": 1193
+        },
+        "choir-ward-crystal.png": {
+          "x": 1597,
+          "y": 5327,
+          "width": 427,
+          "height": 1193
+        },
+        "scout.png": {
+          "x": 2028,
+          "y": 5327,
+          "width": 1185,
+          "height": 1173
+        },
+        "warden-lantern.png": {
+          "x": 3217,
+          "y": 5327,
+          "width": 591,
+          "height": 1150
+        },
+        "equipment-tier-gems.png": {
+          "x": 3812,
+          "y": 5327,
+          "width": 718,
+          "height": 1132
+        },
+        "stillwater-hourglass.png": {
+          "x": 4534,
+          "y": 5327,
+          "width": 661,
+          "height": 1078
+        },
+        "broken-court-monarch-boss.png": {
+          "x": 5199,
+          "y": 5327,
+          "width": 1470,
+          "height": 983
+        },
+        "bulwark-brand.png": {
+          "x": 6673,
+          "y": 5327,
+          "width": 1205,
+          "height": 785
+        }
+      }
+    }
+  ]
 }

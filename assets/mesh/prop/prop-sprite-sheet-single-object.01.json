@@ -1,0 +1,102 @@
+{
+  "sheet": "assets/mesh/prop/prop-sprite-sheet-single-object.01.png",
+  "sheetIndex": 1,
+  "width": 7354,
+  "height": 7426,
+  "pad": 4,
+  "packMode": "shelf-height-desc",
+  "sheetWidthLimit": 8192,
+  "frameCount": 15,
+  "frames": {
+    "s3-gate-sovereign.png": {
+      "x": 0,
+      "y": 0,
+      "width": 1438,
+      "height": 2506
+    },
+    "s4-tide-warden.png": {
+      "x": 1442,
+      "y": 0,
+      "width": 1418,
+      "height": 2499
+    },
+    "s10-abyss-regent.png": {
+      "x": 2864,
+      "y": 0,
+      "width": 1499,
+      "height": 2496
+    },
+    "player-core-v04.png": {
+      "x": 4367,
+      "y": 0,
+      "width": 1490,
+      "height": 2494
+    },
+    "s7-lantern-tyrant.png": {
+      "x": 5861,
+      "y": 0,
+      "width": 1489,
+      "height": 2494
+    },
+    "requiem-warden.png": {
+      "x": 0,
+      "y": 2510,
+      "width": 1485,
+      "height": 2479
+    },
+    "ui-control-close.png": {
+      "x": 1489,
+      "y": 2510,
+      "width": 1483,
+      "height": 2468
+    },
+    "sung-hum-boss.png": {
+      "x": 2976,
+      "y": 2510,
+      "width": 1448,
+      "height": 2458
+    },
+    "possessed.png": {
+      "x": 4428,
+      "y": 2510,
+      "width": 1428,
+      "height": 2439
+    },
+    "shadow-soldier-v04.png": {
+      "x": 5860,
+      "y": 2510,
+      "width": 1487,
+      "height": 2436
+    },
+    "human-command-boss.png": {
+      "x": 0,
+      "y": 4993,
+      "width": 1492,
+      "height": 2433
+    },
+    "pack-warden.png": {
+      "x": 1496,
+      "y": 4993,
+      "width": 1429,
+      "height": 2432
+    },
+    "sung-hum-v04.png": {
+      "x": 2929,
+      "y": 4993,
+      "width": 1453,
+      "height": 2396
+    },
+    "s8-bridge-colossus.png": {
+      "x": 4386,
+      "y": 4993,
+      "width": 1502,
+      "height": 2373
+    },
+    "lantern-reaver.png": {
+      "x": 5892,
+      "y": 4993,
+      "width": 1428,
+      "height": 2371
+    }
+  }
+}
