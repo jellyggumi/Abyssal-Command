@@ -10,12 +10,12 @@ shipped character with a broken bind:
     ~90 deg from the torso ... gives auto-weighting algorithms an unambiguous,
     non-self-intersecting armpit/shoulder region". All 20 rigged GLBs measured
     exactly 30.94 deg: the metarig default, untouched.
-  * The metarig was only *uniformly scaled* to mesh height, never fitted to the
-    mesh's limbs. Rodin characters stand arms-down-at-the-sides, so the A-pose
-    arm bones sat outside the mesh arms entirely and bone-heat fell back to
-    nearest-bone weighting. Symptoms in the shipped GLBs: guard.glb gave
-    DEF-hand.R more total weight than its entire spine chain; cinder-warden.glb
-    put ~1/3 of all weight on the head bone.
+  * The metarig was only *uniformly scaled* to mesh height, never fitted to
+    the source limbs. The shipped character renders are authored in a
+    horizontal-arm/T-pose silhouette, so an A-pose or arms-down bind put the
+    arm bones outside the mesh and made bone-heat fall back to nearest-bone
+    weighting. Symptoms in the shipped GLBs included DEF-hand.R outweighing
+    the entire spine chain and roughly one third of vertices landing on head.
 
 Pipeline:
 
@@ -23,12 +23,16 @@ Pipeline:
      axis, hip width, ground plane) so bones lie INSIDE the geometry.
   2. Bind in the mesh's sculpted pose, via bone-heat -> envelope ->
      inverse-distance, gated on how much weight the arm chain actually owns.
-  3. Freeze the rest pose (`--rest-pose`, below).
-  4. Author the 11-clip action library, export GLB.
+  3. Freeze the rest pose (`--rest-pose`, below), then repair every vertex to
+     one dominant DEF bone plus at most one hierarchy-adjacent DEF bone.
+  4. Author the 11-clip action library.
+  5. Partition faces into bounded semantic skinned meshes, then export GLB.
 
 `--rest-pose natural` (default) preserves the sculpted source bind pose.
-This is the runtime-safe option for this library: the meshes are single fused
-primitives with capes, pauldrons, and weapons welded around the arms.
+This is the runtime-safe option for this library. Runtime output preserves
+bounded adjacent blends and partitions faces into semantic torso, arm, and leg
+skinned regions; duplicated boundary vertices keep each region's deformation
+independent instead of tearing across fused cape/pauldron seams.
 
 `--rest-pose tpose` is retained only as an explicit diagnostic mode. It rotates
 each arm onto +/-X and bakes that as rest, but can drag fused outboard geometry
@@ -89,10 +93,20 @@ ROLL_POLICY = {
     "lateral": (0.0, 0.0, 1.0),  # +Z
 }
 
-# Weight refinement thresholds.
+# Weight repair thresholds.
 WEIGHT_EPSILON = 1e-6
-WEIGHT_OWNERSHIP_THRESHOLD = 2.5e-4
-LATERAL_LEAK_THRESHOLD = 0.22
+ADJACENT_SECONDARY_MIN = 0.02
+MEANINGFUL_SECONDARY_MIN = 0.12
+DROPPED_MASS_SYNTHESIS_MIN = 0.05
+SYNTH_SECONDARY_MIN = MEANINGFUL_SECONDARY_MIN
+SYNTH_SECONDARY_MAX = 0.22
+DISTAL_RIGID_BONES = frozenset({
+    "DEF-hand.L",
+    "DEF-hand.R",
+    "DEF-toe.L",
+    "DEF-toe.R",
+})
+DISTAL_RIGID_START = 0.85
 FORBIDDEN_SOURCE_TOKENS = (
     "terrain",
     "floor",
@@ -105,6 +119,33 @@ FORBIDDEN_SOURCE_TOKENS = (
     "staff",
     "prop",
 )
+
+SEMANTIC_REGION_ORDER = (
+    "torso_head",
+    "upper_arm_l",
+    "lower_arm_l",
+    "upper_arm_r",
+    "lower_arm_r",
+    "upper_leg_l",
+    "lower_leg_l",
+    "upper_leg_r",
+    "lower_leg_r",
+)
+
+SEMANTIC_REGION_BONES = {
+    "torso_head": (
+        "DEF-spine", "DEF-spine.001", "DEF-spine.002",
+        "DEF-spine.003", "DEF-spine.004", "DEF-spine.005",
+    ),
+    "upper_arm_l": ("DEF-shoulder.L", "DEF-upper_arm.L"),
+    "lower_arm_l": ("DEF-forearm.L", "DEF-hand.L"),
+    "upper_arm_r": ("DEF-shoulder.R", "DEF-upper_arm.R"),
+    "lower_arm_r": ("DEF-forearm.R", "DEF-hand.R"),
+    "upper_leg_l": ("DEF-pelvis.L", "DEF-thigh.L"),
+    "lower_leg_l": ("DEF-shin.L", "DEF-foot.L", "DEF-toe.L"),
+    "upper_leg_r": ("DEF-pelvis.R", "DEF-thigh.R"),
+    "lower_leg_r": ("DEF-shin.R", "DEF-foot.R", "DEF-toe.R"),
+}
 
 # Rigify-compatible deform skeleton. Each entry drives one bone; positions come
 # from per-asset landmarks at fit time. `parent` is the bone name, `connect`
@@ -155,13 +196,15 @@ def parse_args(argv):
     p.add_argument("--rest-pose", default="natural", choices=["tpose", "natural"],
                    help="natural = preserve the sculpted source bind pose; "
                         "tpose = explicit diagnostic bake onto +/-X")
-    p.add_argument("--arm-fit", default="detect", choices=["detect", "prior", "tpose"],
-                   help="detect = PCA over the mesh's outboard cloud; "
-                        "prior = anthropometric proportions for arms-down silhouettes; "
-                        "tpose = fit an already-horizontal source without re-posing it")
+    p.add_argument("--arm-fit", default="tpose", choices=["detect", "prior", "tpose"],
+                   help="tpose = fit the horizontal-arm source silhouette; "
+                        "detect = PCA for irregular silhouettes; "
+                        "prior = anthropometric proportions for arms-down silhouettes")
     p.add_argument("--bind-method", default="auto",
                    choices=["auto", "bone_heat", "inverse_distance"],
                    help="auto = bone_heat -> envelope -> inverse_distance, gated on arm weight")
+    p.add_argument("--weld-distance", type=float, default=0.0,
+                   help="merge coincident verts before fitting; 0.0 keeps source seams (runtime default)")
     p.add_argument("--save-blend", default=None)
     return p.parse_args(argv)
 
@@ -327,13 +370,17 @@ def run(args, budgets):
     # Weld coincident verts: marching-cubes output is fragmented into micro
     # islands, and bone-heat silently yields all-zero vertex groups on those.
     before = len(body.data.vertices)
-    bm = bmesh.new()
-    bm.from_mesh(body.data)
-    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0001)
-    bm.to_mesh(body.data)
-    body.data.update()
-    bm.free()
-    step("weld", vertsBefore=before, vertsAfter=len(body.data.vertices))
+    merged = False
+    if args.weld_distance > 0.0:
+        bm = bmesh.new()
+        bm.from_mesh(body.data)
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=args.weld_distance)
+        bm.to_mesh(body.data)
+        body.data.update()
+        bm.free()
+        merged = len(body.data.vertices) != before
+    step("weld", weldDistance=args.weld_distance, vertsBefore=before,
+         vertsAfter=len(body.data.vertices), merged=merged)
 
     # --- 2. Landmark detection --------------------------------------------
     co = np.array([(body.matrix_world @ v.co)[:] for v in body.data.vertices], dtype=float)
@@ -542,7 +589,7 @@ def run(args, budgets):
     # Roll is aligned to contract now, before any binding happens.
     pre_bind_roll = align_def_bone_roll("pre_bind")
     bpy.ops.object.mode_set(mode="OBJECT")
-    step("armature_fit", bones=len(arm_data.bones), shoulderZ=round(shoulder_z, 4), arms=arm_fit,
+    step("armature_fit", mode=args.arm_fit, bones=len(arm_data.bones), shoulderZ=round(shoulder_z, 4), arms=arm_fit,
          preBindRollCount=len(pre_bind_roll))
 
     # --- 4. Bind in the mesh's natural pose --------------------------------
@@ -742,256 +789,411 @@ def run(args, budgets):
     else:
         # The natural source pose is already fitted before binding.
         final_rest_roll = []
-    # Reweight only around limbs, and only where a limb chain already owns the
-    # vertex weight, so accessories, gear, and non-limb attachments keep their
-    # existing ownership while we remove major-joint leakage.
-    def refine_limb_weights():
-        # Deterministic post-T-pose correction around the major limb chains.
-        body_to_world = np.array(body.matrix_world)
-        vertex_world = np.array([list(v.co) for v in body.data.vertices], dtype=float)
-        vertex_world = vertex_world @ body_to_world[:3, :3].T + body_to_world[:3, 3]
-        inv_world_to_rig = np.linalg.inv(np.array(rig.matrix_world))
-        vertex_rig_local = (np.c_[vertex_world, np.ones(len(vertex_world))] @ inv_world_to_rig)[:, :3]
-
-        chain_specs = [
-            {"name": "arm.L", "side": "L", "sideSign": 1.0,
-             "bones": ["DEF-shoulder.L", "DEF-upper_arm.L", "DEF-forearm.L", "DEF-hand.L"],
-             "anchor": "DEF-spine.003"},
-            {"name": "arm.R", "side": "R", "sideSign": -1.0,
-             "bones": ["DEF-shoulder.R", "DEF-upper_arm.R", "DEF-forearm.R", "DEF-hand.R"],
-             "anchor": "DEF-spine.003"},
-            {"name": "leg.L", "side": "L", "sideSign": 1.0,
-             "bones": ["DEF-pelvis.L", "DEF-thigh.L", "DEF-shin.L", "DEF-foot.L", "DEF-toe.L"],
-             "anchor": "DEF-spine"},
-            {"name": "leg.R", "side": "R", "sideSign": -1.0,
-             "bones": ["DEF-pelvis.R", "DEF-thigh.R", "DEF-shin.R", "DEF-foot.R", "DEF-toe.R"],
-             "anchor": "DEF-spine"},
+    # Collapse every vertex onto its original dominant DEF bone plus at most
+    # one directly parent/child-adjacent DEF bone. This repairs cross-branch
+    # heat/envelope leakage without turning the character into rigid chunks.
+    def repair_adjacent_def_weights():
+        def_names = [
+            name for name, _, _ in SKELETON
+            if rig.data.bones.get(name) is not None
+            and rig.data.bones[name].use_deform
         ]
+        if not def_names:
+            raise RuntimeError("adjacent weight repair failed: rig has no DEF bones")
 
-        def chain_index_set(names):
-            out = []
-            seen = set()
-            for nm in names:
-                if nm in seen:
-                    continue
-                seen.add(nm)
-                vg = body.vertex_groups.get(nm)
-                if vg is not None:
-                    out.append(vg.index)
-            return out
+        def_rank = {name: index for index, name in enumerate(def_names)}
+        def_set = set(def_names)
+        adjacency = {name: [] for name in def_names}
+        for name in def_names:
+            parent = rig.data.bones[name].parent
+            if parent is not None and parent.name in def_set:
+                adjacency[name].append(parent.name)
+                adjacency[parent.name].append(name)
+        for name in def_names:
+            adjacency[name].sort(key=def_rank.__getitem__)
 
-        for spec in chain_specs:
-            chain = spec["bones"] + [spec["anchor"]]
-            spec["indices"] = chain_index_set(chain)
-            spec["segments"] = []
-            for bone in chain:
-                vg = body.vertex_groups.get(bone)
-                if vg is None:
-                    continue
-                ebone = rig.data.bones.get(bone)
-                if not ebone:
-                    continue
-                spec["segments"].append((
-                    ebone.head_local.copy(),
-                    ebone.tail_local.copy(),
-                    vg.index,
+        for name in def_names:
+            if body.vertex_groups.get(name) is None:
+                body.vertex_groups.new(name=name)
+        source_group_names = [group.name for group in body.vertex_groups]
+
+        armature_modifiers = [m for m in body.modifiers if m.type == "ARMATURE"]
+        target_modifier = next((m for m in armature_modifiers if m.object == rig), None)
+        if target_modifier is None:
+            target_modifier = (
+                armature_modifiers[0]
+                if armature_modifiers
+                else body.modifiers.new(name="Armature", type="ARMATURE")
+            )
+            target_modifier.object = rig
+        for modifier in list(armature_modifiers):
+            if modifier != target_modifier:
+                body.modifiers.remove(modifier)
+        target_modifier.show_viewport = True
+        target_modifier.show_render = True
+
+        body_to_world = np.array(body.matrix_world)
+        vertex_world = np.array(
+            [list(vertex.co) for vertex in body.data.vertices], dtype=float
+        )
+        vertex_world = (
+            vertex_world @ body_to_world[:3, :3].T + body_to_world[:3, 3]
+        )
+        world_to_rig = np.linalg.inv(np.array(rig.matrix_world))
+        vertex_rig_local = (
+            np.c_[vertex_world, np.ones(len(vertex_world))] @ world_to_rig.T
+        )[:, :3]
+
+        heads = np.array([
+            list(rig.data.bones[name].head_local) for name in def_names
+        ])
+        tails = np.array([
+            list(rig.data.bones[name].tail_local) for name in def_names
+        ])
+        segments = tails - heads
+        segment_lengths_sq = np.maximum(
+            np.einsum("ij,ij->i", segments, segments), 1e-12
+        )
+
+        def influence_histogram():
+            counts = {}
+            for vertex in body.data.vertices:
+                count = sum(
+                    1 for element in vertex.groups
+                    if math.isfinite(element.weight)
+                    and element.weight > WEIGHT_EPSILON
+                )
+                key = str(count)
+                counts[key] = counts.get(key, 0) + 1
+            return dict(sorted(counts.items(), key=lambda item: int(item[0])))
+
+        before_histogram = influence_histogram()
+        fallback_reasons = {}
+
+        def record_fallback(reason):
+            fallback_reasons[reason] = fallback_reasons.get(reason, 0) + 1
+
+        def nearest_def_name(point):
+            projection = np.clip(
+                np.einsum("ij,ij->i", point - heads, segments)
+                / segment_lengths_sq,
+                0.0,
+                1.0,
+            )
+            distances = np.linalg.norm(
+                point - (heads + segments * projection[:, None]), axis=1
+            )
+            return def_names[int(np.argmin(distances))]
+
+        def nearest_adjacent_name(dominant_name, point):
+            ranked = []
+            dominant_bone = rig.data.bones[dominant_name]
+            for candidate_name in adjacency[dominant_name]:
+                candidate = rig.data.bones[candidate_name]
+                joint = (
+                    np.array(candidate.head_local)
+                    if candidate.parent == dominant_bone
+                    else np.array(dominant_bone.head_local)
+                )
+                ranked.append((
+                    float(np.linalg.norm(point - joint)),
+                    def_rank[candidate_name],
+                    candidate_name,
                 ))
+            ranked.sort()
+            return ranked[0][2] if ranked else None
+        def is_distal_rigid_tip(dominant_name, point):
+            if dominant_name not in DISTAL_RIGID_BONES:
+                return False
+            index = def_rank[dominant_name]
+            projection = float(np.clip(
+                np.dot(point - heads[index], segments[index])
+                / segment_lengths_sq[index],
+                0.0,
+                1.0,
+            ))
+            return projection >= DISTAL_RIGID_START
 
-        all_group_names = [g.name for g in body.vertex_groups]
-        x = vertex_rig_local[:, 0]
-        center_x = float(np.median(x)) if len(x) else 0.0
-        span = float(x.max() - x.min()) if len(x) else 0.0
-        lateral_margin = max(span * LATERAL_LEAK_THRESHOLD, 0.0)
+        repaired_vertices = 0
+        dropped_vertices = 0
+        dropped_influences = 0
+        dropped_weight = 0.0
+        synthesized_count = 0
+        retained_adjacent_count = 0
+        original_dominants = {}
 
-        def point_segment_distance(p, head, tail):
-            v = tail - head
-            vl2 = float(v.dot(v))
-            if vl2 < 1e-12:
-                return float((p - head).length)
-            t = float((p - head).dot(v) / vl2)
-            if t < 0.0:
-                t = 0.0
-            elif t > 1.0:
-                t = 1.0
-            return float((p - (head + v * t)).length)
+        for vertex in body.data.vertices:
+            original = []
+            for element in vertex.groups:
+                name = (
+                    source_group_names[element.group]
+                    if 0 <= element.group < len(source_group_names)
+                    else f"<invalid:{element.group}>"
+                )
+                if math.isfinite(element.weight) and element.weight > WEIGHT_EPSILON:
+                    original.append((name, float(element.weight)))
 
-        corrected = 0
-        opposite_leak = 0
-        ambiguous = 0
-        for vi, p_xyz in enumerate(vertex_rig_local):
-            point = Vector((float(p_xyz[0]), float(p_xyz[1]), float(p_xyz[2])))
-            active = [(g.group, g.weight) for g in body.data.vertices[vi].groups
-                      if g.weight > WEIGHT_EPSILON]
-            if not active:
-                continue
+            valid = [
+                (name, weight) for name, weight in original if name in def_set
+            ]
+            original_map = {name: weight for name, weight in original}
+            point = vertex_rig_local[vertex.index]
+            existing_secondary = None
 
-            chain_weights = []
-            for spec in chain_specs:
-                chain_w = 0.0
-                for gi, w in active:
-                    if gi in spec["indices"]:
-                        chain_w += float(w)
-                if chain_w >= WEIGHT_OWNERSHIP_THRESHOLD:
-                    chain_weights.append((chain_w, spec))
-            if not chain_weights:
-                continue
+            if not valid:
+                dominant_name = nearest_def_name(point)
+                new_weights = {dominant_name: 1.0}
+                original_dominants[vertex.index] = None
+                record_fallback("orphan_nearest_def")
+            else:
+                dominant_name, dominant_weight = min(
+                    valid, key=lambda item: (-item[1], def_rank[item[0]])
+                )
+                original_dominants[vertex.index] = dominant_name
+                adjacent_existing = [
+                    (name, weight)
+                    for name, weight in valid
+                    if name != dominant_name
+                    and name in adjacency[dominant_name]
+                    and weight >= ADJACENT_SECONDARY_MIN
+                ]
+                if adjacent_existing:
+                    existing_secondary, secondary_weight = min(
+                        adjacent_existing,
+                        key=lambda item: (-item[1], def_rank[item[0]]),
+                    )
+                    pair_sum = dominant_weight + secondary_weight
+                    normalized_secondary = secondary_weight / pair_sum
+                    if normalized_secondary < MEANINGFUL_SECONDARY_MIN:
+                        normalized_secondary = MEANINGFUL_SECONDARY_MIN
+                    new_weights = {
+                        dominant_name: 1.0 - normalized_secondary,
+                        existing_secondary: normalized_secondary,
+                    }
+                    retained_adjacent_count += 1
+                else:
+                    valid_total = sum(weight for _, weight in valid)
+                    nonadjacent_dropped_fraction = (
+                        sum(
+                            weight for name, weight in valid
+                            if name != dominant_name
+                            and name not in adjacency[dominant_name]
+                        ) / valid_total
+                        if valid_total > 0.0
+                        else 0.0
+                    )
+                    if nonadjacent_dropped_fraction >= DROPPED_MASS_SYNTHESIS_MIN:
+                        synthesized_secondary = nearest_adjacent_name(
+                            dominant_name, point
+                        )
+                        if synthesized_secondary is None:
+                            new_weights = {dominant_name: 1.0}
+                            record_fallback("no_incident_adjacent_bone")
+                        else:
+                            secondary_weight = min(
+                                SYNTH_SECONDARY_MAX,
+                                max(
+                                    SYNTH_SECONDARY_MIN,
+                                    nonadjacent_dropped_fraction,
+                                ),
+                            )
+                            new_weights = {
+                                dominant_name: 1.0 - secondary_weight,
+                                synthesized_secondary: secondary_weight,
+                            }
+                            synthesized_count += 1
+                    else:
+                        synthesized_secondary = nearest_adjacent_name(
+                            dominant_name, point
+                        )
+                        if synthesized_secondary is None:
+                            new_weights = {dominant_name: 1.0}
+                            record_fallback("no_incident_adjacent_bone")
+                        elif is_distal_rigid_tip(dominant_name, point):
+                            new_weights = {dominant_name: 1.0}
+                            record_fallback("distal_tip_rigid")
+                        else:
+                            new_weights = {
+                                dominant_name: 1.0 - SYNTH_SECONDARY_MIN,
+                                synthesized_secondary: SYNTH_SECONDARY_MIN,
+                            }
+                            synthesized_count += 1
+                            record_fallback("rigid_or_weak_secondary_repaired")
 
-            chain_weights.sort(key=lambda item: item[0], reverse=True)
-            top_w, top = chain_weights[0]
-            if len(chain_weights) > 1 and chain_weights[1][0] > top_w * 0.55:
-                ambiguous += 1
-                continue
+            kept_original = {dominant_name}
+            if existing_secondary is not None:
+                kept_original.add(existing_secondary)
+            vertex_dropped = [
+                (name, weight)
+                for name, weight in original
+                if name not in kept_original
+            ]
+            if vertex_dropped:
+                dropped_vertices += 1
+                dropped_influences += len(vertex_dropped)
+                dropped_weight += sum(weight for _, weight in vertex_dropped)
 
-            # Reject clearly opposite-side bleed: keep left vertices on +X and
-            # right vertices on -X, plus a small center margin.
-            if (point.x - center_x) * top["sideSign"] < -lateral_margin:
-                for gi, _ in active:
-                    body.vertex_groups[gi].remove([vi])
-                opposite_leak += 1
-                continue
+            all_names = set(original_map) | set(new_weights)
+            if any(
+                abs(
+                    original_map.get(name, 0.0)
+                    - new_weights.get(name, 0.0)
+                ) > WEIGHT_EPSILON
+                for name in all_names
+            ):
+                repaired_vertices += 1
 
-            if not top["segments"]:
-                continue
+            for group_index in [
+                element.group for element in list(vertex.groups)
+            ]:
+                if 0 <= group_index < len(body.vertex_groups):
+                    body.vertex_groups[group_index].remove([vertex.index])
+            for name, weight in new_weights.items():
+                body.vertex_groups[name].add(
+                    [vertex.index], weight, "REPLACE"
+                )
 
-            dists = []
-            for head, tail, gi in top["segments"]:
-                dists.append((point_segment_distance(point, head, tail), gi))
-            if not dists:
-                continue
+        for group in list(body.vertex_groups):
+            if group.name not in def_set:
+                body.vertex_groups.remove(group)
 
-            dists.sort(key=lambda kv: kv[0])
-            k = min(4, len(dists))
-            raw_w = np.array([1.0 / max(d, 1e-5) ** 2 for d, _ in dists[:k]], dtype=float)
-            raw_w_sum = float(raw_w.sum())
-            if raw_w_sum <= 0.0:
-                continue
-            new_pairs = [(gi, float(w / raw_w_sum)) for w, (_, gi) in zip(raw_w, dists[:k])]
-
-            for gi, _ in active:
-                body.vertex_groups[gi].remove([vi])
-            for gi, w in new_pairs:
-                body.vertex_groups[gi].add([vi], w, "REPLACE")
-            corrected += 1
-
-        all_mods = [m for m in body.modifiers if m.type == "ARMATURE"]
-        for m in all_mods:
-            if not m.show_viewport:
-                m.show_viewport = True
-
-        heads_np = np.array([list(ebone.head_local) for ebone in rig.data.bones], dtype=float)
-        tails_np = np.array([list(ebone.tail_local) for ebone in rig.data.bones], dtype=float)
-        seg_np = tails_np - heads_np
-        seg_l2 = np.maximum(np.einsum("ij,ij->i", seg_np, seg_np), 1e-12)
-        bone_names = [b.name for b in rig.data.bones]
-        orphans = []
-        for vi, groups in enumerate([v.groups for v in body.data.vertices]):
-            if not any(g.weight > WEIGHT_EPSILON for g in groups):
-                orphans.append(vi)
-
-        for vi in orphans:
-            if len(bone_names) == 0:
-                break
-            p = vertex_rig_local[vi]
-            t = np.clip(np.einsum("ij,ij->i", p - heads_np, seg_np) / seg_l2, 0.0, 1.0)
-            d = np.linalg.norm(p - (heads_np + seg_np * t[:, None]), axis=1)
-            name = bone_names[int(np.argmin(d))]
-            vg = body.vertex_groups.get(name)
-            if vg is not None:
-                vg.add([vi], 1.0, "REPLACE")
-
-        for v in body.data.vertices:
-            pairs = [(g.group, g.weight) for g in v.groups if g.weight > WEIGHT_EPSILON]
-            if len(pairs) <= 4:
-                continue
-            pairs.sort(key=lambda item: item[1], reverse=True)
-            for gi, _ in pairs[4:]:
-                body.vertex_groups[gi].remove([v.index])
-
+        after_histogram = influence_histogram()
+        final_group_names = [group.name for group in body.vertex_groups]
         invalid_count = 0
+        orphan_count = 0
         non_def_count = 0
+        dominant_violation_count = 0
         max_influences = 0
-        min_sum = float("inf")
-        max_sum = 0.0
-        deform_vertex = 0
-        for v in body.data.vertices:
-            pairs = [(g.group, g.weight) for g in v.groups if g.weight > WEIGHT_EPSILON]
+        max_weight_sum_error = 0.0
+        max_hierarchy_spread = 0
+        single_influence_vertices = 0
+
+        for vertex in body.data.vertices:
+            pairs = [
+                (final_group_names[element.group], float(element.weight))
+                for element in vertex.groups
+                if 0 <= element.group < len(final_group_names)
+                and math.isfinite(element.weight)
+                and element.weight > WEIGHT_EPSILON
+            ]
             if not pairs:
+                orphan_count += 1
                 continue
-            deform_vertex += 1
-            total = sum(w for _, w in pairs)
-            if total <= 0.0 or not math.isfinite(total):
+            if any(name not in def_set for name, _ in pairs):
+                non_def_count += 1
+            if any(
+                not math.isfinite(weight) or weight <= 0.0
+                for _, weight in pairs
+            ):
                 invalid_count += 1
-                continue
-
-            vertex_invalid = False
-            for gi, w in pairs:
-                if gi < 0 or gi >= len(all_group_names):
-                    vertex_invalid = True
-                    break
-                if not math.isfinite(w) or w < 0.0:
-                    vertex_invalid = True
-                    break
-                if all_group_names[gi][:4] != "DEF-":
-                    non_def_count += 1
-                    vertex_invalid = True
-                    break
-            if vertex_invalid:
-                invalid_count += 1
-                continue
-
-            if len(pairs) > 4:
-                vertex_invalid = True
-                invalid_count += 1
-                continue
-
-            if abs(total - 1.0) > 1e-8:
-                inv_total = 1.0 / total
-                for gi, w in pairs:
-                    body.vertex_groups[gi].add([v.index], w * inv_total, "REPLACE")
-                total = 1.0
-            if total > 0.0:
-                min_sum = min(min_sum, total)
-                max_sum = max(max_sum, total)
             max_influences = max(max_influences, len(pairs))
+            if len(pairs) == 1:
+                single_influence_vertices += 1
+                spread = 0
+            elif (
+                len(pairs) == 2
+                and pairs[1][0] in adjacency[pairs[0][0]]
+            ):
+                spread = 1
+            else:
+                spread = len(def_names) + 1
+            max_hierarchy_spread = max(max_hierarchy_spread, spread)
+            max_weight_sum_error = max(
+                max_weight_sum_error,
+                abs(sum(weight for _, weight in pairs) - 1.0),
+            )
+            expected_dominant = original_dominants[vertex.index]
+            stable_dominant = min(
+                pairs, key=lambda item: (-item[1], def_rank[item[0]])
+            )[0]
+            if (
+                expected_dominant is not None
+                and stable_dominant != expected_dominant
+            ):
+                dominant_violation_count += 1
 
-        if deform_vertex:
-            min_sum = float(min_sum)
-            max_sum = float(max_sum)
-        else:
-            min_sum = 0.0
-            max_sum = 0.0
-
-        enabled_mods = [m for m in body.modifiers if m.type == "ARMATURE"
-                        and m.show_viewport and m.object == rig]
-        enabled_count = len(enabled_mods)
+        total_vertices = len(body.data.vertices)
+        single_influence_fraction = (
+            single_influence_vertices / total_vertices
+            if total_vertices
+            else 0.0
+        )
+        enabled_modifiers = [
+            modifier for modifier in body.modifiers
+            if modifier.type == "ARMATURE"
+            and modifier.show_viewport
+            and modifier.object == rig
+        ]
         return {
-            "enabledArmatureModifiers": enabled_count,
-            "correctedVertices": corrected,
-            "oppositeLeak": opposite_leak,
-            "ambiguous": ambiguous,
-            "orphanCount": len(orphans),
+            "policy": "original_dominant_plus_one_direct_parent_or_child",
+            "influenceHistogramBefore": before_histogram,
+            "influenceHistogramAfter": after_histogram,
+            "repairedVertices": repaired_vertices,
+            "droppedVertices": dropped_vertices,
+            "droppedInfluences": dropped_influences,
+            "droppedWeight": round(dropped_weight, 8),
+            "synthesizedCount": synthesized_count,
+            "retainedAdjacentCount": retained_adjacent_count,
+            "fallbackReasons": dict(sorted(fallback_reasons.items())),
+            "enabledArmatureModifiers": len(enabled_modifiers),
             "invalidCount": invalid_count,
+            "orphanCount": orphan_count,
             "nonDefCount": non_def_count,
+            "dominantViolationCount": dominant_violation_count,
             "maxInfluences": max_influences,
-            "maxWeightSum": max_sum,
-            "minWeightSum": min_sum,
-            "deformVerts": deform_vertex,
-            "deformVertsTotal": len(body.data.vertices),
+            "maxWeightSumError": max_weight_sum_error,
+            "maxHierarchySpread": max_hierarchy_spread,
+            "singleInfluenceVertices": single_influence_vertices,
+            "singleInfluenceFraction": round(
+                single_influence_fraction, 6
+            ),
+            "vertices": total_vertices,
         }
 
-    weights_report = refine_limb_weights()
+    weights_report = repair_adjacent_def_weights()
     if weights_report["enabledArmatureModifiers"] != 1:
-        raise RuntimeError("weight invariant failed: expected 1 enabled Armature modifier on target rig")
+        raise RuntimeError(
+            "weight invariant failed: expected exactly one enabled target "
+            "Armature modifier"
+        )
     if weights_report["invalidCount"] != 0:
-        raise RuntimeError(f"weight invariant failed: {weights_report['invalidCount']} invalid vertices")
+        raise RuntimeError(
+            f"weight invariant failed: "
+            f"{weights_report['invalidCount']} invalid vertices"
+        )
     if weights_report["nonDefCount"] != 0:
-        raise RuntimeError(f"weight invariant failed: {weights_report['nonDefCount']} vertices with non-DEF groups")
+        raise RuntimeError(
+            f"weight invariant failed: "
+            f"{weights_report['nonDefCount']} vertices with non-DEF groups"
+        )
     if weights_report["orphanCount"] != 0:
-        raise RuntimeError(f"weight invariant failed: {weights_report['orphanCount']} orphan vertices after refine")
-    if weights_report["maxInfluences"] > 4:
-        raise RuntimeError(f"weight invariant failed: {weights_report['maxInfluences']} max influences > 4")
-
-    step("weight_refine", **weights_report)
+        raise RuntimeError(
+            f"weight invariant failed: "
+            f"{weights_report['orphanCount']} orphan vertices after repair"
+        )
+    if weights_report["dominantViolationCount"] != 0:
+        raise RuntimeError(
+            "weight invariant failed: original dominant DEF ownership changed"
+        )
+    if weights_report["maxInfluences"] > 2:
+        raise RuntimeError(
+            f"weight invariant failed: "
+            f"{weights_report['maxInfluences']} max influences > 2"
+        )
+    if weights_report["maxWeightSumError"] > 1e-6:
+        raise RuntimeError(
+            "weight invariant failed: normalized sum error exceeds 1e-6"
+        )
+    if weights_report["maxHierarchySpread"] > 1:
+        raise RuntimeError(
+            "weight invariant failed: retained bones are not direct "
+            "hierarchy neighbors"
+        )
+    step(
+        "adjacent_weight_repair",
+        status="completed",
+        **weights_report,
+    )
 
     # A natural bind does not need a horizontal-arm condition. Retain the
     # measurement for diagnostics, but gate only the explicit T-pose mode.
@@ -1131,7 +1333,7 @@ def run(args, budgets):
 
         for fc in iter_fcurves(act):
             for kp in fc.keyframe_points:
-                kp.interpolation = "BEZIER"
+                kp.interpolation = "LINEAR"
                 kp.easing = "AUTO"
 
         track = rig.animation_data.nla_tracks.new()
@@ -1150,12 +1352,529 @@ def run(args, budgets):
     if pedestal is not None:
         bpy.data.objects.remove(pedestal, do_unlink=True)
         pedestal = None
+
+    def partition_semantic_faces():
+        bone_to_region = {}
+        for region_index, region_name in enumerate(SEMANTIC_REGION_ORDER):
+            for bone_name in SEMANTIC_REGION_BONES[region_name]:
+                if bone_name in bone_to_region:
+                    raise RuntimeError(
+                        f"semantic partition map duplicates bone {bone_name}"
+                    )
+                bone_to_region[bone_name] = region_index
+
+        deform_bones = {
+            bone.name for bone in rig.data.bones if bone.use_deform
+        }
+        unmapped_bones = sorted(deform_bones - set(bone_to_region))
+        if unmapped_bones:
+            raise RuntimeError(
+                f"semantic partition has unmapped DEF bones: {unmapped_bones}"
+            )
+
+        group_names = [group.name for group in body.vertex_groups]
+        source_weights = []
+        for vertex in body.data.vertices:
+            weights = {
+                group_names[element.group]: float(element.weight)
+                for element in vertex.groups
+                if 0 <= element.group < len(group_names)
+                and group_names[element.group] in deform_bones
+                and math.isfinite(element.weight)
+                and element.weight > WEIGHT_EPSILON
+            }
+            if not weights:
+                raise RuntimeError(
+                    f"semantic partition found orphan source vertex {vertex.index}"
+                )
+            source_weights.append(weights)
+
+        source_faces = len(body.data.polygons)
+        source_vertices = len(body.data.vertices)
+        source_positions = [
+            body.matrix_world @ vertex.co.copy()
+            for vertex in body.data.vertices
+        ]
+        source_material_indices = {
+            polygon.index: int(polygon.material_index)
+            for polygon in body.data.polygons
+        }
+        def uv_coordinate(layer, loop_index):
+            modern_values = getattr(layer, "uv", None)
+            if modern_values is not None:
+                return tuple(
+                    float(value)
+                    for value in modern_values[loop_index].vector
+                )
+            return tuple(
+                float(value) for value in layer.data[loop_index].uv
+            )
+
+        source_uv_layers = [layer.name for layer in body.data.uv_layers]
+        source_uvs = {
+            polygon.index: {
+                layer.name: [
+                    uv_coordinate(layer, loop_index)
+                    for loop_index in polygon.loop_indices
+                ]
+                for layer in body.data.uv_layers
+            }
+            for polygon in body.data.polygons
+        }
+
+        def material_key(mesh, material_index):
+            material = (
+                mesh.materials[material_index]
+                if 0 <= material_index < len(mesh.materials)
+                else None
+            )
+            material_name = material.name if material is not None else "<none>"
+            return f"{material_index}:{material_name}"
+
+        def material_histogram(objects):
+            histogram = {}
+            for obj in objects:
+                for polygon in obj.data.polygons:
+                    key = material_key(obj.data, int(polygon.material_index))
+                    histogram[key] = histogram.get(key, 0) + 1
+            return dict(sorted(histogram.items()))
+
+        material_before = material_histogram([body])
+        region_face_indices = {
+            region_name: [] for region_name in SEMANTIC_REGION_ORDER
+        }
+        region_source_vertices = {
+            region_name: set() for region_name in SEMANTIC_REGION_ORDER
+        }
+        vertex_regions = [set() for _ in body.data.vertices]
+        polygon_regions = {}
+
+        for polygon in body.data.polygons:
+            scores = [0.0] * len(SEMANTIC_REGION_ORDER)
+            for vertex_index in polygon.vertices:
+                for bone_name, weight in source_weights[vertex_index].items():
+                    scores[bone_to_region[bone_name]] += weight
+            region_index = max(
+                range(len(SEMANTIC_REGION_ORDER)),
+                key=lambda index: scores[index],
+            )
+            if scores[region_index] <= WEIGHT_EPSILON:
+                raise RuntimeError(
+                    f"semantic partition could not score face {polygon.index}"
+                )
+            region_name = SEMANTIC_REGION_ORDER[region_index]
+            polygon_regions[polygon.index] = region_index
+            region_face_indices[region_name].append(polygon.index)
+            for vertex_index in polygon.vertices:
+                region_source_vertices[region_name].add(vertex_index)
+                vertex_regions[vertex_index].add(region_index)
+
+        unreferenced_vertices = [
+            index for index, regions in enumerate(vertex_regions) if not regions
+        ]
+        if unreferenced_vertices:
+            raise RuntimeError(
+                "semantic partition cannot preserve loose source vertices: "
+                f"{len(unreferenced_vertices)} unreferenced"
+            )
+
+        nonempty_regions = [
+            region_name for region_name in SEMANTIC_REGION_ORDER
+            if region_face_indices[region_name]
+        ]
+        if not 5 <= len(nonempty_regions) <= 9:
+            raise RuntimeError(
+                "semantic partition invariant failed before separation: "
+                f"{len(nonempty_regions)} nonempty regions outside 5-9"
+            )
+
+        source_vertex_attribute = "_semantic_source_vertex"
+        source_face_attribute = "_semantic_source_face"
+        region_attribute = "_semantic_region"
+        for attribute_name in (
+            source_vertex_attribute,
+            source_face_attribute,
+            region_attribute,
+        ):
+            if body.data.attributes.get(attribute_name) is not None:
+                raise RuntimeError(
+                    f"semantic partition temporary attribute already exists: "
+                    f"{attribute_name}"
+                )
+
+        vertex_attribute = body.data.attributes.new(
+            name=source_vertex_attribute, type="INT", domain="POINT"
+        )
+        face_attribute = body.data.attributes.new(
+            name=source_face_attribute, type="INT", domain="FACE"
+        )
+        label_attribute = body.data.attributes.new(
+            name=region_attribute, type="INT", domain="FACE"
+        )
+        for vertex in body.data.vertices:
+            vertex_attribute.data[vertex.index].value = vertex.index
+        for polygon in body.data.polygons:
+            face_attribute.data[polygon.index].value = polygon.index
+            label_attribute.data[polygon.index].value = polygon_regions[
+                polygon.index
+            ]
+        body.data.update()
+
+        mesh_parts = []
+        part_regions = {}
+        expected_region_faces = {
+            region_name: len(region_face_indices[region_name])
+            for region_name in nonempty_regions
+        }
+        bpy.context.tool_settings.mesh_select_mode = (False, False, True)
+
+        for region_name in nonempty_regions:
+            region_index = SEMANTIC_REGION_ORDER.index(region_name)
+            bpy.ops.object.select_all(action="DESELECT")
+            body.select_set(True)
+            bpy.context.view_layer.objects.active = body
+            bpy.ops.object.mode_set(mode="EDIT")
+            edit_mesh = bmesh.from_edit_mesh(body.data)
+            region_layer = edit_mesh.faces.layers.int.get(region_attribute)
+            if region_layer is None:
+                raise RuntimeError(
+                    "semantic partition lost its region face attribute"
+                )
+            for vertex in edit_mesh.verts:
+                vertex.select = False
+            for edge in edit_mesh.edges:
+                edge.select = False
+            selected_faces = 0
+            for face in edit_mesh.faces:
+                selected = face[region_layer] == region_index
+                face.select_set(selected)
+                if selected:
+                    selected_faces += 1
+            bmesh.update_edit_mesh(
+                body.data, loop_triangles=False, destructive=False
+            )
+            if selected_faces != expected_region_faces[region_name]:
+                raise RuntimeError(
+                    f"semantic partition selected {selected_faces} "
+                    f"{region_name} faces; expected "
+                    f"{expected_region_faces[region_name]}"
+                )
+
+            object_pointers_before = {
+                obj.as_pointer() for obj in bpy.data.objects
+            }
+            result = bpy.ops.mesh.separate(type="SELECTED")
+            if "FINISHED" not in result:
+                raise RuntimeError(
+                    f"semantic SELECTED separation failed for {region_name}: "
+                    f"{sorted(result)}"
+                )
+            bpy.ops.object.mode_set(mode="OBJECT")
+            created = [
+                obj for obj in bpy.data.objects
+                if obj.type == "MESH"
+                and obj.as_pointer() not in object_pointers_before
+            ]
+            if len(created) != 1:
+                raise RuntimeError(
+                    f"semantic SELECTED separation created {len(created)} "
+                    f"objects for {region_name}; expected one"
+                )
+            part = created[0]
+            part_name = f"{args.asset_id}_{region_name}"
+            name_collision = bpy.data.objects.get(part_name)
+            if name_collision is not None and name_collision != part:
+                raise RuntimeError(
+                    f"semantic part name collision: {part_name}"
+                )
+            world_matrix = part.matrix_world.copy()
+            part.parent = rig
+            part.matrix_world = world_matrix
+            part.name = part_name
+            if part.name != part_name:
+                raise RuntimeError(
+                    f"semantic part name was not stable: {part.name}"
+                )
+            mesh_parts.append(part)
+            part_regions[part.as_pointer()] = region_index
+
+        body.data.update()
+        if len(body.data.polygons) != 0:
+            raise RuntimeError(
+                f"semantic partition left {len(body.data.polygons)} source faces"
+            )
+
+        material_after = material_histogram(mesh_parts)
+        partition_faces = sum(
+            len(part.data.polygons) for part in mesh_parts
+        )
+        face_count_delta = partition_faces - source_faces
+        vertex_occurrences = [0] * source_vertices
+        face_occurrences = [0] * source_faces
+        max_rest_position_delta = 0.0
+        max_weight_delta = 0.0
+        boundary_max_rest_delta = 0.0
+        boundary_max_weight_delta = 0.0
+        max_uv_delta = 0.0
+        modifier_failures = []
+        parent_failures = []
+        region_assignment_failures = []
+
+        for part in mesh_parts:
+            expected_region_index = part_regions[part.as_pointer()]
+            source_vertex_ids = part.data.attributes.get(
+                source_vertex_attribute
+            )
+            source_face_ids = part.data.attributes.get(source_face_attribute)
+            region_labels = part.data.attributes.get(region_attribute)
+            if (
+                source_vertex_ids is None
+                or source_face_ids is None
+                or region_labels is None
+            ):
+                raise RuntimeError(
+                    f"semantic part {part.name} lost verification attributes"
+                )
+
+            armature_modifiers = [
+                modifier for modifier in part.modifiers
+                if modifier.type == "ARMATURE"
+            ]
+            enabled_target = [
+                modifier for modifier in armature_modifiers
+                if modifier.show_viewport and modifier.object == rig
+            ]
+            if len(armature_modifiers) != 1 or len(enabled_target) != 1:
+                modifier_failures.append(part.name)
+            if part.parent != rig:
+                parent_failures.append(part.name)
+
+            part_group_names = [
+                group.name for group in part.vertex_groups
+            ]
+            for vertex in part.data.vertices:
+                source_index = int(
+                    source_vertex_ids.data[vertex.index].value
+                )
+                if not 0 <= source_index < source_vertices:
+                    raise RuntimeError(
+                        f"semantic part {part.name} has invalid source vertex "
+                        f"{source_index}"
+                    )
+                vertex_occurrences[source_index] += 1
+                rest_delta = (
+                    part.matrix_world @ vertex.co
+                    - source_positions[source_index]
+                ).length
+                max_rest_position_delta = max(
+                    max_rest_position_delta, rest_delta
+                )
+                actual_weights = {
+                    part_group_names[element.group]: float(element.weight)
+                    for element in vertex.groups
+                    if 0 <= element.group < len(part_group_names)
+                    and math.isfinite(element.weight)
+                    and element.weight > WEIGHT_EPSILON
+                }
+                expected_weights = source_weights[source_index]
+                weight_delta = max(
+                    (
+                        abs(
+                            actual_weights.get(name, 0.0)
+                            - expected_weights.get(name, 0.0)
+                        )
+                        for name in set(actual_weights) | set(expected_weights)
+                    ),
+                    default=0.0,
+                )
+                max_weight_delta = max(max_weight_delta, weight_delta)
+                if len(vertex_regions[source_index]) > 1:
+                    boundary_max_rest_delta = max(
+                        boundary_max_rest_delta, rest_delta
+                    )
+                    boundary_max_weight_delta = max(
+                        boundary_max_weight_delta, weight_delta
+                    )
+
+            actual_uv_layers = [layer.name for layer in part.data.uv_layers]
+            if actual_uv_layers != source_uv_layers:
+                raise RuntimeError(
+                    f"semantic part {part.name} changed UV layer order"
+                )
+            for polygon in part.data.polygons:
+                source_index = int(
+                    source_face_ids.data[polygon.index].value
+                )
+                if not 0 <= source_index < source_faces:
+                    raise RuntimeError(
+                        f"semantic part {part.name} has invalid source face "
+                        f"{source_index}"
+                    )
+                face_occurrences[source_index] += 1
+                if (
+                    int(region_labels.data[polygon.index].value)
+                    != expected_region_index
+                ):
+                    region_assignment_failures.append(source_index)
+                if (
+                    int(polygon.material_index)
+                    != source_material_indices[source_index]
+                ):
+                    raise RuntimeError(
+                        f"semantic face {source_index} changed material index"
+                    )
+                for layer in part.data.uv_layers:
+                    actual_uvs = [
+                        uv_coordinate(layer, loop_index)
+                        for loop_index in polygon.loop_indices
+                    ]
+                    expected_uvs = source_uvs[source_index][layer.name]
+                    if len(actual_uvs) != len(expected_uvs):
+                        raise RuntimeError(
+                            f"semantic face {source_index} changed UV corners"
+                        )
+                    for actual_uv, expected_uv in zip(
+                        actual_uvs, expected_uvs
+                    ):
+                        max_uv_delta = max(
+                            max_uv_delta,
+                            math.dist(actual_uv, expected_uv),
+                        )
+
+        expected_occurrences = [
+            len(regions) for regions in vertex_regions
+        ]
+        occurrence_mismatches = sum(
+            actual != expected
+            for actual, expected in zip(
+                vertex_occurrences, expected_occurrences
+            )
+        )
+        duplicate_occurrences = sum(
+            max(0, count - 1) for count in vertex_occurrences
+        )
+        expected_duplicate_occurrences = sum(
+            max(0, count - 1) for count in expected_occurrences
+        )
+        duplicate_occurrence_delta = (
+            duplicate_occurrences - expected_duplicate_occurrences
+        )
+        face_occurrence_failures = sum(
+            count != 1 for count in face_occurrences
+        )
+        material_preserved = material_after == material_before
+        part_names = [part.name for part in mesh_parts]
+        region_face_counts = {
+            region_name: len(region_face_indices[region_name])
+            for region_name in nonempty_regions
+        }
+        region_vertex_counts = {
+            region_name: len(region_source_vertices[region_name])
+            for region_name in nonempty_regions
+        }
+
+        failures = []
+        if not 5 <= len(mesh_parts) <= 9:
+            failures.append(f"part count {len(mesh_parts)} outside 5-9")
+        if len(set(part_names)) != len(part_names):
+            failures.append("semantic part names are not unique")
+        if face_count_delta != 0:
+            failures.append(f"face count delta {face_count_delta}")
+        if not material_preserved:
+            failures.append("material face histogram changed")
+        if modifier_failures:
+            failures.append(
+                f"invalid Armature modifiers on {modifier_failures}"
+            )
+        if parent_failures:
+            failures.append(f"invalid rig parent on {parent_failures}")
+        if region_assignment_failures:
+            failures.append(
+                f"{len(region_assignment_failures)} faces changed region"
+            )
+        if occurrence_mismatches:
+            failures.append(
+                f"{occurrence_mismatches} source vertex occurrence mismatches"
+            )
+        if duplicate_occurrence_delta != 0:
+            failures.append(
+                f"duplicate occurrence delta {duplicate_occurrence_delta}"
+            )
+        if face_occurrence_failures:
+            failures.append(
+                f"{face_occurrence_failures} source face occurrence failures"
+            )
+        if max_rest_position_delta > 1e-6:
+            failures.append(
+                f"rest position delta {max_rest_position_delta} > 1e-6"
+            )
+        if max_weight_delta > 1e-6:
+            failures.append(
+                f"weight delta {max_weight_delta} > 1e-6"
+            )
+        if max_uv_delta > 1e-6:
+            failures.append(f"UV delta {max_uv_delta} > 1e-6")
+        if failures:
+            raise RuntimeError(
+                "semantic partition invariant failed: "
+                + "; ".join(failures)
+            )
+
+        for part in mesh_parts:
+            for attribute_name in (
+                source_vertex_attribute,
+                source_face_attribute,
+                region_attribute,
+            ):
+                attribute = part.data.attributes.get(attribute_name)
+                if attribute is not None:
+                    part.data.attributes.remove(attribute)
+            part.data.update()
+        bpy.data.objects.remove(body, do_unlink=True)
+
+        receipt = {
+            "policy": "stable_face_argmax_of_summed_repaired_region_weights",
+            "regionOrder": list(SEMANTIC_REGION_ORDER),
+            "regionFaceCounts": region_face_counts,
+            "regionVertexCounts": region_vertex_counts,
+            "parts": len(mesh_parts),
+            "partNames": part_names,
+            "sourceFaces": source_faces,
+            "partitionFaces": partition_faces,
+            "faceCountDelta": face_count_delta,
+            "materialFaceHistogramBefore": material_before,
+            "materialFaceHistogramAfter": material_after,
+            "materialHistogramPreserved": material_preserved,
+            "boundarySourceVertexCount": sum(
+                len(regions) > 1 for regions in vertex_regions
+            ),
+            "duplicateOccurrences": duplicate_occurrences,
+            "expectedDuplicateOccurrences": (
+                expected_duplicate_occurrences
+            ),
+            "duplicateOccurrenceDelta": duplicate_occurrence_delta,
+            "maxRestPositionDelta": max_rest_position_delta,
+            "maxWeightDelta": max_weight_delta,
+            "boundaryMaxRestDelta": boundary_max_rest_delta,
+            "boundaryMaxWeightDelta": boundary_max_weight_delta,
+            "maxUvDelta": max_uv_delta,
+            "sourceVertices": source_vertices,
+            "partitionVertexOccurrences": sum(vertex_occurrences),
+        }
+        return mesh_parts, receipt
+
+    mesh_parts, semantic_receipt = partition_semantic_faces()
+    step(
+        "semantic_partition",
+        status="completed",
+        **semantic_receipt,
+    )
+
     # --- 7. Hierarchy + export ---------------------------------------------
     root = bpy.data.objects.new(args.asset_id, None)
     root.empty_display_type = "PLAIN_AXES"
     bpy.context.scene.collection.objects.link(root)
     rig.parent = root
-    body.name = f"{args.asset_id}_body"
 
     if args.save_blend:
         Path(args.save_blend).parent.mkdir(parents=True, exist_ok=True)
@@ -1164,20 +1883,22 @@ def run(args, budgets):
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.object.select_all(action="DESELECT")
-    for o in (root, rig, body):
+    for o in (root, rig):
         o.select_set(True)
+    for part in mesh_parts:
+        part.select_set(True)
     bpy.ops.export_scene.gltf(
         filepath=str(out),
         export_format="GLB",
         use_selection=True,
         export_animations=True,
-        export_force_sampling=True,
+        export_force_sampling=False,
         export_yup=True,
         export_skins=True,
         export_all_influences=False,
     )
     step("export", path=str(out), bytes=out.stat().st_size if out.exists() else 0,
-         pedestalRemoved=pedestal_removed)
+         pedestalRemoved=pedestal_removed, meshParts=len(mesh_parts))
     log["axisDeviationDeg"] = achieved
     log["elevationDeg"] = elevation
     log["bindMethod"] = method

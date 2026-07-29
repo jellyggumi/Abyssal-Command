@@ -99,9 +99,10 @@ RELAX_STRENGTH = 0.6
 # a vertex with a single influence. A single-influence vertex is rigid, so this
 # is the difference between "articulated" and "stiff patch".
 MIN_SECOND_INFLUENCE = 0.08
-# Continuity bridges preserve seam continuity only when source bind weights already
-# shared a joint. Keep this strictly below the gate's INFLUENCE_EPSILON (0.10) so
-# the bridge never becomes an accepted active influence.
+# Continuity bridges preserve seam continuity during post-relaxation.
+# Prefer seams already shared by the source bind; keep this below the
+# gate's INFLUENCE_EPSILON (0.10), so the bridge never becomes an accepted
+# active influence.
 SEAM_BRIDGE_WEIGHT = 0.09
 
 
@@ -369,10 +370,10 @@ def repair_primitive(
             blended.append({slot: weight * scale for slot, weight in kept.items()})
         current = blended
 
-    # --- Residual: bridge only seam continuity that already existed in source -----
+    # --- Residual: continuity guard for disjoint seam edges ----------------------
     # A relaxed edge where the vertex influence sets are disjoint can tear under
-    # rotation. If both endpoints were already tied to one or more shared joints in
-    # the source bind, seed a tiny continuity bridge on both endpoints.
+    # rotation. Use a bounded continuity bridge for each pair: shared-source seams
+    # first, then fallback to the strongest current owner if needed.
     bridged_seam_edges = 0
     bridged_slots: list[set[int]] = [set() for _ in range(j_count)]
     for vertex in range(j_count):
@@ -386,13 +387,20 @@ def repair_primitive(
             if not partner or (set(own) & set(partner)):
                 continue
             shared = set(original[vertex]) & set(original[other])
-            if not shared:
-                continue
-            bridge_slot = max(
-                shared,
-                key=lambda slot: original[vertex].get(slot, 0.0)
-                + original[other].get(slot, 0.0),
-            )
+            if shared:
+                bridge_slot = max(
+                    shared,
+                    key=lambda slot: original[vertex].get(slot, 0.0)
+                    + original[other].get(slot, 0.0),
+                )
+            else:
+                current_union = set(own) | set(partner)
+                if not current_union:
+                    continue
+                bridge_slot = max(
+                    current_union,
+                    key=lambda slot: (own.get(slot, 0.0) + partner.get(slot, 0.0), -slot),
+                )
             # One vertex can border several seam edges; keep one bounded bridge
             # per slot instead of accumulating 0.09 for every neighbor.
             current[vertex][bridge_slot] = max(
@@ -435,8 +443,8 @@ def repair_primitive(
             scale = 1.0 / sum(own.values())
             current[vertex] = {slot: weight * scale for slot, weight in own.items()}
 
-    # --- Residual: disjoint seams are a GEOMETRY defect, not a weight one ------
-    # Count residual seams after the continuity guard.
+    # --- Residual: disjoint seams after continuity guard -----------------------
+    # Count seam edges still disjoint after the continuity guard.
     disjoint_seam_edges = 0
     for vertex in range(j_count):
         own = current[vertex]
@@ -476,6 +484,7 @@ def repair_primitive(
         "zeroedByBone": dict(sorted(zeroed_by_bone.items(), key=lambda kv: -kv[1])),
         "influenceHistogram": dict(sorted(influence_histogram.items())),
         "disjointSeamEdges": disjoint_seam_edges,
+        "disjointSeamEdgesAfterContinuityGuard": disjoint_seam_edges,
         "bridgedSeamEdges": bridged_seam_edges,
         "seamBridgeCap": SEAM_BRIDGE_WEIGHT,
         "relaxIterations": relax_iterations,

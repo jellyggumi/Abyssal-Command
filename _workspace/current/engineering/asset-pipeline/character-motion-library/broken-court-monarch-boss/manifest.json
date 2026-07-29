@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T10:28:29.145584+00:00",
+  "generatedAt": "2026-07-29T16:27:40.133865+00:00",
   "assetId": "broken-court-monarch-boss",
   "role": "shadow-duelist",
   "category": "bosses",
@@ -11,8 +11,8 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/model.glb",
-  "modelSha256": "33d67fa58e96e25c30555d0b327faaeba888a74666843547518e185cf97b33d0",
-  "modelBytes": 13618060,
+  "modelSha256": "8637759665b3a43d44cc7cb82103fbca55a40fcbcc44c29c6b56e08588895f35",
+  "modelBytes": 13722704,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/rig-report.json",
   "targetBoneNames": [
@@ -226,7 +226,7 @@
       "action": "die",
       "clipName": "broken-court-monarch-boss::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "f990f263cdc4e15744d8265335796dd4bde98a0e35b3da633e63d994b4148bc6",
+      "sourceSha256": "cb9c2308c613d9fdb8556ca1946dfdbd0486a50b0bc26ae2fad4b79d6c97bfc7",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -247,7 +247,14 @@
   "checks": {
     "glb2": true,
     "meshPresent": true,
+    "meshNodeCount5To9": true,
     "singleSkin": true,
+    "allMeshNodesBoundToSingleSkin": true,
+    "semanticMeshNodeNames": true,
+    "primitiveSkinUvMaterialContract": true,
+    "primitiveWeightsNormalized": true,
+    "effectiveInfluences1To2": true,
+    "notFullyRigid": true,
     "expectedBoneSet": true,
     "expectedClipSet": true,
     "finiteKeyframes": true,
@@ -256,6 +263,10 @@
     "loopClosure": true,
     "linearSampling": true,
     "nonconstantActions": true,
+    "semanticPartitionReceipt": true,
+    "adjacentWeightRepairReceipt": true,
+    "meshNodesMatchSemanticReceipt": true,
+    "weightStatsMatchAdjacentReceipt": true,
     "rigStageCompleted": true,
     "rigNaturalRestPose": true,
     "rigClipCountBeforeRetarget": true
@@ -264,7 +275,14 @@
     "checks": {
       "glb2": true,
       "meshPresent": true,
+      "meshNodeCount5To9": true,
       "singleSkin": true,
+      "allMeshNodesBoundToSingleSkin": true,
+      "semanticMeshNodeNames": true,
+      "primitiveSkinUvMaterialContract": true,
+      "primitiveWeightsNormalized": true,
+      "effectiveInfluences1To2": true,
+      "notFullyRigid": true,
       "expectedBoneSet": true,
       "expectedClipSet": true,
       "finiteKeyframes": true,
@@ -289,11 +307,11 @@
     ],
     "jointNames": [
       "DEF-spine",
-      "DEF-pelvis.L",
-      "DEF-pelvis.R",
       "DEF-spine.001",
       "DEF-spine.002",
       "DEF-spine.003",
+      "DEF-spine.004",
+      "DEF-spine.005",
       "DEF-shoulder.L",
       "DEF-upper_arm.L",
       "DEF-forearm.L",
@@ -302,8 +320,8 @@
       "DEF-upper_arm.R",
       "DEF-forearm.R",
       "DEF-hand.R",
-      "DEF-spine.004",
-      "DEF-spine.005",
+      "DEF-pelvis.L",
+      "DEF-pelvis.R",
       "DEF-thigh.L",
       "DEF-shin.L",
       "DEF-foot.L",
@@ -313,8 +331,86 @@
       "DEF-foot.R",
       "DEF-toe.R"
     ],
-    "meshCount": 1,
-    "skinCount": 1
+    "meshCount": 9,
+    "meshNodeCount": 9,
+    "meshNodeNames": [
+      "broken-court-monarch-boss_lower_arm_l",
+      "broken-court-monarch-boss_lower_arm_r",
+      "broken-court-monarch-boss_lower_leg_l",
+      "broken-court-monarch-boss_lower_leg_r",
+      "broken-court-monarch-boss_torso_head",
+      "broken-court-monarch-boss_upper_arm_l",
+      "broken-court-monarch-boss_upper_arm_r",
+      "broken-court-monarch-boss_upper_leg_l",
+      "broken-court-monarch-boss_upper_leg_r"
+    ],
+    "primitiveCount": 9,
+    "skinCount": 1,
+    "weightStats": {
+      "epsilon": 1e-08,
+      "vertices": 30399,
+      "orphanVertices": 0,
+      "singleInfluenceVertices": 3813,
+      "singleInfluenceFraction": 0.12543175762360603,
+      "maxInfluences": 2,
+      "maxWeightSumError": 2.9802322387695312e-08
+    },
+    "rigReportReceipts": {
+      "checks": {
+        "semanticPartitionReceipt": true,
+        "adjacentWeightRepairReceipt": true
+      },
+      "semanticPartition": {
+        "stepCount": 1,
+        "status": "completed",
+        "missingFields": [],
+        "policy": "stable_face_argmax_of_summed_repaired_region_weights",
+        "parts": 9,
+        "partNames": [
+          "broken-court-monarch-boss_torso_head",
+          "broken-court-monarch-boss_upper_arm_l",
+          "broken-court-monarch-boss_lower_arm_l",
+          "broken-court-monarch-boss_upper_arm_r",
+          "broken-court-monarch-boss_lower_arm_r",
+          "broken-court-monarch-boss_upper_leg_l",
+          "broken-court-monarch-boss_lower_leg_l",
+          "broken-court-monarch-boss_upper_leg_r",
+          "broken-court-monarch-boss_lower_leg_r"
+        ],
+        "regionFaceCounts": {
+          "torso_head": 7947,
+          "upper_arm_l": 3195,
+          "lower_arm_l": 470,
+          "upper_arm_r": 3191,
+          "lower_arm_r": 476,
+          "upper_leg_l": 5421,
+          "lower_leg_l": 7814,
+          "upper_leg_r": 5263,
+          "lower_leg_r": 7578
+        },
+        "sourceFaces": 41355,
+        "partitionFaces": 41355,
+        "faceCountDelta": 0,
+        "materialHistogramPreserved": true,
+        "boundaryMaxRestDelta": 0.0,
+        "boundaryMaxWeightDelta": 0.0
+      },
+      "adjacentWeightRepair": {
+        "stepCount": 1,
+        "status": "completed",
+        "missingFields": [],
+        "maxHierarchySpread": 1,
+        "maxInfluences": 2,
+        "orphanCount": 0,
+        "nonDefCount": 0,
+        "maxWeightSumError": 2.9802322387695312e-08,
+        "singleInfluenceFraction": 0.129372
+      }
+    },
+    "receiptCrossChecks": {
+      "meshNodesMatchSemanticReceipt": true,
+      "weightStatsMatchAdjacentReceipt": true
+    }
   },
   "runtimeEligible": true,
   "gateErrors": []

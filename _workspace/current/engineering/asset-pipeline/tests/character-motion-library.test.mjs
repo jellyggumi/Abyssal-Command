@@ -82,7 +82,7 @@ const EXPECTED_REGISTRY_COUNTS = {
   retargetedClips: ASSET_IDS.length * RETARGETED_ACTIONS.length,
   authoredFallbackClips: ASSET_IDS.length,
 };
-const EXPECTED_REGISTRY_BYTES = 132800560;
+const EXPECTED_REGISTRY_BYTES = 133242428;
 
 // Provenance a retargeted clip must carry and an authored fallback must not:
 // the fallback has no source frame range to cite.

@@ -7,7 +7,7 @@
   "relaxStrength": 0.6,
   "influenceEpsilon": 0.1,
   "maxSpread": 2,
-  "registryGenerationId": "e255362a5d0c4d7497652f222fa9c1646f7d9e293e2b9821800068453effb3f7",
+  "registryGenerationId": "813f078326ce75f2a417a3a482c307edb6bd76966b7c87e821238caca717373e",
   "assets": [
     {
       "assetId": "broken-court-monarch-boss",
@@ -157,5 +157,7 @@
     }
   ],
   "failures": [],
-  "passed": true
+  "passed": true,
+  "supersededBy": "_workspace/current/engineering/asset-pipeline/motion-bench/blender-rebuild-verification.json",
+  "note": "Historical weight-repair verification; current source-linked character models were rebuilt and promoted through Blender MCP. See blender-rebuild-verification.json."
 }

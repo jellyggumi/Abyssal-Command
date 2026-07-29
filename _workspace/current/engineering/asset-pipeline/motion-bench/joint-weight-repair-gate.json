@@ -1,733 +1,231 @@
 {
-  "schemaVersion": 2,
-  "generatedBy": "scripts/gate-joint-weight-repair.py + topology-continuity follow-up",
-  "mode": "write",
-  "keepRadius": 1,
-  "relaxIterations": 12,
-  "relaxStrength": 0.6,
-  "influenceEpsilon": 0.1,
-  "maxSpread": 2,
-  "registryGenerationId": "e255362a5d0c4d7497652f222fa9c1646f7d9e293e2b9821800068453effb3f7",
-  "geometryPipeline": {
-    "sourceRigTool": "scripts/rig-character-asset-blender.py",
-    "defaultWeldDistance": 0.0,
-    "splitLooseDefault": true,
-    "blenderMcpAvailable": false,
-    "blenderCliAvailable": false,
-    "note": "Runtime weight continuity was patched from HEAD baselines; Blender topology rebuild remains required for fused surfaces."
+ "schemaVersion": 1,
+ "generatedBy": "scripts/gate-joint-weight-repair.py",
+ "mode": "check",
+ "keepRadius": 1,
+ "relaxIterations": 12,
+ "relaxStrength": 0.6,
+ "influenceEpsilon": 0.1,
+ "maxSpread": 2,
+ "registryGenerationId": "b0178e95651a0b29beffe28d8006d9c5cb2cb6ce7c6a00ebec36e4e7108529be",
+ "assets": [
+  {
+   "assetId": "broken-court-monarch-boss",
+   "model": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
+   "before": {
+    "verticesMeasured": 30399,
+    "overSpread": 0,
+    "overSpreadFraction": 0.0,
+    "maxSpread": 2,
+    "overSpreadByDominantBone": {},
+    "influenceHistogram": {
+     "1": 393,
+     "2": 17633,
+     "3": 11760,
+     "4": 613
+    },
+    "singleInfluenceVertices": 393,
+    "seamEdgesOverOne": 1303,
+    "seamEdgesDisjoint": 0,
+    "edgeTotal": 70894,
+    "maxWeightSumError": 4.470348358154297e-08
+   },
+   "rigidityShare": 0.01293,
+   "verdict": {
+    "spread": "PASS",
+    "seam": "PASS",
+    "seamDisjoint": "PASS",
+    "rigidityBaselineVertices": 393,
+    "rigidityFloorFraction": 0.005,
+    "rigidityCeilingFraction": 0.25,
+    "rigidityCeilingVertices": 7600,
+    "rigidityBudget": 393,
+    "rigidity": "PASS",
+    "normalized": "PASS",
+    "passed": true
+   }
   },
-  "assets": [
-    {
-      "assetId": "broken-court-monarch-boss",
-      "model": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
-      "beforeCurrent": {
-        "sha256": "33d67fa58e96e25c30555d0b327faaeba888a74666843547518e185cf97b33d0",
-        "bytes": 13618060
-      },
-      "attempts": [],
-      "written": false,
-      "verdict": {
-        "passed": false,
-        "reason": "geometry or continuity gate not reached",
-        "disposition": "fused cape/pauldron topology requires Blender mesh split; weight-only candidate was not promoted"
-      },
-      "before": {
-        "verticesMeasured": 28581,
-        "overSpread": 7051,
-        "overSpreadFraction": 0.2467,
-        "maxSpread": 10,
-        "overSpreadByDominantBone": {
-          "DEF-thigh.L": 1480,
-          "DEF-thigh.R": 1424,
-          "DEF-upper_arm.R": 681,
-          "DEF-upper_arm.L": 649,
-          "DEF-hand.R": 506,
-          "DEF-hand.L": 435
-        },
-        "influenceHistogram": {
-          "1": 2066,
-          "2": 152,
-          "3": 506,
-          "4": 25857
-        },
-        "singleInfluenceVertices": 2066,
-        "seamEdgesOverOne": 835,
-        "seamEdgesDisjoint": 40,
-        "edgeTotal": 69359,
-        "maxWeightSumError": 1.406e-07
-      }
+  {
+   "assetId": "broken-court-monarch-v04",
+   "model": "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
+   "before": {
+    "verticesMeasured": 6390,
+    "overSpread": 0,
+    "overSpreadFraction": 0.0,
+    "maxSpread": 2,
+    "overSpreadByDominantBone": {},
+    "influenceHistogram": {
+     "1": 44,
+     "2": 3035,
+     "3": 3120,
+     "4": 191
     },
-    {
-      "assetId": "broken-court-monarch-v04",
-      "model": "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
-      "beforeCurrent": {
-        "sha256": "ce635ea580018ac3b3f369fe220976985fdde373410455e6106ec29ffffa8abc",
-        "bytes": 11416220
-      },
-      "attempts": [
-        {
-          "relaxIterations": 12,
-          "relaxStrength": 0.6,
-          "overSpreadFraction": 0.0,
-          "maxSpread": 2,
-          "seamEdgesOverOne": 257,
-          "seamEdgesDisjoint": 6,
-          "singleInfluenceVertices": 4,
-          "verdict": {
-            "spread": "PASS",
-            "seam": "FAIL",
-            "seamDisjoint": "PASS",
-            "rigidityBudget": 28,
-            "rigidity": "PASS",
-            "normalized": "PASS",
-            "passed": false
-          }
-        },
-        {
-          "relaxIterations": 20,
-          "relaxStrength": 0.6,
-          "overSpreadFraction": 0.0,
-          "maxSpread": 2,
-          "seamEdgesOverOne": 214,
-          "seamEdgesDisjoint": 6,
-          "singleInfluenceVertices": 7,
-          "verdict": {
-            "spread": "PASS",
-            "seam": "PASS",
-            "seamDisjoint": "PASS",
-            "rigidityBudget": 28,
-            "rigidity": "PASS",
-            "normalized": "PASS",
-            "passed": true
-          }
-        },
-        {
-          "relaxIterations": 32,
-          "relaxStrength": 0.65,
-          "overSpreadFraction": 0.0,
-          "maxSpread": 2,
-          "seamEdgesOverOne": 209,
-          "seamEdgesDisjoint": 6,
-          "singleInfluenceVertices": 28,
-          "verdict": {
-            "spread": "PASS",
-            "seam": "PASS",
-            "seamDisjoint": "PASS",
-            "rigidityBudget": 28,
-            "rigidity": "PASS",
-            "normalized": "PASS",
-            "passed": true
-          }
-        },
-        {
-          "relaxIterations": 48,
-          "relaxStrength": 0.7,
-          "overSpreadFraction": 0.0,
-          "maxSpread": 2,
-          "seamEdgesOverOne": 210,
-          "seamEdgesDisjoint": 6,
-          "singleInfluenceVertices": 64,
-          "verdict": {
-            "spread": "PASS",
-            "seam": "PASS",
-            "seamDisjoint": "PASS",
-            "rigidityBudget": 28,
-            "rigidity": "FAIL",
-            "normalized": "PASS",
-            "passed": false
-          }
-        },
-        {
-          "relaxIterations": 72,
-          "relaxStrength": 0.7,
-          "overSpreadFraction": 0.0,
-          "maxSpread": 2,
-          "seamEdgesOverOne": 210,
-          "seamEdgesDisjoint": 6,
-          "singleInfluenceVertices": 93,
-          "verdict": {
-            "spread": "PASS",
-            "seam": "PASS",
-            "seamDisjoint": "PASS",
-            "rigidityBudget": 28,
-            "rigidity": "FAIL",
-            "normalized": "PASS",
-            "passed": false
-          }
-        },
-        {
-          "relaxIterations": 108,
-          "relaxStrength": 0.75,
-          "overSpreadFraction": 0.0,
-          "maxSpread": 2,
-          "seamEdgesOverOne": 210,
-          "seamEdgesDisjoint": 6,
-          "singleInfluenceVertices": 174,
-          "verdict": {
-            "spread": "PASS",
-            "seam": "PASS",
-            "seamDisjoint": "PASS",
-            "rigidityBudget": 28,
-            "rigidity": "FAIL",
-            "normalized": "PASS",
-            "passed": false
-          }
-        }
-      ],
-      "written": true,
-      "relaxIterations": 32,
-      "relaxStrength": 0.65,
-      "repair": {
-        "vertices": 5770,
-        "changedVertices": 5395,
-        "changedFraction": 0.93501,
-        "droppedInfluences": 7888,
-        "meanWeightRedistributed": 0.24574,
-        "maxWeightRedistributed": 0.73721,
-        "zeroedByBone": {
-          "DEF-pelvis.L": 1105,
-          "DEF-pelvis.R": 1054,
-          "DEF-thigh.L": 610,
-          "DEF-toe.L": 593,
-          "DEF-toe.R": 547,
-          "DEF-hand.R": 522,
-          "DEF-hand.L": 519,
-          "DEF-forearm.R": 494,
-          "DEF-forearm.L": 485,
-          "DEF-thigh.R": 477,
-          "DEF-shoulder.L": 325,
-          "DEF-shoulder.R": 264,
-          "DEF-upper_arm.L": 202,
-          "DEF-upper_arm.R": 180,
-          "DEF-shin.R": 149,
-          "DEF-shin.L": 145,
-          "DEF-foot.L": 96,
-          "DEF-foot.R": 94,
-          "DEF-spine.003": 15,
-          "DEF-spine.001": 5,
-          "DEF-spine.002": 4,
-          "DEF-spine.004": 3
-        },
-        "influenceHistogram": {
-          "1": 28,
-          "2": 1718,
-          "3": 3878,
-          "4": 146
-        },
-        "disjointSeamEdges": 6,
-        "bridgedSeamEdges": 62,
-        "seamBridgeCap": 0.09,
-        "relaxIterations": 32,
-        "relaxStrength": 0.65,
-        "seededSecondInfluence": 120,
-        "maxWeightSumError": 2.22e-16,
-        "mesh": "model",
-        "primitive": 0
-      },
-      "after": {
-        "verticesMeasured": 5770,
-        "overSpread": 0,
-        "overSpreadFraction": 0.0,
-        "maxSpread": 2,
-        "overSpreadByDominantBone": {},
-        "influenceHistogram": {
-          "1": 28,
-          "2": 1718,
-          "3": 3878,
-          "4": 146
-        },
-        "singleInfluenceVertices": 28,
-        "seamEdgesOverOne": 209,
-        "seamEdgesDisjoint": 6,
-        "edgeTotal": 14112,
-        "maxWeightSumError": 4.47e-08
-      },
-      "sha256Before": "d3b51240ba5bc4c4b424f2283a169187f904be49a77461ae1772cb95b09eeddc",
-      "sha256After": "1bc87c2aba7c211b07b9812a76dc9502f22d4eed8a274542ad012c64f90da797",
-      "librarySynced": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/model.glb",
-      "verdict": {
-        "spread": "PASS",
-        "seam": "PASS",
-        "seamDisjoint": "PASS",
-        "rigidityBudget": 28,
-        "rigidity": "PASS",
-        "normalized": "PASS",
-        "passed": true
-      },
-      "before": {
-        "verticesMeasured": 5770,
-        "overSpread": 2731,
-        "overSpreadFraction": 0.47331,
-        "maxSpread": 5,
-        "overSpreadByDominantBone": {
-          "DEF-shoulder.R": 455,
-          "DEF-shin.L": 443,
-          "DEF-shoulder.L": 435,
-          "DEF-shin.R": 347,
-          "DEF-thigh.L": 230,
-          "DEF-hand.L": 205
-        },
-        "influenceHistogram": {
-          "1": 7,
-          "2": 245,
-          "3": 72,
-          "4": 5446
-        },
-        "singleInfluenceVertices": 7,
-        "seamEdgesOverOne": 240,
-        "seamEdgesDisjoint": 7,
-        "edgeTotal": 14112,
-        "maxWeightSumError": 1.304e-07
-      }
+    "singleInfluenceVertices": 44,
+    "seamEdgesOverOne": 384,
+    "seamEdgesDisjoint": 0,
+    "edgeTotal": 14621,
+    "maxWeightSumError": 4.470348358154297e-08
+   },
+   "rigidityShare": 0.00689,
+   "verdict": {
+    "spread": "PASS",
+    "seam": "PASS",
+    "seamDisjoint": "PASS",
+    "rigidityBaselineVertices": 44,
+    "rigidityFloorFraction": 0.005,
+    "rigidityCeilingFraction": 0.25,
+    "rigidityCeilingVertices": 1598,
+    "rigidityBudget": 44,
+    "rigidity": "PASS",
+    "normalized": "PASS",
+    "passed": true
+   }
+  },
+  {
+   "assetId": "ember-cohort",
+   "model": "assets/motion/ingame/characters/ember-cohort/model.glb",
+   "before": {
+    "verticesMeasured": 5881,
+    "overSpread": 0,
+    "overSpreadFraction": 0.0,
+    "maxSpread": 2,
+    "overSpreadByDominantBone": {},
+    "influenceHistogram": {
+     "1": 82,
+     "2": 3461,
+     "3": 2110,
+     "4": 228
     },
-    {
-      "assetId": "ember-cohort",
-      "model": "assets/motion/ingame/characters/ember-cohort/model.glb",
-      "beforeCurrent": {
-        "sha256": "c25a66e0740b9273c58fb189346071ee4a6abc1eb8986d2e804a46984333f3d4",
-        "bytes": 12286784
-      },
-      "attempts": [],
-      "written": false,
-      "verdict": {
-        "passed": false,
-        "reason": "geometry or continuity gate not reached",
-        "disposition": "continuity-safe sweep did not pass seamEdgesOverOne; leave bytes untouched until topology-preserving Blender rebuild"
-      },
-      "before": {
-        "verticesMeasured": 5680,
-        "overSpread": 2360,
-        "overSpreadFraction": 0.41549,
-        "maxSpread": 8,
-        "overSpreadByDominantBone": {
-          "DEF-shoulder.R": 393,
-          "DEF-shoulder.L": 326,
-          "DEF-thigh.L": 233,
-          "DEF-thigh.R": 226,
-          "DEF-forearm.L": 186,
-          "DEF-hand.R": 178
-        },
-        "influenceHistogram": {
-          "1": 44,
-          "2": 164,
-          "3": 170,
-          "4": 5302
-        },
-        "singleInfluenceVertices": 44,
-        "seamEdgesOverOne": 250,
-        "seamEdgesDisjoint": 7,
-        "edgeTotal": 14499,
-        "maxWeightSumError": 1.49e-07
-      }
+    "singleInfluenceVertices": 82,
+    "seamEdgesOverOne": 42,
+    "seamEdgesDisjoint": 0,
+    "edgeTotal": 14670,
+    "maxWeightSumError": 4.470348358154297e-08
+   },
+   "rigidityShare": 0.01394,
+   "verdict": {
+    "spread": "PASS",
+    "seam": "PASS",
+    "seamDisjoint": "PASS",
+    "rigidityBaselineVertices": 82,
+    "rigidityFloorFraction": 0.005,
+    "rigidityCeilingFraction": 0.25,
+    "rigidityCeilingVertices": 1471,
+    "rigidityBudget": 82,
+    "rigidity": "PASS",
+    "normalized": "PASS",
+    "passed": true
+   }
+  },
+  {
+   "assetId": "guard",
+   "model": "assets/motion/ingame/characters/guard/model.glb",
+   "before": {
+    "verticesMeasured": 5504,
+    "overSpread": 0,
+    "overSpreadFraction": 0.0,
+    "maxSpread": 2,
+    "overSpreadByDominantBone": {},
+    "influenceHistogram": {
+     "1": 31,
+     "2": 2630,
+     "3": 2614,
+     "4": 229
     },
-    {
-      "assetId": "guard",
-      "model": "assets/motion/ingame/characters/guard/model.glb",
-      "beforeCurrent": {
-        "sha256": "86f854b1c886344b53bd4f1793331292f3f0624bd0e5c140f52f5fdaa142e69c",
-        "bytes": 13426364
-      },
-      "attempts": [
-        {
-          "relaxIterations": 32,
-          "relaxStrength": 0.65,
-          "overSpreadFraction": 0.0,
-          "maxSpread": 2,
-          "seamEdgesOverOne": 67,
-          "seamEdgesDisjoint": 0,
-          "singleInfluenceVertices": 27,
-          "verdict": {
-            "spread": "PASS",
-            "seam": "PASS",
-            "seamDisjoint": "PASS",
-            "rigidityBudget": 48,
-            "rigidity": "PASS",
-            "normalized": "PASS",
-            "passed": true
-          }
-        }
-      ],
-      "written": true,
-      "relaxIterations": 32,
-      "relaxStrength": 0.65,
-      "repair": {
-        "vertices": 5325,
-        "changedVertices": 5043,
-        "changedFraction": 0.94704,
-        "droppedInfluences": 6340,
-        "meanWeightRedistributed": 0.1389,
-        "maxWeightRedistributed": 0.71278,
-        "zeroedByBone": {
-          "DEF-spine.003": 892,
-          "DEF-shoulder.L": 579,
-          "DEF-shoulder.R": 569,
-          "DEF-pelvis.L": 548,
-          "DEF-pelvis.R": 440,
-          "DEF-thigh.R": 378,
-          "DEF-thigh.L": 344,
-          "DEF-hand.L": 295,
-          "DEF-hand.R": 285,
-          "DEF-upper_arm.R": 258,
-          "DEF-upper_arm.L": 252,
-          "DEF-toe.L": 231,
-          "DEF-forearm.R": 230,
-          "DEF-toe.R": 223,
-          "DEF-forearm.L": 223,
-          "DEF-shin.L": 161,
-          "DEF-shin.R": 159,
-          "DEF-spine.005": 79,
-          "DEF-spine.001": 70,
-          "DEF-spine.002": 47,
-          "DEF-foot.R": 37,
-          "DEF-foot.L": 37,
-          "DEF-spine": 2,
-          "DEF-spine.004": 1
-        },
-        "influenceHistogram": {
-          "1": 27,
-          "2": 1139,
-          "3": 3787,
-          "4": 372
-        },
-        "disjointSeamEdges": 0,
-        "bridgedSeamEdges": 33,
-        "seamBridgeCap": 0.09,
-        "relaxIterations": 32,
-        "relaxStrength": 0.65,
-        "seededSecondInfluence": 89,
-        "maxWeightSumError": 2.22e-16,
-        "mesh": "model",
-        "primitive": 0
-      },
-      "after": {
-        "verticesMeasured": 5325,
-        "overSpread": 0,
-        "overSpreadFraction": 0.0,
-        "maxSpread": 2,
-        "overSpreadByDominantBone": {},
-        "influenceHistogram": {
-          "1": 27,
-          "2": 1139,
-          "3": 3787,
-          "4": 372
-        },
-        "singleInfluenceVertices": 27,
-        "seamEdgesOverOne": 67,
-        "seamEdgesDisjoint": 0,
-        "edgeTotal": 14000,
-        "maxWeightSumError": 4.47e-08
-      },
-      "sha256Before": "760c12de41fbea0caa9f2d6e0c5fb83a1ff945f23b9b50676028deac98f97e67",
-      "sha256After": "e735e9a761747c55d2e4d7eed7ae08437a6c7218095549d2f5046904dfcea58f",
-      "librarySynced": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/model.glb",
-      "verdict": {
-        "spread": "PASS",
-        "seam": "PASS",
-        "seamDisjoint": "PASS",
-        "rigidityBudget": 48,
-        "rigidity": "PASS",
-        "normalized": "PASS",
-        "passed": true
-      },
-      "before": {
-        "verticesMeasured": 5325,
-        "overSpread": 905,
-        "overSpreadFraction": 0.16995,
-        "maxSpread": 5,
-        "overSpreadByDominantBone": {
-          "DEF-upper_arm.R": 168,
-          "DEF-upper_arm.L": 153,
-          "DEF-thigh.L": 96,
-          "DEF-thigh.R": 90,
-          "DEF-shin.L": 75,
-          "DEF-shin.R": 70
-        },
-        "influenceHistogram": {
-          "1": 48,
-          "2": 61,
-          "3": 66,
-          "4": 5150
-        },
-        "singleInfluenceVertices": 48,
-        "seamEdgesOverOne": 130,
-        "seamEdgesDisjoint": 0,
-        "edgeTotal": 14000,
-        "maxWeightSumError": 1.378e-07
-      }
+    "singleInfluenceVertices": 31,
+    "seamEdgesOverOne": 56,
+    "seamEdgesDisjoint": 0,
+    "edgeTotal": 14156,
+    "maxWeightSumError": 4.470348358154297e-08
+   },
+   "rigidityShare": 0.00563,
+   "verdict": {
+    "spread": "PASS",
+    "seam": "PASS",
+    "seamDisjoint": "PASS",
+    "rigidityBaselineVertices": 31,
+    "rigidityFloorFraction": 0.005,
+    "rigidityCeilingFraction": 0.25,
+    "rigidityCeilingVertices": 1376,
+    "rigidityBudget": 31,
+    "rigidity": "PASS",
+    "normalized": "PASS",
+    "passed": true
+   }
+  },
+  {
+   "assetId": "human-command-boss",
+   "model": "assets/motion/ingame/characters/human-command-boss/model.glb",
+   "before": {
+    "verticesMeasured": 5342,
+    "overSpread": 0,
+    "overSpreadFraction": 0.0,
+    "maxSpread": 2,
+    "overSpreadByDominantBone": {},
+    "influenceHistogram": {
+     "1": 154,
+     "2": 2482,
+     "3": 2365,
+     "4": 341
     },
-    {
-      "assetId": "human-command-boss",
-      "model": "assets/motion/ingame/characters/human-command-boss/model.glb",
-      "beforeCurrent": {
-        "sha256": "2ffed4b04bfd63f06ee50add5418a0d491ad4f5739c185847e19c1773a4a652e",
-        "bytes": 9720304
-      },
-      "attempts": [
-        {
-          "relaxIterations": 32,
-          "relaxStrength": 0.65,
-          "overSpreadFraction": 0.0,
-          "maxSpread": 2,
-          "seamEdgesOverOne": 461,
-          "seamEdgesDisjoint": 84,
-          "singleInfluenceVertices": 3,
-          "verdict": {
-            "spread": "PASS",
-            "seam": "PASS",
-            "seamDisjoint": "PASS",
-            "rigidityBudget": 28,
-            "rigidity": "PASS",
-            "normalized": "PASS",
-            "passed": true
-          }
-        }
-      ],
-      "written": true,
-      "relaxIterations": 32,
-      "relaxStrength": 0.65,
-      "repair": {
-        "vertices": 4929,
-        "changedVertices": 4731,
-        "changedFraction": 0.95983,
-        "droppedInfluences": 5937,
-        "meanWeightRedistributed": 0.13524,
-        "maxWeightRedistributed": 0.69238,
-        "zeroedByBone": {
-          "DEF-spine.003": 1022,
-          "DEF-pelvis.R": 619,
-          "DEF-pelvis.L": 597,
-          "DEF-thigh.R": 389,
-          "DEF-thigh.L": 389,
-          "DEF-toe.L": 386,
-          "DEF-toe.R": 380,
-          "DEF-forearm.L": 317,
-          "DEF-forearm.R": 308,
-          "DEF-shin.L": 236,
-          "DEF-shin.R": 224,
-          "DEF-shoulder.L": 209,
-          "DEF-shoulder.R": 188,
-          "DEF-upper_arm.L": 152,
-          "DEF-upper_arm.R": 134,
-          "DEF-foot.R": 115,
-          "DEF-foot.L": 108,
-          "DEF-hand.L": 44,
-          "DEF-hand.R": 38,
-          "DEF-spine.005": 33,
-          "DEF-spine.001": 22,
-          "DEF-spine": 18,
-          "DEF-spine.002": 7,
-          "DEF-spine.004": 2
-        },
-        "influenceHistogram": {
-          "1": 3,
-          "2": 974,
-          "3": 3729,
-          "4": 223
-        },
-        "disjointSeamEdges": 84,
-        "bridgedSeamEdges": 184,
-        "seamBridgeCap": 0.09,
-        "relaxIterations": 32,
-        "relaxStrength": 0.65,
-        "seededSecondInfluence": 181,
-        "maxWeightSumError": 2.22e-16,
-        "mesh": "model",
-        "primitive": 0
-      },
-      "after": {
-        "verticesMeasured": 4929,
-        "overSpread": 0,
-        "overSpreadFraction": 0.0,
-        "maxSpread": 2,
-        "overSpreadByDominantBone": {},
-        "influenceHistogram": {
-          "1": 3,
-          "2": 974,
-          "3": 3729,
-          "4": 223
-        },
-        "singleInfluenceVertices": 3,
-        "seamEdgesOverOne": 461,
-        "seamEdgesDisjoint": 84,
-        "edgeTotal": 12582,
-        "maxWeightSumError": 4.47e-08
-      },
-      "sha256Before": "b51810aa620762a01c3c7f4ffa2226bbbe30e6b8d6ba3c86aacb69aa0048a3ad",
-      "sha256After": "feff635819fdf5b6a4800da0904c1ac229e02cdec42b962841e4c2e97aa7239f",
-      "librarySynced": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/model.glb",
-      "verdict": {
-        "spread": "PASS",
-        "seam": "PASS",
-        "seamDisjoint": "PASS",
-        "rigidityBudget": 28,
-        "rigidity": "PASS",
-        "normalized": "PASS",
-        "passed": true
-      },
-      "before": {
-        "verticesMeasured": 4929,
-        "overSpread": 1464,
-        "overSpreadFraction": 0.29702,
-        "maxSpread": 9,
-        "overSpreadByDominantBone": {
-          "DEF-thigh.R": 232,
-          "DEF-thigh.L": 227,
-          "DEF-shin.L": 225,
-          "DEF-shin.R": 205,
-          "DEF-upper_arm.R": 142,
-          "DEF-upper_arm.L": 142
-        },
-        "influenceHistogram": {
-          "1": 28,
-          "2": 157,
-          "3": 190,
-          "4": 4554
-        },
-        "singleInfluenceVertices": 28,
-        "seamEdgesOverOne": 588,
-        "seamEdgesDisjoint": 106,
-        "edgeTotal": 12582,
-        "maxWeightSumError": 1.341e-07
-      }
+    "singleInfluenceVertices": 154,
+    "seamEdgesOverOne": 285,
+    "seamEdgesDisjoint": 0,
+    "edgeTotal": 12942,
+    "maxWeightSumError": 4.470348358154297e-08
+   },
+   "rigidityShare": 0.02883,
+   "verdict": {
+    "spread": "PASS",
+    "seam": "PASS",
+    "seamDisjoint": "PASS",
+    "rigidityBaselineVertices": 154,
+    "rigidityFloorFraction": 0.005,
+    "rigidityCeilingFraction": 0.25,
+    "rigidityCeilingVertices": 1336,
+    "rigidityBudget": 154,
+    "rigidity": "PASS",
+    "normalized": "PASS",
+    "passed": true
+   }
+  },
+  {
+   "assetId": "lantern-reaver",
+   "model": "assets/motion/ingame/characters/lantern-reaver/model.glb",
+   "before": {
+    "verticesMeasured": 5617,
+    "overSpread": 0,
+    "overSpreadFraction": 0.0,
+    "maxSpread": 2,
+    "overSpreadByDominantBone": {},
+    "influenceHistogram": {
+     "1": 45,
+     "2": 3557,
+     "3": 1857,
+     "4": 158
     },
-    {
-      "assetId": "lantern-reaver",
-      "model": "assets/motion/ingame/characters/lantern-reaver/model.glb",
-      "beforeCurrent": {
-        "sha256": "e2937e6e6dd18f831e5e4c08756858927523cd0086d249d5c6b988af615ee092",
-        "bytes": 12492748
-      },
-      "attempts": [
-        {
-          "relaxIterations": 20,
-          "relaxStrength": 0.6,
-          "overSpreadFraction": 0.0,
-          "maxSpread": 2,
-          "seamEdgesOverOne": 200,
-          "seamEdgesDisjoint": 8,
-          "singleInfluenceVertices": 12,
-          "verdict": {
-            "spread": "PASS",
-            "seam": "PASS",
-            "seamDisjoint": "PASS",
-            "rigidityBudget": 27,
-            "rigidity": "PASS",
-            "normalized": "PASS",
-            "passed": true
-          }
-        }
-      ],
-      "written": true,
-      "relaxIterations": 20,
-      "relaxStrength": 0.6,
-      "repair": {
-        "vertices": 5437,
-        "changedVertices": 5292,
-        "changedFraction": 0.97333,
-        "droppedInfluences": 7743,
-        "meanWeightRedistributed": 0.25669,
-        "maxWeightRedistributed": 0.71836,
-        "zeroedByBone": {
-          "DEF-pelvis.L": 977,
-          "DEF-hand.R": 908,
-          "DEF-pelvis.R": 740,
-          "DEF-shoulder.L": 707,
-          "DEF-upper_arm.L": 651,
-          "DEF-thigh.R": 561,
-          "DEF-forearm.R": 558,
-          "DEF-thigh.L": 505,
-          "DEF-shin.L": 355,
-          "DEF-shin.R": 330,
-          "DEF-forearm.L": 312,
-          "DEF-hand.L": 240,
-          "DEF-shoulder.R": 236,
-          "DEF-toe.L": 210,
-          "DEF-toe.R": 197,
-          "DEF-upper_arm.R": 122,
-          "DEF-foot.L": 47,
-          "DEF-foot.R": 32,
-          "DEF-spine.002": 16,
-          "DEF-spine.004": 12,
-          "DEF-spine.003": 12,
-          "DEF-spine.005": 9,
-          "DEF-spine.001": 6
-        },
-        "influenceHistogram": {
-          "1": 12,
-          "2": 1802,
-          "3": 3453,
-          "4": 170
-        },
-        "disjointSeamEdges": 8,
-        "bridgedSeamEdges": 72,
-        "seamBridgeCap": 0.09,
-        "relaxIterations": 20,
-        "relaxStrength": 0.6,
-        "seededSecondInfluence": 12,
-        "maxWeightSumError": 2.22e-16,
-        "mesh": "model",
-        "primitive": 0
-      },
-      "after": {
-        "verticesMeasured": 5437,
-        "overSpread": 0,
-        "overSpreadFraction": 0.0,
-        "maxSpread": 2,
-        "overSpreadByDominantBone": {},
-        "influenceHistogram": {
-          "1": 12,
-          "2": 1802,
-          "3": 3453,
-          "4": 170
-        },
-        "singleInfluenceVertices": 12,
-        "seamEdgesOverOne": 200,
-        "seamEdgesDisjoint": 8,
-        "edgeTotal": 13642,
-        "maxWeightSumError": 4.47e-08
-      },
-      "sha256Before": "ea07c888748bd528e0e79e2a95e757c765b318c43b534ecc0cb01e6563c69809",
-      "sha256After": "ace464db6a21c5838f2561cf7e12eb8b5af1084052040020ca9e068798f67168",
-      "librarySynced": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/model.glb",
-      "verdict": {
-        "spread": "PASS",
-        "seam": "PASS",
-        "seamDisjoint": "PASS",
-        "rigidityBudget": 27,
-        "rigidity": "PASS",
-        "normalized": "PASS",
-        "passed": true
-      },
-      "before": {
-        "verticesMeasured": 5437,
-        "overSpread": 2487,
-        "overSpreadFraction": 0.45742,
-        "maxSpread": 8,
-        "overSpreadByDominantBone": {
-          "DEF-hand.L": 598,
-          "DEF-shoulder.R": 507,
-          "DEF-upper_arm.R": 486,
-          "DEF-shoulder.L": 259,
-          "DEF-thigh.L": 192,
-          "DEF-spine.003": 109
-        },
-        "influenceHistogram": {
-          "1": 3,
-          "2": 31,
-          "3": 44,
-          "4": 5359
-        },
-        "singleInfluenceVertices": 3,
-        "seamEdgesOverOne": 285,
-        "seamEdgesDisjoint": 29,
-        "edgeTotal": 13642,
-        "maxWeightSumError": 1.285e-07
-      }
-    }
-  ],
-  "failures": [
-    "broken-court-monarch-boss",
-    "ember-cohort"
-  ],
-  "passed": false
+    "singleInfluenceVertices": 45,
+    "seamEdgesOverOne": 85,
+    "seamEdgesDisjoint": 0,
+    "edgeTotal": 13795,
+    "maxWeightSumError": 4.470348358154297e-08
+   },
+   "rigidityShare": 0.00801,
+   "verdict": {
+    "spread": "PASS",
+    "seam": "PASS",
+    "seamDisjoint": "PASS",
+    "rigidityBaselineVertices": 45,
+    "rigidityFloorFraction": 0.005,
+    "rigidityCeilingFraction": 0.25,
+    "rigidityCeilingVertices": 1405,
+    "rigidityBudget": 45,
+    "rigidity": "PASS",
+    "normalized": "PASS",
+    "passed": true
+   }
+  }
+ ],
+ "failures": [],
+ "passed": true
 }

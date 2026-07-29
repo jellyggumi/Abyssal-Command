@@ -118,14 +118,16 @@ The script preserves the source GLB, modifies only the body material, explicitly
 
 ## 5. Character-only rigging and animation
 
-Use `scripts/rig-character-asset-blender.py`, not the retired proxy/previs path. The current rig is a deform-only skeleton with Rigify-compatible `DEF-` names. It fits landmarks to the body, welds fragmented source vertices, binds with gated fallback methods, freezes a T-pose rest pose, and authors the action library.
+Use `scripts/rig-character-asset-blender.py`, not the retired proxy/previs path. The current rig is a deform-only skeleton with Rigify-compatible `DEF-` names. It fits a horizontal-arm source with `--arm-fit tpose`, preserves the natural bind pose, applies adjacent DEF weights, keeps weld distance at zero by default, partitions faces into semantic torso/arm/leg skinned regions, and authors the action library.
 
 ```bash
 blender -b -P scripts/rig-character-asset-blender.py -- \
   --glb <clean-tpose-source.glb> \
   --asset-id dusk-warden \
   --category commander \
-  --rest-pose tpose \
+  --arm-fit tpose \
+  --rest-pose natural \
+  --weld-distance 0.0 \
   --out _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/rig-candidates/dusk-warden.glb \
   --report _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/rig-candidates/dusk-warden.json \
   --budgets-json _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/action-pipeline.json
@@ -148,6 +150,8 @@ python3 scripts/build-motion-prompt-batch.py \
   --out _workspace/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/motion-prompts/dusk-warden.json
 
 ```
+The canonical Dusk Warden references are validated with their adjacent `.provenance.json` files. For an isolated fixture or another character, repeat `--concept-input PATH`; every supplied input must exist, remain outside the runtime GLB/model lanes, and declare `runtimeEligible: false`.
+
 
 The prompt packet preserves the concept vocabulary `hunt → extract → materialize → capture → assault`; Blender NLA remains the authoring step and runtime clip verification is required.
 

@@ -1,0 +1,2185 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "Blender MCP bridge",
+  "blenderVersion": "5.1.2",
+  "assets": [
+    {
+      "assetId": "broken-court-monarch-boss",
+      "model": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
+      "meshObjects": 9,
+      "unexpectedImportedMeshObjects": [
+        "Icosphere"
+      ],
+      "armatureCount": 1,
+      "weightStats": {
+        "full": {
+          "vertices": 30399,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 393,
+          "singleInfluenceFraction": 0.012928056843975131,
+          "maxInfluences": 4,
+          "maxWeightSumError": 4.470348358154297e-08
+        },
+        "monitorEpsilon0.1": {
+          "vertices": 30399,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 3615,
+          "singleInfluenceFraction": 0.11891838547320635,
+          "maxInfluences": 3,
+          "maxWeightSumError": 4.470348358154297e-08
+        }
+      },
+      "actionCount": 11,
+      "sampleCount": 33,
+      "finiteSampleCount": 33,
+      "nonFiniteSamples": [],
+      "actions": [
+        {
+          "name": "broken-court-monarch-boss::attack::v01",
+          "frameRange": [
+            0.0,
+            74.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8834035396575928,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 37,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.7279961109161377,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 74,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8834035396575928,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-boss::avoid::v01",
+          "frameRange": [
+            0.0,
+            39.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8738024234771729,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 20,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.4336777925491333,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 39,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8738024234771729,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-boss::bighit::v01",
+          "frameRange": [
+            0.0,
+            30.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.6981053352355957,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 15,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.5201714038848877,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 30,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.6978065967559814,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-boss::critical::v01",
+          "frameRange": [
+            0.0,
+            91.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.4810032844543457,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 46,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.283815622329712,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 91,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8097190856933594,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-boss::defence::v01",
+          "frameRange": [
+            0.0,
+            82.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.715742588043213,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 41,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.7142395973205566,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 82,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.715742826461792,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-boss::die::v01",
+          "frameRange": [
+            1.0,
+            72.0
+          ],
+          "samples": [
+            {
+              "frame": 1,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8251930475234985,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 36,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.7242999076843262,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 72,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8750324249267578,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-boss::hit::v01",
+          "frameRange": [
+            0.0,
+            18.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.7428967952728271,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 9,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.660353422164917,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 18,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.7428964376449585,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-boss::idle::v01",
+          "frameRange": [
+            0.0,
+            46.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.866627812385559,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 23,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8980581760406494,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 46,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.866627812385559,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-boss::move::v01",
+          "frameRange": [
+            0.0,
+            33.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8722202777862549,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 16,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8681328296661377,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 33,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8722202777862549,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-boss::run::v01",
+          "frameRange": [
+            0.0,
+            30.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8716354370117188,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 15,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8697527647018433,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 30,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8716354370117188,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-boss::show::v01",
+          "frameRange": [
+            0.0,
+            12.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.875400424003601,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 6,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.8382229804992676,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 12,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 30399,
+              "maxAbsCoordinate": 1.7900837659835815,
+              "poseValuesFinite": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "assetId": "broken-court-monarch-v04",
+      "model": "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
+      "meshObjects": 9,
+      "unexpectedImportedMeshObjects": [
+        "Icosphere"
+      ],
+      "armatureCount": 1,
+      "weightStats": {
+        "full": {
+          "vertices": 6390,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 44,
+          "singleInfluenceFraction": 0.006885758998435055,
+          "maxInfluences": 4,
+          "maxWeightSumError": 4.470348358154297e-08
+        },
+        "monitorEpsilon0.1": {
+          "vertices": 6390,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 692,
+          "singleInfluenceFraction": 0.1082942097026604,
+          "maxInfluences": 3,
+          "maxWeightSumError": 4.470348358154297e-08
+        }
+      },
+      "actionCount": 11,
+      "sampleCount": 33,
+      "finiteSampleCount": 33,
+      "nonFiniteSamples": [],
+      "actions": [
+        {
+          "name": "broken-court-monarch-v04::attack::v01",
+          "frameRange": [
+            0.0,
+            65.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.8591418266296387,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 32,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.293540596961975,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 65,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.8591424226760864,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-v04::avoid::v01",
+          "frameRange": [
+            0.0,
+            52.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.5959229469299316,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 26,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.5048463344573975,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 52,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.8389649391174316,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-v04::bighit::v01",
+          "frameRange": [
+            0.0,
+            32.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.557421088218689,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 16,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.7277376651763916,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 32,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.5574206113815308,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-v04::critical::v01",
+          "frameRange": [
+            0.0,
+            263.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.8481990098953247,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 132,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.8385717868804932,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 263,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.8481990098953247,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-v04::defence::v01",
+          "frameRange": [
+            0.0,
+            12.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.450937032699585,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 6,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.6295422315597534,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 12,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.7711493968963623,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-v04::die::v01",
+          "frameRange": [
+            1.0,
+            72.0
+          ],
+          "samples": [
+            {
+              "frame": 1,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.887108564376831,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 36,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.683834433555603,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 72,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.8247652053833008,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-v04::hit::v01",
+          "frameRange": [
+            0.0,
+            18.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.8460637331008911,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 9,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.8401329517364502,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 18,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.8460637331008911,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-v04::idle::v01",
+          "frameRange": [
+            0.0,
+            274.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.843764066696167,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 137,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.7883198261260986,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 274,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.843764066696167,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-v04::move::v01",
+          "frameRange": [
+            0.0,
+            33.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.827492356300354,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 16,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.839776873588562,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 33,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.827492356300354,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-v04::run::v01",
+          "frameRange": [
+            0.0,
+            30.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.856404185295105,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 15,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.8568733930587769,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 30,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.856404185295105,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "broken-court-monarch-v04::show::v01",
+          "frameRange": [
+            0.0,
+            263.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.849488377571106,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 132,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.840204119682312,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 263,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 6390,
+              "maxAbsCoordinate": 1.849488377571106,
+              "poseValuesFinite": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "assetId": "ember-cohort",
+      "model": "assets/motion/ingame/characters/ember-cohort/model.glb",
+      "meshObjects": 9,
+      "unexpectedImportedMeshObjects": [
+        "Icosphere"
+      ],
+      "armatureCount": 1,
+      "weightStats": {
+        "full": {
+          "vertices": 5881,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 82,
+          "singleInfluenceFraction": 0.013943206937595647,
+          "maxInfluences": 4,
+          "maxWeightSumError": 4.470348358154297e-08
+        },
+        "monitorEpsilon0.1": {
+          "vertices": 5881,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 941,
+          "singleInfluenceFraction": 0.1600068015643598,
+          "maxInfluences": 3,
+          "maxWeightSumError": 4.470348358154297e-08
+        }
+      },
+      "actionCount": 11,
+      "sampleCount": 33,
+      "finiteSampleCount": 33,
+      "nonFiniteSamples": [],
+      "actions": [
+        {
+          "name": "ember-cohort::attack::v01",
+          "frameRange": [
+            0.0,
+            44.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.4376544952392578,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 22,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.479685664176941,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 44,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.4376544952392578,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "ember-cohort::avoid::v01",
+          "frameRange": [
+            0.0,
+            39.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7648910284042358,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 20,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.5560812950134277,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 39,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7648910284042358,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "ember-cohort::bighit::v01",
+          "frameRange": [
+            0.0,
+            32.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.5730819702148438,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 16,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.5922868251800537,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 32,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.5730819702148438,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "ember-cohort::critical::v01",
+          "frameRange": [
+            0.0,
+            20.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.443537712097168,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 10,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.5030252933502197,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 20,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.4435381889343262,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "ember-cohort::defence::v01",
+          "frameRange": [
+            0.0,
+            14.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.6736699342727661,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 7,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.6901874542236328,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 14,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.606995940208435,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "ember-cohort::die::v01",
+          "frameRange": [
+            1.0,
+            72.0
+          ],
+          "samples": [
+            {
+              "frame": 1,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7769125699996948,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 36,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.6933248043060303,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 72,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7671922445297241,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "ember-cohort::hit::v01",
+          "frameRange": [
+            0.0,
+            18.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.6110478639602661,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 9,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.5802435874938965,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 18,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.6110478639602661,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "ember-cohort::idle::v01",
+          "frameRange": [
+            0.0,
+            96.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.6920576095581055,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 48,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.6620711088180542,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 96,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.6920576095581055,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "ember-cohort::move::v01",
+          "frameRange": [
+            0.0,
+            33.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7696723937988281,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 16,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7795788049697876,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 33,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7696723937988281,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "ember-cohort::run::v01",
+          "frameRange": [
+            0.0,
+            30.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7744998931884766,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 15,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7738797664642334,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 30,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7744998931884766,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "ember-cohort::show::v01",
+          "frameRange": [
+            0.0,
+            12.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7986249923706055,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 6,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.7715331315994263,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 12,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5881,
+              "maxAbsCoordinate": 1.6489580869674683,
+              "poseValuesFinite": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "assetId": "guard",
+      "model": "assets/motion/ingame/characters/guard/model.glb",
+      "meshObjects": 9,
+      "unexpectedImportedMeshObjects": [
+        "Icosphere"
+      ],
+      "armatureCount": 1,
+      "weightStats": {
+        "full": {
+          "vertices": 5504,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 31,
+          "singleInfluenceFraction": 0.005632267441860465,
+          "maxInfluences": 4,
+          "maxWeightSumError": 4.470348358154297e-08
+        },
+        "monitorEpsilon0.1": {
+          "vertices": 5504,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 806,
+          "singleInfluenceFraction": 0.1464389534883721,
+          "maxInfluences": 4,
+          "maxWeightSumError": 4.470348358154297e-08
+        }
+      },
+      "actionCount": 11,
+      "sampleCount": 33,
+      "finiteSampleCount": 33,
+      "nonFiniteSamples": [],
+      "actions": [
+        {
+          "name": "guard::attack::v01",
+          "frameRange": [
+            0.0,
+            44.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1370996236801147,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 22,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.0249781608581543,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 44,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1370996236801147,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "guard::avoid::v01",
+          "frameRange": [
+            0.0,
+            39.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.194985270500183,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 20,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.2161413431167603,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 39,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.194985270500183,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "guard::bighit::v01",
+          "frameRange": [
+            0.0,
+            30.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1098623275756836,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 15,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1054351329803467,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 30,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1097561120986938,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "guard::critical::v01",
+          "frameRange": [
+            0.0,
+            41.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1688743829727173,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 20,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.2346245050430298,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 41,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.168840765953064,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "guard::defence::v01",
+          "frameRange": [
+            0.0,
+            12.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1176488399505615,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 6,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.3528656959533691,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 12,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.5180261135101318,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "guard::die::v01",
+          "frameRange": [
+            1.0,
+            72.0
+          ],
+          "samples": [
+            {
+              "frame": 1,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.2057888507843018,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 36,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.3620593547821045,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 72,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1972724199295044,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "guard::hit::v01",
+          "frameRange": [
+            0.0,
+            18.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1657978296279907,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 9,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1271624565124512,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 18,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1657978296279907,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "guard::idle::v01",
+          "frameRange": [
+            0.0,
+            274.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.5130645036697388,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 137,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1458159685134888,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 274,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.5130645036697388,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "guard::move::v01",
+          "frameRange": [
+            0.0,
+            33.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1942251920700073,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 16,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.197403907775879,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 33,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1942251920700073,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "guard::run::v01",
+          "frameRange": [
+            0.0,
+            30.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.2023509740829468,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 15,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.2020505666732788,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 30,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.2023509740829468,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "guard::show::v01",
+          "frameRange": [
+            0.0,
+            12.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.210894227027893,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 6,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.2015026807785034,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 12,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5504,
+              "maxAbsCoordinate": 1.1196016073226929,
+              "poseValuesFinite": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "assetId": "human-command-boss",
+      "model": "assets/motion/ingame/characters/human-command-boss/model.glb",
+      "meshObjects": 9,
+      "unexpectedImportedMeshObjects": [
+        "Icosphere"
+      ],
+      "armatureCount": 1,
+      "weightStats": {
+        "full": {
+          "vertices": 5342,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 154,
+          "singleInfluenceFraction": 0.028828154249344814,
+          "maxInfluences": 4,
+          "maxWeightSumError": 4.470348358154297e-08
+        },
+        "monitorEpsilon0.1": {
+          "vertices": 5342,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 1285,
+          "singleInfluenceFraction": 0.24054661175589667,
+          "maxInfluences": 3,
+          "maxWeightSumError": 4.470348358154297e-08
+        }
+      },
+      "actionCount": 11,
+      "sampleCount": 33,
+      "finiteSampleCount": 33,
+      "nonFiniteSamples": [],
+      "actions": [
+        {
+          "name": "human-command-boss::attack::v01",
+          "frameRange": [
+            0.0,
+            77.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.7872774600982666,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 38,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.683282732963562,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 77,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.7872774600982666,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "human-command-boss::avoid::v01",
+          "frameRange": [
+            0.0,
+            52.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.6548608541488647,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 26,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.484676718711853,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 52,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8187199831008911,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "human-command-boss::bighit::v01",
+          "frameRange": [
+            0.0,
+            30.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.6780961751937866,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 15,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.5348988771438599,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 30,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.6779183149337769,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "human-command-boss::critical::v01",
+          "frameRange": [
+            0.0,
+            82.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.6466556787490845,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 41,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.6441092491149902,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 82,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.646655797958374,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "human-command-boss::defence::v01",
+          "frameRange": [
+            0.0,
+            39.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8238856792449951,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 20,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.7431387901306152,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 39,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8238856792449951,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "human-command-boss::die::v01",
+          "frameRange": [
+            1.0,
+            72.0
+          ],
+          "samples": [
+            {
+              "frame": 1,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8975454568862915,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 36,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.7500927448272705,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 72,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8252098560333252,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "human-command-boss::hit::v01",
+          "frameRange": [
+            0.0,
+            18.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.7053438425064087,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 9,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.781159520149231,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 18,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.7053442001342773,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "human-command-boss::idle::v01",
+          "frameRange": [
+            0.0,
+            96.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.770998477935791,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 48,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.77669095993042,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 96,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.770998477935791,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "human-command-boss::move::v01",
+          "frameRange": [
+            0.0,
+            30.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8786113262176514,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 15,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8849345445632935,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 30,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8786113262176514,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "human-command-boss::run::v01",
+          "frameRange": [
+            0.0,
+            30.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8597925901412964,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 15,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8602814674377441,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 30,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8597925901412964,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "human-command-boss::show::v01",
+          "frameRange": [
+            0.0,
+            263.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8498661518096924,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 132,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.84151291847229,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 263,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5342,
+              "maxAbsCoordinate": 1.8498661518096924,
+              "poseValuesFinite": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "assetId": "lantern-reaver",
+      "model": "assets/motion/ingame/characters/lantern-reaver/model.glb",
+      "meshObjects": 9,
+      "unexpectedImportedMeshObjects": [
+        "Icosphere"
+      ],
+      "armatureCount": 1,
+      "weightStats": {
+        "full": {
+          "vertices": 5617,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 45,
+          "singleInfluenceFraction": 0.008011393982552965,
+          "maxInfluences": 4,
+          "maxWeightSumError": 4.470348358154297e-08
+        },
+        "monitorEpsilon0.1": {
+          "vertices": 5617,
+          "orphanVertices": 0,
+          "singleInfluenceVertices": 1234,
+          "singleInfluenceFraction": 0.21969022609934127,
+          "maxInfluences": 3,
+          "maxWeightSumError": 4.470348358154297e-08
+        }
+      },
+      "actionCount": 11,
+      "sampleCount": 33,
+      "finiteSampleCount": 33,
+      "nonFiniteSamples": [],
+      "actions": [
+        {
+          "name": "lantern-reaver::attack::v01",
+          "frameRange": [
+            0.0,
+            65.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.92547607421875,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 32,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.7520742416381836,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 65,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.92547607421875,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "lantern-reaver::avoid::v01",
+          "frameRange": [
+            0.0,
+            39.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8567631244659424,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 20,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.9547290802001953,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 39,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8567631244659424,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "lantern-reaver::bighit::v01",
+          "frameRange": [
+            0.0,
+            32.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.6951693296432495,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 16,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.7366610765457153,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 32,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.695170283317566,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "lantern-reaver::critical::v01",
+          "frameRange": [
+            0.0,
+            120.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8721688985824585,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 60,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8498975038528442,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 120,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8721686601638794,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "lantern-reaver::defence::v01",
+          "frameRange": [
+            0.0,
+            12.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.830275058746338,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 6,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.7179937362670898,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 12,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8677163124084473,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "lantern-reaver::die::v01",
+          "frameRange": [
+            1.0,
+            72.0
+          ],
+          "samples": [
+            {
+              "frame": 1,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.876813292503357,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 36,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.7062920331954956,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 72,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8449724912643433,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "lantern-reaver::hit::v01",
+          "frameRange": [
+            0.0,
+            18.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8071080446243286,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 9,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.7863035202026367,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 18,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8071080446243286,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "lantern-reaver::idle::v01",
+          "frameRange": [
+            0.0,
+            274.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8786218166351318,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 137,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.7537721395492554,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 274,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8786218166351318,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "lantern-reaver::move::v01",
+          "frameRange": [
+            0.0,
+            33.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8567339181900024,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 16,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.870745301246643,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 33,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8567339181900024,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "lantern-reaver::run::v01",
+          "frameRange": [
+            0.0,
+            30.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8590612411499023,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 15,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8585625886917114,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 30,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8590612411499023,
+              "poseValuesFinite": true
+            }
+          ]
+        },
+        {
+          "name": "lantern-reaver::show::v01",
+          "frameRange": [
+            0.0,
+            263.0
+          ],
+          "samples": [
+            {
+              "frame": 0,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8730589151382446,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 132,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.8669707775115967,
+              "poseValuesFinite": true
+            },
+            {
+              "frame": 263,
+              "finiteVertices": true,
+              "vertexCoordinateCount": 5617,
+              "maxAbsCoordinate": 1.873058795928955,
+              "poseValuesFinite": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -7,71 +7,95 @@
  "relaxStrength": 0.6,
  "influenceEpsilon": 0.1,
  "maxSpread": 2,
- "rigidityCeilingFraction": 0.25,
- "registryGenerationId": "813f078326ce75f2a417a3a482c307edb6bd76966b7c87e821238caca717373e",
+ "registryGenerationId": "853021e13b1ff202bebd5c23a070691cf9a41e9ec3a7e009cdc0ae89372be320",
  "assets": [
   {
    "assetId": "broken-court-monarch-boss",
    "model": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
    "before": {
     "verticesMeasured": 28708,
-    "overSpread": 0,
-    "overSpreadFraction": 0.0,
-    "maxSpread": 0,
-    "overSpreadByDominantBone": {},
-    "influenceHistogram": {
-     "1": 28708
+    "overSpread": 17179,
+    "overSpreadFraction": 0.5984,
+    "maxSpread": 10,
+    "overSpreadByDominantBone": {
+     "DEF-upper_arm.L": 1843,
+     "DEF-upper_arm.R": 1812,
+     "DEF-shin.R": 1742,
+     "DEF-shin.L": 1680,
+     "DEF-forearm.R": 1526,
+     "DEF-forearm.L": 1446
     },
-    "singleInfluenceVertices": 28708,
-    "seamEdgesOverOne": 0,
-    "seamEdgesDisjoint": 0,
+    "influenceHistogram": {
+     "2": 237,
+     "3": 585,
+     "4": 27886
+    },
+    "singleInfluenceVertices": 0,
+    "seamEdgesOverOne": 846,
+    "seamEdgesDisjoint": 232,
     "edgeTotal": 69465,
-    "maxWeightSumError": 0.0
+    "maxWeightSumError": 1.36e-07
    },
-   "rigidityShare": 1.0,
-   "rigidityVerdict": "RIGID"
+   "rigidityShare": 0.0
   },
   {
    "assetId": "broken-court-monarch-v04",
    "model": "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
    "before": {
     "verticesMeasured": 5788,
-    "overSpread": 0,
-    "overSpreadFraction": 0.0,
-    "maxSpread": 0,
-    "overSpreadByDominantBone": {},
-    "influenceHistogram": {
-     "1": 5788
+    "overSpread": 3180,
+    "overSpreadFraction": 0.54941,
+    "maxSpread": 6,
+    "overSpreadByDominantBone": {
+     "DEF-shin.L": 515,
+     "DEF-shin.R": 442,
+     "DEF-shoulder.L": 291,
+     "DEF-shoulder.R": 284,
+     "DEF-thigh.L": 243,
+     "DEF-hand.L": 238
     },
-    "singleInfluenceVertices": 5788,
-    "seamEdgesOverOne": 0,
-    "seamEdgesDisjoint": 0,
+    "influenceHistogram": {
+     "2": 36,
+     "3": 141,
+     "4": 5611
+    },
+    "singleInfluenceVertices": 0,
+    "seamEdgesOverOne": 358,
+    "seamEdgesDisjoint": 38,
     "edgeTotal": 14130,
-    "maxWeightSumError": 0.0
+    "maxWeightSumError": 1.267e-07
    },
-   "rigidityShare": 1.0,
-   "rigidityVerdict": "RIGID"
+   "rigidityShare": 0.0
   },
   {
    "assetId": "ember-cohort",
    "model": "assets/motion/ingame/characters/ember-cohort/model.glb",
    "before": {
     "verticesMeasured": 5679,
-    "overSpread": 0,
-    "overSpreadFraction": 0.0,
-    "maxSpread": 0,
-    "overSpreadByDominantBone": {},
-    "influenceHistogram": {
-     "1": 5679
+    "overSpread": 2859,
+    "overSpreadFraction": 0.50343,
+    "maxSpread": 7,
+    "overSpreadByDominantBone": {
+     "DEF-shoulder.R": 444,
+     "DEF-shoulder.L": 379,
+     "DEF-thigh.L": 284,
+     "DEF-thigh.R": 246,
+     "DEF-spine.003": 180,
+     "DEF-forearm.L": 168
     },
-    "singleInfluenceVertices": 5679,
-    "seamEdgesOverOne": 0,
-    "seamEdgesDisjoint": 0,
+    "influenceHistogram": {
+     "1": 7,
+     "2": 8,
+     "3": 101,
+     "4": 5563
+    },
+    "singleInfluenceVertices": 7,
+    "seamEdgesOverOne": 598,
+    "seamEdgesDisjoint": 209,
     "edgeTotal": 14500,
-    "maxWeightSumError": 0.0
+    "maxWeightSumError": 1.267e-07
    },
-   "rigidityShare": 1.0,
-   "rigidityVerdict": "RIGID"
+   "rigidityShare": 0.00123
   },
   {
    "assetId": "guard",
@@ -80,61 +104,80 @@
     "verticesMeasured": 5325,
     "overSpread": 0,
     "overSpreadFraction": 0.0,
-    "maxSpread": 0,
+    "maxSpread": 2,
     "overSpreadByDominantBone": {},
     "influenceHistogram": {
-     "1": 5325
+     "2": 1089,
+     "3": 3792,
+     "4": 444
     },
-    "singleInfluenceVertices": 5325,
-    "seamEdgesOverOne": 0,
+    "singleInfluenceVertices": 0,
+    "seamEdgesOverOne": 21,
     "seamEdgesDisjoint": 0,
     "edgeTotal": 14000,
-    "maxWeightSumError": 0.0
+    "maxWeightSumError": 4.47e-08
    },
-   "rigidityShare": 1.0,
-   "rigidityVerdict": "RIGID"
+   "rigidityShare": 0.0
   },
   {
    "assetId": "human-command-boss",
    "model": "assets/motion/ingame/characters/human-command-boss/model.glb",
    "before": {
     "verticesMeasured": 4933,
-    "overSpread": 0,
-    "overSpreadFraction": 0.0,
-    "maxSpread": 0,
-    "overSpreadByDominantBone": {},
-    "influenceHistogram": {
-     "1": 4933
+    "overSpread": 1477,
+    "overSpreadFraction": 0.29941,
+    "maxSpread": 9,
+    "overSpreadByDominantBone": {
+     "DEF-thigh.R": 241,
+     "DEF-thigh.L": 223,
+     "DEF-shin.L": 212,
+     "DEF-shin.R": 187,
+     "DEF-upper_arm.R": 151,
+     "DEF-upper_arm.L": 135
     },
-    "singleInfluenceVertices": 4933,
-    "seamEdgesOverOne": 0,
-    "seamEdgesDisjoint": 0,
+    "influenceHistogram": {
+     "1": 26,
+     "2": 133,
+     "3": 200,
+     "4": 4574
+    },
+    "singleInfluenceVertices": 26,
+    "seamEdgesOverOne": 497,
+    "seamEdgesDisjoint": 106,
     "edgeTotal": 12586,
-    "maxWeightSumError": 0.0
+    "maxWeightSumError": 1.341e-07
    },
-   "rigidityShare": 1.0,
-   "rigidityVerdict": "RIGID"
+   "rigidityShare": 0.00527
   },
   {
    "assetId": "lantern-reaver",
    "model": "assets/motion/ingame/characters/lantern-reaver/model.glb",
    "before": {
     "verticesMeasured": 5436,
-    "overSpread": 0,
-    "overSpreadFraction": 0.0,
-    "maxSpread": 0,
-    "overSpreadByDominantBone": {},
-    "influenceHistogram": {
-     "1": 5436
+    "overSpread": 2364,
+    "overSpreadFraction": 0.43488,
+    "maxSpread": 8,
+    "overSpreadByDominantBone": {
+     "DEF-shoulder.R": 629,
+     "DEF-hand.L": 596,
+     "DEF-shoulder.L": 259,
+     "DEF-thigh.L": 221,
+     "DEF-spine.003": 107,
+     "DEF-pelvis.R": 103
     },
-    "singleInfluenceVertices": 5436,
-    "seamEdgesOverOne": 0,
-    "seamEdgesDisjoint": 0,
+    "influenceHistogram": {
+     "1": 13,
+     "2": 135,
+     "3": 117,
+     "4": 5171
+    },
+    "singleInfluenceVertices": 13,
+    "seamEdgesOverOne": 262,
+    "seamEdgesDisjoint": 34,
     "edgeTotal": 13640,
-    "maxWeightSumError": 0.0
+    "maxWeightSumError": 1.318e-07
    },
-   "rigidityShare": 1.0,
-   "rigidityVerdict": "RIGID"
+   "rigidityShare": 0.00239
   },
   {
    "assetId": "possessed",
@@ -157,8 +200,7 @@
     "edgeTotal": 13993,
     "maxWeightSumError": 4.47e-08
    },
-   "rigidityShare": 0.01244,
-   "rigidityVerdict": "ok"
+   "rigidityShare": 0.01244
   },
   {
    "assetId": "scout",
@@ -181,8 +223,7 @@
     "edgeTotal": 13414,
     "maxWeightSumError": 4.47e-08
    },
-   "rigidityShare": 0.00129,
-   "rigidityVerdict": "ok"
+   "rigidityShare": 0.00129
   },
   {
    "assetId": "shade",
@@ -205,8 +246,7 @@
     "edgeTotal": 13289,
     "maxWeightSumError": 4.47e-08
    },
-   "rigidityShare": 0.00349,
-   "rigidityVerdict": "ok"
+   "rigidityShare": 0.00349
   },
   {
    "assetId": "shadow-soldier-v04",
@@ -229,8 +269,7 @@
     "edgeTotal": 56918,
     "maxWeightSumError": 4.47e-08
    },
-   "rigidityShare": 0.00265,
-   "rigidityVerdict": "ok"
+   "rigidityShare": 0.00265
   },
   {
    "assetId": "shadow-commander-boss",
@@ -253,8 +292,7 @@
     "edgeTotal": 61827,
     "maxWeightSumError": 4.47e-08
    },
-   "rigidityShare": 0.00536,
-   "rigidityVerdict": "ok"
+   "rigidityShare": 0.00536
   }
  ],
  "failures": [],

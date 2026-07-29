@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-index.py",
-  "generationId": "e255362a5d0c4d7497652f222fa9c1646f7d9e293e2b9821800068453effb3f7",
+  "generationId": "b0178e95651a0b29beffe28d8006d9c5cb2cb6ce7c6a00ebec36e4e7108529be",
   "motionAuthority": "derived-retargeted",
   "motionLineage": {
     "authority": "derived-retargeted",
@@ -15,7 +15,7 @@
     "clips": 121,
     "retargetedClips": 110,
     "authoredFallbackClips": 11,
-    "bytes": 132800560
+    "bytes": 133242428
   },
   "assets": [
     {
@@ -24,7 +24,7 @@
       "category": "bosses",
       "replaces": "assets/mesh/character/broken-court-monarch-boss-character/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
-      "modelSha256": "33d67fa58e96e25c30555d0b327faaeba888a74666843547518e185cf97b33d0",
+      "modelSha256": "8637759665b3a43d44cc7cb82103fbca55a40fcbcc44c29c6b56e08588895f35",
       "manifest": "assets/motion/ingame/characters/broken-court-monarch-boss/manifest.json",
       "clipNames": {
         "idle": "broken-court-monarch-boss::idle::v01",
@@ -52,7 +52,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 13618060,
+      "bytes": 13722704,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",
@@ -70,7 +70,7 @@
       "category": "bosses",
       "replaces": "assets/mesh/character/broken-court-monarch-v04-character/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
-      "modelSha256": "1bc87c2aba7c211b07b9812a76dc9502f22d4eed8a274542ad012c64f90da797",
+      "modelSha256": "9d0a627aa976a37666aef635dd130bf2ed39bf0587576431470a0597c0df6db6",
       "manifest": "assets/motion/ingame/characters/broken-court-monarch-v04/manifest.json",
       "clipNames": {
         "idle": "broken-court-monarch-v04::idle::v01",
@@ -98,7 +98,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 11416220,
+      "bytes": 11457100,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",
@@ -116,7 +116,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/character/ember-cohort-character/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/ember-cohort/model.glb",
-      "modelSha256": "c25a66e0740b9273c58fb189346071ee4a6abc1eb8986d2e804a46984333f3d4",
+      "modelSha256": "ba8c5a24969c633793350de6993a00901d82255900b1f8b9bd3b98f0d62dede7",
       "manifest": "assets/motion/ingame/characters/ember-cohort/manifest.json",
       "clipNames": {
         "idle": "ember-cohort::idle::v01",
@@ -144,7 +144,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 12286784,
+      "bytes": 12305508,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",
@@ -166,7 +166,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/character/guard-character/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/guard/model.glb",
-      "modelSha256": "e735e9a761747c55d2e4d7eed7ae08437a6c7218095549d2f5046904dfcea58f",
+      "modelSha256": "91d1bfe3026af70aa93a02e71c4f33a9fee5c6ff13b38537e008ea889813bc9e",
       "manifest": "assets/motion/ingame/characters/guard/manifest.json",
       "clipNames": {
         "idle": "guard::idle::v01",
@@ -194,7 +194,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 13426364,
+      "bytes": 13444940,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",
@@ -212,7 +212,7 @@
       "category": "bosses",
       "replaces": "assets/mesh/character/human-command-boss-character/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/human-command-boss/model.glb",
-      "modelSha256": "feff635819fdf5b6a4800da0904c1ac229e02cdec42b962841e4c2e97aa7239f",
+      "modelSha256": "80a8d5f2d1dba1262bfb50e48a1c20818a590426768d0cbb59fde0895c3046de",
       "manifest": "assets/motion/ingame/characters/human-command-boss/manifest.json",
       "clipNames": {
         "idle": "human-command-boss::idle::v01",
@@ -240,7 +240,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 9720304,
+      "bytes": 9750392,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",
@@ -261,7 +261,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/lantern-reaver/model.glb",
-      "modelSha256": "ace464db6a21c5838f2561cf7e12eb8b5af1084052040020ca9e068798f67168",
+      "modelSha256": "19a2fa27052002d264e6f662a15d343eac7c541e0b01b6e6b87cef192a37337f",
       "manifest": "assets/motion/ingame/characters/lantern-reaver/manifest.json",
       "clipNames": {
         "idle": "lantern-reaver::idle::v01",
@@ -289,7 +289,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 12492748,
+      "bytes": 12510868,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",
@@ -311,7 +311,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/enemy/possessed/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/possessed/model.glb",
-      "modelSha256": "88cdc0fd94e941d2ce0d282561552be3ef8d6507764e495fb4de08a303066c7d",
+      "modelSha256": "01d07e90f6fdfd15e11d309f2764901459057632327d1ed161f2df703e8c750e",
       "manifest": "assets/motion/ingame/characters/possessed/manifest.json",
       "clipNames": {
         "idle": "possessed::idle::v01",
@@ -339,7 +339,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 11806792,
+      "bytes": 11825936,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",
@@ -360,7 +360,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/enemy/scout/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/scout/model.glb",
-      "modelSha256": "9a13fa73c439184b8316c921313e7d09d1109352feb7cc392e7d08faf3b6a7f0",
+      "modelSha256": "0f035c4b9330527957f1d7e6316ce7ef2e8d66f034d79b581d2dbe32d6c2a7a7",
       "manifest": "assets/motion/ingame/characters/scout/manifest.json",
       "clipNames": {
         "idle": "scout::idle::v01",
@@ -388,7 +388,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 12489432,
+      "bytes": 12510880,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",
@@ -409,7 +409,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/enemy/shade/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/shade/model.glb",
-      "modelSha256": "c5305659b05094f51dabf03c06b52e5008c4b31967a2e63c816b5f89954f6c8c",
+      "modelSha256": "752f18954f494808ac55e1b2e152d700db0fc411a8f59e58fb86f11cbf68e70d",
       "manifest": "assets/motion/ingame/characters/shade/manifest.json",
       "clipNames": {
         "idle": "shade::idle::v01",
@@ -437,7 +437,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 9721264,
+      "bytes": 9744232,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",
@@ -458,7 +458,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/enemy/shadow-soldier-v04/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/shadow-soldier-v04/model.glb",
-      "modelSha256": "2709019aed2cb1ac0d9be4daeaeb455b5799dad481f7d29f63092400d7bb3fe0",
+      "modelSha256": "d8828a8d7bbefe416ecd5d87f56f1bfea03acd6358743c9012084f0ce4450864",
       "manifest": "assets/motion/ingame/characters/shadow-soldier-v04/manifest.json",
       "clipNames": {
         "idle": "shadow-soldier-v04::idle::v01",
@@ -486,7 +486,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 12211352,
+      "bytes": 12278972,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",
@@ -507,7 +507,7 @@
       "category": "bosses",
       "replaces": "assets/mesh/enemy/shadow-commander-boss/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/shadow-commander-boss/model.glb",
-      "modelSha256": "f08f360aadc2a00836648fd6f3a160480173565f1ccb9d55bdba17e66db1bf20",
+      "modelSha256": "2820c0f1a02e8020cd96be4fadb9d920eb39544dc8b15fae0f550b7431c3560f",
       "manifest": "assets/motion/ingame/characters/shadow-commander-boss/manifest.json",
       "clipNames": {
         "idle": "shadow-commander-boss::idle::v01",
@@ -535,7 +535,7 @@
         "die": "authored-fallback",
         "show": "retargeted"
       },
-      "bytes": 13611240,
+      "bytes": 13690896,
       "motionAuthority": "derived-retargeted",
       "loopingActions": [
         "idle",

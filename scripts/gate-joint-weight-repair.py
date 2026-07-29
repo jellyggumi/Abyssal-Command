@@ -17,8 +17,8 @@ Four gates per asset, all measured from the GLB payload without Blender:
            already had seams (guard: 130), so zero is not the honest bar.
   disjoint edges must not exceed the asset's OWN pre-repair count; these are
   the direct zero-overlap tear candidates.
-  rigidity influenceHistogram[1] must not rise. A vertex driven by one bone is
-           rigid; trading a seam for a rigid patch is not a fix.
+  rigidity influenceHistogram[1] must stay within the baseline/negligible floor
+             and the absolute 25% ceiling; an all-rigid candidate always fails.
 
 Run:
   python3 scripts/gate-joint-weight-repair.py --check           # baseline only
@@ -32,6 +32,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import math
 import shutil
 import struct
 import sys
@@ -54,19 +55,14 @@ LIBRARY_ROOT = ROOT / "_workspace/current/engineering/asset-pipeline/character-m
 # agree on what "articulated" means.
 INFLUENCE_EPSILON = 0.10
 MAX_SPREAD = 2
-# Rigid (single-influence) vertices allowed as a share of the mesh, on top of
-# whatever the asset already shipped with.
-#
-# Standard, stated independently of any asset's numbers: a vertex driven by one
-# bone cannot bend, so rigid vertices are a skinning defect -- but leaf bones
-# (toe, hand) legitimately own a few tip vertices with no bending partner, so the
-# honest bar is "a negligible share of the surface", not zero. 0.5% is the same
-# order as the disjoint-seam residual already accepted as a geometry limitation
-# (guard: 29 of 14000 edges, 0.2%), which keeps the two tolerances consistent.
-#
-# A pure "not worse than baseline" bar is unusable here: an asset shipping with
-# inf1=3 gets an effectively absolute-zero budget that no relaxation can clear,
-# which measures the baseline's luck rather than the repair's quality.
+# Rigid (single-influence) vertices are a skinning defect: a vertex driven by
+# one bone cannot bend. Leaf tips can legitimately contain a small rigid share,
+# but a repair must never be allowed to turn an entire mesh into a rigid shell.
+# This is an absolute safety ceiling, independent of the incoming baseline.
+RIGIDITY_CEILING_FRACTION = 0.25
+# A small floor permits a few legitimate leaf/tip vertices even when a source
+# baseline reports zero rigid vertices; the absolute ceiling still blocks
+# pathological all-rigid repairs.
 RIGIDITY_FLOOR_FRACTION = 0.005
 # Relaxation configurations tried in order, cheapest first. A single global knee
 # regressed 6 of 11 assets: relaxation diffuses weight per topological step, so
@@ -210,28 +206,33 @@ def skin_state(
         "seamEdgesOverOne": seam_over_one,
         "seamEdgesDisjoint": seam_disjoint,
         "edgeTotal": edge_total,
-        "maxWeightSumError": float(f"{max_sum_error:.3e}"),
+        "maxWeightSumError": max_sum_error,
     }
 
 
 def verdict(before: dict[str, Any], after: dict[str, Any]) -> dict[str, Any]:
-    spread_ok = after["overSpreadFraction"] == 0.0 and after["maxSpread"] <= MAX_SPREAD
+    spread_ok = after["overSpread"] == 0 and after["maxSpread"] <= MAX_SPREAD
     seam_ok = after["seamEdgesOverOne"] <= before["seamEdgesOverOne"]
     seam_disjoint_ok = after["seamEdgesDisjoint"] <= before["seamEdgesDisjoint"]
-    # A strict "not worse than baseline" rigidity bar is unusable where the
-    # baseline is a handful of vertices: lantern-reaver ships with inf1=3, so
-    # it=20 (inf1=12) would be rejected even though it cuts seam edges 285 -> 202.
-    # 12 rigid vertices in 5437 is 0.2% of the mesh. What matters is that rigid
-    # vertices stay a negligible share, so the floor is the larger of the asset's
-    # own baseline and RIGIDITY_FLOOR_FRACTION of its measured vertices.
+    # Keep a hard cap for pathological all-rigid repairs while also allowing a
+    # negligible leaf/tip share when the incoming baseline is zero.
     vertices = max(1, before["verticesMeasured"])
-    rigidity_budget = max(before["singleInfluenceVertices"], int(vertices * RIGIDITY_FLOOR_FRACTION))
+    rigidity_floor_vertices = int(vertices * RIGIDITY_FLOOR_FRACTION)
+    rigidity_ceiling_vertices = math.ceil(vertices * RIGIDITY_CEILING_FRACTION)
+    rigidity_budget = min(
+        max(before["singleInfluenceVertices"], rigidity_floor_vertices),
+        rigidity_ceiling_vertices,
+    )
     rigidity_ok = after["singleInfluenceVertices"] <= rigidity_budget
     normalized_ok = after["maxWeightSumError"] < 1e-6
     return {
         "spread": "PASS" if spread_ok else "FAIL",
         "seam": "PASS" if seam_ok else "FAIL",
         "seamDisjoint": "PASS" if seam_disjoint_ok else "FAIL",
+        "rigidityBaselineVertices": before["singleInfluenceVertices"],
+        "rigidityFloorFraction": RIGIDITY_FLOOR_FRACTION,
+        "rigidityCeilingFraction": RIGIDITY_CEILING_FRACTION,
+        "rigidityCeilingVertices": rigidity_ceiling_vertices,
         "rigidityBudget": rigidity_budget,
         "rigidity": "PASS" if rigidity_ok else "FAIL",
         "normalized": "PASS" if normalized_ok else "FAIL",
@@ -376,26 +377,23 @@ def main(argv: list[str] | None = None) -> int:
                     f"it={iterations} k={strength} [PASS]"
                 )
         else:
-            # `spread 0.0000 / maxSpr 0 / seam>1 0 / disjoint 0` all read as a false green when
-            # every vertex has exactly ONE influence. With a single influence there is no pair
-            # of bones to span, so spread has nothing to measure; and adjacent vertices never
-            # share a bone, so "disjoint" is the normal state rather than a defect signal. Four
-            # of five columns therefore report clean on a fully rigid asset -- which is worse
-            # than the smear defect, because a single-influence vertex cannot bend at all.
-            #
-            # The share is printed rather than scored so this line needs no threshold constant:
-            # 100.0% next to 0.1% is self-evident, and which ceiling is correct is a separate
-            # decision. `sumErr` doubles as a provenance fingerprint -- a lone weight of exactly
-            # 1.0 sums with zero float error, while renormalized multi-influence weights carry
-            # ~4.5e-08 -- so the two pipelines are distinguishable from this output alone.
+            # A check is a gate, not a read-only pretty-printer. Comparing the
+            # current payload with itself preserves the write-mode seam rules
+            # while making the absolute spread, normalization, and rigidity
+            # limits produce a real verdict.
+            current_verdict = verdict(before, before)
             vertices = max(1, before["verticesMeasured"])
             rigid_share = before["singleInfluenceVertices"] / vertices
             row["rigidityShare"] = round(rigid_share, 5)
+            row["verdict"] = current_verdict
+            if not current_verdict["passed"]:
+                failures.append(asset_id)
             print(
                 f"{asset_id:26s} spread {before['overSpreadFraction']:.4f} maxSpr {before['maxSpread']} "
                 f"seam>1 {before['seamEdgesOverOne']:5d} disjoint {before['seamEdgesDisjoint']:4d} "
                 f"inf1 {before['singleInfluenceVertices']:6d} ({rigid_share:6.1%}) "
-                f"sumErr {before['maxWeightSumError']}"
+                f"sumErr {before['maxWeightSumError']} "
+                f"[{'PASS' if current_verdict['passed'] else 'FAIL'}]"
             )
         rows.append(row)
 

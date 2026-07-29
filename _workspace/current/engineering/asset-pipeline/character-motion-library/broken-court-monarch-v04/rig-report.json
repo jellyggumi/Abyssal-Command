@@ -11,29 +11,31 @@
     },
     {
       "step": "weld",
+      "weldDistance": 0.0,
       "vertsBefore": 5788,
-      "vertsAfter": 4218
+      "vertsAfter": 5788,
+      "merged": false
     },
     {
       "step": "landmarks",
       "height": 1.89,
-      "shoulderZFrac": 0.76,
-      "shoulderHalfWidth": 0.3524,
+      "shoulderZFrac": 0.74,
+      "shoulderHalfWidth": 0.3484,
       "hipHalfWidth": 0.1345,
       "handL": [
-        0.1942,
-        -0.1152,
-        1.4613
+        0.8302,
+        -0.2478,
+        1.2672
       ],
       "handR": [
-        -0.2022,
-        -0.1165,
-        1.4711
+        -0.8321,
+        -0.237,
+        1.2629
       ],
       "synthesizedArms": [],
       "center": [
-        -0.0027,
-        -0.1114
+        0.0014,
+        -0.1133
       ]
     },
     {
@@ -92,17 +94,17 @@
         {
           "bone": "DEF-upper_arm.L",
           "policy": "lateral",
-          "rollDeg": -133.1517
+          "rollDeg": 0.8367
         },
         {
           "bone": "DEF-forearm.L",
           "policy": "lateral",
-          "rollDeg": -133.1517
+          "rollDeg": 0.8367
         },
         {
           "bone": "DEF-hand.L",
           "policy": "lateral",
-          "rollDeg": -133.1513
+          "rollDeg": 0.8367
         },
         {
           "bone": "DEF-shoulder.R",
@@ -112,17 +114,17 @@
         {
           "bone": "DEF-upper_arm.R",
           "policy": "lateral",
-          "rollDeg": 122.4464
+          "rollDeg": -1.3219
         },
         {
           "bone": "DEF-forearm.R",
           "policy": "lateral",
-          "rollDeg": 122.4464
+          "rollDeg": -1.3219
         },
         {
           "bone": "DEF-hand.R",
           "policy": "lateral",
-          "rollDeg": 122.4465
+          "rollDeg": -1.3219
         },
         {
           "bone": "DEF-thigh.L",
@@ -168,87 +170,124 @@
     },
     {
       "step": "armature_fit",
+      "mode": "tpose",
       "bones": 24,
-      "shoulderZ": 1.4364,
+      "shoulderZ": 1.2742,
       "arms": {
         "L": {
-          "restAngleDeg": -78.85,
-          "length": 0.0254
+          "restAngleDeg": 0.67,
+          "length": 0.5984
         },
         "R": {
-          "restAngleDeg": -77.61,
-          "length": 0.0355
+          "restAngleDeg": 1.07,
+          "length": 0.6008
         }
       },
       "preBindRollCount": 24
     },
     {
       "step": "orphan_fill",
-      "filled": 0
+      "filled": 704
     },
     {
       "step": "bind",
-      "method": "bone_heat",
+      "method": "envelope",
       "boundGroups": 24,
-      "weightedVerts": 4218,
-      "totalVerts": 4218,
-      "armWeightFrac": 0.2257,
+      "weightedVerts": 5788,
+      "totalVerts": 5788,
+      "armWeightFrac": 0.2126,
       "attempts": [
         [
           "bone_heat",
-          4218,
-          0.2257
+          0,
+          0.0
+        ],
+        [
+          "envelope",
+          5084,
+          0.2188
         ]
       ],
       "topWeights": [
         [
-          926.3,
+          1232.5,
           "DEF-thigh.R"
         ],
         [
-          782.1,
+          1167.1,
           "DEF-thigh.L"
         ],
         [
-          196.8,
-          "DEF-shoulder.R"
+          1096.9,
+          "DEF-shin.R"
         ],
         [
-          196.2,
-          "DEF-pelvis.L"
+          1082.8,
+          "DEF-shin.L"
         ],
         [
-          185.5,
-          "DEF-shoulder.L"
+          909.9,
+          "DEF-spine.004"
         ]
       ]
     },
     {
-      "step": "weight_refine",
+      "step": "adjacent_weight_repair",
+      "status": "completed",
+      "policy": "original_dominant_plus_one_direct_parent_or_child",
+      "influenceHistogramBefore": {
+        "1": 1003,
+        "2": 1210,
+        "3": 951,
+        "4": 419,
+        "5": 566,
+        "6": 290,
+        "7": 750,
+        "8": 208,
+        "9": 100,
+        "10": 120,
+        "11": 141,
+        "12": 20,
+        "13": 10
+      },
+      "influenceHistogramAfter": {
+        "1": 1026,
+        "2": 4762
+      },
+      "repairedVertices": 5084,
+      "droppedVertices": 3610,
+      "droppedInfluences": 12934,
+      "droppedWeight": 6082.87941867,
+      "synthesizedCount": 27,
+      "retainedAdjacentCount": 4735,
+      "fallbackReasons": {
+        "already_single": 1003,
+        "dropped_mass_below_synthesis_threshold": 7,
+        "no_meaningful_adjacent_secondary": 16
+      },
       "enabledArmatureModifiers": 1,
-      "correctedVertices": 3421,
-      "oppositeLeak": 0,
-      "ambiguous": 627,
-      "orphanCount": 0,
       "invalidCount": 0,
+      "orphanCount": 0,
       "nonDefCount": 0,
-      "maxInfluences": 4,
-      "maxWeightSum": 1.0000000093132257,
-      "minWeightSum": 0.9999999906867743,
-      "deformVerts": 4218,
-      "deformVertsTotal": 4218
+      "dominantViolationCount": 0,
+      "maxInfluences": 2,
+      "maxWeightSumError": 2.9802322387695312e-08,
+      "maxHierarchySpread": 1,
+      "singleInfluenceVertices": 1026,
+      "singleInfluenceFraction": 0.177263,
+      "vertices": 5788
     },
     {
       "step": "rest_pose",
       "mode": "natural",
       "rotatedDeg": {},
       "axisDeviationDeg": {
-        "L": 82.98,
-        "R": 80.88
+        "L": 13.01,
+        "R": 11.93
       },
       "elevationDeg": {
-        "L": -78.85,
-        "R": -77.61
+        "L": 0.67,
+        "R": 1.07
       },
       "tposeToleranceDeg": 12.0,
       "ok": true
@@ -271,21 +310,93 @@
       ]
     },
     {
+      "step": "semantic_partition",
+      "status": "completed",
+      "policy": "stable_face_argmax_of_summed_repaired_region_weights",
+      "regionOrder": [
+        "torso_head",
+        "upper_arm_l",
+        "lower_arm_l",
+        "upper_arm_r",
+        "lower_arm_r",
+        "upper_leg_l",
+        "lower_leg_l",
+        "upper_leg_r",
+        "lower_leg_r"
+      ],
+      "regionFaceCounts": {
+        "torso_head": 1634,
+        "upper_arm_l": 546,
+        "lower_arm_l": 238,
+        "upper_arm_r": 541,
+        "lower_arm_r": 262,
+        "upper_leg_l": 1015,
+        "lower_leg_l": 1596,
+        "upper_leg_r": 959,
+        "lower_leg_r": 1648
+      },
+      "regionVertexCounts": {
+        "torso_head": 1225,
+        "upper_arm_l": 435,
+        "lower_arm_l": 191,
+        "upper_arm_r": 416,
+        "lower_arm_r": 201,
+        "upper_leg_l": 757,
+        "lower_leg_l": 1184,
+        "upper_leg_r": 725,
+        "lower_leg_r": 1222
+      },
+      "parts": 9,
+      "partNames": [
+        "broken-court-monarch-v04_torso_head",
+        "broken-court-monarch-v04_upper_arm_l",
+        "broken-court-monarch-v04_lower_arm_l",
+        "broken-court-monarch-v04_upper_arm_r",
+        "broken-court-monarch-v04_lower_arm_r",
+        "broken-court-monarch-v04_upper_leg_l",
+        "broken-court-monarch-v04_lower_leg_l",
+        "broken-court-monarch-v04_upper_leg_r",
+        "broken-court-monarch-v04_lower_leg_r"
+      ],
+      "sourceFaces": 8439,
+      "partitionFaces": 8439,
+      "faceCountDelta": 0,
+      "materialFaceHistogramBefore": {
+        "0:model": 8439
+      },
+      "materialFaceHistogramAfter": {
+        "0:model": 8439
+      },
+      "materialHistogramPreserved": true,
+      "boundarySourceVertexCount": 553,
+      "duplicateOccurrences": 568,
+      "expectedDuplicateOccurrences": 568,
+      "duplicateOccurrenceDelta": 0,
+      "maxRestPositionDelta": 0.0,
+      "maxWeightDelta": 0.0,
+      "boundaryMaxRestDelta": 0.0,
+      "boundaryMaxWeightDelta": 0.0,
+      "maxUvDelta": 0.0,
+      "sourceVertices": 5788,
+      "partitionVertexOccurrences": 6356
+    },
+    {
       "step": "export",
-      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/model.glb",
-      "bytes": 11165468,
-      "pedestalRemoved": false
+      "path": "/tmp/abyssal-final-rig-final/broken-court-monarch-v04/rig.glb",
+      "bytes": 11023892,
+      "pedestalRemoved": false,
+      "meshParts": 9
     }
   ],
   "axisDeviationDeg": {
-    "L": 82.98,
-    "R": 80.88
+    "L": 13.01,
+    "R": 11.93
   },
   "elevationDeg": {
-    "L": -78.85,
-    "R": -77.61
+    "L": 0.67,
+    "R": 1.07
   },
-  "bindMethod": "bone_heat",
+  "bindMethod": "envelope",
   "pedestalRemoved": false,
   "restPose": "natural",
   "restPoseOk": true,
