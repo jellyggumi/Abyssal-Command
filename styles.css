@@ -171,12 +171,10 @@ html[data-defense-started="true"] .dock-panel {
   z-index: -1;
   content: "";
   pointer-events: none;
-  background:
-    linear-gradient(180deg, rgb(5 8 18 / .48), #050812 76%),
-    var(--stage-art) center top / cover no-repeat;
+  background: linear-gradient(180deg, rgb(5 8 18 / .48), #050812 76%);
   filter: saturate(.8);
   opacity: .32;
-  transition: background-image 260ms ease, opacity 260ms ease;
+  transition: opacity 260ms ease;
 }
 .dock-panel-header { display: flex; align-items: center; gap: .5rem; padding: max(.6rem, env(safe-area-inset-top)) .6rem .5rem; border-bottom: 1px solid rgb(115 121 144 / .18); }
 .dock-brand { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border: 1px solid #6aaee0; border-radius: 50%; color: #a6e2ff; font-size: .68rem; font-weight: 800; flex-shrink: 0; }
@@ -624,20 +622,11 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
   --rc-role-vanguard: #6fa8dc;
   --rc-role-striker: #e08a4a;
   --rc-role-support: #6fd3c7;
-  /* Canon world-material palette — measured directly from the shipped GLB
-     Principled BSDF base colors (Blender headless inspection, sRGB-converted),
-     NOT hand-picked: void-obsidian/cold-steel/cyan-rift/zenith-gold are the
-     Dusk Warden commander's own armor/energy materials
-     (assets/images/battle/glb/dusk-warden.glb); cinder-ember/obsidian-rock/
-     ash-cloth are the Cinder Span (Stage 1) terrain materials
-     (build-world-content-pack.py's canon material table, decision-log.md
-     D15/D19). Used below to re-tint the decorative chrome (aurora backdrop,
-     panel glass, glow ring, portrait socket) so it reads as the SAME
-     in-fiction material language as the characters/terrain it frames,
-     instead of an unrelated generic sci-fi cyan/purple palette.
-     rc-cyan/purple/amber/green above are UNCHANGED (they carry existing
-     semantic meaning — role accents, threat/health gradients elsewhere in
-     this file — and are not this pass's concern). */
+  /* Canon world-material palette shared with the retained mesh assets. The
+     CSS chrome only echoes the world’s void-obsidian, cold-steel, cyan-rift,
+     and cinder-ember language; it does not render a gameplay asset. Semantic
+     role and status colors above remain independent and color is never the
+     only conveyed signal. */
   --canon-void-obsidian: #3c2c5b;
   --canon-void-obsidian-soft: rgb(60 44 91 / .35);
   --canon-cold-steel: #737990;
@@ -773,41 +762,6 @@ body {
   background-size: 48px 48px;
   mask-image: linear-gradient(to bottom, #000, transparent 88%);
 }
-/* Generated lobby key plate (assets/images/battle/ui/plates/). It rides on the
-   EXISTING .page-atmosphere element as an extra ::before layer rather than being
-   added to that element's own `background` shorthand, because the grid lines above
-   are sized by `background-size: 48px 48px` -- folding a cover-sized plate into
-   the same shorthand would inherit that 48px sizing. Sits at the very back of the
-   page (the host is already z-index:-1) and never intercepts pointer events. */
-.page-atmosphere::before {
-  position: absolute;
-  inset: 0;
-  content: "";
-  background: url("assets/images/battle/ui/plates/lobby-command-plate.webp") center / cover no-repeat;
-  opacity: .16;
-  filter: saturate(.9) contrast(1.05);
-  mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / .35) 52%, transparent 92%);
-}
-/* The battle surface already paints its own stage art full-bleed, so the lobby
-   plate must not sit behind a live run and double up on it. */
-html[data-defense-started="true"] .page-atmosphere::before { opacity: 0; }
-/* Seal Atlas header plate: the campaign-map tablet reads as the showcase panel's
-   own masthead. Contained to the panel heading band so it never competes with the
-   three per-stage card arts below it. */
-.mission-panel.has-atlas-plate { position: relative; isolation: isolate; }
-.mission-panel.has-atlas-plate::before {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: -1;
-  height: 6.5rem;
-  content: "";
-  pointer-events: none;
-  background: url("assets/images/battle/ui/plates/seal-atlas-plate.webp") center top / cover no-repeat;
-  opacity: .3;
-  mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / .5) 58%, transparent 100%);
-}
 #defense-app { position: relative; isolation: isolate; }
 .mission-panel, .briefing-panel, .loadout-panel, .archive-panel, .growth-panel {
   border-color: rgb(115 121 144 / .24);
@@ -823,9 +777,9 @@ html[data-defense-started="true"] .page-atmosphere::before { opacity: 0; }
   background: linear-gradient(105deg, rgb(44 173 214 / .07), transparent);
 }
 
-/* Spoiler-safe lobby disclosure: only the three editorial cards carry stage
-   art/cinematic copy. The compact progression control exposes launch-safe
-   title, status, and reward text without rendering encounter composition. */
+/* Spoiler-safe lobby disclosure: the three editorial cards show authored
+   stage identity through CSS color only. The live Three.js scene owns all
+   spatial composition; no raster stage art is displayed under the UI. */
 .stage-showcase-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -855,9 +809,14 @@ html[data-defense-started="true"] .page-atmosphere::before { opacity: 0; }
   width: 100%;
   height: 100%;
   background:
-    linear-gradient(180deg, transparent 42%, rgb(5 8 18 / .84)),
-    var(--stage-card-art) center / cover no-repeat;
-  filter: saturate(.8);
+    radial-gradient(circle at 68% 30%, rgb(117 205 255 / .38), transparent 22%),
+    linear-gradient(135deg, rgb(19 42 70 / .95), rgb(8 10 20 / .98));
+}
+.stage-showcase-card[data-stage-showcase="abyss-chancel"] .stage-showcase-art {
+  background: radial-gradient(circle at 68% 30%, rgb(170 109 255 / .42), transparent 22%), linear-gradient(135deg, rgb(42 20 70 / .95), rgb(8 10 20 / .98));
+}
+.stage-showcase-card[data-stage-showcase="echo-throne"] .stage-showcase-art {
+  background: radial-gradient(circle at 68% 30%, rgb(108 218 255 / .42), transparent 22%), linear-gradient(135deg, rgb(17 51 68 / .95), rgb(8 10 20 / .98));
 }
 .stage-showcase-card.is-selected .stage-showcase-art { filter: saturate(1.05); }
 .stage-showcase-card:disabled .stage-showcase-art { filter: grayscale(1) brightness(.55); }
@@ -955,22 +914,6 @@ html[data-defense-started="true"] .page-atmosphere::before { opacity: 0; }
 .lobby-guide-grid h3 { margin: .25rem 0 .65rem; font-size: .95rem; }
 .lobby-guide-grid ol { display: grid; gap: .5rem; margin: 0; padding-left: 1.2rem; color: #c0d0df; font-size: .76rem; line-height: 1.45; }
 
-/* Stage key art is an atmospheric skyplate above the WebGL scene. The mask
-   keeps lower-lane actors and combat telegraphs crisp while the authored
-   architecture remains legible across the horizon. */
-.battle-stage-art {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, rgb(5 8 18 / .12), transparent 36%, rgb(5 8 18 / .28)),
-    var(--stage-art) center / cover no-repeat;
-  opacity: .32;
-  filter: saturate(.95) contrast(1.14) brightness(.76);
-  mix-blend-mode: screen;
-  mask-image: linear-gradient(180deg, #000 0%, rgb(0 0 0 / .88) 50%, transparent 82%);
-}
 #defense-canvas { z-index: 1; }
 #world-hud-overlay { z-index: 4; }
 #defense-edge-hud { z-index: 5; }
@@ -1041,9 +984,7 @@ html[data-defense-started="true"] .page-atmosphere::before { opacity: 0; }
   border: 1px solid rgb(128 216 255 / .44);
   border-left: 3px solid var(--canon-cyan-rift);
   border-radius: .35rem;
-  background:
-    linear-gradient(110deg, rgb(7 11 21 / .96), rgb(18 12 31 / .92)),
-    var(--stage-art) center / cover no-repeat;
+  background: linear-gradient(110deg, rgb(7 11 21 / .96), rgb(18 12 31 / .92));
   box-shadow: 0 1.25rem 3rem -1rem #000, inset 0 1px rgb(255 255 255 / .05);
   pointer-events: auto;
   backdrop-filter: blur(14px);
@@ -1626,14 +1567,8 @@ html[data-defense-started="true"] .page-atmosphere::before { opacity: 0; }
    never replaces the canvas or combat HUD, and its controls write campaign
    state through app.js rather than storing a parallel lobby selection.
    --------------------------------------------------------------------------- */
-/* These two overrides were authored unscoped, which broke the renderer layering
-   contract (tests/defense-renderer-contract.test.mjs asserts
-   `.battle-stage-art` z-index 2 < `#world-hud-overlay`): lowering the world HUD to
-   2 globally tied it with the stage art and let the backplate cover the live
-   combat readout mid-run. The lobby cinematic only ever renders pre-run, so the
-   overrides are scoped to that state -- the intent (lobby overlay at z-index 3
-   sitting above both) is preserved exactly, and combat-time layering returns to
-   its authored 4/5 order. */
+/* The lobby cinematic renders above the WebGL scene only before a run starts.
+   Combat HUD layering remains explicit: world feedback stays below the edge HUD. */
 #defense-battle-surface[data-defense-started="false"] #world-hud-overlay { z-index: 2; }
 #defense-battle-surface[data-defense-started="false"]::after { z-index: 2; }
 .lobby-cinematic {

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "assetId": "cinder-span-ember-wake-preview",
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "source": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  "reference": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+  "runtimeEligible": false,
+  "output": {
+    "path": "assets/motion/stage-vfx/qa/cinder-span-ember-wake-preview.png",
+    "sha256": "d3739923dbc6d02197d0d8b51f2af36ec3b3d0781241e58f63700bbf92d0bb35"
+  }
+}

@@ -31,16 +31,6 @@ const CORE_ASSETS = [
   // module-resolution error without them in the install-time precache.
   "./lobby-cinematic.js",
   "./stage-world-catalog.js",
-  "./assets/images/battle/dusk-warden-frame-00.png",
-  "./assets/images/battle/dusk-warden-frame-01.png",
-  "./assets/images/battle/dusk-warden-frame-02.png",
-  "./assets/images/battle/dusk-warden-frame-03.png",
-  "./assets/images/battle/echo-rusher-frame-00.png",
-  "./assets/images/battle/echo-rusher-frame-01.png",
-  "./assets/images/battle/echo-rusher-frame-02.png",
-  "./assets/images/battle/echo-rusher-frame-03.png",
-  "./assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
-  "./assets/images/battle/world/cinder-span-topdown-plate.webp",
   // Generated UI icon layer (scripts/build-ui-icon-assets.py). These ARE precached,
   // unlike the battle GLBs below: all 16 together are ~440KB and they paint the
   // dock rail, brand, currency chips, and HUD glyphs on first frame, so deferring
@@ -59,20 +49,15 @@ const CORE_ASSETS = [
   "./assets/images/battle/ui/hud/stat-commander.webp",
   "./assets/images/battle/ui/hud/stat-echo-xp.webp",
   "./assets/images/battle/ui/hud/stat-gate-integrity.webp",
-  "./assets/images/battle/ui/plates/lobby-command-plate.webp",
-  "./assets/images/battle/ui/plates/seal-atlas-plate.webp",
   "./vendor/three.module.js",
   "./vendor/three.core.js",
   "./vendor/loaders/GLTFLoader.js",
+  "./vendor/loaders/OBJLoader.js",
   "./vendor/utils/BufferGeometryUtils.js",
   "./vendor/utils/SkeletonUtils.js",
-  // None of the 40 battle GLBs (assets/images/battle/glb/) are precached here:
-  // together they total ~29MB (grew from ~19MB once 19 of them were rigged and
-  // animated), and forcing every visitor to download that before install
-  // completes would block first paint on mobile. networkFirst() below still
-  // caches each one into CACHE_NAME on its first real fetch (battle start),
-  // so offline replay works normally after one online session -- this only
-  // defers the cost off the install-blocking critical path.
+  // Stage meshes, actor rigs, props, and motion GLBs are intentionally
+  // network-first: forcing the complete three-stage world at install would
+  // delay first paint. A fetched binary is cached for offline replay.
   "./styles.css",
   "./react-game-ui.css",
   "./manifest.json",

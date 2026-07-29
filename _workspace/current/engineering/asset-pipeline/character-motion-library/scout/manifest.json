@@ -1,0 +1,320 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
+  "generatedAt": "2026-07-29T09:26:36.081945+00:00",
+  "assetId": "scout",
+  "role": "rush-scout",
+  "category": "enemies",
+  "source": "assets/mesh/enemy/scout/glb/base_basic_pbr.glb",
+  "sourceSha256": "9faea51e4da6d8368986c094569e4263f957900680e9bf3cbeae687c95f7b650",
+  "sourceRig": "mixamo-37",
+  "targetRig": "def-humanoid-v1",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/model.glb",
+  "modelSha256": "b606598e70e0421bf00700645ea86e883e100279f1f98404eee5d40c23484f88",
+  "modelBytes": 12488740,
+  "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review.blend",
+  "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/rig-report.json",
+  "targetBoneNames": [
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-pelvis.L",
+    "DEF-pelvis.R",
+    "DEF-shoulder.L",
+    "DEF-upper_arm.L",
+    "DEF-forearm.L",
+    "DEF-hand.L",
+    "DEF-shoulder.R",
+    "DEF-upper_arm.R",
+    "DEF-forearm.R",
+    "DEF-hand.R",
+    "DEF-thigh.L",
+    "DEF-shin.L",
+    "DEF-foot.L",
+    "DEF-toe.L",
+    "DEF-thigh.R",
+    "DEF-shin.R",
+    "DEF-foot.R",
+    "DEF-toe.R"
+  ],
+  "clips": [
+    {
+      "action": "idle",
+      "clipName": "scout::idle::v01",
+      "source": "Unarmed Idle.fbx",
+      "sourceSha256": "b4ae5c34ac0dc3923e5c24ab2883dd003c324c39edd86a9a94be3358016f5bfa",
+      "frameStart": 1,
+      "frameEnd": 47,
+      "sourceFps": 24,
+      "durationSeconds": 1.9166666666666667,
+      "sourceRootTravel": {
+        "x": -4.4e-05,
+        "y": 1.5e-05,
+        "z": -6e-06,
+        "total": 4.7e-05
+      },
+      "loop": true,
+      "gain": 0.8
+    },
+    {
+      "action": "move",
+      "clipName": "scout::move::v01",
+      "source": "Walking.fbx",
+      "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+      "frameStart": 1,
+      "frameEnd": 34,
+      "sourceFps": 24,
+      "durationSeconds": 1.375,
+      "sourceRootTravel": {
+        "x": -2e-06,
+        "y": 1.5e-05,
+        "z": 145.083625,
+        "total": 145.083625
+      },
+      "loop": true,
+      "gain": 0.94
+    },
+    {
+      "action": "run",
+      "clipName": "scout::run::v01",
+      "source": "Running.fbx",
+      "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": -1e-06,
+        "y": 0.0,
+        "z": 350.087158,
+        "total": 350.087158
+      },
+      "loop": true,
+      "gain": 1.0
+    },
+    {
+      "action": "hit",
+      "clipName": "scout::hit::v01",
+      "source": "Standing React Small From Left.fbx",
+      "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+      "frameStart": 1,
+      "frameEnd": 19,
+      "sourceFps": 24,
+      "durationSeconds": 0.75,
+      "sourceRootTravel": {
+        "x": -2e-05,
+        "y": 8e-06,
+        "z": 1.2e-05,
+        "total": 2.5e-05
+      },
+      "loop": false,
+      "gain": 0.86
+    },
+    {
+      "action": "bighit",
+      "clipName": "scout::bighit::v01",
+      "source": "Receive Uppercut To The Face.fbx",
+      "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": 0.000427,
+        "y": -3.8e-05,
+        "z": 3.9e-05,
+        "total": 0.000431
+      },
+      "loop": false,
+      "gain": 0.92
+    },
+    {
+      "action": "attack",
+      "clipName": "scout::attack::v01",
+      "source": "Punching.fbx",
+      "sourceSha256": "c8dcecaf2d21fe449f20b74076ccb0e67534aca8dd909d4065deddc3faf48466",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "total": 0.0
+      },
+      "loop": false,
+      "gain": 0.96
+    },
+    {
+      "action": "critical",
+      "clipName": "scout::critical::v01",
+      "source": "Drop Kick.fbx",
+      "sourceSha256": "13a14710baa09b067777d7e9daf53111d45196b435893e94a99956eece04f8b0",
+      "frameStart": 1,
+      "frameEnd": 71,
+      "sourceFps": 24,
+      "durationSeconds": 2.9166666666666665,
+      "sourceRootTravel": {
+        "x": 69.30455,
+        "y": -6.149719,
+        "z": -0.131122,
+        "total": 69.576985
+      },
+      "loop": false,
+      "gain": 0.95
+    },
+    {
+      "action": "avoid",
+      "clipName": "scout::avoid::v01",
+      "source": "Dodging.fbx",
+      "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6",
+      "frameStart": 1,
+      "frameEnd": 40,
+      "sourceFps": 24,
+      "durationSeconds": 1.625,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "total": 0.0
+      },
+      "loop": false,
+      "gain": 1.0
+    },
+    {
+      "action": "defence",
+      "clipName": "scout::defence::v01",
+      "source": "Body Block.fbx",
+      "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4",
+      "frameStart": 1,
+      "frameEnd": 83,
+      "sourceFps": 24,
+      "durationSeconds": 3.4166666666666665,
+      "sourceRootTravel": {
+        "x": -2e-06,
+        "y": -1.5e-05,
+        "z": -2e-06,
+        "total": 1.6e-05
+      },
+      "loop": false,
+      "gain": 0.84
+    },
+    {
+      "action": "show",
+      "clipName": "scout::show::v01",
+      "source": "Look Over Shoulder.fbx",
+      "sourceSha256": "f6137f7e0fa6b28d7cec8c71a7be33ba832cdbfe5e24209878f14bfb75d19acc",
+      "frameStart": 1,
+      "frameEnd": 91,
+      "sourceFps": 24,
+      "durationSeconds": 3.75,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "total": 0.0
+      },
+      "loop": false,
+      "gain": 0.9
+    },
+    {
+      "action": "die",
+      "clipName": "scout::die::v01",
+      "source": "scripts/rig-character-asset-blender.py",
+      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "loop": false,
+      "kind": "authored-fallback"
+    }
+  ],
+  "rights": {
+    "source": "user-provided",
+    "runtimeUseDirectedAt": "2026-07-29",
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
+  },
+  "rightsReceipt": "user-directed-runtime-use-retargeted-from-audited-bench-with-unverified-redistribution",
+  "checks": {
+    "glb2": true,
+    "meshPresent": true,
+    "singleSkin": true,
+    "expectedBoneSet": true,
+    "expectedClipSet": true,
+    "finiteKeyframes": true,
+    "rotationOnly": true,
+    "onlyDefBoneTracks": true,
+    "loopClosure": true,
+    "linearSampling": true,
+    "nonconstantActions": true,
+    "rigStageCompleted": true,
+    "rigTposeGate": true,
+    "rigClipCountBeforeRetarget": true
+  },
+  "validation": {
+    "checks": {
+      "glb2": true,
+      "meshPresent": true,
+      "singleSkin": true,
+      "expectedBoneSet": true,
+      "expectedClipSet": true,
+      "finiteKeyframes": true,
+      "rotationOnly": true,
+      "onlyDefBoneTracks": true,
+      "loopClosure": true,
+      "linearSampling": true,
+      "nonconstantActions": true
+    },
+    "animationNames": [
+      "scout::attack::v01",
+      "scout::avoid::v01",
+      "scout::bighit::v01",
+      "scout::critical::v01",
+      "scout::defence::v01",
+      "scout::die::v01",
+      "scout::hit::v01",
+      "scout::idle::v01",
+      "scout::move::v01",
+      "scout::run::v01",
+      "scout::show::v01"
+    ],
+    "jointNames": [
+      "DEF-spine",
+      "DEF-pelvis.L",
+      "DEF-pelvis.R",
+      "DEF-spine.001",
+      "DEF-spine.002",
+      "DEF-spine.003",
+      "DEF-shoulder.L",
+      "DEF-upper_arm.L",
+      "DEF-forearm.L",
+      "DEF-hand.L",
+      "DEF-shoulder.R",
+      "DEF-upper_arm.R",
+      "DEF-forearm.R",
+      "DEF-hand.R",
+      "DEF-spine.004",
+      "DEF-spine.005",
+      "DEF-thigh.L",
+      "DEF-shin.L",
+      "DEF-foot.L",
+      "DEF-toe.L",
+      "DEF-thigh.R",
+      "DEF-shin.R",
+      "DEF-foot.R",
+      "DEF-toe.R"
+    ],
+    "meshCount": 1,
+    "skinCount": 1
+  },
+  "runtimeEligible": true,
+  "gateErrors": []
+}

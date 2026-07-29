@@ -1,0 +1,313 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
+  "generatedAt": "2026-07-29T07:34:38.834530+00:00",
+  "assetId": "ember-cohort",
+  "role": "radiant-vanguard",
+  "category": "enemies",
+  "source": "assets/mesh/character/ember-cohort-character/glb/base_basic_pbr.glb",
+  "sourceSha256": "4c1668cfc9447751b99d3d485c1a4b0a320f6f502e0b3f9cf8572adc29f8e6d6",
+  "sourceRig": "mixamo-37",
+  "targetRig": "def-humanoid-v1",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/model.glb",
+  "modelSha256": "1b9ccf03b957cbc2ff2f14fca3dd0aa0cf50f5905a757b83a3751a14ce9af933",
+  "modelBytes": 12285752,
+  "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review.blend",
+  "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/rig-report.json",
+  "targetBoneNames": [
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-pelvis.L",
+    "DEF-pelvis.R",
+    "DEF-shoulder.L",
+    "DEF-upper_arm.L",
+    "DEF-forearm.L",
+    "DEF-hand.L",
+    "DEF-shoulder.R",
+    "DEF-upper_arm.R",
+    "DEF-forearm.R",
+    "DEF-hand.R",
+    "DEF-thigh.L",
+    "DEF-shin.L",
+    "DEF-foot.L",
+    "DEF-toe.L",
+    "DEF-thigh.R",
+    "DEF-shin.R",
+    "DEF-foot.R",
+    "DEF-toe.R"
+  ],
+  "clips": [
+    {
+      "action": "idle",
+      "clipName": "ember-cohort::idle::v01",
+      "source": "Idle.fbx",
+      "sourceSha256": "004369b7c2963ba673c307ef33fcbcb26f45214a685adb0db559337ed3c4cb2e",
+      "frameStart": 1,
+      "frameEnd": 97,
+      "sourceFps": 24,
+      "durationSeconds": 4.0,
+      "sourceRootTravel": {
+        "x": -4e-06,
+        "y": 0.0,
+        "z": 4e-06,
+        "total": 6e-06
+      },
+      "loop": true,
+      "gain": 0.78
+    },
+    {
+      "action": "move",
+      "clipName": "ember-cohort::move::v01",
+      "source": "Walking.fbx",
+      "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+      "frameStart": 1,
+      "frameEnd": 34,
+      "sourceFps": 24,
+      "durationSeconds": 1.375,
+      "sourceRootTravel": {
+        "x": -2e-06,
+        "y": 1.5e-05,
+        "z": 145.083625,
+        "total": 145.083625
+      },
+      "loop": true,
+      "gain": 0.88
+    },
+    {
+      "action": "run",
+      "clipName": "ember-cohort::run::v01",
+      "source": "Running.fbx",
+      "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": -1e-06,
+        "y": 0.0,
+        "z": 350.087158,
+        "total": 350.087158
+      },
+      "loop": true,
+      "gain": 0.9
+    },
+    {
+      "action": "hit",
+      "clipName": "ember-cohort::hit::v01",
+      "source": "Standing React Small From Left.fbx",
+      "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+      "frameStart": 1,
+      "frameEnd": 19,
+      "sourceFps": 24,
+      "durationSeconds": 0.75,
+      "sourceRootTravel": {
+        "x": -2e-05,
+        "y": 8e-06,
+        "z": 1.2e-05,
+        "total": 2.5e-05
+      },
+      "loop": false,
+      "gain": 0.82
+    },
+    {
+      "action": "bighit",
+      "clipName": "ember-cohort::bighit::v01",
+      "source": "Standing Block React Large.fbx",
+      "sourceSha256": "1c2724849c68cdb804321b3a598b0acfbebc3666deb019b6f2465a6d1db122b4",
+      "frameStart": 1,
+      "frameEnd": 33,
+      "sourceFps": 24,
+      "durationSeconds": 1.3333333333333333,
+      "sourceRootTravel": {
+        "x": 6e-06,
+        "y": -1.5e-05,
+        "z": 3e-06,
+        "total": 1.7e-05
+      },
+      "loop": false,
+      "gain": 0.9
+    },
+    {
+      "action": "attack",
+      "clipName": "ember-cohort::attack::v01",
+      "source": "Great Sword Slash.fbx",
+      "sourceSha256": "599857c51e22a03e61353193a80c534ba56b5ff1101bcee296f85c984f321124",
+      "frameStart": 1,
+      "frameEnd": 45,
+      "sourceFps": 24,
+      "durationSeconds": 1.8333333333333333,
+      "sourceRootTravel": {
+        "x": -6e-06,
+        "y": 1.5e-05,
+        "z": -2e-06,
+        "total": 1.7e-05
+      },
+      "loop": false,
+      "gain": 0.95
+    },
+    {
+      "action": "critical",
+      "clipName": "ember-cohort::critical::v01",
+      "source": "Sword And Shield Jump.fbx",
+      "sourceSha256": "d24a825d0ff6ab5838fce3c28007450cc3288bacdb9df3d4451e95a15e1b3923",
+      "frameStart": 1,
+      "frameEnd": 21,
+      "sourceFps": 24,
+      "durationSeconds": 0.8333333333333334,
+      "sourceRootTravel": {
+        "x": -0.0032,
+        "y": 0.0,
+        "z": 242.86956,
+        "total": 242.869561
+      },
+      "loop": false,
+      "gain": 0.92
+    },
+    {
+      "action": "avoid",
+      "clipName": "ember-cohort::avoid::v01",
+      "source": "Dodging.fbx",
+      "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6",
+      "frameStart": 1,
+      "frameEnd": 40,
+      "sourceFps": 24,
+      "durationSeconds": 1.625,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "total": 0.0
+      },
+      "loop": false,
+      "gain": 0.9
+    },
+    {
+      "action": "defence",
+      "clipName": "ember-cohort::defence::v01",
+      "source": "Sword And Shield Block.fbx",
+      "sourceSha256": "c12c7fef2080af0b2945efa7172de02bc993235cc0de02046c839f15411e06af",
+      "frameStart": 1,
+      "frameEnd": 15,
+      "sourceFps": 24,
+      "durationSeconds": 0.5833333333333334,
+      "sourceRootTravel": {
+        "x": -3.022201,
+        "y": -11.730621,
+        "z": 23.226719,
+        "total": 26.195833
+      },
+      "loop": false,
+      "gain": 0.88
+    },
+    {
+      "action": "show",
+      "clipName": "ember-cohort::show::v01",
+      "source": "Draw Sword 1.fbx",
+      "sourceSha256": "41357b64f6305ee59ea6ef8beaeba7b79b715514034be86e5365ab56e6dd5374",
+      "frameStart": 1,
+      "frameEnd": 13,
+      "sourceFps": 24,
+      "durationSeconds": 0.5,
+      "sourceRootTravel": {
+        "x": 2.373616,
+        "y": -1.28862,
+        "z": -6.690092,
+        "total": 7.214702
+      },
+      "loop": false,
+      "gain": 0.9
+    },
+    {
+      "action": "die",
+      "clipName": "ember-cohort::die::v01",
+      "source": "scripts/rig-character-asset-blender.py",
+      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "loop": false,
+      "kind": "authored-fallback"
+    }
+  ],
+  "rights": {
+    "source": "user-provided",
+    "runtimeUseDirectedAt": "2026-07-29",
+    "redistributionStatus": "unverified"
+  },
+  "rightsReceipt": "user-directed-runtime-use-retargeted-from-audited-bench-with-unverified-redistribution",
+  "checks": {
+    "glb2": true,
+    "meshPresent": true,
+    "singleSkin": true,
+    "expectedBoneSet": true,
+    "expectedClipSet": true,
+    "finiteKeyframes": true,
+    "rotationOnly": true,
+    "onlyDefBoneTracks": true,
+    "loopClosure": true,
+    "linearSampling": true,
+    "nonconstantActions": true,
+    "rigStageCompleted": true,
+    "rigTposeGate": true,
+    "rigClipCountBeforeRetarget": true
+  },
+  "validation": {
+    "checks": {
+      "glb2": true,
+      "meshPresent": true,
+      "singleSkin": true,
+      "expectedBoneSet": true,
+      "expectedClipSet": true,
+      "finiteKeyframes": true,
+      "rotationOnly": true,
+      "onlyDefBoneTracks": true,
+      "loopClosure": true,
+      "linearSampling": true,
+      "nonconstantActions": true
+    },
+    "animationNames": [
+      "ember-cohort::attack::v01",
+      "ember-cohort::avoid::v01",
+      "ember-cohort::bighit::v01",
+      "ember-cohort::critical::v01",
+      "ember-cohort::defence::v01",
+      "ember-cohort::die::v01",
+      "ember-cohort::hit::v01",
+      "ember-cohort::idle::v01",
+      "ember-cohort::move::v01",
+      "ember-cohort::run::v01",
+      "ember-cohort::show::v01"
+    ],
+    "jointNames": [
+      "DEF-spine",
+      "DEF-pelvis.L",
+      "DEF-pelvis.R",
+      "DEF-spine.001",
+      "DEF-spine.002",
+      "DEF-spine.003",
+      "DEF-shoulder.L",
+      "DEF-upper_arm.L",
+      "DEF-forearm.L",
+      "DEF-hand.L",
+      "DEF-shoulder.R",
+      "DEF-upper_arm.R",
+      "DEF-forearm.R",
+      "DEF-hand.R",
+      "DEF-spine.004",
+      "DEF-spine.005",
+      "DEF-thigh.L",
+      "DEF-shin.L",
+      "DEF-foot.L",
+      "DEF-toe.L",
+      "DEF-thigh.R",
+      "DEF-shin.R",
+      "DEF-foot.R",
+      "DEF-toe.R"
+    ],
+    "meshCount": 1,
+    "skinCount": 1
+  },
+  "runtimeEligible": true,
+  "gateErrors": []
+}

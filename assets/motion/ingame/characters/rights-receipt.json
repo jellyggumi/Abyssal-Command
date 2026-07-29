@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-index.py",
+  "generationId": "e584195e32f52006f6c26fab6b9e3bc1b55975a92e879aa0b8607ec305e5970e",
+  "attestedBy": "user",
+  "attestedAt": "2026-07-29",
+  "attestationScope": [
+    "repository-inclusion",
+    "redistribution"
+  ],
+  "redistributionStatus": "user-attested",
+  "runtimeUseDirectedAt": "2026-07-29",
+  "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate.",
+  "source": "user-provided",
+  "motionLineage": {
+    "authority": "derived-retargeted",
+    "sourceRig": "mixamo-37",
+    "sourceLibrary": "assets/motion/bench",
+    "transformation": "retargeted-and-baked"
+  },
+  "supersededAssetRedistributionStatuses": [
+    "unverified"
+  ]
+}

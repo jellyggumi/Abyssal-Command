@@ -163,3 +163,42 @@ next-beat: director 스코프 리뷰 → 슬라이스 2 사람 플레이 판정
 `_workspace/` 직하위에는 `current/` 와 `archive/<run-id>/` 만 둔다. 산출물 경로는
 `_workspace/current/<lane>/` 로 향하게 하고 날짜 run-id 를 코드 상수에 박지 않는다. 루트에
 날짜 폴더가 보이면 지우기 전에 그것을 만든 상수를 먼저 찾는다.
+
+---
+
+## 7. 2026-07-29 — 캐릭터 모션 라이브러리 승격
+
+| task | owner | 산출물 | 게이트 | 상태 |
+|---|---|---|---|---|
+| 모션 벤치 42개 FBX 감사 결과 재사용 | character-motion-pipeline | `engineering/asset-pipeline/motion-bench/fbx-audit-report-FULL-OBSERVED.json` | 소스 import 42/42 | done |
+| 캐릭터 6종 DEF 리그 정규화 | character-motion-pipeline | `engineering/asset-pipeline/character-motion-library/*/review.blend` | 24 target bones, rig gate | done |
+| 역할별 11클립 리타게팅 | character-motion-pipeline | `engineering/asset-pipeline/character-motion-library/*/model.glb` | 6×11, finite LINEAR quaternion clips | done |
+| Blender 키포즈 시각 검토 | character-motion-pipeline | `engineering/asset-pipeline/character-motion-library/*/review/contact-sheet.png` | 6×11, evaluated-depsgraph framing | done — [OBSERVED] clipping·gross mesh collapse 없음 |
+| runtime handoff·권리 receipt·registry | character-motion-pipeline | `engineering/asset-pipeline/character-motion-library/handoff-index.json`, `assets/motion/ingame/characters/` | asset 6, clip 66, checksum·rights·retained manifest 일치 | done — shipped runtime library |
+| GLB 구조·참조·runtime routing 계약 테스트 | Tester | `engineering/asset-pipeline/tests/character-motion-library.test.mjs`, `tests/realtime-motion-routing.test.mjs` | Node 2/2 + 1/1 | done |
+| Three.js 실전 로드·재생 스모크 | character-motion-pipeline | `qa/character-motion-runtime-smoke.json`, `qa/character-motion-runtime-guard.webp` | WebGL, HTTP 200, `guard::move::v01`, 48-frame bone delta | done |
+
+### 7.1 산출물 상태 [OBSERVED]
+
+- Blender 5.2.0 LTS headless 실행으로 캐릭터 6종 각각에 `model.glb`, `manifest.json`,
+  `review.blend`, 11개 key pose와 contact sheet를 생성했다.
+- 각 `manifest.json`은 `runtimeEligible: true`, `gateErrors: []`이며 GLB는 mesh 1+, skin 1,
+  정확히 11개 회전 전용 animation clip을 포함한다.
+- `handoff-index.json`은 repository-root runtime 경로와
+  `{assetId}::{actionId}::v01` clip 이름을 제공한다.
+- 사용자 권리 확인을 `assets/motion/ingame/characters/rights-receipt.json`에 기록하고,
+  검증된 6개 mesh+skin+animation GLB를 같은 runtime 트리로 승격했다.
+  `registry.json`은 6 assets, 66 clips, 72,956,324 bytes와 각 SHA-256을 고정한다.
+- live battle 기본 경로는 `ember-cohort`, `lantern-reaver`, `guardian`을 각각 승격 모델로
+  해석한다. 나머지 3개 모델은 `entity.motionAssetId`로 선택할 수 있으며 알 수 없는 ID는
+  기존 catalog GLB로 되돌아간다.
+- self-authored 승격 모델은 generic `unarmed-core.glb` overlay를 요청하지 않고 포함된
+  base clip을 재생한다. 기존 catalog 모델의 overlay 및 load-failure fallback은 유지된다.
+- [OBSERVED] Cinder Span 실전 WebGL에서 guardian midboss가
+  `assets/motion/ingame/characters/guard/model.glb`를 HTTP 200으로 로드하고
+  `guard::move::v01`을 48 frame 동안 재생했다. 24 bones 중
+  `maxBoneDeltaRad: 1.8269515528990519`, `movedBoneSamples: 1014`를 기록했다.
+- authoring·review 트리는 `_workspace/current/engineering/asset-pipeline/character-motion-library/`
+  아래에 남아 있으며 runtime 승격 대상이 아니다. 커밋은 반드시 explicit pathspec으로
+  `assets/motion/ingame/characters/`, 관련 manifest·runtime·test 파일만 지정한다.
+  `git add -A`, `git add .` 같은 broad staging으로 review GLB·PNG를 history에 넣지 않는다.

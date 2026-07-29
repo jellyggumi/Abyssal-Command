@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-07-29",
+  "status": "observed-pass",
+  "browser": "headless Chromium",
+  "loader": "vendor/loaders/GLTFLoader.js",
+  "index": "_workspace/current/engineering/asset-pipeline/character-motion-library/handoff-index.json",
+  "artifactStatus": "staged-direct-load-not-shipped",
+  "shipped": false,
+  "checks": {
+    "indexFetched": true,
+    "assetCount": 6,
+    "animationCount": 66,
+    "everyAssetHasOneScene": true,
+    "everyAssetHasSkinnedMesh": true,
+    "everyAssetHasExactIndexedAnimationSet": true
+  },
+  "assets": [
+    {"assetId": "broken-court-monarch-boss", "scenes": 1, "skinnedMeshes": 1, "animations": 11},
+    {"assetId": "broken-court-monarch-v04", "scenes": 1, "skinnedMeshes": 1, "animations": 11},
+    {"assetId": "ember-cohort", "scenes": 1, "skinnedMeshes": 1, "animations": 11},
+    {"assetId": "guard", "scenes": 1, "skinnedMeshes": 1, "animations": 11},
+    {"assetId": "human-command-boss", "scenes": 1, "skinnedMeshes": 1, "animations": 11},
+    {"assetId": "lantern-reaver", "scenes": 1, "skinnedMeshes": 1, "animations": 11}
+  ],
+  "limitations": [
+    "Local repository-root staging paths were tested; shipping paths were not created.",
+    "This smoke test proves browser parsing and clip discovery, not gameplay balance or human feel."
+  ]
+}

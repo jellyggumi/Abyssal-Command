@@ -14,15 +14,8 @@ export const IDLE_RETURN_INTERVAL_MS = 60_000;
 export const IDLE_RETURN_MAX_ELAPSED_MS = 8 * 60 * 60 * 1000;
 export const STAGES = Object.freeze([
   Object.freeze({ id: "cinder-span", name: "Cinder Span", bossName: "Cinder Warden", sequence: 1 }),
-  Object.freeze({ id: "veil-citadel", name: "Veil Citadel", bossName: "Veil Tactician", sequence: 2 }),
+  Object.freeze({ id: "abyss-chancel", name: "Abyss Chancel", bossName: "Veil Tactician", sequence: 2 }),
   Object.freeze({ id: "echo-throne", name: "Echo Throne", bossName: "Gate Sovereign", sequence: 3 }),
-  Object.freeze({ id: "sunken-bastion", name: "Sunken Bastion", bossName: "Tide Warden", sequence: 4 }),
-  Object.freeze({ id: "howling-sprawl", name: "Howling Sprawl", bossName: "Pack Herald", sequence: 5 }),
-  Object.freeze({ id: "glass-necropolis", name: "Glass Necropolis", bossName: "Requiem Choir", sequence: 6 }),
-  Object.freeze({ id: "starless-canal", name: "Starless Canal", bossName: "Lantern Tyrant", sequence: 7 }),
-  Object.freeze({ id: "shattered-causeway", name: "Shattered Causeway", bossName: "Bridge Colossus", sequence: 8 }),
-  Object.freeze({ id: "abyss-chancel", name: "Abyss Chancel", bossName: "Veiled Concordat", sequence: 9 }),
-  Object.freeze({ id: "gate-zenith", name: "Gate Zenith", bossName: "Abyss Regent", sequence: 10 }),
 ]);
 const STAGE_INDEX = new Map(STAGES.map((stage, index) => [stage.id, index]));
 const MAX_LOADOUT_SIZE = 3;

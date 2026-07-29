@@ -1,0 +1,81 @@
+{
+  "blenderVersion": "5.2.0 LTS",
+  "inputDimensions": [
+    1254,
+    1254
+  ],
+  "outputDimensions": [
+    1024,
+    1024
+  ],
+  "outputs": {
+    "ao": {
+      "bytes": 1041812,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-ao.png",
+      "provenance": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-ao.provenance.json",
+      "sha256": "513aef17560cb9133686d1057873ff11d7864ddde41ba18ec7667909db5a9b48"
+    },
+    "basecolor": {
+      "bytes": 2229008,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-basecolor.png",
+      "provenance": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-basecolor.provenance.json",
+      "sha256": "8f22e193ae1c5cf66044be10368ba3f751abfa92c416c576e72523f416342245"
+    },
+    "emission": {
+      "bytes": 397155,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-emission.png",
+      "provenance": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-emission.provenance.json",
+      "sha256": "a4d9df2dc391af11f37cf509107c9e38f0a98eaabeb769cd90afeaec6ab14d84"
+    },
+    "height": {
+      "bytes": 1214125,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-height.png",
+      "provenance": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-height.provenance.json",
+      "sha256": "8c2136889d1d81652a9626aa9e6a1b752b87ca8bdd08416dafb69af21d07262b"
+    },
+    "metallic": {
+      "bytes": 646800,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-metallic.png",
+      "provenance": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-metallic.provenance.json",
+      "sha256": "d61633ded089e8fcdd4ad0e7a4eff33c4211d45ab7e827015c4991c4389cde18"
+    },
+    "normal": {
+      "bytes": 2909663,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-normal.png",
+      "provenance": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-normal.provenance.json",
+      "sha256": "9e5c05e7b828111c9d2685012ba8b5fe0cef6f365a43f19103babc7e42299cdf"
+    },
+    "orm": {
+      "bytes": 1807014,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-orm.png",
+      "provenance": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-orm.provenance.json",
+      "sha256": "fc4128adc74af23604fb010a4eaed2a72a1cea1772cf5b3ad4767ba029f60119"
+    },
+    "roughness": {
+      "bytes": 919489,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-roughness.png",
+      "provenance": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-roughness.provenance.json",
+      "sha256": "687cf0fae5ef711220969992892a62717d23de7db72ce6370af2d5e7b0b40d6b"
+    }
+  },
+  "periodicBlendApplied": false,
+  "runtimeEligible": false,
+  "schemaVersion": 1,
+  "seamMetricsAfter": {
+    "horizontalInteriorBaseline": 0.030822893604636192,
+    "horizontalMeanAbsoluteError": 0.03499157726764679,
+    "horizontalRatio": 1.1352463437236655,
+    "verticalInteriorBaseline": 0.033110469579696655,
+    "verticalMeanAbsoluteError": 0.04156709834933281,
+    "verticalRatio": 1.255406488551336
+  },
+  "seamMetricsBefore": {
+    "horizontalInteriorBaseline": 0.030822893604636192,
+    "horizontalMeanAbsoluteError": 0.03499157726764679,
+    "horizontalRatio": 1.1352463437236655,
+    "verticalInteriorBaseline": 0.033110469579696655,
+    "verticalMeanAbsoluteError": 0.04156709834933281,
+    "verticalRatio": 1.255406488551336
+  },
+  "source": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-basecolor-gti.png"
+}

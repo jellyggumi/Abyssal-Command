@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-index.py",
+  "generationId": "e584195e32f52006f6c26fab6b9e3bc1b55975a92e879aa0b8607ec305e5970e",
+  "motionAuthority": "derived-retargeted",
+  "motionLineage": {
+    "authority": "derived-retargeted",
+    "sourceRig": "mixamo-37",
+    "sourceLibrary": "assets/motion/bench",
+    "transformation": "retargeted-and-baked"
+  },
+  "rightsReceipt": "assets/motion/ingame/characters/rights-receipt.json",
+  "counts": {
+    "assets": 6,
+    "clips": 66,
+    "retargetedClips": 60,
+    "authoredFallbackClips": 6,
+    "bytes": 72956324
+  },
+  "assets": [
+    {
+      "assetId": "broken-court-monarch-boss",
+      "role": "shadow-duelist",
+      "category": "bosses",
+      "replaces": "assets/mesh/character/broken-court-monarch-boss-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
+      "modelSha256": "dbee83d49e5e7d66b85147931399e4829503d0efb8157e74389991fe60705c94",
+      "manifest": "assets/motion/ingame/characters/broken-court-monarch-boss/manifest.json",
+      "clipNames": {
+        "idle": "broken-court-monarch-boss::idle::v01",
+        "move": "broken-court-monarch-boss::move::v01",
+        "run": "broken-court-monarch-boss::run::v01",
+        "hit": "broken-court-monarch-boss::hit::v01",
+        "bighit": "broken-court-monarch-boss::bighit::v01",
+        "attack": "broken-court-monarch-boss::attack::v01",
+        "critical": "broken-court-monarch-boss::critical::v01",
+        "avoid": "broken-court-monarch-boss::avoid::v01",
+        "defence": "broken-court-monarch-boss::defence::v01",
+        "die": "broken-court-monarch-boss::die::v01",
+        "show": "broken-court-monarch-boss::show::v01"
+      },
+      "clipKinds": {
+        "idle": "retargeted",
+        "move": "retargeted",
+        "run": "retargeted",
+        "hit": "retargeted",
+        "bighit": "retargeted",
+        "attack": "retargeted",
+        "critical": "retargeted",
+        "avoid": "retargeted",
+        "defence": "retargeted",
+        "die": "authored-fallback",
+        "show": "retargeted"
+      },
+      "bytes": 13617544,
+      "motionAuthority": "derived-retargeted",
+      "loopingActions": [
+        "idle",
+        "move",
+        "run"
+      ],
+      "inPlaceRootMotion": true,
+      "runtimeEligible": true,
+      "rightsReceipt": "assets/motion/ingame/characters/rights-receipt.json",
+      "runtimeReachability": "library-only"
+    },
+    {
+      "assetId": "broken-court-monarch-v04",
+      "role": "regal-void-caster",
+      "category": "bosses",
+      "replaces": "assets/mesh/character/broken-court-monarch-v04-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
+      "modelSha256": "08c15fd546ea961b6eaf0a0e767770335723aff4f189c732c1cf38c254b8d914",
+      "manifest": "assets/motion/ingame/characters/broken-court-monarch-v04/manifest.json",
+      "clipNames": {
+        "idle": "broken-court-monarch-v04::idle::v01",
+        "move": "broken-court-monarch-v04::move::v01",
+        "run": "broken-court-monarch-v04::run::v01",
+        "hit": "broken-court-monarch-v04::hit::v01",
+        "bighit": "broken-court-monarch-v04::bighit::v01",
+        "attack": "broken-court-monarch-v04::attack::v01",
+        "critical": "broken-court-monarch-v04::critical::v01",
+        "avoid": "broken-court-monarch-v04::avoid::v01",
+        "defence": "broken-court-monarch-v04::defence::v01",
+        "die": "broken-court-monarch-v04::die::v01",
+        "show": "broken-court-monarch-v04::show::v01"
+      },
+      "clipKinds": {
+        "idle": "retargeted",
+        "move": "retargeted",
+        "run": "retargeted",
+        "hit": "retargeted",
+        "bighit": "retargeted",
+        "attack": "retargeted",
+        "critical": "retargeted",
+        "avoid": "retargeted",
+        "defence": "retargeted",
+        "die": "authored-fallback",
+        "show": "retargeted"
+      },
+      "bytes": 11414996,
+      "motionAuthority": "derived-retargeted",
+      "loopingActions": [
+        "idle",
+        "move",
+        "run"
+      ],
+      "inPlaceRootMotion": true,
+      "runtimeEligible": true,
+      "rightsReceipt": "assets/motion/ingame/characters/rights-receipt.json",
+      "runtimeReachability": "library-only"
+    },
+    {
+      "assetId": "ember-cohort",
+      "role": "radiant-vanguard",
+      "category": "enemies",
+      "replaces": "assets/mesh/character/ember-cohort-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/ember-cohort/model.glb",
+      "modelSha256": "1b9ccf03b957cbc2ff2f14fca3dd0aa0cf50f5905a757b83a3751a14ce9af933",
+      "manifest": "assets/motion/ingame/characters/ember-cohort/manifest.json",
+      "clipNames": {
+        "idle": "ember-cohort::idle::v01",
+        "move": "ember-cohort::move::v01",
+        "run": "ember-cohort::run::v01",
+        "hit": "ember-cohort::hit::v01",
+        "bighit": "ember-cohort::bighit::v01",
+        "attack": "ember-cohort::attack::v01",
+        "critical": "ember-cohort::critical::v01",
+        "avoid": "ember-cohort::avoid::v01",
+        "defence": "ember-cohort::defence::v01",
+        "die": "ember-cohort::die::v01",
+        "show": "ember-cohort::show::v01"
+      },
+      "clipKinds": {
+        "idle": "retargeted",
+        "move": "retargeted",
+        "run": "retargeted",
+        "hit": "retargeted",
+        "bighit": "retargeted",
+        "attack": "retargeted",
+        "critical": "retargeted",
+        "avoid": "retargeted",
+        "defence": "retargeted",
+        "die": "authored-fallback",
+        "show": "retargeted"
+      },
+      "bytes": 12285752,
+      "motionAuthority": "derived-retargeted",
+      "loopingActions": [
+        "idle",
+        "move",
+        "run"
+      ],
+      "inPlaceRootMotion": true,
+      "runtimeEligible": true,
+      "rightsReceipt": "assets/motion/ingame/characters/rights-receipt.json",
+      "runtimeReachability": "catalog-bound",
+      "entity": {
+        "kind": "companion",
+        "companionId": "ember-cohort"
+      }
+    },
+    {
+      "assetId": "guard",
+      "role": "ember-greatsword-guard",
+      "category": "enemies",
+      "replaces": "assets/mesh/character/guard-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/guard/model.glb",
+      "modelSha256": "cf6ce6d30f83d708801a8c1ab00ba7355f5f95350377edcf886c51087131d4b1",
+      "manifest": "assets/motion/ingame/characters/guard/manifest.json",
+      "clipNames": {
+        "idle": "guard::idle::v01",
+        "move": "guard::move::v01",
+        "run": "guard::run::v01",
+        "hit": "guard::hit::v01",
+        "bighit": "guard::bighit::v01",
+        "attack": "guard::attack::v01",
+        "critical": "guard::critical::v01",
+        "avoid": "guard::avoid::v01",
+        "defence": "guard::defence::v01",
+        "die": "guard::die::v01",
+        "show": "guard::show::v01"
+      },
+      "clipKinds": {
+        "idle": "retargeted",
+        "move": "retargeted",
+        "run": "retargeted",
+        "hit": "retargeted",
+        "bighit": "retargeted",
+        "attack": "retargeted",
+        "critical": "retargeted",
+        "avoid": "retargeted",
+        "defence": "retargeted",
+        "die": "authored-fallback",
+        "show": "retargeted"
+      },
+      "bytes": 13426276,
+      "motionAuthority": "derived-retargeted",
+      "loopingActions": [
+        "idle",
+        "move",
+        "run"
+      ],
+      "inPlaceRootMotion": true,
+      "runtimeEligible": true,
+      "rightsReceipt": "assets/motion/ingame/characters/rights-receipt.json",
+      "runtimeReachability": "catalog-bound",
+      "entity": {
+        "kind": "guardian"
+      }
+    },
+    {
+      "assetId": "human-command-boss",
+      "role": "stone-command-colossus",
+      "category": "bosses",
+      "replaces": "assets/mesh/character/human-command-boss-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/human-command-boss/model.glb",
+      "modelSha256": "ffa5f40704667186771e4de44e3fc18a4db377f9c52b354e47a969b1243b2770",
+      "manifest": "assets/motion/ingame/characters/human-command-boss/manifest.json",
+      "clipNames": {
+        "idle": "human-command-boss::idle::v01",
+        "move": "human-command-boss::move::v01",
+        "run": "human-command-boss::run::v01",
+        "hit": "human-command-boss::hit::v01",
+        "bighit": "human-command-boss::bighit::v01",
+        "attack": "human-command-boss::attack::v01",
+        "critical": "human-command-boss::critical::v01",
+        "avoid": "human-command-boss::avoid::v01",
+        "defence": "human-command-boss::defence::v01",
+        "die": "human-command-boss::die::v01",
+        "show": "human-command-boss::show::v01"
+      },
+      "clipKinds": {
+        "idle": "retargeted",
+        "move": "retargeted",
+        "run": "retargeted",
+        "hit": "retargeted",
+        "bighit": "retargeted",
+        "attack": "retargeted",
+        "critical": "retargeted",
+        "avoid": "retargeted",
+        "defence": "retargeted",
+        "die": "authored-fallback",
+        "show": "retargeted"
+      },
+      "bytes": 9719604,
+      "motionAuthority": "derived-retargeted",
+      "loopingActions": [
+        "idle",
+        "move",
+        "run"
+      ],
+      "inPlaceRootMotion": true,
+      "runtimeEligible": true,
+      "rightsReceipt": "assets/motion/ingame/characters/rights-receipt.json",
+      "runtimeReachability": "library-only"
+    },
+    {
+      "assetId": "lantern-reaver",
+      "role": "abyssal-reaper-caster",
+      "category": "enemies",
+      "replaces": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/lantern-reaver/model.glb",
+      "modelSha256": "2ef138a44a2d2e8574cd3d8a7ce41e3816c51bdf73c71b23d0cb5f96829c5087",
+      "manifest": "assets/motion/ingame/characters/lantern-reaver/manifest.json",
+      "clipNames": {
+        "idle": "lantern-reaver::idle::v01",
+        "move": "lantern-reaver::move::v01",
+        "run": "lantern-reaver::run::v01",
+        "hit": "lantern-reaver::hit::v01",
+        "bighit": "lantern-reaver::bighit::v01",
+        "attack": "lantern-reaver::attack::v01",
+        "critical": "lantern-reaver::critical::v01",
+        "avoid": "lantern-reaver::avoid::v01",
+        "defence": "lantern-reaver::defence::v01",
+        "die": "lantern-reaver::die::v01",
+        "show": "lantern-reaver::show::v01"
+      },
+      "clipKinds": {
+        "idle": "retargeted",
+        "move": "retargeted",
+        "run": "retargeted",
+        "hit": "retargeted",
+        "bighit": "retargeted",
+        "attack": "retargeted",
+        "critical": "retargeted",
+        "avoid": "retargeted",
+        "defence": "retargeted",
+        "die": "authored-fallback",
+        "show": "retargeted"
+      },
+      "bytes": 12492152,
+      "motionAuthority": "derived-retargeted",
+      "loopingActions": [
+        "idle",
+        "move",
+        "run"
+      ],
+      "inPlaceRootMotion": true,
+      "runtimeEligible": true,
+      "rightsReceipt": "assets/motion/ingame/characters/rights-receipt.json",
+      "runtimeReachability": "catalog-bound",
+      "entity": {
+        "kind": "companion",
+        "companionId": "lantern-reaver"
+      }
+    }
+  ]
+}

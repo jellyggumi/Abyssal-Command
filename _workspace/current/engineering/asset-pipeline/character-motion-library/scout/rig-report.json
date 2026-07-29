@@ -1,0 +1,424 @@
+{
+  "assetId": "scout",
+  "category": "enemies",
+  "source": "assets/mesh/enemy/scout/glb/base_basic_pbr.glb",
+  "steps": [
+    {
+      "step": "import",
+      "meshes": 1,
+      "reusedBodySplit": false,
+      "hadPedestal": false
+    },
+    {
+      "step": "weld",
+      "vertsBefore": 5443,
+      "vertsAfter": 4018
+    },
+    {
+      "step": "landmarks",
+      "height": 1.8037,
+      "shoulderZFrac": 0.78,
+      "shoulderHalfWidth": 0.3947,
+      "hipHalfWidth": 0.205,
+      "handL": [
+        0.9224,
+        -0.0361,
+        1.3188
+      ],
+      "handR": [
+        -0.9249,
+        -0.0295,
+        1.3197
+      ],
+      "synthesizedArms": [],
+      "center": [
+        0.0065,
+        0.0487
+      ]
+    },
+    {
+      "step": "roll_alignment",
+      "phase": "pre_bind",
+      "referencePolicy": {
+        "axial": "+Y",
+        "lateral": "+Z"
+      },
+      "rows": [
+        {
+          "bone": "DEF-spine",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.001",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.002",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.003",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.004",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.005",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-pelvis.L",
+          "policy": "axial",
+          "rollDeg": -121.6299
+        },
+        {
+          "bone": "DEF-pelvis.R",
+          "policy": "axial",
+          "rollDeg": 121.6299
+        },
+        {
+          "bone": "DEF-shoulder.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.L",
+          "policy": "lateral",
+          "rollDeg": 3.759
+        },
+        {
+          "bone": "DEF-forearm.L",
+          "policy": "lateral",
+          "rollDeg": 3.759
+        },
+        {
+          "bone": "DEF-hand.L",
+          "policy": "lateral",
+          "rollDeg": 3.759
+        },
+        {
+          "bone": "DEF-shoulder.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.R",
+          "policy": "lateral",
+          "rollDeg": -3.5552
+        },
+        {
+          "bone": "DEF-forearm.R",
+          "policy": "lateral",
+          "rollDeg": -3.5552
+        },
+        {
+          "bone": "DEF-hand.R",
+          "policy": "lateral",
+          "rollDeg": -3.5552
+        },
+        {
+          "bone": "DEF-thigh.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.L",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.L",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        },
+        {
+          "bone": "DEF-thigh.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.R",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.R",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        }
+      ]
+    },
+    {
+      "step": "armature_fit",
+      "bones": 24,
+      "shoulderZ": 1.3586,
+      "arms": {
+        "L": {
+          "restAngleDeg": 3.32,
+          "length": 0.6878
+        },
+        "R": {
+          "restAngleDeg": 3.18,
+          "length": 0.7023
+        }
+      },
+      "preBindRollCount": 24
+    },
+    {
+      "step": "orphan_fill",
+      "filled": 0
+    },
+    {
+      "step": "bind",
+      "method": "bone_heat",
+      "boundGroups": 24,
+      "weightedVerts": 4018,
+      "totalVerts": 4018,
+      "armWeightFrac": 0.3524,
+      "attempts": [
+        [
+          "bone_heat",
+          4018,
+          0.3524
+        ]
+      ],
+      "topWeights": [
+        [
+          401.8,
+          "DEF-thigh.L"
+        ],
+        [
+          378.1,
+          "DEF-thigh.R"
+        ],
+        [
+          312.8,
+          "DEF-shoulder.R"
+        ],
+        [
+          298.3,
+          "DEF-shoulder.L"
+        ],
+        [
+          225.8,
+          "DEF-pelvis.L"
+        ]
+      ]
+    },
+    {
+      "step": "roll_alignment",
+      "phase": "post_tpose_rest",
+      "referencePolicy": {
+        "axial": "+Y",
+        "lateral": "+Z"
+      },
+      "rows": [
+        {
+          "bone": "DEF-spine",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.001",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.002",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.003",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.004",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.005",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-shoulder.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-forearm.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-hand.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shoulder.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-forearm.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-hand.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-pelvis.L",
+          "policy": "axial",
+          "rollDeg": -121.6299
+        },
+        {
+          "bone": "DEF-pelvis.R",
+          "policy": "axial",
+          "rollDeg": 121.6299
+        },
+        {
+          "bone": "DEF-thigh.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.L",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.L",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        },
+        {
+          "bone": "DEF-thigh.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.R",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.R",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        }
+      ]
+    },
+    {
+      "step": "weight_refine",
+      "enabledArmatureModifiers": 1,
+      "correctedVertices": 3198,
+      "oppositeLeak": 0,
+      "ambiguous": 762,
+      "orphanCount": 0,
+      "invalidCount": 0,
+      "nonDefCount": 0,
+      "maxInfluences": 4,
+      "maxWeightSum": 1.000000009778887,
+      "minWeightSum": 0.9999999901046976,
+      "deformVerts": 4018,
+      "deformVertsTotal": 4018
+    },
+    {
+      "step": "tpose_apply",
+      "rotatedDeg": {
+        "L": 7.83,
+        "R": 7.14
+      },
+      "axisDeviationDeg": {
+        "L": 0.0,
+        "R": 0.0
+      },
+      "elevationDeg": {
+        "L": -0.0,
+        "R": -0.0
+      },
+      "tolerance": 12.0
+    },
+    {
+      "step": "author_animations",
+      "count": 11,
+      "clips": [
+        "scout::idle::v01",
+        "scout::move::v01",
+        "scout::run::v01",
+        "scout::hit::v01",
+        "scout::bighit::v01",
+        "scout::attack::v01",
+        "scout::critical::v01",
+        "scout::avoid::v01",
+        "scout::defence::v01",
+        "scout::die::v01",
+        "scout::show::v01"
+      ]
+    },
+    {
+      "step": "export",
+      "path": "/tmp/abyssal-scout-rigged.glb",
+      "bytes": 12439404,
+      "pedestalRemoved": false
+    }
+  ],
+  "axisDeviationDeg": {
+    "L": 0.0,
+    "R": 0.0
+  },
+  "elevationDeg": {
+    "L": -0.0,
+    "R": -0.0
+  },
+  "bindMethod": "bone_heat",
+  "pedestalRemoved": false,
+  "tposeOk": true,
+  "clipCount": 11,
+  "status": "completed"
+}

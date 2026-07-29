@@ -1,0 +1,17 @@
+{
+  "assetId": "terrain-echo-throne-albedo-1x1",
+  "tool": "god-tibo-imagen",
+  "invocation": "gti --prompt <recordedPrompt> --image assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-terrain.png --size 2048x2048 --output <this asset>",
+  "recordedPrompt": "Create a seamless square 1:1 game-ready PBR base-color albedo texture for the Echo Throne gothic stone dais, using the reference only for visual grammar: weathered charcoal-gray cracked flagstones, thin aged-gold inlaid runic lines, and a subdued centered circular compass-rose sigil. Strict top-down orthographic material scan only. The full square plate must be continuous and tile cleanly for direct planar UV mapping. Preserve square flagstones and a circular, not oval, central medallion. No perspective, no platform silhouette, no transparent background, no borders, no props, no cast shadows, no text, no logos, no watermark.",
+  "referenceInput": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-terrain.png",
+  "responseId": "resp_0a289bc468415661016a69b927e1848191b15206dc7d2326f5",
+  "requestedSize": "2048x2048",
+  "actualSize": {
+    "width": 1254,
+    "height": 1254
+  },
+  "bytes": 3414382,
+  "sha256": "e8cd8f74f43630110e62c86ee8e8946b19fe674de6bd7bc52a485daad2ec6506",
+  "runtimeEligible": false,
+  "stage": "concept-input"
+}

@@ -7,6 +7,7 @@
 // ownership" check.
 import * as THREE from "./vendor/three.module.js";
 import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
+import { OBJLoader } from "./vendor/loaders/OBJLoader.js";
 import * as SkeletonUtils from "./vendor/utils/SkeletonUtils.js";
 import { REWARDS, STAGE_PRESENTATION_BY_ID, STAGES } from "./defense-catalog.js";
 import { stageWorldFor } from "./stage-world-catalog.js";
@@ -49,6 +50,7 @@ const WORLD_SCALE = 14;
 // consistent size relative to the actor-space play area, regardless of how
 // large the stage was originally modeled.
 const TERRAIN_TARGET_HALF_EXTENT = WORLD_SCALE * 1.15;
+const STAGE_VFX_GROUND_LIFT = 0.04;
 // Per-actor-kind target world height (Y-axis extent after uniform scale).
 // Chosen to preserve the same relative size relationships the Canvas2D
 // fallback encodes via pixel radius (presentationRadius() in app.js: boss
@@ -113,64 +115,44 @@ let MAX_ORBIT_DISTANCE = ORBIT_ZOOM_DEFAULT * 2;
 const RIM_LIGHT_DISTANCE = 20;
 const RIM_LIGHT_PITCH = THREE.MathUtils.degToRad(35);
 
-// Generator pipeline (scripts/export-battle-glb.py) currently writes every
-// object flat into assets/images/battle/glb/ (co-located with this cycle's
-// PNG thumbnail previews). The prior assets/models/battle/ category-
-// subdirectory tree was intentionally removed from this worktree -- build
-// against the current pipeline output, not the retired one.
-const MODEL_ROOT = "./assets/images/battle/glb/";
+// Player, summons, and ordinary enemies share one runtime-eligible Lantern
+// Reaver rig. Its promoted model was retargeted from
+// assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb; the
+// checked-in manifest records that provenance. Simulation identity never chooses
+// a second character asset.
+const PLAYER_RUNTIME_MOTION_MESH = "assets/motion/ingame/characters/lantern-reaver/model.glb";
+const PLAYER_MESH = PLAYER_RUNTIME_MOTION_MESH;
+const PROP_BLADE_MESH = "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb";
+const PROP_RELIC_MESH = "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb";
 
-
-// Boss actor's own `bossId` field (set verbatim from BOSSES[stage.boss].id
-// in spawnBoss(), defense-run-simulation.js) is the exact key -- no need to
-// cross-reference STAGES here.
+// `bossId` is emitted directly by the simulation. Only the three supplied
+// boss meshes are accepted by the current campaign.
 const BOSS_MODELS = Object.freeze({
-  "s1-cinder-warden": "bosses/cinder-warden.glb",
-  "s2-veil-tactician": "bosses/veil-tactician.glb",
-  "s3-gate-sovereign": "bosses/gate-sovereign.glb",
-  "s4-tide-warden": "bosses/tide-warden.glb",
-  "s5-pack-herald": "bosses/pack-herald.glb",
-  "s6-requiem-choir": "bosses/requiem-choir.glb",
-  "s7-lantern-tyrant": "bosses/lantern-tyrant.glb",
-  "s8-bridge-colossus": "bosses/bridge-colossus.glb",
-  "s9-veiled-concordat": "bosses/veiled-concordat.glb",
-  "s10-abyss-regent": "bosses/abyss-regent.glb",
+  "s1-cinder-warden": "assets/mesh/boss/s1-cinder-warden/glb/base_basic_pbr.glb",
+  "s2-veil-tactician": "assets/mesh/boss/s2-veil-tactician/glb/base_basic_pbr.glb",
+  "s3-gate-sovereign": "assets/mesh/boss/s3-gate-sovereign/glb/base_basic_pbr.glb",
 });
 
-// Regular (non-boss) enemy actor's `kind` field is one of these 4
-// archetypes (ENEMIES catalog in defense-catalog.js), reusing the canonical
-// resource pack's 4 enemy models -- verified present, never had dedicated
-// per-archetype art before this session.
 const ENEMY_MODELS = Object.freeze({
-  rusher: "enemies/scout.glb",
-  flanker: "enemies/shade.glb",
-  guardian: "enemies/guard.glb",
-  ranged: "enemies/possessed.glb",
+  rusher: PLAYER_MESH,
+  flanker: PLAYER_MESH,
+  guardian: PLAYER_MESH,
+  ranged: PLAYER_MESH,
 });
 
-// Companion actor's `companionId` field selects its model.
-const COMPANION_MODELS = Object.freeze({
-  "ember-cohort": "companions/ember-cohort.glb",
-  "rift-lens": "companions/rift-lens.glb",
-  "veil-vanguard": "companions/veil-vanguard.glb",
-  "anchor-shard": "companions/anchor-shard.glb",
-  "throne-echo": "companions/throne-echo.glb",
-  "dawnless-crown": "companions/dawnless-crown.glb",
-  "pack-warden": "companions/pack-warden.glb",
-  "lantern-reaver": "companions/lantern-reaver.glb",
-  "requiem-warden": "companions/requiem-warden.glb",
-});
+const COMPANION_MODELS = Object.freeze(Object.fromEntries([
+  "ember-cohort", "rift-lens", "veil-vanguard", "anchor-shard", "throne-echo",
+  "dawnless-crown", "pack-warden", "lantern-reaver", "requiem-warden",
+].map((id) => [id, PLAYER_MESH])));
 
-const COMMANDER_MODEL = "commander/dusk-warden.glb";
+const COMMANDER_MODEL = PLAYER_MESH;
 
-// Public companion/boss/commander model-path lookups, for UI code (app.js
-// portrait cards) that has a prototype/stage id but no live simulation
-// "entity" object. Reuses the SAME maps the battle renderer itself
-// consumes, so results are always consistent with what would actually be
-// drawn in battle for that id.
+// Companion rewards and roster cards resolve through COMPANION_MODELS, which now
+// share the same Lantern Reaver runtime motion model used for actor rendering.
 export function meshRootForCompanion(companionId) {
   return COMPANION_MODELS[companionId] ?? null;
 }
+
 
 // Looks up the stage's authored boss id (defense-catalog.js STAGES) and
 // resolves it through BOSS_MODELS -- returns null if the stage or its boss
@@ -204,51 +186,34 @@ export function meshRootForEquipmentTier(tierId) {
 
 export const COMMANDER_MESH_ROOT = COMMANDER_MODEL;
 
-// Event type -> one-shot VFX GLB + lifetime (ticks @ 60Hz). These 5 RPG-
-// layer telemetry events (defense-run-simulation.js) had zero visual
-// representation anywhere in the runtime before this session; wired here
-// against the exact event-type strings verified against the emit() call
-// sites (grepped this session, not assumed).
+// Event type -> one-shot VFX GLB + lifetime (ticks @ 60Hz). Reuses the
+// three authored stage effects from `assets/motion/`; there is no image-lane
+// fallback for combat feedback.
 const VFX_MODELS = Object.freeze({
-  CRITICAL_HIT: "vfx/critical-hit-burst.glb",
-  BOSS_RALLY_WINDOW: "vfx/boss-rally-aura.glb",
-  GATE_BREACHED: "vfx/gate-breach-shockwave.glb",
-  WARDENS_WARD_TRIGGERED: "vfx/wardens-ward-shield.glb",
-  ECHO_WARDEN_AWAKENING_TRIGGERED: "vfx/echo-warden-awakening.glb",
-  COMPANION_DOWNED: "vfx/companion-downed-fade.glb",
+  CRITICAL_HIT: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  BOSS_RALLY_WINDOW: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  GATE_BREACHED: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  WARDENS_WARD_TRIGGERED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  ECHO_WARDEN_AWAKENING_TRIGGERED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  COMPANION_DOWNED: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
 });
 
-// REWARDS catalog entry id -> its 3D prop model, for reward cards (app.js
-// portrait wiring). Built by scripts/build-world-content-pack.py alongside
-// the character/terrain collections (same canon material palette) but
-// exported separately this session -- these 5 "kind":"modifier" REWARDS ids
-// (verified against defense-catalog.js REWARDS, not assumed) are the only
-// ones with an authored 3D prop; "*-legacy" reward kinds instead reuse
-// their companionId's existing character portrait (see meshRootForReward()
-// below), and "*-archive"/"*-record" kinds have no prop and keep their
-// existing text/glyph card.
+// Reward and equipment card previews use the same authored prop meshes that
+// appear in the live world. Text/glyph fallbacks remain for semantic reward
+// kinds without an authored prop.
 const PROP_MODELS = Object.freeze({
-  "stillwater-hourglass": "props/stillwater-hourglass.glb",
-  "bulwark-brand": "props/bulwark-brand.glb",
-  "abyssal-banner": "props/abyssal-banner.glb",
-  "warden-lantern": "props/warden-lantern.glb",
-  "choir-ward-crystal": "props/choir-ward-crystal.glb",
+  "stillwater-hourglass": PROP_RELIC_MESH,
+  "bulwark-brand": PROP_BLADE_MESH,
+  "abyssal-banner": PROP_RELIC_MESH,
+  "warden-lantern": PROP_BLADE_MESH,
+  "choir-ward-crystal": PROP_RELIC_MESH,
 });
-
-// rpg-catalog.js EQUIPMENT_TIERS[].id -> its 3D tier-gem model, one file per
-// tier (T3 merges the top+bottom cone halves the source collection authors
-// as two separate objects). Growth-panel equipment slots (app.js
-// renderEquipmentSlots) currently encode tier via the CSS .tier-icon
-// clip-path polygon (vertexCount 0/3/4/5/6) -- these give the same 5 tiers
-// an alternate 3D-rendered portrait for surfaces that want a mesh instead
-// of a flat CSS shape (e.g. an equipment-purchase card), without replacing
-// the existing accessible shape+text encoding.
 const EQUIPMENT_TIER_MODELS = Object.freeze({
-  T1: "props/tiers/tier-t1.glb",
-  T2: "props/tiers/tier-t2.glb",
-  T3: "props/tiers/tier-t3.glb",
-  T4: "props/tiers/tier-t4.glb",
-  T5: "props/tiers/tier-t5.glb",
+  T1: PROP_BLADE_MESH,
+  T2: PROP_RELIC_MESH,
+  T3: PROP_BLADE_MESH,
+  T4: PROP_RELIC_MESH,
+  T5: PROP_BLADE_MESH,
 });
 const VFX_LIFETIME_TICKS = Object.freeze({
   CRITICAL_HIT: 18,
@@ -272,10 +237,16 @@ const LOCOMOTION_ACTION_KEYS = Object.freeze(["idle", "move", "run"]);
 const RANGED_COMBAT_IDENTITIES = Object.freeze(["ranged", "support"]);
 const MELEE_COMBAT_IDENTITIES = Object.freeze(["rusher", "flanker", "guardian", "vanguard", "striker"]);
 const COMBAT_PRESENTATION_MODELS = Object.freeze({
-  melee: Object.freeze({ weapon: "props/abyss-blade.glb", effects: Object.freeze(["vfx/melee-slash.glb"]) }),
+  melee: Object.freeze({
+    weapon: PROP_BLADE_MESH,
+    effects: Object.freeze(["assets/motion/stage-vfx/cinder-span-ember-wake.glb"]),
+  }),
   ranged: Object.freeze({
-    weapon: "props/arc-caster.glb",
-    effects: Object.freeze(["vfx/abyss-orb.glb", "vfx/ranged-bolt.glb"]),
+    weapon: PROP_RELIC_MESH,
+    effects: Object.freeze([
+      "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+      "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+    ]),
   }),
 });
 const PROJECTILE_PRESENTATIONS = Object.freeze({
@@ -660,13 +631,17 @@ function resolveStageId(snapshot) {
   return snapshot?.presentation?.stageId ?? (typeof snapshot?.stageId === "string" ? snapshot.stageId : null);
 }
 
-function actorModelPath(entity) {
+function standardActorModelPath(entity) {
   if (!entity) return null;
   if (entity.id === "commander") return COMMANDER_MODEL;
   if (entity.class === "boss") return entity.bossId ? BOSS_MODELS[entity.bossId] ?? null : null;
   if (entity.kind === "companion") return entity.companionId ? COMPANION_MODELS[entity.companionId] ?? null : null;
   if (typeof entity.kind === "string" && ENEMY_MODELS[entity.kind]) return ENEMY_MODELS[entity.kind];
   return null;
+}
+
+function actorModelPath(entity) {
+  return standardActorModelPath(entity);
 }
 
 function actorTargetHeight(entity) {
@@ -707,21 +682,16 @@ function snapshotEntityById(snapshot, entityId) {
   return null;
 }
 
-// --- GLTF loading: one shared loader + promise cache across every mounted
-// instance (pure asset-data caching, not per-instance scene state -- safe
-// to share, and avoids re-fetching the same 42 files if multiple sessions
-// mount in sequence). ---
+// Shared loaders and promise caches preserve immutable source data while each
+// mounted scene owns its cloned renderables. Terrain may be a supplied OBJ;
+// actor, prop, and VFX assets remain GLB.
 const gltfLoader = new GLTFLoader();
+const objLoader = new OBJLoader();
 const gltfCache = new Map();
+const objCache = new Map();
+const CINDER_TERRAIN_TEXTURE_ROOT = "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack";
+let cinderTerrainMapsPromise = null;
 
-const OVERLAY_ANIMATION_PATH = "assets/motion/ingame/unarmed-core.glb";
-const OVERLAY_ACTION_KEYS = new Set(["idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence"]);
-let overlayDeltaEntriesPromise = null;
-let warnedOverlayLoadFailure = false;
-// Raw overlay clips are rig-independent quaternion deltas. This cache holds
-// absolute clips composed once per model rest pose, then shared by every
-// instance of that model path.
-const adaptedOverlayEntriesByModel = new Map();
 // SkeletonUtils.clone() gives each rendered instance an owned skeleton; this
 // identity set keeps repeated disposal idempotent when roots overlap.
 const disposedSkeletons = new WeakSet();
@@ -730,7 +700,7 @@ function modelUrl(path) {
   if (typeof path !== "string" || !path) return null;
   if (path.startsWith("./") || path.startsWith("../") || path.startsWith("/")) return path;
   if (path.startsWith("assets/")) return `./${path}`;
-  return MODEL_ROOT + path;
+  return null;
 }
 
 function loadGltf(path) {
@@ -748,99 +718,62 @@ function loadGltf(path) {
   return gltfCache.get(url);
 }
 
-function overlayTrackBoneName(trackName) {
-  if (typeof trackName !== "string" || !trackName.endsWith(".quaternion")) return null;
-  const nodePath = trackName.slice(0, -".quaternion".length);
-  const bonesMatch = nodePath.match(/\.bones\[([^\]]+)\]$/);
-  if (bonesMatch) return bonesMatch[1];
-  const slash = nodePath.lastIndexOf("/");
-  return nodePath.slice(slash + 1);
-}
-
-function normalizeOverlayDeltaClip(clip) {
-  const tracks = [];
-  for (const track of clip?.tracks ?? []) {
-    const boneName = overlayTrackBoneName(track.name);
-    if (!boneName?.startsWith("DEF-") || track.values.length % 4 !== 0) continue;
-    const normalized = track.clone();
-    normalized.name = `${boneName}.quaternion`;
-    tracks.push(normalized);
-  }
-  return tracks.length
-    ? new THREE.AnimationClip(clip.name, clip.duration, tracks, clip.blendMode)
-    : null;
-}
-
-function loadOverlayDeltaEntries() {
-  if (overlayDeltaEntriesPromise) return overlayDeltaEntriesPromise;
-  const request = loadGltf(OVERLAY_ANIMATION_PATH)
-    .then((gltf) => {
-      const entries = [];
-      const seen = new Set();
-      for (const rawClip of gltf?.animations ?? []) {
-        const key = actionKeyFromClipName(rawClip.name);
-        if (!OVERLAY_ACTION_KEYS.has(key) || seen.has(key)) continue;
-        const clip = normalizeOverlayDeltaClip(rawClip);
-        if (!clip) continue;
-        entries.push({ key, clip, source: "overlay" });
-        seen.add(key);
-      }
-      return entries;
-    })
-    .catch((error) => {
-      if (!warnedOverlayLoadFailure) {
-        console.warn(`Failed to load animation overlay ${OVERLAY_ANIMATION_PATH}:`, error);
-        warnedOverlayLoadFailure = true;
-      }
-      if (overlayDeltaEntriesPromise === request) overlayDeltaEntriesPromise = null;
-      return [];
+function loadObj(path) {
+  const url = modelUrl(path);
+  if (!url) return Promise.reject(new TypeError("Missing OBJ model path"));
+  if (!objCache.has(url)) {
+    const request = new Promise((resolve, reject) => {
+      objLoader.load(url, resolve, undefined, reject);
+    }).catch((error) => {
+      if (objCache.get(url) === request) objCache.delete(url);
+      throw error;
     });
-  overlayDeltaEntriesPromise = request;
-  return request;
+    objCache.set(url, request);
+  }
+  return objCache.get(url);
 }
 
-function adaptOverlayEntries(modelPath, instance, deltaEntries) {
-  if (!deltaEntries.length) return [];
-  if (adaptedOverlayEntriesByModel.has(modelPath)) return adaptedOverlayEntriesByModel.get(modelPath);
-  const deltaQuaternion = new THREE.Quaternion();
-  const composedQuaternion = new THREE.Quaternion();
-  const entries = [];
-  for (const entry of deltaEntries) {
-    const tracks = [];
-    for (const deltaTrack of entry.clip.tracks) {
-      const boneName = overlayTrackBoneName(deltaTrack.name);
-      const bone = boneName ? instance.getObjectByName(boneName) : null;
-      if (!bone?.isBone) continue;
-      const restQuaternion = bone.quaternion.clone();
-      const track = deltaTrack.clone();
-      let previous = null;
-      for (let index = 0; index < track.values.length; index += 4) {
-        deltaQuaternion.fromArray(track.values, index).normalize();
-        composedQuaternion.copy(restQuaternion).multiply(deltaQuaternion).normalize();
-        if (previous && composedQuaternion.dot(previous) < 0) {
-          composedQuaternion.set(
-            -composedQuaternion.x,
-            -composedQuaternion.y,
-            -composedQuaternion.z,
-            -composedQuaternion.w,
-          );
-        }
-        composedQuaternion.toArray(track.values, index);
-        previous = composedQuaternion.clone();
-      }
-      track.name = `${boneName}.quaternion`;
-      tracks.push(track);
-    }
-    if (!tracks.length) continue;
-    entries.push({
-      key: entry.key,
-      source: entry.source,
-      clip: new THREE.AnimationClip(entry.clip.name, entry.clip.duration, tracks, entry.clip.blendMode),
+function loadTexture(path) {
+  const url = modelUrl(path);
+  if (!url) return Promise.reject(new TypeError("Missing terrain texture path"));
+  const loader = new THREE.TextureLoader();
+  return new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
+}
+
+function cinderTerrainMaps() {
+  if (!cinderTerrainMapsPromise) {
+    cinderTerrainMapsPromise = Promise.all([
+      loadTexture(`${CINDER_TERRAIN_TEXTURE_ROOT}/texture_diffuse.png`),
+      loadTexture(`${CINDER_TERRAIN_TEXTURE_ROOT}/texture_normal.png`),
+      loadTexture(`${CINDER_TERRAIN_TEXTURE_ROOT}/texture_roughness.png`),
+      loadTexture(`${CINDER_TERRAIN_TEXTURE_ROOT}/texture_metallic.png`),
+    ]).then(([map, normalMap, roughnessMap, metalnessMap]) => {
+      map.colorSpace = THREE.SRGBColorSpace;
+      return { map, normalMap, roughnessMap, metalnessMap };
+    }).catch((error) => {
+      console.warn("Cinder Span terrain textures unavailable; using neutral PBR material.", error);
+      cinderTerrainMapsPromise = null;
+      return null;
     });
   }
-  adaptedOverlayEntriesByModel.set(modelPath, entries);
-  return entries;
+  return cinderTerrainMapsPromise;
 }
+
+async function applyObjTerrainMaterials(instance) {
+  const maps = await cinderTerrainMaps();
+  instance.traverse((node) => {
+    if (!node.isMesh) return;
+    node.material = new THREE.MeshStandardMaterial({
+      map: maps?.map ?? null,
+      normalMap: maps?.normalMap ?? null,
+      roughnessMap: maps?.roughnessMap ?? null,
+      metalnessMap: maps?.metalnessMap ?? null,
+      roughness: 1,
+      metalness: 0,
+    });
+  });
+}
+
 
 function stageNpcFacingYaw(npc, sourcePoint) {
   const target = npc?.attentionTarget
@@ -1048,29 +981,26 @@ function applyCelShading(root) {
 }
 
 async function instantiateActorModel(relPath, targetHeight) {
-  const [gltf, overlayDeltaEntries] = await Promise.all([
-    loadGltf(relPath),
-    loadOverlayDeltaEntries(),
-  ]);
+  const gltf = await loadGltf(relPath);
   return serializeInstantiation(() => {
     // SkeletonUtils.clone() (not gltf.scene.clone()) so a SkinnedMesh instance
     // gets bound to its own cloned skeleton.
     const instance = SkeletonUtils.clone(gltf.scene);
     fitHeight(instance, targetHeight);
     applyCelShading(instance);
-    const overlayEntries = adaptOverlayEntries(relPath, instance, overlayDeltaEntries);
     const baseEntries = (gltf.animations ?? []).map((clip) => ({ clip, source: "base" }));
-    const clipEntries = [...overlayEntries, ...baseEntries];
-    if (!clipEntries.length) return { instance, mixer: null, actions: {}, actionSources: {} };
+    if (!baseEntries.length) return { instance, mixer: null, actions: {}, actionSources: {} };
     const mixer = new THREE.AnimationMixer(instance);
-    const { actions, actionSources } = buildActions(mixer, clipEntries);
+    const { actions, actionSources } = buildActions(mixer, baseEntries);
     return { instance, mixer, actions, actionSources };
   });
 }
 
 async function instantiateTerrainModel(relPath) {
-  const gltf = await loadGltf(relPath);
-  const instance = SkeletonUtils.clone(gltf.scene);
+  const isObj = relPath.endsWith(".obj");
+  const source = isObj ? await loadObj(relPath) : (await loadGltf(relPath)).scene;
+  const instance = isObj ? source.clone(true) : SkeletonUtils.clone(source);
+  if (isObj) await applyObjTerrainMaterials(instance);
   ownRenderableResources(instance);
   fitFootprint(instance, TERRAIN_TARGET_HALF_EXTENT);
   return instance;
@@ -1085,7 +1015,11 @@ async function instantiatePresentationModel(relPath, targetHeight) {
 
 async function instantiateStageProp(prop) {
   const gltf = await loadGltf(prop.modelPath);
-  const instance = SkeletonUtils.clone(gltf.scene);
+  const source = prop.modelNode ? gltf.scene.getObjectByName(prop.modelNode) : gltf.scene;
+  if (!source) throw new Error(`Stage prop node not found: ${prop.modelPath}#${prop.modelNode}`);
+  source.updateWorldMatrix(true, true);
+  const instance = SkeletonUtils.clone(source);
+  if (prop.modelNode) source.matrixWorld.decompose(instance.position, instance.quaternion, instance.scale);
   ownRenderableResources(instance);
   const radius = finite(prop.footprintRadius, 180) * WORLD_SCALE / (WORLD_WIDTH / 2);
   fitFootprint(instance, radius);
@@ -1103,12 +1037,63 @@ async function instantiateStageProp(prop) {
     kind: "prop",
     role: prop.role,
     modelPath: prop.modelPath,
+    modelNode: prop.modelNode ?? null,
     placement: prop.placement,
     root: instance,
     mixer: null,
     actions: {},
   };
 }
+async function instantiateStageVfx(cue, { reducedMotion = false, lowQuality = false } = {}) {
+  const gltf = await loadGltf(cue.modelPath);
+  const instance = SkeletonUtils.clone(gltf.scene);
+  ownRenderableResources(instance);
+  const point = worldPoint(cue.placement);
+  instance.position.set(point.x, point.y + STAGE_VFX_GROUND_LIFT, point.z);
+  instance.rotation.y = finite(cue.placement?.yawRadians, 0);
+  instance.name = `stage-vfx:${cue.id}`;
+  instance.userData.stageDecorId = cue.id;
+  instance.userData.stageDecorKind = "stage-vfx";
+
+  const clip = gltf.animations.find(({ name }) => name === cue.clip) ?? null;
+  const mixer = clip ? new THREE.AnimationMixer(instance) : null;
+  const loopAction = mixer ? mixer.clipAction(clip) : null;
+  loopAction?.setLoop(THREE.LoopRepeat, Infinity);
+  const record = {
+    id: cue.id,
+    effectId: cue.effectId,
+    kind: "stage-vfx",
+    role: cue.role,
+    modelPath: cue.modelPath,
+    placement: cue.placement,
+    root: instance,
+    mixer,
+    actions: loopAction ? { loop: loopAction } : {},
+    activeActionKey: null,
+    activeActionClip: clip?.name ?? null,
+    quality: "full",
+    lowQuality,
+    detailGroup: instance.getObjectByName(cue.qualityGroups.detail) ?? null,
+    decorGroup: instance.getObjectByName(cue.qualityGroups.decor) ?? null,
+    loopAction,
+  };
+  applyStageVfxPolicy(record, reducedMotion);
+  return record;
+}
+function applyStageVfxPolicy(record, reducedMotion) {
+  const simplified = reducedMotion || record.lowQuality;
+  if (record.detailGroup) record.detailGroup.visible = !simplified;
+  if (record.decorGroup) record.decorGroup.visible = !simplified;
+  if (reducedMotion) {
+    record.loopAction?.stop();
+    record.activeActionKey = null;
+  } else {
+    record.loopAction?.reset().play();
+    record.activeActionKey = record.loopAction ? "loop" : null;
+  }
+  record.quality = reducedMotion ? "reduced-motion" : (record.lowQuality ? "low" : "full");
+}
+
 
 function stageNpcGuardBones(root) {
   const bones = { left: null, right: null };
@@ -1752,6 +1737,10 @@ export class RealtimeBattle {
 
     const decorRequests = [
       ...profile.presentation.props.map((prop) => instantiateStageProp(prop)),
+      ...(profile.presentation.vfxCues ?? []).map((cue) => instantiateStageVfx(cue, {
+        reducedMotion: this.reducedMotion,
+        lowQuality: this.softwareRenderer,
+      })),
       ...profile.presentation.npcs.map((npc) => instantiateStageNpc(npc)),
     ];
     for (const request of decorRequests) {
@@ -1845,9 +1834,11 @@ export class RealtimeBattle {
     if (!entity?.id || this.disposed) return;
     const existing = this.actors.get(entity.id);
     if (existing) return existing;
-    const modelPath = actorModelPath(entity) ?? (kind === "companion" ? null : null);
+    const standardModelPath = standardActorModelPath(entity);
+    const modelPath = actorModelPath(entity);
+    const fallbackModelPath = modelPath !== standardModelPath ? standardModelPath : null;
     const record = {
-      root: null, kind, modelPath, loading: Boolean(modelPath),
+      root: null, kind, modelPath, fallbackModelPath, loading: Boolean(modelPath),
       entityKind: entity.kind ?? null, role: entity.role ?? null, moveState: entity.move ?? null,
       mixer: null, actions: {}, actionSources: {}, activeActionKey: null, targetHeight: actorTargetHeight(entity),
       activeActionSource: null, activeActionClip: null,
@@ -1889,7 +1880,18 @@ export class RealtimeBattle {
       this.actorGroup.add(marker);
       return record;
     }
-    instantiateActorModel(modelPath, actorTargetHeight(entity))
+    const targetHeight = actorTargetHeight(entity);
+    const loadRequest = instantiateActorModel(modelPath, targetHeight)
+      .catch((error) => {
+        if (!record.fallbackModelPath || this.disposed || this.actors.get(entity.id) !== record) {
+          throw error;
+        }
+        const fallback = record.fallbackModelPath;
+        record.modelPath = fallback;
+        record.fallbackModelPath = null;
+        return instantiateActorModel(fallback, targetHeight);
+      });
+    loadRequest
       .then(({ instance, mixer, actions, actionSources }) => {
         record.root = instance;
         record.restScale = instance.scale.clone();
@@ -2537,6 +2539,9 @@ export class RealtimeBattle {
   setReducedMotion(reducedMotion) {
     this.reducedMotion = reducedMotion === true;
     if (this.reducedMotion) this.stageIntro = null;
+    for (const record of this.stageDecorRecords) {
+      if (record.kind === "stage-vfx") applyStageVfxPolicy(record, this.reducedMotion);
+    }
   }
 
   startsStageAtTickZero(snapshot) {
@@ -2899,8 +2904,8 @@ export class RealtimeBattle {
       if (echo.mixer) echo.mixer.update(delta);
     }
     for (const record of this.stageDecorRecords) {
-      if (record.kind !== "stage-npc") continue;
       record.mixer?.update(delta);
+      if (record.kind !== "stage-npc") continue;
       applyStageNpcGuardPose(record);
       this.updateAmbientIdle(record, nowMs);
     }
@@ -3326,7 +3331,11 @@ export class RealtimeBattle {
       role: record.role ?? null,
       actorId: record.actorId ?? null,
       modelPath: record.modelPath,
+      modelNode: record.modelNode ?? null,
       source: record.placement ?? null,
+      effectId: record.effectId ?? null,
+      clip: record.activeActionClip ?? null,
+      quality: record.quality ?? null,
       position: record.root
         ? { x: record.root.position.x, y: record.root.position.y, z: record.root.position.z }
         : null,
@@ -3354,6 +3363,7 @@ export class RealtimeBattle {
       terrainLoaded: Boolean(this.stageTerrainRecord),
       propCount: stageDecorRecords.filter((record) => record.kind === "prop").length,
       npcCount: stageDecorRecords.filter((record) => record.kind === "stage-npc").length,
+      vfxCount: stageDecorRecords.filter((record) => record.kind === "stage-vfx").length,
       mixerCount: stageDecorRecords.reduce((count, record) => count + (record.hasMixer ? 1 : 0), 0),
       actionCount: stageDecorRecords.reduce((count, record) => count + record.actionCount, 0),
       records: stageDecorRecords,

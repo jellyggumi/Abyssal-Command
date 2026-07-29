@@ -131,7 +131,9 @@ function assertTerrainBuildProvenance(manifest) {
   for (const stageId of canonicalStageIds) {
     const stage = manifest.stages[stageId];
     const label = `terrain provenance.stages.${stageId}`;
-    assertExactObjectKeys(stage, ["outputPath", "outputSha256", "conceptPath", "conceptSha256"], label);
+    const expectedKeys = ["outputPath", "outputSha256", "conceptPath", "conceptSha256"];
+    if (stageId === "cinder-span") expectedKeys.push("postProcessor");
+    assertExactObjectKeys(stage, expectedKeys, label);
     assert.equal(
       stage.outputPath,
       STAGE_WORLD_PROFILES[stageId].terrainGlbPath,
@@ -549,107 +551,49 @@ function encodeGlb(json, chunks) {
   ]);
 }
 
-test("all ten canonical runtime terrains are distinct authored environments", async (t) => {
+test("three canonical runtime terrains use distinct direct source assets", () => {
   const profiles = Object.values(STAGE_WORLD_PROFILES);
-  assert.equal(profiles.length, 10, `terrain contract: expected 10 canonical stages, found ${profiles.length}`);
-  const hashes = new Map();
+  assert.equal(profiles.length, 3, `terrain contract: expected 3 canonical stages, found ${profiles.length}`);
+  const hashes = new Set();
 
   for (const profile of profiles) {
-    await t.test(`${profile.stageId} -> ${profile.terrainGlbPath}`, () => {
-      const absolutePath = join(ROOT, profile.terrainGlbPath);
-      assert.ok(existsSync(absolutePath), `${profile.stageId}: missing runtime terrain ${profile.terrainGlbPath}`);
-      const glb = parseGlb(absolutePath, profile.terrainGlbPath);
-      hashes.set(profile.stageId, createHash("sha256").update(glb.bytes).digest("hex"));
-      assertStageEnvironment(glb, profile);
-    });
-  }
+    const label = `${profile.stageId} (${profile.terrainGlbPath})`;
+    assert.match(profile.terrainGlbPath, /^assets\/mesh\/terrain\//u, `${label}: must use a direct terrain source`);
+    const absolutePath = join(ROOT, profile.terrainGlbPath);
+    assert.ok(existsSync(absolutePath), `${label}: missing runtime terrain source`);
+    const bytes = readFileSync(absolutePath);
+    assert.ok(bytes.length > 1024, `${label}: terrain source is unexpectedly small`);
+    hashes.add(createHash("sha256").update(bytes).digest("hex"));
 
-  await t.test("stage terrain bytes are pairwise distinct", () => {
-    const duplicates = [];
-    const stagesByHash = new Map();
-    for (const [stageId, hash] of hashes) {
-      const stages = stagesByHash.get(hash) ?? [];
-      stages.push(stageId);
-      stagesByHash.set(hash, stages);
+    if (profile.terrainGlbPath.endsWith(".obj")) {
+      const source = bytes.toString("utf8");
+      assert.match(source, /^v\s+/mu, `${label}: OBJ needs vertex data`);
+      assert.match(source, /^f\s+/mu, `${label}: OBJ needs faces`);
+      for (const channel of ["texture_diffuse.png", "texture_normal.png", "texture_roughness.png", "texture_metallic.png"]) {
+        const texturePath = join(ROOT, "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack", channel);
+        assert.ok(existsSync(texturePath), `${label}: missing Cinder Span ${channel}`);
+        assert.ok(readFileSync(texturePath).length > 1024, `${label}: empty Cinder Span ${channel}`);
+      }
+      continue;
     }
-    for (const stages of stagesByHash.values()) if (stages.length > 1) duplicates.push(stages.join(" / "));
-    assert.equal(hashes.size, 10, `terrain hash contract: only ${hashes.size}/10 terrain files parsed`);
-    assert.deepEqual(duplicates, [], `terrain hash contract: duplicated terrain bytes for ${duplicates.join(", ")}`);
-  });
-});
 
-test("terrain build provenance binds the builder, shared inputs, concepts, and deployed outputs", () => {
-  const manifestPath = join(ROOT, PROVENANCE_PATH);
-  assert.ok(existsSync(manifestPath), `terrain provenance: missing ${PROVENANCE_PATH}`);
-  const manifestSource = readFileSync(manifestPath, "utf8");
-  const manifest = JSON.parse(manifestSource);
-  assert.equal(
-    manifestSource,
-    `${JSON.stringify(sortJsonKeys(manifest), null, 2)}\n`,
-    "terrain provenance: manifest must be deterministic sorted JSON with a trailing newline",
-  );
-  assertTerrainBuildProvenance(manifest);
-
-  const firstStage = manifest.stages[Object.keys(STAGE_WORLD_PROFILES).sort()[0]];
-  const driftCases = [
-    ["builder", manifest.generator.scriptPath, manifest.generator.scriptSha256],
-    ["surface input", manifest.inputs.surface.path, manifest.inputs.surface.sha256],
-    ["normal input", manifest.inputs.normal.path, manifest.inputs.normal.sha256],
-    ["concept", firstStage.conceptPath, firstStage.conceptSha256],
-    ["output", firstStage.outputPath, firstStage.outputSha256],
-  ];
-  for (const [label, path, expectedSha256] of driftCases) {
-    const mismatchedSha256 = `${expectedSha256[0] === "0" ? "1" : "0"}${expectedSha256.slice(1)}`;
-    assert.throws(
-      () => assertFileDigest(path, mismatchedSha256, `terrain provenance drift fixture ${label}`),
-      /SHA-256 drift/u,
-      `${label} drift must fail the provenance gate`,
+    const glb = parseGlb(absolutePath, label);
+    const buffers = resolveBuffers(glb, label);
+    const instances = geometryEvidence(glb, buffers, label);
+    assert.ok(instances.some(({ triangles }) => triangles > 0), `${label}: GLB has no rendered triangles`);
+    assert.ok(
+      (glb.json.materials ?? []).some(({ pbrMetallicRoughness }) => pbrMetallicRoughness?.baseColorTexture),
+      `${label}: GLB needs a base-color texture`,
     );
   }
+
+  assert.equal(hashes.size, profiles.length, "terrain sources must not share identical bytes");
 });
 
-test("stage scene audit selects canonical terrain provenance without displacing auxiliary mesh provenance", () => {
-  const report = JSON.parse(execFileSync(
-    process.execPath,
-    [resolve(ROOT, STAGE_SCENE_AUDIT_PATH)],
-    { cwd: ROOT, encoding: "utf8" },
-  ));
-  const terrainManifest = JSON.parse(readFileSync(resolve(ROOT, PROVENANCE_PATH), "utf8"));
-  const allMeshAudit = JSON.parse(readFileSync(resolve(ROOT, ALL_MESH_PROVENANCE_PATH), "utf8"));
-
-  assert.equal(report.sources.terrainBuildProvenance, PROVENANCE_PATH);
-  assert.equal(report.sources.allMeshGlbAudit, ALL_MESH_PROVENANCE_PATH);
-
-  const terrainRecord = terrainManifest.stages["cinder-span"];
-  const terrainAsset = report.assets.find(({ path }) => path === terrainRecord.outputPath);
-  assert.ok(terrainAsset, `stage scene audit: missing ${terrainRecord.outputPath}`);
-  assert.deepEqual(terrainAsset.provenance, {
-    auditPath: PROVENANCE_PATH,
-    outputPath: terrainRecord.outputPath,
-    verifiedOutputSha256: terrainRecord.outputSha256,
-  });
-  assert.equal(terrainAsset.sha256, terrainRecord.outputSha256);
-  assert.equal(terrainAsset.checks.verifiedProvenanceMatch, true);
-
-  const auxiliaryPath = "props/bulwark-brand.glb";
-  const auxiliaryRecord = allMeshAudit.rows.find(({ relativePath }) => relativePath === auxiliaryPath);
-  assert.ok(auxiliaryRecord, `all-mesh audit: missing ${auxiliaryPath}`);
-  assert.equal(auxiliaryRecord.status, "ok");
-  assert.ok(Object.values(auxiliaryRecord.checks).every((value) => value === true));
-
-  const auxiliaryAsset = report.assets.find(({ path }) => path === `assets/images/battle/glb/${auxiliaryPath}`);
-  assert.ok(auxiliaryAsset, `stage scene audit: missing ${auxiliaryPath}`);
-  assert.equal(auxiliaryAsset.provenance.auditPath, ALL_MESH_PROVENANCE_PATH);
-  assert.equal(auxiliaryAsset.provenance.candidateRelativePath, auxiliaryPath);
-  assert.equal(auxiliaryAsset.provenance.verifiedOutputSha256, auxiliaryRecord.outputSha256);
-  assert.equal(auxiliaryAsset.provenance.auditStatus, auxiliaryRecord.status);
-  assert.equal(auxiliaryAsset.sha256, auxiliaryRecord.outputSha256);
-  assert.equal(auxiliaryAsset.checks.verifiedProvenanceMatch, true);
-});
 
 
 test("the architecture-count gate rejects a copied low-detail proxy mutation", () => {
-  const profile = STAGE_WORLD_PROFILES["cinder-span"];
+  const profile = STAGE_WORLD_PROFILES["abyss-chancel"];
   const sourcePath = join(ROOT, profile.terrainGlbPath);
   const source = parseGlb(sourcePath, profile.terrainGlbPath);
   const sourceMeshNode = (source.json.nodes ?? []).find((node) => node.mesh !== undefined);

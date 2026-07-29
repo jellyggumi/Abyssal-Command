@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-07-29T08:43:22.285Z",
+  "url": "http://127.0.0.1:8877/",
+  "renderer": "webgl",
+  "route": "Cinder Span live battle guardian midboss",
+  "actor": {
+    "id": "midboss-90",
+    "modelPath": "assets/motion/ingame/characters/guard/model.glb",
+    "activeActionSource": "base",
+    "activeActionClip": "guard::move::v01",
+    "activeActionKey": "move",
+    "boneCount": 24,
+    "sampledFrames": 48,
+    "maxBoneDeltaRad": 1.8269515528990519,
+    "movedBoneSamples": 1014
+  },
+  "resource": {
+    "name": "http://127.0.0.1:8877/assets/motion/ingame/characters/guard/model.glb",
+    "responseStatus": 200,
+    "decodedBodySize": 13426276,
+    "durationMs": 196
+  },
+  "screenshot": "_workspace/current/qa/character-motion-runtime-guard.webp"
+}

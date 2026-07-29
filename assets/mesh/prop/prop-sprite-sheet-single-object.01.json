@@ -1,102 +1,48 @@
 {
   "sheet": "assets/mesh/prop/prop-sprite-sheet-single-object.01.png",
   "sheetIndex": 1,
-  "width": 7354,
-  "height": 7426,
+  "width": 7221,
+  "height": 2788,
   "pad": 4,
   "packMode": "shelf-height-desc",
   "sheetWidthLimit": 8192,
-  "frameCount": 15,
+  "frameCount": 6,
   "frames": {
-    "s3-gate-sovereign.png": {
+    "choir-ward-crystal.png": {
+      "x": 6794,
+      "y": 0,
+      "width": 427,
+      "height": 1193
+    },
+    "ember-cohort.png": {
       "x": 0,
       "y": 0,
-      "width": 1438,
-      "height": 2506
+      "width": 947,
+      "height": 2788
     },
-    "s4-tide-warden.png": {
-      "x": 1442,
+    "possessed.png": {
+      "x": 2454,
       "y": 0,
-      "width": 1418,
-      "height": 2499
+      "width": 1428,
+      "height": 2439
     },
     "s10-abyss-regent.png": {
-      "x": 2864,
+      "x": 951,
       "y": 0,
       "width": 1499,
       "height": 2496
     },
-    "player-core-v04.png": {
-      "x": 4367,
-      "y": 0,
-      "width": 1490,
-      "height": 2494
-    },
-    "s7-lantern-tyrant.png": {
-      "x": 5861,
-      "y": 0,
-      "width": 1489,
-      "height": 2494
-    },
-    "requiem-warden.png": {
-      "x": 0,
-      "y": 2510,
-      "width": 1485,
-      "height": 2479
-    },
-    "ui-control-close.png": {
-      "x": 1489,
-      "y": 2510,
-      "width": 1483,
-      "height": 2468
-    },
-    "sung-hum-boss.png": {
-      "x": 2976,
-      "y": 2510,
-      "width": 1448,
-      "height": 2458
-    },
-    "possessed.png": {
-      "x": 4428,
-      "y": 2510,
-      "width": 1428,
-      "height": 2439
-    },
-    "shadow-soldier-v04.png": {
-      "x": 5860,
-      "y": 2510,
-      "width": 1487,
-      "height": 2436
-    },
-    "human-command-boss.png": {
-      "x": 0,
-      "y": 4993,
-      "width": 1492,
-      "height": 2433
-    },
-    "pack-warden.png": {
-      "x": 1496,
-      "y": 4993,
-      "width": 1429,
-      "height": 2432
-    },
     "sung-hum-v04.png": {
-      "x": 2929,
-      "y": 4993,
+      "x": 3886,
+      "y": 0,
       "width": 1453,
       "height": 2396
     },
-    "s8-bridge-colossus.png": {
-      "x": 4386,
-      "y": 4993,
-      "width": 1502,
-      "height": 2373
-    },
-    "lantern-reaver.png": {
-      "x": 5892,
-      "y": 4993,
-      "width": 1428,
-      "height": 2371
+    "ui-control-sortie.png": {
+      "x": 5343,
+      "y": 0,
+      "width": 1447,
+      "height": 1907
     }
   }
 }

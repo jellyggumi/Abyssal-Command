@@ -1,0 +1,313 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
+  "generatedAt": "2026-07-29T07:34:40.168622+00:00",
+  "assetId": "human-command-boss",
+  "role": "stone-command-colossus",
+  "category": "bosses",
+  "source": "assets/mesh/character/human-command-boss-character/glb/base_basic_pbr.glb",
+  "sourceSha256": "84e018fa05866b3f08f675d1fa49712550cbdb3918d3e80af079036f84f715ad",
+  "sourceRig": "mixamo-37",
+  "targetRig": "def-humanoid-v1",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/model.glb",
+  "modelSha256": "ffa5f40704667186771e4de44e3fc18a4db377f9c52b354e47a969b1243b2770",
+  "modelBytes": 9719604,
+  "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/review.blend",
+  "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/rig-report.json",
+  "targetBoneNames": [
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-pelvis.L",
+    "DEF-pelvis.R",
+    "DEF-shoulder.L",
+    "DEF-upper_arm.L",
+    "DEF-forearm.L",
+    "DEF-hand.L",
+    "DEF-shoulder.R",
+    "DEF-upper_arm.R",
+    "DEF-forearm.R",
+    "DEF-hand.R",
+    "DEF-thigh.L",
+    "DEF-shin.L",
+    "DEF-foot.L",
+    "DEF-toe.L",
+    "DEF-thigh.R",
+    "DEF-shin.R",
+    "DEF-foot.R",
+    "DEF-toe.R"
+  ],
+  "clips": [
+    {
+      "action": "idle",
+      "clipName": "human-command-boss::idle::v01",
+      "source": "Idle.fbx",
+      "sourceSha256": "004369b7c2963ba673c307ef33fcbcb26f45214a685adb0db559337ed3c4cb2e",
+      "frameStart": 1,
+      "frameEnd": 97,
+      "sourceFps": 24,
+      "durationSeconds": 4.0,
+      "sourceRootTravel": {
+        "x": -4e-06,
+        "y": 0.0,
+        "z": 4e-06,
+        "total": 6e-06
+      },
+      "loop": true,
+      "gain": 0.58
+    },
+    {
+      "action": "move",
+      "clipName": "human-command-boss::move::v01",
+      "source": "Catwalk Walk Forward HighKnees.fbx",
+      "sourceSha256": "2f2c28bcd3aa1f56d96a26c0ebb0cde76e9b0eced1a1bfe7b9f7f72459a74b47",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": 0.025248,
+        "y": 3.1e-05,
+        "z": 119.008526,
+        "total": 119.008528
+      },
+      "loop": true,
+      "gain": 0.64
+    },
+    {
+      "action": "run",
+      "clipName": "human-command-boss::run::v01",
+      "source": "Running.fbx",
+      "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": -1e-06,
+        "y": 0.0,
+        "z": 350.087158,
+        "total": 350.087158
+      },
+      "loop": true,
+      "gain": 0.68
+    },
+    {
+      "action": "hit",
+      "clipName": "human-command-boss::hit::v01",
+      "source": "Standing React Small From Left.fbx",
+      "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+      "frameStart": 1,
+      "frameEnd": 19,
+      "sourceFps": 24,
+      "durationSeconds": 0.75,
+      "sourceRootTravel": {
+        "x": -2e-05,
+        "y": 8e-06,
+        "z": 1.2e-05,
+        "total": 2.5e-05
+      },
+      "loop": false,
+      "gain": 0.6
+    },
+    {
+      "action": "bighit",
+      "clipName": "human-command-boss::bighit::v01",
+      "source": "Receive Uppercut To The Face.fbx",
+      "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": 0.000427,
+        "y": -3.8e-05,
+        "z": 3.9e-05,
+        "total": 0.000431
+      },
+      "loop": false,
+      "gain": 0.7
+    },
+    {
+      "action": "attack",
+      "clipName": "human-command-boss::attack::v01",
+      "source": "Punching Bag.fbx",
+      "sourceSha256": "51a60ea3fd66916141e99d399337e4ab46ee9eff33de992800b0a00f4afd3bd9",
+      "frameStart": 1,
+      "frameEnd": 78,
+      "sourceFps": 24,
+      "durationSeconds": 3.2083333333333335,
+      "sourceRootTravel": {
+        "x": -5e-06,
+        "y": 0.0,
+        "z": 3e-06,
+        "total": 6e-06
+      },
+      "loop": false,
+      "gain": 0.78
+    },
+    {
+      "action": "critical",
+      "clipName": "human-command-boss::critical::v01",
+      "source": "Body Block.fbx",
+      "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4",
+      "frameStart": 1,
+      "frameEnd": 83,
+      "sourceFps": 24,
+      "durationSeconds": 3.4166666666666665,
+      "sourceRootTravel": {
+        "x": -2e-06,
+        "y": -1.5e-05,
+        "z": -2e-06,
+        "total": 1.6e-05
+      },
+      "loop": false,
+      "gain": 0.82
+    },
+    {
+      "action": "avoid",
+      "clipName": "human-command-boss::avoid::v01",
+      "source": "Change Direction.fbx",
+      "sourceSha256": "09157e82b84fd8a537e8868db2d048977ab87eada12ad4db4321d022b1cfe8da",
+      "frameStart": 1,
+      "frameEnd": 53,
+      "sourceFps": 24,
+      "durationSeconds": 2.1666666666666665,
+      "sourceRootTravel": {
+        "x": 4.270783,
+        "y": -8e-06,
+        "z": 10.199233,
+        "total": 11.057302
+      },
+      "loop": false,
+      "gain": 0.62
+    },
+    {
+      "action": "defence",
+      "clipName": "human-command-boss::defence::v01",
+      "source": "Block With Rifle.fbx",
+      "sourceSha256": "3a22edc16d77b5920c670136abac8c565b6aafa0ea697eb9aa9ffa407f28634a",
+      "frameStart": 1,
+      "frameEnd": 40,
+      "sourceFps": 24,
+      "durationSeconds": 1.625,
+      "sourceRootTravel": {
+        "x": 0.000372,
+        "y": 0.0,
+        "z": -0.000412,
+        "total": 0.000555
+      },
+      "loop": false,
+      "gain": 0.7
+    },
+    {
+      "action": "show",
+      "clipName": "human-command-boss::show::v01",
+      "source": "Opening.fbx",
+      "sourceSha256": "68dfd951d03baaf3b640901f1d6e5e5e20928e0033e49c2e56424b61b0003a2a",
+      "frameStart": 1,
+      "frameEnd": 264,
+      "sourceFps": 24,
+      "durationSeconds": 10.958333333333334,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "total": 0.0
+      },
+      "loop": false,
+      "gain": 0.76
+    },
+    {
+      "action": "die",
+      "clipName": "human-command-boss::die::v01",
+      "source": "scripts/rig-character-asset-blender.py",
+      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "loop": false,
+      "kind": "authored-fallback"
+    }
+  ],
+  "rights": {
+    "source": "user-provided",
+    "runtimeUseDirectedAt": "2026-07-29",
+    "redistributionStatus": "unverified"
+  },
+  "rightsReceipt": "user-directed-runtime-use-retargeted-from-audited-bench-with-unverified-redistribution",
+  "checks": {
+    "glb2": true,
+    "meshPresent": true,
+    "singleSkin": true,
+    "expectedBoneSet": true,
+    "expectedClipSet": true,
+    "finiteKeyframes": true,
+    "rotationOnly": true,
+    "onlyDefBoneTracks": true,
+    "loopClosure": true,
+    "linearSampling": true,
+    "nonconstantActions": true,
+    "rigStageCompleted": true,
+    "rigTposeGate": true,
+    "rigClipCountBeforeRetarget": true
+  },
+  "validation": {
+    "checks": {
+      "glb2": true,
+      "meshPresent": true,
+      "singleSkin": true,
+      "expectedBoneSet": true,
+      "expectedClipSet": true,
+      "finiteKeyframes": true,
+      "rotationOnly": true,
+      "onlyDefBoneTracks": true,
+      "loopClosure": true,
+      "linearSampling": true,
+      "nonconstantActions": true
+    },
+    "animationNames": [
+      "human-command-boss::attack::v01",
+      "human-command-boss::avoid::v01",
+      "human-command-boss::bighit::v01",
+      "human-command-boss::critical::v01",
+      "human-command-boss::defence::v01",
+      "human-command-boss::die::v01",
+      "human-command-boss::hit::v01",
+      "human-command-boss::idle::v01",
+      "human-command-boss::move::v01",
+      "human-command-boss::run::v01",
+      "human-command-boss::show::v01"
+    ],
+    "jointNames": [
+      "DEF-spine",
+      "DEF-pelvis.L",
+      "DEF-pelvis.R",
+      "DEF-spine.001",
+      "DEF-spine.002",
+      "DEF-spine.003",
+      "DEF-shoulder.L",
+      "DEF-upper_arm.L",
+      "DEF-forearm.L",
+      "DEF-hand.L",
+      "DEF-shoulder.R",
+      "DEF-upper_arm.R",
+      "DEF-forearm.R",
+      "DEF-hand.R",
+      "DEF-spine.004",
+      "DEF-spine.005",
+      "DEF-thigh.L",
+      "DEF-shin.L",
+      "DEF-foot.L",
+      "DEF-toe.L",
+      "DEF-thigh.R",
+      "DEF-shin.R",
+      "DEF-foot.R",
+      "DEF-toe.R"
+    ],
+    "meshCount": 1,
+    "skinCount": 1
+  },
+  "runtimeEligible": true,
+  "gateErrors": []
+}

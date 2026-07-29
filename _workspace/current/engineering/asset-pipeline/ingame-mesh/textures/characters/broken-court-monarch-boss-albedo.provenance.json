@@ -1,0 +1,32 @@
+{
+  "assetClass": "character-texture",
+  "assetId": "broken-court-monarch-boss",
+  "generator": "unverified pre-existing candidate input",
+  "output": "_workspace/current/engineering/asset-pipeline/ingame-mesh/textures/characters/broken-court-monarch-boss-albedo.png",
+  "outputBytes": 1729659,
+  "outputImage": {
+    "height": 1522,
+    "mode": "RGB",
+    "width": 1033
+  },
+  "outputSha256": "66c95a12701ae8d46abf108b7fbb54e4a14dcf592dcdd66c0818911f704c24b5",
+  "provenanceStatus": "incomplete-source-attribution",
+  "requestedGeneration": {
+    "attempt": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/generation-attempt-20260728T133448Z.json",
+    "attemptStatus": "blocked-after-rate-limit",
+    "generator": "god-tibo-imagen / gti",
+    "request": "_workspace/current/engineering/asset-pipeline/ingame-mesh/resources/generation-requests.json",
+    "requestStatus": "blocked-after-live-retry"
+  },
+  "rightsReceipt": "Pre-existing candidate image with no successful god-tibo-imagen generation receipt. It is recorded for candidate-lane traceability only and conveys no runtime-use or rights approval.",
+  "runtimeEligible": false,
+  "runtimeReceipt": {
+    "reason": "candidate-only: the recorded god-tibo-imagen attempt ended in HTTP 429 with outputExistsAfter false. This unverified image requires a successful attributable generation receipt plus mesh, visual, and browser promotion gates before runtime use.",
+    "status": "not-issued"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "path": "_workspace/current/engineering/asset-pipeline/concept-input/broken-court-monarch-boss-character.png",
+    "sha256": "e67e58523fff392eb87d88a40a3fca5cbef48de8292dd5ae89a5acfe37e5e669"
+  }
+}

@@ -3,7 +3,8 @@ import { after, test } from "node:test";
 
 import * as THREE from "../vendor/three.module.js";
 import { GLTFLoader } from "../vendor/loaders/GLTFLoader.js";
-import { stageWorldFor } from "../stage-world-catalog.js";
+import { OBJLoader } from "../vendor/loaders/OBJLoader.js";
+import { stageWorldFor, STAGE_WORLD_PROFILES } from "../stage-world-catalog.js";
 
 // Mirrors the rig pipeline's authored library so the harness exercises the same
 // beat set the deployed characters carry, not a subset.
@@ -45,6 +46,35 @@ function syntheticRig() {
 // action selection, reconciliation, and cleanup remain the production code.
 const gltfRequests = [];
 const gltfFailuresRemaining = new Map();
+const objRequests = [];
+
+// Every authored stage VFX cue, keyed by the request URL RealtimeBattle
+// actually issues (modelUrl() prefixes catalog-relative paths with "./").
+// The synthetic response below must expose the cue's qualityGroups node
+// names and its exact loop clip so the mixer/clip contract is genuinely
+// exercised instead of silently no-op-ing on a missing match.
+const stageVfxCueByUrl = new Map();
+for (const profile of Object.values(STAGE_WORLD_PROFILES)) {
+  for (const cue of profile.presentation.vfxCues ?? []) {
+    stageVfxCueByUrl.set(`./${cue.modelPath}`, cue);
+  }
+}
+
+function syntheticStageVfxRig(cue) {
+  const scene = new THREE.Group();
+  scene.name = "synthetic-stage-vfx";
+  const core = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial());
+  core.name = cue.qualityGroups.core;
+  scene.add(core);
+  const detail = new THREE.Group();
+  detail.name = cue.qualityGroups.detail;
+  scene.add(detail);
+  const decor = new THREE.Group();
+  decor.name = cue.qualityGroups.decor;
+  scene.add(decor);
+  const animations = [new THREE.AnimationClip(cue.clip, 0.05, [])];
+  return { scene, animations };
+}
 
 const originalGltfLoad = GLTFLoader.prototype.load;
 GLTFLoader.prototype.load = function loadSyntheticRig(url, onLoad, _onProgress, onError) {
@@ -58,12 +88,36 @@ GLTFLoader.prototype.load = function loadSyntheticRig(url, onLoad, _onProgress, 
       onError(new Error(`Synthetic GLB load failure: ${requestUrl}`));
       return;
     }
-    onLoad(syntheticRig());
+    const stageVfxCue = stageVfxCueByUrl.get(requestUrl);
+    if (stageVfxCue) {
+      onLoad(syntheticStageVfxRig(stageVfxCue));
+      return;
+    }
+    const gltf = syntheticRig();
+    onLoad(gltf);
   });
   return this;
 };
 after(() => {
   GLTFLoader.prototype.load = originalGltfLoad;
+});
+
+// Cinder Span's terrain ships as an authored OBJ, unlike the other stages'
+// GLBs, so it needs its own synthetic-load boundary alongside GLTFLoader's.
+const originalObjLoad = OBJLoader.prototype.load;
+OBJLoader.prototype.load = function loadSyntheticTerrain(url, onLoad, _onProgress, _onError) {
+  const requestUrl = String(url);
+  objRequests.push(requestUrl);
+  queueMicrotask(() => {
+    const group = new THREE.Group();
+    group.name = "synthetic-terrain";
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 4), new THREE.MeshBasicMaterial()));
+    onLoad(group);
+  });
+  return this;
+};
+after(() => {
+  OBJLoader.prototype.load = originalObjLoad;
 });
 
 const rendererModule = import(`../battle-realtime-three.js?combat-presentation-contract=${Date.now()}`);
@@ -590,6 +644,7 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   const adapter = realtimeBattleHarness(RealtimeBattle);
   const profile = stageWorldFor("cinder-span");
   const requestStart = gltfRequests.length;
+  const objRequestStart = objRequests.length;
 
   adapter.ensureStageTerrain(profile.stageId);
   const loading = adapter.debugPresentationState().stageDecor;
@@ -612,20 +667,37 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   const bossRequestPath = bossModelPath.startsWith("assets/")
     ? `./${bossModelPath}`
     : `./assets/images/battle/glb/${bossModelPath}`;
+  const isObjTerrain = profile.terrainGlbPath.endsWith(".obj");
+  // loadGltf() caches by URL for the lifetime of this module import, so a
+  // URL an earlier test in this file already requested (e.g. the shared
+  // commander/companion/lookout mesh, PLAYER_MESH) settles from cache here
+  // instead of firing a fresh gltfLoader.load() call. Exclude anything
+  // already seen before this test's requestStart from the strict fresh-
+  // request assertion; its record is still verified below via debug state,
+  // just without demanding a redundant network request for it.
+  const alreadyCached = new Set(gltfRequests.slice(0, requestStart));
   const expectedRequests = [
     ...[
-      profile.terrainGlbPath,
+      ...(isObjTerrain ? [] : [profile.terrainGlbPath]),
       ...profile.presentation.props.map(({ modelPath }) => modelPath),
       ...profile.presentation.npcs.map(({ modelPath }) => modelPath),
+      ...profile.presentation.vfxCues.map(({ modelPath }) => modelPath),
     ].map((modelPath) => `./${modelPath}`),
     // Stage load warms the boss rig so it does not pop in mid-fight.
     bossRequestPath,
-  ].sort();
+  ].filter((requestUrl) => !alreadyCached.has(requestUrl)).sort();
   assert.deepEqual(
     [...new Set(gltfRequests.slice(requestStart))].sort(),
     expectedRequests,
-    "renderer requests the catalog terrain, prop, NPC, and boss models without substituting generic assets",
+    "renderer requests the catalog prop, NPC, VFX, and boss models without substituting generic assets",
   );
+  if (isObjTerrain) {
+    assert.deepEqual(
+      objRequests.slice(objRequestStart),
+      [`./${profile.terrainGlbPath}`],
+      "Cinder Span's authored OBJ terrain is requested through the OBJ loader boundary",
+    );
+  }
   assert.ok(
     gltfRequests.slice(requestStart).includes(bossRequestPath),
     "stage load must warm the authored boss rig before the boss spawns",
@@ -634,6 +706,7 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   assert.equal(decor.terrainLoaded, true);
   assert.equal(decor.propCount, profile.presentation.props.length);
   assert.equal(decor.npcCount, profile.presentation.npcs.length);
+  assert.equal(decor.vfxCount, profile.presentation.vfxCues.length, "the authored ember-wake cue counts as loaded stage decor");
   assert.equal(state.actorCount, 0, "decorative lookouts never enter the simulation actor map");
 
   const records = new Map(decor.records.map((record) => [record.id, record]));
@@ -661,6 +734,29 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   assert.equal(lookout.activeActionKey, "idle", "decorative lookout starts its ambient standing clip");
   assert.equal(lookout.ambientState, "idle", "decorative lookout receives ambient look/breath presentation");
   assert.equal(adapter.debugPresentationState(lookout.id), null, "stage NPC ids remain separate from simulation actor lookup");
+
+  const [vfxCue] = profile.presentation.vfxCues;
+  const vfxRecord = state.stageDecor.records.find(({ kind }) => kind === "stage-vfx");
+  assert.ok(vfxRecord, "the authored ember-wake cue must be present in stage decor debug state");
+  assert.equal(vfxRecord.effectId, vfxCue.effectId);
+  assert.equal(vfxRecord.modelPath, vfxCue.modelPath, "the renderer requests the authored VFX model, not a placeholder");
+  assert.equal(vfxRecord.clip, vfxCue.clip, "the mixer loops the exact named clip authored for this stage");
+  assert.equal(vfxRecord.hasMixer, true, "a resolved clip must bind a real AnimationMixer");
+  assert.equal(vfxRecord.activeActionKey, "loop", "the stage VFX cue is playing, not idle-bound");
+  assert.equal(vfxRecord.quality, "full", "full motion quality applies while reduced motion is off");
+  assertNear(vfxRecord.position.x, worldX(vfxCue.placement.x), "the VFX cue authored x placement");
+  assertNear(vfxRecord.position.z, worldZ(vfxCue.placement.y), "the VFX cue authored y placement");
+
+  adapter.setReducedMotion(true);
+  const reduced = adapter.debugPresentationState().stageDecor.records.find(({ kind }) => kind === "stage-vfx");
+  assert.equal(reduced.clip, vfxCue.clip, "reduced motion keeps the same resolved clip, it only stops playback");
+  assert.equal(reduced.activeActionKey, null, "reduced motion stops the stage VFX loop instead of leaving it running");
+  assert.equal(reduced.quality, "reduced-motion");
+
+  adapter.setReducedMotion(false);
+  const restored = adapter.debugPresentationState().stageDecor.records.find(({ kind }) => kind === "stage-vfx");
+  assert.equal(restored.activeActionKey, "loop", "disabling reduced motion resumes the stage VFX loop");
+  assert.equal(restored.quality, "full");
   adapter.dispose();
 });
 
@@ -972,10 +1068,16 @@ test("failed stage decor loads retry on a later visit while successful GLBs rema
   const adapter = realtimeBattleHarness(RealtimeBattle);
   const profile = stageWorldFor("echo-throne");
   const bridgeProfile = stageWorldFor("cinder-span");
-  const failedProp = profile.presentation.props[0];
-  const failedUrl = `./${failedProp.modelPath}`;
+  // Every prop mesh URL (PROPS.blade/PROPS.relic) is already cached by
+  // earlier tests in this file (loadGltf() caches by URL for the module's
+  // lifetime), so injecting a failure there would never fire a fresh
+  // gltfLoader.load() call. Echo Throne's VFX cue model is stage-unique
+  // and untouched before this test runs, making it the only decor entry
+  // that can genuinely exercise the retry-after-failure path.
+  const failedDecor = profile.presentation.vfxCues[0];
+  const failedUrl = `./${failedDecor.modelPath}`;
   const cachedTerrainUrl = `./${profile.terrainGlbPath}`;
-  const expectedDecorCount = profile.presentation.props.length + profile.presentation.npcs.length;
+  const expectedDecorCount = profile.presentation.props.length + profile.presentation.npcs.length + profile.presentation.vfxCues.length;
   const requestStart = gltfRequests.length;
   gltfFailuresRemaining.set(failedUrl, 1);
 
@@ -988,12 +1090,12 @@ test("failed stage decor loads retry on a later visit while successful GLBs rema
           && decor.loading === false
           && decor.records.length === expectedDecorCount - 1;
       },
-      "the first stage visit did not settle with only the failed prop absent",
+      "the first stage visit did not settle with only the failed VFX cue absent",
     );
     assert.equal(
-      adapter.debugPresentationState().stageDecor.records.some(({ id }) => id === failedProp.id),
+      adapter.debugPresentationState().stageDecor.records.some(({ id }) => id === failedDecor.id),
       false,
-      "a rejected prop is absent from only the failed visit",
+      "a rejected VFX cue is absent from only the failed visit",
     );
 
     adapter.ensureStageTerrain(bridgeProfile.stageId);
@@ -1012,16 +1114,16 @@ test("failed stage decor loads retry on a later visit while successful GLBs rema
         return decor.stageId === profile.stageId
           && decor.loading === false
           && decor.records.length === expectedDecorCount
-          && decor.records.some(({ id }) => id === failedProp.id);
+          && decor.records.some(({ id }) => id === failedDecor.id);
       },
-      "the failed prop was not retried on the later stage visit",
+      "the failed VFX cue was not retried on the later stage visit",
     );
 
     const requests = gltfRequests.slice(requestStart);
     assert.equal(
       requests.filter((url) => url === failedUrl).length,
       2,
-      "the rejected prop URL is evicted and requested again",
+      "the rejected VFX cue URL is evicted and requested again",
     );
     assert.equal(
       requests.filter((url) => url === cachedTerrainUrl).length,
@@ -1043,7 +1145,7 @@ test("stage switches replace decor resources and dispose clears all tracked stag
   const { RealtimeBattle } = await rendererModule;
   const adapter = realtimeBattleHarness(RealtimeBattle);
   const firstProfile = stageWorldFor("cinder-span");
-  const secondProfile = stageWorldFor("veil-citadel");
+  const secondProfile = stageWorldFor("abyss-chancel");
 
   adapter.ensureStageTerrain(firstProfile.stageId);
   await waitFor(
@@ -1052,7 +1154,7 @@ test("stage switches replace decor resources and dispose clears all tracked stag
   );
   const first = adapter.debugPresentationState().stageDecor;
   const firstIds = new Set(first.records.map(({ id }) => id));
-  assert.equal(first.mixerCount, firstProfile.presentation.npcs.length);
+  assert.equal(first.mixerCount, firstProfile.presentation.npcs.length + firstProfile.presentation.vfxCues.length);
   assert.ok(first.actionCount > 0);
 
   adapter.ensureStageTerrain(secondProfile.stageId);
@@ -1075,7 +1177,7 @@ test("stage switches replace decor resources and dispose clears all tracked stag
   assert.equal(second.terrainLoaded, true);
   assert.equal(second.propCount, secondProfile.presentation.props.length);
   assert.equal(second.npcCount, secondProfile.presentation.npcs.length);
-  assert.equal(second.mixerCount, secondProfile.presentation.npcs.length);
+  assert.equal(second.mixerCount, secondProfile.presentation.npcs.length + secondProfile.presentation.vfxCues.length);
   assert.ok(second.actionCount > 0);
   assert.ok(
     second.records.every(({ id }) => !firstIds.has(id)),

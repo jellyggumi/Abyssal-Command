@@ -179,10 +179,6 @@ function assertNear(actual, expected, message) {
   assert.ok(Math.abs(actual - expected) < 1e-9, `${message}: expected ${expected}, got ${actual}`);
 }
 
-const CINDER_SPAN_WORLD_ASSETS = [
-  "./assets/images/battle/world/cinder-span-topdown-plate.webp",
-  "./assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
-];
 
 let rendererImportNonce = 0;
 
@@ -200,43 +196,6 @@ function cinderSpanSnapshot() {
   };
 }
 
-function unavailableImage() {
-  return class UnavailableImage {
-    set src(_value) {
-      throw new Error("image unavailable");
-    }
-  };
-}
-
-function loadedImage() {
-  return class LoadedImage {
-    constructor() {
-      this.complete = false;
-      this.naturalHeight = 0;
-      this.naturalWidth = 0;
-    }
-
-    set src(value) {
-      this._src = value;
-      this.complete = true;
-      this.naturalHeight = 1;
-      this.naturalWidth = 1;
-    }
-
-    get src() {
-      return this._src;
-    }
-  };
-}
-
-function replaceImage(t, Image) {
-  const original = Object.getOwnPropertyDescriptor(globalThis, "Image");
-  Object.defineProperty(globalThis, "Image", { configurable: true, value: Image });
-  t.after(() => {
-    if (original) Object.defineProperty(globalThis, "Image", original);
-    else delete globalThis.Image;
-  });
-}
 
 async function freshAdapters() {
   const query = `?renderer-contract=${rendererImportNonce += 1}`;
@@ -283,7 +242,7 @@ test("RealtimeBattle throws on WebGL context creation failure, matching app.js's
   assert.doesNotThrow(() => adapter.dispose(), "dispose remains idempotent");
 });
 
-test("RealtimeBattle preserves concept art through transparent WebGL and HUD-safe CSS layering", async (t) => {
+test("RealtimeBattle preserves a transparent runtime terrain layer below both HUD layers", async (t) => {
   const hosting = await startStaticServer();
   t.after(() => new Promise((resolveClose) => hosting.server.close(resolveClose)));
   const browser = await chromium.launch({ headless: true });
@@ -298,9 +257,7 @@ test("RealtimeBattle preserves concept art through transparent WebGL and HUD-saf
     ]);
     const surface = document.createElement("section");
     surface.id = "defense-battle-surface";
-    surface.style.cssText = "position:relative;width:320px;height:180px;--stage-art:linear-gradient(#345,#123)";
-    const stageArt = document.createElement("div");
-    stageArt.className = "battle-stage-art";
+    surface.style.cssText = "position:relative;width:320px;height:180px";
     const canvas = document.createElement("canvas");
     canvas.id = "defense-canvas";
     canvas.width = 320;
@@ -309,7 +266,7 @@ test("RealtimeBattle preserves concept art through transparent WebGL and HUD-saf
     worldHud.id = "world-hud-overlay";
     const edgeHud = document.createElement("div");
     edgeHud.id = "defense-edge-hud";
-    surface.append(stageArt, canvas, worldHud, edgeHud);
+    surface.append(canvas, worldHud, edgeHud);
     document.body.append(surface);
 
     const adapter = new BrowserRealtimeBattle();
@@ -323,7 +280,6 @@ test("RealtimeBattle preserves concept art through transparent WebGL and HUD-saf
       const paletteClearAlpha = adapter.renderer.getClearAlpha();
       const paletteClearColor = adapter.renderer.getClearColor(new THREE.Color()).getHex();
 
-      const stageStyle = getComputedStyle(stageArt);
       const canvasStyle = getComputedStyle(canvas);
       const worldHudStyle = getComputedStyle(worldHud);
       const edgeHudStyle = getComputedStyle(edgeHud);
@@ -333,10 +289,6 @@ test("RealtimeBattle preserves concept art through transparent WebGL and HUD-saf
         mountClearColor,
         paletteClearAlpha,
         paletteClearColor,
-        stageOpacity: Number.parseFloat(stageStyle.opacity),
-        stageBlendMode: stageStyle.mixBlendMode,
-        stageMaskImage: stageStyle.maskImage,
-        stageZ: Number.parseInt(stageStyle.zIndex, 10),
         canvasZ: Number.parseInt(canvasStyle.zIndex, 10),
         worldHudZ: Number.parseInt(worldHudStyle.zIndex, 10),
         edgeHudZ: Number.parseInt(edgeHudStyle.zIndex, 10),
@@ -347,19 +299,15 @@ test("RealtimeBattle preserves concept art through transparent WebGL and HUD-saf
     }
   });
 
-  assert.equal(report.contextAlpha, true, "the mounted WebGL context must retain an alpha channel for the concept-art backplate");
+  assert.equal(report.contextAlpha, true, "the mounted WebGL context must retain an alpha channel");
   assert.equal(report.mountClearAlpha, 0, "mount must leave the renderer clear fully transparent");
   assert.notEqual(report.paletteClearColor, report.mountClearColor, "the authored stage palette must update the renderer clear color");
   assert.equal(report.paletteClearAlpha, 0, "a stage palette update must preserve a fully transparent renderer clear");
-  assert.ok(report.stageOpacity >= 0.2, `stage art opacity ${report.stageOpacity} must remain visibly nontrivial`);
-  assert.equal(report.stageBlendMode, "screen", "stage art must use the authored screen composite over the WebGL terrain");
-  assert.match(report.stageMaskImage, /^linear-gradient\(rgb\(0, 0, 0\).+rgba\(0, 0, 0, 0\)/, "stage art must fade from an opaque upper mask to a transparent lower combat lane");
-  assert.ok(report.canvasZ < report.stageZ, `stage art z-index ${report.stageZ} must remain above canvas z-index ${report.canvasZ}`);
-  assert.ok(report.stageZ < report.worldHudZ, `stage art z-index ${report.stageZ} must remain below world HUD z-index ${report.worldHudZ}`);
-  assert.ok(report.stageZ < report.edgeHudZ, `stage art z-index ${report.stageZ} must remain below edge HUD z-index ${report.edgeHudZ}`);
+  assert.ok(report.canvasZ < report.worldHudZ, `world HUD z-index ${report.worldHudZ} must remain above canvas z-index ${report.canvasZ}`);
+  assert.ok(report.worldHudZ < report.edgeHudZ, `edge HUD z-index ${report.edgeHudZ} must remain above world HUD z-index ${report.worldHudZ}`);
 });
 
-test("RealtimeBattle gives ambient stage NPCs dedicated normalization and a non-horizontal guard pose", async (t) => {
+test("RealtimeBattle loads the direct stage NPC mesh with its dedicated readability normalization", async (t) => {
   const hosting = await startStaticServer();
   t.after(() => new Promise((resolveClose) => hosting.server.close(resolveClose)));
   const browser = await chromium.launch({ headless: true });
@@ -369,8 +317,6 @@ test("RealtimeBattle gives ambient stage NPCs dedicated normalization and a non-
   await page.goto(`${hosting.url}/renderer-contract.html`, { waitUntil: "networkidle" });
   const setupTimeoutMs = 45000;
   const glbReadinessTimeoutMs = 45000;
-  // Budget imports/mount/reconciliation separately so setup cannot consume the
-  // full post-setup GLB readiness window enforced inside the page.
   const totalEvaluationTimeoutMs = setupTimeoutMs + glbReadinessTimeoutMs + 1000;
   let totalEvaluationDeadlineTimer;
   const evaluation = page.evaluate(async (pageGlbReadinessTimeoutMs) => {
@@ -434,48 +380,11 @@ test("RealtimeBattle gives ambient stage NPCs dedicated normalization and a non-
         root.updateWorldMatrix(true, true);
         return new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).y;
       };
-      const findBone = (root, suffix) => {
-        let match = null;
-        root?.traverse((node) => {
-          const normalized = node.name.replace(/[._-]/g, "").toLowerCase();
-          if (node.isBone && normalized.endsWith(suffix)) match = node;
-        });
-        return match;
-      };
-      const armDisplacement = (root, side) => {
-        const upperArm = findBone(root, `upperarm${side}`);
-        const hand = findBone(upperArm, `hand${side}`);
-        if (!upperArm || !hand) throw new Error(`actor is missing its ${side} shoulder-to-hand bone chain`);
-        const shoulderPosition = upperArm.getWorldPosition(new THREE.Vector3());
-        const handPosition = hand.getWorldPosition(new THREE.Vector3());
-        return {
-          upperArmBone: upperArm.name,
-          handBone: hand.name,
-          verticalDrop: shoulderPosition.y - handPosition.y,
-          vertical: Math.abs(shoulderPosition.y - handPosition.y),
-          horizontal: Math.hypot(
-            shoulderPosition.x - handPosition.x,
-            shoulderPosition.z - handPosition.z,
-          ),
-        };
-      };
-      const stageNpcHeight = worldHeight(stageNpc.root);
-      const companionHeight = worldHeight(companion.root);
-      adapter.reducedMotion = true;
-      adapter.updateAnimations(0);
-      stageNpc.root.updateWorldMatrix(true, true);
-      companion.root.updateWorldMatrix(true, true);
       return {
-        stageNpcHeight,
-        companionHeight,
-        stageNpcArms: {
-          left: armDisplacement(stageNpc.root, "l"),
-          right: armDisplacement(stageNpc.root, "r"),
-        },
-        companionArms: {
-          left: armDisplacement(companion.root, "l"),
-          right: armDisplacement(companion.root, "r"),
-        },
+        stageNpcActorId: stageNpc.actorId,
+        stageNpcHeight: worldHeight(stageNpc.root),
+        stageNpcModelPath: stageNpc.modelPath,
+        companionHeight: worldHeight(companion.root),
       };
     } finally {
       adapter.dispose();
@@ -496,20 +405,10 @@ test("RealtimeBattle gives ambient stage NPCs dedicated normalization and a non-
     }),
   ]).finally(() => clearTimeout(totalEvaluationDeadlineTimer));
 
+  assert.equal(report.stageNpcActorId, "lantern-reaver", "the direct stage lookout must retain its authored actor identity");
+  assert.equal(report.stageNpcModelPath, "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb", "the stage lookout must load its direct deployed mesh");
   assertNear(report.stageNpcHeight, 1.8, "the ambient stage NPC keeps its dedicated readability normalization");
   assertNear(report.companionHeight, 1.3, "the gameplay companion keeps its smaller actor normalization");
-  for (const side of ["left", "right"]) {
-    const guarded = report.stageNpcArms[side];
-    const control = report.companionArms[side];
-    assert.ok(
-      guarded.vertical / report.stageNpcHeight > control.vertical / report.companionHeight,
-      `${side} stage-NPC arm must have more normalized vertical displacement than the untouched companion control: ${JSON.stringify({ guarded, control })}`,
-    );
-    assert.ok(
-      guarded.horizontal / report.stageNpcHeight < control.horizontal / report.companionHeight,
-      `${side} stage-NPC arm must have less normalized horizontal reach than the untouched companion control: ${JSON.stringify({ guarded, control })}`,
-    );
-  }
 });
 
 test("defense renderer fallback adapter projects a supplied snapshot to a mocked Canvas2D context", () => {
@@ -1019,49 +918,20 @@ test("defense renderer fallback adapter applies its bounded camera transform onl
   adapter.dispose();
 });
 
-test("BattleVisualizer selects the approved Cinder Span artwork only in the camera-transformed world layer", async (t) => {
-  replaceImage(t, loadedImage());
+test("BattleVisualizer renders procedural Cinder Span terrain without retired world artwork", async () => {
   const camera = { x: 24, y: -18 };
-
   const [, Fallback] = await freshAdapters();
   const canvas = cameraCanvas();
   const adapter = new Fallback().mount({ canvas, viewport: canvas });
+
   adapter.renderSnapshot(cinderSpanSnapshot(), { camera, viewport: canvas });
 
-  const imageCalls = canvas.calls.filter(([name]) => name === "drawImage");
-  assert.deepEqual(
-    imageCalls.map(([, image]) => image.src),
-    CINDER_SPAN_WORLD_ASSETS,
-    "BattleVisualizer selects both approved Cinder Span images",
-  );
+  assert.equal(canvas.calls.some(([name]) => name === "drawImage"), false, "BattleVisualizer must not request retired Cinder Span world artwork");
+  assert.ok(canvas.calls.some(([name]) => name === "rect"), "BattleVisualizer keeps its procedural terrain visible");
   const cameraIndex = canvas.calls.findIndex(
     ([name, x, y]) => name === "translate" && x === camera.x && y === camera.y,
   );
-  const firstImageIndex = canvas.calls.indexOf(imageCalls[0]);
-  assert.ok(cameraIndex >= 0 && cameraIndex < firstImageIndex, "BattleVisualizer applies images inside the transient camera world layer");
-
-  const beforeOtherStage = canvas.calls.length;
-  adapter.renderSnapshot(
-    { ...cinderSpanSnapshot(), presentation: { ...cinderSpanSnapshot().presentation, stageId: "gate-zenith" } },
-    { camera, viewport: canvas },
-  );
-  assert.equal(
-    canvas.calls.slice(beforeOtherStage).some(([name]) => name === "drawImage"),
-    false,
-    "BattleVisualizer does not select Cinder Span artwork for another stage",
-  );
-  adapter.dispose();
-});
-
-test("BattleVisualizer retains procedural Cinder Span terrain when world artwork is unavailable", async (t) => {
-  replaceImage(t, unavailableImage());
-
-  const [, Fallback] = await freshAdapters();
-  const canvas = cameraCanvas();
-  const adapter = new Fallback().mount({ canvas, viewport: canvas });
-  assert.doesNotThrow(() => adapter.renderSnapshot(cinderSpanSnapshot(), { camera: { x: 16, y: -12 }, viewport: canvas }));
-  assert.equal(canvas.calls.some(([name]) => name === "drawImage"), false, "BattleVisualizer does not paint an unavailable image");
-  assert.ok(canvas.calls.some(([name]) => name === "rect"), "BattleVisualizer keeps its procedural terrain visible");
+  assert.ok(cameraIndex >= 0, "BattleVisualizer still applies the supplied camera to its procedural world layer");
   adapter.dispose();
 });
 

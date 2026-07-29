@@ -1,0 +1,122 @@
+{
+  "assetClass": "terrain-source-candidate",
+  "assetId": "terrain-abyss-chancel-textured-candidate",
+  "contents": {
+    "feature": {
+      "glb": "feature/terrain-abyss-chancel-feature-cleaned.glb",
+      "protrusionsObj": "feature/obj/terrain-abyss-chancel-feature-protrusions.obj",
+      "simplePlanesObj": "feature/obj/terrain-abyss-chancel-feature-simple-planes.obj",
+      "textures": "feature/textures/"
+    },
+    "object": {
+      "glb": "object/terrain-abyss-chancel-object-cleaned.glb",
+      "individualObjCount": 72,
+      "individualObjDirectory": "object/obj/",
+      "textures": "object/textures/",
+      "use": "deferred source inspection only; near-identical geometry to the legacy cleaned mesh and must not be co-loaded with it"
+    },
+    "terrain": {
+      "albedo": "terrain/textures/terrain-abyss-chancel-albedo-3x2.png",
+      "albedoProvenance": "terrain/textures/terrain-abyss-chancel-albedo-3x2.provenance.json",
+      "glb": "terrain/terrain-abyss-chancel-textured-cleaned.glb",
+      "mtl": "terrain/terrain-abyss-chancel-textured-cleaned.mtl",
+      "obj": "terrain/terrain-abyss-chancel-textured-cleaned.obj",
+      "use": "legacy cleaned source mesh; near-identical geometry to the deferred object source, not the preferred raw-image terrain",
+      "rawImagePlane": {
+        "audit": "audit/terrain-abyss-chancel-raw-image-plane-audit.json",
+        "footprintAspectRatio": 1.517597,
+        "glb": "terrain/raw-image/terrain-abyss-chancel-raw-image-plane.glb",
+        "mtl": "terrain/raw-image/terrain-abyss-chancel-raw-image-plane.mtl",
+        "obj": "terrain/raw-image/terrain-abyss-chancel-raw-image-plane.obj",
+        "referenceImage": "terrain/raw-image/reference/terrain-abyss-chancel-terrain.raw.png",
+        "report": "terrain/raw-image/terrain-abyss-chancel-raw-image-plane-report.json",
+        "textureStretchPercent": 1.173,
+        "use": "preferred terrain source reconstructed from the raw-image composition via direct planar UV mapping"
+      }
+    }
+  },
+  "deferredReference": "object/terrain-abyss-chancel-object-cleaned.glb",
+  "doNotLoadTogether": [
+    "terrain/terrain-abyss-chancel-textured-cleaned.glb",
+    "object/terrain-abyss-chancel-object-cleaned.glb",
+    "terrain/raw-image/terrain-abyss-chancel-raw-image-plane.glb"
+  ],
+  "overlapDecision": {
+    "audit": "audit/feature-overlap-audit.json",
+    "featureDuplicateTriangles": 0,
+    "objectOnlyTriangles": 7,
+    "rawImagePlane": {
+      "audit": "audit/terrain-abyss-chancel-raw-image-plane-audit.json",
+      "selection": "preferred terrain source; do not co-load with duplicated cleaned terrain or object source GLBs"
+    },
+    "terrainObjectSharedTriangles": 41253,
+    "terrainOnlyTriangles": 7
+  },
+  "preferredReferenceSet": [
+    "terrain/raw-image/terrain-abyss-chancel-raw-image-plane.glb",
+    "feature/terrain-abyss-chancel-feature-cleaned.glb"
+  ],
+  "receipts": [
+    {
+      "bytes": 15340160,
+      "path": "feature/terrain-abyss-chancel-feature-cleaned.glb",
+      "sha256": "823a17bbc811300a892ad5da76ef8a96a25f4119f13013e77335f8b5e211904c"
+    },
+    {
+      "bytes": 12802040,
+      "path": "object/terrain-abyss-chancel-object-cleaned.glb",
+      "sha256": "44ded5e7e88a933cb418b122abf50603e7d4017f57d6c5d89a1509cc49ca075e"
+    },
+    {
+      "bytes": 2169860,
+      "path": "terrain/raw-image/reference/terrain-abyss-chancel-terrain.raw.png",
+      "sha256": "4292ea6a8de3862564d18196b287f64b50456519931eb801ee558d8947977cea"
+    },
+    {
+      "bytes": 3603124,
+      "path": "terrain/raw-image/terrain-abyss-chancel-raw-image-plane.glb",
+      "sha256": "2a9ae095983b047e12c7853fa79c2905428e342112f7f93a61e3014305cac1b7"
+    },
+    {
+      "bytes": 291,
+      "path": "terrain/raw-image/terrain-abyss-chancel-raw-image-plane.mtl",
+      "sha256": "433480b3c43e5811b998a04df40eb74fd9f732e07808844694eb234ae3ef3ad9"
+    },
+    {
+      "bytes": 37512,
+      "path": "terrain/raw-image/terrain-abyss-chancel-raw-image-plane.obj",
+      "sha256": "c7c290601e15052a1c8379284782a8d75c25230cf4bc186fc484f67e7bded336"
+    },
+    {
+      "bytes": 4687836,
+      "path": "terrain/terrain-abyss-chancel-textured-cleaned.glb",
+      "sha256": "623f43f4100bc2effb014d96315c838c2e77fc355ee1f21e90f883b350d023c7"
+    },
+    {
+      "bytes": 287,
+      "path": "terrain/terrain-abyss-chancel-textured-cleaned.mtl",
+      "sha256": "473b01eea1ace7c3328893000dd97f2aeba7327c2eb08af5d9da22f3c1b039f6"
+    },
+    {
+      "bytes": 3122352,
+      "path": "terrain/terrain-abyss-chancel-textured-cleaned.obj",
+      "sha256": "e8fb6e868023876c1222065a2e9ed34d03e38b27346fe1b4c354dde9b9e002d9"
+    },
+    {
+      "bytes": 3583399,
+      "path": "terrain/textures/terrain-abyss-chancel-albedo-3x2.png",
+      "sha256": "676d9216a9cbb30c5229bff2131239c18a5f4df85c3be89f01f294e5e6012424"
+    }
+  ],
+  "referenceRoot": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate",
+  "runtimePromotionBlocker": "The deployed stage terrain contract requires one authored GLB with at least 20 mesh instances, four named materials, a normal texture, and visual stage QA. This candidate bundle does not meet that contract.",
+  "schemaVersion": 1,
+  "stageRuntimeEligible": false,
+  "verification": {
+    "individualObjectObjCount": 72,
+    "meshAudit": "audit/terrain-abyss-chancel-cleaned-audit.json",
+    "rawImagePlaneAudit": "audit/terrain-abyss-chancel-raw-image-plane-audit.json",
+    "rawImagePlaneMtl": "terrain/raw-image/terrain-abyss-chancel-raw-image-plane.mtl",
+    "relativeMtlTexturePaths": true
+  }
+}

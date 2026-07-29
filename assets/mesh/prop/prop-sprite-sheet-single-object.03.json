@@ -1,0 +1,54 @@
+{
+  "sheet": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+  "sheetIndex": 3,
+  "width": 8006,
+  "height": 2494,
+  "pad": 4,
+  "packMode": "shelf-height-desc",
+  "sheetWidthLimit": 8192,
+  "frameCount": 7,
+  "frames": {
+    "anchor-shard.png": {
+      "x": 6452,
+      "y": 0,
+      "width": 959,
+      "height": 1384
+    },
+    "rift-lens.png": {
+      "x": 5868,
+      "y": 0,
+      "width": 580,
+      "height": 1389
+    },
+    "s7-lantern-tyrant.png": {
+      "x": 0,
+      "y": 0,
+      "width": 1489,
+      "height": 2494
+    },
+    "shadow-commander-boss.png": {
+      "x": 2945,
+      "y": 0,
+      "width": 1420,
+      "height": 2342
+    },
+    "sung-hum-boss.png": {
+      "x": 1493,
+      "y": 0,
+      "width": 1448,
+      "height": 2458
+    },
+    "ui-brand-mark.png": {
+      "x": 4369,
+      "y": 0,
+      "width": 1495,
+      "height": 2138
+    },
+    "warden-lantern.png": {
+      "x": 7415,
+      "y": 0,
+      "width": 591,
+      "height": 1150
+    }
+  }
+}

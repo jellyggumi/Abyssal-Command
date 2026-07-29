@@ -1,0 +1,47 @@
+{
+  "assetId": "terrain-echo-throne-textured-candidate",
+  "bundleRoot": "assets/mesh/terrain/terrain-echo-throne/textured-candidate",
+  "allSourceImagesExist": true,
+  "componentCounts": {
+    "actual": {
+      "backgroundObject": 35,
+      "backgroundTerrain": 1,
+      "feature": 39
+    },
+    "expected": {
+      "backgroundObject": 35,
+      "backgroundTerrain": 1,
+      "feature": 39
+    },
+    "matches": true
+  },
+  "manifestHasWorkspacePath": false,
+  "missingMtlPaths": [],
+  "missingTexturePaths": [],
+  "mtlFileCount": 76,
+  "mtlReferencesResolve": true,
+  "mtlTextureReferencesResolve": true,
+  "objFileCount": 76,
+  "passed": true,
+  "receiptCount": 9,
+  "receiptFailures": [],
+  "sourceImages": {
+    "backgroundObject": {
+      "exists": true,
+      "path": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-background-object.png"
+    },
+    "backgroundTerrain": {
+      "exists": true,
+      "path": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-background-terrain.png"
+    },
+    "feature": {
+      "exists": true,
+      "path": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-terrain-feature.png"
+    },
+    "terrain": {
+      "exists": true,
+      "path": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-terrain.png"
+    }
+  },
+  "textureReferenceCount": 226
+}

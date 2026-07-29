@@ -1,0 +1,117 @@
+{
+  "assetClass": "terrain-source-candidate",
+  "assetId": "terrain-echo-throne-textured-candidate",
+  "contents": {
+    "terrain": {
+      "albedo": "terrain/textures/terrain-echo-throne-albedo-1x1.png",
+      "albedoProvenance": "terrain/textures/terrain-echo-throne-albedo-1x1.provenance.json",
+      "glb": "terrain/terrain-echo-throne-textured.glb",
+      "mtl": "terrain/terrain-echo-throne-textured.mtl",
+      "obj": "terrain/terrain-echo-throne-textured.obj",
+      "referenceImage": "terrain/reference/terrain-echo-throne-terrain.png",
+      "use": "procedural 8x8 planar grid with one UV map and generated seamless albedo; the source concept image remains reference-only"
+    },
+    "backgroundTerrain": {
+      "combinedGlb": "background-terrain/terrain-echo-throne-background-terrain-billboards.glb",
+      "componentsDetected": 1,
+      "componentsRetained": 1,
+      "individualObjCount": 1,
+      "individualObjDirectory": "background-terrain/obj/",
+      "textures": "background-terrain/textures/",
+      "use": "alpha-blended source-sheet component card after alpha-threshold segmentation; catalog placement is inspection-only and is not stage geometry"
+    },
+    "feature": {
+      "combinedGlb": "feature/terrain-echo-throne-feature-billboards.glb",
+      "componentsDetected": 39,
+      "componentsRetained": 39,
+      "individualObjCount": 39,
+      "individualObjDirectory": "feature/obj/",
+      "textures": "feature/textures/",
+      "use": "alpha-blended source-sheet component cards after alpha-threshold segmentation; catalog placement is inspection-only and is not stage geometry"
+    },
+    "backgroundObject": {
+      "combinedGlb": "background-object/terrain-echo-throne-background-object-billboards.glb",
+      "componentsDetected": 247,
+      "componentsRetained": 35,
+      "individualObjCount": 35,
+      "individualObjDirectory": "background-object/obj/",
+      "textures": "background-object/textures/",
+      "use": "alpha-blended source-sheet component cards retained above the 2,000-pixel threshold; catalog placement is inspection-only and is not stage geometry"
+    }
+  },
+  "componentExtraction": {
+    "alphaThreshold": 26,
+    "buildReport": "terrain-echo-throne-build-report.json",
+    "minimumPixels": 2000,
+    "sourceComponentSpecificationSha256": "42f554e9adb4ea997b4ba3355bae0165221bf97d1e4f9f33475608afe74ae26d",
+    "sourcePixelDimensionsPreserved": true
+  },
+  "preferredReferenceSet": [
+    "terrain/terrain-echo-throne-textured.glb",
+    "background-terrain/terrain-echo-throne-background-terrain-billboards.glb",
+    "feature/terrain-echo-throne-feature-billboards.glb",
+    "background-object/terrain-echo-throne-background-object-billboards.glb"
+  ],
+  "receipts": [
+    {
+      "bytes": 1595480,
+      "path": "background-terrain/terrain-echo-throne-background-terrain-billboards.glb",
+      "sha256": "73573528bf4e8c792e561341ed8e5054c611dd8dbf27fa95f5604564a8607efb"
+    },
+    {
+      "bytes": 2263332,
+      "path": "background-object/terrain-echo-throne-background-object-billboards.glb",
+      "sha256": "48f47077e65887f84c5971af65457dded03b0884192597ddae007273aa525ac2"
+    },
+    {
+      "bytes": 2367752,
+      "path": "feature/terrain-echo-throne-feature-billboards.glb",
+      "sha256": "1179a9846445accf9e1ee12dc95158f24a522b23a6f957e7f4e23f1e009347e1"
+    },
+    {
+      "bytes": 3414382,
+      "path": "terrain/textures/terrain-echo-throne-albedo-1x1.png",
+      "sha256": "e8cd8f74f43630110e62c86ee8e8946b19fe674de6bd7bc52a485daad2ec6506"
+    },
+    {
+      "bytes": 1322,
+      "path": "terrain/textures/terrain-echo-throne-albedo-1x1.provenance.json",
+      "sha256": "d6b1e6cdb2396bf698f95ba6784498c9ff6d8f9ff0e0986ca1b024a316f6887c"
+    },
+    {
+      "bytes": 2291290,
+      "path": "terrain/reference/terrain-echo-throne-terrain.png",
+      "sha256": "e3f165d4dbffb9d1a84039be12699985b40f5a23d43c928ed5877dc5f37238f9"
+    },
+    {
+      "bytes": 3462912,
+      "path": "terrain/terrain-echo-throne-textured.glb",
+      "sha256": "78293fb0f9e89fa939feba78feed19018034a0f27880705a6545c4eab73b56df"
+    },
+    {
+      "bytes": 275,
+      "path": "terrain/terrain-echo-throne-textured.mtl",
+      "sha256": "f0e22f9301e3d43e252962590d2212f7742a18a800432219a3eaad3f1b65f1f4"
+    },
+    {
+      "bytes": 98567,
+      "path": "terrain/terrain-echo-throne-textured.obj",
+      "sha256": "ac106f6cfd7cadeb73a646ad742422784deefead581241c11b0e74ce7b1b935b"
+    }
+  ],
+  "referenceRoot": "assets/mesh/terrain/terrain-echo-throne/textured-candidate",
+  "runtimePromotionBlocker": "This is a source-only candidate: the terrain is a planar texture-mapped grid and the other layers are inspection-card catalog exports. No authored stage layout, collision, visual stage QA, or runtime loader integration exists.",
+  "schemaVersion": 1,
+  "sourceImages": {
+    "backgroundObject": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-background-object.png",
+    "backgroundTerrain": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-background-terrain.png",
+    "feature": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-terrain-feature.png",
+    "terrain": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-terrain.png"
+  },
+  "stageRuntimeEligible": false,
+  "verification": {
+    "buildReport": "terrain-echo-throne-build-report.json",
+    "relativeMtlTexturePaths": true,
+    "sourceOnly": true
+  }
+}

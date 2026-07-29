@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "assetId": "echo-throne-fracture-echo",
+  "stageId": "echo-throne",
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "tool": "Blender 5.2.0 LTS",
+  "reference": {
+    "path": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+    "usage": "silhouette-and-material-language-only",
+    "embedded": false
+  },
+  "rightsReceipt": "Repository-authored deterministic procedural geometry; no third-party media embedded.",
+  "runtimeReceipt": {
+    "runtimeEligible": true,
+    "reason": "Self-contained GLB, bounded geometry, authored quality groups, and loop clip."
+  },
+  "output": {
+    "path": "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+    "sha256": "884555ce96e9d7bb8d6790b952cefb3abc71c8ef873448da1f06c28b908364e0"
+  }
+}

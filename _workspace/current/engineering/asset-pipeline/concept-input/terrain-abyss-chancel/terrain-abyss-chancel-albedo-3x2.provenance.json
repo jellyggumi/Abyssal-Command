@@ -1,0 +1,18 @@
+{
+  "assetId": "terrain-abyss-chancel-albedo-3x2",
+  "tool": "god-tibo-imagen",
+  "invocation": "gti --prompt <recordedPrompt> --image assets/mesh/terrain/terrain-abyss-chancel/terrain-abyss-chancel-terrain.raw.png --size 1536x1024 --output <this asset>",
+  "recordedPrompt": "Create a seamless 3:2 game-ready PBR albedo texture for a dark-fantasy abyssal chancel floor. Match the reference's wide ceremonial composition: worn blue-black basalt flagstones, narrow aged-gold inlay grooves, a central circular dais, and deep-indigo ornamental panels running along the long axis. Top-down orthographic material scan only: no perspective, no platform silhouette, no exterior borders, no props, no floor edge, no cast shadows, no text, no logos, no watermark. The full 3:2 plate must be continuous and clean for direct planar UV mapping onto one wide terrain surface.",
+  "referenceInputs": [
+    "assets/mesh/terrain/terrain-abyss-chancel/terrain-abyss-chancel-terrain.raw.png"
+  ],
+  "responseId": "resp_0f86baaa39b17593016a69a285d7088191a5819ed52a1e912e",
+  "actual": {
+    "width": 1536,
+    "height": 1024,
+    "bytes": 3583399,
+    "sha256": "676d9216a9cbb30c5229bff2131239c18a5f4df85c3be89f01f294e5e6012424"
+  },
+  "runtimeEligible": false,
+  "stage": "concept-input"
+}

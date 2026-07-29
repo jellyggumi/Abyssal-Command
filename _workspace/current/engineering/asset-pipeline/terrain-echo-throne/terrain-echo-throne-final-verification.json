@@ -1,0 +1,31 @@
+{
+  "allGlbsHaveUv": true,
+  "alphaModes": {
+    "backgroundObject": ["BLEND"],
+    "backgroundTerrain": ["BLEND"],
+    "feature": ["BLEND"]
+  },
+  "componentObjectCounts": {
+    "backgroundObject": 35,
+    "backgroundTerrain": 1,
+    "feature": 39
+  },
+  "glbAudit": "_workspace/current/engineering/asset-pipeline/terrain-echo-throne/terrain-echo-throne-glb-audit.json",
+  "glbMeshObjectCounts": {
+    "terrain-echo-throne-background-object-billboards": 35,
+    "terrain-echo-throne-background-terrain-billboards": 1,
+    "terrain-echo-throne-feature-billboards": 39,
+    "terrain-echo-throne-textured": 1
+  },
+  "manifest": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/asset-manifest.json",
+  "manifestHasWorkspacePath": false,
+  "manifestJsonParsed": true,
+  "mtlFileCount": 76,
+  "objFileCount": 76,
+  "passed": true,
+  "receiptCount": 9,
+  "receiptFailures": 0,
+  "sourceImagesResolved": true,
+  "sourceReferenceAudit": "_workspace/current/engineering/asset-pipeline/terrain-echo-throne/terrain-echo-throne-source-reference-audit.json",
+  "textureReferenceCount": 226
+}

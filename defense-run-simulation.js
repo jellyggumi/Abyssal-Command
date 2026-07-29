@@ -2571,7 +2571,7 @@ function tick(run) {
     run.objectives.bossKill.completed = true;
     run.objectives.bossKill.completedAt = run.tick;
     run.objectives.phase = "complete";
-    run.terminal = run.stage.id === "gate-zenith" ? "FINAL_COMPLETION" : "VICTORY";
+    run.terminal = run.stage.id === "echo-throne" ? "FINAL_COMPLETION" : "VICTORY";
     run.progress.achievements.push(`stage-clear:${run.stage.id}`);
     run.rewardOffer = { choices: [...(STAGE_REWARD_IDS[run.stage.id] || [])] };
     emit(run, "OBJECTIVE_COMPLETED", {

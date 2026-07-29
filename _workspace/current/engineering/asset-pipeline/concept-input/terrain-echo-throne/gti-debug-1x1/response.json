@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "headers": {
+    "x-codex-active-limit": "premium",
+    "x-codex-plan-type": "team",
+    "x-oai-request-id": "d865c91f-409f-4367-b991-f39e5db3bc90"
+  },
+  "body": {
+    "format": "sse",
+    "responseIdPresent": true,
+    "eventCounts": {
+      "response.created": 1,
+      "response.in_progress": 1,
+      "response.output_item.added": 2,
+      "response.image_generation_call.in_progress": 1,
+      "response.image_generation_call.generating": 1,
+      "keepalive": 2,
+      "response.image_generation_call.partial_image": 1,
+      "response.output_item.done": 2,
+      "response.content_part.added": 1,
+      "response.output_text.done": 1,
+      "response.content_part.done": 1,
+      "response.completed": 1
+    },
+    "items": [
+      {
+        "type": "image_generation_call",
+        "status": "generating",
+        "hasResult": true,
+        "hasRevisedPrompt": true,
+        "role": null
+      },
+      {
+        "type": "message",
+        "status": "completed",
+        "hasResult": false,
+        "hasRevisedPrompt": false,
+        "role": "assistant"
+      }
+    ]
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "assetCount": 3,
+  "assets": [
+    {
+      "activeUvMaps": [
+        "UVMap"
+      ],
+      "animationClipCount": 0,
+      "animations": [],
+      "armature": {
+        "boneCount": 0,
+        "boneNames": [],
+        "defBoneCount": 0,
+        "present": false
+      },
+      "assetId": "terrain-abyss-chancel-textured-cleaned",
+      "category": "terrain",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "terrain-abyss-chancel-albedo-3x2",
+            "packed": true,
+            "width": 1536
+          },
+          "metallic": 0.08,
+          "name": "abyss_chancel_terrain_albedo_cleaned",
+          "roughness": 0.73,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 1,
+      "polygonCount": 41259,
+      "relativePath": "terrain/terrain-abyss-chancel-textured-cleaned.glb",
+      "sourceBytes": 4687836,
+      "sourcePath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
+      "sourceSha256": "623f43f4100bc2effb014d96315c838c2e77fc355ee1f21e90f883b350d023c7",
+      "triangleCount": 41259,
+      "uvLayerCount": 1,
+      "vertexCount": 26728
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 0,
+      "animations": [],
+      "armature": {
+        "boneCount": 0,
+        "boneNames": [],
+        "defBoneCount": 0,
+        "present": false
+      },
+      "assetId": "terrain-abyss-chancel-feature-cleaned",
+      "category": "feature",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 2048,
+            "name": "texture_diffuse",
+            "packed": true,
+            "width": 2048
+          },
+          "metallic": 0.0,
+          "name": "abyss_chancel_background_pbr",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 2,
+      "polygonCount": 27952,
+      "relativePath": "feature/terrain-abyss-chancel-feature-cleaned.glb",
+      "sourceBytes": 15340160,
+      "sourcePath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/feature/terrain-abyss-chancel-feature-cleaned.glb",
+      "sourceSha256": "823a17bbc811300a892ad5da76ef8a96a25f4119f13013e77335f8b5e211904c",
+      "triangleCount": 27952,
+      "uvLayerCount": 1,
+      "vertexCount": 39365
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 0,
+      "animations": [],
+      "armature": {
+        "boneCount": 0,
+        "boneNames": [],
+        "defBoneCount": 0,
+        "present": false
+      },
+      "assetId": "terrain-abyss-chancel-object-cleaned",
+      "category": "object",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 2048,
+            "name": "texture_diffuse",
+            "packed": true,
+            "width": 2048
+          },
+          "metallic": 0.0,
+          "name": "abyss_chancel_background_pbr",
+          "roughness": 0.5,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 72,
+      "polygonCount": 41259,
+      "relativePath": "object/terrain-abyss-chancel-object-cleaned.glb",
+      "sourceBytes": 12802040,
+      "sourcePath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/object/terrain-abyss-chancel-object-cleaned.glb",
+      "sourceSha256": "44ded5e7e88a933cb418b122abf50603e7d4017f57d6c5d89a1509cc49ca075e",
+      "triangleCount": 41259,
+      "uvLayerCount": 1,
+      "vertexCount": 26728
+    }
+  ],
+  "generator": "scripts/audit-mesh-detail-blender.py",
+  "measurementTool": "Blender 5.2.0 LTS headless bpy import",
+  "runtimeRoot": "assets/images/battle/glb",
+  "schemaVersion": 1
+}

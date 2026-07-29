@@ -1,0 +1,54 @@
+{
+  "sheet": "assets/mesh/prop/prop-sprite-sheet-single-object.05.png",
+  "sheetIndex": 5,
+  "width": 7438,
+  "height": 3295,
+  "pad": 4,
+  "packMode": "shelf-height-desc",
+  "sheetWidthLimit": 8192,
+  "frameCount": 7,
+  "frames": {
+    "bulwark-brand.png": {
+      "x": 0,
+      "y": 2510,
+      "width": 1205,
+      "height": 785
+    },
+    "guard.png": {
+      "x": 4304,
+      "y": 0,
+      "width": 1280,
+      "height": 2331
+    },
+    "s1-cinder-warden.png": {
+      "x": 2929,
+      "y": 0,
+      "width": 1371,
+      "height": 2436
+    },
+    "s3-gate-sovereign.png": {
+      "x": 0,
+      "y": 0,
+      "width": 1438,
+      "height": 2506
+    },
+    "scout.png": {
+      "x": 5588,
+      "y": 0,
+      "width": 1185,
+      "height": 1173
+    },
+    "stillwater-hourglass.png": {
+      "x": 6777,
+      "y": 0,
+      "width": 661,
+      "height": 1078
+    },
+    "ui-control-close.png": {
+      "x": 1442,
+      "y": 0,
+      "width": 1483,
+      "height": 2468
+    }
+  }
+}

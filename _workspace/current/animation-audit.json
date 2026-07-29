@@ -1,0 +1,309 @@
+{
+  "assetInventory": {
+    "characters": {
+      "count": 6,
+      "list": [
+        {
+          "name": "broken-court-monarch-boss-character",
+          "variants": [
+            "base.fbx",
+            "base_basic_pbr.fbx",
+            "base_basic_shaded.fbx"
+          ]
+        },
+        {
+          "name": "broken-court-monarch-v04-character",
+          "variants": [
+            "base.fbx",
+            "base_basic_pbr.fbx",
+            "base_basic_shaded.fbx"
+          ]
+        },
+        {
+          "name": "ember-cohort-character",
+          "variants": [
+            "base.fbx",
+            "base_basic_pbr.fbx",
+            "base_basic_shaded.fbx"
+          ]
+        },
+        {
+          "name": "lantern-reaver-character",
+          "variants": [
+            "base.fbx",
+            "base_basic_pbr.fbx",
+            "base_basic_shaded.fbx"
+          ]
+        },
+        {
+          "name": "guard-character",
+          "variants": [
+            "base.fbx",
+            "base_basic_pbr.fbx",
+            "base_basic_shaded.fbx"
+          ]
+        },
+        {
+          "name": "human-command-boss-character",
+          "variants": [
+            "base.fbx",
+            "base_basic_pbr.fbx",
+            "base_basic_shaded.fbx"
+          ]
+        }
+      ],
+      "fbxVersionAll": 7400
+    },
+    "motions": {
+      "count": 42,
+      "fbxVersion": 7700,
+      "samplesCount": 10
+    }
+  },
+  "canonicalSkeleton": {
+    "name": "DEF-* system (Rigify-compatible)",
+    "boneCount": 24,
+    "source": "scripts/rig-character-asset-blender.py (SKELETON constant)",
+    "structure": {
+      "spine": [
+        "DEF-spine",
+        "DEF-spine.001",
+        "DEF-spine.002",
+        "DEF-spine.003",
+        "DEF-spine.004",
+        "DEF-spine.005"
+      ],
+      "shoulders": [
+        "DEF-shoulder.L",
+        "DEF-shoulder.R"
+      ],
+      "armChains": [
+        "DEF-upper_arm.L",
+        "DEF-forearm.L",
+        "DEF-hand.L",
+        "DEF-upper_arm.R",
+        "DEF-forearm.R",
+        "DEF-hand.R"
+      ],
+      "legChains": [
+        "DEF-thigh.L",
+        "DEF-shin.L",
+        "DEF-foot.L",
+        "DEF-toe.L",
+        "DEF-thigh.R",
+        "DEF-shin.R",
+        "DEF-foot.R",
+        "DEF-toe.R"
+      ]
+    }
+  },
+  "motionSourceSkeletonContract": {
+    "expectedName": "mixamorig",
+    "description": "Mixamo standard armature naming",
+    "bones": {
+      "spine": [
+        "mixamorig:Hips",
+        "mixamorig:Spine",
+        "mixamorig:Spine1",
+        "mixamorig:Spine2",
+        "mixamorig:Neck",
+        "mixamorig:Head"
+      ],
+      "shoulders": [
+        "mixamorig:LeftShoulder",
+        "mixamorig:RightShoulder"
+      ],
+      "armChains": [
+        "mixamorig:LeftArm",
+        "mixamorig:LeftForeArm",
+        "mixamorig:LeftHand",
+        "mixamorig:RightArm",
+        "mixamorig:RightForeArm",
+        "mixamorig:RightHand"
+      ],
+      "legChains": [
+        "mixamorig:LeftUpLeg",
+        "mixamorig:LeftLeg",
+        "mixamorig:LeftFoot",
+        "mixamorig:LeftToeBase",
+        "mixamorig:RightUpLeg",
+        "mixamorig:RightLeg",
+        "mixamorig:RightFoot",
+        "mixamorig:RightToeBase"
+      ]
+    }
+  },
+  "retargetingMapping": {
+    "description": "From scripts/retarget-ingame-motion-blender.py MAPPING_ROWS",
+    "method": "One-to-one bone rotation copy via quaternion delta",
+    "mappedBones": 22,
+    "totalTargetBones": 24,
+    "unmappedBones": [
+      "DEF-pelvis.L",
+      "DEF-pelvis.R"
+    ],
+    "unmappedReason": "Pelvis bones retain target rest pose; motion comes from root spine and limb chains only",
+    "mappingTable": {
+      "spine": {
+        "DEF-spine": "mixamorig:Hips",
+        "DEF-spine.001": "mixamorig:Spine",
+        "DEF-spine.002": "mixamorig:Spine1",
+        "DEF-spine.003": "mixamorig:Spine2",
+        "DEF-spine.004": "mixamorig:Neck",
+        "DEF-spine.005": "mixamorig:Head"
+      },
+      "shouldersArms": {
+        "DEF-shoulder.L": "mixamorig:LeftShoulder",
+        "DEF-upper_arm.L": "mixamorig:LeftArm",
+        "DEF-forearm.L": "mixamorig:LeftForeArm",
+        "DEF-hand.L": "mixamorig:LeftHand",
+        "DEF-shoulder.R": "mixamorig:RightShoulder",
+        "DEF-upper_arm.R": "mixamorig:RightArm",
+        "DEF-forearm.R": "mixamorig:RightForeArm",
+        "DEF-hand.R": "mixamorig:RightHand"
+      },
+      "legs": {
+        "DEF-thigh.L": "mixamorig:LeftUpLeg",
+        "DEF-shin.L": "mixamorig:LeftLeg",
+        "DEF-foot.L": "mixamorig:LeftFoot",
+        "DEF-toe.L": "mixamorig:LeftToeBase",
+        "DEF-thigh.R": "mixamorig:RightUpLeg",
+        "DEF-shin.R": "mixamorig:RightLeg",
+        "DEF-foot.R": "mixamorig:RightFoot",
+        "DEF-toe.R": "mixamorig:RightToeBase"
+      }
+    }
+  },
+  "animationClipProcessing": {
+    "outputPath": "assets/motion/ingame/unarmed-core.glb",
+    "outputFormat": "GLB (glTF 2.0)",
+    "clipNamingPattern": "unarmed-core::{action}::v01",
+    "processedClips": [
+      {
+        "action": "idle",
+        "source": "Unarmed Idle.fbx",
+        "loop": true
+      },
+      {
+        "action": "move",
+        "source": "Walking.fbx",
+        "loop": true
+      },
+      {
+        "action": "run",
+        "source": "Running.fbx",
+        "loop": true
+      },
+      {
+        "action": "hit",
+        "source": "Standing React Small From Left.fbx",
+        "loop": false
+      },
+      {
+        "action": "bighit",
+        "source": "Receive Uppercut To The Face.fbx",
+        "loop": false
+      },
+      {
+        "action": "attack",
+        "source": "Punching.fbx",
+        "loop": false
+      },
+      {
+        "action": "critical",
+        "source": "Illegal Elbow Punch.fbx",
+        "loop": false
+      },
+      {
+        "action": "avoid",
+        "source": "Dodging.fbx",
+        "loop": false
+      },
+      {
+        "action": "defence",
+        "source": "Body Block.fbx",
+        "loop": false
+      }
+    ],
+    "totalClips": 9,
+    "runtimes_RIG_ACTION_KEYS": [
+      "idle",
+      "move",
+      "run",
+      "hit",
+      "bighit",
+      "attack",
+      "critical",
+      "avoid",
+      "defence",
+      "die",
+      "show",
+      "attack_melee",
+      "attack_ranged"
+    ],
+    "dataType": "rotation-only (quaternion keyframes)",
+    "animationLayeringMethod": "Overlay system (SkeletonUtils.clone + quaternion delta composition)"
+  },
+  "runtimeAnimationContract": {
+    "source": "battle-realtime-three.js",
+    "loader": "THREE.FBXLoader (for .fbx character import, deprecated in favor of GLB)",
+    "overlayLoader": "GLTFLoader for unarmed-core.glb",
+    "overlayAnimationPath": "assets/motion/ingame/unarmed-core.glb",
+    "cloneMechanism": "SkeletonUtils.clone() creates owned skeletons per instance",
+    "animationMixer": "THREE.AnimationMixer",
+    "clipNamingExtraction": "function actionKeyFromClipName(name) extracts from \"<assetId>::<action>::v01\"",
+    "actionLoopingRules": {
+      "locomotion": [
+        "idle",
+        "move",
+        "run"
+      ],
+      "oneShot": [
+        "hit",
+        "bighit",
+        "attack",
+        "critical",
+        "avoid",
+        "defence",
+        "die",
+        "show",
+        "attack_melee",
+        "attack_ranged"
+      ]
+    },
+    "fallbacks": "Commander authors attack_melee/attack_ranged; other actors use attack/critical if those are missing"
+  },
+  "compatibilityMatrix": {
+    "allCharactersShare": "canonical DEF-* skeleton",
+    "characterCount": 6,
+    "motionCount": 42,
+    "retargetingStatus": "Requires one-time baking per character (NOT runtime retargeting)",
+    "currentApproach": "unarmed-core.glb overlay system applies pre-baked rotation deltas to all compatible rigs",
+    "precondition": "all target character rigs must share DEF-* bone hierarchy (VERIFIED via rig pipeline)",
+    "compatibilityRisks": [
+      "Source motion skeleton name: hardcoded as \"mixamorig\"; skeleton drift = silent failure",
+      "FBX version mismatch (char v7400 vs motion v7700): compatible but requires careful import settings",
+      "Pelvis treatment: DEF-pelvis bones not retargeted; motion from DEF-spine + limbs only",
+      "Overlay system assumes rest-pose compatibility: if character has different default pose, overlay may misalign"
+    ]
+  },
+  "validationGates": {
+    "testFile": "tests/ingame-motion-pack.test.mjs",
+    "auditScript": "scripts/audit-fbx-motion-bench.py",
+    "manifestFile": "assets/motion/ingame/manifest.json",
+    "checks": [
+      "Quaternion angle tolerance (double-cover angle)",
+      "Frame range validation",
+      "Animation clip presence per character",
+      "Bone mapping completeness",
+      "GLB structure validation (JSON + binary)",
+      "Keyframe interpolation"
+    ]
+  },
+  "toolchain": {
+    "baking": "scripts/retarget-ingame-motion-blender.py (Blender 5.2+ required)",
+    "rigging": "scripts/rig-character-asset-blender.py",
+    "import": "Blender FBX importer (automatic_bone_orientation=True)",
+    "export": "glTF 2.0 exporter (animation tracks only, quaternion-only, compact)"
+  }
+}

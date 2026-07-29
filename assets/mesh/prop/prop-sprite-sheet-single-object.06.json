@@ -1,0 +1,54 @@
+{
+  "sheet": "assets/mesh/prop/prop-sprite-sheet-single-object.06.png",
+  "sheetIndex": 6,
+  "width": 6757,
+  "height": 3964,
+  "pad": 4,
+  "packMode": "shelf-height-desc",
+  "sheetWidthLimit": 8192,
+  "frameCount": 7,
+  "frames": {
+    "abyssal-banner.png": {
+      "x": 5405,
+      "y": 0,
+      "width": 630,
+      "height": 1193
+    },
+    "broken-court-monarch-boss.png": {
+      "x": 0,
+      "y": 2981,
+      "width": 1470,
+      "height": 983
+    },
+    "equipment-tier-gems.png": {
+      "x": 6039,
+      "y": 0,
+      "width": 718,
+      "height": 1132
+    },
+    "human-command-boss.png": {
+      "x": 2477,
+      "y": 0,
+      "width": 1492,
+      "height": 2433
+    },
+    "lantern-reaver.png": {
+      "x": 3973,
+      "y": 0,
+      "width": 1428,
+      "height": 2371
+    },
+    "shadow-soldier-v04.png": {
+      "x": 986,
+      "y": 0,
+      "width": 1487,
+      "height": 2436
+    },
+    "throne-echo.png": {
+      "x": 0,
+      "y": 0,
+      "width": 982,
+      "height": 2977
+    }
+  }
+}

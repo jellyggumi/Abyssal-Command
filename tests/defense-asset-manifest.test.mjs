@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
@@ -16,7 +16,16 @@ function trackedAssetPaths() {
     encoding: 'buffer',
   });
   assert.equal(result.status, 0, result.stderr.toString('utf8'));
-  return result.stdout.toString('utf8').split('\0').filter(Boolean).sort((left, right) => left.localeCompare(right));
+  const currentPaths = new Set(result.stdout.toString('utf8').split('\0').filter(Boolean));
+  // The manifest builder also retains any RETAINED_ASSET_PATHS entry that
+  // exists on disk, even before it is git-committed, so newly generated
+  // runtime assets receive manifest rows ahead of the commit that adds
+  // them. Mirror that union here or this completeness check would demand
+  // the manifest omit rows for assets that genuinely exist and are kept.
+  for (const retainedPath of retainedPaths) {
+    if (existsSync(resolve(root, retainedPath))) currentPaths.add(retainedPath);
+  }
+  return [...currentPaths].sort((left, right) => left.localeCompare(right));
 }
 
 test('defense asset manifest has literal, complete dispositions when generated', () => {
@@ -99,30 +108,36 @@ test('defense asset manifest has literal, complete dispositions when generated',
   }
 });
 
-test('approved Cinder Span world images remain retained runtime assets', () => {
-  const approvedPaths = [
+test('Cinder Span direct terrain source and material channels remain retained runtime assets', () => {
+  const directPaths = [
+    'assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj',
+    'assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_diffuse.png',
+    'assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_normal.png',
+    'assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_roughness.png',
+    'assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_metallic.png',
+  ];
+  const retiredWorldPlates = [
     'assets/images/battle/world/cinder-span-topdown-plate.webp',
     'assets/images/battle/world/cinder-span-tactical-paper-plate.webp',
   ];
-  const replacedPngPaths = approvedPaths.map((path) => path.replace(/\.webp$/, '.png'));
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 
-  for (const path of approvedPaths) {
+  for (const path of directPaths) {
     assert.ok(retainedPaths.has(path), `${path} must be retained for the runtime`);
   }
-  for (const path of replacedPngPaths) {
+  for (const path of retiredWorldPlates) {
     assert.equal(retainedPaths.has(path), false, `${path} must not re-enter the runtime asset closure`);
   }
 
   if (manifest.pendingGeneration) return;
 
-  for (const path of approvedPaths) {
+  for (const path of directPaths) {
     assert.deepEqual(
       manifest.rows.find((row) => row.currentPath === path),
       {
         currentPath: path,
         disposition: 'retain',
-        extension: '.webp',
+        extension: extname(path),
         generator: 'scripts/build-defense-asset-manifest.mjs',
         replacementPath: path,
         runtimeReference: true,
@@ -131,12 +146,4 @@ test('approved Cinder Span world images remain retained runtime assets', () => {
       `${path} must have an exact retained manifest disposition`,
     );
   }
-
-  for (const path of replacedPngPaths) {
-    const row = manifest.rows.find((entry) => entry.currentPath === path);
-    assert.ok(!row || row.runtimeReference === false, `${path} must not be retained as a duplicate runtime image`);
-  }
-
-  const totalBytes = approvedPaths.reduce((sum, path) => sum + statSync(resolve(root, path)).size, 0);
-  assert.ok(totalBytes <= 2 * 1024 * 1024, `Cinder Span runtime WebP plates must stay within the 2 MiB release budget (observed ${totalBytes} bytes)`);
 });

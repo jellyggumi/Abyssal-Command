@@ -1,0 +1,30 @@
+{
+  "asset": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_orm.png",
+  "generatedAt": "2026-07-29",
+  "generator": {
+    "algorithm": "glTF ORM channel pack: R=1 AO, G=roughness, B=metallic",
+    "blenderVersion": "5.2.0 LTS",
+    "script": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/package-cinder-span-resources-blender.py",
+    "tool": "Blender headless Python"
+  },
+  "output": {
+    "bytes": 5930683,
+    "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_orm.png",
+    "sha256": "c1bebb46507992753ddffe658cfad8e3e6965a2eb3d6388b0e7ef8c1897dabd9"
+  },
+  "runtimeEligible": false,
+  "schemaVersion": 1,
+  "sourceInputs": [
+    {
+      "bytes": 2304084,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_roughness.png",
+      "sha256": "6357e352205f61511ce6e35206b10f56e2acb6143ac263fa7a8edc79dbef311b"
+    },
+    {
+      "bytes": 2430053,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_metallic.png",
+      "sha256": "8415ccaa77d8c9f5c970382c2aaa7f3d9eedf58b50a79453ae19d514840f4b43"
+    }
+  ],
+  "status": "blender-derived-candidate"
+}
