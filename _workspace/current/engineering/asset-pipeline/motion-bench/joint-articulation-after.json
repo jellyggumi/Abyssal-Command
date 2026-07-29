@@ -1,0 +1,4041 @@
+{
+ "schemaVersion": 1,
+ "generatedBy": "scripts/measure-joint-articulation.py",
+ "registry": "assets/motion/ingame/characters/registry.json",
+ "registryGenerationId": "18f2f33f00b2825777fc9753c81281c2a5aee0bd9c97ad441bd11ba54fe53e7c",
+ "sampling": {
+  "maxFramesPerClip": 12,
+  "maxPairsPerBone": 400
+ },
+ "assets": [
+  {
+   "assetId": "broken-court-monarch-boss",
+   "role": "shadow-duelist",
+   "category": "bosses",
+   "model": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
+   "mesh": "broken-court-monarch-boss_body",
+   "vertexCount": 28581,
+   "boneCount": 24,
+   "weightConcentration": {
+    "heaviestBone": "DEF-forearm.R",
+    "heaviestShare": 0.08675,
+    "spineShare": 0.162,
+    "heaviestOverSpine": 0.53552,
+    "boneShare": {
+     "DEF-forearm.R": 0.08675,
+     "DEF-forearm.L": 0.08668,
+     "DEF-upper_arm.R": 0.08411,
+     "DEF-upper_arm.L": 0.08396,
+     "DEF-thigh.L": 0.0736,
+     "DEF-thigh.R": 0.0729,
+     "DEF-spine.005": 0.07149,
+     "DEF-hand.L": 0.06013,
+     "DEF-hand.R": 0.05939,
+     "DEF-spine.003": 0.04419,
+     "DEF-shoulder.R": 0.0416,
+     "DEF-shoulder.L": 0.0412,
+     "DEF-shin.L": 0.02936,
+     "DEF-shin.R": 0.02914,
+     "DEF-pelvis.L": 0.02493,
+     "DEF-pelvis.R": 0.02419,
+     "DEF-spine": 0.0208,
+     "DEF-toe.L": 0.01317,
+     "DEF-toe.R": 0.01253,
+     "DEF-spine.004": 0.0095,
+     "DEF-spine.002": 0.00889,
+     "DEF-foot.L": 0.00739,
+     "DEF-spine.001": 0.00712,
+     "DEF-foot.R": 0.00697
+    }
+   },
+   "chainSpread": {
+    "influenceEpsilon": 0.1,
+    "maxAcceptableSpread": 2,
+    "verticesMeasured": 28581,
+    "meanInfluences": 2.697,
+    "maxInfluences": 4,
+    "meanSpread": 2.613,
+    "maxSpread": 10,
+    "overSpreadVertices": 7051,
+    "overSpreadFraction": 0.2467,
+    "overSpreadByDominantBone": {
+     "DEF-thigh.L": 1480,
+     "DEF-thigh.R": 1424,
+     "DEF-upper_arm.R": 681,
+     "DEF-upper_arm.L": 649,
+     "DEF-hand.R": 506,
+     "DEF-hand.L": 435,
+     "DEF-forearm.L": 409,
+     "DEF-forearm.R": 254,
+     "DEF-toe.L": 227,
+     "DEF-spine.002": 199,
+     "DEF-shin.R": 161,
+     "DEF-shin.L": 160,
+     "DEF-toe.R": 140,
+     "DEF-spine.001": 89,
+     "DEF-pelvis.R": 68,
+     "DEF-pelvis.L": 54,
+     "DEF-spine.003": 52,
+     "DEF-spine": 24,
+     "DEF-foot.R": 19,
+     "DEF-foot.L": 18,
+     "DEF-shoulder.R": 1,
+     "DEF-shoulder.L": 1
+    },
+    "worstVertex": {
+     "vertex": 2091,
+     "spread": 10,
+     "bones": [
+      [
+       "DEF-hand.R",
+       0.4444
+      ],
+      [
+       "DEF-hand.L",
+       0.2337
+      ],
+      [
+       "DEF-forearm.R",
+       0.1952
+      ],
+      [
+       "DEF-foot.R",
+       0.1268
+      ]
+     ]
+    }
+   },
+   "restLengthFloor": {
+    "bboxDiagonal": 2.42042,
+    "fraction": 0.005,
+    "absolute": 0.012102,
+    "pairsBelowFloor": 190,
+    "pairsTotal": 9600
+   },
+   "territorySizes": {
+    "DEF-foot.L": 272,
+    "DEF-foot.R": 252,
+    "DEF-forearm.L": 1901,
+    "DEF-forearm.R": 1760,
+    "DEF-hand.L": 2284,
+    "DEF-hand.R": 2316,
+    "DEF-pelvis.L": 630,
+    "DEF-pelvis.R": 763,
+    "DEF-shin.L": 442,
+    "DEF-shin.R": 444,
+    "DEF-shoulder.L": 887,
+    "DEF-shoulder.R": 917,
+    "DEF-spine": 81,
+    "DEF-spine.001": 234,
+    "DEF-spine.002": 358,
+    "DEF-spine.003": 655,
+    "DEF-spine.004": 289,
+    "DEF-spine.005": 2041,
+    "DEF-thigh.L": 2974,
+    "DEF-thigh.R": 2930,
+    "DEF-toe.L": 232,
+    "DEF-toe.R": 145,
+    "DEF-upper_arm.L": 2881,
+    "DEF-upper_arm.R": 2893
+   },
+   "unownedVertices": 0,
+   "jointEdgeCoverage": {
+    "DEF-foot.L->DEF-toe.L": 12,
+    "DEF-foot.R->DEF-toe.R": 11,
+    "DEF-forearm.L->DEF-hand.L": 230,
+    "DEF-forearm.R->DEF-hand.R": 213,
+    "DEF-shin.L->DEF-foot.L": 64,
+    "DEF-shin.R->DEF-foot.R": 64,
+    "DEF-shoulder.L->DEF-upper_arm.L": 249,
+    "DEF-shoulder.R->DEF-upper_arm.R": 246,
+    "DEF-thigh.L->DEF-shin.L": 172,
+    "DEF-thigh.R->DEF-shin.R": 181,
+    "DEF-upper_arm.L->DEF-forearm.L": 141,
+    "DEF-upper_arm.R->DEF-forearm.R": 143
+   },
+   "clips": [
+    {
+     "clip": "broken-court-monarch-boss::attack::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 12.09439,
+     "segmentDeviationP95": 5.88016,
+     "worstSegment": {
+      "bone": "DEF-spine",
+      "ratio": 13.094390451712927,
+      "frame": 47
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 3.41587,
+      "DEF-forearm.R->DEF-hand.R": 1.53833,
+      "DEF-shin.L->DEF-foot.L": 0.04076,
+      "DEF-shin.R->DEF-foot.R": 0.18515,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.92668,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.92366,
+      "DEF-thigh.L->DEF-shin.L": 2.18371,
+      "DEF-thigh.R->DEF-shin.R": 1.59157,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.74705,
+      "DEF-upper_arm.R->DEF-forearm.R": 3.55908
+     }
+    },
+    {
+     "clip": "broken-court-monarch-boss::avoid::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 14.77592,
+     "segmentDeviationP95": 9.92843,
+     "worstSegment": {
+      "bone": "DEF-thigh.L",
+      "ratio": 15.775924618376157,
+      "frame": 21
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 4.77596,
+      "DEF-forearm.R->DEF-hand.R": 1.62699,
+      "DEF-shin.L->DEF-foot.L": 0.21402,
+      "DEF-shin.R->DEF-foot.R": 0.466,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.41164,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.90094,
+      "DEF-thigh.L->DEF-shin.L": 2.7024,
+      "DEF-thigh.R->DEF-shin.R": 1.31231,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.56401,
+      "DEF-upper_arm.R->DEF-forearm.R": 4.16642
+     }
+    },
+    {
+     "clip": "broken-court-monarch-boss::bighit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 11.90973,
+     "segmentDeviationP95": 7.09262,
+     "worstSegment": {
+      "bone": "DEF-thigh.L",
+      "ratio": 12.909728669491946,
+      "frame": 11
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 3.5445,
+      "DEF-forearm.R->DEF-hand.R": 1.50305,
+      "DEF-shin.L->DEF-foot.L": 0.1323,
+      "DEF-shin.R->DEF-foot.R": 0.19503,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.9111,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.63834,
+      "DEF-thigh.L->DEF-shin.L": 2.12892,
+      "DEF-thigh.R->DEF-shin.R": 1.44324,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.32064,
+      "DEF-upper_arm.R->DEF-forearm.R": 3.08861
+     }
+    },
+    {
+     "clip": "broken-court-monarch-boss::critical::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 18.07475,
+     "segmentDeviationP95": 7.29171,
+     "worstSegment": {
+      "bone": "DEF-spine",
+      "ratio": 19.07475040034861,
+      "frame": 25
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 3.34415,
+      "DEF-forearm.R->DEF-hand.R": 2.25883,
+      "DEF-shin.L->DEF-foot.L": 0.8809,
+      "DEF-shin.R->DEF-foot.R": 0.81506,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.10574,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.95025,
+      "DEF-thigh.L->DEF-shin.L": 2.57703,
+      "DEF-thigh.R->DEF-shin.R": 2.356,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.69295,
+      "DEF-upper_arm.R->DEF-forearm.R": 5.18299
+     }
+    },
+    {
+     "clip": "broken-court-monarch-boss::defence::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 11.88444,
+     "segmentDeviationP95": 6.29392,
+     "worstSegment": {
+      "bone": "DEF-thigh.L",
+      "ratio": 12.884441709927243,
+      "frame": 22
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 3.46787,
+      "DEF-forearm.R->DEF-hand.R": 1.23902,
+      "DEF-shin.L->DEF-foot.L": 0.06437,
+      "DEF-shin.R->DEF-foot.R": 0.30918,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.86289,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.8168,
+      "DEF-thigh.L->DEF-shin.L": 1.84373,
+      "DEF-thigh.R->DEF-shin.R": 1.45746,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.81888,
+      "DEF-upper_arm.R->DEF-forearm.R": 3.1414
+     }
+    },
+    {
+     "clip": "broken-court-monarch-boss::die::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.4828,
+     "segmentDeviationP95": 6.33992,
+     "worstSegment": {
+      "bone": "DEF-spine",
+      "ratio": 9.482798688528703,
+      "frame": 33
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 3.11882,
+      "DEF-forearm.R->DEF-hand.R": 1.47307,
+      "DEF-shin.L->DEF-foot.L": 0.07517,
+      "DEF-shin.R->DEF-foot.R": 0.59327,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.40714,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.58221,
+      "DEF-thigh.L->DEF-shin.L": 0.9774,
+      "DEF-thigh.R->DEF-shin.R": 0.98368,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.88009,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.18656
+     }
+    },
+    {
+     "clip": "broken-court-monarch-boss::hit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 12.29048,
+     "segmentDeviationP95": 7.57662,
+     "worstSegment": {
+      "bone": "DEF-thigh.L",
+      "ratio": 13.290479167531192,
+      "frame": 0
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 2.62574,
+      "DEF-forearm.R->DEF-hand.R": 1.40229,
+      "DEF-shin.L->DEF-foot.L": 0.14142,
+      "DEF-shin.R->DEF-foot.R": 0.05921,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.9556,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.83236,
+      "DEF-thigh.L->DEF-shin.L": 2.08683,
+      "DEF-thigh.R->DEF-shin.R": 0.71999,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.06891,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.17786
+     }
+    },
+    {
+     "clip": "broken-court-monarch-boss::idle::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 12.10946,
+     "segmentDeviationP95": 6.87469,
+     "worstSegment": {
+      "bone": "DEF-thigh.L",
+      "ratio": 13.109459489230083,
+      "frame": 42
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 4.16236,
+      "DEF-forearm.R->DEF-hand.R": 1.71233,
+      "DEF-shin.L->DEF-foot.L": 0.13829,
+      "DEF-shin.R->DEF-foot.R": 0.52361,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.3117,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.41305,
+      "DEF-thigh.L->DEF-shin.L": 2.29481,
+      "DEF-thigh.R->DEF-shin.R": 1.54357,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.47537,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.43498
+     }
+    },
+    {
+     "clip": "broken-court-monarch-boss::move::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 15.97039,
+     "segmentDeviationP95": 8.16158,
+     "worstSegment": {
+      "bone": "DEF-thigh.L",
+      "ratio": 16.970390838787498,
+      "frame": 27
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 4.70538,
+      "DEF-forearm.R->DEF-hand.R": 1.83976,
+      "DEF-shin.L->DEF-foot.L": 0.52436,
+      "DEF-shin.R->DEF-foot.R": 0.5714,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.27754,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.60767,
+      "DEF-thigh.L->DEF-shin.L": 3.08295,
+      "DEF-thigh.R->DEF-shin.R": 2.1101,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.36316,
+      "DEF-upper_arm.R->DEF-forearm.R": 3.11689
+     }
+    },
+    {
+     "clip": "broken-court-monarch-boss::run::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 13.59657,
+     "segmentDeviationP95": 8.59576,
+     "worstSegment": {
+      "bone": "DEF-thigh.L",
+      "ratio": 14.59656816261399,
+      "frame": 11
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 4.22055,
+      "DEF-forearm.R->DEF-hand.R": 1.09608,
+      "DEF-shin.L->DEF-foot.L": 0.54203,
+      "DEF-shin.R->DEF-foot.R": 0.63455,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.09715,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.54876,
+      "DEF-thigh.L->DEF-shin.L": 2.42863,
+      "DEF-thigh.R->DEF-shin.R": 1.52888,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.4812,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.29433
+     }
+    },
+    {
+     "clip": "broken-court-monarch-boss::show::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 15.94539,
+     "segmentDeviationP95": 12.87929,
+     "worstSegment": {
+      "bone": "DEF-spine",
+      "ratio": 16.94538831605094,
+      "frame": 12
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 4.73097,
+      "DEF-forearm.R->DEF-hand.R": 2.13412,
+      "DEF-shin.L->DEF-foot.L": 0.15635,
+      "DEF-shin.R->DEF-foot.R": 0.5369,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.10093,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.93658,
+      "DEF-thigh.L->DEF-shin.L": 2.87087,
+      "DEF-thigh.R->DEF-shin.R": 2.0088,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.91126,
+      "DEF-upper_arm.R->DEF-forearm.R": 4.12886
+     }
+    }
+   ]
+  },
+  {
+   "assetId": "broken-court-monarch-v04",
+   "role": "regal-void-caster",
+   "category": "bosses",
+   "model": "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
+   "mesh": "broken-court-monarch-v04_body",
+   "vertexCount": 5770,
+   "boneCount": 24,
+   "weightConcentration": {
+    "heaviestBone": "DEF-thigh.R",
+    "heaviestShare": 0.14094,
+    "spineShare": 0.25168,
+    "heaviestOverSpine": 0.56,
+    "boneShare": {
+     "DEF-thigh.R": 0.14094,
+     "DEF-spine": 0.1347,
+     "DEF-thigh.L": 0.11928,
+     "DEF-shin.L": 0.09057,
+     "DEF-shin.R": 0.08643,
+     "DEF-spine.003": 0.04685,
+     "DEF-upper_arm.R": 0.04017,
+     "DEF-upper_arm.L": 0.03922,
+     "DEF-spine.004": 0.03686,
+     "DEF-foot.L": 0.03551,
+     "DEF-shoulder.R": 0.0353,
+     "DEF-shoulder.L": 0.03332,
+     "DEF-spine.005": 0.03221,
+     "DEF-foot.R": 0.03213,
+     "DEF-forearm.L": 0.02182,
+     "DEF-forearm.R": 0.02167,
+     "DEF-hand.L": 0.01638,
+     "DEF-hand.R": 0.01354,
+     "DEF-toe.L": 0.00756,
+     "DEF-toe.R": 0.00674,
+     "DEF-pelvis.L": 0.00437,
+     "DEF-pelvis.R": 0.00338,
+     "DEF-spine.001": 0.00079,
+     "DEF-spine.002": 0.00027
+    }
+   },
+   "chainSpread": {
+    "influenceEpsilon": 0.1,
+    "maxAcceptableSpread": 2,
+    "verticesMeasured": 5770,
+    "meanInfluences": 2.273,
+    "maxInfluences": 3,
+    "meanSpread": 1.273,
+    "maxSpread": 2,
+    "overSpreadVertices": 0,
+    "overSpreadFraction": 0.0,
+    "overSpreadByDominantBone": {},
+    "worstVertex": {
+     "vertex": null,
+     "spread": 0,
+     "bones": []
+    }
+   },
+   "restLengthFloor": {
+    "bboxDiagonal": 2.62854,
+    "fraction": 0.005,
+    "absolute": 0.013143,
+    "pairsBelowFloor": 87,
+    "pairsTotal": 7601
+   },
+   "territorySizes": {
+    "DEF-foot.L": 62,
+    "DEF-foot.R": 119,
+    "DEF-forearm.L": 122,
+    "DEF-forearm.R": 155,
+    "DEF-hand.L": 96,
+    "DEF-hand.R": 48,
+    "DEF-pelvis.L": 2,
+    "DEF-shin.L": 556,
+    "DEF-shin.R": 430,
+    "DEF-shoulder.L": 161,
+    "DEF-shoulder.R": 269,
+    "DEF-spine": 737,
+    "DEF-spine.003": 304,
+    "DEF-spine.004": 204,
+    "DEF-spine.005": 199,
+    "DEF-thigh.L": 836,
+    "DEF-thigh.R": 1035,
+    "DEF-toe.L": 45,
+    "DEF-upper_arm.L": 243,
+    "DEF-upper_arm.R": 147
+   },
+   "unownedVertices": 0,
+   "jointEdgeCoverage": {
+    "DEF-forearm.L->DEF-hand.L": 11,
+    "DEF-forearm.R->DEF-hand.R": 11,
+    "DEF-shin.L->DEF-foot.L": 29,
+    "DEF-shin.R->DEF-foot.R": 37,
+    "DEF-shoulder.L->DEF-upper_arm.L": 13,
+    "DEF-shoulder.R->DEF-upper_arm.R": 19,
+    "DEF-thigh.L->DEF-shin.L": 93,
+    "DEF-thigh.R->DEF-shin.R": 71,
+    "DEF-upper_arm.L->DEF-forearm.L": 53,
+    "DEF-upper_arm.R->DEF-forearm.R": 73
+   },
+   "clips": [
+    {
+     "clip": "broken-court-monarch-v04::attack::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 10.12204,
+     "segmentDeviationP95": 2.46921,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 11.122042858655057,
+      "frame": 24
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 0.55204,
+      "DEF-forearm.R->DEF-hand.R": 0.43951,
+      "DEF-shin.L->DEF-foot.L": 0.16797,
+      "DEF-shin.R->DEF-foot.R": 0.66588,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.50772,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.41268,
+      "DEF-thigh.L->DEF-shin.L": 0.525,
+      "DEF-thigh.R->DEF-shin.R": 0.56417,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.83769,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.82017
+     }
+    },
+    {
+     "clip": "broken-court-monarch-v04::avoid::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 13.63344,
+     "segmentDeviationP95": 7.757,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 14.633444611826281,
+      "frame": 19
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 0.5676,
+      "DEF-forearm.R->DEF-hand.R": 0.50307,
+      "DEF-shin.L->DEF-foot.L": 0.95034,
+      "DEF-shin.R->DEF-foot.R": 1.51068,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.79876,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.62827,
+      "DEF-thigh.L->DEF-shin.L": 1.30717,
+      "DEF-thigh.R->DEF-shin.R": 1.21658,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.01057,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.41293
+     }
+    },
+    {
+     "clip": "broken-court-monarch-v04::bighit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 9.66882,
+     "segmentDeviationP95": 7.04262,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 10.668815788448633,
+      "frame": 29
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 0.6511,
+      "DEF-forearm.R->DEF-hand.R": 0.26414,
+      "DEF-shin.L->DEF-foot.L": 0.16901,
+      "DEF-shin.R->DEF-foot.R": 0.21332,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.36793,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.3787,
+      "DEF-thigh.L->DEF-shin.L": 0.52882,
+      "DEF-thigh.R->DEF-shin.R": 0.19219,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.95675,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.89755
+     }
+    },
+    {
+     "clip": "broken-court-monarch-v04::critical::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.1102,
+     "segmentDeviationP95": 4.77913,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 6.110204886987094,
+      "frame": 72
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 0.20798,
+      "DEF-forearm.R->DEF-hand.R": 0.54328,
+      "DEF-shin.L->DEF-foot.L": 0.38897,
+      "DEF-shin.R->DEF-foot.R": 0.72147,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.27795,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.37283,
+      "DEF-thigh.L->DEF-shin.L": 0.87051,
+      "DEF-thigh.R->DEF-shin.R": 0.94357,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.40576,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.79748
+     }
+    },
+    {
+     "clip": "broken-court-monarch-v04::defence::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 9.27843,
+     "segmentDeviationP95": 5.50967,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 10.278430938538243,
+      "frame": 8
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 0.35249,
+      "DEF-forearm.R->DEF-hand.R": 0.28725,
+      "DEF-shin.L->DEF-foot.L": 0.2678,
+      "DEF-shin.R->DEF-foot.R": 1.41833,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.46335,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.33902,
+      "DEF-thigh.L->DEF-shin.L": 0.71407,
+      "DEF-thigh.R->DEF-shin.R": 1.09828,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.53828,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.8211
+     }
+    },
+    {
+     "clip": "broken-court-monarch-v04::die::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 9.97179,
+     "segmentDeviationP95": 9.4038,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 10.971794756990942,
+      "frame": 1
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 0.44899,
+      "DEF-forearm.R->DEF-hand.R": 0.22919,
+      "DEF-shin.L->DEF-foot.L": 0.25851,
+      "DEF-shin.R->DEF-foot.R": 0.97752,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.4761,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.40063,
+      "DEF-thigh.L->DEF-shin.L": 0.68283,
+      "DEF-thigh.R->DEF-shin.R": 1.11435,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.97249,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.85713
+     }
+    },
+    {
+     "clip": "broken-court-monarch-v04::hit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.49309,
+     "segmentDeviationP95": 3.02649,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 4.493093928261619,
+      "frame": 5
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 0.25745,
+      "DEF-forearm.R->DEF-hand.R": 0.15126,
+      "DEF-shin.L->DEF-foot.L": 0.03601,
+      "DEF-shin.R->DEF-foot.R": 0.06446,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.19749,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.30473,
+      "DEF-thigh.L->DEF-shin.L": 0.10385,
+      "DEF-thigh.R->DEF-shin.R": 0.11372,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.43817,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.90285
+     }
+    },
+    {
+     "clip": "broken-court-monarch-v04::idle::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.61471,
+     "segmentDeviationP95": 2.08322,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 9.61471284835187,
+      "frame": 224
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 0.20769,
+      "DEF-forearm.R->DEF-hand.R": 0.26477,
+      "DEF-shin.L->DEF-foot.L": 0.07557,
+      "DEF-shin.R->DEF-foot.R": 0.18312,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.15102,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.37077,
+      "DEF-thigh.L->DEF-shin.L": 0.18809,
+      "DEF-thigh.R->DEF-shin.R": 0.34955,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.06018,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.57156
+     }
+    },
+    {
+     "clip": "broken-court-monarch-v04::move::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 9.59365,
+     "segmentDeviationP95": 5.27631,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 10.5936481036557,
+      "frame": 6
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 0.42703,
+      "DEF-forearm.R->DEF-hand.R": 0.22702,
+      "DEF-shin.L->DEF-foot.L": 0.368,
+      "DEF-shin.R->DEF-foot.R": 0.80874,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.5803,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.34887,
+      "DEF-thigh.L->DEF-shin.L": 1.04594,
+      "DEF-thigh.R->DEF-shin.R": 0.99385,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.97523,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.54105
+     }
+    },
+    {
+     "clip": "broken-court-monarch-v04::run::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.06848,
+     "segmentDeviationP95": 5.34247,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 9.068478963447975,
+      "frame": 11
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 0.15346,
+      "DEF-forearm.R->DEF-hand.R": 0.35173,
+      "DEF-shin.L->DEF-foot.L": 0.37348,
+      "DEF-shin.R->DEF-foot.R": 1.10505,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.36812,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.24005,
+      "DEF-thigh.L->DEF-shin.L": 0.78545,
+      "DEF-thigh.R->DEF-shin.R": 1.12719,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.20139,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.49503
+     }
+    },
+    {
+     "clip": "broken-court-monarch-v04::show::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.13794,
+     "segmentDeviationP95": 4.81243,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 6.1379356621675445,
+      "frame": 72
+     },
+     "jointFlexMax": {
+      "DEF-forearm.L->DEF-hand.L": 0.21774,
+      "DEF-forearm.R->DEF-hand.R": 0.51607,
+      "DEF-shin.L->DEF-foot.L": 0.38679,
+      "DEF-shin.R->DEF-foot.R": 0.72732,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.28009,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.37709,
+      "DEF-thigh.L->DEF-shin.L": 0.86748,
+      "DEF-thigh.R->DEF-shin.R": 0.94791,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.4036,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.7954
+     }
+    }
+   ]
+  },
+  {
+   "assetId": "ember-cohort",
+   "role": "radiant-vanguard",
+   "category": "enemies",
+   "model": "assets/motion/ingame/characters/ember-cohort/model.glb",
+   "mesh": "ember-cohort_body",
+   "vertexCount": 5680,
+   "boneCount": 24,
+   "weightConcentration": {
+    "heaviestBone": "DEF-thigh.L",
+    "heaviestShare": 0.08254,
+    "spineShare": 0.17162,
+    "heaviestOverSpine": 0.48093,
+    "boneShare": {
+     "DEF-thigh.L": 0.08254,
+     "DEF-thigh.R": 0.08108,
+     "DEF-pelvis.L": 0.07912,
+     "DEF-pelvis.R": 0.0708,
+     "DEF-spine": 0.06215,
+     "DEF-shin.R": 0.05712,
+     "DEF-shin.L": 0.05631,
+     "DEF-shoulder.R": 0.04679,
+     "DEF-shoulder.L": 0.04507,
+     "DEF-spine.005": 0.04426,
+     "DEF-forearm.R": 0.0393,
+     "DEF-upper_arm.R": 0.03916,
+     "DEF-upper_arm.L": 0.03855,
+     "DEF-forearm.L": 0.03839,
+     "DEF-hand.R": 0.03712,
+     "DEF-hand.L": 0.03525,
+     "DEF-spine.004": 0.03124,
+     "DEF-foot.R": 0.02507,
+     "DEF-foot.L": 0.02334,
+     "DEF-spine.003": 0.02186,
+     "DEF-toe.R": 0.0176,
+     "DEF-toe.L": 0.01578,
+     "DEF-spine.001": 0.00798,
+     "DEF-spine.002": 0.00413
+    }
+   },
+   "chainSpread": {
+    "influenceEpsilon": 0.1,
+    "maxAcceptableSpread": 2,
+    "verticesMeasured": 5680,
+    "meanInfluences": 3.07,
+    "maxInfluences": 4,
+    "meanSpread": 2.211,
+    "maxSpread": 8,
+    "overSpreadVertices": 2360,
+    "overSpreadFraction": 0.41549,
+    "overSpreadByDominantBone": {
+     "DEF-shoulder.R": 393,
+     "DEF-shoulder.L": 326,
+     "DEF-thigh.L": 233,
+     "DEF-thigh.R": 226,
+     "DEF-forearm.L": 186,
+     "DEF-hand.R": 178,
+     "DEF-hand.L": 175,
+     "DEF-forearm.R": 161,
+     "DEF-upper_arm.L": 144,
+     "DEF-upper_arm.R": 117,
+     "DEF-pelvis.L": 79,
+     "DEF-pelvis.R": 75,
+     "DEF-spine.003": 38,
+     "DEF-spine.001": 13,
+     "DEF-spine.002": 8,
+     "DEF-shin.R": 6,
+     "DEF-shin.L": 2
+    },
+    "worstVertex": {
+     "vertex": 1954,
+     "spread": 8,
+     "bones": [
+      [
+       "DEF-pelvis.L",
+       0.4066
+      ],
+      [
+       "DEF-shoulder.L",
+       0.2756
+      ],
+      [
+       "DEF-hand.L",
+       0.2172
+      ],
+      [
+       "DEF-forearm.L",
+       0.1005
+      ]
+     ]
+    }
+   },
+   "restLengthFloor": {
+    "bboxDiagonal": 2.51608,
+    "fraction": 0.005,
+    "absolute": 0.01258,
+    "pairsBelowFloor": 232,
+    "pairsTotal": 9551
+   },
+   "territorySizes": {
+    "DEF-foot.L": 117,
+    "DEF-foot.R": 148,
+    "DEF-forearm.L": 188,
+    "DEF-forearm.R": 163,
+    "DEF-hand.L": 195,
+    "DEF-hand.R": 210,
+    "DEF-pelvis.L": 640,
+    "DEF-pelvis.R": 482,
+    "DEF-shin.L": 267,
+    "DEF-shin.R": 277,
+    "DEF-shoulder.L": 334,
+    "DEF-shoulder.R": 404,
+    "DEF-spine": 78,
+    "DEF-spine.001": 41,
+    "DEF-spine.002": 27,
+    "DEF-spine.003": 109,
+    "DEF-spine.004": 197,
+    "DEF-spine.005": 256,
+    "DEF-thigh.L": 600,
+    "DEF-thigh.R": 565,
+    "DEF-toe.L": 62,
+    "DEF-toe.R": 59,
+    "DEF-upper_arm.L": 144,
+    "DEF-upper_arm.R": 117
+   },
+   "unownedVertices": 0,
+   "jointEdgeCoverage": {
+    "DEF-foot.L->DEF-toe.L": 31,
+    "DEF-foot.R->DEF-toe.R": 34,
+    "DEF-forearm.L->DEF-hand.L": 147,
+    "DEF-forearm.R->DEF-hand.R": 189,
+    "DEF-shin.L->DEF-foot.L": 44,
+    "DEF-shin.R->DEF-foot.R": 48,
+    "DEF-shoulder.L->DEF-upper_arm.L": 114,
+    "DEF-shoulder.R->DEF-upper_arm.R": 124,
+    "DEF-thigh.L->DEF-shin.L": 76,
+    "DEF-thigh.R->DEF-shin.R": 75,
+    "DEF-upper_arm.L->DEF-forearm.L": 152,
+    "DEF-upper_arm.R->DEF-forearm.R": 147
+   },
+   "clips": [
+    {
+     "clip": "ember-cohort::attack::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 9.70411,
+     "segmentDeviationP95": 4.23332,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 10.704106464307923,
+      "frame": 16
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.33464,
+      "DEF-foot.R->DEF-toe.R": 0.50783,
+      "DEF-forearm.L->DEF-hand.L": 2.4768,
+      "DEF-forearm.R->DEF-hand.R": 2.71177,
+      "DEF-shin.L->DEF-foot.L": 0.41908,
+      "DEF-shin.R->DEF-foot.R": 0.61921,
+      "DEF-shoulder.L->DEF-upper_arm.L": 3.84569,
+      "DEF-shoulder.R->DEF-upper_arm.R": 2.0957,
+      "DEF-thigh.L->DEF-shin.L": 1.49936,
+      "DEF-thigh.R->DEF-shin.R": 1.31357,
+      "DEF-upper_arm.L->DEF-forearm.L": 4.11749,
+      "DEF-upper_arm.R->DEF-forearm.R": 3.06302
+     }
+    },
+    {
+     "clip": "ember-cohort::avoid::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 7.18679,
+     "segmentDeviationP95": 2.83713,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 8.186789392824158,
+      "frame": 18
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.06081,
+      "DEF-foot.R->DEF-toe.R": 0.03867,
+      "DEF-forearm.L->DEF-hand.L": 1.72006,
+      "DEF-forearm.R->DEF-hand.R": 0.70855,
+      "DEF-shin.L->DEF-foot.L": 0.04893,
+      "DEF-shin.R->DEF-foot.R": 0.05145,
+      "DEF-shoulder.L->DEF-upper_arm.L": 2.41483,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.76541,
+      "DEF-thigh.L->DEF-shin.L": 0.76924,
+      "DEF-thigh.R->DEF-shin.R": 0.59613,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.68366,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.6989
+     }
+    },
+    {
+     "clip": "ember-cohort::bighit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.61461,
+     "segmentDeviationP95": 4.41271,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 6.614608346592048,
+      "frame": 9
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.195,
+      "DEF-foot.R->DEF-toe.R": 0.10036,
+      "DEF-forearm.L->DEF-hand.L": 2.69658,
+      "DEF-forearm.R->DEF-hand.R": 1.8503,
+      "DEF-shin.L->DEF-foot.L": 0.17254,
+      "DEF-shin.R->DEF-foot.R": 0.14145,
+      "DEF-shoulder.L->DEF-upper_arm.L": 2.35954,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.46135,
+      "DEF-thigh.L->DEF-shin.L": 0.70273,
+      "DEF-thigh.R->DEF-shin.R": 0.97083,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.58724,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.9525
+     }
+    },
+    {
+     "clip": "ember-cohort::critical::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.44681,
+     "segmentDeviationP95": 5.48656,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 9.446812101487012,
+      "frame": 13
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.40723,
+      "DEF-foot.R->DEF-toe.R": 0.35818,
+      "DEF-forearm.L->DEF-hand.L": 2.12383,
+      "DEF-forearm.R->DEF-hand.R": 2.52627,
+      "DEF-shin.L->DEF-foot.L": 0.66687,
+      "DEF-shin.R->DEF-foot.R": 0.54947,
+      "DEF-shoulder.L->DEF-upper_arm.L": 3.04342,
+      "DEF-shoulder.R->DEF-upper_arm.R": 2.09817,
+      "DEF-thigh.L->DEF-shin.L": 2.8237,
+      "DEF-thigh.R->DEF-shin.R": 2.29671,
+      "DEF-upper_arm.L->DEF-forearm.L": 3.3217,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.5918
+     }
+    },
+    {
+     "clip": "ember-cohort::defence::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.41274,
+     "segmentDeviationP95": 3.78158,
+     "worstSegment": {
+      "bone": "DEF-hand.R",
+      "ratio": 5.412743329262865,
+      "frame": 0
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.39277,
+      "DEF-foot.R->DEF-toe.R": 0.31228,
+      "DEF-forearm.L->DEF-hand.L": 0.83808,
+      "DEF-forearm.R->DEF-hand.R": 2.88462,
+      "DEF-shin.L->DEF-foot.L": 0.36602,
+      "DEF-shin.R->DEF-foot.R": 0.35343,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.14464,
+      "DEF-shoulder.R->DEF-upper_arm.R": 2.38304,
+      "DEF-thigh.L->DEF-shin.L": 0.80343,
+      "DEF-thigh.R->DEF-shin.R": 0.68944,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.4791,
+      "DEF-upper_arm.R->DEF-forearm.R": 3.11435
+     }
+    },
+    {
+     "clip": "ember-cohort::die::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 11.25142,
+     "segmentDeviationP95": 8.61066,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 12.251422697757018,
+      "frame": 1
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.04286,
+      "DEF-foot.R->DEF-toe.R": 0.16326,
+      "DEF-forearm.L->DEF-hand.L": 2.68353,
+      "DEF-forearm.R->DEF-hand.R": 3.36274,
+      "DEF-shin.L->DEF-foot.L": 0.05311,
+      "DEF-shin.R->DEF-foot.R": 0.17088,
+      "DEF-shoulder.L->DEF-upper_arm.L": 4.21981,
+      "DEF-shoulder.R->DEF-upper_arm.R": 2.83933,
+      "DEF-thigh.L->DEF-shin.L": 0.40166,
+      "DEF-thigh.R->DEF-shin.R": 0.52943,
+      "DEF-upper_arm.L->DEF-forearm.L": 4.48836,
+      "DEF-upper_arm.R->DEF-forearm.R": 3.82053
+     }
+    },
+    {
+     "clip": "ember-cohort::hit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.37922,
+     "segmentDeviationP95": 3.70561,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 5.379216097938221,
+      "frame": 5
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.31671,
+      "DEF-foot.R->DEF-toe.R": 0.23568,
+      "DEF-forearm.L->DEF-hand.L": 1.31802,
+      "DEF-forearm.R->DEF-hand.R": 2.63512,
+      "DEF-shin.L->DEF-foot.L": 0.28625,
+      "DEF-shin.R->DEF-foot.R": 0.28917,
+      "DEF-shoulder.L->DEF-upper_arm.L": 2.17714,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.54221,
+      "DEF-thigh.L->DEF-shin.L": 0.64829,
+      "DEF-thigh.R->DEF-shin.R": 0.4678,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.38428,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.7573
+     }
+    },
+    {
+     "clip": "ember-cohort::idle::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.48283,
+     "segmentDeviationP95": 3.70126,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 9.482827158813441,
+      "frame": 26
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.29399,
+      "DEF-foot.R->DEF-toe.R": 0.12272,
+      "DEF-forearm.L->DEF-hand.L": 2.30122,
+      "DEF-forearm.R->DEF-hand.R": 2.76289,
+      "DEF-shin.L->DEF-foot.L": 0.25742,
+      "DEF-shin.R->DEF-foot.R": 0.16093,
+      "DEF-shoulder.L->DEF-upper_arm.L": 2.17887,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.97716,
+      "DEF-thigh.L->DEF-shin.L": 0.55059,
+      "DEF-thigh.R->DEF-shin.R": 0.28344,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.45807,
+      "DEF-upper_arm.R->DEF-forearm.R": 3.25786
+     }
+    },
+    {
+     "clip": "ember-cohort::move::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.55656,
+     "segmentDeviationP95": 3.31753,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 6.556558642215416,
+      "frame": 3
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.20736,
+      "DEF-foot.R->DEF-toe.R": 0.181,
+      "DEF-forearm.L->DEF-hand.L": 2.36872,
+      "DEF-forearm.R->DEF-hand.R": 2.61604,
+      "DEF-shin.L->DEF-foot.L": 0.36186,
+      "DEF-shin.R->DEF-foot.R": 0.30308,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.06861,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.16041,
+      "DEF-thigh.L->DEF-shin.L": 1.29864,
+      "DEF-thigh.R->DEF-shin.R": 1.25379,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.85554,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.40743
+     }
+    },
+    {
+     "clip": "ember-cohort::run::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.573,
+     "segmentDeviationP95": 2.37583,
+     "worstSegment": {
+      "bone": "DEF-shoulder.L",
+      "ratio": 4.573004852790386,
+      "frame": 14
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.20488,
+      "DEF-foot.R->DEF-toe.R": 0.2793,
+      "DEF-forearm.L->DEF-hand.L": 0.99855,
+      "DEF-forearm.R->DEF-hand.R": 1.67335,
+      "DEF-shin.L->DEF-foot.L": 0.47598,
+      "DEF-shin.R->DEF-foot.R": 0.36489,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.64582,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.37891,
+      "DEF-thigh.L->DEF-shin.L": 1.09471,
+      "DEF-thigh.R->DEF-shin.R": 1.3442,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.80168,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.67657
+     }
+    },
+    {
+     "clip": "ember-cohort::show::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.02281,
+     "segmentDeviationP95": 3.05394,
+     "worstSegment": {
+      "bone": "DEF-hand.L",
+      "ratio": 5.022809178459259,
+      "frame": 0
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.04219,
+      "DEF-foot.R->DEF-toe.R": 0.07298,
+      "DEF-forearm.L->DEF-hand.L": 1.18722,
+      "DEF-forearm.R->DEF-hand.R": 2.00489,
+      "DEF-shin.L->DEF-foot.L": 0.02858,
+      "DEF-shin.R->DEF-foot.R": 0.07671,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.91691,
+      "DEF-shoulder.R->DEF-upper_arm.R": 2.1132,
+      "DEF-thigh.L->DEF-shin.L": 0.38511,
+      "DEF-thigh.R->DEF-shin.R": 0.36063,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.16611,
+      "DEF-upper_arm.R->DEF-forearm.R": 3.07996
+     }
+    }
+   ]
+  },
+  {
+   "assetId": "guard",
+   "role": "ember-greatsword-guard",
+   "category": "enemies",
+   "model": "assets/motion/ingame/characters/guard/model.glb",
+   "mesh": "guard_body",
+   "vertexCount": 5325,
+   "boneCount": 24,
+   "weightConcentration": {
+    "heaviestBone": "DEF-spine",
+    "heaviestShare": 0.09825,
+    "spineShare": 0.20014,
+    "heaviestOverSpine": 0.49091,
+    "boneShare": {
+     "DEF-spine": 0.09825,
+     "DEF-upper_arm.L": 0.09456,
+     "DEF-upper_arm.R": 0.09201,
+     "DEF-forearm.L": 0.07056,
+     "DEF-forearm.R": 0.0697,
+     "DEF-shoulder.L": 0.05509,
+     "DEF-shoulder.R": 0.05377,
+     "DEF-thigh.L": 0.05145,
+     "DEF-thigh.R": 0.0502,
+     "DEF-shin.L": 0.04441,
+     "DEF-shin.R": 0.04405,
+     "DEF-spine.003": 0.04209,
+     "DEF-hand.L": 0.03582,
+     "DEF-hand.R": 0.03572,
+     "DEF-spine.005": 0.03363,
+     "DEF-foot.L": 0.02719,
+     "DEF-foot.R": 0.02694,
+     "DEF-spine.004": 0.02263,
+     "DEF-pelvis.R": 0.01557,
+     "DEF-toe.L": 0.01172,
+     "DEF-toe.R": 0.01139,
+     "DEF-pelvis.L": 0.00972,
+     "DEF-spine.001": 0.00186,
+     "DEF-spine.002": 0.00168
+    }
+   },
+   "chainSpread": {
+    "influenceEpsilon": 0.1,
+    "maxAcceptableSpread": 2,
+    "verticesMeasured": 5325,
+    "meanInfluences": 2.416,
+    "maxInfluences": 4,
+    "meanSpread": 1.412,
+    "maxSpread": 2,
+    "overSpreadVertices": 0,
+    "overSpreadFraction": 0.0,
+    "overSpreadByDominantBone": {},
+    "worstVertex": {
+     "vertex": null,
+     "spread": 0,
+     "bones": []
+    }
+   },
+   "restLengthFloor": {
+    "bboxDiagonal": 2.27608,
+    "fraction": 0.005,
+    "absolute": 0.01138,
+    "pairsBelowFloor": 95,
+    "pairsTotal": 8688
+   },
+   "territorySizes": {
+    "DEF-foot.L": 156,
+    "DEF-foot.R": 134,
+    "DEF-forearm.L": 299,
+    "DEF-forearm.R": 338,
+    "DEF-hand.L": 220,
+    "DEF-hand.R": 181,
+    "DEF-pelvis.L": 21,
+    "DEF-pelvis.R": 30,
+    "DEF-shin.L": 179,
+    "DEF-shin.R": 211,
+    "DEF-shoulder.L": 139,
+    "DEF-shoulder.R": 160,
+    "DEF-spine": 578,
+    "DEF-spine.002": 13,
+    "DEF-spine.003": 251,
+    "DEF-spine.004": 86,
+    "DEF-spine.005": 210,
+    "DEF-thigh.L": 361,
+    "DEF-thigh.R": 333,
+    "DEF-toe.L": 36,
+    "DEF-toe.R": 49,
+    "DEF-upper_arm.L": 702,
+    "DEF-upper_arm.R": 638
+   },
+   "unownedVertices": 0,
+   "jointEdgeCoverage": {
+    "DEF-foot.L->DEF-toe.L": 32,
+    "DEF-foot.R->DEF-toe.R": 27,
+    "DEF-forearm.L->DEF-hand.L": 7,
+    "DEF-forearm.R->DEF-hand.R": 15,
+    "DEF-shin.L->DEF-foot.L": 48,
+    "DEF-shin.R->DEF-foot.R": 42,
+    "DEF-shoulder.L->DEF-upper_arm.L": 32,
+    "DEF-shoulder.R->DEF-upper_arm.R": 44,
+    "DEF-thigh.L->DEF-shin.L": 19,
+    "DEF-thigh.R->DEF-shin.R": 39,
+    "DEF-upper_arm.L->DEF-forearm.L": 26,
+    "DEF-upper_arm.R->DEF-forearm.R": 28
+   },
+   "clips": [
+    {
+     "clip": "guard::attack::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 9.82871,
+     "segmentDeviationP95": 5.06937,
+     "worstSegment": {
+      "bone": "DEF-foot.R",
+      "ratio": 10.828710613272202,
+      "frame": 20
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.40314,
+      "DEF-foot.R->DEF-toe.R": 0.46899,
+      "DEF-forearm.L->DEF-hand.L": 0.4745,
+      "DEF-forearm.R->DEF-hand.R": 1.15112,
+      "DEF-shin.L->DEF-foot.L": 0.94331,
+      "DEF-shin.R->DEF-foot.R": 2.86988,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.66153,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.88955,
+      "DEF-thigh.L->DEF-shin.L": 0.59192,
+      "DEF-thigh.R->DEF-shin.R": 0.57081,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.70713,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.77978
+     }
+    },
+    {
+     "clip": "guard::avoid::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.32242,
+     "segmentDeviationP95": 1.87992,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 6.322417873756369,
+      "frame": 18
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.07564,
+      "DEF-foot.R->DEF-toe.R": 0.08634,
+      "DEF-forearm.L->DEF-hand.L": 0.35875,
+      "DEF-forearm.R->DEF-hand.R": 0.56247,
+      "DEF-shin.L->DEF-foot.L": 0.38619,
+      "DEF-shin.R->DEF-foot.R": 0.36251,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.45442,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.47177,
+      "DEF-thigh.L->DEF-shin.L": 0.1867,
+      "DEF-thigh.R->DEF-shin.R": 0.19537,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.5883,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.63245
+     }
+    },
+    {
+     "clip": "guard::bighit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.77168,
+     "segmentDeviationP95": 3.78552,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 5.771680280805796,
+      "frame": 5
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.27754,
+      "DEF-foot.R->DEF-toe.R": 0.18126,
+      "DEF-forearm.L->DEF-hand.L": 0.6306,
+      "DEF-forearm.R->DEF-hand.R": 0.67929,
+      "DEF-shin.L->DEF-foot.L": 0.61602,
+      "DEF-shin.R->DEF-foot.R": 0.41177,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.51926,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.40192,
+      "DEF-thigh.L->DEF-shin.L": 0.31416,
+      "DEF-thigh.R->DEF-shin.R": 0.2523,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.78285,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.60476
+     }
+    },
+    {
+     "clip": "guard::critical::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.5511,
+     "segmentDeviationP95": 4.41075,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 7.551104642125545,
+      "frame": 15
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.17266,
+      "DEF-foot.R->DEF-toe.R": 0.1844,
+      "DEF-forearm.L->DEF-hand.L": 0.50928,
+      "DEF-forearm.R->DEF-hand.R": 1.1042,
+      "DEF-shin.L->DEF-foot.L": 0.86765,
+      "DEF-shin.R->DEF-foot.R": 1.45618,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.47552,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.74347,
+      "DEF-thigh.L->DEF-shin.L": 0.3421,
+      "DEF-thigh.R->DEF-shin.R": 0.5109,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.70122,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.93214
+     }
+    },
+    {
+     "clip": "guard::defence::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 7.53701,
+     "segmentDeviationP95": 4.40921,
+     "worstSegment": {
+      "bone": "DEF-foot.R",
+      "ratio": 8.537005625552311,
+      "frame": 12
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.07262,
+      "DEF-foot.R->DEF-toe.R": 0.42828,
+      "DEF-forearm.L->DEF-hand.L": 0.28935,
+      "DEF-forearm.R->DEF-hand.R": 0.48584,
+      "DEF-shin.L->DEF-foot.L": 0.15702,
+      "DEF-shin.R->DEF-foot.R": 1.88435,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.34404,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.49493,
+      "DEF-thigh.L->DEF-shin.L": 0.06024,
+      "DEF-thigh.R->DEF-shin.R": 0.49713,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.5907,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.66896
+     }
+    },
+    {
+     "clip": "guard::die::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.60832,
+     "segmentDeviationP95": 4.66257,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 7.608323310000348,
+      "frame": 72
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.04679,
+      "DEF-foot.R->DEF-toe.R": 0.27715,
+      "DEF-forearm.L->DEF-hand.L": 0.27873,
+      "DEF-forearm.R->DEF-hand.R": 1.05732,
+      "DEF-shin.L->DEF-foot.L": 0.22009,
+      "DEF-shin.R->DEF-foot.R": 0.65225,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.37067,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.51057,
+      "DEF-thigh.L->DEF-shin.L": 0.05391,
+      "DEF-thigh.R->DEF-shin.R": 0.23523,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.69521,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.08354
+     }
+    },
+    {
+     "clip": "guard::hit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.99297,
+     "segmentDeviationP95": 2.53535,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 7.992965056248631,
+      "frame": 2
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.3321,
+      "DEF-foot.R->DEF-toe.R": 0.27165,
+      "DEF-forearm.L->DEF-hand.L": 0.27234,
+      "DEF-forearm.R->DEF-hand.R": 1.1428,
+      "DEF-shin.L->DEF-foot.L": 0.6382,
+      "DEF-shin.R->DEF-foot.R": 0.33749,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.45524,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.51264,
+      "DEF-thigh.L->DEF-shin.L": 0.37423,
+      "DEF-thigh.R->DEF-shin.R": 0.41458,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.45233,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.9721
+     }
+    },
+    {
+     "clip": "guard::idle::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.08071,
+     "segmentDeviationP95": 3.06073,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 9.080708165946266,
+      "frame": 224
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.30407,
+      "DEF-foot.R->DEF-toe.R": 0.17107,
+      "DEF-forearm.L->DEF-hand.L": 0.41429,
+      "DEF-forearm.R->DEF-hand.R": 1.07591,
+      "DEF-shin.L->DEF-foot.L": 0.57164,
+      "DEF-shin.R->DEF-foot.R": 0.33442,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.55031,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.64791,
+      "DEF-thigh.L->DEF-shin.L": 0.28304,
+      "DEF-thigh.R->DEF-shin.R": 0.29541,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.63349,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.95614
+     }
+    },
+    {
+     "clip": "guard::move::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.81686,
+     "segmentDeviationP95": 2.93762,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 5.816859966875657,
+      "frame": 9
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.09565,
+      "DEF-foot.R->DEF-toe.R": 0.17211,
+      "DEF-forearm.L->DEF-hand.L": 0.259,
+      "DEF-forearm.R->DEF-hand.R": 0.91576,
+      "DEF-shin.L->DEF-foot.L": 0.84534,
+      "DEF-shin.R->DEF-foot.R": 0.64618,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.40104,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.4928,
+      "DEF-thigh.L->DEF-shin.L": 0.45499,
+      "DEF-thigh.R->DEF-shin.R": 0.76266,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.55087,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.92484
+     }
+    },
+    {
+     "clip": "guard::run::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.3866,
+     "segmentDeviationP95": 2.76281,
+     "worstSegment": {
+      "bone": "DEF-foot.R",
+      "ratio": 5.386604353793709,
+      "frame": 22
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.13999,
+      "DEF-foot.R->DEF-toe.R": 0.31238,
+      "DEF-forearm.L->DEF-hand.L": 0.35353,
+      "DEF-forearm.R->DEF-hand.R": 0.19706,
+      "DEF-shin.L->DEF-foot.L": 1.12762,
+      "DEF-shin.R->DEF-foot.R": 1.04758,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.32189,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.44095,
+      "DEF-thigh.L->DEF-shin.L": 0.5603,
+      "DEF-thigh.R->DEF-shin.R": 0.60393,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.48065,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.3102
+     }
+    },
+    {
+     "clip": "guard::show::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.98707,
+     "segmentDeviationP95": 1.71794,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 7.987073162339548,
+      "frame": 11
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.0531,
+      "DEF-foot.R->DEF-toe.R": 0.1002,
+      "DEF-forearm.L->DEF-hand.L": 0.22469,
+      "DEF-forearm.R->DEF-hand.R": 1.00405,
+      "DEF-shin.L->DEF-foot.L": 0.15668,
+      "DEF-shin.R->DEF-foot.R": 0.24653,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.45373,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.41212,
+      "DEF-thigh.L->DEF-shin.L": 0.08633,
+      "DEF-thigh.R->DEF-shin.R": 0.13546,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.35383,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.84099
+     }
+    }
+   ]
+  },
+  {
+   "assetId": "human-command-boss",
+   "role": "stone-command-colossus",
+   "category": "bosses",
+   "model": "assets/motion/ingame/characters/human-command-boss/model.glb",
+   "mesh": "human-command-boss_body",
+   "vertexCount": 4929,
+   "boneCount": 24,
+   "weightConcentration": {
+    "heaviestBone": "DEF-spine",
+    "heaviestShare": 0.12022,
+    "spineShare": 0.23146,
+    "heaviestOverSpine": 0.51938,
+    "boneShare": {
+     "DEF-spine": 0.12022,
+     "DEF-upper_arm.L": 0.09101,
+     "DEF-upper_arm.R": 0.08717,
+     "DEF-thigh.R": 0.08216,
+     "DEF-thigh.L": 0.08194,
+     "DEF-shin.L": 0.07009,
+     "DEF-shin.R": 0.06933,
+     "DEF-shoulder.L": 0.04899,
+     "DEF-shoulder.R": 0.04749,
+     "DEF-spine.005": 0.04449,
+     "DEF-spine.003": 0.03604,
+     "DEF-foot.R": 0.0331,
+     "DEF-foot.L": 0.03275,
+     "DEF-forearm.L": 0.03137,
+     "DEF-forearm.R": 0.02987,
+     "DEF-spine.004": 0.02806,
+     "DEF-hand.L": 0.01494,
+     "DEF-hand.R": 0.0133,
+     "DEF-toe.L": 0.01115,
+     "DEF-toe.R": 0.01112,
+     "DEF-pelvis.L": 0.00758,
+     "DEF-pelvis.R": 0.00519,
+     "DEF-spine.001": 0.00239,
+     "DEF-spine.002": 0.00027
+    }
+   },
+   "chainSpread": {
+    "influenceEpsilon": 0.1,
+    "maxAcceptableSpread": 2,
+    "verticesMeasured": 4929,
+    "meanInfluences": 2.224,
+    "maxInfluences": 3,
+    "meanSpread": 1.224,
+    "maxSpread": 2,
+    "overSpreadVertices": 0,
+    "overSpreadFraction": 0.0,
+    "overSpreadByDominantBone": {},
+    "worstVertex": {
+     "vertex": null,
+     "spread": 0,
+     "bones": []
+    }
+   },
+   "restLengthFloor": {
+    "bboxDiagonal": 2.46153,
+    "fraction": 0.005,
+    "absolute": 0.012308,
+    "pairsBelowFloor": 46,
+    "pairsTotal": 8072
+   },
+   "territorySizes": {
+    "DEF-foot.L": 133,
+    "DEF-foot.R": 151,
+    "DEF-forearm.L": 173,
+    "DEF-forearm.R": 134,
+    "DEF-hand.L": 50,
+    "DEF-hand.R": 55,
+    "DEF-pelvis.L": 9,
+    "DEF-pelvis.R": 9,
+    "DEF-shin.L": 379,
+    "DEF-shin.R": 421,
+    "DEF-shoulder.L": 95,
+    "DEF-shoulder.R": 41,
+    "DEF-spine": 629,
+    "DEF-spine.003": 199,
+    "DEF-spine.004": 122,
+    "DEF-spine.005": 236,
+    "DEF-thigh.L": 423,
+    "DEF-thigh.R": 349,
+    "DEF-toe.L": 44,
+    "DEF-toe.R": 51,
+    "DEF-upper_arm.L": 588,
+    "DEF-upper_arm.R": 638
+   },
+   "unownedVertices": 0,
+   "jointEdgeCoverage": {
+    "DEF-foot.L->DEF-toe.L": 34,
+    "DEF-foot.R->DEF-toe.R": 35,
+    "DEF-forearm.R->DEF-hand.R": 13,
+    "DEF-shin.L->DEF-foot.L": 15,
+    "DEF-shoulder.R->DEF-upper_arm.R": 12,
+    "DEF-thigh.L->DEF-shin.L": 38,
+    "DEF-thigh.R->DEF-shin.R": 39,
+    "DEF-upper_arm.L->DEF-forearm.L": 19,
+    "DEF-upper_arm.R->DEF-forearm.R": 29
+   },
+   "clips": [
+    {
+     "clip": "human-command-boss::attack::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.19003,
+     "segmentDeviationP95": 1.64847,
+     "worstSegment": {
+      "bone": "DEF-upper_arm.L",
+      "ratio": 7.1900310967562095,
+      "frame": 49
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.01044,
+      "DEF-foot.R->DEF-toe.R": 0.00971,
+      "DEF-forearm.R->DEF-hand.R": 0.93088,
+      "DEF-shin.L->DEF-foot.L": 0.00328,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.36074,
+      "DEF-thigh.L->DEF-shin.L": 0.15995,
+      "DEF-thigh.R->DEF-shin.R": 0.14173,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.33365,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.22016
+     }
+    },
+    {
+     "clip": "human-command-boss::avoid::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 9.99391,
+     "segmentDeviationP95": 4.95705,
+     "worstSegment": {
+      "bone": "DEF-upper_arm.L",
+      "ratio": 10.993907424496927,
+      "frame": 0
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.56689,
+      "DEF-foot.R->DEF-toe.R": 0.4388,
+      "DEF-forearm.R->DEF-hand.R": 1.60052,
+      "DEF-shin.L->DEF-foot.L": 0.5352,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.47949,
+      "DEF-thigh.L->DEF-shin.L": 2.15746,
+      "DEF-thigh.R->DEF-shin.R": 1.14631,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.45003,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.56339
+     }
+    },
+    {
+     "clip": "human-command-boss::bighit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.60994,
+     "segmentDeviationP95": 2.22131,
+     "worstSegment": {
+      "bone": "DEF-upper_arm.L",
+      "ratio": 6.609938283428975,
+      "frame": 19
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.00812,
+      "DEF-foot.R->DEF-toe.R": 0.00653,
+      "DEF-forearm.R->DEF-hand.R": 0.56605,
+      "DEF-shin.L->DEF-foot.L": 0.01306,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.38611,
+      "DEF-thigh.L->DEF-shin.L": 0.30962,
+      "DEF-thigh.R->DEF-shin.R": 0.33089,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.15492,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.15687
+     }
+    },
+    {
+     "clip": "human-command-boss::critical::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.21517,
+     "segmentDeviationP95": 1.46432,
+     "worstSegment": {
+      "bone": "DEF-upper_arm.L",
+      "ratio": 6.215166211969401,
+      "frame": 30
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.0389,
+      "DEF-foot.R->DEF-toe.R": 0.0061,
+      "DEF-forearm.R->DEF-hand.R": 0.9703,
+      "DEF-shin.L->DEF-foot.L": 0.01262,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.60434,
+      "DEF-thigh.L->DEF-shin.L": 0.11204,
+      "DEF-thigh.R->DEF-shin.R": 0.3273,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.25982,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.33486
+     }
+    },
+    {
+     "clip": "human-command-boss::defence::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 7.5524,
+     "segmentDeviationP95": 2.94821,
+     "worstSegment": {
+      "bone": "DEF-upper_arm.L",
+      "ratio": 8.552404295772451,
+      "frame": 39
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.20765,
+      "DEF-foot.R->DEF-toe.R": 0.07884,
+      "DEF-forearm.R->DEF-hand.R": 1.07791,
+      "DEF-shin.L->DEF-foot.L": 0.02761,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.59104,
+      "DEF-thigh.L->DEF-shin.L": 0.34412,
+      "DEF-thigh.R->DEF-shin.R": 0.31873,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.27048,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.26621
+     }
+    },
+    {
+     "clip": "human-command-boss::die::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.29769,
+     "segmentDeviationP95": 4.00596,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 5.297689721738807,
+      "frame": 72
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.13949,
+      "DEF-foot.R->DEF-toe.R": 0.22881,
+      "DEF-forearm.R->DEF-hand.R": 1.5972,
+      "DEF-shin.L->DEF-foot.L": 0.01969,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.38858,
+      "DEF-thigh.L->DEF-shin.L": 0.53189,
+      "DEF-thigh.R->DEF-shin.R": 0.47032,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.52055,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.29802
+     }
+    },
+    {
+     "clip": "human-command-boss::hit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.30457,
+     "segmentDeviationP95": 4.00608,
+     "worstSegment": {
+      "bone": "DEF-upper_arm.L",
+      "ratio": 7.304570830480581,
+      "frame": 0
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.00889,
+      "DEF-foot.R->DEF-toe.R": 0.03415,
+      "DEF-forearm.R->DEF-hand.R": 1.56534,
+      "DEF-shin.L->DEF-foot.L": 0.00378,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.43613,
+      "DEF-thigh.L->DEF-shin.L": 0.22824,
+      "DEF-thigh.R->DEF-shin.R": 0.46232,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.23867,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.44369
+     }
+    },
+    {
+     "clip": "human-command-boss::idle::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.62018,
+     "segmentDeviationP95": 3.87436,
+     "worstSegment": {
+      "bone": "DEF-upper_arm.L",
+      "ratio": 9.620184097238308,
+      "frame": 35
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.01355,
+      "DEF-foot.R->DEF-toe.R": 0.15201,
+      "DEF-forearm.R->DEF-hand.R": 1.57431,
+      "DEF-shin.L->DEF-foot.L": 0.00686,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.43531,
+      "DEF-thigh.L->DEF-shin.L": 0.61221,
+      "DEF-thigh.R->DEF-shin.R": 0.32614,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.24813,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.30505
+     }
+    },
+    {
+     "clip": "human-command-boss::move::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 9.21616,
+     "segmentDeviationP95": 3.78424,
+     "worstSegment": {
+      "bone": "DEF-upper_arm.L",
+      "ratio": 10.21615607796749,
+      "frame": 8
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.40399,
+      "DEF-foot.R->DEF-toe.R": 0.25047,
+      "DEF-forearm.R->DEF-hand.R": 1.42026,
+      "DEF-shin.L->DEF-foot.L": 0.16288,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.36334,
+      "DEF-thigh.L->DEF-shin.L": 0.65597,
+      "DEF-thigh.R->DEF-shin.R": 0.92778,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.2593,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.28728
+     }
+    },
+    {
+     "clip": "human-command-boss::run::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.75428,
+     "segmentDeviationP95": 2.18798,
+     "worstSegment": {
+      "bone": "DEF-upper_arm.L",
+      "ratio": 6.75428356464387,
+      "frame": 3
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.41153,
+      "DEF-foot.R->DEF-toe.R": 0.25832,
+      "DEF-forearm.R->DEF-hand.R": 0.73481,
+      "DEF-shin.L->DEF-foot.L": 0.13701,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.23111,
+      "DEF-thigh.L->DEF-shin.L": 0.86367,
+      "DEF-thigh.R->DEF-shin.R": 0.67081,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.13183,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.17939
+     }
+    },
+    {
+     "clip": "human-command-boss::show::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 9.4253,
+     "segmentDeviationP95": 3.65861,
+     "worstSegment": {
+      "bone": "DEF-upper_arm.L",
+      "ratio": 10.425299971021353,
+      "frame": 191
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.27476,
+      "DEF-foot.R->DEF-toe.R": 0.17861,
+      "DEF-forearm.R->DEF-hand.R": 1.31511,
+      "DEF-shin.L->DEF-foot.L": 0.03864,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.58186,
+      "DEF-thigh.L->DEF-shin.L": 0.3787,
+      "DEF-thigh.R->DEF-shin.R": 0.5585,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.19789,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.36341
+     }
+    }
+   ]
+  },
+  {
+   "assetId": "lantern-reaver",
+   "role": "abyssal-reaper-caster",
+   "category": "enemies",
+   "model": "assets/motion/ingame/characters/lantern-reaver/model.glb",
+   "mesh": "lantern-reaver_body",
+   "vertexCount": 5437,
+   "boneCount": 24,
+   "weightConcentration": {
+    "heaviestBone": "DEF-spine",
+    "heaviestShare": 0.17449,
+    "spineShare": 0.26774,
+    "heaviestOverSpine": 0.65173,
+    "boneShare": {
+     "DEF-spine": 0.17449,
+     "DEF-thigh.L": 0.10844,
+     "DEF-thigh.R": 0.0836,
+     "DEF-shoulder.R": 0.07395,
+     "DEF-upper_arm.R": 0.07247,
+     "DEF-spine.003": 0.06221,
+     "DEF-forearm.L": 0.05675,
+     "DEF-hand.L": 0.05499,
+     "DEF-shin.L": 0.04729,
+     "DEF-shin.R": 0.04117,
+     "DEF-forearm.R": 0.03983,
+     "DEF-pelvis.R": 0.02615,
+     "DEF-pelvis.L": 0.02601,
+     "DEF-shoulder.L": 0.02218,
+     "DEF-foot.L": 0.01984,
+     "DEF-foot.R": 0.01842,
+     "DEF-spine.004": 0.01693,
+     "DEF-upper_arm.L": 0.01401,
+     "DEF-hand.R": 0.00998,
+     "DEF-toe.L": 0.00891,
+     "DEF-toe.R": 0.00826,
+     "DEF-spine.001": 0.00804,
+     "DEF-spine.005": 0.0051,
+     "DEF-spine.002": 0.00097
+    }
+   },
+   "chainSpread": {
+    "influenceEpsilon": 0.1,
+    "maxAcceptableSpread": 2,
+    "verticesMeasured": 5437,
+    "meanInfluences": 2.206,
+    "maxInfluences": 4,
+    "meanSpread": 1.206,
+    "maxSpread": 2,
+    "overSpreadVertices": 0,
+    "overSpreadFraction": 0.0,
+    "overSpreadByDominantBone": {},
+    "worstVertex": {
+     "vertex": null,
+     "spread": 0,
+     "bones": []
+    }
+   },
+   "restLengthFloor": {
+    "bboxDiagonal": 2.5467,
+    "fraction": 0.005,
+    "absolute": 0.012733,
+    "pairsBelowFloor": 73,
+    "pairsTotal": 8855
+   },
+   "territorySizes": {
+    "DEF-foot.L": 114,
+    "DEF-foot.R": 101,
+    "DEF-forearm.L": 93,
+    "DEF-forearm.R": 172,
+    "DEF-hand.L": 516,
+    "DEF-hand.R": 32,
+    "DEF-pelvis.L": 105,
+    "DEF-pelvis.R": 140,
+    "DEF-shin.L": 199,
+    "DEF-shin.R": 173,
+    "DEF-shoulder.L": 120,
+    "DEF-shoulder.R": 610,
+    "DEF-spine": 845,
+    "DEF-spine.001": 42,
+    "DEF-spine.003": 417,
+    "DEF-spine.004": 79,
+    "DEF-spine.005": 11,
+    "DEF-thigh.L": 742,
+    "DEF-thigh.R": 568,
+    "DEF-toe.L": 35,
+    "DEF-toe.R": 41,
+    "DEF-upper_arm.L": 48,
+    "DEF-upper_arm.R": 234
+   },
+   "unownedVertices": 0,
+   "jointEdgeCoverage": {
+    "DEF-foot.L->DEF-toe.L": 20,
+    "DEF-foot.R->DEF-toe.R": 30,
+    "DEF-forearm.L->DEF-hand.L": 22,
+    "DEF-forearm.R->DEF-hand.R": 9,
+    "DEF-shin.L->DEF-foot.L": 24,
+    "DEF-shin.R->DEF-foot.R": 30,
+    "DEF-shoulder.L->DEF-upper_arm.L": 13,
+    "DEF-shoulder.R->DEF-upper_arm.R": 23,
+    "DEF-thigh.L->DEF-shin.L": 21,
+    "DEF-upper_arm.L->DEF-forearm.L": 29,
+    "DEF-upper_arm.R->DEF-forearm.R": 20
+   },
+   "clips": [
+    {
+     "clip": "lantern-reaver::attack::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.6989,
+     "segmentDeviationP95": 2.19579,
+     "worstSegment": {
+      "bone": "DEF-shoulder.L",
+      "ratio": 5.698897086349352,
+      "frame": 18
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.0763,
+      "DEF-foot.R->DEF-toe.R": 0.27898,
+      "DEF-forearm.L->DEF-hand.L": 0.57859,
+      "DEF-forearm.R->DEF-hand.R": 0.60895,
+      "DEF-shin.L->DEF-foot.L": 0.18806,
+      "DEF-shin.R->DEF-foot.R": 0.31739,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.32374,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.70566,
+      "DEF-thigh.L->DEF-shin.L": 0.08772,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.05449,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.76399
+     }
+    },
+    {
+     "clip": "lantern-reaver::avoid::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.75536,
+     "segmentDeviationP95": 2.15485,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 4.755364862834377,
+      "frame": 18
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.23684,
+      "DEF-foot.R->DEF-toe.R": 0.24225,
+      "DEF-forearm.L->DEF-hand.L": 0.2881,
+      "DEF-forearm.R->DEF-hand.R": 0.74078,
+      "DEF-shin.L->DEF-foot.L": 0.42662,
+      "DEF-shin.R->DEF-foot.R": 0.24635,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.5123,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.7337,
+      "DEF-thigh.L->DEF-shin.L": 0.11711,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.48331,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.71589
+     }
+    },
+    {
+     "clip": "lantern-reaver::bighit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.70205,
+     "segmentDeviationP95": 2.36296,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 4.702054389859543,
+      "frame": 23
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.12275,
+      "DEF-foot.R->DEF-toe.R": 0.11829,
+      "DEF-forearm.L->DEF-hand.L": 0.63316,
+      "DEF-forearm.R->DEF-hand.R": 0.43824,
+      "DEF-shin.L->DEF-foot.L": 0.29778,
+      "DEF-shin.R->DEF-foot.R": 0.09758,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.16111,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.50862,
+      "DEF-thigh.L->DEF-shin.L": 0.0766,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.65998,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.75544
+     }
+    },
+    {
+     "clip": "lantern-reaver::critical::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.00895,
+     "segmentDeviationP95": 1.74915,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 7.008951494410101,
+      "frame": 33
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.15653,
+      "DEF-foot.R->DEF-toe.R": 0.1773,
+      "DEF-forearm.L->DEF-hand.L": 0.2603,
+      "DEF-forearm.R->DEF-hand.R": 0.67382,
+      "DEF-shin.L->DEF-foot.L": 0.53797,
+      "DEF-shin.R->DEF-foot.R": 0.1644,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.38902,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.70763,
+      "DEF-thigh.L->DEF-shin.L": 0.18281,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.62445,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.03294
+     }
+    },
+    {
+     "clip": "lantern-reaver::defence::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.9373,
+     "segmentDeviationP95": 2.62252,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 5.937295856054801,
+      "frame": 9
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.20266,
+      "DEF-foot.R->DEF-toe.R": 0.40184,
+      "DEF-forearm.L->DEF-hand.L": 0.2904,
+      "DEF-forearm.R->DEF-hand.R": 0.75625,
+      "DEF-shin.L->DEF-foot.L": 0.44725,
+      "DEF-shin.R->DEF-foot.R": 0.48208,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.30198,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.88285,
+      "DEF-thigh.L->DEF-shin.L": 0.11746,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.62258,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.97958
+     }
+    },
+    {
+     "clip": "lantern-reaver::die::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.24759,
+     "segmentDeviationP95": 2.88493,
+     "worstSegment": {
+      "bone": "DEF-shoulder.L",
+      "ratio": 4.247590333107723,
+      "frame": 1
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.20059,
+      "DEF-foot.R->DEF-toe.R": 0.3107,
+      "DEF-forearm.L->DEF-hand.L": 0.42593,
+      "DEF-forearm.R->DEF-hand.R": 0.63922,
+      "DEF-shin.L->DEF-foot.L": 0.42226,
+      "DEF-shin.R->DEF-foot.R": 0.3285,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.24395,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.3265,
+      "DEF-thigh.L->DEF-shin.L": 0.11986,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.97135,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.69392
+     }
+    },
+    {
+     "clip": "lantern-reaver::hit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.57031,
+     "segmentDeviationP95": 1.28722,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 6.570310906502544,
+      "frame": 3
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.02138,
+      "DEF-foot.R->DEF-toe.R": 0.01308,
+      "DEF-forearm.L->DEF-hand.L": 0.24375,
+      "DEF-forearm.R->DEF-hand.R": 0.64955,
+      "DEF-shin.L->DEF-foot.L": 0.0558,
+      "DEF-shin.R->DEF-foot.R": 0.02184,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.13638,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.85866,
+      "DEF-thigh.L->DEF-shin.L": 0.04241,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.44873,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.19895
+     }
+    },
+    {
+     "clip": "lantern-reaver::idle::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.00333,
+     "segmentDeviationP95": 1.18444,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 4.003334971755701,
+      "frame": 249
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.048,
+      "DEF-foot.R->DEF-toe.R": 0.09332,
+      "DEF-forearm.L->DEF-hand.L": 0.38948,
+      "DEF-forearm.R->DEF-hand.R": 0.41663,
+      "DEF-shin.L->DEF-foot.L": 0.12455,
+      "DEF-shin.R->DEF-foot.R": 0.10454,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.09597,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.29004,
+      "DEF-thigh.L->DEF-shin.L": 0.04892,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.80418,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.64421
+     }
+    },
+    {
+     "clip": "lantern-reaver::move::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.3278,
+     "segmentDeviationP95": 2.67036,
+     "worstSegment": {
+      "bone": "DEF-shoulder.L",
+      "ratio": 5.327802515709927,
+      "frame": 6
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.28077,
+      "DEF-foot.R->DEF-toe.R": 0.28065,
+      "DEF-forearm.L->DEF-hand.L": 0.35463,
+      "DEF-forearm.R->DEF-hand.R": 0.67321,
+      "DEF-shin.L->DEF-foot.L": 0.55756,
+      "DEF-shin.R->DEF-foot.R": 0.4301,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.18254,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.80676,
+      "DEF-thigh.L->DEF-shin.L": 0.19231,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.91674,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.62308
+     }
+    },
+    {
+     "clip": "lantern-reaver::run::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.2878,
+     "segmentDeviationP95": 2.03113,
+     "worstSegment": {
+      "bone": "DEF-shoulder.L",
+      "ratio": 4.28780047476775,
+      "frame": 3
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.25497,
+      "DEF-foot.R->DEF-toe.R": 0.32497,
+      "DEF-forearm.L->DEF-hand.L": 0.14484,
+      "DEF-forearm.R->DEF-hand.R": 0.48087,
+      "DEF-shin.L->DEF-foot.L": 0.7474,
+      "DEF-shin.R->DEF-foot.R": 0.58136,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.15822,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.44923,
+      "DEF-thigh.L->DEF-shin.L": 0.30328,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.54034,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.43651
+     }
+    },
+    {
+     "clip": "lantern-reaver::show::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.16001,
+     "segmentDeviationP95": 2.80056,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 5.160010424473291,
+      "frame": 191
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.23826,
+      "DEF-foot.R->DEF-toe.R": 0.27492,
+      "DEF-forearm.L->DEF-hand.L": 0.22533,
+      "DEF-forearm.R->DEF-hand.R": 0.81298,
+      "DEF-shin.L->DEF-foot.L": 0.42233,
+      "DEF-shin.R->DEF-foot.R": 0.2775,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.18487,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.83097,
+      "DEF-thigh.L->DEF-shin.L": 0.1192,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.53238,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.02242
+     }
+    }
+   ]
+  },
+  {
+   "assetId": "possessed",
+   "role": "ranged-possessed-caster",
+   "category": "enemies",
+   "model": "assets/motion/ingame/characters/possessed/model.glb",
+   "mesh": "possessed_body",
+   "vertexCount": 5788,
+   "boneCount": 24,
+   "weightConcentration": {
+    "heaviestBone": "DEF-spine",
+    "heaviestShare": 0.19634,
+    "spineShare": 0.46637,
+    "heaviestOverSpine": 0.421,
+    "boneShare": {
+     "DEF-spine": 0.19634,
+     "DEF-spine.005": 0.14755,
+     "DEF-thigh.R": 0.08672,
+     "DEF-spine.003": 0.07123,
+     "DEF-thigh.L": 0.06196,
+     "DEF-pelvis.L": 0.0492,
+     "DEF-upper_arm.R": 0.03791,
+     "DEF-shoulder.R": 0.03417,
+     "DEF-shoulder.L": 0.03303,
+     "DEF-shin.R": 0.03298,
+     "DEF-shin.L": 0.02921,
+     "DEF-upper_arm.L": 0.028,
+     "DEF-forearm.R": 0.02765,
+     "DEF-pelvis.R": 0.02726,
+     "DEF-spine.004": 0.02625,
+     "DEF-forearm.L": 0.02461,
+     "DEF-spine.001": 0.02229,
+     "DEF-hand.R": 0.01438,
+     "DEF-hand.L": 0.01339,
+     "DEF-foot.R": 0.01291,
+     "DEF-foot.L": 0.01266,
+     "DEF-toe.R": 0.00405,
+     "DEF-toe.L": 0.00352,
+     "DEF-spine.002": 0.0027
+    }
+   },
+   "chainSpread": {
+    "influenceEpsilon": 0.1,
+    "maxAcceptableSpread": 2,
+    "verticesMeasured": 5788,
+    "meanInfluences": 1.899,
+    "maxInfluences": 3,
+    "meanSpread": 0.899,
+    "maxSpread": 2,
+    "overSpreadVertices": 0,
+    "overSpreadFraction": 0.0,
+    "overSpreadByDominantBone": {},
+    "worstVertex": {
+     "vertex": null,
+     "spread": 0,
+     "bones": []
+    }
+   },
+   "restLengthFloor": {
+    "bboxDiagonal": 2.42239,
+    "fraction": 0.005,
+    "absolute": 0.012112,
+    "pairsBelowFloor": 80,
+    "pairsTotal": 8617
+   },
+   "territorySizes": {
+    "DEF-foot.L": 71,
+    "DEF-foot.R": 94,
+    "DEF-forearm.L": 99,
+    "DEF-forearm.R": 92,
+    "DEF-hand.L": 109,
+    "DEF-hand.R": 129,
+    "DEF-pelvis.L": 267,
+    "DEF-pelvis.R": 134,
+    "DEF-shin.L": 148,
+    "DEF-shin.R": 133,
+    "DEF-shoulder.L": 138,
+    "DEF-shoulder.R": 168,
+    "DEF-spine": 1075,
+    "DEF-spine.001": 150,
+    "DEF-spine.002": 4,
+    "DEF-spine.003": 467,
+    "DEF-spine.004": 49,
+    "DEF-spine.005": 958,
+    "DEF-thigh.L": 428,
+    "DEF-thigh.R": 601,
+    "DEF-toe.L": 20,
+    "DEF-toe.R": 7,
+    "DEF-upper_arm.L": 206,
+    "DEF-upper_arm.R": 241
+   },
+   "unownedVertices": 0,
+   "jointEdgeCoverage": {
+    "DEF-foot.R->DEF-toe.R": 8,
+    "DEF-forearm.L->DEF-hand.L": 4,
+    "DEF-shoulder.L->DEF-upper_arm.L": 36,
+    "DEF-shoulder.R->DEF-upper_arm.R": 40,
+    "DEF-thigh.L->DEF-shin.L": 7
+   },
+   "clips": [
+    {
+     "clip": "possessed::attack::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 7.39323,
+     "segmentDeviationP95": 3.11504,
+     "worstSegment": {
+      "bone": "DEF-spine.003",
+      "ratio": 8.393230162488006,
+      "frame": 30
+     },
+     "jointFlexMax": {
+      "DEF-foot.R->DEF-toe.R": 0.24794,
+      "DEF-forearm.L->DEF-hand.L": 0.54109,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.76042,
+      "DEF-shoulder.R->DEF-upper_arm.R": 5.54991,
+      "DEF-thigh.L->DEF-shin.L": 0.05079
+     }
+    },
+    {
+     "clip": "possessed::avoid::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 7.62503,
+     "segmentDeviationP95": 4.36819,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 8.62503280599643,
+      "frame": 14
+     },
+     "jointFlexMax": {
+      "DEF-foot.R->DEF-toe.R": 0.217,
+      "DEF-forearm.L->DEF-hand.L": 0.22594,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.62103,
+      "DEF-shoulder.R->DEF-upper_arm.R": 7.1442,
+      "DEF-thigh.L->DEF-shin.L": 0.03909
+     }
+    },
+    {
+     "clip": "possessed::bighit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 7.08389,
+     "segmentDeviationP95": 2.84492,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 8.08389496196459,
+      "frame": 3
+     },
+     "jointFlexMax": {
+      "DEF-foot.R->DEF-toe.R": 0.06958,
+      "DEF-forearm.L->DEF-hand.L": 0.48021,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.32942,
+      "DEF-shoulder.R->DEF-upper_arm.R": 4.9487,
+      "DEF-thigh.L->DEF-shin.L": 0.022
+     }
+    },
+    {
+     "clip": "possessed::critical::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.36395,
+     "segmentDeviationP95": 2.19016,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 6.363945980120929,
+      "frame": 22
+     },
+     "jointFlexMax": {
+      "DEF-foot.R->DEF-toe.R": 0.13403,
+      "DEF-forearm.L->DEF-hand.L": 0.26612,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.34582,
+      "DEF-shoulder.R->DEF-upper_arm.R": 4.54629,
+      "DEF-thigh.L->DEF-shin.L": 0.1477
+     }
+    },
+    {
+     "clip": "possessed::defence::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.32123,
+     "segmentDeviationP95": 3.61697,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 9.321226712082925,
+      "frame": 30
+     },
+     "jointFlexMax": {
+      "DEF-foot.R->DEF-toe.R": 0.13652,
+      "DEF-forearm.L->DEF-hand.L": 0.46827,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.50907,
+      "DEF-shoulder.R->DEF-upper_arm.R": 5.5621,
+      "DEF-thigh.L->DEF-shin.L": 0.04552
+     }
+    },
+    {
+     "clip": "possessed::die::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.9703,
+     "segmentDeviationP95": 3.9246,
+     "worstSegment": {
+      "bone": "DEF-spine.003",
+      "ratio": 4.9703000186960065,
+      "frame": 33
+     },
+     "jointFlexMax": {
+      "DEF-foot.R->DEF-toe.R": 0.2725,
+      "DEF-forearm.L->DEF-hand.L": 0.29536,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.81385,
+      "DEF-shoulder.R->DEF-upper_arm.R": 2.64061,
+      "DEF-thigh.L->DEF-shin.L": 0.05576
+     }
+    },
+    {
+     "clip": "possessed::hit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.54335,
+     "segmentDeviationP95": 2.72167,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 4.543352637711978,
+      "frame": 3
+     },
+     "jointFlexMax": {
+      "DEF-foot.R->DEF-toe.R": 0.00322,
+      "DEF-forearm.L->DEF-hand.L": 0.1583,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.4899,
+      "DEF-shoulder.R->DEF-upper_arm.R": 4.71232,
+      "DEF-thigh.L->DEF-shin.L": 0.0166
+     }
+    },
+    {
+     "clip": "possessed::idle::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.77772,
+     "segmentDeviationP95": 2.04555,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 5.777724905278923,
+      "frame": 174
+     },
+     "jointFlexMax": {
+      "DEF-foot.R->DEF-toe.R": 0.10586,
+      "DEF-forearm.L->DEF-hand.L": 0.13879,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.42282,
+      "DEF-shoulder.R->DEF-upper_arm.R": 3.03194,
+      "DEF-thigh.L->DEF-shin.L": 0.03253
+     }
+    },
+    {
+     "clip": "possessed::move::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.61928,
+     "segmentDeviationP95": 2.95467,
+     "worstSegment": {
+      "bone": "DEF-spine.003",
+      "ratio": 6.619281257105151,
+      "frame": 6
+     },
+     "jointFlexMax": {
+      "DEF-foot.R->DEF-toe.R": 0.24598,
+      "DEF-forearm.L->DEF-hand.L": 0.25048,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.58257,
+      "DEF-shoulder.R->DEF-upper_arm.R": 5.58722,
+      "DEF-thigh.L->DEF-shin.L": 0.05683
+     }
+    },
+    {
+     "clip": "possessed::run::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.80739,
+     "segmentDeviationP95": 3.13235,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 4.807389924353341,
+      "frame": 3
+     },
+     "jointFlexMax": {
+      "DEF-foot.R->DEF-toe.R": 0.27781,
+      "DEF-forearm.L->DEF-hand.L": 0.12424,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.44916,
+      "DEF-shoulder.R->DEF-upper_arm.R": 4.22495,
+      "DEF-thigh.L->DEF-shin.L": 0.11397
+     }
+    },
+    {
+     "clip": "possessed::show::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.01382,
+     "segmentDeviationP95": 4.18133,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 9.013818586403438,
+      "frame": 72
+     },
+     "jointFlexMax": {
+      "DEF-foot.R->DEF-toe.R": 0.24679,
+      "DEF-forearm.L->DEF-hand.L": 0.20772,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.46934,
+      "DEF-shoulder.R->DEF-upper_arm.R": 6.24998,
+      "DEF-thigh.L->DEF-shin.L": 0.04529
+     }
+    }
+   ]
+  },
+  {
+   "assetId": "scout",
+   "role": "rush-scout",
+   "category": "enemies",
+   "model": "assets/motion/ingame/characters/scout/model.glb",
+   "mesh": "scout_body",
+   "vertexCount": 5443,
+   "boneCount": 24,
+   "weightConcentration": {
+    "heaviestBone": "DEF-spine",
+    "heaviestShare": 0.17721,
+    "spineShare": 0.34068,
+    "heaviestOverSpine": 0.52017,
+    "boneShare": {
+     "DEF-spine": 0.17721,
+     "DEF-spine.003": 0.0859,
+     "DEF-thigh.L": 0.07567,
+     "DEF-thigh.R": 0.0748,
+     "DEF-shoulder.R": 0.05838,
+     "DEF-upper_arm.R": 0.05563,
+     "DEF-shoulder.L": 0.05342,
+     "DEF-upper_arm.L": 0.05099,
+     "DEF-pelvis.L": 0.03416,
+     "DEF-forearm.R": 0.03386,
+     "DEF-shin.R": 0.03324,
+     "DEF-forearm.L": 0.03276,
+     "DEF-spine.004": 0.03206,
+     "DEF-shin.L": 0.03062,
+     "DEF-pelvis.R": 0.02625,
+     "DEF-spine.001": 0.02419,
+     "DEF-hand.R": 0.02417,
+     "DEF-hand.L": 0.02409,
+     "DEF-foot.L": 0.01756,
+     "DEF-foot.R": 0.0169,
+     "DEF-spine.005": 0.01423,
+     "DEF-toe.L": 0.00981,
+     "DEF-spine.002": 0.00709,
+     "DEF-toe.R": 0.00702
+    }
+   },
+   "chainSpread": {
+    "influenceEpsilon": 0.1,
+    "maxAcceptableSpread": 2,
+    "verticesMeasured": 5443,
+    "meanInfluences": 2.288,
+    "maxInfluences": 4,
+    "meanSpread": 1.288,
+    "maxSpread": 2,
+    "overSpreadVertices": 0,
+    "overSpreadFraction": 0.0,
+    "overSpreadByDominantBone": {},
+    "worstVertex": {
+     "vertex": null,
+     "spread": 0,
+     "bones": []
+    }
+   },
+   "restLengthFloor": {
+    "bboxDiagonal": 2.63695,
+    "fraction": 0.005,
+    "absolute": 0.013185,
+    "pairsBelowFloor": 196,
+    "pairsTotal": 9146
+   },
+   "territorySizes": {
+    "DEF-foot.L": 94,
+    "DEF-foot.R": 130,
+    "DEF-forearm.L": 109,
+    "DEF-forearm.R": 99,
+    "DEF-hand.L": 168,
+    "DEF-hand.R": 200,
+    "DEF-pelvis.L": 145,
+    "DEF-pelvis.R": 73,
+    "DEF-shin.L": 114,
+    "DEF-shin.R": 92,
+    "DEF-shoulder.L": 286,
+    "DEF-shoulder.R": 379,
+    "DEF-spine": 990,
+    "DEF-spine.001": 152,
+    "DEF-spine.002": 7,
+    "DEF-spine.003": 517,
+    "DEF-spine.004": 191,
+    "DEF-spine.005": 51,
+    "DEF-thigh.L": 505,
+    "DEF-thigh.R": 517,
+    "DEF-toe.L": 48,
+    "DEF-toe.R": 26,
+    "DEF-upper_arm.L": 283,
+    "DEF-upper_arm.R": 267
+   },
+   "unownedVertices": 0,
+   "jointEdgeCoverage": {
+    "DEF-foot.L->DEF-toe.L": 19,
+    "DEF-foot.R->DEF-toe.R": 17,
+    "DEF-forearm.L->DEF-hand.L": 19,
+    "DEF-forearm.R->DEF-hand.R": 25,
+    "DEF-shoulder.L->DEF-upper_arm.L": 46,
+    "DEF-shoulder.R->DEF-upper_arm.R": 52,
+    "DEF-thigh.L->DEF-shin.L": 17,
+    "DEF-thigh.R->DEF-shin.R": 24,
+    "DEF-upper_arm.L->DEF-forearm.L": 10
+   },
+   "clips": [
+    {
+     "clip": "scout::attack::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 7.30112,
+     "segmentDeviationP95": 2.64013,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 8.301120086819058,
+      "frame": 14
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.16732,
+      "DEF-foot.R->DEF-toe.R": 0.0247,
+      "DEF-forearm.L->DEF-hand.L": 1.14024,
+      "DEF-forearm.R->DEF-hand.R": 0.92441,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.84353,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.80826,
+      "DEF-thigh.L->DEF-shin.L": 0.23366,
+      "DEF-thigh.R->DEF-shin.R": 0.07609,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.84025
+     }
+    },
+    {
+     "clip": "scout::avoid::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.79287,
+     "segmentDeviationP95": 6.72781,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 9.792871746626846,
+      "frame": 18
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.1435,
+      "DEF-foot.R->DEF-toe.R": 0.04618,
+      "DEF-forearm.L->DEF-hand.L": 2.52808,
+      "DEF-forearm.R->DEF-hand.R": 0.85906,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.63095,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.64089,
+      "DEF-thigh.L->DEF-shin.L": 0.06993,
+      "DEF-thigh.R->DEF-shin.R": 0.06197,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.16809
+     }
+    },
+    {
+     "clip": "scout::bighit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.28623,
+     "segmentDeviationP95": 3.22623,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 5.28622604570265,
+      "frame": 19
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.05553,
+      "DEF-foot.R->DEF-toe.R": 0.07257,
+      "DEF-forearm.L->DEF-hand.L": 0.86526,
+      "DEF-forearm.R->DEF-hand.R": 0.43352,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.62078,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.54552,
+      "DEF-thigh.L->DEF-shin.L": 0.03707,
+      "DEF-thigh.R->DEF-shin.R": 0.08946,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.66577
+     }
+    },
+    {
+     "clip": "scout::critical::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 10.95306,
+     "segmentDeviationP95": 8.12649,
+     "worstSegment": {
+      "bone": "DEF-hand.R",
+      "ratio": 11.95306219530404,
+      "frame": 57
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.87988,
+      "DEF-foot.R->DEF-toe.R": 0.51871,
+      "DEF-forearm.L->DEF-hand.L": 2.99924,
+      "DEF-forearm.R->DEF-hand.R": 1.645,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.94455,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.36739,
+      "DEF-thigh.L->DEF-shin.L": 0.48037,
+      "DEF-thigh.R->DEF-shin.R": 0.42093,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.09014
+     }
+    },
+    {
+     "clip": "scout::defence::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.55239,
+     "segmentDeviationP95": 7.35586,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 9.552392881562447,
+      "frame": 45
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.02348,
+      "DEF-foot.R->DEF-toe.R": 0.02514,
+      "DEF-forearm.L->DEF-hand.L": 1.21235,
+      "DEF-forearm.R->DEF-hand.R": 1.18076,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.49962,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.56633,
+      "DEF-thigh.L->DEF-shin.L": 0.03155,
+      "DEF-thigh.R->DEF-shin.R": 0.08222,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.08038
+     }
+    },
+    {
+     "clip": "scout::die::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 11.25275,
+     "segmentDeviationP95": 10.51689,
+     "worstSegment": {
+      "bone": "DEF-hand.R",
+      "ratio": 12.252748722953692,
+      "frame": 59
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.08771,
+      "DEF-foot.R->DEF-toe.R": 0.13011,
+      "DEF-forearm.L->DEF-hand.L": 3.12745,
+      "DEF-forearm.R->DEF-hand.R": 1.81034,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.37851,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.45209,
+      "DEF-thigh.L->DEF-shin.L": 0.02968,
+      "DEF-thigh.R->DEF-shin.R": 0.08359,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.17583
+     }
+    },
+    {
+     "clip": "scout::hit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 10.47397,
+     "segmentDeviationP95": 7.88583,
+     "worstSegment": {
+      "bone": "DEF-hand.R",
+      "ratio": 11.473971442936444,
+      "frame": 2
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.09166,
+      "DEF-foot.R->DEF-toe.R": 0.12789,
+      "DEF-forearm.L->DEF-hand.L": 2.30366,
+      "DEF-forearm.R->DEF-hand.R": 1.57384,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.63633,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.11673,
+      "DEF-thigh.L->DEF-shin.L": 0.05269,
+      "DEF-thigh.R->DEF-shin.R": 0.14573,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.60365
+     }
+    },
+    {
+     "clip": "scout::idle::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 10.81863,
+     "segmentDeviationP95": 9.64913,
+     "worstSegment": {
+      "bone": "DEF-hand.R",
+      "ratio": 11.81862741765307,
+      "frame": 4
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.11677,
+      "DEF-foot.R->DEF-toe.R": 0.067,
+      "DEF-forearm.L->DEF-hand.L": 2.6938,
+      "DEF-forearm.R->DEF-hand.R": 1.44096,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.55175,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.77135,
+      "DEF-thigh.L->DEF-shin.L": 0.02494,
+      "DEF-thigh.R->DEF-shin.R": 0.06401,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.7562
+     }
+    },
+    {
+     "clip": "scout::move::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 11.02934,
+     "segmentDeviationP95": 9.76837,
+     "worstSegment": {
+      "bone": "DEF-hand.R",
+      "ratio": 12.029337534515902,
+      "frame": 30
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.39401,
+      "DEF-foot.R->DEF-toe.R": 0.30449,
+      "DEF-forearm.L->DEF-hand.L": 2.72014,
+      "DEF-forearm.R->DEF-hand.R": 1.22212,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.73148,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.838,
+      "DEF-thigh.L->DEF-shin.L": 0.0926,
+      "DEF-thigh.R->DEF-shin.R": 0.09778,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.96953
+     }
+    },
+    {
+     "clip": "scout::run::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.55555,
+     "segmentDeviationP95": 4.04476,
+     "worstSegment": {
+      "bone": "DEF-hand.R",
+      "ratio": 5.555549072316639,
+      "frame": 27
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.51551,
+      "DEF-foot.R->DEF-toe.R": 0.42881,
+      "DEF-forearm.L->DEF-hand.L": 1.22321,
+      "DEF-forearm.R->DEF-hand.R": 0.79864,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.46236,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.33559,
+      "DEF-thigh.L->DEF-shin.L": 0.18968,
+      "DEF-thigh.R->DEF-shin.R": 0.1353,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.77686
+     }
+    },
+    {
+     "clip": "scout::show::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 10.43356,
+     "segmentDeviationP95": 8.71844,
+     "worstSegment": {
+      "bone": "DEF-hand.R",
+      "ratio": 11.433558982088375,
+      "frame": 49
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.10381,
+      "DEF-foot.R->DEF-toe.R": 0.08639,
+      "DEF-forearm.L->DEF-hand.L": 1.78376,
+      "DEF-forearm.R->DEF-hand.R": 1.56687,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.6036,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.97237,
+      "DEF-thigh.L->DEF-shin.L": 0.07673,
+      "DEF-thigh.R->DEF-shin.R": 0.06742,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.93959
+     }
+    }
+   ]
+  },
+  {
+   "assetId": "shade",
+   "role": "void-flanker",
+   "category": "enemies",
+   "model": "assets/motion/ingame/characters/shade/model.glb",
+   "mesh": "shade_body",
+   "vertexCount": 5441,
+   "boneCount": 24,
+   "weightConcentration": {
+    "heaviestBone": "DEF-spine",
+    "heaviestShare": 0.14339,
+    "spineShare": 0.26115,
+    "heaviestOverSpine": 0.54909,
+    "boneShare": {
+     "DEF-spine": 0.14339,
+     "DEF-thigh.L": 0.07183,
+     "DEF-upper_arm.R": 0.06703,
+     "DEF-forearm.R": 0.0606,
+     "DEF-spine.003": 0.05987,
+     "DEF-thigh.R": 0.05754,
+     "DEF-forearm.L": 0.0554,
+     "DEF-upper_arm.L": 0.05329,
+     "DEF-shoulder.L": 0.04494,
+     "DEF-shin.L": 0.04394,
+     "DEF-shoulder.R": 0.04192,
+     "DEF-shin.R": 0.03963,
+     "DEF-foot.R": 0.03239,
+     "DEF-pelvis.R": 0.03184,
+     "DEF-foot.L": 0.03162,
+     "DEF-hand.L": 0.03091,
+     "DEF-hand.R": 0.03013,
+     "DEF-spine.004": 0.02918,
+     "DEF-pelvis.L": 0.01821,
+     "DEF-toe.R": 0.01587,
+     "DEF-spine.001": 0.01379,
+     "DEF-toe.L": 0.01176,
+     "DEF-spine.005": 0.00994,
+     "DEF-spine.002": 0.00498
+    }
+   },
+   "chainSpread": {
+    "influenceEpsilon": 0.1,
+    "maxAcceptableSpread": 2,
+    "verticesMeasured": 5441,
+    "meanInfluences": 2.332,
+    "maxInfluences": 3,
+    "meanSpread": 1.332,
+    "maxSpread": 2,
+    "overSpreadVertices": 0,
+    "overSpreadFraction": 0.0,
+    "overSpreadByDominantBone": {},
+    "worstVertex": {
+     "vertex": null,
+     "spread": 0,
+     "bones": []
+    }
+   },
+   "restLengthFloor": {
+    "bboxDiagonal": 2.58426,
+    "fraction": 0.005,
+    "absolute": 0.012921,
+    "pairsBelowFloor": 192,
+    "pairsTotal": 8812
+   },
+   "territorySizes": {
+    "DEF-foot.L": 258,
+    "DEF-foot.R": 285,
+    "DEF-forearm.L": 347,
+    "DEF-forearm.R": 335,
+    "DEF-hand.L": 140,
+    "DEF-hand.R": 119,
+    "DEF-pelvis.L": 73,
+    "DEF-pelvis.R": 171,
+    "DEF-shin.L": 127,
+    "DEF-shin.R": 111,
+    "DEF-shoulder.L": 329,
+    "DEF-shoulder.R": 133,
+    "DEF-spine": 754,
+    "DEF-spine.001": 71,
+    "DEF-spine.002": 10,
+    "DEF-spine.003": 351,
+    "DEF-spine.004": 164,
+    "DEF-spine.005": 54,
+    "DEF-thigh.L": 496,
+    "DEF-thigh.R": 405,
+    "DEF-toe.L": 17,
+    "DEF-toe.R": 22,
+    "DEF-upper_arm.L": 196,
+    "DEF-upper_arm.R": 473
+   },
+   "unownedVertices": 0,
+   "jointEdgeCoverage": {
+    "DEF-foot.L->DEF-toe.L": 11,
+    "DEF-foot.R->DEF-toe.R": 15,
+    "DEF-forearm.L->DEF-hand.L": 18,
+    "DEF-forearm.R->DEF-hand.R": 23,
+    "DEF-shin.L->DEF-foot.L": 14,
+    "DEF-shin.R->DEF-foot.R": 22,
+    "DEF-shoulder.L->DEF-upper_arm.L": 45,
+    "DEF-shoulder.R->DEF-upper_arm.R": 14,
+    "DEF-thigh.L->DEF-shin.L": 22,
+    "DEF-thigh.R->DEF-shin.R": 31,
+    "DEF-upper_arm.L->DEF-forearm.L": 43,
+    "DEF-upper_arm.R->DEF-forearm.R": 37
+   },
+   "clips": [
+    {
+     "clip": "shade::attack::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 13.64987,
+     "segmentDeviationP95": 2.68748,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 14.649868293607103,
+      "frame": 13
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.00338,
+      "DEF-foot.R->DEF-toe.R": 0.08417,
+      "DEF-forearm.L->DEF-hand.L": 0.83877,
+      "DEF-forearm.R->DEF-hand.R": 0.88491,
+      "DEF-shin.L->DEF-foot.L": 0.01993,
+      "DEF-shin.R->DEF-foot.R": 0.13632,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.85047,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.78492,
+      "DEF-thigh.L->DEF-shin.L": 0.04425,
+      "DEF-thigh.R->DEF-shin.R": 0.20741,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.50585,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.59094
+     }
+    },
+    {
+     "clip": "shade::avoid::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 23.52093,
+     "segmentDeviationP95": 9.02441,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 24.520927055687558,
+      "frame": 33
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.88508,
+      "DEF-foot.R->DEF-toe.R": 0.65098,
+      "DEF-forearm.L->DEF-hand.L": 1.29976,
+      "DEF-forearm.R->DEF-hand.R": 0.82545,
+      "DEF-shin.L->DEF-foot.L": 0.80538,
+      "DEF-shin.R->DEF-foot.R": 0.70471,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.38423,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.04778,
+      "DEF-thigh.L->DEF-shin.L": 0.82821,
+      "DEF-thigh.R->DEF-shin.R": 0.75243,
+      "DEF-upper_arm.L->DEF-forearm.L": 3.66503,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.54695
+     }
+    },
+    {
+     "clip": "shade::bighit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 10.81196,
+     "segmentDeviationP95": 2.89707,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 11.811964811280719,
+      "frame": 12
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.01097,
+      "DEF-foot.R->DEF-toe.R": 0.16505,
+      "DEF-forearm.L->DEF-hand.L": 0.51549,
+      "DEF-forearm.R->DEF-hand.R": 0.42706,
+      "DEF-shin.L->DEF-foot.L": 0.01784,
+      "DEF-shin.R->DEF-foot.R": 0.20535,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.75568,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.4737,
+      "DEF-thigh.L->DEF-shin.L": 0.04455,
+      "DEF-thigh.R->DEF-shin.R": 0.21837,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.64681,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.41085
+     }
+    },
+    {
+     "clip": "shade::critical::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 21.66702,
+     "segmentDeviationP95": 6.49707,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 22.667019520497508,
+      "frame": 8
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.81557,
+      "DEF-foot.R->DEF-toe.R": 0.81619,
+      "DEF-forearm.L->DEF-hand.L": 1.22324,
+      "DEF-forearm.R->DEF-hand.R": 0.76742,
+      "DEF-shin.L->DEF-foot.L": 0.75727,
+      "DEF-shin.R->DEF-foot.R": 0.73861,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.10341,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.93634,
+      "DEF-thigh.L->DEF-shin.L": 0.56256,
+      "DEF-thigh.R->DEF-shin.R": 0.89534,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.30385,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.27456
+     }
+    },
+    {
+     "clip": "shade::defence::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 7.47897,
+     "segmentDeviationP95": 2.97431,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 8.478968752245365,
+      "frame": 37
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.00807,
+      "DEF-foot.R->DEF-toe.R": 0.18247,
+      "DEF-forearm.L->DEF-hand.L": 0.49007,
+      "DEF-forearm.R->DEF-hand.R": 0.5103,
+      "DEF-shin.L->DEF-foot.L": 0.0172,
+      "DEF-shin.R->DEF-foot.R": 0.24076,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.94107,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.37575,
+      "DEF-thigh.L->DEF-shin.L": 0.05196,
+      "DEF-thigh.R->DEF-shin.R": 0.30672,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.98944,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.41642
+     }
+    },
+    {
+     "clip": "shade::die::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 24.9338,
+     "segmentDeviationP95": 5.11014,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 25.93379921107076,
+      "frame": 33
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.02983,
+      "DEF-foot.R->DEF-toe.R": 0.26843,
+      "DEF-forearm.L->DEF-hand.L": 1.33084,
+      "DEF-forearm.R->DEF-hand.R": 0.82812,
+      "DEF-shin.L->DEF-foot.L": 0.04824,
+      "DEF-shin.R->DEF-foot.R": 0.32895,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.08914,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.49027,
+      "DEF-thigh.L->DEF-shin.L": 0.07523,
+      "DEF-thigh.R->DEF-shin.R": 0.48085,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.64653,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.71686
+     }
+    },
+    {
+     "clip": "shade::hit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 14.93587,
+     "segmentDeviationP95": 4.42577,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 15.935869766035914,
+      "frame": 5
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.0516,
+      "DEF-foot.R->DEF-toe.R": 0.07067,
+      "DEF-forearm.L->DEF-hand.L": 0.95209,
+      "DEF-forearm.R->DEF-hand.R": 0.61545,
+      "DEF-shin.L->DEF-foot.L": 0.06257,
+      "DEF-shin.R->DEF-foot.R": 0.08387,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.11853,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.74438,
+      "DEF-thigh.L->DEF-shin.L": 0.07642,
+      "DEF-thigh.R->DEF-shin.R": 0.16656,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.53058,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.14181
+     }
+    },
+    {
+     "clip": "shade::idle::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 17.14186,
+     "segmentDeviationP95": 4.97322,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 18.141855370992328,
+      "frame": 33
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.03858,
+      "DEF-foot.R->DEF-toe.R": 0.25134,
+      "DEF-forearm.L->DEF-hand.L": 1.11059,
+      "DEF-forearm.R->DEF-hand.R": 0.53698,
+      "DEF-shin.L->DEF-foot.L": 0.07653,
+      "DEF-shin.R->DEF-foot.R": 0.32755,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.22824,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.51072,
+      "DEF-thigh.L->DEF-shin.L": 0.07691,
+      "DEF-thigh.R->DEF-shin.R": 0.43592,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.58877,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.55469
+     }
+    },
+    {
+     "clip": "shade::move::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 25.05656,
+     "segmentDeviationP95": 7.14481,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 26.05655618546694,
+      "frame": 90
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.64159,
+      "DEF-foot.R->DEF-toe.R": 0.28642,
+      "DEF-forearm.L->DEF-hand.L": 1.29526,
+      "DEF-forearm.R->DEF-hand.R": 0.80035,
+      "DEF-shin.L->DEF-foot.L": 0.65696,
+      "DEF-shin.R->DEF-foot.R": 0.63743,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.29886,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.83727,
+      "DEF-thigh.L->DEF-shin.L": 0.76951,
+      "DEF-thigh.R->DEF-shin.R": 0.63791,
+      "DEF-upper_arm.L->DEF-forearm.L": 3.50361,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.62236
+     }
+    },
+    {
+     "clip": "shade::run::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.11384,
+     "segmentDeviationP95": 3.54885,
+     "worstSegment": {
+      "bone": "DEF-shin.R",
+      "ratio": 6.113840938239499,
+      "frame": 27
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.04448,
+      "DEF-foot.R->DEF-toe.R": 0.315,
+      "DEF-forearm.L->DEF-hand.L": 0.5002,
+      "DEF-forearm.R->DEF-hand.R": 0.6333,
+      "DEF-shin.L->DEF-foot.L": 0.21678,
+      "DEF-shin.R->DEF-foot.R": 0.35044,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.99021,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.38138,
+      "DEF-thigh.L->DEF-shin.L": 0.18938,
+      "DEF-thigh.R->DEF-shin.R": 0.53593,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.72806,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.03924
+     }
+    },
+    {
+     "clip": "shade::show::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 15.69997,
+     "segmentDeviationP95": 5.33182,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 16.699967621988176,
+      "frame": 0
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.03822,
+      "DEF-foot.R->DEF-toe.R": 0.26911,
+      "DEF-forearm.L->DEF-hand.L": 1.03975,
+      "DEF-forearm.R->DEF-hand.R": 0.5552,
+      "DEF-shin.L->DEF-foot.L": 0.11489,
+      "DEF-shin.R->DEF-foot.R": 0.32348,
+      "DEF-shoulder.L->DEF-upper_arm.L": 1.31044,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.45601,
+      "DEF-thigh.L->DEF-shin.L": 0.11419,
+      "DEF-thigh.R->DEF-shin.R": 0.47711,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.70535,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.7813
+     }
+    }
+   ]
+  },
+  {
+   "assetId": "shadow-soldier-v04",
+   "role": "shadow-guardian",
+   "category": "enemies",
+   "model": "assets/motion/ingame/characters/shadow-soldier-v04/model.glb",
+   "mesh": "shadow-soldier-v04_body",
+   "vertexCount": 21111,
+   "boneCount": 24,
+   "weightConcentration": {
+    "heaviestBone": "DEF-spine",
+    "heaviestShare": 0.13583,
+    "spineShare": 0.29187,
+    "heaviestOverSpine": 0.46537,
+    "boneShare": {
+     "DEF-spine": 0.13583,
+     "DEF-thigh.R": 0.13542,
+     "DEF-thigh.L": 0.12759,
+     "DEF-shin.R": 0.0845,
+     "DEF-shin.L": 0.06738,
+     "DEF-spine.005": 0.05928,
+     "DEF-spine.004": 0.04489,
+     "DEF-spine.003": 0.04335,
+     "DEF-upper_arm.L": 0.03982,
+     "DEF-forearm.R": 0.03341,
+     "DEF-forearm.L": 0.02951,
+     "DEF-upper_arm.R": 0.02931,
+     "DEF-shoulder.L": 0.0293,
+     "DEF-foot.R": 0.02714,
+     "DEF-foot.L": 0.02212,
+     "DEF-shoulder.R": 0.01939,
+     "DEF-hand.R": 0.01854,
+     "DEF-hand.L": 0.01579,
+     "DEF-pelvis.R": 0.00993,
+     "DEF-spine.001": 0.00711,
+     "DEF-toe.R": 0.00657,
+     "DEF-pelvis.L": 0.00625,
+     "DEF-toe.L": 0.00618,
+     "DEF-spine.002": 0.00142
+    }
+   },
+   "chainSpread": {
+    "influenceEpsilon": 0.1,
+    "maxAcceptableSpread": 2,
+    "verticesMeasured": 21111,
+    "meanInfluences": 2.172,
+    "maxInfluences": 4,
+    "meanSpread": 1.173,
+    "maxSpread": 2,
+    "overSpreadVertices": 0,
+    "overSpreadFraction": 0.0,
+    "overSpreadByDominantBone": {},
+    "worstVertex": {
+     "vertex": null,
+     "spread": 0,
+     "bones": []
+    }
+   },
+   "restLengthFloor": {
+    "bboxDiagonal": 2.4812,
+    "fraction": 0.005,
+    "absolute": 0.012406,
+    "pairsBelowFloor": 162,
+    "pairsTotal": 9200
+   },
+   "territorySizes": {
+    "DEF-foot.L": 413,
+    "DEF-foot.R": 430,
+    "DEF-forearm.L": 658,
+    "DEF-forearm.R": 801,
+    "DEF-hand.L": 275,
+    "DEF-hand.R": 304,
+    "DEF-pelvis.L": 105,
+    "DEF-pelvis.R": 173,
+    "DEF-shin.L": 1188,
+    "DEF-shin.R": 1554,
+    "DEF-shoulder.L": 233,
+    "DEF-shoulder.R": 40,
+    "DEF-spine": 2423,
+    "DEF-spine.001": 123,
+    "DEF-spine.003": 1031,
+    "DEF-spine.004": 1012,
+    "DEF-spine.005": 1231,
+    "DEF-thigh.L": 3298,
+    "DEF-thigh.R": 3590,
+    "DEF-toe.L": 81,
+    "DEF-toe.R": 64,
+    "DEF-upper_arm.L": 1168,
+    "DEF-upper_arm.R": 916
+   },
+   "unownedVertices": 0,
+   "jointEdgeCoverage": {
+    "DEF-foot.L->DEF-toe.L": 33,
+    "DEF-foot.R->DEF-toe.R": 32,
+    "DEF-forearm.L->DEF-hand.L": 31,
+    "DEF-forearm.R->DEF-hand.R": 62,
+    "DEF-shin.L->DEF-foot.L": 49,
+    "DEF-shin.R->DEF-foot.R": 52,
+    "DEF-shoulder.L->DEF-upper_arm.L": 43,
+    "DEF-shoulder.R->DEF-upper_arm.R": 11,
+    "DEF-thigh.L->DEF-shin.L": 125,
+    "DEF-thigh.R->DEF-shin.R": 77,
+    "DEF-upper_arm.L->DEF-forearm.L": 155,
+    "DEF-upper_arm.R->DEF-forearm.R": 184
+   },
+   "clips": [
+    {
+     "clip": "shadow-soldier-v04::attack::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 11.64957,
+     "segmentDeviationP95": 3.21898,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 12.649574257934693,
+      "frame": 24
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.29991,
+      "DEF-foot.R->DEF-toe.R": 0.1836,
+      "DEF-forearm.L->DEF-hand.L": 0.76166,
+      "DEF-forearm.R->DEF-hand.R": 1.19517,
+      "DEF-shin.L->DEF-foot.L": 0.32301,
+      "DEF-shin.R->DEF-foot.R": 1.32525,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.59479,
+      "DEF-shoulder.R->DEF-upper_arm.R": 1.46685,
+      "DEF-thigh.L->DEF-shin.L": 0.42467,
+      "DEF-thigh.R->DEF-shin.R": 0.90333,
+      "DEF-upper_arm.L->DEF-forearm.L": 2.02139,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.65327
+     }
+    },
+    {
+     "clip": "shadow-soldier-v04::avoid::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.56955,
+     "segmentDeviationP95": 1.53353,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 4.5695462103324695,
+      "frame": 14
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.03942,
+      "DEF-foot.R->DEF-toe.R": 0.04279,
+      "DEF-forearm.L->DEF-hand.L": 0.50328,
+      "DEF-forearm.R->DEF-hand.R": 0.53278,
+      "DEF-shin.L->DEF-foot.L": 0.05985,
+      "DEF-shin.R->DEF-foot.R": 0.18568,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.41863,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.80909,
+      "DEF-thigh.L->DEF-shin.L": 0.13511,
+      "DEF-thigh.R->DEF-shin.R": 0.18028,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.82112,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.44074
+     }
+    },
+    {
+     "clip": "shadow-soldier-v04::bighit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.09191,
+     "segmentDeviationP95": 2.44193,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 4.0919102758953265,
+      "frame": 16
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.18385,
+      "DEF-foot.R->DEF-toe.R": 0.12896,
+      "DEF-forearm.L->DEF-hand.L": 0.75537,
+      "DEF-forearm.R->DEF-hand.R": 0.84999,
+      "DEF-shin.L->DEF-foot.L": 0.21503,
+      "DEF-shin.R->DEF-foot.R": 0.16095,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.3558,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.57894,
+      "DEF-thigh.L->DEF-shin.L": 0.26197,
+      "DEF-thigh.R->DEF-shin.R": 0.27273,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.30693,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.61322
+     }
+    },
+    {
+     "clip": "shadow-soldier-v04::critical::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 5.34876,
+     "segmentDeviationP95": 2.74376,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 6.348762200703858,
+      "frame": 19
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.13114,
+      "DEF-foot.R->DEF-toe.R": 0.18066,
+      "DEF-forearm.L->DEF-hand.L": 0.40902,
+      "DEF-forearm.R->DEF-hand.R": 1.57213,
+      "DEF-shin.L->DEF-foot.L": 0.2688,
+      "DEF-shin.R->DEF-foot.R": 0.84551,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.38133,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.80435,
+      "DEF-thigh.L->DEF-shin.L": 0.2826,
+      "DEF-thigh.R->DEF-shin.R": 0.5733,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.24293,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.82004
+     }
+    },
+    {
+     "clip": "shadow-soldier-v04::defence::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.95412,
+     "segmentDeviationP95": 2.06396,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 7.95411605472707,
+      "frame": 7
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.04906,
+      "DEF-foot.R->DEF-toe.R": 0.10912,
+      "DEF-forearm.L->DEF-hand.L": 0.53615,
+      "DEF-forearm.R->DEF-hand.R": 0.47095,
+      "DEF-shin.L->DEF-foot.L": 0.05833,
+      "DEF-shin.R->DEF-foot.R": 0.86201,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.43631,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.75138,
+      "DEF-thigh.L->DEF-shin.L": 0.06441,
+      "DEF-thigh.R->DEF-shin.R": 0.71844,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.7533,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.88715
+     }
+    },
+    {
+     "clip": "shadow-soldier-v04::die::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.29268,
+     "segmentDeviationP95": 4.05567,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 5.2926756224974625,
+      "frame": 33
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.03269,
+      "DEF-foot.R->DEF-toe.R": 0.09736,
+      "DEF-forearm.L->DEF-hand.L": 0.72537,
+      "DEF-forearm.R->DEF-hand.R": 1.65564,
+      "DEF-shin.L->DEF-foot.L": 0.03701,
+      "DEF-shin.R->DEF-foot.R": 0.60669,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.44832,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.68043,
+      "DEF-thigh.L->DEF-shin.L": 0.05677,
+      "DEF-thigh.R->DEF-shin.R": 0.63283,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.99109,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.98162
+     }
+    },
+    {
+     "clip": "shadow-soldier-v04::hit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.78169,
+     "segmentDeviationP95": 3.62455,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 5.7816875511449695,
+      "frame": 2
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.21757,
+      "DEF-foot.R->DEF-toe.R": 0.206,
+      "DEF-forearm.L->DEF-hand.L": 0.3854,
+      "DEF-forearm.R->DEF-hand.R": 1.23848,
+      "DEF-shin.L->DEF-foot.L": 0.24458,
+      "DEF-shin.R->DEF-foot.R": 0.21888,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.40984,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.93358,
+      "DEF-thigh.L->DEF-shin.L": 0.2969,
+      "DEF-thigh.R->DEF-shin.R": 0.36866,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.35778,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.63426
+     }
+    },
+    {
+     "clip": "shadow-soldier-v04::idle::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.24898,
+     "segmentDeviationP95": 2.52307,
+     "worstSegment": {
+      "bone": "DEF-forearm.R",
+      "ratio": 5.248981826111834,
+      "frame": 50
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.19851,
+      "DEF-foot.R->DEF-toe.R": 0.10449,
+      "DEF-forearm.L->DEF-hand.L": 0.47505,
+      "DEF-forearm.R->DEF-hand.R": 1.60552,
+      "DEF-shin.L->DEF-foot.L": 0.22243,
+      "DEF-shin.R->DEF-foot.R": 0.12647,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.33933,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.58184,
+      "DEF-thigh.L->DEF-shin.L": 0.21419,
+      "DEF-thigh.R->DEF-shin.R": 0.24018,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.08913,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.18659
+     }
+    },
+    {
+     "clip": "shadow-soldier-v04::move::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.13256,
+     "segmentDeviationP95": 2.83173,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 7.132561145964114,
+      "frame": 21
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.16555,
+      "DEF-foot.R->DEF-toe.R": 0.06832,
+      "DEF-forearm.L->DEF-hand.L": 0.56114,
+      "DEF-forearm.R->DEF-hand.R": 1.40558,
+      "DEF-shin.L->DEF-foot.L": 0.1594,
+      "DEF-shin.R->DEF-foot.R": 0.54828,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.37248,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.49514,
+      "DEF-thigh.L->DEF-shin.L": 0.38173,
+      "DEF-thigh.R->DEF-shin.R": 0.83135,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.93568,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.59141
+     }
+    },
+    {
+     "clip": "shadow-soldier-v04::run::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 7.13543,
+     "segmentDeviationP95": 1.756,
+     "worstSegment": {
+      "bone": "DEF-thigh.R",
+      "ratio": 8.135428631919963,
+      "frame": 11
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.16067,
+      "DEF-foot.R->DEF-toe.R": 0.10395,
+      "DEF-forearm.L->DEF-hand.L": 0.26734,
+      "DEF-forearm.R->DEF-hand.R": 0.39361,
+      "DEF-shin.L->DEF-foot.L": 0.23001,
+      "DEF-shin.R->DEF-foot.R": 0.76633,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.31158,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.49347,
+      "DEF-thigh.L->DEF-shin.L": 0.60126,
+      "DEF-thigh.R->DEF-shin.R": 0.81317,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.9254,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.64236
+     }
+    },
+    {
+     "clip": "shadow-soldier-v04::show::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.21322,
+     "segmentDeviationP95": 1.99858,
+     "worstSegment": {
+      "bone": "DEF-upper_arm.R",
+      "ratio": 4.213223281950385,
+      "frame": 7
+     },
+     "jointFlexMax": {
+      "DEF-foot.L->DEF-toe.L": 0.02955,
+      "DEF-foot.R->DEF-toe.R": 0.04664,
+      "DEF-forearm.L->DEF-hand.L": 0.43781,
+      "DEF-forearm.R->DEF-hand.R": 1.21571,
+      "DEF-shin.L->DEF-foot.L": 0.05606,
+      "DEF-shin.R->DEF-foot.R": 0.25442,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.27072,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.82471,
+      "DEF-thigh.L->DEF-shin.L": 0.07388,
+      "DEF-thigh.R->DEF-shin.R": 0.37837,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.82725,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.59593
+     }
+    }
+   ]
+  },
+  {
+   "assetId": "shadow-commander-boss",
+   "role": "shadow-command-boss",
+   "category": "bosses",
+   "model": "assets/motion/ingame/characters/shadow-commander-boss/model.glb",
+   "mesh": "shadow-commander-boss_body",
+   "vertexCount": 23715,
+   "boneCount": 24,
+   "weightConcentration": {
+    "heaviestBone": "DEF-spine",
+    "heaviestShare": 0.13956,
+    "spineShare": 0.25392,
+    "heaviestOverSpine": 0.5496,
+    "boneShare": {
+     "DEF-spine": 0.13956,
+     "DEF-shin.R": 0.11966,
+     "DEF-thigh.R": 0.10549,
+     "DEF-thigh.L": 0.07876,
+     "DEF-spine.003": 0.06734,
+     "DEF-forearm.R": 0.05606,
+     "DEF-hand.R": 0.05079,
+     "DEF-shoulder.L": 0.04592,
+     "DEF-pelvis.L": 0.04588,
+     "DEF-upper_arm.L": 0.04574,
+     "DEF-shin.L": 0.04135,
+     "DEF-forearm.L": 0.03105,
+     "DEF-foot.R": 0.02998,
+     "DEF-hand.L": 0.02472,
+     "DEF-pelvis.R": 0.02211,
+     "DEF-spine.004": 0.01824,
+     "DEF-shoulder.R": 0.01634,
+     "DEF-spine.005": 0.01514,
+     "DEF-foot.L": 0.01374,
+     "DEF-upper_arm.R": 0.00899,
+     "DEF-spine.001": 0.00736,
+     "DEF-spine.002": 0.00629,
+     "DEF-toe.L": 0.00504,
+     "DEF-toe.R": 0.00444
+    }
+   },
+   "chainSpread": {
+    "influenceEpsilon": 0.1,
+    "maxAcceptableSpread": 2,
+    "verticesMeasured": 23715,
+    "meanInfluences": 2.054,
+    "maxInfluences": 3,
+    "meanSpread": 1.054,
+    "maxSpread": 2,
+    "overSpreadVertices": 0,
+    "overSpreadFraction": 0.0,
+    "overSpreadByDominantBone": {},
+    "worstVertex": {
+     "vertex": null,
+     "spread": 0,
+     "bones": []
+    }
+   },
+   "restLengthFloor": {
+    "bboxDiagonal": 2.42693,
+    "fraction": 0.005,
+    "absolute": 0.012135,
+    "pairsBelowFloor": 268,
+    "pairsTotal": 9600
+   },
+   "territorySizes": {
+    "DEF-foot.L": 318,
+    "DEF-foot.R": 193,
+    "DEF-forearm.L": 397,
+    "DEF-forearm.R": 564,
+    "DEF-hand.L": 926,
+    "DEF-hand.R": 1973,
+    "DEF-pelvis.L": 1221,
+    "DEF-pelvis.R": 502,
+    "DEF-shin.L": 713,
+    "DEF-shin.R": 3947,
+    "DEF-shoulder.L": 1511,
+    "DEF-shoulder.R": 311,
+    "DEF-spine": 3130,
+    "DEF-spine.001": 160,
+    "DEF-spine.002": 64,
+    "DEF-spine.003": 1701,
+    "DEF-spine.004": 436,
+    "DEF-spine.005": 395,
+    "DEF-thigh.L": 2252,
+    "DEF-thigh.R": 1895,
+    "DEF-toe.L": 46,
+    "DEF-toe.R": 175,
+    "DEF-upper_arm.L": 646,
+    "DEF-upper_arm.R": 239
+   },
+   "unownedVertices": 0,
+   "jointEdgeCoverage": {
+    "DEF-forearm.R->DEF-hand.R": 83,
+    "DEF-shin.L->DEF-foot.L": 16,
+    "DEF-shin.R->DEF-foot.R": 31,
+    "DEF-shoulder.L->DEF-upper_arm.L": 10,
+    "DEF-shoulder.R->DEF-upper_arm.R": 3,
+    "DEF-thigh.L->DEF-shin.L": 54,
+    "DEF-thigh.R->DEF-shin.R": 70,
+    "DEF-upper_arm.L->DEF-forearm.L": 102,
+    "DEF-upper_arm.R->DEF-forearm.R": 84
+   },
+   "clips": [
+    {
+     "clip": "shadow-commander-boss::attack::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 8.9091,
+     "segmentDeviationP95": 3.22124,
+     "worstSegment": {
+      "bone": "DEF-spine.002",
+      "ratio": 9.909104234057974,
+      "frame": 12
+     },
+     "jointFlexMax": {
+      "DEF-forearm.R->DEF-hand.R": 0.83068,
+      "DEF-shin.L->DEF-foot.L": 0.28774,
+      "DEF-shin.R->DEF-foot.R": 0.24949,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.58699,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.4249,
+      "DEF-thigh.L->DEF-shin.L": 0.78559,
+      "DEF-thigh.R->DEF-shin.R": 0.45341,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.90934,
+      "DEF-upper_arm.R->DEF-forearm.R": 3.13223
+     }
+    },
+    {
+     "clip": "shadow-commander-boss::avoid::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 9.6388,
+     "segmentDeviationP95": 6.53314,
+     "worstSegment": {
+      "bone": "DEF-spine.002",
+      "ratio": 10.638799985494401,
+      "frame": 28
+     },
+     "jointFlexMax": {
+      "DEF-forearm.R->DEF-hand.R": 0.98046,
+      "DEF-shin.L->DEF-foot.L": 0.57532,
+      "DEF-shin.R->DEF-foot.R": 0.62259,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.5003,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.44683,
+      "DEF-thigh.L->DEF-shin.L": 1.5966,
+      "DEF-thigh.R->DEF-shin.R": 0.74287,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.87433,
+      "DEF-upper_arm.R->DEF-forearm.R": 4.54281
+     }
+    },
+    {
+     "clip": "shadow-commander-boss::bighit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.97409,
+     "segmentDeviationP95": 3.8785,
+     "worstSegment": {
+      "bone": "DEF-spine.002",
+      "ratio": 7.974092140482683,
+      "frame": 12
+     },
+     "jointFlexMax": {
+      "DEF-forearm.R->DEF-hand.R": 0.91149,
+      "DEF-shin.L->DEF-foot.L": 0.03177,
+      "DEF-shin.R->DEF-foot.R": 0.05402,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.37657,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.23514,
+      "DEF-thigh.L->DEF-shin.L": 0.2024,
+      "DEF-thigh.R->DEF-shin.R": 0.12163,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.29215,
+      "DEF-upper_arm.R->DEF-forearm.R": 3.25934
+     }
+    },
+    {
+     "clip": "shadow-commander-boss::critical::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.12989,
+     "segmentDeviationP95": 3.98831,
+     "worstSegment": {
+      "bone": "DEF-spine.002",
+      "ratio": 7.129886447026888,
+      "frame": 59
+     },
+     "jointFlexMax": {
+      "DEF-forearm.R->DEF-hand.R": 1.13382,
+      "DEF-shin.L->DEF-foot.L": 0.0374,
+      "DEF-shin.R->DEF-foot.R": 0.13689,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.27916,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.35122,
+      "DEF-thigh.L->DEF-shin.L": 0.55621,
+      "DEF-thigh.R->DEF-shin.R": 0.21933,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.22774,
+      "DEF-upper_arm.R->DEF-forearm.R": 4.43771
+     }
+    },
+    {
+     "clip": "shadow-commander-boss::defence::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.31728,
+     "segmentDeviationP95": 2.46379,
+     "worstSegment": {
+      "bone": "DEF-spine.002",
+      "ratio": 7.3172808858385805,
+      "frame": 12
+     },
+     "jointFlexMax": {
+      "DEF-forearm.R->DEF-hand.R": 0.27811,
+      "DEF-shin.L->DEF-foot.L": 0.01706,
+      "DEF-shin.R->DEF-foot.R": 0.14893,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.38677,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.13096,
+      "DEF-thigh.L->DEF-shin.L": 0.06359,
+      "DEF-thigh.R->DEF-shin.R": 0.30262,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.57374,
+      "DEF-upper_arm.R->DEF-forearm.R": 1.03287
+     }
+    },
+    {
+     "clip": "shadow-commander-boss::die::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 6.62681,
+     "segmentDeviationP95": 3.26884,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 7.626806132037099,
+      "frame": 27
+     },
+     "jointFlexMax": {
+      "DEF-forearm.R->DEF-hand.R": 1.16116,
+      "DEF-shin.L->DEF-foot.L": 0.01347,
+      "DEF-shin.R->DEF-foot.R": 0.11193,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.40095,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.06698,
+      "DEF-thigh.L->DEF-shin.L": 0.1415,
+      "DEF-thigh.R->DEF-shin.R": 0.07815,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.99347,
+      "DEF-upper_arm.R->DEF-forearm.R": 0.96595
+     }
+    },
+    {
+     "clip": "shadow-commander-boss::hit::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.82278,
+     "segmentDeviationP95": 3.52317,
+     "worstSegment": {
+      "bone": "DEF-spine.002",
+      "ratio": 5.822780458955238,
+      "frame": 5
+     },
+     "jointFlexMax": {
+      "DEF-forearm.R->DEF-hand.R": 0.88665,
+      "DEF-shin.L->DEF-foot.L": 0.03443,
+      "DEF-shin.R->DEF-foot.R": 0.11168,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.36916,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.1629,
+      "DEF-thigh.L->DEF-shin.L": 0.42059,
+      "DEF-thigh.R->DEF-shin.R": 0.11826,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.38773,
+      "DEF-upper_arm.R->DEF-forearm.R": 4.11449
+     }
+    },
+    {
+     "clip": "shadow-commander-boss::idle::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.46888,
+     "segmentDeviationP95": 3.32187,
+     "worstSegment": {
+      "bone": "DEF-spine.002",
+      "ratio": 5.468884163429487,
+      "frame": 125
+     },
+     "jointFlexMax": {
+      "DEF-forearm.R->DEF-hand.R": 1.14732,
+      "DEF-shin.L->DEF-foot.L": 0.0337,
+      "DEF-shin.R->DEF-foot.R": 0.05336,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.31046,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.23798,
+      "DEF-thigh.L->DEF-shin.L": 0.39204,
+      "DEF-thigh.R->DEF-shin.R": 0.06559,
+      "DEF-upper_arm.L->DEF-forearm.L": 1.22047,
+      "DEF-upper_arm.R->DEF-forearm.R": 4.60602
+     }
+    },
+    {
+     "clip": "shadow-commander-boss::move::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 4.22418,
+     "segmentDeviationP95": 3.11897,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 5.22418345438279,
+      "frame": 8
+     },
+     "jointFlexMax": {
+      "DEF-forearm.R->DEF-hand.R": 1.05402,
+      "DEF-shin.L->DEF-foot.L": 0.10233,
+      "DEF-shin.R->DEF-foot.R": 0.12259,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.34495,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.21171,
+      "DEF-thigh.L->DEF-shin.L": 0.81326,
+      "DEF-thigh.R->DEF-shin.R": 0.11346,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.83997,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.09
+     }
+    },
+    {
+     "clip": "shadow-commander-boss::run::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.03446,
+     "segmentDeviationP95": 2.01667,
+     "worstSegment": {
+      "bone": "DEF-spine.002",
+      "ratio": 4.034462612623055,
+      "frame": 22
+     },
+     "jointFlexMax": {
+      "DEF-forearm.R->DEF-hand.R": 0.46818,
+      "DEF-shin.L->DEF-foot.L": 0.10623,
+      "DEF-shin.R->DEF-foot.R": 0.15556,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.2959,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.19637,
+      "DEF-thigh.L->DEF-shin.L": 0.59402,
+      "DEF-thigh.R->DEF-shin.R": 0.14192,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.41093,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.25752
+     }
+    },
+    {
+     "clip": "shadow-commander-boss::show::v01",
+     "framesSampled": 12,
+     "segmentDeviationMax": 3.6387,
+     "segmentDeviationP95": 3.16006,
+     "worstSegment": {
+      "bone": "DEF-forearm.L",
+      "ratio": 4.638697197879037,
+      "frame": 72
+     },
+     "jointFlexMax": {
+      "DEF-forearm.R->DEF-hand.R": 0.84435,
+      "DEF-shin.L->DEF-foot.L": 0.02785,
+      "DEF-shin.R->DEF-foot.R": 0.07012,
+      "DEF-shoulder.L->DEF-upper_arm.L": 0.18393,
+      "DEF-shoulder.R->DEF-upper_arm.R": 0.36648,
+      "DEF-thigh.L->DEF-shin.L": 0.09404,
+      "DEF-thigh.R->DEF-shin.R": 0.05882,
+      "DEF-upper_arm.L->DEF-forearm.L": 0.50099,
+      "DEF-upper_arm.R->DEF-forearm.R": 2.60439
+     }
+    }
+   ]
+  }
+ ]
+}

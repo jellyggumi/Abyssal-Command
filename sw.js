@@ -1,5 +1,12 @@
-const CACHE_PREFIX = "abyssal-command-defense-survivor-";
-const CACHE_NAME = "abyssal-command-defense-survivor-__CANDIDATE_SHA__";
+// Renamed with the game title (Abyssal Command -> Abyssal Lantern). This prefix is
+// CI-coupled: `.github/workflows/static.yml` greps for
+// "abyssal-lantern-defense-survivor-$RESOLVED_SHA" in the deployed sw.js, so the two
+// MUST change together or the Pages deploy fails its own verification step. Rotating the
+// prefix also means `activate` below no longer recognises caches from the old name, so a
+// returning client keeps one stale cache until the browser evicts it -- acceptable once,
+// and the alternative (matching both prefixes forever) carries the old name indefinitely.
+const CACHE_PREFIX = "abyssal-lantern-defense-survivor-";
+const CACHE_NAME = "abyssal-lantern-defense-survivor-__CANDIDATE_SHA__";
 // The release workflow rewrites the suffix above into the deployed commit SHA
 // (.github/workflows/static.yml), which rotates CACHE_NAME and lets `activate`
 // drop the previous release's cache. Served locally the suffix stays the

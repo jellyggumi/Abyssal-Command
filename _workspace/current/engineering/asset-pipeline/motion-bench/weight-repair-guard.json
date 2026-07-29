@@ -1,0 +1,57 @@
+{
+ "schemaVersion": 1,
+ "generatedBy": "scripts/repair-joint-weights.py",
+ "mode": "write",
+ "keepRadius": 1,
+ "registryGenerationId": "18f2f33f00b2825777fc9753c81281c2a5aee0bd9c97ad441bd11ba54fe53e7c",
+ "assets": [
+  {
+   "path": "assets/motion/ingame/characters/guard/model.glb",
+   "keepRadius": 1,
+   "weightEpsilon": 0.0001,
+   "sha256Before": "760c12de41fbea0caa9f2d6e0c5fb83a1ff945f23b9b50676028deac98f97e67",
+   "primitives": [
+    {
+     "vertices": 5325,
+     "changedVertices": 5043,
+     "changedFraction": 0.94704,
+     "droppedInfluences": 6340,
+     "meanWeightRedistributed": 0.1389,
+     "maxWeightRedistributed": 0.71278,
+     "zeroedByBone": {
+      "DEF-spine.003": 892,
+      "DEF-shoulder.L": 579,
+      "DEF-shoulder.R": 569,
+      "DEF-pelvis.L": 548,
+      "DEF-pelvis.R": 440,
+      "DEF-thigh.R": 378,
+      "DEF-thigh.L": 344,
+      "DEF-hand.L": 295,
+      "DEF-hand.R": 285,
+      "DEF-upper_arm.R": 258,
+      "DEF-upper_arm.L": 252,
+      "DEF-toe.L": 231,
+      "DEF-forearm.R": 230,
+      "DEF-toe.R": 223,
+      "DEF-forearm.L": 223,
+      "DEF-shin.L": 161,
+      "DEF-shin.R": 159,
+      "DEF-spine.005": 79,
+      "DEF-spine.001": 70,
+      "DEF-spine.002": 47,
+      "DEF-foot.R": 37,
+      "DEF-foot.L": 37,
+      "DEF-spine": 2,
+      "DEF-spine.004": 1
+     },
+     "maxWeightSumError": 2.22e-16,
+     "mesh": "model",
+     "primitive": 0
+    }
+   ],
+   "written": true,
+   "sha256After": "bca4dbc96cd43318824b4bc1a14b3829e5e324f3e6af6ce77ddb541cf1167094",
+   "assetId": "guard"
+  }
+ ]
+}

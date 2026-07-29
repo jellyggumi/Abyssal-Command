@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/model.glb",
-  "modelSha256": "760c12de41fbea0caa9f2d6e0c5fb83a1ff945f23b9b50676028deac98f97e67",
+  "modelSha256": "e735e9a761747c55d2e4d7eed7ae08437a6c7218095549d2f5046904dfcea58f",
   "modelBytes": 13426364,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/rig-report.json",
@@ -226,7 +226,7 @@
       "action": "die",
       "clipName": "guard::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "60a0c2b9146e14dd1128834954e62664412cbc8ae9572f6b9c452030ee059477",
+      "sourceSha256": "f990f263cdc4e15744d8265335796dd4bde98a0e35b3da633e63d994b4148bc6",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -317,5 +317,27 @@
     "skinCount": 1
   },
   "runtimeEligible": true,
-  "gateErrors": []
+  "gateErrors": [],
+  "weightRepair": {
+    "tool": "scripts/repair-joint-weights.py",
+    "gate": "scripts/gate-joint-weight-repair.py",
+    "keepRadius": 1,
+    "relaxIterations": 32,
+    "relaxStrength": 0.65,
+    "shaBeforeRepair": "760c12de41fbea0caa9f2d6e0c5fb83a1ff945f23b9b50676028deac98f97e67",
+    "changedVertices": 5043,
+    "droppedInfluences": 6340,
+    "seededSecondInfluence": 89,
+    "overSpreadFractionBefore": 0.16995,
+    "overSpreadFractionAfter": 0.0,
+    "maxSpreadBefore": 5,
+    "maxSpreadAfter": 2,
+    "seamEdgesOverOneBefore": 130,
+    "seamEdgesOverOneAfter": 67,
+    "seamEdgesDisjointBefore": 0,
+    "seamEdgesDisjointAfter": 0,
+    "bridgedSeamEdges": 33,
+    "seamBridgeCap": 0.09,
+    "rationale": "Shipped bind spread single vertices across bones 3-10 hierarchy edges apart, so limbs deformed as one rubber tube instead of bending at joints. Influences are masked to the dominant bone's 1-edge neighbourhood, relaxed across mesh topology to keep the falloff continuous, then renormalized. Rest pose is bit-stable: at rest every joint matrix is identity, so a weight set summing to 1.0 reproduces the original vertex exactly."
+  }
 }

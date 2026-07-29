@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/model.glb",
-  "modelSha256": "3cae521d8cde69603872608aba771615cb9100cba78b1d06fa8e59559b76948f",
+  "modelSha256": "2709019aed2cb1ac0d9be4daeaeb455b5799dad481f7d29f63092400d7bb3fe0",
   "modelBytes": 12211352,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/rig-report.json",
@@ -226,7 +226,7 @@
       "action": "die",
       "clipName": "shadow-soldier-v04::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "60a0c2b9146e14dd1128834954e62664412cbc8ae9572f6b9c452030ee059477",
+      "sourceSha256": "f990f263cdc4e15744d8265335796dd4bde98a0e35b3da633e63d994b4148bc6",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -317,5 +317,23 @@
     "skinCount": 1
   },
   "runtimeEligible": true,
-  "gateErrors": []
+  "gateErrors": [],
+  "weightRepair": {
+    "tool": "scripts/repair-joint-weights.py",
+    "gate": "scripts/gate-joint-weight-repair.py",
+    "keepRadius": 1,
+    "relaxIterations": 48,
+    "relaxStrength": 0.7,
+    "shaBeforeRepair": "3cae521d8cde69603872608aba771615cb9100cba78b1d06fa8e59559b76948f",
+    "changedVertices": 19068,
+    "droppedInfluences": 27436,
+    "seededSecondInfluence": 1782,
+    "overSpreadFractionBefore": 0.36858,
+    "overSpreadFractionAfter": 0.0,
+    "maxSpreadBefore": 6,
+    "maxSpreadAfter": 2,
+    "seamEdgesOverOneBefore": 565,
+    "seamEdgesOverOneAfter": 232,
+    "rationale": "Shipped bind spread single vertices across bones 3-10 hierarchy edges apart, so limbs deformed as one rubber tube instead of bending at joints. Influences are masked to the dominant bone's 1-edge neighbourhood, relaxed across mesh topology to keep the falloff continuous, then renormalized. Rest pose is bit-stable: at rest every joint matrix is identity, so a weight set summing to 1.0 reproduces the original vertex exactly."
+  }
 }

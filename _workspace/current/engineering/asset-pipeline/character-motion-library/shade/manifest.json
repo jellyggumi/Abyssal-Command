@@ -11,7 +11,7 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/model.glb",
-  "modelSha256": "967458d0a1ecf290b34998ea78b2cdaee6ca93b6b10f2d109c3b83ace85dfe29",
+  "modelSha256": "c5305659b05094f51dabf03c06b52e5008c4b31967a2e63c816b5f89954f6c8c",
   "modelBytes": 9721264,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/rig-report.json",
@@ -226,7 +226,7 @@
       "action": "die",
       "clipName": "shade::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "60a0c2b9146e14dd1128834954e62664412cbc8ae9572f6b9c452030ee059477",
+      "sourceSha256": "f990f263cdc4e15744d8265335796dd4bde98a0e35b3da633e63d994b4148bc6",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -317,5 +317,23 @@
     "skinCount": 1
   },
   "runtimeEligible": true,
-  "gateErrors": []
+  "gateErrors": [],
+  "weightRepair": {
+    "tool": "scripts/repair-joint-weights.py",
+    "gate": "scripts/gate-joint-weight-repair.py",
+    "keepRadius": 1,
+    "relaxIterations": 20,
+    "relaxStrength": 0.6,
+    "shaBeforeRepair": "967458d0a1ecf290b34998ea78b2cdaee6ca93b6b10f2d109c3b83ace85dfe29",
+    "changedVertices": 5281,
+    "droppedInfluences": 6809,
+    "seededSecondInfluence": 47,
+    "overSpreadFractionBefore": 0.3696,
+    "overSpreadFractionAfter": 0.0,
+    "maxSpreadBefore": 5,
+    "maxSpreadAfter": 2,
+    "seamEdgesOverOneBefore": 357,
+    "seamEdgesOverOneAfter": 135,
+    "rationale": "Shipped bind spread single vertices across bones 3-10 hierarchy edges apart, so limbs deformed as one rubber tube instead of bending at joints. Influences are masked to the dominant bone's 1-edge neighbourhood, relaxed across mesh topology to keep the falloff continuous, then renormalized. Rest pose is bit-stable: at rest every joint matrix is identity, so a weight set summing to 1.0 reproduces the original vertex exactly."
+  }
 }

@@ -1,7 +1,7 @@
 {
-  "name": "Abyssal Command",
-  "short_name": "AbyssalCommand",
-  "description": "A browser-local deterministic Abyssal defense-survivor campaign.",
+  "name": "Abyssal Lantern",
+  "short_name": "AbyssalLantern",
+  "description": "A browser-local deterministic Abyssal lantern-descent campaign.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#050812",

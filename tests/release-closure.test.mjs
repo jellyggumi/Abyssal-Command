@@ -240,8 +240,10 @@ test("the candidate-stamped service worker precaches every runtime observer, ref
   let installPromise;
   let activatePromise;
   let fetchHandler = async () => { throw new Error("unexpected network request"); };
-  const currentCache = `abyssal-command-defense-survivor-${candidateSha}`;
-  const staleCache = `abyssal-command-defense-survivor-${"a".repeat(40)}`;
+  // Prefix renamed with the game title; must stay byte-identical to sw.js CACHE_PREFIX and
+  // the grep in .github/workflows/static.yml -- three coupled sites, one string.
+  const currentCache = `abyssal-lantern-defense-survivor-${candidateSha}`;
+  const staleCache = `abyssal-lantern-defense-survivor-${"a".repeat(40)}`;
   const unrelatedCache = "another-application-cache";
   const requestKey = (request) => typeof request === "string"
     ? new URL(request, self.location.href).href

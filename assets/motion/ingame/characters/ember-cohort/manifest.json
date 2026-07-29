@@ -205,7 +205,7 @@
       "action": "die",
       "clipName": "ember-cohort::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "60a0c2b9146e14dd1128834954e62664412cbc8ae9572f6b9c452030ee059477",
+      "sourceSha256": "f990f263cdc4e15744d8265335796dd4bde98a0e35b3da633e63d994b4148bc6",
       "loop": false,
       "kind": "authored-fallback"
     },
@@ -315,7 +315,7 @@
   },
   "runtimeEligible": true,
   "gateErrors": [],
-  "generationId": "18f2f33f00b2825777fc9753c81281c2a5aee0bd9c97ad441bd11ba54fe53e7c",
+  "generationId": "e255362a5d0c4d7497652f222fa9c1646f7d9e293e2b9821800068453effb3f7",
   "sourceAssetRights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-index.py",
-  "generationId": "18f2f33f00b2825777fc9753c81281c2a5aee0bd9c97ad441bd11ba54fe53e7c",
+  "generationId": "e255362a5d0c4d7497652f222fa9c1646f7d9e293e2b9821800068453effb3f7",
   "motionAuthority": "derived-retargeted",
   "motionLineage": {
     "authority": "derived-retargeted",
@@ -70,7 +70,7 @@
       "category": "bosses",
       "replaces": "assets/mesh/character/broken-court-monarch-v04-character/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
-      "modelSha256": "d3b51240ba5bc4c4b424f2283a169187f904be49a77461ae1772cb95b09eeddc",
+      "modelSha256": "1bc87c2aba7c211b07b9812a76dc9502f22d4eed8a274542ad012c64f90da797",
       "manifest": "assets/motion/ingame/characters/broken-court-monarch-v04/manifest.json",
       "clipNames": {
         "idle": "broken-court-monarch-v04::idle::v01",
@@ -166,7 +166,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/character/guard-character/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/guard/model.glb",
-      "modelSha256": "760c12de41fbea0caa9f2d6e0c5fb83a1ff945f23b9b50676028deac98f97e67",
+      "modelSha256": "e735e9a761747c55d2e4d7eed7ae08437a6c7218095549d2f5046904dfcea58f",
       "manifest": "assets/motion/ingame/characters/guard/manifest.json",
       "clipNames": {
         "idle": "guard::idle::v01",
@@ -212,7 +212,7 @@
       "category": "bosses",
       "replaces": "assets/mesh/character/human-command-boss-character/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/human-command-boss/model.glb",
-      "modelSha256": "b51810aa620762a01c3c7f4ffa2226bbbe30e6b8d6ba3c86aacb69aa0048a3ad",
+      "modelSha256": "feff635819fdf5b6a4800da0904c1ac229e02cdec42b962841e4c2e97aa7239f",
       "manifest": "assets/motion/ingame/characters/human-command-boss/manifest.json",
       "clipNames": {
         "idle": "human-command-boss::idle::v01",
@@ -261,7 +261,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/lantern-reaver/model.glb",
-      "modelSha256": "ea07c888748bd528e0e79e2a95e757c765b318c43b534ecc0cb01e6563c69809",
+      "modelSha256": "ace464db6a21c5838f2561cf7e12eb8b5af1084052040020ca9e068798f67168",
       "manifest": "assets/motion/ingame/characters/lantern-reaver/manifest.json",
       "clipNames": {
         "idle": "lantern-reaver::idle::v01",
@@ -311,7 +311,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/enemy/possessed/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/possessed/model.glb",
-      "modelSha256": "25e2902bec527236f90f508139912cea3985a8cd41fa62bbf61ea17e0d0fcc97",
+      "modelSha256": "88cdc0fd94e941d2ce0d282561552be3ef8d6507764e495fb4de08a303066c7d",
       "manifest": "assets/motion/ingame/characters/possessed/manifest.json",
       "clipNames": {
         "idle": "possessed::idle::v01",
@@ -360,7 +360,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/enemy/scout/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/scout/model.glb",
-      "modelSha256": "fc2d338e267c7f3637f7090b9a84986c1dca9d32c9adc90c15fc66d060849e2a",
+      "modelSha256": "9a13fa73c439184b8316c921313e7d09d1109352feb7cc392e7d08faf3b6a7f0",
       "manifest": "assets/motion/ingame/characters/scout/manifest.json",
       "clipNames": {
         "idle": "scout::idle::v01",
@@ -409,7 +409,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/enemy/shade/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/shade/model.glb",
-      "modelSha256": "967458d0a1ecf290b34998ea78b2cdaee6ca93b6b10f2d109c3b83ace85dfe29",
+      "modelSha256": "c5305659b05094f51dabf03c06b52e5008c4b31967a2e63c816b5f89954f6c8c",
       "manifest": "assets/motion/ingame/characters/shade/manifest.json",
       "clipNames": {
         "idle": "shade::idle::v01",
@@ -458,7 +458,7 @@
       "category": "enemies",
       "replaces": "assets/mesh/enemy/shadow-soldier-v04/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/shadow-soldier-v04/model.glb",
-      "modelSha256": "3cae521d8cde69603872608aba771615cb9100cba78b1d06fa8e59559b76948f",
+      "modelSha256": "2709019aed2cb1ac0d9be4daeaeb455b5799dad481f7d29f63092400d7bb3fe0",
       "manifest": "assets/motion/ingame/characters/shadow-soldier-v04/manifest.json",
       "clipNames": {
         "idle": "shadow-soldier-v04::idle::v01",
@@ -507,7 +507,7 @@
       "category": "bosses",
       "replaces": "assets/mesh/enemy/shadow-commander-boss/glb/base_basic_pbr.glb",
       "model": "assets/motion/ingame/characters/shadow-commander-boss/model.glb",
-      "modelSha256": "0e035bb052b2dfb5e9da28145e165151572fd30010813ac94a95617579e7518e",
+      "modelSha256": "f08f360aadc2a00836648fd6f3a160480173565f1ccb9d55bdba17e66db1bf20",
       "manifest": "assets/motion/ingame/characters/shadow-commander-boss/manifest.json",
       "clipNames": {
         "idle": "shadow-commander-boss::idle::v01",
