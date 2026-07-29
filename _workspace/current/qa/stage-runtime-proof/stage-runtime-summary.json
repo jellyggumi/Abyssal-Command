@@ -1,0 +1,1568 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-28T17:48:40.381Z",
+  "canonicalStageIds": [
+    "cinder-span",
+    "veil-citadel",
+    "echo-throne",
+    "sunken-bastion",
+    "howling-sprawl",
+    "glass-necropolis",
+    "starless-canal",
+    "shattered-causeway",
+    "abyss-chancel",
+    "gate-zenith"
+  ],
+  "isolation": "fresh BrowserContext per stage; service workers blocked; Chromium cache disabled",
+  "summaryArtifactPath": "_workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json",
+  "stages": [
+    {
+      "stageId": "cinder-span",
+      "pass": true,
+      "expected": {
+        "conceptBackplatePath": "assets/images/battle/ui/stages/cinder-span.png",
+        "terrainGlbPath": "assets/images/battle/glb/terrain/cinder-span.glb",
+        "propRecords": [
+          {
+            "id": "cinder-span:forge-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          },
+          {
+            "id": "cinder-span:seal-brand",
+            "modelPath": "assets/images/battle/glb/props/bulwark-brand.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "cinder-span:ember-lookout",
+            "modelPath": "assets/images/battle/glb/companions/ember-cohort.glb"
+          }
+        ],
+        "palette": {
+          "authored": {
+            "surface": "surface-cinder-ash",
+            "contour": "contour-ember",
+            "landmark": "landmark-forge",
+            "hazard": "hazard-ash",
+            "objective": "objective-seal",
+            "accent": "#f3592c"
+          },
+          "clearColor": "#7b2a1a",
+          "fogNear": 22.400000000000002,
+          "fogFar": 50.4
+        }
+      },
+      "observed": {
+        "selectedStageId": "cinder-span",
+        "surfaceStageId": "cinder-span",
+        "loadedStageId": "cinder-span",
+        "renderer": "webgl",
+        "renderedFrames": 114,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:64872/assets/images/battle/ui/stages/cinder-span.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/cinder-span.png\")",
+        "terrainLoaded": true,
+        "terrainGlbPath": "assets/images/battle/glb/terrain/cinder-span.glb",
+        "palette": {
+          "stagePaletteId": "cinder-span",
+          "fogColor": "#7b2a1a",
+          "fogNear": 22.400000000000002,
+          "fogFar": 50.4,
+          "clearColor": "#7b2a1a",
+          "clearAlpha": 0
+        },
+        "propRecords": [
+          {
+            "id": "cinder-span:forge-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          },
+          {
+            "id": "cinder-span:seal-brand",
+            "modelPath": "assets/images/battle/glb/props/bulwark-brand.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "cinder-span:ember-lookout",
+            "modelPath": "assets/images/battle/glb/companions/ember-cohort.glb"
+          }
+        ]
+      },
+      "diagnostics": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "runtimeAssetResponses": [
+          {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/bosses/cinder-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/ember-cohort.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/scout.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/bulwark-brand.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/cinder-span.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/cinder-span.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/veil-citadel.png",
+            "status": 200
+          }
+        ]
+      },
+      "artifactPaths": {
+        "screenshot": "_workspace/current/qa/stage-runtime-proof/01-cinder-span.png",
+        "summary": "_workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json",
+        "screenshotWritten": true
+      }
+    },
+    {
+      "stageId": "veil-citadel",
+      "pass": true,
+      "expected": {
+        "conceptBackplatePath": "assets/images/battle/ui/stages/veil-citadel.png",
+        "terrainGlbPath": "assets/images/battle/glb/terrain/veil-citadel.glb",
+        "propRecords": [
+          {
+            "id": "veil-citadel:bind-hourglass",
+            "modelPath": "assets/images/battle/glb/props/stillwater-hourglass.glb"
+          },
+          {
+            "id": "veil-citadel:signal-banner",
+            "modelPath": "assets/images/battle/glb/props/abyssal-banner.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "veil-citadel:rift-lookout",
+            "modelPath": "assets/images/battle/glb/companions/rift-lens.glb"
+          }
+        ],
+        "palette": {
+          "authored": {
+            "surface": "surface-veil-stone",
+            "contour": "contour-veil",
+            "landmark": "landmark-rampart",
+            "hazard": "hazard-static",
+            "objective": "objective-signal",
+            "accent": "#2cadd6"
+          },
+          "clearColor": "#12566d",
+          "fogNear": 21,
+          "fogFar": 47.6
+        }
+      },
+      "observed": {
+        "selectedStageId": "veil-citadel",
+        "surfaceStageId": "veil-citadel",
+        "loadedStageId": "veil-citadel",
+        "renderer": "webgl",
+        "renderedFrames": 48,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:64872/assets/images/battle/ui/stages/veil-citadel.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/veil-citadel.png\")",
+        "terrainLoaded": true,
+        "terrainGlbPath": "assets/images/battle/glb/terrain/veil-citadel.glb",
+        "palette": {
+          "stagePaletteId": "veil-citadel",
+          "fogColor": "#12566d",
+          "fogNear": 21,
+          "fogFar": 47.6,
+          "clearColor": "#12566d",
+          "clearAlpha": 0
+        },
+        "propRecords": [
+          {
+            "id": "veil-citadel:bind-hourglass",
+            "modelPath": "assets/images/battle/glb/props/stillwater-hourglass.glb"
+          },
+          {
+            "id": "veil-citadel:signal-banner",
+            "modelPath": "assets/images/battle/glb/props/abyssal-banner.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "veil-citadel:rift-lookout",
+            "modelPath": "assets/images/battle/glb/companions/rift-lens.glb"
+          }
+        ]
+      },
+      "diagnostics": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "runtimeAssetResponses": [
+          {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/bosses/veil-tactician.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/ember-cohort.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/rift-lens.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/scout.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/stillwater-hourglass.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/veil-citadel.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/cinder-span.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/veil-citadel.png",
+            "status": 200
+          }
+        ]
+      },
+      "artifactPaths": {
+        "screenshot": "_workspace/current/qa/stage-runtime-proof/02-veil-citadel.png",
+        "summary": "_workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json",
+        "screenshotWritten": true
+      }
+    },
+    {
+      "stageId": "echo-throne",
+      "pass": true,
+      "expected": {
+        "conceptBackplatePath": "assets/images/battle/ui/stages/echo-throne-steps.png",
+        "terrainGlbPath": "assets/images/battle/glb/terrain/echo-throne-steps.glb",
+        "propRecords": [
+          {
+            "id": "echo-throne:aisle-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          },
+          {
+            "id": "echo-throne:tide-lock-beacon",
+            "modelPath": "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "echo-throne:throne-lookout",
+            "modelPath": "assets/images/battle/glb/companions/throne-echo.glb"
+          }
+        ],
+        "palette": {
+          "authored": {
+            "surface": "surface-throne-stone",
+            "contour": "contour-echo",
+            "landmark": "landmark-dais",
+            "hazard": "hazard-rift",
+            "objective": "objective-domain",
+            "accent": "#3c2c5b"
+          },
+          "clearColor": "#1b142e",
+          "fogNear": 19.599999999999998,
+          "fogFar": 42
+        }
+      },
+      "observed": {
+        "selectedStageId": "echo-throne",
+        "surfaceStageId": "echo-throne",
+        "loadedStageId": "echo-throne",
+        "renderer": "webgl",
+        "renderedFrames": 71,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:64872/assets/images/battle/ui/stages/echo-throne-steps.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/echo-throne-steps.png\")",
+        "terrainLoaded": true,
+        "terrainGlbPath": "assets/images/battle/glb/terrain/echo-throne-steps.glb",
+        "palette": {
+          "stagePaletteId": "echo-throne",
+          "fogColor": "#1b142e",
+          "fogNear": 19.599999999999998,
+          "fogFar": 42,
+          "clearColor": "#1b142e",
+          "clearAlpha": 0
+        },
+        "propRecords": [
+          {
+            "id": "echo-throne:aisle-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          },
+          {
+            "id": "echo-throne:tide-lock-beacon",
+            "modelPath": "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "echo-throne:throne-lookout",
+            "modelPath": "assets/images/battle/glb/companions/throne-echo.glb"
+          }
+        ]
+      },
+      "diagnostics": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "runtimeAssetResponses": [
+          {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/bosses/gate-sovereign.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/ember-cohort.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/throne-echo.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/possessed.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/shade.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/echo-throne-steps.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/cinder-span.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/veil-citadel.png",
+            "status": 200
+          }
+        ]
+      },
+      "artifactPaths": {
+        "screenshot": "_workspace/current/qa/stage-runtime-proof/03-echo-throne.png",
+        "summary": "_workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json",
+        "screenshotWritten": true
+      }
+    },
+    {
+      "stageId": "sunken-bastion",
+      "pass": true,
+      "expected": {
+        "conceptBackplatePath": "assets/images/battle/ui/stages/sunken-bastion.png",
+        "terrainGlbPath": "assets/images/battle/glb/terrain/sunken-bastion.glb",
+        "propRecords": [
+          {
+            "id": "sunken-bastion:anchor-brand",
+            "modelPath": "assets/images/battle/glb/props/bulwark-brand.glb"
+          },
+          {
+            "id": "sunken-bastion:pump-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "sunken-bastion:anchor-lookout",
+            "modelPath": "assets/images/battle/glb/companions/anchor-shard.glb"
+          }
+        ],
+        "palette": {
+          "authored": {
+            "surface": "surface-bastion-flood",
+            "contour": "contour-tide",
+            "landmark": "landmark-anchor",
+            "hazard": "hazard-flood",
+            "objective": "objective-pump",
+            "accent": "#258f9e"
+          },
+          "clearColor": "#12566d",
+          "fogNear": 25.2,
+          "fogFar": 56
+        }
+      },
+      "observed": {
+        "selectedStageId": "sunken-bastion",
+        "surfaceStageId": "sunken-bastion",
+        "loadedStageId": "sunken-bastion",
+        "renderer": "webgl",
+        "renderedFrames": 178,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:64872/assets/images/battle/ui/stages/sunken-bastion.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/sunken-bastion.png\")",
+        "terrainLoaded": true,
+        "terrainGlbPath": "assets/images/battle/glb/terrain/sunken-bastion.glb",
+        "palette": {
+          "stagePaletteId": "sunken-bastion",
+          "fogColor": "#12566d",
+          "fogNear": 25.2,
+          "fogFar": 56,
+          "clearColor": "#12566d",
+          "clearAlpha": 0
+        },
+        "propRecords": [
+          {
+            "id": "sunken-bastion:anchor-brand",
+            "modelPath": "assets/images/battle/glb/props/bulwark-brand.glb"
+          },
+          {
+            "id": "sunken-bastion:pump-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "sunken-bastion:anchor-lookout",
+            "modelPath": "assets/images/battle/glb/companions/anchor-shard.glb"
+          }
+        ]
+      },
+      "diagnostics": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "runtimeAssetResponses": [
+          {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/bosses/tide-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/anchor-shard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/ember-cohort.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/possessed.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/scout.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/bulwark-brand.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/sunken-bastion.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/cinder-span.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/sunken-bastion.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/veil-citadel.png",
+            "status": 200
+          }
+        ]
+      },
+      "artifactPaths": {
+        "screenshot": "_workspace/current/qa/stage-runtime-proof/04-sunken-bastion.png",
+        "summary": "_workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json",
+        "screenshotWritten": true
+      }
+    },
+    {
+      "stageId": "howling-sprawl",
+      "pass": true,
+      "expected": {
+        "conceptBackplatePath": "assets/images/battle/ui/stages/howling-sprawl.png",
+        "terrainGlbPath": "assets/images/battle/glb/terrain/howling-sprawl.glb",
+        "propRecords": [
+          {
+            "id": "howling-sprawl:funnel-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          },
+          {
+            "id": "howling-sprawl:ridge-banner",
+            "modelPath": "assets/images/battle/glb/props/abyssal-banner.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "howling-sprawl:pack-lookout",
+            "modelPath": "assets/images/battle/glb/companions/pack-warden.glb"
+          }
+        ],
+        "palette": {
+          "authored": {
+            "surface": "surface-sprawl-dust",
+            "contour": "contour-wind",
+            "landmark": "landmark-ridge",
+            "hazard": "hazard-gust",
+            "objective": "objective-beacon",
+            "accent": "#c5a56a"
+          },
+          "clearColor": "#6f6435",
+          "fogNear": 30.800000000000004,
+          "fogFar": 75.60000000000001
+        }
+      },
+      "observed": {
+        "selectedStageId": "howling-sprawl",
+        "surfaceStageId": "howling-sprawl",
+        "loadedStageId": "howling-sprawl",
+        "renderer": "webgl",
+        "renderedFrames": 134,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:64872/assets/images/battle/ui/stages/howling-sprawl.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/howling-sprawl.png\")",
+        "terrainLoaded": true,
+        "terrainGlbPath": "assets/images/battle/glb/terrain/howling-sprawl.glb",
+        "palette": {
+          "stagePaletteId": "howling-sprawl",
+          "fogColor": "#6f6435",
+          "fogNear": 30.800000000000004,
+          "fogFar": 75.60000000000001,
+          "clearColor": "#6f6435",
+          "clearAlpha": 0
+        },
+        "propRecords": [
+          {
+            "id": "howling-sprawl:funnel-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          },
+          {
+            "id": "howling-sprawl:ridge-banner",
+            "modelPath": "assets/images/battle/glb/props/abyssal-banner.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "howling-sprawl:pack-lookout",
+            "modelPath": "assets/images/battle/glb/companions/pack-warden.glb"
+          }
+        ]
+      },
+      "diagnostics": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "runtimeAssetResponses": [
+          {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/bosses/pack-herald.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/ember-cohort.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/pack-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/possessed.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/shade.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/howling-sprawl.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/cinder-span.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/howling-sprawl.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/veil-citadel.png",
+            "status": 200
+          }
+        ]
+      },
+      "artifactPaths": {
+        "screenshot": "_workspace/current/qa/stage-runtime-proof/05-howling-sprawl.png",
+        "summary": "_workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json",
+        "screenshotWritten": true
+      }
+    },
+    {
+      "stageId": "glass-necropolis",
+      "pass": true,
+      "expected": {
+        "conceptBackplatePath": "assets/images/battle/ui/stages/glass-necropolis.png",
+        "terrainGlbPath": "assets/images/battle/glb/terrain/glass-necropolis.glb",
+        "propRecords": [
+          {
+            "id": "glass-necropolis:choir-crystal",
+            "modelPath": "assets/images/battle/glb/props/choir-ward-crystal.glb"
+          },
+          {
+            "id": "glass-necropolis:record-hourglass",
+            "modelPath": "assets/images/battle/glb/props/stillwater-hourglass.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "glass-necropolis:requiem-lookout",
+            "modelPath": "assets/images/battle/glb/companions/requiem-warden.glb"
+          }
+        ],
+        "palette": {
+          "authored": {
+            "surface": "surface-glass-crypt",
+            "contour": "contour-glass",
+            "landmark": "landmark-spire",
+            "hazard": "hazard-shard",
+            "objective": "objective-choir",
+            "accent": "#b6dce5"
+          },
+          "clearColor": "#12566d",
+          "fogNear": 26.599999999999998,
+          "fogFar": 61.60000000000001
+        }
+      },
+      "observed": {
+        "selectedStageId": "glass-necropolis",
+        "surfaceStageId": "glass-necropolis",
+        "loadedStageId": "glass-necropolis",
+        "renderer": "webgl",
+        "renderedFrames": 86,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:64872/assets/images/battle/ui/stages/glass-necropolis.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/glass-necropolis.png\")",
+        "terrainLoaded": true,
+        "terrainGlbPath": "assets/images/battle/glb/terrain/glass-necropolis.glb",
+        "palette": {
+          "stagePaletteId": "glass-necropolis",
+          "fogColor": "#12566d",
+          "fogNear": 26.599999999999998,
+          "fogFar": 61.60000000000001,
+          "clearColor": "#12566d",
+          "clearAlpha": 0
+        },
+        "propRecords": [
+          {
+            "id": "glass-necropolis:choir-crystal",
+            "modelPath": "assets/images/battle/glb/props/choir-ward-crystal.glb"
+          },
+          {
+            "id": "glass-necropolis:record-hourglass",
+            "modelPath": "assets/images/battle/glb/props/stillwater-hourglass.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "glass-necropolis:requiem-lookout",
+            "modelPath": "assets/images/battle/glb/companions/requiem-warden.glb"
+          }
+        ]
+      },
+      "diagnostics": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "runtimeAssetResponses": [
+          {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/bosses/requiem-choir.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/ember-cohort.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/requiem-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/scout.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/choir-ward-crystal.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/stillwater-hourglass.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/glass-necropolis.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/cinder-span.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/glass-necropolis.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/veil-citadel.png",
+            "status": 200
+          }
+        ]
+      },
+      "artifactPaths": {
+        "screenshot": "_workspace/current/qa/stage-runtime-proof/06-glass-necropolis.png",
+        "summary": "_workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json",
+        "screenshotWritten": true
+      }
+    },
+    {
+      "stageId": "starless-canal",
+      "pass": true,
+      "expected": {
+        "conceptBackplatePath": "assets/images/battle/ui/stages/starless-canal.png",
+        "terrainGlbPath": "assets/images/battle/glb/terrain/starless-canal.glb",
+        "propRecords": [
+          {
+            "id": "starless-canal:lock-caster",
+            "modelPath": "assets/images/battle/glb/props/arc-caster.glb"
+          },
+          {
+            "id": "starless-canal:towpath-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "starless-canal:lantern-lookout",
+            "modelPath": "assets/images/battle/glb/companions/lantern-reaver.glb"
+          }
+        ],
+        "palette": {
+          "authored": {
+            "surface": "surface-canal-ink",
+            "contour": "contour-lock",
+            "landmark": "landmark-towpath",
+            "hazard": "hazard-undertow",
+            "objective": "objective-toll",
+            "accent": "#16233f"
+          },
+          "clearColor": "#373b49",
+          "fogNear": 19.599999999999998,
+          "fogFar": 43.4
+        }
+      },
+      "observed": {
+        "selectedStageId": "starless-canal",
+        "surfaceStageId": "starless-canal",
+        "loadedStageId": "starless-canal",
+        "renderer": "webgl",
+        "renderedFrames": 95,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:64872/assets/images/battle/ui/stages/starless-canal.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/starless-canal.png\")",
+        "terrainLoaded": true,
+        "terrainGlbPath": "assets/images/battle/glb/terrain/starless-canal.glb",
+        "palette": {
+          "stagePaletteId": "starless-canal",
+          "fogColor": "#373b49",
+          "fogNear": 19.599999999999998,
+          "fogFar": 43.4,
+          "clearColor": "#373b49",
+          "clearAlpha": 0
+        },
+        "propRecords": [
+          {
+            "id": "starless-canal:lock-caster",
+            "modelPath": "assets/images/battle/glb/props/arc-caster.glb"
+          },
+          {
+            "id": "starless-canal:towpath-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "starless-canal:lantern-lookout",
+            "modelPath": "assets/images/battle/glb/companions/lantern-reaver.glb"
+          }
+        ]
+      },
+      "diagnostics": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "runtimeAssetResponses": [
+          {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/bosses/lantern-tyrant.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/ember-cohort.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/lantern-reaver.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/shade.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/arc-caster.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/starless-canal.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/cinder-span.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/starless-canal.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/veil-citadel.png",
+            "status": 200
+          }
+        ]
+      },
+      "artifactPaths": {
+        "screenshot": "_workspace/current/qa/stage-runtime-proof/07-starless-canal.png",
+        "summary": "_workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json",
+        "screenshotWritten": true
+      }
+    },
+    {
+      "stageId": "shattered-causeway",
+      "pass": true,
+      "expected": {
+        "conceptBackplatePath": "assets/images/battle/ui/stages/shattered-causeway.png",
+        "terrainGlbPath": "assets/images/battle/glb/terrain/shattered-causeway.glb",
+        "propRecords": [
+          {
+            "id": "shattered-causeway:brace-brand",
+            "modelPath": "assets/images/battle/glb/props/bulwark-brand.glb"
+          },
+          {
+            "id": "shattered-causeway:gap-blade",
+            "modelPath": "assets/images/battle/glb/props/abyss-blade.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "shattered-causeway:ember-lookout",
+            "modelPath": "assets/images/battle/glb/companions/ember-cohort.glb"
+          }
+        ],
+        "palette": {
+          "authored": {
+            "surface": "surface-causeway-rubble",
+            "contour": "contour-fracture",
+            "landmark": "landmark-keystone",
+            "hazard": "hazard-collapse",
+            "objective": "objective-brace",
+            "accent": "#8a674f"
+          },
+          "clearColor": "#7b2a1a",
+          "fogNear": 23.8,
+          "fogFar": 54.6
+        }
+      },
+      "observed": {
+        "selectedStageId": "shattered-causeway",
+        "surfaceStageId": "shattered-causeway",
+        "loadedStageId": "shattered-causeway",
+        "renderer": "webgl",
+        "renderedFrames": 125,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:64872/assets/images/battle/ui/stages/shattered-causeway.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/shattered-causeway.png\")",
+        "terrainLoaded": true,
+        "terrainGlbPath": "assets/images/battle/glb/terrain/shattered-causeway.glb",
+        "palette": {
+          "stagePaletteId": "shattered-causeway",
+          "fogColor": "#7b2a1a",
+          "fogNear": 23.8,
+          "fogFar": 54.6,
+          "clearColor": "#7b2a1a",
+          "clearAlpha": 0
+        },
+        "propRecords": [
+          {
+            "id": "shattered-causeway:brace-brand",
+            "modelPath": "assets/images/battle/glb/props/bulwark-brand.glb"
+          },
+          {
+            "id": "shattered-causeway:gap-blade",
+            "modelPath": "assets/images/battle/glb/props/abyss-blade.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "shattered-causeway:ember-lookout",
+            "modelPath": "assets/images/battle/glb/companions/ember-cohort.glb"
+          }
+        ]
+      },
+      "diagnostics": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "runtimeAssetResponses": [
+          {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/bosses/bridge-colossus.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/ember-cohort.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/possessed.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/scout.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyss-blade.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/bulwark-brand.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/shattered-causeway.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/cinder-span.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/shattered-causeway.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/veil-citadel.png",
+            "status": 200
+          }
+        ]
+      },
+      "artifactPaths": {
+        "screenshot": "_workspace/current/qa/stage-runtime-proof/08-shattered-causeway.png",
+        "summary": "_workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json",
+        "screenshotWritten": true
+      }
+    },
+    {
+      "stageId": "abyss-chancel",
+      "pass": true,
+      "expected": {
+        "conceptBackplatePath": "assets/images/battle/ui/stages/abyss-chancel.png",
+        "terrainGlbPath": "assets/images/battle/glb/terrain/abyss-chancel.glb",
+        "propRecords": [
+          {
+            "id": "abyss-chancel:nave-banner",
+            "modelPath": "assets/images/battle/glb/props/abyssal-banner.glb"
+          },
+          {
+            "id": "abyss-chancel:oath-crystal",
+            "modelPath": "assets/images/battle/glb/props/choir-ward-crystal.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "abyss-chancel:requiem-lookout",
+            "modelPath": "assets/images/battle/glb/companions/requiem-warden.glb"
+          }
+        ],
+        "palette": {
+          "authored": {
+            "surface": "surface-chancel-abyss",
+            "contour": "contour-oath",
+            "landmark": "landmark-apse",
+            "hazard": "hazard-oath",
+            "objective": "objective-oath",
+            "accent": "#6f4e8b"
+          },
+          "clearColor": "#1b142e",
+          "fogNear": 21,
+          "fogFar": 46.199999999999996
+        }
+      },
+      "observed": {
+        "selectedStageId": "abyss-chancel",
+        "surfaceStageId": "abyss-chancel",
+        "loadedStageId": "abyss-chancel",
+        "renderer": "webgl",
+        "renderedFrames": 373,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:64872/assets/images/battle/ui/stages/abyss-chancel.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/abyss-chancel.png\")",
+        "terrainLoaded": true,
+        "terrainGlbPath": "assets/images/battle/glb/terrain/abyss-chancel.glb",
+        "palette": {
+          "stagePaletteId": "abyss-chancel",
+          "fogColor": "#1b142e",
+          "fogNear": 21,
+          "fogFar": 46.199999999999996,
+          "clearColor": "#1b142e",
+          "clearAlpha": 0
+        },
+        "propRecords": [
+          {
+            "id": "abyss-chancel:nave-banner",
+            "modelPath": "assets/images/battle/glb/props/abyssal-banner.glb"
+          },
+          {
+            "id": "abyss-chancel:oath-crystal",
+            "modelPath": "assets/images/battle/glb/props/choir-ward-crystal.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "abyss-chancel:requiem-lookout",
+            "modelPath": "assets/images/battle/glb/companions/requiem-warden.glb"
+          }
+        ]
+      },
+      "diagnostics": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "runtimeAssetResponses": [
+          {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/bosses/veiled-concordat.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/ember-cohort.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/requiem-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/shade.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyss-blade.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/choir-ward-crystal.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/abyss-chancel.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/vfx/critical-hit-burst.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/vfx/melee-slash.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/abyss-chancel.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/cinder-span.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/veil-citadel.png",
+            "status": 200
+          }
+        ]
+      },
+      "artifactPaths": {
+        "screenshot": "_workspace/current/qa/stage-runtime-proof/09-abyss-chancel.png",
+        "summary": "_workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json",
+        "screenshotWritten": true
+      }
+    },
+    {
+      "stageId": "gate-zenith",
+      "pass": true,
+      "expected": {
+        "conceptBackplatePath": "assets/images/battle/ui/stages/gate-zenith.png",
+        "terrainGlbPath": "assets/images/battle/glb/terrain/gate-zenith.glb",
+        "propRecords": [
+          {
+            "id": "gate-zenith:crown-banner",
+            "modelPath": "assets/images/battle/glb/props/abyssal-banner.glb"
+          },
+          {
+            "id": "gate-zenith:threshold-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "gate-zenith:crown-lookout",
+            "modelPath": "assets/images/battle/glb/companions/dawnless-crown.glb"
+          }
+        ],
+        "palette": {
+          "authored": {
+            "surface": "surface-zenith-void",
+            "contour": "contour-threshold",
+            "landmark": "landmark-crown",
+            "hazard": "hazard-command",
+            "objective": "objective-last-seal",
+            "accent": "#d5ae58"
+          },
+          "clearColor": "#6f6435",
+          "fogNear": 32.199999999999996,
+          "fogFar": 78.39999999999999
+        }
+      },
+      "observed": {
+        "selectedStageId": "gate-zenith",
+        "surfaceStageId": "gate-zenith",
+        "loadedStageId": "gate-zenith",
+        "renderer": "webgl",
+        "renderedFrames": 82,
+        "conceptBackplateCssUrl": "linear-gradient(rgba(5, 8, 18, 0.12), rgba(0, 0, 0, 0) 36%, rgba(5, 8, 18, 0.28)), url(\"http://127.0.0.1:64872/assets/images/battle/ui/stages/gate-zenith.png\")",
+        "conceptBackplateCustomProperty": "url(\"assets/images/battle/ui/stages/gate-zenith.png\")",
+        "terrainLoaded": true,
+        "terrainGlbPath": "assets/images/battle/glb/terrain/gate-zenith.glb",
+        "palette": {
+          "stagePaletteId": "gate-zenith",
+          "fogColor": "#6f6435",
+          "fogNear": 32.199999999999996,
+          "fogFar": 78.39999999999999,
+          "clearColor": "#6f6435",
+          "clearAlpha": 0
+        },
+        "propRecords": [
+          {
+            "id": "gate-zenith:crown-banner",
+            "modelPath": "assets/images/battle/glb/props/abyssal-banner.glb"
+          },
+          {
+            "id": "gate-zenith:threshold-lantern",
+            "modelPath": "assets/images/battle/glb/props/warden-lantern.glb"
+          }
+        ],
+        "npcRecords": [
+          {
+            "id": "gate-zenith:crown-lookout",
+            "modelPath": "assets/images/battle/glb/companions/dawnless-crown.glb"
+          }
+        ]
+      },
+      "diagnostics": {
+        "consoleErrors": [],
+        "pageErrors": [],
+        "runtimeAssetResponses": [
+          {
+            "path": "assets/images/battle/glb/bosses/abyss-regent.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/commander/dusk-warden.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/dawnless-crown.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/ember-cohort.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/companions/veil-vanguard.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/possessed.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/enemies/scout.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/abyssal-banner.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/props/warden-lantern.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/glb/terrain/gate-zenith.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/cinder-span.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/echo-throne-steps.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/gate-zenith.png",
+            "status": 200
+          },
+          {
+            "path": "assets/images/battle/ui/stages/veil-citadel.png",
+            "status": 200
+          }
+        ]
+      },
+      "artifactPaths": {
+        "screenshot": "_workspace/current/qa/stage-runtime-proof/10-gate-zenith.png",
+        "summary": "_workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json",
+        "screenshotWritten": true
+      }
+    }
+  ],
+  "pass": true,
+  "finishedAt": "2026-07-28T17:49:27.302Z"
+}
