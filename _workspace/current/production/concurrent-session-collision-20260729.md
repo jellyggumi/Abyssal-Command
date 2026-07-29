@@ -198,3 +198,42 @@ Live deploy evidence for the rename (fetched from the running site, not CI):
 
 The SHA suffix matches `HEAD` exactly, so the `static.yml:213` grep and the sed substitution
 both resolved against the new prefix in production.
+
+## 10. Separated-parts placement: enabling work done, wiring blocked `[OBSERVED]`
+
+The direction requires props placed as separated pieces, not one merged OBJ. Measured state:
+
+| mesh | components | verdict |
+|---|---|---|
+| `terrain-cinder-span/.../obj/base.obj` | 160 (88 above 20 faces) | **separable** — split and validated |
+| `ember-cohort-character/.../obj/base.obj` | 1 (4455 of 4465 faces) | **fused** — needs regeneration |
+
+`scripts/split-terrain-obj-parts.py` decomposes the terrain: 89 files, face conservation
+19760/19760, and 89/89 import in Blender with every manifest face/vertex count matching the
+imported mesh. Output is authoring-lane, `runtimeEligible: false`.
+
+### Exactly what a future session must change to consume the parts
+
+1. `stage-world-catalog.js:90` — Cinder Span's `terrainGlbPath`. **Trap: the field is named
+   `terrainGlbPath` but holds an `.obj` path.** `instantiateTerrainModel` branches on
+   `relPath.endsWith(".obj")` (`battle-realtime-three.js:1025`), so the name is misleading and
+   a reader may assume GLB. Consuming parts means this becomes a list.
+2. `battle-realtime-three.js:1024-1028` — `instantiateTerrainModel` must iterate a list and
+   place each part at its manifest centroid. **This file is currently corrupted by the
+   concurrent session (`:3215`), which is why the wiring is not done here.**
+3. The four-file allowlist update per CLAUDE.md §3, ×89 parts.
+4. A decision that is design, not porting: 89 cold fetches versus 1 on a mobile-first game.
+   Either keep the parts out of `sw.js` `CORE_ASSETS` and load them lazily, or accept the
+   precache cost. Do not port mechanically without deciding this.
+
+`stage-world-catalog.js` parses cleanly and is NOT in the writer's blast radius; the four
+files they are corrupting are `app.js`, `defense-run-simulation.js`, `defense-catalog.js`, and
+`battle-realtime-three.js`.
+
+### Alternative worth weighing first
+
+If the goal is separated *props the player can distinguish* rather than separate files, then
+`applyObjTerrainMaterials` could assign per-component materials against the single existing
+file — no new assets, no registration, no fetch-count change. That also needs
+`battle-realtime-three.js`, so it is blocked by the same corruption, but it is the cheaper
+design and should be compared before committing to 89 runtime files.
