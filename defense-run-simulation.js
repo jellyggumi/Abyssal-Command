@@ -1272,6 +1272,34 @@ function playerAttack(run, source, damage, owner, combat, range) {
   return true;
 }
 
+/** Resolves the commander's shared basic-attack verb for both automatic and manual input. */
+function resolveCommanderBasicAttack(run, aimReference, mode = "automatic") {
+  const mult = commanderDamageMultiplier(run, aimReference, { skill: false });
+  const hit = resolveCritical(run, "basic", Math.round(run.commander.basicDamage * mult));
+  const resolved = playerAttack(run, run.commander, hit.damage, "commander", hit, COMMANDER.basicRange);
+
+  if (!resolved) return false;
+
+  if (mode === "manual") {
+    emit(run, "BASIC_ATTACK", {
+      entityId: run.commander.id,
+      targetId: aimReference.id,
+      critical: hit.critical,
+      damage: hit.damage,
+      cue: eventCue("weaponFire"),
+    });
+  }
+
+  maybeFireExtraHit(run, aimReference);
+  return true;
+}
+
+function commanderBasicAttack(run, mode = "automatic") {
+  const aimReference = nearestEnemy(run, run.commander, COMMANDER.basicRange);
+  if (!aimReference) return false;
+  return resolveCommanderBasicAttack(run, aimReference, mode);
+}
+
 /** Closest point parameter (0..1) of segment `from`->`delta` to `point`. */
 function segmentClosestFraction(from, delta, point) {
   const lengthSquared = delta.x * delta.x + delta.y * delta.y;
@@ -1605,7 +1633,12 @@ function castSkill(run, skillId) {
 
   const readyTick = run.tick + effectiveCooldownTicks - 1;
 
-  emit(run, "SKILL_CAST", { skillId, castInstanceId, causalRootId, cue: eventCue("skillCast") });
+  // `motion`/`vfx` carried over from a concurrent session's in-flight change: their upgraded
+  // copy of this emit had been spliced into the CRITICAL_HIT object literal above (:1607),
+  // which left the file unparseable. The upgrade is applied here, at the emit HEAD already
+  // had, rather than discarded. Recorded in
+  // _workspace/current/production/concurrent-session-collision-20260729.md.
+  emit(run, "SKILL_CAST", { skillId, motion: skill.motion || "attack", vfx: skill.vfx || skillId, castInstanceId, causalRootId, cue: eventCue("skillCast") });
   emit(run, "SKILL_COOLDOWN_SET", {
     castInstanceId,
     causalRootId,
@@ -1703,13 +1736,22 @@ function updateM4Recovery(run) {
 function processInput(run, input) {
   let accepted = false;
   let rejectionReason = "INPUT_NOT_ACCEPTED";
-  if (["MOVE", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "EXTRACT_ELITE"].includes(input.type)) run.commander.engaged = true;
+  if (["MOVE", "ATTACK", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "EXTRACT_ELITE"].includes(input.type)) run.commander.engaged = true;
   if (input.type === "MOVE") {
     const direction = typeof input.payload === "string" ? input.payload : input.payload?.octant;
     if (OCTANT_VECTORS[direction]) {
       run.commander.move = direction;
       accepted = true;
     } else rejectionReason = "INVALID_DIRECTION";
+  } else if (input.type === "ATTACK") {
+    // Inputs are processed before the per-tick cooldown decrement. Allowing one remaining
+    // tick keeps the manual verb reachable without racing the automatic-fire loop; the +1
+    // reservation below consumes that decrement and prevents a same-tick double shot.
+    if (run.commander.basicCooldown > 1) rejectionReason = "BASIC_ATTACK_ON_COOLDOWN";
+    else if (commanderBasicAttack(run, "manual")) {
+      run.commander.basicCooldown = (run.commander.basicTicks || COMMANDER.basicCooldown) + 1;
+      accepted = true;
+    } else rejectionReason = "BASIC_ATTACK_NO_TARGET";
   } else if (input.type === "STANCE_CYCLE") {
     if (run.tick >= (run.stanceCooldownUntilTick ?? 0)) {
       const currentStance = FORMATION_STANCES.includes(run.formationStance) ? run.formationStance : "VANGUARD";
@@ -2506,6 +2548,11 @@ function tick(run) {
         target.lastCausalRootId = projectile.causalRootId;
       }
     }
+    // Restored verbatim from HEAD: a concurrent session spliced a duplicate of the commander
+    // basic-attack cooldown block (which already exists correctly in tick() below) into the
+    // middle of the escort predicate, destroying the escort-guard damage application and this
+    // emit's opener. Recorded in
+    // _workspace/current/production/concurrent-session-collision-20260729.md.
     emit(run, "PROJECTILE_IMPACT", {
       projectileId: projectile.id,
       sourceId: projectile.sourceId,
@@ -2525,14 +2572,7 @@ function tick(run) {
   if (run.commander.basicCooldown <= 0) {
     /* None-target: the aim reference only feeds conditional damage multipliers — the hit itself is
      * resolved by the melee arc or by the travelling orb's swept sphere. */
-    const aimReference = nearestEnemy(run, run.commander, COMMANDER.basicRange);
-    if (aimReference) {
-      const mult = commanderDamageMultiplier(run, aimReference, { skill: false });
-      const hit = resolveCritical(run, "basic", Math.round(run.commander.basicDamage * mult));
-      if (playerAttack(run, run.commander, hit.damage, "commander", hit, COMMANDER.basicRange)) {
-        maybeFireExtraHit(run, aimReference);
-      }
-    }
+    commanderBasicAttack(run, "automatic");
     run.commander.basicCooldown = run.commander.basicTicks || COMMANDER.basicCooldown;
   }
 
@@ -2861,8 +2901,8 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     }
   }
   emit(state, "STAGE_STARTED", {
-    stageId,
     planIdentity,
+    stageId,
     mapPlanId: stagePlan.mapPlan.id,
     wavePlanId: stagePlan.wavePlan.id,
     m4PlanId: stagePlan.m4Plan.id,
@@ -2880,12 +2920,13 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
 
 /** Queues one input for the next simulation tick and returns a new run. */
 export function queueInput(run, type, payload = null) {
-  if (!run || !["MOVE", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "REWARD_SELECTED", "EXTRACT_ELITE", "M4_CARD_DECISION", "M3_TARGET_PROBE", "STANCE_CYCLE"].includes(type)) return run;
+  if (!run || !["MOVE", "ATTACK", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "REWARD_SELECTED", "EXTRACT_ELITE", "M4_CARD_DECISION", "M3_TARGET_PROBE", "STANCE_CYCLE"].includes(type)) return run;
   const next = clone(run);
   next.inputSequence = (next.inputSequence || 0) + 1;
   next.inputs.push({ at: next.tick + 1, inputId: `${next.planCommitment.identity}:input:${next.inputSequence}`, type, payload: clone(payload) });
   return freeze(next);
 }
+
 
 /** Advances exactly `steps` 60 Hz ticks, stopping early for growth selection or a terminal outcome. */
 export function advanceDefenseRun(run, steps = 1) {

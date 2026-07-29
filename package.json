@@ -8,7 +8,10 @@
   "packageManager": "npm@10.9.2",
   "devDependencies": {
     "agentation": "1.1.0",
+    "esbuild": "^0.25.12",
     "playwright": "1.52.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "three": "0.185.1"
   }
 }

@@ -70,38 +70,58 @@ const STAGE_NPC_GUARD_OFFSETS = Object.freeze({
   right: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), THREE.MathUtils.degToRad(-100)),
 });
 
-// Free-orbit camera bounds (camera-orbit-implementation-plan-20260725.md
-// §3.3, decision-log.md D22 judgment 6): pitch is a fixed angular clamp,
-// while the orbit distance clamp (MIN/MAX_ORBIT_DISTANCE) is derived
-// analytically from these already-deterministic scene constants (never
-// measured from a live GLB bounding box -- fitFootprint()/fitHeight()
-// already normalize every terrain/actor to a fixed size on load, so the
-// "true" bound is knowable before any model finishes loading). Distance
-// constants are populated once mount() creates `this.camera` (their
-// formula reads camera.fov live rather than duplicating the literal 42).
+// Camera framing contract (camera-vfx-direction.md §§1-2). The six phase
+// targets are renderer-world distances at the fixed 55° base pitch. Manual
+// pinch zoom is layered on top and remains within ±10% of the active tier.
 const MIN_ORBIT_PITCH = THREE.MathUtils.degToRad(30);
 const MAX_ORBIT_PITCH = THREE.MathUtils.degToRad(85);
-// Worst-case exposed terrain radius at any yaw: camera looking at a
-// footprint corner (not an edge midpoint) of the square TERRAIN_TARGET_
-// HALF_EXTENT diorama.
-const TERRAIN_CORNER_RADIUS = TERRAIN_TARGET_HALF_EXTENT * Math.SQRT2;
-// Largest actor silhouette (boss) that must never clip the near plane at
-// the steepest (most oblique) permitted pitch.
-const BOSS_RADIUS = TARGET_HEIGHT.boss / 2;
-// zoomFactor default: matches the legacy fixed offset's camera-to-target
-// Euclidean distance (hypot(WORLD_SCALE*1.05, WORLD_SCALE*1.05)) so the
-// first rendered frame starts at the same "how far away" feel as the
-// pre-orbit camera -- only the viewing ANGLE changes to the new
-// presentation-spec default (65° pitch vs the legacy 45° isometric).
-const ORBIT_ZOOM_DEFAULT = Math.hypot(WORLD_SCALE * 1.05, WORLD_SCALE * 1.05);
-// Pre-mount fallback bounds bracketing ORBIT_ZOOM_DEFAULT so zoom() has a
-// valid clamp range before mount() computes the precise fov/GLB-derived
-// values below. mount() always overwrites both before the first real
-// zoom() call, so this changes no production behavior -- it only keeps a
-// pre-mount zoom() (constructed-but-not-mounted, e.g. under test) from
-// clamping against null (which coerces to 0 and corrupts zoomFactor).
-let MIN_ORBIT_DISTANCE = ORBIT_ZOOM_DEFAULT * 0.5;
-let MAX_ORBIT_DISTANCE = ORBIT_ZOOM_DEFAULT * 2;
+const ORBIT_ZOOM_DEFAULT = 20.8;
+const MANUAL_ZOOM_RATIO_MIN = 0.9;
+const MANUAL_ZOOM_RATIO_MAX = 1.1;
+const MIN_ORBIT_DISTANCE = ORBIT_ZOOM_DEFAULT * 0.5;
+const MAX_ORBIT_DISTANCE = ORBIT_ZOOM_DEFAULT * 2;
+export const CAMERA_POSITION_LAMBDA = 6;
+export const CAMERA_LOOK_LAMBDA = 11;
+export const CAMERA_TIER_TRANSITION_TICKS = 90;
+export const CAMERA_PHASE_TIERS = Object.freeze({
+  DESCENT: Object.freeze({ zoomFactor: 20.8, boundaryDepth: 23.0 }),
+  SKIRMISH: Object.freeze({ zoomFactor: 26.0, boundaryDepth: 28.7 }),
+  SURGE: Object.freeze({ zoomFactor: 33.0, boundaryDepth: 36.5 }),
+  MIDBOSS: Object.freeze({ zoomFactor: 38.0, boundaryDepth: 42.0 }),
+  BIGWAVE: Object.freeze({ zoomFactor: 41.5, boundaryDepth: 45.9 }),
+  FINALE: Object.freeze({ zoomFactor: 41.5, boundaryDepth: 45.9 }),
+});
+export const CAMERA_PHASES = Object.freeze(Object.keys(CAMERA_PHASE_TIERS));
+const DEFAULT_CAMERA_PHASE = "DESCENT";
+const CAMERA_TRANSITION_CURVE = 3;
+
+export function cameraTierTarget(phase = DEFAULT_CAMERA_PHASE) {
+  return (CAMERA_PHASE_TIERS[phase] ?? CAMERA_PHASE_TIERS[DEFAULT_CAMERA_PHASE]).zoomFactor;
+}
+
+export function exponentialSmoothingFactor(lambda, deltaSeconds) {
+  const safeLambda = Math.max(0, finite(lambda, 0));
+  const safeDelta = Math.max(0, finite(deltaSeconds, 0));
+  return 1 - Math.exp(-safeLambda * safeDelta);
+}
+
+// A normalized exponential curve gives the transition the authored easing
+// while still landing exactly on its target at tick 90.
+export function exponentialTransitionValue(
+  from,
+  to,
+  elapsedTicks,
+  durationTicks = CAMERA_TIER_TRANSITION_TICKS,
+) {
+  const start = finite(from, 0);
+  const end = finite(to, start);
+  const duration = Math.max(1, finite(durationTicks, CAMERA_TIER_TRANSITION_TICKS));
+  const progress = THREE.MathUtils.clamp(finite(elapsedTicks, 0) / duration, 0, 1);
+  if (progress >= 1) return end;
+  const alpha = (1 - Math.exp(-CAMERA_TRANSITION_CURVE * progress))
+    / (1 - Math.exp(-CAMERA_TRANSITION_CURVE));
+  return THREE.MathUtils.lerp(start, end, alpha);
+}
 // Camera-relative rim light (stage-composition-20260725.md §1.2, D22
 // 판정 9): a DirectionalLight's illumination is direction-only (distance
 // doesn't affect its intensity), so a fixed distance/pitch -- independent
@@ -489,22 +509,27 @@ const STAGE_PALETTE_TINTS = Object.freeze({
   "echo-throne": 0x72c8ff,
 });
 
-// Near/far fog stays stage-specific so the three supplied terrain meshes read
-// as distinct spaces while the near plane remains clear of tracked actors.
+// Authored near/far values stay stage-specific. Phase escalation may only
+// increase far enough to keep the worst boundary threat at clarity >= 0.75;
+// near is never changed and far is never reduced below the authored value.
 const STAGE_FOG_BASE = Object.freeze({ near: 1.8, far: 4.2 });
 const STAGE_FOG_MULTIPLIERS = Object.freeze({
-  "cinder-span": { near: 1.6, far: 3.6 },
-  "abyss-chancel": { near: 1.5, far: 3.3 },
-  "echo-throne": { near: 1.4, far: 3.0 },
+  "cinder-span": Object.freeze({ near: 1.6, far: 3.6 }),
+  "abyss-chancel": Object.freeze({ near: 1.5, far: 3.3 }),
+  "echo-throne": Object.freeze({ near: 1.4, far: 3.0 }),
 });
+const MIN_BOUNDARY_CLARITY = 0.75;
 
-// Resolves a stage id to concrete world-unit fog near/far. Exported as the
-// single source of truth so world-presentation-contract.test.mjs can assert
-// applyStagePalette() actually wrote these values (not a render-layer
-// fabrication), the same oracle pattern the HUD tests use.
-export function stageFogRange(stageId) {
-  const m = STAGE_FOG_MULTIPLIERS[stageId] ?? STAGE_FOG_BASE;
-  return { near: WORLD_SCALE * m.near, far: WORLD_SCALE * m.far };
+// The default phase is intentionally DESCENT: old stage-only callers retain
+// the authored opening atmosphere rather than unexpectedly clearing the fog.
+export function stageFogRange(stageId, phase = DEFAULT_CAMERA_PHASE) {
+  const authored = STAGE_FOG_MULTIPLIERS[stageId] ?? STAGE_FOG_BASE;
+  const phaseTier = CAMERA_PHASE_TIERS[phase] ?? CAMERA_PHASE_TIERS[DEFAULT_CAMERA_PHASE];
+  const near = WORLD_SCALE * authored.near;
+  const authoredFar = WORLD_SCALE * authored.far;
+  const requiredFar = (phaseTier.boundaryDepth - MIN_BOUNDARY_CLARITY * near)
+    / (1 - MIN_BOUNDARY_CLARITY);
+  return { near, far: Math.max(authoredFar, requiredFar) };
 }
 
 function prefersReducedMotion() {
@@ -594,18 +619,16 @@ export function projectilePresentationFor(projectile = {}, sourceEntity = null) 
   return PROJECTILE_PRESENTATIONS[family];
 }
 
-// Orbit distance that frames a sphere of `radius` under `camera`'s live
-// FOV with `margin` headroom -- same bounding-sphere-fit formula
-// MeshThumbnailService already uses (battle-realtime-three.js:535), reused
-// here for the free-orbit zoom clamp instead of a portrait-crop shot.
-// Reads camera.fov live (fixed at construction, but this avoids a second
-// hardcoded "42") rather than reading it once and caching -- see mount().
-function orbitDistanceForRadius(camera, radius, margin) {
-  return (radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2))) * margin;
-}
-
 function resolveStageId(snapshot) {
   return snapshot?.presentation?.stageId ?? (typeof snapshot?.stageId === "string" ? snapshot.stageId : null);
+}
+
+// `objectives.phase` is the simulation-owned phase field. The renderer never
+// keeps a second phase enum; legacy objective ids and malformed snapshots use
+// the safe opening tier until the six-phase timeline owns this field.
+function resolveCameraPhase(snapshot) {
+  const phase = snapshot?.objectives?.phase;
+  return Object.hasOwn(CAMERA_PHASE_TIERS, phase) ? phase : DEFAULT_CAMERA_PHASE;
 }
 
 function standardActorModelPath(entity) {
@@ -1787,18 +1810,18 @@ export class RealtimeBattle {
     this.pressureGatePoint = new THREE.Vector3();
     this.pressureEnemyPoint = new THREE.Vector3();
     this.pressureCandidatePoint = new THREE.Vector3();
-    // Free-orbit camera state (D17/D21/D22, presentation-spec.md:18-25).
-    // orbitYaw accumulates unrestricted (wrapped for float precision only,
-    // never clamped -- see wrapAngle()). orbitPitch and zoomFactor are
-    // clamped on every orbit()/zoom() call. Persisted across frames and
-    // across auto-follow re-acquisition (updateCamera() Section 1 only
-    // ever touches cameraTarget, never these three fields -- director
-    // decision, D21 발견 2/D22 판정 5); dispose() resets these to their
-    // mount-time defaults as a SESSION-boundary reset only, not a
-    // per-drag-release reset.
+    // User orbit selection is presentation-only. Phase distance is stored as a
+    // numeric transition value, not as duplicate phase state; the authoritative
+    // phase is read from every snapshot in updateCamera().
     this.orbitYaw = 0;
-    this.orbitPitch = THREE.MathUtils.degToRad(65);
+    this.orbitPitch = THREE.MathUtils.degToRad(55);
+    this.phaseZoomFactor = ORBIT_ZOOM_DEFAULT;
+    this.manualZoomRatio = 1;
     this.zoomFactor = ORBIT_ZOOM_DEFAULT;
+    this.cameraTierTransition = null;
+    this.cameraLastTick = null;
+    this.cameraLastMs = null;
+    this.fogFarTransition = null;
     // Populated by mount(); updateCamera() repositions rimLight every
     // frame relative to the live camera orbit (stage-composition-
     // 20260725.md §1.2, D22 판정 9). ambientLight/keyLight are kept as
@@ -1889,13 +1912,6 @@ export class RealtimeBattle {
 
     const { width, height } = bounds(this.canvas, this.viewport);
     this.camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 200);
-    // Orbit zoom clamp (camera-orbit-implementation-plan-20260725.md §3.3,
-    // D22 판정 6): analytically derived from this.camera.fov (fixed at
-    // construction, but read live here rather than hardcoding "42" a
-    // second time) plus the already-deterministic TERRAIN_TARGET_HALF_
-    // EXTENT/TARGET_HEIGHT.boss constants -- no async GLB measurement.
-    MIN_ORBIT_DISTANCE = orbitDistanceForRadius(this.camera, BOSS_RADIUS, 1.2);
-    MAX_ORBIT_DISTANCE = orbitDistanceForRadius(this.camera, TERRAIN_CORNER_RADIUS, 1.1);
 
     this.ambientLight = new THREE.AmbientLight(COLORS.ambient, 1.1);
     this.keyLight = new THREE.DirectionalLight(COLORS.key, 1.6);
@@ -1988,13 +2004,13 @@ export class RealtimeBattle {
     }
   }
 
-  ensureStageTerrain(stageId) {
+  ensureStageTerrain(stageId, phase = DEFAULT_CAMERA_PHASE, tick = null) {
     if (!stageId || this.disposed) return;
+    // Palette fog is phase-sensitive even when terrain is already loaded.
+    this.applyStagePalette(stageId, phase, tick);
     if (this.loadedStageId === stageId || this.loadingStageId === stageId) return;
     const profile = stageWorldFor(stageId);
     if (!profile?.terrainGlbPath) return;
-
-    this.applyStagePalette(stageId);
     this.loadingStageId = stageId;
     this.loadedStageId = null;
     const loadToken = ++this.stageLoadToken;
@@ -2070,12 +2086,13 @@ export class RealtimeBattle {
   // 판정 10 confirms this cycle's implementation scope). Idempotent per
   // stage id (stagePaletteId guard) since it rebuilds the PMREM
   // environment map, which is comparatively expensive to redo every frame.
-  applyStagePalette(stageId) {
-    if (this.disposed || this.stagePaletteId === stageId) return;
-    this.stagePaletteId = stageId;
+  applyStagePalette(stageId, phase = DEFAULT_CAMERA_PHASE, tick = null) {
+    if (this.disposed) return;
+    const stageChanged = this.stagePaletteId !== stageId;
     const presentation = STAGE_PRESENTATION_BY_ID[stageId];
     const tint = presentation ? STAGE_PALETTE_TINTS[stageId] ?? null : null;
     if (tint === null) return; // unknown stage id -- keep the existing global defaults rather than blank the scene
+    this.stagePaletteId = stageId;
 
     const backgroundTint = new THREE.Color(COLORS.backgroundBottom).lerp(new THREE.Color(tint), 0.22);
     // scene.fog/keyLight/ambientLight are populated by mount() in normal
@@ -2089,13 +2106,39 @@ export class RealtimeBattle {
     // and debugMetrics()'s this.renderer check.
     if (this.scene.fog) {
       this.scene.fog.color.copy(backgroundTint);
-      // Per-stage atmospheric depth (see STAGE_FOG_MULTIPLIERS). Overrides the
-      // single global near/far mount() set so each stage's openness matches its
-      // authored motif; pure render state, no snapshot/digest coupling.
-      const fogRange = stageFogRange(stageId);
-      this.scene.fog.near = fogRange.near;
-      this.scene.fog.far = fogRange.far;
+      const targetFog = stageFogRange(stageId, phase);
+      this.scene.fog.near = targetFog.near;
+      if (stageChanged || !Number.isInteger(tick)) {
+        this.scene.fog.far = targetFog.far;
+        this.fogFarTransition = null;
+      } else {
+        const active = this.fogFarTransition;
+        if (active && Math.abs(active.to - targetFog.far) <= 1e-9) {
+          // Continue the in-flight phase transition.
+        } else if (Math.abs(this.scene.fog.far - targetFog.far) > 1e-9) {
+          this.fogFarTransition = {
+            from: this.scene.fog.far,
+            to: targetFog.far,
+            startTick: tick,
+          };
+        } else {
+          this.fogFarTransition = null;
+        }
+        const transition = this.fogFarTransition;
+        if (transition) {
+          const elapsedTicks = Math.max(0, tick - transition.startTick);
+          this.scene.fog.far = exponentialTransitionValue(
+            transition.from,
+            transition.to,
+            elapsedTicks,
+          );
+          if (elapsedTicks >= CAMERA_TIER_TRANSITION_TICKS) this.fogFarTransition = null;
+        } else {
+          this.scene.fog.far = targetFog.far;
+        }
+      }
     }
+    if (!stageChanged) return;
     if (this.keyLight) this.keyLight.color.copy(new THREE.Color(COLORS.key).lerp(new THREE.Color(tint), 0.18));
     if (this.ambientLight) this.ambientLight.color.copy(new THREE.Color(COLORS.ambient).lerp(new THREE.Color(tint), 0.3));
 
@@ -2831,8 +2874,13 @@ export class RealtimeBattle {
   // orbit() above -- drives the same boundary tick).
   zoom(delta) {
     if (this.disposed) return false;
-    const desired = this.zoomFactor + delta;
-    this.zoomFactor = THREE.MathUtils.clamp(desired, MIN_ORBIT_DISTANCE, MAX_ORBIT_DISTANCE);
+    const tierDistance = Math.max(Number.EPSILON, finite(this.phaseZoomFactor, ORBIT_ZOOM_DEFAULT));
+    const current = finite(this.zoomFactor, tierDistance * this.manualZoomRatio);
+    const desired = current + finite(delta, 0);
+    const lower = Math.max(MIN_ORBIT_DISTANCE, tierDistance * MANUAL_ZOOM_RATIO_MIN);
+    const upper = Math.min(MAX_ORBIT_DISTANCE, tierDistance * MANUAL_ZOOM_RATIO_MAX);
+    this.zoomFactor = THREE.MathUtils.clamp(desired, lower, upper);
+    this.manualZoomRatio = this.zoomFactor / tierDistance;
     return Math.abs(desired - this.zoomFactor) > 1e-9;
   }
   // App-owned accessibility observers call this whenever the system
@@ -2905,29 +2953,69 @@ export class RealtimeBattle {
     };
   }
 
-  updateCamera(snapshot) {
-    // Auto-follow moves only the orbit center, including authoritative
-    // terrain elevation. It never changes the viewing angle selected
-    // through orbit()/zoom().
-    const commander = snapshot?.commander ?? snapshot?.player;
-    const commanderPoint = worldPoint(commander ?? {});
-    const targetX = commanderPoint.x;
-    const targetY = commanderPoint.y;
-    const targetZ = commanderPoint.z;
-    if (!this.cameraFollowInit) {
-      this.cameraTarget.set(targetX, targetY, targetZ);
-      this.cameraFollowInit = true;
-    } else if (!this.reducedMotion) {
-      this.cameraTarget.x += (targetX - this.cameraTarget.x) * 0.18;
-      this.cameraTarget.y += (targetY - this.cameraTarget.y) * 0.18;
-      this.cameraTarget.z += (targetZ - this.cameraTarget.z) * 0.18;
+  updateCamera(snapshot, nowMs = performance.now()) {
+    const tick = snapshot?.tick;
+    const phaseTarget = cameraTierTarget(resolveCameraPhase(snapshot));
+    if (Number.isInteger(tick)) {
+      const active = this.cameraTierTransition;
+      if (active && Math.abs(active.to - phaseTarget) <= 1e-9) {
+        // Continue the in-flight tier transition.
+      } else if (Math.abs(this.phaseZoomFactor - phaseTarget) > 1e-9) {
+        this.cameraTierTransition = {
+          from: this.phaseZoomFactor,
+          to: phaseTarget,
+          startTick: tick,
+        };
+      } else {
+        this.cameraTierTransition = null;
+      }
+      const transition = this.cameraTierTransition;
+      if (transition) {
+        const elapsedTicks = Math.max(0, tick - transition.startTick);
+        this.phaseZoomFactor = exponentialTransitionValue(
+          transition.from,
+          transition.to,
+          elapsedTicks,
+        );
+        if (elapsedTicks >= CAMERA_TIER_TRANSITION_TICKS) this.cameraTierTransition = null;
+      } else {
+        this.phaseZoomFactor = phaseTarget;
+      }
     } else {
-      this.cameraTarget.set(targetX, targetY, targetZ);
+      this.phaseZoomFactor = phaseTarget;
+      this.cameraTierTransition = null;
     }
 
-    // --- Section 2: orbit position -- cinematic offsets are calculated
-    // locally, so player-selected orbit state remains the unmodified base.
-    const intro = this.stageIntroOffsets(snapshot?.tick);
+    // Manual zoom remains a relative player choice while the phase tier moves.
+    this.zoomFactor = THREE.MathUtils.clamp(
+      this.phaseZoomFactor * this.manualZoomRatio,
+      MIN_ORBIT_DISTANCE,
+      MAX_ORBIT_DISTANCE,
+    );
+
+    let deltaSeconds = 0;
+    if (Number.isInteger(tick)) {
+      if (this.cameraLastTick !== null && tick > this.cameraLastTick) {
+        deltaSeconds = (tick - this.cameraLastTick) / SIM_TICK_RATE;
+      }
+      this.cameraLastTick = tick;
+    } else {
+      deltaSeconds = Math.max(0, (nowMs - (this.cameraLastMs ?? nowMs)) / 1000);
+    }
+    this.cameraLastMs = nowMs;
+
+    // The commander is the sole authoritative target. Clamp malformed or
+    // transitional coordinates to the arena plane so no outside target can
+    // drag the framing beyond the authored world.
+    const commander = snapshot?.commander ?? snapshot?.player;
+    const commanderPoint = worldPoint(commander ?? {});
+    const targetX = THREE.MathUtils.clamp(commanderPoint.x, -WORLD_SCALE, WORLD_SCALE);
+    const targetY = commanderPoint.y;
+    const targetZ = THREE.MathUtils.clamp(commanderPoint.z, -WORLD_SCALE, WORLD_SCALE);
+
+    // Player-selected yaw/pitch and stage-intro offsets remain modifiers over
+    // the phase tier; no phase transition blocks orbit input.
+    const intro = this.stageIntroOffsets(tick);
     const cameraDistance = THREE.MathUtils.clamp(
       this.zoomFactor + (intro?.distance ?? 0),
       MIN_ORBIT_DISTANCE,
@@ -2941,25 +3029,27 @@ export class RealtimeBattle {
     );
     const horizontalRadius = cameraDistance * Math.cos(cameraPitch);
     const height = cameraDistance * Math.sin(cameraPitch);
-    const offsetX = horizontalRadius * Math.sin(cameraYaw);
-    const offsetZ = horizontalRadius * Math.cos(cameraYaw);
-    this.camera.position.set(
-      this.cameraTarget.x + offsetX,
-      this.cameraTarget.y + height,
-      this.cameraTarget.z + offsetZ,
-    );
+    const desiredX = targetX + horizontalRadius * Math.sin(cameraYaw);
+    const desiredY = targetY + height;
+    const desiredZ = targetZ + horizontalRadius * Math.cos(cameraYaw);
+
+    if (!this.cameraFollowInit || this.reducedMotion) {
+      this.camera.position.set(desiredX, desiredY, desiredZ);
+      this.cameraTarget.set(targetX, targetY, targetZ);
+      this.cameraFollowInit = true;
+    } else {
+      const positionAlpha = exponentialSmoothingFactor(CAMERA_POSITION_LAMBDA, deltaSeconds);
+      const lookAlpha = exponentialSmoothingFactor(CAMERA_LOOK_LAMBDA, deltaSeconds);
+      this.camera.position.x += (desiredX - this.camera.position.x) * positionAlpha;
+      this.camera.position.y += (desiredY - this.camera.position.y) * positionAlpha;
+      this.camera.position.z += (desiredZ - this.camera.position.z) * positionAlpha;
+      this.cameraTarget.x += (targetX - this.cameraTarget.x) * lookAlpha;
+      this.cameraTarget.y += (targetY - this.cameraTarget.y) * lookAlpha;
+      this.cameraTarget.z += (targetZ - this.cameraTarget.z) * lookAlpha;
+    }
     this.camera.lookAt(this.cameraTarget.x, this.cameraTarget.y + 0.6, this.cameraTarget.z);
 
-    // --- Section 3: camera-relative rim light (stage-composition-
-    // 20260725.md §1.2, D22 판정 9). A world-fixed rim light loses its
-    // backlight/silhouette function once the camera can orbit freely --
-    // it only reads as "rim" light when it's roughly opposite the camera
-    // across the subject. Reuses Section 2's yaw/sin/cos convention,
-    // offset by PI so it lands on the opposite azimuth from wherever the
-    // camera currently is, independent of zoom distance (a directional
-    // light's falloff is distance-independent, so its position only needs
-    // to encode DIRECTION via rimLightTarget, not an accurately-scaled
-    // distance).
+    // Camera-relative rim light stays opposite the live orbit.
     const rimYaw = cameraYaw + Math.PI;
     const rimHorizontalRadius = RIM_LIGHT_DISTANCE * Math.cos(RIM_LIGHT_PITCH);
     const rimHeight = RIM_LIGHT_DISTANCE * Math.sin(RIM_LIGHT_PITCH);
@@ -3524,16 +3614,17 @@ export class RealtimeBattle {
 
     const startsStageAtTickZero = this.startsStageAtTickZero(snapshot);
     const resetVisualEventDeduplication = this.resetPresentationEventDeduplicationForNewRun(startsStageAtTickZero);
-    this.ensureStageTerrain(resolveStageId(snapshot));
+    this.ensureStageTerrain(resolveStageId(snapshot), resolveCameraPhase(snapshot), snapshot?.tick);
     this.captureDeathEchoes(snapshot);
     this.reconcileActors(snapshot);
     this.collectFeedback(snapshot);
     if (resetVisualEventDeduplication) this.visualEventKeys.clear();
-    this.updateCamera(snapshot);
-    this.updateAnimations(performance.now(), snapshot?.tick, startsStageAtTickZero);
+    const nowMs = performance.now();
+    this.updateCamera(snapshot, nowMs);
+    this.updateAnimations(nowMs, snapshot?.tick, startsStageAtTickZero);
     // Impact feel runs last: the flash/knockback/shake it applies must land on
     // top of the camera and actor placement committed above.
-    this.updateImpactFeedback(performance.now());
+    this.updateImpactFeedback(nowMs);
 
     this.renderer.render(this.scene, this.camera);
   }
@@ -3577,17 +3668,18 @@ export class RealtimeBattle {
     this.actorGroup = null;
     this.vfxGroup = null;
     this.cameraFollowInit = false;
-    // Session-boundary reset only (camera-orbit-implementation-plan-
-    // 20260725.md §2): a fresh mount() should start at the documented
-    // defaults, matching the "디폴트: yaw=0, pitch=65°, zoom=1.0" (this
-    // repo's zoomFactor is a world-unit distance, not a 0..1 ratio -- see
-    // ORBIT_ZOOM_DEFAULT) requirement. This is NOT the drag-release/auto-
-    // follow-reacquisition reset the director explicitly rejected (D21
-    // 발견 2 / D22 판정 5) -- those never touch these three fields at all,
-    // by construction (updateCamera() Section 1 only writes cameraTarget).
+    // Session-boundary reset: a fresh mount starts at the authored DESCENT
+    // tier (55° pitch, 20.8 world-unit distance). Drag release and follow
+    // reacquisition never reset the player's yaw or manual zoom ratio.
     this.orbitYaw = 0;
-    this.orbitPitch = THREE.MathUtils.degToRad(65);
+    this.orbitPitch = THREE.MathUtils.degToRad(55);
+    this.phaseZoomFactor = ORBIT_ZOOM_DEFAULT;
+    this.manualZoomRatio = 1;
     this.zoomFactor = ORBIT_ZOOM_DEFAULT;
+    this.cameraTierTransition = null;
+    this.cameraLastTick = null;
+    this.cameraLastMs = null;
+    this.fogFarTransition = null;
     this.ambientLight = null;
     this.keyLight = null;
     this.rimLight = null;

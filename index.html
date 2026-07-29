@@ -16,5 +16,14 @@
     <noscript><p class="noscript">심연 방어선을 지휘하려면 JavaScript가 필요합니다.</p></noscript>
     <main id="defense-app" aria-live="polite"></main>
     <script type="module" src="app.js"></script>
+ insert after
+    <script>
+      if (new URLSearchParams(window.location.search).has("agentation")) {
+        const agentationScript = document.createElement("script");
+        agentationScript.type = "module";
+        agentationScript.src = "agentation-toolbar.js";
+        document.head.appendChild(agentationScript);
+      }
+    </script>
   </body>
 </html>
