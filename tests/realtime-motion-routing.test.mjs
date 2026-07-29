@@ -10,20 +10,63 @@ import * as THREE from "../vendor/three.module.js";
 import { GLTFLoader } from "../vendor/loaders/GLTFLoader.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const MOTION_MODELS = Object.freeze({
-  "broken-court-monarch-boss": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
-  "broken-court-monarch-v04": "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
-  "ember-cohort": "assets/motion/ingame/characters/ember-cohort/model.glb",
-  guard: "assets/motion/ingame/characters/guard/model.glb",
-  "human-command-boss": "assets/motion/ingame/characters/human-command-boss/model.glb",
-  "lantern-reaver": "assets/motion/ingame/characters/lantern-reaver/model.glb",
-});
+const CANONICAL_BASE_ACTIONS = [
+  "idle",
+  "move",
+  "run",
+  "hit",
+  "bighit",
+  "attack",
+  "critical",
+  "avoid",
+  "defence",
+  "die",
+  "show",
+];
+const LANTERN_REAVER_SOURCE_MESH = "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb";
 
 const gltfRequests = [];
+const failedGltfPaths = new Set();
+
+function normalizeRequestPath(url) {
+  return String(url).replace(/^\.\//, "");
+}
+
+function shouldFailLoadForRequest(requestUrl) {
+  const normalized = normalizeRequestPath(requestUrl);
+  for (const failedPath of failedGltfPaths) {
+    if (normalized.endsWith(failedPath)) return true;
+  }
+  return false;
+}
+
+function setGltfLoadFailure(path, enabled = true) {
+  const normalized = normalizeRequestPath(path);
+  if (enabled) failedGltfPaths.add(normalized);
+  else failedGltfPaths.delete(normalized);
+}
+
+function resetGltfFailures() {
+  failedGltfPaths.clear();
+}
+
+function gltfRequestCountFor(path) {
+  const normalized = normalizeRequestPath(path);
+  return gltfRequests.filter((request) => request === normalized).length;
+}
+
+function safeLookup(map, key) {
+  return Object.hasOwn(map, key) ? map[key] : null;
+}
+
 const originalGltfLoad = GLTFLoader.prototype.load;
 GLTFLoader.prototype.load = function loadGlbFromDisk(url, onLoad, _onProgress, onError) {
-  const requestUrl = String(url);
+  const requestUrl = normalizeRequestPath(url);
   gltfRequests.push(requestUrl);
+  if (shouldFailLoadForRequest(requestUrl)) {
+    queueMicrotask(() => onError?.(new Error(`Simulated model load failure: ${requestUrl}`)));
+    return this;
+  }
   try {
     const filePath = resolve(ROOT, requestUrl);
     const bytes = readFileSync(filePath);
@@ -70,113 +113,216 @@ async function waitForLoaded(record, label) {
   assert.fail(`${label} did not finish loading`);
 }
 
-test("live actors resolve promoted motion models and keep their authored clips", async () => {
-  const { RealtimeBattle, meshRootForMotionCharacter } = await rendererModule;
+function assertBaseClipContract(record, expectedAssetId, label) {
+  for (const action of CANONICAL_BASE_ACTIONS) {
+    assert.equal(
+      safeLookup(record.actionSources, action),
+      "base",
+      `${label} must use base animation source for ${action}`,
+    );
+    const clip = safeLookup(record.actions, action)?.getClip?.()?.name;
+    assert.equal(
+      clip,
+      `${expectedAssetId}::${action}::v01`,
+      `${label} must expose namespaced base clip ${expectedAssetId}::${action}::v01`,
+    );
+  }
+}
 
-  assert.deepEqual(
-    Object.fromEntries(Object.keys(MOTION_MODELS).map((assetId) => [
-      assetId,
-      meshRootForMotionCharacter(assetId),
-    ])),
-    MOTION_MODELS,
-    "all six public motion-library IDs must resolve to their promoted GLBs",
+function assertNoPrototypeLeakage(record, label) {
+  for (const key of ["constructor", "toString", "__proto__"]) {
+    assert.equal(safeLookup(record.actions, key), null, `${label} action map must return null for ${key}`);
+    assert.equal(safeLookup(record.actionSources, key), null, `${label} source map must return null for ${key}`);
+  }
+}
+
+function isMagentaMarker(record) {
+  const root = record?.root;
+  const material = root?.material;
+  return (
+    Boolean(root?.isMesh)
+    && root.geometry?.type === "IcosahedronGeometry"
+    && material?.color?.getHex?.() === 0xff00ff
+    && material?.emissive?.getHex?.() === 0xff00ff
   );
+}
 
-  const adapter = createHarness(RealtimeBattle);
+test("failed motion model loads retry exactly once and marker on second failure", async () => {
+  const { MOTION_MODELS, RealtimeBattle } = await import(
+    `../battle-realtime-three.js?realtime-motion-routing-fail=${Date.now()}`
+  );
+  const explicitModelPath = MOTION_MODELS.scout;
+  assert.equal(explicitModelPath, "assets/motion/ingame/characters/scout/model.glb");
+
+  {
+    resetGltfFailures();
+    gltfRequests.length = 0;
+    setGltfLoadFailure(explicitModelPath);
+    setGltfLoadFailure(LANTERN_REAVER_SOURCE_MESH);
+    const adapter = createHarness(RealtimeBattle);
+
+    try {
+      const record = adapter.ensureActor(
+        { id: "promoted+fallback-load-fail", kind: "rusher", motionAssetId: "scout" },
+        "enemy",
+      );
+      await waitForLoaded(record, "promoted+fallback load marker");
+
+      assert.equal(record.modelPath, LANTERN_REAVER_SOURCE_MESH);
+      assert.equal(record.fallbackModelPath, null, "fallback failure should clear fallback slot");
+      assert.equal(gltfRequestCountFor(explicitModelPath), 1, "promoted failure should be requested once");
+      assert.equal(
+        gltfRequestCountFor(LANTERN_REAVER_SOURCE_MESH),
+        1,
+        "fallback mesh failure should be requested once",
+      );
+      assert.equal(gltfRequests.length, 2, "fallback failure should not continue retrying");
+      assert.equal(record.actions?.attack, undefined, "missing actor marker should have no motion actions");
+      assert.equal(record.mixer, null);
+      assert.equal(isMagentaMarker(record), true, "dual load failure should show visible magenta marker");
+    } finally {
+      adapter.dispose();
+      resetGltfFailures();
+      gltfRequests.length = 0;
+    }
+  }
+
+  {
+    resetGltfFailures();
+    gltfRequests.length = 0;
+    setGltfLoadFailure(explicitModelPath);
+    const adapter = createHarness(RealtimeBattle);
+
+    try {
+      const record = adapter.ensureActor(
+        { id: "promoted-load-fail", kind: "rusher", motionAssetId: "scout" },
+        "enemy",
+      );
+      await waitForLoaded(record, "rusher fallback model load");
+
+      assert.equal(record.modelPath, LANTERN_REAVER_SOURCE_MESH);
+      assert.equal(record.fallbackModelPath, null, "promoted-load failure should consume the fallback slot");
+      assert.equal(gltfRequestCountFor(explicitModelPath), 1, "promoted failure should be requested once");
+      assert.equal(
+        gltfRequestCountFor(LANTERN_REAVER_SOURCE_MESH),
+        1,
+        "fallback mesh should be requested once",
+      );
+      assert.equal(gltfRequests.length, 2, "no retry loop after fallback success");
+    } finally {
+      adapter.dispose();
+      resetGltfFailures();
+      gltfRequests.length = 0;
+    }
+  }
+});
+
+test("live actor routing loads all 11 motion models with namespaced attack clips", async () => {
+  const { MOTION_MODELS, RealtimeBattle, meshRootForMotionCharacter } = await rendererModule;
   const routingCases = [
     {
-      label: "ember-cohort companion default",
-      assetId: "ember-cohort",
-      entity: { id: "default-ember", kind: "companion", companionId: "ember-cohort" },
+      label: "commander default",
+      expectedAssetId: "human-command-boss",
+      entity: { id: "commander" },
+      kind: "commander",
+    },
+    {
+      label: "ember-cohort companion",
+      expectedAssetId: "ember-cohort",
+      entity: { id: "ember-companion", kind: "companion", companionId: "ember-cohort" },
       kind: "companion",
     },
     {
-      label: "lantern-reaver companion default",
-      assetId: "lantern-reaver",
-      entity: { id: "default-lantern", kind: "companion", companionId: "lantern-reaver" },
+      label: "lantern-reaver companion",
+      expectedAssetId: "lantern-reaver",
+      entity: { id: "lantern-companion", kind: "companion", companionId: "lantern-reaver" },
       kind: "companion",
     },
     {
-      label: "guardian enemy default",
-      assetId: "guard",
+      label: "rusher default",
+      expectedAssetId: "scout",
+      entity: { id: "default-rusher", kind: "rusher" },
+      kind: "enemy",
+    },
+    {
+      label: "flanker default",
+      expectedAssetId: "shade",
+      entity: { id: "default-flanker", kind: "flanker" },
+      kind: "enemy",
+    },
+    {
+      label: "guardian default",
+      expectedAssetId: "shadow-soldier-v04",
       entity: { id: "default-guardian", kind: "guardian" },
       kind: "enemy",
     },
     {
-      label: "explicit motionAssetId override",
-      assetId: "human-command-boss",
-      entity: { id: "overridden-rusher", kind: "rusher", motionAssetId: "human-command-boss" },
+      label: "ranged default",
+      expectedAssetId: "possessed",
+      entity: { id: "default-ranged", kind: "ranged" },
       kind: "enemy",
     },
-    {
-      label: "explicit broken-court monarch boss",
-      assetId: "broken-court-monarch-boss",
-      entity: { id: "overridden-monarch", kind: "ranged", motionAssetId: "broken-court-monarch-boss" },
+    ...[
+      "broken-court-monarch-boss",
+      "broken-court-monarch-v04",
+      "guard",
+      "shadow-commander-boss",
+    ].map((motionAssetId) => ({
+      label: `explicit ${motionAssetId}`,
+      expectedAssetId: motionAssetId,
+      entity: { id: `explicit-${motionAssetId}`, kind: "rusher", motionAssetId },
       kind: "enemy",
-    },
-    {
-      label: "explicit broken-court monarch v04",
-      assetId: "broken-court-monarch-v04",
-      entity: { id: "overridden-monarch-v04", kind: "flanker", motionAssetId: "broken-court-monarch-v04" },
-      kind: "enemy",
-    },
+    })),
   ];
+  const expectedAssetIds = routingCases.map(({ expectedAssetId }) => expectedAssetId).sort();
 
+  assert.deepEqual(
+    Object.keys(MOTION_MODELS).sort(),
+    expectedAssetIds,
+    "the public motion registry must expose exactly the 11 routed actor assets",
+  );
+  assert.equal(routingCases.length, 11, "routing should cover all eleven actor routes");
+
+  const adapter = createHarness(RealtimeBattle);
   try {
     for (const routingCase of routingCases) {
+      const expectedModelPath = `assets/motion/ingame/characters/${routingCase.expectedAssetId}/model.glb`;
+      assert.equal(
+        meshRootForMotionCharacter(routingCase.expectedAssetId),
+        expectedModelPath,
+        `${routingCase.expectedAssetId} must resolve through the public motion registry`,
+      );
+
       const record = adapter.ensureActor(routingCase.entity, routingCase.kind);
       await waitForLoaded(record, routingCase.label);
 
-      const expectedPath = MOTION_MODELS[routingCase.assetId];
-      assert.equal(record.modelPath, expectedPath, `${routingCase.label} selected the wrong model`);
+      assert.equal(
+        record.modelPath,
+        expectedModelPath,
+        `${routingCase.label} resolved to the wrong motion model`,
+      );
       assert.ok(
-        gltfRequests.includes(`./${expectedPath}`),
-        `${routingCase.label} never loaded its promoted GLB`,
+        gltfRequests.includes(expectedModelPath),
+        `${routingCase.label} did not load ${routingCase.expectedAssetId}`,
       );
-      assert.equal(
-        record.actionSources.attack,
-        "base",
-        `${routingCase.label} must prefer its self-authored attack over the generic overlay`,
-      );
-      assert.equal(
-        record.actions.attack?.getClip().name,
-        `${routingCase.assetId}::attack::v01`,
-        `${routingCase.label} must expose the authored attack clip`,
-      );
+
+      assertBaseClipContract(record, routingCase.expectedAssetId, routingCase.label);
+      assertNoPrototypeLeakage(record, routingCase.label);
     }
-    assert.equal(
-      gltfRequests.includes("./assets/motion/ingame/unarmed-core.glb"),
-      false,
-      "promoted self-authored actors must not request the generic unarmed overlay",
-    );
 
-    const fallback = adapter.ensureActor(
-      {
-        id: "unknown-motion-override",
-        kind: "companion",
-        companionId: "rift-lens",
-        motionAssetId: "not-in-the-motion-library",
-      },
-      "companion",
+    const unknownAssetId = "not-in-the-motion-library";
+    assert.equal(meshRootForMotionCharacter(unknownAssetId), null);
+    const fallbackRecord = adapter.ensureActor(
+      { id: "unknown-motion-override", kind: "rusher", motionAssetId: unknownAssetId },
+      "enemy",
     );
-    await waitForLoaded(fallback, "unknown explicit motionAssetId fallback");
-
-    assert.equal(
-      fallback.modelPath,
-      "companions/rift-lens.glb",
-      "an unknown explicit motionAssetId must fall back to the actor's standard catalog GLB",
-    );
-    assert.ok(
-      gltfRequests.includes("./assets/images/battle/glb/companions/rift-lens.glb"),
-      "the fallback must load the standard catalog GLB",
-    );
-    assert.equal(
-      fallback.actionSources.attack,
-      "overlay",
-      "standard catalog GLBs keep the generic overlay while self-authored motion GLBs do not",
-    );
-    assert.equal(fallback.actions.attack?.getClip().name, "unarmed-core::attack::v01");
+    await waitForLoaded(fallbackRecord, "unknown motionAssetId fallback");
+    assert.equal(fallbackRecord.modelPath, MOTION_MODELS.scout);
+    assertBaseClipContract(fallbackRecord, "scout", "unknown motionAssetId fallback");
+    assertNoPrototypeLeakage(fallbackRecord, "unknown motionAssetId fallback");
   } finally {
     adapter.dispose();
+    resetGltfFailures();
+    gltfRequests.length = 0;
   }
 });

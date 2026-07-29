@@ -23,35 +23,15 @@ import * as THREE from "../vendor/three.module.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const STORAGE_KEY = "abyssal-command-defense";
-const OUTPUT_DIR = path.join(ROOT, "_workspace/20260726-stage1b-cinder-pressure-agency/qa/stage-runtime-proof");
+const OUTPUT_DIR = path.join(ROOT, "_workspace/current/qa/stage-runtime-proof");
 const SUMMARY_FILE = path.join(OUTPUT_DIR, "stage-runtime-summary.json");
 const SUMMARY_PATH = path.relative(ROOT, SUMMARY_FILE);
 const FIXED_NOW = 2_000_000;
 
-const STAGE_ART_FILE_BY_ID = Object.freeze({
-  "cinder-span": "cinder-span",
-  "veil-citadel": "veil-citadel",
-  "echo-throne": "echo-throne-steps",
-  "sunken-bastion": "sunken-bastion",
-  "howling-sprawl": "howling-sprawl",
-  "glass-necropolis": "glass-necropolis",
-  "starless-canal": "starless-canal",
-  "shattered-causeway": "shattered-causeway",
-  "abyss-chancel": "abyss-chancel",
-  "gate-zenith": "gate-zenith",
-});
-
 const STAGE_PALETTE_TINT_BY_ID = Object.freeze({
   "cinder-span": 0xf3592c,
-  "veil-citadel": 0x2cadd6,
-  "echo-throne": 0x3c2c5b,
-  "sunken-bastion": 0x2cadd6,
-  "howling-sprawl": 0xddc869,
-  "glass-necropolis": 0x2cadd6,
-  "starless-canal": 0x737990,
-  "shattered-causeway": 0xf3592c,
-  "abyss-chancel": 0x3c2c5b,
-  "gate-zenith": 0xddc869,
+  "abyss-chancel": 0x8f67ff,
+  "echo-throne": 0x72c8ff,
 });
 
 const CONTENT_TYPES = Object.freeze({
@@ -148,13 +128,14 @@ function sortedRecords(records) {
 
 async function verifyStage(browser, baseURL, campaign, stage, index) {
   const profile = stageWorldFor(stage.id);
-  const expectedArtPath = `assets/images/battle/ui/stages/${STAGE_ART_FILE_BY_ID[stage.id]}.png`;
   const expectedPropRecords = sortedRecords(profile.presentation.props.map(({ id, modelPath }) => ({ id, modelPath })));
   const expectedNpcRecords = sortedRecords(profile.presentation.npcs.map(({ id, modelPath }) => ({ id, modelPath })));
+  const expectedVfxRecords = sortedRecords(profile.presentation.vfxCues.map(({ id, modelPath, effectId }) => ({ id, modelPath, effectId })));
   const expectedModelPaths = [
     profile.terrainGlbPath,
     ...expectedPropRecords.map(({ modelPath }) => modelPath),
     ...expectedNpcRecords.map(({ modelPath }) => modelPath),
+    ...expectedVfxRecords.map(({ modelPath }) => modelPath),
   ];
   const screenshotFile = path.join(OUTPUT_DIR, `${String(index + 1).padStart(2, "0")}-${stage.id}.png`);
   const screenshotPath = path.relative(ROOT, screenshotFile);
@@ -162,10 +143,10 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     stageId: stage.id,
     pass: false,
     expected: {
-      conceptBackplatePath: expectedArtPath,
       terrainGlbPath: profile.terrainGlbPath,
       propRecords: expectedPropRecords,
       npcRecords: expectedNpcRecords,
+      vfxRecords: expectedVfxRecords,
       palette: {
         authored: profile.presentation.palette,
         clearColor: expectedClearColor(stage.id),
@@ -191,7 +172,7 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
   });
   page.on("response", (response) => {
     const pathname = decodeURIComponent(new URL(response.url()).pathname).replace(/^\//, "");
-    if (pathname.endsWith(".glb") || pathname.endsWith(".png")) {
+    if (pathname.endsWith(".glb") || pathname.endsWith(".obj") || pathname.endsWith(".png")) {
       assetResponses.push({ path: pathname, status: response.status() });
     }
   });
@@ -239,7 +220,7 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     await cutscene.waitFor({ state: "hidden", timeout: 15000 });
     assert.equal(await surface.getAttribute("data-defense-cutscene"), null, `${stage.id} opening cinematic dismissal must clear presentation state`);
 
-    await page.waitForFunction(({ expectedNpcCount, expectedPropCount, stageId }) => {
+    await page.waitForFunction(({ expectedNpcCount, expectedPropCount, expectedVfxCount, stageId }) => {
       const live = window.__stageRuntimeQa?.live;
       const decor = live?.debugPresentationState?.().stageDecor;
       return window.__stageRuntimeQa?.frames > 0
@@ -250,10 +231,12 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
         && decor.terrainLoaded === true
         && decor.propCount === expectedPropCount
         && decor.npcCount === expectedNpcCount
-        && decor.records.length === expectedPropCount + expectedNpcCount;
+        && decor.vfxCount === expectedVfxCount
+        && decor.records.length === expectedPropCount + expectedNpcCount + expectedVfxCount;
     }, {
       expectedNpcCount: profile.presentation.npcs.length,
       expectedPropCount: profile.presentation.props.length,
+      expectedVfxCount: profile.presentation.vfxCues.length,
       stageId: stage.id,
     }, { timeout: 45000 });
     await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -261,7 +244,6 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     const observed = await page.evaluate(({ selectedStageId }) => {
       const qa = window.__stageRuntimeQa;
       const live = qa.live;
-      const stageArt = document.querySelector(".battle-stage-art");
       const surfaceNode = document.querySelector("#defense-battle-surface");
       const decor = live.debugPresentationState().stageDecor;
       const colorTarget = live.scene.fog.color.clone();
@@ -279,8 +261,6 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
         loadedStageId: live.loadedStageId,
         renderer: surfaceNode?.dataset.defenseRenderer ?? null,
         renderedFrames: qa.frames,
-        conceptBackplateCssUrl: getComputedStyle(stageArt).backgroundImage,
-        conceptBackplateCustomProperty: getComputedStyle(surfaceNode).getPropertyValue("--stage-art").trim(),
         terrainLoaded: decor.terrainLoaded,
         terrainGlbPath: live.stageTerrainRecord?.modelPath ?? null,
         palette,
@@ -290,10 +270,14 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
         npcRecords: decor.records
           .filter(({ kind }) => kind === "stage-npc")
           .map(({ id, modelPath }) => ({ id, modelPath })),
+        vfxRecords: decor.records
+          .filter(({ kind }) => kind === "stage-vfx")
+          .map(({ id, modelPath, effectId }) => ({ id, modelPath, effectId })),
       };
     }, { selectedStageId: lobbySelection.appStageId });
     observed.propRecords = sortedRecords(observed.propRecords);
     observed.npcRecords = sortedRecords(observed.npcRecords);
+    observed.vfxRecords = sortedRecords(observed.vfxRecords);
     entry.observed = observed;
 
     assert.equal(observed.renderer, "webgl", `${stage.id} must remain on the real WebGL renderer`);
@@ -302,14 +286,13 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     assert.equal(observed.loadedStageId, observed.selectedStageId, `${stage.id} selected stage must match loadedStageId`);
     assert.equal(observed.terrainLoaded, true, `${stage.id} terrain must finish loading`);
     assert.equal(observed.terrainGlbPath, profile.terrainGlbPath, `${stage.id} must load its authored terrain GLB`);
-    assert.ok(observed.conceptBackplateCssUrl.includes(expectedArtPath), `${stage.id} computed backplate CSS must contain ${expectedArtPath}`);
-    assert.ok(observed.conceptBackplateCustomProperty.includes(expectedArtPath), `${stage.id} battle surface must retain its authored backplate URL`);
+    assert.deepEqual(observed.vfxRecords, expectedVfxRecords, `${stage.id} must publish every authored stage VFX record/model path`);
     assert.deepEqual(observed.propRecords, expectedPropRecords, `${stage.id} must publish every authored prop runtime record/model path`);
     assert.deepEqual(observed.npcRecords, expectedNpcRecords, `${stage.id} must publish every authored NPC runtime record/model path`);
     assert.equal(observed.palette.stagePaletteId, stage.id, `${stage.id} must apply its stage-specific palette`);
     assert.equal(observed.palette.clearColor, expectedClearColor(stage.id), `${stage.id} WebGL clear color must use its authored palette tint`);
     assert.equal(observed.palette.fogColor, expectedClearColor(stage.id), `${stage.id} fog color must use its authored palette tint`);
-    assert.equal(observed.palette.clearAlpha, 0, `${stage.id} palette must preserve the concept backplate through transparent WebGL`);
+    assert.equal(observed.palette.clearAlpha, 0, `${stage.id} transparent WebGL output must not imply a retired image backplate`);
     assert.equal(observed.palette.fogNear, stageFogRange(stage.id).near, `${stage.id} must apply its stage-specific near fog range`);
     assert.equal(observed.palette.fogFar, stageFogRange(stage.id).far, `${stage.id} must apply its stage-specific far fog range`);
 
@@ -317,7 +300,11 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     for (const modelPath of expectedModelPaths) {
       assert.ok(successfulResponses.has(modelPath), `${stage.id} browser must fetch ${modelPath} successfully`);
     }
-    assert.ok(successfulResponses.has(expectedArtPath), `${stage.id} browser must fetch ${expectedArtPath} successfully`);
+    assert.equal(
+      [...successfulResponses].some((assetPath) => assetPath.startsWith("assets/images/battle/stages/")),
+      false,
+      `${stage.id} runtime must not fetch a retired stage image backplate`,
+    );
 
     await page.screenshot({ path: screenshotFile, animations: "allow" });
     screenshotWritten = true;
@@ -342,9 +329,8 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
   return entry;
 }
 
-test("all ten canonical stages load their authored runtime world in isolated real-WebGL sessions", { timeout: 360000 }, async () => {
-  assert.equal(CAMPAIGN_STAGES.length, 10, "the browser proof must cover exactly ten canonical stages");
-  assert.deepEqual(Object.keys(STAGE_ART_FILE_BY_ID), CAMPAIGN_STAGES.map(({ id }) => id), "the proof must name the authored backplate for every canonical stage in order");
+test("all three canonical stages load their authored runtime world in isolated real-WebGL sessions", { timeout: 180000 }, async () => {
+  assert.deepEqual(CAMPAIGN_STAGES.map(({ id }) => id), ["cinder-span", "abyss-chancel", "echo-throne"], "the browser proof must cover the three canonical stages");
   assert.deepEqual(Object.keys(STAGE_PALETTE_TINT_BY_ID), CAMPAIGN_STAGES.map(({ id }) => id), "the proof must name the authored palette tint for every canonical stage in order");
 
   await mkdir(OUTPUT_DIR, { recursive: true });

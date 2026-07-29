@@ -170,35 +170,31 @@ next-beat: director 스코프 리뷰 → 슬라이스 2 사람 플레이 판정
 
 | task | owner | 산출물 | 게이트 | 상태 |
 |---|---|---|---|---|
-| 모션 벤치 42개 FBX 감사 결과 재사용 | character-motion-pipeline | `engineering/asset-pipeline/motion-bench/fbx-audit-report-FULL-OBSERVED.json` | 소스 import 42/42 | done |
-| 캐릭터 6종 DEF 리그 정규화 | character-motion-pipeline | `engineering/asset-pipeline/character-motion-library/*/review.blend` | 24 target bones, rig gate | done |
-| 역할별 11클립 리타게팅 | character-motion-pipeline | `engineering/asset-pipeline/character-motion-library/*/model.glb` | 6×11, finite LINEAR quaternion clips | done |
-| Blender 키포즈 시각 검토 | character-motion-pipeline | `engineering/asset-pipeline/character-motion-library/*/review/contact-sheet.png` | 6×11, evaluated-depsgraph framing | done — [OBSERVED] clipping·gross mesh collapse 없음 |
-| runtime handoff·권리 receipt·registry | character-motion-pipeline | `engineering/asset-pipeline/character-motion-library/handoff-index.json`, `assets/motion/ingame/characters/` | asset 6, clip 66, checksum·rights·retained manifest 일치 | done — shipped runtime library |
-| GLB 구조·참조·runtime routing 계약 테스트 | Tester | `engineering/asset-pipeline/tests/character-motion-library.test.mjs`, `tests/realtime-motion-routing.test.mjs` | Node 2/2 + 1/1 | done |
-| Three.js 실전 로드·재생 스모크 | character-motion-pipeline | `qa/character-motion-runtime-smoke.json`, `qa/character-motion-runtime-guard.webp` | WebGL, HTTP 200, `guard::move::v01`, 48-frame bone delta | done |
+| 모션 벤치·권리 receipt·registry 검증 | character-motion-pipeline | `assets/motion/ingame/characters/registry.json` | asset 11, clip 121, checksum·rights receipt 일치 | done |
+| Lantern Reaver 원본·런타임 경로 확정 | game-programmer | `battle-realtime-three.js#PLAYER_SOURCE_MESH` | source mesh 1, runtime motion mesh 1 | done |
+| 적 역할별 11클립 리타게팅 | character-motion-pipeline | `assets/motion/ingame/characters/*/model.glb` | 11 assets, 110 retargeted + 11 authored fallback clips | done |
+| 보스 메시 직접 배치 | game-programmer | `battle-realtime-three.js#BOSS_MODELS` | Cinder Warden·Veil Tactician·Gate Sovereign 3/3 | done |
+| GLB 구조·참조·runtime routing 계약 테스트 | Tester | `tests/runtime-visual-assets.test.mjs`, `tests/realtime-motion-routing.test.mjs` | runtime visual 6/6, motion routing 2/2 | done |
+| Three.js 실전 로드·재생 스모크 | character-motion-pipeline | `qa/character-motion-runtime-smoke.json` | WebGL, HTTP 200, `guard::move::v01`, 48-frame bone delta | done |
 
 ### 7.1 산출물 상태 [OBSERVED]
 
-- Blender 5.2.0 LTS headless 실행으로 캐릭터 6종 각각에 `model.glb`, `manifest.json`,
-  `review.blend`, 11개 key pose와 contact sheet를 생성했다.
-- 각 `manifest.json`은 `runtimeEligible: true`, `gateErrors: []`이며 GLB는 mesh 1+, skin 1,
-  정확히 11개 회전 전용 animation clip을 포함한다.
-- `handoff-index.json`은 repository-root runtime 경로와
-  `{assetId}::{actionId}::v01` clip 이름을 제공한다.
-- 사용자 권리 확인을 `assets/motion/ingame/characters/rights-receipt.json`에 기록하고,
-  검증된 6개 mesh+skin+animation GLB를 같은 runtime 트리로 승격했다.
-  `registry.json`은 6 assets, 66 clips, 72,956,324 bytes와 각 SHA-256을 고정한다.
-- live battle 기본 경로는 `ember-cohort`, `lantern-reaver`, `guardian`을 각각 승격 모델로
-  해석한다. 나머지 3개 모델은 `entity.motionAssetId`로 선택할 수 있으며 알 수 없는 ID는
-  기존 catalog GLB로 되돌아간다.
-- self-authored 승격 모델은 generic `unarmed-core.glb` overlay를 요청하지 않고 포함된
-  base clip을 재생한다. 기존 catalog 모델의 overlay 및 load-failure fallback은 유지된다.
-- [OBSERVED] Cinder Span 실전 WebGL에서 guardian midboss가
-  `assets/motion/ingame/characters/guard/model.glb`를 HTTP 200으로 로드하고
-  `guard::move::v01`을 48 frame 동안 재생했다. 24 bones 중
-  `maxBoneDeltaRad: 1.8269515528990519`, `movedBoneSamples: 1014`를 기록했다.
-- authoring·review 트리는 `_workspace/current/engineering/asset-pipeline/character-motion-library/`
-  아래에 남아 있으며 runtime 승격 대상이 아니다. 커밋은 반드시 explicit pathspec으로
-  `assets/motion/ingame/characters/`, 관련 manifest·runtime·test 파일만 지정한다.
-  `git add -A`, `git add .` 같은 broad staging으로 review GLB·PNG를 history에 넣지 않는다.
+- `registry.json`은 runtime-eligible asset **11**, clip **121**(retargeted 110,
+  authored fallback 11), 총 **132,794,048 bytes**를 checksum과 권리 receipt로 고정한다.
+- 런타임의 플레이어 원본 식별은
+  `assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb`이며,
+  애니메이션 렌더 경로는 `assets/motion/ingame/characters/lantern-reaver/model.glb`다.
+- 일반 적은 `scout`, `shade`, `shadow-soldier-v04`, `possessed`의 4개 역할별 모션
+  모델로 배치된다. 이 외 모션 GLB는 레지스트리에 보존되며 명시적 `motionAssetId`에서만 선택한다.
+- 세 캠페인 보스는 `assets/mesh/boss/`의 공급 메시를 직접 로드한다. 일반 모션 레지스트리와
+  혼합하지 않는다.
+- self-authored 런타임 모델은 generic `unarmed-core.glb` overlay를 요청하지 않고 포함된
+  base clip을 재생한다. 레거시 image battle GLB의 overlay 및 load-failure fallback은 폐기했다.
+
+### 7.2 자원 컷오버 [OBSERVED]
+
+- 현행 카탈로그는 `Cinder Span → Abyss Chancel → Echo Throne` 세 구역과 세 보스만 소유한다.
+- 지형·소품·보스는 `assets/mesh/`, 모션·스테이지 VFX는 `assets/motion/`에서만 해석한다.
+- `assets/images/battle/`은 UI만 남기며, 비 UI 전장 이미지와 GLB는 런타임 allowlist에서 제거했다.
+- `tests/runtime-visual-assets.test.mjs`가 세 구역의 메쉬·VFX·Lantern Reaver lookout 계약과
+  UI 외 이미지 배제를 검증한다.

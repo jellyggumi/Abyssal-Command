@@ -39,13 +39,26 @@ const ACTIONS = [
   "show",
 ];
 
-const ASSET_IDS = [
+const OLDER_UNVERIFIED_ASSET_IDS = [
   "broken-court-monarch-boss",
   "broken-court-monarch-v04",
   "ember-cohort",
   "guard",
   "human-command-boss",
   "lantern-reaver",
+];
+
+const NEW_USER_ATTESTED_ASSET_IDS = [
+  "possessed",
+  "scout",
+  "shade",
+  "shadow-soldier-v04",
+  "shadow-commander-boss",
+];
+
+const ASSET_IDS = [
+  ...OLDER_UNVERIFIED_ASSET_IDS,
+  ...NEW_USER_ATTESTED_ASSET_IDS,
 ];
 
 // The single action promoted from an authored rig fallback instead of a
@@ -64,12 +77,12 @@ const EXPECTED_MOTION_LINEAGE = {
 };
 
 const EXPECTED_REGISTRY_COUNTS = {
-  assets: 6,
-  clips: 66,
-  retargetedClips: 60,
-  authoredFallbackClips: 6,
-  bytes: 72956324,
+  assets: ASSET_IDS.length,
+  clips: ASSET_IDS.length * ACTIONS.length,
+  retargetedClips: ASSET_IDS.length * RETARGETED_ACTIONS.length,
+  authoredFallbackClips: ASSET_IDS.length,
 };
+const EXPECTED_REGISTRY_BYTES = 132794048;
 
 // Provenance a retargeted clip must carry and an authored fallback must not:
 // the fallback has no source frame range to cite.
@@ -564,8 +577,7 @@ test("one 64-hex generation revision is stamped across every shipped artifact", 
     })),
   ];
 
-  // handoff + registry + receipt + six runtime manifests.
-  assert.equal(carriers.length, 9);
+  assert.equal(carriers.length, ASSET_IDS.length + 3);
 
   for (const { label, payload } of carriers) {
     assert.equal(
@@ -614,11 +626,16 @@ test("the builder revalidates the shipped tree and reproduces the stamped revisi
   }
 
   const summary = JSON.parse(stdout.trim());
+  const registry = readJson(REGISTRY_PATH);
+  const registeredBytes = registry.assets.reduce(
+    (total, asset) => total + asset.bytes,
+    0,
+  );
   assert.equal(summary.mode, "check");
   assert.equal(summary.handoffIndex, INDEX_PATH);
   assert.equal(summary.assetCount, EXPECTED_REGISTRY_COUNTS.assets);
   assert.equal(summary.clipCount, EXPECTED_REGISTRY_COUNTS.clips);
-  assert.equal(summary.totalBytes, EXPECTED_REGISTRY_COUNTS.bytes);
+  assert.equal(summary.totalBytes, registeredBytes);
 
   // The shipped revision must be what the builder recomputes from the current
   // config and staged inputs -- a stale stamp fails here.
@@ -666,7 +683,16 @@ test("derived-retargeted authority and lineage are declared identically by every
 test("registry counts match the entries, the clip kinds, and the bytes on disk", () => {
   const registry = readJson(REGISTRY_PATH);
 
-  assert.deepEqual(registry.counts, EXPECTED_REGISTRY_COUNTS);
+  assert.deepEqual(
+    {
+      assets: registry.counts.assets,
+      clips: registry.counts.clips,
+      retargetedClips: registry.counts.retargetedClips,
+      authoredFallbackClips: registry.counts.authoredFallbackClips,
+    },
+    EXPECTED_REGISTRY_COUNTS,
+  );
+  assert.equal(registry.counts.bytes, EXPECTED_REGISTRY_BYTES, "counts.bytes must match exact registry bytes");
   assert.equal(registry.assets.length, registry.counts.assets);
   assert.equal(
     registry.counts.clips,
@@ -791,15 +817,20 @@ test("every registry entry declares clipKinds with an authored-fallback die and 
     }
   }
 });
-
-test("runtime manifests strip authoring fields, keep pre-attestation rights unverified, and cite the runtime receipt", () => {
+test("runtime manifests preserve older unverified rights and newly user-attested rights", () => {
   const receipt = readJson(RIGHTS_RECEIPT_PATH);
   assert.equal(receipt.redistributionStatus, "user-attested");
-  assert.deepEqual(receipt.supersededAssetRedistributionStatuses, ["unverified"]);
+  assert.deepEqual(
+    receipt.sourceAssetRedistributionStatuses,
+    ["unverified", "user-attested"],
+  );
 
   for (const assetId of ASSET_IDS) {
     const runtimeManifest = readJson(runtimeManifestPath(assetId));
     const authoringManifest = readJson(authoringManifestPath(assetId));
+    const sourceRightsStatus = NEW_USER_ATTESTED_ASSET_IDS.includes(assetId)
+      ? "user-attested"
+      : "unverified";
 
     for (const field of AUTHORING_ONLY_MANIFEST_FIELDS) {
       assert.equal(
@@ -814,29 +845,37 @@ test("runtime manifests strip authoring fields, keep pre-attestation rights unve
       );
     }
 
-    // Attestation upgraded the rights; the pre-attestation status stays on the
-    // record so the provenance of the promotion is not erased.
     assert.equal(
-      runtimeManifest.sourceRightsBeforeAttestation.redistributionStatus,
-      "unverified",
-      `${assetId}: pre-attestation redistribution status`,
+      runtimeManifest.sourceAssetRights.redistributionStatus,
+      sourceRightsStatus,
+      `${assetId}: source redistribution status`,
     );
     assert.equal(
       authoringManifest.rights.redistributionStatus,
-      "unverified",
-      `${assetId}: authoring manifest rights are the pre-attestation record`,
+      sourceRightsStatus,
+      `${assetId}: authoring manifest rights`,
     );
     assert.deepEqual(
-      runtimeManifest.sourceRightsBeforeAttestation,
+      runtimeManifest.sourceAssetRights,
       authoringManifest.rights,
-      `${assetId}: pre-attestation rights must be carried over verbatim`,
+      `${assetId}: source rights must be carried over verbatim`,
     );
     assert.equal(runtimeManifest.rights.redistributionStatus, "user-attested");
-    assert.notEqual(
-      runtimeManifest.rights.redistributionStatus,
-      runtimeManifest.sourceRightsBeforeAttestation.redistributionStatus,
-      `${assetId}: attested and pre-attestation rights must stay distinct`,
-    );
+
+    if (sourceRightsStatus === "unverified") {
+      assert.notEqual(
+        runtimeManifest.rights.redistributionStatus,
+        runtimeManifest.sourceAssetRights.redistributionStatus,
+        `${assetId}: published attestation must remain distinct from older source rights`,
+      );
+    } else {
+      assert.equal(
+        runtimeManifest.rights.redistributionStatus,
+        runtimeManifest.sourceAssetRights.redistributionStatus,
+        `${assetId}: newly attested source rights must remain user-attested`,
+      );
+    }
+
     assert.deepEqual(runtimeManifest.rights, {
       source: receipt.source,
       runtimeUseDirectedAt: receipt.runtimeUseDirectedAt,
@@ -875,7 +914,7 @@ test("the promoted runtime tree is closed to exactly the declared files", () => 
       `${entry.assetId}/manifest.json`,
     ]),
   ]);
-  assert.equal(declared.size, 14);
+  assert.equal(declared.size, 2 + ASSET_IDS.length * 2);
 
   const present = listFilesRecursively(RUNTIME_LIBRARY_PATH);
   assert.deepEqual(
@@ -981,12 +1020,104 @@ test("reachability is declared consistently and matches its catalog binding shap
     assert.equal(entry.reachability, undefined, `${assetId}: registry must flatten reachability`);
     assert.deepEqual(entry.entity, reachability.entity, `${assetId}: registry entity`);
 
-    if (reachability.runtimeReachability === "catalog-bound") {
-      assert.ok(
-        reachability.entity && typeof reachability.entity.kind === "string" &&
-          reachability.entity.kind.length > 0,
-        `${assetId}: catalog-bound assets must name the bound entity kind`,
+    if (assetId === "human-command-boss") {
+      assert.equal(
+        reachability.runtimeReachability,
+        "catalog-bound",
+        `${assetId}: human-command-boss must be catalog-bound`,
       );
+      assert.equal(
+        reachability.entity.id,
+        "commander",
+        `${assetId}: human-command-boss must bind to commander`,
+      );
+    }
+
+    if (assetId === "guard") {
+      assert.equal(
+        reachability.runtimeReachability,
+        "library-only",
+        `${assetId}: guard must remain library-only`,
+      );
+    }
+
+    if (assetId === "shadow-soldier-v04") {
+      assert.equal(
+        reachability.runtimeReachability,
+        "catalog-bound",
+        `${assetId}: shadow-soldier-v04 must remain catalog-bound`,
+      );
+      if (Object.hasOwn(reachability.entity, "id")) {
+        assert.equal(
+          reachability.entity.id,
+          "guardian",
+          `${assetId}: shadow-soldier-v04 must bind to guardian`,
+        );
+      } else {
+        assert.equal(
+          reachability.entity.kind,
+          "guardian",
+          `${assetId}: shadow-soldier-v04 must bind to guardian`,
+        );
+      }
+    }
+
+    if (reachability.runtimeReachability === "catalog-bound") {
+      assert.equal(Object.hasOwn(reachability, "entity"), true, `${assetId}: catalog-bound assets must claim a catalog entity`);
+      if (
+        Object.hasOwn(reachability.entity, "id") ||
+        Object.hasOwn(reachability.entity, "companionId")
+      ) {
+        if (Object.hasOwn(reachability.entity, "id")) {
+          assert.equal(
+            typeof reachability.entity.id,
+            "string",
+            `${assetId}: catalog-bound assets must provide an entity id as a string`,
+          );
+          assert.ok(
+            reachability.entity.id.length > 0,
+            `${assetId}: catalog-bound assets must provide a non-empty entity id`,
+          );
+        }
+
+        if (Object.hasOwn(reachability.entity, "companionId")) {
+          assert.equal(
+            typeof reachability.entity.companionId,
+            "string",
+            `${assetId}: catalog-bound assets must provide a companionId as a string`,
+          );
+          assert.ok(
+            reachability.entity.companionId.length > 0,
+            `${assetId}: catalog-bound assets must provide a non-empty companionId`,
+          );
+        }
+      } else if (Object.hasOwn(reachability.entity, "kind")) {
+        assert.equal(
+          typeof reachability.entity.kind,
+          "string",
+          `${assetId}: catalog-bound assets that declare only kind must use a string`,
+        );
+        assert.ok(
+          reachability.entity.kind.length > 0,
+          `${assetId}: catalog-bound assets with only kind must provide a non-empty kind`,
+        );
+      } else {
+        assert.fail(
+          `${assetId}: catalog-bound assets must provide id, companionId, or kind`,
+        );
+      }
+
+      if (Object.hasOwn(reachability.entity, "kind")) {
+        assert.equal(
+          typeof reachability.entity.kind,
+          "string",
+          `${assetId}: catalog-bound assets that declare kind must use a string`,
+        );
+        assert.ok(
+          reachability.entity.kind.length > 0,
+          `${assetId}: catalog-bound assets with kind must provide a non-empty kind`,
+        );
+      }
     } else {
       assert.equal(
         Object.hasOwn(reachability, "entity"),

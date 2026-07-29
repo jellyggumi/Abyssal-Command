@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T09:26:50.246990+00:00",
+  "generatedAt": "2026-07-29T10:14:25.237891+00:00",
   "assetId": "shade",
   "role": "void-flanker",
   "category": "enemies",
@@ -9,9 +9,10 @@
   "sourceSha256": "e159d2c9bb8ef3345fa33f934e96f6668a97ff29b76f60c8f2eab350088a908d",
   "sourceRig": "mixamo-37",
   "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/model.glb",
-  "modelSha256": "c5688d5ae3937fb28155a2f578fa35012fce6ee7fa8cd32848060dafbc6f0590",
-  "modelBytes": 9720552,
+  "modelSha256": "26aa14c5b856b58b389e8d05971878bb1041786b0b6d114fbbab8f32f868c1a9",
+  "modelBytes": 9721264,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/rig-report.json",
   "targetBoneNames": [
@@ -225,7 +226,7 @@
       "action": "die",
       "clipName": "shade::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -256,7 +257,7 @@
     "linearSampling": true,
     "nonconstantActions": true,
     "rigStageCompleted": true,
-    "rigTposeGate": true,
+    "rigNaturalRestPose": true,
     "rigClipCountBeforeRetarget": true
   },
   "validation": {

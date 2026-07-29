@@ -115,18 +115,35 @@ let MAX_ORBIT_DISTANCE = ORBIT_ZOOM_DEFAULT * 2;
 const RIM_LIGHT_DISTANCE = 20;
 const RIM_LIGHT_PITCH = THREE.MathUtils.degToRad(35);
 
-// Player, summons, and ordinary enemies share one runtime-eligible Lantern
-// Reaver rig. Its promoted model was retargeted from
-// assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb; the
-// checked-in manifest records that provenance. Simulation identity never chooses
-// a second character asset.
-const PLAYER_RUNTIME_MOTION_MESH = "assets/motion/ingame/characters/lantern-reaver/model.glb";
+// Runtime motion GLBs are the only actor assets that ship the canonical
+// 11-action library. Asset IDs stay stable across gameplay routing, review
+// manifests, and the public resource registry.
+export const MOTION_MODELS = Object.freeze({
+  "broken-court-monarch-boss": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
+  "broken-court-monarch-v04": "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
+  "ember-cohort": "assets/motion/ingame/characters/ember-cohort/model.glb",
+  guard: "assets/motion/ingame/characters/guard/model.glb",
+  "human-command-boss": "assets/motion/ingame/characters/human-command-boss/model.glb",
+  "lantern-reaver": "assets/motion/ingame/characters/lantern-reaver/model.glb",
+  possessed: "assets/motion/ingame/characters/possessed/model.glb",
+  scout: "assets/motion/ingame/characters/scout/model.glb",
+  shade: "assets/motion/ingame/characters/shade/model.glb",
+  "shadow-commander-boss": "assets/motion/ingame/characters/shadow-commander-boss/model.glb",
+  "shadow-soldier-v04": "assets/motion/ingame/characters/shadow-soldier-v04/model.glb",
+});
+
+export function meshRootForMotionCharacter(assetId) {
+  return Object.hasOwn(MOTION_MODELS, assetId) ? MOTION_MODELS[assetId] : null;
+}
+
+const PLAYER_SOURCE_MESH = "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb";
+const PLAYER_RUNTIME_MOTION_MESH = MOTION_MODELS["lantern-reaver"];
 const PLAYER_MESH = PLAYER_RUNTIME_MOTION_MESH;
 const PROP_BLADE_MESH = "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb";
 const PROP_RELIC_MESH = "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb";
 
-// `bossId` is emitted directly by the simulation. Only the three supplied
-// boss meshes are accepted by the current campaign.
+// `bossId` is emitted directly by the simulation. Stage bosses without an
+// explicit motionAssetId retain their supplied static campaign mesh.
 const BOSS_MODELS = Object.freeze({
   "s1-cinder-warden": "assets/mesh/boss/s1-cinder-warden/glb/base_basic_pbr.glb",
   "s2-veil-tactician": "assets/mesh/boss/s2-veil-tactician/glb/base_basic_pbr.glb",
@@ -134,23 +151,23 @@ const BOSS_MODELS = Object.freeze({
 });
 
 const ENEMY_MODELS = Object.freeze({
-  rusher: PLAYER_MESH,
-  flanker: PLAYER_MESH,
-  guardian: PLAYER_MESH,
-  ranged: PLAYER_MESH,
+  rusher: MOTION_MODELS.scout,
+  flanker: MOTION_MODELS.shade,
+  guardian: MOTION_MODELS["shadow-soldier-v04"],
+  ranged: MOTION_MODELS.possessed,
 });
 
 const COMPANION_MODELS = Object.freeze(Object.fromEntries([
   "ember-cohort", "rift-lens", "veil-vanguard", "anchor-shard", "throne-echo",
   "dawnless-crown", "pack-warden", "lantern-reaver", "requiem-warden",
-].map((id) => [id, PLAYER_MESH])));
+].map((id) => [id, MOTION_MODELS[id] ?? PLAYER_MESH])));
 
-const COMMANDER_MODEL = PLAYER_MESH;
+const COMMANDER_MODEL = MOTION_MODELS["human-command-boss"];
 
-// Companion rewards and roster cards resolve through COMPANION_MODELS, which now
-// share the same Lantern Reaver runtime motion model used for actor rendering.
+// Companion rewards and roster cards resolve through the same promoted model
+// selected for that companion in battle; unmapped companions use Lantern Reaver.
 export function meshRootForCompanion(companionId) {
-  return COMPANION_MODELS[companionId] ?? null;
+  return Object.hasOwn(COMPANION_MODELS, companionId) ? COMPANION_MODELS[companionId] : null;
 }
 
 
@@ -455,70 +472,22 @@ const COLORS = Object.freeze({
   rim: 0x6ea8ff,
 });
 
-// Stage id -> single accent tint, mapping each stage's authored
-// STAGE_PRESENTATION_BY_ID palette (defense-catalog.js, semantic tokens
-// like "contour-ember"/"hazard-flood" -- design words, not colors) onto
-// this repo's already-shipped canon material palette (styles.css
-// --canon-* custom properties, measured from the actual GLB material
-// table per decision-log.md D15/D19) so stage lighting stays in the same
-// authored color language as the character/terrain art it lights, rather
-// than inventing a parallel palette. One tint per stage is intentionally
-// coarse (stage-composition-20260725.md §1.1 asks only for "at least
-// chromatically consistent" fog/light/envmap, not a full multi-color
-// re-lit scene) -- applyStagePalette() blends this single accent into the
-// existing fog/key/ambient/envmap base tones rather than replacing them
-// outright, so the overall lighting DIRECTION established by mount()
-// stays intact and only its color cast shifts per stage.
+// Three canonical mesh-first stages use their authored accents for fog, key,
+// ambient, and environment tint. These values are presentation-only and never
+// feed the deterministic simulation.
 const STAGE_PALETTE_TINTS = Object.freeze({
-  "cinder-span": 0xf3592c, // canon-cinder-ember -- "불씨와 재의 흐름" ember/ash motif
-  "veil-citadel": 0x2cadd6, // canon-cyan-rift -- "거울빛 장막" mirror-light motif
-  "echo-throne": 0x3c2c5b, // canon-void-obsidian -- moonless-court void motif
-  "sunken-bastion": 0x2cadd6, // canon-cyan-rift -- flood/tide waterline motif
-  "howling-sprawl": 0xddc869, // canon-zenith-gold -- dust/wind wasteland motif
-  "glass-necropolis": 0x2cadd6, // canon-cyan-rift -- crystal/shard reflective motif (see §3.6 mitigation note below)
-  "starless-canal": 0x737990, // canon-cold-steel -- moonless dark-water motif
-  "shattered-causeway": 0xf3592c, // canon-cinder-ember -- collapse/rubble dust motif
-  "abyss-chancel": 0x3c2c5b, // canon-void-obsidian -- oath/pressure heavy-fog motif
-  "gate-zenith": 0xddc869, // canon-zenith-gold -- threshold-rays open-vista motif
+  "cinder-span": 0xf3592c,
+  "abyss-chancel": 0x8f67ff,
+  "echo-throne": 0x72c8ff,
 });
 
-// Per-stage fog DEPTH (near/far as WORLD_SCALE multiples). applyStagePalette()
-// already retints fog COLOR per stage, but near/far distance stayed a single
-// global constant (mount(): WORLD_SCALE*1.8 / *4.2), so every stage read at the
-// same atmospheric depth regardless of its authored motif -- the exact
-// "스테이지마다 시각적 차별점이 있는가" gap this axis targets. This table gives
-// each stage its own openness, grounded in stage-composition-20260725.md §3:
-//   - heavy/close fog for void & night motifs so low silhouettes stay veiled:
-//     Echo Throne (§3.3 "가장 짙게 ... 저해상도 지오메트리 은폐"), Starless
-//     Canal (§3.7 "안개색을 가장 어둡게"), Abyss Chancel (§3.9 "안개를 무겁게"),
-//     Veil Citadel (§3.2 "장막이 신호와 시야를 삼킨다").
-//   - open/far fog for the two vista stages whose identity IS a readable long
-//     silhouette: Howling Sprawl (§3.5 "안개를 가장 옅게 ... 능선의 실루엣이
-//     원거리에서도 읽혀야"), Gate Zenith (§3.10 "안개를 가장 옅게 ... 가장 멀리,
-//     가장 넓게 본다").
-//   - tight fog for the bridge stage so its ends "fade into fog" instead of
-//     snapping off a card-flat bbox: Cinder Span (§3.1 "다리 양 끝단이 항상
-//     안개에 잠기도록 ... 안개 속으로 사라진다").
-// Unlisted stages fall back to STAGE_FOG_BASE (the mount() baseline). Pure
-// render values -- fog never feeds the snapshot or getRunDigest, so the
-// renderer-one-way / determinism contracts are untouched. Every listed near <
-// its far, and every near stays within ~±0.5 of the shipped 1.8 baseline so
-// the near-plane never crosses the character/gate the player is tracking
-// (§1.4's "안개 근거리가 지형 가장자리를 가리도록" concern only bounds how FAR
-// near may drift outward, which the two vista stages do intentionally so their
-// terrain silhouette reads -- exactly what §3.5/§3.10 ask for).
+// Near/far fog stays stage-specific so the three supplied terrain meshes read
+// as distinct spaces while the near plane remains clear of tracked actors.
 const STAGE_FOG_BASE = Object.freeze({ near: 1.8, far: 4.2 });
 const STAGE_FOG_MULTIPLIERS = Object.freeze({
   "cinder-span": { near: 1.6, far: 3.6 },
-  "veil-citadel": { near: 1.5, far: 3.4 },
-  "echo-throne": { near: 1.4, far: 3.0 },
-  "sunken-bastion": { near: 1.8, far: 4.0 },
-  "howling-sprawl": { near: 2.2, far: 5.4 },
-  "glass-necropolis": { near: 1.9, far: 4.4 },
-  "starless-canal": { near: 1.4, far: 3.1 },
-  "shattered-causeway": { near: 1.7, far: 3.9 },
   "abyss-chancel": { near: 1.5, far: 3.3 },
-  "gate-zenith": { near: 2.3, far: 5.6 },
+  "echo-throne": { near: 1.4, far: 3.0 },
 });
 
 // Resolves a stage id to concrete world-unit fog near/far. Exported as the
@@ -634,14 +603,39 @@ function resolveStageId(snapshot) {
 function standardActorModelPath(entity) {
   if (!entity) return null;
   if (entity.id === "commander") return COMMANDER_MODEL;
-  if (entity.class === "boss") return entity.bossId ? BOSS_MODELS[entity.bossId] ?? null : null;
-  if (entity.kind === "companion") return entity.companionId ? COMPANION_MODELS[entity.companionId] ?? null : null;
-  if (typeof entity.kind === "string" && ENEMY_MODELS[entity.kind]) return ENEMY_MODELS[entity.kind];
+  if (entity.class === "boss") {
+    return entity.bossId && Object.hasOwn(BOSS_MODELS, entity.bossId)
+      ? BOSS_MODELS[entity.bossId]
+      : null;
+  }
+  if (entity.kind === "companion") return meshRootForCompanion(entity.companionId);
+  if (typeof entity.kind === "string" && Object.hasOwn(ENEMY_MODELS, entity.kind)) {
+    return ENEMY_MODELS[entity.kind];
+  }
+  return null;
+}
+
+function fallbackActorModelPath(entity) {
+  if (!entity) return null;
+  if (entity.class === "boss") {
+    return entity.bossId && Object.hasOwn(BOSS_MODELS, entity.bossId)
+      ? BOSS_MODELS[entity.bossId]
+      : null;
+  }
+  if (entity.id === "commander" || entity.kind === "companion") {
+    return PLAYER_SOURCE_MESH;
+  }
+  if (typeof entity.kind === "string" && Object.hasOwn(ENEMY_MODELS, entity.kind)) {
+    const standardPath = ENEMY_MODELS[entity.kind];
+    const explicitPath = meshRootForMotionCharacter(entity.motionAssetId);
+    return explicitPath === standardPath ? PLAYER_SOURCE_MESH : standardPath;
+  }
   return null;
 }
 
 function actorModelPath(entity) {
-  return standardActorModelPath(entity);
+  const explicitMotionModel = meshRootForMotionCharacter(entity?.motionAssetId);
+  return explicitMotionModel ?? standardActorModelPath(entity);
 }
 
 function actorTargetHeight(entity) {
@@ -651,6 +645,29 @@ function actorTargetHeight(entity) {
   if (entity.kind === "companion") return TARGET_HEIGHT.companion;
   if (entity.elite) return TARGET_HEIGHT.elite;
   return TARGET_HEIGHT.enemy;
+}
+
+function createMissingActorMarker() {
+  return new THREE.Mesh(
+    new THREE.IcosahedronGeometry(0.3, 0),
+    new THREE.MeshStandardMaterial({
+      color: 0xff00ff,
+      emissive: 0xff00ff,
+      emissiveIntensity: 0.5,
+    }),
+  );
+}
+
+function attachMissingActorMarker(record, actorGroup) {
+  const marker = createMissingActorMarker();
+  record.root = marker;
+  record.restScale = marker.scale.clone();
+  record.restYaw = marker.rotation.y;
+  record.restRoll = marker.rotation.z;
+  record.restGroundY = marker.position.y;
+  record.loading = false;
+  actorGroup.add(marker);
+  return marker;
 }
 
 function feedbackKey(event) {
@@ -1834,9 +1851,11 @@ export class RealtimeBattle {
     if (!entity?.id || this.disposed) return;
     const existing = this.actors.get(entity.id);
     if (existing) return existing;
-    const standardModelPath = standardActorModelPath(entity);
     const modelPath = actorModelPath(entity);
-    const fallbackModelPath = modelPath !== standardModelPath ? standardModelPath : null;
+    const fallbackCandidate = fallbackActorModelPath(entity);
+    const fallbackModelPath = fallbackCandidate && fallbackCandidate !== modelPath
+      ? fallbackCandidate
+      : null;
     const record = {
       root: null, kind, modelPath, fallbackModelPath, loading: Boolean(modelPath),
       entityKind: entity.kind ?? null, role: entity.role ?? null, moveState: entity.move ?? null,
@@ -1867,17 +1886,7 @@ export class RealtimeBattle {
       // No dedicated model (shouldn't normally happen for known kinds, but
       // degrade gracefully instead of leaving a silent gap): a small
       // emissive marker keeps the entity visible.
-      const marker = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(0.3, 0),
-        new THREE.MeshStandardMaterial({ color: 0xff00ff, emissive: 0xff00ff, emissiveIntensity: 0.5 }),
-      );
-      record.root = marker;
-      record.restScale = marker.scale.clone();
-      record.restYaw = marker.rotation.y;
-      record.restRoll = marker.rotation.z;
-      record.restGroundY = marker.position.y;
-      record.loading = false;
-      this.actorGroup.add(marker);
+      attachMissingActorMarker(record, this.actorGroup);
       return record;
     }
     const targetHeight = actorTargetHeight(entity);
@@ -1917,8 +1926,11 @@ export class RealtimeBattle {
           else this.recoverLocomotion(record, 0);
         }
       })
-      .catch(() => {
+      .catch((error) => {
         record.loading = false;
+        if (this.disposed || this.actors.get(entity.id) !== record) return;
+        console.warn(`Failed to load actor model ${record.modelPath}:`, error);
+        attachMissingActorMarker(record, this.actorGroup);
       });
     return record;
   }

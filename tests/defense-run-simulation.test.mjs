@@ -63,10 +63,12 @@ function advanceUntilWithPrevious(run, predicate, maxSteps = 10000) {
 
 const FULL_LOADOUT = ["ember-cohort", "rift-lens", "veil-vanguard"];
 const FULL_REWARDS = ["abyssal-banner", "bulwark-brand", "stillwater-hourglass"];
+const FIRST_STAGE_ID = STAGES[0].id;
+const FINAL_STAGE_ID = STAGES.at(-1).id;
 
 // Step budgets below are expressed against the authored gate hold (STAGE_WAVE_DOCTRINE): a
 // cinder-span run cannot reach the elite/occupation/extraction/boss chain until the hold closes.
-const CINDER_HOLD_TICKS = STAGE_BY_ID["cinder-span"].gateTicks;
+const CINDER_HOLD_TICKS = STAGE_BY_ID[FIRST_STAGE_ID].gateTicks;
 const OBJECTIVE_STEP_BUDGET = CINDER_HOLD_TICKS + 9000;
 
 /**
@@ -180,27 +182,35 @@ function castMeasurementSkillAgainstTarget(profileId, seed = 17) {
 
 test("enemy XP reward scales with stage difficulty so late-stage level-up cadence tracks scaled enemy HP", () => {
   const scaled = (value, stageScale) => Math.trunc((value * stageScale) / 100);
-  const firstRusherXp = (stageId) => {
-    const spawned = getRunSnapshot(advanceDefenseRun(createDefenseRun({ stageId, seed: 5 }), 1));
-    const rusher = spawned.enemies.find((enemy) => enemy.class === "rusher");
-    assert.ok(rusher, `${stageId} opening wave must spawn a rusher`);
-    return rusher.xp;
+  const firstSpawnedEnemy = (stageId) => {
+    const snapshot = getRunSnapshot(advanceDefenseRun(createDefenseRun({ stageId, seed: 5 }), 1));
+    const enemy = snapshot.enemies[0];
+    assert.ok(enemy, `${stageId} opening wave must spawn an enemy`);
+    return enemy;
   };
 
-  const cinderStage = STAGES.find((stage) => stage.id === "cinder-span");
-  const zenithStage = STAGES.find((stage) => stage.id === "gate-zenith");
-  assert.equal(cinderStage.scale, 100, "cinder-span must remain the scale-100 baseline stage");
+  const firstStage = STAGES[0];
+  const lastStage = STAGES.at(-1);
+  assert.deepEqual(
+    [firstStage.id, lastStage.id],
+    ["cinder-span", "echo-throne"],
+    "the scaling boundary must compare the authored first and final stages",
+  );
+  assert.equal(firstStage.scale, 100, "cinder-span must remain the scale-100 baseline stage");
 
-  // Stage 1 (scale 100) is an exact identity: scaled(xp, 100) === xp. This guards the
-  // determinism baseline — every cinder-span digest fixture must stay byte-identical.
-  assert.equal(firstRusherXp("cinder-span"), ENEMIES.rusher.xp);
+  const firstEnemy = firstSpawnedEnemy(firstStage.id);
+  const lastEnemy = firstSpawnedEnemy(lastStage.id);
 
-  // A late stage scales enemy HP by run.stage.scale; XP now tracks the same factor so
-  // the in-run reward rhythm no longer stalls as the campaign gets harder.
-  assert.equal(firstRusherXp("gate-zenith"), scaled(ENEMIES.rusher.xp, zenithStage.scale));
+  // Stage 1 (scale 100) is an exact identity. This guards the determinism baseline:
+  // every cinder-span digest fixture must stay byte-identical.
+  assert.equal(firstEnemy.xp, ENEMIES[firstEnemy.class].xp);
+
+  // The final stage scales enemy HP by run.stage.scale; XP tracks the same factor so
+  // the in-run reward rhythm does not stall as the campaign gets harder.
+  assert.equal(lastEnemy.xp, scaled(ENEMIES[lastEnemy.class].xp, lastStage.scale));
   assert.ok(
-    firstRusherXp("gate-zenith") > firstRusherXp("cinder-span"),
-    "a rusher must be worth more XP at gate-zenith than at cinder-span",
+    lastEnemy.xp / ENEMIES[lastEnemy.class].xp > firstEnemy.xp / ENEMIES[firstEnemy.class].xp,
+    `${lastStage.id} must apply a larger XP multiplier than ${firstStage.id}`,
   );
 });
 
@@ -243,7 +253,7 @@ test("every stage replays with seeded enemy-composition variety inside its clear
     return null;
   };
   const seeds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-  for (const stageId of ["veil-citadel", "gate-zenith"]) {
+  for (const { id: stageId } of STAGES.slice(1)) {
     const selections = new Set(seeds.map((seed) => openingSelectionId(stageId, seed)));
     selections.delete(null);
     assert.ok(selections.size >= 2, `${stageId} opening wave must vary its composition across seeds (saw ${selections.size})`);
@@ -511,10 +521,10 @@ test("an expired elite Bind window reaches terminal defeat before queued extract
 });
 
 test("boss waits for its stage gate and cleared authored waves; final completion is terminal", () => {
-  const waiting = advanceWithOffers(createDefenseRun({ stageId: "cinder-span", seed: 12, companionLoadout: ["ember-cohort", "rift-lens", "veil-vanguard"] }), 719);
+  const waiting = advanceWithOffers(createDefenseRun({ stageId: FIRST_STAGE_ID, seed: 12, companionLoadout: ["ember-cohort", "rift-lens", "veil-vanguard"] }), 719);
   assert.equal(getRunSnapshot(waiting).bossSpawned, false);
   const committed = createDefenseRun({
-    stageId: "gate-zenith",
+    stageId: FINAL_STAGE_ID,
     seed: 12,
     companionLoadout: FULL_LOADOUT,
     rewardIds: FULL_REWARDS,
@@ -561,7 +571,7 @@ test("terminal victory suppresses a growth offer when boss XP crosses the next t
 test("terminal victory accepts a queued reward selection and closes the offer", () => {
   const terminal = advanceThroughObjectives(
     createDefenseRun({
-      stageId: "gate-zenith",
+      stageId: FINAL_STAGE_ID,
       seed: 12,
       companionLoadout: FULL_LOADOUT,
     }),
@@ -905,19 +915,19 @@ test("Warden's Lantern and Choir Ward Crystal are applied once at run creation a
 });
 
 test("an item pickup applies both gate maximum and current integrity", () => {
-  const veilHoldTicks = STAGE_BY_ID["veil-citadel"].gateTicks;
+  const chancelHoldTicks = STAGE_BY_ID["abyss-chancel"].gateTicks;
   const { previous, snapshot } = advanceThroughObjectivesUntil(
     createDefenseRun({
-      stageId: "veil-citadel",
+      stageId: "abyss-chancel",
       seed: 5,
       companionLoadout: ["ember-cohort", "rift-lens", "veil-vanguard"],
     }),
     (next) => next.itemIds.includes("ward-splinter"),
-    veilHoldTicks + 9000,
+    chancelHoldTicks + 9000,
   );
 
   assert.deepEqual(snapshot.itemIds, ["ward-splinter"]);
-  assert.equal(snapshot.gate.maxIntegrity, STAGE_WAVE_DOCTRINE["veil-citadel"].gateIntegrity + 80);
+  assert.equal(snapshot.gate.maxIntegrity, STAGE_WAVE_DOCTRINE["abyss-chancel"].gateIntegrity + 80);
   assert.equal(snapshot.gate.integrity, previous.gate.integrity + 80);
   assert.equal(snapshot.progress.itemsCollected, 1);
   assert.ok(snapshot.events.some((event) => event.type === "ITEM_COLLECTED"));
@@ -925,7 +935,7 @@ test("an item pickup applies both gate maximum and current integrity", () => {
 
 test("repeated ticks after an item pickup do not compound Abyssal Banner companion damage", () => {
   let run = createDefenseRun({
-    stageId: "veil-citadel",
+    stageId: "abyss-chancel",
     seed: 5,
     companionLoadout: ["ember-cohort", "rift-lens", "veil-vanguard"],
     rewardIds: ["abyssal-banner"],
@@ -942,8 +952,8 @@ test("repeated ticks after an item pickup do not compound Abyssal Banner compani
 
   // The stage item drops from the elite, which now appears only after the authored gate hold
   // (STAGE_WAVE_DOCTRINE), so the run has to be played toward the objective rather than idled.
-  const veilItemBudget = STAGE_BY_ID["veil-citadel"].gateTicks + 9000;
-  for (let step = 0; step < veilItemBudget && !getRunSnapshot(run).itemIds.length && !isTerminalRun(run); step += 1) {
+  const chancelItemBudget = STAGE_BY_ID["abyss-chancel"].gateTicks + 9000;
+  for (let step = 0; step < chancelItemBudget && !getRunSnapshot(run).itemIds.length && !isTerminalRun(run); step += 1) {
     run = advanceDefenseRun(queueObjectiveCommands(run), 1);
   }
   const afterPickup = getRunSnapshot(run);
@@ -964,7 +974,7 @@ test("repeated ticks after an item pickup do not compound Abyssal Banner compani
 test("Abyssal Banner gives a later extracted companion one bonus", () => {
   const completed = advanceThroughObjectivesUntil(
     createDefenseRun({
-      stageId: "veil-citadel",
+      stageId: "abyss-chancel",
       seed: 5,
       companionLoadout: ["ember-cohort", "veil-vanguard"],
       rewardIds: FULL_REWARDS,
@@ -982,30 +992,30 @@ test("Abyssal Banner gives a later extracted companion one bonus", () => {
   );
 });
 test("later-stage runs expose their authored cutscene without falling back to generic copy", () => {
-  const run = createDefenseRun({ stageId: "sunken-bastion", seed: 2 });
+  const run = createDefenseRun({ stageId: "abyss-chancel", seed: 2 });
   const snapshot = getRunSnapshot(run);
   const started = snapshot.events.find(({ type }) => type === "STAGE_STARTED");
 
-  assert.deepEqual(snapshot.cutscene, CUTSCENES["sunken-bastion"]);
-  assert.deepEqual(started?.cutscene, CUTSCENES["sunken-bastion"].intro);
+  assert.deepEqual(snapshot.cutscene, CUTSCENES["abyss-chancel"]);
+  assert.deepEqual(started?.cutscene, CUTSCENES["abyss-chancel"].intro);
   assert.notDeepEqual(snapshot.cutscene, CUTSCENES.default);
-  assert.equal(snapshot.stageId, "sunken-bastion");
+  assert.equal(snapshot.stageId, "abyss-chancel");
 });
 
 test("selecting an already-owned reward closes an all-owned terminal offer", () => {
   const terminal = advanceThroughObjectives(
     createDefenseRun({
-      stageId: "gate-zenith",
+      stageId: FINAL_STAGE_ID,
       seed: 12,
       companionLoadout: FULL_LOADOUT,
-      rewardIds: ["dawnless-crown", "throne-echo-record", "rift-lens-archive"],
+      rewardIds: ["throne-echo-record", "veil-vanguard-legacy", "stillwater-hourglass"],
     }),
   );
   const before = getRunSnapshot(terminal);
   assert.equal(before.terminal, "FINAL_COMPLETION");
   assert.deepEqual(
     [...before.rewardOffer.choices].sort(),
-    ["dawnless-crown", "rift-lens-archive", "throne-echo-record"],
+    ["stillwater-hourglass", "throne-echo-record", "veil-vanguard-legacy"],
   );
 
   const selected = advanceDefenseRun(
@@ -1014,6 +1024,6 @@ test("selecting an already-owned reward closes an all-owned terminal offer", () 
   );
   const after = getRunSnapshot(selected);
   assert.equal(after.rewardOffer, null);
-  assert.deepEqual(after.rewardIds, ["dawnless-crown", "rift-lens-archive", "throne-echo-record"]);
+  assert.deepEqual(after.rewardIds, ["stillwater-hourglass", "throne-echo-record", "veil-vanguard-legacy"]);
   assert.equal(after.events.find((e) => e.type === "REWARD_SELECTED")?.alreadyOwned, true);
 });

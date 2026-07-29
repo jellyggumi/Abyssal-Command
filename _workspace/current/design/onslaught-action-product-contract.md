@@ -26,7 +26,7 @@ supersedes:
 - 시뮬레이션: 60 Hz 결정론 시뮬레이션이 권위이며, 렌더러·HUD·VFX·오디오는 스냅샷을 읽기만 한다.
 - 저장: 오프라인 로컬 저장과 JSON 내보내기/가져오기를 유지한다. 계정·클라우드·멀티플레이는 없다.
 - 비즈니스 모델: 광고, 프리미엄 화폐, 가챠, 유료 성장, 유료 회복은 없다.
-- 캠페인: 심연 세계관과 10개 스테이지, Gate Zenith 종결은 유지한다.
+- 캠페인: 심연 세계관의 세 구역 `Cinder Span → Abyss Chancel → Echo Throne`과 각 구역의 보스 `Cinder Warden → Veil Tactician → Gate Sovereign`을 유지한다. `Echo Throne` 승리가 종결이다.
 - 공간: 모든 이동·충돌·목표·전투는 하나의 평면에서 일어난다. 높이는 비보행 장식일 뿐이다.
 - 접근성: `prefers-reduced-motion`, 색 비의존 정보, 터치 대안을 처음부터 제품 계약으로 둔다.
 

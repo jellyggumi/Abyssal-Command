@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-index.py",
+  "assetId": "shadow-soldier-v04",
+  "role": "shadow-guardian",
+  "category": "enemies",
+  "source": "assets/mesh/enemy/shadow-soldier-v04/glb/base_basic_pbr.glb",
+  "sourceSha256": "583ac76b943fc331ec5dd15819b90e25e787e14842a4f079d8a84e7dc9b80815",
+  "sourceRig": "mixamo-37",
+  "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
+  "model": "assets/motion/ingame/characters/shadow-soldier-v04/model.glb",
+  "modelSha256": "026b5df05b85b01342ad8ea675a02c4b3d3614a35f844683ca5a6a0779c501ac",
+  "modelBytes": 12211352,
+  "targetBoneNames": [
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-pelvis.L",
+    "DEF-pelvis.R",
+    "DEF-shoulder.L",
+    "DEF-upper_arm.L",
+    "DEF-forearm.L",
+    "DEF-hand.L",
+    "DEF-shoulder.R",
+    "DEF-upper_arm.R",
+    "DEF-forearm.R",
+    "DEF-hand.R",
+    "DEF-thigh.L",
+    "DEF-shin.L",
+    "DEF-foot.L",
+    "DEF-toe.L",
+    "DEF-thigh.R",
+    "DEF-shin.R",
+    "DEF-foot.R",
+    "DEF-toe.R"
+  ],
+  "clips": {
+    "idle": {
+      "action": "idle",
+      "clipName": "shadow-soldier-v04::idle::v01",
+      "source": "Standing Idle 03.fbx",
+      "sourceSha256": "a8afdebfb66d01ee0f324a6b360f8fe3b0a7eeda15b9b464ea80bf5ed602cc0c",
+      "frameStart": 1,
+      "frameEnd": 275,
+      "sourceFps": 24,
+      "durationSeconds": 11.416666666666666,
+      "sourceRootTravel": {
+        "x": 1e-06,
+        "y": 0.000153,
+        "z": -7e-06,
+        "total": 0.000153
+      },
+      "loop": true,
+      "gain": 0.78
+    },
+    "move": {
+      "action": "move",
+      "clipName": "shadow-soldier-v04::move::v01",
+      "source": "Walking.fbx",
+      "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+      "frameStart": 1,
+      "frameEnd": 34,
+      "sourceFps": 24,
+      "durationSeconds": 1.375,
+      "sourceRootTravel": {
+        "x": -2e-06,
+        "y": 1.5e-05,
+        "z": 145.083625,
+        "total": 145.083625
+      },
+      "loop": true,
+      "gain": 0.86
+    },
+    "run": {
+      "action": "run",
+      "clipName": "shadow-soldier-v04::run::v01",
+      "source": "Running.fbx",
+      "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": -1e-06,
+        "y": 0.0,
+        "z": 350.087158,
+        "total": 350.087158
+      },
+      "loop": true,
+      "gain": 0.88
+    },
+    "hit": {
+      "action": "hit",
+      "clipName": "shadow-soldier-v04::hit::v01",
+      "source": "Standing React Small From Left.fbx",
+      "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+      "frameStart": 1,
+      "frameEnd": 19,
+      "sourceFps": 24,
+      "durationSeconds": 0.75,
+      "sourceRootTravel": {
+        "x": -2e-05,
+        "y": 8e-06,
+        "z": 1.2e-05,
+        "total": 2.5e-05
+      },
+      "loop": false,
+      "gain": 0.82
+    },
+    "bighit": {
+      "action": "bighit",
+      "clipName": "shadow-soldier-v04::bighit::v01",
+      "source": "Receive Uppercut To The Face.fbx",
+      "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": 0.000427,
+        "y": -3.8e-05,
+        "z": 3.9e-05,
+        "total": 0.000431
+      },
+      "loop": false,
+      "gain": 0.9
+    },
+    "attack": {
+      "action": "attack",
+      "clipName": "shadow-soldier-v04::attack::v01",
+      "source": "Great Sword Slash.fbx",
+      "sourceSha256": "599857c51e22a03e61353193a80c534ba56b5ff1101bcee296f85c984f321124",
+      "frameStart": 1,
+      "frameEnd": 45,
+      "sourceFps": 24,
+      "durationSeconds": 1.8333333333333333,
+      "sourceRootTravel": {
+        "x": -6e-06,
+        "y": 1.5e-05,
+        "z": -2e-06,
+        "total": 1.7e-05
+      },
+      "loop": false,
+      "gain": 0.96
+    },
+    "critical": {
+      "action": "critical",
+      "clipName": "shadow-soldier-v04::critical::v01",
+      "source": "Standing Torch Jump.fbx",
+      "sourceSha256": "75a3520ceffa4bdeec1698c990d5694b089ecb23c1aab964844e095e104aef8e",
+      "frameStart": 1,
+      "frameEnd": 42,
+      "sourceFps": 24,
+      "durationSeconds": 1.7083333333333333,
+      "sourceRootTravel": {
+        "x": 1.3e-05,
+        "y": -1.5e-05,
+        "z": 4.7e-05,
+        "total": 5.1e-05
+      },
+      "loop": false,
+      "gain": 0.94
+    },
+    "avoid": {
+      "action": "avoid",
+      "clipName": "shadow-soldier-v04::avoid::v01",
+      "source": "Dodging.fbx",
+      "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6",
+      "frameStart": 1,
+      "frameEnd": 40,
+      "sourceFps": 24,
+      "durationSeconds": 1.625,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "total": 0.0
+      },
+      "loop": false,
+      "gain": 0.84
+    },
+    "defence": {
+      "action": "defence",
+      "clipName": "shadow-soldier-v04::defence::v01",
+      "source": "Great Sword Blocking.fbx",
+      "sourceSha256": "67d49c7f32093574aee743acc1feeb6ec64dd392dae5cfe29bdd39432f3e448d",
+      "frameStart": 1,
+      "frameEnd": 13,
+      "sourceFps": 24,
+      "durationSeconds": 0.5,
+      "sourceRootTravel": {
+        "x": -9.71545,
+        "y": -20.980751,
+        "z": -0.098319,
+        "total": 23.121236
+      },
+      "loop": false,
+      "gain": 0.94
+    },
+    "die": {
+      "action": "die",
+      "clipName": "shadow-soldier-v04::die::v01",
+      "source": "scripts/rig-character-asset-blender.py",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+      "loop": false,
+      "kind": "authored-fallback"
+    },
+    "show": {
+      "action": "show",
+      "clipName": "shadow-soldier-v04::show::v01",
+      "source": "Draw Sword 1.fbx",
+      "sourceSha256": "41357b64f6305ee59ea6ef8beaeba7b79b715514034be86e5365ab56e6dd5374",
+      "frameStart": 1,
+      "frameEnd": 13,
+      "sourceFps": 24,
+      "durationSeconds": 0.5,
+      "sourceRootTravel": {
+        "x": 2.373616,
+        "y": -1.28862,
+        "z": -6.690092,
+        "total": 7.214702
+      },
+      "loop": false,
+      "gain": 0.92
+    }
+  },
+  "rights": {
+    "source": "user-provided",
+    "runtimeUseDirectedAt": "2026-07-29",
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
+  },
+  "rightsReceipt": "assets/motion/ingame/characters/rights-receipt.json",
+  "checks": {
+    "glb2": true,
+    "meshPresent": true,
+    "singleSkin": true,
+    "expectedBoneSet": true,
+    "expectedClipSet": true,
+    "finiteKeyframes": true,
+    "rotationOnly": true,
+    "onlyDefBoneTracks": true,
+    "loopClosure": true,
+    "linearSampling": true,
+    "nonconstantActions": true,
+    "rigStageCompleted": true,
+    "rigNaturalRestPose": true,
+    "rigClipCountBeforeRetarget": true
+  },
+  "validation": {
+    "checks": {
+      "glb2": true,
+      "meshPresent": true,
+      "singleSkin": true,
+      "expectedBoneSet": true,
+      "expectedClipSet": true,
+      "finiteKeyframes": true,
+      "rotationOnly": true,
+      "onlyDefBoneTracks": true,
+      "loopClosure": true,
+      "linearSampling": true,
+      "nonconstantActions": true
+    },
+    "animationNames": [
+      "shadow-soldier-v04::attack::v01",
+      "shadow-soldier-v04::avoid::v01",
+      "shadow-soldier-v04::bighit::v01",
+      "shadow-soldier-v04::critical::v01",
+      "shadow-soldier-v04::defence::v01",
+      "shadow-soldier-v04::die::v01",
+      "shadow-soldier-v04::hit::v01",
+      "shadow-soldier-v04::idle::v01",
+      "shadow-soldier-v04::move::v01",
+      "shadow-soldier-v04::run::v01",
+      "shadow-soldier-v04::show::v01"
+    ],
+    "jointNames": [
+      "DEF-spine",
+      "DEF-pelvis.L",
+      "DEF-pelvis.R",
+      "DEF-spine.001",
+      "DEF-spine.002",
+      "DEF-spine.003",
+      "DEF-shoulder.L",
+      "DEF-upper_arm.L",
+      "DEF-forearm.L",
+      "DEF-hand.L",
+      "DEF-shoulder.R",
+      "DEF-upper_arm.R",
+      "DEF-forearm.R",
+      "DEF-hand.R",
+      "DEF-spine.004",
+      "DEF-spine.005",
+      "DEF-thigh.L",
+      "DEF-shin.L",
+      "DEF-foot.L",
+      "DEF-toe.L",
+      "DEF-thigh.R",
+      "DEF-shin.R",
+      "DEF-foot.R",
+      "DEF-toe.R"
+    ],
+    "meshCount": 1,
+    "skinCount": 1
+  },
+  "runtimeEligible": true,
+  "gateErrors": [],
+  "generationId": "8bab6c499986308411640900cddf7947c321fd2f22e8b5ad9200f7b001d6ae8e",
+  "sourceAssetRights": {
+    "source": "user-provided",
+    "runtimeUseDirectedAt": "2026-07-29",
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
+  },
+  "motionAuthority": "derived-retargeted",
+  "motionLineage": {
+    "authority": "derived-retargeted",
+    "sourceRig": "mixamo-37",
+    "sourceLibrary": "assets/motion/bench",
+    "transformation": "retargeted-and-baked"
+  },
+  "inPlaceRootMotion": true,
+  "clipNames": {
+    "idle": "shadow-soldier-v04::idle::v01",
+    "move": "shadow-soldier-v04::move::v01",
+    "run": "shadow-soldier-v04::run::v01",
+    "hit": "shadow-soldier-v04::hit::v01",
+    "bighit": "shadow-soldier-v04::bighit::v01",
+    "attack": "shadow-soldier-v04::attack::v01",
+    "critical": "shadow-soldier-v04::critical::v01",
+    "avoid": "shadow-soldier-v04::avoid::v01",
+    "defence": "shadow-soldier-v04::defence::v01",
+    "die": "shadow-soldier-v04::die::v01",
+    "show": "shadow-soldier-v04::show::v01"
+  },
+  "reachability": {
+    "runtimeReachability": "catalog-bound",
+    "entity": {
+      "kind": "guardian"
+    }
+  }
+}

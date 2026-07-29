@@ -21,14 +21,14 @@
       "shoulderHalfWidth": 0.2753,
       "hipHalfWidth": 0.1836,
       "handL": [
-        0.6433,
-        -0.3455,
-        1.2901
+        0.1627,
+        -0.0448,
+        0.4094
       ],
       "handR": [
-        -0.644,
-        -0.3455,
-        1.2901
+        -0.1633,
+        -0.0448,
+        0.4094
       ],
       "synthesizedArms": [],
       "center": [
@@ -92,17 +92,17 @@
         {
           "bone": "DEF-upper_arm.L",
           "policy": "lateral",
-          "rollDeg": 0.7735
+          "rollDeg": 4.1238
         },
         {
           "bone": "DEF-forearm.L",
           "policy": "lateral",
-          "rollDeg": 0.7735
+          "rollDeg": 4.1238
         },
         {
           "bone": "DEF-hand.L",
           "policy": "lateral",
-          "rollDeg": 0.7736
+          "rollDeg": 4.1237
         },
         {
           "bone": "DEF-shoulder.R",
@@ -112,17 +112,17 @@
         {
           "bone": "DEF-upper_arm.R",
           "policy": "lateral",
-          "rollDeg": -0.7735
+          "rollDeg": -4.1237
         },
         {
           "bone": "DEF-forearm.R",
           "policy": "lateral",
-          "rollDeg": -0.7735
+          "rollDeg": -4.1238
         },
         {
           "bone": "DEF-hand.R",
           "policy": "lateral",
-          "rollDeg": -0.7736
+          "rollDeg": -4.1237
         },
         {
           "bone": "DEF-thigh.L",
@@ -169,15 +169,15 @@
     {
       "step": "armature_fit",
       "bones": 24,
-      "shoulderZ": 1.2944,
+      "shoulderZ": 1.3785,
       "arms": {
         "L": {
-          "restAngleDeg": 0.53,
-          "length": 0.4566
+          "restAngleDeg": 81.81,
+          "length": 0.9791
         },
         "R": {
-          "restAngleDeg": 0.53,
-          "length": 0.4566
+          "restAngleDeg": 81.81,
+          "length": 0.9791
         }
       },
       "preBindRollCount": 24
@@ -192,173 +192,43 @@
       "boundGroups": 24,
       "weightedVerts": 20617,
       "totalVerts": 20617,
-      "armWeightFrac": 0.1871,
+      "armWeightFrac": 0.5177,
       "attempts": [
         [
           "bone_heat",
           20581,
-          0.1875
+          0.5186
         ]
       ],
       "topWeights": [
         [
-          3901.7,
+          1931.2,
+          "DEF-upper_arm.L"
+        ],
+        [
+          1919.2,
+          "DEF-upper_arm.R"
+        ],
+        [
+          1761.1,
           "DEF-thigh.R"
         ],
         [
-          3899.5,
+          1748.4,
           "DEF-thigh.L"
         ],
         [
-          1385.9,
-          "DEF-spine.005"
-        ],
-        [
-          962.3,
-          "DEF-pelvis.R"
-        ],
-        [
-          952.3,
-          "DEF-pelvis.L"
+          1328.3,
+          "DEF-forearm.L"
         ]
-      ]
-    },
-    {
-      "step": "roll_alignment",
-      "phase": "post_tpose_rest",
-      "referencePolicy": {
-        "axial": "+Y",
-        "lateral": "+Z"
-      },
-      "rows": [
-        {
-          "bone": "DEF-spine",
-          "policy": "axial",
-          "rollDeg": 180.0
-        },
-        {
-          "bone": "DEF-spine.001",
-          "policy": "axial",
-          "rollDeg": 180.0
-        },
-        {
-          "bone": "DEF-spine.002",
-          "policy": "axial",
-          "rollDeg": 180.0
-        },
-        {
-          "bone": "DEF-spine.003",
-          "policy": "axial",
-          "rollDeg": 180.0
-        },
-        {
-          "bone": "DEF-spine.004",
-          "policy": "axial",
-          "rollDeg": 180.0
-        },
-        {
-          "bone": "DEF-spine.005",
-          "policy": "axial",
-          "rollDeg": 180.0
-        },
-        {
-          "bone": "DEF-shoulder.L",
-          "policy": "lateral",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-upper_arm.L",
-          "policy": "lateral",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-forearm.L",
-          "policy": "lateral",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-hand.L",
-          "policy": "lateral",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-shoulder.R",
-          "policy": "lateral",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-upper_arm.R",
-          "policy": "lateral",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-forearm.R",
-          "policy": "lateral",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-hand.R",
-          "policy": "lateral",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-pelvis.L",
-          "policy": "axial",
-          "rollDeg": -125.3847
-        },
-        {
-          "bone": "DEF-pelvis.R",
-          "policy": "axial",
-          "rollDeg": 125.3847
-        },
-        {
-          "bone": "DEF-thigh.L",
-          "policy": "axial",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-shin.L",
-          "policy": "axial",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-foot.L",
-          "policy": "lateral",
-          "rollDeg": 180.0
-        },
-        {
-          "bone": "DEF-toe.L",
-          "policy": "lateral",
-          "rollDeg": 179.9999
-        },
-        {
-          "bone": "DEF-thigh.R",
-          "policy": "axial",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-shin.R",
-          "policy": "axial",
-          "rollDeg": 0.0
-        },
-        {
-          "bone": "DEF-foot.R",
-          "policy": "lateral",
-          "rollDeg": 180.0
-        },
-        {
-          "bone": "DEF-toe.R",
-          "policy": "lateral",
-          "rollDeg": 179.9999
-        }
       ]
     },
     {
       "step": "weight_refine",
       "enabledArmatureModifiers": 1,
-      "correctedVertices": 14116,
+      "correctedVertices": 14328,
       "oppositeLeak": 0,
-      "ambiguous": 5073,
+      "ambiguous": 4899,
       "orphanCount": 0,
       "invalidCount": 0,
       "nonDefCount": 0,
@@ -369,20 +239,19 @@
       "deformVertsTotal": 20617
     },
     {
-      "step": "tpose_apply",
-      "rotatedDeg": {
-        "L": 20.74,
-        "R": 20.74
-      },
+      "step": "rest_pose",
+      "mode": "natural",
+      "rotatedDeg": {},
       "axisDeviationDeg": {
-        "L": 0.0,
-        "R": 0.0
+        "L": 89.32,
+        "R": 89.32
       },
       "elevationDeg": {
-        "L": -0.0,
-        "R": -0.0
+        "L": 81.81,
+        "R": 81.81
       },
-      "tolerance": 12.0
+      "tposeToleranceDeg": 12.0,
+      "ok": true
     },
     {
       "step": "author_animations",
@@ -403,22 +272,23 @@
     },
     {
       "step": "export",
-      "path": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/model.glb",
-      "bytes": 13574056,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/model.glb",
+      "bytes": 13575828,
       "pedestalRemoved": false
     }
   ],
   "axisDeviationDeg": {
-    "L": 0.0,
-    "R": 0.0
+    "L": 89.32,
+    "R": 89.32
   },
   "elevationDeg": {
-    "L": -0.0,
-    "R": -0.0
+    "L": 81.81,
+    "R": 81.81
   },
   "bindMethod": "bone_heat",
   "pedestalRemoved": false,
-  "tposeOk": true,
+  "restPose": "natural",
+  "restPoseOk": true,
   "clipCount": 11,
   "status": "completed"
 }

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T07:34:38.834530+00:00",
+  "generatedAt": "2026-07-29T10:12:48.354085+00:00",
   "assetId": "ember-cohort",
   "role": "radiant-vanguard",
   "category": "enemies",
@@ -9,9 +9,10 @@
   "sourceSha256": "4c1668cfc9447751b99d3d485c1a4b0a320f6f502e0b3f9cf8572adc29f8e6d6",
   "sourceRig": "mixamo-37",
   "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/model.glb",
-  "modelSha256": "1b9ccf03b957cbc2ff2f14fca3dd0aa0cf50f5905a757b83a3751a14ce9af933",
-  "modelBytes": 12285752,
+  "modelSha256": "978aa2c95de63367e748e8a4d30b14c85ed6afbec458b1f03f69211840ea572a",
+  "modelBytes": 12286784,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/rig-report.json",
   "targetBoneNames": [
@@ -225,7 +226,7 @@
       "action": "die",
       "clipName": "ember-cohort::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -233,7 +234,14 @@
   "rights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",
-    "redistributionStatus": "unverified"
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
   },
   "rightsReceipt": "user-directed-runtime-use-retargeted-from-audited-bench-with-unverified-redistribution",
   "checks": {
@@ -249,7 +257,7 @@
     "linearSampling": true,
     "nonconstantActions": true,
     "rigStageCompleted": true,
-    "rigTposeGate": true,
+    "rigNaturalRestPose": true,
     "rigClipCountBeforeRetarget": true
   },
   "validation": {

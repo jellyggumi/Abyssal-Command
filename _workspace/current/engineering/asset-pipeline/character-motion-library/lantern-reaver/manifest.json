@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T07:34:40.739589+00:00",
+  "generatedAt": "2026-07-29T10:13:40.985450+00:00",
   "assetId": "lantern-reaver",
   "role": "abyssal-reaper-caster",
   "category": "enemies",
@@ -9,9 +9,10 @@
   "sourceSha256": "c87097286cdd84deeb433c59db99d8963344948cea41895c7c1a2362d542d09a",
   "sourceRig": "mixamo-37",
   "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/model.glb",
-  "modelSha256": "2ef138a44a2d2e8574cd3d8a7ce41e3816c51bdf73c71b23d0cb5f96829c5087",
-  "modelBytes": 12492152,
+  "modelSha256": "04adec440c5a4aff4746e4536bdc65eaa83eced65fe6f53472a34e659056ef84",
+  "modelBytes": 12492748,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/rig-report.json",
   "targetBoneNames": [
@@ -225,7 +226,7 @@
       "action": "die",
       "clipName": "lantern-reaver::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -233,7 +234,14 @@
   "rights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",
-    "redistributionStatus": "unverified"
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
   },
   "rightsReceipt": "user-directed-runtime-use-retargeted-from-audited-bench-with-unverified-redistribution",
   "checks": {
@@ -249,7 +257,7 @@
     "linearSampling": true,
     "nonconstantActions": true,
     "rigStageCompleted": true,
-    "rigTposeGate": true,
+    "rigNaturalRestPose": true,
     "rigClipCountBeforeRetarget": true
   },
   "validation": {

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T09:26:51.765109+00:00",
+  "generatedAt": "2026-07-29T10:14:57.640655+00:00",
   "assetId": "shadow-commander-boss",
   "role": "shadow-command-boss",
   "category": "bosses",
@@ -9,9 +9,10 @@
   "sourceSha256": "f6b937424f8d9fe98423b1ae193ffdd6573ce78f10db172990ed5287931b547d",
   "sourceRig": "mixamo-37",
   "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/model.glb",
-  "modelSha256": "9cabad5f502e34ca04abe6a7526b0c0beb5b47f6c8c3937ee5d09495d6dacbfa",
-  "modelBytes": 13611136,
+  "modelSha256": "00a0beadd94846088dd25a4f7aeb61db184c8b4b29eef08421d301f5b668db24",
+  "modelBytes": 13611240,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/rig-report.json",
   "targetBoneNames": [
@@ -225,7 +226,7 @@
       "action": "die",
       "clipName": "shadow-commander-boss::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -256,7 +257,7 @@
     "linearSampling": true,
     "nonconstantActions": true,
     "rigStageCompleted": true,
-    "rigTposeGate": true,
+    "rigNaturalRestPose": true,
     "rigClipCountBeforeRetarget": true
   },
   "validation": {

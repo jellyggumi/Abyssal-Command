@@ -42,7 +42,19 @@ env:
     assets/mesh/boss/s1-cinder-warden/glb/base_basic_pbr.glb assets/mesh/boss/s2-veil-tactician/glb/base_basic_pbr.glb
     assets/mesh/boss/s3-gate-sovereign/glb/base_basic_pbr.glb assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb
     assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb
-    assets/motion/ingame/characters/lantern-reaver/model.glb assets/motion/ingame/unarmed-core.glb assets/motion/ingame/manifest.json
+    assets/motion/ingame/characters/broken-court-monarch-boss/model.glb assets/motion/ingame/characters/broken-court-monarch-boss/manifest.json
+    assets/motion/ingame/characters/broken-court-monarch-v04/model.glb assets/motion/ingame/characters/broken-court-monarch-v04/manifest.json
+    assets/motion/ingame/characters/ember-cohort/model.glb assets/motion/ingame/characters/ember-cohort/manifest.json
+    assets/motion/ingame/characters/guard/model.glb assets/motion/ingame/characters/guard/manifest.json
+    assets/motion/ingame/characters/human-command-boss/model.glb assets/motion/ingame/characters/human-command-boss/manifest.json
+    assets/motion/ingame/characters/lantern-reaver/model.glb assets/motion/ingame/characters/lantern-reaver/manifest.json
+    assets/motion/ingame/characters/possessed/model.glb assets/motion/ingame/characters/possessed/manifest.json
+    assets/motion/ingame/characters/scout/model.glb assets/motion/ingame/characters/scout/manifest.json
+    assets/motion/ingame/characters/shade/model.glb assets/motion/ingame/characters/shade/manifest.json
+    assets/motion/ingame/characters/shadow-soldier-v04/model.glb assets/motion/ingame/characters/shadow-soldier-v04/manifest.json
+    assets/motion/ingame/characters/shadow-commander-boss/model.glb assets/motion/ingame/characters/shadow-commander-boss/manifest.json
+    assets/motion/ingame/characters/registry.json assets/motion/ingame/characters/rights-receipt.json
+    assets/motion/ingame/unarmed-core.glb assets/motion/ingame/manifest.json
     assets/motion/stage-vfx/cinder-span-ember-wake.glb assets/motion/stage-vfx/abyss-chancel-mirror-static.glb
     assets/motion/stage-vfx/echo-throne-fracture-echo.glb assets/motion/stage-vfx/manifest.json
 

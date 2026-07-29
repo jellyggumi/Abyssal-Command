@@ -1,0 +1,73 @@
+{
+  "assetId": "broken-court-monarch-v04",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/model.glb",
+  "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/contact-sheet.png",
+  "keyposes": [
+    {
+      "action": "idle",
+      "clipName": "broken-court-monarch-v04::idle::v01",
+      "frame": 110,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/00-idle.png"
+    },
+    {
+      "action": "move",
+      "clipName": "broken-court-monarch-v04::move::v01",
+      "frame": 13,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/01-move.png"
+    },
+    {
+      "action": "run",
+      "clipName": "broken-court-monarch-v04::run::v01",
+      "frame": 12,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/02-run.png"
+    },
+    {
+      "action": "hit",
+      "clipName": "broken-court-monarch-v04::hit::v01",
+      "frame": 10,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/03-hit.png"
+    },
+    {
+      "action": "bighit",
+      "clipName": "broken-court-monarch-v04::bighit::v01",
+      "frame": 19,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/04-bighit.png"
+    },
+    {
+      "action": "attack",
+      "clipName": "broken-court-monarch-v04::attack::v01",
+      "frame": 38,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/05-attack.png"
+    },
+    {
+      "action": "critical",
+      "clipName": "broken-court-monarch-v04::critical::v01",
+      "frame": 153,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/06-critical.png"
+    },
+    {
+      "action": "avoid",
+      "clipName": "broken-court-monarch-v04::avoid::v01",
+      "frame": 30,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/07-avoid.png"
+    },
+    {
+      "action": "defence",
+      "clipName": "broken-court-monarch-v04::defence::v01",
+      "frame": 7,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/08-defence.png"
+    },
+    {
+      "action": "die",
+      "clipName": "broken-court-monarch-v04::die::v01",
+      "frame": 42,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/09-die.png"
+    },
+    {
+      "action": "show",
+      "clipName": "broken-court-monarch-v04::show::v01",
+      "frame": 153,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/10-show.png"
+    }
+  ]
+}

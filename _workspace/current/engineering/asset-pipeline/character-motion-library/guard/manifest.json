@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T07:33:31.518260+00:00",
+  "generatedAt": "2026-07-29T10:13:07.472012+00:00",
   "assetId": "guard",
   "role": "ember-greatsword-guard",
   "category": "enemies",
@@ -9,9 +9,10 @@
   "sourceSha256": "8022cc3f0748247cc22705dcdd0ac5d98c656f9c3f337e9b7e7ff64c0b3d1dc0",
   "sourceRig": "mixamo-37",
   "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/model.glb",
-  "modelSha256": "cf6ce6d30f83d708801a8c1ab00ba7355f5f95350377edcf886c51087131d4b1",
-  "modelBytes": 13426276,
+  "modelSha256": "f2b39aba28988ccea8652f9e3363775031542b6d148bec59d482ea18129dced7",
+  "modelBytes": 13426364,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/rig-report.json",
   "targetBoneNames": [
@@ -225,7 +226,7 @@
       "action": "die",
       "clipName": "guard::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -233,7 +234,14 @@
   "rights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",
-    "redistributionStatus": "unverified"
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
   },
   "rightsReceipt": "user-directed-runtime-use-retargeted-from-audited-bench-with-unverified-redistribution",
   "checks": {
@@ -249,7 +257,7 @@
     "linearSampling": true,
     "nonconstantActions": true,
     "rigStageCompleted": true,
-    "rigTposeGate": true,
+    "rigNaturalRestPose": true,
     "rigClipCountBeforeRetarget": true
   },
   "validation": {

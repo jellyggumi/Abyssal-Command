@@ -1,0 +1,73 @@
+{
+  "assetId": "shade",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/model.glb",
+  "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/contact-sheet.png",
+  "keyposes": [
+    {
+      "action": "idle",
+      "clipName": "shade::idle::v01",
+      "frame": 18,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/keyposes/00-idle.png"
+    },
+    {
+      "action": "move",
+      "clipName": "shade::move::v01",
+      "frame": 57,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/keyposes/01-move.png"
+    },
+    {
+      "action": "run",
+      "clipName": "shade::run::v01",
+      "frame": 12,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/keyposes/02-run.png"
+    },
+    {
+      "action": "hit",
+      "clipName": "shade::hit::v01",
+      "frame": 10,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/keyposes/03-hit.png"
+    },
+    {
+      "action": "bighit",
+      "clipName": "shade::bighit::v01",
+      "frame": 19,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/keyposes/04-bighit.png"
+    },
+    {
+      "action": "attack",
+      "clipName": "shade::attack::v01",
+      "frame": 43,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/keyposes/05-attack.png"
+    },
+    {
+      "action": "critical",
+      "clipName": "shade::critical::v01",
+      "frame": 53,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/keyposes/06-critical.png"
+    },
+    {
+      "action": "avoid",
+      "clipName": "shade::avoid::v01",
+      "frame": 30,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/keyposes/07-avoid.png"
+    },
+    {
+      "action": "defence",
+      "clipName": "shade::defence::v01",
+      "frame": 48,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/keyposes/08-defence.png"
+    },
+    {
+      "action": "die",
+      "clipName": "shade::die::v01",
+      "frame": 42,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/keyposes/09-die.png"
+    },
+    {
+      "action": "show",
+      "clipName": "shade::show::v01",
+      "frame": 30,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/keyposes/10-show.png"
+    }
+  ]
+}

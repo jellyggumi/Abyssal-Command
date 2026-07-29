@@ -34,7 +34,10 @@ REACHABILITY_METADATA = {
         "runtimeReachability": "library-only",
     },
     "human-command-boss": {
-        "runtimeReachability": "library-only",
+        "runtimeReachability": "catalog-bound",
+        "entity": {
+            "id": "commander",
+        },
     },
     "ember-cohort": {
         "runtimeReachability": "catalog-bound",
@@ -44,10 +47,7 @@ REACHABILITY_METADATA = {
         },
     },
     "guard": {
-        "runtimeReachability": "catalog-bound",
-        "entity": {
-            "kind": "guardian",
-        },
+        "runtimeReachability": "library-only",
     },
     "lantern-reaver": {
         "runtimeReachability": "catalog-bound",
@@ -166,6 +166,7 @@ def generation_id(config: dict, assets: list[dict], rights: dict) -> str:
                 "modelSha256": asset["modelSha256"],
                 "clips": asset["clips"],
                 "reachability": asset["reachability"],
+                "sourceRights": asset["sourceRights"],
             }
             for asset in assets
         ],
@@ -445,7 +446,7 @@ def build_rights_receipt(config: dict, assets: list[dict], rights: dict, revisio
         "attestationEvidence": rights["attestationEvidence"],
         "source": rights["source"],
         "motionLineage": motion_lineage(config),
-        "supersededAssetRedistributionStatuses": prior_statuses,
+        "sourceAssetRedistributionStatuses": prior_statuses,
     }
 
 
@@ -461,7 +462,7 @@ def build_runtime_manifest(
     manifest["generatedBy"] = BUILT_BY
     manifest["generationId"] = revision
     manifest["model"] = asset["runtimeModel"]
-    manifest["sourceRightsBeforeAttestation"] = asset["sourceRights"]
+    manifest["sourceAssetRights"] = asset["sourceRights"]
     manifest["rights"] = copy.deepcopy(rights)
     manifest["rightsReceipt"] = RIGHTS_RECEIPT_RELATIVE
     manifest["motionAuthority"] = MOTION_AUTHORITY

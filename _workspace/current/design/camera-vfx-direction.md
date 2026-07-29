@@ -528,10 +528,10 @@ if (p95FrameMs < 13 for 600 ticks) → 티어 1단 상승 (최초 설정값 상�
 |---|---|---|---|
 | 1 | `cam-tier-zoom` | 각 페이즈 진입 | `zoomFactor`가 §2.4 값 ±2%, clamp `[10.39, 41.58]` 이내 |
 | 2 | `cam-visibility-radius` | 전 페이즈 × portrait/landscape | 보장 가시 반경이 §2.4 값 이상, 화면 밖 적 공격 0건 |
-| 2b | `cam-fog-clarity` | **10 스테이지 × 6 페이즈 = 60 조합** | 경계 위협 선명도 ≥0.75, §2.7.1 표와 일치 |
-| 2c | `cam-fog-never-thicker` | 60 조합 | `fogFar ≥ stageBaseFar` — 저작값보다 짙어지는 조합 0건 |
-| 2d | `cam-fog-near-preserved` | 60 조합 | `fogNear` = 스테이지 저작값, 변경 0건 |
-| 2e | `cam-fog-within-far` | 60 조합 | `fogFar` < 카메라 `far` 200 |
+| 2b | `cam-fog-clarity` | **3 스테이지 × 6 페이즈 = 18 조합** | 경계 위협 선명도 ≥0.75, §2.7.1 표와 일치 |
+| 2c | `cam-fog-never-thicker` | 18 조합 | `fogFar ≥ stageBaseFar` — 저작값보다 짙어지는 조합 0건 |
+| 2d | `cam-fog-near-preserved` | 18 조합 | `fogNear` = 스테이지 저작값, 변경 0건 |
+| 2e | `cam-fog-within-far` | 18 조합 | `fogFar` < 카메라 `far` 200 |
 | 2f | `cam-fog-exempt-layers` | 전 페이즈 | 예고 데칼·안전지대·회피신호·실루엣 외곽선의 `material.fog === false` |
 | 2g | `cam-decal-anisotropy` | 원형 예고 5종 | 월드 스케일 `x = r×0.001167`, `z = r×0.002333`, 판정 원과 일치 |
 | 3 | `cam-tier-transition` | `SURGE`→`MIDBOSS` | 90 tick 보간, 급격한 컷 0, 입력 수락 유지 |

@@ -1,0 +1,73 @@
+{
+  "assetId": "scout",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/model.glb",
+  "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/contact-sheet.png",
+  "keyposes": [
+    {
+      "action": "idle",
+      "clipName": "scout::idle::v01",
+      "frame": 18,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/00-idle.png"
+    },
+    {
+      "action": "move",
+      "clipName": "scout::move::v01",
+      "frame": 13,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/01-move.png"
+    },
+    {
+      "action": "run",
+      "clipName": "scout::run::v01",
+      "frame": 12,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/02-run.png"
+    },
+    {
+      "action": "hit",
+      "clipName": "scout::hit::v01",
+      "frame": 10,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/03-hit.png"
+    },
+    {
+      "action": "bighit",
+      "clipName": "scout::bighit::v01",
+      "frame": 17,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/04-bighit.png"
+    },
+    {
+      "action": "attack",
+      "clipName": "scout::attack::v01",
+      "frame": 17,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/05-attack.png"
+    },
+    {
+      "action": "critical",
+      "clipName": "scout::critical::v01",
+      "frame": 41,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/06-critical.png"
+    },
+    {
+      "action": "avoid",
+      "clipName": "scout::avoid::v01",
+      "frame": 23,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/07-avoid.png"
+    },
+    {
+      "action": "defence",
+      "clipName": "scout::defence::v01",
+      "frame": 48,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/08-defence.png"
+    },
+    {
+      "action": "die",
+      "clipName": "scout::die::v01",
+      "frame": 42,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/09-die.png"
+    },
+    {
+      "action": "show",
+      "clipName": "scout::show::v01",
+      "frame": 52,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/10-show.png"
+    }
+  ]
+}

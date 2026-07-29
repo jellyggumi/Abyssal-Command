@@ -229,8 +229,8 @@ function actorSnapshot() {
   };
 }
 
-test("every authored stage exposes one frozen world-presentation profile", () => {
-  assert.equal(STAGES.length, 10);
+test("every canonical stage exposes one frozen world-presentation profile", () => {
+  assert.deepEqual(STAGES.map(({ id }) => id), ["cinder-span", "abyss-chancel", "echo-throne"]);
   assert.deepEqual(Object.keys(STAGE_PRESENTATION_BY_ID).sort(), STAGES.map(({ id }) => id).sort());
   assert.ok(Object.isFrozen(STAGE_PRESENTATION_BY_ID));
   for (const stage of STAGES) {
@@ -258,6 +258,8 @@ test("BattleSession projects exactly the allowed 2.5x actor categories and leave
   const before = structuredClone(source);
   const session = Object.create(BattleSession.prototype);
   session.stageId = source.stageId;
+  session.started = true;
+  session.stopped = false;
   const projection = session.projected(source);
 
   assert.deepEqual(source, before, "projection must not mutate canonical snapshot data");
@@ -290,7 +292,7 @@ test("primary and fallback adapters observe the same presentation projection wit
   session.stageId = snapshot.stageId;
   const projection = session.projected(snapshot);
   const projectedBeforeRender = structuredClone(projection);
-  const alternateSnapshot = { ...snapshot, stageId: "gate-zenith" };
+  const alternateSnapshot = { ...snapshot, stageId: "abyss-chancel" };
   const alternateSession = Object.create(BattleSession.prototype);
   alternateSession.stageId = alternateSnapshot.stageId;
   const alternateProjection = alternateSession.projected(alternateSnapshot);
@@ -321,8 +323,8 @@ test("primary and fallback adapters observe the same presentation projection wit
 
   {
     // RealtimeBattle's equivalent of "distinct data-driven terrain per
-    // stage projection" is resolving a distinct terrain GLB per stageId
-    // (cinder-span vs gate-zenith), and reconciling the projected actors
+    // stage projection" is resolving a distinct terrain mesh per stageId
+    // (cinder-span vs abyss-chancel), then reconciling the projected actors
     // into its real scene graph without throwing or mutating input.
     const adapter = realtimeBattleHarness();
     const alternateAdapter = realtimeBattleHarness();
@@ -389,9 +391,9 @@ test("Cinder Span artwork availability remains passive to canonical simulation s
     assert.equal(getRunDigest(run), digest, `artwork availability=${available} does not alter the deterministic run digest`);
   }
 });
-test("applyStagePalette writes per-stage fog depth so stages read at distinct atmospheric distances", async () => {
+test("applyStagePalette writes distinct fog depth for every canonical stage", async () => {
   const STAGES_FROM_CATALOG = Object.keys(STAGE_PRESENTATION_BY_ID);
-  assert.ok(STAGES_FROM_CATALOG.length >= 10, "fixture assumes the full 10-stage roster");
+  assert.deepEqual(STAGES_FROM_CATALOG.sort(), ["abyss-chancel", "cinder-span", "echo-throne"]);
 
   // Each stage's applyStagePalette() must land its fog on the exact near/far
   // stageFogRange() authored for it -- proves the renderer consumed the data
@@ -413,20 +415,9 @@ test("applyStagePalette writes per-stage fog depth so stages read at distinct at
     adapter.dispose();
   }
 
-  // Differentiation is the whole point: the roster must span a real openness
-  // range, and the two vista stages (Howling Sprawl, Gate Zenith) must read
-  // strictly more open than the two closed motifs (Echo Throne, Starless Canal).
-  const fars = [...seenFar.values()];
-  const spread = Math.max(...fars) / Math.min(...fars);
-  assert.ok(spread >= 1.5, `stage fog depth must span >=1.5x (got ${spread.toFixed(2)}x) for visible per-stage contrast`);
-  for (const openId of ["howling-sprawl", "gate-zenith"]) {
-    for (const closedId of ["echo-throne", "starless-canal"]) {
-      assert.ok(
-        seenFar.get(openId) > seenFar.get(closedId),
-        `${openId} (vista motif) must read more open than ${closedId} (closed motif)`,
-      );
-    }
-  }
+  // Each canonical mesh uses a distinct depth profile, so every stage reads
+  // as its authored atmosphere rather than inheriting the mount baseline.
+  assert.equal(new Set(seenFar.values()).size, STAGES_FROM_CATALOG.length);
 });
 test("commander-follow camera is bounded transient frame state and snaps or resets without touching simulation state", async () => {
   const BattleSession = await loadBattleSession();

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T09:26:50.586467+00:00",
+  "generatedAt": "2026-07-29T10:14:38.451943+00:00",
   "assetId": "shadow-soldier-v04",
   "role": "shadow-guardian",
   "category": "enemies",
@@ -9,9 +9,10 @@
   "sourceSha256": "583ac76b943fc331ec5dd15819b90e25e787e14842a4f079d8a84e7dc9b80815",
   "sourceRig": "mixamo-37",
   "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/model.glb",
-  "modelSha256": "a750f3f28ec0fd92b7bded04c8dd2552ae949a692821ef7ac9a8fa9ce7afcd0c",
-  "modelBytes": 12210964,
+  "modelSha256": "026b5df05b85b01342ad8ea675a02c4b3d3614a35f844683ca5a6a0779c501ac",
+  "modelBytes": 12211352,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/rig-report.json",
   "targetBoneNames": [
@@ -225,7 +226,7 @@
       "action": "die",
       "clipName": "shadow-soldier-v04::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -256,7 +257,7 @@
     "linearSampling": true,
     "nonconstantActions": true,
     "rigStageCompleted": true,
-    "rigTposeGate": true,
+    "rigNaturalRestPose": true,
     "rigClipCountBeforeRetarget": true
   },
   "validation": {

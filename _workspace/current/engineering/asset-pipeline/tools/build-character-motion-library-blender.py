@@ -287,8 +287,15 @@ def main() -> int:
         raise FileNotFoundError(f"rig stage missing for {asset_id}")
 
     rig_report = json.loads(rig_report_path.read_text(encoding="utf-8"))
-    if rig_report.get("status") != "completed" or not rig_report.get("tposeOk"):
-        raise RuntimeError(f"rig gate not passed for {asset_id}: {rig_report.get('status')}")
+    if (
+        rig_report.get("status") != "completed"
+        or rig_report.get("restPose") != "natural"
+        or rig_report.get("restPoseOk") is not True
+    ):
+        raise RuntimeError(
+            f"natural-rest rig gate not passed for {asset_id}: "
+            f"status={rig_report.get('status')} restPose={rig_report.get('restPose')}"
+        )
 
     bpy.ops.wm.open_mainfile(filepath=str(review_path))
     bpy.context.scene.render.fps = int(config.get("sourceFps", 24))
@@ -420,7 +427,10 @@ def main() -> int:
     validation, gate_errors = validate_glb(model_path, expected_action_names, retarget)
     checks = dict(validation["checks"])
     checks["rigStageCompleted"] = rig_report.get("status") == "completed"
-    checks["rigTposeGate"] = bool(rig_report.get("tposeOk"))
+    checks["rigNaturalRestPose"] = (
+        rig_report.get("restPose") == "natural"
+        and rig_report.get("restPoseOk") is True
+    )
     checks["rigClipCountBeforeRetarget"] = int(rig_report.get("clipCount", 0)) == 11
     runtime_eligible = not gate_errors and all(checks.values())
 
@@ -435,6 +445,7 @@ def main() -> int:
         "sourceSha256": sha256(REPO_ROOT / character["source"]),
         "sourceRig": config["sourceRig"],
         "targetRig": config["targetRig"],
+        "restPose": rig_report["restPose"],
         "model": str(model_path.relative_to(REPO_ROOT)),
         "modelSha256": sha256(model_path),
         "modelBytes": model_path.stat().st_size,

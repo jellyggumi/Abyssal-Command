@@ -8,9 +8,10 @@
   "sourceSha256": "b8ce8d4db905e4ba1c8af06832b50b1b9f8168f206d8c6bfefba75b710b08c65",
   "sourceRig": "mixamo-37",
   "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
   "model": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
-  "modelSha256": "dbee83d49e5e7d66b85147931399e4829503d0efb8157e74389991fe60705c94",
-  "modelBytes": 13617544,
+  "modelSha256": "eef9382f6a57db5644b58403d66bfb4fbc1beee32516a5b0ba3a5e61cb8de125",
+  "modelBytes": 13618060,
   "targetBoneNames": [
     "DEF-spine",
     "DEF-spine.001",
@@ -204,7 +205,7 @@
       "action": "die",
       "clipName": "broken-court-monarch-boss::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
       "loop": false,
       "kind": "authored-fallback"
     },
@@ -253,7 +254,7 @@
     "linearSampling": true,
     "nonconstantActions": true,
     "rigStageCompleted": true,
-    "rigTposeGate": true,
+    "rigNaturalRestPose": true,
     "rigClipCountBeforeRetarget": true
   },
   "validation": {
@@ -314,11 +315,18 @@
   },
   "runtimeEligible": true,
   "gateErrors": [],
-  "generationId": "e584195e32f52006f6c26fab6b9e3bc1b55975a92e879aa0b8607ec305e5970e",
-  "sourceRightsBeforeAttestation": {
+  "generationId": "8bab6c499986308411640900cddf7947c321fd2f22e8b5ad9200f7b001d6ae8e",
+  "sourceAssetRights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",
-    "redistributionStatus": "unverified"
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
   },
   "motionAuthority": "derived-retargeted",
   "motionLineage": {

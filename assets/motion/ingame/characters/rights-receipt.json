@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-index.py",
-  "generationId": "e584195e32f52006f6c26fab6b9e3bc1b55975a92e879aa0b8607ec305e5970e",
+  "generationId": "8bab6c499986308411640900cddf7947c321fd2f22e8b5ad9200f7b001d6ae8e",
   "attestedBy": "user",
   "attestedAt": "2026-07-29",
   "attestationScope": [
@@ -18,7 +18,7 @@
     "sourceLibrary": "assets/motion/bench",
     "transformation": "retargeted-and-baked"
   },
-  "supersededAssetRedistributionStatuses": [
-    "unverified"
+  "sourceAssetRedistributionStatuses": [
+    "user-attested"
   ]
 }

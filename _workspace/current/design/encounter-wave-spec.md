@@ -242,9 +242,9 @@ spawnQueue = templates   // EnemyTemplate[] — 신규 entityId로 재생성되�
 
 ### 2.1 스테이지별 재해석
 
-같은 4종을 스테이지 시퀀스 `n`에 따라 §7 램프로 강화한다. 시각적 변주는
-`stage-world-catalog.js` 팔레트로 처리하며 **행동은 동일**하다 — 학습한 대응이 10스테이지
-내내 유효해야 한다.
+같은 4종을 3구역 시퀀스 `n`에 따라 §7 램프로 강화한다. 시각적 변주는
+`stage-world-catalog.js` 팔레트로 처리하며 **행동은 동일**하다 — 학습한 대응이
+`Cinder Span → Abyss Chancel → Echo Throne` 전체에 유효해야 한다.
 
 ---
 

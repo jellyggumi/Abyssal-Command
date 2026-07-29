@@ -1,21 +1,23 @@
-# Stage Composition Audit — Stage 1 `cinder-span` (fidelity reference)
+# Superseded Stage Composition Audit — pre-three-stage catalog
+
+> **Historical evidence only — superseded 2026-07-29.** This audit records the removed
+> ten-stage image-backed catalog and must not guide implementation or gate measurement.
+> The active authority is `defense-catalog.js` plus
+> `design/{pcg-stage-layout-spec,boss-pattern-spec,camera-vfx-direction}.md`; it defines
+> only `Cinder Span → Abyss Chancel → Echo Throne`, mesh terrain, three boss meshes, and
+> UI-only battle images. The evidence below remains unchanged for traceability.
 
 ```yaml
 run_id: 20260728-onslaught-action-pivot
-status: "[OBSERVED] — audit of shipped catalog + asset state"
+status: "[HISTORICAL] — audit of superseded ten-stage catalog + asset state"
 owner_skill: author-game-levels
-scope: stage 1 only; stages 2-10 are audited in the sibling document
-authority: defense-catalog.js, stage-world-catalog.js, campaign-state.js
+scope: archived pre-cutover stage 1 evidence; not an active level specification
+authority: historical snapshot only; see the active sources named above
 depends_on:
   - design/pcg-stage-layout-spec.md
   - design/encounter-wave-spec.md
   - design/lobby-story-presentation-spec.md
 ```
-
-This document is the **reference row** of the ten-stage composition audit. It records what
-stage 1 actually is in the shipped catalog, and — in §6 — exactly which assets and code paths
-stage 1 has that the other nine do not. Every other stage's "composition gaps" section is
-measured against §6 and §7 here.
 
 Evidence rule for this file: a path or value is `[OBSERVED]` only when this audit resolved it
 from the named source line or listed it on disk. Design targets carried from

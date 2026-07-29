@@ -305,7 +305,7 @@ def build_batch(actions_path: Path, asset_id: str, category: str) -> dict[str, A
         "runtimeHandoff": {
             "runtimeEligible": False,
             "required": {
-                "tposeOk": True,
+                "naturalRestPose": True,
                 "noPedestal": True,
                 "noTerrain": True,
                 "noWeapons": True,
@@ -313,7 +313,7 @@ def build_batch(actions_path: Path, asset_id: str, category: str) -> dict[str, A
                 "requiredClipIds": required_clip_ids,
             },
             "verified": {
-                "tposeOk": False,
+                "naturalRestPose": False,
                 "noPedestal": False,
                 "noTerrain": False,
                 "noWeapons": False,

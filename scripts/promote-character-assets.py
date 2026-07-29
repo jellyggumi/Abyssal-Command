@@ -315,13 +315,16 @@ def parse_rig_build(report: Mapping[str, Any], asset_id: str, category: str, rep
     if min_sum < 0 or max_sum > 1.0005 or min_sum > max_sum:
         raise PromoteError(f"{report_path}: expected normalized weight sum range")
 
-    tpose_ok = report.get("tposeOk")
-    if tpose_ok is not True:
-        raise PromoteError(f"{report_path}: tposeOk is false")
+    rest_pose = report.get("restPose")
+    if rest_pose != "natural" or report.get("restPoseOk") is not True:
+        raise PromoteError(
+            f"{report_path}: expected verified natural rest pose, "
+            f"got restPose={rest_pose!r} restPoseOk={report.get('restPoseOk')!r}"
+        )
 
     axis_deviation = report.get("axisDeviationDeg")
     if not isinstance(axis_deviation, Mapping):
-        raise PromoteError(f"{report_path}: missing axisDeviationDeg in T-pose result")
+        raise PromoteError(f"{report_path}: missing axisDeviationDeg in rest-pose diagnostics")
 
     return {
         "tool": RIG_REPORT_TOOL,
@@ -330,7 +333,8 @@ def parse_rig_build(report: Mapping[str, Any], asset_id: str, category: str, rep
         "assetId": asset_id,
         "category": category,
         "status": "completed",
-        "tpose": {
+        "restPose": {
+            "mode": "natural",
             "ok": True,
             "axisDeviationDeg": dict(axis_deviation),
             "elevationDeg": report.get("elevationDeg"),

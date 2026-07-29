@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T09:26:36.081945+00:00",
+  "generatedAt": "2026-07-29T10:14:13.705270+00:00",
   "assetId": "scout",
   "role": "rush-scout",
   "category": "enemies",
@@ -9,9 +9,10 @@
   "sourceSha256": "9faea51e4da6d8368986c094569e4263f957900680e9bf3cbeae687c95f7b650",
   "sourceRig": "mixamo-37",
   "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/model.glb",
-  "modelSha256": "b606598e70e0421bf00700645ea86e883e100279f1f98404eee5d40c23484f88",
-  "modelBytes": 12488740,
+  "modelSha256": "bf925108ee922eeca4773f9282ee772c71648f2b27460c76c12970111e4d44b8",
+  "modelBytes": 12489432,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/rig-report.json",
   "targetBoneNames": [
@@ -225,7 +226,7 @@
       "action": "die",
       "clipName": "scout::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -256,7 +257,7 @@
     "linearSampling": true,
     "nonconstantActions": true,
     "rigStageCompleted": true,
-    "rigTposeGate": true,
+    "rigNaturalRestPose": true,
     "rigClipCountBeforeRetarget": true
   },
   "validation": {

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T09:26:51.658726+00:00",
+  "generatedAt": "2026-07-29T10:14:01.533757+00:00",
   "assetId": "possessed",
   "role": "ranged-possessed-caster",
   "category": "enemies",
@@ -9,9 +9,10 @@
   "sourceSha256": "a670156e901a51a33e0e2759da58cb42ec0dea1491ba24ba87b815bd14bade15",
   "sourceRig": "mixamo-37",
   "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/model.glb",
-  "modelSha256": "d29cab31d29a7dd545d9f46f413682b5f26cbdf1265ae759627f60d4215b8900",
-  "modelBytes": 11806332,
+  "modelSha256": "8d1f1b214eeb89156ed5f4913ff2e994b532d7c7d4e710d72231924f3b7f6e5e",
+  "modelBytes": 11806792,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/rig-report.json",
   "targetBoneNames": [
@@ -225,7 +226,7 @@
       "action": "die",
       "clipName": "possessed::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -256,7 +257,7 @@
     "linearSampling": true,
     "nonconstantActions": true,
     "rigStageCompleted": true,
-    "rigTposeGate": true,
+    "rigNaturalRestPose": true,
     "rigClipCountBeforeRetarget": true
   },
   "validation": {

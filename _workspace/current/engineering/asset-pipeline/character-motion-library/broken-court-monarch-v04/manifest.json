@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-29T07:34:41.271830+00:00",
+  "generatedAt": "2026-07-29T10:12:25.673241+00:00",
   "assetId": "broken-court-monarch-v04",
   "role": "regal-void-caster",
   "category": "bosses",
@@ -9,9 +9,10 @@
   "sourceSha256": "3e3e6c21347e20f176e8ba77f4013a87a2369b2b1acf127c8a4c4ef2f8010267",
   "sourceRig": "mixamo-37",
   "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/model.glb",
-  "modelSha256": "08c15fd546ea961b6eaf0a0e767770335723aff4f189c732c1cf38c254b8d914",
-  "modelBytes": 11414996,
+  "modelSha256": "2a27ffea538856381b3b9108d99574f06b1aab42e2742e6a86cd7bfd7682909b",
+  "modelBytes": 11416220,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/rig-report.json",
   "targetBoneNames": [
@@ -225,7 +226,7 @@
       "action": "die",
       "clipName": "broken-court-monarch-v04::die::v01",
       "source": "scripts/rig-character-asset-blender.py",
-      "sourceSha256": "99f2b82f76eb24a45ada8272bcca8d2615b99a7dfb36be9e378a41333177c10e",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
       "loop": false,
       "kind": "authored-fallback"
     }
@@ -233,7 +234,14 @@
   "rights": {
     "source": "user-provided",
     "runtimeUseDirectedAt": "2026-07-29",
-    "redistributionStatus": "unverified"
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
   },
   "rightsReceipt": "user-directed-runtime-use-retargeted-from-audited-bench-with-unverified-redistribution",
   "checks": {
@@ -249,7 +257,7 @@
     "linearSampling": true,
     "nonconstantActions": true,
     "rigStageCompleted": true,
-    "rigTposeGate": true,
+    "rigNaturalRestPose": true,
     "rigClipCountBeforeRetarget": true
   },
   "validation": {

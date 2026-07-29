@@ -31,6 +31,27 @@ const UI_ICON_ASSETS = Object.freeze([
   "assets/images/battle/ui/hud/stat-echo-xp.webp",
   "assets/images/battle/ui/hud/stat-gate-integrity.webp",
 ]);
+const PROMOTED_MOTION_CHARACTER_IDS = Object.freeze([
+  "broken-court-monarch-boss",
+  "broken-court-monarch-v04",
+  "ember-cohort",
+  "guard",
+  "human-command-boss",
+  "lantern-reaver",
+  "possessed",
+  "scout",
+  "shade",
+  "shadow-soldier-v04",
+  "shadow-commander-boss",
+]);
+const PROMOTED_MOTION_CHARACTER_ASSETS = Object.freeze([
+  ...PROMOTED_MOTION_CHARACTER_IDS.flatMap((id) => [
+    `assets/motion/ingame/characters/${id}/model.glb`,
+    `assets/motion/ingame/characters/${id}/manifest.json`,
+  ]),
+  "assets/motion/ingame/characters/registry.json",
+  "assets/motion/ingame/characters/rights-receipt.json",
+]);
 const DIRECT_RUNTIME_ASSETS = Object.freeze([
   "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj",
   "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_diffuse.png",
@@ -45,7 +66,7 @@ const DIRECT_RUNTIME_ASSETS = Object.freeze([
   "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
   "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb",
   "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb",
-  "assets/motion/ingame/characters/lantern-reaver/model.glb",
+  ...PROMOTED_MOTION_CHARACTER_ASSETS,
   "assets/motion/ingame/unarmed-core.glb",
   "assets/motion/ingame/manifest.json",
   "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
@@ -125,6 +146,23 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
     [],
     "every retained runtime asset must be present in the Pages runtime allowlist",
   );
+  const pagesCharacterRuntimeAssets = pagesRuntimePaths.filter((path) =>
+    path.startsWith("assets/motion/ingame/characters/"),
+  );
+  assert.deepEqual(
+    pagesCharacterRuntimeAssets,
+    PROMOTED_MOTION_CHARACTER_ASSETS,
+    "Pages must ship the exact ordered promoted character model/manifest pairs, registry, and rights receipt",
+  );
+  const retainedCharacterRuntimeAssets = RETAINED_ASSET_PATHS.filter((path) =>
+    path.startsWith("assets/motion/ingame/characters/"),
+  );
+  assert.deepEqual(
+    retainedCharacterRuntimeAssets,
+    PROMOTED_MOTION_CHARACTER_ASSETS,
+    "retained assets must close over the exact ordered promoted character runtime contract",
+  );
+
   for (const path of pagesRuntimePaths) {
     await execFileAsync("git", ["ls-files", "--error-unmatch", "--", path]);
   }
