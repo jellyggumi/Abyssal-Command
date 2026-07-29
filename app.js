@@ -1734,7 +1734,7 @@ export class BattleSession {
 
   /** The lobby is the existing combat shell before a run is committed. */
   inLobby() {
-    return !this.started && !this.stopped;
+    return this.started === false && !this.stopped;
   }
 
   /** Presentation-only per-frame pass. It uses renderer public APIs exclusively and
