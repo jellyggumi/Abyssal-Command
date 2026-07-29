@@ -1,0 +1,18 @@
+{
+ "schemaVersion": 1,
+ "tool": "god-tibo-imagen",
+ "invocation": "gti --prompt \"...\" --output _workspace/current/ui/stage-map-concept/region-cinder-span.png --size 1024x1024",
+ "model": "gpt-5.4",
+ "prompt": "Top-down fantasy campaign map region tile for a dark-abyss action game minimap. Region: CINDER SPAN \u2014 a cracked ember-lit stone causeway spanning a bottomless chasm, hanging iron lanterns with orange flame, charred bridge ribs, faint ash drifting. Painted game-map style, readable at small size, strong silhouette, deep navy-black background with ember orange accents. No text, no letters, no numbers, no UI frame, no border. Centered composition, square.",
+ "referenceInputs": [],
+ "stageId": "cinder-span",
+ "purpose": "Stage minimap region tile \u2014 concept lane. Intended as the sprite behind `.stage-showcase-art` and a hover-activated region map in the \uc804\ud669 \uc2dc\ud2b8 deck.",
+ "sha256": "2d54aa6f55498b60eeb5b0bae4f8a388db7b081edbcfea1721d4bfea35ca24b5",
+ "bytes": 2404527,
+ "runtimeEligible": false,
+ "promotionRequirements": [
+  "audit for originality and palette agreement with STAGE_PALETTE_TINTS",
+  "convert to .webp and place under assets/images/battle/ui/ (tests/runtime-visual-assets.test.mjs forbids any other assets/images/battle/ path, and bans assets/images/battle/stages/)",
+  "register in all four allowlists: scripts/defense-runtime-assets.mjs RETAINED_ASSET_PATHS, assets/defense-asset-manifest.json, .github/workflows/static.yml PAGES_RUNTIME_PATHS, sw.js CORE_ASSETS"
+ ]
+}

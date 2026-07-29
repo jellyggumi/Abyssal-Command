@@ -1,0 +1,18 @@
+{
+ "schemaVersion": 1,
+ "tool": "god-tibo-imagen",
+ "invocation": "gti --prompt \"...\" --output _workspace/current/ui/stage-map-concept/region-echo-throne.png --size 1024x1024",
+ "model": "gpt-5.4",
+ "prompt": "Top-down fantasy campaign map region tile for a dark-abyss action game minimap. Region: ECHO THRONE \u2014 a colossal shattered throne dais at the bottom of the abyss, concentric cracked stone rings, a cold white-gold seat fractured down the middle, dead banners, thin gold light bleeding from the fissure. Painted game-map style, readable at small size, strong silhouette, deep navy-black background with pale gold accents. No text, no letters, no numbers, no UI frame, no border. Centered composition, square.",
+ "referenceInputs": [],
+ "stageId": "echo-throne",
+ "purpose": "Stage minimap region tile \u2014 concept lane. Intended as the sprite behind `.stage-showcase-art` and a hover-activated region map in the \uc804\ud669 \uc2dc\ud2b8 deck.",
+ "sha256": "84b51f60311a8df2215acb093ca5300673c668dac19a83dbe09e7157330542b5",
+ "bytes": 2883809,
+ "runtimeEligible": false,
+ "promotionRequirements": [
+  "audit for originality and palette agreement with STAGE_PALETTE_TINTS",
+  "convert to .webp and place under assets/images/battle/ui/ (tests/runtime-visual-assets.test.mjs forbids any other assets/images/battle/ path, and bans assets/images/battle/stages/)",
+  "register in all four allowlists: scripts/defense-runtime-assets.mjs RETAINED_ASSET_PATHS, assets/defense-asset-manifest.json, .github/workflows/static.yml PAGES_RUNTIME_PATHS, sw.js CORE_ASSETS"
+ ]
+}

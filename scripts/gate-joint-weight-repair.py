@@ -376,10 +376,26 @@ def main(argv: list[str] | None = None) -> int:
                     f"it={iterations} k={strength} [PASS]"
                 )
         else:
+            # `spread 0.0000 / maxSpr 0 / seam>1 0 / disjoint 0` all read as a false green when
+            # every vertex has exactly ONE influence. With a single influence there is no pair
+            # of bones to span, so spread has nothing to measure; and adjacent vertices never
+            # share a bone, so "disjoint" is the normal state rather than a defect signal. Four
+            # of five columns therefore report clean on a fully rigid asset -- which is worse
+            # than the smear defect, because a single-influence vertex cannot bend at all.
+            #
+            # The share is printed rather than scored so this line needs no threshold constant:
+            # 100.0% next to 0.1% is self-evident, and which ceiling is correct is a separate
+            # decision. `sumErr` doubles as a provenance fingerprint -- a lone weight of exactly
+            # 1.0 sums with zero float error, while renormalized multi-influence weights carry
+            # ~4.5e-08 -- so the two pipelines are distinguishable from this output alone.
+            vertices = max(1, before["verticesMeasured"])
+            rigid_share = before["singleInfluenceVertices"] / vertices
+            row["rigidityShare"] = round(rigid_share, 5)
             print(
                 f"{asset_id:26s} spread {before['overSpreadFraction']:.4f} maxSpr {before['maxSpread']} "
                 f"seam>1 {before['seamEdgesOverOne']:5d} disjoint {before['seamEdgesDisjoint']:4d} "
-                f"inf1 {before['singleInfluenceVertices']:4d} sumErr {before['maxWeightSumError']}"
+                f"inf1 {before['singleInfluenceVertices']:6d} ({rigid_share:6.1%}) "
+                f"sumErr {before['maxWeightSumError']}"
             )
         rows.append(row)
 
