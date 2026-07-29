@@ -244,8 +244,9 @@ const VFX_LIFETIME_TICKS = Object.freeze({
 // Rigged character GLBs embed the canonical 11-clip action library named
 // "<assetId>::<action>::v01". The commander additionally authors exact
 // attack_melee / attack_ranged delivery clips; other actors may omit those
-// two and deterministically fall back to attack / critical. VFX and terrain
-// GLBs carry no actions, so unrigged models simply skip animation.
+// two and deterministically fall back to attack / critical. Terrain GLBs carry
+// no actions; authored stage VFX GLBs carry a named loop clip, while other
+// unrigged models simply skip animation.
 const RIG_ACTION_KEYS = Object.freeze([
   "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "die", "show",
   "attack_melee", "attack_ranged",
@@ -1026,8 +1027,13 @@ async function instantiateTerrainModel(relPath) {
 async function instantiatePresentationModel(relPath, targetHeight) {
   const gltf = await loadGltf(relPath);
   const instance = SkeletonUtils.clone(gltf.scene);
+  ownRenderableResources(instance);
   fitHeight(instance, targetHeight);
-  return instance;
+  const clip = gltf.animations?.find(({ name }) => /::loop::/i.test(name)) ?? gltf.animations?.[0] ?? null;
+  const mixer = clip ? new THREE.AnimationMixer(instance) : null;
+  const action = mixer?.clipAction(clip) ?? null;
+  action?.setLoop(THREE.LoopRepeat, Infinity).reset().play();
+  return { instance, mixer, action };
 }
 
 async function instantiateStageProp(prop) {
@@ -1109,6 +1115,12 @@ function applyStageVfxPolicy(record, reducedMotion) {
     record.activeActionKey = record.loopAction ? "loop" : null;
   }
   record.quality = reducedMotion ? "reduced-motion" : (record.lowQuality ? "low" : "full");
+}
+
+function applyTransientVfxPolicy(record, reducedMotion) {
+  if (!record?.action) return;
+  if (reducedMotion) record.action.stop();
+  else record.action.reset().play();
 }
 
 
@@ -1282,9 +1294,14 @@ function weaponSocket(root) {
 async function instantiateVfxModel(relPath) {
   const gltf = await loadGltf(relPath);
   const instance = SkeletonUtils.clone(gltf.scene);
+  ownRenderableResources(instance);
   fitHeight(instance, 1.2);
   instance.position.y = 0.6;
-  return instance;
+  const clip = gltf.animations?.find(({ name }) => /::loop::/i.test(name)) ?? gltf.animations?.[0] ?? null;
+  const mixer = clip ? new THREE.AnimationMixer(instance) : null;
+  const action = mixer?.clipAction(clip) ?? null;
+  action?.setLoop(THREE.LoopRepeat, Infinity).reset().play();
+  return { instance, mixer, action };
 }
 
 function disposeObject3D(root) {
@@ -1767,6 +1784,7 @@ export class RealtimeBattle {
             disposeStageRecord(record);
             return;
           }
+          if (record.kind === "stage-vfx") applyStageVfxPolicy(record, this.reducedMotion);
           this.terrainGroup.add(record.root);
           this.stageDecorRecords.push(record);
         },
@@ -1864,7 +1882,7 @@ export class RealtimeBattle {
       oneShotAction: null, oneShotActionKey: null,
       queuedAction: { key: "show", presentation: null },
       dead: false, hideAfterDeath: false,
-      presentationToken: 0, presentationRoots: [],
+      presentationToken: 0, presentationRoots: [], presentationMixers: [],
       moving: false, lastX: null, lastZ: null,
       // Facing state (D23 Phase 1). `yaw` is the rendered angle, eased
       // toward `targetYaw` in updateAnimations(); both stay null until the
@@ -2026,6 +2044,8 @@ export class RealtimeBattle {
   clearAttackPresentation(record) {
     if (!record) return;
     record.presentationToken = (record.presentationToken ?? 0) + 1;
+    for (const { mixer } of record.presentationMixers ?? []) mixer.stopAllAction();
+    record.presentationMixers = [];
     for (const root of record.presentationRoots ?? []) {
       root.parent?.remove(root);
       disposeObject3D(root);
@@ -2035,12 +2055,18 @@ export class RealtimeBattle {
 
   loadPresentationInto(record, anchor, relPath, targetHeight, token) {
     instantiatePresentationModel(relPath, targetHeight)
-      .then((instance) => {
+      .then(({ instance, mixer, action }) => {
         if (this.disposed || record.presentationToken !== token || !anchor.parent) {
+          mixer?.stopAllAction();
           disposeObject3D(instance);
           return;
         }
         anchor.add(instance);
+        if (mixer) {
+          const presentation = { mixer, action };
+          applyTransientVfxPolicy(presentation, this.reducedMotion);
+          record.presentationMixers.push(presentation);
+        }
       })
       .catch(() => {});
   }
@@ -2554,6 +2580,12 @@ export class RealtimeBattle {
     for (const record of this.stageDecorRecords) {
       if (record.kind === "stage-vfx") applyStageVfxPolicy(record, this.reducedMotion);
     }
+    for (const record of this.vfxInstances) applyTransientVfxPolicy(record, this.reducedMotion);
+    for (const actor of this.actors.values()) {
+      for (const presentation of actor.presentationMixers ?? []) {
+        applyTransientVfxPolicy(presentation, this.reducedMotion);
+      }
+    }
   }
 
   startsStageAtTickZero(snapshot) {
@@ -2788,15 +2820,20 @@ export class RealtimeBattle {
     if (this.vfxInstances.length > MAX_VISUAL_EFFECTS) {
       const stale = this.vfxInstances.shift();
       this.vfxGroup.remove(stale.root);
+      stale.mixer?.stopAllAction();
       disposeObject3D(stale.root);
     }
-    instantiateVfxModel(relPath).then((instance) => {
+    instantiateVfxModel(relPath).then(({ instance, mixer, action }) => {
       if (!this.vfxInstances.includes(record)) {
+        mixer?.stopAllAction();
         disposeObject3D(instance);
         return;
       }
       placeholder.add(instance);
+      record.mixer = mixer;
+      record.action = action;
       record.loaded = true;
+      applyTransientVfxPolicy(record, this.reducedMotion);
     });
   }
 
@@ -2828,6 +2865,7 @@ export class RealtimeBattle {
     instantiateActorModel(echo.modelPath, echo.targetHeight)
       .then(({ instance, mixer, actions }) => {
         if (this.disposed) {
+          mixer?.stopAllAction();
           disposeObject3D(instance);
           return;
         }
@@ -2836,11 +2874,12 @@ export class RealtimeBattle {
         const action = actions.die;
         let untilTick = tick + 72; // DEFAULT_BUDGETS.die.targetFrames @ 60fps, scripts/rig-character-asset-blender.py
         if (action) {
-          action.reset().play();
           const clip = action.getClip();
           if (Number.isFinite(clip?.duration)) untilTick = tick + Math.ceil(clip.duration * 60);
         }
-        this.vfxInstances.push({ root: instance, untilTick, mixer, loaded: true });
+        const record = { root: instance, untilTick, mixer, action, loaded: true };
+        this.vfxInstances.push(record);
+        applyTransientVfxPolicy(record, this.reducedMotion);
       })
       .catch(() => {});
   }
@@ -2911,6 +2950,7 @@ export class RealtimeBattle {
       if (record.kind === "projectile") this.updateProjectilePresentation(record, nowMs);
       else this.updateAmbientIdle(record, nowMs);
       if (!record.oneShotAction && !record.dead) this.recoverLocomotion(record);
+      for (const presentation of record.presentationMixers ?? []) presentation.mixer.update(delta);
     }
     for (const echo of this.vfxInstances) {
       if (echo.mixer) echo.mixer.update(delta);
@@ -3165,6 +3205,7 @@ export class RealtimeBattle {
     for (const record of this.vfxInstances) {
       if (record.untilTick <= tick) {
         this.vfxGroup.remove(record.root);
+        record.mixer?.stopAllAction();
         disposeObject3D(record.root);
       }
     }
