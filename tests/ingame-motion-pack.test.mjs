@@ -11,11 +11,36 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const MANIFEST_PATH = join(ROOT, "assets/motion/ingame/manifest.json");
 const PACK_GLB_PATH = join(ROOT, "assets/motion/ingame/unarmed-core.glb");
-const DUSK_WARDEN_PATH = join(ROOT, "assets/images/battle/glb/commander/dusk-warden.glb");
 const AUDIT_REPORT_PATH = join(
   ROOT,
   "_workspace/current/engineering/asset-pipeline/motion-bench/fbx-audit-report-FULL-OBSERVED.json",
 );
+const PROMOTED_ASSET_IDS = [
+  "broken-court-monarch-boss",
+  "broken-court-monarch-v04",
+  "ember-cohort",
+  "guard",
+  "human-command-boss",
+  "lantern-reaver",
+  "possessed",
+  "scout",
+  "shade",
+  "shadow-commander-boss",
+  "shadow-soldier-v04",
+];
+const CANONICAL_BASE_ACTIONS = [
+  "idle",
+  "move",
+  "run",
+  "hit",
+  "bighit",
+  "attack",
+  "critical",
+  "avoid",
+  "defence",
+  "die",
+  "show",
+];
 
 // Helper to parse GLB structure
 function readGlb(path) {
@@ -62,90 +87,24 @@ function readAccessor(json, bin, index) {
   return { values: out, componentType: acc.componentType };
 }
 
-function loadGltfFile(loader, path, resourcePath = path) {
-  return new Promise((fulfill, rejectLoad) => {
-    const buf = readFileSync(path);
-    const arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-    loader.parse(arrayBuffer, resourcePath, fulfill, rejectLoad);
-  });
-}
 
-function quaternionTrackBoneName(trackName) {
-  const suffix = ".quaternion";
-  if (!trackName.endsWith(suffix)) return null;
-  const nodePath = trackName.slice(0, -suffix.length);
-  const bonesMatch = nodePath.match(/\.bones\[([^\]]+)\]$/);
-  if (bonesMatch) return bonesMatch[1];
-  return nodePath.slice(nodePath.lastIndexOf("/") + 1);
-}
-
-function quaternionAt(track, keyframeIndex) {
-  return new THREE.Quaternion().fromArray(track.values, keyframeIndex * 4).normalize();
-}
-
-function doubleCoverQuaternionAngle(left, right) {
-  const dot = Math.min(1, Math.max(-1, Math.abs(left.dot(right))));
-  return 2 * Math.acos(dot);
-}
-
-function assertQuaternionAngleWithin(actual, expected, epsilon, message) {
-  const angle = doubleCoverQuaternionAngle(actual, expected);
-  assert.ok(angle <= epsilon, `${message}; double-cover angle ${angle} exceeds ${epsilon}`);
-}
-
-function isNonconstantQuaternionTrack(track, epsilon = 1e-5) {
-  const first = quaternionAt(track, 0);
-  for (let index = 1; index < track.values.length / 4; index += 1) {
-    if (doubleCoverQuaternionAngle(first, quaternionAt(track, index)) > epsilon) return true;
-  }
-  return false;
-}
-
-function snapshotLocalPositions(root) {
-  const positions = new Map();
-  root.traverse((object) => positions.set(object, object.position.clone()));
-  return positions;
-}
-
-function assertLocalPositionsUnchanged(positions, message) {
-  for (const [object, expected] of positions) {
-    assert.ok(object.position.equals(expected), `${message}: ${object.name || object.type}`);
-  }
-}
-
-// Intercept GLTFLoader.prototype.load to load real files from disk
-let simulateOverlayLoadFailure = false;
+// Intercept GLTFLoader.prototype.load to load real files from disk.
+let rejectedModelPath = null;
 
 const originalLoad = GLTFLoader.prototype.load;
 GLTFLoader.prototype.load = function (url, onLoad, onProgress, onError) {
-  if (url === "assets/motion/ingame/unarmed-core.glb" || url === "./assets/motion/ingame/unarmed-core.glb") {
-    if (simulateOverlayLoadFailure) {
-      queueMicrotask(() => {
-        onError(new Error("Simulated overlay load failure"));
-      });
-      return this;
-    }
+  const relativeUrl = String(url).replace(/^\.\//, "");
+  if (relativeUrl === rejectedModelPath) {
+    queueMicrotask(() => onError?.(new Error(`Simulated model load failure: ${relativeUrl}`)));
+    return this;
   }
   try {
     const filePath = resolve(ROOT, url);
     const buf = readFileSync(filePath);
     const arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-    this.parse(arrayBuffer, url, onLoad, (err) => {
-      console.error(`GLTFLoader.parse error for ${url}:`, err);
-      if (onError) onError(err);
-    });
-  } catch (err) {
-    if (url === "assets/motion/ingame/unarmed-core.glb" || url === "./assets/motion/ingame/unarmed-core.glb") {
-      // Expected ENOENT warning in production fallback test
-      if (onError) {
-        queueMicrotask(() => onError(err));
-      }
-    } else {
-      console.error(`Mock loader readFileSync error for ${url}:`, err);
-      if (onError) {
-        queueMicrotask(() => onError(err));
-      }
-    }
+    this.parse(arrayBuffer, url, onLoad, onError);
+  } catch (error) {
+    queueMicrotask(() => onError?.(error));
   }
   return this;
 };
@@ -184,8 +143,8 @@ function createHarness(RealtimeBattle) {
   return adapter;
 }
 
-// 1. Manifest structure, mappings, and meshes
-test("manifest records the measured source and complete retarget contract", () => {
+// 1. Raw unarmed-core source and mapping contract
+test("raw unarmed-core manifest records the measured retarget contract", () => {
   assert.ok(existsSync(MANIFEST_PATH), `manifest.json should exist at ${MANIFEST_PATH}`);
   assert.ok(existsSync(AUDIT_REPORT_PATH), `FBX audit report should exist at ${AUDIT_REPORT_PATH}`);
   const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8"));
@@ -266,7 +225,7 @@ test("manifest records the measured source and complete retarget contract", () =
     assert.equal(
       override.clipName,
       `unarmed-core::${override.action}::v01`,
-      `${override.action} must use the runtime clip naming contract`,
+      `${override.action} must use the raw pack clip naming contract`,
     );
 
     const observed = auditByFile.get(expectedSource);
@@ -290,17 +249,6 @@ test("manifest records the measured source and complete retarget contract", () =
     );
   }
 
-  assert.deepEqual(
-    manifest.fallbackActions,
-    ["die", "show", "attack_melee", "attack_ranged"],
-    "the overlay must preserve the four authored fallback action keys",
-  );
-  assert.equal(manifest.compatibleMeshes.length, 24, "all 24 compatible runtime meshes must be listed");
-  for (const relPath of manifest.compatibleMeshes) {
-    assert.ok(!relPath.includes("assets/motion/bench"), `bench input leaked into compatibleMeshes: ${relPath}`);
-    assert.ok(!relPath.endsWith(".fbx"), `FBX input leaked into compatibleMeshes: ${relPath}`);
-  }
-
   for (const check of [
     "glb2",
     "animationOnly",
@@ -313,7 +261,6 @@ test("manifest records the measured source and complete retarget contract", () =
   ]) {
     assert.equal(manifest.checks[check], true, `manifest check ${check} must pass`);
   }
-  assert.equal(manifest.runtimeEligible, true, "the generated pack must pass every runtime gate");
 });
 
 // 2. GLB Structural Verification
@@ -343,10 +290,8 @@ test("raw pack contains only nine finite local quaternion-delta clips", () => {
     "the raw pack must contain exactly one clip for every override action",
   );
 
-  const targetGlb = readGlb(DUSK_WARDEN_PATH);
-  const targetBoneNames = new Set(
-    targetGlb.json.skins[0].joints.map((joint) => targetGlb.json.nodes[joint].name),
-  );
+  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8"));
+  const targetBoneNames = new Set(manifest.pack.targetBoneNames);
   for (const animation of json.animations) {
     for (const channel of animation.channels) {
       const targetNodeName = json.nodes[channel.target.node].name;
@@ -370,223 +315,178 @@ test("raw pack contains only nine finite local quaternion-delta clips", () => {
   }
 });
 
-// 3. Compatible character GLBs contain the target bone names
-test("compatible character GLBs contain target bone names", () => {
-  const duskWardenGlb = readGlb(DUSK_WARDEN_PATH);
-  const duskWardenJoints = duskWardenGlb.json.skins[0].joints.map(j => duskWardenGlb.json.nodes[j].name);
-  
-  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8"));
-  for (const relPath of manifest.compatibleMeshes) {
+// 3. Promoted character GLBs are self-contained and publicly routable
+test("public motion registry exports 11 self-contained promoted character GLBs", async () => {
+  const { MOTION_MODELS, meshRootForMotionCharacter } = await rendererModule;
+  const expectedRegistry = Object.fromEntries(
+    PROMOTED_ASSET_IDS.map((assetId) => [
+      assetId,
+      `assets/motion/ingame/characters/${assetId}/model.glb`,
+    ]),
+  );
+
+  assert.deepEqual(
+    MOTION_MODELS,
+    expectedRegistry,
+    "the public motion registry must expose the complete promoted character library",
+  );
+  for (const [assetId, relPath] of Object.entries(expectedRegistry)) {
+    assert.equal(
+      meshRootForMotionCharacter(assetId),
+      relPath,
+      `${assetId} must resolve to its own promoted character model`,
+    );
     const fullPath = resolve(ROOT, relPath);
-    assert.ok(existsSync(fullPath), `character GLB must exist: ${relPath}`);
-    const charGlb = readGlb(fullPath);
-    const nodeNames = new Set(charGlb.json.nodes.map(n => n.name));
-    
-    for (const bone of duskWardenJoints) {
-      assert.ok(nodeNames.has(bone), `compatible mesh ${relPath} is missing bone ${bone}`);
-    }
+    assert.ok(existsSync(fullPath), `promoted character GLB must exist: ${relPath}`);
+    const { json } = readGlb(fullPath);
+    assert.ok(json.meshes?.length > 0, `${assetId} must carry its renderable mesh`);
+    assert.ok(json.skins?.length > 0, `${assetId} must carry its rig`);
+    assert.deepEqual(
+      json.animations.map(({ name }) => name).sort(),
+      CANONICAL_BASE_ACTIONS.map((action) => `${assetId}::${action}::v01`).sort(),
+      `${assetId} must carry exactly the canonical 11 namespaced base clips`,
+    );
   }
+  assert.equal(
+    meshRootForMotionCharacter("not-in-the-motion-library"),
+    null,
+    "unknown motion asset IDs must not alias a promoted character",
+  );
 });
 
-// 4. Runtime behavior test: overlay precedence, fallback, and failed overlay load recovery
-test("runtime overlay wins while authored fallbacks and load-failure actors survive", async () => {
-  const { RealtimeBattle } = await rendererModule;
-  const overlayActions = JSON.parse(readFileSync(MANIFEST_PATH, "utf8")).pack.clipOverrides;
-
-  const failureAdapter = createHarness(RealtimeBattle);
-  simulateOverlayLoadFailure = true;
+// 4. A failed promoted override falls back to the actor's standard promoted model
+test("failed promoted model load recovers with the standard actor base clips", async () => {
+  const { MOTION_MODELS, RealtimeBattle } = await rendererModule;
+  const adapter = createHarness(RealtimeBattle);
+  rejectedModelPath = MOTION_MODELS.guard;
   try {
-    const failedOverlayActor = failureAdapter.ensureActor({ id: "commander" }, "commander");
-    await waitFor(
-      () => !failedOverlayActor.loading,
-      "commander actor did not finish loading under overlay failure simulation",
+    const record = adapter.ensureActor(
+      { id: "guard-load-failure", kind: "rusher", motionAssetId: "guard" },
+      "enemy",
     );
-    assert.ok(failedOverlayActor.root, "the base actor must still be created when the overlay load fails");
-    assert.ok(failedOverlayActor.mixer, "the base actor mixer must still be created when the overlay load fails");
-    for (const key of ["attack", "die", "show", "attack_melee", "attack_ranged"]) {
-      assert.equal(failedOverlayActor.actionSources[key], "base", `${key} must fall back to the authored base clip`);
+    await waitFor(() => !record.loading, "actor did not finish loading after promoted model failure");
+
+    assert.ok(record.root, "the standard actor model must render when the promoted override fails");
+    assert.ok(record.mixer, "the standard actor model must retain its animation mixer");
+    assert.equal(
+      record.modelPath,
+      MOTION_MODELS.scout,
+      "a failed rusher override must fall back to the standard scout model",
+    );
+    assert.deepEqual(
+      Object.keys(record.actions).sort(),
+      [...CANONICAL_BASE_ACTIONS].sort(),
+      "the fallback actor must retain the complete canonical base action set",
+    );
+    for (const action of CANONICAL_BASE_ACTIONS) {
+      assert.equal(record.actionSources[action], "base", `fallback ${action} must come from the scout model`);
       assert.equal(
-        failedOverlayActor.actions[key].getClip().name,
-        `dusk-warden::${key}::v01`,
-        `${key} must retain its authored dusk-warden clip`,
+        record.actions[action].getClip().name,
+        `scout::${action}::v01`,
+        `fallback ${action} must retain the scout namespace`,
       );
     }
   } finally {
-    simulateOverlayLoadFailure = false;
-    failureAdapter.dispose();
-  }
-
-  const adapter = createHarness(RealtimeBattle);
-  const actors = [
-    {
-      name: "dusk-warden",
-      kind: "commander",
-      entity: { id: "commander" },
-      fallbackActions: ["die", "show", "attack_melee", "attack_ranged"],
-    },
-    {
-      name: "scout",
-      kind: "enemy",
-      entity: { id: "scout-actor", kind: "rusher" },
-      fallbackActions: ["die", "show"],
-    },
-    {
-      name: "bridge-colossus",
-      kind: "boss",
-      entity: { id: "colossus-actor", class: "boss", bossId: "s8-bridge-colossus" },
-      fallbackActions: ["die", "show"],
-    },
-  ];
-
-  try {
-    for (const actor of actors) {
-      const record = adapter.ensureActor(actor.entity, actor.kind);
-      await waitFor(() => !record.loading, `${actor.name} actor did not finish loading`);
-      assert.ok(record.root, `${actor.name} actor root must exist`);
-      assert.ok(record.mixer, `${actor.name} actor mixer must exist`);
-
-      for (const override of overlayActions) {
-        assert.equal(
-          record.actionSources[override.action],
-          "overlay",
-          `${actor.name} ${override.action} must prefer the overlay`,
-        );
-        assert.equal(
-          record.actions[override.action].getClip().name,
-          override.clipName,
-          `${actor.name} ${override.action} must expose the adapted overlay clip`,
-        );
-      }
-
-      for (const key of actor.fallbackActions) {
-        assert.equal(record.actionSources[key], "base", `${actor.name} ${key} must remain authored fallback`);
-        assert.equal(
-          record.actions[key].getClip().name,
-          `${actor.name}::${key}::v01`,
-          `${actor.name} ${key} fallback must retain its authored clip`,
-        );
-      }
-    }
-  } finally {
+    rejectedModelPath = null;
     adapter.dispose();
   }
 });
 
-// 5. Cross-rig test for attack clip rotation tracks
-test("runtime composes cached attack deltas with each target rig rest pose", async () => {
-  const loader = new GLTFLoader();
-  const packGltf = await loadGltfFile(loader, PACK_GLB_PATH, PACK_GLB_PATH);
-  const rawAttackClip = packGltf.animations.find(
-    (animation) => animation.name === "unarmed-core::attack::v01",
-  );
-  assert.ok(rawAttackClip, "the raw pack must contain the attack delta clip");
-
-  const rawCandidates = rawAttackClip.tracks.filter(
-    (track) => track.name.endsWith(".quaternion") && isNonconstantQuaternionTrack(track),
-  );
-  assert.ok(rawCandidates.length > 0, "the attack clip must contain a nonconstant quaternion delta track");
-
-  const { RealtimeBattle } = await rendererModule;
-  const adapter = createHarness(RealtimeBattle);
-  const rigs = [
+// 5. Live routing uses each promoted model's own base action library
+test("runtime routes all promoted rigs to their namespaced base action clips", async () => {
+  const { MOTION_MODELS, RealtimeBattle } = await rendererModule;
+  const routingCases = [
     {
-      name: "scout",
-      kind: "enemy",
-      entity: { id: "cross-rig-scout", kind: "rusher" },
-    },
-    {
-      name: "bridge-colossus",
-      kind: "boss",
-      entity: { id: "cross-rig-colossus", class: "boss", bossId: "s8-bridge-colossus" },
-    },
-    {
-      name: "dusk-warden",
-      kind: "commander",
+      label: "commander",
+      assetId: "human-command-boss",
       entity: { id: "commander" },
+      kind: "commander",
     },
+    {
+      label: "ember-cohort companion",
+      assetId: "ember-cohort",
+      entity: { id: "ember-cohort-runtime", kind: "companion", companionId: "ember-cohort" },
+      kind: "companion",
+    },
+    {
+      label: "lantern-reaver companion",
+      assetId: "lantern-reaver",
+      entity: { id: "lantern-reaver-runtime", kind: "companion", companionId: "lantern-reaver" },
+      kind: "companion",
+    },
+    {
+      label: "rusher",
+      assetId: "scout",
+      entity: { id: "scout-runtime", kind: "rusher" },
+      kind: "enemy",
+    },
+    {
+      label: "flanker",
+      assetId: "shade",
+      entity: { id: "shade-runtime", kind: "flanker" },
+      kind: "enemy",
+    },
+    {
+      label: "guardian",
+      assetId: "shadow-soldier-v04",
+      entity: { id: "guardian-runtime", kind: "guardian" },
+      kind: "enemy",
+    },
+    {
+      label: "ranged enemy",
+      assetId: "possessed",
+      entity: { id: "possessed-runtime", kind: "ranged" },
+      kind: "enemy",
+    },
+    ...[
+      "broken-court-monarch-boss",
+      "broken-court-monarch-v04",
+      "guard",
+      "shadow-commander-boss",
+    ].map((assetId) => ({
+      label: `explicit ${assetId}`,
+      assetId,
+      entity: { id: `${assetId}-runtime`, kind: "rusher", motionAssetId: assetId },
+      kind: "enemy",
+    })),
   ];
-  const angleEpsilon = 1e-5;
 
+  assert.deepEqual(
+    routingCases.map(({ assetId }) => assetId).sort(),
+    PROMOTED_ASSET_IDS,
+    "runtime cases must cover every public promoted motion asset",
+  );
+
+  const adapter = createHarness(RealtimeBattle);
   try {
-    for (const rig of rigs) {
-      const record = adapter.ensureActor(rig.entity, rig.kind);
-      await waitFor(() => !record.loading, `${rig.name} actor did not finish loading`);
-      assert.ok(record.root, `${rig.name} actor root must exist`);
-      assert.equal(record.actionSources.attack, "overlay", `${rig.name} attack must use the overlay`);
+    for (const routingCase of routingCases) {
+      const record = adapter.ensureActor(routingCase.entity, routingCase.kind);
+      await waitFor(() => !record.loading, `${routingCase.label} actor did not finish loading`);
 
-      const adaptedClip = record.actions.attack.getClip();
-      const candidate = rawCandidates
-        .map((rawTrack) => {
-          const boneName = quaternionTrackBoneName(rawTrack.name);
-          const bone = record.root.getObjectByName(boneName);
-          const adaptedTrack = adaptedClip.tracks.find(
-            (track) => quaternionTrackBoneName(track.name) === boneName,
-          );
-          if (!bone?.isBone || !adaptedTrack) return null;
-          const restQuaternion = bone.quaternion.clone().normalize();
-          const rawFirst = quaternionAt(rawTrack, 0);
-          const composedFirst = restQuaternion.clone().multiply(rawFirst).normalize();
-          return doubleCoverQuaternionAngle(composedFirst, rawFirst) > 1e-3
-            ? { rawTrack, adaptedTrack, bone, boneName, restQuaternion }
-            : null;
-        })
-        .find(Boolean);
-      assert.ok(
-        candidate,
-        `${rig.name} must expose a nonconstant mapped track whose rest-relative result differs from the raw delta`,
-      );
-
-      const { rawTrack, adaptedTrack, bone, boneName, restQuaternion } = candidate;
-      assert.deepEqual(
-        Array.from(adaptedTrack.times),
-        Array.from(rawTrack.times),
-        `${rig.name} adapted track must preserve attack keyframe times`,
-      );
+      assert.ok(record.root, `${routingCase.label} actor root must exist`);
+      assert.ok(record.mixer, `${routingCase.label} actor mixer must exist`);
       assert.equal(
-        adaptedTrack.values.length,
-        rawTrack.values.length,
-        `${rig.name} adapted track must preserve every attack delta key`,
+        record.modelPath,
+        MOTION_MODELS[routingCase.assetId],
+        `${routingCase.label} must use its routed promoted model`,
       );
-      for (let index = 0; index < rawTrack.values.length / 4; index += 1) {
-        const delta = quaternionAt(rawTrack, index);
-        const expected = restQuaternion.clone().multiply(delta).normalize();
-        const actual = quaternionAt(adaptedTrack, index);
-        assertQuaternionAngleWithin(
-          actual,
-          expected,
-          angleEpsilon,
-          `${rig.name} ${boneName} key ${index} must equal qRestTarget * qDelta`,
+      assert.deepEqual(
+        Object.keys(record.actions).sort(),
+        [...CANONICAL_BASE_ACTIONS].sort(),
+        `${routingCase.label} must expose the complete canonical base action set`,
+      );
+      for (const action of CANONICAL_BASE_ACTIONS) {
+        assert.equal(
+          record.actionSources[action],
+          "base",
+          `${routingCase.label} ${action} must come from its promoted model`,
+        );
+        assert.equal(
+          record.actions[action].getClip().name,
+          `${routingCase.assetId}::${action}::v01`,
+          `${routingCase.label} ${action} must retain the promoted asset namespace`,
         );
       }
-
-      const localPositions = snapshotLocalPositions(record.root);
-      record.mixer.stopAllAction();
-      record.actions.attack.reset().play();
-      record.mixer.setTime(0);
-
-      const rawAtZero = quaternionAt(rawTrack, 0);
-      const expectedAtZero = restQuaternion.clone().multiply(rawAtZero).normalize();
-      assertQuaternionAngleWithin(
-        bone.quaternion.clone().normalize(),
-        expectedAtZero,
-        angleEpsilon,
-        `${rig.name} ${boneName} must receive the composed quaternion at t=0`,
-      );
-      assert.ok(
-        doubleCoverQuaternionAngle(bone.quaternion.clone().normalize(), rawAtZero) > 1e-3,
-        `${rig.name} ${boneName} must not receive the raw delta as an absolute quaternion at t=0`,
-      );
-      assertLocalPositionsUnchanged(
-        localPositions,
-        `${rig.name} local position changed when the attack started`,
-      );
-
-      record.mixer.update(adaptedClip.duration / 2);
-      assertLocalPositionsUnchanged(
-        localPositions,
-        `${rig.name} local position changed while the attack played`,
-      );
-      record.actions.attack.stop();
     }
   } finally {
     adapter.dispose();

@@ -9,6 +9,7 @@ const OUTPUT_PATH = '_workspace/20260726-stage1b-cinder-pressure-agency/engineer
 const CATALOG_PATH = 'stage-world-catalog.js';
 const ALL_MESH_PROVENANCE_PATH = '_workspace/archive/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json';
 const TERRAIN_PROVENANCE_PATH = 'assets/images/battle/glb/terrain/build-provenance.json';
+const CINDER_RESOURCE_MANIFEST_PATH = 'assets/images/battle/glb/terrain/cinder-span-resources.manifest.json';
 const CHARACTER_PROVENANCE_PATH = 'assets/images/battle/glb/character-build-provenance.json';
 const RUNTIME_REGISTRY_PATH = 'scripts/defense-runtime-assets.mjs';
 const JSON_CHUNK = 0x4e4f534a;
@@ -82,7 +83,7 @@ function parseGlb(assetPath) {
   return { absolutePath, bytes, json, binary, version };
 }
 
-function normalizeProvenanceRecords(allMeshAudit, terrainBuildProvenance, characterBuildProvenance) {
+function normalizeProvenanceRecords(allMeshAudit, terrainBuildProvenance, characterBuildProvenance, cinderResourceManifest) {
   const allMeshByRelativePath = new Map((allMeshAudit.rows ?? []).map((row) => [
     row.relativePath,
     {
@@ -100,19 +101,35 @@ function normalizeProvenanceRecords(allMeshAudit, terrainBuildProvenance, charac
       },
     },
   ]));
-  const terrainByOutputPath = new Map(Object.values(terrainBuildProvenance.stages ?? {}).map((stage) => [
-    stage.outputPath,
-    {
-      auditPath: TERRAIN_PROVENANCE_PATH,
-      outputSha256: stage.outputSha256,
-      valid: typeof stage.outputPath === 'string' && typeof stage.outputSha256 === 'string',
-      report: {
+  const terrainByOutputPath = new Map(Object.values(terrainBuildProvenance.stages ?? {}).map((stage) => {
+    const postProcessor = stage.postProcessor;
+    const postProcessorValid = !postProcessor || [
+      ['scriptPath', 'scriptSha256'],
+      ['resourceManifestPath', 'resourceManifestSha256'],
+    ].every(([pathKey, hashKey]) => {
+      const path = postProcessor[pathKey];
+      const expectedSha256 = postProcessor[hashKey];
+      const absolutePath = typeof path === 'string' ? resolve(ROOT, path) : '';
+      return typeof expectedSha256 === 'string'
+        && existsSync(absolutePath)
+        && sha256(readFileSync(absolutePath)) === expectedSha256;
+    });
+    return [
+      stage.outputPath,
+      {
         auditPath: TERRAIN_PROVENANCE_PATH,
-        outputPath: stage.outputPath,
-        verifiedOutputSha256: stage.outputSha256,
+        outputSha256: stage.outputSha256,
+        valid: typeof stage.outputPath === 'string'
+          && typeof stage.outputSha256 === 'string'
+          && postProcessorValid,
+        report: {
+          auditPath: TERRAIN_PROVENANCE_PATH,
+          outputPath: stage.outputPath,
+          verifiedOutputSha256: stage.outputSha256,
+        },
       },
-    },
-  ]));
+    ];
+  }));
   // Characters that were re-rigged and re-authored no longer come out of the
   // texture pass, so -- exactly like terrain -- they carry their own build
   // record and are verified against it instead.
@@ -130,7 +147,23 @@ function normalizeProvenanceRecords(allMeshAudit, terrainBuildProvenance, charac
       },
     },
   ]));
-  return { allMeshByRelativePath, terrainByOutputPath, characterByOutputPath };
+  const cinderResourceByOutputPath = new Map((cinderResourceManifest.promotionAudit?.resources ?? []).map((resource) => [
+    resource.path,
+    {
+      auditPath: CINDER_RESOURCE_MANIFEST_PATH,
+      outputSha256: resource.sha256,
+      valid: cinderResourceManifest.runtimeEligible === true
+        && cinderResourceManifest.promotionAudit?.passed === true
+        && typeof resource.path === 'string'
+        && typeof resource.sha256 === 'string',
+      report: {
+        auditPath: CINDER_RESOURCE_MANIFEST_PATH,
+        outputPath: resource.path,
+        verifiedOutputSha256: resource.sha256,
+      },
+    },
+  ]));
+  return { allMeshByRelativePath, terrainByOutputPath, characterByOutputPath, cinderResourceByOutputPath };
 }
 
 function auditGlb(assetPath, retainedPaths, provenanceRecords) {
@@ -268,22 +301,26 @@ function auditGlb(assetPath, retainedPaths, provenanceRecords) {
 
   const isTerrainAsset = assetPath.startsWith('assets/images/battle/glb/terrain/');
   const relativeGlbPath = assetPath.split('/glb/')[1];
-  // A promoted character owns its build record; everything else still answers
-  // to the texture pass that produced it.
+  // Re-authored characters and Cinder resource packs own promoted build records;
+  // assets without one still answer to the historical texture-pass audit.
   const characterProvenance = provenanceRecords.characterByOutputPath.get(assetPath);
+  const cinderResourceProvenance = provenanceRecords.cinderResourceByOutputPath.get(assetPath);
   const provenance = isTerrainAsset
     ? provenanceRecords.terrainByOutputPath.get(assetPath)
-    : (characterProvenance ?? provenanceRecords.allMeshByRelativePath.get(relativeGlbPath));
+    : (characterProvenance ?? cinderResourceProvenance ?? provenanceRecords.allMeshByRelativePath.get(relativeGlbPath));
   const runtimeSha256 = sha256(glb.bytes);
   checks.verifiedProvenanceMatch = provenance?.valid === true
     && provenance.outputSha256 === runtimeSha256;
   if (!checks.verifiedProvenanceMatch) {
-    const requirement = isTerrainAsset || characterProvenance
-      ? 'the outputSha256 for its exact outputPath'
+    const exactProvenance = isTerrainAsset || characterProvenance || cinderResourceProvenance;
+    const requirement = exactProvenance
+      ? 'the output SHA-256 for its exact outputPath'
       : 'an all-green row for its relative GLB path';
     const auditPath = isTerrainAsset
       ? TERRAIN_PROVENANCE_PATH
-      : (characterProvenance ? CHARACTER_PROVENANCE_PATH : ALL_MESH_PROVENANCE_PATH);
+      : (characterProvenance
+        ? CHARACTER_PROVENANCE_PATH
+        : (cinderResourceProvenance ? CINDER_RESOURCE_MANIFEST_PATH : ALL_MESH_PROVENANCE_PATH));
     errors.push(issue('provenance_mismatch', assetPath, `runtime SHA-256 does not match ${requirement} in ${auditPath}`));
   }
 
@@ -418,16 +455,22 @@ async function buildReport() {
     import('../stage-world-catalog.js'),
     import('./defense-runtime-assets.mjs'),
   ]);
-  const [allMeshAudit, terrainBuildProvenance] = [
+  const [allMeshAudit, terrainBuildProvenance, cinderResourceManifest] = [
     ALL_MESH_PROVENANCE_PATH,
     TERRAIN_PROVENANCE_PATH,
+    CINDER_RESOURCE_MANIFEST_PATH,
   ].map((path) => JSON.parse(readFileSync(resolve(ROOT, path), 'utf8')));
   // Optional: absent until the first character promotion, and every other
   // asset keeps answering to the texture-pass audit when it is missing.
   const characterBuildProvenance = existsSync(resolve(ROOT, CHARACTER_PROVENANCE_PATH))
     ? JSON.parse(readFileSync(resolve(ROOT, CHARACTER_PROVENANCE_PATH), 'utf8'))
     : { assets: {} };
-  const provenanceRecords = normalizeProvenanceRecords(allMeshAudit, terrainBuildProvenance, characterBuildProvenance);
+  const provenanceRecords = normalizeProvenanceRecords(
+    allMeshAudit,
+    terrainBuildProvenance,
+    characterBuildProvenance,
+    cinderResourceManifest,
+  );
   const retainedPaths = new Set(RETAINED_ASSET_PATHS);
   const canonicalStageIds = STAGES.map(({ id }) => id);
   const assetPaths = new Set();
@@ -480,6 +523,7 @@ async function buildReport() {
       runtimeAssetRegistry: RUNTIME_REGISTRY_PATH,
       allMeshGlbAudit: ALL_MESH_PROVENANCE_PATH,
       terrainBuildProvenance: TERRAIN_PROVENANCE_PATH,
+      cinderResourceManifest: CINDER_RESOURCE_MANIFEST_PATH,
     },
     stageCount: stages.length,
     showcaseStageIds: [...STAGE_SHOWCASE_IDS],

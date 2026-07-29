@@ -1,17 +1,20 @@
-# Stage Composition Map — Stages 2–10
+# Superseded Stage Composition Map — pre-three-stage catalog
+
+> **Historical evidence only — superseded 2026-07-29.** This map records the removed
+> ten-stage image-backed catalog and must not guide implementation or gate measurement.
+> The active authority is `defense-catalog.js` plus
+> `design/{pcg-stage-layout-spec,boss-pattern-spec,camera-vfx-direction}.md`; it defines
+> only `Cinder Span → Abyss Chancel → Echo Throne`, mesh terrain, three boss meshes, and
+> UI-only battle images. The evidence below remains unchanged for traceability.
 
 ```yaml
 run_id: 20260728-onslaught-action-pivot
-status: "[OBSERVED] — 출하된 카탈로그/디스크 상태의 측정 기록"
+status: "[HISTORICAL] — measurement of superseded ten-stage catalog/disk state"
 owner_skill: author-game-levels
-scope: veil-citadel · echo-throne · sunken-bastion · howling-sprawl · glass-necropolis · starless-canal · shattered-causeway · abyss-chancel · gate-zenith
-baseline: cinder-span (스테이지 1은 design/stage-composition-audit-stage1.md 소유 — 여기서는 기준선으로만 인용)
+scope: archived pre-cutover stages 2–10 evidence; not an active level specification
+baseline: historical pre-cutover Cinder Span audit only
 sources:
-  - defense-catalog.js#STAGES / #STAGE_PRESENTATION_BY_ID / #CUTSCENES / #STAGE_WAVE_DOCTRINE / #STAGE_TACTICS
-  - stage-world-catalog.js#STAGE_WORLD_PROFILES
-  - app.js#STAGE_ART_FILE_BY_ID / #stageArtPath
-  - battle-realtime-three.js#MODEL_ROOT / #BOSS_MODELS / #COMPANION_MODELS
-  - assets/defense-asset-manifest.json · scripts/defense-runtime-assets.mjs · .github/workflows/static.yml
+  - superseded catalog, world profiles, and runtime asset registry
 ```
 
 ---

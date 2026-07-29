@@ -6,27 +6,12 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { promisify } from "node:util";
 import { runInNewContext } from "node:vm";
+import { RETAINED_ASSET_PATHS } from "../scripts/defense-runtime-assets.mjs";
 
 const execFileAsync = promisify(execFile);
 const ROOT = new URL("../", import.meta.url);
 const RULES_VERSION = "defense-survivor-v1";
 const GAMEPLAY_VIDEO = "assets/video/abyssal-surge-defense-survivor-smoke.mp4";
-const CINDER_SPAN_WORLD_ASSETS = [
-  "assets/images/battle/world/cinder-span-topdown-plate.webp",
-  "assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
-];
-const STAGE_ART_ASSETS = Object.freeze([
-  "assets/images/battle/ui/stages/cinder-span.png",
-  "assets/images/battle/ui/stages/veil-citadel.png",
-  "assets/images/battle/ui/stages/echo-throne-steps.png",
-  "assets/images/battle/ui/stages/sunken-bastion.png",
-  "assets/images/battle/ui/stages/howling-sprawl.png",
-  "assets/images/battle/ui/stages/glass-necropolis.png",
-  "assets/images/battle/ui/stages/starless-canal.png",
-  "assets/images/battle/ui/stages/shattered-causeway.png",
-  "assets/images/battle/ui/stages/abyss-chancel.png",
-  "assets/images/battle/ui/stages/gate-zenith.png",
-]);
 /* Generated UI icon layer (scripts/build-ui-icon-assets.py). Ordered exactly as the
    workflow's PAGES_RUNTIME_PATHS lists them, because this list is compared as a
    sequence against that env value. */
@@ -45,68 +30,58 @@ const UI_ICON_ASSETS = Object.freeze([
   "assets/images/battle/ui/hud/stat-commander.webp",
   "assets/images/battle/ui/hud/stat-echo-xp.webp",
   "assets/images/battle/ui/hud/stat-gate-integrity.webp",
-  "assets/images/battle/ui/plates/lobby-command-plate.webp",
-  "assets/images/battle/ui/plates/seal-atlas-plate.webp",
 ]);
-const COMBAT_GLB_ASSETS = Object.freeze([
-  "assets/images/battle/glb/props/abyss-blade.glb",
-  "assets/images/battle/glb/props/arc-caster.glb",
-  "assets/images/battle/glb/vfx/abyss-orb.glb",
-  "assets/images/battle/glb/vfx/melee-slash.glb",
-  "assets/images/battle/glb/vfx/ranged-bolt.glb",
+const PROMOTED_MOTION_CHARACTER_IDS = Object.freeze([
+  "broken-court-monarch-boss",
+  "broken-court-monarch-v04",
+  "ember-cohort",
+  "guard",
+  "human-command-boss",
+  "lantern-reaver",
+  "possessed",
+  "scout",
+  "shade",
+  "shadow-soldier-v04",
+  "shadow-commander-boss",
 ]);
-const BATTLE_GLB_ASSETS = [
-  "assets/images/battle/glb/terrain/abyss-chancel.glb", "assets/images/battle/glb/terrain/cinder-span.glb", "assets/images/battle/glb/terrain/echo-throne-steps.glb", "assets/images/battle/glb/terrain/gate-zenith.glb",
-  "assets/images/battle/glb/terrain/glass-necropolis.glb", "assets/images/battle/glb/terrain/howling-sprawl.glb", "assets/images/battle/glb/terrain/shattered-causeway.glb", "assets/images/battle/glb/terrain/starless-canal.glb",
-  "assets/images/battle/glb/terrain/sunken-bastion.glb", "assets/images/battle/glb/terrain/veil-citadel.glb", "assets/images/battle/glb/bosses/abyss-regent.glb", "assets/images/battle/glb/bosses/bridge-colossus.glb",
-  "assets/images/battle/glb/bosses/cinder-warden.glb", "assets/images/battle/glb/bosses/gate-sovereign.glb", "assets/images/battle/glb/bosses/lantern-tyrant.glb", "assets/images/battle/glb/bosses/pack-herald.glb",
-  "assets/images/battle/glb/bosses/requiem-choir.glb", "assets/images/battle/glb/bosses/tide-warden.glb", "assets/images/battle/glb/bosses/veil-tactician.glb", "assets/images/battle/glb/bosses/veiled-concordat.glb",
-  "assets/images/battle/glb/enemies/guard.glb", "assets/images/battle/glb/enemies/possessed.glb", "assets/images/battle/glb/enemies/scout.glb", "assets/images/battle/glb/enemies/shade.glb",
-  "assets/images/battle/glb/companions/anchor-shard.glb", "assets/images/battle/glb/companions/dawnless-crown.glb", "assets/images/battle/glb/companions/ember-cohort.glb", "assets/images/battle/glb/companions/lantern-reaver.glb",
-  "assets/images/battle/glb/companions/pack-warden.glb", "assets/images/battle/glb/companions/requiem-warden.glb", "assets/images/battle/glb/companions/rift-lens.glb", "assets/images/battle/glb/companions/throne-echo.glb",
-  "assets/images/battle/glb/companions/veil-vanguard.glb", "assets/images/battle/glb/commander/dusk-warden.glb", "assets/images/battle/glb/vfx/boss-rally-aura.glb", "assets/images/battle/glb/vfx/companion-downed-fade.glb",
-  "assets/images/battle/glb/vfx/critical-hit-burst.glb", "assets/images/battle/glb/vfx/echo-warden-awakening.glb", "assets/images/battle/glb/vfx/gate-breach-shockwave.glb", "assets/images/battle/glb/vfx/wardens-ward-shield.glb",
-  "assets/images/battle/glb/props/abyssal-banner.glb", "assets/images/battle/glb/props/bulwark-brand.glb", "assets/images/battle/glb/props/choir-ward-crystal.glb", "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb", "assets/images/battle/glb/props/stillwater-hourglass.glb",
-  "assets/images/battle/glb/props/warden-lantern.glb", "assets/images/battle/glb/props/tiers/tier-t1.glb", "assets/images/battle/glb/props/tiers/tier-t2.glb", "assets/images/battle/glb/props/tiers/tier-t3.glb",
-  "assets/images/battle/glb/props/tiers/tier-t4.glb", "assets/images/battle/glb/props/tiers/tier-t5.glb",
-];
+const PROMOTED_MOTION_CHARACTER_ASSETS = Object.freeze([
+  ...PROMOTED_MOTION_CHARACTER_IDS.flatMap((id) => [
+    `assets/motion/ingame/characters/${id}/model.glb`,
+    `assets/motion/ingame/characters/${id}/manifest.json`,
+  ]),
+  "assets/motion/ingame/characters/registry.json",
+  "assets/motion/ingame/characters/rights-receipt.json",
+]);
+const DIRECT_RUNTIME_ASSETS = Object.freeze([
+  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj",
+  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_diffuse.png",
+  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_normal.png",
+  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_roughness.png",
+  "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack/texture_metallic.png",
+  "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
+  "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
+  "assets/mesh/boss/s1-cinder-warden/glb/base_basic_pbr.glb",
+  "assets/mesh/boss/s2-veil-tactician/glb/base_basic_pbr.glb",
+  "assets/mesh/boss/s3-gate-sovereign/glb/base_basic_pbr.glb",
+  "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
+  "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb",
+  "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb",
+  ...PROMOTED_MOTION_CHARACTER_ASSETS,
+  "assets/motion/ingame/unarmed-core.glb",
+  "assets/motion/ingame/manifest.json",
+  "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  "assets/motion/stage-vfx/manifest.json",
+]);
 const RUNTIME_PATHS = [
   "index.html", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
   "campaign-state.js", "defense-storage.js", "defense-audio.js", "defense-cutscene.js", "defense-telemetry.js",
   "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "lobby-cinematic.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
-  "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
+  "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/loaders/OBJLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png",
-  "assets/images/battle/dusk-warden-frame-00.png", "assets/images/battle/dusk-warden-frame-01.png",
-  "assets/images/battle/dusk-warden-frame-02.png", "assets/images/battle/dusk-warden-frame-03.png",
-  "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
-  "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
-  "assets/images/battle/world/cinder-span-tactical-paper-plate.webp", "assets/images/battle/world/cinder-span-topdown-plate.webp",
-  "assets/images/battle/ui/stages/abyss-chancel.png", "assets/images/battle/ui/stages/cinder-span.png", "assets/images/battle/ui/stages/echo-throne-steps.png",
-  "assets/images/battle/ui/stages/gate-zenith.png", "assets/images/battle/ui/stages/glass-necropolis.png", "assets/images/battle/ui/stages/howling-sprawl.png",
-  "assets/images/battle/ui/stages/shattered-causeway.png", "assets/images/battle/ui/stages/starless-canal.png",
-  "assets/images/battle/ui/stages/sunken-bastion.png", "assets/images/battle/ui/stages/veil-citadel.png",
   ...UI_ICON_ASSETS,
-  GAMEPLAY_VIDEO,
-  "assets/images/battle/glb/terrain/abyss-chancel.glb", "assets/images/battle/glb/terrain/cinder-span.glb", "assets/images/battle/glb/terrain/echo-throne-steps.glb",
-  "assets/images/battle/glb/terrain/gate-zenith.glb", "assets/images/battle/glb/terrain/glass-necropolis.glb", "assets/images/battle/glb/terrain/howling-sprawl.glb",
-  "assets/images/battle/glb/terrain/shattered-causeway.glb", "assets/images/battle/glb/terrain/starless-canal.glb", "assets/images/battle/glb/terrain/sunken-bastion.glb",
-  "assets/images/battle/glb/terrain/veil-citadel.glb", "assets/images/battle/glb/bosses/abyss-regent.glb", "assets/images/battle/glb/bosses/bridge-colossus.glb",
-  "assets/images/battle/glb/bosses/cinder-warden.glb", "assets/images/battle/glb/bosses/gate-sovereign.glb", "assets/images/battle/glb/bosses/lantern-tyrant.glb",
-  "assets/images/battle/glb/bosses/pack-herald.glb", "assets/images/battle/glb/bosses/requiem-choir.glb", "assets/images/battle/glb/bosses/tide-warden.glb",
-  "assets/images/battle/glb/bosses/veil-tactician.glb", "assets/images/battle/glb/bosses/veiled-concordat.glb", "assets/images/battle/glb/enemies/guard.glb",
-  "assets/images/battle/glb/enemies/possessed.glb", "assets/images/battle/glb/enemies/scout.glb", "assets/images/battle/glb/enemies/shade.glb",
-  "assets/images/battle/glb/companions/anchor-shard.glb", "assets/images/battle/glb/companions/dawnless-crown.glb", "assets/images/battle/glb/companions/ember-cohort.glb",
-  "assets/images/battle/glb/companions/lantern-reaver.glb", "assets/images/battle/glb/companions/pack-warden.glb", "assets/images/battle/glb/companions/requiem-warden.glb",
-  "assets/images/battle/glb/companions/rift-lens.glb", "assets/images/battle/glb/companions/throne-echo.glb", "assets/images/battle/glb/companions/veil-vanguard.glb",
-  "assets/images/battle/glb/commander/dusk-warden.glb", "assets/images/battle/glb/vfx/abyss-orb.glb", "assets/images/battle/glb/vfx/boss-rally-aura.glb",
-  "assets/images/battle/glb/vfx/companion-downed-fade.glb",
-  "assets/images/battle/glb/vfx/critical-hit-burst.glb", "assets/images/battle/glb/vfx/echo-warden-awakening.glb", "assets/images/battle/glb/vfx/gate-breach-shockwave.glb",
-  "assets/images/battle/glb/vfx/melee-slash.glb", "assets/images/battle/glb/vfx/ranged-bolt.glb",
-  "assets/images/battle/glb/vfx/wardens-ward-shield.glb", "assets/images/battle/glb/props/abyss-blade.glb", "assets/images/battle/glb/props/abyssal-banner.glb",
-  "assets/images/battle/glb/props/arc-caster.glb", "assets/images/battle/glb/props/bulwark-brand.glb",
-  "assets/images/battle/glb/props/choir-ward-crystal.glb", "assets/images/battle/glb/props/tide-lock-beacon-rodin.glb", "assets/images/battle/glb/props/stillwater-hourglass.glb", "assets/images/battle/glb/props/warden-lantern.glb",
-  "assets/images/battle/glb/props/tiers/tier-t1.glb", "assets/images/battle/glb/props/tiers/tier-t2.glb", "assets/images/battle/glb/props/tiers/tier-t3.glb",
-  "assets/images/battle/glb/props/tiers/tier-t4.glb", "assets/images/battle/glb/props/tiers/tier-t5.glb",
+  ...DIRECT_RUNTIME_ASSETS,
 ];
 
 async function project(path) {
@@ -160,7 +135,37 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   assert.match(job(workflow, "release_receipt"), /if: always\(\)/);
   assert.match(job(workflow, "release_receipt"), /needs: \[resolve_revision, engine_contract, release_closure, browser_contract, package_pages, artifact_smoke, deploy_pages, deployed_smoke\]/);
 
-  assert.deepEqual(runtimePaths(workflow), RUNTIME_PATHS);
+  const pagesRuntimePaths = runtimePaths(workflow);
+  assert.deepEqual(pagesRuntimePaths, RUNTIME_PATHS);
+  const pagesRuntimePathSet = new Set(pagesRuntimePaths);
+  const missingRetainedRuntimeAssets = RETAINED_ASSET_PATHS.filter(
+    (path) => path !== "assets/defense-asset-manifest.json" && !pagesRuntimePathSet.has(path),
+  );
+  assert.deepEqual(
+    missingRetainedRuntimeAssets,
+    [],
+    "every retained runtime asset must be present in the Pages runtime allowlist",
+  );
+  const pagesCharacterRuntimeAssets = pagesRuntimePaths.filter((path) =>
+    path.startsWith("assets/motion/ingame/characters/"),
+  );
+  assert.deepEqual(
+    pagesCharacterRuntimeAssets,
+    PROMOTED_MOTION_CHARACTER_ASSETS,
+    "Pages must ship the exact ordered promoted character model/manifest pairs, registry, and rights receipt",
+  );
+  const retainedCharacterRuntimeAssets = RETAINED_ASSET_PATHS.filter((path) =>
+    path.startsWith("assets/motion/ingame/characters/"),
+  );
+  assert.deepEqual(
+    retainedCharacterRuntimeAssets,
+    PROMOTED_MOTION_CHARACTER_ASSETS,
+    "retained assets must close over the exact ordered promoted character runtime contract",
+  );
+
+  for (const path of pagesRuntimePaths) {
+    await execFileAsync("git", ["ls-files", "--error-unmatch", "--", path]);
+  }
   assertCommandsInOrder(workflow, "engine_contract", [
     "npm ci",
     "npx --no-install playwright install --with-deps chromium",
@@ -212,21 +217,7 @@ test("version scripts enforce the exact defense rules version", async () => {
   await writeFile(versionFile, JSON.stringify({ candidate_sha: sha, rules_version: RULES_VERSION }));
   await execFileAsync(process.execPath, ["scripts/validate-pages-version.mjs", "--file", versionFile, "--sha", sha]);
   await writeFile(versionFile, JSON.stringify({ candidate_sha: sha, rules_version: "wrong" }));
-  const required = [
-    "index.html", "version.json", "app.js", "defense-viewport.js", "defense-catalog.js",
-    "defense-run-simulation.js", "campaign-state.js", "defense-storage.js", "defense-cutscene.js",
-    "defense-telemetry.js", "defense-audio.js", "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js",
-    "styles.css", "react-game-ui.css", "sw.js", "manifest.json",
-    "assets/images/battle/dusk-warden-frame-00.png", "assets/images/battle/dusk-warden-frame-01.png",
-    "assets/images/battle/dusk-warden-frame-02.png", "assets/images/battle/dusk-warden-frame-03.png",
-    "assets/images/battle/echo-rusher-frame-00.png", "assets/images/battle/echo-rusher-frame-01.png",
-    "assets/images/battle/echo-rusher-frame-02.png", "assets/images/battle/echo-rusher-frame-03.png",
-    ...CINDER_SPAN_WORLD_ASSETS,
-    ...STAGE_ART_ASSETS,
-    "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
-    ...BATTLE_GLB_ASSETS,
-    ...COMBAT_GLB_ASSETS,
-  ];
+  const required = ["version.json", ...RUNTIME_PATHS];
   for (const file of required) {
     const target = join(directory, file);
     await mkdir(dirname(target), { recursive: true });
@@ -295,13 +286,10 @@ test("the candidate-stamped service worker precaches every runtime observer, ref
   await installPromise;
   assert.deepEqual(opened, [currentCache]);
   assert.ok(precached.includes("./battle-canvas-text.js"), "the renderer text helper must be candidate-stamped with the app shell");
-  for (const path of CINDER_SPAN_WORLD_ASSETS) {
-    assert.ok(precached.includes(`./${path}`), `${path} must be precached for offline Cinder Span presentation`);
-  }
   assert.equal(
-    precached.some((path) => /assets\/images\/battle\/world\/cinder-span-(?:topdown|tactical-paper)-plate\.png$/.test(path)),
+    precached.some((path) => /assets\/images\/battle\/world\/cinder-span-.*\.(?:png|webp)$/.test(path)),
     false,
-    "the service worker must not precache duplicate Cinder Span PNG plates",
+    "the service worker must not precache retired Cinder Span world plates",
   );
   assert.ok(precached.includes("./defense-cutscene.js"));
   assert.ok(precached.includes("./defense-telemetry.js"));

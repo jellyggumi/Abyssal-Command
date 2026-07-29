@@ -1,0 +1,73 @@
+{
+  "assetId": "ember-cohort",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/model.glb",
+  "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/contact-sheet.png",
+  "keyposes": [
+    {
+      "action": "idle",
+      "clipName": "ember-cohort::idle::v01",
+      "frame": 38,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/keyposes/00-idle.png"
+    },
+    {
+      "action": "move",
+      "clipName": "ember-cohort::move::v01",
+      "frame": 13,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/keyposes/01-move.png"
+    },
+    {
+      "action": "run",
+      "clipName": "ember-cohort::run::v01",
+      "frame": 12,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/keyposes/02-run.png"
+    },
+    {
+      "action": "hit",
+      "clipName": "ember-cohort::hit::v01",
+      "frame": 10,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/keyposes/03-hit.png"
+    },
+    {
+      "action": "bighit",
+      "clipName": "ember-cohort::bighit::v01",
+      "frame": 19,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/keyposes/04-bighit.png"
+    },
+    {
+      "action": "attack",
+      "clipName": "ember-cohort::attack::v01",
+      "frame": 26,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/keyposes/05-attack.png"
+    },
+    {
+      "action": "critical",
+      "clipName": "ember-cohort::critical::v01",
+      "frame": 12,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/keyposes/06-critical.png"
+    },
+    {
+      "action": "avoid",
+      "clipName": "ember-cohort::avoid::v01",
+      "frame": 23,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/keyposes/07-avoid.png"
+    },
+    {
+      "action": "defence",
+      "clipName": "ember-cohort::defence::v01",
+      "frame": 8,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/keyposes/08-defence.png"
+    },
+    {
+      "action": "die",
+      "clipName": "ember-cohort::die::v01",
+      "frame": 42,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/keyposes/09-die.png"
+    },
+    {
+      "action": "show",
+      "clipName": "ember-cohort::show::v01",
+      "frame": 7,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/keyposes/10-show.png"
+    }
+  ]
+}

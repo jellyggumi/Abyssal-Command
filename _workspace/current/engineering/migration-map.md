@@ -28,7 +28,8 @@ scope: 런타임 파일별 변경 범위, 데이터 스키마 델타, 테스트 
 | `defense-telemetry.js` | 239 | **소규모** | 신규 지표 |
 
 **보존:** 60 Hz 결정론, 스냅샷 단방향, 오프라인 로컬 저장, 무수익화, 심연 고유명,
-10스테이지 순서, `prefers-reduced-motion`, 단일 게임플레이 평면.
+`Cinder Span → Abyss Chancel → Echo Throne`의 3구역 보스 여정,
+`prefers-reduced-motion`, 단일 게임플레이 평면.
 
 ---
 

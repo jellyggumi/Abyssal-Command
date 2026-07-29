@@ -1,0 +1,294 @@
+{
+  "assetId": "lantern-reaver",
+  "category": "enemies",
+  "source": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
+  "steps": [
+    {
+      "step": "import",
+      "meshes": 1,
+      "reusedBodySplit": false,
+      "hadPedestal": false
+    },
+    {
+      "step": "weld",
+      "vertsBefore": 5436,
+      "vertsAfter": 4135
+    },
+    {
+      "step": "landmarks",
+      "height": 1.8889,
+      "shoulderZFrac": 0.84,
+      "shoulderHalfWidth": 0.3564,
+      "hipHalfWidth": 0.2015,
+      "handL": [
+        0.158,
+        0.034,
+        1.5735
+      ],
+      "handR": [
+        -0.2369,
+        0.0343,
+        1.6309
+      ],
+      "synthesizedArms": [],
+      "center": [
+        -0.0352,
+        0.0333
+      ]
+    },
+    {
+      "step": "roll_alignment",
+      "phase": "pre_bind",
+      "referencePolicy": {
+        "axial": "+Y",
+        "lateral": "+Z"
+      },
+      "rows": [
+        {
+          "bone": "DEF-spine",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.001",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.002",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.003",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.004",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.005",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-pelvis.L",
+          "policy": "axial",
+          "rollDeg": -123.2771
+        },
+        {
+          "bone": "DEF-pelvis.R",
+          "policy": "axial",
+          "rollDeg": 123.2771
+        },
+        {
+          "bone": "DEF-shoulder.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.L",
+          "policy": "lateral",
+          "rollDeg": -63.9193
+        },
+        {
+          "bone": "DEF-forearm.L",
+          "policy": "lateral",
+          "rollDeg": -63.9192
+        },
+        {
+          "bone": "DEF-hand.L",
+          "policy": "lateral",
+          "rollDeg": -63.919
+        },
+        {
+          "bone": "DEF-shoulder.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.R",
+          "policy": "lateral",
+          "rollDeg": 72.2405
+        },
+        {
+          "bone": "DEF-forearm.R",
+          "policy": "lateral",
+          "rollDeg": 72.2406
+        },
+        {
+          "bone": "DEF-hand.R",
+          "policy": "lateral",
+          "rollDeg": 72.2407
+        },
+        {
+          "bone": "DEF-thigh.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.L",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.L",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        },
+        {
+          "bone": "DEF-thigh.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.R",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.R",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        }
+      ]
+    },
+    {
+      "step": "armature_fit",
+      "bones": 24,
+      "shoulderZ": 1.5867,
+      "arms": {
+        "L": {
+          "restAngleDeg": 77.8,
+          "length": 0.0135
+        },
+        "R": {
+          "restAngleDeg": -82.56,
+          "length": 0.0446
+        }
+      },
+      "preBindRollCount": 24
+    },
+    {
+      "step": "orphan_fill",
+      "filled": 0
+    },
+    {
+      "step": "bind",
+      "method": "bone_heat",
+      "boundGroups": 24,
+      "weightedVerts": 4135,
+      "totalVerts": 4135,
+      "armWeightFrac": 0.2879,
+      "attempts": [
+        [
+          "bone_heat",
+          4135,
+          0.2879
+        ]
+      ],
+      "topWeights": [
+        [
+          451.8,
+          "DEF-thigh.L"
+        ],
+        [
+          419.5,
+          "DEF-thigh.R"
+        ],
+        [
+          363.1,
+          "DEF-pelvis.R"
+        ],
+        [
+          355.3,
+          "DEF-shoulder.R"
+        ],
+        [
+          337.8,
+          "DEF-pelvis.L"
+        ]
+      ]
+    },
+    {
+      "step": "weight_refine",
+      "enabledArmatureModifiers": 1,
+      "correctedVertices": 3662,
+      "oppositeLeak": 0,
+      "ambiguous": 449,
+      "orphanCount": 0,
+      "invalidCount": 0,
+      "nonDefCount": 0,
+      "maxInfluences": 4,
+      "maxWeightSum": 1.0000000093132257,
+      "minWeightSum": 0.999999990221113,
+      "deformVerts": 4135,
+      "deformVertsTotal": 4135
+    },
+    {
+      "step": "rest_pose",
+      "mode": "natural",
+      "rotatedDeg": {},
+      "axisDeviationDeg": {
+        "L": 101.8,
+        "R": 82.69
+      },
+      "elevationDeg": {
+        "L": 77.8,
+        "R": -82.56
+      },
+      "tposeToleranceDeg": 12.0,
+      "ok": true
+    },
+    {
+      "step": "author_animations",
+      "count": 11,
+      "clips": [
+        "lantern-reaver::idle::v01",
+        "lantern-reaver::move::v01",
+        "lantern-reaver::run::v01",
+        "lantern-reaver::hit::v01",
+        "lantern-reaver::bighit::v01",
+        "lantern-reaver::attack::v01",
+        "lantern-reaver::critical::v01",
+        "lantern-reaver::avoid::v01",
+        "lantern-reaver::defence::v01",
+        "lantern-reaver::die::v01",
+        "lantern-reaver::show::v01"
+      ]
+    },
+    {
+      "step": "export",
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/model.glb",
+      "bytes": 12293692,
+      "pedestalRemoved": false
+    }
+  ],
+  "axisDeviationDeg": {
+    "L": 101.8,
+    "R": 82.69
+  },
+  "elevationDeg": {
+    "L": 77.8,
+    "R": -82.56
+  },
+  "bindMethod": "bone_heat",
+  "pedestalRemoved": false,
+  "restPose": "natural",
+  "restPoseOk": true,
+  "clipCount": 11,
+  "status": "completed"
+}

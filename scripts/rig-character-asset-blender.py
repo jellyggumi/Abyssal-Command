@@ -26,17 +26,18 @@ Pipeline:
   3. Freeze the rest pose (`--rest-pose`, below).
   4. Author the 11-clip action library, export GLB.
 
-`--rest-pose natural` (default) keeps the sculpted pose as the bind pose.
-`--rest-pose tpose` rotates each arm onto +/-X, bakes the deformation into the
-mesh, and freezes that as rest -- it reaches a measured 0.0 deg axis deviation,
-but on these assets it is NOT what you want: the meshes are a single fused
-primitive with cape, pauldrons and weapons welded to the arms, so the rotation
-drags that geometry outward into wings while the actual arms stay put
-(rendered proof: cinder-warden). Automatic arm isolation was tried and does not
-work here -- PCA over the outboard point cloud diverges between subsets of the
-same arm (+55.4 deg vs -81.7 deg on cinder-warden.L) because the cape dominates
-the cloud. A real T-pose on this art needs either an ML auto-rigger (UniRig,
-guide section 2.4) or T-posed source meshes.
+`--rest-pose natural` (default) preserves the sculpted source bind pose.
+This is the runtime-safe option for this library: the meshes are single fused
+primitives with capes, pauldrons, and weapons welded around the arms.
+
+`--rest-pose tpose` is retained only as an explicit diagnostic mode. It rotates
+each arm onto +/-X and bakes that as rest, but can drag fused outboard geometry
+into wings while the actual arms stay put (rendered proof: cinder-warden).
+Automatic arm isolation does not work here -- PCA over the outboard point cloud
+diverges between subsets of the same arm (+55.4 deg vs -81.7 deg on
+cinder-warden.L) because the cape dominates the cloud. A real T-pose on this
+art needs either an ML auto-rigger (UniRig, guide section 2.4) or T-posed
+source meshes.
 
 Why a hand-built armature instead of Rigify: Rigify's DEF- bones are driven by
 constraints from ORG-/MCH- bones, so `pose.armature_apply` does not move the
@@ -151,9 +152,9 @@ def parse_args(argv):
     p.add_argument("--out", required=True, help="destination GLB path")
     p.add_argument("--report", default=None, help="write per-asset JSON log here")
     p.add_argument("--budgets-json", default=None, help="action-pipeline JSON with keyframeBudgets")
-    p.add_argument("--rest-pose", default="tpose", choices=["tpose", "natural"],
-                   help="tpose = rotate arms onto +/-X and freeze as rest; "
-                        "natural = keep the mesh's sculpted pose as the bind pose")
+    p.add_argument("--rest-pose", default="natural", choices=["tpose", "natural"],
+                   help="natural = preserve the sculpted source bind pose; "
+                        "tpose = explicit diagnostic bake onto +/-X")
     p.add_argument("--arm-fit", default="detect", choices=["detect", "prior", "tpose"],
                    help="detect = PCA over the mesh's outboard cloud; "
                         "prior = anthropometric proportions for arms-down silhouettes; "
@@ -682,76 +683,65 @@ def run(args, budgets):
     if weighted < n_verts * 0.5:
         raise RuntimeError(f"all weighting methods failed: {weighted}/{n_verts} verts")
 
-    # --- 5. Pose arms to the T-pose axis, apply as rest pose ---------------
-    # A T-pose needs the arm along +/-X, not merely level. Rodin characters
-    # hold their arms down AND forward/back, so the detected arm axis has a
-    # large Y component (guard.glb: (0.069, -0.215, -0.064) -- mostly backward).
-    # Rotating only about world Y can flatten Z but never removes that Y
-    # component, which left a 12-19 deg residual. Rotate by the full
-    # axis-to-axis difference instead.
+    # Only diagnostic T-pose generation changes rest geometry. Natural pose
+    # assets retain the source bind, avoiding rubbery deformation of welded
+    # capes, pauldrons, and weapons.
     rotated = {}
-    bpy.context.view_layer.objects.active = rig
-    bpy.ops.object.mode_set(mode="POSE")
-    sides = (("L", 1.0), ("R", -1.0)) if args.rest_pose == "tpose" else ()
-    for side, sgn in sides:
-        ua = rig.pose.bones.get(f"DEF-upper_arm.{side}")
-        ub = rig.data.bones.get(f"DEF-upper_arm.{side}")
-        hb = rig.data.bones.get(f"DEF-hand.{side}")
-        if not (ua and ub and hb):
-            continue
-        cur = (hb.tail_local - ub.head_local)
-        if cur.length < 1e-6:
-            continue
-        cur.normalize()
-        target = Vector((sgn, 0.0, 0.0))
-        delta = math.degrees(cur.angle(target))
-        if delta < 0.5:
-            rotated[side] = 0.0
-            continue
-        R = cur.rotation_difference(target).to_matrix().to_4x4()
-        pivot = ub.head_local.copy()
-        M = ua.matrix.copy()
-        M.translation -= pivot
-        M = R @ M
-        M.translation += pivot
-        ua.matrix = M
-        bpy.context.view_layer.update()
-        rotated[side] = round(delta, 2)
+    if args.rest_pose == "tpose":
+        bpy.context.view_layer.objects.active = rig
+        bpy.ops.object.mode_set(mode="POSE")
+        for side, sgn in (("L", 1.0), ("R", -1.0)):
+            ua = rig.pose.bones.get(f"DEF-upper_arm.{side}")
+            ub = rig.data.bones.get(f"DEF-upper_arm.{side}")
+            hb = rig.data.bones.get(f"DEF-hand.{side}")
+            if not (ua and ub and hb):
+                continue
+            cur = hb.tail_local - ub.head_local
+            if cur.length < 1e-6:
+                continue
+            cur.normalize()
+            target = Vector((sgn, 0.0, 0.0))
+            delta = math.degrees(cur.angle(target))
+            if delta < 0.5:
+                rotated[side] = 0.0
+                continue
+            R = cur.rotation_difference(target).to_matrix().to_4x4()
+            pivot = ub.head_local.copy()
+            M = ua.matrix.copy()
+            M.translation -= pivot
+            M = R @ M
+            M.translation += pivot
+            ua.matrix = M
+            bpy.context.view_layer.update()
+            rotated[side] = round(delta, 2)
 
-    # ORDER IS LOAD-BEARING. The mesh must be baked through the armature
-    # modifier WHILE the arms are still posed; `pose.armature_apply` zeroes the
-    # pose (it becomes the new rest), so applying the modifier after it bakes
-    # an identity deformation -- bones end up T-posed while the mesh keeps its
-    # original arms-down geometry, which is exactly the silent no-op this
-    # ordering bug produced before.
-    bpy.ops.object.mode_set(mode="OBJECT")
-    bpy.context.view_layer.objects.active = body
-    bpy.ops.object.select_all(action="DESELECT")
-    body.select_set(True)
-    for m in [mm for mm in body.modifiers if mm.type == "ARMATURE"]:
-        bpy.ops.object.modifier_apply(modifier=m.name)
+        # T-pose is diagnostic-only. Bake the posed mesh before its rest pose
+        # changes, otherwise the mesh/skeleton pair diverges on export.
+        bpy.ops.object.mode_set(mode="OBJECT")
+        bpy.context.view_layer.objects.active = body
+        bpy.ops.object.select_all(action="DESELECT")
+        body.select_set(True)
+        for m in [mm for mm in body.modifiers if mm.type == "ARMATURE"]:
+            bpy.ops.object.modifier_apply(modifier=m.name)
 
-    # Now freeze the posed skeleton as the new rest pose...
-    bpy.ops.object.select_all(action="DESELECT")
-    rig.select_set(True)
-    bpy.context.view_layer.objects.active = rig
-    bpy.ops.object.mode_set(mode="POSE")
-    bpy.ops.pose.select_all(action="SELECT")
-    bpy.ops.pose.armature_apply(selected=False)
-    bpy.ops.object.mode_set(mode="OBJECT")
+        bpy.ops.object.select_all(action="DESELECT")
+        rig.select_set(True)
+        bpy.context.view_layer.objects.active = rig
+        bpy.ops.object.mode_set(mode="POSE")
+        bpy.ops.pose.select_all(action="SELECT")
+        bpy.ops.pose.armature_apply(selected=False)
+        bpy.ops.object.mode_set(mode="OBJECT")
 
-    # ...and re-bind the (now T-posed) mesh to it. Vertex groups survived the
-    # modifier application, so this restores skinning without re-weighting.
-    # The armature is now in a fresh rest-pose state and has no active
-    # Armature modifier yet; reapply roll in this unbound window so the final
-    # rest orientation is canonical.
-    final_rest_roll = align_def_bone_roll("post_tpose_rest")
-    if not final_rest_roll:
-        raise RuntimeError("roll invariant failed: expected DEF bones after post-T-pose roll alignment")
-    newmod = body.modifiers.new(name="Armature", type="ARMATURE")
-    newmod.object = rig
-    body.parent = rig
-    body.matrix_parent_inverse = rig.matrix_world.inverted()
+        final_rest_roll = align_def_bone_roll("post_tpose_rest")
+        if not final_rest_roll:
+            raise RuntimeError("roll invariant failed: expected DEF bones after post-T-pose roll alignment")
+        newmod = body.modifiers.new(name="Armature", type="ARMATURE")
+        newmod.object = rig
+        body.parent = rig
+        body.matrix_parent_inverse = rig.matrix_world.inverted()
+    else:
+        # The natural source pose is already fitted before binding.
+        final_rest_roll = []
     # Reweight only around limbs, and only where a limb chain already owns the
     # vertex weight, so accessories, gear, and non-limb attachments keep their
     # existing ownership while we remove major-joint leakage.
@@ -1003,8 +993,8 @@ def run(args, budgets):
 
     step("weight_refine", **weights_report)
 
-    # Report BOTH numbers: elevation is what a viewer reads as "arms level",
-    # axis deviation is the real T-pose test (includes forward/back yaw).
+    # A natural bind does not need a horizontal-arm condition. Retain the
+    # measurement for diagnostics, but gate only the explicit T-pose mode.
     achieved = {}
     elevation = {}
     for side, sgn in (("L", 1.0), ("R", -1.0)):
@@ -1016,8 +1006,13 @@ def run(args, budgets):
         elevation[side] = round(math.degrees(math.atan2(-v.z, math.hypot(v.x, v.y))), 2)
         if v.length > 1e-6:
             achieved[side] = round(math.degrees(v.angle(Vector((sgn, 0.0, 0.0)))), 2)
-    step("tpose_apply", rotatedDeg=rotated, axisDeviationDeg=achieved,
-         elevationDeg=elevation, tolerance=TPOSE_TOLERANCE_DEG)
+    rest_pose_ok = (
+        args.rest_pose == "natural"
+        or (bool(achieved) and all(abs(v) <= TPOSE_TOLERANCE_DEG for v in achieved.values()))
+    )
+    step("rest_pose", mode=args.rest_pose, rotatedDeg=rotated,
+         axisDeviationDeg=achieved, elevationDeg=elevation,
+         tposeToleranceDeg=TPOSE_TOLERANCE_DEG, ok=rest_pose_ok)
 
     # --- 6. Author the 11-clip action library ------------------------------
     bpy.context.view_layer.objects.active = rig
@@ -1147,9 +1142,8 @@ def run(args, budgets):
 
     bpy.ops.object.mode_set(mode="OBJECT")
     step("author_animations", count=len(authored), clips=authored)
-    tpose_ok = bool(achieved) and all(abs(v) <= TPOSE_TOLERANCE_DEG for v in achieved.values())
-    if not tpose_ok:
-        raise RuntimeError(f"T-pose gate failed: axisDeviationDeg={achieved}")
+    if not rest_pose_ok:
+        raise RuntimeError(f"{args.rest_pose} rest-pose gate failed: axisDeviationDeg={achieved}")
 
 
     pedestal_removed = pedestal is not None
@@ -1188,7 +1182,8 @@ def run(args, budgets):
     log["elevationDeg"] = elevation
     log["bindMethod"] = method
     log["pedestalRemoved"] = pedestal_removed
-    log["tposeOk"] = tpose_ok
+    log["restPose"] = args.rest_pose
+    log["restPoseOk"] = rest_pose_ok
     log["clipCount"] = len(authored)
     log["status"] = "completed"
     return log

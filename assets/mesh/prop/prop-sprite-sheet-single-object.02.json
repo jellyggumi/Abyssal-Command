@@ -1,150 +1,48 @@
 {
   "sheet": "assets/mesh/prop/prop-sprite-sheet-single-object.02.png",
   "sheetIndex": 2,
-  "width": 8071,
-  "height": 6711,
+  "width": 7084,
+  "height": 2499,
   "pad": 4,
   "packMode": "shelf-height-desc",
   "sheetWidthLimit": 8192,
-  "frameCount": 23,
+  "frameCount": 6,
   "frames": {
-    "throne-echo.png": {
-      "x": 0,
+    "dawnless-crown.png": {
+      "x": 6611,
       "y": 0,
-      "width": 982,
-      "height": 2977
+      "width": 473,
+      "height": 1511
     },
-    "broken-court-monarch-v04.png": {
-      "x": 986,
+    "player-core-v04.png": {
+      "x": 1422,
       "y": 0,
-      "width": 927,
-      "height": 2955
-    },
-    "s9-veiled-concordat.png": {
-      "x": 1917,
-      "y": 0,
-      "width": 927,
-      "height": 2930
-    },
-    "ember-cohort.png": {
-      "x": 2848,
-      "y": 0,
-      "width": 947,
-      "height": 2788
+      "width": 1490,
+      "height": 2494
     },
     "s2-veil-tactician.png": {
-      "x": 3799,
+      "x": 2916,
       "y": 0,
       "width": 954,
       "height": 2455
     },
-    "s1-cinder-warden.png": {
-      "x": 4757,
-      "y": 0,
-      "width": 1371,
-      "height": 2436
-    },
-    "veil-vanguard.png": {
-      "x": 6132,
-      "y": 0,
-      "width": 1381,
-      "height": 2426
-    },
-    "shadow-commander-boss.png": {
+    "s4-tide-warden.png": {
       "x": 0,
-      "y": 2981,
-      "width": 1420,
-      "height": 2342
-    },
-    "guard.png": {
-      "x": 1424,
-      "y": 2981,
-      "width": 1280,
-      "height": 2331
+      "y": 0,
+      "width": 1418,
+      "height": 2499
     },
     "s6-requiem-choir.png": {
-      "x": 2708,
-      "y": 2981,
+      "x": 5259,
+      "y": 0,
       "width": 1348,
       "height": 2182
     },
-    "ui-brand-mark.png": {
-      "x": 4060,
-      "y": 2981,
-      "width": 1495,
-      "height": 2138
-    },
-    "ui-control-sortie.png": {
-      "x": 5559,
-      "y": 2981,
-      "width": 1447,
-      "height": 1907
-    },
-    "dawnless-crown.png": {
-      "x": 7010,
-      "y": 2981,
-      "width": 473,
-      "height": 1511
-    },
-    "rift-lens.png": {
-      "x": 7487,
-      "y": 2981,
-      "width": 580,
-      "height": 1389
-    },
-    "anchor-shard.png": {
-      "x": 0,
-      "y": 5327,
-      "width": 959,
-      "height": 1384
-    },
-    "abyssal-banner.png": {
-      "x": 963,
-      "y": 5327,
-      "width": 630,
-      "height": 1193
-    },
-    "choir-ward-crystal.png": {
-      "x": 1597,
-      "y": 5327,
-      "width": 427,
-      "height": 1193
-    },
-    "scout.png": {
-      "x": 2028,
-      "y": 5327,
-      "width": 1185,
-      "height": 1173
-    },
-    "warden-lantern.png": {
-      "x": 3217,
-      "y": 5327,
-      "width": 591,
-      "height": 1150
-    },
-    "equipment-tier-gems.png": {
-      "x": 3812,
-      "y": 5327,
-      "width": 718,
-      "height": 1132
-    },
-    "stillwater-hourglass.png": {
-      "x": 4534,
-      "y": 5327,
-      "width": 661,
-      "height": 1078
-    },
-    "broken-court-monarch-boss.png": {
-      "x": 5199,
-      "y": 5327,
-      "width": 1470,
-      "height": 983
-    },
-    "bulwark-brand.png": {
-      "x": 6673,
-      "y": 5327,
-      "width": 1205,
-      "height": 785
+    "veil-vanguard.png": {
+      "x": 3874,
+      "y": 0,
+      "width": 1381,
+      "height": 2426
     }
   }
 }

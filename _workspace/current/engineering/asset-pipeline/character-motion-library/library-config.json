@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 1,
+  "sourceFps": 24,
+  "sourceRig": "mixamo-37",
+  "targetRig": "def-humanoid-v1",
+  "motionBench": "assets/motion/bench",
+  "auditReport": "_workspace/current/engineering/asset-pipeline/motion-bench/fbx-audit-report-FULL-OBSERVED.json",
+  "handoffIndex": "_workspace/current/engineering/asset-pipeline/character-motion-library/handoff-index.json",
+  "rights": {
+    "source": "user-provided",
+    "runtimeUseDirectedAt": "2026-07-29",
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": ["repository-inclusion", "redistribution"],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
+  },
+  "characters": [
+    {
+      "assetId": "broken-court-monarch-boss",
+      "role": "shadow-duelist",
+      "category": "bosses",
+      "source": "assets/mesh/character/broken-court-monarch-boss-character/glb/base_basic_pbr.glb",
+      "motions": {
+        "idle": {"source": "Unarmed Idle.fbx", "loop": true, "gain": 0.82},
+        "move": {"source": "Walking.fbx", "loop": true, "gain": 0.95},
+        "run": {"source": "Running.fbx", "loop": true, "gain": 1.0},
+        "hit": {"source": "Standing React Small From Left.fbx", "loop": false, "gain": 0.9},
+        "bighit": {"source": "Receive Uppercut To The Face.fbx", "loop": false, "gain": 0.9},
+        "attack": {"source": "Double Dagger Stab.fbx", "loop": false, "gain": 1.0},
+        "critical": {"source": "Jump Attack.fbx", "loop": false, "gain": 0.95},
+        "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 1.0},
+        "defence": {"source": "Body Block.fbx", "loop": false, "gain": 0.82},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
+        "show": {"source": "Draw Sword 1.fbx", "loop": false, "gain": 0.9}
+      }
+    },
+    {
+      "assetId": "broken-court-monarch-v04",
+      "role": "regal-void-caster",
+      "category": "bosses",
+      "source": "assets/mesh/character/broken-court-monarch-v04-character/glb/base_basic_pbr.glb",
+      "motions": {
+        "idle": {"source": "Standing Idle 03.fbx", "loop": true, "gain": 0.7},
+        "move": {"source": "Walking.fbx", "loop": true, "gain": 0.78},
+        "run": {"source": "Running.fbx", "loop": true, "gain": 0.82},
+        "hit": {"source": "Standing React Small From Left.fbx", "loop": false, "gain": 0.72},
+        "bighit": {"source": "Standing Block React Large.fbx", "loop": false, "gain": 0.82},
+        "attack": {"source": "Standing 2H Magic Attack 01.fbx", "loop": false, "gain": 0.9},
+        "critical": {"source": "Opening.fbx", "loop": false, "gain": 0.9},
+        "avoid": {"source": "Change Direction.fbx", "loop": false, "gain": 0.8},
+        "defence": {"source": "Great Sword Blocking.fbx", "loop": false, "gain": 0.72},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
+        "show": {"source": "Opening.fbx", "loop": false, "gain": 0.88}
+      }
+    },
+    {
+      "assetId": "ember-cohort",
+      "role": "radiant-vanguard",
+      "category": "enemies",
+      "source": "assets/mesh/character/ember-cohort-character/glb/base_basic_pbr.glb",
+      "motions": {
+        "idle": {"source": "Idle.fbx", "loop": true, "gain": 0.78},
+        "move": {"source": "Walking.fbx", "loop": true, "gain": 0.88},
+        "run": {"source": "Running.fbx", "loop": true, "gain": 0.9},
+        "hit": {"source": "Standing React Small From Left.fbx", "loop": false, "gain": 0.82},
+        "bighit": {"source": "Standing Block React Large.fbx", "loop": false, "gain": 0.9},
+        "attack": {"source": "Great Sword Slash.fbx", "loop": false, "gain": 0.95},
+        "critical": {"source": "Sword And Shield Jump.fbx", "loop": false, "gain": 0.92},
+        "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 0.9},
+        "defence": {"source": "Sword And Shield Block.fbx", "loop": false, "gain": 0.88},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
+        "show": {"source": "Draw Sword 1.fbx", "loop": false, "gain": 0.9}
+      }
+    },
+    {
+      "assetId": "guard",
+      "role": "ember-greatsword-guard",
+      "category": "enemies",
+      "source": "assets/mesh/character/guard-character/glb/base_basic_pbr.glb",
+      "motions": {
+        "idle": {"source": "Standing Idle 03.fbx", "loop": true, "gain": 0.8},
+        "move": {"source": "Walking.fbx", "loop": true, "gain": 0.9},
+        "run": {"source": "Running.fbx", "loop": true, "gain": 0.92},
+        "hit": {"source": "Standing React Small From Left.fbx", "loop": false, "gain": 0.84},
+        "bighit": {"source": "Receive Uppercut To The Face.fbx", "loop": false, "gain": 0.88},
+        "attack": {"source": "Great Sword Slash.fbx", "loop": false, "gain": 0.95},
+        "critical": {"source": "Standing Torch Jump.fbx", "loop": false, "gain": 0.95},
+        "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 0.88},
+        "defence": {"source": "Great Sword Blocking.fbx", "loop": false, "gain": 0.9},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
+        "show": {"source": "Draw Sword 1.fbx", "loop": false, "gain": 0.92}
+      }
+    },
+    {
+      "assetId": "human-command-boss",
+      "role": "stone-command-colossus",
+      "category": "bosses",
+      "source": "assets/mesh/character/human-command-boss-character/glb/base_basic_pbr.glb",
+      "motions": {
+        "idle": {"source": "Idle.fbx", "loop": true, "gain": 0.58},
+        "move": {"source": "Catwalk Walk Forward HighKnees.fbx", "loop": true, "gain": 0.64},
+        "run": {"source": "Running.fbx", "loop": true, "gain": 0.68},
+        "hit": {"source": "Standing React Small From Left.fbx", "loop": false, "gain": 0.6},
+        "bighit": {"source": "Receive Uppercut To The Face.fbx", "loop": false, "gain": 0.7},
+        "attack": {"source": "Punching Bag.fbx", "loop": false, "gain": 0.78},
+        "critical": {"source": "Body Block.fbx", "loop": false, "gain": 0.82},
+        "avoid": {"source": "Change Direction.fbx", "loop": false, "gain": 0.62},
+        "defence": {"source": "Block With Rifle.fbx", "loop": false, "gain": 0.7},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
+        "show": {"source": "Opening.fbx", "loop": false, "gain": 0.76}
+      }
+    },
+    {
+      "assetId": "lantern-reaver",
+      "role": "abyssal-reaper-caster",
+      "category": "enemies",
+      "source": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
+      "motions": {
+        "idle": {"source": "Standing Idle 03.fbx", "loop": true, "gain": 0.68},
+        "move": {"source": "Walking.fbx", "loop": true, "gain": 0.76},
+        "run": {"source": "Running.fbx", "loop": true, "gain": 0.8},
+        "hit": {"source": "Standing React Small From Left.fbx", "loop": false, "gain": 0.72},
+        "bighit": {"source": "Standing Block React Large.fbx", "loop": false, "gain": 0.8},
+        "attack": {"source": "Standing 2H Magic Attack 01.fbx", "loop": false, "gain": 0.86},
+        "critical": {"source": "Shooting Arrow.fbx", "loop": false, "gain": 0.88},
+        "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 0.78},
+        "defence": {"source": "Great Sword Blocking.fbx", "loop": false, "gain": 0.78},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
+        "show": {"source": "Opening.fbx", "loop": false, "gain": 0.86}
+      }
+    },
+    {
+      "assetId": "possessed",
+      "role": "ranged-possessed-caster",
+      "category": "enemies",
+      "source": "assets/mesh/enemy/possessed/glb/base_basic_pbr.glb",
+      "motions": {
+        "idle": {"source": "Standing Idle 03.fbx", "loop": true, "gain": 0.66},
+        "move": {"source": "Walking.fbx", "loop": true, "gain": 0.76},
+        "run": {"source": "Running.fbx", "loop": true, "gain": 0.8},
+        "hit": {"source": "Standing React Small From Left.fbx", "loop": false, "gain": 0.74},
+        "bighit": {"source": "Receive Uppercut To The Face.fbx", "loop": false, "gain": 0.8},
+        "attack": {"source": "Standing 2H Magic Attack 01.fbx", "loop": false, "gain": 0.9},
+        "critical": {"source": "Shooting Arrow.fbx", "loop": false, "gain": 0.88},
+        "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 0.82},
+        "defence": {"source": "Body Block.fbx", "loop": false, "gain": 0.75},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
+        "show": {"source": "Opening.fbx", "loop": false, "gain": 0.84}
+      }
+    },
+    {
+      "assetId": "scout",
+      "role": "rush-scout",
+      "category": "enemies",
+      "source": "assets/mesh/enemy/scout/glb/base_basic_pbr.glb",
+      "motions": {
+        "idle": {"source": "Unarmed Idle.fbx", "loop": true, "gain": 0.8},
+        "move": {"source": "Walking.fbx", "loop": true, "gain": 0.94},
+        "run": {"source": "Running.fbx", "loop": true, "gain": 1.0},
+        "hit": {"source": "Standing React Small From Left.fbx", "loop": false, "gain": 0.86},
+        "bighit": {"source": "Receive Uppercut To The Face.fbx", "loop": false, "gain": 0.92},
+        "attack": {"source": "Punching.fbx", "loop": false, "gain": 0.96},
+        "critical": {"source": "Drop Kick.fbx", "loop": false, "gain": 0.95},
+        "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 1.0},
+        "defence": {"source": "Body Block.fbx", "loop": false, "gain": 0.84},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
+        "show": {"source": "Look Over Shoulder.fbx", "loop": false, "gain": 0.9}
+      }
+    },
+    {
+      "assetId": "shade",
+      "role": "void-flanker",
+      "category": "enemies",
+      "source": "assets/mesh/enemy/shade/glb/base_basic_pbr.glb",
+      "motions": {
+        "idle": {"source": "Unarmed Idle.fbx", "loop": true, "gain": 0.74},
+        "move": {"source": "Jog In Circle.fbx", "loop": true, "gain": 0.86},
+        "run": {"source": "Running.fbx", "loop": true, "gain": 0.94},
+        "hit": {"source": "Standing React Small From Left.fbx", "loop": false, "gain": 0.78},
+        "bighit": {"source": "Standing Block React Large.fbx", "loop": false, "gain": 0.86},
+        "attack": {"source": "Double Dagger Stab.fbx", "loop": false, "gain": 0.98},
+        "critical": {"source": "Jump Attack.fbx", "loop": false, "gain": 0.96},
+        "avoid": {"source": "Change Direction.fbx", "loop": false, "gain": 0.94},
+        "defence": {"source": "Body Block.fbx", "loop": false, "gain": 0.78},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
+        "show": {"source": "Catwalk Idle To Twist R.fbx", "loop": false, "gain": 0.88}
+      }
+    },
+    {
+      "assetId": "shadow-soldier-v04",
+      "role": "shadow-guardian",
+      "category": "enemies",
+      "source": "assets/mesh/enemy/shadow-soldier-v04/glb/base_basic_pbr.glb",
+      "motions": {
+        "idle": {"source": "Standing Idle 03.fbx", "loop": true, "gain": 0.78},
+        "move": {"source": "Walking.fbx", "loop": true, "gain": 0.86},
+        "run": {"source": "Running.fbx", "loop": true, "gain": 0.88},
+        "hit": {"source": "Standing React Small From Left.fbx", "loop": false, "gain": 0.82},
+        "bighit": {"source": "Receive Uppercut To The Face.fbx", "loop": false, "gain": 0.9},
+        "attack": {"source": "Great Sword Slash.fbx", "loop": false, "gain": 0.96},
+        "critical": {"source": "Standing Torch Jump.fbx", "loop": false, "gain": 0.94},
+        "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 0.84},
+        "defence": {"source": "Great Sword Blocking.fbx", "loop": false, "gain": 0.94},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
+        "show": {"source": "Draw Sword 1.fbx", "loop": false, "gain": 0.92}
+      }
+    },
+    {
+      "assetId": "shadow-commander-boss",
+      "role": "shadow-command-boss",
+      "category": "bosses",
+      "source": "assets/mesh/enemy/shadow-commander-boss/glb/base_basic_pbr.glb",
+      "motions": {
+        "idle": {"source": "Standing Idle 03.fbx", "loop": true, "gain": 0.68},
+        "move": {"source": "Catwalk Walk Forward HighKnees.fbx", "loop": true, "gain": 0.72},
+        "run": {"source": "Running.fbx", "loop": true, "gain": 0.76},
+        "hit": {"source": "Standing React Small From Left.fbx", "loop": false, "gain": 0.7},
+        "bighit": {"source": "Standing Block React Large.fbx", "loop": false, "gain": 0.82},
+        "attack": {"source": "Great Sword Slash.fbx", "loop": false, "gain": 0.92},
+        "critical": {"source": "Standing 2H Magic Attack 01.fbx", "loop": false, "gain": 0.94},
+        "avoid": {"source": "Change Direction.fbx", "loop": false, "gain": 0.76},
+        "defence": {"source": "Great Sword Blocking.fbx", "loop": false, "gain": 0.86},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
+        "show": {"source": "Opening.fbx", "loop": false, "gain": 0.92}
+      }
+    }
+  ]
+}

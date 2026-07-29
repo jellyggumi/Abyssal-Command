@@ -956,8 +956,8 @@ async function verifyBossMeshRegression(browser, hosting) {
       if (!renderer.renderer) return { error: "RealtimeBattle did not expose a WebGL renderer after mount -- cannot exercise the GLB mesh-resolution code path" };
       renderer.renderSnapshot(projected, {});
 
-      const expectedModelPath = "bosses/cinder-warden.glb";
-      const expectedGlbPath = "assets/images/battle/glb/bosses/cinder-warden.glb";
+      const expectedModelPath = "assets/mesh/boss/s1-cinder-warden/glb/base_basic_pbr.glb";
+      const expectedGlbPath = "assets/mesh/boss/s1-cinder-warden/glb/base_basic_pbr.glb";
       const actorKeys = () => (renderer.actors && typeof renderer.actors.keys === "function" ? [...renderer.actors.keys()] : []);
       // Wait on the record's own SETTLED state, not on the clock. ensureActor()
       // clears `loading` on BOTH the success path (root assigned in the same

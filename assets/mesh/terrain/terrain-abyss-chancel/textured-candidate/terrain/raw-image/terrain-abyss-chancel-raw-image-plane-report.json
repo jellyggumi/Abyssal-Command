@@ -1,0 +1,73 @@
+{
+  "assetId": "terrain-abyss-chancel-raw-image-plane",
+  "geometrySource": {
+    "axes": [
+      "x",
+      "z"
+    ],
+    "footprintAspectRatio": 1.517597,
+    "kind": "procedural planar grid aligned to terrain footprint",
+    "maxX": 0.937226,
+    "maxZ": 1.239477,
+    "minX": -0.943801,
+    "minZ": 0.0,
+    "surfaceY": 0.129146,
+    "textureAspectRatio": 1.5,
+    "textureStretchPercent": 1.173,
+    "xSegments": 24,
+    "zSegments": 16
+  },
+  "material": "abyss_chancel_terrain_raw_image_plane",
+  "object": {
+    "bounds": {
+      "center": [
+        -0.003287,
+        0.129146,
+        0.619739
+      ],
+      "max": [
+        0.937226,
+        0.129146,
+        1.239477
+      ],
+      "min": [
+        -0.943801,
+        0.129146,
+        0.0
+      ]
+    },
+    "name": "TerrainAbyssChancelRawImagePlane",
+    "triangles": 768,
+    "uvLayerCount": 1,
+    "vertices": 425
+  },
+  "outputs": {
+    "glb": {
+      "bytes": 3603124,
+      "path": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/raw-image/terrain-abyss-chancel-raw-image-plane.glb",
+      "sha256": "2a9ae095983b047e12c7853fa79c2905428e342112f7f93a61e3014305cac1b7"
+    },
+    "mtl": {
+      "bytes": 291,
+      "path": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/raw-image/terrain-abyss-chancel-raw-image-plane.mtl",
+      "sha256": "433480b3c43e5811b998a04df40eb74fd9f732e07808844694eb234ae3ef3ad9"
+    },
+    "obj": {
+      "bytes": 37512,
+      "path": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/raw-image/terrain-abyss-chancel-raw-image-plane.obj",
+      "sha256": "c7c290601e15052a1c8379284782a8d75c25230cf4bc186fc484f67e7bded336"
+    }
+  },
+  "referenceImage": {
+    "bytes": 2169860,
+    "path": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/raw-image/reference/terrain-abyss-chancel-terrain.raw.png",
+    "sha256": "4292ea6a8de3862564d18196b287f64b50456519931eb801ee558d8947977cea"
+  },
+  "runtimeEligible": false,
+  "texture": {
+    "bytes": 3583399,
+    "path": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/textures/terrain-abyss-chancel-albedo-3x2.png",
+    "sha256": "676d9216a9cbb30c5229bff2131239c18a5f4df85c3be89f01f294e5e6012424"
+  },
+  "textureMappedUv": "UVMap"
+}

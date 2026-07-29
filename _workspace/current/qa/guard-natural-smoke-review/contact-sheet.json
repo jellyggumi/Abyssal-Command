@@ -1,0 +1,73 @@
+{
+  "assetId": "guard-natural-smoke",
+  "model": "_workspace/current/qa/guard-natural-smoke.glb",
+  "contactSheet": "_workspace/current/qa/guard-natural-smoke-review/contact-sheet.png",
+  "keyposes": [
+    {
+      "action": "idle",
+      "clipName": "guard-natural-smoke::idle::v01",
+      "frame": 49,
+      "image": "_workspace/current/qa/guard-natural-smoke-review/keyposes/00-idle.png"
+    },
+    {
+      "action": "move",
+      "clipName": "guard-natural-smoke::move::v01",
+      "frame": 29,
+      "image": "_workspace/current/qa/guard-natural-smoke-review/keyposes/01-move.png"
+    },
+    {
+      "action": "run",
+      "clipName": "guard-natural-smoke::run::v01",
+      "frame": 34,
+      "image": "_workspace/current/qa/guard-natural-smoke-review/keyposes/02-run.png"
+    },
+    {
+      "action": "hit",
+      "clipName": "guard-natural-smoke::hit::v01",
+      "frame": 32,
+      "image": "_workspace/current/qa/guard-natural-smoke-review/keyposes/03-hit.png"
+    },
+    {
+      "action": "bighit",
+      "clipName": "guard-natural-smoke::bighit::v01",
+      "frame": 49,
+      "image": "_workspace/current/qa/guard-natural-smoke-review/keyposes/04-bighit.png"
+    },
+    {
+      "action": "attack",
+      "clipName": "guard-natural-smoke::attack::v01",
+      "frame": 53,
+      "image": "_workspace/current/qa/guard-natural-smoke-review/keyposes/05-attack.png"
+    },
+    {
+      "action": "critical",
+      "clipName": "guard-natural-smoke::critical::v01",
+      "frame": 42,
+      "image": "_workspace/current/qa/guard-natural-smoke-review/keyposes/06-critical.png"
+    },
+    {
+      "action": "avoid",
+      "clipName": "guard-natural-smoke::avoid::v01",
+      "frame": 25,
+      "image": "_workspace/current/qa/guard-natural-smoke-review/keyposes/07-avoid.png"
+    },
+    {
+      "action": "defence",
+      "clipName": "guard-natural-smoke::defence::v01",
+      "frame": 46,
+      "image": "_workspace/current/qa/guard-natural-smoke-review/keyposes/08-defence.png"
+    },
+    {
+      "action": "die",
+      "clipName": "guard-natural-smoke::die::v01",
+      "frame": 42,
+      "image": "_workspace/current/qa/guard-natural-smoke-review/keyposes/09-die.png"
+    },
+    {
+      "action": "show",
+      "clipName": "guard-natural-smoke::show::v01",
+      "frame": 56,
+      "image": "_workspace/current/qa/guard-natural-smoke-review/keyposes/10-show.png"
+    }
+  ]
+}

@@ -1,0 +1,294 @@
+{
+  "assetId": "guard-natural-smoke",
+  "category": "enemies",
+  "source": "assets/mesh/character/guard-character/glb/base_basic_pbr.glb",
+  "steps": [
+    {
+      "step": "import",
+      "meshes": 1,
+      "reusedBodySplit": false,
+      "hadPedestal": false
+    },
+    {
+      "step": "weld",
+      "vertsBefore": 5325,
+      "vertsAfter": 4351
+    },
+    {
+      "step": "landmarks",
+      "height": 1.211,
+      "shoulderZFrac": 0.74,
+      "shoulderHalfWidth": 0.395,
+      "hipHalfWidth": 0.1173,
+      "handL": [
+        0.7735,
+        -0.0408,
+        1.1259
+      ],
+      "handR": [
+        -0.775,
+        -0.0408,
+        1.1259
+      ],
+      "synthesizedArms": [],
+      "center": [
+        -0.0007,
+        -0.0239
+      ]
+    },
+    {
+      "step": "roll_alignment",
+      "phase": "pre_bind",
+      "referencePolicy": {
+        "axial": "+Y",
+        "lateral": "+Z"
+      },
+      "rows": [
+        {
+          "bone": "DEF-spine",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.001",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.002",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.003",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.004",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.005",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-pelvis.L",
+          "policy": "axial",
+          "rollDeg": -125.8491
+        },
+        {
+          "bone": "DEF-pelvis.R",
+          "policy": "axial",
+          "rollDeg": 125.8491
+        },
+        {
+          "bone": "DEF-shoulder.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.L",
+          "policy": "lateral",
+          "rollDeg": -23.0736
+        },
+        {
+          "bone": "DEF-forearm.L",
+          "policy": "lateral",
+          "rollDeg": -23.0737
+        },
+        {
+          "bone": "DEF-hand.L",
+          "policy": "lateral",
+          "rollDeg": -23.0736
+        },
+        {
+          "bone": "DEF-shoulder.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.R",
+          "policy": "lateral",
+          "rollDeg": 23.0736
+        },
+        {
+          "bone": "DEF-forearm.R",
+          "policy": "lateral",
+          "rollDeg": 23.0737
+        },
+        {
+          "bone": "DEF-hand.R",
+          "policy": "lateral",
+          "rollDeg": 23.0736
+        },
+        {
+          "bone": "DEF-thigh.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.L",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.L",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        },
+        {
+          "bone": "DEF-thigh.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.R",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.R",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        }
+      ]
+    },
+    {
+      "step": "armature_fit",
+      "bones": 24,
+      "shoulderZ": 0.8962,
+      "arms": {
+        "L": {
+          "restAngleDeg": -22.4,
+          "length": 0.6028
+        },
+        "R": {
+          "restAngleDeg": -22.4,
+          "length": 0.6028
+        }
+      },
+      "preBindRollCount": 24
+    },
+    {
+      "step": "orphan_fill",
+      "filled": 0
+    },
+    {
+      "step": "bind",
+      "method": "bone_heat",
+      "boundGroups": 24,
+      "weightedVerts": 4351,
+      "totalVerts": 4351,
+      "armWeightFrac": 0.5179,
+      "attempts": [
+        [
+          "bone_heat",
+          4351,
+          0.5179
+        ]
+      ],
+      "topWeights": [
+        [
+          614.2,
+          "DEF-upper_arm.R"
+        ],
+        [
+          609.1,
+          "DEF-upper_arm.L"
+        ],
+        [
+          292.8,
+          "DEF-thigh.R"
+        ],
+        [
+          292.3,
+          "DEF-thigh.L"
+        ],
+        [
+          243.3,
+          "DEF-shin.R"
+        ]
+      ]
+    },
+    {
+      "step": "weight_refine",
+      "enabledArmatureModifiers": 1,
+      "correctedVertices": 3697,
+      "oppositeLeak": 0,
+      "ambiguous": 560,
+      "orphanCount": 0,
+      "invalidCount": 0,
+      "nonDefCount": 0,
+      "maxInfluences": 4,
+      "maxWeightSum": 1.0000000093132257,
+      "minWeightSum": 0.999999990221113,
+      "deformVerts": 4351,
+      "deformVertsTotal": 4351
+    },
+    {
+      "step": "rest_pose",
+      "mode": "natural",
+      "rotatedDeg": {},
+      "axisDeviationDeg": {
+        "L": 22.47,
+        "R": 22.47
+      },
+      "elevationDeg": {
+        "L": -22.4,
+        "R": -22.4
+      },
+      "tposeToleranceDeg": 12.0,
+      "ok": true
+    },
+    {
+      "step": "author_animations",
+      "count": 11,
+      "clips": [
+        "guard-natural-smoke::idle::v01",
+        "guard-natural-smoke::move::v01",
+        "guard-natural-smoke::run::v01",
+        "guard-natural-smoke::hit::v01",
+        "guard-natural-smoke::bighit::v01",
+        "guard-natural-smoke::attack::v01",
+        "guard-natural-smoke::critical::v01",
+        "guard-natural-smoke::avoid::v01",
+        "guard-natural-smoke::defence::v01",
+        "guard-natural-smoke::die::v01",
+        "guard-natural-smoke::show::v01"
+      ]
+    },
+    {
+      "step": "export",
+      "path": "_workspace/current/qa/guard-natural-smoke.glb",
+      "bytes": 13353084,
+      "pedestalRemoved": false
+    }
+  ],
+  "axisDeviationDeg": {
+    "L": 22.47,
+    "R": 22.47
+  },
+  "elevationDeg": {
+    "L": -22.4,
+    "R": -22.4
+  },
+  "bindMethod": "bone_heat",
+  "pedestalRemoved": false,
+  "restPose": "natural",
+  "restPoseOk": true,
+  "clipCount": 11,
+  "status": "completed"
+}

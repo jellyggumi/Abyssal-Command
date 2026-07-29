@@ -236,59 +236,19 @@ export const CUTSCENES = freeze({
     victory: "다리 끝의 재가 다음 봉쇄선을 가리킨다.",
     defeat: "첫 번째 봉쇄선이 끊어졌다. Dusk Warden, 관문으로 복귀하라.",
   },
-  "veil-citadel": {
-    intro: ["장막 성채가 신호를 삼킨다.", "점유점과 추출점을 붙들고 장막의 잔향을 결속하라."],
-    elite: "감시석의 빈 투구가 새로운 의지를 기다린다.",
-    victory: "거울의 명령이 끊기고 왕좌의 방향이 열린다.",
-    defeat: "장막이 다시 닫혔다. 신호를 되찾아라.",
+  "abyss-chancel": {
+    intro: ["심연 예배소의 서약이 두 번째 봉쇄선을 압박한다.", "거울 장막을 지나 성가의 결속점을 확보하라."],
+    bossEntry: "Veil Tactician이 무너진 제단의 반사를 따라 전장을 재배열한다.",
+    elite: "서약의 파편이 수호자의 발밑에서 장막을 세운다.",
+    victory: "봉인된 성가가 꺼지고 왕좌로 향하는 균열이 열린다.",
+    defeat: "장막이 결속점을 삼켰다. Cinder Span의 봉쇄선으로 복귀하라.",
   },
   "echo-throne": {
-    intro: ["Moonless Court의 메아리 왕좌가 세 번째 봉쇄선 위에 떠 있다.", "한 번뿐인 군주의 영역으로 관문을 버텨라."],
-    elite: "왕좌의 잔향이 Moonless Court의 명령을 기억한다.",
-    victory: "왕좌의 명령이 끊기고 세 번째 봉쇄선이 이어졌다.",
-    defeat: "왕좌의 명령이 관문을 되찾았다. 세 번째 봉쇄선으로 복귀하라.",
-  },
-  "sunken-bastion": {
-    intro: ["가라앉은 보루의 네 번째 봉쇄선이 흔들린다.", "침수된 추출점을 점유하고 닻의 잔향을 결속하라."],
-    elite: "닻의 잔향이 물길의 추출점에 머문다.",
-    victory: "조류의 명령이 끊기고 네 번째 봉쇄선이 이어졌다.",
-    defeat: "침수 압력이 관문을 무너뜨렸다. 네 번째 봉쇄선으로 복귀하라.",
-  },
-  "howling-sprawl": {
-    intro: ["울부짖는 황야가 다섯 번째 관문의 측면을 연다.", "측면 추출점을 점유하고 무리의 잔향을 회수하라."],
-    elite: "무리의 잔향이 바람길의 결속 신호로 남는다.",
-    victory: "측면의 명령이 끊기고 다섯 번째 봉쇄선이 닫혔다.",
-    defeat: "측면 압력이 관문을 갈랐다. 다섯 번째 봉쇄선으로 복귀하라.",
-  },
-  "glass-necropolis": {
-    intro: ["유리 묘역의 고지가 여섯 번째 관문을 내려다본다.", "반사되는 사선을 피해 추출점을 점유하라."],
-    elite: "합창의 잔향이 깨진 기록면 위에 머문다.",
-    victory: "반사된 명령이 멎고 여섯 번째 봉쇄선이 이어졌다.",
-    defeat: "집중 사격이 관문을 깨뜨렸다. 여섯 번째 봉쇄선으로 복귀하라.",
-  },
-  "starless-canal": {
-    intro: ["별 없는 운하가 일곱 번째 관문으로 갈라진다.", "위험 수로의 추출점을 점유하고 통행 잔향을 회수하라."],
-    elite: "통행의 잔향이 잠긴 수문에서 결속을 기다린다.",
-    victory: "수로의 명령이 끊기고 일곱 번째 봉쇄선이 이어졌다.",
-    defeat: "갈라진 수로가 관문을 포위했다. 일곱 번째 봉쇄선으로 복귀하라.",
-  },
-  "shattered-causeway": {
-    intro: ["부서진 둑길이 여덟 번째 관문 앞에서 끊겼다.", "붕괴 구간의 추출점을 점유하고 교량 잔향을 결속하라."],
-    elite: "교량의 잔향이 무너진 연결부를 붙든다.",
-    victory: "거상의 압력이 멎고 여덟 번째 봉쇄선이 이어졌다.",
-    defeat: "붕괴 충격이 관문에 닿았다. 여덟 번째 봉쇄선으로 복귀하라.",
-  },
-  "abyss-chancel": {
-    intro: ["심연 예배소의 서약이 아홉 번째 관문을 억누른다.", "서약의 추출점을 점유하고 명령 잔향을 역전하라."],
-    elite: "서명자의 잔향이 결속할 새 명령을 기다린다.",
-    victory: "가려진 서약이 끊기고 아홉 번째 봉쇄선이 이어졌다.",
-    defeat: "서약의 압력이 관문을 닫았다. 아홉 번째 봉쇄선으로 복귀하라.",
-  },
-  "gate-zenith": {
-    intro: ["Gate Zenith에서 Moonless Court의 명령망이 Echo Deep과 맞닿는다.", "Dusk Warden, 마지막 추출점을 점유하고 열 번째 관문을 지켜라."],
-    elite: "섭정의 잔향이 마지막 결속 신호로 남는다.",
-    victory: "Moonless Court의 명령망이 끊겼다. 열 번째 봉쇄선은 유지되고 Echo Deep은 남는다.",
-    defeat: "마지막 관문이 무너졌다. Dusk Warden, 열 번째 봉쇄선으로 복귀하라.",
+    intro: ["메아리 왕좌가 마지막 봉쇄선 위에서 호응한다.", "군주의 반향을 끊고 관문의 최종 결속을 지켜라."],
+    bossEntry: "Gate Sovereign이 왕좌의 파편을 모아 전장을 하나의 명령으로 묶는다.",
+    elite: "왕좌의 반향이 돌진하는 수호자의 그림자를 되살린다.",
+    victory: "왕좌의 명령이 끊겼다. 세 번째 봉쇄선은 유지된다.",
+    defeat: "관문의 최종 결속이 무너졌다. Echo Throne으로 복귀하라.",
   },
   default: {
     intro: ["새 봉쇄선이 신호를 삼킨다.", "관문을 지키고 메아리를 추출하라."],
@@ -400,69 +360,6 @@ export const STAGE_TACTICS = freeze({
     }),
     surpriseTable: CINDER_SPAN_SURPRISE_TABLE,
   },
-  "veil-citadel": {
-    chokepath: { id: "veil-twins", x: 18400, halfWidth: 1800 },
-    flank: { id: "veil-north", entryX: 12400, entryY: 1800 },
-    elevation: { id: "veil-rampart", x: 17000, y: 3000, rangeMultiplier: 1.12 },
-    hazard: { id: "mirror-static", x: 15400, y: 7200, radius: 1000, damagePerSecond: 9 },
-    occupation: { id: "veil-signal", x: 18000, y: 4200, radius: 850, holdTicks: 210, effects: { moveMultiplier: 1.04, rangeMultiplier: 1.1, recoveryPerSecond: 5 } },
-    extraction: { id: "veil-bind", x: 15800, y: 3400, radius: 950, windowTicks: 600 },
-    spawnDirections: ["W", "NW"], seededVariation: { timingJitterTicks: 15, densityDelta: 1, laneJitter: 360 },
-  },
-  "echo-throne": {
-    chokepath: { id: "throne-aisle", x: 18800, halfWidth: 1600 },
-    flank: { id: "throne-south", entryX: 12800, entryY: 10400 },
-    elevation: { id: "throne-dais", x: 18200, y: 6000, rangeMultiplier: 1.1 },
-    hazard: { id: "echo-rift", x: 16000, y: 6000, radius: 1250, damagePerSecond: 10 },
-    occupation: { id: "throne-domain", x: 18400, y: 6000, radius: 800, holdTicks: 240, effects: { moveMultiplier: 1.06, rangeMultiplier: 1.08, recoveryPerSecond: 6 } },
-    extraction: { id: "throne-bind", x: 16200, y: 7600, radius: 900, windowTicks: 600 },
-    spawnDirections: ["W", "SW", "NW"], seededVariation: { timingJitterTicks: 18, densityDelta: 1, laneJitter: 420 },
-  },
-  "sunken-bastion": {
-    chokepath: { id: "bastion-floodgate", x: 18600, halfWidth: 1500 },
-    flank: { id: "bastion-channel", entryX: 12600, entryY: 10200 },
-    elevation: { id: "bastion-anchor", x: 17400, y: 2800, rangeMultiplier: 1.1 },
-    hazard: { id: "flood-pulse", x: 15200, y: 8200, radius: 1400, damagePerSecond: 11 },
-    occupation: { id: "bastion-pump", x: 17800, y: 7600, radius: 900, holdTicks: 240, effects: { moveMultiplier: 1.05, rangeMultiplier: 1.08, recoveryPerSecond: 7 } },
-    extraction: { id: "bastion-bind", x: 15600, y: 8000, radius: 950, windowTicks: 600 },
-    spawnDirections: ["W", "SW"], seededVariation: { timingJitterTicks: 18, densityDelta: 1, laneJitter: 450 },
-  },
-  "howling-sprawl": {
-    chokepath: { id: "sprawl-funnel", x: 18200, halfWidth: 1900 },
-    flank: { id: "sprawl-crosswind", entryX: 12000, entryY: 1600 },
-    elevation: { id: "sprawl-ridge", x: 16800, y: 2400, rangeMultiplier: 1.09 },
-    hazard: { id: "howling-gust", x: 15000, y: 5000, radius: 1500, damagePerSecond: 10 },
-    occupation: { id: "sprawl-beacon", x: 17400, y: 3600, radius: 950, holdTicks: 270, effects: { moveMultiplier: 1.08, rangeMultiplier: 1.06, recoveryPerSecond: 6 } },
-    extraction: { id: "sprawl-bind", x: 15000, y: 2600, radius: 1000, windowTicks: 600 },
-    spawnDirections: ["W", "NW", "SW"], seededVariation: { timingJitterTicks: 21, densityDelta: 1, laneJitter: 520 },
-  },
-  "glass-necropolis": {
-    chokepath: { id: "glass-crypt", x: 19000, halfWidth: 1400 },
-    flank: { id: "glass-reflection", entryX: 13200, entryY: 9800 },
-    elevation: { id: "glass-spire", x: 17600, y: 2200, rangeMultiplier: 1.14 },
-    hazard: { id: "glass-shardfall", x: 15800, y: 6200, radius: 1200, damagePerSecond: 13 },
-    occupation: { id: "glass-choir", x: 18200, y: 3200, radius: 800, holdTicks: 270, effects: { moveMultiplier: 1.04, rangeMultiplier: 1.12, recoveryPerSecond: 7 } },
-    extraction: { id: "glass-bind", x: 16000, y: 3600, radius: 900, windowTicks: 600 },
-    spawnDirections: ["W", "NW"], seededVariation: { timingJitterTicks: 21, densityDelta: 1, laneJitter: 480 },
-  },
-  "starless-canal": {
-    chokepath: { id: "canal-lock", x: 18400, halfWidth: 1500 },
-    flank: { id: "canal-sluice", entryX: 12200, entryY: 10400 },
-    elevation: { id: "canal-towpath", x: 17000, y: 3000, rangeMultiplier: 1.1 },
-    hazard: { id: "canal-undertow", x: 14600, y: 8000, radius: 1550, damagePerSecond: 12 },
-    occupation: { id: "canal-toll", x: 17600, y: 7600, radius: 900, holdTicks: 300, effects: { moveMultiplier: 1.07, rangeMultiplier: 1.08, recoveryPerSecond: 8 } },
-    extraction: { id: "canal-bind", x: 15200, y: 8200, radius: 950, windowTicks: 600 },
-    spawnDirections: ["W", "SW", "NW"], seededVariation: { timingJitterTicks: 24, densityDelta: 1, laneJitter: 600 },
-  },
-  "shattered-causeway": {
-    chokepath: { id: "causeway-gap", x: 19200, halfWidth: 1200 },
-    flank: { id: "causeway-rubble", entryX: 13000, entryY: 1800 },
-    elevation: { id: "causeway-keystone", x: 17800, y: 2600, rangeMultiplier: 1.12 },
-    hazard: { id: "causeway-collapse", x: 16000, y: 6000, radius: 1350, damagePerSecond: 15 },
-    occupation: { id: "causeway-brace", x: 18400, y: 4400, radius: 800, holdTicks: 300, effects: { moveMultiplier: 1.05, rangeMultiplier: 1.1, recoveryPerSecond: 9 } },
-    extraction: { id: "causeway-bind", x: 16400, y: 4000, radius: 900, windowTicks: 600 },
-    spawnDirections: ["W", "NW"], seededVariation: { timingJitterTicks: 24, densityDelta: 1, laneJitter: 560 },
-  },
   "abyss-chancel": {
     chokepath: { id: "chancel-nave", x: 18800, halfWidth: 1300 },
     flank: { id: "chancel-transept", entryX: 12800, entryY: 10200 },
@@ -472,14 +369,14 @@ export const STAGE_TACTICS = freeze({
     extraction: { id: "chancel-bind", x: 16000, y: 7000, radius: 850, windowTicks: 600 },
     spawnDirections: ["W", "SW", "NW"], seededVariation: { timingJitterTicks: 27, densityDelta: 1, laneJitter: 660 },
   },
-  "gate-zenith": {
-    chokepath: { id: "zenith-threshold", x: 19400, halfWidth: 1100 },
-    flank: { id: "zenith-umbra", entryX: 13200, entryY: 1400 },
-    elevation: { id: "zenith-crown", x: 18400, y: 2200, rangeMultiplier: 1.15 },
-    hazard: { id: "deep-command", x: 16400, y: 6000, radius: 1600, damagePerSecond: 18 },
-    occupation: { id: "zenith-last-seal", x: 18800, y: 6000, radius: 750, holdTicks: 360, effects: { moveMultiplier: 1.06, rangeMultiplier: 1.12, recoveryPerSecond: 12 } },
-    extraction: { id: "zenith-bind", x: 16600, y: 6000, radius: 850, windowTicks: 600 },
-    spawnDirections: ["W", "NW", "SW"], seededVariation: { timingJitterTicks: 30, densityDelta: 1, laneJitter: 720 },
+  "echo-throne": {
+    chokepath: { id: "throne-aisle", x: 18800, halfWidth: 1600 },
+    flank: { id: "throne-south", entryX: 12800, entryY: 10400 },
+    elevation: { id: "throne-dais", x: 18200, y: 6000, rangeMultiplier: 1.1 },
+    hazard: { id: "echo-rift", x: 16000, y: 6000, radius: 1250, damagePerSecond: 10 },
+    occupation: { id: "throne-domain", x: 18400, y: 6000, radius: 800, holdTicks: 240, effects: { moveMultiplier: 1.06, rangeMultiplier: 1.08, recoveryPerSecond: 6 } },
+    extraction: { id: "throne-bind", x: 16200, y: 7600, radius: 900, windowTicks: 600 },
+    spawnDirections: ["W", "SW", "NW"], seededVariation: { timingJitterTicks: 18, densityDelta: 1, laneJitter: 420 },
   },
 });
 /*
@@ -542,15 +439,8 @@ export const MIDBOSS_PROFILE = freeze({
  */
 export const STAGE_WAVE_DOCTRINE = freeze({
   "cinder-span": { gateIntegrity: 1600, defenseTicks: 10200, waveCount: 10, classes: freeze(["rusher", "flanker", "ranged"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
-  "veil-citadel": { gateIntegrity: 1700, defenseTicks: 10200, waveCount: 10, classes: freeze(["rusher", "flanker", "ranged"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "flank", midbossEnemy: "flanker" },
+  "abyss-chancel": { gateIntegrity: 1700, defenseTicks: 10200, waveCount: 10, classes: freeze(["rusher", "flanker", "ranged"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "flank", midbossEnemy: "flanker" },
   "echo-throne": { gateIntegrity: 1800, defenseTicks: 10800, waveCount: 11, classes: freeze(["flanker", "ranged", "guardian"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
-  "sunken-bastion": { gateIntegrity: 1900, defenseTicks: 11400, waveCount: 11, classes: freeze(["rusher", "ranged", "guardian"]), kindCycle: freeze(["big", "normal", "normal", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
-  "howling-sprawl": { gateIntegrity: 2000, defenseTicks: 12000, waveCount: 11, classes: freeze(["flanker", "ranged", "guardian"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "flank", midbossEnemy: "flanker" },
-  "glass-necropolis": { gateIntegrity: 2100, defenseTicks: 12600, waveCount: 12, classes: freeze(["rusher", "ranged", "guardian"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "ranged" },
-  "starless-canal": { gateIntegrity: 2200, defenseTicks: 13200, waveCount: 12, classes: freeze(["flanker", "ranged", "guardian"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "flank", midbossEnemy: "ranged" },
-  "shattered-causeway": { gateIntegrity: 2300, defenseTicks: 13800, waveCount: 12, classes: freeze(["rusher", "ranged", "guardian"]), kindCycle: freeze(["big", "normal", "normal", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
-  "abyss-chancel": { gateIntegrity: 2400, defenseTicks: 14400, waveCount: 13, classes: freeze(["flanker", "ranged", "guardian"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
-  "gate-zenith": { gateIntegrity: 2500, defenseTicks: 15000, waveCount: 13, classes: freeze(["rusher", "ranged", "guardian"]), kindCycle: freeze(["big", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
 });
 
 /**
@@ -674,15 +564,8 @@ const stage = (id, name, bossName, scale, eliteId, eliteKind, eliteCompanion, bo
 
 export const STAGES = freeze([
   stage("cinder-span", "Cinder Span", "Cinder Warden", 100, "s1-ember-hunter", "rusher", "ember-cohort", "s1-cinder-warden", 900, [[0, "rusher", 4], [180, "flanker", 3], [390, "ranged", 2]]),
-  stage("veil-citadel", "Veil Citadel", "Veil Tactician", 115, "s2-veil-sentinel", "flanker", "rift-lens", "s2-veil-tactician", 780, [[0, "rusher", 5], [180, "flanker", 4], [420, "ranged", 3]]),
+  stage("abyss-chancel", "Abyss Chancel", "Veil Tactician", 115, "s2-veil-sentinel", "flanker", "rift-lens", "s2-veil-tactician", 780, [[0, "rusher", 5], [180, "flanker", 4], [420, "ranged", 3]]),
   stage("echo-throne", "Echo Throne", "Gate Sovereign", 130, "s3-throne-wraith", "ranged", "throne-echo", "s3-gate-sovereign", 840, [[0, "flanker", 5], [210, "ranged", 3], [480, "guardian", 2]]),
-  stage("sunken-bastion", "Sunken Bastion", "Tide Warden", 145, "s4-anchor-diver", "guardian", "anchor-shard", "s4-tide-warden", 900, [[0, "rusher", 6], [220, "ranged", 4], [510, "guardian", 2]]),
-  stage("howling-sprawl", "Howling Sprawl", "Pack Herald", 160, "s5-pack-sentinel", "guardian", "veil-vanguard", "s5-pack-herald", 960, [[0, "flanker", 6], [240, "ranged", 4], [540, "guardian", 3]]),
-  stage("glass-necropolis", "Glass Necropolis", "Requiem Choir", 175, "s6-choir-adept", "ranged", "throne-echo", "s6-requiem-choir", 1020, [[0, "rusher", 7], [260, "ranged", 5], [570, "guardian", 3]]),
-  stage("starless-canal", "Starless Canal", "Lantern Tyrant", 190, "s7-toll-keeper", "ranged", "anchor-shard", "s7-lantern-tyrant", 1080, [[0, "flanker", 7], [270, "ranged", 5], [600, "guardian", 4]]),
-  stage("shattered-causeway", "Shattered Causeway", "Bridge Colossus", 205, "s8-keystone-warden", "guardian", "ember-cohort", "s8-bridge-colossus", 1140, [[0, "rusher", 8], [280, "ranged", 6], [630, "guardian", 4]]),
-  stage("abyss-chancel", "Abyss Chancel", "Veiled Concordat", 220, "s9-oathbound-signatory", "guardian", "dawnless-crown", "s9-veiled-concordat", 1200, [[0, "flanker", 8], [300, "ranged", 6], [660, "guardian", 5]]),
-  stage("gate-zenith", "Gate Zenith", "Abyss Regent", 240, "s10-regent-herald", "flanker", "dawnless-crown", "s10-abyss-regent", 1260, [[0, "rusher", 9], [300, "ranged", 7], [690, "guardian", 5]]),
 ]);
 
 /**
@@ -697,12 +580,12 @@ export const STAGE_PRESENTATION_BY_ID = freeze({
     atmosphere: { descriptor: "잿빛 바람이 교량의 봉쇄선을 훑는다.", motif: "불씨와 재의 흐름" },
     mapLabels: { title: "잿빛 교량", domain: "재의 봉쇄선", chokepath: "중앙 재길", flank: "남쪽 측면", elevation: "잿빛 감시대", hazard: "재 폭풍", occupation: "재의 봉인", extraction: "결속 지점", objective: "재의 봉인을 지켜 결속하라." },
   },
-  "veil-citadel": {
-    palette: { surface: "surface-veil-stone", contour: "contour-veil", landmark: "landmark-rampart", hazard: "hazard-static", objective: "objective-signal" },
-    terrain: { patternId: "terrain.veil-citadel.veiled-lines", label: "장막의 선" },
-    landmarks: [{ id: "landmark.veil-rampart", label: "장막 성벽" }, { id: "landmark.veil-twins", label: "쌍둥이 장막" }],
-    atmosphere: { descriptor: "성채의 장막이 신호와 시야를 삼킨다.", motif: "거울빛 장막과 정전" },
-    mapLabels: { title: "장막 성채", domain: "장막의 봉쇄선", chokepath: "쌍둥이 장막길", flank: "북쪽 측면", elevation: "장막 성벽", hazard: "거울 정전", occupation: "장막 신호", extraction: "결속 지점", objective: "장막 신호를 붙들고 결속하라." },
+  "abyss-chancel": {
+    palette: { surface: "surface-chancel-abyss", contour: "contour-oath", landmark: "landmark-apse", hazard: "hazard-oath", objective: "objective-oath" },
+    terrain: { patternId: "terrain.abyss-chancel.oath-rings", label: "서약 고리" },
+    landmarks: [{ id: "landmark.chancel-apse", label: "예배소 후진" }, { id: "landmark.chancel-nave", label: "예배소 본당" }],
+    atmosphere: { descriptor: "심연 예배소의 서약이 시야를 봉인한다.", motif: "서약 고리와 보랏빛 정전" },
+    mapLabels: { title: "심연 예배소", domain: "서약의 봉쇄선", chokepath: "예배소 본당", flank: "교차 회랑 측면", elevation: "예배소 후진", hazard: "서약의 압력", occupation: "예배소 서약", extraction: "결속 지점", objective: "예배소 서약을 역전해 결속하라." },
   },
   "echo-throne": {
     palette: { surface: "surface-throne-stone", contour: "contour-echo", landmark: "landmark-dais", hazard: "hazard-rift", objective: "objective-domain" },
@@ -710,55 +593,6 @@ export const STAGE_PRESENTATION_BY_ID = freeze({
     landmarks: [{ id: "landmark.throne-dais", label: "왕좌 단상" }, { id: "landmark.throne-aisle", label: "왕좌 회랑" }],
     atmosphere: { descriptor: "달 없는 궁정의 메아리가 왕좌 회랑을 울린다.", motif: "메아리와 단상의 균열" },
     mapLabels: { title: "메아리 왕좌", domain: "달 없는 궁정", chokepath: "왕좌 회랑", flank: "남쪽 측면", elevation: "왕좌 단상", hazard: "메아리 균열", occupation: "왕좌 영역", extraction: "결속 지점", objective: "왕좌 영역을 지켜 결속하라." },
-  },
-  "sunken-bastion": {
-    palette: { surface: "surface-bastion-flood", contour: "contour-tide", landmark: "landmark-anchor", hazard: "hazard-flood", objective: "objective-pump" },
-    terrain: { patternId: "terrain.sunken-bastion.flood-arcs", label: "침수 호" },
-    landmarks: [{ id: "landmark.bastion-anchor", label: "보루 닻" }, { id: "landmark.bastion-floodgate", label: "침수 수문" }],
-    atmosphere: { descriptor: "가라앉은 보루의 수문에서 조류가 밀려든다.", motif: "침수선과 닻의 잔향" },
-    mapLabels: { title: "가라앉은 보루", domain: "조류의 봉쇄선", chokepath: "침수 수문", flank: "수로 측면", elevation: "보루 닻", hazard: "침수 파동", occupation: "보루 펌프", extraction: "결속 지점", objective: "보루 펌프를 점유하고 결속하라." },
-  },
-  "howling-sprawl": {
-    palette: { surface: "surface-sprawl-dust", contour: "contour-wind", landmark: "landmark-ridge", hazard: "hazard-gust", objective: "objective-beacon" },
-    terrain: { patternId: "terrain.howling-sprawl.wind-hatch", label: "바람 해칭" },
-    landmarks: [{ id: "landmark.sprawl-ridge", label: "황야 능선" }, { id: "landmark.sprawl-funnel", label: "바람깔때기" }],
-    atmosphere: { descriptor: "울부짖는 바람이 황야의 측면을 열어젖힌다.", motif: "교차풍과 능선의 골" },
-    mapLabels: { title: "울부짖는 황야", domain: "바람길 봉쇄선", chokepath: "바람깔때기", flank: "교차풍 측면", elevation: "황야 능선", hazard: "울부짖는 돌풍", occupation: "황야 봉화", extraction: "결속 지점", objective: "황야 봉화를 지켜 결속하라." },
-  },
-  "glass-necropolis": {
-    palette: { surface: "surface-glass-crypt", contour: "contour-glass", landmark: "landmark-spire", hazard: "hazard-shard", objective: "objective-choir" },
-    terrain: { patternId: "terrain.glass-necropolis.fractures", label: "유리 균열" },
-    landmarks: [{ id: "landmark.glass-spire", label: "유리 첨탑" }, { id: "landmark.glass-crypt", label: "유리 납골당" }],
-    atmosphere: { descriptor: "유리 묘역의 반사면이 고지와 사선을 가른다.", motif: "파편빛과 합창의 잔향" },
-    mapLabels: { title: "유리 묘역", domain: "유리 고지 봉쇄선", chokepath: "유리 납골당", flank: "반사 측면", elevation: "유리 첨탑", hazard: "유리 파편비", occupation: "유리 합창", extraction: "결속 지점", objective: "유리 합창을 점유하고 결속하라." },
-  },
-  "starless-canal": {
-    palette: { surface: "surface-canal-ink", contour: "contour-lock", landmark: "landmark-towpath", hazard: "hazard-undertow", objective: "objective-toll" },
-    terrain: { patternId: "terrain.starless-canal.lock-stripes", label: "수문 줄무늬" },
-    landmarks: [{ id: "landmark.canal-towpath", label: "운하 견인로" }, { id: "landmark.canal-lock", label: "잠긴 수문" }],
-    atmosphere: { descriptor: "별 없는 수로의 저류가 통행길을 끌어당긴다.", motif: "수문과 어두운 물결" },
-    mapLabels: { title: "별 없는 운하", domain: "위험 수로 봉쇄선", chokepath: "잠긴 수문", flank: "수문 측면", elevation: "운하 견인로", hazard: "수로 저류", occupation: "운하 통행점", extraction: "결속 지점", objective: "운하 통행점을 점유하고 결속하라." },
-  },
-  "shattered-causeway": {
-    palette: { surface: "surface-causeway-rubble", contour: "contour-fracture", landmark: "landmark-keystone", hazard: "hazard-collapse", objective: "objective-brace" },
-    terrain: { patternId: "terrain.shattered-causeway.rubble", label: "파편 더미" },
-    landmarks: [{ id: "landmark.causeway-keystone", label: "둑길 쐐기돌" }, { id: "landmark.causeway-gap", label: "끊긴 둑길" }],
-    atmosphere: { descriptor: "부서진 둑길의 틈이 관문 앞에서 흔들린다.", motif: "붕괴선과 쐐기돌" },
-    mapLabels: { title: "부서진 둑길", domain: "교량 봉쇄선", chokepath: "끊긴 둑길", flank: "파편 측면", elevation: "둑길 쐐기돌", hazard: "둑길 붕괴", occupation: "둑길 버팀점", extraction: "결속 지점", objective: "둑길 버팀점을 지켜 결속하라." },
-  },
-  "abyss-chancel": {
-    palette: { surface: "surface-chancel-abyss", contour: "contour-oath", landmark: "landmark-apse", hazard: "hazard-oath", objective: "objective-oath" },
-    terrain: { patternId: "terrain.abyss-chancel.oath-rings", label: "서약 고리" },
-    landmarks: [{ id: "landmark.chancel-apse", label: "예배소 후진" }, { id: "landmark.chancel-nave", label: "예배소 본당" }],
-    atmosphere: { descriptor: "심연 예배소의 서약이 관문 위로 압력을 드리운다.", motif: "서약 고리와 가려진 서명" },
-    mapLabels: { title: "심연 예배소", domain: "서약의 봉쇄선", chokepath: "예배소 본당", flank: "교차 회랑 측면", elevation: "예배소 후진", hazard: "서약의 압력", occupation: "예배소 서약", extraction: "결속 지점", objective: "예배소 서약을 역전해 결속하라." },
-  },
-  "gate-zenith": {
-    palette: { surface: "surface-zenith-void", contour: "contour-threshold", landmark: "landmark-crown", hazard: "hazard-command", objective: "objective-last-seal" },
-    terrain: { patternId: "terrain.gate-zenith.threshold-rays", label: "문턱 광선" },
-    landmarks: [{ id: "landmark.zenith-crown", label: "정점의 왕관" }, { id: "landmark.zenith-threshold", label: "관문의 문턱" }],
-    atmosphere: { descriptor: "관문 정점에서 명령망이 심연과 맞닿는다.", motif: "문턱 광선과 마지막 봉인" },
-    mapLabels: { title: "관문 정점", domain: "마지막 봉쇄선", chokepath: "관문의 문턱", flank: "그림자 측면", elevation: "정점의 왕관", hazard: "심연의 명령", occupation: "마지막 봉인", extraction: "마지막 결속 지점", objective: "마지막 봉인을 지키고 관문을 방어하라." },
   },
 });
 
@@ -771,27 +605,13 @@ if (
 }
 export const STAGE_ITEM_IDS = freeze({
   "cinder-span": "ashen-sigil",
-  "veil-citadel": "ward-splinter",
+  "abyss-chancel": "ward-splinter",
   "echo-throne": "echo-compass",
-  "sunken-bastion": "hourglass-fragment",
-  "howling-sprawl": "ashen-sigil",
-  "glass-necropolis": "ward-splinter",
-  "starless-canal": "echo-compass",
-  "shattered-causeway": "hourglass-fragment",
-  "abyss-chancel": "ashen-sigil",
-  "gate-zenith": "dawnless-crown-shard",
 });
 export const STAGE_REWARD_IDS = freeze({
   "cinder-span": Object.freeze(["ember-cohort-legacy", "stillwater-hourglass", "bulwark-brand"]),
-  "veil-citadel": Object.freeze(["rift-lens-archive", "anchor-shard-archive", "abyssal-banner"]),
+  "abyss-chancel": Object.freeze(["rift-lens-archive", "anchor-shard-archive", "abyssal-banner"]),
   "echo-throne": Object.freeze(["throne-echo-record", "veil-vanguard-legacy", "stillwater-hourglass"]),
-  "sunken-bastion": Object.freeze(["anchor-shard-archive", "bulwark-brand", "abyssal-banner"]),
-  "howling-sprawl": Object.freeze(["veil-vanguard-legacy", "ember-cohort-legacy", "rift-lens-archive", "pack-warden-legacy"]),
-  "glass-necropolis": Object.freeze(["rift-lens-archive", "stillwater-hourglass", "anchor-shard-archive", "requiem-warden-legacy", "choir-ward-crystal"]),
-  "starless-canal": Object.freeze(["abyssal-banner", "bulwark-brand", "throne-echo-record", "lantern-reaver-legacy", "warden-lantern"]),
-  "shattered-causeway": Object.freeze(["ember-cohort-legacy", "veil-vanguard-legacy", "abyssal-banner"]),
-  "abyss-chancel": Object.freeze(["dawnless-crown", "throne-echo-record", "bulwark-brand"]),
-  "gate-zenith": Object.freeze(["dawnless-crown", "throne-echo-record", "rift-lens-archive"]),
 });
 export const STAGE_BY_ID = freeze(Object.fromEntries(STAGES.map((entry) => [entry.id, entry])));
 

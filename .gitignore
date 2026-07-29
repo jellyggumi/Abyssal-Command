@@ -98,6 +98,9 @@ _workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/previs/
 _workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/props/
 _workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/terrain/
 _workspace/**/engineering/asset-pipeline/all-mesh-texture-candidates-v2/vfx/
+_workspace/**/engineering/asset-pipeline/character-motion-library/*/model.glb
+_workspace/**/engineering/asset-pipeline/character-motion-library/*/review.blend
+_workspace/**/engineering/asset-pipeline/character-motion-library/*/review/
 
 # Superseded monolithic stage-gallery/world authoring scenes. The final
 # per-stage sources live under blender/stage-overhaul/ and remain tracked.

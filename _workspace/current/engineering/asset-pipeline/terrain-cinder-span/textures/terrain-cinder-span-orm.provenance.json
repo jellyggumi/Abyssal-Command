@@ -1,0 +1,68 @@
+{
+  "asset": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-orm.png",
+  "details": {
+    "description": "glTF packed occlusion-red roughness-green metallic-blue",
+    "inputDimensions": [
+      1254,
+      1254
+    ],
+    "periodicBlendApplied": false,
+    "seamMarginPixels": 0,
+    "seamMetricsAfter": {
+      "horizontalInteriorBaseline": 0.030822893604636192,
+      "horizontalMeanAbsoluteError": 0.03499157726764679,
+      "horizontalRatio": 1.1352463437236655,
+      "verticalInteriorBaseline": 0.033110469579696655,
+      "verticalMeanAbsoluteError": 0.04156709834933281,
+      "verticalRatio": 1.255406488551336
+    },
+    "seamMetricsBefore": {
+      "horizontalInteriorBaseline": 0.030822893604636192,
+      "horizontalMeanAbsoluteError": 0.03499157726764679,
+      "horizontalRatio": 1.1352463437236655,
+      "verticalInteriorBaseline": 0.033110469579696655,
+      "verticalMeanAbsoluteError": 0.04156709834933281,
+      "verticalRatio": 1.255406488551336
+    },
+    "seamRatioThreshold": 1.5,
+    "targetDimensions": [
+      1024,
+      1024
+    ]
+  },
+  "generatedAt": "2026-07-29",
+  "generator": {
+    "algorithm": "periodic seam blend plus deterministic NumPy PBR derivation",
+    "blenderVersion": "5.2.0 LTS",
+    "script": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/generate-cinder-span-pbr-blender.py",
+    "tool": "Blender headless Python"
+  },
+  "output": {
+    "bytes": 1807014,
+    "format": "png",
+    "height": 1024,
+    "sha256": "fc4128adc74af23604fb010a4eaed2a72a1cea1772cf5b3ad4767ba029f60119",
+    "width": 1024
+  },
+  "role": "orm",
+  "runtimeEligible": false,
+  "schemaVersion": 1,
+  "sourceInputs": [
+    {
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-basecolor-gti.png",
+      "role": "god-tibo-imagen base-color source",
+      "sha256": "a95d58332603b7f6f6664a5cbd005026cc19ace4739e930eb3246d9f9c714fd3"
+    },
+    {
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-terrain.png",
+      "role": "terrain appearance reference",
+      "sha256": "b63fef5134461c89aa460e6392ef9627d49005def864e6d61e4d3924707d2756"
+    },
+    {
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-basecolor-gti.provenance.json",
+      "role": "generation provenance",
+      "sha256": "3876e20e7238f27e939b03d57879e800cc8d87ada2414f4ba09fd40ec76cf021"
+    }
+  ],
+  "status": "blender-derived-candidate"
+}

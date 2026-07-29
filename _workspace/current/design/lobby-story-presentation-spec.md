@@ -272,74 +272,41 @@ scope: 매체 선택, 로비 아카이브 구조, 비디오·이미지 사양, �
 
 ---
 
-## 7. 10스테이지 서사 비트 시트
+## 7. 3구역 서사 비트 시트
 
-기존 고유명과 10스테이지 순서를 유지한다. 매체 배분: **비디오 6 / 인엔진 10 / 스틸 14**.
+현행 세 구역 순서와 보스 메쉬 계약을 유지한다. 매체 배분은 **비디오 2 / 인엔진 3 / 스틸 9장**이다.
+각 비트는 1장 포스터와 텍스트 대체본을 가진다. 전체 9비트 중 `aftermath`는 해당 스테이지를
+클리어하기 전에는 노출하지 않는다.
 
 | # | 스테이지 | 비트 | 매체 | 길이 | 드러내는 것 | 스포일러 등급 |
 |---|---|---|---|---|---|---|
-| 1 | Cinder Span | approach | **비디오** | 14 s | 심연의 문이 열린 순간, Dusk Warden 출정 | 공개 |
+| 1 | Cinder Span | approach | **비디오** | 12 s | 심연의 문이 열린 순간, Dusk Warden 출정 | 공개 |
 | 1 | | confrontation | 인엔진 | 8 s | Cinder Warden의 사슬 | 도달 시 |
-| 1 | | aftermath | 스틸 ×3 | 11 s | 잿빛 교량 너머 더 깊은 어둠 | 클리어 시 |
-| 2 | Veil Citadel | approach | 스틸 ×4 | 14 s | 장막에 가려진 성채 | 도달 시 |
-| 2 | | confrontation | 인엔진 | 8 s | Veil Tactician의 거울 | 도달 시 |
-| 2 | | aftermath | 스틸 ×3 | 11 s | 거울에 비친 것은 자신 | 클리어 시 |
-| 3 | Echo Throne | approach | **비디오** | 12 s | Echo Deep의 실체 | 도달 시 |
-| 3 | | confrontation | 인엔진 | 8 s | Gate Sovereign 즉위 | 도달 시 |
-| 3 | | aftermath | 스틸 ×3 | 11 s | 왕좌는 비어 있었다 | 클리어 시 |
-| 4 | Sunken Bastion | approach | 스틸 ×3 | 11 s | 물에 잠긴 요새 | 도달 시 |
-| 4 | | confrontation | 인엔진 | 8 s | Tide Warden | 도달 시 |
-| 4 | | aftermath | 스틸 ×3 | 11 s | 수위가 계속 오른다 | 클리어 시 |
-| 5 | Howling Sprawl | approach | 스틸 ×4 | 14 s | 무리의 영역 | 도달 시 |
-| 5 | | confrontation | 인엔진 | 8 s | Pack Herald의 울음 | 도달 시 |
-| 5 | | aftermath | **비디오** | 12 s | Moonless Court 최초 언급 | 클리어 시 |
-| 6 | Glass Necropolis | approach | 스틸 ×3 | 11 s | 유리 무덤 | 도달 시 |
-| 6 | | confrontation | 인엔진 | 8 s | Requiem Choir | 도달 시 |
-| 6 | | aftermath | 스틸 ×3 | 11 s | 합창이 멈추지 않는다 | 클리어 시 |
-| 7 | Starless Canal | approach | 스틸 ×4 | 14 s | 별 없는 수로 | 도달 시 |
-| 7 | | confrontation | 인엔진 | 8 s | Lantern Tyrant | 도달 시 |
-| 7 | | aftermath | 스틸 ×3 | 11 s | 등불이 길을 속인다 | 클리어 시 |
-| 8 | Shattered Causeway | approach | **비디오** | 13 s | 무너지는 둑길 | 도달 시 |
-| 8 | | confrontation | 인엔진 | 8 s | Bridge Colossus | 도달 시 |
-| 8 | | aftermath | 스틸 ×3 | 11 s | 건너온 다리가 사라졌다 | 클리어 시 |
-| 9 | Abyss Chancel | approach | 스틸 ×4 | 14 s | 심연의 성소 | 도달 시 |
-| 9 | | confrontation | 인엔진 | 8 s | Veiled Concordat의 서약 | 도달 시 |
-| 9 | | aftermath | **비디오** | 13 s | 서약의 대가 | 클리어 시 |
-| 10 | Gate Zenith | approach | 스틸 ×5 | 18 s | 최후의 관문 | 도달 시 |
-| 10 | | confrontation | 인엔진 | 10 s | Abyss Regent | 도달 시 |
-| 10 | | aftermath | **비디오** | 15 s | 캠페인 종결 | 클리어 시 |
+| 1 | | aftermath | 스틸 ×3 | 11 s | 잿빛 교량 너머 서약의 성소 | 클리어 시 |
+| 2 | Abyss Chancel | approach | 스틸 ×3 | 11 s | 장막 대신 서약 고리로 봉쇄된 성소 | 도달 시 |
+| 2 | | confrontation | 인엔진 | 8 s | Veil Tactician의 서약 거울 | 도달 시 |
+| 2 | | aftermath | **비디오** | 12 s | 봉인이 왕좌 회랑을 가리킨다 | 클리어 시 |
+| 3 | Echo Throne | approach | 스틸 ×3 | 11 s | 달 없는 궁정의 메아리 | 도달 시 |
+| 3 | | confrontation | 인엔진 | 10 s | Gate Sovereign 즉위 | 도달 시 |
+| 3 | | aftermath | 스틸 ×3 | 11 s | 왕좌는 비었고 심연은 닫힌다 | 클리어 시 |
 
 ### 7.1 용량 검산
 
 | 매체 | 개수 | 단가 | 소계 |
 |---|---|---|---|
-| 비디오 | 6 | 700 KB | 4.2 MB |
-| 스틸 | 14 시퀀스 × 평균 3.4장 = 48장 | 120 KB | 5.8 MB |
-| 포스터 | 30 | 40 KB | 1.2 MB |
-| 인엔진 | 10 | 0 | 0 |
-| **합계** | | | **11.2 MB** |
+| 비디오 | 2 | 700 KB | 1.4 MB |
+| 스틸 | 9장 | 120 KB | 1.1 MB |
+| 포스터 | 9 | 40 KB | 0.4 MB |
+| 인엔진 | 3 | 0 | 0 |
+| **합계** | | | **2.9 MB** |
 
-**§4.2의 채택안 5.9 MB를 초과한다.** 스틸 48장이 원인이다. 조정:
-
-| 조치 | 절감 |
-|---|---|
-| 스틸 품질 82 → 76 | 120 → 92 KB, −1.3 MB |
-| 시퀀스당 최대 4장으로 제한 (10번 5장 → 4장) | −0.1 MB |
-| @2x 스틸을 상위 6비트에만 제공 | −0.9 MB |
-| **조정 후** | **≈8.9 MB** |
-
-8.9 MB는 서비스워커 캐시 대상(스틸 4.4 MB + 포스터 1.2 MB = 5.6 MB)과 네트워크 온디맨드
-(비디오 4.2 MB, 캐시 제외)로 나뉜다. **설치 시 강제 다운로드는 5.6 MB**다.
+서비스워커 캐시 대상은 스틸·포스터 **1.5 MB**, 비디오 1.4 MB는 온디맨드다.
+설치 시 강제 다운로드는 1.5 MB이며 §4.2의 5.9 MB 한도 아래다.
 
 ### 7.2 Pages allowlist 영향
 
-`PAGES_RUNTIME_PATHS`에 30 포스터 + 48 스틸 + 6 비디오 + 30 VTT = **114 경로**가 추가된다.
-현행 allowlist는 약 90 경로 `[OBSERVED]`이므로 **2배 이상 증가**한다.
-
-**엔지니어링 결정 필요:** 경로를 일일이 나열하는 현행 방식은 유지보수가 어려워진다.
-디렉터리 단위 allowlist(`assets/story/**`)로 전환할지, 나열을 유지할지 결정해야 한다.
-워크플로가 `test -f "$path"`로 존재를 검증하므로(라인 205), 디렉터리 전환 시 검증 로직도
-바뀐다.
+`PAGES_RUNTIME_PATHS`에는 9 포스터 + 9 스틸 + 2 비디오 + 9 VTT = **29 경로**가 추가된다.
+경로는 `assets/story/` 하위에만 두고, Pages 검증은 각 경로의 존재와 provenance를 검증한다.
 
 ---
 

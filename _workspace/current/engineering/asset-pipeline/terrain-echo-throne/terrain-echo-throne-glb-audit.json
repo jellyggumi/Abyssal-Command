@@ -1,0 +1,245 @@
+{
+  "assetCount": 4,
+  "assets": [
+    {
+      "activeUvMaps": [
+        "UVMap"
+      ],
+      "animationClipCount": 0,
+      "animations": [],
+      "armature": {
+        "boneCount": 0,
+        "boneNames": [],
+        "defBoneCount": 0,
+        "present": false
+      },
+      "assetId": "terrain-echo-throne-textured",
+      "category": "terrain",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1254,
+            "name": "terrain-echo-throne-albedo-1x1",
+            "packed": true,
+            "width": 1254
+          },
+          "metallic": 0.08,
+          "name": "echo_throne_terrain_albedo",
+          "roughness": 0.72,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 1,
+      "polygonCount": 2048,
+      "relativePath": "terrain/terrain-echo-throne-textured.glb",
+      "sourceBytes": 3462912,
+      "sourcePath": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
+      "sourceSha256": "78293fb0f9e89fa939feba78feed19018034a0f27880705a6545c4eab73b56df",
+      "triangleCount": 2048,
+      "uvLayerCount": 1,
+      "vertexCount": 1089
+    },
+    {
+      "activeUvMaps": [
+        "UVMap"
+      ],
+      "animationClipCount": 0,
+      "animations": [],
+      "armature": {
+        "boneCount": 0,
+        "boneNames": [],
+        "defBoneCount": 0,
+        "present": false
+      },
+      "assetId": "terrain-echo-throne-background-terrain-billboards",
+      "category": "background-terrain",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 914,
+            "name": "terrain-echo-throne-background-terrain",
+            "packed": true,
+            "width": 1536
+          },
+          "metallic": 0.08,
+          "name": "echo_throne_background-terrain_alpha_cutout",
+          "roughness": 0.72,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 1,
+      "polygonCount": 2,
+      "relativePath": "background-terrain/terrain-echo-throne-background-terrain-billboards.glb",
+      "sourceBytes": 1595480,
+      "sourcePath": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-terrain/terrain-echo-throne-background-terrain-billboards.glb",
+      "sourceSha256": "73573528bf4e8c792e561341ed8e5054c611dd8dbf27fa95f5604564a8607efb",
+      "triangleCount": 2,
+      "uvLayerCount": 1,
+      "vertexCount": 4
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 0,
+      "animations": [],
+      "armature": {
+        "boneCount": 0,
+        "boneNames": [],
+        "defBoneCount": 0,
+        "present": false
+      },
+      "assetId": "terrain-echo-throne-feature-billboards",
+      "category": "feature",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 996,
+            "name": "terrain-echo-throne-terrain-feature",
+            "packed": true,
+            "width": 1517
+          },
+          "metallic": 0.08,
+          "name": "echo_throne_feature_alpha_cutout",
+          "roughness": 0.72,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 39,
+      "polygonCount": 78,
+      "relativePath": "feature/terrain-echo-throne-feature-billboards.glb",
+      "sourceBytes": 2367752,
+      "sourcePath": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/terrain-echo-throne-feature-billboards.glb",
+      "sourceSha256": "1179a9846445accf9e1ee12dc95158f24a522b23a6f957e7f4e23f1e009347e1",
+      "triangleCount": 78,
+      "uvLayerCount": 1,
+      "vertexCount": 156
+    },
+    {
+      "activeUvMaps": [
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap",
+        "UVMap"
+      ],
+      "animationClipCount": 0,
+      "animations": [],
+      "armature": {
+        "boneCount": 0,
+        "boneNames": [],
+        "defBoneCount": 0,
+        "present": false
+      },
+      "assetId": "terrain-echo-throne-background-object-billboards",
+      "category": "background-object",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1001,
+            "name": "terrain-echo-throne-background-object",
+            "packed": true,
+            "width": 1491
+          },
+          "metallic": 0.08,
+          "name": "echo_throne_background-object_alpha_cutout",
+          "roughness": 0.72,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 35,
+      "polygonCount": 70,
+      "relativePath": "background-object/terrain-echo-throne-background-object-billboards.glb",
+      "sourceBytes": 2263332,
+      "sourcePath": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/terrain-echo-throne-background-object-billboards.glb",
+      "sourceSha256": "48f47077e65887f84c5971af65457dded03b0884192597ddae007273aa525ac2",
+      "triangleCount": 70,
+      "uvLayerCount": 1,
+      "vertexCount": 140
+    }
+  ],
+  "generator": "scripts/audit-mesh-detail-blender.py",
+  "measurementTool": "Blender 5.2.0 LTS headless bpy import",
+  "runtimeRoot": "assets/images/battle/glb",
+  "schemaVersion": 1
+}

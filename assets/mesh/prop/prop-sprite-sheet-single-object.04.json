@@ -1,0 +1,42 @@
+{
+  "sheet": "assets/mesh/prop/prop-sprite-sheet-single-object.04.png",
+  "sheetIndex": 4,
+  "width": 6286,
+  "height": 2955,
+  "pad": 4,
+  "packMode": "shelf-height-desc",
+  "sheetWidthLimit": 8192,
+  "frameCount": 5,
+  "frames": {
+    "broken-court-monarch-v04.png": {
+      "x": 0,
+      "y": 0,
+      "width": 927,
+      "height": 2955
+    },
+    "pack-warden.png": {
+      "x": 3351,
+      "y": 0,
+      "width": 1429,
+      "height": 2432
+    },
+    "requiem-warden.png": {
+      "x": 1862,
+      "y": 0,
+      "width": 1485,
+      "height": 2479
+    },
+    "s8-bridge-colossus.png": {
+      "x": 4784,
+      "y": 0,
+      "width": 1502,
+      "height": 2373
+    },
+    "s9-veiled-concordat.png": {
+      "x": 931,
+      "y": 0,
+      "width": 927,
+      "height": 2930
+    }
+  }
+}

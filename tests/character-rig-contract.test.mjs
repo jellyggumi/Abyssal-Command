@@ -1,19 +1,19 @@
-// Contract: every character GLB the battle renderer can instantiate is rigged
-// with 11 unique base clips; the commander adds exact melee/ranged delivery clips.
+// Contract: the Lantern Reaver-derived character GLB the battle renderer instantiates
+// for player/companion/enemy actor motion is rigged with the 11 unique base clips.
 //
 // This exists because the previous rig pipeline shipped defects that were
-// invisible to every other test in this repo -- the models loaded, the scene
-// rendered, and nothing threw:
+// invisible to most tests -- models loaded, scenes rendered, and nothing
+// threw:
 //
-//   * 4 boss GLBs had no skin and no animations at all, so their stage silently
-//     rendered a static prop where an animated boss was intended.
-//   * The other 20 bound to Rigify's stock metarig, scaled to mesh height but
-//     never fitted to the mesh, so bone-heat fell back to nearest-bone weights.
+//   * 4 boss meshes had no skin and no animations, so a stage could render
+//     a static prop where animation was expected.
+//   * The other character meshes had bones and animations, but the wrong rig fit
+//     and weight collapse produced implausible motion at runtime.
 //     guard.glb gave DEF-hand.R more total weight than its whole spine chain;
-//     pack-herald.glb put 47% of all weight on one head bone. Both still
-//     "animated" -- they just deformed from the wrong joints.
+//     pack-herald.glb put 47% of all weight on one head bone.
 //
-// The assertions defend both clip-library completeness and deformation weight shape.
+// The assertions defend both clip-library completeness and deformation weight shape
+// for the one renderer-owned motion model contract.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -21,30 +21,13 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const GLB_DIR = join(ROOT, "assets/images/battle/glb");
-
+const GLB_DIR = ROOT;
 const RIG_ACTION_KEYS = [
   "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "die", "show",
 ];
-const COMMANDER_GLB = "commander/dusk-warden.glb";
-const COMMANDER_DELIVERY_CLIPS = [
-  "dusk-warden::attack_melee::v01",
-  "dusk-warden::attack_ranged::v01",
-];
+const LANTERN_RUNTIME_MODEL = "assets/motion/ingame/characters/lantern-reaver/model.glb";
+const CHARACTER_GLBS = [LANTERN_RUNTIME_MODEL];
 
-// Mirrors battle-realtime-three.js BOSS_MODELS / ENEMY_MODELS /
-// COMPANION_MODELS / COMMANDER_MODEL -- every path an actor can resolve to.
-const CHARACTER_GLBS = [
-  COMMANDER_GLB,
-  "companions/ember-cohort.glb", "companions/rift-lens.glb", "companions/veil-vanguard.glb",
-  "companions/anchor-shard.glb", "companions/throne-echo.glb", "companions/dawnless-crown.glb",
-  "companions/pack-warden.glb", "companions/lantern-reaver.glb", "companions/requiem-warden.glb",
-  "enemies/scout.glb", "enemies/shade.glb", "enemies/guard.glb", "enemies/possessed.glb",
-  "bosses/cinder-warden.glb", "bosses/veil-tactician.glb", "bosses/gate-sovereign.glb",
-  "bosses/tide-warden.glb", "bosses/pack-herald.glb", "bosses/requiem-choir.glb",
-  "bosses/lantern-tyrant.glb", "bosses/bridge-colossus.glb", "bosses/veiled-concordat.glb",
-  "bosses/abyss-regent.glb",
-];
 
 function readGlb(path) {
   const buf = readFileSync(path);
@@ -136,16 +119,11 @@ for (const rel of CHARACTER_GLBS) {
     assert.deepEqual(missing, [], `${rel}: missing clips ${missing.join(",")}`);
 
     const animationNames = (json.animations ?? []).map((animation) => animation.name);
-    const expectedClipCount = rel === COMMANDER_GLB ? 13 : 11;
+    const expectedClipCount = 11;
     assert.equal(animationNames.length, expectedClipCount,
       `${rel}: expected exactly ${expectedClipCount} clips, found ${animationNames.length}`);
     assert.equal(new Set(animationNames).size, expectedClipCount,
       `${rel}: clip names must be unique`);
-    if (rel === COMMANDER_GLB) {
-      for (const name of COMMANDER_DELIVERY_CLIPS) {
-        assert.ok(animationNames.includes(name), `${rel}: missing exact delivery clip ${name}`);
-      }
-    }
 
     const wq = jointWeightTotals(glb);
     assert.ok(wq, `${rel}: no skin weights`);

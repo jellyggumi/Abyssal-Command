@@ -1,0 +1,16 @@
+# Blender 5.2.0 LTS
+# www.blender.org
+mtllib terrain-echo-throne-background-object-033.mtl
+o terrain-echo-throne-background-object-033
+v -3.935849 0.000000 -25.500000
+v -1.664151 0.000000 -25.500000
+v -1.664151 1.038994 -25.500000
+v -3.935849 1.038994 -25.500000
+vn -0.0000 -0.0000 -1.0000
+vt 0.599598 0.014985
+vt 0.599598 0.132867
+vt 0.772636 0.132867
+vt 0.772636 0.014985
+s 0
+usemtl echo_throne_background-object_alpha_cutout
+f 1/1/1 4/2/1 3/3/1 2/4/1

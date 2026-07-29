@@ -1,0 +1,3839 @@
+{
+  "blenderVersion": "5.2.0 LTS",
+  "passed": true,
+  "resources": [
+    {
+      "assets": [
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -4.52,
+            -2.1,
+            0.9
+          ],
+          "min": [
+            -4.88,
+            -2.66,
+            -0.54
+          ],
+          "node": "cinder-arch-pier--1-0",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -2.17,
+            -2.1,
+            0.9
+          ],
+          "min": [
+            -2.53,
+            -2.66,
+            -0.54
+          ],
+          "node": "cinder-arch-pier--1-1",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.18,
+            -2.1,
+            0.9
+          ],
+          "min": [
+            -0.18,
+            -2.66,
+            -0.54
+          ],
+          "node": "cinder-arch-pier--1-2",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            2.53,
+            -2.1,
+            0.9
+          ],
+          "min": [
+            2.17,
+            -2.66,
+            -0.54
+          ],
+          "node": "cinder-arch-pier--1-3",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.88,
+            -2.1,
+            0.9
+          ],
+          "min": [
+            4.52,
+            -2.66,
+            -0.54
+          ],
+          "node": "cinder-arch-pier--1-4",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -4.52,
+            2.66,
+            0.9
+          ],
+          "min": [
+            -4.88,
+            2.1,
+            -0.54
+          ],
+          "node": "cinder-arch-pier-1-0",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -2.17,
+            2.66,
+            0.9
+          ],
+          "min": [
+            -2.53,
+            2.1,
+            -0.54
+          ],
+          "node": "cinder-arch-pier-1-1",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.18,
+            2.66,
+            0.9
+          ],
+          "min": [
+            -0.18,
+            2.1,
+            -0.54
+          ],
+          "node": "cinder-arch-pier-1-2",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            2.53,
+            2.66,
+            0.9
+          ],
+          "min": [
+            2.17,
+            2.1,
+            -0.54
+          ],
+          "node": "cinder-arch-pier-1-3",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.88,
+            2.66,
+            0.9
+          ],
+          "min": [
+            4.52,
+            2.1,
+            -0.54
+          ],
+          "node": "cinder-arch-pier-1-4",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -5.627257,
+            -2.150696,
+            2.079649
+          ],
+          "min": [
+            -7.106283,
+            -3.214787,
+            -0.195493
+          ],
+          "node": "cinder-basalt-crag-0",
+          "triangles": 136,
+          "uvLayers": 1,
+          "vertices": 143
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -5.438126,
+            3.472022,
+            1.614325
+          ],
+          "min": [
+            -6.734697,
+            2.196856,
+            -0.195982
+          ],
+          "node": "cinder-basalt-crag-1",
+          "triangles": 136,
+          "uvLayers": 1,
+          "vertices": 144
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -3.331137,
+            -2.196339,
+            1.191389
+          ],
+          "min": [
+            -4.614239,
+            -3.352379,
+            -0.17822
+          ],
+          "node": "cinder-basalt-crag-2",
+          "triangles": 136,
+          "uvLayers": 1,
+          "vertices": 120
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            1.713128,
+            3.411451,
+            1.370092
+          ],
+          "min": [
+            0.651236,
+            2.154756,
+            -0.18197
+          ],
+          "node": "cinder-basalt-crag-3",
+          "triangles": 136,
+          "uvLayers": 1,
+          "vertices": 120
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.599509,
+            -2.191079,
+            1.706759
+          ],
+          "min": [
+            3.587444,
+            -3.435658,
+            -0.189673
+          ],
+          "node": "cinder-basalt-crag-4",
+          "triangles": 136,
+          "uvLayers": 1,
+          "vertices": 147
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            6.967372,
+            3.553372,
+            2.283798
+          ],
+          "min": [
+            5.565081,
+            2.077743,
+            -0.202221
+          ],
+          "node": "cinder-basalt-crag-5",
+          "triangles": 136,
+          "uvLayers": 1,
+          "vertices": 120
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -5.646877,
+            -2.25677,
+            1.78
+          ],
+          "min": [
+            -6.353123,
+            -2.70323,
+            1.08
+          ],
+          "node": "cinder-battlement--1-0",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -4.76,
+            -2.28,
+            1.78
+          ],
+          "min": [
+            -5.44,
+            -2.68,
+            1.08
+          ],
+          "node": "cinder-battlement--1-1",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -3.346877,
+            -2.25677,
+            1.78
+          ],
+          "min": [
+            -4.053123,
+            -2.70323,
+            1.08
+          ],
+          "node": "cinder-battlement--1-2",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -1.046877,
+            -2.25677,
+            1.78
+          ],
+          "min": [
+            -1.753123,
+            -2.70323,
+            1.08
+          ],
+          "node": "cinder-battlement--1-3",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            1.74,
+            -2.28,
+            1.78
+          ],
+          "min": [
+            1.06,
+            -2.68,
+            1.08
+          ],
+          "node": "cinder-battlement--1-4",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.053123,
+            -2.25677,
+            1.96
+          ],
+          "min": [
+            3.346877,
+            -2.70323,
+            1.26
+          ],
+          "node": "cinder-battlement--1-5",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            5.453123,
+            -2.25677,
+            1.96
+          ],
+          "min": [
+            4.746877,
+            -2.70323,
+            1.26
+          ],
+          "node": "cinder-battlement--1-6",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            6.34,
+            -2.28,
+            1.96
+          ],
+          "min": [
+            5.66,
+            -2.68,
+            1.26
+          ],
+          "node": "cinder-battlement--1-7",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -5.646877,
+            2.70323,
+            1.78
+          ],
+          "min": [
+            -6.353123,
+            2.25677,
+            1.08
+          ],
+          "node": "cinder-battlement-1-0",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -4.76,
+            2.68,
+            1.78
+          ],
+          "min": [
+            -5.44,
+            2.28,
+            1.08
+          ],
+          "node": "cinder-battlement-1-1",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -3.346877,
+            2.70323,
+            1.78
+          ],
+          "min": [
+            -4.053123,
+            2.25677,
+            1.08
+          ],
+          "node": "cinder-battlement-1-2",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -1.046877,
+            2.70323,
+            1.78
+          ],
+          "min": [
+            -1.753123,
+            2.25677,
+            1.08
+          ],
+          "node": "cinder-battlement-1-3",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            1.74,
+            2.68,
+            1.78
+          ],
+          "min": [
+            1.06,
+            2.28,
+            1.08
+          ],
+          "node": "cinder-battlement-1-4",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.053123,
+            2.70323,
+            1.96
+          ],
+          "min": [
+            3.346877,
+            2.25677,
+            1.26
+          ],
+          "node": "cinder-battlement-1-5",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            5.453123,
+            2.70323,
+            1.96
+          ],
+          "min": [
+            4.746877,
+            2.25677,
+            1.26
+          ],
+          "node": "cinder-battlement-1-6",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            6.34,
+            2.68,
+            1.96
+          ],
+          "min": [
+            5.66,
+            2.28,
+            1.26
+          ],
+          "node": "cinder-battlement-1-7",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -2.8,
+            2.4,
+            0.98
+          ],
+          "min": [
+            -6.8,
+            -2.4,
+            0.46
+          ],
+          "node": "cinder-bridge-court-0",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            2.25,
+            2.15,
+            1.16
+          ],
+          "min": [
+            -2.25,
+            -2.15,
+            0.64
+          ],
+          "node": "cinder-bridge-court-1",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            6.8,
+            2.4,
+            1.34
+          ],
+          "min": [
+            2.8,
+            -2.4,
+            0.82
+          ],
+          "node": "cinder-bridge-court-2",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -1.9,
+            1.72,
+            1.0
+          ],
+          "min": [
+            -3.0,
+            -1.72,
+            0.64
+          ],
+          "node": "cinder-bridge-span-0",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            3.0,
+            1.72,
+            1.18
+          ],
+          "min": [
+            1.9,
+            -1.72,
+            0.82
+          ],
+          "node": "cinder-bridge-span-1",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            5.855885,
+            1.352717,
+            4.680717
+          ],
+          "min": [
+            5.544115,
+            -1.352717,
+            1.975283
+          ],
+          "node": "cinder-forge-gate-arch",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            5.943177,
+            1.433617,
+            4.98
+          ],
+          "min": [
+            5.456823,
+            0.969285,
+            4.14
+          ],
+          "node": "cinder-forge-gate-finial-+1",
+          "triangles": 136,
+          "uvLayers": 1,
+          "vertices": 120
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            5.943177,
+            -0.922383,
+            4.98
+          ],
+          "min": [
+            5.456823,
+            -1.386715,
+            4.14
+          ],
+          "node": "cinder-forge-gate-finial--1",
+          "triangles": 136,
+          "uvLayers": 1,
+          "vertices": 120
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            5.698171,
+            0.932717,
+            4.260717
+          ],
+          "min": [
+            5.620229,
+            -0.932717,
+            2.395283
+          ],
+          "node": "cinder-forge-gate-inner-light",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            6.04,
+            1.478,
+            4.14
+          ],
+          "min": [
+            5.36,
+            0.878,
+            1.24
+          ],
+          "node": "cinder-forge-gate-pier-+1",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            6.04,
+            -0.878,
+            4.14
+          ],
+          "min": [
+            5.36,
+            -1.478,
+            1.24
+          ],
+          "node": "cinder-forge-gate-pier--1",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.964717,
+            -0.785283,
+            2.246603
+          ],
+          "min": [
+            4.135283,
+            -1.614717,
+            2.073397
+          ],
+          "node": "cinder-gate-brazier-0-bowl",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.742568,
+            -1.00248,
+            2.79
+          ],
+          "min": [
+            4.357432,
+            -1.378882,
+            2.17
+          ],
+          "node": "cinder-gate-brazier-0-flame",
+          "triangles": 192,
+          "uvLayers": 1,
+          "vertices": 150
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.762154,
+            -0.987846,
+            2.14
+          ],
+          "min": [
+            4.337846,
+            -1.412154,
+            1.38
+          ],
+          "node": "cinder-gate-brazier-0-stand",
+          "triangles": 220,
+          "uvLayers": 1,
+          "vertices": 164
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.964717,
+            1.614717,
+            2.246603
+          ],
+          "min": [
+            4.135283,
+            0.785283,
+            2.073397
+          ],
+          "node": "cinder-gate-brazier-1-bowl",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.742568,
+            1.39752,
+            2.79
+          ],
+          "min": [
+            4.357432,
+            1.021118,
+            2.17
+          ],
+          "node": "cinder-gate-brazier-1-flame",
+          "triangles": 192,
+          "uvLayers": 1,
+          "vertices": 150
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.762154,
+            1.412154,
+            2.14
+          ],
+          "min": [
+            4.337846,
+            0.987846,
+            1.38
+          ],
+          "node": "cinder-gate-brazier-1-stand",
+          "triangles": 220,
+          "uvLayers": 1,
+          "vertices": 164
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -5.010566,
+            -0.402694,
+            1.205
+          ],
+          "min": [
+            -5.989434,
+            -0.797306,
+            1.155
+          ],
+          "node": "cinder-lava-fissure-0",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -3.80157,
+            0.247973,
+            1.24
+          ],
+          "min": [
+            -4.79843,
+            -0.047973,
+            1.19
+          ],
+          "node": "cinder-lava-fissure-1",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -2.598603,
+            0.564149,
+            1.275
+          ],
+          "min": [
+            -3.601397,
+            0.335851,
+            1.225
+          ],
+          "node": "cinder-lava-fissure-2",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -0.81259,
+            -0.144668,
+            1.31
+          ],
+          "min": [
+            -1.78741,
+            -0.555332,
+            1.26
+          ],
+          "node": "cinder-lava-fissure-3",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.696034,
+            0.444624,
+            1.345
+          ],
+          "min": [
+            -0.296034,
+            0.115376,
+            1.295
+          ],
+          "node": "cinder-lava-fissure-4",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            2.200218,
+            -0.04886,
+            1.38
+          ],
+          "min": [
+            1.199782,
+            -0.31114,
+            1.33
+          ],
+          "node": "cinder-lava-fissure-5",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            3.582917,
+            0.721195,
+            1.415
+          ],
+          "min": [
+            2.617083,
+            0.278805,
+            1.365
+          ],
+          "node": "cinder-lava-fissure-6",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            4.893034,
+            -0.238925,
+            1.45
+          ],
+          "min": [
+            3.906965,
+            -0.601075,
+            1.4
+          ],
+          "node": "cinder-lava-fissure-7",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            5.901757,
+            0.285599,
+            1.485
+          ],
+          "min": [
+            4.898243,
+            0.074401,
+            1.435
+          ],
+          "node": "cinder-lava-fissure-8",
+          "triangles": 108,
+          "uvLayers": 1,
+          "vertices": 96
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -3.855283,
+            -2.237417,
+            1.424717
+          ],
+          "min": [
+            -5.544717,
+            -2.462583,
+            -0.264717
+          ],
+          "node": "cinder-underarch--1-0",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -1.505283,
+            -2.237417,
+            1.514717
+          ],
+          "min": [
+            -3.194717,
+            -2.462583,
+            -0.174717
+          ],
+          "node": "cinder-underarch--1-1",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.844717,
+            -2.237417,
+            1.604717
+          ],
+          "min": [
+            -0.844717,
+            -2.462583,
+            -0.084717
+          ],
+          "node": "cinder-underarch--1-2",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            3.194717,
+            -2.237417,
+            1.694717
+          ],
+          "min": [
+            1.505283,
+            -2.462583,
+            0.005283
+          ],
+          "node": "cinder-underarch--1-3",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            5.544717,
+            -2.237417,
+            1.784717
+          ],
+          "min": [
+            3.855283,
+            -2.462583,
+            0.095283
+          ],
+          "node": "cinder-underarch--1-4",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -3.855283,
+            2.462583,
+            1.424717
+          ],
+          "min": [
+            -5.544717,
+            2.237417,
+            -0.264717
+          ],
+          "node": "cinder-underarch-1-0",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -1.505283,
+            2.462583,
+            1.514717
+          ],
+          "min": [
+            -3.194717,
+            2.237417,
+            -0.174717
+          ],
+          "node": "cinder-underarch-1-1",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.844717,
+            2.462583,
+            1.604717
+          ],
+          "min": [
+            -0.844717,
+            2.237417,
+            -0.084717
+          ],
+          "node": "cinder-underarch-1-2",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            3.194717,
+            2.462583,
+            1.694717
+          ],
+          "min": [
+            1.505283,
+            2.237417,
+            0.005283
+          ],
+          "node": "cinder-underarch-1-3",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            5.544717,
+            2.462583,
+            1.784717
+          ],
+          "min": [
+            3.855283,
+            2.237417,
+            0.095283
+          ],
+          "node": "cinder-underarch-1-4",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -3.305283,
+            1.344717,
+            1.086603
+          ],
+          "min": [
+            -5.994717,
+            -1.344717,
+            0.913397
+          ],
+          "node": "cinder-west-seal",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "emission",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            -3.880283,
+            0.769717,
+            1.067631
+          ],
+          "min": [
+            -5.419717,
+            -0.769717,
+            0.972369
+          ],
+          "node": "cinder-west-seal-ember",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 475
+        }
+      ],
+      "bounds": {
+        "max": [
+          6.967372,
+          3.553372,
+          4.98
+        ],
+        "min": [
+          -7.106283,
+          -3.435658,
+          -0.54
+        ]
+      },
+      "bytes": 1126616,
+      "failures": [],
+      "imageCount": 4,
+      "kind": "terrain",
+      "materialCount": 4,
+      "meshCount": 70,
+      "passed": true,
+      "path": "assets/images/battle/glb/terrain/cinder-span.glb",
+      "sha256": "ff11883d8091de4c56d8acb0517189c0f020ed906487abeef6b390e8a12f66c3",
+      "triangles": 20272,
+      "vertices": 13294
+    },
+    {
+      "assets": [
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.062986,
+            0.071884,
+            0.086323
+          ],
+          "min": [
+            -0.062986,
+            -0.071884,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-001",
+          "triangles": 400,
+          "uvLayers": 1,
+          "vertices": 264
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.066952,
+            0.068992,
+            0.110074
+          ],
+          "min": [
+            -0.066952,
+            -0.068991,
+            -0.0
+          ],
+          "node": "terrain-cinder-span-feature-002",
+          "triangles": 428,
+          "uvLayers": 1,
+          "vertices": 271
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.060614,
+            0.062499,
+            0.112442
+          ],
+          "min": [
+            -0.060614,
+            -0.062498,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-003",
+          "triangles": 362,
+          "uvLayers": 1,
+          "vertices": 258
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.035677,
+            0.030177,
+            0.101383
+          ],
+          "min": [
+            -0.035677,
+            -0.030177,
+            -0.0
+          ],
+          "node": "terrain-cinder-span-feature-004",
+          "triangles": 228,
+          "uvLayers": 1,
+          "vertices": 159
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.085277,
+            0.076916,
+            0.135332
+          ],
+          "min": [
+            -0.085277,
+            -0.076915,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-005",
+          "triangles": 550,
+          "uvLayers": 1,
+          "vertices": 329
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.062243,
+            0.058273,
+            0.102742
+          ],
+          "min": [
+            -0.062243,
+            -0.058272,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-006",
+          "triangles": 362,
+          "uvLayers": 1,
+          "vertices": 222
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.0521,
+            0.056089,
+            0.100155
+          ],
+          "min": [
+            -0.0521,
+            -0.056088,
+            -0.0
+          ],
+          "node": "terrain-cinder-span-feature-007",
+          "triangles": 348,
+          "uvLayers": 1,
+          "vertices": 208
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.075475,
+            0.067236,
+            0.169483
+          ],
+          "min": [
+            -0.075475,
+            -0.067236,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-008",
+          "triangles": 574,
+          "uvLayers": 1,
+          "vertices": 355
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.064864,
+            0.050356,
+            0.145289
+          ],
+          "min": [
+            -0.064864,
+            -0.050356,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-009",
+          "triangles": 424,
+          "uvLayers": 1,
+          "vertices": 265
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.04002,
+            0.040631,
+            0.189563
+          ],
+          "min": [
+            -0.04002,
+            -0.040631,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-010",
+          "triangles": 344,
+          "uvLayers": 1,
+          "vertices": 214
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.079535,
+            0.076104,
+            0.154561
+          ],
+          "min": [
+            -0.079535,
+            -0.076103,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-011",
+          "triangles": 646,
+          "uvLayers": 1,
+          "vertices": 389
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.034433,
+            0.045081,
+            0.184085
+          ],
+          "min": [
+            -0.034432,
+            -0.045081,
+            -0.0
+          ],
+          "node": "terrain-cinder-span-feature-012",
+          "triangles": 398,
+          "uvLayers": 1,
+          "vertices": 245
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.040033,
+            0.045901,
+            0.188629
+          ],
+          "min": [
+            -0.040033,
+            -0.045901,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-013",
+          "triangles": 410,
+          "uvLayers": 1,
+          "vertices": 249
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.139907,
+            0.120985,
+            0.330268
+          ],
+          "min": [
+            -0.139907,
+            -0.120985,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-014",
+          "triangles": 2130,
+          "uvLayers": 1,
+          "vertices": 1210
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.111152,
+            0.079493,
+            0.343391
+          ],
+          "min": [
+            -0.111152,
+            -0.079492,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-015",
+          "triangles": 1532,
+          "uvLayers": 1,
+          "vertices": 890
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.110548,
+            0.093575,
+            0.353929
+          ],
+          "min": [
+            -0.110548,
+            -0.093574,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-016",
+          "triangles": 1366,
+          "uvLayers": 1,
+          "vertices": 818
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.066643,
+            0.049447,
+            0.20161
+          ],
+          "min": [
+            -0.066643,
+            -0.049446,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-017",
+          "triangles": 482,
+          "uvLayers": 1,
+          "vertices": 302
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.035816,
+            0.044774,
+            0.213282
+          ],
+          "min": [
+            -0.035817,
+            -0.044774,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-018",
+          "triangles": 350,
+          "uvLayers": 1,
+          "vertices": 215
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.0488,
+            0.055419,
+            0.234767
+          ],
+          "min": [
+            -0.0488,
+            -0.055418,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-019",
+          "triangles": 474,
+          "uvLayers": 1,
+          "vertices": 289
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.067125,
+            0.089158,
+            0.239917
+          ],
+          "min": [
+            -0.067125,
+            -0.089157,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-020",
+          "triangles": 1032,
+          "uvLayers": 1,
+          "vertices": 582
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.076521,
+            0.059844,
+            0.227779
+          ],
+          "min": [
+            -0.076521,
+            -0.059843,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-021",
+          "triangles": 650,
+          "uvLayers": 1,
+          "vertices": 401
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.073251,
+            0.074604,
+            0.243534
+          ],
+          "min": [
+            -0.073251,
+            -0.074604,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-022",
+          "triangles": 644,
+          "uvLayers": 1,
+          "vertices": 396
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.101047,
+            0.129029,
+            0.113946
+          ],
+          "min": [
+            -0.101047,
+            -0.129029,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-023",
+          "triangles": 974,
+          "uvLayers": 1,
+          "vertices": 545
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.232836,
+            0.208293,
+            0.294115
+          ],
+          "min": [
+            -0.232837,
+            -0.208292,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-024",
+          "triangles": 4242,
+          "uvLayers": 1,
+          "vertices": 2418
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.110142,
+            0.141655,
+            0.14514
+          ],
+          "min": [
+            -0.110142,
+            -0.141655,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-025",
+          "triangles": 1170,
+          "uvLayers": 1,
+          "vertices": 702
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.228972,
+            0.199737,
+            0.316821
+          ],
+          "min": [
+            -0.228972,
+            -0.199737,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-026",
+          "triangles": 4550,
+          "uvLayers": 1,
+          "vertices": 2561
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.182088,
+            0.188318,
+            0.298425
+          ],
+          "min": [
+            -0.182088,
+            -0.188317,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-027",
+          "triangles": 3448,
+          "uvLayers": 1,
+          "vertices": 1965
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.038867,
+            0.041263,
+            0.170596
+          ],
+          "min": [
+            -0.038867,
+            -0.041263,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-028",
+          "triangles": 224,
+          "uvLayers": 1,
+          "vertices": 148
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.086217,
+            0.112516,
+            0.129903
+          ],
+          "min": [
+            -0.086217,
+            -0.112516,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-029",
+          "triangles": 860,
+          "uvLayers": 1,
+          "vertices": 484
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.030042,
+            0.026785,
+            0.208006
+          ],
+          "min": [
+            -0.030042,
+            -0.026785,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-030",
+          "triangles": 260,
+          "uvLayers": 1,
+          "vertices": 164
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.048961,
+            0.058545,
+            0.23379
+          ],
+          "min": [
+            -0.048961,
+            -0.058544,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-031",
+          "triangles": 572,
+          "uvLayers": 1,
+          "vertices": 340
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.068265,
+            0.086289,
+            0.222647
+          ],
+          "min": [
+            -0.068265,
+            -0.086289,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-032",
+          "triangles": 914,
+          "uvLayers": 1,
+          "vertices": 527
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.044736,
+            0.055968,
+            0.299545
+          ],
+          "min": [
+            -0.044736,
+            -0.055968,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-033",
+          "triangles": 658,
+          "uvLayers": 1,
+          "vertices": 387
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.044294,
+            0.048071,
+            0.28427
+          ],
+          "min": [
+            -0.044295,
+            -0.04807,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-034",
+          "triangles": 484,
+          "uvLayers": 1,
+          "vertices": 304
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.042782,
+            0.049813,
+            0.289073
+          ],
+          "min": [
+            -0.042782,
+            -0.049813,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-035",
+          "triangles": 590,
+          "uvLayers": 1,
+          "vertices": 341
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.044544,
+            0.048595,
+            0.261425
+          ],
+          "min": [
+            -0.044543,
+            -0.048595,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-036",
+          "triangles": 572,
+          "uvLayers": 1,
+          "vertices": 340
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.061594,
+            0.057458,
+            0.212106
+          ],
+          "min": [
+            -0.061594,
+            -0.057457,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-037",
+          "triangles": 654,
+          "uvLayers": 1,
+          "vertices": 379
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.045502,
+            0.055841,
+            0.273766
+          ],
+          "min": [
+            -0.045502,
+            -0.05584,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-038",
+          "triangles": 650,
+          "uvLayers": 1,
+          "vertices": 379
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.122056,
+            0.130582,
+            0.245202
+          ],
+          "min": [
+            -0.122057,
+            -0.130582,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-039",
+          "triangles": 1412,
+          "uvLayers": 1,
+          "vertices": 800
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.114565,
+            0.163096,
+            0.212249
+          ],
+          "min": [
+            -0.114565,
+            -0.163095,
+            0.0
+          ],
+          "node": "terrain-cinder-span-feature-040",
+          "triangles": 1500,
+          "uvLayers": 1,
+          "vertices": 896
+        }
+      ],
+      "bounds": {
+        "max": [
+          0.232836,
+          0.208293,
+          0.353929
+        ],
+        "min": [
+          -0.232837,
+          -0.208292,
+          -0.0
+        ]
+      },
+      "bytes": 2031396,
+      "failures": [],
+      "imageCount": 3,
+      "kind": "featurePack",
+      "materialCount": 1,
+      "meshCount": 40,
+      "passed": true,
+      "path": "assets/images/battle/glb/props/terrain-cinder-span-features.glb",
+      "sha256": "c3ab0f1cb01b81cdeff05bd0114b0547feddbc636813552b423f663055445dde",
+      "triangles": 37868,
+      "vertices": 22211
+    },
+    {
+      "assets": [
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.082697,
+            0.10741,
+            0.077315
+          ],
+          "min": [
+            -0.082698,
+            -0.10741,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-001",
+          "triangles": 1238,
+          "uvLayers": 1,
+          "vertices": 769
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.086863,
+            0.1011,
+            0.100156
+          ],
+          "min": [
+            -0.086864,
+            -0.1011,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-002",
+          "triangles": 1736,
+          "uvLayers": 1,
+          "vertices": 932
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.056427,
+            0.055448,
+            0.075043
+          ],
+          "min": [
+            -0.056427,
+            -0.055448,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-003",
+          "triangles": 584,
+          "uvLayers": 1,
+          "vertices": 396
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.103235,
+            0.114265,
+            0.098358
+          ],
+          "min": [
+            -0.103234,
+            -0.114265,
+            -0.0
+          ],
+          "node": "terrain-cinder-span-prop-004",
+          "triangles": 1862,
+          "uvLayers": 1,
+          "vertices": 1151
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.082525,
+            0.099187,
+            0.113045
+          ],
+          "min": [
+            -0.082525,
+            -0.099187,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-005",
+          "triangles": 1742,
+          "uvLayers": 1,
+          "vertices": 1082
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.032632,
+            0.038277,
+            0.103044
+          ],
+          "min": [
+            -0.032632,
+            -0.038277,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-006",
+          "triangles": 358,
+          "uvLayers": 1,
+          "vertices": 221
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.030354,
+            0.040365,
+            0.105219
+          ],
+          "min": [
+            -0.030354,
+            -0.040364,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-007",
+          "triangles": 386,
+          "uvLayers": 1,
+          "vertices": 239
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.057561,
+            0.011897,
+            0.214034
+          ],
+          "min": [
+            -0.057562,
+            -0.011896,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-008",
+          "triangles": 674,
+          "uvLayers": 1,
+          "vertices": 482
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.052845,
+            0.01507,
+            0.167426
+          ],
+          "min": [
+            -0.052845,
+            -0.01507,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-009",
+          "triangles": 470,
+          "uvLayers": 1,
+          "vertices": 333
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.040936,
+            0.041667,
+            0.153814
+          ],
+          "min": [
+            -0.040936,
+            -0.041667,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-010",
+          "triangles": 628,
+          "uvLayers": 1,
+          "vertices": 383
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.038979,
+            0.043661,
+            0.154316
+          ],
+          "min": [
+            -0.038978,
+            -0.04366,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-011",
+          "triangles": 664,
+          "uvLayers": 1,
+          "vertices": 382
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.035512,
+            0.042322,
+            0.120082
+          ],
+          "min": [
+            -0.035512,
+            -0.042321,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-012",
+          "triangles": 494,
+          "uvLayers": 1,
+          "vertices": 297
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.041751,
+            0.038842,
+            0.152475
+          ],
+          "min": [
+            -0.041751,
+            -0.038842,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-013",
+          "triangles": 526,
+          "uvLayers": 1,
+          "vertices": 333
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.032674,
+            0.009574,
+            0.201077
+          ],
+          "min": [
+            -0.032674,
+            -0.009574,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-014",
+          "triangles": 348,
+          "uvLayers": 1,
+          "vertices": 245
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.017948,
+            0.006769,
+            0.19184
+          ],
+          "min": [
+            -0.017948,
+            -0.006768,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-015",
+          "triangles": 346,
+          "uvLayers": 1,
+          "vertices": 231
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.035854,
+            0.042485,
+            0.164376
+          ],
+          "min": [
+            -0.035854,
+            -0.042484,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-016",
+          "triangles": 610,
+          "uvLayers": 1,
+          "vertices": 366
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.016651,
+            0.007174,
+            0.167716
+          ],
+          "min": [
+            -0.016651,
+            -0.007174,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-017",
+          "triangles": 296,
+          "uvLayers": 1,
+          "vertices": 201
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.024772,
+            0.008971,
+            0.170573
+          ],
+          "min": [
+            -0.024772,
+            -0.00897,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-018",
+          "triangles": 332,
+          "uvLayers": 1,
+          "vertices": 226
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.060261,
+            0.013347,
+            0.224365
+          ],
+          "min": [
+            -0.06026,
+            -0.013347,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-019",
+          "triangles": 608,
+          "uvLayers": 1,
+          "vertices": 428
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.03406,
+            0.008538,
+            0.164428
+          ],
+          "min": [
+            -0.03406,
+            -0.008537,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-020",
+          "triangles": 452,
+          "uvLayers": 1,
+          "vertices": 300
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.022191,
+            0.010125,
+            0.154834
+          ],
+          "min": [
+            -0.02219,
+            -0.010125,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-021",
+          "triangles": 250,
+          "uvLayers": 1,
+          "vertices": 188
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.105307,
+            0.078851,
+            0.098266
+          ],
+          "min": [
+            -0.105307,
+            -0.07885,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-022",
+          "triangles": 656,
+          "uvLayers": 1,
+          "vertices": 500
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.026456,
+            0.037703,
+            0.082966
+          ],
+          "min": [
+            -0.026456,
+            -0.037703,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-023",
+          "triangles": 208,
+          "uvLayers": 1,
+          "vertices": 154
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.069264,
+            0.084752,
+            0.130309
+          ],
+          "min": [
+            -0.069263,
+            -0.084752,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-024",
+          "triangles": 476,
+          "uvLayers": 1,
+          "vertices": 366
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.090956,
+            0.068165,
+            0.132513
+          ],
+          "min": [
+            -0.090956,
+            -0.068165,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-025",
+          "triangles": 620,
+          "uvLayers": 1,
+          "vertices": 470
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.043504,
+            0.073901,
+            0.121961
+          ],
+          "min": [
+            -0.043504,
+            -0.0739,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-026",
+          "triangles": 406,
+          "uvLayers": 1,
+          "vertices": 305
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.120788,
+            0.091206,
+            0.148182
+          ],
+          "min": [
+            -0.120788,
+            -0.091206,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-027",
+          "triangles": 864,
+          "uvLayers": 1,
+          "vertices": 699
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.090337,
+            0.108185,
+            0.139488
+          ],
+          "min": [
+            -0.090337,
+            -0.108185,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-028",
+          "triangles": 966,
+          "uvLayers": 1,
+          "vertices": 716
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.036605,
+            0.056715,
+            0.076634
+          ],
+          "min": [
+            -0.036604,
+            -0.056714,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-029",
+          "triangles": 340,
+          "uvLayers": 1,
+          "vertices": 224
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.058098,
+            0.080041,
+            0.053752
+          ],
+          "min": [
+            -0.058098,
+            -0.08004,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-030",
+          "triangles": 704,
+          "uvLayers": 1,
+          "vertices": 452
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.073627,
+            0.092106,
+            0.056027
+          ],
+          "min": [
+            -0.073626,
+            -0.092105,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-031",
+          "triangles": 854,
+          "uvLayers": 1,
+          "vertices": 483
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.064705,
+            0.072662,
+            0.079016
+          ],
+          "min": [
+            -0.064705,
+            -0.072662,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-032",
+          "triangles": 748,
+          "uvLayers": 1,
+          "vertices": 477
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.054959,
+            0.056282,
+            0.052639
+          ],
+          "min": [
+            -0.05496,
+            -0.056282,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-033",
+          "triangles": 318,
+          "uvLayers": 1,
+          "vertices": 203
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.05549,
+            0.077164,
+            0.069486
+          ],
+          "min": [
+            -0.05549,
+            -0.077164,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-034",
+          "triangles": 624,
+          "uvLayers": 1,
+          "vertices": 373
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.089393,
+            0.101481,
+            0.098459
+          ],
+          "min": [
+            -0.089393,
+            -0.101481,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-035",
+          "triangles": 1410,
+          "uvLayers": 1,
+          "vertices": 854
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.051574,
+            0.072519,
+            0.107008
+          ],
+          "min": [
+            -0.051574,
+            -0.072519,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-036",
+          "triangles": 794,
+          "uvLayers": 1,
+          "vertices": 502
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.053875,
+            0.072349,
+            0.0959
+          ],
+          "min": [
+            -0.053876,
+            -0.072349,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-037",
+          "triangles": 932,
+          "uvLayers": 1,
+          "vertices": 526
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.065544,
+            0.087266,
+            0.102645
+          ],
+          "min": [
+            -0.065544,
+            -0.087266,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-038",
+          "triangles": 842,
+          "uvLayers": 1,
+          "vertices": 504
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.080262,
+            0.128637,
+            0.095048
+          ],
+          "min": [
+            -0.080262,
+            -0.128637,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-039",
+          "triangles": 1564,
+          "uvLayers": 1,
+          "vertices": 938
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.063481,
+            0.081232,
+            0.113292
+          ],
+          "min": [
+            -0.06348,
+            -0.081232,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-040",
+          "triangles": 996,
+          "uvLayers": 1,
+          "vertices": 618
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.080765,
+            0.074362,
+            0.110865
+          ],
+          "min": [
+            -0.080765,
+            -0.074361,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-041",
+          "triangles": 1048,
+          "uvLayers": 1,
+          "vertices": 600
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.072893,
+            0.108006,
+            0.037241
+          ],
+          "min": [
+            -0.072893,
+            -0.108005,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-042",
+          "triangles": 1058,
+          "uvLayers": 1,
+          "vertices": 671
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.016872,
+            0.030623,
+            0.019388
+          ],
+          "min": [
+            -0.016872,
+            -0.030623,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-043",
+          "triangles": 136,
+          "uvLayers": 1,
+          "vertices": 108
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.086836,
+            0.129305,
+            0.096026
+          ],
+          "min": [
+            -0.086836,
+            -0.129304,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-044",
+          "triangles": 1978,
+          "uvLayers": 1,
+          "vertices": 1119
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.079767,
+            0.123581,
+            0.080967
+          ],
+          "min": [
+            -0.079766,
+            -0.12358,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-045",
+          "triangles": 1306,
+          "uvLayers": 1,
+          "vertices": 739
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.070268,
+            0.074455,
+            0.095956
+          ],
+          "min": [
+            -0.070268,
+            -0.074454,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-046",
+          "triangles": 838,
+          "uvLayers": 1,
+          "vertices": 522
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.05618,
+            0.070845,
+            0.096665
+          ],
+          "min": [
+            -0.05618,
+            -0.070844,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-047",
+          "triangles": 710,
+          "uvLayers": 1,
+          "vertices": 449
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.07829,
+            0.093242,
+            0.106808
+          ],
+          "min": [
+            -0.07829,
+            -0.093242,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-048",
+          "triangles": 1392,
+          "uvLayers": 1,
+          "vertices": 817
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.059628,
+            0.069959,
+            0.076229
+          ],
+          "min": [
+            -0.059627,
+            -0.069958,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-049",
+          "triangles": 680,
+          "uvLayers": 1,
+          "vertices": 406
+        },
+        {
+          "mappedChannels": [
+            "baseColor",
+            "metallic",
+            "normal",
+            "occlusion",
+            "roughness"
+          ],
+          "max": [
+            0.079903,
+            0.08501,
+            0.102595
+          ],
+          "min": [
+            -0.079902,
+            -0.085009,
+            0.0
+          ],
+          "node": "terrain-cinder-span-prop-050",
+          "triangles": 950,
+          "uvLayers": 1,
+          "vertices": 567
+        }
+      ],
+      "bounds": {
+        "max": [
+          0.120788,
+          0.129305,
+          0.224365
+        ],
+        "min": [
+          -0.120788,
+          -0.129304,
+          -0.0
+        ]
+      },
+      "bytes": 2057884,
+      "failures": [],
+      "imageCount": 3,
+      "kind": "propPack",
+      "materialCount": 1,
+      "meshCount": 50,
+      "passed": true,
+      "path": "assets/images/battle/glb/props/terrain-cinder-span-props.glb",
+      "sha256": "dcb853b4da339aec2783c4f6cc19e3be4917b8ddb6d565ad7780d6988e55385d",
+      "triangles": 39022,
+      "vertices": 24547
+    }
+  ],
+  "schemaVersion": 1,
+  "tolerance": 0.0001
+}

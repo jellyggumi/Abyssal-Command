@@ -57,11 +57,14 @@ function trackedAssetPaths() {
     throw new Error(result.stderr.toString('utf8').trim() || 'git ls-files failed');
   }
 
-  return result.stdout
+  const currentPaths = new Set(result.stdout
     .toString('utf8')
     .split('\0')
-    .filter(Boolean)
-    .sort((left, right) => left.localeCompare(right));
+    .filter(Boolean));
+  for (const retainedPath of retainedPaths) {
+    if (existsSync(resolve(root, retainedPath))) currentPaths.add(retainedPath);
+  }
+  return [...currentPaths].sort((left, right) => left.localeCompare(right));
 }
 
 function rowFor(currentPath) {

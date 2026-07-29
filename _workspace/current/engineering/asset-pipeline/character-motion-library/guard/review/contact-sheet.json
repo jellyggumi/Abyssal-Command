@@ -1,0 +1,73 @@
+{
+  "assetId": "guard",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/model.glb",
+  "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/contact-sheet.png",
+  "keyposes": [
+    {
+      "action": "idle",
+      "clipName": "guard::idle::v01",
+      "frame": 110,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/keyposes/00-idle.png"
+    },
+    {
+      "action": "move",
+      "clipName": "guard::move::v01",
+      "frame": 13,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/keyposes/01-move.png"
+    },
+    {
+      "action": "run",
+      "clipName": "guard::run::v01",
+      "frame": 12,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/keyposes/02-run.png"
+    },
+    {
+      "action": "hit",
+      "clipName": "guard::hit::v01",
+      "frame": 10,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/keyposes/03-hit.png"
+    },
+    {
+      "action": "bighit",
+      "clipName": "guard::bighit::v01",
+      "frame": 17,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/keyposes/04-bighit.png"
+    },
+    {
+      "action": "attack",
+      "clipName": "guard::attack::v01",
+      "frame": 26,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/keyposes/05-attack.png"
+    },
+    {
+      "action": "critical",
+      "clipName": "guard::critical::v01",
+      "frame": 24,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/keyposes/06-critical.png"
+    },
+    {
+      "action": "avoid",
+      "clipName": "guard::avoid::v01",
+      "frame": 23,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/keyposes/07-avoid.png"
+    },
+    {
+      "action": "defence",
+      "clipName": "guard::defence::v01",
+      "frame": 7,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/keyposes/08-defence.png"
+    },
+    {
+      "action": "die",
+      "clipName": "guard::die::v01",
+      "frame": 42,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/keyposes/09-die.png"
+    },
+    {
+      "action": "show",
+      "clipName": "guard::show::v01",
+      "frame": 7,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/keyposes/10-show.png"
+    }
+  ]
+}

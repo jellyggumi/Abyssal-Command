@@ -39,12 +39,13 @@ test("the final stage records campaign completion", () => {
     campaign = startRun(campaign, stage.id);
     campaign = applyCampaignRunResult(campaign, { stageId: stage.id, outcome: "victory" });
   }
-  campaign = startRun(campaign, "gate-zenith");
-  campaign = applyCampaignRunResult(campaign, { stageId: "gate-zenith", outcome: "FINAL_COMPLETION" });
+  const finalStageId = STAGES.at(-1).id;
+  campaign = startRun(campaign, finalStageId);
+  campaign = applyCampaignRunResult(campaign, { stageId: finalStageId, outcome: "FINAL_COMPLETION" });
 
   assert.equal(campaign.resolvedIds.length, STAGES.length);
   assert.deepEqual(campaign.lastResolution, {
-    stageId: "gate-zenith",
+    stageId: finalStageId,
     outcome: "FINAL_COMPLETION",
     campaignComplete: true
   });

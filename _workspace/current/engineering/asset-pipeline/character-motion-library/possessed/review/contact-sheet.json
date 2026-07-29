@@ -1,0 +1,73 @@
+{
+  "assetId": "possessed",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/model.glb",
+  "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/contact-sheet.png",
+  "keyposes": [
+    {
+      "action": "idle",
+      "clipName": "possessed::idle::v01",
+      "frame": 110,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/keyposes/00-idle.png"
+    },
+    {
+      "action": "move",
+      "clipName": "possessed::move::v01",
+      "frame": 13,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/keyposes/01-move.png"
+    },
+    {
+      "action": "run",
+      "clipName": "possessed::run::v01",
+      "frame": 12,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/keyposes/02-run.png"
+    },
+    {
+      "action": "hit",
+      "clipName": "possessed::hit::v01",
+      "frame": 10,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/keyposes/03-hit.png"
+    },
+    {
+      "action": "bighit",
+      "clipName": "possessed::bighit::v01",
+      "frame": 17,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/keyposes/04-bighit.png"
+    },
+    {
+      "action": "attack",
+      "clipName": "possessed::attack::v01",
+      "frame": 38,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/keyposes/05-attack.png"
+    },
+    {
+      "action": "critical",
+      "clipName": "possessed::critical::v01",
+      "frame": 70,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/keyposes/06-critical.png"
+    },
+    {
+      "action": "avoid",
+      "clipName": "possessed::avoid::v01",
+      "frame": 23,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/keyposes/07-avoid.png"
+    },
+    {
+      "action": "defence",
+      "clipName": "possessed::defence::v01",
+      "frame": 48,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/keyposes/08-defence.png"
+    },
+    {
+      "action": "die",
+      "clipName": "possessed::die::v01",
+      "frame": 42,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/keyposes/09-die.png"
+    },
+    {
+      "action": "show",
+      "clipName": "possessed::show::v01",
+      "frame": 153,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/keyposes/10-show.png"
+    }
+  ]
+}

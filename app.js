@@ -117,18 +117,6 @@ const STANCE_SWITCH_CONFIRM_MS = 520;
 // keeps it visually distinct from gameplay achievements without needing a
 // schema change (this lane owns app.js/styles.css only, not campaign-state.js).
 const CAMERA_HINT_ACHIEVEMENT_ID = "ui-hint:camera-orbit-discovery";
-const STAGE_ART_FILE_BY_ID = Object.freeze({
-  "cinder-span": "cinder-span",
-  "veil-citadel": "veil-citadel",
-  "echo-throne": "echo-throne-steps",
-  "sunken-bastion": "sunken-bastion",
-  "howling-sprawl": "howling-sprawl",
-  "glass-necropolis": "glass-necropolis",
-  "starless-canal": "starless-canal",
-  "shattered-causeway": "shattered-causeway",
-  "abyss-chancel": "abyss-chancel",
-  "gate-zenith": "gate-zenith",
-});
 const LOBBY_SHOWCASE_STAGE_ID_SET = new Set(STAGE_SHOWCASE_IDS);
 
 /** Lobby cinematic (ui/lobby-cinematic-spec.md) — the GitHub-Pages main screen is the
@@ -234,10 +222,6 @@ function stageFor(stageId) {
   return STAGES.find((stage) => stage.id === stageId) ?? STAGES[0];
 }
 
-function stageArtPath(stageId) {
-  const fileName = STAGE_ART_FILE_BY_ID[stageId] ?? STAGE_ART_FILE_BY_ID[STAGES[0].id];
-  return `assets/images/battle/ui/stages/${fileName}.png`;
-}
 
 
 
@@ -1097,7 +1081,7 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
       // Mid-run the rail is locked to the committed front, mirroring the dock's stage-rail rule.
       const disabled = locked || (started && stage.id !== selected.id);
       return `
-        <button class="stage-showcase-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage-showcase="${escapeHtml(stage.id)}" style="--stage-card-art: url('${stageArtPath(stage.id)}')" aria-label="${escapeHtml(stage.name)} 쇼케이스 선택, ${state}" aria-pressed="${stage.id === selected.id}" ${disabled ? "disabled" : ""}>
+        <button class="stage-showcase-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage-showcase="${escapeHtml(stage.id)}" aria-label="${escapeHtml(stage.name)} 쇼케이스 선택, ${state}" aria-pressed="${stage.id === selected.id}" ${disabled ? "disabled" : ""}>
           <span class="stage-showcase-art" aria-hidden="true"></span>
           <span class="stage-showcase-copy"><small>SHOWCASE ${String(stage.sequence).padStart(2, "0")} · ${state}</small><strong>${escapeHtml(stage.name)}</strong><span>${escapeHtml(cutsceneTeaser)}</span><em>${escapeHtml(stage.bossName)}</em></span>
         </button>`;
@@ -1137,7 +1121,7 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
       <p class="briefing-tip">${escapeHtml(selectedEditorial?.summary ?? "상세 위협과 전장 구성은 출전 전까지 봉인됩니다.")} 편성을 확인한 뒤 작전을 개시하세요.</p>
     </aside>`;
   return `
-    <section class="mission-panel command-screen has-atlas-plate" aria-labelledby="stage-title">
+    <section class="mission-panel command-screen" aria-labelledby="stage-title">
       <div class="panel-heading"><div><p class="eyebrow">EDITORIAL ARCHIVE</p><h2 id="stage-title">봉쇄선 쇼케이스</h2></div><span class="panel-count">${completed} CLEAR · ${unlocked} UNLOCKED</span></div>
       <p class="section-copy">시네마틱·전장 구성은 아래 세 봉쇄선만 미리 공개됩니다.</p>
       <div class="stage-showcase-grid">${showcaseCards}</div>
@@ -1176,7 +1160,6 @@ function renderDockRight() {
   const selectedObjective = stageObjective(selected.id);
   const started = session?.started ?? false;
   root.dataset.stageId = selected.id;
-  root.style.setProperty("--stage-art", `url("${stageArtPath(selected.id)}")`);
   if (!RIGHT_DOCK_TABS.some((tab) => tab.id === activeRightDockTab)) activeRightDockTab = "sortie";
   const frontLabel = selectedIsShowcase
     ? `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)}`
@@ -1488,8 +1471,7 @@ function mountShell(stageId) {
   document.body.style.overflow = "hidden";
   root.className = "";
   root.innerHTML = `
-    <section id="defense-battle-surface" data-defense-ready="true" data-defense-started="false" data-defense-input-seq="0" data-defense-skill="" data-defense-move="IDLE" data-defense-state="active" data-stage-id="${escapeHtml(stageId)}" style="--stage-art: url('${stageArtPath(stageId)}')" aria-label="심연 방어 전장">
-      <div class="battle-stage-art" aria-hidden="true"></div>
+    <section id="defense-battle-surface" data-defense-ready="true" data-defense-started="false" data-defense-input-seq="0" data-defense-skill="" data-defense-move="IDLE" data-defense-state="active" data-stage-id="${escapeHtml(stageId)}" aria-label="심연 방어 전장">
       <canvas id="defense-canvas" aria-label="방어 전장"></canvas>
       <div id="world-hud-overlay" aria-hidden="true"></div>
 ${lobbyCinematicMarkup()}
@@ -1693,7 +1675,6 @@ export class BattleSession {
     this.stageId = stageId;
     this.surface.dataset.stageId = stageId;
     this.surface.dataset.defenseStarted = "false";
-    this.surface.style.setProperty("--stage-art", `url("${stageArtPath(stageId)}")`);
     this.run = this.createRunForStage(stageId);
     this.extractionEvents = [];
     this.terminalHandled = false;

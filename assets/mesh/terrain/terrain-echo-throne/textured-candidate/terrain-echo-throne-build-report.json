@@ -1,0 +1,4022 @@
+{
+  "assetId": "terrain-echo-throne",
+  "backgroundObjects": {
+    "alphaThreshold": 26,
+    "catalogPlacement": "grid layout for asset inspection only; source-sheet pixel positions are not world placement",
+    "collisionGeometry": false,
+    "combinedGlb": {
+      "bytes": 2263332,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/terrain-echo-throne-background-object-billboards.glb",
+      "sha256": "48f47077e65887f84c5971af65457dded03b0884192597ddae007273aa525ac2"
+    },
+    "componentsDetected": 247,
+    "componentsRetained": 35,
+    "kind": "alpha-blended-billboard-components",
+    "minimumPixels": 2000,
+    "objects": [
+      {
+        "bounds": {
+          "center": [
+            -14.0,
+            4.5,
+            0.708805
+          ],
+          "max": [
+            -12.925786,
+            4.5,
+            1.41761
+          ],
+          "min": [
+            -15.074214,
+            4.5,
+            0.0
+          ]
+        },
+        "componentId": 1,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-001.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-001",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-001.obj",
+          "sha256": "d6ff3458df386a5f1fb33015b421014d00c53b4fa4235dacd03d4af1885469ad"
+        },
+        "relativeScale": 1.012579,
+        "sourceBoundsPx": {
+          "height": 161,
+          "maxX": 263,
+          "maxY": 168,
+          "minX": 20,
+          "minY": 8,
+          "pixels": 23228,
+          "width": 244
+        },
+        "sourceUvRect": {
+          "u0": 0.01341382,
+          "u1": 0.17706237,
+          "v0": 0.83116883,
+          "v1": 0.99200799
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -8.4,
+            4.5,
+            0.713208
+          ],
+          "max": [
+            -7.523899,
+            4.5,
+            1.426415
+          ],
+          "min": [
+            -9.2761,
+            4.5,
+            0.0
+          ]
+        },
+        "componentId": 2,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-002.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-002",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-002.obj",
+          "sha256": "5c0ae45935772d0901e38180b3dbf575a1db562e159eb3a37896853de8b8eb63"
+        },
+        "relativeScale": 1.018868,
+        "sourceBoundsPx": {
+          "height": 162,
+          "maxX": 1221,
+          "maxY": 174,
+          "minX": 1023,
+          "minY": 13,
+          "pixels": 15704,
+          "width": 199
+        },
+        "sourceUvRect": {
+          "u0": 0.6861167,
+          "u1": 0.81958417,
+          "v0": 0.82517483,
+          "v1": 0.98701299
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -2.8,
+            4.5,
+            0.726415
+          ],
+          "max": [
+            -1.893082,
+            4.5,
+            1.45283
+          ],
+          "min": [
+            -3.706918,
+            4.5,
+            0.0
+          ]
+        },
+        "componentId": 3,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-003.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-003",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-003.obj",
+          "sha256": "5bfaed89a9b5a40f0ed7f59993f482ae23d87e05f952bedb416b3f0ece57a17e"
+        },
+        "relativeScale": 1.037736,
+        "sourceBoundsPx": {
+          "height": 165,
+          "maxX": 511,
+          "maxY": 178,
+          "minX": 306,
+          "minY": 14,
+          "pixels": 21501,
+          "width": 206
+        },
+        "sourceUvRect": {
+          "u0": 0.20523139,
+          "u1": 0.3433937,
+          "v0": 0.82117882,
+          "v1": 0.98601399
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            2.8,
+            4.5,
+            0.7
+          ],
+          "max": [
+            3.816981,
+            4.5,
+            1.4
+          ],
+          "min": [
+            1.783019,
+            4.5,
+            0.0
+          ]
+        },
+        "componentId": 4,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-004.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-004",
+        "obj": {
+          "bytes": 446,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-004.obj",
+          "sha256": "5660773393d181dab3b51e5111803d2ee0ba2225ff0061d91df8764ace3289fd"
+        },
+        "relativeScale": 1.0,
+        "sourceBoundsPx": {
+          "height": 159,
+          "maxX": 774,
+          "maxY": 172,
+          "minX": 544,
+          "minY": 14,
+          "pixels": 20978,
+          "width": 231
+        },
+        "sourceUvRect": {
+          "u0": 0.3648558,
+          "u1": 0.51978538,
+          "v0": 0.82717283,
+          "v1": 0.98601399
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            8.4,
+            4.5,
+            0.695597
+          ],
+          "max": [
+            9.34654,
+            4.5,
+            1.391195
+          ],
+          "min": [
+            7.453459,
+            4.5,
+            0.0
+          ]
+        },
+        "componentId": 5,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-005.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-005",
+        "obj": {
+          "bytes": 446,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-005.obj",
+          "sha256": "e30df3702aed45e11ce07f3406ee327222a5622c5951dee2792a0f934fd3776d"
+        },
+        "relativeScale": 0.993711,
+        "sourceBoundsPx": {
+          "height": 158,
+          "maxX": 998,
+          "maxY": 174,
+          "minX": 784,
+          "minY": 17,
+          "pixels": 20781,
+          "width": 215
+        },
+        "sourceUvRect": {
+          "u0": 0.5258216,
+          "u1": 0.67002012,
+          "v0": 0.82517483,
+          "v1": 0.98301698
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            14.0,
+            4.5,
+            0.655975
+          ],
+          "max": [
+            14.977359,
+            4.5,
+            1.31195
+          ],
+          "min": [
+            13.022641,
+            4.5,
+            0.0
+          ]
+        },
+        "componentId": 6,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-006.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-006",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-006.obj",
+          "sha256": "ee590331b92261d52324c9bc5bc3a5a31689f9ef36ddce60533f002c753064eb"
+        },
+        "relativeScale": 0.937107,
+        "sourceBoundsPx": {
+          "height": 149,
+          "maxX": 1476,
+          "maxY": 169,
+          "minX": 1255,
+          "minY": 21,
+          "pixels": 20956,
+          "width": 222
+        },
+        "sourceUvRect": {
+          "u0": 0.84171697,
+          "u1": 0.99061033,
+          "v0": 0.83016983,
+          "v1": 0.97902098
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -14.0,
+            8.7,
+            0.757233
+          ],
+          "max": [
+            -13.181132,
+            8.7,
+            1.514465
+          ],
+          "min": [
+            -14.818868,
+            8.7,
+            0.0
+          ]
+        },
+        "componentId": 7,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-007.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-007",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-007.obj",
+          "sha256": "aa2a2c7178b76d559a44d0d54ef6fc6a64243a82fdf9d6ae87ffc1565e3d7ef6"
+        },
+        "relativeScale": 1.081761,
+        "sourceBoundsPx": {
+          "height": 172,
+          "maxX": 957,
+          "maxY": 361,
+          "minX": 772,
+          "minY": 190,
+          "pixels": 21451,
+          "width": 186
+        },
+        "sourceUvRect": {
+          "u0": 0.51777331,
+          "u1": 0.6425218,
+          "v0": 0.63836164,
+          "v1": 0.81018981
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -8.4,
+            8.7,
+            0.713208
+          ],
+          "max": [
+            -7.64717,
+            8.7,
+            1.426415
+          ],
+          "min": [
+            -9.15283,
+            8.7,
+            0.0
+          ]
+        },
+        "componentId": 8,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-008.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-008",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-008.obj",
+          "sha256": "dd7eff78f9fee8abfd062e3fd85206eee5aaac64a009a7bd5bd65237bcef279a"
+        },
+        "relativeScale": 1.018868,
+        "sourceBoundsPx": {
+          "height": 162,
+          "maxX": 1463,
+          "maxY": 351,
+          "minX": 1293,
+          "minY": 190,
+          "pixels": 16729,
+          "width": 171
+        },
+        "sourceUvRect": {
+          "u0": 0.86720322,
+          "u1": 0.98189135,
+          "v0": 0.64835165,
+          "v1": 0.81018981
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -2.8,
+            8.7,
+            0.766038
+          ],
+          "max": [
+            -1.849056,
+            8.7,
+            1.532076
+          ],
+          "min": [
+            -3.750943,
+            8.7,
+            0.0
+          ]
+        },
+        "componentId": 9,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-009.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-009",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-009.obj",
+          "sha256": "7f50f8a1c104a440a8c194c774876162b7998ff5e390a7412aa94d1a2ca8781c"
+        },
+        "relativeScale": 1.09434,
+        "sourceBoundsPx": {
+          "height": 174,
+          "maxX": 730,
+          "maxY": 367,
+          "minX": 515,
+          "minY": 194,
+          "pixels": 23383,
+          "width": 216
+        },
+        "sourceUvRect": {
+          "u0": 0.34540577,
+          "u1": 0.49027498,
+          "v0": 0.63236763,
+          "v1": 0.80619381
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            2.8,
+            8.7,
+            0.7
+          ],
+          "max": [
+            3.816981,
+            8.7,
+            1.4
+          ],
+          "min": [
+            1.783019,
+            8.7,
+            0.0
+          ]
+        },
+        "componentId": 10,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-010.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-010",
+        "obj": {
+          "bytes": 446,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-010.obj",
+          "sha256": "286c1e55e3437a5652ae2c1bf905a6803db04c30d67bc1ed0a8923c913dea01e"
+        },
+        "relativeScale": 1.0,
+        "sourceBoundsPx": {
+          "height": 159,
+          "maxX": 246,
+          "maxY": 353,
+          "minX": 16,
+          "minY": 195,
+          "pixels": 21403,
+          "width": 231
+        },
+        "sourceUvRect": {
+          "u0": 0.01073105,
+          "u1": 0.16566063,
+          "v0": 0.64635365,
+          "v1": 0.80519481
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            8.399999,
+            8.7,
+            0.726415
+          ],
+          "max": [
+            9.302515,
+            8.7,
+            1.45283
+          ],
+          "min": [
+            7.497484,
+            8.7,
+            0.0
+          ]
+        },
+        "componentId": 11,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-011.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-011",
+        "obj": {
+          "bytes": 446,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-011.obj",
+          "sha256": "c79e70b7da7b39179a1f760a5b3cf7c21dd3b18845bd0f4812e634c72a418b41"
+        },
+        "relativeScale": 1.037736,
+        "sourceBoundsPx": {
+          "height": 165,
+          "maxX": 477,
+          "maxY": 359,
+          "minX": 273,
+          "minY": 195,
+          "pixels": 21307,
+          "width": 205
+        },
+        "sourceUvRect": {
+          "u0": 0.18309859,
+          "u1": 0.32059021,
+          "v0": 0.64035964,
+          "v1": 0.80519481
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            14.0,
+            8.7,
+            0.638365
+          ],
+          "max": [
+            15.144654,
+            8.7,
+            1.27673
+          ],
+          "min": [
+            12.855346,
+            8.7,
+            0.0
+          ]
+        },
+        "componentId": 12,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-012.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-012",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-012.obj",
+          "sha256": "b6b26a60108fdb989e4d97274dcc6669db36d843c0b25ab120e117c6f33f5fb5"
+        },
+        "relativeScale": 0.91195,
+        "sourceBoundsPx": {
+          "height": 145,
+          "maxX": 1256,
+          "maxY": 352,
+          "minX": 997,
+          "minY": 208,
+          "pixels": 23310,
+          "width": 260
+        },
+        "sourceUvRect": {
+          "u0": 0.66867874,
+          "u1": 0.84305835,
+          "v0": 0.64735265,
+          "v1": 0.79220779
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -14.0,
+            12.9,
+            0.73522
+          ],
+          "max": [
+            -13.440881,
+            12.9,
+            1.47044
+          ],
+          "min": [
+            -14.559119,
+            12.9,
+            0.0
+          ]
+        },
+        "componentId": 13,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-013.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-013",
+        "obj": {
+          "bytes": 458,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-013.obj",
+          "sha256": "763da359d76b662ecfee40d69fa46ff86c8154b6e5a0a8c10c580df3ddd9bd3d"
+        },
+        "relativeScale": 1.050314,
+        "sourceBoundsPx": {
+          "height": 167,
+          "maxX": 1441,
+          "maxY": 533,
+          "minX": 1315,
+          "minY": 367,
+          "pixels": 12251,
+          "width": 127
+        },
+        "sourceUvRect": {
+          "u0": 0.88195842,
+          "u1": 0.96713615,
+          "v0": 0.46653347,
+          "v1": 0.63336663
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -8.4,
+            12.9,
+            0.651572
+          ],
+          "max": [
+            -6.854717,
+            12.9,
+            1.303145
+          ],
+          "min": [
+            -9.945283,
+            12.9,
+            0.0
+          ]
+        },
+        "componentId": 14,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-014.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-014",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-014.obj",
+          "sha256": "e58b9b2023f9ac1ee73e255c4e539fe40aac616101d748f9ac013abfe668d009"
+        },
+        "relativeScale": 0.930818,
+        "sourceBoundsPx": {
+          "height": 148,
+          "maxX": 380,
+          "maxY": 518,
+          "minX": 30,
+          "minY": 371,
+          "pixels": 31247,
+          "width": 351
+        },
+        "sourceUvRect": {
+          "u0": 0.02012072,
+          "u1": 0.2555332,
+          "v0": 0.48151848,
+          "v1": 0.62937063
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -2.8,
+            12.9,
+            0.59434
+          ],
+          "max": [
+            -1.483648,
+            12.9,
+            1.188679
+          ],
+          "min": [
+            -4.116352,
+            12.9,
+            0.0
+          ]
+        },
+        "componentId": 15,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-015.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-015",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-015.obj",
+          "sha256": "578f339655217790d14fbca188df99943cfd986bec8ce751dc22a4002c91f8af"
+        },
+        "relativeScale": 0.849057,
+        "sourceBoundsPx": {
+          "height": 135,
+          "maxX": 1019,
+          "maxY": 518,
+          "minX": 721,
+          "minY": 384,
+          "pixels": 29298,
+          "width": 299
+        },
+        "sourceUvRect": {
+          "u0": 0.48356808,
+          "u1": 0.68410463,
+          "v0": 0.48151848,
+          "v1": 0.61638362
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            2.8,
+            12.9,
+            0.598742
+          ],
+          "max": [
+            3.711321,
+            12.9,
+            1.197484
+          ],
+          "min": [
+            1.888679,
+            12.9,
+            0.0
+          ]
+        },
+        "componentId": 16,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-016.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-016",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-016.obj",
+          "sha256": "d534f69d01a583be9ab236ce33b172ea4fa87467327053ea29f2257510ec8ebf"
+        },
+        "relativeScale": 0.855346,
+        "sourceBoundsPx": {
+          "height": 136,
+          "maxX": 1273,
+          "maxY": 523,
+          "minX": 1067,
+          "minY": 388,
+          "pixels": 15890,
+          "width": 207
+        },
+        "sourceUvRect": {
+          "u0": 0.7156271,
+          "u1": 0.85446009,
+          "v0": 0.47652348,
+          "v1": 0.61238761
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            8.4,
+            12.9,
+            0.581132
+          ],
+          "max": [
+            9.390566,
+            12.9,
+            1.162264
+          ],
+          "min": [
+            7.409433,
+            12.9,
+            0.0
+          ]
+        },
+        "componentId": 17,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-017.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-017",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-017.obj",
+          "sha256": "140a1169451f98182743a24b91d8fe60a21aad91704d4cf38463b515df4ee195"
+        },
+        "relativeScale": 0.830189,
+        "sourceBoundsPx": {
+          "height": 132,
+          "maxX": 664,
+          "maxY": 522,
+          "minX": 440,
+          "minY": 391,
+          "pixels": 18013,
+          "width": 225
+        },
+        "sourceUvRect": {
+          "u0": 0.29510396,
+          "u1": 0.44600939,
+          "v0": 0.47752248,
+          "v1": 0.60939061
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            14.0,
+            12.9,
+            0.942138
+          ],
+          "max": [
+            14.884906,
+            12.9,
+            1.884277
+          ],
+          "min": [
+            13.115094,
+            12.9,
+            0.0
+          ]
+        },
+        "componentId": 18,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-018.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-018",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-018.obj",
+          "sha256": "468e27aef15b1fde7632733c6a2022bc215124de0804b5afcbed1c65c1b04f08"
+        },
+        "relativeScale": 1.345912,
+        "sourceBoundsPx": {
+          "height": 214,
+          "maxX": 209,
+          "maxY": 723,
+          "minX": 9,
+          "minY": 510,
+          "pixels": 27051,
+          "width": 201
+        },
+        "sourceUvRect": {
+          "u0": 0.00603622,
+          "u1": 0.14084507,
+          "v0": 0.27672328,
+          "v1": 0.49050949
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -14.0,
+            17.1,
+            0.911321
+          ],
+          "max": [
+            -13.506918,
+            17.1,
+            1.822641
+          ],
+          "min": [
+            -14.493082,
+            17.1,
+            0.0
+          ]
+        },
+        "componentId": 19,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-019.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-019",
+        "obj": {
+          "bytes": 458,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-019.obj",
+          "sha256": "43998752c8ef704e95c0597aaca9b3923f3d5ea8659800f3680b34deee759345"
+        },
+        "relativeScale": 1.301887,
+        "sourceBoundsPx": {
+          "height": 207,
+          "maxX": 836,
+          "maxY": 727,
+          "minX": 725,
+          "minY": 521,
+          "pixels": 12564,
+          "width": 112
+        },
+        "sourceUvRect": {
+          "u0": 0.48625084,
+          "u1": 0.56136821,
+          "v0": 0.27272727,
+          "v1": 0.47952048
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -8.399999,
+            17.1,
+            0.858491
+          ],
+          "max": [
+            -7.898113,
+            17.1,
+            1.716981
+          ],
+          "min": [
+            -8.901886,
+            17.1,
+            0.0
+          ]
+        },
+        "componentId": 20,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-020.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-020",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-020.obj",
+          "sha256": "d7e8ab12d362e68b08b924315638f940f66d24461a2594ec9bbb00897705b64c"
+        },
+        "relativeScale": 1.226415,
+        "sourceBoundsPx": {
+          "height": 195,
+          "maxX": 1022,
+          "maxY": 723,
+          "minX": 909,
+          "minY": 529,
+          "pixels": 12076,
+          "width": 114
+        },
+        "sourceUvRect": {
+          "u0": 0.60965795,
+          "u1": 0.6861167,
+          "v0": 0.27672328,
+          "v1": 0.47152847
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -2.8,
+            17.1,
+            0.827673
+          ],
+          "max": [
+            -2.350943,
+            17.1,
+            1.655346
+          ],
+          "min": [
+            -3.249057,
+            17.1,
+            0.0
+          ]
+        },
+        "componentId": 21,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-021.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-021",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-021.obj",
+          "sha256": "6af384432739fc1ce78f17f7f2010bfb80a2204429d1b0a10807d67fba6d918e"
+        },
+        "relativeScale": 1.18239,
+        "sourceBoundsPx": {
+          "height": 188,
+          "maxX": 389,
+          "maxY": 721,
+          "minX": 288,
+          "minY": 534,
+          "pixels": 9947,
+          "width": 102
+        },
+        "sourceUvRect": {
+          "u0": 0.19315895,
+          "u1": 0.26156942,
+          "v0": 0.27872128,
+          "v1": 0.46653347
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            2.8,
+            17.1,
+            0.792453
+          ],
+          "max": [
+            3.231447,
+            17.1,
+            1.584906
+          ],
+          "min": [
+            2.368553,
+            17.1,
+            0.0
+          ]
+        },
+        "componentId": 22,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-022.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-022",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-022.obj",
+          "sha256": "28db1307081e36e04660451cbbf9fbd90fb150dfb872f58ec9d9e550cf30badd"
+        },
+        "relativeScale": 1.132075,
+        "sourceBoundsPx": {
+          "height": 180,
+          "maxX": 1198,
+          "maxY": 714,
+          "minX": 1101,
+          "minY": 535,
+          "pixels": 9405,
+          "width": 98
+        },
+        "sourceUvRect": {
+          "u0": 0.73843058,
+          "u1": 0.80415828,
+          "v0": 0.28571429,
+          "v1": 0.46553447
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            8.4,
+            17.1,
+            0.7
+          ],
+          "max": [
+            9.13522,
+            17.1,
+            1.4
+          ],
+          "min": [
+            7.66478,
+            17.1,
+            0.0
+          ]
+        },
+        "componentId": 23,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-023.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-023",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-023.obj",
+          "sha256": "b5ce08baa4e6db17e332501951261517da02d3a37f8150c951ffe6c0a160a5de"
+        },
+        "relativeScale": 1.0,
+        "sourceBoundsPx": {
+          "height": 159,
+          "maxX": 640,
+          "maxY": 722,
+          "minX": 474,
+          "minY": 564,
+          "pixels": 14281,
+          "width": 167
+        },
+        "sourceUvRect": {
+          "u0": 0.31790744,
+          "u1": 0.42991281,
+          "v0": 0.27772228,
+          "v1": 0.43656344
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            14.0,
+            17.1,
+            0.68239
+          ],
+          "max": [
+            14.519497,
+            17.1,
+            1.36478
+          ],
+          "min": [
+            13.480503,
+            17.1,
+            0.0
+          ]
+        },
+        "componentId": 24,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-024.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-024",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-024.obj",
+          "sha256": "5f82df11e2afc7df5c0b9f680b830621f5b2407ce4fec57c146af749b600dea7"
+        },
+        "relativeScale": 0.974843,
+        "sourceBoundsPx": {
+          "height": 155,
+          "maxX": 1428,
+          "maxY": 725,
+          "minX": 1311,
+          "minY": 571,
+          "pixels": 9297,
+          "width": 118
+        },
+        "sourceUvRect": {
+          "u0": 0.87927565,
+          "u1": 0.95841717,
+          "v0": 0.27472527,
+          "v1": 0.42957043
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -14.0,
+            21.299999,
+            1.109434
+          ],
+          "max": [
+            -13.220755,
+            21.299999,
+            2.218868
+          ],
+          "min": [
+            -14.779245,
+            21.299999,
+            0.0
+          ]
+        },
+        "componentId": 25,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-025.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-025",
+        "obj": {
+          "bytes": 458,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-025.obj",
+          "sha256": "6b1b5999ee146a9f6686061829d8eeb212908e189a32adcbe4fd77515fd2db34"
+        },
+        "relativeScale": 1.584906,
+        "sourceBoundsPx": {
+          "height": 252,
+          "maxX": 184,
+          "maxY": 992,
+          "minX": 8,
+          "minY": 741,
+          "pixels": 24991,
+          "width": 177
+        },
+        "sourceUvRect": {
+          "u0": 0.00536553,
+          "u1": 0.1240778,
+          "v0": 0.00799201,
+          "v1": 0.25974026
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -8.399999,
+            21.299999,
+            0.471069
+          ],
+          "max": [
+            -7.8761,
+            21.299999,
+            0.942138
+          ],
+          "min": [
+            -8.923899,
+            21.299999,
+            0.0
+          ]
+        },
+        "componentId": 26,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-026.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-026",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-026.obj",
+          "sha256": "45285cffeecc85c3902dd724be714b252c1d858f9439a6ee1308721fcc861f17"
+        },
+        "relativeScale": 0.672956,
+        "sourceBoundsPx": {
+          "height": 107,
+          "maxX": 732,
+          "maxY": 853,
+          "minX": 614,
+          "minY": 747,
+          "pixels": 8836,
+          "width": 119
+        },
+        "sourceUvRect": {
+          "u0": 0.41180416,
+          "u1": 0.49161636,
+          "v0": 0.14685315,
+          "v1": 0.25374625
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -2.8,
+            21.299999,
+            1.043396
+          ],
+          "max": [
+            -2.091195,
+            21.299999,
+            2.086792
+          ],
+          "min": [
+            -3.508805,
+            21.299999,
+            0.0
+          ]
+        },
+        "componentId": 27,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-027.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-027",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-027.obj",
+          "sha256": "0907c3ae6868cc4fb2d5e9751b0ab594d89dee9d5e8db61d4cdefb2a561d1a0d"
+        },
+        "relativeScale": 1.490566,
+        "sourceBoundsPx": {
+          "height": 237,
+          "maxX": 567,
+          "maxY": 989,
+          "minX": 407,
+          "minY": 753,
+          "pixels": 19851,
+          "width": 161
+        },
+        "sourceUvRect": {
+          "u0": 0.27297116,
+          "u1": 0.38095238,
+          "v0": 0.01098901,
+          "v1": 0.24775225
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            2.8,
+            21.299999,
+            0.422642
+          ],
+          "max": [
+            3.350314,
+            21.299999,
+            0.845283
+          ],
+          "min": [
+            2.249686,
+            21.299999,
+            0.0
+          ]
+        },
+        "componentId": 28,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-028.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-028",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-028.obj",
+          "sha256": "115928b909118348a8d5cf93a32be31debc6351dad37a50eaff8d0762618be8c"
+        },
+        "relativeScale": 0.603774,
+        "sourceBoundsPx": {
+          "height": 96,
+          "maxX": 1078,
+          "maxY": 850,
+          "minX": 954,
+          "minY": 755,
+          "pixels": 8128,
+          "width": 125
+        },
+        "sourceUvRect": {
+          "u0": 0.63983903,
+          "u1": 0.72367539,
+          "v0": 0.14985015,
+          "v1": 0.24575425
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            8.4,
+            21.299999,
+            1.012579
+          ],
+          "max": [
+            8.989937,
+            21.299999,
+            2.025157
+          ],
+          "min": [
+            7.810062,
+            21.299999,
+            0.0
+          ]
+        },
+        "componentId": 29,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-029.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-029",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-029.obj",
+          "sha256": "91f3785c03f9b30feb1df60667bacf81f6d99961f546d464a8b4276faff86ae8"
+        },
+        "relativeScale": 1.446541,
+        "sourceBoundsPx": {
+          "height": 230,
+          "maxX": 364,
+          "maxY": 987,
+          "minX": 231,
+          "minY": 758,
+          "pixels": 20883,
+          "width": 134
+        },
+        "sourceUvRect": {
+          "u0": 0.15492958,
+          "u1": 0.24480215,
+          "v0": 0.01298701,
+          "v1": 0.24275724
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            14.0,
+            21.299999,
+            0.449057
+          ],
+          "max": [
+            14.818868,
+            21.299999,
+            0.898113
+          ],
+          "min": [
+            13.181132,
+            21.299999,
+            0.0
+          ]
+        },
+        "componentId": 30,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-030.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-030",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-030.obj",
+          "sha256": "a17f9465dee03e3694e5480ea7af6b750c271093aedc337d7401f6b72a5bde6a"
+        },
+        "relativeScale": 0.641509,
+        "sourceBoundsPx": {
+          "height": 102,
+          "maxX": 1402,
+          "maxY": 859,
+          "minX": 1217,
+          "minY": 758,
+          "pixels": 10863,
+          "width": 186
+        },
+        "sourceUvRect": {
+          "u0": 0.81623072,
+          "u1": 0.94097921,
+          "v0": 0.14085914,
+          "v1": 0.24275724
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -14.0,
+            25.5,
+            0.444654
+          ],
+          "max": [
+            -13.38805,
+            25.5,
+            0.889308
+          ],
+          "min": [
+            -14.61195,
+            25.5,
+            0.0
+          ]
+        },
+        "componentId": 31,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-031.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-031",
+        "obj": {
+          "bytes": 458,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-031.obj",
+          "sha256": "c363b2925b14dd8856036c80508287e46cfe5c2f94a76e6356ab88463ea991e1"
+        },
+        "relativeScale": 0.63522,
+        "sourceBoundsPx": {
+          "height": 101,
+          "maxX": 910,
+          "maxY": 860,
+          "minX": 772,
+          "minY": 760,
+          "pixels": 9482,
+          "width": 139
+        },
+        "sourceUvRect": {
+          "u0": 0.51777331,
+          "u1": 0.61099933,
+          "v0": 0.13986014,
+          "v1": 0.24075924
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -8.4,
+            25.5,
+            0.259748
+          ],
+          "max": [
+            -7.990566,
+            25.5,
+            0.519497
+          ],
+          "min": [
+            -8.809434,
+            25.5,
+            0.0
+          ]
+        },
+        "componentId": 32,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-032.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-032",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-032.obj",
+          "sha256": "063e0d30f188bf782ea317e961b9fca879c9039707bf108678ed8f7495ce4324"
+        },
+        "relativeScale": 0.371069,
+        "sourceBoundsPx": {
+          "height": 59,
+          "maxX": 1482,
+          "maxY": 819,
+          "minX": 1390,
+          "minY": 761,
+          "pixels": 3243,
+          "width": 93
+        },
+        "sourceUvRect": {
+          "u0": 0.93226023,
+          "u1": 0.99463447,
+          "v0": 0.18081918,
+          "v1": 0.23976024
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -2.8,
+            25.5,
+            0.519497
+          ],
+          "max": [
+            -1.664151,
+            25.5,
+            1.038994
+          ],
+          "min": [
+            -3.935849,
+            25.5,
+            0.0
+          ]
+        },
+        "componentId": 33,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-033.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-033",
+        "obj": {
+          "bytes": 454,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-033.obj",
+          "sha256": "2633c2d32fcf7490095f526e4d53a92f4753f63ccc00abe564cfdb2ed6329243"
+        },
+        "relativeScale": 0.742138,
+        "sourceBoundsPx": {
+          "height": 118,
+          "maxX": 1151,
+          "maxY": 985,
+          "minX": 894,
+          "minY": 868,
+          "pixels": 5999,
+          "width": 258
+        },
+        "sourceUvRect": {
+          "u0": 0.59959759,
+          "u1": 0.77263581,
+          "v0": 0.01498501,
+          "v1": 0.13286713
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            2.8,
+            25.5,
+            0.449057
+          ],
+          "max": [
+            3.843396,
+            25.5,
+            0.898113
+          ],
+          "min": [
+            1.756604,
+            25.5,
+            0.0
+          ]
+        },
+        "componentId": 34,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-034.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-034",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-034.obj",
+          "sha256": "935a57e4754ad730ca234b2db58cbfea5f3a2e604ff6a5486f422c10b9d7a686"
+        },
+        "relativeScale": 0.641509,
+        "sourceBoundsPx": {
+          "height": 102,
+          "maxX": 850,
+          "maxY": 978,
+          "minX": 614,
+          "minY": 877,
+          "pixels": 7693,
+          "width": 237
+        },
+        "sourceUvRect": {
+          "u0": 0.41180416,
+          "u1": 0.57075788,
+          "v0": 0.02197802,
+          "v1": 0.12387612
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            8.4,
+            25.5,
+            0.400629
+          ],
+          "max": [
+            9.408175,
+            25.5,
+            0.801258
+          ],
+          "min": [
+            7.391824,
+            25.5,
+            0.0
+          ]
+        },
+        "componentId": 35,
+        "mtl": {
+          "bytes": 522,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-035.mtl",
+          "sha256": "60936eb15da4afffd2d70b4a9a7ab46269cc99976592f28a6f6f269f8883618a"
+        },
+        "name": "terrain-echo-throne-background-object-035",
+        "obj": {
+          "bytes": 450,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/obj/terrain-echo-throne-background-object-035.obj",
+          "sha256": "81975c0e640eae135de6e68b8d2928f547786fb172f1c7eaf79a36237b27e391"
+        },
+        "relativeScale": 0.572327,
+        "sourceBoundsPx": {
+          "height": 91,
+          "maxX": 1434,
+          "maxY": 978,
+          "minX": 1206,
+          "minY": 888,
+          "pixels": 10067,
+          "width": 229
+        },
+        "sourceUvRect": {
+          "u0": 0.80885312,
+          "u1": 0.96244131,
+          "v0": 0.02197802,
+          "v1": 0.11288711
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      }
+    ],
+    "relativeSizing": {
+      "baseHeight": 1.4,
+      "medianPixelHeight": 159,
+      "sourcePixelDimensionsPreserved": true
+    },
+    "sourceImageSize": {
+      "height": 1001,
+      "width": 1491
+    }
+  },
+  "backgroundTerrain": {
+    "alphaThreshold": 26,
+    "catalogPlacement": "grid layout for asset inspection only; source-sheet pixel positions are not world placement",
+    "collisionGeometry": false,
+    "combinedGlb": {
+      "bytes": 1595480,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-terrain/terrain-echo-throne-background-terrain-billboards.glb",
+      "sha256": "73573528bf4e8c792e561341ed8e5054c611dd8dbf27fa95f5604564a8607efb"
+    },
+    "componentsDetected": 1,
+    "componentsRetained": 1,
+    "kind": "alpha-blended-billboard-components",
+    "minimumPixels": 2000,
+    "objects": [
+      {
+        "bounds": {
+          "center": [
+            0.0,
+            8.0,
+            6.0
+          ],
+          "max": [
+            10.216036,
+            8.0,
+            12.0
+          ],
+          "min": [
+            -10.216036,
+            8.0,
+            0.0
+          ]
+        },
+        "componentId": 1,
+        "mtl": {
+          "bytes": 527,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-terrain/obj/terrain-echo-throne-background-terrain-001.mtl",
+          "sha256": "503e3559ee1e314ffe52416182937a0adb6a67e01e6cea6f6c052d5590ad70d3"
+        },
+        "name": "terrain-echo-throne-background-terrain-001",
+        "obj": {
+          "bytes": 457,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-terrain/obj/terrain-echo-throne-background-terrain-001.obj",
+          "sha256": "db027d18a4158c8fe30fd7f634d92206a40a805288e43e9787e15ca6054e3dae"
+        },
+        "relativeScale": 1.0,
+        "sourceBoundsPx": {
+          "height": 898,
+          "maxX": 1529,
+          "maxY": 905,
+          "minX": 1,
+          "minY": 8,
+          "pixels": 959525,
+          "width": 1529
+        },
+        "sourceUvRect": {
+          "u0": 0.00065104,
+          "u1": 0.99609375,
+          "v0": 0.00875274,
+          "v1": 0.99124726
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      }
+    ],
+    "relativeSizing": {
+      "baseHeight": 12.0,
+      "medianPixelHeight": 898,
+      "sourcePixelDimensionsPreserved": true
+    },
+    "sourceImageSize": {
+      "height": 914,
+      "width": 1536
+    }
+  },
+  "features": {
+    "alphaThreshold": 26,
+    "catalogPlacement": "grid layout for asset inspection only; source-sheet pixel positions are not world placement",
+    "collisionGeometry": false,
+    "combinedGlb": {
+      "bytes": 2367752,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/terrain-echo-throne-feature-billboards.glb",
+      "sha256": "1179a9846445accf9e1ee12dc95158f24a522b23a6f957e7f4e23f1e009347e1"
+    },
+    "componentsDetected": 39,
+    "componentsRetained": 39,
+    "kind": "alpha-blended-billboard-components",
+    "minimumPixels": 2000,
+    "objects": [
+      {
+        "bounds": {
+          "center": [
+            -28.799999,
+            3.0,
+            2.087234
+          ],
+          "max": [
+            -28.263828,
+            3.0,
+            4.174468
+          ],
+          "min": [
+            -29.33617,
+            3.0,
+            0.0
+          ]
+        },
+        "componentId": 1,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-001.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-001",
+        "obj": {
+          "bytes": 424,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-001.obj",
+          "sha256": "1611ba7cf6494a49d4f293886bbe6a291f57531f46d680cbd81d91dcd620109d"
+        },
+        "relativeScale": 1.739362,
+        "sourceBoundsPx": {
+          "height": 327,
+          "maxX": 91,
+          "maxY": 334,
+          "minX": 8,
+          "minY": 8,
+          "pixels": 14782,
+          "width": 84
+        },
+        "sourceUvRect": {
+          "u0": 0.00527357,
+          "u1": 0.06064601,
+          "v0": 0.66365462,
+          "v1": 0.99196787
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -19.200001,
+            3.0,
+            2.074468
+          ],
+          "max": [
+            -18.61915,
+            3.0,
+            4.148936
+          ],
+          "min": [
+            -19.780851,
+            3.0,
+            0.0
+          ]
+        },
+        "componentId": 2,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-002.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-002",
+        "obj": {
+          "bytes": 424,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-002.obj",
+          "sha256": "133fd61b28715d4022a9fbbef410adffbd83399559639e6d27edad498e126843"
+        },
+        "relativeScale": 1.728723,
+        "sourceBoundsPx": {
+          "height": 325,
+          "maxX": 208,
+          "maxY": 333,
+          "minX": 118,
+          "minY": 9,
+          "pixels": 15981,
+          "width": 91
+        },
+        "sourceUvRect": {
+          "u0": 0.0777851,
+          "u1": 0.13777192,
+          "v0": 0.66465863,
+          "v1": 0.99096386
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -9.6,
+            3.0,
+            2.048936
+          ],
+          "max": [
+            -8.22766,
+            3.0,
+            4.097872
+          ],
+          "min": [
+            -10.972341,
+            3.0,
+            0.0
+          ]
+        },
+        "componentId": 3,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-003.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-003",
+        "obj": {
+          "bytes": 422,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-003.obj",
+          "sha256": "2cfeca5112ef0a12e57bcac2024ea192ea31767d685f1787efa99836262b4a8f"
+        },
+        "relativeScale": 1.707447,
+        "sourceBoundsPx": {
+          "height": 321,
+          "maxX": 764,
+          "maxY": 332,
+          "minX": 550,
+          "minY": 12,
+          "pixels": 48410,
+          "width": 215
+        },
+        "sourceUvRect": {
+          "u0": 0.36255768,
+          "u1": 0.50428477,
+          "v0": 0.66566265,
+          "v1": 0.98795181
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            0.0,
+            3.0,
+            2.029787
+          ],
+          "max": [
+            0.497872,
+            3.0,
+            4.059575
+          ],
+          "min": [
+            -0.497872,
+            3.0,
+            0.0
+          ]
+        },
+        "componentId": 4,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-004.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-004",
+        "obj": {
+          "bytes": 418,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-004.obj",
+          "sha256": "05c6090e3e2f663c6f80c80f7f19a3f4af03a9ac47c8c38d91e41498d946cd77"
+        },
+        "relativeScale": 1.691489,
+        "sourceBoundsPx": {
+          "height": 318,
+          "maxX": 316,
+          "maxY": 333,
+          "minX": 239,
+          "minY": 16,
+          "pixels": 14789,
+          "width": 78
+        },
+        "sourceUvRect": {
+          "u0": 0.15754779,
+          "u1": 0.20896506,
+          "v0": 0.66465863,
+          "v1": 0.98393574
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            9.6,
+            3.0,
+            1.985106
+          ],
+          "max": [
+            10.13617,
+            3.0,
+            3.970213
+          ],
+          "min": [
+            9.06383,
+            3.0,
+            0.0
+          ]
+        },
+        "componentId": 5,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-005.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-005",
+        "obj": {
+          "bytes": 418,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-005.obj",
+          "sha256": "3690ebf8ddca5a163c3471c73c6178191b40e67022d219fd558eca54ffbe088a"
+        },
+        "relativeScale": 1.654255,
+        "sourceBoundsPx": {
+          "height": 311,
+          "maxX": 420,
+          "maxY": 333,
+          "minX": 337,
+          "minY": 23,
+          "pixels": 14204,
+          "width": 84
+        },
+        "sourceUvRect": {
+          "u0": 0.22214898,
+          "u1": 0.27752142,
+          "v0": 0.66465863,
+          "v1": 0.97690763
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            19.200001,
+            3.0,
+            1.921277
+          ],
+          "max": [
+            20.131916,
+            3.0,
+            3.842553
+          ],
+          "min": [
+            18.268085,
+            3.0,
+            0.0
+          ]
+        },
+        "componentId": 6,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-006.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-006",
+        "obj": {
+          "bytes": 420,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-006.obj",
+          "sha256": "fd9eb91b76291320c2f7c278690427c2856b414b2bf824329ab804c339465c29"
+        },
+        "relativeScale": 1.601064,
+        "sourceBoundsPx": {
+          "height": 301,
+          "maxX": 1168,
+          "maxY": 332,
+          "minX": 1023,
+          "minY": 32,
+          "pixels": 26317,
+          "width": 146
+        },
+        "sourceUvRect": {
+          "u0": 0.67435728,
+          "u1": 0.77059987,
+          "v0": 0.66566265,
+          "v1": 0.96787149
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            28.799999,
+            3.0,
+            1.914894
+          ],
+          "max": [
+            30.223404,
+            3.0,
+            3.829787
+          ],
+          "min": [
+            27.376595,
+            3.0,
+            0.0
+          ]
+        },
+        "componentId": 7,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-007.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-007",
+        "obj": {
+          "bytes": 420,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-007.obj",
+          "sha256": "22abb2b02f5a36c321052009c3b4287dc854b26a90289bf89cc37c609c92c4bd"
+        },
+        "relativeScale": 1.595745,
+        "sourceBoundsPx": {
+          "height": 300,
+          "maxX": 1002,
+          "maxY": 339,
+          "minX": 780,
+          "minY": 40,
+          "pixels": 41617,
+          "width": 223
+        },
+        "sourceUvRect": {
+          "u0": 0.51417271,
+          "u1": 0.66117337,
+          "v0": 0.65863454,
+          "v1": 0.95983936
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -28.799999,
+            10.2,
+            1.812766
+          ],
+          "max": [
+            -27.83617,
+            10.2,
+            3.625532
+          ],
+          "min": [
+            -29.763828,
+            10.2,
+            0.0
+          ]
+        },
+        "componentId": 8,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-008.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-008",
+        "obj": {
+          "bytes": 428,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-008.obj",
+          "sha256": "967dc9e1f2b52cd2dd025f7d3d158b0ed2ad43950f51e2928650fac443a6d3fe"
+        },
+        "relativeScale": 1.510638,
+        "sourceBoundsPx": {
+          "height": 284,
+          "maxX": 1334,
+          "maxY": 341,
+          "minX": 1184,
+          "minY": 58,
+          "pixels": 26121,
+          "width": 151
+        },
+        "sourceUvRect": {
+          "u0": 0.7804878,
+          "u1": 0.88002637,
+          "v0": 0.65662651,
+          "v1": 0.94176707
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -19.200001,
+            10.2,
+            1.806383
+          ],
+          "max": [
+            -18.223406,
+            10.2,
+            3.612766
+          ],
+          "min": [
+            -20.176596,
+            10.2,
+            0.0
+          ]
+        },
+        "componentId": 9,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-009.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-009",
+        "obj": {
+          "bytes": 428,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-009.obj",
+          "sha256": "70bc7786eb74a5fcc97b7eabe825b2f1efe1d65fb086e01d80e350e6080d1690"
+        },
+        "relativeScale": 1.505319,
+        "sourceBoundsPx": {
+          "height": 283,
+          "maxX": 1508,
+          "maxY": 353,
+          "minX": 1356,
+          "minY": 71,
+          "pixels": 27455,
+          "width": 153
+        },
+        "sourceUvRect": {
+          "u0": 0.89386948,
+          "u1": 0.99472643,
+          "v0": 0.64457831,
+          "v1": 0.92871486
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -9.6,
+            10.2,
+            1.308511
+          ],
+          "max": [
+            -9.095745,
+            10.2,
+            2.617021
+          ],
+          "min": [
+            -10.104256,
+            10.2,
+            0.0
+          ]
+        },
+        "componentId": 10,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-010.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-010",
+        "obj": {
+          "bytes": 426,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-010.obj",
+          "sha256": "6d62dea61d7741a785abda3a5cca5f749d567150c39b07e0f3f60826c10f036e"
+        },
+        "relativeScale": 1.090426,
+        "sourceBoundsPx": {
+          "height": 205,
+          "maxX": 513,
+          "maxY": 323,
+          "minX": 435,
+          "minY": 119,
+          "pixels": 9221,
+          "width": 79
+        },
+        "sourceUvRect": {
+          "u0": 0.28675016,
+          "u1": 0.33882663,
+          "v0": 0.6746988,
+          "v1": 0.88052209
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            0.0,
+            10.2,
+            1.110638
+          ],
+          "max": [
+            1.07234,
+            10.2,
+            2.221277
+          ],
+          "min": [
+            -1.07234,
+            10.2,
+            0.0
+          ]
+        },
+        "componentId": 11,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-011.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-011",
+        "obj": {
+          "bytes": 422,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-011.obj",
+          "sha256": "556c70d42b71ff66dbc6c178e1f662e73b4d455ddb611cb58bcb9e430eaff0f6"
+        },
+        "relativeScale": 0.925532,
+        "sourceBoundsPx": {
+          "height": 174,
+          "maxX": 777,
+          "maxY": 507,
+          "minX": 610,
+          "minY": 334,
+          "pixels": 12730,
+          "width": 168
+        },
+        "sourceUvRect": {
+          "u0": 0.40210943,
+          "u1": 0.51285432,
+          "v0": 0.48995984,
+          "v1": 0.66465863
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            9.6,
+            10.2,
+            0.861702
+          ],
+          "max": [
+            10.078724,
+            10.2,
+            1.723404
+          ],
+          "min": [
+            9.121277,
+            10.2,
+            0.0
+          ]
+        },
+        "componentId": 12,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-012.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-012",
+        "obj": {
+          "bytes": 422,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-012.obj",
+          "sha256": "4b674451f4ecfbcacf62baeb035e353da57539728f6bd62dc5805ab39fcf88ab"
+        },
+        "relativeScale": 0.718085,
+        "sourceBoundsPx": {
+          "height": 135,
+          "maxX": 467,
+          "maxY": 479,
+          "minX": 393,
+          "minY": 345,
+          "pixels": 6410,
+          "width": 75
+        },
+        "sourceUvRect": {
+          "u0": 0.25906394,
+          "u1": 0.30850363,
+          "v0": 0.51807229,
+          "v1": 0.65361446
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            19.200001,
+            10.2,
+            1.129787
+          ],
+          "max": [
+            20.61064,
+            10.2,
+            2.259574
+          ],
+          "min": [
+            17.789362,
+            10.2,
+            0.0
+          ]
+        },
+        "componentId": 13,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-013.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-013",
+        "obj": {
+          "bytes": 424,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-013.obj",
+          "sha256": "b59b9e5da53c3fe5359d92bd296c6fc2a9efc4b38b83caf057b473cd397494bf"
+        },
+        "relativeScale": 0.941489,
+        "sourceBoundsPx": {
+          "height": 177,
+          "maxX": 1014,
+          "maxY": 522,
+          "minX": 794,
+          "minY": 346,
+          "pixels": 16414,
+          "width": 221
+        },
+        "sourceUvRect": {
+          "u0": 0.52340145,
+          "u1": 0.66908372,
+          "v0": 0.4748996,
+          "v1": 0.65261044
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            28.799999,
+            10.2,
+            1.129787
+          ],
+          "max": [
+            30.778723,
+            10.2,
+            2.259574
+          ],
+          "min": [
+            26.821276,
+            10.2,
+            0.0
+          ]
+        },
+        "componentId": 14,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-014.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-014",
+        "obj": {
+          "bytes": 424,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-014.obj",
+          "sha256": "c0961dff2d4c69a6ff0b8e4e6d18a2dae3cfc51afe71d00be43a29948743e157"
+        },
+        "relativeScale": 0.941489,
+        "sourceBoundsPx": {
+          "height": 177,
+          "maxX": 1329,
+          "maxY": 525,
+          "minX": 1020,
+          "minY": 349,
+          "pixels": 22943,
+          "width": 310
+        },
+        "sourceUvRect": {
+          "u0": 0.6723797,
+          "u1": 0.87673039,
+          "v0": 0.47188755,
+          "v1": 0.64959839
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -28.799999,
+            17.4,
+            0.823404
+          ],
+          "max": [
+            -28.110638,
+            17.4,
+            1.646809
+          ],
+          "min": [
+            -29.489361,
+            17.4,
+            0.0
+          ]
+        },
+        "componentId": 15,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-015.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-015",
+        "obj": {
+          "bytes": 428,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-015.obj",
+          "sha256": "893bbaaf6fd31c2978307e42593434086e3411d97ba1cf0b05e9530bc28df55d"
+        },
+        "relativeScale": 0.68617,
+        "sourceBoundsPx": {
+          "height": 129,
+          "maxX": 598,
+          "maxY": 478,
+          "minX": 491,
+          "minY": 350,
+          "pixels": 8909,
+          "width": 108
+        },
+        "sourceUvRect": {
+          "u0": 0.32366513,
+          "u1": 0.39485827,
+          "v0": 0.51907631,
+          "v1": 0.64859438
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -19.200001,
+            17.4,
+            0.944681
+          ],
+          "max": [
+            -18.280851,
+            17.4,
+            1.889362
+          ],
+          "min": [
+            -20.11915,
+            17.4,
+            0.0
+          ]
+        },
+        "componentId": 16,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-016.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-016",
+        "obj": {
+          "bytes": 428,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-016.obj",
+          "sha256": "b0e692bf26096762966cab2a07c783ab94d84b4c832e38fa0e04568d0b5aa42e"
+        },
+        "relativeScale": 0.787234,
+        "sourceBoundsPx": {
+          "height": 148,
+          "maxX": 376,
+          "maxY": 499,
+          "minX": 233,
+          "minY": 352,
+          "pixels": 12546,
+          "width": 144
+        },
+        "sourceUvRect": {
+          "u0": 0.15359262,
+          "u1": 0.24851681,
+          "v0": 0.49799197,
+          "v1": 0.64658635
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -9.6,
+            17.4,
+            0.893617
+          ],
+          "max": [
+            -9.044682,
+            17.4,
+            1.787234
+          ],
+          "min": [
+            -10.155319,
+            17.4,
+            0.0
+          ]
+        },
+        "componentId": 17,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-017.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-017",
+        "obj": {
+          "bytes": 426,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-017.obj",
+          "sha256": "a27a29d2b23c179861173758a23e375885d10b733938b92ee26062d877543298"
+        },
+        "relativeScale": 0.744681,
+        "sourceBoundsPx": {
+          "height": 140,
+          "maxX": 212,
+          "maxY": 498,
+          "minX": 126,
+          "minY": 359,
+          "pixels": 8403,
+          "width": 87
+        },
+        "sourceUvRect": {
+          "u0": 0.08305867,
+          "u1": 0.1404087,
+          "v0": 0.49899598,
+          "v1": 0.63955823
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            0.0,
+            17.4,
+            0.829787
+          ],
+          "max": [
+            1.002128,
+            17.4,
+            1.659575
+          ],
+          "min": [
+            -1.002128,
+            17.4,
+            0.0
+          ]
+        },
+        "componentId": 18,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-018.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-018",
+        "obj": {
+          "bytes": 422,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-018.obj",
+          "sha256": "ffe5dabaa9369b7a9ca221e19d2d590bf66ae8620aecd758b948ccedcd1e5e0b"
+        },
+        "relativeScale": 0.691489,
+        "sourceBoundsPx": {
+          "height": 130,
+          "maxX": 1501,
+          "maxY": 502,
+          "minX": 1345,
+          "minY": 373,
+          "pixels": 10573,
+          "width": 157
+        },
+        "sourceUvRect": {
+          "u0": 0.88661833,
+          "u1": 0.99011206,
+          "v0": 0.49497992,
+          "v1": 0.62550201
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            9.6,
+            17.4,
+            0.874468
+          ],
+          "max": [
+            10.155319,
+            17.4,
+            1.748936
+          ],
+          "min": [
+            9.044682,
+            17.4,
+            0.0
+          ]
+        },
+        "componentId": 19,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-019.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-019",
+        "obj": {
+          "bytes": 422,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-019.obj",
+          "sha256": "9c0aff4dfabefb4cca459ea98fef6e70da7f199c8c52a1dd74458d924600cfb6"
+        },
+        "relativeScale": 0.728723,
+        "sourceBoundsPx": {
+          "height": 137,
+          "maxX": 99,
+          "maxY": 513,
+          "minX": 13,
+          "minY": 377,
+          "pixels": 8137,
+          "width": 87
+        },
+        "sourceUvRect": {
+          "u0": 0.00856955,
+          "u1": 0.06591958,
+          "v0": 0.48393574,
+          "v1": 0.62148594
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            19.200001,
+            17.4,
+            1.589362
+          ],
+          "max": [
+            20.993618,
+            17.4,
+            3.178723
+          ],
+          "min": [
+            17.406384,
+            17.4,
+            0.0
+          ]
+        },
+        "componentId": 20,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-020.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-020",
+        "obj": {
+          "bytes": 424,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-020.obj",
+          "sha256": "c2a3cd257c97b71a0910947f2c878ab5cad842643841ea465f61d1c448241985"
+        },
+        "relativeScale": 1.324468,
+        "sourceBoundsPx": {
+          "height": 249,
+          "maxX": 538,
+          "maxY": 750,
+          "minX": 258,
+          "minY": 502,
+          "pixels": 39260,
+          "width": 281
+        },
+        "sourceUvRect": {
+          "u0": 0.17007251,
+          "u1": 0.35530653,
+          "v0": 0.24598394,
+          "v1": 0.49598394
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            28.799999,
+            17.4,
+            1.257447
+          ],
+          "max": [
+            29.348936,
+            17.4,
+            2.514894
+          ],
+          "min": [
+            28.251062,
+            17.4,
+            0.0
+          ]
+        },
+        "componentId": 21,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-021.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-021",
+        "obj": {
+          "bytes": 424,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-021.obj",
+          "sha256": "1e6c260fd4bc79030e65e0e068597533eafcaae5680c2c73f6147c44370a54e5"
+        },
+        "relativeScale": 1.047872,
+        "sourceBoundsPx": {
+          "height": 197,
+          "maxX": 1498,
+          "maxY": 719,
+          "minX": 1413,
+          "minY": 523,
+          "pixels": 11039,
+          "width": 86
+        },
+        "sourceUvRect": {
+          "u0": 0.93144364,
+          "u1": 0.98813448,
+          "v0": 0.27710843,
+          "v1": 0.4748996
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -28.799999,
+            24.6,
+            1.2
+          ],
+          "max": [
+            -27.523403,
+            24.6,
+            2.4
+          ],
+          "min": [
+            -30.076595,
+            24.6,
+            0.0
+          ]
+        },
+        "componentId": 22,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-022.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-022",
+        "obj": {
+          "bytes": 428,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-022.obj",
+          "sha256": "c8bfa83e19d753dbe77a0f2568190e6799a5319d1f0a4faf4bf29392e5dde3b4"
+        },
+        "relativeScale": 1.0,
+        "sourceBoundsPx": {
+          "height": 188,
+          "maxX": 231,
+          "maxY": 712,
+          "minX": 32,
+          "minY": 525,
+          "pixels": 19522,
+          "width": 200
+        },
+        "sourceUvRect": {
+          "u0": 0.02109426,
+          "u1": 0.15293342,
+          "v0": 0.28413655,
+          "v1": 0.47289157
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -19.200001,
+            24.6,
+            1.212766
+          ],
+          "max": [
+            -18.051065,
+            24.6,
+            2.425532
+          ],
+          "min": [
+            -20.348936,
+            24.6,
+            0.0
+          ]
+        },
+        "componentId": 23,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-023.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-023",
+        "obj": {
+          "bytes": 428,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-023.obj",
+          "sha256": "b686ccf6481dd5a565296710cfff3f6239aa2a47eb6f5a44f41d22825138ea28"
+        },
+        "relativeScale": 1.010638,
+        "sourceBoundsPx": {
+          "height": 190,
+          "maxX": 863,
+          "maxY": 722,
+          "minX": 684,
+          "minY": 533,
+          "pixels": 19040,
+          "width": 180
+        },
+        "sourceUvRect": {
+          "u0": 0.45088991,
+          "u1": 0.56954515,
+          "v0": 0.27409639,
+          "v1": 0.46485944
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -9.6,
+            24.6,
+            0.96383
+          ],
+          "max": [
+            -8.917022,
+            24.6,
+            1.92766
+          ],
+          "min": [
+            -10.282979,
+            24.6,
+            0.0
+          ]
+        },
+        "componentId": 24,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-024.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-024",
+        "obj": {
+          "bytes": 426,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-024.obj",
+          "sha256": "de246cd465e9bb906bdd966e8e323829293a690c94c0dbbcb9ee7aa241cb63c7"
+        },
+        "relativeScale": 0.803191,
+        "sourceBoundsPx": {
+          "height": 151,
+          "maxX": 657,
+          "maxY": 687,
+          "minX": 551,
+          "minY": 537,
+          "pixels": 8030,
+          "width": 107
+        },
+        "sourceUvRect": {
+          "u0": 0.36321688,
+          "u1": 0.43375082,
+          "v0": 0.30923695,
+          "v1": 0.46084337
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            0.0,
+            24.6,
+            1.142553
+          ],
+          "max": [
+            0.976596,
+            24.6,
+            2.285106
+          ],
+          "min": [
+            -0.976596,
+            24.6,
+            0.0
+          ]
+        },
+        "componentId": 25,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-025.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-025",
+        "obj": {
+          "bytes": 422,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-025.obj",
+          "sha256": "b054c3ac1739474330cee42110919b532c39024b944202b80512114999cddf54"
+        },
+        "relativeScale": 0.952128,
+        "sourceBoundsPx": {
+          "height": 179,
+          "maxX": 1046,
+          "maxY": 715,
+          "minX": 894,
+          "minY": 537,
+          "pixels": 13385,
+          "width": 153
+        },
+        "sourceUvRect": {
+          "u0": 0.58932103,
+          "u1": 0.69017798,
+          "v0": 0.2811245,
+          "v1": 0.46084337
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            9.6,
+            24.6,
+            1.021277
+          ],
+          "max": [
+            10.200001,
+            24.6,
+            2.042553
+          ],
+          "min": [
+            9.0,
+            24.6,
+            0.0
+          ]
+        },
+        "componentId": 26,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-026.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-026",
+        "obj": {
+          "bytes": 422,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-026.obj",
+          "sha256": "a27181502388d7ad2d1403a6d67ac5a42c3c81fe0bd216cb8628ccd6ab8a1370"
+        },
+        "relativeScale": 0.851064,
+        "sourceBoundsPx": {
+          "height": 160,
+          "maxX": 1389,
+          "maxY": 705,
+          "minX": 1296,
+          "minY": 546,
+          "pixels": 11209,
+          "width": 94
+        },
+        "sourceUvRect": {
+          "u0": 0.85431773,
+          "u1": 0.91628214,
+          "v0": 0.29116466,
+          "v1": 0.45180723
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            19.200001,
+            24.6,
+            1.065957
+          ],
+          "max": [
+            20.37447,
+            24.6,
+            2.131915
+          ],
+          "min": [
+            18.025532,
+            24.6,
+            0.0
+          ]
+        },
+        "componentId": 27,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-027.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-027",
+        "obj": {
+          "bytes": 424,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-027.obj",
+          "sha256": "a6282b7cae5d9f157fb7b81a69bf4cff0cc0db93c59ae17cb9eef0f8851cd1f3"
+        },
+        "relativeScale": 0.888298,
+        "sourceBoundsPx": {
+          "height": 167,
+          "maxX": 1251,
+          "maxY": 715,
+          "minX": 1068,
+          "minY": 549,
+          "pixels": 18486,
+          "width": 184
+        },
+        "sourceUvRect": {
+          "u0": 0.70402109,
+          "u1": 0.82531312,
+          "v0": 0.2811245,
+          "v1": 0.44879518
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            28.799999,
+            24.6,
+            1.73617
+          ],
+          "max": [
+            29.725531,
+            24.6,
+            3.47234
+          ],
+          "min": [
+            27.874468,
+            24.6,
+            0.0
+          ]
+        },
+        "componentId": 28,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-028.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-028",
+        "obj": {
+          "bytes": 424,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-028.obj",
+          "sha256": "9ccf7b6c7ef5eed981bfcbb997a8400db5e69ef88fd22a6cfd0d96e21f61e340"
+        },
+        "relativeScale": 1.446809,
+        "sourceBoundsPx": {
+          "height": 272,
+          "maxX": 984,
+          "maxY": 987,
+          "minX": 840,
+          "minY": 716,
+          "pixels": 23701,
+          "width": 145
+        },
+        "sourceUvRect": {
+          "u0": 0.55372446,
+          "u1": 0.64930784,
+          "v0": 0.00803213,
+          "v1": 0.2811245
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -28.799999,
+            31.799999,
+            1.538298
+          ],
+          "max": [
+            -28.002127,
+            31.799999,
+            3.076596
+          ],
+          "min": [
+            -29.597872,
+            31.799999,
+            0.0
+          ]
+        },
+        "componentId": 29,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-029.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-029",
+        "obj": {
+          "bytes": 428,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-029.obj",
+          "sha256": "9fe83471a8fd176a9b2a52744e95e170fafafaeac0456fa68b626d48473f035c"
+        },
+        "relativeScale": 1.281915,
+        "sourceBoundsPx": {
+          "height": 241,
+          "maxX": 1317,
+          "maxY": 973,
+          "minX": 1193,
+          "minY": 733,
+          "pixels": 18565,
+          "width": 125
+        },
+        "sourceUvRect": {
+          "u0": 0.78642057,
+          "u1": 0.86882004,
+          "v0": 0.02208835,
+          "v1": 0.26405622
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -19.200001,
+            31.799999,
+            0.912766
+          ],
+          "max": [
+            -17.687235,
+            31.799999,
+            1.825532
+          ],
+          "min": [
+            -20.712767,
+            31.799999,
+            0.0
+          ]
+        },
+        "componentId": 30,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-030.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-030",
+        "obj": {
+          "bytes": 428,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-030.obj",
+          "sha256": "6527bdaee09806ce0acb65d143d746911d98c35e4da235b0a189f44be11b6311"
+        },
+        "relativeScale": 0.760638,
+        "sourceBoundsPx": {
+          "height": 143,
+          "maxX": 250,
+          "maxY": 879,
+          "minX": 14,
+          "minY": 737,
+          "pixels": 14503,
+          "width": 237
+        },
+        "sourceUvRect": {
+          "u0": 0.00922874,
+          "u1": 0.16545814,
+          "v0": 0.11646586,
+          "v1": 0.26004016
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -9.6,
+            31.799999,
+            1.385106
+          ],
+          "max": [
+            -9.025533,
+            31.799999,
+            2.770213
+          ],
+          "min": [
+            -10.174468,
+            31.799999,
+            0.0
+          ]
+        },
+        "componentId": 31,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-031.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-031",
+        "obj": {
+          "bytes": 426,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-031.obj",
+          "sha256": "4dcb5d5ad3d286c50ccc762d05c43514f26af77f958b21acdbc131fafa98bab2"
+        },
+        "relativeScale": 1.154255,
+        "sourceBoundsPx": {
+          "height": 217,
+          "maxX": 799,
+          "maxY": 955,
+          "minX": 710,
+          "minY": 739,
+          "pixels": 12750,
+          "width": 90
+        },
+        "sourceUvRect": {
+          "u0": 0.468029,
+          "u1": 0.52735662,
+          "v0": 0.04016064,
+          "v1": 0.25803213
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            0.0,
+            31.799999,
+            1.5
+          ],
+          "max": [
+            0.906383,
+            31.799999,
+            3.0
+          ],
+          "min": [
+            -0.906383,
+            31.799999,
+            0.0
+          ]
+        },
+        "componentId": 32,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-032.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-032",
+        "obj": {
+          "bytes": 422,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-032.obj",
+          "sha256": "a58517ac63b97fc7c186543c1149b91608cbfdeac11aed1f7dc1bdfbb0ec8209"
+        },
+        "relativeScale": 1.25,
+        "sourceBoundsPx": {
+          "height": 235,
+          "maxX": 1164,
+          "maxY": 977,
+          "minX": 1023,
+          "minY": 743,
+          "pixels": 17938,
+          "width": 142
+        },
+        "sourceUvRect": {
+          "u0": 0.67435728,
+          "u1": 0.76796309,
+          "v0": 0.01807229,
+          "v1": 0.25401606
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            9.6,
+            31.799999,
+            1.487234
+          ],
+          "max": [
+            10.582979,
+            31.799999,
+            2.974468
+          ],
+          "min": [
+            8.617022,
+            31.799999,
+            0.0
+          ]
+        },
+        "componentId": 33,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-033.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-033",
+        "obj": {
+          "bytes": 422,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-033.obj",
+          "sha256": "c7fe3d3a87412291b4cbe2b083ef030352893333f97c5eba2c3832fc8208d9ff"
+        },
+        "relativeScale": 1.239362,
+        "sourceBoundsPx": {
+          "height": 233,
+          "maxX": 1498,
+          "maxY": 985,
+          "minX": 1345,
+          "minY": 753,
+          "pixels": 21564,
+          "width": 154
+        },
+        "sourceUvRect": {
+          "u0": 0.88661833,
+          "u1": 0.98813448,
+          "v0": 0.01004016,
+          "v1": 0.2439759
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            19.200001,
+            31.799999,
+            0.497872
+          ],
+          "max": [
+            19.793617,
+            31.799999,
+            0.995745
+          ],
+          "min": [
+            18.606384,
+            31.799999,
+            0.0
+          ]
+        },
+        "componentId": 34,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-034.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-034",
+        "obj": {
+          "bytes": 424,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-034.obj",
+          "sha256": "40f4864d5c88fecd20ec82fcb0d1a855e223a4e2e49ce98d74f5b8afb842ca28"
+        },
+        "relativeScale": 0.414894,
+        "sourceBoundsPx": {
+          "height": 78,
+          "maxX": 572,
+          "maxY": 843,
+          "minX": 480,
+          "minY": 766,
+          "pixels": 4740,
+          "width": 93
+        },
+        "sourceUvRect": {
+          "u0": 0.31641397,
+          "u1": 0.37771918,
+          "v0": 0.15261044,
+          "v1": 0.23092369
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            28.799999,
+            31.799999,
+            1.219149
+          ],
+          "max": [
+            30.568085,
+            31.799999,
+            2.438298
+          ],
+          "min": [
+            27.031914,
+            31.799999,
+            0.0
+          ]
+        },
+        "componentId": 35,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-035.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-035",
+        "obj": {
+          "bytes": 424,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-035.obj",
+          "sha256": "3e0f6c99d0a8e04b315aa0121adb521827f03c58113ba6715e1ce45670d7829c"
+        },
+        "relativeScale": 1.015957,
+        "sourceBoundsPx": {
+          "height": 191,
+          "maxX": 380,
+          "maxY": 966,
+          "minX": 104,
+          "minY": 776,
+          "pixels": 18815,
+          "width": 277
+        },
+        "sourceUvRect": {
+          "u0": 0.06855636,
+          "u1": 0.25115359,
+          "v0": 0.02911647,
+          "v1": 0.22088353
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -28.799999,
+            39.0,
+            1.021277
+          ],
+          "max": [
+            -28.346807,
+            39.0,
+            2.042553
+          ],
+          "min": [
+            -29.253191,
+            39.0,
+            0.0
+          ]
+        },
+        "componentId": 36,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-036.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-036",
+        "obj": {
+          "bytes": 428,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-036.obj",
+          "sha256": "141acb97417206ecc5c1e435cc63247b4088ec7d91474d6fea476d01b9c4f56c"
+        },
+        "relativeScale": 0.851064,
+        "sourceBoundsPx": {
+          "height": 160,
+          "maxX": 676,
+          "maxY": 952,
+          "minX": 606,
+          "minY": 793,
+          "pixels": 8360,
+          "width": 71
+        },
+        "sourceUvRect": {
+          "u0": 0.39947264,
+          "u1": 0.44627554,
+          "v0": 0.04317269,
+          "v1": 0.20381526
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -19.200001,
+            39.0,
+            0.580851
+          ],
+          "max": [
+            -18.389362,
+            39.0,
+            1.161702
+          ],
+          "min": [
+            -20.010639,
+            39.0,
+            0.0
+          ]
+        },
+        "componentId": 37,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-037.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-037",
+        "obj": {
+          "bytes": 428,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-037.obj",
+          "sha256": "fd036a4998bf2414267b0c38ca9307b51bb3ea7484636acab47c35c2c535d55e"
+        },
+        "relativeScale": 0.484043,
+        "sourceBoundsPx": {
+          "height": 91,
+          "maxX": 469,
+          "maxY": 905,
+          "minX": 343,
+          "minY": 815,
+          "pixels": 5335,
+          "width": 127
+        },
+        "sourceUvRect": {
+          "u0": 0.22610415,
+          "u1": 0.30982202,
+          "v0": 0.09036145,
+          "v1": 0.18172691
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            -9.6,
+            39.0,
+            0.504255
+          ],
+          "max": [
+            -8.936171,
+            39.0,
+            1.008511
+          ],
+          "min": [
+            -10.26383,
+            39.0,
+            0.0
+          ]
+        },
+        "componentId": 38,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-038.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-038",
+        "obj": {
+          "bytes": 426,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-038.obj",
+          "sha256": "29d4b5edf1066f32c9c519996aa46baffae0f16f579036799c84f809ac2afef4"
+        },
+        "relativeScale": 0.420213,
+        "sourceBoundsPx": {
+          "height": 79,
+          "maxX": 579,
+          "maxY": 952,
+          "minX": 476,
+          "minY": 874,
+          "pixels": 5597,
+          "width": 104
+        },
+        "sourceUvRect": {
+          "u0": 0.31377719,
+          "u1": 0.38233355,
+          "v0": 0.04317269,
+          "v1": 0.12248996
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            0.0,
+            39.0,
+            0.440426
+          ],
+          "max": [
+            0.612766,
+            39.0,
+            0.880851
+          ],
+          "min": [
+            -0.612766,
+            39.0,
+            0.0
+          ]
+        },
+        "componentId": 39,
+        "mtl": {
+          "bytes": 496,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-039.mtl",
+          "sha256": "edf31dea355b6a03bcd1b37853a5ed9f76aa943d088e93b7bc63f2c5ad383669"
+        },
+        "name": "terrain-echo-throne-feature-039",
+        "obj": {
+          "bytes": 422,
+          "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/obj/terrain-echo-throne-feature-039.obj",
+          "sha256": "9a5a4b45464bdb45468cba083bdd5d7ff9a9cdcb4e79b64a5b798c0905b7b40b"
+        },
+        "relativeScale": 0.367021,
+        "sourceBoundsPx": {
+          "height": 69,
+          "maxX": 445,
+          "maxY": 975,
+          "minX": 350,
+          "minY": 907,
+          "pixels": 4215,
+          "width": 96
+        },
+        "sourceUvRect": {
+          "u0": 0.23071852,
+          "u1": 0.29400132,
+          "v0": 0.02008032,
+          "v1": 0.08935743
+        },
+        "textureMapped": true,
+        "triangles": 2,
+        "uvLayerCount": 1,
+        "vertices": 4
+      }
+    ],
+    "relativeSizing": {
+      "baseHeight": 2.4,
+      "medianPixelHeight": 188,
+      "sourcePixelDimensionsPreserved": true
+    },
+    "sourceImageSize": {
+      "height": 996,
+      "width": 1517
+    }
+  },
+  "inputs": {
+    "backgroundObjectImage": {
+      "bytes": 2232361,
+      "path": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-background-object.png",
+      "sha256": "014be3c069baea81221f60da3878841a8526235d7474682986535df77026e858"
+    },
+    "backgroundTerrainImage": {
+      "bytes": 1593829,
+      "path": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-background-terrain.png",
+      "sha256": "1fbaa231297d3d818865492b18e18acb1359fb459ca55d1db406532165b9f51c"
+    },
+    "componentSpec": {
+      "bytes": 22401,
+      "path": "_workspace/current/engineering/asset-pipeline/concept-input/terrain-echo-throne/terrain-echo-throne-alpha-components.json",
+      "sha256": "42f554e9adb4ea997b4ba3355bae0165221bf97d1e4f9f33475608afe74ae26d"
+    },
+    "featureImage": {
+      "bytes": 2334015,
+      "path": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-terrain-feature.png",
+      "sha256": "095de0829eb9a23487446ff42bc467cd85c1a427de963652f3c0e19af2940714"
+    },
+    "terrainAlbedo": {
+      "bytes": 3414382,
+      "path": "_workspace/current/engineering/asset-pipeline/concept-input/terrain-echo-throne/terrain-echo-throne-albedo-1x1.png",
+      "sha256": "e8cd8f74f43630110e62c86ee8e8946b19fe674de6bd7bc52a485daad2ec6506"
+    },
+    "terrainImage": {
+      "bytes": 2291290,
+      "path": "assets/mesh/terrain/terrain-echo-throne/terrain-echo-throne-terrain.png",
+      "sha256": "e3f165d4dbffb9d1a84039be12699985b40f5a23d43c928ed5877dc5f37238f9"
+    },
+    "terrainProvenance": {
+      "bytes": 1322,
+      "path": "_workspace/current/engineering/asset-pipeline/concept-input/terrain-echo-throne/terrain-echo-throne-albedo-1x1.provenance.json",
+      "sha256": "d6b1e6cdb2396bf698f95ba6784498c9ff6d8f9ff0e0986ca1b024a316f6887c"
+    }
+  },
+  "representation": {
+    "backgroundObject": "alpha-blended billboard components from source layer",
+    "backgroundTerrain": "alpha-blended billboard components from source layer",
+    "feature": "alpha-blended billboard components from source layer",
+    "terrain": "procedural planar grid with generated albedo"
+  },
+  "runtimeEligible": false,
+  "stage": "source-candidate",
+  "terrain": {
+    "glb": {
+      "bytes": 3462912,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
+      "sha256": "78293fb0f9e89fa939feba78feed19018034a0f27880705a6545c4eab73b56df"
+    },
+    "kind": "procedural-planar-grid",
+    "mtl": {
+      "bytes": 275,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.mtl",
+      "sha256": "f0e22f9301e3d43e252962590d2212f7742a18a800432219a3eaad3f1b65f1f4"
+    },
+    "obj": {
+      "bytes": 98567,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.obj",
+      "sha256": "ac106f6cfd7cadeb73a646ad742422784deefead581241c11b0e74ce7b1b935b"
+    },
+    "object": {
+      "bounds": {
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          4.0,
+          0.0,
+          4.0
+        ],
+        "min": [
+          -4.0,
+          0.0,
+          -4.0
+        ]
+      },
+      "name": "TerrainEchoThrone",
+      "triangles": 2048,
+      "uvLayerCount": 1,
+      "vertices": 1089
+    },
+    "textureMappedUv": "UVMap"
+  },
+  "textureCopies": {
+    "backgroundObject": {
+      "bytes": 2232361,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/textures/terrain-echo-throne-background-object.png",
+      "sha256": "014be3c069baea81221f60da3878841a8526235d7474682986535df77026e858"
+    },
+    "backgroundTerrain": {
+      "bytes": 1593829,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-terrain/textures/terrain-echo-throne-background-terrain.png",
+      "sha256": "1fbaa231297d3d818865492b18e18acb1359fb459ca55d1db406532165b9f51c"
+    },
+    "feature": {
+      "bytes": 2334015,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/feature/textures/terrain-echo-throne-terrain-feature.png",
+      "sha256": "095de0829eb9a23487446ff42bc467cd85c1a427de963652f3c0e19af2940714"
+    },
+    "terrainAlbedo": {
+      "bytes": 3414382,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/textures/terrain-echo-throne-albedo-1x1.png",
+      "sha256": "e8cd8f74f43630110e62c86ee8e8946b19fe674de6bd7bc52a485daad2ec6506"
+    },
+    "terrainProvenance": {
+      "bytes": 1322,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/textures/terrain-echo-throne-albedo-1x1.provenance.json",
+      "sha256": "d6b1e6cdb2396bf698f95ba6784498c9ff6d8f9ff0e0986ca1b024a316f6887c"
+    },
+    "terrainReference": {
+      "bytes": 2291290,
+      "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/reference/terrain-echo-throne-terrain.png",
+      "sha256": "e3f165d4dbffb9d1a84039be12699985b40f5a23d43c928ed5877dc5f37238f9"
+    }
+  }
+}

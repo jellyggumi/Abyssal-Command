@@ -1,0 +1,4385 @@
+{
+  "assetId": "terrain-cinder-span-resources",
+  "coordinateContract": {
+    "authoring": "Blender Z-up",
+    "pivot": "bottom-center for named feature and prop nodes",
+    "recommendedWorldScale": 5.0,
+    "runtime": "glTF Y-up"
+  },
+  "featurePack": {
+    "assetCount": 40,
+    "assetId": "terrain-cinder-span-feature-pack",
+    "assets": [
+      {
+        "assetId": "terrain-cinder-span-feature-001",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.062986,
+          0.071884,
+          0.086323
+        ],
+        "maxExtent": 0.143768,
+        "min": [
+          -0.062986,
+          -0.071884,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-001",
+        "pivot": [
+          0.866781,
+          -0.011369,
+          0.0
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          1
+        ],
+        "textureMapped": true,
+        "triangles": 400,
+        "uvLayerCount": 1,
+        "vertices": 198
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-002",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.066952,
+          0.068992,
+          0.110074
+        ],
+        "maxExtent": 0.137983,
+        "min": [
+          -0.066952,
+          -0.068991,
+          -0.0
+        ],
+        "node": "terrain-cinder-span-feature-002",
+        "pivot": [
+          0.468273,
+          0.008636,
+          0.004215
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          2
+        ],
+        "textureMapped": true,
+        "triangles": 428,
+        "uvLayerCount": 1,
+        "vertices": 212
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-003",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.060614,
+          0.062499,
+          0.112442
+        ],
+        "maxExtent": 0.124997,
+        "min": [
+          -0.060614,
+          -0.062498,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-003",
+        "pivot": [
+          0.23767,
+          0.027175,
+          0.014938
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          3
+        ],
+        "textureMapped": true,
+        "triangles": 362,
+        "uvLayerCount": 1,
+        "vertices": 179
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-004",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.035677,
+          0.030177,
+          0.101383
+        ],
+        "maxExtent": 0.101383,
+        "min": [
+          -0.035677,
+          -0.030177,
+          -0.0
+        ],
+        "node": "terrain-cinder-span-feature-004",
+        "pivot": [
+          0.323923,
+          0.014747,
+          0.025876
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          4
+        ],
+        "textureMapped": true,
+        "triangles": 228,
+        "uvLayerCount": 1,
+        "vertices": 114
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-005",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.085277,
+          0.076916,
+          0.135332
+        ],
+        "maxExtent": 0.170554,
+        "min": [
+          -0.085277,
+          -0.076915,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-005",
+        "pivot": [
+          0.682276,
+          -0.016625,
+          0.010725
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          5
+        ],
+        "textureMapped": true,
+        "triangles": 550,
+        "uvLayerCount": 1,
+        "vertices": 277
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-006",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.062243,
+          0.058273,
+          0.102742
+        ],
+        "maxExtent": 0.124486,
+        "min": [
+          -0.062243,
+          -0.058272,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-006",
+        "pivot": [
+          -0.794905,
+          0.036885,
+          0.049159
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          6
+        ],
+        "textureMapped": true,
+        "triangles": 362,
+        "uvLayerCount": 1,
+        "vertices": 183
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-007",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.0521,
+          0.056089,
+          0.100155
+        ],
+        "maxExtent": 0.112177,
+        "min": [
+          -0.0521,
+          -0.056088,
+          -0.0
+        ],
+        "node": "terrain-cinder-span-feature-007",
+        "pivot": [
+          0.087441,
+          0.055834,
+          0.058399
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          7
+        ],
+        "textureMapped": true,
+        "triangles": 348,
+        "uvLayerCount": 1,
+        "vertices": 176
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-008",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.075475,
+          0.067236,
+          0.169483
+        ],
+        "maxExtent": 0.169483,
+        "min": [
+          -0.075475,
+          -0.067236,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-008",
+        "pivot": [
+          -0.18867,
+          -0.001455,
+          0.031499
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          8
+        ],
+        "textureMapped": true,
+        "triangles": 574,
+        "uvLayerCount": 1,
+        "vertices": 285
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-009",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.064864,
+          0.050356,
+          0.145289
+        ],
+        "maxExtent": 0.145289,
+        "min": [
+          -0.064864,
+          -0.050356,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-009",
+        "pivot": [
+          -0.554205,
+          0.015845,
+          0.045537
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          9
+        ],
+        "textureMapped": true,
+        "triangles": 424,
+        "uvLayerCount": 1,
+        "vertices": 212
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-010",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.04002,
+          0.040631,
+          0.189563
+        ],
+        "maxExtent": 0.189563,
+        "min": [
+          -0.04002,
+          -0.040631,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-010",
+        "pivot": [
+          -0.899985,
+          0.004285,
+          0.024298
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          10
+        ],
+        "textureMapped": true,
+        "triangles": 344,
+        "uvLayerCount": 1,
+        "vertices": 174
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-011",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.079535,
+          0.076104,
+          0.154561
+        ],
+        "maxExtent": 0.15907,
+        "min": [
+          -0.079535,
+          -0.076103,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-011",
+        "pivot": [
+          -0.369217,
+          0.023048,
+          0.04274
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          11
+        ],
+        "textureMapped": true,
+        "triangles": 646,
+        "uvLayerCount": 1,
+        "vertices": 325
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-012",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.034433,
+          0.045081,
+          0.184085
+        ],
+        "maxExtent": 0.184085,
+        "min": [
+          -0.034432,
+          -0.045081,
+          -0.0
+        ],
+        "node": "terrain-cinder-span-feature-012",
+        "pivot": [
+          -0.051493,
+          0.02134,
+          0.032293
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          12
+        ],
+        "textureMapped": true,
+        "triangles": 398,
+        "uvLayerCount": 1,
+        "vertices": 201
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-013",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.040033,
+          0.045901,
+          0.188629
+        ],
+        "maxExtent": 0.188629,
+        "min": [
+          -0.040033,
+          -0.045901,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-013",
+        "pivot": [
+          -0.656176,
+          -0.046315,
+          0.031894
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          13
+        ],
+        "textureMapped": true,
+        "triangles": 410,
+        "uvLayerCount": 1,
+        "vertices": 207
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-014",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.139907,
+          0.120985,
+          0.330268
+        ],
+        "maxExtent": 0.330268,
+        "min": [
+          -0.139907,
+          -0.120985,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-014",
+        "pivot": [
+          0.782846,
+          -0.028896,
+          0.198383
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          14
+        ],
+        "textureMapped": true,
+        "triangles": 2130,
+        "uvLayerCount": 1,
+        "vertices": 1067
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-015",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.111152,
+          0.079493,
+          0.343391
+        ],
+        "maxExtent": 0.343391,
+        "min": [
+          -0.111152,
+          -0.079492,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-015",
+        "pivot": [
+          0.254308,
+          -0.046707,
+          0.193958
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          15
+        ],
+        "textureMapped": true,
+        "triangles": 1532,
+        "uvLayerCount": 1,
+        "vertices": 768
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-016",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.110548,
+          0.093575,
+          0.353929
+        ],
+        "maxExtent": 0.353929,
+        "min": [
+          -0.110548,
+          -0.093574,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-016",
+        "pivot": [
+          0.514472,
+          0.027812,
+          0.198583
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          16
+        ],
+        "textureMapped": true,
+        "triangles": 1366,
+        "uvLayerCount": 1,
+        "vertices": 685
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-017",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.066643,
+          0.049447,
+          0.20161
+        ],
+        "maxExtent": 0.20161,
+        "min": [
+          -0.066643,
+          -0.049446,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-017",
+        "pivot": [
+          -0.519286,
+          -0.003482,
+          0.278741
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          17
+        ],
+        "textureMapped": true,
+        "triangles": 482,
+        "uvLayerCount": 1,
+        "vertices": 243
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-018",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.035816,
+          0.044774,
+          0.213282
+        ],
+        "maxExtent": 0.213282,
+        "min": [
+          -0.035817,
+          -0.044774,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-018",
+        "pivot": [
+          -0.88193,
+          0.01493,
+          0.28014
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          18
+        ],
+        "textureMapped": true,
+        "triangles": 350,
+        "uvLayerCount": 1,
+        "vertices": 177
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-019",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.0488,
+          0.055419,
+          0.234767
+        ],
+        "maxExtent": 0.234767,
+        "min": [
+          -0.0488,
+          -0.055418,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-019",
+        "pivot": [
+          -0.149257,
+          0.03791,
+          0.270587
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          19
+        ],
+        "textureMapped": true,
+        "triangles": 474,
+        "uvLayerCount": 1,
+        "vertices": 239
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-020",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.067125,
+          0.089158,
+          0.239917
+        ],
+        "maxExtent": 0.239917,
+        "min": [
+          -0.067125,
+          -0.089157,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-020",
+        "pivot": [
+          0.029204,
+          -0.017174,
+          0.272115
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          20
+        ],
+        "textureMapped": true,
+        "triangles": 1032,
+        "uvLayerCount": 1,
+        "vertices": 518
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-021",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.076521,
+          0.059844,
+          0.227779
+        ],
+        "maxExtent": 0.227779,
+        "min": [
+          -0.076521,
+          -0.059843,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-021",
+        "pivot": [
+          -0.342652,
+          0.052524,
+          0.278821
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          21
+        ],
+        "textureMapped": true,
+        "triangles": 650,
+        "uvLayerCount": 1,
+        "vertices": 327
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-022",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.073251,
+          0.074604,
+          0.243534
+        ],
+        "maxExtent": 0.243534,
+        "min": [
+          -0.073251,
+          -0.074604,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-022",
+        "pivot": [
+          -0.714915,
+          0.018811,
+          0.276191
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          22
+        ],
+        "textureMapped": true,
+        "triangles": 644,
+        "uvLayerCount": 1,
+        "vertices": 324
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-023",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.101047,
+          0.129029,
+          0.113946
+        ],
+        "maxExtent": 0.258058,
+        "min": [
+          -0.101047,
+          -0.129029,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-023",
+        "pivot": [
+          -0.560015,
+          -0.0062,
+          0.566621
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          23
+        ],
+        "textureMapped": true,
+        "triangles": 974,
+        "uvLayerCount": 1,
+        "vertices": 489
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-024",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.232836,
+          0.208293,
+          0.294115
+        ],
+        "maxExtent": 0.465673,
+        "min": [
+          -0.232837,
+          -0.208292,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-024",
+        "pivot": [
+          -0.138539,
+          -0.024625,
+          0.592874
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          24
+        ],
+        "textureMapped": true,
+        "triangles": 4242,
+        "uvLayerCount": 1,
+        "vertices": 2123
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-025",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.110142,
+          0.141655,
+          0.14514
+        ],
+        "maxExtent": 0.28331,
+        "min": [
+          -0.110142,
+          -0.141655,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-025",
+        "pivot": [
+          -0.828477,
+          0.008023,
+          0.673913
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          25
+        ],
+        "textureMapped": true,
+        "triangles": 1170,
+        "uvLayerCount": 1,
+        "vertices": 587
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-026",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.228972,
+          0.199737,
+          0.316821
+        ],
+        "maxExtent": 0.457944,
+        "min": [
+          -0.228972,
+          -0.199737,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-026",
+        "pivot": [
+          0.338533,
+          0.04556,
+          0.597231
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          26
+        ],
+        "textureMapped": true,
+        "triangles": 4550,
+        "uvLayerCount": 1,
+        "vertices": 2277
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-027",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.182088,
+          0.188318,
+          0.298425
+        ],
+        "maxExtent": 0.376635,
+        "min": [
+          -0.182088,
+          -0.188317,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-027",
+        "pivot": [
+          0.765771,
+          0.008224,
+          0.60854
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          27
+        ],
+        "textureMapped": true,
+        "triangles": 3448,
+        "uvLayerCount": 1,
+        "vertices": 1726
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-028",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.038867,
+          0.041263,
+          0.170596
+        ],
+        "maxExtent": 0.170596,
+        "min": [
+          -0.038867,
+          -0.041263,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-028",
+        "pivot": [
+          -0.465174,
+          0.049038,
+          0.718066
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          28
+        ],
+        "textureMapped": true,
+        "triangles": 224,
+        "uvLayerCount": 1,
+        "vertices": 114
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-029",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.086217,
+          0.112516,
+          0.129903
+        ],
+        "maxExtent": 0.225032,
+        "min": [
+          -0.086217,
+          -0.112516,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-029",
+        "pivot": [
+          -0.637716,
+          0.059417,
+          0.738687
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          29
+        ],
+        "textureMapped": true,
+        "triangles": 860,
+        "uvLayerCount": 1,
+        "vertices": 432
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-030",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.030042,
+          0.026785,
+          0.208006
+        ],
+        "maxExtent": 0.208006,
+        "min": [
+          -0.030042,
+          -0.026785,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-030",
+        "pivot": [
+          -0.285401,
+          0.001512,
+          0.96013
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          30
+        ],
+        "textureMapped": true,
+        "triangles": 260,
+        "uvLayerCount": 1,
+        "vertices": 132
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-031",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.048961,
+          0.058545,
+          0.23379
+        ],
+        "maxExtent": 0.23379,
+        "min": [
+          -0.048961,
+          -0.058544,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-031",
+        "pivot": [
+          -0.716071,
+          0.019776,
+          0.960262
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          31
+        ],
+        "textureMapped": true,
+        "triangles": 572,
+        "uvLayerCount": 1,
+        "vertices": 288
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-032",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.068265,
+          0.086289,
+          0.222647
+        ],
+        "maxExtent": 0.222647,
+        "min": [
+          -0.068265,
+          -0.086289,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-032",
+        "pivot": [
+          0.870512,
+          -0.018353,
+          0.988278
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          32
+        ],
+        "textureMapped": true,
+        "triangles": 914,
+        "uvLayerCount": 1,
+        "vertices": 459
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-033",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.044736,
+          0.055968,
+          0.299545
+        ],
+        "maxExtent": 0.299545,
+        "min": [
+          -0.044736,
+          -0.055968,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-033",
+        "pivot": [
+          -0.882936,
+          0.008606,
+          0.949863
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          33
+        ],
+        "textureMapped": true,
+        "triangles": 658,
+        "uvLayerCount": 1,
+        "vertices": 331
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-034",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.044294,
+          0.048071,
+          0.28427
+        ],
+        "maxExtent": 0.28427,
+        "min": [
+          -0.044295,
+          -0.04807,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-034",
+        "pivot": [
+          -0.416871,
+          0.015549,
+          0.957801
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          34
+        ],
+        "textureMapped": true,
+        "triangles": 484,
+        "uvLayerCount": 1,
+        "vertices": 244
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-035",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.042782,
+          0.049813,
+          0.289073
+        ],
+        "maxExtent": 0.289073,
+        "min": [
+          -0.042782,
+          -0.049813,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-035",
+        "pivot": [
+          -0.557269,
+          0.024872,
+          0.957831
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          35
+        ],
+        "textureMapped": true,
+        "triangles": 590,
+        "uvLayerCount": 1,
+        "vertices": 297
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-036",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.044544,
+          0.048595,
+          0.261425
+        ],
+        "maxExtent": 0.261425,
+        "min": [
+          -0.044543,
+          -0.048595,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-036",
+        "pivot": [
+          -0.001078,
+          0.022277,
+          0.973278
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          36
+        ],
+        "textureMapped": true,
+        "triangles": 572,
+        "uvLayerCount": 1,
+        "vertices": 288
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-037",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.061594,
+          0.057458,
+          0.212106
+        ],
+        "maxExtent": 0.212106,
+        "min": [
+          -0.061594,
+          -0.057457,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-037",
+        "pivot": [
+          0.674515,
+          -0.030463,
+          1.005251
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          37
+        ],
+        "textureMapped": true,
+        "triangles": 654,
+        "uvLayerCount": 1,
+        "vertices": 329
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-038",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.045502,
+          0.055841,
+          0.273766
+        ],
+        "maxExtent": 0.273766,
+        "min": [
+          -0.045502,
+          -0.05584,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-038",
+        "pivot": [
+          -0.125243,
+          0.016151,
+          0.974853
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          38
+        ],
+        "textureMapped": true,
+        "triangles": 650,
+        "uvLayerCount": 1,
+        "vertices": 327
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-039",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.122056,
+          0.130582,
+          0.245202
+        ],
+        "maxExtent": 0.261164,
+        "min": [
+          -0.122057,
+          -0.130582,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-039",
+        "pivot": [
+          0.195438,
+          0.06328,
+          0.994559
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          39
+        ],
+        "textureMapped": true,
+        "triangles": 1412,
+        "uvLayerCount": 1,
+        "vertices": 708
+      },
+      {
+        "assetId": "terrain-cinder-span-feature-040",
+        "collisionHint": "box",
+        "material": "Cinder Span Feature PBR",
+        "max": [
+          0.114565,
+          0.163096,
+          0.212249
+        ],
+        "maxExtent": 0.326191,
+        "min": [
+          -0.114565,
+          -0.163095,
+          0.0
+        ],
+        "node": "terrain-cinder-span-feature-040",
+        "pivot": [
+          0.455678,
+          -0.007422,
+          1.014705
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          40
+        ],
+        "textureMapped": true,
+        "triangles": 1500,
+        "uvLayerCount": 1,
+        "vertices": 750
+      }
+    ],
+    "blend": {
+      "bytes": 15085176,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/blend/terrain-cinder-span-features.blend",
+      "sha256": "66891d5e296c241fd77ef9e37f6b5fb1c657260eb76d0bdf6e21ffd5de9cc486"
+    },
+    "material": "Cinder Span Feature PBR",
+    "pack": {
+      "bytes": 2031396,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/packs/terrain-cinder-span-features.glb",
+      "sha256": "c3ab0f1cb01b81cdeff05bd0114b0547feddbc636813552b423f663055445dde"
+    },
+    "packLoadContract": "load pack GLB once; getObjectByName(node); clone for placement",
+    "rejectedComponentCount": 0,
+    "rejectedComponents": [],
+    "review": {
+      "bytes": 963072,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/review/terrain-cinder-span-features.png",
+      "sha256": "26d5fa9955bf66615705dd07f804a27431b97d756877dddae8dc2d2a733982df"
+    },
+    "runtimeEligible": false,
+    "source": {
+      "bytes": 2795804,
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/feature/obj/base.obj",
+      "sha256": "e2281b464d746480cccb973aa876936936842d823871ed3bf6479deae9ed2412"
+    },
+    "sourceComponentCount": 40,
+    "textureChannels": [
+      "baseColor",
+      "normal",
+      "roughness",
+      "metallic"
+    ],
+    "textureSet": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature"
+  },
+  "generatedAt": "2026-07-29",
+  "generator": {
+    "blenderVersion": "5.2.0 LTS",
+    "script": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/package-cinder-span-resources-blender.py",
+    "scriptSha256": "5db7f63c9557b7eeb08506fd268710dd60dc6012c6dfe891c699068b8193f32b",
+    "tool": "Blender headless Python"
+  },
+  "promotionGate": "independent Blender re-import audit plus Three.js GLTFLoader smoke test",
+  "propPack": {
+    "assetCount": 50,
+    "assetId": "terrain-cinder-span-prop-pack",
+    "assets": [
+      {
+        "assetId": "terrain-cinder-span-prop-001",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.082697,
+          0.10741,
+          0.077315
+        ],
+        "maxExtent": 0.21482,
+        "min": [
+          -0.082698,
+          -0.10741,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-001",
+        "pivot": [
+          0.417228,
+          -0.009448,
+          0.001336
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          3,
+          12
+        ],
+        "textureMapped": true,
+        "triangles": 1238,
+        "uvLayerCount": 1,
+        "vertices": 621
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-002",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.086863,
+          0.1011,
+          0.100156
+        ],
+        "maxExtent": 0.2022,
+        "min": [
+          -0.086864,
+          -0.1011,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-002",
+        "pivot": [
+          0.23528,
+          -0.003207,
+          0.0
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          15
+        ],
+        "textureMapped": true,
+        "triangles": 1736,
+        "uvLayerCount": 1,
+        "vertices": 870
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-003",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.056427,
+          0.055448,
+          0.075043
+        ],
+        "maxExtent": 0.112854,
+        "min": [
+          -0.056427,
+          -0.055448,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-003",
+        "pivot": [
+          -0.857571,
+          -0.0029,
+          0.015577
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          11,
+          13,
+          14,
+          16
+        ],
+        "textureMapped": true,
+        "triangles": 584,
+        "uvLayerCount": 1,
+        "vertices": 300
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-004",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.103235,
+          0.114265,
+          0.098358
+        ],
+        "maxExtent": 0.22853,
+        "min": [
+          -0.103234,
+          -0.114265,
+          -0.0
+        ],
+        "node": "terrain-cinder-span-prop-004",
+        "pivot": [
+          0.63603,
+          -0.009156,
+          0.010119
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          2,
+          9,
+          17,
+          19
+        ],
+        "textureMapped": true,
+        "triangles": 1862,
+        "uvLayerCount": 1,
+        "vertices": 939
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-005",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.082525,
+          0.099187,
+          0.113045
+        ],
+        "maxExtent": 0.198374,
+        "min": [
+          -0.082525,
+          -0.099187,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-005",
+        "pivot": [
+          0.857078,
+          -0.011034,
+          0.008617
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          1,
+          4,
+          5,
+          6,
+          7,
+          18
+        ],
+        "textureMapped": true,
+        "triangles": 1742,
+        "uvLayerCount": 1,
+        "vertices": 881
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-006",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.032632,
+          0.038277,
+          0.103044
+        ],
+        "maxExtent": 0.103044,
+        "min": [
+          -0.032632,
+          -0.038277,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-006",
+        "pivot": [
+          0.648412,
+          0.001828,
+          0.200866
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          21
+        ],
+        "textureMapped": true,
+        "triangles": 358,
+        "uvLayerCount": 1,
+        "vertices": 181
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-007",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.030354,
+          0.040365,
+          0.105219
+        ],
+        "maxExtent": 0.105219,
+        "min": [
+          -0.030354,
+          -0.040364,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-007",
+        "pivot": [
+          0.753242,
+          0.005445,
+          0.206707
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          22
+        ],
+        "textureMapped": true,
+        "triangles": 386,
+        "uvLayerCount": 1,
+        "vertices": 195
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-008",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.057561,
+          0.011897,
+          0.214034
+        ],
+        "maxExtent": 0.214034,
+        "min": [
+          -0.057562,
+          -0.011896,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-008",
+        "pivot": [
+          -0.558564,
+          0.000825,
+          0.153387
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          23
+        ],
+        "textureMapped": true,
+        "triangles": 674,
+        "uvLayerCount": 1,
+        "vertices": 335
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-009",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.052845,
+          0.01507,
+          0.167426
+        ],
+        "maxExtent": 0.167426,
+        "min": [
+          -0.052845,
+          -0.01507,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-009",
+        "pivot": [
+          -0.868603,
+          0.004494,
+          0.181629
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          25
+        ],
+        "textureMapped": true,
+        "triangles": 470,
+        "uvLayerCount": 1,
+        "vertices": 235
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-010",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.040936,
+          0.041667,
+          0.153814
+        ],
+        "maxExtent": 0.153814,
+        "min": [
+          -0.040936,
+          -0.041667,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-010",
+        "pivot": [
+          0.115545,
+          0.002039,
+          0.191101
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          26
+        ],
+        "textureMapped": true,
+        "triangles": 628,
+        "uvLayerCount": 1,
+        "vertices": 316
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-011",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.038979,
+          0.043661,
+          0.154316
+        ],
+        "maxExtent": 0.154316,
+        "min": [
+          -0.038978,
+          -0.04366,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-011",
+        "pivot": [
+          0.509422,
+          0.003855,
+          0.19129
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          27
+        ],
+        "textureMapped": true,
+        "triangles": 664,
+        "uvLayerCount": 1,
+        "vertices": 334
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-012",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.035512,
+          0.042322,
+          0.120082
+        ],
+        "maxExtent": 0.120082,
+        "min": [
+          -0.035512,
+          -0.042321,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-012",
+        "pivot": [
+          0.892218,
+          0.008585,
+          0.209883
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          28
+        ],
+        "textureMapped": true,
+        "triangles": 494,
+        "uvLayerCount": 1,
+        "vertices": 249
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-013",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.041751,
+          0.038842,
+          0.152475
+        ],
+        "maxExtent": 0.152475,
+        "min": [
+          -0.041751,
+          -0.038842,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-013",
+        "pivot": [
+          0.242535,
+          0.006964,
+          0.195023
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          30
+        ],
+        "textureMapped": true,
+        "triangles": 526,
+        "uvLayerCount": 1,
+        "vertices": 265
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-014",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.032674,
+          0.009574,
+          0.201077
+        ],
+        "maxExtent": 0.201077,
+        "min": [
+          -0.032674,
+          -0.009574,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-014",
+        "pivot": [
+          -0.334918,
+          -0.001479,
+          0.171989
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          31
+        ],
+        "textureMapped": true,
+        "triangles": 348,
+        "uvLayerCount": 1,
+        "vertices": 174
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-015",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.017948,
+          0.006769,
+          0.19184
+        ],
+        "maxExtent": 0.19184,
+        "min": [
+          -0.017948,
+          -0.006768,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-015",
+        "pivot": [
+          -0.236468,
+          -0.001311,
+          0.176732
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          32
+        ],
+        "textureMapped": true,
+        "triangles": 346,
+        "uvLayerCount": 1,
+        "vertices": 173
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-016",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.035854,
+          0.042485,
+          0.164376
+        ],
+        "maxExtent": 0.164376,
+        "min": [
+          -0.035854,
+          -0.042484,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-016",
+        "pivot": [
+          0.378734,
+          0.003392,
+          0.191173
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          33
+        ],
+        "textureMapped": true,
+        "triangles": 610,
+        "uvLayerCount": 1,
+        "vertices": 307
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-017",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.016651,
+          0.007174,
+          0.167716
+        ],
+        "maxExtent": 0.167716,
+        "min": [
+          -0.016651,
+          -0.007174,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-017",
+        "pivot": [
+          -0.180569,
+          0.004354,
+          0.191979
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          34
+        ],
+        "textureMapped": true,
+        "triangles": 296,
+        "uvLayerCount": 1,
+        "vertices": 148
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-018",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.024772,
+          0.008971,
+          0.170573
+        ],
+        "maxExtent": 0.170573,
+        "min": [
+          -0.024772,
+          -0.00897,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-018",
+        "pivot": [
+          -0.100444,
+          -0.001488,
+          0.196672
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          35
+        ],
+        "textureMapped": true,
+        "triangles": 332,
+        "uvLayerCount": 1,
+        "vertices": 166
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-019",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.060261,
+          0.013347,
+          0.224365
+        ],
+        "maxExtent": 0.224365,
+        "min": [
+          -0.06026,
+          -0.013347,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-019",
+        "pivot": [
+          -0.713515,
+          0.003076,
+          0.171312
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          36
+        ],
+        "textureMapped": true,
+        "triangles": 608,
+        "uvLayerCount": 1,
+        "vertices": 304
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-020",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.03406,
+          0.008538,
+          0.164428
+        ],
+        "maxExtent": 0.164428,
+        "min": [
+          -0.03406,
+          -0.008537,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-020",
+        "pivot": [
+          -0.020899,
+          0.002778,
+          0.213174
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          37
+        ],
+        "textureMapped": true,
+        "triangles": 452,
+        "uvLayerCount": 1,
+        "vertices": 226
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-021",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.022191,
+          0.010125,
+          0.154834
+        ],
+        "maxExtent": 0.154834,
+        "min": [
+          -0.02219,
+          -0.010125,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-021",
+        "pivot": [
+          -0.433295,
+          0.005325,
+          0.224884
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          38
+        ],
+        "textureMapped": true,
+        "triangles": 250,
+        "uvLayerCount": 1,
+        "vertices": 125
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-022",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.105307,
+          0.078851,
+          0.098266
+        ],
+        "maxExtent": 0.210614,
+        "min": [
+          -0.105307,
+          -0.07885,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-022",
+        "pivot": [
+          0.325942,
+          0.008434,
+          0.481543
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          91
+        ],
+        "textureMapped": true,
+        "triangles": 656,
+        "uvLayerCount": 1,
+        "vertices": 330
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-023",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.026456,
+          0.037703,
+          0.082966
+        ],
+        "maxExtent": 0.082966,
+        "min": [
+          -0.026456,
+          -0.037703,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-023",
+        "pivot": [
+          0.684774,
+          -0.012235,
+          0.489354
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          92
+        ],
+        "textureMapped": true,
+        "triangles": 208,
+        "uvLayerCount": 1,
+        "vertices": 106
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-024",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.069264,
+          0.084752,
+          0.130309
+        ],
+        "maxExtent": 0.169504,
+        "min": [
+          -0.069263,
+          -0.084752,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-024",
+        "pivot": [
+          0.115958,
+          -0.013795,
+          0.473598
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          93
+        ],
+        "textureMapped": true,
+        "triangles": 476,
+        "uvLayerCount": 1,
+        "vertices": 240
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-025",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.090956,
+          0.068165,
+          0.132513
+        ],
+        "maxExtent": 0.181912,
+        "min": [
+          -0.090956,
+          -0.068165,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-025",
+        "pivot": [
+          -0.595163,
+          0.006626,
+          0.476518
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          89,
+          94
+        ],
+        "textureMapped": true,
+        "triangles": 620,
+        "uvLayerCount": 1,
+        "vertices": 314
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-026",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.043504,
+          0.073901,
+          0.121961
+        ],
+        "maxExtent": 0.147801,
+        "min": [
+          -0.043504,
+          -0.0739,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-026",
+        "pivot": [
+          0.547358,
+          0.013892,
+          0.487153
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          95
+        ],
+        "textureMapped": true,
+        "triangles": 406,
+        "uvLayerCount": 1,
+        "vertices": 205
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-027",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.120788,
+          0.091206,
+          0.148182
+        ],
+        "maxExtent": 0.241576,
+        "min": [
+          -0.120788,
+          -0.091206,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-027",
+        "pivot": [
+          -0.344367,
+          0.00632,
+          0.47629
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          96
+        ],
+        "textureMapped": true,
+        "triangles": 864,
+        "uvLayerCount": 1,
+        "vertices": 432
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-028",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.090337,
+          0.108185,
+          0.139488
+        ],
+        "maxExtent": 0.21637,
+        "min": [
+          -0.090337,
+          -0.108185,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-028",
+        "pivot": [
+          0.84212,
+          0.006568,
+          0.484259
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          97
+        ],
+        "textureMapped": true,
+        "triangles": 966,
+        "uvLayerCount": 1,
+        "vertices": 485
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-029",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.036605,
+          0.056715,
+          0.076634
+        ],
+        "maxExtent": 0.113429,
+        "min": [
+          -0.036604,
+          -0.056714,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-029",
+        "pivot": [
+          -0.848512,
+          0.018403,
+          0.688069
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          101
+        ],
+        "textureMapped": true,
+        "triangles": 340,
+        "uvLayerCount": 1,
+        "vertices": 172
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-030",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.058098,
+          0.080041,
+          0.053752
+        ],
+        "maxExtent": 0.160081,
+        "min": [
+          -0.058098,
+          -0.08004,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-030",
+        "pivot": [
+          -0.14705,
+          -0.01843,
+          0.923321
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          110,
+          122
+        ],
+        "textureMapped": true,
+        "triangles": 704,
+        "uvLayerCount": 1,
+        "vertices": 356
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-031",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.073627,
+          0.092106,
+          0.056027
+        ],
+        "maxExtent": 0.184211,
+        "min": [
+          -0.073626,
+          -0.092105,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-031",
+        "pivot": [
+          -0.295814,
+          0.001033,
+          0.925165
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          124
+        ],
+        "textureMapped": true,
+        "triangles": 854,
+        "uvLayerCount": 1,
+        "vertices": 429
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-032",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.064705,
+          0.072662,
+          0.079016
+        ],
+        "maxExtent": 0.145324,
+        "min": [
+          -0.064705,
+          -0.072662,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-032",
+        "pivot": [
+          0.139744,
+          -0.005443,
+          0.922625
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          126
+        ],
+        "textureMapped": true,
+        "triangles": 748,
+        "uvLayerCount": 1,
+        "vertices": 374
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-033",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.054959,
+          0.056282,
+          0.052639
+        ],
+        "maxExtent": 0.112564,
+        "min": [
+          -0.05496,
+          -0.056282,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-033",
+        "pivot": [
+          0.894647,
+          -0.018701,
+          0.936112
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          127
+        ],
+        "textureMapped": true,
+        "triangles": 318,
+        "uvLayerCount": 1,
+        "vertices": 161
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-034",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.05549,
+          0.077164,
+          0.069486
+        ],
+        "maxExtent": 0.154328,
+        "min": [
+          -0.05549,
+          -0.077164,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-034",
+        "pivot": [
+          0.614255,
+          -0.016934,
+          0.934616
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          115,
+          129
+        ],
+        "textureMapped": true,
+        "triangles": 624,
+        "uvLayerCount": 1,
+        "vertices": 316
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-035",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.089393,
+          0.101481,
+          0.098459
+        ],
+        "maxExtent": 0.202962,
+        "min": [
+          -0.089393,
+          -0.101481,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-035",
+        "pivot": [
+          -0.831972,
+          0.013618,
+          0.926053
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          114,
+          120,
+          130
+        ],
+        "textureMapped": true,
+        "triangles": 1410,
+        "uvLayerCount": 1,
+        "vertices": 711
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-036",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.051574,
+          0.072519,
+          0.107008
+        ],
+        "maxExtent": 0.145038,
+        "min": [
+          -0.051574,
+          -0.072519,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-036",
+        "pivot": [
+          -0.464049,
+          -0.005231,
+          0.922926
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          106,
+          117,
+          131
+        ],
+        "textureMapped": true,
+        "triangles": 794,
+        "uvLayerCount": 1,
+        "vertices": 403
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-037",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.053875,
+          0.072349,
+          0.0959
+        ],
+        "maxExtent": 0.144698,
+        "min": [
+          -0.053876,
+          -0.072349,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-037",
+        "pivot": [
+          0.276911,
+          0.008267,
+          0.928505
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          111,
+          132
+        ],
+        "textureMapped": true,
+        "triangles": 932,
+        "uvLayerCount": 1,
+        "vertices": 470
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-038",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.065544,
+          0.087266,
+          0.102645
+        ],
+        "maxExtent": 0.174532,
+        "min": [
+          -0.065544,
+          -0.087266,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-038",
+        "pivot": [
+          0.762657,
+          0.005408,
+          0.925891
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          133
+        ],
+        "textureMapped": true,
+        "triangles": 842,
+        "uvLayerCount": 1,
+        "vertices": 423
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-039",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.080262,
+          0.128637,
+          0.095048
+        ],
+        "maxExtent": 0.257274,
+        "min": [
+          -0.080262,
+          -0.128637,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-039",
+        "pivot": [
+          0.443109,
+          -0.028151,
+          0.93273
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          116,
+          118,
+          121,
+          128,
+          134
+        ],
+        "textureMapped": true,
+        "triangles": 1564,
+        "uvLayerCount": 1,
+        "vertices": 792
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-040",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.063481,
+          0.081232,
+          0.113292
+        ],
+        "maxExtent": 0.162464,
+        "min": [
+          -0.06348,
+          -0.081232,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-040",
+        "pivot": [
+          -0.012358,
+          0.001949,
+          0.923909
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          107,
+          108,
+          109,
+          135
+        ],
+        "textureMapped": true,
+        "triangles": 996,
+        "uvLayerCount": 1,
+        "vertices": 506
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-041",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.080765,
+          0.074362,
+          0.110865
+        ],
+        "maxExtent": 0.16153,
+        "min": [
+          -0.080765,
+          -0.074361,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-041",
+        "pivot": [
+          -0.636409,
+          0.009737,
+          0.925407
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          113,
+          136
+        ],
+        "textureMapped": true,
+        "triangles": 1048,
+        "uvLayerCount": 1,
+        "vertices": 528
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-042",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.072893,
+          0.108006,
+          0.037241
+        ],
+        "maxExtent": 0.216011,
+        "min": [
+          -0.072893,
+          -0.108005,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-042",
+        "pivot": [
+          0.630757,
+          0.037726,
+          1.149607
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          143,
+          145,
+          146
+        ],
+        "textureMapped": true,
+        "triangles": 1058,
+        "uvLayerCount": 1,
+        "vertices": 533
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-043",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.016872,
+          0.030623,
+          0.019388
+        ],
+        "maxExtent": 0.061246,
+        "min": [
+          -0.016872,
+          -0.030623,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-043",
+        "pivot": [
+          0.723143,
+          0.119992,
+          1.165589
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          151,
+          153
+        ],
+        "textureMapped": true,
+        "triangles": 136,
+        "uvLayerCount": 1,
+        "vertices": 72
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-044",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.086836,
+          0.129305,
+          0.096026
+        ],
+        "maxExtent": 0.258609,
+        "min": [
+          -0.086836,
+          -0.129304,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-044",
+        "pivot": [
+          -0.633404,
+          -0.014484,
+          1.131955
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          137,
+          138,
+          139,
+          154
+        ],
+        "textureMapped": true,
+        "triangles": 1978,
+        "uvLayerCount": 1,
+        "vertices": 997
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-045",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.079767,
+          0.123581,
+          0.080967
+        ],
+        "maxExtent": 0.247161,
+        "min": [
+          -0.079766,
+          -0.12358,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-045",
+        "pivot": [
+          -0.18401,
+          0.000273,
+          1.139518
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          140,
+          142,
+          155
+        ],
+        "textureMapped": true,
+        "triangles": 1306,
+        "uvLayerCount": 1,
+        "vertices": 659
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-046",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.070268,
+          0.074455,
+          0.095956
+        ],
+        "maxExtent": 0.148909,
+        "min": [
+          -0.070268,
+          -0.074454,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-046",
+        "pivot": [
+          -0.004215,
+          0.001615,
+          1.140067
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          156
+        ],
+        "textureMapped": true,
+        "triangles": 838,
+        "uvLayerCount": 1,
+        "vertices": 421
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-047",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.05618,
+          0.070845,
+          0.096665
+        ],
+        "maxExtent": 0.141689,
+        "min": [
+          -0.05618,
+          -0.070844,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-047",
+        "pivot": [
+          0.444277,
+          0.025468,
+          1.144802
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          147,
+          149,
+          157
+        ],
+        "textureMapped": true,
+        "triangles": 710,
+        "uvLayerCount": 1,
+        "vertices": 361
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-048",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.07829,
+          0.093242,
+          0.106808
+        ],
+        "maxExtent": 0.186484,
+        "min": [
+          -0.07829,
+          -0.093242,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-048",
+        "pivot": [
+          -0.407072,
+          0.022028,
+          1.140792
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          144,
+          158
+        ],
+        "textureMapped": true,
+        "triangles": 1392,
+        "uvLayerCount": 1,
+        "vertices": 700
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-049",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.059628,
+          0.069959,
+          0.076229
+        ],
+        "maxExtent": 0.139917,
+        "min": [
+          -0.059627,
+          -0.069958,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-049",
+        "pivot": [
+          0.873577,
+          0.008593,
+          1.159641
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          148,
+          152,
+          159
+        ],
+        "textureMapped": true,
+        "triangles": 680,
+        "uvLayerCount": 1,
+        "vertices": 346
+      },
+      {
+        "assetId": "terrain-cinder-span-prop-050",
+        "collisionHint": "convex-hull",
+        "material": "Cinder Span Prop PBR",
+        "max": [
+          0.079903,
+          0.08501,
+          0.102595
+        ],
+        "maxExtent": 0.170019,
+        "min": [
+          -0.079902,
+          -0.085009,
+          0.0
+        ],
+        "node": "terrain-cinder-span-prop-050",
+        "pivot": [
+          -0.863791,
+          -0.007972,
+          1.148767
+        ],
+        "pivotPolicy": "bottom-center",
+        "recommendedWorldScale": 5.0,
+        "sourceComponents": [
+          141,
+          160
+        ],
+        "textureMapped": true,
+        "triangles": 950,
+        "uvLayerCount": 1,
+        "vertices": 479
+      }
+    ],
+    "blend": {
+      "bytes": 15538948,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/blend/terrain-cinder-span-props.blend",
+      "sha256": "8a0b0bd0332f405944c95e90ac244f26bcb370e40e4cc5956e11b487e55cd685"
+    },
+    "material": "Cinder Span Prop PBR",
+    "pack": {
+      "bytes": 2057884,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/packs/terrain-cinder-span-props.glb",
+      "sha256": "dcb853b4da339aec2783c4f6cc19e3be4917b8ddb6d565ad7780d6988e55385d"
+    },
+    "packLoadContract": "load pack GLB once; getObjectByName(node); clone for placement",
+    "rejectedComponentCount": 68,
+    "rejectedComponents": [
+      {
+        "max": [
+          -0.869552,
+          -0.01718,
+          0.030171
+        ],
+        "maxExtent": 0.006533,
+        "min": [
+          -0.876085,
+          -0.018193,
+          0.027794
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 8,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.671209,
+          0.061353,
+          0.040564
+        ],
+        "maxExtent": 0.010101,
+        "min": [
+          0.661108,
+          0.051874,
+          0.032793
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 10,
+        "triangles": 18,
+        "uvLayerCount": 1,
+        "vertices": 11
+      },
+      {
+        "max": [
+          0.786535,
+          -0.012442,
+          0.112066
+        ],
+        "maxExtent": 0.004885,
+        "min": [
+          0.784854,
+          -0.013887,
+          0.107181
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 20,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.66633,
+          0.011538,
+          0.267303
+        ],
+        "maxExtent": 0.006298,
+        "min": [
+          -0.669982,
+          0.006209,
+          0.261005
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 24,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.430628,
+          0.005042,
+          0.274753
+        ],
+        "maxExtent": 0.007259,
+        "min": [
+          -0.432198,
+          -0.000725,
+          0.267494
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 29,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.645142,
+          0.008143,
+          0.305024
+        ],
+        "maxExtent": 0.003928,
+        "min": [
+          0.642549,
+          0.006597,
+          0.301096
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 39,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.754331,
+          0.00606,
+          0.315641
+        ],
+        "maxExtent": 0.005814,
+        "min": [
+          0.753462,
+          0.003862,
+          0.309827
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 40,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.754248,
+          0.00606,
+          0.319724
+        ],
+        "maxExtent": 0.007798,
+        "min": [
+          0.753462,
+          0.003862,
+          0.311926
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 41,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.754248,
+          0.005749,
+          0.321669
+        ],
+        "maxExtent": 0.006028,
+        "min": [
+          0.753637,
+          0.003834,
+          0.315641
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 42,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.644592,
+          0.009077,
+          0.321728
+        ],
+        "maxExtent": 0.002673,
+        "min": [
+          0.641919,
+          0.008723,
+          0.320007
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 43,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.644592,
+          0.009077,
+          0.323555
+        ],
+        "maxExtent": 0.003548,
+        "min": [
+          0.641919,
+          0.008456,
+          0.320007
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 44,
+        "triangles": 4,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "max": [
+          0.643971,
+          0.009077,
+          0.325048
+        ],
+        "maxExtent": 0.00332,
+        "min": [
+          0.641919,
+          0.008456,
+          0.321728
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 45,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.755827,
+          0.00849,
+          0.327389
+        ],
+        "maxExtent": 0.007665,
+        "min": [
+          0.75312,
+          0.003834,
+          0.319724
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 46,
+        "triangles": 12,
+        "uvLayerCount": 1,
+        "vertices": 8
+      },
+      {
+        "max": [
+          -0.858209,
+          0.009369,
+          0.328725
+        ],
+        "maxExtent": 0.008116,
+        "min": [
+          -0.86274,
+          0.004875,
+          0.320609
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 47,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.859907,
+          0.005631,
+          0.341437
+        ],
+        "maxExtent": 0.003913,
+        "min": [
+          -0.860314,
+          0.004,
+          0.337524
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 48,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.86024,
+          0.005061,
+          0.34357
+        ],
+        "maxExtent": 0.005706,
+        "min": [
+          -0.861106,
+          0.003522,
+          0.337864
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 49,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.860314,
+          0.005103,
+          0.346359
+        ],
+        "maxExtent": 0.004922,
+        "min": [
+          -0.861599,
+          0.003522,
+          0.341437
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 50,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.861106,
+          0.005103,
+          0.348955
+        ],
+        "maxExtent": 0.005385,
+        "min": [
+          -0.861827,
+          0.003185,
+          0.34357
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 51,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.896022,
+          0.008265,
+          0.347944
+        ],
+        "maxExtent": 0.001705,
+        "min": [
+          0.894705,
+          0.006761,
+          0.346239
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 52,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.861599,
+          0.005103,
+          0.351511
+        ],
+        "maxExtent": 0.005152,
+        "min": [
+          -0.862769,
+          0.003185,
+          0.346359
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 53,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.753614,
+          0.00582,
+          0.352451
+        ],
+        "maxExtent": 0.00272,
+        "min": [
+          0.753092,
+          0.003747,
+          0.349731
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 54,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.861827,
+          0.004215,
+          0.354028
+        ],
+        "maxExtent": 0.005073,
+        "min": [
+          -0.862769,
+          0.003066,
+          0.348955
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 55,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.86188,
+          0.004215,
+          0.35654
+        ],
+        "maxExtent": 0.005029,
+        "min": [
+          -0.863449,
+          0.003066,
+          0.351511
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 56,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.86188,
+          0.003719,
+          0.359097
+        ],
+        "maxExtent": 0.005069,
+        "min": [
+          -0.863449,
+          0.003066,
+          0.354028
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 57,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.379963,
+          0.009916,
+          0.36094
+        ],
+        "maxExtent": 0.005553,
+        "min": [
+          0.377629,
+          0.009449,
+          0.355387
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 58,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.862008,
+          0.003719,
+          0.361465
+        ],
+        "maxExtent": 0.004925,
+        "min": [
+          -0.863823,
+          0.003144,
+          0.35654
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 59,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.753699,
+          0.005423,
+          0.361496
+        ],
+        "maxExtent": 0.003924,
+        "min": [
+          0.751185,
+          0.003211,
+          0.357572
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 60,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.753699,
+          0.005423,
+          0.361553
+        ],
+        "maxExtent": 0.003981,
+        "min": [
+          0.751185,
+          0.003038,
+          0.357572
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 61,
+        "triangles": 4,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "max": [
+          0.510517,
+          0.004254,
+          0.362876
+        ],
+        "maxExtent": 0.005799,
+        "min": [
+          0.509327,
+          0.002632,
+          0.357077
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 62,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.862008,
+          0.003582,
+          0.364498
+        ],
+        "maxExtent": 0.005401,
+        "min": [
+          -0.863823,
+          0.003144,
+          0.359097
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 63,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.380185,
+          0.009916,
+          0.366949
+        ],
+        "maxExtent": 0.006009,
+        "min": [
+          0.378508,
+          0.008092,
+          0.36094
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 64,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.862788,
+          0.003582,
+          0.366745
+        ],
+        "maxExtent": 0.00528,
+        "min": [
+          -0.864603,
+          0.002809,
+          0.361465
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 65,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.301438,
+          0.005757,
+          0.36581
+        ],
+        "maxExtent": 0.0048,
+        "min": [
+          -0.306238,
+          0.002483,
+          0.364836
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 66,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.242122,
+          0.018992,
+          0.365946
+        ],
+        "maxExtent": 0.000496,
+        "min": [
+          0.242068,
+          0.018814,
+          0.36545
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 67,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.862788,
+          0.004107,
+          0.368871
+        ],
+        "maxExtent": 0.004373,
+        "min": [
+          -0.864603,
+          0.002809,
+          0.364498
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 68,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.510412,
+          0.0039,
+          0.371735
+        ],
+        "maxExtent": 0.008859,
+        "min": [
+          0.505962,
+          0.002632,
+          0.362876
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 69,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.380185,
+          0.009396,
+          0.368527
+        ],
+        "maxExtent": 0.002384,
+        "min": [
+          0.378508,
+          0.007067,
+          0.366143
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 70,
+        "triangles": 4,
+        "uvLayerCount": 1,
+        "vertices": 4
+      },
+      {
+        "max": [
+          -0.864249,
+          0.004107,
+          0.371642
+        ],
+        "maxExtent": 0.004897,
+        "min": [
+          -0.86594,
+          0.002459,
+          0.366745
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 71,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.864249,
+          0.004107,
+          0.372547
+        ],
+        "maxExtent": 0.003676,
+        "min": [
+          -0.86594,
+          0.002459,
+          0.368871
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 72,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.865263,
+          0.003544,
+          0.373471
+        ],
+        "maxExtent": 0.001829,
+        "min": [
+          -0.86594,
+          0.00214,
+          0.371642
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 73,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.511491,
+          0.005522,
+          0.384441
+        ],
+        "maxExtent": 0.01828,
+        "min": [
+          0.499511,
+          0.003222,
+          0.366161
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 74,
+        "triangles": 20,
+        "uvLayerCount": 1,
+        "vertices": 12
+      },
+      {
+        "max": [
+          0.758857,
+          0.004445,
+          0.383545
+        ],
+        "maxExtent": 0.005631,
+        "min": [
+          0.755126,
+          0.003024,
+          0.377914
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 75,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.758857,
+          0.004445,
+          0.383545
+        ],
+        "maxExtent": 0.005631,
+        "min": [
+          0.755126,
+          0.003024,
+          0.377914
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 76,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.372063,
+          0.005825,
+          0.382325
+        ],
+        "maxExtent": 0.001785,
+        "min": [
+          0.371815,
+          0.00535,
+          0.38054
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 77,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.385597,
+          0.006377,
+          0.382848
+        ],
+        "maxExtent": 0.003022,
+        "min": [
+          0.382575,
+          0.005865,
+          0.380912
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 78,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.756913,
+          0.003821,
+          0.382242
+        ],
+        "maxExtent": 0.001083,
+        "min": [
+          0.75583,
+          0.003053,
+          0.381553
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 79,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.501819,
+          0.005245,
+          0.383985
+        ],
+        "maxExtent": 0.003364,
+        "min": [
+          0.501615,
+          0.005052,
+          0.380621
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 80,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.385597,
+          0.006377,
+          0.384364
+        ],
+        "maxExtent": 0.005594,
+        "min": [
+          0.380003,
+          0.005865,
+          0.380912
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 81,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.373932,
+          0.005825,
+          0.383954
+        ],
+        "maxExtent": 0.002117,
+        "min": [
+          0.371815,
+          0.00535,
+          0.382192
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 82,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.380003,
+          0.006239,
+          0.384364
+        ],
+        "maxExtent": 0.008188,
+        "min": [
+          0.371815,
+          0.00535,
+          0.382192
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 83,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.866452,
+          0.00207,
+          0.394527
+        ],
+        "maxExtent": 0.00375,
+        "min": [
+          -0.867432,
+          0.001161,
+          0.390777
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 84,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.863235,
+          0.001419,
+          0.39668
+        ],
+        "maxExtent": 0.004197,
+        "min": [
+          -0.867432,
+          0.001337,
+          0.394527
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 85,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.118979,
+          0.004947,
+          0.406965
+        ],
+        "maxExtent": 0.003374,
+        "min": [
+          0.115605,
+          0.004428,
+          0.405769
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 86,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.121276,
+          0.004947,
+          0.406965
+        ],
+        "maxExtent": 0.002385,
+        "min": [
+          0.118891,
+          0.004592,
+          0.406309
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 87,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.122452,
+          0.005596,
+          0.40932
+        ],
+        "maxExtent": 0.003473,
+        "min": [
+          0.118979,
+          0.004776,
+          0.406309
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 88,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.400385,
+          -0.032538,
+          0.505655
+        ],
+        "maxExtent": 0.007021,
+        "min": [
+          0.393364,
+          -0.034269,
+          0.499115
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 90,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.43233,
+          0.031022,
+          0.572513
+        ],
+        "maxExtent": 0.00811,
+        "min": [
+          0.428862,
+          0.022912,
+          0.565278
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 98,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.672571,
+          0.028746,
+          0.571925
+        ],
+        "maxExtent": 0.00615,
+        "min": [
+          0.666421,
+          0.024898,
+          0.569005
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 99,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.468408,
+          0.036927,
+          0.571675
+        ],
+        "maxExtent": 0.004959,
+        "min": [
+          0.463449,
+          0.034861,
+          0.570665
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 100,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.853296,
+          0.037832,
+          0.767942
+        ],
+        "maxExtent": 0.008475,
+        "min": [
+          -0.860696,
+          0.030011,
+          0.759467
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 102,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.860388,
+          0.046122,
+          0.776801
+        ],
+        "maxExtent": 0.00109,
+        "min": [
+          -0.86124,
+          0.045139,
+          0.775711
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 103,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.860936,
+          0.046461,
+          0.777142
+        ],
+        "maxExtent": 0.001345,
+        "min": [
+          -0.86124,
+          0.045522,
+          0.775797
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 104,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.860936,
+          0.046968,
+          0.777885
+        ],
+        "maxExtent": 0.001084,
+        "min": [
+          -0.86158,
+          0.046122,
+          0.776801
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 105,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.174754,
+          -0.097797,
+          0.935555
+        ],
+        "maxExtent": 0.000853,
+        "min": [
+          -0.175607,
+          -0.098339,
+          0.935291
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 112,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.604954,
+          -0.062986,
+          0.949815
+        ],
+        "maxExtent": 0.00732,
+        "min": [
+          0.600833,
+          -0.066654,
+          0.942495
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 119,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          0.145742,
+          0.054077,
+          0.964074
+        ],
+        "maxExtent": 0.003989,
+        "min": [
+          0.141753,
+          0.052562,
+          0.960158
+        ],
+        "reason": "legacy-micro-component",
+        "sourceComponent": 125,
+        "triangles": 1,
+        "uvLayerCount": 1,
+        "vertices": 3
+      },
+      {
+        "max": [
+          -0.916977,
+          0.004082,
+          0.953984
+        ],
+        "maxExtent": 0.013602,
+        "min": [
+          -0.929163,
+          -0.00952,
+          0.947435
+        ],
+        "reason": "orphan-small-group",
+        "sourceComponent": 123,
+        "triangles": 86,
+        "uvLayerCount": 1,
+        "vertices": 45
+      },
+      {
+        "max": [
+          0.384601,
+          -0.001647,
+          1.176375
+        ],
+        "maxExtent": 0.01459,
+        "min": [
+          0.37171,
+          -0.016237,
+          1.169772
+        ],
+        "reason": "orphan-small-group",
+        "sourceComponent": 150,
+        "triangles": 160,
+        "uvLayerCount": 1,
+        "vertices": 82
+      }
+    ],
+    "review": {
+      "bytes": 1006436,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/review/terrain-cinder-span-props.png",
+      "sha256": "823340b1c7fe8e236a5a1613bd7664cc4aa4d5c2be5fce2fefd2d2cc3034965d"
+    },
+    "runtimeEligible": false,
+    "source": {
+      "bytes": 2969126,
+      "path": "/Users/supercent/orca/Abyssal-Command/assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/obj/base.obj",
+      "sha256": "4e7f9794f901522f59e2cfec61ef44d2caff494b8fdc8f5f84d62fdfe06cbdd0"
+    },
+    "sourceComponentCount": 160,
+    "textureChannels": [
+      "baseColor",
+      "normal",
+      "roughness",
+      "metallic"
+    ],
+    "textureSet": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop"
+  },
+  "runtimeEligible": false,
+  "schemaVersion": 1,
+  "terrain": {
+    "assetId": "terrain-cinder-span",
+    "authoringOnlyMaps": [
+      "height"
+    ],
+    "blend": {
+      "bytes": 12736410,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/blend/terrain-cinder-span.blend",
+      "sha256": "04b612ab0dce6d48407c56ed301055b752aa63179cf691cd5e392153d52097f6"
+    },
+    "bounds": {
+      "max": [
+        6.967372,
+        3.553372,
+        4.98
+      ],
+      "min": [
+        -7.106283,
+        -3.435658,
+        -0.54
+      ]
+    },
+    "glb": {
+      "bytes": 1126616,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/terrain/terrain-cinder-span.glb",
+      "sha256": "ff11883d8091de4c56d8acb0517189c0f020ed906487abeef6b390e8a12f66c3"
+    },
+    "materialCount": 4,
+    "meshCount": 70,
+    "review": {
+      "bytes": 1592939,
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/review/terrain-cinder-span.png",
+      "sha256": "e4ea26da198b57fa1acd2dc8dfeb418e984d24e2be2169fb4de71ddb72e8039b"
+    },
+    "runtimeEligible": true,
+    "textureChannels": [
+      "baseColor",
+      "normal",
+      "occlusion",
+      "roughness",
+      "metallic",
+      "emission"
+    ]
+  },
+  "textures": {
+    "feature": [
+      {
+        "bytes": 4902662,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature/shaded.png",
+        "sha256": "bb6cccbd80d15165cddb32795ee8b9787aa24cf0707efafda5e2eb7a95f6e23a"
+      },
+      {
+        "bytes": 5593012,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature/texture_diffuse.png",
+        "sha256": "5be94585784400be44dce18d5179713df81c76757894e41d97a662d66ac745e4"
+      },
+      {
+        "bytes": 2468910,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature/texture_metallic.png",
+        "sha256": "74041b474ef15d1309ee1d7f24ab0f2ceeef92f7db368ab92e3eb66bc427f980"
+      },
+      {
+        "bytes": 2407495,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature/texture_normal.png",
+        "sha256": "7dc4a4700924ec62cbd70895baace2972277269ed91a390ff448bcc38137d51e"
+      },
+      {
+        "bytes": 5704372,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature/texture_pbr.png",
+        "sha256": "14336162a5b3460bfea9bfe64209790a57b642dede79b339309fc35f43198c07"
+      },
+      {
+        "bytes": 2486864,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature/texture_roughness.png",
+        "sha256": "ade1b026fdbd11bf921ba3e140205dd9caa843dde9df5c17a657365ec63edbd5"
+      },
+      {
+        "bytes": 6183653,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature/texture_orm.png",
+        "sha256": "88d16afcceaef42b4704a3129d7eca41478a1c8b0040237e252588fc387ef2b9"
+      },
+      {
+        "provenance": {
+          "asset": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature/texture_orm.png",
+          "generatedAt": "2026-07-29",
+          "generator": {
+            "algorithm": "glTF ORM channel pack: R=1 AO, G=roughness, B=metallic",
+            "blenderVersion": "5.2.0 LTS",
+            "script": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/package-cinder-span-resources-blender.py",
+            "tool": "Blender headless Python"
+          },
+          "output": {
+            "bytes": 6183653,
+            "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature/texture_orm.png",
+            "sha256": "88d16afcceaef42b4704a3129d7eca41478a1c8b0040237e252588fc387ef2b9"
+          },
+          "runtimeEligible": false,
+          "schemaVersion": 1,
+          "sourceInputs": [
+            {
+              "bytes": 2486864,
+              "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature/texture_roughness.png",
+              "sha256": "ade1b026fdbd11bf921ba3e140205dd9caa843dde9df5c17a657365ec63edbd5"
+            },
+            {
+              "bytes": 2468910,
+              "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/feature/texture_metallic.png",
+              "sha256": "74041b474ef15d1309ee1d7f24ab0f2ceeef92f7db368ab92e3eb66bc427f980"
+            }
+          ],
+          "status": "blender-derived-candidate"
+        }
+      }
+    ],
+    "prop": [
+      {
+        "bytes": 4847626,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/shaded.png",
+        "sha256": "308834fb94c6ac530edd2cfff6b96e8e35a28c752624578591380369f5d26f03"
+      },
+      {
+        "bytes": 6220333,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_diffuse.png",
+        "sha256": "53bc7e304c026783668a872345f92c68e4cc64263424d4c9f8c61616aa1f1816"
+      },
+      {
+        "bytes": 2430053,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_metallic.png",
+        "sha256": "8415ccaa77d8c9f5c970382c2aaa7f3d9eedf58b50a79453ae19d514840f4b43"
+      },
+      {
+        "bytes": 2457727,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_normal.png",
+        "sha256": "073ce116a4efb52ce7dfb077719b0a145358da99d3e59f3ba17ec904e8c8723b"
+      },
+      {
+        "bytes": 5513455,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_pbr.png",
+        "sha256": "55a52140bdcb6bebc035959cb30bbff6183b37890ac545a37d554c017564e06c"
+      },
+      {
+        "bytes": 2304084,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_roughness.png",
+        "sha256": "6357e352205f61511ce6e35206b10f56e2acb6143ac263fa7a8edc79dbef311b"
+      },
+      {
+        "bytes": 5930683,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_orm.png",
+        "sha256": "c1bebb46507992753ddffe658cfad8e3e6965a2eb3d6388b0e7ef8c1897dabd9"
+      },
+      {
+        "provenance": {
+          "asset": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_orm.png",
+          "generatedAt": "2026-07-29",
+          "generator": {
+            "algorithm": "glTF ORM channel pack: R=1 AO, G=roughness, B=metallic",
+            "blenderVersion": "5.2.0 LTS",
+            "script": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/package-cinder-span-resources-blender.py",
+            "tool": "Blender headless Python"
+          },
+          "output": {
+            "bytes": 5930683,
+            "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_orm.png",
+            "sha256": "c1bebb46507992753ddffe658cfad8e3e6965a2eb3d6388b0e7ef8c1897dabd9"
+          },
+          "runtimeEligible": false,
+          "schemaVersion": 1,
+          "sourceInputs": [
+            {
+              "bytes": 2304084,
+              "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_roughness.png",
+              "sha256": "6357e352205f61511ce6e35206b10f56e2acb6143ac263fa7a8edc79dbef311b"
+            },
+            {
+              "bytes": 2430053,
+              "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/prop/texture_metallic.png",
+              "sha256": "8415ccaa77d8c9f5c970382c2aaa7f3d9eedf58b50a79453ae19d514840f4b43"
+            }
+          ],
+          "status": "blender-derived-candidate"
+        }
+      }
+    ],
+    "terrain": [
+      {
+        "bytes": 1041812,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/terrain/terrain-cinder-span-ao.png",
+        "sha256": "513aef17560cb9133686d1057873ff11d7864ddde41ba18ec7667909db5a9b48"
+      },
+      {
+        "bytes": 3318313,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/terrain/terrain-cinder-span-basecolor-gti.png",
+        "sha256": "a95d58332603b7f6f6664a5cbd005026cc19ace4739e930eb3246d9f9c714fd3"
+      },
+      {
+        "bytes": 2229008,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/terrain/terrain-cinder-span-basecolor.png",
+        "sha256": "8f22e193ae1c5cf66044be10368ba3f751abfa92c416c576e72523f416342245"
+      },
+      {
+        "bytes": 397155,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/terrain/terrain-cinder-span-emission.png",
+        "sha256": "a4d9df2dc391af11f37cf509107c9e38f0a98eaabeb769cd90afeaec6ab14d84"
+      },
+      {
+        "bytes": 1214125,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/terrain/terrain-cinder-span-height.png",
+        "sha256": "8c2136889d1d81652a9626aa9e6a1b752b87ca8bdd08416dafb69af21d07262b"
+      },
+      {
+        "bytes": 646800,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/terrain/terrain-cinder-span-metallic.png",
+        "sha256": "d61633ded089e8fcdd4ad0e7a4eff33c4211d45ab7e827015c4991c4389cde18"
+      },
+      {
+        "bytes": 2909663,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/terrain/terrain-cinder-span-normal.png",
+        "sha256": "9e5c05e7b828111c9d2685012ba8b5fe0cef6f365a43f19103babc7e42299cdf"
+      },
+      {
+        "bytes": 1807014,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/terrain/terrain-cinder-span-orm.png",
+        "sha256": "fc4128adc74af23604fb010a4eaed2a72a1cea1772cf5b3ad4767ba029f60119"
+      },
+      {
+        "bytes": 919489,
+        "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/terrain-cinder-span/staged/runtime/textures/terrain/terrain-cinder-span-roughness.png",
+        "sha256": "687cf0fae5ef711220969992892a62717d23de7db72ce6370af2d5e7b0b40d6b"
+      }
+    ]
+  }
+}

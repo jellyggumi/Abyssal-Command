@@ -1,0 +1,13 @@
+# Blender 5.2.0 LTS MTL File: 'None'
+# www.blender.org
+
+newmtl echo_throne_background-object_alpha_cutout
+Ns 78.399986
+Ka 0.080000 0.080000 0.080000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 3
+map_Kd ../textures/terrain-echo-throne-background-object.png
+map_d ../textures/terrain-echo-throne-background-object.png
+map_d /Users/supercent/orca/Abyssal-Command/assets/mesh/terrain/terrain-echo-throne/textured-candidate/background-object/textures/terrain-echo-throne-background-object.png

@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-index.py",
+  "assetId": "shade",
+  "role": "void-flanker",
+  "category": "enemies",
+  "source": "assets/mesh/enemy/shade/glb/base_basic_pbr.glb",
+  "sourceSha256": "e159d2c9bb8ef3345fa33f934e96f6668a97ff29b76f60c8f2eab350088a908d",
+  "sourceRig": "mixamo-37",
+  "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
+  "model": "assets/motion/ingame/characters/shade/model.glb",
+  "modelSha256": "26aa14c5b856b58b389e8d05971878bb1041786b0b6d114fbbab8f32f868c1a9",
+  "modelBytes": 9721264,
+  "targetBoneNames": [
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-pelvis.L",
+    "DEF-pelvis.R",
+    "DEF-shoulder.L",
+    "DEF-upper_arm.L",
+    "DEF-forearm.L",
+    "DEF-hand.L",
+    "DEF-shoulder.R",
+    "DEF-upper_arm.R",
+    "DEF-forearm.R",
+    "DEF-hand.R",
+    "DEF-thigh.L",
+    "DEF-shin.L",
+    "DEF-foot.L",
+    "DEF-toe.L",
+    "DEF-thigh.R",
+    "DEF-shin.R",
+    "DEF-foot.R",
+    "DEF-toe.R"
+  ],
+  "clips": {
+    "idle": {
+      "action": "idle",
+      "clipName": "shade::idle::v01",
+      "source": "Unarmed Idle.fbx",
+      "sourceSha256": "b4ae5c34ac0dc3923e5c24ab2883dd003c324c39edd86a9a94be3358016f5bfa",
+      "frameStart": 1,
+      "frameEnd": 47,
+      "sourceFps": 24,
+      "durationSeconds": 1.9166666666666667,
+      "sourceRootTravel": {
+        "x": -4.4e-05,
+        "y": 1.5e-05,
+        "z": -6e-06,
+        "total": 4.7e-05
+      },
+      "loop": true,
+      "gain": 0.74
+    },
+    "move": {
+      "action": "move",
+      "clipName": "shade::move::v01",
+      "source": "Jog In Circle.fbx",
+      "sourceSha256": "2bd85900037b900bb83b692b7baf8215b0de56bea0c2ce9bbcad6c68382ec6b0",
+      "frameStart": 1,
+      "frameEnd": 143,
+      "sourceFps": 24,
+      "durationSeconds": 5.916666666666667,
+      "sourceRootTravel": {
+        "x": -6e-06,
+        "y": 0.0,
+        "z": 7e-06,
+        "total": 9e-06
+      },
+      "loop": true,
+      "gain": 0.86
+    },
+    "run": {
+      "action": "run",
+      "clipName": "shade::run::v01",
+      "source": "Running.fbx",
+      "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": -1e-06,
+        "y": 0.0,
+        "z": 350.087158,
+        "total": 350.087158
+      },
+      "loop": true,
+      "gain": 0.94
+    },
+    "hit": {
+      "action": "hit",
+      "clipName": "shade::hit::v01",
+      "source": "Standing React Small From Left.fbx",
+      "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+      "frameStart": 1,
+      "frameEnd": 19,
+      "sourceFps": 24,
+      "durationSeconds": 0.75,
+      "sourceRootTravel": {
+        "x": -2e-05,
+        "y": 8e-06,
+        "z": 1.2e-05,
+        "total": 2.5e-05
+      },
+      "loop": false,
+      "gain": 0.78
+    },
+    "bighit": {
+      "action": "bighit",
+      "clipName": "shade::bighit::v01",
+      "source": "Standing Block React Large.fbx",
+      "sourceSha256": "1c2724849c68cdb804321b3a598b0acfbebc3666deb019b6f2465a6d1db122b4",
+      "frameStart": 1,
+      "frameEnd": 33,
+      "sourceFps": 24,
+      "durationSeconds": 1.3333333333333333,
+      "sourceRootTravel": {
+        "x": 6e-06,
+        "y": -1.5e-05,
+        "z": 3e-06,
+        "total": 1.7e-05
+      },
+      "loop": false,
+      "gain": 0.86
+    },
+    "attack": {
+      "action": "attack",
+      "clipName": "shade::attack::v01",
+      "source": "Double Dagger Stab.fbx",
+      "sourceSha256": "8f296334061561b149e34e9b646f0988003704be3444abc6ad113207e328e09a",
+      "frameStart": 1,
+      "frameEnd": 75,
+      "sourceFps": 24,
+      "durationSeconds": 3.0833333333333335,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "total": 0.0
+      },
+      "loop": false,
+      "gain": 0.98
+    },
+    "critical": {
+      "action": "critical",
+      "clipName": "shade::critical::v01",
+      "source": "Jump Attack.fbx",
+      "sourceSha256": "0962cd710cff7362c72ac0646cdcd5fc2e87c00d263f1eb9bd53f01304840274",
+      "frameStart": 1,
+      "frameEnd": 92,
+      "sourceFps": 24,
+      "durationSeconds": 3.7916666666666665,
+      "sourceRootTravel": {
+        "x": 13.448752,
+        "y": -10.138176,
+        "z": 211.311373,
+        "total": 211.98148
+      },
+      "loop": false,
+      "gain": 0.96
+    },
+    "avoid": {
+      "action": "avoid",
+      "clipName": "shade::avoid::v01",
+      "source": "Change Direction.fbx",
+      "sourceSha256": "09157e82b84fd8a537e8868db2d048977ab87eada12ad4db4321d022b1cfe8da",
+      "frameStart": 1,
+      "frameEnd": 53,
+      "sourceFps": 24,
+      "durationSeconds": 2.1666666666666665,
+      "sourceRootTravel": {
+        "x": 4.270783,
+        "y": -8e-06,
+        "z": 10.199233,
+        "total": 11.057302
+      },
+      "loop": false,
+      "gain": 0.94
+    },
+    "defence": {
+      "action": "defence",
+      "clipName": "shade::defence::v01",
+      "source": "Body Block.fbx",
+      "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4",
+      "frameStart": 1,
+      "frameEnd": 83,
+      "sourceFps": 24,
+      "durationSeconds": 3.4166666666666665,
+      "sourceRootTravel": {
+        "x": -2e-06,
+        "y": -1.5e-05,
+        "z": -2e-06,
+        "total": 1.6e-05
+      },
+      "loop": false,
+      "gain": 0.78
+    },
+    "die": {
+      "action": "die",
+      "clipName": "shade::die::v01",
+      "source": "scripts/rig-character-asset-blender.py",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+      "loop": false,
+      "kind": "authored-fallback"
+    },
+    "show": {
+      "action": "show",
+      "clipName": "shade::show::v01",
+      "source": "Catwalk Idle To Twist R.fbx",
+      "sourceSha256": "8cb1f572d0c249ac81c45f62712529a40b0abac0393e976c64375d4305a3b902",
+      "frameStart": 1,
+      "frameEnd": 53,
+      "sourceFps": 24,
+      "durationSeconds": 2.1666666666666665,
+      "sourceRootTravel": {
+        "x": 23.788079,
+        "y": -0.75666,
+        "z": -0.164365,
+        "total": 23.800678
+      },
+      "loop": false,
+      "gain": 0.88
+    }
+  },
+  "rights": {
+    "source": "user-provided",
+    "runtimeUseDirectedAt": "2026-07-29",
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
+  },
+  "rightsReceipt": "assets/motion/ingame/characters/rights-receipt.json",
+  "checks": {
+    "glb2": true,
+    "meshPresent": true,
+    "singleSkin": true,
+    "expectedBoneSet": true,
+    "expectedClipSet": true,
+    "finiteKeyframes": true,
+    "rotationOnly": true,
+    "onlyDefBoneTracks": true,
+    "loopClosure": true,
+    "linearSampling": true,
+    "nonconstantActions": true,
+    "rigStageCompleted": true,
+    "rigNaturalRestPose": true,
+    "rigClipCountBeforeRetarget": true
+  },
+  "validation": {
+    "checks": {
+      "glb2": true,
+      "meshPresent": true,
+      "singleSkin": true,
+      "expectedBoneSet": true,
+      "expectedClipSet": true,
+      "finiteKeyframes": true,
+      "rotationOnly": true,
+      "onlyDefBoneTracks": true,
+      "loopClosure": true,
+      "linearSampling": true,
+      "nonconstantActions": true
+    },
+    "animationNames": [
+      "shade::attack::v01",
+      "shade::avoid::v01",
+      "shade::bighit::v01",
+      "shade::critical::v01",
+      "shade::defence::v01",
+      "shade::die::v01",
+      "shade::hit::v01",
+      "shade::idle::v01",
+      "shade::move::v01",
+      "shade::run::v01",
+      "shade::show::v01"
+    ],
+    "jointNames": [
+      "DEF-spine",
+      "DEF-pelvis.L",
+      "DEF-pelvis.R",
+      "DEF-spine.001",
+      "DEF-spine.002",
+      "DEF-spine.003",
+      "DEF-shoulder.L",
+      "DEF-upper_arm.L",
+      "DEF-forearm.L",
+      "DEF-hand.L",
+      "DEF-shoulder.R",
+      "DEF-upper_arm.R",
+      "DEF-forearm.R",
+      "DEF-hand.R",
+      "DEF-spine.004",
+      "DEF-spine.005",
+      "DEF-thigh.L",
+      "DEF-shin.L",
+      "DEF-foot.L",
+      "DEF-toe.L",
+      "DEF-thigh.R",
+      "DEF-shin.R",
+      "DEF-foot.R",
+      "DEF-toe.R"
+    ],
+    "meshCount": 1,
+    "skinCount": 1
+  },
+  "runtimeEligible": true,
+  "gateErrors": [],
+  "generationId": "8bab6c499986308411640900cddf7947c321fd2f22e8b5ad9200f7b001d6ae8e",
+  "sourceAssetRights": {
+    "source": "user-provided",
+    "runtimeUseDirectedAt": "2026-07-29",
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
+  },
+  "motionAuthority": "derived-retargeted",
+  "motionLineage": {
+    "authority": "derived-retargeted",
+    "sourceRig": "mixamo-37",
+    "sourceLibrary": "assets/motion/bench",
+    "transformation": "retargeted-and-baked"
+  },
+  "inPlaceRootMotion": true,
+  "clipNames": {
+    "idle": "shade::idle::v01",
+    "move": "shade::move::v01",
+    "run": "shade::run::v01",
+    "hit": "shade::hit::v01",
+    "bighit": "shade::bighit::v01",
+    "attack": "shade::attack::v01",
+    "critical": "shade::critical::v01",
+    "avoid": "shade::avoid::v01",
+    "defence": "shade::defence::v01",
+    "die": "shade::die::v01",
+    "show": "shade::show::v01"
+  },
+  "reachability": {
+    "runtimeReachability": "catalog-bound",
+    "entity": {
+      "kind": "flanker"
+    }
+  }
+}

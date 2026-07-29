@@ -58,8 +58,8 @@ D docs/abyssal-surge-production-cycle.md
 | 렌더러 단방향 (스냅샷 읽기 전용, `getRunDigest()` 불변) | 동일 |
 | 오프라인 로컬 저장 + JSON 내보내기/가져오기 | 계정·클라우드·멀티 없음 |
 | 무수익화 — 광고·프리미엄 화폐·가챠·유료 성장·유료 복구 없음 | 제품 경계 |
-| 심연 세계관 고유명 (Dusk Warden, Echo Deep, Moonless Court, Gate Zenith) | G1 |
-| 10스테이지 캠페인, Gate Zenith 종결 | G1 |
+| 심연 세계관 고유명과 3구역 여정 (`Cinder Span → Abyss Chancel → Echo Throne`) | G1 |
+| 3보스 종결 (`Cinder Warden → Veil Tactician → Gate Sovereign`) | G1 |
 | `prefers-reduced-motion` 존중, 색 비의존 정보 전달 | G4 |
 | **단일 게임플레이 평면** — 시각적 높이는 비보행 장식만 | 이동·타겟팅 판독성 |
 | full-bleed 캔버스, 가장자리 HUD | 모바일 계약 |
@@ -129,9 +129,9 @@ D docs/abyssal-surge-production-cycle.md
 
 | 항목 | 이전 | 이후 |
 |---|---|---|
-| 스테이지 수 | 10 | **10 (불변)** |
-| 순서 | 고정, Gate Zenith 종결 | **불변** |
-| 스테이지 해금 | 보스 처치 | **불변** |
+| 스테이지 수 | 10 | **3 (Cinder Span, Abyss Chancel, Echo Throne)** |
+| 순서 | Gate Zenith 종결 | **고정, Echo Throne 종결** |
+| 스테이지 해금 | 보스 처치 | **보스 처치** |
 | 스테이지 내부 | 웨이브 3슬롯 + 목표 6단계 | 페이즈 6종 |
 | 맵 | 스테이지당 authored 1종 | 스테이지당 시드별 변주 |
 | 재도전 | 런 스킬 초기화, 순손실 | **XP 40% + Shard 100% 보존** |
@@ -232,7 +232,7 @@ D docs/abyssal-surge-production-cycle.md
 
 | 결과 | 조건 |
 |---|---|
-| 완료 | Stage 10 `s10-abyss-regent` 처치 |
+| 완료 | Stage 3 `s3-gate-sovereign` 처치 |
 | 실패 | 없음 — 패배는 재도전이며 진행을 잃지 않는다 |
 
 ### 7.3 폐기된 실패 조건

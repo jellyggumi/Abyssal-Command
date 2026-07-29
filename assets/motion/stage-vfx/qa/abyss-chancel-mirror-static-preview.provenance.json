@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "assetId": "abyss-chancel-mirror-static-preview",
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "source": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  "reference": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+  "runtimeEligible": false,
+  "output": {
+    "path": "assets/motion/stage-vfx/qa/abyss-chancel-mirror-static-preview.png",
+    "sha256": "13784a3458564e94502505d9c20b54104ae5f3f9c755bdca7acf04f21772bed4"
+  }
+}

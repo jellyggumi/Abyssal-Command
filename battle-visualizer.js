@@ -19,12 +19,6 @@ const PALETTE = Object.freeze({
   healthTrack: "#432234",
 });
 
-const WORLD_TEXTURES = Object.freeze({
-  cinderSpanBackground: "./assets/images/battle/world/cinder-span-topdown-plate.webp",
-  cinderSpanMap: "./assets/images/battle/world/cinder-span-tactical-paper-plate.webp",
-});
-let textureCache = new Map();
-let textureCacheOwner = null;
 const CATALOG_EFFECTS = new Set([...ANIMATION_CLIPS.commander, ...ANIMATION_CLIPS.effects]);
 const FEEDBACK_CUES = Object.freeze({
   CRITICAL_HIT: AUDIO_CUES.criticalHit,
@@ -189,51 +183,6 @@ function drawChevron(context, from, to, color) {
 }
 
 
-function loadTexture(source) {
-  if (!source || typeof globalThis.Image !== "function") return null;
-  // A test harness (or any caller) can swap globalThis.Image between mock
-  // classes at runtime; cached instances from a prior Image constructor are
-  // not valid results for the current one, so the cache is scoped to
-  // "images created by the currently-installed Image class" rather than
-  // living forever at module scope. Production never swaps globalThis.Image,
-  // so this is a no-op invalidation there.
-  if (textureCacheOwner !== globalThis.Image) {
-    textureCache = new Map();
-    textureCacheOwner = globalThis.Image;
-  }
-  if (textureCache.has(source)) return textureCache.get(source);
-  try {
-    const image = new globalThis.Image();
-    image.decoding = "async";
-    image.src = source;
-    textureCache.set(source, image);
-    return image;
-  } catch {
-    return null;
-  }
-}
-
-function drawOptionalWorldImage(context, source, x, y, width, height, alpha) {
-  if (!canDraw(context, "drawImage")) return;
-  const image = loadTexture(source);
-  if (!image?.complete || !image.naturalWidth) return;
-  try {
-    context.save?.();
-    context.globalAlpha = alpha;
-    context.drawImage(image, x, y, width, height);
-  } catch {
-    // Canvas and Image shims are presentation-only; the procedural world remains visible.
-  } finally {
-    context.restore?.();
-  }
-}
-
-function drawCinderSpanArtwork(context, projection, width, height) {
-  if (projection?.stageId !== "cinder-span") return;
-  drawOptionalWorldImage(context, WORLD_TEXTURES.cinderSpanBackground, -width, -height, width * 3, height * 3, 0.2);
-  const inset = Math.min(width, height) * 0.07;
-  drawOptionalWorldImage(context, WORLD_TEXTURES.cinderSpanMap, inset, inset, width - inset * 2, height - inset * 2, 0.12);
-}
 function drawStageWorld(context, snapshot, width, height, tick, reducedMotion, portrait) {
   const projection = snapshot?.presentation ?? {};
   const profile = projection.stagePresentation ?? {};
@@ -255,7 +204,6 @@ function drawStageWorld(context, snapshot, width, height, tick, reducedMotion, p
   context.save?.();
   context.fillStyle = terrainColor;
   context.fillRect(-width, -height, width * 3, height * 3);
-  drawCinderSpanArtwork(context, projection, width, height);
   if (canDraw(context, "beginPath", "moveTo", "lineTo", "stroke")) {
     context.strokeStyle = contour;
     context.lineWidth = 1;

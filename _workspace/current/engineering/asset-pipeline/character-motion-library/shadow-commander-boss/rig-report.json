@@ -1,0 +1,294 @@
+{
+  "assetId": "shadow-commander-boss",
+  "category": "bosses",
+  "source": "assets/mesh/enemy/shadow-commander-boss/glb/base_basic_pbr.glb",
+  "steps": [
+    {
+      "step": "import",
+      "meshes": 1,
+      "reusedBodySplit": false,
+      "hadPedestal": false
+    },
+    {
+      "step": "weld",
+      "vertsBefore": 23716,
+      "vertsAfter": 19169
+    },
+    {
+      "step": "landmarks",
+      "height": 1.897,
+      "shoulderZFrac": 0.78,
+      "shoulderHalfWidth": 0.2996,
+      "hipHalfWidth": 0.1208,
+      "handL": [
+        0.1847,
+        -0.0696,
+        1.5323
+      ],
+      "handR": [
+        -0.1504,
+        -0.0695,
+        1.4592
+      ],
+      "synthesizedArms": [],
+      "center": [
+        0.013,
+        -0.0699
+      ]
+    },
+    {
+      "step": "roll_alignment",
+      "phase": "pre_bind",
+      "referencePolicy": {
+        "axial": "+Y",
+        "lateral": "+Z"
+      },
+      "rows": [
+        {
+          "bone": "DEF-spine",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.001",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.002",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.003",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.004",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-spine.005",
+          "policy": "axial",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-pelvis.L",
+          "policy": "axial",
+          "rollDeg": -137.6979
+        },
+        {
+          "bone": "DEF-pelvis.R",
+          "policy": "axial",
+          "rollDeg": 137.6979
+        },
+        {
+          "bone": "DEF-shoulder.L",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.L",
+          "policy": "lateral",
+          "rollDeg": -79.8592
+        },
+        {
+          "bone": "DEF-forearm.L",
+          "policy": "lateral",
+          "rollDeg": -79.8592
+        },
+        {
+          "bone": "DEF-hand.L",
+          "policy": "lateral",
+          "rollDeg": -79.8591
+        },
+        {
+          "bone": "DEF-shoulder.R",
+          "policy": "lateral",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-upper_arm.R",
+          "policy": "lateral",
+          "rollDeg": 68.6318
+        },
+        {
+          "bone": "DEF-forearm.R",
+          "policy": "lateral",
+          "rollDeg": 68.6315
+        },
+        {
+          "bone": "DEF-hand.R",
+          "policy": "lateral",
+          "rollDeg": 68.6311
+        },
+        {
+          "bone": "DEF-thigh.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.L",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.L",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.L",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        },
+        {
+          "bone": "DEF-thigh.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-shin.R",
+          "policy": "axial",
+          "rollDeg": 0.0
+        },
+        {
+          "bone": "DEF-foot.R",
+          "policy": "lateral",
+          "rollDeg": 180.0
+        },
+        {
+          "bone": "DEF-toe.R",
+          "policy": "lateral",
+          "rollDeg": 179.9999
+        }
+      ]
+    },
+    {
+      "step": "armature_fit",
+      "bones": 24,
+      "shoulderZ": 1.4797,
+      "arms": {
+        "L": {
+          "restAngleDeg": -82.49,
+          "length": 0.0531
+        },
+        "R": {
+          "restAngleDeg": 85.78,
+          "length": 0.0206
+        }
+      },
+      "preBindRollCount": 24
+    },
+    {
+      "step": "orphan_fill",
+      "filled": 3
+    },
+    {
+      "step": "bind",
+      "method": "bone_heat",
+      "boundGroups": 24,
+      "weightedVerts": 19169,
+      "totalVerts": 19169,
+      "armWeightFrac": 0.2244,
+      "attempts": [
+        [
+          "bone_heat",
+          19166,
+          0.2243
+        ]
+      ],
+      "topWeights": [
+        [
+          1951.7,
+          "DEF-shin.R"
+        ],
+        [
+          1830.5,
+          "DEF-thigh.L"
+        ],
+        [
+          1808.5,
+          "DEF-thigh.R"
+        ],
+        [
+          1744.2,
+          "DEF-hand.R"
+        ],
+        [
+          1440.1,
+          "DEF-pelvis.R"
+        ]
+      ]
+    },
+    {
+      "step": "weight_refine",
+      "enabledArmatureModifiers": 1,
+      "correctedVertices": 13714,
+      "oppositeLeak": 0,
+      "ambiguous": 4931,
+      "orphanCount": 0,
+      "invalidCount": 0,
+      "nonDefCount": 0,
+      "maxInfluences": 4,
+      "maxWeightSum": 1.000000009778887,
+      "minWeightSum": 0.9999999901046976,
+      "deformVerts": 19169,
+      "deformVertsTotal": 19169
+    },
+    {
+      "step": "rest_pose",
+      "mode": "natural",
+      "rotatedDeg": {},
+      "axisDeviationDeg": {
+        "L": 82.5,
+        "R": 94.03
+      },
+      "elevationDeg": {
+        "L": -82.49,
+        "R": 85.78
+      },
+      "tposeToleranceDeg": 12.0,
+      "ok": true
+    },
+    {
+      "step": "author_animations",
+      "count": 11,
+      "clips": [
+        "shadow-commander-boss::idle::v01",
+        "shadow-commander-boss::move::v01",
+        "shadow-commander-boss::run::v01",
+        "shadow-commander-boss::hit::v01",
+        "shadow-commander-boss::bighit::v01",
+        "shadow-commander-boss::attack::v01",
+        "shadow-commander-boss::critical::v01",
+        "shadow-commander-boss::avoid::v01",
+        "shadow-commander-boss::defence::v01",
+        "shadow-commander-boss::die::v01",
+        "shadow-commander-boss::show::v01"
+      ]
+    },
+    {
+      "step": "export",
+      "path": "/Users/supercent/orca/Abyssal-Command/_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/model.glb",
+      "bytes": 13436916,
+      "pedestalRemoved": false
+    }
+  ],
+  "axisDeviationDeg": {
+    "L": 82.5,
+    "R": 94.03
+  },
+  "elevationDeg": {
+    "L": -82.49,
+    "R": 85.78
+  },
+  "bindMethod": "bone_heat",
+  "pedestalRemoved": false,
+  "restPose": "natural",
+  "restPoseOk": true,
+  "clipCount": 11,
+  "status": "completed"
+}

@@ -1,0 +1,73 @@
+{
+  "assetId": "shadow-commander-boss",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/model.glb",
+  "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/contact-sheet.png",
+  "keyposes": [
+    {
+      "action": "idle",
+      "clipName": "shadow-commander-boss::idle::v01",
+      "frame": 110,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/00-idle.png"
+    },
+    {
+      "action": "move",
+      "clipName": "shadow-commander-boss::move::v01",
+      "frame": 12,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/01-move.png"
+    },
+    {
+      "action": "run",
+      "clipName": "shadow-commander-boss::run::v01",
+      "frame": 12,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/02-run.png"
+    },
+    {
+      "action": "hit",
+      "clipName": "shadow-commander-boss::hit::v01",
+      "frame": 10,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/03-hit.png"
+    },
+    {
+      "action": "bighit",
+      "clipName": "shadow-commander-boss::bighit::v01",
+      "frame": 19,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/04-bighit.png"
+    },
+    {
+      "action": "attack",
+      "clipName": "shadow-commander-boss::attack::v01",
+      "frame": 26,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/05-attack.png"
+    },
+    {
+      "action": "critical",
+      "clipName": "shadow-commander-boss::critical::v01",
+      "frame": 38,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/06-critical.png"
+    },
+    {
+      "action": "avoid",
+      "clipName": "shadow-commander-boss::avoid::v01",
+      "frame": 30,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/07-avoid.png"
+    },
+    {
+      "action": "defence",
+      "clipName": "shadow-commander-boss::defence::v01",
+      "frame": 7,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/08-defence.png"
+    },
+    {
+      "action": "die",
+      "clipName": "shadow-commander-boss::die::v01",
+      "frame": 42,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/09-die.png"
+    },
+    {
+      "action": "show",
+      "clipName": "shadow-commander-boss::show::v01",
+      "frame": 153,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/10-show.png"
+    }
+  ]
+}

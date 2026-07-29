@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "asset": "_workspace/current/engineering/asset-pipeline/terrain-cinder-span/textures/terrain-cinder-span-basecolor-gti.png",
+  "status": "generated-source-not-runtime",
+  "generatedAt": "2026-07-29",
+  "generator": {
+    "tool": "god-tibo-imagen",
+    "provider": "private-codex",
+    "model": "gpt-5.4",
+    "responseId": "resp_0d8b59446abbe2be016a69aed79b8481918d80184adc895011",
+    "sessionId": "e2c9cd3c-f723-416a-ab32-487ab0ebe2cb"
+  },
+  "prompt": "Create a seamless square top-down PBR base-color texture for a dark-fantasy game terrain, derived from the supplied Cinder Span reference. Orthographic material swatch only: tightly fitted irregular black basalt cobblestones, charred beveled stone edges, sparse branching molten-orange ember fissures between stones, subtle soot and ash variation. No slab silhouette, no perspective, no lighting direction, no cast shadows, no ambient occlusion baked into the color, no border, no background, no objects, no text, no logo, no watermark. The left/right and top/bottom edges must tile seamlessly. Preserve the reference palette and rugged stone scale. Output base color/albedo only.",
+  "revisedPrompt": "Create a seamless square top-down PBR base-color/albedo texture swatch derived from the supplied Cinder Span reference. Orthographic material-only view, tightly fitted irregular black basalt cobblestones with charred beveled stone edges, sparse branching molten-orange ember fissures between stones, subtle soot and ash color variation, rugged dark-fantasy stone scale matching the reference palette. Strictly base color only: no lighting direction, no shading gradients, no cast shadows, no ambient occlusion, no height cues from illumination, no slab silhouette, no perspective, no border, no background, no isolated objects, no text, no logo, no watermark. Left/right and top/bottom edges must tile seamlessly.",
+  "referenceInputs": [
+    {
+      "path": "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-terrain.png",
+      "role": "terrain appearance reference"
+    }
+  ],
+  "output": {
+    "format": "png",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 3318313,
+    "sha256": "a95d58332603b7f6f6664a5cbd005026cc19ace4739e930eb3246d9f9c714fd3"
+  },
+  "runtimeEligible": false,
+  "note": "The backend ignored the requested 1024x1024 size and returned 1254x1254. Blender downsamples this source to the 1024x1024 runtime map and only applies edge blending when measured wrap-seam error exceeds 1.5 times the interior-adjacency baseline."
+}

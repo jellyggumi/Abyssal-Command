@@ -1,0 +1,50 @@
+{
+  "assetCount": 1,
+  "assets": [
+    {
+      "activeUvMaps": [
+        "UVMap"
+      ],
+      "animationClipCount": 0,
+      "animations": [],
+      "armature": {
+        "boneCount": 0,
+        "boneNames": [],
+        "defBoneCount": 0,
+        "present": false
+      },
+      "assetId": "terrain-abyss-chancel-raw-image-plane",
+      "category": "raw-image",
+      "hasUv": true,
+      "materials": [
+        {
+          "baseColorFactor": null,
+          "baseColorTexture": {
+            "channels": 4,
+            "height": 1024,
+            "name": "terrain-abyss-chancel-albedo-3x2",
+            "packed": true,
+            "width": 1536
+          },
+          "metallic": 0.08,
+          "name": "abyss_chancel_terrain_raw_image_plane",
+          "roughness": 0.73,
+          "useNodes": true
+        }
+      ],
+      "meshObjectCount": 1,
+      "polygonCount": 768,
+      "relativePath": "raw-image/terrain-abyss-chancel-raw-image-plane.glb",
+      "sourceBytes": 3603124,
+      "sourcePath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/raw-image/terrain-abyss-chancel-raw-image-plane.glb",
+      "sourceSha256": "2a9ae095983b047e12c7853fa79c2905428e342112f7f93a61e3014305cac1b7",
+      "triangleCount": 768,
+      "uvLayerCount": 1,
+      "vertexCount": 425
+    }
+  ],
+  "generator": "scripts/audit-mesh-detail-blender.py",
+  "measurementTool": "Blender 5.2.0 LTS headless bpy import",
+  "runtimeRoot": "assets/images/battle/glb",
+  "schemaVersion": 1
+}

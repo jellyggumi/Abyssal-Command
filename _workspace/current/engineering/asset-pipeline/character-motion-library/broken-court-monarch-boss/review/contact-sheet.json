@@ -1,0 +1,73 @@
+{
+  "assetId": "broken-court-monarch-boss",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/model.glb",
+  "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/contact-sheet.png",
+  "keyposes": [
+    {
+      "action": "idle",
+      "clipName": "broken-court-monarch-boss::idle::v01",
+      "frame": 18,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/00-idle.png"
+    },
+    {
+      "action": "move",
+      "clipName": "broken-court-monarch-boss::move::v01",
+      "frame": 13,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/01-move.png"
+    },
+    {
+      "action": "run",
+      "clipName": "broken-court-monarch-boss::run::v01",
+      "frame": 12,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/02-run.png"
+    },
+    {
+      "action": "hit",
+      "clipName": "broken-court-monarch-boss::hit::v01",
+      "frame": 10,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/03-hit.png"
+    },
+    {
+      "action": "bighit",
+      "clipName": "broken-court-monarch-boss::bighit::v01",
+      "frame": 17,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/04-bighit.png"
+    },
+    {
+      "action": "attack",
+      "clipName": "broken-court-monarch-boss::attack::v01",
+      "frame": 43,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/05-attack.png"
+    },
+    {
+      "action": "critical",
+      "clipName": "broken-court-monarch-boss::critical::v01",
+      "frame": 53,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/06-critical.png"
+    },
+    {
+      "action": "avoid",
+      "clipName": "broken-court-monarch-boss::avoid::v01",
+      "frame": 23,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/07-avoid.png"
+    },
+    {
+      "action": "defence",
+      "clipName": "broken-court-monarch-boss::defence::v01",
+      "frame": 48,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/08-defence.png"
+    },
+    {
+      "action": "die",
+      "clipName": "broken-court-monarch-boss::die::v01",
+      "frame": 42,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/09-die.png"
+    },
+    {
+      "action": "show",
+      "clipName": "broken-court-monarch-boss::show::v01",
+      "frame": 7,
+      "image": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/10-show.png"
+    }
+  ]
+}

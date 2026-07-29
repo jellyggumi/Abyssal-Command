@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "assetId": "abyss-chancel-mirror-static",
+  "stageId": "abyss-chancel",
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "tool": "Blender 5.2.0 LTS",
+  "reference": {
+    "path": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+    "usage": "silhouette-and-material-language-only",
+    "embedded": false
+  },
+  "rightsReceipt": "Repository-authored deterministic procedural geometry; no third-party media embedded.",
+  "runtimeReceipt": {
+    "runtimeEligible": true,
+    "reason": "Self-contained GLB, bounded geometry, authored quality groups, and loop clip."
+  },
+  "output": {
+    "path": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+    "sha256": "3c56dc0c34957596ab6b846012e6876c06ee22055bf9d6b800665da623280c40"
+  }
+}

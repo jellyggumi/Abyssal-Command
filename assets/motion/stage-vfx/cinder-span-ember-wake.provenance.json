@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "assetId": "cinder-span-ember-wake",
+  "stageId": "cinder-span",
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "tool": "Blender 5.2.0 LTS",
+  "reference": {
+    "path": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+    "usage": "silhouette-and-material-language-only",
+    "embedded": false
+  },
+  "rightsReceipt": "Repository-authored deterministic procedural geometry; no third-party media embedded.",
+  "runtimeReceipt": {
+    "runtimeEligible": true,
+    "reason": "Self-contained GLB, bounded geometry, authored quality groups, and loop clip."
+  },
+  "output": {
+    "path": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+    "sha256": "82cd881894888f15a5bf4d03557ec8fac596a1be455d6579b45d5eacb700aa8a"
+  }
+}

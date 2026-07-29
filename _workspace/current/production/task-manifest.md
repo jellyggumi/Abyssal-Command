@@ -163,3 +163,38 @@ next-beat: director 스코프 리뷰 → 슬라이스 2 사람 플레이 판정
 `_workspace/` 직하위에는 `current/` 와 `archive/<run-id>/` 만 둔다. 산출물 경로는
 `_workspace/current/<lane>/` 로 향하게 하고 날짜 run-id 를 코드 상수에 박지 않는다. 루트에
 날짜 폴더가 보이면 지우기 전에 그것을 만든 상수를 먼저 찾는다.
+
+---
+
+## 7. 2026-07-29 — 캐릭터 모션 라이브러리 승격
+
+| task | owner | 산출물 | 게이트 | 상태 |
+|---|---|---|---|---|
+| 모션 벤치·권리 receipt·registry 검증 | character-motion-pipeline | `assets/motion/ingame/characters/registry.json` | asset 11, clip 121, checksum·rights receipt 일치 | done |
+| Lantern Reaver 원본·런타임 경로 확정 | game-programmer | `battle-realtime-three.js#PLAYER_SOURCE_MESH` | source mesh 1, runtime motion mesh 1 | done |
+| 적 역할별 11클립 리타게팅 | character-motion-pipeline | `assets/motion/ingame/characters/*/model.glb` | 11 assets, 110 retargeted + 11 authored fallback clips | done |
+| 보스 메시 직접 배치 | game-programmer | `battle-realtime-three.js#BOSS_MODELS` | Cinder Warden·Veil Tactician·Gate Sovereign 3/3 | done |
+| GLB 구조·참조·runtime routing 계약 테스트 | Tester | `tests/runtime-visual-assets.test.mjs`, `tests/realtime-motion-routing.test.mjs` | runtime visual 6/6, motion routing 2/2 | done |
+| Three.js 실전 로드·재생 스모크 | character-motion-pipeline | `qa/character-motion-runtime-smoke.json` | WebGL, HTTP 200, `guard::move::v01`, 48-frame bone delta | done |
+
+### 7.1 산출물 상태 [OBSERVED]
+
+- `registry.json`은 runtime-eligible asset **11**, clip **121**(retargeted 110,
+  authored fallback 11), 총 **132,794,048 bytes**를 checksum과 권리 receipt로 고정한다.
+- 런타임의 플레이어 원본 식별은
+  `assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb`이며,
+  애니메이션 렌더 경로는 `assets/motion/ingame/characters/lantern-reaver/model.glb`다.
+- 일반 적은 `scout`, `shade`, `shadow-soldier-v04`, `possessed`의 4개 역할별 모션
+  모델로 배치된다. 이 외 모션 GLB는 레지스트리에 보존되며 명시적 `motionAssetId`에서만 선택한다.
+- 세 캠페인 보스는 `assets/mesh/boss/`의 공급 메시를 직접 로드한다. 일반 모션 레지스트리와
+  혼합하지 않는다.
+- self-authored 런타임 모델은 generic `unarmed-core.glb` overlay를 요청하지 않고 포함된
+  base clip을 재생한다. 레거시 image battle GLB의 overlay 및 load-failure fallback은 폐기했다.
+
+### 7.2 자원 컷오버 [OBSERVED]
+
+- 현행 카탈로그는 `Cinder Span → Abyss Chancel → Echo Throne` 세 구역과 세 보스만 소유한다.
+- 지형·소품·보스는 `assets/mesh/`, 모션·스테이지 VFX는 `assets/motion/`에서만 해석한다.
+- `assets/images/battle/`은 UI만 남기며, 비 UI 전장 이미지와 GLB는 런타임 allowlist에서 제거했다.
+- `tests/runtime-visual-assets.test.mjs`가 세 구역의 메쉬·VFX·Lantern Reaver lookout 계약과
+  UI 외 이미지 배제를 검증한다.

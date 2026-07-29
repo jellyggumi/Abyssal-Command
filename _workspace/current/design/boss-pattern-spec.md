@@ -260,23 +260,17 @@ entity.decisionSlot = hash32(entity.id) % DECISION_PERIOD   // 스폰 시 1회 �
 
 ---
 
-## 7. 10스테이지 보스 배치
+## 7. 3구역 보스 배치
 
-기존 보스 ID `[OBSERVED]` (`defense-catalog.js#BOSSES`)를 유지한다. 중보스는 기존 정예
-ID(`STAGES[*].eliteId`)를 승격해 신규 고유명을 만들지 않는다.
+최종 보스는 현행 런타임의 공급 메쉬 3종과 정확히 1:1로 대응한다:
+`assets/mesh/boss/{s1-cinder-warden,s2-veil-tactician,s3-gate-sovereign}/glb/base_basic_pbr.glb`.
+중간 보스는 기존 정예 ID(`STAGES[*].eliteId`)를 승격해 신규 고유명을 만들지 않는다.
 
 | # | 스테이지 | 최종 보스 | 중간 보스 | P1 패턴 (2) | P2 추가 | P3 추가 (2) | 시그니처 |
 |---|---|---|---|---|---|---|---|
 | 1 | Cinder Span | `s1-cinder-warden` | `s1-ember-hunter` | `line-sweep`, `radial-burst` | `charge-rush` | `ground-cluster`, `arena-close` | 잿불 장판이 회피 경로에 잔류 |
-| 2 | Veil Citadel | `s2-veil-tactician` | `s2-veil-sentinel` | `ground-cluster`, `line-sweep` | `radial-burst` | `charge-rush`, `arena-close` | 예고 데칼이 반투명 (판독 난도↑, 예고 길이는 불변) |
+| 2 | Abyss Chancel | `s2-veil-tactician` | `s2-veil-sentinel` | `ground-cluster`, `line-sweep` | `radial-burst` | `charge-rush`, `arena-close` | 서약 고리가 안전 경로를 압박하되 예고 길이는 불변 |
 | 3 | Echo Throne | `s3-gate-sovereign` | `s3-throne-wraith` | `radial-burst`, `charge-rush` | `line-sweep` | `ground-cluster`, `arena-close` | 메아리 — 패턴이 60 tick 뒤 절반 위력으로 1회 반복 |
-| 4 | Sunken Bastion | `s4-tide-warden` | `s4-anchor-diver` | `ground-cluster`, `arena-close` | `line-sweep` | `radial-burst`, `charge-rush` | 장판이 수면처럼 확산 (반경 +20%, 피해 −20%) |
-| 5 | Howling Sprawl | `s5-pack-herald` | `s5-pack-sentinel` | `charge-rush`, `line-sweep` | `radial-burst` | `ground-cluster`, `arena-close` | 돌진이 애드를 동반 소환 |
-| 6 | Glass Necropolis | `s6-requiem-choir` | `s6-choir-adept` | `radial-burst`, `ground-cluster` | `arena-close` | `line-sweep`, `charge-rush` | 방사 폭발이 유리처럼 파편 2차 확산 |
-| 7 | Starless Canal | `s7-lantern-tyrant` | `s7-toll-keeper` | `line-sweep`, `arena-close` | `charge-rush` | `radial-burst`, `ground-cluster` | 안전지대가 등불 위치로 이동 |
-| 8 | Shattered Causeway | `s8-bridge-colossus` | `s8-keystone-warden` | `charge-rush`, `radial-burst` | `ground-cluster` | `line-sweep`, `arena-close` | 돌진이 지형 장식을 파괴 (비보행, 게임플레이 불변) |
-| 9 | Abyss Chancel | `s9-veiled-concordat` | `s9-oathbound-signatory` | `ground-cluster`, `charge-rush` | `line-sweep` | `radial-burst`, `arena-close` | 장판이 두 지점에서 교차 전개 |
-| 10 | Gate Zenith | `s10-abyss-regent` | `s10-regent-herald` | `arena-close`, `radial-burst` | `line-sweep` | `charge-rush`, `ground-cluster` | P3에서 조합 2종을 상시 사용 |
 
 **시그니처는 예고 길이를 건드리지 않는다.** 전부 형상·후속 효과·연출 변주이며, §5.2의
 학습 보존 규칙을 지킨다. 2번 스테이지의 "반투명 데칼"도 예고 tick은 그대로이고 대비만

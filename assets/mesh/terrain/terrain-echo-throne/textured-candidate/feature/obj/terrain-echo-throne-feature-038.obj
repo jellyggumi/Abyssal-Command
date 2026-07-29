@@ -1,0 +1,16 @@
+# Blender 5.2.0 LTS
+# www.blender.org
+mtllib terrain-echo-throne-feature-038.mtl
+o terrain-echo-throne-feature-038
+v -10.263830 0.000000 -39.000000
+v -8.936171 0.000000 -39.000000
+v -8.936171 1.008511 -39.000000
+v -10.263830 1.008511 -39.000000
+vn -0.0000 -0.0000 -1.0000
+vt 0.313777 0.043173
+vt 0.313777 0.122490
+vt 0.382334 0.122490
+vt 0.382334 0.043173
+s 0
+usemtl echo_throne_feature_alpha_cutout
+f 1/1/1 4/2/1 3/3/1 2/4/1

@@ -1,0 +1,321 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
+  "generatedAt": "2026-07-29T10:11:32.225931+00:00",
+  "assetId": "broken-court-monarch-boss",
+  "role": "shadow-duelist",
+  "category": "bosses",
+  "source": "assets/mesh/character/broken-court-monarch-boss-character/glb/base_basic_pbr.glb",
+  "sourceSha256": "b8ce8d4db905e4ba1c8af06832b50b1b9f8168f206d8c6bfefba75b710b08c65",
+  "sourceRig": "mixamo-37",
+  "targetRig": "def-humanoid-v1",
+  "restPose": "natural",
+  "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/model.glb",
+  "modelSha256": "eef9382f6a57db5644b58403d66bfb4fbc1beee32516a5b0ba3a5e61cb8de125",
+  "modelBytes": 13618060,
+  "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review.blend",
+  "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/rig-report.json",
+  "targetBoneNames": [
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-pelvis.L",
+    "DEF-pelvis.R",
+    "DEF-shoulder.L",
+    "DEF-upper_arm.L",
+    "DEF-forearm.L",
+    "DEF-hand.L",
+    "DEF-shoulder.R",
+    "DEF-upper_arm.R",
+    "DEF-forearm.R",
+    "DEF-hand.R",
+    "DEF-thigh.L",
+    "DEF-shin.L",
+    "DEF-foot.L",
+    "DEF-toe.L",
+    "DEF-thigh.R",
+    "DEF-shin.R",
+    "DEF-foot.R",
+    "DEF-toe.R"
+  ],
+  "clips": [
+    {
+      "action": "idle",
+      "clipName": "broken-court-monarch-boss::idle::v01",
+      "source": "Unarmed Idle.fbx",
+      "sourceSha256": "b4ae5c34ac0dc3923e5c24ab2883dd003c324c39edd86a9a94be3358016f5bfa",
+      "frameStart": 1,
+      "frameEnd": 47,
+      "sourceFps": 24,
+      "durationSeconds": 1.9166666666666667,
+      "sourceRootTravel": {
+        "x": -4.4e-05,
+        "y": 1.5e-05,
+        "z": -6e-06,
+        "total": 4.7e-05
+      },
+      "loop": true,
+      "gain": 0.82
+    },
+    {
+      "action": "move",
+      "clipName": "broken-court-monarch-boss::move::v01",
+      "source": "Walking.fbx",
+      "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+      "frameStart": 1,
+      "frameEnd": 34,
+      "sourceFps": 24,
+      "durationSeconds": 1.375,
+      "sourceRootTravel": {
+        "x": -2e-06,
+        "y": 1.5e-05,
+        "z": 145.083625,
+        "total": 145.083625
+      },
+      "loop": true,
+      "gain": 0.95
+    },
+    {
+      "action": "run",
+      "clipName": "broken-court-monarch-boss::run::v01",
+      "source": "Running.fbx",
+      "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": -1e-06,
+        "y": 0.0,
+        "z": 350.087158,
+        "total": 350.087158
+      },
+      "loop": true,
+      "gain": 1.0
+    },
+    {
+      "action": "hit",
+      "clipName": "broken-court-monarch-boss::hit::v01",
+      "source": "Standing React Small From Left.fbx",
+      "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+      "frameStart": 1,
+      "frameEnd": 19,
+      "sourceFps": 24,
+      "durationSeconds": 0.75,
+      "sourceRootTravel": {
+        "x": -2e-05,
+        "y": 8e-06,
+        "z": 1.2e-05,
+        "total": 2.5e-05
+      },
+      "loop": false,
+      "gain": 0.9
+    },
+    {
+      "action": "bighit",
+      "clipName": "broken-court-monarch-boss::bighit::v01",
+      "source": "Receive Uppercut To The Face.fbx",
+      "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": 0.000427,
+        "y": -3.8e-05,
+        "z": 3.9e-05,
+        "total": 0.000431
+      },
+      "loop": false,
+      "gain": 0.9
+    },
+    {
+      "action": "attack",
+      "clipName": "broken-court-monarch-boss::attack::v01",
+      "source": "Double Dagger Stab.fbx",
+      "sourceSha256": "8f296334061561b149e34e9b646f0988003704be3444abc6ad113207e328e09a",
+      "frameStart": 1,
+      "frameEnd": 75,
+      "sourceFps": 24,
+      "durationSeconds": 3.0833333333333335,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "total": 0.0
+      },
+      "loop": false,
+      "gain": 1.0
+    },
+    {
+      "action": "critical",
+      "clipName": "broken-court-monarch-boss::critical::v01",
+      "source": "Jump Attack.fbx",
+      "sourceSha256": "0962cd710cff7362c72ac0646cdcd5fc2e87c00d263f1eb9bd53f01304840274",
+      "frameStart": 1,
+      "frameEnd": 92,
+      "sourceFps": 24,
+      "durationSeconds": 3.7916666666666665,
+      "sourceRootTravel": {
+        "x": 13.448752,
+        "y": -10.138176,
+        "z": 211.311373,
+        "total": 211.98148
+      },
+      "loop": false,
+      "gain": 0.95
+    },
+    {
+      "action": "avoid",
+      "clipName": "broken-court-monarch-boss::avoid::v01",
+      "source": "Dodging.fbx",
+      "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6",
+      "frameStart": 1,
+      "frameEnd": 40,
+      "sourceFps": 24,
+      "durationSeconds": 1.625,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "total": 0.0
+      },
+      "loop": false,
+      "gain": 1.0
+    },
+    {
+      "action": "defence",
+      "clipName": "broken-court-monarch-boss::defence::v01",
+      "source": "Body Block.fbx",
+      "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4",
+      "frameStart": 1,
+      "frameEnd": 83,
+      "sourceFps": 24,
+      "durationSeconds": 3.4166666666666665,
+      "sourceRootTravel": {
+        "x": -2e-06,
+        "y": -1.5e-05,
+        "z": -2e-06,
+        "total": 1.6e-05
+      },
+      "loop": false,
+      "gain": 0.82
+    },
+    {
+      "action": "show",
+      "clipName": "broken-court-monarch-boss::show::v01",
+      "source": "Draw Sword 1.fbx",
+      "sourceSha256": "41357b64f6305ee59ea6ef8beaeba7b79b715514034be86e5365ab56e6dd5374",
+      "frameStart": 1,
+      "frameEnd": 13,
+      "sourceFps": 24,
+      "durationSeconds": 0.5,
+      "sourceRootTravel": {
+        "x": 2.373616,
+        "y": -1.28862,
+        "z": -6.690092,
+        "total": 7.214702
+      },
+      "loop": false,
+      "gain": 0.9
+    },
+    {
+      "action": "die",
+      "clipName": "broken-court-monarch-boss::die::v01",
+      "source": "scripts/rig-character-asset-blender.py",
+      "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+      "loop": false,
+      "kind": "authored-fallback"
+    }
+  ],
+  "rights": {
+    "source": "user-provided",
+    "runtimeUseDirectedAt": "2026-07-29",
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
+  },
+  "rightsReceipt": "user-directed-runtime-use-retargeted-from-audited-bench-with-unverified-redistribution",
+  "checks": {
+    "glb2": true,
+    "meshPresent": true,
+    "singleSkin": true,
+    "expectedBoneSet": true,
+    "expectedClipSet": true,
+    "finiteKeyframes": true,
+    "rotationOnly": true,
+    "onlyDefBoneTracks": true,
+    "loopClosure": true,
+    "linearSampling": true,
+    "nonconstantActions": true,
+    "rigStageCompleted": true,
+    "rigNaturalRestPose": true,
+    "rigClipCountBeforeRetarget": true
+  },
+  "validation": {
+    "checks": {
+      "glb2": true,
+      "meshPresent": true,
+      "singleSkin": true,
+      "expectedBoneSet": true,
+      "expectedClipSet": true,
+      "finiteKeyframes": true,
+      "rotationOnly": true,
+      "onlyDefBoneTracks": true,
+      "loopClosure": true,
+      "linearSampling": true,
+      "nonconstantActions": true
+    },
+    "animationNames": [
+      "broken-court-monarch-boss::attack::v01",
+      "broken-court-monarch-boss::avoid::v01",
+      "broken-court-monarch-boss::bighit::v01",
+      "broken-court-monarch-boss::critical::v01",
+      "broken-court-monarch-boss::defence::v01",
+      "broken-court-monarch-boss::die::v01",
+      "broken-court-monarch-boss::hit::v01",
+      "broken-court-monarch-boss::idle::v01",
+      "broken-court-monarch-boss::move::v01",
+      "broken-court-monarch-boss::run::v01",
+      "broken-court-monarch-boss::show::v01"
+    ],
+    "jointNames": [
+      "DEF-spine",
+      "DEF-pelvis.L",
+      "DEF-pelvis.R",
+      "DEF-spine.001",
+      "DEF-spine.002",
+      "DEF-spine.003",
+      "DEF-shoulder.L",
+      "DEF-upper_arm.L",
+      "DEF-forearm.L",
+      "DEF-hand.L",
+      "DEF-shoulder.R",
+      "DEF-upper_arm.R",
+      "DEF-forearm.R",
+      "DEF-hand.R",
+      "DEF-spine.004",
+      "DEF-spine.005",
+      "DEF-thigh.L",
+      "DEF-shin.L",
+      "DEF-foot.L",
+      "DEF-toe.L",
+      "DEF-thigh.R",
+      "DEF-shin.R",
+      "DEF-foot.R",
+      "DEF-toe.R"
+    ],
+    "meshCount": 1,
+    "skinCount": 1
+  },
+  "runtimeEligible": true,
+  "gateErrors": []
+}

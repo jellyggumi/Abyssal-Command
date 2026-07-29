@@ -1,0 +1,2492 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-index.py",
+  "generationId": "8bab6c499986308411640900cddf7947c321fd2f22e8b5ad9200f7b001d6ae8e",
+  "artifactStatus": "shipped-runtime-asset-library",
+  "shipped": true,
+  "commitPolicy": {
+    "staging": "explicit-pathspec-only",
+    "broadStagingProhibited": true,
+    "reviewGeneratedBinariesBeforeCommit": true
+  },
+  "sourceFps": 24,
+  "sourceRig": "mixamo-37",
+  "targetRig": "def-humanoid-v1",
+  "motionLineage": {
+    "authority": "derived-retargeted",
+    "sourceRig": "mixamo-37",
+    "sourceLibrary": "assets/motion/bench",
+    "transformation": "retargeted-and-baked"
+  },
+  "actionOrder": [
+    "idle",
+    "move",
+    "run",
+    "hit",
+    "bighit",
+    "attack",
+    "critical",
+    "avoid",
+    "defence",
+    "die",
+    "show"
+  ],
+  "loaderContract": {
+    "strategy": "replace-character-model",
+    "pathScope": "repository-root-local-runtime",
+    "modelContainsMeshSkinAndAnimations": true,
+    "clipLookup": "clipNames[actionId]",
+    "loopingActions": [
+      "idle",
+      "move",
+      "run"
+    ],
+    "inPlaceRootMotion": true,
+    "shipped": true
+  },
+  "promotion": {
+    "targetRoot": "assets/motion/ingame/characters",
+    "requiredBeforeShipping": [
+      "record-redistribution-rights-receipt",
+      "copy-models-to-tracked-runtime-paths",
+      "register-retained-runtime-assets",
+      "regenerate-defense-asset-manifest",
+      "run-browser-playable-verification"
+    ]
+  },
+  "rights": {
+    "source": "user-provided",
+    "runtimeUseDirectedAt": "2026-07-29",
+    "redistributionStatus": "user-attested",
+    "attestedBy": "user",
+    "attestedAt": "2026-07-29",
+    "attestationScope": [
+      "repository-inclusion",
+      "redistribution"
+    ],
+    "attestationEvidence": "User selected '저장소 포함·배포 권한 있음' in the 2026-07-29 promotion gate."
+  },
+  "assets": [
+    {
+      "assetId": "broken-court-monarch-boss",
+      "role": "shadow-duelist",
+      "category": "bosses",
+      "replaces": "assets/mesh/character/broken-court-monarch-boss-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
+      "modelSha256": "eef9382f6a57db5644b58403d66bfb4fbc1beee32516a5b0ba3a5e61cb8de125",
+      "manifest": "assets/motion/ingame/characters/broken-court-monarch-boss/manifest.json",
+      "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review.blend",
+      "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/contact-sheet.png",
+      "clipNames": {
+        "idle": "broken-court-monarch-boss::idle::v01",
+        "move": "broken-court-monarch-boss::move::v01",
+        "run": "broken-court-monarch-boss::run::v01",
+        "hit": "broken-court-monarch-boss::hit::v01",
+        "bighit": "broken-court-monarch-boss::bighit::v01",
+        "attack": "broken-court-monarch-boss::attack::v01",
+        "critical": "broken-court-monarch-boss::critical::v01",
+        "avoid": "broken-court-monarch-boss::avoid::v01",
+        "defence": "broken-court-monarch-boss::defence::v01",
+        "die": "broken-court-monarch-boss::die::v01",
+        "show": "broken-court-monarch-boss::show::v01"
+      },
+      "clips": {
+        "idle": {
+          "action": "idle",
+          "clipName": "broken-court-monarch-boss::idle::v01",
+          "source": "Unarmed Idle.fbx",
+          "sourceSha256": "b4ae5c34ac0dc3923e5c24ab2883dd003c324c39edd86a9a94be3358016f5bfa",
+          "frameStart": 1,
+          "frameEnd": 47,
+          "sourceFps": 24,
+          "durationSeconds": 1.9166666666666667,
+          "sourceRootTravel": {
+            "x": -4.4e-05,
+            "y": 1.5e-05,
+            "z": -6e-06,
+            "total": 4.7e-05
+          },
+          "loop": true,
+          "gain": 0.82
+        },
+        "move": {
+          "action": "move",
+          "clipName": "broken-court-monarch-boss::move::v01",
+          "source": "Walking.fbx",
+          "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+          "frameStart": 1,
+          "frameEnd": 34,
+          "sourceFps": 24,
+          "durationSeconds": 1.375,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": 1.5e-05,
+            "z": 145.083625,
+            "total": 145.083625
+          },
+          "loop": true,
+          "gain": 0.95
+        },
+        "run": {
+          "action": "run",
+          "clipName": "broken-court-monarch-boss::run::v01",
+          "source": "Running.fbx",
+          "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": -1e-06,
+            "y": 0.0,
+            "z": 350.087158,
+            "total": 350.087158
+          },
+          "loop": true,
+          "gain": 1.0
+        },
+        "hit": {
+          "action": "hit",
+          "clipName": "broken-court-monarch-boss::hit::v01",
+          "source": "Standing React Small From Left.fbx",
+          "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+          "frameStart": 1,
+          "frameEnd": 19,
+          "sourceFps": 24,
+          "durationSeconds": 0.75,
+          "sourceRootTravel": {
+            "x": -2e-05,
+            "y": 8e-06,
+            "z": 1.2e-05,
+            "total": 2.5e-05
+          },
+          "loop": false,
+          "gain": 0.9
+        },
+        "bighit": {
+          "action": "bighit",
+          "clipName": "broken-court-monarch-boss::bighit::v01",
+          "source": "Receive Uppercut To The Face.fbx",
+          "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": 0.000427,
+            "y": -3.8e-05,
+            "z": 3.9e-05,
+            "total": 0.000431
+          },
+          "loop": false,
+          "gain": 0.9
+        },
+        "attack": {
+          "action": "attack",
+          "clipName": "broken-court-monarch-boss::attack::v01",
+          "source": "Double Dagger Stab.fbx",
+          "sourceSha256": "8f296334061561b149e34e9b646f0988003704be3444abc6ad113207e328e09a",
+          "frameStart": 1,
+          "frameEnd": 75,
+          "sourceFps": 24,
+          "durationSeconds": 3.0833333333333335,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 1.0
+        },
+        "critical": {
+          "action": "critical",
+          "clipName": "broken-court-monarch-boss::critical::v01",
+          "source": "Jump Attack.fbx",
+          "sourceSha256": "0962cd710cff7362c72ac0646cdcd5fc2e87c00d263f1eb9bd53f01304840274",
+          "frameStart": 1,
+          "frameEnd": 92,
+          "sourceFps": 24,
+          "durationSeconds": 3.7916666666666665,
+          "sourceRootTravel": {
+            "x": 13.448752,
+            "y": -10.138176,
+            "z": 211.311373,
+            "total": 211.98148
+          },
+          "loop": false,
+          "gain": 0.95
+        },
+        "avoid": {
+          "action": "avoid",
+          "clipName": "broken-court-monarch-boss::avoid::v01",
+          "source": "Dodging.fbx",
+          "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6",
+          "frameStart": 1,
+          "frameEnd": 40,
+          "sourceFps": 24,
+          "durationSeconds": 1.625,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 1.0
+        },
+        "defence": {
+          "action": "defence",
+          "clipName": "broken-court-monarch-boss::defence::v01",
+          "source": "Body Block.fbx",
+          "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4",
+          "frameStart": 1,
+          "frameEnd": 83,
+          "sourceFps": 24,
+          "durationSeconds": 3.4166666666666665,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": -1.5e-05,
+            "z": -2e-06,
+            "total": 1.6e-05
+          },
+          "loop": false,
+          "gain": 0.82
+        },
+        "die": {
+          "action": "die",
+          "clipName": "broken-court-monarch-boss::die::v01",
+          "source": "scripts/rig-character-asset-blender.py",
+          "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+          "loop": false,
+          "kind": "authored-fallback"
+        },
+        "show": {
+          "action": "show",
+          "clipName": "broken-court-monarch-boss::show::v01",
+          "source": "Draw Sword 1.fbx",
+          "sourceSha256": "41357b64f6305ee59ea6ef8beaeba7b79b715514034be86e5365ab56e6dd5374",
+          "frameStart": 1,
+          "frameEnd": 13,
+          "sourceFps": 24,
+          "durationSeconds": 0.5,
+          "sourceRootTravel": {
+            "x": 2.373616,
+            "y": -1.28862,
+            "z": -6.690092,
+            "total": 7.214702
+          },
+          "loop": false,
+          "gain": 0.9
+        }
+      },
+      "runtimeEligible": true,
+      "reachability": {
+        "runtimeReachability": "library-only"
+      }
+    },
+    {
+      "assetId": "broken-court-monarch-v04",
+      "role": "regal-void-caster",
+      "category": "bosses",
+      "replaces": "assets/mesh/character/broken-court-monarch-v04-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
+      "modelSha256": "2a27ffea538856381b3b9108d99574f06b1aab42e2742e6a86cd7bfd7682909b",
+      "manifest": "assets/motion/ingame/characters/broken-court-monarch-v04/manifest.json",
+      "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review.blend",
+      "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/contact-sheet.png",
+      "clipNames": {
+        "idle": "broken-court-monarch-v04::idle::v01",
+        "move": "broken-court-monarch-v04::move::v01",
+        "run": "broken-court-monarch-v04::run::v01",
+        "hit": "broken-court-monarch-v04::hit::v01",
+        "bighit": "broken-court-monarch-v04::bighit::v01",
+        "attack": "broken-court-monarch-v04::attack::v01",
+        "critical": "broken-court-monarch-v04::critical::v01",
+        "avoid": "broken-court-monarch-v04::avoid::v01",
+        "defence": "broken-court-monarch-v04::defence::v01",
+        "die": "broken-court-monarch-v04::die::v01",
+        "show": "broken-court-monarch-v04::show::v01"
+      },
+      "clips": {
+        "idle": {
+          "action": "idle",
+          "clipName": "broken-court-monarch-v04::idle::v01",
+          "source": "Standing Idle 03.fbx",
+          "sourceSha256": "a8afdebfb66d01ee0f324a6b360f8fe3b0a7eeda15b9b464ea80bf5ed602cc0c",
+          "frameStart": 1,
+          "frameEnd": 275,
+          "sourceFps": 24,
+          "durationSeconds": 11.416666666666666,
+          "sourceRootTravel": {
+            "x": 1e-06,
+            "y": 0.000153,
+            "z": -7e-06,
+            "total": 0.000153
+          },
+          "loop": true,
+          "gain": 0.7
+        },
+        "move": {
+          "action": "move",
+          "clipName": "broken-court-monarch-v04::move::v01",
+          "source": "Walking.fbx",
+          "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+          "frameStart": 1,
+          "frameEnd": 34,
+          "sourceFps": 24,
+          "durationSeconds": 1.375,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": 1.5e-05,
+            "z": 145.083625,
+            "total": 145.083625
+          },
+          "loop": true,
+          "gain": 0.78
+        },
+        "run": {
+          "action": "run",
+          "clipName": "broken-court-monarch-v04::run::v01",
+          "source": "Running.fbx",
+          "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": -1e-06,
+            "y": 0.0,
+            "z": 350.087158,
+            "total": 350.087158
+          },
+          "loop": true,
+          "gain": 0.82
+        },
+        "hit": {
+          "action": "hit",
+          "clipName": "broken-court-monarch-v04::hit::v01",
+          "source": "Standing React Small From Left.fbx",
+          "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+          "frameStart": 1,
+          "frameEnd": 19,
+          "sourceFps": 24,
+          "durationSeconds": 0.75,
+          "sourceRootTravel": {
+            "x": -2e-05,
+            "y": 8e-06,
+            "z": 1.2e-05,
+            "total": 2.5e-05
+          },
+          "loop": false,
+          "gain": 0.72
+        },
+        "bighit": {
+          "action": "bighit",
+          "clipName": "broken-court-monarch-v04::bighit::v01",
+          "source": "Standing Block React Large.fbx",
+          "sourceSha256": "1c2724849c68cdb804321b3a598b0acfbebc3666deb019b6f2465a6d1db122b4",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "sourceFps": 24,
+          "durationSeconds": 1.3333333333333333,
+          "sourceRootTravel": {
+            "x": 6e-06,
+            "y": -1.5e-05,
+            "z": 3e-06,
+            "total": 1.7e-05
+          },
+          "loop": false,
+          "gain": 0.82
+        },
+        "attack": {
+          "action": "attack",
+          "clipName": "broken-court-monarch-v04::attack::v01",
+          "source": "Standing 2H Magic Attack 01.fbx",
+          "sourceSha256": "4d094e4272a11643c442c4de1be171819f5c2393e98b53898bf8ca10dce74e3d",
+          "frameStart": 1,
+          "frameEnd": 66,
+          "sourceFps": 24,
+          "durationSeconds": 2.7083333333333335,
+          "sourceRootTravel": {
+            "x": 1e-05,
+            "y": 0.000305,
+            "z": 8e-06,
+            "total": 0.000305
+          },
+          "loop": false,
+          "gain": 0.9
+        },
+        "critical": {
+          "action": "critical",
+          "clipName": "broken-court-monarch-v04::critical::v01",
+          "source": "Opening.fbx",
+          "sourceSha256": "68dfd951d03baaf3b640901f1d6e5e5e20928e0033e49c2e56424b61b0003a2a",
+          "frameStart": 1,
+          "frameEnd": 264,
+          "sourceFps": 24,
+          "durationSeconds": 10.958333333333334,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.9
+        },
+        "avoid": {
+          "action": "avoid",
+          "clipName": "broken-court-monarch-v04::avoid::v01",
+          "source": "Change Direction.fbx",
+          "sourceSha256": "09157e82b84fd8a537e8868db2d048977ab87eada12ad4db4321d022b1cfe8da",
+          "frameStart": 1,
+          "frameEnd": 53,
+          "sourceFps": 24,
+          "durationSeconds": 2.1666666666666665,
+          "sourceRootTravel": {
+            "x": 4.270783,
+            "y": -8e-06,
+            "z": 10.199233,
+            "total": 11.057302
+          },
+          "loop": false,
+          "gain": 0.8
+        },
+        "defence": {
+          "action": "defence",
+          "clipName": "broken-court-monarch-v04::defence::v01",
+          "source": "Great Sword Blocking.fbx",
+          "sourceSha256": "67d49c7f32093574aee743acc1feeb6ec64dd392dae5cfe29bdd39432f3e448d",
+          "frameStart": 1,
+          "frameEnd": 13,
+          "sourceFps": 24,
+          "durationSeconds": 0.5,
+          "sourceRootTravel": {
+            "x": -9.71545,
+            "y": -20.980751,
+            "z": -0.098319,
+            "total": 23.121236
+          },
+          "loop": false,
+          "gain": 0.72
+        },
+        "die": {
+          "action": "die",
+          "clipName": "broken-court-monarch-v04::die::v01",
+          "source": "scripts/rig-character-asset-blender.py",
+          "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+          "loop": false,
+          "kind": "authored-fallback"
+        },
+        "show": {
+          "action": "show",
+          "clipName": "broken-court-monarch-v04::show::v01",
+          "source": "Opening.fbx",
+          "sourceSha256": "68dfd951d03baaf3b640901f1d6e5e5e20928e0033e49c2e56424b61b0003a2a",
+          "frameStart": 1,
+          "frameEnd": 264,
+          "sourceFps": 24,
+          "durationSeconds": 10.958333333333334,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.88
+        }
+      },
+      "runtimeEligible": true,
+      "reachability": {
+        "runtimeReachability": "library-only"
+      }
+    },
+    {
+      "assetId": "ember-cohort",
+      "role": "radiant-vanguard",
+      "category": "enemies",
+      "replaces": "assets/mesh/character/ember-cohort-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/ember-cohort/model.glb",
+      "modelSha256": "978aa2c95de63367e748e8a4d30b14c85ed6afbec458b1f03f69211840ea572a",
+      "manifest": "assets/motion/ingame/characters/ember-cohort/manifest.json",
+      "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review.blend",
+      "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review/contact-sheet.png",
+      "clipNames": {
+        "idle": "ember-cohort::idle::v01",
+        "move": "ember-cohort::move::v01",
+        "run": "ember-cohort::run::v01",
+        "hit": "ember-cohort::hit::v01",
+        "bighit": "ember-cohort::bighit::v01",
+        "attack": "ember-cohort::attack::v01",
+        "critical": "ember-cohort::critical::v01",
+        "avoid": "ember-cohort::avoid::v01",
+        "defence": "ember-cohort::defence::v01",
+        "die": "ember-cohort::die::v01",
+        "show": "ember-cohort::show::v01"
+      },
+      "clips": {
+        "idle": {
+          "action": "idle",
+          "clipName": "ember-cohort::idle::v01",
+          "source": "Idle.fbx",
+          "sourceSha256": "004369b7c2963ba673c307ef33fcbcb26f45214a685adb0db559337ed3c4cb2e",
+          "frameStart": 1,
+          "frameEnd": 97,
+          "sourceFps": 24,
+          "durationSeconds": 4.0,
+          "sourceRootTravel": {
+            "x": -4e-06,
+            "y": 0.0,
+            "z": 4e-06,
+            "total": 6e-06
+          },
+          "loop": true,
+          "gain": 0.78
+        },
+        "move": {
+          "action": "move",
+          "clipName": "ember-cohort::move::v01",
+          "source": "Walking.fbx",
+          "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+          "frameStart": 1,
+          "frameEnd": 34,
+          "sourceFps": 24,
+          "durationSeconds": 1.375,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": 1.5e-05,
+            "z": 145.083625,
+            "total": 145.083625
+          },
+          "loop": true,
+          "gain": 0.88
+        },
+        "run": {
+          "action": "run",
+          "clipName": "ember-cohort::run::v01",
+          "source": "Running.fbx",
+          "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": -1e-06,
+            "y": 0.0,
+            "z": 350.087158,
+            "total": 350.087158
+          },
+          "loop": true,
+          "gain": 0.9
+        },
+        "hit": {
+          "action": "hit",
+          "clipName": "ember-cohort::hit::v01",
+          "source": "Standing React Small From Left.fbx",
+          "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+          "frameStart": 1,
+          "frameEnd": 19,
+          "sourceFps": 24,
+          "durationSeconds": 0.75,
+          "sourceRootTravel": {
+            "x": -2e-05,
+            "y": 8e-06,
+            "z": 1.2e-05,
+            "total": 2.5e-05
+          },
+          "loop": false,
+          "gain": 0.82
+        },
+        "bighit": {
+          "action": "bighit",
+          "clipName": "ember-cohort::bighit::v01",
+          "source": "Standing Block React Large.fbx",
+          "sourceSha256": "1c2724849c68cdb804321b3a598b0acfbebc3666deb019b6f2465a6d1db122b4",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "sourceFps": 24,
+          "durationSeconds": 1.3333333333333333,
+          "sourceRootTravel": {
+            "x": 6e-06,
+            "y": -1.5e-05,
+            "z": 3e-06,
+            "total": 1.7e-05
+          },
+          "loop": false,
+          "gain": 0.9
+        },
+        "attack": {
+          "action": "attack",
+          "clipName": "ember-cohort::attack::v01",
+          "source": "Great Sword Slash.fbx",
+          "sourceSha256": "599857c51e22a03e61353193a80c534ba56b5ff1101bcee296f85c984f321124",
+          "frameStart": 1,
+          "frameEnd": 45,
+          "sourceFps": 24,
+          "durationSeconds": 1.8333333333333333,
+          "sourceRootTravel": {
+            "x": -6e-06,
+            "y": 1.5e-05,
+            "z": -2e-06,
+            "total": 1.7e-05
+          },
+          "loop": false,
+          "gain": 0.95
+        },
+        "critical": {
+          "action": "critical",
+          "clipName": "ember-cohort::critical::v01",
+          "source": "Sword And Shield Jump.fbx",
+          "sourceSha256": "d24a825d0ff6ab5838fce3c28007450cc3288bacdb9df3d4451e95a15e1b3923",
+          "frameStart": 1,
+          "frameEnd": 21,
+          "sourceFps": 24,
+          "durationSeconds": 0.8333333333333334,
+          "sourceRootTravel": {
+            "x": -0.0032,
+            "y": 0.0,
+            "z": 242.86956,
+            "total": 242.869561
+          },
+          "loop": false,
+          "gain": 0.92
+        },
+        "avoid": {
+          "action": "avoid",
+          "clipName": "ember-cohort::avoid::v01",
+          "source": "Dodging.fbx",
+          "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6",
+          "frameStart": 1,
+          "frameEnd": 40,
+          "sourceFps": 24,
+          "durationSeconds": 1.625,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.9
+        },
+        "defence": {
+          "action": "defence",
+          "clipName": "ember-cohort::defence::v01",
+          "source": "Sword And Shield Block.fbx",
+          "sourceSha256": "c12c7fef2080af0b2945efa7172de02bc993235cc0de02046c839f15411e06af",
+          "frameStart": 1,
+          "frameEnd": 15,
+          "sourceFps": 24,
+          "durationSeconds": 0.5833333333333334,
+          "sourceRootTravel": {
+            "x": -3.022201,
+            "y": -11.730621,
+            "z": 23.226719,
+            "total": 26.195833
+          },
+          "loop": false,
+          "gain": 0.88
+        },
+        "die": {
+          "action": "die",
+          "clipName": "ember-cohort::die::v01",
+          "source": "scripts/rig-character-asset-blender.py",
+          "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+          "loop": false,
+          "kind": "authored-fallback"
+        },
+        "show": {
+          "action": "show",
+          "clipName": "ember-cohort::show::v01",
+          "source": "Draw Sword 1.fbx",
+          "sourceSha256": "41357b64f6305ee59ea6ef8beaeba7b79b715514034be86e5365ab56e6dd5374",
+          "frameStart": 1,
+          "frameEnd": 13,
+          "sourceFps": 24,
+          "durationSeconds": 0.5,
+          "sourceRootTravel": {
+            "x": 2.373616,
+            "y": -1.28862,
+            "z": -6.690092,
+            "total": 7.214702
+          },
+          "loop": false,
+          "gain": 0.9
+        }
+      },
+      "runtimeEligible": true,
+      "reachability": {
+        "runtimeReachability": "catalog-bound",
+        "entity": {
+          "kind": "companion",
+          "companionId": "ember-cohort"
+        }
+      }
+    },
+    {
+      "assetId": "guard",
+      "role": "ember-greatsword-guard",
+      "category": "enemies",
+      "replaces": "assets/mesh/character/guard-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/guard/model.glb",
+      "modelSha256": "f2b39aba28988ccea8652f9e3363775031542b6d148bec59d482ea18129dced7",
+      "manifest": "assets/motion/ingame/characters/guard/manifest.json",
+      "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review.blend",
+      "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/guard/review/contact-sheet.png",
+      "clipNames": {
+        "idle": "guard::idle::v01",
+        "move": "guard::move::v01",
+        "run": "guard::run::v01",
+        "hit": "guard::hit::v01",
+        "bighit": "guard::bighit::v01",
+        "attack": "guard::attack::v01",
+        "critical": "guard::critical::v01",
+        "avoid": "guard::avoid::v01",
+        "defence": "guard::defence::v01",
+        "die": "guard::die::v01",
+        "show": "guard::show::v01"
+      },
+      "clips": {
+        "idle": {
+          "action": "idle",
+          "clipName": "guard::idle::v01",
+          "source": "Standing Idle 03.fbx",
+          "sourceSha256": "a8afdebfb66d01ee0f324a6b360f8fe3b0a7eeda15b9b464ea80bf5ed602cc0c",
+          "frameStart": 1,
+          "frameEnd": 275,
+          "sourceFps": 24,
+          "durationSeconds": 11.416666666666666,
+          "sourceRootTravel": {
+            "x": 1e-06,
+            "y": 0.000153,
+            "z": -7e-06,
+            "total": 0.000153
+          },
+          "loop": true,
+          "gain": 0.8
+        },
+        "move": {
+          "action": "move",
+          "clipName": "guard::move::v01",
+          "source": "Walking.fbx",
+          "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+          "frameStart": 1,
+          "frameEnd": 34,
+          "sourceFps": 24,
+          "durationSeconds": 1.375,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": 1.5e-05,
+            "z": 145.083625,
+            "total": 145.083625
+          },
+          "loop": true,
+          "gain": 0.9
+        },
+        "run": {
+          "action": "run",
+          "clipName": "guard::run::v01",
+          "source": "Running.fbx",
+          "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": -1e-06,
+            "y": 0.0,
+            "z": 350.087158,
+            "total": 350.087158
+          },
+          "loop": true,
+          "gain": 0.92
+        },
+        "hit": {
+          "action": "hit",
+          "clipName": "guard::hit::v01",
+          "source": "Standing React Small From Left.fbx",
+          "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+          "frameStart": 1,
+          "frameEnd": 19,
+          "sourceFps": 24,
+          "durationSeconds": 0.75,
+          "sourceRootTravel": {
+            "x": -2e-05,
+            "y": 8e-06,
+            "z": 1.2e-05,
+            "total": 2.5e-05
+          },
+          "loop": false,
+          "gain": 0.84
+        },
+        "bighit": {
+          "action": "bighit",
+          "clipName": "guard::bighit::v01",
+          "source": "Receive Uppercut To The Face.fbx",
+          "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": 0.000427,
+            "y": -3.8e-05,
+            "z": 3.9e-05,
+            "total": 0.000431
+          },
+          "loop": false,
+          "gain": 0.88
+        },
+        "attack": {
+          "action": "attack",
+          "clipName": "guard::attack::v01",
+          "source": "Great Sword Slash.fbx",
+          "sourceSha256": "599857c51e22a03e61353193a80c534ba56b5ff1101bcee296f85c984f321124",
+          "frameStart": 1,
+          "frameEnd": 45,
+          "sourceFps": 24,
+          "durationSeconds": 1.8333333333333333,
+          "sourceRootTravel": {
+            "x": -6e-06,
+            "y": 1.5e-05,
+            "z": -2e-06,
+            "total": 1.7e-05
+          },
+          "loop": false,
+          "gain": 0.95
+        },
+        "critical": {
+          "action": "critical",
+          "clipName": "guard::critical::v01",
+          "source": "Standing Torch Jump.fbx",
+          "sourceSha256": "75a3520ceffa4bdeec1698c990d5694b089ecb23c1aab964844e095e104aef8e",
+          "frameStart": 1,
+          "frameEnd": 42,
+          "sourceFps": 24,
+          "durationSeconds": 1.7083333333333333,
+          "sourceRootTravel": {
+            "x": 1.3e-05,
+            "y": -1.5e-05,
+            "z": 4.7e-05,
+            "total": 5.1e-05
+          },
+          "loop": false,
+          "gain": 0.95
+        },
+        "avoid": {
+          "action": "avoid",
+          "clipName": "guard::avoid::v01",
+          "source": "Dodging.fbx",
+          "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6",
+          "frameStart": 1,
+          "frameEnd": 40,
+          "sourceFps": 24,
+          "durationSeconds": 1.625,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.88
+        },
+        "defence": {
+          "action": "defence",
+          "clipName": "guard::defence::v01",
+          "source": "Great Sword Blocking.fbx",
+          "sourceSha256": "67d49c7f32093574aee743acc1feeb6ec64dd392dae5cfe29bdd39432f3e448d",
+          "frameStart": 1,
+          "frameEnd": 13,
+          "sourceFps": 24,
+          "durationSeconds": 0.5,
+          "sourceRootTravel": {
+            "x": -9.71545,
+            "y": -20.980751,
+            "z": -0.098319,
+            "total": 23.121236
+          },
+          "loop": false,
+          "gain": 0.9
+        },
+        "die": {
+          "action": "die",
+          "clipName": "guard::die::v01",
+          "source": "scripts/rig-character-asset-blender.py",
+          "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+          "loop": false,
+          "kind": "authored-fallback"
+        },
+        "show": {
+          "action": "show",
+          "clipName": "guard::show::v01",
+          "source": "Draw Sword 1.fbx",
+          "sourceSha256": "41357b64f6305ee59ea6ef8beaeba7b79b715514034be86e5365ab56e6dd5374",
+          "frameStart": 1,
+          "frameEnd": 13,
+          "sourceFps": 24,
+          "durationSeconds": 0.5,
+          "sourceRootTravel": {
+            "x": 2.373616,
+            "y": -1.28862,
+            "z": -6.690092,
+            "total": 7.214702
+          },
+          "loop": false,
+          "gain": 0.92
+        }
+      },
+      "runtimeEligible": true,
+      "reachability": {
+        "runtimeReachability": "library-only"
+      }
+    },
+    {
+      "assetId": "human-command-boss",
+      "role": "stone-command-colossus",
+      "category": "bosses",
+      "replaces": "assets/mesh/character/human-command-boss-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/human-command-boss/model.glb",
+      "modelSha256": "530ea5967ac431f8c5a62270c6673d90156df749b07924b15ce7908bc88d9939",
+      "manifest": "assets/motion/ingame/characters/human-command-boss/manifest.json",
+      "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/review.blend",
+      "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/review/contact-sheet.png",
+      "clipNames": {
+        "idle": "human-command-boss::idle::v01",
+        "move": "human-command-boss::move::v01",
+        "run": "human-command-boss::run::v01",
+        "hit": "human-command-boss::hit::v01",
+        "bighit": "human-command-boss::bighit::v01",
+        "attack": "human-command-boss::attack::v01",
+        "critical": "human-command-boss::critical::v01",
+        "avoid": "human-command-boss::avoid::v01",
+        "defence": "human-command-boss::defence::v01",
+        "die": "human-command-boss::die::v01",
+        "show": "human-command-boss::show::v01"
+      },
+      "clips": {
+        "idle": {
+          "action": "idle",
+          "clipName": "human-command-boss::idle::v01",
+          "source": "Idle.fbx",
+          "sourceSha256": "004369b7c2963ba673c307ef33fcbcb26f45214a685adb0db559337ed3c4cb2e",
+          "frameStart": 1,
+          "frameEnd": 97,
+          "sourceFps": 24,
+          "durationSeconds": 4.0,
+          "sourceRootTravel": {
+            "x": -4e-06,
+            "y": 0.0,
+            "z": 4e-06,
+            "total": 6e-06
+          },
+          "loop": true,
+          "gain": 0.58
+        },
+        "move": {
+          "action": "move",
+          "clipName": "human-command-boss::move::v01",
+          "source": "Catwalk Walk Forward HighKnees.fbx",
+          "sourceSha256": "2f2c28bcd3aa1f56d96a26c0ebb0cde76e9b0eced1a1bfe7b9f7f72459a74b47",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": 0.025248,
+            "y": 3.1e-05,
+            "z": 119.008526,
+            "total": 119.008528
+          },
+          "loop": true,
+          "gain": 0.64
+        },
+        "run": {
+          "action": "run",
+          "clipName": "human-command-boss::run::v01",
+          "source": "Running.fbx",
+          "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": -1e-06,
+            "y": 0.0,
+            "z": 350.087158,
+            "total": 350.087158
+          },
+          "loop": true,
+          "gain": 0.68
+        },
+        "hit": {
+          "action": "hit",
+          "clipName": "human-command-boss::hit::v01",
+          "source": "Standing React Small From Left.fbx",
+          "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+          "frameStart": 1,
+          "frameEnd": 19,
+          "sourceFps": 24,
+          "durationSeconds": 0.75,
+          "sourceRootTravel": {
+            "x": -2e-05,
+            "y": 8e-06,
+            "z": 1.2e-05,
+            "total": 2.5e-05
+          },
+          "loop": false,
+          "gain": 0.6
+        },
+        "bighit": {
+          "action": "bighit",
+          "clipName": "human-command-boss::bighit::v01",
+          "source": "Receive Uppercut To The Face.fbx",
+          "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": 0.000427,
+            "y": -3.8e-05,
+            "z": 3.9e-05,
+            "total": 0.000431
+          },
+          "loop": false,
+          "gain": 0.7
+        },
+        "attack": {
+          "action": "attack",
+          "clipName": "human-command-boss::attack::v01",
+          "source": "Punching Bag.fbx",
+          "sourceSha256": "51a60ea3fd66916141e99d399337e4ab46ee9eff33de992800b0a00f4afd3bd9",
+          "frameStart": 1,
+          "frameEnd": 78,
+          "sourceFps": 24,
+          "durationSeconds": 3.2083333333333335,
+          "sourceRootTravel": {
+            "x": -5e-06,
+            "y": 0.0,
+            "z": 3e-06,
+            "total": 6e-06
+          },
+          "loop": false,
+          "gain": 0.78
+        },
+        "critical": {
+          "action": "critical",
+          "clipName": "human-command-boss::critical::v01",
+          "source": "Body Block.fbx",
+          "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4",
+          "frameStart": 1,
+          "frameEnd": 83,
+          "sourceFps": 24,
+          "durationSeconds": 3.4166666666666665,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": -1.5e-05,
+            "z": -2e-06,
+            "total": 1.6e-05
+          },
+          "loop": false,
+          "gain": 0.82
+        },
+        "avoid": {
+          "action": "avoid",
+          "clipName": "human-command-boss::avoid::v01",
+          "source": "Change Direction.fbx",
+          "sourceSha256": "09157e82b84fd8a537e8868db2d048977ab87eada12ad4db4321d022b1cfe8da",
+          "frameStart": 1,
+          "frameEnd": 53,
+          "sourceFps": 24,
+          "durationSeconds": 2.1666666666666665,
+          "sourceRootTravel": {
+            "x": 4.270783,
+            "y": -8e-06,
+            "z": 10.199233,
+            "total": 11.057302
+          },
+          "loop": false,
+          "gain": 0.62
+        },
+        "defence": {
+          "action": "defence",
+          "clipName": "human-command-boss::defence::v01",
+          "source": "Block With Rifle.fbx",
+          "sourceSha256": "3a22edc16d77b5920c670136abac8c565b6aafa0ea697eb9aa9ffa407f28634a",
+          "frameStart": 1,
+          "frameEnd": 40,
+          "sourceFps": 24,
+          "durationSeconds": 1.625,
+          "sourceRootTravel": {
+            "x": 0.000372,
+            "y": 0.0,
+            "z": -0.000412,
+            "total": 0.000555
+          },
+          "loop": false,
+          "gain": 0.7
+        },
+        "die": {
+          "action": "die",
+          "clipName": "human-command-boss::die::v01",
+          "source": "scripts/rig-character-asset-blender.py",
+          "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+          "loop": false,
+          "kind": "authored-fallback"
+        },
+        "show": {
+          "action": "show",
+          "clipName": "human-command-boss::show::v01",
+          "source": "Opening.fbx",
+          "sourceSha256": "68dfd951d03baaf3b640901f1d6e5e5e20928e0033e49c2e56424b61b0003a2a",
+          "frameStart": 1,
+          "frameEnd": 264,
+          "sourceFps": 24,
+          "durationSeconds": 10.958333333333334,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.76
+        }
+      },
+      "runtimeEligible": true,
+      "reachability": {
+        "runtimeReachability": "catalog-bound",
+        "entity": {
+          "id": "commander"
+        }
+      }
+    },
+    {
+      "assetId": "lantern-reaver",
+      "role": "abyssal-reaper-caster",
+      "category": "enemies",
+      "replaces": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/lantern-reaver/model.glb",
+      "modelSha256": "04adec440c5a4aff4746e4536bdc65eaa83eced65fe6f53472a34e659056ef84",
+      "manifest": "assets/motion/ingame/characters/lantern-reaver/manifest.json",
+      "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review.blend",
+      "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review/contact-sheet.png",
+      "clipNames": {
+        "idle": "lantern-reaver::idle::v01",
+        "move": "lantern-reaver::move::v01",
+        "run": "lantern-reaver::run::v01",
+        "hit": "lantern-reaver::hit::v01",
+        "bighit": "lantern-reaver::bighit::v01",
+        "attack": "lantern-reaver::attack::v01",
+        "critical": "lantern-reaver::critical::v01",
+        "avoid": "lantern-reaver::avoid::v01",
+        "defence": "lantern-reaver::defence::v01",
+        "die": "lantern-reaver::die::v01",
+        "show": "lantern-reaver::show::v01"
+      },
+      "clips": {
+        "idle": {
+          "action": "idle",
+          "clipName": "lantern-reaver::idle::v01",
+          "source": "Standing Idle 03.fbx",
+          "sourceSha256": "a8afdebfb66d01ee0f324a6b360f8fe3b0a7eeda15b9b464ea80bf5ed602cc0c",
+          "frameStart": 1,
+          "frameEnd": 275,
+          "sourceFps": 24,
+          "durationSeconds": 11.416666666666666,
+          "sourceRootTravel": {
+            "x": 1e-06,
+            "y": 0.000153,
+            "z": -7e-06,
+            "total": 0.000153
+          },
+          "loop": true,
+          "gain": 0.68
+        },
+        "move": {
+          "action": "move",
+          "clipName": "lantern-reaver::move::v01",
+          "source": "Walking.fbx",
+          "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+          "frameStart": 1,
+          "frameEnd": 34,
+          "sourceFps": 24,
+          "durationSeconds": 1.375,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": 1.5e-05,
+            "z": 145.083625,
+            "total": 145.083625
+          },
+          "loop": true,
+          "gain": 0.76
+        },
+        "run": {
+          "action": "run",
+          "clipName": "lantern-reaver::run::v01",
+          "source": "Running.fbx",
+          "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": -1e-06,
+            "y": 0.0,
+            "z": 350.087158,
+            "total": 350.087158
+          },
+          "loop": true,
+          "gain": 0.8
+        },
+        "hit": {
+          "action": "hit",
+          "clipName": "lantern-reaver::hit::v01",
+          "source": "Standing React Small From Left.fbx",
+          "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+          "frameStart": 1,
+          "frameEnd": 19,
+          "sourceFps": 24,
+          "durationSeconds": 0.75,
+          "sourceRootTravel": {
+            "x": -2e-05,
+            "y": 8e-06,
+            "z": 1.2e-05,
+            "total": 2.5e-05
+          },
+          "loop": false,
+          "gain": 0.72
+        },
+        "bighit": {
+          "action": "bighit",
+          "clipName": "lantern-reaver::bighit::v01",
+          "source": "Standing Block React Large.fbx",
+          "sourceSha256": "1c2724849c68cdb804321b3a598b0acfbebc3666deb019b6f2465a6d1db122b4",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "sourceFps": 24,
+          "durationSeconds": 1.3333333333333333,
+          "sourceRootTravel": {
+            "x": 6e-06,
+            "y": -1.5e-05,
+            "z": 3e-06,
+            "total": 1.7e-05
+          },
+          "loop": false,
+          "gain": 0.8
+        },
+        "attack": {
+          "action": "attack",
+          "clipName": "lantern-reaver::attack::v01",
+          "source": "Standing 2H Magic Attack 01.fbx",
+          "sourceSha256": "4d094e4272a11643c442c4de1be171819f5c2393e98b53898bf8ca10dce74e3d",
+          "frameStart": 1,
+          "frameEnd": 66,
+          "sourceFps": 24,
+          "durationSeconds": 2.7083333333333335,
+          "sourceRootTravel": {
+            "x": 1e-05,
+            "y": 0.000305,
+            "z": 8e-06,
+            "total": 0.000305
+          },
+          "loop": false,
+          "gain": 0.86
+        },
+        "critical": {
+          "action": "critical",
+          "clipName": "lantern-reaver::critical::v01",
+          "source": "Shooting Arrow.fbx",
+          "sourceSha256": "16ba3828644cbda198ba8b70e5bd7a3f9b95f2050ba12cc9a79bcb0cf1e16926",
+          "frameStart": 1,
+          "frameEnd": 121,
+          "sourceFps": 24,
+          "durationSeconds": 5.0,
+          "sourceRootTravel": {
+            "x": 3e-06,
+            "y": -8e-06,
+            "z": 0.0,
+            "total": 8e-06
+          },
+          "loop": false,
+          "gain": 0.88
+        },
+        "avoid": {
+          "action": "avoid",
+          "clipName": "lantern-reaver::avoid::v01",
+          "source": "Dodging.fbx",
+          "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6",
+          "frameStart": 1,
+          "frameEnd": 40,
+          "sourceFps": 24,
+          "durationSeconds": 1.625,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.78
+        },
+        "defence": {
+          "action": "defence",
+          "clipName": "lantern-reaver::defence::v01",
+          "source": "Great Sword Blocking.fbx",
+          "sourceSha256": "67d49c7f32093574aee743acc1feeb6ec64dd392dae5cfe29bdd39432f3e448d",
+          "frameStart": 1,
+          "frameEnd": 13,
+          "sourceFps": 24,
+          "durationSeconds": 0.5,
+          "sourceRootTravel": {
+            "x": -9.71545,
+            "y": -20.980751,
+            "z": -0.098319,
+            "total": 23.121236
+          },
+          "loop": false,
+          "gain": 0.78
+        },
+        "die": {
+          "action": "die",
+          "clipName": "lantern-reaver::die::v01",
+          "source": "scripts/rig-character-asset-blender.py",
+          "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+          "loop": false,
+          "kind": "authored-fallback"
+        },
+        "show": {
+          "action": "show",
+          "clipName": "lantern-reaver::show::v01",
+          "source": "Opening.fbx",
+          "sourceSha256": "68dfd951d03baaf3b640901f1d6e5e5e20928e0033e49c2e56424b61b0003a2a",
+          "frameStart": 1,
+          "frameEnd": 264,
+          "sourceFps": 24,
+          "durationSeconds": 10.958333333333334,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.86
+        }
+      },
+      "runtimeEligible": true,
+      "reachability": {
+        "runtimeReachability": "catalog-bound",
+        "entity": {
+          "kind": "companion",
+          "companionId": "lantern-reaver"
+        }
+      }
+    },
+    {
+      "assetId": "possessed",
+      "role": "ranged-possessed-caster",
+      "category": "enemies",
+      "replaces": "assets/mesh/enemy/possessed/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/possessed/model.glb",
+      "modelSha256": "8d1f1b214eeb89156ed5f4913ff2e994b532d7c7d4e710d72231924f3b7f6e5e",
+      "manifest": "assets/motion/ingame/characters/possessed/manifest.json",
+      "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review.blend",
+      "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/possessed/review/contact-sheet.png",
+      "clipNames": {
+        "idle": "possessed::idle::v01",
+        "move": "possessed::move::v01",
+        "run": "possessed::run::v01",
+        "hit": "possessed::hit::v01",
+        "bighit": "possessed::bighit::v01",
+        "attack": "possessed::attack::v01",
+        "critical": "possessed::critical::v01",
+        "avoid": "possessed::avoid::v01",
+        "defence": "possessed::defence::v01",
+        "die": "possessed::die::v01",
+        "show": "possessed::show::v01"
+      },
+      "clips": {
+        "idle": {
+          "action": "idle",
+          "clipName": "possessed::idle::v01",
+          "source": "Standing Idle 03.fbx",
+          "sourceSha256": "a8afdebfb66d01ee0f324a6b360f8fe3b0a7eeda15b9b464ea80bf5ed602cc0c",
+          "frameStart": 1,
+          "frameEnd": 275,
+          "sourceFps": 24,
+          "durationSeconds": 11.416666666666666,
+          "sourceRootTravel": {
+            "x": 1e-06,
+            "y": 0.000153,
+            "z": -7e-06,
+            "total": 0.000153
+          },
+          "loop": true,
+          "gain": 0.66
+        },
+        "move": {
+          "action": "move",
+          "clipName": "possessed::move::v01",
+          "source": "Walking.fbx",
+          "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+          "frameStart": 1,
+          "frameEnd": 34,
+          "sourceFps": 24,
+          "durationSeconds": 1.375,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": 1.5e-05,
+            "z": 145.083625,
+            "total": 145.083625
+          },
+          "loop": true,
+          "gain": 0.76
+        },
+        "run": {
+          "action": "run",
+          "clipName": "possessed::run::v01",
+          "source": "Running.fbx",
+          "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": -1e-06,
+            "y": 0.0,
+            "z": 350.087158,
+            "total": 350.087158
+          },
+          "loop": true,
+          "gain": 0.8
+        },
+        "hit": {
+          "action": "hit",
+          "clipName": "possessed::hit::v01",
+          "source": "Standing React Small From Left.fbx",
+          "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+          "frameStart": 1,
+          "frameEnd": 19,
+          "sourceFps": 24,
+          "durationSeconds": 0.75,
+          "sourceRootTravel": {
+            "x": -2e-05,
+            "y": 8e-06,
+            "z": 1.2e-05,
+            "total": 2.5e-05
+          },
+          "loop": false,
+          "gain": 0.74
+        },
+        "bighit": {
+          "action": "bighit",
+          "clipName": "possessed::bighit::v01",
+          "source": "Receive Uppercut To The Face.fbx",
+          "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": 0.000427,
+            "y": -3.8e-05,
+            "z": 3.9e-05,
+            "total": 0.000431
+          },
+          "loop": false,
+          "gain": 0.8
+        },
+        "attack": {
+          "action": "attack",
+          "clipName": "possessed::attack::v01",
+          "source": "Standing 2H Magic Attack 01.fbx",
+          "sourceSha256": "4d094e4272a11643c442c4de1be171819f5c2393e98b53898bf8ca10dce74e3d",
+          "frameStart": 1,
+          "frameEnd": 66,
+          "sourceFps": 24,
+          "durationSeconds": 2.7083333333333335,
+          "sourceRootTravel": {
+            "x": 1e-05,
+            "y": 0.000305,
+            "z": 8e-06,
+            "total": 0.000305
+          },
+          "loop": false,
+          "gain": 0.9
+        },
+        "critical": {
+          "action": "critical",
+          "clipName": "possessed::critical::v01",
+          "source": "Shooting Arrow.fbx",
+          "sourceSha256": "16ba3828644cbda198ba8b70e5bd7a3f9b95f2050ba12cc9a79bcb0cf1e16926",
+          "frameStart": 1,
+          "frameEnd": 121,
+          "sourceFps": 24,
+          "durationSeconds": 5.0,
+          "sourceRootTravel": {
+            "x": 3e-06,
+            "y": -8e-06,
+            "z": 0.0,
+            "total": 8e-06
+          },
+          "loop": false,
+          "gain": 0.88
+        },
+        "avoid": {
+          "action": "avoid",
+          "clipName": "possessed::avoid::v01",
+          "source": "Dodging.fbx",
+          "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6",
+          "frameStart": 1,
+          "frameEnd": 40,
+          "sourceFps": 24,
+          "durationSeconds": 1.625,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.82
+        },
+        "defence": {
+          "action": "defence",
+          "clipName": "possessed::defence::v01",
+          "source": "Body Block.fbx",
+          "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4",
+          "frameStart": 1,
+          "frameEnd": 83,
+          "sourceFps": 24,
+          "durationSeconds": 3.4166666666666665,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": -1.5e-05,
+            "z": -2e-06,
+            "total": 1.6e-05
+          },
+          "loop": false,
+          "gain": 0.75
+        },
+        "die": {
+          "action": "die",
+          "clipName": "possessed::die::v01",
+          "source": "scripts/rig-character-asset-blender.py",
+          "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+          "loop": false,
+          "kind": "authored-fallback"
+        },
+        "show": {
+          "action": "show",
+          "clipName": "possessed::show::v01",
+          "source": "Opening.fbx",
+          "sourceSha256": "68dfd951d03baaf3b640901f1d6e5e5e20928e0033e49c2e56424b61b0003a2a",
+          "frameStart": 1,
+          "frameEnd": 264,
+          "sourceFps": 24,
+          "durationSeconds": 10.958333333333334,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.84
+        }
+      },
+      "runtimeEligible": true,
+      "reachability": {
+        "runtimeReachability": "catalog-bound",
+        "entity": {
+          "kind": "ranged"
+        }
+      }
+    },
+    {
+      "assetId": "scout",
+      "role": "rush-scout",
+      "category": "enemies",
+      "replaces": "assets/mesh/enemy/scout/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/scout/model.glb",
+      "modelSha256": "bf925108ee922eeca4773f9282ee772c71648f2b27460c76c12970111e4d44b8",
+      "manifest": "assets/motion/ingame/characters/scout/manifest.json",
+      "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review.blend",
+      "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/contact-sheet.png",
+      "clipNames": {
+        "idle": "scout::idle::v01",
+        "move": "scout::move::v01",
+        "run": "scout::run::v01",
+        "hit": "scout::hit::v01",
+        "bighit": "scout::bighit::v01",
+        "attack": "scout::attack::v01",
+        "critical": "scout::critical::v01",
+        "avoid": "scout::avoid::v01",
+        "defence": "scout::defence::v01",
+        "die": "scout::die::v01",
+        "show": "scout::show::v01"
+      },
+      "clips": {
+        "idle": {
+          "action": "idle",
+          "clipName": "scout::idle::v01",
+          "source": "Unarmed Idle.fbx",
+          "sourceSha256": "b4ae5c34ac0dc3923e5c24ab2883dd003c324c39edd86a9a94be3358016f5bfa",
+          "frameStart": 1,
+          "frameEnd": 47,
+          "sourceFps": 24,
+          "durationSeconds": 1.9166666666666667,
+          "sourceRootTravel": {
+            "x": -4.4e-05,
+            "y": 1.5e-05,
+            "z": -6e-06,
+            "total": 4.7e-05
+          },
+          "loop": true,
+          "gain": 0.8
+        },
+        "move": {
+          "action": "move",
+          "clipName": "scout::move::v01",
+          "source": "Walking.fbx",
+          "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+          "frameStart": 1,
+          "frameEnd": 34,
+          "sourceFps": 24,
+          "durationSeconds": 1.375,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": 1.5e-05,
+            "z": 145.083625,
+            "total": 145.083625
+          },
+          "loop": true,
+          "gain": 0.94
+        },
+        "run": {
+          "action": "run",
+          "clipName": "scout::run::v01",
+          "source": "Running.fbx",
+          "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": -1e-06,
+            "y": 0.0,
+            "z": 350.087158,
+            "total": 350.087158
+          },
+          "loop": true,
+          "gain": 1.0
+        },
+        "hit": {
+          "action": "hit",
+          "clipName": "scout::hit::v01",
+          "source": "Standing React Small From Left.fbx",
+          "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+          "frameStart": 1,
+          "frameEnd": 19,
+          "sourceFps": 24,
+          "durationSeconds": 0.75,
+          "sourceRootTravel": {
+            "x": -2e-05,
+            "y": 8e-06,
+            "z": 1.2e-05,
+            "total": 2.5e-05
+          },
+          "loop": false,
+          "gain": 0.86
+        },
+        "bighit": {
+          "action": "bighit",
+          "clipName": "scout::bighit::v01",
+          "source": "Receive Uppercut To The Face.fbx",
+          "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": 0.000427,
+            "y": -3.8e-05,
+            "z": 3.9e-05,
+            "total": 0.000431
+          },
+          "loop": false,
+          "gain": 0.92
+        },
+        "attack": {
+          "action": "attack",
+          "clipName": "scout::attack::v01",
+          "source": "Punching.fbx",
+          "sourceSha256": "c8dcecaf2d21fe449f20b74076ccb0e67534aca8dd909d4065deddc3faf48466",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.96
+        },
+        "critical": {
+          "action": "critical",
+          "clipName": "scout::critical::v01",
+          "source": "Drop Kick.fbx",
+          "sourceSha256": "13a14710baa09b067777d7e9daf53111d45196b435893e94a99956eece04f8b0",
+          "frameStart": 1,
+          "frameEnd": 71,
+          "sourceFps": 24,
+          "durationSeconds": 2.9166666666666665,
+          "sourceRootTravel": {
+            "x": 69.30455,
+            "y": -6.149719,
+            "z": -0.131122,
+            "total": 69.576985
+          },
+          "loop": false,
+          "gain": 0.95
+        },
+        "avoid": {
+          "action": "avoid",
+          "clipName": "scout::avoid::v01",
+          "source": "Dodging.fbx",
+          "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6",
+          "frameStart": 1,
+          "frameEnd": 40,
+          "sourceFps": 24,
+          "durationSeconds": 1.625,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 1.0
+        },
+        "defence": {
+          "action": "defence",
+          "clipName": "scout::defence::v01",
+          "source": "Body Block.fbx",
+          "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4",
+          "frameStart": 1,
+          "frameEnd": 83,
+          "sourceFps": 24,
+          "durationSeconds": 3.4166666666666665,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": -1.5e-05,
+            "z": -2e-06,
+            "total": 1.6e-05
+          },
+          "loop": false,
+          "gain": 0.84
+        },
+        "die": {
+          "action": "die",
+          "clipName": "scout::die::v01",
+          "source": "scripts/rig-character-asset-blender.py",
+          "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+          "loop": false,
+          "kind": "authored-fallback"
+        },
+        "show": {
+          "action": "show",
+          "clipName": "scout::show::v01",
+          "source": "Look Over Shoulder.fbx",
+          "sourceSha256": "f6137f7e0fa6b28d7cec8c71a7be33ba832cdbfe5e24209878f14bfb75d19acc",
+          "frameStart": 1,
+          "frameEnd": 91,
+          "sourceFps": 24,
+          "durationSeconds": 3.75,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.9
+        }
+      },
+      "runtimeEligible": true,
+      "reachability": {
+        "runtimeReachability": "catalog-bound",
+        "entity": {
+          "kind": "rusher"
+        }
+      }
+    },
+    {
+      "assetId": "shade",
+      "role": "void-flanker",
+      "category": "enemies",
+      "replaces": "assets/mesh/enemy/shade/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/shade/model.glb",
+      "modelSha256": "26aa14c5b856b58b389e8d05971878bb1041786b0b6d114fbbab8f32f868c1a9",
+      "manifest": "assets/motion/ingame/characters/shade/manifest.json",
+      "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review.blend",
+      "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/shade/review/contact-sheet.png",
+      "clipNames": {
+        "idle": "shade::idle::v01",
+        "move": "shade::move::v01",
+        "run": "shade::run::v01",
+        "hit": "shade::hit::v01",
+        "bighit": "shade::bighit::v01",
+        "attack": "shade::attack::v01",
+        "critical": "shade::critical::v01",
+        "avoid": "shade::avoid::v01",
+        "defence": "shade::defence::v01",
+        "die": "shade::die::v01",
+        "show": "shade::show::v01"
+      },
+      "clips": {
+        "idle": {
+          "action": "idle",
+          "clipName": "shade::idle::v01",
+          "source": "Unarmed Idle.fbx",
+          "sourceSha256": "b4ae5c34ac0dc3923e5c24ab2883dd003c324c39edd86a9a94be3358016f5bfa",
+          "frameStart": 1,
+          "frameEnd": 47,
+          "sourceFps": 24,
+          "durationSeconds": 1.9166666666666667,
+          "sourceRootTravel": {
+            "x": -4.4e-05,
+            "y": 1.5e-05,
+            "z": -6e-06,
+            "total": 4.7e-05
+          },
+          "loop": true,
+          "gain": 0.74
+        },
+        "move": {
+          "action": "move",
+          "clipName": "shade::move::v01",
+          "source": "Jog In Circle.fbx",
+          "sourceSha256": "2bd85900037b900bb83b692b7baf8215b0de56bea0c2ce9bbcad6c68382ec6b0",
+          "frameStart": 1,
+          "frameEnd": 143,
+          "sourceFps": 24,
+          "durationSeconds": 5.916666666666667,
+          "sourceRootTravel": {
+            "x": -6e-06,
+            "y": 0.0,
+            "z": 7e-06,
+            "total": 9e-06
+          },
+          "loop": true,
+          "gain": 0.86
+        },
+        "run": {
+          "action": "run",
+          "clipName": "shade::run::v01",
+          "source": "Running.fbx",
+          "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": -1e-06,
+            "y": 0.0,
+            "z": 350.087158,
+            "total": 350.087158
+          },
+          "loop": true,
+          "gain": 0.94
+        },
+        "hit": {
+          "action": "hit",
+          "clipName": "shade::hit::v01",
+          "source": "Standing React Small From Left.fbx",
+          "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+          "frameStart": 1,
+          "frameEnd": 19,
+          "sourceFps": 24,
+          "durationSeconds": 0.75,
+          "sourceRootTravel": {
+            "x": -2e-05,
+            "y": 8e-06,
+            "z": 1.2e-05,
+            "total": 2.5e-05
+          },
+          "loop": false,
+          "gain": 0.78
+        },
+        "bighit": {
+          "action": "bighit",
+          "clipName": "shade::bighit::v01",
+          "source": "Standing Block React Large.fbx",
+          "sourceSha256": "1c2724849c68cdb804321b3a598b0acfbebc3666deb019b6f2465a6d1db122b4",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "sourceFps": 24,
+          "durationSeconds": 1.3333333333333333,
+          "sourceRootTravel": {
+            "x": 6e-06,
+            "y": -1.5e-05,
+            "z": 3e-06,
+            "total": 1.7e-05
+          },
+          "loop": false,
+          "gain": 0.86
+        },
+        "attack": {
+          "action": "attack",
+          "clipName": "shade::attack::v01",
+          "source": "Double Dagger Stab.fbx",
+          "sourceSha256": "8f296334061561b149e34e9b646f0988003704be3444abc6ad113207e328e09a",
+          "frameStart": 1,
+          "frameEnd": 75,
+          "sourceFps": 24,
+          "durationSeconds": 3.0833333333333335,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.98
+        },
+        "critical": {
+          "action": "critical",
+          "clipName": "shade::critical::v01",
+          "source": "Jump Attack.fbx",
+          "sourceSha256": "0962cd710cff7362c72ac0646cdcd5fc2e87c00d263f1eb9bd53f01304840274",
+          "frameStart": 1,
+          "frameEnd": 92,
+          "sourceFps": 24,
+          "durationSeconds": 3.7916666666666665,
+          "sourceRootTravel": {
+            "x": 13.448752,
+            "y": -10.138176,
+            "z": 211.311373,
+            "total": 211.98148
+          },
+          "loop": false,
+          "gain": 0.96
+        },
+        "avoid": {
+          "action": "avoid",
+          "clipName": "shade::avoid::v01",
+          "source": "Change Direction.fbx",
+          "sourceSha256": "09157e82b84fd8a537e8868db2d048977ab87eada12ad4db4321d022b1cfe8da",
+          "frameStart": 1,
+          "frameEnd": 53,
+          "sourceFps": 24,
+          "durationSeconds": 2.1666666666666665,
+          "sourceRootTravel": {
+            "x": 4.270783,
+            "y": -8e-06,
+            "z": 10.199233,
+            "total": 11.057302
+          },
+          "loop": false,
+          "gain": 0.94
+        },
+        "defence": {
+          "action": "defence",
+          "clipName": "shade::defence::v01",
+          "source": "Body Block.fbx",
+          "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4",
+          "frameStart": 1,
+          "frameEnd": 83,
+          "sourceFps": 24,
+          "durationSeconds": 3.4166666666666665,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": -1.5e-05,
+            "z": -2e-06,
+            "total": 1.6e-05
+          },
+          "loop": false,
+          "gain": 0.78
+        },
+        "die": {
+          "action": "die",
+          "clipName": "shade::die::v01",
+          "source": "scripts/rig-character-asset-blender.py",
+          "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+          "loop": false,
+          "kind": "authored-fallback"
+        },
+        "show": {
+          "action": "show",
+          "clipName": "shade::show::v01",
+          "source": "Catwalk Idle To Twist R.fbx",
+          "sourceSha256": "8cb1f572d0c249ac81c45f62712529a40b0abac0393e976c64375d4305a3b902",
+          "frameStart": 1,
+          "frameEnd": 53,
+          "sourceFps": 24,
+          "durationSeconds": 2.1666666666666665,
+          "sourceRootTravel": {
+            "x": 23.788079,
+            "y": -0.75666,
+            "z": -0.164365,
+            "total": 23.800678
+          },
+          "loop": false,
+          "gain": 0.88
+        }
+      },
+      "runtimeEligible": true,
+      "reachability": {
+        "runtimeReachability": "catalog-bound",
+        "entity": {
+          "kind": "flanker"
+        }
+      }
+    },
+    {
+      "assetId": "shadow-soldier-v04",
+      "role": "shadow-guardian",
+      "category": "enemies",
+      "replaces": "assets/mesh/enemy/shadow-soldier-v04/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/shadow-soldier-v04/model.glb",
+      "modelSha256": "026b5df05b85b01342ad8ea675a02c4b3d3614a35f844683ca5a6a0779c501ac",
+      "manifest": "assets/motion/ingame/characters/shadow-soldier-v04/manifest.json",
+      "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/review.blend",
+      "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/review/contact-sheet.png",
+      "clipNames": {
+        "idle": "shadow-soldier-v04::idle::v01",
+        "move": "shadow-soldier-v04::move::v01",
+        "run": "shadow-soldier-v04::run::v01",
+        "hit": "shadow-soldier-v04::hit::v01",
+        "bighit": "shadow-soldier-v04::bighit::v01",
+        "attack": "shadow-soldier-v04::attack::v01",
+        "critical": "shadow-soldier-v04::critical::v01",
+        "avoid": "shadow-soldier-v04::avoid::v01",
+        "defence": "shadow-soldier-v04::defence::v01",
+        "die": "shadow-soldier-v04::die::v01",
+        "show": "shadow-soldier-v04::show::v01"
+      },
+      "clips": {
+        "idle": {
+          "action": "idle",
+          "clipName": "shadow-soldier-v04::idle::v01",
+          "source": "Standing Idle 03.fbx",
+          "sourceSha256": "a8afdebfb66d01ee0f324a6b360f8fe3b0a7eeda15b9b464ea80bf5ed602cc0c",
+          "frameStart": 1,
+          "frameEnd": 275,
+          "sourceFps": 24,
+          "durationSeconds": 11.416666666666666,
+          "sourceRootTravel": {
+            "x": 1e-06,
+            "y": 0.000153,
+            "z": -7e-06,
+            "total": 0.000153
+          },
+          "loop": true,
+          "gain": 0.78
+        },
+        "move": {
+          "action": "move",
+          "clipName": "shadow-soldier-v04::move::v01",
+          "source": "Walking.fbx",
+          "sourceSha256": "ba555b8bfb65b0601cc76272027a978d33ffbfc3bffb2a876a50fd3451c8c6e7",
+          "frameStart": 1,
+          "frameEnd": 34,
+          "sourceFps": 24,
+          "durationSeconds": 1.375,
+          "sourceRootTravel": {
+            "x": -2e-06,
+            "y": 1.5e-05,
+            "z": 145.083625,
+            "total": 145.083625
+          },
+          "loop": true,
+          "gain": 0.86
+        },
+        "run": {
+          "action": "run",
+          "clipName": "shadow-soldier-v04::run::v01",
+          "source": "Running.fbx",
+          "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": -1e-06,
+            "y": 0.0,
+            "z": 350.087158,
+            "total": 350.087158
+          },
+          "loop": true,
+          "gain": 0.88
+        },
+        "hit": {
+          "action": "hit",
+          "clipName": "shadow-soldier-v04::hit::v01",
+          "source": "Standing React Small From Left.fbx",
+          "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+          "frameStart": 1,
+          "frameEnd": 19,
+          "sourceFps": 24,
+          "durationSeconds": 0.75,
+          "sourceRootTravel": {
+            "x": -2e-05,
+            "y": 8e-06,
+            "z": 1.2e-05,
+            "total": 2.5e-05
+          },
+          "loop": false,
+          "gain": 0.82
+        },
+        "bighit": {
+          "action": "bighit",
+          "clipName": "shadow-soldier-v04::bighit::v01",
+          "source": "Receive Uppercut To The Face.fbx",
+          "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": 0.000427,
+            "y": -3.8e-05,
+            "z": 3.9e-05,
+            "total": 0.000431
+          },
+          "loop": false,
+          "gain": 0.9
+        },
+        "attack": {
+          "action": "attack",
+          "clipName": "shadow-soldier-v04::attack::v01",
+          "source": "Great Sword Slash.fbx",
+          "sourceSha256": "599857c51e22a03e61353193a80c534ba56b5ff1101bcee296f85c984f321124",
+          "frameStart": 1,
+          "frameEnd": 45,
+          "sourceFps": 24,
+          "durationSeconds": 1.8333333333333333,
+          "sourceRootTravel": {
+            "x": -6e-06,
+            "y": 1.5e-05,
+            "z": -2e-06,
+            "total": 1.7e-05
+          },
+          "loop": false,
+          "gain": 0.96
+        },
+        "critical": {
+          "action": "critical",
+          "clipName": "shadow-soldier-v04::critical::v01",
+          "source": "Standing Torch Jump.fbx",
+          "sourceSha256": "75a3520ceffa4bdeec1698c990d5694b089ecb23c1aab964844e095e104aef8e",
+          "frameStart": 1,
+          "frameEnd": 42,
+          "sourceFps": 24,
+          "durationSeconds": 1.7083333333333333,
+          "sourceRootTravel": {
+            "x": 1.3e-05,
+            "y": -1.5e-05,
+            "z": 4.7e-05,
+            "total": 5.1e-05
+          },
+          "loop": false,
+          "gain": 0.94
+        },
+        "avoid": {
+          "action": "avoid",
+          "clipName": "shadow-soldier-v04::avoid::v01",
+          "source": "Dodging.fbx",
+          "sourceSha256": "56da3f48fba96f2e901d25c013c2e4fc6be5ba369b499f2d8c796165933ddac6",
+          "frameStart": 1,
+          "frameEnd": 40,
+          "sourceFps": 24,
+          "durationSeconds": 1.625,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.84
+        },
+        "defence": {
+          "action": "defence",
+          "clipName": "shadow-soldier-v04::defence::v01",
+          "source": "Great Sword Blocking.fbx",
+          "sourceSha256": "67d49c7f32093574aee743acc1feeb6ec64dd392dae5cfe29bdd39432f3e448d",
+          "frameStart": 1,
+          "frameEnd": 13,
+          "sourceFps": 24,
+          "durationSeconds": 0.5,
+          "sourceRootTravel": {
+            "x": -9.71545,
+            "y": -20.980751,
+            "z": -0.098319,
+            "total": 23.121236
+          },
+          "loop": false,
+          "gain": 0.94
+        },
+        "die": {
+          "action": "die",
+          "clipName": "shadow-soldier-v04::die::v01",
+          "source": "scripts/rig-character-asset-blender.py",
+          "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+          "loop": false,
+          "kind": "authored-fallback"
+        },
+        "show": {
+          "action": "show",
+          "clipName": "shadow-soldier-v04::show::v01",
+          "source": "Draw Sword 1.fbx",
+          "sourceSha256": "41357b64f6305ee59ea6ef8beaeba7b79b715514034be86e5365ab56e6dd5374",
+          "frameStart": 1,
+          "frameEnd": 13,
+          "sourceFps": 24,
+          "durationSeconds": 0.5,
+          "sourceRootTravel": {
+            "x": 2.373616,
+            "y": -1.28862,
+            "z": -6.690092,
+            "total": 7.214702
+          },
+          "loop": false,
+          "gain": 0.92
+        }
+      },
+      "runtimeEligible": true,
+      "reachability": {
+        "runtimeReachability": "catalog-bound",
+        "entity": {
+          "kind": "guardian"
+        }
+      }
+    },
+    {
+      "assetId": "shadow-commander-boss",
+      "role": "shadow-command-boss",
+      "category": "bosses",
+      "replaces": "assets/mesh/enemy/shadow-commander-boss/glb/base_basic_pbr.glb",
+      "model": "assets/motion/ingame/characters/shadow-commander-boss/model.glb",
+      "modelSha256": "00a0beadd94846088dd25a4f7aeb61db184c8b4b29eef08421d301f5b668db24",
+      "manifest": "assets/motion/ingame/characters/shadow-commander-boss/manifest.json",
+      "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review.blend",
+      "contactSheet": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/contact-sheet.png",
+      "clipNames": {
+        "idle": "shadow-commander-boss::idle::v01",
+        "move": "shadow-commander-boss::move::v01",
+        "run": "shadow-commander-boss::run::v01",
+        "hit": "shadow-commander-boss::hit::v01",
+        "bighit": "shadow-commander-boss::bighit::v01",
+        "attack": "shadow-commander-boss::attack::v01",
+        "critical": "shadow-commander-boss::critical::v01",
+        "avoid": "shadow-commander-boss::avoid::v01",
+        "defence": "shadow-commander-boss::defence::v01",
+        "die": "shadow-commander-boss::die::v01",
+        "show": "shadow-commander-boss::show::v01"
+      },
+      "clips": {
+        "idle": {
+          "action": "idle",
+          "clipName": "shadow-commander-boss::idle::v01",
+          "source": "Standing Idle 03.fbx",
+          "sourceSha256": "a8afdebfb66d01ee0f324a6b360f8fe3b0a7eeda15b9b464ea80bf5ed602cc0c",
+          "frameStart": 1,
+          "frameEnd": 275,
+          "sourceFps": 24,
+          "durationSeconds": 11.416666666666666,
+          "sourceRootTravel": {
+            "x": 1e-06,
+            "y": 0.000153,
+            "z": -7e-06,
+            "total": 0.000153
+          },
+          "loop": true,
+          "gain": 0.68
+        },
+        "move": {
+          "action": "move",
+          "clipName": "shadow-commander-boss::move::v01",
+          "source": "Catwalk Walk Forward HighKnees.fbx",
+          "sourceSha256": "2f2c28bcd3aa1f56d96a26c0ebb0cde76e9b0eced1a1bfe7b9f7f72459a74b47",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": 0.025248,
+            "y": 3.1e-05,
+            "z": 119.008526,
+            "total": 119.008528
+          },
+          "loop": true,
+          "gain": 0.72
+        },
+        "run": {
+          "action": "run",
+          "clipName": "shadow-commander-boss::run::v01",
+          "source": "Running.fbx",
+          "sourceSha256": "36af8adbf3f9ebf9e9db4ddce06610b20cd1caae8475406fd5eb5e57d85fa802",
+          "frameStart": 1,
+          "frameEnd": 31,
+          "sourceFps": 24,
+          "durationSeconds": 1.25,
+          "sourceRootTravel": {
+            "x": -1e-06,
+            "y": 0.0,
+            "z": 350.087158,
+            "total": 350.087158
+          },
+          "loop": true,
+          "gain": 0.76
+        },
+        "hit": {
+          "action": "hit",
+          "clipName": "shadow-commander-boss::hit::v01",
+          "source": "Standing React Small From Left.fbx",
+          "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf",
+          "frameStart": 1,
+          "frameEnd": 19,
+          "sourceFps": 24,
+          "durationSeconds": 0.75,
+          "sourceRootTravel": {
+            "x": -2e-05,
+            "y": 8e-06,
+            "z": 1.2e-05,
+            "total": 2.5e-05
+          },
+          "loop": false,
+          "gain": 0.7
+        },
+        "bighit": {
+          "action": "bighit",
+          "clipName": "shadow-commander-boss::bighit::v01",
+          "source": "Standing Block React Large.fbx",
+          "sourceSha256": "1c2724849c68cdb804321b3a598b0acfbebc3666deb019b6f2465a6d1db122b4",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "sourceFps": 24,
+          "durationSeconds": 1.3333333333333333,
+          "sourceRootTravel": {
+            "x": 6e-06,
+            "y": -1.5e-05,
+            "z": 3e-06,
+            "total": 1.7e-05
+          },
+          "loop": false,
+          "gain": 0.82
+        },
+        "attack": {
+          "action": "attack",
+          "clipName": "shadow-commander-boss::attack::v01",
+          "source": "Great Sword Slash.fbx",
+          "sourceSha256": "599857c51e22a03e61353193a80c534ba56b5ff1101bcee296f85c984f321124",
+          "frameStart": 1,
+          "frameEnd": 45,
+          "sourceFps": 24,
+          "durationSeconds": 1.8333333333333333,
+          "sourceRootTravel": {
+            "x": -6e-06,
+            "y": 1.5e-05,
+            "z": -2e-06,
+            "total": 1.7e-05
+          },
+          "loop": false,
+          "gain": 0.92
+        },
+        "critical": {
+          "action": "critical",
+          "clipName": "shadow-commander-boss::critical::v01",
+          "source": "Standing 2H Magic Attack 01.fbx",
+          "sourceSha256": "4d094e4272a11643c442c4de1be171819f5c2393e98b53898bf8ca10dce74e3d",
+          "frameStart": 1,
+          "frameEnd": 66,
+          "sourceFps": 24,
+          "durationSeconds": 2.7083333333333335,
+          "sourceRootTravel": {
+            "x": 1e-05,
+            "y": 0.000305,
+            "z": 8e-06,
+            "total": 0.000305
+          },
+          "loop": false,
+          "gain": 0.94
+        },
+        "avoid": {
+          "action": "avoid",
+          "clipName": "shadow-commander-boss::avoid::v01",
+          "source": "Change Direction.fbx",
+          "sourceSha256": "09157e82b84fd8a537e8868db2d048977ab87eada12ad4db4321d022b1cfe8da",
+          "frameStart": 1,
+          "frameEnd": 53,
+          "sourceFps": 24,
+          "durationSeconds": 2.1666666666666665,
+          "sourceRootTravel": {
+            "x": 4.270783,
+            "y": -8e-06,
+            "z": 10.199233,
+            "total": 11.057302
+          },
+          "loop": false,
+          "gain": 0.76
+        },
+        "defence": {
+          "action": "defence",
+          "clipName": "shadow-commander-boss::defence::v01",
+          "source": "Great Sword Blocking.fbx",
+          "sourceSha256": "67d49c7f32093574aee743acc1feeb6ec64dd392dae5cfe29bdd39432f3e448d",
+          "frameStart": 1,
+          "frameEnd": 13,
+          "sourceFps": 24,
+          "durationSeconds": 0.5,
+          "sourceRootTravel": {
+            "x": -9.71545,
+            "y": -20.980751,
+            "z": -0.098319,
+            "total": 23.121236
+          },
+          "loop": false,
+          "gain": 0.86
+        },
+        "die": {
+          "action": "die",
+          "clipName": "shadow-commander-boss::die::v01",
+          "source": "scripts/rig-character-asset-blender.py",
+          "sourceSha256": "a60c07bde62e9d53b9e5c92e0b56ba9e839e80d3274acaff9ac352512eab1c28",
+          "loop": false,
+          "kind": "authored-fallback"
+        },
+        "show": {
+          "action": "show",
+          "clipName": "shadow-commander-boss::show::v01",
+          "source": "Opening.fbx",
+          "sourceSha256": "68dfd951d03baaf3b640901f1d6e5e5e20928e0033e49c2e56424b61b0003a2a",
+          "frameStart": 1,
+          "frameEnd": 264,
+          "sourceFps": 24,
+          "durationSeconds": 10.958333333333334,
+          "sourceRootTravel": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "total": 0.0
+          },
+          "loop": false,
+          "gain": 0.92
+        }
+      },
+      "runtimeEligible": true,
+      "reachability": {
+        "runtimeReachability": "library-only"
+      }
+    }
+  ]
+}

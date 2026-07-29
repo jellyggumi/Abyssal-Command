@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "assetId": "echo-throne-fracture-echo-preview",
+  "generator": "scripts/build-stage-vfx-blender.py",
+  "source": "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  "reference": "assets/mesh/prop/prop-sprite-sheet-single-object.03.png",
+  "runtimeEligible": false,
+  "output": {
+    "path": "assets/motion/stage-vfx/qa/echo-throne-fracture-echo-preview.png",
+    "sha256": "cabcd45e82e24a3bb56c6d2249f1780f1d2ddf23cc0802984bb3625f4982dec9"
+  }
+}
