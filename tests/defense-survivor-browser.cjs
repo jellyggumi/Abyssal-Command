@@ -361,6 +361,14 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
     const surface = page.locator('#defense-battle-surface[data-defense-started="true"]');
     await surface.waitFor({ state: "attached" });
     report.events.push("battle-visible");
+    await page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseFeedback === "lore");
+    const loreFeedback = page.locator("#battle-event-feedback");
+    assert.equal(await loreFeedback.getAttribute("data-feedback"), "lore");
+    assert.match(
+      await loreFeedback.textContent() ?? "",
+      /\S/,
+      "lore feedback must render safe snapshot-derived text through the live status region",
+    );
     const cutscene = page.locator("#defense-cutscene-overlay");
     await cutscene.waitFor({ state: "visible" });
     assert.ok(
@@ -404,13 +412,6 @@ async function verifyPlaythroughJourney(browser, hosting, campaign) {
       await page.evaluate(() => document.activeElement?.dataset.move),
       "E",
       "a one-thumb direction must remain keyboard focusable",
-    );
-    await page.waitForFunction(() => document.querySelector("#defense-battle-surface")?.dataset.defenseFeedback === "lore");
-    assert.equal(await page.locator("#battle-event-feedback").getAttribute("data-feedback"), "lore");
-    assert.match(
-      await page.locator("#battle-event-feedback").textContent() ?? "",
-      /\S/,
-      "lore feedback must render safe snapshot-derived text through the live status region",
     );
     assert.equal(
       await cutscene.isVisible(),

@@ -145,14 +145,14 @@ function stopAndDismissCutscenes(session) {
   session.dismissCutscene();
 }
 
-test("BattleSession starts queued cutscene audio only when its overlay becomes visible", async (t) => {
+test("BattleSession defers opening cutscenes until beginRun synchronously renders the committed run", async (t) => {
   const BattleSession = await loadBattleSession();
   const audioCalls = [];
   const surface = new TestElement("main");
   const session = Object.create(BattleSession.prototype);
   Object.assign(session, {
     stageId: "cinder-span",
-    run: createDefenseRun({ stageId: "cinder-span", seed: 73 }),
+    run: createDefenseRun({ stageId: "cinder-span", seed: 1 }),
     surface,
     canvas: { height: 360, width: 640 },
     statusNode: new TestElement(),
@@ -165,7 +165,7 @@ test("BattleSession starts queued cutscene audio only when its overlay becomes v
     cutsceneTimer: null,
     cutsceneRelayTimers: [],
     cutsceneQueue: [],
-    started: true,
+    started: false,
     stopped: false,
     rallyAcknowledgedBossIds: new Set(),
     motionQuery: { matches: false },
@@ -183,19 +183,11 @@ test("BattleSession starts queued cutscene audio only when its overlay becomes v
   session.renderEventFeedback = noop;
   t.after(() => stopAndDismissCutscenes(session));
 
-  const stageStarted = Object.freeze({
-    type: "STAGE_STARTED",
-    tick: 0,
-    stageId: "cinder-span",
-    cutscene: ["봉쇄선 진입"],
-  });
-  const loreResolved = Object.freeze({
-    type: "LORE_SURPRISE_RESOLVED",
-    tick: 0,
-    tableId: "cinder-span-surprise",
-    outcomeId: "ash-echo-whisper",
-    text: "옛 교량의 재가 바람에 흩어진다.",
-  });
+  const openingEvents = getRunSnapshot(session.run).events;
+  const stageStarted = openingEvents.find((event) => event.type === "STAGE_STARTED");
+  const loreResolved = openingEvents.find((event) => event.type === "LORE_SURPRISE_RESOLVED");
+  assert(stageStarted, "the deterministic opening snapshot must contain authored stage dialogue");
+  assert(loreResolved, "the deterministic opening snapshot must contain authored lore");
   const impact = Object.freeze({
     type: "PROJECTILE_IMPACT",
     tick: 0,
@@ -203,13 +195,33 @@ test("BattleSession starts queued cutscene audio only when its overlay becomes v
     targetId: "enemy-1",
   });
 
-  session.render([stageStarted, loreResolved, impact, loreResolved, stageStarted]);
+  session.render([...openingEvents, impact]);
+
+  assert.equal(surface.querySelector("#defense-cutscene-overlay"), null, "lobby render must not present opening cutscenes");
+  assert.equal(session.cutsceneEventKeys.size, 0, "lobby render must not mark opening cutscenes seen");
+  assert.equal(countAudioEvents(audioCalls, "PROJECTILE_IMPACT"), 1, "other pre-run event audio remains unchanged");
+
+  await new Promise(setImmediate);
+  assert.equal(surface.querySelector("#defense-cutscene-overlay"), null, "the lobby must remain free of opening overlays after deferred startup work");
+  assert.equal(session.cutsceneEventKeys.size, 0, "deferred startup work must not mark lobby cutscenes seen");
+
+  session.beginRun();
 
   assert.equal(surface.querySelector("#defense-cutscene-overlay")?.dataset.cutsceneEvent, "STAGE_STARTED");
   assert.equal(surface.dataset.defenseCutscene, "STAGE_STARTED");
+  assert.equal(session.cutsceneEventKeys.size, 2, "beginRun must synchronously key the authored stage and lore cutscenes");
+  assert.equal(session.cutsceneQueue.length, 1, "authored lore must queue behind the visible stage dialogue");
+  assert.equal(session.cutsceneQueue[0]?.event?.eventId, loreResolved.eventId, "the queued entry must be the real run's authored lore event");
   assert.equal(countAudioEvents(audioCalls, "STAGE_STARTED"), 1, "visible stage dialogue starts its audio once");
   assert.equal(countAudioEvents(audioCalls, "PROJECTILE_IMPACT"), 1, "ordinary SFX remains frame-batch-driven");
-  assert.equal(countAudioEvents(audioCalls, "LORE_SURPRISE_RESOLVED"), 0, "queued lore remains silent behind stage dialogue");
+  assert.equal(countAudioEvents(audioCalls, "LORE_SURPRISE_RESOLVED"), 0, "queued authored lore remains silent behind stage dialogue");
+
+  const queuedLoreEntry = session.cutsceneQueue[0];
+  session.consumeCutscenes([loreResolved]);
+  assert.equal(session.cutsceneEventKeys.size, 2, "duplicate lore must not create another cutscene key");
+  assert.equal(session.cutsceneQueue.length, 1, "duplicate lore must not create another queued entry");
+  assert.equal(session.cutsceneQueue[0], queuedLoreEntry, "duplicate lore must preserve the original queued entry");
+  assert.equal(countAudioEvents(audioCalls, "LORE_SURPRISE_RESOLVED"), 0, "duplicate lore remains silent behind stage dialogue");
 
   session.dismissCutscene();
 

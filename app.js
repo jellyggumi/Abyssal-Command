@@ -2588,7 +2588,7 @@ export class BattleSession {
     });
     this.audio.consume(newAudioEvents);
     this.recordExtraction(snapshot);
-    this.consumeCutscenes(snapshot.events);
+    if (this.started) this.consumeCutscenes(snapshot.events);
     // Boss Rally Window (rpg-catalog.js BOSS_RALLY_COOLDOWN_REDUCTION) is an
     // automatic sim-driven effect at boss spawn — there is no player-input
     // path for it (queueInput only accepts MOVE/SKILL_CAST/SKILL_SELECTED/
