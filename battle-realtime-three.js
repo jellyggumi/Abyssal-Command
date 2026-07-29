@@ -716,9 +716,12 @@ const gltfCache = new Map();
 const objCache = new Map();
 const CINDER_TERRAIN_TEXTURE_ROOT = "assets/mesh/terrain/terrain-cinder-span/terrain-cinder-span-object/object/textureBasicPack";
 let cinderTerrainMapsPromise = null;
-// Last terrain decomposition, for the runtime proof that the split is lossless. Read by
-// tests/stage-runtime-proof-browser.test.mjs through the export below rather than by scraping
-// the scene graph, so the assertion sees the same numbers the offline splitter reports.
+// Last terrain decomposition, or null. Null in every production path today, because splitParts
+// defaults false (see instantiateTerrainModel for the measurement behind that default) -- this
+// is populated only when a caller opts in, and exists so an opt-in caller can read the counts
+// without walking the scene graph. No test asserts against it: the correctness property is
+// spatial (reassembled bbox vs pre-split bbox), and component count is welding-rule dependent,
+// so it must never be compared against the offline splitter's figure.
 let lastTerrainSplitStats = null;
 
 // SkeletonUtils.clone() gives each rendered instance an owned skeleton; this
@@ -857,7 +860,12 @@ export function splitObjIntoPlaceableParts(root) {
 
   for (const mesh of sources) {
     stats.sourceMeshes += 1;
-    const geometry = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry;
+    // `converted` tracks whether `geometry` is a temporary WE created. It matters for disposal:
+    // after source.clone(true) three.js shares geometry by reference, so when the source is
+    // non-indexed `mesh.geometry` IS objCache's cached geometry, and disposing it would break
+    // every later instantiateTerrainModel() for the same URL. Only the temporary is ours to free.
+    const converted = Boolean(mesh.geometry.index);
+    const geometry = converted ? mesh.geometry.toNonIndexed() : mesh.geometry;
     const position = geometry.attributes.position;
     const faceCount = Math.floor(position.count / 3);
     stats.faces += faceCount;
@@ -940,7 +948,9 @@ export function splitObjIntoPlaceableParts(root) {
     container.quaternion.copy(mesh.quaternion);
     container.scale.copy(mesh.scale);
     mesh.parent?.remove(mesh);
-    if (geometry !== mesh.geometry) mesh.geometry.dispose();
+    // Free only the temporary produced by toNonIndexed(); never mesh.geometry, which the
+    // OBJ cache still owns and other instances still reference.
+    if (converted) geometry.dispose();
   }
   return { root, stats };
 }
