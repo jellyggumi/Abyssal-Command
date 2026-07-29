@@ -112,10 +112,11 @@ jobs:
           test "$(git rev-parse HEAD)" = "$RESOLVED_SHA"
           npm ci
           npx --no-install playwright install --with-deps chromium
-          node --test tests/defense-run-simulation.test.mjs tests/defense-campaign-adapter.test.mjs tests/defense-renderer-contract.test.mjs tests/defense-asset-manifest.test.mjs tests/no-rts-closure.test.mjs
+          node --test --test-concurrency=1 tests/defense-run-simulation.test.mjs tests/defense-campaign-adapter.test.mjs tests/defense-renderer-contract.test.mjs tests/defense-asset-manifest.test.mjs tests/no-rts-closure.test.mjs
           mkdir -p results
           node scripts/run-defense-balance-sim.mjs --strict --output "results/defense-balance-$RESOLVED_SHA.json"
           printf '{"gate":"engine_contract","sha":"%s","status":"passed"}\n' "$RESOLVED_SHA" > results/engine_contract.json
+          # Browser contracts run in their dedicated job below.
       - if: always()
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
@@ -171,10 +172,22 @@ jobs:
           mkdir -p results
           npm ci
           npx --no-install playwright install --with-deps chromium
-          node tests/defense-hud-responsive-browser.cjs > results/defense-hud-responsive-browser.json
-          node tests/defense-survivor-browser.cjs > results/defense-survivor-browser.json
-          node tests/defense-performance-browser.cjs > results/defense-performance-browser.json
-          printf '{"gate":"browser_contract","sha":"%s","status":"passed"}\n' "$RESOLVED_SHA" > results/browser_contract.json
+          status=passed
+          for browser_contract in defense-hud-responsive-browser defense-survivor-browser defense-performance-browser; do
+            result="results/${browser_contract}.json"
+            echo "::group::${browser_contract}"
+            set +e
+            node "tests/${browser_contract}.cjs" 2>&1 | tee "$result"
+            test_status=${PIPESTATUS[0]}
+            set -e
+            if [ "$test_status" -ne 0 ]; then
+              status=failed
+              echo "${browser_contract} failed with exit code ${test_status}" >&2
+            fi
+            echo "::endgroup::"
+          done
+          printf '{"gate":"browser_contract","sha":"%s","status":"%s"}\n' "$RESOLVED_SHA" "$status" > results/browser_contract.json
+          test "$status" = passed
       - if: always()
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
