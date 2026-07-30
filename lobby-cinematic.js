@@ -7,8 +7,8 @@
  * wiring (`app.js`) staying a thin caller of these functions.
  */
 
-/** One showcase lap: long enough to read all three framings without feeling like a turntable loop. */
-export const SHOWCASE_CYCLE_MS = 21000;
+/** One showcase lap: wide route read → squad mid-shot → commander close-up → wide reset. */
+export const SHOWCASE_CYCLE_MS = 24000;
 
 /** One dialogue line's hold time before the relay advances — long enough to read a short Korean line. */
 export const DIALOGUE_LINE_MS = 6000;
@@ -34,16 +34,17 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const STATIC_SHOT = Object.freeze({
   phaseId: "static",
   framing: "mid",
+  focusRole: "commander",
   progress: 0,
   yaw: SHOWCASE_BASE_YAW,
   pitch: SHOWCASE_BASE_PITCH,
-  distanceScale: 0.78,
+  distanceScale: 1,
 });
 
 /** Framing name from the current zoom: gates when the boss plate/vignette fade in (see spec §2). */
 const framingFor = (distanceScale) => {
-  if (distanceScale <= 0.68) return "closeup";
-  if (distanceScale < 0.88) return "mid";
+  if (distanceScale <= 0.96) return "closeup";
+  if (distanceScale < 1.05) return "mid";
   return "wide";
 };
 
@@ -63,16 +64,20 @@ export function showcaseCamera(elapsedMs, { reducedMotion = false } = {}) {
   if (reducedMotion) return STATIC_SHOT;
 
   const progress = (sanitizeElapsedMs(elapsedMs) % SHOWCASE_CYCLE_MS) / SHOWCASE_CYCLE_MS;
-  // A ±31° sweep, not a full spin — a full spin loses the boss silhouette and reads as a turntable.
-  const yaw = SHOWCASE_BASE_YAW + 0.55 * Math.sin(TAU * progress);
-  // The camera rises slightly as it pulls back, so the reveal beat reads as a lift, not a flat pan.
-  const pitch = SHOWCASE_BASE_PITCH + 0.16 * Math.cos(TAU * progress);
-  // Wide (1.0) at the seam, closeup (0.5) at the half-lap, back to wide at the wrap — a single breathing cycle.
-  const distanceScale = 1 - 0.5 * (0.5 - 0.5 * Math.cos(TAU * progress));
+  // A bounded hero orbit, not a turntable: the camera keeps the commander as
+  // its authoritative target while boss and companions remain supporting silhouettes.
+  const yaw = SHOWCASE_BASE_YAW
+    + 0.48 * Math.sin(TAU * progress)
+    + 0.08 * Math.sin(TAU * progress * 2);
+  // Lift on the route reveal, settle for the close commander read.
+  const pitch = SHOWCASE_BASE_PITCH + 0.14 * Math.cos(TAU * progress);
+  // Wide at the seam, close at half-lap, exactly reset at wrap.
+  const distanceScale = 0.9 + 0.2 * (0.5 + 0.5 * Math.cos(TAU * progress));
 
   return Object.freeze({
     phaseId: phaseIdFor(progress),
     framing: framingFor(distanceScale),
+    focusRole: "commander",
     progress,
     yaw,
     pitch,
@@ -91,12 +96,10 @@ const hash32 = (value) => {
 };
 
 /**
- * Presentation-only face-off staging in arena coordinates. The commander
- * always stands foreground-left of the boss (0.42/0.62 of width) so the
- * silhouettes never trade sides between stages; a stable hash of `stageId`
- * moves the shared lane up or down so repeat visits to the lobby don't all
- * frame identically, while keeping both actors level (so `facing` stays a
- * clean horizontal yaw instead of an off-axis stare).
+ * Presentation-only hero staging in arena coordinates. The commander owns the
+ * center line; the boss reads behind the hero and companions form a shallow
+ * crescent. A stable stage hash shifts the shared lane without changing sides
+ * or introducing simulation state.
  */
 export function stagingFor(stageId, arena) {
   if (typeof stageId !== "string" || stageId.length === 0) {
@@ -112,11 +115,16 @@ export function stagingFor(stageId, arena) {
   const normalizedHash = (hash32(stageId) / 0xffffffff) * 2 - 1;
   const laneY = clamp(height * 0.5 + normalizedHash * 0.08 * height, height * 0.12, height * 0.88);
 
-  const commander = Object.freeze({ x: Math.round(width * 0.42), y: laneY });
-  const boss = Object.freeze({ x: Math.round(width * 0.62), y: laneY });
+  const commander = Object.freeze({ x: Math.round(width * 0.5), y: laneY });
+  const boss = Object.freeze({ x: Math.round(width * 0.7), y: laneY });
+  const companions = Object.freeze([
+    Object.freeze({ x: Math.round(width * 0.43), y: Math.round(laneY - height * 0.09) }),
+    Object.freeze({ x: Math.round(width * 0.4), y: Math.round(laneY + height * 0.08) }),
+    Object.freeze({ x: Math.round(width * 0.48), y: Math.round(laneY + height * 0.13) }),
+  ]);
   const facing = Math.atan2(boss.y - commander.y, boss.x - commander.x);
 
-  return Object.freeze({ commander, boss, facing });
+  return Object.freeze({ commander, boss, companions, facing });
 }
 
 /** Neutral Korean fallbacks so a missing/blank stage fact never surfaces the literal string "undefined". */

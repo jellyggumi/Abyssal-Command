@@ -106,7 +106,10 @@ const profiles = [
     stageId: "cinder-span",
     sequence: 1,
     name: "Cinder Span",
-    terrainGlbPath: "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
+    terrainGlbPath: null,
+    terrainSourceCandidatePath: "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
+    terrainRuntimeEligible: false,
+    terrainFallback: { kind: "procedural-flat-support", reason: "authored-diorama-not-flat-gameplay-eligible" },
     gameplay: {
       bounds: bounds(600, 23400, 800, 11200),
       obstacles: [
@@ -177,7 +180,10 @@ const profiles = [
     stageId: "abyss-chancel",
     sequence: 2,
     name: "Abyss Chancel",
-    terrainGlbPath: "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
+    terrainGlbPath: null,
+    terrainSourceCandidatePath: "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
+    terrainRuntimeEligible: false,
+    terrainFallback: { kind: "procedural-flat-support", reason: "source-candidate-not-runtime-eligible" },
     gameplay: {
       bounds: bounds(600, 23400, 700, 11300),
       obstacles: [
@@ -251,7 +257,10 @@ const profiles = [
     stageId: "echo-throne",
     sequence: 3,
     name: "Echo Throne",
-    terrainGlbPath: "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
+    terrainGlbPath: null,
+    terrainSourceCandidatePath: "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
+    terrainRuntimeEligible: false,
+    terrainFallback: { kind: "procedural-flat-support", reason: "source-candidate-not-runtime-eligible" },
     gameplay: {
       bounds: bounds(600, 23400, 600, 11400),
       obstacles: [
@@ -344,7 +353,18 @@ const validateProfile = (profile) => {
   if (!(inside(minX, 0, ARENA.width) && inside(maxX, 0, ARENA.width) && minX < maxX
     && inside(minY, 0, ARENA.height) && inside(maxY, 0, ARENA.height) && minY < maxY)) throw new Error(`Invalid walkable bounds for stage world: ${profile.stageId}`);
   if (ARENA.gateX - 900 < minX || ARENA.gateX + 900 > maxX || ARENA.gateY - 900 < minY || ARENA.gateY + 900 > maxY) throw new Error(`Stage world excludes canonical gate geometry: ${profile.stageId}`);
-  if (!profile.terrainGlbPath.startsWith("assets/mesh/terrain/")) throw new Error(`Stage terrain must use the retained mesh lane: ${profile.stageId}`);
+  const hasRuntimeTerrain = typeof profile.terrainGlbPath === "string" && profile.terrainGlbPath.length > 0;
+  const usesPromotedTerrain = profile.terrainRuntimeEligible === true;
+  const hasProceduralFallback = profile.terrainFallback?.kind === "procedural-flat-support";
+  const candidatePath = profile.terrainSourceCandidatePath;
+  if (usesPromotedTerrain !== hasRuntimeTerrain || usesPromotedTerrain === hasProceduralFallback) throw new Error(`Stage terrain requires one eligible runtime strategy: ${profile.stageId}`);
+  if (usesPromotedTerrain && (!profile.terrainGlbPath.startsWith("assets/mesh/terrain/")
+    || !profile.terrainGlbPath.includes("/runtime/")
+    || profile.terrainGlbPath.includes("/textured-candidate/"))) throw new Error(`Stage terrain must use a promoted runtime mesh: ${profile.stageId}`);
+  if (hasProceduralFallback && (typeof profile.terrainFallback.reason !== "string"
+    || profile.terrainFallback.reason.length === 0
+    || typeof candidatePath !== "string"
+    || !candidatePath.startsWith("assets/mesh/terrain/"))) throw new Error(`Procedural terrain fallback requires an ineligible retained candidate: ${profile.stageId}`);
 
   const ids = new Set();
   const claimId = (entry) => {
@@ -410,8 +430,8 @@ const validateProfile = (profile) => {
   for (const entry of [...profile.presentation.props, ...(profile.presentation.visibilityAnchors ?? []),
     ...(profile.presentation.vfxCues ?? []), ...profile.presentation.npcs, ...profile.presentation.landmarks]) claimId(entry);
   const props = profile.presentation.props;
-  if (props.length < 8 || props.some(({ modelPath, placement, footprintRadius }) => !modelPath.startsWith("assets/mesh/")
-    || placement.elevation !== 0 || !pointInside(placement) || !(footprintRadius > 0))) throw new Error(`Stage props must be dense, flat, retained placements: ${profile.stageId}`);
+  if (props.length < 8 || props.length > 14 || props.some(({ modelPath, placement, footprintRadius }) => !modelPath.startsWith("assets/mesh/")
+    || placement.elevation !== 0 || !pointInside(placement) || !(footprintRadius > 0))) throw new Error(`Stage props must be sparse, flat, retained placements: ${profile.stageId}`);
   const propById = new Map(props.map((entry) => [entry.id, entry]));
   profile.gameplay.obstacles.forEach((entry) => {
     const source = propById.get(entry.propId);

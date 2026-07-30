@@ -19,6 +19,7 @@ import {
   STAGES as RUNTIME_STAGES,
   STAGE_PRESENTATION_BY_ID,
 } from "../defense-catalog.js";
+import { STAGE_SHOWCASE_IDS } from "../stage-world-catalog.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const STORAGE_KEY = "abyssal-command-defense";
@@ -67,12 +68,7 @@ async function startServer() {
   return server;
 }
 
-function fullyUnlockedCampaign() {
-  let campaign = createCampaign({ campaignId: "lobby-guide-disclosure", resetEpoch: 3 });
-  for (const stage of CAMPAIGN_STAGES.slice(0, -1)) {
-    campaign = startRun(campaign, stage.id);
-    campaign = applyCampaignRunResult(campaign, { outcome: "victory", stageId: stage.id });
-  }
+function storedCampaign(campaign) {
   const payload = serializeCampaign(campaign);
   payload.idleReturn.lastSettledAt = NOW;
   const text = JSON.stringify(payload);
@@ -83,6 +79,15 @@ function fullyUnlockedCampaign() {
   });
 }
 
+function fullyUnlockedCampaign() {
+  let campaign = createCampaign({ campaignId: "lobby-guide-disclosure", resetEpoch: 3 });
+  for (const stage of CAMPAIGN_STAGES.slice(0, -1)) {
+    campaign = startRun(campaign, stage.id);
+    campaign = applyCampaignRunResult(campaign, { outcome: "victory", stageId: stage.id });
+  }
+  return storedCampaign(campaign);
+}
+
 /**
  * Opens the page and reveals the 출정 dock panel, which is where the editorial showcase,
  * the spoiler-free progression control and the guide launcher live since the unified
@@ -91,7 +96,7 @@ function fullyUnlockedCampaign() {
  * first paint and the outgame UI is a dock peeked open over it. Everything these tests
  * assert about disclosure is unchanged -- only the navigation to reach it is.
  */
-async function openLobby(viewport = VIEWPORTS[0], { touch = false } = {}) {
+async function openLobby(viewport = VIEWPORTS[0], { campaign = unlockedCampaign, touch = false } = {}) {
   const context = await browser.newContext({
     baseURL,
     hasTouch: touch,
@@ -108,7 +113,7 @@ async function openLobby(viewport = VIEWPORTS[0], { touch = false } = {}) {
     Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
     Date.now = () => now;
     localStorage.setItem(storageKey, campaign);
-  }, { campaign: unlockedCampaign, now: NOW, storageKey: STORAGE_KEY });
+  }, { campaign, now: NOW, storageKey: STORAGE_KEY });
   await page.goto("/index.html", { waitUntil: "networkidle" });
   await page.locator('#defense-battle-surface[data-defense-ready="true"]').waitFor();
   await assertOpsDeckMountedWithoutInteraction(page);
@@ -176,7 +181,10 @@ test("lobby renders exactly three named editorial showcase stage cards", async (
       assert.match(await card.getAttribute("aria-label") ?? await card.textContent() ?? "", new RegExp(stage.name, "i"), `${stage.name} showcase card must have an accessible stage name`);
       ids.push(stageId);
     }
-    assert.equal(new Set(ids).size, SHOWCASE_COUNT, "showcase cards must identify three distinct stages");
+    assert.deepEqual(ids, STAGE_SHOWCASE_IDS, "minimap nodes must preserve the three canonical showcase IDs and order");
+    const map = page.locator("[data-stage-map]");
+    assert.equal(await map.getAttribute("data-revealed-count"), String(SHOWCASE_COUNT), "a fully unlocked route must report all three revealed nodes");
+    assert.match(await map.getAttribute("aria-label") ?? "", /3개\s*스테이지\s*밝혀짐/u, "the minimap accessible name must announce the revealed count");
     const firstCard = cards.first();
     const firstStageId = await firstCard.getAttribute("data-stage-showcase");
     await firstCard.focus();
@@ -184,6 +192,46 @@ test("lobby renders exactly three named editorial showcase stage cards", async (
     await page.locator(`#defense-app[data-stage-id="${firstStageId}"]`).waitFor();
     assert.equal(await page.locator('[data-stage-showcase][aria-pressed="true"]').count(), 1, "keyboard selection must disclose exactly one active showcase card");
     assert.deepEqual(errors, [], "showcase lobby emitted browser errors");
+  } finally {
+    await context.close();
+  }
+});
+
+test("progressive minimap keeps unrevealed canonical nodes disabled and obscured", async () => {
+  const campaign = storedCampaign(createCampaign({ campaignId: "lobby-minimap-locked", resetEpoch: 1 }));
+  const { context, errors, page } = await openLobby(VIEWPORTS[0], { campaign });
+  try {
+    const map = page.locator("[data-stage-map]");
+    const nodes = map.locator("[data-stage-showcase]");
+    assert.equal(await nodes.count(), SHOWCASE_COUNT, "the minimap must retain exactly three canonical nodes while progression is locked");
+    assert.deepEqual(
+      await nodes.evaluateAll((entries) => entries.map(({ dataset }) => dataset.stageShowcase)),
+      STAGE_SHOWCASE_IDS,
+      "locked progression must not add, remove, or reorder canonical minimap nodes",
+    );
+    assert.equal(await map.getAttribute("data-revealed-count"), "1", "a fresh campaign must disclose only its first showcase stage");
+    assert.match(await map.getAttribute("aria-label") ?? "", /1개\s*스테이지\s*밝혀짐/u, "the minimap accessible name must announce one revealed stage");
+
+    const revealed = map.locator("[data-stage-showcase].is-revealed");
+    const locked = map.locator("[data-stage-showcase].is-locked");
+    assert.equal(await revealed.count(), 1, "only the currently unlocked node may be revealed");
+    assert.equal(await locked.count(), 2, "the two future showcase nodes must remain visually obscured");
+    assert.equal(await locked.evaluateAll((entries) => entries.every((entry) => entry.disabled)), true, "every locked minimap node must be natively disabled");
+    for (let index = 0; index < await locked.count(); index += 1) {
+      const node = locked.nth(index);
+      assert.match(await node.getAttribute("aria-label") ?? "", /잠김/u, "locked node accessibility text must announce its state");
+      assert.equal(
+        normalized(await node.locator(".stage-map-copy span").textContent() ?? ""),
+        normalized("등불을 전진시켜 이 구역을 밝히세요."),
+        "locked node detail must remain behind the shared spoiler-safe obscuring copy",
+      );
+    }
+
+    const selectedStageBefore = await page.locator("#defense-app").getAttribute("data-stage-id");
+    await locked.first().evaluate((node) => node.click());
+    assert.equal(await page.locator("#defense-app").getAttribute("data-stage-id"), selectedStageBefore, "a disabled future node cannot change stage selection");
+    assert.equal(await page.locator('[data-stage-showcase][aria-pressed="true"]').count(), 1, "the existing data-stage-showcase selection contract must keep one active node");
+    assert.deepEqual(errors, [], "progressive minimap emitted browser errors");
   } finally {
     await context.close();
   }

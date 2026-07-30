@@ -4,6 +4,7 @@ import { after, test } from "node:test";
 import * as THREE from "../vendor/three.module.js";
 import { GLTFLoader } from "../vendor/loaders/GLTFLoader.js";
 import { stageWorldFor, STAGE_WORLD_PROFILES } from "../stage-world-catalog.js";
+import { createDefenseRun, getRunSnapshot } from "../defense-run-simulation.js";
 
 // Mirrors the rig pipeline's authored library so the harness exercises the same
 // beat set the deployed characters carry, not a subset.
@@ -217,6 +218,16 @@ function worldZ(y) {
 
 function assertNear(actual, expected, message) {
   assert.ok(Math.abs(actual - expected) < 1e-9, `${message}: expected ${expected}, got ${actual}`);
+}
+
+function assertMeshIntegrity(report, label) {
+  assert.ok(report && typeof report === "object", `${label}: missing mesh integrity report`);
+  for (const key of ["meshCount", "vertexCount", "triangleCount"]) {
+    assert.ok(Number.isFinite(report[key]) && report[key] > 0, `${label}: ${key} must be finite and nonzero`);
+  }
+  assert.equal(report.invalidVertexCount, 0, `${label}: vertices must remain finite`);
+  assert.equal(report.invalidIndexCount, 0, `${label}: indices must remain valid`);
+  assert.equal(report.finiteBounds, true, `${label}: bounds must remain finite`);
 }
 
 test("projectile families publish distinct geometry, material, and motion contracts", async () => {
@@ -663,6 +674,109 @@ test("a retired enemy's death echo preserves its nonzero rendered elevation", as
   adapter.dispose();
 });
 
+test("3D pickup presentation consumes snapshot pickups, grounds both models, and retains its failure marker", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const bladePath = "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb";
+  const relicPath = "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb";
+  const run = structuredClone(createDefenseRun({ stageId: "cinder-span", seed: 211 }));
+  run.pickups = [
+    { id: "snapshot-item", kind: "item", itemId: "ward-splinter", x: 8400, y: 4100, elevation: 0, hp: 1, maxHp: 1 },
+    { id: "snapshot-echo", kind: "echo", xp: 9, x: 15200, y: 7600, elevation: 0, hp: 1, maxHp: 1 },
+  ];
+  const snapshot = getRunSnapshot(run);
+  const item = snapshot.pickups.find(({ kind }) => kind === "item");
+  const echo = snapshot.pickups.find(({ kind }) => kind === "echo");
+  const before = structuredClone(snapshot);
+  const failedUrl = `./${bladePath}`;
+  gltfFailuresRemaining.set(failedUrl, 1);
+
+  try {
+    adapter.reconcileActors(snapshot);
+    await waitFor(
+      () => adapter.actors.get(item.id)?.loading === false && adapter.actors.get(echo.id)?.loading === false,
+      "snapshot pickup model requests did not settle",
+    );
+
+    const failedRecord = adapter.actors.get(item.id);
+    assert.equal(
+      failedRecord.root.children.some((child) => child.isMesh && child.visible),
+      true,
+      "a rejected pickup GLB must leave its visible marker attached",
+    );
+    assert.equal(adapter.debugPresentationState(item.id).meshIntegrity, null, "a failed GLB must not publish fabricated model integrity");
+
+    adapter.reconcileActors({ ...snapshot, pickups: [echo] });
+    assert.equal(adapter.debugPresentationState(item.id), null, "a pickup absent from the next snapshot must retire");
+    adapter.reconcileActors(snapshot);
+    await waitFor(
+      () => snapshot.pickups.every(({ id }) => adapter.debugPresentationState(id)?.meshIntegrity),
+      "the evicted pickup GLB did not load on the next authoritative snapshot appearance",
+    );
+
+    const pickupStates = adapter.debugPresentationState().pickups.sort((left, right) => left.id.localeCompare(right.id));
+    assert.deepEqual(
+      pickupStates.map(({ id }) => id),
+      snapshot.pickups.map(({ id }) => id).sort(),
+      "the renderer must publish exactly the pickups present in the simulation snapshot",
+    );
+    assert.deepEqual(
+      Object.fromEntries(pickupStates.map(({ id, modelPath }) => [id, modelPath])),
+      { "snapshot-echo": relicPath, "snapshot-item": bladePath },
+      "item and echo pickups must resolve their distinct authored 3D models",
+    );
+    for (const pickup of pickupStates) {
+      assertMeshIntegrity(pickup.meshIntegrity, pickup.id);
+      assertNear(pickup.groundedMinY, 0, `${pickup.id} model rests on its local support plane`);
+      const source = snapshot.pickups.find(({ id }) => id === pickup.id);
+      assertNear(pickup.position.x, worldX(source.x), `${pickup.id} consumes snapshot x`);
+      assertNear(pickup.position.z, worldZ(source.y), `${pickup.id} consumes snapshot y`);
+    }
+    assert.deepEqual(snapshot, before, "pickup reconciliation must not mutate the authoritative snapshot");
+  } finally {
+    gltfFailuresRemaining.delete(failedUrl);
+    adapter.dispose();
+  }
+});
+
+test("a lobby boss consumes the authored show presentation without mutating the staged snapshot", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const snapshot = Object.freeze({
+    tick: 0,
+    enemies: Object.freeze([Object.freeze({
+      id: "lobby-preview:cinder-span",
+      kind: "boss",
+      class: "boss",
+      bossId: "s1-cinder-warden",
+      hp: 1,
+      maxHp: 1,
+      x: 16800,
+      y: 6000,
+      presentationAction: "show",
+    })]),
+    companions: Object.freeze([]),
+    projectiles: Object.freeze([]),
+    pickups: Object.freeze([]),
+    events: Object.freeze([]),
+  });
+  const before = structuredClone(snapshot);
+
+  adapter.reconcileActors(snapshot);
+  const boss = await waitFor(
+    () => {
+      const state = adapter.debugPresentationState("lobby-preview:cinder-span");
+      return state?.oneShotActionKey === "show" ? state : null;
+    },
+    "the lobby boss did not enter its show action",
+  );
+  assert.equal(boss.presentationAction, "show", "debug presentation must expose the lobby-authored action");
+  assert.equal(boss.activeActionKey, "show", "the authored show action must reach the active mixer");
+  assert.deepEqual(snapshot, before, "lobby boss presentation must not mutate the staged snapshot");
+  adapter.dispose();
+});
+
+
 test("stage-world catalog props and lookout NPCs load at authored presentation placements", async () => {
   const { RealtimeBattle } = await rendererModule;
   const adapter = realtimeBattleHarness(RealtimeBattle);
@@ -708,7 +822,7 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
       ...profile.presentation.props.map(({ modelPath }) => modelPath),
       ...profile.presentation.npcs.map(({ modelPath }) => modelPath),
       ...profile.presentation.vfxCues.map(({ modelPath }) => modelPath),
-    ].map((modelPath) => `./${modelPath}`),
+    ].filter(Boolean).map((modelPath) => `./${modelPath}`),
     // Stage load warms the boss rig so it does not pop in mid-fight.
     bossRequestPath,
   ].filter((requestUrl) => !alreadyCached.has(requestUrl)).sort();
@@ -718,11 +832,20 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
     "renderer requests each unique catalog prop, NPC, VFX, and boss model exactly once",
   );
   assert.ok(
-    gltfRequests.slice(requestStart).includes(bossRequestPath),
+    gltfRequests.includes(bossRequestPath),
     "stage load must warm the authored boss rig before the boss spawns",
+  );
+  assert.equal(
+    gltfRequests.slice(requestStart).includes(`./${profile.terrainSourceCandidatePath}`),
+    false,
+    "Cinder must not request the renderer-ineligible diorama",
   );
   assert.equal(decor.stageId, profile.stageId);
   assert.equal(decor.terrainLoaded, true);
+  assert.equal(decor.terrainSource, "procedural-flat-support", "Cinder gameplay must report flat procedural support");
+  assert.equal(decor.terrainModelPath, null, "Cinder must not publish its diorama as loaded gameplay terrain");
+  assert.equal(decor.terrainSourceCandidatePath, profile.terrainSourceCandidatePath, "Cinder debug state must retain diorama provenance");
+  assertMeshIntegrity(decor.terrainIntegrity, "Cinder procedural support");
   assert.equal(decor.propCount, profile.presentation.props.length);
   assert.equal(decor.npcCount, profile.presentation.npcs.length);
   assert.equal(decor.vfxCount, profile.presentation.vfxCues.length, "the authored ember-wake cue counts as loaded stage decor");
@@ -765,6 +888,8 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
     assertNear(record.position.y, authored.placement.elevation * 14 / 12000, `${authored.id} authored elevation`);
     if (authored.role !== "lookout") {
       assertNear(record.yaw, authored.placement.yawRadians, `${authored.id} authored yaw`);
+      assert.ok(Math.abs(record.groundedMinY) <= 1e-4, `${authored.id} must be grounded at minY 0, got ${record.groundedMinY}`);
+      assertMeshIntegrity(record.meshIntegrity, authored.id);
     }
   }
 
@@ -1143,7 +1268,7 @@ test("authored lookout attention targets determine rendered yaw instead of being
   }
 });
 
-test("failed stage decor loads retry on a later visit while successful GLBs remain cached", async () => {
+test("failed stage decor retries while ineligible terrain candidates are never requested", async () => {
   const { RealtimeBattle } = await rendererModule;
   const adapter = realtimeBattleHarness(RealtimeBattle);
   const profile = stageWorldFor("echo-throne");
@@ -1156,7 +1281,7 @@ test("failed stage decor loads retry on a later visit while successful GLBs rema
   // that can genuinely exercise the retry-after-failure path.
   const failedDecor = profile.presentation.vfxCues[0];
   const failedUrl = `./${failedDecor.modelPath}`;
-  const cachedTerrainUrl = `./${profile.terrainGlbPath}`;
+  const candidateTerrainUrl = `./${profile.terrainSourceCandidatePath}`;
   const expectedDecorCount = profile.presentation.props.length + profile.presentation.npcs.length + profile.presentation.vfxCues.length;
   const requestStart = gltfRequests.length;
   gltfFailuresRemaining.set(failedUrl, 1);
@@ -1177,6 +1302,10 @@ test("failed stage decor loads retry on a later visit while successful GLBs rema
       false,
       "a rejected VFX cue is absent from only the failed visit",
     );
+    const firstTerrain = adapter.debugPresentationState().stageDecor;
+    assert.equal(firstTerrain.terrainSource, "procedural-flat-support", "Echo Throne must render procedural support");
+    assert.equal(firstTerrain.terrainModelPath, null, "Echo Throne must not publish its candidate as loaded terrain");
+    assert.equal(firstTerrain.terrainSourceCandidatePath, profile.terrainSourceCandidatePath, "Echo Throne must retain candidate provenance");
 
     adapter.ensureStageTerrain(bridgeProfile.stageId);
     await waitFor(
@@ -1206,9 +1335,9 @@ test("failed stage decor loads retry on a later visit while successful GLBs rema
       "the rejected VFX cue URL is evicted and requested again",
     );
     assert.equal(
-      requests.filter((url) => url === cachedTerrainUrl).length,
-      1,
-      "the successfully loaded terrain URL stays cached across the revisit",
+      requests.filter((url) => url === candidateTerrainUrl).length,
+      0,
+      "the retained but ineligible Echo Throne terrain candidate must never be requested",
     );
     assert.equal(
       adapter.debugPresentationState().stageDecor.records.length,
@@ -1218,6 +1347,166 @@ test("failed stage decor loads retry on a later visit while successful GLBs rema
   } finally {
     gltfFailuresRemaining.delete(failedUrl);
     adapter.dispose();
+  }
+});
+
+test("impact VFX stay short-lived and bounded without evicting an active boss telegraph", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const tick = 100;
+  const baseSnapshot = Object.freeze({
+    tick,
+    commander: Object.freeze({ id: "commander", x: 9000, y: 6000, elevation: 0 }),
+    enemies: Object.freeze([Object.freeze({ id: "boss-target", class: "boss", x: 17000, y: 6000, elevation: 0 })]),
+    companions: Object.freeze([]),
+    projectiles: Object.freeze([]),
+    pickups: Object.freeze([]),
+  });
+  const emit = async (event) => {
+    adapter.collectFeedback({ ...baseSnapshot, events: [event] });
+    await waitFor(
+      () => adapter.pendingVfxLoads.size === 0,
+      `${event.type} VFX load did not settle`,
+    );
+  };
+
+  try {
+    await emit({
+      type: "BOSS_ATTACK_TELEGRAPHED",
+      eventId: "telegraph:active",
+      targetId: "commander",
+      windupTicks: 60,
+    });
+    const telegraph = adapter.vfxInstances.find(({ eventType }) => eventType === "BOSS_ATTACK_TELEGRAPHED");
+    assert.ok(telegraph, "the active boss telegraph must enter the transient VFX pool");
+    assert.equal(telegraph.untilTick - tick, 60, "the telegraph lifetime must follow its active windup window");
+
+    const impactTypes = ["MELEE_IMPACT", "PROJECTILE_IMPACT", "SKILL_RESOLVED_DAMAGE"];
+    for (let index = 0; index < 30; index += 1) {
+      const type = impactTypes[index % impactTypes.length];
+      await emit({
+        type,
+        eventId: `impact:${index}`,
+        sourceId: "commander",
+        targetId: "boss-target",
+        damage: index + 1,
+      });
+    }
+
+    assert.equal(adapter.vfxInstances.length, 24, "the transient VFX pool must stay capped after impact pressure exceeds its budget");
+    assert.equal(adapter.vfxInstances.includes(telegraph), true, "non-critical impact eviction must preserve the active boss telegraph");
+    const expectedLifetime = { MELEE_IMPACT: 8, PROJECTILE_IMPACT: 8, SKILL_RESOLVED_DAMAGE: 10 };
+    const impacts = adapter.vfxInstances.filter(({ eventType }) => eventType in expectedLifetime);
+    assert.equal(impacts.length, 23, "only non-critical impacts may occupy the remaining capped slots");
+    for (const type of impactTypes) {
+      const records = impacts.filter(({ eventType }) => eventType === type);
+      assert.ok(records.length > 0, `${type} must remain represented after eviction`);
+      assert.equal(
+        records.every(({ untilTick }) => untilTick - tick === expectedLifetime[type]),
+        true,
+        `${type} must use its short authored lifetime`,
+      );
+    }
+  } finally {
+    adapter.dispose();
+  }
+});
+
+test("a cold-load boss telegraph preempts one of 24 unresolved impact VFX", async () => {
+  const previousLoad = GLTFLoader.prototype.load;
+  const heldLoads = [];
+  let adapter = null;
+  GLTFLoader.prototype.load = function holdColdVfx(url, onLoad) {
+    heldLoads.push({ onLoad, requestUrl: String(url) });
+    return this;
+  };
+
+  try {
+    const { RealtimeBattle } = await import(`../battle-realtime-three.js?cold-vfx-priority=${Date.now()}`);
+    adapter = realtimeBattleHarness(RealtimeBattle);
+    const tick = 200;
+    const baseSnapshot = {
+      tick,
+      commander: { id: "commander", x: 9000, y: 6000, elevation: 0 },
+      enemies: [{ id: "boss-target", class: "boss", x: 17000, y: 6000, elevation: 0 }],
+      companions: [],
+      projectiles: [],
+      pickups: [],
+    };
+    const impacts = Array.from({ length: 24 }, (_, index) => ({
+      type: "MELEE_IMPACT",
+      eventId: `cold-impact:${index}`,
+      sourceId: "commander",
+      targetId: "boss-target",
+      damage: index + 1,
+    }));
+
+    adapter.collectFeedback({ ...baseSnapshot, events: impacts });
+    assert.equal(adapter.pendingVfxLoads.size, 24, "the fixture must hold all 24 non-critical impact loads unresolved");
+    assert.equal(adapter.vfxInstances.length, 24, "unresolved impacts must occupy the full active VFX budget");
+    const firstImpact = adapter.vfxInstances[0];
+    assert.equal(firstImpact.eventType, "MELEE_IMPACT", "the first expendable record must be an impact");
+    assert.equal(firstImpact.loaded, false, "cold impact records must still be placeholders");
+    const firstImpactLoadRequest = firstImpact.loadRequest;
+    assert.equal(adapter.pendingVfxLoads.has(firstImpactLoadRequest), true, "the first impact load must begin in pending accounting");
+
+    adapter.collectFeedback({
+      ...baseSnapshot,
+      events: [{
+        type: "BOSS_ATTACK_TELEGRAPHED",
+        eventId: "cold-telegraph:priority",
+        targetId: "commander",
+        windupTicks: 60,
+      }],
+    });
+
+    const telegraph = adapter.vfxInstances.find(({ eventType }) => eventType === "BOSS_ATTACK_TELEGRAPHED");
+    assert.ok(telegraph, "priority admission must retain the boss telegraph");
+    assert.equal(telegraph.loaded, false, "the admitted telegraph must remain an active placeholder while its GLB is cold");
+    assert.equal(telegraph.root.parent, adapter.vfxGroup, "the telegraph placeholder must be attached to the live VFX group");
+    assert.equal(adapter.vfxInstances.length, 24, "priority admission must keep the active VFX pool capped");
+    assert.equal(adapter.pendingVfxLoads.size, 24, "evicted pending work must make room for the critical load without raw pending growth");
+    assert.equal(adapter.vfxInstances.includes(firstImpact), false, "priority eviction must invalidate an expendable impact record");
+    assert.equal(firstImpact.root.parent, null, "the invalidated impact placeholder must leave the live VFX group");
+    assert.equal(firstImpact.loadRequest, null, "retirement must sever the evicted impact's pending-load ownership");
+    assert.equal(adapter.pendingVfxLoads.has(firstImpactLoadRequest), false, "the evicted impact load must leave pending accounting");
+    assert.equal(
+      adapter.vfxInstances.filter(({ eventType }) => eventType === "MELEE_IMPACT").length,
+      23,
+      "the telegraph must replace exactly one non-critical impact",
+    );
+
+    const secondImpact = adapter.vfxInstances.find(({ eventType }) => eventType === "MELEE_IMPACT");
+    const secondImpactLoadRequest = secondImpact.loadRequest;
+    adapter.collectFeedback({
+      ...baseSnapshot,
+      events: [{
+        type: "BOSS_ATTACK_TELEGRAPHED",
+        eventId: "cold-telegraph:priority-repeat",
+        targetId: "commander",
+        windupTicks: 60,
+      }],
+    });
+    const telegraphs = adapter.vfxInstances.filter(({ eventType }) => eventType === "BOSS_ATTACK_TELEGRAPHED");
+    assert.equal(telegraphs.length, 2, "a second critical admission must repeat while the cold pool remains full");
+    assert.equal(adapter.vfxInstances.length, 24, "repeated critical replacement must keep the active pool capped");
+    assert.equal(adapter.pendingVfxLoads.size, 24, "repeated replacement must not accumulate dead pending loads");
+    assert.equal(secondImpact.loadRequest, null, "the second evicted impact must also release its load request");
+    assert.equal(adapter.pendingVfxLoads.has(secondImpactLoadRequest), false, "the second evicted request must leave pending accounting");
+    assert.equal(
+      adapter.vfxInstances.filter(({ eventType }) => eventType === "MELEE_IMPACT").length,
+      22,
+      "two critical placeholders must replace exactly two non-critical impacts",
+    );
+  } finally {
+    GLTFLoader.prototype.load = previousLoad;
+    const pending = adapter ? [...adapter.pendingVfxLoads] : [];
+    for (const { onLoad, requestUrl } of heldLoads) {
+      const cue = stageVfxCueByUrl.get(requestUrl);
+      onLoad(cue ? syntheticStageVfxRig(cue) : syntheticRig());
+    }
+    await Promise.allSettled(pending);
+    adapter?.dispose();
   }
 });
 

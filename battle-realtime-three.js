@@ -61,6 +61,7 @@ const TARGET_HEIGHT = Object.freeze({
   enemy: 1.7,
   companion: 1.3,
   stageNpc: 1.8,
+  pickup: 0.7,
 });
 // Imported ambient rigs use a local-X arm swing. Keep their idle silhouette guarded
 // after the mixer writes its authored horizontal pose each frame.
@@ -237,6 +238,11 @@ const VFX_MODELS = Object.freeze({
   PROJECTILE_EXPIRED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
   BOSS_ATTACK_CANCELLED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
   CRITICAL_HIT: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  MELEE_IMPACT: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  PROJECTILE_IMPACT: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  SKILL_RESOLVED_DAMAGE: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  COMMANDER_DAMAGED: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  COMPANION_DAMAGED: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
   ITEM_COLLECTED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
   OBJECTIVE_PHASE_CHANGED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
   ENCOUNTER_OBJECTIVE_STARTED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
@@ -312,6 +318,11 @@ const VFX_LIFETIME_TICKS = Object.freeze({
   PROJECTILE_BLOCKED: 18,
   PROJECTILE_EXPIRED: 12,
   CRITICAL_HIT: 18,
+  MELEE_IMPACT: 8,
+  PROJECTILE_IMPACT: 8,
+  SKILL_RESOLVED_DAMAGE: 10,
+  COMMANDER_DAMAGED: 12,
+  COMPANION_DAMAGED: 12,
   ITEM_COLLECTED: 24,
   OBJECTIVE_PHASE_CHANGED: 36,
   ENCOUNTER_OBJECTIVE_STARTED: 36,
@@ -330,6 +341,23 @@ const VFX_LIFETIME_TICKS = Object.freeze({
   COMPANION_DOWNED: 48,
   TERMINAL: 90,
 });
+const CRITICAL_VFX_EVENT_TYPES = Object.freeze([
+  "BOSS_ATTACK_TELEGRAPHED",
+  "BOSS_RALLY_WINDOW",
+  "BOSS_SPAWNED",
+  "EXTRACTION_WINDOW_OPENED",
+  "GATE_BREACHED",
+  "WARDENS_WARD_TRIGGERED",
+  "ECHO_WARDEN_AWAKENING_TRIGGERED",
+  "COMPANION_DOWNED",
+  "OBJECTIVE_PHASE_CHANGED",
+  "ENCOUNTER_OBJECTIVE_STARTED",
+  "OBJECTIVE_COMPLETED",
+  "ENCOUNTER_OBJECTIVE_COMPLETED",
+  "OBJECTIVE_FAILED",
+  "ENCOUNTER_OBJECTIVE_FAILED",
+  "TERMINAL",
+]);
 
 // Rigged character GLBs embed the canonical 11-clip action library named
 // "<assetId>::<action>::v01". The commander additionally authors exact
@@ -888,6 +916,7 @@ function snapshotEntityById(snapshot, entityId) {
 // mounted scene owns its cloned renderables. All runtime assets are GLB.
 const gltfLoader = new GLTFLoader();
 const gltfCache = new Map();
+const meshIntegrityCache = new Map();
 
 // SkeletonUtils.clone() gives each rendered instance an owned skeleton; this
 // identity set keeps repeated disposal idempotent when roots overlap.
@@ -1139,14 +1168,128 @@ async function instantiateActorModel(relPath, targetHeight) {
   });
 }
 
+function inspectMeshIntegrity(root, label) {
+  let meshCount = 0;
+  let vertexCount = 0;
+  let triangleCount = 0;
+  let invalidVertexCount = 0;
+  let invalidIndexCount = 0;
+  root.updateWorldMatrix(true, true);
+  root.traverse((node) => {
+    if (!node.isMesh) return;
+    meshCount += 1;
+    const position = node.geometry?.getAttribute?.("position");
+    if (!position || position.count < 3) {
+      invalidVertexCount += 1;
+      return;
+    }
+    vertexCount += position.count;
+    for (let index = 0; index < position.count; index += 1) {
+      const x = position.getX(index);
+      const y = position.getY(index);
+      const z = position.getZ(index);
+      if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) invalidVertexCount += 1;
+    }
+    const indices = node.geometry?.index;
+    triangleCount += Math.floor((indices?.count ?? position.count) / 3);
+    if (!indices) return;
+    for (let index = 0; index < indices.count; index += 1) {
+      const value = indices.getX(index);
+      if (!Number.isInteger(value) || value < 0 || value >= position.count) invalidIndexCount += 1;
+    }
+  });
+  const bounds = new THREE.Box3().setFromObject(root);
+  const finiteBounds = !bounds.isEmpty()
+    && Number.isFinite(bounds.min.x) && Number.isFinite(bounds.min.y) && Number.isFinite(bounds.min.z)
+    && Number.isFinite(bounds.max.x) && Number.isFinite(bounds.max.y) && Number.isFinite(bounds.max.z);
+  const report = Object.freeze({
+    meshCount,
+    vertexCount,
+    triangleCount,
+    invalidVertexCount,
+    invalidIndexCount,
+    finiteBounds,
+  });
+  if (meshCount === 0 || vertexCount === 0 || triangleCount === 0
+    || invalidVertexCount > 0 || invalidIndexCount > 0 || !finiteBounds) {
+    throw new Error(`Invalid render mesh ${label}: ${JSON.stringify(report)}`);
+  }
+  return report;
+}
+
+function inspectMeshIntegrityOnce(root, cacheKey, label = cacheKey) {
+  if (!cacheKey) return inspectMeshIntegrity(root, label);
+  let topology = meshIntegrityCache.get(cacheKey);
+  if (!topology) {
+    topology = inspectMeshIntegrity(root, label);
+    meshIntegrityCache.set(cacheKey, topology);
+  }
+  root.updateWorldMatrix(true, true);
+  const bounds = new THREE.Box3().setFromObject(root);
+  const finiteBounds = !bounds.isEmpty()
+    && Number.isFinite(bounds.min.x) && Number.isFinite(bounds.min.y) && Number.isFinite(bounds.min.z)
+    && Number.isFinite(bounds.max.x) && Number.isFinite(bounds.max.y) && Number.isFinite(bounds.max.z);
+  const report = Object.freeze({ ...topology, finiteBounds });
+  if (!finiteBounds) throw new Error(`Invalid render mesh ${label}: ${JSON.stringify(report)}`);
+  return report;
+}
+
+function groundObjectOnPlane(root, groundY, label) {
+  root.updateWorldMatrix(true, true);
+  const before = new THREE.Box3().setFromObject(root);
+  if (before.isEmpty() || !Number.isFinite(before.min.y)) throw new Error(`Cannot ground empty render mesh ${label}`);
+  root.position.y += groundY - before.min.y;
+  root.updateWorldMatrix(true, true);
+  const after = new THREE.Box3().setFromObject(root);
+  if (after.isEmpty() || !Number.isFinite(after.min.y) || Math.abs(after.min.y - groundY) > 1e-4) {
+    throw new Error(`Render mesh penetrates support plane ${label}: ${after.min.y}`);
+  }
+  return after.min.y;
+}
+
 /**
- * Terrain is authored as a GLB and instantiated by cloning the loaded scene.
+ * Promoted terrain GLBs are cloned and inspected once before attachment.
  */
 async function instantiateTerrainModel(relPath) {
   const gltf = await loadGltf(relPath);
   const instance = SkeletonUtils.clone(gltf.scene);
   ownRenderableResources(instance);
   fitFootprint(instance, TERRAIN_TARGET_HALF_EXTENT);
+  instance.userData.meshIntegrity = inspectMeshIntegrityOnce(instance, `terrain:${relPath}`, relPath);
+  instance.userData.terrainSource = "promoted-glb";
+  return instance;
+}
+
+function instantiateProceduralTerrain(profile) {
+  const min = worldPoint({ x: profile.gameplay.bounds.minX, y: profile.gameplay.bounds.minY, elevation: 0 });
+  const max = worldPoint({ x: profile.gameplay.bounds.maxX, y: profile.gameplay.bounds.maxY, elevation: 0 });
+  const geometry = new THREE.PlaneGeometry(max.x - min.x, max.z - min.z, 12, 6);
+  geometry.rotateX(-Math.PI / 2);
+  const tint = STAGE_PALETTE_TINTS[profile.stageId] ?? STAGE_PALETTE_TINTS["cinder-span"];
+  const material = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(0x05070d).lerp(new THREE.Color(tint), 0.08),
+    roughness: 0.94,
+    metalness: 0.03,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set((min.x + max.x) / 2, 0, (min.z + max.z) / 2);
+  mesh.receiveShadow = false;
+  const root = new THREE.Group();
+  root.name = `procedural-terrain:${profile.stageId}`;
+  root.add(mesh);
+  ownRenderableResources(root);
+  root.userData.meshIntegrity = inspectMeshIntegrityOnce(root, `procedural-terrain:${profile.stageId}`, root.name);
+  root.userData.terrainSource = profile.terrainFallback?.kind ?? "procedural-flat-support";
+  return root;
+}
+
+async function instantiatePickupModel(relPath) {
+  const gltf = await loadGltf(relPath);
+  const instance = SkeletonUtils.clone(gltf.scene);
+  ownRenderableResources(instance);
+  fitHeight(instance, TARGET_HEIGHT.pickup);
+  instance.userData.meshIntegrity = inspectMeshIntegrityOnce(instance, `pickup:${relPath}`, relPath);
+  instance.userData.groundedMinY = groundObjectOnPlane(instance, 0, relPath);
   return instance;
 }
 
@@ -1176,15 +1319,17 @@ async function instantiateStageProp(prop) {
   ownRenderableResources(instance);
   const radius = finite(prop.footprintRadius, 180) * WORLD_SCALE / (WORLD_WIDTH / 2);
   fitFootprint(instance, radius);
-  const rescan = new THREE.Box3().setFromObject(instance);
-  instance.position.y -= rescan.min.y;
-  const groundOffset = instance.position.y;
+  const integrityKey = `prop:${prop.modelPath}#${prop.modelNode ?? "scene"}`;
+  const integrity = inspectMeshIntegrityOnce(instance, integrityKey, integrityKey);
   const point = worldPoint(prop.placement);
-  instance.position.set(point.x, point.y + groundOffset, point.z);
+  instance.position.set(point.x, point.y, point.z);
   instance.rotation.y = finite(prop.placement?.yawRadians, 0);
+  const groundedMinY = groundObjectOnPlane(instance, point.y, prop.id);
   instance.name = `stage-prop:${prop.id}`;
   instance.userData.stageDecorId = prop.id;
   instance.userData.stageDecorKind = "prop";
+  instance.userData.meshIntegrity = integrity;
+  instance.userData.groundedMinY = groundedMinY;
   return {
     id: prop.id,
     kind: "prop",
@@ -1658,6 +1803,8 @@ export class RealtimeBattle {
     this.actors = new Map(); // entity.id -> { root, kind, modelPath, loading }
     this.vfxInstances = []; // { root, untilTick } -- also holds death echoes: { root, untilTick, mixer }
     this.stageTerrainRecord = null;
+    this.stageTerrainError = null;
+    this.stageTerrainFailedId = null;
     this.stageDecorRecords = [];
     this.stageLoadToken = 0;
     this.cameraTarget = new THREE.Vector3();
@@ -1867,11 +2014,14 @@ export class RealtimeBattle {
     if (!stageId || this.disposed) return;
     // Palette fog is phase-sensitive even when terrain is already loaded.
     this.applyStagePalette(stageId, phase, tick);
-    if (this.loadedStageId === stageId || this.loadingStageId === stageId) return;
+    if (this.loadedStageId === stageId || this.loadingStageId === stageId || this.stageTerrainFailedId === stageId) return;
     const profile = stageWorldFor(stageId);
-    if (!profile?.terrainGlbPath) return;
+    if (!profile || (profile.terrainRuntimeEligible !== true
+      && profile.terrainFallback?.kind !== "procedural-flat-support")) return;
+    this.stageTerrainFailedId = null;
     this.loadingStageId = stageId;
     this.loadedStageId = null;
+    this.stageTerrainError = null;
     const loadToken = ++this.stageLoadToken;
     this.clearStageWorld();
     // Warm the stage boss's GLB while the player is still in the opening
@@ -1882,14 +2032,30 @@ export class RealtimeBattle {
     const bossModelPath = meshRootForStageBoss(stageId);
     if (bossModelPath) loadGltf(bossModelPath).catch(() => {});
 
-    const terrainRequest = instantiateTerrainModel(profile.terrainGlbPath).then((root) => ({
-      id: `${stageId}:terrain`,
-      kind: "terrain",
-      modelPath: profile.terrainGlbPath,
-      root,
-      mixer: null,
-      actions: {},
-    }));
+    const terrainRequest = Promise.resolve()
+      .then(async () => {
+        if (profile.terrainRuntimeEligible !== true) return instantiateProceduralTerrain(profile);
+        try {
+          return await instantiateTerrainModel(profile.terrainGlbPath);
+        } catch (error) {
+          console.warn(`Rejected stage terrain ${profile.terrainGlbPath}; using planar support:`, error);
+          const fallback = instantiateProceduralTerrain(profile);
+          fallback.userData.terrainFallbackReason = error instanceof Error ? error.message : String(error);
+          return fallback;
+        }
+      })
+      .then((root) => ({
+        id: `${stageId}:terrain`,
+        kind: "terrain",
+        modelPath: root.userData.terrainSource === "promoted-glb" ? profile.terrainGlbPath : null,
+        sourceCandidatePath: profile.terrainSourceCandidatePath ?? profile.terrainGlbPath,
+        sourceKind: root.userData.terrainSource,
+        fallbackReason: root.userData.terrainFallbackReason ?? profile.terrainFallback?.reason ?? null,
+        meshIntegrity: root.userData.meshIntegrity,
+        root,
+        mixer: null,
+        actions: {},
+      }));
     terrainRequest.then(
       (record) => {
         if (this.disposed || this.stageLoadToken !== loadToken || this.loadingStageId !== stageId) {
@@ -1899,10 +2065,14 @@ export class RealtimeBattle {
         this.terrainGroup.add(record.root);
         this.stageTerrainRecord = record;
         this.loadedStageId = stageId;
+        this.stageTerrainFailedId = null;
         this.loadingStageId = null;
       },
-      () => {
+      (error) => {
         if (this.disposed || this.stageLoadToken !== loadToken) return;
+        console.warn(`Failed to mount stage terrain ${stageId}:`, error);
+        this.stageTerrainError = error instanceof Error ? error.message : String(error);
+        this.stageTerrainFailedId = stageId;
         this.stageLoadToken += 1;
         this.loadingStageId = null;
         this.clearStageWorld();
@@ -2041,13 +2211,16 @@ export class RealtimeBattle {
     const fallbackModelPath = fallbackCandidate && fallbackCandidate !== modelPath
       ? fallbackCandidate
       : null;
+    const suppressEntranceBeat = typeof entity.presentationAction === "string"
+      && LOCOMOTION_ACTION_KEYS.includes(entity.presentationAction);
     const record = {
       root: null, kind, modelPath, fallbackModelPath, loading: Boolean(modelPath),
       entityKind: entity.kind ?? null, role: entity.role ?? null, moveState: entity.move ?? null,
       mixer: null, actions: {}, actionSources: {}, activeActionKey: null, targetHeight: actorTargetHeight(entity),
       activeActionSource: null, activeActionClip: null,
       oneShotAction: null, oneShotActionKey: null,
-      queuedAction: { key: "show", presentation: null },
+      queuedAction: suppressEntranceBeat ? null : { key: "show", presentation: null },
+      presentationAction: null,
       dead: false, hideAfterDeath: false,
       presentationToken: 0, presentationRoots: [], presentationMixers: [],
       moving: false, lastX: null, lastZ: null,
@@ -2116,6 +2289,56 @@ export class RealtimeBattle {
         if (this.disposed || this.actors.get(entity.id) !== record) return;
         console.warn(`Failed to load actor model ${record.modelPath}:`, error);
         attachMissingActorMarker(record, this.actorGroup);
+      });
+    return record;
+  }
+
+  ensurePickup(pickup) {
+    if (!pickup?.id || this.disposed) return;
+    const existing = this.actors.get(pickup.id);
+    if (existing) return existing;
+    const modelPath = pickup.kind === "item" ? PROP_BLADE_MESH : PROP_RELIC_MESH;
+    const root = new THREE.Group();
+    const fallback = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.14, 0),
+      new THREE.MeshStandardMaterial({ color: COLORS.pickup, emissive: COLORS.pickup, emissiveIntensity: 0.8 }),
+    );
+    fallback.position.y = 0.14;
+    root.add(fallback);
+    const record = {
+      root,
+      kind: "pickup",
+      modelPath,
+      loading: true,
+      restGroundY: 0,
+      goalX: null,
+      goalY: null,
+      goalZ: null,
+      moving: false,
+      lastX: null,
+      lastZ: null,
+      meshIntegrity: null,
+      groundedMinY: 0,
+    };
+    this.actors.set(pickup.id, record);
+    this.actorGroup.add(root);
+    instantiatePickupModel(modelPath)
+      .then((instance) => {
+        if (this.disposed || this.actors.get(pickup.id) !== record) {
+          disposeObject3D(instance);
+          return;
+        }
+        root.remove(fallback);
+        disposeObject3D(fallback);
+        root.add(instance);
+        record.loading = false;
+        record.meshIntegrity = instance.userData.meshIntegrity;
+        record.groundedMinY = instance.userData.groundedMinY;
+      })
+      .catch((error) => {
+        record.loading = false;
+        if (this.disposed || this.actors.get(pickup.id) !== record) return;
+        console.warn(`Failed to load pickup model ${modelPath}:`, error);
       });
     return record;
   }
@@ -2376,6 +2599,18 @@ export class RealtimeBattle {
     record.entityKind = entity.kind ?? record.entityKind;
     record.role = entity.role ?? record.role;
     record.moveState = entity.move ?? null;
+    const requestedAction = typeof entity.presentationAction === "string"
+      && RIG_ACTION_KEYS.includes(entity.presentationAction)
+      ? entity.presentationAction
+      : null;
+    if (requestedAction !== record.presentationAction) {
+      record.presentationAction = requestedAction;
+      if (requestedAction && LOCOMOTION_ACTION_KEYS.includes(requestedAction)) {
+        if (!record.loading) this.recoverLocomotion(record, 0);
+      } else if (requestedAction && !record.dead) {
+        this.triggerAction(record, requestedAction);
+      }
+    }
     const status = entity.status;
     const dead = status === "DOWNED" || status === "DEAD" || status === "DEFEATED"
       || (Number.isFinite(entity.hp) && entity.hp <= 0)
@@ -2649,16 +2884,7 @@ export class RealtimeBattle {
     for (const pickup of list(snapshot, "pickups", "drops")) {
       if (!pickup?.id) continue;
       seen.add(pickup.id);
-      let record = this.actors.get(pickup.id);
-      if (!record) {
-        const mesh = new THREE.Mesh(
-          new THREE.OctahedronGeometry(0.14, 0),
-          new THREE.MeshStandardMaterial({ color: COLORS.pickup, emissive: COLORS.pickup, emissiveIntensity: 0.8 }),
-        );
-        record = { root: mesh, kind: "pickup", modelPath: null, loading: false };
-        this.actors.set(pickup.id, record);
-        this.actorGroup.add(mesh);
-      }
+      const record = this.ensurePickup(pickup);
       this.syncActorPosition(record, pickup);
     }
 
@@ -3025,6 +3251,10 @@ export class RealtimeBattle {
 
   retireVfxRecord(record) {
     if (!record) return;
+    if (record.loadRequest) {
+      this.pendingVfxLoads.delete(record.loadRequest);
+      record.loadRequest = null;
+    }
     this.vfxGroup?.remove(record.root);
     record.mixer?.stopAllAction();
     disposeObject3D(record.root);
@@ -3034,7 +3264,12 @@ export class RealtimeBattle {
     if (!record) return false;
     this.vfxInstances.push(record);
     while (this.vfxInstances.length > MAX_VISUAL_EFFECTS) {
-      this.retireVfxRecord(this.vfxInstances.shift());
+      const expendableIndex = this.vfxInstances.findIndex(
+        (candidate) => !CRITICAL_VFX_EVENT_TYPES.includes(candidate.eventType),
+      );
+      const evictionIndex = expendableIndex >= 0 ? expendableIndex : 0;
+      const [evicted] = this.vfxInstances.splice(evictionIndex, 1);
+      this.retireVfxRecord(evicted);
     }
     return this.vfxInstances.includes(record);
   }
@@ -3044,7 +3279,8 @@ export class RealtimeBattle {
       ? SKILL_VFX_MODELS[event?.vfx || event?.skillId]
       : VFX_MODELS[event?.type];
     if (!relPath) return;
-    if (this.pendingVfxLoads.size >= MAX_VISUAL_EFFECTS) return;
+    const criticalEvent = CRITICAL_VFX_EVENT_TYPES.includes(event?.type);
+    if (this.pendingVfxLoads.size >= MAX_VISUAL_EFFECTS && !criticalEvent) return;
     const generation = this.vfxGeneration;
     const anchor = effectAnchor(snapshot, event);
     if (!anchor) return;
@@ -3057,8 +3293,10 @@ export class RealtimeBattle {
     placeholder.position.set(p.x, p.y + 0.6, p.z);
     this.vfxGroup.add(placeholder);
     const semanticVfxId = semanticVfxIdForEvent(event);
-    const record = { root: placeholder, untilTick, loaded: false, semanticVfxId };
-    this.trackVfxInstance(record);
+    const record = {
+      root: placeholder, untilTick, loaded: false, semanticVfxId, eventType: event.type, loadRequest: null,
+    };
+    if (!this.trackVfxInstance(record)) return;
     const loadRequest = instantiateVfxModel(
       relPath,
       () => generation === this.vfxGeneration && this.vfxInstances.includes(record),
@@ -3081,8 +3319,12 @@ export class RealtimeBattle {
       if (index >= 0) this.vfxInstances.splice(index, 1);
       this.retireVfxRecord(record);
     });
+    record.loadRequest = loadRequest;
     this.pendingVfxLoads.add(loadRequest);
-    loadRequest.finally(() => this.pendingVfxLoads.delete(loadRequest));
+    loadRequest.finally(() => {
+      this.pendingVfxLoads.delete(loadRequest);
+      if (record.loadRequest === loadRequest) record.loadRequest = null;
+    });
   }
 
   // Runs BEFORE reconcileActors() retires this tick's dead enemies, so their
@@ -3641,6 +3883,8 @@ export class RealtimeBattle {
     this.loadingStageId = null;
     this.stageDecorRecords = [];
     this.stageTerrainRecord = null;
+    this.stageTerrainError = null;
+    this.stageTerrainFailedId = null;
     this.lastAnimMs = null;
     this.lastAnimTick = null;
     this.stageIntro = null;
@@ -3666,6 +3910,9 @@ export class RealtimeBattle {
         id: entityId,
         kind: record.kind,
         position,
+        modelPath: record.modelPath ?? null,
+        meshIntegrity: record.meshIntegrity ?? record.root?.userData?.meshIntegrity ?? null,
+        groundedMinY: record.groundedMinY ?? record.root?.userData?.groundedMinY ?? null,
         ambient: {
           state: record.ambientState ?? "suppressed",
           active: record.ambientActive === true,
@@ -3679,6 +3926,7 @@ export class RealtimeBattle {
         oneShotActionKey: record.oneShotActionKey ?? null,
         activeActionSource: record.activeActionSource ?? null,
         activeActionClip: record.activeActionClip ?? null,
+        presentationAction: record.presentationAction ?? null,
         hasMixer: Boolean(record.mixer),
         actionCount: Object.keys(record.actions ?? {}).length,
       };
@@ -3694,6 +3942,8 @@ export class RealtimeBattle {
       effectId: record.effectId ?? null,
       clip: record.activeActionClip ?? null,
       quality: record.quality ?? null,
+      meshIntegrity: record.root?.userData?.meshIntegrity ?? null,
+      groundedMinY: record.root?.userData?.groundedMinY ?? null,
       position: record.root
         ? { x: record.root.position.x, y: record.root.position.y, z: record.root.position.z }
         : null,
@@ -3708,17 +3958,24 @@ export class RealtimeBattle {
       return record ? describe(id, record) : null;
     }
     const projectiles = [];
+    const pickups = [];
     const actors = [];
     for (const [entityId, record] of this.actors) {
       const state = describe(entityId, record);
       if (record.kind === "projectile") projectiles.push(state);
+      else if (record.kind === "pickup") pickups.push(state);
       else if (["commander", "enemy", "boss", "companion"].includes(record.kind)) actors.push(state);
     }
     const stageDecorRecords = this.stageDecorRecords.map(describeStageDecor);
     const stageDecor = {
-      stageId: this.loadedStageId ?? this.loadingStageId,
+      stageId: this.loadedStageId ?? this.loadingStageId ?? this.stageTerrainFailedId,
       loading: this.loadingStageId !== null,
       terrainLoaded: Boolean(this.stageTerrainRecord),
+      terrainSource: this.stageTerrainRecord?.sourceKind ?? null,
+      terrainModelPath: this.stageTerrainRecord?.modelPath ?? null,
+      terrainSourceCandidatePath: this.stageTerrainRecord?.sourceCandidatePath ?? null,
+      terrainFallbackReason: this.stageTerrainRecord?.fallbackReason ?? this.stageTerrainError,
+      terrainIntegrity: this.stageTerrainRecord?.meshIntegrity ?? null,
       propCount: stageDecorRecords.filter((record) => record.kind === "prop").length,
       npcCount: stageDecorRecords.filter((record) => record.kind === "stage-npc").length,
       vfxCount: stageDecorRecords.filter((record) => record.kind === "stage-vfx").length,
@@ -3730,10 +3987,13 @@ export class RealtimeBattle {
       reducedMotion: this.reducedMotion,
       actorCount: actors.length,
       projectileCount: projectiles.length,
+      pickupCount: pickups.length,
+      activeVfxCount: this.vfxInstances.length,
       mixerCount: actors.reduce((count, actor) => count + (actor.hasMixer ? 1 : 0), 0),
       actionCount: actors.reduce((count, actor) => count + actor.actionCount, 0),
       stageDecor,
       projectiles,
+      pickups,
       actors,
     };
   }

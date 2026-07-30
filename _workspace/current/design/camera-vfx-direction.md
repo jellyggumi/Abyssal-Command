@@ -33,13 +33,9 @@ ingress -> intermediate objective(s) -> final objective/boss -> extraction
 `[SHIPPED]` Runtime now resolves `boss-kill` before `extraction`. Presentation follows the emitted
 boss-death and extraction-window events; it never fabricates a camera- or VFX-only objective state.
 
-## 2. Exactly three stage worlds
-
-| Sequence / stage | Flat spatial intent | Camera intent | Authored ambient VFX | Sound intent |
-|---|---|---|---|---|
-| 1 — `cinder-span` | Low-wide ash bridge blockade; `cinder-span:critical-route` carries `cinder-span:ingress → cinder-relay-crossing → cinder-forge-stand → encounter-path:cinder-span:boss-kill → cinder-bind`, corridor width `1200`, W/SW ingress. | Focus `(13800,6000,0)`; intro `90` ticks from distance `6`, azimuth `-0.24`, polar `-0.34`; hold the long route axis and show the final gate before commitment. | cue `cinder-span:ember-wake`, effect `cinder-span-ember-wake`, clip `stage-vfx::cinder-span::loop::v01`; warm moving embers indicate forward pressure. | Saw/triangle ash ambience; music fundamentals `55/82.41/123.47 Hz`; the least complex lane mix teaches warning versus contact. |
-| 2 — `abyss-chancel` | Bent nave/colonnade; `abyss-chancel:critical-route` carries `abyss-chancel:ingress → chancel-nave-advance → chancel-transept-lock → encounter-path:abyss-chancel:boss-kill → chancel-bind`, corridor width `1000`, three approaches. | Focus `(13600,6000,0)`; intro `96` ticks from distance `6.4`, azimuth `0.30`, polar `-0.30`; frame side ingress without letting apse props occlude the contest point. | cue `abyss-chancel:mirror-static`, effect `abyss-chancel-mirror-static`, clip `stage-vfx::abyss-chancel::loop::v01`; violet static makes locks and denials legible. | Sine-led chancel bed at `73.42/110/164.81 Hz`; cleaner sustained tones leave warning pulses room during three-way pressure. |
-| 3 — `echo-throne` | Axial fractured court; `echo-throne:critical-route` carries `echo-throne:ingress → throne-aisle-break → throne-dais-stand → encounter-path:echo-throne:boss-kill → throne-bind`, corridor width `1100`, fastest W/SW/NW convergence. | Focus `(14200,6000,0)`; intro `102` ticks from distance `6.8`, azimuth `-0.40`, polar `-0.28`; widest opening establishes the final court, then keeps dais, boss path, and extraction direction readable. | cue `echo-throne:fracture-echo`, effect `echo-throne-fracture-echo`, clip `stage-vfx::echo-throne::loop::v01`; cold fracture echoes carry boss and terminal beats. | Low `49/73.42/98 Hz` throne bed with saw pressure; boss mix is heaviest but never masks terminal or extraction cues. |
+| 1 — `cinder-span` | Low-wide ash bridge blockade; `cinder-span:critical-route` carries `cinder-span:ingress → cinder-relay-crossing → cinder-forge-stand → encounter-path:cinder-span:boss-kill → cinder-bind`, corridor width `1200`, W/SW ingress. | Focus `(13800,6000,0)`; intro `90` ticks from distance `6`, azimuth `-0.24`, polar `-0.34`; hold the long route axis and show the final gate before commitment. | cue `cinder-span:ember-wake`, effect `cinder-span-ember-wake`, clip `stage-vfx::cinder-span::loop::v01`; warm moving embers indicate forward pressure. | Saw/triangle ash ambience; music fundamentals `55/82.41/123.47 Hz`; the least complex lane mix teaches warning versus contact. | **OBSERVED [8.1]**: minimap Cinder initially revealed, Chancel/Throne locked; route markers resolve from `stage-world-catalog.js#vfxCue` and `STAGE_SHOWCASE_IDS`. Camera distanceScale `0.34–0.68`, presentationAction drives show. |
+| 2 — `abyss-chancel` | Bent nave/colonnade; `abyss-chancel:critical-route` carries `abyss-chancel:ingress → chancel-nave-advance → chancel-transept-lock → encounter-path:abyss-chancel:boss-kill → chancel-bind`, corridor width `1000`, three approaches. | Focus `(13600,6000,0)`; intro `96` ticks from distance `6.4`, azimuth `0.30`, polar `-0.30`; frame side ingress without letting apse props occlude the contest point. | cue `abyss-chancel:mirror-static`, effect `abyss-chancel-mirror-static`, clip `stage-vfx::abyss-chancel::loop::v01`; violet static makes locks and denials legible. | Sine-led chancel bed at `73.42/110/164.81 Hz`; cleaner sustained tones leave warning pulses room during three-way pressure. | **OBSERVED [8.1]**: minimap unlocked on Cinder clear, progressive reveal. |
+| 3 — `echo-throne` | Axial fractured court; `echo-throne:critical-route` carries `echo-throne:ingress → throne-aisle-break → throne-dais-stand → encounter-path:echo-throne:boss-kill → throne-bind`, corridor width `1100`, fastest W/SW/NW convergence. | Focus `(14200,6000,0)`; intro `102` ticks from distance `6.8`, azimuth `-0.40`, polar `-0.28`; widest opening establishes the final court, then keeps dais, boss path, and extraction direction readable. | cue `echo-throne:fracture-echo`, effect `echo-throne-fracture-echo`, clip `stage-vfx::echo-throne::loop::v01`; cold fracture echoes carry boss and terminal beats. | Low `49/73.42/98 Hz` throne bed with saw pressure; boss mix is heaviest but never masks terminal or extraction cues. | **OBSERVED [8.1]**: minimap unlocked on Chancel clear, final reveal. |
 
 Every stage has one rectangular support mesh at elevation `0`, an empty `surfaces` list, one critical
 route, an optional detour, at least eight non-overlapping retained props, and motivated lights attached to
@@ -86,6 +82,29 @@ Stage fog is authored per world and remains stage-specific:
 
 Telegraphs, objective rings, ingress arrows, and extraction markers must remain readable at the worst
 allowed orbit/pitch. Atmosphere may be thinned; information layers may not.
+---
+
+## 3b. Lobby minimap and stage reveal progression [OBSERVED 8.1]
+
+`app.js#renderSortieTabBody` renders one native button per canonical
+`stage-world-catalog.js#STAGE_SHOWCASE_IDS` entry. The route is fixed:
+Cinder Span → Abyss Chancel → Echo Throne. A new campaign exposes Cinder only;
+`campaign.unlockedStageIndex` reveals each later node after the preceding
+`FINAL_COMPLETION`. Locked nodes remain disabled and spoiler-safe. Selecting a
+revealed node updates the existing stage briefing and shared battle canvas; the
+minimap does not create a second preview renderer or advance simulation.
+
+---
+
+## 3c. Lobby camera distance and reduced-motion binding [OBSERVED 8.1, FINAL]
+
+`lobby-cinematic.js#showcaseCamera` keeps `focusRole: "commander"` and emits an
+animated `distanceScale` of exactly `0.9–1.1`. `app.js#applyShowcaseCamera`
+applies each shot through the renderer's public `orbit()` and `zoom()` APIs, so
+the curve stays inside `MANUAL_ZOOM_RATIO_MIN/MAX` instead of flattening at a
+clamp. Framing thresholds are `≤0.96` close-up, `<1.05` mid, otherwise wide.
+Reduced motion returns one static `distanceScale: 1.0` shot and performs no
+animated orbit.
 
 ## 4. VFX lifecycle
 

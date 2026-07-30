@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-29T20:28:12.332Z",
+  "generatedAt": "2026-07-29T23:46:50.681Z",
   "canonicalStageIds": [
     "cinder-span",
     "abyss-chancel",
@@ -13,7 +13,9 @@
       "stageId": "cinder-span",
       "pass": true,
       "expected": {
-        "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
+        "terrainGlbPath": null,
+        "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
+        "terrainSource": "procedural-flat-support",
         "propRecords": [
           {
             "id": "cinder-span:collapsed-parapet-prop",
@@ -96,9 +98,165 @@
         "surfaceStageId": "cinder-span",
         "loadedStageId": "cinder-span",
         "renderer": "webgl",
-        "renderedFrames": 88,
+        "renderedFrames": 74,
         "terrainLoaded": true,
-        "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
+        "terrainGlbPath": null,
+        "terrainSource": "procedural-flat-support",
+        "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
+        "terrainIntegrity": {
+          "meshCount": 1,
+          "vertexCount": 91,
+          "triangleCount": 144,
+          "invalidVertexCount": 0,
+          "invalidIndexCount": 0,
+          "finiteBounds": true
+        },
+        "propGrounding": [
+          {
+            "id": "cinder-span:seal-brand",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 221,
+              "triangleCount": 358,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:forge-relic",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 382,
+              "triangleCount": 664,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:relay-debris-north-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 203,
+              "triangleCount": 318,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:relay-debris-south-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 1119,
+              "triangleCount": 1978,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:ingress-beacon-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 297,
+              "triangleCount": 494,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:north-ash-talon-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 452,
+              "triangleCount": 704,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:gate-beacon-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 245,
+              "triangleCount": 348,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:forge-arch",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 818,
+              "triangleCount": 1366,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:collapsed-parapet-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 2561,
+              "triangleCount": 4550,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:west-ash-wall-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 329,
+              "triangleCount": 550,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:east-ash-wall-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 355,
+              "triangleCount": 574,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:south-forge-teeth-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 800,
+              "triangleCount": 1412,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          }
+        ],
         "palette": {
           "stagePaletteId": "cinder-span",
           "fogColor": "#7b2a1a",
@@ -204,14 +362,6 @@
             "status": 200
           },
           {
-            "path": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
-            "status": 200
-          },
-          {
-            "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
-            "status": 200
-          },
-          {
             "path": "assets/motion/ingame/characters/ember-cohort/model.glb",
             "status": 200
           },
@@ -247,7 +397,9 @@
       "stageId": "abyss-chancel",
       "pass": true,
       "expected": {
-        "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
+        "terrainGlbPath": null,
+        "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
+        "terrainSource": "procedural-flat-support",
         "propRecords": [
           {
             "id": "abyss-chancel:apse-wing-prop",
@@ -330,9 +482,165 @@
         "surfaceStageId": "abyss-chancel",
         "loadedStageId": "abyss-chancel",
         "renderer": "webgl",
-        "renderedFrames": 38,
+        "renderedFrames": 57,
         "terrainLoaded": true,
-        "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
+        "terrainGlbPath": null,
+        "terrainSource": "procedural-flat-support",
+        "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
+        "terrainIntegrity": {
+          "meshCount": 1,
+          "vertexCount": 91,
+          "triangleCount": 144,
+          "invalidVertexCount": 0,
+          "invalidIndexCount": 0,
+          "finiteBounds": true
+        },
+        "propGrounding": [
+          {
+            "id": "abyss-chancel:nave-blade",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:nave-seal-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:west-colonnade-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:east-colonnade-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:south-nave-screen-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:vestry-screen-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:oath-relic",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:oath-apse-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:vestry-debris-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:apse-wing-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:west-processional-lamp-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:east-processional-lamp-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          }
+        ],
         "palette": {
           "stagePaletteId": "abyss-chancel",
           "fogColor": "#463282",
@@ -430,14 +738,6 @@
             "status": 200
           },
           {
-            "path": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
-            "status": 200
-          },
-          {
-            "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
-            "status": 200
-          },
-          {
             "path": "assets/motion/ingame/characters/ember-cohort/model.glb",
             "status": 200
           },
@@ -469,7 +769,9 @@
       "stageId": "echo-throne",
       "pass": true,
       "expected": {
-        "terrainGlbPath": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
+        "terrainGlbPath": null,
+        "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
+        "terrainSource": "procedural-flat-support",
         "propRecords": [
           {
             "id": "echo-throne:aisle-blade",
@@ -552,9 +854,165 @@
         "surfaceStageId": "echo-throne",
         "loadedStageId": "echo-throne",
         "renderer": "webgl",
-        "renderedFrames": 34,
+        "renderedFrames": 40,
         "terrainLoaded": true,
-        "terrainGlbPath": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
+        "terrainGlbPath": null,
+        "terrainSource": "procedural-flat-support",
+        "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
+        "terrainIntegrity": {
+          "meshCount": 1,
+          "vertexCount": 91,
+          "triangleCount": 144,
+          "invalidVertexCount": 0,
+          "invalidIndexCount": 0,
+          "finiteBounds": true
+        },
+        "propGrounding": [
+          {
+            "id": "echo-throne:aisle-blade",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:echo-aisle-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:west-fractured-wing-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:east-fractured-wing-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:court-crescent-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:south-gallery-shard-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:dais-relic",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:fractured-dais-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:gallery-debris-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:crown-shard-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:west-crown-light-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "echo-throne:east-crown-light-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          }
+        ],
         "palette": {
           "stagePaletteId": "echo-throne",
           "fogColor": "#376482",
@@ -648,10 +1106,6 @@
             "status": 200
           },
           {
-            "path": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
-            "status": 200
-          },
-          {
             "path": "assets/motion/ingame/characters/ember-cohort/model.glb",
             "status": 200
           },
@@ -681,5 +1135,5 @@
     }
   ],
   "pass": true,
-  "finishedAt": "2026-07-29T20:28:20.108Z"
+  "finishedAt": "2026-07-29T23:46:58.275Z"
 }

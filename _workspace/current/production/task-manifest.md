@@ -252,7 +252,6 @@ next-beat: 독립 사람 플레이 판정으로 G4/G7/G8 재측정
 - [ ] webtoon-harness 캐릭터 특성 연동
 
 ---
-
 ## 8. 2026-07-29 — 자연 관절 모션·3스테이지 런타임 통합
 
 | task | owner | 산출물 | 게이트 | 상태 |
@@ -281,6 +280,29 @@ next-beat: 독립 사람 플레이 판정으로 G4/G7/G8 재측정
   real-WebGL stage proof는 canonical stage **3/3**을 통과했다.
 - Cinder obstacle 재배치 중 companion RETURN deadlock이 한 차례 재현됐고,
   겹치는 clearance circle을 제거한 뒤 movement contract **11/11**로 회귀를 닫았다.
+- **로비 미니맵**: Cinder→Chancel→Throne 순서의 3-node 진행형 route이며, 새 캠페인은
+  Cinder 한 node만 노출한다. `app.js#renderSortieTabBody`, `stage-world-catalog.js#STAGE_SHOWCASE_IDS`.
+- **카메라**: commander를 고정 초점으로 삼고, lobby `distanceScale`을 renderer 수동 zoom의
+  합법 범위인 `0.9–1.1` 안에서 순환시킨다. reduced-motion은 정적 `1.0`이다.
+  `lobby-cinematic.js#showcaseCamera`, `app.js#applyShowcaseCamera`.
+- **지형**: 세 stage 모두 `terrainGlbPath: null`, provenance용
+  `terrainSourceCandidatePath` 유지, runtime은 `procedural-flat-support`를 사용한다.
+  props·obstacles·route anchors는 gameplay elevation 0 검증을 통과한다.
+- **소품**: stage당 8–14개의 sparse retained mesh placement를 사용하며 모두 기본 평면 위에
+  ground된다. `stage-world-catalog.js#STAGE_WORLD_PROFILES`.
+- **픽업**: `run.pickups`가 authority다. renderer는 item을 prop `.03`, 그 외 collectible을
+  prop `.05`로 표시하고 snapshot을 변경하지 않는다. `battle-realtime-three.js#PROP_MODELS`.
+- **VFX**: melee/projectile/skill impact와 commander/companion damage를 transient pool
+  24개로 제한하며, cold-load 중에도 boss telegraph를 우선 수용한다.
+- **오디오**: `defense-audio.js#AUDIO_EVENT_POLICY`가 event priority, voice cap, mute,
+  pause/resume을 소유하고 `debugMetrics()`로 node/voice 수를 노출한다.
+- **브라우저 증거** [OBSERVED]:
+  - Desktop `1440×900`: WebGL, minimap node 3개/초기 reveal 1개, console error 0.
+  - Mobile `390×844`: horizontal overflow 0, WebGL, minimap node 3개.
+  - final real-WebGL stage proof: canonical stage **3/3**, prop mesh integrity·grounding PASS.
+- **자동 회귀** [OBSERVED]: `node --test 'tests/**/*.test.mjs'`는 tests **469**,
+  pass **444**, fail **0**, skip **25**를 기록했다. skip은 기존 historical/fixture-gated
+  lane이며 이번 변경을 우회하도록 새로 추가하지 않았다.
 
 ### 8.2 게이트 해석
 
@@ -288,3 +310,5 @@ next-beat: 독립 사람 플레이 판정으로 G4/G7/G8 재측정
 - 사람 플레이 관찰 없이 손맛·장기 몰입·G4/G7/G8을 PASS로 승격하지 않는다.
 - final prompt의 다음 개선 실행은 이 기준선을 다시 측정해야 하며 과거 PASS를 새 변경의
   증거로 재사용하지 않는다.
+- **남은 게이트**: G4 몰입/접근성, G7 코어 루프, G8 최초 노출 모두 **재측정 필요** (사람 플레이).
+- **배포**: push와 Pages production smoke는 아직 미측정이다.

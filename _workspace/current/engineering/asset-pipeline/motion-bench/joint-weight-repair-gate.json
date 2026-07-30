@@ -7,7 +7,7 @@
  "relaxStrength": 0.6,
  "influenceEpsilon": 0.1,
  "maxSpread": 2,
- "registryGenerationId": "b0178e95651a0b29beffe28d8006d9c5cb2cb6ce7c6a00ebec36e4e7108529be",
+ "registryGenerationId": "ada19f5524d2a384e3545923281945026bf683b46e974a39217b9e104c6599ef",
  "assets": [
   {
    "assetId": "broken-court-monarch-boss",
@@ -16,30 +16,28 @@
     "verticesMeasured": 30399,
     "overSpread": 0,
     "overSpreadFraction": 0.0,
-    "maxSpread": 2,
+    "maxSpread": 1,
     "overSpreadByDominantBone": {},
     "influenceHistogram": {
-     "1": 393,
-     "2": 17633,
-     "3": 11760,
-     "4": 613
+     "1": 3813,
+     "2": 26586
     },
-    "singleInfluenceVertices": 393,
-    "seamEdgesOverOne": 1303,
-    "seamEdgesDisjoint": 0,
+    "singleInfluenceVertices": 3813,
+    "seamEdgesOverOne": 2611,
+    "seamEdgesDisjoint": 1558,
     "edgeTotal": 70894,
-    "maxWeightSumError": 4.470348358154297e-08
+    "maxWeightSumError": 2.9802322387695312e-08
    },
-   "rigidityShare": 0.01293,
+   "rigidityShare": 0.12543,
    "verdict": {
     "spread": "PASS",
     "seam": "PASS",
     "seamDisjoint": "PASS",
-    "rigidityBaselineVertices": 393,
+    "rigidityBaselineVertices": 3813,
     "rigidityFloorFraction": 0.005,
     "rigidityCeilingFraction": 0.25,
     "rigidityCeilingVertices": 7600,
-    "rigidityBudget": 393,
+    "rigidityBudget": 3813,
     "rigidity": "PASS",
     "normalized": "PASS",
     "passed": true
@@ -52,30 +50,28 @@
     "verticesMeasured": 6390,
     "overSpread": 0,
     "overSpreadFraction": 0.0,
-    "maxSpread": 2,
+    "maxSpread": 1,
     "overSpreadByDominantBone": {},
     "influenceHistogram": {
-     "1": 44,
-     "2": 3035,
-     "3": 3120,
-     "4": 191
+     "1": 1069,
+     "2": 5321
     },
-    "singleInfluenceVertices": 44,
-    "seamEdgesOverOne": 384,
-    "seamEdgesDisjoint": 0,
+    "singleInfluenceVertices": 1069,
+    "seamEdgesOverOne": 852,
+    "seamEdgesDisjoint": 508,
     "edgeTotal": 14621,
-    "maxWeightSumError": 4.470348358154297e-08
+    "maxWeightSumError": 2.9802322387695312e-08
    },
-   "rigidityShare": 0.00689,
+   "rigidityShare": 0.16729,
    "verdict": {
     "spread": "PASS",
     "seam": "PASS",
     "seamDisjoint": "PASS",
-    "rigidityBaselineVertices": 44,
+    "rigidityBaselineVertices": 1069,
     "rigidityFloorFraction": 0.005,
     "rigidityCeilingFraction": 0.25,
     "rigidityCeilingVertices": 1598,
-    "rigidityBudget": 44,
+    "rigidityBudget": 1069,
     "rigidity": "PASS",
     "normalized": "PASS",
     "passed": true
@@ -88,30 +84,28 @@
     "verticesMeasured": 5881,
     "overSpread": 0,
     "overSpreadFraction": 0.0,
-    "maxSpread": 2,
+    "maxSpread": 1,
     "overSpreadByDominantBone": {},
     "influenceHistogram": {
-     "1": 82,
-     "2": 3461,
-     "3": 2110,
-     "4": 228
+     "1": 804,
+     "2": 5077
     },
-    "singleInfluenceVertices": 82,
-    "seamEdgesOverOne": 42,
-    "seamEdgesDisjoint": 0,
+    "singleInfluenceVertices": 804,
+    "seamEdgesOverOne": 573,
+    "seamEdgesDisjoint": 136,
     "edgeTotal": 14670,
-    "maxWeightSumError": 4.470348358154297e-08
+    "maxWeightSumError": 2.9802322387695312e-08
    },
-   "rigidityShare": 0.01394,
+   "rigidityShare": 0.13671,
    "verdict": {
     "spread": "PASS",
     "seam": "PASS",
     "seamDisjoint": "PASS",
-    "rigidityBaselineVertices": 82,
+    "rigidityBaselineVertices": 804,
     "rigidityFloorFraction": 0.005,
     "rigidityCeilingFraction": 0.25,
     "rigidityCeilingVertices": 1471,
-    "rigidityBudget": 82,
+    "rigidityBudget": 804,
     "rigidity": "PASS",
     "normalized": "PASS",
     "passed": true
@@ -124,19 +118,17 @@
     "verticesMeasured": 5504,
     "overSpread": 0,
     "overSpreadFraction": 0.0,
-    "maxSpread": 2,
+    "maxSpread": 1,
     "overSpreadByDominantBone": {},
     "influenceHistogram": {
      "1": 31,
-     "2": 2630,
-     "3": 2614,
-     "4": 229
+     "2": 5473
     },
     "singleInfluenceVertices": 31,
-    "seamEdgesOverOne": 56,
-    "seamEdgesDisjoint": 0,
+    "seamEdgesOverOne": 250,
+    "seamEdgesDisjoint": 71,
     "edgeTotal": 14156,
-    "maxWeightSumError": 4.470348358154297e-08
+    "maxWeightSumError": 2.9802322387695312e-08
    },
    "rigidityShare": 0.00563,
    "verdict": {
@@ -160,30 +152,28 @@
     "verticesMeasured": 5342,
     "overSpread": 0,
     "overSpreadFraction": 0.0,
-    "maxSpread": 2,
+    "maxSpread": 1,
     "overSpreadByDominantBone": {},
     "influenceHistogram": {
-     "1": 154,
-     "2": 2482,
-     "3": 2365,
-     "4": 341
+     "1": 793,
+     "2": 4549
     },
-    "singleInfluenceVertices": 154,
-    "seamEdgesOverOne": 285,
-    "seamEdgesDisjoint": 0,
+    "singleInfluenceVertices": 793,
+    "seamEdgesOverOne": 1055,
+    "seamEdgesDisjoint": 497,
     "edgeTotal": 12942,
-    "maxWeightSumError": 4.470348358154297e-08
+    "maxWeightSumError": 2.9802322387695312e-08
    },
-   "rigidityShare": 0.02883,
+   "rigidityShare": 0.14845,
    "verdict": {
     "spread": "PASS",
     "seam": "PASS",
     "seamDisjoint": "PASS",
-    "rigidityBaselineVertices": 154,
+    "rigidityBaselineVertices": 793,
     "rigidityFloorFraction": 0.005,
     "rigidityCeilingFraction": 0.25,
     "rigidityCeilingVertices": 1336,
-    "rigidityBudget": 154,
+    "rigidityBudget": 793,
     "rigidity": "PASS",
     "normalized": "PASS",
     "passed": true
@@ -196,30 +186,198 @@
     "verticesMeasured": 5617,
     "overSpread": 0,
     "overSpreadFraction": 0.0,
-    "maxSpread": 2,
+    "maxSpread": 1,
     "overSpreadByDominantBone": {},
     "influenceHistogram": {
-     "1": 45,
-     "2": 3557,
-     "3": 1857,
-     "4": 158
+     "1": 1090,
+     "2": 4527
     },
-    "singleInfluenceVertices": 45,
-    "seamEdgesOverOne": 85,
-    "seamEdgesDisjoint": 0,
+    "singleInfluenceVertices": 1090,
+    "seamEdgesOverOne": 424,
+    "seamEdgesDisjoint": 175,
     "edgeTotal": 13795,
-    "maxWeightSumError": 4.470348358154297e-08
+    "maxWeightSumError": 2.9802322387695312e-08
    },
-   "rigidityShare": 0.00801,
+   "rigidityShare": 0.19405,
    "verdict": {
     "spread": "PASS",
     "seam": "PASS",
     "seamDisjoint": "PASS",
-    "rigidityBaselineVertices": 45,
+    "rigidityBaselineVertices": 1090,
     "rigidityFloorFraction": 0.005,
     "rigidityCeilingFraction": 0.25,
     "rigidityCeilingVertices": 1405,
-    "rigidityBudget": 45,
+    "rigidityBudget": 1090,
+    "rigidity": "PASS",
+    "normalized": "PASS",
+    "passed": true
+   }
+  },
+  {
+   "assetId": "possessed",
+   "model": "assets/motion/ingame/characters/possessed/model.glb",
+   "before": {
+    "verticesMeasured": 5974,
+    "overSpread": 0,
+    "overSpreadFraction": 0.0,
+    "maxSpread": 1,
+    "overSpreadByDominantBone": {},
+    "influenceHistogram": {
+     "1": 18,
+     "2": 5956
+    },
+    "singleInfluenceVertices": 18,
+    "seamEdgesOverOne": 391,
+    "seamEdgesDisjoint": 2,
+    "edgeTotal": 14152,
+    "maxWeightSumError": 2.9802322387695312e-08
+   },
+   "rigidityShare": 0.00301,
+   "verdict": {
+    "spread": "PASS",
+    "seam": "PASS",
+    "seamDisjoint": "PASS",
+    "rigidityBaselineVertices": 18,
+    "rigidityFloorFraction": 0.005,
+    "rigidityCeilingFraction": 0.25,
+    "rigidityCeilingVertices": 1494,
+    "rigidityBudget": 29,
+    "rigidity": "PASS",
+    "normalized": "PASS",
+    "passed": true
+   }
+  },
+  {
+   "assetId": "scout",
+   "model": "assets/motion/ingame/characters/scout/model.glb",
+   "before": {
+    "verticesMeasured": 5677,
+    "overSpread": 0,
+    "overSpreadFraction": 0.0,
+    "maxSpread": 1,
+    "overSpreadByDominantBone": {},
+    "influenceHistogram": {
+     "1": 807,
+     "2": 4870
+    },
+    "singleInfluenceVertices": 807,
+    "seamEdgesOverOne": 594,
+    "seamEdgesDisjoint": 189,
+    "edgeTotal": 13622,
+    "maxWeightSumError": 2.9802322387695312e-08
+   },
+   "rigidityShare": 0.14215,
+   "verdict": {
+    "spread": "PASS",
+    "seam": "PASS",
+    "seamDisjoint": "PASS",
+    "rigidityBaselineVertices": 807,
+    "rigidityFloorFraction": 0.005,
+    "rigidityCeilingFraction": 0.25,
+    "rigidityCeilingVertices": 1420,
+    "rigidityBudget": 807,
+    "rigidity": "PASS",
+    "normalized": "PASS",
+    "passed": true
+   }
+  },
+  {
+   "assetId": "shade",
+   "model": "assets/motion/ingame/characters/shade/model.glb",
+   "before": {
+    "verticesMeasured": 5703,
+    "overSpread": 0,
+    "overSpreadFraction": 0.0,
+    "maxSpread": 1,
+    "overSpreadByDominantBone": {},
+    "influenceHistogram": {
+     "1": 1198,
+     "2": 4505
+    },
+    "singleInfluenceVertices": 1198,
+    "seamEdgesOverOne": 504,
+    "seamEdgesDisjoint": 107,
+    "edgeTotal": 13528,
+    "maxWeightSumError": 2.9802322387695312e-08
+   },
+   "rigidityShare": 0.21006,
+   "verdict": {
+    "spread": "PASS",
+    "seam": "PASS",
+    "seamDisjoint": "PASS",
+    "rigidityBaselineVertices": 1198,
+    "rigidityFloorFraction": 0.005,
+    "rigidityCeilingFraction": 0.25,
+    "rigidityCeilingVertices": 1426,
+    "rigidityBudget": 1198,
+    "rigidity": "PASS",
+    "normalized": "PASS",
+    "passed": true
+   }
+  },
+  {
+   "assetId": "shadow-soldier-v04",
+   "model": "assets/motion/ingame/characters/shadow-soldier-v04/model.glb",
+   "before": {
+    "verticesMeasured": 22230,
+    "overSpread": 0,
+    "overSpreadFraction": 0.0,
+    "maxSpread": 1,
+    "overSpreadByDominantBone": {},
+    "influenceHistogram": {
+     "1": 868,
+     "2": 21362
+    },
+    "singleInfluenceVertices": 868,
+    "seamEdgesOverOne": 1445,
+    "seamEdgesDisjoint": 667,
+    "edgeTotal": 57962,
+    "maxWeightSumError": 2.9802322387695312e-08
+   },
+   "rigidityShare": 0.03905,
+   "verdict": {
+    "spread": "PASS",
+    "seam": "PASS",
+    "seamDisjoint": "PASS",
+    "rigidityBaselineVertices": 868,
+    "rigidityFloorFraction": 0.005,
+    "rigidityCeilingFraction": 0.25,
+    "rigidityCeilingVertices": 5558,
+    "rigidityBudget": 868,
+    "rigidity": "PASS",
+    "normalized": "PASS",
+    "passed": true
+   }
+  },
+  {
+   "assetId": "shadow-commander-boss",
+   "model": "assets/motion/ingame/characters/shadow-commander-boss/model.glb",
+   "before": {
+    "verticesMeasured": 25064,
+    "overSpread": 0,
+    "overSpreadFraction": 0.0,
+    "maxSpread": 1,
+    "overSpreadByDominantBone": {},
+    "influenceHistogram": {
+     "1": 2337,
+     "2": 22727
+    },
+    "singleInfluenceVertices": 2337,
+    "seamEdgesOverOne": 2215,
+    "seamEdgesDisjoint": 1287,
+    "edgeTotal": 63028,
+    "maxWeightSumError": 2.9802322387695312e-08
+   },
+   "rigidityShare": 0.09324,
+   "verdict": {
+    "spread": "PASS",
+    "seam": "PASS",
+    "seamDisjoint": "PASS",
+    "rigidityBaselineVertices": 2337,
+    "rigidityFloorFraction": 0.005,
+    "rigidityCeilingFraction": 0.25,
+    "rigidityCeilingVertices": 6266,
+    "rigidityBudget": 2337,
     "rigidity": "PASS",
     "normalized": "PASS",
     "passed": true

@@ -73,7 +73,7 @@ function assertRouteClear(profile, route) {
 
 function profileAssetPaths(profile) {
   return [
-    profile.terrainGlbPath,
+    profile.terrainGlbPath ?? profile.terrainSourceCandidatePath,
     ...profile.presentation.props.map(({ modelPath }) => modelPath),
     ...(profile.presentation.vfxCues ?? []).map(({ modelPath }) => modelPath),
     ...profile.presentation.npcs.map(({ modelPath }) => modelPath),
@@ -238,6 +238,16 @@ test("three canonical stage profiles publish distinct, loadable routed worlds", 
     assert.equal(profile.sequence, STAGE_IDS.indexOf(stageId) + 1);
     assert.equal(Object.isFrozen(profile), true);
 
+    assert.equal(profile.terrainRuntimeEligible, false, `${stageId} terrain source must remain renderer-ineligible`);
+    assert.equal(profile.terrainGlbPath, null, `${stageId} ineligible terrain must not publish a runtime GLB path`);
+    assert.match(profile.terrainSourceCandidatePath, /^assets\/mesh\/terrain\/.*\.glb$/u, `${stageId} must retain its source mesh for offline checks`);
+    assert.equal(profile.terrainFallback?.kind, "procedural-flat-support", `${stageId} must route gameplay onto procedural support`);
+    if (stageId === "cinder-span") {
+      assert.equal(profile.terrainFallback.reason, "authored-diorama-not-flat-gameplay-eligible", "Cinder must reject the promoted diorama that obscures flat-plane actors");
+    } else {
+      assert.equal(profile.terrainFallback.reason, "source-candidate-not-runtime-eligible", `${stageId} must preserve its candidate rejection reason`);
+      assert.match(profile.terrainSourceCandidatePath, /\/textured-candidate\//u, `${stageId} must retain the rejected textured candidate`);
+    }
     const paths = [...new Set(profileAssetPaths(profile))];
     assert.ok(paths.length >= 4, `${stageId} must route terrain and authored presentation assets`);
     for (const path of paths) {
@@ -265,6 +275,8 @@ test("three canonical stage profiles publish distinct, loadable routed worlds", 
 
     signatures.push(JSON.stringify({
       terrainGlbPath: profile.terrainGlbPath,
+      terrainSourceCandidatePath: profile.terrainSourceCandidatePath,
+      terrainRuntimeEligible: profile.terrainRuntimeEligible,
       bounds: profile.gameplay.bounds,
       obstacles: profile.gameplay.obstacles,
       routes: profile.gameplay.routes,

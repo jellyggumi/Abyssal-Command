@@ -169,16 +169,98 @@ Abyssal Lantern을 Cinder Span → Abyss Chancel → Echo Throne의 세 스테�
 - 대사는 lobby/archive, 접근성 텍스트 폴백, 안전한 전투 전·후 창에서만 전달한다. active combat에는 텍스트 대사 relay를 두지 않고 camera/VFX/audio/objective marker/telegraph로 비트를 전달한다.
 - presentation-only aftermath와 dialogue는 시뮬레이션 상태를 만들지 않는다. 모든 전투 결과는 `defense-run-simulation.js` 이벤트가 권위이며 presentation은 읽기 전용이다.
 
+## J. [TARGET] 로비 미니맵 & 스테이지 카드 진행형 공개
+
+### 소스 참고
+
+이 작업은 prompts.chat의 **Code Reviewer**, **Real-Time Multiplayer Defense Game**, **Continue Coding Assistant** 패턴을 구조 참고로만 사용했다. 이 세 소스의 멀티플레이·서버·단일 파일 제약은 Abyssal Lantern의 결정론적 시뮬레이션 + 자체 UI/카탈로그 계약과 맞지 않으므로 제외했다.
+
+### 로비 카메라 (Commander 중심)
+
+- 로비 scene의 카메라는 `focusRole=commander`로 고정되며, commander character rig의 위치를 중심으로 배치된다.
+- 카메라는 bounded yaw, pitch, distanceScale 파라미터로 제어되고, world 좌표계에서 commander의 관절 움직임과 독립적으로 동작한다.
+- 각 파라미터는 frame-rate independent interpolation을 따른다.
+- reduced-motion이 활성화되면 카메라는 정적 shot (static head-on or side view)으로 고정된다.
+
+### 로비 미니맵 & 진행형 공개 스테이지 카드
+
+기존 right-side sortie stage cards를 accessible progressive-reveal minimap으로 대체한다.
+minimap의 canonical node는 stage 내부 waypoint가 아니라 정확히 세 sortie stage
+(Cinder Span → Abyss Chancel → Echo Throne)다.
+
+**Canonical Stage/World 데이터 기반:**
+- node 순서는 `stage-world-catalog.js#STAGE_SHOWCASE_IDS`를 그대로 사용한다.
+- 선택한 revealed node는 기존 briefing과 공유 battle canvas를 갱신한다.
+- minimap 자체는 두 번째 preview renderer를 만들거나 simulation을 advance하지 않는다.
+
+**진행형 공개 (Progressive Reveal):**
+- Cinder Span은 새 campaign에서 유일하게 revealed/unlocked 상태다.
+- Cinder Span 완료 후 Abyss Chancel, Abyss Chancel 완료 후 Echo Throne을
+  `campaign.unlockedStageIndex` 기준으로 순서대로 공개한다.
+- locked stage는 disabled·spoiler-safe 상태를 유지한다.
+- 모든 icon, label, touch target은 WCAG 2.1 AA 명도 대비와 최소 44px 기준을 만족해야 한다.
+
+**Semantic Keyframe Action Routing (Character Rigs):**
+- 모든 promoted runtime GLB character는 snapshot의 `presentationAction`과 기존 combat event로부터 semantic keyframe action을 수신한다.
+- 가능한 action 값은 기존 `RIG_ACTION_KEYS` (`idle`, `move`, `run`, `attack`, `hit`, `bighit`, `critical`, `avoid`, `defence`, `die`, `show`)와 일치한다.
+- renderer는 이 action을 animation mixer에 맞는 clip으로 라우팅하되, simulation state를 변경하지 않는다.
+- 미승격 character rig이 snapshot에 나타나면 load 시점에 error logging하고 fallback 표시를 사용한다.
+
+### 세 스테이지 구조 강화 (Runtime-Eligible Assets & Terrain Candidates)
+
+세 stage의 terrain 후보는 모두 source provenance에 보존하되, runtime 게임플레이는 다음 규칙을 따른다.
+
+**Cinder Span:**
+- runtime에는 procedural-flat-support terrain mesh 하나만 load.
+- eligible catalog prop은 현재 검증 범위인 8–14개를 sparse하게 유지한다.
+- critical-route corridor와 optional-detour는 기존 catalog 구조를 따르며 수정하지 않음.
+
+**Abyss Chancel, Echo Throne:**
+- Chancel/Throne 소유 terrain candidate는 runtime에서 blocked.
+- 오직 procedural-flat-support mesh + eligible catalog props만 load.
+- 각 stage의 unique prop/landmark/obstacle은 8–14개 범위에서 sparse하게 유지한다.
+
+### Collision Authority (defense-run-simulation Contract)
+
+- gameplay actor의 terrain/obstacle placement는 `defense-run-simulation`의 `placeOnTerrain()`과
+  `resolveTerrainPlacement()`가 권위이며 `supportMeshId`·`elevation` 검증을 따른다.
+- presentation-only static prop은 `stage-world-catalog.js` placement를 사용하고 renderer의
+  `inspectMeshIntegrity()`·`groundObjectOnPlane()`을 통과해야 한다.
+- frame-rate independent movement와 deterministic resolver를 보존하며, 새로운 collision shape contract나 semantic prefix를 추가하지 않는다.
+
+### Chancel/Throne Promotion Gate
+
+- Abyss Chancel, Echo Throne의 terrain candidate는 runtime에서 blocked (procedural-flat-support mesh와 catalog props만 load).
+- 기존 Chancel/Throne prop/character는 terrain override 없이 유지된다. promotion gate는 terrain 교체 정책에만 적용된다.
+- Cinder Span 완료 후 (`FINAL_COMPLETION` event) Abyss Chancel unlock, Abyss Chancel 완료 후 Echo Throne unlock.
+
+### 충돌·투과·무결성
+
+- **No Terrain/Prop Penetration**: commander, companion, enemy 모두 terrain/obstacle collision을 `defense-run-simulation`의 resolver 계약 안에서 피해야 한다.
+- **Collectible Prop Visuals Over Simulation Pickups**: 기존 simulation reward/item event는 그대로 두고, 각 event마다 visual representation (glowing orb, icon particle, floor marker)을 world space에 배치해 player가 획득 지점을 명시적으로 본다. `run.pickups`와 item→prop `.03` (blade) / echo→prop `.05` (relic) 매핑을 명시적으로 사용하며 더블-카운트는 안 된다.
+
+### VFX·Audio Coverage
+
+- attack 개시/hit/impact, skill cast/projectile/landing, critical trigger, pick-up/extraction, boss phase transition, objective complete/fail, stage transition 각각 sound cue + visual event가 paired.
+- 단일 simulation event는 한 번만 trigger되며, old VFX/audio source는 phase transition 전 dispose된다.
+- focused/full/browser/release 환경에서 동일 event sequence와 timing을 보장한다.
+
+### Git·배포·증거
+
+- **Selective Git Staging**: 본 section J 변경만 명시적 allowlist (`git add <path>`)로 stage하고, 무관 파일은 남겨둔다. `git add -A`는 사용하지 않는다.
+- **Push**: staged commit 내용이 focused/full test 결과와 정확히 일치하는 경우에만 push.
+- **Pages Deployment**: workflow trigger 후 실제 배포 페이지에서 production branch SHA를 read-back하여 동일성 확인.
+- **Production Release Verification**: `.github/workflows/static.yml` workflow gates를 통해 build/test를 거친 후 배포하고, `results/release-receipt.json`에 배포 시점의 commit SHA와 page URL을 기록한다. deployed smoke test에서 실제 page URL을 read-back하여 프로덕션 배포 버전이 의도한 commit을 포함하는지 확인한다.
+
+### 변경 불가 계약 (기존 보존)
+
+- Stage 4는 만들거나 암시하지 않는다.
+- Deterministic renderer contract (frame-rate independent, phase enum 중복 금지, simulation ownership 보존) 유지.
+- 두 번째 SSOT (Source of Truth)를 만들지 않는다. stage-world-catalog, defense-catalog, defense-run-simulation이 유일한 권위다.
+
+---
+
 ## I. README·이름·배포
-
-- 공개 제품명은 모든 active source/deploy surface에서 `Abyssal Lantern`으로 통일한다.
-- `README.md`, `index.html`, `manifest.json`, `sw.js`, package metadata, Pages workflow, repository 링크, PWA cache prefix를 점검한다.
-- `_workspace/archive/**`와 immutable historical evidence는 이름 변경 대상으로 삼지 않는다.
-- README는 실제 구현·조작·세 스테이지·검증된 자산·로컬 실행·Pages URL만 설명한다. 미구현 기능을 현재 기능처럼 쓰지 않는다.
-- 먼저 변경 ownership allowlist를 만들고 그 파일만 명시적으로 stage한다. `git add -A`, `git reset --hard`, `git clean`, rebase, force-push로 무관한 사용자·동시 세션 변경을 흡수·삭제하지 않는다.
-- staged diff와 focused/full gate가 일치하는 exact commit만 push한다. Pages workflow와 배포 페이지가 같은 commit SHA를 제공하는지 확인한다.
-- repository rename 권한이나 인증이 없으면 나머지를 완료한 뒤, 필요한 권한·실패한 정확한 명령·현재 remote 상태를 blocker로 보고한다. 성공한 것처럼 쓰지 않는다.
-
 # 5. 필수 수치·행동 게이트
 
 아래를 모두 만족해야 완료다.

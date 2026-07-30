@@ -6,6 +6,7 @@ import { BattleVisualizer } from "../battle-visualizer.js";
 import { RealtimeBattle, stageFogRange } from "../battle-realtime-three.js";
 import { ARENA, STAGES, STAGE_PRESENTATION_BY_ID } from "../defense-catalog.js";
 import { advanceDefenseRun, createDefenseRun, getRunDigest, getRunSnapshot } from "../defense-run-simulation.js";
+import { SHOWCASE_CYCLE_MS, showcaseCamera, stagingFor } from "../lobby-cinematic.js";
 
 // RealtimeBattle (primary, real WebGL/Three.js) can't mount against the
 // Canvas2D-shaped mocks below -- THREE.WebGLRenderer requires a real
@@ -228,6 +229,110 @@ function actorSnapshot() {
     events: [],
   };
 }
+
+test("lobby showcase camera keeps a bounded commander-focused lap and a static reduced-motion shot", async () => {
+  const samples = [
+    showcaseCamera(0),
+    showcaseCamera(SHOWCASE_CYCLE_MS / 3),
+    showcaseCamera(SHOWCASE_CYCLE_MS / 2),
+    showcaseCamera(SHOWCASE_CYCLE_MS * 2 / 3),
+    showcaseCamera(SHOWCASE_CYCLE_MS * 3 / 4),
+  ];
+  assert.deepEqual(
+    samples.map(({ phaseId }) => phaseId),
+    ["approach", "orbit", "orbit", "reveal", "reveal"],
+    "one lap must progress through the approach, orbit, and reveal phases",
+  );
+  assert.equal(samples.every(({ focusRole }) => focusRole === "commander"), true, "every moving shot must keep the commander as camera focus");
+  assert.equal(samples.every(({ distanceScale }) => distanceScale >= 0.9 && distanceScale <= 1.1), true, "showcase zoom requests must stay inside RealtimeBattle's manual zoom ratio range");
+  assert.equal(samples.every(({ yaw }) => yaw >= 0.06 && yaw <= 1.18), true, "showcase orbit yaw must remain bounded around the hero");
+  assert.equal(samples.every(({ pitch }) => pitch >= 0.48 && pitch <= 0.76), true, "showcase orbit pitch must remain bounded");
+  assert.deepEqual(showcaseCamera(SHOWCASE_CYCLE_MS), showcaseCamera(0), "the camera lap must return to its exact seam without drift");
+
+  const reduced = showcaseCamera(1, { reducedMotion: true });
+  assert.deepEqual(
+    reduced,
+    {
+      phaseId: "static",
+      framing: "mid",
+      focusRole: "commander",
+      progress: 0,
+      yaw: 0.62,
+      pitch: 0.62,
+      distanceScale: 1,
+    },
+    "reduced motion must use the authored static commander mid-shot",
+  );
+  assert.strictEqual(
+    showcaseCamera(SHOWCASE_CYCLE_MS * 7, { reducedMotion: true }),
+    reduced,
+    "reduced motion must not advance or allocate a changing camera pose",
+  );
+  const BattleSession = await loadBattleSession();
+  const renderer = realtimeBattleHarness();
+  const session = Object.create(BattleSession.prototype);
+  session.renderer = renderer;
+  session.showcaseBaselineZoom = null;
+  const baselineZoom = renderer.zoomFactor;
+  const appliedZoomFactors = samples.map((shot) => {
+    session.applyShowcaseCamera(shot);
+    return renderer.zoomFactor;
+  });
+  const manualLowerBound = baselineZoom * 0.9;
+  const manualUpperBound = baselineZoom * 1.1;
+  assert.equal(
+    appliedZoomFactors.every((zoomFactor) => zoomFactor >= manualLowerBound - 1e-9 && zoomFactor <= manualUpperBound + 1e-9),
+    true,
+    "every applied showcase zoom must remain inside RealtimeBattle's manual zoom clamp",
+  );
+  assert.ok(
+    new Set(appliedZoomFactors.map((zoomFactor) => zoomFactor.toFixed(6))).size >= 3,
+    `showcase shots must produce at least three distinct applied zoom levels, got ${appliedZoomFactors.join(", ")}`,
+  );
+  session.applyShowcaseCamera(reduced);
+  assert.ok(
+    Math.abs(renderer.zoomFactor - baselineZoom * reduced.distanceScale) < 1e-9,
+    "reduced-motion static shot must apply its legal mid zoom",
+  );
+  renderer.dispose();
+});
+
+test("lobby projection stages the commander squad against a show-posed boss without changing the snapshot", async () => {
+  const BattleSession = await loadBattleSession();
+  const source = actorSnapshot();
+  const before = structuredClone(source);
+  const session = Object.create(BattleSession.prototype);
+  session.stageId = source.stageId;
+  session.started = false;
+  session.stopped = false;
+
+  const projection = session.projected(source);
+  const staging = stagingFor(source.stageId, ARENA);
+  const lobbyBoss = projection.enemies.find(({ id }) => id === `lobby-preview:${source.stageId}`);
+  assert.ok(lobbyBoss, "pre-run projection must append the presentation-only stage boss");
+  assert.equal(projection.enemies.length, source.enemies.length + 1, "lobby staging must preserve every simulation enemy while adding one preview boss");
+  assert.deepEqual(
+    { x: projection.commander.x, y: projection.commander.y },
+    {
+      x: staging.commander.x / ARENA.width * 2 - 1,
+      y: staging.commander.y / ARENA.height * 2 - 1,
+    },
+    "the commander must occupy the authoritative hero staging point",
+  );
+  assert.equal(projection.commander.presentationAction, "idle", "the staged commander must hold an idle hero pose");
+  assert.equal(projection.companions.every(({ presentationAction }) => presentationAction === "idle"), true, "the staged squad must support the hero in idle poses");
+  assert.deepEqual(
+    { x: lobbyBoss.x, y: lobbyBoss.y },
+    {
+      x: staging.boss.x / ARENA.width * 2 - 1,
+      y: staging.boss.y / ARENA.height * 2 - 1,
+    },
+    "the preview boss must occupy the opposing staging point",
+  );
+  assert.equal(lobbyBoss.presentationAction, "show", "the preview boss must request its authored reveal action");
+  assert.ok(lobbyBoss.x > projection.commander.x, "the opposing boss must remain behind the commander on the presentation lane");
+  assert.deepEqual(source, before, "lobby staging must leave the canonical simulation snapshot unchanged");
+});
 
 test("every canonical stage exposes one frozen world-presentation profile", () => {
   assert.deepEqual(STAGES.map(({ id }) => id), ["cinder-span", "abyss-chancel", "echo-throne"]);

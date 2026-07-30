@@ -1,7 +1,6 @@
 // Contract: each canonical runtime terrain is a distinct, authored 3D environment,
 // not a textured proxy slab or a stage-agnostic copy.
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   existsSync,
@@ -10,7 +9,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, isAbsolute, join, posix, relative, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -22,7 +21,6 @@ const GLB_MAGIC = 0x46546c67;
 const GLB_JSON_CHUNK = 0x4e4f534a;
 const GLB_BINARY_CHUNK = 0x004e4942;
 const IDENTITY = Object.freeze([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-const MATERIAL_ROLE_WORDS = new Set(["surface", "contour", "landmark", "hazard", "objective", "accent"]);
 const COMPONENTS_BY_TYPE = Object.freeze({ SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT2: 4, MAT3: 9, MAT4: 16 });
 const COMPONENT_TYPES = Object.freeze({
   5120: { bytes: 1, read: (buffer, offset) => buffer.readInt8(offset), normalize: (value) => Math.max(value / 127, -1) },
@@ -33,11 +31,6 @@ const COMPONENT_TYPES = Object.freeze({
   5126: { bytes: 4, read: (buffer, offset) => buffer.readFloatLE(offset), normalize: (value) => value },
 });
 
-const PROVENANCE_PATH = "assets/images/battle/glb/terrain/build-provenance.json";
-const TERRAIN_BUILDER_PATH = "scripts/build-authored-stage-environments.py";
-const ALL_MESH_PROVENANCE_PATH = "_workspace/archive/20260726-stage1b-cinder-pressure-agency/engineering/asset-pipeline/all-mesh-texture-candidates-v2/audit.json";
-const STAGE_SCENE_AUDIT_PATH = "scripts/audit-stage-scenes.mjs";
-const SHA256_PATTERN = /^[0-9a-f]{64}$/u;
 const CINDER_RESOURCE_MANIFEST_PATH = "assets/mesh/terrain/terrain-cinder-span/runtime/terrain-cinder-span-resources.manifest.json";
 const CINDER_RUNTIME_GLBS = Object.freeze([
   "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
@@ -45,112 +38,11 @@ const CINDER_RUNTIME_GLBS = Object.freeze([
   "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb",
 ]);
 
-function assertExactObjectKeys(value, expectedKeys, label) {
-  assert.ok(value !== null && typeof value === "object" && !Array.isArray(value), `${label}: expected an object`);
-  assert.deepEqual(
-    Object.keys(value).sort(),
-    [...expectedKeys].sort(),
-    `${label}: expected exactly ${expectedKeys.join(", ")}`,
-  );
-}
 
-function assertRepositoryPath(path, label) {
-  assert.equal(typeof path, "string", `${label}: expected a string path`);
-  assert.notEqual(path, "", `${label}: path must not be empty`);
-  assert.ok(!path.includes("\\"), `${label}: path must use POSIX separators`);
-  assert.ok(!posix.isAbsolute(path), `${label}: path must be repository-relative`);
-  assert.equal(posix.normalize(path), path, `${label}: path must be normalized and non-traversing`);
-  assert.ok(
-    path.split("/").every((part) => part !== "" && part !== "." && part !== ".."),
-    `${label}: path must not contain empty, current-directory, or parent-directory segments`,
-  );
 
-  const absolutePath = resolve(ROOT, path);
-  const repositoryRelativePath = relative(ROOT, absolutePath);
-  assert.ok(
-    repositoryRelativePath !== "" && !repositoryRelativePath.startsWith(`..${posix.sep}`) && !isAbsolute(repositoryRelativePath),
-    `${label}: path must resolve inside the repository`,
-  );
-  return absolutePath;
-}
 
-function sha256File(path) {
-  return createHash("sha256").update(readFileSync(path)).digest("hex");
-}
 
-function assertFileDigest(path, expectedSha256, label) {
-  assert.match(expectedSha256, SHA256_PATTERN, `${label}.sha256: expected a lowercase SHA-256 digest`);
-  const absolutePath = assertRepositoryPath(path, `${label}.path`);
-  assert.ok(existsSync(absolutePath), `${label}: missing referenced file ${path}`);
-  assert.equal(sha256File(absolutePath), expectedSha256, `${label}: SHA-256 drift for ${path}`);
-}
 
-function sortJsonKeys(value) {
-  if (Array.isArray(value)) return value.map(sortJsonKeys);
-  if (value === null || typeof value !== "object") return value;
-  return Object.fromEntries(
-    Object.keys(value)
-      .sort()
-      .map((key) => [key, sortJsonKeys(value[key])]),
-  );
-}
-
-function assertTerrainBuildProvenance(manifest) {
-  assertExactObjectKeys(manifest, ["schemaVersion", "generator", "inputs", "stages"], "terrain provenance");
-  assert.equal(manifest.schemaVersion, 1, "terrain provenance: unsupported schemaVersion");
-
-  assertExactObjectKeys(
-    manifest.generator,
-    ["scriptPath", "scriptSha256", "blenderVersion"],
-    "terrain provenance.generator",
-  );
-  assert.equal(
-    manifest.generator.scriptPath,
-    TERRAIN_BUILDER_PATH,
-    "terrain provenance.generator.scriptPath: must reference the canonical terrain builder",
-  );
-  assert.equal(typeof manifest.generator.blenderVersion, "string", "terrain provenance.generator.blenderVersion: expected a string");
-  assert.notEqual(manifest.generator.blenderVersion.trim(), "", "terrain provenance.generator.blenderVersion: must not be empty");
-  assertFileDigest(
-    manifest.generator.scriptPath,
-    manifest.generator.scriptSha256,
-    "terrain provenance.generator",
-  );
-
-  assertExactObjectKeys(manifest.inputs, ["surface", "normal"], "terrain provenance.inputs");
-  for (const inputName of ["surface", "normal"]) {
-    const input = manifest.inputs[inputName];
-    assertExactObjectKeys(input, ["path", "sha256"], `terrain provenance.inputs.${inputName}`);
-    assertFileDigest(input.path, input.sha256, `terrain provenance.inputs.${inputName}`);
-  }
-  assert.notEqual(
-    manifest.inputs.surface.path,
-    manifest.inputs.normal.path,
-    "terrain provenance inputs: surface and normal must reference distinct files",
-  );
-
-  const canonicalStageIds = Object.keys(STAGE_WORLD_PROFILES).sort();
-  assert.equal(canonicalStageIds.length, 10, "terrain provenance: expected ten canonical runtime stages");
-  assertExactObjectKeys(manifest.stages, canonicalStageIds, "terrain provenance.stages");
-
-  const conceptPaths = new Set();
-  for (const stageId of canonicalStageIds) {
-    const stage = manifest.stages[stageId];
-    const label = `terrain provenance.stages.${stageId}`;
-    const expectedKeys = ["outputPath", "outputSha256", "conceptPath", "conceptSha256"];
-    if (stageId === "cinder-span") expectedKeys.push("postProcessor");
-    assertExactObjectKeys(stage, expectedKeys, label);
-    assert.equal(
-      stage.outputPath,
-      STAGE_WORLD_PROFILES[stageId].terrainGlbPath,
-      `${label}.outputPath: must equal the runtime terrain path`,
-    );
-    assertFileDigest(stage.outputPath, stage.outputSha256, `${label}.output`);
-    assertFileDigest(stage.conceptPath, stage.conceptSha256, `${label}.concept`);
-    conceptPaths.add(stage.conceptPath);
-  }
-  assert.equal(conceptPaths.size, 10, "terrain provenance: every stage must reference a distinct concept image");
-}
 
 function parseGlb(path, label) {
   const bytes = readFileSync(path);
@@ -265,39 +157,7 @@ function assertIndex(index, values, label, target) {
     `${label}: ${target} index ${String(index)} is out of range (count ${values.length})`);
 }
 
-function textureSources(texture) {
-  const sources = [];
-  if (texture?.source !== undefined) sources.push(texture.source);
-  for (const extension of Object.values(texture?.extensions ?? {})) {
-    if (extension?.source !== undefined) sources.push(extension.source);
-  }
-  return sources;
-}
 
-function assertTextureReference(glb, buffers, textureIndex, label) {
-  const { bufferViews = [], images = [], textures = [] } = glb.json;
-  assertIndex(textureIndex, textures, label, "texture");
-  const sources = textureSources(textures[textureIndex]);
-  assert.ok(sources.length > 0, `${label}: texture ${textureIndex} has no image source`);
-  for (const imageIndex of sources) {
-    assertIndex(imageIndex, images, label, `texture ${textureIndex} image`);
-    const image = images[imageIndex];
-    let bytes;
-    if (image.uri !== undefined) {
-      bytes = resolveUri(image.uri, glb.path, `${label}: image ${imageIndex}`);
-    } else {
-      assertIndex(image.bufferView, bufferViews, label, `image ${imageIndex} bufferView`);
-      const view = bufferViews[image.bufferView];
-      assertIndex(view.buffer ?? 0, buffers, label, `image ${imageIndex} buffer`);
-      const start = view.byteOffset ?? 0;
-      const end = start + view.byteLength;
-      assert.ok(Number.isInteger(view.byteLength) && start >= 0 && end <= buffers[view.buffer ?? 0].length,
-        `${label}: image ${imageIndex} bufferView exceeds its buffer`);
-      bytes = buffers[view.buffer ?? 0].subarray(start, end);
-    }
-    assert.ok(bytes.length > 0, `${label}: image ${imageIndex} is empty`);
-  }
-}
 
 function readAccessor(glb, buffers, index, label) {
   const accessors = glb.json.accessors ?? [];
@@ -487,84 +347,8 @@ function geometryEvidence(glb, buffers, label) {
   return instances;
 }
 
-function assertStructuralVariety(instances, label) {
-  const sceneMin = [Infinity, Infinity, Infinity];
-  const sceneMax = [-Infinity, -Infinity, -Infinity];
-  for (const instance of instances) {
-    for (let axis = 0; axis < 3; axis += 1) {
-      sceneMin[axis] = Math.min(sceneMin[axis], instance.min[axis]);
-      sceneMax[axis] = Math.max(sceneMax[axis], instance.max[axis]);
-    }
-  }
-  const sceneSize = sceneMax.map((value, axis) => value - sceneMin[axis]);
-  assert.ok(sceneSize.every((value) => Number.isFinite(value) && value > 1e-5),
-    `${label}: 3D bounds are degenerate (${sceneSize.join(" x ")})`);
 
-  const shapeSignatures = new Set();
-  const occupiedCells = new Set();
-  let totalTriangles = 0;
-  for (const instance of instances) {
-    const size = instance.max.map((value, axis) => value - instance.min[axis]);
-    const coverage = size.map((value, axis) => value / sceneSize[axis]);
-    assert.equal(coverage.every((value) => value >= 0.85) && instance.triangles <= 24, false,
-      `${label}: ${instance.location} is an oversized ${instance.triangles}-triangle proxy block spanning ${coverage.map((value) => value.toFixed(2)).join(" x ")} of the scene`);
-    shapeSignatures.add(size.map((value, axis) => Math.round((value / sceneSize[axis]) * 100)).join("x"));
-    const center = instance.min.map((value, axis) => (value + instance.max[axis]) / 2);
-    occupiedCells.add(center.map((value, axis) =>
-      Math.min(3, Math.max(0, Math.floor(((value - sceneMin[axis]) / sceneSize[axis]) * 4)))).join(":"));
-    totalTriangles += instance.triangles;
-  }
-  assert.ok(shapeSignatures.size >= 6,
-    `${label}: only ${shapeSignatures.size} distinct geometry extent signatures; expected at least 6 architectural shapes`);
-  assert.ok(occupiedCells.size >= 8,
-    `${label}: geometry occupies only ${occupiedCells.size} spatial cells; expected at least 8 for structural distribution`);
-  assert.ok(totalTriangles >= 200,
-    `${label}: only ${totalTriangles} rendered triangles; expected at least 200 for authored architecture`);
-}
 
-function paletteTokens(profile) {
-  return Object.values(profile.presentation?.palette ?? {})
-    .filter((value) => typeof value === "string" && !value.startsWith("#"))
-    .flatMap((value) => value.toLowerCase().split(/[^a-z0-9]+/u))
-    .filter((word) => word.length >= 4 && !MATERIAL_ROLE_WORDS.has(word));
-}
-
-function assertStageEnvironment(glb, profile) {
-  const label = `${profile.stageId} (${profile.terrainGlbPath})`;
-  const { accessors = [], materials = [], meshes = [] } = glb.json;
-  const buffers = resolveBuffers(glb, label);
-  architectureCounts(glb.json, label);
-
-  const namedMaterials = new Set(materials.map(({ name }) => name?.trim()).filter(Boolean));
-  assert.ok(namedMaterials.size >= 4,
-    `${label}: expected at least 4 distinctly named materials, found ${namedMaterials.size} [${[...namedMaterials].join(", ")}]`);
-  const expectedPaletteTokens = paletteTokens(profile);
-  if (expectedPaletteTokens.length > 0) {
-    const normalizedNames = [...namedMaterials].join(" ").toLowerCase();
-    assert.ok(expectedPaletteTokens.some((token) => normalizedNames.includes(token)),
-      `${label}: material names do not carry a stage palette token [${expectedPaletteTokens.join(", ")}]`);
-  }
-
-  let baseColorTexture;
-  let normalTexture;
-  for (const [meshIndex, mesh] of meshes.entries()) {
-    for (const [primitiveIndex, primitive] of (mesh.primitives ?? []).entries()) {
-      const location = `mesh ${meshIndex} primitive ${primitiveIndex}`;
-      assertIndex(primitive.attributes?.POSITION, accessors, label, `${location} POSITION accessor`);
-      assertIndex(primitive.attributes?.NORMAL, accessors, label, `${location} NORMAL accessor`);
-      assertIndex(primitive.attributes?.TEXCOORD_0, accessors, label, `${location} TEXCOORD_0 accessor`);
-      assertIndex(primitive.material, materials, label, `${location} material`);
-      const material = materials[primitive.material];
-      baseColorTexture ??= material?.pbrMetallicRoughness?.baseColorTexture?.index;
-      normalTexture ??= material?.normalTexture?.index;
-    }
-  }
-  assert.notEqual(baseColorTexture, undefined, `${label}: no primitive material references a base-color texture`);
-  assert.notEqual(normalTexture, undefined, `${label}: no primitive material references a normal texture`);
-  assertTextureReference(glb, buffers, baseColorTexture, `${label}: base-color`);
-  assertTextureReference(glb, buffers, normalTexture, `${label}: normal-map`);
-  assertStructuralVariety(geometryEvidence(glb, buffers, label), label);
-}
 
 function encodeGlb(json, chunks) {
   const encodedJson = Buffer.from(JSON.stringify(json));
@@ -589,7 +373,7 @@ function encodeGlb(json, chunks) {
   ]);
 }
 
-test("three canonical runtime terrains use distinct direct source assets", () => {
+test("canonical terrain GLBs remain finite offline sources while gameplay uses flat procedural support", () => {
   const profiles = Object.values(STAGE_WORLD_PROFILES);
   assert.equal(profiles.length, 3, `terrain contract: expected 3 canonical stages, found ${profiles.length}`);
   const hashes = new Set();
@@ -610,34 +394,52 @@ test("three canonical runtime terrains use distinct direct source assets", () =>
   }
 
   for (const profile of profiles) {
-    const label = `${profile.stageId} (${profile.terrainGlbPath})`;
-    assert.match(profile.terrainGlbPath, /^assets\/mesh\/terrain\//u, `${label}: must use a direct terrain source`);
-    const absolutePath = join(ROOT, profile.terrainGlbPath);
-    assert.ok(existsSync(absolutePath), `${label}: missing runtime terrain source`);
+    const terrainSourcePath = profile.terrainGlbPath ?? profile.terrainSourceCandidatePath;
+    const label = `${profile.stageId} (${terrainSourcePath})`;
+    assert.match(terrainSourcePath, /^assets\/mesh\/terrain\//u, `${label}: must use a retained terrain source`);
+    assert.equal(profile.terrainRuntimeEligible, false, `${label}: source mesh must remain renderer-ineligible`);
+    assert.equal(profile.terrainGlbPath, null, `${label}: ineligible terrain must not publish a runtime path`);
+    assert.equal(profile.terrainFallback?.kind, "procedural-flat-support", `${label}: gameplay must use flat procedural support`);
+    if (profile.stageId === "cinder-span") {
+      assert.match(profile.terrainSourceCandidatePath, /\/runtime\/.*\.glb$/u, `${label}: promoted Cinder diorama must remain available for offline inspection`);
+      assert.equal(profile.terrainFallback.reason, "authored-diorama-not-flat-gameplay-eligible", `${label}: diorama rejection reason must remain explicit`);
+    } else {
+      assert.match(profile.terrainSourceCandidatePath, /\/textured-candidate\/.*\.glb$/u, `${label}: rejected textured source must remain marked as a candidate`);
+      assert.equal(profile.terrainFallback.reason, "source-candidate-not-runtime-eligible", `${label}: candidate rejection reason must remain explicit`);
+    }
+    const absolutePath = join(ROOT, terrainSourcePath);
+    assert.ok(existsSync(absolutePath), `${label}: missing retained terrain source`);
     const bytes = readFileSync(absolutePath);
     assert.ok(bytes.length > 1024, `${label}: terrain source is unexpectedly small`);
     hashes.add(createHash("sha256").update(bytes).digest("hex"));
-
 
     const glb = parseGlb(absolutePath, label);
     const buffers = resolveBuffers(glb, label);
     const instances = geometryEvidence(glb, buffers, label);
     assert.ok(instances.some(({ triangles }) => triangles > 0), `${label}: GLB has no rendered triangles`);
+    const renderedTriangles = instances.reduce((total, { triangles }) => total + triangles, 0);
+    assert.ok(Number.isFinite(renderedTriangles) && renderedTriangles > 0, `${label}: offline mesh integrity must report finite, nonzero triangles`);
+    assert.equal(
+      instances.every(({ min, max }) => [...min, ...max].every(Number.isFinite)),
+      true,
+      `${label}: offline mesh bounds must remain finite`,
+    );
     assert.ok(
       (glb.json.materials ?? []).some(({ pbrMetallicRoughness }) => pbrMetallicRoughness?.baseColorTexture),
       `${label}: GLB needs a base-color texture`,
     );
   }
 
-  assert.equal(hashes.size, profiles.length, "terrain sources must not share identical bytes");
+  assert.equal(hashes.size, profiles.length, "retained terrain sources must not share identical bytes");
 });
 
 
 
 test("the architecture-count gate rejects a copied low-detail proxy mutation", () => {
   const profile = STAGE_WORLD_PROFILES["abyss-chancel"];
-  const sourcePath = join(ROOT, profile.terrainGlbPath);
-  const source = parseGlb(sourcePath, profile.terrainGlbPath);
+  const terrainSourcePath = profile.terrainGlbPath ?? profile.terrainSourceCandidatePath;
+  const sourcePath = join(ROOT, terrainSourcePath);
+  const source = parseGlb(sourcePath, terrainSourcePath);
   const sourceMeshNode = (source.json.nodes ?? []).find((node) => node.mesh !== undefined);
   assert.ok(sourceMeshNode, "mutation fixture source has no mesh node");
 

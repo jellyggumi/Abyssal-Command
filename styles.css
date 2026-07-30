@@ -285,8 +285,8 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
    regardless of outer viewport width -- a viewport media query would never fire on a desktop
    screen even though the column itself is just as narrow there. */
 @container (max-width: 21rem) {
-  .stage-showcase-grid { grid-template-columns: 1fr; }
-  .stage-showcase-card { grid-template-columns: 6rem minmax(0, 1fr); grid-template-rows: minmax(8rem, auto); min-height: 8rem; }
+  .stage-sortie-map { min-height: 20rem; padding: .75rem; }
+  .stage-map-node { grid-template-columns: 3rem minmax(0, 1fr); min-height: 4.75rem; }
   .briefing-stats { grid-template-columns: 1fr; }
   .growth-stat-row, .growth-skill-node { flex-wrap: wrap; }
   .loadout-slots, .companion-grid, .reward-grid { grid-template-columns: 1fr; }
@@ -843,60 +843,125 @@ body {
   background: linear-gradient(105deg, rgb(44 173 214 / .07), transparent);
 }
 
-/* Spoiler-safe lobby disclosure: the three editorial cards show authored
-   stage identity through CSS color only. The live Three.js scene owns all
-   spatial composition; no raster stage art is displayed under the UI. */
-.stage-showcase-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .6rem;
-  margin-top: .85rem;
-}
-.stage-showcase-card {
+/* Progressive sortie minimap. Stage identity and reveal state come from the
+   canonical catalogs; this layer only maps them into a readable route. */
+.stage-sortie-map {
   position: relative;
-  display: grid;
-  grid-template-rows: 7.5rem minmax(0, 1fr);
-  min-width: 0;
-  min-height: 14rem;
+  isolation: isolate;
+  min-height: 22rem;
+  margin-top: .85rem;
   overflow: hidden;
-  padding: 0;
-  border-color: rgb(115 121 144 / .28);
-  border-radius: .55rem;
-  background: linear-gradient(160deg, rgb(18 20 36 / .96), rgb(8 10 20 / .98));
+  padding: 1rem;
+  border: 1px solid rgb(115 121 144 / .28);
+  border-radius: .75rem;
+  background:
+    radial-gradient(circle at 18% 12%, rgb(44 173 214 / .15), transparent 34%),
+    linear-gradient(160deg, rgb(18 20 36 / .96), rgb(8 10 20 / .98));
+}
+.stage-map-fog {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 80% 80%, rgb(143 103 255 / .12), transparent 28%),
+    repeating-linear-gradient(125deg, transparent 0 2.25rem, rgb(255 255 255 / .012) 2.3rem 2.35rem);
+  pointer-events: none;
+}
+.stage-map-route {
+  position: absolute;
+  top: 3.6rem;
+  bottom: 3.6rem;
+  left: 2.45rem;
+  z-index: 0;
+  width: 3px;
+  border-radius: 999px;
+  background: rgb(74 91 117 / .45);
+}
+.stage-sortie-map[data-revealed-count="1"] .stage-map-route {
+  background: linear-gradient(to bottom, #68d8ff 0 14%, rgb(74 91 117 / .45) 14%);
+}
+.stage-sortie-map[data-revealed-count="2"] .stage-map-route {
+  background: linear-gradient(to bottom, #68d8ff 0 56%, rgb(74 91 117 / .45) 56%);
+}
+.stage-sortie-map[data-revealed-count="3"] .stage-map-route {
+  background: linear-gradient(to bottom, #68d8ff, #b992ff 54%, var(--canon-zenith-gold));
+  box-shadow: 0 0 12px rgb(104 216 255 / .45);
+}
+.stage-map-route span {
+  position: absolute;
+  left: 50%;
+  width: .55rem;
+  height: .55rem;
+  border: 1px solid #57718f;
+  border-radius: 50%;
+  background: #101b2a;
+  transform: translate(-50%, -50%);
+}
+.stage-map-route span:nth-child(1) { top: 0; }
+.stage-map-route span:nth-child(2) { top: 50%; }
+.stage-map-route span:nth-child(3) { top: 100%; }
+.stage-map-nodes {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: .85rem;
+}
+.stage-map-node {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  min-height: 5.5rem;
+  padding: .55rem .65rem .55rem 0;
+  border: 1px solid rgb(91 113 143 / .45);
+  border-radius: .65rem;
+  background: linear-gradient(100deg, rgb(10 21 35 / .98), rgb(17 22 39 / .92));
+  color: #f1f6fb;
   text-align: left;
 }
-.stage-showcase-card.is-selected,
-.stage-showcase-card[aria-pressed="true"] {
-  border-color: var(--canon-cyan-rift);
-  box-shadow: inset 0 0 0 1px rgb(44 173 214 / .18), 0 .75rem 1.5rem -.9rem rgb(44 173 214 / .46);
+.stage-map-node:nth-child(2) { margin-left: 1.25rem; }
+.stage-map-node:focus-visible {
+  outline: 2px solid #81d6ff;
+  outline-offset: 3px;
 }
-.stage-showcase-art {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background:
-    radial-gradient(circle at 68% 30%, rgb(117 205 255 / .38), transparent 22%),
-    linear-gradient(135deg, rgb(19 42 70 / .95), rgb(8 10 20 / .98));
+.stage-map-node.is-selected,
+.stage-map-node[aria-pressed="true"] {
+  border-color: #b992ff;
+  background: linear-gradient(90deg, rgb(32 16 58 / .94), rgb(12 30 52 / .94));
+  box-shadow: 0 0 16px rgb(185 146 255 / .3);
 }
-.stage-showcase-card[data-stage-showcase="abyss-chancel"] .stage-showcase-art {
-  background: radial-gradient(circle at 68% 30%, rgb(170 109 255 / .42), transparent 22%), linear-gradient(135deg, rgb(42 20 70 / .95), rgb(8 10 20 / .98));
+.stage-map-node.is-cleared { border-color: rgb(229 194 105 / .7); }
+.stage-map-node.is-locked {
+  filter: saturate(.35);
+  opacity: .58;
 }
-.stage-showcase-card[data-stage-showcase="echo-throne"] .stage-showcase-art {
-  background: radial-gradient(circle at 68% 30%, rgb(108 218 255 / .42), transparent 22%), linear-gradient(135deg, rgb(17 51 68 / .95), rgb(8 10 20 / .98));
-}
-.stage-showcase-card.is-selected .stage-showcase-art { filter: saturate(1.05); }
-.stage-showcase-card:disabled .stage-showcase-art { filter: grayscale(1) brightness(.55); }
-.stage-showcase-copy {
+.stage-map-sigil {
   display: grid;
-  gap: .25rem;
-  align-content: start;
-  min-width: 0;
-  padding: .65rem;
+  place-items: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  margin-left: -.1rem;
+  border: 2px solid #55708d;
+  border-radius: 50%;
+  background: #0d1928;
+  box-shadow: 0 0 0 .35rem rgb(8 14 24 / .85);
 }
-.stage-showcase-copy small { color: #9ecce4; font-size: .62rem; font-weight: 800; letter-spacing: .06em; }
-.stage-showcase-copy strong { color: #f1f6fb; }
-.stage-showcase-copy span { color: #afc2d4; font-size: .7rem; line-height: 1.35; }
-.stage-showcase-copy em { color: var(--canon-zenith-gold); font-size: .66rem; font-style: normal; }
+.stage-map-node.is-revealed .stage-map-sigil {
+  border-color: #68d8ff;
+  box-shadow: 0 0 0 .35rem rgb(8 14 24 / .85), 0 0 14px rgb(104 216 255 / .38);
+}
+.stage-map-node.is-cleared .stage-map-sigil {
+  border-color: var(--canon-zenith-gold);
+  color: var(--canon-zenith-gold);
+}
+.stage-map-copy {
+  display: grid;
+  min-width: 0;
+  gap: .18rem;
+}
+.stage-map-copy small { color: #9ecce4; font-size: .62rem; font-weight: 800; letter-spacing: .06em; }
+.stage-map-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage-map-copy span { color: #afc2d4; font-size: .69rem; line-height: 1.35; }
 .stage-progression-control {
   display: grid;
   grid-template-columns: minmax(10rem, .9fr) minmax(0, 1.1fr);
@@ -1129,8 +1194,8 @@ body {
   .cutscene-frame { grid-template-columns: 1fr auto; gap: .55rem; padding: .7rem; }
   .cutscene-heading { grid-column: 1 / -1; border: 0; border-bottom: 1px solid rgb(128 216 255 / .2); padding: 0 0 .45rem; }
   .cutscene-line { font-size: .9rem; }
-  .stage-showcase-grid { grid-template-columns: 1fr; }
-  .stage-showcase-card { grid-template-columns: 6rem minmax(0, 1fr); grid-template-rows: minmax(8rem, auto); min-height: 8rem; }
+  .stage-sortie-map { min-height: 19rem; }
+  .stage-map-node { min-height: 4.75rem; }
   .stage-progression-control { grid-template-columns: 1fr; }
   .stage-progression-control label { grid-column: 1; }
   .lobby-guide-launch { flex-wrap: wrap; }
@@ -1284,18 +1349,6 @@ body {
 .briefing-detail summary:hover, .briefing-detail summary:focus-visible { color: #cfe6f5; }
 .briefing-detail[open] summary { margin-bottom: .5rem; }
 
-/* Item 4a's selected-card expand + gold reward chip decorated the flat .stage-rail cards
-   that the editorial showcase replaced. .stage-showcase-card carries its own selected
-   treatment (see .stage-showcase-card.is-selected above), and the front's reward is stated
-   in words by .stage-progression-summary and the briefing's 승리 시 line rather than a
-   glyph chip, so neither rule has a surviving element to style. */
-
-/* Item 4b's 봉쇄선 spine + node dots are not carried over: they decorated the flat
-   10-entry .stage-rail, which the editorial showcase (3 named cards + a spoiler-free
-   progression select) replaced in order to keep unvisited fronts sealed. A vertical
-   connector has no equivalent meaning across a 3-card showcase, and drawing the dots
-   outside .stage-showcase-card would require dropping the overflow:hidden that clips its
-   art. Reinstating a showcase-appropriate connector is left as its own presentation pass. */
 
 /* Item 5 — idle-return "payday" count-up (SETTLED + awardedProgress>0). Static 누적 line
  * always painted; gold +N counts once. Reduced-motion: JS paints the final +N immediately
@@ -1474,7 +1527,7 @@ body {
   background: radial-gradient(circle at 50% 40%, rgb(38 18 66 / .9), rgb(6 10 20 / .9));
   box-shadow: 0 0 14px rgba(185, 146, 255, .35);
 }
-.command-screen, .growth-panel, .deck-section, .command-deck, .lobby-guide-launch, .stage-showcase-card, .companion-card, .loadout-slot, .reward-card, .growth-stat-row, .growth-skill-node {
+.command-screen, .growth-panel, .deck-section, .command-deck, .lobby-guide-launch, .stage-map-node, .companion-card, .loadout-slot, .reward-card, .growth-stat-row, .growth-skill-node {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -1483,7 +1536,7 @@ body {
   box-shadow: inset 0 0 0 1px rgba(92, 200, 255, .1), 0 0 18px rgba(10, 30, 60, .55);
 }
 .panel-heading .eyebrow, .lobby-guide-grid .eyebrow { color: #7fd0ff; }
-.stage-showcase-card.is-selected, .stage-showcase-card[aria-pressed="true"], .companion-card[aria-pressed="true"] {
+.stage-map-node.is-selected, .stage-map-node[aria-pressed="true"], .companion-card[aria-pressed="true"] {
   border-color: #b992ff;
   background: linear-gradient(90deg, rgb(32 16 58 / .9), rgb(12 30 52 / .9));
   box-shadow: 0 0 16px rgba(185, 146, 255, .3);

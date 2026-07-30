@@ -1144,20 +1144,28 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
   const selectedReward = selectedIsShowcase
     ? nextRewardName(selected.id)
     : selectedEditorial?.rewardHint ?? "봉쇄 완료 후 공개";
-  const showcaseCards = STAGE_SHOWCASE_IDS
+  const revealedStageCount = STAGE_SHOWCASE_IDS.filter((stageId) => {
+    const stageIndex = STAGES.findIndex(({ id }) => id === stageId);
+    return stageIndex <= campaign.unlockedStageIndex;
+  }).length;
+  const minimapNodes = STAGE_SHOWCASE_IDS
     .map((stageId) => stageFor(stageId))
     .map((stage) => {
       const stageIndex = STAGES.findIndex(({ id }) => id === stage.id);
       const locked = stageIndex > campaign.unlockedStageIndex;
       const cleared = campaign.resolvedIds?.includes(stage.id);
-      const state = locked ? "잠김" : started && stage.id === selected.id ? "전투 중" : cleared ? "CLEAR" : stage.id === selected.id ? "선택됨" : "열람 가능";
-      const cutsceneTeaser = CUTSCENES[stage.id]?.intro?.[0] ?? "봉쇄 기록을 열람합니다.";
-      // Mid-run the showcase is locked to the committed front, mirroring the progression rule.
-      const disabled = locked || (started && stage.id !== selected.id);
+      const selectedNode = stage.id === selected.id;
+      const state = locked ? "잠김" : started && selectedNode ? "전투 중" : cleared ? "CLEAR" : selectedNode ? "선택됨" : "출전 가능";
+      const disclosure = stageWorldFor(stage.id)?.editorial?.spoilerSafe;
+      const title = disclosure?.title ?? stage.name;
+      const summary = locked
+        ? "등불을 전진시켜 이 구역을 밝히세요."
+        : CUTSCENES[stage.id]?.intro?.[0] ?? disclosure?.summary ?? "봉쇄 기록을 열람합니다.";
+      const disabled = locked || (started && !selectedNode);
       return `
-        <button class="stage-showcase-card rc-lift${stage.id === selected.id ? " is-selected rc-glow-ring" : ""}" data-stage-showcase="${escapeHtml(stage.id)}" aria-label="${escapeHtml(stage.name)} 쇼케이스 선택, ${state}" aria-pressed="${stage.id === selected.id}" ${disabled ? "disabled" : ""}>
-          <span class="stage-showcase-art" aria-hidden="true"></span>
-          <span class="stage-showcase-copy"><small>SHOWCASE ${String(stage.sequence).padStart(2, "0")} · ${state}</small><strong>${escapeHtml(stage.name)}</strong><span>${escapeHtml(cutsceneTeaser)}</span><em>${escapeHtml(stage.bossName)}</em></span>
+        <button class="stage-map-node${selectedNode ? " is-selected" : ""}${cleared ? " is-cleared" : ""}${locked ? " is-locked" : " is-revealed"}" data-stage-showcase="${escapeHtml(stage.id)}" data-map-index="${stageIndex}" aria-label="${escapeHtml(title)} 미니맵 지점 선택, ${state}" aria-pressed="${selectedNode}" ${disabled ? "disabled" : ""}>
+          <span class="stage-map-sigil" aria-hidden="true"><b>${String(stage.sequence).padStart(2, "0")}</b></span>
+          <span class="stage-map-copy"><small>${state}</small><strong>${escapeHtml(title)}</strong><span>${escapeHtml(summary)}</span></span>
         </button>`;
     }).join("");
   const progressionOptions = STAGES.map((stage, index) => {
@@ -1209,7 +1217,11 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
         <div class="stage-progression-summary" aria-live="polite"><span>${selectedStatus}</span><strong>${escapeHtml(selectedEditorial?.title ?? selected.name)}</strong><small>완료 보상 · ${escapeHtml(selectedReward)}</small></div>
       </div>
       <p class="section-copy sr-only">세 스테이지의 등불 항로와 출전 상태를 확인합니다.</p>
-      <div class="stage-showcase-grid">${showcaseCards}</div>
+      <div class="stage-sortie-map" data-stage-map data-revealed-count="${revealedStageCount}" aria-label="출전 항로 미니맵, ${revealedStageCount}개 스테이지 밝혀짐">
+        <div class="stage-map-fog" aria-hidden="true"></div>
+        <div class="stage-map-route" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="stage-map-nodes">${minimapNodes}</div>
+      </div>
     </section>
     ${briefingPanel}
     <div class="lobby-guide-launch"><button type="button" data-guide-open aria-label="전투 작전 가이드 열기" aria-haspopup="dialog" aria-controls="lobby-guide-dialog"><span class="guide-launch-mark" aria-hidden="true">?</span><span>조작·전투 가이드</span></button></div>
@@ -2363,8 +2375,26 @@ export class BattleSession {
     });
     const lobbyStaging = this.inLobby() ? stagingFor(this.stageId, ARENA) : null;
     const stagedCommander = lobbyStaging
-      ? { ...snapshot.commander, x: lobbyStaging.commander.x, y: lobbyStaging.commander.y, facing: lobbyStaging.facing }
+      ? {
+        ...snapshot.commander,
+        x: lobbyStaging.commander.x,
+        y: lobbyStaging.commander.y,
+        facing: lobbyStaging.facing,
+        presentationAction: "idle",
+      }
       : snapshot.commander;
+    const stagedCompanions = lobbyStaging
+      ? snapshot.companions.map((companion, index) => {
+        const point = lobbyStaging.companions[index] ?? lobbyStaging.commander;
+        return {
+          ...companion,
+          x: point.x,
+          y: point.y,
+          facing: lobbyStaging.facing,
+          presentationAction: "idle",
+        };
+      })
+      : snapshot.companions;
     // The pre-run boss is a presentation-only synthetic entity. It is deliberately appended
     // after the authoritative snapshot is read, never fed to advanceDefenseRun(), telemetry,
     // or getRunDigest(). RealtimeBattle resolves its mesh solely from `class === "boss"` and
@@ -2381,6 +2411,7 @@ export class BattleSession {
         x: lobbyStaging.boss.x,
         y: lobbyStaging.boss.y,
         facing: lobbyStaging.facing + Math.PI,
+        presentationAction: "show",
       }
       : null;
     return {
@@ -2391,7 +2422,7 @@ export class BattleSession {
       enemies: [...snapshot.enemies, ...(lobbyBoss ? [lobbyBoss] : [])].map(project),
       projectiles: snapshot.projectiles.map(project),
       pickups: snapshot.pickups.map(project),
-      companions: snapshot.companions.map(project),
+      companions: stagedCompanions.map(project),
     };
   }
 

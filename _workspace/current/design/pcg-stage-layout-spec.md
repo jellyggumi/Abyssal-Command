@@ -20,34 +20,28 @@ scope: 셀 그리드, 모듈 팔레트, 시드 결정론, 레이어 분리, 조�
 - 시각적 높이는 **비보행 배경 장식**으로만 허용한다. 장식은 내비게이션, 카메라 오클루전,
   위협 가시성, 타겟팅, 이동 중 **무엇도** 바꾸지 않는다.
 
-### 1.1 기존 데이터와의 충돌 `[OBSERVED]` — 엔지니어링 결정 필요
+### 1.1 기존 데이터와의 충돌 `[OBSERVED 8.1]` — 엔지니어링 결정 완료
 
-`stage-world-catalog.js`는 고도가 0이 아닌 `surface(...)` 항목을 authored 데이터로 갖는다:
+현재 `stage-world-catalog.js#STAGE_WORLD_PROFILES`는 세 stage 모두 하나의
+gameplay 평면만 사용한다. 검증기는 다음을 fail-closed로 확인한다.
 
-| 항목 | 타입 | 고도 |
-|---|---|---|
-| `cinder-span:overlook-ramp` | `ramp` | x축 0 → 420 |
-| `cinder-span:overlook-platform` | `platform` | 420 (평탄) |
+- obstacle footprint의 `elevation === 0`
+- mesh-collider triangle 모든 vertex의 `elevation === 0`
+- route waypoint·visibility anchor·NPC·prop placement의 `elevation === 0`
+- prop footprint가 arena 안에 있고 gate/critical route를 막지 않음
 
-또한 `obstacle(...)`과 `landmark(...)`가 `elevation` 인자를 받는다.
+authored terrain candidate 경로와 provenance는 source evidence로 보존하지만,
+현재 candidate GLB는 runtime eligible하지 않다. 따라서 각 profile은
+`terrainGlbPath: null`, `terrainRuntimeEligible: false`,
+`terrainFallback.kind: "procedural-flat-support"`를 선언한다.
+`battle-realtime-three.js#instantiateProceduralTerrain`은 arena bounds 크기의
+수평 `PlaneGeometry`를 생성한다. 8–14개의 catalog prop은 이 support plane 위에
+개별 clone으로 배치되고 `inspectMeshIntegrity`와 `groundObjectOnPlane`을 거친다.
 
-**완화 요인 `[OBSERVED]`:** 같은 모듈 상단 주석이 *"This module intentionally contains no
-collision or elevation-resolution behavior: it only describes authored geometry and
-presentation cues."* 라고 명시한다. 이 고도값은 이미 **표현용**이며 시뮬레이션이 소비하지
-않는다.
-
-**결정 사항 (엔지니어링 확인 필요):**
-
-| # | 항목 | 처분 |
-|---|---|---|
-| 1 | `surface` 타입 `ramp`/`platform` | **비보행 장식으로 재분류.** 타입명을 `decor-ramp`/`decor-platform`으로 개명해 보행 가능 오해를 제거 |
-| 2 | `elevation` 필드 | 렌더 전용임을 필드명(`visualElevation`)과 스키마 주석으로 강제 |
-| 3 | 검증 | 모든 내비게이션 정점·충돌·인카운터 앵커의 게임플레이 고도가 0임을 픽스처가 단언(§9) |
-| 4 | 신규 PCG 모듈 | `visualElevation`만 사용 가능. 보행 표면 생성 불가 |
-
-이 결정은 **렌더 결과를 바꾸지 않는다** — 이미 표현 전용이었기 때문이다. 바뀌는 것은
-이름과 검증이며, PCG가 실수로 보행 가능한 고저차를 만들지 못하게 막는 장치다.
-
+이 결정은 terrain candidate를 가짜 collision mesh로 승격하지 않으며,
+Chancel/Throne의 적격 prop·character asset 로딩을 막지 않는다. 최종 자동 검증은
+real-WebGL canonical stage 3/3 및 quoted Node gate 469 tests / 444 pass /
+0 fail / 25 existing skips다.
 ---
 
 ## 2. 셀 그리드

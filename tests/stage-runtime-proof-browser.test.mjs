@@ -67,6 +67,13 @@ function fullyUnlockedCampaign() {
 async function startServer() {
   const server = http.createServer(async (request, response) => {
     const pathname = new URL(request.url ?? "/", "http://127.0.0.1").pathname;
+    if (pathname === "/__stage-runtime-fixture.html") {
+      response.writeHead(200, {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Content-Type": "text/html; charset=utf-8",
+      });
+      return response.end("<!doctype html><html><body></body></html>");
+    }
     const file = path.resolve(ROOT, `.${decodeURIComponent(pathname === "/" ? "/index.html" : pathname)}`);
     if (!file.startsWith(`${ROOT}${path.sep}`)) return response.writeHead(403).end();
     try {
@@ -126,6 +133,16 @@ function sortedRecords(records) {
   return [...records].sort((left, right) => left.id.localeCompare(right.id));
 }
 
+function assertMeshIntegrity(report, label) {
+  assert.ok(report && typeof report === "object", `${label}: missing mesh integrity report`);
+  for (const key of ["meshCount", "vertexCount", "triangleCount"]) {
+    assert.ok(Number.isFinite(report[key]) && report[key] > 0, `${label}: ${key} must be finite and nonzero`);
+  }
+  assert.equal(report.invalidVertexCount, 0, `${label}: mesh vertices must all be finite`);
+  assert.equal(report.invalidIndexCount, 0, `${label}: mesh indices must all be valid`);
+  assert.equal(report.finiteBounds, true, `${label}: rendered bounds must be finite`);
+}
+
 async function verifyStage(browser, baseURL, campaign, stage, index) {
   const profile = stageWorldFor(stage.id);
   const expectedPropRecords = sortedRecords(profile.presentation.props.map(({ id, modelPath }) => ({ id, modelPath })));
@@ -136,7 +153,7 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     ...expectedPropRecords.map(({ modelPath }) => modelPath),
     ...expectedNpcRecords.map(({ modelPath }) => modelPath),
     ...expectedVfxRecords.map(({ modelPath }) => modelPath),
-  ];
+  ].filter(Boolean);
   const screenshotFile = path.join(OUTPUT_DIR, `${String(index + 1).padStart(2, "0")}-${stage.id}.png`);
   const screenshotPath = path.relative(ROOT, screenshotFile);
   const entry = {
@@ -144,6 +161,8 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     pass: false,
     expected: {
       terrainGlbPath: profile.terrainGlbPath,
+      terrainSourceCandidatePath: profile.terrainSourceCandidatePath ?? profile.terrainGlbPath,
+      terrainSource: profile.terrainRuntimeEligible ? "promoted-glb" : "procedural-flat-support",
       propRecords: expectedPropRecords,
       npcRecords: expectedNpcRecords,
       vfxRecords: expectedVfxRecords,
@@ -226,15 +245,16 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     await cutscene.waitFor({ state: "hidden", timeout: 15000 });
     assert.equal(await surface.getAttribute("data-defense-cutscene"), null, `${stage.id} opening cinematic dismissal must clear presentation state`);
 
-    await page.waitForFunction(({ expectedNpcCount, expectedPropCount, expectedVfxCount, stageId }) => {
+    await page.waitForFunction(({ expectedNpcCount, expectedPropCount, expectedTerrainSource, expectedVfxCount, stageId }) => {
       const live = window.__stageRuntimeQa?.live;
       const decor = live?.debugPresentationState?.().stageDecor;
       return window.__stageRuntimeQa?.frames > 0
         && live?.loadedStageId === stageId
-        && live?.stageTerrainRecord?.modelPath
+        && live?.stageTerrainRecord
         && decor?.stageId === stageId
         && decor.loading === false
         && decor.terrainLoaded === true
+        && decor.terrainSource === expectedTerrainSource
         && decor.propCount === expectedPropCount
         && decor.npcCount === expectedNpcCount
         && decor.vfxCount === expectedVfxCount
@@ -242,6 +262,7 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     }, {
       expectedNpcCount: profile.presentation.npcs.length,
       expectedPropCount: profile.presentation.props.length,
+      expectedTerrainSource: profile.terrainRuntimeEligible ? "promoted-glb" : "procedural-flat-support",
       expectedVfxCount: profile.presentation.vfxCues.length,
       stageId: stage.id,
     }, { timeout: 45000 });
@@ -269,6 +290,12 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
         renderedFrames: qa.frames,
         terrainLoaded: decor.terrainLoaded,
         terrainGlbPath: live.stageTerrainRecord?.modelPath ?? null,
+        terrainSource: decor.terrainSource,
+        terrainSourceCandidatePath: decor.terrainSourceCandidatePath,
+        terrainIntegrity: decor.terrainIntegrity,
+        propGrounding: decor.records
+          .filter(({ kind }) => kind === "prop")
+          .map(({ id, groundedMinY, meshIntegrity }) => ({ id, groundedMinY, meshIntegrity })),
         palette,
         propRecords: decor.records
           .filter(({ kind }) => kind === "prop")
@@ -292,6 +319,21 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     assert.equal(observed.loadedStageId, observed.selectedStageId, `${stage.id} selected stage must match loadedStageId`);
     assert.equal(observed.terrainLoaded, true, `${stage.id} terrain must finish loading`);
     assert.equal(observed.terrainGlbPath, profile.terrainGlbPath, `${stage.id} must load its authored terrain GLB`);
+    assert.equal(
+      observed.terrainSource,
+      profile.terrainRuntimeEligible ? "promoted-glb" : "procedural-flat-support",
+      `${stage.id} must expose the selected runtime terrain strategy`,
+    );
+    assert.equal(
+      observed.terrainSourceCandidatePath,
+      profile.terrainSourceCandidatePath ?? profile.terrainGlbPath,
+      `${stage.id} must preserve the source path used for promotion or rejection`,
+    );
+    assertMeshIntegrity(observed.terrainIntegrity, `${stage.id} terrain`);
+    for (const prop of observed.propGrounding) {
+      assert.ok(Math.abs(prop.groundedMinY) <= 1e-4, `${stage.id} ${prop.id} must rest on the support plane, got minY ${prop.groundedMinY}`);
+      assertMeshIntegrity(prop.meshIntegrity, `${stage.id} ${prop.id}`);
+    }
     assert.deepEqual(observed.vfxRecords, expectedVfxRecords, `${stage.id} must publish every authored stage VFX record/model path`);
     assert.deepEqual(observed.propRecords, expectedPropRecords, `${stage.id} must publish every authored prop runtime record/model path`);
     assert.deepEqual(observed.npcRecords, expectedNpcRecords, `${stage.id} must publish every authored NPC runtime record/model path`);
@@ -305,6 +347,13 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     const successfulResponses = new Set(assetResponses.filter(({ status }) => status === 200).map(({ path: assetPath }) => assetPath));
     for (const modelPath of expectedModelPaths) {
       assert.ok(successfulResponses.has(modelPath), `${stage.id} browser must fetch ${modelPath} successfully`);
+    }
+    if (!profile.terrainRuntimeEligible) {
+      assert.equal(
+        successfulResponses.has(profile.terrainSourceCandidatePath),
+        false,
+        `${stage.id} must not request its ineligible terrain candidate`,
+      );
     }
     assert.equal(
       [...successfulResponses].some((assetPath) => assetPath.startsWith("assets/images/battle/stages/")),
@@ -374,4 +423,105 @@ test("all three canonical stages load their authored runtime world in isolated r
     true,
     `stage runtime proof failures:\n${summary.stages.filter(({ pass }) => !pass).map(({ stageId, error }) => `${stageId}: ${error}`).join("\n")}`,
   );
+});
+
+test("disposing after a transient terrain failure lets the same stage retry on remount", { timeout: 60000 }, async () => {
+  const hosting = await startServer();
+  const browser = await chromium.launch({
+    headless: true,
+    args: ["--use-gl=angle", "--enable-unsafe-swiftshader"],
+  });
+  const context = await browser.newContext({
+    baseURL: hosting.url,
+    serviceWorkers: "block",
+    viewport: { width: 800, height: 450 },
+  });
+  const page = await context.newPage();
+  const stageId = "cinder-span";
+  const transientError = "transient terrain fixture failure";
+
+  try {
+    await page.goto("/__stage-runtime-fixture.html", { waitUntil: "domcontentloaded" });
+    const lifecycle = await page.evaluate(async ({ stageId: selectedStageId, transientError: failureMessage }) => {
+      const { RealtimeBattle } = await import("/battle-realtime-three.js");
+      const canvas = document.createElement("canvas");
+      canvas.width = 800;
+      canvas.height = 450;
+      document.body.append(canvas);
+
+      const adapter = new RealtimeBattle({ reducedMotion: true });
+      adapter.mount({ canvas, viewport: { width: 800, height: 450 } });
+      adapter.stageTerrainFailedId = selectedStageId;
+      adapter.stageTerrainError = failureMessage;
+      adapter.ensureStageTerrain(selectedStageId);
+      const failed = adapter.debugPresentationState().stageDecor;
+
+      adapter.dispose();
+      const disposed = adapter.debugPresentationState().stageDecor;
+
+      adapter.mount({ canvas, viewport: { width: 800, height: 450 } });
+      adapter.ensureStageTerrain(selectedStageId);
+      window.__terrainRemountQa = { adapter, canvas };
+
+      return {
+        failed: {
+          loading: failed.loading,
+          stageId: failed.stageId,
+          terrainFallbackReason: failed.terrainFallbackReason,
+          terrainLoaded: failed.terrainLoaded,
+        },
+        disposed: {
+          loading: disposed.loading,
+          stageId: disposed.stageId,
+          terrainFallbackReason: disposed.terrainFallbackReason,
+          terrainLoaded: disposed.terrainLoaded,
+        },
+      };
+    }, { stageId, transientError });
+
+    assert.deepEqual(lifecycle.failed, {
+      loading: false,
+      stageId,
+      terrainFallbackReason: transientError,
+      terrainLoaded: false,
+    }, "the fixture must begin in the poisoned same-stage failure state");
+    assert.deepEqual(lifecycle.disposed, {
+      loading: false,
+      stageId: null,
+      terrainFallbackReason: null,
+      terrainLoaded: false,
+    }, "dispose must clear the failed stage identity and terrain error at the mount boundary");
+
+    await page.waitForFunction((selectedStageId) => {
+      const adapter = window.__terrainRemountQa?.adapter;
+      return adapter?.loadedStageId === selectedStageId && adapter?.stageTerrainRecord !== null;
+    }, stageId, { timeout: 15000 });
+
+    const retried = await page.evaluate(() => {
+      const { adapter, canvas } = window.__terrainRemountQa;
+      const decor = adapter.debugPresentationState().stageDecor;
+      const result = {
+        loading: decor.loading,
+        loadedStageId: adapter.loadedStageId,
+        stageId: decor.stageId,
+        terrainFallbackReason: decor.terrainFallbackReason,
+        terrainLoaded: decor.terrainLoaded,
+        terrainSource: decor.terrainSource,
+      };
+      adapter.dispose();
+      canvas.remove();
+      delete window.__terrainRemountQa;
+      return result;
+    });
+    assert.equal(retried.loadedStageId, stageId, "the remounted renderer must retry the same stage");
+    assert.equal(retried.stageId, stageId, "the successful retry must publish the same stage identity");
+    assert.equal(retried.loading, false, "the same-stage retry must settle");
+    assert.equal(retried.terrainLoaded, true, "the same-stage retry must mount terrain");
+    assert.equal(retried.terrainSource, "procedural-flat-support", "the retry must publish the loaded terrain source");
+    assert.notEqual(retried.terrainFallbackReason, transientError, "the remount must not retain the prior transient terrain error");
+  } finally {
+    await context.close();
+    await browser.close();
+    await new Promise((resolve) => hosting.server.close(resolve));
+  }
 });

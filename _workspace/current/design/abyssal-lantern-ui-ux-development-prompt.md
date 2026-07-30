@@ -49,6 +49,27 @@
 - 선택한 stage의 3D tick-0 preview와 lobby cinematic을 유지한다. 카드 선택이 가짜 preview 또는 run advance를 만들지 않는다.
 - `작전 개시`는 가장 강한 primary CTA 하나다. 잠김/편성 불충분/저장 실패 등 실행 불가 사유는 CTA 근처의 구체적 문장으로 제공한다.
 - 장황한 설명은 접고, 첫 화면에는 `스테이지 → 목표 → 편성 → 출전`만 남긴다.
+## Observed implementation [8.1]
+
+**Lobby minimap**: `app.js#renderSortieTabBody` renders the fixed
+Cinder→Chancel→Throne route as three native stage buttons. A new campaign reveals
+Cinder only; later nodes become enabled through `campaign.unlockedStageIndex`
+after the preceding stage clear. Selection reuses the existing briefing and
+battle canvas—there is no per-node preview renderer or simulation advance.
+
+**Lobby camera**: `lobby-cinematic.js#showcaseCamera` emits a commander-focused
+animated `distanceScale` of `0.9–1.1`; reduced motion is a static `1.0`.
+`app.js#applyShowcaseCamera` applies the shot through public renderer APIs.
+Framing thresholds are `.96/1.05`.
+
+**VFX/audio**: impact VFX are short-lived and capped at 24; critical boss
+telegraphs preempt expendable cold loads. `defense-audio.js#AUDIO_EVENT_POLICY`
+owns cue priority, voice caps, mute, and pause/resume behavior.
+
+**Verification** [8.1]: desktop `1440×900` observed WebGL, three minimap nodes,
+one initial reveal, and zero console errors. Mobile `390×844` observed WebGL,
+three nodes, and zero horizontal overflow. The final quoted Node gate recorded
+469 tests, 444 pass, 0 fail, and 25 existing fixture/history skips.
 - 현재 title, stage, currency, selected companion/loadout state가 서로 다른 창에서 불일치하지 않아야 한다.
 
 ### B. 조작 학습과 발견 가능성

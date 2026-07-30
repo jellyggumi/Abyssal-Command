@@ -3,6 +3,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import * as THREE from "../vendor/three.module.js";
+import { GLTFLoader } from "../vendor/loaders/GLTFLoader.js";
 
 import { STAGES } from "../campaign-state.js";
 import { RETAINED_ASSET_PATHS } from "../scripts/defense-runtime-assets.mjs";
@@ -35,7 +37,7 @@ function assertModel(assetPath) {
   parseGlb(assetPath);
 }
 
-test("the three-stage catalog resolves only retained mesh and motion resources", async (t) => {
+test("the three-stage catalog retains source meshes while routing all terrain to flat procedural support", async (t) => {
   const stageIds = STAGES.map(({ id }) => id);
   assert.deepEqual(stageIds, ["cinder-span", "abyss-chancel", "echo-throne"]);
 
@@ -43,15 +45,27 @@ test("the three-stage catalog resolves only retained mesh and motion resources",
   for (const stageId of stageIds) {
     const profile = stageWorldFor(stageId);
     assert.ok(profile, `${stageId}: missing stage world profile`);
+    const terrainSourcePath = profile.terrainGlbPath ?? profile.terrainSourceCandidatePath;
     const paths = [
-      profile.terrainGlbPath,
+      terrainSourcePath,
       ...profile.presentation.props.map(({ modelPath }) => modelPath),
       ...profile.presentation.npcs.map(({ modelPath }) => modelPath),
       ...profile.presentation.vfxCues.map(({ modelPath }) => modelPath),
     ];
     await t.test(stageId, () => {
-      assert.equal(paths.every((assetPath) => retained.has(assetPath)), true, `${stageId}: every runtime model must be in the frozen asset allowlist`);
-      assert.equal(paths.every((assetPath) => assetPath.startsWith("assets/mesh/") || assetPath.startsWith("assets/motion/")), true, `${stageId}: models must use mesh or motion lanes`);
+      assert.equal(profile.terrainRuntimeEligible, false, `${stageId}: no retained terrain source is gameplay-eligible`);
+      assert.equal(profile.terrainGlbPath, null, `${stageId}: an ineligible source cannot be advertised as runtime terrain`);
+      assert.match(profile.terrainSourceCandidatePath, /^assets\/mesh\/terrain\/.*\.glb$/u, `${stageId}: retained source must remain an inspectable terrain GLB`);
+      assert.equal(profile.terrainFallback?.kind, "procedural-flat-support", `${stageId}: ineligible terrain must route to procedural support`);
+      if (stageId === "cinder-span") {
+        assert.equal(profile.terrainFallback.reason, "authored-diorama-not-flat-gameplay-eligible", "Cinder must record why its promoted diorama cannot be gameplay terrain");
+        assert.match(profile.terrainSourceCandidatePath, /\/runtime\/.*\.glb$/u, "Cinder must retain the promoted diorama for offline integrity checks");
+      } else {
+        assert.equal(profile.terrainFallback.reason, "source-candidate-not-runtime-eligible", `${stageId}: textured candidate rejection reason must remain explicit`);
+        assert.match(profile.terrainSourceCandidatePath, /\/textured-candidate\/.*\.glb$/u, `${stageId}: retained source must remain marked as a textured candidate`);
+      }
+      assert.equal(paths.every((assetPath) => retained.has(assetPath)), true, `${stageId}: every retained source and runtime model must be in the frozen asset allowlist`);
+      assert.equal(paths.every((assetPath) => assetPath.startsWith("assets/mesh/") || assetPath.startsWith("assets/motion/")), true, `${stageId}: assets must use mesh or motion lanes`);
       for (const assetPath of paths) assertModel(assetPath);
     });
   }
@@ -138,4 +152,74 @@ test("Cinder Span publishes twelve frozen, independently placed nodes across its
   assert.equal(new Set(props.map(({ placement }) => placement)).size, 12, "placements must not share mutable object identity");
   assert.equal(new Set(props.map(({ placement }) => JSON.stringify(placement))).size, 12, "placements must not collapse to duplicate coordinates");
   assert.equal(props.every((entry) => Object.isFrozen(entry) && Object.isFrozen(entry.placement)), true, "prop records and placements stay immutable");
+});
+
+test("a staged idle commander clears the queued show before its model resolves", async () => {
+  const clipKeys = [
+    "idle",
+    "move",
+    "run",
+    "attack",
+    "hit",
+    "bighit",
+    "avoid",
+    "defence",
+    "critical",
+    "die",
+    "show",
+  ];
+  const originalLoad = GLTFLoader.prototype.load;
+  GLTFLoader.prototype.load = function loadSyntheticRig(_url, onLoad) {
+    queueMicrotask(() => {
+      const scene = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 1.5, 0.35),
+        new THREE.MeshStandardMaterial({ color: 0xffffff }),
+      );
+      body.position.y = 0.75;
+      scene.add(body);
+      onLoad({
+        scene,
+        animations: clipKeys.map((key) => new THREE.AnimationClip(`synthetic::${key}::v01`, 0.05, [])),
+      });
+    });
+    return this;
+  };
+
+  let adapter;
+  try {
+    const { RealtimeBattle } = await import(`../battle-realtime-three.js?staged-idle-regression=${Date.now()}`);
+    adapter = new RealtimeBattle({ reducedMotion: false });
+    adapter.disposed = false;
+    adapter.scene = new THREE.Scene();
+    adapter.actorGroup = new THREE.Group();
+    adapter.scene.add(adapter.actorGroup);
+
+    adapter.reconcileActors({
+      commander: {
+        id: "commander",
+        x: 12000,
+        y: 6000,
+        presentationAction: "idle",
+      },
+      enemies: [],
+      companions: [],
+      projectiles: [],
+      pickups: [],
+    });
+
+    let commander;
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      commander = adapter.debugPresentationState("commander");
+      if (commander?.hasMixer) break;
+      await Promise.resolve();
+    }
+    assert.equal(commander?.hasMixer, true, "the staged commander rig must resolve through the real actor-loading path");
+    assert.equal(commander.presentationAction, "idle", "reconciliation must retain the staged idle request");
+    assert.equal(commander.oneShotActionKey, null, "model resolution must not replay the default queued show action");
+    assert.equal(commander.activeActionKey, "idle", "the resolved staged commander must settle into canonical idle");
+  } finally {
+    adapter?.dispose();
+    GLTFLoader.prototype.load = originalLoad;
+  }
 });
