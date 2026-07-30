@@ -2023,10 +2023,13 @@ test("actors render with banded cel shading rather than smooth PBR", async () =>
 // spawnVfx() hard-returns with no console warning, so a cue that never spawns is
 // indistinguishable in production from a cue that was never requested.
 
-// MAX_VISUAL_EFFECTS. Restated rather than imported: the renderer exports neither the
-// constant nor the predicates under test, and a test that read them back from the module
-// would assert the implementation against itself.
-const POOL_CAPACITY = 24;
+// MAX_VISUAL_EFFECTS. The predicates under test are still not exported, so they are asserted
+// against restated behaviour -- but the BUDGET is now exported and is imported here. Restating
+// it duplicated an authored number in two files, and when the budget moved from 24 to 40 for
+// the always-area combat model these rows failed on the stale copy rather than on any real
+// behaviour change. The pool's capacity is the renderer's to author; what this file asserts is
+// that the pool stays AT that capacity and that the right records survive overflow.
+const POOL_CAPACITY = MAX_VISUAL_EFFECTS;
 // MAX_DROP_BEACONS, equal to the peer contract's MAX_FIELD_DROPS so the bound cannot grow
 // with wave count.
 const DROP_BEACON_CAP = 8;

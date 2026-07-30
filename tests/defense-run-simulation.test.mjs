@@ -1348,11 +1348,22 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
  * precondition rather than assuming it. A future balance change that starts dropping inside one
  * of these windows must fail as "precondition broke", never as a silent hash mismatch.
  */
+/*
+ * REBASELINED 2026-07-30 at the cycle-10 / area-combat merge.
+ *
+ * These SHAs pin "the buff-drop layer changes nothing when nothing drops". The always-area
+ * combat model (defense-catalog AREA_*) changed what a tick DOES, so every digest moved --
+ * including these windows. That is a change in the combat rules, NOT a change in the claim
+ * under test, and the claim is still asserted the same way: each window is re-measured to have
+ * zero DROP_SPAWNED, zero BUFF_APPLIED, a completed window, an ADVANCED dropRng (so the layer
+ * really executed), and absent `buffs`/`buffStats` keys at SNAPSHOT_VERSION 7. Only the bytes
+ * are new; every precondition below was re-verified, not assumed.
+ */
 const PRE_FEATURE_DIGEST_SHA256 = Object.freeze([
-  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "4fa5abdeeff6c4782595c2b1b45681049b3f082a4a2e344a53aa16d3425e35d1" },
-  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "c4e67af6ce7b052f3635132084e117b770d1d6f0f498405ab926d511e480793f" },
-  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "b18f8900fb9b8fc181060ad91171188d902d2336ccccbd8e6c47b40f12916324" },
-  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "ba0e8c11f35e015724e92e323c14d495711e14073005b40ecffb2580fb9f6ed0" },
+  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "0cd03d7f67ab2fca815945d706956ffd60cdd214ac3b345d2341c27be436f00f" },
+  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "c250e10ff1c0d1e70280646dbde592ba3d7bb6e29693161a5d067064dff6c57b" },
+  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "43bb86e07c4e9c6353d3f298d695e4a1cdfd716a8d6947d9d4e861fa30d09297" },
+  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "cf3f32b176712c9cfec62be5c071645c342e714962a9db96298b02237ef46b32" },
 ]);
 
 // ---------------------------------------------------------------------------------------------

@@ -305,8 +305,40 @@ const played = playRun();
 // actually reach contact range and the ENEMY side of the model gets exercised too.
 const pressured = playRun({ castSkills: false });
 
+/**
+ * A third play-out that STANDS STILL.
+ *
+ * Chasing enemies is how a player clears a wave, and it is also why enemy contact is rare: the
+ * commander deletes bodies before they close. Holding position with a thin escort is the
+ * configuration where enemies actually reach contact range, so it is the only honest way to
+ * exercise the enemy half of the model without hoping a seed happens to produce a strike.
+ * Every assertion below that needs an enemy strike reads THIS run.
+ */
+function playContested({ seed = 7, steps = 5000 } = {}) {
+  let run = createDefenseRun({ stageId: "cinder-span", seed, companionLoadout: ["ember-cohort"] });
+  const ticks = [];
+  for (let step = 0; step < steps && !isTerminalRun(run); step += 1) {
+    const snapshot = getRunSnapshot(run);
+    const next = snapshot.growthOffer
+      ? queueInput(run, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] })
+      : queueInput(run, "MOVE", { octant: "IDLE" });
+    run = advanceDefenseRun(next, 1);
+    const after = getRunSnapshot(run);
+    ticks.push({
+      tick: after.tick,
+      events: after.events,
+      enemies: after.enemies,
+      bodies: [after.commander, ...after.companions.filter((entry) => entry.status !== "DOWNED")],
+    });
+  }
+  return { run, ticks, events: ticks.flatMap((entry) => entry.events) };
+}
+
+const contested = playContested();
+
 test("every attack splashes: both factions produce area impacts and the primary body is never in its own splash", () => {
-  const impacts = [...played.events, ...pressured.events].filter((event) => event.type === "AREA_IMPACT");
+  const impacts = [...played.events, ...pressured.events, ...contested.events]
+    .filter((event) => event.type === "AREA_IMPACT");
   assert.ok(impacts.length > 0, "a live run must produce area contacts");
 
   const factions = new Set(impacts.map((event) => event.faction));
@@ -331,7 +363,8 @@ test("every attack splashes: both factions produce area impacts and the primary 
 });
 
 test("area damage falls off with distance for equal element and weight", () => {
-  const impacts = [...played.events, ...pressured.events].filter((event) => event.type === "AREA_IMPACT" && event.targets.length >= 2);
+  const impacts = [...played.events, ...pressured.events, ...contested.events]
+    .filter((event) => event.type === "AREA_IMPACT" && event.targets.length >= 2);
   assert.ok(impacts.length > 0, "the run must contain at least one multi-body contact");
   let compared = 0;
   for (const impact of impacts) {
@@ -483,17 +516,10 @@ test("every live body publishes exactly one authored semantic state, and the sta
 });
 
 test("the windup state is exactly the telegraph window, and the strike leaves it", () => {
-  let run = createDefenseRun({ stageId: "cinder-span", seed: 7, companionLoadout: ["ember-cohort"] });
   const windupSpans = new Map();
-  const strikes = new Map();
-  for (let step = 0; step < 4000 && !isTerminalRun(run); step += 1) {
-    run = advanceDefenseRun(run, 1);
-    const snapshot = getRunSnapshot(run);
-    for (const enemy of snapshot.enemies) {
+  for (const entry of contested.ticks) {
+    for (const enemy of entry.enemies) {
       if (enemy.state === "windup") windupSpans.set(enemy.id, (windupSpans.get(enemy.id) ?? 0) + 1);
-    }
-    for (const event of snapshot.events) {
-      if (event.type === "ENEMY_ATTACK") strikes.set(event.entityId, (strikes.get(event.entityId) ?? 0) + 1);
     }
   }
   assert.ok(windupSpans.size > 0, "authored patterns must put bodies into a windup");
@@ -501,4 +527,56 @@ test("the windup state is exactly the telegraph window, and the strike leaves it
     assert.ok(ticks >= 1, `${entityId} must hold its windup for at least one tick`);
     assert.ok(ticks <= 300, `${entityId} must not be stuck in windup forever`);
   }
+
+  // A body that entered a windup must leave it: either the strike lands or the target walked
+  // out and the attack is cancelled. A body still winding up on the last observed tick would
+  // be a stuck state machine.
+  const lastTick = contested.ticks.at(-1);
+  assert.equal(
+    lastTick.enemies.filter((enemy) => enemy.state === "windup" && enemy.attackCooldown <= 0).length,
+    0,
+    "no body may sit in a windup whose timer has already expired",
+  );
+
+  const resolutions = contested.events.filter((event) => event.type === "ENEMY_ATTACK"
+    || event.type === "ENEMY_ATTACK_CANCELLED" || event.type === "BOSS_ATTACK_CANCELLED");
+  assert.ok(resolutions.length > 0, "a windup must resolve into a strike or a cancellation");
 });
+
+test("an enemy-side splash contains exactly the player bodies standing inside its disc", () => {
+  // The live geometry is the oracle: for every enemy-faction area impact the contested run
+  // produced, recompute from that tick's own body positions which player-side bodies the disc
+  // covered, and require the splash to be exactly that set minus the primary target. This is the
+  // invariant that would break if the splash over-reached (hitting bodies outside the disc) or
+  // under-reached (missing a body that stood inside it).
+  const checked = [];
+  for (const entry of contested.ticks) {
+    for (const impact of entry.events) {
+      if (impact.type !== "AREA_IMPACT" || impact.faction !== "enemy") continue;
+      const covered = entry.bodies
+        .filter((body) => Math.hypot(body.x - impact.originX, body.y - impact.originY) < impact.radius)
+        .map((body) => body.id);
+      const splashed = [...impact.targetIds].sort();
+
+      for (const id of splashed) {
+        assert.ok(
+          covered.includes(id),
+          `${id} was splashed at tick ${entry.tick} but stood outside the ${impact.radius}-unit disc`,
+        );
+      }
+      // Every covered body is either in the splash or was the primary contact the strike
+      // already damaged on its own path; nothing inside the disc may simply be skipped.
+      for (const id of covered) {
+        const isPrimary = entry.events.some((event) => (event.type === "ENEMY_ATTACK"
+          || event.type === "PROJECTILE_IMPACT") && event.targetId === id);
+        assert.ok(
+          splashed.includes(id) || isPrimary,
+          `${id} stood inside the disc at tick ${entry.tick} and was neither splashed nor the primary target`,
+        );
+      }
+      checked.push(impact);
+    }
+  }
+  assert.ok(checked.length > 0, "the contested run must produce at least one enemy-side splash to check");
+});
+
