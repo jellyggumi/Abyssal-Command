@@ -2384,7 +2384,12 @@ button:disabled {
     min-height: 64px;
     transform: none;
   }
-  .abyss-depth-control { left: calc(var(--deck-left-width) + .5rem); right: .5rem; transform: none; bottom: calc(42dvh + 5.4rem); max-width: none; justify-content: center; }
+  /* Stack on mobile: the 218px band (deck-left..right) is too narrow for eyebrow + full option
+     text side-by-side, so a row with justify-center bled the eyebrow into the left deck and the
+     select off-screen. Column keeps both inside; bottom is fixed so height grows upward, clear of
+     the SortieFab below. */
+  .abyss-depth-control { left: calc(var(--deck-left-width) + .5rem); right: .5rem; transform: none; bottom: calc(42dvh + 5.4rem); max-width: none; flex-direction: column; align-items: stretch; gap: .2rem; }
+  .abyss-depth-control select { width: 100%; min-width: 0; }
   .sortie-fab:active { transform: scale(.98); }
   .sortie-action-label { font-size: .82rem; white-space: normal; }
 }
