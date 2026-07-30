@@ -164,9 +164,21 @@ async function measureHud(page) {
       const range = document.createRange();
       range.selectNodeContents(node);
       const lineTops = [...range.getClientRects()].map(({ top }) => Math.round(top * 10) / 10);
+      // Column room is a LAYOUT property, so it is measured from the space the heading is given,
+      // not from the width of whatever string happens to be rendered at that instant. These
+      // headings are inline elements whose own box is exactly their text: measuring that made the
+      // assertion depend on which label the run had reached -- "작전 개시 · 관문 방어" (11 glyphs)
+      // early, "관문 방어" (4) a few seconds later -- so the same layout passed or failed purely on
+      // timing. The container's content box is the room the label actually has.
+      const container = node.parentElement ?? node;
+      const containerStyle = getComputedStyle(container);
+      const containerWidth = container.getBoundingClientRect().width
+        - Number.parseFloat(containerStyle.paddingLeft || "0")
+        - Number.parseFloat(containerStyle.paddingRight || "0");
       return {
         box: box(node),
-        characterColumns: node.getBoundingClientRect().width / Number.parseFloat(style.fontSize),
+        characterColumns: containerWidth / Number.parseFloat(style.fontSize),
+        textColumns: node.getBoundingClientRect().width / Number.parseFloat(style.fontSize),
         fontSize: Number.parseFloat(style.fontSize),
         lineCount: new Set(lineTops).size,
         text: node.textContent.trim(),
@@ -297,7 +309,14 @@ function assertPhoneContract(report, viewport) {
 
   for (const [name, heading] of Object.entries(report.headings)) {
     assert.equal(heading.visible, true, `${name} heading must remain visible`);
-    assert.ok(heading.characterColumns >= 5, `${name} heading must fit at least five character columns, got ${heading.characterColumns.toFixed(1)}`);
+    assert.ok(
+      heading.characterColumns >= 5,
+      `${name} heading must be given room for at least five character columns, got ${heading.characterColumns.toFixed(1)}`,
+    );
+    assert.ok(
+      heading.textColumns <= heading.characterColumns + 0.5,
+      `${name} heading text (${heading.textColumns.toFixed(1)} cols) must fit the room it is given (${heading.characterColumns.toFixed(1)} cols)`,
+    );
     assert.ok(heading.lineCount <= 3, `${name} heading must not wrap into a ${heading.lineCount}-line one/two-character column`);
   }
 
@@ -340,6 +359,7 @@ function printMeasurement(label, report, extra = {}) {
     controls: Object.fromEntries(report.bottomControls.buttons.map(({ box, label }) => [label, roundedBox(box)])),
     headings: Object.fromEntries(Object.entries(report.headings).map(([name, value]) => [name, {
       characterColumns: Math.round(value.characterColumns * 10) / 10,
+      textColumns: Math.round(value.textColumns * 10) / 10,
       lineCount: value.lineCount,
       width: Math.round(value.box.width * 10) / 10,
     }])),
