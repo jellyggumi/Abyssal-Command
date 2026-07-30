@@ -72,6 +72,14 @@ MAPPING_ROWS = [
     MappingRow("DEF-toe.R", "mixamorig:RightToeBase", "copy", 1.0),
 ]
 
+# Overlay clip roster.
+#
+# The nine base actions are the original shipped pack and their sources are unchanged, so every
+# rig keeps exactly the motion it already had. Everything below them is additive: the runtime
+# already routes directional reactions ("hit_left" / "bighit_back", battle-realtime-three.js
+# hitReactionKey) and exact attack delivery ("attack_melee" / "attack_ranged"), and falls back to
+# the flat key when a rig does not carry the clip. Shipping these turns that routing on for all
+# 24 compatible rigs at once instead of leaving it dormant.
 CLIPS = [
     ClipSpec("idle", "Unarmed Idle.fbx", True),
     ClipSpec("move", "Walking.fbx", True),
@@ -82,6 +90,27 @@ CLIPS = [
     ClipSpec("critical", "Illegal Elbow Punch.fbx", False),
     ClipSpec("avoid", "Dodging.fbx", False),
     ClipSpec("defence", "Body Block.fbx", False),
+
+    # Directional light reactions: the side the blow came from decides which way the body folds.
+    ClipSpec("hit_front", "Pain Gesture.fbx", False),
+    ClipSpec("hit_back", "Standing React Large Gut.fbx", False),
+    ClipSpec("hit_left", "Standing React Small From Left.fbx", False),
+    ClipSpec("hit_right", "Standing React Small From Right.fbx", False),
+
+    # Directional heavy reactions: same axis, larger arc, longer recovery.
+    ClipSpec("bighit_front", "Receive Uppercut To The Face.fbx", False),
+    ClipSpec("bighit_back", "Turn To Knocked Unconscious.fbx", False),
+    ClipSpec("bighit_left", "Standing Block React Large.fbx", False),
+    ClipSpec("bighit_right", "Standing React Large Gut.fbx", False),
+
+    # Delivery-specific attacks, so a melee swing and a ranged release stop both playing the
+    # generic punch.
+    ClipSpec("attack_melee", "Standing Melee Attack Horizontal.fbx", False),
+    ClipSpec("attack_ranged", "Shooting Arrow.fbx", False),
+
+    # Terminal and entrance beats, so death and boss entry stop borrowing a combat clip.
+    ClipSpec("die", "Dying.fbx", False),
+    ClipSpec("show", "Mutant Roaring.fbx", False),
 ]
 
 EXPECTED_CLIP_NAMES = [f"unarmed-core::{clip.action}::v01" for clip in CLIPS]

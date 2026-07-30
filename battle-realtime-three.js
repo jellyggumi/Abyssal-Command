@@ -11,7 +11,15 @@ import * as SkeletonUtils from "./vendor/utils/SkeletonUtils.js";
 import { REWARDS, STAGE_PRESENTATION_BY_ID, STAGES } from "./defense-catalog.js";
 import { stageWorldFor } from "./stage-world-catalog.js";
 
-const MAX_VISUAL_EFFECTS = 24;
+// Concurrent authored-GLB effect instances.
+//
+// Raised from 24 to 40 for the always-area combat model: one contact now produces
+// feedback for up to AREA_COMBAT.maxSplashTargets (8) bodies instead of one, so the
+// previous cap silently ate the tail of every crowd fight. The pool is still hard
+// bounded and still evicts oldest-first, and the cheap procedural rings
+// (MAX_AREA_RINGS) carry the area read on their own budget, so raising this does
+// not make the worst case unbounded.
+export const MAX_VISUAL_EFFECTS = 40;
 const SIM_TICK_RATE = 60;
 const MAX_ANIMATION_TICK_DELTA = 6;
 const MAX_VISUAL_EVENT_KEYS = 128;
@@ -52,14 +60,26 @@ const WORLD_SCALE = 14;
 const TERRAIN_TARGET_HALF_EXTENT = WORLD_SCALE * 1.15;
 const STAGE_VFX_GROUND_LIFT = 0.04;
 // Per-actor-kind target world height (Y-axis extent after uniform scale).
-// Bosses remain the largest silhouette; the commander deliberately reads
-// smaller than a normal enemy so friendly attachments do not obscure combat.
+//
+// Proportion pass, 2026-07-30, against the decoded reference capture
+// (`_workspace/current/intake/reference-video-analysis.md` §3): the reference
+// frames a CROWD, not a hero. Its actors sit at ~6.8% of viewport height and
+// the player is read out of that crowd by an over-head label and a ground ring,
+// NOT by being larger. At our 42-degree FOV the SKIRMISH tier (26 units) shows
+// ~19.9 world units of height, so the 1.55-unit commander is 7.8% of the frame --
+// inside the reference band, and the reason these numbers are not being inflated.
+//
+// What the reference DOES constrain is the ratio between classes: legion units
+// read at the player's own scale (within ~10%) and are told apart by colour,
+// elites run 1.5-2x, and the boss dominates. `companion` sat 16% under the
+// commander, which read as a lesser body rather than a peer, so it moves to
+// within 7%.
 const TARGET_HEIGHT = Object.freeze({
   commander: 1.55,
   boss: 4.5,
   elite: 2.2,
   enemy: 1.7,
-  companion: 1.3,
+  companion: 1.45,
   stageNpc: 1.8,
   pickup: 0.7,
 });
@@ -693,6 +713,48 @@ const IMPACT_FLASH_PEAK = 0.55;
 const IMPACT_FLASH_HEAVY_PEAK = 1.1;
 const IMPACT_CONTACT_STAGGER_MS = 34;
 const MAX_IMPACT_STAGGER_TARGETS = 5;
+// --- Struck-body blink (create-game-vfx: make the gameplay meaning visible) ---
+// Every body that takes damage -- primary or area splash -- blinks semi-transparent
+// for the life of its flash. Emissive alone is unreadable on a dark rig at encounter
+// distance; alpha is readable on every silhouette regardless of material colour.
+// The blink is a square wave so it reads as "being hit" rather than "fading out",
+// and every material's pre-blink transparency is captured once and always restored.
+const HIT_BLINK_PERIOD_MS = 90;
+const HIT_BLINK_MIN_OPACITY = 0.35;
+// Reduced motion keeps the translucency (the information) and drops the flicker.
+const HIT_BLINK_STATIC_OPACITY = 0.62;
+// --- Area contact rings (광역) --------------------------------------------
+// An area contact is drawn as a ground ring at the contact point, scaled to the
+// authored disc radius, so "who else is in range" is legible before the damage
+// numbers land. Rings are procedural (no GLB fetch), pooled, and capped.
+const AREA_RING_IMPACT_MS = 420;
+const AREA_RING_TELEGRAPH_MIN_MS = 260;
+const AREA_RING_SEGMENTS = 48;
+const AREA_RING_THICKNESS = 0.06;
+const AREA_RING_Y = 0.06;
+const MAX_AREA_RINGS = 28;
+// Element -> ring colour. Matches the authored ELEMENT_MATCHUP_BP identities so a
+// player can read the element of an incoming disc without opening a menu.
+const AREA_ELEMENT_COLORS = Object.freeze({
+  neutral: 0xdfe9ff,
+  ember: 0xff8a3d,
+  frost: 0x6fd6ff,
+  veil: 0xc07bff,
+  void: 0x7a5cff,
+});
+const AREA_TELEGRAPH_COLOR = 0xff4d4d;
+// Persistent commander range ring: thin, dim, always on, never in front of an actor.
+const RANGE_RING_COLOR = 0x8fd8ff;
+const RANGE_RING_OPACITY = 0.16;
+const RANGE_RING_Y = 0.04;
+const AREA_FIELD_OPACITY = 0.26;
+const AREA_IMPACT_OPACITY = 0.62;
+const AREA_TELEGRAPH_OPACITY = 0.5;
+// --- Boss entrance --------------------------------------------------------
+// The simulation authors the entrance length on BOSS_SPAWNED (`intro.durationTicks`);
+// these are the presentation shape of that window only.
+const BOSS_INTRO_FALLBACK_MS = 3000;
+const BOSS_INTRO_LOOK_BLEND = 0.72;
 // Knockback is a render-space offset in world units along the attacker to
 // target axis; updateActorFollow() pulls the root back to the authoritative
 // position every frame, so these stay well under one actor width.
@@ -2374,6 +2436,15 @@ export class RealtimeBattle {
     this.cameraShakeOffset = new THREE.Vector3();
     this.rendererSize = new THREE.Vector2();
     this.impactShakeSeed = 0;
+    // Area combat presentation (광역). Rings are procedural ground decals pooled
+    // in one array; `areaFieldRings` indexes the persistent ones by simulation
+    // field id so a field is drawn exactly once for its authored lifetime.
+    this.areaRings = []; // { mesh, startMs, untilMs, mode, fromRadius, toRadius, opacity, fieldId }
+    this.areaFieldRings = new Map(); // fieldId -> ring record
+    this.areaRingGeometry = null;
+    this.rangeRing = null;
+    // Boss entrance: { startMs, untilMs, bossId, title, subtitle }. Camera-only.
+    this.bossIntro = null;
   }
 
   mount({ canvas, handoff, viewport } = {}) {
@@ -3714,6 +3785,10 @@ export class RealtimeBattle {
     this.knockbacks.clear();
     this.clearCameraShakeOffset();
     this.cameraShake = null;
+    // Area presentation is transient by contract: a reset leaves no ring and no
+    // half-played entrance behind.
+    this.clearAreaRings();
+    this.bossIntro = null;
     for (const record of this.stageDecorRecords) {
       if (record.kind !== "stage-npc") continue;
       this.clearAttackPresentation(record);
@@ -3842,15 +3917,31 @@ export class RealtimeBattle {
     // so the boss silhouette and the extraction bind stay in one frame
     // (per-stage-camera-framing-addendum.md §4). Additive to commander-follow.
     const lookOffset = stageFinaleLookOffset(this.cameraStageId, phase);
-    const targetX = THREE.MathUtils.clamp(commanderPoint.x + lookOffset.x, -WORLD_SCALE, WORLD_SCALE);
-    const targetY = commanderPoint.y;
-    const targetZ = THREE.MathUtils.clamp(commanderPoint.z + lookOffset.z, -WORLD_SCALE, WORLD_SCALE);
+    // The boss entrance is a temporary modifier layered over the same base
+    // follow-cam (build-game-camera-controls): it biases the look target toward
+    // the boss and pulls the orbit in, then hands the frame straight back.
+    const bossIntro = this.bossIntroFraming(nowMs);
+    const introLook = bossIntro?.lookTarget ?? null;
+    const introBlend = introLook ? bossIntro.lookBlend : 0;
+    const baseTargetX = commanderPoint.x + lookOffset.x;
+    const baseTargetZ = commanderPoint.z + lookOffset.z;
+    const targetX = THREE.MathUtils.clamp(
+      introLook ? baseTargetX + (introLook.x - baseTargetX) * introBlend : baseTargetX,
+      -WORLD_SCALE,
+      WORLD_SCALE,
+    );
+    const targetY = introLook ? commanderPoint.y + (introLook.y - commanderPoint.y) * introBlend : commanderPoint.y;
+    const targetZ = THREE.MathUtils.clamp(
+      introLook ? baseTargetZ + (introLook.z - baseTargetZ) * introBlend : baseTargetZ,
+      -WORLD_SCALE,
+      WORLD_SCALE,
+    );
 
     // Player-selected yaw/pitch and stage-intro offsets remain modifiers over
     // the phase tier; no phase transition blocks orbit input.
     const intro = this.stageIntroOffsets(tick);
     const cameraDistance = THREE.MathUtils.clamp(
-      this.zoomFactor + (intro?.distance ?? 0),
+      (this.zoomFactor + (intro?.distance ?? 0)) * (bossIntro?.distanceRatio ?? 1),
       MIN_ORBIT_DISTANCE,
       MAX_ORBIT_DISTANCE,
     );
@@ -4290,6 +4381,279 @@ export class RealtimeBattle {
     return Math.min(rank, MAX_IMPACT_STAGGER_TARGETS) * IMPACT_CONTACT_STAGGER_MS;
   }
 
+  // --- Area combat presentation (광역) ------------------------------------
+  // One shared ring geometry serves every disc; per-ring colour/opacity live on
+  // cloned basic materials, and every ring is disposed through retireAreaRing().
+  ensureAreaRingGeometry() {
+    if (!this.areaRingGeometry) {
+      this.areaRingGeometry = new THREE.RingGeometry(1 - AREA_RING_THICKNESS, 1, AREA_RING_SEGMENTS);
+      this.areaRingGeometry.rotateX(-Math.PI / 2);
+    }
+    return this.areaRingGeometry;
+  }
+
+  /**
+   * Spawns one ground ring. `mode` selects the behaviour:
+   *  - `impact`    expands from 40% to full radius and fades out
+   *  - `telegraph` grows from 0 to full radius over the windup, so the fill IS the timer
+   *  - `field`     holds full radius and breathes until the field ends
+   */
+  spawnAreaRing({ x, z, radius, color, mode = "impact", startMs, untilMs, fieldId = null }) {
+    if (!this.vfxGroup || this.disposed) return null;
+    const material = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(color),
+      transparent: true,
+      opacity: mode === "field" ? AREA_FIELD_OPACITY : (mode === "telegraph" ? AREA_TELEGRAPH_OPACITY : AREA_IMPACT_OPACITY),
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    });
+    const mesh = new THREE.Mesh(this.ensureAreaRingGeometry(), material);
+    mesh.name = `area-ring:${mode}${fieldId ? `:${fieldId}` : ""}`;
+    mesh.renderOrder = 2;
+    mesh.position.set(x, AREA_RING_Y, z);
+    mesh.scale.setScalar(mode === "telegraph" ? 0.05 : radius * 0.4);
+    this.vfxGroup.add(mesh);
+    const record = { mesh, material, mode, radius, startMs, untilMs, fieldId };
+    this.areaRings.push(record);
+    // Oldest transient ring is evicted first; a live field ring is never evicted
+    // by a burst of impacts, because it is the one that carries standing danger.
+    while (this.areaRings.length > MAX_AREA_RINGS) {
+      const index = this.areaRings.findIndex((entry) => entry.mode !== "field");
+      const [evicted] = this.areaRings.splice(index >= 0 ? index : 0, 1);
+      this.retireAreaRing(evicted);
+    }
+    if (fieldId) this.areaFieldRings.set(fieldId, record);
+    return record;
+  }
+
+  retireAreaRing(record) {
+    if (!record) return;
+    this.vfxGroup?.remove(record.mesh);
+    record.material?.dispose();
+    if (record.fieldId) this.areaFieldRings.delete(record.fieldId);
+  }
+
+  updateAreaRings(nowMs) {
+    if (!this.areaRings.length) return;
+    let retained = 0;
+    for (const record of this.areaRings) {
+      const span = Math.max(1, record.untilMs - record.startMs);
+      const progress = THREE.MathUtils.clamp((nowMs - record.startMs) / span, 0, 1);
+      if (progress >= 1 && record.mode !== "field") {
+        this.retireAreaRing(record);
+        continue;
+      }
+      if (record.mode === "impact") {
+        record.mesh.scale.setScalar(record.radius * (0.4 + 0.6 * progress));
+        record.material.opacity = AREA_IMPACT_OPACITY * (1 - progress);
+      } else if (record.mode === "telegraph") {
+        record.mesh.scale.setScalar(Math.max(0.05, record.radius * progress));
+        record.material.opacity = AREA_TELEGRAPH_OPACITY * (0.55 + 0.45 * progress);
+      } else {
+        record.mesh.scale.setScalar(record.radius);
+        const breathe = this.reducedMotion ? 1 : 0.75 + 0.25 * Math.sin(nowMs / 220);
+        record.material.opacity = AREA_FIELD_OPACITY * breathe;
+        if (nowMs >= record.untilMs) {
+          this.retireAreaRing(record);
+          continue;
+        }
+      }
+      this.areaRings[retained] = record;
+      retained += 1;
+    }
+    this.areaRings.length = retained;
+  }
+  /**
+   * Persistent commander range ring (reference-video-analysis.md §4 / target #4).
+   *
+   * The reference keeps a thin, low-opacity ring on the ground under the player at all times and
+   * reads player legibility out of it instead of out of actor scale. It is also the honest way to
+   * show an always-area combat model: the ring IS the reach the next swing will splash across.
+   * Drawn under every actor, never occluding a silhouette, and it never blinks.
+   */
+  syncRangeRing(snapshot) {
+    const commander = snapshot?.commander;
+    if (!this.vfxGroup || !commander) return;
+    const simRange = finite(commander.basicRange, 0) || finite(commander.range, 0);
+    if (simRange <= 0) {
+      if (this.rangeRing) this.rangeRing.visible = false;
+      return;
+    }
+    if (!this.rangeRing) {
+      const material = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(RANGE_RING_COLOR),
+        transparent: true,
+        opacity: RANGE_RING_OPACITY,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      });
+      this.rangeRing = new THREE.Mesh(this.ensureAreaRingGeometry(), material);
+      this.rangeRing.name = "commander-range-ring";
+      this.rangeRing.renderOrder = 1;
+      this.vfxGroup.add(this.rangeRing);
+    }
+    const point = worldPoint(commander);
+    this.rangeRing.visible = true;
+    this.rangeRing.position.set(point.x, RANGE_RING_Y, point.z);
+    this.rangeRing.scale.setScalar(this.areaRingRadius(simRange));
+  }
+
+
+  clearAreaRings() {
+    for (const record of this.areaRings) this.retireAreaRing(record);
+    this.areaRings = [];
+    this.areaFieldRings.clear();
+    if (this.rangeRing) {
+      this.vfxGroup?.remove(this.rangeRing);
+      this.rangeRing.material?.dispose();
+      this.rangeRing = null;
+    }
+  }
+
+  /**
+   * World-space ring radius for a simulation-space disc radius. The arena is
+   * WORLD_WIDTH units wide and maps onto a 2 * WORLD_SCALE ground plane, so one
+   * simulation unit is `WORLD_SCALE / (WORLD_WIDTH / 2)` world units — the same
+   * factor worldPointInto() uses for positions.
+   */
+  areaRingRadius(simRadius) {
+    return Math.max(0.4, finite(simRadius, 0) * WORLD_SCALE / (WORLD_WIDTH / 2));
+  }
+
+  /**
+   * Area contact: every splashed body blinks, and one ring is drawn at the contact
+   * point sized to the authored disc. The primary body of the same beat already
+   * blinks through registerImpactFeedback(), so this only adds what area adds.
+   */
+  registerAreaFeedback(event, nowMs) {
+    const targets = Array.isArray(event?.targets) ? event.targets : [];
+    const heavy = event?.sourceKey === "boss" || event?.sourceKey === "skill";
+    for (const entry of targets) {
+      const record = this.actors.get(entry?.targetId) ?? this.combatTarget(entry?.targetId);
+      if (!record?.root) continue;
+      this.hitFlashes.set(entry.targetId, {
+        startMs: nowMs,
+        untilMs: nowMs + (heavy ? IMPACT_FLASH_HEAVY_MS : IMPACT_FLASH_MS),
+        color: heavy ? IMPACT_FLASH_HEAVY_COLOR : IMPACT_FLASH_COLOR,
+        accent: null,
+        critical: false,
+        static: this.reducedMotion,
+        peak: heavy ? IMPACT_FLASH_HEAVY_PEAK : IMPACT_FLASH_PEAK,
+        record,
+      });
+    }
+    if (!Number.isFinite(event?.originX) || !Number.isFinite(event?.originY)) return;
+    const point = worldPoint({ x: event.originX, y: event.originY });
+    this.spawnAreaRing({
+      x: point.x,
+      z: point.z,
+      radius: this.areaRingRadius(event?.radius),
+      color: AREA_ELEMENT_COLORS[event?.element] ?? AREA_ELEMENT_COLORS.neutral,
+      mode: "impact",
+      startMs: nowMs,
+      untilMs: nowMs + AREA_RING_IMPACT_MS,
+    });
+  }
+
+  /** Telegraph ring whose fill time IS the authored windup. */
+  registerTelegraphRing(event, nowMs) {
+    if (!Number.isFinite(event?.originX) || !Number.isFinite(event?.originY)) return;
+    const point = worldPoint({ x: event.originX, y: event.originY });
+    const windupMs = Math.max(AREA_RING_TELEGRAPH_MIN_MS, finite(event?.windupTicks, 60) / SIM_TICK_RATE * 1000);
+    this.spawnAreaRing({
+      x: point.x,
+      z: point.z,
+      radius: this.areaRingRadius(event?.radius),
+      color: AREA_TELEGRAPH_COLOR,
+      mode: "telegraph",
+      startMs: nowMs,
+      untilMs: nowMs + windupMs,
+    });
+  }
+
+  /**
+   * Persistent field rings, reconciled from the snapshot rather than from events:
+   * a field that is present keeps its ring, a field that ended loses it, and a
+   * re-render of the same tick cannot double-spawn.
+   */
+  syncAreaFieldRings(snapshot, nowMs) {
+    const fields = Array.isArray(snapshot?.areaFields) ? snapshot.areaFields : [];
+    const live = new Set();
+    for (const field of fields) {
+      if (!field?.id) continue;
+      live.add(field.id);
+      if (this.areaFieldRings.has(field.id)) continue;
+      if (!Number.isFinite(field.x) || !Number.isFinite(field.y)) continue;
+      const point = worldPoint({ x: field.x, y: field.y });
+      const remainingMs = Math.max(
+        AREA_RING_IMPACT_MS,
+        (finite(field.expiresAt, 0) - finite(snapshot?.tick, 0)) / SIM_TICK_RATE * 1000,
+      );
+      this.spawnAreaRing({
+        x: point.x,
+        z: point.z,
+        radius: this.areaRingRadius(field.radius),
+        color: AREA_ELEMENT_COLORS[field.element] ?? AREA_ELEMENT_COLORS.neutral,
+        mode: "field",
+        startMs: nowMs,
+        untilMs: nowMs + remainingMs,
+        fieldId: field.id,
+      });
+    }
+    for (const [fieldId, record] of [...this.areaFieldRings]) {
+      if (!live.has(fieldId)) this.retireAreaRing(record);
+    }
+  }
+
+  /**
+   * Boss entrance. The simulation authors the window on BOSS_SPAWNED, so the push
+   * lasts exactly as long as the subtitle band the HUD shows. Camera-only: the
+   * fight is already live underneath it and no input is blocked.
+   */
+  startBossIntro(event, nowMs) {
+    const intro = event?.intro ?? null;
+    const durationMs = intro?.durationTicks
+      ? intro.durationTicks / SIM_TICK_RATE * 1000
+      : BOSS_INTRO_FALLBACK_MS;
+    this.bossIntro = {
+      startMs: nowMs,
+      untilMs: nowMs + durationMs,
+      bossId: event?.entityId ?? null,
+      zoomRatio: finite(intro?.zoomBp, 6200) / 10000,
+    };
+    const bossRecord = this.actors.get(event?.entityId);
+    if (bossRecord) this.triggerAction(bossRecord, intro?.motion || "show", nowMs);
+  }
+
+  /**
+   * Camera modifier for the live entrance: pulls the orbit in toward the boss and
+   * biases the look target onto it, easing in and back out inside the window.
+   * Returns null outside the window, so the base follow-cam is untouched.
+   */
+  bossIntroFraming(nowMs) {
+    const intro = this.bossIntro;
+    if (!intro) return null;
+    if (nowMs >= intro.untilMs) {
+      this.bossIntro = null;
+      return null;
+    }
+    const span = Math.max(1, intro.untilMs - intro.startMs);
+    const progress = THREE.MathUtils.clamp((nowMs - intro.startMs) / span, 0, 1);
+    // Ease in over the first third, hold, ease back out over the last third.
+    const envelope = progress < 0.34
+      ? progress / 0.34
+      : (progress > 0.72 ? (1 - progress) / 0.28 : 1);
+    const weight = THREE.MathUtils.clamp(envelope, 0, 1);
+    const bossRecord = intro.bossId ? this.actors.get(intro.bossId) : null;
+    return {
+      weight,
+      distanceRatio: 1 - (1 - intro.zoomRatio) * weight,
+      lookTarget: bossRecord?.root?.position ?? null,
+      lookBlend: BOSS_INTRO_LOOK_BLEND * weight,
+    };
+  }
+
   registerImpactFeedback(event, nowMs, events) {
     const impact = IMPACT_FEEDBACK_SOURCES[event?.type]?.(event);
     if (!impact?.targetId) return;
@@ -4346,9 +4710,12 @@ export class RealtimeBattle {
     };
   }
 
-  // Emissive flash on the actor's own material clones. The pre-flash emissive
-  // value is captured once per material and always restored, so an actor that
-  // is hit repeatedly never accumulates brightness.
+  // Emissive flash AND a semi-transparent blink on the actor's own material
+  // clones. The pre-flash emissive/alpha values are captured once per material and
+  // always restored, so a body that is hit repeatedly never accumulates brightness
+  // and never gets stuck translucent. Every struck body -- the primary contact and
+  // every area-splash body -- runs through here, so "I am being hit" is one visual
+  // language across single-target and 광역 damage.
   applyHitFlashes(nowMs) {
     for (const [entityId, flash] of this.hitFlashes) {
       const root = flash.record?.root;
@@ -4361,10 +4728,34 @@ export class RealtimeBattle {
       if (nowMs < flash.startMs) continue;
       const done = progress >= 1;
       const strength = done ? 0 : (flash.static ? flash.peak : flash.peak * (1 - progress) * (1 - progress));
+      // Square-wave alpha: legible as a flicker, not as a dissolve. Reduced motion
+      // holds one translucent value for the same window, keeping the information
+      // without the strobe.
+      const blinkOn = flash.static
+        ? true
+        : Math.floor((nowMs - flash.startMs) / HIT_BLINK_PERIOD_MS) % 2 === 0;
+      const blinkFloor = flash.static ? HIT_BLINK_STATIC_OPACITY : HIT_BLINK_MIN_OPACITY;
+      const blendedFloor = blinkFloor + (1 - blinkFloor) * progress;
       root.traverse((node) => {
         const materials = Array.isArray(node.material) ? node.material : node.material ? [node.material] : [];
         for (const material of materials) {
-          if (!material?.emissive) continue;
+          if (!material) continue;
+          if (material.userData.impactBaseOpacity === undefined) {
+            material.userData.impactBaseOpacity = finite(material.opacity, 1);
+            material.userData.impactBaseTransparent = material.transparent === true;
+          }
+          const baseOpacity = material.userData.impactBaseOpacity;
+          if (done) {
+            material.opacity = baseOpacity;
+            material.transparent = material.userData.impactBaseTransparent;
+          } else if (blinkOn) {
+            material.transparent = true;
+            material.opacity = baseOpacity * blendedFloor;
+          } else {
+            material.opacity = baseOpacity;
+            material.transparent = material.userData.impactBaseTransparent;
+          }
+          if (!material.emissive) continue;
           if (!material.userData.impactBaseEmissive) {
             material.userData.impactBaseEmissive = material.emissive.clone();
             material.userData.impactBaseEmissiveIntensity = finite(material.emissiveIntensity, 1);
@@ -4449,6 +4840,7 @@ export class RealtimeBattle {
   updateImpactFeedback(nowMs) {
     try {
       this.applyHitFlashes(nowMs);
+      this.updateAreaRings(nowMs);
       if (this.reducedMotion) {
         this.knockbacks.clear();
         this.cameraShake = null;
@@ -4461,6 +4853,8 @@ export class RealtimeBattle {
       this.hitFlashes.clear();
       this.knockbacks.clear();
       this.cameraShake = null;
+      this.clearAreaRings();
+      this.bossIntro = null;
     }
   }
 
@@ -4481,8 +4875,19 @@ export class RealtimeBattle {
         this.triggerAction(actor("commander"), "show", nowMs);
         break;
       case "ENEMY_SPAWNED":
-      case "BOSS_SPAWNED":
         this.triggerAction(actor(event.entityId), "show", nowMs);
+        break;
+      case "BOSS_SPAWNED":
+        // The entrance owns the boss's "show" beat and the camera push for the
+        // authored window; the fight underneath it is never paused.
+        this.startBossIntro(event, nowMs);
+        break;
+      case "AREA_IMPACT":
+        this.registerAreaFeedback(event, nowMs);
+        break;
+      case "BOSS_ATTACK_TELEGRAPHED":
+        this.registerTelegraphRing(event, nowMs);
+        this.triggerAction(actor(event.entityId), "defence", nowMs);
         break;
       case "ECHO_WARDEN_AWAKENING_TRIGGERED":
         this.triggerAction(actor(event.entityId), "show", nowMs);
@@ -4563,6 +4968,11 @@ export class RealtimeBattle {
       }
       this.triggerCombatActions(event, nowMs, snapshot);
     }
+    // Field rings are reconciled from the snapshot, not from events, so a repeat
+    // render of one tick cannot double-spawn a ring and an ended field cannot
+    // leave one behind.
+    this.syncAreaFieldRings(snapshot, nowMs);
+    this.syncRangeRing(snapshot);
     for (const echo of this.pendingDeathEchoes.splice(0)) {
       this.spawnDeathEcho(echo, tick);
     }
@@ -4651,6 +5061,10 @@ export class RealtimeBattle {
     this.hitFlashes.clear();
     this.knockbacks.clear();
     this.cameraShake = null;
+    this.clearAreaRings();
+    this.areaRingGeometry?.dispose();
+    this.areaRingGeometry = null;
+    this.bossIntro = null;
     for (const record of this.vfxInstances) {
       record.mixer?.stopAllAction();
       disposeObject3D(record.root);

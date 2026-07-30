@@ -182,10 +182,16 @@ jobs:
           # here would repeat the download and its `|| status=failed` would
           # disguise a provisioning fault as a plain red gate.
           status=passed
-          node tests/defense-hud-responsive-browser.cjs > results/defense-hud-responsive-browser.json || status=failed
-          node tests/progression-mobile-ui-browser.cjs > results/progression-mobile-ui-browser.json || status=failed
-          node tests/defense-survivor-browser.cjs > results/defense-survivor-browser.json || status=failed
-          node tests/defense-performance-browser.cjs > results/defense-performance-browser.json || status=failed
+          # Raw browser output goes to results/browser/, NOT results/. The Decide step slurps
+          # results/*.json as JSON, and not every browser contract emits JSON --
+          # progression-mobile-ui-browser.cjs emits TAP, whose `1..N` line is an invalid numeric
+          # literal to jq and aborted the whole sweep. Verdicts stay in results/; transcripts
+          # stay beside them but out of the parser's path.
+          mkdir -p results/browser
+          node tests/defense-hud-responsive-browser.cjs > results/browser/defense-hud-responsive-browser.txt || status=failed
+          node tests/progression-mobile-ui-browser.cjs > results/browser/progression-mobile-ui-browser.txt || status=failed
+          node tests/defense-survivor-browser.cjs > results/browser/defense-survivor-browser.txt || status=failed
+          node tests/defense-performance-browser.cjs > results/browser/defense-performance-browser.txt || status=failed
           printf '{"gate":"browser_contract","status":"%s"}\n' "$status" > results/browser_contract.json
 
       - name: Decide

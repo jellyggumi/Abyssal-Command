@@ -34,6 +34,15 @@ def parse_args(argv=None):
     )
     parser.add_argument("--bench-dir", required=True, help="Bench directory path")
     parser.add_argument("--output", required=True, help="Output JSON file path")
+    parser.add_argument(
+        "--expect-count",
+        type=int,
+        default=EXPECTED_REPORT_COUNT,
+        help=(
+            "Exact number of .fbx files the bench must contain. The guard stays "
+            "mandatory; widening the corpus is an explicit, recorded choice."
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -420,11 +429,11 @@ def analyze_fbx(fbx_path: Path):
     return result
 
 
-def require_legacy_count(files):
+def require_legacy_count(files, expected):
     """Fail early if this is not exactly the expected bench corpus."""
-    if len(files) != EXPECTED_REPORT_COUNT:
+    if len(files) != expected:
         print(
-            f"[audit-fbx-motion-bench] Expected {EXPECTED_REPORT_COUNT} files, "
+            f"[audit-fbx-motion-bench] Expected {expected} files, "
             f"found {len(files)}"
         )
         return False
@@ -438,7 +447,7 @@ def main():
     output_file = Path(args.output)
 
     fbx_files = sorted(list(bench_dir.glob("*.fbx")))
-    if not require_legacy_count(fbx_files):
+    if not require_legacy_count(fbx_files, args.expect_count):
         print("[audit-fbx-motion-bench] Command validation failed before processing.")
         raise SystemExit(1)
 
