@@ -15,11 +15,18 @@ const CANONICAL_BASE_ACTIONS = [
   "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "die", "show",
 ];
 
-const OVERLAY_ACTIONS = new Set([
-  "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence",
-]);
+// The shared overlay pack's roster, read from the pack itself rather than duplicated: a rig
+// takes overlay motion for every action the pack carries and its own authored motion for
+// everything else. The pack grew from 9 to 21 actions (directional reactions, exact attack
+// delivery, terminal and entrance beats), so `die`/`show` are now overlay-backed too.
+const OVERLAY_ACTIONS = new Set(
+  (JSON.parse(readFileSync(resolve(ROOT, "assets/motion/ingame/manifest.json"), "utf8"))
+    .pack.clipOverrides ?? []).map((override) => override.action),
+);
 
-const FALLBACK_ONLY_ACTIONS = ["die", "show"];
+// Actions a rig must still serve from its own authored library because the overlay does not
+// carry them. Empty today; kept as the seam that proves "no overlay entry -> base" still works.
+const FALLBACK_ONLY_ACTIONS = CANONICAL_BASE_ACTIONS.filter((action) => !OVERLAY_ACTIONS.has(action));
 
 const OVERLAY_GLB_PATH = "assets/motion/ingame/unarmed-core.glb";
 
@@ -148,7 +155,7 @@ function assertActionClipNames(record, baseAssetId, label) {
 }
 
 // ── 1. Normal overlay action sources and clip names ──
-test("normal overlay routing assigns correct sources and clip names for all 11 actions", async () => {
+test("normal overlay routing assigns correct sources and clip names for every routed action", async () => {
   const { MOTION_MODELS, RealtimeBattle } = await rendererModule;
 
   gltfRequests.length = 0;
@@ -166,18 +173,19 @@ test("normal overlay routing assigns correct sources and clip names for all 11 a
     assertActionClipNames(record, "scout", "scout");
     assert.equal(record.modelPath, MOTION_MODELS.scout);
 
-    // Verify all 11 action keys exist
-    assert.equal(
-      Object.keys(record.actions).length,
-      11,
-      "scout must have exactly 11 action entries",
+    // A rig exposes its own canonical actions plus every action the overlay pack adds on top.
+    const expectedActionKeys = [...new Set([...CANONICAL_BASE_ACTIONS, ...OVERLAY_ACTIONS])].sort();
+    assert.deepEqual(
+      Object.keys(record.actions).sort(),
+      expectedActionKeys,
+      "scout must expose its canonical actions plus every overlay action",
     );
 
-    // Verify actionSources map has exactly 11 entries
-    assert.equal(
-      Object.keys(record.actionSources).length,
-      11,
-      "scout actionSources map must have exactly 11 entries",
+    // Every exposed action must declare where its clip came from -- no untracked action.
+    assert.deepEqual(
+      Object.keys(record.actionSources).sort(),
+      expectedActionKeys,
+      "scout must declare a source for every action it exposes",
     );
 
     // Verify no prototype leakage
@@ -193,7 +201,7 @@ test("normal overlay routing assigns correct sources and clip names for all 11 a
 });
 
 // ── 2. All 11 promoted characters get overlay ──
-test("all 11 promoted characters receive overlay for the correct 9 actions", async () => {
+test("all 11 promoted characters receive overlay for exactly the pack's actions", async () => {
   const { MOTION_MODELS, RealtimeBattle } = await rendererModule;
 
   gltfRequests.length = 0;
@@ -231,7 +239,7 @@ test("all 11 promoted characters receive overlay for the correct 9 actions", asy
 });
 
 // ── 3. Overlay load failure falls back to base ──
-test("overlay GLB load failure falls back to base clips for all 11 actions", async () => {
+test("overlay GLB load failure falls back to base clips for every canonical action", async () => {
   const { MOTION_MODELS, RealtimeBattle } = await importFreshRuntime();
 
   gltfRequests.length = 0;
