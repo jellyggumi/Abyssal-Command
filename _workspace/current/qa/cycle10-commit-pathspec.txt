@@ -37,3 +37,12 @@ _workspace/current/engineering/asset-pipeline/terrain-dungeon/
 _workspace/current/qa/cycle10-baseline.md
 _workspace/current/qa/cycle10-terrain-proof/
 _workspace/current/qa/cycle10-commit-pathspec.txt
+
+# NEVER COMMIT — worktree-local only:
+#   node_modules            an ABSOLUTE symlink to /Users/jangyoung/orca/Abyssal-Surge/node_modules,
+#                           created so the playwright browser tests can run in this worktree.
+#                           git sees a symlink as a FILE, so .gitignore's directory-only
+#                           `node_modules/` never matches it and neither does an
+#                           info/exclude entry. Committing it would break every other
+#                           checkout and couple this branch to another session's dependency
+#                           tree. Delete it at cycle close: `rm node_modules`.
