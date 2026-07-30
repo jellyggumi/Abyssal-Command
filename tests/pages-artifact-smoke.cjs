@@ -10,6 +10,7 @@ const REQUIRED_FILES = [
   "app.js",
   "rpg-catalog.js",
   "stage-world-catalog.js",
+  "stage-story-catalog.js",
   "defense-viewport.js",
   "defense-catalog.js",
   "defense-run-simulation.js",

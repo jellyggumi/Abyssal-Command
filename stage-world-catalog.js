@@ -1,4 +1,4 @@
-import { ARENA, STAGES } from "./defense-catalog.js";
+import { ARENA, STAGES, STAGE_ENCOUNTER_ROUTES, STAGE_TACTICS } from "./defense-catalog.js";
 
 /**
  * Immutable placement source of truth shared by simulation and presentation.
@@ -68,18 +68,31 @@ const vfxCue = (stageId, id, effectId, x, y, elevation, yawRadians) => ({
   qualityGroups: { core: "vfx-core", detail: "vfx-detail", decor: "vfx-decor" },
   reducedMotion: "core-static",
 });
-const lookout = (id, x, y, elevation, yawRadians, lookAtX, lookAtY, cue) => ({
+const lookout = (id, x, y, elevation, yawRadians, lookAtX, lookAtY, cue, questId, interactionRadius = 720) => ({
   id,
   role: "lookout",
   actorId: "lantern-reaver",
   modelPath: "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
   placement: { x, y, elevation, yawRadians },
+  questId,
+  questRole: "quest-giver",
+  questCue: "quest-offer",
+  interactionRadius,
   presentationCue: {
     idleClip: "idle",
     posture: "watchful",
     attention: cue,
     lookAt: { x: lookAtX, y: lookAtY },
   },
+});
+const questPoint = (id, questId, label, order, visualRole, x, y, eventBinding) => ({
+  id,
+  questId,
+  label,
+  order,
+  visualRole,
+  placement: { x, y, elevation: 0 },
+  eventBinding,
 });
 const editorial = (order, title, summary, rewardHint) => ({
   showcase: true,
@@ -172,7 +185,13 @@ const profiles = [
         visibilityAnchor("cinder-span:central-fog-break", "fog-break", 10800, 6000, 1500),
       ],
       vfxCues: [vfxCue("cinder-span", "cinder-span:ember-wake", "cinder-span-ember-wake", 15400, 6000, 0, 0)],
-      npcs: [lookout("cinder-span:ember-lookout", 17100, 2700, 0, 3.1416, 8000, 6000, "watch-western-ingress")],
+      npcs: [lookout("cinder-span:ember-lookout", 17100, 2700, 0, 3.1416, 8000, 6000, "watch-western-ingress", "cinder-span:unchain-the-descent")],
+      questPoints: [
+        questPoint("cinder-span:quest-relay-crossing", "cinder-span:unchain-the-descent", "Ember Relay Crossing", 1, "route-objective", 14600, 5200, { type: "ENCOUNTER_OBJECTIVE_COMPLETED", objectiveId: "cinder-relay-crossing" }),
+        questPoint("cinder-span:quest-forge-stand", "cinder-span:unchain-the-descent", "Forge Stand", 2, "route-gate", 17400, 6000, { type: "ENCOUNTER_OBJECTIVE_COMPLETED", objectiveId: "cinder-forge-stand" }),
+        questPoint("cinder-span:quest-seal", "cinder-span:unchain-the-descent", "Cinder Seal", 3, "occupation-focus", 17600, 6000, { type: "OCCUPATION_CAPTURED", occupationPointId: "cinder-seal" }),
+        questPoint("cinder-span:quest-bind", "cinder-span:unchain-the-descent", "Cinder Bind", 4, "extraction-beacon", 15400, 6000, { type: "OBJECTIVE_COMPLETED", objectiveId: "boss-kill" }),
+      ],
     },
     editorial: editorial(1, "Cinder Span", "Hold the ash bridge and learn the first binding route.", "A recoverable Echo answers a successful extraction."),
   },
@@ -249,7 +268,13 @@ const profiles = [
         visibilityAnchor("abyss-chancel:nave-fog-break", "fog-break", 15000, 6000, 1500),
       ],
       vfxCues: [vfxCue("abyss-chancel", "abyss-chancel:mirror-static", "abyss-chancel-mirror-static", 14200, 6000, 0, 0)],
-      npcs: [lookout("abyss-chancel:veil-lookout", 17300, 7850, 0, 3.1416, 9000, 6000, "watch-the-apse")],
+      npcs: [lookout("abyss-chancel:veil-lookout", 17300, 7850, 0, 3.1416, 9000, 6000, "watch-the-apse", "abyss-chancel:refuse-repeated-answer")],
+      questPoints: [
+        questPoint("abyss-chancel:quest-nave-advance", "abyss-chancel:refuse-repeated-answer", "Nave Advance", 1, "route-objective", 15000, 6000, { type: "ENCOUNTER_OBJECTIVE_COMPLETED", objectiveId: "chancel-nave-advance" }),
+        questPoint("abyss-chancel:quest-transept-lock", "abyss-chancel:refuse-repeated-answer", "Transept Lock", 2, "route-gate", 17600, 8200, { type: "ENCOUNTER_OBJECTIVE_COMPLETED", objectiveId: "chancel-transept-lock" }),
+        questPoint("abyss-chancel:quest-oath", "abyss-chancel:refuse-repeated-answer", "Chancel Oath", 3, "occupation-focus", 18200, 5200, { type: "OCCUPATION_CAPTURED", occupationPointId: "chancel-oath" }),
+        questPoint("abyss-chancel:quest-bind", "abyss-chancel:refuse-repeated-answer", "Chancel Bind", 4, "extraction-beacon", 16000, 7000, { type: "OBJECTIVE_COMPLETED", objectiveId: "boss-kill" }),
+      ],
     },
     editorial: editorial(2, "Abyss Chancel", "Break the oath rings before the tactician closes the nave.", "The second binding changes the squad's reach."),
   },
@@ -326,7 +351,13 @@ const profiles = [
         visibilityAnchor("echo-throne:court-fog-break", "fog-break", 14800, 6000, 1600),
       ],
       vfxCues: [vfxCue("echo-throne", "echo-throne:fracture-echo", "echo-throne-fracture-echo", 15400, 6000, 0, 0)],
-      npcs: [lookout("echo-throne:throne-lookout", 17800, 8100, 0, 3.1416, 9200, 6000, "watch-the-court")],
+      npcs: [lookout("echo-throne:throne-lookout", 17800, 8100, 0, 3.1416, 9200, 6000, "watch-the-court", "echo-throne:break-the-command")],
+      questPoints: [
+        questPoint("echo-throne:quest-aisle-break", "echo-throne:break-the-command", "Aisle Break", 1, "route-objective", 15200, 6000, { type: "ENCOUNTER_OBJECTIVE_COMPLETED", objectiveId: "throne-aisle-break" }),
+        questPoint("echo-throne:quest-dais-stand", "echo-throne:break-the-command", "Dais Stand", 2, "route-gate", 18000, 6000, { type: "ENCOUNTER_OBJECTIVE_COMPLETED", objectiveId: "throne-dais-stand" }),
+        questPoint("echo-throne:quest-domain", "echo-throne:break-the-command", "Throne Domain", 3, "occupation-focus", 18400, 6000, { type: "OCCUPATION_CAPTURED", occupationPointId: "throne-domain" }),
+        questPoint("echo-throne:quest-bind", "echo-throne:break-the-command", "Throne Bind", 4, "extraction-beacon", 16200, 7600, { type: "OBJECTIVE_COMPLETED", objectiveId: "boss-kill" }),
+      ],
     },
     editorial: editorial(3, "Echo Throne", "Turn the sovereign's own echo against the final court.", "The third binding resolves the current campaign."),
   },
@@ -428,7 +459,8 @@ const validateProfile = (profile) => {
   });
 
   for (const entry of [...profile.presentation.props, ...(profile.presentation.visibilityAnchors ?? []),
-    ...(profile.presentation.vfxCues ?? []), ...profile.presentation.npcs, ...profile.presentation.landmarks]) claimId(entry);
+    ...(profile.presentation.vfxCues ?? []), ...profile.presentation.npcs,
+    ...(profile.presentation.questPoints ?? []), ...profile.presentation.landmarks]) claimId(entry);
   const props = profile.presentation.props;
   if (props.length < 8 || props.length > 14 || props.some(({ modelPath, placement, footprintRadius }) => !modelPath.startsWith("assets/mesh/")
     || placement.elevation !== 0 || !pointInside(placement) || !(footprintRadius > 0))) throw new Error(`Stage props must be sparse, flat, retained placements: ${profile.stageId}`);
@@ -482,6 +514,49 @@ const validateProfile = (profile) => {
   if (profile.presentation.vfxCues.some((entry) => entry.modelPath !== `assets/motion/stage-vfx/${entry.effectId}.glb` || entry.clip !== `stage-vfx::${profile.stageId}::loop::v01`)) throw new Error(`Invalid stage VFX cue: ${profile.stageId}`);
   if (profile.presentation.npcs.some(({ modelPath, placement }) => modelPath !== "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb"
     || placement.elevation !== 0 || !pointInside(placement))) throw new Error(`Stage NPC must use a flat Lantern Reaver placement: ${profile.stageId}`);
+  const questGivers = profile.presentation.npcs.filter(({ questRole }) => questRole === "quest-giver");
+  if (questGivers.length !== 1) throw new Error(`Stage world requires exactly one quest giver: ${profile.stageId}`);
+  const [questGiver] = questGivers;
+  if (typeof questGiver.questId !== "string" || !questGiver.questId.startsWith(`${profile.stageId}:`)
+    || questGiver.questCue !== "quest-offer" || !(questGiver.interactionRadius > 0)) throw new Error(`Invalid quest giver metadata: ${questGiver.id}`);
+  const questPoints = profile.presentation.questPoints ?? [];
+  if (!Array.isArray(questPoints) || questPoints.length !== 4) throw new Error(`Stage world requires exactly four quest points: ${profile.stageId}`);
+  const encounterRoute = STAGE_ENCOUNTER_ROUTES[profile.stageId];
+  const tactics = STAGE_TACTICS[profile.stageId];
+  const [firstEncounterObjective, secondEncounterObjective] = encounterRoute?.objectives ?? [];
+  const expectedQuestPoints = [
+    {
+      point: firstEncounterObjective?.point,
+      visualRole: "route-objective",
+      eventBinding: { type: "ENCOUNTER_OBJECTIVE_COMPLETED", objectiveId: firstEncounterObjective?.id },
+    },
+    {
+      point: secondEncounterObjective?.point,
+      visualRole: "route-gate",
+      eventBinding: { type: "ENCOUNTER_OBJECTIVE_COMPLETED", objectiveId: secondEncounterObjective?.id },
+    },
+    {
+      point: tactics?.occupation,
+      visualRole: "occupation-focus",
+      eventBinding: { type: "OCCUPATION_CAPTURED", occupationPointId: tactics?.occupation?.id },
+    },
+    {
+      point: tactics?.extraction,
+      visualRole: "extraction-beacon",
+      eventBinding: { type: "OBJECTIVE_COMPLETED", objectiveId: "boss-kill" },
+    },
+  ];
+  if (new Set(questPoints.map(({ visualRole }) => visualRole)).size !== questPoints.length
+    || new Set(questPoints.map(({ placement }) => `${placement.x}:${placement.y}`)).size !== questPoints.length) throw new Error(`Quest points require distinct visual roles and placements: ${profile.stageId}`);
+  questPoints.forEach((entry, index) => {
+    const expected = expectedQuestPoints[index];
+    if (!expected?.point || entry.questId !== questGiver.questId || typeof entry.label !== "string" || entry.label.length === 0
+      || entry.order !== index + 1 || entry.visualRole !== expected.visualRole
+      || entry.placement.elevation !== 0 || !pointInside(entry.placement)
+      || entry.placement.x !== expected.point.x || entry.placement.y !== expected.point.y
+      || Object.keys(entry.eventBinding ?? {}).length !== Object.keys(expected.eventBinding).length
+      || Object.entries(expected.eventBinding).some(([key, value]) => entry.eventBinding?.[key] !== value)) throw new Error(`Invalid ordered quest point: ${entry.id}`);
+  });
   const intro = profile.presentation.cinematic?.intro;
   if (!intro || !Number.isInteger(intro.durationTicks) || intro.durationTicks <= 0 || intro.durationTicks > 300) throw new Error(`Invalid cinematic profile: ${profile.stageId}`);
 };

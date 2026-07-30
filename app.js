@@ -1,4 +1,6 @@
 import {
+  MAX_EXTRACTED_SKILL_LEVEL,
+  MAX_EXTRACTED_SKILL_LOADOUT,
   STAGES,
   allocateWardenStatPoint,
   applyCampaignRunResult,
@@ -9,6 +11,9 @@ import {
   createCampaign,
   echoCoreEarned,
   echoCoreSpent,
+  equipAppearanceItem,
+  equipExtractedSkill,
+  extractedSkillUpgradeCostForLevel,
   equipmentTierIndexFor,
   purchaseEquipmentTier,
   selectWardenTrait,
@@ -16,6 +21,8 @@ import {
   setCompanionLoadout,
   startRun,
   unlockWardenSkillNode,
+  upgradeExtractedSkill,
+  unequipExtractedSkill,
   wardLevel,
 } from "./campaign-state.js";
 import {
@@ -42,6 +49,7 @@ import { DefenseAudio } from "./defense-audio.js";
 import { DefenseViewport } from "./defense-viewport.js";
 import { DefenseTelemetry } from "./defense-telemetry.js";
 import { STAGE_SHOWCASE_IDS, stageWorldFor } from "./stage-world-catalog.js";
+import { STAGE_STORIES, questProgressForEvents, stageStoryFor } from "./stage-story-catalog.js";
 import {
   dialogueLineAt,
   dialogueScriptFor,
@@ -63,6 +71,8 @@ const DIRECTION_BY_VECTOR = Object.freeze({
   "0,-1": "N", "1,-1": "NE", "1,0": "E", "1,1": "SE",
   "0,1": "S", "-1,1": "SW", "-1,0": "W", "-1,-1": "NW", "0,0": "IDLE",
 });
+const JOYSTICK_OCTANTS = Object.freeze(["E", "SE", "S", "SW", "W", "NW", "N", "NE"]);
+const JOYSTICK_DEAD_ZONE_RATIO = 0.22;
 const KEY_DIRECTIONS = Object.freeze({
   w: "N", arrowup: "N", d: "E", arrowright: "E",
   s: "S", arrowdown: "S", a: "W", arrowleft: "W",
@@ -346,6 +356,22 @@ function stageObjective(stageId) {
   const intro = stageNarrativeFor(stageId).intro;
   const lines = Array.isArray(intro) ? intro.filter((line) => typeof line === "string") : [];
   return lines.join(" ") || "관문을 지키고 메아리를 추출하라.";
+}
+
+function appearanceLoadoutForCampaign(source = campaign) {
+  const equipped = source?.storyProgress?.equippedAppearance ?? {};
+  const rewards = new Map(Object.values(STAGE_STORIES).map((story) => [story.appearanceReward.id, story.appearanceReward]));
+  return Object.fromEntries(Object.entries(equipped).flatMap(([slot, itemId]) => {
+    const reward = rewards.get(itemId);
+    return reward?.slot === slot ? [[slot, reward]] : [];
+  }));
+}
+
+
+function toggleExtractedSkill(source, skillId) {
+  return source.storyProgress.activeSkillLoadout.includes(skillId)
+    ? unequipExtractedSkill(source, skillId)
+    : equipExtractedSkill(source, skillId);
 }
 
 function idleReturnSummary() {
@@ -737,6 +763,53 @@ function wardenSkillsMarkup(data, interactive = true) {
   }).join("");
 }
 
+function extractedSkillsMarkup(data) {
+  const progress = campaign.storyProgress;
+  const availableEcho = data.echoEarned - data.echoSpent;
+  const equipped = new Set(progress.activeSkillLoadout);
+  const loadoutFull = equipped.size >= MAX_EXTRACTED_SKILL_LOADOUT;
+  const rows = progress.extractedSkillIds
+    .filter((skillId) => SKILLS[skillId]?.kind === "active")
+    .map((skillId) => {
+      const skill = SKILLS[skillId];
+      const level = progress.extractedSkillLevels[skillId] ?? 1;
+      const maxed = level >= MAX_EXTRACTED_SKILL_LEVEL;
+      const targetLevel = maxed ? level : level + 1;
+      const upgradeCost = maxed ? null : extractedSkillUpgradeCostForLevel(targetLevel);
+      const isEquipped = equipped.has(skillId);
+      const equipDisabled = !isEquipped && loadoutFull;
+      const upgradeDisabled = maxed || upgradeCost > availableEcho;
+      return `
+        <div class="extracted-skill-card rc-lift${isEquipped ? " is-equipped" : ""}" data-extracted-skill="${escapeHtml(skillId)}">
+          <span class="progression-icon" data-track="run-scoped" aria-hidden="true"></span>
+          <div class="extracted-skill-copy">
+            <strong>${escapeHtml(skill.name ?? skillId)}</strong>
+            <small>추출 액티브 · Lv ${level}/${MAX_EXTRACTED_SKILL_LEVEL} · ${isEquipped ? "장착 중" : "보관 중"}</small>
+          </div>
+          <button type="button" data-extracted-skill-toggle="${escapeHtml(skillId)}" aria-pressed="${isEquipped}" ${equipDisabled ? "disabled" : ""}>${isEquipped ? "해제" : loadoutFull ? `장착 ${MAX_EXTRACTED_SKILL_LOADOUT}/${MAX_EXTRACTED_SKILL_LOADOUT}` : "장착"}</button>
+          <button type="button" data-extracted-skill-upgrade="${escapeHtml(skillId)}" ${upgradeDisabled ? "disabled" : ""}>${maxed ? "최대 Lv 5" : `Lv ${targetLevel} (${upgradeCost} EC)`}</button>
+        </div>`;
+    }).join("");
+  return rows || `<p class="section-copy">전선을 완료하면 추출 액티브 스킬이 이곳에 기록됩니다.</p>`;
+}
+
+function appearanceItemsMarkup() {
+  const progress = campaign.storyProgress;
+  const storiesByItem = new Map(Object.values(STAGE_STORIES).map((story) => [story.appearanceReward.id, story]));
+  const rows = progress.appearanceItemIds.map((itemId) => {
+    const reward = storiesByItem.get(itemId)?.appearanceReward;
+    if (!reward) return "";
+    const equipped = progress.equippedAppearance[reward.slot] === itemId;
+    return `
+      <div class="appearance-item-card rc-lift${equipped ? " is-equipped" : ""}" data-appearance-slot="${escapeHtml(reward.slot)}">
+        <span class="appearance-item-mark" aria-hidden="true">◇</span>
+        <div><strong>${escapeHtml(reward.name)}</strong><small>${escapeHtml(reward.slot)} 슬롯 · ${equipped ? "착용 중" : "보유"}</small></div>
+        <button type="button" data-appearance-item="${escapeHtml(itemId)}" aria-pressed="${equipped}" ${equipped ? "disabled" : ""}>${equipped ? "착용 중" : "착용"}</button>
+      </div>`;
+  }).join("");
+  return rows || `<p class="section-copy">스토리 전선의 외형 보상을 아직 획득하지 못했습니다.</p>`;
+}
+
 function wardenTraitsMarkup(data, interactive = true) {
   const { wp } = data;
   const nextTraitSlot = wp.traitIds.length;
@@ -828,29 +901,30 @@ function deckCurrencyChip(kind, amount, unitName) {
   return `<span class="deck-chip deck-chip-${kind}" role="img" aria-label="${escapeHtml(`${unitName} 잔량 ${amount}`)}"><span class="deck-chip-glyph" data-ui-icon="currency-${kind}" aria-hidden="true"></span><b>${amount}</b></span>`;
 }
 
-/** 인벤토리 section: the 3-slot x 5-tier equipment ladder (weapon/ward/trinket) -- no
- * discrete item-drop inventory exists in this build. Mounted unconditionally and placed
- * first in the deck body after the status window, because the directive names it. */
+/** 인벤토리 section: story appearance rewards followed by the existing 3-slot x 5-tier
+ * equipment ladder. Cosmetics are presentation-only campaign state; equipment remains the
+ * existing permanent-stat authority. */
 function renderInventorySection(data) {
   const bf = data.fragEarned - data.fragSpent;
   return deckSectionMarkup("inventory", {
     titleId: "inventory-title",
     chipHtml: deckCurrencyChip("bound-fragment", bf, "속박 파편"),
-    bodyHtml: `<div class="growth-equip-grid">${equipmentOwnersMarkup(data)}</div>`,
+    bodyHtml: `
+      <div class="deck-subsection"><h3 class="deck-subhead">외형 장비</h3><div class="appearance-item-grid">${appearanceItemsMarkup()}</div></div>
+      <div class="deck-subsection"><h3 class="deck-subhead">장비 티어</h3><div class="growth-equip-grid">${equipmentOwnersMarkup(data)}</div></div>`,
   });
 }
 
-/** 스킬 section: the skill tree alone. Measured reason for the split -- 스킬트리 + 스탯 + 특성
- * in one section came to 2016px inside a 779px deck body (58% of a 3446px scroll), so the
- * one surface the directive names by hand was the least reachable thing in the deck. Skills
- * now own a segment, and 스탯/특성 own another. Neither is behind a disclosure: both labels
- * sit permanently on the segment bar. */
+/** 스킬 section: extracted active loadout plus the existing permanent skill tree. They are
+ * separate authorities: extracted ranks enter a run, while tree nodes modify permanent stats. */
 function renderSkillSection(data) {
   const ec = data.echoEarned - data.echoSpent;
   return deckSectionMarkup("skills", {
     titleId: "skills-title",
     chipHtml: `${deckCurrencyChip("echo-core", ec, "에코 코어")}<span class="deck-chip deck-chip-level"><b>Lv ${data.level}</b></span>`,
-    bodyHtml: `<div class="growth-skill-grid">${wardenSkillsMarkup(data)}</div>`,
+    bodyHtml: `
+      <div class="deck-subsection"><h3 class="deck-subhead">추출 액티브 · ${campaign.storyProgress.activeSkillLoadout.length}/${MAX_EXTRACTED_SKILL_LOADOUT}</h3><div class="extracted-skill-grid">${extractedSkillsMarkup(data)}</div></div>
+      <div class="deck-subsection"><h3 class="deck-subhead">영구 스킬 트리</h3><div class="growth-skill-grid">${wardenSkillsMarkup(data)}</div></div>`,
   });
 }
 
@@ -1112,13 +1186,17 @@ function renderCommandDeckLeft() {
     { attr: "data-warden-trait", apply: (el) => selectWardenTrait(campaign, el.dataset.wardenTrait), status: "특성을 선택했습니다." },
     { attr: "data-warden-equip-owner", apply: (el) => purchaseEquipmentTier(campaign, el.dataset.wardenEquipOwner, el.dataset.wardenEquipSlot), status: "장비를 강화했습니다." },
     { attr: "data-warden-formation", apply: (el) => setCompanionFormationSlot(campaign, el.dataset.wardenFormation, el.dataset.wardenFormationTarget), status: "편성을 변경했습니다." },
+    { attr: "data-extracted-skill-toggle", apply: (el) => toggleExtractedSkill(campaign, el.dataset.extractedSkillToggle), status: "추출 스킬 편성을 저장했습니다." },
+    { attr: "data-extracted-skill-upgrade", apply: (el) => upgradeExtractedSkill(campaign, el.dataset.extractedSkillUpgrade), status: "추출 스킬을 강화했습니다." },
+    { attr: "data-appearance-item", apply: (el) => equipAppearanceItem(campaign, el.dataset.appearanceItem), status: "외형 장비를 착용했습니다.", syncAppearance: true },
   ];
-  for (const { attr, apply, status } of growthActions) {
+  for (const { attr, apply, status, syncAppearance = false } of growthActions) {
     deck.querySelectorAll(`[${attr}]`).forEach((button) => {
       button.addEventListener("click", async () => {
         try {
           campaign = apply(button);
           await persistCampaign(status);
+          if (syncAppearance) session?.syncAppearanceLoadout?.();
         } catch (error) {
           statusText = error.message;
         }
@@ -1612,6 +1690,7 @@ function renderShell() {
   renderSortieFab();
   renderAbyssDepthControl();
   renderLobbyCinematic();
+  session?.syncAppearanceLoadout?.();
 }
 
 /** Item 6 (presentation-spec) — pooled screen-space particle burst on 작전 개시 press.
@@ -1682,7 +1761,7 @@ ${lobbyCinematicMarkup()}
           <div class="hud-panel hud-loop-state" data-stage-hud-context="loop"><span class="hud-eyebrow">OBJECTIVE FLOW · 진행</span><strong id="battle-loop-phase" aria-live="polite"></strong><div class="hud-loop-grid"><span id="battle-pressure-state"></span><span id="battle-growth-state"></span><span id="battle-formation-state"></span><span id="battle-extraction-state"></span></div></div>
           <div class="hud-panel hud-legion"><span class="hud-eyebrow">LANTERN LEGION · 군단</span><div class="hud-legion-stack"><span class="legion-mana-label" id="battle-legion-mana-label"></span><span class="legion-mana-track"><i id="battle-legion-mana-fill"></i></span><div class="legion-roster" id="battle-legion-roster"></div><span class="hud-stance-mode" id="battle-stance-mode"></span></div></div>
 
-          <div class="top-right-hud"><div class="hud-order-strip"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span><small>현재 목표 · OBJECTIVE</small><strong id="battle-objective"></strong></span></div></div><div class="hud-right-stack"><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
+          <div class="top-right-hud"><div class="hud-order-strip"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span class="objective-copy"><small>현재 퀘스트 · QUEST</small><b id="battle-quest-title"></b><strong id="battle-objective"></strong><em id="battle-quest-count"></em></span></div></div><div class="hud-right-stack"><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
         </div>
         <output id="battle-event-feedback" class="battle-event-feedback" role="status" aria-live="polite" aria-atomic="true"></output>
         <div class="arise-banner" id="battle-arise-banner" data-active="false" aria-hidden="true">ARISE</div>
@@ -1690,7 +1769,8 @@ ${lobbyCinematicMarkup()}
         <div class="arena-callout" aria-hidden="true"><span>LANTERN GATE</span><i></i><span>등불을 지키세요</span></div>
         <div class="defense-edge defense-bottom">
           <div class="hud-panel gate-panel"><div class="gate-panel-copy">${portraitMarkup(COMMANDER_MESH_ROOT, "DW", "gate-panel-portrait rc-portrait")}<span class="hud-eyebrow">WARDEN / LANTERN INTEGRITY</span><div class="gate-panel-bars" aria-hidden="true"><span class="gate-panel-bar-icon" data-ui-icon="stat-commander"></span><span class="gate-panel-bar-track commander"><i id="battle-commander-bar-fill"></i></span><span class="gate-panel-bar-icon" data-ui-icon="stat-gate-integrity"></span><span class="gate-panel-bar-track gate"><i id="battle-gate-bar-fill"></i></span></div><strong id="battle-commander-integrity"></strong><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div></div>
-          <div class="one-thumb-controls" id="movement-actions" role="group" aria-label="한 손 이동 조작">
+          <div class="one-thumb-controls" id="movement-actions" data-movement-control="octant-joystick" role="group" aria-label="한 손 이동 조작">
+            <div class="virtual-joystick" data-joystick aria-hidden="true"><span class="virtual-joystick-rune"></span><i class="virtual-joystick-knob" data-joystick-knob></i></div>
             <button type="button" data-move="N" aria-label="위로 이동">↑</button>
             <button type="button" data-move="W" aria-label="왼쪽으로 이동">←</button>
             <button type="button" data-move="IDLE" aria-label="이동 정지">●</button>
@@ -1750,12 +1830,18 @@ export class BattleSession {
     this.pinch = null;
     this.activePointers = new Map();
     this.controlPointerId = null;
+    this.controlPointerMode = null;
+    this.joystickDirection = "IDLE";
     this.feedbackTick = null;
     this.feedbackEventKeys = new Set();
     this.feedbackTimer = null;
     this.heldKeys = new Set();
     this.listenerCount = 0;
     this.extractionEvents = [];
+    this.questEvents = [];
+    this.questEventKeys = new Set();
+    this.questEventKeyGroups = [];
+    this.accumulateQuestEvents(this.run.events);
     this.terminalHandled = false;
     this.rewardPrompted = false;
     this.selectedRewardId = null;
@@ -1825,6 +1911,7 @@ export class BattleSession {
     this.onWindowBlur = this.onWindowBlur.bind(this);
     this.onKey = this.onKey.bind(this);
     this.onMoveControlDown = this.onMoveControlDown.bind(this);
+    this.onMoveControlMove = this.onMoveControlMove.bind(this);
     this.onMoveControlEnd = this.onMoveControlEnd.bind(this);
     this.onMoveControlClick = this.onMoveControlClick.bind(this);
     this.onVisibility = this.onVisibility.bind(this);
@@ -1859,6 +1946,12 @@ export class BattleSession {
       wardenProgress: campaign.wardenProgress,
       wardenEquipment: equipTiers("warden"),
       companionEquipment: Object.fromEntries(companionLoadout.map((id) => [id, equipTiers(id)])),
+      extractedSkillRanks: Object.fromEntries(
+        (campaign.storyProgress?.activeSkillLoadout ?? []).map((skillId) => [
+          skillId,
+          campaign.storyProgress?.extractedSkillLevels?.[skillId] ?? 1,
+        ]),
+      ),
       formation: campaign.companionFormation,
       // Stage-to-stage carry-over: the skill ranks and items the previous cleared stage
       // handed back. Lives here rather than at the constructor's call site so a pre-commit
@@ -1883,6 +1976,13 @@ export class BattleSession {
     delete this.surface.dataset.abyssTint;
     delete this.surface.dataset.abyssDepth;
     this.run = this.createRunForStage(stageId);
+    this.audio.resetRun();
+    this.audioEventKeys.clear();
+    this.audioTick = null;
+    this.questEvents = [];
+    this.questEventKeys.clear();
+    this.questEventKeyGroups = [];
+    this.accumulateQuestEvents(this.run.events);
     this.extractionEvents = [];
     this.terminalHandled = false;
     this.rewardPrompted = false;
@@ -1911,6 +2011,7 @@ export class BattleSession {
     this.resetLobbyShowcase();
     this.surface.querySelectorAll(".edge-card").forEach((card) => card.remove());
     this.render();
+    this.syncAppearanceLoadout();
   }
 
   /** Restarts the pre-run camera cycle and dialogue relay from their establishing beat. */
@@ -2051,6 +2152,7 @@ export class BattleSession {
       this.renderer = new BattleVisualizer().mount({ canvas: this.canvas, viewport: this.canvas });
     }
     this.updateRendererModeAttribute();
+    this.syncAppearanceLoadout();
     this.listen(this.canvas, "pointerdown", this.onPointerDown);
     this.listen(this.canvas, "pointermove", this.onPointerMove);
     this.listen(this.canvas, "pointerup", this.onPointerEnd);
@@ -2058,6 +2160,7 @@ export class BattleSession {
     this.listen(this.canvas, "lostpointercapture", this.onPointerEnd);
     this.movementControls = root.querySelector("#movement-actions");
     this.listen(this.movementControls, "pointerdown", this.onMoveControlDown);
+    this.listen(this.movementControls, "pointermove", this.onMoveControlMove);
     this.listen(this.movementControls, "pointerup", this.onMoveControlEnd);
     this.listen(this.movementControls, "pointercancel", this.onMoveControlEnd);
     this.listen(this.movementControls, "lostpointercapture", this.onMoveControlEnd);
@@ -2102,6 +2205,10 @@ export class BattleSession {
 
   resetCamera() {
     this.camera = { x: 0, y: 0 };
+  }
+
+  syncAppearanceLoadout() {
+    this.renderer?.setAppearanceLoadout?.(appearanceLoadoutForCampaign());
   }
 
   updateCamera(commander) {
@@ -2240,38 +2347,99 @@ export class BattleSession {
     this.attackFeedbackTimer = setTimeout(() => control.removeAttribute("data-feedback"), 180);
   }
 
+  joystickActive() {
+    return Boolean(globalThis.matchMedia?.("(pointer: coarse) and (orientation: landscape)").matches)
+      && document.documentElement.dataset.defensePortrait !== "true";
+  }
+
+  updateJoystick(event) {
+    const joystick = this.movementControls?.querySelector("[data-joystick]");
+    const knob = joystick?.querySelector("[data-joystick-knob]");
+    if (!joystick || !knob) return;
+    const rect = joystick.getBoundingClientRect();
+    const radius = Math.max(1, Math.min(rect.width, rect.height) / 2);
+    const knobRadius = Math.min(knob.offsetWidth, knob.offsetHeight) / 2;
+    const maxTravel = Math.max(1, radius - knobRadius);
+    const dx = event.clientX - (rect.left + rect.width / 2);
+    const dy = event.clientY - (rect.top + rect.height / 2);
+    const distance = Math.hypot(dx, dy);
+    const travel = Math.min(distance, maxTravel);
+    const scale = distance > 0 ? travel / distance : 0;
+    const clampedX = dx * scale;
+    const clampedY = dy * scale;
+    knob.style.setProperty("--joystick-x", `${clampedX}px`);
+    knob.style.setProperty("--joystick-y", `${clampedY}px`);
+    const direction = distance < radius * JOYSTICK_DEAD_ZONE_RATIO
+      ? "IDLE"
+      : JOYSTICK_OCTANTS[(Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) + 8) % 8];
+    this.movementControls.dataset.joystickDirection = direction;
+    if (direction === this.joystickDirection) return;
+    this.joystickDirection = direction;
+    this.send("MOVE", direction);
+    if (direction !== "IDLE" && this.inLobby()) this.suppressLobbyShowcase();
+  }
+
+  resetJoystick({ sendIdle = true } = {}) {
+    const knob = this.movementControls?.querySelector("[data-joystick-knob]");
+    knob?.style.removeProperty("--joystick-x");
+    knob?.style.removeProperty("--joystick-y");
+    if (this.movementControls) this.movementControls.dataset.joystickDirection = "IDLE";
+    this.joystickDirection = "IDLE";
+    if (sendIdle) this.send("MOVE", "IDLE");
+  }
+
   onMoveControlDown(event) {
+    if (this.controlPointerId !== null || (event.button !== undefined && event.button !== 0)) return;
+    if (this.joystickActive()) {
+      event.preventDefault();
+      this.controlPointerId = event.pointerId;
+      this.controlPointerMode = "joystick";
+      this.movementControls.setPointerCapture?.(event.pointerId);
+      this.updateJoystick(event);
+      return;
+    }
     const button = event.target.closest?.("[data-move]");
-    if (!button || this.controlPointerId !== null) return;
+    if (!button) return;
     event.preventDefault();
     this.controlPointerId = event.pointerId;
+    this.controlPointerMode = "buttons";
     button.setPointerCapture?.(event.pointerId);
     this.send("MOVE", button.dataset.move);
-    if (this.inLobby()) this.suppressLobbyShowcase();
+    if (button.dataset.move !== "IDLE" && this.inLobby()) this.suppressLobbyShowcase();
+  }
+
+  onMoveControlMove(event) {
+    if (event.pointerId !== this.controlPointerId || this.controlPointerMode !== "joystick") return;
+    event.preventDefault();
+    this.updateJoystick(event);
   }
 
   onMoveControlEnd(event) {
     if (event.pointerId !== this.controlPointerId) return;
-    const button = event.target.closest?.("[data-move]");
-    if (button?.hasPointerCapture?.(event.pointerId)) button.releasePointerCapture(event.pointerId);
+    const captureTarget = this.controlPointerMode === "joystick"
+      ? this.movementControls
+      : event.target.closest?.("[data-move]");
+    if (captureTarget?.hasPointerCapture?.(event.pointerId)) captureTarget.releasePointerCapture(event.pointerId);
     this.controlPointerId = null;
-    this.send("MOVE", "IDLE");
+    this.controlPointerMode = null;
+    this.resetJoystick();
   }
 
   onMoveControlClick(event) {
     if (event.detail !== 0) return;
     const button = event.target.closest?.("[data-move]");
     if (button) this.send("MOVE", button.dataset.move);
-    if (button && this.inLobby()) this.suppressLobbyShowcase();
+    if (button?.dataset.move !== "IDLE" && this.inLobby()) this.suppressLobbyShowcase();
   }
 
   onWindowBlur() {
     this.controlPointerId = null;
+    this.controlPointerMode = null;
     this.heldKeys.clear();
     this.pointer = null;
     this.pinch = null;
     this.activePointers.clear();
-    this.send("MOVE", "IDLE");
+    this.resetJoystick();
   }
 
   onVisibility() {
@@ -2392,6 +2560,7 @@ export class BattleSession {
       while (this.accumulator >= STEP_MS) {
         this.run = advanceDefenseRun(this.run, 1);
         frameEvents.push(...this.run.events);
+        this.accumulateQuestEvents(this.run.events);
         this.accumulator -= STEP_MS;
       }
     } else {
@@ -2484,6 +2653,29 @@ export class BattleSession {
     };
   }
 
+  accumulateQuestEvents(events) {
+    for (const event of events ?? []) {
+      if (!event?.quest && !event?.storyBeat) continue;
+      const keys = [
+        event.eventId ? `event:${event.eventId}` : null,
+        event.quest?.objectiveId ? `quest:${event.type}:${event.quest.objectiveId}` : null,
+        event.storyBeat?.id ? `story:${event.storyBeat.id}` : null,
+      ].filter(Boolean);
+      if (keys.some((key) => this.questEventKeys.has(key))) continue;
+      const retained = { type: event.type };
+      if (event.objectiveId !== undefined) retained.objectiveId = event.objectiveId;
+      if (event.occupationPointId !== undefined) retained.occupationPointId = event.occupationPointId;
+      this.questEvents.push(retained);
+      this.questEventKeyGroups.push(keys);
+      keys.forEach((key) => this.questEventKeys.add(key));
+      while (this.questEvents.length > 16) {
+        this.questEvents.shift();
+        const expiredKeys = this.questEventKeyGroups.shift() ?? [];
+        expiredKeys.forEach((key) => this.questEventKeys.delete(key));
+      }
+    }
+  }
+
   recordExtraction(snapshot) {
     for (const event of snapshot.events) {
       if (event.type !== "ELITE_EXTRACTED") continue;
@@ -2527,6 +2719,8 @@ export class BattleSession {
     overlay.className = "defense-cutscene";
     overlay.dataset.cutsceneEvent = cutscene.eventType;
     overlay.dataset.captionMode = cutscene.captionMode ?? "dialogue";
+    const nonBlocking = event?.quest?.status === "ACQUIRED";
+    overlay.dataset.nonblocking = String(nonBlocking);
     overlay.setAttribute("role", "status");
     overlay.setAttribute("aria-live", "polite");
     overlay.setAttribute("aria-atomic", "true");
@@ -2588,9 +2782,8 @@ export class BattleSession {
     frame.append(heading, beatNode, dismiss);
     overlay.append(frame);
     this.surface.append(overlay);
-    this.cutsceneActive = true;
+    this.cutsceneActive = !nonBlocking;
     this.surface.dataset.defenseCutscene = cutscene.eventType;
-    if (event && !this.stopped) this.audio?.consume?.([event]);
     beats.slice(1).forEach((beat) => {
       this.cutsceneRelayTimers.push(setTimeout(() => renderBeat(beat), beat.timing.startMs));
     });
@@ -2598,13 +2791,13 @@ export class BattleSession {
     // WebGL mount must not consume the visible window before the battle can be
     // observed or interacted with.
     this.cutsceneTimer = setTimeout(() => {
-      if (this.stopped || overlay.isConnected === false || !this.cutsceneActive) {
+      if (this.stopped || overlay.isConnected === false || (!nonBlocking && !this.cutsceneActive)) {
         this.cutsceneTimer = null;
         return;
       }
       this.cutsceneTimer = setTimeout(
         () => {
-          if (this.stopped || overlay.isConnected === false || !this.cutsceneActive) return;
+          if (this.stopped || overlay.isConnected === false || (!nonBlocking && !this.cutsceneActive)) return;
           this.dismissCutscene(overlay);
         },
         cutscene.timing?.dismissAfterMs ?? 8000,
@@ -2669,8 +2862,21 @@ export class BattleSession {
       this.audioEventKeys.clear();
     }
     const newAudioEvents = snapshot.events.filter((event) => {
-      if (cutsceneFromEvent(event)) return false;
-      const key = `${event.type}:${event.enemyId ?? event.itemId ?? event.rewardId ?? ""}`;
+      const key = event.eventId ?? [
+        event.type,
+        event.stageId,
+        event.eventSequence,
+        event.entityId,
+        event.enemyId,
+        event.itemId,
+        event.rewardId,
+        event.objectiveId,
+        event.occupationPointId,
+        event.bossId,
+        event.outcome,
+        event.tableId,
+        event.storyBeat?.id,
+      ].map((value) => value ?? "").join(":");
       if (this.audioEventKeys.has(key)) return false;
       this.audioEventKeys.add(key);
       return true;
@@ -2756,7 +2962,16 @@ export class BattleSession {
           : snapshot.terminal
             ? "전투 종료"
             : `시간 ${Math.floor(snapshot.tick / TICK_RATE)}초 · Lv.${snapshot.commander.level}`;
-    root.querySelector("#battle-objective").textContent = presentation.mapLabels.objective;
+    const story = stageStoryFor(this.stageId);
+    const questProgress = questProgressForEvents(this.stageId, this.questEvents);
+    const currentQuestObjective = story?.quest?.objectives.find((entry) => entry.id === questProgress?.currentObjectiveId);
+    root.querySelector("#battle-quest-title").textContent = story?.title ?? "전선 임무";
+    root.querySelector("#battle-objective").textContent = questProgress?.completed
+      ? "퀘스트 완료"
+      : currentQuestObjective?.label ?? presentation.mapLabels.objective;
+    root.querySelector("#battle-quest-count").textContent = questProgress
+      ? `${questProgress.completedObjectives}/${questProgress.totalObjectives} 완료`
+      : "";
     const loopState = loopPresentation(snapshot, { userPaused: this.userPaused });
     root.querySelector("#battle-loop-phase").textContent = loopState.phaseLabel;
     root.querySelector("#battle-pressure-state").textContent = loopState.pressureLabel;

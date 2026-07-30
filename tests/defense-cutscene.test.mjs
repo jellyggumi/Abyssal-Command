@@ -149,6 +149,52 @@ test("cutscene adapter normalizes authored stage copy without mutating the event
   assert.deepEqual(event.cutscene, ["  첫 줄  ", "둘째 줄", ""]);
 });
 
+test("stage-start dialogue keeps legacy relay labels and resolves authored speakers by exact text", () => {
+  const event = Object.freeze({
+    type: "STAGE_STARTED",
+    tick: 0,
+    stageId: "abyss-chancel",
+    cutscene: Object.freeze([
+      "심연 예배소의 서약이 두 번째 봉쇄선을 압박한다.",
+      "거울 장막을 지나 성가의 결속점을 확보하라.",
+    ]),
+    quest: Object.freeze({
+      acquisitionDialogue: Object.freeze([
+        Object.freeze({ speaker: "VEIL LOOKOUT", text: "등불을 들었군요. 여섯 번째 손이 같은 길을 걷고 있습니다." }),
+        Object.freeze({ speaker: "DUSK WARDEN", text: "내 앞의 손들은 뭘 했지?" }),
+        Object.freeze({ speaker: "VEIL LOOKOUT", text: "모두 거울 속 손이 보여준 서약을 되풀이했습니다. 당신도 그럴 건가요?" }),
+      ]),
+    }),
+    storyBeat: Object.freeze({
+      dialogue: Object.freeze({ speaker: "VEIL LOOKOUT", text: "거울이 먼저 내놓은 답을 거부하세요." }),
+    }),
+  });
+
+  const cutscene = cutsceneFromEvent(event);
+  const expectedLines = [
+    ...event.cutscene,
+    ...event.quest.acquisitionDialogue.map(({ text }) => text),
+    event.storyBeat.dialogue.text,
+  ];
+
+  assert.deepEqual(cutscene.lines, expectedLines);
+  assert.deepEqual(
+    cutscene.beats.map(({ text, relay }) => [text, relay.speaker]),
+    [
+      [event.cutscene[0], "speaker-a"],
+      [event.cutscene[1], "speaker-b"],
+      ...event.quest.acquisitionDialogue.map(({ speaker, text }) => [text, speaker]),
+      [event.storyBeat.dialogue.text, event.storyBeat.dialogue.speaker],
+    ],
+  );
+  assert.equal(
+    cutscene.beats.slice(0, event.cutscene.length).some(({ relay }) => relay.speaker === "VEIL LOOKOUT"),
+    false,
+    "legacy intro lines must not inherit the quest giver speaker by array position",
+  );
+  assertCinematicContract(cutscene, audioCueForEvent(event));
+});
+
 test("cutscene adapter accepts terminal and elite copy but rejects empty presentation events", () => {
   assert.deepEqual(cutsceneLines("승리 기록"), ["승리 기록"]);
   assert.equal(cutsceneFromEvent({ type: "ITEM_COLLECTED", tick: 10 }), null);

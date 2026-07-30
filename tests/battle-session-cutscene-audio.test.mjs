@@ -6,9 +6,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createDefenseRun, getRunSnapshot } from "../defense-run-simulation.js";
+import { advanceDefenseRun, createDefenseRun, getRunSnapshot } from "../defense-run-simulation.js";
 import { TICK_RATE } from "../defense-catalog.js";
 import { cutsceneFromEvent } from "../defense-cutscene.js";
+import { DefenseAudio } from "../defense-audio.js";
 
 function noop() {}
 
@@ -212,22 +213,22 @@ test("BattleSession defers opening cutscenes until beginRun synchronously render
   assert.equal(session.cutsceneEventKeys.size, 2, "beginRun must synchronously key the authored stage and lore cutscenes");
   assert.equal(session.cutsceneQueue.length, 1, "authored lore must queue behind the visible stage dialogue");
   assert.equal(session.cutsceneQueue[0]?.event?.eventId, loreResolved.eventId, "the queued entry must be the real run's authored lore event");
-  assert.equal(countAudioEvents(audioCalls, "STAGE_STARTED"), 1, "visible stage dialogue starts its audio once");
+  assert.equal(countAudioEvents(audioCalls, "STAGE_STARTED"), 1, "the stage story event must reach the frame audio batch once");
   assert.equal(countAudioEvents(audioCalls, "PROJECTILE_IMPACT"), 1, "ordinary SFX remains frame-batch-driven");
-  assert.equal(countAudioEvents(audioCalls, "LORE_SURPRISE_RESOLVED"), 0, "queued authored lore remains silent behind stage dialogue");
+  assert.equal(countAudioEvents(audioCalls, "LORE_SURPRISE_RESOLVED"), 1, "queued authored lore must reach the frame audio batch once");
 
   const queuedLoreEntry = session.cutsceneQueue[0];
   session.consumeCutscenes([loreResolved]);
   assert.equal(session.cutsceneEventKeys.size, 2, "duplicate lore must not create another cutscene key");
   assert.equal(session.cutsceneQueue.length, 1, "duplicate lore must not create another queued entry");
   assert.equal(session.cutsceneQueue[0], queuedLoreEntry, "duplicate lore must preserve the original queued entry");
-  assert.equal(countAudioEvents(audioCalls, "LORE_SURPRISE_RESOLVED"), 0, "duplicate lore remains silent behind stage dialogue");
+  assert.equal(countAudioEvents(audioCalls, "LORE_SURPRISE_RESOLVED"), 1, "cutscene queueing must not replay lore audio");
 
   session.dismissCutscene();
 
   assert.equal(surface.querySelector("#defense-cutscene-overlay")?.dataset.cutsceneEvent, "LORE_SURPRISE_RESOLVED");
   assert.equal(surface.dataset.defenseCutscene, "LORE_SURPRISE_RESOLVED");
-  assert.equal(countAudioEvents(audioCalls, "LORE_SURPRISE_RESOLVED"), 1, "lore narration starts at its visual boundary exactly once");
+  assert.equal(countAudioEvents(audioCalls, "LORE_SURPRISE_RESOLVED"), 1, "presenting queued lore must not start a second audio batch");
 
   session.consumeCutscenes([loreResolved, loreResolved, stageStarted]);
   session.dismissCutscene();
@@ -253,6 +254,297 @@ test("BattleSession defers opening cutscenes until beginRun synchronously render
   );
 });
 
+test("BattleSession batches same-frame critical and story audio before presenting the cutscene", async (t) => {
+  const BattleSession = await loadBattleSession();
+  const audioCalls = [];
+  const surface = new TestElement("main");
+  const session = Object.create(BattleSession.prototype);
+  Object.assign(session, {
+    stageId: "cinder-span",
+    run: createDefenseRun({ stageId: "cinder-span", seed: 73 }),
+    surface,
+    canvas: { height: 360, width: 640 },
+    statusNode: new TestElement(),
+    renderer: { renderSnapshot: noop },
+    audio: {
+      consume(events) {
+        audioCalls.push({
+          eventIds: events.map((event) => event.eventId),
+          overlayVisible: surface.querySelector("#defense-cutscene-overlay") !== null,
+        });
+      },
+    },
+    audioTick: null,
+    audioEventKeys: new Set(),
+    recordedEliteIds: new Set(),
+    cutsceneEventKeys: new Set(),
+    cutsceneTimer: null,
+    cutsceneRelayTimers: [],
+    cutsceneQueue: [],
+    started: true,
+    stopped: false,
+    rallyAcknowledgedBossIds: new Set(),
+    motionQuery: { matches: false },
+    lastStanceBlockEventId: null,
+    lastStanceSwitchEventId: null,
+    userPaused: false,
+    terminalHandled: false,
+    camera: { x: 0, y: 0 },
+    questEvents: [],
+  });
+  session.projected = (snapshot) => snapshot;
+  session.updateCamera = () => ({ x: 0, y: 0 });
+  session.renderControls = noop;
+  session.renderPauseOverlay = noop;
+  session.renderWorldHud = noop;
+  session.renderEventFeedback = noop;
+  t.after(() => stopAndDismissCutscenes(session));
+
+  const criticalHit = Object.freeze({
+    type: "CRITICAL_HIT",
+    tick: 0,
+    eventId: "critical:0:warden",
+    targetId: "enemy-1",
+  });
+  const stageStarted = Object.freeze({
+    type: "STAGE_STARTED",
+    tick: 0,
+    eventId: "stage:0:cinder-span",
+    stageId: "cinder-span",
+    cutscene: Object.freeze(["봉쇄선 진입"]),
+    storyBeat: Object.freeze({
+      id: "cinder-span:opening",
+      dialogue: Object.freeze({
+        speaker: "감시관",
+        text: "바람의 방향이 바뀌었다.",
+      }),
+    }),
+  });
+  const firstObjective = Object.freeze({
+    type: "OBJECTIVE_COMPLETED",
+    tick: 0,
+    eventId: "objective:0:hold-gate",
+    objectiveId: "hold-gate",
+  });
+  const secondObjective = Object.freeze({
+    type: "OBJECTIVE_COMPLETED",
+    tick: 0,
+    eventId: "objective:0:defeat-boss",
+    objectiveId: "defeat-boss",
+  });
+
+  session.render([criticalHit, stageStarted, firstObjective, secondObjective]);
+
+  assert.deepEqual(
+    audioCalls,
+    [{
+      eventIds: [
+        criticalHit.eventId,
+        stageStarted.eventId,
+        firstObjective.eventId,
+        secondObjective.eventId,
+      ],
+      overlayVisible: false,
+    }],
+    "one frame must deliver critical, story, and distinct same-tick objectives in one audio batch before cutscene presentation",
+  );
+  assert.equal(
+    surface.querySelector("#defense-cutscene-overlay")?.dataset.cutsceneEvent,
+    "STAGE_STARTED",
+    "the story cutscene must still be presented after its audio batch",
+  );
+
+  session.dismissCutscene();
+
+  assert.equal(surface.querySelector("#defense-cutscene-overlay"), null, "the story overlay must remain dismissible");
+  assert.equal(audioCalls.length, 1, "dismissing the cutscene must not create a second audio consume call");
+});
+
+test("BattleSession same-stage remount resets audio before the tick-zero preview", async (t) => {
+  const BattleSession = await loadBattleSession();
+  const surface = new TestElement("main");
+  const playback = [];
+  const audio = new DefenseAudio({ reducedMotion: true });
+  audio.play = (cueId, event) => {
+    playback.push({ method: "play", cueId, eventId: event?.eventId });
+    return true;
+  };
+  audio.narrate = (event) => {
+    playback.push({ method: "narrate", eventId: event?.eventId });
+    return true;
+  };
+  const session = Object.create(BattleSession.prototype);
+  Object.assign(session, {
+    stageId: "cinder-span",
+    surface,
+    canvas: { height: 360, width: 640 },
+    statusNode: new TestElement(),
+    renderer: { renderSnapshot: noop },
+    audio,
+    audioTick: null,
+    audioEventKeys: new Set(),
+    recordedEliteIds: new Set(),
+    extractionEvents: [],
+    questEvents: [],
+    questEventKeys: new Set(),
+    questEventKeyGroups: [],
+    cutsceneEventKeys: new Set(),
+    cutsceneTimer: null,
+    cutsceneRelayTimers: [],
+    cutsceneQueue: [],
+    cutsceneActive: false,
+    feedbackTimer: null,
+    started: false,
+    stopped: false,
+    rallyAcknowledgedBossIds: new Set(),
+    motionQuery: { matches: true },
+    lastStanceBlockEventId: null,
+    lastStanceSwitchEventId: null,
+    userPaused: false,
+    terminalHandled: false,
+    camera: { x: 0, y: 0 },
+  });
+  session.run = session.createRunForStage(session.stageId);
+  session.projected = (snapshot) => snapshot;
+  session.updateCamera = () => ({ x: 0, y: 0 });
+  session.renderControls = noop;
+  session.renderPauseOverlay = noop;
+  session.renderWorldHud = noop;
+  session.renderEventFeedback = noop;
+  session.resetCamera = noop;
+  session.resetLobbyShowcase = noop;
+  session.syncAppearanceLoadout = noop;
+  t.after(() => stopAndDismissCutscenes(session));
+
+  const openingStory = session.run.events.find((event) => event.type === "STAGE_STARTED");
+  assert(openingStory, "the stable Cinder run must expose its tick-zero stage story");
+  session.run = advanceDefenseRun(session.run, TICK_RATE * 90);
+  const highTick = session.run.tick;
+  session.render([
+    Object.freeze({ ...openingStory, tick: highTick }),
+    Object.freeze({
+      type: "PROJECTILE_IMPACT",
+      tick: highTick,
+      eventId: "impact:high:enemy-1",
+      targetId: "enemy-1",
+    }),
+  ]);
+  assert.equal(
+    playback.filter(({ method, eventId }) => method === "narrate" && eventId === openingStory.eventId).length,
+    1,
+    "the first run must establish the same-stage story narration identity",
+  );
+
+  playback.length = 0;
+  session.remountForStage("cinder-span");
+  const remountedStory = session.run.events.find((event) => event.type === "STAGE_STARTED");
+
+  assert.equal(remountedStory?.eventId, openingStory.eventId, "same-stage remount must preserve the deterministic story identity");
+  assert.equal(
+    playback.filter(({ method, eventId }) => method === "narrate" && eventId === openingStory.eventId).length,
+    1,
+    "the remounted tick-zero preview must narrate the stable story identity again",
+  );
+
+  const lowTickImpact = Object.freeze({
+    type: "PROJECTILE_IMPACT",
+    tick: 0,
+    eventId: "impact:low:enemy-2",
+    targetId: "enemy-2",
+  });
+  session.render([lowTickImpact]);
+
+  assert.equal(
+    playback.filter(({ method, eventId }) => method === "play" && eventId === lowTickImpact.eventId).length,
+    1,
+    "a low-tick ordinary cue must remain eligible after the high-tick run remounts",
+  );
+});
+
+test("BattleSession retains authored stage intro and story dialogue through queued live presentation", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const BattleSession = await loadBattleSession();
+  const surface = new TestElement("main");
+  const session = Object.create(BattleSession.prototype);
+  Object.assign(session, {
+    stageId: "cinder-span",
+    run: createDefenseRun({ stageId: "cinder-span", seed: 73 }),
+    surface,
+    audio: { consume: noop },
+    cutsceneEventKeys: new Set(),
+    cutsceneTimer: null,
+    cutsceneRelayTimers: [],
+    cutsceneQueue: [],
+    started: true,
+    stopped: false,
+  });
+  t.after(() => stopAndDismissCutscenes(session));
+
+  const openingLore = Object.freeze({
+    type: "LORE_SURPRISE_RESOLVED",
+    tick: 0,
+    tableId: "cinder-span-surprise",
+    outcomeId: "ash-echo-whisper",
+    text: "옛 교량의 재가 바람에 흩어진다.",
+  });
+  const stageStarted = Object.freeze({
+    type: "STAGE_STARTED",
+    tick: 0,
+    stageId: "cinder-span",
+    cutscene: Object.freeze(["봉쇄선 진입"]),
+    storyBeat: Object.freeze({
+      dialogue: Object.freeze({
+        speaker: "감시관",
+        text: "바람의 방향이 바뀌었다.",
+      }),
+    }),
+  });
+  const originalStageStarted = structuredClone(stageStarted);
+
+  session.presentCutscene(openingLore);
+  session.presentCutscene(stageStarted);
+
+  assert.equal(session.cutsceneQueue.length, 1, "the authored stage event must queue behind the active cutscene");
+  assert.equal(session.cutsceneQueue[0]?.event, stageStarted, "the queue must retain the original stage event object");
+  assert.deepEqual(stageStarted, originalStageStarted, "queueing must not mutate the authored stage event");
+
+  const queuedStageCutscene = session.cutsceneQueue[0].cutscene;
+  assert.deepEqual(
+    queuedStageCutscene.lines,
+    ["봉쇄선 진입", "바람의 방향이 바뀌었다."],
+    "the live BattleSession entry must retain the stage intro and structured story dialogue",
+  );
+
+  session.dismissCutscene();
+  const overlay = surface.querySelector("#defense-cutscene-overlay");
+  const visibleCutsceneLine = () => {
+    const pending = [overlay];
+    while (pending.length) {
+      const node = pending.shift();
+      if (node.className === "cutscene-line") return node.textContent;
+      pending.unshift(...node.children);
+    }
+    return null;
+  };
+  const renderedLines = [visibleCutsceneLine()];
+  const storyBeat = queuedStageCutscene.beats[1];
+  t.mock.timers.tick(storyBeat.timing.startMs);
+  renderedLines.push(visibleCutsceneLine());
+
+  assert.deepEqual(
+    renderedLines,
+    ["봉쇄선 진입", "바람의 방향이 바뀌었다."],
+    "the live overlay must render the intro and story dialogue in sequence",
+  );
+  assert.equal(renderedLines.filter((line) => line === "봉쇄선 진입").length, 1, "the intro must render once");
+  assert.equal(
+    renderedLines.filter((line) => line === "바람의 방향이 바뀌었다.").length,
+    1,
+    "the structured story dialogue must render once",
+  );
+  assert.deepEqual(stageStarted, originalStageStarted, "live presentation must not mutate the queued source event");
+});
+
 test("BattleSession pauses simulation across queued dialogue and narration, then resumes one tick on the next frame", async (t) => {
   const BattleSession = await loadBattleSession();
   const surface = new TestElement("main");
@@ -260,6 +552,7 @@ test("BattleSession pauses simulation across queued dialogue and narration, then
   Object.assign(session, {
     stageId: "cinder-span",
     run: createDefenseRun({ stageId: "cinder-span", seed: 73 }),
+    runEvents: [],
     surface,
     audio: { consume: noop },
     cutsceneEventKeys: new Set(),
@@ -323,6 +616,7 @@ test("BattleSession timer completion removes the overlay and resumes without pau
   Object.assign(session, {
     stageId: "cinder-span",
     run: createDefenseRun({ stageId: "cinder-span", seed: 73 }),
+    runEvents: [],
     surface,
     audio: { consume: noop },
     cutsceneTimer: null,
@@ -449,6 +743,7 @@ test("BattleSession keeps timer-completed cutscenes paused by user intent until 
   Object.assign(session, {
     stageId: "cinder-span",
     run: createDefenseRun({ stageId: "cinder-span", seed: 73 }),
+    runEvents: [],
     surface,
     audio: { consume: noop },
     cutsceneTimer: null,

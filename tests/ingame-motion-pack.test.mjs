@@ -41,6 +41,10 @@ const CANONICAL_BASE_ACTIONS = [
   "die",
   "show",
 ];
+const OVERLAY_ACTIONS = new Set([
+  "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence",
+]);
+
 
 // Helper to parse GLB structure
 function readGlb(path) {
@@ -433,12 +437,21 @@ test("failed promoted model load recovers with the standard actor base clips", a
       "the fallback actor must retain the complete canonical base action set",
     );
     for (const action of CANONICAL_BASE_ACTIONS) {
-      assert.equal(record.actionSources[action], "base", `fallback ${action} must come from the scout model`);
-      assert.equal(
-        record.actions[action].getClip().name,
-        `scout::${action}::v01`,
-        `fallback ${action} must retain the scout namespace`,
-      );
+      if (OVERLAY_ACTIONS.has(action)) {
+        assert.equal(record.actionSources[action], "overlay", `fallback ${action} must come from overlay pack`);
+        assert.equal(
+          record.actions[action].getClip().name,
+          `unarmed-core::${action}::v01`,
+          `fallback ${action} must use the overlay namespace`,
+        );
+      } else {
+        assert.equal(record.actionSources[action], "base", `fallback ${action} must come from the scout model`);
+        assert.equal(
+          record.actions[action].getClip().name,
+          `scout::${action}::v01`,
+          `fallback ${action} must retain the scout namespace`,
+        );
+      }
     }
   } finally {
     rejectedModelPath = null;
@@ -530,18 +543,25 @@ test("runtime routes all promoted rigs to their namespaced base action clips", a
         `${routingCase.label} must expose the complete canonical base action set`,
       );
       for (const action of CANONICAL_BASE_ACTIONS) {
-        assert.equal(
-          record.actionSources[action],
-          "base",
-          `${routingCase.label} ${action} must come from its promoted model`,
-        );
-        assert.equal(
-          record.actions[action].getClip().name,
-          `${routingCase.assetId}::${action}::v01`,
-          `${routingCase.label} ${action} must retain the promoted asset namespace`,
-        );
+        if (OVERLAY_ACTIONS.has(action)) {
+          assert.equal(record.actionSources[action], "overlay", `${routingCase.label} ${action} must come from overlay pack`);
+          assert.equal(
+            record.actions[action].getClip().name,
+            `unarmed-core::${action}::v01`,
+            `${routingCase.label} ${action} must use the overlay namespace`,
+          );
+        } else {
+          assert.equal(record.actionSources[action], "base", `${routingCase.label} ${action} must come from its promoted model`);
+          assert.equal(
+            record.actions[action].getClip().name,
+            `${routingCase.assetId}::${action}::v01`,
+            `${routingCase.label} ${action} must retain the promoted asset namespace`,
+          );
+        }
       }
+
     }
+
   } finally {
     adapter.dispose();
   }

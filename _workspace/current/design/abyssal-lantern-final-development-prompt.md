@@ -169,6 +169,136 @@ Abyssal Lantern을 Cinder Span → Abyss Chancel → Echo Throne의 세 스테�
 - 대사는 lobby/archive, 접근성 텍스트 폴백, 안전한 전투 전·후 창에서만 전달한다. active combat에는 텍스트 대사 relay를 두지 않고 camera/VFX/audio/objective marker/telegraph로 비트를 전달한다.
 - presentation-only aftermath와 dialogue는 시뮬레이션 상태를 만들지 않는다. 모든 전투 결과는 `defense-run-simulation.js` 이벤트가 권위이며 presentation은 읽기 전용이다.
 
+## I. [TARGET] 세 스테이지 스토리 퀘스트·진행·음향·모션 통합
+
+### 권위와 공통 불변식
+
+- 스토리 권위는 `stage-story-catalog.js`, 전투 권위는 `defense-run-simulation.js`,
+  월드 배치는 `stage-world-catalog.js`, 프레젠테이션 변환은
+  `defense-cutscene.js`·`defense-audio.js`·`battle-realtime-three.js`가 소유한다.
+- 스토리/VFX/오디오는 기존 simulation event를 소비할 뿐 전투 결과를 다시 계산하지 않는다.
+- 모든 스테이지는 퀘스트 NPC 1명과 순서가 고정된 목표 4개를 가진다.
+  목표 1·2는 실제 `STAGE_ENCOUNTER_ROUTES` 지점, 목표 3은 occupation point,
+  목표 4는 `boss-kill` 완료 이벤트와 1:1로 결속한다.
+- 기존 출전 미니맵, 로비 카메라, 넓은 단일 평면, mesh collider,
+  terrain grounding, sparse prop/pickup, VFX cap 계약을 유지한다.
+
+### 스테이지별 퀘스트와 보상
+
+**Cinder Span — `cinder-span:unchain-the-descent`**
+
+- 퀘스트 NPC: `cinder-span:ember-lookout`
+- 목표:
+  1. `cinder-relay-crossing`
+  2. `cinder-forge-stand`
+  3. `cinder-seal` 점령
+  4. `boss-kill` — Cinder Warden 격파
+- 최초 완료 보상: 추출 스킬 `rift-bolt`, 외형 `cinder-span-ember-chain`
+- 결말: 사슬은 문을 지킨 것이 아니라 문이 올라오지 못하게 묶고 있었다.
+
+**Abyss Chancel — `abyss-chancel:refuse-repeated-answer`**
+
+- 퀘스트 NPC: `abyss-chancel:veil-lookout`
+- 목표:
+  1. `chancel-nave-advance`
+  2. `chancel-transept-lock`
+  3. `chancel-oath` 점령
+  4. `boss-kill` — Veil Tactician 격파
+- 최초 완료 보상: 추출 스킬 `grave-pulse`, 외형 `abyss-chancel-ward`
+- 결말: 거울이 반복한 과거의 답을 거부하고 분류되지 않은 왕좌 길을 연다.
+
+**Echo Throne — `echo-throne:break-the-command`**
+
+- 퀘스트 NPC: `echo-throne:throne-lookout`
+- 목표:
+  1. `throne-aisle-break`
+  2. `throne-dais-stand`
+  3. `throne-domain` 점령
+  4. `boss-kill` — Gate Sovereign 격파
+- 최초 완료 보상: 추출 스킬 `void-aegis`, 외형 `echo-throne-crown`
+- 결말: 마지막 등불지기는 해방되고 왕좌는 비지만, 끊긴 명령의 메아리는 등불 안에 남는다.
+- 현재 캠페인은 여기서 완료된다. 스테이지 4를 암시하거나 생성하지 않는다.
+
+세부 한국어 대사·화자·반전·결말은 아래 문서를 그대로 따른다.
+
+- `design/cinder-span-episode-scenario.md`
+- `design/abyss-chancel-stage-episode.md`
+- `design/echo-throne-stage3-final-episode.md`
+- `design/QUEST_RUNTIME_MAPPING.md`
+
+### 대사와 화자
+
+- `STAGE_STARTED`는 기존 스테이지 intro를 보존한 뒤
+  `quest.acquisitionDialogue` 전체와 중복되지 않는 `storyBeat.dialogue`를 순서대로 표시한다.
+- 화자는 배열 인덱스로 추측하지 않는다. 대사 문자열을
+  `acquisitionDialogue`와 `storyBeat.dialogue`의 정확한 `text`에 대조해 `speaker`를 선택한다.
+- 기존 intro처럼 화자가 없는 줄만 `WARDEN CHANNEL`/`FARWATCH RELAY` 기본 릴레이를 사용한다.
+- 컷신은 접근 가능한 텍스트 오버레이이며, 퀘스트 획득은 전투를 막지 않는다.
+
+### 저장·장착·강화
+
+`campaign.storyProgress`의 현재 스키마만 사용한다.
+
+- `questCompletionsByStage`
+- `extractedSkillIds`
+- `extractedSkillLevels`
+- `activeSkillLoadout`
+- `appearanceItemIds`
+- `equippedAppearance`
+
+규칙:
+
+- 기존 저장 데이터는 `restoreCampaign`에서 위 스키마로 닫힌 마이그레이션한다.
+- 최초 승리만 스킬·외형을 지급한다. 반복 승리는 중복 지급하지 않는다.
+- 추출 스킬은 소유 확인 후 최대 3개를 장착하며, 명시적인 해제 API를 제공한다.
+- 추출 스킬 레벨은 1→5이고 Echo Core 누적 비용 검증을 통과해야 한다.
+- 외형은 authored slot에만 장착한다. 동일한 slot/item loadout 재적용은 GLB를 재복제하지 않는다.
+- 패배는 캠페인 영구 진행을 삭제하지 않는다.
+
+### 11-action 모션과 프리비스
+
+- 모든 commander/companion/enemy/boss/NPC는
+  `idle`, `move`, `run`, `hit`, `bighit`, `attack`, `critical`,
+  `avoid`, `defence`, `die`, `show`의 canonical action만 사용한다.
+- locomotion은 loop, 전투·반응·등장·사망은 one-shot이며 종료 후 상태 권위에 맞게 복귀한다.
+- 3스테이지 12개 스토리 비트는
+  `engineering/asset-pipeline/motion-previs/quest-beat-previs.json`의
+  `show`/`defence`/`bighit` 매핑을 사용한다.
+- 권위 모션 라이브러리는 11 assets × 11 actions = 121 clips
+  (retargeted 110 + authored fallback 11)다. 같은 의도를 위해 이미지나 모션을 재생성하지 않는다.
+- 상세 계약은 `design/MOTION_SYSTEM_EXPANSION_BLUEPRINT.md`를 따른다.
+
+### 오디오·VFX·퀘스트 앵커
+
+- `DefenseAudio.consume`은 같은 프레임의 전투·스토리 이벤트를 한 배치로 받아
+  critical priority를 먼저 적용한다.
+- 한국어 스토리 대사는 브라우저 `speechSynthesis` 기본 큐에 도착 순서대로 한 번씩 들어간다.
+  추적 중인 utterance는 최대 8개이며 mute/pause/background/stop에서 취소된다.
+- `DefenseAudio.resetRun()`은 스테이지 재마운트 전에 실행별 tick·dedupe·refractory·transient
+  상태만 지우고 context, 음량, 음소거, ambience/music, stage soundscape는 보존한다.
+- stage별 합성 cue와 voice tuning을 사용하고, 오디오가 없어도 같은 의미를 컷신·HUD·VFX가 전달한다.
+- `CRITICAL_HIT`과 boss/terminal telegraph는 24개 VFX cap 안에서 비치명 효과보다 우선한다.
+- 퀘스트 VFX는 event binding이 일치하는 네 월드 지점을 사용한다.
+  `BOSS_SPAWNED`는 quest-point fallback이 아니라 실제 spawned boss/entity 위치를 사용한다.
+
+실제 encounter 좌표:
+
+| Stage | Objective 1 | Objective 2 |
+|---|---|---|
+| Cinder Span | `cinder-relay-crossing` `(14600, 5200)` | `cinder-forge-stand` `(17400, 6000)` |
+| Abyss Chancel | `chancel-nave-advance` `(15000, 6000)` | `chancel-transept-lock` `(17600, 8200)` |
+| Echo Throne | `throne-aisle-break` `(15200, 6000)` | `throne-dais-stand` `(18000, 6000)` |
+
+### 모바일 가로 모드
+
+- 기존 키보드와 5개 `[data-move]` 버튼은 유지한다.
+- drag joystick은 coarse pointer **가로 모드에서만** 보이며 이동 전용이다.
+- drag vector는 8방향으로 양자화하고 pointer up/cancel/lost capture,
+  visibility loss, resize/orientation 전환에서 반드시 `MOVE: IDLE`을 보낸다.
+- portrait/fine-pointer/reduced-motion에서는 기존 버튼 기반 안전 UI를 유지한다.
+- 모든 조작은 44px 이상 target, safe-area, focus/keyboard, HUD 가독성 계약을 지킨다.
+
+---
 ## J. [TARGET] 로비 미니맵 & 스테이지 카드 진행형 공개
 
 ### 소스 참고
@@ -232,7 +362,7 @@ minimap의 canonical node는 stage 내부 waypoint가 아니라 정확히 세 so
 
 - Abyss Chancel, Echo Throne의 terrain candidate는 runtime에서 blocked (procedural-flat-support mesh와 catalog props만 load).
 - 기존 Chancel/Throne prop/character는 terrain override 없이 유지된다. promotion gate는 terrain 교체 정책에만 적용된다.
-- Cinder Span 완료 후 (`FINAL_COMPLETION` event) Abyss Chancel unlock, Abyss Chancel 완료 후 Echo Throne unlock.
+- Cinder Span 승리는 `applyCampaignRunResult`의 `resolvedIds`/`unlockedStageIndex` 갱신으로 Abyss Chancel을 열고, Abyss Chancel 승리는 Echo Throne을 연다.
 
 ### 충돌·투과·무결성
 
@@ -247,10 +377,10 @@ minimap의 canonical node는 stage 내부 waypoint가 아니라 정확히 세 so
 
 ### Git·배포·증거
 
-- **Selective Git Staging**: 본 section J 변경만 명시적 allowlist (`git add <path>`)로 stage하고, 무관 파일은 남겨둔다. `git add -A`는 사용하지 않는다.
+- **Selective Git Staging**: 이번 검증 범위의 변경 파일만 명시적 allowlist (`git add <path>`)로 stage하고, 무관 파일은 남겨둔다. `git add -A`는 사용하지 않는다.
 - **Push**: staged commit 내용이 focused/full test 결과와 정확히 일치하는 경우에만 push.
 - **Pages Deployment**: workflow trigger 후 실제 배포 페이지에서 production branch SHA를 read-back하여 동일성 확인.
-- **Production Release Verification**: `.github/workflows/static.yml` workflow gates를 통해 build/test를 거친 후 배포하고, `results/release-receipt.json`에 배포 시점의 commit SHA와 page URL을 기록한다. deployed smoke test에서 실제 page URL을 read-back하여 프로덕션 배포 버전이 의도한 commit을 포함하는지 확인한다.
+- **Production Release Verification**: `.github/workflows/static.yml` 배포를 완료한 뒤 commit SHA, workflow 결과, page URL, production smoke를 `_workspace/current/production/task-manifest.md` Cycle 9에 기록한다.
 
 ### 변경 불가 계약 (기존 보존)
 

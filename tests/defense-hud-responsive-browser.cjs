@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { createHash } = require("node:crypto");
 const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
@@ -31,6 +32,22 @@ function server() {
   })).on("error", reject));
 }
 
+async function activeSkillCampaign() {
+  const campaignState = await import("../campaign-state.js");
+  let campaign = campaignState.createCampaign({ campaignId: "responsive-active-skill" });
+  campaign = campaignState.startRun(campaign, "cinder-span");
+  campaign = campaignState.applyCampaignRunResult(campaign, { stageId: "cinder-span", outcome: "victory" });
+  campaign = campaignState.equipExtractedSkill(campaign, "rift-bolt");
+  const payload = campaignState.serializeCampaign(campaign);
+  payload.idleReturn.lastSettledAt = 2_000_000;
+  const text = JSON.stringify(payload);
+  return JSON.stringify({
+    version: campaignState.RULES_VERSION,
+    hash: `sha256-${createHash("sha256").update(text).digest("hex")}`,
+    payload,
+  });
+}
+
 async function battle(page, { force = false } = {}) {
   await page.goto("/index.html", { waitUntil: "networkidle" });
   // D9 unified shell: #defense-battle-surface (and its data-defense-ready="true") exists
@@ -52,6 +69,7 @@ async function inspect(page, width, height) {
     const canvas = document.querySelector("#defense-canvas");
     const hud = document.querySelector("#defense-edge-hud");
     if (!surface || !canvas || !hud) throw new Error("required battle surface is absent");
+    document.documentElement.style.setProperty("--defense-device-safe-bottom", "24px");
     const rect = (node) => {
       const bounds = node.getBoundingClientRect();
       return {
@@ -63,11 +81,22 @@ async function inspect(page, width, height) {
         height: bounds.height,
       };
     };
+    const visible = (node) => {
+      const style = getComputedStyle(node);
+      const bounds = node.getBoundingClientRect();
+      return style.display !== "none"
+        && style.visibility !== "hidden"
+        && bounds.width > 0
+        && bounds.height > 0;
+    };
+    const overlapArea = (left, right) =>
+      Math.max(0, Math.min(left.right, right.right) - Math.max(left.left, right.left))
+      * Math.max(0, Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top));
     const surfaceRect = rect(surface);
     const canvasRect = rect(canvas);
-    const controls = [...hud.querySelectorAll("button")].map((node) => ({
+    const controls = [...hud.querySelectorAll("button")].filter(visible).map((node) => ({
       rect: rect(node),
-      text: node.textContent.trim(),
+      text: node.getAttribute("aria-label") || node.textContent.trim(),
     }));
     const points = [[.5, .5], [.25, .5], [.75, .5], [.5, .28], [.5, .72]].map(([x, y]) => {
       const px = canvasRect.left + canvasRect.width * x;
@@ -75,11 +104,42 @@ async function inspect(page, width, height) {
       const hit = document.elementFromPoint(px, py);
       return { x: px, y: py, canvas: hit === canvas || canvas.contains(hit), surface: surface.contains(hit) };
     });
+    const zoneNodes = [
+      ["quest", document.querySelector(".objective-chip")],
+      ["cutscene", document.querySelector('.defense-cutscene[data-nonblocking="true"] .cutscene-frame')],
+      ["attack", document.querySelector("#manual-attack")],
+      ...[...document.querySelectorAll("#skill-actions button")].map((node, index) => [`skill-${index}`, node]),
+    ];
+    const zones = Object.fromEntries(zoneNodes.flatMap(([name, node]) =>
+      node && visible(node) ? [[name, rect(node)]] : []));
+    const zoneOverlaps = [];
+    const zoneEntries = Object.entries(zones);
+    for (let leftIndex = 0; leftIndex < zoneEntries.length; leftIndex += 1) {
+      for (let rightIndex = leftIndex + 1; rightIndex < zoneEntries.length; rightIndex += 1) {
+        const [leftName, leftRect] = zoneEntries[leftIndex];
+        const [rightName, rightRect] = zoneEntries[rightIndex];
+        zoneOverlaps.push({
+          pair: `${leftName}/${rightName}`,
+          area: overlapArea(leftRect, rightRect),
+        });
+      }
+    }
+    const bottomTargets = [
+      ...document.querySelectorAll(".defense-bottom button:not([disabled])"),
+      document.querySelector("[data-joystick]"),
+    ].filter((node) => node && visible(node)).map((node) => ({
+      bottom: rect(node).bottom,
+      text: node.getAttribute("aria-label") || node.textContent.trim() || "joystick",
+    }));
     return {
       surfaceRect,
       canvasRect,
       controls,
       points,
+      zones,
+      zoneOverlaps,
+      bottomTargets,
+      safeBottom: 24,
       scrollWidth: document.documentElement.scrollWidth,
       scrollHeight: document.documentElement.scrollHeight,
       clientWidth: document.documentElement.clientWidth,
@@ -91,9 +151,19 @@ async function inspect(page, width, height) {
   assert.equal(Math.round(report.surfaceRect.width), width, `${width}x${height} surface must be full bleed`);
   assert.equal(Math.round(report.surfaceRect.height), height, `${width}x${height} surface must be full bleed`);
   assert.ok(report.canvasRect.width > 0 && report.canvasRect.height > 0, "canvas must render");
-  assert.ok(report.controls.every(({ rect }) => rect.width >= 44 && rect.height >= 44), "every rendered edge control must be at least 44px");
+  assert.ok(report.controls.every(({ rect }) => rect.width >= 44 && rect.height >= 44), "every active edge control must be at least 44px");
   assert.ok(report.points.every((point) => point.canvas || point.surface), "logical center grid must hit canvas or battle surface, not HUD");
   assert.ok(report.scrollWidth <= report.clientWidth && report.scrollHeight <= report.clientHeight, "battle document must not scroll or overflow");
+  if ((width === 844 && height === 390) || (width === 667 && height === 375)) {
+    assert.ok(
+      report.zoneOverlaps.every(({ area }) => area <= 1),
+      `${width}x${height} quest/cutscene/skill/attack zones must not overlap: ${JSON.stringify(report.zoneOverlaps)}`,
+    );
+  }
+  assert.ok(
+    report.bottomTargets.every(({ bottom }) => bottom <= height - report.safeBottom + 1),
+    `${width}x${height} active bottom targets must clear the ${report.safeBottom}px safe area: ${JSON.stringify(report.bottomTargets)}`,
+  );
   if (height > width) assert.equal(report.rotateText, false, "portrait fallback must not show a rotate prompt");
   return report;
 }
@@ -378,14 +448,26 @@ async function run() {
   try {
     browser = await playwright.chromium.launch({ headless: true });
     const results = [];
+    const campaign = await activeSkillCampaign();
     for (const [width, height] of VIEWPORTS) {
-      const context = await browser.newContext({ viewport: { width, height }, baseURL: hosting.url });
+      const coarseLandscape = width > height && height <= 480;
+      const context = await browser.newContext({
+        viewport: { width, height },
+        baseURL: hosting.url,
+        hasTouch: coarseLandscape,
+        isMobile: coarseLandscape,
+      });
       const page = await context.newPage();
       const errors = [];
       page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
       page.on("console", (message) => {
         if (message.type() === "error") errors.push(`console: ${message.text()}`);
       });
+      await page.addInitScript(({ campaign: encoded }) => {
+        Object.defineProperty(window, "indexedDB", { configurable: true, value: undefined });
+        Date.now = () => 2_000_000;
+        localStorage.setItem("abyssal-command-defense", encoded);
+      }, { campaign });
       await battle(page);
       const before = await page.locator("#defense-battle-surface").getAttribute("data-defense-input-seq");
       await page.keyboard.down("ArrowRight");

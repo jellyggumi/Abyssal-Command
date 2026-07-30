@@ -7,6 +7,12 @@ const MASTER_GAIN = 0.055;
 const SILENCE = 0.0001;
 const MAX_FEEDBACK_EVENT_KEYS = 128;
 const MAX_NARRATION_CHARS = 240;
+const MAX_STORY_NARRATION_CHARS = 96;
+const STORY_NARRATION_PRIORITY = 76;
+const AMBIENT_NARRATION_PRIORITY = 45;
+const CRITICAL_AUDIO_PRIORITY = 80;
+const MAX_ACTIVE_NARRATIONS = 8;
+const MAX_STORY_NARRATION_KEYS = 32;
 
 const tone = (waveform, frequency, endFrequency, duration, gain, delay = 0, attack = 0.008) =>
   Object.freeze({ waveform, frequency, endFrequency, duration, gain, delay, attack });
@@ -33,10 +39,39 @@ const byId = Object.freeze(Object.fromEntries(
 ));
 
 const NARRATION_VOICE_HINTS = Object.freeze(["ko-KR", "ko_KR", "Korean"]);
-const NARRATION_SETTINGS = Object.freeze({ rate: 0.92, pitch: 0.88, volume: 0.86 });
-const pickNarrationVoice = (voices = []) => voices.find((voice) =>
-  NARRATION_VOICE_HINTS.some((hint) => `${voice.lang} ${voice.name}`.includes(hint))
-) || voices.find((voice) => String(voice.lang || "").toLowerCase().startsWith("ko")) || voices[0] || null;
+const NARRATION_VOICE_PROFILES = Object.freeze({
+  narrator: Object.freeze({
+    hints: Object.freeze([]),
+    settings: Object.freeze({ rate: 0.92, pitch: 0.88, volume: 0.86 }),
+  }),
+  keeper: Object.freeze({
+    hints: Object.freeze(["sora", "sunhi", "yuna", "female"]),
+    settings: Object.freeze({ rate: 0.86, pitch: 0.98, volume: 0.84 }),
+  }),
+  antagonist: Object.freeze({
+    hints: Object.freeze(["minsu", "inhyeok", "male"]),
+    settings: Object.freeze({ rate: 0.82, pitch: 0.72, volume: 0.9 }),
+  }),
+  warden: Object.freeze({
+    hints: Object.freeze(["minsu", "hyun", "male"]),
+    settings: Object.freeze({ rate: 0.88, pitch: 0.82, volume: 0.88 }),
+  }),
+});
+const NARRATION_STAGE_TUNING = Object.freeze({
+  "cinder-span": Object.freeze({ rate: 0.02, pitch: 0.02 }),
+  "abyss-chancel": Object.freeze({ rate: -0.02, pitch: -0.02 }),
+  "echo-throne": Object.freeze({ rate: -0.04, pitch: -0.04 }),
+});
+const koreanVoice = (voice) => NARRATION_VOICE_HINTS.some((hint) =>
+  `${voice?.lang || ""} ${voice?.name || ""}`.includes(hint)
+) || String(voice?.lang || "").toLowerCase().startsWith("ko");
+const pickNarrationVoice = (voices = [], hints = []) => {
+  const preferred = voices.filter(koreanVoice);
+  const roleVoice = preferred.find((voice) => hints.some((hint) =>
+    String(voice?.name || "").toLowerCase().includes(hint)
+  ));
+  return roleVoice || preferred[0] || voices[0] || null;
+};
 
 const CUE_PROFILES = Object.freeze({
   "stage-start": Object.freeze([
@@ -205,7 +240,7 @@ export const AUDIO_EVENT_POLICY = Object.freeze({
   MELEE_IMPACT: feedbackPolicy("impact-hit", 47, "contact"),
   PROJECTILE_BLOCKED: feedbackPolicy("block-contact", 52, "block"),
   PROJECTILE_EXPIRED: feedbackPolicy("attack-miss", 28, "miss"),
-  CRITICAL_HIT: feedbackPolicy(AUDIO_CUES.criticalHit.id, 68, "damage"),
+  CRITICAL_HIT: feedbackPolicy(AUDIO_CUES.criticalHit.id, 82, "damage"),
   SKILL_RESOLVED_DAMAGE: feedbackPolicy("impact-hit", 58, "damage"),
   COMMANDER_DAMAGED: feedbackPolicy("impact-hit", 74, "damage"),
   COMPANION_DAMAGED: feedbackPolicy("impact-hit", 70, "damage"),
@@ -408,7 +443,121 @@ const prefersReducedMotion = () => {
 
 const safePromise = (value) => value?.catch?.(() => undefined);
 
+const STORY_NARRATION_EVENT_TYPES = new Set([
+  "STAGE_STARTED",
+  "OCCUPATION_CAPTURED",
+  "BOSS_SPAWNED",
+  "OBJECTIVE_COMPLETED",
+  "EXTRACTION_COMPLETED",
+  "TERMINAL",
+]);
 const FEEDBACK_EVENT_TYPES = new Set(["LORE_SURPRISE_RESOLVED", ...Object.keys(AUDIO_EVENT_POLICY)]);
+
+const storyNarrationEligible = (event) => STORY_NARRATION_EVENT_TYPES.has(event?.type)
+  && (event.type !== "OBJECTIVE_COMPLETED"
+    || event.objectiveId === "boss-kill"
+    || event.storyBeat?.kind === "questCompletion");
+
+const conciseKoreanLine = (value) => {
+  if (typeof value !== "string") return "";
+  const lines = value.split(/\r?\n/);
+  for (const source of lines) {
+    let line = source
+      .replace(/\[[^\]]*\]|\([^)]*\)|（[^）]*）/gu, " ")
+      .replace(/\s+/gu, " ")
+      .trim();
+    const speakerDivider = line.search(/[:：]/u);
+    if (speakerDivider > 0 && speakerDivider < 40) line = line.slice(speakerDivider + 1).trim();
+    if (!/[가-힣]/u.test(line)) continue;
+    const sentenceEnd = line.search(/[.!?。！？](?:\s|$)/u);
+    const sentence = sentenceEnd >= 0 ? line.slice(0, sentenceEnd + 1) : line;
+    return sentence.slice(0, MAX_STORY_NARRATION_CHARS).trim();
+  }
+  return "";
+};
+
+const narrationLineFrom = (value, seen = new Set()) => {
+  if (typeof value === "string") return conciseKoreanLine(value);
+  if (!value || typeof value !== "object" || seen.has(value)) return "";
+  seen.add(value);
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const line = narrationLineFrom(entry, seen);
+      if (line) return line;
+    }
+    return "";
+  }
+  for (const key of ["voiceLine", "text", "line", "dialogue", "lines"]) {
+    const line = narrationLineFrom(value[key], seen);
+    if (line) return line;
+  }
+  return "";
+};
+
+const storyNarrationText = (event) => {
+  if (!storyNarrationEligible(event)) return "";
+  const sources = [
+    event?.storyBeat?.voiceLine,
+    event?.storyBeat?.dialogue,
+    event?.storyBeat?.cutscene,
+    event?.voiceLine,
+    event?.dialogue,
+    event?.storyDialogue,
+    event?.cutscene,
+    event?.type === "STAGE_STARTED" ? event?.quest?.acquisitionDialogue : null,
+  ];
+  for (const source of sources) {
+    const line = narrationLineFrom(source);
+    if (line) return line;
+  }
+  return "";
+};
+
+const narrationText = (event) => {
+  const storyLine = storyNarrationText(event);
+  if (storyLine) return storyLine;
+  if (event?.type !== "LORE_SURPRISE_RESOLVED" || typeof event.text !== "string") return "";
+  return event.text.trim().slice(0, MAX_NARRATION_CHARS);
+};
+
+const narrationVoiceProfile = (event) => {
+  const beat = event?.storyBeat;
+  const voiced = beat?.voiceLine && typeof beat.voiceLine === "object" ? beat.voiceLine : null;
+  const dialogue = beat?.dialogue && typeof beat.dialogue === "object" ? beat.dialogue : null;
+  const metadata = [
+    event?.voiceRole,
+    event?.speakerRole,
+    voiced?.role,
+    voiced?.speaker,
+    dialogue?.role,
+    dialogue?.speaker,
+    beat?.kind,
+  ].filter((value) => typeof value === "string").join(" ").toLowerCase();
+  let name = "narrator";
+  if (/dusk warden|commander|player|황혼/u.test(metadata)) {
+    name = "warden";
+  } else if (/questacquisition|lookout|keeper|quest.?giver|감시/u.test(metadata)) {
+    name = "keeper";
+  } else if (/bossentry|occupationreversal|antagonist|tactician|sovereign|cinder warden|boss/u.test(metadata)) {
+    name = "antagonist";
+  } else if (storyNarrationText(event)
+    && ["OBJECTIVE_COMPLETED", "EXTRACTION_COMPLETED", "TERMINAL"].includes(event?.type)) {
+    name = "warden";
+  }
+  const profile = NARRATION_VOICE_PROFILES[name];
+  const storyStageId = typeof beat?.id === "string" ? beat.id.split(":")[0] : null;
+  const stageId = event?.stageId || beat?.event?.stageId || storyStageId;
+  const tuning = NARRATION_STAGE_TUNING[stageId] || {};
+  return Object.freeze({
+    name,
+    hints: profile.hints,
+    settings: Object.freeze({
+      rate: Math.max(0.7, Math.min(1.1, profile.settings.rate + (tuning.rate || 0))),
+      pitch: Math.max(0.55, Math.min(1.15, profile.settings.pitch + (tuning.pitch || 0))),
+      volume: profile.settings.volume,
+    }),
+  });
+};
 
 const feedbackEventKey = (event) => {
   if (!FEEDBACK_EVENT_TYPES.has(event?.type) && !byId[event?.cue]) return null;
@@ -440,27 +589,35 @@ const feedbackEventKey = (event) => {
     event?.reason ?? "",
     event?.damage ?? "",
     event?.pulse ?? "",
-    event?.text ?? "",
+    event?.storyBeat?.id ?? "",
+    event?.quest?.questId ?? "",
+    narrationText(event),
   ]);
 };
 
-const narrationText = (event) => {
-  if (event?.type !== "LORE_SURPRISE_RESOLVED" || typeof event.text !== "string") return "";
-  return event.text.trim().slice(0, MAX_NARRATION_CHARS);
-};
-
 export function audioCueForEvent(event) {
+  const policy = AUDIO_EVENT_POLICY[event?.type];
+  const storyText = storyNarrationText(event);
+  if (storyText) {
+    return Object.freeze({
+      eventType: event.type,
+      method: "narrate",
+      cueId: policy?.intentionalSilence ? null : policy?.cueId ?? null,
+      priority: STORY_NARRATION_PRIORITY,
+      category: "story-narration",
+      intentionalSilence: false,
+    });
+  }
   if (event?.type === "LORE_SURPRISE_RESOLVED") {
     return Object.freeze({
       eventType: event.type,
       method: "narrate",
       cueId: null,
-      priority: 45,
+      priority: AMBIENT_NARRATION_PRIORITY,
       category: "narration",
       intentionalSilence: false,
     });
   }
-  const policy = AUDIO_EVENT_POLICY[event?.type];
   if (policy) {
     return Object.freeze({
       eventType: event.type,
@@ -484,6 +641,14 @@ export function audioCueForEvent(event) {
 const variantKey = (cueId, event) => {
   if (event?.type === "TERMINAL" && event.outcome) return `${cueId}:TERMINAL:${event.outcome}`;
   return event?.type ? `${cueId}:${event.type}` : "";
+};
+
+const cueRefractoryKey = (cueId, event) => {
+  const category = AUDIO_EVENT_POLICY[event?.type]?.category || event?.type || "catalog";
+  const family = cueId === "impact-hit" && (category === "contact" || category === "damage")
+    ? "hit"
+    : category;
+  return `${cueId}:${family}`;
 };
 
 const fallbackProfile = (cue) => Object.freeze([
@@ -532,6 +697,9 @@ export class DefenseAudio {
     this.feedbackEventKeys = new Set();
     this.lastFeedbackTick = null;
     this.activeNarrations = new Set();
+    this.narrationPriorities = new Map();
+    this.activeNarrationPriority = 0;
+    this.storyNarrationKeys = new Set();
     this.visibilityTarget = null;
     this.windowTarget = null;
     this.onVisibilityChange = () => {
@@ -614,7 +782,10 @@ export class DefenseAudio {
   }
 
   suspendForBackground() {
-    if (!this.started || this.backgrounded) return false;
+    if (this.backgrounded) {
+      this.stopNarration();
+      return false;
+    }
     this.backgrounded = true;
     this.stopTransientVoices();
     this.stopNarration();
@@ -648,6 +819,16 @@ export class DefenseAudio {
       this.startAmbience();
       this.startBattleMusic();
     }
+    return true;
+  }
+
+  resetRun() {
+    this.stopNarration();
+    this.stopTransientVoices();
+    this.feedbackEventKeys.clear();
+    this.storyNarrationKeys.clear();
+    this.lastCueAt.clear();
+    this.lastFeedbackTick = null;
     return true;
   }
 
@@ -845,13 +1026,17 @@ export class DefenseAudio {
       || this.paused
       || this.backgrounded
     ) return false;
-    const now = this.context.currentTime;
-    const refractory = CUE_REFRACTORY_SECONDS[cueId] || 0;
-    const lastPlayedAt = this.lastCueAt.get(cueId);
-    if (refractory && Number.isFinite(lastPlayedAt) && now - lastPlayedAt < refractory) return false;
-    const requiredNodes = resolved.profile.length * 2;
     const priority = AUDIO_EVENT_POLICY[event?.type]?.priority
       ?? (cueId === "camera-clamp" ? 5 : 40);
+    if (priority >= CRITICAL_AUDIO_PRIORITY && this.activeNarrationPriority < priority) {
+      this.stopNarration();
+    }
+    const now = this.context.currentTime;
+    const refractory = CUE_REFRACTORY_SECONDS[cueId] || 0;
+    const refractoryKey = cueRefractoryKey(cueId, event);
+    const lastPlayedAt = this.lastCueAt.get(refractoryKey);
+    if (refractory && Number.isFinite(lastPlayedAt) && now - lastPlayedAt < refractory) return false;
+    const requiredNodes = resolved.profile.length * 2;
     if (!this.makeRoomForVoice(requiredNodes, priority)) return false;
 
     const voice = {
@@ -891,7 +1076,7 @@ export class DefenseAudio {
         oscillator.stop(ends);
       });
       this.activeVoices.add(voice);
-      this.lastCueAt.set(cueId, now);
+      this.lastCueAt.set(refractoryKey, now);
       if (this.context.state === "suspended") safePromise(this.context.resume?.());
       return true;
     } catch {
@@ -910,59 +1095,133 @@ export class DefenseAudio {
     }
     return true;
   }
+  rememberStoryNarration(event) {
+    const key = feedbackEventKey(event);
+    if (!key) return true;
+    if (this.storyNarrationKeys.has(key)) return false;
+    if (this.storyNarrationKeys.size >= MAX_STORY_NARRATION_KEYS) return false;
+    this.storyNarrationKeys.add(key);
+    return true;
+  }
 
-  narrate(event) {
+
+
+  updateActiveNarrationPriority() {
+    this.activeNarrationPriority = 0;
+    for (const priority of this.narrationPriorities.values()) {
+      this.activeNarrationPriority = Math.max(this.activeNarrationPriority, priority);
+    }
+  }
+
+  narrate(event, priority = AMBIENT_NARRATION_PRIORITY) {
     const text = narrationText(event);
+    const story = Boolean(storyNarrationText(event));
     const speech = globalThis.speechSynthesis;
     const Utterance = globalThis.SpeechSynthesisUtterance;
     if (!text || this.muted || this.paused || this.backgrounded
-      || typeof speech?.speak !== "function" || typeof Utterance !== "function"
-      || speech.speaking || speech.pending || this.activeNarrations.size) return false;
+      || typeof speech?.speak !== "function" || typeof Utterance !== "function") return false;
+    if (this.activeNarrations.size) {
+      if (priority > this.activeNarrationPriority) {
+        this.stopNarration();
+      } else if (!story || priority < this.activeNarrationPriority) {
+        return false;
+      }
+    } else if (!story && (speech.speaking || speech.pending)) {
+      return false;
+    }
+    if (this.activeNarrations.size >= MAX_ACTIVE_NARRATIONS) {
+      // Keep the earliest authored milestones in native speech order.
+      return false;
+    }
+    let utterance = null;
     try {
-      const utterance = new Utterance(text);
+      const profile = narrationVoiceProfile(event);
+      utterance = new Utterance(text);
       const voices = typeof speech.getVoices === "function" ? speech.getVoices() : [];
-      const voice = pickNarrationVoice(voices);
+      const voice = pickNarrationVoice(voices, profile.hints);
       if (voice) utterance.voice = voice;
       utterance.lang = voice?.lang || "ko-KR";
-      utterance.rate = NARRATION_SETTINGS.rate;
-      utterance.pitch = NARRATION_SETTINGS.pitch;
-      utterance.volume = NARRATION_SETTINGS.volume * this.volume;
-      const release = () => this.activeNarrations.delete(utterance);
+      utterance.rate = profile.settings.rate;
+      utterance.pitch = profile.settings.pitch;
+      utterance.volume = profile.settings.volume * this.volume;
+      const release = () => {
+        if (!this.activeNarrations.delete(utterance)) return;
+        this.narrationPriorities.delete(utterance);
+        this.updateActiveNarrationPriority();
+      };
       utterance.onend = release;
       utterance.onerror = release;
       this.activeNarrations.add(utterance);
+      this.narrationPriorities.set(utterance, priority);
+      this.updateActiveNarrationPriority();
       speech.speak(utterance);
       return true;
     } catch {
-      this.activeNarrations.clear();
+      this.activeNarrations.delete(utterance);
+      this.narrationPriorities.delete(utterance);
+      this.updateActiveNarrationPriority();
       return false;
     }
   }
 
   stopNarration() {
-    if (!this.activeNarrations.size) return;
-    try { globalThis.speechSynthesis?.cancel?.(); } catch { /* optional speech synthesis failure */ }
+    const hadActiveNarration = this.activeNarrations.size > 0;
     this.activeNarrations.clear();
+    this.narrationPriorities.clear();
+    this.activeNarrationPriority = 0;
+    if (hadActiveNarration) {
+      try { globalThis.speechSynthesis?.cancel?.(); } catch { /* optional speech synthesis failure */ }
+    }
   }
 
   consume(events = []) {
     if (!Array.isArray(events)) return;
     let feedbackTick = null;
-    let startsRunAtTickZero = false;
+    let startsNewRunAtTickZero = false;
     for (const event of events) {
       if (Number.isFinite(event?.tick)) {
         feedbackTick = feedbackTick === null ? event.tick : Math.max(feedbackTick, event.tick);
       }
-      if (event?.type === "STAGE_STARTED" && event.tick === 0) startsRunAtTickZero = true;
+      if (event?.type === "STAGE_STARTED" && event.tick === 0) {
+        const key = feedbackEventKey(event);
+        startsNewRunAtTickZero ||= !key
+          || (!this.feedbackEventKeys.has(key) && !this.storyNarrationKeys.has(key));
+      }
     }
-    const resetFeedbackDeduplication = startsRunAtTickZero && (this.lastFeedbackTick ?? 0) > 0;
+    const resetFeedbackDeduplication = startsNewRunAtTickZero && this.lastFeedbackTick !== null;
     if (resetFeedbackDeduplication) {
+      this.stopNarration();
       this.feedbackEventKeys.clear();
+      this.storyNarrationKeys.clear();
       this.lastCueAt.clear();
+      this.lastFeedbackTick = null;
     }
+    const batchStoryKeys = new Set();
     const fresh = events
-      .map((event, index) => ({ event, index, audioCue: audioCueForEvent(event) }))
-      .filter(({ event, audioCue }) => audioCue && this.rememberFeedbackEvent(event));
+      .map((event, index) => ({
+        event,
+        index,
+        audioCue: audioCueForEvent(event),
+        key: feedbackEventKey(event),
+      }))
+      .filter(({ event, audioCue, key }) => {
+        if (!audioCue
+          || (audioCue.category !== "story-narration"
+            && Number.isFinite(event?.tick)
+            && this.lastFeedbackTick !== null
+            && event.tick < this.lastFeedbackTick)) return false;
+        if (audioCue.category === "story-narration") {
+          if (key && (this.storyNarrationKeys.has(key)
+            || batchStoryKeys.has(key))) return false;
+          if (key && this.storyNarrationKeys.size + batchStoryKeys.size
+            >= MAX_STORY_NARRATION_KEYS) {
+            return false;
+          }
+          if (key) batchStoryKeys.add(key);
+          return true;
+        }
+        return this.rememberFeedbackEvent(event);
+      });
     for (const { event } of fresh) {
       const transition = audioSoundscapeForEvent(
         event,
@@ -971,16 +1230,31 @@ export class DefenseAudio {
       );
       if (transition) this.setSoundscape(transition.state, transition.stageId);
     }
-    fresh
-      .sort((left, right) => right.audioCue.priority - left.audioCue.priority || left.index - right.index)
-      .forEach(({ event, audioCue }) => {
-        if (audioCue.method === "narrate") {
-          this.narrate(event);
-        } else if (audioCue.method === "play") {
-          this.play(audioCue.cueId, event);
+    const batchMaxPriority = fresh.reduce(
+      (maximum, { audioCue }) => Math.max(maximum, audioCue.priority),
+      0,
+    );
+    const ordered = fresh.sort(
+      (left, right) => right.audioCue.priority - left.audioCue.priority || left.index - right.index,
+    );
+    ordered.forEach(({ event, audioCue }) => {
+      if (audioCue.method === "play" || (audioCue.method === "narrate" && audioCue.cueId)) {
+        this.play(audioCue.cueId, event);
+      }
+    });
+    ordered.forEach(({ event, audioCue }) => {
+      if (audioCue.method !== "narrate") return;
+      if (batchMaxPriority < CRITICAL_AUDIO_PRIORITY
+        || audioCue.priority >= batchMaxPriority) {
+        const startedNarration = this.narrate(event, audioCue.priority);
+        if (audioCue.category === "story-narration" && startedNarration) {
+          this.rememberStoryNarration(event);
         }
-      });
-    if (feedbackTick !== null) this.lastFeedbackTick = feedbackTick;
+      }
+    });
+    if (feedbackTick !== null) {
+      this.lastFeedbackTick = Math.max(this.lastFeedbackTick ?? feedbackTick, feedbackTick);
+    }
   }
 
   stop() {
@@ -995,6 +1269,7 @@ export class DefenseAudio {
     this.activeVoices.clear();
     this.lastCueAt.clear();
     this.feedbackEventKeys.clear();
+    this.storyNarrationKeys.clear();
     this.lastFeedbackTick = null;
     this.stoppableNodes.clear();
     this.transientNodes.clear();
@@ -1030,6 +1305,9 @@ export class DefenseAudio {
       maxVoices: MAX_ACTIVE_VOICES,
       feedbackEvents: this.feedbackEventKeys.size,
       narrations: this.activeNarrations.size,
+      narrationPriority: this.activeNarrationPriority,
+      narrationQueue: Math.max(0, this.activeNarrations.size - 1),
+      storyNarrations: this.storyNarrationKeys.size,
     };
   }
 }

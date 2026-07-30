@@ -317,11 +317,19 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   campaign = startRun(campaign, "cinder-span");
   campaign = applyCampaignRunResult(campaign, { stageId: "cinder-span", outcome: "victory" });
   const current = serializeCampaign(campaign);
-  // 15 = the 14 RPG-era keys plus `stageCarryOver`
-  // (run-id 20260728-stage-playtime-doctrine, stage-to-stage skill/item carry-over).
-  assert.equal(Object.keys(current).length, 15);
+  // 16 = the 15 pre-story campaign keys plus `storyProgress`.
+  assert.equal(Object.keys(current).length, 16);
   assert.ok(current.rewardIds.length > 0);
   assert.ok(current.achievementIds.length > 0);
+  const expectedMigratedStoryProgress = {
+    version: 1,
+    questCompletionsByStage: { "cinder-span": true },
+    extractedSkillIds: ["rift-bolt"],
+    extractedSkillLevels: { "rift-bolt": 1 },
+    activeSkillLoadout: [],
+    appearanceItemIds: ["cinder-span-ember-chain"],
+    equippedAppearance: { back: "cinder-span-ember-chain" },
+  };
 
   // shape (a): oldest 8-key pre-reward shape
   const shapeA = { ...current };
@@ -332,6 +340,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   delete shapeA.ownedEquipmentIds;
   delete shapeA.companionFormation;
   delete shapeA.stageCarryOver;
+  delete shapeA.storyProgress;
   assert.equal(Object.keys(shapeA).length, 8);
   const restoredA = restoreCampaign(shapeA);
   assert.ok(restoredA);
@@ -342,6 +351,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   assert.deepEqual(restoredA.ownedEquipmentIds, []);
   assert.deepEqual(restoredA.companionFormation, {});
   assert.deepEqual(restoredA.stageCarryOver, { version: 1, stageId: null, skillRanks: {}, itemIds: [] });
+  assert.deepEqual(restoredA.storyProgress, expectedMigratedStoryProgress);
 
   // shape (b): 9-key (+idleReturn, no rewards)
   const shapeB = { ...current };
@@ -351,11 +361,13 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   delete shapeB.ownedEquipmentIds;
   delete shapeB.companionFormation;
   delete shapeB.stageCarryOver;
+  delete shapeB.storyProgress;
   assert.equal(Object.keys(shapeB).length, 9);
   const restoredB = restoreCampaign(shapeB);
   assert.ok(restoredB);
   assert.deepEqual(restoredB.rewardIds, []);
   assert.deepEqual(restoredB.idleReturn, current.idleReturn);
+  assert.deepEqual(restoredB.storyProgress, expectedMigratedStoryProgress);
 
   // shape (c): 10-key (+rewards, no idleReturn)
   const shapeC = { ...current };
@@ -364,11 +376,13 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   delete shapeC.ownedEquipmentIds;
   delete shapeC.companionFormation;
   delete shapeC.stageCarryOver;
+  delete shapeC.storyProgress;
   assert.equal(Object.keys(shapeC).length, 10);
   const restoredC = restoreCampaign(shapeC);
   assert.ok(restoredC);
   assert.deepEqual(restoredC.rewardIds, current.rewardIds);
   assert.deepEqual(restoredC.idleReturn, { version: 1, lastSettledAt: null, totalProgress: 0 });
+  assert.deepEqual(restoredC.storyProgress, expectedMigratedStoryProgress);
 
   // shape (d): 11-key current pre-RPG production shape (rewards+idleReturn, no RPG fields),
   // WITH non-empty rewardIds/achievementIds — regression: an earlier implementation wiped these.
@@ -377,6 +391,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   delete shapeD.ownedEquipmentIds;
   delete shapeD.companionFormation;
   delete shapeD.stageCarryOver;
+  delete shapeD.storyProgress;
   assert.equal(Object.keys(shapeD).length, 11);
   const restoredD = restoreCampaign(shapeD);
   assert.ok(restoredD);
@@ -385,6 +400,7 @@ test("restoreCampaign migrates all four historical shapes, defaulting missing RP
   assert.deepEqual(restoredD.wardenProgress, { statPoints: {}, skillTreeIds: [], traitIds: [] });
   assert.deepEqual(restoredD.ownedEquipmentIds, []);
   assert.deepEqual(restoredD.companionFormation, {});
+  assert.deepEqual(restoredD.storyProgress, expectedMigratedStoryProgress);
 });
 
 test("restoreCampaign rejects a tampered save with an unaffordable statPoints total", () => {
@@ -480,6 +496,7 @@ test("deterministic persistence trace preserves stable campaign fields across se
     "ownedEquipmentIds",
     "companionFormation",
     "idleReturn",
+    "storyProgress",
   ]) {
     assert.deepEqual(restored[field], preSerialization[field], `${field} must survive persistence exactly`);
   }

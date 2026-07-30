@@ -10,6 +10,7 @@ import {
   queueInput,
   SKILL_RANK_DAMAGE_STEP,
 } from "../defense-run-simulation.js";
+import { cutsceneFromEvent } from "../defense-cutscene.js";
 import {
   COMMANDER,
   CUTSCENES,
@@ -23,6 +24,7 @@ import {
   STAGE_WAVE_DOCTRINE,
   XP_GROWTH,
 } from "../defense-catalog.js";
+import { STAGE_STORIES } from "../stage-story-catalog.js";
 
 function squaredDistance(left, right) {
   return (left.x - right.x) ** 2 + (left.y - right.y) ** 2;
@@ -1035,15 +1037,71 @@ test("Abyssal Banner gives a later extracted companion one bonus", () => {
     600,
   );
 });
-test("later-stage runs expose their authored cutscene without falling back to generic copy", () => {
-  const run = createDefenseRun({ stageId: "abyss-chancel", seed: 2 });
-  const snapshot = getRunSnapshot(run);
-  const started = snapshot.events.find(({ type }) => type === "STAGE_STARTED");
+test("all stage starts expose ordered authored quest dialogue without generic fallback", () => {
+  const expectedByStage = {
+    "cinder-span": {
+      acquisition: [
+        ["사슬이 길을 막는다고 생각하나요? 서쪽 불씨를 버티고, 무엇을 붙들고 있는지 직접 보세요.", "EMBER LOOKOUT"],
+        ["문을 지키는 사슬인지, 무너지는 길을 붙드는 사슬인지 확인하겠다.", "DUSK WARDEN"],
+      ],
+      summary: ["서쪽 불씨를 버티고 사슬의 진실을 확인하세요.", "EMBER LOOKOUT"],
+    },
+    "abyss-chancel": {
+      acquisition: [
+        ["등불을 들었군요. 여섯 번째 손이 같은 길을 걷고 있습니다.", "VEIL LOOKOUT"],
+        ["내 앞의 손들은 뭘 했지?", "DUSK WARDEN"],
+        ["모두 거울 속 손이 보여준 서약을 되풀이했습니다. 당신도 그럴 건가요?", "VEIL LOOKOUT"],
+      ],
+      summary: ["거울이 먼저 내놓은 답을 거부하세요.", "VEIL LOOKOUT"],
+    },
+    "echo-throne": {
+      acquisition: [
+        ["왕좌는 비어 있지만 명령은 아직 회랑을 돌고 있습니다. 돌아오는 메아리보다 먼저 단상에 서세요.", "THRONE LOOKOUT"],
+        ["주인이 아니라 명령을 끝내겠다.", "DUSK WARDEN"],
+      ],
+      summary: ["빈 왕좌보다 오래 남은 명령을 끊으세요.", "THRONE LOOKOUT"],
+    },
+  };
 
-  assert.deepEqual(snapshot.cutscene, CUTSCENES["abyss-chancel"]);
-  assert.deepEqual(started?.cutscene, CUTSCENES["abyss-chancel"].intro);
-  assert.notDeepEqual(snapshot.cutscene, CUTSCENES.default);
-  assert.equal(snapshot.stageId, "abyss-chancel");
+  for (const [stageId, expected] of Object.entries(expectedByStage)) {
+    const snapshot = getRunSnapshot(createDefenseRun({ stageId, seed: 2 }));
+    const started = snapshot.events.find(({ type }) => type === "STAGE_STARTED");
+    assert.ok(started, `${stageId} must emit STAGE_STARTED`);
+    const presentation = cutsceneFromEvent(started);
+    const expectedSpeakerPairs = [
+      [CUTSCENES[stageId].intro[0], "speaker-a"],
+      [CUTSCENES[stageId].intro[1], "speaker-b"],
+      ...expected.acquisition,
+      expected.summary,
+    ];
+    const authoredDialogue = STAGE_STORIES[stageId].quest.acquisitionDialogue;
+
+    assert.deepEqual(snapshot.cutscene, CUTSCENES[stageId], `${stageId} must retain its authored catalog cutscene`);
+    assert.deepEqual(
+      authoredDialogue.map(({ text, speaker }) => [text, speaker]),
+      expected.acquisition,
+      `${stageId} acquisition dialogue must retain its authoritative text and speakers`,
+    );
+    assert.deepEqual(
+      [started?.storyBeat?.dialogue?.text, started?.storyBeat?.dialogue?.speaker],
+      expected.summary,
+      `${stageId} summary must retain its authoritative text and speaker`,
+    );
+    assert.deepEqual(started?.cutscene, CUTSCENES[stageId].intro, `${stageId} raw stage-start lines must retain only the authored intro`);
+    assert.equal(new Set(started?.cutscene).size, CUTSCENES[stageId].intro.length, `${stageId} raw stage-start lines must be unique`);
+    assert.deepEqual(
+      presentation.beats.map(({ text, relay }) => [text, relay.speaker]),
+      expectedSpeakerPairs,
+      `${stageId} dialogue speakers must resolve from exact authored text`,
+    );
+    assert.deepEqual(
+      presentation.beats.slice(0, CUTSCENES[stageId].intro.length).map(({ relay }) => relay.speaker),
+      ["speaker-a", "speaker-b"],
+      `${stageId} legacy intro lines must retain generic relay labels`,
+    );
+    assert.notDeepEqual(snapshot.cutscene, CUTSCENES.default, `${stageId} must reject generic fallback copy`);
+    assert.equal(snapshot.stageId, stageId);
+  }
 });
 
 test("selecting an already-owned reward closes an all-owned terminal offer", () => {

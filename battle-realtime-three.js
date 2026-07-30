@@ -15,6 +15,7 @@ const MAX_VISUAL_EFFECTS = 24;
 const SIM_TICK_RATE = 60;
 const MAX_ANIMATION_TICK_DELTA = 6;
 const MAX_VISUAL_EVENT_KEYS = 128;
+const MAX_PENDING_STAGE_NPC_BEATS = 4;
 // Software rasterizers (SwiftShader/llvmpipe) make fragment cost dominate the
 // frame. Bound their drawn backbuffer while preserving the logical CSS viewport;
 // real GPUs remain full resolution.
@@ -51,11 +52,10 @@ const WORLD_SCALE = 14;
 const TERRAIN_TARGET_HALF_EXTENT = WORLD_SCALE * 1.15;
 const STAGE_VFX_GROUND_LIFT = 0.04;
 // Per-actor-kind target world height (Y-axis extent after uniform scale).
-// Chosen to preserve the same relative size relationships the Canvas2D
-// fallback encodes via pixel radius (presentationRadius() in app.js: boss
-// far > commander/enemy > companion > pickup/projectile).
+// Bosses remain the largest silhouette; the commander deliberately reads
+// smaller than a normal enemy so friendly attachments do not obscure combat.
 const TARGET_HEIGHT = Object.freeze({
-  commander: 2.9,
+  commander: 1.55,
   boss: 4.5,
   elite: 2.2,
   enemy: 1.7,
@@ -326,8 +326,8 @@ const VFX_LIFETIME_TICKS = Object.freeze({
   ITEM_COLLECTED: 24,
   OBJECTIVE_PHASE_CHANGED: 36,
   ENCOUNTER_OBJECTIVE_STARTED: 36,
-  OBJECTIVE_COMPLETED: 48,
-  ENCOUNTER_OBJECTIVE_COMPLETED: 48,
+  OBJECTIVE_COMPLETED: 72,
+  ENCOUNTER_OBJECTIVE_COMPLETED: 42,
   WAVE_CLEARED: 36,
   EXTRACTION_WINDOW_OPENED: 60,
   OCCUPATION_CAPTURED: 48,
@@ -342,6 +342,7 @@ const VFX_LIFETIME_TICKS = Object.freeze({
   TERMINAL: 90,
 });
 const CRITICAL_VFX_EVENT_TYPES = Object.freeze([
+  "CRITICAL_HIT",
   "BOSS_ATTACK_TELEGRAPHED",
   "BOSS_RALLY_WINDOW",
   "BOSS_SPAWNED",
@@ -354,10 +355,35 @@ const CRITICAL_VFX_EVENT_TYPES = Object.freeze([
   "ENCOUNTER_OBJECTIVE_STARTED",
   "OBJECTIVE_COMPLETED",
   "ENCOUNTER_OBJECTIVE_COMPLETED",
+  "OCCUPATION_CAPTURED",
   "OBJECTIVE_FAILED",
   "ENCOUNTER_OBJECTIVE_FAILED",
   "TERMINAL",
 ]);
+const QUEST_VFX_PRESENTATIONS = Object.freeze({
+  OBJECTIVE_PHASE_CHANGED: Object.freeze({
+    intent: "telegraph", role: "route-objective", color: new THREE.Color(0x5de6ff), scale: 0.9, lifetime: 36,
+  }),
+  ENCOUNTER_OBJECTIVE_STARTED: Object.freeze({
+    intent: "telegraph", role: "route-objective", color: new THREE.Color(0x5de6ff), scale: 0.9, lifetime: 36,
+  }),
+  ENCOUNTER_OBJECTIVE_COMPLETED: Object.freeze({
+    intent: "success", role: "route-objective", color: new THREE.Color(0x66f0bd), scale: 1.1, lifetime: 42,
+  }),
+  OCCUPATION_CAPTURED: Object.freeze({
+    intent: "contact", role: "occupation-focus", color: new THREE.Color(0xa06bff), scale: 1.2, lifetime: 48,
+  }),
+  BOSS_SPAWNED: Object.freeze({
+    intent: "boss", role: "boss-threshold", color: new THREE.Color(0xffa43a), scale: 1.45, lifetime: 90,
+  }),
+  OBJECTIVE_COMPLETED: Object.freeze({
+    intent: "completion", role: "extraction-beacon", color: new THREE.Color(0xffd66b), scale: 1.35, lifetime: 72,
+  }),
+});
+
+function questVfxPresentationForEvent(event) {
+  return QUEST_VFX_PRESENTATIONS[event?.type] ?? null;
+}
 
 // Rigged character GLBs embed the canonical 11-clip action library named
 // "<assetId>::<action>::v01". The commander additionally authors exact
@@ -369,6 +395,12 @@ const RIG_ACTION_KEYS = Object.freeze([
   "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "die", "show",
   "attack_melee", "attack_ranged",
 ]);
+const STAGE_NPC_STORY_ACTIONS = Object.freeze({
+  questAcquisition: Object.freeze(["show"]),
+  occupationReversal: Object.freeze(["bighit", "defence"]),
+  bossEntry: Object.freeze(["defence"]),
+  questCompletion: Object.freeze(["show"]),
+});
 const LOCOMOTION_ACTION_KEYS = Object.freeze(["idle", "move", "run"]);
 const RANGED_COMBAT_IDENTITIES = Object.freeze(["ranged", "support"]);
 const MELEE_COMBAT_IDENTITIES = Object.freeze(["rusher", "flanker", "guardian", "vanguard", "striker"]);
@@ -504,14 +536,17 @@ const AMBIENT_LOOK_YAW = THREE.MathUtils.degToRad(8);
 // authored actor silhouette is the presentation-space close-contact bound.
 const MELEE_PRESENTATION_DISTANCE = TARGET_HEIGHT.boss;
 // --- Impact feel constants (presentation-only) ---------------------------
-// Neon blue for a normal connect, shadow-violet for a heavy/critical one, to
-// match the Solo-Leveling system-window palette used by the DOM HUD.
+// Normal contact is cyan. Critical contact keeps a purple emissive core with
+// a gold albedo edge, so the distinction survives bright stage lighting.
 const IMPACT_FLASH_COLOR = new THREE.Color(0x5de6ff);
 const IMPACT_FLASH_HEAVY_COLOR = new THREE.Color(0xa06bff);
+const IMPACT_FLASH_CRITICAL_ACCENT = new THREE.Color(0xffd66b);
 const IMPACT_FLASH_MS = 180;
 const IMPACT_FLASH_HEAVY_MS = 320;
 const IMPACT_FLASH_PEAK = 0.55;
 const IMPACT_FLASH_HEAVY_PEAK = 1.1;
+const IMPACT_CONTACT_STAGGER_MS = 34;
+const MAX_IMPACT_STAGGER_TARGETS = 5;
 // Knockback is a render-space offset in world units along the attacker to
 // target axis; updateActorFollow() pulls the root back to the authoritative
 // position every frame, so these stay well under one actor width.
@@ -519,30 +554,59 @@ const IMPACT_KNOCKBACK_MS = 160;
 const IMPACT_KNOCKBACK_HEAVY_MS = 260;
 const IMPACT_KNOCKBACK_DISTANCE = 0.12;
 const IMPACT_KNOCKBACK_HEAVY_DISTANCE = 0.26;
-// Camera shake fires only on heavy hits and is bounded so the orbit framing
-// stays readable; it is skipped entirely under prefers-reduced-motion.
+// Camera impulse is admitted only for heavy, critical, or boss contacts and
+// is bounded so it cannot disturb the authored orbit framing.
 const IMPACT_SHAKE_MS = 220;
 const IMPACT_SHAKE_AMPLITUDE = 0.07;
 const IMPACT_SHAKE_BOSS_AMPLITUDE = 0.13;
+const IMPACT_SHAKE_MAX_AMPLITUDE = 0.13;
 const IMPACT_SHAKE_FREQUENCY = 38;
-// Each entry maps one public snapshot event to { attackerId, targetId, heavy }
-// or null when that event did not actually land damage.
+// Each entry maps an emitted contact event to its presentation participants.
+// Windup/fire events are deliberately absent: they are not authoritative hits.
 const IMPACT_FEEDBACK_SOURCES = Object.freeze({
-  WEAPON_FIRED: (event) =>
-    event?.critical === true ? { attackerId: event.entityId, targetId: event.targetId, heavy: true } : null,
+  MELEE_IMPACT: (event) => ({
+    attackerId: event?.sourceId ?? event?.entityId,
+    targetId: event?.targetId,
+    heavy: event?.heavy === true,
+    critical: event?.critical === true,
+  }),
   SKILL_RESOLVED_DAMAGE: (event) => ({
     attackerId: event?.sourceId,
     targetId: event?.targetId,
-    heavy: event?.critical === true,
+    heavy: event?.heavy === true || event?.critical === true,
+    critical: event?.critical === true,
   }),
-  CRITICAL_HIT: (event) => ({ attackerId: event?.entityId, targetId: event?.targetId, heavy: true }),
+  CRITICAL_HIT: (event) => ({
+    attackerId: event?.entityId,
+    targetId: event?.targetId,
+    heavy: true,
+    critical: true,
+  }),
   ENEMY_ATTACK: (event) =>
-    finite(event?.damage, 0) > 0 ? { attackerId: event.entityId, targetId: event.targetId, heavy: false } : null,
+    finite(event?.damage, 0) > 0
+      ? { attackerId: event.entityId, targetId: event.targetId, heavy: event?.heavy === true, critical: false }
+      : null,
   PROJECTILE_IMPACT: (event) =>
     event?.hit === false
       ? null
-      : { attackerId: event?.sourceId ?? event?.ownerId, targetId: event?.targetId, heavy: false },
-  COMMANDER_DAMAGED: (event) => ({ attackerId: event?.sourceId ?? event?.entityId, targetId: "commander", heavy: false }),
+      : {
+        attackerId: event?.sourceId ?? event?.ownerId,
+        targetId: event?.targetId,
+        heavy: event?.heavy === true,
+        critical: event?.critical === true,
+      },
+  COMMANDER_DAMAGED: (event) => ({
+    attackerId: event?.sourceId ?? event?.entityId,
+    targetId: "commander",
+    heavy: event?.heavy === true,
+    critical: event?.critical === true,
+  }),
+  COMPANION_DAMAGED: (event) => ({
+    attackerId: event?.sourceId,
+    targetId: event?.entityId,
+    heavy: event?.heavy === true,
+    critical: event?.critical === true,
+  }),
 });
 // Movement in this simulation is continuous position sync (app.js's
 // projected() feeds ARENA-scale x/y every tick), not a discrete "moving"
@@ -887,14 +951,63 @@ function feedbackKey(event) {
   ]);
 }
 
-function effectAnchor(snapshot, event) {
-  const targetId = event?.targetId ?? event?.entityId ?? event?.enemyId ?? "";
-  if (targetId === "gate" || event?.type === "GATE_BREACHED") return snapshot?.gate ?? snapshot?.base;
-  if (targetId === "commander") return snapshot?.commander ?? snapshot?.player;
-  for (const entity of [...list(snapshot, "enemies", "hostiles"), ...list(snapshot, "companions", "allies")]) {
-    if (entity?.id === targetId) return entity;
+function questPointForEvent(snapshot, event) {
+  const presentation = questVfxPresentationForEvent(event);
+  if (!presentation) return null;
+  const profile = stageWorldFor(resolveStageId(snapshot) ?? event?.stageId);
+  const points = profile?.presentation?.questPoints;
+  if (!Array.isArray(points)) return null;
+  const questId = event?.quest?.questId ?? event?.storyBeat?.questId;
+  const bindingType = event?.type === "ENCOUNTER_OBJECTIVE_STARTED"
+    || event?.type === "OBJECTIVE_PHASE_CHANGED"
+    ? "ENCOUNTER_OBJECTIVE_COMPLETED"
+    : event?.type;
+  const bindingSources = [event, event?.quest, event?.storyBeat?.event];
+  const mayUseRoleFallback = (event?.type === "ENCOUNTER_OBJECTIVE_STARTED"
+    || event?.type === "OBJECTIVE_PHASE_CHANGED")
+    && Boolean(questId || event?.storyBeat);
+  let hasBindingData = false;
+  let roleFallback = null;
+  for (const point of points) {
+    if (questId && point.questId !== questId) continue;
+    if (mayUseRoleFallback && point.visualRole === presentation.role) roleFallback = point;
+    const binding = point.eventBinding;
+    if (binding?.type !== bindingType) continue;
+    let matchedFields = 0;
+    let exact = true;
+    for (const [key, value] of Object.entries(binding)) {
+      if (key === "type") continue;
+      matchedFields += 1;
+      const fieldPresent = bindingSources.some((source) => source?.[key] !== undefined);
+      hasBindingData ||= fieldPresent;
+      if (!bindingSources.some((source) => source?.[key] === value)) exact = false;
+    }
+    if (matchedFields > 0 && exact) return point;
   }
-  return snapshot?.commander ?? snapshot?.player ?? snapshot?.gate ?? snapshot?.base;
+  return mayUseRoleFallback && !hasBindingData ? roleFallback : null;
+}
+
+function effectAnchor(snapshot, event) {
+  const questPresentation = questVfxPresentationForEvent(event);
+  const questPoint = questPresentation ? questPointForEvent(snapshot, event) : null;
+  if (questPoint) return questPoint.placement;
+  const targetId = event?.targetId ?? event?.entityId ?? event?.enemyId ?? event?.bossId ?? "";
+  if (targetId === "gate" || event?.type === "GATE_BREACHED") return snapshot?.gate ?? snapshot?.base ?? null;
+  const target = snapshotEntityById(snapshot, targetId);
+  if (target) return target;
+  const authoredAnchor = event?.anchor ?? event?.position ?? event?.point;
+  if (authoredAnchor && Number.isFinite(authoredAnchor.x) && Number.isFinite(authoredAnchor.y)) {
+    return authoredAnchor;
+  }
+  switch (event?.type) {
+    case "INPUT_ACCEPTED":
+    case "INPUT_REJECTED":
+    case "WARDENS_WARD_TRIGGERED":
+    case "COMMANDER_DAMAGED":
+      return snapshot?.commander ?? snapshot?.player ?? null;
+    default:
+      return null;
+  }
 }
 
 function snapshotEntityById(snapshot, entityId) {
@@ -904,7 +1017,7 @@ function snapshotEntityById(snapshot, entityId) {
   const gate = snapshot?.gate ?? snapshot?.base;
   if (gate?.id === entityId || entityId === "gate") return gate;
   for (const entity of list(snapshot, "enemies", "hostiles")) {
-    if (entity?.id === entityId) return entity;
+    if (entity?.id === entityId || entity?.bossId === entityId) return entity;
   }
   for (const entity of list(snapshot, "companions", "allies")) {
     if (entity?.id === entityId) return entity;
@@ -945,7 +1058,122 @@ function loadGltf(path) {
   return gltfCache.get(url);
 }
 
+// Overlay animation system — 9-clip unarmed motion pack (rest-relative
+// quaternion deltas) retargeted onto any DEF-humanoid-v1 character at runtime.
+// Design: _workspace/current/overlay-architecture.md
+// Contract: RUNTIME_ANIMATION_CONTRACT.md §5
+const OVERLAY_ANIMATION_PATH = "assets/motion/ingame/unarmed-core.glb";
+// (overlay action keys: idle, move, run, hit, bighit, attack, critical, avoid, defence)
+let warnedOverlayLoadFailure = false;
+let overlayDeltaEntriesPromise = null;
+const adaptedOverlayEntriesByModel = new Map();
 
+function loadOverlayDeltaEntries() {
+  if (overlayDeltaEntriesPromise) return overlayDeltaEntriesPromise;
+  overlayDeltaEntriesPromise = loadGltf(OVERLAY_ANIMATION_PATH).then((gltf) => {
+    const clips = (gltf.animations ?? []).filter((clip) => clip.tracks.length > 0);
+    clips.forEach(normalizeOverlayDeltaClip);
+    return clips;
+  }).catch((err) => {
+    if (!warnedOverlayLoadFailure) {
+      console.warn("overlay delta pack load failed:", err.message || err);
+      warnedOverlayLoadFailure = true;
+    }
+    return null;
+  });
+  return overlayDeltaEntriesPromise;
+}
+
+function normalizeOverlayDeltaClip(clip) {
+  // For each quaternion track, ensure shortest-path continuity: detect and
+  // correct flipped (>180°) quaternion sign jumps between adjacent keyframes.
+  for (const track of clip.tracks) {
+    if (track.ValueTypeName !== "quaternion") continue;
+    const values = track.values;
+    if (values.length < 8) continue;
+    let prevW = values[3];
+    for (let i = 4; i < values.length; i += 4) {
+      const w = values[i + 3];
+      // Negate the entire quaternion if the dot product with the previous
+      // quaternion is negative (sign flip > 90° indicates a wraparound).
+      if (w * prevW < 0) {
+        const d = values[i] * values[i] + values[i + 1] * values[i + 1] + values[i + 2] * values[i + 2] + w * w;
+        if (d > 1e-6) {
+          values[i] = -values[i];
+          values[i + 1] = -values[i + 1];
+          values[i + 2] = -values[i + 2];
+          values[i + 3] = -w;
+        }
+      }
+      prevW = values[i + 3];
+    }
+  }
+}
+
+function restQuatsFromInstance(instance) {
+  // Extract DEF-* bone rest pose quaternions from the cloned scene instance.
+  // Immediately after SkeletonUtils.clone() before any animation ticks, every
+  // Bone.quaternion holds its rest (bind) pose rotation.
+  const restQuats = {};
+  instance.traverse((node) => {
+    if (node.isBone && node.name.startsWith("DEF-")) {
+      restQuats[node.name] = node.quaternion.clone();
+    }
+  });
+  return restQuats;
+}
+
+function boneNameFromTrackName(trackName) {
+  // Track names follow pattern: "path/to/node.property"
+  // or "bone_name.quaternion" / "bone_name.rotation"
+  // Strip .quaternion, .rotation, ._quaternion suffixes
+  const dot = trackName.lastIndexOf(".");
+  if (dot === -1) return trackName;
+  const prop = trackName.slice(dot + 1);
+  if (prop === "quaternion" || prop === "rotation" || prop === "_quaternion") {
+    // Bone name is everything before the last dot
+    return trackName.slice(0, dot);
+  }
+  return trackName;
+}
+
+function composeDeltaWithRestPose(clip, restQuats) {
+  // For each quaternion track in the clip, pre-multiply every keyframe delta
+  // by the character's rest pose quaternion:  adapted = C_rest * delta
+  // Mutates clip tracks in place (no new allocation).
+  for (const track of clip.tracks) {
+    if (track.ValueTypeName !== "quaternion") continue;
+    const boneName = boneNameFromTrackName(track.name);
+    const restQ = restQuats[boneName];
+    if (!restQ) continue;
+    const values = track.values;
+    const deltaQ = new THREE.Quaternion();
+    for (let i = 0; i < values.length; i += 4) {
+      deltaQ.set(values[i], values[i + 1], values[i + 2], values[i + 3]);
+      deltaQ.premultiply(restQ);
+      values[i] = deltaQ.x;
+      values[i + 1] = deltaQ.y;
+      values[i + 2] = deltaQ.z;
+      values[i + 3] = deltaQ.w;
+    }
+  }
+  return clip;
+}
+
+function adaptOverlayEntries(modelPath, instance, deltaEntries) {
+  if (adaptedOverlayEntriesByModel.has(modelPath)) {
+    return adaptedOverlayEntriesByModel.get(modelPath);
+  }
+  const restQuats = restQuatsFromInstance(instance);
+  // Deep-clone each clip so the cached delta entries remain reusable across
+  // multiple instances of the same model (no cross-instance mutation).
+  const adapted = deltaEntries.map((clip) => ({
+    clip: composeDeltaWithRestPose(clip.clone(), restQuats),
+    source: "overlay",
+  }));
+  adaptedOverlayEntriesByModel.set(modelPath, adapted);
+  return adapted;
+}
 
 function stageNpcFacingYaw(npc, sourcePoint) {
   const target = npc?.attentionTarget
@@ -1153,7 +1381,12 @@ function applyCelShading(root) {
 }
 
 async function instantiateActorModel(relPath, targetHeight) {
-  const gltf = await loadGltf(relPath);
+  // Load the character GLB and overlay delta pack in parallel.
+  // If overlay fails to load, overlayDeltaEntries is null — fall back to base clips.
+  const [gltf, overlayDeltaEntries] = await Promise.all([
+    loadGltf(relPath),
+    loadOverlayDeltaEntries(),
+  ]);
   return serializeInstantiation(() => {
     // SkeletonUtils.clone() (not gltf.scene.clone()) so a SkinnedMesh instance
     // gets bound to its own cloned skeleton.
@@ -1163,7 +1396,19 @@ async function instantiateActorModel(relPath, targetHeight) {
     const baseEntries = (gltf.animations ?? []).map((clip) => ({ clip, source: "base" }));
     if (!baseEntries.length) return { instance, mixer: null, actions: {}, actionSources: {} };
     const mixer = new THREE.AnimationMixer(instance);
-    const { actions, actionSources } = buildActions(mixer, baseEntries);
+    let allEntries = baseEntries;
+    if (overlayDeltaEntries) {
+      const adapted = adaptOverlayEntries(relPath, instance, overlayDeltaEntries);
+      if (adapted.length) {
+        // Overlay entries appear before base entries. buildActions() first-match
+        // wins on duplicate action keys, so the overlay registration
+        // for a key wins over the base registration that follows. Nine overlay
+        // keys replace base; the 4 fallback-only keys (die, show, attack_melee,
+        // attack_ranged) have no overlay entry and fall through to base.
+        allEntries = [...adapted, ...baseEntries];
+      }
+    }
+    const { actions, actionSources } = buildActions(mixer, allEntries);
     return { instance, mixer, actions, actionSources };
   });
 }
@@ -1304,6 +1549,23 @@ async function instantiatePresentationModel(relPath, targetHeight) {
   action?.setLoop(THREE.LoopRepeat, Infinity).reset().play();
   return { instance, mixer, action };
 }
+async function instantiateAppearanceModel(reward) {
+  const gltf = await loadGltf(reward.modelPath);
+  const instance = SkeletonUtils.clone(gltf.scene);
+  ownRenderableResources(instance);
+  const scale = finite(reward.scale, 1);
+  instance.scale.setScalar(scale);
+  instance.position.set(
+    finite(reward.offset?.x, 0),
+    finite(reward.offset?.y, 0),
+    finite(reward.offset?.z, 0),
+  );
+  instance.rotation.y = finite(reward.yaw, 0);
+  instance.name = `appearance-prop:${reward.slot}:${reward.id ?? "equipped"}`;
+  instance.userData.appearanceSlot = reward.slot;
+  instance.userData.appearanceItemId = reward.id ?? null;
+  return instance;
+}
 
 
 async function instantiateStageProp(prop) {
@@ -1408,6 +1670,22 @@ function applySkillVfxSilhouette(instance, semanticVfxId) {
   );
   instance.userData.semanticVfxId = semanticVfxId;
 }
+function applyQuestVfxPresentation(instance, presentation, reducedMotion) {
+  if (!instance || !presentation) return;
+  instance.scale.multiplyScalar(presentation.scale);
+  instance.userData.questVfxIntent = presentation.intent;
+  instance.userData.motionPolicy = reducedMotion ? "held-core" : "animated";
+  instance.traverse((node) => {
+    const materials = Array.isArray(node.material) ? node.material : node.material ? [node.material] : [];
+    for (const material of materials) {
+      if (material.color) material.color.lerp(presentation.color, reducedMotion ? 0.42 : 0.22);
+      if (material.emissive) {
+        material.emissive.copy(presentation.color);
+        material.emissiveIntensity = Math.max(finite(material.emissiveIntensity, 1), reducedMotion ? 1.25 : 0.9);
+      }
+    }
+  });
+}
 
 
 function stageNpcGuardBones(root) {
@@ -1428,7 +1706,11 @@ function applyStageNpcGuardPose(record) {
 }
 
 async function instantiateStageNpc(npc) {
-  const { instance, mixer, actions, actionSources } = await instantiateActorModel(npc.modelPath, TARGET_HEIGHT.stageNpc);
+  const motionModelPath = meshRootForMotionCharacter(npc.actorId) ?? npc.modelPath;
+  const { instance, mixer, actions, actionSources } = await instantiateActorModel(
+    motionModelPath,
+    TARGET_HEIGHT.stageNpc,
+  );
   ownRenderableResources(instance);
   const point = worldPoint(npc.placement);
   const restGroundY = instance.position.y;
@@ -1446,7 +1728,10 @@ async function instantiateStageNpc(npc) {
     kind: "stage-npc",
     role: npc.role,
     actorId: npc.actorId,
-    modelPath: npc.modelPath,
+    questId: npc.questId ?? null,
+    questRole: npc.questRole ?? null,
+    modelPath: motionModelPath,
+    sourceModelPath: npc.modelPath,
     placement: npc.placement,
     presentationCue: npc.presentationCue,
     root: instance,
@@ -1459,7 +1744,14 @@ async function instantiateStageNpc(npc) {
     activeActionKey: idleAction ? (actions[idleKey] ? idleKey : "idle") : null,
     oneShotAction: null,
     oneShotActionKey: null,
+    queuedAction: null,
+    storyBeatQueue: [],
+    presentationToken: 0,
+    presentationRoots: [],
+    presentationMixers: [],
+    loading: false,
     dead: false,
+    hideAfterDeath: false,
     moving: false,
     yaw: null,
     targetYaw: null,
@@ -1575,6 +1867,70 @@ function weaponSocket(root) {
     else if (!fallback && /hand/i.test(name)) fallback = node;
   });
   return socket ?? fallback ?? root;
+}
+
+const APPEARANCE_SLOT_NAMES = Object.freeze(["head", "back", "ward"]);
+const COMPANION_LOCOMOTION_STATES = new Set(["FOLLOW", "RETURN", "COLLECT"]);
+
+function appearanceSocket(root, slot) {
+  const patterns = {
+    head: /head|neck/i,
+    back: /back|spine|chest|upper[._-]?body/i,
+    ward: /hand[._-]?[l]|left[._-]?hand/i,
+  };
+  const pattern = patterns[slot];
+  let fallback = null;
+  let socket = null;
+  root?.traverse((node) => {
+    if (!node.isBone || socket) return;
+    const name = String(node.name || "");
+    if (pattern?.test(name)) socket = node;
+    else if (!fallback && /spine|chest|hand|head/i.test(name)) fallback = node;
+  });
+  return socket ?? fallback ?? root;
+}
+
+function normalizeAppearanceDescriptor(slot, value) {
+  if (!APPEARANCE_SLOT_NAMES.includes(slot) || !value || typeof value !== "object" || Array.isArray(value)) return null;
+  const id = typeof value.id === "string" ? value.id.trim() : "";
+  const modelPath = typeof value.modelPath === "string" ? value.modelPath.trim() : "";
+  if (!id || !modelUrl(modelPath) || !/\.glb(?:[?#].*)?$/i.test(modelPath)) return null;
+  const scale = Number(value.scale);
+  if (!Number.isFinite(scale) || scale <= 0 || scale > 20) return null;
+  const offset = value.offset && typeof value.offset === "object" && !Array.isArray(value.offset)
+    ? value.offset
+    : {};
+  const boundedOffset = (axis) => {
+    const coordinate = Number(offset[axis]);
+    return Number.isFinite(coordinate) ? THREE.MathUtils.clamp(coordinate, -10, 10) : 0;
+  };
+  const yaw = Number(value.yaw);
+  return Object.freeze({
+    slot,
+    id,
+    modelPath,
+    scale,
+    offset: Object.freeze({
+      x: boundedOffset("x"),
+      y: boundedOffset("y"),
+      z: boundedOffset("z"),
+    }),
+    yaw: Number.isFinite(yaw) ? THREE.MathUtils.euclideanModulo(yaw + Math.PI, Math.PI * 2) - Math.PI : 0,
+  });
+}
+
+function normalizeAppearanceLoadout(loadout) {
+  const entries = Array.isArray(loadout)
+    ? loadout.map((value) => [value?.slot, value])
+    : Object.entries(loadout && typeof loadout === "object" ? loadout : {});
+  const bySlot = new Map();
+  for (const [slot, value] of entries) {
+    const descriptor = normalizeAppearanceDescriptor(slot, value);
+    if (descriptor) bySlot.set(slot, descriptor);
+  }
+  return [...bySlot.values()].sort(
+    (left, right) => APPEARANCE_SLOT_NAMES.indexOf(left.slot) - APPEARANCE_SLOT_NAMES.indexOf(right.slot),
+  );
 }
 
 async function instantiateVfxModel(relPath, isCurrent = null) {
@@ -1847,6 +2203,9 @@ export class RealtimeBattle {
     this.pendingDeathEchoLoads = new Set();
     this.pendingDeathEchoes = []; // captureDeathEchoes()-collected { modelPath, x, y, z }, drained by collectFeedback()
     this.vfxGeneration = 0;
+    this.pendingStageNpcBeats = new Map();
+    this.appearanceLoadout = [];
+    this.appearanceGeneration = 0;
     // Tick-bearing snapshots advance mixers, follow, and facing from the
     // authoritative 60 Hz simulation timeline. Utility callers that omit a
     // tick retain the wall-clock path below.
@@ -2001,6 +2360,7 @@ export class RealtimeBattle {
   clearStageWorld() {
     for (const record of this.stageDecorRecords) record.mixer?.stopAllAction();
     this.stageDecorRecords = [];
+    this.pendingStageNpcBeats.clear();
     this.stageTerrainRecord = null;
     if (!this.terrainGroup) return;
     while (this.terrainGroup.children.length) {
@@ -2008,6 +2368,117 @@ export class RealtimeBattle {
       this.terrainGroup.remove(child);
       disposeObject3D(child);
     }
+  }
+
+  commanderPresentationRecord() {
+    for (const record of this.actors.values()) {
+      if (record.kind === "commander") return record;
+    }
+    return null;
+  }
+
+  clearAppearanceAttachments(record = this.commanderPresentationRecord()) {
+    if (!record?.appearanceRoots) return;
+    for (const root of record.appearanceRoots.values()) {
+      root.parent?.remove(root);
+      disposeObject3D(root);
+    }
+    record.appearanceRoots.clear();
+  }
+
+  mountAppearanceLoadout(record = this.commanderPresentationRecord()) {
+    if (!record?.root || record.kind !== "commander") return;
+    this.clearAppearanceAttachments(record);
+    const generation = this.appearanceGeneration;
+    const stageToken = this.stageLoadToken;
+    for (const reward of this.appearanceLoadout) {
+      const socket = appearanceSocket(record.root, reward.slot);
+      const slotRoot = new THREE.Group();
+      slotRoot.name = `appearance-slot:${reward.slot}`;
+      slotRoot.userData.appearanceSlot = reward.slot;
+      slotRoot.userData.appearanceItemId = reward.id;
+      slotRoot.userData.appearanceLoaded = false;
+      socket.add(slotRoot);
+      record.appearanceRoots.set(reward.slot, slotRoot);
+      instantiateAppearanceModel(reward)
+        .then((instance) => {
+          const current = !this.disposed
+            && generation === this.appearanceGeneration
+            && stageToken === this.stageLoadToken
+            && this.commanderPresentationRecord() === record
+            && record.appearanceRoots.get(reward.slot) === slotRoot
+            && slotRoot.parent === socket;
+          if (!current) {
+            disposeObject3D(instance);
+            return;
+          }
+          slotRoot.userData.appearanceLoaded = true;
+          slotRoot.add(instance);
+        })
+        .catch(() => {
+          if (record.appearanceRoots.get(reward.slot) !== slotRoot) return;
+          record.appearanceRoots.delete(reward.slot);
+          slotRoot.parent?.remove(slotRoot);
+          disposeObject3D(slotRoot);
+        });
+    }
+  }
+
+  setAppearanceLoadout(loadout) {
+    const nextLoadout = normalizeAppearanceLoadout(loadout);
+    const unchanged = nextLoadout.length === this.appearanceLoadout.length
+      && nextLoadout.every((entry, index) => entry.slot === this.appearanceLoadout[index]?.slot
+        && entry.id === this.appearanceLoadout[index]?.id);
+    if (unchanged) return;
+    this.appearanceLoadout = nextLoadout;
+    this.appearanceGeneration += 1;
+    this.mountAppearanceLoadout();
+  }
+
+  playStageNpcStoryBeat(record, storyBeat, nowMs) {
+    const candidates = STAGE_NPC_STORY_ACTIONS[storyBeat?.kind];
+    if (!record || !candidates) return false;
+    if (record.oneShotAction) {
+      if (record.storyBeatQueue.length >= MAX_PENDING_STAGE_NPC_BEATS) record.storyBeatQueue.shift();
+      record.storyBeatQueue.push({ storyBeat, nowMs });
+      return false;
+    }
+    for (const actionKey of candidates) {
+      if (!record.actions?.[actionKey]) continue;
+      if (this.triggerAction(record, actionKey, nowMs)) return true;
+    }
+    this.recoverLocomotion(record, 0);
+    return false;
+  }
+
+  triggerStageNpcStoryBeat(event, nowMs) {
+    const storyBeat = event?.storyBeat;
+    if (!STAGE_NPC_STORY_ACTIONS[storyBeat?.kind]) return false;
+    const npcId = event?.quest?.questGiverNpcId ?? null;
+    const questId = event?.quest?.questId ?? null;
+    const record = this.stageDecorRecords.find((candidate) => candidate.kind === "stage-npc"
+      && ((npcId && candidate.id === npcId) || (questId && candidate.questId === questId)));
+    if (record) return this.playStageNpcStoryBeat(record, storyBeat, nowMs);
+    const pendingKey = npcId ?? questId;
+    if (pendingKey) {
+      const pending = this.pendingStageNpcBeats.get(pendingKey) ?? [];
+      if (!pending.some((entry) => entry.storyBeat?.id === storyBeat.id)) {
+        if (pending.length >= MAX_PENDING_STAGE_NPC_BEATS) pending.shift();
+        pending.push({ storyBeat, nowMs });
+      }
+      this.pendingStageNpcBeats.set(pendingKey, pending);
+    }
+    return false;
+  }
+
+  consumePendingStageNpcBeat(record) {
+    if (record?.kind !== "stage-npc") return;
+    const pending = this.pendingStageNpcBeats.get(record.id)
+      ?? this.pendingStageNpcBeats.get(record.questId);
+    if (!pending?.length) return;
+    this.pendingStageNpcBeats.delete(record.id);
+    if (record.questId) this.pendingStageNpcBeats.delete(record.questId);
+    for (const beat of pending) this.playStageNpcStoryBeat(record, beat.storyBeat, beat.nowMs);
   }
 
   ensureStageTerrain(stageId, phase = DEFAULT_CAMERA_PHASE, tick = null) {
@@ -2024,6 +2495,8 @@ export class RealtimeBattle {
     this.stageTerrainError = null;
     const loadToken = ++this.stageLoadToken;
     this.clearStageWorld();
+    this.appearanceGeneration += 1;
+    this.mountAppearanceLoadout();
     // Warm the stage boss's GLB while the player is still in the opening
     // cutscene. It is 4 MB of authored rig that otherwise starts downloading
     // only when the boss spawns mid-fight, which pops the boss in late on a
@@ -2097,6 +2570,7 @@ export class RealtimeBattle {
           if (record.kind === "stage-vfx") applyStageVfxPolicy(record, this.reducedMotion);
           this.terrainGroup.add(record.root);
           this.stageDecorRecords.push(record);
+          if (record.kind === "stage-npc") this.consumePendingStageNpcBeat(record);
         },
         () => {},
       );
@@ -2215,7 +2689,7 @@ export class RealtimeBattle {
       && LOCOMOTION_ACTION_KEYS.includes(entity.presentationAction);
     const record = {
       root: null, kind, modelPath, fallbackModelPath, loading: Boolean(modelPath),
-      entityKind: entity.kind ?? null, role: entity.role ?? null, moveState: entity.move ?? null,
+      entityKind: entity.kind ?? null, role: entity.role ?? null, moveState: entity.move ?? null, aiState: entity.aiState ?? null,
       mixer: null, actions: {}, actionSources: {}, activeActionKey: null, targetHeight: actorTargetHeight(entity),
       activeActionSource: null, activeActionClip: null,
       oneShotAction: null, oneShotActionKey: null,
@@ -2223,6 +2697,7 @@ export class RealtimeBattle {
       presentationAction: null,
       dead: false, hideAfterDeath: false,
       presentationToken: 0, presentationRoots: [], presentationMixers: [],
+      appearanceRoots: new Map(),
       moving: false, lastX: null, lastZ: null,
       // Facing state (D23 Phase 1). `yaw` is the rendered angle, eased
       // toward `targetYaw` in updateAnimations(); both stay null until the
@@ -2245,6 +2720,7 @@ export class RealtimeBattle {
       // degrade gracefully instead of leaving a silent gap): a small
       // emissive marker keeps the entity visible.
       attachMissingActorMarker(record, this.actorGroup);
+      if (kind === "commander") this.mountAppearanceLoadout(record);
       return record;
     }
     const targetHeight = actorTargetHeight(entity);
@@ -2274,6 +2750,7 @@ export class RealtimeBattle {
           return;
         }
         this.actorGroup.add(instance);
+        if (record.kind === "commander") this.mountAppearanceLoadout(record);
         const queued = record.queuedAction;
         record.queuedAction = null;
         const startedQueued = queued
@@ -2289,6 +2766,7 @@ export class RealtimeBattle {
         if (this.disposed || this.actors.get(entity.id) !== record) return;
         console.warn(`Failed to load actor model ${record.modelPath}:`, error);
         attachMissingActorMarker(record, this.actorGroup);
+        if (record.kind === "commander") this.mountAppearanceLoadout(record);
       });
     return record;
   }
@@ -2399,6 +2877,7 @@ export class RealtimeBattle {
     if (record.kind === "commander" && typeof record.moveState === "string" && record.moveState !== "IDLE") {
       return "run";
     }
+    if (record.kind === "companion" && COMPANION_LOCOMOTION_STATES.has(record.aiState)) return "move";
     return record.moving ? "move" : "idle";
   }
 
@@ -2512,6 +2991,10 @@ export class RealtimeBattle {
       if (record.hideAfterDeath && record.root) record.root.visible = false;
       return;
     }
+    if (record.kind === "stage-npc" && record.storyBeatQueue?.length) {
+      const nextStoryBeat = record.storyBeatQueue.shift();
+      if (this.playStageNpcStoryBeat(record, nextStoryBeat.storyBeat, nextStoryBeat.nowMs)) return;
+    }
     const queued = record.queuedAction;
     record.queuedAction = null;
     if (queued && this.triggerAction(record, queued.key, undefined, queued.presentation)) return;
@@ -2599,6 +3082,7 @@ export class RealtimeBattle {
     record.entityKind = entity.kind ?? record.entityKind;
     record.role = entity.role ?? record.role;
     record.moveState = entity.move ?? null;
+    record.aiState = entity.aiState ?? null;
     const requestedAction = typeof entity.presentationAction === "string"
       && RIG_ACTION_KEYS.includes(entity.presentationAction)
       ? entity.presentationAction
@@ -2615,7 +3099,11 @@ export class RealtimeBattle {
     const dead = status === "DOWNED" || status === "DEAD" || status === "DEFEATED"
       || (Number.isFinite(entity.hp) && entity.hp <= 0)
       || (Number.isFinite(entity.integrity) && entity.integrity <= 0);
-    if (!dead || record.dead) return;
+    if (!dead) {
+      if (!record.loading && !record.oneShotAction) this.recoverLocomotion(record);
+      return;
+    }
+    if (record.dead) return;
     record.hideAfterDeath = record.kind === "companion";
     const started = this.triggerAction(record, "die");
     if (!started && !record.loading && record.hideAfterDeath && record.root) {
@@ -2974,7 +3462,13 @@ export class RealtimeBattle {
   // disabling it cannot resume a partially completed dolly.
   setReducedMotion(reducedMotion) {
     this.reducedMotion = reducedMotion === true;
-    if (this.reducedMotion) this.stageIntro = null;
+    if (this.reducedMotion) {
+      this.stageIntro = null;
+      this.knockbacks.clear();
+      this.clearCameraShakeOffset();
+      this.cameraShake = null;
+    }
+    for (const flash of this.hitFlashes.values()) flash.static = this.reducedMotion;
     for (const record of this.stageDecorRecords) {
       if (record.kind === "stage-vfx") applyStageVfxPolicy(record, this.reducedMotion);
     }
@@ -2993,12 +3487,56 @@ export class RealtimeBattle {
       && snapshot.events.some((event) => event?.type === "STAGE_STARTED" && event.tick === 0);
   }
   // A second tick-zero STAGE_STARTED after a progressed timeline is a new
-  // session run, even when the event keeps its deterministic id. Clear
-  // animation keys before the confirming frame so its intro can replay, but
-  // retain visual keys until that batch has filtered its existing VFX.
+  // presentation run even when the stage id and deterministic event ids repeat.
+  // Retire transient state before consuming the new frame so no old effect,
+  // queued NPC beat, or impact pose crosses the retry boundary.
   resetPresentationEventDeduplicationForNewRun(startsStageAtTickZero) {
     if (!startsStageAtTickZero || !(this.lastAnimTick > 0)) return false;
     this.animationEventKeys.clear();
+    this.visualEventKeys.clear();
+    this.vfxGeneration += 1;
+    for (const record of this.vfxInstances) this.retireVfxRecord(record);
+    this.vfxInstances = [];
+    this.pendingVfxLoads.clear();
+    this.pendingDeathEchoLoads.clear();
+    this.pendingDeathEchoes = [];
+    this.pendingStageNpcBeats.clear();
+    for (const flash of this.hitFlashes.values()) {
+      flash.record?.root?.traverse((node) => {
+        const materials = Array.isArray(node.material) ? node.material : node.material ? [node.material] : [];
+        for (const material of materials) {
+          if (material?.userData?.impactBaseEmissive && material.emissive) {
+            material.emissive.copy(material.userData.impactBaseEmissive);
+            material.emissiveIntensity = material.userData.impactBaseEmissiveIntensity;
+          }
+          if (material?.userData?.impactBaseColor && material.color) {
+            material.color.copy(material.userData.impactBaseColor);
+          }
+        }
+      });
+    }
+    this.hitFlashes.clear();
+    this.knockbacks.clear();
+    this.clearCameraShakeOffset();
+    this.cameraShake = null;
+    for (const record of this.stageDecorRecords) {
+      if (record.kind !== "stage-npc") continue;
+      this.clearAttackPresentation(record);
+      record.mixer?.stopAllAction();
+      record.oneShotAction = null;
+      record.oneShotActionKey = null;
+      record.queuedAction = null;
+      record.storyBeatQueue.length = 0;
+      record.dead = false;
+      if (record.root) record.root.visible = true;
+      const idleKey = record.presentationCue?.idleClip ?? "idle";
+      const idle = record.actions?.[idleKey] ?? record.actions?.idle ?? null;
+      idle?.reset().play();
+      record.activeActionKey = idle ? (record.actions?.[idleKey] ? idleKey : "idle") : null;
+      record.activeActionSource = idle ? (record.actionSources?.[record.activeActionKey] ?? "base") : null;
+      record.activeActionClip = idle?.getClip()?.name ?? null;
+      this.resetAmbientIdle(record);
+    }
     return true;
   }
 
@@ -3284,17 +3822,31 @@ export class RealtimeBattle {
     const generation = this.vfxGeneration;
     const anchor = effectAnchor(snapshot, event);
     if (!anchor) return;
-    const lifetime = event.type === "BOSS_ATTACK_TELEGRAPHED"
+    const questPresentation = questVfxPresentationForEvent(event);
+    const lifetime = questPresentation?.lifetime ?? (event.type === "BOSS_ATTACK_TELEGRAPHED"
       ? Math.max(1, finite(event.windupTicks, VFX_LIFETIME_TICKS[event.type] ?? 30))
-      : (VFX_LIFETIME_TICKS[event.type] ?? 30);
-    const untilTick = tick + lifetime;
+      : (VFX_LIFETIME_TICKS[event.type] ?? 30));
+    const events = Array.isArray(snapshot?.events) ? snapshot.events : [];
+    const contactDelayTicks = Math.ceil(this.impactContactDelayMs(event, events) * SIM_TICK_RATE / 1000);
+    const startTick = tick + contactDelayTicks;
+    const untilTick = startTick + lifetime;
     const placeholder = new THREE.Group();
     const p = worldPoint(anchor);
     placeholder.position.set(p.x, p.y + 0.6, p.z);
+    placeholder.visible = contactDelayTicks === 0;
+    placeholder.userData.eventAnchor = questPresentation ? "quest-point" : "event-entity";
+    placeholder.userData.questVfxIntent = questPresentation?.intent ?? null;
     this.vfxGroup.add(placeholder);
     const semanticVfxId = semanticVfxIdForEvent(event);
     const record = {
-      root: placeholder, untilTick, loaded: false, semanticVfxId, eventType: event.type, loadRequest: null,
+      root: placeholder,
+      startTick,
+      untilTick,
+      loaded: false,
+      semanticVfxId,
+      eventType: event.type,
+      questVfxIntent: questPresentation?.intent ?? null,
+      loadRequest: null,
     };
     if (!this.trackVfxInstance(record)) return;
     const loadRequest = instantiateVfxModel(
@@ -3310,6 +3862,7 @@ export class RealtimeBattle {
       }
       placeholder.add(instance);
       applySkillVfxSilhouette(instance, semanticVfxId);
+      applyQuestVfxPresentation(instance, questPresentation, this.reducedMotion);
       record.mixer = mixer;
       record.action = action;
       record.loaded = true;
@@ -3460,6 +4013,8 @@ export class RealtimeBattle {
     for (const record of this.stageDecorRecords) {
       record.mixer?.update(delta);
       if (record.kind !== "stage-npc") continue;
+      if (record.oneShotAction?.paused) this.finishOneShot(record);
+      if (!record.oneShotAction) this.recoverLocomotion(record);
       applyStageNpcGuardPose(record);
       this.updateAmbientIdle(record, nowMs);
     }
@@ -3501,22 +4056,57 @@ export class RealtimeBattle {
   // material clones, actor root offsets, and the camera AFTER updateCamera()
   // has placed it. Nothing writes back into the snapshot.
 
-  registerImpactFeedback(event, nowMs) {
+  impactContactDelayMs(event, events) {
+    const impact = IMPACT_FEEDBACK_SOURCES[event?.type]?.(event);
+    if (!impact?.targetId) return 0;
+    const group = event?.causalRootId ?? event?.castInstanceId
+      ?? `${event?.tick ?? ""}:${impact.attackerId ?? ""}:${event?.type ?? ""}`;
+    let rank = 0;
+    for (let index = 0; index < events.length; index += 1) {
+      const candidateEvent = events[index];
+      const candidate = IMPACT_FEEDBACK_SOURCES[candidateEvent?.type]?.(candidateEvent);
+      if (!candidate?.targetId || candidate.targetId >= impact.targetId) continue;
+      const candidateGroup = candidateEvent?.causalRootId ?? candidateEvent?.castInstanceId
+        ?? `${candidateEvent?.tick ?? ""}:${candidate.attackerId ?? ""}:${candidateEvent?.type ?? ""}`;
+      if (candidateGroup !== group) continue;
+      let firstForTarget = true;
+      for (let prior = 0; prior < index; prior += 1) {
+        const priorEvent = events[prior];
+        const priorImpact = IMPACT_FEEDBACK_SOURCES[priorEvent?.type]?.(priorEvent);
+        const priorGroup = priorEvent?.causalRootId ?? priorEvent?.castInstanceId
+          ?? `${priorEvent?.tick ?? ""}:${priorImpact?.attackerId ?? ""}:${priorEvent?.type ?? ""}`;
+        if (priorImpact?.targetId === candidate.targetId && priorGroup === candidateGroup) {
+          firstForTarget = false;
+          break;
+        }
+      }
+      if (firstForTarget) rank += 1;
+    }
+    return Math.min(rank, MAX_IMPACT_STAGGER_TARGETS) * IMPACT_CONTACT_STAGGER_MS;
+  }
+
+  registerImpactFeedback(event, nowMs, events) {
     const impact = IMPACT_FEEDBACK_SOURCES[event?.type]?.(event);
     if (!impact?.targetId) return;
     const targetRecord = this.actors.get(impact.targetId) ?? this.combatTarget(impact.targetId);
     if (!targetRecord?.root) return;
-    const heavy = impact.heavy === true;
+    const attacker = impact.attackerId ? this.actors.get(impact.attackerId) : null;
+    const critical = impact.critical === true;
+    const bossContact = attacker?.kind === "boss" || targetRecord.kind === "boss";
+    const heavy = impact.heavy === true || critical;
+    const startMs = nowMs + this.impactContactDelayMs(event, events);
     this.hitFlashes.set(impact.targetId, {
-      startMs: nowMs,
-      untilMs: nowMs + (heavy ? IMPACT_FLASH_HEAVY_MS : IMPACT_FLASH_MS),
+      startMs,
+      untilMs: startMs + (heavy ? IMPACT_FLASH_HEAVY_MS : IMPACT_FLASH_MS),
       color: heavy ? IMPACT_FLASH_HEAVY_COLOR : IMPACT_FLASH_COLOR,
+      accent: critical ? IMPACT_FLASH_CRITICAL_ACCENT : null,
+      critical,
+      static: this.reducedMotion,
       peak: heavy ? IMPACT_FLASH_HEAVY_PEAK : IMPACT_FLASH_PEAK,
       record: targetRecord,
     });
     if (this.reducedMotion) return;
 
-    const attacker = impact.attackerId ? this.actors.get(impact.attackerId) : null;
     let dx = 0;
     let dz = 0;
     if (attacker?.root) {
@@ -3526,19 +4116,27 @@ export class RealtimeBattle {
     const length = Math.hypot(dx, dz);
     if (length > 1e-4) {
       this.knockbacks.set(impact.targetId, {
-        startMs: nowMs,
-        untilMs: nowMs + (heavy ? IMPACT_KNOCKBACK_HEAVY_MS : IMPACT_KNOCKBACK_MS),
+        startMs,
+        untilMs: startMs + (heavy ? IMPACT_KNOCKBACK_HEAVY_MS : IMPACT_KNOCKBACK_MS),
         dx: dx / length,
         dz: dz / length,
         distance: heavy ? IMPACT_KNOCKBACK_HEAVY_DISTANCE : IMPACT_KNOCKBACK_DISTANCE,
       });
     }
-    if (!heavy) return;
+    if (!heavy && !bossContact) return;
+    const amplitude = Math.min(
+      IMPACT_SHAKE_MAX_AMPLITUDE,
+      bossContact ? IMPACT_SHAKE_BOSS_AMPLITUDE : IMPACT_SHAKE_AMPLITUDE,
+    );
+    const currentShake = this.cameraShake;
+    if (currentShake && currentShake.untilMs > nowMs
+      && (currentShake.startMs < startMs
+        || (currentShake.startMs === startMs && currentShake.amplitude >= amplitude))) return;
     this.impactShakeSeed = (this.impactShakeSeed + 1) % 1024;
     this.cameraShake = {
-      startMs: nowMs,
-      untilMs: nowMs + IMPACT_SHAKE_MS,
-      amplitude: targetRecord.kind === "boss" ? IMPACT_SHAKE_BOSS_AMPLITUDE : IMPACT_SHAKE_AMPLITUDE,
+      startMs,
+      untilMs: startMs + IMPACT_SHAKE_MS,
+      amplitude,
       seed: this.impactShakeSeed,
     };
   }
@@ -3554,9 +4152,10 @@ export class RealtimeBattle {
         continue;
       }
       const span = Math.max(1, flash.untilMs - flash.startMs);
-      const progress = (nowMs - flash.startMs) / span;
+      const progress = THREE.MathUtils.clamp((nowMs - flash.startMs) / span, 0, 1);
+      if (nowMs < flash.startMs) continue;
       const done = progress >= 1;
-      const strength = done ? 0 : flash.peak * (1 - progress) * (1 - progress);
+      const strength = done ? 0 : (flash.static ? flash.peak : flash.peak * (1 - progress) * (1 - progress));
       root.traverse((node) => {
         const materials = Array.isArray(node.material) ? node.material : node.material ? [node.material] : [];
         for (const material of materials) {
@@ -3565,14 +4164,23 @@ export class RealtimeBattle {
             material.userData.impactBaseEmissive = material.emissive.clone();
             material.userData.impactBaseEmissiveIntensity = finite(material.emissiveIntensity, 1);
           }
+          if (flash.critical && material.color && !material.userData.impactBaseColor) {
+            material.userData.impactBaseColor = material.color.clone();
+          }
           const base = material.userData.impactBaseEmissive;
           if (done) {
             material.emissive.copy(base);
             material.emissiveIntensity = material.userData.impactBaseEmissiveIntensity;
+            if (material.userData.impactBaseColor && material.color) {
+              material.color.copy(material.userData.impactBaseColor);
+            }
             continue;
           }
           material.emissive.copy(base).lerp(flash.color, Math.min(1, strength));
           material.emissiveIntensity = material.userData.impactBaseEmissiveIntensity + strength;
+          if (flash.accent && material.color) {
+            material.color.copy(material.userData.impactBaseColor).lerp(flash.accent, Math.min(0.55, strength * 0.45));
+          }
         }
       });
       if (done) this.hitFlashes.delete(entityId);
@@ -3590,12 +4198,14 @@ export class RealtimeBattle {
         continue;
       }
       const span = Math.max(1, knockback.untilMs - knockback.startMs);
-      const progress = (nowMs - knockback.startMs) / span;
+      const progress = THREE.MathUtils.clamp((nowMs - knockback.startMs) / span, 0, 1);
+      if (nowMs < knockback.startMs) continue;
       if (progress >= 1) {
         this.knockbacks.delete(entityId);
         continue;
       }
-      const eased = Math.sin(Math.PI * (1 - progress)) * (1 - progress);
+      const remaining = 1 - progress;
+      const eased = remaining * remaining * (3 - 2 * remaining);
       record.root.position.x += knockback.dx * knockback.distance * eased;
       record.root.position.z += knockback.dz * knockback.distance * eased;
     }
@@ -3614,7 +4224,8 @@ export class RealtimeBattle {
     const shake = this.cameraShake;
     if (!shake || !this.camera) return;
     const span = Math.max(1, shake.untilMs - shake.startMs);
-    const progress = (nowMs - shake.startMs) / span;
+    const progress = THREE.MathUtils.clamp((nowMs - shake.startMs) / span, 0, 1);
+    if (nowMs < shake.startMs) return;
     if (progress >= 1) {
       this.clearCameraShakeOffset();
       this.cameraShake = null;
@@ -3654,7 +4265,9 @@ export class RealtimeBattle {
   // idempotent without mutating the frozen snapshot or restarting clips.
   triggerCombatActions(event, nowMs, snapshot) {
     if (!event?.type || !this.rememberAnimationEvent(feedbackKey(event))) return;
-    this.registerImpactFeedback(event, nowMs);
+    const events = Array.isArray(snapshot?.events) ? snapshot.events : [];
+    this.registerImpactFeedback(event, nowMs, events);
+    this.triggerStageNpcStoryBeat(event, nowMs);
     const actor = (id) => this.actors.get(id);
     const target = (id) => this.combatTarget(id);
     switch (event.type) {
@@ -3692,6 +4305,10 @@ export class RealtimeBattle {
         this.triggerAttackDelivery(actor(event.entityId), target(event.targetId), nowMs);
         if (event.damage > 0) this.triggerAction(actor(event.targetId), "hit", nowMs);
         break;
+      case "MELEE_IMPACT":
+        if (event.guardedBy) this.triggerAction(actor(event.guardedBy), "defence", nowMs);
+        this.triggerAction(actor(event.targetId), event.critical === true ? "bighit" : "hit", nowMs);
+        break;
       case "PROJECTILE_IMPACT":
         if (event.guardedBy) this.triggerAction(actor(event.guardedBy), "defence", nowMs);
         this.triggerAction(actor(event.targetId), event.hit === false ? "avoid" : "hit", nowMs);
@@ -3724,6 +4341,7 @@ export class RealtimeBattle {
         this.retireVfxRecord(record);
         continue;
       }
+      record.root.visible = !Number.isFinite(record.startTick) || record.startTick <= tick;
       this.vfxInstances[retainedVfxCount] = record;
       retainedVfxCount += 1;
     }
@@ -3797,7 +4415,6 @@ export class RealtimeBattle {
     this.captureDeathEchoes(snapshot);
     this.reconcileActors(snapshot);
     this.collectFeedback(snapshot);
-    if (resetVisualEventDeduplication) this.visualEventKeys.clear();
     const nowMs = performance.now();
     this.updateCamera(snapshot, nowMs);
     this.updateAnimations(nowMs, snapshot?.tick, startsStageAtTickZero);
@@ -3817,6 +4434,7 @@ export class RealtimeBattle {
     this.clearCameraShakeOffset();
     this.stageLoadToken += 1;
     this.vfxGeneration += 1;
+    this.appearanceGeneration += 1;
     this.clearStageWorld();
     for (const record of this.actors.values()) {
       this.clearAttackPresentation(record);
@@ -3835,6 +4453,7 @@ export class RealtimeBattle {
     this.pendingDeathEchoes = [];
     this.pendingVfxLoads.clear();
     this.pendingDeathEchoLoads.clear();
+    this.pendingStageNpcBeats.clear();
     if (this.gateMesh) disposeObject3D(this.gateMesh);
     this.gateMesh = null;
     if (this.pressureGroup) disposeObject3D(this.pressureGroup);
@@ -3911,6 +4530,7 @@ export class RealtimeBattle {
         kind: record.kind,
         position,
         modelPath: record.modelPath ?? null,
+        targetHeight: record.targetHeight ?? TARGET_HEIGHT.enemy,
         meshIntegrity: record.meshIntegrity ?? record.root?.userData?.meshIntegrity ?? null,
         groundedMinY: record.groundedMinY ?? record.root?.userData?.groundedMinY ?? null,
         ambient: {
@@ -3929,6 +4549,13 @@ export class RealtimeBattle {
         presentationAction: record.presentationAction ?? null,
         hasMixer: Boolean(record.mixer),
         actionCount: Object.keys(record.actions ?? {}).length,
+        appearanceSlots: record.appearanceRoots ? [...record.appearanceRoots.keys()] : [],
+        appearance: record.appearanceRoots
+          ? [...record.appearanceRoots.entries()]
+            .filter(([, root]) => root.userData.appearanceLoaded === true)
+            .map(([slot, root]) => ({ slot, id: root.userData.appearanceItemId ?? null }))
+            .sort((left, right) => left.slot.localeCompare(right.slot))
+          : [],
       };
     };
     const describeStageDecor = (record) => ({
@@ -3936,7 +4563,10 @@ export class RealtimeBattle {
       kind: record.kind,
       role: record.role ?? null,
       actorId: record.actorId ?? null,
+      questId: record.questId ?? null,
+      questRole: record.questRole ?? null,
       modelPath: record.modelPath,
+      sourceModelPath: record.sourceModelPath ?? null,
       modelNode: record.modelNode ?? null,
       source: record.placement ?? null,
       effectId: record.effectId ?? null,

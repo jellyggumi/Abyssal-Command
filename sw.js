@@ -38,6 +38,7 @@ const CORE_ASSETS = [
   // module-resolution error without them in the install-time precache.
   "./lobby-cinematic.js",
   "./stage-world-catalog.js",
+  "./stage-story-catalog.js",
   // Generated UI icon layer (scripts/build-ui-icon-assets.py). These ARE precached,
   // unlike the battle GLBs below: all 16 together are ~440KB and they paint the
   // dock rail, brand, currency chips, and HUD glyphs on first frame, so deferring

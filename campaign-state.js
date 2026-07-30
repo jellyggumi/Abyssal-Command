@@ -7,6 +7,7 @@ import {
   EQUIPMENT_SLOTS, EQUIPMENT_TIERS, EQUIPMENT_TIER_UPGRADE_COST,
   MAX_FRONT_SLOTS, FORMATION_SLOTS, deriveWardenRuntimeStats, deriveCompanionRuntimeStats,
 } from "./rpg-catalog.js";
+import { STAGE_STORIES, stageStoryFor } from "./stage-story-catalog.js";
 
 export const RULES_VERSION = "defense-survivor-v1";
 export const IDLE_RETURN_VERSION = 1;
@@ -19,6 +20,8 @@ export const STAGES = Object.freeze([
 ]);
 const STAGE_INDEX = new Map(STAGES.map((stage, index) => [stage.id, index]));
 const MAX_LOADOUT_SIZE = 3;
+export const MAX_EXTRACTED_SKILL_LOADOUT = 3;
+export const MAX_EXTRACTED_SKILL_LEVEL = 5;
 /** Warden equipment owner id — verified disjoint from every COMPANIONS prototype id. */
 const WARDEN_OWNER_ID = "warden";
 let campaignSequence = 0;
@@ -45,6 +48,45 @@ const initialWardenProgress = () => ({ statPoints: {}, skillTreeIds: [], traitId
  */
 export const CARRY_OVER_VERSION = 1;
 const initialStageCarryOver = () => ({ version: CARRY_OVER_VERSION, stageId: null, skillRanks: {}, itemIds: [] });
+export const STORY_PROGRESS_VERSION = 1;
+const initialStoryProgress = (resolvedIds = []) => {
+  const completedStages = new Set(resolvedIds);
+  const storyProgress = {
+    version: STORY_PROGRESS_VERSION,
+    questCompletionsByStage: {},
+    extractedSkillIds: [],
+    extractedSkillLevels: {},
+    activeSkillLoadout: [],
+    appearanceItemIds: [],
+    equippedAppearance: {},
+  };
+  for (const stage of STAGES) {
+    if (!completedStages.has(stage.id)) continue;
+    const story = stageStoryFor(stage.id);
+    if (!story) continue;
+    storyProgress.questCompletionsByStage[stage.id] = true;
+    storyProgress.extractedSkillIds.push(story.extractionReward.skillId);
+    storyProgress.extractedSkillLevels[story.extractionReward.skillId] = story.extractionReward.level;
+    storyProgress.appearanceItemIds.push(story.appearanceReward.id);
+    if (!storyProgress.equippedAppearance[story.appearanceReward.slot]) {
+      storyProgress.equippedAppearance[story.appearanceReward.slot] = story.appearanceReward.id;
+    }
+  }
+  storyProgress.extractedSkillIds.sort();
+  storyProgress.appearanceItemIds.sort();
+  return storyProgress;
+};
+function copyStoryProgress(storyProgress) {
+  return {
+    version: storyProgress.version,
+    questCompletionsByStage: { ...storyProgress.questCompletionsByStage },
+    extractedSkillIds: [...storyProgress.extractedSkillIds],
+    extractedSkillLevels: { ...storyProgress.extractedSkillLevels },
+    activeSkillLoadout: [...storyProgress.activeSkillLoadout],
+    appearanceItemIds: [...storyProgress.appearanceItemIds],
+    equippedAppearance: { ...storyProgress.equippedAppearance },
+  };
+}
 function copyStageCarryOver(stageCarryOver) {
   return {
     version: stageCarryOver.version,
@@ -83,7 +125,9 @@ export function boundFragmentEarned(campaign) { return campaign.resolvedIds.leng
 export function echoCoreSpent(campaign) {
   const statCost = Object.values(campaign.wardenProgress.statPoints).reduce((sum, points) => sum + wardenStatTotalCost(points), 0);
   const skillCost = campaign.wardenProgress.skillTreeIds.reduce((sum, id) => sum + (WARDEN_SKILL_TREE[id]?.cost ?? 0), 0);
-  return statCost + skillCost;
+  const extractedSkillCost = Object.values(campaign.storyProgress?.extractedSkillLevels ?? {})
+    .reduce((sum, level) => sum + extractedSkillSpentAtLevel(level), 0);
+  return statCost + skillCost + extractedSkillCost;
 }
 export function boundFragmentSpent(campaign) {
   return campaign.ownedEquipmentIds.reduce((sum, id) => {
@@ -145,6 +189,53 @@ function validCompanionFormation(campaign, companionFormation) {
   if (!entries.every(([prototype, slot]) => campaign.companionLoadout.prototypeIds.includes(prototype) && FORMATION_SLOTS.includes(slot))) return false;
   return entries.filter(([, slot]) => slot === "FRONT").length <= MAX_FRONT_SLOTS;
 }
+export function extractedSkillUpgradeCostForLevel(targetLevel) {
+  return targetLevel - 1;
+}
+function extractedSkillSpentAtLevel(level) {
+  let cost = 0;
+  for (let targetLevel = 2; targetLevel <= level; targetLevel += 1) {
+    cost += extractedSkillUpgradeCostForLevel(targetLevel);
+  }
+  return cost;
+}
+function validStoryProgress(campaign, storyProgress) {
+  const keys = [
+    "version", "questCompletionsByStage", "extractedSkillIds", "extractedSkillLevels",
+    "activeSkillLoadout", "appearanceItemIds", "equippedAppearance",
+  ];
+  if (!isPlainObject(storyProgress) || !hasOnlyKeys(storyProgress, keys) || storyProgress.version !== STORY_PROGRESS_VERSION) return false;
+  const resolvedStories = campaign.resolvedIds.map(stageStoryFor).filter(Boolean);
+  if (!isPlainObject(storyProgress.questCompletionsByStage)
+      || Object.keys(storyProgress.questCompletionsByStage).length !== resolvedStories.length
+      || !resolvedStories.every((story) => storyProgress.questCompletionsByStage[story.stageId] === true)) return false;
+  const expectedSkillIds = resolvedStories.map((story) => story.extractionReward.skillId);
+  if (!validIds(storyProgress.extractedSkillIds)
+      || storyProgress.extractedSkillIds.length !== expectedSkillIds.length
+      || !expectedSkillIds.every((skillId) =>
+        storyProgress.extractedSkillIds.includes(skillId) && SKILLS[skillId]?.kind === "active")) return false;
+  if (!isPlainObject(storyProgress.extractedSkillLevels)
+      || Object.keys(storyProgress.extractedSkillLevels).length !== storyProgress.extractedSkillIds.length
+      || !storyProgress.extractedSkillIds.every((skillId) => {
+        const level = storyProgress.extractedSkillLevels[skillId];
+        return Number.isInteger(level) && level >= 1 && level <= MAX_EXTRACTED_SKILL_LEVEL;
+      })) return false;
+  if (!validIds(storyProgress.activeSkillLoadout)
+      || storyProgress.activeSkillLoadout.length > MAX_EXTRACTED_SKILL_LOADOUT
+      || !storyProgress.activeSkillLoadout.every((skillId) => storyProgress.extractedSkillIds.includes(skillId))) return false;
+  const storyByAppearanceId = new Map(Object.values(STAGE_STORIES).map((story) => [story.appearanceReward.id, story]));
+  const expectedAppearanceIds = resolvedStories.map((story) => story.appearanceReward.id);
+  if (!validIds(storyProgress.appearanceItemIds)
+      || storyProgress.appearanceItemIds.length !== expectedAppearanceIds.length
+      || !expectedAppearanceIds.every((itemId) => storyProgress.appearanceItemIds.includes(itemId))) return false;
+  if (!isPlainObject(storyProgress.equippedAppearance)
+      || !Object.entries(storyProgress.equippedAppearance).every(([slot, itemId]) => {
+        const story = storyByAppearanceId.get(itemId);
+        return storyProgress.appearanceItemIds.includes(itemId) && story?.appearanceReward.slot === slot;
+      })) return false;
+  if (!isPlainObject(campaign.wardenProgress)) return false;
+  return echoCoreSpent({ ...campaign, storyProgress }) <= echoCoreEarned(campaign);
+}
 
 function copyCampaign(campaign) {
   return {
@@ -159,12 +250,13 @@ function copyCampaign(campaign) {
     ownedEquipmentIds: [...(campaign.ownedEquipmentIds ?? [])],
     companionFormation: copyCompanionFormation(campaign.companionFormation ?? {}),
     stageCarryOver: copyStageCarryOver(campaign.stageCarryOver ?? initialStageCarryOver()),
+    storyProgress: copyStoryProgress(campaign.storyProgress ?? initialStoryProgress(campaign.resolvedIds)),
   };
 }
 const LEGACY_KEYS = ["campaignId", "resetEpoch", "unlockedStageIndex", "companionCollection", "companionLoadout", "resolvedIds", "attemptsByStage", "lastResolution"];
 const REWARD_KEYS = [...LEGACY_KEYS, "rewardIds", "achievementIds"];
 const IDLE_KEYS = [...REWARD_KEYS, "idleReturn"];
-const CURRENT_KEYS = [...IDLE_KEYS, "wardenProgress", "ownedEquipmentIds", "companionFormation", "stageCarryOver"];
+const CURRENT_KEYS = [...IDLE_KEYS, "wardenProgress", "ownedEquipmentIds", "companionFormation", "stageCarryOver", "storyProgress"];
 const initialIdleReturn = () => ({ version: IDLE_RETURN_VERSION, lastSettledAt: null, totalProgress: 0 });
 function migrateCampaign(value) {
   if (!isPlainObject(value)) return value;
@@ -177,6 +269,7 @@ function migrateCampaign(value) {
   if (!Object.hasOwn(value, "ownedEquipmentIds")) patch.ownedEquipmentIds = [];
   if (!Object.hasOwn(value, "companionFormation")) patch.companionFormation = {};
   if (!Object.hasOwn(value, "stageCarryOver")) patch.stageCarryOver = initialStageCarryOver();
+  if (!Object.hasOwn(value, "storyProgress")) patch.storyProgress = initialStoryProgress(value.resolvedIds);
   return Object.keys(patch).length ? { ...value, ...patch } : value;
 }
 function validCampaign(value) {
@@ -192,6 +285,7 @@ function validCampaign(value) {
   if (candidate.lastResolution !== null && !(isPlainObject(candidate.lastResolution) && hasOnlyKeys(candidate.lastResolution, ["stageId", "outcome", "campaignComplete"]) && STAGE_INDEX.has(candidate.lastResolution.stageId) && ["victory", "defeat", "FINAL_COMPLETION"].includes(candidate.lastResolution.outcome) && typeof candidate.lastResolution.campaignComplete === "boolean")) return false;
   if (!validStageCarryOver(candidate.stageCarryOver)) return false;
   if (!validWardenProgress(candidate, candidate.wardenProgress)) return false;
+  if (!validStoryProgress(candidate, candidate.storyProgress)) return false;
   if (!validOwnedEquipmentIds(candidate, candidate.ownedEquipmentIds)) return false;
   return validCompanionFormation(candidate, candidate.companionFormation);
 }
@@ -206,6 +300,7 @@ export function createCampaign({ campaignId, resetEpoch = 0 } = {}) {
     resolvedIds: [], attemptsByStage: {}, rewardIds: [], achievementIds: [], idleReturn: initialIdleReturn(), lastResolution: null,
     wardenProgress: initialWardenProgress(), ownedEquipmentIds: [], companionFormation: {},
     stageCarryOver: initialStageCarryOver(),
+    storyProgress: initialStoryProgress(),
   };
 }
 export function startRun(campaign, stageId = STAGES[campaign?.unlockedStageIndex]?.id) {
@@ -233,9 +328,61 @@ export function applyCampaignRunResult(campaign, { stageId, outcome, rewardId = 
   }
   if (victory && !next.achievementIds.includes(`stage-clear:${stageId}`)) next.achievementIds.push(`stage-clear:${stageId}`);
   if (effectiveRewardId !== null && !next.rewardIds.includes(effectiveRewardId)) next.rewardIds.push(effectiveRewardId);
+  if (victory && !next.storyProgress.questCompletionsByStage[stageId]) {
+    const story = stageStoryFor(stageId);
+    next.storyProgress.questCompletionsByStage[stageId] = true;
+    const skillId = story.extractionReward.skillId;
+    if (!next.storyProgress.extractedSkillIds.includes(skillId)) next.storyProgress.extractedSkillIds.push(skillId);
+    next.storyProgress.extractedSkillLevels[skillId] ??= story.extractionReward.level;
+    const appearance = story.appearanceReward;
+    if (!next.storyProgress.appearanceItemIds.includes(appearance.id)) next.storyProgress.appearanceItemIds.push(appearance.id);
+    next.storyProgress.equippedAppearance[appearance.slot] ??= appearance.id;
+    next.storyProgress.extractedSkillIds.sort();
+    next.storyProgress.appearanceItemIds.sort();
+  }
   next.achievementIds.sort();
   next.rewardIds.sort();
   next.lastResolution = { stageId, outcome, campaignComplete: victory && stageIndex === STAGES.length - 1 && next.resolvedIds.includes(stageId) };
+  return next;
+}
+export function equipExtractedSkill(campaign, skillId) {
+  requireCampaign(campaign);
+  if (!campaign.storyProgress.extractedSkillIds.includes(skillId)) fail("Extracted skill must be unlocked before it can be equipped.");
+  const next = copyCampaign(campaign);
+  if (next.storyProgress.activeSkillLoadout.includes(skillId)) return next;
+  if (next.storyProgress.activeSkillLoadout.length >= MAX_EXTRACTED_SKILL_LOADOUT) fail(`At most ${MAX_EXTRACTED_SKILL_LOADOUT} extracted skills may be equipped.`);
+  next.storyProgress.activeSkillLoadout.push(skillId);
+  next.storyProgress.activeSkillLoadout.sort();
+  return next;
+}
+
+export function unequipExtractedSkill(campaign, skillId) {
+  requireCampaign(campaign);
+  if (!campaign.storyProgress.extractedSkillIds.includes(skillId)) fail("Extracted skill must be unlocked before it can be unequipped.");
+  if (!campaign.storyProgress.activeSkillLoadout.includes(skillId)) fail("Extracted skill must be equipped before it can be unequipped.");
+  const next = copyCampaign(campaign);
+  next.storyProgress.activeSkillLoadout = next.storyProgress.activeSkillLoadout.filter((id) => id !== skillId);
+  return next;
+}
+
+export function upgradeExtractedSkill(campaign, skillId) {
+  requireCampaign(campaign);
+  if (!campaign.storyProgress.extractedSkillIds.includes(skillId)) fail("Extracted skill must be unlocked before it can be upgraded.");
+  const currentLevel = campaign.storyProgress.extractedSkillLevels[skillId];
+  if (currentLevel >= MAX_EXTRACTED_SKILL_LEVEL) fail("Extracted skill is already at max level.");
+  const targetLevel = currentLevel + 1;
+  if (echoCoreSpent(campaign) + extractedSkillUpgradeCostForLevel(targetLevel) > echoCoreEarned(campaign)) fail("Not enough Echo Core.");
+  const next = copyCampaign(campaign);
+  next.storyProgress.extractedSkillLevels[skillId] = targetLevel;
+  return next;
+}
+
+export function equipAppearanceItem(campaign, itemId) {
+  requireCampaign(campaign);
+  if (!campaign.storyProgress.appearanceItemIds.includes(itemId)) fail("Appearance item must be owned before it can be equipped.");
+  const story = Object.values(STAGE_STORIES).find((entry) => entry.appearanceReward.id === itemId);
+  const next = copyCampaign(campaign);
+  next.storyProgress.equippedAppearance[story.appearanceReward.slot] = itemId;
   return next;
 }
 

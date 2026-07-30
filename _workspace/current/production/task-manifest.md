@@ -312,3 +312,54 @@ next-beat: 독립 사람 플레이 판정으로 G4/G7/G8 재측정
   증거로 재사용하지 않는다.
 - **남은 게이트**: G4 몰입/접근성, G7 코어 루프, G8 최초 노출 모두 **재측정 필요** (사람 플레이).
 - **배포**: push와 Pages production smoke는 아직 미측정이다.
+
+## 9. 2026-07-30 — 3스테이지 스토리 퀘스트·성장·모바일·오디오 확장
+
+### 9.1 구현된 계약
+
+- **스토리/퀘스트**: Cinder Span → Abyss Chancel → Echo Throne 각 스테이지는 퀘스트 NPC,
+  정확히 4개의 순차 목표, 전용 반전·보스 진입·결말을 갖는다.
+- **보상/성장**: 최초 클리어의 추출 스킬과 외형 장비는 중복 없이 저장되며, 장착·해제와
+  스킬 Lv.1→5 강화 비용은 `campaign-state.js` 한 곳에서 검증한다.
+- **월드/프레젠테이션**: 네 퀘스트 지점은 스토리 목표 이벤트와 1:1로 결속되고,
+  보스 등장 VFX는 지점 대체물이 아니라 실제 보스 엔티티에 고정된다.
+- **모션**: 3스테이지 12개 스토리 비트는 검증된 11-action 라이브러리의
+  `show`/`defence`/`bighit`에 매핑되며 새 모션·이미지 재생성은 필요하지 않다.
+- **오디오**: 같은 프레임의 전투·스토리 이벤트는 한 배치로 우선순위를 결정하고,
+  브라우저 기본 음성 큐가 여러 스토리 대사를 순서대로 한 번씩 재생한다. 스테이지 재마운트는
+  실행별 중복 제거·tick·refractory 상태만 초기화하고 음량·음소거·지속 사운드스케이프는 보존한다.
+- **모바일**: 기존 5개 키보드/버튼 입력은 유지하고 coarse pointer 가로 모드에만
+  8방향 드래그 조이스틱을 추가한다. 취소·포인터 손실·방향 전환은 모두 `IDLE`로 수렴한다.
+- **보존 계약**: 기존 출전 미니맵, 로비 카메라 연출, 넓은 단일 평면,
+  mesh-collider·grounding·prop pickup·VFX cap 계약은 유지한다.
+
+### 9.2 현재 권위 문서와 증거
+
+- 개발 프롬프트: `design/abyssal-lantern-final-development-prompt.md` §I
+- 런타임 매핑: `design/QUEST_RUNTIME_MAPPING.md`
+- 모션 청사진: `design/MOTION_SYSTEM_EXPANSION_BLUEPRINT.md`
+- 퀘스트 모션 프리비스:
+  `engineering/asset-pipeline/motion-previs/quest-beat-previs.json`
+- 스테이지 에피소드:
+  `design/cinder-span-episode-scenario.md`,
+  `design/abyss-chancel-stage-episode.md`,
+  `design/echo-throne-stage3-final-episode.md`
+- 집중 회귀 [OBSERVED]:
+  - quest/world/VFX/appearance: **32/32 PASS**
+  - audio lifecycle + remount integration: **25/25 PASS** (`17 + 8`)
+  - 모바일·HUD 브라우저 3개 스위트: **17/17 PASS**
+  - 실제 브라우저: Cinder Span `STAGE_STARTED`, EMBER LOOKOUT 정확 화자 대사,
+    console error **0**, page error **0**
+- 독립 코드 리뷰 [OBSERVED]: P0 **0**, P1 **0**, **APPROVE**
+- 전체 Node 회귀: `node --test 'tests/**/*.test.mjs'`는 로컬 병렬 실행이 완료 요약 없이 종료되어 **[BLOCKED]**다. 세 번의 시도 모두 `# fail 0` 종결 블록을 만들지 못했으므로 PASS로 계산하지 않는다.
+- Pages/PR 동등 릴리스 게이트 [OBSERVED]:
+  - engine contract: **61/61 PASS**
+  - release closure·서비스워커·패키지 계약: **4/4 PASS**
+  - character rig + merge decision: **36/36 PASS**
+  - workflow browser allowlist: **5/5 exit code 0**, progression **4/4 PASS**, phone HUD **12/12 PASS**
+
+### 9.3 릴리스 게이트
+
+- 구현 commit SHA / remote branch: `b29f54b846e2f54938a6fc4eda4a2eaff72da1d1` / `origin/main`
+- GitHub Pages workflow: run `30512950567` **SUCCESS** — `https://github.com/jellyggumi/Abyssal-Lantern/actions/runs/30512950567`
+- Production: `https://jellyggumi.github.io/Abyssal-Lantern/`; `version.json.candidate_sha`가 구현 SHA와 일치한다. 배포 로비 smoke는 미니맵 노드 **3**, Canvas **1**, horizontal overflow **0**, console error **0**, page error **0**을 기록했다.

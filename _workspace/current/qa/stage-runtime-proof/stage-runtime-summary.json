@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-29T23:46:50.681Z",
+  "generatedAt": "2026-07-30T04:02:33.530Z",
   "canonicalStageIds": [
     "cinder-span",
     "abyss-chancel",
@@ -69,6 +69,7 @@
         "npcRecords": [
           {
             "id": "cinder-span:ember-lookout",
+            "actorId": "lantern-reaver",
             "modelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb"
           }
         ],
@@ -98,7 +99,7 @@
         "surfaceStageId": "cinder-span",
         "loadedStageId": "cinder-span",
         "renderer": "webgl",
-        "renderedFrames": 74,
+        "renderedFrames": 845,
         "terrainLoaded": true,
         "terrainGlbPath": null,
         "terrainSource": "procedural-flat-support",
@@ -318,7 +319,11 @@
         "npcRecords": [
           {
             "id": "cinder-span:ember-lookout",
-            "modelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb"
+            "modelPath": "assets/motion/ingame/characters/lantern-reaver/model.glb",
+            "sourceModelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
+            "hasMixer": true,
+            "actionCount": 11,
+            "activeActionKey": "idle"
           }
         ],
         "vfxRecords": [
@@ -339,10 +344,6 @@
           },
           {
             "path": "assets/mesh/boss/s3-gate-sovereign/glb/base_basic_pbr.glb",
-            "status": 200
-          },
-          {
-            "path": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
             "status": 200
           },
           {
@@ -367,6 +368,10 @@
           },
           {
             "path": "assets/motion/ingame/characters/human-command-boss/model.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/motion/ingame/characters/lantern-reaver/model.glb",
             "status": 200
           },
           {
@@ -453,6 +458,7 @@
         "npcRecords": [
           {
             "id": "abyss-chancel:veil-lookout",
+            "actorId": "lantern-reaver",
             "modelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb"
           }
         ],
@@ -482,7 +488,7 @@
         "surfaceStageId": "abyss-chancel",
         "loadedStageId": "abyss-chancel",
         "renderer": "webgl",
-        "renderedFrames": 57,
+        "renderedFrames": 713,
         "terrainLoaded": true,
         "terrainGlbPath": null,
         "terrainSource": "procedural-flat-support",
@@ -702,7 +708,11 @@
         "npcRecords": [
           {
             "id": "abyss-chancel:veil-lookout",
-            "modelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb"
+            "modelPath": "assets/motion/ingame/characters/lantern-reaver/model.glb",
+            "sourceModelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
+            "hasMixer": true,
+            "actionCount": 11,
+            "activeActionKey": "idle"
           }
         ],
         "vfxRecords": [
@@ -726,10 +736,6 @@
             "status": 200
           },
           {
-            "path": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
-            "status": 200
-          },
-          {
             "path": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb",
             "status": 200
           },
@@ -746,11 +752,19 @@
             "status": 200
           },
           {
+            "path": "assets/motion/ingame/characters/lantern-reaver/model.glb",
+            "status": 200
+          },
+          {
             "path": "assets/motion/ingame/characters/possessed/model.glb",
             "status": 200
           },
           {
             "path": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
             "status": 200
           },
           {
@@ -825,6 +839,7 @@
         "npcRecords": [
           {
             "id": "echo-throne:throne-lookout",
+            "actorId": "lantern-reaver",
             "modelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb"
           }
         ],
@@ -854,7 +869,7 @@
         "surfaceStageId": "echo-throne",
         "loadedStageId": "echo-throne",
         "renderer": "webgl",
-        "renderedFrames": 40,
+        "renderedFrames": 684,
         "terrainLoaded": true,
         "terrainGlbPath": null,
         "terrainSource": "procedural-flat-support",
@@ -1074,7 +1089,11 @@
         "npcRecords": [
           {
             "id": "echo-throne:throne-lookout",
-            "modelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb"
+            "modelPath": "assets/motion/ingame/characters/lantern-reaver/model.glb",
+            "sourceModelPath": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
+            "hasMixer": true,
+            "actionCount": 11,
+            "activeActionKey": "idle"
           }
         ],
         "vfxRecords": [
@@ -1094,10 +1113,6 @@
             "status": 200
           },
           {
-            "path": "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb",
-            "status": 200
-          },
-          {
             "path": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb",
             "status": 200
           },
@@ -1114,11 +1129,19 @@
             "status": 200
           },
           {
+            "path": "assets/motion/ingame/characters/lantern-reaver/model.glb",
+            "status": 200
+          },
+          {
             "path": "assets/motion/ingame/characters/shade/model.glb",
             "status": 200
           },
           {
             "path": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
             "status": 200
           },
           {
@@ -1135,5 +1158,5 @@
     }
   ],
   "pass": true,
-  "finishedAt": "2026-07-29T23:46:58.275Z"
+  "finishedAt": "2026-07-30T04:03:17.475Z"
 }
