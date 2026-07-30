@@ -57,6 +57,46 @@ EFFECTS = (
         "silhouette": "Caged lantern core, three echo rings, crown-like fractures.",
         "reducedMotion": "Keep the static lantern and innermost echo ring; hide fracture drift and motes.",
     },
+    # Cycle-10 transient cue assets (vfx-drop-spawn-terrain-spec.md §9.2). Unlike the three
+    # ambient stage cues above these are not stage-scoped: one asset serves every stage and
+    # every rarity/grade, because that variation is colour, not geometry. `scope` marks them
+    # so animate_root() and build_effect() branch on intent rather than on stageId.
+    {
+        "scope": "transient",
+        "stageId": None,
+        "effectId": "drop-beacon-pillar",
+        "durationSeconds": 2.0,
+        "palette": {"core": "#FFD257", "accent": "#5DE6FF", "shadow": "#1A1206"},
+        "meaning": "Field item lifecycle: appear, expire, deny, and buff transitions.",
+        "silhouette": "Vertical flare spike over a thin ground ring; separable at 48 px.",
+        "reducedMotion": "Hold the open ring and lit core; hide falling motes.",
+        "builder": "build_drop_pillar",
+        "spawnCap": 3,
+    },
+    {
+        "scope": "transient",
+        "stageId": None,
+        "effectId": "arrival-breach-gate",
+        "durationSeconds": 1.5,
+        "palette": {"core": "#66F0BD", "accent": "#A06BFF", "shadow": "#04140E"},
+        "meaning": "Enemy arrival marker; grade drives scale, stage drives decor accent.",
+        "silhouette": "Low wide ground seam (BASIC) or vertical gate with lintel (SHADOW).",
+        "reducedMotion": "Hold the seam or gate fully open; stop mote travel.",
+        "builder": "build_arrival_gate",
+        "spawnCap": 4,
+    },
+    {
+        "scope": "transient",
+        "stageId": None,
+        "effectId": "deform-fracture-seam",
+        "durationSeconds": 2.5,
+        "palette": {"core": "#FFD257", "accent": "#F3592C", "shadow": "#140A04"},
+        "meaning": "Presentation-only corridor-width change. Never alters elevation or collision.",
+        "silhouette": "Hairline ground seam, 0.10 bright over 0.04 dark, plus a 1.1-unit arming marker.",
+        "reducedMotion": "Hold the solid seam; hide falling dust and the pulse.",
+        "builder": "build_deform_seam",
+        "spawnCap": 1,
+    },
 )
 
 
@@ -64,6 +104,12 @@ def parse_args() -> argparse.Namespace:
     argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    # Build a subset by effectId. Without this, adding an effect forces a rebuild of every
+    # existing GLB and a rewrite of the shared manifest, which churns hashes on assets the
+    # caller may not intend to touch. `--manifest none` skips the manifest write for the
+    # same reason: a partial build must not publish a manifest that omits the other rows.
+    parser.add_argument("--only", action="append", default=None, metavar="EFFECT_ID")
+    parser.add_argument("--manifest", choices=("write", "none"), default="write")
     return parser.parse_args(argv)
 
 
@@ -331,10 +377,109 @@ def build_echo(effect, groups, mats):
         )
 
 
+# --- Cycle-10 transient builders (spec §9.3) -------------------------------------------
+# Only the existing primitive helpers are used: no new dependency, no imported mesh, no
+# sampled texture. Silhouettes are authored at the spec's world heights BEFORE the runtime
+# applies fitHeight(1.2), so the core-to-decor ratio survives that uniform rescale.
+#
+# Frame 1 of every transient must be the readable resting pose: the runtime stops the
+# action under reduced motion, so frame 1 is what a reduced-motion player sees for the
+# cue's whole lifetime. Rings are authored fully open and cores at full strength.
+def build_drop_pillar(effect, groups, mats):
+    core, detail, decor = groups
+    # Vertical spike -- the only shape that cannot be mistaken for floor texture at the
+    # arena's ~55 degree view pitch.
+    cylinder("drop-shaft", core, (0, 0, 0.62), 0.055, 1.24, mats["core"], vertices=8)
+    # Top terminator, so the shaft ends deliberately instead of being clipped.
+    ico("drop-crown", core, (0, 0, 1.24), 0.085, mats["core"], subdivisions=2)
+    torus("drop-ring", detail, (0, 0, 0.03), 0.55, 0.018, mats["accent"])
+    torus("drop-ring-inner", detail, (0, 0, 0.03), 0.30, 0.012, mats["accent"])
+    for index in range(6):
+        angle = index * math.tau / 6
+        ico(
+            f"drop-mote-{index:02d}",
+            decor,
+            (math.cos(angle) * 0.42, math.sin(angle) * 0.42, 0.18 + index * 0.128),
+            0.022,
+            mats["accent"],
+        )
+
+
+def build_arrival_gate(effect, groups, mats):
+    core, detail, decor = groups
+    # SHADOW reads as a vertical gate: two uprights plus a lintel.
+    for side, offset in (("L", -0.45), ("R", 0.45)):
+        cube(f"gate-upright-{side}", core, (offset, 0, 0.8), (0.07, 0.07, 1.6), mats["core"])
+    cube("gate-lintel", core, (0, 0, 1.58), (1.04, 0.08, 0.09), mats["core"])
+    # BASIC reads as a low wide ground seam -- the only group BASIC shows at full strength.
+    cube("gate-seam", detail, (0, 0, 0.03), (1.5, 0.10, 0.02), mats["accent"])
+    for index in range(2):
+        lift = 0.55 - index * 0.16
+        points = [
+            (-0.6, 0.0, 0.05),
+            (-0.3, 0.0, lift * 0.7),
+            (0.0, 0.0, lift),
+            (0.3, 0.0, lift * 0.7),
+            (0.6, 0.0, 0.05),
+        ]
+        curve_ribbon(f"gate-arc-{index}", detail, points, mats["accent"], 0.016)
+    for index in range(8):
+        ico(
+            f"gate-mote-{index:02d}",
+            decor,
+            (-0.66 + index * 0.19, 0.0, 0.12 + (index % 3) * 0.14),
+            0.02,
+            mats["accent"],
+        )
+
+
+def build_deform_seam(effect, groups, mats):
+    core, detail, decor = groups
+    # A hard bright edge over a dark core: the strongest "do not cross" signal available
+    # without geometry, and it never moves the ground plane.
+    cube("seam-bright", core, (0, 0, 0.032), (2.4, 0.10, 0.014), mats["core"])
+    cube("seam-dark", core, (0, 0, 0.030), (2.4, 0.040, 0.012), mats["frame"])
+    # 1.1-unit arming marker at the event point, so the armed gimmick is findable off-seam.
+    cone("seam-marker", core, (0, 0, 0.55), 0.10, 1.10, mats["core"], vertices=5)
+    for index in range(5):
+        cube(
+            f"seam-dash-{index:02d}",
+            detail,
+            (-0.96 + index * 0.48, 0, 0.031),
+            (0.30, 0.06, 0.012),
+            mats["accent"],
+        )
+    for index in range(10):
+        ico(
+            f"seam-dust-{index:02d}",
+            decor,
+            (-1.08 + index * 0.24, 0.0, 0.10 + (index % 4) * 0.09),
+            0.016,
+            mats["accent"],
+        )
+
+
 def animate_root(root, effect):
     duration_frames = round(effect["durationSeconds"] * FPS)
     bpy.context.scene.frame_start = 1
     bpy.context.scene.frame_end = duration_frames
+    if effect.get("scope") == "transient":
+        # Transients get scale only and NO Z rotation. Two reasons, both load-bearing:
+        # a 14-tick burst cannot read a full-turn rotation authored over 2-6 seconds, and
+        # the runtime stops the action outright under reduced motion -- with a rotation
+        # curve a stopped action can rest at an arbitrary angle, whereas scale-only leaves
+        # the cue at exactly its authored open pose. Frame 1 is that open pose at scale 1.0.
+        root.rotation_euler = (0.0, 0.0, 0.0)
+        root.scale = (1.0, 1.0, 1.0)
+        root.keyframe_insert(data_path="scale", frame=1)
+        overshoot = 1.06
+        root.scale = (overshoot, overshoot, overshoot)
+        root.keyframe_insert(data_path="scale", frame=max(2, duration_frames // 4))
+        root.scale = (1.0, 1.0, 1.0)
+        root.keyframe_insert(data_path="scale", frame=duration_frames)
+        action = root.animation_data.action
+        action.name = f"vfx::{effect['effectId']}::loop::v01"
+        return duration_frames
     root.rotation_euler = (0.0, 0.0, 0.0)
     root.scale = (0.985, 0.985, 0.985)
     root.keyframe_insert(data_path="rotation_euler", frame=1)
@@ -348,6 +493,7 @@ def animate_root(root, effect):
     root.keyframe_insert(data_path="rotation_euler", frame=duration_frames)
     root.keyframe_insert(data_path="scale", frame=duration_frames)
     action = root.animation_data.action
+    # The stage-cue validator requires this name verbatim, so it must stay unchanged.
     action.name = f"stage-vfx::{effect['stageId']}::loop::v01"
     return duration_frames
 
@@ -401,12 +547,21 @@ def build_effect(effect, output_dir: Path) -> dict:
         "frame": make_material(f"{effect['effectId']}-frame", effect["palette"]["shadow"], 0.1, metallic=0.7, roughness=0.32),
     }
 
+    # Prefer an explicit `builder` key when the effect names one, falling back to the
+    # stageId lookup so the three ambient cues resolve exactly as before. The transients
+    # have stageId None and could not use the stage-keyed dict at all.
     builders = {
         "cinder-span": build_cinder,
         "abyss-chancel": build_veil,
         "echo-throne": build_echo,
     }
-    builders[effect["stageId"]](effect, (core, detail, decor), mats)
+    named_builders = {
+        "build_drop_pillar": build_drop_pillar,
+        "build_arrival_gate": build_arrival_gate,
+        "build_deform_seam": build_deform_seam,
+    }
+    builder = named_builders.get(effect.get("builder")) or builders[effect["stageId"]]
+    builder(effect, (core, detail, decor), mats)
     duration_frames = animate_root(root, effect)
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -464,10 +619,16 @@ def build_effect(effect, output_dir: Path) -> dict:
         **effect,
         "path": asset_path,
         "sha256": glb_hash,
-        "clip": f"stage-vfx::{effect['stageId']}::loop::v01",
+        "clip": (
+            f"vfx::{effect['effectId']}::loop::v01"
+            if effect.get("scope") == "transient"
+            else f"stage-vfx::{effect['stageId']}::loop::v01"
+        ),
         "fps": FPS,
         "frameRange": [1, duration_frames],
-        "spawnCap": 1,
+        # Ambient stage cues are one-per-stage; transients carry the per-cue concurrent cap
+        # the VFX spec authored for their family.
+        "spawnCap": effect.get("spawnCap", 1),
         "qualityGroups": {"core": "vfx-core", "detail": "vfx-detail", "decor": "vfx-decor"},
         "qualityPolicy": {"high": ["core", "detail", "decor"], "balanced": ["core", "detail"], "low": ["core"]},
         "cleanupRule": "Stop the mixer and dispose cloned geometry/material resources on stage change or renderer disposal.",
@@ -479,19 +640,36 @@ def build_effect(effect, output_dir: Path) -> dict:
 def main() -> None:
     args = parse_args()
     output_dir = args.output_dir.resolve()
-    entries = [build_effect(effect, output_dir) for effect in EFFECTS]
-    manifest = {
-        "schemaVersion": 1,
-        "generatedBy": "scripts/build-stage-vfx-blender.py",
-        "reference": {"path": REFERENCE_ATLAS, "embedded": False},
-        "effects": entries,
-    }
+    selected = EFFECTS
+    if args.only:
+        wanted = set(args.only)
+        selected = tuple(effect for effect in EFFECTS if effect["effectId"] in wanted)
+        unknown = wanted - {effect["effectId"] for effect in EFFECTS}
+        if unknown:
+            raise SystemExit(f"unknown --only effectId(s): {sorted(unknown)}")
+    entries = [build_effect(effect, output_dir) for effect in selected]
     manifest_path = output_dir / "manifest.json"
-    write_json(manifest_path, manifest)
+    if args.manifest == "write":
+        # A manifest that omits rows would be worse than no write at all, so a partial build
+        # refuses to publish one rather than silently dropping the effects it did not build.
+        if len(entries) != len(EFFECTS):
+            raise SystemExit(
+                "refusing to write a partial manifest: pass --manifest none for a subset build"
+            )
+        write_json(
+            manifest_path,
+            {
+                "schemaVersion": 1,
+                "generatedBy": "scripts/build-stage-vfx-blender.py",
+                "reference": {"path": REFERENCE_ATLAS, "embedded": False},
+                "effects": entries,
+            },
+        )
     print(
         "STAGE_VFX_BUILD_OK",
         "effects=" + str(len(entries)),
-        "manifest=" + manifest_path.relative_to(REPO_ROOT).as_posix(),
+        "manifest=" + (manifest_path.relative_to(REPO_ROOT).as_posix() if args.manifest == "write" else "skipped"),
+        "built=" + ",".join(entry["effectId"] for entry in entries),
     )
 
 

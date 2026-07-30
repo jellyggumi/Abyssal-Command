@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "stageId": "abyss-chancel",
+  "promotedAt": "2026-07-30T14:39:02.204604+00:00",
+  "tool": "promote-dungeon-floor.py",
+  "gates": {
+    "flatSurface": "PASS",
+    "runtimeDestination": "PASS",
+    "buildReportChecksum": "PASS"
+  },
+  "surface": {
+    "kind": "flat-gameplay-floor",
+    "gameplayElevation": 0.0,
+    "coplanar": true,
+    "coordinateSpace": "renderer-world",
+    "worldScale": 14.0,
+    "bounds": {
+      "minX": 600,
+      "maxX": 23400,
+      "minY": 700,
+      "maxY": 11300
+    },
+    "apron": {
+      "x": 2400,
+      "y": 1200
+    },
+    "apronRect": {
+      "minX": -1800,
+      "maxX": 25800,
+      "minY": -500,
+      "maxY": 12500
+    },
+    "worldSpan": {
+      "x": 32.199999999999996,
+      "z": 30.333333333333336
+    },
+    "fitFootprintScale": 1.0,
+    "coveredArea": 241680000,
+    "declaredArea": 241680000,
+    "uvLattice": {
+      "periodX": 2000.0,
+      "periodY": 1000.0,
+      "anchor": [
+        0,
+        0
+      ]
+    }
+  },
+  "source": {
+    "path": "/Users/jangyoung/orca/Abyssal-Surge-dungeon/_workspace/current/engineering/asset-pipeline/terrain-dungeon/built/terrain-abyss-chancel-floor.glb",
+    "sha256": "055b871905b2e1598b7b2289a65f57a0b68e6f5e7e3e0f794be8cfd5d664391b",
+    "bytes": 1750112
+  },
+  "destination": {
+    "path": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
+    "sha256": "055b871905b2e1598b7b2289a65f57a0b68e6f5e7e3e0f794be8cfd5d664391b",
+    "bytes": 1750112
+  },
+  "slabs": [
+    {
+      "slabId": "abyss-chancel:slab-01",
+      "node": "terrain-abyss-chancel-slab-001",
+      "material": "flagstone-oath",
+      "rect": {
+        "minX": 600,
+        "maxX": 8000,
+        "minY": 700,
+        "maxY": 11300
+      },
+      "uv": {
+        "repeat": [
+          3.7,
+          10.6
+        ],
+        "offset": [
+          0.3,
+          0.7
+        ],
+        "rotationTurns": 0
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    },
+    {
+      "slabId": "abyss-chancel:slab-02",
+      "node": "terrain-abyss-chancel-slab-002",
+      "material": "flagstone-oath",
+      "rect": {
+        "minX": 8000,
+        "maxX": 16400,
+        "minY": 700,
+        "maxY": 11300
+      },
+      "uv": {
+        "repeat": [
+          4.2,
+          10.6
+        ],
+        "offset": [
+          4.0,
+          0.7
+        ],
+        "rotationTurns": 0
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    },
+    {
+      "slabId": "abyss-chancel:slab-03",
+      "node": "terrain-abyss-chancel-slab-003",
+      "material": "oath-inlay",
+      "rect": {
+        "minX": 16400,
+        "maxX": 23400,
+        "minY": 700,
+        "maxY": 7200
+      },
+      "uv": {
+        "repeat": [
+          3.5,
+          6.5
+        ],
+        "offset": [
+          8.2,
+          0.7
+        ],
+        "rotationTurns": 1
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    },
+    {
+      "slabId": "abyss-chancel:slab-04",
+      "node": "terrain-abyss-chancel-slab-004",
+      "material": "vestry-tile",
+      "rect": {
+        "minX": 16400,
+        "maxX": 23400,
+        "minY": 7200,
+        "maxY": 11300
+      },
+      "uv": {
+        "repeat": [
+          3.5,
+          4.1
+        ],
+        "offset": [
+          8.2,
+          7.2
+        ],
+        "rotationTurns": 0
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    }
+  ],
+  "catalogPatch": {
+    "file": "stage-world-catalog.js",
+    "stageId": "abyss-chancel",
+    "applyAllThreeTogether": true,
+    "reason": "the validator throws 'requires one eligible runtime strategy' if a profile keeps both an eligible path and a fallback",
+    "set": {
+      "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
+      "terrainRuntimeEligible": true
+    },
+    "delete": [
+      "terrainFallback"
+    ],
+    "keep": {
+      "terrainSourceCandidatePath": "unchanged \u2014 retained for provenance"
+    },
+    "alsoRegister": {
+      "file": "scripts/defense-runtime-assets.mjs",
+      "addToRetainedAssetPaths": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
+      "note": "chancel and throne currently register textured-candidate paths; without this edit the promotion is invisible to the runtime"
+    },
+    "slabNodes": [
+      "terrain-abyss-chancel-slab-001",
+      "terrain-abyss-chancel-slab-002",
+      "terrain-abyss-chancel-slab-003",
+      "terrain-abyss-chancel-slab-004"
+    ]
+  },
+  "runtimeEligible": true
+}

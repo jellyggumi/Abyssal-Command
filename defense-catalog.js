@@ -343,6 +343,179 @@ export const ITEMS = freeze({
   "hourglass-fragment": { id: "hourglass-fragment", name: "Ration Sigil Fragment", description: "스킬 쿨다운 10% 감소", cooldownReduction: 0.1 },
   "dawnless-crown-shard": { id: "dawnless-crown-shard", name: "Moonless Command Shard", description: "Moonless Court 명령 파편: 기본 공격 피해 +240, 관문 최대 내구 +120", damageBonus: 240, maxIntegrity: 120, integrity: 120 },
 });
+/**
+ * Timed stat buffs granted by field drops (cycle 10). **A SEPARATE CATALOG, NOT AN EXTENSION
+ * OF `ITEMS`.**
+ *
+ * Keeping the two catalogs disjoint is load-bearing, not stylistic. `eligibleCompanionItem`
+ * and `assignCompanionItemClaims` in defense-run-simulation.js both gate on
+ * `pickup.kind === "item" && ITEMS[pickup.itemId]`. Adding these ids to `ITEMS` would
+ * silently make companions claim, walk to, and collect buff drops. Disjoint catalogs mean
+ * companion claiming excludes buff drops with ZERO code change — a structural property, not
+ * a hope.
+ *
+ * `applyItem` grants PERMANENT deltas and is reached only from the `kind === "item"` branch,
+ * so nothing here can ever become a permanent grant.
+ *
+ * Field contract: every value is a JSON primitive or an array of primitives, so the catalog
+ * survives `clone = JSON.parse(JSON.stringify(...))` with no loss. `magnitude` is ALWAYS an
+ * integer in basis points — the unit is fixed by the `stat` (see `BUFF_STAT_OPS`), never by
+ * the item, so two items touching one stat can never disagree about the op. Sign is
+ * meaningful: negative is a reduction.
+ *
+ * All magnitudes, durations, and caps are [TARGET] — unmeasured this cycle.
+ */
+export const BUFF_ITEMS = freeze({
+  "ash-stride": { id: "ash-stride", name: "Ash Stride", rarity: "common", iconId: "buff-ash-stride", modelKey: "relic", stat: "moveSpeedBp", magnitude: 1000, durationTicks: 600, maxStacks: 2, stacking: "STACK", stageIds: freeze(["abyss-chancel", "cinder-span", "echo-throne"]) },
+  // WITHDRAWN this cycle: "bulwark-echo", the only `gateMaxIntegrity` item.
+  //
+  // The stat is specified as a COMPOSED cap that never writes `gate.maxIntegrity`, so while
+  // it is live `gate.integrity` legitimately exceeds the base max -- the spec's own check 11
+  // says recovery fills to 1920 against a base 1600. But `getRunSnapshot` publishes
+  // `gate: run.gate` verbatim, so the snapshot reports integrity 1920 against maxIntegrity
+  // 1600, and three consumers assume that cannot happen:
+  //   1. `scripts/run-stage1b-pressure-packets.mjs` trips its `to > max` invariant -- G7
+  //      evidence tooling, so relaxing it is an evidence supersession, not a fix;
+  //   2. the `low-hp-focus` enemy policy at :2705 computes
+  //      `gateRatio = gate.integrity / gate.maxIntegrity`, so a gate buff pushes the ratio
+  //      above 1 and flips target selection toward the commander -- a live behavioral
+  //      change, not a display artifact;
+  //   3. any HUD ratio reads the same pair.
+  //
+  // Shipping it needs the composed cap published in the snapshot and all three consumers
+  // routed at it. That is a deliberate contract change with a G7 supersession attached, not
+  // something to slip in at cycle close. `BUFF_STAT_OPS.gateMaxIntegrity` and
+  // `effectiveGateMax` are intentionally retained so re-enabling is one line once that
+  // work lands.
+  "chancel-tempo": { id: "chancel-tempo", name: "Chancel Tempo", rarity: "resonant", iconId: "buff-chancel-tempo", modelKey: "blade", stat: "cooldownScaleBp", magnitude: -1500, durationTicks: 1200, maxStacks: 1, stacking: "REFRESH", stageIds: freeze(["abyss-chancel", "echo-throne"]) },
+  "cinder-haste": { id: "cinder-haste", name: "Cinder Haste", rarity: "rare", iconId: "buff-cinder-haste", modelKey: "blade", stat: "cooldownScaleBp", magnitude: -800, durationTicks: 900, maxStacks: 2, stacking: "STACK", stageIds: freeze(["abyss-chancel", "cinder-span"]) },
+  "ember-edge": { id: "ember-edge", name: "Ember Edge", rarity: "common", iconId: "buff-ember-edge", modelKey: "blade", stat: "basicDamage", magnitude: 1200, durationTicks: 600, maxStacks: 3, stacking: "STACK", stageIds: freeze(["abyss-chancel", "cinder-span", "echo-throne"]) },
+  "lantern-aegis": { id: "lantern-aegis", name: "Lantern Aegis", rarity: "relic", iconId: "buff-lantern-aegis", modelKey: "relic", stat: "incomingDamageBp", magnitude: -2000, durationTicks: 1800, maxStacks: 1, stacking: "REFRESH", stageIds: freeze(["abyss-chancel", "cinder-span", "echo-throne"]) },
+  "oath-keen": { id: "oath-keen", name: "Oath Keen", rarity: "rare", iconId: "buff-oath-keen", modelKey: "blade", stat: "critChanceBp", magnitude: 600, durationTicks: 900, maxStacks: 2, stacking: "STACK", stageIds: freeze(["abyss-chancel", "echo-throne"]) },
+  "reaver-fervor": { id: "reaver-fervor", name: "Reaver Fervor", rarity: "resonant", iconId: "buff-reaver-fervor", modelKey: "blade", stat: "basicDamage", magnitude: 2500, durationTicks: 1200, maxStacks: 2, stacking: "STACK", stageIds: freeze(["abyss-chancel", "cinder-span", "echo-throne"]) },
+  "reclaimer-pulse": { id: "reclaimer-pulse", name: "Reclaimer Pulse", rarity: "common", iconId: "buff-reclaimer-pulse", modelKey: "relic", stat: "pickupRange", magnitude: 2500, durationTicks: 900, maxStacks: 2, stacking: "STACK", stageIds: freeze(["abyss-chancel", "cinder-span", "echo-throne"]) },
+  "throne-resonance": { id: "throne-resonance", name: "Throne Resonance", rarity: "relic", iconId: "buff-throne-resonance", modelKey: "blade", stat: "critChanceBp", magnitude: 1500, durationTicks: 1800, maxStacks: 1, stacking: "REFRESH", stageIds: freeze(["echo-throne"]) },
+  "warding-splint": { id: "warding-splint", name: "Warding Splint", rarity: "rare", iconId: "buff-warding-splint", modelKey: "relic", stat: "incomingDamageBp", magnitude: -1000, durationTicks: 900, maxStacks: 2, stacking: "STACK", stageIds: freeze(["abyss-chancel", "cinder-span", "echo-throne"]) },
+});
+/**
+ * Per-stat composition op and the cap on the COMPOSED TOTAL, independent of how many items
+ * or stacks produced it.
+ *
+ * The cap is why caps exist at all: `reaver-fervor`x2 + `ember-edge`x3 sums to +8600bp =
+ * x1.86 on basicDamage, which is 1.86x the authoritative 3510 DPS ceiling in
+ * design/master-numeric-contract.md. +5000bp holds the burst at x1.50.
+ *
+ * `op` is a property of the STAT, not of the buff entry, and is never serialized.
+ * A negative `capBp` is a floor (reductions clamp with `Math.max`). All values [TARGET].
+ */
+export const BUFF_STAT_OPS = freeze({
+  basicDamage: { op: "mulBp", capBp: 5000 },
+  gateMaxIntegrity: { op: "mulBp", capBp: 2000 },
+  pickupRange: { op: "mulBp", capBp: 7000 },
+  cooldownScaleBp: { op: "addBp", capBp: -3000 },
+  moveSpeedBp: { op: "mulBp", capBp: 3000 },
+  critChanceBp: { op: "addBp", capBp: 2000 },
+  incomingDamageBp: { op: "addBp", capBp: -2000 },
+});
+/** Buff-drop lifecycle bounds. Ticks are 60 Hz. All [TARGET]. */
+export const DROP_TTL_TICKS = 1800;
+export const MAX_FIELD_DROPS = 8;
+export const MAX_ACTIVE_BUFFS = 6;
+/** Matches the existing elite-item spawn offset in `resolveDeaths`. */
+export const DROP_OFFSET_X = 240;
+/**
+ * Drop chance per stage and enemy grade, integer basis points over a 10000 denominator —
+ * the same denominator every existing bp roll uses.
+ *
+ * BASIC climbs 600 -> 1400 across the stages to compensate for BODY COUNT, not difficulty.
+ * `buildDoctrineWavePlan` sizes each wave from a fixed HP budget and divides by
+ * `enemyHp * stageScale / 100`, and stage scale is 100/115/130, so a later stage fields
+ * FEWER, TOUGHER bodies for the same budget. A flat rate would make Echo Throne feel barren:
+ * equal drop CADENCE is the goal, equal drop RATE would defeat it. Expected totals per full
+ * stage converge at 4.87 / 5.10 / 5.83. All [TARGET].
+ */
+export const DROP_CHANCE_BP = freeze({
+  "cinder-span": freeze({ BASIC: 600, SHADOW: 2500, BOSS: 10000 }),
+  "abyss-chancel": freeze({ BASIC: 800, SHADOW: 3000, BOSS: 10000 }),
+  "echo-throne": freeze({ BASIC: 1400, SHADOW: 3500, BOSS: 10000 }),
+});
+/** Rarity weights per grade, integer bp. Every row sums to 10000. All [TARGET]. */
+export const RARITY_WEIGHTS_BP = freeze({
+  BASIC: freeze({ common: 7500, rare: 2500, resonant: 0, relic: 0 }),
+  SHADOW: freeze({ common: 0, rare: 6000, resonant: 4000, relic: 0 }),
+  BOSS: freeze({ common: 0, rare: 0, resonant: 5000, relic: 5000 }),
+});
+/** Rarity order, ascending. Used for the fall-through when a resolved pool is empty. */
+export const BUFF_RARITIES = freeze(["common", "rare", "resonant", "relic"]);
+/**
+ * Authored floor bounds per stage — the outer rectangle `STAGE_SLABS` exactly tiles.
+ * Gameplay units, integers. Published by DungeonLevelDesign in
+ * design/stage-dungeon-composition-spec.md and frozen.
+ */
+export const STAGE_FLOOR_BOUNDS = freeze({
+  "cinder-span": freeze({ minX: 600, maxX: 23400, minY: 800, maxY: 11200 }),
+  "abyss-chancel": freeze({ minX: 600, maxX: 23400, minY: 700, maxY: 11300 }),
+  "echo-throne": freeze({ minX: 600, maxX: 23400, minY: 600, maxY: 11400 }),
+});
+/**
+ * The 12 frozen floor slabs, in authored order (slab-01 first). Ids are the full
+ * `{stageId}:slab-{nn}` string — never the bare `slab-nn`.
+ *
+ * Verified by DungeonLevelDesign: exact area closure against the bounds rectangle
+ * (237,120,000 / 241,680,000 / 246,240,000 unit^2) and zero pairwise overlap on all three
+ * stages. `materialId` is carried here so audio and terrain resolve one table instead of
+ * duplicating it; note `abyss-chancel:slab-01`/`-02` deliberately share `flagstone-oath`.
+ */
+export const STAGE_SLABS = freeze({
+  "cinder-span": freeze([
+    freeze({ id: "cinder-span:slab-01", materialId: "ash-drift", minX: 600, maxX: 8600, minY: 800, maxY: 11200 }),
+    freeze({ id: "cinder-span:slab-02", materialId: "basalt-ember", minX: 8600, maxX: 17000, minY: 800, maxY: 11200 }),
+    freeze({ id: "cinder-span:slab-03", materialId: "forge-plate", minX: 17000, maxX: 23400, minY: 800, maxY: 11200 }),
+  ]),
+  "abyss-chancel": freeze([
+    freeze({ id: "abyss-chancel:slab-01", materialId: "flagstone-oath", minX: 600, maxX: 8000, minY: 700, maxY: 11300 }),
+    freeze({ id: "abyss-chancel:slab-02", materialId: "flagstone-oath", minX: 8000, maxX: 16400, minY: 700, maxY: 11300 }),
+    freeze({ id: "abyss-chancel:slab-03", materialId: "oath-inlay", minX: 16400, maxX: 23400, minY: 700, maxY: 7200 }),
+    freeze({ id: "abyss-chancel:slab-04", materialId: "vestry-tile", minX: 16400, maxX: 23400, minY: 7200, maxY: 11300 }),
+  ]),
+  "echo-throne": freeze([
+    freeze({ id: "echo-throne:slab-01", materialId: "polished-echo", minX: 600, maxX: 6800, minY: 600, maxY: 11400 }),
+    freeze({ id: "echo-throne:slab-02", materialId: "fracture-glass", minX: 6800, maxX: 16600, minY: 600, maxY: 4000 }),
+    freeze({ id: "echo-throne:slab-03", materialId: "gilt-compass", minX: 6800, maxX: 16600, minY: 4000, maxY: 8000 }),
+    freeze({ id: "echo-throne:slab-04", materialId: "fracture-glass", minX: 6800, maxX: 16600, minY: 8000, maxY: 11400 }),
+    freeze({ id: "echo-throne:slab-05", materialId: "polished-echo", minX: 16600, maxX: 23400, minY: 600, maxY: 11400 }),
+  ]),
+});
+/**
+ * Canonical slab id at a gameplay point, or `null` outside the authored floor.
+ *
+ * Pure function of position — reads no simulation state and writes none. Interior edges are
+ * HALF-OPEN and only the stage's outer edge is CLOSED. Without that rule a point exactly on a
+ * seam matches two slabs and the answer depends on iteration order, which is silent
+ * nondeterminism rather than a visible bug.
+ *
+ * `null` is reachable and correct, not an error: the slabs do not cover the full
+ * 24000x12000 arena and enemies spawn from the W/NW/SW edges, so a death at `x < 600` — or a
+ * drop pushed outside by `DROP_OFFSET_X` — resolves to `null`.
+ */
+export function slabAt(stageId, x, y) {
+  const bounds = STAGE_FLOOR_BOUNDS[stageId];
+  const slabs = STAGE_SLABS[stageId];
+  if (!bounds || !slabs) return null;
+  for (const slab of slabs) {
+    const withinX = slab.maxX === bounds.maxX ? x <= slab.maxX : x < slab.maxX;
+    const withinY = slab.maxY === bounds.maxY ? y <= slab.maxY : y < slab.maxY;
+    if (x >= slab.minX && withinX && y >= slab.minY && withinY) return slab.id;
+  }
+  return null;
+}
+/** `{ slabId, materialId }` at a gameplay point, or `null`. Presentation/audio convenience. */
+export function slabMaterialAt(stageId, x, y) {
+  const slabId = slabAt(stageId, x, y);
+  if (!slabId) return null;
+  const slab = STAGE_SLABS[stageId].find((entry) => entry.id === slabId);
+  return { slabId, materialId: slab.materialId };
+}
 export const REWARDS = freeze({
   "ember-cohort-legacy": { id: "ember-cohort-legacy", name: "Ember Cohort Legacy", description: "다음 런의 동료 슬롯에 Ember Cohort 기록", kind: "companion", companionId: "ember-cohort" },
   "rift-lens-archive": { id: "rift-lens-archive", name: "Rift Lens Archive", description: "Rift Lens의 결속 기록을 기록실에 보존", kind: "archive" },

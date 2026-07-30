@@ -119,10 +119,13 @@ const profiles = [
     stageId: "cinder-span",
     sequence: 1,
     name: "Cinder Span",
-    terrainGlbPath: null,
+    // Cycle 10: the walkable ground is now a composed slab floor authored in renderer
+    // world coordinates, so fitFootprint resolves to scale 1.0 and the floor lands
+    // exactly where worldPointInto puts actors. The retained diorama stays an offline
+    // source only -- it was the artifact that earned the earlier ineligible verdict.
+    terrainGlbPath: "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
     terrainSourceCandidatePath: "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
-    terrainRuntimeEligible: false,
-    terrainFallback: { kind: "procedural-flat-support", reason: "authored-diorama-not-flat-gameplay-eligible" },
+    terrainRuntimeEligible: true,
     gameplay: {
       bounds: bounds(600, 23400, 800, 11200),
       obstacles: [
@@ -199,10 +202,9 @@ const profiles = [
     stageId: "abyss-chancel",
     sequence: 2,
     name: "Abyss Chancel",
-    terrainGlbPath: null,
+    terrainGlbPath: "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
     terrainSourceCandidatePath: "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
-    terrainRuntimeEligible: false,
-    terrainFallback: { kind: "procedural-flat-support", reason: "source-candidate-not-runtime-eligible" },
+    terrainRuntimeEligible: true,
     gameplay: {
       bounds: bounds(600, 23400, 700, 11300),
       obstacles: [
@@ -282,10 +284,9 @@ const profiles = [
     stageId: "echo-throne",
     sequence: 3,
     name: "Echo Throne",
-    terrainGlbPath: null,
+    terrainGlbPath: "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
     terrainSourceCandidatePath: "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
-    terrainRuntimeEligible: false,
-    terrainFallback: { kind: "procedural-flat-support", reason: "source-candidate-not-runtime-eligible" },
+    terrainRuntimeEligible: true,
     gameplay: {
       bounds: bounds(600, 23400, 600, 11400),
       obstacles: [

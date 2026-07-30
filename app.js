@@ -44,6 +44,13 @@ import {
 import { RealtimeBattle, MeshThumbnailService, meshRootForCompanion, meshRootForStageBoss, COMMANDER_MESH_ROOT } from "./battle-realtime-three.js";
 import { BattleVisualizer } from "./battle-visualizer.js";
 import { ARENA, COMPANIONS, CUTSCENES, REWARDS, RULES_VERSION, SKILLS, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP, SKILL_RANK_PASSIVE_SHARE, STAGE_PRESENTATION_BY_ID, STAGE_REWARD_IDS, STAGE_TACTICS, TICK_RATE, XP_GROWTH, abyssDepthPackage } from "./defense-catalog.js";
+// Cycle 10 §5.3: BUFF_ITEMS is authored by the drop/buff cycle inside defense-catalog.js and
+// does not exist at this commit. A NAMESPACE import cannot throw on a missing export, whereas a
+// named import would be a hard module error that blanks the entire app before first paint. The
+// buff strip therefore degrades to "renders nothing" while the catalog is absent and lights up
+// with no further UI change the moment the export lands. Read through buffItem() below, never
+// destructured at module scope, so the binding is picked up live rather than snapshotted.
+import * as defenseCatalog from "./defense-catalog.js";
 import { cutsceneEventKey, cutsceneFromEvent } from "./defense-cutscene.js";
 import { DefenseAudio } from "./defense-audio.js";
 import { DefenseViewport } from "./defense-viewport.js";
@@ -73,6 +80,49 @@ const DIRECTION_BY_VECTOR = Object.freeze({
 });
 const JOYSTICK_OCTANTS = Object.freeze(["E", "SE", "S", "SW", "W", "NW", "N", "NE"]);
 const JOYSTICK_DEAD_ZONE_RATIO = 0.22;
+// ── Cycle 10 §5 dungeon-aware HUD readouts ───────────────────────────────────────────────
+// Presentation-only vocabulary. None of this reaches the simulation, so getRunDigest is
+// untouched by every constant below.
+//
+// Route-role labels for #battle-route-rail. Keyed on the AUTHORED `role` strings in
+// stage-world-catalog.js so a rail node can never invent a role the level does not declare.
+const ROUTE_ROLE_LABELS = Object.freeze({
+  ingress: "진입",
+  "intermediate-objective": "중간 목표",
+  "intermediate-gate": "중간 관문",
+  "final-gate": "최종 관문",
+});
+// Gimmick class glyphs (spec §5.2). `hazard` doubles as the fallback: an unknown class must
+// still render something, and "hazard" is the honest default for an unrecognised threat.
+const GIMMICK_CLASS_GLYPHS = Object.freeze({
+  deformation: "◤", gate: "⌗", mirror: "◈", hazard: "⚠",
+});
+// FALLBACK ONLY, never the value. telegraphTicks is per gimmick class -- deformation 180,
+// narrowing gate 120, progress-ring/mirror 90, hazard 60 -- and the chip reads it off the event
+// (director ruling v6 C2). 180 is the longest tier, so a gimmick arriving with a malformed field
+// gets the most conservative window rather than a cue that expires before its own TRIGGERED.
+const GIMMICK_TELEGRAPH_FALLBACK_TICKS = 180;
+// Buff-strip vocabulary (spec §5.3). Both sets are VALIDATION domains, not lookup tables: an
+// unknown `stat` degrades to the neutral group and an unknown `rarity` to common, so a future
+// enum change in the simulation cannot break the strip or throw.
+const BUFF_STATS = new Set([
+  "basicDamage", "gateMaxIntegrity", "pickupRange",
+  "cooldownScaleBp", "moveSpeedBp", "critChanceBp", "incomingDamageBp",
+]);
+const BUFF_RARITIES = new Set(["common", "rare", "resonant", "relic"]);
+// Pre-expiry warning window, 180 ticks = 3s. DERIVED, never an event (spec §5.3): a
+// `BUFF_EXPIRING` event would have to fire per buff per tick to be accurate.
+const BUFF_WARN_TICKS = 180;
+/**
+ * Resolves a buff's DISPLAY data from the frozen catalog by `itemId`.
+ *
+ * Read through the namespace import rather than a destructured binding so the lookup picks up
+ * `BUFF_ITEMS` the moment the drop/buff cycle exports it -- at this commit the export does not
+ * exist and every call returns null, which renders an empty strip instead of throwing.
+ * Deliberately keyed on `itemId` and NEVER on `stat`: several items share a stat, so a
+ * stat-keyed icon would show the wrong plate for all but the first item of each stat.
+ */
+const buffItem = (itemId) => (itemId ? defenseCatalog.BUFF_ITEMS?.[itemId] ?? null : null);
 const KEY_DIRECTIONS = Object.freeze({
   w: "N", arrowup: "N", d: "E", arrowright: "E",
   s: "S", arrowdown: "S", a: "W", arrowleft: "W",
@@ -1758,7 +1808,7 @@ ${lobbyCinematicMarkup()}
       <div id="defense-edge-hud">
         <div class="defense-edge defense-top">
           <div class="hud-panel hud-mission" data-stage-hud-context="current"><span class="hud-eyebrow">ABYSSAL LANTERN · 전장</span><strong id="battle-stage"></strong><span id="battle-domain"></span><span id="battle-terrain-context"></span><span id="battle-status" aria-live="polite"></span><div class="hud-xp" aria-hidden="true" data-ui-icon-lead="stat-echo-xp"><b id="battle-xp-label"></b><span class="hud-xp-track"><i id="battle-xp-fill"></i></span></div></div>
-          <div class="hud-panel hud-loop-state" data-stage-hud-context="loop"><span class="hud-eyebrow">OBJECTIVE FLOW · 진행</span><strong id="battle-loop-phase" aria-live="polite"></strong><div class="hud-loop-grid"><span id="battle-pressure-state"></span><span id="battle-growth-state"></span><span id="battle-formation-state"></span><span id="battle-extraction-state"></span></div></div>
+          <div class="hud-panel hud-loop-state" data-stage-hud-context="loop"><span class="hud-eyebrow">OBJECTIVE FLOW · 진행</span><strong id="battle-loop-phase" aria-live="polite"></strong><ol class="hud-route-rail" id="battle-route-rail" role="list" aria-label="던전 동선"></ol><div class="hud-loop-grid"><span id="battle-pressure-state"></span><span id="battle-growth-state"></span><span id="battle-formation-state"></span><span id="battle-extraction-state"></span></div><div class="hud-gimmick-chip" id="battle-gimmick-state" role="status" aria-live="off" data-gimmick-state=""></div></div>
           <div class="hud-panel hud-legion"><span class="hud-eyebrow">LANTERN LEGION · 군단</span><div class="hud-legion-stack"><span class="legion-mana-label" id="battle-legion-mana-label"></span><span class="legion-mana-track"><i id="battle-legion-mana-fill"></i></span><div class="legion-roster" id="battle-legion-roster"></div><span class="hud-stance-mode" id="battle-stance-mode"></span></div></div>
 
           <div class="top-right-hud"><div class="hud-order-strip"><div class="objective-chip"><span class="objective-pulse" aria-hidden="true"></span><span class="objective-copy"><small>현재 퀘스트 · QUEST</small><b id="battle-quest-title"></b><strong id="battle-objective"></strong><em id="battle-quest-count"></em></span></div></div><div class="hud-right-stack"><div class="hud-passives" id="passive-badges" aria-label="지속 특성"></div></div></div>
@@ -1768,14 +1818,15 @@ ${lobbyCinematicMarkup()}
 
         <div class="arena-callout" aria-hidden="true"><span>LANTERN GATE</span><i></i><span>등불을 지키세요</span></div>
         <div class="defense-edge defense-bottom">
-          <div class="hud-panel gate-panel"><div class="gate-panel-copy">${portraitMarkup(COMMANDER_MESH_ROOT, "DW", "gate-panel-portrait rc-portrait")}<span class="hud-eyebrow">WARDEN / LANTERN INTEGRITY</span><div class="gate-panel-bars" aria-hidden="true"><span class="gate-panel-bar-icon" data-ui-icon="stat-commander"></span><span class="gate-panel-bar-track commander"><i id="battle-commander-bar-fill"></i></span><span class="gate-panel-bar-icon" data-ui-icon="stat-gate-integrity"></span><span class="gate-panel-bar-track gate"><i id="battle-gate-bar-fill"></i></span></div><strong id="battle-commander-integrity"></strong><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div></div>
+          <div class="hud-panel gate-panel"><div class="gate-panel-copy">${portraitMarkup(COMMANDER_MESH_ROOT, "DW", "gate-panel-portrait rc-portrait")}<span class="hud-eyebrow">WARDEN / LANTERN INTEGRITY</span><div class="gate-panel-bars" aria-hidden="true"><span class="gate-panel-bar-icon" data-ui-icon="stat-commander"></span><span class="gate-panel-bar-track commander"><i id="battle-commander-bar-fill"></i></span><span class="gate-panel-bar-icon" data-ui-icon="stat-gate-integrity"></span><span class="gate-panel-bar-track gate"><i id="battle-gate-bar-fill"></i></span></div><strong id="battle-commander-integrity"></strong><strong id="battle-integrity"></strong><span id="battle-enemies"></span></div><div class="integrity-meter" aria-hidden="true"><i id="battle-integrity-fill"></i></div><ul class="hud-buff-strip" id="battle-buff-strip" role="list" aria-label="활성 강화" aria-live="off"></ul></div>
           <div class="one-thumb-controls" id="movement-actions" data-movement-control="octant-joystick" role="group" aria-label="한 손 이동 조작">
-            <div class="virtual-joystick" data-joystick aria-hidden="true"><span class="virtual-joystick-rune"></span><i class="virtual-joystick-knob" data-joystick-knob></i></div>
+            <div class="virtual-joystick" data-joystick role="application" aria-label="이동 스틱" aria-describedby="movement-hint"><span class="virtual-joystick-rune" aria-hidden="true"></span><i class="virtual-joystick-knob" data-joystick-knob aria-hidden="true"></i></div>
             <button type="button" data-move="N" aria-label="위로 이동">↑</button>
             <button type="button" data-move="W" aria-label="왼쪽으로 이동">←</button>
             <button type="button" data-move="IDLE" aria-label="이동 정지">●</button>
             <button type="button" data-move="E" aria-label="오른쪽으로 이동">→</button>
             <button type="button" data-move="S" aria-label="아래로 이동">↓</button>
+            <span id="movement-hint" class="sr-only">스틱을 끌어 이동. 방향 버튼은 키보드로도 사용할 수 있습니다.</span>
           </div>
           <div class="combat-input-cluster" id="combat-input-cluster" role="group" aria-label="전투 입력">
             <button type="button" id="manual-attack" class="manual-attack-action" aria-label="수동 공격 (Space 또는 J)"><span class="manual-attack-glyph" aria-hidden="true">✦</span><span class="manual-attack-label">공격</span><kbd>SPACE</kbd></button>
@@ -1817,6 +1868,15 @@ export class BattleSession {
     this.audio = new DefenseAudio();
     this.audioTick = null;
     this.audioEventKeys = new Set();
+    // Cycle 10 §5.3a. One-shot pre-expiry warning ledger, keyed by buffId. Presentation-only:
+    // never read by the simulation, so getRunDigest is unaffected.
+    this.warnedBuffIds = new Set();
+    // §5.1/§5.2/§5.3 render signatures -- these let each readout rebuild its DOM only when the
+    // node identity actually changes, instead of replaceChildren() 60 times a second (which
+    // would drop focus and restart the active-pip animation every frame).
+    this.routeRailSignature = "";
+    this.gimmickChipSignature = "";
+    this.buffStripSignature = "";
     this.frame = 0;
     this.lastFrameAt = 0;
     this.inputModality = "keyboard";
@@ -1981,6 +2041,15 @@ export class BattleSession {
     this.run = this.createRunForStage(stageId);
     this.audio.resetRun();
     this.audioEventKeys.clear();
+    // Cycle 10 §5.3a: a buff warns ONCE, not every frame for 180 ticks. Reset here as well as
+    // in beginRun() because `nextId` is a shared per-run counter, so a re-entered stage can
+    // reissue a `buff-<n>` this Set already holds -- without the remount reset that buff would
+    // never warn again for the rest of the session.
+    // Assignment rather than .clear() deliberately. Nothing else holds a reference to this Set,
+    // so replacing it is equivalent to clearing it -- and it also survives the codebase's
+    // Object.create(BattleSession.prototype) test fixtures, which build a session field-by-field
+    // and never run the constructor. A .clear() there is a TypeError on undefined.
+    this.warnedBuffIds = new Set();
     this.audioTick = null;
     this.questEvents = [];
     this.questEventKeys.clear();
@@ -2133,6 +2202,7 @@ export class BattleSession {
       })),
     });
     this.started = true;
+    this.warnedBuffIds = new Set();
     this.accumulator = 0;
     this.lastFrameAt = 0;
     document.documentElement.dataset.defenseStarted = "true";
@@ -2356,9 +2426,26 @@ export class BattleSession {
     this.attackFeedbackTimer = setTimeout(() => control.removeAttribute("data-feedback"), 180);
   }
 
+  /**
+   * Cycle 10 (ui/hud-overhaul-joystick-cutover-spec.md §3.1): the stick is the PRIMARY
+   * movement control at every viewport and for EVERY pointer type, so availability is no
+   * longer a modality question at all -- the `(pointer: coarse) and (orientation: landscape)`
+   * media query and its `data-defense-portrait` companion clause are both gone. It is purely
+   * a geometry question: has CSS given the pad a box?
+   *
+   * Reading the same rect updateJoystick() reads is what makes this un-desyncable, and the
+   * rect check is load-bearing rather than defensive garnish. Without it a `display: none` pad
+   * still reaches updateJoystick(), whose zeroed getBoundingClientRect() collapses radius to 1,
+   * derives the octant from the viewport origin to the finger, and swallows the [data-move]
+   * fallback press entirely (spec §2.1). Keeping the rect check and dropping the media query
+   * makes the CSS in §3.4 the single switch: give the element a box and the stick is live;
+   * take the box away and the five ring buttons resume ownership with no JS change.
+   */
   joystickActive() {
-    return Boolean(globalThis.matchMedia?.("(pointer: coarse) and (orientation: landscape)").matches)
-      && document.documentElement.dataset.defensePortrait !== "true";
+    const joystick = this.movementControls?.querySelector("[data-joystick]");
+    if (!joystick) return false;
+    const rect = joystick.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
   }
 
   updateJoystick(event) {
@@ -2399,22 +2486,29 @@ export class BattleSession {
 
   onMoveControlDown(event) {
     if (this.controlPointerId !== null || (event.button !== undefined && event.button !== 0)) return;
-    if (this.joystickActive()) {
+    // Buttons FIRST (spec §3.2). The pad is visible at every viewport after §3.4, so the
+    // octant ring and the drag surface share one container. A press that actually landed on a
+    // labelled control is that control's press -- resolving it by pad geometry instead would
+    // discard the player's stated intent and break the held-movement contract in
+    // tests/defense-survivor-browser.cjs (hover [data-move="W"] -> mouse.down -> held MOVE W).
+    // Requirement C1 keeps every [data-move] box clear of the pad centre, so a drag that
+    // starts at the centre still finds no button here and falls through to the stick.
+    const button = event.target.closest?.("[data-move]");
+    if (button) {
       event.preventDefault();
       this.controlPointerId = event.pointerId;
-      this.controlPointerMode = "joystick";
-      this.movementControls.setPointerCapture?.(event.pointerId);
-      this.updateJoystick(event);
+      this.controlPointerMode = "buttons";
+      button.setPointerCapture?.(event.pointerId);
+      this.send("MOVE", button.dataset.move);
+      if (button.dataset.move !== "IDLE" && this.inLobby()) this.suppressLobbyShowcase();
       return;
     }
-    const button = event.target.closest?.("[data-move]");
-    if (!button) return;
+    if (!this.joystickActive()) return;
     event.preventDefault();
     this.controlPointerId = event.pointerId;
-    this.controlPointerMode = "buttons";
-    button.setPointerCapture?.(event.pointerId);
-    this.send("MOVE", button.dataset.move);
-    if (button.dataset.move !== "IDLE" && this.inLobby()) this.suppressLobbyShowcase();
+    this.controlPointerMode = "joystick";
+    this.movementControls.setPointerCapture?.(event.pointerId);
+    this.updateJoystick(event);
   }
 
   onMoveControlMove(event) {
@@ -3063,6 +3157,9 @@ export class BattleSession {
     root.querySelector("#battle-gate-bar-fill").style.width = `${gateIntegrity.ratio * 100}%`;
     root.querySelector("#battle-enemies").textContent = `적 ${snapshot.enemies.length} · 처치 ${snapshot.progress.defeated} · 아이템 ${snapshot.progress.itemsCollected}`;
     this.renderLegionHud(snapshot);
+    this.renderRouteRail(snapshot);
+    this.renderGimmickChip(snapshot);
+    this.renderBuffStrip(snapshot);
     if (this.started) {
       this.renderControls(snapshot);
       this.renderPauseOverlay(snapshot);
@@ -3122,6 +3219,273 @@ export class BattleSession {
       if (ariseState === "ready" || ariseState === "extracted") this.pulseAriseBanner();
     }
 
+  }
+
+  /**
+   * Cycle 10 §5.1 -- route/objective rail. Read-only over the AUTHORED critical route in
+   * stage-world-catalog.js, so the rail can never disagree with the level it describes.
+   *
+   * Node count is `waypoints.length`, not a hard-coded 4. Every stage authors exactly four
+   * today and the catalog validator enforces >=2 `intermediate-*` plus termination at the
+   * canonical gate, but it permits MORE -- a 5-waypoint dungeon would silently clip a fixed
+   * 4-node rail (spec Open risk R14). Rendering the real length costs nothing and removes
+   * the failure mode.
+   *
+   * State source is `snapshot.encounter.objectives[objectiveId].completed`, driven by
+   * ENCOUNTER_OBJECTIVE_COMPLETED -- no new event. The authored waypoint id is
+   * `<stageId>:<objectiveId>` for the two intermediate nodes, which is exactly how a rail node
+   * binds to encounter state. `ingress` is cleared the moment the run is under way; `final-gate`
+   * clears on extraction.
+   *
+   * `aria-live` is deliberately absent (spec §7.3): route advance is a beat the world already
+   * narrates, and #battle-status remains the single combat announcer.
+   */
+  renderRouteRail(snapshot) {
+    const rail = root.querySelector("#battle-route-rail");
+    if (!rail) return;
+    const critical = stageWorldFor(this.stageId)?.gameplay?.routes?.find(({ kind }) => kind === "critical");
+    const waypoints = critical?.waypoints ?? [];
+    if (!waypoints.length) {
+      rail.replaceChildren();
+      delete this.surface.dataset.routeWaypoint;
+      return;
+    }
+    const objectiveState = snapshot.encounter?.objectives ?? {};
+    const extractionCleared = Boolean(snapshot.extracted);
+    const cleared = waypoints.map(({ id, role }) => {
+      if (role === "ingress") return this.started;
+      if (role === "final-gate") return extractionCleared;
+      return Boolean(objectiveState[id.slice(this.stageId.length + 1)]?.completed);
+    });
+    const activeIndex = cleared.indexOf(false);
+    // Rebuild the <li> set only when the node identity changes; a per-frame replaceChildren
+    // would discard focus and restart the active-pip animation 60 times a second.
+    const signature = waypoints.map(({ id }) => id).join("|");
+    if (this.routeRailSignature !== signature) {
+      this.routeRailSignature = signature;
+      rail.replaceChildren(...waypoints.map(({ id, role }) => {
+        const node = document.createElement("li");
+        node.className = "route-node";
+        node.dataset.routeRole = role;
+        node.dataset.routeWaypoint = id;
+        // The label is written ONCE here, at build time, because the role -- and therefore the
+        // label -- is fixed for the life of the node. Only `data-route-state` varies per frame.
+        const pip = document.createElement("span");
+        pip.className = "route-pip";
+        pip.setAttribute("aria-hidden", "true");
+        const label = document.createElement("b");
+        label.textContent = ROUTE_ROLE_LABELS[role] ?? role;
+        node.append(pip, label);
+        return node;
+      }));
+    }
+    // Per-frame work is ONE attribute write per node. Deliberately no DOM read-back: the
+    // previous form read `node.querySelector("b").textContent` to decide whether to write it,
+    // which dereferenced null wherever the child was not round-trippable -- it crashed
+    // tests/battle-session-cutscene-audio.test.mjs (3 of 8) through a DOM stub whose
+    // querySelector does not resolve appended children. Deriving state from the snapshot
+    // instead of from the DOM removes the failure mode rather than guarding it.
+    [...rail.children].forEach((node, index) => {
+      const state = cleared[index] ? "cleared" : index === activeIndex ? "active" : "pending";
+      if (node.dataset.routeState !== state) node.dataset.routeState = state;
+    });
+    const activeWaypoint = activeIndex === -1 ? waypoints.at(-1) : waypoints[activeIndex];
+    if (this.surface.dataset.routeWaypoint !== activeWaypoint.id) this.surface.dataset.routeWaypoint = activeWaypoint.id;
+  }
+
+  /**
+   * Cycle 10 §5.2 -- gimmick chip. SUBORDINATE by contract: the world decal is the primary
+   * telegraph, so the chip carries the class glyph and the objective, and deliberately shows NO
+   * countdown (the decal's fill is that information).
+   *
+   * The GIMMICK_ARMED / GIMMICK_TRIGGERED / GIMMICK_RESOLVED family is authored by the dungeon
+   * cycle and is NOT emitted at this commit, so `armed` stays empty and the chip renders nothing.
+   * That is the correct absent state, not a stub: `data-gimmick-state=""` is exactly what the
+   * auto-hide CSS keys on, so this lights up unchanged the moment the events land.
+   *
+   * Concurrency is capped at 2 armed per stage stage-wide, so `+1` is the only overflow that can
+   * exist and a second chip is never needed.
+   */
+  renderGimmickChip(snapshot) {
+    const chip = root.querySelector("#battle-gimmick-state");
+    if (!chip) return;
+    const armed = (snapshot.gimmicks ?? []).filter((entry) => entry && entry.state !== "resolved");
+    if (!armed.length) {
+      if (chip.dataset.gimmickState !== "") {
+        chip.dataset.gimmickState = "";
+        chip.replaceChildren();
+      }
+      if (this.surface.dataset.gimmickState !== "") this.surface.dataset.gimmickState = "";
+      return;
+    }
+    // Smallest remaining telegraph wins the single chip. telegraphTicks IS the full reaction
+    // window (ARMED at T, TRIGGERED at exactly T + telegraphTicks), so remaining is derived and
+    // the chip needs no timer of its own.
+    //
+    // telegraphTicks is PER CLASS, not one global constant -- four tiers: deformation 180,
+    // narrowing gate 120, progress-ring/mirror 90, hazard 60. So it is READ FROM THE EVENT and
+    // 180 is only a fallback, never the value. Hardcoding 180 would leave a 60-tick hazard cue
+    // claiming to be arming for 120 ticks after it already fired (director ruling v6 C2).
+    // The Number.isInteger guard also keeps a missing field from producing NaN, which would
+    // poison the comparator and randomise which gimmick owns the chip.
+    const expiryOf = (entry) => (Number.isInteger(entry.armedAtTick) ? entry.armedAtTick : 0)
+      + (Number.isInteger(entry.telegraphTicks) ? entry.telegraphTicks : GIMMICK_TELEGRAPH_FALLBACK_TICKS);
+    const ordered = [...armed].sort((left, right) => expiryOf(left) - expiryOf(right));
+    const lead = ordered[0];
+    const state = lead.state === "triggered" ? "triggered" : "armed";
+    const glyph = GIMMICK_CLASS_GLYPHS[lead.gimmickClass] ?? GIMMICK_CLASS_GLYPHS.hazard;
+    // Deformation narrowing is a simulation-enforced hazard band INSIDE the authored corridor.
+    // The copy must not imply the floor moved, so the bars are labelled as a hazard proportion.
+    const bars = state === "triggered" && lead.gimmickClass === "deformation"
+      && lead.corridorWidthBefore > 0 && lead.corridorWidthAfter >= 0
+      ? "▮".repeat(Math.round((lead.corridorWidthAfter / lead.corridorWidthBefore) * 5))
+        .padEnd(5, "▯")
+      : "";
+    const overflow = ordered.length > 1 ? `+${ordered.length - 1}` : "";
+    const signature = `${state}|${lead.gimmickId}|${bars}|${overflow}`;
+    if (this.gimmickChipSignature !== signature) {
+      this.gimmickChipSignature = signature;
+      chip.replaceChildren();
+      const glyphNode = document.createElement("span");
+      glyphNode.className = "gimmick-glyph";
+      glyphNode.setAttribute("aria-hidden", "true");
+      glyphNode.textContent = glyph;
+      const labelNode = document.createElement("span");
+      labelNode.className = "gimmick-label";
+      labelNode.textContent = lead.objectiveId ?? lead.gimmickId ?? "";
+      chip.append(glyphNode, labelNode);
+      if (bars) {
+        const barsNode = document.createElement("span");
+        barsNode.className = "gimmick-bars";
+        barsNode.textContent = bars;
+        chip.append(barsNode);
+      }
+      if (overflow) {
+        const overflowNode = document.createElement("span");
+        overflowNode.className = "gimmick-overflow";
+        overflowNode.textContent = overflow;
+        chip.append(overflowNode);
+      }
+    }
+    if (chip.dataset.gimmickState !== state) chip.dataset.gimmickState = state;
+    if (this.surface.dataset.gimmickState !== state) this.surface.dataset.gimmickState = state;
+  }
+
+  /**
+   * Cycle 10 §5.3 -- active-buff strip. Steady state renders from `snapshot.buffs`, NEVER from
+   * events, so it is unaffected by the effectAnchor() defect that blocks VFX for the same events.
+   *
+   * Three blocking contracts are honoured here and each one has a failure it prevents:
+   *   1. `snapshot.buffs ?? []` -- presence is CONDITIONAL, emitted only when the run has a
+   *      buff, mirroring abyssDepth. Reading `.length` unguarded would throw on every pre-drop
+   *      frame, which is every frame of every existing digest fixture (spec Open risk R8).
+   *   2. Slots are <li>/<span>, NEVER <button>. defense-phone-battle-hud-browser collects
+   *      `.defense-bottom button` and requires every hit visible and >=44x44; a 26-36px readout
+   *      chip is neither, so a <button> slot fails two assertions at once (R6).
+   *   3. Order is the simulation's ascending buffId and the HUD MUST NOT re-sort. Sorting by
+   *      remaining time makes icons swap position as they tick.
+   * Display data resolves from the frozen catalog by `itemId`, never from `stat` (several items
+   * share a stat), and an unknown stat degrades to the neutral group so a future enum change
+   * cannot break the strip.
+   */
+  renderBuffStrip(snapshot) {
+    const strip = root.querySelector("#battle-buff-strip");
+    if (!strip) return;
+    const entries = snapshot.buffs ?? [];
+    if (!entries.length) {
+      if (strip.childElementCount) strip.replaceChildren();
+      this.buffStripSignature = "";
+      return;
+    }
+    const tick = snapshot.tick ?? 0;
+    const rendered = entries.map((entry) => {
+      const item = buffItem(entry.itemId);
+      const remaining = Math.max(0, (entry.expiresAtTick ?? 0) - tick);
+      return {
+        buffId: entry.buffId,
+        itemId: entry.itemId,
+        iconId: item?.iconId ?? "",
+        name: item?.name ?? entry.itemId ?? "",
+        rarity: BUFF_RARITIES.has(item?.rarity) ? item.rarity : "common",
+        stat: BUFF_STATS.has(entry.stat) ? entry.stat : "neutral",
+        // magnitude is an integer in basis points and stays one -- /100 happens only at the
+        // read site, so no float is ever stored or serialized.
+        percent: Number.isFinite(entry.magnitude) ? entry.magnitude / 100 : null,
+        stacks: Math.max(1, entry.stacks ?? 1),
+        seconds: Math.ceil(remaining / TICK_RATE),
+        warning: remaining > 0 && remaining <= BUFF_WARN_TICKS,
+      };
+    });
+    // Cycle 10 §5.3a -- pre-expiry warning, ONE comparison with TWO consumers. `slot.warning`
+    // above is the only place the 180-tick threshold is evaluated; the hatched overlay
+    // (data-buff-warning, set below) and the audio sting both read THIS result, so the visual
+    // and the sound cannot disagree. Do not add a second copy of BUFF_WARN_TICKS anywhere.
+    //
+    // Placed ahead of the signature early-return deliberately: the audio edge must not depend
+    // on DOM diffing. It is an EDGE, not a level -- fired only as the flag flips false->true,
+    // so a buff stings once per approach rather than 180 times.
+    //
+    // The Set is also CLEARED when a buff rises back above the threshold, which is what makes
+    // BUFF_REFRESHED correct: a refresh extends expiresAtTick, so the buff approaches expiry a
+    // second time and must be allowed to warn again. A permanently-held id would warn once for
+    // the lifetime of the run and stay silent through every later expiry.
+    //
+    // signalBuffExpiring is optional-called: defense-audio.js does not export it at this
+    // commit, so this degrades to "no sting, hatch overlay still renders" instead of throwing
+    // inside the render loop.
+    rendered.forEach((slot) => {
+      // ??= for the same prototype-constructed-fixture reason as the reset sites above.
+      const warned = (this.warnedBuffIds ??= new Set());
+      if (slot.warning) {
+        if (!warned.has(slot.buffId)) {
+          warned.add(slot.buffId);
+          this.audio?.signalBuffExpiring?.(slot.buffId);
+        }
+        return;
+      }
+      warned.delete(slot.buffId);
+    });
+    // The signature covers every VISIBLE field, so any change at all means the slot content
+    // changed. Build each slot complete in one pass and swap it in, rather than creating empty
+    // spans and then re-querying them to fill in text: that re-query is the read-back pattern
+    // that crashed renderRouteRail through a DOM stub, and here it would only have surfaced
+    // once snapshot.buffs starts being emitted -- i.e. long after this code was reviewed.
+    // Cost of always rebuilding is one replaceChildren per second per buff (the seconds label is
+    // the fastest-changing field), not one per frame.
+    const signature = rendered.map((slot) =>
+      `${slot.buffId}:${slot.stacks}:${slot.seconds}:${slot.warning ? 1 : 0}`).join("|");
+    if (this.buffStripSignature === signature) return;
+    this.buffStripSignature = signature;
+    strip.replaceChildren(...rendered.map((slot) => {
+      const node = document.createElement("li");
+      node.className = "buff-slot";
+      node.dataset.buffId = slot.buffId;
+      node.dataset.buffItem = slot.itemId ?? "";
+      node.dataset.buffStat = slot.stat;
+      node.dataset.buffRarity = slot.rarity;
+      node.dataset.buffWarning = slot.warning ? "true" : "false";
+      node.dataset.buffStacks = String(slot.stacks);
+      const icon = document.createElement("span");
+      icon.className = "buff-icon";
+      if (slot.iconId) icon.dataset.uiIcon = slot.iconId;
+      icon.setAttribute("aria-hidden", "true");
+      const stacks = document.createElement("span");
+      stacks.className = "buff-stacks";
+      stacks.setAttribute("aria-hidden", "true");
+      stacks.textContent = slot.stacks > 1 ? `×${slot.stacks}` : "";
+      const remainingNode = document.createElement("span");
+      remainingNode.className = "buff-remaining";
+      remainingNode.setAttribute("aria-hidden", "true");
+      remainingNode.textContent = `${slot.seconds}s`;
+      // ONE .sr-only sentence per slot, with every numeric span aria-hidden, so a screen reader
+      // hears one phrase instead of four disconnected fragments (spec §7.3).
+      const readout = document.createElement("span");
+      readout.className = "sr-only";
+      const percentText = slot.percent === null ? "" : `, ${slot.percent}%`;
+      readout.textContent = `${slot.name}${percentText}, ${slot.stacks}중첩, 남은 ${slot.seconds}초`;
+      node.append(icon, stacks, remainingNode, readout);
+      return node;
+    }));
   }
 
   /** Flash the ARISE banner for ~1.2s; the timer is cleared in stop(). */

@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
+  "role": "flat-gameplay-floor",
+  "stageId": "echo-throne",
+  "generatedAt": "2026-07-30T14:41:00.222705+00:00",
+  "runtimeEligible": true,
+  "promotedBy": "promote-dungeon-floor.py",
+  "builtBy": "build-dungeon-floor-blender.py",
+  "blender": "5.1.2",
+  "sha256": "6a7adf1153b92c6f6f11978ed201c0a120dc46b47ae2eac737c1fcdbe9d947c3",
+  "bytes": 2090580,
+  "surface": {
+    "kind": "flat-gameplay-floor",
+    "gameplayElevation": 0.0,
+    "coplanar": true,
+    "coordinateSpace": "renderer-world",
+    "worldScale": 14.0,
+    "bounds": {
+      "minX": 600,
+      "maxX": 23400,
+      "minY": 600,
+      "maxY": 11400
+    },
+    "apron": {
+      "x": 2400,
+      "y": 1200
+    },
+    "apronRect": {
+      "minX": -1800,
+      "maxX": 25800,
+      "minY": -600,
+      "maxY": 12600
+    },
+    "worldSpan": {
+      "x": 32.199999999999996,
+      "z": 30.800000000000004
+    },
+    "fitFootprintScale": 1.0,
+    "coveredArea": 246240000,
+    "declaredArea": 246240000,
+    "uvLattice": {
+      "periodX": 2000.0,
+      "periodY": 1000.0,
+      "anchor": [
+        0,
+        0
+      ]
+    }
+  },
+  "slabs": [
+    {
+      "slabId": "echo-throne:slab-01",
+      "node": "terrain-echo-throne-slab-001",
+      "material": "polished-echo",
+      "rect": {
+        "minX": 600,
+        "maxX": 6800,
+        "minY": 600,
+        "maxY": 11400
+      },
+      "uv": {
+        "repeat": [
+          3.1,
+          10.8
+        ],
+        "offset": [
+          0.3,
+          0.6
+        ],
+        "rotationTurns": 0
+      }
+    },
+    {
+      "slabId": "echo-throne:slab-02",
+      "node": "terrain-echo-throne-slab-002",
+      "material": "fracture-glass",
+      "rect": {
+        "minX": 6800,
+        "maxX": 16600,
+        "minY": 600,
+        "maxY": 4000
+      },
+      "uv": {
+        "repeat": [
+          4.9,
+          3.4
+        ],
+        "offset": [
+          3.4,
+          0.6
+        ],
+        "rotationTurns": 0
+      }
+    },
+    {
+      "slabId": "echo-throne:slab-03",
+      "node": "terrain-echo-throne-slab-003",
+      "material": "gilt-compass",
+      "rect": {
+        "minX": 6800,
+        "maxX": 16600,
+        "minY": 4000,
+        "maxY": 8000
+      },
+      "uv": {
+        "repeat": [
+          4.9,
+          4.0
+        ],
+        "offset": [
+          3.4,
+          4.0
+        ],
+        "rotationTurns": 1
+      }
+    },
+    {
+      "slabId": "echo-throne:slab-04",
+      "node": "terrain-echo-throne-slab-004",
+      "material": "fracture-glass",
+      "rect": {
+        "minX": 6800,
+        "maxX": 16600,
+        "minY": 8000,
+        "maxY": 11400
+      },
+      "uv": {
+        "repeat": [
+          4.9,
+          3.4
+        ],
+        "offset": [
+          3.4,
+          8.0
+        ],
+        "rotationTurns": 2
+      }
+    },
+    {
+      "slabId": "echo-throne:slab-05",
+      "node": "terrain-echo-throne-slab-005",
+      "material": "polished-echo",
+      "rect": {
+        "minX": 16600,
+        "maxX": 23400,
+        "minY": 600,
+        "maxY": 11400
+      },
+      "uv": {
+        "repeat": [
+          3.4,
+          10.8
+        ],
+        "offset": [
+          8.3,
+          0.6
+        ],
+        "rotationTurns": 2
+      }
+    }
+  ],
+  "apronNode": {
+    "node": "terrain-echo-throne-apron-001",
+    "rect": {
+      "minX": -1800,
+      "maxX": 25800,
+      "minY": -600,
+      "maxY": 12600
+    },
+    "uv": {
+      "repeat": [
+        13.8,
+        13.2
+      ],
+      "offset": [
+        -0.9,
+        -0.6
+      ],
+      "rotationTurns": 0
+    },
+    "walkable": false
+  },
+  "sources": [
+    {
+      "role": "slab-manifest",
+      "path": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/echo-throne.slabs.json",
+      "sha256": "d51a2a0100f583d8449156df003ef9b2d5b1a37ad24f495e1197d997651df9c6"
+    },
+    {
+      "role": "rectified-albedo",
+      "path": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/echo-throne-floor-albedo.png",
+      "sha256": "94243a609c4c2a809cf8e6c1d7bc9d2a98337404748293ec90cb3d2959460928"
+    },
+    {
+      "role": "concept-plate",
+      "path": "assets/mesh/terrain/terrain-echo-throne/raw/terrain-echo-throne-terrain.raw.png",
+      "sha256": "9efa13566ffc3109ba6feeed007162a5c7524f8d59f9b0a62acaa295c99f4dd2"
+    }
+  ],
+  "rights": {
+    "origin": "generated in-repo from a retained concept plate; no third-party asset introduced",
+    "plateProvenance": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/echo-throne-floor.provenance.json"
+  },
+  "verification": {
+    "coplanar": true,
+    "fitFootprintScale": 1.0,
+    "browserAlignmentProof": "walkable world bounds equal worldPointInto(bounds) to 3 decimals on both axes, measured through vendor/loaders/GLTFLoader.js in a real WebGL session"
+  }
+}

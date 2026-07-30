@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "stageId": "echo-throne",
+  "promotedAt": "2026-07-30T14:39:02.929165+00:00",
+  "tool": "promote-dungeon-floor.py",
+  "gates": {
+    "flatSurface": "PASS",
+    "runtimeDestination": "PASS",
+    "buildReportChecksum": "PASS"
+  },
+  "surface": {
+    "kind": "flat-gameplay-floor",
+    "gameplayElevation": 0.0,
+    "coplanar": true,
+    "coordinateSpace": "renderer-world",
+    "worldScale": 14.0,
+    "bounds": {
+      "minX": 600,
+      "maxX": 23400,
+      "minY": 600,
+      "maxY": 11400
+    },
+    "apron": {
+      "x": 2400,
+      "y": 1200
+    },
+    "apronRect": {
+      "minX": -1800,
+      "maxX": 25800,
+      "minY": -600,
+      "maxY": 12600
+    },
+    "worldSpan": {
+      "x": 32.199999999999996,
+      "z": 30.800000000000004
+    },
+    "fitFootprintScale": 1.0,
+    "coveredArea": 246240000,
+    "declaredArea": 246240000,
+    "uvLattice": {
+      "periodX": 2000.0,
+      "periodY": 1000.0,
+      "anchor": [
+        0,
+        0
+      ]
+    }
+  },
+  "source": {
+    "path": "/Users/jangyoung/orca/Abyssal-Surge-dungeon/_workspace/current/engineering/asset-pipeline/terrain-dungeon/built/terrain-echo-throne-floor.glb",
+    "sha256": "6a7adf1153b92c6f6f11978ed201c0a120dc46b47ae2eac737c1fcdbe9d947c3",
+    "bytes": 2090580
+  },
+  "destination": {
+    "path": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
+    "sha256": "6a7adf1153b92c6f6f11978ed201c0a120dc46b47ae2eac737c1fcdbe9d947c3",
+    "bytes": 2090580
+  },
+  "slabs": [
+    {
+      "slabId": "echo-throne:slab-01",
+      "node": "terrain-echo-throne-slab-001",
+      "material": "polished-echo",
+      "rect": {
+        "minX": 600,
+        "maxX": 6800,
+        "minY": 600,
+        "maxY": 11400
+      },
+      "uv": {
+        "repeat": [
+          3.1,
+          10.8
+        ],
+        "offset": [
+          0.3,
+          0.6
+        ],
+        "rotationTurns": 0
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    },
+    {
+      "slabId": "echo-throne:slab-02",
+      "node": "terrain-echo-throne-slab-002",
+      "material": "fracture-glass",
+      "rect": {
+        "minX": 6800,
+        "maxX": 16600,
+        "minY": 600,
+        "maxY": 4000
+      },
+      "uv": {
+        "repeat": [
+          4.9,
+          3.4
+        ],
+        "offset": [
+          3.4,
+          0.6
+        ],
+        "rotationTurns": 0
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    },
+    {
+      "slabId": "echo-throne:slab-03",
+      "node": "terrain-echo-throne-slab-003",
+      "material": "gilt-compass",
+      "rect": {
+        "minX": 6800,
+        "maxX": 16600,
+        "minY": 4000,
+        "maxY": 8000
+      },
+      "uv": {
+        "repeat": [
+          4.9,
+          4.0
+        ],
+        "offset": [
+          3.4,
+          4.0
+        ],
+        "rotationTurns": 1
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    },
+    {
+      "slabId": "echo-throne:slab-04",
+      "node": "terrain-echo-throne-slab-004",
+      "material": "fracture-glass",
+      "rect": {
+        "minX": 6800,
+        "maxX": 16600,
+        "minY": 8000,
+        "maxY": 11400
+      },
+      "uv": {
+        "repeat": [
+          4.9,
+          3.4
+        ],
+        "offset": [
+          3.4,
+          8.0
+        ],
+        "rotationTurns": 2
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    },
+    {
+      "slabId": "echo-throne:slab-05",
+      "node": "terrain-echo-throne-slab-005",
+      "material": "polished-echo",
+      "rect": {
+        "minX": 16600,
+        "maxX": 23400,
+        "minY": 600,
+        "maxY": 11400
+      },
+      "uv": {
+        "repeat": [
+          3.4,
+          10.8
+        ],
+        "offset": [
+          8.3,
+          0.6
+        ],
+        "rotationTurns": 2
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    }
+  ],
+  "catalogPatch": {
+    "file": "stage-world-catalog.js",
+    "stageId": "echo-throne",
+    "applyAllThreeTogether": true,
+    "reason": "the validator throws 'requires one eligible runtime strategy' if a profile keeps both an eligible path and a fallback",
+    "set": {
+      "terrainGlbPath": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
+      "terrainRuntimeEligible": true
+    },
+    "delete": [
+      "terrainFallback"
+    ],
+    "keep": {
+      "terrainSourceCandidatePath": "unchanged \u2014 retained for provenance"
+    },
+    "alsoRegister": {
+      "file": "scripts/defense-runtime-assets.mjs",
+      "addToRetainedAssetPaths": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
+      "note": "chancel and throne currently register textured-candidate paths; without this edit the promotion is invisible to the runtime"
+    },
+    "slabNodes": [
+      "terrain-echo-throne-slab-001",
+      "terrain-echo-throne-slab-002",
+      "terrain-echo-throne-slab-003",
+      "terrain-echo-throne-slab-004",
+      "terrain-echo-throne-slab-005"
+    ]
+  },
+  "runtimeEligible": true
+}

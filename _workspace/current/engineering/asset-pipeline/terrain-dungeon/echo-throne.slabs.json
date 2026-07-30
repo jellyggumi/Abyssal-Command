@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 2,
+  "stageId": "echo-throne",
+  "arena": {
+    "width": 24000,
+    "height": 12000
+  },
+  "bounds": {
+    "minX": 600,
+    "maxX": 23400,
+    "minY": 600,
+    "maxY": 11400
+  },
+  "apron": {
+    "x": 2400,
+    "y": 1200
+  },
+  "slabs": [
+    {
+      "id": "echo-throne:slab-01",
+      "material": "polished-echo",
+      "texture": "echo-throne-floor",
+      "rect": {
+        "minX": 600,
+        "maxX": 6800,
+        "minY": 600,
+        "maxY": 11400
+      },
+      "rotationTurns": 0,
+      "tint": [
+        0.94,
+        0.97,
+        1.0
+      ]
+    },
+    {
+      "id": "echo-throne:slab-02",
+      "material": "fracture-glass",
+      "texture": "echo-throne-floor",
+      "rect": {
+        "minX": 6800,
+        "maxX": 16600,
+        "minY": 600,
+        "maxY": 4000
+      },
+      "rotationTurns": 0,
+      "tint": [
+        0.9,
+        0.96,
+        1.0
+      ]
+    },
+    {
+      "id": "echo-throne:slab-03",
+      "material": "gilt-compass",
+      "texture": "echo-throne-floor",
+      "rect": {
+        "minX": 6800,
+        "maxX": 16600,
+        "minY": 4000,
+        "maxY": 8000
+      },
+      "rotationTurns": 1,
+      "tint": [
+        1.0,
+        0.97,
+        0.9
+      ]
+    },
+    {
+      "id": "echo-throne:slab-04",
+      "material": "fracture-glass",
+      "texture": "echo-throne-floor",
+      "rect": {
+        "minX": 6800,
+        "maxX": 16600,
+        "minY": 8000,
+        "maxY": 11400
+      },
+      "rotationTurns": 2,
+      "tint": [
+        0.9,
+        0.96,
+        1.0
+      ]
+    },
+    {
+      "id": "echo-throne:slab-05",
+      "material": "polished-echo",
+      "texture": "echo-throne-floor",
+      "rect": {
+        "minX": 16600,
+        "maxX": 23400,
+        "minY": 600,
+        "maxY": 11400
+      },
+      "rotationTurns": 2,
+      "tint": [
+        0.94,
+        0.97,
+        1.0
+      ]
+    }
+  ],
+  "provenance": "DungeonLevelDesign frozen slab table, cycle 10; uv derived from global lattice"
+}

@@ -366,14 +366,84 @@ next-beat: 독립 사람 플레이 판정으로 G4/G7/G8 재측정
 
 ---
 
-## 10. 2026-07-30 — 광역 전투 모델·공격 패턴 프리셋·AI 대응·보스 등장씬
+## 10. 2026-07-30 — 사이클 10: 스테이지 던전 구성
+
+run-id: `20260728-onslaught-action-pivot` · cycle 10
+branch: `feat/cycle10-stage-dungeon` · worktree `/Users/jangyoung/orca/Abyssal-Surge-dungeon` · base `033877ad`
+operating mode: Stage 1 재진입 — 3스테이지 던전 콘텐츠·자산 구축
+
+### 10.1 동시 세션 경계 [OBSERVED]
+
+타 세션이 cycle 9(코어 루프·컨트롤 감각)를 **공유 워크트리에서 구현 중**이며, 이 사이클이
+건드리는 모든 파일에 미커밋 변경이 있었다: `app.js`, `battle-realtime-three.js`,
+`defense-audio.js`, `defense-catalog.js`, `defense-run-simulation.js`, `campaign-state.js`.
+`defense-run-simulation.js`는 세션 중 3571 → 4002행으로 자랐다.
+
+CLAUDE.md §5에 따라 격리 워크트리에서 작업했다. `core-loop-legion-spec.md`는 **그들의
+cycle 9 스펙이며 이미 그들 쪽에 구현되어 있다** — 그들의 `defense-catalog.js`(1025행)가
+`AIM_BIAS_BP`, `EXTRACTION*`, `COMPANION_SLOT_UNLOCKS`를 그 스펙을 인용하며 노출한다.
+범위 밖으로 명시했다(ruling R27).
+
+### 10.2 작업과 산출물
+
+| task | owner | 산출물 | 게이트 | 상태 |
+|---|---|---|---|---|
+| 런타임 5개 표면 지도 | explore ×6 | `engineering/runtime-surface-maps/` 6개 | — | done |
+| 프로덕션 브리프·범위 경계 | game-production-director | `intake/production-brief-cycle10-stage-dungeon.md` | 전체 | done |
+| 던전 슬랩·경로·기믹 설계 | level-designer | `design/stage-dungeon-composition-spec.md` (1197행) | G1/G7 입력 | done |
+| 5–15분 페이싱 설계 | game-designer | `design/stage-pacing-5to15min-spec.md` (996행) | G2/G7 입력 | done |
+| 드롭·시한 버프 설계 | systems-designer | `design/item-drop-timed-buff-spec.md` (1256행) | G2 입력 | done |
+| VFX 큐 설계 | vfx-designer | `design/vfx-drop-spawn-terrain-spec.md` (1250행) | G4/G6 입력 | done |
+| 오디오·BGM 설계 | game-audio | `design/audio-feedback-dungeon-spec.md` (1426행) | G4 입력 | done |
+| HUD·조이스틱 설계 | ui-senior-developer | `ui/hud-overhaul-joystick-cutover-spec.md` (984행) | G4/G8 입력 | done |
+| 플레이트 → 탑다운 타일 역투영 | asset-pipeline | `engineering/asset-pipeline/terrain-dungeon/deproject-terrain-plate.py` | — | done — 시임 0.0000 |
+| 슬랩 조합 바닥 빌더 | asset-pipeline | `.../build-dungeon-floor-blender.py` | G6 입력 | done — fit 1.000000 |
+| 3스테이지 바닥 빌드·승격 | asset-pipeline | `assets/mesh/terrain/*/runtime/terrain/*-floor.glb` + provenance | — | done |
+| 카탈로그 지형 승격 3필드 | game-programmer | `stage-world-catalog.js` | G6 입력 | done — 검증기 green |
+| 자산 allowlist 4곳 동기 | game-programmer | `defense-runtime-assets.mjs`, `pages-artifact-smoke.cjs`, `static.yml` | — | done (지형만) |
+| 지형 계약 테스트 반전 | Tester | 3개 테스트 파일 | — | done — 22/22 |
+| 드롭·버프 시뮬레이션 | game-programmer | `defense-catalog.js`, `defense-run-simulation.js` | G2 입력 | in flight |
+| 렌더러 앵커 수정·VFX | game-programmer | `battle-realtime-three.js` | G4/G6 입력 | in flight |
+| 조이스틱 컷오버·HUD | ui-senior-developer | `app.js`, `styles.css` | G4/G8 입력 | in flight |
+| 오디오 발소리·큐·BGM | game-audio | `defense-audio.js` | G4 입력 | in flight |
+
+### 10.3 측정된 증거 [OBSERVED]
+
+- 역투영 시임 오차: 블렌드 후 3/3 타일 **0.0000 / 0.0000**. JPEG q88은 이를 1.3792로
+  파괴하므로 PNG + 업스트림 리사이즈를 쓴다.
+- `fitFootprint` 스케일 **1.000000** (3/3). 에이프런이 큰 축을 정확히 32.2로 맞춘다.
+- 보행 가능 월드 경계 == `worldPointInto(bounds)` **소수 3자리까지 일치** (3/3, 양축).
+- 보행 슬랩 수직 범위 **0** (에이프런만 −0.002). 슬랩 3/4/5개.
+- GLB 로드 **30–40 ms**, 실제 `vendor/loaders/GLTFLoader.js` 경유.
+- 브라우저 증거 `qa/cycle10-terrain-proof/`: WebGL 2.0, 1440×900, console error **0**,
+  page error **0**, horizontal overflow **0**.
+- 지형 계약 테스트 **22/22 PASS**. 사전 베이스라인 `qa/cycle10-baseline.md`는 동일
+  4파일에서 **28/28 PASS, 36.0초**.
+
+### 10.4 측정되지 않은 것
+
+- **전체 스위트 베이스라인이 없다.** 4회 시도 전부 종료·무효화됐다(러너 4중 중첩,
+  load 101–121). 파일 단위 베이스라인만 존재한다.
+- 5–15분 실플레이 시간 미측정. 페이싱 델타는 미구현이며, 측정 하네스 자체가 두 상수
+  때문에 목표 구간을 판정할 수 없다.
+- 드로우콜·프레임 예산 델타 미측정.
+- 사람 플레이 판정 없음 → G4/G7/G8 불변.
+
+### 10.5 다음 사이클 진입
+
+Stage 2(밸런스·코어 루프 안정화). 회고
+`retrospectives/cycle-10-retrospective.md` §6에 의존 순서가 있다.
+
+---
+
+## 11. 2026-07-30 — 광역 전투 모델·공격 패턴 프리셋·AI 대응·보스 등장씬
 
 세션 브랜치: `feat/motion-vfx-aoe-boss` → PR #11 → `main` `9562943b`.
 동시 세션이 `defense-catalog.js` / `defense-run-simulation.js` / `battle-realtime-three.js` /
 `app.js`를 편집 중이었으므로 `CLAUDE.md` §5에 따라 격리 워크트리
 (`/Users/jangyoung/orca/Abyssal-Surge-motion`)에서 작업했고, 공유 워크트리는 건드리지 않았다.
 
-### 10.1 구현된 계약
+### 11.1 구현된 계약
 
 **광역 전투(모든 공격·피격은 광역).** `defense-catalog.js`가 네 개의 정수 basis-point 인자를
 저작한다: 거리 감쇠 × 소스 가중치 × 속성 상성 × 지속시간.
@@ -408,7 +478,7 @@ share = areaFalloffBp(distance, radius)
 구분된다. 지휘관 1.55는 SKIRMISH 티어에서 화면 높이의 7.8%로 레퍼런스 대역(≈6.8%) 안에 있어
 확대하지 않았다.
 
-### 10.2 발견·수정한 결함 [OBSERVED]
+### 11.2 발견·수정한 결함 [OBSERVED]
 
 1. **성장 선택 이벤트 소실.** `advanceDefenseRun()`이 성장 오퍼 입력을 `tick()` 이전에 처리하고,
    `tick()`은 `run.events = []`로 시작한다. ward-binder의 +120 integrity/maxIntegrity는 적용되는데
@@ -420,7 +490,7 @@ share = areaFalloffBp(distance, radius)
    `1..N` 줄에서 "Invalid numeric literal"로 전체 스윕을 실패시켰다. 전사는
    `results/browser/*.txt`로 분리.
 
-### 10.3 증거 [OBSERVED]
+### 11.3 증거 [OBSERVED]
 
 - `tests/area-combat-model.test.mjs`(신규) **19/19 PASS** — 인자 수학, 모든 패턴의 위상 경계,
   actionId 유지/갱신, 응답 윈도 상한, 라이브 광역 구조, 속성별 거리 단조성, 장판 주기·만료,
@@ -442,7 +512,7 @@ share = areaFalloffBp(distance, radius)
 - 전체 Node 회귀(`node --test 'tests/**/*.test.mjs'`)는 §9.2와 동일하게 로컬에서 완료 요약을
   만들지 못했다 — 이번에도 PASS로 계산하지 않는다 [BLOCKED].
 
-### 10.4 모션 팩 재타깃 [OBSERVED · 완료]
+### 11.4 모션 팩 재타깃 [OBSERVED · 완료]
 
 `assets/motion/ingame/unarmed-core.glb` 9클립 → **21클립**(189 KB → 495 KB), `main` `e4775b5c`.
 
@@ -468,7 +538,7 @@ share = areaFalloffBp(distance, radius)
   `version.json.candidate_sha` = `e4775b5c9943394a1ad5c8bc193a6f4399c43115`,
   로컬 실행 `deployed-defense-smoke` `"pass": true`, `errors: []`.
 
-### 10.5 남은 작업
+### 11.5 남은 작업
 - 텍스트-투-모션 생성 경로(MDM/T2M-GPT)는 실행하지 않았다. 프롬프트 템플릿은
   `wiki/concepts/motion-generation-for-runtime-rigs.md` §4에 있고, 산출물은 `CLAUDE.md` §3의
   provenance/감사 게이트를 통과해야 런타임에서 참조할 수 있다.

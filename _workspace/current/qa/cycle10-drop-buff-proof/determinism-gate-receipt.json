@@ -1,0 +1,190 @@
+{
+  "artifact": "determinism-gate-receipt",
+  "runId": "20260728-onslaught-action-pivot",
+  "cycle": 10,
+  "lane": "qa",
+  "owner": "DropBuffImpl",
+  "spec": "_workspace/current/design/item-drop-timed-buff-spec.md",
+  "implementationCommit": "ee82c5f0",
+  "baseCommit": "033877ad",
+  "worktree": "/Users/jangyoung/orca/Abyssal-Surge-dungeon",
+  "status": "MEASURED BY PROBE, NOT BY COMMITTED TEST",
+  "honestScope": "Every number below was produced by the four scripts beside this file, each run with `cd /Users/jangyoung/orca/Abyssal-Surge-dungeon &&` and absolute-path imports. They are PROBES, not tests in `tests/**`. They prove the implementation behaves as specified; they do not gate future regressions. DropBuffGateTests owns turning these into committed tests. Do not read this receipt as the spec §9 gate being installed.",
+
+  "namedTestFiles": {
+    "command": "cd /Users/jangyoung/orca/Abyssal-Surge-dungeon && node --test --test-concurrency=2 tests/<file>",
+    "tests/defense-run-simulation.test.mjs": { "pass": 27, "fail": 0, "total": 27, "durationMs": 522068 },
+    "tests/defense-public-contract-regressions.test.mjs": { "pass": 5, "fail": 0, "total": 5 },
+    "tests/g2-measurement-fixture.test.mjs": { "pass": 5, "fail": 0, "total": 5 },
+    "aggregate": { "pass": 37, "fail": 0 }
+  },
+
+  "specSection6_2_namedCasualties": {
+    "requirement": "All nine must pass unchanged if `run.rng` is not consumed and no base stat is mutated.",
+    "result": "9/9 GREEN",
+    "tests": [
+      { "name": "equal seeds and identical inputs produce identical deterministic digests", "file": "tests/defense-run-simulation.test.mjs", "ordinal": 3, "status": "pass" },
+      { "name": "an item pickup applies both gate maximum and current integrity", "file": "tests/defense-run-simulation.test.mjs", "ordinal": 23, "status": "pass", "note": "RED on first run (itemsCollected 7 != 1); fixed by removing the spec's buff-branch increment. See deliberateDeviations." },
+      { "name": "repeated ticks after an item pickup do not compound Abyssal Banner companion damage", "file": "tests/defense-run-simulation.test.mjs", "ordinal": 24, "status": "pass" },
+      { "name": "owned Warden's Lantern increases commander pickupRange by exactly 400 over baseline", "file": "tests/defense-run-simulation.test.mjs", "ordinal": 20, "status": "pass" },
+      { "name": "owned Choir Ward Crystal increases commander crit chance by exactly 300bp over baseline", "file": "tests/defense-run-simulation.test.mjs", "ordinal": 21, "status": "pass" },
+      { "name": "Warden's Lantern and Choir Ward Crystal are applied once at run creation and never compound across ticks with no pickups", "file": "tests/defense-run-simulation.test.mjs", "ordinal": 22, "status": "pass" },
+      { "name": "measurement fixtures remain isolated through a deterministic combat interval", "file": "tests/defense-run-simulation.test.mjs", "ordinal": 15, "status": "pass" },
+      { "name": "M4 selected and declined paths retain deterministic committed-card traces through recovery and exhaustion", "file": "tests/g2-measurement-fixture.test.mjs", "ordinal": 2, "status": "pass" },
+      { "name": "critical visual and audio observation is idempotent and cannot alter the deterministic outcome", "file": "tests/defense-public-contract-regressions.test.mjs", "ordinal": 3, "status": "pass" }
+    ]
+  },
+
+  "check1_zeroBuffDigestIdentity": {
+    "method": "A/B in ONE process: base blob 033877ad extracted via `git show` into /tmp/dbimpl-base, vs the post-change worktree module. Divergence is then classified by replaying the same run and counting DROP_SPAWNED + DROP_DENIED.",
+    "script": "dbimpl-ab.mjs",
+    "sweep": { "stages": 3, "seeds": [1, 4, 5, 12, 17, 42, 71, 99], "horizons": [300, 500, 900], "runsCompared": 72 },
+    "byteIdentical": 66,
+    "divergedWithDropRolls": 6,
+    "divergedWithZeroDropRolls": 0,
+    "verdict": "PASS — divergence occurs if and only if the buff system engaged. The gate condition is `divergedWithZeroDropRolls === 0`.",
+    "divergenceCause": "Uniform +2 actor-id renumber (enemy-100 -> enemy-102, pickup-113 -> pickup-115, projectile-131 -> projectile-133): the shared `nextId` counter is consumed once for `drop-<n>` and once for `buff-<n>`. This is spec Open risk 7, documented as intended and unavoidable. `waveSchedule` and `waveVariant` are byte-IDENTICAL in those same diverged runs, which is the direct proof `run.rng` was never consumed.",
+    "assignmentForm": {
+      "method": "Two runs, same seed 71, cinder-span, 500 ticks, no buff pickup, digest string equality.",
+      "digestLength": 22843,
+      "buffsAbsentBothSides": true,
+      "result": "PASS"
+    },
+    "supplementaryBaseline": {
+      "script": "dbimpl-baseline.mjs",
+      "note": "Captured BEFORE the first source edit, per spec check 1's 'capture the baseline before step 1'.",
+      "digestsCaptured": 10,
+      "identicalAfterChange": 9,
+      "differing": ["cinder-span:71:3000"],
+      "differingExplanation": "3000-tick run in which a drop spawned and was collected. itemsCollected 0 -> 0 after the deviation fix; waveSchedule and waveVariant identical."
+    }
+  },
+
+  "check17_measurementIsolation": {
+    "longHorizonAB": { "script": "dbimpl-ab.mjs", "profiles": ["striker", "bulwark"], "stages": 3, "horizons": [500, 2000], "runsCompared": 12, "byteIdentical": 12, "verdict": "PASS" },
+    "directProbe": { "script": "dbimpl-verify.mjs", "profile": "striker", "ticks": 2000, "enemiesDefeated": 13, "dropRngUnchangedFromCreation": true, "buffsEmpty": true, "dropOrBuffEventsEmitted": 0, "verdict": "PASS — the guard is exercised, not merely unreached: 13 enemies actually died." }
+  },
+
+  "check5_noFloatSerialized": {
+    "script": "dbimpl-verify.mjs",
+    "method": "Walk every numeric leaf of `buffs`, `buffStats`, every payload of the 7 spec event types, and every `kind === \"buff\"` pickup, across a 6000-tick echo-throne seed-7 run, asserting Number.isInteger.",
+    "nonIntegerLeavesFound": 0,
+    "buffWasActive": true,
+    "dropDidSpawn": true,
+    "verdict": "PASS"
+  },
+
+  "check10a_identityGuardOnEveryAccessor": {
+    "method": "All seven accessors exported and called with `run.buffs = []`, compared Object.is against the original expression each replaced.",
+    "results": { "effectiveBasicDamage": 900, "effectiveGateMax": 1600, "effectivePickupRange": 12000, "effectiveCritChanceBp": 1500, "effectiveCooldownScaleBp": 10000, "getCommanderSpeed": 4100 },
+    "verdict": "PASS 6/6 scalar accessors"
+  },
+  "check10b_incomingDamageRoundingPreserved": {
+    "method": "applyIncomingDamage(run, d) vs Math.round(d * incomingDamageMultiplier) for every d in 1..2000, no incomingDamageBp buff.",
+    "mismatches": 0,
+    "verdict": "PASS"
+  },
+
+  "check9_and_10_compositionAndCaps": {
+    "note": "TRAP for the test author: createDefenseRun and advanceDefenseRun both return FROZEN runs, so `run.buffs = [...]` silently no-ops and every accessor returns its base value. Clone with JSON.parse(JSON.stringify(run)) first.",
+    "compositionExact": { "input": "ember-edge x2 (+2400bp)", "effectiveBasicDamage": 1116, "formula": "Math.trunc(900 * 12400 / 10000)", "restoresToBaseOnExpiry": 900, "verdict": "PASS" },
+    "capHolds": { "input": "reaver-fervor x2 + ember-edge x3", "uncappedSum": 8600, "buffBp": 5000, "verdict": "PASS" },
+    "negativeCapsClampWithMax": [
+      { "stat": "cooldownScaleBp", "input": "chancel-tempo + cinder-haste x2", "uncapped": -3100, "capped": -3000, "effectiveCooldownScaleBp": 7000 },
+      { "stat": "incomingDamageBp", "input": "lantern-aegis + warding-splint x2", "uncapped": -4000, "capped": -2000, "applyIncomingDamage_100": 80 }
+    ],
+    "perStat": { "effectiveGateMax_bulwarkEchoX2": 1920, "effectivePickupRange_reclaimerPulseX2": 18000, "effectiveCritChanceBp_throneResonance": 3000, "getCommanderSpeed_ashStrideX2": 4920 },
+    "orderIndependent": true
+  },
+
+  "behavioralChecks": {
+    "script": "dbimpl-behavior.mjs",
+    "totals": { "pass": 32, "fail": 0 },
+    "check4_drawCountStateIndependent": { "method": "Identical pre-state, one dead BOSS-grade enemy, field empty vs saturated at MAX_FIELD_DROPS.", "dropRngEmptyField": 3212273630, "dropRngSaturatedField": 3212273630, "verdict": "PASS — a denied drop advances the stream exactly as far as a spawned one." },
+    "check6_expiryExact": { "buffsApplied": 4, "unrefreshedExpiredAtExactExpiresAtTick": 4, "buffIdExpiredTwice": 0, "verdict": "PASS" },
+    "check7_expiryIdempotent": { "expiredEventsTick1": 1, "expiredEventsTick2": 0, "verdict": "PASS" },
+    "check13_duplicatePickup": [
+      { "itemId": "ember-edge", "stacking": "STACK", "entries": 1, "stacks": 2, "expiresAtTick": "601 -> 602", "verdict": "PASS" },
+      { "itemId": "lantern-aegis", "stacking": "REFRESH", "entries": 1, "stacks": 1, "expiresAtTick": "1801 -> 1802", "verdict": "PASS" }
+    ],
+    "check14_evictionDeterministic": { "activeBefore": 6, "seventhCollected": "reaver-fervor", "activeAfter": 6, "evictedEventsEmitted": 1, "victim": "buff-1", "victimRule": "smallest expiresAtTick, ties by buffId.localeCompare", "verdict": "PASS" },
+    "check15_fieldCap": { "method": "Saturate the field to MAX_FIELD_DROPS, then kill a BOSS-grade enemy (cinder-span BOSS chance = 10000bp, a guaranteed roll).", "dropDeniedEmitted": 1, "reason": "FIELD_CAP", "dropSpawnedEmitted": 0, "fieldCountAfter": 8, "verdict": "PASS" },
+    "check16_ttlGrace": { "inRangeAtExpiryTickIsCollected": true, "outOfRangeAtExpiryTickEmitsDropExpired": true, "expiredDropRemovedFromPickups": true, "verdict": "PASS — proves the Phase B ordering choice." },
+    "check18_oldSaveRehydration": { "method": "delete run.dropRng and run.buffs, then advanceDefenseRun.", "threw": false, "dropRngRestored": 1768471323, "buffsRestored": [], "verdict": "PASS" },
+    "check19_snapshotVersion": { "unbuffed": 7, "buffed": 7, "verdict": "PASS — no bump." },
+    "check27_dropPositionIsActorNotCorpse": {
+      "method": "Both arms from an identical pre-state so the corpse position is identical; only field saturation differs.",
+      "dropSpawned": { "x": 12213, "y": 5988, "slabId": "cinder-span:slab-02" },
+      "dropDenied": { "x": 11973, "y": 5988, "slabId": "cinder-span:slab-02" },
+      "xDelta": 240,
+      "dropOffsetX": 240,
+      "yIdentical": true,
+      "eventMatchesActorInRunPickups": "id, x, y, slabId all agree",
+      "verdict": "PASS — DROP_SPAWNED reports the actor position after DROP_OFFSET_X and placeOnTerrain; DROP_DENIED reports the corpse, because no actor exists."
+    }
+  },
+
+  "catalogAndSlabVerification": {
+    "buffItems": { "count": 11, "keysSorted": true, "overlapWithITEMS": 0, "cloneLossless": true, "statsCovered": "7/7", "frozenDeep": true },
+    "rarityWeightRowsSumTo10000": ["BASIC", "SHADOW", "BOSS"],
+    "reachableStageGradeRarityCellsEmpty": 0,
+    "slabTiling": [
+      { "stage": "cinder-span", "slabs": 3, "slabArea": 237120000, "boundsArea": 237120000, "equal": true, "pairwiseOverlap": 0 },
+      { "stage": "abyss-chancel", "slabs": 4, "slabArea": 241680000, "boundsArea": 241680000, "equal": true, "pairwiseOverlap": 0 },
+      { "stage": "echo-throne", "slabs": 5, "slabArea": 246240000, "boundsArea": 246240000, "equal": true, "pairwiseOverlap": 0 }
+    ],
+    "slabAreasMatchDungeonLevelDesign": "Independently derived here and identical to DungeonLevelDesign's published figures.",
+    "latticeProbe": { "step": 200, "stages": 3, "multiMatchPoints": 0, "unmatchedInteriorPoints": 0, "verdict": "The half-open interior / closed outer-edge rule yields exactly one slab per point." },
+    "slabAtEdgeRule": { "seam_x8600": "cinder-span:slab-02", "outerEdge_x23400": "cinder-span:slab-03", "outerEdge_y11200": "cinder-span:slab-01", "outside_x599": null, "outside_x23401": null }
+  },
+
+  "deliberateDeviations": [
+    {
+      "id": "D1",
+      "specSection": "§4.3",
+      "specText": "run.progress.itemsCollected += 1 inside the `kind === \"buff\"` collection branch",
+      "action": "REMOVED",
+      "reason": "It reds `an item pickup applies both gate maximum and current integrity` (tests/defense-run-simulation.test.mjs:978 asserts itemsCollected === 1; measured 7) — one of the nine tests §6.2 requires to pass UNCHANGED. That counter means PERMANENT stage items: app.js renders it as '아이템 N' beside the kill count and it moves in lockstep with `run.itemIds`, which a buff drop never joins. Counting buff drops in it makes the HUD claim 7 items while the player holds 1, contradicting the spec's own §2 premise that BUFF_ITEMS and ITEMS are disjoint catalogs.",
+      "replacementCounterAdded": false,
+      "replacementRationale": "A new `progress` key changes the serialized shape for every run and breaks the byte-identical-digest proof. The value is derivable from `buffs` and the BUFF_APPLIED/BUFF_REFRESHED event stream.",
+      "preserved": "The ITEM_COLLECTED emit is retained exactly as specified, so audio/VFX/HUD consumers are unaffected."
+    },
+    {
+      "id": "D2",
+      "specSection": "§3.5 / check 11",
+      "specText": "expireBuffs is a pure filter",
+      "action": "ADDED `reconcileGateCap(run)` = Math.min(gate.integrity, effectiveGateMax(run)), called at the end of expireBuffs, clearBuffs, AND evictOldestBuff",
+      "reason": "Check 11 requires `gate.integrity <= gate.maxIntegrity` on the expiry tick, which a pure filter cannot deliver. Of the 8 gateMaxIntegrity read sites the 3 damage clamps are provably inert (clamp(integrity - damage, 0, cap) with damage >= 0 never reaches the upper bound), but the 5 that RAISE integrity — recovery headroom, recovery amount, retry floor, terrain-recovery budget and clamp — let bulwark-echo x2 fill cinder-span's gate to 1920 against a base 1600, so on expiry the HUD would read 1920/1600.",
+      "safety": "Never writes gate.maxIntegrity, so R14 holds. Math.min can only cap, never grant. Identity in every unbuffed run, so check 1 is unaffected. Phase A precedes every gate write in the tick.",
+      "authority": "Confirmed by DropBuffSystem (spec author, who called check 11 unsatisfiable as written and identified evictOldestBuff as a third removal path) and ratified by the director as R39."
+    },
+    {
+      "id": "D3",
+      "specSection": "§7.2",
+      "specText": "slabAt / STAGE_SLABS / STAGE_FLOOR_BOUNDS given without a host file",
+      "action": "Placed in defense-catalog.js, with materialId carried on each slab, plus a slabMaterialAt convenience returning { slabId, materialId } | null",
+      "reason": "stage-world-catalog.js is not owned by this lane and had zero slab symbols. One frozen table with materialId beats three lanes duplicating it.",
+      "consequence": "AudioFeedbackDesign's §7.2 instructed `import { slabMaterialAt } from \"./stage-world-catalog.js\"`, which would not resolve. Flagged before it became a runtime error; ratified as R38 — canonical import is from defense-catalog.js, with no re-export added."
+    },
+    {
+      "id": "D4",
+      "specSection": "§3.2",
+      "specText": "effectiveCritChanceBp reads run.commander.critProfile.chanceBp directly",
+      "action": "Mirrored resolveCritical's own fallback: `run?.commander?.critProfile || COMMANDER.critProfile`, and made buffBp null-safe with `run?.buffs || []`",
+      "reason": "resolveCritical is reachable with a run lacking a commander; the spec's literal form would throw there. The accessor now cannot disagree with the read site it serves."
+    },
+    {
+      "id": "D5",
+      "specSection": "§8 step 3",
+      "action": "Exported the 7 accessors plus buffBp and composedBuffStats",
+      "reason": "Check 10a is specified as 'table-driven over the 7 accessors' and check 10b as a 1..2000 sweep of applyIncomingDamage; neither is writable while they are module-private. All are read-only derivations, so the export cannot widen the mutation surface."
+    }
+  ],
+
+  "unresolved": [
+    "The spec §9 gate is NOT installed. Checks 1, 2, 5, 8, 10a, 17, 20 are named as the hard ship gate; all pass as probes here, none exists in tests/**. DropBuffGateTests owns that work.",
+    "Checks 23, 24, 25 (drop cadence, uptime band, DPS ceiling) are soak measurements and were not attempted — they need >=20 full-stage runs per stage. Every magnitude, duration, chance, and cap in the catalog remains [TARGET].",
+    "Spec check 12 (companions ignore buff drops) is structurally guaranteed by catalog disjointness — verified 0 overlap between BUFF_ITEMS and ITEMS keys — but was not driven with 3 companions and a buff drop in leash range.",
+    "Spec checks 21, 22 (renderer boundary, prop GLB load) belong to the renderer lane."
+  ]
+}

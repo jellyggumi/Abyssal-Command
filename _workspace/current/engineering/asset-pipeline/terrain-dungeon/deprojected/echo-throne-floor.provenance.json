@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "slabId": "echo-throne-floor",
+  "generatedAt": "2026-07-30T14:04:40.067841+00:00",
+  "tool": "deproject-terrain-plate.py",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "source": {
+    "path": "assets/mesh/terrain/terrain-echo-throne/raw/terrain-echo-throne-terrain.raw.png",
+    "sha256": "9efa13566ffc3109ba6feeed007162a5c7524f8d59f9b0a62acaa295c99f4dd2",
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  "silhouette": {
+    "maskCoverage": 0.48261133829752606,
+    "topFaceCorners": {
+      "north": [
+        768.0,
+        30.0
+      ],
+      "east": [
+        1507.0,
+        407.0
+      ],
+      "south": [
+        767.0,
+        777.0
+      ],
+      "west": [
+        28.0,
+        400.0
+      ]
+    },
+    "insetFraction": 0.012
+  },
+  "output": {
+    "albedo": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/echo-throne-floor-albedo.png",
+    "height": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/echo-throne-floor-height.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "seamless": true,
+    "seamMargin": 0.06,
+    "seamErrorBeforeBlend": {
+      "horizontalMeanAbs": 0.10850916198907512,
+      "verticalMeanAbs": 0.13072310930160083
+    },
+    "seamErrorAfterBlend": {
+      "horizontalMeanAbs": 1.2377974802542842e-18,
+      "verticalMeanAbs": 1.3823577699190182e-18
+    }
+  }
+}

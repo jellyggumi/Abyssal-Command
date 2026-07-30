@@ -378,18 +378,105 @@ test("coarse-landscape joystick resolves eight octants and every cancellation pa
   }
 });
 
-test("the joystick stays hidden outside coarse landscape", async () => {
+/**
+ * Cycle 10 §8.1 -- INTENTIONAL CONTRACT INVERSION, not a weakened assertion.
+ *
+ * This replaces "the joystick stays hidden outside coarse landscape", which asserted
+ * `display === "none"` in coarse portrait and fine-pointer landscape. That assertion encoded the
+ * exact gate the cutover exists to remove: while it held, desktop and portrait were left on the
+ * retired keypad. Keeping it would mean the cutover did not happen -- the two are the same
+ * decision, so this cannot be reviewed as a softening.
+ *
+ * The replacement is strictly STRONGER. The old test made 2 assertions across 2 contexts (4
+ * total) and never dispatched a pointer event. This one makes >=15 across 4 contexts, adds the
+ * two desktop viewports the old one never visited, and adds two guards the old shape could not
+ * express at all:
+ *   - C1: the pad centre is drag-only. Before the ring became pointer-active this was vacuous;
+ *     now it is what keeps the eight-octant drag test alive, because [data-move="IDLE"] used to
+ *     park exactly where that test presses.
+ *   - Gate desync: the JS predicate and the CSS visibility cannot disagree. This is the defect
+ *     spec §2.1 documents -- a `display: none` pad whose zeroed rect still reached
+ *     updateJoystick() and produced octants measured from the viewport origin.
+ */
+test("the joystick is the primary movement control at every viewport", async () => {
+  const DEAD_ZONE_RATIO = 0.22;   // mirrors JOYSTICK_DEAD_ZONE_RATIO in app.js
   for (const options of [
-    { hasTouch: true, viewport: PORTRAIT, label: "coarse portrait" },
-    { hasTouch: false, viewport: COARSE_LANDSCAPE, label: "fine-pointer landscape" },
+    { hasTouch: true, viewport: PORTRAIT, label: "coarse portrait", padSize: 116 },
+    { hasTouch: false, viewport: COARSE_LANDSCAPE, label: "fine-pointer landscape", padSize: 116 },
+    { hasTouch: false, viewport: { width: 1440, height: 900 }, label: "desktop pointer", padSize: 144 },
+    { hasTouch: false, viewport: { width: 1920, height: 1080 }, label: "wide desktop pointer", padSize: 160 },
   ]) {
     const run = await openPage(options);
     try {
+      await launch(run);
+      const joystick = run.page.locator("[data-joystick]");
+      // 1. present and laid out -- the inverted assertion.
+      assert.equal(await joystick.evaluate((node) => getComputedStyle(node).display), "grid",
+        `${options.label} must expose the drag joystick`);
+      const box = await joystick.boundingBox();
+      assert.ok(box && box.width >= 44 && box.height >= 44,
+        `${options.label} joystick must expose a reachable target`);
+      // Per-composition pad size (spec §3.5). Pinned because maxTravel = padRadius - knobRadius
+      // is the analog resolution denominator, so a silent size change alters movement feel.
+      assert.ok(Math.abs(box.width - options.padSize) <= 1 && Math.abs(box.height - options.padSize) <= 1,
+        `${options.label} pad must measure ${options.padSize}px, got ${box.width}x${box.height}`);
+      // 2. the five controls survive as the accessible fallback -- retained strength.
+      const buttons = run.page.locator("#movement-actions button[data-move]");
+      assert.equal(await buttons.count(), 5,
+        `${options.label} must keep the five keyboard movement controls`);
+      assert.deepEqual(
+        await run.page.$$eval("#movement-actions button[data-move]", (nodes) => nodes.map((node) => node.dataset.move)),
+        ["N", "W", "IDLE", "E", "S"],
+        `${options.label} must keep DOM order N,W,IDLE,E,S -- position is CSS-only (spec C2)`);
+      for (const direction of ["N", "W", "IDLE", "E", "S"]) {
+        const button = run.page.locator(`#movement-actions button[data-move="${direction}"]`);
+        const rect = await button.boundingBox();
+        assert.ok(rect && rect.width >= 44 && rect.height >= 44,
+          `${options.label} ${direction} must retain a 44px target`);
+        await button.focus();
+        assert.equal(await button.evaluate((node) => document.activeElement === node), true,
+          `${options.label} ${direction} must stay keyboard focusable`);
+      }
+      // 3. NEW strength the old test could not have: the centre stays drag-only (spec C1).
+      const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+      const hit = await run.page.evaluate(({ x, y }) =>
+        document.elementFromPoint(x, y)?.closest("[data-move]")?.dataset.move ?? null, centre);
+      assert.equal(hit, null,
+        `${options.label} pad centre must be drag-only, no [data-move] may intercept it`);
+      // C1 dead-zone margin. Reported, and asserted as a WARNING-grade floor rather than the
+      // gate: the binding form is the point exclusion above. A press inside the dead zone is
+      // exactly the press that must start a drag instead of resolving to a button, so if the
+      // nearest [data-move] edge ever crosses padRadius x 0.22 the octant drag starts failing.
+      const margin = await run.page.evaluate(({ cx, cy }) => {
+        const edges = [...document.querySelectorAll("#movement-actions button[data-move]")].map((node) => {
+          const rect = node.getBoundingClientRect();
+          const dx = Math.max(rect.left - cx, 0, cx - rect.right);
+          const dy = Math.max(rect.top - cy, 0, cy - rect.bottom);
+          return Math.hypot(dx, dy);
+        });
+        return Math.min(...edges);
+      }, { cx: centre.x, cy: centre.y });
+      const deadZone = (box.width / 2) * DEAD_ZONE_RATIO;
+      assert.ok(margin > deadZone,
+        `${options.label} nearest [data-move] edge ${margin.toFixed(2)}px must clear the `
+        + `${deadZone.toFixed(2)}px dead-zone radius (margin ${(margin - deadZone).toFixed(2)}px)`);
+      // 4. NEW strength: the JS predicate and the CSS visibility cannot disagree (spec §2.1).
       assert.equal(
-        await run.page.locator("[data-joystick]").evaluate((node) => getComputedStyle(node).display),
-        "none",
-        `${options.label} must not expose the drag joystick`,
-      );
+        await run.page.evaluate(() => {
+          const pad = document.querySelector("[data-joystick]");
+          const rect = pad.getBoundingClientRect();
+          return getComputedStyle(pad).display !== "none" && rect.width > 0 && rect.height > 0;
+        }),
+        true, `${options.label} pad geometry must be measurable wherever it is displayed`);
+      // 5. no horizontal overflow at any composition (spec §7.2).
+      assert.equal(
+        await run.page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
+        true, `${options.label} must not overflow horizontally`);
+      // 6. buff slots are a READOUT, never a button (spec §5.3 blocking requirement). A <button>
+      // slot would be swept by the phone suite's `.defense-bottom button` collection and fail
+      // both its visible and its >=44x44 assertion at 26-36px.
+      assert.equal(await run.page.locator("#battle-buff-strip button").count(), 0,
+        `${options.label} buff strip must contain no buttons`);
       assert.deepEqual(run.errors, [], `${options.label} must not emit browser errors`);
     } finally {
       await run.context.close();

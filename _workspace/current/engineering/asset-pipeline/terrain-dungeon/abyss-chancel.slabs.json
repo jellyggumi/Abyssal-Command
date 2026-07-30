@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 2,
+  "stageId": "abyss-chancel",
+  "arena": {
+    "width": 24000,
+    "height": 12000
+  },
+  "bounds": {
+    "minX": 600,
+    "maxX": 23400,
+    "minY": 700,
+    "maxY": 11300
+  },
+  "apron": {
+    "x": 2400,
+    "y": 1200
+  },
+  "slabs": [
+    {
+      "id": "abyss-chancel:slab-01",
+      "material": "flagstone-oath",
+      "texture": "abyss-chancel-floor",
+      "rect": {
+        "minX": 600,
+        "maxX": 8000,
+        "minY": 700,
+        "maxY": 11300
+      },
+      "rotationTurns": 0,
+      "tint": [
+        0.96,
+        0.94,
+        1.0
+      ]
+    },
+    {
+      "id": "abyss-chancel:slab-02",
+      "material": "flagstone-oath",
+      "texture": "abyss-chancel-floor",
+      "rect": {
+        "minX": 8000,
+        "maxX": 16400,
+        "minY": 700,
+        "maxY": 11300
+      },
+      "rotationTurns": 0,
+      "tint": [
+        0.96,
+        0.94,
+        1.0
+      ]
+    },
+    {
+      "id": "abyss-chancel:slab-03",
+      "material": "oath-inlay",
+      "texture": "abyss-chancel-floor",
+      "rect": {
+        "minX": 16400,
+        "maxX": 23400,
+        "minY": 700,
+        "maxY": 7200
+      },
+      "rotationTurns": 1,
+      "tint": [
+        0.93,
+        0.9,
+        1.0
+      ]
+    },
+    {
+      "id": "abyss-chancel:slab-04",
+      "material": "vestry-tile",
+      "texture": "abyss-chancel-floor",
+      "rect": {
+        "minX": 16400,
+        "maxX": 23400,
+        "minY": 7200,
+        "maxY": 11300
+      },
+      "rotationTurns": 0,
+      "tint": [
+        0.9,
+        0.9,
+        0.98
+      ]
+    }
+  ],
+  "provenance": "DungeonLevelDesign frozen slab table, cycle 10; uv derived from global lattice"
+}

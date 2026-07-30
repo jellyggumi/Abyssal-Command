@@ -50,6 +50,11 @@ const REQUIRED_FILES = [
   "assets/images/battle/ui/hud/stat-commander.webp",
   "assets/images/battle/ui/hud/stat-echo-xp.webp",
   "assets/images/battle/ui/hud/stat-gate-integrity.webp",
+  // Cycle 10: the composed slab floors are what the runtime loads for gameplay ground.
+  // The retained diorama and textured candidates stay listed as offline provenance.
+  "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
+  "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
+  "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
   "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
   "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb",
   "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb",
