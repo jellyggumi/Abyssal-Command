@@ -1917,6 +1917,9 @@ export class BattleSession {
     this.cutsceneRelayTimers = [];
     this.cutsceneQueue = [];
     this.cutsceneActive = false;
+    // Boss entrance band: one per boss body, dismissed by its own authored timer.
+    this.bossIntroKeys = new Set();
+    this.bossIntroTimer = null;
     this.stopped = false;
     this.camera = { x: 0, y: 0 };
     this.focusBeforeGrowth = null;
@@ -2070,6 +2073,12 @@ export class BattleSession {
     this.cutsceneRelayTimers = [];
     this.cutsceneQueue = [];
     this.dismissCutscene();
+    if (this.bossIntroTimer !== null) {
+      clearTimeout(this.bossIntroTimer);
+      this.bossIntroTimer = null;
+    }
+    this.surface.querySelector("#defense-boss-intro")?.remove();
+    this.bossIntroKeys.clear();
     this.rallyAcknowledgedBossIds = new Set();
     this.accumulator = 0;
     this.resetCamera();
@@ -2903,6 +2912,50 @@ export class BattleSession {
     events.forEach((event) => this.presentCutscene(event));
   }
 
+  /**
+   * Boss entrance band (보스 등장씬).
+   *
+   * The simulation authors the window on BOSS_SPAWNED (`intro.durationTicks`), the renderer uses
+   * the same number for its camera push, and this band shows the boss name + authored line for
+   * exactly that long. It is deliberately NOT the blocking cutscene overlay: the encounter is
+   * already live underneath, so the entrance must never eat input or stall the run.
+   */
+  presentBossIntro(event) {
+    const intro = event?.intro ?? null;
+    if (!intro || !this.surface) return;
+    const key = `boss-intro:${event.entityId ?? event.bossId ?? ""}`;
+    if (this.bossIntroKeys.has(key)) return;
+    this.bossIntroKeys.add(key);
+    const durationMs = Math.max(1200, (intro.durationTicks ?? 180) / 60 * 1000);
+    this.surface.querySelector("#defense-boss-intro")?.remove();
+    const band = document.createElement("div");
+    band.id = "defense-boss-intro";
+    band.className = "defense-boss-intro";
+    band.dataset.bossId = event.bossId ?? "";
+    band.dataset.durationMs = String(durationMs);
+    band.setAttribute("role", "status");
+    band.setAttribute("aria-live", "polite");
+    const kicker = document.createElement("p");
+    kicker.className = "boss-intro-kicker";
+    kicker.textContent = "심연 지휘관 출현";
+    const title = document.createElement("h3");
+    title.className = "boss-intro-title";
+    title.textContent = intro.title ?? event.bossId ?? "";
+    band.append(kicker, title);
+    if (intro.subtitle) {
+      const subtitle = document.createElement("p");
+      subtitle.className = "boss-intro-subtitle";
+      subtitle.textContent = intro.subtitle;
+      band.append(subtitle);
+    }
+    this.surface.append(band);
+    if (this.bossIntroTimer !== null) clearTimeout(this.bossIntroTimer);
+    this.bossIntroTimer = setTimeout(() => {
+      this.bossIntroTimer = null;
+      band.remove();
+    }, durationMs);
+  }
+
 
   renderEventFeedback(snapshot) {
     if (this.feedbackTick !== snapshot.tick) {
@@ -2978,6 +3031,9 @@ export class BattleSession {
     this.audio.consume(newAudioEvents);
     this.recordExtraction(snapshot);
     if (this.started) this.consumeCutscenes(snapshot.events);
+    for (const event of snapshot.events) {
+      if (event.type === "BOSS_SPAWNED") this.presentBossIntro(event);
+    }
     // Boss Rally Window (rpg-catalog.js BOSS_RALLY_COOLDOWN_REDUCTION) is an
     // automatic sim-driven effect at boss spawn — there is no player-input
     // path for it (queueInput only accepts MOVE/SKILL_CAST/SKILL_SELECTED/

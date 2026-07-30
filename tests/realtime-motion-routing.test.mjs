@@ -23,9 +23,12 @@ const CANONICAL_BASE_ACTIONS = [
   "die",
   "show",
 ];
-const OVERLAY_ACTIONS = new Set([
-  "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence",
-]);
+// Read the overlay roster from the shipped pack instead of duplicating it: a rig takes overlay
+// motion for every action the pack carries and its own authored motion for everything else.
+const OVERLAY_ACTIONS = new Set(
+  (JSON.parse(readFileSync(resolve(ROOT, "assets/motion/ingame/manifest.json"), "utf8"))
+    .pack.clipOverrides ?? []).map((override) => override.action),
+);
 
 const LANTERN_REAVER_SOURCE_MESH = "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb";
 

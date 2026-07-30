@@ -3605,3 +3605,60 @@ html[data-defense-started="true"] .idle-return-toast {
   .hud-buff-strip .buff-slot[data-buff-warning="true"] { animation: none; }
   .hud-gimmick-chip { animation: none; }
 }
+
+/* --- Boss entrance band (보스 등장씬) -----------------------------------
+   Non-blocking status band shown for the simulation-authored entrance window
+   (BOSS_SPAWNED intro.durationTicks). It never covers the play area centre and
+   never takes pointer events, because the encounter is live underneath it. */
+.defense-boss-intro {
+  position: absolute;
+  left: 50%;
+  top: max(18%, calc(var(--defense-safe-top) + 4rem));
+  transform: translateX(-50%);
+  z-index: 6;
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  max-width: min(30rem, 86vw);
+  text-align: center;
+  pointer-events: none;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 122, 122, 0.55);
+  background: linear-gradient(180deg, rgba(24, 6, 10, 0.86), rgba(10, 4, 12, 0.72));
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.55), 0 0 1.5rem rgba(255, 77, 77, 0.28);
+  animation: boss-intro-rise 320ms ease-out both;
+}
+
+.defense-boss-intro .boss-intro-kicker {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(255, 168, 168, 0.9);
+}
+
+.defense-boss-intro .boss-intro-title {
+  margin: 0;
+  font-size: clamp(1.1rem, 4.2vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff2f2;
+  text-shadow: 0 0 0.9rem rgba(255, 77, 77, 0.5);
+}
+
+.defense-boss-intro .boss-intro-subtitle {
+  margin: 0;
+  font-size: clamp(0.78rem, 3vw, 0.95rem);
+  line-height: 1.45;
+  color: rgba(238, 226, 232, 0.92);
+}
+
+@keyframes boss-intro-rise {
+  from { opacity: 0; transform: translate(-50%, 0.75rem) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .defense-boss-intro { animation: none; }
+}
