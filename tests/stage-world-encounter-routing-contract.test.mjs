@@ -345,9 +345,24 @@ test("committed attackers never exceed the authored cap on any stage", () => {
       assert.equal(new Set(committedAttackerIds).size, committedAttackerIds.length);
       assert.ok(committedAttackerCount <= route.commitmentCap, `${stageId} exceeded its commitment cap`);
       const routedEnemies = snapshot.enemies.filter(({ elite, class: enemyClass }) => !elite && enemyClass !== "boss");
-      assert.ok(routedEnemies.length <= route.maxConcurrentEnemies, `${stageId} exceeded its concurrent-enemy cap`);
+      // A route authors TWO ceilings: the flat one it runs at normally, and the big-wave one it
+      // is allowed to reach during a `kind: "big"` wave (decision-log D-20260730-04, which raised
+      // big-wave concurrency so `regents-verdict`'s targetCap is reachable at all). This assertion
+      // predates that feature and was still checking every tick against the flat number, so a
+      // perfectly authored big wave read as a cap breach. The live ceiling is the bound.
+      const liveCeiling = Math.max(route.maxConcurrentEnemies, route.bigWaveMaxConcurrentEnemies ?? 0);
+      assert.ok(
+        routedEnemies.length <= liveCeiling,
+        `${stageId} exceeded its concurrent-enemy ceiling: ${routedEnemies.length} > ${liveCeiling}`,
+      );
     }
     assert.equal(maxObserved, route.commitmentCap, `${stageId} must exercise its commitment-cap boundary`);
+    // The big-wave ceiling is a real headroom grant, not a blanket one: it must sit above the
+    // flat cap, and the flat cap must still be the smaller of the two authored numbers.
+    assert.ok(
+      (route.bigWaveMaxConcurrentEnemies ?? 0) > route.maxConcurrentEnemies,
+      `${stageId} must author a big-wave ceiling above its flat cap`,
+    );
   }
 });
 
