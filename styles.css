@@ -419,6 +419,14 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
 .defense-edge { position: absolute; display: flex; gap: .45rem; pointer-events: auto; }
 .defense-top { top: max(.4rem, var(--defense-safe-top)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-start; }
 .defense-bottom { bottom: max(.4rem, var(--defense-safe-bottom)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-end; }
+/* Desktop (>=1000px): pack the top HUD panels to the LEFT in one line (mission -> objective
+   flow -> legion -> objective) instead of spreading them across the band with space-between,
+   so they read as a single left-aligned strip and nothing floats in the centre/right where the
+   paused growth/reward modal now lives. Narrower widths keep space-between (and <=720px its own
+   grid) so the landscape browser contract's centre-grid hit test is untouched. */
+@media (min-width: 1000px) {
+  .defense-top { justify-content: flex-start; flex-wrap: wrap; column-gap: .45rem; row-gap: .3rem; max-width: calc(100% - 2 * max(.4rem, var(--defense-safe-left))); }
+}
 /* No mid-run deck exists any more (renderShell() empties both columns and CSS hides their
    wrappers once data-defense-started flips), so the edge-HUD bands need no rail-clearance
    padding and no per-side widening: combat owns the full width again. The band's own
@@ -453,6 +461,23 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
 .defense-reward { max-height: min(38vh, 360px); }
 .defense-reward .choices button { display: grid; gap: .2rem; min-width: 11rem; text-align: left; }
 .defense-reward .choices span { color: #b9c2d6; font-size: .72rem; }
+/* >=481px: the growth-offer and reward cards PAUSE the sim to demand a choice, so they sit
+   centred as a modal, not wedged into the top HUD band where they overlapped the loop-state and
+   legion panels. (<=480px already centres #defense-growth-offer via the small-screen block
+   below; this extends the same treatment to every wider screen and to the reward card.) The
+   100vmax box-shadow is a cheap full-screen scrim; the sim is already paused so no pointer
+   capture is needed. .defense-result (end-of-run banner) stays bottom-anchored -- excluded. */
+@media (min-width: 481px) {
+  #defense-growth-offer,
+  .edge-card.defense-reward {
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    width: min(70vw, 640px);
+    max-height: min(72vh, 32rem);
+    box-shadow: 0 0 0 100vmax rgb(3 7 17 / .58), 0 1.5rem 4rem #000;
+  }
+}
 html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="true"] #world-hud-overlay {
   width: var(--defense-logical-width);
   height: var(--defense-logical-height);
@@ -1124,7 +1149,12 @@ body {
 .hud-actions button:hover, .one-thumb-controls button:hover {
   background: linear-gradient(160deg, rgb(25 48 68 / .96), rgb(16 21 38 / .96));
 }
+/* Decorative, aria-hidden, and duplicative of the top-right OBJECTIVE chip. It had no layout
+   rule, so on desktop it fell into normal flow as a full-width band at the very top of
+   #defense-edge-hud, ghosting behind the mission/loop panels. Hidden everywhere (mobile already
+   hid it) -- the objective text lives in the OBJECTIVE chip. */
 .arena-callout {
+  display: none;
   color: rgb(225 238 247 / .72);
   text-shadow: 0 2px 8px #000;
 }
