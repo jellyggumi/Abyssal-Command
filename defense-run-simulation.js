@@ -1256,7 +1256,20 @@ function applyWardenVigilRegen(run) {
   const wholeRegen = Math.trunc(run.wardenState.vigilRegenRemainderMilli / 1000);
   if (wholeRegen > 0) {
     run.wardenState.vigilRegenRemainderMilli -= wholeRegen * 1000;
+    const before = run.commander.integrity;
     run.commander.integrity = clamp(run.commander.integrity + wholeRegen, 0, run.commander.maxIntegrity);
+    const applied = run.commander.integrity - before;
+    // Every integrity delta must be explainable from the public event stream: the evidence
+    // exporters reconcile before/after integrity against the events of that tick, and a silent
+    // regen is an unattributable delta. This regen was the last integrity path with no event.
+    if (applied > 0) {
+      emit(run, "WARDENS_VIGIL_REGEN", {
+        entityId: run.commander.id,
+        regen: applied,
+        hp: run.commander.integrity,
+        maxHp: run.commander.maxIntegrity,
+      });
+    }
   }
 }
 
@@ -4059,14 +4072,24 @@ export function advanceDefenseRun(run, steps = 1) {
     if (enemy.class === "boss" && typeof enemy.attackWindup !== "boolean") enemy.attackWindup = false;
   });
   for (let index = 0; index < steps && !next.terminal; index += 1) {
+    // A growth selection is resolved BEFORE the tick it applies to, because the offer blocks the
+    // tick. Its events must survive that tick's `run.events = []` reset: the selection changes
+    // commander integrity and max integrity, and an integrity delta with no event in the stream
+    // is unattributable to every observer (HUD, telemetry, and the Stage1b evidence exporters,
+    // which reconcile before/after integrity against the events of the same tick). The carried
+    // events keep their own lower eventSequence values, so stream ordering is unchanged.
+    const carriedSelectionEvents = [];
     if (next.growthOffer) {
       const selections = next.inputs.filter((input) => input.type === "GROWTH_OFFER_SELECTED" || input.type === "SKILL_SELECTED");
       if (!selections.length) break;
       next.inputs = next.inputs.filter((input) => input.type !== "GROWTH_OFFER_SELECTED" && input.type !== "SKILL_SELECTED");
+      const emittedBefore = next.events.length;
       selections.forEach((input) => processInput(next, input));
+      carriedSelectionEvents.push(...next.events.slice(emittedBefore));
       if (next.growthOffer) break;
     }
     tick(next);
+    if (carriedSelectionEvents.length) next.events.unshift(...carriedSelectionEvents);
     if (next.growthOffer) break;
   }
   if (next.terminal && next.rewardOffer) {
