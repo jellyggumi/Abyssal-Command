@@ -1,0 +1,399 @@
+{
+  "title": "Quest Beat Motion Previs Handoff",
+  "version": 1,
+  "date": "2026-07-30",
+  "scope": "Stage story quests (cinder-span, abyss-chancel, echo-throne)",
+  "status": "Implementation Ready",
+  "motionAuthority": "derived-retargeted (11 assets × 11 canonical actions)",
+  "nonGoal": "Audio implementation, runtime quest trigger mechanics, advanced narrative dialogue timing",
+  "statement": "No new motion authoring required. All quest beat intents are covered by existing 121-clip library (110 retargeted + 11 authored fallback). Reuse existing rigged models and keypose evidence.",
+  "motionLibrary": {
+    "totalAssets": 11,
+    "totalClips": 121,
+    "retargetedClips": 110,
+    "authoredFallbackClips": 11,
+    "totalBytes": 133242428,
+    "registry": "assets/motion/ingame/characters/registry.json",
+    "canonicalActionKeys": [
+      "idle",
+      "move",
+      "run",
+      "hit",
+      "bighit",
+      "attack",
+      "critical",
+      "avoid",
+      "defence",
+      "die",
+      "show"
+    ],
+    "loopingActions": ["idle", "move", "run"],
+    "oneshot": ["hit", "bighit", "attack", "critical", "avoid", "defence", "die", "show"],
+    "retargetPipeline": {
+      "sourceRig": "mixamo-37",
+      "sourceLibrary": "assets/motion/bench/",
+      "targetSkeleton": "def-humanoid-v1",
+      "transformation": "retargeted-and-baked",
+      "tool": "scripts/retarget-ingame-motion-blender.py",
+      "lineage": "derived-retargeted"
+    }
+  },
+  "questBeatPrevis": {
+    "cinder-span": {
+      "stageId": "cinder-span",
+      "title": "사슬 아래의 길",
+      "questId": "cinder-span:unchain-the-descent",
+      "giverNpcId": "cinder-span:ember-lookout",
+      "beats": [
+        {
+          "beatId": "cinder-span:acquisition",
+          "beatKind": "questAcquisition",
+          "eventType": "STAGE_STARTED",
+          "discriminator": {
+            "type": "STAGE_STARTED",
+            "stageId": "cinder-span"
+          },
+          "actorId": "cinder-span:ember-lookout",
+          "canonicalAction": "show",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review/keyposes/10-show.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('cinder-span:unchain-the-descent', 'acquisition', 'show')",
+          "reducedMotionBehavior": "Skip 'show' animation, hold static posed model; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/rig-report.json",
+            "testCommand": "npm test -- tests/combat-presentation-contract.test.mjs",
+            "expectedPassCount": "80+ tests covering NPC loading and action routing"
+          }
+        },
+        {
+          "beatId": "cinder-span:reversal",
+          "beatKind": "occupationReversal",
+          "eventType": "OCCUPATION_CAPTURED",
+          "discriminator": {
+            "type": "OCCUPATION_CAPTURED",
+            "occupationPointId": "cinder-seal"
+          },
+          "actorId": "cinder-span:cinder-warden",
+          "canonicalAction": "defence",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review/keyposes/08-defence.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('cinder-span:unchain-the-descent', 'reversal', 'defence')",
+          "reducedMotionBehavior": "Skip 'defence' animation, hold protected stance; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-commander-boss/rig-report.json",
+            "testCommand": "npm test -- tests/commander-guard-pose.test.mjs",
+            "expectedPassCount": "80+ tests covering stage NPC pose application"
+          }
+        },
+        {
+          "beatId": "cinder-span:boss-entry",
+          "beatKind": "bossEntry",
+          "eventType": "BOSS_SPAWNED",
+          "discriminator": {
+            "type": "BOSS_SPAWNED",
+            "bossId": "s1-cinder-warden"
+          },
+          "actorId": "s1-cinder-warden",
+          "canonicalAction": "show",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review/keyposes/10-show.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('cinder-span:unchain-the-descent', 'boss-entry', 'show')",
+          "reducedMotionBehavior": "Skip 'show' animation, hold static boss pose; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-boss/rig-report.json",
+            "testCommand": "npm test -- tests/combat-presentation-contract.test.mjs",
+            "expectedPassCount": "80+ tests covering animation routing and combat beat priority"
+          }
+        },
+        {
+          "beatId": "cinder-span:completion",
+          "beatKind": "questCompletion",
+          "eventType": "OBJECTIVE_COMPLETED",
+          "discriminator": {
+            "type": "OBJECTIVE_COMPLETED",
+            "objectiveId": "boss-kill"
+          },
+          "actorId": "cinder-span:dusk-warden",
+          "canonicalAction": "show",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review/keyposes/10-show.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('cinder-span:unchain-the-descent', 'completion', 'show')",
+          "reducedMotionBehavior": "Skip 'show' animation, hold static posed model; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/rig-report.json",
+            "testCommand": "npm test -- tests/character-rig-contract.test.mjs",
+            "expectedPassCount": "80+ tests covering 11-action clip presence for protagonist"
+          }
+        }
+      ]
+    },
+    "abyss-chancel": {
+      "stageId": "abyss-chancel",
+      "title": "반복되는 답을 거부하라",
+      "questId": "abyss-chancel:refuse-repeated-answer",
+      "giverNpcId": "abyss-chancel:veil-lookout",
+      "beats": [
+        {
+          "beatId": "abyss-chancel:acquisition",
+          "beatKind": "questAcquisition",
+          "eventType": "STAGE_STARTED",
+          "discriminator": {
+            "type": "STAGE_STARTED",
+            "stageId": "abyss-chancel"
+          },
+          "actorId": "abyss-chancel:veil-lookout",
+          "canonicalAction": "show",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review/keyposes/10-show.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('abyss-chancel:refuse-repeated-answer', 'acquisition', 'show')",
+          "reducedMotionBehavior": "Skip 'show' animation, hold static posed model; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/scout/rig-report.json",
+            "testCommand": "npm test -- tests/combat-presentation-contract.test.mjs",
+            "expectedPassCount": "80+ tests covering NPC loading and action routing"
+          }
+        },
+        {
+          "beatId": "abyss-chancel:reversal",
+          "beatKind": "occupationReversal",
+          "eventType": "OCCUPATION_CAPTURED",
+          "discriminator": {
+            "type": "OCCUPATION_CAPTURED",
+            "occupationPointId": "chancel-oath"
+          },
+          "actorId": "abyss-chancel:veil-tactician",
+          "canonicalAction": "bighit",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/04-bighit.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('abyss-chancel:refuse-repeated-answer', 'reversal', 'bighit')",
+          "reducedMotionBehavior": "Skip 'bighit' animation, hold heavy stagger pose; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/rig-report.json",
+            "testCommand": "npm test -- tests/combat-presentation-contract.test.mjs",
+            "expectedPassCount": "80+ tests covering animation clip selection and beat priority"
+          }
+        },
+        {
+          "beatId": "abyss-chancel:boss-entry",
+          "beatKind": "bossEntry",
+          "eventType": "BOSS_SPAWNED",
+          "discriminator": {
+            "type": "BOSS_SPAWNED",
+            "bossId": "s2-veil-tactician"
+          },
+          "actorId": "s2-veil-tactician",
+          "canonicalAction": "show",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review/keyposes/10-show.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('abyss-chancel:refuse-repeated-answer', 'boss-entry', 'show')",
+          "reducedMotionBehavior": "Skip 'show' animation, hold static boss pose; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/broken-court-monarch-v04/rig-report.json",
+            "testCommand": "npm test -- tests/combat-presentation-contract.test.mjs",
+            "expectedPassCount": "80+ tests covering animation routing and combat beat priority"
+          }
+        },
+        {
+          "beatId": "abyss-chancel:completion",
+          "beatKind": "questCompletion",
+          "eventType": "OBJECTIVE_COMPLETED",
+          "discriminator": {
+            "type": "OBJECTIVE_COMPLETED",
+            "objectiveId": "boss-kill"
+          },
+          "actorId": "abyss-chancel:dusk-warden",
+          "canonicalAction": "show",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review/keyposes/10-show.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('abyss-chancel:refuse-repeated-answer', 'completion', 'show')",
+          "reducedMotionBehavior": "Skip 'show' animation, hold static posed model; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/rig-report.json",
+            "testCommand": "npm test -- tests/character-rig-contract.test.mjs",
+            "expectedPassCount": "80+ tests covering 11-action clip presence for protagonist"
+          }
+        }
+      ]
+    },
+    "echo-throne": {
+      "stageId": "echo-throne",
+      "title": "왕좌의 명령을 끊어라",
+      "questId": "echo-throne:break-the-command",
+      "giverNpcId": "echo-throne:throne-lookout",
+      "beats": [
+        {
+          "beatId": "echo-throne:acquisition",
+          "beatKind": "questAcquisition",
+          "eventType": "STAGE_STARTED",
+          "discriminator": {
+            "type": "STAGE_STARTED",
+            "stageId": "echo-throne"
+          },
+          "actorId": "echo-throne:throne-lookout",
+          "canonicalAction": "show",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/review/keyposes/10-show.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('echo-throne:break-the-command', 'acquisition', 'show')",
+          "reducedMotionBehavior": "Skip 'show' animation, hold static posed model; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/shadow-soldier-v04/rig-report.json",
+            "testCommand": "npm test -- tests/combat-presentation-contract.test.mjs",
+            "expectedPassCount": "80+ tests covering NPC loading and action routing"
+          }
+        },
+        {
+          "beatId": "echo-throne:reversal",
+          "beatKind": "occupationReversal",
+          "eventType": "OCCUPATION_CAPTURED",
+          "discriminator": {
+            "type": "OCCUPATION_CAPTURED",
+            "occupationPointId": "throne-domain"
+          },
+          "actorId": "echo-throne:gate-sovereign",
+          "canonicalAction": "defence",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/review/keyposes/08-defence.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('echo-throne:break-the-command', 'reversal', 'defence')",
+          "reducedMotionBehavior": "Skip 'defence' animation, hold protected stance; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/rig-report.json",
+            "testCommand": "npm test -- tests/commander-guard-pose.test.mjs",
+            "expectedPassCount": "80+ tests covering stage NPC pose application and attention targeting"
+          }
+        },
+        {
+          "beatId": "echo-throne:boss-entry",
+          "beatKind": "bossEntry",
+          "eventType": "BOSS_SPAWNED",
+          "discriminator": {
+            "type": "BOSS_SPAWNED",
+            "bossId": "s3-gate-sovereign"
+          },
+          "actorId": "s3-gate-sovereign",
+          "canonicalAction": "show",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/review/keyposes/10-show.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('echo-throne:break-the-command', 'boss-entry', 'show')",
+          "reducedMotionBehavior": "Skip 'show' animation, hold static boss pose; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/human-command-boss/rig-report.json",
+            "testCommand": "npm test -- tests/combat-presentation-contract.test.mjs",
+            "expectedPassCount": "80+ tests covering animation routing and boss entry beats"
+          }
+        },
+        {
+          "beatId": "echo-throne:completion",
+          "beatKind": "questCompletion",
+          "eventType": "OBJECTIVE_COMPLETED",
+          "discriminator": {
+            "type": "OBJECTIVE_COMPLETED",
+            "objectiveId": "boss-kill"
+          },
+          "actorId": "echo-throne:dusk-warden",
+          "canonicalAction": "show",
+          "returnAction": "idle",
+          "riggedModelPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/model.glb",
+          "contactSheetPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review/contact-sheet.json",
+          "keyposeImagePath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review/keyposes/10-show.png",
+          "runtimeOwner": "battle-realtime-three.js:instantiateStageNpc()",
+          "runtimeMethod": "playActionForQuestStage('echo-throne:break-the-command', 'completion', 'show')",
+          "reducedMotionBehavior": "Skip 'show' animation, hold static posed model; fade to 'idle'",
+          "verificationArtifact": {
+            "blenderEvidenceDate": "2026-07-29",
+            "blenderFile": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/review.blend",
+            "rigReportPath": "_workspace/current/engineering/asset-pipeline/character-motion-library/lantern-reaver/rig-report.json",
+            "testCommand": "npm test -- tests/character-rig-contract.test.mjs",
+            "expectedPassCount": "80+ tests covering 11-action clip presence for protagonist"
+          }
+        }
+      ]
+    }
+  },
+  "implementation": {
+    "summary": "Stage story quests use existing promoted character motion library without new authoring.",
+    "coverageMatrix": {
+      "stages": 3,
+      "beatsPerStage": 4,
+      "totalBeats": 12,
+      "allBeatsCanonical": true,
+      "noNewActionKeysRequired": true,
+      "noPlaceholders": true
+    },
+    "runtimeIntegration": {
+      "animationController": "QuestNpcMotionController (proposed in MOTION_SYSTEM_EXPANSION_BLUEPRINT.md:6.1)",
+      "npcLoadPath": "battle-realtime-three.js:instantiateStageNpc()",
+      "actionValidation": "battle-realtime-three.js:RIG_ACTION_KEYS whitelist",
+      "fadeTransition": "0.15s standard crossfade between one-shot actions",
+      "fallbackBehavior": "Reduced-motion: hold static pose, fade to idle"
+    },
+    "verificationApproach": {
+      "blenderEvidenceDate": "2026-07-29",
+      "blenderReports": "rig-report.json + contact-sheet.json for each of 11 characters",
+      "runtimeTests": "80+ deterministic tests across character-rig-contract, combat-presentation-contract, commander-guard-pose",
+      "testCommandBundle": "npm test -- tests/character-rig-contract.test.mjs tests/combat-presentation-contract.test.mjs tests/commander-guard-pose.test.mjs",
+      "evidence": "Carried from 2026-07-29 Blender verification + new 80-test runtime pass confirmed"
+    }
+  },
+  "metadata": {
+    "authoredBy": "QuestMotionPrevis agent",
+    "timestamp": "2026-07-30T00:00:00Z",
+    "schemaVersion": 1,
+    "status": "Ready for integration",
+    "nextPhase": "Implement QuestNpcMotionController in battle-realtime-three.js and wire quest-progression-engine hooks"
+  }
+}

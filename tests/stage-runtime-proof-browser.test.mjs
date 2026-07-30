@@ -17,7 +17,7 @@ import {
   serializeCampaign,
   startRun,
 } from "../campaign-state.js";
-import { stageFogRange } from "../battle-realtime-three.js";
+import { MOTION_MODELS, stageFogRange } from "../battle-realtime-three.js";
 import { stageWorldFor } from "../stage-world-catalog.js";
 import * as THREE from "../vendor/three.module.js";
 
@@ -143,15 +143,64 @@ function assertMeshIntegrity(report, label) {
   assert.equal(report.finiteBounds, true, `${label}: rendered bounds must be finite`);
 }
 
+async function settleStageNpcAnimations(page, stageId, expectedNpcCount) {
+  const deadline = Date.now() + 45_000;
+  let sawShow = false;
+  for (;;) {
+    const timeout = deadline - Date.now();
+    assert.ok(timeout > 0, `${stageId} stage NPCs must settle on idle before the proof deadline`);
+    const state = await (await page.waitForFunction(({ expectedNpcCount: npcCount, stageId: expectedStageId, showAlreadySeen }) => {
+      const live = window.__stageRuntimeQa?.live;
+      const decor = live?.debugPresentationState?.().stageDecor;
+      const npcRecords = decor?.records.filter(({ kind }) => kind === "stage-npc") ?? [];
+      if (
+        live?.loadedStageId !== expectedStageId
+        || decor?.loading !== false
+        || decor.npcCount !== npcCount
+        || npcRecords.length !== npcCount
+      ) return null;
+      const allIdle = npcRecords.every(({ hasMixer, actionCount, activeActionKey }) => (
+        hasMixer && actionCount >= 1 && activeActionKey === "idle"
+      ));
+      if (!showAlreadySeen && npcRecords.every(({ activeActionKey }) => activeActionKey === "show")) return "show";
+      if (allIdle) return "idle";
+      const offer = document.querySelector("#defense-growth-offer");
+      const offerStyle = offer ? getComputedStyle(offer) : null;
+      const choice = [...offer?.querySelectorAll("[data-pick]") ?? []].find((button) => (
+        !button.disabled
+        && button.getAttribute("aria-disabled") !== "true"
+        && offerStyle?.display !== "none"
+        && offerStyle?.visibility !== "hidden"
+      ));
+      return choice ? "growth-offer" : null;
+    }, { expectedNpcCount, stageId, showAlreadySeen: sawShow }, { timeout })).jsonValue();
+    if (state === "show") {
+      sawShow = true;
+      continue;
+    }
+    if (state === "idle") {
+      assert.equal(sawShow, true, `${stageId} stage NPCs must enter show before returning to idle`);
+      return;
+    }
+    const selected = await page.locator("#defense-growth-offer [data-pick]").evaluateAll((choices) => {
+      const choice = choices.find((button) => !button.disabled && button.getAttribute("aria-disabled") !== "true");
+      if (!choice) return false;
+      choice.click();
+      return true;
+    });
+    assert.equal(selected, true, `${stageId} must select each available growth offer while stage NPC animation settles`);
+  }
+}
+
 async function verifyStage(browser, baseURL, campaign, stage, index) {
   const profile = stageWorldFor(stage.id);
   const expectedPropRecords = sortedRecords(profile.presentation.props.map(({ id, modelPath }) => ({ id, modelPath })));
-  const expectedNpcRecords = sortedRecords(profile.presentation.npcs.map(({ id, modelPath }) => ({ id, modelPath })));
+  const expectedNpcRecords = sortedRecords(profile.presentation.npcs.map(({ id, actorId, modelPath }) => ({ id, actorId, modelPath })));
   const expectedVfxRecords = sortedRecords(profile.presentation.vfxCues.map(({ id, modelPath, effectId }) => ({ id, modelPath, effectId })));
   const expectedModelPaths = [
     profile.terrainGlbPath,
     ...expectedPropRecords.map(({ modelPath }) => modelPath),
-    ...expectedNpcRecords.map(({ modelPath }) => modelPath),
+    ...expectedNpcRecords.map(({ actorId }) => MOTION_MODELS[actorId]),
     ...expectedVfxRecords.map(({ modelPath }) => modelPath),
   ].filter(Boolean);
   const screenshotFile = path.join(OUTPUT_DIR, `${String(index + 1).padStart(2, "0")}-${stage.id}.png`);
@@ -248,6 +297,7 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     await page.waitForFunction(({ expectedNpcCount, expectedPropCount, expectedTerrainSource, expectedVfxCount, stageId }) => {
       const live = window.__stageRuntimeQa?.live;
       const decor = live?.debugPresentationState?.().stageDecor;
+      const npcRecords = decor?.records.filter(({ kind }) => kind === "stage-npc") ?? [];
       return window.__stageRuntimeQa?.frames > 0
         && live?.loadedStageId === stageId
         && live?.stageTerrainRecord
@@ -266,6 +316,7 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
       expectedVfxCount: profile.presentation.vfxCues.length,
       stageId: stage.id,
     }, { timeout: 45000 });
+    await settleStageNpcAnimations(page, stage.id, profile.presentation.npcs.length);
     await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
     const observed = await page.evaluate(({ selectedStageId }) => {
@@ -302,7 +353,14 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
           .map(({ id, modelPath }) => ({ id, modelPath })),
         npcRecords: decor.records
           .filter(({ kind }) => kind === "stage-npc")
-          .map(({ id, modelPath }) => ({ id, modelPath })),
+          .map(({ id, modelPath, sourceModelPath, hasMixer, actionCount, activeActionKey }) => ({
+            id,
+            modelPath,
+            sourceModelPath,
+            hasMixer,
+            actionCount,
+            activeActionKey,
+          })),
         vfxRecords: decor.records
           .filter(({ kind }) => kind === "stage-vfx")
           .map(({ id, modelPath, effectId }) => ({ id, modelPath, effectId })),
@@ -336,7 +394,35 @@ async function verifyStage(browser, baseURL, campaign, stage, index) {
     }
     assert.deepEqual(observed.vfxRecords, expectedVfxRecords, `${stage.id} must publish every authored stage VFX record/model path`);
     assert.deepEqual(observed.propRecords, expectedPropRecords, `${stage.id} must publish every authored prop runtime record/model path`);
-    assert.deepEqual(observed.npcRecords, expectedNpcRecords, `${stage.id} must publish every authored NPC runtime record/model path`);
+    assert.deepEqual(
+      observed.npcRecords.map(({ id }) => id),
+      expectedNpcRecords.map(({ id }) => id),
+      `${stage.id} must publish every authored stage NPC runtime record`,
+    );
+    for (const expectedNpcRecord of expectedNpcRecords) {
+      const runtimeNpcRecord = observed.npcRecords.find(({ id }) => id === expectedNpcRecord.id);
+      const expectedMotionModel = MOTION_MODELS[expectedNpcRecord.actorId];
+      assert.ok(
+        expectedMotionModel,
+        `${stage.id} ${expectedNpcRecord.id} actor ${expectedNpcRecord.actorId} must resolve through the exported motion-model mapping`,
+      );
+      assert.equal(
+        runtimeNpcRecord?.modelPath,
+        expectedMotionModel,
+        `${stage.id} ${expectedNpcRecord.id} must resolve to the mapped animated runtime NPC model`,
+      );
+      assert.equal(
+        runtimeNpcRecord?.sourceModelPath,
+        expectedNpcRecord.modelPath,
+        `${stage.id} ${expectedNpcRecord.id} must retain its authored catalog NPC model as fallback provenance`,
+      );
+      assert.equal(runtimeNpcRecord?.hasMixer, true, `${stage.id} ${expectedNpcRecord.id} must retain a live animation mixer`);
+      assert.ok(
+        Number.isInteger(runtimeNpcRecord?.actionCount) && runtimeNpcRecord.actionCount >= 1,
+        `${stage.id} ${expectedNpcRecord.id} must expose at least one usable animation action`,
+      );
+      assert.equal(runtimeNpcRecord?.activeActionKey, "idle", `${stage.id} ${expectedNpcRecord.id} must be playing idle`);
+    }
     assert.equal(observed.palette.stagePaletteId, stage.id, `${stage.id} must apply its stage-specific palette`);
     assert.equal(observed.palette.clearColor, expectedClearColor(stage.id), `${stage.id} WebGL clear color must use its authored palette tint`);
     assert.equal(observed.palette.fogColor, expectedClearColor(stage.id), `${stage.id} fog color must use its authored palette tint`);

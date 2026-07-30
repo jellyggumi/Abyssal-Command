@@ -18,6 +18,7 @@ import {
   FORMATION_STANCES, orderCompanionsByFormationIntent, STANCE_CONFIG,
 } from "./rpg-catalog.js";
 import { stageWorldFor } from "./stage-world-catalog.js";
+import { questObjectiveForEvent, stageStoryFor, storyBeatForEvent } from "./stage-story-catalog.js";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const freeze = (value) => {
@@ -367,16 +368,48 @@ function resolveOverlap(run, body, other, anchorFixed) {
   return true;
 }
 
+
 const SNAPSHOT_VERSION = 7;
 const EVENT_VERSION = 4;
 const emit = (run, type, payload = {}) => {
+  const enrichedPayload = { ...payload };
+  const stageId = run.stage?.id;
+  const story = stageStoryFor(stageId);
+  if (story) {
+    const eventShape = { type, ...payload };
+    const storyBeat = storyBeatForEvent(stageId, eventShape);
+    const questObjective = questObjectiveForEvent(stageId, eventShape);
+    if (storyBeat) enrichedPayload.storyBeat = clone(storyBeat);
+    if (type === "STAGE_STARTED" || storyBeat || questObjective) {
+      const objectiveIndex = questObjective ? story.quest.objectives.indexOf(questObjective) : -1;
+      enrichedPayload.quest = {
+        questId: story.quest.id,
+        questGiverNpcId: story.quest.giverNpcId,
+        ...(type === "STAGE_STARTED" ? {
+          status: "ACQUIRED",
+          acquisitionDialogue: clone(Array.isArray(story.quest.acquisitionDialogue) ? story.quest.acquisitionDialogue : []),
+          objectiveId: story.quest.objectives[0]?.id ?? null,
+          objectiveIndex: 0,
+        } : questObjective ? {
+          status: objectiveIndex === story.quest.objectives.length - 1 ? "COMPLETED" : "ADVANCED",
+          objectiveId: questObjective.id,
+          objectiveIndex,
+        } : {
+          status: "ACTIVE",
+          objectiveId: null,
+          objectiveIndex: null,
+        }),
+        objectiveTotal: story.quest.objectives.length,
+      };
+    }
+  }
   const eventSequence = ++run.eventSequence;
   const identity = run.planCommitment?.identity || `uncommitted:${run.seed ?? 0}`;
   const event = {
     version: EVENT_VERSION,
     tick: run.tick,
     type,
-    ...payload,
+    ...enrichedPayload,
     eventSequence,
     eventId: `${identity}:event:${eventSequence}`,
   };
@@ -3069,6 +3102,21 @@ export function runCarryOver(run) {
     itemIds: [...(run?.itemIds || [])].slice(-CARRY_OVER_MAX_ITEMS),
   };
 }
+function applyExtractedSkillRanks(state, extractedSkillRanks) {
+  if (!extractedSkillRanks || typeof extractedSkillRanks !== "object" || Array.isArray(extractedSkillRanks)) return;
+  for (const skillId of Object.keys(extractedSkillRanks).sort()) {
+    const skill = SKILLS[skillId];
+    if (!skill || skill.kind !== "active") continue;
+    const rank = clamp(Math.trunc(extractedSkillRanks[skillId]), 1, MAX_SKILL_RANK);
+    if (!Number.isFinite(rank)) continue;
+    if (!state.commander.skills.includes(skillId)) state.commander.skills.push(skillId);
+    const currentRank = state.commander.skillRanks[skillId] ?? 0;
+    const targetRank = Math.max(currentRank, rank);
+    state.commander.skillRanks[skillId] = targetRank;
+    for (let step = currentRank + 1; step <= targetRank; step += 1) applySkillRankEffects(state, skill, step);
+  }
+  state.commander.skills.sort();
+}
 function applyCarryOver(state, carryOver) {
   if (!carryOver) return;
   const skillRanks = carryOver.skillRanks || {};
@@ -3076,10 +3124,12 @@ function applyCarryOver(state, carryOver) {
   for (const skillId of Object.keys(skillRanks).sort()) {
     const skill = SKILLS[skillId];
     if (!skill) continue;
-    const rank = clamp(Math.trunc(skillRanks[skillId]), 1, CARRY_OVER_MAX_RANK);
+    const carriedRank = clamp(Math.trunc(skillRanks[skillId]), 1, CARRY_OVER_MAX_RANK);
     if (!state.commander.skills.includes(skillId)) state.commander.skills.push(skillId);
+    const currentRank = state.commander.skillRanks[skillId] ?? 0;
+    const rank = Math.max(currentRank, carriedRank);
     state.commander.skillRanks[skillId] = rank;
-    for (let step = 1; step <= rank; step += 1) applySkillRankEffects(state, skill, step);
+    for (let step = currentRank + 1; step <= rank; step += 1) applySkillRankEffects(state, skill, step);
     carriedSkills.push({ skillId, rank });
   }
   state.commander.skills.sort();
@@ -3098,7 +3148,7 @@ function applyCarryOver(state, carryOver) {
  * `formation` is the saved per-companion FRONT/BACK intent map. It deterministically chooses
  * companion position rank at run creation; the active stance still derives the live slot count
  * from STANCE_CONFIG every tick. See resolveFormation(). */
-export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, carryOver = null } = {}) {
+export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, extractedSkillRanks = null, carryOver = null } = {}) {
   const stage = stageFor(stageId);
   const stagePlan = stagePlanFor(stage);
   const unsignedSeed = (seed >>> 0) || 1;
@@ -3297,6 +3347,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     }
     resolveFormation(companionLoadout, formation).forEach((id) => addCompanion(state, id, { equipment: companionEquipment[id] || {} }));
     applyOwnedRewards(state, rewardIds);
+    applyExtractedSkillRanks(state, extractedSkillRanks);
     applyCarryOver(state, carryOver);
     if (rpgActive) {
       let incomingMultiplier = state.commander.incomingDamageMultiplier;

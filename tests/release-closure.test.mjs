@@ -74,7 +74,7 @@ const DIRECT_RUNTIME_ASSETS = Object.freeze([
   "assets/motion/stage-vfx/manifest.json",
 ]);
 const RUNTIME_PATHS = [
-  "index.html", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
+  "index.html", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "stage-story-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
   "campaign-state.js", "defense-storage.js", "defense-audio.js", "defense-cutscene.js", "defense-telemetry.js",
   "battle-canvas-text.js", "battle-realtime-three.js", "battle-visualizer.js", "lobby-cinematic.js", "styles.css", "react-game-ui.css", "sw.js", "manifest.json", "icon.svg", "privacy.html",
   "vendor/three.module.js", "vendor/three.core.js", "vendor/loaders/GLTFLoader.js", "vendor/utils/BufferGeometryUtils.js", "vendor/utils/SkeletonUtils.js",
@@ -176,7 +176,7 @@ test("Pages workflow preserves the defense-survivor release DAG and closure", as
   ]);
   const browserContractJob = job(workflow, "browser_contract");
   const browserLoop = browserContractJob.match(
-    /^\s*for browser_contract in defense-hud-responsive-browser defense-phone-battle-hud-browser\.test defense-survivor-browser defense-performance-browser; do\n(?<body>[\s\S]*?)^\s*done$/m,
+    /^\s*for browser_contract in defense-hud-responsive-browser defense-phone-battle-hud-browser\.test progression-mobile-ui-browser defense-survivor-browser defense-performance-browser; do\n(?<body>[\s\S]*?)^\s*done$/m,
   );
   assert.ok(browserLoop, "browser_contract must iterate the exact bounded browser suite allowlist");
   assert.match(
@@ -310,6 +310,7 @@ test("the candidate-stamped service worker precaches every runtime observer, ref
     "the service worker must not precache retired Cinder Span world plates",
   );
   assert.ok(precached.includes("./defense-cutscene.js"));
+  assert.ok(precached.includes("./stage-story-catalog.js"));
   assert.ok(precached.includes("./defense-telemetry.js"));
 
   listeners.get("activate")({

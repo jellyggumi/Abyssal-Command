@@ -4,16 +4,18 @@ import { audioCueForEvent } from "./defense-audio.js";
  * Renderer-neutral presentation adapter for authored defense cutscenes.
  * It observes simulation events only; it never changes run or campaign state.
  */
-const EVENT_TITLES = Object.freeze({
-  STAGE_STARTED: "봉쇄선 진입",
-  ELITE_CANDIDATE_AVAILABLE: "정예 잔향",
-  TERMINAL: "전투 기록",
-  LORE_SURPRISE_RESOLVED: "심연 기록",
-});
-
 const CAPTION_MODES = Object.freeze({
   dialogue: "dialogue",
   narration: "narration",
+});
+const EVENT_PRESENTATION = Object.freeze({
+  STAGE_STARTED: Object.freeze({ title: "봉쇄선 진입", captionMode: CAPTION_MODES.dialogue }),
+  ELITE_CANDIDATE_AVAILABLE: Object.freeze({ title: "정예 잔향", captionMode: CAPTION_MODES.dialogue }),
+  OCCUPATION_CAPTURED: Object.freeze({ title: "점령 역전", captionMode: CAPTION_MODES.dialogue }),
+  BOSS_SPAWNED: Object.freeze({ title: "심연 지휘관 출현", captionMode: CAPTION_MODES.dialogue }),
+  OBJECTIVE_COMPLETED: Object.freeze({ title: "목표 달성", captionMode: CAPTION_MODES.dialogue }),
+  TERMINAL: Object.freeze({ title: "전투 기록", captionMode: CAPTION_MODES.dialogue }),
+  LORE_SURPRISE_RESOLVED: Object.freeze({ title: "심연 기록", captionMode: CAPTION_MODES.narration }),
 });
 const RELAY_GAP_MS = 180;
 const EXIT_HOLD_MS = 500;
@@ -24,24 +26,40 @@ const lineDurationMs = (text, captionMode) => {
   return Math.min(narration ? 4800 : 3600, Math.max(narration ? 2800 : 2200, duration));
 };
 
-const relayMetadata = (index, lineCount, captionMode) => {
+const relayMetadata = (index, lineCount, captionMode, authoredSpeaker = null) => {
   const sequence = index + 1;
   const narration = captionMode === CAPTION_MODES.narration;
   const cue = `${narration ? "narration" : "relay"}-${sequence}`;
   return Object.freeze({
     sequence,
     cue,
-    speaker: narration ? "narrator" : `speaker-${index % 2 === 0 ? "a" : "b"}`,
+    speaker: narration ? "narrator" : (authoredSpeaker ?? `speaker-${index % 2 === 0 ? "a" : "b"}`),
     previousCue: sequence > 1 ? `${narration ? "narration" : "relay"}-${sequence - 1}` : null,
     nextCue: sequence < lineCount ? `${narration ? "narration" : "relay"}-${sequence + 1}` : null,
   });
+};
+
+const authoredSpeakerForLine = (event, text) => {
+  const normalizedText = typeof text === "string" ? text.trim() : "";
+  if (!normalizedText) return null;
+  const acquisitionDialogue = Array.isArray(event?.quest?.acquisitionDialogue)
+    ? event.quest.acquisitionDialogue
+    : [];
+  const dialogueEntries = acquisitionDialogue.concat(event?.storyBeat?.dialogue ?? []);
+  for (const dialogue of dialogueEntries) {
+    if (typeof dialogue?.text !== "string" || dialogue.text.trim() !== normalizedText) continue;
+    if (typeof dialogue.speaker !== "string") continue;
+    const speaker = dialogue.speaker.trim();
+    if (speaker) return speaker;
+  }
+  return null;
 };
 
 const presentationBeats = (lines, event, captionMode) => {
   const eventAudioCue = audioCueForEvent(event);
   let cursorMs = 0;
   return Object.freeze(lines.map((text, index) => {
-    const relay = relayMetadata(index, lines.length, captionMode);
+    const relay = relayMetadata(index, lines.length, captionMode, authoredSpeakerForLine(event, text));
     const durationMs = lineDurationMs(text, captionMode);
     const startMs = cursorMs;
     const endMs = startMs + durationMs;
@@ -78,16 +96,26 @@ export function cutsceneLines(cutscene) {
 export function cutsceneFromEvent(event) {
   const authoredLines = cutsceneLines(event?.cutscene);
   const loreLines = event?.type === "LORE_SURPRISE_RESOLVED" ? cutsceneLines(event.text) : [];
-  const lines = Object.freeze(authoredLines.length ? authoredLines : loreLines);
+  const baseLines = authoredLines.length ? authoredLines : loreLines;
+  const acquisitionDialogue = Array.isArray(event?.quest?.acquisitionDialogue)
+    ? event.quest.acquisitionDialogue
+    : [];
+  const acquisitionLines = acquisitionDialogue.flatMap((dialogue) => cutsceneLines(dialogue?.text));
+  const storyBeatLines = cutsceneLines(event?.storyBeat?.dialogue?.text);
+  const knownLines = new Set();
+  const lines = Object.freeze(baseLines.concat(acquisitionLines, storyBeatLines).filter((line) => {
+    if (knownLines.has(line)) return false;
+    knownLines.add(line);
+    return true;
+  }));
   if (!lines.length) return null;
-  const captionMode = event?.type === "LORE_SURPRISE_RESOLVED"
-    ? CAPTION_MODES.narration
-    : CAPTION_MODES.dialogue;
+  const presentation = EVENT_PRESENTATION[event?.type];
+  const captionMode = presentation?.captionMode ?? CAPTION_MODES.dialogue;
   const beats = presentationBeats(lines, event, captionMode);
   const durationMs = beats.at(-1)?.timing.endMs ?? 0;
   return Object.freeze({
     eventType: event.type,
-    title: EVENT_TITLES[event.type] ?? "심연 기록",
+    title: presentation?.title ?? "심연 기록",
     lines,
     captionMode,
     beats,

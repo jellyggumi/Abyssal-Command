@@ -119,12 +119,344 @@ function startAudio(t) {
   return { audio, context: FakeAudioContext.instances[0] };
 }
 
+class FakeSpeechSynthesisUtterance {
+  constructor(text) {
+    this.text = text;
+    this.onend = null;
+    this.onerror = null;
+  }
+}
+
+function installSpeechSynthesis(t) {
+  const speech = {
+    cancelCount: 0,
+    current: null,
+    finishedCount: 0,
+    pending: false,
+    speaking: false,
+    utterances: [],
+    cancel() {
+      this.cancelCount += 1;
+      this.current = null;
+      this.finishedCount = this.utterances.length;
+      this.pending = false;
+      this.speaking = false;
+    },
+    finish() {
+      const utterance = this.current;
+      if (!utterance) return;
+      this.finishedCount += 1;
+      this.current = this.utterances[this.finishedCount] ?? null;
+      this.speaking = Boolean(this.current);
+      this.pending = this.utterances.length - this.finishedCount > 1;
+      utterance.onend?.();
+    },
+    getVoices() {
+      return [];
+    },
+    speak(utterance) {
+      this.utterances.push(utterance);
+      if (!this.speaking && !this.current) {
+        this.current = utterance;
+        this.speaking = true;
+        this.pending = false;
+      } else {
+        this.pending = true;
+      }
+    },
+  };
+  replaceGlobal(t, "speechSynthesis", speech);
+  replaceGlobal(t, "SpeechSynthesisUtterance", FakeSpeechSynthesisUtterance);
+  return speech;
+}
+
 const event = (type, eventSequence, extra = {}) => ({
   type,
   tick: 20,
   eventSequence,
   eventId: `audio:${type}:${eventSequence}`,
   ...extra,
+});
+
+test("authored story milestones speak one Korean line and retain their established cue", (t) => {
+  const speech = installSpeechSynthesis(t);
+  const audio = new DefenseAudio({ reducedMotion: true });
+  const cases = [
+    {
+      name: "stage start",
+      source: event("STAGE_STARTED", 1, {
+        stageId: "cinder-span",
+        storyBeat: {
+          voiceLine: {
+            text: "[숨죽여] 감시자: 재의 봉쇄선을 넘어라. 다음 명령은 기다려라.",
+            direction: "낮고 은밀하게",
+            speaker: "감시자",
+          },
+        },
+      }),
+      cueId: AUDIO_CUES.stageStart.id,
+      spoken: "재의 봉쇄선을 넘어라.",
+    },
+    {
+      name: "occupation captured",
+      source: event("OCCUPATION_CAPTURED", 2, {
+        storyBeat: { dialogue: { text: "봉인이 뒤집혔다. 점령지를 사수하라." } },
+      }),
+      cueId: AUDIO_CUES.occupationCaptured.id,
+      spoken: "봉인이 뒤집혔다.",
+    },
+    {
+      name: "boss spawned",
+      source: event("BOSS_SPAWNED", 3, {
+        bossId: "ash-monarch",
+        voiceLine: "재의 군주가 강림한다.\n대형을 유지하라.",
+      }),
+      cueId: AUDIO_CUES.bossSpawned.id,
+      spoken: "재의 군주가 강림한다.",
+    },
+    {
+      name: "boss objective completed",
+      source: event("OBJECTIVE_COMPLETED", 4, {
+        objectiveId: "boss-kill",
+        storyBeat: { voiceLine: "재의 군주가 쓰러졌다.\n결속 지점으로 이동하라." },
+      }),
+      cueId: "objective-complete",
+      spoken: "재의 군주가 쓰러졌다.",
+    },
+    {
+      name: "extraction completed",
+      source: event("EXTRACTION_COMPLETED", 5, {
+        storyDialogue: "결속이 완성됐다.\n퇴로를 확보하라.",
+      }),
+      cueId: AUDIO_CUES.eliteExtracted.id,
+      spoken: "결속이 완성됐다.",
+    },
+    {
+      name: "terminal",
+      source: event("TERMINAL", 6, {
+        outcome: "VICTORY",
+        cutscene: ["귀환로가 열렸다.", "모든 생존자가 돌아온다."],
+      }),
+      cueId: AUDIO_CUES.terminal.id,
+      spoken: "귀환로가 열렸다.",
+    },
+  ];
+
+  for (const { name, source, cueId, spoken } of cases) {
+    const cue = audioCueForEvent(source);
+    assert.deepEqual(
+      { method: cue?.method, cueId: cue?.cueId, priority: cue?.priority },
+      { method: "narrate", cueId, priority: 76 },
+      `${name} must add narration without replacing its established cue`,
+    );
+    const spokenBefore = speech.utterances.length;
+    audio.consume([source]);
+    assert.equal(speech.utterances.length, spokenBefore + 1, `${name} must start one utterance`);
+    assert.equal(
+      speech.utterances.at(-1).text,
+      spoken,
+      `${name} must speak only the first Korean story line, not direction or metadata`,
+    );
+    speech.finish();
+  }
+});
+
+test("story narration outranks lore when both arrive in one event batch", (t) => {
+  const speech = installSpeechSynthesis(t);
+  const audio = new DefenseAudio({ reducedMotion: true });
+  const lore = event("LORE_SURPRISE_RESOLVED", 1, {
+    outcomeId: "ash-echo-whisper",
+    text: "옛 교량의 재가 바람에 흩어진다.",
+  });
+  const story = event("STAGE_STARTED", 2, {
+    stageId: "cinder-span",
+    voiceLine: "봉쇄선이 열렸다.",
+  });
+
+  assert.ok(
+    audioCueForEvent(story).priority > audioCueForEvent(lore).priority,
+    "authored story must retain priority over ambient lore",
+  );
+  audio.consume([lore, story]);
+
+  assert.deepEqual(
+    speech.utterances.map(({ text }) => text),
+    ["봉쇄선이 열렸다."],
+    "lower-priority lore must not displace or queue behind active story narration",
+  );
+});
+
+test("same-batch authored stories use the native queue once in arrival order", (t) => {
+  const speech = installSpeechSynthesis(t);
+  const audio = new DefenseAudio({ reducedMotion: true });
+  const firstStory = event("STAGE_STARTED", 10, {
+    tick: 0,
+    stageId: "cinder-span",
+    voiceLine: "첫 번째 봉쇄 명령이다.",
+  });
+  const secondStory = event("OBJECTIVE_COMPLETED", 11, {
+    tick: 0,
+    objectiveId: "boss-kill",
+    storyBeat: { voiceLine: "두 번째 귀환 명령이다." },
+  });
+
+  audio.consume([firstStory, secondStory]);
+
+  assert.deepEqual(
+    speech.utterances.map(({ text }) => text),
+    ["첫 번째 봉쇄 명령이다.", "두 번째 귀환 명령이다."],
+    "both authored stories must enter the native speech queue once in arrival order",
+  );
+  assert.equal(speech.current?.text, "첫 번째 봉쇄 명령이다.", "the first story must speak immediately");
+  assert.equal(speech.pending, true, "the second story must remain pending behind the first");
+  assert.equal(audio.debugMetrics().narrations, 2, "both native-queued utterances must be tracked");
+  assert.equal(audio.debugMetrics().narrationQueue, 1, "the second authored story must be queued");
+
+  speech.finish();
+
+  assert.equal(
+    speech.current?.text,
+    "두 번째 귀환 명령이다.",
+    "ending the first utterance must automatically promote the second native-queued story",
+  );
+  assert.equal(audio.debugMetrics().narrations, 1, "only the promoted second utterance remains tracked");
+  assert.equal(audio.debugMetrics().narrationQueue, 0, "the native queue must be drained");
+
+  speech.finish();
+  audio.consume([firstStory, secondStory]);
+
+  assert.deepEqual(
+    speech.utterances.map(({ text }) => text),
+    ["첫 번째 봉쇄 명령이다.", "두 번째 귀환 명령이다."],
+    "immediately replaying the same tick-zero authored events must not duplicate narration",
+  );
+});
+
+test("authored story narration joins an already-pending native speech queue once", (t) => {
+  const speech = installSpeechSynthesis(t);
+  speech.speaking = true;
+  speech.pending = true;
+  const audio = new DefenseAudio({ reducedMotion: true });
+  const story = event("STAGE_STARTED", 12, {
+    stageId: "cinder-span",
+    voiceLine: "외부 음성 뒤에도 이 명령을 보존하라.",
+  });
+
+  audio.consume([story]);
+  audio.consume([story]);
+
+  assert.deepEqual(
+    speech.utterances.map(({ text }) => text),
+    ["외부 음성 뒤에도 이 명령을 보존하라."],
+    "external pending speech must not drop or duplicate authored story narration",
+  );
+  assert.equal(audio.debugMetrics().narrations, 1, "the accepted authored utterance must be tracked");
+  audio.stop();
+});
+
+test("critical feedback preempts active story narration", (t) => {
+  const speech = installSpeechSynthesis(t);
+  const { audio } = startAudio(t);
+  audio.consume([
+    event("STAGE_STARTED", 1, {
+      stageId: "cinder-span",
+      voiceLine: "봉쇄선을 사수하라.",
+    }),
+  ]);
+
+  assert.equal(audio.debugMetrics().narrations, 1);
+  assert.equal(
+    audio.play(AUDIO_CUES.criticalHit.id, event("CRITICAL_HIT", 2)),
+    true,
+    "critical feedback must remain audible during narration",
+  );
+  assert.equal(speech.cancelCount, 1, "critical feedback must cancel the displaced narration");
+  assert.equal(audio.debugMetrics().narrations, 0);
+  assert.equal(audio.debugMetrics().voices, 2, "the story cue and critical cue both remain bounded voices");
+  audio.stop();
+});
+
+test("a completed story utterance is not replayed for the same event key", (t) => {
+  const speech = installSpeechSynthesis(t);
+  const audio = new DefenseAudio({ reducedMotion: true });
+  const stageStarted = event("STAGE_STARTED", 1, {
+    stageId: "cinder-span",
+    voiceLine: "봉쇄선을 사수하라.",
+  });
+
+  audio.consume([stageStarted]);
+  speech.finish();
+  audio.consume([{ ...stageStarted, voiceLine: "중복 재생되면 안 된다." }]);
+
+  assert.deepEqual(
+    speech.utterances.map(({ text }) => text),
+    ["봉쇄선을 사수하라."],
+    "deduplication must hold after the first utterance has ended",
+  );
+});
+
+test("mute, pause, background suspension, and stop dispose active and queued narration", (t) => {
+  const speech = installSpeechSynthesis(t);
+  FakeAudioContext.instances.length = 0;
+  replaceGlobal(t, "AudioContext", FakeAudioContext);
+  replaceGlobal(t, "webkitAudioContext", undefined);
+  const cases = [
+    ["mute", (audio) => audio.setMuted(true), (audio) => audio.setMuted(false)],
+    ["pause", (audio) => audio.pause(), (audio) => audio.resume()],
+    ["background", (audio) => audio.suspendForBackground(), (audio) => audio.resumeFromBackground()],
+    ["stop/dispose", (audio) => audio.stop(), (audio) => audio.start()],
+  ];
+
+  for (const [index, [name, cancel, restore]] of cases.entries()) {
+    const audio = new DefenseAudio({ reducedMotion: true });
+    assert.equal(audio.start(), true);
+    const utterancesBefore = speech.utterances.length;
+    audio.consume([
+      event("STAGE_STARTED", index * 2 + 20, {
+        stageId: "cinder-span",
+        voiceLine: `${name} 전 첫 번째 명령.`,
+      }),
+      event("OBJECTIVE_COMPLETED", index * 2 + 21, {
+        objectiveId: "boss-kill",
+        storyBeat: { voiceLine: `${name} 뒤 재생되면 안 되는 대기 명령.` },
+      }),
+    ]);
+    assert.equal(
+      speech.utterances.length,
+      utterancesBefore + 2,
+      `${name} setup must submit the active and native-queued narrations`,
+    );
+    assert.equal(audio.debugMetrics().narrations, 2, `${name} setup must track both narrations`);
+    assert.equal(audio.debugMetrics().narrationQueue, 1, `${name} setup must queue the second narration`);
+    const activeUtterances = speech.utterances.slice(-2);
+    const cancellationsBefore = speech.cancelCount;
+
+    cancel(audio);
+
+    assert.equal(speech.cancelCount, cancellationsBefore + 1, `${name} must cancel speech synthesis`);
+    assert.equal(audio.debugMetrics().narrations, 0, `${name} must release narration ownership`);
+    assert.equal(audio.debugMetrics().narrationQueue, 0, `${name} must clear queued narration`);
+    assert.equal(speech.speaking, false, `${name} must leave no speech playing`);
+
+    restore(audio);
+    const restored = audio.debugMetrics();
+    assert.deepEqual(
+      [restored.started, restored.muted, restored.paused, restored.backgrounded],
+      [true, false, false, false],
+      `${name} setup must become eligible for audio again`,
+    );
+    for (const utterance of activeUtterances) {
+      utterance.onend?.();
+      utterance.onerror?.();
+    }
+
+    assert.equal(
+      speech.utterances.length,
+      utterancesBefore + 2,
+      `${name} must clear tracked narration so stale callbacks cannot revive it`,
+    );
+    audio.stop();
+  }
 });
 
 test("public event policy maps objective, boss, death, retry, and completion semantics", () => {
@@ -244,7 +576,12 @@ test("rapid repetition never exceeds the public active-voice cap", (t) => {
 
   assert.equal(results.filter(Boolean).length, maxVoices);
   assert.equal(audio.debugMetrics().voices, maxVoices);
+  assert.ok(
+    audio.debugMetrics().nodes <= audio.debugMetrics().maxNodes,
+    "rejected rapid cues must not allocate past the public node cap",
+  );
   audio.stop();
+  assert.equal(audio.debugMetrics().nodes, 0, "stop must release every bounded node");
 });
 
 test("mute is allocation-free and unmute restores event feedback", (t) => {
@@ -314,6 +651,113 @@ test("consume emits each public event once without collapsing distinct event IDs
     { cueId: AUDIO_CUES.bossSpawned.id, eventId: first.eventId },
     { cueId: AUDIO_CUES.bossSpawned.id, eventId: second.eventId },
   ]);
+});
+
+test("resetRun clears run-local audio while preserving the live soundscape graph", (t) => {
+  const speech = installSpeechSynthesis(t);
+  FakeAudioContext.instances.length = 0;
+  replaceGlobal(t, "AudioContext", FakeAudioContext);
+  replaceGlobal(t, "webkitAudioContext", undefined);
+  const audio = new DefenseAudio({ reducedMotion: false, muted: false, volume: 0.37 });
+
+  assert.equal(audio.start(), true);
+  const context = FakeAudioContext.instances[0];
+  const persistentNodes = audio.debugMetrics().nodes;
+  const persistentOscillators = context.created.filter(({ kind }) => kind === "oscillator");
+  const ordinary = event("OBJECTIVE_PHASE_CHANGED", 70, {
+    tick: 70,
+    eventId: "reset:objective:stable",
+    objectiveId: "occupation",
+  });
+  const firstStory = event("STAGE_STARTED", 71, {
+    tick: 70,
+    eventId: "reset:story:stable",
+    stageId: "cinder-span",
+    voiceLine: "재설정 전 첫 번째 명령.",
+  });
+  const secondStory = event("OBJECTIVE_COMPLETED", 72, {
+    tick: 70,
+    eventId: "reset:story:queued",
+    objectiveId: "boss-kill",
+    storyBeat: { voiceLine: "재설정 전 대기 명령." },
+  });
+
+  audio.consume([ordinary, firstStory, secondStory]);
+  audio.setSoundscape("boss", "echo-throne");
+  const beforeReset = audio.debugMetrics();
+  const staleUtterances = speech.utterances.slice(-2);
+
+  assert.ok(beforeReset.voices > 0, "setup must own transient feedback voices");
+  assert.equal(beforeReset.feedbackEvents, 1, "setup must remember the ordinary event");
+  assert.equal(beforeReset.storyNarrations, 2, "setup must remember both authored stories");
+  assert.equal(beforeReset.narrations, 2, "setup must track active and native-pending narration");
+  assert.equal(beforeReset.narrationQueue, 1, "setup must expose one native-pending narration");
+  assert.equal(speech.pending, true, "setup must leave the second story pending");
+
+  const cancellationsBefore = speech.cancelCount;
+  assert.equal(audio.resetRun(), true);
+
+  const reset = audio.debugMetrics();
+  assert.deepEqual(
+    {
+      started: reset.started,
+      muted: reset.muted,
+      volume: reset.volume,
+      soundscapeStageId: reset.soundscapeStageId,
+      soundscapeState: reset.soundscapeState,
+    },
+    {
+      started: true,
+      muted: false,
+      volume: 0.37,
+      soundscapeStageId: "echo-throne",
+      soundscapeState: "boss",
+    },
+    "resetRun must preserve live configuration and soundscape state",
+  );
+  assert.equal(reset.nodes, persistentNodes, "resetRun must retain only the persistent audio graph");
+  assert.equal(reset.transientNodes, 0, "resetRun must release every transient node");
+  assert.equal(reset.voices, 0, "resetRun must release every transient voice");
+  assert.equal(reset.feedbackEvents, 0, "resetRun must clear general event deduplication");
+  assert.equal(reset.storyNarrations, 0, "resetRun must clear story deduplication");
+  assert.equal(reset.narrations, 0, "resetRun must clear tracked narration");
+  assert.equal(reset.narrationQueue, 0, "resetRun must clear native-pending narration");
+  assert.equal(speech.cancelCount, cancellationsBefore + 1, "resetRun must cancel native speech once");
+  assert.equal(speech.speaking, false, "resetRun must leave no active native speech");
+  assert.equal(speech.pending, false, "resetRun must leave no pending native speech");
+  assert.equal(context.closeCount, 0, "resetRun must not close the live audio context");
+  assert.equal(
+    persistentOscillators.every(({ stopCount, disconnectCount }) =>
+      stopCount === 0 && disconnectCount === 0
+    ),
+    true,
+    "resetRun must not stop or disconnect persistent soundscape layers",
+  );
+
+  for (const utterance of staleUtterances) {
+    utterance.onend?.();
+    utterance.onerror?.();
+  }
+  const lowTickOrdinary = { ...ordinary, tick: 1 };
+  const stableTickZeroStory = { ...firstStory, tick: 0 };
+
+  audio.consume([lowTickOrdinary, stableTickZeroStory]);
+  audio.consume([lowTickOrdinary, stableTickZeroStory]);
+
+  assert.deepEqual(
+    speech.utterances.map(({ text }) => text),
+    ["재설정 전 첫 번째 명령.", "재설정 전 대기 명령.", "재설정 전 첫 번째 명령."],
+    "the stable tick-zero story must be accepted once after reset and then deduplicated",
+  );
+  assert.equal(audio.debugMetrics().feedbackEvents, 1, "the low-tick ordinary cue must be accepted once");
+  assert.equal(audio.debugMetrics().storyNarrations, 1, "the stable story key must be remembered once");
+  assert.equal(
+    audio.debugMetrics().voices,
+    2,
+    "cleared tick and refractory state must allow one low-tick cue plus its story cue",
+  );
+
+  audio.stop();
 });
 
 test("stop and restart forget prior event identities without letting stale voice callbacks touch the new graph", (t) => {

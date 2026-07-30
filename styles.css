@@ -2875,3 +2875,267 @@ html[data-defense-started="true"] .idle-return-toast {
     width: 100%;
   }
 }
+
+/* Story progression inventory and loadout cards share the command deck's forged-ink
+   material without introducing a second progression authority. */
+.extracted-skill-grid,
+.appearance-item-grid {
+  display: grid;
+  gap: .4rem;
+}
+.extracted-skill-card,
+.appearance-item-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .35rem;
+  min-width: 0;
+  padding: .45rem;
+  border: 1px solid rgb(132 164 194 / .28);
+  border-left: 3px solid rgb(106 136 164 / .7);
+  border-radius: .45rem;
+  background:
+    linear-gradient(125deg, rgb(255 255 255 / .045), transparent 34%),
+    linear-gradient(155deg, rgb(19 24 42 / .96), rgb(8 10 21 / .98));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .025), 0 .35rem .9rem rgb(0 0 0 / .3);
+}
+.extracted-skill-card.is-equipped,
+.appearance-item-card.is-equipped {
+  border-left-color: var(--canon-zenith-gold, #ddc869);
+  box-shadow: inset 0 0 1.25rem rgb(221 200 105 / .08), 0 .35rem .9rem rgb(0 0 0 / .34);
+}
+.extracted-skill-copy,
+.appearance-item-card > div { min-width: 0; }
+.extracted-skill-copy strong,
+.appearance-item-card strong { display: block; overflow-wrap: anywhere; color: #f7f2df; font-size: .72rem; }
+.extracted-skill-copy small,
+.appearance-item-card small { display: block; margin-top: .12rem; color: #a9bdd0; font-size: .58rem; line-height: 1.3; }
+.extracted-skill-card > button,
+.appearance-item-card > button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: .25rem .4rem;
+  border-color: rgb(221 200 105 / .4);
+  border-radius: .35rem;
+  background: linear-gradient(160deg, rgb(35 38 57 / .96), rgb(13 16 30 / .98));
+  font-size: .6rem;
+  font-weight: 850;
+}
+.extracted-skill-card > button:last-child { grid-column: 2 / -1; width: 100%; }
+.appearance-item-mark {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgb(221 200 105 / .35);
+  border-radius: 50%;
+  color: #ffe487;
+  background: radial-gradient(circle, rgb(221 200 105 / .16), transparent 70%);
+}
+
+.objective-copy { display: grid; min-width: 0; }
+.objective-copy > b {
+  overflow: hidden;
+  color: #ffe487;
+  font-family: ui-serif, "Apple SD Gothic Neo", serif;
+  font-size: .67rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.objective-copy > em { color: #9fc8dc; font-size: .55rem; font-style: normal; font-weight: 800; }
+
+/* The drag surface exists at every viewport, but is visible and pointer-active only on
+   coarse, physical landscape. The five legacy buttons stay mounted and keyboard-focusable. */
+.virtual-joystick { display: none; }
+
+.defense-cutscene[data-nonblocking="true"] {
+  inset: auto 18vw max(8.6rem, calc(var(--defense-safe-bottom) + 8rem));
+  padding: 0;
+  background: transparent;
+  pointer-events: none;
+}
+.defense-cutscene[data-nonblocking="true"] .cutscene-frame {
+  width: min(64vw, 44rem);
+  margin-inline: auto;
+  pointer-events: none;
+}
+.defense-cutscene[data-nonblocking="true"] [data-cutscene-dismiss] { pointer-events: auto; }
+
+@media (pointer: coarse) and (orientation: landscape) {
+  html[data-defense-portrait="false"] .defense-bottom {
+    bottom: 0;
+    display: grid;
+    grid-template-columns: 7.25rem minmax(7.5rem, 1fr) minmax(5.5rem, 7rem) 9.4rem;
+    grid-template-areas: "movement gate actions combat";
+    gap: .3rem;
+    align-items: end;
+    padding:
+      .25rem
+      max(.35rem, var(--defense-safe-right))
+      max(.35rem, var(--defense-safe-bottom))
+      max(.35rem, var(--defense-safe-left));
+  }
+  html[data-defense-portrait="false"] .defense-bottom > #movement-actions {
+    grid-area: movement;
+    position: relative;
+    display: block;
+    width: 7.25rem;
+    height: 7.25rem;
+    max-width: none;
+    justify-self: start;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  html[data-defense-portrait="false"] .virtual-joystick {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 2px solid rgb(137 173 201 / .62);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, rgb(30 48 67 / .82) 0 18%, transparent 19%),
+      repeating-conic-gradient(from 22.5deg, rgb(129 216 255 / .08) 0 43deg, transparent 43deg 45deg),
+      radial-gradient(circle, rgb(11 21 36 / .94), rgb(4 8 17 / .9));
+    box-shadow:
+      inset 0 0 0 .35rem rgb(3 7 17 / .62),
+      inset 0 0 1.4rem rgb(89 190 232 / .18),
+      0 .55rem 1.4rem rgb(0 0 0 / .52);
+  }
+  html[data-defense-portrait="false"] .virtual-joystick-rune {
+    position: absolute;
+    inset: 16%;
+    border: 1px solid rgb(221 200 105 / .22);
+    transform: rotate(45deg);
+    pointer-events: none;
+  }
+  html[data-defense-portrait="false"] .virtual-joystick-knob {
+    --joystick-x: 0px;
+    --joystick-y: 0px;
+    position: relative;
+    z-index: 1;
+    width: 44px;
+    height: 44px;
+    border: 2px solid #e5d48a;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 28%, #8bdcff, #304c67 46%, #101a28 72%);
+    box-shadow: inset 0 0 .65rem rgb(255 255 255 / .2), 0 0 1rem rgb(111 208 255 / .38), 0 .35rem .7rem #000;
+    transform: translate3d(var(--joystick-x), var(--joystick-y), 0);
+    transition: transform 45ms linear;
+    pointer-events: none;
+  }
+  html[data-defense-portrait="false"] #movement-actions[data-joystick-direction="IDLE"] .virtual-joystick-knob {
+    border-color: rgb(189 202 213 / .72);
+    box-shadow: inset 0 0 .65rem rgb(255 255 255 / .15), 0 .35rem .7rem #000;
+  }
+  html[data-defense-portrait="false"] #movement-actions > button[data-move] {
+    position: absolute;
+    z-index: 1;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+  html[data-defense-portrait="false"] #movement-actions > button[data-move="N"] { top: 0; left: calc(50% - 22px); }
+  html[data-defense-portrait="false"] #movement-actions > button[data-move="S"] { bottom: 0; left: calc(50% - 22px); }
+  html[data-defense-portrait="false"] #movement-actions > button[data-move="W"] { top: calc(50% - 22px); left: 0; }
+  html[data-defense-portrait="false"] #movement-actions > button[data-move="E"] { top: calc(50% - 22px); right: 0; }
+  html[data-defense-portrait="false"] #movement-actions > button[data-move="IDLE"] { top: calc(50% - 22px); left: calc(50% - 22px); }
+  html[data-defense-portrait="false"] #movement-actions > button[data-move]:focus-visible {
+    z-index: 3;
+    opacity: 1;
+  }
+  html[data-defense-portrait="false"] .defense-bottom > .gate-panel {
+    grid-area: gate;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+  html[data-defense-portrait="false"] .defense-bottom > #battle-actions {
+    grid-area: actions;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(44px, 1fr));
+    width: 100%;
+    max-width: none;
+  }
+  html[data-defense-portrait="false"] .defense-bottom > #combat-input-cluster {
+    grid-area: combat;
+    width: 9.4rem;
+    height: 7.4rem;
+    justify-self: end;
+  }
+}
+
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 480px) {
+  html[data-defense-portrait="false"] .defense-top {
+    top: max(.2rem, var(--defense-safe-top));
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(9rem, 1fr) minmax(0, .8fr) minmax(0, 1.1fr);
+    gap: .22rem;
+    align-items: start;
+  }
+  html[data-defense-portrait="false"] .defense-top > .hud-panel,
+  html[data-defense-portrait="false"] .defense-top > .top-right-hud {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+  html[data-defense-portrait="false"] .defense-top > .hud-panel,
+  html[data-defense-portrait="false"] .objective-chip {
+    max-width: none;
+    padding: .22rem .32rem;
+    font-size: .62rem;
+  }
+  html[data-defense-portrait="false"] .hud-mission #battle-domain,
+  html[data-defense-portrait="false"] .hud-mission #battle-terrain-context,
+  html[data-defense-portrait="false"] .hud-mission .hud-eyebrow,
+  html[data-defense-portrait="false"] .hud-legion .hud-eyebrow {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  html[data-defense-portrait="false"] .hud-loop-state { min-width: 9rem; }
+  html[data-defense-portrait="false"] .hud-loop-state .hud-loop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .08rem .25rem;
+  }
+  html[data-defense-portrait="false"] .hud-loop-state span:not(.hud-eyebrow),
+  html[data-defense-portrait="false"] .hud-legion { font-size: .52rem; }
+  html[data-defense-portrait="false"] .top-right-hud,
+  html[data-defense-portrait="false"] .hud-order-strip,
+  html[data-defense-portrait="false"] .objective-chip { width: 100%; max-width: none; }
+  html[data-defense-portrait="false"] .objective-copy > b { font-size: .56rem; }
+  html[data-defense-portrait="false"] .objective-chip strong { font-size: .65rem; line-height: 1.14; }
+  html[data-defense-portrait="false"] .defense-bottom > .gate-panel { padding: .25rem .35rem; }
+  html[data-defense-portrait="false"] .gate-panel-portrait { width: 2rem; height: 2rem; }
+  html[data-defense-portrait="false"] .gate-panel-copy > strong { font-size: .56rem; }
+  html[data-defense-portrait="false"] .gate-panel .hud-eyebrow,
+  html[data-defense-portrait="false"] .gate-panel #battle-enemies {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  html[data-defense-portrait="false"] .defense-cutscene[data-nonblocking="true"] {
+    inset: auto 20vw max(7.8rem, calc(var(--defense-safe-bottom) + 7.4rem));
+  }
+  html[data-defense-portrait="false"] .defense-cutscene[data-nonblocking="true"] .cutscene-frame {
+    grid-template-columns: minmax(5.5rem, .22fr) minmax(0, 1fr) auto;
+    width: min(60vw, 35rem);
+    padding: .4rem .5rem;
+  }
+  html[data-defense-portrait="false"] .defense-cutscene[data-nonblocking="true"] .cutscene-heading h2,
+  html[data-defense-portrait="false"] .defense-cutscene[data-nonblocking="true"] .cutscene-line { font-size: .68rem; }
+}

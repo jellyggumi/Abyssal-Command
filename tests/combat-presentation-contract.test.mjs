@@ -33,9 +33,14 @@ function syntheticRig() {
   scene.add(body);
   const spine = new THREE.Bone();
   spine.name = "DEF-spine";
+  const chest = new THREE.Bone();
+  chest.name = "DEF-chest";
   const head = new THREE.Bone();
   head.name = "DEF-head";
-  spine.add(head);
+  const offhand = new THREE.Bone();
+  offhand.name = "DEF-hand.L";
+  spine.add(chest);
+  chest.add(head, offhand);
   scene.add(spine);
   const animations = COMBAT_CLIP_KEYS.map((key) => new THREE.AnimationClip(`synthetic::${key}::v01`, 0.05, []));
   return { scene, animations };
@@ -458,6 +463,319 @@ test("combat one-shots preempt ambient idle, recover cleanly, and death stays te
   adapter.dispose();
 });
 
+test("commander target height stays strictly below normal enemies and bosses", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  adapter.reconcileActors({
+    tick: 1,
+    commander: { id: "commander", x: 19000, y: 6000, elevation: 0 },
+    enemies: [
+      { id: "height-enemy", kind: "rusher", x: 12000, y: 6000, elevation: 0 },
+      {
+        // actorModelPath only starts a boss load for a catalog-backed id.
+        // Keep this fixture on the same public boss lookup path as production.
+        id: "height-boss",
+        class: "boss",
+        bossId: "s1-cinder-warden",
+        x: 15000,
+        y: 6000,
+        elevation: 0,
+      },
+    ],
+  });
+  await settleLoadedActors(adapter, ["commander", "height-enemy", "height-boss"]);
+
+  const commander = adapter.debugPresentationState("commander");
+  const enemy = adapter.debugPresentationState("height-enemy");
+  const boss = adapter.debugPresentationState("height-boss");
+  assert.ok(
+    commander.targetHeight < enemy.targetHeight && enemy.targetHeight < boss.targetHeight,
+    `target-height order must be commander < enemy < boss, got ${commander.targetHeight} < ${enemy.targetHeight} < ${boss.targetHeight}`,
+  );
+  adapter.dispose();
+});
+
+test("authoritative companion aiState selects locomotion without a rendered position delta", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const companion = {
+    id: "stateful-companion",
+    kind: "companion",
+    companionId: "ember-cohort",
+    x: 17500,
+    y: 6100,
+    elevation: 0,
+    aiState: "FOLLOW",
+  };
+  adapter.reconcileActors({ tick: 1, companions: [companion] });
+  await waitFor(
+    () => adapter.debugPresentationState(companion.id)?.hasMixer === true,
+    "the synthetic companion rig did not finish loading",
+  );
+  adapter.lastAnimMs = 0;
+  adapter.updateAnimations(100);
+  // The first loaded companion receives its authoritative transform on the
+  // next reconcile. Establish that position before proving a state-only
+  // update selects locomotion without a position delta.
+  adapter.reconcileActors({ tick: 2, companions: [companion] });
+
+  for (const aiState of ["FOLLOW", "RETURN", "COLLECT"]) {
+    const before = adapter.debugPresentationState(companion.id);
+    adapter.reconcileActors({
+      tick: 3,
+      companions: [{ ...companion, aiState }],
+    });
+    const state = adapter.debugPresentationState(companion.id);
+    assert.deepEqual(
+      state.position,
+      before.position,
+      `${aiState} must select locomotion even when its rendered position is unchanged`,
+    );
+    assert.ok(
+      ["move", "run"].includes(state.activeActionKey),
+      `${aiState} must select a locomotion clip rather than ${state.activeActionKey}`,
+    );
+  }
+  adapter.dispose();
+});
+
+test("snapshot-driven boss combat and enemy death one-shots are completed by their mixers", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  adapter.reconcileActors({
+    tick: 1,
+    enemies: [
+      {
+        id: "state-boss",
+        class: "boss",
+        bossId: "s1-cinder-warden",
+        x: 15000,
+        y: 6000,
+        elevation: 0,
+        presentationAction: "attack",
+      },
+      {
+        id: "state-dead-enemy",
+        kind: "rusher",
+        x: 12000,
+        y: 6000,
+        elevation: 0,
+        status: "DEAD",
+      },
+    ],
+  });
+  await waitFor(
+    () => {
+      const boss = adapter.debugPresentationState("state-boss");
+      const enemy = adapter.debugPresentationState("state-dead-enemy");
+      return boss?.oneShotActionKey === "attack" && enemy?.oneShotActionKey === "die";
+    },
+    "snapshot state did not start the boss combat and enemy death mixer actions",
+  );
+
+  adapter.lastAnimMs = 0;
+  adapter.updateAnimations(1);
+  assert.equal(
+    adapter.debugPresentationState("state-boss").oneShotActionKey,
+    "attack",
+    "the boss combat action remains live until the mixer advances through its clip",
+  );
+  assert.equal(
+    adapter.debugPresentationState("state-dead-enemy").oneShotActionKey,
+    "die",
+    "the enemy death action remains live until the mixer advances through its clip",
+  );
+
+  adapter.updateAnimations(100);
+  const boss = adapter.debugPresentationState("state-boss");
+  const enemy = adapter.debugPresentationState("state-dead-enemy");
+  assert.equal(boss.oneShotActionKey, null, "the completed boss mixer clip returns to locomotion");
+  assert.equal(boss.activeActionKey, "idle", "the completed boss combat clip recovers to idle");
+  assert.equal(enemy.oneShotActionKey, null, "the completed death mixer clip no longer queues a one-shot");
+  assert.equal(enemy.activeActionKey, "die", "enemy death remains terminal after its mixer completes");
+  assert.equal(enemy.dead, true, "state-driven enemy death remains terminal");
+  adapter.dispose();
+});
+
+test("commander appearance loadouts replace durable equipment without mutating caller state", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const initialLoadout = Object.freeze({
+    head: Object.freeze({
+      id: "iron-crown",
+      modelPath: "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
+      scale: 0.24,
+      offset: Object.freeze({ x: 0, y: 0.08, z: 0 }),
+      yaw: 0.2,
+    }),
+    back: Object.freeze({
+      id: "ember-pack",
+      modelPath: "assets/motion/ingame/characters/human-command-boss/model.glb",
+      scale: 0.3,
+      offset: Object.freeze({ x: 0, y: 0.1, z: -0.08 }),
+      yaw: Math.PI,
+    }),
+    ward: Object.freeze({
+      id: "ward-lantern",
+      modelPath: "assets/motion/ingame/characters/possessed/model.glb",
+      scale: 0.2,
+      offset: Object.freeze({ x: 0.04, y: 0, z: 0 }),
+      yaw: 0,
+    }),
+  });
+  const initialBefore = structuredClone(initialLoadout);
+  const snapshot = Object.freeze({
+    tick: 1,
+    commander: Object.freeze({ id: "commander", x: 19000, y: 6000, elevation: 0 }),
+    enemies: Object.freeze([]),
+    companions: Object.freeze([]),
+    projectiles: Object.freeze([]),
+    pickups: Object.freeze([]),
+    events: Object.freeze([]),
+  });
+  const snapshotBefore = structuredClone(snapshot);
+
+  adapter.setAppearanceLoadout(initialLoadout);
+  adapter.reconcileActors(snapshot);
+  await waitFor(
+    () => {
+      const appearance = adapter.debugPresentationState("commander")?.appearance;
+      return Array.isArray(appearance) && appearance.length === 3;
+    },
+    "the deferred commander appearance loadout did not attach after its rig resolved",
+  );
+  await settleLoadedActors(adapter, ["commander"]);
+  assert.deepEqual(
+    adapter.debugPresentationState("commander").appearance,
+    [
+      { slot: "back", id: "ember-pack" },
+      { slot: "head", id: "iron-crown" },
+      { slot: "ward", id: "ward-lantern" },
+    ],
+    "named commander sockets must expose deterministic equipped identities",
+  );
+  const canonicalEquivalentLoadout = Object.freeze([
+    Object.freeze({
+      slot: "ward",
+      id: "ward-lantern",
+      modelPath: "assets/motion/ingame/characters/possessed/model.glb",
+      scale: 0.2,
+      offset: Object.freeze({ x: 0.04, y: 0, z: 0 }),
+      yaw: 0,
+    }),
+    Object.freeze({
+      slot: "back",
+      id: "ember-pack",
+      modelPath: "assets/motion/ingame/characters/human-command-boss/model.glb",
+      scale: 0.3,
+      offset: Object.freeze({ x: 0, y: 0.1, z: -0.08 }),
+      yaw: Math.PI,
+    }),
+    Object.freeze({
+      slot: "head",
+      id: "iron-crown",
+      modelPath: "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
+      scale: 0.24,
+      offset: Object.freeze({ x: 0, y: 0.08, z: 0 }),
+      yaw: 0.2,
+    }),
+  ]);
+  const canonicalEquivalentBefore = structuredClone(canonicalEquivalentLoadout);
+  const commanderRecord = adapter.actors.get("commander");
+  const initialAttachmentRoots = new Map(commanderRecord.appearanceRoots);
+  const initialAppearanceGeneration = adapter.appearanceGeneration;
+  const requestsAfterInitialLoadout = gltfRequests.length;
+
+  adapter.setAppearanceLoadout(canonicalEquivalentLoadout);
+  assert.equal(
+    adapter.appearanceGeneration,
+    initialAppearanceGeneration,
+    "canonical-equivalent loadouts must not advance attachment generation",
+  );
+  assert.equal(
+    gltfRequests.length,
+    requestsAfterInitialLoadout,
+    "canonical-equivalent loadouts must not issue attachment model loads",
+  );
+  for (const [slot, root] of initialAttachmentRoots) {
+    assert.strictEqual(
+      commanderRecord.appearanceRoots.get(slot),
+      root,
+      `canonical-equivalent ${slot} equipment must retain its mounted attachment root`,
+    );
+    assert.ok(root.parent, `canonical-equivalent ${slot} equipment must not be retired`);
+  }
+  assert.deepEqual(
+    canonicalEquivalentLoadout,
+    canonicalEquivalentBefore,
+    "canonical-equivalent loadout comparison must not mutate caller state",
+  );
+
+
+  const replacementLoadout = Object.freeze({
+    head: Object.freeze({
+      id: "obsidian-crown",
+      modelPath: "assets/motion/ingame/characters/shadow-soldier-v04/model.glb",
+      scale: 0.28,
+      offset: Object.freeze({ x: 0, y: 0.1, z: 0 }),
+      yaw: 0,
+    }),
+  });
+  const replacementBefore = structuredClone(replacementLoadout);
+  adapter.setAppearanceLoadout(replacementLoadout);
+  assert.equal(
+    adapter.appearanceGeneration,
+    initialAppearanceGeneration + 1,
+    "a changed loadout must advance attachment generation exactly once",
+  );
+  for (const [slot, root] of initialAttachmentRoots) {
+    assert.equal(root.parent, null, `changed loadout must retire the prior ${slot} attachment root`);
+  }
+  await waitFor(
+    () => {
+      const appearance = adapter.debugPresentationState("commander")?.appearance;
+      return Array.isArray(appearance) && appearance.length === 1 && appearance[0]?.id === "obsidian-crown";
+    },
+    "replacing the loadout did not remove stale commander equipment",
+  );
+  assert.notStrictEqual(
+    commanderRecord.appearanceRoots.get("head"),
+    initialAttachmentRoots.get("head"),
+    "a changed loadout must mount a fresh attachment root",
+  );
+
+  const attackSnapshot = Object.freeze({
+    ...snapshot,
+    tick: 2,
+    enemies: Object.freeze([{ id: "appearance-target", kind: "rusher", x: 12000, y: 6000, elevation: 0 }]),
+    events: Object.freeze([Object.freeze({
+      type: "BASIC_ATTACK",
+      eventId: "appearance-attack",
+      entityId: "commander",
+      targetId: "appearance-target",
+    })]),
+  });
+  const attackBefore = structuredClone(attackSnapshot);
+  adapter.reconcileActors(attackSnapshot);
+  adapter.collectFeedback(attackSnapshot);
+  await waitFor(
+    () => adapter.debugPresentationState("commander")?.oneShotActionKey === "attack",
+    "the commander attack presentation did not begin",
+  );
+  adapter.lastAnimMs = 0;
+  adapter.updateAnimations(100);
+  assert.deepEqual(
+    adapter.debugPresentationState("commander").appearance,
+    [{ slot: "head", id: "obsidian-crown" }],
+    "transient attack cleanup must not remove durable commander appearance",
+  );
+  assert.deepEqual(initialLoadout, initialBefore, "setAppearanceLoadout must not mutate the supplied initial loadout");
+  assert.deepEqual(replacementLoadout, replacementBefore, "setAppearanceLoadout must not mutate the supplied replacement loadout");
+  assert.deepEqual(snapshot, snapshotBefore, "reconciliation must not mutate the supplied snapshot");
+  assert.deepEqual(attackSnapshot, attackBefore, "attack presentation must not mutate the supplied snapshot");
+  adapter.dispose();
+});
+
 test("a repeated combat beat restarts its clip and cannot be pinned at frame zero", async () => {
   const { RealtimeBattle } = await rendererModule;
   const adapter = realtimeBattleHarness(RealtimeBattle);
@@ -778,9 +1096,10 @@ test("a lobby boss consumes the authored show presentation without mutating the 
 
 
 test("stage-world catalog props and lookout NPCs load at authored presentation placements", async () => {
-  const { RealtimeBattle } = await rendererModule;
+  const { RealtimeBattle, meshRootForStageBoss } = await rendererModule;
   const adapter = realtimeBattleHarness(RealtimeBattle);
   const profile = stageWorldFor("cinder-span");
+  const stageNpcModelPath = "assets/motion/ingame/characters/lantern-reaver/model.glb";
   const requestStart = gltfRequests.length;
 
   adapter.ensureStageTerrain(profile.stageId);
@@ -799,7 +1118,6 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   );
   let state = adapter.debugPresentationState();
   const decor = state.stageDecor;
-  const { meshRootForStageBoss } = await rendererModule;
   const bossModelPath = meshRootForStageBoss(profile.stageId);
   assert.ok(bossModelPath, "the stage must resolve an authored boss rig");
   // BOSS_MODELS entries are stored relative to the renderer's model root,
@@ -820,7 +1138,7 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
     ...[
       profile.terrainGlbPath,
       ...profile.presentation.props.map(({ modelPath }) => modelPath),
-      ...profile.presentation.npcs.map(({ modelPath }) => modelPath),
+      ...profile.presentation.npcs.map(() => stageNpcModelPath),
       ...profile.presentation.vfxCues.map(({ modelPath }) => modelPath),
     ].filter(Boolean).map((modelPath) => `./${modelPath}`),
     // Stage load warms the boss rig so it does not pop in mid-fight.
@@ -880,7 +1198,7 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   for (const authored of [...profile.presentation.props, ...profile.presentation.npcs]) {
     const record = records.get(authored.id);
     assert.ok(record, `${authored.id} must be present in stage decor debug state`);
-    assert.equal(record.modelPath, authored.modelPath);
+    assert.equal(record.modelPath, authored.actorId === "lantern-reaver" ? stageNpcModelPath : authored.modelPath);
     assert.equal(record.role, authored.role);
     assert.deepEqual(record.source, authored.placement);
     assertNear(record.position.x, worldX(authored.placement.x), `${authored.id} authored x placement`);
@@ -1105,7 +1423,7 @@ test("confirmed same-stage same-seed tick-zero restarts replay the stage intro w
   adapter.dispose();
 });
 
-test("only an event tick-zero stage start confirms a retry without replaying carried VFX", async () => {
+test("an event tick-zero stage start clears prior-run VFX before deduplicating the retry", async () => {
   const { RealtimeBattle } = await rendererModule;
   const profile = stageWorldFor("cinder-span");
   const stageStarted = (tick) => Object.freeze({
@@ -1157,6 +1475,7 @@ test("only an event tick-zero stage start confirms a retry without replaying car
   );
   adapter.renderSnapshot(priorRally);
   assert.equal(adapter.vfxInstances.length, 1, "the prior-run rally VFX is recorded for duplicate suppression");
+  const priorRallyVfx = adapter.vfxInstances[0];
 
   adapter.renderSnapshot(staleEventTimestamp);
   assert.strictEqual(
@@ -1181,16 +1500,17 @@ test("only an event tick-zero stage start confirms a retry without replaying car
     "show",
     "the confirmed retry remains eligible for its stage-start animation",
   );
-  assert.equal(
-    adapter.vfxInstances.length,
-    1,
-    "the confirming batch does not replay an unrelated VFX event from the prior run",
+  assert.equal(adapter.vfxInstances.length, 1, "the confirming batch presents its carried VFX exactly once");
+  assert.notStrictEqual(
+    adapter.vfxInstances[0],
+    priorRallyVfx,
+    "the retry boundary retires the prior-run VFX before consuming the confirming batch",
   );
 
   adapter.renderSnapshot(newRunRally);
-  assert.equal(adapter.vfxInstances.length, 2, "visual de-dupe resets after the confirming batch for new-run events");
+  assert.equal(adapter.vfxInstances.length, 1, "the confirming batch seeds visual de-duplication for the new run");
   adapter.renderSnapshot(newRunRally);
-  assert.equal(adapter.vfxInstances.length, 2, "duplicate new-run VFX remains suppressed after the reset");
+  assert.equal(adapter.vfxInstances.length, 1, "duplicate new-run VFX remains suppressed after the reset");
   assert.deepEqual(snapshots, snapshotsBefore, "retry snapshots remain immutable during presentation");
   adapter.dispose();
 });
@@ -1346,6 +1666,73 @@ test("failed stage decor retries while ineligible terrain candidates are never r
     );
   } finally {
     gltfFailuresRemaining.delete(failedUrl);
+    adapter.dispose();
+  }
+});
+
+test("BOSS_SPAWNED VFX anchors to the spawned boss instead of a quest point", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const profile = stageWorldFor("cinder-span");
+  const boss = Object.freeze({
+    id: "s1-cinder-warden",
+    class: "boss",
+    x: 8300,
+    y: 3100,
+    elevation: 420,
+  });
+  const event = Object.freeze({
+    type: "BOSS_SPAWNED",
+    eventId: "boss-spawned:entity-anchor",
+    bossId: boss.id,
+    objectiveId: "boss-kill",
+    quest: Object.freeze({
+      questId: "cinder-span:unchain-the-descent",
+      objectiveId: null,
+    }),
+    storyBeat: Object.freeze({
+      event: Object.freeze({ type: "BOSS_SPAWNED", bossId: boss.id }),
+    }),
+  });
+  const snapshot = Object.freeze({
+    tick: 90,
+    stageId: profile.stageId,
+    commander: Object.freeze({ id: "commander", x: 9000, y: 6000, elevation: 0 }),
+    enemies: Object.freeze([boss]),
+    companions: Object.freeze([]),
+    projectiles: Object.freeze([]),
+    pickups: Object.freeze([]),
+    events: Object.freeze([event]),
+  });
+  const snapshotBefore = structuredClone(snapshot);
+
+  try {
+    adapter.collectFeedback(snapshot);
+    const spawnVfx = adapter.vfxInstances.find(({ eventType }) => eventType === "BOSS_SPAWNED");
+    assert.ok(spawnVfx, "the boss-entry event must create its transient VFX");
+    assertNear(spawnVfx.root.position.x, worldX(boss.x), "boss-entry VFX consumes the spawned boss x");
+    assertNear(spawnVfx.root.position.z, worldZ(boss.y), "boss-entry VFX consumes the spawned boss y");
+    assertNear(
+      spawnVfx.root.position.y,
+      boss.elevation * 14 / 12000 + 0.6,
+      "boss-entry VFX consumes the spawned boss elevation",
+    );
+    const questPointPositions = profile.presentation.questPoints.map(({ placement }) => [
+      worldX(placement.x),
+      placement.elevation * 14 / 12000 + 0.6,
+      worldZ(placement.y),
+    ]);
+    assert.equal(
+      questPointPositions.some(([x, y, z]) =>
+        Math.abs(spawnVfx.root.position.x - x) <= 1e-6
+        && Math.abs(spawnVfx.root.position.y - y) <= 1e-6
+        && Math.abs(spawnVfx.root.position.z - z) <= 1e-6),
+      false,
+      "boss-entry VFX must not fall back to any authored quest-point placement",
+    );
+    assert.deepEqual(snapshot, snapshotBefore, "boss-entry presentation must not mutate the authoritative snapshot");
+  } finally {
+    await Promise.allSettled([...adapter.pendingVfxLoads]);
     adapter.dispose();
   }
 });

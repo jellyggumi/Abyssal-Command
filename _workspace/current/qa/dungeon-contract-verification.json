@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-07-30",
+  "scope": {
+    "playerScale": "commander target height is strictly below a normal enemy and a boss",
+    "terrain": "all movement remains constrained to the flat authored support and collision bounds",
+    "animation": "commander, companion, enemy, and boss presentation uses snapshot state plus mixer-owned one-shots",
+    "appearance": "campaign appearance loadouts attach durable commander props to authored slots"
+  },
+  "evidence": [
+    {
+      "kind": "deterministic-test",
+      "command": "node --test tests/defense-stage-world-movement.test.mjs tests/stage-terrain-environment-contract.test.mjs",
+      "observed": "13 passed, 0 failed"
+    },
+    {
+      "kind": "deterministic-test",
+      "command": "node --test tests/combat-presentation-contract.test.mjs",
+      "observed": "28 passed, 0 failed. Includes the new scale, AI-state, one-shot, and appearance contracts. Stage-NPC verification asserts that the renderer intentionally prefers the motion model resolved from actorId over the catalog modelPath fallback."
+    },
+    {
+      "kind": "final-test-gate",
+      "command": "node --test tests/combat-presentation-contract.test.mjs tests/defense-stage-world-movement.test.mjs tests/stage-terrain-environment-contract.test.mjs tests/runtime-visual-assets.test.mjs tests/defense-renderer-contract.test.mjs tests/realtime-motion-routing.test.mjs",
+      "observed": "73 passed, 0 failed"
+    },
+    {
+      "kind": "browser-smoke",
+      "url": "http://127.0.0.1:4173/",
+      "actions": ["start Cinder Span", "move left", "stop", "manual attack"],
+      "observed": "visible 1800x1125 canvas; no console-error or pageerror events during the exercised controls",
+      "screenshot": "_workspace/current/qa/dungeon-player-scale-and-terrain-qa.png"
+    },
+    {
+      "kind": "asset-review",
+      "observed": "The existing rig artifact and motion registry establish 11 action clips on the DEF-* skeleton. Blender MCP live and CLI inspection calls both timed out, so this is carried asset evidence rather than a new Blender inspection."
+    }
+  ]
+}

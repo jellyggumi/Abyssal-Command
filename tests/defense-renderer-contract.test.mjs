@@ -307,7 +307,7 @@ test("RealtimeBattle preserves a transparent runtime terrain layer below both HU
   assert.ok(report.worldHudZ < report.edgeHudZ, `edge HUD z-index ${report.edgeHudZ} must remain above world HUD z-index ${report.worldHudZ}`);
 });
 
-test("RealtimeBattle loads the direct stage NPC mesh with its dedicated readability normalization", async (t) => {
+test("RealtimeBattle prefers a resolved motion rig for stage NPC readability while retaining catalog fallback eligibility", async (t) => {
   const hosting = await startStaticServer();
   t.after(() => new Promise((resolveClose) => hosting.server.close(resolveClose)));
   const browser = await chromium.launch({ headless: true });
@@ -320,10 +320,12 @@ test("RealtimeBattle loads the direct stage NPC mesh with its dedicated readabil
   const totalEvaluationTimeoutMs = setupTimeoutMs + glbReadinessTimeoutMs + 1000;
   let totalEvaluationDeadlineTimer;
   const evaluation = page.evaluate(async (pageGlbReadinessTimeoutMs) => {
-    const [{ RealtimeBattle: BrowserRealtimeBattle }, THREE] = await Promise.all([
+    const [{ RealtimeBattle: BrowserRealtimeBattle, meshRootForMotionCharacter }, THREE] = await Promise.all([
       import("/battle-realtime-three.js"),
       import("/vendor/three.module.js"),
     ]);
+    const resolvedMotionModelPath = meshRootForMotionCharacter("lantern-reaver");
+    const unmappedMotionModelPath = meshRootForMotionCharacter("unmapped-stage-npc");
     const canvas = document.createElement("canvas");
     canvas.width = 640;
     canvas.height = 360;
@@ -384,6 +386,8 @@ test("RealtimeBattle loads the direct stage NPC mesh with its dedicated readabil
         stageNpcActorId: stageNpc.actorId,
         stageNpcHeight: worldHeight(stageNpc.root),
         stageNpcModelPath: stageNpc.modelPath,
+        resolvedMotionModelPath,
+        unmappedMotionModelPath,
         companionHeight: worldHeight(companion.root),
       };
     } finally {
@@ -406,7 +410,16 @@ test("RealtimeBattle loads the direct stage NPC mesh with its dedicated readabil
   ]).finally(() => clearTimeout(totalEvaluationDeadlineTimer));
 
   assert.equal(report.stageNpcActorId, "lantern-reaver", "the direct stage lookout must retain its authored actor identity");
-  assert.equal(report.stageNpcModelPath, "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb", "the stage lookout must load its direct deployed mesh");
+  assert.equal(
+    report.stageNpcModelPath,
+    "assets/motion/ingame/characters/lantern-reaver/model.glb",
+    "the stage lookout must load its rigged motion mesh",
+  );
+  assert.equal(
+    report.unmappedMotionModelPath,
+    null,
+    "an unmapped stage actor leaves its catalog model path eligible as the fallback",
+  );
   assertNear(report.stageNpcHeight, 1.8, "the ambient stage NPC keeps its dedicated readability normalization");
   assertNear(report.companionHeight, 1.3, "the gameplay companion keeps its smaller actor normalization");
 });
