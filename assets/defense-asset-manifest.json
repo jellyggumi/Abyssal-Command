@@ -3443,6 +3443,24 @@
       "testDisposition": "delete"
     },
     {
+      "disposition": "retain",
+      "currentPath": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
+      "replacementPath": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.provenance.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
       "disposition": "delete",
       "currentPath": "assets/mesh/terrain/terrain-abyss-chancel/terrain-abyss-chancel-background-object.raw.png",
       "replacementPath": null,
@@ -5271,6 +5289,24 @@
     },
     {
       "disposition": "retain",
+      "currentPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
+      "replacementPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.provenance.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "retain",
       "currentPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
       "replacementPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
       "extension": ".glb",
@@ -5499,6 +5535,24 @@
       "currentPath": "assets/mesh/terrain/terrain-echo-throne/raw/terrain-echo-throne-terrain.raw.png",
       "replacementPath": null,
       "extension": ".png",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
+      "replacementPath": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
+      "extension": ".glb",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.provenance.json",
+      "replacementPath": null,
+      "extension": ".json",
       "generator": "scripts/build-defense-asset-manifest.mjs",
       "runtimeReference": false,
       "testDisposition": "delete"
