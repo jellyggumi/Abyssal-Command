@@ -36,7 +36,7 @@ import {
 } from "./defense-run-simulation.js";
 import { RealtimeBattle, MeshThumbnailService, meshRootForCompanion, meshRootForStageBoss, COMMANDER_MESH_ROOT } from "./battle-realtime-three.js";
 import { BattleVisualizer } from "./battle-visualizer.js";
-import { ARENA, COMPANIONS, CUTSCENES, REWARDS, RULES_VERSION, SKILLS, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP, SKILL_RANK_PASSIVE_SHARE, STAGE_PRESENTATION_BY_ID, STAGE_REWARD_IDS, STAGE_TACTICS, TICK_RATE, XP_GROWTH } from "./defense-catalog.js";
+import { ARENA, COMPANIONS, CUTSCENES, REWARDS, RULES_VERSION, SKILLS, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP, SKILL_RANK_PASSIVE_SHARE, STAGE_PRESENTATION_BY_ID, STAGE_REWARD_IDS, STAGE_TACTICS, TICK_RATE, XP_GROWTH, abyssDepthPackage } from "./defense-catalog.js";
 import { cutsceneEventKey, cutsceneFromEvent } from "./defense-cutscene.js";
 import { DefenseAudio } from "./defense-audio.js";
 import { DefenseViewport } from "./defense-viewport.js";
@@ -1463,7 +1463,8 @@ function renderSortieFab() {
   }
   const selected = stageFor(selectedStageId);
   const depthNow = Math.min(selectedAbyssDepth, maxUnlockedAbyssDepth());
-  const label = `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)}${depthNow ? ` · 심연 ${depthNow}` : ""}`;
+  const depthPkg = depthNow ? abyssDepthPackage(depthNow) : null;
+  const label = `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)}${depthPkg ? ` · 심연 ${depthNow} ${escapeHtml(depthPkg.name)}` : ""}`;
   // One markup string for both the create and the update path: the update path used to
   // rebuild the chevron WITHOUT data-ui-icon, so a re-render silently downgraded the
   // generated plate back to the ↗ glyph.
@@ -1498,7 +1499,10 @@ function renderAbyssDepthControl() {
   if (selectedAbyssDepth > maxDepth) selectedAbyssDepth = maxDepth;
   const options = Array.from({ length: ABYSS_DEPTH_MAX + 1 }, (_, d) => {
     const locked = d > maxDepth;
-    const text = d === 0 ? "심연 0 · 기본" : locked ? `심연 ${d} · 잠김 (${d} 클리어 필요)` : `심연 ${d} · 적 +${d * 15}%`;
+    const pkg = abyssDepthPackage(d);
+    const text = d === 0 ? "심연 0 · 기본"
+      : locked ? `심연 ${d} · ${pkg?.name ?? ""} · 잠김 (${d} 클리어)`
+      : `심연 ${d} · ${pkg?.name ?? ""} · 보상 T${pkg?.rewardTier ?? d}`;
     return `<option value="${d}"${d === selectedAbyssDepth ? " selected" : ""}${locked ? " disabled" : ""}>${text}</option>`;
   }).join("");
   const inner = `<span class="abyss-depth-eyebrow">ABYSS DEPTH · 심도</span><select id="abyss-depth-select" aria-label="심연 심도 선택">${options}</select>`;
@@ -1876,6 +1880,8 @@ export class BattleSession {
     this.stageId = stageId;
     this.surface.dataset.stageId = stageId;
     this.surface.dataset.defenseStarted = "false";
+    delete this.surface.dataset.abyssTint;
+    delete this.surface.dataset.abyssDepth;
     this.run = this.createRunForStage(stageId);
     this.extractionEvents = [];
     this.terminalHandled = false;
@@ -2021,6 +2027,17 @@ export class BattleSession {
     this.lastFrameAt = 0;
     document.documentElement.dataset.defenseStarted = "true";
     this.surface.dataset.defenseStarted = "true";
+    // Abyss Depth entrance juice: name the active depth package, wash the battle surface in its
+    // tint, and announce the dominant rule change (depth 0 = no package -> nothing added).
+    const depthPkg = abyssDepthPackage(this.run?.abyssDepth ?? 0);
+    if (depthPkg) {
+      this.surface.dataset.abyssDepth = String(this.run.abyssDepth);
+      this.surface.dataset.abyssTint = depthPkg.tint;
+      this.showToast(`<h2>심연 ${this.run.abyssDepth} · ${escapeHtml(depthPkg.name)}</h2><p>${escapeHtml(depthPkg.dominantLabel)} 활성 · 보상 T${depthPkg.rewardTier}</p>`, { className: "defense-toast-abyss", durationMs: 5000 });
+    } else {
+      delete this.surface.dataset.abyssDepth;
+      delete this.surface.dataset.abyssTint;
+    }
     this.render();
   }
 
@@ -2713,7 +2730,8 @@ export class BattleSession {
     const presentation = stagePresentationFor(this.stageId);
     root.querySelector("#battle-stage").textContent = `${stage.sequence}. ${stage.name}`;
     root.querySelector("#battle-domain").textContent = `${presentation.mapLabels.title} · ${presentation.mapLabels.domain}`;
-    const depthBadge = this.run?.abyssDepth ? ` · ABYSS DEPTH ${this.run.abyssDepth}` : "";
+    const depthPkg = this.run?.abyssDepth ? abyssDepthPackage(this.run.abyssDepth) : null;
+    const depthBadge = depthPkg ? ` · 심연 ${this.run.abyssDepth} ${depthPkg.name} · ${depthPkg.dominantLabel}` : "";
     root.querySelector("#battle-terrain-context").textContent = `${presentation.terrain.label} · ${presentation.mapLabels.hazard} · ${presentation.mapLabels.occupation} → ${presentation.mapLabels.extraction}${depthBadge}`;
     this.surface.dataset.stageId = this.stageId;
     this.surface.dataset.terrainPattern = presentation.terrain.patternId;

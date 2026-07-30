@@ -385,6 +385,14 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
 }
 #defense-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 #defense-edge-hud { position: absolute; inset: 0; pointer-events: none; }
+/* AbyssDepth tint (wiki 2026-07-30 difficulty-feel): a per-depth mood vignette washed over the live
+   surface while a depth>0 run is active (set by BattleSession.beginRun via data-abyss-tint, cleared
+   on remount). Center stays transparent so scene + HUD read clearly; edges carry the depth hue. */
+#defense-battle-surface[data-abyss-tint]::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3; background: radial-gradient(ellipse at 50% 48%, transparent 52%, var(--abyss-tint-color, rgba(243,89,44,.28)) 100%); mix-blend-mode: screen; }
+#defense-battle-surface[data-abyss-tint="ember"] { --abyss-tint-color: rgba(243,89,44,.32); }
+#defense-battle-surface[data-abyss-tint="frost"] { --abyss-tint-color: rgba(96,178,255,.32); }
+#defense-battle-surface[data-abyss-tint="veil"] { --abyss-tint-color: rgba(158,96,224,.34); }
+@media (prefers-reduced-motion: reduce) { #defense-battle-surface[data-abyss-tint]::after { mix-blend-mode: normal; } }
 /* Combat-only HUD (mission/loop-state panels, D-pad, pause) has nothing meaningful to show
    before a run is committed -- the pre-start briefing lives in the ops deck instead. Hidden
    via the surface's own dataset flag (set by BattleSession.beginRun()/remountForStage()),
