@@ -96,3 +96,162 @@ Blender 리타겟/신규 FBX가 선행되어야 하는 항목은 명시적으로
   FBX 다수가 작업 트리에 없음). 이번 변경과 무관한 기존 상태이며 수정하지 않았다.
 - 시뮬레이션 결정성 불변식은 유지된다. 추가된 코드는 전부 프레젠테이션 계층이며
   `getRunDigest()` 입력에 쓰지 않는다.
+
+---
+
+## D-20260730-02 — 오디오를 하이브리드 샘플-절차 모드로 전환
+
+```yaml
+decision_id: D-20260730-02
+date: 2026-07-30
+status: IMPLEMENTED_RUNTIME_VERIFIED
+scope: defense-audio.js 재생 계층, ElevenLabs 생성 파이프라인, 큐/variant 샘플 자산
+evidence_state: "[OBSERVED] — 계약 테스트 통과. 브라우저 청감 레벨 튜닝은 미측정"
+```
+
+### 결정
+
+**절차 오실레이터 단일 모드를 유지-폴백으로 강등하고, Abyssal Lantern 컨셉으로
+ElevenLabs sound-generation에서 재생성한 샘플(원샷 33종 + 스테이지 루프 6종)을
+동일 큐 어휘 위에 옵트인 하이브리드로 얹는다.** 큐 ID·variant 키·우선순위·refractory·
+보이스 캡·reduced-motion·내레이션 선점 계약은 전부 불변이다.
+
+| 사안 | 결정 | 이유 |
+|---|---|---|
+| 재생 경로 | `sampleMapUrl` 옵트인, 큐 단위 자동 폴백 | 오프라인·fetch/decode 부재·파일 누락에서도 기존 절차 경로가 그대로 성립 — 테스트 mock 무변경 |
+| 샘플 키 | 런타임 `variantKey`/`cueId`와 1:1 (`index.json`) | 신규 큐는 절차 재생이 기본값, 샘플 추가는 플랜 1엔트리 + 재생성 1회 |
+| BGM/앰비언스 | 스테이지별 루프 버퍼가 `SOUNDSCAPE_STATES` gain/pitch 믹스를 `playbackRate`/gain 램프로 소비 | 6상태 사운드스케이프 의미론 보존, 스테이지 전환은 루프 스왑 |
+| API 키 | 생성 시점 전용 (`.env.game-audio`, 커밋 금지) | 런타임 무의존 — 정적 Pages 배포 계약 유지 |
+| sw.js precache | mp3 39종(2.0MB)을 CORE_ASSETS에 넣지 않음 | 설치 비대 방지; 일반 fetch 경로의 런타임 캐시로 충분, 실패 시 절차 폴백 |
+
+### 소유 경계 (cycle 9/10 병행 세션)
+
+- cycle 10이 소유한 **오디오 설계 결정**(발소리 un-shadowing, 던전 신규 큐, BGM 상태 확장)은
+  이 결정의 대상이 아니다. 이 결정은 그 설계가 올라탈 **재생 인프라**만 제공한다.
+  드리프트 고지: `design/audio-feedback-dungeon-spec.md` §0.1, `engineering/runtime-surface-maps/map-ui-audio.md` 상단.
+- `MOVE = silentPolicy` 유지. `movement-step` 샘플은 생성되어 있으나 cycle 10의 설계 결정 전까지 비활성.
+
+### 증거
+
+- `tests/audio-sample-hybrid.test.mjs` 6/6 (기본 생성 네트워크 0, 버퍼 우선 재생, variant 해석,
+  루프 리믹스/스왑, fetch 실패 폴백, 배포 index↔파일 무결성·큐 계약 커버리지).
+- `audio-feedback-runtime` 17/17, `battle-session-cutscene-audio` 8/8,
+  `defense-observers-contract`+`defense-public-contract-regressions`+`release-closure` 20/20.
+- 생성 산출: 39/39 성공, `assets/audio/elevenlabs/` 2.0MB, 플랜 `assets/audio/elevenlabs-sound-plan.json`,
+  재생성 스크립트 `scripts/generate-defense-audio.mjs` (`--force`/`--only`/`--dry-run`).
+- 매니페스트: `assets/audio/defense-audio-manifest.json` schemaVersion 3 `hybrid-sample-procedural`.
+- **미측정**: 실브라우저 청감 레벨 밸런스(마스터 0.055 하 샘플 게인). `index.json` 게인 수치만으로
+  조정 가능하며 코드 변경 불요. 이 항목이 끝나기 전까지 G4 오디오 측면 PASS를 주장하지 않는다.
+
+---
+
+## D-20260730-03 — 광역 타격(`aoe-burst`) 런타임 실장과 반경 진실성 VFX
+
+```yaml
+decision_id: D-20260730-03
+date: 2026-07-30
+status: IMPLEMENTED_CONTRACT_VERIFIED
+scope: SKILLS aoe-burst 2종, 밀도 비례 피해 규칙, 스킬 광역 VFX, SKILL_CAST 앵커 결함
+evidence_state: "[OBSERVED] — 계약 테스트·결정성 게이트 통과. 사람 플레이 판정 미실시"
+authority: design/skill-and-growth-spec.md §2.2, design/master-numeric-contract.md
+```
+
+### 결정
+
+**핵앤슬래시의 타격 재미를 광역 스킬 축으로 세운다.** 이미 저작되어 있었으나 런타임에
+실리지 않은 `aoe-burst`(광역 파괴) 카테고리를 기존 `SKILLS` 형태 안에서 2종 실장하고,
+광역 연출이 **실제 피해 반경을 그리도록** 고친다.
+
+| 사안 | 결정 | 근거 |
+|---|---|---|
+| 신규 스킬 | `ash-nova`(1400/480/r3600), `regents-verdict`(적 수×400 상한12/900/r5000) | `skill-and-growth-spec.md` §2.2 저작값 그대로 |
+| 빅웨이브 답 | `regents-verdict`는 **밀도가 곧 피해** — 단일 대상 400, 12기 4800 | 사용자 요구("빅웨이브를 해결하는 주요 이펙트")의 기계적 실체 |
+| 반경 연출 | 고정 상수 glow 폐기 → `SKILLS[id].radius` 참조 링 | 기존 표시율 50%(`grave-pulse`)·15%(`shadow-step`) 실측 |
+| 밀도 결합 | 같은 `castInstanceId`의 `SKILL_RESOLVED_DAMAGE` 수로 호·밝기·카메라 임펄스 스케일 | 신규 시뮬레이션 필드 0개, 동결 스냅샷만 읽음 |
+| 형상 | 환형(annulus) + 얇은 호. **원반 금지** | r=5.83에서 원반 106.8 world² 대비 환형 12.4 world² (12%) |
+| 미실장 | `veil-lance`/`drowned-toll`/`starless-collapse` | 직선 형상·다단 타이밍·상태이상이라는 신규 시뮬레이션 원시연산 선행 필요 |
+
+### 선행 결함 수정 (본 세션 신규 아님)
+
+`effectAnchor()`에 `SKILL_CAST` 케이스가 없어 **모든 스킬 캐스트 VFX가 도달 불가능한
+죽은 코드였다.** 커맨더(시전 원점)에 앵커하도록 수정했고, 이로써 기존 5종도 처음으로
+저작된 연출을 표시한다. 상세: `design/wide-area-hit-aoe-burst-spec.md` §6.
+
+### 소유 경계
+
+cycle 10이 소유한 VFX 3종(드롭·스폰·지형 변형)은 건드리지 않았다. 신규 이벤트 타입 0개.
+`SKILLS` → `SKILL_CATEGORIES` 20종 전면 교체(저장 스키마 v2 동반)는 성장 레인 소유로 남긴다.
+
+### 증거
+
+- `scripts/verify-cycle9-digest-identity.mjs` **PASS** (seed 1/17/4242 sha256 불변, commander 키 26).
+  기준선 프로브는 300 tick·이동 전용이라 성장 제안에 도달하지 않으므로(`growthOffer: null`)
+  스킬 id 추가가 해시를 움직이지 않는다. **레벨업에 도달하는 더 긴 런에서는 제안 조합이
+  바뀐다** — 제안 가능 콘텐츠 추가의 필연이며 기준선의 목적(필드 누출 탐지)과 무관하다.
+- `tests/aoe-burst-wide-hit-contract.test.mjs` **12/12** (신규)
+- `defense-run-simulation` 27/27, 렌더러 5개 스위트 69/69, observers+regressions 16/16
+- 라이브 밀도 규칙: 12,492 캐스트 전부 `min(n,12)×400` 준수
+
+### 미해결 — 수치 권위 판정 필요
+
+**`targetCap: 12`가 현재 런타임에서 도달 불가.** 실측 결과 반경 5000 안 동시 생존
+최대치는 **7기**(seed 23, depth 0/4/8, 14000 tick). 설계 전제는 "밀도 60 중 12명"이었다.
+`commitmentCap`/스폰 페이싱을 올릴지, 상한을 실측에 맞춰 내릴지는
+`master-numeric-contract.md` 권위 사안이므로 본 세션이 단독 결정하지 않았다.
+
+---
+
+## D-20260730-04 — 빅웨이브 동시성 상승 (D-20260730-03 §5.1 해소)
+
+```yaml
+decision_id: D-20260730-04
+date: 2026-07-30
+status: IMPLEMENTED_MEASURED
+scope: 빅웨이브 동시 적 상한 / 커밋 인원 / 큐 배출 속도 (kind:"big" 한정)
+supersedes_open_item: D-20260730-03 "targetCap 12 도달 불가"
+evidence_state: "[OBSERVED] — 실측·결정성 통과. p95 프레임 시간과 승률은 미측정"
+```
+
+### 결정
+
+**`kind: "big"` 웨이브에만 적용되는 상승 등급을 도입한다.** 평시 값은 불변.
+
+| 스테이지 | 평시 (동시/커밋/간격) | 빅웨이브 |
+|---|---|---|
+| `cinder-span` | 8 / 3 / 18 | 22 / 7 / 5 |
+| `abyss-chancel` | 9 / 4 / 24 | 24 / 8 / 6 |
+| `echo-throne` | 10 / 4 / 15 | 26 / 8 / 4 |
+
+지시는 `commitmentCap`이었으나 실제 구속 조건은 `maxConcurrentEnemies`(스폰 차단)였고,
+상한만 올리면 `spawnIntervalTicks`가 큐를 찔끔 흘려 상한이 놀았다(상한 22에 실측 14).
+**세 레버를 함께 올려야 빅웨이브가 성립한다.**
+
+계약의 BIGWAVE 60은 채택하지 않았다 — §9가 60을 인스턴스드 렌더링에 걸어 두었고 현
+렌더러는 액터당 스킨드 GLB 클론이라 draw call 180 예산을 초과한다. **상향은 이 표가
+아니라 인스턴스드 렌더링에 묶여 있다.**
+
+### 결과 [OBSERVED]
+
+- `targetCap 12` **도달**: `cinder-span` 13, `abyss-chancel` 12 (변경 전 각 7)
+- `echo-throne` 9 — 상한 문제 아님. `ranged`가 `projectileRange 6000`에서 정지해 반경
+  5000 밖에 머문다. 조합 문제로 별도 판정 필요.
+- 광역기 A/B: 캐스트 시 첨두 밀도 13→9 / 12→10 / 9→6. 군중이 실제로 지워진다.
+
+### 증거
+
+- `scripts/verify-cycle9-digest-identity.mjs` **PASS** — 상승은 `kind:"big"`(최초 tick
+  2040)에서만 발동, 기준선 프로브는 300 tick이라 미진입. 스냅샷 직렬화되는 평시 값 불변.
+- `tests/aoe-burst-wide-hit-contract.test.mjs` **14/14** (신규 2건: 등급 계약 + 라이브 초과 검증)
+- `defense-run-simulation` 27/27, observers+regressions+release-closure 20/20
+
+### 정정 — 이전 "실측 7"은 측정 오류
+
+`advanceDefenseRun()`은 `growthOffer`가 열린 채 선택이 없으면 `break`하여 런을 해당 tick에
+영구 정지시킨다. 이전 프로브가 성장 제안을 응답하지 않아 웨이브가 2개에서 멈췄고 big
+웨이브에 도달한 적이 없었다. D-20260730-03 §미해결의 "밀도 상한 7"은 이 결함의 산물이다.
+
+### 미해결
+
+- 빅웨이브 16기 동시 + 광역 VFX의 **p95 프레임 시간 미측정** (계약 ≤16.7 ms, 비인스턴스드 렌더러).
+- 봇 런은 tick ~19200 압박 데드라인에서 DEFEAT하나 **변경 전후 동일 지점**이다. 승률은 사람 플레이 게이트 소관.
+- `echo-throne` 원거리 조합으로 인한 밀도 미달 — 조합/반경 판정 필요 (수치 권위).

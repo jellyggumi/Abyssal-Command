@@ -1,0 +1,79 @@
+{
+  "ok": true,
+  "observed": {
+    "media": {
+      "coarsePointer": true,
+      "portraitOrientation": true,
+      "defensePortraitAttr": "true"
+    },
+    "joystick": {
+      "present": true,
+      "display": "grid",
+      "width": 116,
+      "height": 116,
+      "laidOut": true
+    },
+    "cutover": {
+      "stylesheet": "styles.css",
+      "displayNoneDefaultPresent": true,
+      "portraitOverridePresent": true,
+      "shape": "cycle-9 portrait override",
+      "merged": true
+    },
+    "samples": [
+      {
+        "analog": "563,0",
+        "move": "E",
+        "direction": "E"
+      },
+      {
+        "analog": "966,0",
+        "move": "E",
+        "direction": "E"
+      },
+      {
+        "analog": "1000,0",
+        "move": "E",
+        "direction": "E"
+      }
+    ],
+    "released": {
+      "analog": "0,0",
+      "move": "IDLE",
+      "direction": "IDLE"
+    },
+    "magnitudes": [
+      563,
+      966,
+      1000
+    ],
+    "buttons": [
+      {
+        "move": "N",
+        "w": 44,
+        "h": 44
+      },
+      {
+        "move": "W",
+        "w": 44,
+        "h": 44
+      },
+      {
+        "move": "IDLE",
+        "w": 44,
+        "h": 44
+      },
+      {
+        "move": "E",
+        "w": 44,
+        "h": 44
+      },
+      {
+        "move": "S",
+        "w": 44,
+        "h": 44
+      }
+    ]
+  },
+  "failures": []
+}

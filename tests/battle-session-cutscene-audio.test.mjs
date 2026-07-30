@@ -166,6 +166,10 @@ test("BattleSession defers opening cutscenes until beginRun synchronously render
     cutsceneTimer: null,
     cutsceneRelayTimers: [],
     cutsceneQueue: [],
+    // The boss-entrance band is constructor state the remount path clears; assembling it here
+    // keeps this fixture exercising the real teardown instead of a shape the app never has.
+    bossIntroKeys: new Set(),
+    bossIntroTimer: null,
     started: false,
     stopped: false,
     rallyAcknowledgedBossIds: new Set(),

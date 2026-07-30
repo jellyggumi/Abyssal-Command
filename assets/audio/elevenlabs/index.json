@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "generator": "scripts/generate-defense-audio.mjs",
+  "source": "elevenlabs /v1/sound-generation",
+  "concept": "Abyssal Lantern (심연의 등불)",
+  "cues": {
+    "stage-start": {
+      "url": "assets/audio/elevenlabs/sfx/stage-start.mp3",
+      "gain": 0.95
+    },
+    "movement-step": {
+      "url": "assets/audio/elevenlabs/sfx/movement-step.mp3",
+      "gain": 0.32
+    },
+    "weapon-fire": {
+      "url": "assets/audio/elevenlabs/sfx/weapon-fire.mp3",
+      "gain": 0.7
+    },
+    "impact-hit": {
+      "url": "assets/audio/elevenlabs/sfx/impact-hit.mp3",
+      "gain": 0.85
+    },
+    "critical-hit": {
+      "url": "assets/audio/elevenlabs/sfx/critical-hit.mp3",
+      "gain": 0.95
+    },
+    "enemy-defeated": {
+      "url": "assets/audio/elevenlabs/sfx/enemy-defeated.mp3",
+      "gain": 0.8
+    },
+    "item-collected": {
+      "url": "assets/audio/elevenlabs/sfx/item-collected.mp3",
+      "gain": 0.75
+    },
+    "growth-offer": {
+      "url": "assets/audio/elevenlabs/sfx/growth-offer.mp3",
+      "gain": 0.8
+    },
+    "growth-offer:SKILL_SELECTED": {
+      "url": "assets/audio/elevenlabs/sfx/growth-offer--skill-selected.mp3",
+      "gain": 0.85
+    },
+    "skill-cast": {
+      "url": "assets/audio/elevenlabs/sfx/skill-cast.mp3",
+      "gain": 0.85
+    },
+    "extraction-ready": {
+      "url": "assets/audio/elevenlabs/sfx/extraction-ready.mp3",
+      "gain": 0.75
+    },
+    "extraction-ready:EXTRACTION_PROGRESS": {
+      "url": "assets/audio/elevenlabs/sfx/extraction-ready--progress.mp3",
+      "gain": 0.5
+    },
+    "elite-extracted": {
+      "url": "assets/audio/elevenlabs/sfx/elite-extracted.mp3",
+      "gain": 0.9
+    },
+    "occupation-captured": {
+      "url": "assets/audio/elevenlabs/sfx/occupation-captured.mp3",
+      "gain": 0.85
+    },
+    "occupation-captured:OCCUPATION_PROGRESS": {
+      "url": "assets/audio/elevenlabs/sfx/occupation-captured--progress.mp3",
+      "gain": 0.45
+    },
+    "boss-spawned": {
+      "url": "assets/audio/elevenlabs/sfx/boss-spawned.mp3",
+      "gain": 1
+    },
+    "terminal": {
+      "url": "assets/audio/elevenlabs/sfx/terminal.mp3",
+      "gain": 0.9
+    },
+    "terminal:TERMINAL:VICTORY": {
+      "url": "assets/audio/elevenlabs/sfx/terminal--victory.mp3",
+      "gain": 0.95
+    },
+    "terminal:TERMINAL:DEFEAT": {
+      "url": "assets/audio/elevenlabs/sfx/terminal--defeat.mp3",
+      "gain": 0.9
+    },
+    "terminal:TERMINAL:FINAL_COMPLETION": {
+      "url": "assets/audio/elevenlabs/sfx/terminal--final-completion.mp3",
+      "gain": 1
+    },
+    "terminal:REWARD_SELECTED": {
+      "url": "assets/audio/elevenlabs/sfx/terminal--reward-selected.mp3",
+      "gain": 0.8
+    },
+    "impact-hit:PICKUP_DENIED": {
+      "url": "assets/audio/elevenlabs/sfx/impact-hit--pickup-denied.mp3",
+      "gain": 0.55
+    },
+    "impact-hit:STANCE_SWITCH_BLOCKED": {
+      "url": "assets/audio/elevenlabs/sfx/impact-hit--pickup-denied.mp3",
+      "gain": 0.55
+    },
+    "input-accepted": {
+      "url": "assets/audio/elevenlabs/sfx/input-accepted.mp3",
+      "gain": 0.45
+    },
+    "input-rejected": {
+      "url": "assets/audio/elevenlabs/sfx/input-rejected.mp3",
+      "gain": 0.5
+    },
+    "attack-windup": {
+      "url": "assets/audio/elevenlabs/sfx/attack-windup.mp3",
+      "gain": 0.5
+    },
+    "block-contact": {
+      "url": "assets/audio/elevenlabs/sfx/block-contact.mp3",
+      "gain": 0.7
+    },
+    "attack-miss": {
+      "url": "assets/audio/elevenlabs/sfx/attack-miss.mp3",
+      "gain": 0.4
+    },
+    "interrupt-alert": {
+      "url": "assets/audio/elevenlabs/sfx/interrupt-alert.mp3",
+      "gain": 0.8
+    },
+    "warning-pulse": {
+      "url": "assets/audio/elevenlabs/sfx/warning-pulse.mp3",
+      "gain": 0.8
+    },
+    "objective-waypoint": {
+      "url": "assets/audio/elevenlabs/sfx/objective-waypoint.mp3",
+      "gain": 0.6
+    },
+    "objective-complete": {
+      "url": "assets/audio/elevenlabs/sfx/objective-complete.mp3",
+      "gain": 0.8
+    },
+    "boss-phase": {
+      "url": "assets/audio/elevenlabs/sfx/boss-phase.mp3",
+      "gain": 0.9
+    },
+    "death-retry": {
+      "url": "assets/audio/elevenlabs/sfx/death-retry.mp3",
+      "gain": 0.8
+    }
+  },
+  "loops": {
+    "ambience:cinder-span": {
+      "url": "assets/audio/elevenlabs/loops/ambience--cinder-span.mp3",
+      "gain": 0.5
+    },
+    "ambience:abyss-chancel": {
+      "url": "assets/audio/elevenlabs/loops/ambience--abyss-chancel.mp3",
+      "gain": 0.5
+    },
+    "ambience:echo-throne": {
+      "url": "assets/audio/elevenlabs/loops/ambience--echo-throne.mp3",
+      "gain": 0.5
+    },
+    "music:cinder-span": {
+      "url": "assets/audio/elevenlabs/loops/music--cinder-span.mp3",
+      "gain": 0.45
+    },
+    "music:abyss-chancel": {
+      "url": "assets/audio/elevenlabs/loops/music--abyss-chancel.mp3",
+      "gain": 0.45
+    },
+    "music:echo-throne": {
+      "url": "assets/audio/elevenlabs/loops/music--echo-throne.mp3",
+      "gain": 0.45
+    }
+  }
+}

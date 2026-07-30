@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "checks": [
+    {
+      "id": "E1",
+      "description": "trash (`normal`) enemies map to NO extractable grade",
+      "ok": true,
+      "detail": "EXTRACTION_GRADE_BY_ENEMY.normal = null (expected undefined/null — absence IS the no-corpse rule)"
+    },
+    {
+      "id": "E2",
+      "description": "elite / midboss / boss each map to an extractable grade",
+      "ok": true,
+      "detail": "elite=BASIC  midboss=SHADOW  boss=BOSS"
+    },
+    {
+      "id": "E7",
+      "description": "a base run exposes NONE of the new snapshot fields (conditional presence)",
+      "ok": true,
+      "detail": "none of [extractionUnlocked, corpses, extractionChannel, companionCapacity] present, as required"
+    },
+    {
+      "id": "E3",
+      "description": "extraction is LOCKED on a fresh run (no midboss killed yet)",
+      "ok": true,
+      "detail": "extractionUnlocked = undefined (expected absent/falsy)"
+    },
+    {
+      "id": "E8",
+      "description": "capacity: absent at base 3, carried when raised, clamped to 10",
+      "ok": true,
+      "detail": "base→absent (correct)  raised(6)→6  over(999)→10"
+    },
+    {
+      "id": "E5",
+      "description": "two runs of one seed start from the same run-scoped id counter (defect D1)",
+      "ok": true,
+      "detail": "run A nextId=0  run B nextId=0 — run-scoped, not module-scoped"
+    },
+    {
+      "id": "E6",
+      "description": "corpse cap is a bounded integer (tick-cost bound, spec §6)",
+      "ok": true,
+      "detail": "EXTRACTION.corpseCap = 12"
+    },
+    {
+      "id": "E4",
+      "description": "timing contract: corpse 600 ticks, channel 120 ticks, range 1200",
+      "ok": true,
+      "detail": "corpseDurationTicks=600  channelTicks=120  range=1200"
+    }
+  ]
+}

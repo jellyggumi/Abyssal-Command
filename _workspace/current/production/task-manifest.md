@@ -433,3 +433,213 @@ cycle 9 스펙이며 이미 그들 쪽에 구현되어 있다** — 그들의 `d
 
 Stage 2(밸런스·코어 루프 안정화). 회고
 `retrospectives/cycle-10-retrospective.md` §6에 의존 순서가 있다.
+
+---
+
+## 11. 2026-07-30 — 광역 전투 모델·공격 패턴 프리셋·AI 대응·보스 등장씬
+
+세션 브랜치: `feat/motion-vfx-aoe-boss` → PR #11 → `main` `9562943b`.
+동시 세션이 `defense-catalog.js` / `defense-run-simulation.js` / `battle-realtime-three.js` /
+`app.js`를 편집 중이었으므로 `CLAUDE.md` §5에 따라 격리 워크트리
+(`/Users/jangyoung/orca/Abyssal-Surge-motion`)에서 작업했고, 공유 워크트리는 건드리지 않았다.
+
+### 11.1 구현된 계약
+
+**광역 전투(모든 공격·피격은 광역).** `defense-catalog.js`가 네 개의 정수 basis-point 인자를
+저작한다: 거리 감쇠 × 소스 가중치 × 속성 상성 × 지속시간.
+
+```
+share = areaFalloffBp(distance, radius)
+      x weightBp(source)
+      x elementMatchupBp(attacker, defender)
+      x areaSustainBp(durationTicks)
+```
+
+- `resolveAreaImpact()`가 유일한 권위다. 근접 스윕, 이동 오브, 적 포탄, 스킬, 적 타격, 보스
+  슬램이 모두 이 경로를 통과하며 1차 대상은 항상 제외된다(이중 피해 불가).
+- 잔류 장판(`AREA_FIELD_STARTED/_PULSE/_ENDED`)은 저작된 주기로만 맥동하고, 개수 상한이
+  있으며, 스냅샷에 공개되고, 항상 명시적으로 회수된다.
+- `ATTACK_PATTERNS`: 모든 적 아키타입과 3보스에 대해 telegraph → active → recovery 3단계
+  스텝의 순환 시퀀스. 순수 함수 `samplePattern(patternId, elapsed)`로 어떤 위상도 재현 가능.
+- `AI_RESPONSE_PATTERNS`: evade / spread / brace / punish. 각각 시뮬레이션이 실제로 읽는
+  유한 윈도(대형 앵커, 피해 지분, 아군 사격 주기).
+- `MONSTER_STATES`: 바디당 하나의 의미 상태(build-game-monster-system의 runtime→view 이음매).
+- `BOSS_SPAWNED`가 3초(180틱) 등장 윈도를 저작해 실어 보낸다.
+
+**연출.** 피격체는 피격 플래시 동안 반투명 점멸(사각파)한다 — 1차·광역 대상 동일. 재질의
+사전 알파는 1회 캡처 후 항상 복원되며, reduced motion은 점멸 없이 반투명만 유지한다.
+지면 링은 절차적 생성이다: 광역 임팩트 / 텔레그래프(채워지는 시간 = 윈드업) / 잔류 장판 /
+지휘관 상시 사거리 링. 보스 등장은 기본 팔로우캠 위에 얹히는 카메라 푸시 + 비차단 3초 자막
+밴드이며 전투를 멈추지 않는다. 투명 VFX 예산 24 → 40(상수를 export해 계약 테스트가 리터럴
+대신 저작값을 검증).
+
+**비례.** 컴패니언 실루엣 1.3 → 1.45. 근거는 디코딩된 레퍼런스 캡처
+(`intake/reference-video-analysis.md` §3): 군단 유닛은 플레이어와 같은 스케일로 읽히고 색으로
+구분된다. 지휘관 1.55는 SKIRMISH 티어에서 화면 높이의 7.8%로 레퍼런스 대역(≈6.8%) 안에 있어
+확대하지 않았다.
+
+### 11.2 발견·수정한 결함 [OBSERVED]
+
+1. **성장 선택 이벤트 소실.** `advanceDefenseRun()`이 성장 오퍼 입력을 `tick()` 이전에 처리하고,
+   `tick()`은 `run.events = []`로 시작한다. ward-binder의 +120 integrity/maxIntegrity는 적용되는데
+   `SKILL_SELECTED` 이벤트는 지워져, 어떤 관측자도 설명할 수 없는 델타가 남았다. 선택 이벤트를
+   리셋 너머로 이월한다(자체 eventSequence 유지 → 스트림 순서 불변).
+2. **wardens-vigil 재생이 무이벤트.** `WARDENS_VIGIL_REGEN`을 발행하도록 수정.
+3. **PR guard의 jq 파싱 중단.** 브라우저 게이트가 원시 stdout을 `results/*.json`으로 썼고
+   `progression-mobile-ui-browser.cjs`는 TAP을 출력한다. Decide 단계의 `jq -sc ... results/*.json`이
+   `1..N` 줄에서 "Invalid numeric literal"로 전체 스윕을 실패시켰다. 전사는
+   `results/browser/*.txt`로 분리.
+
+### 11.3 증거 [OBSERVED]
+
+- `tests/area-combat-model.test.mjs`(신규) **19/19 PASS** — 인자 수학, 모든 패턴의 위상 경계,
+  actionId 유지/갱신, 응답 윈도 상한, 라이브 광역 구조, 속성별 거리 단조성, 장판 주기·만료,
+  digest 결정성, 몬스터 상태 계약.
+- `defense-run-simulation` + `-rpg` + `companion-autonomy` + `combat-presentation-contract`
+  **87/87 PASS**; `defense-renderer-contract` **22/22 PASS**;
+  `defense-campaign-adapter` + `defense-asset-manifest` + `no-rts-closure` + `release-closure`
+  **16/16 PASS**; stage1b pressure·persistence·evidence exporters **PASS**(관측성 수정 이후).
+- `node scripts/run-defense-balance-sim.mjs --strict` → `"pass": true`, `"failures": []`.
+- 브라우저 5종 로컬 **exit 0**: survivor `"pass": true`/`errors: []`, performance
+  `rafMeanMs 16.94`/`failures: []`, hud-responsive, phone-battle-hud, progression-mobile-ui.
+- CI(병합 결과 기준) 릴리스 파이프라인 run `30568810321` **전 게이트 SUCCESS**:
+  resolve_revision · release_closure · engine_contract · browser_contract · package_pages ·
+  artifact_smoke · deploy_pages · deployed_smoke · release_receipt.
+- 배포 검증: `https://jellyggumi.github.io/Abyssal-Lantern/version.json` =
+  `{"candidate_sha":"9562943b2ba22617916be0fe799edc956c68466c","rules_version":"defense-survivor-v1"}`.
+  로컬에서 실행한 `tests/deployed-defense-smoke.cjs`도 라이브 URL 대상 `"pass": true`,
+  `errors: []`(390×844, 844×390).
+- 전체 Node 회귀(`node --test 'tests/**/*.test.mjs'`)는 §9.2와 동일하게 로컬에서 완료 요약을
+  만들지 못했다 — 이번에도 PASS로 계산하지 않는다 [BLOCKED].
+
+### 11.4 모션 팩 재타깃 [OBSERVED · 완료]
+
+`assets/motion/ingame/unarmed-core.glb` 9클립 → **21클립**(189 KB → 495 KB), `main` `e4775b5c`.
+
+- 기존 9개(idle/move/run/hit/bighit/attack/critical/avoid/defence)는 소스 무변경 — 어떤 리그도
+  기존 모션을 잃거나 바꾸지 않는다. 추가분: 방향별 `hit_front/back/left/right`,
+  `bighit_front/back/left/right`, `attack_melee`, `attack_ranged`, `die`, `show`.
+- 런타임 변경 0줄. 오버레이 액션 키는 팩의 클립 이름(`unarmed-core::<action>::v01`)에서 읽고
+  `RIG_ACTION_KEYS`로 승인되므로, 팩이 커지면 라우팅이 그대로 켜진다. 잠들어 있던
+  `hitReactionKey()` 방향 분기가 24개 호환 리그 전부에서 처음으로 실제 클립을 얻었다.
+- 관측 감사 66/66. 2026-07-29의 42개 코퍼스는 그대로 두고, 이후 추가된 24개만 동일 스크립트로
+  심볼릭 링크 디렉터리에서 관측(`--expect-count 24`)해 병합했다. 양쪽 모두 실제 Blender 임포트다.
+  (전체 66개 단일 실행은 부하 상태에서 특정 파일에 걸려 진행되지 않아 중단했다.)
+- 레퍼런스 리그는 `assets/motion/ingame/characters/human-command-boss/model.glb`(지휘관의 실제
+  런타임 리그). 스크립트의 옛 기본값 `assets/images/battle/glb/commander/dusk-warden.glb`는
+  폐기된 GLB 레인과 함께 사라졌다.
+- 팩 클립 수 게이트는 `CLIPS`에서 파생하도록 바꿔, 로스터가 바뀌어도 클립이 빠진 팩을 통과시킬 수 없다.
+- 테스트는 오버레이 로스터를 배포된 매니페스트에서 읽는다 — "팩이 싣는 것은 오버레이, 나머지는
+  리그 자체"라는 실제 규칙을 검증한다.
+- 증거: 모션/라우팅/오버레이 QA/렌더러/자산 매니페스트/리그 계약/승격 자산 **51개 중 47 PASS,
+  0 FAIL**(4 SKIP); engine contract 세트 **61/61**; `defense-survivor-browser` `"pass": true`;
+  자산 매니페스트 재생성 diff 없음. 릴리스 run `30574564581` 전 게이트 SUCCESS.
+- 배포 확인: 라이브 팩 21클립/495 072 B, 라이브 매니페스트 override 21개,
+  `version.json.candidate_sha` = `e4775b5c9943394a1ad5c8bc193a6f4399c43115`,
+  로컬 실행 `deployed-defense-smoke` `"pass": true`, `errors: []`.
+
+### 11.5 남은 작업
+- 텍스트-투-모션 생성 경로(MDM/T2M-GPT)는 실행하지 않았다. 프롬프트 템플릿은
+  `wiki/concepts/motion-generation-for-runtime-rigs.md` §4에 있고, 산출물은 `CLAUDE.md` §3의
+  provenance/감사 게이트를 통과해야 런타임에서 참조할 수 있다.
+
+---
+
+## 12. 2026-07-30 — 병행 세션 현황과 오디오 하이브리드 레인 (최신화)
+
+### 12.1 활성 레인 경계 [OBSERVED]
+
+같은 작업 트리에서 세 레인이 병행 중이다. 소유 경계는 `intake/production-brief-cycle10-stage-dungeon.md` §0이 권위다.
+
+| 레인 | 선언 문서 | 범위 | 상태 |
+|---|---|---|---|
+| cycle 9 — 코어 루프·조작감 | `intake/production-brief-cycle9.md`, `design/core-loop-legion-spec.md` | 중간보스 추출 게이팅, 군단 정원 3→10, octant→아날로그 입력, 조준 타게팅 | 구현 진행 — `scripts/verify-cycle9-*.mjs` 3종 + `qa/cycle9/` 라이브 증거(JSON 3종) + `qa/cycle9-digest-baseline.json` 존재 |
+| cycle 10 — 스테이지 던전 | `intake/production-brief-cycle10-stage-dungeon.md` | 3스테이지 터레인·타일 조합, 동선, 5–15분 페이싱, 드롭→시한 버프, VFX 신규 3큐, HUD 개편·조이스틱 컷오버, 발소리·BGM 상태 | 설계 산출 완료 — `design/audio-feedback-dungeon-spec.md`, `design/item-drop-timed-buff-spec.md`, `design/vfx-drop-spawn-terrain-spec.md`, `ui/hud-overhaul-joystick-cutover-spec.md`, `ui/battle-hud-concept-cycle9.md`, `qa/cycle10-baseline.md` |
+| 오디오 하이브리드 (본 항목) | `production/decision-log.md#D-20260730-02` | ElevenLabs 재생성 샘플 39종 + `defense-audio.js` 하이브리드 재생 계층 | 구현·계약 테스트 완료 (§10.2) |
+
+모션 오버레이 레인(프롬프트 #3, `summary.md`)은 Phase 6까지 완료로 종결됐다.
+
+### 12.2 오디오 하이브리드 레인 산출
+
+| task | 산출물 | 상태 |
+|---|---|---|
+| 컨셉 사운드 플랜 (Cinder Span 잿불/사슬, Abyss Chancel 성당/성가, Echo Throne 왕좌/북) | `assets/audio/elevenlabs-sound-plan.json` (원샷 33 + 루프 6, 큐/variant 키 1:1) | done |
+| 배치 생성 파이프라인 | `scripts/generate-defense-audio.mjs` → `assets/audio/elevenlabs/` 39/39 (2.0MB) + 런타임 맵 `index.json` | done |
+| 런타임 하이브리드 재생 | `defense-audio.js#DefenseAudio` — `sampleMapUrl` 옵트인, 큐 단위 절차 폴백, 스테이지 루프 스왑·상태 믹스 | done |
+| 옵트인 배선·매니페스트 | `app.js#BattleSession`, `assets/audio/defense-audio-manifest.json` v3 | done |
+| 계약 테스트 | `tests/audio-sample-hybrid.test.mjs` 6/6; 인접 스위트 45/45 | done |
+| 브라우저 청감 레벨 튜닝 | `index.json` 게인 수치 조정만 필요 | **미착수 — G4 오디오 측면 미승격** |
+
+### 12.3 문서 정합성 조치
+
+- `design/audio-feedback-dungeon-spec.md` §0.1과 `engineering/runtime-surface-maps/map-ui-audio.md` 상단에
+  런타임 드리프트 애드덤을 기록했다 — "100% 절차 합성 / no file playback" 진술은 역사적 사실로 강등,
+  `MOVE=silentPolicy`·사운드스케이프 의미론·이벤트 정책 인벤토리는 유효 유지.
+- cycle 10 오디오 설계(발소리 un-shadowing, 신규 큐)는 해당 레인 소유로 불변 — 신규 큐는 플랜 1엔트리
+  추가 + 재생성 1회로 샘플을 얻고, 그 전까지 절차 재생이 기본값이다.
+
+## 13. 2026-07-30 — 광역 타격(wide-hit) 레인
+
+### 13.1 산출
+
+| task | 산출물 | 상태 |
+|---|---|---|
+| 레퍼런스 판독 (오퍼레이터 제공 16.1s 세로 광고) | `design/wide-area-hit-aoe-burst-spec.md` §1 — 압박(적 15+)→단일 광역 해소 구조, 수축→폭발 형태 언어 | done |
+| `aoe-burst` 2종 실장 | `defense-catalog.js#SKILLS` — `ash-nova`, `regents-verdict` (저작값 그대로) | done |
+| 밀도 비례 피해 | `defense-run-simulation.js#skillCastBaseDamage()` — 캐스트당 1회 확정, 정렬 순서 무관 | done |
+| 반경 진실성 VFX | `battle-realtime-three.js#aoeWorldRadiusFor/attachAoeBurst/advanceAoeBurst` | done |
+| 밀도 결합 연출 | 호 개수·밝기·카메라 임펄스가 실제 명중 수에 비례 | done |
+| **선행 결함 수정** | `effectAnchor()`에 `SKILL_CAST` — 스킬 VFX 전체가 죽은 코드였음 | done |
+| 계약 테스트 | `tests/aoe-burst-wide-hit-contract.test.mjs` 12/12 | done |
+| 사람 플레이 판정 | — | **미착수 — G4/G7 미승격** |
+
+### 13.2 미해결
+
+- ~~`targetCap: 12` 도달 불가~~ → **해소** (`decision-log.md#D-20260730-04`): 빅웨이브 동시성 상승으로 `cinder-span` 13 / `abyss-chancel` 12 도달. 이전 "실측 7"은 성장 제안 미응답으로 런이 정지한 프로브 결함이었다. `echo-throne` 9는 원거리 조합 문제로 별도 판정 필요.
+- 빅웨이브 16기 동시 + 광역 VFX의 p95 프레임 시간 미측정 (계약 ≤16.7 ms, 렌더러 비인스턴스드).
+- `veil-lance`/`drowned-toll`/`starless-collapse` 미실장: 직선 형상·다단·상태이상 원시연산 선행.
+- 빅웨이브 동시 광역 캐스트 fill-rate 실측(p95) 미측정.
+
+---
+
+## 14. 2026-07-30 — 세 레인 통합과 `main` 최신화
+
+세 개의 병행 레인이 각자 다른 `main` 기준으로 작성돼 있었고, 이 항목에서 전부 `main`으로 통합됐다.
+
+| PR | 내용 | 병합 SHA |
+|---|---|---|
+| #14 | 사이클 10 던전 슬라이스 + 광역 전투 통합 | `352a2334` |
+| #15 | 사이클 9 코어 루프 슬라이스 통합 + 적 포탄 진영 태그 결함 수정 | `8f89580c` |
+| #16 | 오디오 하이브리드 레인 (본 항목) | 본 커밋 |
+
+### 14.1 통합에서 발견·수정한 결함 [OBSERVED]
+
+1. **적 포탄이 아군을 때리지 않고 적을 때렸다.** `fire()`가 발사 주체를
+   `source.kind === "enemy"`로 판정했는데, 적 액터의 `kind`는 아키타입 문자열
+   (`"rusher"`, `"ranged"` …)이라 이 조건은 절대 참이 되지 않는다. 모든 적 포탄이
+   `player`로 태깅돼 폭발 광역이 **적**을 때렸다. 수정 전 실측: 지휘관 300 유닛,
+   컴패니언 554 유닛(모두 1200 유닛 원판 안)인데 플레이어 측 광역이 0건 — 7개 시드
+   × 2개 대형 전부. `fire()`는 구조상 적 전용 경로(호출부가 적 원거리 분기 하나)이므로
+   태그를 리터럴로 고정했다.
+2. **`remountForStage()`가 부분 생성 세션에서 throw.** 보스 등장 밴드의
+   `bossIntroKeys.clear()`가 생성자 필드를 가정했는데, 오디오/컷신 계약 테스트는
+   `Object.create(prototype)` + 명시 필드 목록으로 세션을 만든다. 정리(teardown) 경로는
+   throw하지 않아야 하므로 옵셔널 체이닝으로 강화하고, 픽스처에도 해당 필드를 추가해
+   실제 경로를 계속 검증하게 했다.
+3. **샘플 오디오가 배포되지 않을 뻔했다.** `assets/audio/elevenlabs/**` 40종이
+   `PAGES_RUNTIME_PATHS`에도 `RETAINED_ASSET_PATHS`에도 없어, 자산 매니페스트는 이를
+   전부 `delete`로 분류하고 배포 아티팩트는 이를 제외했다. 런타임은 조용히 절차적
+   음원으로 폴백하므로 **실패가 보이지 않는** 종류의 누락이었다. 두 목록 모두에 등재하고,
+   릴리스 계약 테스트가 인덱스(`index.json`)에서 목록을 유도하도록 바꿔 큐가 추가돼도
+   목록이 갈라지지 않게 했다.
+
+### 14.2 재기준선화한 증거 [OBSERVED]
+
+| 게이트 | 무엇이 바뀌었나 | 불변식 |
+|---|---|---|
+| 무버프 다이제스트 동일성 | 4개 창의 SHA 재측정 (2회: 광역 전투 병합, 사이클 9 병합) | 드롭 0 · 버프 0 · 창 완주 · `dropRng` 전진 · `buffs`/`buffStats` 부재 · `SNAPSHOT_VERSION` 7 — 전부 재검증 |
+| 3000틱 `run.rng` | seed 3만 이동, 나머지 2개는 불변 | 드롭 롤이 웨이브 스트림을 건드리지 않음 |
+| G7 영속성 시나리오 | 시뮬레이션 변경에 따라 재생성 + 다이제스트 재고정 | `--check` exit 0 |
+
+수치가 움직인 이유는 전투 규칙이 바뀌었기 때문이며, 게이트가 지키는 주장 자체는 하나도
+약화되지 않았다.

@@ -52,6 +52,21 @@ const PROMOTED_MOTION_CHARACTER_ASSETS = Object.freeze([
   "assets/motion/ingame/characters/registry.json",
   "assets/motion/ingame/characters/rights-receipt.json",
 ]);
+/**
+ * Sampled audio buffers, derived from the shipped index rather than restated.
+ *
+ * The index is the runtime's own map (`assets/audio/elevenlabs/index.json`); reading it here is
+ * what makes "every cue the game will try to fetch is deployed" a checked property instead of a
+ * hand-maintained parallel list that drifts the first time a cue is added.
+ */
+const AUDIO_SAMPLE_INDEX = JSON.parse(
+  await readFile(new URL("assets/audio/elevenlabs/index.json", ROOT), "utf8"),
+);
+const AUDIO_SAMPLE_ASSETS = Object.freeze([
+  ...Object.values(AUDIO_SAMPLE_INDEX.cues ?? {}).map(({ url }) => url),
+  ...Object.values(AUDIO_SAMPLE_INDEX.loops ?? {}).map(({ url }) => url),
+]);
+
 const DIRECT_RUNTIME_ASSETS = Object.freeze([
   // Cycle 10: the composed slab floors are the gameplay ground the runtime loads.
   // Order matters -- this list is compared with assert.deepEqual against the
@@ -79,6 +94,12 @@ const DIRECT_RUNTIME_ASSETS = Object.freeze([
   "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
   "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
   "assets/motion/stage-vfx/manifest.json",
+  // Hybrid audio (D-20260730-02): DefenseAudio fetches this index at start() and layers the
+  // sampled cues over the procedural profiles. If the index is not deployed the runtime silently
+  // stays procedural, so shipping the map WITHOUT the buffers it points at would be the failure
+  // this list exists to prevent -- every referenced file is enumerated below with it.
+  "assets/audio/elevenlabs/index.json",
+  ...AUDIO_SAMPLE_ASSETS,
 ]);
 const RUNTIME_PATHS = [
   "index.html", "app.js", "rpg-catalog.js", "stage-world-catalog.js", "stage-story-catalog.js", "defense-viewport.js", "defense-catalog.js", "defense-run-simulation.js",
