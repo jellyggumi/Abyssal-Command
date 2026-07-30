@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-30T04:02:33.530Z",
+  "generatedAt": "2026-07-30T15:30:47.329Z",
   "canonicalStageIds": [
     "cinder-span",
     "abyss-chancel",
@@ -13,9 +13,9 @@
       "stageId": "cinder-span",
       "pass": true,
       "expected": {
-        "terrainGlbPath": null,
+        "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
         "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
-        "terrainSource": "procedural-flat-support",
+        "terrainSource": "promoted-glb",
         "propRecords": [
           {
             "id": "cinder-span:collapsed-parapet-prop",
@@ -99,15 +99,15 @@
         "surfaceStageId": "cinder-span",
         "loadedStageId": "cinder-span",
         "renderer": "webgl",
-        "renderedFrames": 845,
+        "renderedFrames": 687,
         "terrainLoaded": true,
-        "terrainGlbPath": null,
-        "terrainSource": "procedural-flat-support",
+        "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
+        "terrainSource": "promoted-glb",
         "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
         "terrainIntegrity": {
-          "meshCount": 1,
-          "vertexCount": 91,
-          "triangleCount": 144,
+          "meshCount": 4,
+          "vertexCount": 16,
+          "triangleCount": 8,
           "invalidVertexCount": 0,
           "invalidIndexCount": 0,
           "finiteBounds": true
@@ -363,6 +363,14 @@
             "status": 200
           },
           {
+            "path": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
+            "status": 200
+          },
+          {
             "path": "assets/motion/ingame/characters/ember-cohort/model.glb",
             "status": 200
           },
@@ -376,6 +384,10 @@
           },
           {
             "path": "assets/motion/ingame/characters/scout/model.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/motion/ingame/unarmed-core.glb",
             "status": 200
           },
           {
@@ -402,9 +414,9 @@
       "stageId": "abyss-chancel",
       "pass": true,
       "expected": {
-        "terrainGlbPath": null,
+        "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
         "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
-        "terrainSource": "procedural-flat-support",
+        "terrainSource": "promoted-glb",
         "propRecords": [
           {
             "id": "abyss-chancel:apse-wing-prop",
@@ -488,15 +500,15 @@
         "surfaceStageId": "abyss-chancel",
         "loadedStageId": "abyss-chancel",
         "renderer": "webgl",
-        "renderedFrames": 713,
+        "renderedFrames": 683,
         "terrainLoaded": true,
-        "terrainGlbPath": null,
-        "terrainSource": "procedural-flat-support",
+        "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
+        "terrainSource": "promoted-glb",
         "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-abyss-chancel/textured-candidate/terrain/terrain-abyss-chancel-textured-cleaned.glb",
         "terrainIntegrity": {
-          "meshCount": 1,
-          "vertexCount": 91,
-          "triangleCount": 144,
+          "meshCount": 5,
+          "vertexCount": 20,
+          "triangleCount": 10,
           "invalidVertexCount": 0,
           "invalidIndexCount": 0,
           "finiteBounds": true
@@ -744,6 +756,14 @@
             "status": 200
           },
           {
+            "path": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
+            "status": 200
+          },
+          {
             "path": "assets/motion/ingame/characters/ember-cohort/model.glb",
             "status": 200
           },
@@ -757,6 +777,10 @@
           },
           {
             "path": "assets/motion/ingame/characters/possessed/model.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/motion/ingame/unarmed-core.glb",
             "status": 200
           },
           {
@@ -783,9 +807,9 @@
       "stageId": "echo-throne",
       "pass": true,
       "expected": {
-        "terrainGlbPath": null,
+        "terrainGlbPath": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
         "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
-        "terrainSource": "procedural-flat-support",
+        "terrainSource": "promoted-glb",
         "propRecords": [
           {
             "id": "echo-throne:aisle-blade",
@@ -869,15 +893,15 @@
         "surfaceStageId": "echo-throne",
         "loadedStageId": "echo-throne",
         "renderer": "webgl",
-        "renderedFrames": 684,
+        "renderedFrames": 681,
         "terrainLoaded": true,
-        "terrainGlbPath": null,
-        "terrainSource": "procedural-flat-support",
+        "terrainGlbPath": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
+        "terrainSource": "promoted-glb",
         "terrainSourceCandidatePath": "assets/mesh/terrain/terrain-echo-throne/textured-candidate/terrain/terrain-echo-throne-textured.glb",
         "terrainIntegrity": {
-          "meshCount": 1,
-          "vertexCount": 91,
-          "triangleCount": 144,
+          "meshCount": 6,
+          "vertexCount": 24,
+          "triangleCount": 12,
           "invalidVertexCount": 0,
           "invalidIndexCount": 0,
           "finiteBounds": true
@@ -1121,6 +1145,10 @@
             "status": 200
           },
           {
+            "path": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
+            "status": 200
+          },
+          {
             "path": "assets/motion/ingame/characters/ember-cohort/model.glb",
             "status": 200
           },
@@ -1134,6 +1162,10 @@
           },
           {
             "path": "assets/motion/ingame/characters/shade/model.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/motion/ingame/unarmed-core.glb",
             "status": 200
           },
           {
@@ -1158,5 +1190,5 @@
     }
   ],
   "pass": true,
-  "finishedAt": "2026-07-30T04:03:17.475Z"
+  "finishedAt": "2026-07-30T15:31:26.557Z"
 }
