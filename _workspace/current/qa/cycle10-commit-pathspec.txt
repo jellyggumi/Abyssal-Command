@@ -1,0 +1,39 @@
+# Cycle 10 commit pathspec — explicit list only. CLAUDE.md §5 forbids `git add -A`.
+#
+# EXCLUDED, and why: four cycle-9 artifacts came across with the worktree seed rsync.
+# They were already untracked in the original tree before this session started and they
+# belong to the concurrent session, whose shipped EXTRACTION / COMPANION_SLOT_UNLOCKS /
+# AIM_BIAS_BP code cites core-loop-legion-spec.md directly. Committing them here would
+# misattribute cycle-9 work to cycle 10 and create an add/add conflict on files that
+# session owns:
+#   _workspace/current/intake/production-brief-cycle9.md
+#   _workspace/current/intake/reference-video-analysis.md
+#   _workspace/current/ui/battle-hud-concept-cycle9.md
+#   _workspace/current/design/core-loop-legion-spec.md
+#
+# INCLUDED:
+stage-world-catalog.js
+scripts/defense-runtime-assets.mjs
+tests/pages-artifact-smoke.cjs
+tests/runtime-visual-assets.test.mjs
+tests/stage-terrain-environment-contract.test.mjs
+tests/stage-world-encounter-routing-contract.test.mjs
+.github/workflows/static.yml
+assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb
+assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.provenance.json
+assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb
+assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.provenance.json
+assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb
+assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.provenance.json
+_workspace/current/intake/production-brief-cycle10-stage-dungeon.md
+_workspace/current/design/stage-dungeon-composition-spec.md
+_workspace/current/design/stage-pacing-5to15min-spec.md
+_workspace/current/design/item-drop-timed-buff-spec.md
+_workspace/current/design/vfx-drop-spawn-terrain-spec.md
+_workspace/current/design/audio-feedback-dungeon-spec.md
+_workspace/current/ui/hud-overhaul-joystick-cutover-spec.md
+_workspace/current/engineering/runtime-surface-maps/
+_workspace/current/engineering/asset-pipeline/terrain-dungeon/
+_workspace/current/qa/cycle10-baseline.md
+_workspace/current/qa/cycle10-terrain-proof/
+_workspace/current/qa/cycle10-commit-pathspec.txt

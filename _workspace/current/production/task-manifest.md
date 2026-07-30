@@ -363,3 +363,73 @@ next-beat: 독립 사람 플레이 판정으로 G4/G7/G8 재측정
 - 구현 commit SHA / remote branch: `b29f54b846e2f54938a6fc4eda4a2eaff72da1d1` / `origin/main`
 - GitHub Pages workflow: run `30512950567` **SUCCESS** — `https://github.com/jellyggumi/Abyssal-Lantern/actions/runs/30512950567`
 - Production: `https://jellyggumi.github.io/Abyssal-Lantern/`; `version.json.candidate_sha`가 구현 SHA와 일치한다. 배포 로비 smoke는 미니맵 노드 **3**, Canvas **1**, horizontal overflow **0**, console error **0**, page error **0**을 기록했다.
+
+---
+
+## 10. 2026-07-30 — 사이클 10: 스테이지 던전 구성
+
+run-id: `20260728-onslaught-action-pivot` · cycle 10
+branch: `feat/cycle10-stage-dungeon` · worktree `/Users/jangyoung/orca/Abyssal-Surge-dungeon` · base `033877ad`
+operating mode: Stage 1 재진입 — 3스테이지 던전 콘텐츠·자산 구축
+
+### 10.1 동시 세션 경계 [OBSERVED]
+
+타 세션이 cycle 9(코어 루프·컨트롤 감각)를 **공유 워크트리에서 구현 중**이며, 이 사이클이
+건드리는 모든 파일에 미커밋 변경이 있었다: `app.js`, `battle-realtime-three.js`,
+`defense-audio.js`, `defense-catalog.js`, `defense-run-simulation.js`, `campaign-state.js`.
+`defense-run-simulation.js`는 세션 중 3571 → 4002행으로 자랐다.
+
+CLAUDE.md §5에 따라 격리 워크트리에서 작업했다. `core-loop-legion-spec.md`는 **그들의
+cycle 9 스펙이며 이미 그들 쪽에 구현되어 있다** — 그들의 `defense-catalog.js`(1025행)가
+`AIM_BIAS_BP`, `EXTRACTION*`, `COMPANION_SLOT_UNLOCKS`를 그 스펙을 인용하며 노출한다.
+범위 밖으로 명시했다(ruling R27).
+
+### 10.2 작업과 산출물
+
+| task | owner | 산출물 | 게이트 | 상태 |
+|---|---|---|---|---|
+| 런타임 5개 표면 지도 | explore ×6 | `engineering/runtime-surface-maps/` 6개 | — | done |
+| 프로덕션 브리프·범위 경계 | game-production-director | `intake/production-brief-cycle10-stage-dungeon.md` | 전체 | done |
+| 던전 슬랩·경로·기믹 설계 | level-designer | `design/stage-dungeon-composition-spec.md` (1197행) | G1/G7 입력 | done |
+| 5–15분 페이싱 설계 | game-designer | `design/stage-pacing-5to15min-spec.md` (996행) | G2/G7 입력 | done |
+| 드롭·시한 버프 설계 | systems-designer | `design/item-drop-timed-buff-spec.md` (1256행) | G2 입력 | done |
+| VFX 큐 설계 | vfx-designer | `design/vfx-drop-spawn-terrain-spec.md` (1250행) | G4/G6 입력 | done |
+| 오디오·BGM 설계 | game-audio | `design/audio-feedback-dungeon-spec.md` (1426행) | G4 입력 | done |
+| HUD·조이스틱 설계 | ui-senior-developer | `ui/hud-overhaul-joystick-cutover-spec.md` (984행) | G4/G8 입력 | done |
+| 플레이트 → 탑다운 타일 역투영 | asset-pipeline | `engineering/asset-pipeline/terrain-dungeon/deproject-terrain-plate.py` | — | done — 시임 0.0000 |
+| 슬랩 조합 바닥 빌더 | asset-pipeline | `.../build-dungeon-floor-blender.py` | G6 입력 | done — fit 1.000000 |
+| 3스테이지 바닥 빌드·승격 | asset-pipeline | `assets/mesh/terrain/*/runtime/terrain/*-floor.glb` + provenance | — | done |
+| 카탈로그 지형 승격 3필드 | game-programmer | `stage-world-catalog.js` | G6 입력 | done — 검증기 green |
+| 자산 allowlist 4곳 동기 | game-programmer | `defense-runtime-assets.mjs`, `pages-artifact-smoke.cjs`, `static.yml` | — | done (지형만) |
+| 지형 계약 테스트 반전 | Tester | 3개 테스트 파일 | — | done — 22/22 |
+| 드롭·버프 시뮬레이션 | game-programmer | `defense-catalog.js`, `defense-run-simulation.js` | G2 입력 | in flight |
+| 렌더러 앵커 수정·VFX | game-programmer | `battle-realtime-three.js` | G4/G6 입력 | in flight |
+| 조이스틱 컷오버·HUD | ui-senior-developer | `app.js`, `styles.css` | G4/G8 입력 | in flight |
+| 오디오 발소리·큐·BGM | game-audio | `defense-audio.js` | G4 입력 | in flight |
+
+### 10.3 측정된 증거 [OBSERVED]
+
+- 역투영 시임 오차: 블렌드 후 3/3 타일 **0.0000 / 0.0000**. JPEG q88은 이를 1.3792로
+  파괴하므로 PNG + 업스트림 리사이즈를 쓴다.
+- `fitFootprint` 스케일 **1.000000** (3/3). 에이프런이 큰 축을 정확히 32.2로 맞춘다.
+- 보행 가능 월드 경계 == `worldPointInto(bounds)` **소수 3자리까지 일치** (3/3, 양축).
+- 보행 슬랩 수직 범위 **0** (에이프런만 −0.002). 슬랩 3/4/5개.
+- GLB 로드 **30–40 ms**, 실제 `vendor/loaders/GLTFLoader.js` 경유.
+- 브라우저 증거 `qa/cycle10-terrain-proof/`: WebGL 2.0, 1440×900, console error **0**,
+  page error **0**, horizontal overflow **0**.
+- 지형 계약 테스트 **22/22 PASS**. 사전 베이스라인 `qa/cycle10-baseline.md`는 동일
+  4파일에서 **28/28 PASS, 36.0초**.
+
+### 10.4 측정되지 않은 것
+
+- **전체 스위트 베이스라인이 없다.** 4회 시도 전부 종료·무효화됐다(러너 4중 중첩,
+  load 101–121). 파일 단위 베이스라인만 존재한다.
+- 5–15분 실플레이 시간 미측정. 페이싱 델타는 미구현이며, 측정 하네스 자체가 두 상수
+  때문에 목표 구간을 판정할 수 없다.
+- 드로우콜·프레임 예산 델타 미측정.
+- 사람 플레이 판정 없음 → G4/G7/G8 불변.
+
+### 10.5 다음 사이클 진입
+
+Stage 2(밸런스·코어 루프 안정화). 회고
+`retrospectives/cycle-10-retrospective.md` §6에 의존 순서가 있다.

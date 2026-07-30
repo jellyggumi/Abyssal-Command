@@ -1160,10 +1160,13 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   );
   assert.equal(decor.stageId, profile.stageId);
   assert.equal(decor.terrainLoaded, true);
-  assert.equal(decor.terrainSource, "procedural-flat-support", "Cinder gameplay must report flat procedural support");
-  assert.equal(decor.terrainModelPath, null, "Cinder must not publish its diorama as loaded gameplay terrain");
+  // Cycle 10 supersession: Cinder ships a composed slab floor, so the renderer takes
+  // instantiateTerrainModel() instead of instantiateProceduralTerrain(). The candidate
+  // provenance assertion below is unchanged -- the rejected diorama is still retained.
+  assert.equal(decor.terrainSource, "promoted-glb", "Cinder gameplay must load its composed slab floor");
+  assert.equal(decor.terrainModelPath, profile.terrainGlbPath, "Cinder must publish the promoted floor as loaded gameplay terrain");
   assert.equal(decor.terrainSourceCandidatePath, profile.terrainSourceCandidatePath, "Cinder debug state must retain diorama provenance");
-  assertMeshIntegrity(decor.terrainIntegrity, "Cinder procedural support");
+  assertMeshIntegrity(decor.terrainIntegrity, "Cinder composed slab floor");
   assert.equal(decor.propCount, profile.presentation.props.length);
   assert.equal(decor.npcCount, profile.presentation.npcs.length);
   assert.equal(decor.vfxCount, profile.presentation.vfxCues.length, "the authored ember-wake cue counts as loaded stage decor");
@@ -1623,8 +1626,9 @@ test("failed stage decor retries while ineligible terrain candidates are never r
       "a rejected VFX cue is absent from only the failed visit",
     );
     const firstTerrain = adapter.debugPresentationState().stageDecor;
-    assert.equal(firstTerrain.terrainSource, "procedural-flat-support", "Echo Throne must render procedural support");
-    assert.equal(firstTerrain.terrainModelPath, null, "Echo Throne must not publish its candidate as loaded terrain");
+    // Cycle 10 supersession: promoted composed slab floor replaces procedural support.
+    assert.equal(firstTerrain.terrainSource, "promoted-glb", "Echo Throne must render its composed slab floor");
+    assert.equal(firstTerrain.terrainModelPath, profile.terrainGlbPath, "Echo Throne must publish the promoted floor as loaded terrain");
     assert.equal(firstTerrain.terrainSourceCandidatePath, profile.terrainSourceCandidatePath, "Echo Throne must retain candidate provenance");
 
     adapter.ensureStageTerrain(bridgeProfile.stageId);

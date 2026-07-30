@@ -18,6 +18,14 @@ export const RETAINED_ASSET_PATHS = Object.freeze([
   "assets/images/battle/ui/hud/stat-gate-integrity.webp",
   // Live terrain, NPC, bosses, and props are loaded directly from their
   // generated mesh outputs.
+  //
+  // Cycle 10: each stage's walkable ground is a composed slab floor. The retained
+  // diorama and the textured candidates stay listed as offline provenance sources
+  // -- they are what `terrainSourceCandidatePath` points at -- but the floors below
+  // are what the runtime actually loads.
+  "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
+  "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
+  "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
   "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
   "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb",
   "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb",

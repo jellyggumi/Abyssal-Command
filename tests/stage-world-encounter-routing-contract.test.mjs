@@ -238,14 +238,12 @@ test("three canonical stage profiles publish distinct, loadable routed worlds", 
     assert.equal(profile.sequence, STAGE_IDS.indexOf(stageId) + 1);
     assert.equal(Object.isFrozen(profile), true);
 
-    assert.equal(profile.terrainRuntimeEligible, false, `${stageId} terrain source must remain renderer-ineligible`);
-    assert.equal(profile.terrainGlbPath, null, `${stageId} ineligible terrain must not publish a runtime GLB path`);
+    // Cycle 10 supersession: promoted composed slab floor replaces procedural support.
+    assert.equal(profile.terrainRuntimeEligible, true, `${stageId} composed slab floor is gameplay-eligible`);
+    assert.match(profile.terrainGlbPath, /\/runtime\/.*-floor\.glb$/u, `${stageId} runtime terrain must be a promoted floor under runtime/`);
+    assert.equal(profile.terrainFallback, undefined, `${stageId} an eligible floor must not also carry a procedural fallback`);
     assert.match(profile.terrainSourceCandidatePath, /^assets\/mesh\/terrain\/.*\.glb$/u, `${stageId} must retain its source mesh for offline checks`);
-    assert.equal(profile.terrainFallback?.kind, "procedural-flat-support", `${stageId} must route gameplay onto procedural support`);
-    if (stageId === "cinder-span") {
-      assert.equal(profile.terrainFallback.reason, "authored-diorama-not-flat-gameplay-eligible", "Cinder must reject the promoted diorama that obscures flat-plane actors");
-    } else {
-      assert.equal(profile.terrainFallback.reason, "source-candidate-not-runtime-eligible", `${stageId} must preserve its candidate rejection reason`);
+    if (stageId !== "cinder-span") {
       assert.match(profile.terrainSourceCandidatePath, /\/textured-candidate\//u, `${stageId} must retain the rejected textured candidate`);
     }
     const paths = [...new Set(profileAssetPaths(profile))];

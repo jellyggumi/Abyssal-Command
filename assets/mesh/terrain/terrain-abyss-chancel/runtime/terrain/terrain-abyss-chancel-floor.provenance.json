@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "asset": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
+  "role": "flat-gameplay-floor",
+  "stageId": "abyss-chancel",
+  "generatedAt": "2026-07-30T14:41:00.215753+00:00",
+  "runtimeEligible": true,
+  "promotedBy": "promote-dungeon-floor.py",
+  "builtBy": "build-dungeon-floor-blender.py",
+  "blender": "5.1.2",
+  "sha256": "055b871905b2e1598b7b2289a65f57a0b68e6f5e7e3e0f794be8cfd5d664391b",
+  "bytes": 1750112,
+  "surface": {
+    "kind": "flat-gameplay-floor",
+    "gameplayElevation": 0.0,
+    "coplanar": true,
+    "coordinateSpace": "renderer-world",
+    "worldScale": 14.0,
+    "bounds": {
+      "minX": 600,
+      "maxX": 23400,
+      "minY": 700,
+      "maxY": 11300
+    },
+    "apron": {
+      "x": 2400,
+      "y": 1200
+    },
+    "apronRect": {
+      "minX": -1800,
+      "maxX": 25800,
+      "minY": -500,
+      "maxY": 12500
+    },
+    "worldSpan": {
+      "x": 32.199999999999996,
+      "z": 30.333333333333336
+    },
+    "fitFootprintScale": 1.0,
+    "coveredArea": 241680000,
+    "declaredArea": 241680000,
+    "uvLattice": {
+      "periodX": 2000.0,
+      "periodY": 1000.0,
+      "anchor": [
+        0,
+        0
+      ]
+    }
+  },
+  "slabs": [
+    {
+      "slabId": "abyss-chancel:slab-01",
+      "node": "terrain-abyss-chancel-slab-001",
+      "material": "flagstone-oath",
+      "rect": {
+        "minX": 600,
+        "maxX": 8000,
+        "minY": 700,
+        "maxY": 11300
+      },
+      "uv": {
+        "repeat": [
+          3.7,
+          10.6
+        ],
+        "offset": [
+          0.3,
+          0.7
+        ],
+        "rotationTurns": 0
+      }
+    },
+    {
+      "slabId": "abyss-chancel:slab-02",
+      "node": "terrain-abyss-chancel-slab-002",
+      "material": "flagstone-oath",
+      "rect": {
+        "minX": 8000,
+        "maxX": 16400,
+        "minY": 700,
+        "maxY": 11300
+      },
+      "uv": {
+        "repeat": [
+          4.2,
+          10.6
+        ],
+        "offset": [
+          4.0,
+          0.7
+        ],
+        "rotationTurns": 0
+      }
+    },
+    {
+      "slabId": "abyss-chancel:slab-03",
+      "node": "terrain-abyss-chancel-slab-003",
+      "material": "oath-inlay",
+      "rect": {
+        "minX": 16400,
+        "maxX": 23400,
+        "minY": 700,
+        "maxY": 7200
+      },
+      "uv": {
+        "repeat": [
+          3.5,
+          6.5
+        ],
+        "offset": [
+          8.2,
+          0.7
+        ],
+        "rotationTurns": 1
+      }
+    },
+    {
+      "slabId": "abyss-chancel:slab-04",
+      "node": "terrain-abyss-chancel-slab-004",
+      "material": "vestry-tile",
+      "rect": {
+        "minX": 16400,
+        "maxX": 23400,
+        "minY": 7200,
+        "maxY": 11300
+      },
+      "uv": {
+        "repeat": [
+          3.5,
+          4.1
+        ],
+        "offset": [
+          8.2,
+          7.2
+        ],
+        "rotationTurns": 0
+      }
+    }
+  ],
+  "apronNode": {
+    "node": "terrain-abyss-chancel-apron-001",
+    "rect": {
+      "minX": -1800,
+      "maxX": 25800,
+      "minY": -500,
+      "maxY": 12500
+    },
+    "uv": {
+      "repeat": [
+        13.8,
+        13.0
+      ],
+      "offset": [
+        -0.9,
+        -0.5
+      ],
+      "rotationTurns": 0
+    },
+    "walkable": false
+  },
+  "sources": [
+    {
+      "role": "slab-manifest",
+      "path": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/abyss-chancel.slabs.json",
+      "sha256": "ea5b2d4163e9b6ade4f2a23136984fce6128d1e945eb086644feaa9b62b30dc1"
+    },
+    {
+      "role": "rectified-albedo",
+      "path": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/abyss-chancel-floor-albedo.png",
+      "sha256": "c37d8a7d16b661ffb6ac69e35085028652c185e5cf07062ce1e587d02a32ade3"
+    },
+    {
+      "role": "concept-plate",
+      "path": "assets/mesh/terrain/terrain-abyss-chancel/terrain-abyss-chancel-terrain.raw.png",
+      "sha256": "4292ea6a8de3862564d18196b287f64b50456519931eb801ee558d8947977cea"
+    }
+  ],
+  "rights": {
+    "origin": "generated in-repo from a retained concept plate; no third-party asset introduced",
+    "plateProvenance": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/abyss-chancel-floor.provenance.json"
+  },
+  "verification": {
+    "coplanar": true,
+    "fitFootprintScale": 1.0,
+    "browserAlignmentProof": "walkable world bounds equal worldPointInto(bounds) to 3 decimals on both axes, measured through vendor/loaders/GLTFLoader.js in a real WebGL session"
+  }
+}

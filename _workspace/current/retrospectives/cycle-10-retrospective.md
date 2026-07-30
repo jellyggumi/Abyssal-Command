@@ -1,0 +1,223 @@
+# Cycle 10 retrospective — 스테이지 던전 구성
+
+run-id: `20260728-onslaught-action-pivot`
+cycle: 10
+branch: `feat/cycle10-stage-dungeon`, worktree `/Users/jangyoung/orca/Abyssal-Surge-dungeon`
+base: `033877ad`
+operating mode: Stage 1 re-entry — content/asset build for three stage dungeons
+
+---
+
+## 1. What shipped, with evidence
+
+### 1.1 Composed dungeon floors — DELIVERED and PROVEN [OBSERVED]
+
+The battle floor was a single procedural quad on every stage. It is now a composed
+slab floor on all three.
+
+Pipeline, both halves new this cycle and both in
+`_workspace/current/engineering/asset-pipeline/terrain-dungeon/`:
+
+1. `deproject-terrain-plate.py` — the three concept plates are 1536×1024 three-quarter
+   renders of a slab on white. Segment the silhouette, take the top-face corners (`N`
+   from the topmost row, `W`/`E` from the **topmost pixel** of the extreme columns
+   because the silhouette also contains the side faces, `S` by parallelogram closure),
+   solve the homography onto a rectangle, downscale, then converge the wrap edges.
+2. `build-dungeon-floor-blender.py` — authors each slab **in renderer world
+   coordinates**, derives UVs from one global lattice, and adds a non-walkable apron.
+
+| Measurement | Value |
+|---|---|
+| Wrap seam error, all three tiles, after blend | **0.0000 / 0.0000** (from 0.0664/0.0512/0.1085) |
+| `fitFootprint` scale, all three stages | **1.000000** |
+| Walkable world bounds vs `worldPointInto(bounds)` | **equal to 3 decimals on both axes** |
+| Vertical extent, walkable slabs | **0** (apron alone at −0.002) |
+| GLB load time through `vendor/loaders/GLTFLoader.js` | 30–40 ms |
+| Slab counts | cinder 3, chancel 4, throne 5 |
+
+Promoted with `promote-dungeon-floor.py` into `assets/mesh/terrain/**/runtime/**` with a
+provenance sidecar each, and registered in all four asset allowlists. Catalog validator
+loads clean with `terrainRuntimeEligible: true` and `terrainFallback` deleted on all
+three profiles.
+
+Browser proof: `_workspace/current/qa/cycle10-terrain-proof/` — three PNGs plus
+`terrain-proof.json`. WebGL 2.0, 1440×900, console errors 0, page errors 0,
+horizontal overflow 0.
+
+### 1.2 Two engineering findings that changed the design
+
+**The apron.** `fitFootprint` applies a **uniform** scale from `max(sizeX, sizeZ)`, while
+actors are placed **per axis** by `worldPointInto` — and because both axes normalise by
+their own dimension, the 2:1 gameplay arena renders as a 28×28 world square. A floor
+authored at 2:1 would have been scaled by one factor for both axes and landed nowhere
+near the actors. Authoring in world coordinates and padding the larger axis to exactly
+32.2 makes the fit an identity. `DungeonLevelDesign` found this; it is the difference
+between a floor that aligns and a floor that looks approximately right.
+
+**JPEG destroys the seam.** The first export embedded PNG at 5,708,716 bytes, so JPEG q88
+looked like an obvious 9.8× win. Measured, it raised the wrap seam error from 0.0000 to
+**1.3792** — DCT blocks on opposite edges quantise independently, and at `uvRepeat` 3–4
+per axis that discontinuity draws a regular grid across the floor. The proposed
+wrap-aware resize did **not** fix it either (0.4557 vs 0.4049 naive at 256). What works
+is resize-then-blend, which converges the edges by construction: 512 PNG, 509 KB, seam
+exactly 0.
+
+### 1.3 Test contract inverted, not weakened
+
+Three test files hard-asserted the ineligible state. Per the cycle-2 rule that
+invalidation tests are replaced only once substitute fixtures exist, each assertion was
+**inverted to the promoted contract** rather than deleted: `terrainRuntimeEligible ===
+true`, path matching `/\/runtime\/.*-floor\.glb$/`, `terrainFallback === undefined`,
+candidate retained. **22/22 pass.**
+
+One coverage defect was found and fixed in the process. `stage-terrain-environment-contract.test.mjs`
+resolved its integrity subject with `profile.terrainGlbPath ?? profile.terrainSourceCandidatePath`.
+That was a fallback while the path was null, so it always inspected the diorama; once the
+floor became real the same expression silently retargeted onto it, leaving the retained
+diorama and both textured candidates **unchecked anywhere in the suite** while the test
+stayed green. The loop now iterates both subjects explicitly and asserts 6 distinct
+hashes.
+
+### 1.4 Design specifications — DELIVERED
+
+Six specs, 6,800+ lines total, all in `_workspace/current/`:
+
+| Spec | Lines | Owns |
+|---|---|---|
+| `design/stage-dungeon-composition-spec.md` | 1197 | 12 slabs, routes, 13 gimmicks, emitter→light inventory |
+| `design/stage-pacing-5to15min-spec.md` | 996 | 8-block budgets summing to 390/525/750 s |
+| `design/item-drop-timed-buff-spec.md` | 946 | `BUFF_ITEMS`, `run.buffs`, `dropRng`, drop tables |
+| `design/vfx-drop-spawn-terrain-spec.md` | 1250 | 9 pooled cues + 2 pool-free surfaces, pool proof |
+| `design/audio-feedback-dungeon-spec.md` | 1426 | footsteps, 12 cues, 9 soundscape states |
+| `ui/hud-overhaul-joystick-cutover-spec.md` | 984 | joystick cutover, 4 compositions, buff strip |
+
+---
+
+## 2. Defects the cycle found in existing code [OBSERVED]
+
+These were latent before this cycle and would not have surfaced without the specs.
+
+| # | Defect | Evidence |
+|---|---|---|
+| 1 | `effectAnchor()` never reads top-level `event.x`/`event.y`, and `spawnVfx()` hard-returns on a null anchor with no warning. **8 of 9 new cues would have silently never rendered.** | `battle-realtime-three.js:1194-1210`, `:4029`; verified by the director |
+| 2 | `worldPointInto()` treats `\|x\| ≤ 1 && \|y\| ≤ 1` as normalised, so a legitimate arena-corner (0,0) lands at arena centre. An explicit `normalized: false` does not force the raw path. | `:932` |
+| 3 | `movement-step` is **dead code**, not merely unmapped: the simulation already emits `cue: eventCue("movementStep")` every 12th tick, but the policy registry shadows the catalog-cue fallback. Footsteps are a re-wiring, not a new synth. | `defense-audio.js:230`, `defense-catalog.js:208-209`, `defense-run-simulation.js:2886` |
+| 4 | `weapon-fire` is a second dead profile by the same mechanism — a weapon's release sounds identical to its windup. | same |
+| 5 | A fully **dodged** projectile sounds exactly like a landed hit, though the renderer already plays the avoid animation off the same field. | `PROJECTILE_IMPACT` with `hit === false` → `impact-hit` |
+| 6 | The 300–900 s window is **unreachable by construction**, not merely un-tuned: the objective-pressure deadline forces DEFEAT at 320/325/330 s. This corrects a carried claim of a "~3000–4000 s practical ceiling". | `map-simulation.md:317` vs the deadline arithmetic |
+| 7 | `scripts/measure-stage-playtime.mjs` cannot validate the target window: `PLAYTIME_TARGET_SECONDS {min:180,max:360}` reports false for every compliant run, and `MAX_TICKS` 28800 truncates every throne target as TIMEOUT. | `:26-27` |
+| 8 | A coarse-portrait `display:none` movement pad reached `updateJoystick`, whose zeroed rect made radius 1 and computed octants from the screen origin. **Closed on this branch by cycle 10** — `git diff -- app.js` shows the geometry guard and the `joystickActive()` early return as added lines, not inherited. The concurrent session's own fix lives only in their uncommitted tree and is **not** in `feat/cycle10-stage-dungeon`, so a conflict resolution that drops our lines silently reopens the bug. | `app.js` `joystickActive()`, `onMoveControlDown` |
+
+---
+
+## 3. Process failures, and what they cost
+
+### 3.1 Four provenance traps, in escalating severity
+
+1. **Stale line numbers.** Specs were authored against the shared tree carrying ~430
+   uncommitted lines. `resolveDeaths` was cited at `:2500` and is at `:2210`; two
+   citations were **past EOF**. A few matched coincidentally, which made a spot-check
+   pass while the rest were off by hundreds.
+2. **Relative paths read the wrong tree.** `grep`/`read`/`glob` resolve a relative path
+   against the original workspace root, not the worktree. Reproduced: the same pattern
+   returned line 404 relative and 378 absolute. Four agents' citations were poisoned;
+   two spec authors had to re-measure and correct **39** and **54** citations.
+3. **Relative paths also WRITE to the wrong tree.** An `edit` with a relative header
+   resolved against the forbidden tree and was stopped **only** by the stale-hash check.
+   `styles.css` differs by one line between trees — had the file been byte-identical the
+   tag would have matched and the write would have landed in a tree we were told not to
+   touch.
+4. **`_workspace/` is per-worktree.** The dungeon copies of the specs were snapshotted
+   mid-authoring, so an implementer was building from a version with no anchor table and
+   the stale caveat still in it.
+
+Cost: one wasted three-stage Blender build against a stale script copy, and two spec
+rewrites. Every trap was caught by an agent reporting a divergence instead of adapting
+silently — that discipline is what kept them off the branch.
+
+### 3.2 Test-runner pile-up
+
+Four concurrent full-suite runners and 51 node workers on 12 cores, **load average
+101.75–120.98**. `job cancel` killed the parent but not the children, which node spawns
+without the `--test` flag. This suite has wall-clock-sensitive subtests — one runs 324 s
+unloaded — so oversubscription manufactures timeout failures indistinguishable from real
+regressions, and the tests write real fixtures, so concurrent runs corrupt each other.
+
+Consequence recorded honestly: **there is no full-suite pass/fail baseline for cycle 10.**
+Four attempts were started and all four were killed or invalidated. Per-file baselines
+were captured instead, in the clean worktree — see `qa/cycle10-baseline.md`.
+
+### 3.3 A director ruling that contradicted itself
+
+Ruling v1 fixed `stat` to four values. Rulings v13/v14 then required basis-point
+magnitudes and gate-targeted integrity — which the four names could not express
+truthfully. `DropBuffSystem` escalated instead of silently diverging, and v17 superseded
+my own list with their seven-value enum. The lesson is that a vocabulary ruling issued
+before the constraints are settled will contradict the constraints.
+
+### 3.4 An RNG collision that no test would have caught
+
+Two agents independently chose `0x85ebca6b`. Two streams seeded identically are
+perfectly correlated, and because RNG state is never serialised into the digest, **no
+existing test would have detected it.** Registry now closed at four constants:
+`combatRng` `0x9e3779b9`, surprise `0x6d2b79f5`, `dropRng` `0x85ebca6b`, `gimmickRng`
+`0xc2b2ae35`.
+
+---
+
+## 4. Gate status
+
+**No gate changed to PASS this cycle.** Design and assets are not measurements.
+
+| Gate | Before | Now | Why |
+|---|---|---|---|
+| G1 세계관 | PASS | **영향 없음** | 고유명·순서 유지 |
+| G2 밸런스 | 재측정 필요 | **재측정 필요** | pacing spec is `[TARGET]`; the harness cannot yet measure the window (defect 7) |
+| G3 편성 | 재정의 | **영향 없음** | cycle 9 owns it |
+| G4 몰입/접근성 | 재측정 필요 | **재측정 필요** | HUD/joystick implementation in flight; no human-play adjudication |
+| G6 운영/성능 | 재측정 필요 | **부분 증거** | terrain load 30–40 ms, 6 slabs + apron per stage, draw-call delta unmeasured |
+| G7 코어 루프 | 재정의 | **재측정 필요** | no 5–15 min run measured |
+| G8 최초 노출 | 재측정 필요 | **재측정 필요** | joystick learning curve unmeasured |
+
+---
+
+## 5. Unresolved, carried forward
+
+1. **No full-suite baseline.** Must be run once, alone, in the isolated worktree.
+2. **Hazard-class visuals have no owner** (R30). `forge-pressure-vents` and
+   `dais-command-echo` ship with correct pool behaviour and **no dedicated visual**.
+   Reusing `deform-fracture-seam.glb` is prohibited — a narrowing seam and a pressure
+   vent are different claims about the world.
+3. **R-3 is closed for terrain, open for VFX.** The three new VFX GLBs
+   (`drop-beacon-pillar`, `arrival-breach-gate`, `deform-fracture-seam`) are absent from
+   all four allowlists because nobody has authored them yet.
+4. **Pacing deltas are unimplemented.** The doctrine changes that would make 390/525/750 s
+   reachable — including the two harness constants — are specified, not landed.
+5. **Four files need a real merge with the concurrent session**: `defense-catalog.js`
+   (923 vs 1025), `defense-run-simulation.js` (3570 vs 4002), `app.js`,
+   `battle-realtime-three.js`. Planned, not a surprise.
+6. **Slab layouts are promoted but the catalog still carries the old routes and
+   obstacles.** The floor geometry matches `DungeonLevelDesign`'s 12 slabs; the gameplay
+   route/obstacle rewrite from the same spec is not applied. The floor is correct and the
+   old routes still validate, so this is incomplete rather than broken.
+7. **Tiling reads repetitively** at `uvRepeat` 3–5 per axis on the chancel and throne
+   floors. Seams are mathematically invisible; the *pattern period* is visible. A
+   per-slab rotation or a second variant tile would break it up.
+
+---
+
+## 6. Next-cycle entry decision
+
+**Enter at Stage 2 (balance / core-loop stability), not Stage 1.** Concept and asset work
+for the three dungeons is done and proven. What is missing is measurement: the pacing
+deltas plus the two harness constants, then a seeded duration run per stage, then human
+play adjudication for G4/G7/G8.
+
+Sequence, in dependency order:
+
+1. Land the pacing doctrine deltas and the two `measure-stage-playtime.mjs` constants.
+2. Run the full suite once, alone, in the worktree. Record the real baseline.
+3. Apply the route/obstacle layout from the dungeon spec, whose floor is already in place.
+4. Author the three VFX GLBs and register them in all four allowlists in one commit.
+5. Merge with the concurrent session's cycle-9 branch deliberately, file by file.
+6. Only then seek human-play adjudication.

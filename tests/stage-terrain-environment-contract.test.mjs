@@ -373,7 +373,7 @@ function encodeGlb(json, chunks) {
   ]);
 }
 
-test("canonical terrain GLBs remain finite offline sources while gameplay uses flat procedural support", () => {
+test("promoted slab floors and retained offline sources both remain finite, textured GLBs", () => {
   const profiles = Object.values(STAGE_WORLD_PROFILES);
   assert.equal(profiles.length, 3, `terrain contract: expected 3 canonical stages, found ${profiles.length}`);
   const hashes = new Set();
@@ -394,50 +394,57 @@ test("canonical terrain GLBs remain finite offline sources while gameplay uses f
   }
 
   for (const profile of profiles) {
-    const terrainSourcePath = profile.terrainGlbPath ?? profile.terrainSourceCandidatePath;
-    const label = `${profile.stageId} (${terrainSourcePath})`;
-    assert.match(terrainSourcePath, /^assets\/mesh\/terrain\//u, `${label}: must use a retained terrain source`);
-    assert.equal(profile.terrainRuntimeEligible, false, `${label}: source mesh must remain renderer-ineligible`);
-    assert.equal(profile.terrainGlbPath, null, `${label}: ineligible terrain must not publish a runtime path`);
-    assert.equal(profile.terrainFallback?.kind, "procedural-flat-support", `${label}: gameplay must use flat procedural support`);
+    const candidatePath = profile.terrainSourceCandidatePath;
+    const label = `${profile.stageId} (${candidatePath})`;
+    assert.match(candidatePath, /^assets\/mesh\/terrain\//u, `${label}: must use a retained terrain source`);
+    // Cycle 10 supersession: each stage now ships a composed slab floor, so the
+    // promoted-terrain contract replaces the previous "nothing is eligible" guard.
+    assert.equal(profile.terrainRuntimeEligible, true, `${label}: the composed slab floor is gameplay-eligible`);
+    assert.match(profile.terrainGlbPath, /\/runtime\/.*-floor\.glb$/u, `${label}: gameplay terrain must be a promoted floor under runtime/`);
+    assert.equal(profile.terrainFallback, undefined, `${label}: an eligible floor must not also carry a procedural fallback`);
     if (profile.stageId === "cinder-span") {
-      assert.match(profile.terrainSourceCandidatePath, /\/runtime\/.*\.glb$/u, `${label}: promoted Cinder diorama must remain available for offline inspection`);
-      assert.equal(profile.terrainFallback.reason, "authored-diorama-not-flat-gameplay-eligible", `${label}: diorama rejection reason must remain explicit`);
+      assert.match(candidatePath, /\/runtime\/.*\.glb$/u, `${label}: promoted Cinder diorama must remain available for offline inspection`);
     } else {
-      assert.match(profile.terrainSourceCandidatePath, /\/textured-candidate\/.*\.glb$/u, `${label}: rejected textured source must remain marked as a candidate`);
-      assert.equal(profile.terrainFallback.reason, "source-candidate-not-runtime-eligible", `${label}: candidate rejection reason must remain explicit`);
+      assert.match(candidatePath, /\/textured-candidate\/.*\.glb$/u, `${label}: rejected textured source must remain marked as a candidate`);
     }
-    const absolutePath = join(ROOT, terrainSourcePath);
-    assert.ok(existsSync(absolutePath), `${label}: missing retained terrain source`);
-    const bytes = readFileSync(absolutePath);
-    assert.ok(bytes.length > 1024, `${label}: terrain source is unexpectedly small`);
-    hashes.add(createHash("sha256").update(bytes).digest("hex"));
 
-    const glb = parseGlb(absolutePath, label);
-    const buffers = resolveBuffers(glb, label);
-    const instances = geometryEvidence(glb, buffers, label);
-    assert.ok(instances.some(({ triangles }) => triangles > 0), `${label}: GLB has no rendered triangles`);
-    const renderedTriangles = instances.reduce((total, { triangles }) => total + triangles, 0);
-    assert.ok(Number.isFinite(renderedTriangles) && renderedTriangles > 0, `${label}: offline mesh integrity must report finite, nonzero triangles`);
-    assert.equal(
-      instances.every(({ min, max }) => [...min, ...max].every(Number.isFinite)),
-      true,
-      `${label}: offline mesh bounds must remain finite`,
-    );
-    assert.ok(
-      (glb.json.materials ?? []).some(({ pbrMetallicRoughness }) => pbrMetallicRoughness?.baseColorTexture),
-      `${label}: GLB needs a base-color texture`,
-    );
+    // Both subjects are inspected. Before cycle 10 `terrainGlbPath` was null and a
+    // `??` fallback pointed this loop at the candidate; now that the floor is real,
+    // the same expression would silently retarget onto it and leave the retained
+    // diorama and both textured candidates unchecked anywhere in the suite. Iterate
+    // the pair explicitly so promoting terrain cannot evaporate offline coverage.
+    for (const [role, terrainSourcePath] of [["retained offline source", candidatePath], ["promoted gameplay floor", profile.terrainGlbPath]]) {
+      const subject = `${profile.stageId} ${role} (${terrainSourcePath})`;
+      const absolutePath = join(ROOT, terrainSourcePath);
+      assert.ok(existsSync(absolutePath), `${subject}: missing terrain GLB`);
+      const bytes = readFileSync(absolutePath);
+      assert.ok(bytes.length > 1024, `${subject}: terrain GLB is unexpectedly small`);
+      hashes.add(createHash("sha256").update(bytes).digest("hex"));
+
+      const glb = parseGlb(absolutePath, subject);
+      const buffers = resolveBuffers(glb, subject);
+      const instances = geometryEvidence(glb, buffers, subject);
+      assert.ok(instances.some(({ triangles }) => triangles > 0), `${subject}: GLB has no rendered triangles`);
+      const renderedTriangles = instances.reduce((total, { triangles }) => total + triangles, 0);
+      assert.ok(Number.isFinite(renderedTriangles) && renderedTriangles > 0, `${subject}: offline mesh integrity must report finite, nonzero triangles`);
+      assert.equal(
+        instances.every(({ min, max }) => [...min, ...max].every(Number.isFinite)),
+        true,
+        `${subject}: offline mesh bounds must remain finite`,
+      );
+      assert.ok(
+        (glb.json.materials ?? []).some(({ pbrMetallicRoughness }) => pbrMetallicRoughness?.baseColorTexture),
+        `${subject}: GLB needs a base-color texture`,
+      );
+    }
   }
 
-  assert.equal(hashes.size, profiles.length, "retained terrain sources must not share identical bytes");
+  assert.equal(hashes.size, profiles.length * 2, "every retained source and promoted floor must have distinct bytes");
 });
-
-
 
 test("the architecture-count gate rejects a copied low-detail proxy mutation", () => {
   const profile = STAGE_WORLD_PROFILES["abyss-chancel"];
-  const terrainSourcePath = profile.terrainGlbPath ?? profile.terrainSourceCandidatePath;
+  const terrainSourcePath = profile.terrainSourceCandidatePath;
   const sourcePath = join(ROOT, terrainSourcePath);
   const source = parseGlb(sourcePath, terrainSourcePath);
   const sourceMeshNode = (source.json.nodes ?? []).find((node) => node.mesh !== undefined);

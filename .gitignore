@@ -123,3 +123,11 @@ _workspace/**/qa/stage-worlds-v06-rodin-evidence.json
 wiki/graph/
 .obsidian/workspace*
 .obsidian/plugins/
+
+# Cycle 10 terrain pipeline intermediates. The composed floors are promoted into
+# assets/mesh/terrain/**/runtime/terrain/ with provenance sidecars; the build outputs
+# under built/ are byte-identical duplicates, probe-out/ is an explicitly throwaway
+# pipeline probe, and the -height.png plates are unused by the runtime.
+_workspace/current/engineering/asset-pipeline/terrain-dungeon/built/
+_workspace/current/engineering/asset-pipeline/terrain-dungeon/probe-out/
+_workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/*-height.png
