@@ -1,5 +1,6 @@
 import {
   CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, COMPANIONS, ITEMS, REWARDS, SKILLS, STAGE_REWARD_IDS,
+  COMPANION_CAPACITY_BASE, COMPANION_CAPACITY_MAX, COMPANION_SLOT_UNLOCKS, companionSlotUnlockFor,
 } from "./defense-catalog.js";
 import {
   WARDEN_STATS, wardenStatTotalCost, WARDEN_SKILL_TREE,
@@ -19,7 +20,14 @@ export const STAGES = Object.freeze([
   Object.freeze({ id: "echo-throne", name: "Echo Throne", bossName: "Gate Sovereign", sequence: 3 }),
 ]);
 const STAGE_INDEX = new Map(STAGES.map((stage, index) => [stage.id, index]));
-const MAX_LOADOUT_SIZE = 3;
+/**
+ * Legion capacity (core-loop-legion-spec.md §3). `MAX_LOADOUT_SIZE` used to be the single hard
+ * bound; it is now the BASE capacity, and the effective bound is derived per campaign from the
+ * unlocked-slot ladder. Re-exported so the lobby UI binds to one source of truth instead of
+ * re-deriving the ladder.
+ */
+const MAX_LOADOUT_SIZE = COMPANION_CAPACITY_BASE;
+export { COMPANION_CAPACITY_BASE, COMPANION_CAPACITY_MAX, COMPANION_SLOT_UNLOCKS };
 export const MAX_EXTRACTED_SKILL_LOADOUT = 3;
 export const MAX_EXTRACTED_SKILL_LEVEL = 5;
 /** Warden equipment owner id — verified disjoint from every COMPANIONS prototype id. */
@@ -120,8 +128,36 @@ export function echoCoreEarned(campaign) {
   const capturedEliteCount = Math.min(STAGES.length, new Set(campaign.companionCollection.flatMap((record) => record.capturedEliteIds)).size);
   return capturedEliteCount + campaign.resolvedIds.length * 3;
 }
-/** Bound Fragment earned so far: 1 per resolved stage (boss kill), max 10. */
-export function boundFragmentEarned(campaign) { return campaign.resolvedIds.length; }
+/**
+ * Bound Fragment earned so far.
+ *
+ * Cycle 9 correction (`N-20260730-C9-01`). This was `resolvedIds.length` with a comment claiming
+ * "max 10" — a stale assumption inherited from a larger stage list. `STAGES.length` is **3**, so the
+ * real lifetime pool was **3** [OBSERVED], against a slot ladder costing 16 and a single equipment
+ * line to T5 costing 10. The capacity feature was unfundable by a factor of five, and the "max 10"
+ * comment is why two separate audits mis-stated the budget instead of measuring it.
+ *
+ * The shape now mirrors `echoCoreEarned` above — a per-stage multiplier plus a distinct-elite term —
+ * so both Track A and Track B earn on the same rhythm rather than one being silently starved:
+ *
+ *   3 per resolved stage (boss kill)      -> 9 at full clear
+ * + 1 per distinct captured elite         -> 3 at full clear (stage-capped, as echoCore does)
+ * = 12 lifetime maximum
+ *
+ * Against a repriced ladder of 7 (see COMPANION_SLOT_UNLOCKS) that leaves 5 toward equipment, so
+ * capacity 10 is reachable and the slot/equipment tradeoff stays real instead of being decided by
+ * an arithmetic impossibility.
+ *
+ * [TARGET] Raising an earn rate is a G5 (매출·밸런스 시너지) input. It is a deliberate, recorded
+ * economy change, not a tuning nudge — see the negotiation record.
+ */
+export function boundFragmentEarned(campaign) {
+  const capturedEliteCount = Math.min(
+    STAGES.length,
+    new Set(campaign.companionCollection.flatMap((record) => record.capturedEliteIds)).size,
+  );
+  return campaign.resolvedIds.length * 3 + capturedEliteCount;
+}
 export function echoCoreSpent(campaign) {
   const statCost = Object.values(campaign.wardenProgress.statPoints).reduce((sum, points) => sum + wardenStatTotalCost(points), 0);
   const skillCost = campaign.wardenProgress.skillTreeIds.reduce((sum, id) => sum + (WARDEN_SKILL_TREE[id]?.cost ?? 0), 0);
@@ -129,11 +165,62 @@ export function echoCoreSpent(campaign) {
     .reduce((sum, level) => sum + extractedSkillSpentAtLevel(level), 0);
   return statCost + skillCost + extractedSkillCost;
 }
+/**
+ * Bound Fragment spent so far. Equipment tiers and companion slots draw on the SAME currency, which
+ * is the budget conflict spec §3 escalated to PM rather than silently resolving: earning is
+ * `resolvedIds.length` (max 10) while a full slot ladder costs 16 cumulative, and one equipment line
+ * to T5 already costs 10. Both spends are counted here so the shared budget is enforced honestly and
+ * the shortfall surfaces as an unaffordable purchase instead of a hidden overdraft.
+ */
 export function boundFragmentSpent(campaign) {
-  return campaign.ownedEquipmentIds.reduce((sum, id) => {
+  const equipmentCost = campaign.ownedEquipmentIds.reduce((sum, id) => {
     const stepIndex = Number(id.split(":")[2]);
     return sum + (EQUIPMENT_TIER_UPGRADE_COST[stepIndex] ?? 0);
   }, 0);
+  return equipmentCost + companionSlotSpent(campaign.unlockedCompanionSlots ?? 0);
+}
+
+/** Cumulative Bound Fragment cost of the first `unlockedSlots` ladder rows. */
+function companionSlotSpent(unlockedSlots) {
+  return COMPANION_SLOT_UNLOCKS.slice(0, unlockedSlots).reduce((sum, entry) => sum + entry.boundFragmentCost, 0);
+}
+
+/** Unlocked extra slots beyond the base (0..7). Slots are contiguous, so a count IS the full state. */
+export function companionSlotsUnlocked(campaign) {
+  return Math.min(campaign.unlockedCompanionSlots ?? 0, COMPANION_SLOT_UNLOCKS.length);
+}
+
+/**
+ * Derived legion capacity for this campaign: base 3 plus every unlocked slot, hard-capped at 10.
+ *
+ * This is the MUTATION-TIME bound (spec §3). It is deliberately NOT used by `validCampaign()`: that
+ * function checks loadout length at line 281 BEFORE it validates `resolvedIds` at line 282, so a
+ * resolver called there would let a tampered save self-certify its own capacity from fields that
+ * have not been validated yet. Load time uses the literal ceiling instead. Three checkpoints, three
+ * different bounds, on purpose.
+ */
+export function companionCapacityForCampaign(campaign) {
+  return Math.min(COMPANION_CAPACITY_BASE + companionSlotsUnlocked(campaign), COMPANION_CAPACITY_MAX);
+}
+
+/**
+ * The next purchasable slot and whether it is currently attainable, or null at max capacity.
+ * Exposed so the lobby renders the unlock button from one source of truth rather than re-deriving
+ * the (contested, PM-owned) ladder numbers.
+ */
+export function companionSlotUnlockCostFor(campaign) {
+  const nextSlot = COMPANION_CAPACITY_BASE + companionSlotsUnlocked(campaign) + 1;
+  const entry = companionSlotUnlockFor(nextSlot);
+  if (!entry) return null;
+  const stageGateMet = campaign.resolvedIds.length >= entry.requiresStageClears;
+  const remainingBudget = boundFragmentEarned(campaign) - boundFragmentSpent(campaign);
+  return {
+    slot: entry.slot,
+    requiresStageClears: entry.requiresStageClears,
+    boundFragmentCost: entry.boundFragmentCost,
+    stageGateMet,
+    affordable: remainingBudget >= entry.boundFragmentCost,
+  };
 }
 /** 0-based tier index (0=T1 baseline .. 4=T5) currently owned for an owner+slot pair. */
 export function equipmentTierIndexFor(campaign, ownerId, slot) {
@@ -188,6 +275,24 @@ function validCompanionFormation(campaign, companionFormation) {
   const entries = Object.entries(companionFormation);
   if (!entries.every(([prototype, slot]) => campaign.companionLoadout.prototypeIds.includes(prototype) && FORMATION_SLOTS.includes(slot))) return false;
   return entries.filter(([, slot]) => slot === "FRONT").length <= MAX_FRONT_SLOTS;
+}
+/**
+ * Validates the unlocked-slot count (load time).
+ *
+ * Stored as a contiguous COUNT rather than a set of slot numbers: the ladder can only be climbed in
+ * order, so a count is the exact state and there is no gap case to validate (unlike
+ * `ownedEquipmentIds`, which needs a contiguity check because it is keyed per owner+slot).
+ *
+ * Both gates are re-checked here, not just the budget, so a hand-edited save cannot grant slots it
+ * never earned: every unlocked row must have its stage-clear requirement met, and the combined
+ * equipment + slot spend must fit the earned Bound Fragment budget.
+ */
+function validUnlockedCompanionSlots(campaign) {
+  const unlocked = campaign.unlockedCompanionSlots;
+  if (!Number.isInteger(unlocked) || unlocked < 0 || unlocked > COMPANION_SLOT_UNLOCKS.length) return false;
+  const gatesMet = COMPANION_SLOT_UNLOCKS.slice(0, unlocked)
+    .every((entry) => campaign.resolvedIds.length >= entry.requiresStageClears);
+  return gatesMet && boundFragmentSpent(campaign) <= boundFragmentEarned(campaign);
 }
 export function extractedSkillUpgradeCostForLevel(targetLevel) {
   return targetLevel - 1;
@@ -251,12 +356,13 @@ function copyCampaign(campaign) {
     companionFormation: copyCompanionFormation(campaign.companionFormation ?? {}),
     stageCarryOver: copyStageCarryOver(campaign.stageCarryOver ?? initialStageCarryOver()),
     storyProgress: copyStoryProgress(campaign.storyProgress ?? initialStoryProgress(campaign.resolvedIds)),
+    unlockedCompanionSlots: campaign.unlockedCompanionSlots ?? 0,
   };
 }
 const LEGACY_KEYS = ["campaignId", "resetEpoch", "unlockedStageIndex", "companionCollection", "companionLoadout", "resolvedIds", "attemptsByStage", "lastResolution"];
 const REWARD_KEYS = [...LEGACY_KEYS, "rewardIds", "achievementIds"];
 const IDLE_KEYS = [...REWARD_KEYS, "idleReturn"];
-const CURRENT_KEYS = [...IDLE_KEYS, "wardenProgress", "ownedEquipmentIds", "companionFormation", "stageCarryOver", "storyProgress"];
+const CURRENT_KEYS = [...IDLE_KEYS, "wardenProgress", "ownedEquipmentIds", "companionFormation", "stageCarryOver", "storyProgress", "unlockedCompanionSlots"];
 const initialIdleReturn = () => ({ version: IDLE_RETURN_VERSION, lastSettledAt: null, totalProgress: 0 });
 function migrateCampaign(value) {
   if (!isPlainObject(value)) return value;
@@ -270,6 +376,8 @@ function migrateCampaign(value) {
   if (!Object.hasOwn(value, "companionFormation")) patch.companionFormation = {};
   if (!Object.hasOwn(value, "stageCarryOver")) patch.stageCarryOver = initialStageCarryOver();
   if (!Object.hasOwn(value, "storyProgress")) patch.storyProgress = initialStoryProgress(value.resolvedIds);
+  // Cycle 9: pre-capacity saves carry no slot state; 0 unlocked == the historical hard cap of 3.
+  if (!Object.hasOwn(value, "unlockedCompanionSlots")) patch.unlockedCompanionSlots = 0;
   return Object.keys(patch).length ? { ...value, ...patch } : value;
 }
 function validCampaign(value) {
@@ -278,7 +386,17 @@ function validCampaign(value) {
   if (!isNonEmptyString(candidate.campaignId) || !Number.isInteger(candidate.resetEpoch) || candidate.resetEpoch < 0 || !Number.isInteger(candidate.unlockedStageIndex) || candidate.unlockedStageIndex < 0 || candidate.unlockedStageIndex >= STAGES.length) return false;
   if (!Array.isArray(candidate.companionCollection) || !candidate.companionCollection.every((record) => isPlainObject(record) && hasOnlyKeys(record, ["prototype", "evolution", "capturedEliteIds"]) && canonicalPrototype(record.prototype) && Number.isInteger(record.evolution) && record.evolution >= 1 && record.evolution <= 3 && validIds(record.capturedEliteIds))) return false;
   const prototypes = candidate.companionCollection.map((record) => record.prototype);
-  if (new Set(prototypes).size !== prototypes.length || !isPlainObject(candidate.companionLoadout) || !hasOnlyKeys(candidate.companionLoadout, ["prototypeIds"]) || !validIds(candidate.companionLoadout.prototypeIds) || candidate.companionLoadout.prototypeIds.length > MAX_LOADOUT_SIZE || !candidate.companionLoadout.prototypeIds.every((prototype) => prototypes.includes(prototype))) return false;
+  /**
+   * LOAD-TIME bound (spec §3): the literal `COMPANION_CAPACITY_MAX`, never the derived resolver.
+   *
+   * This check runs BEFORE `resolvedIds` is validated on the next line, and `companionCapacityForCampaign`
+   * derives capacity from `resolvedIds` + `unlockedCompanionSlots`. Calling the resolver here would let a
+   * tampered save self-certify its own capacity from fields this function has not vetted yet — inflate
+   * `resolvedIds`, and an oversized loadout would validate itself. The literal ceiling cannot be gamed:
+   * a save is well-formed if it is within the absolute maximum, and the derived per-campaign bound is
+   * enforced at MUTATION time by `setCompanionLoadout()` where the campaign is already trusted.
+   */
+  if (new Set(prototypes).size !== prototypes.length || !isPlainObject(candidate.companionLoadout) || !hasOnlyKeys(candidate.companionLoadout, ["prototypeIds"]) || !validIds(candidate.companionLoadout.prototypeIds) || candidate.companionLoadout.prototypeIds.length > COMPANION_CAPACITY_MAX || !candidate.companionLoadout.prototypeIds.every((prototype) => prototypes.includes(prototype))) return false;
   if (!validIds(candidate.resolvedIds) || !candidate.resolvedIds.every((id) => STAGE_INDEX.has(id)) || !isPlainObject(candidate.attemptsByStage) || !Object.entries(candidate.attemptsByStage).every(([id, attempts]) => STAGE_INDEX.has(id) && Number.isInteger(attempts) && attempts >= 0)) return false;
   if (!validIds(candidate.rewardIds) || !candidate.rewardIds.every((id) => Object.hasOwn(REWARDS, id)) || !validIds(candidate.achievementIds)) return false;
   if (!isPlainObject(candidate.idleReturn) || !hasOnlyKeys(candidate.idleReturn, ["version", "lastSettledAt", "totalProgress"]) || candidate.idleReturn.version !== IDLE_RETURN_VERSION || (candidate.idleReturn.lastSettledAt !== null && !isTimestamp(candidate.idleReturn.lastSettledAt)) || !isTimestamp(candidate.idleReturn.totalProgress)) return false;
@@ -287,6 +405,7 @@ function validCampaign(value) {
   if (!validWardenProgress(candidate, candidate.wardenProgress)) return false;
   if (!validStoryProgress(candidate, candidate.storyProgress)) return false;
   if (!validOwnedEquipmentIds(candidate, candidate.ownedEquipmentIds)) return false;
+  if (!validUnlockedCompanionSlots(candidate)) return false;
   return validCompanionFormation(candidate, candidate.companionFormation);
 }
 function requireCampaign(campaign) { if (!validCampaign(campaign)) fail("Invalid defense campaign."); }
@@ -301,6 +420,7 @@ export function createCampaign({ campaignId, resetEpoch = 0 } = {}) {
     wardenProgress: initialWardenProgress(), ownedEquipmentIds: [], companionFormation: {},
     stageCarryOver: initialStageCarryOver(),
     storyProgress: initialStoryProgress(),
+    unlockedCompanionSlots: 0,
   };
 }
 export function startRun(campaign, stageId = STAGES[campaign?.unlockedStageIndex]?.id) {
@@ -500,7 +620,14 @@ export function captureElite(campaign, eliteId, prototype) {
 }
 export function setCompanionLoadout(campaign, prototypeIds) {
   requireCampaign(campaign);
-  if (!validIds(prototypeIds) || prototypeIds.length > MAX_LOADOUT_SIZE || !prototypeIds.every((prototype) => campaign.companionCollection.some((record) => record.prototype === prototype))) fail("Loadout must contain up to three owned canonical companions.");
+  /**
+   * MUTATION-TIME bound (spec §3): the DERIVED per-campaign capacity, not the literal ceiling. The
+   * campaign has already passed `requireCampaign` on the line above, so its `resolvedIds` and
+   * unlocked-slot count are trusted and the resolver is safe to call here — which is exactly why
+   * load-time validation must not use it.
+   */
+  const capacity = companionCapacityForCampaign(campaign);
+  if (!validIds(prototypeIds) || prototypeIds.length > capacity || !prototypeIds.every((prototype) => campaign.companionCollection.some((record) => record.prototype === prototype))) fail(`Loadout must contain up to ${capacity} owned canonical companions.`);
   const next = copyCampaign(campaign);
   next.companionLoadout.prototypeIds = [...prototypeIds].sort();
   next.companionFormation = Object.fromEntries(Object.entries(next.companionFormation).filter(([prototype]) => prototypeIds.includes(prototype)));
@@ -570,6 +697,26 @@ export function purchaseEquipmentTier(campaign, ownerId, slot) {
   const next = copyCampaign(campaign);
   next.ownedEquipmentIds.push(`${ownerId}:${slot}:${step}`);
   next.ownedEquipmentIds.sort();
+  if (boundFragmentSpent(next) > boundFragmentEarned(next)) fail("Not enough Bound Fragment.");
+  return next;
+}
+/**
+ * Unlocks the next legion slot (4th..10th), following `purchaseEquipmentTier`'s pattern exactly:
+ * validate the campaign, reject the terminal case, mutate a copy, then assert the Bound Fragment
+ * budget on the RESULT and fail if it overdraws. Checking the budget post-mutation is what makes the
+ * shared equipment/slot budget honest — `boundFragmentSpent(next)` sums both spends, so a slot cannot
+ * be bought with fragments already committed to equipment tiers.
+ *
+ * Requires BOTH gates (spec §3): the stage-clear count and the payment. Level alone is insufficient.
+ */
+export function purchaseCompanionSlot(campaign) {
+  requireCampaign(campaign);
+  const unlocked = companionSlotsUnlocked(campaign);
+  const entry = companionSlotUnlockFor(COMPANION_CAPACITY_BASE + unlocked + 1);
+  if (!entry) fail("Legion capacity is already at maximum.");
+  if (campaign.resolvedIds.length < entry.requiresStageClears) fail(`Slot ${entry.slot} unlocks at ${entry.requiresStageClears} cleared stages.`);
+  const next = copyCampaign(campaign);
+  next.unlockedCompanionSlots = unlocked + 1;
   if (boundFragmentSpent(next) > boundFragmentEarned(next)) fail("Not enough Bound Fragment.");
   return next;
 }

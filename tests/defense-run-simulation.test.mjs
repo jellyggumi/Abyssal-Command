@@ -1349,7 +1349,9 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
  * of these windows must fail as "precondition broke", never as a silent hash mismatch.
  */
 /*
- * REBASELINED 2026-07-30 at the cycle-10 / area-combat merge.
+ * REBASELINED 2026-07-30, twice: once at the cycle-10 / area-combat merge, and again when the
+ * cycle-9 slice landed and fixed the enemy-shell faction tag (enemy fire had been splashing
+ * enemies instead of the player side, so windows containing an enemy shell moved again).
  *
  * These SHAs pin "the buff-drop layer changes nothing when nothing drops". The always-area
  * combat model (defense-catalog AREA_*) changed what a tick DOES, so every digest moved --
@@ -1360,9 +1362,9 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
  * are new; every precondition below was re-verified, not assumed.
  */
 const PRE_FEATURE_DIGEST_SHA256 = Object.freeze([
-  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "0cd03d7f67ab2fca815945d706956ffd60cdd214ac3b345d2341c27be436f00f" },
+  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "50860301b64464b00cbac792a661f18574f3cf6e65599e624433ead49db5abdf" },
   { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "c250e10ff1c0d1e70280646dbde592ba3d7bb6e29693161a5d067064dff6c57b" },
-  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "43bb86e07c4e9c6353d3f298d695e4a1cdfd716a8d6947d9d4e861fa30d09297" },
+  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "ade3e989e89d3a3037ada50b5bebaa6a2f073cc395545d58efcb89313717805b" },
   { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "cf3f32b176712c9cfec62be5c071645c342e714962a9db96298b02237ef46b32" },
 ]);
 
@@ -1435,9 +1437,14 @@ test("gate check 1: two runs at one seed ticked identically with no buff produce
  * that build is §9 check 2's "build with the drop block deleted". Each row spawns drops in the
  * current build, so the stream is compared across a boundary where drop rolls demonstrably ran.
  */
+// Seed 3 repinned 2026-07-30 with the cycle-9 slice: growth offers draw from `run.rng`, and the
+// combat changes moved how many enemies die inside 3000 ticks, so the number of offers moved with
+// them. The other two seeds were re-measured and did NOT move. The invariant this gate protects --
+// the drop roll never touches the wave stream -- is unchanged and still asserted alongside its
+// positive pair (drops really spawned, dropRng really advanced, waveVariant byte-identical).
 const PRE_FEATURE_RNG_AT_3000 = Object.freeze([
   { options: { stageId: "cinder-span", seed: 9, companionLoadout: [] }, rng: 745195808 },
-  { options: { stageId: "cinder-span", seed: 3, companionLoadout: [] }, rng: 3066949719 },
+  { options: { stageId: "cinder-span", seed: 3, companionLoadout: [] }, rng: 3246667586 },
   { options: { stageId: "abyss-chancel", seed: 5, companionLoadout: ["ember-cohort"] }, rng: 3688787054 },
 ]);
 

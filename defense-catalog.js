@@ -58,6 +58,117 @@ export const COMBAT_TARGETING = freeze({
   elevationTolerance: 700,
 });
 
+/**
+ * Aim-biased target selection (core-loop-legion-spec.md §5). An optional player aim vector WEIGHTS
+ * candidate selection instead of replacing it:
+ *
+ *   score(enemy) = distance^2 * (1 + AIM_BIAS * (1 - cos t) / 2)
+ *
+ * where t is the angle between the aim vector and the vector to the enemy. At AIM_BIAS 3.0 an enemy
+ * directly behind the commander must be ~2x closer to win over one being aimed at. With no aim
+ * vector present the weight is exactly 1, so the score reduces to `distance^2` and selection is
+ * bit-identical to the pre-cycle-9 nearest-enemy behavior (ties still broken by id).
+ *
+ * Expressed in basis points because the comparison itself is done in scaled INTEGER arithmetic —
+ * float scores would make ordering engine-dependent, which a deterministic sim cannot accept.
+ */
+export const AIM_BIAS_BP = 30000; // 3.0 x 10000
+/** Fixed-point scale shared by aim/analog/facing vectors. Integer millis at magnitude 1000. */
+export const AIM_VECTOR_SCALE = 1000;
+
+/**
+ * Extraction: corpse -> channel -> companion (core-loop-legion-spec.md §2).
+ * Ported from the deferred `engineering/extraction-system.js` design. The timing values are the
+ * deferred module's own and are internally consistent at 60 Hz, so they carry over unchanged.
+ */
+export const EXTRACTION = freeze({
+  /** Corpse persists 10 s. */
+  corpseDurationTicks: TICK_RATE * 10,
+  /** Channel takes 2 s of continuous proximity. */
+  channelTicks: TICK_RATE * 2,
+  /** World units; the commander must stay inside this radius or the channel BREAKS (never pauses). */
+  range: 1200,
+  /** Hard cap on live corpses; oldest is evicted first (spec §6 tick-cost bound). */
+  corpseCap: 12,
+});
+
+/**
+ * Enemy grade -> companion grade. Fixes spec defect D2: the deferred module declared ALL enemy
+ * types extractable, but extraction is midboss-onward, so trash produces no corpse at all. `normal`
+ * is deliberately absent — absence IS the "no corpse" rule, and it also bounds the corpse array.
+ */
+export const EXTRACTION_GRADE_BY_ENEMY = freeze({
+  elite: "BASIC",
+  midboss: "SHADOW",
+  boss: "BOSS",
+});
+
+/** Companion stat inheritance per extracted grade (spec §2 table, retained from the deferred module). */
+export const GRADE_COMPANION_MULTIPLIERS = freeze({
+  BASIC: freeze({ damageBp: 15000, fireTicksBp: 8000, hpInheritBp: 3000, defaultRange: 4000, loyaltyBase: 100 }),
+  SHADOW: freeze({ damageBp: 18000, fireTicksBp: 7500, hpInheritBp: 4000, defaultRange: 4600, loyaltyBase: 120 }),
+  BOSS: freeze({ damageBp: 20000, fireTicksBp: 7000, hpInheritBp: 5000, defaultRange: 5200, loyaltyBase: 150 }),
+});
+
+/**
+ * Legion capacity, dynamic 3 -> 10 (core-loop-legion-spec.md §3).
+ * `COMPANION_CAPACITY_BASE` replaces the *meaning* of campaign-state's MAX_LOADOUT_SIZE;
+ * `COMPANION_CAPACITY_MAX` is the absolute ceiling used by load-time validation.
+ */
+export const COMPANION_CAPACITY_BASE = 3;
+export const COMPANION_CAPACITY_MAX = 10;
+
+/**
+ * The 4th..10th slot unlock ladder, shipped as DATA on purpose.
+ *
+ * Each slot requires BOTH a stage-clear gate and a Bound Fragment payment; level alone is
+ * insufficient, matching the request (레벨과 특정 조건(비용지불등)에 따라 해금). The resolver
+ * (`companionCapacityForCampaign`) reads this table and contains no inline thresholds, so a
+ * pricing decision edits data here and touches no logic anywhere.
+ *
+ * ECONOMY, as of the cycle-9 resolution (`N-20260730-C9-01`):
+ *   Bound Fragment earned  = resolvedIds.length * 3 + distinct captured elites (elites capped at
+ *                            STAGES.length) -> 12 lifetime max, 9 from stage clears alone
+ *   This ladder            = 7 cumulative (7 rows x 1)
+ *   Remainder              = 5 toward equipment, which needs 10 for one line to T5
+ * So capacity 10 is reachable AND buying the full ladder still costs you a full equipment line.
+ * The tradeoff is real; it is no longer an arithmetic impossibility.
+ *
+ * This comment previously described the PRE-resolution economy and said earning was
+ * "`resolvedIds.length`, capped at 10" against a 16-cost ladder that was "NOT fully affordable...
+ * a deliberate, recorded state". Every clause of that is now false. It is called out because that
+ * exact "capped at 10" phrasing — inherited from a larger stage list, while STAGES.length is 3 —
+ * is what led two separate audits to mis-state the budget by reading the comment instead of
+ * measuring the function. Keep this block in sync with `campaign-state.js#boundFragmentEarned`;
+ * a stale economy comment here has already cost this project two wrong analyses.
+ */
+export const COMPANION_SLOT_UNLOCKS = freeze([
+  // Cycle 9 reprice (`N-20260730-C9-01`). The authored ladder cost 16 cumulative and gated slots
+  // 7-10 behind 4/6/8/10 stage clears. `STAGES.length` is **3**, so those four rows were
+  // PERMANENTLY UNREACHABLE at any price [OBSERVED] — a second defect independent of the budget,
+  // and one that repricing alone could not have fixed.
+  //
+  // Every gate is now within the 3 stages that exist, and the cumulative cost is 7 against a
+  // lifetime pool of 12 (see boundFragmentEarned), leaving 5 toward equipment. Capacity 10 is
+  // reachable, and spending on slots still costs you equipment progress — the tradeoff is real
+  // rather than arithmetically impossible.
+  //
+  // Gates rise 1,1,2,2,3,3,3: the first two slots land early to make the mechanic legible, then
+  // pacing tightens so the last three all wait on a full clear.
+  freeze({ slot: 4, requiresStageClears: 1, boundFragmentCost: 1 }),
+  freeze({ slot: 5, requiresStageClears: 1, boundFragmentCost: 1 }),
+  freeze({ slot: 6, requiresStageClears: 2, boundFragmentCost: 1 }),
+  freeze({ slot: 7, requiresStageClears: 2, boundFragmentCost: 1 }),
+  freeze({ slot: 8, requiresStageClears: 3, boundFragmentCost: 1 }),
+  freeze({ slot: 9, requiresStageClears: 3, boundFragmentCost: 1 }),
+  freeze({ slot: 10, requiresStageClears: 3, boundFragmentCost: 1 }),
+]);
+
+/** Ladder row for one slot number, or null when that slot is not unlockable. */
+export function companionSlotUnlockFor(slot) {
+  return COMPANION_SLOT_UNLOCKS.find((entry) => entry.slot === slot) || null;
+}
+
 /* ---------------------------------------------------------------------------------------------
  * Area combat model (광역 전투).
  *
@@ -667,6 +778,26 @@ export const SKILLS = freeze({
   "grave-pulse": { id: "grave-pulse", name: "Echo Pulse", role: "active", kind: "active", damage: 650, cooldown: 240, radius: 3000, motion: "critical", vfx: "grave-pulse", element: "ember", areaRadius: 3000, areaWeightBp: 10000, fieldTicks: 180 },
   "void-aegis": { id: "void-aegis", name: "Zenith Aegis", role: "active", kind: "active", damage: 0, cooldown: 300, radius: 0, integrity: 50, motion: "defence", vfx: "void-aegis", element: "frost", areaRadius: 1600, areaWeightBp: 0, fieldTicks: 0 },
   "shadow-step": { id: "shadow-step", name: "Dusk Step", role: "active", kind: "active", damage: 900, cooldown: 210, radius: 4500, motion: "avoid", vfx: "shadow-step", element: "frost", areaRadius: 2400, areaWeightBp: 8500, fieldTicks: 90 },
+  // --- aoe-burst (광역 파괴) --------------------------------------------
+  // Authored in design/skill-and-growth-spec.md §2.2 as the answer to
+  // SURGE/BIGWAVE density ("근접 처치율 2.7/s로는 밀도 60을 감당할 수 없다"), and
+  // required by master-numeric-contract.md §2 row 2 ("광역기 필요성 발생"). Both
+  // are 원형 360°, which orderedTargets() already resolves natively.
+  //
+  // `regents-verdict` is the BIGWAVE payoff: damage is `min(targets, targetCap)
+  // * damagePerTarget`, so it is worth 400 against one enemy and 4800 against
+  // twelve. Density IS the damage — that is what makes one cast resolve a wave.
+  // `damage: 0` keeps skillRankDamage()'s base term at zero so rank scaling
+  // applies to damagePerTarget alone (castSkill()), and it also keeps the area
+  // model off this skill entirely: castSkill() only splashes when the authored
+  // damage is positive, so its per-target sum is never double-counted.
+  //
+  // `areaRadius` deliberately equals each skill's authored `radius`: the burst
+  // already damages everything inside its stated circle, so the area layer adds
+  // the element matchup and the ring/blink presentation without widening the
+  // circle the player was told about.
+  "ash-nova": { id: "ash-nova", name: "Ash Nova", role: "active", kind: "active", category: "aoe-burst", damage: 1400, cooldown: 480, radius: 3600, motion: "critical", vfx: "ash-nova", element: "ember", areaRadius: 3600, areaWeightBp: 10000, fieldTicks: 0 },
+  "regents-verdict": { id: "regents-verdict", name: "Regent's Verdict", role: "active", kind: "active", category: "aoe-burst", damage: 0, damagePerTarget: 400, targetCap: 12, cooldown: 900, radius: 5000, motion: "critical", vfx: "regents-verdict", element: "void", areaRadius: 5000, areaWeightBp: 10000, fieldTicks: 0 },
   "eclipse-edge": { id: "eclipse-edge", name: "Dusk Edge", role: "passive", kind: "passive", basicDamage: 180 },
   "soul-magnet": { id: "soul-magnet", name: "Echo Magnet", role: "passive", kind: "passive", pickupRange: 1500 },
   "ward-binder": { id: "ward-binder", name: "Zenith Binder", role: "passive", kind: "passive", maxIntegrity: 120 },
@@ -939,6 +1070,9 @@ const stageEncounterRoute = ({
   stageId,
   commitmentCap,
   maxConcurrentEnemies,
+  bigWaveMaxConcurrentEnemies,
+  bigWaveCommitmentCap,
+  bigWaveSpawnIntervalTicks,
   spawnIntervalTicks,
   objectives,
   approaches,
@@ -947,6 +1081,26 @@ const stageEncounterRoute = ({
   id: `encounter-route:${stageId}:v1`,
   commitmentCap,
   maxConcurrentEnemies,
+  // Phase escalation (master-numeric-contract.md §2): the authored concurrency
+  // ceiling rises 8 -> 18 -> 34 -> 60 across DESCENT..BIGWAVE. The runtime had a
+  // single flat number, so it was permanently pinned at the DESCENT-tier value
+  // and a "big" wave was never denser than the opening skirmish -- which is why
+  // an area skill could never catch more than 7 bodies.
+  //
+  // These are the BIG-wave ceilings only; `kind: "normal"` waves keep the value
+  // above. Deliberately BELOW the contract's BIGWAVE 60: that row is gated on
+  // "적 메시 인스턴스드 렌더 필수 (60개 개별 draw 금지)" (§9), and this renderer
+  // still clones one skinned GLB per actor (instantiateActorModel). 60 concurrent
+  // rigged actors would breach the 180 draw-call budget outright. Raising past
+  // these values is blocked on instanced rendering, not on this table.
+  bigWaveMaxConcurrentEnemies,
+  bigWaveCommitmentCap,
+  // Third lever, and the one that actually decides whether a big wave READS as a
+  // wave: the queue drain rate. A raised concurrency ceiling does nothing while
+  // bodies trickle in one per `spawnIntervalTicks` -- measured, the field held 14
+  // against a ceiling of 22, so the interval was binding, not the cap. A big wave
+  // must arrive as a burst ("정신없는 최대 밀도", master-numeric-contract.md §2 row 4).
+  bigWaveSpawnIntervalTicks,
   spawnIntervalTicks,
   objectives: freeze(objectives),
   paths: freeze([
@@ -994,6 +1148,9 @@ export const STAGE_ENCOUNTER_ROUTES = freeze({
     stageId: "cinder-span",
     commitmentCap: 3,
     maxConcurrentEnemies: 8,
+    bigWaveMaxConcurrentEnemies: 22,
+    bigWaveCommitmentCap: 7,
+    bigWaveSpawnIntervalTicks: 5,
     spawnIntervalTicks: 18,
     objectives: [
       objectiveDefinition(
@@ -1035,6 +1192,9 @@ export const STAGE_ENCOUNTER_ROUTES = freeze({
     stageId: "abyss-chancel",
     commitmentCap: 4,
     maxConcurrentEnemies: 9,
+    bigWaveMaxConcurrentEnemies: 24,
+    bigWaveCommitmentCap: 8,
+    bigWaveSpawnIntervalTicks: 6,
     spawnIntervalTicks: 24,
     objectives: [
       objectiveDefinition(
@@ -1078,6 +1238,9 @@ export const STAGE_ENCOUNTER_ROUTES = freeze({
     stageId: "echo-throne",
     commitmentCap: 4,
     maxConcurrentEnemies: 10,
+    bigWaveMaxConcurrentEnemies: 26,
+    bigWaveCommitmentCap: 8,
+    bigWaveSpawnIntervalTicks: 4,
     spawnIntervalTicks: 15,
     objectives: [
       objectiveDefinition(

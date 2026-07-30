@@ -1,0 +1,181 @@
+# ############################################################################
+# ##  ONE FILE IS MISSING FROM THIS LIST: app.js. IT IS REQUIRED.          ##
+# ############################################################################
+#
+# The allowlist now covers everything cycle 9 needs EXCEPT `app.js`, which cannot
+# be a pathspec entry because it is co-edited and must be filtered hunk-by-hunk.
+#
+# Staging the list ALONE gives you a working, drawn, visible extraction loop and
+# capacity 3->10 in the simulation -- but:
+#
+#   * the joystick still emits 8 QUANTIZED OCTANTS (request #8 unmet), and
+#   * the lobby still hard-blocks the roster at 3, so the 3->10 capacity the
+#     simulation supports is UNREACHABLE by the player.
+#
+# Two of those lobby sites fail SILENTLY: `app.js:1187` drops the 4th pick on
+# click, `app.js:1003` renders only 3 slots.
+#
+# To stage `app.js`: take `git diff HEAD -- app.js` (15 hunks), drop the single
+# hunk containing `DefenseAudio` (`@@ -1814,7 +1874,10 @@` -- a foreign audio-lane
+# edit; HEAD:1817 has no argument), and `git apply --cached` the remaining 14.
+#
+# `battle-realtime-three.js` IS in the list (staged whole, with its AoE
+# provenance stated in the commit message) and so is its contract test
+# `tests/aoe-burst-wide-hit-contract.test.mjs` -- they must land together or the
+# test's subject is absent and the suite goes red on main.
+#
+# `styles.css` IS in the list: the cycle-9 portrait block was restored after the
+# cycle-10 supersession assumption proved false (that branch is 19 commits ahead,
+# unmerged, conflicts on app.js, and its session is gone).
+# ############################################################################
+
+# ############################################################################
+# WARNING — `.list` IS PURE PATHS. `git add --pathspec-from-file` treats EVERY
+# line as a literal pathspec, including `#` lines: adding a comment to the
+# `.list` makes git fail with "pathspec # ... did not match any files" and the
+# whole allowlist degrades to nothing. Verified. Keep `.list` comment-free and
+# keep all rationale in THIS file.
+#
+# A pathspec stages files WHOLE. These three are ABSENT from the allowlist on
+# purpose, because staging them whole would silently discard the filtering they
+# require:
+#
+#   app.js                    hunk-selective  (foreign DefenseAudio hunk)
+#   battle-realtime-three.js  symbol-split    (unattributed AoE work)
+#   styles.css                superseded      (cycle 10 d37b6568)
+#
+# Do not "fix" the allowlist by adding them.
+# ############################################################################
+
+# Cycle-9 commit allowlist — enumerated pathspec
+#
+# An ALLOWLIST, deliberately, not an exclusion list. Three sessions wrote to this
+# working tree concurrently (cycle 9 core-loop, cycle 10 stage-dungeon, an audio
+# lane), so any "stage everything except X" instruction goes stale the moment a
+# fourth foreign path appears. This file cannot go stale that way: a path absent
+# here is not staged, whoever wrote it.
+#
+# Usage:
+#   cd <repo root>
+#   git add --pathspec-from-file=_workspace/current/qa/cycle9-commit-pathspec.txt
+#
+# EXCEPT `app.js` — see the WARNING at the bottom. It is co-edited and must be
+# staged hunk-selectively, NOT via this file. It is deliberately omitted below.
+#
+# Verified against `git diff --numstat` on 2026-07-30. Every entry was confirmed
+# cycle-9-authored; every omission was confirmed foreign or out of scope.
+
+# ── Simulation and catalog: extraction, capacity, aim, analog acceptance ──────
+defense-run-simulation.js
+defense-catalog.js
+campaign-state.js
+
+# ── Tests (authored by the Tester agent this cycle) ───────────────────────────
+tests/campaign-state-rpg.test.mjs
+
+# ── Verification gates (new files) ────────────────────────────────────────────
+scripts/verify-cycle9-digest-identity.mjs
+scripts/verify-cycle9-analog-live.mjs
+scripts/verify-cycle9-extraction-live.mjs
+scripts/verify-cycle9-extraction-e2e.mjs
+scripts/verify-cycle9-portrait-joystick.cjs
+
+# ── Cycle-9 workspace artifacts ───────────────────────────────────────────────
+_workspace/current/intake/production-brief-cycle9.md
+_workspace/current/intake/reference-video-analysis.md
+_workspace/current/design/core-loop-legion-spec.md
+_workspace/current/ui/battle-hud-concept-cycle9.md
+_workspace/current/engineering/companion-capacity-blast-radius.md
+_workspace/current/pm/negotiation-record-cycle9-legion-capacity.md
+_workspace/current/qa/cycle9-digest-baseline.json
+_workspace/current/qa/cycle9/
+_workspace/current/qa/cycle9-commit-pathspec.txt
+_workspace/current/retrospectives/cycle-9-retrospective.md
+
+# ═════════════════════════════════════════════════════════════════════════════
+# DELIBERATELY OMITTED — foreign or requires special handling
+# ═════════════════════════════════════════════════════════════════════════════
+#
+# app.js
+#     CO-EDITED. Carries cycle-9 analog + 10 capacity sites + the pre-existing
+#     `[object Object]` fix, AND a foreign `DefenseAudio({ sampleMapUrl })` hunk
+#     (HEAD:1817 had no argument). Stage hunk-selectively: take
+#     `git diff HEAD -- app.js`, drop the single hunk containing `DefenseAudio`,
+#     `git apply --cached` the rest. Also note cycle 10's `d37b6568` rewrote the
+#     same `joystickActive()` / `updateJoystick()` call sites, so re-derive the
+#     hunk split against that branch rather than reusing a filter built on 033877ad.
+#
+# battle-realtime-three.js
+#     MIXED. Cycle 9 contributed the range ring, corpse markers, extraction
+#     channel indicator, and impact signatures. The file then grew 698 -> 970
+#     lines AFTER the cycle-9 renderer agent was aborted, gaining `attachAoeBurst`,
+#     `AOE_BURST_SIGNATURES`, `aoeWorldRadiusFor` — symbols matching
+#     `feat/motion-vfx-aoe-boss`. Split by symbol before staging.
+#
+# styles.css
+#     SUPERSEDED. The cycle-9 portrait block was reverted (0 churn) because
+#     cycle 10's `d37b6568` removes the `.virtual-joystick { display: none; }`
+#     default and the landscape gating outright, at every viewport. Do not
+#     resurrect it. Verified: cycle 10 CSS + cycle 9 analog app.js = ok:true,
+#     116x116 box, magnitudes 563 -> 966 -> 1000.
+#
+# defense-audio.js, assets/audio/defense-audio-manifest.json,
+# assets/audio/elevenlabs/, assets/audio/elevenlabs-sound-plan.json,
+# scripts/generate-defense-audio.mjs, tests/audio-sample-hybrid.test.mjs
+#     AUDIO LANE. Pairs with the excluded app.js `sampleMapUrl` hunk. Staging any
+#     subset lands half of that writer's change.
+#
+# tests/aoe-burst-wide-hit-contract.test.mjs
+#     Pairs with the foreign AoE work in battle-realtime-three.js.
+#
+# qa/evidence/gates/G7/stage1b-persistence-scenarios.json (+ .receipt.json),
+# scripts/export-stage1b-persistence-scenarios.mjs
+#     STAGE1B LANE. Present and modified before cycle 9 began.
+#
+# _workspace/current/production/decision-log.md,
+# _workspace/current/production/task-manifest.md,
+# _workspace/current/summary.md
+#     CYCLE 10 / AUDIO. Their diffs document the three-lane ownership boundary and
+#     the ElevenLabs decision (`D-20260730-02`). Cycle 9 did not write them.
+#     Cycle 9's own manifest entry should be appended by whoever holds the write
+#     lock, not smuggled in via this file.
+#
+# _workspace/current/qa/stage-runtime-proof/*.png,
+# _workspace/current/qa/stage-runtime-proof/stage-runtime-summary.json
+#     FOREIGN REGENERATION (binary PNGs + a -290 line summary rewrite). This is
+#     the trap that motivated an allowlist: `git add _workspace/current/qa/` would
+#     absorb all of it. Cycle 9's artifacts under that directory are ONLY
+#     `cycle9-digest-baseline.json`, `cycle9/`, and this pathspec file.
+#
+# _workspace/current/qa/cycle10-baseline.md,
+# _workspace/current/design/{audio-feedback-dungeon,item-drop-timed-buff,
+#   stage-dungeon-composition,stage-pacing-5to15min,vfx-drop-spawn-terrain}-spec.md,
+# _workspace/current/ui/hud-overhaul-joystick-cutover-spec.md,
+# _workspace/current/intake/production-brief-cycle10-stage-dungeon.md,
+# _workspace/current/engineering/runtime-surface-maps/,
+# _workspace/current/engineering/asset-pipeline/terrain-dungeon/
+#     CYCLE 10 design output.
+#
+# ── Pre-commit requirement ───────────────────────────────────────────────────
+# The git write lock `/tmp/abyssal-surge-git-write.lock` was held by
+# `owner=jeo-cycle10 session=dungeon-worktree` throughout, so cycle 9 committed
+# NOTHING. Before using this file: acquire the lock with `mkdir`, re-establish
+# tree quiescence (hash `git diff HEAD`, wait, hash again, require equality), and
+# re-run all five gate scripts. Every measurement in the retrospective was taken
+# on a quiescent tree and is void if the tree moved.
+
+# ── `_workspace/current/qa/cycle9/recovery/` — DELIBERATELY UNTRACKED ────────
+# The recovery bundle (two patches, a tarball, a README) is pre-commit insurance
+# ONLY. It is excluded from the allowlist on purpose: those patches are diffs of
+# the very changes being committed, so staging them would land a diff of itself —
+# self-referential dead weight from the moment the commit exists.
+#
+# This is also why the allowlist enumerates the five `cycle9/*.json` evidence
+# files individually instead of naming the `cycle9/` directory: a directory
+# pathspec swept `recovery/` in (verified — it pulled all four files).
+#
+# Untracked is the right state for insurance. It survives `git checkout`,
+# `git stash`, and `git reset`, which are the failure modes it defends against;
+# only `git clean -fdx` removes it, and that would take the working tree anyway.
+#
+# Safe to delete once the cycle-9 commit exists.

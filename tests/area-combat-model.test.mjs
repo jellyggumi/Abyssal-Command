@@ -274,11 +274,24 @@ function playRun({
   companionLoadout = ["ember-cohort", "rift-lens", "veil-vanguard"],
   clustered = true,
   castSkills = true,
+  // A field-bearing active, seeded through the public carry-over API rather than hoped for from
+  // the growth offer. The offer's contents are a balance decision that moves whenever the skill
+  // roster changes -- it stopped offering either field skill the moment the aoe-burst pair
+  // landed -- so a test that waits for one to be offered is testing the offer table, not the
+  // field. Carry-over is how the campaign hands a build to the next stage, so this is a
+  // supported starting state, not a back door.
+  carriedSkill = "grave-pulse",
 } = {}) {
-  let run = createDefenseRun({ stageId: "cinder-span", seed, companionLoadout });
+  let run = createDefenseRun({
+    stageId: "cinder-span",
+    seed,
+    companionLoadout,
+    ...(carriedSkill ? { carryOver: { skillRanks: { [carriedSkill]: 1 }, itemIds: [] } } : {}),
+  });
   if (clustered) run = advanceDefenseRun(queueInput(run, "STANCE_CYCLE", {}), 1);
   const events = [];
   const fieldSnapshots = [];
+  const snapshots = [];
   for (let step = 0; step < steps && !isTerminalRun(run); step += 1) {
     const snapshot = getRunSnapshot(run);
     let next;
@@ -295,9 +308,10 @@ function playRun({
     run = advanceDefenseRun(next, 1);
     const after = getRunSnapshot(run);
     events.push(...after.events);
+    snapshots.push(after);
     if (after.areaFields.length) fieldSnapshots.push(after);
   }
-  return { run, events, fieldSnapshots, snapshot: getRunSnapshot(run) };
+  return { run, events, fieldSnapshots, snapshots, snapshot: getRunSnapshot(run) };
 }
 
 const played = playRun();
@@ -314,8 +328,17 @@ const pressured = playRun({ castSkills: false });
  * exercise the enemy half of the model without hoping a seed happens to produce a strike.
  * Every assertion below that needs an enemy strike reads THIS run.
  */
-function playContested({ seed = 7, steps = 5000 } = {}) {
-  let run = createDefenseRun({ stageId: "cinder-span", seed, companionLoadout: ["ember-cohort"] });
+function playContested({
+  seed = 3,
+  steps = 4000,
+  companionLoadout = ["ember-cohort", "rift-lens", "veil-vanguard"],
+  clustered = true,
+} = {}) {
+  // Clustered (TURRET) and holding position: the legion stands inside one disc, which is the
+  // configuration the area model exists to punish, and it is where an enemy contact or shell
+  // actually reaches a bystander.
+  let run = createDefenseRun({ stageId: "cinder-span", seed, companionLoadout });
+  if (clustered) run = advanceDefenseRun(queueInput(run, "STANCE_CYCLE", {}), 1);
   const ticks = [];
   for (let step = 0; step < steps && !isTerminalRun(run); step += 1) {
     const snapshot = getRunSnapshot(run);
@@ -335,6 +358,14 @@ function playContested({ seed = 7, steps = 5000 } = {}) {
 }
 
 const contested = playContested();
+// A spread play-out of the same shape. Clustered legions delete approaching bodies before they
+// reach contact, so the WINDUP evidence lives here, while the clustered run above is where a
+// landed hit actually has bystanders to splash. Two configurations, two halves of the model.
+const contestedSpread = playContested({
+  seed: 7,
+  companionLoadout: ["ember-cohort"],
+  clustered: false,
+});
 
 test("every attack splashes: both factions produce area impacts and the primary body is never in its own splash", () => {
   const impacts = [...played.events, ...pressured.events, ...contested.events]
@@ -494,7 +525,7 @@ test("the boss entrance is authored by the simulation, not improvised by the ren
 test("every live body publishes exactly one authored semantic state, and the states actually occur", () => {
   const observed = new Set();
   let bodies = 0;
-  for (const snapshot of played.fieldSnapshots) {
+  for (const snapshot of played.snapshots) {
     for (const enemy of snapshot.enemies) {
       bodies += 1;
       assert.ok(
@@ -517,7 +548,7 @@ test("every live body publishes exactly one authored semantic state, and the sta
 
 test("the windup state is exactly the telegraph window, and the strike leaves it", () => {
   const windupSpans = new Map();
-  for (const entry of contested.ticks) {
+  for (const entry of contestedSpread.ticks) {
     for (const enemy of entry.enemies) {
       if (enemy.state === "windup") windupSpans.set(enemy.id, (windupSpans.get(enemy.id) ?? 0) + 1);
     }
@@ -531,14 +562,14 @@ test("the windup state is exactly the telegraph window, and the strike leaves it
   // A body that entered a windup must leave it: either the strike lands or the target walked
   // out and the attack is cancelled. A body still winding up on the last observed tick would
   // be a stuck state machine.
-  const lastTick = contested.ticks.at(-1);
+  const lastTick = contestedSpread.ticks.at(-1);
   assert.equal(
     lastTick.enemies.filter((enemy) => enemy.state === "windup" && enemy.attackCooldown <= 0).length,
     0,
     "no body may sit in a windup whose timer has already expired",
   );
 
-  const resolutions = contested.events.filter((event) => event.type === "ENEMY_ATTACK"
+  const resolutions = contestedSpread.events.filter((event) => event.type === "ENEMY_ATTACK"
     || event.type === "ENEMY_ATTACK_CANCELLED" || event.type === "BOSS_ATTACK_CANCELLED");
   assert.ok(resolutions.length > 0, "a windup must resolve into a strike or a cancellation");
 });

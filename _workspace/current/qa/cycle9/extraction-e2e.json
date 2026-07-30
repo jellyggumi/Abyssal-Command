@@ -1,0 +1,113 @@
+{
+  "ok": true,
+  "observed": {
+    "seed": 17,
+    "ticksRun": 3888,
+    "finalTick": 3888,
+    "terminal": false,
+    "endedBecause": "loop-closed",
+    "phase": "gate-defense",
+    "growthSelections": 4,
+    "seen": {
+      "STAGE_STARTED": 0,
+      "ENCOUNTER_OBJECTIVE_STARTED": 0,
+      "LORE_SURPRISE_RESOLVED": 0,
+      "M4_CARD_AVAILABLE": 0,
+      "INPUT_ACCEPTED": 1,
+      "INPUT_REJECTED": 1,
+      "WAVE_VARIANT_STARTED": 1,
+      "ENEMY_SPAWNED": 1,
+      "ENEMY_POLICY_SELECTED": 1,
+      "MOVE": 1,
+      "HAZARD_DAMAGE": 53,
+      "WEAPON_FIRED": 121,
+      "BASIC_ATTACK": 121,
+      "PROJECTILE_IMPACT": 123,
+      "MELEE_SWEEP": 145,
+      "MELEE_IMPACT": 145,
+      "ATTACKER_COMMITMENT_CHANGED": 150,
+      "ENEMY_PRESSURE_DELAYED": 150,
+      "CRITICAL_HIT": 169,
+      "ENEMY_DEFEATED": 169,
+      "GROWTH_OFFER": 289,
+      "OBJECTIVE_COMPLETED": 290,
+      "ENCOUNTER_PATH_CONTESTED": 343,
+      "ENCOUNTER_REWARD_GRANTED": 361,
+      "WAVE_CLEARED": 361,
+      "MIDBOSS_SPAWNED": 3060,
+      "ENEMY_ATTACK": 3582,
+      "GATE_BREACHED": 3582,
+      "EXTRACTION_UNLOCKED": 3769,
+      "CORPSE_CREATED": 3769,
+      "EXTRACTION_CHANNEL_STARTED": 3769,
+      "CORPSE_EXTRACTED": 3888
+    },
+    "timeline": [
+      {
+        "tick": 3769,
+        "type": "EXTRACTION_UNLOCKED",
+        "grade": null
+      },
+      {
+        "tick": 3769,
+        "type": "CORPSE_CREATED",
+        "grade": "SHADOW"
+      },
+      {
+        "tick": 3769,
+        "type": "EXTRACTION_CHANNEL_STARTED",
+        "grade": "SHADOW"
+      },
+      {
+        "tick": 3888,
+        "type": "CORPSE_EXTRACTED",
+        "grade": "SHADOW"
+      }
+    ],
+    "corpseTargetId": "corpse-70",
+    "channelPeak": 119,
+    "channelRequired": 120,
+    "companionsAtStart": 0,
+    "companionsAfterExtract": 1,
+    "companionsFinal": 1,
+    "extractionUnlocked": true
+  },
+  "checks": [
+    {
+      "id": "X1",
+      "description": "a midboss died and EXTRACTION_UNLOCKED fired in a real run",
+      "ok": true,
+      "detail": "unlocked at tick 3769"
+    },
+    {
+      "id": "X2",
+      "description": "a corpse was created from an eligible kill",
+      "ok": true,
+      "detail": "first corpse at tick 3769"
+    },
+    {
+      "id": "X3",
+      "description": "the extraction channel started (commander reached a corpse in range)",
+      "ok": true,
+      "detail": "channel started at tick 3769, peak elapsed 119/120"
+    },
+    {
+      "id": "X4",
+      "description": "the channel completed and CORPSE_EXTRACTED fired",
+      "ok": true,
+      "detail": "extracted at tick 3888"
+    },
+    {
+      "id": "X5",
+      "description": "the legion actually grew (a companion entity was added)",
+      "ok": true,
+      "detail": "companions 0 -> 1 (final 1)"
+    },
+    {
+      "id": "X6",
+      "description": "unlock strictly preceded the first extraction (gating held in play)",
+      "ok": true,
+      "detail": "unlock tick 3769 <= extract tick 3888"
+    }
+  ]
+}
