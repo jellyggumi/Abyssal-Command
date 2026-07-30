@@ -32,6 +32,9 @@ env:
     assets/images/battle/ui/hud/nav-companions.webp assets/images/battle/ui/hud/nav-growth.webp assets/images/battle/ui/hud/nav-inventory.webp
     assets/images/battle/ui/hud/nav-sortie.webp assets/images/battle/ui/hud/nav-stronghold.webp assets/images/battle/ui/hud/stat-commander.webp
     assets/images/battle/ui/hud/stat-echo-xp.webp assets/images/battle/ui/hud/stat-gate-integrity.webp
+    assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb
+    assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb
+    assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb
     assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb
     assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb
     assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb

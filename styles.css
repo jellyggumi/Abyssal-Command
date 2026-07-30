@@ -599,7 +599,38 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
 .passive-copy { display: flex; flex-direction: column; line-height: 1.15; }
 .passive-copy strong { font-size: .62rem; font-weight: 700; letter-spacing: .01em; color: #e8ddff; white-space: nowrap; }
 .passive-copy small { font-size: .58rem; color: #a98fd6; white-space: nowrap; }
-.one-thumb-controls { display: grid; grid-template-columns: repeat(5, minmax(44px, 1fr)); gap: .3rem; max-width: min(45vw, 320px); }
+/* ── Movement pad: PRIMARY control at every viewport ────────────────────────────────────────
+   Cycle 10 §3.4. The pad is a fixed PEDESTAL -- it never re-centres on press (spec S3), so the
+   knob moves and the base does not; every expected octant in the browser suite is derived from
+   `joystick.boundingBox()` centre, and a moving origin would invalidate that geometry mid-drag.
+
+   This rule was previously a 5-column keypad grid, promoted here to an unconditional pad box.
+   The former `(pointer: coarse) and (orientation: landscape)` + `html[data-defense-portrait]`
+   gate is GONE: it left a hidden, zero-rect pad that the JS branch could still reach, where a
+   zeroed getBoundingClientRect() reported full deflection toward the viewport origin and
+   swallowed the [data-move] fallback press (spec §2.1). Giving the element a box everywhere is
+   now the single switch, and joystickActive() reads that box rather than a media query.
+
+   --pad-size / --knob-size are the ONLY per-composition knobs. Their ratio is pinned to
+   0.375-0.39 because maxTravel = padRadius - knobRadius is the analog resolution denominator in
+   updateJoystick(); nothing in code couples the two, so changing one alone silently alters
+   movement feel with no test failing (spec R12).
+
+   Do NOT shrink --pad-size below 7.25rem and do NOT inset the cardinals further: at 116px the
+   nearest [data-move] edge already sits only 14px from centre against a 12.76px dead-zone
+   radius, i.e. 1.24px of margin protecting C1's centre-is-drag-only guarantee. */
+.one-thumb-controls {
+  --pad-size: 7.25rem;
+  --knob-size: 44px;
+  position: relative;
+  display: block;
+  width: var(--pad-size);
+  height: var(--pad-size);
+  max-width: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
 .one-thumb-controls button { min-width: 44px; min-height: 44px; padding: .35rem; }
 .gate-panel { max-width: min(43vw, 360px); }
 .gate-panel-copy { display: grid; gap: .12rem; }
@@ -667,7 +698,8 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
   /* Narrow screens: passive chips keep the glyph + boon, drop the name (still in title/aria). */
   .passive-copy strong { display: none; }
   .gate-panel { max-width: 42vw; }
-  .one-thumb-controls { grid-template-columns: repeat(3, 44px); max-width: 8.8rem; }
+  /* Cycle 10 §3.4: the 3x44px keypad grid is gone -- the pad is a fixed-size pedestal at every
+     viewport and its box comes from --pad-size, so a narrow viewport must not re-grid it. */
   .defense-bottom { gap: .3rem; }
 }
 
@@ -770,6 +802,19 @@ html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="
   --canon-zenith-gold: #ddc869;
   --canon-cinder-ember: #f3592c;
   --canon-cinder-ember-soft: rgb(243 89 44 / .14);
+  /* Cycle 10 §6.1 — stage accent indirection. Two NEW hues, both taken from the stage's own
+     `presentation.palette.accent`; the cinder value reuses --canon-cinder-ember rather than
+     restating #f3592c. --stage-accent defaults to the neutral canon cyan so any surface without
+     a recognised data-stage-id still renders, and it is switched by ATTRIBUTE below -- never by
+     a JS style write, so the HUD stays read-only over the snapshot. */
+  --canon-oath-violet: #8f67ff;   /* abyss-chancel presentation.palette.accent */
+  --canon-echo-ice: #72c8ff;      /* echo-throne presentation.palette.accent   */
+  --stage-accent: var(--canon-cyan-rift);
+  /* Cycle 10 §4.5 — the combat cluster's width as a TOKEN, so cutscene clearance can be
+     expressed as calc() over the real box instead of restating a pixel size that was derived
+     from a pad geometry the spec rejected (S5). Per-composition overrides sit with each
+     composition's #combat-input-cluster rule. */
+  --combat-cluster-width: 9.4rem;
 }
 
 /* Glass panel: layered depth via blur + soft border, replaces flat opaque panel fills on
@@ -2503,12 +2548,18 @@ button:disabled {
   }
   .gate-panel-copy > strong { font-size: .65rem; white-space: nowrap; }
   .integrity-meter { margin-top: .25rem; }
+  /* COMPOSITION B — phone portrait 390x844 (spec §4.2). Vertical budget is generous, WIDTH is
+     scarce, which is why B's bottom band is two rows where A's is one. The 3x44px keypad grid
+     that used to be here is deleted: the pad is a fixed pedestal sized by --pad-size, so only
+     placement belongs to the composition. */
   .defense-bottom > #movement-actions {
     grid-area: movement;
-    grid-template-columns: repeat(3, 44px);
     justify-self: start;
-    max-width: none;
   }
+  /* B has vertical room, so the strip gets its own line BELOW .integrity-meter at 30px. */
+  .gate-panel .hud-buff-strip { --buff-slot: 30px; max-width: 204px; }
+  .hud-route-rail .route-node > b { display: none; }
+  .hud-route-rail .route-node[data-route-state="active"] > b { display: inline; }
   .defense-bottom > #combat-input-cluster {
     grid-area: combat;
     justify-self: end;
@@ -3029,9 +3080,99 @@ html[data-defense-started="true"] .idle-return-toast {
 }
 .objective-copy > em { color: #9fc8dc; font-size: .55rem; font-style: normal; font-weight: 800; }
 
-/* The drag surface exists at every viewport, but is visible and pointer-active only on
-   coarse, physical landscape. The five legacy buttons stay mounted and keyboard-focusable. */
-.virtual-joystick { display: none; }
+/* ── Drag surface, octant ring, knob: UNCONDITIONAL ─────────────────────────────────────────
+   Cycle 10 §3.4. This block replaces `.virtual-joystick { display: none; }` plus the
+   `(pointer: coarse) and (orientation: landscape)` + `html[data-defense-portrait="false"]`
+   wrapper that used to be the only place the pad had a box. Both halves of that gate are gone:
+   the stick is the primary movement control on EVERY viewport and for EVERY pointer type,
+   including a fine desktop mouse, which is the whole point of retiring the keypad.
+
+   `display: grid` here is load-bearing beyond layout -- joystickActive() returns
+   `rect.width > 0 && rect.height > 0`, so this declaration IS the availability switch. Set it
+   to none anywhere and the five [data-move] buttons resume ownership with no JS change. */
+.virtual-joystick {
+  position: absolute;
+  inset: 0;
+  z-index: 2;                 /* local to #defense-edge-hud (z-index 5) */
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid rgb(137 173 201 / .62);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgb(30 48 67 / .82) 0 18%, transparent 19%),
+    repeating-conic-gradient(from 22.5deg, rgb(129 216 255 / .08) 0 43deg, transparent 43deg 45deg),
+    radial-gradient(circle, rgb(11 21 36 / .94), rgb(4 8 17 / .9));
+  box-shadow:
+    inset 0 0 0 .35rem rgb(3 7 17 / .62),
+    inset 0 0 1.4rem rgb(89 190 232 / .18),
+    0 .55rem 1.4rem rgb(0 0 0 / .52);
+}
+/* The rune is the one pad element carrying the stage accent (§6.2). The knob deliberately does
+   NOT -- it is the same object on every stage, so it stays gold. */
+.virtual-joystick-rune {
+  position: absolute;
+  inset: 16%;
+  border: 1px solid color-mix(in srgb, var(--stage-accent) 34%, transparent);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.virtual-joystick-knob {
+  --joystick-x: 0px;
+  --joystick-y: 0px;
+  position: relative;
+  z-index: 1;
+  width: var(--knob-size);
+  height: var(--knob-size);
+  border: 2px solid var(--canon-zenith-gold);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #8bdcff, #304c67 46%, #101a28 72%);
+  box-shadow: inset 0 0 .65rem rgb(255 255 255 / .2), 0 0 1rem rgb(111 208 255 / .38), 0 .35rem .7rem #000;
+  transform: translate3d(var(--joystick-x), var(--joystick-y), 0);
+  transition: transform 45ms linear;
+  pointer-events: none;
+}
+#movement-actions[data-joystick-direction="IDLE"] .virtual-joystick-knob {
+  border-color: rgb(189 202 213 / .72);
+  box-shadow: inset 0 0 .65rem rgb(255 255 255 / .15), 0 .35rem .7rem #000;
+}
+
+/* Octant ring: retained, VISIBLE, pointer-active, keyboard-focusable. These are simultaneously
+   the accessible fallback the browser suite asserts and the pad's own legend. They were
+   `opacity: 0; pointer-events: none` and revealed only on :focus-visible, which made them a
+   hidden keyboard affordance; now they are a real control at every viewport.
+
+   z-index 3 puts them ABOVE the drag disc so a deliberate press on a labelled control wins --
+   that ordering is why onMoveControlDown() hit-tests [data-move] FIRST (§3.2). Requirement C1
+   keeps them clear of the centre point so a drag starting at the centre is never intercepted. */
+#movement-actions > button[data-move] {
+  position: absolute;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  opacity: 1;
+  pointer-events: auto;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 900;
+}
+#movement-actions > button[data-move="N"] { top: 0; left: calc(50% - 22px); }
+#movement-actions > button[data-move="S"] { bottom: 0; left: calc(50% - 22px); }
+#movement-actions > button[data-move="W"] { top: calc(50% - 22px); left: 0; }
+#movement-actions > button[data-move="E"] { top: calc(50% - 22px); right: 0; }
+/* C1: IDLE VACATES THE CENTRE for the SE ring slot -- the only one of eight unoccupied by
+   N/W/E/S. It previously parked at `top/left: calc(50% - 22px)`, exactly where the octant drag
+   test presses, so with the ring pointer-active every centre-start drag would have resolved to
+   MOVE IDLE and no drag could begin. DOM order is untouched (C2): position is CSS-only. */
+#movement-actions > button[data-move="IDLE"] { right: 2%; bottom: 2%; top: auto; left: auto; }
+#movement-actions > button[data-move]:focus-visible {
+  z-index: 4;
+  outline: 2px solid var(--lantern-focus);
+  outline-offset: 2px;
+}
 
 .defense-cutscene[data-nonblocking="true"] {
   inset: auto 18vw max(8.6rem, calc(var(--defense-safe-bottom) + 8rem));
@@ -3046,8 +3187,25 @@ html[data-defense-started="true"] .idle-return-toast {
 }
 .defense-cutscene[data-nonblocking="true"] [data-cutscene-dismiss] { pointer-events: auto; }
 
-@media (pointer: coarse) and (orientation: landscape) {
-  html[data-defense-portrait="false"] .defense-bottom {
+/* ═══ COMPOSITION A — phone landscape 844x390 (spec §4.1) ════════════════════════════════════
+   HEIGHT is the constraint here: single top row, single bottom row, nothing stacks. This block
+   was `@media (pointer: coarse) and (orientation: landscape)` with an
+   `html[data-defense-portrait="false"]` prefix on every rule. Both are gone:
+
+   - `pointer: coarse` is dropped because the stick is no longer touch-exclusive (§3.1/S1). It is
+     replaced by `max-height: 560px`, which is what actually distinguishes composition A (a 390px
+     -tall phone in landscape) from composition C (a 900px-tall desktop). Keying the layout on
+     pointer type meant a fine-pointer 844x390 window got the base flex band instead of this
+     grid, which is exactly the desktop-left-on-the-keypad problem being retired.
+   - `data-defense-portrait="false"` is redundant with `(orientation: landscape)`: the attribute
+     is written as `String(height > width)` in defense-viewport.js, so it is the same predicate
+     expressed twice, and dropping the prefix also drops one attribute-selector's worth of
+     specificity that was fighting the unconditional pad rules above.
+
+   Every pad VISUAL rule that used to live in here is deleted, not moved -- it is unconditional
+   now. What remains is layout: the band grid and per-panel placement. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .defense-bottom {
     bottom: 0;
     display: grid;
     grid-template-columns: 7.25rem minmax(7.5rem, 1fr) minmax(5.5rem, 7rem) 9.4rem;
@@ -3060,225 +3218,64 @@ html[data-defense-started="true"] .idle-return-toast {
       max(.35rem, var(--defense-safe-bottom))
       max(.35rem, var(--defense-safe-left));
   }
-  html[data-defense-portrait="false"] .defense-bottom > #movement-actions {
-    grid-area: movement;
-    position: relative;
-    display: block;
-    width: 7.25rem;
-    height: 7.25rem;
-    max-width: none;
-    justify-self: start;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-  html[data-defense-portrait="false"] .virtual-joystick {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    border: 2px solid rgb(137 173 201 / .62);
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 50% 50%, rgb(30 48 67 / .82) 0 18%, transparent 19%),
-      repeating-conic-gradient(from 22.5deg, rgb(129 216 255 / .08) 0 43deg, transparent 43deg 45deg),
-      radial-gradient(circle, rgb(11 21 36 / .94), rgb(4 8 17 / .9));
-    box-shadow:
-      inset 0 0 0 .35rem rgb(3 7 17 / .62),
-      inset 0 0 1.4rem rgb(89 190 232 / .18),
-      0 .55rem 1.4rem rgb(0 0 0 / .52);
-  }
-  html[data-defense-portrait="false"] .virtual-joystick-rune {
-    position: absolute;
-    inset: 16%;
-    border: 1px solid rgb(221 200 105 / .22);
-    transform: rotate(45deg);
-    pointer-events: none;
-  }
-  html[data-defense-portrait="false"] .virtual-joystick-knob {
-    --joystick-x: 0px;
-    --joystick-y: 0px;
-    position: relative;
-    z-index: 1;
-    width: 44px;
-    height: 44px;
-    border: 2px solid #e5d48a;
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 35% 28%, #8bdcff, #304c67 46%, #101a28 72%);
-    box-shadow: inset 0 0 .65rem rgb(255 255 255 / .2), 0 0 1rem rgb(111 208 255 / .38), 0 .35rem .7rem #000;
-    transform: translate3d(var(--joystick-x), var(--joystick-y), 0);
-    transition: transform 45ms linear;
-    pointer-events: none;
-  }
-  html[data-defense-portrait="false"] #movement-actions[data-joystick-direction="IDLE"] .virtual-joystick-knob {
-    border-color: rgb(189 202 213 / .72);
-    box-shadow: inset 0 0 .65rem rgb(255 255 255 / .15), 0 .35rem .7rem #000;
-  }
-  html[data-defense-portrait="false"] #movement-actions > button[data-move] {
-    position: absolute;
-    z-index: 1;
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0;
-    opacity: 0;
-    pointer-events: none;
-  }
-  html[data-defense-portrait="false"] #movement-actions > button[data-move="N"] { top: 0; left: calc(50% - 22px); }
-  html[data-defense-portrait="false"] #movement-actions > button[data-move="S"] { bottom: 0; left: calc(50% - 22px); }
-  html[data-defense-portrait="false"] #movement-actions > button[data-move="W"] { top: calc(50% - 22px); left: 0; }
-  html[data-defense-portrait="false"] #movement-actions > button[data-move="E"] { top: calc(50% - 22px); right: 0; }
-  html[data-defense-portrait="false"] #movement-actions > button[data-move="IDLE"] { top: calc(50% - 22px); left: calc(50% - 22px); }
-  html[data-defense-portrait="false"] #movement-actions > button[data-move]:focus-visible {
-    z-index: 3;
-    opacity: 1;
-  }
-  html[data-defense-portrait="false"] .defense-bottom > .gate-panel {
+  /* Pad box comes from --pad-size in the unconditional rule; only placement is composition A's. */
+  .defense-bottom > #movement-actions { grid-area: movement; justify-self: start; }
+  .defense-bottom > .gate-panel {
     grid-area: gate;
     width: 100%;
     min-width: 0;
     max-width: none;
   }
-  html[data-defense-portrait="false"] .defense-bottom > #battle-actions {
+  .defense-bottom > #battle-actions {
     grid-area: actions;
     display: grid;
     grid-template-columns: repeat(2, minmax(44px, 1fr));
     width: 100%;
     max-width: none;
   }
-  html[data-defense-portrait="false"] .defense-bottom > #combat-input-cluster {
+  .defense-bottom > #combat-input-cluster {
     grid-area: combat;
-    width: 9.4rem;
+    width: var(--combat-cluster-width);
     height: 7.4rem;
     justify-self: end;
   }
+  /* A's width budget funds ONE line of 26px slots above the bars, and the row height is already
+     max(pad 116px, gate panel) -- so the strip must not push the gate panel past 116px or it
+     steals from the central clear band, which has only ~8px of slack against its 180px floor. */
+  .gate-panel .hud-buff-strip { --buff-slot: 26px; max-width: 171px; }
+  .hud-route-rail { gap: .2rem; }
+  .hud-route-rail .route-node > b { display: none; }
+  .hud-route-rail .route-node[data-route-state="active"] > b { display: inline; }
 }
 
-/* Cycle 9 — portrait analog cutover.
-
-   The stick's JS contract (app.js `joystickActive()` / `updateJoystick`) is
-   orientation-agnostic: it gates on `(pointer: coarse)` plus a laid-out
-   `[data-joystick]` box. It was measured correct in portrait while still
-   dormant, because `.virtual-joystick { display: none }` above is lifted ONLY
-   inside the landscape block, and every rule there is additionally gated on
-   `html[data-defense-portrait="false"]`. TWO independent gates, so widening the
-   media query alone would not have shown the stick on an upright phone.
-
-   This block grants the box in portrait and nothing else. It deliberately does
-   NOT touch `.defense-bottom`'s portrait grid, the safe-edge insets, or any
-   other bottom-bar child: those geometries are locked by
-   tests/defense-hud-responsive-browser.cjs. Visual values are copied from the
-   landscape rules verbatim so the stick has one visual language, not two.
-
-   The five `[data-move]` buttons stay mounted, keyboard-focusable, and
-   focus-visible-revealed underneath, exactly as in landscape — the stick is an
-   additive surface, never a replacement, so no input capability is lost. */
-@media (pointer: coarse) and (orientation: portrait) {
-  html[data-defense-portrait="true"] .defense-bottom > #movement-actions {
-    position: relative;
-    display: block;
-    width: 7.25rem;
-    height: 7.25rem;
-    max-width: none;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-  html[data-defense-portrait="true"] .virtual-joystick {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    border: 2px solid rgb(137 173 201 / .62);
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 50% 50%, rgb(30 48 67 / .82) 0 18%, transparent 19%),
-      repeating-conic-gradient(from 22.5deg, rgb(129 216 255 / .08) 0 43deg, transparent 43deg 45deg),
-      radial-gradient(circle, rgb(11 21 36 / .94), rgb(4 8 17 / .9));
-    box-shadow:
-      inset 0 0 0 .35rem rgb(3 7 17 / .62),
-      inset 0 0 1.4rem rgb(89 190 232 / .18),
-      0 .55rem 1.4rem rgb(0 0 0 / .52);
-  }
-  html[data-defense-portrait="true"] .virtual-joystick-rune {
-    position: absolute;
-    inset: 16%;
-    border: 1px solid rgb(221 200 105 / .22);
-    transform: rotate(45deg);
-    pointer-events: none;
-  }
-  html[data-defense-portrait="true"] .virtual-joystick-knob {
-    --joystick-x: 0px;
-    --joystick-y: 0px;
-    position: relative;
-    z-index: 1;
-    width: 44px;
-    height: 44px;
-    border: 2px solid #e5d48a;
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 35% 28%, #8bdcff, #304c67 46%, #101a28 72%);
-    box-shadow: inset 0 0 .65rem rgb(255 255 255 / .2), 0 0 1rem rgb(111 208 255 / .38), 0 .35rem .7rem #000;
-    transform: translate3d(var(--joystick-x), var(--joystick-y), 0);
-    transition: transform 45ms linear;
-    pointer-events: none;
-  }
-  html[data-defense-portrait="true"] #movement-actions[data-joystick-direction="IDLE"] .virtual-joystick-knob {
-    border-color: rgb(189 202 213 / .72);
-    box-shadow: inset 0 0 .65rem rgb(255 255 255 / .15), 0 .35rem .7rem #000;
-  }
-  html[data-defense-portrait="true"] #movement-actions > button[data-move] {
-    position: absolute;
-    z-index: 1;
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0;
-    opacity: 0;
-    pointer-events: none;
-  }
-  html[data-defense-portrait="true"] #movement-actions > button[data-move="N"] { top: 0; left: calc(50% - 22px); }
-  html[data-defense-portrait="true"] #movement-actions > button[data-move="S"] { bottom: 0; left: calc(50% - 22px); }
-  html[data-defense-portrait="true"] #movement-actions > button[data-move="W"] { top: calc(50% - 22px); left: 0; }
-  html[data-defense-portrait="true"] #movement-actions > button[data-move="E"] { top: calc(50% - 22px); right: 0; }
-  html[data-defense-portrait="true"] #movement-actions > button[data-move="IDLE"] { top: calc(50% - 22px); left: calc(50% - 22px); }
-  html[data-defense-portrait="true"] #movement-actions > button[data-move]:focus-visible {
-    z-index: 3;
-    opacity: 1;
-  }
-}
-
-@media (pointer: coarse) and (orientation: landscape) and (max-height: 480px) {
-  html[data-defense-portrait="false"] .defense-top {
+/* Composition A, top band (spec §4.1). Same de-gating as the block above: `pointer: coarse`
+   dropped so a fine-pointer 844x390 window gets the same four-column strip, and the
+   `html[data-defense-portrait="false"]` prefix dropped as a duplicate of (orientation:
+   landscape). Target ceiling is 78px so the central clear band keeps its ~190px. */
+@media (orientation: landscape) and (max-height: 480px) {
+  .defense-top {
     top: max(.2rem, var(--defense-safe-top));
     display: grid;
     grid-template-columns: minmax(0, .9fr) minmax(9rem, 1fr) minmax(0, .8fr) minmax(0, 1.1fr);
     gap: .22rem;
     align-items: start;
   }
-  html[data-defense-portrait="false"] .defense-top > .hud-panel,
-  html[data-defense-portrait="false"] .defense-top > .top-right-hud {
+  .defense-top > .hud-panel,
+  .defense-top > .top-right-hud {
     width: 100%;
     min-width: 0;
     max-width: none;
   }
-  html[data-defense-portrait="false"] .defense-top > .hud-panel,
-  html[data-defense-portrait="false"] .objective-chip {
+  .defense-top > .hud-panel,
+  .objective-chip {
     max-width: none;
     padding: .22rem .32rem;
     font-size: .62rem;
   }
-  html[data-defense-portrait="false"] .hud-mission #battle-domain,
-  html[data-defense-portrait="false"] .hud-mission #battle-terrain-context,
-  html[data-defense-portrait="false"] .hud-mission .hud-eyebrow,
-  html[data-defense-portrait="false"] .hud-legion .hud-eyebrow {
+  .hud-mission #battle-domain,
+  .hud-mission #battle-terrain-context,
+  .hud-mission .hud-eyebrow,
+  .hud-legion .hud-eyebrow {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -3286,23 +3283,23 @@ html[data-defense-started="true"] .idle-return-toast {
     overflow: hidden;
     clip-path: inset(50%);
   }
-  html[data-defense-portrait="false"] .hud-loop-state { min-width: 9rem; }
-  html[data-defense-portrait="false"] .hud-loop-state .hud-loop-grid {
+  .hud-loop-state { min-width: 9rem; }
+  .hud-loop-state .hud-loop-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: .08rem .25rem;
   }
-  html[data-defense-portrait="false"] .hud-loop-state span:not(.hud-eyebrow),
-  html[data-defense-portrait="false"] .hud-legion { font-size: .52rem; }
-  html[data-defense-portrait="false"] .top-right-hud,
-  html[data-defense-portrait="false"] .hud-order-strip,
-  html[data-defense-portrait="false"] .objective-chip { width: 100%; max-width: none; }
-  html[data-defense-portrait="false"] .objective-copy > b { font-size: .56rem; }
-  html[data-defense-portrait="false"] .objective-chip strong { font-size: .65rem; line-height: 1.14; }
-  html[data-defense-portrait="false"] .defense-bottom > .gate-panel { padding: .25rem .35rem; }
-  html[data-defense-portrait="false"] .gate-panel-portrait { width: 2rem; height: 2rem; }
-  html[data-defense-portrait="false"] .gate-panel-copy > strong { font-size: .56rem; }
-  html[data-defense-portrait="false"] .gate-panel .hud-eyebrow,
-  html[data-defense-portrait="false"] .gate-panel #battle-enemies {
+  .hud-loop-state span:not(.hud-eyebrow),
+  .hud-legion { font-size: .52rem; }
+  .top-right-hud,
+  .hud-order-strip,
+  .objective-chip { width: 100%; max-width: none; }
+  .objective-copy > b { font-size: .56rem; }
+  .objective-chip strong { font-size: .65rem; line-height: 1.14; }
+  .defense-bottom > .gate-panel { padding: .25rem .35rem; }
+  .gate-panel-portrait { width: 2rem; height: 2rem; }
+  .gate-panel-copy > strong { font-size: .56rem; }
+  .gate-panel .hud-eyebrow,
+  .gate-panel #battle-enemies {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -3310,14 +3307,358 @@ html[data-defense-started="true"] .idle-return-toast {
     overflow: hidden;
     clip-path: inset(50%);
   }
-  html[data-defense-portrait="false"] .defense-cutscene[data-nonblocking="true"] {
+  .defense-cutscene[data-nonblocking="true"] {
     inset: auto 20vw max(7.8rem, calc(var(--defense-safe-bottom) + 7.4rem));
   }
-  html[data-defense-portrait="false"] .defense-cutscene[data-nonblocking="true"] .cutscene-frame {
+  .defense-cutscene[data-nonblocking="true"] .cutscene-frame {
     grid-template-columns: minmax(5.5rem, .22fr) minmax(0, 1fr) auto;
     width: min(60vw, 35rem);
     padding: .4rem .5rem;
   }
-  html[data-defense-portrait="false"] .defense-cutscene[data-nonblocking="true"] .cutscene-heading h2,
-  html[data-defense-portrait="false"] .defense-cutscene[data-nonblocking="true"] .cutscene-line { font-size: .68rem; }
+  .defense-cutscene[data-nonblocking="true"] .cutscene-heading h2,
+  .defense-cutscene[data-nonblocking="true"] .cutscene-line { font-size: .68rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   CYCLE 10 — dungeon-aware HUD readouts, stage accents, and desktop compositions C/D
+   Spec: _workspace/current/ui/hud-overhaul-joystick-cutover-spec.md §4.3-4.5, §5, §6, §7.5
+   Appended as one additive block rather than woven into the cascade above: the cycle-9 session
+   is editing this file in a parallel worktree, and an inserted block merges where a reflow of
+   existing regions conflicts across hundreds of lines.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── §6.1 stage accent binding, by ATTRIBUTE ────────────────────────────────────────────────
+   Keyed on the existing data-stage-id, which app.js writes at mount and re-asserts every
+   render. No JS style write is involved, so this cannot drift from the simulation. */
+#defense-battle-surface[data-stage-id="cinder-span"] { --stage-accent: var(--canon-cinder-ember); }
+#defense-battle-surface[data-stage-id="abyss-chancel"] { --stage-accent: var(--canon-oath-violet); }
+#defense-battle-surface[data-stage-id="echo-throne"] { --stage-accent: var(--canon-echo-ice); }
+
+/* ── §5.1 route rail ────────────────────────────────────────────────────────────────────────
+   Four discrete nodes with per-node state, NOT a continuous progress fill (§6.3 rejects the
+   generic-progress-bar reading). Every state is carried by DIAMETER AND FILL, never by hue
+   alone: cleared = filled + inner ring, active = filled at 1.35x, pending = hollow. That is
+   what keeps it legible with the accent removed and under prefers-contrast. */
+.hud-route-rail {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  margin: .18rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.hud-route-rail .route-node {
+  display: flex;
+  align-items: center;
+  gap: .22rem;
+  min-width: 0;
+}
+/* The rail's own connector. Drawn on the node rather than as a separate element so the node
+   count can vary (spec R14: the validator permits more than four waypoints). */
+.hud-route-rail .route-node + .route-node::before {
+  content: "";
+  width: .5rem;
+  height: 1px;
+  background: var(--rc-panel-border);
+}
+.hud-route-rail .route-pip {
+  display: block;
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--canon-cold-steel);
+  border-radius: 50%;
+  background: transparent;
+}
+.hud-route-rail .route-node[data-route-state="cleared"] .route-pip {
+  border-color: var(--canon-cyan-rift);
+  background: var(--canon-cyan-rift);
+  box-shadow: inset 0 0 0 1px rgb(4 8 17 / .85);
+}
+.hud-route-rail .route-node[data-route-state="active"] .route-pip {
+  width: 13.5px;                                  /* 1.35x of 10px -- the SIZE is the state */
+  height: 13.5px;
+  border-color: var(--stage-accent);
+  background: var(--stage-accent);
+}
+.hud-route-rail .route-node[data-route-state="pending"] .route-pip { opacity: .55; }
+.hud-route-rail .route-node > b {
+  overflow: hidden;
+  color: #b7c9dc;
+  font-size: .54rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hud-route-rail .route-node[data-route-state="active"] > b { color: #e8f4ff; }
+
+/* ── §5.2 gimmick chip ──────────────────────────────────────────────────────────────────────
+   SUBORDINATE to the world decal by contract: the decal is the primary telegraph and the chip
+   must not duplicate it, so there is deliberately no countdown number here. Auto-hides on the
+   empty attribute, which is the absent state the renderer writes when nothing is armed. */
+.hud-gimmick-chip {
+  display: none;
+  align-items: center;
+  gap: .25rem;
+  height: 22px;
+  margin: .18rem 0 0;
+  padding: 0 .34rem;
+  border: 1px solid var(--rc-panel-border);
+  border-radius: 4px;
+  background: rgb(8 14 26 / .82);
+  font-size: .55rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+.hud-gimmick-chip[data-gimmick-state="armed"],
+.hud-gimmick-chip[data-gimmick-state="triggered"] { display: flex; }
+.hud-gimmick-chip[data-gimmick-state="armed"] { border-color: var(--stage-accent); }
+.hud-gimmick-chip[data-gimmick-state="triggered"] {
+  border-color: var(--canon-zenith-gold);
+  border-left-width: 3px;
+}
+.hud-gimmick-chip .gimmick-glyph { color: var(--stage-accent); font-size: .7rem; line-height: 1; }
+.hud-gimmick-chip .gimmick-label {
+  overflow: hidden;
+  color: #e8f4ff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Deformation delta. The narrowing is a simulation-enforced hazard band INSIDE the authored
+   corridor, never a moved plane, so this reads as a proportion and not as a geometry change. */
+.hud-gimmick-chip .gimmick-bars { color: var(--canon-cinder-ember); letter-spacing: -.04em; }
+.hud-gimmick-chip .gimmick-overflow {
+  padding-left: .18rem;
+  border-left: 1px solid var(--rc-panel-border);
+  color: #9fc8dc;
+}
+
+/* ── §5.3 active-buff strip ─────────────────────────────────────────────────────────────────
+   A READOUT, not a control: no slot is actionable, which is why the 44px target floor does not
+   apply and why the slots are <li>/<span> and never <button>. A <button> slot would be
+   collected by the phone suite's `.defense-bottom button` sweep and fail both the visible and
+   the >=44x44 assertion at 26-36px.
+
+   Rarity is encoded with NO HUE AT ALL -- border weight plus corner treatment. Four rarity
+   colours on one strip would consume the entire <=5 HUD colour budget by themselves, and
+   rarity is requested-grade information, not the glance-grade signal that earns a colour. */
+.hud-buff-strip {
+  --buff-slot: 26px;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: .22rem;
+  margin: .22rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.hud-buff-strip:empty { display: none; }
+.hud-buff-strip .buff-slot {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-rows: 1fr auto;
+  place-items: center;
+  width: var(--buff-slot);
+  height: var(--buff-slot);
+  border: 1px solid var(--rc-panel-border);
+  border-radius: 3px;
+  background: rgb(10 17 32 / .9);
+}
+.hud-buff-strip .buff-icon {
+  width: calc(var(--buff-slot) - 10px);
+  height: calc(var(--buff-slot) - 10px);
+}
+.hud-buff-strip .buff-stacks {
+  position: absolute;
+  top: -2px;
+  right: -1px;
+  color: var(--canon-zenith-gold);
+  font-size: .46rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 2px #000;
+}
+.hud-buff-strip .buff-remaining {
+  color: #b7c9dc;
+  font-size: .44rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+/* Rarity: weight + corner, never hue. */
+.hud-buff-strip .buff-slot[data-buff-rarity="resonant"],
+.hud-buff-strip .buff-slot[data-buff-rarity="relic"] { border-width: 2px; }
+.hud-buff-strip .buff-slot[data-buff-rarity="resonant"],
+.hud-buff-strip .buff-slot[data-buff-rarity="relic"] {
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 0 100%);
+}
+/* Pre-expiry: a HATCHED OVERLAY plus the numeric seconds label, not a hue shift. Both channels
+   survive prefers-reduced-motion, where the blink is removed (§7.5). */
+.hud-buff-strip .buff-slot[data-buff-warning="true"] {
+  border-color: var(--canon-cinder-ember);
+  animation: buff-warn-pulse 900ms steps(2, end) infinite;
+}
+.hud-buff-strip .buff-slot[data-buff-warning="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    135deg, rgb(243 89 44 / .3) 0 2px, transparent 2px 5px);
+  pointer-events: none;
+}
+@keyframes buff-warn-pulse {
+  from { box-shadow: 0 0 0 0 rgb(243 89 44 / .5); }
+  to { box-shadow: 0 0 0 2px rgb(243 89 44 / 0); }
+}
+/* Stack-count notches -- the second, non-numeric channel for stacks (§7). */
+.hud-buff-strip .buff-slot[data-buff-stacks="2"]::before,
+.hud-buff-strip .buff-slot[data-buff-stacks="3"]::before {
+  content: "";
+  position: absolute;
+  bottom: 1px;
+  left: 1px;
+  width: 3px;
+  height: 1px;
+  background: var(--canon-zenith-gold);
+  box-shadow: 4px 0 0 var(--canon-zenith-gold);
+}
+.hud-buff-strip .buff-slot[data-buff-stacks="3"]::before { box-shadow: 4px 0 0 var(--canon-zenith-gold), 8px 0 0 var(--canon-zenith-gold); }
+
+/* The panel rule `.hud-panel strong, .hud-panel span { display: block }` would otherwise turn
+   every pip, glyph and readout span above into a block and break all three layouts. Scoped
+   re-assert rather than a change to that rule, which many panels depend on. */
+.hud-panel .hud-route-rail span,
+.hud-panel .hud-gimmick-chip span,
+.hud-panel .hud-buff-strip span { display: inline-flex; position: static; }
+.hud-panel .hud-route-rail .route-pip { display: block; }
+.hud-panel .hud-buff-strip .buff-stacks { position: absolute; display: block; }
+.hud-panel .hud-buff-strip .buff-icon { display: block; }
+.hud-panel .sr-only { position: absolute; display: block; }
+
+/* ── §4.3 COMPOSITION C — desktop 1440x900 ──────────────────────────────────────────────────
+   Width buys SIMULTANEOUS CONTEXT, not larger phone spacing. This is where the route rail
+   expands from a single active label to all four named waypoints and the buff strip gains
+   percent labels. `justify-content: flex-start` from the >=1000px block is retained -- it is
+   what keeps the four top panels one left strip and the viewport centre free for the frozen
+   growth modal. */
+@media (min-width: 1000px) and (min-height: 600px) {
+  #movement-actions { --pad-size: 9rem; --knob-size: 56px; }
+  .defense-bottom { --combat-cluster-width: 12rem; align-items: flex-end; }
+  .defense-bottom > #movement-actions { order: 2; }
+  .defense-bottom > .gate-panel { order: 1; max-width: min(34vw, 460px); }
+  .defense-bottom > #combat-input-cluster { order: 3; width: var(--combat-cluster-width); }
+  .defense-bottom > #battle-actions { order: 4; max-width: min(18vw, 260px); }
+  .hud-mission { max-width: min(24vw, 340px); }
+  .hud-loop-state { max-width: min(30vw, 420px); }
+  .hud-legion { max-width: min(24vw, 340px); }
+  .top-right-hud { max-width: min(26vw, 360px); }
+  /* All four labels render at C/D -- the width is there, so the rail stops being pips-only. */
+  .hud-route-rail .route-node > b { display: inline; max-width: 5.5rem; font-size: .58rem; }
+  .hud-route-rail .route-pip { width: 12px; height: 12px; }
+  .hud-route-rail .route-node[data-route-state="active"] .route-pip { width: 16.2px; height: 16.2px; }
+  .hud-gimmick-chip { height: 26px; font-size: .58rem; }
+  .gate-panel .hud-buff-strip { --buff-slot: 34px; max-width: 234px; }
+}
+
+/* ── §4.4 COMPOSITION D — 1920x1080 ─────────────────────────────────────────────────────────
+   NOT a wider C. At 1920 the four top panels consume ~1480px of the band packed left, leaving
+   ~440px of dead right edge; D spends it by right-anchoring .top-right-hud, which is the split
+   C does not have. */
+@media (min-width: 1600px) {
+  #movement-actions { --pad-size: 10rem; --knob-size: 60px; }
+  .defense-top { flex-wrap: nowrap; }
+  .defense-top > .top-right-hud { margin-left: auto; max-width: 380px; }
+  .hud-mission { max-width: 340px; }
+  .hud-loop-state { max-width: 440px; }
+  .hud-legion { max-width: 360px; }
+  .defense-bottom { --combat-cluster-width: 13rem; }
+  .defense-bottom > .gate-panel { max-width: 520px; }
+  .defense-bottom > #battle-actions { max-width: 280px; }
+  .gate-panel .hud-buff-strip { --buff-slot: 36px; max-width: 252px; }
+}
+
+/* ── §4.5 cutscene clearance ────────────────────────────────────────────────────────────────
+   Replaces the rejected hard-coded `margin-left: 200px; margin-right: 220px`, which was derived
+   from a 160px pad that never shipped and is wrong for all four compositions. Clearance now
+   tracks the real boxes through their own tokens, so it cannot drift when a composition
+   resizes the pad or the cluster. */
+.defense-cutscene .cutscene-frame {
+  --pad-clearance: calc(var(--pad-size, 7.25rem) + 1rem);
+  --combat-clearance: calc(var(--combat-cluster-width, 9.4rem) + 1rem);
+}
+@media (orientation: landscape) and (min-width: 700px) {
+  .defense-cutscene .cutscene-frame {
+    margin-left: var(--pad-clearance);
+    margin-right: var(--combat-clearance);
+  }
+}
+
+/* ── §7.5 reduced motion ────────────────────────────────────────────────────────────────────
+   Every removal below keeps its information in a static channel, so nothing exists only in
+   motion: the knob still tracks the pointer 1:1 (only interpolation is dropped), the active pip
+   keeps its 1.35x diameter, and the warning slot keeps both the hatch overlay and the numeric
+   seconds label. */
+@media (prefers-reduced-motion: reduce) {
+  .virtual-joystick-knob { transition: none; }
+  .hud-route-rail .route-node[data-route-state="active"] .route-pip { animation: none; }
+  .hud-buff-strip .buff-slot[data-buff-warning="true"] { animation: none; }
+  .hud-gimmick-chip { animation: none; }
+}
+
+/* --- Boss entrance band (보스 등장씬) -----------------------------------
+   Non-blocking status band shown for the simulation-authored entrance window
+   (BOSS_SPAWNED intro.durationTicks). It never covers the play area centre and
+   never takes pointer events, because the encounter is live underneath it. */
+.defense-boss-intro {
+  position: absolute;
+  left: 50%;
+  top: max(18%, calc(var(--defense-safe-top) + 4rem));
+  transform: translateX(-50%);
+  z-index: 6;
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  max-width: min(30rem, 86vw);
+  text-align: center;
+  pointer-events: none;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 122, 122, 0.55);
+  background: linear-gradient(180deg, rgba(24, 6, 10, 0.86), rgba(10, 4, 12, 0.72));
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.55), 0 0 1.5rem rgba(255, 77, 77, 0.28);
+  animation: boss-intro-rise 320ms ease-out both;
+}
+
+.defense-boss-intro .boss-intro-kicker {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(255, 168, 168, 0.9);
+}
+
+.defense-boss-intro .boss-intro-title {
+  margin: 0;
+  font-size: clamp(1.1rem, 4.2vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff2f2;
+  text-shadow: 0 0 0.9rem rgba(255, 77, 77, 0.5);
+}
+
+.defense-boss-intro .boss-intro-subtitle {
+  margin: 0;
+  font-size: clamp(0.78rem, 3vw, 0.95rem);
+  line-height: 1.45;
+  color: rgba(238, 226, 232, 0.92);
+}
+
+@keyframes boss-intro-rise {
+  from { opacity: 0; transform: translate(-50%, 0.75rem) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .defense-boss-intro { animation: none; }
 }

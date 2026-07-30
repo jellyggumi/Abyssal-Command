@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "slabId": "cinder-span-floor",
+  "generatedAt": "2026-07-30T14:04:31.152744+00:00",
+  "tool": "deproject-terrain-plate.py",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "source": {
+    "path": "assets/mesh/terrain/terrain-cinder-span/raw/terrain-cinder-span-terrain.raw.png",
+    "sha256": "97a8e8541a8bb5248a7f6d0bcefd68ae90631d78f91abb2e2364b0a82085f2e6",
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  "silhouette": {
+    "maskCoverage": 0.4853521982828776,
+    "topFaceCorners": {
+      "north": [
+        817.0,
+        37.0
+      ],
+      "east": [
+        1509.0,
+        333.0
+      ],
+      "south": [
+        714.0,
+        658.0
+      ],
+      "west": [
+        22.0,
+        362.0
+      ]
+    },
+    "insetFraction": 0.012
+  },
+  "output": {
+    "albedo": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/cinder-span-floor-albedo.png",
+    "height": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/cinder-span-floor-height.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "seamless": true,
+    "seamMargin": 0.06,
+    "seamErrorBeforeBlend": {
+      "horizontalMeanAbs": 0.0664086348846629,
+      "verticalMeanAbs": 0.06720686770924307
+    },
+    "seamErrorAfterBlend": {
+      "horizontalMeanAbs": 6.301925127571995e-19,
+      "verticalMeanAbs": 6.550388125433256e-19
+    }
+  }
+}

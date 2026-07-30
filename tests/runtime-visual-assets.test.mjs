@@ -53,15 +53,21 @@ test("the three-stage catalog retains source meshes while routing all terrain to
       ...profile.presentation.vfxCues.map(({ modelPath }) => modelPath),
     ];
     await t.test(stageId, () => {
-      assert.equal(profile.terrainRuntimeEligible, false, `${stageId}: no retained terrain source is gameplay-eligible`);
-      assert.equal(profile.terrainGlbPath, null, `${stageId}: an ineligible source cannot be advertised as runtime terrain`);
+      // Cycle 10 supersession. Until now every stage routed gameplay onto a procedural
+      // plane because the only retained terrains were authored dioramas and rejected
+      // textured candidates. Each stage now ships a composed slab floor authored in
+      // renderer world coordinates, so the invariant inverts: assert the promoted
+      // terrain contract instead of asserting that no terrain is eligible. The
+      // rejected sources stay retained and are still asserted below, so this replaces
+      // the guard rather than removing it.
+      assert.equal(profile.terrainRuntimeEligible, true, `${stageId}: the composed slab floor is gameplay-eligible`);
+      assert.match(profile.terrainGlbPath, /^assets\/mesh\/terrain\/.*\/runtime\/.*-floor\.glb$/u, `${stageId}: runtime terrain must be a promoted floor under runtime/`);
+      assert.ok(!profile.terrainGlbPath.includes("/textured-candidate/"), `${stageId}: a candidate path is never promotable`);
+      assert.equal(profile.terrainFallback, undefined, `${stageId}: an eligible floor must not also carry a procedural fallback`);
       assert.match(profile.terrainSourceCandidatePath, /^assets\/mesh\/terrain\/.*\.glb$/u, `${stageId}: retained source must remain an inspectable terrain GLB`);
-      assert.equal(profile.terrainFallback?.kind, "procedural-flat-support", `${stageId}: ineligible terrain must route to procedural support`);
       if (stageId === "cinder-span") {
-        assert.equal(profile.terrainFallback.reason, "authored-diorama-not-flat-gameplay-eligible", "Cinder must record why its promoted diorama cannot be gameplay terrain");
         assert.match(profile.terrainSourceCandidatePath, /\/runtime\/.*\.glb$/u, "Cinder must retain the promoted diorama for offline integrity checks");
       } else {
-        assert.equal(profile.terrainFallback.reason, "source-candidate-not-runtime-eligible", `${stageId}: textured candidate rejection reason must remain explicit`);
         assert.match(profile.terrainSourceCandidatePath, /\/textured-candidate\/.*\.glb$/u, `${stageId}: retained source must remain marked as a textured candidate`);
       }
       assert.equal(paths.every((assetPath) => retained.has(assetPath)), true, `${stageId}: every retained source and runtime model must be in the frozen asset allowlist`);

@@ -43,6 +43,29 @@ function fakeNode() {
     addEventListener: noop,
     removeEventListener: noop,
     append: noop,
+    // `app.js` reads a wider DOM surface than this stub originally carried -- it calls
+    // `replaceChildren()` on rail and beat nodes (`:3189`, `:2863`, `:382`) and iterates
+    // `rail.children`. The gaps only surfaced once terrain became runtime-eligible: the
+    // load attempt fails under plain `node --test` (no URL base), and its planar-support
+    // fallback drives shell code that touches these members. Because that happens after
+    // the triggering test has ended, a missing member appears as an unhandledRejection
+    // attributed to whichever test was running -- so keep this list complete rather than
+    // adding one member per failure.
+    replaceChildren: noop,
+    children: [],
+    childNodes: [],
+    firstChild: null,
+    lastChild: null,
+    appendChild: (node) => node,
+    removeChild: (node) => node,
+    insertBefore: (node) => node,
+    contains: () => false,
+    getAttribute: () => null,
+    removeAttribute: noop,
+    hasAttribute: () => false,
+    closest: () => null,
+    scrollIntoView: noop,
+    textContent: "",
     focus: noop,
     remove: noop,
     getBoundingClientRect: () => ({ bottom: 360, height: 360, left: 0, right: 640, top: 0, width: 640, x: 0, y: 0 }),

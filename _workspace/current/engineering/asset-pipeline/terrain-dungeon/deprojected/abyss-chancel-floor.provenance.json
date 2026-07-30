@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "slabId": "abyss-chancel-floor",
+  "generatedAt": "2026-07-30T14:04:35.643295+00:00",
+  "tool": "deproject-terrain-plate.py",
+  "assetLane": "concept",
+  "runtimeEligible": false,
+  "source": {
+    "path": "assets/mesh/terrain/terrain-abyss-chancel/terrain-abyss-chancel-terrain.raw.png",
+    "sha256": "4292ea6a8de3862564d18196b287f64b50456519931eb801ee558d8947977cea",
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  "silhouette": {
+    "maskCoverage": 0.4306786855061849,
+    "topFaceCorners": {
+      "north": [
+        878.0,
+        63.0
+      ],
+      "east": [
+        1472.0,
+        326.0
+      ],
+      "south": [
+        673.0,
+        745.0
+      ],
+      "west": [
+        79.0,
+        482.0
+      ]
+    },
+    "insetFraction": 0.012
+  },
+  "output": {
+    "albedo": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/abyss-chancel-floor-albedo.png",
+    "height": "_workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/abyss-chancel-floor-height.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "seamless": true,
+    "seamMargin": 0.06,
+    "seamErrorBeforeBlend": {
+      "horizontalMeanAbs": 0.051221371682364826,
+      "verticalMeanAbs": 0.04748571422978168
+    },
+    "seamErrorAfterBlend": {
+      "horizontalMeanAbs": 8.583267198843576e-20,
+      "verticalMeanAbs": 1.0842021724855044e-19
+    }
+  }
+}

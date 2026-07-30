@@ -44,6 +44,8 @@ const TARGET_CAUSE_ORDER = Object.freeze([
   "PROJECTILE_IMPACT",
   "SKILL_SELECTED_PASSIVE_INTEGRITY",
   "SKILL_CAST_INTEGRITY",
+  "WARDENS_VIGIL_REGEN",
+  "WARDENS_WARD_TRIGGERED",
 ]);
 // COMMANDER_GATE_DIVERSION is retained in the contract vocabulary as an annotation-only mirror; it never appears in `causes`.
 const CONTROLLER = Object.freeze({
@@ -240,6 +242,8 @@ function eventCauseForTarget(event, target) {
   if (event.type === "ENCOUNTER_REWARD_GRANTED" && target === "gate" && event.gateRecovered > 0) return "ENCOUNTER_REWARD_GRANTED";
   if (event.type === "ENCOUNTER_REWARD_GRANTED" && target === "commander" && event.commanderRecovered > 0) return "ENCOUNTER_REWARD_GRANTED";
   if (event.type === "SKILL_CAST" && target === "commander" && Number.isFinite(SKILLS[event.skillId]?.integrity) && SKILLS[event.skillId].integrity > 0) return "SKILL_CAST_INTEGRITY";
+  if (event.type === "WARDENS_VIGIL_REGEN" && target === "commander" && event.regen > 0) return "WARDENS_VIGIL_REGEN";
+  if (event.type === "WARDENS_WARD_TRIGGERED" && target === "commander" && event.shield > 0) return "WARDENS_WARD_TRIGGERED";
   if (event.type === "GATE_BREACHED" && target === "gate" && event.damage > 0) {
     return "GATE_BREACHED";
   }
@@ -286,6 +290,10 @@ function buildCompositeRecord(before, after, events, target) {
       ? (target === "gate" ? event.gateRecovered : event.commanderRecovered)
       : cause === "SKILL_SELECTED_PASSIVE_INTEGRITY"
         ? SKILLS[event.skillId].maxIntegrity
+        : cause === "WARDENS_VIGIL_REGEN"
+          ? event.regen
+        : cause === "WARDENS_WARD_TRIGGERED"
+          ? event.shield
         : cause === "SKILL_CAST_INTEGRITY"
           ? SKILLS[event.skillId].integrity
           : -event.damage;

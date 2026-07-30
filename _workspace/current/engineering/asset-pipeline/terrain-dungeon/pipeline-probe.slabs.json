@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "stageId": "pipeline-probe",
+  "note": "Throwaway 3-slab manifest that exercises build-dungeon-floor-blender.py end to end before the authored dungeon layouts land. Not a stage. Never promoted.",
+  "arena": { "width": 24000, "height": 12000 },
+  "slabs": [
+    {
+      "id": "pipeline-probe:slab-01",
+      "material": "basalt-ember",
+      "texture": "cinder-span-floor",
+      "rect": { "minX": 600, "maxX": 8600, "minY": 800, "maxY": 11200 },
+      "uvRepeat": 4,
+      "rotationTurns": 0,
+      "tint": [1.0, 0.96, 0.92]
+    },
+    {
+      "id": "pipeline-probe:slab-02",
+      "material": "flagstone-oath",
+      "texture": "abyss-chancel-floor",
+      "rect": { "minX": 8600, "maxX": 16000, "minY": 800, "maxY": 11200 },
+      "uvRepeat": 3,
+      "rotationTurns": 1,
+      "tint": [0.96, 0.94, 1.0]
+    },
+    {
+      "id": "pipeline-probe:slab-03",
+      "material": "polished-echo",
+      "texture": "echo-throne-floor",
+      "rect": { "minX": 16000, "maxX": 23400, "minY": 800, "maxY": 11200 },
+      "uvRepeat": 3,
+      "rotationTurns": 0,
+      "tint": [0.94, 0.97, 1.0]
+    }
+  ]
+}

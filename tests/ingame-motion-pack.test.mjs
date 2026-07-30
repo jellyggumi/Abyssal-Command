@@ -41,9 +41,39 @@ const CANONICAL_BASE_ACTIONS = [
   "die",
   "show",
 ];
-const OVERLAY_ACTIONS = new Set([
-  "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence",
+const OVERLAY_CLIP_SOURCES = new Map([
+  // The nine base actions are the original shipped roster; their sources are unchanged, so every
+  // rig keeps exactly the motion it already had. The twelve below are additive and turn on
+  // routing the runtime already had (directional reactions, exact attack delivery, terminal and
+  // entrance beats) for every compatible rig at once.
+  ["idle", "Unarmed Idle.fbx"],
+  ["move", "Walking.fbx"],
+  ["run", "Running.fbx"],
+  ["hit", "Standing React Small From Left.fbx"],
+  ["bighit", "Receive Uppercut To The Face.fbx"],
+  ["attack", "Punching.fbx"],
+  ["critical", "Illegal Elbow Punch.fbx"],
+  ["avoid", "Dodging.fbx"],
+  ["defence", "Body Block.fbx"],
+  ["hit_front", "Pain Gesture.fbx"],
+  ["hit_back", "Standing React Large Gut.fbx"],
+  ["hit_left", "Standing React Small From Left.fbx"],
+  ["hit_right", "Standing React Small From Right.fbx"],
+  ["bighit_front", "Receive Uppercut To The Face.fbx"],
+  ["bighit_back", "Turn To Knocked Unconscious.fbx"],
+  ["bighit_left", "Standing Block React Large.fbx"],
+  ["bighit_right", "Standing React Large Gut.fbx"],
+  ["attack_melee", "Standing Melee Attack Horizontal.fbx"],
+  ["attack_ranged", "Shooting Arrow.fbx"],
+  ["die", "Dying.fbx"],
+  ["show", "Mutant Roaring.fbx"],
 ]);
+const OVERLAY_ACTIONS = new Set(OVERLAY_CLIP_SOURCES.keys());
+// What a live rig must expose: its own eleven authored base actions, plus every action the
+// shared overlay pack supplies. The overlay wins on a shared key; the keys it adds beyond the
+// canonical eleven (directional reactions, exact attack delivery) are new capabilities the
+// runtime already routed with a deterministic fallback to the flat key.
+const EXPECTED_RUNTIME_ACTIONS = [...new Set([...CANONICAL_BASE_ACTIONS, ...OVERLAY_ACTIONS])].sort();
 
 
 // Helper to parse GLB structure
@@ -203,24 +233,14 @@ test("raw unarmed-core manifest records the measured retarget contract", () => {
     "unmapped target bones must reflect the target names absent from the mapping rows",
   );
 
-  const expectedSources = new Map([
-    ["idle", "Unarmed Idle.fbx"],
-    ["move", "Walking.fbx"],
-    ["run", "Running.fbx"],
-    ["hit", "Standing React Small From Left.fbx"],
-    ["bighit", "Receive Uppercut To The Face.fbx"],
-    ["attack", "Punching.fbx"],
-    ["critical", "Illegal Elbow Punch.fbx"],
-    ["avoid", "Dodging.fbx"],
-    ["defence", "Body Block.fbx"],
-  ]);
+  const expectedSources = OVERLAY_CLIP_SOURCES;
   const auditByFile = new Map(audit.files.map((entry) => [entry.file, entry]));
 
   assert.ok(
     Object.hasOwn(pack, "clipOverrides") && Array.isArray(pack.clipOverrides),
     "clip overrides must live inside manifest.pack",
   );
-  assert.equal(pack.clipOverrides.length, expectedSources.size, "the pack must define all nine overrides");
+  assert.equal(pack.clipOverrides.length, expectedSources.size, "the pack must define every authored override");
   for (const override of pack.clipOverrides) {
     const expectedSource = expectedSources.get(override.action);
     assert.ok(expectedSource, `unknown override action ${override.action}`);
@@ -268,7 +288,7 @@ test("raw unarmed-core manifest records the measured retarget contract", () => {
 });
 
 // 2. GLB Structural Verification
-test("raw pack contains only nine finite local quaternion-delta clips", () => {
+test("raw pack contains only the authored finite local quaternion-delta clips", () => {
   assert.ok(existsSync(PACK_GLB_PATH), `unarmed-core.glb should exist at ${PACK_GLB_PATH}`);
   const { json, bin } = readGlb(PACK_GLB_PATH);
 
@@ -277,17 +297,7 @@ test("raw pack contains only nine finite local quaternion-delta clips", () => {
   assert.ok(!json.textures || json.textures.length === 0, "the shared delta pack must contain no textures");
   assert.ok(!json.images || json.images.length === 0, "the shared delta pack must contain no images");
 
-  const expectedClipNames = [
-    "unarmed-core::idle::v01",
-    "unarmed-core::move::v01",
-    "unarmed-core::run::v01",
-    "unarmed-core::hit::v01",
-    "unarmed-core::bighit::v01",
-    "unarmed-core::attack::v01",
-    "unarmed-core::critical::v01",
-    "unarmed-core::avoid::v01",
-    "unarmed-core::defence::v01",
-  ];
+  const expectedClipNames = [...OVERLAY_CLIP_SOURCES.keys()].map((action) => `unarmed-core::${action}::v01`);
   assert.deepEqual(
     json.animations.map((animation) => animation.name).sort(),
     [...expectedClipNames].sort(),
@@ -433,8 +443,8 @@ test("failed promoted model load recovers with the standard actor base clips", a
     );
     assert.deepEqual(
       Object.keys(record.actions).sort(),
-      [...CANONICAL_BASE_ACTIONS].sort(),
-      "the fallback actor must retain the complete canonical base action set",
+      EXPECTED_RUNTIME_ACTIONS,
+      "the fallback actor must retain the canonical base actions plus every overlay action",
     );
     for (const action of CANONICAL_BASE_ACTIONS) {
       if (OVERLAY_ACTIONS.has(action)) {
@@ -539,8 +549,8 @@ test("runtime routes all promoted rigs to their namespaced base action clips", a
       );
       assert.deepEqual(
         Object.keys(record.actions).sort(),
-        [...CANONICAL_BASE_ACTIONS].sort(),
-        `${routingCase.label} must expose the complete canonical base action set`,
+        EXPECTED_RUNTIME_ACTIONS,
+        `${routingCase.label} must expose the canonical base actions plus every overlay action`,
       );
       for (const action of CANONICAL_BASE_ACTIONS) {
         if (OVERLAY_ACTIONS.has(action)) {

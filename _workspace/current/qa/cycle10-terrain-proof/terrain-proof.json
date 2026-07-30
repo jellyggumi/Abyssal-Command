@@ -1,0 +1,25 @@
+{
+  "capturedAt": "2026-07-30T14:46:20.520Z",
+  "worktree": "/Users/jangyoung/orca/Abyssal-Surge-dungeon",
+  "branch": "feat/cycle10-stage-dungeon",
+  "baseCommit": "033877ad",
+  "viewport": [
+    1440,
+    900
+  ],
+  "stage": "cinder-span",
+  "claim": "the composed slab floor renders as gameplay ground; the single procedural quad is gone",
+  "metrics": {
+    "webgl": true,
+    "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "canvasSize": [
+      1800,
+      1125
+    ],
+    "devicePixelRatio": 1.25,
+    "overflow": 0,
+    "started": "true"
+  },
+  "consoleErrors": 0,
+  "pageErrors": 0
+}

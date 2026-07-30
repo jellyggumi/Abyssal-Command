@@ -5,9 +5,11 @@ This is the content-oriented map of the wiki. Read this file first before broad 
 ## Overview
 
 - Current release evidence covers the three-stage mesh-first runtime and the 11-asset natural rest-pose motion library.
+- Combat is an always-area model: every contact resolves as a disc weighted by distance, source weight, element matchup and duration (`wiki/concepts/attack-pattern-presets-and-ai-response.md`).
 
 ## Sources
 <!-- SOURCES:START -->
+- [2026-07-30 motion generation + encounter pattern research](wiki/sources/2026-07-30-motion-generation-and-encounter-pattern-research.md)
 <!-- SOURCES:END -->
 
 ## Entities
@@ -16,6 +18,8 @@ This is the content-oriented map of the wiki. Read this file first before broad 
 
 ## Concepts
 <!-- CONCEPTS:START -->
+- [Motion generation for runtime rigs](wiki/concepts/motion-generation-for-runtime-rigs.md) — method comparison, retarget pipeline, prompt templates
+- [Attack-pattern presets and AI response](wiki/concepts/attack-pattern-presets-and-ai-response.md) — three-phase steps, presets, evade/spread/brace/punish
 <!-- CONCEPTS:END -->
 
 ## Queries

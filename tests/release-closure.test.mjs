@@ -53,6 +53,13 @@ const PROMOTED_MOTION_CHARACTER_ASSETS = Object.freeze([
   "assets/motion/ingame/characters/rights-receipt.json",
 ]);
 const DIRECT_RUNTIME_ASSETS = Object.freeze([
+  // Cycle 10: the composed slab floors are the gameplay ground the runtime loads.
+  // Order matters -- this list is compared with assert.deepEqual against the
+  // workflow's PAGES_RUNTIME_PATHS, so these three must sit here in the same
+  // position they occupy in scripts/defense-runtime-assets.mjs and static.yml.
+  "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
+  "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
+  "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
   "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span.glb",
   "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-features.glb",
   "assets/mesh/terrain/terrain-cinder-span/runtime/packs/terrain-cinder-span-props.glb",

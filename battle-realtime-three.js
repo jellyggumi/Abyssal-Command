@@ -11,7 +11,15 @@ import * as SkeletonUtils from "./vendor/utils/SkeletonUtils.js";
 import { REWARDS, SKILLS, STAGE_PRESENTATION_BY_ID, STAGES } from "./defense-catalog.js";
 import { stageWorldFor } from "./stage-world-catalog.js";
 
-const MAX_VISUAL_EFFECTS = 24;
+// Concurrent authored-GLB effect instances.
+//
+// Raised from 24 to 40 for the always-area combat model: one contact now produces
+// feedback for up to AREA_COMBAT.maxSplashTargets (8) bodies instead of one, so the
+// previous cap silently ate the tail of every crowd fight. The pool is still hard
+// bounded and still evicts oldest-first, and the cheap procedural rings
+// (MAX_AREA_RINGS) carry the area read on their own budget, so raising this does
+// not make the worst case unbounded.
+export const MAX_VISUAL_EFFECTS = 40;
 const SIM_TICK_RATE = 60;
 const MAX_ANIMATION_TICK_DELTA = 6;
 const MAX_VISUAL_EVENT_KEYS = 128;
@@ -52,14 +60,26 @@ const WORLD_SCALE = 14;
 const TERRAIN_TARGET_HALF_EXTENT = WORLD_SCALE * 1.15;
 const STAGE_VFX_GROUND_LIFT = 0.04;
 // Per-actor-kind target world height (Y-axis extent after uniform scale).
-// Bosses remain the largest silhouette; the commander deliberately reads
-// smaller than a normal enemy so friendly attachments do not obscure combat.
+//
+// Proportion pass, 2026-07-30, against the decoded reference capture
+// (`_workspace/current/intake/reference-video-analysis.md` §3): the reference
+// frames a CROWD, not a hero. Its actors sit at ~6.8% of viewport height and
+// the player is read out of that crowd by an over-head label and a ground ring,
+// NOT by being larger. At our 42-degree FOV the SKIRMISH tier (26 units) shows
+// ~19.9 world units of height, so the 1.55-unit commander is 7.8% of the frame --
+// inside the reference band, and the reason these numbers are not being inflated.
+//
+// What the reference DOES constrain is the ratio between classes: legion units
+// read at the player's own scale (within ~10%) and are told apart by colour,
+// elites run 1.5-2x, and the boss dominates. `companion` sat 16% under the
+// commander, which read as a lesser body rather than a peer, so it moves to
+// within 7%.
 const TARGET_HEIGHT = Object.freeze({
   commander: 1.55,
   boss: 4.5,
   elite: 2.2,
   enemy: 1.7,
-  companion: 1.3,
+  companion: 1.45,
   stageNpc: 1.8,
   pickup: 0.7,
 });
@@ -374,6 +394,31 @@ const VFX_MODELS = Object.freeze({
   ECHO_WARDEN_AWAKENING_TRIGGERED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
   COMPANION_DOWNED: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
   TERMINAL: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  // Cycle-10 cue families (vfx-drop-spawn-terrain-spec.md §8). The spec authors three
+  // dedicated GLBs -- drop-beacon-pillar / arrival-breach-gate / deform-fracture-seam --
+  // but a runtime asset path is only shipped when it appears in all four allowlists
+  // (scripts/defense-runtime-assets.mjs, tests/release-closure.test.mjs,
+  // .github/workflows/static.yml PAGES_RUNTIME_PATHS, tests/pages-artifact-smoke.cjs).
+  // The Pages artifact is built by `git archive -- $PAGES_RUNTIME_PATHS` and then asserted
+  // to equal that list exactly, so an unlisted path is absent at runtime, not merely
+  // unoptimised. Those four files are owned by other lanes this cycle, so these entries
+  // deliberately reuse the three already-allowlisted stage GLBs: the cue behaviour
+  // (anchor, lifetime, pool budget, exemption) is what this change is for, and the
+  // authored silhouettes swap in as a one-line-per-row edit once the paths are listed.
+  // Family -> reused GLB is chosen by silhouette intent, not convenience:
+  //   drop + buff  -> ember wake     (vertical flare/collapse, §4.1 / §4.6 upward sweep)
+  //   enemy arrival -> fracture echo (a breach seam opening, §5.1)
+  //   deformation   -> mirror static (hairline craze along an edge, §6.2)
+  DROP_SPAWNED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  DROP_EXPIRED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  DROP_DENIED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  BUFF_APPLIED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  BUFF_REFRESHED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  BUFF_EXPIRED: "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  ENEMY_SPAWNED: "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  GIMMICK_ARMED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  GIMMICK_TRIGGERED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+  GIMMICK_RESOLVED: "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
 });
 const SKILL_VFX_MODELS = Object.freeze({
   "rift-bolt": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
@@ -464,6 +509,29 @@ const VFX_LIFETIME_TICKS = Object.freeze({
   // than an accidental one.
   SKILL_CAST: 30,
   TERMINAL: 90,
+  // Cycle-10 defaults (vfx-drop-spawn-terrain-spec.md §8). Every value is a positive
+  // integer tick count; ENEMY_SPAWNED and GIMMICK_ARMED prefer event.telegraphTicks at
+  // the spawn site so the reaction window the pacing/level lanes author is exactly what
+  // the player sees, mirroring the existing BOSS_ATTACK_TELEGRAPHED windupTicks override.
+  DROP_SPAWNED: 14,
+  DROP_EXPIRED: 16,
+  DROP_DENIED: 12,
+  BUFF_APPLIED: 20,
+  BUFF_REFRESHED: 12,
+  BUFF_EXPIRED: 24,
+  // FALLBACK ONLY -- event.telegraphTicks is the real value (see resolveVfxLifetimeTicks).
+  // 30 is derived from constants that actually ship, not from a design doc: at
+  // COMMANDER.speed 4100 (68.3 units/tick) 30 ticks buys 2050 units of repositioning,
+  // about 5.7 body radii at radius 360, and 1.25 full basicCooldown (24) windows. There is
+  // deliberately no dash in that derivation because the shipped catalog has no dash.
+  ENEMY_SPAWNED: 30,
+  // FALLBACK ONLY, and the largest of the four authored telegraph tiers (deformation 180 /
+  // narrowing gate 120 / progress-ring and mirror 90 / hazard 60). Reading the event's own
+  // telegraphTicks is what keeps the cue's length equal to the real arming window; this
+  // constant applies only when the field is missing.
+  GIMMICK_ARMED: 180,
+  GIMMICK_TRIGGERED: 45,
+  GIMMICK_RESOLVED: 30,
 });
 // Per-skill cast lifetime, keyed by the same semantic id SKILL_VFX_MODELS,
 // SKILL_VFX_SILHOUETTES and SKILL_IMPACT_SIGNATURES use. A lingering ground
@@ -504,6 +572,174 @@ const CRITICAL_VFX_EVENT_TYPES = Object.freeze([
   "ENCOUNTER_OBJECTIVE_FAILED",
   "TERMINAL",
 ]);
+// SHADOW arrival default; BASIC uses the VFX_LIFETIME_TICKS.ENEMY_SPAWNED value above
+// (spec §5.1). Grade selects the default only -- event.telegraphTicks always wins.
+// 60 = one dash cycle plus one committed basic attack (COMMANDER.basicCooldown 24) and
+// still escape, frozen by EncounterPacing as the elite reaction window.
+const ENEMY_SPAWNED_SHADOW_LIFETIME_TICKS = 60;
+
+// Pool exemption, replacing the two bare CRITICAL_VFX_EVENT_TYPES.includes() membership
+// tests (spec PR-4). The array stays the type-level source of truth; this predicate adds
+// the two payload-conditional cases a flat array cannot express. For all 33 pre-existing
+// event types it is exactly the old includes() test, so eviction order is unchanged.
+//
+// ENEMY_SPAWNED is conditional because exempting it wholesale would make every BASIC
+// arrival un-evictable and starve the pool. GIMMICK_ARMED/TRIGGERED cover "hazard" as
+// well as "deformation" per director ruling R24: DungeonLevelDesign confirmed the
+// corridor narrowing is simulation-enforced as a hazard/steering band, so the cue
+// carries live gameplay information and evicting it would hide an active hazard.
+// The "gate" and "mirror" gimmick classes stay evictable.
+function isCriticalVfxEvent(eventOrRecord) {
+  const type = eventOrRecord?.type ?? eventOrRecord?.eventType;
+  if (CRITICAL_VFX_EVENT_TYPES.includes(type)) return true;
+  if (type === "ENEMY_SPAWNED") return eventOrRecord?.grade === "SHADOW";
+  if (type === "GIMMICK_ARMED" || type === "GIMMICK_TRIGGERED") {
+    const gimmickClass = eventOrRecord?.gimmickClass;
+    return gimmickClass === "deformation" || gimmickClass === "hazard";
+  }
+  return false;
+}
+
+// Lifetime resolution for the transient pool. BOSS_ATTACK_TELEGRAPHED already preferred its
+// own windupTicks over the table; the cycle-10 arrival and deformation-telegraph cues follow
+// that established precedent with telegraphTicks.
+//
+// telegraphTicks IS the value; the table entry is only a fallback for when the field is
+// absent. This matters because telegraphTicks is authored PER CLASS and PER GRADE, not
+// globally: deformation 180 / narrowing gate 120 / progress-ring and mirror 90 / hazard 60,
+// and arrivals 30 / 60 / 90 by grade. A hardcoded constant would be right for one tier and
+// wrong for the rest -- a 60-tick mirror cue held for 180 ticks would still be claiming
+// "arming" for 120 ticks after the gimmick already triggered, which misinforms worse than a
+// cue that is too short. The simulation fires TRIGGERED at exactly ARMED + telegraphTicks,
+// so reading the field is also what keeps the cue and the rule in agreement.
+//
+// Integer-only on purpose: tick counts are integers everywhere in this codebase, and a
+// float arriving here would be a payload defect worth falling back on rather than honouring.
+function telegraphLifetime(value, fallback) {
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+}
+function resolveVfxLifetimeTicks(event, semanticVfxId = null) {
+  const type = event?.type;
+  // Pre-existing shape at 033877ad, fixed here because the consequence is a permanent
+  // leak rather than a wrong number: an event type that is an Object.prototype key made
+  // `table` a Function, so `startTick + lifetime` string-concatenated into
+  // `"100function Object() { [native code] }"`, which never satisfies `untilTick <= tick`.
+  // The record then never expires and burns a pool slot for the rest of the session --
+  // measured still resident after 1e9 ticks. Not reachable from the simulation's own
+  // `emit()` today; guarded so it cannot become reachable.
+  const table = Object.hasOwn(VFX_LIFETIME_TICKS, type ?? "") ? VFX_LIFETIME_TICKS[type] : 30;
+  if (type === "BOSS_ATTACK_TELEGRAPHED") return Math.max(1, finite(event?.windupTicks, table));
+  if (type === "ENEMY_SPAWNED") {
+    const graded = event?.grade === "SHADOW" ? ENEMY_SPAWNED_SHADOW_LIFETIME_TICKS : table;
+    return Math.max(1, telegraphLifetime(event?.telegraphTicks, graded));
+  }
+  if (type === "GIMMICK_ARMED") return Math.max(1, telegraphLifetime(event?.telegraphTicks, table));
+  // A cast's cue lives as long as the SKILL authored, not as long as the event type: a wide
+  // aoe-burst has to stay on screen long enough to explain the kills it just produced, while a
+  // single-target bolt should not. Falls back to the type-keyed value for any skill that does
+  // not author its own lifetime, so an unlisted skill behaves exactly as before.
+  if (type === "SKILL_CAST") return Math.max(1, SKILL_VFX_LIFETIME_TICKS[semanticVfxId] ?? table);
+  return table;
+}
+
+// Cues suppressed at source (spec §4.6). BUFF_EXPIRED only reads as a loss on TIMEOUT.
+// DEATH would flush up to MAX_ACTIVE_BUFFS (6) cues in the terminal tick, and EVICTED
+// always coincides with the buff-apply that displaced it -- one player action, one cue.
+// The ratified audio policy suppresses exactly the same reasons, so the two lanes agree.
+//
+// DROP_DENIED is deliberately NOT branched on: DropBuffSystem withdrew the second reason
+// value "MEASUREMENT_PROFILE" as unreachable, so `reason` has exactly one value
+// ("FIELD_CAP") and there is nothing left to discriminate. Encoding the withdrawn value
+// here would preserve a dead branch that reads as a live contract.
+function suppressNewFamilyVfx(event) {
+  if (event?.type === "BUFF_EXPIRED") return event?.reason !== "TIMEOUT";
+  return false;
+}
+
+// Cycle-10 live budgets (spec §7.2). The four new families share a hard combined live
+// budget of 10, leaving the 33 pre-existing events their measured 14-slot reserve inside
+// MAX_VISUAL_EFFECTS (24). A family at budget drops its cue AT SOURCE in spawnVfx, before
+// trackVfxInstance, so a new cue can never evict an existing combat cue. Reachable peak is
+// 23 of 24 with one slot spare, because the existing families measure 9-11 rather than 14.
+//
+// spawn is 4 -- exactly the observed ceiling of 1 routed + 1 elite + 2 escorts -- because a
+// budget tighter than the thing it budgets would silently drop a real arrival.
+const NEW_VFX_EVENT_FAMILIES = Object.freeze({
+  DROP_SPAWNED: "drop",
+  DROP_EXPIRED: "drop",
+  DROP_DENIED: "drop",
+  BUFF_APPLIED: "buff",
+  BUFF_REFRESHED: "buff",
+  BUFF_EXPIRED: "buff",
+  ENEMY_SPAWNED: "spawn",
+  GIMMICK_ARMED: "deform",
+  GIMMICK_TRIGGERED: "deform",
+  GIMMICK_RESOLVED: "deform",
+});
+const NEW_VFX_FAMILY_LIVE_BUDGET = Object.freeze({ drop: 3, buff: 2, spawn: 4, deform: 1 });
+
+// Drop-rarity classifier ramp (spec §3.1). Deliberately separated from CORPSE-grade
+// hues: resonant sits +2 hue steps off SHADOW violet and relic +12 degrees off BOSS
+// amber, so a rarity read never collides with a grade read at 48 px.
+const DROP_RARITY_COLORS = Object.freeze({
+  common: 0x9fb4c8,
+  rare: 0x5de6ff,
+  resonant: 0xc07bff,
+  relic: 0xffd257,
+});
+const DROP_RARITY_FALLBACK = "common";
+// Buff field drops (item-drop-timed-buff-spec) arrive in the existing snapshot.pickups
+// array under `kind: "buff"` and carry their own `modelKey`, so the mesh is chosen by the
+// simulation's catalog rather than inferred from the pickup kind. Echo and item pickups
+// keep their long-standing kind-based mapping byte-for-byte.
+const PICKUP_MODEL_KEYS = Object.freeze({
+  blade: PROP_BLADE_MESH,
+  relic: PROP_RELIC_MESH,
+});
+// `Object.hasOwn` is load-bearing, not defensive habit: a bare `PICKUP_MODEL_KEYS[key]`
+// resolves `"constructor"`, `"toString"`, `"valueOf"`, and `"hasOwnProperty"` off
+// Object.prototype, and a Function is truthy -- so a malformed `modelKey` would bypass the
+// legacy `kind` fallback entirely and hand a Function to the loader. Same idiom as
+// `meshRootForMotionCharacter` and `BOSS_MODELS` above.
+function pickupModelPathFor(pickup) {
+  const key = pickup?.modelKey;
+  if (typeof key === "string" && Object.hasOwn(PICKUP_MODEL_KEYS, key)) return PICKUP_MODEL_KEYS[key];
+  return pickup?.kind === "item" ? PROP_BLADE_MESH : PROP_RELIC_MESH;
+}
+
+// Pool-free drop beacons (spec §4.2). A dropped buff is only 48 px tall at the default
+// orbit distance and 24 px at max zoom, against a 24000 x 12000 arena whose visible frame
+// is ~19987 x 11243 gameplay units -- so the prop mesh alone cannot be found by looking.
+// The beacon is the cue that makes a drop findable, which is why it is a hard requirement
+// rather than polish.
+//
+// It is PERSISTENT SCENERY and is deliberately kept out of the 24-slot transient VFX pool
+// (MAX_VISUAL_EFFECTS): that cap is a performance contract shared with the software-WebGL
+// backbuffer bound and must not be spent on a marker that lives as long as its pickup.
+// Beacons are never passed to spawnVfx(), never pushed to vfxInstances[] and never seen by
+// trackVfxInstance(), so "zero pool slots" holds by construction, not by assertion.
+//
+// Bound equals the peer contract's MAX_FIELD_DROPS, so it cannot grow with wave count.
+const MAX_DROP_BEACONS = 8;
+// Authored at 1.35 world units: 92 px at the default orbit distance and 46 px at max zoom,
+// clearing the shared 44 px readability floor at every zoom tier -- which the 1.2 default
+// VFX height does not (41 px zoomed out). Height rather than area, because a vertical shaft
+// survives being behind an enemy silhouette where a floor disc does not.
+const DROP_BEACON_HEIGHT = 1.35;
+const DROP_BEACON_SHAFT_RADIUS = 0.06;
+const DROP_BEACON_TICK_RADIUS = 0.3;
+// Matches RANGE_RING_OPACITY so beacons and the range ring read as one scenery language.
+const DROP_BEACON_TICK_OPACITY = 0.28;
+// Ground decals sit just above the floor to avoid z-fighting with terrain.
+const DROP_BEACON_GROUND_LIFT = 0.03;
+// 0.5 Hz opacity travel on the shaft only. No rotation and no scale pulse: those belong to
+// the transient vocabulary and must stay distinct from scenery.
+const DROP_BEACON_TRAVEL_HZ = 0.5;
+// Pre-expiry read, derived presentation-side from expiresAtTick - tick. Shared with the HUD
+// and audio lanes so all three warn on the same tick. No new event, no new pool slot.
+const DROP_BEACON_WARN_TICKS = 180;
+const DROP_BEACON_WARN_TRAVEL_HZ = 2;
+const DROP_BEACON_WARN_TICK_OPACITY = 0.14;
 const QUEST_VFX_PRESENTATIONS = Object.freeze({
   OBJECTIVE_PHASE_CHANGED: Object.freeze({
     intent: "telegraph", role: "route-objective", color: new THREE.Color(0x5de6ff), scale: 0.9, lifetime: 36,
@@ -777,6 +1013,44 @@ const IMPACT_FLASH_PEAK = 0.55;
 const IMPACT_FLASH_HEAVY_PEAK = 1.1;
 const IMPACT_CONTACT_STAGGER_MS = 34;
 const MAX_IMPACT_STAGGER_TARGETS = 5;
+// --- Struck-body blink (create-game-vfx: make the gameplay meaning visible) ---
+// Every body that takes damage -- primary or area splash -- blinks semi-transparent
+// for the life of its flash. Emissive alone is unreadable on a dark rig at encounter
+// distance; alpha is readable on every silhouette regardless of material colour.
+// The blink is a square wave so it reads as "being hit" rather than "fading out",
+// and every material's pre-blink transparency is captured once and always restored.
+const HIT_BLINK_PERIOD_MS = 90;
+const HIT_BLINK_MIN_OPACITY = 0.35;
+// Reduced motion keeps the translucency (the information) and drops the flicker.
+const HIT_BLINK_STATIC_OPACITY = 0.62;
+// --- Area contact rings (광역) --------------------------------------------
+// An area contact is drawn as a ground ring at the contact point, scaled to the
+// authored disc radius, so "who else is in range" is legible before the damage
+// numbers land. Rings are procedural (no GLB fetch), pooled, and capped.
+const AREA_RING_IMPACT_MS = 420;
+const AREA_RING_TELEGRAPH_MIN_MS = 260;
+const AREA_RING_SEGMENTS = 48;
+const AREA_RING_THICKNESS = 0.06;
+const AREA_RING_Y = 0.06;
+const MAX_AREA_RINGS = 28;
+// Element -> ring colour. Matches the authored ELEMENT_MATCHUP_BP identities so a
+// player can read the element of an incoming disc without opening a menu.
+const AREA_ELEMENT_COLORS = Object.freeze({
+  neutral: 0xdfe9ff,
+  ember: 0xff8a3d,
+  frost: 0x6fd6ff,
+  veil: 0xc07bff,
+  void: 0x7a5cff,
+});
+const AREA_TELEGRAPH_COLOR = 0xff4d4d;
+const AREA_FIELD_OPACITY = 0.26;
+const AREA_IMPACT_OPACITY = 0.62;
+const AREA_TELEGRAPH_OPACITY = 0.5;
+// --- Boss entrance --------------------------------------------------------
+// The simulation authors the entrance length on BOSS_SPAWNED (`intro.durationTicks`);
+// these are the presentation shape of that window only.
+const BOSS_INTRO_FALLBACK_MS = 3000;
+const BOSS_INTRO_LOOK_BLEND = 0.72;
 // Knockback is a render-space offset in world units along the attacker to
 // target axis; updateActorFollow() pulls the root back to the authoritative
 // position every frame, so these stay well under one actor width.
@@ -956,10 +1230,18 @@ const WORLD_HEIGHT = 12000;
 // the same heuristic the old code used (`entity.normalized === true` or
 // both axes within [-1, 1]) and map either to world units centered on the
 // WORLD_SCALE-sized ground plane.
+//
+// An explicit `normalized: false` now opts OUT of the magnitude heuristic
+// (spec PR-3). Without that opt-out a legitimate gameplay point at (0, 0) --
+// the arena's south-west corner -- satisfies |x| <= 1 && |y| <= 1 and is
+// silently mapped to arena centre. effectAnchor() is the first producer of
+// the flag; verified before the change that no other caller passes it false,
+// so this is additive for every existing call site.
 function worldPointInto(target, entity) {
   const x = finite(entity?.x, 0);
   const y = finite(entity?.y, 0);
-  if (entity?.normalized === true || (Math.abs(x) <= 1 && Math.abs(y) <= 1)) {
+  if (entity?.normalized === true
+    || (entity?.normalized !== false && Math.abs(x) <= 1 && Math.abs(y) <= 1)) {
     target.x = x * WORLD_SCALE;
     target.z = y * WORLD_SCALE;
   } else {
@@ -1229,6 +1511,17 @@ function effectAnchor(snapshot, event) {
   if (authoredAnchor && Number.isFinite(authoredAnchor.x) && Number.isFinite(authoredAnchor.y)) {
     return authoredAnchor;
   }
+  // PR-1: an event may be its own anchor. The cycle-10 families (drop, deformation)
+  // carry position as top-level `x, y` rather than under `anchor`/`position`/`point`,
+  // and their ids (dropId, gimmickId) are not entity ids, so without this branch
+  // effectAnchor returns null and spawnVfx hard-returns with no console warning --
+  // the cue would be silently discarded in production. Additive: all 33 pre-existing
+  // events return at the quest, entity, authored-anchor or commander step above/below,
+  // so none of them reaches this line. `normalized: false` is required so a legitimate
+  // gameplay point inside |x|,|y| <= 1 is not mistaken for a normalized coordinate.
+  if (Number.isFinite(event?.x) && Number.isFinite(event?.y)) {
+    return { x: event.x, y: event.y, elevation: event.elevation ?? 0, normalized: false };
+  }
   switch (event?.type) {
     // SKILL_CAST carries no target/entity id (defense-run-simulation.js emits only
     // skillId/motion/vfx/castInstanceId), so it fell through to `default: null`
@@ -1245,6 +1538,11 @@ function effectAnchor(snapshot, event) {
     case "INPUT_REJECTED":
     case "WARDENS_WARD_TRIGGERED":
     case "COMMANDER_DAMAGED":
+    // PR-2: the buff family is commander-owned and carries no position and no entity
+    // id, so the commander fallback is its anchor. No payload change is required.
+    case "BUFF_APPLIED":
+    case "BUFF_REFRESHED":
+    case "BUFF_EXPIRED":
       return snapshot?.commander ?? snapshot?.player ?? null;
     default:
       return null;
@@ -1304,7 +1602,10 @@ function loadGltf(path) {
 // Design: _workspace/current/overlay-architecture.md
 // Contract: RUNTIME_ANIMATION_CONTRACT.md §5
 const OVERLAY_ANIMATION_PATH = "assets/motion/ingame/unarmed-core.glb";
-// (overlay action keys: idle, move, run, hit, bighit, attack, critical, avoid, defence)
+// Overlay action keys are read off the pack's own clip names (`unarmed-core::<action>::v01`)
+// and admitted when they appear in RIG_ACTION_KEYS, so growing the pack needs no edit here:
+// idle, move, run, hit, bighit, attack, critical, avoid, defence, the four directional hit_*,
+// the four directional bighit_*, attack_melee, attack_ranged, die, show.
 let warnedOverlayLoadFailure = false;
 let overlayDeltaEntriesPromise = null;
 const adaptedOverlayEntriesByModel = new Map();
@@ -1641,11 +1942,12 @@ async function instantiateActorModel(relPath, targetHeight) {
     if (overlayDeltaEntries) {
       const adapted = adaptOverlayEntries(relPath, instance, overlayDeltaEntries);
       if (adapted.length) {
-        // Overlay entries appear before base entries. buildActions() first-match
-        // wins on duplicate action keys, so the overlay registration
-        // for a key wins over the base registration that follows. Nine overlay
-        // keys replace base; the 4 fallback-only keys (die, show, attack_melee,
-        // attack_ranged) have no overlay entry and fall through to base.
+        // Overlay entries appear before base entries. buildActions() first-match wins on
+        // duplicate action keys, so the overlay registration for a key wins over the base
+        // registration that follows. The pack now carries 21 keys: the original nine replace
+        // base, `die`/`show`/`attack_melee`/`attack_ranged` replace what used to fall through
+        // to base, and the eight directional reactions (hit_*/bighit_*) are new keys that
+        // hitReactionKey() can finally resolve instead of falling back to the flat key.
         allEntries = [...adapted, ...baseEntries];
       }
     }
@@ -2972,6 +3274,11 @@ export class RealtimeBattle {
 
     this.actors = new Map(); // entity.id -> { root, kind, modelPath, loading }
     this.vfxInstances = []; // { root, untilTick } -- also holds death echoes: { root, untilTick, mixer }
+    // Pool-free persistent drop markers, keyed by pickup.id. Named dropDecalGroup /
+    // dropBeacons rather than folded into a shared decal group so that a future merge with
+    // any other ground-decal work is a visible conflict rather than a silent overwrite.
+    this.dropDecalGroup = null;
+    this.dropBeacons = new Map(); // pickup.id -> { group, shaft, tick, rarity, travelHz }
     this.stageTerrainRecord = null;
     this.stageTerrainError = null;
     this.stageTerrainFailedId = null;
@@ -3042,6 +3349,15 @@ export class RealtimeBattle {
     this.cameraShakeOffset = new THREE.Vector3();
     this.rendererSize = new THREE.Vector2();
     this.impactShakeSeed = 0;
+    // Area combat presentation (광역). Rings are procedural ground decals pooled
+    // in one array; `areaFieldRings` indexes the persistent ones by simulation
+    // field id so a field is drawn exactly once for its authored lifetime.
+    this.areaRings = []; // { mesh, startMs, untilMs, mode, fromRadius, toRadius, opacity, fieldId }
+    this.areaFieldRings = new Map(); // fieldId -> ring record
+    this.areaRingGeometry = null;
+    this.rangeRing = null;
+    // Boss entrance: { startMs, untilMs, bossId, title, subtitle }. Camera-only.
+    this.bossIntro = null;
   }
 
   mount({ canvas, handoff, viewport } = {}) {
@@ -3113,7 +3429,12 @@ export class RealtimeBattle {
     this.terrainGroup = new THREE.Group();
     this.actorGroup = new THREE.Group();
     this.vfxGroup = new THREE.Group();
-    this.scene.add(this.terrainGroup, this.actorGroup, this.vfxGroup);
+    // Persistent scenery, added straight to the scene alongside the transient vfxGroup so
+    // it is structurally impossible for a beacon to be reached by the transient pool's
+    // eviction sweep, which only ever walks this.vfxInstances.
+    this.dropDecalGroup = new THREE.Group();
+    this.dropDecalGroup.name = "drop-decals";
+    this.scene.add(this.terrainGroup, this.actorGroup, this.vfxGroup, this.dropDecalGroup);
 
     this.gateMesh = new THREE.Mesh(
       new THREE.TorusGeometry(1, 0.08, 12, 32),
@@ -3613,7 +3934,7 @@ export class RealtimeBattle {
     if (!pickup?.id || this.disposed) return;
     const existing = this.actors.get(pickup.id);
     if (existing) return existing;
-    const modelPath = pickup.kind === "item" ? PROP_BLADE_MESH : PROP_RELIC_MESH;
+    const modelPath = pickupModelPathFor(pickup);
     const root = new THREE.Group();
     const fallback = new THREE.Mesh(
       new THREE.OctahedronGeometry(0.14, 0),
@@ -3657,6 +3978,120 @@ export class RealtimeBattle {
         console.warn(`Failed to load pickup model ${modelPath}:`, error);
       });
     return record;
+  }
+
+  // --- Pool-free drop beacons (spec §4.2) ---------------------------------------------
+  // No event drives these. State is derived from snapshot.pickups every tick, which is
+  // what makes collection and expiry both free: the beacon is retired the tick its id
+  // stops appearing, whatever the reason, so no DROP_EXPIRED / ITEM_COLLECTED handling is
+  // needed and there is no way for a beacon to outlive its pickup.
+  ensureDropBeacon(pickup) {
+    const existing = this.dropBeacons.get(pickup.id);
+    if (existing) return existing;
+    if (this.dropBeacons.size >= MAX_DROP_BEACONS || !this.dropDecalGroup) return null;
+    const rarity = DROP_RARITY_COLORS[pickup.rarity] ? pickup.rarity : DROP_RARITY_FALLBACK;
+    const rarityColor = DROP_RARITY_COLORS[rarity];
+    const group = new THREE.Group();
+    group.name = `drop-beacon-${pickup.id}`;
+
+    // Thin vertical light-shaft carrying the rarity classifier.
+    const shaft = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        DROP_BEACON_SHAFT_RADIUS,
+        DROP_BEACON_SHAFT_RADIUS,
+        DROP_BEACON_HEIGHT,
+        8,
+        1,
+        true,
+      ),
+      new THREE.MeshStandardMaterial({
+        color: rarityColor,
+        emissive: rarityColor,
+        emissiveIntensity: 1.1,
+        transparent: true,
+        opacity: 0.82,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+    );
+    shaft.position.y = DROP_BEACON_HEIGHT / 2;
+    group.add(shaft);
+
+    // Ground tick, matching the range ring's opacity so the two read as one language.
+    const tick = new THREE.Mesh(
+      new THREE.RingGeometry(DROP_BEACON_TICK_RADIUS * 0.62, DROP_BEACON_TICK_RADIUS, 24),
+      new THREE.MeshBasicMaterial({
+        color: rarityColor,
+        transparent: true,
+        opacity: DROP_BEACON_TICK_OPACITY,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+    );
+    tick.rotation.x = -Math.PI / 2;
+    group.add(tick);
+
+    const record = { group, shaft, tick, rarity, travelHz: DROP_BEACON_TRAVEL_HZ, warning: false };
+    this.dropBeacons.set(pickup.id, record);
+    this.dropDecalGroup.add(group);
+    return record;
+  }
+
+  retireDropBeacon(pickupId) {
+    const record = this.dropBeacons.get(pickupId);
+    if (!record) return;
+    this.dropBeacons.delete(pickupId);
+    this.dropDecalGroup?.remove(record.group);
+    disposeObject3D(record.group);
+  }
+
+  syncDropBeacons(snapshot) {
+    if (this.disposed || !this.dropDecalGroup) return;
+    const tick = finite(snapshot?.tick, 0);
+    const seen = new Set();
+    for (const pickup of list(snapshot, "pickups", "drops")) {
+      // Only buff field drops carry a beacon. Echo and item pickups are unchanged.
+      if (!pickup?.id || pickup.kind !== "buff") continue;
+      seen.add(pickup.id);
+      const record = this.ensureDropBeacon(pickup);
+      if (!record) continue;
+      const point = worldPoint(pickup);
+      record.group.position.set(point.x, point.y + DROP_BEACON_GROUND_LIFT, point.z);
+      // Pre-expiry read, derived from the snapshot rather than from an event: under the
+      // shared warn window the travel doubles and the ground tick dims, so the beacon
+      // reads as closing without costing a new event or a pool slot.
+      const remaining = Number.isFinite(pickup.expiresAtTick) ? pickup.expiresAtTick - tick : null;
+      const warning = remaining !== null && remaining <= DROP_BEACON_WARN_TICKS;
+      record.warning = warning;
+      record.travelHz = warning ? DROP_BEACON_WARN_TRAVEL_HZ : DROP_BEACON_TRAVEL_HZ;
+      record.tick.material.opacity = warning ? DROP_BEACON_WARN_TICK_OPACITY : DROP_BEACON_TICK_OPACITY;
+    }
+    for (const pickupId of [...this.dropBeacons.keys()]) {
+      if (!seen.has(pickupId)) this.retireDropBeacon(pickupId);
+    }
+    this.applyDropBeaconMotionPolicy();
+  }
+
+  // Reduced motion holds the shaft at full opacity with travel stopped. The beacon is
+  // NEVER hidden: it is the only way to find a drop, so it degrades to a static marker
+  // rather than to nothing. This mirrors the stage-VFX policy of keeping the static core
+  // and dropping only the motion.
+  applyDropBeaconMotionPolicy() {
+    if (!this.reducedMotion) return;
+    for (const record of this.dropBeacons.values()) {
+      record.shaft.material.opacity = 1;
+    }
+  }
+
+  updateDropBeacons(nowMs) {
+    if (this.reducedMotion || this.dropBeacons.size === 0) return;
+    const seconds = finite(nowMs, 0) / 1000;
+    for (const record of this.dropBeacons.values()) {
+      // Vertical opacity travel on the shaft only -- no rotation, no scale pulse, because
+      // those belong to the transient vocabulary and scenery must stay distinguishable.
+      const phase = Math.sin(seconds * record.travelHz * Math.PI * 2);
+      record.shaft.material.opacity = 0.62 + 0.3 * (phase * 0.5 + 0.5);
+    }
   }
 
   resetAmbientIdle(record) {
@@ -4365,6 +4800,9 @@ export class RealtimeBattle {
       const record = this.ensurePickup(pickup);
       this.syncActorPosition(record, pickup);
     }
+    // Derived from the same snapshot.pickups pass, so a beacon can never disagree with the
+    // pickup it marks. Kept out of the loop above because it owns its own bound and retire.
+    this.syncDropBeacons(snapshot);
 
     for (const projectile of list(snapshot, "projectiles", "shots")) {
       if (!projectile?.id) continue;
@@ -4491,6 +4929,9 @@ export class RealtimeBattle {
     if (this.reducedMotion) {
       for (const marker of this.corpseMarkers.values()) marker.lip.scale.setScalar(1);
     }
+    // Beacons are decals, not pooled records, so they need their own sweep on toggle --
+    // the same loop shape the transient pool above uses.
+    this.applyDropBeaconMotionPolicy();
     for (const actor of this.actors.values()) {
       for (const presentation of actor.presentationMixers ?? []) {
         applyTransientVfxPolicy(presentation, this.reducedMotion);
@@ -4537,6 +4978,10 @@ export class RealtimeBattle {
     this.knockbacks.clear();
     this.clearCameraShakeOffset();
     this.cameraShake = null;
+    // Area presentation is transient by contract: a reset leaves no ring and no
+    // half-played entrance behind.
+    this.clearAreaRings();
+    this.bossIntro = null;
     for (const record of this.stageDecorRecords) {
       if (record.kind !== "stage-npc") continue;
       this.clearAttackPresentation(record);
@@ -4665,15 +5110,31 @@ export class RealtimeBattle {
     // so the boss silhouette and the extraction bind stay in one frame
     // (per-stage-camera-framing-addendum.md §4). Additive to commander-follow.
     const lookOffset = stageFinaleLookOffset(this.cameraStageId, phase);
-    const targetX = THREE.MathUtils.clamp(commanderPoint.x + lookOffset.x, -WORLD_SCALE, WORLD_SCALE);
-    const targetY = commanderPoint.y;
-    const targetZ = THREE.MathUtils.clamp(commanderPoint.z + lookOffset.z, -WORLD_SCALE, WORLD_SCALE);
+    // The boss entrance is a temporary modifier layered over the same base
+    // follow-cam (build-game-camera-controls): it biases the look target toward
+    // the boss and pulls the orbit in, then hands the frame straight back.
+    const bossIntro = this.bossIntroFraming(nowMs);
+    const introLook = bossIntro?.lookTarget ?? null;
+    const introBlend = introLook ? bossIntro.lookBlend : 0;
+    const baseTargetX = commanderPoint.x + lookOffset.x;
+    const baseTargetZ = commanderPoint.z + lookOffset.z;
+    const targetX = THREE.MathUtils.clamp(
+      introLook ? baseTargetX + (introLook.x - baseTargetX) * introBlend : baseTargetX,
+      -WORLD_SCALE,
+      WORLD_SCALE,
+    );
+    const targetY = introLook ? commanderPoint.y + (introLook.y - commanderPoint.y) * introBlend : commanderPoint.y;
+    const targetZ = THREE.MathUtils.clamp(
+      introLook ? baseTargetZ + (introLook.z - baseTargetZ) * introBlend : baseTargetZ,
+      -WORLD_SCALE,
+      WORLD_SCALE,
+    );
 
     // Player-selected yaw/pitch and stage-intro offsets remain modifiers over
     // the phase tier; no phase transition blocks orbit input.
     const intro = this.stageIntroOffsets(tick);
     const cameraDistance = THREE.MathUtils.clamp(
-      this.zoomFactor + (intro?.distance ?? 0),
+      (this.zoomFactor + (intro?.distance ?? 0)) * (bossIntro?.distanceRatio ?? 1),
       MIN_ORBIT_DISTANCE,
       MAX_ORBIT_DISTANCE,
     );
@@ -4831,7 +5292,7 @@ export class RealtimeBattle {
     this.vfxInstances.push(record);
     while (this.vfxInstances.length > MAX_VISUAL_EFFECTS) {
       const expendableIndex = this.vfxInstances.findIndex(
-        (candidate) => !CRITICAL_VFX_EVENT_TYPES.includes(candidate.eventType),
+        (candidate) => !isCriticalVfxEvent(candidate),
       );
       const evictionIndex = expendableIndex >= 0 ? expendableIndex : 0;
       const [evicted] = this.vfxInstances.splice(evictionIndex, 1);
@@ -4906,21 +5367,28 @@ export class RealtimeBattle {
       ? SKILL_VFX_MODELS[event?.vfx || event?.skillId]
       : VFX_MODELS[event?.type];
     if (!relPath) return;
-    const criticalEvent = CRITICAL_VFX_EVENT_TYPES.includes(event?.type);
+    // Suppressed at source, before any pool accounting, so a suppressed cue can never
+    // evict a live one (spec §4.5, §4.6).
+    if (suppressNewFamilyVfx(event)) return;
+    const criticalEvent = isCriticalVfxEvent(event);
     if (this.pendingVfxLoads.size >= MAX_VISUAL_EFFECTS && !criticalEvent) return;
+    // Family live budget (spec §7.2). Enforced here rather than in trackVfxInstance so an
+    // over-budget new cue is dropped at source and never displaces an existing combat cue.
+    const family = NEW_VFX_EVENT_FAMILIES[event?.type];
+    if (family) {
+      const budget = NEW_VFX_FAMILY_LIVE_BUDGET[family];
+      let live = 0;
+      for (const candidate of this.vfxInstances) {
+        if (NEW_VFX_EVENT_FAMILIES[candidate.eventType] === family) live += 1;
+      }
+      if (live >= budget) return;
+    }
     const generation = this.vfxGeneration;
     const anchor = effectAnchor(snapshot, event);
     if (!anchor) return;
     const questPresentation = questVfxPresentationForEvent(event);
     const semanticVfxId = semanticVfxIdForEvent(event);
-    // BOSS_ATTACK_TELEGRAPHED must keep deriving its lifetime from the
-    // simulation's own windupTicks so the telegraph and the windup it warns
-    // about stay the same length; the per-skill table is consulted only for
-    // SKILL_CAST, and every other type keeps its existing type-keyed value.
-    const lifetime = questPresentation?.lifetime ?? (event.type === "BOSS_ATTACK_TELEGRAPHED"
-      ? Math.max(1, finite(event.windupTicks, VFX_LIFETIME_TICKS[event.type] ?? 30))
-      : (event.type === "SKILL_CAST" ? SKILL_VFX_LIFETIME_TICKS[semanticVfxId] : undefined)
-        ?? VFX_LIFETIME_TICKS[event.type] ?? 30);
+    const lifetime = questPresentation?.lifetime ?? resolveVfxLifetimeTicks(event, semanticVfxId);
     const events = Array.isArray(snapshot?.events) ? snapshot.events : [];
     const contactDelayTicks = Math.ceil(this.impactContactDelayMs(event, events) * SIM_TICK_RATE / 1000);
     const startTick = tick + contactDelayTicks;
@@ -4939,6 +5407,10 @@ export class RealtimeBattle {
       loaded: false,
       semanticVfxId,
       eventType: event.type,
+      // Persisted so isCriticalVfxEvent() can re-evaluate the payload-conditional
+      // exemptions against a pool record, not just against a live event.
+      grade: event.grade ?? null,
+      gimmickClass: event.gimmickClass ?? null,
       questVfxIntent: questPresentation?.intent ?? null,
       loadRequest: null,
     };
@@ -5148,6 +5620,9 @@ export class RealtimeBattle {
     for (const echo of this.vfxInstances) {
       if (echo.mixer) echo.mixer.update(delta);
     }
+    // Scenery motion is wall-clock driven, not mixer driven: a beacon has no GLB and no
+    // AnimationAction, which is exactly why it costs no pool slot.
+    this.updateDropBeacons(nowMs);
     for (const record of this.stageDecorRecords) {
       record.mixer?.update(delta);
       if (record.kind !== "stage-npc") continue;
@@ -5223,6 +5698,238 @@ export class RealtimeBattle {
     return Math.min(rank, MAX_IMPACT_STAGGER_TARGETS) * IMPACT_CONTACT_STAGGER_MS;
   }
 
+  // --- Area combat presentation (광역) ------------------------------------
+  // One shared ring geometry serves every disc; per-ring colour/opacity live on
+  // cloned basic materials, and every ring is disposed through retireAreaRing().
+  ensureAreaRingGeometry() {
+    if (!this.areaRingGeometry) {
+      this.areaRingGeometry = new THREE.RingGeometry(1 - AREA_RING_THICKNESS, 1, AREA_RING_SEGMENTS);
+      this.areaRingGeometry.rotateX(-Math.PI / 2);
+    }
+    return this.areaRingGeometry;
+  }
+
+  /**
+   * Spawns one ground ring. `mode` selects the behaviour:
+   *  - `impact`    expands from 40% to full radius and fades out
+   *  - `telegraph` grows from 0 to full radius over the windup, so the fill IS the timer
+   *  - `field`     holds full radius and breathes until the field ends
+   */
+  spawnAreaRing({ x, z, radius, color, mode = "impact", startMs, untilMs, fieldId = null }) {
+    if (!this.vfxGroup || this.disposed) return null;
+    const material = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(color),
+      transparent: true,
+      opacity: mode === "field" ? AREA_FIELD_OPACITY : (mode === "telegraph" ? AREA_TELEGRAPH_OPACITY : AREA_IMPACT_OPACITY),
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    });
+    const mesh = new THREE.Mesh(this.ensureAreaRingGeometry(), material);
+    mesh.name = `area-ring:${mode}${fieldId ? `:${fieldId}` : ""}`;
+    mesh.renderOrder = 2;
+    mesh.position.set(x, AREA_RING_Y, z);
+    mesh.scale.setScalar(mode === "telegraph" ? 0.05 : radius * 0.4);
+    this.vfxGroup.add(mesh);
+    const record = { mesh, material, mode, radius, startMs, untilMs, fieldId };
+    this.areaRings.push(record);
+    // Oldest transient ring is evicted first; a live field ring is never evicted
+    // by a burst of impacts, because it is the one that carries standing danger.
+    while (this.areaRings.length > MAX_AREA_RINGS) {
+      const index = this.areaRings.findIndex((entry) => entry.mode !== "field");
+      const [evicted] = this.areaRings.splice(index >= 0 ? index : 0, 1);
+      this.retireAreaRing(evicted);
+    }
+    if (fieldId) this.areaFieldRings.set(fieldId, record);
+    return record;
+  }
+
+  retireAreaRing(record) {
+    if (!record) return;
+    this.vfxGroup?.remove(record.mesh);
+    record.material?.dispose();
+    if (record.fieldId) this.areaFieldRings.delete(record.fieldId);
+  }
+
+  updateAreaRings(nowMs) {
+    if (!this.areaRings.length) return;
+    let retained = 0;
+    for (const record of this.areaRings) {
+      const span = Math.max(1, record.untilMs - record.startMs);
+      const progress = THREE.MathUtils.clamp((nowMs - record.startMs) / span, 0, 1);
+      if (progress >= 1 && record.mode !== "field") {
+        this.retireAreaRing(record);
+        continue;
+      }
+      if (record.mode === "impact") {
+        record.mesh.scale.setScalar(record.radius * (0.4 + 0.6 * progress));
+        record.material.opacity = AREA_IMPACT_OPACITY * (1 - progress);
+      } else if (record.mode === "telegraph") {
+        record.mesh.scale.setScalar(Math.max(0.05, record.radius * progress));
+        record.material.opacity = AREA_TELEGRAPH_OPACITY * (0.55 + 0.45 * progress);
+      } else {
+        record.mesh.scale.setScalar(record.radius);
+        const breathe = this.reducedMotion ? 1 : 0.75 + 0.25 * Math.sin(nowMs / 220);
+        record.material.opacity = AREA_FIELD_OPACITY * breathe;
+        if (nowMs >= record.untilMs) {
+          this.retireAreaRing(record);
+          continue;
+        }
+      }
+      this.areaRings[retained] = record;
+      retained += 1;
+    }
+    this.areaRings.length = retained;
+  }
+  clearAreaRings() {
+    for (const record of this.areaRings) this.retireAreaRing(record);
+    this.areaRings = [];
+    this.areaFieldRings.clear();
+  }
+
+  /**
+   * World-space ring radius for a simulation-space disc radius. The arena is
+   * WORLD_WIDTH units wide and maps onto a 2 * WORLD_SCALE ground plane, so one
+   * simulation unit is `WORLD_SCALE / (WORLD_WIDTH / 2)` world units — the same
+   * factor worldPointInto() uses for positions.
+   */
+  areaRingRadius(simRadius) {
+    return Math.max(0.4, finite(simRadius, 0) * WORLD_SCALE / (WORLD_WIDTH / 2));
+  }
+
+  /**
+   * Area contact: every splashed body blinks, and one ring is drawn at the contact
+   * point sized to the authored disc. The primary body of the same beat already
+   * blinks through registerImpactFeedback(), so this only adds what area adds.
+   */
+  registerAreaFeedback(event, nowMs) {
+    const targets = Array.isArray(event?.targets) ? event.targets : [];
+    const heavy = event?.sourceKey === "boss" || event?.sourceKey === "skill";
+    for (const entry of targets) {
+      const record = this.actors.get(entry?.targetId) ?? this.combatTarget(entry?.targetId);
+      if (!record?.root) continue;
+      this.hitFlashes.set(entry.targetId, {
+        startMs: nowMs,
+        untilMs: nowMs + (heavy ? IMPACT_FLASH_HEAVY_MS : IMPACT_FLASH_MS),
+        color: heavy ? IMPACT_FLASH_HEAVY_COLOR : IMPACT_FLASH_COLOR,
+        accent: null,
+        critical: false,
+        static: this.reducedMotion,
+        peak: heavy ? IMPACT_FLASH_HEAVY_PEAK : IMPACT_FLASH_PEAK,
+        record,
+      });
+    }
+    if (!Number.isFinite(event?.originX) || !Number.isFinite(event?.originY)) return;
+    const point = worldPoint({ x: event.originX, y: event.originY });
+    this.spawnAreaRing({
+      x: point.x,
+      z: point.z,
+      radius: this.areaRingRadius(event?.radius),
+      color: AREA_ELEMENT_COLORS[event?.element] ?? AREA_ELEMENT_COLORS.neutral,
+      mode: "impact",
+      startMs: nowMs,
+      untilMs: nowMs + AREA_RING_IMPACT_MS,
+    });
+  }
+
+  /** Telegraph ring whose fill time IS the authored windup. */
+  registerTelegraphRing(event, nowMs) {
+    if (!Number.isFinite(event?.originX) || !Number.isFinite(event?.originY)) return;
+    const point = worldPoint({ x: event.originX, y: event.originY });
+    const windupMs = Math.max(AREA_RING_TELEGRAPH_MIN_MS, finite(event?.windupTicks, 60) / SIM_TICK_RATE * 1000);
+    this.spawnAreaRing({
+      x: point.x,
+      z: point.z,
+      radius: this.areaRingRadius(event?.radius),
+      color: AREA_TELEGRAPH_COLOR,
+      mode: "telegraph",
+      startMs: nowMs,
+      untilMs: nowMs + windupMs,
+    });
+  }
+
+  /**
+   * Persistent field rings, reconciled from the snapshot rather than from events:
+   * a field that is present keeps its ring, a field that ended loses it, and a
+   * re-render of the same tick cannot double-spawn.
+   */
+  syncAreaFieldRings(snapshot, nowMs) {
+    const fields = Array.isArray(snapshot?.areaFields) ? snapshot.areaFields : [];
+    const live = new Set();
+    for (const field of fields) {
+      if (!field?.id) continue;
+      live.add(field.id);
+      if (this.areaFieldRings.has(field.id)) continue;
+      if (!Number.isFinite(field.x) || !Number.isFinite(field.y)) continue;
+      const point = worldPoint({ x: field.x, y: field.y });
+      const remainingMs = Math.max(
+        AREA_RING_IMPACT_MS,
+        (finite(field.expiresAt, 0) - finite(snapshot?.tick, 0)) / SIM_TICK_RATE * 1000,
+      );
+      this.spawnAreaRing({
+        x: point.x,
+        z: point.z,
+        radius: this.areaRingRadius(field.radius),
+        color: AREA_ELEMENT_COLORS[field.element] ?? AREA_ELEMENT_COLORS.neutral,
+        mode: "field",
+        startMs: nowMs,
+        untilMs: nowMs + remainingMs,
+        fieldId: field.id,
+      });
+    }
+    for (const [fieldId, record] of [...this.areaFieldRings]) {
+      if (!live.has(fieldId)) this.retireAreaRing(record);
+    }
+  }
+
+  /**
+   * Boss entrance. The simulation authors the window on BOSS_SPAWNED, so the push
+   * lasts exactly as long as the subtitle band the HUD shows. Camera-only: the
+   * fight is already live underneath it and no input is blocked.
+   */
+  startBossIntro(event, nowMs) {
+    const intro = event?.intro ?? null;
+    const durationMs = intro?.durationTicks
+      ? intro.durationTicks / SIM_TICK_RATE * 1000
+      : BOSS_INTRO_FALLBACK_MS;
+    this.bossIntro = {
+      startMs: nowMs,
+      untilMs: nowMs + durationMs,
+      bossId: event?.entityId ?? null,
+      zoomRatio: finite(intro?.zoomBp, 6200) / 10000,
+    };
+    const bossRecord = this.actors.get(event?.entityId);
+    if (bossRecord) this.triggerAction(bossRecord, intro?.motion || "show", nowMs);
+  }
+
+  /**
+   * Camera modifier for the live entrance: pulls the orbit in toward the boss and
+   * biases the look target onto it, easing in and back out inside the window.
+   * Returns null outside the window, so the base follow-cam is untouched.
+   */
+  bossIntroFraming(nowMs) {
+    const intro = this.bossIntro;
+    if (!intro) return null;
+    if (nowMs >= intro.untilMs) {
+      this.bossIntro = null;
+      return null;
+    }
+    const span = Math.max(1, intro.untilMs - intro.startMs);
+    const progress = THREE.MathUtils.clamp((nowMs - intro.startMs) / span, 0, 1);
+    // Ease in over the first third, hold, ease back out over the last third.
+    const envelope = progress < 0.34
+      ? progress / 0.34
+      : (progress > 0.72 ? (1 - progress) / 0.28 : 1);
+    const weight = THREE.MathUtils.clamp(envelope, 0, 1);
+    const bossRecord = intro.bossId ? this.actors.get(intro.bossId) : null;
+    return {
+      weight,
+      distanceRatio: 1 - (1 - intro.zoomRatio) * weight,
+      lookTarget: bossRecord?.root?.position ?? null,
+      lookBlend: BOSS_INTRO_LOOK_BLEND * weight,
+    };
+  }
+
   registerImpactFeedback(event, nowMs, events) {
     const impact = IMPACT_FEEDBACK_SOURCES[event?.type]?.(event);
     if (!impact?.targetId) return;
@@ -5279,9 +5986,12 @@ export class RealtimeBattle {
     };
   }
 
-  // Emissive flash on the actor's own material clones. The pre-flash emissive
-  // value is captured once per material and always restored, so an actor that
-  // is hit repeatedly never accumulates brightness.
+  // Emissive flash AND a semi-transparent blink on the actor's own material
+  // clones. The pre-flash emissive/alpha values are captured once per material and
+  // always restored, so a body that is hit repeatedly never accumulates brightness
+  // and never gets stuck translucent. Every struck body -- the primary contact and
+  // every area-splash body -- runs through here, so "I am being hit" is one visual
+  // language across single-target and 광역 damage.
   applyHitFlashes(nowMs) {
     for (const [entityId, flash] of this.hitFlashes) {
       const root = flash.record?.root;
@@ -5294,10 +6004,34 @@ export class RealtimeBattle {
       if (nowMs < flash.startMs) continue;
       const done = progress >= 1;
       const strength = done ? 0 : (flash.static ? flash.peak : flash.peak * (1 - progress) * (1 - progress));
+      // Square-wave alpha: legible as a flicker, not as a dissolve. Reduced motion
+      // holds one translucent value for the same window, keeping the information
+      // without the strobe.
+      const blinkOn = flash.static
+        ? true
+        : Math.floor((nowMs - flash.startMs) / HIT_BLINK_PERIOD_MS) % 2 === 0;
+      const blinkFloor = flash.static ? HIT_BLINK_STATIC_OPACITY : HIT_BLINK_MIN_OPACITY;
+      const blendedFloor = blinkFloor + (1 - blinkFloor) * progress;
       root.traverse((node) => {
         const materials = Array.isArray(node.material) ? node.material : node.material ? [node.material] : [];
         for (const material of materials) {
-          if (!material?.emissive) continue;
+          if (!material) continue;
+          if (material.userData.impactBaseOpacity === undefined) {
+            material.userData.impactBaseOpacity = finite(material.opacity, 1);
+            material.userData.impactBaseTransparent = material.transparent === true;
+          }
+          const baseOpacity = material.userData.impactBaseOpacity;
+          if (done) {
+            material.opacity = baseOpacity;
+            material.transparent = material.userData.impactBaseTransparent;
+          } else if (blinkOn) {
+            material.transparent = true;
+            material.opacity = baseOpacity * blendedFloor;
+          } else {
+            material.opacity = baseOpacity;
+            material.transparent = material.userData.impactBaseTransparent;
+          }
+          if (!material.emissive) continue;
           if (!material.userData.impactBaseEmissive) {
             material.userData.impactBaseEmissive = material.emissive.clone();
             material.userData.impactBaseEmissiveIntensity = finite(material.emissiveIntensity, 1);
@@ -5382,6 +6116,7 @@ export class RealtimeBattle {
   updateImpactFeedback(nowMs) {
     try {
       this.applyHitFlashes(nowMs);
+      this.updateAreaRings(nowMs);
       if (this.reducedMotion) {
         this.knockbacks.clear();
         this.cameraShake = null;
@@ -5394,6 +6129,8 @@ export class RealtimeBattle {
       this.hitFlashes.clear();
       this.knockbacks.clear();
       this.cameraShake = null;
+      this.clearAreaRings();
+      this.bossIntro = null;
     }
   }
 
@@ -5414,8 +6151,19 @@ export class RealtimeBattle {
         this.triggerAction(actor("commander"), "show", nowMs);
         break;
       case "ENEMY_SPAWNED":
-      case "BOSS_SPAWNED":
         this.triggerAction(actor(event.entityId), "show", nowMs);
+        break;
+      case "BOSS_SPAWNED":
+        // The entrance owns the boss's "show" beat and the camera push for the
+        // authored window; the fight underneath it is never paused.
+        this.startBossIntro(event, nowMs);
+        break;
+      case "AREA_IMPACT":
+        this.registerAreaFeedback(event, nowMs);
+        break;
+      case "BOSS_ATTACK_TELEGRAPHED":
+        this.registerTelegraphRing(event, nowMs);
+        this.triggerAction(actor(event.entityId), "defence", nowMs);
         break;
       case "ECHO_WARDEN_AWAKENING_TRIGGERED":
         this.triggerAction(actor(event.entityId), "show", nowMs);
@@ -5506,6 +6254,10 @@ export class RealtimeBattle {
       }
       this.triggerCombatActions(event, nowMs, snapshot);
     }
+    // Field rings are reconciled from the snapshot, not from events, so a repeat
+    // render of one tick cannot double-spawn a ring and an ended field cannot
+    // leave one behind.
+    this.syncAreaFieldRings(snapshot, nowMs);
     for (const echo of this.pendingDeathEchoes.splice(0)) {
       this.spawnDeathEcho(echo, tick);
     }
@@ -5594,6 +6346,10 @@ export class RealtimeBattle {
     this.hitFlashes.clear();
     this.knockbacks.clear();
     this.cameraShake = null;
+    this.clearAreaRings();
+    this.areaRingGeometry?.dispose();
+    this.areaRingGeometry = null;
+    this.bossIntro = null;
     for (const record of this.vfxInstances) {
       record.mixer?.stopAllAction();
       disposeObject3D(record.root);
@@ -5603,6 +6359,12 @@ export class RealtimeBattle {
     this.pendingVfxLoads.clear();
     this.pendingDeathEchoLoads.clear();
     this.pendingStageNpcBeats.clear();
+    // Leak guard: every beacon owns its own geometry and materials, so the map must be
+    // drained before the group reference is dropped.
+    for (const pickupId of [...this.dropBeacons.keys()]) this.retireDropBeacon(pickupId);
+    this.dropBeacons.clear();
+    if (this.dropDecalGroup) disposeObject3D(this.dropDecalGroup);
+    this.dropDecalGroup = null;
     if (this.gateMesh) disposeObject3D(this.gateMesh);
     this.gateMesh = null;
     if (this.pressureGroup) disposeObject3D(this.pressureGroup);
@@ -5800,6 +6562,21 @@ export class RealtimeBattle {
       projectileCount: projectiles.length,
       pickupCount: pickups.length,
       activeVfxCount: this.vfxInstances.length,
+      // Reported beside activeVfxCount specifically so a test can assert the pool-free
+      // claim directly: beacons present while activeVfxCount stays 0.
+      dropBeaconCount: this.dropBeacons.size,
+      dropBeacons: [...this.dropBeacons.entries()]
+        .map(([id, record]) => ({
+          id,
+          rarity: record.rarity,
+          warning: record.warning === true,
+          position: {
+            x: record.group.position.x,
+            y: record.group.position.y,
+            z: record.group.position.z,
+          },
+        }))
+        .sort((left, right) => left.id.localeCompare(right.id)),
       mixerCount: actors.reduce((count, actor) => count + (actor.hasMixer ? 1 : 0), 0),
       actionCount: actors.reduce((count, actor) => count + actor.actionCount, 0),
       stageDecor,

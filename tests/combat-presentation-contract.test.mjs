@@ -5,6 +5,10 @@ import * as THREE from "../vendor/three.module.js";
 import { GLTFLoader } from "../vendor/loaders/GLTFLoader.js";
 import { stageWorldFor, STAGE_WORLD_PROFILES } from "../stage-world-catalog.js";
 import { createDefenseRun, getRunSnapshot } from "../defense-run-simulation.js";
+// The transient VFX pool budget is authored by the renderer. Importing it keeps these
+// assertions about "the pool stays capped at its authored budget" rather than about a
+// number that has to be edited in two files whenever the budget moves.
+import { MAX_VISUAL_EFFECTS } from "../battle-realtime-three.js";
 
 // Mirrors the rig pipeline's authored library so the harness exercises the same
 // beat set the deployed characters carry, not a subset.
@@ -1160,10 +1164,13 @@ test("stage-world catalog props and lookout NPCs load at authored presentation p
   );
   assert.equal(decor.stageId, profile.stageId);
   assert.equal(decor.terrainLoaded, true);
-  assert.equal(decor.terrainSource, "procedural-flat-support", "Cinder gameplay must report flat procedural support");
-  assert.equal(decor.terrainModelPath, null, "Cinder must not publish its diorama as loaded gameplay terrain");
+  // Cycle 10 supersession: Cinder ships a composed slab floor, so the renderer takes
+  // instantiateTerrainModel() instead of instantiateProceduralTerrain(). The candidate
+  // provenance assertion below is unchanged -- the rejected diorama is still retained.
+  assert.equal(decor.terrainSource, "promoted-glb", "Cinder gameplay must load its composed slab floor");
+  assert.equal(decor.terrainModelPath, profile.terrainGlbPath, "Cinder must publish the promoted floor as loaded gameplay terrain");
   assert.equal(decor.terrainSourceCandidatePath, profile.terrainSourceCandidatePath, "Cinder debug state must retain diorama provenance");
-  assertMeshIntegrity(decor.terrainIntegrity, "Cinder procedural support");
+  assertMeshIntegrity(decor.terrainIntegrity, "Cinder composed slab floor");
   assert.equal(decor.propCount, profile.presentation.props.length);
   assert.equal(decor.npcCount, profile.presentation.npcs.length);
   assert.equal(decor.vfxCount, profile.presentation.vfxCues.length, "the authored ember-wake cue counts as loaded stage decor");
@@ -1623,8 +1630,9 @@ test("failed stage decor retries while ineligible terrain candidates are never r
       "a rejected VFX cue is absent from only the failed visit",
     );
     const firstTerrain = adapter.debugPresentationState().stageDecor;
-    assert.equal(firstTerrain.terrainSource, "procedural-flat-support", "Echo Throne must render procedural support");
-    assert.equal(firstTerrain.terrainModelPath, null, "Echo Throne must not publish its candidate as loaded terrain");
+    // Cycle 10 supersession: promoted composed slab floor replaces procedural support.
+    assert.equal(firstTerrain.terrainSource, "promoted-glb", "Echo Throne must render its composed slab floor");
+    assert.equal(firstTerrain.terrainModelPath, profile.terrainGlbPath, "Echo Throne must publish the promoted floor as loaded terrain");
     assert.equal(firstTerrain.terrainSourceCandidatePath, profile.terrainSourceCandidatePath, "Echo Throne must retain candidate provenance");
 
     adapter.ensureStageTerrain(bridgeProfile.stageId);
@@ -1769,7 +1777,7 @@ test("impact VFX stay short-lived and bounded without evicting an active boss te
     assert.equal(telegraph.untilTick - tick, 60, "the telegraph lifetime must follow its active windup window");
 
     const impactTypes = ["MELEE_IMPACT", "PROJECTILE_IMPACT", "SKILL_RESOLVED_DAMAGE"];
-    for (let index = 0; index < 30; index += 1) {
+    for (let index = 0; index < MAX_VISUAL_EFFECTS + 6; index += 1) {
       const type = impactTypes[index % impactTypes.length];
       await emit({
         type,
@@ -1780,11 +1788,11 @@ test("impact VFX stay short-lived and bounded without evicting an active boss te
       });
     }
 
-    assert.equal(adapter.vfxInstances.length, 24, "the transient VFX pool must stay capped after impact pressure exceeds its budget");
+    assert.equal(adapter.vfxInstances.length, MAX_VISUAL_EFFECTS, "the transient VFX pool must stay capped after impact pressure exceeds its budget");
     assert.equal(adapter.vfxInstances.includes(telegraph), true, "non-critical impact eviction must preserve the active boss telegraph");
     const expectedLifetime = { MELEE_IMPACT: 8, PROJECTILE_IMPACT: 8, SKILL_RESOLVED_DAMAGE: 10 };
     const impacts = adapter.vfxInstances.filter(({ eventType }) => eventType in expectedLifetime);
-    assert.equal(impacts.length, 23, "only non-critical impacts may occupy the remaining capped slots");
+    assert.equal(impacts.length, MAX_VISUAL_EFFECTS - 1, "only non-critical impacts may occupy the remaining capped slots");
     for (const type of impactTypes) {
       const records = impacts.filter(({ eventType }) => eventType === type);
       assert.ok(records.length > 0, `${type} must remain represented after eviction`);
@@ -1799,7 +1807,7 @@ test("impact VFX stay short-lived and bounded without evicting an active boss te
   }
 });
 
-test("a cold-load boss telegraph preempts one of 24 unresolved impact VFX", async () => {
+test("a cold-load boss telegraph preempts one unresolved impact VFX at the authored pool budget", async () => {
   const previousLoad = GLTFLoader.prototype.load;
   const heldLoads = [];
   let adapter = null;
@@ -1820,7 +1828,7 @@ test("a cold-load boss telegraph preempts one of 24 unresolved impact VFX", asyn
       projectiles: [],
       pickups: [],
     };
-    const impacts = Array.from({ length: 24 }, (_, index) => ({
+    const impacts = Array.from({ length: MAX_VISUAL_EFFECTS }, (_, index) => ({
       type: "MELEE_IMPACT",
       eventId: `cold-impact:${index}`,
       sourceId: "commander",
@@ -1829,8 +1837,8 @@ test("a cold-load boss telegraph preempts one of 24 unresolved impact VFX", asyn
     }));
 
     adapter.collectFeedback({ ...baseSnapshot, events: impacts });
-    assert.equal(adapter.pendingVfxLoads.size, 24, "the fixture must hold all 24 non-critical impact loads unresolved");
-    assert.equal(adapter.vfxInstances.length, 24, "unresolved impacts must occupy the full active VFX budget");
+    assert.equal(adapter.pendingVfxLoads.size, MAX_VISUAL_EFFECTS, "the fixture must hold every non-critical impact load unresolved");
+    assert.equal(adapter.vfxInstances.length, MAX_VISUAL_EFFECTS, "unresolved impacts must occupy the full active VFX budget");
     const firstImpact = adapter.vfxInstances[0];
     assert.equal(firstImpact.eventType, "MELEE_IMPACT", "the first expendable record must be an impact");
     assert.equal(firstImpact.loaded, false, "cold impact records must still be placeholders");
@@ -1851,15 +1859,15 @@ test("a cold-load boss telegraph preempts one of 24 unresolved impact VFX", asyn
     assert.ok(telegraph, "priority admission must retain the boss telegraph");
     assert.equal(telegraph.loaded, false, "the admitted telegraph must remain an active placeholder while its GLB is cold");
     assert.equal(telegraph.root.parent, adapter.vfxGroup, "the telegraph placeholder must be attached to the live VFX group");
-    assert.equal(adapter.vfxInstances.length, 24, "priority admission must keep the active VFX pool capped");
-    assert.equal(adapter.pendingVfxLoads.size, 24, "evicted pending work must make room for the critical load without raw pending growth");
+    assert.equal(adapter.vfxInstances.length, MAX_VISUAL_EFFECTS, "priority admission must keep the active VFX pool capped");
+    assert.equal(adapter.pendingVfxLoads.size, MAX_VISUAL_EFFECTS, "evicted pending work must make room for the critical load without raw pending growth");
     assert.equal(adapter.vfxInstances.includes(firstImpact), false, "priority eviction must invalidate an expendable impact record");
     assert.equal(firstImpact.root.parent, null, "the invalidated impact placeholder must leave the live VFX group");
     assert.equal(firstImpact.loadRequest, null, "retirement must sever the evicted impact's pending-load ownership");
     assert.equal(adapter.pendingVfxLoads.has(firstImpactLoadRequest), false, "the evicted impact load must leave pending accounting");
     assert.equal(
       adapter.vfxInstances.filter(({ eventType }) => eventType === "MELEE_IMPACT").length,
-      23,
+      MAX_VISUAL_EFFECTS - 1,
       "the telegraph must replace exactly one non-critical impact",
     );
 
@@ -1876,13 +1884,13 @@ test("a cold-load boss telegraph preempts one of 24 unresolved impact VFX", asyn
     });
     const telegraphs = adapter.vfxInstances.filter(({ eventType }) => eventType === "BOSS_ATTACK_TELEGRAPHED");
     assert.equal(telegraphs.length, 2, "a second critical admission must repeat while the cold pool remains full");
-    assert.equal(adapter.vfxInstances.length, 24, "repeated critical replacement must keep the active pool capped");
-    assert.equal(adapter.pendingVfxLoads.size, 24, "repeated replacement must not accumulate dead pending loads");
+    assert.equal(adapter.vfxInstances.length, MAX_VISUAL_EFFECTS, "repeated critical replacement must keep the active pool capped");
+    assert.equal(adapter.pendingVfxLoads.size, MAX_VISUAL_EFFECTS, "repeated replacement must not accumulate dead pending loads");
     assert.equal(secondImpact.loadRequest, null, "the second evicted impact must also release its load request");
     assert.equal(adapter.pendingVfxLoads.has(secondImpactLoadRequest), false, "the second evicted request must leave pending accounting");
     assert.equal(
       adapter.vfxInstances.filter(({ eventType }) => eventType === "MELEE_IMPACT").length,
-      22,
+      MAX_VISUAL_EFFECTS - 2,
       "two critical placeholders must replace exactly two non-critical impacts",
     );
   } finally {
@@ -2005,4 +2013,917 @@ test("actors render with banded cel shading rather than smooth PBR", async () =>
   assert.equal(secondRamp, materials[0].gradientMap, "every actor shares one cel ramp");
 
   adapter.dispose();
+});
+
+// --- Cycle-10 renderer VFX contracts -------------------------------------------------
+// The drop / buff / arrival / deformation families landed with no test that emits their
+// event types, so every branch below was unreachable from this suite: the pre-existing
+// tests could only prove the new code did not break old behaviour. The failure mode being
+// hunted here is SILENT ABSENCE. effectAnchor() returns null for an unanchorable event and
+// spawnVfx() hard-returns with no console warning, so a cue that never spawns is
+// indistinguishable in production from a cue that was never requested.
+
+// MAX_VISUAL_EFFECTS. The predicates under test are still not exported, so they are asserted
+// against restated behaviour -- but the BUDGET is now exported and is imported here. Restating
+// it duplicated an authored number in two files, and when the budget moved from 24 to 40 for
+// the always-area combat model these rows failed on the stale copy rather than on any real
+// behaviour change. The pool's capacity is the renderer's to author; what this file asserts is
+// that the pool stays AT that capacity and that the right records survive overflow.
+const POOL_CAPACITY = MAX_VISUAL_EFFECTS;
+// MAX_DROP_BEACONS, equal to the peer contract's MAX_FIELD_DROPS so the bound cannot grow
+// with wave count.
+const DROP_BEACON_CAP = 8;
+// DROP_BEACON_WARN_TICKS. A cross-lane constant: HUD, audio and VFX must warn on the same
+// tick, so the boundary is pinned rather than merely relationally asserted.
+const DROP_BEACON_WARN_TICKS = 180;
+
+// The 33 event ids VFX_MODELS carried before this cycle, and the 17 of them
+// CRITICAL_VFX_EVENT_TYPES exempts from eviction. Both lists are restated independently so
+// the equivalence check below is a real contract rather than a mirror of the frozen
+// literals it is meant to police.
+const PRE_CYCLE10_VFX_EVENT_TYPES = Object.freeze([
+  "INPUT_ACCEPTED",
+  "INPUT_REJECTED",
+  "PICKUP_DENIED",
+  "ECHO_DENIED",
+  "EXTRACTION_REJECTED",
+  "OBJECTIVE_FAILED",
+  "ENCOUNTER_OBJECTIVE_FAILED",
+  "PROJECTILE_BLOCKED",
+  "PROJECTILE_EXPIRED",
+  "BOSS_ATTACK_CANCELLED",
+  "CRITICAL_HIT",
+  "MELEE_IMPACT",
+  "PROJECTILE_IMPACT",
+  "SKILL_RESOLVED_DAMAGE",
+  "COMMANDER_DAMAGED",
+  "COMPANION_DAMAGED",
+  "ITEM_COLLECTED",
+  "OBJECTIVE_PHASE_CHANGED",
+  "ENCOUNTER_OBJECTIVE_STARTED",
+  "OBJECTIVE_COMPLETED",
+  "ENCOUNTER_OBJECTIVE_COMPLETED",
+  "WAVE_CLEARED",
+  "EXTRACTION_WINDOW_OPENED",
+  "OCCUPATION_CAPTURED",
+  "EXTRACTION_COMPLETED",
+  "BOSS_ATTACK_TELEGRAPHED",
+  "BOSS_SPAWNED",
+  "BOSS_RALLY_WINDOW",
+  "GATE_BREACHED",
+  "WARDENS_WARD_TRIGGERED",
+  "ECHO_WARDEN_AWAKENING_TRIGGERED",
+  "COMPANION_DOWNED",
+  "TERMINAL",
+]);
+const PRE_CYCLE10_CRITICAL_TYPES = Object.freeze([
+  "CRITICAL_HIT",
+  "BOSS_ATTACK_TELEGRAPHED",
+  "BOSS_RALLY_WINDOW",
+  "BOSS_SPAWNED",
+  "EXTRACTION_WINDOW_OPENED",
+  "GATE_BREACHED",
+  "WARDENS_WARD_TRIGGERED",
+  "ECHO_WARDEN_AWAKENING_TRIGGERED",
+  "COMPANION_DOWNED",
+  "OBJECTIVE_PHASE_CHANGED",
+  "ENCOUNTER_OBJECTIVE_STARTED",
+  "OBJECTIVE_COMPLETED",
+  "ENCOUNTER_OBJECTIVE_COMPLETED",
+  "OCCUPATION_CAPTURED",
+  "OBJECTIVE_FAILED",
+  "ENCOUNTER_OBJECTIVE_FAILED",
+  "TERMINAL",
+]);
+
+function cycle10Snapshot(overrides = {}) {
+  return {
+    commander: { id: "commander", x: 9000, y: 6000, elevation: 0 },
+    gate: { id: "gate", x: 22000, y: 6000, elevation: 0 },
+    enemies: [],
+    companions: [],
+    projectiles: [],
+    pickups: [],
+    ...overrides,
+  };
+}
+
+// Drives exactly one event and returns the record it produced, or null when the cue was
+// silently dropped. The pool is swept to empty first: collectFeedback() retires records
+// whose untilTick has passed before admitting new ones, so each case starts with an empty
+// pool AND an empty per-family live budget (drop 3 / buff 2 / spawn 4 / deform 1). Without
+// that sweep a dropped cue would be masked by the previous case's surviving record.
+async function driveOneVfxEvent(adapter, base, event, tick) {
+  adapter.collectFeedback({ ...base, tick, events: [] });
+  assert.equal(
+    adapter.vfxInstances.length,
+    0,
+    `the transient pool must be quiescent before driving ${event.type}`,
+  );
+  adapter.collectFeedback({ ...base, tick, events: [event] });
+  await waitFor(
+    () => adapter.pendingVfxLoads.size === 0,
+    `${event.type} VFX load did not settle`,
+  );
+  return adapter.vfxInstances.length === 1 ? adapter.vfxInstances[0] : null;
+}
+
+// spawnVfx() offsets every placeholder 0.6 above its anchor, and worldPointInto() maps
+// gameplay elevation through the same WORLD_SCALE/arena-height ratio the actor path uses.
+function assertVfxAnchoredAt(record, anchor, label) {
+  assertNear(record.root.position.x, worldX(anchor.x), `${label}: rendered x must consume the payload anchor`);
+  assertNear(record.root.position.z, worldZ(anchor.y), `${label}: rendered z must consume the payload anchor`);
+  assertNear(
+    record.root.position.y,
+    (anchor.elevation ?? 0) * 14 / 12000 + 0.6,
+    `${label}: rendered elevation must consume the payload anchor`,
+  );
+}
+
+// Admits `subjectEvent`, fills the pool to MAX_VISUAL_EFFECTS behind it, then overflows by
+// one. trackVfxInstance() evicts the FIRST non-critical record, and the subject is that
+// record's predecessor at index 0, so an exempt subject survives and a non-exempt subject
+// is the first thing to go. Survival is therefore a direct read of the exemption predicate
+// through the only surface that observes it.
+async function poolSurvivalOf(RealtimeBattle, subjectEvent) {
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const base = cycle10Snapshot({
+    enemies: [{ id: "pool-enemy", class: "boss", x: 17000, y: 6000, elevation: 0 }],
+  });
+  const tick = 100;
+  const settle = () => waitFor(
+    () => adapter.pendingVfxLoads.size === 0,
+    `${subjectEvent.type} pool fixture did not settle`,
+  );
+  const filler = (index) => ({
+    type: "MELEE_IMPACT",
+    eventId: `pool-filler:${subjectEvent.eventId}:${index}`,
+    sourceId: "commander",
+    targetId: "pool-enemy",
+    damage: index + 1,
+  });
+
+  try {
+    adapter.collectFeedback({ ...base, tick, events: [subjectEvent] });
+    await settle();
+    const subject = adapter.vfxInstances[0] ?? null;
+    if (!subject) return { admitted: false, survived: false, filledSize: 0, poolSize: adapter.vfxInstances.length };
+
+    adapter.collectFeedback({
+      ...base,
+      tick,
+      events: Array.from({ length: POOL_CAPACITY - 1 }, (_unused, index) => filler(index)),
+    });
+    await settle();
+    const filledSize = adapter.vfxInstances.length;
+
+    adapter.collectFeedback({ ...base, tick, events: [filler(POOL_CAPACITY)] });
+    await settle();
+    return {
+      admitted: true,
+      survived: adapter.vfxInstances.includes(subject),
+      filledSize,
+      poolSize: adapter.vfxInstances.length,
+    };
+  } finally {
+    adapter.dispose();
+  }
+}
+
+function dropBeaconHarness(RealtimeBattle) {
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  // mount() builds this group beside terrain/actor/vfx and adds it straight to the scene;
+  // the shared harness predates the beacon surface, so it is wired here the same way.
+  // syncDropBeacons() no-ops without it, which would make every beacon assertion vacuous.
+  adapter.dropDecalGroup = new THREE.Group();
+  adapter.dropDecalGroup.name = "drop-decals";
+  adapter.scene.add(adapter.dropDecalGroup);
+  return adapter;
+}
+
+// Read through the live scene graph rather than the internal Map, so the assertions cover
+// what is actually attached and drawn.
+function beaconGroupFor(adapter, pickupId) {
+  return adapter.dropDecalGroup?.children.find((child) => child.name === `drop-beacon-${pickupId}`) ?? null;
+}
+
+function beaconPartOpacity(group, geometryType) {
+  const mesh = group?.children.find((child) => child.isMesh && child.geometry?.type === geometryType);
+  return mesh ? mesh.material.opacity : null;
+}
+
+test("every cycle-10 event family produces an anchored VFX record instead of failing silently", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const commander = { id: "commander", x: 9000, y: 6000, elevation: 0 };
+  const arrival = { id: "arrival-shadow", class: "rusher", x: 15000, y: 8000, elevation: 240 };
+  const base = cycle10Snapshot({ commander, enemies: [arrival] });
+  const before = structuredClone(base);
+  // Every deformation anchor is deliberately far from the commander and from the arrival,
+  // so an implementation that anchored the whole family to one convenient entity fails.
+  const cases = [
+    {
+      event: {
+        type: "DROP_SPAWNED",
+        eventId: "drop:spawned",
+        dropId: "drop-001",
+        itemId: "ember-draught",
+        rarity: "resonant",
+        x: 6200,
+        y: 3400,
+      },
+      anchor: { x: 6200, y: 3400, elevation: 0 },
+      why: "top-level x/y via the event-as-own-anchor branch",
+    },
+    {
+      event: {
+        type: "DROP_EXPIRED",
+        eventId: "drop:expired",
+        dropId: "drop-002",
+        itemId: "ember-draught",
+        x: 7100,
+        y: 9200,
+      },
+      anchor: { x: 7100, y: 9200, elevation: 0 },
+      why: "top-level x/y, no rarity in the ruled payload",
+    },
+    {
+      event: {
+        type: "DROP_DENIED",
+        eventId: "drop:denied",
+        dropId: "drop-003",
+        reason: "FIELD_CAP",
+        x: 18300,
+        y: 2100,
+      },
+      anchor: { x: 18300, y: 2100, elevation: 0 },
+      why: "top-level x/y with the single ruled reason value",
+    },
+    {
+      event: {
+        type: "BUFF_APPLIED",
+        eventId: "buff:applied",
+        buffId: "buff-001",
+        stat: "power",
+        magnitude: 120,
+        durationTicks: 600,
+      },
+      anchor: commander,
+      why: "commander fallback: the buff family carries no position and no entity id",
+    },
+    {
+      event: {
+        type: "BUFF_REFRESHED",
+        eventId: "buff:refreshed",
+        buffId: "buff-001",
+        stat: "power",
+        stacks: 2,
+        expiresAtTick: 2400,
+      },
+      anchor: commander,
+      why: "commander fallback",
+    },
+    {
+      event: {
+        type: "BUFF_EXPIRED",
+        eventId: "buff:expired",
+        buffId: "buff-001",
+        stat: "power",
+        reason: "TIMEOUT",
+      },
+      anchor: commander,
+      why: "commander fallback, TIMEOUT is the only reason that reads as a loss",
+    },
+    {
+      event: {
+        type: "ENEMY_SPAWNED",
+        eventId: "arrival:shadow",
+        enemyId: arrival.id,
+        grade: "SHADOW",
+        telegraphTicks: 60,
+      },
+      anchor: arrival,
+      why: "enemyId resolves the live snapshot enemy, elevation included",
+    },
+    {
+      event: {
+        type: "GIMMICK_ARMED",
+        eventId: "gimmick:armed",
+        gimmickId: "span-fracture",
+        gimmickClass: "deformation",
+        telegraphTicks: 180,
+        x: 11000,
+        y: 4200,
+      },
+      anchor: { x: 11000, y: 4200, elevation: 0 },
+      why: "top-level x/y; gimmickId is not an entity id",
+    },
+    {
+      event: {
+        type: "GIMMICK_TRIGGERED",
+        eventId: "gimmick:triggered",
+        gimmickId: "span-fracture",
+        gimmickClass: "deformation",
+        x: 11000,
+        y: 4200,
+      },
+      anchor: { x: 11000, y: 4200, elevation: 0 },
+      why: "top-level x/y",
+    },
+    {
+      event: {
+        type: "GIMMICK_RESOLVED",
+        eventId: "gimmick:resolved",
+        gimmickId: "span-fracture",
+        gimmickClass: "deformation",
+        x: 11000,
+        y: 4200,
+      },
+      anchor: { x: 11000, y: 4200, elevation: 0 },
+      why: "top-level x/y",
+    },
+  ];
+
+  try {
+    // Spacing exceeds the longest new-family lifetime (GIMMICK_ARMED fallback 180), so the
+    // previous cue is always swept before the next case is admitted.
+    let tick = 1000;
+    for (const { event, anchor, why } of cases) {
+      tick += 400;
+      const record = await driveOneVfxEvent(adapter, base, event, tick);
+      assert.ok(record, `${event.type} must produce a VFX record (${why}) -- a null anchor is discarded with no warning`);
+      assert.equal(record.eventType, event.type, `${event.type} must publish its own event type on the pool record`);
+      assertVfxAnchoredAt(record, anchor, event.type);
+      assert.equal(record.root.parent, adapter.vfxGroup, `${event.type} placeholder must be attached to the live VFX group`);
+    }
+
+    // The suppression rule shares the `reason` field with four unrelated vocabularies, so
+    // it is asserted alongside the positive case: only TIMEOUT reads as a loss, and a
+    // stage-transition flush of MAX_ACTIVE_BUFFS must not burst six cues.
+    for (const reason of ["EVICTED", "STAGE_TRANSITION", "DEATH"]) {
+      tick += 400;
+      const suppressed = await driveOneVfxEvent(adapter, base, {
+        type: "BUFF_EXPIRED",
+        eventId: `buff:expired:${reason}`,
+        buffId: "buff-002",
+        stat: "power",
+        reason,
+      }, tick);
+      assert.equal(suppressed, null, `BUFF_EXPIRED reason ${reason} must be suppressed at source, not rendered as a loss`);
+    }
+
+    assert.deepEqual(base, before, "cycle-10 cue presentation must not mutate the authoritative snapshot");
+  } finally {
+    await Promise.allSettled([...adapter.pendingVfxLoads]);
+    adapter.dispose();
+  }
+});
+
+test("telegraph lifetimes come from the event payload and fall back to the class default when unusable", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const arrival = { id: "arrival-unit", class: "rusher", x: 15000, y: 8000, elevation: 0 };
+  const base = cycle10Snapshot({ enemies: [arrival] });
+  let tick = 5000;
+
+  const lifetimeOf = async (event) => {
+    tick += 400;
+    const record = await driveOneVfxEvent(adapter, base, event, tick);
+    assert.ok(record, `${event.eventId} must produce a VFX record before its lifetime can be measured`);
+    return record.untilTick - tick;
+  };
+
+  try {
+    // A hardcoded constant would be right for exactly one authored tier and wrong for the
+    // other three. The simulation fires TRIGGERED at ARMED + telegraphTicks, so a cue that
+    // ignores the field keeps claiming "arming" after the gimmick already fired.
+    const armedByTier = {};
+    for (const [gimmickClass, telegraphTicks] of [
+      ["deformation", 180],
+      ["gate", 120],
+      ["mirror", 90],
+      ["hazard", 60],
+    ]) {
+      armedByTier[gimmickClass] = await lifetimeOf({
+        type: "GIMMICK_ARMED",
+        eventId: `armed:${gimmickClass}`,
+        gimmickId: `g-${gimmickClass}`,
+        gimmickClass,
+        telegraphTicks,
+        x: 11000,
+        y: 4200,
+      });
+    }
+    assert.deepEqual(
+      armedByTier,
+      { deformation: 180, gate: 120, mirror: 90, hazard: 60 },
+      "each authored arming window must produce its own cue length, not one shared constant",
+    );
+
+    // Fallback is the CLASS default, never the malformed field. Integer-only on purpose:
+    // ticks are integers everywhere, so a float is a payload defect worth rejecting.
+    const GIMMICK_ARMED_DEFAULT = 180;
+    for (const [label, telegraphTicks] of [
+      ["absent", undefined],
+      ["zero", 0],
+      ["negative", -30],
+      ["fractional", 90.5],
+      ["string", "120"],
+      ["null", null],
+      ["NaN", Number.NaN],
+    ]) {
+      const observed = await lifetimeOf({
+        type: "GIMMICK_ARMED",
+        eventId: `armed-fallback:${label}`,
+        gimmickId: "g-fallback",
+        gimmickClass: "deformation",
+        telegraphTicks,
+        x: 11000,
+        y: 4200,
+      });
+      assert.equal(
+        observed,
+        GIMMICK_ARMED_DEFAULT,
+        `an ${label} telegraphTicks must fall back to the class default, never be honoured`,
+      );
+    }
+
+    // Arrival reaction windows are a gameplay contract: the cue length is how long the
+    // player has to reposition. SHADOW carries its own default; every other grade uses the
+    // registry value.
+    const arrivalByGrade = {};
+    for (const grade of ["BASIC", "SHADOW", "BOSS"]) {
+      arrivalByGrade[grade] = await lifetimeOf({
+        type: "ENEMY_SPAWNED",
+        eventId: `arrival-default:${grade}`,
+        enemyId: arrival.id,
+        grade,
+      });
+    }
+    assert.deepEqual(
+      arrivalByGrade,
+      { BASIC: 30, SHADOW: 60, BOSS: 30 },
+      "the SHADOW arrival default must be distinct from the registry default the other grades take",
+    );
+
+    assert.equal(
+      await lifetimeOf({
+        type: "ENEMY_SPAWNED",
+        eventId: "arrival-override:basic",
+        enemyId: arrival.id,
+        grade: "BASIC",
+        telegraphTicks: 75,
+      }),
+      75,
+      "an authored telegraphTicks must win over the grade default",
+    );
+    // The sharpest case in this test: a SHADOW arrival whose telegraphTicks is unusable
+    // must fall back to the SHADOW default, not to the shared registry default. A fallback
+    // wired to the table would silently halve the elite reaction window to 30.
+    assert.equal(
+      await lifetimeOf({
+        type: "ENEMY_SPAWNED",
+        eventId: "arrival-fallback:shadow",
+        enemyId: arrival.id,
+        grade: "SHADOW",
+        telegraphTicks: 0,
+      }),
+      60,
+      "an unusable telegraphTicks on a SHADOW arrival must fall back to the SHADOW default, not the registry default",
+    );
+  } finally {
+    await Promise.allSettled([...adapter.pendingVfxLoads]);
+    adapter.dispose();
+  }
+});
+
+test("BOSS_ATTACK_TELEGRAPHED keeps reading windupTicks and never adopts the cycle-10 telegraphTicks field", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const base = cycle10Snapshot({
+    enemies: [{ id: "boss-target", class: "boss", x: 17000, y: 6000, elevation: 0 }],
+  });
+  const BOSS_TELEGRAPH_DEFAULT = 45;
+  let tick = 20000;
+
+  const lifetimeOf = async (event) => {
+    tick += 400;
+    const record = await driveOneVfxEvent(adapter, base, event, tick);
+    assert.ok(record, `${event.eventId} must produce a VFX record`);
+    return record.untilTick - tick;
+  };
+
+  try {
+    // Two distinct values, because a single value cannot distinguish "reads the payload"
+    // from "happens to equal the constant".
+    assert.equal(
+      await lifetimeOf({ type: "BOSS_ATTACK_TELEGRAPHED", eventId: "windup:60", targetId: "commander", windupTicks: 60 }),
+      60,
+      "an active boss windup must set the telegraph length",
+    );
+    assert.equal(
+      await lifetimeOf({ type: "BOSS_ATTACK_TELEGRAPHED", eventId: "windup:33", targetId: "commander", windupTicks: 33 }),
+      33,
+      "a second windup value must also be honoured, proving the field is read and not coincidental",
+    );
+    assert.equal(
+      await lifetimeOf({ type: "BOSS_ATTACK_TELEGRAPHED", eventId: "windup:absent", targetId: "commander" }),
+      BOSS_TELEGRAPH_DEFAULT,
+      "a windupless boss telegraph must fall back to its registry default",
+    );
+    // The regression this guards: telegraphTicks is a cycle-10 field, and the boss branch
+    // predates it. A shared cross-family telegraph reader would silently retarget this
+    // event onto the wrong field and hold the cue 200 ticks instead of 45.
+    assert.equal(
+      await lifetimeOf({
+        type: "BOSS_ATTACK_TELEGRAPHED",
+        eventId: "windup:foreign-field",
+        targetId: "commander",
+        telegraphTicks: 200,
+      }),
+      BOSS_TELEGRAPH_DEFAULT,
+      "BOSS_ATTACK_TELEGRAPHED must ignore telegraphTicks -- windupTicks is its only override",
+    );
+    // And the converse: when both arrive, the branch keyed to this type still wins.
+    assert.equal(
+      await lifetimeOf({
+        type: "BOSS_ATTACK_TELEGRAPHED",
+        eventId: "windup:both-fields",
+        targetId: "commander",
+        windupTicks: 72,
+        telegraphTicks: 200,
+      }),
+      72,
+      "with both fields present the boss branch must still resolve through windupTicks",
+    );
+  } finally {
+    await Promise.allSettled([...adapter.pendingVfxLoads]);
+    adapter.dispose();
+  }
+});
+
+test("a contested route path carries telegraphTicks yet produces no telegraph cue", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const enemy = { id: "e-014", class: "rusher", x: 15000, y: 8000, elevation: 0 };
+  const base = cycle10Snapshot({ enemies: [enemy] });
+  let tick = 30000;
+
+  try {
+    // Positive control, run first and against the same adapter and snapshot shape: a real
+    // gimmick telegraph DOES produce a cue here. Without it, the absence asserted below
+    // would also pass against a dead harness.
+    tick += 400;
+    const armed = await driveOneVfxEvent(adapter, base, {
+      type: "GIMMICK_ARMED",
+      eventId: "control:armed",
+      gimmickId: "span-fracture",
+      gimmickClass: "deformation",
+      telegraphTicks: 120,
+      x: 11000,
+      y: 4200,
+    }, tick);
+    assert.ok(armed, "positive control: a real GIMMICK_ARMED must still produce a telegraph cue");
+    assert.equal(armed.untilTick - tick, 120, "positive control: the control cue must read its own arming window");
+
+    // The real emit from getTargetPosition()'s waypoint.contest branch. It carries BOTH
+    // telegraphTicks (a contest duration, not an arming window) and objectiveId -- the two
+    // fields a presence-keyed reader would dispatch on. Such a reader renders a complete,
+    // plausible-looking telegraph for a route contest that has no gimmick at all.
+    tick += 400;
+    const contested = await driveOneVfxEvent(adapter, base, {
+      type: "ENCOUNTER_PATH_CONTESTED",
+      eventId: "contest:single",
+      entityId: enemy.id,
+      routeId: "cinder-approach",
+      waypointId: "contest-gate",
+      objectiveId: "hold-the-span",
+      releaseAt: tick + 60,
+      telegraphTicks: 60,
+    }, tick);
+    assert.equal(contested, null, "a route contest must produce no telegraph cue -- correct dispatch keys on event.type, never on field presence");
+
+    // The cost of getting this wrong, driven at the stage's real body count: 130 arriving
+    // bodies against a 24-slot pool would evict every live combat cue, every wave.
+    tick += 400;
+    adapter.collectFeedback({ ...base, tick, events: [] });
+    assert.equal(adapter.vfxInstances.length, 0, "the pool must be quiescent before the contest flood");
+    adapter.collectFeedback({
+      ...base,
+      tick,
+      events: Array.from({ length: 130 }, (_unused, index) => ({
+        type: "ENCOUNTER_PATH_CONTESTED",
+        eventId: `contest:flood:${index}`,
+        entityId: `e-${index}`,
+        routeId: "cinder-approach",
+        waypointId: "contest-gate",
+        objectiveId: "hold-the-span",
+        releaseAt: tick + 60,
+        telegraphTicks: 60,
+      })),
+    });
+    await waitFor(() => adapter.pendingVfxLoads.size === 0, "the contest flood did not settle");
+    assert.equal(adapter.vfxInstances.length, 0, "130 contested bodies must consume zero of the 24 transient pool slots");
+    assert.equal(adapter.pendingVfxLoads.size, 0, "a contested body must not even open a model load");
+  } finally {
+    await Promise.allSettled([...adapter.pendingVfxLoads]);
+    adapter.dispose();
+  }
+});
+
+test("the cycle-10 pool exemption is payload-conditional and keeps the transient pool capped", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  // Exempting an arrival or a gimmick wholesale would make every BASIC body and every
+  // decorative gate un-evictable and starve the pool; exempting none would let an active
+  // hazard telegraph be evicted while the hazard is still live. Each row is one branch of
+  // the predicate, evaluated against the persisted pool record rather than the live event.
+  const cases = [
+    { label: "SHADOW arrival", exempt: true, event: { type: "ENEMY_SPAWNED", eventId: "exempt:shadow", enemyId: "pool-enemy", grade: "SHADOW" } },
+    { label: "BASIC arrival", exempt: false, event: { type: "ENEMY_SPAWNED", eventId: "exempt:basic", enemyId: "pool-enemy", grade: "BASIC" } },
+    { label: "gradeless arrival", exempt: false, event: { type: "ENEMY_SPAWNED", eventId: "exempt:gradeless", enemyId: "pool-enemy" } },
+    { label: "deformation arming", exempt: true, event: { type: "GIMMICK_ARMED", eventId: "exempt:deform-armed", gimmickClass: "deformation", x: 11000, y: 4200 } },
+    { label: "hazard arming", exempt: true, event: { type: "GIMMICK_ARMED", eventId: "exempt:hazard-armed", gimmickClass: "hazard", x: 11000, y: 4200 } },
+    { label: "gate arming", exempt: false, event: { type: "GIMMICK_ARMED", eventId: "exempt:gate-armed", gimmickClass: "gate", x: 11000, y: 4200 } },
+    { label: "mirror arming", exempt: false, event: { type: "GIMMICK_ARMED", eventId: "exempt:mirror-armed", gimmickClass: "mirror", x: 11000, y: 4200 } },
+    { label: "classless arming", exempt: false, event: { type: "GIMMICK_ARMED", eventId: "exempt:classless-armed", x: 11000, y: 4200 } },
+    { label: "deformation contact", exempt: true, event: { type: "GIMMICK_TRIGGERED", eventId: "exempt:deform-trig", gimmickClass: "deformation", x: 11000, y: 4200 } },
+    { label: "gate contact", exempt: false, event: { type: "GIMMICK_TRIGGERED", eventId: "exempt:gate-trig", gimmickClass: "gate", x: 11000, y: 4200 } },
+    // GIMMICK_RESOLVED is deliberately outside the predicate: the deformation is over, so
+    // the cue no longer carries live gameplay information and must stay evictable even
+    // though it shares the deformation class with the two exempt phases above.
+    { label: "deformation resolution", exempt: false, event: { type: "GIMMICK_RESOLVED", eventId: "exempt:deform-resolved", gimmickClass: "deformation", x: 11000, y: 4200 } },
+    { label: "drop appear", exempt: false, event: { type: "DROP_SPAWNED", eventId: "exempt:drop", dropId: "d-1", rarity: "relic", x: 6200, y: 3400 } },
+    { label: "buff apply", exempt: false, event: { type: "BUFF_APPLIED", eventId: "exempt:buff", buffId: "b-1", stat: "power" } },
+  ];
+
+  const observed = {};
+  for (const { label, event } of cases) {
+    const result = await poolSurvivalOf(RealtimeBattle, event);
+    assert.equal(result.admitted, true, `${label}: the subject must enter the pool before its exemption can be measured`);
+    assert.equal(result.filledSize, POOL_CAPACITY, `${label}: the pool must fill to exactly ${POOL_CAPACITY} before overflow`);
+    assert.equal(result.poolSize, POOL_CAPACITY, `${label}: the pool must stay capped at ${POOL_CAPACITY} after overflow`);
+    observed[label] = result.survived;
+  }
+  assert.deepEqual(
+    observed,
+    Object.fromEntries(cases.map(({ label, exempt }) => [label, exempt])),
+    "pool exemption must follow the payload (grade / gimmickClass), not the event type alone",
+  );
+});
+
+test("pool exemption stays byte-equivalent to the pre-cycle-10 membership test for all 33 event ids", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  // The predicate replaced two bare CRITICAL_VFX_EVENT_TYPES.includes() calls. An
+  // over-broad predicate starves the pool and a narrowed one drops live boss telegraphs,
+  // and neither shows up in any other test, so every pre-existing id is measured.
+  const observed = {};
+  for (const type of PRE_CYCLE10_VFX_EVENT_TYPES) {
+    const result = await poolSurvivalOf(RealtimeBattle, {
+      type,
+      eventId: `equivalence:${type}`,
+      targetId: "commander",
+      sourceId: "commander",
+      damage: 1,
+    });
+    assert.equal(result.admitted, true, `${type}: the subject must enter the pool before its exemption can be measured`);
+    assert.equal(result.poolSize, POOL_CAPACITY, `${type}: the pool must stay capped at ${POOL_CAPACITY}`);
+    observed[type] = result.survived;
+  }
+  assert.deepEqual(
+    observed,
+    Object.fromEntries(PRE_CYCLE10_VFX_EVENT_TYPES.map((type) => [type, PRE_CYCLE10_CRITICAL_TYPES.includes(type)])),
+    "every pre-existing event id must keep exactly its old CRITICAL_VFX_EVENT_TYPES eviction behaviour",
+  );
+  assert.equal(
+    Object.values(observed).filter(Boolean).length,
+    PRE_CYCLE10_CRITICAL_TYPES.length,
+    "the exempt set must stay at its measured size -- a wider set starves the 24-slot pool",
+  );
+});
+
+test("drop beacons are pool-free scenery, bounded, retired with their pickup, and swept by reduced motion and dispose", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = dropBeaconHarness(RealtimeBattle);
+  const rarities = ["common", "rare", "resonant", "relic"];
+  // More drops than the bound, so the cap is exercised rather than merely satisfied.
+  const drops = Array.from({ length: DROP_BEACON_CAP + 4 }, (_unused, index) => ({
+    id: `drop-${String(index).padStart(2, "0")}`,
+    kind: "buff",
+    itemId: "ember-draught",
+    rarity: rarities[index % rarities.length],
+    x: 4000 + index * 500,
+    y: 3000 + index * 200,
+    elevation: 0,
+    expiresAtTick: 100000,
+    hp: 1,
+    maxHp: 1,
+  }));
+  // Echo and item pickups predate the beacon surface and must stay unmarked.
+  const legacyPickups = [
+    { id: "legacy-item", kind: "item", itemId: "ward-splinter", x: 8400, y: 4100, elevation: 0, hp: 1, maxHp: 1 },
+    { id: "legacy-echo", kind: "echo", xp: 9, x: 15200, y: 7600, elevation: 0, hp: 1, maxHp: 1 },
+  ];
+  const snapshotWith = (pickups, tick) => ({ tick, ...cycle10Snapshot({ pickups }) });
+  const allPickups = [...drops, ...legacyPickups];
+  const before = structuredClone(allPickups);
+
+  try {
+    // Kind filter FIRST, deliberately under cap headroom. Asserted after saturation it is
+    // vacuous: the bound would reject a legacy pickup anyway, so the assertion would pass
+    // against an implementation that had lost the `kind === "buff"` filter entirely.
+    const headroom = [drops[0], drops[1], ...legacyPickups];
+    adapter.reconcileActors(snapshotWith(headroom, 400));
+    const headroomState = adapter.debugPresentationState();
+    assert.ok(
+      headroomState.dropBeaconCount < DROP_BEACON_CAP,
+      "the kind-filter fixture must leave spare beacon slots or the assertion below proves nothing",
+    );
+    assert.deepEqual(
+      headroomState.dropBeacons.map(({ id }) => id),
+      [drops[0].id, drops[1].id].sort(),
+      "only buff field drops may be marked -- echo and item pickups predate this surface and stay unmarked",
+    );
+    for (const pickup of legacyPickups) {
+      assert.equal(beaconGroupFor(adapter, pickup.id), null, `a ${pickup.kind} pickup must not receive a drop beacon`);
+    }
+
+    adapter.reconcileActors(snapshotWith(allPickups, 500));
+
+    const state = adapter.debugPresentationState();
+    assert.equal(state.dropBeaconCount, DROP_BEACON_CAP, `the beacon population must be bounded at ${DROP_BEACON_CAP}, not grow with the drop count`);
+    assert.equal(adapter.dropDecalGroup.children.length, DROP_BEACON_CAP, "the scene graph must carry exactly the bounded beacon population");
+    assert.deepEqual(
+      state.dropBeacons.map(({ id }) => id),
+      drops.slice(0, DROP_BEACON_CAP).map(({ id }) => id).sort(),
+      "the bound must admit drops in snapshot order, not silently reshuffle them",
+    );
+    assert.deepEqual(
+      state.dropBeacons.map(({ rarity }) => rarity),
+      drops.slice(0, DROP_BEACON_CAP)
+        .slice()
+        .sort((left, right) => left.id.localeCompare(right.id))
+        .map(({ rarity }) => rarity),
+      "each beacon must carry its own drop's rarity classifier",
+    );
+
+    // The load-bearing claim: this whole surface costs nothing from the transient budget.
+    assert.equal(state.activeVfxCount, 0, "beacons must consume zero transient VFX pool slots");
+    assert.equal(adapter.vfxInstances.length, 0, "no beacon may be pushed into the transient pool");
+    assert.equal(adapter.pendingVfxLoads.size, 0, "no beacon may open a transient VFX model load");
+
+    const marked = drops[0];
+    const markedGroup = beaconGroupFor(adapter, marked.id);
+    assert.ok(markedGroup, "a bounded-in drop must be attached to the drop decal group");
+    assertNear(markedGroup.position.x, worldX(marked.x), "a beacon must sit at its own drop's x");
+    assertNear(markedGroup.position.z, worldZ(marked.y), "a beacon must sit at its own drop's z");
+    assert.ok(
+      markedGroup.position.y > 0 && markedGroup.position.y < 0.1,
+      `a beacon must be lifted clear of the floor without floating: got ${markedGroup.position.y}`,
+    );
+
+    // Pre-expiry read, derived from the snapshot rather than from an event. The threshold
+    // is a cross-lane constant -- HUD, audio and VFX must warn on the same tick -- so the
+    // boundary is asserted on both sides.
+    const idleTickOpacity = beaconPartOpacity(markedGroup, "RingGeometry");
+    const justOutside = snapshotWith(
+      allPickups.map((pickup) => (pickup.id === marked.id
+        ? { ...pickup, expiresAtTick: 600 + DROP_BEACON_WARN_TICKS + 1 }
+        : pickup)),
+      600,
+    );
+    adapter.reconcileActors(justOutside);
+    assert.equal(
+      adapter.debugPresentationState().dropBeacons.find(({ id }) => id === marked.id).warning,
+      false,
+      `a drop ${DROP_BEACON_WARN_TICKS + 1} ticks from expiry must not warn yet`,
+    );
+    const justInside = snapshotWith(
+      allPickups.map((pickup) => (pickup.id === marked.id
+        ? { ...pickup, expiresAtTick: 600 + DROP_BEACON_WARN_TICKS }
+        : pickup)),
+      600,
+    );
+    adapter.reconcileActors(justInside);
+    assert.equal(
+      adapter.debugPresentationState().dropBeacons.find(({ id }) => id === marked.id).warning,
+      true,
+      `a drop exactly ${DROP_BEACON_WARN_TICKS} ticks from expiry must warn on that tick`,
+    );
+    assert.ok(
+      beaconPartOpacity(markedGroup, "RingGeometry") < idleTickOpacity,
+      "the warning read must dim the ground tick rather than leave it at its idle value",
+    );
+
+    // Retirement is snapshot-derived, so collection and expiry are the same code path: the
+    // beacon leaves the tick its id leaves snapshot.pickups, whatever the reason.
+    const collected = drops[3];
+    const collectedGroup = beaconGroupFor(adapter, collected.id);
+    const survivors = allPickups.filter(({ id }) => id !== collected.id);
+    adapter.reconcileActors(snapshotWith(survivors, 700));
+    assert.equal(beaconGroupFor(adapter, collected.id), null, "a beacon must be retired the tick its drop leaves the snapshot");
+    assert.equal(collectedGroup.parent, null, "a retired beacon must be detached from the drop decal group, not merely forgotten");
+    assert.equal(adapter.debugPresentationState().dropBeaconCount, DROP_BEACON_CAP - 1, "retirement must free a slot rather than leave a hole");
+
+    // A freed slot must be reusable: a high-water-mark bound would leave the population
+    // one short forever, and a leaked entry would keep the retired id occupying it.
+    adapter.reconcileActors(snapshotWith(survivors, 800));
+    const refilled = adapter.debugPresentationState();
+    assert.equal(refilled.dropBeaconCount, DROP_BEACON_CAP, "a freed slot must be reclaimed by a previously bounded-out drop");
+    assert.equal(
+      refilled.dropBeacons.some(({ id }) => id === collected.id),
+      false,
+      "the reclaimed slot must not resurrect the retired drop",
+    );
+
+    // Reduced motion degrades the beacon to a static marker and never hides it: it is the
+    // only way to find a drop at max zoom.
+    adapter.setReducedMotion(true);
+    const staticGroup = beaconGroupFor(adapter, drops[1].id);
+    assert.equal(staticGroup.visible, true, "reduced motion must never hide a beacon -- it is the only way to find a drop");
+    assert.equal(beaconPartOpacity(staticGroup, "CylinderGeometry"), 1, "reduced motion must hold the shaft at full opacity");
+    adapter.updateDropBeacons(1234);
+    assert.equal(beaconPartOpacity(staticGroup, "CylinderGeometry"), 1, "reduced-motion travel must stay stopped across animation ticks");
+
+    adapter.setReducedMotion(false);
+    adapter.updateDropBeacons(1234);
+    assert.ok(
+      beaconPartOpacity(staticGroup, "CylinderGeometry") < 1,
+      "clearing reduced motion must let the shaft resume its opacity travel",
+    );
+
+    assert.deepEqual(allPickups, before, "beacon presentation must not mutate the authoritative snapshot pickups");
+
+    // Every beacon owns its geometry and materials, so unmount must drain the map before
+    // the group reference is dropped.
+    const livingGroups = adapter.dropDecalGroup.children.slice();
+    assert.equal(livingGroups.length, DROP_BEACON_CAP, "the dispose fixture must start with a populated decal group");
+    adapter.dispose();
+    assert.equal(adapter.dropBeacons.size, 0, "dispose must drain the beacon map");
+    assert.equal(adapter.dropDecalGroup, null, "dispose must release the decal group reference");
+    assert.equal(
+      livingGroups.every((group) => group.parent === null),
+      true,
+      "dispose must detach every beacon from the scene graph",
+    );
+  } finally {
+    if (!adapter.disposed) adapter.dispose();
+  }
+});
+
+test("pickup model selection preserves the legacy kind mapping and honours an authored modelKey", async () => {
+  const { RealtimeBattle } = await rendererModule;
+  const adapter = realtimeBattleHarness(RealtimeBattle);
+  const BLADE = "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb";
+  const RELIC = "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb";
+  // The expression this replaced, restated as an oracle. Every keyless row below is
+  // checked against it rather than against a transcribed table, so "byte-identical to the
+  // old behaviour" is asserted differentially instead of by hand.
+  const legacyModelPath = (kind) => (kind === "item" ? BLADE : RELIC);
+
+  const keyless = [
+    { id: "keyless-item", kind: "item" },
+    { id: "keyless-echo", kind: "echo" },
+    { id: "keyless-buff", kind: "buff" },
+    { id: "keyless-unknown", kind: "shard" },
+    { id: "keyless-absent" },
+  ];
+  const keyed = [
+    { id: "keyed-blade-on-buff", kind: "buff", modelKey: "blade", expected: BLADE },
+    { id: "keyed-relic-on-buff", kind: "buff", modelKey: "relic", expected: RELIC },
+    // An authored key must override the kind inference in both directions, otherwise the
+    // simulation's catalog choice is silently discarded for one of the two kinds.
+    { id: "keyed-relic-on-item", kind: "item", modelKey: "relic", expected: RELIC },
+    { id: "keyed-blade-on-echo", kind: "echo", modelKey: "blade", expected: BLADE },
+    // An unrecognised key must degrade to the legacy kind rule, not to a broken path.
+    { id: "unkeyed-item", kind: "item", modelKey: "sunburst", expected: BLADE },
+    { id: "unkeyed-echo", kind: "echo", modelKey: "sunburst", expected: RELIC },
+  ];
+  const pickups = [
+    ...keyless.map(({ id, kind }) => ({ id, ...(kind ? { kind } : {}), x: 9000, y: 5000, elevation: 0, hp: 1, maxHp: 1 })),
+    ...keyed.map(({ id, kind, modelKey }) => ({ id, kind, modelKey, x: 9000, y: 5000, elevation: 0, hp: 1, maxHp: 1 })),
+  ];
+
+  try {
+    adapter.reconcileActors({ tick: 1, ...cycle10Snapshot({ pickups }) });
+    await waitFor(
+      () => pickups.every(({ id }) => adapter.actors.get(id)?.loading === false),
+      "pickup model requests did not settle",
+    );
+
+    const observed = Object.fromEntries(
+      pickups.map(({ id }) => [id, adapter.debugPresentationState(id).modelPath]),
+    );
+    assert.deepEqual(
+      Object.fromEntries(keyless.map(({ id, kind }) => [id, observed[id]])),
+      Object.fromEntries(keyless.map(({ id, kind }) => [id, legacyModelPath(kind)])),
+      "a pickup with no modelKey must resolve exactly as the pre-cycle-10 kind expression did",
+    );
+    assert.deepEqual(
+      Object.fromEntries(keyed.map(({ id }) => [id, observed[id]])),
+      Object.fromEntries(keyed.map(({ id, expected }) => [id, expected])),
+      "an authored modelKey must select its own mesh and degrade to the kind rule when unrecognised",
+    );
+  } finally {
+    adapter.dispose();
+  }
 });

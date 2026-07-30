@@ -1,9 +1,19 @@
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import test from "node:test";
 
 import {
   advanceDefenseRun,
+  applyIncomingDamage,
+  buffBp,
+  composedBuffStats,
   createDefenseRun,
+  effectiveBasicDamage,
+  effectiveCooldownScaleBp,
+  effectiveCritChanceBp,
+  effectiveGateMax,
+  effectivePickupRange,
+  getCommanderSpeed,
   getRunDigest,
   getRunSnapshot,
   isTerminalRun,
@@ -12,18 +22,25 @@ import {
 } from "../defense-run-simulation.js";
 import { cutsceneFromEvent } from "../defense-cutscene.js";
 import {
+  BUFF_ITEMS,
+  BUFF_STAT_OPS,
   COMMANDER,
   CUTSCENES,
+  DROP_TTL_TICKS,
   ENEMIES,
+  ITEMS,
+  MAX_FIELD_DROPS,
   MEASUREMENT_FIXTURE_BUDGET_ID,
   MEASUREMENT_PROFILES,
   OCTANT_VECTORS,
+  REWARDS,
   SKILLS,
   STAGES,
   STAGE_BY_ID,
   STAGE_WAVE_DOCTRINE,
   XP_GROWTH,
 } from "../defense-catalog.js";
+import { COMPANION_ROLES } from "../rpg-catalog.js";
 import { STAGE_STORIES } from "../stage-story-catalog.js";
 
 function squaredDistance(left, right) {
@@ -1131,4 +1148,810 @@ test("selecting an already-owned reward closes an all-owned terminal offer", () 
     after.events.find((event) => event.type === "REWARD_SELECTION_DUPLICATE_IGNORED")?.reason,
     "REWARD_ALREADY_OWNED",
   );
+});
+
+/* ===========================================================================================
+ * CYCLE 10 — ITEM DROP / TIMED STAT BUFF DETERMINISM GATE
+ *
+ * `_workspace/current/design/item-drop-timed-buff-spec.md` §9 names checks 1, 2, 5, 8, 10a, 17
+ * and 20 the determinism gate: if any of the seven fails, the feature does not ship. Each one
+ * defends against a specific silent-corruption mode from §10's risk register — the class of
+ * defect that leaves the game playable and the suite green while the digest stops being
+ * reproducible.
+ *
+ * FIVE of the seven assert an ABSENCE (no buff key, no event, no mutation, no float, no rng
+ * movement), and an absence assertion passes trivially against a feature that was never wired
+ * up. Every one below therefore carries a POSITIVE PAIR in the same test — an assertion that
+ * fails if the drop/buff layer is inert — so a green result means "the layer ran and stayed
+ * invisible", never "the layer did nothing".
+ * =========================================================================================== */
+
+/**
+ * `createDefenseRun` returns a FROZEN run, so `run.buffs = [...]` silently no-ops and every
+ * accessor keeps reporting its base value — a mutation that looks applied and isn't. Round-trip
+ * through JSON to get a writable copy: `run.buffs` entries are eight integer/string fields with
+ * no nesting, so the clone is lossless, and this is the same `clone` the simulation itself uses
+ * on every `advanceDefenseRun`.
+ */
+function thawRun(run) {
+  return JSON.parse(JSON.stringify(run));
+}
+
+/** A `run.buffs` entry built from the catalog, so magnitude/stat can never drift from BUFF_ITEMS. */
+function buffEntry(itemId, { stacks = 1, buffId = `buff-${itemId}`, appliedAtTick = 0, expiresAtTick = 1_000_000 } = {}) {
+  const definition = BUFF_ITEMS[itemId];
+  return {
+    buffId,
+    itemId,
+    stat: definition.stat,
+    magnitude: definition.magnitude,
+    stacks,
+    appliedAtTick,
+    expiresAtTick,
+    sourceDropId: `drop-${itemId}`,
+  };
+}
+
+/** A real buff drop actor, shaped exactly as `rollBuffDrop` builds one. */
+function buffDropAt(run, itemId, x, y) {
+  const definition = BUFF_ITEMS[itemId];
+  return {
+    id: `zz-drop-${itemId}`,
+    type: "pickup",
+    kind: "buff",
+    itemId,
+    rarity: definition.rarity,
+    modelKey: definition.modelKey,
+    grade: "BOSS",
+    slabId: null,
+    expiresAtTick: run.tick + DROP_TTL_TICKS,
+    elevation: 0,
+    x,
+    y,
+    hp: 1,
+    maxHp: 1,
+  };
+}
+
+/**
+ * Clones a LIVE enemy `count` times with `hp = 0` so the next tick's `resolveDeaths` rolls a
+ * drop for each. Cloning a real spawned enemy rather than hand-rolling a literal keeps every
+ * field the tick loop touches (`route`, `waypointIndex`, `policyId`, …) present and valid.
+ * Ids are `zz-`prefixed, so they sort last under the `id.localeCompare` order `resolveDeaths`
+ * imposes and the roll sequence is fixed.
+ */
+function withDeadEnemies(run, count, mutate = () => {}) {
+  const next = thawRun(run);
+  const template = next.enemies[0];
+  assert.ok(template, "withDeadEnemies needs at least one live enemy to clone");
+  for (let index = 0; index < count; index += 1) {
+    const corpse = JSON.parse(JSON.stringify(template));
+    corpse.id = `zz-corpse-${String(index).padStart(2, "0")}`;
+    corpse.hp = 0;
+    corpse.x = 5000 + index * 7;
+    corpse.y = 5000;
+    mutate(corpse, index);
+    next.enemies.push(corpse);
+  }
+  return next;
+}
+
+/** BOSS grade is 10000bp in every stage's DROP_CHANCE_BP, so each death spawns with certainty. */
+function withDeadBosses(run, count) {
+  return withDeadEnemies(run, count, (corpse) => {
+    corpse.class = "boss";
+    corpse.elite = false;
+    corpse.midboss = false;
+  });
+}
+
+/** Fills the field to `count` buff drops, far from the commander so none is collected. */
+function withFieldDrops(run, count) {
+  const next = thawRun(run);
+  for (let index = 0; index < count; index += 1) {
+    next.pickups.push({
+      ...buffDropAt(next, "ember-edge", 200, 200 + index),
+      id: `zz-fill-${index}`,
+      expiresAtTick: next.tick + DROP_TTL_TICKS,
+    });
+  }
+  return next;
+}
+
+/** Advances `steps` ticks through growth offers, tallying every event type seen on the way. */
+function driveWithLedger(run, steps) {
+  const counts = new Map();
+  let next = run;
+  for (let step = 0; step < steps && !isTerminalRun(next); step += 1) {
+    const snapshot = getRunSnapshot(next);
+    if (snapshot.growthOffer) next = queueInput(next, "SKILL_SELECTED", { skillId: snapshot.growthOffer.choices[0] });
+    next = advanceDefenseRun(next, 1);
+    for (const event of getRunSnapshot(next).events) counts.set(event.type, (counts.get(event.type) || 0) + 1);
+  }
+  return { run: next, counts, count: (type) => counts.get(type) || 0 };
+}
+
+/** Every numeric leaf in a serialized snapshot, as `path -> value`. Array indices are kept. */
+function numericLeaves(value, path = "", out = []) {
+  if (typeof value === "number") {
+    out.push({ path, value });
+    return out;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => numericLeaves(item, `${path}[${index}]`, out));
+    return out;
+  }
+  if (value && typeof value === "object") {
+    for (const [key, entry] of Object.entries(value)) numericLeaves(entry, path ? `${path}.${key}` : key, out);
+  }
+  return out;
+}
+
+const stripIndices = (path) => path.replace(/\[\d+\]/g, "[]");
+
+/**
+ * The complete set of non-integer leaves a snapshot carried BEFORE cycle 10, measured against
+ * the pre-feature module at `033877ad` across every stage. All seven are authored float
+ * multipliers in stage layout / recovery data. The drop-buff layer must add NOTHING to this
+ * list: §10 risk 6 and risk 13 are both "a float reaches the digest and byte-identity dies
+ * across engines", and both are invisible in an unbuffed fixture.
+ */
+const PRE_EXISTING_FLOAT_PATHS = Object.freeze([
+  "stageLayout.elevation.rangeMultiplier",
+  "stageLayout.occupationPoint.effects.moveMultiplier",
+  "stageLayout.occupationPoint.effects.rangeMultiplier",
+  "tactics.elevation.rangeMultiplier",
+  "tactics.occupation.effects.moveMultiplier",
+  "tactics.occupation.effects.rangeMultiplier",
+  "terrainRecovery.capRatio",
+]);
+
+/** The seven event types §7 introduces. None may appear in a measurement-profile run (§6.3). */
+const DROP_BUFF_EVENT_TYPES = Object.freeze([
+  "DROP_SPAWNED",
+  "DROP_DENIED",
+  "DROP_EXPIRED",
+  "BUFF_APPLIED",
+  "BUFF_REFRESHED",
+  "BUFF_EXPIRED",
+  "ITEM_COLLECTED",
+]);
+
+const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex");
+
+/**
+ * §9 check 1 requires the zero-buff digest to be byte-identical to "the pre-change digest at
+ * the same seed", captured BEFORE the feature landed. These are that capture: each hash is
+ * `sha256(getRunDigest(run))` produced by the simulation module at commit `033877ad` — the last
+ * commit before the drop/buff layer existed — run against the current catalog, whose diff over
+ * the same range is +173/-0 (pure addition, so the pre-feature module loads unchanged against
+ * it). Recover the baseline with `git show 033877ad:defense-run-simulation.js`.
+ *
+ * A hash rather than a 19KB string because the digest is not the artifact under test — its
+ * INVARIANCE is. Any byte that moves flips the hash.
+ *
+ * STATE THE CLAIM AT THE WIDTH THE EVIDENCE SUPPORTS (director R43). Byte-identity across the
+ * feature boundary holds for a run that SPAWNED ZERO DROPS. It does NOT hold merely because no
+ * buff is active at the measurement tick, and the difference is not a leak.
+ *
+ * Measured: 10 windows compared old-module against new-module, 7 byte-identical. Two of the
+ * three that differed had a buff live at the tick — expected. The third (cinder-span/9/3000) had
+ * `buffs` ABSENT, zero field drops, and an identical digest LENGTH, yet differed: enemy ids had
+ * shifted `enemy-58` -> `enemy-63` and `eventSequence` `12831` -> `12842`. That is §10 risk 7 —
+ * `nextId` is one counter shared with pickups, projectiles and enemies, so a drop actor that
+ * spawned and was collected 2000 ticks earlier permanently renumbers every later actor. Its
+ * `waveVariant` was byte-identical in that same run, which is what proves `run.rng` was never
+ * touched. DropBuffImpl's independent 72-run sweep found the same shape: 6 divergences, every one
+ * with a drop roll, zero divergences without one.
+ *
+ * So every window pinned below is chosen for ZERO SPAWNED DROPS, and the test asserts that
+ * precondition rather than assuming it. A future balance change that starts dropping inside one
+ * of these windows must fail as "precondition broke", never as a silent hash mismatch.
+ */
+/*
+ * REBASELINED 2026-07-30, twice: once at the cycle-10 / area-combat merge, and again when the
+ * cycle-9 slice landed and fixed the enemy-shell faction tag (enemy fire had been splashing
+ * enemies instead of the player side, so windows containing an enemy shell moved again).
+ *
+ * These SHAs pin "the buff-drop layer changes nothing when nothing drops". The always-area
+ * combat model (defense-catalog AREA_*) changed what a tick DOES, so every digest moved --
+ * including these windows. That is a change in the combat rules, NOT a change in the claim
+ * under test, and the claim is still asserted the same way: each window is re-measured to have
+ * zero DROP_SPAWNED, zero BUFF_APPLIED, a completed window, an ADVANCED dropRng (so the layer
+ * really executed), and absent `buffs`/`buffStats` keys at SNAPSHOT_VERSION 7. Only the bytes
+ * are new; every precondition below was re-verified, not assumed.
+ */
+const PRE_FEATURE_DIGEST_SHA256 = Object.freeze([
+  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "50860301b64464b00cbac792a661f18574f3cf6e65599e624433ead49db5abdf" },
+  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "c250e10ff1c0d1e70280646dbde592ba3d7bb6e29693161a5d067064dff6c57b" },
+  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "ade3e989e89d3a3037ada50b5bebaa6a2f073cc395545d58efcb89313717805b" },
+  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "cf3f32b176712c9cfec62be5c071645c342e714962a9db96298b02237ef46b32" },
+]);
+
+// ---------------------------------------------------------------------------------------------
+// CHECK 1 — zero-buff digest byte-identity
+// ---------------------------------------------------------------------------------------------
+
+test("gate check 1: a run that collects no buff drop keeps a digest byte-identical to the pre-feature build", () => {
+  for (const fixture of PRE_FEATURE_DIGEST_SHA256) {
+    const ledger = driveWithLedger(createDefenseRun(fixture.options), fixture.steps);
+    const digest = getRunDigest(ledger.run);
+    const snapshot = JSON.parse(digest);
+
+    // Precondition, asserted rather than assumed: this window really is buff-free. Stated first
+    // so a future balance change that starts spawning here fails as "precondition broke", not as
+    // a mysterious digest mismatch.
+    assert.equal(ledger.count("DROP_SPAWNED"), 0, `${fixture.label}: expected a drop-free window`);
+    assert.equal(ledger.count("BUFF_APPLIED"), 0, `${fixture.label}: expected a buff-free window`);
+    assert.equal(ledger.run.tick, fixture.steps, `${fixture.label}: window must run to completion`);
+
+    // POSITIVE PAIR. `dropRng` advanced, so `rollBuffDrop` really executed for every death in
+    // this window — the identity below is "the layer ran and changed nothing", not "the layer
+    // was never reached". Without this line the whole test passes against an unwired feature.
+    assert.notEqual(
+      ledger.run.dropRng,
+      createDefenseRun(fixture.options).dropRng,
+      `${fixture.label}: dropRng must advance, otherwise no drop was ever rolled and this proves nothing`,
+    );
+
+    // The additive claim itself.
+    assert.equal(sha256(digest), fixture.sha, `${fixture.label}: digest diverged from the pre-feature baseline`);
+
+    // Absent, not empty: an empty `buffs: []` would still change the serialized bytes.
+    assert.equal("buffs" in snapshot, false, `${fixture.label}: buffs must be absent, not empty`);
+    assert.equal("buffStats" in snapshot, false, `${fixture.label}: buffStats must be absent, not empty`);
+    assert.equal(snapshot.version, 7, `${fixture.label}: SNAPSHOT_VERSION must not bump`);
+  }
+});
+
+test("gate check 1: two runs at one seed ticked identically with no buff produce string-equal digests, and a buffed run does not", () => {
+  const options = { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] };
+  const left = driveWithLedger(createDefenseRun(options), 500);
+  const right = driveWithLedger(createDefenseRun(options), 500);
+  assert.equal(left.count("BUFF_APPLIED"), 0);
+  assert.equal(getRunDigest(left.run), getRunDigest(right.run));
+
+  // POSITIVE PAIR for the byte-identity above: the same comparison MUST fail once a buff is
+  // live, otherwise `getRunDigest` is insensitive to buff state and check 1 is vacuous.
+  const buffed = thawRun(left.run);
+  buffed.buffs = [buffEntry("ember-edge", { buffId: "buff-1", expiresAtTick: buffed.tick + 600 })];
+  const buffedSnapshot = JSON.parse(getRunDigest(buffed));
+  assert.notEqual(getRunDigest(buffed), getRunDigest(left.run));
+  assert.equal("buffs" in buffedSnapshot, true);
+  assert.equal("buffStats" in buffedSnapshot, true);
+  assert.deepEqual(buffedSnapshot.buffStats, { basicDamage: 1200 });
+  assert.equal(buffedSnapshot.version, 7, "a buffed snapshot must still report version 7");
+});
+
+// ---------------------------------------------------------------------------------------------
+// CHECK 2 — `run.rng` untouched
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * `run.rng` is the wave-schedule and growth-offer stream and every draw on it is POSITIONAL.
+ * One extra `rngNext(run.rng)` anywhere in the drop path shifts every subsequent draw — wave
+ * composition, timing jitter, lane offset, spawn direction, policy selection, growth-offer
+ * contents — for every seed on every stage (§6.2, §10 risk 4).
+ *
+ * The literals are `run.rng` measured on the PRE-FEATURE module at `033877ad` after 3000 ticks:
+ * that build is §9 check 2's "build with the drop block deleted". Each row spawns drops in the
+ * current build, so the stream is compared across a boundary where drop rolls demonstrably ran.
+ */
+// Seed 3 repinned 2026-07-30 with the cycle-9 slice: growth offers draw from `run.rng`, and the
+// combat changes moved how many enemies die inside 3000 ticks, so the number of offers moved with
+// them. The other two seeds were re-measured and did NOT move. The invariant this gate protects --
+// the drop roll never touches the wave stream -- is unchanged and still asserted alongside its
+// positive pair (drops really spawned, dropRng really advanced, waveVariant byte-identical).
+const PRE_FEATURE_RNG_AT_3000 = Object.freeze([
+  { options: { stageId: "cinder-span", seed: 9, companionLoadout: [] }, rng: 745195808 },
+  { options: { stageId: "cinder-span", seed: 3, companionLoadout: [] }, rng: 3246667586 },
+  { options: { stageId: "abyss-chancel", seed: 5, companionLoadout: ["ember-cohort"] }, rng: 3688787054 },
+]);
+
+test("gate check 2: 3000 ticks of live drop rolls leave run.rng and the wave schedule exactly where the pre-feature build left them", () => {
+  for (const fixture of PRE_FEATURE_RNG_AT_3000) {
+    const created = createDefenseRun(fixture.options);
+    const ledger = driveWithLedger(created, 3000);
+
+    // POSITIVE PAIR, stated before the invariant: drops really spawned in this window. A run
+    // where nothing dropped would satisfy every assertion below while proving nothing.
+    assert.ok(ledger.count("DROP_SPAWNED") > 0, "expected at least one live drop in a 3000-tick window");
+    assert.notEqual(ledger.run.dropRng, created.dropRng, "dropRng must have advanced");
+
+    // The invariant: the wave stream is where the drop-free build left it, to the integer.
+    assert.equal(ledger.run.rng, fixture.rng, `${fixture.options.stageId}/${fixture.options.seed}: run.rng moved`);
+    // And the schedule those draws produced is untouched — built once at creation, never re-drawn.
+    assert.deepEqual(ledger.run.waveVariant, created.waveVariant);
+  }
+});
+
+test("gate check 2: forcing extra drop rolls inside one tick moves dropRng and leaves run.rng and waveVariant identical", () => {
+  // Isolates the drop path to a single tick: two runs differing ONLY in how many deaths they
+  // resolve. Anything the drop roll touches beyond `dropRng` shows up as an inequality here.
+  const seeded = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 71 }), 1);
+  const control = advanceDefenseRun(thawRun(seeded), 1);
+  const rolled = advanceDefenseRun(withDeadBosses(seeded, 3), 1);
+
+  // Growth offers consume `run.rng` through `makeOffer`, and the injected corpses grant XP. If a
+  // future XP change pushes either run into an offer the comparison is meaningless, so make that
+  // a loud precondition failure rather than a silent false negative.
+  assert.equal(getRunSnapshot(control).growthOffer, null, "control must not be mid-growth-offer");
+  assert.equal(getRunSnapshot(rolled).growthOffer, null, "rolled run must not be mid-growth-offer");
+
+  // POSITIVE PAIR: the extra deaths really did roll, spawn, and advance the drop stream.
+  const spawned = getRunSnapshot(rolled).events.filter((event) => event.type === "DROP_SPAWNED");
+  assert.equal(spawned.length, 3, "each BOSS-grade death is a 10000bp certainty");
+  assert.notEqual(rolled.dropRng, control.dropRng, "dropRng must diverge once extra rolls happen");
+
+  // The invariant.
+  assert.equal(rolled.rng, control.rng, "run.rng must be untouched by drop rolls");
+  assert.deepEqual(rolled.waveVariant, control.waveVariant);
+});
+
+// ---------------------------------------------------------------------------------------------
+// DRAW PROTOCOL — §6.3 invariants 1 and 2
+// ---------------------------------------------------------------------------------------------
+
+test("draw protocol: a denied drop advances dropRng exactly as far as a spawned one", () => {
+  // §6.3 invariant 2 / §10 risk 5. The field-cap check must happen AFTER all three draws. Check
+  // the cap first and the stream position starts depending on how many drops the player happened
+  // to leave lying around — a state-dependent RNG position that survives casual play and dies in
+  // replay. Same seed, same kill sequence, opposite field occupancy.
+  const seeded = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 71 }), 1);
+  const emptyField = advanceDefenseRun(withDeadBosses(seeded, 2), 1);
+  const fullField = advanceDefenseRun(withFieldDrops(withDeadBosses(seeded, 2), MAX_FIELD_DROPS), 1);
+
+  const emptyEvents = getRunSnapshot(emptyField).events;
+  const fullEvents = getRunSnapshot(fullField).events;
+
+  // POSITIVE PAIR: the two runs really did take opposite branches. Without this the assertion
+  // below passes for two runs that both spawned, or both denied, or both did nothing.
+  assert.equal(emptyEvents.filter((event) => event.type === "DROP_SPAWNED").length, 2);
+  assert.equal(emptyEvents.filter((event) => event.type === "DROP_DENIED").length, 0);
+  assert.equal(fullEvents.filter((event) => event.type === "DROP_SPAWNED").length, 0);
+  assert.equal(fullEvents.filter((event) => event.type === "DROP_DENIED").length, 2);
+  for (const denial of fullEvents.filter((event) => event.type === "DROP_DENIED")) {
+    assert.equal(denial.reason, "FIELD_CAP");
+  }
+
+  // The invariant: identical stream position despite opposite outcomes.
+  assert.equal(fullField.dropRng, emptyField.dropRng, "a denied drop must consume the same three draws as a spawned one");
+
+  // And denial adds no actor: the cap held.
+  assert.equal(getRunSnapshot(fullField).pickups.filter((pickup) => pickup.kind === "buff").length, MAX_FIELD_DROPS);
+});
+
+test("draw protocol: draw 1 is unconditional, so a failed roll advances dropRng as far as a successful roll's first draw", () => {
+  // §6.3 invariant 1. Draw 1 fires for every death outside a measurement profile, whatever the
+  // chance table says. The measurement exploits stream arithmetic instead of re-implementing
+  // `rngNext`: three cinder-span BASIC deaths (600bp — every roll fails, one draw each) must land
+  // the stream on the SAME position as one BOSS death (10000bp — roll succeeds, three draws).
+  // Three advances either way. Make draw 1 conditional and the failing rolls consume nothing,
+  // so the two positions diverge.
+  const seeded = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 71 }), 1);
+  const threeFailures = advanceDefenseRun(withDeadEnemies(seeded, 3), 1);
+  const oneSuccess = advanceDefenseRun(withDeadBosses(seeded, 1), 1);
+
+  // POSITIVE PAIR: the two runs really did take the branches the arithmetic assumes.
+  const failureEvents = getRunSnapshot(threeFailures).events;
+  assert.equal(failureEvents.filter((event) => event.type === "DROP_SPAWNED").length, 0, "all three BASIC rolls must fail");
+  assert.equal(failureEvents.filter((event) => event.type === "DROP_DENIED").length, 0, "a failed chance roll is not a denial");
+  assert.equal(getRunSnapshot(oneSuccess).events.filter((event) => event.type === "DROP_SPAWNED").length, 1);
+  assert.notEqual(threeFailures.dropRng, seeded.dropRng, "three failed rolls must still advance the stream");
+
+  // The invariant: 3 x draw-1 == 1 x (draw-1 + draw-2 + draw-3).
+  assert.equal(threeFailures.dropRng, oneSuccess.dropRng, "draw 1 must fire unconditionally for every death");
+});
+
+// ---------------------------------------------------------------------------------------------
+// CHECK 5 — no float serialized
+// ---------------------------------------------------------------------------------------------
+
+test("gate check 5: every numeric leaf the buff layer serializes is an integer, and the snapshot gains no new float", () => {
+  // §10 risk 6 (`Math.round(0.9 * 10000)` is 9000.000000000002 unrounded) and risk 13 (bp
+  // conversion of a float multiplier). Both put a float in the digest, which breaks byte-identity
+  // across engines while every gameplay assertion still passes.
+  const seeded = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 71 }), 1);
+  const staged = thawRun(seeded);
+  // One drop on the commander (collected this tick -> buffs + buffStats + BUFF_APPLIED), one far
+  // away (survives -> a buff pickup with its own numeric fields stays in `pickups`).
+  staged.pickups.push(buffDropAt(staged, "reaver-fervor", staged.commander.x, staged.commander.y));
+  // `lantern-aegis` replaces the WITHDRAWN `bulwark-echo` here. This drop is never collected
+  // (400,400 is far from the commander), so its stat never reaches `buffStats` and the
+  // `{ basicDamage: 2500 }` assertion below is unaffected -- only its numeric leaves matter.
+  staged.pickups.push({ ...buffDropAt(staged, "lantern-aegis", 400, 400), id: "zz-drop-far" });
+  const collected = advanceDefenseRun(staged, 1);
+
+  const snapshot = JSON.parse(getRunDigest(collected));
+  const buffPickups = snapshot.pickups.filter((pickup) => pickup.kind === "buff");
+  const buffEvents = snapshot.events.filter((event) => DROP_BUFF_EVENT_TYPES.includes(event.type));
+
+  // POSITIVE PAIR: the structures under test are populated. A walk over `undefined` finds no
+  // float and passes, which is exactly the null-implementation trap.
+  assert.equal(snapshot.buffs.length, 1, "expected one active buff to walk");
+  assert.deepEqual(snapshot.buffStats, { basicDamage: 2500 }, "expected a populated buffStats to walk");
+  assert.equal(buffPickups.length, 1, "expected one uncollected buff drop to walk");
+  assert.ok(buffEvents.length > 0, "expected at least one drop/buff event payload to walk");
+
+  // Scoped assertion: every number the feature introduces is an integer.
+  const featureRoots = [
+    ["buffs", snapshot.buffs],
+    ["buffStats", snapshot.buffStats],
+    ["buffPickups", buffPickups],
+    ["buffEvents", buffEvents],
+  ];
+  for (const [label, root] of featureRoots) {
+    for (const leaf of numericLeaves(root, label)) {
+      assert.equal(Number.isInteger(leaf.value), true, `${leaf.path} = ${leaf.value} is not an integer`);
+    }
+  }
+
+  // Whole-snapshot assertion: the set of float-bearing paths is EXACTLY the pre-cycle-10 set.
+  // Stronger than the scoped walk — it catches a float introduced anywhere, including into a
+  // field the feature only reads.
+  const floats = [...new Set(numericLeaves(snapshot).filter((leaf) => !Number.isInteger(leaf.value)).map((leaf) => stripIndices(leaf.path)))].sort();
+  assert.deepEqual(floats, [...PRE_EXISTING_FLOAT_PATHS]);
+});
+
+// ---------------------------------------------------------------------------------------------
+// CHECK 8 — base stats never mutated
+// ---------------------------------------------------------------------------------------------
+
+test("gate check 8: a full buff apply then timeout expiry leaves every base stat field untouched", () => {
+  // §10 risk 3: an implementer who "simplifies" composition by writing into
+  // `run.commander.basicDamage` reintroduces the permanent-grant bug this layer exists to avoid,
+  // and it looks like it works. Composition happens at the read site; the base is never written.
+  const seeded = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 71 }), 1);
+  const baseline = {
+    basicDamage: seeded.commander.basicDamage,
+    pickupRange: seeded.commander.pickupRange,
+    critChanceBp: seeded.commander.critProfile.chanceBp,
+    cooldownScale: seeded.commander.cooldownScale,
+    incomingDamageMultiplier: seeded.commander.incomingDamageMultiplier,
+    gateMaxIntegrity: seeded.gate.maxIntegrity,
+  };
+  const readBases = (run) => ({
+    basicDamage: run.commander.basicDamage,
+    pickupRange: run.commander.pickupRange,
+    critChanceBp: run.commander.critProfile.chanceBp,
+    cooldownScale: run.commander.cooldownScale,
+    incomingDamageMultiplier: run.commander.incomingDamageMultiplier,
+    gateMaxIntegrity: run.gate.maxIntegrity,
+  });
+
+  // Collect for real, through `collectPickups` -> `applyBuff`.
+  const staged = thawRun(seeded);
+  staged.pickups.push(buffDropAt(staged, "ember-edge", staged.commander.x, staged.commander.y));
+  const active = advanceDefenseRun(staged, 1);
+  const activeSnapshot = getRunSnapshot(active);
+
+  // POSITIVE PAIR: the buff is genuinely live and genuinely changing the composed read. Without
+  // this, "base fields unchanged" is satisfied by a buff that was never applied.
+  assert.equal(activeSnapshot.buffs.length, 1, "the drop must have been collected");
+  assert.equal(activeSnapshot.buffs[0].itemId, "ember-edge");
+  assert.equal(buffBp(active, "basicDamage"), 1200);
+  assert.equal(effectiveBasicDamage(active), Math.trunc(baseline.basicDamage * 11200 / 10000));
+  assert.notEqual(effectiveBasicDamage(active), baseline.basicDamage, "the composed read must differ while buffed");
+
+  // Invariant, while active.
+  assert.deepEqual(readBases(active), baseline, "no base stat may be written while a buff is active");
+
+  // Run to the exact expiry tick. `expireBuffs` removes on `expiresAtTick <= run.tick`, so the
+  // entry is present at `expiresAtTick - 1` and gone at `expiresAtTick`.
+  const entry = activeSnapshot.buffs[0];
+  const beforeExpiry = advanceWithOffers(active, entry.expiresAtTick - 1 - active.tick);
+  assert.equal(beforeExpiry.tick, entry.expiresAtTick - 1, "must reach the tick before expiry without going terminal");
+  assert.equal(getRunSnapshot(beforeExpiry).buffs.length, 1, "the buff must still be live one tick before expiry");
+
+  const expired = advanceWithOffers(beforeExpiry, 1);
+  const expiredSnapshot = getRunSnapshot(expired);
+
+  // POSITIVE PAIR: expiry really happened, by timeout, exactly once.
+  const timeouts = expiredSnapshot.events.filter((event) => event.type === "BUFF_EXPIRED");
+  assert.equal(timeouts.length, 1);
+  assert.equal(timeouts[0].reason, "TIMEOUT");
+  assert.equal(timeouts[0].buffId, entry.buffId);
+  assert.equal("buffs" in expiredSnapshot, false, "buffs must be absent again, not an empty array");
+  assert.equal(buffBp(expired, "basicDamage"), 0);
+  assert.equal(effectiveBasicDamage(expired), baseline.basicDamage, "the composed read must restore exactly");
+
+  // Invariant, after expiry.
+  assert.deepEqual(readBases(expired), baseline, "no base stat may be written across a full apply -> expire cycle");
+});
+
+// ---------------------------------------------------------------------------------------------
+// CHECK 10a — identity guard on every accessor
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Each row names an accessor, the ORIGINAL expression §3.2 records it as replacing, and a buff
+ * that makes it move. `original` is evaluated against the same run, so the row compares the
+ * accessor to the expression rather than to a hard-coded number that could drift from the
+ * catalog.
+ *
+ * READ THIS BEFORE TRUSTING THE ROWS BELOW AS GUARD EVIDENCE (director R44). The spec and the
+ * source comment both say the `bp === 0` short-circuits are "what makes byte-identity a proof
+ * rather than a hope". Measured by perturbation, that is one step wider than the evidence: for
+ * six of the seven accessors the guarded branch and the composed branch are ARITHMETICALLY
+ * IDENTICAL at bp = 0 — `Math.trunc(x * 10000 / 10000) === x` for an integer x, and the crit
+ * clamp is an identity inside its range. Deleting the guard from `effectiveBasicDamage` leaves
+ * every check in this file green, verified.
+ *
+ * So these six rows are REGRESSION rows: they pin that an unbuffed read returns the base value
+ * and that a buffed read composes correctly. They are not evidence that the guards are
+ * load-bearing, and they cannot become that. The guards are still worth keeping — they document
+ * intent and they stay correct if a base field ever becomes non-integer — but the byte-identity
+ * proof rests on `getRunSnapshot` omitting `buffs`/`buffStats` entirely (check 1), not on them.
+ *
+ * The one accessor whose zero-buff behaviour is a real arithmetic obligation is
+ * `effectiveCooldownScaleBp`, which has no guard at all; it is tested separately below.
+ */
+const ACCESSOR_IDENTITY_ROWS = Object.freeze([
+  {
+    name: "effectiveBasicDamage",
+    accessor: (run) => effectiveBasicDamage(run),
+    original: (run) => run.commander.basicDamage,
+    buff: () => [buffEntry("ember-edge", { stacks: 2 })],
+    buffed: (run) => Math.trunc(run.commander.basicDamage * 12400 / 10000),
+  },
+  {
+    name: "effectiveGateMax",
+    accessor: (run) => effectiveGateMax(run),
+    original: (run) => run.gate.maxIntegrity,
+    // Synthetic, not `buffEntry` -- the only `gateMaxIntegrity` item (`bulwark-echo`) was
+    // WITHDRAWN from BUFF_ITEMS this cycle because the composed cap makes the published
+    // snapshot report `gate.integrity > gate.maxIntegrity` (see the catalog comment).
+    // `effectiveGateMax` itself is still live code behind 7 read sites, so it keeps its
+    // coverage here; only the catalog dependency is cut. Arithmetic is unchanged: the
+    // withdrawn item was magnitude 1000 x 2 stacks = +2000bp = x1.2.
+    buff: () => [{
+      buffId: "buff-synthetic-gate-max",
+      itemId: "synthetic-gate-max",
+      stat: "gateMaxIntegrity",
+      magnitude: 1000,
+      stacks: 2,
+      appliedAtTick: 0,
+      expiresAtTick: 1_000_000,
+      sourceDropId: "drop-synthetic-gate-max",
+    }],
+    buffed: (run) => Math.trunc(run.gate.maxIntegrity * 12000 / 10000),
+  },
+  {
+    name: "effectivePickupRange",
+    accessor: (run) => effectivePickupRange(run),
+    original: (run) => run.commander.pickupRange,
+    buff: () => [buffEntry("reclaimer-pulse", { stacks: 2 })],
+    buffed: (run) => Math.trunc(run.commander.pickupRange * 15000 / 10000),
+  },
+  {
+    name: "effectiveCritChanceBp",
+    accessor: (run) => effectiveCritChanceBp(run),
+    original: (run) => run.commander.critProfile.chanceBp,
+    buff: () => [buffEntry("throne-resonance")],
+    buffed: (run) => run.commander.critProfile.chanceBp + 1500,
+  },
+  {
+    name: "effectiveCooldownScaleBp",
+    accessor: (run) => effectiveCooldownScaleBp(run),
+    // The accessor returns basis points where the original read site multiplied by the raw float.
+    original: (run) => Math.round(run.commander.cooldownScale * 10000),
+    buff: () => [buffEntry("chancel-tempo")],
+    buffed: (run) => Math.round(run.commander.cooldownScale * 10000) - 1500,
+  },
+  {
+    name: "getCommanderSpeed",
+    accessor: (run) => getCommanderSpeed(run),
+    // No occupation capture at tick 1, so the multiplier the original expression used is 1.0.
+    original: () => Math.trunc(COMMANDER.speed * 1.0),
+    buff: () => [buffEntry("ash-stride", { stacks: 2 })],
+    buffed: () => Math.trunc(Math.trunc(COMMANDER.speed * 1.0) * 12000 / 10000),
+  },
+]);
+
+test("gate check 10a: with no buff active every accessor is Object.is-identical to the expression it replaced", () => {
+  const seeded = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 71 }), 1);
+  for (const row of ACCESSOR_IDENTITY_ROWS) {
+    const unbuffed = thawRun(seeded);
+    unbuffed.buffs = [];
+    assert.equal(
+      Object.is(row.accessor(unbuffed), row.original(unbuffed)),
+      true,
+      `${row.name}: with run.buffs = [] the accessor must return the original expression exactly`,
+    );
+
+    // POSITIVE PAIR, per row. Without it the whole table passes against an accessor hard-wired to
+    // return its base field and ignore buffs entirely — which is precisely the bug the identity
+    // assertion cannot see, because at bp = 0 both branches agree.
+    const buffed = thawRun(seeded);
+    buffed.buffs = row.buff();
+    assert.equal(row.accessor(buffed), row.buffed(buffed), `${row.name}: composed value wrong while buffed`);
+    assert.notEqual(row.accessor(buffed), row.original(buffed), `${row.name}: accessor ignored an active buff`);
+  }
+});
+
+test("gate check 10a: applyIncomingDamage preserves the original rounding for every damage value, including a float multiplier", () => {
+  // The seventh accessor, kept separate because its identity is a sweep and because it is the one
+  // §10 risk 13 targets. `incomingDamageMultiplier` is a PRODUCT of floats, not an authored
+  // constant: three vanguard companions give 0.95^3 = 0.857375, which is not representable in
+  // four decimals. Converting the read site to `Math.trunc(d * bp / 10000)` also flips the
+  // rounding mode. Both changes are invisible in an unbuffed integer fixture, so the sweep runs
+  // against an injected float and proves the bp form would actually disagree.
+  const seeded = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 71 }), 1);
+  for (const multiplier of [1, 0.95, 0.95 ** 2, 0.95 ** 3]) {
+    const run = thawRun(seeded);
+    run.buffs = [];
+    run.commander.incomingDamageMultiplier = multiplier;
+    let bpFormDisagreements = 0;
+    const bpForm = Math.round(multiplier * 10000);
+    for (let damage = 1; damage <= 2000; damage += 1) {
+      const original = Math.round(damage * multiplier);
+      assert.equal(applyIncomingDamage(run, damage), original, `multiplier ${multiplier}, damage ${damage}`);
+      if (Math.trunc(damage * bpForm / 10000) !== original) bpFormDisagreements += 1;
+    }
+    // POSITIVE PAIR: for every real (non-unit) multiplier the tempting bp conversion genuinely
+    // disagrees, so the identity above is a live constraint rather than an arithmetic tautology.
+    if (multiplier !== 1) {
+      assert.ok(bpFormDisagreements > 0, `multiplier ${multiplier}: sweep must discriminate against the bp form`);
+    }
+  }
+
+  // And the buffed branch still composes off the ALREADY-ROUNDED base.
+  const buffed = thawRun(seeded);
+  buffed.buffs = [buffEntry("lantern-aegis")];
+  assert.equal(buffBp(buffed, "incomingDamageBp"), -2000);
+  assert.equal(applyIncomingDamage(buffed, 100), Math.max(0, Math.trunc(Math.round(100 * buffed.commander.incomingDamageMultiplier) * 8000 / 10000)));
+  assert.notEqual(applyIncomingDamage(buffed, 100), Math.round(100 * buffed.commander.incomingDamageMultiplier));
+});
+
+test("gate check 10a: effectiveCooldownScaleBp returns integer basis points for every scale its write paths can produce", () => {
+  // `effectiveCooldownScaleBp` is the one accessor with NO `bp === 0` short-circuit, so unlike the
+  // six guarded rows above its behaviour at zero buff is real arithmetic rather than a branch.
+  //
+  // CORRECTION TO THE SPEC AND TO THE SOURCE COMMENT. §3.2 and the comment on the accessor both
+  // justify `Math.round(scale * 10000)` with "`0.9 * 10000` is `9000.000000000002`". That is
+  // FALSE: `0.9 * 10000` is exactly 9000 in IEEE-754, verified below so the claim cannot rot back
+  // in. The dust does not come from the multiply — it comes from ACCUMULATED SUBTRACTION in the
+  // four write paths, each of them `clamp(cooldownScale - reduction, floor, 1)`.
+  //
+  // Measured reachability: across every shipped `companionLoadout` (singles and triples) x
+  // `stillwater-hourglass` x all three stages, run creation produces exactly {1, 0.8}, and both
+  // are exact. `COMPANION_ROLES.support`'s 0.05 is not loadout-reachable (its members are not
+  // `COMPANIONS` keys) and `hourglass-fragment` is not in `STAGE_ITEM_IDS`, so `applyItem`'s 0.1
+  // is not reachable in play either. The round is therefore DEFENSIVE TODAY: no currently
+  // reachable configuration produces a value where removing it changes a cooldown.
+  //
+  // So this test does not pretend the round is load-bearing for cooldown VALUES. It asserts the
+  // property that is genuinely load-bearing and genuinely fails without the round: the accessor
+  // feeds `Math.trunc(ticks * bp / 10000)` and must hand that expression an INTEGER. Delete the
+  // round and 20 of the 35 scales the write paths can produce return a float — verified by
+  // perturbation. One more reduction constant, or one more subtraction in a write path, turns
+  // that from defensive into reachable without anyone editing this accessor.
+  assert.equal(0.9 * 10000, 9000, "the spec's stated justification for Math.round is false; do not restore it");
+  assert.equal(Number.isInteger(0.9 * 10000), true);
+
+  const seeded = advanceDefenseRun(createDefenseRun({ stageId: "cinder-span", seed: 71 }), 1);
+  const clampScale = (value, floor) => Math.min(Math.max(value, floor), 1);
+
+  // Every reduction the live catalogs can subtract from `cooldownScale`, read from the catalogs so
+  // a new reduction widens this sweep automatically instead of silently escaping it.
+  const reductions = [...new Set([
+    ...Object.values(ITEMS).map((item) => item.cooldownReduction),
+    ...Object.values(REWARDS).map((reward) => reward.cooldownReduction),
+    COMPANION_ROLES.support?.commanderCooldownReduction,
+  ].filter((value) => typeof value === "number" && value > 0))];
+  assert.ok(reductions.length >= 2, "expected the catalogs to publish cooldown reductions to sweep");
+
+  // Close the reduction set over the two clamp floors the four write paths use (0.4 and 0.5),
+  // reproducing the shipped expression rather than hand-typing decimal literals — typing clean
+  // literals is exactly what made an earlier revision of this test unable to fail.
+  const producible = new Set([1]);
+  let frontier = [1];
+  for (let depth = 0; depth < 4; depth += 1) {
+    const next = [];
+    for (const scale of frontier) {
+      for (const reduction of reductions) {
+        for (const floor of [0.4, 0.5]) {
+          const value = clampScale(scale - reduction, floor);
+          if (!producible.has(value)) { producible.add(value); next.push(value); }
+        }
+      }
+    }
+    frontier = next;
+  }
+
+  // POSITIVE PAIR: the sweep really does contain values carrying floating-point dust, so the
+  // integer assertion below has something to catch. Without this the sweep could silently narrow
+  // to exact values and go quiet.
+  const dusty = [...producible].filter((scale) => !Number.isInteger(scale * 10000));
+  assert.ok(dusty.length > 0, "the sweep must include scales whose *10000 is not an integer");
+
+  for (const scale of producible) {
+    const run = thawRun(seeded);
+    run.buffs = [];
+    run.commander.cooldownScale = scale;
+    const bp = effectiveCooldownScaleBp(run);
+    // The load-bearing assertion. Fails for 20 of these scales if the `Math.round` is removed.
+    assert.equal(Number.isInteger(bp), true, `scale ${scale}: accessor must return integer basis points, got ${bp}`);
+    assert.equal(bp, Math.round(scale * 10000), `scale ${scale}: accessor must report exact basis points`);
+  }
+
+  // Regression row, labelled as such: for every scale a run can actually START at, the composed
+  // call-site expression is identical to the pre-feature one. This does not evidence the round —
+  // it pins that the bp refactor did not move a shipped cooldown.
+  const reachableAtCreation = new Set();
+  for (const rewardIds of [[], ["stillwater-hourglass"]]) {
+    for (const stageId of STAGES.map((stage) => stage.id)) {
+      reachableAtCreation.add(createDefenseRun({ stageId, seed: 71, companionLoadout: FULL_LOADOUT, rewardIds }).commander.cooldownScale);
+      reachableAtCreation.add(createDefenseRun({ stageId, seed: 71, companionLoadout: [], rewardIds }).commander.cooldownScale);
+    }
+  }
+  const authoredCooldowns = Object.values(SKILLS).map((skill) => skill.cooldown).filter((value) => Number.isInteger(value));
+  assert.ok(authoredCooldowns.length > 0, "expected authored skill cooldowns to sweep");
+  const maxCooldown = Math.max(...authoredCooldowns);
+  for (const scale of reachableAtCreation) {
+    const run = thawRun(seeded);
+    run.buffs = [];
+    run.commander.cooldownScale = scale;
+    const bp = effectiveCooldownScaleBp(run);
+    for (let ticks = 1; ticks <= maxCooldown * 2; ticks += 1) {
+      assert.equal(
+        Math.max(1, Math.trunc(ticks * bp / 10000)),
+        Math.max(1, Math.trunc(ticks * scale)),
+        `scale ${scale}, cooldown ${ticks}: composed cooldown diverged from the original expression`,
+      );
+    }
+  }
+
+  // POSITIVE PAIR: a cooldown buff must actually move the result, and clamp at the negative cap.
+  const buffed = thawRun(seeded);
+  buffed.commander.cooldownScale = 1;
+  buffed.buffs = [buffEntry("chancel-tempo"), buffEntry("cinder-haste", { stacks: 2 })];
+  assert.equal(buffBp(buffed, "cooldownScaleBp"), BUFF_STAT_OPS.cooldownScaleBp.capBp, "-1500 + -1600 must clamp to the -3000 cap");
+  assert.equal(effectiveCooldownScaleBp(buffed), 7000);
+  assert.notEqual(effectiveCooldownScaleBp(buffed), 10000, "a cooldown buff must move the composed basis points");
+});
+
+// ---------------------------------------------------------------------------------------------
+// CHECK 17 — measurement isolation
+// ---------------------------------------------------------------------------------------------
+
+test("gate check 17: a measurement-profile run consumes zero drop draws and emits no drop or buff event", () => {
+  // §6.3 invariant 3. A fixture run must be bit-identical to its signed tuple, so the drop roll
+  // is skipped entirely rather than rolled and discarded — a discarded roll still moves the
+  // stream, which would make every fixture depend on kill count.
+  const options = { stageId: "cinder-span", seed: 71, measurementProfileId: "striker" };
+  const created = createDefenseRun(options);
+  assert.equal(created.measurementProfileId, "striker");
+  const ledger = driveWithLedger(created, 2000);
+
+  // POSITIVE PAIR: enemies really died inside the window, so the guard was actually reached.
+  // Without this the test passes on a run where `resolveDeaths` never fired.
+  assert.ok(ledger.count("ENEMY_DEFEATED") > 0, "the measurement window must contain real deaths");
+  assert.equal(ledger.run.tick, 2000);
+
+  // The invariant: zero draws consumed, no buff state, none of the seven event types.
+  assert.equal(ledger.run.dropRng, created.dropRng, "dropRng must be untouched for the whole fixture run");
+  assert.deepEqual(ledger.run.buffs, []);
+  assert.equal("buffs" in JSON.parse(getRunDigest(ledger.run)), false);
+  for (const type of DROP_BUFF_EVENT_TYPES) {
+    assert.equal(ledger.count(type), 0, `${type} must never be emitted inside a measurement profile`);
+  }
+});
+
+test("gate check 17: the identical kill sequence outside a measurement profile does roll, spawn, and advance dropRng", () => {
+  // The discriminating half of check 17. The assertions above are all absences and pass against
+  // a drop layer that was never wired up; this proves the same code path is live and productive
+  // the moment the profile is removed, so the isolation above is a guard and not an accident.
+  const base = { stageId: "cinder-span", seed: 71 };
+  const measured = advanceDefenseRun(createDefenseRun({ ...base, measurementProfileId: "striker" }), 1);
+  const ordinary = advanceDefenseRun(createDefenseRun(base), 1);
+
+  const measuredAfter = advanceDefenseRun(withDeadBosses(measured, 2), 1);
+  const ordinaryAfter = advanceDefenseRun(withDeadBosses(ordinary, 2), 1);
+
+  assert.equal(measuredAfter.dropRng, measured.dropRng, "a measurement profile must consume zero draws even on a guaranteed roll");
+  assert.equal(getRunSnapshot(measuredAfter).events.filter((event) => DROP_BUFF_EVENT_TYPES.includes(event.type)).length, 0);
+
+  assert.notEqual(ordinaryAfter.dropRng, ordinary.dropRng, "an ordinary run must advance the drop stream");
+  assert.equal(getRunSnapshot(ordinaryAfter).events.filter((event) => event.type === "DROP_SPAWNED").length, 2);
 });

@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "stageId": "cinder-span",
+  "promotedAt": "2026-07-30T14:39:01.677179+00:00",
+  "tool": "promote-dungeon-floor.py",
+  "gates": {
+    "flatSurface": "PASS",
+    "runtimeDestination": "PASS",
+    "buildReportChecksum": "PASS"
+  },
+  "surface": {
+    "kind": "flat-gameplay-floor",
+    "gameplayElevation": 0.0,
+    "coplanar": true,
+    "coordinateSpace": "renderer-world",
+    "worldScale": 14.0,
+    "bounds": {
+      "minX": 600,
+      "maxX": 23400,
+      "minY": 800,
+      "maxY": 11200
+    },
+    "apron": {
+      "x": 2400,
+      "y": 1200
+    },
+    "apronRect": {
+      "minX": -1800,
+      "maxX": 25800,
+      "minY": -400,
+      "maxY": 12400
+    },
+    "worldSpan": {
+      "x": 32.199999999999996,
+      "z": 29.86666666666667
+    },
+    "fitFootprintScale": 1.0,
+    "coveredArea": 237120000,
+    "declaredArea": 237120000,
+    "uvLattice": {
+      "periodX": 2000.0,
+      "periodY": 1000.0,
+      "anchor": [
+        0,
+        0
+      ]
+    }
+  },
+  "source": {
+    "path": "/Users/jangyoung/orca/Abyssal-Surge-dungeon/_workspace/current/engineering/asset-pipeline/terrain-dungeon/built/terrain-cinder-span-floor.glb",
+    "sha256": "cde1babe0089fc08fa8af55f46150b1ec67dcd76b7d2f69967bcca0d3b4002fa",
+    "bytes": 1881596
+  },
+  "destination": {
+    "path": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
+    "sha256": "cde1babe0089fc08fa8af55f46150b1ec67dcd76b7d2f69967bcca0d3b4002fa",
+    "bytes": 1881596
+  },
+  "slabs": [
+    {
+      "slabId": "cinder-span:slab-01",
+      "node": "terrain-cinder-span-slab-001",
+      "material": "ash-drift",
+      "rect": {
+        "minX": 600,
+        "maxX": 8600,
+        "minY": 800,
+        "maxY": 11200
+      },
+      "uv": {
+        "repeat": [
+          4.0,
+          10.4
+        ],
+        "offset": [
+          0.3,
+          0.8
+        ],
+        "rotationTurns": 2
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    },
+    {
+      "slabId": "cinder-span:slab-02",
+      "node": "terrain-cinder-span-slab-002",
+      "material": "basalt-ember",
+      "rect": {
+        "minX": 8600,
+        "maxX": 17000,
+        "minY": 800,
+        "maxY": 11200
+      },
+      "uv": {
+        "repeat": [
+          4.2,
+          10.4
+        ],
+        "offset": [
+          4.3,
+          0.8
+        ],
+        "rotationTurns": 0
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    },
+    {
+      "slabId": "cinder-span:slab-03",
+      "node": "terrain-cinder-span-slab-003",
+      "material": "forge-plate",
+      "rect": {
+        "minX": 17000,
+        "maxX": 23400,
+        "minY": 800,
+        "maxY": 11200
+      },
+      "uv": {
+        "repeat": [
+          3.2,
+          10.4
+        ],
+        "offset": [
+          8.5,
+          0.8
+        ],
+        "rotationTurns": 1
+      },
+      "walkable": true,
+      "vertices": 4,
+      "polygons": 1
+    }
+  ],
+  "catalogPatch": {
+    "file": "stage-world-catalog.js",
+    "stageId": "cinder-span",
+    "applyAllThreeTogether": true,
+    "reason": "the validator throws 'requires one eligible runtime strategy' if a profile keeps both an eligible path and a fallback",
+    "set": {
+      "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
+      "terrainRuntimeEligible": true
+    },
+    "delete": [
+      "terrainFallback"
+    ],
+    "keep": {
+      "terrainSourceCandidatePath": "unchanged \u2014 retained for provenance"
+    },
+    "alsoRegister": {
+      "file": "scripts/defense-runtime-assets.mjs",
+      "addToRetainedAssetPaths": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
+      "note": "chancel and throne currently register textured-candidate paths; without this edit the promotion is invisible to the runtime"
+    },
+    "slabNodes": [
+      "terrain-cinder-span-slab-001",
+      "terrain-cinder-span-slab-002",
+      "terrain-cinder-span-slab-003"
+    ]
+  },
+  "runtimeEligible": true
+}

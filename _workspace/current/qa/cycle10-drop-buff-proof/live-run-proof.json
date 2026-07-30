@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-07-31T00:00:00Z",
+  "worktree": "/Users/jangyoung/orca/Abyssal-Surge-dungeon",
+  "branch": "feat/cycle10-stage-dungeon",
+  "claim": "the drop -> collect -> buff -> compose path runs end to end in a live simulation, and the drop's slabId resolves against the composed floor",
+  "method": "createDefenseRun({stageId:'cinder-span',seed:71}) driven through queueInput MOVE/BASIC_ATTACK and advanceDefenseRun, accumulating run.events every tick and deduping by eventId. Read in a real browser module context so the shipped ES modules resolve exactly as the game loads them.",
+  "whyThisWasNeeded": "Unit tests cannot reach this path. rollBuffDrop fires from resolveDeaths, so a drop requires a real enemy death, then collection inside pickupRange, then buff composition. A short trash-only run is also not evidence: BASIC chance is 600bp, so P(zero drops at 20 kills) is about 29% -- an underpowered sample looks identical to a broken feature.",
+  "observed": {
+    "finalTick": 3652,
+    "terminal": null,
+    "deaths": 8,
+    "dropSpawned": 1,
+    "dropDenied": 0,
+    "dropExpired": 0,
+    "buffApplied": 1,
+    "buffRefreshed": 0,
+    "buffExpired": 0,
+    "itemCollected": 1,
+    "snapshotBuffs": 1,
+    "buffStats": { "basicDamage": 1200 }
+  },
+  "events": [
+    { "tick": 3651, "type": "DROP_SPAWNED", "itemId": "ember-edge", "rarity": "common", "grade": "BASIC", "slabId": "cinder-span:slab-03" },
+    { "tick": 3651, "type": "BUFF_APPLIED", "itemId": "ember-edge", "stat": "basicDamage", "magnitude": 1200, "durationTicks": 600, "stacks": 1 },
+    { "tick": 3651, "type": "ITEM_COLLECTED", "itemId": "ember-edge", "rarity": "common" }
+  ],
+  "whatEachFactProves": {
+    "slabId cinder-span:slab-03": "the frozen 12-slab table and the composed floor GLB agree -- the drop landed on a real authored slab, not a null lookup",
+    "magnitude 1200": "integer basis points, so no float entered serialized state",
+    "durationTicks 600": "integer tick span at 60Hz = 10s",
+    "snapshotBuffs 1 and buffStats present": "the conditional snapshot fields appear only while a buff is active, which is what keeps a zero-buff run byte-identical to pre-cycle-10",
+    "8 deaths -> 1 drop": "consistent with DROP_CHANCE_BP['cinder-span'].BASIC = 600 (6%)"
+  },
+  "notProvenHere": [
+    "the drop MODEL rendering in WebGL -- the buff drops resolve to prop-sprite-sheet-single-object.03/.05, both already in all three asset allowlists, so no new mesh ships and no 404 is possible, but the visual instantiation is not asserted by this run",
+    "the seven determinism gate checks from item-drop-timed-buff-spec.md section 9 -- authored separately"
+  ],
+  "correctedMisreading": "An earlier probe reported 22898 ENEMY_DEFEATED over 553 ticks and zero drops, which looked like a defect. It was double counting: the loop re-read run.events without deduping by eventId, and the run stalls at tick 553 without player input. The real figure was 4 deaths, whose expected drop count is 0.24."
+}

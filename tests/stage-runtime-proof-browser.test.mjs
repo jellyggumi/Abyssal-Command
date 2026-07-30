@@ -603,7 +603,17 @@ test("disposing after a transient terrain failure lets the same stage retry on r
     assert.equal(retried.stageId, stageId, "the successful retry must publish the same stage identity");
     assert.equal(retried.loading, false, "the same-stage retry must settle");
     assert.equal(retried.terrainLoaded, true, "the same-stage retry must mount terrain");
-    assert.equal(retried.terrainSource, "procedural-flat-support", "the retry must publish the loaded terrain source");
+    // Cycle 10 supersession: the stage now ships an eligible composed slab floor, so a
+    // successful remount loads it rather than falling back to a procedural plane. Derived
+    // from the profile rather than hardcoded -- matching the house style at line 214 -- so
+    // a future legitimately-ineligible stage cannot re-break this test. The point of the
+    // test is unchanged: a transient failure must not persist across the dispose boundary.
+    const retryProfile = stageWorldFor(stageId);
+    assert.equal(
+      retried.terrainSource,
+      retryProfile.terrainRuntimeEligible ? "promoted-glb" : "procedural-flat-support",
+      "the retry must publish the loaded terrain source",
+    );
     assert.notEqual(retried.terrainFallbackReason, transientError, "the remount must not retain the prior transient terrain error");
   } finally {
     await context.close();

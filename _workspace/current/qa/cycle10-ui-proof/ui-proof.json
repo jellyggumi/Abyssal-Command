@@ -1,0 +1,79 @@
+{
+  "capturedAt": "2026-07-30T15:11:26.242Z",
+  "worktree": "/Users/jangyoung/orca/Abyssal-Surge-dungeon",
+  "branch": "feat/cycle10-stage-dungeon",
+  "claim": "the virtual joystick is the primary movement control at all four compositions, including coarse portrait where it was previously display:none",
+  "contract": {
+    "joystickVisible": "true at every composition",
+    "padCentreHitsMoveButton": "false -- the octant drag test presses the pad centre, so IDLE must not sit there",
+    "buttonsUnder44": "0 -- accessibility floor for every visible bottom-bar control",
+    "hOverflow": "0"
+  },
+  "note": "The first 1920x1080 pass recorded joystickVisible:false. That was a harness artifact, not a defect: the sortie button sits at top 1004, below the fold, so the click never registered and the run never started. Re-measured with a longer settle; recorded here.",
+  "results": [
+    {
+      "composition": "phone-landscape",
+      "viewport": [
+        844,
+        390
+      ],
+      "joystickVisible": true,
+      "padSize": [
+        116,
+        116
+      ],
+      "padCentreHitsMoveButton": false,
+      "buttonsUnder44": 0,
+      "hOverflow": 0,
+      "portraitFlag": "false"
+    },
+    {
+      "composition": "phone-portrait",
+      "viewport": [
+        390,
+        844
+      ],
+      "joystickVisible": true,
+      "padSize": [
+        116,
+        116
+      ],
+      "padCentreHitsMoveButton": false,
+      "buttonsUnder44": 0,
+      "hOverflow": 0,
+      "portraitFlag": "true"
+    },
+    {
+      "composition": "desktop",
+      "viewport": [
+        1440,
+        900
+      ],
+      "joystickVisible": true,
+      "padSize": [
+        144,
+        144
+      ],
+      "padCentreHitsMoveButton": false,
+      "buttonsUnder44": 0,
+      "hOverflow": 0,
+      "portraitFlag": "false"
+    },
+    {
+      "composition": "steam",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "joystickVisible": true,
+      "padSize": [
+        160,
+        160
+      ],
+      "padCentreHitsMoveButton": false,
+      "buttonsUnder44": 0,
+      "hOverflow": 0,
+      "portraitFlag": "false"
+    }
+  ]
+}

@@ -6,6 +6,8 @@ import * as Catalog from "./defense-catalog.js";
 import {
   ARENA, AUDIO_CUES, BOSSES, COLLISION, COMBAT_TARGETING, COMMANDER, COMPANION_AUTONOMY, COMPANIONS,
   CUTSCENES, ENEMIES, CARRY_OVER_MAX_ITEMS, CARRY_OVER_MAX_RANK, CARRY_OVER_RANK_DECAY,
+  BUFF_ITEMS, BUFF_RARITIES, BUFF_STAT_OPS, DROP_CHANCE_BP, DROP_OFFSET_X, DROP_TTL_TICKS,
+  MAX_ACTIVE_BUFFS, MAX_FIELD_DROPS, RARITY_WEIGHTS_BP, slabAt,
 
   MAX_SKILL_RANK, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP,
   SKILL_RANK_PASSIVE_SHARE,
@@ -13,6 +15,8 @@ import {
   STAGE_REWARD_IDS, TARGET_PRIORITY, TICK_RATE, XP_GROWTH,
   AIM_BIAS_BP, AIM_VECTOR_SCALE, COMPANION_CAPACITY_BASE, EXTRACTION, EXTRACTION_GRADE_BY_ENEMY,
   GRADE_COMPANION_MULTIPLIERS,
+  AREA_BP, AREA_COMBAT, AREA_FIELD, AI_RESPONSE_PATTERNS,
+  areaShareBp, areaSourceProfile, elementOf, samplePattern,
 } from "./defense-catalog.js";
 import {
   BACK_ROW_SYNERGY_DAMAGE_BONUS, BOSS_RALLY_COOLDOWN_REDUCTION, COMPANION_ROLES,
@@ -457,6 +461,13 @@ const OBJECTIVE_PRESSURE_INTERVAL_TICKS = 600;
 const OBJECTIVE_PRESSURE_DAMAGE = 100;
 const OBJECTIVE_PRESSURE_DEADLINE_OFFSET = 9000;
 const BOSS_PRESSURE_GRACE_TICKS = 1800;
+/**
+ * Boss entrance: 180 ticks = 3.0 s at 60 Hz. Authored here, carried on BOSS_SPAWNED, and read by
+ * both the camera push and the subtitle band, so presentation cannot drift from the simulation.
+ */
+const BOSS_INTRO_TICKS = 180;
+/** Camera pull-in during the entrance, in basis points of the live tier distance. */
+const BOSS_INTRO_ZOOM_BP = 6200;
 const ECHO_RECOVERY_PRESSURE_GRACE_TICKS = 150;
 const GATE_PRESSURE_RELEASE_LEAD = freeze({
   "player-pursuit": 360,
@@ -688,7 +699,7 @@ function addCompanion(run, companionId, { equipment = {} } = {}) {
   const companion = actor(nextId(run, "companion"), "companion", run.commander.x + offset.x, run.commander.y + offset.y, maxFormationIntegrity, maxFormationIntegrity, {
     companionId, cooldown: 0, damage, fireTicks: data.fireTicks, range, radius: 300,
     slot: stanceSlotForIndex(run, index), status: "ACTIVE", role: runtime.role, eliteDamageBonus: rpgActive ? runtime.eliteDamageBonus : 0,
-    aiState: "FOLLOW", aiTargetId: null, combatTargetId: null,
+    aiState: "FOLLOW", aiTargetId: null, combatTargetId: null, element: elementOf(data.element),
   });
   placeOnTerrain(run, companion, companion);
   run.companions.push(companion);
@@ -1010,6 +1021,10 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     policyIntent: policy?.intent || null,
     policyTarget: policy?.target || null,
     spawnDirection: direction,
+    // Area-combat identity: the element decides every matchup this body takes part in, and the
+    // pattern preset decides the shape and timing of its strikes.
+    element: elementOf(data.element),
+    patternId: data.patternId ?? null,
     routeId,
     route: spawnRoute(run, routeId, policyId, laneOffset),
     waypointIndex: 0,
@@ -1075,6 +1090,10 @@ function spawnBoss(run) {
     policyId,
     policyIntent: policy?.intent || null,
     policyTarget: policy?.target || null,
+    element: elementOf(data.element),
+    patternId: data.patternId ?? null,
+    patternStepId: null,
+    patternActionId: null,
     spawnDirection: "W",
     routeId,
     route: spawnRoute(run, routeId, policyId, 0),
@@ -1101,6 +1120,23 @@ function spawnBoss(run) {
     routeId,
     route: clone(boss.route),
     objectiveId: "boss-kill",
+    element: boss.element,
+    patternId: boss.patternId,
+    /**
+     * Authored 3-second entrance. The simulation owns the timing (`BOSS_INTRO_TICKS`) so the
+     * renderer's camera push and the HUD's subtitle band cannot drift apart, and so a replay of
+     * the same run frames the boss identically. Presentation-only: no combat value reads it, and
+     * the boss is already live at this tick — the entrance never freezes the fight.
+     */
+    intro: {
+      durationTicks: BOSS_INTRO_TICKS,
+      endsAtTick: run.tick + BOSS_INTRO_TICKS,
+      title: run.stage.bossName || data.id,
+      subtitle: stageCutscene(run.stage).bossEntry || null,
+      cameraCueId: `camera:boss-intro:${boss.id}`,
+      motion: "show",
+      zoomBp: BOSS_INTRO_ZOOM_BP,
+    },
     cue: eventCue("bossSpawned"),
   });
   spawnEvent.spawnEventId = spawnEvent.eventId;
@@ -1202,8 +1238,8 @@ function grantEncounterRecovery(run, rewardKey, recovery, payload = {}) {
     run.commander.maxIntegrity - run.commander.integrity,
   );
   const gateGain = Math.min(
-    Math.trunc((run.gate.maxIntegrity * Math.max(0, recovery?.gateBp || 0)) / 10000),
-    run.gate.maxIntegrity - run.gate.integrity,
+    Math.trunc((effectiveGateMax(run) * Math.max(0, recovery?.gateBp || 0)) / 10000),
+    effectiveGateMax(run) - run.gate.integrity,
   );
   run.commander.integrity += commanderGain;
   run.gate.integrity += gateGain;
@@ -1357,7 +1393,7 @@ function beginEncounterRecovery(run, reason = "PLAYER_RETRY") {
   encounter.committedAttackerIds = [];
   encounter.committedAttackerCount = 0;
   const commanderFloor = Math.trunc((run.commander.maxIntegrity * objective.retry.commanderFloorBp) / 10000);
-  const gateFloor = Math.trunc((run.gate.maxIntegrity * objective.retry.gateFloorBp) / 10000);
+  const gateFloor = Math.trunc((effectiveGateMax(run) * objective.retry.gateFloorBp) / 10000);
   run.commander.integrity = Math.max(run.commander.integrity, commanderFloor);
   run.gate.integrity = Math.max(run.gate.integrity, gateFloor);
   emit(run, "ENCOUNTER_OBJECTIVE_FAILED", {
@@ -1463,13 +1499,346 @@ function getEffectiveRange(run, baseRange) {
   return Math.trunc(baseRange * multiplier);
 }
 
+/* ===========================================================================================
+ * TIMED STAT BUFFS (cycle 10)
+ *
+ * A DERIVED layer. Composition never mutates a base stat: `run.commander.basicDamage`,
+ * `.pickupRange`, `.cooldownScale`, `.critProfile.chanceBp`, `.incomingDamageMultiplier` and
+ * `run.gate.maxIntegrity` keep their current values and current write paths for the whole run.
+ * Buffs are read at the point of use and nowhere else. An implementer who "simplifies" this by
+ * writing into a base field reintroduces exactly the permanent-grant bug this layer exists to
+ * avoid — and it will look like it works.
+ *
+ * Every accessor short-circuits to the ORIGINAL expression when its stat has no active buff.
+ * That is not an optimisation: it is what makes "a run with no buffs is byte-identical to
+ * today" a proof rather than a hope. NEVER remove a `bp === 0` guard.
+ *
+ * `run.rng` is untouched by all of this. Drop rolls use `run.dropRng` (see `rollBuffDrop`),
+ * because `run.rng` is the wave-schedule/growth-offer stream and every draw on it is
+ * positional — one extra `rngNext` would shift wave composition, timing jitter, lane offset,
+ * spawn direction, and every growth offer, for every seed on every stage.
+ * =========================================================================================== */
+
+/**
+ * Total buff contribution for one stat, in basis points. Always an integer.
+ *
+ * Order-independent by construction: integer addition is associative and commutative and the
+ * cap is applied once, after the sum. Removing an entry therefore restores the previous total
+ * exactly — there is no inverse operation to get wrong and no accumulated rounding to unwind.
+ */
+function buffBp(run, stat) {
+  const spec = BUFF_STAT_OPS[stat];
+  let sum = 0;
+  for (const entry of run?.buffs || []) {
+    if (entry.stat === stat) sum += entry.magnitude * entry.stacks;
+  }
+  return spec.capBp < 0 ? Math.max(sum, spec.capBp) : Math.min(sum, spec.capBp);
+}
+
+/** `{ [stat]: buffBp }` for stats with a non-zero total. All integers. Presentation convenience. */
+function composedBuffStats(run) {
+  const stats = {};
+  for (const stat of Object.keys(BUFF_STAT_OPS)) {
+    const bp = buffBp(run, stat);
+    if (bp !== 0) stats[stat] = bp;
+  }
+  return stats;
+}
+
+function effectiveBasicDamage(run) {
+  const bp = buffBp(run, "basicDamage");
+  return bp === 0 ? run.commander.basicDamage
+    : Math.trunc(run.commander.basicDamage * (10000 + bp) / 10000);
+}
+
+function effectiveGateMax(run) {
+  const bp = buffBp(run, "gateMaxIntegrity");
+  return bp === 0 ? run.gate.maxIntegrity
+    : Math.trunc(run.gate.maxIntegrity * (10000 + bp) / 10000);
+}
+
+function effectivePickupRange(run) {
+  const bp = buffBp(run, "pickupRange");
+  return bp === 0 ? run.commander.pickupRange
+    : Math.trunc(run.commander.pickupRange * (10000 + bp) / 10000);
+}
+
+/**
+ * Mirrors `resolveCritical`'s own profile fallback (`run?.commander?.critProfile ||
+ * COMMANDER.critProfile`) so the accessor is safe on a run without a commander and can never
+ * disagree with the read site it serves.
+ */
+function effectiveCritChanceBp(run) {
+  const profile = run?.commander?.critProfile || COMMANDER.critProfile;
+  const bp = buffBp(run, "critChanceBp");
+  return bp === 0 ? profile.chanceBp : clamp(profile.chanceBp + bp, 0, 10000);
+}
+
+/**
+ * `cooldownScale` is a live float in state and stays one; this only reads it.
+ * `Math.round(scale * 10000)` is required, not cosmetic: `0.9 * 10000` is
+ * `9000.000000000002` in IEEE-754, so rounding to the nearest basis point before any integer
+ * math is what keeps the result reproducible across machines.
+ */
+function effectiveCooldownScaleBp(run) {
+  const baseBp = Math.round(run.commander.cooldownScale * 10000);
+  return clamp(baseBp + buffBp(run, "cooldownScaleBp"), 4000, 10000);
+}
+
+/**
+ * Incoming damage after mitigation. `run.commander.incomingDamageMultiplier` is a live FLOAT
+ * and is deliberately NOT converted to basis points.
+ *
+ * It is the one base value that is a product of floats rather than an authored constant: it
+ * accumulates the Warden runtime multiplier and one x0.95 per vanguard companion. Three
+ * vanguards give 0.95^3 = 0.857375, which is not representable in 4 decimal places, so
+ * quantising it to 8574bp would change damage for every existing run with that loadout.
+ * Converting `Math.round(d * m)` to `Math.trunc(d * bp / 10000)` also flips the rounding mode
+ * — at d=101, m=0.95 the first gives 96 and the second 95. So the original rounded expression
+ * is kept intact and the buff scales its ALREADY-ROUNDED result.
+ */
+function applyIncomingDamage(run, damage) {
+  const base = Math.round(damage * run.commander.incomingDamageMultiplier);
+  const bp = buffBp(run, "incomingDamageBp");
+  return bp === 0 ? base : Math.max(0, Math.trunc(base * (10000 + bp) / 10000));
+}
+
+/**
+ * Applies a collected buff drop. A duplicate ALWAYS refreshes the window and additionally
+ * increments `stacks` only when `stacking === "STACK"` and the entry is below `maxStacks`.
+ * A duplicate is never wasted and never creates a second entry for the same `itemId`; the
+ * duration always restarts from the latest pickup, so the player never has to reason about
+ * which of two timers is running.
+ */
+function applyBuff(run, drop) {
+  const def = BUFF_ITEMS[drop.itemId];
+  const existing = run.buffs.find((entry) => entry.itemId === drop.itemId);
+  if (existing) {
+    if (def.stacking === "STACK" && existing.stacks < def.maxStacks) existing.stacks += 1;
+    existing.expiresAtTick = run.tick + def.durationTicks;
+    emit(run, "BUFF_REFRESHED", {
+      buffId: existing.buffId,
+      itemId: existing.itemId,
+      stacks: existing.stacks,
+      expiresAtTick: existing.expiresAtTick,
+    });
+    return;
+  }
+  if (run.buffs.length >= MAX_ACTIVE_BUFFS) evictOldestBuff(run);
+  const entry = {
+    buffId: nextId(run, "buff"),
+    itemId: drop.itemId,
+    stat: def.stat,
+    magnitude: def.magnitude,
+    stacks: 1,
+    appliedAtTick: run.tick,
+    expiresAtTick: run.tick + def.durationTicks,
+    sourceDropId: drop.id,
+  };
+  run.buffs.push(entry);
+  emit(run, "BUFF_APPLIED", {
+    buffId: entry.buffId,
+    itemId: entry.itemId,
+    stat: entry.stat,
+    magnitude: entry.magnitude,
+    durationTicks: def.durationTicks,
+    stacks: entry.stacks,
+    expiresAtTick: entry.expiresAtTick,
+  });
+}
+
+/** Deterministic eviction — no RNG. Smallest `expiresAtTick` wins, ties by `buffId`. */
+function evictOldestBuff(run) {
+  const victim = [...run.buffs].sort((a, b) =>
+    a.expiresAtTick - b.expiresAtTick || a.buffId.localeCompare(b.buffId))[0];
+  if (!victim) return;
+  run.buffs = run.buffs.filter((entry) => entry.buffId !== victim.buffId);
+  emit(run, "BUFF_EXPIRED", { buffId: victim.buffId, itemId: victim.itemId, stat: victim.stat, reason: "EVICTED" });
+  reconcileGateCap(run);
+}
+
+/**
+ * Re-establishes `gate.integrity <= effective cap` after the cap SHRINKS on buff expiry.
+ *
+ * A `gateMaxIntegrity` buff raises the cap used by the recovery headroom, the recovery amount,
+ * the retry floor, and the terrain-recovery budget — all of which RAISE integrity. (The three
+ * damage clamps are provably inert: `clamp(integrity - damage, 0, cap)` with `damage >= 0` can
+ * never reach the upper bound.) So `bulwark-echo` x2 on cinder-span can fill the gate to 1920
+ * against a base 1600, and when the buff expires that value would otherwise stay above the base
+ * cap and read as `1920/1600` on the HUD.
+ *
+ * This does NOT write `run.gate.maxIntegrity` — the base cap is never mutated, per R14. It is
+ * the same invariant every other gate write in this file already maintains, re-applied after
+ * the cap moves, exactly as `applyItem` re-clamps when it grows `maxIntegrity`. `Math.min` can
+ * only cap and never raise, and it is an identity in every unbuffed run.
+ */
+function reconcileGateCap(run) {
+  run.gate.integrity = Math.min(run.gate.integrity, effectiveGateMax(run));
+}
+
+/**
+ * Phase A of the tick. Idempotent: calling it twice in one tick yields the identical array and
+ * emits no second `BUFF_EXPIRED`, because the predicate is a pure comparison against `run.tick`.
+ */
+function expireBuffs(run) {
+  if (!run.buffs?.length) return;
+  run.buffs = run.buffs.filter((entry) => {
+    if (entry.expiresAtTick > run.tick) return true;
+    emit(run, "BUFF_EXPIRED", { buffId: entry.buffId, itemId: entry.itemId, stat: entry.stat, reason: "TIMEOUT" });
+    return false;
+  });
+  reconcileGateCap(run);
+}
+
+/** Clears every buff, emitting in ascending `buffId`. Field drops are NOT cleared — arena state persists. */
+function clearBuffs(run, reason) {
+  if (!run.buffs?.length) return;
+  const doomed = [...run.buffs].sort((a, b) => a.buffId.localeCompare(b.buffId));
+  run.buffs = [];
+  for (const entry of doomed) {
+    emit(run, "BUFF_EXPIRED", { buffId: entry.buffId, itemId: entry.itemId, stat: entry.stat, reason });
+  }
+  reconcileGateCap(run);
+}
+
+/**
+ * Phase B of the tick, deliberately AFTER `collectPickups`: a drop whose `expiresAtTick`
+ * equals the current tick gets its last collection attempt on that tick. Expiring at the top
+ * of the tick would delete a drop the player is standing on. One-tick grace, by design.
+ */
+function expireFieldDrops(run) {
+  run.pickups = run.pickups.filter((pickup) => {
+    if (pickup.kind !== "buff" || pickup.expiresAtTick > run.tick) return true;
+    emit(run, "DROP_EXPIRED", { dropId: pickup.id, itemId: pickup.itemId, x: pickup.x, y: pickup.y });
+    return false;
+  });
+}
+
+/** Rarity for one roll value, falling through to the next LOWER non-empty rarity if a pool is empty. */
+function pickRarity(rollBp, grade, stageId) {
+  const weights = RARITY_WEIGHTS_BP[grade];
+  let cursor = 0;
+  let chosen = null;
+  for (const rarity of BUFF_RARITIES) {
+    cursor += weights[rarity] || 0;
+    if (rollBp < cursor) { chosen = rarity; break; }
+  }
+  if (!chosen) {
+    for (let index = BUFF_RARITIES.length - 1; index >= 0; index -= 1) {
+      if (weights[BUFF_RARITIES[index]] > 0) { chosen = BUFF_RARITIES[index]; break; }
+    }
+  }
+  // A future catalog edit could empty a reachable (stage, grade, rarity) cell. Falling through
+  // to the next lower non-empty rarity is mandatory: `pool[n % 0]` is `undefined`, which would
+  // create a drop with `itemId: undefined` and corrupt the digest, and throwing here would
+  // abort the whole tick from inside `resolveDeaths`.
+  let index = BUFF_RARITIES.indexOf(chosen);
+  while (index >= 0 && poolFor(stageId, BUFF_RARITIES[index]).length === 0) index -= 1;
+  return index >= 0 ? BUFF_RARITIES[index] : null;
+}
+
+/** Catalog filtered by stage and rarity, sorted by id so index selection is stable. */
+function poolFor(stageId, rarity) {
+  return Object.keys(BUFF_ITEMS)
+    .filter((id) => BUFF_ITEMS[id].rarity === rarity && BUFF_ITEMS[id].stageIds.includes(stageId))
+    .sort();
+}
+
+/** Enemy grade for the drop table, derived from live flags — never from a mesh path. */
+function dropGradeFor(entry) {
+  if (entry.class === "boss") return "BOSS";
+  return (entry.elite || entry.midboss) ? "SHADOW" : "BASIC";
+}
+
+/**
+ * Rolls one dead enemy's buff drop. THREE DRAWS, FIXED ORDER, FIXED COUNT.
+ *
+ * 1. Draw 1 is unconditional for every death outside a measurement profile. It never depends
+ *    on field state.
+ * 2. The field-cap check happens AFTER all three draws, so a denied drop consumes exactly as
+ *    many draws as a spawned one. Checking the cap first would make the stream depend on how
+ *    many drops the player happened to leave lying around — a state-dependent RNG position,
+ *    the subtle class of non-determinism that survives casual testing and dies in replay.
+ * 3. A measurement profile consumes ZERO draws and emits nothing, so `dropRng` is untouched
+ *    for the whole fixture run.
+ */
+function rollBuffDrop(run, entry) {
+  if (run.measurementProfile) return;
+  const stageId = run.stage.id;
+  const grade = dropGradeFor(entry);
+  const chanceBp = DROP_CHANCE_BP[stageId]?.[grade];
+  if (!chanceBp) return;
+  run.dropRng = rngNext(run.dropRng);                       // DRAW 1 - always
+  if (run.dropRng % 10000 >= chanceBp) return;
+  run.dropRng = rngNext(run.dropRng);                       // DRAW 2 - rarity
+  const rarity = pickRarity(run.dropRng % 10000, grade, stageId);
+  const pool = rarity ? poolFor(stageId, rarity) : [];
+  run.dropRng = rngNext(run.dropRng);                       // DRAW 3 - item
+  if (!pool.length) return;
+  const itemId = pool[run.dropRng % pool.length];
+  const fieldDrops = run.pickups.reduce((total, pickup) => total + (pickup.kind === "buff" ? 1 : 0), 0);
+  if (fieldDrops >= MAX_FIELD_DROPS) {
+    // No actor exists, so the only position to report is the corpse's.
+    emit(run, "DROP_DENIED", {
+      itemId, rarity, grade, reason: "FIELD_CAP",
+      x: entry.x, y: entry.y, slabId: slabAt(stageId, entry.x, entry.y),
+    });
+    return;
+  }
+  const definition = BUFF_ITEMS[itemId];
+  const drop = actor(nextId(run, "drop"), "pickup", entry.x + DROP_OFFSET_X, entry.y, 1, 1, {
+    kind: "buff",
+    itemId,
+    rarity: definition.rarity,
+    modelKey: definition.modelKey,
+    grade,
+    slabId: null,
+    expiresAtTick: run.tick + DROP_TTL_TICKS,
+    elevation: entry.elevation || 0,
+  });
+  placeOnTerrain(run, drop, drop);
+  // Resolved from the ACTOR's final position, after the offset and after terrain placement, so
+  // the spawn cue lands on the mesh the player walks to rather than 240 units off it.
+  drop.slabId = slabAt(stageId, drop.x, drop.y);
+  run.pickups.push(drop);
+  emit(run, "DROP_SPAWNED", {
+    dropId: drop.id, itemId, rarity: definition.rarity, grade,
+    x: drop.x, y: drop.y, slabId: drop.slabId,
+  });
+}
+
+/**
+ * Exported for the §9 determinism gate, which cannot otherwise be written: check 10a is
+ * table-driven over these seven accessors and asserts each returns a value `Object.is`-equal to
+ * the original expression it replaced when `run.buffs` is empty, and check 10b sweeps
+ * `applyIncomingDamage` against `Math.round(d * incomingDamageMultiplier)` for d in 1..2000.
+ *
+ * These are READ-ONLY derivations. None of them writes run state, so exporting them cannot widen
+ * the mutation surface — the only thing a external caller can do with them is observe.
+ * `getCommanderSpeed` is the seventh accessor and is edited in place rather than wrapped, so it
+ * is exported below rather than here.
+ */
+export {
+  applyIncomingDamage,
+  buffBp,
+  composedBuffStats,
+  effectiveBasicDamage,
+  effectiveCooldownScaleBp,
+  effectiveCritChanceBp,
+  effectiveGateMax,
+  effectivePickupRange,
+  getCommanderSpeed,
+};
+
 function getCommanderSpeed(run) {
   let mult = 1.0;
   const tactics = run.tactics;
   if (run.occupationProgress?.captured || (tactics?.occupation && distanceSquared(run.commander, tactics.occupation) <= tactics.occupation.radius * tactics.occupation.radius)) {
     mult *= (tactics?.occupation?.effects?.moveMultiplier || 1.15);
   }
-  return Math.trunc(COMMANDER.speed * mult);
+  const base = Math.trunc(COMMANDER.speed * mult);
+  const bp = buffBp(run, "moveSpeedBp");
+  return bp === 0 ? base : Math.trunc(base * (10000 + bp) / 10000);
 }
 
 /**
@@ -1513,7 +1882,7 @@ function maybeFireExtraHit(run, target) {
   if (!extraHit) return;
   run.combatRng = rngNext(run.combatRng);
   if (run.combatRng % 10000 >= extraHit.extraHitChance * 10000) return;
-  const hit = resolveCritical(run, "basic", Math.round(run.commander.basicDamage * extraHit.extraHitDamageMultiplier));
+  const hit = resolveCritical(run, "basic", Math.round(effectiveBasicDamage(run) * extraHit.extraHitDamageMultiplier));
   playerAttack(run, run.commander, hit.damage, "commander", hit, COMMANDER.basicRange);
 
 }
@@ -1546,7 +1915,20 @@ function applyWardenVigilRegen(run) {
   const wholeRegen = Math.trunc(run.wardenState.vigilRegenRemainderMilli / 1000);
   if (wholeRegen > 0) {
     run.wardenState.vigilRegenRemainderMilli -= wholeRegen * 1000;
+    const before = run.commander.integrity;
     run.commander.integrity = clamp(run.commander.integrity + wholeRegen, 0, run.commander.maxIntegrity);
+    const applied = run.commander.integrity - before;
+    // Every integrity delta must be explainable from the public event stream: the evidence
+    // exporters reconcile before/after integrity against the events of that tick, and a silent
+    // regen is an unattributable delta. This regen was the last integrity path with no event.
+    if (applied > 0) {
+      emit(run, "WARDENS_VIGIL_REGEN", {
+        entityId: run.commander.id,
+        regen: applied,
+        hp: run.commander.integrity,
+        maxHp: run.commander.maxIntegrity,
+      });
+    }
   }
 }
 
@@ -1562,13 +1944,37 @@ function orderedTargets(run, origin, range) {
   });
 }
 
+/**
+ * Formation anchor for one companion, with the live AI response applied.
+ *
+ * `evade` pushes the anchor radially out of the telegraph that covered this body until it clears
+ * the disc; `spread` fans the anchor sideways so two companions caught by one disc do not both
+ * stand in the same place. Both are windowed (AI_RESPONSE_PATTERNS) and decay on their own, so
+ * the formation returns to its authored offsets by itself.
+ */
 function companionFormationAnchor(run, companion, index) {
   const stance = activeStanceConfig(run);
   const offset = stance.offsets[Math.min(index, stance.offsets.length - 1)];
-  const placed = resolveTerrainPlacement(run, companion, {
-    x: run.commander.x + offset.x,
-    y: run.commander.y + offset.y,
-  });
+  let anchorX = run.commander.x + offset.x;
+  let anchorY = run.commander.y + offset.y;
+  if (companion.evadeUntilTick && run.tick <= companion.evadeUntilTick) {
+    const dx = anchorX - companion.evadeFromX;
+    const dy = anchorY - companion.evadeFromY;
+    const distance = Math.hypot(dx, dy);
+    const clearance = Math.max(1, Math.trunc(companion.evadeClearance || 0));
+    if (distance > 0 && distance < clearance) {
+      anchorX = Math.round(companion.evadeFromX + dx / distance * clearance);
+      anchorY = Math.round(companion.evadeFromY + dy / distance * clearance);
+    } else if (distance === 0) {
+      anchorX += clearance;
+    }
+  }
+  if (companion.spreadUntilTick && run.tick <= companion.spreadUntilTick) {
+    const scatter = Math.trunc(AI_RESPONSE_PATTERNS.spread.separationBp * (index + 1) * 100 / AREA_BP);
+    anchorX += index % 2 === 0 ? scatter : -scatter;
+    anchorY += index % 2 === 0 ? -scatter : scatter;
+  }
+  const placed = resolveTerrainPlacement(run, companion, { x: anchorX, y: anchorY });
   return { x: placed.x, y: placed.y };
 }
 
@@ -1687,7 +2093,11 @@ function updateCompanions(run) {
         playerAttack(run, companion, Math.round(companion.damage * mult), companion.companionId, null, companion.range);
 
       }
-      companion.cooldown = companion.fireTicks;
+      // AI response `punish`: inside the recovery window a heavy attack just opened, allied fire
+      // recovers faster. This is the reward for surviving the telegraph rather than avoiding it.
+      companion.cooldown = punishWindowActive(run)
+        ? Math.max(1, Math.trunc(companion.fireTicks * AI_RESPONSE_PATTERNS.punish.cooldownScaleBp / AREA_BP))
+        : companion.fireTicks;
     }
   });
 }
@@ -1697,13 +2107,14 @@ function resolveCritical(run, source, baseDamage) {
   const profile = run?.commander?.critProfile || COMMANDER.critProfile;
   if (!profile?.sources?.includes(source)) return { source, baseDamage, damage: baseDamage, critical: false };
   run.combatRng = rngNext(run.combatRng);
-  const critical = run.combatRng % 10000 < profile.chanceBp;
+  const chanceBp = effectiveCritChanceBp(run);
+  const critical = run.combatRng % 10000 < chanceBp;
   return {
     source,
     baseDamage,
     damage: critical ? Math.trunc(baseDamage * profile.multiplierBp / 10000) : baseDamage,
     critical,
-    chanceBp: profile.chanceBp,
+    chanceBp,
     multiplierBp: profile.multiplierBp,
   };
 }
@@ -1718,6 +2129,18 @@ function fire(run, source, target, damage, owner, ttl = 5, combat = null) {
     owner,
     ttl,
     combat: hit,
+    element: elementOf(source.element),
+    // The launching side is recorded on the shell itself: resolving it from the live enemy list
+    // at detonation would flip sides whenever the shooter died mid-flight.
+    //
+    // `fire()` is the ENEMY path by construction -- its one call site is the enemy ranged branch
+    // in moveEnemies(), while player-side fire goes through fireTravellingOrb(). An earlier
+    // version tested `source.kind === "enemy"`, which is never true: an enemy actor's `kind` is
+    // its archetype ("rusher", "ranged", ...), so every enemy shell was tagged `player` and its
+    // detonation splashed ENEMIES instead of the commander and the legion. Measured: an enemy
+    // shell landing on companion-1 with the commander 300 units away produced no player-side
+    // splash at all.
+    faction: "enemy",
   });
   run.projectiles.push(projectile);
   const firedEvent = emit(run, "WEAPON_FIRED", {
@@ -1753,6 +2176,316 @@ function fire(run, source, target, damage, owner, ttl = 5, combat = null) {
 }
 
 /* ---------------------------------------------------------------------------------------------
+ * Area combat (광역 전투) — every contact splashes.
+ *
+ * `resolveAreaImpact()` is the single authority. Every damage-dealing call site hands it a
+ * contact point, the authored damage of the PRIMARY hit and a source key; it finds every other
+ * body of the opposing faction inside the disc and applies
+ * `damage x areaShareBp(distance, weight, element, duration)` to each.
+ *
+ * Invariants:
+ *  - The primary body is damaged by its own call site. This function never double-damages it.
+ *  - Iteration order is the deterministic `sortedActors()` order, and every arithmetic step is
+ *    integer, so the digest is reproducible.
+ *  - Splash never kills the gate. Structures are hit by their own authored paths only.
+ * ------------------------------------------------------------------------------------------- */
+
+/** Bodies of the faction OPPOSING `faction`, deterministically ordered, primary excluded. */
+function areaVictims(run, faction, excludeIds) {
+  const bodies = faction === "player"
+    ? sortedActors(run.enemies).filter((enemy) => enemy.hp > 0)
+    : [run.commander, ...sortedActors(run.companions).filter((entry) => entry.status !== "DOWNED")];
+  return bodies.filter((body) => body && !excludeIds.has(body.id));
+}
+
+/** Live integrity of a body, whichever field its kind stores it in. */
+const bodyHealth = (body) => (body.id === "commander" ? body.integrity : body.hp);
+
+/**
+ * Applies one splash hit to one body and emits the damage event its kind already uses, so HUD,
+ * telemetry and audio keep working without learning a new event type.
+ */
+function applyAreaDamageToBody(run, body, damage, context) {
+  if (damage <= 0) return 0;
+  if (body.id === "commander") {
+    // Area splash on the commander goes through the same mitigation path as a direct strike,
+    // so a timed defensive buff protects against a splash exactly as it protects against the
+    // hit that caused it.
+    const scaled = applyIncomingDamage(run, damage);
+    run.commander.integrity = clamp(run.commander.integrity - scaled, 0, run.commander.maxIntegrity);
+    emit(run, "COMMANDER_DAMAGED", {
+      enemyId: context.sourceId,
+      sourceId: context.sourceId,
+      damage: scaled,
+      hp: run.commander.integrity,
+      maxHp: run.commander.maxIntegrity,
+      area: true,
+      areaSource: context.sourceKey,
+      element: context.element,
+      causalRootId: context.causalRootId,
+    });
+    applyWardenDamageResponse(run);
+    return scaled;
+  }
+  if (body.kind === "companion") {
+    body.hp = clamp(body.hp - damage, 0, body.maxHp);
+    emit(run, "COMPANION_DAMAGED", {
+      entityId: body.id,
+      companionId: body.companionId,
+      sourceId: context.sourceId,
+      damage,
+      hp: body.hp,
+      maxHp: body.maxHp,
+      area: true,
+      areaSource: context.sourceKey,
+      element: context.element,
+      causalRootId: context.causalRootId,
+    });
+    if (body.hp <= 0 && body.status === "ACTIVE") {
+      body.status = "DOWNED";
+      emit(run, "COMPANION_DOWNED", { entityId: body.id, companionId: body.companionId, area: true });
+    }
+    return damage;
+  }
+  const applied = damageEnemyBody(run, body, damage);
+  body.lastCausalRootId = context.causalRootId || body.lastCausalRootId;
+  return applied.damage;
+}
+
+/**
+ * Resolves one area contact. Returns the splash descriptor the renderer reads (origin, radius,
+ * element and the per-body damage list) — the event carrying it is emitted here as well.
+ */
+function resolveAreaImpact(run, {
+  origin,
+  faction,
+  sourceId,
+  sourceKey = "basic",
+  damage,
+  element = null,
+  radius = null,
+  weightBp = null,
+  durationTicks = 0,
+  excludeIds = [],
+  causalRootId = null,
+  castInstanceId = null,
+}) {
+  const profile = areaSourceProfile(sourceKey);
+  const discRadius = Math.max(1, Math.trunc(radius ?? profile.radius));
+  const discWeightBp = Math.max(0, Math.trunc(weightBp ?? profile.weightBp));
+  const attackerElement = elementOf(element ?? profile.element);
+  const baseDamage = Math.max(0, Math.trunc(damage));
+  const exclude = new Set(excludeIds.filter(Boolean));
+  if (baseDamage <= 0 || discWeightBp <= 0) return null;
+
+  const struck = [];
+  for (const body of areaVictims(run, faction, exclude)) {
+    if (struck.length >= AREA_COMBAT.maxSplashTargets) break;
+    const distance = Math.trunc(Math.sqrt(distanceSquared(body, origin)));
+    const shareBp = areaShareBp({
+      distance,
+      radius: discRadius,
+      weightBp: discWeightBp,
+      attackerElement,
+      defenderElement: elementOf(body.element),
+      durationTicks,
+    });
+    if (shareBp <= 0) continue;
+    const braced = body.braceUntilTick && run.tick <= body.braceUntilTick;
+    const rawDamage = Math.trunc(baseDamage * shareBp / AREA_BP);
+    const bracedDamage = braced
+      ? Math.trunc(rawDamage * AI_RESPONSE_PATTERNS.brace.damageScaleBp / AREA_BP)
+      : rawDamage;
+    const finalDamage = Math.max(AREA_COMBAT.minSplashDamage, bracedDamage);
+    const healthBefore = bodyHealth(body);
+    const applied = applyAreaDamageToBody(run, body, finalDamage, {
+      sourceId,
+      sourceKey,
+      element: attackerElement,
+      causalRootId,
+    });
+    struck.push({
+      targetId: body.id,
+      damage: applied,
+      distance,
+      shareBp,
+      // The defender's element is published so a reviewer can reproduce the share by hand:
+      // share = falloff(distance) x weight x matchup(attacker, defender) x sustain(duration).
+      defenderElement: elementOf(body.element),
+      braced: Boolean(braced),
+      healthBefore,
+      healthAfter: bodyHealth(body),
+    });
+  }
+  if (!struck.length) return null;
+
+  const impact = {
+    sourceId,
+    sourceKey,
+    faction,
+    element: attackerElement,
+    originX: Math.trunc(origin.x),
+    originY: Math.trunc(origin.y),
+    radius: discRadius,
+    weightBp: discWeightBp,
+    durationTicks: Math.max(0, Math.trunc(durationTicks)),
+    targets: struck,
+    targetIds: struck.map((entry) => entry.targetId),
+    causalRootId,
+    castInstanceId,
+    simTick: run.tick,
+    cue: eventCue("impactHit"),
+  };
+  emit(run, "AREA_IMPACT", impact);
+  return impact;
+}
+
+/**
+ * Spawns a lingering field. The field re-runs `resolveAreaImpact` every `AREA_FIELD.pulseTicks`
+ * with the duration factor applied, which is what makes "지속시간" a real balance axis rather
+ * than a label: the same budget either lands now or is paid out over the field's life.
+ */
+function spawnAreaField(run, { origin, faction, sourceId, sourceKey, damage, element, radius, weightBp, durationTicks, causalRootId = null }) {
+  const ticks = Math.max(0, Math.trunc(durationTicks));
+  if (ticks < AREA_FIELD.pulseTicks) return null;
+  const profile = areaSourceProfile(sourceKey);
+  const field = {
+    id: nextId(run, "field"),
+    faction,
+    sourceId,
+    sourceKey,
+    element: elementOf(element ?? profile.element),
+    x: Math.trunc(origin.x),
+    y: Math.trunc(origin.y),
+    radius: Math.max(1, Math.trunc(radius ?? profile.radius)),
+    weightBp: Math.max(0, Math.trunc(weightBp ?? profile.weightBp)),
+    damage: Math.max(0, Math.trunc(damage)),
+    durationTicks: ticks,
+    startedAt: run.tick,
+    expiresAt: run.tick + ticks,
+    nextPulseAt: run.tick + AREA_FIELD.pulseTicks,
+    causalRootId,
+  };
+  run.areaFields.push(field);
+  while (run.areaFields.length > AREA_FIELD.maxActive) {
+    const retired = run.areaFields.shift();
+    emit(run, "AREA_FIELD_ENDED", { fieldId: retired.id, reason: "EVICTED", simTick: run.tick });
+  }
+  emit(run, "AREA_FIELD_STARTED", {
+    fieldId: field.id,
+    sourceId,
+    sourceKey,
+    faction,
+    element: field.element,
+    originX: field.x,
+    originY: field.y,
+    radius: field.radius,
+    durationTicks: ticks,
+    expiresAt: field.expiresAt,
+    causalRootId,
+    simTick: run.tick,
+    cue: eventCue("impactHit"),
+  });
+  return field;
+}
+
+/** Ticks every live field: pulse on schedule, retire on expiry. Deterministic array order. */
+function processAreaFields(run) {
+  if (!run.areaFields.length) return;
+  const surviving = [];
+  for (const field of run.areaFields) {
+    if (run.tick >= field.nextPulseAt && run.tick <= field.expiresAt) {
+      const impact = resolveAreaImpact(run, {
+        origin: field,
+        faction: field.faction,
+        sourceId: field.sourceId,
+        sourceKey: field.sourceKey,
+        damage: field.damage,
+        element: field.element,
+        radius: field.radius,
+        weightBp: field.weightBp,
+        durationTicks: field.durationTicks,
+        causalRootId: field.causalRootId,
+      });
+      field.nextPulseAt = run.tick + AREA_FIELD.pulseTicks;
+      emit(run, "AREA_FIELD_PULSE", {
+        fieldId: field.id,
+        sourceId: field.sourceId,
+        faction: field.faction,
+        element: field.element,
+        originX: field.x,
+        originY: field.y,
+        radius: field.radius,
+        targetIds: impact ? impact.targetIds : [],
+        remainingTicks: field.expiresAt - run.tick,
+        simTick: run.tick,
+      });
+    }
+    if (run.tick >= field.expiresAt) {
+      emit(run, "AREA_FIELD_ENDED", { fieldId: field.id, reason: "EXPIRED", simTick: run.tick });
+      continue;
+    }
+    surviving.push(field);
+  }
+  run.areaFields = surviving;
+}
+
+/**
+ * AI response patterns (defense-catalog AI_RESPONSE_PATTERNS) applied to one telegraph.
+ *
+ * Every player-side body the telegraph disc covers is marked with an evade window; when two or
+ * more are covered they additionally take a scatter bias so the legion stops standing in one
+ * disc; a body already too deep inside the disc braces instead. The recovery window that follows
+ * the attack is what opens the punish window on the attacker.
+ */
+function applyTelegraphResponse(run, attacker, origin, radius) {
+  const covered = [run.commander, ...sortedActors(run.companions).filter((entry) => entry.status !== "DOWNED")]
+    .filter((body) => distanceSquared(body, origin) <= radius * radius);
+  if (!covered.length) return { evading: [], bracing: [] };
+  const evade = AI_RESPONSE_PATTERNS.evade;
+  const spread = AI_RESPONSE_PATTERNS.spread;
+  const braceRadius = Math.trunc(radius * AI_RESPONSE_PATTERNS.brace.damageScaleBp / AREA_BP / 2);
+  const evading = [];
+  const bracing = [];
+  for (const body of covered) {
+    const distance = Math.trunc(Math.sqrt(distanceSquared(body, origin)));
+    if (distance <= braceRadius) {
+      body.braceUntilTick = run.tick + AI_RESPONSE_PATTERNS.brace.windowTicks;
+      bracing.push(body.id);
+      continue;
+    }
+    body.evadeUntilTick = run.tick + evade.windowTicks;
+    body.evadeFromX = Math.trunc(origin.x);
+    body.evadeFromY = Math.trunc(origin.y);
+    body.evadeClearance = radius + Math.trunc(radius * evade.clearanceBp / AREA_BP);
+    evading.push(body.id);
+  }
+  if (covered.length >= spread.minBodies) {
+    for (const body of covered) body.spreadUntilTick = run.tick + spread.windowTicks;
+  }
+  emit(run, "AI_RESPONSE_APPLIED", {
+    entityId: attacker.id,
+    responsePatterns: [
+      ...(evading.length ? ["evade"] : []),
+      ...(covered.length >= spread.minBodies ? ["spread"] : []),
+      ...(bracing.length ? ["brace"] : []),
+    ],
+    evadingIds: evading,
+    bracingIds: bracing,
+    originX: Math.trunc(origin.x),
+    originY: Math.trunc(origin.y),
+    radius,
+    simTick: run.tick,
+  });
+  return { evading, bracing };
+}
+
+/** True while allied fire is inside a punish window opened by a recovering attacker. */
+function punishWindowActive(run) {
+  return run.punishWindowUntilTick > 0 && run.tick <= run.punishWindowUntilTick;
+}
+
+/* ---------------------------------------------------------------------------------------------
  * None-target combat (COMBAT_TARGETING).
  *
  * Player-side attacks no longer lock onto an enemy id. A swing damages every body inside the
@@ -1768,6 +2501,9 @@ function damageEnemyBody(run, target, damage) {
     && distanceSquared(entry, target) <= 1600 ** 2);
   const applied = escort ? Math.max(1, Math.trunc(damage * 3 / 4)) : damage;
   target.hp -= applied;
+  // The tick of the last hit is what the semantic `stagger` state reads; it is bookkeeping for
+  // presentation and AI, never an input to damage.
+  target.lastDamagedTick = run.tick;
   return { damage: applied, guardedBy: escort ? escort.id : null };
 }
 
@@ -1931,6 +2667,18 @@ function meleeSweep(run, source, targets, damage, owner, combat) {
       cue: eventCue("impactHit"),
     });
   });
+  // 광역: the swing is a disc centred on the arc, not a list of locked targets. Bodies already
+  // struck by the arc are excluded so nobody is damaged twice by one swing.
+  resolveAreaImpact(run, {
+    origin: source,
+    faction: "player",
+    sourceId: source.id,
+    sourceKey: source.id === "commander" ? "basic" : "companion",
+    damage: hit.damage,
+    element: source.element,
+    excludeIds: targets.map((target) => target.id),
+    causalRootId: sweepEvent.eventId,
+  });
   return targets.length;
 }
 
@@ -1954,6 +2702,7 @@ function fireTravellingOrb(run, source, aim, damage, owner, range, combat) {
     owner,
     ttl: COMBAT_TARGETING.ranged.maxTicks,
     combat: hit,
+    element: elementOf(source.element),
   });
   run.projectiles.push(projectile);
   const firedEvent = emit(run, "WEAPON_FIRED", {
@@ -2011,7 +2760,7 @@ function playerAttack(run, source, damage, owner, combat, range) {
 /** Resolves the commander's shared basic-attack verb for both automatic and manual input. */
 function resolveCommanderBasicAttack(run, aimReference, mode = "automatic") {
   const mult = commanderDamageMultiplier(run, aimReference, { skill: false });
-  const hit = resolveCritical(run, "basic", Math.round(run.commander.basicDamage * mult));
+  const hit = resolveCritical(run, "basic", Math.round(effectiveBasicDamage(run) * mult));
   const resolved = playerAttack(run, run.commander, hit.damage, "commander", hit, COMMANDER.basicRange);
 
   if (!resolved) return false;
@@ -2104,6 +2853,17 @@ function advanceTravellingProjectiles(run) {
         guardedBy: applied.guardedBy,
         cue: eventCue("impactHit"),
       });
+      // 광역: the orb detonates on contact; the body it touched is excluded from its own burst.
+      resolveAreaImpact(run, {
+        origin: struck.enemy,
+        faction: "player",
+        sourceId: projectile.sourceId,
+        sourceKey: "projectile",
+        damage: projectile.damage,
+        element: projectile.element,
+        excludeIds: [struck.enemy.id],
+        causalRootId: projectile.causalRootId,
+      });
       continue;
     }
 
@@ -2145,7 +2905,7 @@ function applyItem(run, itemId) {
 
 function collectPickups(run) {
   let gained = 0;
-  const commanderRadiusSquared = run.commander.pickupRange ** 2;
+  const commanderRadiusSquared = effectivePickupRange(run) ** 2;
   const companionContactSquared = COMPANION_AUTONOMY.itemContactRange ** 2;
   run.pickups = run.pickups.filter((pickup) => {
     const commanderInRange = distanceSquared(pickup, run.commander) <= commanderRadiusSquared;
@@ -2171,6 +2931,37 @@ function collectPickups(run) {
       }
       if (pickup.deniedUntil >= run.tick) return true;
       gained += pickup.xp;
+      return false;
+    }
+
+    // MUST sit before the `kind === "item"` branch and before the trailing xp fallback: a buff
+    // drop has no `xp`, so falling through would add `undefined` to `run.commander.xp` and
+    // poison it to NaN — a silent digest break rather than a visible error.
+    // Commander-only by design: companions cannot claim buff drops (they require
+    // `kind === "item"` AND `ITEMS[itemId]`), so there is no claimant to consult.
+    if (pickup.kind === "buff") {
+      if (!commanderInRange) return true;
+      applyBuff(run, pickup);
+      // DELIBERATE DEVIATION from spec §4.3, which had `run.progress.itemsCollected += 1` here.
+      // That counter means PERMANENT stage items: it is rendered as "아이템 N" beside the kill
+      // count (app.js) and it moves in lockstep with `run.itemIds`, which a buff drop never joins.
+      // Counting buff drops in it makes the HUD claim 7 items while the player holds 1, and it
+      // reds `an item pickup applies both gate maximum and current integrity`
+      // (tests/defense-run-simulation.test.mjs:978, `itemsCollected === 1`) — one of the nine
+      // tests §6.2 requires to pass UNCHANGED. The spec's own §2 premise is that BUFF_ITEMS and
+      // ITEMS are disjoint catalogs; conflating their counters contradicts it. No replacement
+      // counter is added: a new `progress` key would change the serialized shape for every run
+      // and break the byte-identical-digest proof, and the value is derivable from `buffs` and
+      // the BUFF_APPLIED/BUFF_REFRESHED event stream. The ITEM_COLLECTED emit below is retained
+      // exactly as specified, so audio/VFX/HUD consumers are unaffected.
+      emit(run, "ITEM_COLLECTED", {
+        itemId: pickup.itemId,
+        entityId: run.commander.id,
+        companionId: null,
+        dropId: pickup.id,
+        rarity: pickup.rarity,
+        cue: eventCue("itemCollected"),
+      });
       return false;
     }
 
@@ -2383,8 +3174,44 @@ function castSkill(run, skillId) {
     });
   }
 
+  // 광역: every cast is a disc, including the single-target actives. The bodies the authored
+  // skill already damaged are excluded, so the splash only reaches what the skill did NOT hit.
+  // A skill that declares `fieldTicks` also leaves a field, which is the duration axis of the
+  // area model: the same damage budget either lands now or is paid out over the field's life.
+  const skillDamage = skillRankDamage(run, skill);
+  const skillOrigin = targets[0] ? { x: targets[0].x, y: targets[0].y } : { x: run.commander.x, y: run.commander.y };
+  if (skillDamage > 0) {
+    resolveAreaImpact(run, {
+      origin: skillOrigin,
+      faction: "player",
+      sourceId: run.commander.id,
+      sourceKey: "skill",
+      damage: skillDamage,
+      element: skill.element,
+      radius: skill.areaRadius,
+      weightBp: skill.areaWeightBp,
+      excludeIds: targets.map((entry) => entry.id),
+      causalRootId,
+      castInstanceId,
+    });
+    if (skill.fieldTicks > 0) {
+      spawnAreaField(run, {
+        origin: skillOrigin,
+        faction: "player",
+        sourceId: run.commander.id,
+        sourceKey: "skill",
+        damage: skillDamage,
+        element: skill.element,
+        radius: skill.areaRadius,
+        weightBp: skill.areaWeightBp,
+        durationTicks: skill.fieldTicks,
+        causalRootId,
+      });
+    }
+  }
+
   const baseCooldownTicks = run.measurementProfile?.fixtureActiveCooldownTicks ?? skill.cooldown;
-  const effectiveCooldownTicks = Math.max(1, Math.trunc(skillRankCooldown(run, skill, baseCooldownTicks) * run.commander.cooldownScale));
+  const effectiveCooldownTicks = Math.max(1, Math.trunc(skillRankCooldown(run, skill, baseCooldownTicks) * effectiveCooldownScaleBp(run) / 10000));
   run.commander.cooldowns[skillId] = effectiveCooldownTicks;
 
   const readyTick = run.tick + effectiveCooldownTicks - 1;
@@ -2557,6 +3384,9 @@ function processInput(run, input) {
   } else if (input.type === "RETRY_OBJECTIVE") {
     const encounter = ensureEncounterState(run);
     accepted = beginEncounterRecovery(run, "PLAYER_RETRY");
+    // Only on an ACCEPTED retry: a rejected input must not silently strip the player's buffs.
+    // Field drops are deliberately NOT cleared — the arena state persists across a retry.
+    if (accepted) clearBuffs(run, "DEATH");
     rejectionReason = encounter.status === "RECOVERY"
       ? "ENCOUNTER_RECOVERY_ACTIVE"
       : encounter.status === "COMPLETE"
@@ -2712,6 +3542,11 @@ function resolveDeaths(run) {
       }
       emit(run, "OBJECTIVE_COMPLETED", { objectiveId: "echo-recovery" });
     }
+    // LAST in the loop body, deliberately: the echo pickup, ENEMY_DEFEATED, and the elite item
+    // above keep their exact current `nextId` allocation order and event order, so a run that
+    // rolls no drop is byte-identical to before this block existed. `dead` is already sorted by
+    // `id.localeCompare`, so the roll order is deterministic.
+    rollBuffDrop(run, entry);
   });
   if (run.wardenState?.runtime?.chainReaction) {
     run.wardenState.chainReactionStacks = Math.min(run.wardenState.runtime.chainReaction.maxStacks, run.wardenState.chainReactionStacks + dead.length);
@@ -2827,6 +3662,36 @@ function refreshAttackerCommitment(run) {
   }
 }
 
+/**
+ * Semantic monster state (build-game-monster-system: the MonsterRuntime -> MonsterViewAdapter seam).
+ *
+ * The runtime already knows everything needed to name what a body is doing; before this it was
+ * scattered across `attackWindup`, `attackCooldown`, route commitment and raw positions, so the
+ * view layer had to guess. This publishes ONE authoritative state per body, derived only from
+ * simulation data. It never decides damage: contact is still authored by the attack path.
+ *
+ * `defeated` is produced only for a body still in the array with no health; resolveDeaths()
+ * removes it in the same tick and announces it with ENEMY_DEFEATED.
+ */
+export const MONSTER_STATES = freeze([
+  "idle", "investigate", "pursue", "reposition", "windup", "attack", "recover", "stagger", "defeated",
+]);
+
+/** Ticks a body keeps reading as staggered after taking a hit. */
+const MONSTER_STAGGER_TICKS = 18;
+
+function monsterState(run, enemy, { moved, contactRange, targetDistance }) {
+  if (enemy.hp <= 0) return "defeated";
+  if (enemy.lastStrikeTick === run.tick) return "attack";
+  if (enemy.attackWindup) return "windup";
+  if (Number.isInteger(enemy.lastDamagedTick) && run.tick - enemy.lastDamagedTick < MONSTER_STAGGER_TICKS) return "stagger";
+  if (enemy.attackCooldown > 0 && targetDistance <= contactRange) return "recover";
+  if (moved) {
+    return enemy.route?.length && enemy.waypointIndex < enemy.route.length - 1 ? "reposition" : "pursue";
+  }
+  return targetDistance <= contactRange ? "idle" : "investigate";
+}
+
 function moveEnemies(run) {
   const breachedIds = new Set();
   const chokepath = run.tactics?.chokepath;
@@ -2859,7 +3724,8 @@ function moveEnemies(run) {
         y: Math.round(enemy.y + dy / distance * movement),
       });
     }
-    if (enemy.x !== from.x || enemy.y !== from.y) {
+    enemy.movedThisTick = enemy.x !== from.x || enemy.y !== from.y;
+    if (enemy.movedThisTick) {
       emit(run, "MOVE", {
         entityId: enemy.id,
         from,
@@ -2927,34 +3793,67 @@ function moveEnemies(run) {
     }
     if (enemy.class === "boss" && run.tick < run.bossSpawnedAt + BOSS_PRESSURE_GRACE_TICKS) return;
     if (enemy.projectileRange > 0 && targetDistance <= enemy.projectileRange && enemy.rangedCooldown <= 0) {
-      const damage = target.id === "gate" ? Math.max(1, enemy.damage - Math.trunc(run.gateDamageReduction / 2)) : (target.id === "commander" ? Math.round(enemy.damage * run.commander.incomingDamageMultiplier) : enemy.damage);
+      const damage = target.id === "gate" ? Math.max(1, enemy.damage - Math.trunc(run.gateDamageReduction / 2)) : (target.id === "commander" ? applyIncomingDamage(run, enemy.damage) : enemy.damage);
       fire(run, enemy, target, damage, enemy.id, Math.max(1, Math.trunc(enemy.projectileTicks / 12)));
       enemy.rangedCooldown = enemy.projectileTicks;
       return;
     }
 
+    // Telegraph -> active -> recovery, for EVERY body that carries a pattern.
+    //
+    // The boss already worked this way; the authored patterns give trash and elites the same
+    // three-phase shape, so a wide swing is announced before it lands and the AI response
+    // patterns have something to answer. A body with no authored telegraph (telegraphTicks 0)
+    // keeps the original immediate-contact cadence.
     const contactRange = enemy.radius + (target.radius || 0);
-    if (enemy.class === "boss") {
-      if (enemy.attackWindup) {
-        if (enemy.attackCooldown > 0) return;
-        if (targetDistance > contactRange) {
-          enemy.attackWindup = false;
-          emit(run, "BOSS_ATTACK_CANCELLED", { entityId: enemy.id, targetId: target.id, policyId: enemy.policyId });
-          return;
-        }
-      } else {
-        if (targetDistance > contactRange) return;
-        enemy.attackWindup = true;
-        enemy.attackCooldown = enemy.attackTicks;
-        emit(run, "BOSS_ATTACK_TELEGRAPHED", {
+    const bossBody = enemy.class === "boss";
+    if (enemy.attackWindup) {
+      if (enemy.attackCooldown > 0) return;
+      if (targetDistance > contactRange) {
+        enemy.attackWindup = false;
+        emit(run, bossBody ? "BOSS_ATTACK_CANCELLED" : "ENEMY_ATTACK_CANCELLED", {
           entityId: enemy.id,
           targetId: target.id,
           policyId: enemy.policyId,
-          windupTicks: enemy.attackTicks,
+          patternId: enemy.patternId ?? null,
+          stepId: enemy.patternStepId ?? null,
+          actionId: enemy.patternActionId ?? null,
         });
         return;
       }
-    } else if (targetDistance > contactRange || enemy.attackCooldown > 0) return;
+    } else {
+      if (targetDistance > contactRange || enemy.attackCooldown > 0) return;
+      // The authored pattern preset decides what THIS strike is: its disc, its damage weight,
+      // its tell length and whether it leaves a field. Two consecutive slams from one body
+      // therefore read as two different attacks instead of one repeated animation.
+      const sample = samplePattern(enemy.patternId, bossBody ? run.tick - (run.bossSpawnedAt ?? 0) : run.tick);
+      const telegraphTicks = bossBody ? enemy.attackTicks : (sample?.step?.telegraphTicks ?? 0);
+      if (telegraphTicks > 0) {
+        enemy.attackWindup = true;
+        enemy.attackCooldown = telegraphTicks;
+        enemy.patternStepId = sample?.stepId ?? null;
+        enemy.patternActionId = sample?.actionId ?? null;
+        const telegraphRadius = sample?.step?.radius ?? areaSourceProfile(bossBody ? "boss" : "enemy").radius;
+        emit(run, bossBody ? "BOSS_ATTACK_TELEGRAPHED" : "ENEMY_ATTACK_TELEGRAPHED", {
+          entityId: enemy.id,
+          targetId: target.id,
+          policyId: enemy.policyId,
+          windupTicks: telegraphTicks,
+          patternId: sample?.patternId ?? null,
+          stepId: sample?.stepId ?? null,
+          actionId: sample?.actionId ?? null,
+          phase: "telegraph",
+          shape: sample?.step?.shape ?? "disc",
+          element: elementOf(sample?.step?.element ?? enemy.element),
+          radius: telegraphRadius,
+          originX: enemy.x,
+          originY: enemy.y,
+        });
+        // AI response: the covered player-side bodies decide to evade, scatter or brace.
+        applyTelegraphResponse(run, enemy, enemy, telegraphRadius);
+        return;
+      }
+    }
     let commanderDamage = 0;
     let gateDamage = 0;
     let companionDamage = 0;
@@ -2975,18 +3874,75 @@ function moveEnemies(run) {
         }
       }
     }
-    const damage = target.id === "gate" ? gateDamage : (target.kind === "companion" ? companionDamage : Math.round(commanderDamage * run.commander.incomingDamageMultiplier));
-    if (enemy.class === "boss") enemy.attackWindup = false;
-    else enemy.attackCooldown = enemy.attackTicks;
+    // Mitigation goes through applyIncomingDamage() (cycle 10) so timed buffs are honoured;
+    // the pattern sample and strike bookkeeping (cycle 10 area combat) stay on top of it.
+    const damage = target.id === "gate" ? gateDamage : (target.kind === "companion" ? companionDamage : applyIncomingDamage(run, commanderDamage));
+    const bossStrike = bossBody;
+    const patternSample = bossStrike
+      ? samplePattern(enemy.patternId, run.tick - (run.bossSpawnedAt ?? 0))
+      : samplePattern(enemy.patternId, run.tick);
+    const patternStep = patternSample?.step ?? null;
+    enemy.attackWindup = false;
+    enemy.lastStrikeTick = run.tick;
+    if (!bossStrike) enemy.attackCooldown = enemy.attackTicks;
     emit(run, "ENEMY_ATTACK", {
       entityId: enemy.id,
       targetId: target.id,
       damage,
       policyId: enemy.policyId,
       intent: enemy.policyIntent,
+      patternId: patternSample?.patternId ?? null,
+      stepId: patternSample?.stepId ?? null,
+      actionId: patternSample?.actionId ?? null,
+      phase: "active",
+      element: elementOf(patternStep?.element ?? enemy.element),
+      radius: patternStep?.radius ?? areaSourceProfile(bossStrike ? "boss" : "enemy").radius,
     });
+    // 광역: every enemy strike is a disc on the player side. The primary target is excluded —
+    // it is damaged by the authored branch below — so the splash is exactly "who else was
+    // standing close enough".
+    const strikeSourceKey = bossStrike ? "boss" : "enemy";
+    const strikeProfile = areaSourceProfile(strikeSourceKey);
+    const strikeDamage = Math.max(0, Math.trunc(enemy.damage * (patternStep?.damageBp ?? AREA_BP) / AREA_BP));
+    resolveAreaImpact(run, {
+      origin: patternStep?.shape === "lead" ? { x: target.x ?? enemy.x, y: target.y ?? enemy.y } : enemy,
+      faction: "enemy",
+      sourceId: enemy.id,
+      sourceKey: strikeSourceKey,
+      damage: strikeDamage,
+      element: patternStep?.element ?? enemy.element,
+      radius: patternStep?.radius ?? strikeProfile.radius,
+      weightBp: patternStep?.weightBp ?? strikeProfile.weightBp,
+      excludeIds: [target.id],
+    });
+    const fieldTicks = patternStep?.fieldTicks ?? (bossStrike ? strikeProfile.fieldTicks : 0);
+    if (fieldTicks > 0) {
+      spawnAreaField(run, {
+        origin: patternStep?.shape === "lead" ? { x: target.x ?? enemy.x, y: target.y ?? enemy.y } : enemy,
+        faction: "enemy",
+        sourceId: enemy.id,
+        sourceKey: strikeSourceKey,
+        damage: strikeDamage,
+        element: patternStep?.element ?? enemy.element,
+        radius: patternStep?.radius ?? strikeProfile.radius,
+        weightBp: patternStep?.weightBp ?? strikeProfile.weightBp,
+        durationTicks: fieldTicks,
+      });
+    }
+    if (bossStrike) {
+      // The recovery phase of a heavy attack is the answer window: allied fire speeds up
+      // inside it (AI_RESPONSE_PATTERNS.punish), which is what makes a telegraph a trade.
+      run.punishWindowUntilTick = run.tick + (patternStep?.recoveryTicks ?? AI_RESPONSE_PATTERNS.punish.windowTicks);
+      emit(run, "AI_RESPONSE_APPLIED", {
+        entityId: enemy.id,
+        responsePatterns: ["punish"],
+        windowUntilTick: run.punishWindowUntilTick,
+        cooldownScaleBp: AI_RESPONSE_PATTERNS.punish.cooldownScaleBp,
+        simTick: run.tick,
+      });
+    }
     if (target.id === "gate") {
-      run.gate.integrity = clamp(run.gate.integrity - damage, 0, run.gate.maxIntegrity);
+      run.gate.integrity = clamp(run.gate.integrity - damage, 0, effectiveGateMax(run));
       emit(run, "GATE_BREACHED", { enemyId: enemy.id, damage, policyId: enemy.policyId });
       if (enemy.class !== "boss" && !enemy.elite) breachedIds.add(enemy.id);
     } else if (target.kind === "companion" && target.status !== "DOWNED") {
@@ -3007,7 +3963,7 @@ function moveEnemies(run) {
       });
       applyWardenDamageResponse(run);
       if (gateDamage > 0) {
-        run.gate.integrity = clamp(run.gate.integrity - gateDamage, 0, run.gate.maxIntegrity);
+        run.gate.integrity = clamp(run.gate.integrity - gateDamage, 0, effectiveGateMax(run));
         emit(run, "GATE_BREACHED", {
           enemyId: enemy.id,
           damage: gateDamage,
@@ -3020,6 +3976,17 @@ function moveEnemies(run) {
   });
 
   if (breachedIds.size) run.enemies = run.enemies.filter((enemy) => !breachedIds.has(enemy.id));
+
+  // One authoritative semantic state per body, published after every body has finished its pass
+  // so a windup entered or a strike resolved THIS tick is what the snapshot reports.
+  for (const enemy of run.enemies) {
+    const target = pressureTarget(run, enemy);
+    enemy.state = monsterState(run, enemy, {
+      moved: enemy.movedThisTick === true,
+      contactRange: enemy.radius + (target.radius || 0),
+      targetDistance: Math.sqrt(distanceSquared(enemy, target)),
+    });
+  }
 }
 
 /** Opens extraction only after the occupation has been secured and its boss guardian is defeated. */
@@ -3214,9 +4181,9 @@ function processTerrainEffects(run) {
         const previousCommander = run.commander.integrity;
         const previousGate = run.gate.integrity;
         const commanderBudget = Math.max(0, Math.trunc(run.commander.maxIntegrity * run.terrainRecovery.capRatio) - run.terrainRecovery.commander);
-        const gateBudget = Math.max(0, Math.trunc(run.gate.maxIntegrity * run.terrainRecovery.capRatio) - run.terrainRecovery.gate);
+        const gateBudget = Math.max(0, Math.trunc(effectiveGateMax(run) * run.terrainRecovery.capRatio) - run.terrainRecovery.gate);
         run.commander.integrity = clamp(run.commander.integrity + Math.min(recovery, commanderBudget), 0, run.commander.maxIntegrity);
-        run.gate.integrity = clamp(run.gate.integrity + Math.min(recovery, gateBudget), 0, run.gate.maxIntegrity);
+        run.gate.integrity = clamp(run.gate.integrity + Math.min(recovery, gateBudget), 0, effectiveGateMax(run));
         const commanderRecovery = run.commander.integrity - previousCommander;
         const gateRecovery = run.gate.integrity - previousGate;
         run.terrainRecovery.commander += commanderRecovery;
@@ -3295,6 +4262,14 @@ function tick(run) {
   while (run.inputs.length && run.inputs[0].at <= run.tick) processInput(run, run.inputs.shift());
   if (run.growthOffer) return;
   processEncounterRecovery(run);
+  // PHASE A — buff expiry, deliberately before the commander-move block below.
+  // `getCommanderSpeed` on the next lines is the FIRST stat read of the tick, so expiring here
+  // guarantees the composed stat set is constant for the entire remainder of the tick: every
+  // consumer downstream — projectiles, basic attack, enemy attacks, pickups, pressure — sees one
+  // stable set, and two impacts in the same tick can never see different effective damage.
+  // The `run.growthOffer` early-return above means buffs FREEZE during a skill selection, which
+  // is correct: the player is not playing.
+  expireBuffs(run);
 
   const commanderFrom = { x: run.commander.x, y: run.commander.y };
   const commanderSpeed = getCommanderSpeed(run);
@@ -3409,6 +4384,8 @@ function tick(run) {
   }
 
   advanceTravellingProjectiles(run);
+  // Lingering area fields pulse before deaths are resolved, so a field kill lands on this tick.
+  processAreaFields(run);
 
   /* Legacy timed projectiles (enemy fire) only: travelling orbs were already integrated above. */
   run.projectiles.forEach((projectile) => { if (projectile.mode !== "travel") projectile.ttl -= 1; });
@@ -3422,7 +4399,7 @@ function tick(run) {
     let guardedBy = null;
     let targetSpawnEventId = null;
     if (projectile.targetId === "gate") {
-      run.gate.integrity = clamp(run.gate.integrity - damage, 0, run.gate.maxIntegrity);
+      run.gate.integrity = clamp(run.gate.integrity - damage, 0, effectiveGateMax(run));
     } else if (projectile.targetId === "commander") {
       run.commander.integrity = clamp(run.commander.integrity - damage, 0, run.commander.maxIntegrity);
       applyWardenDamageResponse(run);
@@ -3470,6 +4447,26 @@ function tick(run) {
       guardedBy,
       cue: hit ? eventCue("impactHit") : null,
     });
+    // 광역: an enemy shell detonates on whatever it reached. Structures are never splashed —
+    // the gate has its own authored damage path — so this only reaches bodies.
+    if (hit && projectile.targetId !== "gate") {
+      const detonation = run.commander.id === projectile.targetId
+        ? run.commander
+        : (run.companions.find((entry) => entry.id === projectile.targetId)
+          || run.enemies.find((entry) => entry.id === projectile.targetId));
+      if (detonation) {
+        resolveAreaImpact(run, {
+          origin: detonation,
+          faction: projectile.faction ?? "enemy",
+          sourceId: projectile.sourceId,
+          sourceKey: "enemyProjectile",
+          damage: projectile.damage,
+          element: projectile.element,
+          excludeIds: [projectile.targetId],
+          causalRootId: projectile.causalRootId,
+        });
+      }
+    }
   });
 
   run.commander.basicCooldown -= 1;
@@ -3502,6 +4499,10 @@ function tick(run) {
   processWaveClearRecovery(run);
   assignCompanionItemClaims(run);
   collectPickups(run);
+  // PHASE B — field-drop TTL, deliberately AFTER collection rather than with Phase A, so a drop
+  // whose `expiresAtTick` equals this tick still gets its last collection attempt. Expiring at
+  // the top of the tick would delete a drop the player is standing on. One-tick grace, by design.
+  expireFieldDrops(run);
   updateEncounterObjective(run);
   updateObjectivePhase(run);
   processObjectivePressure(run);
@@ -3523,6 +4524,7 @@ function tick(run) {
       cutscene: stageCutscene(run.stage).defeat,
       cue: eventCue("terminal"),
     });
+    clearBuffs(run, "DEATH");
   } else {
     if (run.bossSpawned
         && !run.objectives.bossKill.completed
@@ -3552,6 +4554,7 @@ function tick(run) {
         cutscene: stageCutscene(run.stage).victory,
         cue: eventCue("terminal"),
       });
+      clearBuffs(run, "DEATH");
     }
   }
 
@@ -3701,7 +4704,15 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     ...(resolvedCapacity > COMPANION_CAPACITY_BASE ? { companionCapacity: resolvedCapacity } : {}),
     rng: nextRng,
     combatRng: rngNext(unsignedSeed ^ 0x9e3779b9),
+    // Buff-drop rolls get their OWN derived stream. `run.rng` is the wave-schedule and
+    // growth-offer stream and every draw on it is positional, so one extra `rngNext` there
+    // would shift wave composition, timing jitter, lane offset, spawn direction, policy
+    // selection, and growth-offer contents for every seed on every stage. The constant is the
+    // MurmurHash3 finalizer, distinct from combatRng's 0x9e3779b9, the surprise roll's
+    // 0x6d2b79f5, and gimmickRng's 0xc2b2ae35.
+    dropRng: rngNext(unsignedSeed ^ 0x85ebca6b),
     nextId: 0,
+    buffs: [],
     eventSequence: 0,
     castSequence: 0,
     stage,
@@ -3731,6 +4742,10 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     events: [],
     enemies: [],
     projectiles: [],
+    /** Live lingering area fields (defense-catalog AREA_FIELD). Ticked by processAreaFields(). */
+    areaFields: [],
+    /** Tick through which allied fire is inside an AI punish window. 0 = no window. */
+    punishWindowUntilTick: 0,
     pickups: [],
     companions: [],
     itemIds: [],
@@ -3949,6 +4964,11 @@ export function advanceDefenseRun(run, steps = 1) {
   if (next.commander && typeof next.commander.objectiveRoute !== "boolean") next.commander.objectiveRoute = false;
   if (next.commander && typeof next.commander.engaged !== "boolean") next.commander.engaged = false;
   if (!Number.isInteger(next.combatRng)) next.combatRng = rngNext(next.seed ^ 0x9e3779b9);
+  // Shape checks, exactly the pattern this function already uses for `terrainRecovery`,
+  // `objectiveRoute`, `engaged`, and `combatRng`. A pre-cycle-10 save has neither field, both
+  // guards fire, and it rehydrates to a run seeded identically to a fresh one at the same seed.
+  if (!Number.isInteger(next.dropRng)) next.dropRng = rngNext(next.seed ^ 0x85ebca6b);
+  if (!Array.isArray(next.buffs)) next.buffs = [];
   ensureEncounterState(next);
   if (!next.objectives.route) {
     const route = encounterRouteFor(next);
@@ -3972,14 +4992,24 @@ export function advanceDefenseRun(run, steps = 1) {
     if (enemy.class === "boss" && typeof enemy.attackWindup !== "boolean") enemy.attackWindup = false;
   });
   for (let index = 0; index < steps && !next.terminal; index += 1) {
+    // A growth selection is resolved BEFORE the tick it applies to, because the offer blocks the
+    // tick. Its events must survive that tick's `run.events = []` reset: the selection changes
+    // commander integrity and max integrity, and an integrity delta with no event in the stream
+    // is unattributable to every observer (HUD, telemetry, and the Stage1b evidence exporters,
+    // which reconcile before/after integrity against the events of the same tick). The carried
+    // events keep their own lower eventSequence values, so stream ordering is unchanged.
+    const carriedSelectionEvents = [];
     if (next.growthOffer) {
       const selections = next.inputs.filter((input) => input.type === "GROWTH_OFFER_SELECTED" || input.type === "SKILL_SELECTED");
       if (!selections.length) break;
       next.inputs = next.inputs.filter((input) => input.type !== "GROWTH_OFFER_SELECTED" && input.type !== "SKILL_SELECTED");
+      const emittedBefore = next.events.length;
       selections.forEach((input) => processInput(next, input));
+      carriedSelectionEvents.push(...next.events.slice(emittedBefore));
       if (next.growthOffer) break;
     }
     tick(next);
+    if (carriedSelectionEvents.length) next.events.unshift(...carriedSelectionEvents);
     if (next.growthOffer) break;
   }
   if (next.terminal && next.rewardOffer) {
@@ -4024,6 +5054,18 @@ export function getRunSnapshot(run) {
       waveVariantId: run.planCommitment.waveVariantId,
     },
     ...(run.measurementProfileId ? { measurementProfileId: run.measurementProfileId } : {}),
+    // Both ABSENT when no buff is active, so a run that never collects a buff drop produces a
+    // byte-identical snapshot to before this feature existed — that is the property the
+    // zero-buff digest-identity proof rests on. Same conditional-additive precedent as
+    // `abyssDepth` and `measurementProfileId` above, so NO `SNAPSHOT_VERSION` bump: bumping 7->8
+    // would change `version` in every digest and break every stored comparison for a change that
+    // touches no existing run. Sorted by `buffId` to match `sortedActors`, so HUD order is stable.
+    // `dropRng` is deliberately NOT serialized — neither are `rng`, `combatRng`, or `seed`; RNG
+    // state has never been part of the digest.
+    ...(run.buffs?.length ? {
+      buffs: [...run.buffs].sort((left, right) => left.buffId.localeCompare(right.buffId)),
+      buffStats: composedBuffStats(run),
+    } : {}),
     gate: run.gate,
     gateDamageReduction: run.gateDamageReduction,
     terrainRecovery: run.terrainRecovery,
@@ -4047,6 +5089,9 @@ export function getRunSnapshot(run) {
     events: run.events.map((event) => ({ version: EVENT_VERSION, ...event })),
     enemies: sortedActors(run.enemies),
     projectiles: sortedActors(run.projectiles),
+    /** Live area fields, so a renderer can draw a persistent ground zone without inferring it. */
+    areaFields: sortedActors(run.areaFields),
+    punishWindowUntilTick: run.punishWindowUntilTick,
     pickups: sortedActors(run.pickups),
     companions: sortedActors(run.companions),
     occupationProgress: run.occupationProgress,
