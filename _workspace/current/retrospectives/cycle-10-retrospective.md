@@ -323,9 +323,10 @@ existing test would have detected it.** Registry now closed at four constants:
    | base `033877ad` | 13,953,706 | **+968,074** |
    | this branch | 13,920,096 | +934,464 |
 
-   So the **dominant drift is pre-existing** — `defense-run-simulation.js` changed in **10
-   commits** between the artifact's last write and our base, including `543194e8` "Abyss Depth
-   v2" and others from concurrent sessions. Cycle 10's own contribution is the residual
+   So the **dominant drift is pre-existing** — `defense-run-simulation.js` changed in **9
+   commits** between the artifact's last write and our base (10 to HEAD; the tenth,
+   `ee82c5f0`, is ours), including `543194e8` "Abyss Depth v2" and others from concurrent
+   sessions. Cycle 10's own contribution is the residual
    **−33,610** (base → branch), and total `controlRuns[].events` moves 18,540 → 14,804.
    Deliberately **reverted, not re-exported**: re-exporting would fold three days of other
    sessions' simulation changes into a G3 re-adjudication nobody requested, and G3 is fenced
