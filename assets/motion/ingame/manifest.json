@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "scripts/retarget-ingame-motion-blender.py",
-  "generatedAt": "2026-07-29T03:52:19.284031+00:00",
+  "generatedAt": "2026-07-30T18:59:38.357040+00:00",
   "sourceBoneNames": [
     "mixamorig:Head",
     "mixamorig:HeadTop_End",
@@ -410,7 +410,7 @@
   "pack": {
     "id": "unarmed-core",
     "path": "assets/motion/ingame/unarmed-core.glb",
-    "sha256": "dc0244fee4c442285f9febb1485756948a7ec42dec475d6b81fbaef9ada080b0",
+    "sha256": "c642c139c6649cb8d909e40c62becc2c15a0e4eeef0e09ff45abeb17647db91c",
     "sourceRig": "mixamo-37",
     "targetRig": "def-humanoid-v1",
     "sourceFps": 24,
@@ -1024,6 +1024,258 @@
         },
         "loop": false,
         "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4"
+      },
+      {
+        "action": "hit_front",
+        "source": "Pain Gesture.fbx",
+        "sourceFile": "Pain Gesture.fbx",
+        "clipName": "unarmed-core::hit_front::v01",
+        "frameStart": 1,
+        "frameEnd": 43,
+        "sourceFps": 24,
+        "durationSeconds": 1.75,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "11e2c3887f3415a0139063ddfd7db478050a521d3c347d5d9477213e902fed4f"
+      },
+      {
+        "action": "hit_back",
+        "source": "Standing React Large Gut.fbx",
+        "sourceFile": "Standing React Large Gut.fbx",
+        "clipName": "unarmed-core::hit_back::v01",
+        "frameStart": 1,
+        "frameEnd": 39,
+        "sourceFps": 24,
+        "durationSeconds": 1.5833333333333333,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "782ec50e76726021155ac1da7ed4045c371827976c8d922681aac11960b9fcdd"
+      },
+      {
+        "action": "hit_left",
+        "source": "Standing React Small From Left.fbx",
+        "sourceFile": "Standing React Small From Left.fbx",
+        "clipName": "unarmed-core::hit_left::v01",
+        "frameStart": 1,
+        "frameEnd": 19,
+        "sourceFps": 24,
+        "durationSeconds": 0.75,
+        "sourceRootTravel": {
+          "x": -2e-05,
+          "y": 8e-06,
+          "z": 1.2e-05
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf"
+      },
+      {
+        "action": "hit_right",
+        "source": "Standing React Small From Right.fbx",
+        "sourceFile": "Standing React Small From Right.fbx",
+        "clipName": "unarmed-core::hit_right::v01",
+        "frameStart": 1,
+        "frameEnd": 19,
+        "sourceFps": 24,
+        "durationSeconds": 0.75,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "632eacfcf519f4c2d8fd2038797f700446b57b350e7e9557315f69f21f2315c5"
+      },
+      {
+        "action": "bighit_front",
+        "source": "Receive Uppercut To The Face.fbx",
+        "sourceFile": "Receive Uppercut To The Face.fbx",
+        "clipName": "unarmed-core::bighit_front::v01",
+        "frameStart": 1,
+        "frameEnd": 31,
+        "sourceFps": 24,
+        "durationSeconds": 1.25,
+        "sourceRootTravel": {
+          "x": 0.000427,
+          "y": -3.8e-05,
+          "z": 3.9e-05
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945"
+      },
+      {
+        "action": "bighit_back",
+        "source": "Turn To Knocked Unconscious.fbx",
+        "sourceFile": "Turn To Knocked Unconscious.fbx",
+        "clipName": "unarmed-core::bighit_back::v01",
+        "frameStart": 1,
+        "frameEnd": 111,
+        "sourceFps": 24,
+        "durationSeconds": 4.583333333333333,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "a32330addd424477dc33271ddbc8d8a2c5e2f73e22d72dde69f8cabc1efc04f3"
+      },
+      {
+        "action": "bighit_left",
+        "source": "Standing Block React Large.fbx",
+        "sourceFile": "Standing Block React Large.fbx",
+        "clipName": "unarmed-core::bighit_left::v01",
+        "frameStart": 1,
+        "frameEnd": 33,
+        "sourceFps": 24,
+        "durationSeconds": 1.3333333333333333,
+        "sourceRootTravel": {
+          "x": 6e-06,
+          "y": -1.5e-05,
+          "z": 3e-06
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "1c2724849c68cdb804321b3a598b0acfbebc3666deb019b6f2465a6d1db122b4"
+      },
+      {
+        "action": "bighit_right",
+        "source": "Standing React Large Gut.fbx",
+        "sourceFile": "Standing React Large Gut.fbx",
+        "clipName": "unarmed-core::bighit_right::v01",
+        "frameStart": 1,
+        "frameEnd": 39,
+        "sourceFps": 24,
+        "durationSeconds": 1.5833333333333333,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "782ec50e76726021155ac1da7ed4045c371827976c8d922681aac11960b9fcdd"
+      },
+      {
+        "action": "attack_melee",
+        "source": "Standing Melee Attack Horizontal.fbx",
+        "sourceFile": "Standing Melee Attack Horizontal.fbx",
+        "clipName": "unarmed-core::attack_melee::v01",
+        "frameStart": 1,
+        "frameEnd": 59,
+        "sourceFps": 24,
+        "durationSeconds": 2.4166666666666665,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "565683db7f919a11d31396692563cfbe9d6f2e0eda99bf43e3c0d5a0f354813f"
+      },
+      {
+        "action": "attack_ranged",
+        "source": "Shooting Arrow.fbx",
+        "sourceFile": "Shooting Arrow.fbx",
+        "clipName": "unarmed-core::attack_ranged::v01",
+        "frameStart": 1,
+        "frameEnd": 121,
+        "sourceFps": 24,
+        "durationSeconds": 5.0,
+        "sourceRootTravel": {
+          "x": 3e-06,
+          "y": -8e-06,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "16ba3828644cbda198ba8b70e5bd7a3f9b95f2050ba12cc9a79bcb0cf1e16926"
+      },
+      {
+        "action": "die",
+        "source": "Dying.fbx",
+        "sourceFile": "Dying.fbx",
+        "clipName": "unarmed-core::die::v01",
+        "frameStart": 1,
+        "frameEnd": 139,
+        "sourceFps": 24,
+        "durationSeconds": 5.75,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "fc3361375e89cee81601f148693aedf4235a0f0dbed564e36d1e1862b8413290"
+      },
+      {
+        "action": "show",
+        "source": "Mutant Roaring.fbx",
+        "sourceFile": "Mutant Roaring.fbx",
+        "clipName": "unarmed-core::show::v01",
+        "frameStart": 1,
+        "frameEnd": 131,
+        "sourceFps": 24,
+        "durationSeconds": 5.416666666666667,
+        "sourceRootTravel": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "exportedRootDeviation": {
+          "x": 0.0,
+          "z": 0.0
+        },
+        "loop": false,
+        "sourceSha256": "afbb51821e1508df7de759b19907c222a7887438cbe4701d7136f66fc40f80b1"
       }
     ]
   },
@@ -1216,6 +1468,258 @@
       },
       "loop": false,
       "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4"
+    },
+    {
+      "action": "hit_front",
+      "source": "Pain Gesture.fbx",
+      "sourceFile": "Pain Gesture.fbx",
+      "clipName": "unarmed-core::hit_front::v01",
+      "frameStart": 1,
+      "frameEnd": 43,
+      "sourceFps": 24,
+      "durationSeconds": 1.75,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "11e2c3887f3415a0139063ddfd7db478050a521d3c347d5d9477213e902fed4f"
+    },
+    {
+      "action": "hit_back",
+      "source": "Standing React Large Gut.fbx",
+      "sourceFile": "Standing React Large Gut.fbx",
+      "clipName": "unarmed-core::hit_back::v01",
+      "frameStart": 1,
+      "frameEnd": 39,
+      "sourceFps": 24,
+      "durationSeconds": 1.5833333333333333,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "782ec50e76726021155ac1da7ed4045c371827976c8d922681aac11960b9fcdd"
+    },
+    {
+      "action": "hit_left",
+      "source": "Standing React Small From Left.fbx",
+      "sourceFile": "Standing React Small From Left.fbx",
+      "clipName": "unarmed-core::hit_left::v01",
+      "frameStart": 1,
+      "frameEnd": 19,
+      "sourceFps": 24,
+      "durationSeconds": 0.75,
+      "sourceRootTravel": {
+        "x": -2e-05,
+        "y": 8e-06,
+        "z": 1.2e-05
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "c12decb764b02ae761561bd996b6d7df721c16eacae172e949c5b10ba66adebf"
+    },
+    {
+      "action": "hit_right",
+      "source": "Standing React Small From Right.fbx",
+      "sourceFile": "Standing React Small From Right.fbx",
+      "clipName": "unarmed-core::hit_right::v01",
+      "frameStart": 1,
+      "frameEnd": 19,
+      "sourceFps": 24,
+      "durationSeconds": 0.75,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "632eacfcf519f4c2d8fd2038797f700446b57b350e7e9557315f69f21f2315c5"
+    },
+    {
+      "action": "bighit_front",
+      "source": "Receive Uppercut To The Face.fbx",
+      "sourceFile": "Receive Uppercut To The Face.fbx",
+      "clipName": "unarmed-core::bighit_front::v01",
+      "frameStart": 1,
+      "frameEnd": 31,
+      "sourceFps": 24,
+      "durationSeconds": 1.25,
+      "sourceRootTravel": {
+        "x": 0.000427,
+        "y": -3.8e-05,
+        "z": 3.9e-05
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945"
+    },
+    {
+      "action": "bighit_back",
+      "source": "Turn To Knocked Unconscious.fbx",
+      "sourceFile": "Turn To Knocked Unconscious.fbx",
+      "clipName": "unarmed-core::bighit_back::v01",
+      "frameStart": 1,
+      "frameEnd": 111,
+      "sourceFps": 24,
+      "durationSeconds": 4.583333333333333,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "a32330addd424477dc33271ddbc8d8a2c5e2f73e22d72dde69f8cabc1efc04f3"
+    },
+    {
+      "action": "bighit_left",
+      "source": "Standing Block React Large.fbx",
+      "sourceFile": "Standing Block React Large.fbx",
+      "clipName": "unarmed-core::bighit_left::v01",
+      "frameStart": 1,
+      "frameEnd": 33,
+      "sourceFps": 24,
+      "durationSeconds": 1.3333333333333333,
+      "sourceRootTravel": {
+        "x": 6e-06,
+        "y": -1.5e-05,
+        "z": 3e-06
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "1c2724849c68cdb804321b3a598b0acfbebc3666deb019b6f2465a6d1db122b4"
+    },
+    {
+      "action": "bighit_right",
+      "source": "Standing React Large Gut.fbx",
+      "sourceFile": "Standing React Large Gut.fbx",
+      "clipName": "unarmed-core::bighit_right::v01",
+      "frameStart": 1,
+      "frameEnd": 39,
+      "sourceFps": 24,
+      "durationSeconds": 1.5833333333333333,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "782ec50e76726021155ac1da7ed4045c371827976c8d922681aac11960b9fcdd"
+    },
+    {
+      "action": "attack_melee",
+      "source": "Standing Melee Attack Horizontal.fbx",
+      "sourceFile": "Standing Melee Attack Horizontal.fbx",
+      "clipName": "unarmed-core::attack_melee::v01",
+      "frameStart": 1,
+      "frameEnd": 59,
+      "sourceFps": 24,
+      "durationSeconds": 2.4166666666666665,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "565683db7f919a11d31396692563cfbe9d6f2e0eda99bf43e3c0d5a0f354813f"
+    },
+    {
+      "action": "attack_ranged",
+      "source": "Shooting Arrow.fbx",
+      "sourceFile": "Shooting Arrow.fbx",
+      "clipName": "unarmed-core::attack_ranged::v01",
+      "frameStart": 1,
+      "frameEnd": 121,
+      "sourceFps": 24,
+      "durationSeconds": 5.0,
+      "sourceRootTravel": {
+        "x": 3e-06,
+        "y": -8e-06,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "16ba3828644cbda198ba8b70e5bd7a3f9b95f2050ba12cc9a79bcb0cf1e16926"
+    },
+    {
+      "action": "die",
+      "source": "Dying.fbx",
+      "sourceFile": "Dying.fbx",
+      "clipName": "unarmed-core::die::v01",
+      "frameStart": 1,
+      "frameEnd": 139,
+      "sourceFps": 24,
+      "durationSeconds": 5.75,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "fc3361375e89cee81601f148693aedf4235a0f0dbed564e36d1e1862b8413290"
+    },
+    {
+      "action": "show",
+      "source": "Mutant Roaring.fbx",
+      "sourceFile": "Mutant Roaring.fbx",
+      "clipName": "unarmed-core::show::v01",
+      "frameStart": 1,
+      "frameEnd": 131,
+      "sourceFps": 24,
+      "durationSeconds": 5.416666666666667,
+      "sourceRootTravel": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "exportedRootDeviation": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "loop": false,
+      "sourceSha256": "afbb51821e1508df7de759b19907c222a7887438cbe4701d7136f66fc40f80b1"
     }
   ],
   "rights": {

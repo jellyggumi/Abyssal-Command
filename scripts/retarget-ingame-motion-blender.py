@@ -734,8 +734,11 @@ def run_gates(
         errors.append("pack contains images")
 
     animations = json_doc.get("animations", []) or []
-    if len(animations) != 9:
-        errors.append(f"expected 9 animations, got {len(animations)}")
+    # The pack must carry exactly the authored roster -- no more, no fewer. Deriving the count
+    # from CLIPS keeps this gate honest when the roster grows; a hardcoded number would have to
+    # be edited in two places and would silently pass a pack that lost a clip.
+    if len(animations) != len(CLIPS):
+        errors.append(f"expected {len(CLIPS)} animations, got {len(animations)}")
         checks["expectedClipCount"] = False
 
     expected_overrides = {row["clipName"]: row for row in expected_clip_overrides}

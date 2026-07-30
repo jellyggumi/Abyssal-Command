@@ -363,3 +363,94 @@ next-beat: 독립 사람 플레이 판정으로 G4/G7/G8 재측정
 - 구현 commit SHA / remote branch: `b29f54b846e2f54938a6fc4eda4a2eaff72da1d1` / `origin/main`
 - GitHub Pages workflow: run `30512950567` **SUCCESS** — `https://github.com/jellyggumi/Abyssal-Lantern/actions/runs/30512950567`
 - Production: `https://jellyggumi.github.io/Abyssal-Lantern/`; `version.json.candidate_sha`가 구현 SHA와 일치한다. 배포 로비 smoke는 미니맵 노드 **3**, Canvas **1**, horizontal overflow **0**, console error **0**, page error **0**을 기록했다.
+
+---
+
+## 10. 2026-07-30 — 광역 전투 모델·공격 패턴 프리셋·AI 대응·보스 등장씬
+
+세션 브랜치: `feat/motion-vfx-aoe-boss` → PR #11 → `main` `9562943b`.
+동시 세션이 `defense-catalog.js` / `defense-run-simulation.js` / `battle-realtime-three.js` /
+`app.js`를 편집 중이었으므로 `CLAUDE.md` §5에 따라 격리 워크트리
+(`/Users/jangyoung/orca/Abyssal-Surge-motion`)에서 작업했고, 공유 워크트리는 건드리지 않았다.
+
+### 10.1 구현된 계약
+
+**광역 전투(모든 공격·피격은 광역).** `defense-catalog.js`가 네 개의 정수 basis-point 인자를
+저작한다: 거리 감쇠 × 소스 가중치 × 속성 상성 × 지속시간.
+
+```
+share = areaFalloffBp(distance, radius)
+      x weightBp(source)
+      x elementMatchupBp(attacker, defender)
+      x areaSustainBp(durationTicks)
+```
+
+- `resolveAreaImpact()`가 유일한 권위다. 근접 스윕, 이동 오브, 적 포탄, 스킬, 적 타격, 보스
+  슬램이 모두 이 경로를 통과하며 1차 대상은 항상 제외된다(이중 피해 불가).
+- 잔류 장판(`AREA_FIELD_STARTED/_PULSE/_ENDED`)은 저작된 주기로만 맥동하고, 개수 상한이
+  있으며, 스냅샷에 공개되고, 항상 명시적으로 회수된다.
+- `ATTACK_PATTERNS`: 모든 적 아키타입과 3보스에 대해 telegraph → active → recovery 3단계
+  스텝의 순환 시퀀스. 순수 함수 `samplePattern(patternId, elapsed)`로 어떤 위상도 재현 가능.
+- `AI_RESPONSE_PATTERNS`: evade / spread / brace / punish. 각각 시뮬레이션이 실제로 읽는
+  유한 윈도(대형 앵커, 피해 지분, 아군 사격 주기).
+- `MONSTER_STATES`: 바디당 하나의 의미 상태(build-game-monster-system의 runtime→view 이음매).
+- `BOSS_SPAWNED`가 3초(180틱) 등장 윈도를 저작해 실어 보낸다.
+
+**연출.** 피격체는 피격 플래시 동안 반투명 점멸(사각파)한다 — 1차·광역 대상 동일. 재질의
+사전 알파는 1회 캡처 후 항상 복원되며, reduced motion은 점멸 없이 반투명만 유지한다.
+지면 링은 절차적 생성이다: 광역 임팩트 / 텔레그래프(채워지는 시간 = 윈드업) / 잔류 장판 /
+지휘관 상시 사거리 링. 보스 등장은 기본 팔로우캠 위에 얹히는 카메라 푸시 + 비차단 3초 자막
+밴드이며 전투를 멈추지 않는다. 투명 VFX 예산 24 → 40(상수를 export해 계약 테스트가 리터럴
+대신 저작값을 검증).
+
+**비례.** 컴패니언 실루엣 1.3 → 1.45. 근거는 디코딩된 레퍼런스 캡처
+(`intake/reference-video-analysis.md` §3): 군단 유닛은 플레이어와 같은 스케일로 읽히고 색으로
+구분된다. 지휘관 1.55는 SKIRMISH 티어에서 화면 높이의 7.8%로 레퍼런스 대역(≈6.8%) 안에 있어
+확대하지 않았다.
+
+### 10.2 발견·수정한 결함 [OBSERVED]
+
+1. **성장 선택 이벤트 소실.** `advanceDefenseRun()`이 성장 오퍼 입력을 `tick()` 이전에 처리하고,
+   `tick()`은 `run.events = []`로 시작한다. ward-binder의 +120 integrity/maxIntegrity는 적용되는데
+   `SKILL_SELECTED` 이벤트는 지워져, 어떤 관측자도 설명할 수 없는 델타가 남았다. 선택 이벤트를
+   리셋 너머로 이월한다(자체 eventSequence 유지 → 스트림 순서 불변).
+2. **wardens-vigil 재생이 무이벤트.** `WARDENS_VIGIL_REGEN`을 발행하도록 수정.
+3. **PR guard의 jq 파싱 중단.** 브라우저 게이트가 원시 stdout을 `results/*.json`으로 썼고
+   `progression-mobile-ui-browser.cjs`는 TAP을 출력한다. Decide 단계의 `jq -sc ... results/*.json`이
+   `1..N` 줄에서 "Invalid numeric literal"로 전체 스윕을 실패시켰다. 전사는
+   `results/browser/*.txt`로 분리.
+
+### 10.3 증거 [OBSERVED]
+
+- `tests/area-combat-model.test.mjs`(신규) **19/19 PASS** — 인자 수학, 모든 패턴의 위상 경계,
+  actionId 유지/갱신, 응답 윈도 상한, 라이브 광역 구조, 속성별 거리 단조성, 장판 주기·만료,
+  digest 결정성, 몬스터 상태 계약.
+- `defense-run-simulation` + `-rpg` + `companion-autonomy` + `combat-presentation-contract`
+  **87/87 PASS**; `defense-renderer-contract` **22/22 PASS**;
+  `defense-campaign-adapter` + `defense-asset-manifest` + `no-rts-closure` + `release-closure`
+  **16/16 PASS**; stage1b pressure·persistence·evidence exporters **PASS**(관측성 수정 이후).
+- `node scripts/run-defense-balance-sim.mjs --strict` → `"pass": true`, `"failures": []`.
+- 브라우저 5종 로컬 **exit 0**: survivor `"pass": true`/`errors: []`, performance
+  `rafMeanMs 16.94`/`failures: []`, hud-responsive, phone-battle-hud, progression-mobile-ui.
+- CI(병합 결과 기준) 릴리스 파이프라인 run `30568810321` **전 게이트 SUCCESS**:
+  resolve_revision · release_closure · engine_contract · browser_contract · package_pages ·
+  artifact_smoke · deploy_pages · deployed_smoke · release_receipt.
+- 배포 검증: `https://jellyggumi.github.io/Abyssal-Lantern/version.json` =
+  `{"candidate_sha":"9562943b2ba22617916be0fe799edc956c68466c","rules_version":"defense-survivor-v1"}`.
+  로컬에서 실행한 `tests/deployed-defense-smoke.cjs`도 라이브 URL 대상 `"pass": true`,
+  `errors: []`(390×844, 844×390).
+- 전체 Node 회귀(`node --test 'tests/**/*.test.mjs'`)는 §9.2와 동일하게 로컬에서 완료 요약을
+  만들지 못했다 — 이번에도 PASS로 계산하지 않는다 [BLOCKED].
+
+### 10.4 남은 작업
+
+- **모션 팩 재타깃**: `scripts/retarget-ingame-motion-blender.py`의 `CLIPS`가 9 → 20개
+  (방향별 hit_*/bighit_*, attack_melee, attack_ranged, die, show)로 확장되어 있고, 런타임은 이미
+  이 키들을 라우팅한다(미보유 시 평면 키로 폴백). 팩 재빌드는 전체 66개 벤치 FBX에 대한
+  Blender 관측 감사(`scripts/audit-fbx-motion-bench.py --expect-count 66`)를 선행 요구하며,
+  이번 세션에서 헤드리스 Blender 5.1.2로 실행했으나 부하가 걸린 머신에서 시간 내 완료하지
+  못했다. `assets/motion/ingame/unarmed-core.glb`는 여전히 9클립 팩이며
+  `tests/ingame-motion-pack.test.mjs`도 9개 기준으로 일관된다.
+- 텍스트-투-모션 생성 경로(MDM/T2M-GPT)는 실행하지 않았다. 프롬프트 템플릿은
+  `wiki/concepts/motion-generation-for-runtime-rigs.md` §4에 있고, 산출물은 `CLAUDE.md` §3의
+  provenance/감사 게이트를 통과해야 런타임에서 참조할 수 있다.

@@ -1271,7 +1271,10 @@ function loadGltf(path) {
 // Design: _workspace/current/overlay-architecture.md
 // Contract: RUNTIME_ANIMATION_CONTRACT.md §5
 const OVERLAY_ANIMATION_PATH = "assets/motion/ingame/unarmed-core.glb";
-// (overlay action keys: idle, move, run, hit, bighit, attack, critical, avoid, defence)
+// Overlay action keys are read off the pack's own clip names (`unarmed-core::<action>::v01`)
+// and admitted when they appear in RIG_ACTION_KEYS, so growing the pack needs no edit here:
+// idle, move, run, hit, bighit, attack, critical, avoid, defence, the four directional hit_*,
+// the four directional bighit_*, attack_melee, attack_ranged, die, show.
 let warnedOverlayLoadFailure = false;
 let overlayDeltaEntriesPromise = null;
 const adaptedOverlayEntriesByModel = new Map();
@@ -1608,11 +1611,12 @@ async function instantiateActorModel(relPath, targetHeight) {
     if (overlayDeltaEntries) {
       const adapted = adaptOverlayEntries(relPath, instance, overlayDeltaEntries);
       if (adapted.length) {
-        // Overlay entries appear before base entries. buildActions() first-match
-        // wins on duplicate action keys, so the overlay registration
-        // for a key wins over the base registration that follows. Nine overlay
-        // keys replace base; the 4 fallback-only keys (die, show, attack_melee,
-        // attack_ranged) have no overlay entry and fall through to base.
+        // Overlay entries appear before base entries. buildActions() first-match wins on
+        // duplicate action keys, so the overlay registration for a key wins over the base
+        // registration that follows. The pack now carries 21 keys: the original nine replace
+        // base, `die`/`show`/`attack_melee`/`attack_ranged` replace what used to fall through
+        // to base, and the eight directional reactions (hit_*/bighit_*) are new keys that
+        // hitReactionKey() can finally resolve instead of falling back to the flat key.
         allEntries = [...adapted, ...baseEntries];
       }
     }
