@@ -247,11 +247,22 @@ existing test would have detected it.** Registry now closed at four constants:
 
 ## 5. Unresolved, carried forward
 
-1. **No full-suite baseline.** The pre-change baseline was never captured — four attempts
-   were killed or invalidated. A post-change full run is in flight against the committed
-   surface, but it is not a *comparison*: there is no "before" number to diff it against,
-   so a failure in it cannot be attributed to this cycle without opening the specific
-   file at the base commit. That asymmetry is the cost of the runner pile-up in §3.2.
+1. **No full-suite baseline — CLOSED. The suite ran to completion and cycle 10 causes zero
+   pass/fail regressions.** `[OBSERVED]` Four earlier attempts were killed by the runner
+   pile-up in §3.2. The fifth, run alone at `--test-concurrency=4` over all **57** files after
+   reaping the orphans, finished: **566 pass, 1 fail.** The one failure is
+   `tests/stage1b-persistence.test.mjs:332`, and it **reproduces at base `033877ad`**
+   (10/11 there too, same subtest), so it is inherited, not ours — see item 12 for its
+   three-leg attribution. Two traps worth naming, because both cost time here: the dot
+   reporter emits **no `# tests` summary** when a child exits non-zero, so a completed run
+   looks like a dead one — count the dots and `✖` marks instead; and `pgrep -f "node --test"`
+   matches only the parent, because children spawn as `node --test-concurrency=4 tests/<file>`
+   with no `--test` token. I twice concluded "the run died" from those two artifacts while it
+   was healthy, and once ran `git checkout -- qa/evidence/` **mid-run**, racing a live
+   exporter write. That race produced no spurious failure — proven by base reproducing the
+   same single failure without any race — but it was still the wrong move: the exporter
+   restores the canonical file in its own `finally`, so the checkout was both unnecessary and
+   capable of corrupting an in-flight write.
 2. **`Math.round` in `effectiveCooldownScaleBp` — CLOSED. Load-bearing at reachable values,
    and the spec's stated reason was the wrong one.** The spec and an earlier commit message
    of mine both claim `0.9 * 10000` is `9000.000000000002`. It is exactly 9000 — verified —
@@ -280,39 +291,39 @@ existing test would have detected it.** Registry now closed at four constants:
    seven `bp === 0` accessor guards are arithmetically **unobservable**: deleting one keeps
    every check green. I twice wrote that those guards are what make byte-identity a proof;
    that is true of exactly one row.
-2. **Hazard-class visuals have no owner** (R30). `forge-pressure-vents` and
+4. **Hazard-class visuals have no owner** (R30). `forge-pressure-vents` and
    `dais-command-echo` ship with correct pool behaviour and **no dedicated visual**.
    Reusing `deform-fracture-seam.glb` is prohibited — a narrowing seam and a pressure
    vent are different claims about the world.
-3. **R-3 is closed for terrain, open for VFX.** The three new VFX GLBs
+5. **R-3 is closed for terrain, open for VFX.** The three new VFX GLBs
    (`drop-beacon-pillar`, `arrival-breach-gate`, `deform-fracture-seam`) are absent from
    all four allowlists because nobody has authored them yet.
-4. **Pacing deltas are unimplemented.** The doctrine changes that would make 390/525/750 s
+6. **Pacing deltas are unimplemented.** The doctrine changes that would make 390/525/750 s
    reachable — including the two harness constants — are specified, not landed.
-5. **Four files need a real merge with the concurrent session**: `defense-catalog.js`
+7. **Four files need a real merge with the concurrent session**: `defense-catalog.js`
    (923 vs 1025), `defense-run-simulation.js` (3570 vs 4002), `app.js`,
    `battle-realtime-three.js`. Planned, not a surprise.
-6. **Slab layouts are promoted but the catalog still carries the old routes and
+8. **Slab layouts are promoted but the catalog still carries the old routes and
    obstacles.** The floor geometry matches `DungeonLevelDesign`'s 12 slabs; the gameplay
    route/obstacle rewrite from the same spec is not applied. The floor is correct and the
    old routes still validate, so this is incomplete rather than broken.
-7. **Tiling reads repetitively** at `uvRepeat` 3–5 per axis on the chancel and throne
+9. **Tiling reads repetitively** at `uvRepeat` 3–5 per axis on the chancel and throne
    floors. Seams are mathematically invisible; the *pattern period* is visible. A
    per-slab rotation or a second variant tile would break it up.
-8. **Spec check 11 is PARKED and the drop/buff catalog ships 10 of 11 items.** The
+10. **Spec check 11 is PARKED and the drop/buff catalog ships 10 of 11 items.** The
    withdrawal in defect 11 is the honest close of the gate-cap question for this cycle, not
    a solution. Carried: (a) check 11's three-removal-path reconciliation is **uncovered**,
    because no reachable drop can produce a gate buff — `reconcileGateCap` is live code whose
    eviction path now has no end-to-end test; (b) the withdrawal edits `defense-catalog.js`, so
    `qa/evidence/gates/G2/g2-adversarial-tape-fixture.receipt.json` now claims a **stale**
    digest for it (`31a36ad1…` recorded vs `c0b2c1ea…` actual). **That is the narrowest true
-   statement, and the real scope is wider — see item 9**, which measured two receipts with
+   statement, and the real scope is wider — see item 11**, which measured two receipts with
    2-of-7 and 5-of-6 stale inputs and traced most of the drift to commits before this cycle.
    G2 was not re-adjudicated here, so nothing was re-exported into a gate nobody judged — the
    next G2 adjudication must. (c) The cycle-10 drop/buff proof folder carries
    `SUPERSEDED-bulwark-echo.md`; its receipt and `dbimpl-behavior.mjs` measured the withdrawn
    item accurately and are deliberately left byte-unedited.
-9. **Committed G2/G3 gate evidence is stale, measured three ways — re-export deferred, not
+11. **Committed G2/G3 gate evidence is stale, measured three ways — re-export deferred, not
    forgotten.** `[OBSERVED]` The G3 formation-attribution exporter is deterministic (four
    successful runs, one size each), and it produces **three different artifacts** depending on
    the tree:
@@ -351,6 +362,41 @@ existing test would have detected it.** Registry now closed at four constants:
    chasing it to a byte count, then to the base tree, then to `git log` on the artifact path
    is what separated "9 KB of killed-run garbage" from "968 KB of real, pre-existing,
    three-day drift".
+12. **The G7 persistence exporter's hardcoded digest is stale, and cycle 10 moves it twice
+    more — three legs, each measured separately.** `[OBSERVED]` The suite's single failure.
+    `scripts/export-stage1b-persistence-scenarios.mjs` pins an expected
+    `semanticPayloadDigest`, which hashes the whole payload with only `sourceRevision`
+    normalised, so any captured field moves it. Four digests, one run of the same file per
+    tree:
+
+    | tree | observed digest | leg |
+    |---|---|---|
+    | hardcoded expectation in the exporter | `821366a0…` | — |
+    | base `033877ad` | `484347b6…` | **inherited**: the constant was already wrong before this cycle (5 sim commits since `2359578b` last touched the script) |
+    | `ee82c5f0` (buff layer landed, `bulwark-echo` still present) | `24dd69f9…` | **ours, leg 1**: the drop/buff layer changed persisted state |
+    | HEAD (withdrawal applied) | `d063a266…` | **ours, leg 2**: withdrawing the item shrank cinder-span's rare pool 3→2, so a seeded roll that previously landed on it now lands elsewhere — drop *outcomes* change for any seed reaching that pool, whether or not a buff is ever collected |
+
+    **Why the last leg is attributable to the withdrawal specifically**, since
+    `ee82c5f0..HEAD` is 23 files and 4,490 insertions and would otherwise license nothing:
+    in that range `defense-run-simulation.js` is **byte-identical** (`git diff --numstat` is
+    empty) and `defense-catalog.js` is touched by **exactly one commit — `64974d3d`, the
+    withdrawal — at +20/−1**. Everything else in the range is renderer, audio, tests, specs,
+    and PNGs that the persistence exporter never reads. So the only input to that digest which
+    moved is the catalog, and the only catalog change is the withdrawn item.
+
+    Two consequences. First, **the constant is deliberately not refreshed**: doing so would
+    absorb five commits of other sessions' drift into this cycle's commit, which is exactly the
+    G3 mistake item 11 avoided. Whoever re-adjudicates G7 re-pins it. Second, and more
+    interesting, **the persisted-scenario payload is sensitive to the drop/buff layer while
+    `getRunSnapshot` is not** — determinism check 1 proved snapshot byte-identity precisely
+    because the snapshot omits `buffs`/`buffStats`. So byte-identity of the snapshot was never
+    evidence that persistence was unaffected, and the retrospective's G7 "재측정 필요" line has a
+    concrete reason attached rather than a general one.
+
+    Method note: three of the four numbers above came from throwaway detached worktrees
+    (`git worktree add --detach /tmp/as-<sha> <sha>`, symlink `node_modules`, run the one
+    file, ~90 s each). A three-way split that separates inherited drift from two distinct
+    cycle-10 increments cost four single-file runs and no guessing.
 
 ---
 
