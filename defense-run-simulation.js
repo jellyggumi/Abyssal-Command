@@ -1817,6 +1817,9 @@ function damageEnemyBody(run, target, damage) {
     && distanceSquared(entry, target) <= 1600 ** 2);
   const applied = escort ? Math.max(1, Math.trunc(damage * 3 / 4)) : damage;
   target.hp -= applied;
+  // The tick of the last hit is what the semantic `stagger` state reads; it is bookkeeping for
+  // presentation and AI, never an input to damage.
+  target.lastDamagedTick = run.tick;
   return { damage: applied, guardedBy: escort ? escort.id : null };
 }
 
@@ -2811,6 +2814,36 @@ function refreshAttackerCommitment(run) {
   }
 }
 
+/**
+ * Semantic monster state (build-game-monster-system: the MonsterRuntime -> MonsterViewAdapter seam).
+ *
+ * The runtime already knows everything needed to name what a body is doing; before this it was
+ * scattered across `attackWindup`, `attackCooldown`, route commitment and raw positions, so the
+ * view layer had to guess. This publishes ONE authoritative state per body, derived only from
+ * simulation data. It never decides damage: contact is still authored by the attack path.
+ *
+ * `defeated` is produced only for a body still in the array with no health; resolveDeaths()
+ * removes it in the same tick and announces it with ENEMY_DEFEATED.
+ */
+export const MONSTER_STATES = freeze([
+  "idle", "investigate", "pursue", "reposition", "windup", "attack", "recover", "stagger", "defeated",
+]);
+
+/** Ticks a body keeps reading as staggered after taking a hit. */
+const MONSTER_STAGGER_TICKS = 18;
+
+function monsterState(run, enemy, { moved, contactRange, targetDistance }) {
+  if (enemy.hp <= 0) return "defeated";
+  if (enemy.lastStrikeTick === run.tick) return "attack";
+  if (enemy.attackWindup) return "windup";
+  if (Number.isInteger(enemy.lastDamagedTick) && run.tick - enemy.lastDamagedTick < MONSTER_STAGGER_TICKS) return "stagger";
+  if (enemy.attackCooldown > 0 && targetDistance <= contactRange) return "recover";
+  if (moved) {
+    return enemy.route?.length && enemy.waypointIndex < enemy.route.length - 1 ? "reposition" : "pursue";
+  }
+  return targetDistance <= contactRange ? "idle" : "investigate";
+}
+
 function moveEnemies(run) {
   const breachedIds = new Set();
   const chokepath = run.tactics?.chokepath;
@@ -2843,7 +2876,8 @@ function moveEnemies(run) {
         y: Math.round(enemy.y + dy / distance * movement),
       });
     }
-    if (enemy.x !== from.x || enemy.y !== from.y) {
+    enemy.movedThisTick = enemy.x !== from.x || enemy.y !== from.y;
+    if (enemy.movedThisTick) {
       emit(run, "MOVE", {
         entityId: enemy.id,
         from,
@@ -2999,6 +3033,7 @@ function moveEnemies(run) {
       : samplePattern(enemy.patternId, run.tick);
     const patternStep = patternSample?.step ?? null;
     enemy.attackWindup = false;
+    enemy.lastStrikeTick = run.tick;
     if (!bossStrike) enemy.attackCooldown = enemy.attackTicks;
     emit(run, "ENEMY_ATTACK", {
       entityId: enemy.id,
@@ -3091,6 +3126,17 @@ function moveEnemies(run) {
   });
 
   if (breachedIds.size) run.enemies = run.enemies.filter((enemy) => !breachedIds.has(enemy.id));
+
+  // One authoritative semantic state per body, published after every body has finished its pass
+  // so a windup entered or a strike resolved THIS tick is what the snapshot reports.
+  for (const enemy of run.enemies) {
+    const target = pressureTarget(run, enemy);
+    enemy.state = monsterState(run, enemy, {
+      moved: enemy.movedThisTick === true,
+      contactRange: enemy.radius + (target.radius || 0),
+      targetDistance: Math.sqrt(distanceSquared(enemy, target)),
+    });
+  }
 }
 
 /** Opens extraction only after the occupation has been secured and its boss guardian is defeated. */

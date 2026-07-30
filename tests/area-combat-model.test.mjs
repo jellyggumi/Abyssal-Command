@@ -25,6 +25,7 @@ import {
   samplePattern,
 } from "../defense-catalog.js";
 import {
+  MONSTER_STATES,
   advanceDefenseRun,
   createDefenseRun,
   getRunDigest,
@@ -451,4 +452,53 @@ test("the boss entrance is authored by the simulation, not improvised by the ren
   assert.ok(spawn.intro.subtitle, "the entrance must carry its authored line");
   assert.equal(spawn.intro.motion, "show", "the entrance drives the rig's entrance beat");
   assert.ok(spawn.intro.zoomBp > 0 && spawn.intro.zoomBp < AREA_BP, "the camera push must be a pull-in, not a pull-out");
+});
+
+/* --------------------------------------------------------------------------------------------
+ * 4. Monster runtime state (build-game-monster-system: the runtime -> view-adapter seam).
+ * ----------------------------------------------------------------------------------------- */
+
+test("every live body publishes exactly one authored semantic state, and the states actually occur", () => {
+  const observed = new Set();
+  let bodies = 0;
+  for (const snapshot of played.fieldSnapshots) {
+    for (const enemy of snapshot.enemies) {
+      bodies += 1;
+      assert.ok(
+        MONSTER_STATES.includes(enemy.state),
+        `a live body published an unauthored state: ${String(enemy.state)}`,
+      );
+      observed.add(enemy.state);
+    }
+  }
+  assert.ok(bodies > 0, "the sampled snapshots must contain live bodies");
+  assert.ok(
+    observed.has("pursue") || observed.has("reposition"),
+    "a body closing on its objective must read as pursuing or repositioning",
+  );
+  assert.ok(
+    !observed.has("defeated"),
+    "a defeated body is removed in the same tick, so it must never be published as live",
+  );
+});
+
+test("the windup state is exactly the telegraph window, and the strike leaves it", () => {
+  let run = createDefenseRun({ stageId: "cinder-span", seed: 7, companionLoadout: ["ember-cohort"] });
+  const windupSpans = new Map();
+  const strikes = new Map();
+  for (let step = 0; step < 4000 && !isTerminalRun(run); step += 1) {
+    run = advanceDefenseRun(run, 1);
+    const snapshot = getRunSnapshot(run);
+    for (const enemy of snapshot.enemies) {
+      if (enemy.state === "windup") windupSpans.set(enemy.id, (windupSpans.get(enemy.id) ?? 0) + 1);
+    }
+    for (const event of snapshot.events) {
+      if (event.type === "ENEMY_ATTACK") strikes.set(event.entityId, (strikes.get(event.entityId) ?? 0) + 1);
+    }
+  }
+  assert.ok(windupSpans.size > 0, "authored patterns must put bodies into a windup");
+  for (const [entityId, ticks] of windupSpans) {
+    assert.ok(ticks >= 1, `${entityId} must hold its windup for at least one tick`);
+    assert.ok(ticks <= 300, `${entityId} must not be stuck in windup forever`);
+  }
 });
