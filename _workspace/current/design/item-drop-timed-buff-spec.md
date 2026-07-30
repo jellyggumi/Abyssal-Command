@@ -275,7 +275,7 @@ const modelPath = pickup.modelKey === "blade" ? PROP_BLADE_MESH
 Every current pickup lacks `modelKey`, so every current pickup takes the fallback and
 renders byte-identically. `fitHeight` pickup target stays 0.7 (`:1339-1352`).
 
-### 2.3 Buff catalog — 11 items
+### 2.3 Buff catalog — 10 shipped items (11 specified; row 5 withdrawn cycle 10)
 
 Magnitude unit is **fixed by the stat** (§3.2), not by the item. `mulBp` = permille-of-base
 in basis points (10000 = ×1.0). `addBp` = added directly to a value already denominated in
@@ -287,7 +287,7 @@ basis points.
 | 2 | `ash-stride` | common | `moveSpeedBp` | `+1000` | mulBp | 600 (10) | 2 | STACK | relic | all 3 | 재를 밟고 미끄러지듯 빠져나간다 |
 | 3 | `reclaimer-pulse` | common | `pickupRange` | `+2500` | mulBp | 900 (15) | 2 | STACK | relic | all 3 | 메아리가 스스로 끌려온다 |
 | 4 | `cinder-haste` | rare | `cooldownScaleBp` | `-800` | addBp | 900 (15) | 2 | STACK | blade | cinder-span, abyss-chancel | 불티가 스킬을 재촉한다 |
-| 5 | `bulwark-echo` | rare | `gateMaxIntegrity` | `+1000` | mulBp | 1200 (20) | 2 | STACK | relic | all 3 | 관문이 잠시 더 두꺼워진다 |
+| 5 | ~~`bulwark-echo`~~ | rare | `gateMaxIntegrity` | `+1000` | mulBp | 1200 (20) | 2 | STACK | relic | all 3 | **WITHDRAWN cycle 10 - see "Withdrawal" at the end of this spec. Not present in `BUFF_ITEMS`.** |
 | 6 | `oath-keen` | rare | `critChanceBp` | `+600` | addBp | 900 (15) | 2 | STACK | blade | abyss-chancel, echo-throne | 서약이 급소를 읽는다 |
 | 7 | `warding-splint` | rare | `incomingDamageBp` | `-1000` | addBp | 900 (15) | 2 | STACK | relic | all 3 | 맞아도 덜 아프다 |
 | 8 | `reaver-fervor` | resonant | `basicDamage` | `+2500` | mulBp | 1200 (20) | 2 | STACK | blade | all 3 | 광란 — 눈에 띄게 세진다 |
@@ -295,7 +295,8 @@ basis points.
 | 10 | `throne-resonance` | relic | `critChanceBp` | `+1500` | addBp | 1800 (30) | 1 | REFRESH | blade | echo-throne | 왕좌의 공명 — 모든 일격이 위협적이다 |
 | 11 | `lantern-aegis` | relic | `incomingDamageBp` | `-2000` | addBp | 1800 (30) | 1 | REFRESH | relic | all 3 | 등불이 방패가 된다 |
 
-All 11 magnitudes and durations are **`[TARGET]`**.
+All 10 shipped magnitudes and durations are **`[TARGET]`**. Row 5 (`bulwark-echo`) ships in no
+build this cycle — see "Withdrawal" at the end of this spec.
 
 Stat coverage: all 7 enum values are covered, and each of the four stats `applyItem`
 already knows has at least one entry — `basicDamage` (1, 8), `gateMaxIntegrity` (5),
@@ -630,6 +631,17 @@ Concretely: `bulwark-echo` ×2 on cinder-span raises the effective cap 1600 → 
 fills to 1920, the buff expires, and integrity is 1920 against a base `maxIntegrity` of
 1600. The HUD reads 1920/1600 and the invariant every other gate write maintains is broken.
 
+> **Cycle 10 outcome — this paragraph identified the defect and `reconcileGateCap` solved only
+> half of it.** `reconcileGateCap` restores the invariant *after removal*. It does nothing
+> *during* the buff, and `getRunSnapshot` publishes `gate: run.gate` verbatim
+> (`defense-run-simulation.js:3921`), so for the whole 20 s window the snapshot reports
+> `integrity 1920` against `maxIntegrity 1600`. Three consumers read that pair and assume it
+> cannot happen: `scripts/run-stage1b-pressure-packets.mjs` (`to > max` invariant — G7
+> evidence tooling), the `low-hp-focus` enemy policy at `:2705`
+> (`gateRatio = gate.integrity / gate.maxIntegrity`, which a gate buff pushes above 1 and
+> which flips target selection toward the commander — a live behavioural change, not a
+> display artifact), and any HUD ratio. `bulwark-echo` is therefore WITHDRAWN this cycle.
+
 The three *damage* clamps (blob 2540, 2561, 2962) are **provably inert** by arithmetic:
 `clamp(x − d, 0, cap)` with `d ≥ 0` and `x ≤ cap` can never reach the upper bound. Compose
 them anyway for fidelity, so a future healing path added there inherits correct behaviour.
@@ -912,9 +924,9 @@ Resolved pools per stage (from §2.3 `stageIds`, sorted):
 
 | Stage | common | rare | resonant | relic |
 |---|---|---|---|---|
-| cinder-span | `ash-stride`, `ember-edge`, `reclaimer-pulse` | `bulwark-echo`, `cinder-haste`, `warding-splint` | `reaver-fervor` | `lantern-aegis` |
-| abyss-chancel | `ash-stride`, `ember-edge`, `reclaimer-pulse` | `bulwark-echo`, `cinder-haste`, `oath-keen`, `warding-splint` | `chancel-tempo`, `reaver-fervor` | `lantern-aegis` |
-| echo-throne | `ash-stride`, `ember-edge`, `reclaimer-pulse` | `bulwark-echo`, `oath-keen`, `warding-splint` | `chancel-tempo`, `reaver-fervor` | `lantern-aegis`, `throne-resonance` |
+| cinder-span | `ash-stride`, `ember-edge`, `reclaimer-pulse` | ~~`bulwark-echo`~~ (WITHDRAWN), `cinder-haste`, `warding-splint` | `reaver-fervor` | `lantern-aegis` |
+| abyss-chancel | `ash-stride`, `ember-edge`, `reclaimer-pulse` | ~~`bulwark-echo`~~ (WITHDRAWN), `cinder-haste`, `oath-keen`, `warding-splint` | `chancel-tempo`, `reaver-fervor` | `lantern-aegis` |
+| echo-throne | `ash-stride`, `ember-edge`, `reclaimer-pulse` | ~~`bulwark-echo`~~ (WITHDRAWN), `oath-keen`, `warding-splint` | `chancel-tempo`, `reaver-fervor` | `lantern-aegis`, `throne-resonance` |
 
 Every (stage, grade, rarity) cell reachable by the table above is non-empty. If a future
 edit empties one, the roll **must** fall through to the next lower non-empty rarity rather
@@ -1355,6 +1367,7 @@ independent of their analog input contract; the MOVE payload is untouched by thi
 | 10a | **Identity guard on every accessor** | With `run.buffs = []`, each of `effectiveBasicDamage`, `effectiveGateMax`, `effectivePickupRange`, `effectiveCritChanceBp`, `effectiveCooldownScaleBp`, `applyIncomingDamage`, and the edited `getCommanderSpeed` returns a value `Object.is`-equal to the original expression it replaced. | New unit test, table-driven over the 7 accessors. |
 | 10b | **Incoming-damage rounding preserved** | With `companionLoadout` of 3 vanguard companions (`incomingDamageMultiplier = 0.95³ = 0.857375`) and no `incomingDamageBp` buff, `applyIncomingDamage(run, d)` equals `Math.round(d * run.commander.incomingDamageMultiplier)` for every `d` in 1..2000. Guards the quantisation and rounding-mode trap in §3.2. | New unit test. |
 | 11 | **Gate cap composes, never mutates, and reconciles on removal** | (a) With `bulwark-echo` ×2 on `cinder-span`, `effectiveGateMax` is 1920 while `run.gate.maxIntegrity` stays **1600** — the base is never written. (b) Recovery fills integrity to 1920, then on **each of the three removal paths independently** — timeout, eviction, and `clearBuffs` — `gate.integrity <= gate.maxIntegrity` holds **within the same tick**, including in that tick's snapshot. Eviction is the one that fails a filter-only implementation: it removes at phase 18, so a missing `reconcileGateCap` leaves integrity above cap through phases 19–21 and into the end-of-tick snapshot. (c) `reconcileGateCap` never raises: with no gate buff it is `Object.is`-identity on `gate.integrity`. | New test, three cases — the direct guard for `an item pickup applies both gate maximum and current integrity` (`tests/defense-run-simulation.test.mjs:963-980`). |
+| 11-PARKED | **Gate cap check 11 is PARKED, not passed — cycle 10.** Clauses (a)/(b)/(c) above are unimplementable as written: they name `bulwark-echo`, and no catalog item carries `gateMaxIntegrity` after the withdrawal. `effectiveGateMax` and `reconcileGateCap` remain live code and keep unit coverage via a **synthetic** buff entry at `tests/defense-run-simulation.test.mjs:1683` (identical arithmetic: magnitude 1000 × 2 stacks = ×1.2). What is NOT covered is the three-removal-path reconciliation, because no reachable drop can produce a gate buff. Re-enabling the item must restore this check **and** carry the snapshot fix. | Parked — see "Withdrawal". |
 | 12 | **Companions ignore buff drops** | With 3 companions and a buff drop in leash range, no companion reaches `aiState === "COLLECT"` targeting it, and `applyItem` is never called for a `BUFF_ITEMS` id. | New test; `tests/companion-autonomy.test.mjs` for the regression side. |
 | 13 | **Duplicate pickup never duplicates the entry** | Collect the same `itemId` twice: `run.buffs.filter(e => e.itemId === id).length === 1`; `STACK` ⇒ `stacks === 2` + one `BUFF_REFRESHED`; `REFRESH` ⇒ `stacks === 1` + one `BUFF_REFRESHED`; `expiresAtTick` advanced in both. | New test. |
 | 14 | **Eviction is deterministic** | With 6 distinct buffs active and a 7th collected, the evicted entry is the smallest `expiresAtTick` (tie → smallest `buffId`); `run.buffs.length === 6`; one `BUFF_EXPIRED` with `reason: "EVICTED"`. | New test. |
@@ -1395,3 +1408,72 @@ the feature does not ship** — no adjective overrides them.
 | 11 | **Numbers are all `[TARGET]`.** Every chance, magnitude, duration, and cap is unmeasured. §5.2's kill estimates are derived from the shipped `buildDoctrineWavePlan` formula, not from a run. | G2 balance if shipped unmeasured. | Checks 23–25 are the measurement. **This cycle changes no gate to PASS** (production brief §3). |
 | 12 | **Every inline line number in §1–§7 is wrong for the implementation tree.** `[OBSERVED]` This spec was authored in `~/orca/Abyssal-Surge` (`defense-run-simulation.js` = 4002 lines, ~430 uncommitted lines from a concurrent session); implementation is `~/orca/Abyssal-Surge-dungeon` @ `033877ad` where the file is **3570**. `:3610` and `:3858` are **past EOF** there. Root cause `[OBSERVED]`, found by AudioImpl: the grep/read tools resolve **relative** paths against the workspace root — the authoring tree — so a relative grep silently measures the forbidden tree. A few numbers match by coincidence (`run.rng = seed` at 1838), so a spot-check can pass while the rest are off by hundreds. | An implementer patching by inline number lands in the wrong function, or past EOF. Phase A/B would land in the wrong tick phase and break the "stats constant for the whole tick" invariant that §3.6 depends on. | **§0 is the authoritative table**, measured with absolute paths in the implementation tree and cross-verified against the director's independent grep — both passes agree on every symbol. §8 carries worktree coordinates. Always pass absolute `~/orca/Abyssal-Surge-dungeon/...` paths to grep/read/edit and `cwd` on every bash call. Anchor on symbol + quoted code text; if the code differs from what this spec quotes, stop and escalate. |
 | 13 | **Float quantisation via basis-point conversion.** The tempting cleanup is to convert `incomingDamageMultiplier` to basis points for uniformity with the other six stats. `0.95³ = 0.857375` is not representable in 4 decimals, and `Math.round(d*m)` vs `Math.trunc(d*bp/10000)` disagree at `d=101, m=0.95` (96 vs 95). | Damage taken changes for every existing run with a vanguard companion — a silent balance and digest regression, invisible in an unbuffed fixture. | §3.2 keeps the float and scales the already-rounded result. Check 10b sweeps `d` in 1..2000 against the original expression; check 10a asserts the zero-buff identity for all seven accessors. |
+
+---
+
+## Withdrawal — `bulwark-echo` / `gateMaxIntegrity`, cycle 10
+
+`[OBSERVED]` **Status: withdrawn from the shipped catalog. 10 of 11 specified items ship.**
+
+### What happened
+
+§4's overflow table already predicted the defect ("The HUD reads 1920/1600 and the invariant
+every other gate write maintains is broken") and `reconcileGateCap` was written to answer it.
+`reconcileGateCap` restores the invariant **after removal** and does nothing **during** the
+buff. `getRunSnapshot` publishes `gate: run.gate` verbatim
+(`defense-run-simulation.js:3921`), so for the entire 20 s window the serialized snapshot
+reports `integrity 1920` against `maxIntegrity 1600`.
+
+### How it was found
+
+Not by reasoning. `tests/stage1b-pressure-packets.test.mjs` failed with
+`stage1b-pressure: invalid gate integrity state at tick 1496: from=1600, to=1601, max=1600`.
+Attribution was decided by running the same file at the base commit `033877ad` in a detached
+worktree: **8/8 pass there, so the regression is cycle 10's, not carried.** §10 risk 7 had
+assessed the neighbouring `nextId` hazard as "None found in the current suite" — that
+assessment was about a different mechanism and was not what fired.
+
+### Why withdrawal rather than publishing the composed cap
+
+Three consumers read `gate.integrity` against `gate.maxIntegrity` and assume the invariant:
+
+1. `scripts/run-stage1b-pressure-packets.mjs` — its `to > max` bound **and** its
+   `Math.min(max, …)` delta model. This is **G7 evidence tooling**; relaxing its invariant is
+   an evidence supersession that makes previously exported G7 pressure evidence
+   non-comparable.
+2. The `low-hp-focus` enemy policy at `:2705` —
+   `gateRatio = run.gate.integrity / run.gate.maxIntegrity`. A gate buff pushes that ratio
+   above 1 and flips target selection toward the commander. **A live behavioural change**,
+   not a display artifact.
+3. Any HUD ratio reading the same pair.
+
+Publishing a composed cap in the snapshot changes the canonical digest bytes, which forces a
+full G7 evidence re-export, and rerouting `:2705` changes shipped targeting behaviour that
+needs its own proof. Both at cycle close, against a red suite, with no measured before-number
+for the pacing gates. Withdrawing one rare item touches no invariant and no evidence.
+
+### Cost of the withdrawal — stated, not hidden
+
+- Check 11 is **PARKED**, not passed (see the 11-PARKED row). Its three-removal-path
+  reconciliation is uncovered because no reachable drop can produce a gate buff.
+- `effectiveGateMax` and `reconcileGateCap` stay live behind their other read sites and keep
+  accessor coverage through a **synthetic** entry
+  (`tests/defense-run-simulation.test.mjs:1683`), not a catalog item.
+- `tests/defense-run-simulation.test.mjs:1544` (gate check 5) swapped its far drop to
+  `lantern-aegis`; that drop is never collected, so the check's `buffStats` assertion is
+  unaffected.
+- `_workspace/current/qa/cycle10-drop-buff-proof/determinism-gate-receipt.json` and
+  `dbimpl-behavior.mjs` record `bulwark-echo` measurements that were **accurate when taken**.
+  They are superseded, not wrong, and are left unedited as history.
+- Every reachable (stage, rarity) cell stays non-empty after the removal — verified
+  (cinder-span rare = 2, chancel rare = 3, throne rare = 2), so §5.3's fall-through is not
+  exercised and risk 10 does not trigger.
+
+### Re-enabling — one line is NOT enough
+
+`BUFF_STAT_OPS.gateMaxIntegrity` and `effectiveGateMax` are deliberately retained, so the
+catalog row is one line. **That line alone reintroduces the defect.** Re-enabling must carry:
+publish the composed cap in the snapshot (e.g. `gate.effectiveMaxIntegrity`, leaving
+`gate.maxIntegrity` byte-identical), route all three consumers at it, add a check asserting
+the snapshot never reports `integrity > published cap`, restore check 11, and accept the G7
+evidence supersession.

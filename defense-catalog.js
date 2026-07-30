@@ -205,7 +205,26 @@ export const ITEMS = freeze({
  */
 export const BUFF_ITEMS = freeze({
   "ash-stride": { id: "ash-stride", name: "Ash Stride", rarity: "common", iconId: "buff-ash-stride", modelKey: "relic", stat: "moveSpeedBp", magnitude: 1000, durationTicks: 600, maxStacks: 2, stacking: "STACK", stageIds: freeze(["abyss-chancel", "cinder-span", "echo-throne"]) },
-  "bulwark-echo": { id: "bulwark-echo", name: "Bulwark Echo", rarity: "rare", iconId: "buff-bulwark-echo", modelKey: "relic", stat: "gateMaxIntegrity", magnitude: 1000, durationTicks: 1200, maxStacks: 2, stacking: "STACK", stageIds: freeze(["abyss-chancel", "cinder-span", "echo-throne"]) },
+  // WITHDRAWN this cycle: "bulwark-echo", the only `gateMaxIntegrity` item.
+  //
+  // The stat is specified as a COMPOSED cap that never writes `gate.maxIntegrity`, so while
+  // it is live `gate.integrity` legitimately exceeds the base max -- the spec's own check 11
+  // says recovery fills to 1920 against a base 1600. But `getRunSnapshot` publishes
+  // `gate: run.gate` verbatim, so the snapshot reports integrity 1920 against maxIntegrity
+  // 1600, and three consumers assume that cannot happen:
+  //   1. `scripts/run-stage1b-pressure-packets.mjs` trips its `to > max` invariant -- G7
+  //      evidence tooling, so relaxing it is an evidence supersession, not a fix;
+  //   2. the `low-hp-focus` enemy policy at :2705 computes
+  //      `gateRatio = gate.integrity / gate.maxIntegrity`, so a gate buff pushes the ratio
+  //      above 1 and flips target selection toward the commander -- a live behavioral
+  //      change, not a display artifact;
+  //   3. any HUD ratio reads the same pair.
+  //
+  // Shipping it needs the composed cap published in the snapshot and all three consumers
+  // routed at it. That is a deliberate contract change with a G7 supersession attached, not
+  // something to slip in at cycle close. `BUFF_STAT_OPS.gateMaxIntegrity` and
+  // `effectiveGateMax` are intentionally retained so re-enabling is one line once that
+  // work lands.
   "chancel-tempo": { id: "chancel-tempo", name: "Chancel Tempo", rarity: "resonant", iconId: "buff-chancel-tempo", modelKey: "blade", stat: "cooldownScaleBp", magnitude: -1500, durationTicks: 1200, maxStacks: 1, stacking: "REFRESH", stageIds: freeze(["abyss-chancel", "echo-throne"]) },
   "cinder-haste": { id: "cinder-haste", name: "Cinder Haste", rarity: "rare", iconId: "buff-cinder-haste", modelKey: "blade", stat: "cooldownScaleBp", magnitude: -800, durationTicks: 900, maxStacks: 2, stacking: "STACK", stageIds: freeze(["abyss-chancel", "cinder-span"]) },
   "ember-edge": { id: "ember-edge", name: "Ember Edge", rarity: "common", iconId: "buff-ember-edge", modelKey: "blade", stat: "basicDamage", magnitude: 1200, durationTicks: 600, maxStacks: 3, stacking: "STACK", stageIds: freeze(["abyss-chancel", "cinder-span", "echo-throne"]) },

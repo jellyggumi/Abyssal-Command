@@ -1538,7 +1538,10 @@ test("gate check 5: every numeric leaf the buff layer serializes is an integer, 
   // One drop on the commander (collected this tick -> buffs + buffStats + BUFF_APPLIED), one far
   // away (survives -> a buff pickup with its own numeric fields stays in `pickups`).
   staged.pickups.push(buffDropAt(staged, "reaver-fervor", staged.commander.x, staged.commander.y));
-  staged.pickups.push({ ...buffDropAt(staged, "bulwark-echo", 400, 400), id: "zz-drop-far" });
+  // `lantern-aegis` replaces the WITHDRAWN `bulwark-echo` here. This drop is never collected
+  // (400,400 is far from the commander), so its stat never reaches `buffStats` and the
+  // `{ basicDamage: 2500 }` assertion below is unaffected -- only its numeric leaves matter.
+  staged.pickups.push({ ...buffDropAt(staged, "lantern-aegis", 400, 400), id: "zz-drop-far" });
   const collected = advanceDefenseRun(staged, 1);
 
   const snapshot = JSON.parse(getRunDigest(collected));
@@ -1677,7 +1680,22 @@ const ACCESSOR_IDENTITY_ROWS = Object.freeze([
     name: "effectiveGateMax",
     accessor: (run) => effectiveGateMax(run),
     original: (run) => run.gate.maxIntegrity,
-    buff: () => [buffEntry("bulwark-echo", { stacks: 2 })],
+    // Synthetic, not `buffEntry` -- the only `gateMaxIntegrity` item (`bulwark-echo`) was
+    // WITHDRAWN from BUFF_ITEMS this cycle because the composed cap makes the published
+    // snapshot report `gate.integrity > gate.maxIntegrity` (see the catalog comment).
+    // `effectiveGateMax` itself is still live code behind 7 read sites, so it keeps its
+    // coverage here; only the catalog dependency is cut. Arithmetic is unchanged: the
+    // withdrawn item was magnitude 1000 x 2 stacks = +2000bp = x1.2.
+    buff: () => [{
+      buffId: "buff-synthetic-gate-max",
+      itemId: "synthetic-gate-max",
+      stat: "gateMaxIntegrity",
+      magnitude: 1000,
+      stacks: 2,
+      appliedAtTick: 0,
+      expiresAtTick: 1_000_000,
+      sourceDropId: "drop-synthetic-gate-max",
+    }],
     buffed: (run) => Math.trunc(run.gate.maxIntegrity * 12000 / 10000),
   },
   {
