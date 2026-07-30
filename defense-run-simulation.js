@@ -10,7 +10,9 @@ import {
   MAX_SKILL_RANK, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP,
   SKILL_RANK_PASSIVE_SHARE,
   GATE, ITEMS, MEASUREMENT_PROFILES, OCTANT_VECTORS, REWARDS, SKILLS, STAGE_BY_ID, STAGE_ITEM_IDS,
-  STAGE_REWARD_IDS, TARGET_PRIORITY, TICK_RATE, XP_GROWTH
+  STAGE_REWARD_IDS, TARGET_PRIORITY, TICK_RATE, XP_GROWTH,
+  AIM_BIAS_BP, AIM_VECTOR_SCALE, COMPANION_CAPACITY_BASE, EXTRACTION, EXTRACTION_GRADE_BY_ENEMY,
+  GRADE_COMPANION_MULTIPLIERS,
 } from "./defense-catalog.js";
 import {
   BACK_ROW_SYNERGY_DAMAGE_BONUS, BOSS_RALLY_COOLDOWN_REDUCTION, COMPANION_ROLES,
@@ -43,7 +45,31 @@ const stageFor = (stageId) => {
   if (!stage) throw new RangeError(`Unknown defense stage: ${stageId}`);
   return stage;
 };
-const validLoadout = (loadout) => [...new Set((Array.isArray(loadout) ? loadout : []).filter((id) => COMPANIONS[id]))].sort().slice(0, 3);
+/**
+ * Deduplicated, deterministically ordered loadout, clamped to `capacity`.
+ *
+ * The clamp bound was a literal 3 before cycle 9, which silently truncated at RUN CREATION: a
+ * campaign carrying more than three deployed companions entered the run with exactly three, no error
+ * and no event, defeating every downstream capacity check. `COMPANIONS` has nine prototypes, so that
+ * was reachable, not theoretical. Only the bound changed — the dedup-then-sort is untouched and
+ * remains load-bearing for determinism, so a base-3 campaign resolves the identical ordered triple.
+ */
+const validLoadout = (loadout, capacity = COMPANION_CAPACITY_BASE) =>
+  [...new Set((Array.isArray(loadout) ? loadout : []).filter((id) => COMPANIONS[id]))].sort().slice(0, capacity);
+/**
+ * A movement/aim vector in the integer-millis contract shared with `OCTANT_VECTORS` and
+ * `FACING_SCALE`: integer axes in [-1000, 1000] with magnitude <= 1000.
+ *
+ * Magnitude is tested as `x*x + y*y > 1000*1000` — an exact integer comparison, never a `hypot`
+ * float. Over-magnitude input is REJECTED rather than clamped: clamping requires a scaling divide,
+ * which reintroduces the float the contract exists to exclude, and the client is required to
+ * quantize before sending. Integers in, `Math.trunc`, integers out.
+ */
+const validVectorMillis = (vector) => vector !== null && typeof vector === "object" && !Array.isArray(vector)
+  && Number.isInteger(vector.x) && Number.isInteger(vector.y)
+  && vector.x >= -AIM_VECTOR_SCALE && vector.x <= AIM_VECTOR_SCALE
+  && vector.y >= -AIM_VECTOR_SCALE && vector.y <= AIM_VECTOR_SCALE
+  && vector.x * vector.x + vector.y * vector.y <= AIM_VECTOR_SCALE * AIM_VECTOR_SCALE;
 const nextId = (run, prefix) => `${prefix}-${++run.nextId}`;
 const actor = (id, kind, x, y, hp, maxHp, extra = {}) => ({ id, kind, x, y, elevation: 0, hp, maxHp, ...extra });
 const sortedActors = (entries) => [...entries].sort((left, right) => left.id.localeCompare(right.id));
@@ -618,12 +644,13 @@ function playerSideTarget(run, enemy) {
   if (distanceSquared(enemy, nearestFront) <= distanceSquared(enemy, run.commander)) return nearestFront;
   return run.commander;
 }
-/** Resolves a loadout into deterministic stance position-rank order, capped at 3.
+/** Resolves a loadout into deterministic stance position-rank order, capped at `capacity`
+ * (COMPANION_CAPACITY_BASE when the caller supplies none, i.e. the pre-cycle-9 bound of 3).
  * Saved FRONT intent ranks first, unassigned companions retain the deterministic companionId
  * fallback, and saved BACK intent ranks last. The active stance still owns the live FRONT/BACK
  * count through stanceSlotForIndex(); this map only chooses which companion occupies each rank. */
-function resolveFormation(companionLoadout, formation = {}) {
-  return orderCompanionsByFormationIntent(validLoadout(companionLoadout), formation);
+function resolveFormation(companionLoadout, formation = {}, capacity = COMPANION_CAPACITY_BASE) {
+  return orderCompanionsByFormationIntent(validLoadout(companionLoadout, capacity), formation);
 }
 
 /**
@@ -644,6 +671,7 @@ function addCompanion(run, companionId, { equipment = {} } = {}) {
   if (run.measurementProfile) return;
   const data = COMPANIONS[companionId];
   if (!data || run.companions.some((entry) => entry.companionId === companionId)) return;
+  if (!companionSlotAvailable(run)) return;
   const runtime = deriveCompanionRuntimeStats(companionId, { equipment });
   const rpgActive = Boolean(run.rpgActive);
   const wardenRuntime = run.wardenState?.runtime;
@@ -664,6 +692,256 @@ function addCompanion(run, companionId, { equipment = {} } = {}) {
   });
   placeOnTerrain(run, companion, companion);
   run.companions.push(companion);
+}
+
+/**
+ * Live legion capacity for this run. `run.companionCapacity` is conditionally present — absent means
+ * the base 3, so an untouched run serialises exactly as before (see `getRunSnapshot`).
+ */
+function companionCapacityFor(run) {
+  return run.companionCapacity ?? COMPANION_CAPACITY_BASE;
+}
+
+/**
+ * Run-time capacity gate (spec §3, fixes defect D3). Before cycle 9, `addCompanion` pushed to
+ * `run.companions` with NO length check at all, so a 4th+ companion could already be added mid-run
+ * regardless of the campaign-side MAX_LOADOUT_SIZE. This is the third of three deliberately
+ * different checkpoints: load time validates against the literal ceiling, mutation time against the
+ * derived unlocked capacity, and run time (here) against this run's own resolved capacity.
+ */
+function companionSlotAvailable(run) {
+  return run.companions.length < companionCapacityFor(run);
+}
+
+/**
+ * Free slot for an IN-RUN corpse extraction, which is stricter than `companionSlotAvailable`.
+ *
+ * One slot is reserved for the authored elite extraction (`EXTRACT_ELITE` -> `run.stage.eliteCompanion`)
+ * for as long as that objective is unresolved. Without the reservation, discretionary corpse
+ * extraction could consume the last slot and permanently block a GUARANTEED stage reward — the
+ * authored elite is part of the objective chain and the stage-clear contract, while a corpse is an
+ * opportunistic pickup, so the scripted reward outranks the optional one.
+ *
+ * This resolves a collision the spec does not address: §2 defines corpse extraction and §3 defines
+ * capacity, but neither says what happens when the two compete for the final slot. Flagged in the
+ * hand-off rather than silently picking a winner.
+ *
+ * Consequence, and it is the intended shape of the feature: at base capacity 3 a full 3-companion
+ * loadout leaves NO room for corpse extraction, and a 2-companion loadout leaves none either once
+ * the elite slot is reserved. In-run extraction becomes available exactly as the unlock ladder raises
+ * capacity — which is what makes buying slots mean something.
+ */
+function extractionSlotAvailable(run) {
+  const authoredReserve = run.extracted || run.extractionProgress.failed ? 0 : 1;
+  return run.companions.length + authoredReserve < companionCapacityFor(run);
+}
+
+/**
+ * Enemy -> extractable grade, or null when the enemy leaves no corpse (spec §2, fixes defect D2).
+ *
+ * The spec is written in the deferred module's vocabulary (`kind === "midboss"`), but the live sim
+ * does not carry grade in `kind`: `actor()` puts the enemy *type* there ("grunt", "guardian", ...),
+ * and grade lives in the `elite` / `midboss` booleans and the "boss" class. This maps the live
+ * representation onto the spec's four grades. `normal` is the absent case — no corpse at all, which
+ * is what bounds the corpse array.
+ *
+ * Order matters: a boss is checked first, then midboss, then elite, so a body that somehow carried
+ * more than one marker resolves to its strongest grade rather than to whichever test ran first.
+ */
+function extractionGradeFor(enemy) {
+  if (enemy.class === "boss" || enemy.kind === "boss") return EXTRACTION_GRADE_BY_ENEMY.boss;
+  if (enemy.midboss) return EXTRACTION_GRADE_BY_ENEMY.midboss;
+  if (enemy.elite) return EXTRACTION_GRADE_BY_ENEMY.elite;
+  return null;
+}
+
+/**
+ * Creates a corpse from a defeated enemy, or does nothing when that enemy leaves no corpse.
+ *
+ * IDs come from `nextId(run, "corpse")` — the run-scoped, seed-derived primitive that already backs
+ * `spawnEnemy`/`spawnBoss`. This is spec defect D1, which was BLOCKING: the deferred module used a
+ * module-level `corpseSeq` counter, so two runs of the same seed in one process produced different
+ * entity IDs and replay identity broke. `Math.random()` is likewise forbidden.
+ *
+ * The cap evicts the OLDEST corpse first (spec §6). Corpses are appended in death order, so index 0
+ * is always the oldest and a single shift is correct.
+ */
+function createCorpse(run, enemy) {
+  const grade = extractionGradeFor(enemy);
+  if (!grade) return null;
+  if (!run.corpses) run.corpses = [];
+  const corpse = actor(nextId(run, "corpse"), "corpse", enemy.x, enemy.y, 1, 1, {
+    grade,
+    sourceEnemyId: enemy.id,
+    sourceKind: enemy.kind,
+    elevation: enemy.elevation || 0,
+    createdTick: run.tick,
+    expiryTick: run.tick + EXTRACTION.corpseDurationTicks,
+    remainingTicks: EXTRACTION.corpseDurationTicks,
+    extractable: true,
+    sourceDamage: enemy.damage || 0,
+    sourceMaxHp: enemy.maxHp || enemy.hp || 1,
+    sourceAttackTicks: enemy.attackTicks || 60,
+    sourceRadius: enemy.radius || 300,
+    sourceProjectileRange: enemy.projectileRange || 0,
+  });
+  placeOnTerrain(run, corpse, corpse);
+  while (run.corpses.length >= EXTRACTION.corpseCap) {
+    const evicted = run.corpses.shift();
+    emit(run, "CORPSE_EXPIRED", { entityId: evicted.id, grade: evicted.grade, reason: "CAPACITY_EVICTED" });
+  }
+  run.corpses.push(corpse);
+  emit(run, "CORPSE_CREATED", {
+    entityId: corpse.id,
+    grade,
+    sourceEnemyId: enemy.id,
+    expiryTick: corpse.expiryTick,
+    extractionUnlocked: Boolean(run.extractionUnlocked),
+  });
+  return corpse;
+}
+
+/**
+ * Expires timed-out corpses and refreshes `remainingTicks` on the survivors.
+ *
+ * Drops the array entirely once empty so the conditional-presence rule in `getRunSnapshot` keeps
+ * holding for the rest of the run — leaving an empty `[]` behind would serialise a new key forever
+ * after the first corpse and break byte-identity for every later tick.
+ */
+function updateCorpses(run) {
+  if (!run.corpses?.length) return;
+  const survivors = [];
+  for (const corpse of run.corpses) {
+    if (run.tick >= corpse.expiryTick || !corpse.extractable) {
+      emit(run, "CORPSE_EXPIRED", {
+        entityId: corpse.id,
+        grade: corpse.grade,
+        reason: corpse.extractable ? "TIMED_OUT" : "EXTRACTED",
+      });
+      continue;
+    }
+    corpse.remainingTicks = corpse.expiryTick - run.tick;
+    survivors.push(corpse);
+  }
+  if (survivors.length) run.corpses = survivors;
+  else delete run.corpses;
+}
+
+/** Nearest extractable corpse in range of the commander, ties broken by id. */
+function nearestExtractableCorpse(run) {
+  const maxSquared = EXTRACTION.range ** 2;
+  let best = null;
+  for (const corpse of run.corpses || []) {
+    if (!corpse.extractable) continue;
+    const distance = distanceSquared(corpse, run.commander);
+    if (distance > maxSquared) continue;
+    if (!best || distance < best.distance
+      || (distance === best.distance && corpse.id.localeCompare(best.corpse.id) < 0)) {
+      best = { corpse, distance };
+    }
+  }
+  return best?.corpse || null;
+}
+
+/**
+ * Converts a completed channel into a live companion.
+ *
+ * IDs use `nextId(run, "extracted")` (spec §2, defect D1) rather than the deferred module's
+ * `companionSeq`. Stats inherit from the corpse through `GRADE_COMPANION_MULTIPLIERS`, expressed in
+ * basis points so the derivation is integer arithmetic end to end.
+ *
+ * This deliberately does NOT route through `addCompanion`: that function resolves a catalog
+ * prototype from `COMPANIONS`, and an extracted body has no prototype — its stats come from the
+ * enemy it used to be. The capacity gate is applied here explicitly so both entry points are gated.
+ */
+function addExtractedCompanion(run, corpse) {
+  if (!extractionSlotAvailable(run)) return null;
+  const multipliers = GRADE_COMPANION_MULTIPLIERS[corpse.grade] || GRADE_COMPANION_MULTIPLIERS.BASIC;
+  const maxHp = Math.max(1, Math.trunc(corpse.sourceMaxHp * multipliers.hpInheritBp / 10000));
+  const index = run.companions.length;
+  const offsets = activeStanceConfig(run).offsets;
+  const offset = offsets[Math.min(index, offsets.length - 1)];
+  const companion = actor(nextId(run, "extracted"), "companion", run.commander.x + offset.x, run.commander.y + offset.y, maxHp, maxHp, {
+    companionId: null,
+    extractedGrade: corpse.grade,
+    sourceEnemyId: corpse.sourceEnemyId,
+    cooldown: 0,
+    damage: Math.max(1, Math.trunc(corpse.sourceDamage * multipliers.damageBp / 10000)),
+    fireTicks: Math.max(12, Math.trunc(corpse.sourceAttackTicks * multipliers.fireTicksBp / 10000)),
+    range: corpse.sourceProjectileRange > 0 ? corpse.sourceProjectileRange : multipliers.defaultRange,
+    radius: 300,
+    loyalty: multipliers.loyaltyBase,
+    slot: stanceSlotForIndex(run, index),
+    status: "ACTIVE",
+    role: null,
+    eliteDamageBonus: 0,
+    aiState: "FOLLOW",
+    aiTargetId: null,
+    combatTargetId: null,
+  });
+  placeOnTerrain(run, companion, companion);
+  run.companions.push(companion);
+  return companion;
+}
+
+/**
+ * Drives the extraction channel from commander proximity (spec §2).
+ *
+ * The channel BREAKS rather than pauses: leaving range deletes the entry and destroys partial
+ * progress, so a contested extraction is a real decision. Re-entering range starts a new channel at
+ * elapsed 1. Only one channel exists at a time (spec §6 scopes the distance test to the commander),
+ * so this is a single object rather than the deferred module's `Map` — a Map would not survive the
+ * JSON snapshot round-trip anyway.
+ *
+ * Gated on `run.extractionUnlocked`: before the first midboss dies, corpses exist but nothing can be
+ * channelled from them.
+ */
+function updateExtractionChannel(run) {
+  if (!run.extractionUnlocked) {
+    if (run.extractionChannel) delete run.extractionChannel;
+    return;
+  }
+  const active = run.extractionChannel
+    ? (run.corpses || []).find((corpse) => corpse.id === run.extractionChannel.corpseId && corpse.extractable) || null
+    : null;
+  if (run.extractionChannel && (!active || distanceSquared(active, run.commander) > EXTRACTION.range ** 2)) {
+    emit(run, "EXTRACTION_CHANNEL_BROKEN", {
+      entityId: run.extractionChannel.corpseId,
+      elapsedTicks: run.extractionChannel.elapsedTicks,
+      reason: active ? "OUT_OF_RANGE" : "CORPSE_LOST",
+    });
+    delete run.extractionChannel;
+  }
+  const target = active && run.extractionChannel ? active : nearestExtractableCorpse(run);
+  if (!target) return;
+  if (!run.extractionChannel) {
+    if (!extractionSlotAvailable(run)) return;
+    run.extractionChannel = { corpseId: target.id, elapsedTicks: 0, requiredTicks: EXTRACTION.channelTicks };
+    emit(run, "EXTRACTION_CHANNEL_STARTED", {
+      entityId: target.id,
+      grade: target.grade,
+      requiredTicks: EXTRACTION.channelTicks,
+    });
+  }
+  run.extractionChannel.elapsedTicks += 1;
+  if (run.extractionChannel.elapsedTicks < EXTRACTION.channelTicks) return;
+  const companion = addExtractedCompanion(run, target);
+  delete run.extractionChannel;
+  if (!companion) return;
+  target.extractable = false;
+  run.progress.extracted += 1;
+  emit(run, "CORPSE_EXTRACTED", {
+    entityId: target.id,
+    grade: target.grade,
+    companionEntityId: companion.id,
+    sourceEnemyId: target.sourceEnemyId,
+    damage: companion.damage,
+    maxHp: companion.maxHp,
+    range: companion.range,
+    legionSize: run.companions.length,
+    legionCapacity: companionCapacityFor(run),
+    cue: eventCue("eliteExtracted"),
+  });
 }
 
 function applyOwnedRewards(run, rewardIds) {
@@ -999,20 +1277,66 @@ function enqueueEncounterWave(run, wave, retryAttempt = null) {
   }
 }
 
+/**
+ * Concurrency + pressure ceilings for the wave currently feeding the spawn queue.
+ *
+ * master-numeric-contract.md §2 authors a RISING ceiling (DESCENT 8 -> SKIRMISH 18
+ * -> SURGE 34 -> BIGWAVE 60). The runtime carried a single flat per-route number,
+ * so every wave — including `kind: "big"` — was capped at the DESCENT-tier value.
+ * That is why a big wave was never denser than the opening skirmish, and why an
+ * area skill could never catch more than 7 bodies (`regents-verdict` targetCap 12
+ * was unreachable).
+ *
+ * The wave kind is DERIVED from the authoritative schedule rather than stored on
+ * the encounter, so this adds no snapshot field: `spawnQueue` entries already
+ * carry `waveIndex`, and `run.waveSchedule` already carries `kind`.
+ *
+ * A route without the big-wave values falls back to its flat numbers, so any
+ * stage or fixture that never authored them behaves exactly as before.
+ */
+function waveConcurrencyCeilings(run, waveIndex) {
+  const encounter = ensureEncounterState(run);
+  const flat = {
+    maxConcurrentEnemies: encounter.maxConcurrentEnemies,
+    commitmentCap: encounter.commitmentCap,
+    spawnIntervalTicks: Math.max(1, encounterRouteFor(run)?.spawnIntervalTicks || 1),
+  };
+  if (!Number.isInteger(waveIndex)) return flat;
+  const wave = run.waveSchedule?.find((entry) => entry.waveIndex === waveIndex);
+  if (wave?.kind !== "big") return flat;
+  const route = encounterRouteFor(run);
+  return {
+    maxConcurrentEnemies: Math.max(flat.maxConcurrentEnemies, route?.bigWaveMaxConcurrentEnemies || 0),
+    commitmentCap: Math.max(flat.commitmentCap, route?.bigWaveCommitmentCap || 0),
+    // Faster drain, so the ceiling is actually reached instead of being an unused
+    // headroom number. Never slower than the route's own interval.
+    spawnIntervalTicks: Math.min(
+      Math.max(1, route?.spawnIntervalTicks || 1),
+      Math.max(1, route?.bigWaveSpawnIntervalTicks || route?.spawnIntervalTicks || 1),
+    ),
+  };
+}
+
+/** The densest wave still queued, which is what the spawn throttle must answer to. */
+function activeWaveIndexForSpawns(run) {
+  const encounter = ensureEncounterState(run);
+  return encounter.spawnQueue[0]?.waveIndex ?? null;
+}
 function processEncounterSpawns(run) {
   const encounter = ensureEncounterState(run);
   if (encounter.status !== "ACTIVE" || !encounter.spawnQueue.length || run.tick < encounter.nextSpawnAt) return;
   const pending = encounter.spawnQueue[0];
   if (pending.objectiveId !== encounter.objectiveId) return;
   const activeBodies = run.enemies.filter((enemy) => enemy.class !== "boss" && !enemy.elite).length;
-  if (activeBodies >= encounter.maxConcurrentEnemies) return;
+  const ceilings = waveConcurrencyCeilings(run, pending.waveIndex);
+  if (activeBodies >= ceilings.maxConcurrentEnemies) return;
   encounter.spawnQueue.shift();
   spawnEnemy(run, pending.type, false, {
     ...pending.spawnOpt,
     objectiveId: pending.objectiveId,
     waveIndex: pending.waveIndex,
   });
-  encounter.nextSpawnAt = run.tick + Math.max(1, encounterRouteFor(run)?.spawnIntervalTicks || 1);
+  encounter.nextSpawnAt = run.tick + ceilings.spawnIntervalTicks;
 }
 
 function beginEncounterRecovery(run, reason = "PLAYER_RETRY") {
@@ -1450,24 +1774,79 @@ function damageEnemyBody(run, target, damage) {
 const withinStrikeHeight = (source, other) =>
   Math.abs((other.elevation || 0) - (source.elevation || 0)) <= COMBAT_TARGETING.elevationTolerance;
 
-/** Nearest living enemy inside `range` that is also within strike height — direction only, no lock. */
+/**
+ * The commander's player-supplied aim vector, or null. Deliberately narrow: aim biases ONLY the
+ * commander's own target pick. `nearestEnemy` is also called for companion targeting and by
+ * `playerAttack` for every companion, and leaking the bias into those paths would change selection
+ * on runs that must stay bit-identical.
+ */
+function commanderAim(run, source) {
+  if (source !== run.commander) return null;
+  const aim = run.commander.aim;
+  if (!aim) return null;
+  return aim.x === 0 && aim.y === 0 ? null : aim;
+}
+
+/**
+ * Aim weight in basis points for one candidate direction (core-loop-legion-spec.md §5):
+ *
+ *   weight = 10000 * (1 + AIM_BIAS * (1 - cos t) / 2)
+ *
+ * cos t is computed as a basis-point integer from the integer dot product over the two integer
+ * magnitudes, so the whole comparison stays in scaled integer arithmetic. `Math.sqrt` is used
+ * rather than `Math.hypot` because sqrt is exactly-rounded per IEEE-754 (hypot is not required to
+ * be), and its result is truncated to an integer immediately — so the magnitudes are identical on
+ * every conforming engine.
+ *
+ * Returns 10000 (identity) when either vector has zero length, so a degenerate case can never
+ * perturb selection.
+ */
+function aimWeightBp(aim, dx, dy) {
+  const aimMagnitude = Math.trunc(Math.sqrt(aim.x * aim.x + aim.y * aim.y));
+  const toEnemyMagnitude = Math.trunc(Math.sqrt(dx * dx + dy * dy));
+  if (aimMagnitude <= 0 || toEnemyMagnitude <= 0) return 10000;
+  const dot = aim.x * dx + aim.y * dy;
+  // cos t in basis points, clamped for the truncation slack in the magnitudes above.
+  const cosBp = clamp(Math.trunc(dot * 10000 / aimMagnitude / toEnemyMagnitude), -10000, 10000);
+  return 10000 + Math.trunc(AIM_BIAS_BP * (10000 - cosBp) / 20000);
+}
+
+/**
+ * Nearest living enemy inside `range` that is also within strike height — direction only, no lock.
+ *
+ * With no commander aim vector this is the pre-cycle-9 function unchanged: it compares raw
+ * `distanceSquared` and breaks ties by id. When the commander has an aim vector, candidates are
+ * compared by the aim-weighted score instead, which is why the weighted branch is kept strictly
+ * separate rather than folded in as a `* 1` multiply — a uniform multiply would change the
+ * magnitudes being compared and could reorder equal-distance candidates.
+ */
 function nearestEnemy(run, source, range) {
   const maxSquared = getEffectiveRange(run, range) ** 2;
+  const aim = commanderAim(run, source);
   let best = null;
   for (const enemy of run.enemies) {
     if (enemy.hp <= 0) continue;
     if (!withinStrikeHeight(source, enemy)) continue;
     const distance = distanceSquared(enemy, source);
     if (distance > maxSquared) continue;
-    if (!best || distance < best.distance
-      || (distance === best.distance && enemy.id.localeCompare(best.enemy.id) < 0)) {
-      best = { enemy, distance };
+    const score = aim
+      ? Math.trunc(distance * aimWeightBp(aim, enemy.x - source.x, enemy.y - source.y) / 10000)
+      : distance;
+    if (!best || score < best.score
+      || (score === best.score && enemy.id.localeCompare(best.enemy.id) < 0)) {
+      best = { enemy, distance, score };
     }
   }
   return best?.enemy || null;
 }
 
-/** Unit aim vector: toward the nearest body in range, else the direction the attacker faces. */
+/**
+ * Unit aim vector: toward the nearest body in range, else the player's own aim, else the direction
+ * the attacker faces. The nearest -> facing -> (1,0) chain is preserved exactly as-is; the player
+ * aim is inserted only as a fallback ahead of `facing`, so that aiming at empty space points the
+ * attack where the stick points instead of where the last movement happened. Selection bias itself
+ * lives in `nearestEnemy`, per spec §5 ("aim biases selection, never replaces it").
+ */
 function aimDirection(run, source, range) {
   const near = nearestEnemy(run, source, range);
   if (near) {
@@ -1475,6 +1854,11 @@ function aimDirection(run, source, range) {
     const dy = near.y - source.y;
     const length = Math.hypot(dx, dy);
     if (length > 0) return { x: dx / length, y: dy / length, aimId: near.id };
+  }
+  const aim = commanderAim(run, source);
+  if (aim) {
+    const length = Math.hypot(aim.x, aim.y);
+    if (length > 0) return { x: aim.x / length, y: aim.y / length, aimId: null };
   }
   const facing = facingOf(source);
   if (facing) return { x: facing.x, y: facing.y, aimId: near?.id || null };
@@ -1884,6 +2268,25 @@ function skillRankDamage(run, skill) {
   const rank = run.commander.skillRanks?.[skill.id] ?? 1;
   return Math.round((skill.damage || 0) * (1 + SKILL_RANK_DAMAGE_STEP * (rank - 1)));
 }
+/**
+ * Base damage for ONE cast, before per-target multipliers.
+ *
+ * Density-scaled AoE (`damagePerTarget`, design/skill-and-growth-spec.md §2.2
+ * `regents-verdict`): every target in the radius takes
+ * `min(targetsHit, targetCap) * damagePerTarget`, rank-scaled. The count is
+ * resolved ONCE per cast and applied uniformly, so the result cannot depend on
+ * the iteration order of `orderedTargets()` — a cast that hits 12 bodies deals
+ * the same number to each of them regardless of which id sorts first.
+ *
+ * Skills without `damagePerTarget` are untouched and keep `skillRankDamage()`
+ * exactly, so every pre-existing skill resolves byte-identically.
+ */
+function skillCastBaseDamage(run, skill, targetCount) {
+  if (!skill.damagePerTarget) return skillRankDamage(run, skill);
+  const rank = run.commander.skillRanks?.[skill.id] ?? 1;
+  const counted = Math.min(targetCount, skill.targetCap ?? targetCount);
+  return Math.round(skill.damagePerTarget * counted * (1 + SKILL_RANK_DAMAGE_STEP * (rank - 1)));
+}
 /** Active-skill cooldown at its current rank: -6% of base per rank beyond the first, floored at 70%. */
 function skillRankCooldown(run, skill, baseCooldownTicks) {
   const rank = run.commander.skillRanks?.[skill.id] ?? 1;
@@ -1901,9 +2304,10 @@ function castSkill(run, skillId) {
   if (skill.integrity) run.commander.integrity = clamp(run.commander.integrity + skill.integrity, 0, run.commander.maxIntegrity);
   if (skill.radius) {
     const firstStrikeFactor = targets.length ? consumeFirstStrikeFactor(run) : 1;
+    const castBaseDamage = skillCastBaseDamage(run, skill, targets.length);
     targets.forEach((entry) => {
       const healthBefore = entry.hp;
-      const hit = resolveCritical(run, "skill", Math.round(skillRankDamage(run, skill) * commanderDamageMultiplier(run, entry, { skill: true, firstStrikeFactor })));
+      const hit = resolveCritical(run, "skill", Math.round(castBaseDamage * commanderDamageMultiplier(run, entry, { skill: true, firstStrikeFactor })));
       entry.hp -= hit.damage;
       const healthAfter = entry.hp;
       entry.lastCastInstanceId = castInstanceId;
@@ -2106,10 +2510,23 @@ function processInput(run, input) {
   if (["MOVE", "ATTACK", "SKILL_CAST", "SKILL_SELECTED", "GROWTH_OFFER_SELECTED", "EXTRACT_ELITE"].includes(input.type)) run.commander.engaged = true;
   if (input.type === "MOVE") {
     const direction = typeof input.payload === "string" ? input.payload : input.payload?.octant;
-    if (OCTANT_VECTORS[direction]) {
+    const analog = typeof input.payload === "string" ? undefined : input.payload?.analog;
+    const aim = typeof input.payload === "string" ? undefined : input.payload?.aim;
+    if (!OCTANT_VECTORS[direction]) rejectionReason = "INVALID_DIRECTION";
+    else if (analog !== undefined && analog !== null && !validVectorMillis(analog)) rejectionReason = "INVALID_DIRECTION";
+    else if (aim !== undefined && aim !== null && !validVectorMillis(aim)) rejectionReason = "INVALID_DIRECTION";
+    else {
       run.commander.move = direction;
+      // Conditional presence (fixes defect D4). `getRunSnapshot` serialises the WHOLE commander
+      // object, so an always-present field would enter every digest. These keys are created only
+      // when a payload actually carries them, and deleted when a later octant-only payload arrives,
+      // so keyboard/button/legacy-string input leaves the serialised commander byte-identical.
+      if (analog) run.commander.moveAnalog = { x: analog.x, y: analog.y };
+      else delete run.commander.moveAnalog;
+      if (aim) run.commander.aim = { x: aim.x, y: aim.y };
+      else delete run.commander.aim;
       accepted = true;
-    } else rejectionReason = "INVALID_DIRECTION";
+    }
   } else if (input.type === "ATTACK") {
     // Inputs are processed before the per-tick cooldown decrement. Allowing one remaining
     // tick keeps the manual verb reachable without racing the automatic-fire loop; the +1
@@ -2211,6 +2628,31 @@ function resolveDeaths(run) {
   if (!dead.length) return;
   run.enemies = run.enemies.filter((entry) => entry.hp > 0);
   run.progress.defeated += dead.length;
+  /**
+   * Extraction capability unlock (core-loop-legion-spec.md §1). Resolved in its own pass BEFORE any
+   * corpse is created, so the outcome cannot depend on the id-sort order of bodies that died on the
+   * same tick: a midboss and an elite dying together must unlock extraction regardless of which id
+   * sorts first. Once true it never reverts within a run.
+   *
+   * The live sim does not store grade in `kind` (see `extractionGradeFor`), so the spec's
+   * `kind === "midboss"` is the `entry.midboss` boolean here — the flag `spawnEnemy` sets at :722.
+   *
+   * This flag is ORTHOGONAL to `run.objectives.extraction`, which keeps its exact semantics: that
+   * objective is the terminal run-completion elite extraction, and the 7-phase order in
+   * `updateObjectivePhase` is deliberately NOT reordered. Conflating the two would break the stage
+   * contract and the objective-phase tests.
+   */
+  if (!run.extractionUnlocked) {
+    const trigger = dead.find((entry) => entry.midboss);
+    if (trigger) {
+      run.extractionUnlocked = true;
+      emit(run, "EXTRACTION_UNLOCKED", {
+        entityId: trigger.id,
+        midbossId: trigger.midbossId || null,
+        atTick: run.tick,
+      });
+    }
+  }
   dead.forEach((entry) => {
     const echo = actor(nextId(run, "pickup"), "pickup", entry.x, entry.y, 1, 1, { kind: "echo", xp: entry.xp, elevation: entry.elevation || 0 });
     placeOnTerrain(run, echo, echo);
@@ -2226,6 +2668,9 @@ function resolveDeaths(run) {
     });
     killEvent.killEventId = killEvent.eventId;
     entry.killEventId = killEvent.eventId;
+    // Corpse -> channel -> companion (spec §2). Measurement-profile runs are excluded for the same
+    // reason they skip item drops and `addCompanion`: a G2 balance fixture must not gain a legion.
+    if (!run.measurementProfile) createCorpse(run, entry);
     if (entry.elite) {
       const itemId = run.measurementProfile ? null : (STAGE_ITEM_IDS[run.stage.id] || null);
       if (!run.measurementProfile) {
@@ -2363,7 +2808,11 @@ function refreshAttackerCommitment(run) {
         - distanceSquared(right, pressureTarget(run, right));
       return distanceDelta || left.id.localeCompare(right.id);
     });
-  const nextIds = candidates.slice(0, encounter.commitmentCap).map(({ id }) => id);
+  // A big wave commits more attackers so the extra bodies actually apply pressure
+  // instead of standing in a passive crowd (waitingForCommitment pins them at
+  // speed 0 once in range). Density without pressure would be scenery, not a wave.
+  const commitmentCap = waveConcurrencyCeilings(run, activeWaveIndexForSpawns(run)).commitmentCap;
+  const nextIds = candidates.slice(0, commitmentCap).map(({ id }) => id);
   const changed = nextIds.length !== encounter.committedAttackerIds.length
     || nextIds.some((id, index) => encounter.committedAttackerIds[index] !== id);
   encounter.committedAttackerIds = nextIds;
@@ -2869,7 +3318,21 @@ function tick(run) {
       moveDirection = "OBJECTIVE_ROUTE";
     }
   } else {
-    const vector = OCTANT_VECTORS[run.commander.move];
+    /**
+     * Analog is a strict generalization of the octant table, not a parallel code path: both are
+     * integer millis at magnitude 1000, so the truncation math below is IDENTICAL for both and is
+     * reused verbatim. When `moveAnalog` is absent (keyboard, buttons, every legacy/replay input)
+     * this reads `OCTANT_VECTORS[run.commander.move]` exactly as it did before cycle 9.
+     *
+     * NO magnitude floor is applied, deliberately. Spec §4 measured it: `getCommanderSpeed()` carries
+     * exactly one multiplier (occupation `moveMultiplier`, 1.15, an INCREASE), so the minimum
+     * reachable commander speed is COMMANDER.speed = 4100. At 4100 the smallest analog value that
+     * still produces motion is 15 millis, while the client's dead zone is 220 — the dead zone masks
+     * the truncation floor by 14x. A `Math.max(1, ...)` guard would therefore be dead code, and
+     * shipping one would fake motion the player did not ask for. `run.commander.move` stays the
+     * octant string for renderer/event compatibility.
+     */
+    const vector = run.commander.moveAnalog || OCTANT_VECTORS[run.commander.move];
     moveOnTerrain(run, run.commander, {
       x: run.commander.x + Math.trunc(vector.x * commanderSpeed / 1000 / TICK_RATE),
       y: run.commander.y + Math.trunc(vector.y * commanderSpeed / 1000 / TICK_RATE),
@@ -3026,6 +3489,16 @@ function tick(run) {
   separateBodies(run);
 
   resolveDeaths(run);
+  /**
+   * Extraction runs immediately after `resolveDeaths` so a corpse created this tick is already a
+   * channel candidate, and BEFORE `collectPickups` so the extraction beat resolves in the same
+   * order as the echo/item pickups dropped by the same deaths.
+   *
+   * `updateCorpses` first: it expires timed-out bodies and drops consumed ones, so the channel never
+   * evaluates a corpse that should already be gone.
+   */
+  updateCorpses(run);
+  updateExtractionChannel(run);
   processWaveClearRecovery(run);
   assignCompanionItemClaims(run);
   collectPickups(run);
@@ -3164,11 +3637,21 @@ function applyCarryOver(state, carryOver) {
  * `formation` is the saved per-companion FRONT/BACK intent map. It deterministically chooses
  * companion position rank at run creation; the active stance still derives the live slot count
  * from STANCE_CONFIG every tick. See resolveFormation(). */
-export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, extractedSkillRanks = null, carryOver = null, abyssDepth = 0 } = {}) {
+export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, extractedSkillRanks = null, carryOver = null, abyssDepth = 0, companionCapacity = null } = {}) {
   const stage = stageFor(stageId);
   const stagePlan = stagePlanFor(stage);
   const unsignedSeed = (seed >>> 0) || 1;
   const depth = Number.isInteger(abyssDepth) ? clamp(abyssDepth, 0, ABYSS_DEPTH_MAX) : 0;
+  /**
+   * Legion capacity for this run (spec §3). The caller (campaign adapter) resolves the campaign's
+   * unlocked capacity and passes the integer in; the simulation never imports campaign-state, so no
+   * module cycle is created. Clamped to [BASE, MAX] so a tampered or malformed value cannot widen
+   * capacity past the ceiling, and defaults to BASE (3) — which is what keeps every existing caller
+   * and fixture behaving exactly as before.
+   */
+  const resolvedCapacity = Number.isInteger(companionCapacity)
+    ? clamp(companionCapacity, COMPANION_CAPACITY_BASE, Catalog.COMPANION_CAPACITY_MAX)
+    : COMPANION_CAPACITY_BASE;
   // Only the wave schedule reroutes on depth; identity/surprise/combat rng stay on unsignedSeed so
   // depth 0 is byte-identical and higher depths just rotate which enemy policies/compositions roll.
   const waveSeed = depth ? (((unsignedSeed ^ (0x51ed2701 * (depth + 1))) >>> 0) || 1) : unsignedSeed;
@@ -3213,6 +3696,9 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     seed: unsignedSeed,
     abyssDepth: depth,
     abyssDepthName: depthPackage?.name || null,
+    // Conditional presence: only stored when capacity was actually raised above the base, so an
+    // untouched run carries no new field and serialises byte-identically (mirrors `abyssDepth`).
+    ...(resolvedCapacity > COMPANION_CAPACITY_BASE ? { companionCapacity: resolvedCapacity } : {}),
     rng: nextRng,
     combatRng: rngNext(unsignedSeed ^ 0x9e3779b9),
     nextId: 0,
@@ -3368,7 +3854,26 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
       state.commander.cooldownScale = clamp(state.commander.cooldownScale - runtime.cooldownReduction, 0.4, 1);
       state.commander.critProfile.chanceBp = clamp(state.commander.critProfile.chanceBp + runtime.critChanceBonusBp, 0, 10000);
     }
-    resolveFormation(companionLoadout, formation).forEach((id) => addCompanion(state, id, { equipment: companionEquipment[id] || {} }));
+    /**
+     * Truncation must never be silent (it was, before cycle 9 — see `validLoadout`). A loadout
+     * larger than capacity is a caller bug, so it is surfaced as an event rather than a throw:
+     * `createDefenseRun` is on the browser adapter path, where throwing would turn a recoverable bug
+     * into a black screen at stage start, and the event stream is already what the QA harness reads.
+     * The event fires ONLY when truncation actually happens, so no existing run gains an event.
+     */
+    const orderedLoadout = resolveFormation(companionLoadout, formation, resolvedCapacity);
+    const requestedLoadout = validLoadout(companionLoadout, Catalog.COMPANION_CAPACITY_MAX);
+    if (requestedLoadout.length > orderedLoadout.length) {
+      emit(state, "COMPANION_LOADOUT_TRUNCATED", {
+        stageId: stage.id,
+        requested: requestedLoadout.length,
+        accepted: orderedLoadout.length,
+        capacity: resolvedCapacity,
+        capacitySource: resolvedCapacity > COMPANION_CAPACITY_BASE ? "UNLOCKED_SLOTS" : "BASE",
+        droppedCompanionIds: requestedLoadout.filter((id) => !orderedLoadout.includes(id)),
+      });
+    }
+    orderedLoadout.forEach((id) => addCompanion(state, id, { equipment: companionEquipment[id] || {} }));
     applyOwnedRewards(state, rewardIds);
     applyExtractedSkillRanks(state, extractedSkillRanks);
     applyCarryOver(state, carryOver);
@@ -3496,6 +4001,21 @@ export function getRunSnapshot(run) {
     bossName: run.stage.bossName,
     terminal: run.terminal,
     ...(run.abyssDepth ? { abyssDepth: run.abyssDepth, abyssDepthName: run.abyssDepthName ?? null } : {}),
+    /**
+     * Cycle-9 conditional-presence block (spec §4 defect D4, §6). Corpses and the channel are
+     * simulation entities and therefore belong in the snapshot, but this function serialises into
+     * `getRunDigest()`, so an always-present key would break depth-0 byte-identity and every stored
+     * replay fixture. Each key appears only once its state actually exists — the same rule
+     * `abyssDepth` uses on the line above.
+     *
+     * `extractionUnlocked` is emitted only while true (never as `false`), `corpses` only while
+     * non-empty (`updateCorpses` deletes the array rather than leaving `[]`), and
+     * `companionCapacity` only when above the base 3.
+     */
+    ...(run.extractionUnlocked ? { extractionUnlocked: true } : {}),
+    ...(run.corpses?.length ? { corpses: sortedActors(run.corpses) } : {}),
+    ...(run.extractionChannel ? { extractionChannel: run.extractionChannel } : {}),
+    ...(run.companionCapacity ? { companionCapacity: run.companionCapacity } : {}),
     plan: {
       identity: run.planCommitment.identity,
       mapPlanId: run.planCommitment.mapPlan.id,
@@ -3567,4 +4087,9 @@ export {
   OBJECTIVE_PRESSURE_GRACE_TICKS,
   BOSS_PRESSURE_GRACE_TICKS,
   ECHO_RECOVERY_PRESSURE_GRACE_TICKS,
+  AIM_BIAS_BP,
+  AIM_VECTOR_SCALE,
+  COMPANION_CAPACITY_BASE,
+  EXTRACTION,
+  GRADE_COMPANION_MULTIPLIERS,
 };

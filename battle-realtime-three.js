@@ -8,7 +8,7 @@
 import * as THREE from "./vendor/three.module.js";
 import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "./vendor/utils/SkeletonUtils.js";
-import { REWARDS, STAGE_PRESENTATION_BY_ID, STAGES } from "./defense-catalog.js";
+import { REWARDS, SKILLS, STAGE_PRESENTATION_BY_ID, STAGES } from "./defense-catalog.js";
 import { stageWorldFor } from "./stage-world-catalog.js";
 
 const MAX_VISUAL_EFFECTS = 24;
@@ -63,6 +63,60 @@ const TARGET_HEIGHT = Object.freeze({
   stageNpc: 1.8,
   pickup: 0.7,
 });
+
+// --- Persistent ground decals (presentation-only scenery) ------------------
+// The reference build carries an always-on thin ground ring centred on the
+// player (intake/reference-video-analysis.md §4). It is PERSISTENT SCENERY,
+// so it is deliberately kept out of the 24-slot transient VFX pool
+// (MAX_VISUAL_EFFECTS) -- that cap is a performance contract shared with the
+// software-WebGL backbuffer bound and must not be spent on a decal that
+// never expires.
+//
+// RADIUS BASIS -- read this before retuning. The reference measurement is a
+// recorded NEGATIVE result: a row-band scan returned 117-406 px of VFX-polluted
+// noise, so §4 publishes only a visual estimate, and that estimate is
+// internally inconsistent: "diameter ~= 60-65 % of viewport width, i.e. radius
+// ~= 4.5x the actor's silhouette height". Against its own numbers (viewport
+// 636 px wide, silhouette 95 px tall) 60-65 % of width is 382-413 px of
+// DIAMETER, i.e. 191-207 px of radius -- 2.0-2.2 silhouette heights, while
+// 4.02-4.35 silhouette heights is the DIAMETER. The "4.5x" figure is therefore
+// a diameter, mislabelled as a radius; taking it literally would draw a ring
+// with 4x the intended area.
+//
+// Expressed as a multiple of the commander silhouette rather than a fraction
+// of viewport width, because a width fraction is aspect-dependent: the same
+// world-space ring reads as 72 % of a 636x1402 portrait phone and 18 % of a
+// 16:9 desktop. The silhouette multiple is aspect-independent and survives
+// both. 2.1 is the midpoint of the self-consistent 2.0-2.2 band.
+// [INFERENCE] -- not a measurement. Tune here, in one place.
+const RANGE_RING_RADIUS_SILHOUETTES = 2.1;
+const RANGE_RING_RADIUS = TARGET_HEIGHT.commander * RANGE_RING_RADIUS_SILHOUETTES;
+// Thin: the reference ring reads as a hairline, not a painted disc.
+const RANGE_RING_THICKNESS = RANGE_RING_RADIUS * 0.035;
+const RANGE_RING_SEGMENTS = 72;
+const RANGE_RING_OPACITY = 0.28;
+// Locked-in extraction readiness reads as a second, brighter inner tick ring.
+const RANGE_RING_ARMED_OPACITY = 0.46;
+// Ground decals sit just above the floor to avoid z-fighting with terrain,
+// far enough below an actor's feet that they never climb a silhouette.
+const GROUND_DECAL_LIFT = 0.03;
+// Corpse/extraction presentation. Bounded by the simulation's own corpse cap
+// (core-loop-legion-spec.md §6: hard cap 12), so this pool cannot grow with
+// wave count and is independent of MAX_VISUAL_EFFECTS.
+const MAX_CORPSE_MARKERS = 12;
+const CORPSE_MARKER_RADIUS = 0.42;
+// remainingTicks counts 600 -> 0. Fade the marker over its last second so an
+// expiring body reads as a closing window rather than popping out.
+const CORPSE_MARKER_FADE_TICKS = 60;
+const CORPSE_GRADE_COLORS = Object.freeze({
+  BASIC: new THREE.Color(0x66f0bd),
+  SHADOW: new THREE.Color(0xa06bff),
+  BOSS: new THREE.Color(0xffa43a),
+});
+const CORPSE_MARKER_DEFAULT_COLOR = new THREE.Color(0x8fa4c4);
+const EXTRACTION_CHANNEL_SEGMENTS = 48;
+const EXTRACTION_CHANNEL_RADIUS = CORPSE_MARKER_RADIUS * 1.55;
+const EXTRACTION_CHANNEL_BEAM_HEIGHT = 2.6;
 // Imported ambient rigs use a local-X arm swing. Keep their idle silhouette guarded
 // after the mixer writes its authored horizontal pose each frame.
 const STAGE_NPC_GUARD_OFFSETS = Object.freeze({
@@ -327,6 +381,8 @@ const SKILL_VFX_MODELS = Object.freeze({
   "grave-pulse": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
   "void-aegis": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
   "shadow-step": "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
+  "ash-nova": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
+  "regents-verdict": "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
 });
 
 const SKILL_VFX_SILHOUETTES = Object.freeze({
@@ -334,6 +390,10 @@ const SKILL_VFX_SILHOUETTES = Object.freeze({
   "rift-bolt": Object.freeze({ x: 0.5, y: 0.5, z: 1.65 }),
   "grave-pulse": Object.freeze({ x: 1.65, y: 0.42, z: 1.65 }),
   "shadow-step": Object.freeze({ x: 0.55, y: 0.9, z: 1.45 }),
+  // Flattened hard: the wide burst's own ground ring states the radius, so the
+  // GLB is a centre flourish and must not compete with it for the boundary read.
+  "ash-nova": Object.freeze({ x: 1.4, y: 0.5, z: 1.4 }),
+  "regents-verdict": Object.freeze({ x: 1.15, y: 0.85, z: 1.15 }),
   "void-aegis": Object.freeze({ x: 1.25, y: 1.7, z: 1.25 }),
 });
 
@@ -399,7 +459,31 @@ const VFX_LIFETIME_TICKS = Object.freeze({
   WARDENS_WARD_TRIGGERED: 60,
   ECHO_WARDEN_AWAKENING_TRIGGERED: 120,
   COMPANION_DOWNED: 48,
+  // Previously fell through to the implicit 30-tick default. Named here so a
+  // skill without a per-skill entry below has a documented duration rather
+  // than an accidental one.
+  SKILL_CAST: 30,
   TERMINAL: 90,
+});
+// Per-skill cast lifetime, keyed by the same semantic id SKILL_VFX_MODELS,
+// SKILL_VFX_SILHOUETTES and SKILL_IMPACT_SIGNATURES use. A lingering ground
+// AoE and an instant bolt should not share one duration; anything unlisted
+// falls back to VFX_LIFETIME_TICKS.SKILL_CAST.
+//
+// Applies to SKILL_CAST only. BOSS_ATTACK_TELEGRAPHED keeps deriving its
+// lifetime from event.windupTicks so the telegraph stays matched to the
+// simulation's own windup, and this table is never consulted for it.
+const SKILL_VFX_LIFETIME_TICKS = Object.freeze({
+  "rift-bolt": 20,
+  "soul-lance": 26,
+  // Long enough to read collapse -> detonation -> decay at 60 Hz. regents-verdict
+  // spends its first 35% imploding (advanceAoeBurst), so it needs the longest
+  // window of any cast or the burst half never lands on screen.
+  "grave-pulse": 48,
+  "void-aegis": 66,
+  "shadow-step": 22,
+  "ash-nova": 54,
+  "regents-verdict": 78,
 });
 const CRITICAL_VFX_EVENT_TYPES = Object.freeze([
   "CRITICAL_HIT",
@@ -1146,6 +1230,17 @@ function effectAnchor(snapshot, event) {
     return authoredAnchor;
   }
   switch (event?.type) {
+    // SKILL_CAST carries no target/entity id (defense-run-simulation.js emits only
+    // skillId/motion/vfx/castInstanceId), so it fell through to `default: null`
+    // and spawnVfx() returned before allocating anything. That made
+    // SKILL_VFX_MODELS, SKILL_VFX_SILHOUETTES, SKILL_VFX_LIFETIME_TICKS and
+    // SKILL_IMPACT_SIGNATURES unreachable for every skill in the catalog -- casts
+    // have never drawn their authored effect.
+    //
+    // The commander IS the cast origin: castSkill() resolves targets with
+    // `orderedTargets(run, run.commander, skill.radius)`, so anchoring here puts
+    // the area footprint exactly on the circle the simulation damaged.
+    case "SKILL_CAST":
     case "INPUT_ACCEPTED":
     case "INPUT_REJECTED":
     case "WARDENS_WARD_TRIGGERED":
@@ -1816,6 +1911,566 @@ function applySkillVfxSilhouette(instance, semanticVfxId) {
   );
   instance.userData.semanticVfxId = semanticVfxId;
 }
+
+// --- Signature impact tell: vertical light spear + radial ground glow ------
+// The reference build's dominant "big hit" read is a thin vertical light
+// column rising out of the impact point, sitting above a radial ground glow
+// (intake/reference-video-analysis.md §5, layers 2 and 5). Both are built
+// from procedural three.js geometry and attach as CHILDREN of the placeholder
+// group spawnVfx() already allocates for the event, so they add no new event
+// type to the VFX catalog -- this is enrichment of existing beats, not a
+// parallel effect system.
+//
+// COST, STATED AS NUMBERS (not covered by MAX_VISUAL_EFFECTS) ---------------
+// The 24-slot pool caps RECORD count, which is a proxy for frame cost, not the
+// cost itself: enriching a record adds geometry, draw calls, and -- the real
+// risk -- additive transparent overdraw. So enrichment carries its own
+// explicit budget, capped below the pool and independent of it.
+//
+// Measured per fully enriched effect (three.js geometry, counted not guessed):
+//   spear  CylinderGeometry(r*0.18, r, h, 6, 1, open)  = 14 verts / 12 tris
+//   glow   CircleGeometry(R, 24)                       = 26 verts / 24 tris
+//   total                                              = 40 verts / 36 tris,
+//                                                        2 draw calls
+// Worst case at the hardware cap of 10 concurrent enriched effects:
+//   400 verts / 360 tris / 20 draw calls.
+// For scale, an unenriched pool of 24 GLB effects is already far above that;
+// vertex load is not the binding constraint.
+//
+// Fill rate IS the binding constraint. Worst single glow (grave-pulse R=1.75
+// at its 1.30x terminal expansion) covers 7.4 % of a 636x1402 portrait
+// viewport at the closest combat tier (SKIRMISH, d=26, pitch 55 deg); the
+// worst spear covers 1.3 %. At 10 concurrent that is ~87 % of ONE full-screen
+// additive layer -- bounded under a single full-screen pass, and the reason
+// the cap is 10 rather than 24 (24 would reach ~209 %).
+//
+// The software rasterizer path is disproportionately fill-bound (the same
+// reason SOFTWARE_MAX_BACKBUFFER_PX exists), and the glow carries ~85 % of the
+// fill cost while the spear carries the signature read. So on software WebGL
+// the glow is dropped entirely, the spear drops to 4 radial segments
+// (10 verts / 8 tris), and the cap drops to 4: worst case
+// 40 verts / 32 tris / 4 draw calls and ~5 % of one additive layer.
+//
+// Additive blending with depthWrite disabled keeps a spear reading as light
+// rather than as geometry, and keeps it from punching a hole in the actors
+// it overlaps.
+const IMPACT_SIGNATURE_BUDGET = Object.freeze({
+  full: Object.freeze({ maxConcurrent: 10, spearSegments: 6, glowSegments: 24, glow: true }),
+  software: Object.freeze({ maxConcurrent: 4, spearSegments: 4, glowSegments: 0, glow: false }),
+});
+// Headroom inside the cap that only CRITICAL_VFX_EVENT_TYPES may spend, so a
+// storm of cheap impacts can never starve a boss telegraph or a gate breach of
+// its tell.
+const IMPACT_SIGNATURE_CRITICAL_RESERVE = 2;
+const IMPACT_SIGNATURES = Object.freeze({
+  CRITICAL_HIT: Object.freeze({
+    spear: Object.freeze({ height: 3.4, radius: 0.075, color: 0xffd66b }),
+    glow: Object.freeze({ radius: 1.15, color: 0xffa43a }),
+  }),
+  MELEE_IMPACT: Object.freeze({
+    spear: Object.freeze({ height: 1.5, radius: 0.045, color: 0x5de6ff }),
+    glow: Object.freeze({ radius: 0.62, color: 0x5de6ff }),
+  }),
+  PROJECTILE_IMPACT: Object.freeze({
+    spear: Object.freeze({ height: 1.35, radius: 0.04, color: 0x8fd9ff }),
+    glow: Object.freeze({ radius: 0.58, color: 0x8fd9ff }),
+  }),
+  SKILL_RESOLVED_DAMAGE: Object.freeze({
+    spear: Object.freeze({ height: 2.9, radius: 0.07, color: 0xa06bff }),
+    glow: Object.freeze({ radius: 1.05, color: 0xa06bff }),
+  }),
+  COMMANDER_DAMAGED: Object.freeze({
+    glow: Object.freeze({ radius: 0.86, color: 0xff5d6b }),
+  }),
+  COMPANION_DAMAGED: Object.freeze({
+    glow: Object.freeze({ radius: 0.7, color: 0xff8f5d }),
+  }),
+  // Telegraph: ground glow only. A vertical column would read as the blow
+  // already landing, and the windup must stay a floor-level warning.
+  BOSS_ATTACK_TELEGRAPHED: Object.freeze({
+    glow: Object.freeze({ radius: 1.45, color: 0xffa43a }),
+  }),
+  GATE_BREACHED: Object.freeze({
+    spear: Object.freeze({ height: 4.2, radius: 0.11, color: 0xff5d6b }),
+    glow: Object.freeze({ radius: 1.6, color: 0xff5d6b }),
+  }),
+  EXTRACTION_COMPLETED: Object.freeze({
+    spear: Object.freeze({ height: 3.8, radius: 0.085, color: 0x66f0bd }),
+    glow: Object.freeze({ radius: 1.25, color: 0x66f0bd }),
+  }),
+});
+// Per-skill signature, keyed by the same semantic id SKILL_VFX_MODELS and
+// SKILL_VFX_SILHOUETTES already use, so one skill has one identity across
+// mesh, silhouette, and light tell.
+const SKILL_IMPACT_SIGNATURES = Object.freeze({
+  "soul-lance": Object.freeze({
+    spear: Object.freeze({ height: 4.4, radius: 0.06, color: 0xd4bcff }),
+    glow: Object.freeze({ radius: 0.72, color: 0xa06bff }),
+  }),
+  "rift-bolt": Object.freeze({
+    spear: Object.freeze({ height: 2.6, radius: 0.055, color: 0x5de6ff }),
+    glow: Object.freeze({ radius: 0.68, color: 0x5de6ff }),
+  }),
+  // AoE skills carry NO fixed-radius `glow`. The old glow was the defect: it drew
+  // a boundary unrelated to the damage radius (grave-pulse 1.75 vs a true 3.50,
+  // shadow-step 0.80 vs a true 5.25). attachAoeBurst() now draws the authoritative
+  // radius, so a second ring at the wrong size is removed rather than left to
+  // contradict it. The vertical spear stays: it marks the epicentre, which the
+  // ring alone does not.
+  "grave-pulse": Object.freeze({
+    spear: Object.freeze({ height: 2.4, radius: 0.06, color: 0x66f0bd }),
+  }),
+  "ash-nova": Object.freeze({
+    spear: Object.freeze({ height: 3.2, radius: 0.08, color: 0xffa43a }),
+  }),
+  "regents-verdict": Object.freeze({
+    spear: Object.freeze({ height: 4.6, radius: 0.1, color: 0xff5de6 }),
+  }),
+  "void-aegis": Object.freeze({
+    spear: Object.freeze({ height: 2.1, radius: 0.13, color: 0x8fd9ff }),
+    glow: Object.freeze({ radius: 1.3, color: 0x8fd9ff }),
+  }),
+  "shadow-step": Object.freeze({
+    spear: Object.freeze({ height: 2.2, radius: 0.05, color: 0xa06bff }),
+  }),
+});
+
+function impactSignatureFor(event, semanticVfxId) {
+  if (event?.type === "SKILL_CAST") return SKILL_IMPACT_SIGNATURES[semanticVfxId] ?? null;
+  return IMPACT_SIGNATURES[event?.type] ?? null;
+}
+
+// --- Wide-area burst footprint (광역 파괴) ---------------------------------
+// THE defect this fixes, measured: an AoE skill's ground tell was a FIXED
+// radius from SKILL_IMPACT_SIGNATURES, unrelated to the radius the simulation
+// actually damages. `grave-pulse` damages r=3000 sim (= 3.50 world) and drew
+// 1.75 -> 50% of the truth; `shadow-step` damages r=4500 (= 5.25 world) and
+// drew 0.80 -> 15%. The player was being taught an AoE roughly a quarter of its
+// real size, which is exactly why a wide hit did not read as wide.
+//
+// Sim->world for a RADIUS (not a position): worldPointInto() maps x through
+// (x / WORLD_WIDTH * 2 - 1) * WORLD_SCALE, so a length scales by
+// (2 * WORLD_SCALE / WORLD_WIDTH) with no origin term.
+const SIM_RADIUS_TO_WORLD = 2 * WORLD_SCALE / WORLD_WIDTH;
+
+/** Authoritative damage radius of an AoE skill, in world units. 0 = not AoE. */
+export function aoeWorldRadiusFor(semanticVfxId) {
+  const radius = SKILLS[semanticVfxId]?.radius;
+  return Number.isFinite(radius) && radius > 0 ? radius * SIM_RADIUS_TO_WORLD : 0;
+}
+
+// Per-skill wide-burst identity. `arcs` are the orbiting crescent blades that
+// carry the "something swept the whole area" read; `implode` inverts the sweep
+// so a collapse-then-detonate skill reads as a singularity pulling in before it
+// bursts, rather than as one more outward ripple.
+const AOE_BURST_SIGNATURES = Object.freeze({
+  "grave-pulse": Object.freeze({ color: 0x66f0bd, arcs: 3, implode: false }),
+  "shadow-step": Object.freeze({ color: 0xa06bff, arcs: 2, implode: false }),
+  "ash-nova": Object.freeze({ color: 0xffa43a, arcs: 4, implode: false }),
+  // The BIGWAVE payoff reads as the reference's magenta singularity: the ring
+  // collapses inward, then detonates outward past the damage boundary.
+  "regents-verdict": Object.freeze({ color: 0xff5de6, arcs: 6, implode: true }),
+});
+
+// Fill-rate budget, counted rather than guessed. A FILLED disc at
+// regents-verdict's r=5.83 world covers pi*5.83^2 = 106.8 world^2; the annulus
+// actually drawn covers pi*(5.83^2 - 5.48^2) = 12.4 world^2, i.e. 12% of it.
+// That is the whole reason this is a ring plus thin arcs and never a disc: the
+// authored radius is large precisely because the gameplay radius is large, so
+// the shape has to stay cheap per unit area.
+//
+//   ring  RingGeometry(r*0.94, r, seg)  = 2*(seg+1) verts / 2*seg tris
+//   arc   TorusGeometry(r*0.72, thin, 3, seg, PI*0.55)
+//   core  CircleGeometry(r*0.22, seg)
+// Software WebGL is disproportionately fill-bound, so it drops the arcs and
+// keeps the ring, which is the part that states the radius.
+export const AOE_BURST_BUDGET = Object.freeze({
+  full: Object.freeze({ ringSegments: 48, arcSegments: 12, maxArcs: 6, core: true }),
+  software: Object.freeze({ ringSegments: 20, arcSegments: 6, maxArcs: 0, core: false }),
+});
+const AOE_RING_THICKNESS_RATIO = 0.06;
+// Density coupling: `targetCount` is the number of bodies this cast actually
+// resolved damage against, read from the frozen snapshot. One target reads as a
+// thin ring; a full BIGWAVE saturates arcs, brightness, and camera impulse. This
+// is what makes the wide skill the ANSWER to the wave rather than a big circle
+// that looks the same whether it hit 1 enemy or 40.
+const AOE_DENSITY_SATURATION_TARGETS = 12;
+
+export function aoeDensityFactor(targetCount) {
+  const count = Math.max(0, finite(targetCount, 0));
+  return THREE.MathUtils.clamp(count / AOE_DENSITY_SATURATION_TARGETS, 0, 1);
+}
+
+/**
+ * Builds the wide-burst children for one AoE cast and attaches them to `host`.
+ * Returns a descriptor the per-frame pass animates, or null when the skill is
+ * not AoE or the quality tier admits nothing.
+ *
+ * Purely presentation: `worldRadius` comes from the frozen SKILLS catalog and
+ * `targetCount` from the frozen snapshot's own events. Nothing is written back.
+ */
+export function attachAoeBurst(host, semanticVfxId, worldRadius, targetCount, budget = AOE_BURST_BUDGET.full) {
+  const signature = AOE_BURST_SIGNATURES[semanticVfxId];
+  if (!host || !signature || !(worldRadius > 0)) return null;
+  const density = aoeDensityFactor(targetCount);
+  const descriptor = {
+    ring: null,
+    arcs: [],
+    core: null,
+    worldRadius,
+    implode: signature.implode === true,
+    density,
+  };
+  const thickness = Math.max(0.04, worldRadius * AOE_RING_THICKNESS_RATIO);
+  const ringGeometry = new THREE.RingGeometry(
+    Math.max(0.01, worldRadius - thickness),
+    worldRadius,
+    budget.ringSegments,
+    1,
+  );
+  ringGeometry.rotateX(-Math.PI / 2);
+  const ring = new THREE.Mesh(
+    ringGeometry,
+    additiveGlowMaterial(signature.color, 0.7),
+  );
+  ring.name = "aoe-burst-ring";
+  ring.renderOrder = 2;
+  ring.position.y = GROUND_DECAL_LIFT;
+  host.add(ring);
+  descriptor.ring = ring;
+
+  // Arc count scales with how many bodies the cast actually caught, so the
+  // effect's visual weight is the wave it answered.
+  const arcCount = Math.min(budget.maxArcs, Math.round(signature.arcs * (0.35 + 0.65 * density)));
+  for (let index = 0; index < arcCount; index += 1) {
+    const arcGeometry = new THREE.TorusGeometry(
+      worldRadius * 0.72,
+      Math.max(0.02, worldRadius * 0.022),
+      3,
+      budget.arcSegments,
+      Math.PI * 0.55,
+    );
+    arcGeometry.rotateX(-Math.PI / 2);
+    const arc = new THREE.Mesh(arcGeometry, additiveGlowMaterial(signature.color, 0.6));
+    arc.name = "aoe-burst-arc";
+    arc.renderOrder = 3;
+    arc.position.y = GROUND_DECAL_LIFT * 1.6;
+    arc.rotation.y = (index / Math.max(1, arcCount)) * Math.PI * 2;
+    host.add(arc);
+    descriptor.arcs.push({ mesh: arc, baseYaw: arc.rotation.y });
+  }
+
+  if (budget.core) {
+    const coreGeometry = new THREE.CircleGeometry(Math.max(0.05, worldRadius * 0.22), budget.arcSegments * 2);
+    coreGeometry.rotateX(-Math.PI / 2);
+    const core = new THREE.Mesh(coreGeometry, additiveGlowMaterial(signature.color, 0.5));
+    core.name = "aoe-burst-core";
+    core.renderOrder = 1;
+    core.position.y = GROUND_DECAL_LIFT * 0.8;
+    host.add(core);
+    descriptor.core = core;
+  }
+  return descriptor;
+}
+
+/**
+ * Advances one wide burst. `progress` is 0..1 off the authoritative simulation
+ * tick, never a renderer clock, so the sweep stays locked to the cast.
+ *
+ * A normal nova sweeps 0 -> 1 outward. An `implode` skill spends the first 35%
+ * collapsing from outside the boundary down to the core, then detonates back
+ * out past it -- the singularity read from the reference. Both settle on the
+ * authored damage radius while the ring is brightest, so the player can learn
+ * the real AoE size by watching it.
+ *
+ * Reduced motion holds a static full-radius ring: the radius is INFORMATION and
+ * must stay legible, only the sweep is removed.
+ */
+export function advanceAoeBurst(descriptor, progress, reducedMotion) {
+  if (!descriptor) return;
+  const t = THREE.MathUtils.clamp(progress, 0, 1);
+  let sweep;
+  if (reducedMotion) {
+    sweep = 1;
+  } else if (descriptor.implode) {
+    const collapse = 0.35;
+    sweep = t < collapse
+      ? THREE.MathUtils.lerp(1.15, 0.12, t / collapse)
+      : THREE.MathUtils.lerp(0.12, 1.12, (t - collapse) / (1 - collapse));
+  } else {
+    // Fast reach (first 45%) then hold: an AoE must state its boundary almost
+    // immediately, because the boundary is the gameplay information.
+    sweep = t < 0.45 ? THREE.MathUtils.lerp(0.18, 1, t / 0.45) : THREE.MathUtils.lerp(1, 1.06, (t - 0.45) / 0.55);
+  }
+  const brightness = reducedMotion ? 0.45 : Math.pow(1 - t, 1.15);
+  const emphasis = 0.55 + 0.45 * descriptor.density;
+
+  if (descriptor.ring) {
+    descriptor.ring.scale.setScalar(sweep);
+    descriptor.ring.material.opacity = 0.85 * brightness * emphasis;
+  }
+  for (const [index, arc] of descriptor.arcs.entries()) {
+    arc.mesh.scale.setScalar(sweep);
+    arc.mesh.rotation.y = reducedMotion
+      ? arc.baseYaw
+      : arc.baseYaw + (descriptor.implode ? -1 : 1) * t * Math.PI * (1.4 + index * 0.12);
+    arc.mesh.material.opacity = 0.7 * brightness * emphasis;
+  }
+  if (descriptor.core) {
+    const corePulse = reducedMotion ? 1 : (descriptor.implode ? 1 + (1 - Math.min(1, t / 0.35)) * 1.6 : 1.2 - t * 0.5);
+    descriptor.core.scale.setScalar(Math.max(0.05, corePulse));
+    descriptor.core.material.opacity = 0.6 * brightness;
+  }
+}
+
+// Bare, self-lit primitives: no lights, no environment, no textures, so the
+// tell reads identically under every stage palette and on software WebGL.
+function additiveGlowMaterial(color, opacity) {
+  return new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    toneMapped: false,
+  });
+}
+
+/**
+ * Builds the procedural children for one event's signature and attaches them
+ * to `host`. Returns a descriptor the per-frame pass animates, or null when
+ * the event has no authored signature or the quality tier admits nothing.
+ * Purely presentation: reads the frozen signature table, writes only to
+ * renderer-owned Object3Ds.
+ *
+ * `budget` is one entry of IMPACT_SIGNATURE_BUDGET -- it decides segment
+ * counts and whether the fill-rate-heavy ground glow is drawn at all.
+ */
+function attachImpactSignature(host, signature, budget = IMPACT_SIGNATURE_BUDGET.full) {
+  if (!host || !signature) return null;
+  const descriptor = { spear: null, glow: null, spearHeight: 0, glowRadius: 0 };
+  if (signature.spear) {
+    // Open-ended cylinder tapering to a point: a cone reads as a solid
+    // object, a full cylinder reads as a pillar; a near-zero top radius with
+    // additive falloff reads as light.
+    const geometry = new THREE.CylinderGeometry(
+      signature.spear.radius * 0.18,
+      signature.spear.radius,
+      signature.spear.height,
+      budget.spearSegments,
+      1,
+      true,
+    );
+    // Pivot at the base so scale.y animates a rise out of the floor rather
+    // than a growth in both directions.
+    geometry.translate(0, signature.spear.height / 2, 0);
+    const spear = new THREE.Mesh(geometry, additiveGlowMaterial(signature.spear.color, 0.85));
+    spear.name = "impact-light-spear";
+    spear.renderOrder = 3;
+    spear.position.y = GROUND_DECAL_LIFT;
+    host.add(spear);
+    descriptor.spear = spear;
+    descriptor.spearHeight = signature.spear.height;
+  }
+  // The glow is the fill-rate cost centre; the software tier drops it and
+  // keeps the spear, which is what actually carries the signature read.
+  if (signature.glow && budget.glow) {
+    const geometry = new THREE.CircleGeometry(signature.glow.radius, budget.glowSegments);
+    geometry.rotateX(-Math.PI / 2);
+    const glow = new THREE.Mesh(geometry, additiveGlowMaterial(signature.glow.color, 0.5));
+    glow.name = "impact-ground-glow";
+    glow.renderOrder = 2;
+    glow.position.y = GROUND_DECAL_LIFT;
+    host.add(glow);
+    descriptor.glow = glow;
+    descriptor.glowRadius = signature.glow.radius;
+  }
+  return descriptor.spear || descriptor.glow ? descriptor : null;
+}
+
+/**
+ * Advances one signature over its own lifetime. `progress` is 0..1 derived
+ * from the authoritative simulation tick, never from a renderer-owned clock,
+ * so the tell stays locked to the beat that caused it.
+ *
+ * Under reduced motion nothing animates: the spear holds a static mid pose
+ * and the glow holds a steady opacity, so the event is still legible without
+ * a moving element.
+ */
+function advanceImpactSignature(descriptor, progress, reducedMotion) {
+  if (!descriptor) return;
+  const t = THREE.MathUtils.clamp(progress, 0, 1);
+  if (descriptor.spear) {
+    if (reducedMotion) {
+      descriptor.spear.scale.y = 0.85;
+      descriptor.spear.material.opacity = 0.6;
+    } else {
+      // Fast rise (first 30 %), then a long fade -- an impact should be at
+      // full height almost immediately and then bleed off.
+      const rise = t < 0.3 ? t / 0.3 : 1;
+      descriptor.spear.scale.y = 0.25 + rise * 0.9;
+      descriptor.spear.material.opacity = 0.9 * Math.pow(1 - t, 1.6);
+    }
+  }
+  if (descriptor.glow) {
+    if (reducedMotion) {
+      descriptor.glow.scale.setScalar(1);
+      descriptor.glow.material.opacity = 0.4;
+    } else {
+      // The glow expands outward as it dims, so the impact reads as a wave
+      // leaving the contact point.
+      descriptor.glow.scale.setScalar(0.45 + t * 0.85);
+      descriptor.glow.material.opacity = 0.55 * Math.pow(1 - t, 1.2);
+    }
+  }
+}
+
+// --- Persistent range ring (scenery, not a transient effect) ---------------
+/**
+ * Builds the always-on ground ring centred on the commander. Two coplanar
+ * annuli: a hairline outer boundary plus a dimmer inner tick, so the ring
+ * still reads as a bounded area at the far camera tiers where a single
+ * hairline collapses toward one pixel.
+ *
+ * `depthWrite: false` with depth TEST left on is what satisfies "never
+ * occludes characters": actors are opaque and render first, so an actor
+ * standing on the ring correctly hides the segment behind its feet, while the
+ * ring never writes depth that could clip an actor drawn after it.
+ */
+function createRangeRing() {
+  const group = new THREE.Group();
+  group.name = "commander-range-ring";
+  const ringMaterial = (opacity) => new THREE.MeshBasicMaterial({
+    color: COLORS.pickup,
+    transparent: true,
+    opacity,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    toneMapped: false,
+  });
+  const outer = new THREE.Mesh(
+    new THREE.RingGeometry(
+      RANGE_RING_RADIUS - RANGE_RING_THICKNESS,
+      RANGE_RING_RADIUS,
+      RANGE_RING_SEGMENTS,
+      1,
+    ),
+    ringMaterial(RANGE_RING_OPACITY),
+  );
+  outer.name = "range-ring-boundary";
+  const inner = new THREE.Mesh(
+    new THREE.RingGeometry(
+      RANGE_RING_RADIUS * 0.42 - RANGE_RING_THICKNESS * 0.7,
+      RANGE_RING_RADIUS * 0.42,
+      RANGE_RING_SEGMENTS,
+      1,
+    ),
+    ringMaterial(RANGE_RING_OPACITY * 0.55),
+  );
+  inner.name = "range-ring-tick";
+  for (const mesh of [outer, inner]) {
+    // RingGeometry is authored in the XY plane; lay it flat on the ground.
+    mesh.rotation.x = -Math.PI / 2;
+    // Negative renderOrder inside a transparent pass keeps the decal beneath
+    // every other transparent element that shares its pixels.
+    mesh.renderOrder = -1;
+    group.add(mesh);
+  }
+  group.position.y = GROUND_DECAL_LIFT;
+  return { group, outer, inner };
+}
+
+// --- Corpse / extraction-channel presentation ------------------------------
+/**
+ * One extractable body's ground marker: a flat grade-tinted disc with a thin
+ * ring lip, so an extractable corpse reads as an interactable floor target
+ * rather than as debris. Grade colour is read from the snapshot; nothing here
+ * is written back.
+ */
+function createCorpseMarker(grade) {
+  const color = CORPSE_GRADE_COLORS[grade] ?? CORPSE_MARKER_DEFAULT_COLOR;
+  const group = new THREE.Group();
+  group.name = "corpse-marker";
+  const disc = new THREE.Mesh(
+    new THREE.CircleGeometry(CORPSE_MARKER_RADIUS, 20),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.34,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    }),
+  );
+  disc.rotation.x = -Math.PI / 2;
+  disc.renderOrder = 0;
+  const lip = new THREE.Mesh(
+    new THREE.RingGeometry(CORPSE_MARKER_RADIUS * 0.86, CORPSE_MARKER_RADIUS, 20, 1),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.7,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    }),
+  );
+  lip.rotation.x = -Math.PI / 2;
+  lip.renderOrder = 1;
+  group.add(disc, lip);
+  group.position.y = GROUND_DECAL_LIFT;
+  return { group, disc, lip, grade: grade ?? null };
+}
+
+/**
+ * The commander's extraction channel readout: a sweeping ground arc whose
+ * drawn span IS the progress, plus a vertical tether so a channel in progress
+ * is legible without reading the arc.
+ *
+ * Progress is expressed by BufferGeometry.setDrawRange over a pre-built full
+ * ring -- no per-frame geometry reallocation, and the arc grows in one
+ * direction because RingGeometry emits its indices in theta order.
+ */
+function createExtractionChannelIndicator() {
+  const group = new THREE.Group();
+  group.name = "extraction-channel";
+  const arcGeometry = new THREE.RingGeometry(
+    EXTRACTION_CHANNEL_RADIUS * 0.78,
+    EXTRACTION_CHANNEL_RADIUS,
+    EXTRACTION_CHANNEL_SEGMENTS,
+    1,
+  );
+  const arc = new THREE.Mesh(
+    arcGeometry,
+    new THREE.MeshBasicMaterial({
+      color: COLORS.pickup,
+      transparent: true,
+      opacity: 0.9,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    }),
+  );
+  arc.rotation.x = -Math.PI / 2;
+  arc.renderOrder = 2;
+  const beamGeometry = new THREE.CylinderGeometry(
+    0.04,
+    0.09,
+    EXTRACTION_CHANNEL_BEAM_HEIGHT,
+    6,
+    1,
+    true,
+  );
+  beamGeometry.translate(0, EXTRACTION_CHANNEL_BEAM_HEIGHT / 2, 0);
+  const beam = new THREE.Mesh(beamGeometry, additiveGlowMaterial(COLORS.pickup, 0.5));
+  beam.name = "extraction-channel-beam";
+  beam.renderOrder = 3;
+  group.add(arc, beam);
+  group.position.y = GROUND_DECAL_LIFT;
+  group.visible = false;
+  return { group, arc, beam, arcIndexCount: arcGeometry.index ? arcGeometry.index.count : 0 };
+}
 function applyQuestVfxPresentation(instance, presentation, reducedMotion) {
   if (!instance || !presentation) return;
   instance.scale.multiplyScalar(presentation.scale);
@@ -2301,6 +2956,19 @@ export class RealtimeBattle {
     this.pressureLane = null;
     this.pressureArrow = null;
     this.pressureTargetRing = null;
+    // Persistent ground scenery, deliberately NOT part of vfxInstances: the
+    // 24-slot transient pool is a frame-cost budget for expiring effects, and
+    // a decal that never expires must not spend it.
+    this.groundDecalGroup = null;
+    this.rangeRing = null;
+    this.rangeRingBoundary = null;
+    this.rangeRingTick = null;
+    // Corpse/extraction presentation. Bounded by the simulation's own corpse
+    // cap, keyed by corpse id, and retired the tick a corpse leaves the
+    // snapshot.
+    this.corpseGroup = null;
+    this.corpseMarkers = new Map(); // corpse.id -> { group, disc, lip, grade }
+    this.extractionChannel = null;
 
     this.actors = new Map(); // entity.id -> { root, kind, modelPath, loading }
     this.vfxInstances = []; // { root, untilTick } -- also holds death echoes: { root, untilTick, mixer }
@@ -2503,6 +3171,22 @@ export class RealtimeBattle {
     this.pressureGroup.add(this.pressureLane, this.pressureArrow, this.pressureTargetRing);
     this.pressureGroup.visible = false;
     this.scene.add(this.pressureGroup);
+
+    // Persistent ground-decal layer. Added as its own group so every decal
+    // shares one transform-invisibility switch and one disposal path, and so
+    // nothing here can ever be mistaken for a transient VFX record.
+    this.groundDecalGroup = new THREE.Group();
+    this.groundDecalGroup.name = "ground-decals";
+    const rangeRing = createRangeRing();
+    this.rangeRing = rangeRing.group;
+    this.rangeRingBoundary = rangeRing.outer;
+    this.rangeRingTick = rangeRing.inner;
+    this.rangeRing.visible = false;
+    this.corpseGroup = new THREE.Group();
+    this.corpseGroup.name = "corpse-markers";
+    this.extractionChannel = createExtractionChannelIndicator();
+    this.groundDecalGroup.add(this.rangeRing, this.corpseGroup, this.extractionChannel.group);
+    this.scene.add(this.groundDecalGroup);
 
     this.disposed = false;
     return this;
@@ -3449,6 +4133,131 @@ export class RealtimeBattle {
     this.pressureArrow.rotation.y = heading;
   }
 
+  /**
+   * Keeps the persistent ground ring centred under the commander.
+   *
+   * READ-ONLY: consumes the frozen snapshot's commander position and the
+   * conditionally-present `extractionUnlocked` flag, and writes only to
+   * renderer-owned Object3Ds. Nothing here can reach getRunDigest() inputs.
+   *
+   * Degrades to hidden when the decal layer was never assembled (headless
+   * harnesses build only the three original scene groups) or when the
+   * snapshot carries no commander.
+   */
+  syncRangeRing(snapshot, commander) {
+    if (!this.rangeRing) return;
+    if (!commander) {
+      this.rangeRing.visible = false;
+      return;
+    }
+    const point = worldPoint(commander);
+    this.rangeRing.position.set(point.x, point.y + GROUND_DECAL_LIFT, point.z);
+    this.rangeRing.visible = true;
+    // `extractionUnlocked` is conditional-presence (absent before the first
+    // midboss death), so absence is the normal pre-unlock state, not an error.
+    // Once armed the ring brightens: the same scenery now also communicates
+    // that bodies in reach can be extracted.
+    const armed = snapshot?.extractionUnlocked === true;
+    if (this.rangeRingBoundary?.material) {
+      this.rangeRingBoundary.material.opacity = armed ? RANGE_RING_ARMED_OPACITY : RANGE_RING_OPACITY;
+    }
+    if (this.rangeRingTick?.material) {
+      this.rangeRingTick.material.opacity = (armed ? RANGE_RING_ARMED_OPACITY : RANGE_RING_OPACITY) * 0.55;
+    }
+  }
+
+  /**
+   * Presents extractable bodies and the commander's extraction channel.
+   *
+   * READ-ONLY on two conditionally-present snapshot fields:
+   *   snapshot.corpses           -- absent while empty, id-sorted, sim-capped
+   *   snapshot.extractionChannel -- single object, absent when no channel runs
+   *
+   * Both are absent in every pre-extraction run and in every run recorded
+   * before the simulation gained them, so absence retires the presentation
+   * rather than warning.
+   *
+   * The channel BREAKS rather than pausing: leaving range destroys progress and
+   * a later re-entry is a NEW channel. So absence is treated as cancellation --
+   * the indicator is hidden outright and no value is interpolated across the
+   * gap, which would otherwise animate a phantom resume.
+   */
+  syncExtractionPresentation(snapshot) {
+    if (!this.corpseGroup) return;
+    const corpses = Array.isArray(snapshot?.corpses) ? snapshot.corpses : [];
+    const seen = new Set();
+    for (const corpse of corpses) {
+      if (!corpse?.id) continue;
+      if (seen.size >= MAX_CORPSE_MARKERS) break;
+      seen.add(corpse.id);
+      let marker = this.corpseMarkers.get(corpse.id);
+      // Grade is immutable for a given corpse id, so a marker is rebuilt only
+      // if a snapshot ever contradicts itself.
+      if (marker && marker.grade !== (corpse.grade ?? null)) {
+        this.retireCorpseMarker(corpse.id);
+        marker = null;
+      }
+      if (!marker) {
+        marker = createCorpseMarker(corpse.grade);
+        this.corpseMarkers.set(corpse.id, marker);
+        this.corpseGroup.add(marker.group);
+      }
+      const point = worldPoint(corpse);
+      marker.group.position.set(point.x, point.y + GROUND_DECAL_LIFT, point.z);
+      // `remainingTicks` arrives precomputed (600 -> 0), so the closing window
+      // needs no tick arithmetic here.
+      const remaining = finite(corpse.remainingTicks, CORPSE_MARKER_FADE_TICKS);
+      const decay = THREE.MathUtils.clamp(remaining / CORPSE_MARKER_FADE_TICKS, 0, 1);
+      // `extractable: false` means consumed this tick; it vanishes next tick.
+      const claimable = corpse.extractable !== false;
+      const emphasis = claimable ? 1 : 0.35;
+      marker.disc.material.opacity = 0.34 * decay * emphasis;
+      marker.lip.material.opacity = 0.7 * decay * emphasis;
+      // Reduced motion keeps the marker perfectly static; otherwise the lip
+      // breathes off the authoritative tick so a claimable body draws the eye
+      // without a renderer-owned clock.
+      if (this.reducedMotion) {
+        marker.lip.scale.setScalar(1);
+      } else {
+        const tick = finite(snapshot?.tick, 0);
+        marker.lip.scale.setScalar(claimable ? 1 + 0.06 * Math.sin(tick * 0.12) : 1);
+      }
+    }
+    for (const id of [...this.corpseMarkers.keys()]) {
+      if (!seen.has(id)) this.retireCorpseMarker(id);
+    }
+
+    const indicator = this.extractionChannel;
+    if (!indicator) return;
+    const channel = snapshot?.extractionChannel;
+    const host = channel?.corpseId ? this.corpseMarkers.get(channel.corpseId) : null;
+    const required = finite(channel?.requiredTicks, 0);
+    if (!channel || !host || required <= 0) {
+      indicator.group.visible = false;
+      return;
+    }
+    indicator.group.position.copy(host.group.position);
+    indicator.group.visible = true;
+    const progress = THREE.MathUtils.clamp(finite(channel.elapsedTicks, 0) / required, 0, 1);
+    // Quantize to whole ring segments: RingGeometry emits 6 indices per theta
+    // segment, so only a multiple of 6 draws a clean arc rather than a torn
+    // triangle.
+    const segments = Math.round(progress * EXTRACTION_CHANNEL_SEGMENTS);
+    indicator.arc.geometry.setDrawRange(0, Math.min(indicator.arcIndexCount, segments * 6));
+    indicator.arc.visible = segments > 0;
+    indicator.beam.scale.y = 0.35 + progress * 0.75;
+    indicator.beam.material.opacity = this.reducedMotion ? 0.5 : 0.35 + progress * 0.45;
+  }
+
+  retireCorpseMarker(id) {
+    const marker = this.corpseMarkers.get(id);
+    if (!marker) return;
+    this.corpseMarkers.delete(id);
+    this.corpseGroup?.remove(marker.group);
+    disposeObject3D(marker.group);
+    if (this.extractionChannel) this.extractionChannel.group.visible = false;
+  }
+
   syncProjectile(record, projectile, snapshot) {
     const source = record.projectileSourcePoint;
     const target = record.projectileTargetPoint;
@@ -3600,6 +4409,10 @@ export class RealtimeBattle {
       }
     }
     this.syncPressureIndicator(snapshot, gate);
+    // Ground scenery runs after actor placement so a decal always reads the
+    // same authoritative position the actor above it was just placed at.
+    this.syncRangeRing(snapshot, commander);
+    this.syncExtractionPresentation(snapshot);
   }
 
   // Called by app.js's onPointerMove with already-sign-adjusted, already-
@@ -3667,7 +4480,17 @@ export class RealtimeBattle {
     for (const record of this.stageDecorRecords) {
       if (record.kind === "stage-vfx") applyStageVfxPolicy(record, this.reducedMotion);
     }
-    for (const record of this.vfxInstances) applyTransientVfxPolicy(record, this.reducedMotion);
+    for (const record of this.vfxInstances) {
+      applyTransientVfxPolicy(record, this.reducedMotion);
+      // Re-pose any live signature immediately: a runtime toggle must not
+      // leave a half-risen spear mid-animation until its next tick.
+      if (record.signature) advanceImpactSignature(record.signature, 0, this.reducedMotion);
+      if (record.aoeBurst) advanceAoeBurst(record.aoeBurst, 0, this.reducedMotion);
+    }
+    // Corpse markers stop breathing at once rather than on the next snapshot.
+    if (this.reducedMotion) {
+      for (const marker of this.corpseMarkers.values()) marker.lip.scale.setScalar(1);
+    }
     for (const actor of this.actors.values()) {
       for (const presentation of actor.presentationMixers ?? []) {
         applyTransientVfxPolicy(presentation, this.reducedMotion);
@@ -4017,6 +4840,67 @@ export class RealtimeBattle {
     return this.vfxInstances.includes(record);
   }
 
+  // Software rasterizers make fragment cost dominate, and the additive ground
+  // glow is the fill-rate cost centre -- the same reasoning that bounds the
+  // backbuffer via SOFTWARE_MAX_BACKBUFFER_PX. Detection already happened in
+  // mount(); this only selects the matching budget row.
+  impactSignatureBudget() {
+    return this.softwareRenderer ? IMPACT_SIGNATURE_BUDGET.software : IMPACT_SIGNATURE_BUDGET.full;
+  }
+
+  aoeBurstBudget() {
+    return this.softwareRenderer ? AOE_BURST_BUDGET.software : AOE_BURST_BUDGET.full;
+  }
+
+  /**
+   * How many bodies this cast actually resolved damage against, counted from the
+   * frozen snapshot's own SKILL_RESOLVED_DAMAGE events sharing the cast's
+   * `castInstanceId`. Read-only: the count is already in the event stream, so
+   * the renderer needs no new simulation field to know the wave it just cleared.
+   *
+   * Falls back to the cast's own `targetCount` when the simulation supplies it,
+   * and to 1 when neither is present, so a legacy snapshot still draws a ring.
+   */
+  aoeTargetCountFor(event, events) {
+    const castInstanceId = event?.castInstanceId;
+    if (castInstanceId) {
+      let count = 0;
+      for (const candidate of events) {
+        if (candidate?.type === "SKILL_RESOLVED_DAMAGE" && candidate.castInstanceId === castInstanceId) count += 1;
+      }
+      if (count > 0) return count;
+    }
+    return Math.max(1, finite(event?.targetCount, 1));
+  }
+
+  /**
+   * Bounded camera impulse for a wide burst, scaled by the density it caught.
+   * A one-target cast gets nothing; a saturated BIGWAVE clear gets the full
+   * authored amplitude. Clamped by IMPACT_SHAKE_MAX_AMPLITUDE exactly like every
+   * other impulse, so the authored orbit framing is never disturbed.
+   */
+  registerAoeCameraImpulse(density, nowMs) {
+    if (this.reducedMotion || !(density > 0.25)) return;
+    const amplitude = Math.min(IMPACT_SHAKE_MAX_AMPLITUDE, IMPACT_SHAKE_AMPLITUDE * (0.6 + density));
+    const current = this.cameraShake;
+    if (current && current.untilMs > nowMs && current.amplitude >= amplitude) return;
+    this.impactShakeSeed = (this.impactShakeSeed + 1) % 1024;
+    this.cameraShake = {
+      startMs: nowMs,
+      untilMs: nowMs + IMPACT_SHAKE_MS,
+      amplitude,
+      seed: this.impactShakeSeed,
+    };
+  }
+
+  // Derived from the live pool rather than a parallel counter, so it can never
+  // drift out of sync with eviction, expiry, or a generation reset.
+  enrichedSignatureCount() {
+    let count = 0;
+    for (const record of this.vfxInstances) if (record.signature) count += 1;
+    return count;
+  }
+
   spawnVfx(snapshot, event, tick) {
     const relPath = event?.type === "SKILL_CAST"
       ? SKILL_VFX_MODELS[event?.vfx || event?.skillId]
@@ -4028,9 +4912,15 @@ export class RealtimeBattle {
     const anchor = effectAnchor(snapshot, event);
     if (!anchor) return;
     const questPresentation = questVfxPresentationForEvent(event);
+    const semanticVfxId = semanticVfxIdForEvent(event);
+    // BOSS_ATTACK_TELEGRAPHED must keep deriving its lifetime from the
+    // simulation's own windupTicks so the telegraph and the windup it warns
+    // about stay the same length; the per-skill table is consulted only for
+    // SKILL_CAST, and every other type keeps its existing type-keyed value.
     const lifetime = questPresentation?.lifetime ?? (event.type === "BOSS_ATTACK_TELEGRAPHED"
       ? Math.max(1, finite(event.windupTicks, VFX_LIFETIME_TICKS[event.type] ?? 30))
-      : (VFX_LIFETIME_TICKS[event.type] ?? 30));
+      : (event.type === "SKILL_CAST" ? SKILL_VFX_LIFETIME_TICKS[semanticVfxId] : undefined)
+        ?? VFX_LIFETIME_TICKS[event.type] ?? 30);
     const events = Array.isArray(snapshot?.events) ? snapshot.events : [];
     const contactDelayTicks = Math.ceil(this.impactContactDelayMs(event, events) * SIM_TICK_RATE / 1000);
     const startTick = tick + contactDelayTicks;
@@ -4042,7 +4932,6 @@ export class RealtimeBattle {
     placeholder.userData.eventAnchor = questPresentation ? "quest-point" : "event-entity";
     placeholder.userData.questVfxIntent = questPresentation?.intent ?? null;
     this.vfxGroup.add(placeholder);
-    const semanticVfxId = semanticVfxIdForEvent(event);
     const record = {
       root: placeholder,
       startTick,
@@ -4053,7 +4942,51 @@ export class RealtimeBattle {
       questVfxIntent: questPresentation?.intent ?? null,
       loadRequest: null,
     };
+    record.signature = null;
+    record.aoeBurst = null;
     if (!this.trackVfxInstance(record)) return;
+    // Enrichment is admitted under its OWN budget, not the 24-slot pool's:
+    // adding geometry to a record raises draw calls and additive overdraw even
+    // though the record count is unchanged. Critical beats keep a reserved
+    // slice of the budget so an impact storm cannot starve a telegraph.
+    //
+    // Runs only after pool admission succeeded, so no geometry is ever built
+    // for a record that was evicted on arrival.
+    const signatureBudget = this.impactSignatureBudget();
+    const signatureLimit = criticalEvent
+      ? signatureBudget.maxConcurrent
+      : Math.max(1, signatureBudget.maxConcurrent - IMPACT_SIGNATURE_CRITICAL_RESERVE);
+    if (this.enrichedSignatureCount() < signatureLimit) {
+      // Built on the placeholder immediately, before the GLB resolves, so a
+      // cold or failed asset load still leaves the player a legible tell.
+      record.signature = attachImpactSignature(
+        placeholder,
+        impactSignatureFor(event, semanticVfxId),
+        signatureBudget,
+      );
+      advanceImpactSignature(record.signature, 0, this.reducedMotion);
+    }
+    // Wide-area footprint. Independent of the spear/glow signature above: it is
+    // keyed off the skill's AUTHORITATIVE damage radius, so it states the real
+    // boundary even when the fixed-radius glow above understates it, and it
+    // scales with the density this cast actually caught.
+    if (event.type === "SKILL_CAST") {
+      const aoeRadius = aoeWorldRadiusFor(semanticVfxId);
+      if (aoeRadius > 0) {
+        const targetCount = this.aoeTargetCountFor(event, events);
+        record.aoeBurst = attachAoeBurst(
+          placeholder,
+          semanticVfxId,
+          aoeRadius,
+          targetCount,
+          this.aoeBurstBudget(),
+        );
+        if (record.aoeBurst) {
+          advanceAoeBurst(record.aoeBurst, 0, this.reducedMotion);
+          this.registerAoeCameraImpulse(record.aoeBurst.density, performance.now());
+        }
+      }
+    }
     const loadRequest = instantiateVfxModel(
       relPath,
       () => generation === this.vfxGeneration && this.vfxInstances.includes(record),
@@ -4548,6 +5481,16 @@ export class RealtimeBattle {
         continue;
       }
       record.root.visible = !Number.isFinite(record.startTick) || record.startTick <= tick;
+      // Signature progress comes from the authoritative simulation tick over
+      // the record's own span, never from a renderer-owned clock, so the tell
+      // stays locked to the beat that caused it and to the same contact delay
+      // the placeholder's visibility already honours.
+      if (record.signature || record.aoeBurst) {
+        const span = record.untilTick - record.startTick;
+        const progress = span > 0 ? (tick - record.startTick) / span : 1;
+        if (record.signature) advanceImpactSignature(record.signature, progress, this.reducedMotion);
+        if (record.aoeBurst) advanceAoeBurst(record.aoeBurst, progress, this.reducedMotion);
+      }
       this.vfxInstances[retainedVfxCount] = record;
       retainedVfxCount += 1;
     }
@@ -4667,6 +5610,18 @@ export class RealtimeBattle {
     this.pressureLane = null;
     this.pressureArrow = null;
     this.pressureTargetRing = null;
+    // One disposal pass covers the whole decal layer: disposeObject3D
+    // traverses, so the range ring, every corpse marker, and the channel
+    // indicator release their geometry and materials with it. The marker map
+    // is cleared alongside so a remount cannot resurrect a stale id.
+    this.corpseMarkers.clear();
+    if (this.groundDecalGroup) disposeObject3D(this.groundDecalGroup);
+    this.groundDecalGroup = null;
+    this.rangeRing = null;
+    this.rangeRingBoundary = null;
+    this.rangeRingTick = null;
+    this.corpseGroup = null;
+    this.extractionChannel = null;
     this.environmentTexture?.dispose();
     this.environmentTexture = null;
 
@@ -4819,6 +5774,26 @@ export class RealtimeBattle {
       actionCount: stageDecorRecords.reduce((count, record) => count + record.actionCount, 0),
       records: stageDecorRecords,
     };
+    // Ground scenery is reported separately from activeVfxCount so a QA pass
+    // can tell at a glance that the persistent decals are NOT spending the
+    // 24-slot transient budget, and can see how much of the enrichment budget
+    // is currently committed.
+    const groundDecals = {
+      assembled: Boolean(this.groundDecalGroup),
+      rangeRingVisible: this.rangeRing?.visible === true,
+      rangeRingRadius: RANGE_RING_RADIUS,
+      rangeRingOpacity: this.rangeRingBoundary?.material?.opacity ?? null,
+      corpseMarkerCount: this.corpseMarkers.size,
+      corpseMarkerCap: MAX_CORPSE_MARKERS,
+      extractionChannelVisible: this.extractionChannel?.group.visible === true,
+      extractionChannelDrawnIndices: this.extractionChannel?.arc.geometry.drawRange.count ?? null,
+      extractionChannelTotalIndices: this.extractionChannel?.arcIndexCount ?? null,
+    };
+    const impactSignatures = {
+      budget: this.impactSignatureBudget(),
+      enriched: this.enrichedSignatureCount(),
+      criticalReserve: IMPACT_SIGNATURE_CRITICAL_RESERVE,
+    };
     return {
       reducedMotion: this.reducedMotion,
       actorCount: actors.length,
@@ -4828,6 +5803,8 @@ export class RealtimeBattle {
       mixerCount: actors.reduce((count, actor) => count + (actor.hasMixer ? 1 : 0), 0),
       actionCount: actors.reduce((count, actor) => count + actor.actionCount, 0),
       stageDecor,
+      groundDecals,
+      impactSignatures,
       projectiles,
       pickups,
       actors,

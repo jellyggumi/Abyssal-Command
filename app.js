@@ -25,6 +25,16 @@ import {
   unequipExtractedSkill,
   wardLevel,
 } from "./campaign-state.js";
+// Namespace alias for ONE symbol: the companion-capacity resolver. Cycle 9 raises the legion
+// from a baked 3 to a dynamic 3..10 unlock ladder (design/core-loop-legion-spec.md §3), and
+// campaign-state.js owns that ladder as data. app.js must never re-derive it -- a second copy
+// of the ladder is exactly the drift the spec's "ship the ladder as data" clause forbids.
+// Why a namespace alias rather than a named import: the resolver lands in campaign-state.js in
+// the same cycle as this file. A named import of a not-yet-exported binding is a hard
+// module-load failure, which would take the whole app down rather than degrade; the accessor
+// below reads through the namespace so an older campaign-state.js simply keeps the base
+// capacity. Single source of truth either way -- app.js contributes no ladder of its own.
+import * as campaignState from "./campaign-state.js";
 import {
   COMPANION_ROLES, EQUIPMENT_SLOTS, EQUIPMENT_TIERS, FORMATION_STANCES, MAX_FRONT_SLOTS, STANCE_CONFIG,
   WARDEN_SKILL_TREE, WARDEN_STATS, WARDEN_TRAITS, WARDEN_TRAIT_UNLOCK_SEQUENCES,
@@ -73,6 +83,19 @@ const DIRECTION_BY_VECTOR = Object.freeze({
 });
 const JOYSTICK_OCTANTS = Object.freeze(["E", "SE", "S", "SW", "W", "NW", "N", "NE"]);
 const JOYSTICK_DEAD_ZONE_RATIO = 0.22;
+// Analog stick contract (design/core-loop-legion-spec.md §4 "Integer-millis contract"):
+// OCTANT_VECTORS in defense-run-simulation.js are integer millis at magnitude 1000
+// (E:{x:1000,y:0}, NE:{x:707,y:-707}) and movement is
+// `Math.trunc(vector.x * speed / 1000 / TICK_RATE)`. The stick therefore emits the
+// IDENTICAL representation -- integers in [-1000,1000], magnitude clamped to <=1000 --
+// so analog is a strict generalization of the octant table rather than a parallel path,
+// and the simulation never receives a float. Quantization happens HERE, on the client.
+const JOYSTICK_ANALOG_SCALE = 1000;
+// Resend threshold, in the same millis. pointermove fires ~once per frame, so without a
+// step the stick would queue an input every frame for sub-perceptible deltas. 32 millis is
+// ~2x the measured truncation floor (15 millis at the floor commander speed of 4100), so
+// every resend is a speed change the player can actually feel.
+const JOYSTICK_ANALOG_RESEND_STEP = 32;
 const KEY_DIRECTIONS = Object.freeze({
   w: "N", arrowup: "N", d: "E", arrowright: "E",
   s: "S", arrowdown: "S", a: "W", arrowleft: "W",
@@ -235,6 +258,22 @@ function selectedLoadout() {
   return Array.isArray(campaign?.companionLoadout?.prototypeIds)
     ? campaign.companionLoadout.prototypeIds
     : [];
+}
+
+/**
+ * Live companion-deployment capacity: 3 at base, up to 10 once slots are unlocked
+ * (design/core-loop-legion-spec.md §3). campaign-state.js owns the unlock ladder as data and
+ * exposes it through `companionCapacityForCampaign(campaign)`; this is a read-through accessor
+ * with a base-3 fallback, never a second derivation.
+ *
+ * The fallback is permanent, not a migration bridge: capacity is conditionally present all the
+ * way through the run snapshot too, and 3 is the correct default everywhere. That also makes
+ * the base case provably unchanged -- a campaign with nothing unlocked resolves to exactly 3,
+ * so every capacity-derived surface renders byte-identically to the hardcoded behavior.
+ */
+function companionCapacity() {
+  const resolved = campaignState.companionCapacityForCampaign?.(campaign);
+  return Number.isInteger(resolved) && resolved > 0 ? resolved : 3;
 }
 
 function stageFor(stageId) {
@@ -611,21 +650,35 @@ function renderLobbyCinematic() {
     : "결속한 동료가 없어 전략 편성을 적용할 수 없습니다.";
 
   const collection = campaign.companionCollection ?? [];
+  // Capacity is the dynamic 3..10 unlock ladder, not a baked 3. Resolved ONCE here so the
+  // chip `disabled` state, the `n/N` counter and the hint copy below can never disagree.
+  const capacity = companionCapacity();
   const companionRow = overlay.querySelector("#lobby-companion-row");
   companionRow.innerHTML = collection.length
-    ? collection.map((prototypeId) => {
+    // PRE-EXISTING DEFECT (present at HEAD, not introduced by cycle 9): this mapped its element
+    // as an id string, but `campaign.companionCollection` holds RECORDS. `validCampaign()`
+    // (campaign-state.js:359) enforces exactly `{ prototype, evolution, capturedEliteIds }` for
+    // every version in LEGACY_KEYS, and every other reader goes through `record.prototype`
+    // (:226, :320, :360, :602, :665). Reading the record itself made each chip render
+    // `data-companion="[object Object]"`, so `loadout.includes()` was permanently false and
+    // `toggleLobbyCompanion("[object Object]")` could never seat anyone -- the row was dead.
+    // Strict `record.prototype`, deliberately with NO string fallback: a plain-string collection
+    // cannot survive validCampaign(), so a tolerant `?? record` arm would be unreachable today
+    // and would silently mask a future regression in exactly this spot.
+    ? collection.map((record) => {
+      const prototypeId = record.prototype;
       const deployed = loadout.includes(prototypeId);
       const roleName = COMPANION_ROLES[roleForCompanion(prototypeId)]?.name ?? "미분류";
-      const full = !deployed && loadout.length >= 3;
+      const full = !deployed && loadout.length >= capacity;
       return `
         <button type="button" class="lobby-companion-chip rc-lift" data-companion="${escapeHtml(prototypeId)}" aria-pressed="${deployed}" aria-label="${escapeHtml(companionLabel(prototypeId))} ${deployed ? "출전 해제" : "출전 편성"}"${full ? " disabled" : ""}><span class="lobby-companion-glyph" aria-hidden="true">${companionGlyph(prototypeId)}</span><b class="lobby-companion-name">${escapeHtml(companionLabel(prototypeId))}</b><small class="lobby-companion-role">${escapeHtml(roleName)}</small></button>`;
     }).join("")
     : `<p class="lobby-companion-empty">아직 결속한 동료가 없습니다. 전투에서 정예를 처치한 뒤 추출하세요.</p>`;
-  overlay.querySelector("#lobby-companion-count").textContent = `${loadout.length}/3`;
+  overlay.querySelector("#lobby-companion-count").textContent = `${loadout.length}/${capacity}`;
   overlay.querySelector("#lobby-companion-hint").textContent = collection.length
-    ? loadout.length >= 3
+    ? loadout.length >= capacity
       ? "출전 슬롯이 가득 찼습니다. 해제하려면 편성된 동료를 다시 누르세요."
-      : "최대 3명까지 편성할 수 있습니다."
+      : `최대 ${capacity}명까지 편성할 수 있습니다.`
     : "정예 추출로 동료를 확보하면 이곳에서 바로 편성할 수 있습니다.";
 
   strategyRow.querySelectorAll("[data-strategy]").forEach((button) => {
@@ -958,7 +1011,11 @@ function renderGrowthSection(data) {
  * the roster is a picture grid, not a list of names. */
 function renderLegionSection(data) {
   const collection = campaign.companionCollection;
-  const slotsHtml = [0, 1, 2].map((index) => {
+  // Slot count IS the capacity: a literal [0,1,2] renders three slots forever, so an unlocked
+  // 4th..10th slot would have nowhere to appear even once every gate below allows it. At base
+  // capacity 3 this produces exactly [0,1,2] again.
+  const capacity = companionCapacity();
+  const slotsHtml = Array.from({ length: capacity }, (unused, index) => {
     const prototype = data.loadout[index];
     return prototype
       ? `<div class="loadout-slot is-filled">${portraitMarkup(meshRootForCompanion(prototype), companionGlyph(prototype), "rc-portrait rc-portrait-sm")}<strong>${escapeHtml(companionLabel(prototype))}</strong><small>결속 ${index + 1}</small></div>`
@@ -969,7 +1026,7 @@ function renderLegionSection(data) {
     : `<div class="empty-companions"><span class="companion-glyph">?</span><div><strong>결속한 동료가 없습니다.</strong><p>정예를 쓰러뜨린 뒤 <b>추출</b>하세요.</p></div></div>`;
   return deckSectionMarkup("legion", {
     titleId: "companion-title",
-    chipHtml: `<span class="deck-chip deck-chip-count" role="img" aria-label="편성 ${data.loadout.length} / 정원 3"><b>${data.loadout.length}/3</b></span>`,
+    chipHtml: `<span class="deck-chip deck-chip-count" role="img" aria-label="편성 ${data.loadout.length} / 정원 ${capacity}"><b>${data.loadout.length}/${capacity}</b></span>`,
     bodyHtml: `
       <div class="loadout-slots" aria-label="현재 동료 편성">${slotsHtml}</div>
       <div class="companion-grid">${rosterHtml}</div>
@@ -1055,7 +1112,7 @@ function monarchStatusMarkup() {
       </div>
       <dl class="monarch-stat-grid">
         <div><dt>저지 레벨</dt><dd>Lv ${data.level}</dd></div>
-        <div><dt>군단 정원</dt><dd>${data.loadout.length}/3</dd></div>
+        <div><dt>군단 정원</dt><dd>${data.loadout.length}/${companionCapacity()}</dd></div>
         <div><dt>결속 병력</dt><dd>${collection.length}</dd></div>
         <div><dt>추출 기록</dt><dd>${extracted}</dd></div>
       </dl>
@@ -1171,7 +1228,10 @@ function renderCommandDeckLeft() {
     button.addEventListener("click", async () => {
       const prototype = button.dataset.companion;
       const current = selectedLoadout();
-      const next = current.includes(prototype) ? current.filter((entry) => entry !== prototype) : [...current, prototype].slice(0, 3);
+      // Clamp to the LIVE capacity, not a literal 3. This slice is a second, silent hard cap:
+      // with a literal it drops a 4th pick with no error and no feedback, so the chip simply
+      // refuses to take even once the `disabled` state and campaign-state validation allow it.
+      const next = current.includes(prototype) ? current.filter((entry) => entry !== prototype) : [...current, prototype].slice(0, companionCapacity());
       campaign = setCompanionLoadout(campaign, next);
       await persistCampaign("동료 편성을 저장했습니다.");
       renderShell();
@@ -1356,7 +1416,7 @@ function renderSortieTabBody(selected, selectedPresentation, selectedTerrain, se
         </div>
 
         <div class="lobby-guide-grid">
-          <section data-guide-section="companion" aria-labelledby="guide-companion-title"><span aria-hidden="true">01</span><h3 id="guide-companion-title">동료 편성·자율 전투</h3><ol><li><b>군단</b>에서 최대 3명을 출전 편성하세요.</li><li>전열·후열 선호는 다음 출전의 배치 순위에 반영됩니다.</li><li>동료는 자동 교전하고, 멀어지면 지휘관 곁으로 복귀합니다.</li></ol></section>
+          <section data-guide-section="companion" aria-labelledby="guide-companion-title"><span aria-hidden="true">01</span><h3 id="guide-companion-title">동료 편성·자율 전투</h3><ol><li><b>군단</b>에서 해금한 출전 슬롯만큼 편성하세요.</li><li>전열·후열 선호는 다음 출전의 배치 순위에 반영됩니다.</li><li>동료는 자동 교전하고, 멀어지면 지휘관 곁으로 복귀합니다.</li></ol></section>
           <section data-guide-section="extraction" aria-labelledby="guide-extraction-title"><span aria-hidden="true">02</span><h3 id="guide-extraction-title">정예 추출 · ARISE</h3><ol><li>정예를 처치한 뒤 <b>Bind 시작</b>을 누르세요.</li><li>추출 지점 안에서 홀드가 끝날 때까지 버티세요.</li><li><b>정예 추출</b>이 준비되면 눌러 영구 동료로 결속하세요.</li></ol></section>
           <section data-guide-section="skills" aria-labelledby="guide-skills-title"><span aria-hidden="true">03</span><h3 id="guide-skills-title">공격·스킬·쿨다운</h3><ol><li><b>공격</b> 버튼은 언제든 기본 공격을 보냅니다.</li><li>준비된 액티브 스킬을 누르면 즉시 사용합니다.</li><li>레벨업 선택은 이번 런, 성장 탭의 스킬 노드는 영구 적용입니다.</li></ol></section>
         </div>
@@ -1832,6 +1892,10 @@ export class BattleSession {
     this.controlPointerId = null;
     this.controlPointerMode = null;
     this.joystickDirection = "IDLE";
+    // Last analog vector emitted by the stick, or null when this session has only ever sent
+    // octant strings (keyboard/buttons). Doubles as the "may this session emit the analog
+    // MOVE form" flag -- see resetJoystick() for why that matters to digest identity.
+    this.joystickAnalog = null;
     this.feedbackTick = null;
     this.feedbackEventKeys = new Set();
     this.feedbackTimer = null;
@@ -2347,11 +2411,47 @@ export class BattleSession {
     this.attackFeedbackTimer = setTimeout(() => control.removeAttribute("data-feedback"), 180);
   }
 
+  /**
+   * The stick is available on ANY coarse pointer, portrait AND landscape
+   * (design/core-loop-legion-spec.md §4: "Availability | touch landscape only | any coarse
+   * pointer, portrait and landscape"). The former
+   * `(pointer: coarse) and (orientation: landscape)` + `data-defense-portrait !== "true"`
+   * gate is what made a phone held upright fall back to the 5-button octant pad; removing
+   * it is the point of the change. The five buttons stay mounted and keyboard-focusable
+   * behind the stick at every viewport, so no capability is lost either way.
+   *
+   * The second condition is not an orientation gate, it is a laid-out check: the stick's
+   * geometry (`getBoundingClientRect`) IS the analog input space, so a surface that CSS has
+   * not given a box yet cannot produce a meaningful vector -- a 0x0 rect would report full
+   * deflection toward the viewport origin and, worse, would swallow the `[data-move]`
+   * button presses that are the fallback. Deferring to real layout means this gate needs no
+   * further change when the stick's portrait visibility lands: whoever owns that CSS turns
+   * the analog contract on in portrait by giving the element a box.
+   */
   joystickActive() {
-    return Boolean(globalThis.matchMedia?.("(pointer: coarse) and (orientation: landscape)").matches)
-      && document.documentElement.dataset.defensePortrait !== "true";
+    if (!globalThis.matchMedia?.("(pointer: coarse)").matches) return false;
+    const joystick = this.movementControls?.querySelector("[data-joystick]");
+    if (!joystick) return false;
+    const rect = joystick.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
   }
 
+  /**
+   * Continuous analog stick. Emits `{ octant, analog: { x, y } }` where x/y are INTEGER
+   * millis in [-1000,1000] with `hypot(x,y) <= 1000` -- the same representation
+   * OCTANT_VECTORS already uses, so the simulation's `Math.trunc(v.x * speed / 1000 /
+   * TICK_RATE)` stays integer-in/integer-out and determinism is preserved by construction.
+   *
+   * `octant` remains populated with the NEAREST octant string for backward compatibility:
+   * `processInput` reads `input.payload?.octant`, the public `data-defense-move` dataset
+   * contract stays an octant string, and any consumer that ignores `analog` behaves exactly
+   * as before.
+   *
+   * Dead zone keeps the existing `radius * 0.22` physical threshold (unchanged feel, and
+   * what tests/progression-mobile-ui-browser.cjs measures); above it the magnitude scales
+   * continuously with deflection depth, so walk-vs-run emerges from how far the thumb
+   * pushes instead of being a single always-full-speed value.
+   */
   updateJoystick(event) {
     const joystick = this.movementControls?.querySelector("[data-joystick]");
     const knob = joystick?.querySelector("[data-joystick-knob]");
@@ -2369,13 +2469,32 @@ export class BattleSession {
     const clampedY = dy * scale;
     knob.style.setProperty("--joystick-x", `${clampedX}px`);
     knob.style.setProperty("--joystick-y", `${clampedY}px`);
-    const direction = distance < radius * JOYSTICK_DEAD_ZONE_RATIO
+    const idle = distance < radius * JOYSTICK_DEAD_ZONE_RATIO;
+    // Deflection depth in [0,1] against the knob's own travel limit, then quantized to
+    // integer millis. Math.trunc (not round) guarantees the clamped magnitude can never
+    // exceed 1000 through per-axis rounding-up.
+    const deflection = idle ? 0 : Math.min(1, travel / maxTravel);
+    const analog = idle
+      ? { x: 0, y: 0 }
+      : {
+        x: Math.trunc((clampedX / travel) * deflection * JOYSTICK_ANALOG_SCALE),
+        y: Math.trunc((clampedY / travel) * deflection * JOYSTICK_ANALOG_SCALE),
+      };
+    const direction = idle
       ? "IDLE"
       : JOYSTICK_OCTANTS[(Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) + 8) % 8];
     this.movementControls.dataset.joystickDirection = direction;
-    if (direction === this.joystickDirection) return;
+    const previous = this.joystickAnalog;
+    const moved = !previous
+      || Math.abs(previous.x - analog.x) >= JOYSTICK_ANALOG_RESEND_STEP
+      || Math.abs(previous.y - analog.y) >= JOYSTICK_ANALOG_RESEND_STEP;
+    // Re-send on an octant change (the old trigger) or on a perceptible magnitude change.
+    // The IDLE boundary is always an octant change -- `idle` drives both `direction` and
+    // `analog`, so a zeroed vector and the "IDLE" octant are the same event.
+    if (direction === this.joystickDirection && !moved) return;
     this.joystickDirection = direction;
-    this.send("MOVE", direction);
+    this.joystickAnalog = analog;
+    this.send("MOVE", { octant: direction, analog });
     if (direction !== "IDLE" && this.inLobby()) this.suppressLobbyShowcase();
   }
 
@@ -2385,7 +2504,15 @@ export class BattleSession {
     knob?.style.removeProperty("--joystick-y");
     if (this.movementControls) this.movementControls.dataset.joystickDirection = "IDLE";
     this.joystickDirection = "IDLE";
-    if (sendIdle) this.send("MOVE", "IDLE");
+    // Digest safety (spec §4 "conditional presence"): only a run that has actually received
+    // analog input may carry `commander.moveAnalog`. resetJoystick() also fires on blur and
+    // visibility loss for keyboard/button-only sessions, so the analog IDLE form is emitted
+    // ONLY when this session already sent an analog vector -- otherwise a desktop keyboard
+    // run would gain the field and its serialized commander would stop being byte-identical.
+    const hadAnalog = Boolean(this.joystickAnalog);
+    this.joystickAnalog = null;
+    if (!sendIdle) return;
+    this.send("MOVE", hadAnalog ? { octant: "IDLE", analog: { x: 0, y: 0 } } : "IDLE");
   }
 
   onMoveControlDown(event) {
@@ -2519,7 +2646,17 @@ export class BattleSession {
     this.run = queueInput(this.run, type, payload);
     const inputSeq = ++this.inputSeq;
     this.surface.dataset.defenseInputSeq = String(inputSeq);
-    if (type === "MOVE") this.surface.dataset.defenseMove = payload;
+    // `data-defense-move` is a PUBLIC octant-string contract (asserted by
+    // tests/defense-survivor-browser.cjs, progression-mobile-ui-browser.cjs and the phone
+    // HUD contract). The analog MOVE payload is an object, so read its octant out rather
+    // than letting it stringify to "[object Object]". The analog vector is mirrored
+    // alongside as its own attribute so the integer-millis contract stays observable.
+    if (type === "MOVE") {
+      this.surface.dataset.defenseMove = typeof payload === "string" ? payload : payload?.octant ?? "IDLE";
+      const analog = typeof payload === "string" ? null : payload?.analog ?? null;
+      if (analog) this.surface.dataset.defenseMoveAnalog = `${analog.x},${analog.y}`;
+      else delete this.surface.dataset.defenseMoveAnalog;
+    }
     if (type === "ATTACK") this.surface.dataset.defenseAttack = String(inputSeq);
     if (type === "SKILL_CAST" || type === "SKILL_SELECTED" || type === "REWARD_SELECTED") {
       this.surface.dataset.defenseSkill = payload?.skillId ?? payload?.rewardId ?? payload ?? "";

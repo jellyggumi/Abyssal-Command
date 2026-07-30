@@ -3158,6 +3158,103 @@ html[data-defense-started="true"] .idle-return-toast {
   }
 }
 
+/* Cycle 9 — portrait analog cutover.
+
+   The stick's JS contract (app.js `joystickActive()` / `updateJoystick`) is
+   orientation-agnostic: it gates on `(pointer: coarse)` plus a laid-out
+   `[data-joystick]` box. It was measured correct in portrait while still
+   dormant, because `.virtual-joystick { display: none }` above is lifted ONLY
+   inside the landscape block, and every rule there is additionally gated on
+   `html[data-defense-portrait="false"]`. TWO independent gates, so widening the
+   media query alone would not have shown the stick on an upright phone.
+
+   This block grants the box in portrait and nothing else. It deliberately does
+   NOT touch `.defense-bottom`'s portrait grid, the safe-edge insets, or any
+   other bottom-bar child: those geometries are locked by
+   tests/defense-hud-responsive-browser.cjs. Visual values are copied from the
+   landscape rules verbatim so the stick has one visual language, not two.
+
+   The five `[data-move]` buttons stay mounted, keyboard-focusable, and
+   focus-visible-revealed underneath, exactly as in landscape — the stick is an
+   additive surface, never a replacement, so no input capability is lost. */
+@media (pointer: coarse) and (orientation: portrait) {
+  html[data-defense-portrait="true"] .defense-bottom > #movement-actions {
+    position: relative;
+    display: block;
+    width: 7.25rem;
+    height: 7.25rem;
+    max-width: none;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  html[data-defense-portrait="true"] .virtual-joystick {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 2px solid rgb(137 173 201 / .62);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, rgb(30 48 67 / .82) 0 18%, transparent 19%),
+      repeating-conic-gradient(from 22.5deg, rgb(129 216 255 / .08) 0 43deg, transparent 43deg 45deg),
+      radial-gradient(circle, rgb(11 21 36 / .94), rgb(4 8 17 / .9));
+    box-shadow:
+      inset 0 0 0 .35rem rgb(3 7 17 / .62),
+      inset 0 0 1.4rem rgb(89 190 232 / .18),
+      0 .55rem 1.4rem rgb(0 0 0 / .52);
+  }
+  html[data-defense-portrait="true"] .virtual-joystick-rune {
+    position: absolute;
+    inset: 16%;
+    border: 1px solid rgb(221 200 105 / .22);
+    transform: rotate(45deg);
+    pointer-events: none;
+  }
+  html[data-defense-portrait="true"] .virtual-joystick-knob {
+    --joystick-x: 0px;
+    --joystick-y: 0px;
+    position: relative;
+    z-index: 1;
+    width: 44px;
+    height: 44px;
+    border: 2px solid #e5d48a;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 28%, #8bdcff, #304c67 46%, #101a28 72%);
+    box-shadow: inset 0 0 .65rem rgb(255 255 255 / .2), 0 0 1rem rgb(111 208 255 / .38), 0 .35rem .7rem #000;
+    transform: translate3d(var(--joystick-x), var(--joystick-y), 0);
+    transition: transform 45ms linear;
+    pointer-events: none;
+  }
+  html[data-defense-portrait="true"] #movement-actions[data-joystick-direction="IDLE"] .virtual-joystick-knob {
+    border-color: rgb(189 202 213 / .72);
+    box-shadow: inset 0 0 .65rem rgb(255 255 255 / .15), 0 .35rem .7rem #000;
+  }
+  html[data-defense-portrait="true"] #movement-actions > button[data-move] {
+    position: absolute;
+    z-index: 1;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+  html[data-defense-portrait="true"] #movement-actions > button[data-move="N"] { top: 0; left: calc(50% - 22px); }
+  html[data-defense-portrait="true"] #movement-actions > button[data-move="S"] { bottom: 0; left: calc(50% - 22px); }
+  html[data-defense-portrait="true"] #movement-actions > button[data-move="W"] { top: calc(50% - 22px); left: 0; }
+  html[data-defense-portrait="true"] #movement-actions > button[data-move="E"] { top: calc(50% - 22px); right: 0; }
+  html[data-defense-portrait="true"] #movement-actions > button[data-move="IDLE"] { top: calc(50% - 22px); left: calc(50% - 22px); }
+  html[data-defense-portrait="true"] #movement-actions > button[data-move]:focus-visible {
+    z-index: 3;
+    opacity: 1;
+  }
+}
+
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 480px) {
   html[data-defense-portrait="false"] .defense-top {
     top: max(.2rem, var(--defense-safe-top));
