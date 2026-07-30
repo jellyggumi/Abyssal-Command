@@ -294,8 +294,9 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
   .stage-progression-control { grid-template-columns: 1fr; }
 }
 /* SortieFab: fixed bottom-centre, thumb-zone anchored. z-index 6 puts it above both deck
-   columns (4) so the single most important pre-run action is never occluded by the ops
-   strip on a portrait viewport; it stays below the pause overlay. */
+   columns (4); it stays below the pause overlay. Position is load-bearing for the browser
+   contracts (sortie centred clears the right-side .lobby-setup panel at landscape widths), so
+   the depth pill is placed relative to it rather than the reverse. */
 .sortie-fab {
   position: fixed;
   z-index: 6;
@@ -314,8 +315,9 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
 }
 .sortie-fab small { color: #c6dded; }
 .sortie-fab b { font-size: 1.25rem; }
-/* AbyssDepthControl (wiki 2026-07-30 GAP-A): run-scoped difficulty-ladder selector, a fixed pill
-   sitting just above the SortieFab so 심도 is chosen right at 전투개시. Pre-run only. */
+/* AbyssDepthControl: run-scoped difficulty selector, a compact pill (eyebrow over select).
+   Default (<=1099px): centred just above the SortieFab. Desktop (>=1100px, section below):
+   moves to the LEFT of the SortieFab on the same line. Pre-run only. */
 .abyss-depth-control {
   position: fixed;
   z-index: 6;
@@ -323,15 +325,31 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
   transform: translateX(-50%);
   bottom: calc(5.6rem + env(safe-area-inset-bottom));
   display: flex;
-  align-items: center;
-  gap: .5rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: .2rem;
   padding: .3rem .6rem;
   border: 1px solid var(--canon-cinder-ember, #f3592c);
   border-radius: 10px;
-  max-width: min(92vw, 26rem);
+  max-width: min(92vw, 22rem);
 }
 .abyss-depth-eyebrow { font-size: .62rem; font-weight: 800; letter-spacing: .06em; color: #ffd7c4; white-space: nowrap; }
-.abyss-depth-control select { font-size: .8rem; font-weight: 700; background: rgba(8, 12, 20, .6); color: #fff2ea; border: 1px solid var(--rc-panel-border, rgba(150, 156, 180, .3)); border-radius: 8px; padding: .2rem .4rem; }
+.abyss-depth-control select { font-size: .8rem; font-weight: 700; background: rgba(8, 12, 20, .6); color: #fff2ea; border: 1px solid var(--rc-panel-border, rgba(150, 156, 180, .3)); border-radius: 8px; padding: .2rem .4rem; min-width: 11rem; }
+/* Desktop (>=1440px): the depth pill leaves the centred stack and sits to the LEFT of the
+   viewport-centred SortieFab, anchored to the CTA's left edge (right: 50% + half-CTA + gap) so
+   it tracks the CTA and never overlaps it. Gated at 1440 because a 26rem centred CTA leaves no
+   room beside it below that; narrower desktops keep the stacked-above-centre layout. The pill
+   shrinks to its content (~9rem), clearing the left deck with room to spare. */
+@media (min-width: 1440px) {
+  .abyss-depth-control {
+    left: auto;
+    right: calc(50% + 13rem + .6rem);
+    transform: none;
+    bottom: max(.9rem, env(safe-area-inset-bottom));
+    max-width: 13rem;
+  }
+  .abyss-depth-control select { min-width: 8rem; }
+}
 /* IdleReturnToast (component-contracts.md §3.4): top-center transient notice, same visual
    language as .edge-card (border/background) but NOT .edge-card itself -- that class is
    positioned relative to #defense-battle-surface; this toast is a shell-level sibling and
@@ -1714,7 +1732,7 @@ body {
   grid-template-rows: auto 1fr auto;
   grid-template-areas:
     "head boss"
-    "objective ."
+    "objective objective"
     "dialogue setup";
   gap: clamp(.5rem, 1.4vw, 1rem);
   padding:
@@ -1786,6 +1804,7 @@ body {
 .lobby-objective {
   grid-area: objective;
   align-self: center;
+  justify-self: center;
   width: min(100%, 25rem);
   padding: .7rem .8rem;
   border: 1px solid var(--rc-panel-border);
@@ -2376,22 +2395,26 @@ button:disabled {
   .lobby-dialogue-bubble::before { display: none; }
   .lobby-dialogue-text { font-size: .68rem; }
 
+  /* Mobile band (deck-left..viewport edge). sortie sits at the band bottom; depth stacks just
+     above it. Both re-anchored off #command-deck-left so nothing overflows the ~218px width. */
   .sortie-fab {
+    left: calc(var(--deck-left-width) + .5rem);
     right: .5rem;
     bottom: calc(42dvh + .55rem);
-    left: calc(var(--deck-left-width) + .5rem);
     width: auto;
     min-height: 64px;
     transform: none;
   }
-  /* Stack on mobile: the 218px band (deck-left..right) is too narrow for eyebrow + full option
-     text side-by-side, so a row with justify-center bled the eyebrow into the left deck and the
-     select off-screen. Column keeps both inside; bottom is fixed so height grows upward, clear of
-     the SortieFab below. */
-  .abyss-depth-control { left: calc(var(--deck-left-width) + .5rem); right: .5rem; transform: none; bottom: calc(42dvh + 5.4rem); max-width: none; flex-direction: column; align-items: stretch; gap: .2rem; }
-  .abyss-depth-control select { width: 100%; min-width: 0; }
   .sortie-fab:active { transform: scale(.98); }
   .sortie-action-label { font-size: .82rem; white-space: normal; }
+  .abyss-depth-control {
+    left: calc(var(--deck-left-width) + .5rem);
+    right: .5rem;
+    bottom: calc(42dvh + 5.4rem);
+    transform: none;
+    max-width: none;
+  }
+  .abyss-depth-control select { width: 100%; min-width: 0; }
 }
 
 @media (max-width: 480px) {
