@@ -360,6 +360,6 @@ next-beat: 독립 사람 플레이 판정으로 G4/G7/G8 재측정
 
 ### 9.3 릴리스 게이트
 
-- 구현 commit SHA / remote branch: **[WAIT]**
-- GitHub Pages workflow / production URL smoke: **[WAIT]**
-- 위 두 `[WAIT]`는 검증 결과를 얻은 뒤 같은 `current/` manifest에서 갱신한다.
+- 구현 commit SHA / remote branch: `b29f54b846e2f54938a6fc4eda4a2eaff72da1d1` / `origin/main`
+- GitHub Pages workflow: run `30512950567` **SUCCESS** — `https://github.com/jellyggumi/Abyssal-Lantern/actions/runs/30512950567`
+- Production: `https://jellyggumi.github.io/Abyssal-Lantern/`; `version.json.candidate_sha`가 구현 SHA와 일치한다. 배포 로비 smoke는 미니맵 노드 **3**, Canvas **1**, horizontal overflow **0**, console error **0**, page error **0**을 기록했다.
