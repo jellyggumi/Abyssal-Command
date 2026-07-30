@@ -98,6 +98,10 @@ async function openPage({
     reducedMotion: "reduce",
     viewport,
   });
+  // Same measured slowdown as the phone-HUD suite: this file's test 4 took 108 s in run #14 and
+  // its tests 1 and 4 timed out at Playwright's 30000 ms default in #14/#15. See
+  // tests/defense-phone-battle-hud-browser.test.cjs:48 for the full reasoning.
+  context.setDefaultTimeout(90_000);
   try {
     const page = await context.newPage();
     const errors = [];
@@ -154,7 +158,13 @@ async function openPage({
         });
       });
     }
-    await page.goto("/index.html", { waitUntil: "networkidle" });
+    // `domcontentloaded`, not `networkidle`: app.js:4347 registers the service worker with
+    // `updateViaCache: "none"`, so every load revalidates over the network while a continuous
+    // WebGL RAF loop keeps the page busy. On a slow CI runner (rafMean ~95 ms, ~10 fps) the
+    // 500 ms zero-network window `networkidle` needs may never open inside the 30 s timeout.
+    // The very next line waits on `[data-defense-ready="true"]`, which is the app's own explicit
+    // readiness signal and a strictly stronger guarantee than a network heuristic.
+    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
     const surface = page.locator('#defense-battle-surface[data-defense-ready="true"]');
     await surface.waitFor({ state: "visible" });
     if (rendererProbe) {
@@ -219,7 +229,12 @@ test("story rewards drive extracted-skill and appearance controls through persis
     await run.page.waitForFunction(() => document.querySelector(".deck-subhead")?.textContent?.includes("추출 액티브 · 0/3"));
     assert.deepEqual((await readStoredStoryProgress(run.page)).activeSkillLoadout, [], "unequipping must persist without removing the unlocked skill");
 
-    await run.page.reload({ waitUntil: "networkidle" });
+    // See the goto above: `networkidle` is unreliable here. This is the site that timed out in
+    // CI runs #14 and #15 (`page.reload: Timeout 30000ms exceeded waiting for networkidle`).
+    // A reload is strictly worse than a first load for this: the service worker is already
+    // active and re-fetches in the background, so the network may never fall quiet at all.
+    // The following locator click and getAttribute calls auto-wait, so no coverage is lost.
+    await run.page.reload({ waitUntil: "domcontentloaded" });
     await run.page.locator('[data-deck-section="skills"]').click();
     assert.equal(await run.page.locator('[data-extracted-skill-toggle="rift-bolt"]').getAttribute("aria-pressed"), "false");
     assert.match(await run.page.locator('[data-extracted-skill-upgrade="rift-bolt"]').textContent() ?? "", /Lv 3/, "reload must render the next level from persisted level 2");

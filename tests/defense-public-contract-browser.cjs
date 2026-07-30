@@ -74,7 +74,10 @@ async function run() {
       if (!localStorage.getItem(key)) localStorage.setItem(key, encoded);
     }, { encoded: campaign.encoded, now: NOW, key: STORAGE_KEY });
 
-    await page.goto("/index.html", { waitUntil: "networkidle" });
+    // `domcontentloaded`, not `networkidle` -- app.js:4347 registers the service worker with
+    // `updateViaCache: "none"`, so loads revalidate while a continuous WebGL RAF loop keeps the
+    // page busy. The next line waits on the toast becoming visible, which is deterministic.
+    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
     const idleSummary = page.locator("#idle-return-toast");
     await idleSummary.waitFor({ state: "visible" });
     assert.equal(await idleSummary.getAttribute("data-idle-return-outcome"), "SETTLED", "initialization must visibly settle a due offline return");
@@ -110,7 +113,11 @@ async function run() {
     assert.equal(await gateIntegrity.getAttribute("data-integrity-current"), String(expectedGateMaximum), "the battle UI must project the Gate’s current integrity");
     assert.equal(await gateIntegrity.getAttribute("data-integrity-max"), String(expectedGateMaximum), "the battle UI must project the Gate’s maximum integrity");
     assert.match(await gateIntegrity.textContent() ?? "", new RegExp(expectedGateIntegrity), "the battle UI must expose the Gate’s current and maximum integrity");
-    await page.reload({ waitUntil: "networkidle" });
+    // Latent twin of the reload that timed out in CI at progression-mobile-ui-browser.cjs:222.
+    // Not currently exercised by the browser_contract job, but it carries the identical defect:
+    // on a reload the service worker is already active and re-fetches in the background, so the
+    // network may never fall quiet. The following waitFor is deterministic.
+    await page.reload({ waitUntil: "domcontentloaded" });
     await idleSummary.waitFor({ state: "visible" });
     assert.notEqual(await idleSummary.getAttribute("data-idle-return-outcome"), "SETTLED", "reloading the same returned interval must not claim it again");
     assert.equal(await idleSummary.getAttribute("data-idle-return-total"), String(campaign.expectedAward), "a duplicate return check must preserve the settled canonical total");

@@ -45,6 +45,18 @@ function staticServer() {
 
 async function openUi(viewport, { forceCanvasMotionProbe = false, reducedMotion = "reduce", syntheticFrames = false } = {}) {
   const context = await browser.newContext({ baseURL: hosting.url, reducedMotion, viewport });
+  // Every CI failure in this file has been a 30000 ms timeout -- Playwright's DEFAULT, never an
+  // assertion. Runs #14 and #15 lost test 10, run #16 lost test 3: a different test each time,
+  // which is a suite racing the clock rather than three separate bugs. The runner measures
+  // rafMean ~95.8 ms against ~16 ms locally (~6x slower, ~10 fps), and this suite took 253 s for
+  // 12 tests in #15. Tests that wait on `dataset.defenseMove` / `defenseState` need input to
+  // round-trip through the simulation tick, so they starve first.
+  //
+  // 90 s restores the original headroom at that measured slowdown without making a genuine hang
+  // invisible. Set on the context so it covers all nine waitForFunction sites and every locator
+  // auto-wait at once. The explicit `{ timeout: 2400 }` at the feedback-clear probe is a
+  // deliberate tight bound and is preserved -- an explicit timeout wins over the default.
+  context.setDefaultTimeout(90_000);
   try {
     const page = await context.newPage();
     if (forceCanvasMotionProbe) {
@@ -96,7 +108,13 @@ async function openUi(viewport, { forceCanvasMotionProbe = false, reducedMotion 
         };
       });
     }
-    await page.goto("/index.html", { waitUntil: "networkidle" });
+    // `domcontentloaded`, not `networkidle`: app.js:4347 registers the service worker with
+    // `updateViaCache: "none"`, so loads revalidate over the network while a continuous WebGL
+    // RAF loop keeps the page busy; on a slow CI runner the 500 ms quiet window may never open.
+    // This file failed in BOTH run #15 (test 10) and run #16 (test 3) -- different assertions
+    // each time, which is the signature of a fragile wait rather than a broken contract.
+    // The next line waits on `[data-defense-ready="true"]`, the app's explicit readiness signal.
+    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
     const surface = page.locator('#defense-battle-surface[data-defense-ready="true"]');
     await surface.waitFor({ state: "visible" });
     assert.equal(await surface.getAttribute("data-stage-id"), "cinder-span", "a fresh browser must select Cinder Span");
