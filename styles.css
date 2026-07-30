@@ -321,7 +321,7 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
   z-index: 6;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(3.9rem + env(safe-area-inset-bottom));
+  bottom: calc(5.6rem + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   gap: .5rem;
@@ -2376,7 +2376,7 @@ button:disabled {
     min-height: 64px;
     transform: none;
   }
-  .abyss-depth-control { left: calc(var(--deck-left-width) + .5rem); right: .5rem; transform: none; bottom: calc(42dvh + 3.5rem); max-width: none; justify-content: center; }
+  .abyss-depth-control { left: calc(var(--deck-left-width) + .5rem); right: .5rem; transform: none; bottom: calc(42dvh + 5.4rem); max-width: none; justify-content: center; }
   .sortie-fab:active { transform: scale(.98); }
   .sortie-action-label { font-size: .82rem; white-space: normal; }
 }
