@@ -129,9 +129,12 @@ const profiles = [
     gameplay: {
       bounds: bounds(600, 23400, 800, 11200),
       obstacles: [
+        obstacle("cinder-span:relay-debris-north", 5000, 10400, 500, "cinder-span:relay-debris-north-prop"),
         obstacle("cinder-span:drowned-forge-arch", 12600, 2800, 850, "cinder-span:forge-arch"),
         obstacle("cinder-span:collapsed-parapet", 13200, 9300, 900, "cinder-span:collapsed-parapet-prop"),
+        obstacle("cinder-span:relay-debris-south", 15000, 1500, 540, "cinder-span:relay-debris-south-prop"),
         obstacle("cinder-span:west-ash-wall", 19000, 4400, 940, "cinder-span:west-ash-wall-prop"),
+        obstacle("cinder-span:east-ash-wall", 20800, 9900, 700, "cinder-span:east-ash-wall-prop"),
       ],
       surfaces: [],
       meshColliders: [meshCollider("cinder-span:walkable-support", [

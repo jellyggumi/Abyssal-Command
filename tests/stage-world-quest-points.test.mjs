@@ -27,9 +27,12 @@ const EXPECTED_WORLD_TOPOLOGY = {
       "cinder-span:gate-beacon-prop",
     ],
     obstacles: [
+      "cinder-span:relay-debris-north",
       "cinder-span:drowned-forge-arch",
       "cinder-span:collapsed-parapet",
+      "cinder-span:relay-debris-south",
       "cinder-span:west-ash-wall",
+      "cinder-span:east-ash-wall",
     ],
     meshColliders: [["cinder-span:walkable-support", [
       [[600, 800, 0], [23400, 800, 0], [23400, 11200, 0]],
