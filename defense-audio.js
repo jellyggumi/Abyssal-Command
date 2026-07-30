@@ -1,4 +1,9 @@
-import { AUDIO_CUES } from "./defense-catalog.js";
+// `slabMaterialAt` is the authored slab lookup, canonically homed in defense-catalog.js beside
+// STAGE_SLABS (director ruling v9 R38 — NOT stage-world-catalog.js, which has no such export).
+// It is a pure read of a frozen table: no simulation state, no RNG, first-match-wins seam
+// ownership. Importing it here makes per-surface footsteps live without waiting on an app.js
+// injection; setSurfaceResolver() remains available to override or disable it.
+import { AUDIO_CUES, slabMaterialAt } from "./defense-catalog.js";
 
 const MAX_AUDIO_NODES = 64;
 const MAX_TRANSIENT_NODES = 48;
@@ -13,6 +18,14 @@ const AMBIENT_NARRATION_PRIORITY = 45;
 const CRITICAL_AUDIO_PRIORITY = 80;
 const MAX_ACTIVE_NARRATIONS = 8;
 const MAX_STORY_NARRATION_KEYS = 32;
+// Footstep cadence. The simulation already computes this exact interval for its own `cue` field
+// (defense-run-simulation.js:2886 `run.tick % 12 === 0`); deriving the gate from `event.tick`
+// mirrors it without reading `event.cue`, keeping AUDIO_EVENT_POLICY the sole event->cue
+// authority. 60 / 12 = 5.00 steps/s while a direction is held, frame-rate independent.
+const FOOTSTEP_TICK_INTERVAL = 12;
+// Presentation-derived pre-expiry warning threshold. Shared derivation with app.js's
+// BUFF_WARN_TICKS: one comparison, two consumers, so the buff strip and the sting cannot disagree.
+const BUFF_WARN_TICKS = 180;
 
 const tone = (waveform, frequency, endFrequency, duration, gain, delay = 0, attack = 0.008) =>
   Object.freeze({ waveform, frequency, endFrequency, duration, gain, delay, attack });
@@ -32,6 +45,18 @@ const SYNTHETIC_CUES = Object.freeze({
   objectiveComplete: syntheticCue("objective-complete", "triangle", 260, 0.28),
   bossPhase: syntheticCue("boss-phase", "sawtooth", 82, 0.42),
   deathRetry: syntheticCue("death-retry", "triangle", 146, 0.34),
+  dodgeSlip: syntheticCue("dodge-slip", "sine", 240, 0.045),
+  dropAppear: syntheticCue("drop-appear", "sine", 520, 0.14),
+  dropExpire: syntheticCue("drop-expire", "sine", 300, 0.16),
+  buffApply: syntheticCue("buff-apply", "triangle", 300, 0.2),
+  buffRefresh: syntheticCue("buff-refresh", "triangle", 330, 0.11),
+  buffExpire: syntheticCue("buff-expire", "sine", 420, 0.17),
+  buffWarning: syntheticCue("buff-warning", "sine", 360, 0.09),
+  shadowArrival: syntheticCue("shadow-arrival", "sawtooth", 62, 0.34),
+  gimmickArm: syntheticCue("gimmick-arm", "sawtooth", 128, 0.26),
+  terrainDeform: syntheticCue("terrain-deform", "sawtooth", 84, 0.42),
+  gimmickMirror: syntheticCue("gimmick-mirror", "sine", 740, 0.22),
+  gimmickSettle: syntheticCue("gimmick-settle", "triangle", 168, 0.14),
 });
 
 const byId = Object.freeze(Object.fromEntries(
@@ -178,7 +203,99 @@ const CUE_PROFILES = Object.freeze({
     tone("triangle", 146, 219, 0.34, 0.065),
     tone("sine", 219, 328.5, 0.28, 0.032, 0.055),
   ]),
+  // Dodge (§3.3). A dodged projectile previously played impact-hit, sounding exactly like a
+  // landed hit while the renderer played `avoid`. Rising slip-past then a settling tail, so it
+  // differs from attack-miss in contour, layer count and onset.
+  "dodge-slip": Object.freeze([
+    tone("sine", 240, 380, 0.045, 0.03, 0, 0.003),
+    tone("triangle", 190, 128, 0.075, 0.02, 0.03, 0.004),
+  ]),
+  // Drop family (§4.2). Base is the `common` reading; rarity raises layer count 1->2->3->4 via
+  // CUE_VARIANTS, so tier is audible by density rather than loudness alone.
+  "drop-appear": Object.freeze([
+    tone("sine", 520, 660, 0.14, 0.055, 0, 0.005),
+  ]),
+  "drop-expire": Object.freeze([
+    tone("sine", 300, 210, 0.16, 0.038, 0, 0.006),
+  ]),
+  // Buff family (§4.3). buff-apply rises and buff-expire falls across the same register, so gain
+  // and loss are inverses and readable without the HUD. buff-refresh is a shallow 20% rise
+  // against apply's 50%.
+  "buff-apply": Object.freeze([
+    tone("triangle", 300, 450, 0.2, 0.07, 0, 0.006),
+    tone("sine", 450, 600, 0.15, 0.034, 0.04, 0.005),
+  ]),
+  "buff-refresh": Object.freeze([
+    tone("triangle", 330, 396, 0.11, 0.04, 0, 0.006),
+  ]),
+  "buff-expire": Object.freeze([
+    tone("sine", 420, 264, 0.17, 0.042, 0, 0.005),
+  ]),
+  // Presentation-only cue (§4.4): no simulation event maps to it, exactly like camera-clamp.
+  "buff-warning": Object.freeze([
+    tone("sine", 360, 300, 0.09, 0.026, 0, 0.005),
+  ]),
+  // Spawn family (§4.5). SHADOW only; BASIC stays silent because 10 concurrent BASIC spawns
+  // would consume 10 of 12 voices in one tick and starve every damage cue in the same batch.
+  // 31-62Hz sub register, disjoint from warning-pulse's 170-255Hz, so a midboss reads as one
+  // layered arrival rather than two competing stings.
+  "shadow-arrival": Object.freeze([
+    tone("sawtooth", 62, 41, 0.34, 0.062, 0, 0.018),
+    tone("sine", 31, 26, 0.4, 0.048, 0.03, 0.022),
+  ]),
+  // Gimmick family (§4.6). gimmick-arm rises, terrain-deform falls into a sub: arm and fire are
+  // inverses. terrain-deform is the only registry cue with three descending layers reaching 22Hz,
+  // so it cannot be confused with boss-spawned (which also reaches 36Hz but rises in layer 3).
+  "gimmick-arm": Object.freeze([
+    tone("sawtooth", 128, 192, 0.26, 0.052, 0, 0.02),
+    tone("sine", 64, 96, 0.3, 0.03, 0.03, 0.024),
+  ]),
+  "terrain-deform": Object.freeze([
+    tone("sawtooth", 84, 36, 0.42, 0.08, 0, 0.008),
+    tone("square", 42, 28, 0.36, 0.044, 0.02, 0.01),
+    tone("sine", 28, 22, 0.5, 0.052, 0.05, 0.014),
+  ]),
+  "gimmick-mirror": Object.freeze([
+    tone("sine", 740, 494, 0.22, 0.046, 0, 0.004),
+    tone("triangle", 494, 370, 0.16, 0.026, 0.03, 0.004),
+  ]),
+  "gimmick-settle": Object.freeze([
+    tone("triangle", 168, 126, 0.14, 0.034, 0, 0.008),
+  ]),
 });
+
+// Buff stat differentiation (§4.3). Seven stats with one cue would be undifferentiated; rather
+// than seven cue ids, buff-apply and buff-expire take a base-frequency scalar per stat. Ratios are
+// >= 12% apart. This table is the single source of truth — the 14 variant profiles below are
+// derived from it, so a retune changes one number, not fourteen frozen arrays.
+const BUFF_STAT_PITCH = Object.freeze({
+  basicDamage: 1,
+  gateMaxIntegrity: 0.75,
+  pickupRange: 1.2,
+  cooldownScaleBp: 1.35,
+  moveSpeedBp: 1.5,
+  critChanceBp: 1.68,
+  incomingDamageBp: 0.85,
+});
+
+// Pitch-scales every layer of a profile while preserving envelope shape (duration, gain, delay,
+// attack). Timbre and density carry meaning; only the register moves.
+const pitchScaledProfile = (layers, scalar) => Object.freeze(layers.map((layer) => tone(
+  layer.waveform,
+  layer.frequency * scalar,
+  layer.endFrequency * scalar,
+  layer.duration,
+  layer.gain,
+  layer.delay,
+  layer.attack,
+)));
+
+const buffStatVariants = (cueId, eventType) => Object.fromEntries(
+  Object.entries(BUFF_STAT_PITCH).map(([stat, scalar]) => [
+    `${cueId}:${eventType}:${stat}`,
+    pitchScaledProfile(CUE_PROFILES[cueId], scalar),
+  ]),
+);
 
 const CUE_VARIANTS = Object.freeze({
   "growth-offer:SKILL_SELECTED": Object.freeze([
@@ -216,6 +333,102 @@ const CUE_VARIANTS = Object.freeze({
     tone("triangle", 180, 720, 0.52, 0.055, 0.055),
     tone("sine", 240, 960, 0.46, 0.035, 0.11),
   ]),
+  // Damage-taken differentiation (§3.3). Four meanings previously shared one timbre. These are
+  // variants on the existing impact-hit id, not new cues, so they add zero voices inside the
+  // shared impact-hit:hit refractory family. COMPANION_DAMAGED deliberately keeps the base
+  // profile, so the commander's own damage is distinguishable from an ally's.
+  "impact-hit:COMMANDER_DAMAGED": Object.freeze([
+    tone("sawtooth", 104, 46, 0.085, 0.078, 0, 0.004),
+    tone("square", 52, 38, 0.055, 0.036, 0.01, 0.003),
+  ]),
+  "impact-hit:GATE_BREACHED": Object.freeze([
+    tone("sawtooth", 76, 34, 0.11, 0.075, 0, 0.006),
+    tone("sine", 38, 30, 0.13, 0.04, 0.02, 0.008),
+  ]),
+  "impact-hit:HAZARD_DAMAGE": Object.freeze([
+    tone("triangle", 132, 58, 0.07, 0.07, 0, 0.005),
+    tone("sawtooth", 66, 44, 0.05, 0.03, 0.012, 0.004),
+  ]),
+  // Per-surface footsteps (§2.2). Nine slab materials across twelve slabs; abyss-chancel
+  // slab-01/02 share flagstone-oath and echo-throne 02/04 share fracture-glass (exact mirrors
+  // about y=6000), so the timbre table is 9 entries, not 12 — a player crossing either mirrored
+  // gallery must hear the same floor, because it is the same floor reflected.
+  // All single-layer, all gain <= 0.040, all duration <= 0.060s: timbre carries the surface,
+  // loudness never does. Adjacent materials within a stage differ in waveform AND by >= 25% in
+  // base frequency, so a slab transition is audible without a visual cue.
+  "movement-step:MOVE:basalt-ember": Object.freeze([
+    tone("triangle", 92, 72, 0.045, 0.035, 0, 0.004),
+  ]),
+  "movement-step:MOVE:ash-drift": Object.freeze([
+    tone("sine", 74, 58, 0.058, 0.026, 0, 0.01),
+  ]),
+  "movement-step:MOVE:forge-plate": Object.freeze([
+    tone("square", 138, 104, 0.038, 0.032, 0, 0.003),
+  ]),
+  "movement-step:MOVE:flagstone-oath": Object.freeze([
+    tone("triangle", 104, 80, 0.048, 0.034, 0, 0.004),
+  ]),
+  "movement-step:MOVE:oath-inlay": Object.freeze([
+    tone("sine", 156, 117, 0.052, 0.028, 0, 0.006),
+  ]),
+  "movement-step:MOVE:vestry-tile": Object.freeze([
+    tone("triangle", 124, 88, 0.04, 0.03, 0, 0.003),
+  ]),
+  "movement-step:MOVE:polished-echo": Object.freeze([
+    tone("sine", 116, 92, 0.056, 0.032, 0, 0.005),
+  ]),
+  "movement-step:MOVE:gilt-compass": Object.freeze([
+    tone("square", 174, 130, 0.036, 0.03, 0, 0.003),
+  ]),
+  "movement-step:MOVE:fracture-glass": Object.freeze([
+    tone("sawtooth", 208, 148, 0.044, 0.028, 0, 0.002),
+  ]),
+  // Drop rarity (§4.2). Layer count rises 1->2->3->4 with tier, so rarity is audible by density
+  // rather than by loudness. relic is the only drop cue carrying a sub octave. At 4 layers the
+  // relic cue costs 8 nodes / 1 voice, well inside MAX_TRANSIENT_NODES.
+  "drop-appear:DROP_SPAWNED:common": Object.freeze([
+    tone("sine", 520, 660, 0.14, 0.055, 0, 0.005),
+  ]),
+  "drop-appear:DROP_SPAWNED:rare": Object.freeze([
+    tone("sine", 560, 760, 0.17, 0.062, 0, 0.005),
+    tone("triangle", 840, 1020, 0.11, 0.03, 0.035, 0.005),
+  ]),
+  "drop-appear:DROP_SPAWNED:resonant": Object.freeze([
+    tone("sine", 620, 880, 0.21, 0.068, 0, 0.005),
+    tone("triangle", 930, 1240, 0.14, 0.034, 0.04, 0.005),
+    tone("sine", 1240, 1560, 0.09, 0.018, 0.085, 0.005),
+  ]),
+  "drop-appear:DROP_SPAWNED:relic": Object.freeze([
+    tone("sine", 660, 990, 0.26, 0.072, 0, 0.006),
+    tone("triangle", 990, 1480, 0.18, 0.038, 0.045, 0.006),
+    tone("sine", 1480, 1980, 0.12, 0.02, 0.095, 0.006),
+    tone("sawtooth", 330, 495, 0.22, 0.022, 0.01, 0.006),
+  ]),
+  // Collection rarity. §4.2 authorises "add rarity variants" on the existing item-collected id
+  // without fixing values, so these are derived from its base profile using drop-appear's density
+  // rule: common sheds the upper layer, rare is the authored base, resonant adds a ringing
+  // partial, relic alone adds the sub octave. Pitches stay on the base's own register so a
+  // collection never sounds like a spawn.
+  "item-collected:ITEM_COLLECTED:common": Object.freeze([
+    tone("sine", 560, 780, 0.2, 0.11),
+  ]),
+  "item-collected:ITEM_COLLECTED:rare": Object.freeze([
+    tone("sine", 560, 780, 0.2, 0.11),
+    tone("triangle", 840, 1120, 0.14, 0.055, 0.04),
+  ]),
+  "item-collected:ITEM_COLLECTED:resonant": Object.freeze([
+    tone("sine", 560, 780, 0.2, 0.11),
+    tone("triangle", 840, 1120, 0.14, 0.055, 0.04),
+    tone("sine", 1120, 1400, 0.1, 0.026, 0.085, 0.005),
+  ]),
+  "item-collected:ITEM_COLLECTED:relic": Object.freeze([
+    tone("sine", 560, 780, 0.2, 0.11),
+    tone("triangle", 840, 1120, 0.14, 0.055, 0.04),
+    tone("sine", 1120, 1400, 0.1, 0.026, 0.085, 0.005),
+    tone("sawtooth", 280, 390, 0.22, 0.02, 0.012, 0.006),
+  ]),
+  ...buffStatVariants("buff-apply", "BUFF_APPLIED"),
+  ...buffStatVariants("buff-expire", "BUFF_EXPIRED"),
 });
 
 const feedbackPolicy = (cueId, priority, category) =>
@@ -229,8 +442,11 @@ export const AUDIO_EVENT_POLICY = Object.freeze({
   INPUT_REJECTED: feedbackPolicy("input-rejected", 48, "input"),
   MOVE: silentPolicy("movement"),
   BASIC_ATTACK: feedbackPolicy("attack-windup", 34, "windup"),
-  WEAPON_FIRED: feedbackPolicy("attack-windup", 32, "windup"),
-  MELEE_SWEEP: feedbackPolicy("attack-windup", 35, "windup"),
+  // C-1 (§3.2): these events ARE the release, not the windup — the simulation labels them
+  // `cue: eventCue("weaponFire")` itself. Pointing them at attack-windup made the release of a
+  // weapon sound identical to its wind-up and left the authored weapon-fire profile unreachable.
+  WEAPON_FIRED: feedbackPolicy("weapon-fire", 32, "windup"),
+  MELEE_SWEEP: feedbackPolicy("weapon-fire", 35, "windup"),
   MIDBOSS_SPAWNED: feedbackPolicy("warning-pulse", 82, "boss"),
   SKILL_CAST: feedbackPolicy("skill-cast", 42, "windup"),
   BOSS_ATTACK_TELEGRAPHED: feedbackPolicy("warning-pulse", 86, "warning"),
@@ -289,7 +505,138 @@ export const AUDIO_EVENT_POLICY = Object.freeze({
   SKILL_COOLDOWN_READY: silentPolicy("cooldown"),
   ESCORT_LEADER_ACQUIRED: silentPolicy("policy"),
   ENEMY_PRESSURE_DELAYED: silentPolicy("policy"),
+  // --- Cycle 10 stage-dungeon moments. Event types are ruled vocabulary (director v1/v2/v3);
+  // no name is coined here, and audio binds the same type VfxCueDesign binds.
+  // Drop family (§4.2). DROP_SPAWNED sits deliberately above ENEMY_DEFEATED 36 so the reward
+  // reads over the kill that produced it, while staying under every damage cue.
+  DROP_SPAWNED: feedbackPolicy("drop-appear", 38, "pickup"),
+  DROP_EXPIRED: feedbackPolicy("drop-expire", 30, "pickup"),
+  // DROP_DENIED is intentionally silent: it reports a system-side cap (reason "FIELD_CAP") on a
+  // roll the player never acted on. Sounding it would fire on every over-cap wave clear and
+  // collide semantically with PICKUP_DENIED 50, which reports a genuine rejected player action.
+  DROP_DENIED: silentPolicy("pickup"),
+  // Buff family (§4.3). BUFF_APPLIED sits just under ITEM_COLLECTED 56 — collecting is the act,
+  // gaining the buff is its consequence, and both arrive in the same batch.
+  BUFF_APPLIED: feedbackPolicy("buff-apply", 54, "pickup"),
+  BUFF_REFRESHED: feedbackPolicy("buff-refresh", 44, "pickup"),
+  // Registry entry is the TIMEOUT reading; every other reason resolves silent in
+  // resolveEventPolicy(). MAX_ACTIVE_BUFFS = 6, so an ungated sweep would fire 6 stings — half
+  // the 12-voice pool — in the single tick a wipe or objective retry clears every buff.
+  BUFF_EXPIRED: feedbackPolicy("buff-expire", 40, "pickup"),
+  // Gimmick family (§4.6). GIMMICK_TRIGGERED's registry entry is the `deformation` reading and
+  // the unknown-class fallback; hazard/gate/mirror re-resolve in resolveEventPolicy().
+  GIMMICK_ARMED: feedbackPolicy("gimmick-arm", 72, "warning"),
+  GIMMICK_TRIGGERED: feedbackPolicy("terrain-deform", 76, "warning"),
+  GIMMICK_RESOLVED: feedbackPolicy("gimmick-settle", 34, "objective"),
+  // Pacing blocks are BGM-only (§4.7): they are state transitions, not moments, and the moments
+  // inside them already sound. A policy may be silent for SFX while still steering the
+  // soundscape, because consume() runs audioSoundscapeForEvent() on every fresh event
+  // independently of `method`.
+  PACING_BLOCK_STARTED: silentPolicy("pacing"),
+  PACING_BLOCK_CLEARED: silentPolicy("pacing"),
 });
+
+// Conditional policies. Each is an ordinary frozen policy object built by the EXISTING
+// feedbackPolicy factory, with the same six keys as every registry entry — no new policy field is
+// introduced, because audio-feedback-runtime.test.mjs's silent-shape assertion enumerates exactly
+// six keys and would red on a seventh.
+//
+// Footsteps (§2.3): AUDIO_EVENT_POLICY.MOVE stays silentPolicy("movement") verbatim. That entry
+// remains the truthful default for the MOVE event CLASS — up to 60 emits/s across every actor, of
+// which at most 5/s are commander footsteps. The step is resolved beside the registry rather than
+// by re-pointing it, which is what keeps the off-cadence silent shape byte-identical.
+//
+// Priority 5 is a provable mix guarantee, not a tuning hope: makeRoomForVoice() evicts only when
+// `candidate.priority < priority`, and the lowest priority any other voice can hold is 5
+// (camera-clamp) while every policy-driven cue is >= 28. A footstep therefore can never evict any
+// voice — it is dropped instead. Traversal yields to everything.
+const MOVEMENT_FOOTSTEP_POLICY = feedbackPolicy("movement-step", 5, "movement");
+// A dodged projectile previously sounded exactly like a landed hit while the renderer played
+// `avoid`. 50 puts it in the block/input band: a dodge is a player-relevant outcome, above raw
+// contact but below damage.
+const DODGE_SLIP_POLICY = feedbackPolicy("dodge-slip", 50, "contact");
+// Guarded contact keeps the event's OWN priority (45/47) rather than dropping to
+// PROJECTILE_BLOCKED's 52: damage is still dealt, only reduced, so it stays in the contact band.
+const GUARDED_IMPACT_POLICY = Object.freeze({
+  PROJECTILE_IMPACT: feedbackPolicy("block-contact", 45, "contact"),
+  MELEE_IMPACT: feedbackPolicy("block-contact", 47, "contact"),
+});
+const SHADOW_ARRIVAL_POLICY = feedbackPolicy("shadow-arrival", 68, "spawn");
+// Non-TIMEOUT buff expiry. Its own constant rather than borrowing another event's silent policy:
+// the shape is identical, but a reader must not have to know that DROP_DENIED and BUFF_EXPIRED
+// happen to share a category to understand why this is silent.
+const BUFF_EXPIRED_SILENT_POLICY = silentPolicy("pickup");
+const GIMMICK_TRIGGERED_POLICY = Object.freeze({
+  deformation: feedbackPolicy("terrain-deform", 76, "warning"),
+  hazard: feedbackPolicy("warning-pulse", 78, "warning"),
+  gate: feedbackPolicy("occupation-captured", 64, "objective"),
+  mirror: feedbackPolicy("gimmick-mirror", 66, "warning"),
+});
+
+// Presentation-derived cues have no simulation event, so they cannot take a priority from the
+// registry. This replaces the inline `cueId === "camera-clamp" ? 5 : 40` hack in play() with a
+// table; camera-clamp keeps its hard-coded 5 exactly, so the observers-contract guarantee that no
+// simulation event maps to it is untouched.
+const PRESENTATION_CUE_PRIORITY = Object.freeze({
+  "camera-clamp": 5,
+  "movement-step": 5,
+  "buff-warning": 26,
+});
+
+const commanderFootstepTick = (event) => typeof event?.direction === "string"
+  && event.direction !== "IDLE"
+  && Number.isInteger(event.tick)
+  && event.tick % FOOTSTEP_TICK_INTERVAL === 0;
+
+/**
+ * Resolves the policy for an event, applying the conditional readings that branch on fields
+ * already present in the public payload. Called by BOTH audioCueForEvent() and play()'s priority
+ * lookup, so the resolved cue and its priority can never disagree.
+ *
+ * Every branch reads a ruled payload field — `direction`/`tick`, `hit`, `guardedBy`, `grade`,
+ * `reason`, `gimmickClass`. None reads `event.cue`, so AUDIO_EVENT_POLICY remains the sole
+ * event->cue authority and the catalog-cue fallback stays reserved for unregistered events.
+ */
+const resolveEventPolicy = (event) => {
+  const policy = AUDIO_EVENT_POLICY[event?.type];
+  if (!policy) return null;
+  switch (event.type) {
+    case "MOVE":
+      // A MOVE carrying `direction` is a commander step; enemy MOVE emits none, so enemy
+      // movement is silent without an id lookup or a snapshot read.
+      return commanderFootstepTick(event) ? MOVEMENT_FOOTSTEP_POLICY : policy;
+    case "PROJECTILE_IMPACT":
+    case "MELEE_IMPACT":
+      // Precedence: a dodge is not a block, so `hit === false` wins over `guardedBy`. Strict
+      // comparisons, so an absent field leaves the ordinary contact reading untouched.
+      if (event.hit === false) return DODGE_SLIP_POLICY;
+      if (event.guardedBy !== null && event.guardedBy !== undefined) {
+        return GUARDED_IMPACT_POLICY[event.type] ?? policy;
+      }
+      return policy;
+    case "ENEMY_SPAWNED":
+      // Reads `grade` ONLY and never re-derives it from elite/midboss. BASIC stays silent: 10
+      // concurrent BASIC spawns would take 10 of 12 voices in one tick.
+      return event.grade === "SHADOW" ? SHADOW_ARRIVAL_POLICY : policy;
+    case "BUFF_EXPIRED":
+      // TIMEOUT is the only audible reason. DEATH clears up to 6 buffs in the terminal tick and
+      // EVICTED always coincides with the buff-apply that displaced it — one player action, one
+      // cue. STAGE_TRANSITION is retained in the enum but unreachable today.
+      return event.reason === "TIMEOUT" ? policy : BUFF_EXPIRED_SILENT_POLICY;
+    case "GIMMICK_TRIGGERED":
+      // One event type, four readings, branching on the ruled `gimmickClass` field. An unknown
+      // class falls back to the registry's terrain-deform entry rather than throwing.
+      return GIMMICK_TRIGGERED_POLICY[event.gimmickClass] ?? policy;
+    default:
+      return policy;
+  }
+};
+
+const cuePriority = (cueId, event) => {
+  const policy = resolveEventPolicy(event);
+  if (policy && !policy.intentionalSilence) return policy.priority;
+  return PRESENTATION_CUE_PRIORITY[cueId] ?? policy?.priority ?? 40;
+};
 
 
 const CUE_REFRACTORY_SECONDS = Object.freeze({
@@ -316,6 +663,18 @@ const CUE_REFRACTORY_SECONDS = Object.freeze({
   "objective-complete": 0.2,
   "boss-phase": 0.5,
   "death-retry": 0.5,
+  "dodge-slip": 0.09,
+  "drop-appear": 0.09,
+  "drop-expire": 0.14,
+  "buff-apply": 0.1,
+  "buff-refresh": 0.12,
+  "buff-expire": 0.12,
+  "buff-warning": 0.25,
+  "shadow-arrival": 0.6,
+  "gimmick-arm": 0.4,
+  "terrain-deform": 0.45,
+  "gimmick-mirror": 0.3,
+  "gimmick-settle": 0.25,
 });
 
 const AMBIENCE_LAYERS = Object.freeze([
@@ -371,6 +730,22 @@ const SOUNDSCAPE_STATES = Object.freeze({
   "active-wave": Object.freeze({ ambienceGain: 1, musicGain: 1, pitch: 1 }),
   "objective-pressure": Object.freeze({ ambienceGain: 1.12, musicGain: 1.18, pitch: 1.12 }),
   boss: Object.freeze({ ambienceGain: 0.86, musicGain: 1.36, pitch: 0.68 }),
+  // Cycle 10 (§5.3). The eight ruled pacing blocks previously collapsed midboss/occupation/
+  // extraction into active-wave or objective-pressure, which is why the middle of a dungeon read
+  // flat. These are graded interpolations on the same three scalars, so per-stage tonal identity
+  // is preserved — `pitch` is a SCALAR on each stage's own frequencies, never a borrowed interval
+  // structure. Every new state's pitch is >= 4% from its nearest neighbour so the 0.35s frequency
+  // ramp is audible.
+  //
+  // midboss sits strictly interior to active-wave and boss on every axis: music louder, pitch
+  // dropping — the floor is tilting but has not fallen.
+  midboss: Object.freeze({ ambienceGain: 0.94, musicGain: 1.26, pitch: 0.84 }),
+  // occupation is held ground: alert, pitch slightly up, and below objective-pressure on all
+  // three axes so a pressure pulse during occupation still reads as an escalation.
+  occupation: Object.freeze({ ambienceGain: 1.06, musicGain: 1.1, pitch: 1.06 }),
+  // extraction inverts the boss shape — ambience down, pitch up: the world thins out and lifts as
+  // you leave. The only non-victory state with pitch > 1.12.
+  extraction: Object.freeze({ ambienceGain: 0.8, musicGain: 1.14, pitch: 1.22 }),
   victory: Object.freeze({ ambienceGain: 0.5, musicGain: 0.72, pitch: 1.5 }),
   defeat: Object.freeze({ ambienceGain: 0.38, musicGain: 0.5, pitch: 0.55 }),
 });
@@ -404,7 +779,11 @@ export function audioSoundscapeForEvent(
     case "OBJECTIVE_PRESSURE_PULSE":
     case "OBJECTIVE_PRESSURE_DEADLINE":
     case "OBJECTIVE_FAILED":
-      if (currentState === "boss" || currentState === "victory" || currentState === "defeat") return null;
+      // `extraction` joins the block list: an extraction pressure pulse must not drop pitch from
+      // 1.22 back to 1.12 mid-exfil. `midboss` and `occupation` are deliberately absent — a
+      // pressure pulse there SHOULD still escalate.
+      if (currentState === "boss" || currentState === "victory" || currentState === "defeat"
+        || currentState === "extraction") return null;
       return Object.freeze({ stageId, state: "objective-pressure" });
     case "ENEMY_SPAWNED":
     case "WAVE_VARIANT_STARTED":
@@ -413,6 +792,36 @@ export function audioSoundscapeForEvent(
     case "WAVE_CLEARED":
     case "OBJECTIVE_COMPLETED":
       if (currentState !== "objective-pressure") return null;
+      return Object.freeze({ stageId, state: "active-wave" });
+    case "PACING_BLOCK_STARTED":
+      // Never pre-empt a terminal outcome state; `resolution` is the terminal BLOCK but the
+      // victory/defeat OUTCOME belongs to TERMINAL, and keying an outcome off a block id would
+      // give one moment two authorities.
+      if (currentState === "victory" || currentState === "defeat") return null;
+      switch (event.blockId) {
+        case "ingress":
+          return Object.freeze({ stageId, state: "descent" });
+        case "objective-1":
+        case "objective-2":
+          // Do not downgrade an active pressure overlay.
+          return currentState === "objective-pressure"
+            ? null
+            : Object.freeze({ stageId, state: "active-wave" });
+        case "midboss":
+          return Object.freeze({ stageId, state: "midboss" });
+        case "occupation":
+          return Object.freeze({ stageId, state: "occupation" });
+        case "boss":
+          return Object.freeze({ stageId, state: "boss" });
+        case "extraction":
+          return Object.freeze({ stageId, state: "extraction" });
+        case "resolution":
+        default:
+          return null;
+      }
+    case "PACING_BLOCK_CLEARED":
+      // A cleared block returns to the neutral bed unless a heavier state owns the mix.
+      if (currentState === "boss" || currentState === "victory" || currentState === "defeat") return null;
       return Object.freeze({ stageId, state: "active-wave" });
     default:
       return null;
@@ -596,7 +1005,12 @@ const feedbackEventKey = (event) => {
 };
 
 export function audioCueForEvent(event) {
-  const policy = AUDIO_EVENT_POLICY[event?.type];
+  // resolveEventPolicy() applies the conditional readings (footstep cadence, dodge/guard,
+  // spawn grade, expiry reason, gimmick class). The decision is made HERE, inside the authority
+  // function, which is what makes the footstep binding an explicit contract change rather than a
+  // route around an intentionalSilence entry: it is not the `event.cue` fallback below, and it is
+  // not a renderer-direct play().
+  const policy = resolveEventPolicy(event);
   const storyText = storyNarrationText(event);
   if (storyText) {
     return Object.freeze({
@@ -638,9 +1052,21 @@ export function audioCueForEvent(event) {
     : null;
 }
 
-const variantKey = (cueId, event) => {
+const variantKey = (cueId, event, material = null) => {
+  // Per-surface footsteps (§2.2): scoped to a single cue id, and only when a material actually
+  // resolved, so a null surface falls through to the base movement-step profile.
+  if (cueId === "movement-step" && material) return `movement-step:MOVE:${material}`;
   if (event?.type === "TERMINAL" && event.outcome) return `${cueId}:TERMINAL:${event.outcome}`;
-  return event?.type ? `${cueId}:${event.type}` : "";
+  if (!event?.type) return "";
+  // Rarity (§4.2) and stat (§4.3) extend the key to a third segment for their own cue ids only.
+  // A missing or non-string field leaves the two-segment key untouched.
+  if ((cueId === "drop-appear" || cueId === "item-collected") && typeof event.rarity === "string") {
+    return `${cueId}:${event.type}:${event.rarity}`;
+  }
+  if ((cueId === "buff-apply" || cueId === "buff-expire") && typeof event.stat === "string") {
+    return `${cueId}:${event.type}:${event.stat}`;
+  }
+  return `${cueId}:${event.type}`;
 };
 
 const cueRefractoryKey = (cueId, event) => {
@@ -717,7 +1143,80 @@ export class DefenseAudio {
     this.onUserGesture = () => this.unlock();
     this.soundscapeStageId = DEFAULT_SOUNDSCAPE_STAGE;
     this.soundscapeState = "descent";
+    // Read-only surface lookup (§2.2), defaulted to the authored slab table so all nine material
+    // timbres are live without a host injection. A stage with no authored slabs, or a point
+    // outside the slab rects, returns null and falls back to the base movement-step timbre — the
+    // degradation path, not silence.
+    this.surfaceResolver = typeof slabMaterialAt === "function" ? slabMaterialAt : null;
+    // Once-per-buffId dedupe for the presentation-derived pre-expiry sting (§4.4), mirroring
+    // app.js's rallyAcknowledgedBossIds pattern. Cleared by resetRun(), because buffId is
+    // `buff-<n>` from a run-local counter and a re-entered stage reuses ids.
+    this.buffWarnedIds = new Set();
   }
+
+  /**
+   * Injects the read-only slab surface lookup used for per-surface footstep timbre.
+   *
+   * @param {null|((stageId: string, x: number, y: number) => ({ slabId?: string, materialId?: string }|string|null))} resolver
+   *   Contract from DungeonLevelDesign: three arguments, object return carrying `materialId`, and
+   *   `null` outside stage bounds. A bare material-id string is also accepted, because app.js's
+   *   guarded call site may map `?.materialId ?? null` before handing the function over.
+   *
+   * The resolver is READ-ONLY by contract: it derives purely from authored slab rects, never
+   * writes simulation state, and never consumes RNG — so injecting it cannot move getRunDigest().
+   * Its seam ownership is single-valued (ascending slab index, first match wins), which is the
+   * property that keeps timbre from flickering between two materials mid-stride at 5 steps/s.
+   */
+  setSurfaceResolver(resolver) {
+    this.surfaceResolver = typeof resolver === "function" ? resolver : null;
+    return this.surfaceResolver !== null;
+  }
+
+  /** Resolves the slab material under a MOVE event's post-move position, or null. */
+  surfaceMaterialFor(event) {
+    if (typeof this.surfaceResolver !== "function") return null;
+    const to = event?.to;
+    if (!Number.isFinite(to?.x) || !Number.isFinite(to?.y)) return null;
+    try {
+      const resolved = this.surfaceResolver(this.soundscapeStageId, to.x, to.y);
+      if (typeof resolved === "string") return resolved;
+      return typeof resolved?.materialId === "string" ? resolved.materialId : null;
+    } catch {
+      // A resolver that throws must never break the audio frame; fall back to the base timbre.
+      return null;
+    }
+  }
+
+  /**
+   * Presentation-derived pre-expiry warning (§4.4). There is no BUFF_EXPIRING event and one must
+   * not be added — a per-tick warning would bloat run.events every tick. The caller hangs this off
+   * the buff strip's EXISTING `remaining <= BUFF_WARN_TICKS` comparison, so the strip and the sting
+   * are driven by one evaluation and can never disagree.
+   *
+   * This is an EDGE DETECTOR, not fire-once-per-id. A fire-once Set is silently broken by
+   * BUFF_REFRESHED: a refresh pushes `remaining` back above BUFF_WARN_TICKS, so the buff
+   * approaches expiry a second time while its id is still latched, and it never warns again.
+   * Rising edge (outside window -> inside) plays; falling edge (a refresh lifting it back out)
+   * clears the latch so the next approach warns again.
+   *
+   * @param {string} buffId Instance id, `buff-<n>`.
+   * @param {boolean} [expiring=true] The caller's `remaining > 0 && remaining <= BUFF_WARN_TICKS`.
+   *   Pass it through rather than recomputing, so one comparison drives strip and sting.
+   * @returns {boolean} true only when this call played the sting.
+   */
+  signalBuffExpiring(buffId, expiring = true) {
+    const key = typeof buffId === "string" && buffId ? buffId : null;
+    if (!key) return false;
+    if (!expiring) {
+      // Falling edge: refreshed clear of the window, so re-arm for the next approach.
+      this.buffWarnedIds.delete(key);
+      return false;
+    }
+    if (this.buffWarnedIds.has(key)) return false;
+    this.buffWarnedIds.add(key);
+    return this.play("buff-warning");
+  }
+
   applyMasterGain() {
     if (!this.master?.gain) return;
     const value = this.muted ? 0 : MASTER_GAIN * this.volume;
@@ -828,6 +1327,9 @@ export class DefenseAudio {
     this.feedbackEventKeys.clear();
     this.storyNarrationKeys.clear();
     this.lastCueAt.clear();
+    // buffId is `buff-<n>` from a run-local counter, so a re-entered stage reuses ids. Clearing
+    // here — the same path BattleSession takes on remount — is what lets a reused id re-warn.
+    this.buffWarnedIds.clear();
     this.lastFeedbackTick = null;
     return true;
   }
@@ -1011,7 +1513,12 @@ export class DefenseAudio {
   lookup(cueId, event = null) {
     const cue = byId[cueId];
     if (!cue) return null;
-    const profile = CUE_VARIANTS[variantKey(cueId, event)] || CUE_PROFILES[cueId] || fallbackProfile(cue);
+    // Footsteps alone consult the injected surface resolver, so a slab material can select a
+    // timbre variant without any other cue paying for the lookup.
+    const material = cueId === "movement-step" ? this.surfaceMaterialFor(event) : null;
+    const profile = CUE_VARIANTS[variantKey(cueId, event, material)]
+      || CUE_PROFILES[cueId]
+      || fallbackProfile(cue);
     return { cue, profile };
   }
 
@@ -1025,9 +1532,14 @@ export class DefenseAudio {
       || this.muted
       || this.paused
       || this.backgrounded
+      // A 5Hz continuous footstep stream is an ambience-class stimulus, and reducedMotion already
+      // gates exactly that class (startAmbience/startBattleMusic both return early on it).
+      // Footsteps are the first transient cue that behaves like a bed, so they follow the bed's
+      // rule. Discrete combat cues stay audible. Checked before any node is allocated, which is
+      // what preserves the zero-allocation mute/suppress guarantee.
+      || (this.reducedMotion && cueId === "movement-step")
     ) return false;
-    const priority = AUDIO_EVENT_POLICY[event?.type]?.priority
-      ?? (cueId === "camera-clamp" ? 5 : 40);
+    const priority = cuePriority(cueId, event);
     if (priority >= CRITICAL_AUDIO_PRIORITY && this.activeNarrationPriority < priority) {
       this.stopNarration();
     }
@@ -1270,6 +1782,7 @@ export class DefenseAudio {
     this.lastCueAt.clear();
     this.feedbackEventKeys.clear();
     this.storyNarrationKeys.clear();
+    this.buffWarnedIds.clear();
     this.lastFeedbackTick = null;
     this.stoppableNodes.clear();
     this.transientNodes.clear();
