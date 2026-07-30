@@ -5,6 +5,10 @@ import * as THREE from "../vendor/three.module.js";
 import { GLTFLoader } from "../vendor/loaders/GLTFLoader.js";
 import { stageWorldFor, STAGE_WORLD_PROFILES } from "../stage-world-catalog.js";
 import { createDefenseRun, getRunSnapshot } from "../defense-run-simulation.js";
+// The transient VFX pool budget is authored by the renderer. Importing it keeps these
+// assertions about "the pool stays capped at its authored budget" rather than about a
+// number that has to be edited in two files whenever the budget moves.
+import { MAX_VISUAL_EFFECTS } from "../battle-realtime-three.js";
 
 // Mirrors the rig pipeline's authored library so the harness exercises the same
 // beat set the deployed characters carry, not a subset.
@@ -1769,7 +1773,7 @@ test("impact VFX stay short-lived and bounded without evicting an active boss te
     assert.equal(telegraph.untilTick - tick, 60, "the telegraph lifetime must follow its active windup window");
 
     const impactTypes = ["MELEE_IMPACT", "PROJECTILE_IMPACT", "SKILL_RESOLVED_DAMAGE"];
-    for (let index = 0; index < 30; index += 1) {
+    for (let index = 0; index < MAX_VISUAL_EFFECTS + 6; index += 1) {
       const type = impactTypes[index % impactTypes.length];
       await emit({
         type,
@@ -1780,11 +1784,11 @@ test("impact VFX stay short-lived and bounded without evicting an active boss te
       });
     }
 
-    assert.equal(adapter.vfxInstances.length, 24, "the transient VFX pool must stay capped after impact pressure exceeds its budget");
+    assert.equal(adapter.vfxInstances.length, MAX_VISUAL_EFFECTS, "the transient VFX pool must stay capped after impact pressure exceeds its budget");
     assert.equal(adapter.vfxInstances.includes(telegraph), true, "non-critical impact eviction must preserve the active boss telegraph");
     const expectedLifetime = { MELEE_IMPACT: 8, PROJECTILE_IMPACT: 8, SKILL_RESOLVED_DAMAGE: 10 };
     const impacts = adapter.vfxInstances.filter(({ eventType }) => eventType in expectedLifetime);
-    assert.equal(impacts.length, 23, "only non-critical impacts may occupy the remaining capped slots");
+    assert.equal(impacts.length, MAX_VISUAL_EFFECTS - 1, "only non-critical impacts may occupy the remaining capped slots");
     for (const type of impactTypes) {
       const records = impacts.filter(({ eventType }) => eventType === type);
       assert.ok(records.length > 0, `${type} must remain represented after eviction`);
@@ -1799,7 +1803,7 @@ test("impact VFX stay short-lived and bounded without evicting an active boss te
   }
 });
 
-test("a cold-load boss telegraph preempts one of 24 unresolved impact VFX", async () => {
+test("a cold-load boss telegraph preempts one unresolved impact VFX at the authored pool budget", async () => {
   const previousLoad = GLTFLoader.prototype.load;
   const heldLoads = [];
   let adapter = null;
@@ -1820,7 +1824,7 @@ test("a cold-load boss telegraph preempts one of 24 unresolved impact VFX", asyn
       projectiles: [],
       pickups: [],
     };
-    const impacts = Array.from({ length: 24 }, (_, index) => ({
+    const impacts = Array.from({ length: MAX_VISUAL_EFFECTS }, (_, index) => ({
       type: "MELEE_IMPACT",
       eventId: `cold-impact:${index}`,
       sourceId: "commander",
@@ -1829,8 +1833,8 @@ test("a cold-load boss telegraph preempts one of 24 unresolved impact VFX", asyn
     }));
 
     adapter.collectFeedback({ ...baseSnapshot, events: impacts });
-    assert.equal(adapter.pendingVfxLoads.size, 24, "the fixture must hold all 24 non-critical impact loads unresolved");
-    assert.equal(adapter.vfxInstances.length, 24, "unresolved impacts must occupy the full active VFX budget");
+    assert.equal(adapter.pendingVfxLoads.size, MAX_VISUAL_EFFECTS, "the fixture must hold every non-critical impact load unresolved");
+    assert.equal(adapter.vfxInstances.length, MAX_VISUAL_EFFECTS, "unresolved impacts must occupy the full active VFX budget");
     const firstImpact = adapter.vfxInstances[0];
     assert.equal(firstImpact.eventType, "MELEE_IMPACT", "the first expendable record must be an impact");
     assert.equal(firstImpact.loaded, false, "cold impact records must still be placeholders");
@@ -1851,15 +1855,15 @@ test("a cold-load boss telegraph preempts one of 24 unresolved impact VFX", asyn
     assert.ok(telegraph, "priority admission must retain the boss telegraph");
     assert.equal(telegraph.loaded, false, "the admitted telegraph must remain an active placeholder while its GLB is cold");
     assert.equal(telegraph.root.parent, adapter.vfxGroup, "the telegraph placeholder must be attached to the live VFX group");
-    assert.equal(adapter.vfxInstances.length, 24, "priority admission must keep the active VFX pool capped");
-    assert.equal(adapter.pendingVfxLoads.size, 24, "evicted pending work must make room for the critical load without raw pending growth");
+    assert.equal(adapter.vfxInstances.length, MAX_VISUAL_EFFECTS, "priority admission must keep the active VFX pool capped");
+    assert.equal(adapter.pendingVfxLoads.size, MAX_VISUAL_EFFECTS, "evicted pending work must make room for the critical load without raw pending growth");
     assert.equal(adapter.vfxInstances.includes(firstImpact), false, "priority eviction must invalidate an expendable impact record");
     assert.equal(firstImpact.root.parent, null, "the invalidated impact placeholder must leave the live VFX group");
     assert.equal(firstImpact.loadRequest, null, "retirement must sever the evicted impact's pending-load ownership");
     assert.equal(adapter.pendingVfxLoads.has(firstImpactLoadRequest), false, "the evicted impact load must leave pending accounting");
     assert.equal(
       adapter.vfxInstances.filter(({ eventType }) => eventType === "MELEE_IMPACT").length,
-      23,
+      MAX_VISUAL_EFFECTS - 1,
       "the telegraph must replace exactly one non-critical impact",
     );
 
@@ -1876,13 +1880,13 @@ test("a cold-load boss telegraph preempts one of 24 unresolved impact VFX", asyn
     });
     const telegraphs = adapter.vfxInstances.filter(({ eventType }) => eventType === "BOSS_ATTACK_TELEGRAPHED");
     assert.equal(telegraphs.length, 2, "a second critical admission must repeat while the cold pool remains full");
-    assert.equal(adapter.vfxInstances.length, 24, "repeated critical replacement must keep the active pool capped");
-    assert.equal(adapter.pendingVfxLoads.size, 24, "repeated replacement must not accumulate dead pending loads");
+    assert.equal(adapter.vfxInstances.length, MAX_VISUAL_EFFECTS, "repeated critical replacement must keep the active pool capped");
+    assert.equal(adapter.pendingVfxLoads.size, MAX_VISUAL_EFFECTS, "repeated replacement must not accumulate dead pending loads");
     assert.equal(secondImpact.loadRequest, null, "the second evicted impact must also release its load request");
     assert.equal(adapter.pendingVfxLoads.has(secondImpactLoadRequest), false, "the second evicted request must leave pending accounting");
     assert.equal(
       adapter.vfxInstances.filter(({ eventType }) => eventType === "MELEE_IMPACT").length,
-      22,
+      MAX_VISUAL_EFFECTS - 2,
       "two critical placeholders must replace exactly two non-critical impacts",
     );
   } finally {

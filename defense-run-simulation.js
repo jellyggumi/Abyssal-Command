@@ -10,7 +10,9 @@ import {
   MAX_SKILL_RANK, SKILL_RANK_COOLDOWN_FLOOR, SKILL_RANK_COOLDOWN_STEP, SKILL_RANK_DAMAGE_STEP,
   SKILL_RANK_PASSIVE_SHARE,
   GATE, ITEMS, MEASUREMENT_PROFILES, OCTANT_VECTORS, REWARDS, SKILLS, STAGE_BY_ID, STAGE_ITEM_IDS,
-  STAGE_REWARD_IDS, TARGET_PRIORITY, TICK_RATE, XP_GROWTH
+  STAGE_REWARD_IDS, TARGET_PRIORITY, TICK_RATE, XP_GROWTH,
+  AREA_BP, AREA_COMBAT, AREA_FIELD, AI_RESPONSE_PATTERNS,
+  areaShareBp, areaSourceProfile, elementOf, samplePattern,
 } from "./defense-catalog.js";
 import {
   BACK_ROW_SYNERGY_DAMAGE_BONUS, BOSS_RALLY_COOLDOWN_REDUCTION, COMPANION_ROLES,
@@ -431,6 +433,13 @@ const OBJECTIVE_PRESSURE_INTERVAL_TICKS = 600;
 const OBJECTIVE_PRESSURE_DAMAGE = 100;
 const OBJECTIVE_PRESSURE_DEADLINE_OFFSET = 9000;
 const BOSS_PRESSURE_GRACE_TICKS = 1800;
+/**
+ * Boss entrance: 180 ticks = 3.0 s at 60 Hz. Authored here, carried on BOSS_SPAWNED, and read by
+ * both the camera push and the subtitle band, so presentation cannot drift from the simulation.
+ */
+const BOSS_INTRO_TICKS = 180;
+/** Camera pull-in during the entrance, in basis points of the live tier distance. */
+const BOSS_INTRO_ZOOM_BP = 6200;
 const ECHO_RECOVERY_PRESSURE_GRACE_TICKS = 150;
 const GATE_PRESSURE_RELEASE_LEAD = freeze({
   "player-pursuit": 360,
@@ -660,7 +669,7 @@ function addCompanion(run, companionId, { equipment = {} } = {}) {
   const companion = actor(nextId(run, "companion"), "companion", run.commander.x + offset.x, run.commander.y + offset.y, maxFormationIntegrity, maxFormationIntegrity, {
     companionId, cooldown: 0, damage, fireTicks: data.fireTicks, range, radius: 300,
     slot: stanceSlotForIndex(run, index), status: "ACTIVE", role: runtime.role, eliteDamageBonus: rpgActive ? runtime.eliteDamageBonus : 0,
-    aiState: "FOLLOW", aiTargetId: null, combatTargetId: null,
+    aiState: "FOLLOW", aiTargetId: null, combatTargetId: null, element: elementOf(data.element),
   });
   placeOnTerrain(run, companion, companion);
   run.companions.push(companion);
@@ -732,6 +741,10 @@ function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
     policyIntent: policy?.intent || null,
     policyTarget: policy?.target || null,
     spawnDirection: direction,
+    // Area-combat identity: the element decides every matchup this body takes part in, and the
+    // pattern preset decides the shape and timing of its strikes.
+    element: elementOf(data.element),
+    patternId: data.patternId ?? null,
     routeId,
     route: spawnRoute(run, routeId, policyId, laneOffset),
     waypointIndex: 0,
@@ -797,6 +810,10 @@ function spawnBoss(run) {
     policyId,
     policyIntent: policy?.intent || null,
     policyTarget: policy?.target || null,
+    element: elementOf(data.element),
+    patternId: data.patternId ?? null,
+    patternStepId: null,
+    patternActionId: null,
     spawnDirection: "W",
     routeId,
     route: spawnRoute(run, routeId, policyId, 0),
@@ -823,6 +840,23 @@ function spawnBoss(run) {
     routeId,
     route: clone(boss.route),
     objectiveId: "boss-kill",
+    element: boss.element,
+    patternId: boss.patternId,
+    /**
+     * Authored 3-second entrance. The simulation owns the timing (`BOSS_INTRO_TICKS`) so the
+     * renderer's camera push and the HUD's subtitle band cannot drift apart, and so a replay of
+     * the same run frames the boss identically. Presentation-only: no combat value reads it, and
+     * the boss is already live at this tick — the entrance never freezes the fight.
+     */
+    intro: {
+      durationTicks: BOSS_INTRO_TICKS,
+      endsAtTick: run.tick + BOSS_INTRO_TICKS,
+      title: run.stage.bossName || data.id,
+      subtitle: stageCutscene(run.stage).bossEntry || null,
+      cameraCueId: `camera:boss-intro:${boss.id}`,
+      motion: "show",
+      zoomBp: BOSS_INTRO_ZOOM_BP,
+    },
     cue: eventCue("bossSpawned"),
   });
   spawnEvent.spawnEventId = spawnEvent.eventId;
@@ -1238,13 +1272,37 @@ function orderedTargets(run, origin, range) {
   });
 }
 
+/**
+ * Formation anchor for one companion, with the live AI response applied.
+ *
+ * `evade` pushes the anchor radially out of the telegraph that covered this body until it clears
+ * the disc; `spread` fans the anchor sideways so two companions caught by one disc do not both
+ * stand in the same place. Both are windowed (AI_RESPONSE_PATTERNS) and decay on their own, so
+ * the formation returns to its authored offsets by itself.
+ */
 function companionFormationAnchor(run, companion, index) {
   const stance = activeStanceConfig(run);
   const offset = stance.offsets[Math.min(index, stance.offsets.length - 1)];
-  const placed = resolveTerrainPlacement(run, companion, {
-    x: run.commander.x + offset.x,
-    y: run.commander.y + offset.y,
-  });
+  let anchorX = run.commander.x + offset.x;
+  let anchorY = run.commander.y + offset.y;
+  if (companion.evadeUntilTick && run.tick <= companion.evadeUntilTick) {
+    const dx = anchorX - companion.evadeFromX;
+    const dy = anchorY - companion.evadeFromY;
+    const distance = Math.hypot(dx, dy);
+    const clearance = Math.max(1, Math.trunc(companion.evadeClearance || 0));
+    if (distance > 0 && distance < clearance) {
+      anchorX = Math.round(companion.evadeFromX + dx / distance * clearance);
+      anchorY = Math.round(companion.evadeFromY + dy / distance * clearance);
+    } else if (distance === 0) {
+      anchorX += clearance;
+    }
+  }
+  if (companion.spreadUntilTick && run.tick <= companion.spreadUntilTick) {
+    const scatter = Math.trunc(AI_RESPONSE_PATTERNS.spread.separationBp * (index + 1) * 100 / AREA_BP);
+    anchorX += index % 2 === 0 ? scatter : -scatter;
+    anchorY += index % 2 === 0 ? -scatter : scatter;
+  }
+  const placed = resolveTerrainPlacement(run, companion, { x: anchorX, y: anchorY });
   return { x: placed.x, y: placed.y };
 }
 
@@ -1363,7 +1421,11 @@ function updateCompanions(run) {
         playerAttack(run, companion, Math.round(companion.damage * mult), companion.companionId, null, companion.range);
 
       }
-      companion.cooldown = companion.fireTicks;
+      // AI response `punish`: inside the recovery window a heavy attack just opened, allied fire
+      // recovers faster. This is the reward for surviving the telegraph rather than avoiding it.
+      companion.cooldown = punishWindowActive(run)
+        ? Math.max(1, Math.trunc(companion.fireTicks * AI_RESPONSE_PATTERNS.punish.cooldownScaleBp / AREA_BP))
+        : companion.fireTicks;
     }
   });
 }
@@ -1394,6 +1456,10 @@ function fire(run, source, target, damage, owner, ttl = 5, combat = null) {
     owner,
     ttl,
     combat: hit,
+    element: elementOf(source.element),
+    // The launching side is recorded on the shell itself: resolving it from the live enemy list
+    // at detonation would flip sides whenever the shooter died mid-flight.
+    faction: source.kind === "enemy" || source.class === "boss" ? "enemy" : "player",
   });
   run.projectiles.push(projectile);
   const firedEvent = emit(run, "WEAPON_FIRED", {
@@ -1426,6 +1492,313 @@ function fire(run, source, target, damage, owner, ttl = 5, combat = null) {
     multiplierBp: hit.multiplierBp,
     cue: eventCue("criticalHit"),
   });
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * Area combat (광역 전투) — every contact splashes.
+ *
+ * `resolveAreaImpact()` is the single authority. Every damage-dealing call site hands it a
+ * contact point, the authored damage of the PRIMARY hit and a source key; it finds every other
+ * body of the opposing faction inside the disc and applies
+ * `damage x areaShareBp(distance, weight, element, duration)` to each.
+ *
+ * Invariants:
+ *  - The primary body is damaged by its own call site. This function never double-damages it.
+ *  - Iteration order is the deterministic `sortedActors()` order, and every arithmetic step is
+ *    integer, so the digest is reproducible.
+ *  - Splash never kills the gate. Structures are hit by their own authored paths only.
+ * ------------------------------------------------------------------------------------------- */
+
+/** Bodies of the faction OPPOSING `faction`, deterministically ordered, primary excluded. */
+function areaVictims(run, faction, excludeIds) {
+  const bodies = faction === "player"
+    ? sortedActors(run.enemies).filter((enemy) => enemy.hp > 0)
+    : [run.commander, ...sortedActors(run.companions).filter((entry) => entry.status !== "DOWNED")];
+  return bodies.filter((body) => body && !excludeIds.has(body.id));
+}
+
+/** Live integrity of a body, whichever field its kind stores it in. */
+const bodyHealth = (body) => (body.id === "commander" ? body.integrity : body.hp);
+
+/**
+ * Applies one splash hit to one body and emits the damage event its kind already uses, so HUD,
+ * telemetry and audio keep working without learning a new event type.
+ */
+function applyAreaDamageToBody(run, body, damage, context) {
+  if (damage <= 0) return 0;
+  if (body.id === "commander") {
+    const scaled = Math.round(damage * run.commander.incomingDamageMultiplier);
+    run.commander.integrity = clamp(run.commander.integrity - scaled, 0, run.commander.maxIntegrity);
+    emit(run, "COMMANDER_DAMAGED", {
+      enemyId: context.sourceId,
+      sourceId: context.sourceId,
+      damage: scaled,
+      hp: run.commander.integrity,
+      maxHp: run.commander.maxIntegrity,
+      area: true,
+      areaSource: context.sourceKey,
+      element: context.element,
+      causalRootId: context.causalRootId,
+    });
+    applyWardenDamageResponse(run);
+    return scaled;
+  }
+  if (body.kind === "companion") {
+    body.hp = clamp(body.hp - damage, 0, body.maxHp);
+    emit(run, "COMPANION_DAMAGED", {
+      entityId: body.id,
+      companionId: body.companionId,
+      sourceId: context.sourceId,
+      damage,
+      hp: body.hp,
+      maxHp: body.maxHp,
+      area: true,
+      areaSource: context.sourceKey,
+      element: context.element,
+      causalRootId: context.causalRootId,
+    });
+    if (body.hp <= 0 && body.status === "ACTIVE") {
+      body.status = "DOWNED";
+      emit(run, "COMPANION_DOWNED", { entityId: body.id, companionId: body.companionId, area: true });
+    }
+    return damage;
+  }
+  const applied = damageEnemyBody(run, body, damage);
+  body.lastCausalRootId = context.causalRootId || body.lastCausalRootId;
+  return applied.damage;
+}
+
+/**
+ * Resolves one area contact. Returns the splash descriptor the renderer reads (origin, radius,
+ * element and the per-body damage list) — the event carrying it is emitted here as well.
+ */
+function resolveAreaImpact(run, {
+  origin,
+  faction,
+  sourceId,
+  sourceKey = "basic",
+  damage,
+  element = null,
+  radius = null,
+  weightBp = null,
+  durationTicks = 0,
+  excludeIds = [],
+  causalRootId = null,
+  castInstanceId = null,
+}) {
+  const profile = areaSourceProfile(sourceKey);
+  const discRadius = Math.max(1, Math.trunc(radius ?? profile.radius));
+  const discWeightBp = Math.max(0, Math.trunc(weightBp ?? profile.weightBp));
+  const attackerElement = elementOf(element ?? profile.element);
+  const baseDamage = Math.max(0, Math.trunc(damage));
+  const exclude = new Set(excludeIds.filter(Boolean));
+  if (baseDamage <= 0 || discWeightBp <= 0) return null;
+
+  const struck = [];
+  for (const body of areaVictims(run, faction, exclude)) {
+    if (struck.length >= AREA_COMBAT.maxSplashTargets) break;
+    const distance = Math.trunc(Math.sqrt(distanceSquared(body, origin)));
+    const shareBp = areaShareBp({
+      distance,
+      radius: discRadius,
+      weightBp: discWeightBp,
+      attackerElement,
+      defenderElement: elementOf(body.element),
+      durationTicks,
+    });
+    if (shareBp <= 0) continue;
+    const braced = body.braceUntilTick && run.tick <= body.braceUntilTick;
+    const rawDamage = Math.trunc(baseDamage * shareBp / AREA_BP);
+    const bracedDamage = braced
+      ? Math.trunc(rawDamage * AI_RESPONSE_PATTERNS.brace.damageScaleBp / AREA_BP)
+      : rawDamage;
+    const finalDamage = Math.max(AREA_COMBAT.minSplashDamage, bracedDamage);
+    const healthBefore = bodyHealth(body);
+    const applied = applyAreaDamageToBody(run, body, finalDamage, {
+      sourceId,
+      sourceKey,
+      element: attackerElement,
+      causalRootId,
+    });
+    struck.push({
+      targetId: body.id,
+      damage: applied,
+      distance,
+      shareBp,
+      // The defender's element is published so a reviewer can reproduce the share by hand:
+      // share = falloff(distance) x weight x matchup(attacker, defender) x sustain(duration).
+      defenderElement: elementOf(body.element),
+      braced: Boolean(braced),
+      healthBefore,
+      healthAfter: bodyHealth(body),
+    });
+  }
+  if (!struck.length) return null;
+
+  const impact = {
+    sourceId,
+    sourceKey,
+    faction,
+    element: attackerElement,
+    originX: Math.trunc(origin.x),
+    originY: Math.trunc(origin.y),
+    radius: discRadius,
+    weightBp: discWeightBp,
+    durationTicks: Math.max(0, Math.trunc(durationTicks)),
+    targets: struck,
+    targetIds: struck.map((entry) => entry.targetId),
+    causalRootId,
+    castInstanceId,
+    simTick: run.tick,
+    cue: eventCue("impactHit"),
+  };
+  emit(run, "AREA_IMPACT", impact);
+  return impact;
+}
+
+/**
+ * Spawns a lingering field. The field re-runs `resolveAreaImpact` every `AREA_FIELD.pulseTicks`
+ * with the duration factor applied, which is what makes "지속시간" a real balance axis rather
+ * than a label: the same budget either lands now or is paid out over the field's life.
+ */
+function spawnAreaField(run, { origin, faction, sourceId, sourceKey, damage, element, radius, weightBp, durationTicks, causalRootId = null }) {
+  const ticks = Math.max(0, Math.trunc(durationTicks));
+  if (ticks < AREA_FIELD.pulseTicks) return null;
+  const profile = areaSourceProfile(sourceKey);
+  const field = {
+    id: nextId(run, "field"),
+    faction,
+    sourceId,
+    sourceKey,
+    element: elementOf(element ?? profile.element),
+    x: Math.trunc(origin.x),
+    y: Math.trunc(origin.y),
+    radius: Math.max(1, Math.trunc(radius ?? profile.radius)),
+    weightBp: Math.max(0, Math.trunc(weightBp ?? profile.weightBp)),
+    damage: Math.max(0, Math.trunc(damage)),
+    durationTicks: ticks,
+    startedAt: run.tick,
+    expiresAt: run.tick + ticks,
+    nextPulseAt: run.tick + AREA_FIELD.pulseTicks,
+    causalRootId,
+  };
+  run.areaFields.push(field);
+  while (run.areaFields.length > AREA_FIELD.maxActive) {
+    const retired = run.areaFields.shift();
+    emit(run, "AREA_FIELD_ENDED", { fieldId: retired.id, reason: "EVICTED", simTick: run.tick });
+  }
+  emit(run, "AREA_FIELD_STARTED", {
+    fieldId: field.id,
+    sourceId,
+    sourceKey,
+    faction,
+    element: field.element,
+    originX: field.x,
+    originY: field.y,
+    radius: field.radius,
+    durationTicks: ticks,
+    expiresAt: field.expiresAt,
+    causalRootId,
+    simTick: run.tick,
+    cue: eventCue("impactHit"),
+  });
+  return field;
+}
+
+/** Ticks every live field: pulse on schedule, retire on expiry. Deterministic array order. */
+function processAreaFields(run) {
+  if (!run.areaFields.length) return;
+  const surviving = [];
+  for (const field of run.areaFields) {
+    if (run.tick >= field.nextPulseAt && run.tick <= field.expiresAt) {
+      const impact = resolveAreaImpact(run, {
+        origin: field,
+        faction: field.faction,
+        sourceId: field.sourceId,
+        sourceKey: field.sourceKey,
+        damage: field.damage,
+        element: field.element,
+        radius: field.radius,
+        weightBp: field.weightBp,
+        durationTicks: field.durationTicks,
+        causalRootId: field.causalRootId,
+      });
+      field.nextPulseAt = run.tick + AREA_FIELD.pulseTicks;
+      emit(run, "AREA_FIELD_PULSE", {
+        fieldId: field.id,
+        sourceId: field.sourceId,
+        faction: field.faction,
+        element: field.element,
+        originX: field.x,
+        originY: field.y,
+        radius: field.radius,
+        targetIds: impact ? impact.targetIds : [],
+        remainingTicks: field.expiresAt - run.tick,
+        simTick: run.tick,
+      });
+    }
+    if (run.tick >= field.expiresAt) {
+      emit(run, "AREA_FIELD_ENDED", { fieldId: field.id, reason: "EXPIRED", simTick: run.tick });
+      continue;
+    }
+    surviving.push(field);
+  }
+  run.areaFields = surviving;
+}
+
+/**
+ * AI response patterns (defense-catalog AI_RESPONSE_PATTERNS) applied to one telegraph.
+ *
+ * Every player-side body the telegraph disc covers is marked with an evade window; when two or
+ * more are covered they additionally take a scatter bias so the legion stops standing in one
+ * disc; a body already too deep inside the disc braces instead. The recovery window that follows
+ * the attack is what opens the punish window on the attacker.
+ */
+function applyTelegraphResponse(run, attacker, origin, radius) {
+  const covered = [run.commander, ...sortedActors(run.companions).filter((entry) => entry.status !== "DOWNED")]
+    .filter((body) => distanceSquared(body, origin) <= radius * radius);
+  if (!covered.length) return { evading: [], bracing: [] };
+  const evade = AI_RESPONSE_PATTERNS.evade;
+  const spread = AI_RESPONSE_PATTERNS.spread;
+  const braceRadius = Math.trunc(radius * AI_RESPONSE_PATTERNS.brace.damageScaleBp / AREA_BP / 2);
+  const evading = [];
+  const bracing = [];
+  for (const body of covered) {
+    const distance = Math.trunc(Math.sqrt(distanceSquared(body, origin)));
+    if (distance <= braceRadius) {
+      body.braceUntilTick = run.tick + AI_RESPONSE_PATTERNS.brace.windowTicks;
+      bracing.push(body.id);
+      continue;
+    }
+    body.evadeUntilTick = run.tick + evade.windowTicks;
+    body.evadeFromX = Math.trunc(origin.x);
+    body.evadeFromY = Math.trunc(origin.y);
+    body.evadeClearance = radius + Math.trunc(radius * evade.clearanceBp / AREA_BP);
+    evading.push(body.id);
+  }
+  if (covered.length >= spread.minBodies) {
+    for (const body of covered) body.spreadUntilTick = run.tick + spread.windowTicks;
+  }
+  emit(run, "AI_RESPONSE_APPLIED", {
+    entityId: attacker.id,
+    responsePatterns: [
+      ...(evading.length ? ["evade"] : []),
+      ...(covered.length >= spread.minBodies ? ["spread"] : []),
+      ...(bracing.length ? ["brace"] : []),
+    ],
+    evadingIds: evading,
+    bracingIds: bracing,
+    originX: Math.trunc(origin.x),
+    originY: Math.trunc(origin.y),
+    radius,
+    simTick: run.tick,
+  });
+  return { evading, bracing };
+}
+
+/** True while allied fire is inside a punish window opened by a recovering attacker. */
+function punishWindowActive(run) {
+  return run.punishWindowUntilTick > 0 && run.tick <= run.punishWindowUntilTick;
 }
 
 /* ---------------------------------------------------------------------------------------------
@@ -1547,6 +1920,18 @@ function meleeSweep(run, source, targets, damage, owner, combat) {
       cue: eventCue("impactHit"),
     });
   });
+  // 광역: the swing is a disc centred on the arc, not a list of locked targets. Bodies already
+  // struck by the arc are excluded so nobody is damaged twice by one swing.
+  resolveAreaImpact(run, {
+    origin: source,
+    faction: "player",
+    sourceId: source.id,
+    sourceKey: source.id === "commander" ? "basic" : "companion",
+    damage: hit.damage,
+    element: source.element,
+    excludeIds: targets.map((target) => target.id),
+    causalRootId: sweepEvent.eventId,
+  });
   return targets.length;
 }
 
@@ -1570,6 +1955,7 @@ function fireTravellingOrb(run, source, aim, damage, owner, range, combat) {
     owner,
     ttl: COMBAT_TARGETING.ranged.maxTicks,
     combat: hit,
+    element: elementOf(source.element),
   });
   run.projectiles.push(projectile);
   const firedEvent = emit(run, "WEAPON_FIRED", {
@@ -1719,6 +2105,17 @@ function advanceTravellingProjectiles(run) {
         hit: true,
         guardedBy: applied.guardedBy,
         cue: eventCue("impactHit"),
+      });
+      // 광역: the orb detonates on contact; the body it touched is excluded from its own burst.
+      resolveAreaImpact(run, {
+        origin: struck.enemy,
+        faction: "player",
+        sourceId: projectile.sourceId,
+        sourceKey: "projectile",
+        damage: projectile.damage,
+        element: projectile.element,
+        excludeIds: [struck.enemy.id],
+        causalRootId: projectile.causalRootId,
       });
       continue;
     }
@@ -1977,6 +2374,42 @@ function castSkill(run, skillId) {
       multiplierBp: hit.multiplierBp,
       cue: eventCue("criticalHit"),
     });
+  }
+
+  // 광역: every cast is a disc, including the single-target actives. The bodies the authored
+  // skill already damaged are excluded, so the splash only reaches what the skill did NOT hit.
+  // A skill that declares `fieldTicks` also leaves a field, which is the duration axis of the
+  // area model: the same damage budget either lands now or is paid out over the field's life.
+  const skillDamage = skillRankDamage(run, skill);
+  const skillOrigin = targets[0] ? { x: targets[0].x, y: targets[0].y } : { x: run.commander.x, y: run.commander.y };
+  if (skillDamage > 0) {
+    resolveAreaImpact(run, {
+      origin: skillOrigin,
+      faction: "player",
+      sourceId: run.commander.id,
+      sourceKey: "skill",
+      damage: skillDamage,
+      element: skill.element,
+      radius: skill.areaRadius,
+      weightBp: skill.areaWeightBp,
+      excludeIds: targets.map((entry) => entry.id),
+      causalRootId,
+      castInstanceId,
+    });
+    if (skill.fieldTicks > 0) {
+      spawnAreaField(run, {
+        origin: skillOrigin,
+        faction: "player",
+        sourceId: run.commander.id,
+        sourceKey: "skill",
+        damage: skillDamage,
+        element: skill.element,
+        radius: skill.areaRadius,
+        weightBp: skill.areaWeightBp,
+        durationTicks: skill.fieldTicks,
+        causalRootId,
+      });
+    }
   }
 
   const baseCooldownTicks = run.measurementProfile?.fixtureActiveCooldownTicks ?? skill.cooldown;
@@ -2484,28 +2917,61 @@ function moveEnemies(run) {
       return;
     }
 
+    // Telegraph -> active -> recovery, for EVERY body that carries a pattern.
+    //
+    // The boss already worked this way; the authored patterns give trash and elites the same
+    // three-phase shape, so a wide swing is announced before it lands and the AI response
+    // patterns have something to answer. A body with no authored telegraph (telegraphTicks 0)
+    // keeps the original immediate-contact cadence.
     const contactRange = enemy.radius + (target.radius || 0);
-    if (enemy.class === "boss") {
-      if (enemy.attackWindup) {
-        if (enemy.attackCooldown > 0) return;
-        if (targetDistance > contactRange) {
-          enemy.attackWindup = false;
-          emit(run, "BOSS_ATTACK_CANCELLED", { entityId: enemy.id, targetId: target.id, policyId: enemy.policyId });
-          return;
-        }
-      } else {
-        if (targetDistance > contactRange) return;
-        enemy.attackWindup = true;
-        enemy.attackCooldown = enemy.attackTicks;
-        emit(run, "BOSS_ATTACK_TELEGRAPHED", {
+    const bossBody = enemy.class === "boss";
+    if (enemy.attackWindup) {
+      if (enemy.attackCooldown > 0) return;
+      if (targetDistance > contactRange) {
+        enemy.attackWindup = false;
+        emit(run, bossBody ? "BOSS_ATTACK_CANCELLED" : "ENEMY_ATTACK_CANCELLED", {
           entityId: enemy.id,
           targetId: target.id,
           policyId: enemy.policyId,
-          windupTicks: enemy.attackTicks,
+          patternId: enemy.patternId ?? null,
+          stepId: enemy.patternStepId ?? null,
+          actionId: enemy.patternActionId ?? null,
         });
         return;
       }
-    } else if (targetDistance > contactRange || enemy.attackCooldown > 0) return;
+    } else {
+      if (targetDistance > contactRange || enemy.attackCooldown > 0) return;
+      // The authored pattern preset decides what THIS strike is: its disc, its damage weight,
+      // its tell length and whether it leaves a field. Two consecutive slams from one body
+      // therefore read as two different attacks instead of one repeated animation.
+      const sample = samplePattern(enemy.patternId, bossBody ? run.tick - (run.bossSpawnedAt ?? 0) : run.tick);
+      const telegraphTicks = bossBody ? enemy.attackTicks : (sample?.step?.telegraphTicks ?? 0);
+      if (telegraphTicks > 0) {
+        enemy.attackWindup = true;
+        enemy.attackCooldown = telegraphTicks;
+        enemy.patternStepId = sample?.stepId ?? null;
+        enemy.patternActionId = sample?.actionId ?? null;
+        const telegraphRadius = sample?.step?.radius ?? areaSourceProfile(bossBody ? "boss" : "enemy").radius;
+        emit(run, bossBody ? "BOSS_ATTACK_TELEGRAPHED" : "ENEMY_ATTACK_TELEGRAPHED", {
+          entityId: enemy.id,
+          targetId: target.id,
+          policyId: enemy.policyId,
+          windupTicks: telegraphTicks,
+          patternId: sample?.patternId ?? null,
+          stepId: sample?.stepId ?? null,
+          actionId: sample?.actionId ?? null,
+          phase: "telegraph",
+          shape: sample?.step?.shape ?? "disc",
+          element: elementOf(sample?.step?.element ?? enemy.element),
+          radius: telegraphRadius,
+          originX: enemy.x,
+          originY: enemy.y,
+        });
+        // AI response: the covered player-side bodies decide to evade, scatter or brace.
+        applyTelegraphResponse(run, enemy, enemy, telegraphRadius);
+        return;
+      }
+    }
     let commanderDamage = 0;
     let gateDamage = 0;
     let companionDamage = 0;
@@ -2527,15 +2993,69 @@ function moveEnemies(run) {
       }
     }
     const damage = target.id === "gate" ? gateDamage : (target.kind === "companion" ? companionDamage : Math.round(commanderDamage * run.commander.incomingDamageMultiplier));
-    if (enemy.class === "boss") enemy.attackWindup = false;
-    else enemy.attackCooldown = enemy.attackTicks;
+    const bossStrike = bossBody;
+    const patternSample = bossStrike
+      ? samplePattern(enemy.patternId, run.tick - (run.bossSpawnedAt ?? 0))
+      : samplePattern(enemy.patternId, run.tick);
+    const patternStep = patternSample?.step ?? null;
+    enemy.attackWindup = false;
+    if (!bossStrike) enemy.attackCooldown = enemy.attackTicks;
     emit(run, "ENEMY_ATTACK", {
       entityId: enemy.id,
       targetId: target.id,
       damage,
       policyId: enemy.policyId,
       intent: enemy.policyIntent,
+      patternId: patternSample?.patternId ?? null,
+      stepId: patternSample?.stepId ?? null,
+      actionId: patternSample?.actionId ?? null,
+      phase: "active",
+      element: elementOf(patternStep?.element ?? enemy.element),
+      radius: patternStep?.radius ?? areaSourceProfile(bossStrike ? "boss" : "enemy").radius,
     });
+    // 광역: every enemy strike is a disc on the player side. The primary target is excluded —
+    // it is damaged by the authored branch below — so the splash is exactly "who else was
+    // standing close enough".
+    const strikeSourceKey = bossStrike ? "boss" : "enemy";
+    const strikeProfile = areaSourceProfile(strikeSourceKey);
+    const strikeDamage = Math.max(0, Math.trunc(enemy.damage * (patternStep?.damageBp ?? AREA_BP) / AREA_BP));
+    resolveAreaImpact(run, {
+      origin: patternStep?.shape === "lead" ? { x: target.x ?? enemy.x, y: target.y ?? enemy.y } : enemy,
+      faction: "enemy",
+      sourceId: enemy.id,
+      sourceKey: strikeSourceKey,
+      damage: strikeDamage,
+      element: patternStep?.element ?? enemy.element,
+      radius: patternStep?.radius ?? strikeProfile.radius,
+      weightBp: patternStep?.weightBp ?? strikeProfile.weightBp,
+      excludeIds: [target.id],
+    });
+    const fieldTicks = patternStep?.fieldTicks ?? (bossStrike ? strikeProfile.fieldTicks : 0);
+    if (fieldTicks > 0) {
+      spawnAreaField(run, {
+        origin: patternStep?.shape === "lead" ? { x: target.x ?? enemy.x, y: target.y ?? enemy.y } : enemy,
+        faction: "enemy",
+        sourceId: enemy.id,
+        sourceKey: strikeSourceKey,
+        damage: strikeDamage,
+        element: patternStep?.element ?? enemy.element,
+        radius: patternStep?.radius ?? strikeProfile.radius,
+        weightBp: patternStep?.weightBp ?? strikeProfile.weightBp,
+        durationTicks: fieldTicks,
+      });
+    }
+    if (bossStrike) {
+      // The recovery phase of a heavy attack is the answer window: allied fire speeds up
+      // inside it (AI_RESPONSE_PATTERNS.punish), which is what makes a telegraph a trade.
+      run.punishWindowUntilTick = run.tick + (patternStep?.recoveryTicks ?? AI_RESPONSE_PATTERNS.punish.windowTicks);
+      emit(run, "AI_RESPONSE_APPLIED", {
+        entityId: enemy.id,
+        responsePatterns: ["punish"],
+        windowUntilTick: run.punishWindowUntilTick,
+        cooldownScaleBp: AI_RESPONSE_PATTERNS.punish.cooldownScaleBp,
+        simTick: run.tick,
+      });
+    }
     if (target.id === "gate") {
       run.gate.integrity = clamp(run.gate.integrity - damage, 0, run.gate.maxIntegrity);
       emit(run, "GATE_BREACHED", { enemyId: enemy.id, damage, policyId: enemy.policyId });
@@ -2946,6 +3466,8 @@ function tick(run) {
   }
 
   advanceTravellingProjectiles(run);
+  // Lingering area fields pulse before deaths are resolved, so a field kill lands on this tick.
+  processAreaFields(run);
 
   /* Legacy timed projectiles (enemy fire) only: travelling orbs were already integrated above. */
   run.projectiles.forEach((projectile) => { if (projectile.mode !== "travel") projectile.ttl -= 1; });
@@ -3007,6 +3529,26 @@ function tick(run) {
       guardedBy,
       cue: hit ? eventCue("impactHit") : null,
     });
+    // 광역: an enemy shell detonates on whatever it reached. Structures are never splashed —
+    // the gate has its own authored damage path — so this only reaches bodies.
+    if (hit && projectile.targetId !== "gate") {
+      const detonation = run.commander.id === projectile.targetId
+        ? run.commander
+        : (run.companions.find((entry) => entry.id === projectile.targetId)
+          || run.enemies.find((entry) => entry.id === projectile.targetId));
+      if (detonation) {
+        resolveAreaImpact(run, {
+          origin: detonation,
+          faction: projectile.faction ?? "enemy",
+          sourceId: projectile.sourceId,
+          sourceKey: "enemyProjectile",
+          damage: projectile.damage,
+          element: projectile.element,
+          excludeIds: [projectile.targetId],
+          causalRootId: projectile.causalRootId,
+        });
+      }
+    }
   });
 
   run.commander.basicCooldown -= 1;
@@ -3245,6 +3787,10 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     events: [],
     enemies: [],
     projectiles: [],
+    /** Live lingering area fields (defense-catalog AREA_FIELD). Ticked by processAreaFields(). */
+    areaFields: [],
+    /** Tick through which allied fire is inside an AI punish window. 0 = no window. */
+    punishWindowUntilTick: 0,
     pickups: [],
     companions: [],
     itemIds: [],
@@ -3527,6 +4073,9 @@ export function getRunSnapshot(run) {
     events: run.events.map((event) => ({ version: EVENT_VERSION, ...event })),
     enemies: sortedActors(run.enemies),
     projectiles: sortedActors(run.projectiles),
+    /** Live area fields, so a renderer can draw a persistent ground zone without inferring it. */
+    areaFields: sortedActors(run.areaFields),
+    punishWindowUntilTick: run.punishWindowUntilTick,
     pickups: sortedActors(run.pickups),
     companions: sortedActors(run.companions),
     occupationProgress: run.occupationProgress,
