@@ -139,16 +139,16 @@ const profiles = [
         triangle(600, 800, 0, 23400, 11200, 0, 600, 11200, 0),
       ])],
       routes: [
-        route("cinder-span:critical-route", "critical", 1200, [
+        route("cinder-span:critical-route", "critical", 1400, [
           waypoint("cinder-span:ingress", "ingress", 1800, 6000),
-          waypoint("cinder-span:cinder-relay-crossing", "intermediate-objective", 7600, 6000),
-          waypoint("cinder-span:cinder-forge-stand", "intermediate-gate", 14400, 6000),
+          waypoint("cinder-span:cinder-relay-crossing", "intermediate-objective", 14600, 5200),
+          waypoint("cinder-span:cinder-forge-stand", "intermediate-gate", 17400, 6400),
           waypoint("cinder-span:final-gate", "final-gate", 22000, 6000),
         ]),
-        route("cinder-span:optional-detour", "optional-detour", 700, [
-          waypoint("cinder-span:detour-entry", "detour-entry", 5600, 7400),
-          waypoint("cinder-span:ash-cache", "detour-objective", 9200, 10700),
-          waypoint("cinder-span:detour-exit", "detour-exit", 16800, 10700),
+        route("cinder-span:optional-detour", "optional-detour", 900, [
+          waypoint("cinder-span:detour-entry", "detour-entry", 6000, 10600),
+          waypoint("cinder-span:ash-cache", "detour-objective", 13200, 10700),
+          waypoint("cinder-span:detour-exit", "detour-exit", 19600, 10700),
         ]),
       ],
     },

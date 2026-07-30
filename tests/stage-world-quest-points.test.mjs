@@ -36,16 +36,16 @@ const EXPECTED_WORLD_TOPOLOGY = {
       [[600, 800, 0], [23400, 11200, 0], [600, 11200, 0]],
     ]]],
     routes: [
-      ["cinder-span:critical-route", "critical", 1200, [
+      ["cinder-span:critical-route", "critical", 1400, [
         ["cinder-span:ingress", "ingress", 1800, 6000, 0],
-        ["cinder-span:cinder-relay-crossing", "intermediate-objective", 7600, 6000, 0],
-        ["cinder-span:cinder-forge-stand", "intermediate-gate", 14400, 6000, 0],
+        ["cinder-span:cinder-relay-crossing", "intermediate-objective", 14600, 5200, 0],
+        ["cinder-span:cinder-forge-stand", "intermediate-gate", 17400, 6400, 0],
         ["cinder-span:final-gate", "final-gate", 22000, 6000, 0],
       ]],
-      ["cinder-span:optional-detour", "optional-detour", 700, [
-        ["cinder-span:detour-entry", "detour-entry", 5600, 7400, 0],
-        ["cinder-span:ash-cache", "detour-objective", 9200, 10700, 0],
-        ["cinder-span:detour-exit", "detour-exit", 16800, 10700, 0],
+      ["cinder-span:optional-detour", "optional-detour", 900, [
+        ["cinder-span:detour-entry", "detour-entry", 6000, 10600, 0],
+        ["cinder-span:ash-cache", "detour-objective", 13200, 10700, 0],
+        ["cinder-span:detour-exit", "detour-exit", 19600, 10700, 0],
       ]],
     ],
   },
