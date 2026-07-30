@@ -28,6 +28,7 @@ import { DefenseStorage } from "./defense-storage.js";
 import {
   advanceDefenseRun,
   createDefenseRun,
+  ABYSS_DEPTH_MAX,
   getRunSnapshot,
   isTerminalRun,
   queueInput,
@@ -160,6 +161,9 @@ const LOBBY_STRATEGY_CUSTOM = "CUSTOM";
 
 let campaign = null;
 let selectedStageId = STAGES[0].id;
+let selectedAbyssDepth = 0; // Abyss Depth (wiki 2026-07-30 GAP-A): run-scoped difficulty ladder, NOT persisted; clamped to cleared-stage count each build.
+/** Max Abyss Depth unlocked = cleared-stage count, capped at ABYSS_DEPTH_MAX (clear-to-unlock, GAP-A). depth 0 always available. */
+function maxUnlockedAbyssDepth() { return campaign ? Math.min(ABYSS_DEPTH_MAX, campaign.resolvedIds?.length ?? 0) : 0; }
 // Persistent RPG command decks (20260729-ui-dock-removal, ui/dock-removal-plan.md):
 // replaces the slide-open side docks. Two fixed edge columns, siblings of
 // #defense-battle-surface, mounted ONLY before a run and emptied the instant a run starts:
@@ -1458,7 +1462,8 @@ function renderSortieFab() {
     return;
   }
   const selected = stageFor(selectedStageId);
-  const label = `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)}`;
+  const depthNow = Math.min(selectedAbyssDepth, maxUnlockedAbyssDepth());
+  const label = `${escapeHtml(selected.name)} · ${escapeHtml(selected.bossName)}${depthNow ? ` · 심연 ${depthNow}` : ""}`;
   // One markup string for both the create and the update path: the update path used to
   // rebuild the chevron WITHOUT data-ui-icon, so a re-render silently downgraded the
   // generated plate back to the ↗ glyph.
@@ -1477,6 +1482,40 @@ function renderSortieFab() {
     renderShell();
   });
   root.append(button);
+}
+
+/** AbyssDepthControl (wiki 2026-07-30 GAP-A/C): run-scoped difficulty-ladder selector, a fixed
+ * sibling just above the SortieFab so the chosen depth is set right at 전투개시. Always mounted
+ * pre-run (visible immediately); depths above the cleared-stage count render as LOCKED options
+ * (clear-to-unlock, GAP-A). Removed the instant a run starts. Not persisted — resets to 0 on
+ * reload. Changing depth remounts the run so the new scale + enemy-policy rotation are live
+ * before the first tick. */
+function renderAbyssDepthControl() {
+  if (!campaign) return;
+  const existing = root.querySelector("#abyss-depth-control");
+  if (session?.started) { existing?.remove(); return; }
+  const maxDepth = maxUnlockedAbyssDepth();
+  if (selectedAbyssDepth > maxDepth) selectedAbyssDepth = maxDepth;
+  const options = Array.from({ length: ABYSS_DEPTH_MAX + 1 }, (_, d) => {
+    const locked = d > maxDepth;
+    const text = d === 0 ? "심연 0 · 기본" : locked ? `심연 ${d} · 잠김 (${d} 클리어 필요)` : `심연 ${d} · 적 +${d * 15}%`;
+    return `<option value="${d}"${d === selectedAbyssDepth ? " selected" : ""}${locked ? " disabled" : ""}>${text}</option>`;
+  }).join("");
+  const inner = `<span class="abyss-depth-eyebrow">ABYSS DEPTH · 심도</span><select id="abyss-depth-select" aria-label="심연 심도 선택">${options}</select>`;
+  if (existing) { existing.innerHTML = inner; }
+  else {
+    const box = document.createElement("div");
+    box.id = "abyss-depth-control";
+    box.className = "abyss-depth-control rc-glass";
+    box.innerHTML = inner;
+    root.append(box);
+  }
+  root.querySelector("#abyss-depth-select")?.addEventListener("change", (event) => {
+    if (session?.started) return;
+    selectedAbyssDepth = Math.min(Number(event.currentTarget.value) || 0, maxUnlockedAbyssDepth());
+    session?.remountForStage(selectedStageId);
+    renderShell();
+  });
 }
 
 /** IdleReturnToast (ui/component-contracts.md §4): mounted ONCE at mountShell() time, only
@@ -1567,6 +1606,7 @@ function renderShell() {
     renderCommandDeckRight();
   }
   renderSortieFab();
+  renderAbyssDepthControl();
   renderLobbyCinematic();
 }
 
@@ -1809,6 +1849,7 @@ export class BattleSession {
     return createDefenseRun({
       stageId,
       seed,
+      abyssDepth: Math.min(selectedAbyssDepth, maxUnlockedAbyssDepth()),
       companionLoadout,
       rewardIds: campaign.rewardIds ?? [],
       wardenProgress: campaign.wardenProgress,
@@ -2672,7 +2713,8 @@ export class BattleSession {
     const presentation = stagePresentationFor(this.stageId);
     root.querySelector("#battle-stage").textContent = `${stage.sequence}. ${stage.name}`;
     root.querySelector("#battle-domain").textContent = `${presentation.mapLabels.title} · ${presentation.mapLabels.domain}`;
-    root.querySelector("#battle-terrain-context").textContent = `${presentation.terrain.label} · ${presentation.mapLabels.hazard} · ${presentation.mapLabels.occupation} → ${presentation.mapLabels.extraction}`;
+    const depthBadge = this.run?.abyssDepth ? ` · ABYSS DEPTH ${this.run.abyssDepth}` : "";
+    root.querySelector("#battle-terrain-context").textContent = `${presentation.terrain.label} · ${presentation.mapLabels.hazard} · ${presentation.mapLabels.occupation} → ${presentation.mapLabels.extraction}${depthBadge}`;
     this.surface.dataset.stageId = this.stageId;
     this.surface.dataset.terrainPattern = presentation.terrain.patternId;
     this.surface.dataset.visualScale = String(VISUAL_ACTOR_SCALE);

@@ -30,6 +30,12 @@ const freeze = (value) => {
 const clamp = (value, low, high) => value < low ? low : value > high ? high : value;
 const distanceSquared = (a, b) => { const x = a.x - b.x; const y = a.y - b.y; return x * x + y * y; };
 const scaled = (value, scale) => Math.trunc(value * scale / 100);
+// Abyss Depth (wiki reports 2026-07-30 GAP-A/C): run-scoped clear-to-unlock difficulty ladder.
+// depth 0 is a pure identity (same seed stream, same scale, same snapshot keys) so every existing
+// digest fixture is byte-unchanged. Each depth adds +ABYSS_DEPTH_SCALE_STEP% enemy HP/XP and folds
+// into the WAVE rng stream only (rotating enemy policy/composition), never the identity/combat rng.
+export const ABYSS_DEPTH_MAX = 5;
+const ABYSS_DEPTH_SCALE_STEP = 15;
 const rngNext = (seed) => { let x = seed | 0; x ^= x << 13; x ^= x >>> 17; x ^= x << 5; return x >>> 0; };
 const stageFor = (stageId) => {
   const stage = STAGE_BY_ID[stageId];
@@ -646,13 +652,14 @@ function applyOwnedRewards(run, rewardIds) {
 function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
   const data = ENEMIES[type];
   if (!data) throw new RangeError(`Unknown authored enemy type: ${type}`);
-  const hp = scaled(data.hp, run.stage.scale);
+  const effScale = run.stage.scale + (run.abyssDepth || 0) * ABYSS_DEPTH_SCALE_STEP;
+  const hp = scaled(data.hp, effScale);
   // XP reward tracks enemy toughness: late stages scale enemy HP (line above) by
   // run.stage.scale, so a flat XP grant would stretch the in-run level-up cadence
   // the further a player progresses (2.4x the HP for the same XP at gate-zenith).
   // Scaling XP by the same stage factor keeps the level-up rhythm constant across
   // stages. scale 100 (cinder-span) is an identity, so Stage 1 digests are unchanged.
-  const xpReward = scaled(data.xp, run.stage.scale);
+  const xpReward = scaled(data.xp, effScale);
   const fallbackPolicy = elite ? "low-hp-focus" : (
     type === "flanker" ? "flank" :
     type === "guardian" ? "elite-escort" :
@@ -3098,12 +3105,16 @@ function applyCarryOver(state, carryOver) {
  * `formation` is the saved per-companion FRONT/BACK intent map. It deterministically chooses
  * companion position rank at run creation; the active stance still derives the live slot count
  * from STANCE_CONFIG every tick. See resolveFormation(). */
-export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, carryOver = null } = {}) {
+export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, carryOver = null, abyssDepth = 0 } = {}) {
   const stage = stageFor(stageId);
   const stagePlan = stagePlanFor(stage);
   const unsignedSeed = (seed >>> 0) || 1;
+  const depth = Number.isInteger(abyssDepth) ? clamp(abyssDepth, 0, ABYSS_DEPTH_MAX) : 0;
+  // Only the wave schedule reroutes on depth; identity/surprise/combat rng stay on unsignedSeed so
+  // depth 0 is byte-identical and higher depths just rotate which enemy policies/compositions roll.
+  const waveSeed = depth ? (((unsignedSeed ^ (0x51ed2701 * (depth + 1))) >>> 0) || 1) : unsignedSeed;
   const tactics = stagePlan.mapPlan.tactics;
-  const { schedule, nextRng, variantId } = buildWaveSchedule(stage, unsignedSeed, tactics, stagePlan.wavePlan);
+  const { schedule, nextRng, variantId } = buildWaveSchedule(stage, waveSeed, tactics, stagePlan.wavePlan);
   const planIdentity = `${stagePlan.mapPlan.id}:${stagePlan.wavePlan.id}:seed:${unsignedSeed}`;
   const surpriseTable = tactics.surpriseTable;
   const surpriseRng = rngNext(unsignedSeed ^ 0x6d2b79f5);
@@ -3140,6 +3151,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     version: SNAPSHOT_VERSION,
     tick: 0,
     seed: unsignedSeed,
+    abyssDepth: depth,
     rng: nextRng,
     combatRng: rngNext(unsignedSeed ^ 0x9e3779b9),
     nextId: 0,
@@ -3421,6 +3433,7 @@ export function getRunSnapshot(run) {
     stageName: run.stage.name,
     bossName: run.stage.bossName,
     terminal: run.terminal,
+    ...(run.abyssDepth ? { abyssDepth: run.abyssDepth } : {}),
     plan: {
       identity: run.planCommitment.identity,
       mapPlanId: run.planCommitment.mapPlan.id,

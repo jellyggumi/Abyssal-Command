@@ -314,6 +314,24 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
 }
 .sortie-fab small { color: #c6dded; }
 .sortie-fab b { font-size: 1.25rem; }
+/* AbyssDepthControl (wiki 2026-07-30 GAP-A): run-scoped difficulty-ladder selector, a fixed pill
+   sitting just above the SortieFab so 심도 is chosen right at 전투개시. Pre-run only. */
+.abyss-depth-control {
+  position: fixed;
+  z-index: 6;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(3.9rem + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .3rem .6rem;
+  border: 1px solid var(--canon-cinder-ember, #f3592c);
+  border-radius: 10px;
+  max-width: min(92vw, 26rem);
+}
+.abyss-depth-eyebrow { font-size: .62rem; font-weight: 800; letter-spacing: .06em; color: #ffd7c4; white-space: nowrap; }
+.abyss-depth-control select { font-size: .8rem; font-weight: 700; background: rgba(8, 12, 20, .6); color: #fff2ea; border: 1px solid var(--rc-panel-border, rgba(150, 156, 180, .3)); border-radius: 8px; padding: .2rem .4rem; }
 /* IdleReturnToast (component-contracts.md §3.4): top-center transient notice, same visual
    language as .edge-card (border/background) but NOT .edge-card itself -- that class is
    positioned relative to #defense-battle-surface; this toast is a shell-level sibling and
@@ -2358,6 +2376,7 @@ button:disabled {
     min-height: 64px;
     transform: none;
   }
+  .abyss-depth-control { left: calc(var(--deck-left-width) + .5rem); right: .5rem; transform: none; bottom: calc(42dvh + 3.5rem); max-width: none; justify-content: center; }
   .sortie-fab:active { transform: scale(.98); }
   .sortie-action-label { font-size: .82rem; white-space: normal; }
 }
