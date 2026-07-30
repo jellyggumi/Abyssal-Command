@@ -442,15 +442,33 @@ share = areaFalloffBp(distance, radius)
 - 전체 Node 회귀(`node --test 'tests/**/*.test.mjs'`)는 §9.2와 동일하게 로컬에서 완료 요약을
   만들지 못했다 — 이번에도 PASS로 계산하지 않는다 [BLOCKED].
 
-### 10.4 남은 작업
+### 10.4 모션 팩 재타깃 [OBSERVED · 완료]
 
-- **모션 팩 재타깃**: `scripts/retarget-ingame-motion-blender.py`의 `CLIPS`가 9 → 20개
-  (방향별 hit_*/bighit_*, attack_melee, attack_ranged, die, show)로 확장되어 있고, 런타임은 이미
-  이 키들을 라우팅한다(미보유 시 평면 키로 폴백). 팩 재빌드는 전체 66개 벤치 FBX에 대한
-  Blender 관측 감사(`scripts/audit-fbx-motion-bench.py --expect-count 66`)를 선행 요구하며,
-  이번 세션에서 헤드리스 Blender 5.1.2로 실행했으나 부하가 걸린 머신에서 시간 내 완료하지
-  못했다. `assets/motion/ingame/unarmed-core.glb`는 여전히 9클립 팩이며
-  `tests/ingame-motion-pack.test.mjs`도 9개 기준으로 일관된다.
+`assets/motion/ingame/unarmed-core.glb` 9클립 → **21클립**(189 KB → 495 KB), `main` `e4775b5c`.
+
+- 기존 9개(idle/move/run/hit/bighit/attack/critical/avoid/defence)는 소스 무변경 — 어떤 리그도
+  기존 모션을 잃거나 바꾸지 않는다. 추가분: 방향별 `hit_front/back/left/right`,
+  `bighit_front/back/left/right`, `attack_melee`, `attack_ranged`, `die`, `show`.
+- 런타임 변경 0줄. 오버레이 액션 키는 팩의 클립 이름(`unarmed-core::<action>::v01`)에서 읽고
+  `RIG_ACTION_KEYS`로 승인되므로, 팩이 커지면 라우팅이 그대로 켜진다. 잠들어 있던
+  `hitReactionKey()` 방향 분기가 24개 호환 리그 전부에서 처음으로 실제 클립을 얻었다.
+- 관측 감사 66/66. 2026-07-29의 42개 코퍼스는 그대로 두고, 이후 추가된 24개만 동일 스크립트로
+  심볼릭 링크 디렉터리에서 관측(`--expect-count 24`)해 병합했다. 양쪽 모두 실제 Blender 임포트다.
+  (전체 66개 단일 실행은 부하 상태에서 특정 파일에 걸려 진행되지 않아 중단했다.)
+- 레퍼런스 리그는 `assets/motion/ingame/characters/human-command-boss/model.glb`(지휘관의 실제
+  런타임 리그). 스크립트의 옛 기본값 `assets/images/battle/glb/commander/dusk-warden.glb`는
+  폐기된 GLB 레인과 함께 사라졌다.
+- 팩 클립 수 게이트는 `CLIPS`에서 파생하도록 바꿔, 로스터가 바뀌어도 클립이 빠진 팩을 통과시킬 수 없다.
+- 테스트는 오버레이 로스터를 배포된 매니페스트에서 읽는다 — "팩이 싣는 것은 오버레이, 나머지는
+  리그 자체"라는 실제 규칙을 검증한다.
+- 증거: 모션/라우팅/오버레이 QA/렌더러/자산 매니페스트/리그 계약/승격 자산 **51개 중 47 PASS,
+  0 FAIL**(4 SKIP); engine contract 세트 **61/61**; `defense-survivor-browser` `"pass": true`;
+  자산 매니페스트 재생성 diff 없음. 릴리스 run `30574564581` 전 게이트 SUCCESS.
+- 배포 확인: 라이브 팩 21클립/495 072 B, 라이브 매니페스트 override 21개,
+  `version.json.candidate_sha` = `e4775b5c9943394a1ad5c8bc193a6f4399c43115`,
+  로컬 실행 `deployed-defense-smoke` `"pass": true`, `errors: []`.
+
+### 10.5 남은 작업
 - 텍스트-투-모션 생성 경로(MDM/T2M-GPT)는 실행하지 않았다. 프롬프트 템플릿은
   `wiki/concepts/motion-generation-for-runtime-rigs.md` §4에 있고, 산출물은 `CLAUDE.md` §3의
   provenance/감사 게이트를 통과해야 런타임에서 참조할 수 있다.
