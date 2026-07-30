@@ -303,14 +303,53 @@ existing test would have detected it.** Registry now closed at four constants:
    withdrawal in defect 11 is the honest close of the gate-cap question for this cycle, not
    a solution. Carried: (a) check 11's three-removal-path reconciliation is **uncovered**,
    because no reachable drop can produce a gate buff — `reconcileGateCap` is live code whose
-   eviction path now has no end-to-end test; (b)
+   eviction path now has no end-to-end test; (b) the withdrawal edits `defense-catalog.js`, so
    `qa/evidence/gates/G2/g2-adversarial-tape-fixture.receipt.json` now claims a **stale**
-   `defense-catalog.js` digest (`31a36ad1…` recorded vs `c0b2c1ea…` actual), because the
-   withdrawal edits that file. G2 was not re-adjudicated this cycle, so the receipt was left
-   alone rather than re-exported into a gate nobody judged — but the next G2 adjudication
-   **must** re-export it. (c) The cycle-10 drop/buff proof folder carries
+   digest for it (`31a36ad1…` recorded vs `c0b2c1ea…` actual). **That is the narrowest true
+   statement, and the real scope is wider — see item 9**, which measured two receipts with
+   2-of-7 and 5-of-6 stale inputs and traced most of the drift to commits before this cycle.
+   G2 was not re-adjudicated here, so nothing was re-exported into a gate nobody judged — the
+   next G2 adjudication must. (c) The cycle-10 drop/buff proof folder carries
    `SUPERSEDED-bulwark-echo.md`; its receipt and `dbimpl-behavior.mjs` measured the withdrawn
    item accurately and are deliberately left byte-unedited.
+9. **Committed G2/G3 gate evidence is stale, measured three ways — re-export deferred, not
+   forgotten.** `[OBSERVED]` The G3 formation-attribution exporter is deterministic (four
+   successful runs, one size each), and it produces **three different artifacts** depending on
+   the tree:
+
+   | tree | bytes | delta vs committed |
+   |---|---|---|
+   | committed at HEAD (last written by `47d8dcda`, 2026-07-28) | 12,985,632 | — |
+   | base `033877ad` | 13,953,706 | **+968,074** |
+   | this branch | 13,920,096 | +934,464 |
+
+   So the **dominant drift is pre-existing** — `defense-run-simulation.js` changed in **10
+   commits** between the artifact's last write and our base, including `543194e8` "Abyss Depth
+   v2" and others from concurrent sessions. Cycle 10's own contribution is the residual
+   **−33,610** (base → branch), and total `controlRuns[].events` moves 18,540 → 14,804.
+   Deliberately **reverted, not re-exported**: re-exporting would fold three days of other
+   sessions' simulation changes into a G3 re-adjudication nobody requested, and G3 is fenced
+   out of this cycle by ruling R27. G3 must be re-exported and re-adjudicated by whoever owns
+   it next — the artifact in the tree today describes none of the three trees above.
+
+   Two receipts also carry stale `inputDigests`, wider than item 8 stated:
+   `G2/g2-adversarial-tape-fixture.receipt.json` has **2 of 7** stale (`defense-catalog.js`,
+   `defense-run-simulation.js`), and `G2/stage1b-cinder-pressure-packets.json.receipt.json` —
+   a **release** receipt (`sourceRevision: stage1b-release-20260727`) — has **5 of 6**,
+   including `scripts/run-stage1b-pressure-packets.mjs` and
+   `scripts/export-stage1b-pressure-packets.mjs`, which are the very G7 tooling cited in
+   defect 11. Their `outputSha256` still matches their own payload, so each artifact is
+   internally consistent; only the inputs drifted. Nothing enforces this —
+   `g2-adversarial-tape-cli.test.mjs:149` only asserts the digest *matches the sha256 format*,
+   never its value — so CI stays green while the provenance rots. A value comparison there
+   would have caught all of it.
+
+   How this was found, since the method generalises: an interrupted test left the canonical
+   artifact dirty. The exporter writes the canonical path and restores the original in a
+   `finally`, so killing the parent skips the restore. The dirty file was **not** damage —
+   chasing it to a byte count, then to the base tree, then to `git log` on the artifact path
+   is what separated "9 KB of killed-run garbage" from "968 KB of real, pre-existing,
+   three-day drift".
 
 ---
 
