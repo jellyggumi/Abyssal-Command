@@ -307,46 +307,121 @@ Per `buildActions()` → `battle-realtime-three.js:931-950`:
 **Retarget one unarmed motion pack onto all 23 character rigs dynamically**
 
 ### Overlay Pack Source
-**File:** `assets/motion/ingame/unarmed-core.glb`  
-**Clips:** 9 delta clips (quaternion-only, rig-independent)
+**File:** `assets/motion/ingame/unarmed-core.glb` (189 KB, animation-only)
+**Clips:** 9 quaternion-delta clips, no skeleton/skin
+**Bones:** 24 DEF-* bone references (rig compatibility), 22 animated via MAPPING_ROWS
+**Design Doc:** `_workspace/current/overlay-architecture.md`
 ```
-idle, move, run, hit, bighit, attack, critical, avoid, defence
+idle (loop), move (loop), run (loop), hit, bighit, attack, critical, avoid, defence
 ```
-**Format:** Raw quaternion deltas (not absolute poses)
 
-### Overlay Loading
+### Delta Encoding Format
+The overlay GLB stores **rest-relative quaternion deltas**, not absolute poses:
 
-**Path:** `battle-realtime-three.js:717`
 ```
+delta[X][t] = inverse(target_rig_rest[X]) * absolute_retargeted[X][t]
+```
+
+Where:
+- `target_rig` = `commander/dusk-warden.glb` (reference rig used during offline retargeting)
+- `delta[X][t]` = quaternion for bone X at frame t in the overlay GLB
+- `absolute_retargeted[X][t]` = the retargeted bone-local absolute rotation
+
+The postprocess pipeline (`postprocess_rest_relative_deltas()` in the retarget script) converts absolute quaternions to this rest-relative delta form before export.
+
+### Runtime Adaptation Math
+
+For a character C with rest pose quaternion `C_rest[X]` (from GLB `nodes[].rotation`):
+
+```
+adapted_clip[X][t] = C_rest[X] * delta[X][t]
+```
+
+This works because:
+1. All 24 compatible characters use the same `def-humanoid-v1` skeleton hierarchy
+2. `C_rest[X]` is the bone's rest orientation relative to its parent in character C's GLB
+3. The overlay delta encodes retargeted motion relative to the reference rig's rest
+4. Pre-multiplying by `C_rest[X]` shifts the motion into character C's bone-local space
+
+### Rest Pose Extraction
+
+Read from each character GLB's `nodes[]` array (`battle-realtime-three.js:775-790`):
+```javascript
+function restQuatsFromGLB(gltf) {
+  const rest = {};
+  for (const node of gltf.scene?.users?.gltfJson?.nodes ?? []) {
+    if (node.name?.startsWith("DEF-")) {
+      const [x, y, z, w] = node.rotation ?? [0, 0, 0, 1];
+      rest[node.name] = normalizeQuat([x, y, z, w]);
+    }
+  }
+  return rest;
+}
+```
+
+### Caching Strategy
+
+```javascript
+adaptedOverlayEntriesByModel: Map<string, AdaptedEntry[]>
+  key:   modelPath (e.g. "enemies/scout.glb")
+  value: [{ clip: THREE.AnimationClip, source: "overlay" }, ...]  (9 entries)
+```
+
+- Adapted entries computed once per unique model path
+- Cache survives for session lifetime
+- Max 24 unique models — no eviction needed
+
+### Loading Functions
+
+**Constants** (`battle-realtime-three.js:717-718`):
+```javascript
 const OVERLAY_ANIMATION_PATH = "assets/motion/ingame/unarmed-core.glb";
+const OVERLAY_ACTION_KEYS = ["idle","move","run","hit","bighit","attack","critical","avoid","defence"];
 ```
 
-**Loader:** `loadOverlayDeltaEntries()` → `battle-realtime-three.js:774-800`
-- Loads pack on first request
-- Caches promise in `overlayDeltaEntriesPromise`
+**Loader** (`battle-realtime-three.js:774-800`):
+- `loadOverlayDeltaEntries()` — loads pack on first request, caches promise
 - Extracts 9 clips, normalizes quaternion tracks
 
-**Normalization:** `normalizeOverlayDeltaClip(clip)` → `battle-realtime-three.js:760-772`
-- For each quaternion track, ensures consistent angle direction (shortest path)
-- Detects & corrects flipped (>180°) quaternion jumps
+**Normalization** (`battle-realtime-three.js:760-772`):
+- `normalizeOverlayDeltaClip(clip)` — ensures shortest-path quaternion continuity
+- Detects & corrects flipped (>180°) quaternion sign jumps
 
-**Adapter:** `adaptOverlayEntries(modelPath, instance, deltaEntries)` → `battle-realtime-three.js:802-843`
-- Composes overlay deltas with each model's rest pose
-- Caches adapted entries per model path
+**Adapter** (`battle-realtime-three.js:802-843`):
+- `adaptOverlayEntries(modelPath, instance, deltaEntries)` — composes deltas with model's rest pose
+- Caches adapted entries per model path in `adaptedOverlayEntriesByModel` Map
 - Returns array of `{clip, source: "overlay"}` entries
 
 ### Fallback Logic
 
 **If overlay load fails:**
 - Simulation continues using authored clips only
-- `warnedOverlayLoadFailure` set once (line 720)
+- `warnedOverlayLoadFailure` set once
 - No retry; failure is permanent in session
 
-**Fallback Actions** (per manifest):
+**Fallback Actions** (no overlay needed):
 ```
 "die", "show", "attack_melee", "attack_ranged"
 ```
-These 4 are expected to exist on each character's authored GLB
+
+### Bone Chain
+
+**22 Mapped Bones** (same as manifest `MAPPING_ROWS`):
+```
+DEF-spine (.001-.005), DEF-shoulder.L/R, DEF-upper_arm.L/R,
+DEF-forearm.L/R, DEF-hand.L/R, DEF-thigh.L/R, DEF-shin.L/R,
+DEF-foot.L/R, DEF-toe.L/R
+```
+
+**Not animated by overlay:** DEF-pelvis.L, DEF-pelvis.R (runtime-synthesized)
+
+**Error recovery** — 4 scenarios:
+| Scenario | Behavior |
+|----------|----------|
+| Overlay GLB not found | `warn` once, fall back to base clips |
+| Overlay GLB malformed | `warn` once, fall back to base clips |
+| Character GLB has no DEF skeleton | No overlay applied (unrigged model) |
+| Character GLB has extra non-DEF bones | Only DEF-* bones get overlay delta; others use base clip |
 
 ---
 
@@ -422,24 +497,36 @@ const mixer = new THREE.AnimationMixer(instance);
 
 **Return:** `{ actions: {}, actionSources: {} }` map
 
-### Overlay Composition
+### Overlay Composition in instantiateActorModel()
 
-**When overlay is available:**
-```
-adaptOverlayEntries(modelPath, instance, deltaEntries)
-→ composes deltas with instance's rest pose
-→ returns adapted clip array with source: "overlay"
-```
+**When overlay is available**, the loading flow merges base and adapted overlay clips:
 
-**Clip Array for buildActions:**
 ```javascript
-[
-  ...gltf.animations,           // Authored clips (source: "base")
-  ...adaptedOverlay              // Overlay clips (source: "overlay")
-]
+const [gltf, overlayEntries] = await Promise.all([
+  loadGltf(modelUrl(relPath)),
+  loadOverlayDeltaEntries().then((deltaEntries) =>
+    deltaEntries ? adaptOverlayEntries(relPath, instance, deltaEntries) : []
+  ),
+]);
+
+const allClips = overlayEntries.length
+  ? [...gltf.animations, ...overlayEntries]
+  : gltf.animations;
+
+const mixer = new THREE.AnimationMixer(instance);
+const { actions, actionSources } = buildActions(mixer, allClips);
 ```
 
-**First-match wins:** `buildActions()` skips duplicate action keys (overlay replaces base)
+**First-match wins:** `buildActions()` iterates the concatenated array in order.
+When it encounters a duplicate action key (e.g. "idle" from both base and overlay),
+it skips the second occurrence. Since overlay entries appear after base entries,
+**overlay replaces base** on the 9 covered action keys.
+
+**Fallback-only keys** (`die`, `show`, `attack_melee`, `attack_ranged`) have no overlay
+entries, so base clips win by default.
+
+**Cache:** `adaptedOverlayEntriesByModel` (Map, keyed by modelPath) prevents recomputation
+on multi-instance spawns of the same character type.
 
 ---
 
@@ -609,7 +696,8 @@ node tests/release-closure.test.mjs
   - [ ] Contains exactly 9 clips (idle, move, run, hit, bighit, attack, critical, avoid, defence)
   - [ ] All clips quaternion-only (rotation deltas, no position tracks)
   - [ ] No skeleton/skin required (pure delta format)
-
+  - [ ] Delta encoding validated: rest-relative format per `_workspace/current/overlay-architecture.md`
+  - [ ] Quaternion normalization passes shortest-path check (no >180° sign flips)
 - [ ] **Verify manifest bone mapping**
   - [ ] `sourceBoneNames` has 37 mixamorig:* bones
   - [ ] `targetBoneNames` has 24 DEF-* bones
@@ -630,6 +718,10 @@ node tests/release-closure.test.mjs
   - [ ] `tests/ingame-motion-pack.test.mjs` passes
   - [ ] All 24 meshes in `compatibleMeshes` array tested
   - [ ] Overlay composition cache working (`adaptedOverlayEntriesByModel` populated)
+  - [ ] Adaptation math: `C_rest * delta` produces correct absolute rotations (spot-check 3 characters)
+  - [ ] Rest pose extraction (`restQuatsFromGLB`) reads `nodes[].rotation` correctly
+  - [ ] First-match wins: overlay clips supersede base clips on duplicate action keys
+  - [ ] Fallback-only keys (die, show, attack_melee, attack_ranged) use base clips when overlay absent
 
 ---
 
@@ -683,6 +775,10 @@ node tests/release-closure.test.mjs
 | loadOverlayDeltaEntries() | battle-realtime-three.js | 774-800 |
 | normalizeOverlayDeltaClip(clip) | battle-realtime-three.js | 760-772 |
 | adaptOverlayEntries(modelPath, instance, deltaEntries) | battle-realtime-three.js | 802-843 |
+| adaptedOverlayEntriesByModel (caching Map) | battle-realtime-three.js | module-level |
+| restQuatsFromGLB(gltf) | battle-realtime-three.js | 775-790 |
+| warnedOverlayLoadFailure | battle-realtime-three.js | 720 |
+| Overlay architecture design | _workspace/current/overlay-architecture.md | 1-274 |
 | instantiateActorModel(relPath, targetHeight) | battle-realtime-three.js | 1050-1069 |
 | TARGET_HEIGHT object | battle-realtime-three.js | 56-63 |
 | fitHeight(object3d, targetHeight) | battle-realtime-three.js | 860-873 |
@@ -703,6 +799,9 @@ registry and per-asset manifests.
 - **Loader:** Three.js `GLTFLoader`, cloned per actor with its own skeleton.
 - **Runtime motion library:** 11 promoted character assets and 121 embedded
   clips in the current registry.
+- **Overlay system:** 9-clip unarmed motion pack retargeted onto all 23 character
+  rigs via rest-relative quaternion delta composition (§5). Designed at
+  `_workspace/current/overlay-architecture.md`
 - **Skeleton:** `def-humanoid-v1`, with semantic regions weighted to adjacent
   parent/child joint chains.
 - **Playback:** fixed-tick mixer updates, in-place locomotion, ordinary

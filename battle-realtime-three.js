@@ -945,7 +945,122 @@ function loadGltf(path) {
   return gltfCache.get(url);
 }
 
+// Overlay animation system — 9-clip unarmed motion pack (rest-relative
+// quaternion deltas) retargeted onto any DEF-humanoid-v1 character at runtime.
+// Design: _workspace/current/overlay-architecture.md
+// Contract: RUNTIME_ANIMATION_CONTRACT.md §5
+const OVERLAY_ANIMATION_PATH = "assets/motion/ingame/unarmed-core.glb";
+// (overlay action keys: idle, move, run, hit, bighit, attack, critical, avoid, defence)
+let warnedOverlayLoadFailure = false;
+let overlayDeltaEntriesPromise = null;
+const adaptedOverlayEntriesByModel = new Map();
 
+function loadOverlayDeltaEntries() {
+  if (overlayDeltaEntriesPromise) return overlayDeltaEntriesPromise;
+  overlayDeltaEntriesPromise = loadGltf(OVERLAY_ANIMATION_PATH).then((gltf) => {
+    const clips = (gltf.animations ?? []).filter((clip) => clip.tracks.length > 0);
+    clips.forEach(normalizeOverlayDeltaClip);
+    return clips;
+  }).catch((err) => {
+    if (!warnedOverlayLoadFailure) {
+      console.warn("overlay delta pack load failed:", err.message || err);
+      warnedOverlayLoadFailure = true;
+    }
+    return null;
+  });
+  return overlayDeltaEntriesPromise;
+}
+
+function normalizeOverlayDeltaClip(clip) {
+  // For each quaternion track, ensure shortest-path continuity: detect and
+  // correct flipped (>180°) quaternion sign jumps between adjacent keyframes.
+  for (const track of clip.tracks) {
+    if (track.ValueTypeName !== "quaternion") continue;
+    const values = track.values;
+    if (values.length < 8) continue;
+    let prevW = values[3];
+    for (let i = 4; i < values.length; i += 4) {
+      const w = values[i + 3];
+      // Negate the entire quaternion if the dot product with the previous
+      // quaternion is negative (sign flip > 90° indicates a wraparound).
+      if (w * prevW < 0) {
+        const d = values[i] * values[i] + values[i + 1] * values[i + 1] + values[i + 2] * values[i + 2] + w * w;
+        if (d > 1e-6) {
+          values[i] = -values[i];
+          values[i + 1] = -values[i + 1];
+          values[i + 2] = -values[i + 2];
+          values[i + 3] = -w;
+        }
+      }
+      prevW = values[i + 3];
+    }
+  }
+}
+
+function restQuatsFromInstance(instance) {
+  // Extract DEF-* bone rest pose quaternions from the cloned scene instance.
+  // Immediately after SkeletonUtils.clone() before any animation ticks, every
+  // Bone.quaternion holds its rest (bind) pose rotation.
+  const restQuats = {};
+  instance.traverse((node) => {
+    if (node.isBone && node.name.startsWith("DEF-")) {
+      restQuats[node.name] = node.quaternion.clone();
+    }
+  });
+  return restQuats;
+}
+
+function boneNameFromTrackName(trackName) {
+  // Track names follow pattern: "path/to/node.property"
+  // or "bone_name.quaternion" / "bone_name.rotation"
+  // Strip .quaternion, .rotation, ._quaternion suffixes
+  const dot = trackName.lastIndexOf(".");
+  if (dot === -1) return trackName;
+  const prop = trackName.slice(dot + 1);
+  if (prop === "quaternion" || prop === "rotation" || prop === "_quaternion") {
+    // Bone name is everything before the last dot
+    return trackName.slice(0, dot);
+  }
+  return trackName;
+}
+
+function composeDeltaWithRestPose(clip, restQuats) {
+  // For each quaternion track in the clip, pre-multiply every keyframe delta
+  // by the character's rest pose quaternion:  adapted = C_rest * delta
+  // Mutates clip tracks in place (no new allocation).
+  for (const track of clip.tracks) {
+    if (track.ValueTypeName !== "quaternion") continue;
+    const boneName = boneNameFromTrackName(track.name);
+    const restQ = restQuats[boneName];
+    if (!restQ) continue;
+    const values = track.values;
+    const deltaQ = new THREE.Quaternion();
+    for (let i = 0; i < values.length; i += 4) {
+      deltaQ.set(values[i], values[i + 1], values[i + 2], values[i + 3]);
+      deltaQ.premultiply(restQ);
+      values[i] = deltaQ.x;
+      values[i + 1] = deltaQ.y;
+      values[i + 2] = deltaQ.z;
+      values[i + 3] = deltaQ.w;
+    }
+  }
+  return clip;
+}
+
+function adaptOverlayEntries(modelPath, instance, deltaEntries) {
+  if (adaptedOverlayEntriesByModel.has(modelPath)) {
+    return adaptedOverlayEntriesByModel.get(modelPath);
+  }
+  const restQuats = restQuatsFromInstance(instance);
+  // Deep-clone each clip so the cached delta entries remain reusable across
+  // multiple instances of the same model (no cross-instance mutation).
+  const adapted = deltaEntries.map((clip) => ({
+    clip: composeDeltaWithRestPose(clip.clone(), restQuats),
+    source: "overlay",
+  }));
+  adaptedOverlayEntriesByModel.set(modelPath, adapted);
+  return adapted;
+}
 
 function stageNpcFacingYaw(npc, sourcePoint) {
   const target = npc?.attentionTarget
@@ -1153,7 +1268,12 @@ function applyCelShading(root) {
 }
 
 async function instantiateActorModel(relPath, targetHeight) {
-  const gltf = await loadGltf(relPath);
+  // Load the character GLB and overlay delta pack in parallel.
+  // If overlay fails to load, overlayDeltaEntries is null — fall back to base clips.
+  const [gltf, overlayDeltaEntries] = await Promise.all([
+    loadGltf(relPath),
+    loadOverlayDeltaEntries(),
+  ]);
   return serializeInstantiation(() => {
     // SkeletonUtils.clone() (not gltf.scene.clone()) so a SkinnedMesh instance
     // gets bound to its own cloned skeleton.
@@ -1163,7 +1283,19 @@ async function instantiateActorModel(relPath, targetHeight) {
     const baseEntries = (gltf.animations ?? []).map((clip) => ({ clip, source: "base" }));
     if (!baseEntries.length) return { instance, mixer: null, actions: {}, actionSources: {} };
     const mixer = new THREE.AnimationMixer(instance);
-    const { actions, actionSources } = buildActions(mixer, baseEntries);
+    let allEntries = baseEntries;
+    if (overlayDeltaEntries) {
+      const adapted = adaptOverlayEntries(relPath, instance, overlayDeltaEntries);
+      if (adapted.length) {
+        // Overlay entries appear before base entries. buildActions() first-match
+        // wins on duplicate action keys, so the overlay registration
+        // for a key wins over the base registration that follows. Nine overlay
+        // keys replace base; the 4 fallback-only keys (die, show, attack_melee,
+        // attack_ranged) have no overlay entry and fall through to base.
+        allEntries = [...adapted, ...baseEntries];
+      }
+    }
+    const { actions, actionSources } = buildActions(mixer, allEntries);
     return { instance, mixer, actions, actionSources };
   });
 }
