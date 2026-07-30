@@ -7053,6 +7053,15 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/motion/bench/Brutal Assassination.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/motion/bench/Catwalk Idle To Twist R.fbx",
       "replacementPath": null,
       "extension": ".fbx",
@@ -7098,6 +7107,15 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/motion/bench/Defeated.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/motion/bench/Dodging.fbx",
       "replacementPath": null,
       "extension": ".fbx",
@@ -7134,6 +7152,15 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/motion/bench/Dying.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/motion/bench/Firing Rifle.fbx",
       "replacementPath": null,
       "extension": ".fbx",
@@ -7162,6 +7189,24 @@
     {
       "disposition": "delete",
       "currentPath": "assets/motion/bench/Great Sword Slash.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Gunplay.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Hook Punch.fbx",
       "replacementPath": null,
       "extension": ".fbx",
       "generator": "scripts/build-defense-asset-manifest.mjs",
@@ -7224,7 +7269,43 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/motion/bench/Mutant Roaring.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Mutant Swiping.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/motion/bench/Opening.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Pain Gesture.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Pistol Idle.fbx",
       "replacementPath": null,
       "extension": ".fbx",
       "generator": "scripts/build-defense-asset-manifest.mjs",
@@ -7314,7 +7395,25 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/motion/bench/Standing Aim Overdraw.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/motion/bench/Standing Block React Large.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Standing Death Right 02.fbx",
       "replacementPath": null,
       "extension": ".fbx",
       "generator": "scripts/build-defense-asset-manifest.mjs",
@@ -7332,7 +7431,61 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/motion/bench/Standing Melee Attack Horizontal.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Standing Melee Combo Attack Ver. 2.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Standing Melee Run Jump Attack.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Standing React Large Gut.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/motion/bench/Standing React Small From Left.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Standing React Small From Right.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Standing Run Forward.fbx",
       "replacementPath": null,
       "extension": ".fbx",
       "generator": "scripts/build-defense-asset-manifest.mjs",
@@ -7377,6 +7530,60 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/motion/bench/Sword and Shield Pack.zip",
+      "replacementPath": null,
+      "extension": ".zip",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Sword Fight One.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Throw Grenade.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Toss Grenade.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Turn To Knocked Unconscious.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Unarmed Equip Over Shoulder.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/motion/bench/Unarmed Idle.fbx",
       "replacementPath": null,
       "extension": ".fbx",
@@ -7395,7 +7602,25 @@
     },
     {
       "disposition": "delete",
+      "currentPath": "assets/motion/bench/Unarmed Walk Forward.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
       "currentPath": "assets/motion/bench/Walking.fbx",
+      "replacementPath": null,
+      "extension": ".fbx",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "delete",
+      "currentPath": "assets/motion/bench/Withdrawing Sword.fbx",
       "replacementPath": null,
       "extension": ".fbx",
       "generator": "scripts/build-defense-asset-manifest.mjs",
