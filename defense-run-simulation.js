@@ -31,6 +31,12 @@ const freeze = (value) => {
 const clamp = (value, low, high) => value < low ? low : value > high ? high : value;
 const distanceSquared = (a, b) => { const x = a.x - b.x; const y = a.y - b.y; return x * x + y * y; };
 const scaled = (value, scale) => Math.trunc(value * scale / 100);
+// Abyss Depth (wiki reports 2026-07-30 GAP-A/C): run-scoped clear-to-unlock difficulty ladder.
+// depth 0 is a pure identity (same seed stream, same scale, same snapshot keys) so every existing
+// digest fixture is byte-unchanged. Each depth adds +ABYSS_DEPTH_SCALE_STEP% enemy HP/XP and folds
+// into the WAVE rng stream only (rotating enemy policy/composition), never the identity/combat rng.
+export const ABYSS_DEPTH_MAX = 3; // 3 stages -> 3 named Abyss Depth packages (defense-catalog ABYSS_DEPTH_PACKAGES)
+const ABYSS_DEPTH_SCALE_STEP = 15;
 const rngNext = (seed) => { let x = seed | 0; x ^= x << 13; x ^= x >>> 17; x ^= x << 5; return x >>> 0; };
 const stageFor = (stageId) => {
   const stage = STAGE_BY_ID[stageId];
@@ -449,7 +455,7 @@ function stagePlanFor(stage) {
   return descriptor;
 }
 
-function buildWaveSchedule(stage, seed, tactics, wavePlan) {
+function buildWaveSchedule(stage, seed, tactics, wavePlan, depthPackage = null) {
   let rng = seed;
   const variation = tactics.seededVariation || { timingJitterTicks: 30, densityDelta: 1, laneJitter: 400 };
   const directions = tactics.spawnDirections?.length ? tactics.spawnDirections : ["W", "NW", "SW"];
@@ -500,7 +506,10 @@ function buildWaveSchedule(stage, seed, tactics, wavePlan) {
     const laneOffset = (rng % (2 * variation.laneJitter + 1)) - variation.laneJitter;
     rng = rngNext(rng);
     const policies = policyChoices[primary.enemy] || [ENEMIES[primary.enemy]?.policyId || "gate-pressure"];
-    const policyId = source.policyId || policies[rng % policies.length];
+    // Abyss Depth: a depth PACKAGE pins the normal-wave policy per index so enemy BEHAVIOR (not just
+    // HP) changes by depth; depthPackage is null at depth 0 -> unchanged (identity). rng is only READ
+    // here, never advanced, so pinning does not shift the downstream stream.
+    const policyId = source.policyId || (depthPackage ? depthPackage.policyMix[waveIndex % depthPackage.policyMix.length] : policies[rng % policies.length]);
     const adjustedComposition = composition.map((entry, index) => ({
       enemy: entry.enemy,
       count: Math.max(1, entry.count + (index === 0 ? densityDelta : 0)),
@@ -679,13 +688,14 @@ function applyOwnedRewards(run, rewardIds) {
 function spawnEnemy(run, type, elite = false, spawnOpt = {}) {
   const data = ENEMIES[type];
   if (!data) throw new RangeError(`Unknown authored enemy type: ${type}`);
-  const hp = scaled(data.hp, run.stage.scale);
+  const effScale = run.stage.scale + (run.abyssDepth || 0) * ABYSS_DEPTH_SCALE_STEP;
+  const hp = scaled(data.hp, effScale);
   // XP reward tracks enemy toughness: late stages scale enemy HP (line above) by
   // run.stage.scale, so a flat XP grant would stretch the in-run level-up cadence
   // the further a player progresses (2.4x the HP for the same XP at gate-zenith).
   // Scaling XP by the same stage factor keeps the level-up rhythm constant across
   // stages. scale 100 (cinder-span) is an identity, so Stage 1 digests are unchanged.
-  const xpReward = scaled(data.xp, run.stage.scale);
+  const xpReward = scaled(data.xp, effScale);
   const fallbackPolicy = elite ? "low-hp-focus" : (
     type === "flanker" ? "flank" :
     type === "guardian" ? "elite-escort" :
@@ -2754,8 +2764,8 @@ function processTerrainEffects(run) {
       if (recovery) {
         const previousCommander = run.commander.integrity;
         const previousGate = run.gate.integrity;
-        const commanderBudget = Math.max(0, Math.trunc(run.commander.maxIntegrity / 4) - run.terrainRecovery.commander);
-        const gateBudget = Math.max(0, Math.trunc(run.gate.maxIntegrity / 4) - run.terrainRecovery.gate);
+        const commanderBudget = Math.max(0, Math.trunc(run.commander.maxIntegrity * run.terrainRecovery.capRatio) - run.terrainRecovery.commander);
+        const gateBudget = Math.max(0, Math.trunc(run.gate.maxIntegrity * run.terrainRecovery.capRatio) - run.terrainRecovery.gate);
         run.commander.integrity = clamp(run.commander.integrity + Math.min(recovery, commanderBudget), 0, run.commander.maxIntegrity);
         run.gate.integrity = clamp(run.gate.integrity + Math.min(recovery, gateBudget), 0, run.gate.maxIntegrity);
         const commanderRecovery = run.commander.integrity - previousCommander;
@@ -2906,26 +2916,32 @@ function tick(run) {
   processTerrainEffects(run);
   if (!run.eliteSpawned && run.objectives.gateDefense.completed) {
     const elitePathId = encounterRouteFor(run)?.finale?.elitePathId || null;
+    const depthPkg = Catalog.abyssDepthPackage(run.abyssDepth);
     const elite = spawnEnemy(run, run.stage.eliteKind, true, {
-      policyId: "low-hp-focus",
+      policyId: depthPkg?.elitePolicy || "low-hp-focus",
       direction: "W",
       routeId: elitePathId,
       objectiveId: "echo-recovery",
     });
-    const escort = spawnEnemy(run, "guardian", false, {
-      policyId: "elite-escort",
-      direction: "W",
-      laneOffset: 500,
-      routeId: elitePathId,
-      objectiveId: "echo-recovery",
-    });
-    escort.escortLeaderId = elite.id;
-    emit(run, "ESCORT_LEADER_ACQUIRED", {
-      entityId: escort.id,
-      leaderId: elite.id,
-      policyId: escort.policyId,
-      objectiveId: "echo-recovery",
-    });
+    if (depthPkg?.affixAura) elite.affixAura = depthPkg.affixAura;
+    const escortCount = depthPkg?.eliteEscorts ?? 1;
+    for (let escortIndex = 0; escortIndex < escortCount; escortIndex += 1) {
+      const escort = spawnEnemy(run, "guardian", false, {
+        policyId: "elite-escort",
+        direction: "W",
+        laneOffset: 500 * (escortIndex + 1),
+        routeId: elitePathId,
+        objectiveId: "echo-recovery",
+      });
+      escort.escortLeaderId = elite.id;
+      if (depthPkg?.affixAura) escort.affixAura = depthPkg.affixAura;
+      emit(run, "ESCORT_LEADER_ACQUIRED", {
+        entityId: escort.id,
+        leaderId: elite.id,
+        policyId: escort.policyId,
+        objectiveId: "echo-recovery",
+      });
+    }
     run.eliteSpawned = true;
   }
 
@@ -3148,12 +3164,17 @@ function applyCarryOver(state, carryOver) {
  * `formation` is the saved per-companion FRONT/BACK intent map. It deterministically chooses
  * companion position rank at run creation; the active stance still derives the live slot count
  * from STANCE_CONFIG every tick. See resolveFormation(). */
-export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, extractedSkillRanks = null, carryOver = null } = {}) {
+export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rewardIds = [], measurementProfileId = null, wardenProgress = null, wardenEquipment = {}, companionEquipment = {}, formation = {}, extractedSkillRanks = null, carryOver = null, abyssDepth = 0 } = {}) {
   const stage = stageFor(stageId);
   const stagePlan = stagePlanFor(stage);
   const unsignedSeed = (seed >>> 0) || 1;
+  const depth = Number.isInteger(abyssDepth) ? clamp(abyssDepth, 0, ABYSS_DEPTH_MAX) : 0;
+  // Only the wave schedule reroutes on depth; identity/surprise/combat rng stay on unsignedSeed so
+  // depth 0 is byte-identical and higher depths just rotate which enemy policies/compositions roll.
+  const waveSeed = depth ? (((unsignedSeed ^ (0x51ed2701 * (depth + 1))) >>> 0) || 1) : unsignedSeed;
   const tactics = stagePlan.mapPlan.tactics;
-  const { schedule, nextRng, variantId } = buildWaveSchedule(stage, unsignedSeed, tactics, stagePlan.wavePlan);
+  const depthPackage = Catalog.abyssDepthPackage(depth);
+  const { schedule, nextRng, variantId } = buildWaveSchedule(stage, waveSeed, tactics, stagePlan.wavePlan, depthPackage);
   const planIdentity = `${stagePlan.mapPlan.id}:${stagePlan.wavePlan.id}:seed:${unsignedSeed}`;
   const surpriseTable = tactics.surpriseTable;
   const surpriseRng = rngNext(unsignedSeed ^ 0x6d2b79f5);
@@ -3190,6 +3211,8 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     version: SNAPSHOT_VERSION,
     tick: 0,
     seed: unsignedSeed,
+    abyssDepth: depth,
+    abyssDepthName: depthPackage?.name || null,
     rng: nextRng,
     combatRng: rngNext(unsignedSeed ^ 0x9e3779b9),
     nextId: 0,
@@ -3240,7 +3263,7 @@ export function createDefenseRun({ stageId, seed = 1, companionLoadout = [], rew
     },
     progress: { defeated: 0, extracted: 0, echoDenied: 0, itemsCollected: 0, skillsLearned: 0, achievements: [] },
     gateDamageReduction: 0,
-    terrainRecovery: { commander: 0, gate: 0, capRatio: 0.25 },
+    terrainRecovery: { commander: 0, gate: 0, capRatio: depthPackage?.recoveryCapRatio ?? 0.25 },
     rallyTargetId: null,
     formationStance: "VANGUARD",
     stanceCooldownUntilTick: 0,
@@ -3472,6 +3495,7 @@ export function getRunSnapshot(run) {
     stageName: run.stage.name,
     bossName: run.stage.bossName,
     terminal: run.terminal,
+    ...(run.abyssDepth ? { abyssDepth: run.abyssDepth, abyssDepthName: run.abyssDepthName ?? null } : {}),
     plan: {
       identity: run.planCommitment.identity,
       mapPlanId: run.planCommitment.mapPlan.id,

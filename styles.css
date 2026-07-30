@@ -294,8 +294,9 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
   .stage-progression-control { grid-template-columns: 1fr; }
 }
 /* SortieFab: fixed bottom-centre, thumb-zone anchored. z-index 6 puts it above both deck
-   columns (4) so the single most important pre-run action is never occluded by the ops
-   strip on a portrait viewport; it stays below the pause overlay. */
+   columns (4); it stays below the pause overlay. Position is load-bearing for the browser
+   contracts (sortie centred clears the right-side .lobby-setup panel at landscape widths), so
+   the depth pill is placed relative to it rather than the reverse. */
 .sortie-fab {
   position: fixed;
   z-index: 6;
@@ -314,6 +315,41 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
 }
 .sortie-fab small { color: #c6dded; }
 .sortie-fab b { font-size: 1.25rem; }
+/* AbyssDepthControl: run-scoped difficulty selector, a compact pill (eyebrow over select).
+   Default (<=1099px): centred just above the SortieFab. Desktop (>=1100px, section below):
+   moves to the LEFT of the SortieFab on the same line. Pre-run only. */
+.abyss-depth-control {
+  position: fixed;
+  z-index: 6;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(5.6rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: .2rem;
+  padding: .3rem .6rem;
+  border: 1px solid var(--canon-cinder-ember, #f3592c);
+  border-radius: 10px;
+  max-width: min(92vw, 22rem);
+}
+.abyss-depth-eyebrow { font-size: .62rem; font-weight: 800; letter-spacing: .06em; color: #ffd7c4; white-space: nowrap; }
+.abyss-depth-control select { font-size: .8rem; font-weight: 700; background: rgba(8, 12, 20, .6); color: #fff2ea; border: 1px solid var(--rc-panel-border, rgba(150, 156, 180, .3)); border-radius: 8px; padding: .2rem .4rem; min-width: 11rem; }
+/* Desktop (>=1440px): the depth pill leaves the centred stack and sits to the LEFT of the
+   viewport-centred SortieFab, anchored to the CTA's left edge (right: 50% + half-CTA + gap) so
+   it tracks the CTA and never overlaps it. Gated at 1440 because a 26rem centred CTA leaves no
+   room beside it below that; narrower desktops keep the stacked-above-centre layout. The pill
+   shrinks to its content (~9rem), clearing the left deck with room to spare. */
+@media (min-width: 1440px) {
+  .abyss-depth-control {
+    left: auto;
+    right: calc(50% + 13rem + .6rem);
+    transform: none;
+    bottom: max(.9rem, env(safe-area-inset-bottom));
+    max-width: 13rem;
+  }
+  .abyss-depth-control select { min-width: 8rem; }
+}
 /* IdleReturnToast (component-contracts.md §3.4): top-center transient notice, same visual
    language as .edge-card (border/background) but NOT .edge-card itself -- that class is
    positioned relative to #defense-battle-surface; this toast is a shell-level sibling and
@@ -367,6 +403,14 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
 }
 #defense-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 #defense-edge-hud { position: absolute; inset: 0; pointer-events: none; }
+/* AbyssDepth tint (wiki 2026-07-30 difficulty-feel): a per-depth mood vignette washed over the live
+   surface while a depth>0 run is active (set by BattleSession.beginRun via data-abyss-tint, cleared
+   on remount). Center stays transparent so scene + HUD read clearly; edges carry the depth hue. */
+#defense-battle-surface[data-abyss-tint]::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3; background: radial-gradient(ellipse at 50% 48%, transparent 52%, var(--abyss-tint-color, rgba(243,89,44,.28)) 100%); mix-blend-mode: screen; }
+#defense-battle-surface[data-abyss-tint="ember"] { --abyss-tint-color: rgba(243,89,44,.32); }
+#defense-battle-surface[data-abyss-tint="frost"] { --abyss-tint-color: rgba(96,178,255,.32); }
+#defense-battle-surface[data-abyss-tint="veil"] { --abyss-tint-color: rgba(158,96,224,.34); }
+@media (prefers-reduced-motion: reduce) { #defense-battle-surface[data-abyss-tint]::after { mix-blend-mode: normal; } }
 /* Combat-only HUD (mission/loop-state panels, D-pad, pause) has nothing meaningful to show
    before a run is committed -- the pre-start briefing lives in the ops deck instead. Hidden
    via the surface's own dataset flag (set by BattleSession.beginRun()/remountForStage()),
@@ -375,6 +419,14 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
 .defense-edge { position: absolute; display: flex; gap: .45rem; pointer-events: auto; }
 .defense-top { top: max(.4rem, var(--defense-safe-top)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-start; }
 .defense-bottom { bottom: max(.4rem, var(--defense-safe-bottom)); left: max(.4rem, var(--defense-safe-left)); right: max(.4rem, var(--defense-safe-right)); justify-content: space-between; align-items: flex-end; }
+/* Desktop (>=1000px): pack the top HUD panels to the LEFT in one line (mission -> objective
+   flow -> legion -> objective) instead of spreading them across the band with space-between,
+   so they read as a single left-aligned strip and nothing floats in the centre/right where the
+   paused growth/reward modal now lives. Narrower widths keep space-between (and <=720px its own
+   grid) so the landscape browser contract's centre-grid hit test is untouched. */
+@media (min-width: 1000px) {
+  .defense-top { justify-content: flex-start; flex-wrap: wrap; column-gap: .45rem; row-gap: .3rem; max-width: calc(100% - 2 * max(.4rem, var(--defense-safe-left))); }
+}
 /* No mid-run deck exists any more (renderShell() empties both columns and CSS hides their
    wrappers once data-defense-started flips), so the edge-HUD bands need no rail-clearance
    padding and no per-side widening: combat owns the full width again. The band's own
@@ -409,6 +461,23 @@ html[data-defense-started="true"] #command-deck-right { display: none; }
 .defense-reward { max-height: min(38vh, 360px); }
 .defense-reward .choices button { display: grid; gap: .2rem; min-width: 11rem; text-align: left; }
 .defense-reward .choices span { color: #b9c2d6; font-size: .72rem; }
+/* >=481px: the growth-offer and reward cards PAUSE the sim to demand a choice, so they sit
+   centred as a modal, not wedged into the top HUD band where they overlapped the loop-state and
+   legion panels. (<=480px already centres #defense-growth-offer via the small-screen block
+   below; this extends the same treatment to every wider screen and to the reward card.) The
+   100vmax box-shadow is a cheap full-screen scrim; the sim is already paused so no pointer
+   capture is needed. .defense-result (end-of-run banner) stays bottom-anchored -- excluded. */
+@media (min-width: 481px) {
+  #defense-growth-offer,
+  .edge-card.defense-reward {
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    width: min(70vw, 640px);
+    max-height: min(72vh, 32rem);
+    box-shadow: 0 0 0 100vmax rgb(3 7 17 / .58), 0 1.5rem 4rem #000;
+  }
+}
 html[data-defense-portrait="true"] #defense-canvas, html[data-defense-portrait="true"] #world-hud-overlay {
   width: var(--defense-logical-width);
   height: var(--defense-logical-height);
@@ -1080,7 +1149,12 @@ body {
 .hud-actions button:hover, .one-thumb-controls button:hover {
   background: linear-gradient(160deg, rgb(25 48 68 / .96), rgb(16 21 38 / .96));
 }
+/* Decorative, aria-hidden, and duplicative of the top-right OBJECTIVE chip. It had no layout
+   rule, so on desktop it fell into normal flow as a full-width band at the very top of
+   #defense-edge-hud, ghosting behind the mission/loop panels. Hidden everywhere (mobile already
+   hid it) -- the objective text lives in the OBJECTIVE chip. */
 .arena-callout {
+  display: none;
   color: rgb(225 238 247 / .72);
   text-shadow: 0 2px 8px #000;
 }
@@ -1688,7 +1762,7 @@ body {
   grid-template-rows: auto 1fr auto;
   grid-template-areas:
     "head boss"
-    "objective ."
+    "objective objective"
     "dialogue setup";
   gap: clamp(.5rem, 1.4vw, 1rem);
   padding:
@@ -1760,6 +1834,7 @@ body {
 .lobby-objective {
   grid-area: objective;
   align-self: center;
+  justify-self: center;
   width: min(100%, 25rem);
   padding: .7rem .8rem;
   border: 1px solid var(--rc-panel-border);
@@ -2350,16 +2425,26 @@ button:disabled {
   .lobby-dialogue-bubble::before { display: none; }
   .lobby-dialogue-text { font-size: .68rem; }
 
+  /* Mobile band (deck-left..viewport edge). sortie sits at the band bottom; depth stacks just
+     above it. Both re-anchored off #command-deck-left so nothing overflows the ~218px width. */
   .sortie-fab {
+    left: calc(var(--deck-left-width) + .5rem);
     right: .5rem;
     bottom: calc(42dvh + .55rem);
-    left: calc(var(--deck-left-width) + .5rem);
     width: auto;
     min-height: 64px;
     transform: none;
   }
   .sortie-fab:active { transform: scale(.98); }
   .sortie-action-label { font-size: .82rem; white-space: normal; }
+  .abyss-depth-control {
+    left: calc(var(--deck-left-width) + .5rem);
+    right: .5rem;
+    bottom: calc(42dvh + 5.4rem);
+    transform: none;
+    max-width: none;
+  }
+  .abyss-depth-control select { width: 100%; min-width: 0; }
 }
 
 @media (max-width: 480px) {

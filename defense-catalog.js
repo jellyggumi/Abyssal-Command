@@ -291,6 +291,18 @@ export const ENEMY_POLICIES = freeze({
   "low-hp-focus": { id: "low-hp-focus", target: "lowest-hp-friendly", intent: "focus" },
 });
 
+/** Abyss Depth packages (wiki 2026-07-30 difficulty-feel report). Each depth is a NAMED rule-change
+ * package, NOT a global stat multiplier: it pins the normal-wave enemy-policy mix (behavior change),
+ * gives the finale elite an affix aura + extra escorts, optionally cuts occupation recovery, and
+ * carries a reward tier. depth 0 has NO package (identity). 3 stages -> 3 depths. Rendered by app.js
+ * (naming/toast/tint) + defense-run-simulation.js (policy/elite/recovery). */
+export const ABYSS_DEPTH_PACKAGES = freeze({
+  1: freeze({ id: 1, name: "재의 추격", dominantLabel: "추격 · 지휘관 직격", policyMix: freeze(["player-pursuit", "player-pursuit", "gate-pressure"]), elitePolicy: "player-pursuit", eliteEscorts: 1, affixAura: "ember", tint: "ember", recoveryCapRatio: 0.25, rewardTier: 1 }),
+  2: freeze({ id: 2, name: "메아리 기근", dominantLabel: "자원 봉쇄 · 지속력 고갈", policyMix: freeze(["resource-denial", "resource-denial", "flank"]), elitePolicy: "resource-denial", eliteEscorts: 1, affixAura: "frost", tint: "frost", recoveryCapRatio: 0.12, rewardTier: 2 }),
+  3: freeze({ id: 3, name: "협공의 장막", dominantLabel: "협공 · 약자 집중", policyMix: freeze(["flank", "low-hp-focus", "flank"]), elitePolicy: "flank", eliteEscorts: 2, affixAura: "veil", tint: "veil", recoveryCapRatio: 0.20, rewardTier: 3 }),
+});
+export function abyssDepthPackage(depth) { return ABYSS_DEPTH_PACKAGES[depth] || null; }
+
 export const ENEMIES = freeze({
   rusher: { id: "rusher", hp: 3000, speed: 3000, damage: 10, attackTicks: 60, xp: 8, radius: 260, policyId: "gate-pressure" },
   flanker: { id: "flanker", hp: 3600, speed: 3300, damage: 12, attackTicks: 60, xp: 10, radius: 340, policyId: "flank" },

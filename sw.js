@@ -89,7 +89,11 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(caches.keys().then((names) => Promise.all(
-    names.filter((name) => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME).map((name) => caches.delete(name)),
+    // Release: drop only previous-SHA caches (keep the current one). Local/dev: the suffix is the
+    // unstamped placeholder so the cache name never rotates -- purge EVERY cache on activate so a
+    // rebuilt asset (JS/CSS/GLB) can never be replayed from a stale copy. Fixes "my change didn't
+    // apply": once this SW activates, dev is always network-fresh (networkFirst below) + clean.
+    names.filter((name) => !IS_RELEASE_BUILD || (name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME)).map((name) => caches.delete(name)),
   )).then(() => self.clients.claim()));
 });
 
