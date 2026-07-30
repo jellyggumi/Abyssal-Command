@@ -552,6 +552,54 @@ action.clampWhenFinished = true;  // Hold last frame
 **Clip actions:** Mapped by key (idle/attack/etc.)  
 **Playback trigger:** From snapshot events (defense-run-simulation.js layer)
 
+### Mesh-Size-Aware Motion Profile (2026-07-30 amendment)
+
+Per-character differentiation is a **function of the fitted mesh size**, never a
+per-kind constant. `motionProfileFor(targetHeight)` derives the profile from the
+same height `fitHeight()` scales the GLB to, relative to
+`MOTION_PROFILE_REFERENCE_HEIGHT` (the standard enemy silhouette, 1.7u):
+
+```javascript
+heightRatio      = targetHeight / MOTION_PROFILE_REFERENCE_HEIGHT
+locomotionRate   = clamp(heightRatio ** -0.5,  0.70, 1.20)
+oneShotRate      = clamp(heightRatio ** -0.35, 0.72, 1.15)
+reactionArcScale = clamp(heightRatio ** -0.5,  0.60, 1.25)
+```
+
+Rules:
+- The profile is applied only as `action.setEffectiveTimeScale(...)` on the
+  mixer (`crossfadeToAction()` and both `triggerAction()` play paths). No clip
+  is re-authored, `inPlaceRootMotion: true` is preserved, and the simulation
+  digest is untouched.
+- `motionPlaybackRate(profile, key)` selects `locomotionRate` for
+  idle/move/run and `oneShotRate` for every combat beat.
+- A record with no profile (unrigged/degraded actor) plays at rate 1.0.
+
+### Directional Hit Reaction Routing (2026-07-30 amendment)
+
+Reactions resolve as a **direction x damage-level matrix**. Direction is
+measured in the target's own frame from the attacker's rendered position:
+
+| Resolved direction | Relative angle to target facing |
+|---|---|
+| `front` | \|a\| <= 45 deg |
+| `right` | 45 deg < a < 135 deg |
+| `left` | -135 deg < a < -45 deg |
+| `back` | \|a\| >= 135 deg |
+
+- Clip keys are `hit_<direction>` / `bighit_<direction>`; a rig that does not
+  ship them falls back deterministically to the flat `hit` / `bighit` key, so
+  the routing is safe ahead of the directional retarget pass.
+- Directional keys inherit the beat priority and fade envelope of their flat
+  parent (`baseBeatKey()`), so direction never changes how a beat competes for
+  the single one-shot slot.
+- Entry point: `RealtimeBattle#triggerHitReaction(record, attackerRecord,
+  heavy, nowMs)`, used by every damage-bearing event
+  (`WEAPON_FIRED` critical, `SKILL_RESOLVED_DAMAGE`, `CRITICAL_HIT`,
+  `ENEMY_ATTACK`, `MELEE_IMPACT`, `PROJECTILE_IMPACT`, `COMMANDER_DAMAGED`,
+  `COMPANION_DAMAGED`).
+- Verified by `tests/stage-framing-and-motion-profile.test.mjs`.
+
 ---
 
 ## 9. VALIDATION & TESTING CONTRACTS
@@ -762,27 +810,27 @@ node tests/release-closure.test.mjs
 | gltfCache | battle-realtime-three.js | 715 |
 | loadGltf(path) | battle-realtime-three.js | 736-749 |
 | modelUrl(path) | battle-realtime-three.js | 729-734 |
-| BOSS_MODELS | battle-realtime-three.js | 127-138 |
-| ENEMY_MODELS | battle-realtime-three.js | 144-149 |
-| COMPANION_MODELS | battle-realtime-three.js | 152-162 |
-| COMMANDER_MODEL | battle-realtime-three.js | 164 |
-| RIG_ACTION_KEYS | battle-realtime-three.js | 267-270 |
-| LOCOMOTION_ACTION_KEYS | battle-realtime-three.js | 271 |
-| actionKeyFromClipName(name) | battle-realtime-three.js | 920-924 |
-| buildActions(mixer, clipEntries) | battle-realtime-three.js | 931-950 |
-| OVERLAY_ANIMATION_PATH | battle-realtime-three.js | 717 |
-| OVERLAY_ACTION_KEYS | battle-realtime-three.js | 718 |
-| loadOverlayDeltaEntries() | battle-realtime-three.js | 774-800 |
-| normalizeOverlayDeltaClip(clip) | battle-realtime-three.js | 760-772 |
-| adaptOverlayEntries(modelPath, instance, deltaEntries) | battle-realtime-three.js | 802-843 |
-| adaptedOverlayEntriesByModel (caching Map) | battle-realtime-three.js | module-level |
-| restQuatsFromGLB(gltf) | battle-realtime-three.js | 775-790 |
-| warnedOverlayLoadFailure | battle-realtime-three.js | 720 |
+| BOSS_MODELS | battle-realtime-three.js | 340-350 |
+| ENEMY_MODELS | battle-realtime-three.js | 352-358 |
+| COMPANION_MODELS | battle-realtime-three.js | 360-365 |
+| COMMANDER_MODEL | battle-realtime-three.js | 366 |
+| RIG_ACTION_KEYS | battle-realtime-three.js | 368-370 |
+| LOCOMOTION_ACTION_KEYS | battle-realtime-three.js | 372 |
+| actionKeyFromClipName(name) | battle-realtime-three.js | 1253-1257 |
+| buildActions(mixer, clipEntries) | battle-realtime-three.js | 1264-1283 |
+| OVERLAY_ANIMATION_PATH | battle-realtime-three.js | 1065 |
+| OVERLAY_ACTION_KEYS | battle-realtime-three.js | 1066 |
+| loadOverlayDeltaEntries() | battle-realtime-three.js | 1071-1085 |
+| normalizeOverlayDeltaClip(clip) | battle-realtime-three.js | 1087-1111 |
+| adaptOverlayEntries(modelPath, instance, deltaEntries) | battle-realtime-three.js | 1163-1176 |
+| adaptedOverlayEntriesByModel (caching Map) | battle-realtime-three.js | 1069 |
+| restQuatsFromInstance(instance) | battle-realtime-three.js | 1113-1124 |
+| warnedOverlayLoadFailure | battle-realtime-three.js | 1067 |
 | Overlay architecture design | _workspace/current/overlay-architecture.md | 1-274 |
-| instantiateActorModel(relPath, targetHeight) | battle-realtime-three.js | 1050-1069 |
-| TARGET_HEIGHT object | battle-realtime-three.js | 56-63 |
-| fitHeight(object3d, targetHeight) | battle-realtime-three.js | 860-873 |
-| SkeletonUtils.clone() | battle-realtime-three.js | 10, 725 |
+| instantiateActorModel(relPath, targetHeight) | battle-realtime-three.js | 1383-1414 |
+| TARGET_HEIGHT object | battle-realtime-three.js | 374-387 |
+| fitHeight(object3d, targetHeight) | battle-realtime-three.js | 1193-1206 |
+| SkeletonUtils.clone() | battle-realtime-three.js | 10, 1393 |
 | Animation test suite | tests/ingame-motion-pack.test.mjs | 1-596 |
 | Combat presentation test | tests/combat-presentation-contract.test.mjs | 1-+ |
 | Asset manifest | assets/defense-asset-manifest.json | (208 KB) |

@@ -1,0 +1,210 @@
+// Contract tests for the ooo-spec refinement slice:
+//   - per-stage-camera-framing-addendum.md §§1,3,4 (zoom clamp, pitch floor,
+//     FINALE look-at offset)
+//   - _workspace/current/refinement-prompts/README.md §2 (direction x level hit
+//     reaction routing) and §5.1 (mesh-size-aware motion profile)
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import * as THREE from "../vendor/three.module.js";
+import {
+  CAMERA_PHASES,
+  HIT_REACTION_DIRECTIONS,
+  MOTION_PROFILE_REFERENCE_HEIGHT,
+  RealtimeBattle,
+  STAGE_CAMERA_ENVELOPES,
+  cameraTierTarget,
+  hitReactionDirection,
+  hitReactionKey,
+  motionPlaybackRate,
+  motionProfileFor,
+  stageFinaleLookOffset,
+  stagePitchRange,
+  stageZoomClamp,
+} from "../battle-realtime-three.js";
+
+const GLOBAL_ZOOM = Object.freeze({ min: 10.4, max: 41.6 });
+const GLOBAL_PITCH = Object.freeze({
+  min: THREE.MathUtils.degToRad(30),
+  max: THREE.MathUtils.degToRad(85),
+});
+const STAGES = Object.keys(STAGE_CAMERA_ENVELOPES);
+
+function cameraHarness() {
+  const adapter = new RealtimeBattle({ reducedMotion: false });
+  adapter.disposed = false;
+  adapter.scene = new THREE.Scene();
+  adapter.scene.fog = new THREE.Fog(0x030712, 1, 100);
+  adapter.camera = new THREE.PerspectiveCamera(42, 640 / 360, 0.1, 200);
+  adapter.ambientLight = new THREE.AmbientLight(0x33445a, 1.1);
+  adapter.keyLight = new THREE.DirectionalLight(0xfff0d8, 1.6);
+  adapter.rimLight = new THREE.DirectionalLight(0x6ea8ff, 0.6);
+  adapter.rimLightTarget = new THREE.Object3D();
+  adapter.rimLight.target = adapter.rimLightTarget;
+  adapter.scene.add(adapter.ambientLight, adapter.keyLight, adapter.rimLight, adapter.rimLightTarget);
+  return adapter;
+}
+
+function snapshot(stageId, phase, tick, commander = { x: 12000, y: 6000 }) {
+  return { tick, commander, stageId, objectives: { phase } };
+}
+
+test("cam-per-stage-zoom keeps every stage clamp inside the global orbit envelope", () => {
+  for (const stageId of STAGES) {
+    const clamp = stageZoomClamp(stageId);
+    assert.ok(clamp.min >= GLOBAL_ZOOM.min - 1e-9, `${stageId} min ${clamp.min} escapes global`);
+    assert.ok(clamp.max <= GLOBAL_ZOOM.max + 1e-9, `${stageId} max ${clamp.max} escapes global`);
+    assert.ok(clamp.min < clamp.max, `${stageId} clamp is degenerate`);
+  }
+  // abyss-chancel is the one stage that actually narrows the band.
+  assert.deepEqual({ ...stageZoomClamp("abyss-chancel") }, { min: 12, max: 36 });
+  assert.deepEqual({ ...stageZoomClamp("cinder-span") }, { ...GLOBAL_ZOOM });
+  // An unknown stage falls back to the full global envelope.
+  assert.deepEqual({ ...stageZoomClamp("not-a-stage") }, { ...GLOBAL_ZOOM });
+});
+
+test("cam-per-stage-zoom lets a phase tier outside the stage clamp still win", () => {
+  const adapter = cameraHarness();
+  // FINALE tier is 41.5, above abyss-chancel's manual ceiling of 36. A tickless
+  // snapshot commits the tier immediately instead of easing over 90 ticks.
+  adapter.updateCamera({ ...snapshot("abyss-chancel", "FINALE", 0), tick: undefined }, 0);
+  assert.equal(adapter.phaseZoomFactor, cameraTierTarget("FINALE"));
+  adapter.zoom(50);
+  assert.ok(
+    adapter.zoomFactor >= cameraTierTarget("FINALE") - 1e-9,
+    `tier target must survive the stage clamp, got ${adapter.zoomFactor}`,
+  );
+  // Inside a tier the stage clamp still binds: DESCENT (20.8) pinches to >= 12.
+  adapter.updateCamera({ ...snapshot("abyss-chancel", "DESCENT", 1), tick: undefined }, 16);
+  adapter.zoom(-100);
+  assert.ok(adapter.zoomFactor >= 12 - 1e-9, `stage floor must bind, got ${adapter.zoomFactor}`);
+});
+
+test("cam-per-stage-pitch raises the abyss-chancel floor to 35 degrees while pushed in", () => {
+  const skirmish = stagePitchRange("abyss-chancel", "SKIRMISH");
+  assert.ok(skirmish.min >= THREE.MathUtils.degToRad(35) - 1e-9);
+  assert.equal(stagePitchRange("abyss-chancel", "FINALE").min, GLOBAL_PITCH.min);
+  for (const stageId of ["cinder-span", "echo-throne"]) {
+    for (const phase of CAMERA_PHASES) {
+      assert.equal(stagePitchRange(stageId, phase).min, GLOBAL_PITCH.min, `${stageId}/${phase}`);
+    }
+  }
+
+  const adapter = cameraHarness();
+  adapter.updateCamera(snapshot("abyss-chancel", "SKIRMISH", 0), 0);
+  const cut = adapter.orbit(0, -Math.PI);
+  assert.equal(cut, true, "dragging past the raised floor must report a clamped input");
+  assert.ok(
+    adapter.orbitPitch >= THREE.MathUtils.degToRad(35) - 1e-9,
+    `orbit pitch ${adapter.orbitPitch} fell below the stage floor`,
+  );
+});
+
+test("cam-boss-look-offset biases the FINALE look target per stage and nowhere else", () => {
+  assert.deepEqual({ ...stageFinaleLookOffset("cinder-span", "SKIRMISH") }, { x: 0, z: 0 });
+  assert.deepEqual({ ...stageFinaleLookOffset("echo-throne", "FINALE") }, { x: 0, z: 0 });
+  const cinder = stageFinaleLookOffset("cinder-span", "FINALE");
+  const chancel = stageFinaleLookOffset("abyss-chancel", "FINALE");
+  assert.ok(cinder.z > 0, "cinder-span pushes up-corridor");
+  assert.ok(chancel.z < 0, "abyss-chancel pulls down-nave");
+
+  const adapter = cameraHarness();
+  const commander = { x: 12000, y: 6000 };
+  adapter.updateCamera(snapshot("cinder-span", "SKIRMISH", 0, commander), 0);
+  const neutralZ = adapter.cameraTarget.z;
+  const finale = cameraHarness();
+  finale.updateCamera(snapshot("cinder-span", "FINALE", 0, commander), 0);
+  assert.ok(
+    Math.abs((finale.cameraTarget.z - neutralZ) - cinder.z) < 1e-6,
+    `FINALE look target must carry exactly the authored offset (${finale.cameraTarget.z - neutralZ} vs ${cinder.z})`,
+  );
+});
+
+test("motion profile derives speed and reaction arc from mesh size, not from a per-kind constant", () => {
+  const reference = motionProfileFor(MOTION_PROFILE_REFERENCE_HEIGHT);
+  assert.equal(reference.heightRatio, 1);
+  assert.equal(reference.locomotionRate, 1);
+  assert.equal(reference.oneShotRate, 1);
+
+  const boss = motionProfileFor(4.5);
+  const companion = motionProfileFor(1.3);
+  assert.ok(boss.locomotionRate < reference.locomotionRate, "a boss strides slower than a standard enemy");
+  assert.ok(companion.locomotionRate > reference.locomotionRate, "a companion strides faster");
+  assert.ok(boss.oneShotRate < companion.oneShotRate, "a boss winds up slower than a companion");
+  assert.ok(boss.reactionArcScale < 1 && companion.reactionArcScale > 1);
+
+  // Monotonic in mesh size across the authored silhouette range.
+  const heights = [1.3, 1.55, 1.7, 2.2, 4.5];
+  for (let i = 1; i < heights.length; i += 1) {
+    assert.ok(
+      motionProfileFor(heights[i]).locomotionRate <= motionProfileFor(heights[i - 1]).locomotionRate,
+      `locomotion rate must not rise with mesh height at ${heights[i]}`,
+    );
+  }
+
+  // Bounded: even a degenerate input stays inside a playable band.
+  for (const height of [0, -12, Number.NaN, 1e6]) {
+    const profile = motionProfileFor(height);
+    assert.ok(profile.locomotionRate >= 0.7 && profile.locomotionRate <= 1.2, `height ${height}`);
+    assert.ok(profile.oneShotRate >= 0.72 && profile.oneShotRate <= 1.15, `height ${height}`);
+  }
+
+  // Locomotion and one-shot beats read different lanes of the same profile.
+  assert.equal(motionPlaybackRate(boss, "idle"), boss.locomotionRate);
+  assert.equal(motionPlaybackRate(boss, "run"), boss.locomotionRate);
+  assert.equal(motionPlaybackRate(boss, "attack"), boss.oneShotRate);
+  assert.equal(motionPlaybackRate(boss, "bighit_left"), boss.oneShotRate);
+  // A record without a profile still plays at authored speed.
+  assert.equal(motionPlaybackRate(null, "idle"), 1);
+});
+
+test("hit reactions resolve direction in the target frame and fall back to the flat clip", () => {
+  const facingNorth = 0; // target looks toward +Z
+  assert.equal(hitReactionDirection(0, facingNorth), "front");
+  assert.equal(hitReactionDirection(Math.PI, facingNorth), "back");
+  assert.equal(hitReactionDirection(Math.PI / 2, facingNorth), "right");
+  assert.equal(hitReactionDirection(-Math.PI / 2, facingNorth), "left");
+  // Rotating the target rotates the resolved direction with it.
+  assert.equal(hitReactionDirection(Math.PI / 2, Math.PI / 2), "front");
+  // Malformed input never invents a direction.
+  assert.equal(hitReactionDirection(Number.NaN, 0), "front");
+  assert.equal(hitReactionDirection(0, null), "front");
+
+  const flatRig = { hit: {}, bighit: {} };
+  for (const direction of HIT_REACTION_DIRECTIONS) {
+    assert.equal(hitReactionKey(flatRig, direction, false), "hit");
+    assert.equal(hitReactionKey(flatRig, direction, true), "bighit");
+  }
+  const directionalRig = { hit: {}, bighit: {}, hit_left: {}, bighit_back: {} };
+  assert.equal(hitReactionKey(directionalRig, "left", false), "hit_left");
+  assert.equal(hitReactionKey(directionalRig, "back", true), "bighit_back");
+  // Level and direction are independent: no bighit_left clip means bighit.
+  assert.equal(hitReactionKey(directionalRig, "left", true), "bighit");
+  assert.equal(hitReactionKey(directionalRig, "up", false), "hit");
+});
+
+test("triggerHitReaction picks the directional clip for a blow from behind", () => {
+  const adapter = cameraHarness();
+  const played = [];
+  adapter.triggerAction = (record, key) => {
+    played.push(key);
+    return true;
+  };
+  const target = {
+    root: new THREE.Object3D(),
+    yaw: 0, // facing +Z
+    actions: { hit: {}, bighit: {}, hit_back: {} },
+  };
+  const attacker = { root: new THREE.Object3D() };
+  attacker.root.position.set(0, 0, -5); // behind the target
+  adapter.triggerHitReaction(target, attacker, false, 0);
+  assert.deepEqual(played, ["hit_back"]);
+
+  // Without a known attacker the reaction stays the flat front clip.
+  played.length = 0;
+  adapter.triggerHitReaction(target, null, true, 0);
+  assert.deepEqual(played, ["bighit"]);
+
+  // A missing target record is a no-op, never a thrown frame.
+  assert.equal(adapter.triggerHitReaction(undefined, attacker, false, 0), false);
+});

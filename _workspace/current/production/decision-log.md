@@ -66,3 +66,33 @@ evidence_state: "[TARGET] — 설계 승인이지 구현·밸런스·사람 플�
 - 기존 세부 스펙은 각 영역의 권위 문서로 유지한다. 새 제품 계약은 수치·알고리즘을 복제하지 않는다.
 - README의 공개 제품 설명은 슬라이스 2 사람 플레이 판정 뒤 갱신한다. 구현되지 않은 목표를 현재 기능처럼 표기하지 않는다.
 - `design/encounter-wave-spec.md#1`의 페이즈별 Shard 보상은 마스터 계약의 `0/1/1/2/1/3`, 총 8로 정정했다. `master-gdd-delta.md`와 `engineering/migration-map.md`의 스탯 상한도 `19`로 정정했다.
+---
+
+## D-20260730-01 — ooo 스펙 정제안의 런타임 적용 범위 확정
+
+`_workspace/current/refinement-prompts/README.md`(프롬프트 #1–#5)와
+`design/per-stage-camera-framing-addendum.md`가 이번 사이클의 개선 스펙이다.
+이 중 **에셋 재생성 없이 런타임만으로 완결되는 항목**을 이번에 구현하고,
+Blender 리타겟/신규 FBX가 선행되어야 하는 항목은 명시적으로 미착수로 남긴다.
+
+| 스펙 | 처리 | 근거 |
+|---|---|---|
+| 프롬프트 #5 §1 (속도·크기 차별화) | **구현** — `motionProfileFor(targetHeight)`가 mesh 높이 비율의 함수로 `locomotionRate`/`oneShotRate`/`reactionArcScale`을 산출하고, 믹서 `setEffectiveTimeScale`로만 적용 | `RUNTIME_ANIMATION_CONTRACT.md#8` |
+| 프롬프트 #2 (방향×레벨 히트 리액션) | **런타임 라우팅만 구현** — `triggerHitReaction()`이 공격자 위치를 타겟 프레임으로 환산해 `hit_<dir>`/`bighit_<dir>` 클립을 선택하고, 클립이 없으면 평면 키로 결정적 폴백 | `RUNTIME_ANIMATION_CONTRACT.md#8` |
+| 카메라 애드덤 §1/§3/§4 | **구현** — `STAGE_CAMERA_ENVELOPES` + `stageZoomClamp()`/`stagePitchRange()`/`stageFinaleLookOffset()` | `design/per-stage-camera-framing-addendum.md#5` |
+| 프롬프트 #1/#4, #5 §2–§3 | **미착수** — 신규 Mixamo FBX 확보와 `retarget-ingame-motion-blender.py`의 per-bone proportional 개편이 선행 조건 | `refinement-prompts/README.md#1`, `#4` |
+| 카메라 애드덤 §2 (occlusion fade) | **미착수** — `resolveStageTerrain()`에 `occlusionFadeProps` 레지스트리가 아직 없다 | `design/per-stage-camera-framing-addendum.md#5` |
+
+### 증거
+
+- `node --test tests/stage-framing-and-motion-profile.test.mjs` → 7/7 통과 (신규 계약 테스트).
+- `node --test` 렌더러 인접 9개 파일(`camera-slice-contract`, `combat-presentation-contract`,
+  `defense-renderer-contract`, `ingame-motion-pack`, `overlay-runtime-qa`,
+  `realtime-motion-routing`, `runtime-visual-assets`, `world-presentation-contract`,
+  `stage-framing-and-motion-profile`) → 98/98 통과.
+- **[OBSERVED] 선행 결함**: `tests/defense-asset-manifest.test.mjs`의
+  `defense asset manifest has literal, complete dispositions when generated`는
+  본 변경을 stash한 상태에서도 동일하게 실패한다(`assets/motion/bench/**`의
+  FBX 다수가 작업 트리에 없음). 이번 변경과 무관한 기존 상태이며 수정하지 않았다.
+- 시뮬레이션 결정성 불변식은 유지된다. 추가된 코드는 전부 프레젠테이션 계층이며
+  `getRunDigest()` 입력에 쓰지 않는다.

@@ -99,6 +99,66 @@ export function cameraTierTarget(phase = DEFAULT_CAMERA_PHASE) {
   return (CAMERA_PHASE_TIERS[phase] ?? CAMERA_PHASE_TIERS[DEFAULT_CAMERA_PHASE]).zoomFactor;
 }
 
+// Per-stage framing envelope (per-stage-camera-framing-addendum.md §§1,3,4).
+// The global envelope stays the outer bound; a stage may only narrow it, never
+// widen it. Manual pinch zoom lives inside the stage clamp, while a phase tier
+// target always wins over the manual preference (gameplay readability first).
+export const STAGE_CAMERA_ENVELOPES = Object.freeze({
+  "cinder-span": Object.freeze({
+    // Open bridge: no occlusion risk at any zoom, no overhead geometry.
+    zoom: Object.freeze({ min: 10.4, max: 41.6 }),
+    pitchMinDegreesByPhase: Object.freeze({}),
+    // Up-corridor: keep the boss forge and the extraction bind in one frame.
+    finaleLookOffset: Object.freeze({ x: 0, y: 1000 }),
+  }),
+  "abyss-chancel": Object.freeze({
+    // Colonnade props occlude below 12; past 36 the side-ingress context is lost.
+    zoom: Object.freeze({ min: 12, max: 36 }),
+    // Colonnade overhangs block the view below 35 degrees while the camera is
+    // still pushed in; the pulled-back BIGWAVE/FINALE tiers clear them.
+    pitchMinDegreesByPhase: Object.freeze({ DESCENT: 35, SKIRMISH: 35 }),
+    // Down-nave: keep the transept boss path and the chancel bind readable.
+    finaleLookOffset: Object.freeze({ x: 0, y: -800 }),
+  }),
+  "echo-throne": Object.freeze({
+    // Axial court stays readable at both extremes and has no overhead occlusion.
+    zoom: Object.freeze({ min: 10.4, max: 41.6 }),
+    pitchMinDegreesByPhase: Object.freeze({}),
+    // Already frames dais + throne-bind on the axis; no offset.
+    finaleLookOffset: Object.freeze({ x: 0, y: 0 }),
+  }),
+});
+
+export function stageZoomClamp(stageId) {
+  const authored = STAGE_CAMERA_ENVELOPES[stageId]?.zoom;
+  return Object.freeze({
+    min: Math.max(MIN_ORBIT_DISTANCE, finite(authored?.min, MIN_ORBIT_DISTANCE)),
+    max: Math.min(MAX_ORBIT_DISTANCE, finite(authored?.max, MAX_ORBIT_DISTANCE)),
+  });
+}
+
+export function stagePitchRange(stageId, phase = DEFAULT_CAMERA_PHASE) {
+  const authoredDegrees = STAGE_CAMERA_ENVELOPES[stageId]?.pitchMinDegreesByPhase?.[phase];
+  const authored = Number.isFinite(authoredDegrees)
+    ? THREE.MathUtils.degToRad(authoredDegrees)
+    : MIN_ORBIT_PITCH;
+  return Object.freeze({
+    min: THREE.MathUtils.clamp(authored, MIN_ORBIT_PITCH, MAX_ORBIT_PITCH),
+    max: MAX_ORBIT_PITCH,
+  });
+}
+
+// Simulation-space offset converted to renderer world units on the same axes
+// worldPointInto() uses, so the offset composes with the commander follow.
+export function stageFinaleLookOffset(stageId, phase = DEFAULT_CAMERA_PHASE) {
+  const authored = STAGE_CAMERA_ENVELOPES[stageId]?.finaleLookOffset;
+  if (phase !== "FINALE" || !authored) return Object.freeze({ x: 0, z: 0 });
+  return Object.freeze({
+    x: finite(authored.x, 0) / WORLD_WIDTH * 2 * WORLD_SCALE,
+    z: finite(authored.y, 0) / WORLD_HEIGHT * 2 * WORLD_SCALE,
+  });
+}
+
 export function exponentialSmoothingFactor(lambda, deltaSeconds) {
   const safeLambda = Math.max(0, finite(lambda, 0));
   const safeDelta = Math.max(0, finite(deltaSeconds, 0));
@@ -394,6 +454,11 @@ function questVfxPresentationForEvent(event) {
 const RIG_ACTION_KEYS = Object.freeze([
   "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "die", "show",
   "attack_melee", "attack_ranged",
+  // Directional reaction variants (refinement-prompts §2). A rig that ships
+  // them gets direction-aware flinches; a rig that does not falls back to the
+  // flat "hit" / "bighit" key, so registration here is additive only.
+  "hit_front", "hit_back", "hit_left", "hit_right",
+  "bighit_front", "bighit_back", "bighit_left", "bighit_right",
 ]);
 const STAGE_NPC_STORY_ACTIONS = Object.freeze({
   questAcquisition: Object.freeze(["show"]),
@@ -514,16 +579,97 @@ const LOCOMOTION_RECOVERY_FADE_SECONDS = Object.freeze({
 });
 const DEFAULT_LOCOMOTION_RECOVERY_FADE_SECONDS = 0.15;
 
+// A directional reaction variant ("hit_left") carries exactly the beat weight
+// and fade envelope of its flat parent ("hit") -- direction changes which clip
+// plays, never how the beat competes for the one-shot slot.
+function baseBeatKey(key) {
+  const text = String(key ?? "");
+  const separator = text.indexOf("_");
+  if (separator < 0) return text;
+  const head = text.slice(0, separator);
+  return head === "hit" || head === "bighit" ? head : text;
+}
+
 function beatPriority(key) {
-  return BEAT_PRIORITY[key] ?? DEFAULT_BEAT_PRIORITY;
+  return BEAT_PRIORITY[key] ?? BEAT_PRIORITY[baseBeatKey(key)] ?? DEFAULT_BEAT_PRIORITY;
 }
 
 function oneShotEntryFadeSeconds(key) {
-  return ONE_SHOT_ENTRY_FADE_SECONDS[key] ?? DEFAULT_ONE_SHOT_ENTRY_FADE_SECONDS;
+  return ONE_SHOT_ENTRY_FADE_SECONDS[key]
+    ?? ONE_SHOT_ENTRY_FADE_SECONDS[baseBeatKey(key)]
+    ?? DEFAULT_ONE_SHOT_ENTRY_FADE_SECONDS;
 }
 
 function locomotionRecoveryFadeSeconds(key) {
-  return LOCOMOTION_RECOVERY_FADE_SECONDS[key] ?? DEFAULT_LOCOMOTION_RECOVERY_FADE_SECONDS;
+  return LOCOMOTION_RECOVERY_FADE_SECONDS[key]
+    ?? LOCOMOTION_RECOVERY_FADE_SECONDS[baseBeatKey(key)]
+    ?? DEFAULT_LOCOMOTION_RECOVERY_FADE_SECONDS;
+}
+
+// --- Mesh-size-aware motion profile (refinement-prompts §5.1) -------------
+// Every differentiation parameter is a FUNCTION of the character's mesh size,
+// never a hardcoded per-kind constant: the runtime reads the actor's fitted
+// target height (the same value fitHeight() scales the GLB to) and derives
+// playback rate and reaction arc from its ratio against the standard enemy
+// silhouette. Locomotion clips stay in-place and fixed-speed on disk
+// (inPlaceRootMotion: true); the differentiation is applied purely as a mixer
+// timeScale, so no clip is re-authored and determinism is untouched.
+export const MOTION_PROFILE_REFERENCE_HEIGHT = TARGET_HEIGHT.enemy;
+// Bigger silhouettes read heavier: slower stride, longer windup, shorter
+// relative reaction arc. Bounds keep a 4.5u boss inside a readable range
+// instead of asymptotically stalling.
+const MOTION_PROFILE_LOCOMOTION_BOUNDS = Object.freeze({ min: 0.7, max: 1.2 });
+const MOTION_PROFILE_ONE_SHOT_BOUNDS = Object.freeze({ min: 0.72, max: 1.15 });
+const MOTION_PROFILE_ARC_BOUNDS = Object.freeze({ min: 0.6, max: 1.25 });
+const MOTION_PROFILE_LOCOMOTION_EXPONENT = -0.5;
+const MOTION_PROFILE_ONE_SHOT_EXPONENT = -0.35;
+
+export function motionProfileFor(targetHeight) {
+  const height = Math.max(0.1, finite(targetHeight, MOTION_PROFILE_REFERENCE_HEIGHT));
+  const heightRatio = height / MOTION_PROFILE_REFERENCE_HEIGHT;
+  const shape = (exponent, bounds) => THREE.MathUtils.clamp(
+    Math.pow(heightRatio, exponent),
+    bounds.min,
+    bounds.max,
+  );
+  return Object.freeze({
+    heightRatio,
+    locomotionRate: shape(MOTION_PROFILE_LOCOMOTION_EXPONENT, MOTION_PROFILE_LOCOMOTION_BOUNDS),
+    oneShotRate: shape(MOTION_PROFILE_ONE_SHOT_EXPONENT, MOTION_PROFILE_ONE_SHOT_BOUNDS),
+    reactionArcScale: shape(MOTION_PROFILE_LOCOMOTION_EXPONENT, MOTION_PROFILE_ARC_BOUNDS),
+  });
+}
+
+const DEFAULT_MOTION_PROFILE = motionProfileFor(MOTION_PROFILE_REFERENCE_HEIGHT);
+
+export function motionPlaybackRate(profile, key) {
+  const resolved = profile ?? DEFAULT_MOTION_PROFILE;
+  return LOCOMOTION_ACTION_KEYS.includes(key) ? resolved.locomotionRate : resolved.oneShotRate;
+}
+
+// --- Directional hit reaction routing (refinement-prompts §2) -------------
+// The direction x damage-level matrix is authored as clip keys
+// ("hit_left", "bighit_back", ...). Rigs that never received the directional
+// clips resolve deterministically back to the flat "hit" / "bighit" key, so
+// this routing is safe to ship before the retarget pass lands.
+export const HIT_REACTION_DIRECTIONS = Object.freeze(["front", "right", "back", "left"]);
+const HIT_REACTION_QUADRANT = Math.PI / 4;
+
+// Direction is expressed in the TARGET's frame: where the blow came from.
+export function hitReactionDirection(incomingHeading, targetYaw) {
+  if (!Number.isFinite(incomingHeading) || !Number.isFinite(targetYaw)) return "front";
+  const relative = wrapAngle(incomingHeading - targetYaw);
+  const magnitude = Math.abs(relative);
+  if (magnitude <= HIT_REACTION_QUADRANT) return "front";
+  if (magnitude >= Math.PI - HIT_REACTION_QUADRANT) return "back";
+  return relative > 0 ? "right" : "left";
+}
+
+export function hitReactionKey(actions, direction, heavy = false) {
+  const base = heavy ? "bighit" : "hit";
+  if (!HIT_REACTION_DIRECTIONS.includes(direction)) return base;
+  const directional = `${base}_${direction}`;
+  return actions?.[directional] ? directional : base;
 }
 const AMBIENT_BREATH_CYCLE_SECONDS = 4.2;
 const AMBIENT_WEIGHT_CYCLE_SECONDS = 6.4;
@@ -2191,6 +2337,11 @@ export class RealtimeBattle {
     this.rimLight = null;
     this.rimLightTarget = null;
     this.stagePaletteId = null; // last stageId applyStagePalette() was run for -- avoids redundant PMREM rebakes
+    // Stage/phase the per-stage camera envelope (zoom clamp, pitch floor,
+    // FINALE look offset) is currently resolved against. updateCamera() owns
+    // the writes; orbit()/zoom() only read them.
+    this.cameraStageId = null;
+    this.cameraPhase = DEFAULT_CAMERA_PHASE;
 
     this.loadedStageId = null;
     this.loadingStageId = null;
@@ -2691,6 +2842,9 @@ export class RealtimeBattle {
       root: null, kind, modelPath, fallbackModelPath, loading: Boolean(modelPath),
       entityKind: entity.kind ?? null, role: entity.role ?? null, moveState: entity.move ?? null, aiState: entity.aiState ?? null,
       mixer: null, actions: {}, actionSources: {}, activeActionKey: null, targetHeight: actorTargetHeight(entity),
+      // Mesh-size-aware differentiation: derived once from the fitted
+      // silhouette, applied as a mixer timeScale per beat (motionProfileFor).
+      motionProfile: motionProfileFor(actorTargetHeight(entity)),
       activeActionSource: null, activeActionClip: null,
       oneShotAction: null, oneShotActionKey: null,
       queuedAction: suppressEntranceBeat ? null : { key: "show", presentation: null },
@@ -2902,6 +3056,9 @@ export class RealtimeBattle {
     const previous = record.activeActionKey ? record.actions[record.activeActionKey] : null;
     next.enabled = true;
     next.setEffectiveWeight(1);
+    // Mesh-size differentiation is a playback-rate modifier only: the clip and
+    // its authored in-place root motion are untouched.
+    next.setEffectiveTimeScale(motionPlaybackRate(record.motionProfile, key));
     next.reset().fadeIn(fadeSeconds).play();
     if (previous && previous !== next) previous.fadeOut(fadeSeconds);
     record.activeActionKey = key;
@@ -3037,6 +3194,7 @@ export class RealtimeBattle {
         if (action.time < ONE_SHOT_RESTART_MIN_ELAPSED_SECONDS) return false;
         action.enabled = true;
         action.setEffectiveWeight(1);
+        action.setEffectiveTimeScale(motionPlaybackRate(record.motionProfile, key));
         action.reset().play();
         record.activeActionKey = key;
         record.activeActionSource = record.actionSources?.[key] ?? "base";
@@ -3064,6 +3222,7 @@ export class RealtimeBattle {
       if (previous && previous !== action) previous.stop();
       action.enabled = true;
       action.setEffectiveWeight(1);
+      action.setEffectiveTimeScale(motionPlaybackRate(record.motionProfile, key));
       action.reset().play();
       record.activeActionKey = key;
       played = true;
@@ -3075,6 +3234,28 @@ export class RealtimeBattle {
     record.oneShotActionKey = key;
     if (presentation) this.beginAttackPresentation(record, presentation);
     return true;
+  }
+
+  // Direction x damage-level reaction routing (refinement-prompts §2). The
+  // incoming blow's heading is measured against the target's rendered facing,
+  // so the same event drives a left/right/back flinch on rigs that carry the
+  // directional clips and the flat reaction everywhere else.
+  triggerHitReaction(record, attackerRecord, heavy, nowMs) {
+    if (!record) return false;
+    let direction = "front";
+    if (attackerRecord?.root && record.root && Number.isFinite(record.yaw)) {
+      const from = attackerRecord.root.position;
+      const to = record.root.position;
+      const dx = from.x - to.x;
+      const dz = from.z - to.z;
+      if (Math.abs(dx) > 1e-6 || Math.abs(dz) > 1e-6) {
+        direction = hitReactionDirection(
+          wrapAngle(Math.atan2(dx, dz) + MODEL_FORWARD_YAW_OFFSET),
+          record.yaw,
+        );
+      }
+    }
+    return this.triggerAction(record, hitReactionKey(record.actions, direction, heavy), nowMs);
   }
 
   syncActorState(record, entity) {
@@ -3436,7 +3617,11 @@ export class RealtimeBattle {
     // unrestricted").
     this.orbitYaw = wrapAngle(this.orbitYaw + dYaw);
     const desiredPitch = this.orbitPitch + dPitch;
-    this.orbitPitch = THREE.MathUtils.clamp(desiredPitch, MIN_ORBIT_PITCH, MAX_ORBIT_PITCH);
+    // The stage may raise the floor above the global 30 degrees while its
+    // overhead geometry would otherwise cut the view
+    // (per-stage-camera-framing-addendum.md §3).
+    const pitchRange = stagePitchRange(this.cameraStageId, this.cameraPhase);
+    this.orbitPitch = THREE.MathUtils.clamp(desiredPitch, pitchRange.min, pitchRange.max);
     return Math.abs(desiredPitch - this.orbitPitch) > 1e-9;
   }
 
@@ -3450,8 +3635,18 @@ export class RealtimeBattle {
     const tierDistance = Math.max(Number.EPSILON, finite(this.phaseZoomFactor, ORBIT_ZOOM_DEFAULT));
     const current = finite(this.zoomFactor, tierDistance * this.manualZoomRatio);
     const desired = current + finite(delta, 0);
-    const lower = Math.max(MIN_ORBIT_DISTANCE, tierDistance * MANUAL_ZOOM_RATIO_MIN);
-    const upper = Math.min(MAX_ORBIT_DISTANCE, tierDistance * MANUAL_ZOOM_RATIO_MAX);
+    // Stage envelope narrows the manual band (addendum §1). A phase tier target
+    // that sits outside its own stage clamp still wins -- gameplay readability
+    // outranks the manual preference -- so the band always contains the tier.
+    const stageClamp = stageZoomClamp(this.cameraStageId);
+    const lower = Math.min(
+      tierDistance,
+      Math.max(MIN_ORBIT_DISTANCE, stageClamp.min, tierDistance * MANUAL_ZOOM_RATIO_MIN),
+    );
+    const upper = Math.max(
+      tierDistance,
+      Math.min(MAX_ORBIT_DISTANCE, stageClamp.max, tierDistance * MANUAL_ZOOM_RATIO_MAX),
+    );
     this.zoomFactor = THREE.MathUtils.clamp(desired, lower, upper);
     this.manualZoomRatio = this.zoomFactor / tierDistance;
     return Math.abs(desired - this.zoomFactor) > 1e-9;
@@ -3584,7 +3779,12 @@ export class RealtimeBattle {
   updateCamera(snapshot, nowMs = performance.now()) {
     this.clearCameraShakeOffset();
     const tick = snapshot?.tick;
-    const phaseTarget = cameraTierTarget(resolveCameraPhase(snapshot));
+    // Stage + phase drive the per-stage framing envelope and stay cached so the
+    // player-input paths (orbit/zoom) clamp against the same authored stage.
+    const phase = resolveCameraPhase(snapshot);
+    this.cameraStageId = resolveStageId(snapshot) ?? this.cameraStageId ?? null;
+    this.cameraPhase = phase;
+    const phaseTarget = cameraTierTarget(phase);
     if (Number.isInteger(tick)) {
       const active = this.cameraTierTransition;
       if (active && Math.abs(active.to - phaseTarget) <= 1e-9) {
@@ -3638,9 +3838,13 @@ export class RealtimeBattle {
     // drag the framing beyond the authored world.
     const commander = snapshot?.commander ?? snapshot?.player;
     const commanderPoint = worldPoint(commander ?? {});
-    const targetX = THREE.MathUtils.clamp(commanderPoint.x, -WORLD_SCALE, WORLD_SCALE);
+    // FINALE only: bias the look target along the stage's boss/extraction axis
+    // so the boss silhouette and the extraction bind stay in one frame
+    // (per-stage-camera-framing-addendum.md §4). Additive to commander-follow.
+    const lookOffset = stageFinaleLookOffset(this.cameraStageId, phase);
+    const targetX = THREE.MathUtils.clamp(commanderPoint.x + lookOffset.x, -WORLD_SCALE, WORLD_SCALE);
     const targetY = commanderPoint.y;
-    const targetZ = THREE.MathUtils.clamp(commanderPoint.z, -WORLD_SCALE, WORLD_SCALE);
+    const targetZ = THREE.MathUtils.clamp(commanderPoint.z + lookOffset.z, -WORLD_SCALE, WORLD_SCALE);
 
     // Player-selected yaw/pitch and stage-intro offsets remain modifiers over
     // the phase tier; no phase transition blocks orbit input.
@@ -3651,10 +3855,11 @@ export class RealtimeBattle {
       MAX_ORBIT_DISTANCE,
     );
     const cameraYaw = wrapAngle(this.orbitYaw + (intro?.azimuth ?? 0));
+    const pitchRange = stagePitchRange(this.cameraStageId, phase);
     const cameraPitch = THREE.MathUtils.clamp(
       this.orbitPitch + (intro?.polar ?? 0),
-      MIN_ORBIT_PITCH,
-      MAX_ORBIT_PITCH,
+      pitchRange.min,
+      pitchRange.max,
     );
     const horizontalRadius = cameraDistance * Math.cos(cameraPitch);
     const height = cameraDistance * Math.sin(cameraPitch);
@@ -4284,7 +4489,7 @@ export class RealtimeBattle {
         break;
       case "WEAPON_FIRED":
         this.triggerAttackDelivery(actor(event.entityId), target(event.targetId), nowMs, event.critical === true);
-        if (event.critical === true) this.triggerAction(actor(event.targetId), "bighit", nowMs);
+        if (event.critical === true) this.triggerHitReaction(actor(event.targetId), actor(event.entityId), true, nowMs);
         break;
       case "BASIC_ATTACK":
         this.triggerAttackDelivery(actor(event.entityId), target(event.targetId), nowMs, event.critical === true);
@@ -4295,29 +4500,30 @@ export class RealtimeBattle {
         break;
       case "SKILL_RESOLVED_DAMAGE":
         this.triggerAttackDelivery(actor(event.sourceId), target(event.targetId), nowMs, event.critical === true);
-        this.triggerAction(actor(event.targetId), event.critical === true ? "bighit" : "hit", nowMs);
+        this.triggerHitReaction(actor(event.targetId), actor(event.sourceId), event.critical === true, nowMs);
         break;
       case "CRITICAL_HIT":
         this.triggerAttackDelivery(actor(event.entityId), target(event.targetId), nowMs, true);
-        this.triggerAction(actor(event.targetId), "bighit", nowMs);
+        this.triggerHitReaction(actor(event.targetId), actor(event.entityId), true, nowMs);
         break;
       case "ENEMY_ATTACK":
         this.triggerAttackDelivery(actor(event.entityId), target(event.targetId), nowMs);
-        if (event.damage > 0) this.triggerAction(actor(event.targetId), "hit", nowMs);
+        if (event.damage > 0) this.triggerHitReaction(actor(event.targetId), actor(event.entityId), false, nowMs);
         break;
       case "MELEE_IMPACT":
         if (event.guardedBy) this.triggerAction(actor(event.guardedBy), "defence", nowMs);
-        this.triggerAction(actor(event.targetId), event.critical === true ? "bighit" : "hit", nowMs);
+        this.triggerHitReaction(actor(event.targetId), actor(event.entityId ?? event.sourceId), event.critical === true, nowMs);
         break;
       case "PROJECTILE_IMPACT":
         if (event.guardedBy) this.triggerAction(actor(event.guardedBy), "defence", nowMs);
-        this.triggerAction(actor(event.targetId), event.hit === false ? "avoid" : "hit", nowMs);
+        if (event.hit === false) this.triggerAction(actor(event.targetId), "avoid", nowMs);
+        else this.triggerHitReaction(actor(event.targetId), actor(event.sourceId ?? event.entityId), false, nowMs);
         break;
       case "COMMANDER_DAMAGED":
-        this.triggerAction(actor("commander"), "hit", nowMs);
+        this.triggerHitReaction(actor("commander"), actor(event.sourceId ?? event.entityId), false, nowMs);
         break;
       case "COMPANION_DAMAGED":
-        this.triggerAction(actor(event.entityId), "hit", nowMs);
+        this.triggerHitReaction(actor(event.entityId), actor(event.sourceId), false, nowMs);
         break;
       case "BOSS_ATTACK_CANCELLED":
         this.triggerAction(actor(event.targetId), "avoid", nowMs);
