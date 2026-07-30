@@ -1324,7 +1324,7 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
  * the same seed", captured BEFORE the feature landed. These are that capture: each hash is
  * `sha256(getRunDigest(run))` produced by the simulation module at commit `033877ad` — the last
  * commit before the drop/buff layer existed — run against the current catalog, whose diff over
- * the same range is +154/-0 (pure addition, so the pre-feature module loads unchanged against
+ * the same range is +173/-0 (pure addition, so the pre-feature module loads unchanged against
  * it). Recover the baseline with `git show 033877ad:defense-run-simulation.js`.
  *
  * A hash rather than a 19KB string because the digest is not the artifact under test — its
