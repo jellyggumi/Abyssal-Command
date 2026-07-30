@@ -303,10 +303,49 @@ existing test would have detected it.** Registry now closed at four constants:
 7. **Four files need a real merge with the concurrent session**: `defense-catalog.js`
    (923 vs 1025), `defense-run-simulation.js` (3570 vs 4002), `app.js`,
    `battle-realtime-three.js`. Planned, not a surprise.
-8. **Slab layouts are promoted but the catalog still carries the old routes and
-   obstacles.** The floor geometry matches `DungeonLevelDesign`'s 12 slabs; the gameplay
-   route/obstacle rewrite from the same spec is not applied. The floor is correct and the
-   old routes still validate, so this is incomplete rather than broken.
+8. **Slab layouts — cinder-span CLOSED, chancel and throne scoped and measured.**
+   `[OBSERVED]` Cinder's authored layout is now applied: routes in `87915ded`
+   (corridorWidth 1200→1400 / 700→900, five waypoints moved) and obstacles in `eb434315`
+   (3→6, promoting three already-visible frozen props to collision). Margins recomputed with
+   the validator's own rule: critical +213.87, detour +49.86 — the detour figure reproduces
+   the spec's stated tightest margin to the hundredth.
+
+   Two measurements made this landable in two commits instead of one risky one. First,
+   `defense-run-simulation.js` has **zero reads of `gameplay.routes`** (it reads `bounds`,
+   `surfaces`, `obstacles`, `meshColliders`), so the route commit is digest-neutral and
+   `defense-run-simulation.test.mjs` stayed 40/40 with **zero hash re-pins** — that green is
+   the evidence rather than an assumption. Second, obstacles **are** read
+   (`resolveTerrainPlacement`, `firstObstacleHit`) and do displace entities, yet the four
+   pinned windows still did not move, because none of them reaches the three added circles
+   (closest approach +2494.53). That null result carries a positive control: injecting one
+   obstacle on the commander's start moves the hash to `d4086a62`, so the harness is
+   demonstrably sensitive and the invariance is measured, not an unwired no-op. **Do not
+   generalise "obstacles are digest-neutral" from it.**
+
+   **Chancel and throne are deliberately not applied, and the reason is arithmetic.** The
+   spec's routes were authored against its own re-authored prop layout, so against today's
+   props they are illegal — chancel critical **−532.23** (`oath-relic`), chancel detour
+   **−967.36** (`east-colonnade-prop`), throne detour **−883.20**
+   (`east-fractured-wing-prop`); all three throw `Prop blocks authored route` at import.
+   Throne's critical passes at +310.00, so it is not uniformly broken — it is coupled.
+   The spec's own layout is self-consistent (its claimed +301.24 / +200.00 reproduce
+   exactly), so this is an **ordering** finding, not a spec defect.
+
+   The atomic unit there is far wider than "routes and obstacles", measured:
+
+   | stage | props exact / moved / absent / dropped | landmarks orphaned | anchors that must move |
+   |---|---|---|---|
+   | abyss-chancel | 3 / 5 / 5 / 4 | 1 (`landmark.west-colonnade`) | 2 (`apse-light-anchor`, `nave-light-anchor`) |
+   | echo-throne | 3 / 7 / 3 / 2 | 1 (`landmark.echo-court-crescent`) | 2 (`dais-light-anchor`, `aisle-light-anchor`) |
+
+   Plus the spec renames all 12 landmark ids, and `fractured-dais-prop` changes **radius**
+   900→700 as well as position — which is load-bearing, not cosmetic: keep r900 at the new
+   (19200, 7600) and throne's critical route fails by −700. So landing it means props +
+   landmarks + anchors + obstacles + routes in one commit, **deleting six currently visible
+   props** across two stages. That is a presentation content decision, not the
+   route/obstacle gap this item was opened for. Chancel/throne props are generic
+   relic/blade instances with **no `modelNode` at all** (0/12 on both, vs cinder's 12/12
+   from stage-specific packs), so no unauthored art blocks it — only the content call does.
 9. **Tiling reads repetitively** at `uvRepeat` 3–5 per axis on the chancel and throne
    floors. Seams are mathematically invisible; the *pattern period* is visible. A
    per-slab rotation or a second variant tile would break it up.
@@ -410,8 +449,15 @@ play adjudication for G4/G7/G8.
 Sequence, in dependency order:
 
 1. Land the pacing doctrine deltas and the two `measure-stage-playtime.mjs` constants.
-2. Run the full suite once, alone, in the worktree. Record the real baseline.
-3. Apply the route/obstacle layout from the dungeon spec, whose floor is already in place.
+2. ~~Run the full suite once, alone, in the worktree. Record the real baseline.~~ **DONE this
+   cycle** — 57 files, 566 pass, 1 fail, the failure reproduced at base. See unresolved item 1.
+   What is still owed is the G7 persistence digest re-pin described in item 12.
+3. Chancel and throne layout — **not** "apply the spec", which is what this looked like from
+   the outside. Cinder is done (`87915ded`, `eb434315`). Those two need props + landmarks +
+   anchors + obstacles + routes in ONE commit, and it deletes six visible props. Decide the
+   content question first: is the spec's re-authored prop layout the one we want, given it
+   drops `oath-apse-prop` (r880) and `court-crescent-prop` and renames all 12 landmarks?
+   Applying routes alone throws at import — measured, see unresolved item 8.
 4. Author the three VFX GLBs and register them in all four allowlists in one commit.
 5. Merge with the concurrent session's cycle-9 branch deliberately, file by file.
 6. Only then seek human-play adjudication.
