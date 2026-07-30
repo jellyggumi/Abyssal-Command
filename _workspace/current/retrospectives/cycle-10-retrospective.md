@@ -344,7 +344,7 @@ existing test would have detected it.** Registry now closed at four constants:
    out of this cycle by ruling R27. G3 must be re-exported and re-adjudicated by whoever owns
    it next — the artifact in the tree today describes none of the three trees above.
 
-   Two receipts also carry stale `inputDigests`, wider than item 8 stated:
+   Two receipts also carry stale `inputDigests`, wider than item 10 stated:
    `G2/g2-adversarial-tape-fixture.receipt.json` has **2 of 7** stale (`defense-catalog.js`,
    `defense-run-simulation.js`), and `G2/stage1b-cinder-pressure-packets.json.receipt.json` —
    a **release** receipt (`sourceRevision: stage1b-release-20260727`) — has **5 of 6**,
