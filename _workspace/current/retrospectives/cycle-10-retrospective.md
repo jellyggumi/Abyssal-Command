@@ -91,6 +91,53 @@ Six specs, 6,800+ lines total, all in `_workspace/current/`:
 | `design/audio-feedback-dungeon-spec.md` | 1426 | footsteps, 12 cues, 9 soundscape states |
 | `ui/hud-overhaul-joystick-cutover-spec.md` | 984 | joystick cutover, 4 compositions, buff strip |
 
+### 1.5 Implementation — three lanes LANDED and verified, one still open
+
+Committed on `feat/cycle10-stage-dungeon`:
+
+| commit | lane | evidence |
+|---|---|---|
+| `17428d69` | composed dungeon floors, catalog promotion, 4 asset allowlists, 3 contract-test inversions | 22/22 + 37/37 |
+| `d37b6568` | joystick cutover, route rail, gimmick chip, buff strip, six design specs | joystick browser 4/4, overlay 6/6, world-presentation 10/10 |
+| `ad0c3751` | footstep un-shadowing, 11 new cues, soundscape 6→9 states | audio 17/17, cutscene audio 8/8 |
+| `f1accc05` | four-composition joystick proof | measured, see below |
+
+Committed-surface regression, 11 files, run in the isolated worktree with
+`--test-concurrency=2`: **110 tests, 110 pass, 0 fail** [OBSERVED].
+
+**Joystick cutover, browser-measured at four authored compositions** [OBSERVED]:
+
+| composition | viewport | pad | portraitFlag | centre clear | <44px controls | h-overflow |
+|---|---|---|---|---|---|---|
+| phone landscape | 844×390 | 116×116 | false | yes | 0 | 0 |
+| phone portrait | 390×844 | 116×116 | **true** | yes | 0 | 0 |
+| desktop | 1440×900 | 144×144 | false | yes | 0 | 0 |
+| Steam | 1920×1080 | 160×160 | false | yes | 0 | 0 |
+
+Portrait is the case that matters: it was `display: none` before, so the
+five-button pad was the only control there and the joystick could never appear.
+Four distinct pad sizes, not one scaled copy.
+
+**Renderer and UI lanes were both ABORTED mid-verification**, so I audited and
+finished them myself rather than reporting a half-landed lane. `battle-realtime-three.js`
+`node --check` clean at 5239 lines with every new symbol present; I took the two
+`combat-presentation-contract` assertion inversions its owner never reached.
+`app.js` clean at 4171 lines; `AudioImpl` found and reported a `renderRouteRail`
+null-dereference in it that reddened 3 of 8 cutscene-audio tests, proved it was
+not theirs by A/B against the base `defense-audio.js`, and it is fixed.
+
+**The drop/buff lane is NOT closed.** The simulation code landed —
+`run.buffs`, `dropRng`, `rollBuffDrop`, `expireBuffs`, `reconcileGateCap`,
+`BUFF_ITEMS` — but it shipped with **zero tests**, and its own spec §9 names seven
+determinism checks as a hard gate: *if any of those seven fails, the feature does
+not ship*. `grep -rl dropRng tests/` returned nothing. Three `Tester` agents were
+dispatched to author the missing coverage: the seven determinism checks, the new
+renderer VFX behavior, and the new audio cue behavior. Roughly 930 of ~1250 new
+lines had no behavioral coverage, because the passing runs cited above prove the
+new code did not break old behavior — no existing test emits the new event types,
+so those branches were never entered. That is the carried-vs-new evidence
+distinction CLAUDE.md §6 requires, and it is why those passes are not sufficient.
+
 ---
 
 ## 2. Defects the cycle found in existing code [OBSERVED]
@@ -171,13 +218,13 @@ existing test would have detected it.** Registry now closed at four constants:
 
 | Gate | Before | Now | Why |
 |---|---|---|---|
-| G1 세계관 | PASS | **영향 없음** | 고유명·순서 유지 |
-| G2 밸런스 | 재측정 필요 | **재측정 필요** | pacing spec is `[TARGET]`; the harness cannot yet measure the window (defect 7) |
-| G3 편성 | 재정의 | **영향 없음** | cycle 9 owns it |
-| G4 몰입/접근성 | 재측정 필요 | **재측정 필요** | HUD/joystick implementation in flight; no human-play adjudication |
-| G6 운영/성능 | 재측정 필요 | **부분 증거** | terrain load 30–40 ms, 6 slabs + apron per stage, draw-call delta unmeasured |
-| G7 코어 루프 | 재정의 | **재측정 필요** | no 5–15 min run measured |
-| G8 최초 노출 | 재측정 필요 | **재측정 필요** | joystick learning curve unmeasured |
+| G1 세계관 | PASS | **영향 없음** | 고유명·순서 유지. Story quotes re-grounded to `stage-story-catalog.js` rather than a design doc. |
+| G2 밸런스 | 재측정 필요 | **재측정 필요** | pacing spec is `[TARGET]` and unimplemented; the harness itself cannot judge the window (defect 7). Drop rate has one live datapoint — 8 deaths → 1 drop against `BASIC = 600bp` — which is consistent, not a balance measurement. |
+| G3 편성 | 재정의 | **영향 없음** | cycle 9 owns it; explicitly fenced out by ruling R27. |
+| G4 몰입/접근성 | 재측정 필요 | **부분 증거** | Joystick is now primary at all four compositions, browser-measured: pad 116/116/144/160, centre clear, zero controls under 44×44, zero horizontal overflow, portrait included. **No human-play adjudication**, so the gate does not move. |
+| G6 운영/성능 | 재측정 필요 | **부분 증거** | Terrain load 30–40 ms; 3/4/5 slabs plus one apron per stage; `fitFootprint` 1.000000; floor GLBs 1.75–2.09 MB with lossless 512 PNG albedo. Draw-call and frame-time delta **unmeasured** — `tests/defense-performance-browser.cjs` exists and was not run. |
+| G7 코어 루프 | 재정의 | **재측정 필요** | No 5–15 min run measured. The drop→collect→buff path is proven live at tick 3651, but a full stage traversal is not. |
+| G8 최초 노출 | 재측정 필요 | **재측정 필요** | Joystick learning curve unmeasured; needs a human. |
 
 ---
 

@@ -159,6 +159,77 @@ schemaVersion 3, mode `hybrid-sample-procedural`.
 
 ---
 
+### The failure mode this spec kept hitting, stated narrowly enough to act on
+
+Four load-bearing claims in this cycle's audio work were wrong. Listing them as "unverified
+claims" is not useful, because **all four were backed by real evidence**. `AudioImpl`'s diagnosis
+is the sharper one and is recorded here in their terms: in every case the evidence was true of
+something **adjacent** to what was asserted.
+
+| Claim as written | What the evidence actually supported | Gap |
+|---|---|---|
+| §0's citation table was current | It was current **for the authoring tree** | wrong tree |
+| The `BUFF_EXPIRED` gate stops a stage-transition burst | `STAGE_TRANSITION` **is in the enum** | in the enum ≠ reachable |
+| Stat scalars are ≥ 12 % apart | **Most adjacent pairs** are | 4 of 6 ≠ all 6 |
+| V-8 resolves 9 distinct profiles | 9 distinct **via an injected stub** | distinct-via-stub ≠ reachable-without-injection |
+
+Each was one step wider than its evidence, which is precisely why each read as sufficient and
+survived review. So the cheap check is not *"did I verify this"* — the answer was yes every time.
+It is:
+
+> **What is the narrowest statement my evidence actually supports, and is that the statement I
+> wrote?**
+
+Two detection mechanisms have worked this cycle, and they cover different cases.
+
+**1. Re-derivation from primary source by someone other than the author** — five for five across
+three lanes. Never re-reading: reading a coherent claim only confirms its coherence, and every one
+of these survived multiple readings including by the person who wrote it. `git show <sha>:<path>`,
+an executed check against the real module, or an independent walk of the authored data is what
+broke them.
+
+**2. Executed adversarial perturbation — mutate the implementation and confirm the check fails.**
+Contributed by `RendererVfxTests`, and it covers the case mechanism 1 cannot: **where the author is
+the only reader.** It asks *"would this have failed?"* rather than *"does this read as correct?"*,
+and unlike review it needs no second party. Their worked example is the adjacency shape exactly:
+they asserted "echo and item pickups receive no drop beacon" against 12 buff drops with a cap of
+8 — a true statement and a worthless test, because the cap rejects the 9th pickup whatever its
+kind, so it passed against an implementation with the `kind === "buff"` filter **deleted**. Their
+evidence supported "a saturated population admits nothing further", one step narrower than what
+they wrote.
+
+**Applied to this spec's own matrix, it found a hole [OBSERVED — computed].** V-6 asserts a
+footstep is rejected at the voice cap, with the pool filled by `stage-start` (72). That passes for
+**every** sub-72 priority — 0, 5, 22, 28, 40, 71 all reject — so it cannot distinguish 5 from 40,
+and the mutation `PRESENTATION_CUE_PRIORITY["movement-step"] 5 → 40` **survives it** while breaking
+the never-evicts property V-6 exists to defend. The discriminating form fills the pool with
+`camera-clamp` (5) instead: at 5 the footstep is still rejected, at 22 and above it evicts a clamp.
+Added as **V-6b**.
+
+`DropBuffGateTests` then isolated a **sub-shape** worth naming separately, because it is invisible
+to the null-implementation test: **an identity assertion is toothless when the two branches it
+compares are arithmetically identical in the tested case.** Their instance — six of seven accessors
+carry a `bp === 0` guard whose branches agree at `bp = 0` for integer inputs, so those six rows pass
+with the guard **deleted**; only `effectiveCooldownScaleBp`, which has no guard, carries a real
+arithmetic obligation.
+
+**This spec has the same shape at V-7 [OBSERVED — computed].** V-7 asserts `camera-clamp` still
+resolves priority 5 after §2.3's refactor. Old form `?? (cueId === "camera-clamp" ? 5 : 40)` and new
+form `?? PRESENTATION_CUE_PRIORITY[cueId] ?? …` **both return 5** for that cue, so **deleting
+`PRESENTATION_CUE_PRIORITY` entirely leaves V-7 green.** Across five sampled cases only two
+discriminate: `movement-step`+`MOVE` (old **0** → new **5**) and `buff-warning` (old **40** → new
+**26**). V-7 is not wrong — it is a genuine *regression guard*, and its real job is "the refactor did
+not break the shipped clamp tick", which the observers-contract test already depends on. It simply
+must not be read as evidence the refactor happened. Relabelled accordingly; the refactor's teeth are
+V-2 and V-6b.
+
+The same pass revealed a structural property worth stating: **five of eight sampled rows pass
+against a null implementation** — V-3, V-4, V-6, V-25, V-31 all assert *silence*, which is what an
+unimplemented spec also produces. They are necessary conditions, not sufficient ones, and each is
+only meaningful paired with a positive row that fails under the null: V-3/V-4/V-31 pair with V-2,
+V-25 with V-5. V-6 was the only one with **no pair**, which is why it needed V-6b rather than a
+footnote.
+
 ## 1. Observed inventory
 
 ### 1.1 The claim in the brief, verified
@@ -372,6 +443,12 @@ node --test tests/audio-feedback-runtime.test.mjs …      ← no cd prefix: FOR
 → tests 36 | pass 36 | fail 0 | duration_ms 11752.6      ← VOID, cite none of it
 ```
 
+**Update:** `AudioImpl` has since run both audio gates `cd`-prefixed after implementing this spec
+— `audio-feedback-runtime` **17/17**, `battle-session-cutscene-audio` **8/8**, no count moved
+[OBSERVED by `AudioImpl`, reported; not independently re-run here]. That is the valid measurement
+this void run was not. It covers the **existing** contracts only; V-1…V-31 remain unwritten and
+unmeasured (R-14).
+
 **Every per-assertion value in the table below was read from the test file's source**, through an
 absolute dungeon path (`tests/audio-feedback-runtime.test.mjs` tag `#22B0`,
 `tests/defense-observers-contract.test.mjs` tag `#C359`) — not inferred from any run. That is why
@@ -505,6 +582,15 @@ Twelve slabs, nine material ids — three materials are reused, so the timbre ta
 The `echo-throne` 02/04 mirror reuse is **load-bearing for audio**: the two galleries are
 deliberate mirrors, so an identical `fracture-glass` timbre is the correct reading — a player
 crossing either gallery must hear the same floor, because they are the same floor reflected.
+
+**This table is now measured, not transcribed [OBSERVED — executed against the landed
+`STAGE_SLABS`].** Walking all 12 authored rect centres through `slabMaterialAt` with the default
+resolver: **12/12 resolve to their declared material, 0 failures, 9 distinct materials**, and the
+resolved set equals the nine above exactly. All three reuses hold, and the 02/04 mirror returns
+the same `fracture-glass` from both galleries. `AudioImpl` measured this first and re-measured
+after noticing their initial evidence — 9 profiles via an *injected stub*, plus only 2 materials
+from the real table — was weaker than the claim it supported. That correction is the reason the
+row above is worth trusting.
 
 **Variant key extension [TARGET].** `variantKey()` (`defense-audio.js:641-644`) gains one
 branch, additive and scoped to a single cue id:
@@ -874,11 +960,34 @@ Shipped `reason` sites at `033877ad`, with their vocabularies [OBSERVED, blob-gr
 | `REWARD_SELECTION_DUPLICATE_IGNORED` | `:2018` | `"REWARD_ALREADY_OWNED"` | SCREAMING_SNAKE |
 | `REWARD_SELECTED` | `:2044` | `"M4_CARD_INVENTORY_EXHAUSTED"` / `"M4_CARD_DECISION_INVALID"` | SCREAMING_SNAKE |
 | *(m4 fallback)* | `:2082` | `run.m4.fallbackReason` | **dynamic** |
-| `EXTRACTION_REJECTED` | `:2195`, `:2204` | `rejectionReason` (may be `null`) | **dynamic** |
+| `EXTRACTION_REJECTED` | `:2195` | `rejectionReason` — `ELITE_ALREADY_EXTRACTED` / `NO_ECHO_CANDIDATE` / `EXTRACTION_HOLD_INCOMPLETE` / `WINDOW_EXPIRED` | **dynamic** |
+| **`INPUT_ACCEPTED` / `INPUT_REJECTED`** | `:2204` | `accepted ? null : rejectionReason` — **a `null` reason on the accepted branch**, and a rejection vocabulary spanning input, stance, and extraction failures | **dynamic + nullable** |
 
-**Two of those events already carry audio policies** — `PROJECTILE_EXPIRED` → `attack-miss` 28,
-`EXTRACTION_REJECTED` → `input-rejected` 62, and `REWARD_SELECTED` → `terminal` 70 — so unlike
-the other two collisions these *are* reachable in `play()`. They are safe today only because this
+**FIVE of those events already carry audio policies and are reachable in `play()`** — an earlier
+revision of this sentence said "two" and then listed three, which was both undercounted and
+internally inconsistent:
+
+| Reachable event | Line | Cue | Priority |
+|---|---|---|---|
+| `PROJECTILE_EXPIRED` | `:1740` | `attack-miss` | 28 |
+| `INPUT_ACCEPTED` | `:2204` | `input-accepted` | 34 |
+| `INPUT_REJECTED` | `:2204` | `input-rejected` | 48 |
+| `EXTRACTION_REJECTED` | `:2195` | `input-rejected` | 62 |
+| `REWARD_SELECTED` | `:2044` | `terminal` | 70 |
+
+Not reachable (no policy): `REWARD_SELECTION_DUPLICATE_IGNORED`, and the m4 fallback at `:2082`.
+**"Unreachable" here means no policy, not safe-by-design** — adding a policy to either would make
+its `reason` live without any change to a consumer.
+
+**How the undercount happened, because it is the §0 lesson eating its own tail.** My enumeration
+regex was `emit\(run,\s*"([A-Z_]+)"` — literal event types only. `:2204` is
+`emit(run, accepted ? "INPUT_ACCEPTED" : "INPUT_REJECTED", …)`, a **ternary event type**, which
+the pattern cannot match; the backward walk therefore skipped it and attributed `:2204` to the
+previous literal emit it found, `EXTRACTION_REJECTED`. The evidence was real and the tool was
+wrong in a way that produced a plausible answer. `AudioCueTests` caught it by executing against
+the real module instead of grepping — re-derivation, not re-reading, for the fifth time this
+cycle. Their count of four then missed `REWARD_SELECTED`; re-running with a ternary-aware pattern
+gives **five**, which is the number above. They are safe today only because this
 spec's gates are written as `event.type === "BUFF_EXPIRED" && event.reason === "TIMEOUT"`, never as
 a bare `reason` lookup. **A `reason`-keyed table without a type gate would fail silently**, because
 the value sets happen not to overlap — no throw, no wrong cue, just a gate that never fires or one
@@ -978,12 +1087,34 @@ via variant key `${cueId}:${type}:${stat}` — one table, no new cue ids:
 | `gateMaxIntegrity` | ×0.75 | 225 → 338 |
 | `pickupRange` | ×1.20 | 360 → 540 |
 | `cooldownScaleBp` | ×1.35 | 405 → 608 |
-| `moveSpeedBp` | ×1.50 | 450 → 675 |
-| `critChanceBp` | ×1.68 | 504 → 756 |
+| `moveSpeedBp` | ×1.53 | 459 → 689 |
+| `critChanceBp` | ×1.72 | 516 → 774 |
 | `incomingDamageBp` | ×0.85 | 255 → 383 |
 
-Ratios are ≥ 12 % apart, above a just-noticeable pitch difference for short tones [INFERENCE —
-not measured on this hardware; §V-14 is the measurement].
+**Two scalars were retuned after `AudioImpl` ran §V-14 against the table and it FAILED.** They
+generated the 14 variants from this table rather than hand-copying, which is what made the defect
+visible. Verified independently before accepting [OBSERVED — computed]:
+
+| Adjacent pair (ascending) | Was | Now |
+|---|---|---|
+| `gateMaxIntegrity` → `incomingDamageBp` | +13.33 % | +13.33 % |
+| `incomingDamageBp` → `basicDamage` | +17.65 % | +17.65 % |
+| `basicDamage` → `pickupRange` | +20.00 % | +20.00 % |
+| `pickupRange` → `cooldownScaleBp` | +12.50 % | +12.50 % |
+| `cooldownScaleBp` → `moveSpeedBp` | **+11.11 % — VIOLATION** | **+13.33 %** |
+| `moveSpeedBp` → `critChanceBp` | **+12.00 %, but `1.68/1.50 === 1.1199999999999999` in IEEE754 — fails a literal `>= 1.12`** | **+12.42 %** |
+
+Minimum adjacent gap moves **11.11 % → 12.42 %**, and the ordering, the semantic ladder
+(defensive/heavy low → kinetic/sharp high), and `basicDamage` as the exact ×1.00 reference are all
+preserved — only the two offending values move. **The rule was not lowered to fit the numbers**;
+that is the failure mode this cycle has ruled against repeatedly. The numbers were moved to satisfy
+the rule.
+
+Ratios are ≥ 12 % apart — minimum achieved **12.42 %** — above a just-noticeable pitch difference
+for short tones [INFERENCE — the 12 % floor is an unmeasured JND assumption, not a measurement on
+this hardware. §V-14 has two halves and only one is objective: pairwise-distinctness is a fact
+about the profiles; the 12 % threshold is my design floor and a browser listen is what would
+settle it].
 
 ### 4.4 Pre-expiry warning — no new event
 
@@ -1621,6 +1752,28 @@ Director's hard stop. Every row below names a command or file for the **Verifica
 the Director owns** — a single uncontended baseline run. No row is a claim that it has passed.
 Rows V-28/V-29 additionally require the browser proof, which this lane did not run and must not.
 
+**⚠ NONE of V-1…V-31 EXISTS AS A TEST. Do not mistake an in-kernel check for a gate.** Several
+claims in this spec were verified by running code in a scratch kernel against the real modules —
+the field-collision immunity in §4.1.1, the link-time `SyntaxError`, the `??` short-circuit in
+§2.3's additive mitigation, the §4.3 scalar arithmetic. `AudioImpl` did the same on their side
+(~60 checks) and flagged the distinction first, correctly: **a kernel check is not a committed
+test.** It cannot be re-run by anyone else, it gates nothing, it does not fail CI, and it vanishes
+with the session. Its only legitimate use is what it was used for here — to stop a *claim in prose*
+from being unfounded.
+
+So the honest reading of this matrix is: the **reasoning** behind these rows has been exercised;
+the **rows** have not. Turning V-1…V-31 into a gate still requires writing them into
+`tests/audio-feedback-runtime.test.mjs`, which no lane's assignment authorised this cycle.
+
+**Per-check readiness, so the next author does not budget wrongly** [status from `AudioImpl`]:
+
+| Check | Status | Why |
+|---|---|---|
+| V-8 (9 material timbres) | **now trivial** — was blocked | The default resolver landed, so the 9 profiles resolve without injection. Do not budget for the blocker in the original R-10; it is gone. **Confirmed twice, independently:** `AudioImpl` walked all 12 authored slab-rect centres with no injection and reached 9/9 materials; I then re-walked them from `STAGE_SLABS` myself — **12/12 resolve to their declared material, 9 distinct, and the set matches §2.2.1 exactly**, including all three deliberate reuses (`flagstone-oath` ×2, `polished-echo` ×2, `fracture-glass` ×2). The `echo-throne` 02/04 mirror resolves the **same** `fracture-glass` timbre from both galleries — the property §2.2.1 calls load-bearing, now measured rather than asserted. V-8 is writable as a plain loop over `STAGE_SLABS`: no fixture, no injection, no stub. |
+| V-26 (pre-expiry warning) | **still blocked** | Needs the `app.js` hook owned by `UiJoystickImpl` (§7.2). Defer to the Verification phase. |
+| V-28 / V-29 (browser) | **Director-owned** | Real Chromium, per stage, both viewports. |
+| all others | writable today | Against `defense-audio.js` as landed. |
+
 | # | Assertion | Where measured |
 |---|---|---|
 | V-1 | **[Director-owned baseline]** `cd /Users/jangyoung/orca/Abyssal-Surge-dungeon && node --test --test-concurrency=2 tests/audio-feedback-runtime.test.mjs tests/battle-session-cutscene-audio.test.mjs tests/defense-observers-contract.test.mjs` reports `fail 0` on an **uncontended** machine before any edit, and `fail 0` with `tests ≥ 36` after. **The `cd` prefix is mandatory (ruling v8 R35): the default bash cwd is the forbidden tree, so an unprefixed run tests the concurrent session's cycle-9 code.** The 36/36 in §1.6 was unprefixed and is VOID, not a baseline | command output, Verification phase only |
@@ -1629,14 +1782,15 @@ Rows V-28/V-29 additionally require the browser proof, which this lane did not r
 | V-4 | `audioCueForEvent({type:"MOVE", tick:24, entityId:"enemy-3", policyId:"rush"})` (no `direction`) → silent. Enemy movement never sounds | `tests/audio-feedback-runtime.test.mjs` |
 | V-5 | Cadence: feeding `MOVE` events for ticks 0…119 with a held direction yields exactly **10** footstep resolutions (`120 / 12`), and 0 for a tick range containing no multiple of 12 | `tests/audio-feedback-runtime.test.mjs` |
 | V-6 | Footstep never evicts: fill to `maxVoices` with `stage-start` (72), then `play("movement-step", MOVE@tick24)` → `false`, and `debugMetrics().voices === 12` with oscillator `stopCount` unchanged | `tests/audio-feedback-runtime.test.mjs` (extends T4) |
-| V-7 | `play("camera-clamp")` still resolves priority 5 through `PRESENTATION_CUE_PRIORITY`, first call `true`, immediate second `false`, and `consume([{type:"CAMERA_CLAMP"}])` plays nothing | `tests/defense-observers-contract.test.mjs:439-466` (must stay green unmodified) |
+| V-6b | **Footstep priority is exactly 5, not merely sub-72.** Fill to `maxVoices` with **`camera-clamp`** (priority 5), then `play("movement-step", MOVE@tick24)` → `false` with oscillator `stopCount` unchanged. V-6 alone cannot distinguish 5 from 40; this row is what kills the mutation `PRESENTATION_CUE_PRIORITY["movement-step"] 5 → 40`, which V-6 survives while breaking the never-evicts guarantee | `tests/audio-feedback-runtime.test.mjs` |
+| V-7 | **Regression guard, NOT a refactor test — do not read it as proving `PRESENTATION_CUE_PRIORITY` exists.** `play("camera-clamp")` still resolves priority 5, first call `true`, immediate second `false`, and `consume([{type:"CAMERA_CLAMP"}])` plays nothing. Old and new priority forms both return 5 for this cue, so deleting the table entirely leaves this row green (computed). What it legitimately defends is that §2.3 did not break the shipped clamp tick. The refactor's discriminating cases are V-2 (`movement-step` old 0 → new 5) and V-6b | `tests/defense-observers-contract.test.mjs:439-466` (must stay green unmodified) |
 | V-8 | All 9 slab materials resolve distinct `movement-step` profiles: `lookup("movement-step", ...)` under each material returns 9 pairwise-unequal profiles, and a `null` material returns the base profile | `tests/audio-feedback-runtime.test.mjs` |
 | V-9 | Surface resolver is read-only: `getRunDigest(run)` is byte-identical with the resolver injected and absent, over ≥ 600 ticks on a fixed seed | `tests/defense-observers-contract.test.mjs` (pattern: *"rendering, telemetry, and audio observation leave the simulation digest unchanged"*) |
 | V-10 | Dodge distinctness: `audioCueForEvent({type:"PROJECTILE_IMPACT", hit:false, ...})` → `dodge-slip` 50; with `hit:true` → `impact-hit` 45; with `guardedBy:"escort-1"` → `block-contact`; `hit:false` wins over `guardedBy` | `tests/audio-feedback-runtime.test.mjs` |
 | V-11 | Windup vs release: `AUDIO_EVENT_POLICY.BASIC_ATTACK.cueId === "attack-windup"` and `AUDIO_EVENT_POLICY.WEAPON_FIRED.cueId === "weapon-fire"`, and `lookup()` returns unequal profiles for the two | `tests/audio-feedback-runtime.test.mjs` |
 | V-12 | Zero orphans except `camera-clamp`: every key of `CUE_PROFILES` is either reachable from a non-silent policy, or is exactly `"camera-clamp"` / `"buff-warning"` (the two documented presentation cues) | `tests/audio-feedback-runtime.test.mjs` — a registry-completeness test |
 | V-13 | Four rarity tiers resolve 4 pairwise-unequal `drop-appear` profiles with layer counts 1/2/3/4 | `tests/audio-feedback-runtime.test.mjs` |
-| V-14 | Seven `stat` values resolve 7 pairwise-unequal `buff-apply` profiles, and every adjacent pair of base frequencies differs by ≥ 12 % | `tests/audio-feedback-runtime.test.mjs` |
+| V-14 | Seven `stat` values resolve 7 pairwise-unequal `buff-apply` profiles (**objective**), and every adjacent pair of scalars, sorted ascending, differs by ≥ 12 % (**design floor, [INFERENCE]**). **Assert with an epsilon — never a literal `>= 1.12`:** `assert.ok(ratio >= 1.12 - 1e-9)`. The pre-retune table failed this twice, once genuinely (`1.35 → 1.50` is 11.11 %) and once purely on float representation (`1.68/1.50 === 1.1199999999999999`). Post-retune minimum is 12.42 %, clearing both the floor and any representation error | `tests/audio-feedback-runtime.test.mjs` |
 | V-15 | `BUFF_EXPIRED` reason gate: `reason:"TIMEOUT"` → `buff-expire` 40; each of `EVICTED`, `STAGE_TRANSITION`, `DEATH` → `method:"silent"` | `tests/audio-feedback-runtime.test.mjs` |
 | V-16 | `ENEMY_SPAWNED` grade gate: `grade:"BASIC"` → silent; `grade:"SHADOW"` → `shadow-arrival` 68; the resolver reads only `grade` (a payload with `elite:true, midboss:true` but `grade:"BASIC"` still resolves silent) | `tests/audio-feedback-runtime.test.mjs` |
 | V-17 | `GIMMICK_TRIGGERED` class branch: `deformation`→`terrain-deform` 76, `hazard`→`warning-pulse` 78, `gate`→`occupation-captured` 64, `mirror`→`gimmick-mirror` 66; unknown class → `terrain-deform` fallback, never `throw` | `tests/audio-feedback-runtime.test.mjs` |
@@ -1670,17 +1824,17 @@ Rows V-28/V-29 additionally require the browser proof, which this lane did not r
 | **R-7** | **CLOSED.** `DungeonLevelDesign` published `telegraphTicks` = 180 deformation / 120 gate / 90 hazard / 60 mirror, and confirmed ARMED at `T` → TRIGGERED at exactly `T + telegraphTicks`. Every class clears `gimmick-arm`'s 18-tick envelope by ≥ 42 ticks, and two gimmicks never trigger in the same tick, so no deformation-sting mix is possible. No residual risk. | resolved — §4.6 |
 | **R-8** | Cues bound to `DROP_SPAWNED`, `DROP_EXPIRED`, `DROP_DENIED`, and all three `GIMMICK_*` types **will sound before their VFX renders**. `VfxCueDesign`'s prerequisite PR-1 (ruling v2 R9) fixes `effectAnchor()` and `worldPointInto()`; until it lands, audio fires and the screen shows nothing. Audio is not blocked by PR-1, but §6.5's visual-equivalent column is. | ruling v2 R9, `battle-realtime-three.js` `effectAnchor()` / `spawnVfx()` |
 | **R-9** | `snapshot.buffs` **does not exist yet** — verified absent from `getRunSnapshot()` (`defense-run-simulation.js:3489`). `DropBuffSystem`'s spec is written and specifies it as **conditionally present** (absent, not empty, when no buff is active) plus a sibling `snapshot.buffStats`. Until it lands V-26 cannot run, and any derivation that omits the `?? []` guard (§4.4) will throw on a no-buff run rather than degrade. | `getRunSnapshot()`; `_workspace/current/design/item-drop-timed-buff-spec.md` |
-| **R-10** | **CLOSED.** `slabMaterialAt` is landed in `defense-catalog.js` — `STAGE_SLABS` (`:288`), `slabAt(stageId, x, y)` (`:320`), `slabMaterialAt(stageId, x, y)` (`:332`) returning `{ slabId, materialId }` or `null`, which is byte-for-byte the contract §2.2 specified. The 12 slab rects carry `DungeonLevelDesign`'s corrected geometry. V-8's 9-profile check can now run. Superseded text follows for provenance: ~~`slabMaterialAt()` does not exist: a grep for `slab` / `material` in `stage-world-catalog.js` returns **0 hits**. Its authored rects (`profile.gameplay.terrainTiles[].rect`) are a `DungeonLevelDesign` deliverable, and `DropBuffSystem` reports `slabId` is specified as `null` until that list lands. Footsteps therefore ship on the base `movement-step` timbre — a graceful degradation via the §2.2 `null` fallback, not a failure — but V-8's 9-profile check cannot run.~~ | resolved — `defense-catalog.js:288-336` |
+| **R-10** | **CLOSED IN CODE, and better than §7.2 specified.** `AudioImpl` found that `defense-audio.js` *already imports from* `defense-catalog.js`, so they import `slabMaterialAt` directly as the **default** resolver rather than injecting it from `app.js`. Per-surface footsteps are therefore live with **zero `app.js` dependency**, and `setSurfaceResolver()` survives as an override. All 9 material timbres verified distinct, and a 600-tick traversal resolved `forge-plate` and `basalt-ember` across a seam. This also materially reduces R-16, which assumed both audio seams were gated on another lane's file. Original finding: `slabMaterialAt` is landed in `defense-catalog.js` — `STAGE_SLABS` (`:288`), `slabAt(stageId, x, y)` (`:320`), `slabMaterialAt(stageId, x, y)` (`:332`) returning `{ slabId, materialId }` or `null`, which is byte-for-byte the contract §2.2 specified. The 12 slab rects carry `DungeonLevelDesign`'s corrected geometry. V-8's 9-profile check can now run. Superseded text follows for provenance: ~~`slabMaterialAt()` does not exist: a grep for `slab` / `material` in `stage-world-catalog.js` returns **0 hits**. Its authored rects (`profile.gameplay.terrainTiles[].rect`) are a `DungeonLevelDesign` deliverable, and `DropBuffSystem` reports `slabId` is specified as `null` until that list lands. Footsteps therefore ship on the base `movement-step` timbre — a graceful degradation via the §2.2 `null` fallback, not a failure — but V-8's 9-profile check cannot run.~~ | resolved — `defense-catalog.js:288-336` |
 | **R-11** | Extending `SNAPSHOT_FEEDBACK_TYPES` (`app.js:82`) for the §6.5 announcements changes what `renderEventFeedback()` writes to `#battle-event-feedback`. That element is a shared single slot with an 1800 ms auto-clear (end of `renderEventFeedback()`, re-grep); adding `ENEMY_SPAWNED` and the gimmick types risks announcement thrash that would drown `CRITICAL_HIT`. Surface is owned by `UiOverhaulConcept`, so the throttle decision is theirs, not this lane's. | `app.js` `renderEventFeedback()`; `UiOverhaulConcept` spec |
 | **R-12** | **Provenance, not drift — the four traps of this cycle.** Relative paths in `grep`/`read`/`edit` resolve against the authoring tree, not the dungeon worktree (ruling v4 R20). An earlier draft of §0 asserted the inverse of the truth: it labelled the assignment's and the Director's numbers stale and its own polluted numbers fresh. All citations are now re-measured through absolute dungeon paths (§0), but `app.js` moved 3807 → 3832 **during this session**, so line numbers remain perishable by nature. Anchor on the symbol; the `edit` stale-hash check is the only guard against writing to the wrong tree, and it fails silently when a file is byte-identical across both. | ruling v4 R20/R21; `CLAUDE.md` §5 |
-| **R-13** | **Reduced, not closed.** Priority 5 means footsteps vanish whenever 12 voices are live — i.e. through most combat. That is the intended mix (traversal yields to everything), and `EncounterPacing`'s authored `ingress` block now gives footsteps a measured **20–24 s** window per stage with zero enemies and zero admission, plus **≥ 159 ticks** of clear air at each of 8 block boundaries — so the per-surface timbre is genuinely audible somewhere, which was the open question. **Caveat an implementer must not misread:** `ingressTicks` does not exist at `033877ad` (verified,
+| **R-13** | **Reduced, not closed.** *(The never-evicts half is now defensible: V-6 could not distinguish priority 5 from 40, so V-6b was added to kill that mutation — see §0.)* Priority 5 means footsteps vanish whenever 12 voices are live — i.e. through most combat. That is the intended mix (traversal yields to everything), and `EncounterPacing`'s authored `ingress` block now gives footsteps a measured **20–24 s** window per stage with zero enemies and zero admission, plus **≥ 159 ticks** of clear air at each of 8 block boundaries — so the per-surface timbre is genuinely audible somewhere, which was the open question. **Caveat an implementer must not misread:** `ingressTicks` does not exist at `033877ad` (verified,
 zero grep matches), so **the quiet window is 0 ticks until `EncounterPacing`'s
 `buildDoctrineWavePlan` edits land**. The `descent` state is correct as designed but unreachable
 before then — anyone testing audio ahead of the pacing change will hear combat from tick 0 and must
 not read the missing quiet as an audio defect. What remains a **design bet** is the *combat* case: if V-28 shows the dungeon feels silent while fighting *and* moving, the fix is not a priority bump (that would let footsteps evict `camera-clamp` and erode the never-evicts guarantee) but a dedicated low-cost voice reservation, which does not exist in the current cap model. | `makeRoomForVoice()` (`defense-audio.js:995-1009`) |
-| **R-14** | **No test evidence of any kind exists for this spec, and the one run is VOID.** It is void twice over: (a) **wrong tree** — no `cd` prefix, so it executed in the default cwd `/Users/jangyoung/orca/Abyssal-Surge`, the forbidden tree, against a 1496-line `defense-audio.js` rather than our 1313 (ruling v8 R35); (b) **contended machine** — load average 101.75, four concurrent full-suite runners, 51 workers on 12 cores. An earlier revision of §1.6 salvaged the 36/36 as a correctness signal; that was wrong, because (a) means it never measured our code at all. Every per-assertion value in §1.6 is read from test **source** via absolute dungeon paths and is unaffected. Nothing in the Verification matrix has been observed to pass. | ruling v8 R35; production brief §4 evidence rule; §V-1 |
+| **R-14** | **Two distinct evidence states — do not collapse them.** *(a) Existing-suite regression: GREEN.* `AudioImpl` reports `cd`-prefixed runs after implementing §2–§5 and the §4.3 retune — `audio-feedback-runtime` **17/17**, `battle-session-cutscene-audio` **8/8**, no count moved from before their change. That is real evidence that this spec's design does not break the existing contracts, and it retires the concern behind T1–T11. **[OBSERVED by `AudioImpl`, reported to this lane; I did not independently re-run — the Director's hard stop stands and I own no source file.]** *(b) This spec's own matrix: UNMEASURED.* V-1…V-31 are **new** assertions that do not exist as tests yet, so none has been observed to pass; a green existing suite says nothing about them. *(c) My own run is still VOID*, twice over: unprefixed, so it executed in the default cwd `/Users/jangyoung/orca/Abyssal-Surge` against a 1496-line `defense-audio.js` rather than our 1313; and taken at load average 101.75. An earlier revision salvaged its 36/36 as a correctness signal — wrong, because the wrong-tree defect means it never measured our code. Every per-assertion value in §1.6 was read from test **source** via absolute paths, which is why that table is unaffected by the void. | ruling v8 R35; production brief §4 evidence rule; §V-1 | It is void twice over: (a) **wrong tree** — no `cd` prefix, so it executed in the default cwd `/Users/jangyoung/orca/Abyssal-Surge`, the forbidden tree, against a 1496-line `defense-audio.js` rather than our 1313 (ruling v8 R35); (b) **contended machine** — load average 101.75, four concurrent full-suite runners, 51 workers on 12 cores. An earlier revision of §1.6 salvaged the 36/36 as a correctness signal; that was wrong, because (a) means it never measured our code at all. Every per-assertion value in §1.6 is read from test **source** via absolute dungeon paths and is unaffected. Nothing in the Verification matrix has been observed to pass. | ruling v8 R35; production brief §4 evidence rule; §V-1 |
 | **R-15** | **CLOSED.** `EncounterPacing` published the authored windows: minimum `recoveryTicks` across all 12 block boundaries is **180 t (3.00 s)**, against `SOUNDSCAPE_RAMP_SECONDS = 0.35` s = **21 t** — a **8.57×** margin, leaving ≥ 159 ticks of clear air after the ramp completes. The floor is pinned to the smallest authored `retry.recoveryTicks` already shipped (`cinder-relay-crossing`, `defense-catalog.js:482`), so it cannot silently drop below 180 without contradicting catalog data. Drive the transition off the `recoveryTicks` **field**, never off a constant. | resolved — §5.4 |
-| **R-20** | **`reason` carries four incompatible vocabularies across six shipped sites, and two of its owners already have audio policies.** `PROJECTILE_EXPIRED` (`:1740`, lowercase `"bounds"`/`"range"`) → `attack-miss` 28 and `EXTRACTION_REJECTED` (`:2195`, `:2204`, dynamic, may be `null`) → `input-rejected` 62 are both **reachable in `play()`**, unlike the `telegraphTicks`/`recoveryTicks` collisions which are unreachable. §4.2 and §4.3 are safe only because their gates are written `event.type === "…" && event.reason === "…"`. A future `reason`-keyed table without a type gate **fails silently** — the value sets do not overlap, so there is no throw and no wrong cue, just a gate that never fires. Silence is the worst failure mode for an audio gate because it is invisible in review and in test. Requirement: no cross-family field reader in the audio module; every read sits inside a `case` arm or behind an explicit `event.type` check. | `AUDIO_EVENT_POLICY` `PROJECTILE_EXPIRED` / `EXTRACTION_REJECTED`; §4.2, §4.3 |
+| **R-20** | **`reason` carries four incompatible vocabularies across six shipped sites, and FIVE of its owners already have audio policies** — `PROJECTILE_EXPIRED` 28, `INPUT_ACCEPTED` 34, `INPUT_REJECTED` 48, `EXTRACTION_REJECTED` 62, `REWARD_SELECTED` 70. An earlier revision said two, undercounting because the enumeration regex could not match `:2204`'s **ternary event type** `emit(run, accepted ? "INPUT_ACCEPTED" : "INPUT_REJECTED", …)`. Extra hazard that only appears at that site: `INPUT_ACCEPTED` carries **`reason: null`** on the accepted branch, so a `reason`-keyed table must survive a null key as well as a foreign vocabulary. All five are **reachable in `play()`**, unlike the `telegraphTicks`/`recoveryTicks` collisions which are unreachable. §4.2 and §4.3 are safe only because their gates are written `event.type === "…" && event.reason === "…"`. A future `reason`-keyed table without a type gate **fails silently** — the value sets do not overlap, so there is no throw and no wrong cue, just a gate that never fires. Silence is the worst failure mode for an audio gate because it is invisible in review and in test. Requirement: no cross-family field reader in the audio module; every read sits inside a `case` arm or behind an explicit `event.type` check. | `AUDIO_EVENT_POLICY` `PROJECTILE_EXPIRED` / `EXTRACTION_REJECTED`; §4.2, §4.3 |
 | **R-19** | **Tier contradiction CLOSED; the name collision remains.** `DungeonLevelDesign` has withdrawn their tiers and adopted ruling v6 C2 verbatim — deformation **180**, narrowing gate **120**, progress-ring and mirror **90**, hazard **60** — self-reporting that their published list was wrong for 5 of 13 gimmicks. Audio needed no change under either ordering (below), which is why this was amber not red. Audio is insulated — `gimmick-arm` is a fixed 18-tick envelope marking onset only, and the smallest tier (60 t) clears it by 42 t. `VfxCueDesign` is **not** insulated, which is why ruling v6 C2's `Number.isInteger(event.telegraphTicks) ? event.telegraphTicks : 180` form is mandatory for them: 9 of 13 gimmicks are not 180. **Still open:** `telegraphTicks` is **already a shipped field** (`defense-run-simulation.js:2296`, `ENCOUNTER_PATH_CONTESTED`, meaning `contestTicks`), so any generic read of it must key on `event.type` first. | ruling v6 C2 vs `DungeonLevelDesign`; `ENCOUNTER_PATH_CONTESTED` payload |
 | **R-18** | **`defense-audio.js` diverges and ruling v5 R28's merge list omits it.** Measured: ours **1313** lines, the concurrent session's **1496**. Their delta is not cosmetic — it adds **sample/buffer playback**: `loadSamples(mapUrl)`, `sampleFor(cueId, event)`, `refreshPersistentLoops()`, `startBufferedLoop(kind)`, `playSampleVoice(sample)`, and their file contains `decodeAudioData`, `createBufferSource`, and `fetch`. **Two consequences.** (1) §1.1's "100% procedural, zero file playback" is true of our tree and **false of the merged result**; a reviewer must not carry it forward as an invariant. (2) Collision surface, measured per insertion point: all **nine module-level tables this spec edits are at identical line numbers with byte-identical bodies** (`SYNTHETIC_CUES` 23, `CUE_PROFILES` 76, `CUE_VARIANTS` 183, `AUDIO_EVENT_POLICY` 226, `CUE_REFRACTORY_SECONDS` 295, `SOUNDSCAPE_STATES` 369, `audioSoundscapeForEvent` 378, `audioCueForEvent` 598, `variantKey` 641) — every table row this spec adds is additive into untouched regions and merges clean, satisfying R28. The exceptions are the three class methods: `setSoundscape` (+133 offset, body identical), **`applySoundscape` (+106, body CHANGED** — they branch on `voice.buffered` and swap loop buffers**)**, and **`play()` (+170, body CHANGED** — routed through `sampleFor`/`playSampleVoice`**)**. `play()` is the one real conflict, because §2.3's `PRESENTATION_CUE_PRIORITY` refactor rewrites the same `?? (cueId === "camera-clamp" ? 5 : 40)` ternary they still carry verbatim at their `:1199-1200`. **Mitigation, and the reason this is amber not red:** that refactor is the *only* non-additive edit in the entire spec, and it is optional — `PRESENTATION_CUE_PRIORITY` can be introduced as a new module-level table (additive, clean) with the ternary extended to `?? PRESENTATION_CUE_PRIORITY[cueId] ?? (cueId === "camera-clamp" ? 5 : 40)`, a one-token insertion rather than a rewrite. Specify it that way if the merge lands before implementation. | ruling v5 R28; `defense-audio.js` `play()` / `applySoundscape()` |
 | **R-17** | **A cross-lane seam can be unlandable even when the spec is self-consistent.** An earlier §7.2 form used a *named* import of `slabMaterialAt`, which does not exist in `stage-world-catalog.js` (exports are `STAGE_WORLD_PROFILES`, `STAGE_SHOWCASE_IDS`, `stageWorldFor` only). A named import of a missing export is a **link-time `SyntaxError`** — reproduced: exit 1, body never runs — so `app.js` would never evaluate, `data-defense-ready` would never mount, and **every** browser suite would red on its first `waitFor`. Escalated by `UiJoystickImpl`; fixed to a namespace import. Residual risk: any future seam added to this spec must be reachable via namespace import, because module linking precedes every guard the spec reasons about. | `app.js` module graph; `stage-world-catalog.js:570-577` |

@@ -265,16 +265,26 @@ const CUE_PROFILES = Object.freeze({
 });
 
 // Buff stat differentiation (§4.3). Seven stats with one cue would be undifferentiated; rather
-// than seven cue ids, buff-apply and buff-expire take a base-frequency scalar per stat. Ratios are
-// >= 12% apart. This table is the single source of truth — the 14 variant profiles below are
-// derived from it, so a retune changes one number, not fourteen frozen arrays.
+// than seven cue ids, buff-apply and buff-expire take a base-frequency scalar per stat. This table
+// is the single source of truth — the 14 variant profiles below are derived from it, so a retune
+// changes one number, not fourteen frozen arrays. That derivation is what made the defect below
+// findable: hand-copied constants would have hidden a wrong scalar as a plausible number.
+//
+// moveSpeedBp is 1.53 and critChanceBp 1.72, which look arbitrary and are not. The originally
+// authored 1.50 / 1.68 broke the design rule that adjacent scalars stay >= 12% apart:
+// 1.50/1.35 = +11.11% was a real violation, and 1.68/1.50 is exactly +12% in decimal but
+// 1.1199999999999999 in IEEE754, so even a literal `>= 1.12` check fails it. The remedy moved the
+// NUMBERS to satisfy the rule rather than lowering the rule to fit the numbers, and deliberately
+// kept basicDamage at exactly x1.00 as the reference — a clean equal-ratio ladder across all seven
+// would have displaced it, which is worth more than uniform spacing. Minimum adjacent gap is now
+// +12.42%. Any test on this table must use an epsilon (`>= 1.12 - 1e-9`), never a bare literal.
 const BUFF_STAT_PITCH = Object.freeze({
   basicDamage: 1,
   gateMaxIntegrity: 0.75,
   pickupRange: 1.2,
   cooldownScaleBp: 1.35,
-  moveSpeedBp: 1.5,
-  critChanceBp: 1.68,
+  moveSpeedBp: 1.53,
+  critChanceBp: 1.72,
   incomingDamageBp: 0.85,
 });
 
@@ -577,9 +587,26 @@ const GIMMICK_TRIGGERED_POLICY = Object.freeze({
 // registry. This replaces the inline `cueId === "camera-clamp" ? 5 : 40` hack in play() with a
 // table; camera-clamp keeps its hard-coded 5 exactly, so the observers-contract guarantee that no
 // simulation event maps to it is untouched.
+//
+// The movement-step row is LOAD-BEARING, and not on the path you would expect. A footstep reaches
+// cuePriority() by two routes:
+//
+//   A. policy path — a real step tick. resolveEventPolicy() returns MOVEMENT_FOOTSTEP_POLICY, which
+//      is non-silent, so cuePriority() returns the POLICY's priority and never reads this table.
+//   B. presentation path — an off-cadence MOVE, or a bare play("movement-step") with no event (how
+//      a presentation-side footstep would fire). No non-silent policy resolves, so this table IS
+//      the priority.
+//
+// So the never-evict guarantee — a footstep can never evict any voice, because the weakest voice
+// any other cue can hold is camera-clamp's 5 and eviction requires candidate.priority < priority —
+// depends on BOTH routes agreeing on 5. Deriving the row from the policy is what makes them agree
+// by construction instead of by two literals that happen to match. Measured: de-linking this row to
+// 40, 22, or even 6 leaves path A at 5 while path B evicts a camera-clamp, so the guarantee would
+// hold where it is easy to test and break where it is not. Do NOT inline a literal here on the
+// reasoning that path A ignores the table — path A does, path B does not.
 const PRESENTATION_CUE_PRIORITY = Object.freeze({
   "camera-clamp": 5,
-  "movement-step": 5,
+  "movement-step": MOVEMENT_FOOTSTEP_POLICY.priority,
   "buff-warning": 26,
 });
 

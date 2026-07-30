@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-30T15:30:47.329Z",
+  "generatedAt": "2026-07-30T15:35:33.757Z",
   "canonicalStageIds": [
     "cinder-span",
     "abyss-chancel",
@@ -99,7 +99,7 @@
         "surfaceStageId": "cinder-span",
         "loadedStageId": "cinder-span",
         "renderer": "webgl",
-        "renderedFrames": 687,
+        "renderedFrames": 682,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-cinder-span/runtime/terrain/terrain-cinder-span-floor.glb",
         "terrainSource": "promoted-glb",
@@ -500,7 +500,7 @@
         "surfaceStageId": "abyss-chancel",
         "loadedStageId": "abyss-chancel",
         "renderer": "webgl",
-        "renderedFrames": 683,
+        "renderedFrames": 684,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
         "terrainSource": "promoted-glb",
@@ -893,7 +893,7 @@
         "surfaceStageId": "echo-throne",
         "loadedStageId": "echo-throne",
         "renderer": "webgl",
-        "renderedFrames": 681,
+        "renderedFrames": 670,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
         "terrainSource": "promoted-glb",
@@ -1190,5 +1190,5 @@
     }
   ],
   "pass": true,
-  "finishedAt": "2026-07-30T15:31:26.557Z"
+  "finishedAt": "2026-07-30T15:36:16.721Z"
 }
