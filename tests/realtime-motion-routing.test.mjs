@@ -23,6 +23,10 @@ const CANONICAL_BASE_ACTIONS = [
   "die",
   "show",
 ];
+const OVERLAY_ACTIONS = new Set([
+  "idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence",
+]);
+
 const LANTERN_REAVER_SOURCE_MESH = "assets/mesh/character/lantern-reaver-character/glb/base_basic_pbr.glb";
 
 const gltfRequests = [];
@@ -115,17 +119,29 @@ async function waitForLoaded(record, label) {
 
 function assertBaseClipContract(record, expectedAssetId, label) {
   for (const action of CANONICAL_BASE_ACTIONS) {
-    assert.equal(
-      safeLookup(record.actionSources, action),
-      "base",
-      `${label} must use base animation source for ${action}`,
-    );
-    const clip = safeLookup(record.actions, action)?.getClip?.()?.name;
-    assert.equal(
-      clip,
-      `${expectedAssetId}::${action}::v01`,
-      `${label} must expose namespaced base clip ${expectedAssetId}::${action}::v01`,
-    );
+    if (OVERLAY_ACTIONS.has(action)) {
+      assert.equal(
+        safeLookup(record.actionSources, action),
+        "overlay",
+        `${label} must use overlay animation source for ${action}`,
+      );
+      assert.equal(
+        safeLookup(record.actions, action)?.getClip?.()?.name,
+        `unarmed-core::${action}::v01`,
+        `${label} ${action} must use overlay namespace`,
+      );
+    } else {
+      assert.equal(
+        safeLookup(record.actionSources, action),
+        "base",
+        `${label} must use base animation source for ${action}`,
+      );
+      assert.equal(
+        safeLookup(record.actions, action)?.getClip?.()?.name,
+        `${expectedAssetId}::${action}::v01`,
+        `${label} must expose namespaced base clip ${expectedAssetId}::${action}::v01`,
+      );
+    }
   }
 }
 
@@ -176,7 +192,7 @@ test("failed motion model loads retry exactly once and marker on second failure"
         1,
         "fallback mesh failure should be requested once",
       );
-      assert.equal(gltfRequests.length, 2, "fallback failure should not continue retrying");
+      assert.equal(gltfRequests.length, 3, 'overlay GLB adds one request');
       assert.equal(record.actions?.attack, undefined, "missing actor marker should have no motion actions");
       assert.equal(record.mixer, null);
       assert.equal(isMagentaMarker(record), true, "dual load failure should show visible magenta marker");
@@ -208,7 +224,7 @@ test("failed motion model loads retry exactly once and marker on second failure"
         1,
         "fallback mesh should be requested once",
       );
-      assert.equal(gltfRequests.length, 2, "no retry loop after fallback success");
+      assert.equal(gltfRequests.length, 2, 'overlay GLB is cached after first retry test');
     } finally {
       adapter.dispose();
       resetGltfFailures();
