@@ -154,6 +154,9 @@ These were latent before this cycle and would not have surfaced without the spec
 | 6 | The 300–900 s window is **unreachable by construction**, not merely un-tuned: the objective-pressure deadline forces DEFEAT at 320/325/330 s. This corrects a carried claim of a "~3000–4000 s practical ceiling". | `map-simulation.md:317` vs the deadline arithmetic |
 | 7 | `scripts/measure-stage-playtime.mjs` cannot validate the target window: `PLAYTIME_TARGET_SECONDS {min:180,max:360}` reports false for every compliant run, and `MAX_TICKS` 28800 truncates every throne target as TIMEOUT. | `:26-27` |
 | 8 | A coarse-portrait `display:none` movement pad reached `updateJoystick`, whose zeroed rect made radius 1 and computed octants from the screen origin. **Closed on this branch by cycle 10** — `git diff -- app.js` shows the geometry guard and the `joystickActive()` early return as added lines, not inherited. The concurrent session's own fix lives only in their uncommitted tree and is **not** in `feat/cycle10-stage-dungeon`, so a conflict resolution that drops our lines silently reopens the bug. | `app.js` `joystickActive()`, `onMoveControlDown` |
+| 9 | **A runtime asset must be registered in FIVE lists, and nothing enforces that they move together.** `defense-runtime-assets.mjs`, `tests/pages-artifact-smoke.cjs`, `static.yml` `PAGES_RUNTIME_PATHS`, the `release-closure.test.mjs` literal, and the generated `assets/defense-asset-manifest.json`. I moved four and missed the fifth. It was **CI-blocking**, not cosmetic: `pr-guard.yml:144` and `static.yml:117` both run `defense-asset-manifest.test.mjs` in their gate sets, so a push would have failed the PR guard. `release-closure` compares two of the five with an order-sensitive `assert.deepEqual`, so position matters as well as membership. Found by the full-suite run, not by reasoning. | `tests/defense-asset-manifest.test.mjs:50` |
+| 10 | `dev.sh --verify` execs `tests/playtest-browser-3stage.cjs`, which exists in no tree and not at HEAD. That flag has been dead since it was written. | `dev.sh:50-53` |
+| 11 | **The `gateMaxIntegrity` buff makes the published snapshot self-inconsistent — a cycle-10 regression, withdrawn rather than shipped.** `bulwark-echo` composes an effective gate cap without writing `gate.maxIntegrity`, but `getRunSnapshot` publishes `gate: run.gate` verbatim, so while the buff is live the snapshot reports `integrity 1920` against `maxIntegrity 1600`. Three consumers assume that cannot happen: the Stage1b pressure runner's `to > max` invariant (**G7 evidence tooling**), the `low-hp-focus` enemy policy's `gateRatio = integrity / maxIntegrity` (a gate buff pushes it above 1 and flips targeting to the commander — **live behaviour, not display**), and any HUD ratio. The spec's own §4 predicted the HUD half and `reconcileGateCap` answered only the *post-removal* half. **Attribution measured, not assumed:** the failing file passes 8/8 at base `033877ad` in a detached worktree, so it is ours. Item withdrawn; spec check 11 PARKED; `effectiveGateMax` keeps coverage via a synthetic entry. Re-enabling requires publishing the composed cap and rerouting all three consumers. | `stage1b-pressure: invalid gate integrity state at tick 1496: from=1600, to=1601, max=1600`; `defense-run-simulation.js:3921`, `:2705`; commit `64974d3d` |
 
 ---
 
@@ -194,6 +197,20 @@ Consequence recorded honestly: **there is no full-suite pass/fail baseline for c
 Four attempts were started and all four were killed or invalidated. Per-file baselines
 were captured instead, in the clean worktree — see `qa/cycle10-baseline.md`.
 
+**The missing baseline turned out to be recoverable per-file, and that is how defect 11 was
+caught.** `git worktree add --detach /tmp/as-base<sha> <base-sha>`, symlink `node_modules`,
+then run the *specific* failing file there. `stage1b-pressure-packets` + `-evidence-exporters`
+returned **8/8 pass at base** against 0/3 + 2/5 on the branch, which converted "six failures,
+unknown origin" into "six failures, ours, in this feature" without needing a full-suite
+before-number at all. Two operational costs, both real: the base run took **1642 s** because
+it shared cores with verification runs, and `timeout` kills only the parent `node --test` — a
+`run-g3-stance-events.mjs` grandchild survived at **599% CPU** as an orphan (`ppid 1`) and
+silently starved every later run until it was reaped by pid. `kill -9` is also **not valid**
+in this shell (`kill: invalid signal name`); `kill -s KILL <pid>` is. After reaping, the same
+pressure-packets file that had timed out at 800 s finished in **109 s**. Per-file base
+attribution should be the default first move on any suspected regression, and orphan reaping
+the default first move before timing anything.
+
 ### 3.3 A director ruling that contradicted itself
 
 Ruling v1 fixed `stat` to four values. Rulings v13/v14 then required basis-point
@@ -230,7 +247,39 @@ existing test would have detected it.** Registry now closed at four constants:
 
 ## 5. Unresolved, carried forward
 
-1. **No full-suite baseline.** Must be run once, alone, in the isolated worktree.
+1. **No full-suite baseline.** The pre-change baseline was never captured — four attempts
+   were killed or invalidated. A post-change full run is in flight against the committed
+   surface, but it is not a *comparison*: there is no "before" number to diff it against,
+   so a failure in it cannot be attributed to this cycle without opening the specific
+   file at the base commit. That asymmetry is the cost of the runner pile-up in §3.2.
+2. **`Math.round` in `effectiveCooldownScaleBp` — CLOSED. Load-bearing at reachable values,
+   and the spec's stated reason was the wrong one.** The spec and an earlier commit message
+   of mine both claim `0.9 * 10000` is `9000.000000000002`. It is exactly 9000 — verified —
+   so the justification was false and a mutation sweep over clean literals let the deletion
+   survive. The dust is not in the literals, it is in the **accumulated subtraction** the
+   write paths actually perform, and there it changes a gameplay number:
+
+   | reachable expression | product | `trunc` | `round` |
+   |---|---|---|---|
+   | `0.7 − 0.2` | 4999.999999999999 | **4999** | **5000** |
+   | `0.94 − 0.06` | 8799.999999999998 | **8799** | **8800** |
+   | 0.06 step 3 | 8199.999999999998 | **8199** | **8200** |
+   | 0.06 step 4 | 7599.999999999998 | **7599** | **7600** |
+   | 0.06 step 5 | 6999.999999999997 | **6999** | **7000** |
+
+   Successive `SKILL_RANK_COOLDOWN_STEP` 0.06 from 1.0 goes dusty at step 2 and stays dusty
+   through step 5, off by one every time. So the guard prevents a live off-by-one, not
+   harmless dust — and separately it is required for integrality, because the accessor feeds
+   `Math.trunc(ticks * bp / 10000)` and without the round 20 of 35 reachable scales return a
+   float `bp`. The test now derives the reduction set from the live catalogs so a new
+   reduction widens the sweep automatically, and pins `assert.equal(0.9 * 10000, 9000)` so
+   the false claim cannot rot back in. A mutant that was UNDETECTED is now DETECTED.
+3. **Two of my own claims were narrowed by measurement and the narrow form is the true one.**
+   Digest byte-identity holds for runs with **zero spawned drops**, not "no buff active" —
+   a spawned drop consumes a `nextId` and renumbers subsequent actor ids. And six of the
+   seven `bp === 0` accessor guards are arithmetically **unobservable**: deleting one keeps
+   every check green. I twice wrote that those guards are what make byte-identity a proof;
+   that is true of exactly one row.
 2. **Hazard-class visuals have no owner** (R30). `forge-pressure-vents` and
    `dais-command-echo` ship with correct pool behaviour and **no dedicated visual**.
    Reusing `deform-fracture-seam.glb` is prohibited — a narrowing seam and a pressure
@@ -250,6 +299,18 @@ existing test would have detected it.** Registry now closed at four constants:
 7. **Tiling reads repetitively** at `uvRepeat` 3–5 per axis on the chancel and throne
    floors. Seams are mathematically invisible; the *pattern period* is visible. A
    per-slab rotation or a second variant tile would break it up.
+8. **Spec check 11 is PARKED and the drop/buff catalog ships 10 of 11 items.** The
+   withdrawal in defect 11 is the honest close of the gate-cap question for this cycle, not
+   a solution. Carried: (a) check 11's three-removal-path reconciliation is **uncovered**,
+   because no reachable drop can produce a gate buff — `reconcileGateCap` is live code whose
+   eviction path now has no end-to-end test; (b)
+   `qa/evidence/gates/G2/g2-adversarial-tape-fixture.receipt.json` now claims a **stale**
+   `defense-catalog.js` digest (`31a36ad1…` recorded vs `c0b2c1ea…` actual), because the
+   withdrawal edits that file. G2 was not re-adjudicated this cycle, so the receipt was left
+   alone rather than re-exported into a gate nobody judged — but the next G2 adjudication
+   **must** re-export it. (c) The cycle-10 drop/buff proof folder carries
+   `SUPERSEDED-bulwark-echo.md`; its receipt and `dbimpl-behavior.mjs` measured the withdrawn
+   item accurately and are deliberately left byte-unedited.
 
 ---
 
