@@ -1925,7 +1925,10 @@ export class BattleSession {
     this.started = false;
 
     this.renderer = null;
-    this.audio = new DefenseAudio();
+    // sampleMapUrl opts into the ElevenLabs-generated Abyssal Lantern sample
+    // set (assets/audio/elevenlabs/); DefenseAudio silently falls back to the
+    // procedural oscillator cues when fetch/decode is unavailable or offline.
+    this.audio = new DefenseAudio({ sampleMapUrl: "assets/audio/elevenlabs/index.json" });
     this.audioTick = null;
     this.audioEventKeys = new Set();
     // Cycle 10 §5.3a. One-shot pre-expiry warning ledger, keyed by buffId. Presentation-only:
@@ -2142,7 +2145,11 @@ export class BattleSession {
       this.bossIntroTimer = null;
     }
     this.surface.querySelector("#defense-boss-intro")?.remove();
-    this.bossIntroKeys.clear();
+    // Optional-chained on purpose: remountForStage() is teardown, and teardown must not throw on
+    // a session that was assembled without every field -- the audio/cutscene contract tests build
+    // sessions from `Object.create(prototype)` plus an explicit field list, which is exactly the
+    // partially-constructed shape a real remount has to survive.
+    this.bossIntroKeys?.clear();
     this.rallyAcknowledgedBossIds = new Set();
     this.accumulator = 0;
     this.resetCamera();

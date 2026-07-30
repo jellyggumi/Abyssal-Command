@@ -134,17 +134,18 @@ Every verdict below carries a measured value, a method, and an evidence path.
 | `scripts/verify-cycle9-analog-live.mjs` | **PASS 6/6** — travel 4040/2040/1020 across full/half/quarter; full analog == octant exactly; 30° ≠ 45° |
 | `scripts/verify-cycle9-extraction-live.mjs` | **PASS 8/8** — grade table, lock state, conditional presence, capacity clamp, run-scoped ids |
 | `scripts/verify-cycle9-extraction-e2e.mjs` | **PASS 6/6** — the loop CLOSES in a real driven run: midboss dies at tick **3817** → `EXTRACTION_UNLOCKED` → `CORPSE_CREATED` (grade **SHADOW**, the correct midboss mapping) → channel 119/120 → `CORPSE_EXTRACTED` at tick **3936** → legion **0 → 1**. Interval 3936−3817 = **119**, matching `channelTicks: 120`. This is the only evidence that the headline feature works in *play* rather than at the API surface. |
-| `scripts/verify-cycle9-portrait-joystick.cjs` | **SKIP on `main`** (exit 0, `merged: false`) — the CSS half is cycle 10's and not yet merged here. **PASS with the cutover applied**: box **116×116**, magnitudes **563 → 966 → 1000**, `failures: []`. Keys on the *cause* (reads `styles.css` for the cutover marker), so it skips honestly pre-merge and **fails** if visibility regresses post-merge. See §8. |
-| `tests/campaign-state-rpg.test.mjs` | **37/37** (was 36/1 fail) — +11 tests, non-vacuity proven by a **14-mutant** matrix |
+| `scripts/verify-cycle9-portrait-joystick.cjs` | **PASS** — real assertions run, not a skip. `merged: true`, `shape: "cycle-9 portrait override"`, box **116×116**, magnitudes **563 → 966 → 1000**, `failures: []`, and the 5 fallback buttons still 44×44. The gate keys on the *cause* (reads `styles.css`) and accepts either cutover shape — cycle 9's portrait override or cycle 10's deleted default — so it neither reports our own fix as unmerged nor skips silently if visibility regresses. Evidence: `qa/cycle9/portrait-joystick.json`. |
+| `tests/campaign-state-rpg.test.mjs` | **40/40** (36/1 fail → 37/37 after the capacity/tamper pass → 40/40 after the G3 economy resolution). The +3 are the G3 proof, and the count alone does not carry them: (1) **`maximum legion capacity is reachable in a legitimate campaign, and buying the full ladder still prices out a full equipment line`** — the *inverted* acceptance test, replacing one that asserted a full-ladder save must FAIL validation, i.e. the shortfall encoded as a permanent invariant; (2) **`every slot ladder gate is reachable within the canonical stage count`** — locks the defect repricing alone could never have fixed (`requiresStageClears <= STAGES.length`), previously unguarded; (3) **`purchaseCompanionSlot reports max capacity once the whole ladder is bought`** — a terminal branch with zero prior coverage that only became reachable *because of* the reprice, and the cleanest end-to-end G3 proof: capacity 10 through real mutators, no tampered save, no serialization shortcut. A vacuous canary was **deleted** rather than renamed — it had gone trivially true AND its stated conclusion was now false. Non-vacuity proven by mutation. |
 | `tests/defense-renderer-contract.test.mjs` + `combat-presentation-contract` | **51/51** — read-only invariant and 24-cap both intact |
 | `world-presentation-contract` + `defense-public-contract-regressions` | **all pass** |
-| Combined node suites | **103/103, 0 fail** |
+| Combined node suites | **118/118, 0 fail** — campaign-state-rpg, renderer contract, combat/world presentation, public-contract regressions, and the AoE burst contract |
 | `tests/defense-hud-responsive-browser.cjs` | **`pass: true`** — portrait safe insets exactly `{11,17,29}` / `{23,17,29}` |
 
 ### The schema assertion was strengthened, not weakened
 
-`tests/campaign-state-rpg.test.mjs:321` moved from `Object.keys(current).length === 16`
-to a **sorted literal key-set** assertion of 17 keys. This is a contract change with
+The serialized-campaign schema assertion (now `tests/campaign-state-rpg.test.mjs:386`)
+moved from `Object.keys(current).length === 16` to a **sorted literal key-set**
+assertion of 17 keys. This is a contract change with
 migration in place (`CURRENT_KEYS` carries the key, `migrateCampaign` defaults old
 saves to 0), and it is **stronger**: mutant M16 showed a consistent rename keeps the
 count at 17, so a count-only assertion passes blind while the key-set assertion

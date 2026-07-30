@@ -1128,6 +1128,7 @@ export class DefenseAudio {
     reducedMotion = prefersReducedMotion(),
     muted = false,
     volume = 1,
+    sampleMapUrl = null,
   } = {}) {
     this.context = null;
     this.master = null;
@@ -1146,6 +1147,14 @@ export class DefenseAudio {
     this.activeVoices = new Set();
     this.ambienceVoices = [];
     this.musicVoices = [];
+    // Sample mode (opt-in): ElevenLabs-generated buffers keyed by cue/variant
+    // id, loaded lazily after start(). Empty maps keep every code path on the
+    // procedural oscillator profiles, so environments without fetch/decode
+    // (tests, offline, blocked network) behave exactly as before.
+    this.sampleMapUrl = typeof sampleMapUrl === "string" && sampleMapUrl ? sampleMapUrl : null;
+    this.sampleBuffers = new Map();
+    this.loopBuffers = new Map();
+    this.samplesLoading = null;
     this.lastCueAt = new Map();
     this.feedbackEventKeys = new Set();
     this.lastFeedbackTick = null;
@@ -1401,6 +1410,7 @@ export class DefenseAudio {
       this.started = true;
       this.attachLifecycle();
       this.unlock();
+      if (this.sampleMapUrl) safePromise(this.loadSamples());
       if (!this.reducedMotion && !this.paused && !this.backgrounded) {
         this.startAmbience();
         this.startBattleMusic();
@@ -1409,6 +1419,92 @@ export class DefenseAudio {
     } catch {
       this.stop();
       return false;
+    }
+  }
+
+  loadSamples(mapUrl = this.sampleMapUrl) {
+    this.sampleMapUrl = typeof mapUrl === "string" && mapUrl ? mapUrl : null;
+    if (!this.sampleMapUrl || !this.context
+      || typeof globalThis.fetch !== "function"
+      || typeof this.context.decodeAudioData !== "function") return Promise.resolve(false);
+    if (this.samplesLoading) return this.samplesLoading;
+    const loadOne = async (target, key, spec) => {
+      try {
+        const res = await globalThis.fetch(spec.url);
+        if (!res?.ok) return;
+        const buffer = await this.context.decodeAudioData(await res.arrayBuffer());
+        if (buffer) target.set(key, { buffer, gain: Number.isFinite(spec.gain) ? spec.gain : 0.8 });
+      } catch { /* missing or undecodable sample keeps the procedural profile */ }
+    };
+    this.samplesLoading = (async () => {
+      try {
+        const res = await globalThis.fetch(this.sampleMapUrl);
+        if (!res?.ok) return false;
+        const map = await res.json();
+        await Promise.all([
+          ...Object.entries(map?.cues ?? {}).map(([key, spec]) => loadOne(this.sampleBuffers, key, spec)),
+          ...Object.entries(map?.loops ?? {}).map(([key, spec]) => loadOne(this.loopBuffers, key, spec)),
+        ]);
+        this.refreshPersistentLoops();
+        return this.sampleBuffers.size > 0 || this.loopBuffers.size > 0;
+      } catch {
+        return false;
+      }
+    })();
+    return this.samplesLoading;
+  }
+
+  sampleFor(cueId, event) {
+    if (!this.sampleBuffers.size || typeof this.context?.createBufferSource !== "function") return null;
+    return this.sampleBuffers.get(variantKey(cueId, event)) ?? this.sampleBuffers.get(cueId) ?? null;
+  }
+
+  refreshPersistentLoops() {
+    if (!this.started || this.paused || this.backgrounded || this.reducedMotion) return;
+    if (this.ambienceVoices.length && !this.ambienceVoices[0].buffered
+      && this.loopBuffers.has(`ambience:${this.soundscapeStageId}`)) {
+      this.stopAmbience();
+      this.startAmbience();
+    }
+    if (this.musicVoices.length && !this.musicVoices[0].buffered
+      && this.loopBuffers.has(`music:${this.soundscapeStageId}`)) {
+      this.stopBattleMusic();
+      this.startBattleMusic();
+    }
+  }
+
+  startBufferedLoop(kind, destination) {
+    if (!this.context || !destination
+      || typeof this.context.createBufferSource !== "function") return null;
+    const spec = this.loopBuffers.get(`${kind}:${this.soundscapeStageId}`);
+    if (!spec || this.nodes.size + 2 > MAX_AUDIO_NODES) return null;
+    let source = null;
+    let gain = null;
+    try {
+      const stateMix = SOUNDSCAPE_STATES[this.soundscapeState] ?? SOUNDSCAPE_STATES.descent;
+      const gainScale = kind === "ambience" ? stateMix.ambienceGain : stateMix.musicGain;
+      source = this.register(this.context.createBufferSource(), { stoppable: true });
+      gain = this.register(this.context.createGain());
+      source.buffer = spec.buffer;
+      source.loop = true;
+      if (source.playbackRate) source.playbackRate.value = stateMix.pitch;
+      gain.gain.value = spec.gain * gainScale;
+      source.connect(gain).connect(destination);
+      source.start();
+      return {
+        source,
+        gain,
+        kind,
+        index: 0,
+        buffered: true,
+        stageId: this.soundscapeStageId,
+        baseGain: spec.gain,
+      };
+    } catch {
+      stopNode(source);
+      this.release(source);
+      this.release(gain);
+      return null;
     }
   }
 
@@ -1435,6 +1531,11 @@ export class DefenseAudio {
 
   startAmbience() {
     if (!this.started || this.paused || this.backgrounded || this.reducedMotion || this.ambienceVoices.length) return;
+    const buffered = this.startBufferedLoop("ambience", this.ambienceBus);
+    if (buffered) {
+      this.ambienceVoices.push(buffered);
+      return;
+    }
     AMBIENCE_LAYERS.forEach((_, index) => {
       try {
         const layer = persistentLayerTarget("ambience", index, this.soundscapeStageId, this.soundscapeState);
@@ -1448,6 +1549,11 @@ export class DefenseAudio {
 
   startBattleMusic() {
     if (!this.started || this.paused || this.backgrounded || this.reducedMotion || this.musicVoices.length) return;
+    const buffered = this.startBufferedLoop("music", this.musicBus);
+    if (buffered) {
+      this.musicVoices.push(buffered);
+      return;
+    }
     MUSIC_LAYERS.forEach((_, index) => {
       try {
         const layer = persistentLayerTarget("music", index, this.soundscapeStageId, this.soundscapeState);
@@ -1463,7 +1569,26 @@ export class DefenseAudio {
     if (!this.context || this.context.state === "closed") return;
     const now = this.context.currentTime;
     const end = now + SOUNDSCAPE_RAMP_SECONDS;
+    const restartKinds = new Set();
     for (const voice of [...this.ambienceVoices, ...this.musicVoices]) {
+      if (voice.buffered) {
+        // A stage change swaps the loop buffer; a state change only re-mixes
+        // the running loop (gain + playback rate) like the oscillator path.
+        if (voice.stageId !== this.soundscapeStageId
+          && this.loopBuffers.has(`${voice.kind}:${this.soundscapeStageId}`)) {
+          restartKinds.add(voice.kind);
+          continue;
+        }
+        const stateMix = SOUNDSCAPE_STATES[this.soundscapeState] ?? SOUNDSCAPE_STATES.descent;
+        const gainScale = voice.kind === "ambience" ? stateMix.ambienceGain : stateMix.musicGain;
+        if (voice.source.playbackRate) {
+          setParam(voice.source.playbackRate, "setValueAtTime", Math.max(0.01, voice.source.playbackRate.value || 1), now);
+          setParam(voice.source.playbackRate, "linearRampToValueAtTime", stateMix.pitch, end);
+        }
+        setParam(voice.gain.gain, "setValueAtTime", Math.max(SILENCE, voice.gain.gain.value), now);
+        setParam(voice.gain.gain, "linearRampToValueAtTime", voice.baseGain * gainScale, end);
+        continue;
+      }
       const target = persistentLayerTarget(
         voice.kind,
         voice.index,
@@ -1475,6 +1600,14 @@ export class DefenseAudio {
       setParam(voice.oscillator.frequency, "exponentialRampToValueAtTime", target.frequency, end);
       setParam(voice.gain.gain, "setValueAtTime", Math.max(SILENCE, voice.gain.gain.value), now);
       setParam(voice.gain.gain, "linearRampToValueAtTime", target.gain, end);
+    }
+    if (restartKinds.has("ambience")) {
+      this.stopAmbience();
+      this.startAmbience();
+    }
+    if (restartKinds.has("music")) {
+      this.stopBattleMusic();
+      this.startBattleMusic();
     }
   }
 
@@ -1491,10 +1624,11 @@ export class DefenseAudio {
   }
 
   stopVoices(voices) {
-    voices.splice(0).forEach(({ oscillator, gain }) => {
-      stopNode(oscillator);
-      this.release(oscillator);
-      this.release(gain);
+    voices.splice(0).forEach((voice) => {
+      const generator = voice.oscillator ?? voice.source;
+      stopNode(generator);
+      this.release(generator);
+      this.release(voice.gain);
     });
   }
 
@@ -1549,6 +1683,42 @@ export class DefenseAudio {
     return { cue, profile };
   }
 
+  playSampleVoice(sample, priority, now, refractoryKey) {
+    const voice = {
+      remaining: 1,
+      nodes: [],
+      priority,
+      startedAt: now,
+      released: false,
+    };
+    try {
+      const source = this.register(this.context.createBufferSource(), { transient: true, stoppable: true });
+      voice.nodes.push(source);
+      const gain = this.register(this.context.createGain(), { transient: true });
+      voice.nodes.push(gain);
+      source.buffer = sample.buffer;
+      gain.gain.value = sample.gain;
+      source.connect(gain).connect(this.sfxBus);
+      source.addEventListener?.("ended", () => {
+        if (voice.released) return;
+        this.release(source);
+        this.release(gain);
+        voice.nodes = [];
+        voice.remaining = 0;
+        voice.released = true;
+        this.activeVoices.delete(voice);
+      }, { once: true });
+      source.start(now);
+      this.activeVoices.add(voice);
+      this.lastCueAt.set(refractoryKey, now);
+      if (this.context.state === "suspended") safePromise(this.context.resume?.());
+      return true;
+    } catch {
+      this.stopVoice(voice);
+      return false;
+    }
+  }
+
   play(cueId, event = null) {
     const resolved = this.lookup(cueId, event);
     if (
@@ -1575,8 +1745,15 @@ export class DefenseAudio {
     const refractoryKey = cueRefractoryKey(cueId, event);
     const lastPlayedAt = this.lastCueAt.get(refractoryKey);
     if (refractory && Number.isFinite(lastPlayedAt) && now - lastPlayedAt < refractory) return false;
-    const requiredNodes = resolved.profile.length * 2;
+    const sample = this.sampleFor(cueId, event);
+    const requiredNodes = sample ? 2 : resolved.profile.length * 2;
     if (!this.makeRoomForVoice(requiredNodes, priority)) return false;
+    if (sample) {
+      if (this.playSampleVoice(sample, priority, now, refractoryKey)) return true;
+      // The buffer path failed mid-flight; fall through to the procedural
+      // profile after re-checking the larger oscillator node budget.
+      if (!this.makeRoomForVoice(resolved.profile.length * 2, priority)) return false;
+    }
 
     const voice = {
       remaining: resolved.profile.length,
@@ -1816,6 +1993,9 @@ export class DefenseAudio {
     this.nodes.clear();
     this.musicVoices.length = 0;
     this.ambienceVoices.length = 0;
+    this.sampleBuffers.clear();
+    this.loopBuffers.clear();
+    this.samplesLoading = null;
     this.musicBus = null;
     this.ambienceBus = null;
     this.sfxBus = null;
@@ -1841,6 +2021,9 @@ export class DefenseAudio {
       volume: this.volume,
       soundscapeStageId: this.soundscapeStageId,
       soundscapeState: this.soundscapeState,
+      sampleMode: Boolean(this.sampleMapUrl),
+      sampleCues: this.sampleBuffers.size,
+      sampleLoops: this.loopBuffers.size,
       maxNodes: MAX_AUDIO_NODES,
       maxVoices: MAX_ACTIVE_VOICES,
       feedbackEvents: this.feedbackEventKeys.size,

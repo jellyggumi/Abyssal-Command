@@ -59,6 +59,21 @@ env:
     assets/motion/ingame/unarmed-core.glb assets/motion/ingame/manifest.json
     assets/motion/stage-vfx/cinder-span-ember-wake.glb assets/motion/stage-vfx/abyss-chancel-mirror-static.glb
     assets/motion/stage-vfx/echo-throne-fracture-echo.glb assets/motion/stage-vfx/manifest.json
+    assets/audio/elevenlabs/index.json
+    assets/audio/elevenlabs/sfx/stage-start.mp3 assets/audio/elevenlabs/sfx/movement-step.mp3 assets/audio/elevenlabs/sfx/weapon-fire.mp3
+    assets/audio/elevenlabs/sfx/impact-hit.mp3 assets/audio/elevenlabs/sfx/critical-hit.mp3 assets/audio/elevenlabs/sfx/enemy-defeated.mp3
+    assets/audio/elevenlabs/sfx/item-collected.mp3 assets/audio/elevenlabs/sfx/growth-offer.mp3 assets/audio/elevenlabs/sfx/growth-offer--skill-selected.mp3
+    assets/audio/elevenlabs/sfx/skill-cast.mp3 assets/audio/elevenlabs/sfx/extraction-ready.mp3 assets/audio/elevenlabs/sfx/extraction-ready--progress.mp3
+    assets/audio/elevenlabs/sfx/elite-extracted.mp3 assets/audio/elevenlabs/sfx/occupation-captured.mp3 assets/audio/elevenlabs/sfx/occupation-captured--progress.mp3
+    assets/audio/elevenlabs/sfx/boss-spawned.mp3 assets/audio/elevenlabs/sfx/terminal.mp3 assets/audio/elevenlabs/sfx/terminal--victory.mp3
+    assets/audio/elevenlabs/sfx/terminal--defeat.mp3 assets/audio/elevenlabs/sfx/terminal--final-completion.mp3 assets/audio/elevenlabs/sfx/terminal--reward-selected.mp3
+    assets/audio/elevenlabs/sfx/impact-hit--pickup-denied.mp3 assets/audio/elevenlabs/sfx/impact-hit--pickup-denied.mp3 assets/audio/elevenlabs/sfx/input-accepted.mp3
+    assets/audio/elevenlabs/sfx/input-rejected.mp3 assets/audio/elevenlabs/sfx/attack-windup.mp3 assets/audio/elevenlabs/sfx/block-contact.mp3
+    assets/audio/elevenlabs/sfx/attack-miss.mp3 assets/audio/elevenlabs/sfx/interrupt-alert.mp3 assets/audio/elevenlabs/sfx/warning-pulse.mp3
+    assets/audio/elevenlabs/sfx/objective-waypoint.mp3 assets/audio/elevenlabs/sfx/objective-complete.mp3 assets/audio/elevenlabs/sfx/boss-phase.mp3
+    assets/audio/elevenlabs/sfx/death-retry.mp3 assets/audio/elevenlabs/loops/ambience--cinder-span.mp3 assets/audio/elevenlabs/loops/ambience--abyss-chancel.mp3
+    assets/audio/elevenlabs/loops/ambience--echo-throne.mp3 assets/audio/elevenlabs/loops/music--cinder-span.mp3 assets/audio/elevenlabs/loops/music--abyss-chancel.mp3
+    assets/audio/elevenlabs/loops/music--echo-throne.mp3
 
 jobs:
   resolve_revision:

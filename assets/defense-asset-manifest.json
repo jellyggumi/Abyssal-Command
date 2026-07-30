@@ -23,6 +23,375 @@
       "testDisposition": "delete"
     },
     {
+      "disposition": "delete",
+      "currentPath": "assets/audio/elevenlabs-sound-plan.json",
+      "replacementPath": null,
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": false,
+      "testDisposition": "delete"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/index.json",
+      "replacementPath": "assets/audio/elevenlabs/index.json",
+      "extension": ".json",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/loops/ambience--abyss-chancel.mp3",
+      "replacementPath": "assets/audio/elevenlabs/loops/ambience--abyss-chancel.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/loops/ambience--cinder-span.mp3",
+      "replacementPath": "assets/audio/elevenlabs/loops/ambience--cinder-span.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/loops/ambience--echo-throne.mp3",
+      "replacementPath": "assets/audio/elevenlabs/loops/ambience--echo-throne.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/loops/music--abyss-chancel.mp3",
+      "replacementPath": "assets/audio/elevenlabs/loops/music--abyss-chancel.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/loops/music--cinder-span.mp3",
+      "replacementPath": "assets/audio/elevenlabs/loops/music--cinder-span.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/loops/music--echo-throne.mp3",
+      "replacementPath": "assets/audio/elevenlabs/loops/music--echo-throne.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/attack-miss.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/attack-miss.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/attack-windup.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/attack-windup.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/block-contact.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/block-contact.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/boss-phase.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/boss-phase.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/boss-spawned.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/boss-spawned.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/critical-hit.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/critical-hit.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/death-retry.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/death-retry.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/elite-extracted.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/elite-extracted.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/enemy-defeated.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/enemy-defeated.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/extraction-ready--progress.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/extraction-ready--progress.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/extraction-ready.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/extraction-ready.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/growth-offer--skill-selected.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/growth-offer--skill-selected.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/growth-offer.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/growth-offer.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/impact-hit--pickup-denied.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/impact-hit--pickup-denied.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/impact-hit.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/impact-hit.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/input-accepted.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/input-accepted.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/input-rejected.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/input-rejected.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/interrupt-alert.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/interrupt-alert.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/item-collected.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/item-collected.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/movement-step.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/movement-step.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/objective-complete.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/objective-complete.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/objective-waypoint.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/objective-waypoint.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/occupation-captured--progress.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/occupation-captured--progress.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/occupation-captured.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/occupation-captured.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/skill-cast.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/skill-cast.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/stage-start.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/stage-start.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/terminal--defeat.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/terminal--defeat.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/terminal--final-completion.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/terminal--final-completion.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/terminal--reward-selected.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/terminal--reward-selected.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/terminal--victory.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/terminal--victory.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/terminal.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/terminal.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/warning-pulse.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/warning-pulse.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
+      "disposition": "retain",
+      "currentPath": "assets/audio/elevenlabs/sfx/weapon-fire.mp3",
+      "replacementPath": "assets/audio/elevenlabs/sfx/weapon-fire.mp3",
+      "extension": ".mp3",
+      "generator": "scripts/build-defense-asset-manifest.mjs",
+      "runtimeReference": true,
+      "testDisposition": "retain"
+    },
+    {
       "disposition": "retain",
       "currentPath": "assets/defense-asset-manifest.json",
       "replacementPath": "assets/defense-asset-manifest.json",
