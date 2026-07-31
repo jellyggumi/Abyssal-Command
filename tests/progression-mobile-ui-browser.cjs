@@ -158,13 +158,24 @@ async function openPage({
         });
       });
     }
-    // `domcontentloaded`, not `networkidle`: app.js:4347 registers the service worker with
-    // `updateViaCache: "none"`, so every load revalidates over the network while a continuous
-    // WebGL RAF loop keeps the page busy. On a slow CI runner (rafMean ~95 ms, ~10 fps) the
-    // 500 ms zero-network window `networkidle` needs may never open inside the 30 s timeout.
-    // The very next line waits on `[data-defense-ready="true"]`, which is the app's own explicit
-    // readiness signal and a strictly stronger guarantee than a network heuristic.
-    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    // `load`, deliberately, and NOT either neighbour:
+    //
+    //   networkidle       waits for a 500 ms quiet window. app.js:4347 registers the service
+    //                     worker with `updateViaCache: "none"`, so every load revalidates over
+    //                     the network while a continuous WebGL RAF loop keeps the page busy.
+    //                     On CI that window may never open -- runs #14/#15 died here with
+    //                     `page.reload: Timeout 30000ms exceeded`.
+    //   domcontentloaded  does NOT wait for stylesheets. Tried in #17; it moved the failure
+    //                     rather than fixing it. Test 4 asserts `.focus()` lands
+    //                     (`document.activeElement === node`, :452) on a `[data-move]` button,
+    //                     and an unstyled button is `display:none`, where focus() silently
+    //                     no-ops -- so the assert read `false !== true` in #17 AND #18. It
+    //                     passed locally every time because CSS resolves from disk instantly.
+    //   load              waits for stylesheets and subresources but needs no quiet window, so
+    //                     the service-worker revalidation loop cannot stall it.
+    //
+    // Keep in sync with the reload below; both need the CSS guarantee.
+    await page.goto("/index.html", { waitUntil: "load" });
     const surface = page.locator('#defense-battle-surface[data-defense-ready="true"]');
     await surface.waitFor({ state: "visible" });
     if (rendererProbe) {
@@ -229,12 +240,11 @@ test("story rewards drive extracted-skill and appearance controls through persis
     await run.page.waitForFunction(() => document.querySelector(".deck-subhead")?.textContent?.includes("추출 액티브 · 0/3"));
     assert.deepEqual((await readStoredStoryProgress(run.page)).activeSkillLoadout, [], "unequipping must persist without removing the unlocked skill");
 
-    // See the goto above: `networkidle` is unreliable here. This is the site that timed out in
-    // CI runs #14 and #15 (`page.reload: Timeout 30000ms exceeded waiting for networkidle`).
-    // A reload is strictly worse than a first load for this: the service worker is already
-    // active and re-fetches in the background, so the network may never fall quiet at all.
-    // The following locator click and getAttribute calls auto-wait, so no coverage is lost.
-    await run.page.reload({ waitUntil: "domcontentloaded" });
+    // `load` for the same reason as the goto above: must not measure before stylesheets apply,
+    // and must not wait on a network quiet window the service worker prevents. A reload is the
+    // harder case -- the worker is already active and re-fetches in the background -- which is
+    // why this exact line timed out under `networkidle` in runs #14 and #15.
+    await run.page.reload({ waitUntil: "load" });
     await run.page.locator('[data-deck-section="skills"]').click();
     assert.equal(await run.page.locator('[data-extracted-skill-toggle="rift-bolt"]').getAttribute("aria-pressed"), "false");
     assert.match(await run.page.locator('[data-extracted-skill-upgrade="rift-bolt"]').textContent() ?? "", /Lv 3/, "reload must render the next level from persisted level 2");
