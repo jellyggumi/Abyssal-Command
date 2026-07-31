@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-31T04:23:28.111Z",
+  "generatedAt": "2026-07-31T06:17:29.207Z",
   "canonicalStageIds": [
     "cinder-span",
     "abyss-chancel",
@@ -423,11 +423,23 @@
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
+            "id": "abyss-chancel:crossing-lamp-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
             "id": "abyss-chancel:east-colonnade-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
             "id": "abyss-chancel:east-processional-lamp-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:narthex-colonnade-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:narthex-debris-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
@@ -439,27 +451,19 @@
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
-            "id": "abyss-chancel:oath-apse-prop",
-            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
-          },
-          {
             "id": "abyss-chancel:oath-relic",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
-            "id": "abyss-chancel:south-nave-screen-prop",
+            "id": "abyss-chancel:oath-ring-plinth-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
-            "id": "abyss-chancel:vestry-debris-prop",
+            "id": "abyss-chancel:transept-debris-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
             "id": "abyss-chancel:vestry-screen-prop",
-            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
-          },
-          {
-            "id": "abyss-chancel:west-colonnade-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
@@ -500,7 +504,7 @@
         "surfaceStageId": "abyss-chancel",
         "loadedStageId": "abyss-chancel",
         "renderer": "webgl",
-        "renderedFrames": 358,
+        "renderedFrames": 354,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
         "terrainSource": "promoted-glb",
@@ -515,19 +519,7 @@
         },
         "propGrounding": [
           {
-            "id": "abyss-chancel:oath-relic",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 23895,
-              "triangleCount": 38536,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "abyss-chancel:nave-blade",
+            "id": "abyss-chancel:vestry-screen-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
@@ -539,12 +531,12 @@
             }
           },
           {
-            "id": "abyss-chancel:oath-apse-prop",
+            "id": "abyss-chancel:narthex-colonnade-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
-              "vertexCount": 23895,
-              "triangleCount": 38536,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
               "invalidVertexCount": 0,
               "invalidIndexCount": 0,
               "finiteBounds": true
@@ -563,7 +555,19 @@
             }
           },
           {
-            "id": "abyss-chancel:west-colonnade-prop",
+            "id": "abyss-chancel:nave-blade",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 24925,
+              "triangleCount": 39495,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:oath-ring-plinth-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
@@ -587,7 +591,55 @@
             }
           },
           {
-            "id": "abyss-chancel:vestry-debris-prop",
+            "id": "abyss-chancel:west-processional-lamp-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:narthex-debris-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:transept-debris-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:crossing-lamp-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 23895,
+              "triangleCount": 38536,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "abyss-chancel:oath-relic",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
@@ -611,48 +663,12 @@
             }
           },
           {
-            "id": "abyss-chancel:west-processional-lamp-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 23895,
-              "triangleCount": 38536,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "abyss-chancel:south-nave-screen-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 24925,
-              "triangleCount": 39495,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
             "id": "abyss-chancel:east-processional-lamp-prop",
             "groundedMinY": 0,
             "meshIntegrity": {
               "meshCount": 1,
               "vertexCount": 23895,
               "triangleCount": 38536,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "abyss-chancel:vestry-screen-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 24925,
-              "triangleCount": 39495,
               "invalidVertexCount": 0,
               "invalidIndexCount": 0,
               "finiteBounds": true
@@ -673,11 +689,23 @@
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
+            "id": "abyss-chancel:crossing-lamp-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
             "id": "abyss-chancel:east-colonnade-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
             "id": "abyss-chancel:east-processional-lamp-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:narthex-colonnade-prop",
+            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
+          },
+          {
+            "id": "abyss-chancel:narthex-debris-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
@@ -689,27 +717,19 @@
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
-            "id": "abyss-chancel:oath-apse-prop",
-            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
-          },
-          {
             "id": "abyss-chancel:oath-relic",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
-            "id": "abyss-chancel:south-nave-screen-prop",
+            "id": "abyss-chancel:oath-ring-plinth-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
-            "id": "abyss-chancel:vestry-debris-prop",
+            "id": "abyss-chancel:transept-debris-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.05/glb/base_basic_pbr.glb"
           },
           {
             "id": "abyss-chancel:vestry-screen-prop",
-            "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
-          },
-          {
-            "id": "abyss-chancel:west-colonnade-prop",
             "modelPath": "assets/mesh/prop/prop-sprite-sheet-single-object.03/glb/base_basic_pbr.glb"
           },
           {
@@ -785,6 +805,10 @@
           },
           {
             "path": "assets/motion/stage-vfx/abyss-chancel-mirror-static.glb",
+            "status": 200
+          },
+          {
+            "path": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
             "status": 200
           },
           {
@@ -889,7 +913,7 @@
         "surfaceStageId": "echo-throne",
         "loadedStageId": "echo-throne",
         "renderer": "webgl",
-        "renderedFrames": 353,
+        "renderedFrames": 342,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
         "terrainSource": "promoted-glb",
@@ -1186,5 +1210,5 @@
     }
   ],
   "pass": true,
-  "finishedAt": "2026-07-31T04:23:50.280Z"
+  "finishedAt": "2026-07-31T06:17:51.864Z"
 }

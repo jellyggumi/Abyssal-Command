@@ -53,3 +53,30 @@ Each entry should list the files touched, the reason for the change, and any fol
   failure. Browser proof green on all three stages, 12 props each, zero console errors.
 - Digest gates repinned for cinder-span only; `abyss-chancel`, `echo-throne` and all three
   rng-at-3000 fixtures re-measured unchanged.
+
+## [2026-07-31] report | Stage 2 abyss-chancel composition + a validator blind spot
+
+- Executed the authored chancel composition (`_workspace/current/design/stage-dungeon-composition-spec.md`
+  §2.2/§3.3/§5.2/§6) as the atomic unit the cycle-10 retrospective specified: props, landmarks,
+  anchors, obstacles and routes in one commit. 13 props (7 obstacles), 6 landmarks, 4 motivated
+  lights, 4 fog breaks, critical route re-threaded through both objective points, detour moved to
+  the northern mirror aisle. Bound coordinates untouched.
+- Found and fixed a defect the spec would have shipped: two obstacles sat on
+  `STAGE_ENCOUNTER_ROUTES` spawn approaches (`narthex-debris` −453 over `chancel-south-entry`,
+  `nave-seal` −54 over `chancel-nave-north`). `validateProfile` never checks those paths, so the
+  module imported cleanly and every suite stayed green while a measured run collapsed from 81 spawns
+  / 7 cleared waves to 27 / 1. After the minimal correction: 83 spawns, 10 waves, boss reached.
+- Durable fix: `scripts/search-stage-dungeon-layout.mjs` gained the spawn-approach clearance filter
+  and a `--verify` mode that runs the whole filter set against an authored profile. Recorded in
+  `prompts/approved/03-procedural-layout.md` v2 and in the concept page.
+- The verifier then found two more overlaps on `echo-throne` (`fractured-dais` −19,
+  `gallery-debris` −75); both corrected, with measured runs unchanged (60 spawns, 9 waves, boss on
+  both builds).
+- Pacing: chancel now completes on every measured seed (199-204 s) where `origin/main` never
+  completed (bot capped at 325 s in gate-defense). Doctrine window is 180-360 s.
+- Evidence: focused suites 64/64 plus gate checks 11/11; full `node --test 'tests/**/*.test.mjs'`
+  607 tests, 577 pass, 5 fail — the same five pre-existing failures verified red on a pristine
+  `origin/main` worktree. Browser proof green on all three stages (chancel now 13 props).
+- Digest gates needed no repin: the pinned `abyss-chancel` and `echo-throne` windows re-measured
+  byte-identical, consistent with the cycle-10 finding that those windows never reach the changed
+  circles.

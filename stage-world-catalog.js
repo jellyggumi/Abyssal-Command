@@ -214,12 +214,13 @@ const profiles = [
     gameplay: {
       bounds: bounds(600, 23400, 700, 11300),
       obstacles: [
-        obstacle("abyss-chancel:oath-apse", 14000, 8750, 880, "abyss-chancel:oath-apse-prop"),
-        obstacle("abyss-chancel:nave-seal", 12200, 3150, 820, "abyss-chancel:nave-seal-prop"),
-        obstacle("abyss-chancel:west-colonnade", 5200, 2600, 650, "abyss-chancel:west-colonnade-prop"),
-        obstacle("abyss-chancel:east-colonnade", 18500, 2600, 650, "abyss-chancel:east-colonnade-prop"),
-        obstacle("abyss-chancel:vestry-debris", 6000, 10300, 500, "abyss-chancel:vestry-debris-prop"),
-        obstacle("abyss-chancel:apse-wing", 19100, 9400, 650, "abyss-chancel:apse-wing-prop"),
+        obstacle("abyss-chancel:narthex-colonnade", 5200, 3800, 650, "abyss-chancel:narthex-colonnade-prop"),
+        obstacle("abyss-chancel:narthex-debris", 6000, 8400, 500, "abyss-chancel:narthex-debris-prop"),
+        obstacle("abyss-chancel:nave-seal", 13000, 3600, 820, "abyss-chancel:nave-seal-prop"),
+        obstacle("abyss-chancel:transept-debris", 12800, 9800, 500, "abyss-chancel:transept-debris-prop"),
+        obstacle("abyss-chancel:oath-ring-plinth", 17800, 10400, 400, "abyss-chancel:oath-ring-plinth-prop"),
+        obstacle("abyss-chancel:east-colonnade", 20400, 4200, 650, "abyss-chancel:east-colonnade-prop"),
+        obstacle("abyss-chancel:apse-wing", 20200, 9600, 650, "abyss-chancel:apse-wing-prop"),
       ],
       surfaces: [],
       meshColliders: [meshCollider("abyss-chancel:walkable-nave", [
@@ -227,16 +228,21 @@ const profiles = [
         triangle(600, 700, 0, 23400, 11300, 0, 600, 11300, 0),
       ])],
       routes: [
-        route("abyss-chancel:critical-route", "critical", 1000, [
+        // The critical route now threads all four authored slabs and puts its two intermediate
+        // waypoints exactly on the encounter objective points, so the route the player walks and
+        // the objectives the simulation scores are the same two places.
+        route("abyss-chancel:critical-route", "critical", 1400, [
           waypoint("abyss-chancel:ingress", "ingress", 1800, 6000),
-          waypoint("abyss-chancel:chancel-nave-advance", "intermediate-objective", 7200, 4400),
-          waypoint("abyss-chancel:chancel-transept-lock", "intermediate-gate", 14200, 6000),
+          waypoint("abyss-chancel:chancel-nave-advance", "intermediate-objective", 15000, 6000),
+          waypoint("abyss-chancel:chancel-transept-lock", "intermediate-gate", 17600, 8200),
           waypoint("abyss-chancel:final-gate", "final-gate", 22000, 6000),
         ]),
-        route("abyss-chancel:optional-detour", "optional-detour", 700, [
-          waypoint("abyss-chancel:detour-entry", "detour-entry", 5200, 7600),
-          waypoint("abyss-chancel:vestry-cache", "detour-objective", 9000, 10400),
-          waypoint("abyss-chancel:detour-exit", "detour-exit", 17800, 10400),
+        // The detour is the mirror's offered aisle along the north: shorter, lit, and exactly the
+        // answer the stage quest asks the player to refuse.
+        route("abyss-chancel:optional-detour", "optional-detour", 900, [
+          waypoint("abyss-chancel:detour-entry", "detour-entry", 6200, 2600),
+          waypoint("abyss-chancel:mirror-aisle-cache", "detour-objective", 12000, 1800),
+          waypoint("abyss-chancel:detour-exit", "detour-exit", 19800, 2600),
         ]),
       ],
     },
@@ -247,33 +253,40 @@ const profiles = [
       silhouette: { profile: "bent-nave-colonnade", primaryAxis: "x", skyline: "paired-apse-arches" },
       camera: { arenaBounds: bounds(900, 23100, 1000, 11000), focus: { x: 13600, y: 6000, elevation: 0 }, readableMargin: 600 },
       landmarks: [
-        landmark("landmark.chancel-apse", "Chancel Apse", 18000, 7600, 0, "abyss-chancel:oath-relic"),
-        landmark("landmark.chancel-nave", "Chancel Nave", 12200, 3150, 0, "abyss-chancel:nave-seal-prop"),
-        landmark("landmark.west-colonnade", "West Oath Colonnade", 5200, 2600, 0, "abyss-chancel:west-colonnade-prop"),
-        landmark("landmark.vestry-wing", "Veiled Vestry", 19100, 9400, 0, "abyss-chancel:apse-wing-prop"),
+        // `landmark.chancel-apse` and `landmark.chancel-nave` keep their ids because the Seal Atlas
+        // vocabulary in defense-catalog.js STAGE_PRESENTATION_BY_ID addresses them by id.
+        landmark("landmark.chancel-apse", "Chancel Oath Apse", 18200, 3600, 0, "abyss-chancel:oath-relic"),
+        landmark("landmark.chancel-nave", "Chancel Nave Seal", 13000, 3600, 0, "abyss-chancel:nave-seal-prop"),
+        landmark("landmark.narthex-colonnade", "Narthex Colonnade", 5200, 3800, 0, "abyss-chancel:narthex-colonnade-prop"),
+        landmark("landmark.chancel-apse-wing", "Apse Wing", 20200, 9600, 0, "abyss-chancel:apse-wing-prop"),
+        landmark("landmark.chancel-oath-ring", "Oath Ring Plinth", 17800, 10400, 0, "abyss-chancel:oath-ring-plinth-prop"),
         landmark("landmark.chancel-processional-lamp", "West Processional Lamp", 2700, 1600, 0, "abyss-chancel:west-processional-lamp-prop"),
-        landmark("landmark.chancel-vestry-screen", "Vestry Screen", 2600, 10700, 0, "abyss-chancel:vestry-screen-prop"),
       ],
       props: [
-        prop("abyss-chancel:oath-relic", PROPS.relic, "oath-lantern", 18000, 7600, 0, 0.4, 190),
-        prop("abyss-chancel:nave-blade", PROPS.blade, "objective-beacon", 12200, 4800, 0, 1.5708, 150),
-        prop("abyss-chancel:oath-apse-prop", PROPS.relic, "arch", 14000, 8750, 0, 0, 880),
-        prop("abyss-chancel:nave-seal-prop", PROPS.blade, "arch", 12200, 3150, 0, 1.5708, 820),
-        prop("abyss-chancel:west-colonnade-prop", PROPS.blade, "wall", 5200, 2600, 0, 0, 650),
-        prop("abyss-chancel:east-colonnade-prop", PROPS.blade, "wall", 18500, 2600, 0, 0, 650),
-        prop("abyss-chancel:vestry-debris-prop", PROPS.relic, "debris", 6000, 10300, 0, -0.5, 500),
-        prop("abyss-chancel:apse-wing-prop", PROPS.relic, "wall", 19100, 9400, 0, 0.5, 650),
         prop("abyss-chancel:west-processional-lamp-prop", PROPS.relic, "processional-lantern", 2700, 1600, 0, -0.2, 140),
-        prop("abyss-chancel:south-nave-screen-prop", PROPS.blade, "background-nave-screen", 9400, 1200, 0, 1.5708, 360),
-        prop("abyss-chancel:east-processional-lamp-prop", PROPS.relic, "processional-lantern", 22200, 1600, 0, 0.2, 140),
         prop("abyss-chancel:vestry-screen-prop", PROPS.blade, "background-vestry-screen", 2600, 10700, 0, 0, 300),
+        prop("abyss-chancel:narthex-colonnade-prop", PROPS.blade, "wall", 5200, 3800, 0, 0, 650),
+        prop("abyss-chancel:narthex-debris-prop", PROPS.relic, "debris", 6000, 8400, 0, -0.5, 500),
+        prop("abyss-chancel:nave-seal-prop", PROPS.blade, "arch", 13000, 3600, 0, 1.5708, 820),
+        prop("abyss-chancel:transept-debris-prop", PROPS.relic, "debris", 12800, 9800, 0, 0.4, 500),
+        prop("abyss-chancel:crossing-lamp-prop", PROPS.relic, "crossing-lantern", 13000, 7400, 0, 0.3, 150),
+        prop("abyss-chancel:nave-blade", PROPS.blade, "objective-beacon", 15000, 4200, 0, 1.5708, 150),
+        prop("abyss-chancel:oath-ring-plinth-prop", PROPS.blade, "oath-ring", 17800, 10400, 0, 0, 400),
+        prop("abyss-chancel:oath-relic", PROPS.relic, "oath-lantern", 18200, 3600, 0, 0.4, 190),
+        prop("abyss-chancel:apse-wing-prop", PROPS.relic, "wall", 20200, 9600, 0, 0.5, 650),
+        prop("abyss-chancel:east-colonnade-prop", PROPS.blade, "wall", 20400, 4200, 0, 0, 650),
+        prop("abyss-chancel:east-processional-lamp-prop", PROPS.relic, "processional-lantern", 22200, 1600, 0, 0.2, 140),
       ],
       visibilityAnchors: [
-        visibilityAnchor("abyss-chancel:apse-light-anchor", "motivated-light", 18000, 7600, 1100, "abyss-chancel:oath-relic"),
-        visibilityAnchor("abyss-chancel:nave-light-anchor", "motivated-light", 12200, 4800, 900, "abyss-chancel:nave-blade"),
         visibilityAnchor("abyss-chancel:west-processional-light", "motivated-light", 2700, 1600, 720, "abyss-chancel:west-processional-lamp-prop"),
+        visibilityAnchor("abyss-chancel:crossing-light-anchor", "motivated-light", 13000, 7400, 900, "abyss-chancel:crossing-lamp-prop"),
+        visibilityAnchor("abyss-chancel:oath-light-anchor", "motivated-light", 18200, 3600, 1100, "abyss-chancel:oath-relic"),
         visibilityAnchor("abyss-chancel:east-processional-light", "motivated-light", 22200, 1600, 720, "abyss-chancel:east-processional-lamp-prop"),
-        visibilityAnchor("abyss-chancel:nave-fog-break", "fog-break", 15000, 6000, 1500),
+        // One readable pocket per authored slab, so no chamber goes dark.
+        visibilityAnchor("abyss-chancel:narthex-fog-break", "fog-break", 4200, 6000, 1400),
+        visibilityAnchor("abyss-chancel:nave-fog-break", "fog-break", 10000, 6000, 1500),
+        visibilityAnchor("abyss-chancel:apse-fog-break", "fog-break", 20800, 2400, 1200),
+        visibilityAnchor("abyss-chancel:transept-fog-break", "fog-break", 19000, 8800, 1200),
       ],
       vfxCues: [vfxCue("abyss-chancel", "abyss-chancel:mirror-static", "abyss-chancel-mirror-static", 14200, 6000, 0, 0)],
       npcs: [lookout("abyss-chancel:veil-lookout", 17300, 7850, 0, 3.1416, 9000, 6000, "watch-the-apse", "abyss-chancel:refuse-repeated-answer")],
@@ -296,11 +309,11 @@ const profiles = [
     gameplay: {
       bounds: bounds(600, 23400, 600, 11400),
       obstacles: [
-        obstacle("echo-throne:fractured-dais", 15400, 8600, 900, "echo-throne:fractured-dais-prop"),
+        obstacle("echo-throne:fractured-dais", 15400, 8700, 900, "echo-throne:fractured-dais-prop"),
         obstacle("echo-throne:echo-aisle", 11800, 3000, 800, "echo-throne:echo-aisle-prop"),
         obstacle("echo-throne:west-fractured-wing", 5400, 9000, 650, "echo-throne:west-fractured-wing-prop"),
         obstacle("echo-throne:east-fractured-wing", 19000, 9000, 650, "echo-throne:east-fractured-wing-prop"),
-        obstacle("echo-throne:gallery-debris", 6200, 1200, 500, "echo-throne:gallery-debris-prop"),
+        obstacle("echo-throne:gallery-debris", 6900, 1200, 500, "echo-throne:gallery-debris-prop"),
         obstacle("echo-throne:crown-shard", 19400, 2400, 600, "echo-throne:crown-shard-prop"),
       ],
       surfaces: [],
@@ -339,11 +352,11 @@ const profiles = [
       props: [
         prop("echo-throne:dais-relic", PROPS.relic, "throne-lantern", 18200, 7200, 0, 0, 190),
         prop("echo-throne:aisle-blade", PROPS.blade, "objective-beacon", 11800, 4400, 0, 1.5708, 150),
-        prop("echo-throne:fractured-dais-prop", PROPS.relic, "arch", 15400, 8600, 0, 0, 900),
+        prop("echo-throne:fractured-dais-prop", PROPS.relic, "arch", 15400, 8700, 0, 0, 900),
         prop("echo-throne:echo-aisle-prop", PROPS.blade, "arch", 11800, 3000, 0, 1.5708, 800),
         prop("echo-throne:west-fractured-wing-prop", PROPS.blade, "wall", 5400, 9000, 0, -0.5, 650),
         prop("echo-throne:east-fractured-wing-prop", PROPS.blade, "wall", 19000, 9000, 0, 0.5, 650),
-        prop("echo-throne:gallery-debris-prop", PROPS.relic, "debris", 6200, 1200, 0, 0.4, 500),
+        prop("echo-throne:gallery-debris-prop", PROPS.relic, "debris", 6900, 1200, 0, 0.4, 500),
         prop("echo-throne:crown-shard-prop", PROPS.relic, "debris", 19400, 2400, 0, -0.4, 600),
         prop("echo-throne:west-crown-light-prop", PROPS.relic, "crown-lantern", 2700, 10500, 0, -0.6, 140),
         prop("echo-throne:court-crescent-prop", PROPS.blade, "background-court-crescent", 10400, 10800, 0, 0, 380),
