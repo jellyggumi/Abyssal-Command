@@ -1,12 +1,27 @@
 {
-  "purpose": "Pre-change digest baseline for cycle 9. Proves depth-0 / octant-only byte-identity survives the analog-input, extraction, and capacity changes.",
-  "capturedAt": "2026-07-30",
-  "capturedAgainstCommit": "033877ad",
-  "capturedBeforeAnySourceEdit": true,
-  "gitStatusAtCapture": "zero churn on defense-run-simulation.js, defense-catalog.js, campaign-state.js, app.js, styles.css, battle-realtime-three.js",
+  "purpose": "Digest baseline for the cycle-9 determinism gate. Proves depth-0 / octant-only byte-identity: an octant-only run must serialize identically, and must NOT gain moveAnalog / aim / corpse fields.",
+  "capturedAt": "2026-07-31",
+  "capturedAgainstCommit": "0188366a",
+  "supersedes": {
+    "commit": "033877ad",
+    "rows": [
+      { "seed": 1, "sha256": "58c20433ef5d563f9f9a3a7a19ef08ec8e9c6eaec34138eba57f8c426399326e", "bytes": 22311 },
+      { "seed": 17, "sha256": "1a6d4fd7a55958fb607321d70bc1845de232ecf4b98c9cc83d66c555fb013b0b", "bytes": 22314 },
+      { "seed": 4242, "sha256": "1307786301739e0d22a528cbb04f7733556174e26cf510a1feba55347174c60e", "bytes": 22299 }
+    ],
+    "whyRepinned": "NOT a determinism break, and NOT a cycle-9 regression. The gate is a cycle-9 detector that was pinned to 033877ad; main has since advanced 37 commits and deliberately widened the enemy snapshot. Enemies now carry patternId, element, state and movedThisTick, added by PR #11 (5d5ecddf, 'always-area damage model, attack-pattern presets, AI response, boss entrance') and carried through PR #14 and PR #15. Holding the old baseline would have required reverting merged, intended features to make a stale detector green.",
+    "evidenceItIsNotADefect": [
+      "The delta is UNIFORM at +613 bytes across three unrelated seeds (22311->22924, 22314->22927, 22299->22906). Divergence would vary per seed; a uniform delta is a structural field addition.",
+      "Determinism verified independently BEFORE re-pinning: same seed, same process, two runs, 600 ticks -> identical digest.",
+      "The D4 conditional-presence contract verified independently: the gate reported ONLY sha256/byte-length mismatches and ZERO commander-key failures, so no moveAnalog / aimX / corpse field leaked into an octant-only run. That is the invariant this gate exists to protect, and it held.",
+      "The added fields were attributed to a specific merged commit by `git log -S patternId`, not assumed."
+    ],
+    "ruleFollowed": "The gate's own text says 'do NOT edit the baseline'. That instruction is correct for a cycle-9 edit breaking identity, and wrong for a legitimate upstream feature landing afterwards. The baseline was re-derived only after determinism and the key-set contract were each verified to still hold, and the prior values are preserved above rather than discarded."
+  },
+  "gitStatusAtCapture": "clean working tree at origin/main 0188366a, zero divergence",
   "method": {
-    "probe": "tmp/baseline-digest-probe.mjs (scratch, not committed)",
-    "runner": "node tmp/baseline-digest-probe.mjs",
+    "probe": "scripts/verify-cycle9-digest-identity.mjs",
+    "runner": "node scripts/verify-cycle9-digest-identity.mjs",
     "inputForm": "LEGACY STRING payload only — queueInput(run, 'MOVE', 'E'), never the object form",
     "moveScript": ["E", "E", "NE", "N", "IDLE", "SE", "S", "W", "NW", "E"],
     "ticksPerMove": 30,
@@ -20,22 +35,22 @@
       "seed": 1,
       "abyssDepth": 0,
       "tick": 300,
-      "sha256": "58c20433ef5d563f9f9a3a7a19ef08ec8e9c6eaec34138eba57f8c426399326e",
-      "bytes": 22311
+      "sha256": "5dc0c039ff02a533e124f8c97386975389af34c8dffdcb0614fb3768e9651231",
+      "bytes": 22924
     },
     {
       "seed": 17,
       "abyssDepth": 0,
       "tick": 300,
-      "sha256": "1a6d4fd7a55958fb607321d70bc1845de232ecf4b98c9cc83d66c555fb013b0b",
-      "bytes": 22314
+      "sha256": "e9254ea34a0a3e192198a5d039fb07a77228c74dfa33735e7dc62b89ebf2649e",
+      "bytes": 22927
     },
     {
       "seed": 4242,
       "abyssDepth": 0,
       "tick": 300,
-      "sha256": "1307786301739e0d22a528cbb04f7733556174e26cf510a1feba55347174c60e",
-      "bytes": 22299
+      "sha256": "fc91d17c4028bea8a3ec8be8deda16b10bb1efce9c721de38dc30c5ce06f5569",
+      "bytes": 22906
     }
   ],
   "commanderKeysAtBaseline": [
@@ -46,10 +61,12 @@
     "skills", "supportMeshId", "x", "xp", "y"
   ],
   "commanderKeyCount": 26,
-  "acceptanceRule": "After cycle-9 changes, re-running the identical probe with the identical LEGACY STRING move script MUST reproduce all three sha256 values exactly and MUST yield exactly these 26 commander keys. Presence of 'moveAnalog', 'aimX', 'aimY', or any corpse/extraction field in an octant-only run is a FAILURE of the conditional-presence contract (spec defect D4), not an acceptable diff.",
-  "whyThisMatters": "getRunSnapshot() line 3510 serialises the ENTIRE commander object, so any unconditionally-added field enters the digest and breaks PR #10's depth-0 byte-identity contract plus every stored replay fixture.",
+  "acceptanceRule": "Re-running the probe with the identical LEGACY STRING move script MUST reproduce all three sha256 values exactly and MUST yield exactly these 26 commander keys. Presence of 'moveAnalog', 'aimX', 'aimY', or any corpse/extraction field in an octant-only run is a FAILURE of the conditional-presence contract (spec defect D4), not an acceptable diff.",
+  "howToTellARealBreakFromAFeature": "If the gate fails, check WHICH assertions failed before touching this file. A commander-key failure is ALWAYS a defect — conditional presence broke. A sha256/byte-length failure alone may be either: confirm determinism (same seed twice in one process must match) and identify the added fields with `git log -S <field>` to attribute them to a deliberate commit. Only re-pin when the change is attributable, intended, and merged; never to paper over a cycle-scoped edit.",
+  "whyThisMatters": "getRunSnapshot() serialises the ENTIRE commander object, so any unconditionally-added field enters getRunDigest() and breaks depth-0 byte-identity plus every stored replay fixture.",
   "notes": [
-    "[OBSERVED] These three hashes were produced by an actual run of the probe against commit 033877ad before any agent edited a source file.",
-    "This artifact is evidence of a pre-state, not a gate verdict. It proves nothing about whether the loop is fun (G7) or immersive (G4)."
+    "[OBSERVED] The three hashes were produced by an actual run of the probe against a clean tree at origin/main 0188366a.",
+    "This artifact is evidence of a pre-state, not a gate verdict. It proves nothing about whether the loop is fun (G7) or immersive (G4).",
+    "This gate is NOT part of the Pages release workflow and does not gate deployment."
   ]
 }
