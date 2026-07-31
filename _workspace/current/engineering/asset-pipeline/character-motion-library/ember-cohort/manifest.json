@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "_workspace/current/engineering/asset-pipeline/tools/build-character-motion-library-blender.py",
-  "generatedAt": "2026-07-31T02:42:02.846025+00:00",
+  "generatedAt": "2026-07-29T17:57:20.782376+00:00",
   "assetId": "ember-cohort",
   "role": "radiant-vanguard",
   "category": "enemies",
@@ -11,8 +11,8 @@
   "targetRig": "def-humanoid-v1",
   "restPose": "natural",
   "model": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/model.glb",
-  "modelSha256": "19f47913aaf9562e399f47ff1bd0586a94cbb5d152fa383aed6f212acbd27161",
-  "modelBytes": 12335160,
+  "modelSha256": "4b59c24d94c9eb827ad3ff82e2450802250297d562d4ee4acd7d5411a249c5af",
+  "modelBytes": 12305508,
   "reviewBlend": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/review.blend",
   "rigReport": "_workspace/current/engineering/asset-pipeline/character-motion-library/ember-cohort/rig-report.json",
   "targetBoneNames": [
@@ -225,105 +225,10 @@
     {
       "action": "die",
       "clipName": "ember-cohort::die::v01",
-      "source": "Defeated.fbx",
-      "sourceSha256": "311db0f498f38850210c566ea24f9928e6c0856459d2ddd9d9ab19ef9503fb4f",
-      "frameStart": 1,
-      "frameEnd": 163,
-      "sourceFps": 24,
-      "durationSeconds": 6.75,
-      "sourceRootTravel": {
-        "bone_name": "mixamorig:Hips",
-        "local": {
-          "min": {
-            "x": -7.255979,
-            "y": -8.568213,
-            "z": -11.059397
-          },
-          "max": {
-            "x": -0.706646,
-            "y": -4.894026,
-            "z": 5.925982
-          },
-          "delta": {
-            "x": 6.549333,
-            "y": 3.674186,
-            "z": 16.985378
-          }
-        },
-        "world": {
-          "min": {
-            "x": -0.07256,
-            "y": -0.05926,
-            "z": 0.839867
-          },
-          "max": {
-            "x": -0.007066,
-            "y": 0.110594,
-            "z": 0.876609
-          },
-          "delta": {
-            "x": 0.065493,
-            "y": 0.169854,
-            "z": 0.036742
-          }
-        },
-        "threejs_ground_interpretation": {
-          "local": {
-            "min": {
-              "x": -7.255979,
-              "y": -11.059397,
-              "z": -8.568213
-            },
-            "max": {
-              "x": -0.706646,
-              "y": 5.925982,
-              "z": -4.894026
-            },
-            "delta": {
-              "x": 6.549333,
-              "y": 16.985378,
-              "z": 3.674186
-            },
-            "axis_interpretation": "Blender X/Y ground-plane, Z up -> Three.js X/Z ground-plane, Y up",
-            "mapping": {
-              "blender_x_to_three_x": "same",
-              "blender_y_to_three_z": "same",
-              "blender_z_to_three_y": "same"
-            }
-          },
-          "world": {
-            "min": {
-              "x": -0.07256,
-              "y": 0.839867,
-              "z": -0.05926
-            },
-            "max": {
-              "x": -0.007066,
-              "y": 0.876609,
-              "z": 0.110594
-            },
-            "delta": {
-              "x": 0.065493,
-              "y": 0.036742,
-              "z": 0.169854
-            },
-            "axis_interpretation": "Blender X/Y ground-plane, Z up -> Three.js X/Z ground-plane, Y up",
-            "mapping": {
-              "blender_x_to_three_x": "same",
-              "blender_y_to_three_z": "same",
-              "blender_z_to_three_y": "same"
-            }
-          }
-        },
-        "ground_motion": {
-          "x": 6.549333,
-          "y": 3.674186,
-          "xz_plane_delta": 6.549333
-        },
-        "travel_type": "travel"
-      },
+      "source": "scripts/rig-character-asset-blender.py",
+      "sourceSha256": "cb9c2308c613d9fdb8556ca1946dfdbd0486a50b0bc26ae2fad4b79d6c97bfc7",
       "loop": false,
-      "gain": 0.92
+      "kind": "authored-fallback"
     }
   ],
   "rights": {
@@ -505,9 +410,9 @@
       }
     },
     "quaternionNormalization": {
-      "rotationAccessors": 242,
-      "rotationKeyframes": 11242,
-      "signFlips": 429
+      "rotationAccessors": 244,
+      "rotationKeyframes": 9384,
+      "signFlips": 416
     },
     "receiptCrossChecks": {
       "meshNodesMatchSemanticReceipt": true,

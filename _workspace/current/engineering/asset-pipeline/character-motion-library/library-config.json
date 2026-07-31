@@ -31,7 +31,7 @@
         "critical": {"source": "Jump Attack.fbx", "loop": false, "gain": 0.95},
         "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 1.0},
         "defence": {"source": "Body Block.fbx", "loop": false, "gain": 0.82},
-        "die": {"source": "Defeated.fbx", "loop": false, "gain": 0.95},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
         "show": {"source": "Draw Sword 1.fbx", "loop": false, "gain": 0.9}
       }
     },
@@ -50,7 +50,7 @@
         "critical": {"source": "Opening.fbx", "loop": false, "gain": 0.9},
         "avoid": {"source": "Change Direction.fbx", "loop": false, "gain": 0.8},
         "defence": {"source": "Great Sword Blocking.fbx", "loop": false, "gain": 0.72},
-        "die": {"source": "Defeated.fbx", "loop": false, "gain": 0.9},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
         "show": {"source": "Opening.fbx", "loop": false, "gain": 0.88}
       }
     },
@@ -69,7 +69,7 @@
         "critical": {"source": "Sword And Shield Jump.fbx", "loop": false, "gain": 0.92},
         "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 0.9},
         "defence": {"source": "Sword And Shield Block.fbx", "loop": false, "gain": 0.88},
-        "die": {"source": "Defeated.fbx", "loop": false, "gain": 0.92},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
         "show": {"source": "Draw Sword 1.fbx", "loop": false, "gain": 0.9}
       }
     },
@@ -88,7 +88,7 @@
         "critical": {"source": "Standing Torch Jump.fbx", "loop": false, "gain": 0.95},
         "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 0.88},
         "defence": {"source": "Great Sword Blocking.fbx", "loop": false, "gain": 0.9},
-        "die": {"source": "Defeated.fbx", "loop": false, "gain": 0.95},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
         "show": {"source": "Draw Sword 1.fbx", "loop": false, "gain": 0.92}
       }
     },
@@ -107,7 +107,7 @@
         "critical": {"source": "Body Block.fbx", "loop": false, "gain": 0.82},
         "avoid": {"source": "Change Direction.fbx", "loop": false, "gain": 0.62},
         "defence": {"source": "Block With Rifle.fbx", "loop": false, "gain": 0.7},
-        "die": {"source": "Defeated.fbx", "loop": false, "gain": 0.82},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
         "show": {"source": "Opening.fbx", "loop": false, "gain": 0.76}
       }
     },
@@ -126,7 +126,7 @@
         "critical": {"source": "Shooting Arrow.fbx", "loop": false, "gain": 0.88},
         "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 0.78},
         "defence": {"source": "Great Sword Blocking.fbx", "loop": false, "gain": 0.78},
-        "die": {"source": "Defeated.fbx", "loop": false, "gain": 0.88},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
         "show": {"source": "Opening.fbx", "loop": false, "gain": 0.86}
       }
     },
@@ -145,7 +145,7 @@
         "critical": {"source": "Shooting Arrow.fbx", "loop": false, "gain": 0.88},
         "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 0.82},
         "defence": {"source": "Body Block.fbx", "loop": false, "gain": 0.75},
-        "die": {"source": "Defeated.fbx", "loop": false, "gain": 0.88},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
         "show": {"source": "Opening.fbx", "loop": false, "gain": 0.84}
       }
     },
@@ -164,7 +164,7 @@
         "critical": {"source": "Drop Kick.fbx", "loop": false, "gain": 0.95},
         "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 1.0},
         "defence": {"source": "Body Block.fbx", "loop": false, "gain": 0.84},
-        "die": {"source": "Defeated.fbx", "loop": false, "gain": 0.95},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
         "show": {"source": "Look Over Shoulder.fbx", "loop": false, "gain": 0.9}
       }
     },
@@ -183,7 +183,7 @@
         "critical": {"source": "Jump Attack.fbx", "loop": false, "gain": 0.96},
         "avoid": {"source": "Change Direction.fbx", "loop": false, "gain": 0.94},
         "defence": {"source": "Body Block.fbx", "loop": false, "gain": 0.78},
-        "die": {"source": "Defeated.fbx", "loop": false, "gain": 0.96},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
         "show": {"source": "Catwalk Idle To Twist R.fbx", "loop": false, "gain": 0.88}
       }
     },
@@ -202,7 +202,7 @@
         "critical": {"source": "Standing Torch Jump.fbx", "loop": false, "gain": 0.94},
         "avoid": {"source": "Dodging.fbx", "loop": false, "gain": 0.84},
         "defence": {"source": "Great Sword Blocking.fbx", "loop": false, "gain": 0.94},
-        "die": {"source": "Defeated.fbx", "loop": false, "gain": 0.94},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
         "show": {"source": "Draw Sword 1.fbx", "loop": false, "gain": 0.92}
       }
     },
@@ -221,7 +221,7 @@
         "critical": {"source": "Standing 2H Magic Attack 01.fbx", "loop": false, "gain": 0.94},
         "avoid": {"source": "Change Direction.fbx", "loop": false, "gain": 0.76},
         "defence": {"source": "Great Sword Blocking.fbx", "loop": false, "gain": 0.86},
-        "die": {"source": "Defeated.fbx", "loop": false, "gain": 0.94},
+        "die": {"source": "scripts/rig-character-asset-blender.py", "loop": false, "kind": "authored-fallback"},
         "show": {"source": "Opening.fbx", "loop": false, "gain": 0.92}
       }
     }
