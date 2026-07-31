@@ -1390,9 +1390,19 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
  * really executed), and absent `buffs`/`buffStats` keys at SNAPSHOT_VERSION 7. Only the bytes
  * are new; every precondition below was re-verified, not assumed.
  */
+/*
+ * REBASELINED 2026-07-31, cinder-span only: the ash gatehouse added two obstacles at the ingress
+ * band of `cinder-span`, which changes what a cinder-span tick DOES (collision and the paths
+ * enemies take through the doorway) and therefore moves these two windows. Scope was measured,
+ * not assumed: `abyss-chancel/71/1000` and `echo-throne/12/500` re-measured to their existing SHAs
+ * byte-for-byte, and all three rng-at-3000 fixtures below kept their pinned values, so nothing
+ * outside stage 1 moved. Preconditions re-measured for both repinned windows: zero DROP_SPAWNED,
+ * zero BUFF_APPLIED, window ran to completion, advanced dropRng, absent buffs/buffStats at
+ * SNAPSHOT_VERSION 7.
+ */
 const PRE_FEATURE_DIGEST_SHA256 = Object.freeze([
-  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "50860301b64464b00cbac792a661f18574f3cf6e65599e624433ead49db5abdf" },
-  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "c250e10ff1c0d1e70280646dbde592ba3d7bb6e29693161a5d067064dff6c57b" },
+  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "396a06a49febbbb9d0995d1ee121ebad8f59a84aa6984f2ce2aeb769878c6550" },
+  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "980f019efc762928222acc3dbf91d837684e7e2dc262977f7a5f079098222521" },
   { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "ade3e989e89d3a3037ada50b5bebaa6a2f073cc395545d58efcb89313717805b" },
   { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "cf3f32b176712c9cfec62be5c071645c342e714962a9db96298b02237ef46b32" },
 ]);

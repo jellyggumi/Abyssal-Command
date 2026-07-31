@@ -1008,8 +1008,8 @@ export const STAGE_TACTICS = freeze({
     extraction: { id: "cinder-bind", x: 15400, y: 6000, radius: 1000, windowTicks: 600 },
     spawnDirections: ["W", "SW"], seededVariation: { timingJitterTicks: 12, densityDelta: 1, laneJitter: 300 },
     mapVariant: freeze({
-      version: "v1",
-      modules: freeze(["ember-relay-spire", "drowned-forge-arch"]),
+      version: "v2",
+      modules: freeze(["ember-relay-spire", "drowned-forge-arch", "ash-gatehouse"]),
       protectedCorridor: freeze({
         declared: true,
         preservesObjectives: true,
