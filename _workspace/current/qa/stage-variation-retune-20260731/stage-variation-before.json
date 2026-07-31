@@ -1,0 +1,453 @@
+{
+  "scanner": "scan-stage-variation.mjs",
+  "schemaVersion": "stage-variation-scan-v1",
+  "classification": "deterministic-catalog-scan-not-playtest-evidence",
+  "thresholds": {
+    "maxSharedRatio": 0.5,
+    "escalation": "responseTypes non-decreasing in campaign order and last > first"
+  },
+  "stageIds": [
+    "cinder-span",
+    "abyss-chancel",
+    "echo-throne"
+  ],
+  "axisNames": [
+    "waveKindRhythm",
+    "waveCount",
+    "cadenceTicks",
+    "holdTicks",
+    "gateIntegrity",
+    "classRotation",
+    "midbossEnemy",
+    "pressureLane",
+    "spawnDirections",
+    "normalConcurrency",
+    "bigConcurrency",
+    "spawnIntervalPair",
+    "commitmentCapPair",
+    "objectiveShape",
+    "seededVariation",
+    "hazardDps",
+    "occupationHoldTicks",
+    "extractionWindowTicks",
+    "elevationRangeMultiplier",
+    "eliteKind"
+  ],
+  "axesByStage": {
+    "cinder-span": {
+      "waveKindRhythm": "nnbmnnbmnb",
+      "waveCount": "10",
+      "cadenceTicks": "1020",
+      "holdTicks": "10200",
+      "gateIntegrity": "1600",
+      "classRotation": "rusher>flanker>ranged",
+      "midbossEnemy": "guardian",
+      "pressureLane": "chokepath",
+      "spawnDirections": "W,SW",
+      "normalConcurrency": "8",
+      "bigConcurrency": "22",
+      "spawnIntervalPair": "18/5",
+      "commitmentCapPair": "3/7",
+      "objectiveShape": "corridor:5>arena:5",
+      "seededVariation": "12/1/300",
+      "hazardDps": "8",
+      "occupationHoldTicks": "180",
+      "extractionWindowTicks": "600",
+      "elevationRangeMultiplier": "1.08",
+      "eliteKind": "rusher"
+    },
+    "abyss-chancel": {
+      "waveKindRhythm": "nbnmnbnmnb",
+      "waveCount": "10",
+      "cadenceTicks": "1050",
+      "holdTicks": "10500",
+      "gateIntegrity": "1700",
+      "classRotation": "ranged>flanker>rusher>guardian",
+      "midbossEnemy": "flanker",
+      "pressureLane": "flank",
+      "spawnDirections": "W,SW,NW",
+      "normalConcurrency": "9",
+      "bigConcurrency": "24",
+      "spawnIntervalPair": "24/6",
+      "commitmentCapPair": "4/8",
+      "objectiveShape": "corridor:4>arena:6",
+      "seededVariation": "27/1/660",
+      "hazardDps": "16",
+      "occupationHoldTicks": "330",
+      "extractionWindowTicks": "600",
+      "elevationRangeMultiplier": "1.13",
+      "eliteKind": "flanker"
+    },
+    "echo-throne": {
+      "waveKindRhythm": "nnbmnnbmnnb",
+      "waveCount": "11",
+      "cadenceTicks": "981",
+      "holdTicks": "10800",
+      "gateIntegrity": "1800",
+      "classRotation": "flanker>ranged>guardian",
+      "midbossEnemy": "guardian",
+      "pressureLane": "chokepath",
+      "spawnDirections": "W,SW,NW",
+      "normalConcurrency": "10",
+      "bigConcurrency": "26",
+      "spawnIntervalPair": "15/4",
+      "commitmentCapPair": "4/8",
+      "objectiveShape": "corridor:6>arena:5",
+      "seededVariation": "18/1/420",
+      "hazardDps": "10",
+      "occupationHoldTicks": "240",
+      "extractionWindowTicks": "600",
+      "elevationRangeMultiplier": "1.1",
+      "eliteKind": "ranged"
+    }
+  },
+  "axisDistinctness": [
+    {
+      "axis": "waveKindRhythm",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "nnbmnnbmnb",
+        "abyss-chancel": "nbnmnbnmnb",
+        "echo-throne": "nnbmnnbmnnb"
+      }
+    },
+    {
+      "axis": "waveCount",
+      "distinctValues": 2,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "10",
+        "abyss-chancel": "10",
+        "echo-throne": "11"
+      }
+    },
+    {
+      "axis": "cadenceTicks",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "1020",
+        "abyss-chancel": "1050",
+        "echo-throne": "981"
+      }
+    },
+    {
+      "axis": "holdTicks",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "10200",
+        "abyss-chancel": "10500",
+        "echo-throne": "10800"
+      }
+    },
+    {
+      "axis": "gateIntegrity",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "1600",
+        "abyss-chancel": "1700",
+        "echo-throne": "1800"
+      }
+    },
+    {
+      "axis": "classRotation",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "rusher>flanker>ranged",
+        "abyss-chancel": "ranged>flanker>rusher>guardian",
+        "echo-throne": "flanker>ranged>guardian"
+      }
+    },
+    {
+      "axis": "midbossEnemy",
+      "distinctValues": 2,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "guardian",
+        "abyss-chancel": "flanker",
+        "echo-throne": "guardian"
+      }
+    },
+    {
+      "axis": "pressureLane",
+      "distinctValues": 2,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "chokepath",
+        "abyss-chancel": "flank",
+        "echo-throne": "chokepath"
+      }
+    },
+    {
+      "axis": "spawnDirections",
+      "distinctValues": 2,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "W,SW",
+        "abyss-chancel": "W,SW,NW",
+        "echo-throne": "W,SW,NW"
+      }
+    },
+    {
+      "axis": "normalConcurrency",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "8",
+        "abyss-chancel": "9",
+        "echo-throne": "10"
+      }
+    },
+    {
+      "axis": "bigConcurrency",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "22",
+        "abyss-chancel": "24",
+        "echo-throne": "26"
+      }
+    },
+    {
+      "axis": "spawnIntervalPair",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "18/5",
+        "abyss-chancel": "24/6",
+        "echo-throne": "15/4"
+      }
+    },
+    {
+      "axis": "commitmentCapPair",
+      "distinctValues": 2,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "3/7",
+        "abyss-chancel": "4/8",
+        "echo-throne": "4/8"
+      }
+    },
+    {
+      "axis": "objectiveShape",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "corridor:5>arena:5",
+        "abyss-chancel": "corridor:4>arena:6",
+        "echo-throne": "corridor:6>arena:5"
+      }
+    },
+    {
+      "axis": "seededVariation",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "12/1/300",
+        "abyss-chancel": "27/1/660",
+        "echo-throne": "18/1/420"
+      }
+    },
+    {
+      "axis": "hazardDps",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "8",
+        "abyss-chancel": "16",
+        "echo-throne": "10"
+      }
+    },
+    {
+      "axis": "occupationHoldTicks",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "180",
+        "abyss-chancel": "330",
+        "echo-throne": "240"
+      }
+    },
+    {
+      "axis": "extractionWindowTicks",
+      "distinctValues": 1,
+      "stageCount": 3,
+      "constantAcrossCampaign": true,
+      "values": {
+        "cinder-span": "600",
+        "abyss-chancel": "600",
+        "echo-throne": "600"
+      }
+    },
+    {
+      "axis": "elevationRangeMultiplier",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "1.08",
+        "abyss-chancel": "1.13",
+        "echo-throne": "1.1"
+      }
+    },
+    {
+      "axis": "eliteKind",
+      "distinctValues": 3,
+      "stageCount": 3,
+      "constantAcrossCampaign": false,
+      "values": {
+        "cinder-span": "rusher",
+        "abyss-chancel": "flanker",
+        "echo-throne": "ranged"
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "stages": [
+        "cinder-span",
+        "abyss-chancel"
+      ],
+      "axisCount": 20,
+      "sharedAxes": [
+        "waveCount",
+        "extractionWindowTicks"
+      ],
+      "sharedCount": 2,
+      "sharedRatio": 0.1
+    },
+    {
+      "stages": [
+        "cinder-span",
+        "echo-throne"
+      ],
+      "axisCount": 20,
+      "sharedAxes": [
+        "midbossEnemy",
+        "pressureLane",
+        "extractionWindowTicks"
+      ],
+      "sharedCount": 3,
+      "sharedRatio": 0.15
+    },
+    {
+      "stages": [
+        "abyss-chancel",
+        "echo-throne"
+      ],
+      "axisCount": 20,
+      "sharedAxes": [
+        "spawnDirections",
+        "commitmentCapPair",
+        "extractionWindowTicks"
+      ],
+      "sharedCount": 3,
+      "sharedRatio": 0.15
+    }
+  ],
+  "escalation": [
+    {
+      "order": 1,
+      "stageId": "cinder-span",
+      "scale": 100,
+      "holdSeconds": 170,
+      "responseTypes": 16,
+      "responses": [
+        "boss:s1-cinder-warden",
+        "class:flanker",
+        "class:ranged",
+        "class:rusher",
+        "field:elevation",
+        "field:extraction",
+        "field:hazard",
+        "field:occupation",
+        "lane:chokepath",
+        "midboss:guardian",
+        "objective:arena",
+        "objective:corridor",
+        "policy:elite-escort",
+        "policy:flank",
+        "policy:gate-pressure",
+        "policy:resource-denial"
+      ]
+    },
+    {
+      "order": 2,
+      "stageId": "abyss-chancel",
+      "scale": 115,
+      "holdSeconds": 175,
+      "responseTypes": 17,
+      "responses": [
+        "boss:s2-veil-tactician",
+        "class:flanker",
+        "class:guardian",
+        "class:ranged",
+        "class:rusher",
+        "field:elevation",
+        "field:extraction",
+        "field:hazard",
+        "field:occupation",
+        "lane:flank",
+        "midboss:flanker",
+        "objective:arena",
+        "objective:corridor",
+        "policy:elite-escort",
+        "policy:flank",
+        "policy:gate-pressure",
+        "policy:resource-denial"
+      ]
+    },
+    {
+      "order": 3,
+      "stageId": "echo-throne",
+      "scale": 130,
+      "holdSeconds": 180,
+      "responseTypes": 16,
+      "responses": [
+        "boss:s3-gate-sovereign",
+        "class:flanker",
+        "class:guardian",
+        "class:ranged",
+        "field:elevation",
+        "field:extraction",
+        "field:hazard",
+        "field:occupation",
+        "lane:chokepath",
+        "midboss:guardian",
+        "objective:arena",
+        "objective:corridor",
+        "policy:elite-escort",
+        "policy:flank",
+        "policy:gate-pressure",
+        "policy:resource-denial"
+      ]
+    }
+  ],
+  "worstSharedRatio": 0.15,
+  "failures": [
+    "escalation: echo-throne asks for 16 response types, fewer than abyss-chancel (17)",
+    "escalation: the last stage (16) must ask for more response types than the first (16)"
+  ],
+  "pass": false
+}

@@ -1365,7 +1365,12 @@ const PRE_FEATURE_DIGEST_SHA256 = Object.freeze([
   { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "50860301b64464b00cbac792a661f18574f3cf6e65599e624433ead49db5abdf" },
   { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "c250e10ff1c0d1e70280646dbde592ba3d7bb6e29693161a5d067064dff6c57b" },
   { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "ade3e989e89d3a3037ada50b5bebaa6a2f073cc395545d58efcb89313717805b" },
-  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "cf3f32b176712c9cfec62be5c071645c342e714962a9db96298b02237ef46b32" },
+  // Re-baselined 2026-07-31 (echo-throne wave-doctrine retune: four-class rotation, the
+  // normal/mid/normal/big/normal rhythm and a ranged mid-boss). The stage's schedule changed, so its
+  // snapshot bytes changed; the CLAIM is unchanged and was re-verified for this window — zero
+  // DROP_SPAWNED, zero BUFF_APPLIED, completed window, advanced dropRng, absent buff keys. The other
+  // three rows are byte-identical, which is what proves the retune stayed inside one stage.
+  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "01972547729aa402735cb70eef54c126a816ec062bc2e165a511e04de825107a" },
 ]);
 
 // ---------------------------------------------------------------------------------------------
