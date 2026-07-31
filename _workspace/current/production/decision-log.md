@@ -255,3 +255,43 @@ evidence_state: "[OBSERVED] — 실측·결정성 통과. p95 프레임 시간�
 - 빅웨이브 16기 동시 + 광역 VFX의 **p95 프레임 시간 미측정** (계약 ≤16.7 ms, 비인스턴스드 렌더러).
 - 봇 런은 tick ~19200 압박 데드라인에서 DEFEAT하나 **변경 전후 동일 지점**이다. 승률은 사람 플레이 게이트 소관.
 - `echo-throne` 원거리 조합으로 인한 밀도 미달 — 조합/반경 판정 필요 (수치 권위).
+
+---
+
+## D-20260731-01 — pull 동기화 시 이 워크트리의 미커밋 초안 처리
+
+`main`이 52 커밋 앞선 상태(`7a98515` → `e240809`, PR #10–#17)에서 pull을 수행했다.
+이 워크트리에는 커밋되지 않은 tracked 수정 16개가 있었고, 그중 9개가 유입분과 충돌했다.
+
+### 처리
+
+| 파일 | 처리 | 근거 |
+|---|---|---|
+| `app.js`, `styles.css`, `defense-catalog.js`, `defense-run-simulation.js` | **upstream 채택** | 로컬 초안은 상류가 이미 다른 설계로 대체함 (아래 증거) |
+| `_workspace/current/qa/stage-runtime-proof/*.png`, `stage-runtime-summary.json` | **upstream 채택** | cycle 9/10 실측본이 최신 |
+| `.gitignore` | **양쪽 병합** — upstream 규칙 + 로컬의 `.vercel`, `.env*` | 두 항목은 상류에 없고, 작업 트리에 실제로 `.vercel/`·`.env.local`이 존재해 유출 방지가 필요 |
+| `llm-wiki/**`, `assets/mesh/boss/**/*.glb`, `qa/evidence/gates/G2/*.receipt.json` | **로컬 유지** | 상류가 건드리지 않아 충돌 없음. 다른 세션 작업이므로 그대로 둔다 |
+
+### 대체 판정의 증거 [OBSERVED]
+
+- `defense-run-simulation.js`: 로컬 초안은 `FSM.*` 상태기계(perceive/decide/stagger, 387줄)를 담고 있으나,
+  상류 파일에는 `fsmState`/`FSM.` 출현이 **0회**이고 대신 `AI_RESPONSE_PATTERNS` + always-area 전투(PR #11)가 있다.
+  같은 문제를 푸는 **평행 설계**이며 상류 쪽이 테스트·증거와 함께 머지되었다.
+- `app.js`: 로컬은 군단 정원 `loadout.length}/3`으로 고정. 상류 cycle 9는 정원 3 → 10으로 상향했다.
+- `styles.css` / `app.js`의 조이스틱·`#skill-actions` 초안은 상류 cycle 9/10 HUD 오버홀에 이미 포함(각각 15/31회 매칭).
+
+### 복구 경로 (초안은 파기되지 않음)
+
+- `git stash list` → `stash@{0}` "pre-pull-sync 20260731T011927Z"
+- `~/.abyssal-pull-backup/uncommitted-tracked-20260731T011927Z.patch` (+ `-binary-` 버전)
+- 태그 `pre-pull-sync-20260731T011927Z` = `7a98515`
+
+### 동기화 후 검증 [OBSERVED]
+
+- `node --check` — `battle-realtime-three.js`, `app.js`, `defense-run-simulation.js` 통과.
+- `node --test` 11개 파일 → **116/116 통과**
+  (`stage-framing-and-motion-profile`, `camera-slice-contract`, `realtime-motion-routing`,
+  `overlay-runtime-qa`, `defense-asset-manifest`, `area-combat-model`,
+  `aoe-burst-wide-hit-contract`, `audio-sample-hybrid`, `combat-presentation-contract`,
+  `world-presentation-contract`, `ingame-motion-pack`).
+- D-20260730-01의 모션 프로파일·방향 리액션·스테이지 카메라 봉투는 상류 리라이트 이후에도 유지된다.
