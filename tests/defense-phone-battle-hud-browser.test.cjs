@@ -544,23 +544,10 @@ test("stable combat control IDs remain unique and their native keyboard activati
       assert.equal(await control.evaluate((node) => document.activeElement === node), true, `${selector} must accept keyboard focus`);
       const previous = Number(await run.surface.getAttribute("data-defense-input-seq"));
       await run.page.keyboard.press(key);
-      // The dismissal above runs BEFORE the press, so it cannot cover the case the comment at
-      // the top of this helper describes: the press ITSELF crosses the XP threshold, the offer
-      // opens, and `defense-run-simulation.js` returns early while one is open -- so
-      // `data-defense-input-seq` never increments and a bare waitForFunction burns its full
-      // timeout. That is how test 3 failed on `main` (runs fb667021 and 012ea15d,
-      // `waitForFunction: Timeout 90000ms exceeded`). Poll instead, dismissing an offer that
-      // appears after the press, so the wait tolerates the threshold crossing rather than
-      // hanging on it. Same total budget; the retry is what changes.
-      const seqAdvanced = async () => Number(
-        await run.surface.getAttribute("data-defense-input-seq"),
-      ) > previous;
-      const deadline = Date.now() + 90_000;
-      while (!(await seqAdvanced())) {
-        assert.ok(Date.now() < deadline, `${selector} activation never advanced data-defense-input-seq`);
-        await dismissGrowthOffer();
-        await run.page.waitForTimeout(100);
-      }
+      await run.page.waitForFunction(
+        ({ prior }) => Number(document.querySelector("#defense-battle-surface")?.dataset.defenseInputSeq) > prior,
+        { prior: previous },
+      );
     };
 
     await activateAndWaitForInput("#manual-attack", "Enter");

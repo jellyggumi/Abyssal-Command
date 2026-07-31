@@ -511,14 +511,6 @@ test("the joystick is the primary movement control at every viewport", async () 
         const rect = await button.boundingBox();
         assert.ok(rect && rect.width >= 44 && rect.height >= 44,
           `${options.label} ${direction} must retain a 44px target`);
-        // INSIDE the loop, mirroring `:387` and for the same measured reason. The growth offer
-        // is modal and steals focus, and it is recurrent: XP can cross a level threshold between
-        // iterations, so an offer that did not exist at loop entry opens mid-loop and the very
-        // next `activeElement` assert fails with `false !== true`. That is exactly how this test
-        // failed on `main` -- run 30602090979, "coarse portrait E must stay keyboard focusable".
-        // The sibling test at `:381-389` already carried this mitigation; this loop drove the
-        // same focus assertions without it.
-        await dismissGrowthOffer(run);
         await button.focus();
         assert.equal(await button.evaluate((node) => document.activeElement === node), true,
           `${options.label} ${direction} must stay keyboard focusable`);
