@@ -99,9 +99,11 @@ explicit audit (CLAUDE.md §3). Nothing generated goes straight into `assets/mot
 
 ## 5. What was applied in this cycle
 
-- The overlay clip roster grew from the original 9 actions to 20, adding the four directional
+- The overlay clip roster grew from the original 9 actions to **21**, adding the four directional
   `hit_*`, the four directional `bighit_*`, `attack_melee`, `attack_ranged`, `die` and `show`
-  (`scripts/retarget-ingame-motion-blender.py` `CLIPS`).
+  (`scripts/retarget-ingame-motion-blender.py` `CLIPS`, 21 `ClipSpec` entries; mirrored by
+  `OVERLAY_CLIP_SOURCES` in `tests/ingame-motion-pack.test.mjs`, 21 keys). 9 + 12 = 21; this line
+  previously read 20, which was an arithmetic error, not a roster change.
 - Those keys were *already routed* by the runtime (`hitReactionKey`, `triggerAttackDelivery`) with a
   deterministic fallback to the flat key, so shipping the clips turns direction-aware reactions on
   for every compatible rig instead of leaving the routing dormant.

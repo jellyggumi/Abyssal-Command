@@ -17,7 +17,7 @@ import {
   BOSS_PRESSURE_GRACE_TICKS,
 } from "../defense-run-simulation.js";
 import { canonicalStringify } from "../g2-full-route-runner.js";
-import { OCTANT_VECTORS, SKILLS } from "../defense-catalog.js";
+import { OCTANT_VECTORS, SKILLS, SKILL_RANK_PASSIVE_SHARE } from "../defense-catalog.js";
 
 const STAGE_ID = "cinder-span";
 const LOADOUT = Object.freeze(["ember-cohort", "rift-lens", "veil-vanguard"]);
@@ -289,7 +289,13 @@ function buildCompositeRecord(before, after, events, target) {
     : cause === "WAVE_CLEARED" || cause === "ENCOUNTER_REWARD_GRANTED"
       ? (target === "gate" ? event.gateRecovered : event.commanderRecovered)
       : cause === "SKILL_SELECTED_PASSIVE_INTEGRITY"
-        ? SKILLS[event.skillId].maxIntegrity
+        // Rank-aware, mirroring `applySkillRankEffects`: a passive grants its full authored
+        // `maxIntegrity` at rank 1 and SKILL_RANK_PASSIVE_SHARE of it on every rank-up. Reading
+        // the flat catalog value assumed every selection was a first acquisition, so the moment a
+        // run ranked a passive UP the auditor expected 120 where the simulation applied 60 and
+        // reported it as an unobservable delta. The rank is on the event
+        // (`emit(run, "SKILL_SELECTED", { skillId, rank, rankUp })`), so this needs no new state.
+        ? Math.round(SKILLS[event.skillId].maxIntegrity * (event.rank === 1 ? 1 : SKILL_RANK_PASSIVE_SHARE))
         : cause === "WARDENS_VIGIL_REGEN"
           ? event.regen
         : cause === "WARDENS_WARD_TRIGGERED"
