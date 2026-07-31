@@ -164,6 +164,8 @@ test("re-picking a learned skill ranks it up instead of duplicating it", () => {
       picks += 1;
       if (owned) {
         const beforeDamage = snapshot.commander.basicDamage;
+        const beforePickupRange = snapshot.commander.pickupRange;
+        const beforeMaxIntegrity = snapshot.commander.maxIntegrity;
         const beforeRank = snapshot.commander.skillRanks[owned] ?? 1;
         run = advanceDefenseRun(run, 1);
         const after = getRunSnapshot(run);
@@ -171,8 +173,20 @@ test("re-picking a learned skill ranks it up instead of duplicating it", () => {
         assert.equal(after.commander.skillRanks[owned], beforeRank + 1, "re-picking an owned skill raises its rank by one");
         assert.equal(after.commander.skills.filter((skillId) => skillId === owned).length, 1,
           "a rank-up must not duplicate the skill id");
-        if (SKILLS[owned].kind === "passive") {
-          assert.ok(after.commander.basicDamage > beforeDamage, "a passive rank-up banks more damage");
+        // A passive banks the stat it authors, not damage: eclipse-edge pays basicDamage,
+        // soul-magnet pays pickupRange, ward-binder pays maxIntegrity (defense-catalog.js SKILLS,
+        // applied by applySkillRankEffects in defense-run-simulation.js).
+        const banked = SKILLS[owned];
+        if (banked.kind === "passive") {
+          if (banked.basicDamage) {
+            assert.ok(after.commander.basicDamage > beforeDamage, "a basicDamage passive rank-up banks more damage");
+          }
+          if (banked.pickupRange) {
+            assert.ok(after.commander.pickupRange > beforePickupRange, "a pickupRange passive rank-up banks more reach");
+          }
+          if (banked.maxIntegrity) {
+            assert.ok(after.commander.maxIntegrity > beforeMaxIntegrity, "a maxIntegrity passive rank-up banks more integrity");
+          }
         }
         break;
       }
