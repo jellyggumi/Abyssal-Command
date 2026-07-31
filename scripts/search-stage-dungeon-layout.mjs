@@ -69,7 +69,8 @@ const seedCount = Number(process.argv[process.argv.indexOf("--seeds") + 1]) || 8
 const profile = STAGE_WORLD_PROFILES[stageId];
 const tactics = STAGE_TACTICS[stageId];
 const encounter = STAGE_ENCOUNTER_ROUTES[stageId];
-if (!profile || !MODULES[stageId]) throw new Error(`No module vocabulary for stage: ${stageId}`);
+if (!profile) throw new Error(`Unknown stage: ${stageId}`);
+if (!MODULES[stageId] && !process.argv.includes("--verify")) throw new Error(`No module vocabulary for stage: ${stageId}`);
 
 const { minX, maxX, minY, maxY } = profile.gameplay.bounds;
 const routes = profile.gameplay.routes;
@@ -105,6 +106,19 @@ const anchors = profile.presentation.visibilityAnchors.map((anchor) => ({
   id: anchor.id, x: anchor.placement.x, y: anchor.placement.y,
 }));
 
+/**
+ * Spawn approach and finale paths from `STAGE_ENCOUNTER_ROUTES`. `validateProfile` never sees these
+ * -- it only knows the world catalog's own routes -- so an obstacle can be perfectly legal there and
+ * still sit on a spawn entry. abyss-chancel shipped exactly that: a debris circle 453 units over
+ * `chancel-south-entry` starved the SW lane, cutting a measured run from 81 spawns to 27.
+ */
+const encounterPaths = (STAGE_ENCOUNTER_ROUTES[stageId]?.paths ?? []).map((path) => ({
+  id: path.id.split(":").slice(-2).join(":"),
+  waypoints: path.waypoints.map((waypoint) => ({
+    id: waypoint.id, x: waypoint.x, y: waypoint.y, radius: waypoint.radius ?? 400,
+  })),
+}));
+
 const jitterValue = (rng, target, spread) => Math.round((target + ((rng() * 2) - 1) * spread) / 100) * 100;
 const jitterRadius = (rng, [low, high]) => Math.round((low + (rng() * (high - low))) / 20) * 20;
 
@@ -132,7 +146,11 @@ function buildCandidate(seed) {
 
 function evaluate(candidate) {
   const failures = [];
-  const solids = [...candidate.obstacles, ...candidate.dressing, ...keptProps.map((prop) => ({ ...prop, frozen: true }))];
+  // In verify mode the candidate already carries every authored prop, so the kept-prop list would
+  // double-count and report each beacon as overlapping itself.
+  const solids = candidate.seed === "authored"
+    ? [...candidate.obstacles, ...candidate.dressing]
+    : [...candidate.obstacles, ...candidate.dressing, ...keptProps.map((prop) => ({ ...prop, frozen: true }))];
   let minRouteMargin = Infinity;
   let minNewRouteMargin = Infinity;
 
@@ -155,6 +173,18 @@ function evaluate(candidate) {
       const gap = Math.hypot(solids[left].x - solids[right].x, solids[left].y - solids[right].y)
         - (solids[left].radius + solids[right].radius);
       if (gap < 0) failures.push(`${solids[left].id} overlaps ${solids[right].id} by ${Math.round(-gap)}`);
+    }
+  }
+  for (const entry of candidate.obstacles) {
+    for (const path of encounterPaths) {
+      for (const waypoint of path.waypoints) {
+        const gap = Math.hypot(waypoint.x - entry.x, waypoint.y - entry.y) - (entry.radius + waypoint.radius);
+        if (gap < 0) failures.push(`${entry.id}: blocks spawn waypoint ${waypoint.id} by ${Math.round(-gap)}`);
+      }
+      for (let index = 1; index < path.waypoints.length; index += 1) {
+        const gap = pointSegmentDistance(entry, path.waypoints[index - 1], path.waypoints[index]) - entry.radius;
+        if (gap < 0) failures.push(`${entry.id}: blocks encounter path ${path.id} by ${Math.round(-gap)}`);
+      }
     }
   }
   for (const anchor of anchors) {
@@ -218,6 +248,42 @@ function evaluate(candidate) {
     pinches,
     score: failures.length ? -1 : Math.round(pinchScore + Math.min(minNewRouteMargin, 900)),
   };
+}
+
+/** The authored profile as a candidate, so a hand-written layout clears the same filters. */
+const authoredCandidate = () => ({
+  seed: "authored",
+  obstacles: profile.gameplay.obstacles.map((entry) => ({
+    id: entry.id,
+    role: "authored",
+    pinch: "authored",
+    x: entry.footprint.x,
+    y: entry.footprint.y,
+    radius: entry.footprint.radius,
+    frozen: true,
+  })),
+  dressing: profile.presentation.props
+    .filter((entry) => !profile.gameplay.obstacles.some((obstacle) => obstacle.propId === entry.id))
+    .map((entry) => ({
+      id: entry.id,
+      role: entry.role,
+      x: entry.placement.x,
+      y: entry.placement.y,
+      radius: entry.footprintRadius,
+      frozen: true,
+    })),
+});
+
+if (process.argv.includes("--verify")) {
+  const verdict = evaluate(authoredCandidate());
+  console.log(`stage: ${stageId}   mode: verify authored layout`);
+  console.log(`route margin ${verdict.minRouteMargin} | reachable cells ${verdict.reachableCells}`);
+  if (verdict.failures.length === 0) console.log("PASS — the authored layout clears every filter.");
+  else {
+    console.log(`FAIL — ${verdict.failures.length} finding(s):`);
+    for (const failure of verdict.failures) console.log(`  - ${failure}`);
+  }
+  process.exit(verdict.failures.length === 0 ? 0 : 1);
 }
 
 const results = Array.from({ length: seedCount }, (_, index) => evaluate(buildCandidate((index + 1) * 7)));

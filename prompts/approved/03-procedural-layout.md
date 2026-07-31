@@ -77,6 +77,7 @@ The curating human and the prompt-02 session. Both need coordinates, not screens
   evidence.
 
 **DONE WHEN:**
-`${seedCount}` seeds have been executed, every surviving candidate passes flood-fill and all five
-clearance filters, and one candidate is emitted as constructor tuples with its clearance margins
-listed.
+`${seedCount}` seeds have been executed, every surviving candidate passes flood-fill and all six
+clearance filters, one candidate is emitted as constructor tuples with its clearance margins listed,
+and `node scripts/search-stage-dungeon-layout.mjs ${stageId} --verify` exits 0 against the layout as
+it was finally authored.

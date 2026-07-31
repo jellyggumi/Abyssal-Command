@@ -9,6 +9,7 @@ the same commit that changes the invariant.
 | `approved/01-encounter-progression.md` | v1 | 2026-07-31 | `/skill:design-game-encounters` + C.R.A.F.T. | `STAGE_ENCOUNTER_ROUTES`, `STAGE_TACTICS`, `STAGES` | Initial. Objective/wave/cap envelope from the three shipped stages. |
 | `approved/02-stage-world-authoring.md` | v1 | 2026-07-31 | `/skill:author-game-levels` + C.R.A.F.T. | `validateProfile` lines 382-563 of `stage-world-catalog.js` | Initial. All 24 validator clauses inlined. |
 | `approved/03-procedural-layout.md` | v1 | 2026-07-31 | prompts.chat `Act as a Procedural Content Generator` (CC0) | `validateProfile` obstacle/route clearance clauses | Initial. Retargeted from infinite 2D caves to a bounded, hand-curated 24000x12000 plane. |
+| `approved/03-procedural-layout.md` | v2 | 2026-07-31 | same | + `STAGE_ENCOUNTER_ROUTES[].paths` | Added the spawn-approach clearance filter after the authored abyss-chancel layout blocked `chancel-south-entry` by 453 units, and required `--verify` to pass on the final authored layout. |
 | `approved/04-stage-dressing-assets.md` | v1 | 2026-07-31 | catalog §5 + `CLAUDE.md` §3 | prop count 8-14, provenance rule | Initial. |
 | `approved/05-vfx-and-budget.md` | v1 | 2026-07-31 | `/skill:create-game-vfx`, `/skill:optimize-threejs-games` | `vfxCue` path/clip contract | Initial. |
 | `approved/06-regression-and-proof.md` | v1 | 2026-07-31 | `/skill:test-playable-web-games` + `CLAUDE.md` §6 | `tests/**/*.test.mjs` | Initial. Records the 2026-07-31 baseline, including the pre-existing `stage-wave-doctrine` failure. |
