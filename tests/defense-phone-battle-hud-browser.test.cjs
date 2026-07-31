@@ -114,7 +114,12 @@ async function openUi(viewport, { forceCanvasMotionProbe = false, reducedMotion 
     // This file failed in BOTH run #15 (test 10) and run #16 (test 3) -- different assertions
     // each time, which is the signature of a fragile wait rather than a broken contract.
     // The next line waits on `[data-defense-ready="true"]`, the app's explicit readiness signal.
-    await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+    // `load`, not `domcontentloaded`: this suite measures STYLED geometry (control rects,
+    // heading columns, 44px targets), and DCL does not wait for stylesheets. That gap cost
+    // runs #17 and #18 in progression-mobile-ui-browser.cjs -- see its goto for the full
+    // reasoning. `load` is a strict superset of DCL, so it cannot regress a passing test
+    // except by timeout, and setDefaultTimeout(90_000) covers that.
+    await page.goto("/index.html", { waitUntil: "load" });
     const surface = page.locator('#defense-battle-surface[data-defense-ready="true"]');
     await surface.waitFor({ state: "visible" });
     assert.equal(await surface.getAttribute("data-stage-id"), "cinder-span", "a fresh browser must select Cinder Span");
