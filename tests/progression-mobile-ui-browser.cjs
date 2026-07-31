@@ -506,13 +506,36 @@ test("the joystick is the primary movement control at every viewport", async () 
         await run.page.$$eval("#movement-actions button[data-move]", (nodes) => nodes.map((node) => node.dataset.move)),
         ["N", "W", "IDLE", "E", "S"],
         `${options.label} must keep DOM order N,W,IDLE,E,S -- position is CSS-only (spec C2)`);
+      // The growth offer steals focus. `app.js` renders the level-up card and immediately calls
+      // `card.querySelector("button")?.focus()`, which is correct modal behaviour — but it races
+      // this loop: the run keeps ticking while the five buttons are checked, and a level-up landing
+      // mid-loop moves activeElement off the movement control between `focus()` and the assertion.
+      // On a fast machine the loop finishes first; on the CI runner it did not, and the failure
+      // always landed on `E` (the fourth of five, i.e. the most elapsed time) — see the
+      // "fine-pointer landscape E must stay keyboard focusable" break on main.
+      //
+      // Answering the offer before each check isolates the claim under test (a movement control is
+      // keyboard focusable) from an unrelated modal's focus management. The claim is unchanged: all
+      // five controls must still take focus, and no assertion is relaxed.
+      const settleGrowthOffer = async () => {
+        const pick = run.page.locator("#defense-growth-offer [data-pick]").first();
+        if (await pick.count()) await pick.click({ timeout: 5000 }).catch(() => undefined);
+      };
       for (const direction of ["N", "W", "IDLE", "E", "S"]) {
         const button = run.page.locator(`#movement-actions button[data-move="${direction}"]`);
         const rect = await button.boundingBox();
         assert.ok(rect && rect.width >= 44 && rect.height >= 44,
           `${options.label} ${direction} must retain a 44px target`);
+        await settleGrowthOffer();
         await button.focus();
-        assert.equal(await button.evaluate((node) => document.activeElement === node), true,
+        let focused = await button.evaluate((node) => document.activeElement === node);
+        if (!focused) {
+          // One retry, and only after clearing an offer that appeared inside the check itself.
+          await settleGrowthOffer();
+          await button.focus();
+          focused = await button.evaluate((node) => document.activeElement === node);
+        }
+        assert.equal(focused, true,
           `${options.label} ${direction} must stay keyboard focusable`);
       }
       // 3. NEW strength the old test could not have: the centre stays drag-only (spec C1).
