@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T10:58:51.033Z",
+  "runId": "20260728-stage-playtime-doctrine",
+  "method": "objective-seeking bot, shipped simulation imported unmodified",
+  "tickRate": 60,
+  "playtimeTargetSeconds": {
+    "min": 180,
+    "max": 360
+  },
+  "seeds": [
+    401,
+    402,
+    403,
+    404,
+    405
+  ],
+  "abyssDepth": 3,
+  "summaries": [
+    {
+      "stageId": "cinder-span",
+      "runs": 5,
+      "victories": 5,
+      "medianSeconds": 193.73,
+      "minSeconds": 191.98,
+      "maxSeconds": 197.73,
+      "withinTarget": 5,
+      "midbossSpawns": 10,
+      "medianMinGateIntegrity": 1588,
+      "abyssDepth": 3
+    }
+  ],
+  "runs": [
+    {
+      "stageId": "cinder-span",
+      "seed": 401,
+      "terminal": "VICTORY",
+      "ticks": 11519,
+      "seconds": 191.98,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 9,
+      "skillSelections": 9,
+      "rankUps": 2,
+      "finalLevel": 10,
+      "gateIntegrity": 1600,
+      "minGateIntegrity": 1560,
+      "abyssDepth": 3
+    },
+    {
+      "stageId": "cinder-span",
+      "seed": 402,
+      "terminal": "VICTORY",
+      "ticks": 11707,
+      "seconds": 195.12,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 9,
+      "skillSelections": 9,
+      "rankUps": 3,
+      "finalLevel": 10,
+      "gateIntegrity": 1600,
+      "minGateIntegrity": 1588,
+      "abyssDepth": 3
+    },
+    {
+      "stageId": "cinder-span",
+      "seed": 403,
+      "terminal": "VICTORY",
+      "ticks": 11864,
+      "seconds": 197.73,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 8,
+      "skillSelections": 8,
+      "rankUps": 3,
+      "finalLevel": 9,
+      "gateIntegrity": 1600,
+      "minGateIntegrity": 1588,
+      "abyssDepth": 3
+    },
+    {
+      "stageId": "cinder-span",
+      "seed": 404,
+      "terminal": "VICTORY",
+      "ticks": 11552,
+      "seconds": 192.53,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 8,
+      "skillSelections": 8,
+      "rankUps": 1,
+      "finalLevel": 9,
+      "gateIntegrity": 1600,
+      "minGateIntegrity": 1588,
+      "abyssDepth": 3
+    },
+    {
+      "stageId": "cinder-span",
+      "seed": 405,
+      "terminal": "VICTORY",
+      "ticks": 11624,
+      "seconds": 193.73,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 8,
+      "skillSelections": 8,
+      "rankUps": 2,
+      "finalLevel": 9,
+      "gateIntegrity": 1600,
+      "minGateIntegrity": 1560,
+      "abyssDepth": 3
+    }
+  ]
+}

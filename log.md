@@ -202,3 +202,37 @@ Each entry should list the files touched, the reason for the change, and any fol
 - Evidence artifacts and the digest probe are kept at
   `_workspace/current/qa/stage-variation-retune-20260731/` with a README naming the command behind
   each file; the throwaway module sandboxes were deleted. Nothing was committed by this session.
+
+## [2026-07-31] execution | echo-throne 리튠 격리 커밋 + 게이트·심연 뎁스 실측 (브랜치 `retune/echo-throne-response-types`)
+
+- deep-interview(17라운드, 모호도 5%) → ralplan 합의(3차 반복, Architect/Critic APPROVE_WITH_CHANGES)
+  → 사용자 승인 후 실행. 스펙 `.gjc/_session-019fb61e-.../specs/deep-interview-stage-systems-remaining-work.md`,
+  계획 `.gjc/_session-019fb61e-.../plans/ralplan/.../stage-03-planner.md`.
+- 격리: `git worktree add -b retune/echo-throne-response-types ../abyssal-retune HEAD` + `node_modules` 심볼릭 링크.
+  원 트리는 무변형이며 상대 세션(arrival choreography)의 미커밋 6파일은 그대로 남아 있다. 되돌림 태그
+  `pre-retune-worktree-20260731`.
+- 커밋 3개: ① 리튠+다변화 래칫+세 트랙 문서(55파일) ② `measure-stage-playtime.mjs`에 `--depth`/`--seed-list`/
+  `minGateIntegrity` ③ 증거.
+- **[OBSERVED] 아키타입 밸런스 붕괴가 처음 측정됨.** `stage1b-symmetric-trials-v1` 아티팩트는 저장소에 존재한
+  적이 없었다(qa/evidence 전역 검색 0건). 정규 생산자로 생성(100행/21.5초)하니 G2 임계 9-11/20 대비
+  striker 20/20, conductor 15/20, gambit 6/20, bulwark 5/20, rift 4/20. 깨끗한 HEAD 워크트리에서 동일 결과 →
+  이번 리튠과 무관한 사전 결함.
+- **[OBSERVED] 심연 뎁스는 규칙을 바꾸지만 난이도를 바꾸지 않는다.** cinder-span × 시드 401-405 × depth 0/1/2/3
+  = 20런에서 게이트 무결성 바닥값 중앙이 1580 / 1580 / 1577 / 1588, 플레이타임 192.58 / 193.33 / 192.33 /
+  193.73 s. 전 구간 5/5 승리·5/5 목표 내. 델타 최대 0.7%로 노이즈 수준이라 AC-10(모든 depth>0 < depth0,
+  그리고 depth2 ≤ depth3 ≤ depth1) **FAIL**. 측정 유효성은 별도 확인 — `snapshot.abyssDepth`, 회복캡
+  0.25/0.12/0.20, 정책 분포(추격 3 / 봉쇄 2+측면 2 / 측면 4)가 설계대로 전환된다. 계획대로 롤백하지 않고
+  설계-수치 불일치로 기록.
+- **[OBSERVED] 게이트 verdict 생성됨, disposition BLOCKED.** `qa/evidence/gates/stage1b-verdict.json`.
+  G6/G7/G8은 인자 미공급에 따른 자동 BLOCKED(사람 실측 종속), G2는 readiness BLOCKED(pressure 15런 샘플플랜
+  불완전, 보존 필드 누락), G3 FAIL 3건. 기존 pressure/persistence 아티팩트도 현재 evaluator 스키마를
+  만족하지 못한다.
+- 저비용 3수트: 63 tests / 62 pass / 1 fail / 119961 ms. 실패 1건(`stage1b-persistence`의 exporter 시맨틱
+  digest 불일치)은 깨끗한 HEAD에서도 10/11로 동일 실패 → 사전 결함.
+- Phase D(브라우저 미드보스 증거) 미착수. 이번에 확인한 사실: `app.js`에 `midboss`/`bossSpawned` 문자열이 없어
+  미드보스 스폰은 DOM에 아무 신호를 남기지 않고 렌더러(`battle-realtime-three.js:1315`)만 소비한다. 자동 판정에는
+  `tests/stage-runtime-proof-browser.test.mjs:96`의 `INSTALL_RUNTIME_PROBE` 재사용이 선행돼야 하며, 검증되지 않은
+  스크립트를 커밋하지 않기 위해 착수하지 않았다.
+- AC-12(고비용 exporters) 미실행: `git log -1 -- defense-run-simulation.js` = `9ba2aa39` ≠ HEAD `c139b508`,
+  상대 세션 변경이 아직 미커밋이라 트리거 미충족.
+- 푸시하지 않음. Phase D 미완 상태이며 체인지로그·푸시는 계획상 브라우저 증명 이후 단계다.

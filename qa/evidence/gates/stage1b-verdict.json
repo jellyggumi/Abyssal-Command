@@ -1,0 +1,542 @@
+{
+  "schemaVersion": "stage1b-gate-verdict-v1",
+  "thresholds": {
+    "G2": "each archetype 9-11 explicit wins out of 20 canonical symmetric pairs; ties are not wins; 15 pressure rows each gateMinPct 55.0-80.0%, 0-3 defeats, and MEASURED boss TTK 5.95-8.05 seconds",
+    "G3": "BOSS_RALLY_COOLDOWN_REDUCTION=0, one TURRET FRONT, 50/50 post-switch damage conversions, at least one control COMPANION_DOWNED, combined control defeat rate <=20%, and legal combo maxEV/medianEV <=1.30",
+    "G6": "all full-app tiers and 30-minute soak p95 frame <=16.7ms, long-frame ratio <0.5%, input p95 <=100ms, stable soak memory; DOM <5000; telemetry, rollback, release-readiness, and UI-browser provenance complete",
+    "G7": "at least 14 voluntary re-entries out of 20 eligible decisions across 10 participants; every circuit 30-180 seconds inclusive with at least 3 unique canonical player actions and at least 1 ELITE_EXTRACTED reward event",
+    "G8": "five sourced titles with direct-feature count <=2/5 and ten first-exposure raw scores with median >=4.0/5"
+  },
+  "inputs": {
+    "symmetric": {
+      "path": "qa/evidence/gates/G2/stage1b-symmetric-trials.json",
+      "digest": "sha256:9f8c12316e3340c37eeaa3221f192611bf50df99f6ec1280d6af9fec070db6d4",
+      "readStatus": "READ"
+    },
+    "g3": {
+      "path": "qa/evidence/gates/G3/stage1b-formation-attribution.json",
+      "digest": "sha256:d9868308c08ffd8ca608acde6edf943179369e11ba9e8bdbd0bdc5d9cac50b7f",
+      "readStatus": "READ"
+    },
+    "pressure": {
+      "path": "qa/evidence/gates/G2/stage1b-cinder-pressure-packets.json",
+      "digest": "sha256:04cbf92774d6312f537901381e0757f7098d1c44de0ae4f8843f9bf4c143b37f",
+      "readStatus": "READ"
+    },
+    "persistence": {
+      "path": "qa/evidence/gates/G7/stage1b-persistence-scenarios.json",
+      "digest": "sha256:cc21e730d89db747be18c5ba3f7205b44d22d3cd503925f5bdc7f4b7ee0acf37",
+      "readStatus": "READ"
+    },
+    "g7": {
+      "path": null,
+      "digest": null,
+      "readStatus": "NOT_SUPPLIED"
+    },
+    "g8-survey": {
+      "path": null,
+      "digest": null,
+      "readStatus": "NOT_SUPPLIED"
+    },
+    "g8-impression": {
+      "path": null,
+      "digest": null,
+      "readStatus": "NOT_SUPPLIED"
+    },
+    "g6-provenance": {
+      "path": null,
+      "digest": null,
+      "readStatus": "NOT_SUPPLIED"
+    },
+    "g6-scenario": {
+      "path": null,
+      "digest": null,
+      "readStatus": "NOT_SUPPLIED"
+    },
+    "g6-fullapp": {
+      "path": null,
+      "digest": null,
+      "readStatus": "NOT_SUPPLIED"
+    },
+    "g6-leak": {
+      "path": null,
+      "digest": null,
+      "readStatus": "NOT_SUPPLIED"
+    },
+    "g6-soak": {
+      "path": null,
+      "digest": null,
+      "readStatus": "NOT_SUPPLIED"
+    }
+  },
+  "readiness": {
+    "pressureInstrumentation": {
+      "verdict": "BLOCKED",
+      "observed": {
+        "runCount": 15,
+        "expectedRunCount": 15,
+        "packetCount": 0
+      },
+      "source": {
+        "path": "qa/evidence/gates/G2/stage1b-cinder-pressure-packets.json",
+        "digest": "sha256:04cbf92774d6312f537901381e0757f7098d1c44de0ae4f8843f9bf4c143b37f",
+        "readStatus": "READ"
+      },
+      "rawEvidenceReferences": [],
+      "failures": [
+        "pressure-readiness: canonical 15-run sample plan is incomplete",
+        "pressure-readiness: run 0 is missing retained measurement fields",
+        "pressure-readiness: run 1 is missing retained measurement fields",
+        "pressure-readiness: run 2 is missing retained measurement fields",
+        "pressure-readiness: run 3 is missing retained measurement fields",
+        "pressure-readiness: run 4 is missing retained measurement fields",
+        "pressure-readiness: run 5 is missing retained measurement fields",
+        "pressure-readiness: run 6 is missing retained measurement fields",
+        "pressure-readiness: run 7 is missing retained measurement fields",
+        "pressure-readiness: run 8 is missing retained measurement fields",
+        "pressure-readiness: run 9 is missing retained measurement fields",
+        "pressure-readiness: run 10 is missing retained measurement fields",
+        "pressure-readiness: run 11 is missing retained measurement fields",
+        "pressure-readiness: run 12 is missing retained measurement fields",
+        "pressure-readiness: run 13 is missing retained measurement fields",
+        "pressure-readiness: run 14 is missing retained measurement fields"
+      ]
+    },
+    "persistenceInstrumentation": {
+      "verdict": "BLOCKED",
+      "observed": {
+        "scenarioCount": 3,
+        "acceptedHandoffs": 2
+      },
+      "source": {
+        "path": "qa/evidence/gates/G7/stage1b-persistence-scenarios.json",
+        "digest": "sha256:cc21e730d89db747be18c5ba3f7205b44d22d3cd503925f5bdc7f4b7ee0acf37",
+        "readStatus": "READ"
+      },
+      "rawEvidenceReferences": [],
+      "failures": [
+        "persistence-readiness: canonical three-scenario artifact is incomplete"
+      ]
+    }
+  },
+  "gates": {
+    "G2": {
+      "verdict": "BLOCKED",
+      "observed": {
+        "threshold": {
+          "minimumWins": 9,
+          "maximumWins": 11,
+          "denominator": 20
+        },
+        "archetypes": [
+          {
+            "archetypeId": "bulwark",
+            "explicitWins": 5,
+            "ties": 0,
+            "denominator": 20
+          },
+          {
+            "archetypeId": "conductor",
+            "explicitWins": 15,
+            "ties": 0,
+            "denominator": 20
+          },
+          {
+            "archetypeId": "gambit",
+            "explicitWins": 6,
+            "ties": 0,
+            "denominator": 20
+          },
+          {
+            "archetypeId": "rift",
+            "explicitWins": 4,
+            "ties": 0,
+            "denominator": 20
+          },
+          {
+            "archetypeId": "striker",
+            "explicitWins": 20,
+            "ties": 0,
+            "denominator": 20
+          }
+        ],
+        "pressure": {
+          "gateMinPctRange": [
+            55,
+            80
+          ],
+          "defeats": 0,
+          "denominator": 0,
+          "allowedDefeats": [
+            0,
+            3
+          ],
+          "measuredBossTtks": 0,
+          "bossTtkSecondsRange": [
+            5.95,
+            8.05
+          ]
+        }
+      },
+      "source": {
+        "symmetric": {
+          "path": "qa/evidence/gates/G2/stage1b-symmetric-trials.json",
+          "digest": "sha256:9f8c12316e3340c37eeaa3221f192611bf50df99f6ec1280d6af9fec070db6d4",
+          "readStatus": "READ"
+        },
+        "pressure": {
+          "path": "qa/evidence/gates/G2/stage1b-cinder-pressure-packets.json",
+          "digest": "sha256:04cbf92774d6312f537901381e0757f7098d1c44de0ae4f8843f9bf4c143b37f",
+          "readStatus": "READ"
+        }
+      },
+      "rawEvidenceReferences": [],
+      "failures": [
+        "pressure-readiness: canonical 15-run sample plan is incomplete",
+        "pressure-readiness: run 0 is missing retained measurement fields",
+        "pressure-readiness: run 1 is missing retained measurement fields",
+        "pressure-readiness: run 2 is missing retained measurement fields",
+        "pressure-readiness: run 3 is missing retained measurement fields",
+        "pressure-readiness: run 4 is missing retained measurement fields",
+        "pressure-readiness: run 5 is missing retained measurement fields",
+        "pressure-readiness: run 6 is missing retained measurement fields",
+        "pressure-readiness: run 7 is missing retained measurement fields",
+        "pressure-readiness: run 8 is missing retained measurement fields",
+        "pressure-readiness: run 9 is missing retained measurement fields",
+        "pressure-readiness: run 10 is missing retained measurement fields",
+        "pressure-readiness: run 11 is missing retained measurement fields",
+        "pressure-readiness: run 12 is missing retained measurement fields",
+        "pressure-readiness: run 13 is missing retained measurement fields",
+        "pressure-readiness: run 14 is missing retained measurement fields"
+      ]
+    },
+    "G3": {
+      "verdict": "FAIL",
+      "observed": {
+        "legalCombo": {
+          "sampleCount": 5,
+          "maxEV": 2040,
+          "medianEV": 1200,
+          "maxOverMedian": 1.7,
+          "thresholdMaximumInclusive": 1.3
+        },
+        "attribution": {
+          "rallyToTurret": 50,
+          "vanguardControls": 50,
+          "splitControls": 50,
+          "exposed": 0,
+          "notExposed": 50,
+          "zeroDamageConversions": 50,
+          "turretFrontCounts": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "controlCompanionsDowned": 0,
+          "controlDefeats": 0,
+          "controlDefeatRate": 0,
+          "controlDefeatRateMaximumInclusive": 0.2,
+          "bossRallyCooldownReductionsBp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "source": {
+        "symmetric": {
+          "path": "qa/evidence/gates/G2/stage1b-symmetric-trials.json",
+          "digest": "sha256:9f8c12316e3340c37eeaa3221f192611bf50df99f6ec1280d6af9fec070db6d4",
+          "readStatus": "READ"
+        },
+        "phaseAttribution": {
+          "path": "qa/evidence/gates/G3/stage1b-formation-attribution.json",
+          "digest": "sha256:d9868308c08ffd8ca608acde6edf943179369e11ba9e8bdbd0bdc5d9cac50b7f",
+          "readStatus": "READ"
+        }
+      },
+      "rawEvidenceReferences": [],
+      "failures": [
+        "G3: 50/50 rally-to-TURRET conversions had zero post-switch damage",
+        "G3: VANGUARD+SPLIT controls observed no COMPANION_DOWNED event",
+        "G3: recomputed maxEV/medianEV 1.7 exceeds 1.30"
+      ]
+    },
+    "G5": {
+      "verdict": "N_A",
+      "observed": {
+        "monetizationSurfaceIntroduced": false
+      },
+      "source": null,
+      "rawEvidenceReferences": [],
+      "failures": []
+    },
+    "G6": {
+      "verdict": "BLOCKED",
+      "observed": {
+        "fullappTiers": [],
+        "scenarioTierCount": 0,
+        "measurementIsolation": {
+          "fullapp": false,
+          "soak": false
+        },
+        "soak": {
+          "actualDurationMs": null,
+          "frameDeltaP95Ms": null,
+          "longFrameRatio": null,
+          "inputP95Ms": null,
+          "heapSlopeMiBPerMin": null,
+          "memoryStable": null
+        },
+        "supplementalLeak": {
+          "supplied": false,
+          "generations": null
+        },
+        "thresholds": {
+          "frameDeltaP95MsMaximumInclusive": 16.7,
+          "longFrameRatioMaximumExclusive": 0.005,
+          "inputP95MsMaximumInclusive": 100,
+          "domNodesMaximumExclusive": 5000,
+          "soakDurationMsMinimumInclusive": 1800000
+        }
+      },
+      "source": {
+        "provenance": {
+          "path": null,
+          "digest": null,
+          "readStatus": "NOT_SUPPLIED"
+        },
+        "scenario": {
+          "path": null,
+          "digest": null,
+          "readStatus": "NOT_SUPPLIED"
+        },
+        "fullapp": {
+          "path": null,
+          "digest": null,
+          "readStatus": "NOT_SUPPLIED"
+        },
+        "leak": {
+          "path": null,
+          "digest": null,
+          "readStatus": "NOT_SUPPLIED"
+        },
+        "soak": {
+          "path": null,
+          "digest": null,
+          "readStatus": "NOT_SUPPLIED"
+        }
+      },
+      "rawEvidenceReferences": [],
+      "failures": [
+        "g6-provenance: artifact path was not supplied",
+        "g6-scenario: artifact path was not supplied",
+        "g6-fullapp: artifact path was not supplied",
+        "g6-soak: artifact path was not supplied"
+      ]
+    },
+    "G7": {
+      "verdict": "BLOCKED",
+      "observed": {
+        "voluntaryReentries": 0,
+        "eligibleDecisions": 0,
+        "participants": 0,
+        "durationRangeSeconds": [
+          30,
+          180
+        ],
+        "minimumPlayerActionsPerDecision": 3,
+        "minimumRewardEventsPerDecision": 1,
+        "playerActionCounts": [],
+        "rewardEventCounts": []
+      },
+      "source": {
+        "path": null,
+        "digest": null,
+        "readStatus": "NOT_SUPPLIED"
+      },
+      "rawEvidenceReferences": [],
+      "failures": [
+        "g7: artifact path was not supplied"
+      ]
+    },
+    "G8": {
+      "verdict": "BLOCKED",
+      "observed": {
+        "survey": {
+          "directFeatureCount": 0,
+          "titleCount": 0,
+          "denominator": 5,
+          "thresholdMaximum": 2
+        },
+        "impression": {
+          "scoreCount": 0,
+          "median": null,
+          "denominator": 10,
+          "thresholdMinimum": 4
+        }
+      },
+      "source": {
+        "survey": {
+          "path": null,
+          "digest": null,
+          "readStatus": "NOT_SUPPLIED"
+        },
+        "impression": {
+          "path": null,
+          "digest": null,
+          "readStatus": "NOT_SUPPLIED"
+        }
+      },
+      "rawEvidenceReferences": [],
+      "components": {
+        "survey": "BLOCKED",
+        "impression": "BLOCKED"
+      },
+      "failures": [
+        "g8-survey: artifact path was not supplied",
+        "g8-impression: artifact path was not supplied"
+      ]
+    }
+  },
+  "overallDisposition": "BLOCKED",
+  "failures": [
+    "pressureInstrumentation: pressure-readiness: canonical 15-run sample plan is incomplete",
+    "pressureInstrumentation: pressure-readiness: run 0 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 1 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 2 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 3 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 4 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 5 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 6 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 7 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 8 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 9 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 10 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 11 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 12 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 13 is missing retained measurement fields",
+    "pressureInstrumentation: pressure-readiness: run 14 is missing retained measurement fields",
+    "persistenceInstrumentation: persistence-readiness: canonical three-scenario artifact is incomplete",
+    "G2: pressure-readiness: canonical 15-run sample plan is incomplete",
+    "G2: pressure-readiness: run 0 is missing retained measurement fields",
+    "G2: pressure-readiness: run 1 is missing retained measurement fields",
+    "G2: pressure-readiness: run 2 is missing retained measurement fields",
+    "G2: pressure-readiness: run 3 is missing retained measurement fields",
+    "G2: pressure-readiness: run 4 is missing retained measurement fields",
+    "G2: pressure-readiness: run 5 is missing retained measurement fields",
+    "G2: pressure-readiness: run 6 is missing retained measurement fields",
+    "G2: pressure-readiness: run 7 is missing retained measurement fields",
+    "G2: pressure-readiness: run 8 is missing retained measurement fields",
+    "G2: pressure-readiness: run 9 is missing retained measurement fields",
+    "G2: pressure-readiness: run 10 is missing retained measurement fields",
+    "G2: pressure-readiness: run 11 is missing retained measurement fields",
+    "G2: pressure-readiness: run 12 is missing retained measurement fields",
+    "G2: pressure-readiness: run 13 is missing retained measurement fields",
+    "G2: pressure-readiness: run 14 is missing retained measurement fields",
+    "G3: G3: 50/50 rally-to-TURRET conversions had zero post-switch damage",
+    "G3: G3: VANGUARD+SPLIT controls observed no COMPANION_DOWNED event",
+    "G3: G3: recomputed maxEV/medianEV 1.7 exceeds 1.30",
+    "G6: g6-provenance: artifact path was not supplied",
+    "G6: g6-scenario: artifact path was not supplied",
+    "G6: g6-fullapp: artifact path was not supplied",
+    "G6: g6-soak: artifact path was not supplied",
+    "G7: g7: artifact path was not supplied",
+    "G8: g8-survey: artifact path was not supplied",
+    "G8: g8-impression: artifact path was not supplied"
+  ]
+}
