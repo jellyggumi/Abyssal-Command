@@ -1343,7 +1343,14 @@ export const MIDBOSS_PROFILE = freeze({
 export const STAGE_WAVE_DOCTRINE = freeze({
   "cinder-span": { gateIntegrity: 1600, defenseTicks: 10200, waveCount: 10, classes: freeze(["rusher", "flanker", "ranged"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
   "abyss-chancel": { gateIntegrity: 1700, defenseTicks: 10500, waveCount: 10, classes: freeze(["ranged", "flanker", "rusher", "guardian"]), kindCycle: freeze(["normal", "big", "normal", "mid"]), pressureLane: "flank", midbossEnemy: "flanker" },
-  "echo-throne": { gateIntegrity: 1800, defenseTicks: 10800, waveCount: 11, classes: freeze(["flanker", "ranged", "guardian"]), kindCycle: freeze(["normal", "normal", "big", "mid"]), pressureLane: "chokepath", midbossEnemy: "guardian" },
+  // echo-throne is the campaign's LAST stage, so it must ask for the largest set of distinct
+  // answers, not merely the largest HP `scale` (100 -> 115 -> 130). Measured by
+  // `scripts/scan-stage-variation.mjs` it did the opposite: it fielded three classes against
+  // abyss-chancel's four, and it copied cinder-span's mid-boss class, pressure lane and wave-kind
+  // rhythm outright, so stage 3 was stage 1 with bigger numbers. It now fields all four classes in
+  // its own rotation order, walls on a RANGED mid-boss (a body that must be closed on, not a slower
+  // guardian to be out-traded), and keeps a 5-slot rhythm that no other stage uses.
+  "echo-throne": { gateIntegrity: 1800, defenseTicks: 10800, waveCount: 11, classes: freeze(["flanker", "ranged", "guardian", "rusher"]), kindCycle: freeze(["normal", "mid", "normal", "big", "normal"]), pressureLane: "chokepath", midbossEnemy: "ranged" },
 });
 
 /**

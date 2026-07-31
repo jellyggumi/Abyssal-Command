@@ -99,7 +99,52 @@ fixture, and record it here.
 | Add or retune the stage VFX cue | `05` | presentation + frame budget |
 | Verify only | `06` | full quoted regression + browser |
 | Deploy | `07` | `06` first, always |
+| Retune a stage's difficulty (hold, rhythm, classes, mid-boss) | `20` → `23` → `25` → `27` → `28` | wave-doctrine, variation-doctrine, routing-contract, balance-retune, run-simulation digests |
+| Change enemy behaviour (policy, pattern, response window) | `21` (then `25`, `28`) | expansion-contract, run-simulation, wave-doctrine |
+| Add or retune an Abyss Depth package | `24` → `25` → `27` → `28` | variation-doctrine + the depth measurement named in `24` |
+| Re-run the numeric gates | `26` | `stage1b-*` suites + the evaluator verdict |
+| Systems verify only | `28` | full quoted regression + browser |
+| Ship a balance change | `29` | `28` first, always |
 
 A coordinate that appears in the quest table above cannot move in isolation: moving an encounter
 objective, the occupation, or the extraction point forces the matching quest point in the same
 commit, or the module throws on import.
+
+## Systems doctrine — the `20`–`29` placeholder resolution
+
+`[OBSERVED 2026-07-31]`, after the `echo-throne` retune recorded in `log.md`.
+
+| Field | `cinder-span` | `abyss-chancel` | `echo-throne` |
+|---|---|---|---|
+| `defenseTicks` (hold) | 10200 (170 s) | 10500 (175 s) | 10800 (180 s) |
+| `waveCount` / cadence | 10 / 1020 t (17.00 s) | 10 / 1050 t (17.50 s) | 11 / 981 t (16.35 s) |
+| `gateIntegrity` | 1600 | 1700 | 1800 |
+| `classes` (rotation) | rusher > flanker > ranged | ranged > flanker > rusher > guardian | flanker > ranged > guardian > rusher |
+| `kindCycle` | normal, normal, big, mid | normal, big, normal, mid | normal, mid, normal, big, normal |
+| realized rhythm | `n n b m n n b m n b` | `n b n m n b n m n b` | `n m n b n n m n b n b` |
+| `pressureLane` / `midbossEnemy` | chokepath / guardian | flank / flanker | chokepath / ranged |
+| clear budget (1 cadence) | 38 250 hp | 39 375 hp | 36 788 hp |
+| worst wave / budget | 48 000 = 1.25× | 49 680 = 1.26× | 46 280 = 1.26× |
+| mid-boss HP (×2 waves) | 22 950 | 23 625 | 22 073 |
+| response types | 16 | 17 | 17 |
+
+Derivation constants: `PLAYER_BASELINE_DPS 2250` (COMMANDER 900 dmg / 24 t at `TICK_RATE 60`),
+`WAVE_PRESSURE_BP 5500`, ramp 10000 → 13000 bp across the slots, `WAVE_KIND_PROFILE.countBp`
+normal 10000 / big 17500 / mid 5000, `MIDBOSS_PROFILE` hp 6000 bp of one cadence budget, damage
+16000 bp, speed 8500 bp, radius 14000 bp, xp 40000 bp. Cap: wave HP ≤ 2.0× the cadence budget.
+
+Measured with the shipped instruments on 2026-07-31 (`HEAD` simulation, isolated sandbox):
+
+| Instrument | Result |
+|---|---|
+| `run-defense-balance-sim.mjs --strict` | `pass: true`, 0 failures; `echo-throne` FINAL_COMPLETION @12640 / @12517 / @12783 (seeds 1 / 17 / 991); stages 1–2 digests byte-identical to `HEAD` |
+| `measure-stage-playtime.mjs --seeds 3` | `cinder-span` 192.13 s (190.93–193.77), `abyss-chancel` 205.27 s (202.67–206.07), `echo-throne` 209.68 s (208.48–213.28); 9/9 victories, 9/9 in the 180–360 s target |
+| `scan-stage-variation.mjs --strict` | `pass: true`, worst pair 3/20 = 0.15 (`abyss-chancel` vs `echo-throne`) |
+
+Variation ratchet: `MAX_SHARED_AXIS_RATIO = 0.20` over 20 axes; wave-kind rhythm, mid-boss class and
+class rotation are stage-unique; response types never fall across campaign order and the last stage
+is strictly above the first.
+
+Gate thresholds live in `scripts/evaluate-stage1b-gates.mjs` and are transcribed in
+`prompts/approved/26` and `wiki/concepts/stage-difficulty-and-system-variation.md` §9. G7 and G8 are
+human-only; no agent may claim them.

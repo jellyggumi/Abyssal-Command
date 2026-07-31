@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T03:42:12.669Z",
+  "runId": "20260728-stage-playtime-doctrine",
+  "method": "objective-seeking bot, shipped simulation imported unmodified",
+  "tickRate": 60,
+  "playtimeTargetSeconds": {
+    "min": 180,
+    "max": 360
+  },
+  "seeds": [
+    101,
+    138,
+    175
+  ],
+  "summaries": [
+    {
+      "stageId": "cinder-span",
+      "runs": 3,
+      "victories": 3,
+      "medianSeconds": 192.13,
+      "minSeconds": 190.93,
+      "maxSeconds": 193.77,
+      "withinTarget": 3,
+      "midbossSpawns": 6
+    },
+    {
+      "stageId": "abyss-chancel",
+      "runs": 3,
+      "victories": 3,
+      "medianSeconds": 205.27,
+      "minSeconds": 202.67,
+      "maxSeconds": 206.07,
+      "withinTarget": 3,
+      "midbossSpawns": 6
+    },
+    {
+      "stageId": "echo-throne",
+      "runs": 3,
+      "victories": 3,
+      "medianSeconds": 210.08,
+      "minSeconds": 208.08,
+      "maxSeconds": 212.88,
+      "withinTarget": 3,
+      "midbossSpawns": 6
+    }
+  ],
+  "runs": [
+    {
+      "stageId": "cinder-span",
+      "seed": 101,
+      "terminal": "VICTORY",
+      "ticks": 11626,
+      "seconds": 193.77,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 7,
+      "skillSelections": 7,
+      "rankUps": 1,
+      "finalLevel": 8,
+      "gateIntegrity": 1600
+    },
+    {
+      "stageId": "cinder-span",
+      "seed": 138,
+      "terminal": "VICTORY",
+      "ticks": 11456,
+      "seconds": 190.93,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 7,
+      "skillSelections": 7,
+      "rankUps": 2,
+      "finalLevel": 8,
+      "gateIntegrity": 1600
+    },
+    {
+      "stageId": "cinder-span",
+      "seed": 175,
+      "terminal": "VICTORY",
+      "ticks": 11528,
+      "seconds": 192.13,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 7,
+      "skillSelections": 7,
+      "rankUps": 1,
+      "finalLevel": 8,
+      "gateIntegrity": 1600
+    },
+    {
+      "stageId": "abyss-chancel",
+      "seed": 101,
+      "terminal": "VICTORY",
+      "ticks": 12364,
+      "seconds": 206.07,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 1,
+      "growthOffers": 7,
+      "skillSelections": 7,
+      "rankUps": 1,
+      "finalLevel": 8,
+      "gateIntegrity": 1780
+    },
+    {
+      "stageId": "abyss-chancel",
+      "seed": 138,
+      "terminal": "VICTORY",
+      "ticks": 12160,
+      "seconds": 202.67,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 7,
+      "skillSelections": 7,
+      "rankUps": 2,
+      "finalLevel": 8,
+      "gateIntegrity": 1780
+    },
+    {
+      "stageId": "abyss-chancel",
+      "seed": 175,
+      "terminal": "VICTORY",
+      "ticks": 12316,
+      "seconds": 205.27,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 5,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 7,
+      "skillSelections": 7,
+      "rankUps": 1,
+      "finalLevel": 8,
+      "gateIntegrity": 1780
+    },
+    {
+      "stageId": "echo-throne",
+      "seed": 101,
+      "terminal": "FINAL_COMPLETION",
+      "ticks": 12605,
+      "seconds": 210.08,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 6,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 7,
+      "skillSelections": 7,
+      "rankUps": 0,
+      "finalLevel": 8,
+      "gateIntegrity": 1800
+    },
+    {
+      "stageId": "echo-throne",
+      "seed": 138,
+      "terminal": "FINAL_COMPLETION",
+      "ticks": 12773,
+      "seconds": 212.88,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 6,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 8,
+      "skillSelections": 8,
+      "rankUps": 3,
+      "finalLevel": 9,
+      "gateIntegrity": 1800
+    },
+    {
+      "stageId": "echo-throne",
+      "seed": 175,
+      "terminal": "FINAL_COMPLETION",
+      "ticks": 12485,
+      "seconds": 208.08,
+      "withinTarget": true,
+      "wavesByKind": {
+        "normal": 6,
+        "big": 3,
+        "mid": 2
+      },
+      "midbossSpawns": 2,
+      "midbossKills": 2,
+      "growthOffers": 8,
+      "skillSelections": 8,
+      "rankUps": 3,
+      "finalLevel": 9,
+      "gateIntegrity": 1800
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "midboss-arrival-evidence-v1",
+  "classification": "rendered-browser-evidence",
+  "capturedAt": "2026-07-31T17:22:10.320Z",
+  "stageId": "echo-throne",
+  "seed": 401,
+  "provenance": {
+    "branch": "retune/echo-throne-response-types",
+    "commit": "39c09e78332c35da5014f180938dc9ad81480716",
+    "rulesVersion": "defense-survivor-v1"
+  },
+  "passCondition": "MIDBOSS_SPAWNED with enemyType === 'ranged' observed in a rendered frame, captured with its screenshot",
+  "observed": {
+    "midboss": {
+      "source": "event",
+      "tick": 981,
+      "frame": 340,
+      "entityId": "midboss-36",
+      "midbossId": "echo-throne-midboss-1",
+      "enemyType": "ranged",
+      "hp": 22073,
+      "spawnDirection": "SW"
+    },
+    "midbossEvents": [
+      {
+        "source": "event",
+        "tick": 981,
+        "frame": 340,
+        "entityId": "midboss-36",
+        "midbossId": "echo-throne-midboss-1",
+        "enemyType": "ranged",
+        "hp": 22073,
+        "spawnDirection": "SW"
+      }
+    ],
+    "frames": 362,
+    "maxTick": 1046,
+    "eventTypeCounts": {
+      "STAGE_STARTED": 26,
+      "ENCOUNTER_OBJECTIVE_STARTED": 26,
+      "M4_CARD_AVAILABLE": 26,
+      "WAVE_VARIANT_STARTED": 2,
+      "ENEMY_SPAWNED": 9,
+      "ENEMY_POLICY_SELECTED": 9,
+      "MOVE": 2033,
+      "WEAPON_FIRED": 24,
+      "PROJECTILE_IMPACT": 24,
+      "AREA_IMPACT": 15,
+      "ENCOUNTER_PATH_CONTESTED": 5,
+      "HAZARD_DAMAGE": 33,
+      "CRITICAL_HIT": 4,
+      "ENEMY_DEFEATED": 5,
+      "PICKUP_DENIED": 6,
+      "ECHO_DENIED": 6,
+      "ATTACKER_COMMITMENT_CHANGED": 4,
+      "COMPANION_DAMAGED": 2,
+      "ENCOUNTER_REWARD_GRANTED": 1,
+      "WAVE_CLEARED": 1,
+      "GROWTH_OFFER": 49,
+      "SKILL_SELECTED": 1,
+      "INPUT_ACCEPTED": 1,
+      "OBJECTIVE_COMPLETED": 1,
+      "TERRAIN_RECOVERY": 52,
+      "MIDBOSS_SPAWNED": 1
+    },
+    "growthOffersAnswered": 1
+  },
+  "screenshot": {
+    "path": "_workspace/current/qa/stage-variation-retune-20260731/midboss-evidence.png",
+    "sha256": "sha256:6333020665b7306b298367df9cd067a2f25ee8c009ea92e2fd4a058ffaa29064",
+    "bytes": 983421
+  },
+  "diagnostics": {
+    "consoleErrors": [],
+    "pageErrors": []
+  },
+  "pass": true
+}

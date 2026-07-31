@@ -34,6 +34,14 @@ const argValue = (name, fallback) => {
 const outputPath = argValue("--output", null);
 const seedCount = Number(argValue("--seeds", "3"));
 const stageFilter = argValue("--stages", null)?.split(",").map((value) => value.trim()).filter(Boolean) ?? null;
+// Abyss Depth (심연 뎁스). A depth PACKAGE is a named RULE change, not a stat multiplier
+// (defense-catalog ABYSS_DEPTH_PACKAGES): it pins the normal-wave policy mix, adds elite escorts,
+// and cuts the terrain recovery cap. Depth 0 is identity. Measuring depth > 0 is what turns
+// "the package is wired" into "the package changes the run", which nothing measured before.
+const abyssDepth = Number(argValue("--depth", "0"));
+// Explicit seed list, so a depth sweep can reuse the canonical gate seeds (401-405) instead of the
+// default 101+37k ladder. Comparing depths across DIFFERENT seeds would measure the seed, not the depth.
+const seedList = argValue("--seed-list", null)?.split(",").map((value) => Number(value.trim())).filter(Number.isFinite) ?? null;
 
 const octantFor = (dx, dy) => {
   let best = "IDLE";
@@ -62,7 +70,7 @@ function botTarget(snapshot) {
 }
 
 function measureRun(stageId, seed) {
-  let run = createDefenseRun({ stageId, seed });
+  let run = createDefenseRun({ stageId, seed, abyssDepth });
   const wavesByKind = { normal: 0, big: 0, mid: 0 };
   const midbossSpawns = [];
   const midbossKills = [];
@@ -71,9 +79,14 @@ function measureRun(stageId, seed) {
   let rankUps = 0;
   let lastOctant = null;
   let ticks = 0;
+  // The FLOOR of gate integrity, not its terminal value: a depth package that makes a run harder
+  // shows up as a lower trough long before the run ends, and `snapshot.gate.integrity` at the end
+  // has already been paid back by WAVE_CLEARED recovery.
+  let minGateIntegrity = Infinity;
 
   while (!isTerminalRun(run) && ticks < MAX_TICKS) {
     const snapshot = getRunSnapshot(run);
+    if (snapshot.gate.integrity < minGateIntegrity) minGateIntegrity = snapshot.gate.integrity;
     for (const event of snapshot.events) {
       if (event.type === "WAVE_VARIANT_STARTED") wavesByKind[event.kind ?? "normal"] += 1;
       if (event.type === "MIDBOSS_SPAWNED") midbossSpawns.push({ tick: snapshot.tick, midbossId: event.midbossId });
@@ -129,11 +142,13 @@ function measureRun(stageId, seed) {
     rankUps,
     finalLevel: snapshot.commander.level,
     gateIntegrity: snapshot.gate.integrity,
+    minGateIntegrity: Math.min(minGateIntegrity, snapshot.gate.integrity),
+    abyssDepth,
   };
 }
 
 const stageIds = (stageFilter ?? STAGES.map((stage) => stage.id));
-const seeds = Array.from({ length: seedCount }, (unused, index) => 101 + index * 37);
+const seeds = seedList ?? Array.from({ length: seedCount }, (unused, index) => 101 + index * 37);
 const runs = [];
 for (const stageId of stageIds) {
   for (const seed of seeds) runs.push(measureRun(stageId, seed));
@@ -150,6 +165,11 @@ const summaries = stageIds.map((stageId) => {
     maxSeconds: secondsList.at(-1),
     withinTarget: stageRuns.filter((run) => run.withinTarget).length,
     midbossSpawns: stageRuns.reduce((sum, run) => sum + run.midbossSpawns, 0),
+    // Depth comparison reads this trough, not `gateIntegrity`: the median floor across the seed set.
+    medianMinGateIntegrity: stageRuns
+      .map((run) => run.minGateIntegrity)
+      .sort((left, right) => left - right)[Math.floor(stageRuns.length / 2)],
+    abyssDepth,
   };
 });
 
@@ -161,6 +181,7 @@ const report = {
   tickRate: TICK_RATE,
   playtimeTargetSeconds: PLAYTIME_TARGET_SECONDS,
   seeds,
+  abyssDepth,
   summaries,
   runs,
 };
