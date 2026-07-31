@@ -203,16 +203,19 @@ test("raw unarmed-core manifest records the measured retarget contract", () => {
     "unmapped target bones must reflect the target names absent from the mapping rows",
   );
 
+  // Mirrors CLIPS in scripts/retarget-ingame-motion-blender.py. Both must move together:
+  // this map is what stops the shipped pack from drifting onto an unmeasured source.
+  // Every entry must also exist in the FBX audit report (asserted below).
   const expectedSources = new Map([
     ["idle", "Unarmed Idle.fbx"],
     ["move", "Walking.fbx"],
     ["run", "Running.fbx"],
     ["hit", "Standing React Small From Left.fbx"],
-    ["bighit", "Receive Uppercut To The Face.fbx"],
+    ["bighit", "Standing React Large Gut.fbx"],
     ["attack", "Punching.fbx"],
-    ["critical", "Illegal Elbow Punch.fbx"],
+    ["critical", "Hook Punch.fbx"],
     ["avoid", "Dodging.fbx"],
-    ["defence", "Body Block.fbx"],
+    ["defence", "Standing Block React Large.fbx"],
   ]);
   const auditByFile = new Map(audit.files.map((entry) => [entry.file, entry]));
 

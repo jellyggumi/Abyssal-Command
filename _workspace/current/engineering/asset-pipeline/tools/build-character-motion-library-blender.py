@@ -25,8 +25,16 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[5]
 DEFAULT_CONFIG = REPO_ROOT / "_workspace/current/engineering/asset-pipeline/character-motion-library/library-config.json"
 RETARGET_SCRIPT = REPO_ROOT / "scripts/retarget-ingame-motion-blender.py"
-RETARGET_ACTIONS = ("idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "show")
-FALLBACK_ACTIONS = ("die",)
+# "die" is retargeted, not authored. The authored fallback it replaced measured
+# hips 0.0 deg / thigh 0.0 deg / shin 0.0 deg on the shipped GLBs -- a static-legged
+# torso slump, identical across all 11 characters, that never read as a death.
+# Defeated.fbx carries the collapse in joint rotation (peak 100.2 deg, legs 29-54 deg)
+# with only 17.0cm of root translation, so it survives the rotation-only export that
+# deletes root motion. The other three death clips in the bench do not: Dying (143cm),
+# Standing Death Right 02 (136cm) and Turn To Knocked Unconscious (392cm) all carry the
+# fall in translation and would rotate to horizontal while hovering at standing height.
+RETARGET_ACTIONS = ("idle", "move", "run", "hit", "bighit", "attack", "critical", "avoid", "defence", "show", "die")
+FALLBACK_ACTIONS: tuple[str, ...] = ()
 EXPECTED_BONES = (
     "DEF-spine", "DEF-spine.001", "DEF-spine.002", "DEF-spine.003", "DEF-spine.004", "DEF-spine.005",
     "DEF-pelvis.L", "DEF-pelvis.R",

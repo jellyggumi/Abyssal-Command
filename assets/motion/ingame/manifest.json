@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "scripts/retarget-ingame-motion-blender.py",
-  "generatedAt": "2026-07-29T03:52:19.284031+00:00",
+  "generatedAt": "2026-07-31T02:38:46.591483+00:00",
   "sourceBoneNames": [
     "mixamorig:Head",
     "mixamorig:HeadTop_End",
@@ -91,11 +91,11 @@
   "targetRig": "def-humanoid-v1",
   "targetBoneNames": [
     "DEF-spine",
+    "DEF-pelvis.L",
+    "DEF-pelvis.R",
     "DEF-spine.001",
     "DEF-spine.002",
     "DEF-spine.003",
-    "DEF-spine.004",
-    "DEF-spine.005",
     "DEF-shoulder.L",
     "DEF-upper_arm.L",
     "DEF-forearm.L",
@@ -104,8 +104,8 @@
     "DEF-upper_arm.R",
     "DEF-forearm.R",
     "DEF-hand.R",
-    "DEF-pelvis.L",
-    "DEF-pelvis.R",
+    "DEF-spine.004",
+    "DEF-spine.005",
     "DEF-thigh.L",
     "DEF-shin.L",
     "DEF-foot.L",
@@ -410,17 +410,17 @@
   "pack": {
     "id": "unarmed-core",
     "path": "assets/motion/ingame/unarmed-core.glb",
-    "sha256": "dc0244fee4c442285f9febb1485756948a7ec42dec475d6b81fbaef9ada080b0",
+    "sha256": "e8f2c22345f390d8d41c22279e07f30d5e065282a914cfb0468be794bedba58e",
     "sourceRig": "mixamo-37",
     "targetRig": "def-humanoid-v1",
     "sourceFps": 24,
     "targetBoneNames": [
       "DEF-spine",
+      "DEF-pelvis.L",
+      "DEF-pelvis.R",
       "DEF-spine.001",
       "DEF-spine.002",
       "DEF-spine.003",
-      "DEF-spine.004",
-      "DEF-spine.005",
       "DEF-shoulder.L",
       "DEF-upper_arm.L",
       "DEF-forearm.L",
@@ -429,8 +429,8 @@
       "DEF-upper_arm.R",
       "DEF-forearm.R",
       "DEF-hand.R",
-      "DEF-pelvis.L",
-      "DEF-pelvis.R",
+      "DEF-spine.004",
+      "DEF-spine.005",
       "DEF-thigh.L",
       "DEF-shin.L",
       "DEF-foot.L",
@@ -922,24 +922,24 @@
       },
       {
         "action": "bighit",
-        "source": "Receive Uppercut To The Face.fbx",
-        "sourceFile": "Receive Uppercut To The Face.fbx",
+        "source": "Standing React Large Gut.fbx",
+        "sourceFile": "Standing React Large Gut.fbx",
         "clipName": "unarmed-core::bighit::v01",
         "frameStart": 1,
-        "frameEnd": 31,
+        "frameEnd": 39,
         "sourceFps": 24,
-        "durationSeconds": 1.25,
+        "durationSeconds": 1.5833333333333333,
         "sourceRootTravel": {
-          "x": 0.000427,
-          "y": -3.8e-05,
-          "z": 3.9e-05
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
         },
         "exportedRootDeviation": {
           "x": 0.0,
           "z": 0.0
         },
         "loop": false,
-        "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945"
+        "sourceSha256": "782ec50e76726021155ac1da7ed4045c371827976c8d922681aac11960b9fcdd"
       },
       {
         "action": "attack",
@@ -964,24 +964,24 @@
       },
       {
         "action": "critical",
-        "source": "Illegal Elbow Punch.fbx",
-        "sourceFile": "Illegal Elbow Punch.fbx",
+        "source": "Hook Punch.fbx",
+        "sourceFile": "Hook Punch.fbx",
         "clipName": "unarmed-core::critical::v01",
         "frameStart": 1,
-        "frameEnd": 55,
+        "frameEnd": 53,
         "sourceFps": 24,
-        "durationSeconds": 2.25,
+        "durationSeconds": 2.1666666666666665,
         "sourceRootTravel": {
-          "x": 2e-06,
-          "y": 1.5e-05,
-          "z": -1e-06
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
         },
         "exportedRootDeviation": {
           "x": 0.0,
           "z": 0.0
         },
         "loop": false,
-        "sourceSha256": "ee735d328ddcb77506b38fb6d2e5befec5619a2fa76a1d713bf8e9409feceb13"
+        "sourceSha256": "dab584c943a0695669c7c2455371debbadd851cd42df959604731dc0efe61bc8"
       },
       {
         "action": "avoid",
@@ -1006,24 +1006,24 @@
       },
       {
         "action": "defence",
-        "source": "Body Block.fbx",
-        "sourceFile": "Body Block.fbx",
+        "source": "Standing Block React Large.fbx",
+        "sourceFile": "Standing Block React Large.fbx",
         "clipName": "unarmed-core::defence::v01",
         "frameStart": 1,
-        "frameEnd": 83,
+        "frameEnd": 33,
         "sourceFps": 24,
-        "durationSeconds": 3.4166666666666665,
+        "durationSeconds": 1.3333333333333333,
         "sourceRootTravel": {
-          "x": -2e-06,
+          "x": 6e-06,
           "y": -1.5e-05,
-          "z": -2e-06
+          "z": 3e-06
         },
         "exportedRootDeviation": {
           "x": 0.0,
           "z": 0.0
         },
         "loop": false,
-        "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4"
+        "sourceSha256": "1c2724849c68cdb804321b3a598b0acfbebc3666deb019b6f2465a6d1db122b4"
       }
     ]
   },
@@ -1114,24 +1114,24 @@
     },
     {
       "action": "bighit",
-      "source": "Receive Uppercut To The Face.fbx",
-      "sourceFile": "Receive Uppercut To The Face.fbx",
+      "source": "Standing React Large Gut.fbx",
+      "sourceFile": "Standing React Large Gut.fbx",
       "clipName": "unarmed-core::bighit::v01",
       "frameStart": 1,
-      "frameEnd": 31,
+      "frameEnd": 39,
       "sourceFps": 24,
-      "durationSeconds": 1.25,
+      "durationSeconds": 1.5833333333333333,
       "sourceRootTravel": {
-        "x": 0.000427,
-        "y": -3.8e-05,
-        "z": 3.9e-05
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
       },
       "exportedRootDeviation": {
         "x": 0.0,
         "z": 0.0
       },
       "loop": false,
-      "sourceSha256": "9a5faf986326fea3b25cb8baa5052a508863a02c52d5668aeaed861d2b75e945"
+      "sourceSha256": "782ec50e76726021155ac1da7ed4045c371827976c8d922681aac11960b9fcdd"
     },
     {
       "action": "attack",
@@ -1156,24 +1156,24 @@
     },
     {
       "action": "critical",
-      "source": "Illegal Elbow Punch.fbx",
-      "sourceFile": "Illegal Elbow Punch.fbx",
+      "source": "Hook Punch.fbx",
+      "sourceFile": "Hook Punch.fbx",
       "clipName": "unarmed-core::critical::v01",
       "frameStart": 1,
-      "frameEnd": 55,
+      "frameEnd": 53,
       "sourceFps": 24,
-      "durationSeconds": 2.25,
+      "durationSeconds": 2.1666666666666665,
       "sourceRootTravel": {
-        "x": 2e-06,
-        "y": 1.5e-05,
-        "z": -1e-06
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
       },
       "exportedRootDeviation": {
         "x": 0.0,
         "z": 0.0
       },
       "loop": false,
-      "sourceSha256": "ee735d328ddcb77506b38fb6d2e5befec5619a2fa76a1d713bf8e9409feceb13"
+      "sourceSha256": "dab584c943a0695669c7c2455371debbadd851cd42df959604731dc0efe61bc8"
     },
     {
       "action": "avoid",
@@ -1198,24 +1198,24 @@
     },
     {
       "action": "defence",
-      "source": "Body Block.fbx",
-      "sourceFile": "Body Block.fbx",
+      "source": "Standing Block React Large.fbx",
+      "sourceFile": "Standing Block React Large.fbx",
       "clipName": "unarmed-core::defence::v01",
       "frameStart": 1,
-      "frameEnd": 83,
+      "frameEnd": 33,
       "sourceFps": 24,
-      "durationSeconds": 3.4166666666666665,
+      "durationSeconds": 1.3333333333333333,
       "sourceRootTravel": {
-        "x": -2e-06,
+        "x": 6e-06,
         "y": -1.5e-05,
-        "z": -2e-06
+        "z": 3e-06
       },
       "exportedRootDeviation": {
         "x": 0.0,
         "z": 0.0
       },
       "loop": false,
-      "sourceSha256": "ebb13bae7bc8cbf70678472fd573e70b0881ff82eb35c97f2445550489e0b2b4"
+      "sourceSha256": "1c2724849c68cdb804321b3a598b0acfbebc3666deb019b6f2465a6d1db122b4"
     }
   ],
   "rights": {
@@ -1231,30 +1231,17 @@
     "attack_ranged"
   ],
   "compatibleMeshes": [
-    "assets/images/battle/glb/commander/dusk-warden.glb",
-    "assets/images/battle/glb/companions/ember-cohort.glb",
-    "assets/images/battle/glb/companions/rift-lens.glb",
-    "assets/images/battle/glb/companions/veil-vanguard.glb",
-    "assets/images/battle/glb/companions/anchor-shard.glb",
-    "assets/images/battle/glb/companions/throne-echo.glb",
-    "assets/images/battle/glb/companions/dawnless-crown.glb",
-    "assets/images/battle/glb/companions/pack-warden.glb",
-    "assets/images/battle/glb/companions/lantern-reaver.glb",
-    "assets/images/battle/glb/companions/requiem-warden.glb",
-    "assets/images/battle/glb/enemies/scout.glb",
-    "assets/images/battle/glb/enemies/shade.glb",
-    "assets/images/battle/glb/enemies/guard.glb",
-    "assets/images/battle/glb/enemies/possessed.glb",
-    "assets/images/battle/glb/bosses/cinder-warden.glb",
-    "assets/images/battle/glb/bosses/veil-tactician.glb",
-    "assets/images/battle/glb/bosses/gate-sovereign.glb",
-    "assets/images/battle/glb/bosses/tide-warden.glb",
-    "assets/images/battle/glb/bosses/pack-herald.glb",
-    "assets/images/battle/glb/bosses/requiem-choir.glb",
-    "assets/images/battle/glb/bosses/lantern-tyrant.glb",
-    "assets/images/battle/glb/bosses/bridge-colossus.glb",
-    "assets/images/battle/glb/bosses/veiled-concordat.glb",
-    "assets/images/battle/glb/bosses/abyss-regent.glb"
+    "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
+    "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
+    "assets/motion/ingame/characters/ember-cohort/model.glb",
+    "assets/motion/ingame/characters/guard/model.glb",
+    "assets/motion/ingame/characters/human-command-boss/model.glb",
+    "assets/motion/ingame/characters/lantern-reaver/model.glb",
+    "assets/motion/ingame/characters/possessed/model.glb",
+    "assets/motion/ingame/characters/scout/model.glb",
+    "assets/motion/ingame/characters/shade/model.glb",
+    "assets/motion/ingame/characters/shadow-commander-boss/model.glb",
+    "assets/motion/ingame/characters/shadow-soldier-v04/model.glb"
   ],
   "checks": {
     "glb2": true,

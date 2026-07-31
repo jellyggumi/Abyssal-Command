@@ -31,7 +31,17 @@ class MappingRow:
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_TARGET_RIG = REPO_ROOT / "assets/images/battle/glb/commander/dusk-warden.glb"
+# The original target rig, assets/images/battle/glb/commander/dusk-warden.glb, no longer
+# exists -- that entire directory was removed. The rig itself survived: the exporter wrote
+# its armature into the pack, so unarmed-core.glb still carries the 24-bone skeleton under
+# its original name, "dusk-warden_armature". A copy is kept below as the reference rig so
+# this script stays runnable and keeps producing deltas against the SAME rest pose the
+# shipped pack was authored against. Rebuilding against it reproduces the unchanged clips
+# to within 0.043 deg, which is GLB float round-trip, not drift.
+DEFAULT_TARGET_RIG = (
+    REPO_ROOT
+    / "_workspace/current/engineering/asset-pipeline/motion-bench/ref/dusk-warden-reference-rig.glb"
+)
 DEFAULT_FBX_DIR = REPO_ROOT / "assets/motion/bench"
 DEFAULT_AUDIT_REPORT = (
     REPO_ROOT
@@ -72,45 +82,86 @@ MAPPING_ROWS = [
     MappingRow("DEF-toe.R", "mixamorig:RightToeBase", "copy", 1.0),
 ]
 
+# Source selection is measured, not nominal. Every row below was chosen against a
+# single uniform pass of audit-fbx-motion-bench.analyze_fbx() over all 66 bench FBX
+# (fbx-audit-uniform-66.json). Two numbers decide a row:
+#
+#   duration  = (frameEnd - frameStart) / 24. One-shots QUEUE rather than interrupt
+#               (battle-realtime-three.js triggerAction/crossfadeToAction), and the
+#               queue holds ONE beat, so a clip longer than its trigger cadence drops
+#               beats. Enemy melee cadence is attackTicks 60 @ TICK_RATE 60 = 1.00s;
+#               companion fireTicks 28-70 = 0.47-1.17s. oneShotRate is clamped to
+#               [0.72, 1.15], so timeScale cannot rescue an over-long clip.
+#   rootExc   = max(x, y, z) of the hips max-minus-min range, in Mixamo cm. Export is
+#               rotation-only (strip_non_rotation_channels), so root translation is
+#               DELETED. High rootExc on a one-shot means the motion's meaning lived in
+#               translation and will read as sliding/floating once pinned. On a LOOPING
+#               locomotion clip high forward travel is correct -- that is the treadmill
+#               cycle the in-place contract asks for.
+#
+# This pack is "unarmed-core" by contract: it is the shared fallback whose 9 keys
+# override the base clips of every promoted character. A weapon-grip swing here would
+# put an invisible weapon in the hands of unarmed rigs, so weapon motion stays in the
+# per-character library and these rows stay in the unarmed idiom.
 CLIPS = [
+    # 47f/1.92s, rootExc 1.3 -- cleanest cyclic idle in the bench. Cycles.
     ClipSpec("idle", "Unarmed Idle.fbx", True),
+    # 34f/1.38s, forward travel 145 -- canonical Mixamo walk cycle; travel is the
+    # treadmill the in-place contract wants. Cycles.
     ClipSpec("move", "Walking.fbx", True),
+    # 31f/1.25s, forward travel 350 -- canonical Mixamo run cycle. Cycles.
     ClipSpec("run", "Running.fbx", True),
+    # 19f/0.75s, rootExc 5.5 -- shortest flinch in the bench, so it lands inside even
+    # the 0.47s companion cadence. Light end of the scaled flinch pair.
     ClipSpec("hit", "Standing React Small From Left.fbx", False),
-    ClipSpec("bighit", "Receive Uppercut To The Face.fbx", False),
+    # 39f/1.58s, rootExc 7.8 -- heavy end of the flinch pair: a full-body doubling-over
+    # reads as scaled-up against the 19f light flinch. Replaces Receive Uppercut To The
+    # Face (31f, rootExc 12.8), a boxing-specific head snap that reads wrong when the
+    # damage source is a blade or a projectile, and which loses more to root-pinning.
+    ClipSpec("bighit", "Standing React Large Gut.fbx", False),
+    # 31f/1.25s, rootExc 7.5 -- kept deliberately. The bench holds no weapon swing under
+    # 45f: Great Sword Slash is 45f/1.83s (rootExc 68.6) and Standing Melee Attack
+    # Horizontal is 59f/2.42s. Against the 1.00s enemy melee cadence those drop roughly
+    # 45% and 60% of attack beats respectively, versus ~20% here, and both hold a weapon
+    # this unarmed pack cannot show. Committed-weapon-swing read belongs in the
+    # per-character library, not in the shared unarmed fallback.
     ClipSpec("attack", "Punching.fbx", False),
-    ClipSpec("critical", "Illegal Elbow Punch.fbx", False),
+    # 53f/2.17s, rootExc 17.2 -- heavier finisher: a wide committed hook arc stays
+    # legible at the isometric camera distance. Replaces Illegal Elbow Punch (55f,
+    # rootExc 26.3), a close-in elbow whose small arc reads poorly at that distance and
+    # which gives up 34% more motion to root-pinning.
+    ClipSpec("critical", "Hook Punch.fbx", False),
+    # 40f/1.62s, rootExc 18.6 of which only 5.1 is forward -- genuinely lateral, which is
+    # what an evade must be. Change Direction (rootExc 323) is a relocation, not an
+    # evade, and collapses under root-pinning.
     ClipSpec("avoid", "Dodging.fbx", False),
-    ClipSpec("defence", "Body Block.fbx", False),
+    # 33f/1.33s, rootExc 6.5 -- braced guard absorbing an impact. defence is a REACTIVE
+    # beat (MELEE_IMPACT / PROJECTILE_IMPACT with guardedBy, WARDENS_WARD_TRIGGERED), so
+    # it fires at impact frequency. Replaces Body Block (83f/3.42s), which at 2.6x this
+    # length drops most guard reactions outright.
+    ClipSpec("defence", "Standing Block React Large.fbx", False),
 ]
 
 EXPECTED_CLIP_NAMES = [f"unarmed-core::{clip.action}::v01" for clip in CLIPS]
 
+# Rigs this delta pack can drive. Every path here is verified present; the previous list
+# named 24 files under assets/images/battle/glb/, a directory that no longer exists, so the
+# generated manifest was advertising compatibility with deleted assets. These are the 11
+# promoted DEF-humanoid-v1 characters the runtime actually loads. They do NOT share one rest
+# pose -- all 11 differ -- which is exactly why this pack ships rest-relative deltas that are
+# composed against each model's own rest at load time.
 COMPATIBLE_MESHES = [
-    "assets/images/battle/glb/commander/dusk-warden.glb",
-    "assets/images/battle/glb/companions/ember-cohort.glb",
-    "assets/images/battle/glb/companions/rift-lens.glb",
-    "assets/images/battle/glb/companions/veil-vanguard.glb",
-    "assets/images/battle/glb/companions/anchor-shard.glb",
-    "assets/images/battle/glb/companions/throne-echo.glb",
-    "assets/images/battle/glb/companions/dawnless-crown.glb",
-    "assets/images/battle/glb/companions/pack-warden.glb",
-    "assets/images/battle/glb/companions/lantern-reaver.glb",
-    "assets/images/battle/glb/companions/requiem-warden.glb",
-    "assets/images/battle/glb/enemies/scout.glb",
-    "assets/images/battle/glb/enemies/shade.glb",
-    "assets/images/battle/glb/enemies/guard.glb",
-    "assets/images/battle/glb/enemies/possessed.glb",
-    "assets/images/battle/glb/bosses/cinder-warden.glb",
-    "assets/images/battle/glb/bosses/veil-tactician.glb",
-    "assets/images/battle/glb/bosses/gate-sovereign.glb",
-    "assets/images/battle/glb/bosses/tide-warden.glb",
-    "assets/images/battle/glb/bosses/pack-herald.glb",
-    "assets/images/battle/glb/bosses/requiem-choir.glb",
-    "assets/images/battle/glb/bosses/lantern-tyrant.glb",
-    "assets/images/battle/glb/bosses/bridge-colossus.glb",
-    "assets/images/battle/glb/bosses/veiled-concordat.glb",
-    "assets/images/battle/glb/bosses/abyss-regent.glb",
+    "assets/motion/ingame/characters/broken-court-monarch-boss/model.glb",
+    "assets/motion/ingame/characters/broken-court-monarch-v04/model.glb",
+    "assets/motion/ingame/characters/ember-cohort/model.glb",
+    "assets/motion/ingame/characters/guard/model.glb",
+    "assets/motion/ingame/characters/human-command-boss/model.glb",
+    "assets/motion/ingame/characters/lantern-reaver/model.glb",
+    "assets/motion/ingame/characters/possessed/model.glb",
+    "assets/motion/ingame/characters/scout/model.glb",
+    "assets/motion/ingame/characters/shade/model.glb",
+    "assets/motion/ingame/characters/shadow-commander-boss/model.glb",
+    "assets/motion/ingame/characters/shadow-soldier-v04/model.glb",
 ]
 
 
