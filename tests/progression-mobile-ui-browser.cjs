@@ -211,6 +211,36 @@ async function dismissOpeningCutscene(run) {
   await run.page.locator("#defense-cutscene-overlay").waitFor({ state: "hidden" }).catch(() => {});
 }
 
+/**
+ * Answers any pending level-up growth offer and waits for the card to leave.
+ *
+ * Sibling of dismissOpeningCutscene above, for the same class of defect: a surface that
+ * legitimately owns focus is on screen while a control test asserts `document.activeElement`.
+ *
+ * The offer is genuinely modal -- defense-run-simulation.js:4263 is `if (run.growthOffer) return;`,
+ * so the simulation HALTS until it is answered. app.js:3908 therefore correctly focuses the card's
+ * button. That button is a plain <button> with no `data-move`, which is exactly what a local repro
+ * observed holding focus at the point of failure.
+ *
+ * The focus loop below presses Enter once per direction; each press moves the commander and accrues
+ * XP, so a level-up can render MID-LOOP and take focus from the button under assertion. That is why
+ * the failure moved between runs -- CI lost S (5th), a 6x CPU-throttled local repro lost E (4th).
+ * It depends on WHEN the offer fires, not on which button.
+ *
+ * It is also why no wait strategy fixed it across runs #16-#20: the steal happens in the window
+ * BETWEEN `.focus()` and the assertion, which `networkidle`, `domcontentloaded` and `load` cannot
+ * address. Retrying the focus assertion would be worse still -- it would paper over correct modal
+ * behaviour and could pass while the player-facing focus contract was broken.
+ *
+ * Answering the offer up front is what a player does before drilling the controls, so the
+ * assertion still measures the state it was always about.
+ */
+async function dismissGrowthOffer(run) {
+  const pick = run.page.locator("#defense-growth-offer [data-pick]").first();
+  if (await pick.isVisible().catch(() => false)) await pick.click();
+  await run.page.locator("#defense-growth-offer").waitFor({ state: "hidden" }).catch(() => {});
+}
+
 async function readStoredStoryProgress(page) {
   return page.evaluate((key) => JSON.parse(localStorage.getItem(key)).payload.storyProgress, STORAGE_KEY);
 }
@@ -350,6 +380,11 @@ test("coarse-landscape joystick resolves eight octants and every cancellation pa
     assert.equal(await buttons.count(), 5, "the drag surface must not replace the five keyboard movement controls");
     for (const direction of ["N", "W", "IDLE", "E", "S"]) {
       const button = movement.locator(`button[data-move="${direction}"]`);
+      // INSIDE the loop, not before it. Unlike the opening cutscene, the growth offer is
+      // recurrent: each Enter below moves the commander and accrues XP, so a level-up can cross
+      // its threshold during iteration 4 or 5 and take focus mid-loop. A pre-loop dismiss would
+      // clear an offer that is not there yet and miss the one that actually breaks the assert.
+      await dismissGrowthOffer(run);
       await button.focus();
       assert.equal(await button.evaluate((node) => document.activeElement === node), true, `${direction} must remain keyboard focusable behind the joystick`);
       const previous = Number(await run.surface.getAttribute("data-defense-input-seq"));
