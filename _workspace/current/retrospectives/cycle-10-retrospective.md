@@ -603,6 +603,7 @@ with each other and disagreed with the **filesystem**.
 | `fb667021` | the merge | 1 — phone-HUD test 3 |
 | `012ea15d` | dedupe | 2 — + progression test 4 |
 | `30a0c111` | my race fixes | 3 — + progression test 3 |
+| `dde8a36e` | those fixes reverted | 2 — progression test 3 gone again |
 
 Three consecutive runs were red **before this branch merged**, so the blocker predates the
 merge. The mechanism is documented in the suite itself: the growth offer is modal, and
@@ -620,15 +621,36 @@ them, authored by someone who can reproduce it.
 ### My own error here, recorded because the reasoning was worse than the code
 
 I pushed two race fixes (`30a0c111`), saw the failure count go 1 → 2 → 3, concluded I had
-caused a regression, and **reverted them** (`dde8a36e`). That inference was **wrong**, and
-checkable: progression test 3 is at `:370`, my edit was at `:514` inside test 4 at `:478`, each
-test opens its own page, and test 3 runs first. A later test cannot retroactively break an
-earlier one. Its failure was `'E' !== 'S'` — a drag resolving to the wrong octant, geometry and
-timing, with no modal-focus mechanism at all. The 1 → 2 → 3 progression is the load variance the
-suite documents, surfacing in different assertions on different runs.
+caused a regression, and **reverted them** (`dde8a36e`). Then I ran the revert as a controlled
+comparison, because §7 should not assert what it has not measured. Full series:
 
-So the revert removed two mechanistically-justified fixes on a bad causal claim. I did not
-re-push them, because that would be a fifth speculative push into a shared branch against a
+| head | my fixes | failures |
+|---|---|---|
+| `fb667021` | no | 1 — phone-HUD 3 |
+| `012ea15d` | no | 2 — phone-HUD 3, progression 4 |
+| `30a0c111` | **yes** | 3 — phone-HUD 3, progression **3**, progression 4 |
+| `dde8a36e` | reverted | 2 — phone-HUD 3, progression 4 |
+
+**The honest reading, and it is not the one I first gave.** Two facts point opposite ways.
+Against my fixes being harmful: progression test **4** failed at 2 without the fix, at 3 with
+it, and at 2 again without it — so the `:514` dismissal neither caused nor cured the very test
+it targeted. It was **insufficient, not harmful**. And the count has now taken three values
+across four runs whose browser-test code differed by only two commits, which is variance.
+
+For my fixes being implicated: progression test **3** appeared *only* on the run carrying them
+and vanished on the revert. That is a suggestive A/B — but n=1 per condition on a suite whose
+own comment documents a 6×-slow runner, so it does not separate causation from a single unlucky
+run. Its failure was `'E' !== 'S'`, a drag resolving to the wrong octant: geometry and timing,
+with no modal-focus mechanism, and its test is at `:370` while my edit was at `:514` inside a
+*later* test that opens its own page. A later test cannot retroactively break an earlier one.
+
+So the mechanism argument survives and the count argument does not settle anything either way.
+**The revert was still unnecessary** — but I reverted on the count, not on the mechanism, and
+the count was never sufficient evidence. Getting the right answer from the wrong reasoning is
+not a defence.
+
+I did not re-push the fixes after the revert, because that would be a fifth speculative push
+into a shared branch against a
 ~20-minute feedback loop with **zero local signal** — 13 clean local runs across both files,
 before and after. The fixes are recorded here instead so someone with a reproduction can
 restore them deliberately:
