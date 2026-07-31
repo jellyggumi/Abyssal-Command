@@ -20,6 +20,26 @@ const obstacle = (id, x, y, radius, propId) => ({
   propId,
 });
 const meshCollider = (id, triangles) => ({ id, triangles });
+/**
+ * One authored floor slab. `plateNode` addresses the quad inside the promoted terrain GLB, and
+ * `colliderTriangleIndices` names the two support-mesh triangles that carry it, so the visible
+ * floor and the walkable plane are the same rectangle by construction rather than by promise.
+ */
+const terrainTile = (stageId, index, name, materialId, minX, maxX, minY, maxY) => ({
+  id: `${stageId}:slab-${String(index).padStart(2, "0")}`,
+  index,
+  name,
+  materialId,
+  plateNode: `terrain-${stageId}-slab-${String(index).padStart(3, "0")}`,
+  elevation: 0,
+  rect: { minX, maxX, minY, maxY },
+  colliderTriangleIndices: [(index - 1) * 2, ((index - 1) * 2) + 1],
+});
+/** The two triangles of one slab rect, in slab order, so tile N owns triangles 2N and 2N+1. */
+const slabTriangles = (minX, maxX, minY, maxY) => ([
+  triangle(minX, minY, 0, maxX, minY, 0, maxX, maxY, 0),
+  triangle(minX, minY, 0, maxX, maxY, 0, minX, maxY, 0),
+]);
 const triangle = (ax, ay, ae, bx, by, be, cx, cy, ce) => ([
   { x: ax, y: ay, elevation: ae },
   { x: bx, y: by, elevation: be },
@@ -139,9 +159,15 @@ const profiles = [
         obstacle("cinder-span:east-ash-wall", 20800, 9900, 700, "cinder-span:east-ash-wall-prop"),
       ],
       surfaces: [],
+      terrainTiles: [
+        terrainTile("cinder-span", 1, "West Ash Abutment", "ash-drift", 600, 8600, 800, 11200),
+        terrainTile("cinder-span", 2, "Ember Relay Causeway", "basalt-ember", 8600, 17000, 800, 11200),
+        terrainTile("cinder-span", 3, "Drowned Forge Court", "forge-plate", 17000, 23400, 800, 11200),
+      ],
       meshColliders: [meshCollider("cinder-span:walkable-support", [
-        triangle(600, 800, 0, 23400, 800, 0, 23400, 11200, 0),
-        triangle(600, 800, 0, 23400, 11200, 0, 600, 11200, 0),
+        ...slabTriangles(600, 8600, 800, 11200),
+        ...slabTriangles(8600, 17000, 800, 11200),
+        ...slabTriangles(17000, 23400, 800, 11200),
       ])],
       routes: [
         route("cinder-span:critical-route", "critical", 1400, [
@@ -223,9 +249,17 @@ const profiles = [
         obstacle("abyss-chancel:apse-wing", 20200, 9600, 650, "abyss-chancel:apse-wing-prop"),
       ],
       surfaces: [],
+      terrainTiles: [
+        terrainTile("abyss-chancel", 1, "West Processional Narthex", "flagstone-oath", 600, 8000, 700, 11300),
+        terrainTile("abyss-chancel", 2, "Nave Crossing", "flagstone-oath", 8000, 16400, 700, 11300),
+        terrainTile("abyss-chancel", 3, "North Oath Apse", "oath-inlay", 16400, 23400, 700, 7200),
+        terrainTile("abyss-chancel", 4, "South Transept Arm", "vestry-tile", 16400, 23400, 7200, 11300),
+      ],
       meshColliders: [meshCollider("abyss-chancel:walkable-nave", [
-        triangle(600, 700, 0, 23400, 700, 0, 23400, 11300, 0),
-        triangle(600, 700, 0, 23400, 11300, 0, 600, 11300, 0),
+        ...slabTriangles(600, 8000, 700, 11300),
+        ...slabTriangles(8000, 16400, 700, 11300),
+        ...slabTriangles(16400, 23400, 700, 7200),
+        ...slabTriangles(16400, 23400, 7200, 11300),
       ])],
       routes: [
         // The critical route now threads all four authored slabs and puts its two intermediate
@@ -318,9 +352,19 @@ const profiles = [
         obstacle("echo-throne:east-fractured-wing", 20600, 9000, 650, "echo-throne:east-fractured-wing-prop"),
       ],
       surfaces: [],
+      terrainTiles: [
+        terrainTile("echo-throne", 1, "West Echo Narthex", "polished-echo", 600, 6800, 600, 11400),
+        terrainTile("echo-throne", 2, "North Repeating Gallery", "fracture-glass", 6800, 16600, 600, 4000),
+        terrainTile("echo-throne", 3, "Sovereign Aisle", "gilt-compass", 6800, 16600, 4000, 8000),
+        terrainTile("echo-throne", 4, "South Repeating Gallery", "fracture-glass", 6800, 16600, 8000, 11400),
+        terrainTile("echo-throne", 5, "Crescent Throne Court", "polished-echo", 16600, 23400, 600, 11400),
+      ],
       meshColliders: [meshCollider("echo-throne:walkable-court", [
-        triangle(600, 600, 0, 23400, 600, 0, 23400, 11400, 0),
-        triangle(600, 600, 0, 23400, 11400, 0, 600, 11400, 0),
+        ...slabTriangles(600, 6800, 600, 11400),
+        ...slabTriangles(6800, 16600, 600, 4000),
+        ...slabTriangles(6800, 16600, 4000, 8000),
+        ...slabTriangles(6800, 16600, 8000, 11400),
+        ...slabTriangles(16600, 23400, 600, 11400),
       ])],
       routes: [
         // Critical thread: narthex -> sovereign aisle -> crescent court, with both intermediate
@@ -461,6 +505,44 @@ const validateProfile = (profile) => {
       const area = (second.x - first.x) * (third.y - first.y) - (second.y - first.y) * (third.x - first.x);
       if (!Number.isFinite(area) || area === 0) throw new Error(`Degenerate mesh collider triangle: ${collider.id}[${index}]`);
     });
+  });
+
+  // Terrain tiles are the authored floor. Until they were claimed here a slab id could silently
+  // duplicate a route or prop id, and nothing checked that the visible slabs actually tile the
+  // walkable bounds -- the four tiling contracts were promised in a spec, not machine-checked.
+  const tiles = profile.gameplay.terrainTiles ?? [];
+  if (!Array.isArray(tiles) || tiles.length < 1) throw new Error(`Stage world requires authored terrain tiles: ${profile.stageId}`);
+  let tiledArea = 0;
+  tiles.forEach((tile, index) => {
+    claimId(tile);
+    const rect = tile.rect;
+    if (!(tile.index === index + 1
+      && tile.id === `${profile.stageId}:slab-${String(index + 1).padStart(2, "0")}`
+      && tile.plateNode === `terrain-${profile.stageId}-slab-${String(index + 1).padStart(3, "0")}`
+      && tile.elevation === 0
+      && typeof tile.materialId === "string" && tile.materialId.length > 0
+      && Number.isInteger(rect.minX) && Number.isInteger(rect.maxX)
+      && Number.isInteger(rect.minY) && Number.isInteger(rect.maxY)
+      && rect.minX < rect.maxX && rect.minY < rect.maxY
+      && inside(rect.minX, minX, maxX) && inside(rect.maxX, minX, maxX)
+      && inside(rect.minY, minY, maxY) && inside(rect.maxY, minY, maxY)
+      && tile.colliderTriangleIndices[0] === index * 2
+      && tile.colliderTriangleIndices[1] === (index * 2) + 1)) throw new Error(`Invalid terrain tile: ${tile.id}`);
+    tiledArea += (rect.maxX - rect.minX) * (rect.maxY - rect.minY);
+    for (let other = 0; other < index; other += 1) {
+      const previous = tiles[other].rect;
+      if (Math.max(0, Math.min(rect.maxX, previous.maxX) - Math.max(rect.minX, previous.minX))
+        * Math.max(0, Math.min(rect.maxY, previous.maxY) - Math.max(rect.minY, previous.minY)) !== 0) throw new Error(`Terrain tiles overlap: ${tile.id}, ${tiles[other].id}`);
+    }
+  });
+  if (tiledArea !== (maxX - minX) * (maxY - minY)) throw new Error(`Terrain tiles must tile the walkable bounds exactly: ${profile.stageId}`);
+  if (meshColliders[0].triangles.length !== tiles.length * 2) throw new Error(`Support mesh must carry two triangles per terrain tile: ${profile.stageId}`);
+  tiles.forEach((tile) => {
+    const [firstIndex, secondIndex] = tile.colliderTriangleIndices;
+    const rect = tile.rect;
+    const covered = [firstIndex, secondIndex].every((index) => meshColliders[0].triangles[index]
+      ?.every(({ x, y }) => x >= rect.minX && x <= rect.maxX && y >= rect.minY && y <= rect.maxY));
+    if (!covered) throw new Error(`Terrain tile does not own its support triangles: ${tile.id}`);
   });
 
   const routes = profile.gameplay.routes ?? [];

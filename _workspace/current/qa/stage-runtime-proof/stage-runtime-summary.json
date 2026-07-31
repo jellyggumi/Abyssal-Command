@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-31T06:49:29.158Z",
+  "generatedAt": "2026-07-31T07:28:15.108Z",
   "canonicalStageIds": [
     "cinder-span",
     "abyss-chancel",
@@ -114,6 +114,66 @@
         },
         "propGrounding": [
           {
+            "id": "cinder-span:forge-arch",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 818,
+              "triangleCount": 1366,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:collapsed-parapet-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 2561,
+              "triangleCount": 4550,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:west-ash-wall-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 329,
+              "triangleCount": 550,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:east-ash-wall-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 355,
+              "triangleCount": 574,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
+            "id": "cinder-span:ash-gatehouse-north-prop",
+            "groundedMinY": 0,
+            "meshIntegrity": {
+              "meshCount": 1,
+              "vertexCount": 800,
+              "triangleCount": 1412,
+              "invalidVertexCount": 0,
+              "invalidIndexCount": 0,
+              "finiteBounds": true
+            }
+          },
+          {
             "id": "cinder-span:seal-brand",
             "groundedMinY": 0,
             "meshIntegrity": {
@@ -192,66 +252,6 @@
               "meshCount": 1,
               "vertexCount": 245,
               "triangleCount": 348,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "cinder-span:forge-arch",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 818,
-              "triangleCount": 1366,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "cinder-span:collapsed-parapet-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 2561,
-              "triangleCount": 4550,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "cinder-span:west-ash-wall-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 329,
-              "triangleCount": 550,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "cinder-span:east-ash-wall-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 355,
-              "triangleCount": 574,
-              "invalidVertexCount": 0,
-              "invalidIndexCount": 0,
-              "finiteBounds": true
-            }
-          },
-          {
-            "id": "cinder-span:ash-gatehouse-north-prop",
-            "groundedMinY": 0,
-            "meshIntegrity": {
-              "meshCount": 1,
-              "vertexCount": 800,
-              "triangleCount": 1412,
               "invalidVertexCount": 0,
               "invalidIndexCount": 0,
               "finiteBounds": true
@@ -504,7 +504,7 @@
         "surfaceStageId": "abyss-chancel",
         "loadedStageId": "abyss-chancel",
         "renderer": "webgl",
-        "renderedFrames": 357,
+        "renderedFrames": 359,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-abyss-chancel/runtime/terrain/terrain-abyss-chancel-floor.glb",
         "terrainSource": "promoted-glb",
@@ -808,10 +808,6 @@
             "status": 200
           },
           {
-            "path": "assets/motion/stage-vfx/cinder-span-ember-wake.glb",
-            "status": 200
-          },
-          {
             "path": "assets/motion/stage-vfx/echo-throne-fracture-echo.glb",
             "status": 200
           }
@@ -917,7 +913,7 @@
         "surfaceStageId": "echo-throne",
         "loadedStageId": "echo-throne",
         "renderer": "webgl",
-        "renderedFrames": 354,
+        "renderedFrames": 353,
         "terrainLoaded": true,
         "terrainGlbPath": "assets/mesh/terrain/terrain-echo-throne/runtime/terrain/terrain-echo-throne-floor.glb",
         "terrainSource": "promoted-glb",
@@ -1230,5 +1226,5 @@
     }
   ],
   "pass": true,
-  "finishedAt": "2026-07-31T06:49:51.553Z"
+  "finishedAt": "2026-07-31T07:28:37.235Z"
 }

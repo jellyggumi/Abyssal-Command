@@ -98,3 +98,23 @@ Each entry should list the files touched, the reason for the change, and any fol
 - Evidence: focused suites 54/54 plus gate checks 11/11 with no digest repin needed; full
   `node --test 'tests/**/*.test.mjs'` 607 tests, 577 pass, 5 fail — the same five pre-existing
   failures. Browser proof green on all three stages (12 / 13 / 13 props).
+
+## [2026-07-31] report | Terrain tiles: the floor contract becomes machine-checked
+
+- Authored `gameplay.terrainTiles` for all three stages (3 / 4 / 5 slabs) matching the slab quads
+  the promoted terrain GLBs already ship, and re-authored the support mesh from one bounds-spanning
+  quad into two triangles per tile, in tile order.
+- Added the spec §6.1 validator extension: slab ids now pass through `claimId` (closing spec risk
+  R8, where a slab id could silently duplicate a route or prop id), rects must be integer and inside
+  bounds, tiles may not overlap, `Σ tileArea` must equal the bounds area exactly, the support mesh
+  must carry two triangles per tile, and each tile's triangles must lie inside its own rect.
+- Added `tests/stage-terrain-tiles-contract.test.mjs` (4 tests): exact tiling, per-tile triangle
+  ownership, every `plateNode` resolving inside the shipped GLB, and three negative controls that
+  import mutated copies of the real catalog and assert each new clause rejects.
+- Evidence: new suite 4/4; focused stage suites 54/54; gate checks 11/11 with no digest movement
+  (partitioning a flat quad changes its description, not its geometry); full
+  `node --test 'tests/**/*.test.mjs'` 611 tests, 581 pass, 5 fail — the same five pre-existing
+  failures. Browser proof green with `terrainIntegrity.meshCount` 4 / 5 / 6, matching 3 / 4 / 5
+  slabs plus one apron per stage.
+- Not included: gimmicks (spec §4), seam inlay geometry (R11), per-slab material merge.
+  `materialId` is authored but unread — recorded so the renderer has a source of truth later.
