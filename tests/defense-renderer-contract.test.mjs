@@ -421,7 +421,10 @@ test("RealtimeBattle prefers a resolved motion rig for stage NPC readability whi
     "an unmapped stage actor leaves its catalog model path eligible as the fallback",
   );
   assertNear(report.stageNpcHeight, 1.8, "the ambient stage NPC keeps its dedicated readability normalization");
-  assertNear(report.companionHeight, 1.3, "the gameplay companion keeps its smaller actor normalization");
+  // Proportion pass 2026-07-30 (reference-video-analysis.md §3): legion units read at the player's
+  // own scale, distinguished by colour rather than by being smaller. 1.45 is 94% of the 1.55
+  // commander -- inside the reference's "within ~10%" band -- and still below the 1.7 enemy.
+  assertNear(report.companionHeight, 1.45, "the gameplay companion reads as a peer of the commander, not a lesser body");
 });
 
 test("defense renderer fallback adapter projects a supplied snapshot to a mocked Canvas2D context", () => {

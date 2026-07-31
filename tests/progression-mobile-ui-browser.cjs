@@ -98,6 +98,10 @@ async function openPage({
     reducedMotion: "reduce",
     viewport,
   });
+  // Same measured slowdown as the phone-HUD suite: this file's test 4 took 108 s in run #14 and
+  // its tests 1 and 4 timed out at Playwright's 30000 ms default in #14/#15. See
+  // tests/defense-phone-battle-hud-browser.test.cjs:48 for the full reasoning.
+  context.setDefaultTimeout(90_000);
   try {
     const page = await context.newPage();
     const errors = [];
@@ -154,7 +158,24 @@ async function openPage({
         });
       });
     }
-    await page.goto("/index.html", { waitUntil: "networkidle" });
+    // `load`, deliberately, and NOT either neighbour:
+    //
+    //   networkidle       waits for a 500 ms quiet window. app.js:4347 registers the service
+    //                     worker with `updateViaCache: "none"`, so every load revalidates over
+    //                     the network while a continuous WebGL RAF loop keeps the page busy.
+    //                     On CI that window may never open -- runs #14/#15 died here with
+    //                     `page.reload: Timeout 30000ms exceeded`.
+    //   domcontentloaded  does NOT wait for stylesheets. Tried in #17; it moved the failure
+    //                     rather than fixing it. Test 4 asserts `.focus()` lands
+    //                     (`document.activeElement === node`, :452) on a `[data-move]` button,
+    //                     and an unstyled button is `display:none`, where focus() silently
+    //                     no-ops -- so the assert read `false !== true` in #17 AND #18. It
+    //                     passed locally every time because CSS resolves from disk instantly.
+    //   load              waits for stylesheets and subresources but needs no quiet window, so
+    //                     the service-worker revalidation loop cannot stall it.
+    //
+    // Keep in sync with the reload below; both need the CSS guarantee.
+    await page.goto("/index.html", { waitUntil: "load" });
     const surface = page.locator('#defense-battle-surface[data-defense-ready="true"]');
     await surface.waitFor({ state: "visible" });
     if (rendererProbe) {
@@ -172,6 +193,52 @@ async function launch(run) {
   await run.page.locator("#start-defense").click();
   await run.page.locator('#defense-battle-surface[data-defense-started="true"]').waitFor({ state: "attached" });
   await run.page.locator('#defense-cutscene-overlay[data-cutscene-event="STAGE_STARTED"]').waitFor({ state: "visible" });
+}
+
+/**
+ * Clears the opening cutscene and waits for the overlay to actually leave.
+ *
+ * The overlay is a modal that owns focus and advances on its own relay timers. A control test
+ * that asserts `document.activeElement` while it is still on screen is racing that timer: on a
+ * fast machine the loop over the five movement buttons finishes first, and on a ~6x slower CI
+ * runner a relay beat lands mid-loop and takes focus back, which is correct modal behaviour and
+ * a false failure for the control under test. Dismissing first is also what a player does before
+ * touching the controls, so this asserts the state the assertion was always about.
+ */
+async function dismissOpeningCutscene(run) {
+  const dismiss = run.page.locator("#defense-cutscene-overlay [data-cutscene-dismiss]");
+  if (await dismiss.isVisible().catch(() => false)) await dismiss.click();
+  await run.page.locator("#defense-cutscene-overlay").waitFor({ state: "hidden" }).catch(() => {});
+}
+
+/**
+ * Answers any pending level-up growth offer and waits for the card to leave.
+ *
+ * Sibling of dismissOpeningCutscene above, for the same class of defect: a surface that
+ * legitimately owns focus is on screen while a control test asserts `document.activeElement`.
+ *
+ * The offer is genuinely modal -- defense-run-simulation.js:4263 is `if (run.growthOffer) return;`,
+ * so the simulation HALTS until it is answered. app.js:3908 therefore correctly focuses the card's
+ * button. That button is a plain <button> with no `data-move`, which is exactly what a local repro
+ * observed holding focus at the point of failure.
+ *
+ * The focus loop below presses Enter once per direction; each press moves the commander and accrues
+ * XP, so a level-up can render MID-LOOP and take focus from the button under assertion. That is why
+ * the failure moved between runs -- CI lost S (5th), a 6x CPU-throttled local repro lost E (4th).
+ * It depends on WHEN the offer fires, not on which button.
+ *
+ * It is also why no wait strategy fixed it across runs #16-#20: the steal happens in the window
+ * BETWEEN `.focus()` and the assertion, which `networkidle`, `domcontentloaded` and `load` cannot
+ * address. Retrying the focus assertion would be worse still -- it would paper over correct modal
+ * behaviour and could pass while the player-facing focus contract was broken.
+ *
+ * Answering the offer up front is what a player does before drilling the controls, so the
+ * assertion still measures the state it was always about.
+ */
+async function dismissGrowthOffer(run) {
+  const pick = run.page.locator("#defense-growth-offer [data-pick]").first();
+  if (await pick.isVisible().catch(() => false)) await pick.click();
+  await run.page.locator("#defense-growth-offer").waitFor({ state: "hidden" }).catch(() => {});
 }
 
 async function readStoredStoryProgress(page) {
@@ -219,7 +286,11 @@ test("story rewards drive extracted-skill and appearance controls through persis
     await run.page.waitForFunction(() => document.querySelector(".deck-subhead")?.textContent?.includes("추출 액티브 · 0/3"));
     assert.deepEqual((await readStoredStoryProgress(run.page)).activeSkillLoadout, [], "unequipping must persist without removing the unlocked skill");
 
-    await run.page.reload({ waitUntil: "networkidle" });
+    // `load` for the same reason as the goto above: must not measure before stylesheets apply,
+    // and must not wait on a network quiet window the service worker prevents. A reload is the
+    // harder case -- the worker is already active and re-fetches in the background -- which is
+    // why this exact line timed out under `networkidle` in runs #14 and #15.
+    await run.page.reload({ waitUntil: "load" });
     await run.page.locator('[data-deck-section="skills"]').click();
     assert.equal(await run.page.locator('[data-extracted-skill-toggle="rift-bolt"]').getAttribute("aria-pressed"), "false");
     assert.match(await run.page.locator('[data-extracted-skill-upgrade="rift-bolt"]').textContent() ?? "", /Lv 3/, "reload must render the next level from persisted level 2");
@@ -300,6 +371,7 @@ test("coarse-landscape joystick resolves eight octants and every cancellation pa
   const run = await openPage({ hasTouch: true, viewport: COARSE_LANDSCAPE });
   try {
     await launch(run);
+    await dismissOpeningCutscene(run);
     const movement = run.page.locator("#movement-actions");
     const joystick = run.page.locator("[data-joystick]");
     assert.equal(await joystick.evaluate((node) => getComputedStyle(node).display), "grid", "coarse landscape must expose the drag joystick");
@@ -308,6 +380,11 @@ test("coarse-landscape joystick resolves eight octants and every cancellation pa
     assert.equal(await buttons.count(), 5, "the drag surface must not replace the five keyboard movement controls");
     for (const direction of ["N", "W", "IDLE", "E", "S"]) {
       const button = movement.locator(`button[data-move="${direction}"]`);
+      // INSIDE the loop, not before it. Unlike the opening cutscene, the growth offer is
+      // recurrent: each Enter below moves the commander and accrues XP, so a level-up can cross
+      // its threshold during iteration 4 or 5 and take focus mid-loop. A pre-loop dismiss would
+      // clear an offer that is not there yet and miss the one that actually breaks the assert.
+      await dismissGrowthOffer(run);
       await button.focus();
       assert.equal(await button.evaluate((node) => document.activeElement === node), true, `${direction} must remain keyboard focusable behind the joystick`);
       const previous = Number(await run.surface.getAttribute("data-defense-input-seq"));
@@ -409,6 +486,7 @@ test("the joystick is the primary movement control at every viewport", async () 
     const run = await openPage(options);
     try {
       await launch(run);
+      await dismissOpeningCutscene(run);
       const joystick = run.page.locator("[data-joystick]");
       // 1. present and laid out -- the inverted assertion.
       assert.equal(await joystick.evaluate((node) => getComputedStyle(node).display), "grid",

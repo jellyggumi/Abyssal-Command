@@ -58,6 +58,279 @@ export const COMBAT_TARGETING = freeze({
   elevationTolerance: 700,
 });
 
+/**
+ * Aim-biased target selection (core-loop-legion-spec.md §5). An optional player aim vector WEIGHTS
+ * candidate selection instead of replacing it:
+ *
+ *   score(enemy) = distance^2 * (1 + AIM_BIAS * (1 - cos t) / 2)
+ *
+ * where t is the angle between the aim vector and the vector to the enemy. At AIM_BIAS 3.0 an enemy
+ * directly behind the commander must be ~2x closer to win over one being aimed at. With no aim
+ * vector present the weight is exactly 1, so the score reduces to `distance^2` and selection is
+ * bit-identical to the pre-cycle-9 nearest-enemy behavior (ties still broken by id).
+ *
+ * Expressed in basis points because the comparison itself is done in scaled INTEGER arithmetic —
+ * float scores would make ordering engine-dependent, which a deterministic sim cannot accept.
+ */
+export const AIM_BIAS_BP = 30000; // 3.0 x 10000
+/** Fixed-point scale shared by aim/analog/facing vectors. Integer millis at magnitude 1000. */
+export const AIM_VECTOR_SCALE = 1000;
+
+/**
+ * Extraction: corpse -> channel -> companion (core-loop-legion-spec.md §2).
+ * Ported from the deferred `engineering/extraction-system.js` design. The timing values are the
+ * deferred module's own and are internally consistent at 60 Hz, so they carry over unchanged.
+ */
+export const EXTRACTION = freeze({
+  /** Corpse persists 10 s. */
+  corpseDurationTicks: TICK_RATE * 10,
+  /** Channel takes 2 s of continuous proximity. */
+  channelTicks: TICK_RATE * 2,
+  /** World units; the commander must stay inside this radius or the channel BREAKS (never pauses). */
+  range: 1200,
+  /** Hard cap on live corpses; oldest is evicted first (spec §6 tick-cost bound). */
+  corpseCap: 12,
+});
+
+/**
+ * Enemy grade -> companion grade. Fixes spec defect D2: the deferred module declared ALL enemy
+ * types extractable, but extraction is midboss-onward, so trash produces no corpse at all. `normal`
+ * is deliberately absent — absence IS the "no corpse" rule, and it also bounds the corpse array.
+ */
+export const EXTRACTION_GRADE_BY_ENEMY = freeze({
+  elite: "BASIC",
+  midboss: "SHADOW",
+  boss: "BOSS",
+});
+
+/** Companion stat inheritance per extracted grade (spec §2 table, retained from the deferred module). */
+export const GRADE_COMPANION_MULTIPLIERS = freeze({
+  BASIC: freeze({ damageBp: 15000, fireTicksBp: 8000, hpInheritBp: 3000, defaultRange: 4000, loyaltyBase: 100 }),
+  SHADOW: freeze({ damageBp: 18000, fireTicksBp: 7500, hpInheritBp: 4000, defaultRange: 4600, loyaltyBase: 120 }),
+  BOSS: freeze({ damageBp: 20000, fireTicksBp: 7000, hpInheritBp: 5000, defaultRange: 5200, loyaltyBase: 150 }),
+});
+
+/**
+ * Legion capacity, dynamic 3 -> 10 (core-loop-legion-spec.md §3).
+ * `COMPANION_CAPACITY_BASE` replaces the *meaning* of campaign-state's MAX_LOADOUT_SIZE;
+ * `COMPANION_CAPACITY_MAX` is the absolute ceiling used by load-time validation.
+ */
+export const COMPANION_CAPACITY_BASE = 3;
+export const COMPANION_CAPACITY_MAX = 10;
+
+/**
+ * The 4th..10th slot unlock ladder, shipped as DATA on purpose.
+ *
+ * Each slot requires BOTH a stage-clear gate and a Bound Fragment payment; level alone is
+ * insufficient, matching the request (레벨과 특정 조건(비용지불등)에 따라 해금). The resolver
+ * (`companionCapacityForCampaign`) reads this table and contains no inline thresholds, so a
+ * pricing decision edits data here and touches no logic anywhere.
+ *
+ * ECONOMY, as of the cycle-9 resolution (`N-20260730-C9-01`):
+ *   Bound Fragment earned  = resolvedIds.length * 3 + distinct captured elites (elites capped at
+ *                            STAGES.length) -> 12 lifetime max, 9 from stage clears alone
+ *   This ladder            = 7 cumulative (7 rows x 1)
+ *   Remainder              = 5 toward equipment, which needs 10 for one line to T5
+ * So capacity 10 is reachable AND buying the full ladder still costs you a full equipment line.
+ * The tradeoff is real; it is no longer an arithmetic impossibility.
+ *
+ * This comment previously described the PRE-resolution economy and said earning was
+ * "`resolvedIds.length`, capped at 10" against a 16-cost ladder that was "NOT fully affordable...
+ * a deliberate, recorded state". Every clause of that is now false. It is called out because that
+ * exact "capped at 10" phrasing — inherited from a larger stage list, while STAGES.length is 3 —
+ * is what led two separate audits to mis-state the budget by reading the comment instead of
+ * measuring the function. Keep this block in sync with `campaign-state.js#boundFragmentEarned`;
+ * a stale economy comment here has already cost this project two wrong analyses.
+ */
+export const COMPANION_SLOT_UNLOCKS = freeze([
+  // Cycle 9 reprice (`N-20260730-C9-01`). The authored ladder cost 16 cumulative and gated slots
+  // 7-10 behind 4/6/8/10 stage clears. `STAGES.length` is **3**, so those four rows were
+  // PERMANENTLY UNREACHABLE at any price [OBSERVED] — a second defect independent of the budget,
+  // and one that repricing alone could not have fixed.
+  //
+  // Every gate is now within the 3 stages that exist, and the cumulative cost is 7 against a
+  // lifetime pool of 12 (see boundFragmentEarned), leaving 5 toward equipment. Capacity 10 is
+  // reachable, and spending on slots still costs you equipment progress — the tradeoff is real
+  // rather than arithmetically impossible.
+  //
+  // Gates rise 1,1,2,2,3,3,3: the first two slots land early to make the mechanic legible, then
+  // pacing tightens so the last three all wait on a full clear.
+  freeze({ slot: 4, requiresStageClears: 1, boundFragmentCost: 1 }),
+  freeze({ slot: 5, requiresStageClears: 1, boundFragmentCost: 1 }),
+  freeze({ slot: 6, requiresStageClears: 2, boundFragmentCost: 1 }),
+  freeze({ slot: 7, requiresStageClears: 2, boundFragmentCost: 1 }),
+  freeze({ slot: 8, requiresStageClears: 3, boundFragmentCost: 1 }),
+  freeze({ slot: 9, requiresStageClears: 3, boundFragmentCost: 1 }),
+  freeze({ slot: 10, requiresStageClears: 3, boundFragmentCost: 1 }),
+]);
+
+/** Ladder row for one slot number, or null when that slot is not unlockable. */
+export function companionSlotUnlockFor(slot) {
+  return COMPANION_SLOT_UNLOCKS.find((entry) => entry.slot === slot) || null;
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * Area combat model (광역 전투).
+ *
+ * Every contact in this game is area-of-effect. A basic swing, an orb impact, a companion volley,
+ * a skill, an enemy strike and a boss slam all resolve as a DISC centred on the contact point:
+ * the primary body takes its authored damage, and every other body of the opposing faction inside
+ * the disc takes a derived share of it.
+ *
+ * The share is the product of four authored factors, each an integer basis-point weight so the
+ * simulation stays bit-deterministic:
+ *
+ *   shareBp = falloffBp(distance, radius)   distance   -- how far the body stands from the contact
+ *           x weightBp(source)              스킬가중치  -- how "wide" that kind of attack is authored to be
+ *           x matchupBp(attacker, target)   속성        -- elemental advantage between the two bodies
+ *           x sustainBp(durationTicks)      지속시간    -- burst now vs. the same budget spread over a field
+ *
+ * All four are visible, tunable, per-source data. They are the balance levers for area combat:
+ * a wide, long, on-element hit is the strongest configuration and a narrow, instant, off-element
+ * hit is the weakest, with everything between reachable by editing this block alone.
+ * ------------------------------------------------------------------------------------------- */
+
+/** Basis-point unit shared by every area factor. 10000 bp = x1.0. */
+export const AREA_BP = 10000;
+
+/**
+ * Elemental identities. `neutral` never gains or suffers a matchup; it is the baseline a body
+ * carries when its authored data says nothing about element.
+ */
+export const ELEMENT_IDS = freeze(["neutral", "ember", "frost", "veil", "void"]);
+
+/**
+ * Attacker -> defender multiplier. The advantage cycle is ember > frost > veil > void > ember,
+ * so no element is globally dominant and every stage's enemy mix has an answer. Mirror matchups
+ * are deliberately below 1.0: hitting a body with its own element is the worst case, which keeps
+ * a single-element build from being universally correct.
+ */
+export const ELEMENT_MATCHUP_BP = freeze({
+  neutral: freeze({ neutral: 10000, ember: 10000, frost: 10000, veil: 10000, void: 10000 }),
+  ember: freeze({ neutral: 10000, ember: 9000, frost: 12500, veil: 10000, void: 8500 }),
+  frost: freeze({ neutral: 10000, ember: 8500, frost: 9000, veil: 12500, void: 10000 }),
+  veil: freeze({ neutral: 10000, ember: 10000, frost: 8500, veil: 9000, void: 12500 }),
+  void: freeze({ neutral: 10000, ember: 12500, frost: 10000, veil: 8500, void: 9000 }),
+});
+
+/**
+ * Per-source area geometry and weight.
+ *
+ * `radius` is the disc radius in world units, `weightBp` scales the splash share, and `element`
+ * is the fallback element when neither the attacker body nor the skill declares one.
+ * `fieldTicks` > 0 means the contact also leaves a lingering field (see `AREA_FIELD`).
+ */
+export const AREA_SOURCES = freeze({
+  /** Commander basic swing: tight, frequent, cheap splash. */
+  basic: freeze({ radius: 1100, weightBp: 5500, element: "neutral", fieldTicks: 0 }),
+  /** Melee arc contact from any body. */
+  melee: freeze({ radius: 1250, weightBp: 6000, element: "neutral", fieldTicks: 0 }),
+  /** Travelling orb burst at the body it touched. */
+  projectile: freeze({ radius: 1000, weightBp: 5000, element: "veil", fieldTicks: 0 }),
+  /** Companion volley: the legion trades per-hit weight for uptime. */
+  companion: freeze({ radius: 900, weightBp: 4500, element: "neutral", fieldTicks: 0 }),
+  /** Player active skill: the widest player-side contact, and the only one that leaves a field. */
+  skill: freeze({ radius: 2600, weightBp: 10000, element: "void", fieldTicks: 120 }),
+  /**
+   * Enemy contact strike. Player-side bodies standing together share the hit. The disc is sized
+   * against the authored formation offsets (rpg-catalog STANCE_CONFIG: 300-1414 units), so
+   * clustering the legion is a real risk and spreading it is a real answer.
+   */
+  enemy: freeze({ radius: 1200, weightBp: 4500, element: "ember", fieldTicks: 0 }),
+  /** Enemy projectile detonation, sized to the same formation scale. */
+  enemyProjectile: freeze({ radius: 1200, weightBp: 4000, element: "void", fieldTicks: 0 }),
+  /** Boss slam: the widest contact in the game and always leaves a field. */
+  boss: freeze({ radius: 3200, weightBp: 12000, element: "void", fieldTicks: 180 }),
+});
+
+/** Distance falloff and the hard bounds every area resolution is clamped by. */
+export const AREA_COMBAT = freeze({
+  mode: "always-area",
+  /** Inside this fraction of the radius the splash share does not decay at all. */
+  innerRatioBp: 3500,
+  /** Share still applied exactly at the rim. Beyond the rim the body is untouched. */
+  edgeShareBp: 3000,
+  /** Bodies struck by one resolution, primary excluded. Bounds the per-tick cost. */
+  maxSplashTargets: 8,
+  /** A body inside the disc always takes at least this much, so "in range" is never free. */
+  minSplashDamage: 1,
+});
+
+/** Lingering-field pacing. A field is the `지속시간` axis of the model made observable. */
+export const AREA_FIELD = freeze({
+  /** Ticks between damage pulses. 30 ticks = 0.5 s at 60 Hz. */
+  pulseTicks: 30,
+  /** Concurrent fields; the oldest is retired first so the tick cost stays bounded. */
+  maxActive: 6,
+  /**
+   * Per-pulse share floor. Without it a very long field would pulse for nothing; with it a long
+   * field trades a lower peak for a higher total, which is exactly the sustain-vs-burst choice.
+   */
+  sustainFloorBp: 2500,
+  /** A field never out-damages the contact that spawned it on a single pulse. */
+  sustainCeilingBp: 10000,
+});
+
+/** Element carried by a body/skill id, or `neutral` when the id is unknown. */
+export function elementOf(source) {
+  const element = typeof source === "string" ? source : source?.element;
+  return ELEMENT_IDS.includes(element) ? element : "neutral";
+}
+
+/** Attacker-vs-defender element multiplier in basis points. */
+export function elementMatchupBp(attackerElement, defenderElement) {
+  const attacker = elementOf(attackerElement);
+  const defender = elementOf(defenderElement);
+  return ELEMENT_MATCHUP_BP[attacker]?.[defender] ?? AREA_BP;
+}
+
+/**
+ * Distance factor: flat inside the inner ratio, then linear down to `edgeShareBp` at the rim.
+ * Integer-only, so identical inputs give identical output on every engine.
+ */
+export function areaFalloffBp(distance, radius) {
+  const span = Math.max(1, Math.trunc(radius));
+  const gap = Math.max(0, Math.trunc(distance));
+  if (gap >= span) return 0;
+  const inner = Math.trunc(span * AREA_COMBAT.innerRatioBp / AREA_BP);
+  if (gap <= inner) return AREA_BP;
+  const decaySpan = Math.max(1, span - inner);
+  const decayed = AREA_BP - Math.trunc((AREA_BP - AREA_COMBAT.edgeShareBp) * (gap - inner) / decaySpan);
+  return Math.max(AREA_COMBAT.edgeShareBp, decayed);
+}
+
+/**
+ * Duration factor. A field spreads one contact's budget over `durationTicks`, so each pulse is
+ * worth `pulseTicks / durationTicks` of it — floored, so long fields keep a meaningful pulse.
+ * An instant contact (durationTicks <= 0) is worth the full budget on its single hit.
+ */
+export function areaSustainBp(durationTicks) {
+  const ticks = Math.max(0, Math.trunc(durationTicks));
+  if (ticks <= 0) return AREA_BP;
+  const share = Math.trunc(AREA_BP * AREA_FIELD.pulseTicks / Math.max(AREA_FIELD.pulseTicks, ticks));
+  return Math.min(AREA_FIELD.sustainCeilingBp, Math.max(AREA_FIELD.sustainFloorBp, share));
+}
+
+/** Authored geometry/weight for one area source key. */
+export function areaSourceProfile(sourceKey) {
+  return AREA_SOURCES[sourceKey] || AREA_SOURCES.basic;
+}
+
+/**
+ * The whole model in one call: the basis-point share a body at `distance` takes from a contact.
+ * Factors are applied one at a time and truncated between steps so the result cannot depend on
+ * floating-point association order.
+ */
+export function areaShareBp({ distance, radius, weightBp, attackerElement, defenderElement, durationTicks = 0 }) {
+  const falloffBp = areaFalloffBp(distance, radius);
+  if (falloffBp <= 0) return 0;
+  let share = falloffBp;
+  share = Math.trunc(share * Math.max(0, Math.trunc(weightBp)) / AREA_BP);
+  share = Math.trunc(share * elementMatchupBp(attackerElement, defenderElement) / AREA_BP);
+  share = Math.trunc(share * areaSustainBp(durationTicks) / AREA_BP);
+  return Math.max(0, share);
+}
+
 /** Body-vs-body and body-vs-terrain collision limits shared by placement and movement. */
 export const COLLISION = freeze({
   /** Elevation rise a body can walk up in one tick; anything steeper blocks like a wall. */
@@ -477,36 +750,243 @@ export const ABYSS_DEPTH_PACKAGES = freeze({
 export function abyssDepthPackage(depth) { return ABYSS_DEPTH_PACKAGES[depth] || null; }
 
 export const ENEMIES = freeze({
-  rusher: { id: "rusher", hp: 3000, speed: 3000, damage: 10, attackTicks: 60, xp: 8, radius: 260, policyId: "gate-pressure" },
-  flanker: { id: "flanker", hp: 3600, speed: 3300, damage: 12, attackTicks: 60, xp: 10, radius: 340, policyId: "flank" },
-  guardian: { id: "guardian", hp: 9000, speed: 1700, damage: 20, attackTicks: 90, xp: 18, radius: 540, policyId: "elite-escort" },
-  ranged: { id: "ranged", hp: 2800, speed: 2000, damage: 20, attackTicks: 120, xp: 12, radius: 320, projectileRange: 6000, projectileTicks: 120, policyId: "resource-denial" },
+  rusher: { id: "rusher", hp: 3000, speed: 3000, damage: 10, attackTicks: 60, xp: 8, radius: 260, policyId: "gate-pressure", element: "ember", patternId: "ember-rush" },
+  flanker: { id: "flanker", hp: 3600, speed: 3300, damage: 12, attackTicks: 60, xp: 10, radius: 340, policyId: "flank", element: "veil", patternId: "veil-flank" },
+  guardian: { id: "guardian", hp: 9000, speed: 1700, damage: 20, attackTicks: 90, xp: 18, radius: 540, policyId: "elite-escort", element: "frost", patternId: "frost-guard" },
+  ranged: { id: "ranged", hp: 2800, speed: 2000, damage: 20, attackTicks: 120, xp: 12, radius: 320, projectileRange: 6000, projectileTicks: 120, policyId: "resource-denial", element: "void", patternId: "void-volley" },
 });
 export const COMPANIONS = freeze({
-  "ember-cohort": { id: "ember-cohort", name: "Ember Cohort", damage: 420, fireTicks: 36, range: 4600 },
-  "rift-lens": { id: "rift-lens", name: "Rift Lens", damage: 540, fireTicks: 48, range: 5200 },
-  "veil-vanguard": { id: "veil-vanguard", name: "Veil Vanguard", damage: 360, fireTicks: 28, range: 4000 },
-  "anchor-shard": { id: "anchor-shard", name: "Anchor Shard", damage: 720, fireTicks: 70, range: 5600 },
-  "throne-echo": { id: "throne-echo", name: "Throne Echo", damage: 480, fireTicks: 38, range: 4800 },
-  "dawnless-crown": { id: "dawnless-crown", name: "Moonless Command", damage: 600, fireTicks: 52, range: 6000 },
-  "pack-warden": { id: "pack-warden", name: "Pack Warden", damage: 400, fireTicks: 30, range: 4200 },
-  "lantern-reaver": { id: "lantern-reaver", name: "Lantern Reaver", damage: 480, fireTicks: 40, range: 4400 },
-  "requiem-warden": { id: "requiem-warden", name: "Requiem Warden", damage: 440, fireTicks: 38, range: 4600 },
+  "ember-cohort": { id: "ember-cohort", name: "Ember Cohort", damage: 420, fireTicks: 36, range: 4600, element: "ember" },
+  "rift-lens": { id: "rift-lens", name: "Rift Lens", damage: 540, fireTicks: 48, range: 5200, element: "void" },
+  "veil-vanguard": { id: "veil-vanguard", name: "Veil Vanguard", damage: 360, fireTicks: 28, range: 4000, element: "veil" },
+  "anchor-shard": { id: "anchor-shard", name: "Anchor Shard", damage: 720, fireTicks: 70, range: 5600, element: "frost" },
+  "throne-echo": { id: "throne-echo", name: "Throne Echo", damage: 480, fireTicks: 38, range: 4800, element: "void" },
+  "dawnless-crown": { id: "dawnless-crown", name: "Moonless Command", damage: 600, fireTicks: 52, range: 6000, element: "veil" },
+  "pack-warden": { id: "pack-warden", name: "Pack Warden", damage: 400, fireTicks: 30, range: 4200, element: "ember" },
+  "lantern-reaver": { id: "lantern-reaver", name: "Lantern Reaver", damage: 480, fireTicks: 40, range: 4400, element: "ember" },
+  "requiem-warden": { id: "requiem-warden", name: "Requiem Warden", damage: 440, fireTicks: 38, range: 4600, element: "frost" },
 });
+/**
+ * Active skills declare their own area identity: `element` picks the matchup row, `areaWeightBp`
+ * overrides the generic skill weight, `areaRadius` overrides the disc, and `fieldTicks` decides
+ * whether the cast leaves a lingering field. A skill that declares none of them inherits
+ * `AREA_SOURCES.skill` unchanged, so this stays additive to the authored damage/cooldown values.
+ */
 export const SKILLS = freeze({
-  "rift-bolt": { id: "rift-bolt", name: "Echo Bolt", role: "active", kind: "active", damage: 1800, cooldown: 390, radius: 0, motion: "attack", vfx: "rift-bolt" },
-  "soul-lance": { id: "soul-lance", name: "Echo Lance", role: "active", kind: "active", damage: 1200, cooldown: 270, radius: 0, motion: "critical", vfx: "soul-lance" },
-  "grave-pulse": { id: "grave-pulse", name: "Echo Pulse", role: "active", kind: "active", damage: 650, cooldown: 240, radius: 3000, motion: "critical", vfx: "grave-pulse" },
-  "void-aegis": { id: "void-aegis", name: "Zenith Aegis", role: "active", kind: "active", damage: 0, cooldown: 300, radius: 0, integrity: 50, motion: "defence", vfx: "void-aegis" },
-  "shadow-step": { id: "shadow-step", name: "Dusk Step", role: "active", kind: "active", damage: 900, cooldown: 210, radius: 4500, motion: "avoid", vfx: "shadow-step" },
+  "rift-bolt": { id: "rift-bolt", name: "Echo Bolt", role: "active", kind: "active", damage: 1800, cooldown: 390, radius: 0, motion: "attack", vfx: "rift-bolt", element: "void", areaRadius: 1800, areaWeightBp: 11000, fieldTicks: 0 },
+  "soul-lance": { id: "soul-lance", name: "Echo Lance", role: "active", kind: "active", damage: 1200, cooldown: 270, radius: 0, motion: "critical", vfx: "soul-lance", element: "veil", areaRadius: 2200, areaWeightBp: 9000, fieldTicks: 0 },
+  "grave-pulse": { id: "grave-pulse", name: "Echo Pulse", role: "active", kind: "active", damage: 650, cooldown: 240, radius: 3000, motion: "critical", vfx: "grave-pulse", element: "ember", areaRadius: 3000, areaWeightBp: 10000, fieldTicks: 180 },
+  "void-aegis": { id: "void-aegis", name: "Zenith Aegis", role: "active", kind: "active", damage: 0, cooldown: 300, radius: 0, integrity: 50, motion: "defence", vfx: "void-aegis", element: "frost", areaRadius: 1600, areaWeightBp: 0, fieldTicks: 0 },
+  "shadow-step": { id: "shadow-step", name: "Dusk Step", role: "active", kind: "active", damage: 900, cooldown: 210, radius: 4500, motion: "avoid", vfx: "shadow-step", element: "frost", areaRadius: 2400, areaWeightBp: 8500, fieldTicks: 90 },
+  // --- aoe-burst (광역 파괴) --------------------------------------------
+  // Authored in design/skill-and-growth-spec.md §2.2 as the answer to
+  // SURGE/BIGWAVE density ("근접 처치율 2.7/s로는 밀도 60을 감당할 수 없다"), and
+  // required by master-numeric-contract.md §2 row 2 ("광역기 필요성 발생"). Both
+  // are 원형 360°, which orderedTargets() already resolves natively.
+  //
+  // `regents-verdict` is the BIGWAVE payoff: damage is `min(targets, targetCap)
+  // * damagePerTarget`, so it is worth 400 against one enemy and 4800 against
+  // twelve. Density IS the damage — that is what makes one cast resolve a wave.
+  // `damage: 0` keeps skillRankDamage()'s base term at zero so rank scaling
+  // applies to damagePerTarget alone (castSkill()), and it also keeps the area
+  // model off this skill entirely: castSkill() only splashes when the authored
+  // damage is positive, so its per-target sum is never double-counted.
+  //
+  // `areaRadius` deliberately equals each skill's authored `radius`: the burst
+  // already damages everything inside its stated circle, so the area layer adds
+  // the element matchup and the ring/blink presentation without widening the
+  // circle the player was told about.
+  "ash-nova": { id: "ash-nova", name: "Ash Nova", role: "active", kind: "active", category: "aoe-burst", damage: 1400, cooldown: 480, radius: 3600, motion: "critical", vfx: "ash-nova", element: "ember", areaRadius: 3600, areaWeightBp: 10000, fieldTicks: 0 },
+  "regents-verdict": { id: "regents-verdict", name: "Regent's Verdict", role: "active", kind: "active", category: "aoe-burst", damage: 0, damagePerTarget: 400, targetCap: 12, cooldown: 900, radius: 5000, motion: "critical", vfx: "regents-verdict", element: "void", areaRadius: 5000, areaWeightBp: 10000, fieldTicks: 0 },
   "eclipse-edge": { id: "eclipse-edge", name: "Dusk Edge", role: "passive", kind: "passive", basicDamage: 180 },
   "soul-magnet": { id: "soul-magnet", name: "Echo Magnet", role: "passive", kind: "passive", pickupRange: 1500 },
   "ward-binder": { id: "ward-binder", name: "Zenith Binder", role: "passive", kind: "passive", maxIntegrity: 120 },
 });
 export const BOSSES = freeze({
-  "s1-cinder-warden": { id: "s1-cinder-warden", hp: 40000, speed: 1800, damage: 200, attackTicks: 90, xp: 100, radius: 900, policyId: "player-pursuit" },
-  "s2-veil-tactician": { id: "s2-veil-tactician", hp: 48000, speed: 1650, damage: 200, attackTicks: 90, xp: 110, radius: 900, policyId: "resource-denial" },
-  "s3-gate-sovereign": { id: "s3-gate-sovereign", hp: 60000, speed: 1500, damage: 300, attackTicks: 90, xp: 120, radius: 980, policyId: "low-hp-focus" },
+  "s1-cinder-warden": { id: "s1-cinder-warden", hp: 40000, speed: 1800, damage: 200, attackTicks: 90, xp: 100, radius: 900, policyId: "player-pursuit", element: "ember", patternId: "cinder-warden-cycle" },
+  "s2-veil-tactician": { id: "s2-veil-tactician", hp: 48000, speed: 1650, damage: 200, attackTicks: 90, xp: 110, radius: 900, policyId: "resource-denial", element: "veil", patternId: "veil-tactician-cycle" },
+  "s3-gate-sovereign": { id: "s3-gate-sovereign", hp: 60000, speed: 1500, damage: 300, attackTicks: 90, xp: 120, radius: 980, policyId: "low-hp-focus", element: "void", patternId: "gate-sovereign-cycle" },
+});
+
+/* ---------------------------------------------------------------------------------------------
+ * Attack-pattern presets and the AI response patterns that answer them.
+ *
+ * A pattern is an ORDERED, LOOPING sequence of steps. Each step is a three-phase action —
+ * telegraph (the readable tell), active (the one tick that authors contact) and recovery (the
+ * punish window) — matching the startup/active/recovery contract the combat design uses
+ * elsewhere. The simulation owns the timing; the renderer only reflects the phase it is told.
+ *
+ * Because timing lives here and nowhere else, a designer can retime a boss without touching a
+ * single line of behaviour code, and the same table is what the AI response patterns read when
+ * they decide whether to evade, spread out or punish.
+ * ------------------------------------------------------------------------------------------- */
+
+/** Contact shapes a step can author. `disc` is centred on the attacker, `lead` on the target. */
+export const ATTACK_SHAPES = freeze(["disc", "lead", "ring"]);
+
+const attackStep = (id, { telegraphTicks, activeTicks, recoveryTicks, shape = "disc", radius, damageBp = 10000, weightBp = null, fieldTicks = 0, element = null }) => freeze({
+  id,
+  telegraphTicks,
+  activeTicks,
+  recoveryTicks,
+  totalTicks: telegraphTicks + activeTicks + recoveryTicks,
+  shape,
+  radius,
+  damageBp,
+  weightBp,
+  fieldTicks,
+  element,
+});
+
+export const ATTACK_PATTERNS = freeze({
+  /** Trash rusher: one short tell, one contact. Readable at a glance, cheap to dodge. */
+  "ember-rush": freeze({
+    id: "ember-rush",
+    element: "ember",
+    steps: freeze([
+      attackStep("lunge", { telegraphTicks: 18, activeTicks: 6, recoveryTicks: 24, radius: 950, damageBp: 10000 }),
+    ]),
+  }),
+  /** Flanker alternates a fast poke with a wider arc, so spacing alone is not a full answer. */
+  "veil-flank": freeze({
+    id: "veil-flank",
+    element: "veil",
+    steps: freeze([
+      attackStep("poke", { telegraphTicks: 12, activeTicks: 4, recoveryTicks: 20, radius: 800, damageBp: 8500 }),
+      attackStep("arc", { telegraphTicks: 24, activeTicks: 6, recoveryTicks: 26, radius: 1400, damageBp: 11500 }),
+    ]),
+  }),
+  /** Guardian is slow and wide: the escort punishes crowding around the leader it protects. */
+  "frost-guard": freeze({
+    id: "frost-guard",
+    element: "frost",
+    steps: freeze([
+      attackStep("slam", { telegraphTicks: 34, activeTicks: 8, recoveryTicks: 40, radius: 1500, damageBp: 12000, fieldTicks: 60 }),
+    ]),
+  }),
+  /** Ranged denial: a long tell, a ring that punishes standing on top of the volley. */
+  "void-volley": freeze({
+    id: "void-volley",
+    element: "void",
+    steps: freeze([
+      attackStep("volley", { telegraphTicks: 40, activeTicks: 4, recoveryTicks: 44, shape: "lead", radius: 1100, damageBp: 9000 }),
+    ]),
+  }),
+  /** Stage 1 boss: pursue-and-slam, then a field that denies the spot it just hit. */
+  "cinder-warden-cycle": freeze({
+    id: "cinder-warden-cycle",
+    element: "ember",
+    steps: freeze([
+      attackStep("cleave", { telegraphTicks: 45, activeTicks: 8, recoveryTicks: 37, radius: 2600, damageBp: 10000, weightBp: 11000 }),
+      attackStep("ember-fall", { telegraphTicks: 60, activeTicks: 6, recoveryTicks: 54, shape: "lead", radius: 3200, damageBp: 12000, weightBp: 12000, fieldTicks: 180 }),
+    ]),
+  }),
+  /** Stage 2 boss: a ring that punishes hugging, then a lead disc that punishes running. */
+  "veil-tactician-cycle": freeze({
+    id: "veil-tactician-cycle",
+    element: "veil",
+    steps: freeze([
+      attackStep("veil-ring", { telegraphTicks: 50, activeTicks: 6, recoveryTicks: 34, shape: "ring", radius: 3000, damageBp: 9000, weightBp: 12500 }),
+      attackStep("mirror-step", { telegraphTicks: 36, activeTicks: 6, recoveryTicks: 48, shape: "lead", radius: 2400, damageBp: 11000, weightBp: 11000, fieldTicks: 120 }),
+    ]),
+  }),
+  /** Stage 3 boss: three escalating steps, the last one the widest contact in the game. */
+  "gate-sovereign-cycle": freeze({
+    id: "gate-sovereign-cycle",
+    element: "void",
+    steps: freeze([
+      attackStep("sovereign-cleave", { telegraphTicks: 40, activeTicks: 8, recoveryTicks: 32, radius: 2800, damageBp: 9500, weightBp: 11000 }),
+      attackStep("throne-quake", { telegraphTicks: 55, activeTicks: 8, recoveryTicks: 45, radius: 3600, damageBp: 11000, weightBp: 12500, fieldTicks: 150 }),
+      attackStep("null-collapse", { telegraphTicks: 70, activeTicks: 10, recoveryTicks: 60, shape: "lead", radius: 4200, damageBp: 13000, weightBp: 13000, fieldTicks: 240 }),
+    ]),
+  }),
+});
+
+/** Pattern preset for a body, or null when that body has no authored pattern. */
+export function attackPatternFor(patternId) {
+  return ATTACK_PATTERNS[patternId] || null;
+}
+
+/**
+ * Sampler: where a pattern stands after `elapsedTicks`. Pure, total and deterministic — the same
+ * (patternId, elapsed) always yields the same phase, which is what makes pattern fixtures
+ * reproducible without playing the encounter.
+ */
+export function samplePattern(patternId, elapsedTicks) {
+  const pattern = attackPatternFor(patternId);
+  if (!pattern || !pattern.steps.length) return null;
+  const cycleTicks = pattern.steps.reduce((total, step) => total + step.totalTicks, 0);
+  const elapsed = Math.max(0, Math.trunc(elapsedTicks));
+  const loop = Math.trunc(elapsed / cycleTicks);
+  let offset = elapsed % cycleTicks;
+  for (let index = 0; index < pattern.steps.length; index += 1) {
+    const step = pattern.steps[index];
+    if (offset >= step.totalTicks) {
+      offset -= step.totalTicks;
+      continue;
+    }
+    const phase = offset < step.telegraphTicks
+      ? "telegraph"
+      : (offset < step.telegraphTicks + step.activeTicks ? "active" : "recovery");
+    return {
+      patternId: pattern.id,
+      stepId: step.id,
+      stepIndex: index,
+      step,
+      phase,
+      phaseTick: phase === "telegraph"
+        ? offset
+        : (phase === "active" ? offset - step.telegraphTicks : offset - step.telegraphTicks - step.activeTicks),
+      /** One id per (loop, step): stable across a step's three phases, new on every repeat. */
+      actionId: `${pattern.id}:${loop}:${index}:${step.id}`,
+      cycleTicks,
+    };
+  }
+  return null;
+}
+
+/**
+ * AI response patterns — what the OTHER side does about a telegraph.
+ *
+ * These are not flavour: each entry is read by the simulation at the tick its trigger fires.
+ * They are the reason a wide telegraph is a decision rather than an unavoidable tax.
+ */
+export const AI_RESPONSE_PATTERNS = freeze({
+  /** A body covered by a live telegraph disc steps out along the perpendicular. */
+  evade: freeze({
+    id: "evade",
+    trigger: "telegraph-covers-self",
+    windowTicks: 45,
+    /** Extra world units per tick granted while evading, on top of the body's own speed. */
+    speedBonusBp: 3500,
+    /** How far outside the telegraph rim the body wants to end up. */
+    clearanceBp: 2500,
+  }),
+  /** Two or more allies inside one telegraph: they scatter instead of all eating it. */
+  spread: freeze({
+    id: "spread",
+    trigger: "shared-telegraph",
+    minBodies: 2,
+    windowTicks: 60,
+    /** Separation the scatter aims for, as a share of the telegraph radius. */
+    separationBp: 6000,
+  }),
+  /** The recovery window is the answer to a heavy attack: allied fire speeds up inside it. */
+  punish: freeze({
+    id: "punish",
+    trigger: "attacker-recovering",
+    windowTicks: 60,
+    /** Cooldown scale applied to allied fire during the window. 7000bp = 30% faster. */
+    cooldownScaleBp: 7000,
+  }),
+  /** A body that cannot clear the disc in time braces instead, trading mobility for reduction. */
+  brace: freeze({
+    id: "brace",
+    trigger: "telegraph-unavoidable",
+    windowTicks: 30,
+    /** Incoming area share while bracing. */
+    damageScaleBp: 6500,
+  }),
 });
 
 export const CINDER_SPAN_SURPRISE_TABLE = freeze({
@@ -590,6 +1070,9 @@ const stageEncounterRoute = ({
   stageId,
   commitmentCap,
   maxConcurrentEnemies,
+  bigWaveMaxConcurrentEnemies,
+  bigWaveCommitmentCap,
+  bigWaveSpawnIntervalTicks,
   spawnIntervalTicks,
   objectives,
   approaches,
@@ -598,6 +1081,26 @@ const stageEncounterRoute = ({
   id: `encounter-route:${stageId}:v1`,
   commitmentCap,
   maxConcurrentEnemies,
+  // Phase escalation (master-numeric-contract.md §2): the authored concurrency
+  // ceiling rises 8 -> 18 -> 34 -> 60 across DESCENT..BIGWAVE. The runtime had a
+  // single flat number, so it was permanently pinned at the DESCENT-tier value
+  // and a "big" wave was never denser than the opening skirmish -- which is why
+  // an area skill could never catch more than 7 bodies.
+  //
+  // These are the BIG-wave ceilings only; `kind: "normal"` waves keep the value
+  // above. Deliberately BELOW the contract's BIGWAVE 60: that row is gated on
+  // "적 메시 인스턴스드 렌더 필수 (60개 개별 draw 금지)" (§9), and this renderer
+  // still clones one skinned GLB per actor (instantiateActorModel). 60 concurrent
+  // rigged actors would breach the 180 draw-call budget outright. Raising past
+  // these values is blocked on instanced rendering, not on this table.
+  bigWaveMaxConcurrentEnemies,
+  bigWaveCommitmentCap,
+  // Third lever, and the one that actually decides whether a big wave READS as a
+  // wave: the queue drain rate. A raised concurrency ceiling does nothing while
+  // bodies trickle in one per `spawnIntervalTicks` -- measured, the field held 14
+  // against a ceiling of 22, so the interval was binding, not the cap. A big wave
+  // must arrive as a burst ("정신없는 최대 밀도", master-numeric-contract.md §2 row 4).
+  bigWaveSpawnIntervalTicks,
   spawnIntervalTicks,
   objectives: freeze(objectives),
   paths: freeze([
@@ -645,6 +1148,9 @@ export const STAGE_ENCOUNTER_ROUTES = freeze({
     stageId: "cinder-span",
     commitmentCap: 3,
     maxConcurrentEnemies: 8,
+    bigWaveMaxConcurrentEnemies: 22,
+    bigWaveCommitmentCap: 7,
+    bigWaveSpawnIntervalTicks: 5,
     spawnIntervalTicks: 18,
     objectives: [
       objectiveDefinition(
@@ -686,6 +1192,9 @@ export const STAGE_ENCOUNTER_ROUTES = freeze({
     stageId: "abyss-chancel",
     commitmentCap: 4,
     maxConcurrentEnemies: 9,
+    bigWaveMaxConcurrentEnemies: 24,
+    bigWaveCommitmentCap: 8,
+    bigWaveSpawnIntervalTicks: 6,
     spawnIntervalTicks: 24,
     objectives: [
       objectiveDefinition(
@@ -729,6 +1238,9 @@ export const STAGE_ENCOUNTER_ROUTES = freeze({
     stageId: "echo-throne",
     commitmentCap: 4,
     maxConcurrentEnemies: 10,
+    bigWaveMaxConcurrentEnemies: 26,
+    bigWaveCommitmentCap: 8,
+    bigWaveSpawnIntervalTicks: 4,
     spawnIntervalTicks: 15,
     objectives: [
       objectiveDefinition(

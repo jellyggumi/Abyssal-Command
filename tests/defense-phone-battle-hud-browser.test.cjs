@@ -45,6 +45,18 @@ function staticServer() {
 
 async function openUi(viewport, { forceCanvasMotionProbe = false, reducedMotion = "reduce", syntheticFrames = false } = {}) {
   const context = await browser.newContext({ baseURL: hosting.url, reducedMotion, viewport });
+  // Every CI failure in this file has been a 30000 ms timeout -- Playwright's DEFAULT, never an
+  // assertion. Runs #14 and #15 lost test 10, run #16 lost test 3: a different test each time,
+  // which is a suite racing the clock rather than three separate bugs. The runner measures
+  // rafMean ~95.8 ms against ~16 ms locally (~6x slower, ~10 fps), and this suite took 253 s for
+  // 12 tests in #15. Tests that wait on `dataset.defenseMove` / `defenseState` need input to
+  // round-trip through the simulation tick, so they starve first.
+  //
+  // 90 s restores the original headroom at that measured slowdown without making a genuine hang
+  // invisible. Set on the context so it covers all nine waitForFunction sites and every locator
+  // auto-wait at once. The explicit `{ timeout: 2400 }` at the feedback-clear probe is a
+  // deliberate tight bound and is preserved -- an explicit timeout wins over the default.
+  context.setDefaultTimeout(90_000);
   try {
     const page = await context.newPage();
     if (forceCanvasMotionProbe) {
@@ -96,7 +108,18 @@ async function openUi(viewport, { forceCanvasMotionProbe = false, reducedMotion 
         };
       });
     }
-    await page.goto("/index.html", { waitUntil: "networkidle" });
+    // `domcontentloaded`, not `networkidle`: app.js:4347 registers the service worker with
+    // `updateViaCache: "none"`, so loads revalidate over the network while a continuous WebGL
+    // RAF loop keeps the page busy; on a slow CI runner the 500 ms quiet window may never open.
+    // This file failed in BOTH run #15 (test 10) and run #16 (test 3) -- different assertions
+    // each time, which is the signature of a fragile wait rather than a broken contract.
+    // The next line waits on `[data-defense-ready="true"]`, the app's explicit readiness signal.
+    // `load`, not `domcontentloaded`: this suite measures STYLED geometry (control rects,
+    // heading columns, 44px targets), and DCL does not wait for stylesheets. That gap cost
+    // runs #17 and #18 in progression-mobile-ui-browser.cjs -- see its goto for the full
+    // reasoning. `load` is a strict superset of DCL, so it cannot regress a passing test
+    // except by timeout, and setDefaultTimeout(90_000) covers that.
+    await page.goto("/index.html", { waitUntil: "load" });
     const surface = page.locator('#defense-battle-surface[data-defense-ready="true"]');
     await surface.waitFor({ state: "visible" });
     assert.equal(await surface.getAttribute("data-stage-id"), "cinder-span", "a fresh browser must select Cinder Span");
@@ -164,9 +187,21 @@ async function measureHud(page) {
       const range = document.createRange();
       range.selectNodeContents(node);
       const lineTops = [...range.getClientRects()].map(({ top }) => Math.round(top * 10) / 10);
+      // Column room is a LAYOUT property, so it is measured from the space the heading is given,
+      // not from the width of whatever string happens to be rendered at that instant. These
+      // headings are inline elements whose own box is exactly their text: measuring that made the
+      // assertion depend on which label the run had reached -- "작전 개시 · 관문 방어" (11 glyphs)
+      // early, "관문 방어" (4) a few seconds later -- so the same layout passed or failed purely on
+      // timing. The container's content box is the room the label actually has.
+      const container = node.parentElement ?? node;
+      const containerStyle = getComputedStyle(container);
+      const containerWidth = container.getBoundingClientRect().width
+        - Number.parseFloat(containerStyle.paddingLeft || "0")
+        - Number.parseFloat(containerStyle.paddingRight || "0");
       return {
         box: box(node),
-        characterColumns: node.getBoundingClientRect().width / Number.parseFloat(style.fontSize),
+        characterColumns: containerWidth / Number.parseFloat(style.fontSize),
+        textColumns: node.getBoundingClientRect().width / Number.parseFloat(style.fontSize),
         fontSize: Number.parseFloat(style.fontSize),
         lineCount: new Set(lineTops).size,
         text: node.textContent.trim(),
@@ -297,7 +332,14 @@ function assertPhoneContract(report, viewport) {
 
   for (const [name, heading] of Object.entries(report.headings)) {
     assert.equal(heading.visible, true, `${name} heading must remain visible`);
-    assert.ok(heading.characterColumns >= 5, `${name} heading must fit at least five character columns, got ${heading.characterColumns.toFixed(1)}`);
+    assert.ok(
+      heading.characterColumns >= 5,
+      `${name} heading must be given room for at least five character columns, got ${heading.characterColumns.toFixed(1)}`,
+    );
+    assert.ok(
+      heading.textColumns <= heading.characterColumns + 0.5,
+      `${name} heading text (${heading.textColumns.toFixed(1)} cols) must fit the room it is given (${heading.characterColumns.toFixed(1)} cols)`,
+    );
     assert.ok(heading.lineCount <= 3, `${name} heading must not wrap into a ${heading.lineCount}-line one/two-character column`);
   }
 
@@ -340,6 +382,7 @@ function printMeasurement(label, report, extra = {}) {
     controls: Object.fromEntries(report.bottomControls.buttons.map(({ box, label }) => [label, roundedBox(box)])),
     headings: Object.fromEntries(Object.entries(report.headings).map(([name, value]) => [name, {
       characterColumns: Math.round(value.characterColumns * 10) / 10,
+      textColumns: Math.round(value.textColumns * 10) / 10,
       lineCount: value.lineCount,
       width: Math.round(value.box.width * 10) / 10,
     }])),
@@ -478,7 +521,24 @@ test("stable combat control IDs remain unique and their native keyboard activati
       assert.equal(await run.page.locator(selector).count(), 1, `${selector} must remain a unique public control hook`);
     }
 
+    // Sibling of the fix in progression-mobile-ui-browser.cjs. Answer any pending level-up growth
+    // offer before driving a control. The offer is genuinely modal --
+    // defense-run-simulation.js:4263 is `if (run.growthOffer) return;`, so the simulation HALTS
+    // while one is open, and app.js:3908 correctly focuses its button. Both consequences break
+    // this helper: the focus assertion can see the offer's <button> instead of the control, and
+    // `data-defense-input-seq` can then never increment, burning the full timeout -- which is
+    // exactly how test 3 failed with `waitForFunction: Timeout 90000ms exceeded`.
+    //
+    // Per activation, not once up front: each Enter moves the commander and accrues XP, so a
+    // level-up can cross its threshold between calls.
+    const dismissGrowthOffer = async () => {
+      const pick = run.page.locator("#defense-growth-offer [data-pick]").first();
+      if (await pick.isVisible().catch(() => false)) await pick.click();
+      await run.page.locator("#defense-growth-offer").waitFor({ state: "hidden" }).catch(() => {});
+    };
+
     const activateAndWaitForInput = async (selector, key) => {
+      await dismissGrowthOffer();
       const control = run.page.locator(selector);
       await control.focus();
       assert.equal(await control.evaluate((node) => document.activeElement === node), true, `${selector} must accept keyboard focus`);

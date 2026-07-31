@@ -131,3 +131,9 @@ wiki/graph/
 _workspace/current/engineering/asset-pipeline/terrain-dungeon/built/
 _workspace/current/engineering/asset-pipeline/terrain-dungeon/probe-out/
 _workspace/current/engineering/asset-pipeline/terrain-dungeon/deprojected/*-height.png
+
+# Local deployment credentials and Vercel link state -- machine-local, never
+# shared. Kept from this worktree's uncommitted .gitignore edit during the
+# 2026-07-31 pull sync.
+.vercel
+.env*

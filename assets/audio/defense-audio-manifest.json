@@ -1,12 +1,17 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "runtime": "defense-audio.js",
-  "mode": "offline-procedural",
+  "mode": "hybrid-sample-procedural",
   "dependencies": {
-    "network": false,
-    "mediaDecode": false,
-    "externalAssets": [],
-    "api": "Web Audio oscillator and gain nodes only"
+    "network": "optional — sample mode fetches assets/audio/elevenlabs/index.json plus mp3 buffers after start(); every failure falls back per-cue to the procedural profile",
+    "mediaDecode": "optional — decodeAudioData/createBufferSource used only when available",
+    "externalAssets": [
+      "assets/audio/elevenlabs/index.json",
+      "assets/audio/elevenlabs/sfx/*.mp3 (33 one-shots, ElevenLabs sound-generation, Abyssal Lantern concept)",
+      "assets/audio/elevenlabs/loops/*.mp3 (3 stage ambience + 3 stage music loops)"
+    ],
+    "generator": "scripts/generate-defense-audio.mjs + assets/audio/elevenlabs-sound-plan.json",
+    "api": "Web Audio oscillator and gain nodes (authoritative fallback); buffer sources when samples decode"
   },
   "mix": {
     "masterGain": 0.055,

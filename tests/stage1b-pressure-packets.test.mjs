@@ -21,6 +21,10 @@ const EXPECTED_CAUSES = new Set([
   "PROJECTILE_IMPACT",
   "SKILL_SELECTED_PASSIVE_INTEGRITY",
   "SKILL_CAST_INTEGRITY",
+  // Warden recoveries are integrity deltas like any other and must be attributable: the vigil
+  // regen now emits WARDENS_VIGIL_REGEN, and the ward shield was already emitting its amount.
+  "WARDENS_VIGIL_REGEN",
+  "WARDENS_WARD_TRIGGERED",
 ]);
 const EXPECTED_CAUSE_ANNOTATIONS = new Set(["COMMANDER_GATE_DIVERSION"]);
 

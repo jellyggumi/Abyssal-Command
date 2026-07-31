@@ -1,0 +1,299 @@
+{
+  "schemaVersion": 1,
+  "concept": "Abyssal Lantern (심연의 등불) — a lantern lineage bearer descends three boundaries: Cinder Span (burning chain bridge, embers, ash), Abyss Chancel (submerged cathedral, mirrors, choir), Echo Throne (empty throne, echoing command). Sound identity: warm lantern light (glass, chime, flame) cutting through cold abyss (stone, sub-bass, choral echo).",
+  "api": "elevenlabs /v1/sound-generation",
+  "outputBase": "assets/audio/elevenlabs",
+  "promptStyle": "dark fantasy game audio, clean mix, no music in SFX one-shots, no voice",
+  "sfx": [
+    {
+      "key": "stage-start",
+      "cueId": "stage-start",
+      "duration": 1.5,
+      "gain": 0.95,
+      "prompt": "lantern ignition flare: a glass lantern snaps alight with a warm whoosh of flame over a deep stone gate rumble, dark fantasy stage opening cue, one-shot, no music, no voice"
+    },
+    {
+      "key": "movement-step",
+      "cueId": "movement-step",
+      "duration": 0.5,
+      "gain": 0.32,
+      "prompt": "single soft footstep on ash and cinder gravel, subtle short scuff, very quiet, dry, one-shot, no music, no voice"
+    },
+    {
+      "key": "weapon-fire",
+      "cueId": "weapon-fire",
+      "duration": 0.5,
+      "gain": 0.7,
+      "prompt": "short arc of burning lantern light whipped forward, tight fiery swish with a faint glass ring, snappy attack transient, one-shot, no music, no voice"
+    },
+    {
+      "key": "impact-hit",
+      "cueId": "impact-hit",
+      "duration": 0.5,
+      "gain": 0.85,
+      "prompt": "heavy ashen body thud with a low stone knock, muffled dark impact, tight and dry, one-shot, no music, no voice"
+    },
+    {
+      "key": "critical-hit",
+      "cueId": "critical-hit",
+      "duration": 0.6,
+      "gain": 0.95,
+      "prompt": "sharp glass-crack impact with a bright ember burst sparkle tail, dramatic critical strike, one-shot, no music, no voice"
+    },
+    {
+      "key": "enemy-defeated",
+      "cueId": "enemy-defeated",
+      "duration": 0.8,
+      "gain": 0.8,
+      "prompt": "creature collapsing into cinders: soft ember burst, ash crumble and brief hiss of extinguishing flame, one-shot, no music, no voice"
+    },
+    {
+      "key": "item-collected",
+      "cueId": "item-collected",
+      "duration": 0.7,
+      "gain": 0.75,
+      "prompt": "warm glass lantern chime pickup, small bright two-note glint with a soft glow tail, pleasing collectible cue, one-shot, no music, no voice"
+    },
+    {
+      "key": "growth-offer",
+      "cueId": "growth-offer",
+      "duration": 1.2,
+      "gain": 0.8,
+      "prompt": "rising resonant lantern shimmer, warm glass harmonics blooming upward, invitation cue, gentle and hopeful in a dark hall, one-shot, no voice"
+    },
+    {
+      "key": "growth-offer--skill-selected",
+      "cueId": "growth-offer",
+      "variant": "growth-offer:SKILL_SELECTED",
+      "duration": 0.8,
+      "gain": 0.85,
+      "prompt": "confident confirm chime: two ascending warm glass tones locking in with a soft flame flick, decisive selection cue, one-shot, no music, no voice"
+    },
+    {
+      "key": "skill-cast",
+      "cueId": "skill-cast",
+      "duration": 0.9,
+      "gain": 0.85,
+      "prompt": "abyssal flame skill release: compressed whoosh of dark fire with a low resonant boom tail, powerful cast, one-shot, no music, no voice"
+    },
+    {
+      "key": "extraction-ready",
+      "cueId": "extraction-ready",
+      "duration": 1.2,
+      "gain": 0.75,
+      "prompt": "resonant beacon ping in a vast stone hall, clear bell-like signal with long cathedral echo, calling attention, one-shot, no music, no voice"
+    },
+    {
+      "key": "extraction-ready--progress",
+      "cueId": "extraction-ready",
+      "variant": "extraction-ready:EXTRACTION_PROGRESS",
+      "duration": 0.5,
+      "gain": 0.5,
+      "prompt": "single short soft sonar tick, muted bell pulse, subtle progress feedback, quiet, one-shot, no music, no voice"
+    },
+    {
+      "key": "elite-extracted",
+      "cueId": "elite-extracted",
+      "duration": 1.8,
+      "gain": 0.9,
+      "prompt": "spirit echo binding: a swirl of choral whisper drawn into glass, ascending harmonic bloom sealed with a warm chime, mystical success, one-shot, no voice"
+    },
+    {
+      "key": "occupation-captured",
+      "cueId": "occupation-captured",
+      "duration": 1.2,
+      "gain": 0.85,
+      "prompt": "ancient seal locking: deep stone mechanism thrum rotating shut with a warm resonant confirmation swell, territory secured, one-shot, no music, no voice"
+    },
+    {
+      "key": "occupation-captured--progress",
+      "cueId": "occupation-captured",
+      "variant": "occupation-captured:OCCUPATION_PROGRESS",
+      "duration": 0.5,
+      "gain": 0.45,
+      "prompt": "single quiet stone ratchet click, low mechanical tick of an old seal turning one notch, subtle, one-shot, no music, no voice"
+    },
+    {
+      "key": "boss-spawned",
+      "cueId": "boss-spawned",
+      "duration": 2.5,
+      "gain": 1.0,
+      "prompt": "colossal gate horn of the abyss: massive low brass-like blast with chains rattling and a sub-bass drop, dread arrival of a boss, cinematic one-shot, no voice"
+    },
+    {
+      "key": "terminal",
+      "cueId": "terminal",
+      "duration": 2.0,
+      "gain": 0.9,
+      "prompt": "solemn deep bell toll in a vast dark hall with slow stone resonance decay, run-ending finality, one-shot, no music, no voice"
+    },
+    {
+      "key": "terminal--victory",
+      "cueId": "terminal",
+      "variant": "terminal:TERMINAL:VICTORY",
+      "duration": 2.5,
+      "gain": 0.95,
+      "prompt": "triumphant lantern dawn: warm rising harmonic swell of glass and light breaking through darkness, victorious resolution flourish, one-shot, no voice"
+    },
+    {
+      "key": "terminal--defeat",
+      "cueId": "terminal",
+      "variant": "terminal:TERMINAL:DEFEAT",
+      "duration": 2.5,
+      "gain": 0.9,
+      "prompt": "lantern extinguished: a flame snuffed with a cold air rush, followed by a descending dark drone sinking into silence, somber defeat, one-shot, no voice"
+    },
+    {
+      "key": "terminal--final-completion",
+      "cueId": "terminal",
+      "variant": "terminal:TERMINAL:FINAL_COMPLETION",
+      "duration": 3.0,
+      "gain": 1.0,
+      "prompt": "grand finale: cathedral bells and a warm choral swell blooming upward into radiant shimmering light, epic conclusive fanfare, one-shot"
+    },
+    {
+      "key": "terminal--reward-selected",
+      "cueId": "terminal",
+      "variant": "terminal:REWARD_SELECTED",
+      "duration": 1.0,
+      "gain": 0.8,
+      "prompt": "treasure sealed in glass: bright warm double chime with a soft sparkling tail, satisfying reward confirmation, one-shot, no music, no voice"
+    },
+    {
+      "key": "impact-hit--pickup-denied",
+      "cueId": "impact-hit",
+      "variant": "impact-hit:PICKUP_DENIED",
+      "variantAliases": ["impact-hit:STANCE_SWITCH_BLOCKED"],
+      "duration": 0.5,
+      "gain": 0.55,
+      "prompt": "dull muted rejection knock, low wooden thunk with a short damp buzz, action not allowed, quiet, one-shot, no music, no voice"
+    },
+    {
+      "key": "input-accepted",
+      "cueId": "input-accepted",
+      "duration": 0.5,
+      "gain": 0.45,
+      "prompt": "tiny warm glass tick, single short bright tap confirming input, minimal UI cue, very short, one-shot, no music, no voice"
+    },
+    {
+      "key": "input-rejected",
+      "cueId": "input-rejected",
+      "duration": 0.5,
+      "gain": 0.5,
+      "prompt": "short low muted buzz thud, blocked action feedback, dull and clipped, one-shot, no music, no voice"
+    },
+    {
+      "key": "attack-windup",
+      "cueId": "attack-windup",
+      "duration": 0.5,
+      "gain": 0.5,
+      "prompt": "quick rising flame inhale, short crescendo of gathering fire energy before a strike, tense windup, one-shot, no music, no voice"
+    },
+    {
+      "key": "block-contact",
+      "cueId": "block-contact",
+      "duration": 0.5,
+      "gain": 0.7,
+      "prompt": "solid parry clang: metal chain link struck against stone shield, tight ringing block, one-shot, no music, no voice"
+    },
+    {
+      "key": "attack-miss",
+      "cueId": "attack-miss",
+      "duration": 0.5,
+      "gain": 0.4,
+      "prompt": "soft air whiff of a missed swing, short breathy swish fading fast, one-shot, no music, no voice"
+    },
+    {
+      "key": "interrupt-alert",
+      "cueId": "interrupt-alert",
+      "duration": 0.7,
+      "gain": 0.8,
+      "prompt": "urgent low chain snap with a harsh short metallic warning rattle, something broke off, alarming interrupt, one-shot, no music, no voice"
+    },
+    {
+      "key": "warning-pulse",
+      "cueId": "warning-pulse",
+      "duration": 0.9,
+      "gain": 0.8,
+      "prompt": "ominous warning pulse: dark tolling throb with a dissonant metallic shimmer, imminent danger alarm in a dungeon, one-shot, no voice"
+    },
+    {
+      "key": "objective-waypoint",
+      "cueId": "objective-waypoint",
+      "duration": 0.8,
+      "gain": 0.6,
+      "prompt": "clear guiding chime with a short cathedral echo, waypoint marker cue, neutral and informative, one-shot, no music, no voice"
+    },
+    {
+      "key": "objective-complete",
+      "cueId": "objective-complete",
+      "duration": 1.0,
+      "gain": 0.8,
+      "prompt": "objective sealed: ascending two-chime resolution with a warm resonant stone undertone, satisfying completion, one-shot, no music, no voice"
+    },
+    {
+      "key": "boss-phase",
+      "cueId": "boss-phase",
+      "duration": 1.5,
+      "gain": 0.9,
+      "prompt": "boss phase shift: deep guttural stone groan with chains tightening and a dark pressure swell, escalation cue, one-shot, no voice"
+    },
+    {
+      "key": "death-retry",
+      "cueId": "death-retry",
+      "duration": 1.5,
+      "gain": 0.8,
+      "prompt": "lantern relit from an ember: soft flame rekindle whoosh rising into a warm hopeful glass tone, retry and rebirth cue, one-shot, no voice"
+    }
+  ],
+  "loops": [
+    {
+      "key": "ambience--cinder-span",
+      "kind": "ambience",
+      "stageId": "cinder-span",
+      "duration": 12,
+      "gain": 0.5,
+      "prompt": "seamless looping ambience of a burning chain bridge over an abyss: smoldering embers crackling softly, heavy chains creaking in hot ash wind, distant deep rumble below, dark fantasy environment loop, no melody, no voice"
+    },
+    {
+      "key": "ambience--abyss-chancel",
+      "kind": "ambience",
+      "stageId": "abyss-chancel",
+      "duration": 12,
+      "gain": 0.5,
+      "prompt": "seamless looping ambience of a half-submerged dark cathedral: cavernous stone reverb, slow water drips, faint glass mirror shimmer resonances, cold hollow air drone, dark fantasy environment loop, no melody, no voice"
+    },
+    {
+      "key": "ambience--echo-throne",
+      "kind": "ambience",
+      "stageId": "echo-throne",
+      "duration": 12,
+      "gain": 0.5,
+      "prompt": "seamless looping ambience of a vast empty throne hall in the deep abyss: cavernous sub-bass air, faint echoing whispers dissolving into stone, slow cold resonant pulses, oppressive dark fantasy loop, no melody"
+    },
+    {
+      "key": "music--cinder-span",
+      "kind": "music",
+      "stageId": "cinder-span",
+      "duration": 16,
+      "gain": 0.45,
+      "prompt": "seamless looping dark fantasy battle underscore for a burning bridge: low ominous percussion with ember-crackle rhythm, brooding low brass drone, restrained tension, instrumental game battle loop, no vocals"
+    },
+    {
+      "key": "music--abyss-chancel",
+      "kind": "music",
+      "stageId": "abyss-chancel",
+      "duration": 16,
+      "gain": 0.45,
+      "prompt": "seamless looping eerie sacred battle underscore for a sunken cathedral: dark organ pedal tones, distant dissonant choir pads, slow ritual pulse, haunting instrumental game battle loop, no lead vocals"
+    },
+    {
+      "key": "music--echo-throne",
+      "kind": "music",
+      "stageId": "echo-throne",
+      "duration": 16,
+      "gain": 0.45,
+      "prompt": "seamless looping final-boss underscore for an empty abyssal throne: deep ceremonial war drums, low male choir drone, ominous horn swells, heavy dread, instrumental game battle loop"
+    }
+  ]
+}

@@ -1377,11 +1377,24 @@ const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex"
  * precondition rather than assuming it. A future balance change that starts dropping inside one
  * of these windows must fail as "precondition broke", never as a silent hash mismatch.
  */
+/*
+ * REBASELINED 2026-07-30, twice: once at the cycle-10 / area-combat merge, and again when the
+ * cycle-9 slice landed and fixed the enemy-shell faction tag (enemy fire had been splashing
+ * enemies instead of the player side, so windows containing an enemy shell moved again).
+ *
+ * These SHAs pin "the buff-drop layer changes nothing when nothing drops". The always-area
+ * combat model (defense-catalog AREA_*) changed what a tick DOES, so every digest moved --
+ * including these windows. That is a change in the combat rules, NOT a change in the claim
+ * under test, and the claim is still asserted the same way: each window is re-measured to have
+ * zero DROP_SPAWNED, zero BUFF_APPLIED, a completed window, an ADVANCED dropRng (so the layer
+ * really executed), and absent `buffs`/`buffStats` keys at SNAPSHOT_VERSION 7. Only the bytes
+ * are new; every precondition below was re-verified, not assumed.
+ */
 const PRE_FEATURE_DIGEST_SHA256 = Object.freeze([
-  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "4fa5abdeeff6c4782595c2b1b45681049b3f082a4a2e344a53aa16d3425e35d1" },
-  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "c4e67af6ce7b052f3635132084e117b770d1d6f0f498405ab926d511e480793f" },
-  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "b18f8900fb9b8fc181060ad91171188d902d2336ccccbd8e6c47b40f12916324" },
-  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "ba0e8c11f35e015724e92e323c14d495711e14073005b40ecffb2580fb9f6ed0" },
+  { label: "cinder-span/71/500 +ember-cohort", options: { stageId: "cinder-span", seed: 71, companionLoadout: ["ember-cohort"] }, steps: 500, sha: "50860301b64464b00cbac792a661f18574f3cf6e65599e624433ead49db5abdf" },
+  { label: "cinder-span/71/500 bare", options: { stageId: "cinder-span", seed: 71, companionLoadout: [] }, steps: 500, sha: "c250e10ff1c0d1e70280646dbde592ba3d7bb6e29693161a5d067064dff6c57b" },
+  { label: "abyss-chancel/71/1000 bare", options: { stageId: "abyss-chancel", seed: 71, companionLoadout: [] }, steps: 1000, sha: "ade3e989e89d3a3037ada50b5bebaa6a2f073cc395545d58efcb89313717805b" },
+  { label: "echo-throne/12/500 bare", options: { stageId: "echo-throne", seed: 12, companionLoadout: [] }, steps: 500, sha: "cf3f32b176712c9cfec62be5c071645c342e714962a9db96298b02237ef46b32" },
 ]);
 
 // ---------------------------------------------------------------------------------------------
@@ -1453,9 +1466,14 @@ test("gate check 1: two runs at one seed ticked identically with no buff produce
  * that build is §9 check 2's "build with the drop block deleted". Each row spawns drops in the
  * current build, so the stream is compared across a boundary where drop rolls demonstrably ran.
  */
+// Seed 3 repinned 2026-07-30 with the cycle-9 slice: growth offers draw from `run.rng`, and the
+// combat changes moved how many enemies die inside 3000 ticks, so the number of offers moved with
+// them. The other two seeds were re-measured and did NOT move. The invariant this gate protects --
+// the drop roll never touches the wave stream -- is unchanged and still asserted alongside its
+// positive pair (drops really spawned, dropRng really advanced, waveVariant byte-identical).
 const PRE_FEATURE_RNG_AT_3000 = Object.freeze([
   { options: { stageId: "cinder-span", seed: 9, companionLoadout: [] }, rng: 745195808 },
-  { options: { stageId: "cinder-span", seed: 3, companionLoadout: [] }, rng: 3066949719 },
+  { options: { stageId: "cinder-span", seed: 3, companionLoadout: [] }, rng: 3246667586 },
   { options: { stageId: "abyss-chancel", seed: 5, companionLoadout: ["ember-cohort"] }, rng: 3688787054 },
 ]);
 

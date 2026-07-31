@@ -1,0 +1,44 @@
+{
+  "ok": true,
+  "seed": 17,
+  "ticks": 60,
+  "stageId": "cinder-span",
+  "checks": [
+    {
+      "id": "A1",
+      "description": "object payload { octant, analog } accepted and commander.moveAnalog present",
+      "ok": true,
+      "detail": "moveAnalog present as expected"
+    },
+    {
+      "id": "A2",
+      "description": "analog run digest differs from octant-only run digest (same seed)",
+      "ok": true,
+      "detail": "octant d8be2f6f2a39… vs analog 9db38cf894b4…"
+    },
+    {
+      "id": "A3",
+      "description": "deflection magnitude scales distance travelled (full > half > quarter)",
+      "ok": true,
+      "detail": "full(1000)=4040  half(500)=2040  quarter(250)=1020  — magnitude reaches movement"
+    },
+    {
+      "id": "A4",
+      "description": "full analog deflection ≈ equivalent octant distance (within 2%)",
+      "ok": true,
+      "detail": "octant E=4040  analog(1000,0)=4040"
+    },
+    {
+      "id": "A5",
+      "description": "sub-dead-zone deflection (10 millis) produces no travel",
+      "ok": true,
+      "detail": "travel=0 (expected 0)"
+    },
+    {
+      "id": "A6",
+      "description": "off-axis heading (30°) resolves distinctly from the 45° octant",
+      "ok": true,
+      "detail": "30° end=(22540,3960)  45° end=(21952,3287)"
+    }
+  ]
+}
