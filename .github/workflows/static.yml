@@ -67,7 +67,7 @@ env:
     assets/audio/elevenlabs/sfx/elite-extracted.mp3 assets/audio/elevenlabs/sfx/occupation-captured.mp3 assets/audio/elevenlabs/sfx/occupation-captured--progress.mp3
     assets/audio/elevenlabs/sfx/boss-spawned.mp3 assets/audio/elevenlabs/sfx/terminal.mp3 assets/audio/elevenlabs/sfx/terminal--victory.mp3
     assets/audio/elevenlabs/sfx/terminal--defeat.mp3 assets/audio/elevenlabs/sfx/terminal--final-completion.mp3 assets/audio/elevenlabs/sfx/terminal--reward-selected.mp3
-    assets/audio/elevenlabs/sfx/impact-hit--pickup-denied.mp3 assets/audio/elevenlabs/sfx/impact-hit--pickup-denied.mp3 assets/audio/elevenlabs/sfx/input-accepted.mp3
+    assets/audio/elevenlabs/sfx/impact-hit--pickup-denied.mp3 assets/audio/elevenlabs/sfx/input-accepted.mp3
     assets/audio/elevenlabs/sfx/input-rejected.mp3 assets/audio/elevenlabs/sfx/attack-windup.mp3 assets/audio/elevenlabs/sfx/block-contact.mp3
     assets/audio/elevenlabs/sfx/attack-miss.mp3 assets/audio/elevenlabs/sfx/interrupt-alert.mp3 assets/audio/elevenlabs/sfx/warning-pulse.mp3
     assets/audio/elevenlabs/sfx/objective-waypoint.mp3 assets/audio/elevenlabs/sfx/objective-complete.mp3 assets/audio/elevenlabs/sfx/boss-phase.mp3

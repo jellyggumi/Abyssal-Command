@@ -62,10 +62,18 @@ const PROMOTED_MOTION_CHARACTER_ASSETS = Object.freeze([
 const AUDIO_SAMPLE_INDEX = JSON.parse(
   await readFile(new URL("assets/audio/elevenlabs/index.json", ROOT), "utf8"),
 );
-const AUDIO_SAMPLE_ASSETS = Object.freeze([
+// Deduped, and that is load-bearing. This derives a list of FILES to deploy, while the index is
+// keyed by CUE, and two cues deliberately share one file (`impact-hit:PICKUP_DENIED` and
+// `impact-hit:STANCE_SWITCH_BLOCKED` both point at `impact-hit--pickup-denied.mp3`). A per-cue
+// map therefore yielded that path twice and forced the same duplicate into the workflow's
+// `PAGES_RUNTIME_PATHS` to satisfy the deepEqual below -- which broke `package_pages` on `main`,
+// because that job compares `find`'s output (129 unique files) against the listed paths (130
+// with the repeat) as sorted strings. A Set keeps insertion order, so the sequence contract the
+// deepEqual enforces is unchanged; only the repeat is gone.
+const AUDIO_SAMPLE_ASSETS = Object.freeze([...new Set([
   ...Object.values(AUDIO_SAMPLE_INDEX.cues ?? {}).map(({ url }) => url),
   ...Object.values(AUDIO_SAMPLE_INDEX.loops ?? {}).map(({ url }) => url),
-]);
+])]);
 
 const DIRECT_RUNTIME_ASSETS = Object.freeze([
   // Cycle 10: the composed slab floors are the gameplay ground the runtime loads.
